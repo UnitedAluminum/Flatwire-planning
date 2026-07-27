@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>Output Coil Completion · FW-00421-C01</title>
+<link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
+<style>
+  body { min-height: 1024px; }
+  .dashboard { height: 1024px; }
+  .mono { font-family: var(--font-mono); }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 24px;
+    height: 72px;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font-sans);
+  }
+  .back-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .back-btn svg { width: 14px; height: 14px; }
+  .context-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--color-background-success);
+    color: var(--color-text-success);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .context-chip .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--color-green);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .header h1 { margin: 0; font-size: 22px; font-weight: 500; }
+  .header-meta {
+    display: flex;
+    gap: 24px;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    align-items: center;
+  }
+  .header-meta strong { color: var(--color-text-primary); font-weight: 500; }
+
+  /* Top row */
+  .top-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 12px;
+    height: 330px;
+  }
+
+  .section {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+  }
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .section-title {
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .section-hint {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+  }
+
+  /* Coil hero */
+  .coil-alpha-block {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 6px;
+    padding: 10px 14px;
+    background: var(--color-background-info);
+    border-radius: var(--border-radius-md);
+    border-left: 3px solid var(--color-blue);
+  }
+  .coil-alpha-label {
+    font-size: 11px;
+    color: var(--color-text-info);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .coil-alpha-value {
+    font-size: 28px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    color: var(--color-text-primary);
+    line-height: 1;
+  }
+  .coil-alpha-meta {
+    font-size: 12px;
+    color: var(--color-text-info);
+    margin-top: 4px;
+  }
+  .auto-gen-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--color-background-primary);
+    color: var(--color-text-info);
+    border-radius: var(--border-radius-md);
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .auto-gen-badge svg { width: 11px; height: 11px; }
+
+  .coil-specs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .spec-tile {
+    background: var(--color-background-secondary);
+    padding: 6px 10px;
+    border-radius: var(--border-radius-md);
+  }
+  .spec-label {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    margin-bottom: 3px;
+  }
+  .spec-value {
+    font-size: 15px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+  }
+  .spec-value.plain { font-family: var(--font-sans); }
+
+  .weight-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: auto;
+  }
+  .weight-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .weight-label {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+  .weight-field-required::after {
+    content: " *";
+    color: var(--color-red);
+  }
+  .weight-input {
+    height: 34px;
+    padding: 0 12px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    outline: none;
+    width: 100%;
+  }
+  .weight-input:focus {
+    border-color: var(--color-blue);
+    box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.18);
+  }
+  .weight-readonly {
+    height: 34px;
+    padding: 0 12px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    display: flex;
+    align-items: center;
+    color: var(--color-text-primary);
+    gap: 8px;
+  }
+  .weight-readonly .calc-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    background: var(--color-background-primary);
+    color: var(--color-text-tertiary);
+    border-radius: 4px;
+    font-family: var(--font-sans);
+    font-weight: 400;
+    margin-left: auto;
+  }
+
+  /* Label preview */
+  .label-preview-section {
+    display: flex;
+    flex-direction: column;
+  }
+  .label-preview {
+    flex: 1;
+    background: #ffffff;
+    color: #1a1a19;
+    border: 1.5px dashed var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden;
+  }
+  .label-head {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0ddd4;
+  }
+  .label-alpha {
+    font-size: 22px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+  .label-barcode {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+  }
+  .barcode-bar {
+    height: 100%;
+    background: #000000;
+  }
+  .label-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px 10px;
+    font-size: 10px;
+    line-height: 1.3;
+  }
+  .label-grid .k { color: #6a6866; font-family: var(--font-sans); }
+  .label-grid .v { font-weight: 600; }
+  .label-footer {
+    margin-top: auto;
+    padding-top: 6px;
+    border-top: 1px solid #e0ddd4;
+    font-size: 9px;
+    color: #6a6866;
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-sans);
+  }
+
+  /* Mid row */
+  .mid-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    height: 234px;
+  }
+
+  /* Source traceability */
+  .traceability-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    flex: 1;
+  }
+  .trace-rod {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 6px 14px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+  }
+  .trace-rod-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-secondary);
+  }
+  .trace-rod-icon svg { width: 10px; height: 10px; }
+  .trace-rod-body {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .trace-rod-alpha {
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+  }
+  .trace-rod-range {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+  }
+  .trace-rod-weight {
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    font-family: var(--font-mono);
+  }
+  .trace-weld-row {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 7px 14px;
+    background: var(--color-background-warning);
+    color: var(--color-text-warning);
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+  }
+  .trace-weld-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-amber);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .trace-weld-icon svg { width: 11px; height: 11px; }
+  .trace-weld-label { font-weight: 500; }
+  .trace-footer {
+    margin-top: 6px;
+    padding: 8px 12px;
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+    border-radius: var(--border-radius-md);
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* Final SPC */
+  .final-spc {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+  .spc-row {
+    background: var(--color-background-secondary);
+    padding: 8px 12px;
+    border-radius: var(--border-radius-md);
+    border-left: 3px solid var(--color-green);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .spc-row-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 5px;
+  }
+  .spc-row-label {
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .spc-row-value {
+    font-size: 18px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+  }
+  .spc-row-meta {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    margin-left: 8px;
+  }
+  .spc-status-inline {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-success);
+    color: var(--color-text-success);
+    margin-left: 10px;
+  }
+  .tolerance-track {
+    position: relative;
+    height: 10px;
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: 6px;
+  }
+  .tolerance-range {
+    position: absolute;
+    top: 0;
+    left: 20%;
+    right: 20%;
+    height: 100%;
+    background: var(--color-green);
+    opacity: 0.22;
+    border-radius: 6px;
+  }
+  .tolerance-marker {
+    position: absolute;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    background: var(--color-blue);
+    border: 2.5px solid var(--color-background-primary);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 1px var(--color-blue);
+  }
+  .tolerance-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--color-text-tertiary);
+    padding: 2px 4px 0;
+  }
+
+  /* Skid tracking */
+  .skid-section {
+    padding: 18px 24px;
+    height: 200px;
+  }
+  .skid-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .skid-layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 24px;
+    height: 120px;
+  }
+  .skid-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .skid-radio {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 16px;
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    background: var(--color-background-primary);
+    user-select: none;
+    transition: all 0.15s;
+  }
+  .skid-radio:hover { background: var(--color-background-secondary); }
+  .skid-radio.selected {
+    border-color: var(--color-blue);
+    background: var(--color-background-info);
+  }
+  .skid-radio-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--color-border-primary);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .skid-radio.selected .skid-radio-dot {
+    border-color: var(--color-blue);
+  }
+  .skid-radio.selected .skid-radio-dot::after {
+    content: "";
+    position: absolute;
+    top: 3px; left: 3px; right: 3px; bottom: 3px;
+    border-radius: 50%;
+    background: var(--color-blue);
+  }
+  .skid-radio-body { flex: 1; }
+  .skid-radio-name {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .skid-radio.selected .skid-radio-name { color: var(--color-text-info); }
+  .skid-radio-desc {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+  .skid-radio-badge {
+    padding: 3px 9px;
+    border-radius: var(--border-radius-md);
+    font-size: 10px;
+    font-weight: 500;
+    background: var(--color-background-secondary);
+    color: var(--color-text-secondary);
+  }
+  .skid-radio.selected .skid-radio-badge {
+    background: var(--color-background-warning);
+    color: var(--color-text-warning);
+  }
+
+  /* Skid visual */
+  .skid-visual {
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .skid-visual-label {
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .skid-visual-label strong {
+    color: var(--color-text-primary);
+    font-family: var(--font-mono);
+    letter-spacing: normal;
+    font-weight: 500;
+    text-transform: none;
+  }
+  .skid-slots {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .skid-slot {
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    min-height: 60px;
+    position: relative;
+  }
+  .skid-slot.filled {
+    background: var(--color-background-info);
+    border-color: var(--color-blue);
+  }
+  .skid-slot.current {
+    background: var(--color-background-success);
+    border-color: var(--color-green);
+    box-shadow: 0 0 0 2px rgba(29, 158, 117, 0.25);
+  }
+  .skid-slot.empty {
+    border-style: dashed;
+    opacity: 0.55;
+  }
+  .skid-slot-position {
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+  }
+  .skid-slot.current .skid-slot-position { color: var(--color-text-success); }
+  .skid-slot.filled .skid-slot-position { color: var(--color-text-info); }
+  .skid-slot-alpha {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .skid-slot-alpha.empty { color: var(--color-text-tertiary); font-style: italic; font-family: var(--font-sans); }
+  .skid-base {
+    margin-top: 8px;
+    height: 6px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--color-border-primary) 0 3px,
+      transparent 3px 10px
+    );
+    border-radius: 2px;
+    opacity: 0.35;
+  }
+
+  /* Footer */
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 22px;
+    height: 82px;
+  }
+  .footer-stamp {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+  }
+  .footer-stamp-item { display: flex; flex-direction: column; gap: 2px; }
+  .footer-stamp-label {
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .footer-stamp-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+  .footer-stamp-value.mono { font-family: var(--font-mono); }
+
+  .footer-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .btn {
+    height: 54px;
+    padding: 0 22px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn:active { transform: scale(0.98); }
+  .btn svg { width: 16px; height: 16px; }
+  .btn-primary {
+    background: var(--color-green);
+    border-color: var(--color-green);
+    color: #ffffff;
+    padding: 0 28px;
+  }
+  .btn-primary:hover { background: #168962; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <div class="header panel">
+    <div class="header-left">
+      <button class="back-btn" onclick="window.location.href='dashboard_3_active_run_fl2.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back to run
+      </button>
+      <span class="context-chip">
+        <span class="dot"></span>
+        FL2 &middot; coil complete at TKUP-2
+      </span>
+      <h1>Output Coil Completion</h1>
+    </div>
+    <div class="header-meta">
+      <span>Order <strong class="mono">FW-00421</strong></span>
+    </div>
+  </div>
+
+  <div class="top-row">
+
+    <div class="section">
+      <div class="coil-alpha-block">
+        <div>
+          <div class="coil-alpha-label">Output coil alpha</div>
+          <div class="coil-alpha-value">FW-00421-C01</div>
+          <div class="coil-alpha-meta">Generated 07:42:18 AM &middot; linked to order FW-00421</div>
+        </div>
+        <span class="auto-gen-badge">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1v4"/><path d="M8 11v4"/><path d="M1 8h4"/><path d="M11 8h4"/><circle cx="8" cy="8" r="2"/></svg>
+          Auto-generated
+        </span>
+      </div>
+
+      <div class="coil-specs">
+        <div class="spec-tile">
+          <div class="spec-label">Alloy</div>
+          <div class="spec-value plain">1100</div>
+        </div>
+        <div class="spec-tile">
+          <div class="spec-label">Temper</div>
+          <div class="spec-value plain">H18</div>
+        </div>
+        <div class="spec-tile">
+          <div class="spec-label">Footage</div>
+          <div class="spec-value">14,200 ft</div>
+        </div>
+        <div class="spec-tile">
+          <div class="spec-label">Gauge <span style="font-size:10px;color:var(--color-text-success);">✓ target</span></div>
+          <div class="spec-value">0.110"</div>
+        </div>
+        <div class="spec-tile">
+          <div class="spec-label">Width <span style="font-size:10px;color:var(--color-text-success);">✓ target</span></div>
+          <div class="spec-value">0.625"</div>
+        </div>
+        <div class="spec-tile">
+          <div class="spec-label">Lot</div>
+          <div class="spec-value">FW-00421</div>
+        </div>
+      </div>
+
+      <div class="weight-grid">
+        <div class="weight-field">
+          <label class="weight-label weight-field-required">Gross weight</label>
+          <input class="weight-input" type="text" value="1,010 lb">
+        </div>
+        <div class="weight-field">
+          <label class="weight-label">Net weight (calculated)</label>
+          <div class="weight-readonly">
+            980 lb
+            <span class="calc-badge">14,200 ft × 0.069 lb/ft</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section label-preview-section">
+      <div class="section-header">
+        <span class="section-title">Coil label preview</span>
+        <span class="section-hint">Prints on confirm</span>
+      </div>
+
+      <div class="label-preview">
+        <div class="label-head">CORELESS OSCILLATED FLAT WIRE</div>
+
+        <div class="label-alpha">FW-00421-C01</div>
+
+        <div class="label-barcode">
+          <span class="barcode-bar" style="width: 2px"></span>
+          <span class="barcode-bar" style="width: 1px"></span>
+          <span class="barcode-bar" style="width: 3px"></span>
+          <span class="barcode-bar" style="width: 1px"></span>
+          <span class="barcode-bar" style="width: 2px"></span>
+          <span class="barcode-bar" style="width: 1px"></span>
+          <span class="barcode-bar" style="width: 2px"></span>
+          <span class="barcode-bar" style="width: 3px"></span>
+          <span class="barcode-bar" style="width: 1px"></span>
+          <span class="barcode-bar" style="width: 2px"></span>
+          <span class="barcode-bar" style="width: 1px"></span>
+          <span class="barcode-bar" style="width: 1px"></span>
+          <span class="barcode-bar" style="width: 2px"></span>
+          <span class="barcode-bar" style="width: 3px"></span>
+          <span class="barcode-bar" style="width: 1px"></span>
+          <span class="barcode-bar" style="width: 2px"></span>
+          <span class="barcode-bar" style="width: 2px"></span>
+          <span class="barcode-bar" style="width: 1px"></span>
+          <span class="barcode-bar" style="width: 3px"></span>
+          <span class="barcode-bar" style="width: 1px"></span>
+          <span class="barcode-bar" style="width: 1px"></span>
+          <span class="barcode-bar" style="width: 2px"></span>
+          <span class="barcode-bar" style="width: 1px"></span>
+          <span class="barcode-bar" style="width: 2px"></span>
+          <span class="barcode-bar" style="width: 3px"></span>
+          <span class="barcode-bar" style="width: 1px"></span>
+          <span class="barcode-bar" style="width: 2px"></span>
+          <span class="barcode-bar" style="width: 1px"></span>
+          <span class="barcode-bar" style="width: 2px"></span>
+          <span class="barcode-bar" style="width: 1px"></span>
+          <span class="barcode-bar" style="width: 3px"></span>
+          <span class="barcode-bar" style="width: 1px"></span>
+          <span class="barcode-bar" style="width: 2px"></span>
+          <span class="barcode-bar" style="width: 1px"></span>
+        </div>
+
+        <div class="label-grid">
+          <span class="k">Alloy</span><span class="v">1100 · H18</span>
+          <span class="k">Gauge</span><span class="v">0.110"</span>
+          <span class="k">Width</span><span class="v">0.625"</span>
+          <span class="k">Footage</span><span class="v">14,200 ft</span>
+          <span class="k">Gross wt</span><span class="v">1,010 lb</span>
+          <span class="k">Net wt</span><span class="v">980 lb</span>
+          <span class="k">Lot</span><span class="v">FW-00421</span>
+          <span class="k">Source</span><span class="v">R00041, R00042</span>
+        </div>
+
+        <div class="label-footer">
+          <span>Apr 23, 2026 · Linda K.</span>
+          <span>Rev 2026.04</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="mid-row">
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Source traceability</span>
+        <span class="section-hint">Rods consumed to produce this coil</span>
+      </div>
+
+      <div class="traceability-list">
+        <div class="trace-rod">
+          <span class="trace-rod-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>
+          </span>
+          <div class="trace-rod-body">
+            <span class="trace-rod-alpha">R00041</span>
+            <span class="trace-rod-range">0 – 4,100 ft</span>
+          </div>
+          <span class="trace-rod-weight">4,100 ft &middot; 283 lb</span>
+        </div>
+
+        <div class="trace-weld-row">
+          <span class="trace-weld-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </span>
+          <div>
+            <span class="trace-weld-label">Induction weld</span>
+            <span style="font-family: var(--font-mono); opacity: 0.85; margin-left: 8px;">at 4,100 ft</span>
+          </div>
+          <span style="font-size: 11px; font-weight: 500;">&#x2713; Pass</span>
+        </div>
+
+        <div class="trace-rod">
+          <span class="trace-rod-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>
+          </span>
+          <div class="trace-rod-body">
+            <span class="trace-rod-alpha">R00042</span>
+            <span class="trace-rod-range">4,100 – 14,200 ft</span>
+          </div>
+          <span class="trace-rod-weight">10,100 ft &middot; 697 lb</span>
+        </div>
+      </div>
+
+      <div class="trace-footer">
+        <span>Chain: rod &rarr; spool SP-00031 &rarr; coil <strong class="mono" style="font-weight: 500;">FW-00421-C01</strong></span>
+        <span style="font-family: var(--font-mono); font-weight: 500;">14,200 ft total</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Final SPC</span>
+        <span class="section-hint">Averaged across full coil length</span>
+      </div>
+
+      <div class="final-spc">
+        <div class="spc-row">
+          <div class="spc-row-head">
+            <div>
+              <span class="spc-row-label">Gauge</span>
+              <span class="spc-row-meta">target 0.110" &plusmn; 0.002"</span>
+            </div>
+            <div>
+              <span class="spc-row-value">0.110"</span>
+              <span class="spc-status-inline">&#x2713; In spec</span>
+            </div>
+          </div>
+          <div class="tolerance-track">
+            <div class="tolerance-range"></div>
+            <div class="tolerance-marker" style="left: 50%;"></div>
+          </div>
+          <div class="tolerance-labels">
+            <span>0.108"</span>
+            <span>0.110"</span>
+            <span>0.112"</span>
+          </div>
+        </div>
+
+        <div class="spc-row">
+          <div class="spc-row-head">
+            <div>
+              <span class="spc-row-label">Width</span>
+              <span class="spc-row-meta">target 0.625" &plusmn; 0.005"</span>
+            </div>
+            <div>
+              <span class="spc-row-value">0.625"</span>
+              <span class="spc-status-inline">&#x2713; In spec</span>
+            </div>
+          </div>
+          <div class="tolerance-track">
+            <div class="tolerance-range"></div>
+            <div class="tolerance-marker" style="left: 52%;"></div>
+          </div>
+          <div class="tolerance-labels">
+            <span>0.620"</span>
+            <span>0.625"</span>
+            <span>0.630"</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="section skid-section">
+    <div class="skid-header">
+      <div style="display: flex; gap: 12px; align-items: baseline;">
+        <span class="section-title">Skid tracking</span>
+        <span class="section-hint">Each skid holds 2 coreless coils</span>
+      </div>
+      <span id="skid-status-badge" style="font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: var(--border-radius-md); background: var(--color-background-warning); color: var(--color-text-warning);">
+        Skid will close on confirm
+      </span>
+    </div>
+
+    <div class="skid-layout">
+      <div class="skid-options">
+        <div class="skid-radio" data-option="1" data-status="Skid remains open for next coil">
+          <div class="skid-radio-dot"></div>
+          <div class="skid-radio-body">
+            <div class="skid-radio-name">Coil 1 of 2</div>
+            <div class="skid-radio-desc">First coil on a new skid &middot; skid remains open</div>
+          </div>
+          <span class="skid-radio-badge">Open</span>
+        </div>
+        <div class="skid-radio selected" data-option="2" data-status="Skid will close on confirm">
+          <div class="skid-radio-dot"></div>
+          <div class="skid-radio-body">
+            <div class="skid-radio-name">Coil 2 of 2</div>
+            <div class="skid-radio-desc">Second coil &middot; close skid &amp; print skid label</div>
+          </div>
+          <span class="skid-radio-badge">Close</span>
+        </div>
+      </div>
+
+      <div class="skid-visual">
+        <div class="skid-visual-label">
+          <span>Skid</span>
+          <strong>SK-00201</strong>
+        </div>
+        <div class="skid-slots">
+          <div class="skid-slot filled" id="slot-1">
+            <span class="skid-slot-position">Slot 1</span>
+            <span class="skid-slot-alpha">FW-00421-C00</span>
+          </div>
+          <div class="skid-slot current" id="slot-2">
+            <span class="skid-slot-position">Slot 2 &middot; this coil</span>
+            <span class="skid-slot-alpha">FW-00421-C01</span>
+          </div>
+        </div>
+        <div class="skid-base"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer panel">
+    <div class="footer-stamp">
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Operator</span>
+        <span class="footer-stamp-value">Linda K.</span>
+      </div>
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Completed</span>
+        <span class="footer-stamp-value mono" id="stamp-time">07:42:18 AM &middot; Apr 23, 2026</span>
+      </div>
+    </div>
+    <div class="footer-actions">
+      <button class="btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print coil label
+      </button>
+      <button class="btn btn-primary" onclick="window.location.href='dashboard_7b_packing_station.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Confirm &amp; move to packing
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  (function () {
+    function pad(n) { return String(n).padStart(2, "0"); }
+    function updateClock() {
+      var now = new Date();
+      var h = now.getHours();
+      var m = pad(now.getMinutes());
+      var s = pad(now.getSeconds());
+      var ampm = h < 12 ? "AM" : "PM";
+      var h12 = h % 12 || 12;
+      var clockEl = document.getElementById("clock");
+      if (clockEl) clockEl.textContent = pad(h12) + ":" + m + " " + ampm;
+      var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      var dateEl = document.getElementById("date");
+      var dateStr = months[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();
+      if (dateEl) dateEl.textContent = dateStr;
+      var stampEl = document.getElementById("stamp-time");
+      if (stampEl) stampEl.textContent = pad(h12) + ":" + m + ":" + s + " " + ampm + " \u00b7 " + dateStr;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Skid option selector
+    document.querySelectorAll(".skid-radio").forEach(function (radio) {
+      radio.addEventListener("click", function () {
+        document.querySelectorAll(".skid-radio").forEach(function (r) { r.classList.remove("selected"); });
+        radio.classList.add("selected");
+
+        var option = radio.getAttribute("data-option");
+        var slot1 = document.getElementById("slot-1");
+        var slot2 = document.getElementById("slot-2");
+        var badge = document.getElementById("skid-status-badge");
+
+        if (option === "1") {
+          slot1.className = "skid-slot current";
+          slot1.innerHTML = '<span class="skid-slot-position">Slot 1 &middot; this coil</span><span class="skid-slot-alpha">FW-00421-C01</span>';
+          slot2.className = "skid-slot empty";
+          slot2.innerHTML = '<span class="skid-slot-position">Slot 2</span><span class="skid-slot-alpha empty">awaiting next coil</span>';
+          badge.style.background = "var(--color-background-info)";
+          badge.style.color = "var(--color-text-info)";
+          badge.textContent = "Skid remains open for next coil";
+        } else {
+          slot1.className = "skid-slot filled";
+          slot1.innerHTML = '<span class="skid-slot-position">Slot 1</span><span class="skid-slot-alpha">FW-00421-C00</span>';
+          slot2.className = "skid-slot current";
+          slot2.innerHTML = '<span class="skid-slot-position">Slot 2 &middot; this coil</span><span class="skid-slot-alpha">FW-00421-C01</span>';
+          badge.style.background = "var(--color-background-warning)";
+          badge.style.color = "var(--color-text-warning)";
+          badge.textContent = "Skid will close on confirm";
+        }
+      });
+    });
+  })();
+</script>
+
+<script src="flat-wire-topbar.js"></script>
+</body>
+</html>

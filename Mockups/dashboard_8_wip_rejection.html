@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>WIP rejection · FL1 · R00042</title>
+<link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
+<style>
+  body { min-height: 1024px; }
+  .dashboard { height: 1024px; }
+  .mono { font-family: var(--font-mono); }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    height: 72px;
+    border-left: 4px solid var(--color-red);
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font-sans);
+  }
+  .back-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .back-btn svg { width: 14px; height: 14px; }
+  .warning-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--color-background-danger);
+    color: var(--color-text-danger);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .warning-chip svg { width: 13px; height: 13px; }
+  .header h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 500;
+  }
+  .header-meta {
+    display: flex;
+    gap: 24px;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    align-items: center;
+  }
+  .header-meta strong { color: var(--color-text-primary); font-weight: 500; }
+
+  /* Material context banner */
+  .material-banner {
+    padding: 14px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    height: 94px;
+  }
+  .material-facts {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+  }
+  .material-fact {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .material-fact-label {
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .material-fact-value {
+    font-size: 17px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    color: var(--color-text-primary);
+  }
+  .material-fact-value.plain { font-family: var(--font-sans); }
+  .material-divider {
+    width: 1px;
+    height: 32px;
+    background: var(--color-border-tertiary);
+  }
+
+  .measurement-context {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 16px;
+    background: var(--color-background-danger);
+    color: var(--color-text-danger);
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+    max-width: 460px;
+  }
+  .measurement-context-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--color-red);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .measurement-context-icon svg { width: 12px; height: 12px; }
+  .measurement-context-body { flex: 1; line-height: 1.4; }
+  .measurement-context-body strong { font-weight: 500; }
+  .measurement-context .badge {
+    display: inline-block;
+    padding: 1px 7px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  /* Main grid */
+  .main-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .section {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+  }
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .section-hint {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+  }
+  .required::after {
+    content: " *";
+    color: var(--color-red);
+  }
+
+  /* Common reasons */
+  .quick-reasons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .quick-reason {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--color-background-secondary);
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    transition: all 0.15s;
+  }
+  .quick-reason:hover { background: var(--color-background-tertiary); }
+  .quick-reason.selected {
+    background: var(--color-red);
+    border-color: var(--color-red);
+    color: #ffffff;
+  }
+  .quick-reason.selected .chip-icon { color: rgba(255,255,255,0.85); }
+  .chip-icon {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-text-tertiary);
+  }
+
+  .reason-fields {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .field-label {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+  .select {
+    height: 46px;
+    padding: 0 14px;
+    font-size: 14px;
+    font-family: var(--font-sans);
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%), linear-gradient(135deg, var(--color-text-secondary) 50%, transparent 50%);
+    background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 32px;
+  }
+  .select:focus {
+    border-color: var(--color-blue);
+    box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.18);
+  }
+
+  .measurement-details {
+    padding: 14px 16px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    border-left: 3px solid var(--color-red);
+    margin-bottom: 12px;
+  }
+  .measurement-details-title {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .measurement-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+  .md-cell { display: flex; flex-direction: column; gap: 3px; }
+  .md-cell-label { font-size: 11px; color: var(--color-text-tertiary); }
+  .md-cell-value { font-size: 16px; font-weight: 500; font-family: var(--font-mono); }
+  .md-cell-value.danger { color: var(--color-text-danger); }
+
+  .textarea {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-family: var(--font-sans);
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    resize: none;
+    min-height: 84px;
+    outline: none;
+    flex: 1;
+  }
+  .textarea:focus {
+    border-color: var(--color-blue);
+    box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.18);
+  }
+
+  /* Disposition cards */
+  .disposition-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+  }
+  .disposition-card {
+    display: flex;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 2px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    background: var(--color-background-primary);
+    user-select: none;
+    transition: all 0.15s;
+    align-items: center;
+  }
+  .disposition-card:hover { background: var(--color-background-secondary); }
+  .disposition-card.selected.suspend {
+    border-color: var(--color-amber);
+    background: var(--color-background-warning);
+  }
+  .disposition-card.selected.scrap {
+    border-color: var(--color-red);
+    background: var(--color-background-danger);
+  }
+  .disposition-card.selected.rework {
+    border-color: var(--color-blue);
+    background: var(--color-background-info);
+  }
+  .disposition-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--color-text-secondary);
+  }
+  .disposition-card.selected.suspend .disposition-icon {
+    background: var(--color-amber);
+    color: #ffffff;
+  }
+  .disposition-card.selected.scrap .disposition-icon {
+    background: var(--color-red);
+    color: #ffffff;
+  }
+  .disposition-card.selected.rework .disposition-icon {
+    background: var(--color-blue);
+    color: #ffffff;
+  }
+  .disposition-icon svg { width: 22px; height: 22px; }
+  .disposition-body { flex: 1; }
+  .disposition-name {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .disposition-desc {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+  .disposition-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--color-border-primary);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .disposition-card.selected .disposition-dot {
+    border-width: 6px;
+  }
+  .disposition-card.selected.suspend .disposition-dot { border-color: var(--color-amber); }
+  .disposition-card.selected.scrap .disposition-dot { border-color: var(--color-red); }
+  .disposition-card.selected.rework .disposition-dot { border-color: var(--color-blue); }
+
+  /* Rework stage selector */
+  .rework-stage {
+    display: none;
+    margin-top: 4px;
+    padding: 12px 14px;
+    background: var(--color-background-info);
+    border-radius: var(--border-radius-md);
+    border-left: 3px solid var(--color-blue);
+  }
+  .rework-stage.visible { display: block; }
+  .rework-stage-label {
+    font-size: 12px;
+    color: var(--color-text-info);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .reviewer-banner {
+    margin-top: auto;
+    padding: 11px 14px;
+    background: var(--color-background-warning);
+    color: var(--color-text-warning);
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .reviewer-banner-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-amber);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .reviewer-banner-icon svg { width: 11px; height: 11px; }
+  .reviewer-banner-body { flex: 1; line-height: 1.4; }
+  .reviewer-banner-body strong { font-weight: 500; }
+
+  /* Footer */
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 22px;
+    height: 80px;
+  }
+  .footer-stamp {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+  }
+  .footer-stamp-item { display: flex; flex-direction: column; gap: 2px; }
+  .footer-stamp-label {
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .footer-stamp-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+  .footer-stamp-value.mono { font-family: var(--font-mono); }
+
+  .footer-actions { display: flex; gap: 10px; }
+  .btn {
+    height: 52px;
+    padding: 0 24px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn:active { transform: scale(0.98); }
+  .btn svg { width: 16px; height: 16px; }
+  .btn-primary {
+    background: var(--color-red);
+    border-color: var(--color-red);
+    color: #ffffff;
+    padding: 0 30px;
+  }
+  .btn-primary:hover { background: #bc4921; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <div class="header panel">
+    <div class="header-left">
+      <button class="back-btn" onclick="window.location.href='dashboard_3_active_run.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back to run
+      </button>
+      <span class="warning-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        WIP rejection in progress
+      </span>
+      <h1>Log rejection</h1>
+    </div>
+    <div class="header-meta">
+    </div>
+  </div>
+
+  <div class="material-banner panel">
+    <div class="material-facts">
+      <div class="material-fact">
+        <span class="material-fact-label">Material</span>
+        <span class="material-fact-value">R00042</span>
+      </div>
+      <div class="material-divider"></div>
+      <div class="material-fact">
+        <span class="material-fact-label">Stage</span>
+        <span class="material-fact-value plain">FL1 &middot; active run</span>
+      </div>
+      <div class="material-divider"></div>
+      <div class="material-fact">
+        <span class="material-fact-label">Order</span>
+        <span class="material-fact-value">FW-00421</span>
+      </div>
+      <div class="material-divider"></div>
+      <div class="material-fact">
+        <span class="material-fact-label">Rejection at</span>
+        <span class="material-fact-value">8,220 ft</span>
+      </div>
+      <div class="material-divider"></div>
+      <div class="material-fact">
+        <span class="material-fact-label">Time</span>
+        <span class="material-fact-value">08:15 AM</span>
+      </div>
+    </div>
+
+    <div class="measurement-context">
+      <span class="measurement-context-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </span>
+      <span class="measurement-context-body">
+        Gauge deviation detected mid-run &middot; reading <strong>0.118"</strong> vs target <span class="badge">0.108"&ndash;0.112"</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="main-row">
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title required">Rejection reason</span>
+        <span class="section-hint">Start with a common reason or select from full list</span>
+      </div>
+
+      <div class="quick-reasons">
+        <span class="quick-reason selected">
+          <span class="chip-icon"></span>
+          Gauge out of spec
+        </span>
+        <span class="quick-reason">
+          <span class="chip-icon"></span>
+          Width out of spec
+        </span>
+        <span class="quick-reason">
+          <span class="chip-icon"></span>
+          Surface defect
+        </span>
+        <span class="quick-reason">
+          <span class="chip-icon"></span>
+          Oxidation
+        </span>
+        <span class="quick-reason">
+          <span class="chip-icon"></span>
+          Weld failure
+        </span>
+        <span class="quick-reason">
+          <span class="chip-icon"></span>
+          Die failure
+        </span>
+        <span class="quick-reason">
+          <span class="chip-icon"></span>
+          Component fault
+        </span>
+      </div>
+
+      <div class="reason-fields">
+        <div class="field">
+          <label class="field-label required">Group</label>
+          <select class="select">
+            <option>Dimensional</option>
+            <option>Surface quality</option>
+            <option>Weld quality</option>
+            <option>Material</option>
+            <option>Process</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label required">Specific reason</label>
+          <select class="select">
+            <option>Gauge out of spec</option>
+            <option>Width out of spec</option>
+            <option>Edge burr</option>
+            <option>Camber</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="measurement-details">
+        <div class="measurement-details-title">Measured details</div>
+        <div class="measurement-details-grid">
+          <div class="md-cell">
+            <span class="md-cell-label">Measured gauge</span>
+            <span class="md-cell-value danger">0.118"</span>
+          </div>
+          <div class="md-cell">
+            <span class="md-cell-label">Target range</span>
+            <span class="md-cell-value">0.108" &ndash; 0.112"</span>
+          </div>
+          <div class="md-cell">
+            <span class="md-cell-label">Deviation</span>
+            <span class="md-cell-value danger">+0.006" above max</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field" style="flex: 1;">
+        <label class="field-label">Observation (optional but recommended)</label>
+        <textarea class="textarea" placeholder="Describe what was observed, when it started, any suspected cause, corrective action taken..."></textarea>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title required">Disposition</span>
+        <span class="section-hint">Choose what happens to the material</span>
+      </div>
+
+      <div class="disposition-list">
+        <div class="disposition-card suspend selected" data-disp="suspend">
+          <div class="disposition-dot"></div>
+          <div class="disposition-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </div>
+          <div class="disposition-body">
+            <div class="disposition-name">Suspend &middot; hold for review</div>
+            <div class="disposition-desc">Status set to HOLD &middot; supervisor notified &middot; stays in WIP held queue until disposition decided</div>
+          </div>
+        </div>
+
+        <div class="disposition-card rework" data-disp="rework">
+          <div class="disposition-dot"></div>
+          <div class="disposition-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7l3-3"/><path d="M21 3v6h-6"/><path d="M21 12a9 9 0 0 1-15 6.7l-3 3"/><path d="M3 21v-6h6"/></svg>
+          </div>
+          <div class="disposition-body">
+            <div class="disposition-name">Rework &middot; return to earlier stage</div>
+            <div class="disposition-desc">Material flagged for rework &middot; you pick the return stage</div>
+          </div>
+        </div>
+
+        <div class="rework-stage" id="rework-stage">
+          <div class="rework-stage-label">Return to stage</div>
+          <select class="select">
+            <option>FL1 &middot; draw bench 2 (re-draw)</option>
+            <option>FL1 &middot; FM1 (re-roll)</option>
+            <option>FL2 &middot; 6" S1 (re-finish)</option>
+          </select>
+        </div>
+
+        <div class="disposition-card scrap" data-disp="scrap">
+          <div class="disposition-dot"></div>
+          <div class="disposition-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </div>
+          <div class="disposition-body">
+            <div class="disposition-name">Scrap &middot; send to scrap disposition</div>
+            <div class="disposition-desc">Alpha status set to SCRAP &middot; routed to scrap module for weight-out &amp; accounting</div>
+          </div>
+        </div>
+
+        <div class="reviewer-banner">
+          <span class="reviewer-banner-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </span>
+          <span class="reviewer-banner-body">
+            <strong>Supervisor review required</strong> &middot; Marcus T. (day shift) will be notified
+          </span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer panel">
+    <div class="footer-stamp">
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Operator</span>
+        <span class="footer-stamp-value">Dave M.</span>
+      </div>
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Timestamp</span>
+        <span class="footer-stamp-value mono" id="stamp-time">08:15:42 AM &middot; Apr 23, 2026</span>
+      </div>
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Rejection ID</span>
+        <span class="footer-stamp-value mono">REJ-2026-0418</span>
+      </div>
+    </div>
+    <div class="footer-actions">
+      <button class="btn">Cancel</button>
+      <button class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Submit rejection
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  (function () {
+    function pad(n) { return String(n).padStart(2, "0"); }
+    function updateClock() {
+      var now = new Date();
+      var h = now.getHours();
+      var m = pad(now.getMinutes());
+      var s = pad(now.getSeconds());
+      var ampm = h < 12 ? "AM" : "PM";
+      var h12 = h % 12 || 12;
+      var clockEl = document.getElementById("clock");
+      if (clockEl) clockEl.textContent = pad(h12) + ":" + m + " " + ampm;
+      var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      var dateEl = document.getElementById("date");
+      var dateStr = months[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();
+      if (dateEl) dateEl.textContent = dateStr;
+      var stampEl = document.getElementById("stamp-time");
+      if (stampEl) stampEl.textContent = pad(h12) + ":" + m + ":" + s + " " + ampm + " \u00b7 " + dateStr;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    document.querySelectorAll(".quick-reason").forEach(function (el) {
+      el.addEventListener("click", function () {
+        document.querySelectorAll(".quick-reason").forEach(function (e) { e.classList.remove("selected"); });
+        el.classList.add("selected");
+      });
+    });
+
+    var reworkStage = document.getElementById("rework-stage");
+    document.querySelectorAll(".disposition-card").forEach(function (card) {
+      card.addEventListener("click", function () {
+        document.querySelectorAll(".disposition-card").forEach(function (c) { c.classList.remove("selected"); });
+        card.classList.add("selected");
+        if (card.getAttribute("data-disp") === "rework") {
+          reworkStage.classList.add("visible");
+        } else {
+          reworkStage.classList.remove("visible");
+        }
+      });
+    });
+  })();
+</script>
+
+<script src="flat-wire-topbar.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../ual-angular"
+		},
+		{
+			"path": "../../ual-api"
+		}
+	],
+	"settings": {}
+}

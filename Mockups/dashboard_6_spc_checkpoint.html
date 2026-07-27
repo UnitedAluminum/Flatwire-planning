@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>SPC Checkpoint · FL1 · FW-00421</title>
+<link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
+<style>
+  body { min-height: 1024px; }
+  .dashboard { height: 1024px; }
+
+  .mono { font-family: var(--font-mono); }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    height: 72px;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: all 0.15s;
+  }
+  .back-btn:hover {
+    background: var(--color-background-secondary);
+    color: var(--color-text-primary);
+  }
+  .back-btn svg { width: 14px; height: 14px; }
+
+  .context-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--color-background-success);
+    color: var(--color-text-success);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .context-chip .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--color-green);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .header h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 500;
+  }
+  .header-meta {
+    display: flex;
+    gap: 24px;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    align-items: center;
+  }
+  .header-meta strong { color: var(--color-text-primary); font-weight: 500; }
+
+  /* Section wrapper */
+  .section {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 18px 22px;
+  }
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .section-title {
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .section-hint {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+  }
+
+  /* Checkpoint type */
+  .checkpoint-section {
+    height: 186px;
+  }
+  .cp-selector {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .cp-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    background: var(--color-background-primary);
+    font-family: var(--font-sans);
+    transition: all 0.15s;
+    text-align: left;
+    font-size: 13px;
+  }
+  .cp-option:hover { background: var(--color-background-secondary); }
+  .cp-option:active { transform: scale(0.98); }
+  .cp-option.selected {
+    border-color: var(--color-blue);
+    background: var(--color-background-info);
+  }
+  .cp-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--color-text-secondary);
+  }
+  .cp-option.selected .cp-icon {
+    background: var(--color-blue);
+    color: #ffffff;
+  }
+  .cp-icon svg { width: 20px; height: 20px; }
+  .cp-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .cp-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+  .cp-option.selected .cp-name { color: var(--color-text-info); }
+  .cp-desc {
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+  }
+
+  .trigger-banner {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 11px 14px;
+    background: var(--color-background-warning);
+    color: var(--color-text-warning);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+  }
+  .trigger-banner-icon {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--color-amber);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .trigger-banner-icon svg { width: 13px; height: 13px; }
+  .trigger-banner-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .trigger-banner-body strong { font-weight: 500; }
+  .trigger-banner .change-arrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    background: rgba(255, 255, 255, 0.55);
+    border-radius: var(--border-radius-md);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .trigger-banner-body .dim {
+    opacity: 0.75;
+    font-size: 12px;
+  }
+
+  /* Measurements */
+  .measurements-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .measurement-summary {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 4px 12px;
+    background: var(--color-background-success);
+    color: var(--color-text-success);
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .measurement-summary.has-fail {
+    background: var(--color-background-danger);
+    color: var(--color-text-danger);
+  }
+  .measurement-summary .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--color-green);
+  }
+  .measurement-summary.has-fail .dot { background: var(--color-red); }
+
+  .measurements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+  }
+  .measurement {
+    display: grid;
+    grid-template-columns: 240px 180px 1fr 170px;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 18px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    border-left: 3px solid var(--color-green);
+    transition: border-left-color 0.2s;
+  }
+  .measurement.oos {
+    border-left-color: var(--color-red);
+    background: var(--color-background-danger);
+  }
+
+  .measurement-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .measurement-name {
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .measurement-context {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+  }
+  .measurement-target {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+    margin-top: 2px;
+  }
+
+  .measurement-input-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .measurement-input-label {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .measurement-input {
+    width: 100%;
+    height: 56px;
+    padding: 0 16px;
+    font-size: 22px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    outline: none;
+    text-align: center;
+  }
+  .measurement-input:focus {
+    border-color: var(--color-blue);
+    box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.18);
+  }
+  .measurement.oos .measurement-input {
+    border-color: var(--color-red);
+    color: var(--color-text-danger);
+  }
+
+  /* Tolerance bar */
+  .tolerance-viz {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 8px;
+  }
+  .tolerance-track {
+    position: relative;
+    height: 18px;
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: 9px;
+    overflow: visible;
+  }
+  .tolerance-range {
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 100%;
+    background: var(--color-green);
+    opacity: 0.22;
+    border-radius: 9px;
+  }
+  .tolerance-center-line {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    left: 50%;
+    width: 1px;
+    background: var(--color-border-primary);
+    opacity: 0.6;
+  }
+  .tolerance-marker {
+    position: absolute;
+    top: 50%;
+    width: 22px;
+    height: 22px;
+    background: var(--color-blue);
+    border: 3px solid var(--color-background-primary);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 1px var(--color-blue);
+    transition: left 0.25s, background 0.2s, box-shadow 0.2s;
+    z-index: 2;
+  }
+  .measurement.oos .tolerance-marker {
+    background: var(--color-red);
+    box-shadow: 0 0 0 1px var(--color-red);
+  }
+  .tolerance-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--color-text-tertiary);
+    padding: 0 4px;
+  }
+  .tolerance-labels .center { color: var(--color-text-secondary); font-weight: 500; }
+
+  .measurement-result {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+  .measurement-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--color-background-success);
+    color: var(--color-text-success);
+    white-space: nowrap;
+  }
+  .measurement-status.oos {
+    background: var(--color-background-danger);
+    color: var(--color-text-danger);
+  }
+  .measurement-status svg { width: 11px; height: 11px; }
+  .measurement-deviation {
+    font-size: 13px;
+    font-family: var(--font-mono);
+    color: var(--color-text-success);
+    font-weight: 500;
+  }
+  .measurement.oos .measurement-deviation {
+    color: var(--color-text-danger);
+  }
+
+  /* Observation */
+  .observation-section {
+    height: 110px;
+  }
+  .observation-label {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+  }
+  .observation-input {
+    width: 100%;
+    height: 60px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-family: var(--font-sans);
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    resize: none;
+    outline: none;
+  }
+  .observation-input:focus {
+    border-color: var(--color-blue);
+    box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.18);
+  }
+
+  /* Footer */
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 22px;
+    height: 84px;
+  }
+  .footer-stamp {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+  }
+  .footer-stamp-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .footer-stamp-label {
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .footer-stamp-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+  .footer-stamp-value.mono { font-family: var(--font-mono); }
+
+  .footer-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .btn {
+    height: 56px;
+    padding: 0 22px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn:active { transform: scale(0.98); }
+  .btn svg { width: 16px; height: 16px; }
+  .btn-primary {
+    background: var(--color-green);
+    border-color: var(--color-green);
+    color: #ffffff;
+    padding: 0 26px;
+  }
+  .btn-primary:hover { background: #168962; }
+  .btn-danger {
+    background: var(--color-background-primary);
+    border-color: var(--color-red);
+    color: var(--color-text-danger);
+    padding: 0 26px;
+  }
+  .btn-danger:hover {
+    background: var(--color-background-danger);
+  }
+  .btn-danger.elevated {
+    background: var(--color-red);
+    color: #ffffff;
+    border-color: var(--color-red);
+  }
+  .btn-danger.elevated:hover { background: #bc4921; }
+
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <div class="header panel">
+    <div class="header-left">
+      <button class="back-btn" onclick="window.location.href='dashboard_3_active_run.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back to run
+      </button>
+      <span class="context-chip">
+        <span class="dot"></span>
+        FL1 running &middot; checkpoint
+      </span>
+      <h1>SPC Checkpoint</h1>
+    </div>
+    <div class="header-meta">
+      <span>Order <strong class="mono">FW-00421</strong></span>
+      <span>Alpha <strong class="mono">R00042</strong></span>
+    </div>
+  </div>
+
+  <div class="section checkpoint-section">
+    <div class="section-header">
+      <span class="section-title">Checkpoint type</span>
+      <span class="section-hint">Measurements required adjust based on checkpoint type</span>
+    </div>
+
+    <div class="cp-selector">
+      <button class="cp-option" data-type="pre-run">
+        <span class="cp-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </span>
+        <span class="cp-body">
+          <span class="cp-name">Pre-run</span>
+          <span class="cp-desc">Incoming material before run start</span>
+        </span>
+      </button>
+
+      <button class="cp-option" data-type="post-db1">
+        <span class="cp-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        </span>
+        <span class="cp-body">
+          <span class="cp-name">Post DB1</span>
+          <span class="cp-desc">Wire diameter after DB1 drawing stage</span>
+        </span>
+      </button>
+
+      <button class="cp-option selected" data-type="post-die-change">
+        <span class="cp-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </span>
+        <span class="cp-body">
+          <span class="cp-name">Post die change</span>
+          <span class="cp-desc">Required after any die swap</span>
+        </span>
+      </button>
+
+      <button class="cp-option" data-type="spot-check">
+        <span class="cp-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <span class="cp-body">
+          <span class="cp-name">Manual spot check</span>
+          <span class="cp-desc">Operator discretion, any time</span>
+        </span>
+      </button>
+    </div>
+
+    <div class="trigger-banner">
+      <span class="trigger-banner-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </span>
+      <span class="trigger-banner-body">
+        <strong>DB2 die change</strong>
+        <span class="change-arrow">0.310" &rarr; 0.308"</span>
+        <span class="dim">logged at footage 12,450 ft &middot; by Tim O. &middot; 07:38 AM &middot; 4 min ago</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="section measurements-section">
+    <div class="section-header">
+      <div style="display: flex; gap: 12px; align-items: baseline;">
+        <span class="section-title">Measurements</span>
+        <span class="section-hint">Measure each value and confirm in spec</span>
+      </div>
+      <span class="measurement-summary" id="summary">
+        <span class="dot"></span>
+        <span id="summary-text">3 of 3 in spec</span>
+      </span>
+    </div>
+
+    <div class="measurements-list">
+
+      <div class="measurement" data-target="0.308" data-tolerance="0.003">
+        <div class="measurement-info">
+          <div class="measurement-name">Wire diameter</div>
+          <div class="measurement-context">post-DB2 draw</div>
+          <div class="measurement-target">Target 0.308" &plusmn; 0.003"</div>
+        </div>
+        <div class="measurement-input-wrap">
+          <span class="measurement-input-label">Measured</span>
+          <input class="measurement-input" type="text" value='0.309"' data-field="diameter">
+        </div>
+        <div class="tolerance-viz">
+          <div class="tolerance-track">
+            <div class="tolerance-range"></div>
+            <div class="tolerance-center-line"></div>
+            <div class="tolerance-marker" data-marker="diameter" style="left: 53%;"></div>
+          </div>
+          <div class="tolerance-labels">
+            <span class="mono">0.305"</span>
+            <span class="center">0.308"</span>
+            <span class="mono">0.311"</span>
+          </div>
+        </div>
+        <div class="measurement-result">
+          <span class="measurement-status" data-status="diameter">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 4 6 11 3 8"/></svg>
+            In spec
+          </span>
+          <span class="measurement-deviation" data-deviation="diameter">+0.001"</span>
+        </div>
+      </div>
+
+      <div class="measurement" data-target="0.110" data-tolerance="0.002">
+        <div class="measurement-info">
+          <div class="measurement-name">Gauge</div>
+          <div class="measurement-context">at FM1 output</div>
+          <div class="measurement-target">Target 0.110" &plusmn; 0.002"</div>
+        </div>
+        <div class="measurement-input-wrap">
+          <span class="measurement-input-label">Measured</span>
+          <input class="measurement-input" type="text" value='0.110"' data-field="gauge">
+        </div>
+        <div class="tolerance-viz">
+          <div class="tolerance-track">
+            <div class="tolerance-range"></div>
+            <div class="tolerance-center-line"></div>
+            <div class="tolerance-marker" data-marker="gauge" style="left: 50%;"></div>
+          </div>
+          <div class="tolerance-labels">
+            <span class="mono">0.108"</span>
+            <span class="center">0.110"</span>
+            <span class="mono">0.112"</span>
+          </div>
+        </div>
+        <div class="measurement-result">
+          <span class="measurement-status" data-status="gauge">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 4 6 11 3 8"/></svg>
+            In spec
+          </span>
+          <span class="measurement-deviation" data-deviation="gauge">0.000"</span>
+        </div>
+      </div>
+
+      <div class="measurement" data-target="0.625" data-tolerance="0.005">
+        <div class="measurement-info">
+          <div class="measurement-name">Width</div>
+          <div class="measurement-context">at FM1 output</div>
+          <div class="measurement-target">Target 0.625" &plusmn; 0.005"</div>
+        </div>
+        <div class="measurement-input-wrap">
+          <span class="measurement-input-label">Measured</span>
+          <input class="measurement-input" type="text" value='0.626"' data-field="width">
+        </div>
+        <div class="tolerance-viz">
+          <div class="tolerance-track">
+            <div class="tolerance-range"></div>
+            <div class="tolerance-center-line"></div>
+            <div class="tolerance-marker" data-marker="width" style="left: 52%;"></div>
+          </div>
+          <div class="tolerance-labels">
+            <span class="mono">0.620"</span>
+            <span class="center">0.625"</span>
+            <span class="mono">0.630"</span>
+          </div>
+        </div>
+        <div class="measurement-result">
+          <span class="measurement-status" data-status="width">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 4 6 11 3 8"/></svg>
+            In spec
+          </span>
+          <span class="measurement-deviation" data-deviation="width">+0.001"</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="section observation-section">
+    <div class="observation-label">Observation (optional)</div>
+    <textarea class="observation-input" placeholder="Notes on the die change, surface appearance, or anything unusual about this checkpoint..."></textarea>
+  </div>
+
+  <div class="footer panel">
+    <div class="footer-stamp">
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Operator</span>
+        <span class="footer-stamp-value">Dave M.</span>
+      </div>
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Footage at check</span>
+        <span class="footer-stamp-value mono">12,450 ft</span>
+      </div>
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Timestamp</span>
+        <span class="footer-stamp-value mono" id="stamp-time">07:42:18 AM &middot; Apr 23, 2026</span>
+      </div>
+    </div>
+    <div class="footer-actions">
+      <button class="btn btn-danger" id="suspend-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Submit &middot; suspend material
+      </button>
+      <button class="btn btn-primary" id="continue-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Submit &middot; continue run
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  (function () {
+    function pad(n) { return String(n).padStart(2, "0"); }
+
+    function updateClock() {
+      var now = new Date();
+      var h = now.getHours();
+      var m = pad(now.getMinutes());
+      var s = pad(now.getSeconds());
+      var ampm = h < 12 ? "AM" : "PM";
+      var h12 = h % 12 || 12;
+      var clockEl = document.getElementById("clock");
+      if (clockEl) clockEl.textContent = pad(h12) + ":" + m + " " + ampm;
+      var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      var dateEl = document.getElementById("date");
+      var dateStr = months[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();
+      if (dateEl) dateEl.textContent = dateStr;
+      var stampEl = document.getElementById("stamp-time");
+      if (stampEl) stampEl.textContent = pad(h12) + ":" + m + ":" + s + " " + ampm + " \u00b7 " + dateStr;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Checkpoint type selector
+    document.querySelectorAll(".cp-option").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        document.querySelectorAll(".cp-option").forEach(function (b) { b.classList.remove("selected"); });
+        btn.classList.add("selected");
+      });
+    });
+
+    // Live-validating measurements
+    function parseValue(str) {
+      var m = str.match(/-?\d+(\.\d+)?/);
+      return m ? parseFloat(m[0]) : NaN;
+    }
+
+    function fmtDeviation(v) {
+      var sign = v >= 0 ? "+" : "";
+      return sign + v.toFixed(3) + '"';
+    }
+
+    function updateMeasurement(measEl) {
+      var input = measEl.querySelector(".measurement-input");
+      var field = input.getAttribute("data-field");
+      var target = parseFloat(measEl.getAttribute("data-target"));
+      var tolerance = parseFloat(measEl.getAttribute("data-tolerance"));
+      var measured = parseValue(input.value);
+
+      var markerEl = measEl.querySelector(".tolerance-marker");
+      var statusEl = measEl.querySelector(".measurement-status");
+      var devEl = measEl.querySelector(".measurement-deviation");
+
+      if (isNaN(measured)) {
+        markerEl.style.left = "50%";
+        statusEl.innerHTML = '<span style="font-size: 12px;">&mdash;</span>';
+        devEl.textContent = "—";
+        measEl.classList.remove("oos");
+        return { inSpec: false, measured: false };
+      }
+
+      var dev = measured - target;
+      var inSpec = Math.abs(dev) <= tolerance;
+
+      // Position marker: map measured value relative to a display range wider than tolerance
+      // Use 3.33x tolerance as the full track width (so ±tolerance lives in 60% center, 20%-80%)
+      var displayHalfRange = tolerance * 1.67;
+      var relPosition = (measured - target) / displayHalfRange; // -1 to +1 within display range
+      var pct = 50 + relPosition * 50;
+      if (pct < 4) pct = 4;
+      if (pct > 96) pct = 96;
+      markerEl.style.left = pct + "%";
+
+      if (inSpec) {
+        measEl.classList.remove("oos");
+        statusEl.classList.remove("oos");
+        statusEl.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 4 6 11 3 8"/></svg> In spec';
+      } else {
+        measEl.classList.add("oos");
+        statusEl.classList.add("oos");
+        statusEl.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="4" x2="4" y2="12"/><line x1="4" y1="4" x2="12" y2="12"/></svg> Out of spec';
+      }
+      devEl.textContent = fmtDeviation(dev);
+
+      return { inSpec: inSpec, measured: true };
+    }
+
+    function updateSummary() {
+      var measurements = document.querySelectorAll(".measurement");
+      var inSpecCount = 0;
+      var measuredCount = 0;
+      measurements.forEach(function (m) {
+        var result = updateMeasurement(m);
+        if (result.measured) {
+          measuredCount++;
+          if (result.inSpec) inSpecCount++;
+        }
+      });
+
+      var summary = document.getElementById("summary");
+      var summaryText = document.getElementById("summary-text");
+      var continueBtn = document.getElementById("continue-btn");
+      var suspendBtn = document.getElementById("suspend-btn");
+
+      if (inSpecCount === measurements.length) {
+        summary.classList.remove("has-fail");
+        summaryText.textContent = measurements.length + " of " + measurements.length + " in spec";
+        suspendBtn.classList.remove("elevated");
+      } else {
+        summary.classList.add("has-fail");
+        var failCount = measurements.length - inSpecCount;
+        summaryText.textContent = failCount + " of " + measurements.length + " out of spec";
+        suspendBtn.classList.add("elevated");
+      }
+    }
+
+    document.querySelectorAll(".measurement-input").forEach(function (input) {
+      input.addEventListener("input", updateSummary);
+      input.addEventListener("blur", updateSummary);
+    });
+
+    updateSummary();
+  })();
+</script>
+
+<script src="flat-wire-topbar.js"></script>
+</body>
+</html>

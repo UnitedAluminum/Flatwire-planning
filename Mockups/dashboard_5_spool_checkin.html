@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>FL2 spool check-in · FW-00421</title>
+<link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
+<style>
+  body { min-height: 1024px; }
+  .dashboard { height: 1024px; }
+
+  .mono { font-family: var(--font-mono); }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 24px;
+    height: 72px;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .line-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+    border-radius: var(--border-radius-md);
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .line-badge .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--color-blue);
+  }
+  .header h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 500;
+  }
+  .header-meta {
+    display: flex;
+    gap: 24px;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    align-items: center;
+  }
+  .header-meta strong {
+    color: var(--color-text-primary);
+    font-weight: 500;
+  }
+
+  /* Top row — bundle info + source traceability */
+  .top-row {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr;
+    gap: 12px;
+    height: 256px;
+  }
+
+  .section {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .section-title {
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .section-subtitle {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    font-family: var(--font-mono);
+  }
+  .section-hint {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+  }
+
+  /* Bundle info */
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .field-label {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+  .field-required::after {
+    content: " *";
+    color: var(--color-red);
+  }
+  .input {
+    height: 44px;
+    padding: 0 14px;
+    font-size: 16px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    outline: none;
+    width: 100%;
+  }
+  .input:focus {
+    border-color: var(--color-blue);
+    box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.18);
+  }
+  .input-readonly {
+    height: 44px;
+    padding: 0 14px;
+    font-size: 16px;
+    font-weight: 500;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    display: flex;
+    align-items: center;
+    color: var(--color-text-primary);
+  }
+  .input-readonly.mono { font-family: var(--font-mono); }
+  .input-with-prefix {
+    position: relative;
+  }
+  .input-prefix {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-tertiary);
+    pointer-events: none;
+  }
+  .input-prefix svg { width: 18px; height: 18px; }
+  .input.with-prefix { padding-left: 38px; }
+
+  /* Source traceability */
+  .traceability-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+  .trace-rod {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+  }
+  .trace-rod-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+  }
+  .trace-rod-icon svg { width: 12px; height: 12px; }
+  .trace-rod-body {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .trace-rod-alpha {
+    font-size: 15px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+  }
+  .trace-rod-range {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+  }
+  .trace-rod-status {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: var(--border-radius-md);
+    font-weight: 500;
+    background: var(--color-background-success);
+    color: var(--color-text-success);
+  }
+  .trace-weld-row {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 7px 14px;
+    background: var(--color-background-warning);
+    color: var(--color-text-warning);
+    border-radius: var(--border-radius-md);
+  }
+  .trace-weld-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--color-amber);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .trace-weld-icon svg { width: 12px; height: 12px; }
+  .trace-weld-body {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .trace-weld-label {
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .trace-weld-detail {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    opacity: 0.85;
+  }
+  .trace-weld-badge {
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .trace-footer {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .trace-footer strong { font-weight: 500; font-family: var(--font-mono); }
+
+  /* Gauge profile chart */
+  .profile-section {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 18px 22px;
+    height: 270px;
+    display: flex;
+    flex-direction: column;
+  }
+  .profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .profile-title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .profile-title h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .profile-spec-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: var(--color-background-success);
+    color: var(--color-text-success);
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .profile-spec-badge .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-green);
+  }
+  .profile-legend {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-swatch {
+    width: 14px;
+    height: 3px;
+    border-radius: 2px;
+  }
+  .legend-swatch.trace { background: var(--color-blue); }
+  .legend-swatch.target {
+    background: var(--color-green);
+    opacity: 0.25;
+    height: 8px;
+  }
+  .legend-swatch.weld {
+    background: var(--color-amber);
+    height: 10px;
+    width: 2px;
+  }
+
+  .profile-chart {
+    flex: 1;
+    position: relative;
+  }
+  .profile-chart svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .chart-axis-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    fill: var(--color-text-tertiary);
+  }
+  .chart-gridline {
+    stroke: var(--color-border-tertiary);
+    stroke-width: 0.5;
+  }
+
+  .profile-stats {
+    display: flex;
+    gap: 20px;
+    padding-top: 10px;
+    border-top: 0.5px solid var(--color-border-tertiary);
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+  .profile-stat strong {
+    color: var(--color-text-primary);
+    font-weight: 500;
+    font-family: var(--font-mono);
+    margin-left: 6px;
+  }
+
+  /* Pass schedule */
+  .schedule-section {
+    height: 258px;
+    display: flex;
+    flex-direction: column;
+  }
+  .schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+  }
+  .schedule-table thead tr {
+    background: var(--color-background-secondary);
+  }
+  .schedule-table th {
+    text-align: left;
+    padding: 9px 16px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+  }
+  .schedule-table tbody tr {
+    border-top: 0.5px solid var(--color-border-tertiary);
+  }
+  .schedule-table tbody tr.bypass {
+    opacity: 0.6;
+  }
+  .schedule-table td {
+    padding: 10px 16px;
+    vertical-align: middle;
+  }
+  .schedule-table .component-name { font-weight: 500; }
+  .status-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .status-cell .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-green);
+  }
+  .status-cell.bypass .dot { background: var(--color-gray); }
+  .setting-cell {
+    font-family: var(--font-mono);
+    color: var(--color-text-secondary);
+  }
+  .setting-cell.plain {
+    font-family: var(--font-sans);
+  }
+  .setting-cell.bypass-label {
+    font-family: var(--font-sans);
+    font-style: italic;
+  }
+  .schedule-stage {
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 0;
+  }
+
+  .callout {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    line-height: 1.5;
+  }
+  .callout-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--color-blue);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Pass schedule confirm bar */
+  .ps-confirm-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--color-background-warning);
+    border-radius: var(--border-radius-md);
+    margin-bottom: 10px;
+    gap: 14px;
+    transition: background 0.2s;
+  }
+  .ps-confirm-bar.confirmed { background: var(--color-background-success); }
+  .ps-confirm-match {
+    font-size: 12px;
+    color: var(--color-text-warning);
+    line-height: 1.45;
+    flex: 1;
+  }
+  .ps-confirm-bar.confirmed .ps-confirm-match { color: var(--color-text-success); }
+  .ps-confirm-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .btn-confirm-ps {
+    height: 32px;
+    padding: 0 14px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    border: 1px solid var(--color-green);
+    background: var(--color-green);
+    color: #ffffff;
+    white-space: nowrap;
+    transition: opacity 0.15s;
+  }
+  .btn-confirm-ps:hover { opacity: 0.85; }
+  .ps-change-wrap { position: relative; }
+  .btn-change-ps {
+    height: 32px;
+    padding: 0 11px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .btn-change-ps:hover { background: var(--color-background-secondary); }
+  .ps-change-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 6px 0;
+    min-width: 270px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    z-index: 200;
+    display: none;
+  }
+  .ps-change-dropdown.open { display: block; }
+  .ps-dropdown-item {
+    padding: 9px 16px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: background 0.1s;
+  }
+  .ps-dropdown-item:hover { background: var(--color-background-secondary); }
+  .ps-dropdown-item.recommended { background: var(--color-background-info); }
+  .ps-dropdown-id { font-size: 13px; font-family: var(--font-mono); font-weight: 500; color: var(--color-text-primary); }
+  .ps-dropdown-desc { font-size: 11px; color: var(--color-text-secondary); }
+  .ps-dropdown-warning {
+    padding: 8px 16px;
+    font-size: 11px;
+    color: var(--color-text-danger);
+    border-top: 0.5px solid var(--color-border-tertiary);
+    margin-top: 4px;
+  }
+
+  /* Footer */
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 24px;
+    height: 80px;
+  }
+  .footer-status {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+  }
+  .progress-ring {
+    width: 36px;
+    height: 36px;
+    position: relative;
+  }
+  .progress-ring svg {
+    width: 36px;
+    height: 36px;
+    transform: rotate(-90deg);
+  }
+  .progress-ring-bg {
+    fill: none;
+    stroke: var(--color-background-secondary);
+    stroke-width: 3;
+  }
+  .progress-ring-fill {
+    fill: none;
+    stroke: var(--color-green);
+    stroke-width: 3;
+    stroke-linecap: round;
+  }
+  .progress-ring-text {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+  .footer-status strong {
+    color: var(--color-text-primary);
+    font-weight: 500;
+  }
+  .footer-actions {
+    display: flex;
+    gap: 12px;
+  }
+  .btn {
+    height: 52px;
+    padding: 0 28px;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    transition: all 0.15s;
+  }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary {
+    background: var(--color-blue);
+    border-color: var(--color-blue);
+    color: #ffffff;
+    padding: 0 36px;
+  }
+  .btn-primary:hover { background: #13497d; }
+  .btn-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <div class="header panel">
+    <div class="header-left">
+      <span class="line-badge">
+        <span class="dot"></span>
+        FL2
+      </span>
+      <h1>Spool check-in</h1>
+    </div>
+    <div class="header-meta">
+      <span>Order <strong class="mono">FW-00421</strong></span>
+    </div>
+  </div>
+
+  <div class="top-row">
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Incoming Bundle Information</span>
+        <span class="section-hint">Measured values at TPO load</span>
+      </div>
+
+      <div class="field-grid" style="grid-template-columns: 1.5fr 1fr 1fr; margin-bottom: 12px;">
+        <div class="field">
+          <label class="field-label field-required">Spool alpha</label>
+          <div class="input-with-prefix">
+            <span class="input-prefix">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5a2 2 0 0 1 2-2h2"/><path d="M16 3h2a2 2 0 0 1 2 2v2"/><path d="M20 17v2a2 2 0 0 1-2 2h-2"/><path d="M8 21H6a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+            </span>
+            <input class="input with-prefix" type="text" value="SP-00031">
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">Alloy</label>
+          <div class="input-readonly">1100</div>
+        </div>
+        <div class="field">
+          <label class="field-label">Temper</label>
+          <div class="input-readonly">O &middot; annealed</div>
+        </div>
+      </div>
+
+      <div class="field-grid">
+        <div class="field">
+          <label class="field-label field-required">Gauge</label>
+          <input class="input" type="text" value='0.110"'>
+        </div>
+        <div class="field">
+          <label class="field-label field-required">Width</label>
+          <input class="input" type="text" value='0.627"'>
+        </div>
+        <div class="field">
+          <label class="field-label field-required">Gross weight</label>
+          <input class="input" type="text" value="3,480 lb">
+        </div>
+      </div>
+
+      <div class="field-grid" style="grid-template-columns: 1fr 2fr; margin-top: 12px;">
+        <div class="field">
+          <label class="field-label">Net weight (calculated)</label>
+          <div class="input-readonly mono">3,200 lb</div>
+        </div>
+        <div class="field">
+          <label class="field-label">Handling history</label>
+          <div class="input-readonly" style="font-family: var(--font-sans); font-size: 13px; color: var(--color-text-secondary);">
+            Spooled 07:02 AM &middot; staged at TPO 07:24 AM &middot; 38m dwell
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Source traceability</span>
+        <span class="section-hint">From FL1 run &middot; read-only</span>
+      </div>
+
+      <div class="traceability-list">
+        <div class="trace-rod">
+          <span class="trace-rod-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>
+          </span>
+          <div class="trace-rod-body">
+            <span class="trace-rod-alpha">R00041</span>
+            <span class="trace-rod-range">0 – 2,100 ft</span>
+          </div>
+          <span class="trace-rod-status">Complete</span>
+        </div>
+
+        <div class="trace-weld-row">
+          <span class="trace-weld-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </span>
+          <div class="trace-weld-body">
+            <span class="trace-weld-label">Induction weld</span>
+            <span class="trace-weld-detail">at 2,100 ft &middot; 06:31 AM</span>
+          </div>
+          <span class="trace-weld-badge">&#x2713; Pass</span>
+        </div>
+
+        <div class="trace-rod">
+          <span class="trace-rod-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>
+          </span>
+          <div class="trace-rod-body">
+            <span class="trace-rod-alpha">R00042</span>
+            <span class="trace-rod-range">2,100 – 3,200 ft</span>
+          </div>
+          <span class="trace-rod-status">Complete</span>
+        </div>
+      </div>
+
+      <div class="trace-footer">
+        <span>FL1 run completed 07:02 AM</span>
+        <span>Output alpha <strong>SP-00031</strong></span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="profile-section">
+    <div class="profile-header">
+      <div class="profile-title">
+        <h2>Gauge profile &middot; FL1 run history</h2>
+        <span class="section-subtitle">Target 0.110" &plusmn; 0.002"</span>
+      </div>
+      <div style="display: flex; gap: 16px; align-items: center;">
+        <div class="profile-legend">
+          <span class="legend-item">
+            <span class="legend-swatch trace"></span>
+            Gauge
+          </span>
+          <span class="legend-item">
+            <span class="legend-swatch target"></span>
+            Tolerance band
+          </span>
+          <span class="legend-item">
+            <span class="legend-swatch weld"></span>
+            Weld point
+          </span>
+        </div>
+        <span class="profile-spec-badge">
+          <span class="dot"></span>
+          All 3,200 ft in spec
+        </span>
+      </div>
+    </div>
+
+    <div class="profile-chart">
+      <svg viewBox="0 0 1200 180" preserveAspectRatio="none">
+        <line class="chart-gridline" x1="70" y1="20" x2="1180" y2="20"/>
+        <line class="chart-gridline" x1="70" y1="60" x2="1180" y2="60"/>
+        <line class="chart-gridline" x1="70" y1="100" x2="1180" y2="100"/>
+        <line class="chart-gridline" x1="70" y1="140" x2="1180" y2="140"/>
+
+        <rect x="70" y="73" width="1110" height="54" fill="#1D9E75" fill-opacity="0.14"/>
+        <line x1="70" y1="100" x2="1180" y2="100" stroke="#1D9E75" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"/>
+
+        <line x1="798" y1="12" x2="798" y2="150" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.85"/>
+        <rect x="730" y="6" width="136" height="16" rx="3" fill="#FAEEDA"/>
+        <text x="798" y="18" text-anchor="middle" fill="#633806" font-size="10" font-weight="600">R00041 &rarr; R00042</text>
+
+        <path d="M 70,106 L 120,104 L 160,100 L 210,95 L 260,93 L 320,96 L 380,99 L 440,101 L 500,99 L 560,97 L 620,95 L 680,97 L 740,100 L 798,102 L 830,104 L 880,101 L 940,99 L 1000,97 L 1060,99 L 1110,102 L 1180,100"
+          stroke="#185FA5" stroke-width="2" fill="none" stroke-linejoin="round"/>
+
+        <text class="chart-axis-label" x="65" y="24" text-anchor="end">0.115</text>
+        <text class="chart-axis-label" x="65" y="64" text-anchor="end">0.113</text>
+        <text class="chart-axis-label" x="65" y="104" text-anchor="end">0.110</text>
+        <text class="chart-axis-label" x="65" y="144" text-anchor="end">0.108</text>
+
+        <text class="chart-axis-label" x="70" y="168">0 ft</text>
+        <text class="chart-axis-label" x="348" y="168" text-anchor="middle">800 ft</text>
+        <text class="chart-axis-label" x="625" y="168" text-anchor="middle">1,600 ft</text>
+        <text class="chart-axis-label" x="902" y="168" text-anchor="middle">2,400 ft</text>
+        <text class="chart-axis-label" x="1180" y="168" text-anchor="end" font-weight="500">3,200 ft</text>
+      </svg>
+    </div>
+
+    <div class="profile-stats">
+      <span class="profile-stat">Min <strong>0.108"</strong></span>
+      <span class="profile-stat">Max <strong>0.112"</strong></span>
+      <span class="profile-stat">Avg <strong>0.110"</strong></span>
+      <span class="profile-stat">Std dev <strong>0.0011"</strong></span>
+      <span class="profile-stat" style="margin-left: auto;">Samples <strong>3,194</strong></span>
+    </div>
+  </div>
+
+  <div class="section schedule-section">
+    <div class="section-header">
+      <span class="section-title">Pass Schedule</span>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <span class="section-subtitle" id="ps-schedule-id-label">PS-1100-FL2-007</span>
+        <span style="font-size: 11px; padding: 3px 10px; background: var(--color-background-secondary); color: var(--color-text-secondary); border-radius: var(--border-radius-md); font-weight: 500;">Read-only</span>
+      </div>
+    </div>
+
+    <div class="ps-confirm-bar" id="ps-confirm-bar">
+      <span class="ps-confirm-match" id="ps-confirm-match">System recommends <strong>PS-1100-FL2-007</strong> &mdash; matched on Alloy&nbsp;1100, Gauge&nbsp;0.110&Prime;&nbsp;&times;&nbsp;0.625&Prime;, Round&nbsp;edge</span>
+      <div class="ps-confirm-actions">
+        <button class="btn-confirm-ps" id="btn-confirm-ps">Confirm Schedule</button>
+        <div class="ps-change-wrap">
+          <button class="btn-change-ps" id="btn-change-ps">Change <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1.5 3.5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <div class="ps-change-dropdown" id="ps-change-dropdown">
+            <div class="ps-dropdown-item recommended" data-id="PS-1100-FL2-007">
+              <span class="ps-dropdown-id">PS-1100-FL2-007</span>
+              <span class="ps-dropdown-desc">Alloy 1100 &middot; 0.110&Prime; &times; 0.625&Prime; &middot; Round edge &mdash; Recommended</span>
+            </div>
+            <div class="ps-dropdown-item" data-id="PS-1100-FL2-006">
+              <span class="ps-dropdown-id">PS-1100-FL2-006</span>
+              <span class="ps-dropdown-desc">Alloy 1100 &middot; 0.110&Prime; &times; 0.625&Prime; &middot; Flat edge</span>
+            </div>
+            <div class="ps-dropdown-item" data-id="PS-1100-FL2-005">
+              <span class="ps-dropdown-id">PS-1100-FL2-005</span>
+              <span class="ps-dropdown-desc">Alloy 1100 &middot; 0.112&Prime; &times; 0.625&Prime; &middot; Round edge</span>
+            </div>
+            <div class="ps-dropdown-warning">&#9888; Selecting a different schedule will be flagged for Operations review.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <table class="schedule-table">
+      <thead>
+        <tr>
+          <th style="width: 30%;">Component</th>
+          <th style="width: 20%;">Status</th>
+          <th style="width: 32%;">Setting</th>
+          <th style="width: 18%;">Stage</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="bypass">
+          <td class="component-name">8" Roller</td>
+          <td><span class="status-cell bypass"><span class="dot"></span>Bypass</span></td>
+          <td class="setting-cell bypass-label">&mdash;</td>
+          <td class="schedule-stage">pre-finishing</td>
+        </tr>
+        <tr>
+          <td class="component-name">6" Roller S1</td>
+          <td><span class="status-cell"><span class="dot"></span>Active</span></td>
+          <td class="setting-cell">Gap 0.0162"</td>
+          <td class="schedule-stage">stage 1</td>
+        </tr>
+        <tr>
+          <td class="component-name">Edger</td>
+          <td><span class="status-cell"><span class="dot"></span>Active</span></td>
+          <td class="setting-cell plain">Round edge</td>
+          <td class="schedule-stage">stage 1</td>
+        </tr>
+        <tr>
+          <td class="component-name">6" Roller S2</td>
+          <td><span class="status-cell"><span class="dot"></span>Active</span></td>
+          <td class="setting-cell">Gap 0.0160" &middot; final</td>
+          <td class="schedule-stage">stage 2</td>
+        </tr>
+        <tr>
+          <td class="component-name">Edger</td>
+          <td><span class="status-cell"><span class="dot"></span>Active</span></td>
+          <td class="setting-cell plain">Round edge</td>
+          <td class="schedule-stage">stage 2</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer panel">
+    <div class="footer-status">
+      <div class="progress-ring">
+        <svg viewBox="0 0 36 36">
+          <circle class="progress-ring-bg" cx="18" cy="18" r="15"/>
+          <circle class="progress-ring-fill" cx="18" cy="18" r="15" stroke-dasharray="94" stroke-dashoffset="15.7"/>
+        </svg>
+        <div class="progress-ring-text">5/6</div>
+      </div>
+      <span id="footer-status-text"><strong>5 of 6 steps complete</strong> &middot; confirm pass schedule to proceed</span>
+    </div>
+    <div class="footer-actions">
+      <button class="btn">Cancel</button>
+      <button class="btn btn-primary" id="acknowledge-btn" disabled>Acknowledge &amp; Begin Check-in</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  (function () {
+    function pad(n) { return String(n).padStart(2, "0"); }
+
+    function updateClock() {
+      var now = new Date();
+      var h = now.getHours();
+      var m = pad(now.getMinutes());
+      var ampm = h < 12 ? "AM" : "PM";
+      var h12 = h % 12 || 12;
+      var clockEl = document.getElementById("clock");
+      if (clockEl) clockEl.textContent = pad(h12) + ":" + m + " " + ampm;
+      var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      var dateEl = document.getElementById("date");
+      if (dateEl) dateEl.textContent = months[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Pass schedule confirmation
+    var psRecommendedId = "PS-1100-FL2-007";
+    var psCurrentId = psRecommendedId;
+    var psConfirmBar = document.getElementById("ps-confirm-bar");
+    var psConfirmMatch = document.getElementById("ps-confirm-match");
+    var btnConfirmPs = document.getElementById("btn-confirm-ps");
+    var btnChangePs = document.getElementById("btn-change-ps");
+    var psChangeDropdown = document.getElementById("ps-change-dropdown");
+    var psScheduleLabel = document.getElementById("ps-schedule-id-label");
+    var acknowledgeBtn = document.getElementById("acknowledge-btn");
+    var footerText = document.getElementById("footer-status-text");
+    var ringFill = document.querySelector(".progress-ring-fill");
+    var ringText = document.querySelector(".progress-ring-text");
+
+    function setProgress(done, total) {
+      var offset = 94.25 * (1 - done / total);
+      if (ringFill) ringFill.setAttribute("stroke-dashoffset", offset.toFixed(1));
+      if (ringText) ringText.textContent = done + "/" + total;
+    }
+
+    function confirmSchedule(id) {
+      psCurrentId = id;
+      if (psScheduleLabel) psScheduleLabel.textContent = id;
+      psConfirmBar.classList.add("confirmed");
+      btnConfirmPs.style.display = "none";
+      if (id === psRecommendedId) {
+        psConfirmMatch.innerHTML = "&#10003; Schedule confirmed &mdash; <strong>" + id + "</strong>";
+      } else {
+        psConfirmMatch.innerHTML = "&#10003; Schedule changed to <strong>" + id + "</strong> &mdash; <span style=\"color:var(--color-text-danger);font-size:12px;\">&#9888; Flagged for Operations review</span>";
+      }
+      acknowledgeBtn.disabled = false;
+      if (footerText) footerText.innerHTML = "<strong>All required fields complete</strong> &middot; ready to acknowledge &amp; load to TPO";
+      setProgress(6, 6);
+    }
+
+    acknowledgeBtn.addEventListener("click", function () {
+      window.location.href = "dashboard_3_active_run_fl2.html";
+    });
+
+    btnConfirmPs.addEventListener("click", function () { confirmSchedule(psCurrentId); });
+
+    btnChangePs.addEventListener("click", function (e) {
+      e.stopPropagation();
+      psChangeDropdown.classList.toggle("open");
+    });
+
+    document.querySelectorAll(".ps-dropdown-item").forEach(function (item) {
+      item.addEventListener("click", function (e) {
+        e.stopPropagation();
+        psChangeDropdown.classList.remove("open");
+        confirmSchedule(item.getAttribute("data-id"));
+      });
+    });
+
+    document.addEventListener("click", function () { psChangeDropdown.classList.remove("open"); });
+  })();
+</script>
+
+<script src="flat-wire-topbar.js"></script>
+</body>
+</html>

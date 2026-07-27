@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>FL1 — Line Schematic (HMI)</title>
+<link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
+<style>
+  /* ── Reset / base ──────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1280px; height: 1024px; overflow: hidden; background: var(--color-background-tertiary); }
+
+  /*
+   * Height budget (must sum to exactly 1024px):
+   *   header    68px
+   *   route-bar 56px
+   *   schematic flex:1  (≈848px)
+   *   alert-bar 52px
+   */
+  /* reset shared .dashboard padding/gap so the fixed row budget holds after the
+     injected top strip; overflow:hidden keeps everything within 1024px */
+  .dashboard { width: 1280px; height: 1024px; display: flex; flex-direction: column; padding: 0; margin: 0; gap: 0; overflow: hidden; }
+
+  /* ── Header (68px) ─────────────────────────────────────────── */
+  .header {
+    height: 68px; flex-shrink: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 24px; gap: 16px;
+  }
+  .header-left  { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
+  .header-right { display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    min-height: 48px; padding: 0 20px;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    border-radius: var(--border-radius-md);
+    font-size: 14px; font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer; text-decoration: none; white-space: nowrap;
+  }
+  .back-btn:active { background: var(--color-background-secondary); }
+
+  .line-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 48px; padding: 0 18px;
+    background: var(--color-background-success);
+    color: var(--color-text-success);
+    border-radius: var(--border-radius-md);
+    font-size: 15px; font-weight: 600; white-space: nowrap;
+  }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--color-green); animation: pulse 1.6s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+  .header h1 { font-size: 22px; font-weight: 500; white-space: nowrap; }
+
+  .hdr-meta { display: flex; gap: 24px; font-size: 14px; color: var(--color-text-secondary); white-space: nowrap; }
+  .hdr-meta strong { color: var(--color-text-primary); font-weight: 600; }
+  .mono { font-family: var(--font-mono); }
+
+  .hdr-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    min-height: 48px; padding: 0 20px;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    border-radius: var(--border-radius-md);
+    font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap;
+  }
+  .hdr-btn:active { background: var(--color-background-secondary); }
+  .hdr-btn.blue { background: #185FA5; border-color: #185FA5; color: #fff; }
+  .hdr-btn.blue:active { opacity: 0.85; }
+
+  /* ── Route bar (56px) ──────────────────────────────────────── */
+  .route-bar {
+    height: 56px; flex-shrink: 0;
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 24px;
+    background: var(--color-background-primary);
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .route-label {
+    font-size: 11px; font-weight: 600;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-right: 4px;
+  }
+  .route-btn {
+    min-height: 48px; padding: 0 22px;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    color: var(--color-text-secondary); white-space: nowrap;
+  }
+  .route-btn.active { background: #185FA5; border-color: #185FA5; color: #fff; }
+  .route-btn:active { opacity: 0.85; }
+
+  /* ── Schematic canvas (flex:1 ≈ 848px) ───────────────────── */
+  .schematic-wrap {
+    flex: 1; min-height: 0; overflow: hidden;
+    padding: 12px 20px 0 20px;
+  }
+  .schematic-canvas { width: 100%; height: 100%; display: block; }
+
+  /* SVG text defaults */
+  .sec-label  { font-size: 11px; font-weight: 700; fill: var(--color-text-tertiary); letter-spacing: 0.7px; text-transform: uppercase; }
+  .comp-label { font-size: 12px; font-weight: 700; fill: var(--color-text-secondary); letter-spacing: 0.3px; text-transform: uppercase; }
+  .comp-val   { font-size: 22px; font-weight: 500; font-family: 'SF Mono','Consolas',monospace; fill: var(--color-text-primary); }
+  .comp-sub   { font-size: 13px; fill: var(--color-text-secondary); }
+
+  /* Flow animation */
+  @keyframes flowAnim { to { stroke-dashoffset: -28; } }
+  .flow { stroke: #1D9E75; stroke-width: 3; fill: none; stroke-dasharray: 10 7; }
+  .flow.running { animation: flowAnim 0.8s linear infinite; }
+  .flow.dimmed  { stroke: var(--color-border-secondary); animation: none; stroke-dasharray: 4 8; opacity: 0.35; }
+
+  /* ── Alert bar (52px) ──────────────────────────────────────── */
+  .alert-bar {
+    height: 52px; flex-shrink: 0;
+    display: flex; align-items: center; gap: 18px;
+    padding: 0 24px;
+    border-top: 0.5px solid var(--color-border-tertiary);
+    background: var(--color-background-primary);
+    font-size: 14px;
+  }
+  .alert-lbl { font-size: 11px; font-weight: 700; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+  .alert-item { display: flex; align-items: center; gap: 8px; }
+  .alert-item.warn { color: var(--color-text-warning); }
+  .alert-item.ok   { color: var(--color-text-success); }
+  .alert-item.crit { color: var(--color-text-danger); font-weight: 600; }
+  .sep { color: var(--color-border-secondary); }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- ── HEADER (68px) ──────────────────────────────────────── -->
+  <div class="header panel">
+    <div class="header-left">
+      <a class="back-btn" href="dashboard_1_line_status.html">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        Line Status
+      </a>
+      <span class="line-badge"><span class="dot"></span>FL1 running</span>
+      <h1>Line Schematic</h1>
+      <span class="hdr-meta">
+        <span>Order <strong class="mono">FW-00421</strong></span>
+        <span>Alpha <strong class="mono">R00042</strong></span>
+        <span>Alloy <strong>1100</strong></span>
+      </span>
+    </div>
+    <div class="header-right">
+      <div class="hdr-meta">
+        <span>Speed <strong class="mono" id="speed-val">1,620</strong> FPM</span>
+        <span>Footage <strong class="mono" id="footage-val">12,450</strong> ft</span>
+      </div>
+      <button class="hdr-btn" onclick="window.location='dashboard_3_active_run.html'">Active Run</button>
+      <button class="hdr-btn blue" onclick="window.location='dashboard_14_scada_trends.html'">SCADA Trends</button>
+    </div>
+  </div>
+
+  <!-- ── ROUTE BAR (56px) ───────────────────────────────────── -->
+  <div class="route-bar">
+    <span class="route-label">Route</span>
+    <button class="route-btn active" onclick="setRoute('fl1',this)">FL1 Standalone</button>
+    <button class="route-btn"        onclick="setRoute('fl2',this)">FL2 Standalone</button>
+    <button class="route-btn"        onclick="setRoute('fl3',this)">FL3 Hybrid</button>
+  </div>
+
+  <!-- ── SCHEMATIC CANVAS (flex:1) ──────────────────────────── -->
+  <div class="schematic-wrap">
+    <!--
+      ViewBox 0 0 1240 820   (width × height)
+
+      Section columns (separated by dashed vertical lines):
+        Payoff   x   30 – 290
+        Draw     x  320 – 920   (DB1 x=320-560, DB2 x=600-840)
+        Flatten  x  940 – 1220  (FM1, EdgeSet, TKUP-1 stacked vertically)
+        [row divider at y=628]
+        FM2 row  x   30 – 905   (four boxes, no overlap)
+        Takeup   x  940 – 1220  (TKUP-2)
+
+      ROW 1 right column (x=940-1220):
+        FM1      y= 90-310
+        EdgeSet  y=380-490
+        TKUP-1   y=505-615   ← FL1 direct output (below EdgeSet, above divider)
+
+      ROW 2 (y=640-760):
+        FM2-8"   x= 30-220   w=190
+        FM2-S1   x=250-440   w=190
+        FM2-S2   x=470-660   w=190
+        Width    x=680-870   w=190
+        TKUP-2   x=940-1220  w=280  ← starts well after width sensor (870), no overlap
+    -->
+    <svg class="schematic-canvas" viewBox="0 0 1240 820"
+         preserveAspectRatio="xMidYMid meet" id="schematic-svg">
+
+      <!-- ═══ Section separator lines ═══ -->
+      <line x1="300" y1="10" x2="300" y2="615" stroke="var(--color-border-tertiary)" stroke-width="0.5" stroke-dasharray="4 6"/>
+      <line x1="580" y1="10" x2="580" y2="615" stroke="var(--color-border-tertiary)" stroke-width="0.5" stroke-dasharray="4 6"/>
+      <line x1="920" y1="10" x2="920" y2="820" stroke="var(--color-border-tertiary)" stroke-width="0.5" stroke-dasharray="4 6"/>
+
+      <!-- Horizontal divider between row 1 and row 2 -->
+      <line x1="30" y1="628" x2="905" y2="628"
+            stroke="var(--color-border-tertiary)" stroke-width="0.5" stroke-dasharray="4 6"/>
+
+      <!-- Section labels (row 1) -->
+      <text class="sec-label" x="30"  y="16">Payoff</text>
+      <text class="sec-label" x="320" y="16">Draw</text>
+      <text class="sec-label" x="940" y="16">Flatten / Takeup</text>
+
+      <!-- Section labels (row 2) -->
+      <text class="sec-label" x="30"  y="645">3-Stand Finishing Mill (FM2)</text>
+      <text class="sec-label" x="940" y="645">Takeup</text>
+
+      <!-- ═══ PAYOFF 1 ═══ -->
+      <rect id="p1-box" x="30" y="30" width="240" height="150" rx="12"
+            fill="var(--color-background-primary)" stroke="#EF9F27" stroke-width="2"/>
+      <circle cx="56" cy="52" r="8" fill="#EF9F27">
+        <animate attributeName="opacity" values="1;0.4;1" dur="1.6s" repeatCount="indefinite"/>
+      </circle>
+      <text class="comp-label" x="72"  y="57">Payoff 1</text>
+      <text class="comp-val"   x="40"  y="105" fill="#EF9F27">4,200 lb</text>
+      <rect x="40" y="118" width="210" height="12" rx="6" fill="var(--color-background-secondary)"/>
+      <rect x="40" y="118" width="99"  height="12" rx="6" fill="#EF9F27"/>
+      <text class="comp-sub"   x="40"  y="148" fill="#EF9F27" font-weight="600">⚠  Weld soon — 47%</text>
+
+      <!-- ═══ PAYOFF 2 ═══ -->
+      <rect id="p2-box" x="30" y="210" width="240" height="150" rx="12"
+            fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="2"/>
+      <circle cx="56" cy="232" r="8" fill="#1D9E75"/>
+      <text class="comp-label" x="72"  y="237">Payoff 2</text>
+      <text class="comp-val"   x="40"  y="285" fill="#1D9E75">8,500 lb</text>
+      <rect x="40" y="298" width="210" height="12" rx="6" fill="var(--color-background-secondary)"/>
+      <rect x="40" y="298" width="210" height="12" rx="6" fill="#1D9E75"/>
+      <text class="comp-sub"   x="40"  y="328" fill="#1D9E75" font-weight="600">✓  Ready — 100%</text>
+
+      <!-- Payoff merge connector: down, join at x=150, go right to DB1 -->
+      <path fill="none" stroke="#1D9E75" stroke-width="2"
+            d="M 150 180 L 150 390 L 310 390"/>
+      <path class="flow running" d="M 150 180 L 150 390 L 310 390"/>
+
+      <!-- ═══ DB1 ═══ -->
+      <rect id="db1-box" x="320" y="310" width="240" height="120" rx="12"
+            fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="2"/>
+      <circle cx="346" cy="332" r="8" fill="#1D9E75"/>
+      <text class="comp-label" x="362" y="337">DB1 — Draw Box 1</text>
+      <text class="comp-val"   x="332" y="382">0.340"</text>
+      <text class="comp-sub"   x="332" y="402">Die diameter · Active</text>
+
+      <!-- DB1 → DB2 connector -->
+      <path class="flow running" d="M 560 370 L 600 370"/>
+
+      <!-- ═══ DB2 ═══ -->
+      <rect id="db2-box" x="600" y="310" width="240" height="120" rx="12"
+            fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="2"/>
+      <circle cx="626" cy="332" r="8" fill="#1D9E75"/>
+      <text class="comp-label" x="642" y="337">DB2 — Draw Box 2</text>
+      <text class="comp-val"   x="612" y="382">0.310"</text>
+      <text class="comp-sub"   x="612" y="402">Die diameter · Active</text>
+
+      <!-- DB2 → FM1 connector (goes right then up to FM1 center) -->
+      <path class="flow running" d="M 840 370 L 900 370 L 900 200 L 940 200"/>
+
+      <!-- ═══ FM1 ═══ -->
+      <rect id="fm1-box" x="940" y="90" width="280" height="220" rx="12"
+            fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="2.5"/>
+      <circle cx="968" cy="114" r="8" fill="#1D9E75"/>
+      <text class="comp-label" x="984"  y="119">FM1 — 12" Flattening Mill</text>
+      <text class="comp-val"   x="952"  y="176">Gap: 0.112"</text>
+      <line x1="952" y1="200" x2="1208" y2="200" stroke="var(--color-border-tertiary)" stroke-width="0.5"/>
+      <circle cx="960" cy="228" r="7" fill="#185FA5"/>
+      <text x="976" y="233" font-size="12" font-weight="700" fill="#185FA5" letter-spacing="0.4">GAUGE OUT</text>
+      <text x="952" y="272" font-size="26" font-weight="500"
+            font-family="'SF Mono','Consolas',monospace" fill="#1D9E75" id="gauge-live">0.110"</text>
+      <text x="952" y="292" font-size="13" fill="#1D9E75" font-weight="600"
+            id="gauge-status">✓  In spec  ·  Target 0.110 ± 0.002"</text>
+
+      <!-- FM1 → EdgeSet connector -->
+      <path class="flow running" d="M 1080 310 L 1080 380"/>
+
+      <!-- ═══ EDGE SET ═══ -->
+      <rect id="edge-box" x="940" y="380" width="280" height="110" rx="12"
+            fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="2"/>
+      <circle cx="968" cy="402" r="8" fill="#1D9E75"/>
+      <text class="comp-label" x="984" y="407">Edge Set</text>
+      <text class="comp-val"   x="952" y="452">Round Edge</text>
+      <text class="comp-sub"   x="952" y="472">Active</text>
+
+      <!--
+        From EdgeSet two possible exits:
+          FL1: straight down to TKUP-1 (y=490 → y=505)
+          FL3: route left then down into FM2-8"
+      -->
+
+      <!-- EdgeSet → TKUP-1  (FL1 direct output) -->
+      <path id="path-fl1-to-tkup1" class="flow running"
+            d="M 1080 490 L 1080 505"/>
+
+      <!-- EdgeSet → FM2-8"  (FL3 hybrid — wire routes back left)
+           Exits EdgeSet left edge at y=437, runs left to x=20, drops to FM2 center y=700 -->
+      <path id="path-to-fm2" class="flow dimmed"
+            d="M 940 437 L 20 437 L 20 700 L 30 700"/>
+
+      <!-- ═══ TKUP-1 — FL1 direct output (below EdgeSet, above row-2 divider) ═══ -->
+      <rect id="tkup1-box" x="940" y="505" width="280" height="110" rx="12"
+            fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="2"/>
+      <circle cx="968" cy="527" r="8" fill="#1D9E75"/>
+      <text class="comp-label" x="984" y="532">TKUP-1 — Spool (FL1 out)</text>
+      <text class="comp-val"   x="952" y="578">3,200 ft</text>
+      <text class="comp-sub"   x="952" y="598" fill="#1D9E75">● Filling · 2,400 lb</text>
+
+      <!-- ═══ ROW 2 — FM2 stands ═══
+           All four boxes sit in x=30–870, TKUP-2 at x=940. No overlap.
+           Box width 190, gaps 30px, center y=700.
+      -->
+
+      <!-- FM2-8" stand  x=30-220 -->
+      <rect id="fm2-8-box" x="30" y="652" width="190" height="108" rx="12"
+            fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="2"/>
+      <circle cx="54"  cy="672" r="7" fill="#1D9E75"/>
+      <text class="comp-label" x="68"  y="677">FM2 — 8" Roller</text>
+      <text class="comp-val"   x="40"  y="720">0.117"</text>
+      <text class="comp-sub"   x="40"  y="740">Roll gap · Active</text>
+
+      <!-- FM2-8" → FM2-6"S1 connector -->
+      <path id="path-fm2-8-s1" class="flow running" d="M 220 700 L 250 700"/>
+
+      <!-- FM2-6"S1  x=250-440 -->
+      <rect id="fm2-s1-box" x="250" y="652" width="190" height="108" rx="12"
+            fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="2"/>
+      <circle cx="274" cy="672" r="7" fill="#1D9E75"/>
+      <text class="comp-label" x="288" y="677">FM2 — 6" S1</text>
+      <text class="comp-val"   x="260" y="720">0.0162"</text>
+      <text class="comp-sub"   x="260" y="740">Roll gap · Active</text>
+
+      <!-- FM2-6"S1 → FM2-6"S2 connector -->
+      <path id="path-fm2-s1-s2" class="flow running" d="M 440 700 L 470 700"/>
+
+      <!-- FM2-6"S2 (final)  x=470-660 -->
+      <rect id="fm2-s2-box" x="470" y="652" width="190" height="108" rx="12"
+            fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="2.5"/>
+      <circle cx="494" cy="672" r="7" fill="#1D9E75"/>
+      <text class="comp-label" x="508" y="677">FM2 — 6" S2 (final)</text>
+      <text class="comp-val"   x="480" y="720">0.0160"</text>
+      <text class="comp-sub"   x="480" y="740">Roll gap · Always active</text>
+
+      <!-- FM2-6"S2 → Width sensor connector -->
+      <path id="path-fm2-s2-width" class="flow running" d="M 660 700 L 680 700"/>
+
+      <!-- Width sensor  x=680-870  (ends at 870, well before TKUP-2 at 940) -->
+      <rect id="width-sensor" x="680" y="652" width="190" height="108" rx="12"
+            fill="#EFF6FB" stroke="#185FA5" stroke-width="2"/>
+      <circle cx="704" cy="672" r="7" fill="#185FA5"/>
+      <text x="718" y="677" font-size="12" font-weight="700" fill="#185FA5" letter-spacing="0.4">WIDTH OUT</text>
+      <text x="690" y="720" font-size="26" font-weight="500"
+            font-family="'SF Mono','Consolas',monospace" fill="#1D9E75" id="width-live">0.625"</text>
+      <text x="690" y="740" font-size="13" fill="#1D9E75" font-weight="600">✓  In spec  ·  Target 0.625 ± 0.005"</text>
+
+      <!-- Width sensor → TKUP-2 connector  (870 → 940, 70px gap) -->
+      <path id="path-to-tkup2" class="flow running" d="M 870 700 L 940 700"/>
+
+      <!-- ═══ TKUP-2 — FL2/FL3 output  x=940-1220  y=652-760 ═══
+           Starts at x=940, 70px after width sensor ends at x=870. NO overlap.
+      -->
+      <rect id="tkup2-box" x="940" y="652" width="280" height="108" rx="12"
+            fill="var(--color-background-primary)" stroke="var(--color-border-secondary)"
+            stroke-width="1.5" opacity="0.3"/>
+      <circle id="tkup2-dot" cx="968" cy="672" r="7" fill="var(--color-border-secondary)" opacity="0.3"/>
+      <text id="tkup2-label" class="comp-label" x="984" y="677"
+            fill="var(--color-text-tertiary)">TKUP-2 — Output Coil</text>
+      <text id="tkup2-val"   x="952" y="720" font-size="22" font-weight="500"
+            font-family="'SF Mono','Consolas',monospace"
+            fill="var(--color-text-tertiary)">— — —</text>
+      <text id="tkup2-sub"   x="952" y="740" font-size="13"
+            fill="var(--color-text-tertiary)">Not used on FL1 route</text>
+
+      <!-- ═══ FM2 bypass overlay (FL1 route, hidden by default) ═══
+           Covers x=30-875, y=648-764. Does NOT overlap TKUP-2 (starts at x=940).
+      -->
+      <rect id="fm2-bypass-box" x="28" y="648" width="847" height="116" rx="12"
+            fill="var(--color-background-secondary)" stroke="var(--color-border-tertiary)"
+            stroke-width="0.5" opacity="0.85" style="display:none"/>
+      <text id="fm2-bypass-label" x="451" y="712" text-anchor="middle"
+            font-size="15" fill="var(--color-text-tertiary)" style="display:none">
+        FM2 — 3-Stand Finishing Mill — BYPASSED on FL1 Standalone route
+      </text>
+
+    </svg>
+  </div>
+
+  <!-- ── ALERT BAR (52px) ────────────────────────────────────── -->
+  <div class="alert-bar panel">
+    <span class="alert-lbl">Alerts</span>
+    <span class="alert-item warn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Payoff 1 — 4,200 lb — prepare weld (Payoff 2 ready)
+    </span>
+    <span class="sep">·</span>
+    <span class="alert-item ok">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+      All gauge and width readings in spec
+    </span>
+  </div>
+
+</div><!-- /dashboard -->
+
+<script>
+  /* Clock */
+  function updateClock() {
+    const now = new Date();
+    const h = now.getHours(), m = now.getMinutes();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    var _clk = document.getElementById('clock');
+    if (_clk) _clk.textContent =
+      String(h12).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ' ' + ampm;
+  }
+  updateClock();
+  setInterval(updateClock, 15000);
+
+  /* Route switching */
+  function setRoute(route, btn) {
+    document.querySelectorAll('.route-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const tkup1Box  = document.getElementById('tkup1-box');
+    const tkup2Box  = document.getElementById('tkup2-box');
+    const tkup2Dot  = document.getElementById('tkup2-dot');
+    const tkup2Lbl  = document.getElementById('tkup2-label');
+    const tkup2Val  = document.getElementById('tkup2-val');
+    const tkup2Sub  = document.getElementById('tkup2-sub');
+    const fm2_8  = document.getElementById('fm2-8-box');
+    const fm2_s1 = document.getElementById('fm2-s1-box');
+    const fm2_s2 = document.getElementById('fm2-s2-box');
+    const widthS = document.getElementById('width-sensor');
+    const bypassBox = document.getElementById('fm2-bypass-box');
+    const bypassLbl = document.getElementById('fm2-bypass-label');
+    const db1 = document.getElementById('db1-box');
+    const db2 = document.getElementById('db2-box');
+    const fm1 = document.getElementById('fm1-box');
+    const edgeBox = document.getElementById('edge-box');
+
+    const pathFl1Tkup1 = document.getElementById('path-fl1-to-tkup1');
+    const pathToFm2    = document.getElementById('path-to-fm2');
+    const fm2Paths     = ['path-fm2-8-s1','path-fm2-s1-s2','path-fm2-s2-width','path-to-tkup2'];
+
+    function setFlow(id, active) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (active) { el.classList.remove('dimmed'); el.classList.add('running'); }
+      else        { el.classList.remove('running'); el.classList.add('dimmed'); }
+    }
+    function setOpacity(el, v) { if (el) el.style.opacity = String(v); }
+    function setStrokeColor(el, color, opacity) {
+      if (!el) return;
+      el.setAttribute('stroke', color);
+      el.setAttribute('opacity', String(opacity));
+    }
+
+    if (route === 'fl1') {
+      /* ── FL1 Standalone: Draw → Flatten → TKUP-1. FM2 bypassed. ── */
+      // Draw and flatten: active
+      setOpacity(db1, 1); setOpacity(db2, 1);
+      setOpacity(fm1, 1); setOpacity(edgeBox, 1);
+      // TKUP-1: active
+      setStrokeColor(tkup1Box, '#1D9E75', 1);
+      setOpacity(tkup1Box, 1);
+      // TKUP-2: dimmed
+      setStrokeColor(tkup2Box, 'var(--color-border-secondary)', 0.3);
+      if (tkup2Dot) { tkup2Dot.setAttribute('fill','var(--color-border-secondary)'); tkup2Dot.setAttribute('opacity','0.3'); }
+      if (tkup2Sub) tkup2Sub.textContent = 'Not used on FL1 route';
+      if (tkup2Val) tkup2Val.textContent = '— — —';
+      // FM2 boxes: dimmed
+      [fm2_8, fm2_s1, fm2_s2, widthS].forEach(el => setOpacity(el, 0.2));
+      // Bypass overlay: show
+      bypassBox.style.display = 'block';
+      bypassLbl.style.display = 'block';
+      // Paths
+      setFlow('path-fl1-to-tkup1', true);
+      setFlow('path-to-fm2', false);
+      fm2Paths.forEach(id => setFlow(id, false));
+
+    } else if (route === 'fl2') {
+      /* ── FL2 Standalone: Wire from spool → FM2 → TKUP-2. No draw. ── */
+      // Draw/flatten: dimmed (not used on FL2)
+      setOpacity(db1, 0.2); setOpacity(db2, 0.2);
+      setOpacity(fm1, 0.2); setOpacity(edgeBox, 0.2);
+      // TKUP-1: dimmed
+      setStrokeColor(tkup1Box, 'var(--color-border-secondary)', 0.3);
+      setOpacity(tkup1Box, 0.3);
+      // TKUP-2: active
+      setStrokeColor(tkup2Box, '#1D9E75', 1);
+      if (tkup2Dot) { tkup2Dot.setAttribute('fill','#1D9E75'); tkup2Dot.setAttribute('opacity','1'); }
+      if (tkup2Sub) tkup2Sub.textContent = '● Filling · In progress';
+      if (tkup2Val) tkup2Val.textContent = '14,200 ft';
+      // FM2 boxes: active
+      [fm2_8, fm2_s1, fm2_s2, widthS].forEach(el => setOpacity(el, 1));
+      // Bypass overlay: hide
+      bypassBox.style.display = 'none';
+      bypassLbl.style.display = 'none';
+      // Paths: FM2 internal paths active; no EdgeSet-to-FM2 path on FL2
+      setFlow('path-fl1-to-tkup1', false);
+      setFlow('path-to-fm2', false);   // FL2 wire enters FM2 from external spool
+      fm2Paths.forEach(id => setFlow(id, true));
+
+    } else { /* fl3 */
+      /* ── FL3 Hybrid: Draw → Flatten → FM2 → TKUP-2 ── */
+      // All draw/flatten: active
+      setOpacity(db1, 1); setOpacity(db2, 1);
+      setOpacity(fm1, 1); setOpacity(edgeBox, 1);
+      // TKUP-1: dimmed (wire continues through, no stop)
+      setStrokeColor(tkup1Box, 'var(--color-border-secondary)', 0.3);
+      setOpacity(tkup1Box, 0.3);
+      // TKUP-2: active
+      setStrokeColor(tkup2Box, '#1D9E75', 1);
+      if (tkup2Dot) { tkup2Dot.setAttribute('fill','#1D9E75'); tkup2Dot.setAttribute('opacity','1'); }
+      if (tkup2Sub) tkup2Sub.textContent = '● Filling · In progress';
+      if (tkup2Val) tkup2Val.textContent = '14,200 ft';
+      // FM2 boxes: active
+      [fm2_8, fm2_s1, fm2_s2, widthS].forEach(el => setOpacity(el, 1));
+      // Bypass overlay: hide
+      bypassBox.style.display = 'none';
+      bypassLbl.style.display = 'none';
+      // Paths: EdgeSet → FM2 routing path active
+      setFlow('path-fl1-to-tkup1', false);
+      setFlow('path-to-fm2', true);
+      fm2Paths.forEach(id => setFlow(id, true));
+    }
+  }
+
+  /* Simulate live gauge drift */
+  let gaugeV = 0.1100;
+  function tickReadings() {
+    gaugeV += (Math.random() - 0.5) * 0.0008;
+    gaugeV = Math.max(0.1070, Math.min(0.1130, gaugeV));
+    const inSpec = gaugeV >= 0.108 && gaugeV <= 0.112;
+    const gEl  = document.getElementById('gauge-live');
+    const sSEl = document.getElementById('gauge-status');
+    if (gEl) {
+      gEl.textContent = gaugeV.toFixed(4) + '"';
+      gEl.setAttribute('fill', inSpec ? '#1D9E75' : '#D85A30');
+    }
+    if (sSEl) {
+      sSEl.textContent = inSpec
+        ? '✓  In spec  ·  Target 0.110 ± 0.002"'
+        : '⚠  Out of spec  ·  Target 0.110 ± 0.002"';
+      sSEl.setAttribute('fill', inSpec ? '#1D9E75' : '#D85A30');
+    }
+  }
+  setInterval(tickReadings, 2500);
+</script>
+<script src="flat-wire-topbar.js"></script>
+</body>
+</html>

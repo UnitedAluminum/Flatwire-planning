@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1000, initial-scale=1">
+<title>Aluminum Coil Spinner · Flat Wire</title>
+<link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
+<style>
+  body { min-width: 0; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 40px 24px 60px; }
+  .page-title { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
+  .page-sub { color: var(--color-text-secondary); margin: 0 0 28px; font-size: 14px; }
+
+  .demo-row {
+    display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 24px;
+  }
+  .demo-card {
+    flex: 1 1 220px; display: flex; flex-direction: column; align-items: center; gap: 16px;
+    padding: 32px 20px; border-radius: var(--border-radius-lg);
+    background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary);
+  }
+  .demo-card.dark {
+    background: #1b2027;
+    background-image: radial-gradient(120% 120% at 50% 0%, #262d36 0%, #161a20 70%);
+    border-color: rgba(255,255,255,0.08);
+  }
+  .demo-card .caption { font-size: 13px; color: var(--color-text-tertiary); }
+  .demo-card.dark .caption { color: #9aa6b2; }
+
+  .loading-inline {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 22px; border-radius: var(--border-radius-lg);
+    background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary);
+  }
+  .loading-inline .txt { font-size: 15px; font-weight: 500; color: var(--color-text-secondary); }
+  .loading-inline .txt .dots::after {
+    content: ""; animation: dots 1.4s steps(4, end) infinite;
+  }
+  @keyframes dots { 0%{content:"";} 25%{content:".";} 50%{content:"..";} 75%{content:"...";} 100%{content:"";} }
+
+  /* ══════════════════════════════════════════════════════════
+     ALUMINUM COIL SPINNER  (pure CSS, no images)
+     Copy this block + the .coil markup to reuse.
+     Size is driven by the --coil-size custom property.
+     ══════════════════════════════════════════════════════════ */
+  .coil {
+    --coil-size: 96px;
+    position: relative;
+    width: var(--coil-size);
+    height: var(--coil-size);
+    border-radius: 50%;
+    /* cylindrical metal body: off-centre highlight + edge falloff */
+    background:
+      radial-gradient(circle at 38% 32%,
+        #ffffff 0%, #eef1f3 12%, #c8cdd2 42%, #a7adb4 66%, #8b9198 82%, #6f757c 100%);
+    box-shadow:
+      inset 0 0 10px rgba(0,0,0,0.35),
+      inset 0 2px 3px rgba(255,255,255,0.55),
+      0 6px 16px rgba(0,0,0,0.28);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  /* wound strip: fine concentric rings of brushed aluminium */
+  .coil::before {
+    content: "";
+    position: absolute; inset: 0; border-radius: 50%;
+    background:
+      repeating-radial-gradient(circle at 50% 50%,
+        rgba(255,255,255,0.55) 0px,
+        rgba(150,156,163,0.25) 1.4px,
+        rgba(90,95,101,0.30) 2.4px,
+        rgba(255,255,255,0.45) 3.4px);
+    mix-blend-mode: overlay;
+    opacity: 0.9;
+  }
+  /* rotating sheen sweep + strip-tail seam = the visible "spin" */
+  .coil::after {
+    content: "";
+    position: absolute; inset: -2%; border-radius: 50%;
+    background:
+      /* strip tail (a slightly darker wound seam) */
+      conic-gradient(from 0deg,
+        rgba(60,64,68,0.55) 0deg, rgba(60,64,68,0) 14deg,
+        rgba(0,0,0,0) 180deg, rgba(0,0,0,0) 360deg),
+      /* bright metallic highlight sweep */
+      conic-gradient(from 0deg,
+        rgba(255,255,255,0) 0deg,
+        rgba(255,255,255,0.9) 46deg,
+        rgba(255,255,255,0) 96deg,
+        rgba(255,255,255,0) 205deg,
+        rgba(255,255,255,0.5) 240deg,
+        rgba(255,255,255,0) 285deg,
+        rgba(255,255,255,0) 360deg);
+    animation: coil-spin 1.15s linear infinite;
+  }
+  /* central core (the coil eye / arbor hole) — sits above the sweep */
+  .coil-core {
+    position: absolute; top: 50%; left: 50%;
+    width: 34%; height: 34%; transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle at 42% 36%, #d8dce0 0%, #9aa0a6 55%, #5f646a 100%);
+    box-shadow:
+      inset 0 0 9px rgba(0,0,0,0.65),
+      0 0 0 2px rgba(255,255,255,0.35),
+      0 1px 2px rgba(0,0,0,0.3);
+    z-index: 2;
+  }
+  @keyframes coil-spin { to { transform: rotate(360deg); } }
+
+  /* Size variants via the custom property */
+  .coil.sm  { --coil-size: 44px; }
+  .coil.md  { --coil-size: 80px; }
+  .coil.lg  { --coil-size: 140px; }
+  .coil.xl  { --coil-size: 200px; }
+
+  /* Optional: gold/anodized tint variant */
+  .coil.tint-gold {
+    background:
+      radial-gradient(circle at 38% 32%,
+        #fffaf0 0%, #f3e4bd 12%, #d8bd82 44%, #b9995a 68%, #977a45 84%, #6f5a34 100%);
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 class="page-title">Aluminum Coil Spinner</h1>
+    <p class="page-sub">A brand-inspired loading indicator for the Flat Wire shop floor — a wound aluminum coil with a rotating metallic sheen. Pure CSS, no images, scales with the <code>--coil-size</code> property.</p>
+
+    <div class="demo-row">
+      <div class="demo-card">
+        <div class="coil lg"></div>
+        <span class="caption">Default · 140px</span>
+      </div>
+      <div class="demo-card dark">
+        <div class="coil xl"><div class="coil-core"></div></div>
+        <span class="caption">With core hole · 200px</span>
+      </div>
+      <div class="demo-card">
+        <div class="coil lg tint-gold"><div class="coil-core"></div></div>
+        <span class="caption">Anodized tint</span>
+      </div>
+    </div>
+
+    <div class="demo-row">
+      <div class="loading-inline">
+        <div class="coil sm"><div class="coil-core"></div></div>
+        <span class="txt">Loading flat wire data<span class="dots"></span></span>
+      </div>
+      <div class="loading-inline">
+        <div class="coil md"><div class="coil-core"></div></div>
+        <span class="txt">Pushing pass schedule to PLC<span class="dots"></span></span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

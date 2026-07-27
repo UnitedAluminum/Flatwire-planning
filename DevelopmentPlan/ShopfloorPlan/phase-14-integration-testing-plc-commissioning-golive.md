@@ -1,0 +1,26 @@
+# PHASE 14 — Integration Testing, PLC Commissioning & Go-Live
+
+> **Part of the [Flat Wire Mill — Master Implementation Roadmap](../ShopfloorAndRealTimePlan.md).** See [Foundations](./00-foundations.md) for §0.2–0.4 shared context.
+> **Prev:** [Phase 13 — Administration & Reference Data](./phase-13-administration-reference-data.md) · **Next:** [Back Matter — Dependencies, Roadmap, Gaps & Appendices](./back-matter.md)
+
+---
+
+*The convergence phase: three-route E2E, PLC commissioning support, UAT, trial, production.*
+
+## Business Overview
+- **Objective:** verify all three routes end-to-end, support PLC commissioning, run UAT, and release for trial then production.
+- **User roles:** QA, Ops team, PLC/commissioning engineers, PM.
+- **Entry conditions:** Phases 1–13 delivered (at least critical path); staging environment.
+- **Exit conditions:** signed-off UAT at window close (Sep 30); on-line trial + production scheduled post-sign-off (Q4 2026, TBD).
+
+## Scope
+- **E2E FL1 standalone (FW-120):** Rod received → planned → scheduled → check-in → active run → SPC → weld → complete → spool alpha → shift summary. Verify INFLAT set/cleared, PLC push logged (simulate/commissioning), weld traceability, SPC records.
+- **E2E FL2 standalone (FW-121):** spool → FL2 check-in (historical profile) → roll adjust → coil completion → skid close.
+- **E2E FL3 hybrid (FW-122):** single acknowledgment → continuous run → no intermediate alpha → weld → coil; FL1/FL2 unavailable.
+- **PLC commissioning:** switch `SimulatePLCTagPush`→live; confirm OPC tag paths with Tim O./engineer; validate push/clear + live AGC feed.
+- **UAT (FW-123):** staging (devual-uadev001) with mock SignalR + simulate PLC; clickable demo for Tim O./Shannon R./ops; resolve Critical OQs (OQ-1, OQ-10, OQ-14, OQ-15, OQ-18, OQ-27, OQ-35, OQ-36, OQ-45, OQ-51, OQ-52) before sign-off.
+
+## Testing / Deliverables
+- Three green E2E route runs; alpha genealogy Rod→Spool→Coil→Skid; PLC audit; UAT sign-off; trial + production releases.
+
+**OQ blockers:** all Critical OQs must close before UAT sign-off. **Stories:** FW-120, FW-121, FW-122, FW-123.

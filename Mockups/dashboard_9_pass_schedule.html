@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>Pass Schedule · PS-1100-FL3-003</title>
+<link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
+<style>
+  :root { --color-purple: #6930c3; }
+  body { min-height: 1024px; }
+  .dashboard { height: 1024px; }
+  .mono { font-family: var(--font-mono); }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 24px;
+    height: 72px;
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font-sans);
+  }
+  .back-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .back-btn svg { width: 14px; height: 14px; }
+  .admin-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .admin-chip svg { width: 13px; height: 13px; }
+  .header h1 { margin: 0; font-size: 22px; font-weight: 500; }
+  .header-meta {
+    display: flex;
+    gap: 24px;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    align-items: center;
+  }
+  .header-meta strong { color: var(--color-text-primary); font-weight: 500; }
+
+  /* Metadata strip */
+  .meta-strip {
+    display: grid;
+    grid-template-columns: 2.2fr 1fr 1fr 0.8fr auto;
+    gap: 18px;
+    padding: 14px 24px;
+    align-items: center;
+    height: 90px;
+  }
+  .meta-cell { display: flex; flex-direction: column; gap: 4px; }
+  .meta-label { font-size: 11px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.4px; }
+  .meta-value { font-size: 17px; font-weight: 500; color: var(--color-text-primary); }
+  .meta-value.mono { font-family: var(--font-mono); }
+  .meta-description { font-size: 13px; color: var(--color-text-secondary); line-height: 1.35; }
+  .status-active-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px;
+    background: var(--color-background-success);
+    color: var(--color-text-success);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    width: fit-content;
+  }
+  .status-active-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-green); }
+  .status-draft-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px;
+    background: var(--color-background-draft);
+    color: var(--color-text-draft);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    width: fit-content;
+  }
+  .status-draft-badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-purple); }
+  .meta-actions { display: flex; gap: 8px; align-items: center; }
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    border-radius: var(--border-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .icon-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  /* Main row */
+  .main-row {
+    display: grid;
+    grid-template-columns: 1.9fr 1fr;
+    gap: 12px;
+    height: 500px;
+  }
+  .section {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+  }
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .section-title { font-size: 15px; font-weight: 500; }
+  .section-hint { font-size: 12px; color: var(--color-text-tertiary); }
+
+  /* Components table */
+  .components-table-wrap {
+    flex: 1;
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+  }
+  .components-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .components-table thead { background: var(--color-background-secondary); }
+  .components-table th { text-align: left; padding: 11px 14px; font-weight: 500; color: var(--color-text-secondary); font-size: 12px; }
+  .components-table tbody tr { border-top: 0.5px solid var(--color-border-tertiary); }
+  .components-table tbody tr:hover { background: var(--color-background-secondary); }
+  .components-table tbody tr.bypass td.component-cell,
+  .components-table tbody tr.bypass td.param-cell { opacity: 0.45; }
+  .components-table td { padding: 10px 14px; vertical-align: middle; }
+  .component-cell { font-weight: 500; }
+  .component-line-tag {
+    display: inline-block;
+    padding: 1px 7px;
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    margin-right: 8px;
+    font-family: var(--font-sans);
+  }
+
+  /* Toggle switch */
+  .toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: var(--color-background-secondary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: 12px;
+    cursor: pointer;
+    display: inline-block;
+    transition: background 0.15s;
+  }
+  .toggle::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: #ffffff;
+    border-radius: 50%;
+    transition: left 0.15s, background 0.15s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  .toggle.on { background: var(--color-green); border-color: var(--color-green); }
+  .toggle.on::after { left: 22px; }
+  .toggle.locked { cursor: not-allowed; opacity: 0.7; }
+
+  .param-input {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 13px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: 6px;
+    outline: none;
+    width: 110px;
+  }
+  .param-input:focus { border-color: var(--color-blue); box-shadow: 0 0 0 2px rgba(24, 95, 165, 0.18); }
+  .param-input.generated { border-color: var(--color-purple); background: var(--color-background-draft); }
+  .param-row { display: inline-flex; gap: 8px; align-items: center; }
+  .param-sep { color: var(--color-text-tertiary); font-size: 11px; font-family: var(--font-sans); }
+  .bypass-label { color: var(--color-text-tertiary); font-style: italic; font-size: 12px; }
+
+  /* Targets sidebar */
+  .target-group { display: flex; flex-direction: column; gap: 14px; flex: 1; }
+  .target-item { background: var(--color-background-secondary); padding: 12px 14px; border-radius: var(--border-radius-md); }
+  .target-item.generated { background: var(--color-background-draft); }
+  .target-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .target-label { font-size: 13px; font-weight: 500; }
+  .target-unit { font-size: 11px; color: var(--color-text-tertiary); font-family: var(--font-mono); }
+  .target-inputs { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
+  .target-inputs.single { grid-template-columns: 1fr; }
+  .target-inputs .pm { font-size: 12px; color: var(--color-text-secondary); font-family: var(--font-mono); }
+  .target-input {
+    height: 36px;
+    padding: 0 10px;
+    font-size: 14px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    outline: none;
+    text-align: center;
+  }
+  .target-input:focus { border-color: var(--color-blue); box-shadow: 0 0 0 2px rgba(24, 95, 165, 0.18); }
+  .target-input.generated { border-color: var(--color-purple); background: var(--color-background-draft); }
+  .target-inputs-speed { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
+  .target-helper { font-size: 11px; color: var(--color-text-tertiary); margin-top: 6px; }
+
+  /* Rod / input specs */
+  .rod-specs-panel {
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+  }
+  .rod-specs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .rod-specs-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .rod-specs-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    background: var(--color-background-primary);
+    color: var(--color-text-tertiary);
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .rod-specs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 14px;
+  }
+  .rod-spec-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .rod-spec-key {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+  .rod-spec-val {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+  .rod-spec-val.mono { font-family: var(--font-mono); }
+
+  /* History section */
+  .history-section { height: 200px; display: flex; flex-direction: column; }
+  .history-tabs { display: flex; gap: 6px; margin-bottom: 12px; border-bottom: 1px solid var(--color-border-tertiary); }
+  .history-tab {
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    background: transparent;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    outline: none;
+  }
+  .history-tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-blue); }
+  .history-list { flex: 1; display: flex; flex-direction: column; gap: 6px; overflow: auto; }
+  .history-entry {
+    display: grid;
+    grid-template-columns: 140px 180px 1fr 120px;
+    gap: 16px;
+    padding: 9px 14px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    align-items: center;
+  }
+  .history-time { font-family: var(--font-mono); color: var(--color-text-secondary); font-size: 12px; }
+  .history-user { font-weight: 500; }
+  .history-change { font-family: var(--font-mono); font-size: 12px; }
+  .history-change .arrow { color: var(--color-text-tertiary); margin: 0 4px; }
+  .history-change .from { color: var(--color-text-tertiary); text-decoration: line-through; }
+  .history-change .to { color: var(--color-text-primary); font-weight: 500; }
+  .history-reason { font-size: 12px; padding: 3px 9px; background: var(--color-background-primary); color: var(--color-text-secondary); border-radius: 4px; text-align: center; font-weight: 500; }
+
+  /* Footer */
+  .footer { display: flex; justify-content: space-between; align-items: center; padding: 14px 22px; height: 74px; }
+  .footer-status { display: flex; gap: 16px; align-items: center; font-size: 13px; color: var(--color-text-secondary); }
+  .unsaved-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 11px;
+    background: var(--color-background-warning);
+    color: var(--color-text-warning);
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .unsaved-indicator .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-amber); }
+  .draft-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 11px;
+    background: var(--color-background-draft);
+    color: var(--color-text-draft);
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .draft-indicator .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-purple); }
+  .footer-actions { display: flex; gap: 10px; }
+  .btn {
+    height: 44px;
+    padding: 0 20px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn svg { width: 15px; height: 15px; }
+  .btn-primary { background: var(--color-blue); border-color: var(--color-blue); color: #ffffff; padding: 0 24px; }
+  .btn-primary:hover { background: #13497d; }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-primary:disabled:hover { background: var(--color-blue); }
+  .btn-generate { background: var(--color-background-draft); border-color: var(--color-purple); color: var(--color-text-draft); }
+  .btn-generate:hover { background: #e8d9fc; }
+  .btn-danger { color: var(--color-text-danger); border-color: var(--color-border-secondary); }
+  .btn-danger:hover { background: var(--color-background-danger); border-color: var(--color-red); }
+  .btn-save-active { background: var(--color-green); border-color: var(--color-green); color: #ffffff; padding: 0 24px; }
+  .btn-save-active:hover { background: #177a5a; }
+
+  /* ─── GENERATE MODAL ─── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.52);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: auto; }
+  .modal {
+    background: var(--color-background-primary);
+    border-radius: var(--border-radius-lg);
+    width: 960px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.30);
+    overflow: hidden;
+    transform: translateY(12px);
+    transition: transform 0.18s ease;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 22px 28px 18px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .modal-header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+  .modal-header-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--color-background-draft);
+    color: var(--color-purple);
+    border-radius: var(--border-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .modal-header-icon svg { width: 18px; height: 18px; }
+  .modal-header h2 { margin: 0; font-size: 18px; font-weight: 600; }
+  .modal-header p { margin: 2px 0 0; font-size: 13px; color: var(--color-text-secondary); }
+  .modal-close-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--color-border-secondary);
+    background: transparent;
+    color: var(--color-text-secondary);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .modal-close-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+
+  .modal-body {
+    display: grid;
+    grid-template-columns: 320px 1px 1fr;
+    min-height: 440px;
+  }
+
+  /* Left: inputs panel */
+  .modal-inputs {
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .modal-divider { background: var(--color-border-tertiary); }
+
+  .form-field { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.4px; }
+  .form-input {
+    height: 40px;
+    padding: 0 12px;
+    font-size: 14px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    outline: none;
+    width: 100%;
+  }
+  .form-input:focus { border-color: var(--color-purple); box-shadow: 0 0 0 2px rgba(105, 48, 195, 0.16); }
+  .form-input.error { border-color: var(--color-red); }
+  .form-select {
+    height: 40px;
+    padding: 0 12px;
+    font-size: 14px;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    outline: none;
+    width: 100%;
+    cursor: pointer;
+  }
+  .form-select:focus { border-color: var(--color-purple); box-shadow: 0 0 0 2px rgba(105, 48, 195, 0.16); }
+  .form-error { font-size: 12px; color: var(--color-text-danger); display: none; }
+  .form-error.show { display: block; }
+
+  .alloy-info-box {
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 2px;
+  }
+  .alloy-info-row { display: flex; justify-content: space-between; align-items: center; }
+  .alloy-info-row strong { color: var(--color-text-primary); font-family: var(--font-mono); }
+
+  .btn-run {
+    height: 44px;
+    background: var(--color-purple);
+    border: none;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.12s;
+    margin-top: 4px;
+  }
+  .btn-run:hover { background: #5620a0; }
+  .btn-run svg { width: 16px; height: 16px; }
+
+  /* Right: results panel */
+  .modal-results {
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+  }
+
+  .results-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-tertiary);
+    font-size: 14px;
+    text-align: center;
+    gap: 14px;
+  }
+  .results-empty svg { width: 40px; height: 40px; opacity: 0.3; }
+
+  .results-content { display: flex; flex-direction: column; gap: 14px; }
+
+  /* Calc summary chips */
+  .calc-summary {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .calc-chip {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 14px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    min-width: 110px;
+  }
+  .calc-chip-label { font-size: 10px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.4px; }
+  .calc-chip-value { font-size: 15px; font-weight: 600; font-family: var(--font-mono); color: var(--color-text-primary); }
+  .calc-chip-sub { font-size: 11px; color: var(--color-text-secondary); }
+
+  /* Results component table */
+  .result-section-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-tertiary);
+    margin-bottom: 6px;
+  }
+  .result-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .result-table thead { background: var(--color-background-secondary); }
+  .result-table th { text-align: left; padding: 8px 12px; font-weight: 500; color: var(--color-text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .result-table tbody tr { border-top: 0.5px solid var(--color-border-tertiary); }
+  .result-table td { padding: 9px 12px; vertical-align: middle; font-family: var(--font-mono); font-size: 13px; }
+  .result-table td.label-col { font-family: var(--font-sans); font-weight: 500; color: var(--color-text-primary); }
+  .result-table td.label-col .line-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 500;
+    margin-right: 6px;
+    font-family: var(--font-sans);
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-sans);
+  }
+  .status-pill.active { background: var(--color-background-success); color: var(--color-text-success); }
+  .status-pill.bypass { background: var(--color-background-secondary); color: var(--color-text-tertiary); }
+  .status-pill.locked { background: var(--color-background-info); color: var(--color-text-info); }
+  .status-pill .dot { width: 5px; height: 5px; border-radius: 50%; }
+  .status-pill.active .dot { background: var(--color-green); }
+  .status-pill.bypass .dot { background: var(--color-gray); }
+  .status-pill.locked .dot { background: var(--color-blue); }
+
+  /* Warnings */
+  .warnings-list { display: flex; flex-direction: column; gap: 6px; }
+  .warning-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--color-background-warning);
+    color: var(--color-text-warning);
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .warning-item.error { background: var(--color-background-danger); color: var(--color-text-danger); }
+  .warning-item.info { background: var(--color-background-info); color: var(--color-text-info); }
+  .warning-item svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; }
+
+  .route-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: var(--color-background-draft);
+    color: var(--color-text-draft);
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* Modal footer */
+  .modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 28px;
+    border-top: 0.5px solid var(--color-border-tertiary);
+    background: var(--color-background-secondary);
+  }
+  .modal-footer-hint { font-size: 12px; color: var(--color-text-tertiary); }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <div class="header panel">
+    <div class="header-left">
+      <button class="back-btn" onclick="window.location.href='dashboard_9a_schedule_list.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        All schedules
+      </button>
+      <span class="admin-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Operations Manager
+      </span>
+      <h1>Pass Schedule Management</h1>
+    </div>
+    <div class="header-meta">
+      <span>Editing as <strong>Tim O.</strong></span>
+    </div>
+  </div>
+
+  <div class="meta-strip panel">
+    <div class="meta-cell">
+      <span class="meta-label">Schedule ID</span>
+      <span class="meta-value mono" id="meta-schedule-id">PS-1100-FL3-003</span>
+      <span class="meta-description" id="meta-description" style="margin-top: 2px;">1100 rod &rarr; 0.110&Prime; &times; 0.625&Prime; (hybrid FL3)</span>
+    </div>
+    <div class="meta-cell">
+      <span class="meta-label">Alloy</span>
+      <span class="meta-value" id="meta-alloy">1100</span>
+    </div>
+    <div class="meta-cell">
+      <span class="meta-label">Line</span>
+      <span class="meta-value" id="meta-line">FL3</span>
+    </div>
+    <div class="meta-cell">
+      <span class="meta-label">Status</span>
+      <span class="status-active-badge" id="meta-status-badge">
+        <span class="dot"></span>
+        Active
+      </span>
+    </div>
+    <div class="meta-actions">
+      <button class="icon-btn" title="Copy schedule">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </button>
+      <button class="icon-btn" title="View full history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </button>
+      <button class="icon-btn" title="More options">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="main-row">
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Component configuration</span>
+        <span class="section-hint">Toggle components on / off &middot; set die or roll parameters</span>
+      </div>
+
+      <div class="components-table-wrap">
+        <table class="components-table">
+          <thead>
+            <tr>
+              <th style="width: 28%;">Component</th>
+              <th style="width: 14%;">Active</th>
+              <th style="width: 58%;">Parameters</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr id="row-db1">
+              <td class="component-cell"><span class="component-line-tag">FL1</span>DB1</td>
+              <td><span class="toggle on" id="toggle-db1"></span></td>
+              <td class="param-cell" id="param-db1">
+                <span class="param-row">
+                  <span class="param-sep">Die</span>
+                  <input class="param-input" id="db1-die" type="text" value='0.340"'>
+                </span>
+              </td>
+            </tr>
+            <tr id="row-db2">
+              <td class="component-cell"><span class="component-line-tag">FL1</span>DB2</td>
+              <td><span class="toggle on" id="toggle-db2"></span></td>
+              <td class="param-cell" id="param-db2">
+                <span class="param-row">
+                  <span class="param-sep">Die</span>
+                  <input class="param-input" id="db2-die" type="text" value='0.310"'>
+                </span>
+              </td>
+            </tr>
+            <tr id="row-fm1">
+              <td class="component-cell"><span class="component-line-tag">FL1</span>FM1 12" mill</td>
+              <td><span class="toggle on" id="toggle-fm1"></span></td>
+              <td class="param-cell" id="param-fm1">
+                <span class="param-row">
+                  <span class="param-sep">Gap</span>
+                  <input class="param-input" id="fm1-gap" type="text" value='0.112"'>
+                  <span class="param-sep">Width</span>
+                  <input class="param-input" id="fm1-width" type="text" value='0.630"'>
+                </span>
+              </td>
+            </tr>
+            <tr id="row-fm2-8" class="bypass">
+              <td class="component-cell"><span class="component-line-tag">FL2</span>8" Roller</td>
+              <td><span class="toggle" id="toggle-fm2-8"></span></td>
+              <td class="param-cell" id="param-fm2-8">
+                <span class="bypass-label">Bypassed &middot; no parameters</span>
+              </td>
+            </tr>
+            <tr id="row-fm2-s1">
+              <td class="component-cell"><span class="component-line-tag">FL2</span>6" Roller S1</td>
+              <td><span class="toggle on" id="toggle-fm2-s1"></span></td>
+              <td class="param-cell" id="param-fm2-s1">
+                <span class="param-row">
+                  <span class="param-sep">Gap</span>
+                  <input class="param-input" id="fm2-s1-gap" type="text" value='0.0164"'>
+                </span>
+              </td>
+            </tr>
+            <tr id="row-fm2-s2">
+              <td class="component-cell">
+                <span class="component-line-tag">FL2</span>6" Roller S2
+              </td>
+              <td><span class="toggle on" id="toggle-fm2-s2"></span></td>
+              <td class="param-cell" id="param-fm2-s2">
+                <span class="param-row">
+                  <span class="param-sep">Gap</span>
+                  <input class="param-input" id="fm2-s2-gap" type="text" value='0.0162"'>
+                </span>
+              </td>
+            </tr>
+            <tr id="row-edger-s2">
+              <td class="component-cell" style="padding-left: 28px; color: var(--color-text-secondary);">
+                <span class="component-line-tag">FL2</span>Edger (S2)
+              </td>
+              <td><span class="toggle on" id="toggle-edger-s2"></span></td>
+              <td class="param-cell" id="param-edger-s2">
+                <span class="param-row">
+                  <span class="param-sep">Type</span>
+                  <select class="param-input" id="edger-s2-type" style="width: 140px; padding-right: 10px;">
+                    <option value="round">Round edge</option>
+                    <option value="flat">Flat edge</option>
+                    <option value="bevel">Bevel edge</option>
+                  </select>
+                </span>
+              </td>
+            </tr>
+            <tr id="row-fm2-s3">
+              <td class="component-cell">
+                <span class="component-line-tag">FL2</span>6" Roller S3
+                <span style="font-size:10px; color: var(--color-text-tertiary); margin-left:4px;">(mandatory)</span>
+              </td>
+              <td><span class="toggle on locked" id="toggle-fm2-s3" title="Cannot bypass"></span></td>
+              <td class="param-cell" id="param-fm2-s3">
+                <span class="param-row">
+                  <span class="param-sep">Gap</span>
+                  <input class="param-input" id="fm2-s3-gap" type="text" value='0.0160"'>
+                  <span class="param-sep">final</span>
+                </span>
+              </td>
+            </tr>
+            <tr id="row-edger-s3">
+              <td class="component-cell" style="padding-left: 28px; color: var(--color-text-secondary);">
+                <span class="component-line-tag">FL2</span>Edger (S3)
+              </td>
+              <td><span class="toggle on" id="toggle-edger-s3"></span></td>
+              <td class="param-cell" id="param-edger-s3">
+                <span class="param-row">
+                  <span class="param-sep">Type</span>
+                  <select class="param-input" id="edger-s3-type" style="width: 140px; padding-right: 10px;">
+                    <option value="round">Round edge</option>
+                    <option value="flat">Flat edge</option>
+                    <option value="bevel">Bevel edge</option>
+                  </select>
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Targets &amp; tolerances</span>
+        <span class="section-hint">Applied to all runs</span>
+      </div>
+
+      <div class="rod-specs-panel">
+        <div class="rod-specs-header">
+          <span class="rod-specs-title">Input rod specification</span>
+          <span class="rod-specs-badge">Read-only</span>
+        </div>
+        <div class="rod-specs-grid">
+          <div class="rod-spec-field">
+            <span class="rod-spec-key">Diameter</span>
+            <span class="rod-spec-val mono" id="rod-spec-dia">0.375"</span>
+          </div>
+          <div class="rod-spec-field">
+            <span class="rod-spec-key">Alloy</span>
+            <span class="rod-spec-val" id="rod-spec-alloy">1100</span>
+          </div>
+          <div class="rod-spec-field">
+            <span class="rod-spec-key">Temper</span>
+            <span class="rod-spec-val mono" id="rod-spec-temper">H19</span>
+          </div>
+          <div class="rod-spec-field">
+            <span class="rod-spec-key">Condition</span>
+            <span class="rod-spec-val" id="rod-spec-cond">Hard drawn</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="target-group">
+        <div class="target-item" id="target-gauge-item">
+          <div class="target-head">
+            <span class="target-label">Output gauge</span>
+            <span class="target-unit">inches</span>
+          </div>
+          <div class="target-inputs">
+            <input class="target-input" id="target-gauge" type="text" value="0.110">
+            <span class="pm">&plusmn;</span>
+            <input class="target-input" id="target-gauge-tol" type="text" value="0.002">
+          </div>
+          <div class="target-helper">Post-FM1 measurement</div>
+        </div>
+
+        <div class="target-item" id="target-width-item">
+          <div class="target-head">
+            <span class="target-label">Output width</span>
+            <span class="target-unit">inches</span>
+          </div>
+          <div class="target-inputs">
+            <input class="target-input" id="target-width" type="text" value="0.625">
+            <span class="pm">&plusmn;</span>
+            <input class="target-input" id="target-width-tol" type="text" value="0.005">
+          </div>
+          <div class="target-helper">Post-edger measurement</div>
+        </div>
+
+        <div class="target-item" id="target-speed-item">
+          <div class="target-head">
+            <span class="target-label">Line speed</span>
+            <span class="target-unit">FPM</span>
+          </div>
+          <div class="target-inputs-speed">
+            <input class="target-input" id="target-speed-min" type="text" value="1,600">
+            <span class="pm">&ndash;</span>
+            <input class="target-input" id="target-speed-max" type="text" value="1,800">
+          </div>
+          <div class="target-helper">Acceptable operating range</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="section history-section">
+    <div class="section-header">
+      <div style="display: flex; gap: 14px; align-items: baseline;">
+        <span class="section-title">Change history</span>
+        <span class="section-hint">All parameter changes are logged with reason codes</span>
+      </div>
+      <div style="display: flex; gap: 16px; font-size: 12px; color: var(--color-text-tertiary);">
+        <span>Showing last 5</span>
+        <a href="#" style="color: var(--color-text-info); text-decoration: none; font-weight: 500;">View all &rarr;</a>
+      </div>
+    </div>
+
+    <div class="history-tabs">
+      <button class="history-tab active">Overrides</button>
+      <button class="history-tab">Schedule edits</button>
+      <button class="history-tab">Acknowledgments</button>
+    </div>
+
+    <div class="history-list">
+      <div class="history-entry">
+        <span class="history-time">Apr 21 08:30</span>
+        <span class="history-user">Tim O.</span>
+        <span class="history-change">DB2 die <span class="from">0.310"</span><span class="arrow">&rarr;</span><span class="to">0.308"</span></span>
+        <span class="history-reason">Die wear</span>
+      </div>
+      <div class="history-entry">
+        <span class="history-time">Apr 19 14:12</span>
+        <span class="history-user">Bob S.</span>
+        <span class="history-change">FM1 gap <span class="from">0.112"</span><span class="arrow">&rarr;</span><span class="to">0.111"</span></span>
+        <span class="history-reason">SPC drift</span>
+      </div>
+      <div class="history-entry">
+        <span class="history-time">Apr 18 11:50</span>
+        <span class="history-user">Tim O.</span>
+        <span class="history-change">Edger type <span class="from">Square</span><span class="arrow">&rarr;</span><span class="to">Round</span></span>
+        <span class="history-reason">Order spec</span>
+      </div>
+      <div class="history-entry">
+        <span class="history-time">Apr 16 06:20</span>
+        <span class="history-user">Bob S.</span>
+        <span class="history-change">FL2 8" Roller <span class="from">active</span><span class="arrow">&rarr;</span><span class="to">bypass</span></span>
+        <span class="history-reason">Process update</span>
+      </div>
+      <div class="history-entry">
+        <span class="history-time">Apr 14 09:05</span>
+        <span class="history-user">Tim O.</span>
+        <span class="history-change">DB1 die <span class="from">0.345"</span><span class="arrow">&rarr;</span><span class="to">0.340"</span></span>
+        <span class="history-reason">Campaign start</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer panel">
+    <div class="footer-status">
+      <span class="unsaved-indicator" id="footer-unsaved">
+        <span class="dot"></span>
+        Unsaved changes
+      </span>
+      <span class="draft-indicator" id="footer-draft" style="display: none;">
+        <span class="dot"></span>
+        Generated draft &mdash; pending review
+      </span>
+      <span id="footer-saved-by">Last saved Apr 20, 2026 at 03:18 PM by <strong style="color: var(--color-text-primary);">Tim O.</strong></span>
+    </div>
+    <div class="footer-actions">
+      <button class="btn btn-generate" id="open-gen-modal-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Generate from Specs
+      </button>
+      <button class="btn btn-danger">Deactivate</button>
+      <button class="btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy schedule
+      </button>
+      <button class="btn" id="discard-btn">Discard changes</button>
+      <button class="btn btn-primary" id="save-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save changes
+      </button>
+      <button class="btn btn-save-active" id="save-active-btn" style="display: none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Save as active
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ─── GENERATE FROM SPECS MODAL ─── -->
+<div class="modal-overlay" id="gen-modal-overlay">
+  <div class="modal">
+
+    <div class="modal-header">
+      <div>
+        <div class="modal-header-title">
+          <div class="modal-header-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <h2>Generate Pass Schedule From Specs</h2>
+        </div>
+        <p>Algorithm calculates die sizes, roll gaps, and component activation from product dimensions. Review and adjust before saving.</p>
+      </div>
+      <button class="modal-close-btn" id="modal-close-btn">&times;</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- Left: inputs -->
+      <div class="modal-inputs">
+
+        <div class="form-field">
+          <label class="form-label">Alloy</label>
+          <select class="form-select" id="gen-alloy">
+            <option value="1100">1100</option>
+            <option value="1350">1350</option>
+            <option value="3003">3003</option>
+            <option value="5052">5052</option>
+            <option value="6061">6061</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Incoming rod diameter (inches)</label>
+          <input class="form-input" id="gen-rod-dia" type="text" placeholder='e.g. 0.375' value="0.375">
+          <span class="form-error" id="err-rod-dia">Enter a valid diameter (0.100 – 0.750")</span>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Target gauge — output thickness (inches)</label>
+          <input class="form-input" id="gen-gauge" type="text" placeholder='e.g. 0.110' value="0.110">
+          <span class="form-error" id="err-gauge">Enter a valid gauge (0.010 – 0.500")</span>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Target width (inches)</label>
+          <input class="form-input" id="gen-width" type="text" placeholder='e.g. 0.625' value="0.625">
+          <span class="form-error" id="err-width">Enter a valid width (0.050 – 3.000")</span>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">Edge type</label>
+          <select class="form-select" id="gen-edge">
+            <option value="round">Round edge</option>
+            <option value="flat">Flat edge</option>
+            <option value="bevel">Bevel edge</option>
+          </select>
+        </div>
+
+        <!-- Alloy parameters info box -->
+        <div class="alloy-info-box" id="alloy-info-box">
+          <div class="alloy-info-row"><span>Max reduction / pass</span><strong id="info-max-red">26%</strong></div>
+          <div class="alloy-info-row"><span>Spring-back factor</span><strong id="info-springback">0.98</strong></div>
+          <div class="alloy-info-row"><span>Gauge tolerance default</span><strong id="info-gauge-tol">&plusmn; 0.003"</strong></div>
+          <div class="alloy-info-row"><span>Width tolerance default</span><strong id="info-width-tol">&plusmn; 0.010"</strong></div>
+        </div>
+
+        <button class="btn-run" id="gen-run-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Generate
+        </button>
+
+      </div>
+
+      <!-- Divider -->
+      <div class="modal-divider"></div>
+
+      <!-- Right: results -->
+      <div class="modal-results" id="modal-results">
+
+        <div class="results-empty" id="results-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <div>
+            <div style="font-weight: 500; margin-bottom: 4px;">No draft generated yet</div>
+            Enter specs on the left and click <strong>Generate</strong> to calculate the pass schedule.
+          </div>
+        </div>
+
+        <div class="results-content" id="results-content" style="display: none;">
+
+          <!-- Calculation summary chips -->
+          <div>
+            <div class="result-section-label">Calculation summary</div>
+            <div class="calc-summary" id="calc-chips"></div>
+          </div>
+
+          <!-- Component table -->
+          <div>
+            <div class="result-section-label">Generated component configuration</div>
+            <table class="result-table">
+              <thead>
+                <tr>
+                  <th style="width: 34%">Component</th>
+                  <th style="width: 22%">Status</th>
+                  <th>Calculated value</th>
+                </tr>
+              </thead>
+              <tbody id="result-table-body"></tbody>
+            </table>
+          </div>
+
+          <!-- Route mode + targets -->
+          <div style="display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap;">
+            <div>
+              <div class="result-section-label" style="margin-bottom: 5px;">Route mode</div>
+              <span class="route-pill" id="result-route-pill">—</span>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+              <div class="result-section-label" style="margin-bottom: 5px;">Output targets</div>
+              <div style="font-size: 13px; font-family: var(--font-mono); color: var(--color-text-secondary);" id="result-targets">—</div>
+            </div>
+          </div>
+
+          <!-- Warnings -->
+          <div id="warnings-section" style="display: none;">
+            <div class="result-section-label">Warnings &amp; notes</div>
+            <div class="warnings-list" id="warnings-list"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <span class="modal-footer-hint" id="modal-footer-hint">Review the generated values, then click Apply to populate the schedule.</span>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn" id="modal-cancel-btn">Cancel</button>
+        <button class="btn btn-primary" id="modal-apply-btn" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg>
+          Apply to schedule
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function () {
+
+  /* ─── Clock ─── */
+  function pad(n) { return String(n).padStart(2, "0"); }
+  function updateClock() {
+    var now = new Date();
+    var h = now.getHours(), m = pad(now.getMinutes());
+    var ampm = h < 12 ? "AM" : "PM";
+    var h12 = h % 12 || 12;
+    var clockEl = document.getElementById("clock");
+    if (clockEl) clockEl.textContent = pad(h12) + ":" + m + " " + ampm;
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var dateEl = document.getElementById("date");
+    if (dateEl) dateEl.textContent = months[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  /* ─── Toggle switches (main form) ─── */
+  document.querySelectorAll(".toggle:not(.locked)").forEach(function (t) {
+    t.addEventListener("click", function () {
+      t.classList.toggle("on");
+      var row = t.closest("tr");
+      if (row) row.classList.toggle("bypass", !t.classList.contains("on"));
+    });
+  });
+
+  /* ─── History tabs ─── */
+  document.querySelectorAll(".history-tab").forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      document.querySelectorAll(".history-tab").forEach(function (t) { t.classList.remove("active"); });
+      tab.classList.add("active");
+    });
+  });
+
+  /* ─── Alloy temper / condition lookup (for rod specs panel) ─── */
+  var ALLOY_TEMPER    = { "1100": "H19", "1350": "H14", "3003": "H18", "5052": "H34", "6061": "T8" };
+  var ALLOY_CONDITION = { "1100": "Hard drawn", "1350": "Hard drawn", "3003": "Hard drawn", "5052": "Strain hardened", "6061": "Solution treated" };
+
+  /* ─── Alloy data table ─── */
+  var ALLOY_DATA = {
+    "1100": { maxRed: 0.26, springback: 0.98, gaugeTol: 0.003, widthTol: 0.010, speedMin: 800,  speedMax: 2000 },
+    "1350": { maxRed: 0.22, springback: 0.97, gaugeTol: 0.002, widthTol: 0.008, speedMin: 600,  speedMax: 1600, weldingWire: true },
+    "3003": { maxRed: 0.24, springback: 0.98, gaugeTol: 0.004, widthTol: 0.012, speedMin: 700,  speedMax: 1800 },
+    "5052": { maxRed: 0.20, springback: 0.97, gaugeTol: 0.003, widthTol: 0.010, speedMin: 500,  speedMax: 1400 },
+    "6061": { maxRed: 0.18, springback: 0.96, gaugeTol: 0.003, widthTol: 0.010, speedMin: 400,  speedMax: 1200 }
+  };
+
+  /* ─── Alloy info box live update ─── */
+  var genAlloyEl = document.getElementById("gen-alloy");
+  function refreshAlloyInfo() {
+    var d = ALLOY_DATA[genAlloyEl.value];
+    if (!d) return;
+    document.getElementById("info-max-red").textContent     = (d.maxRed * 100).toFixed(0) + "%";
+    document.getElementById("info-springback").textContent  = d.springback.toFixed(2);
+    document.getElementById("info-gauge-tol").textContent   = "± " + d.gaugeTol.toFixed(3) + "\"";
+    document.getElementById("info-width-tol").textContent   = "± " + d.widthTol.toFixed(3) + "\"";
+  }
+  genAlloyEl.addEventListener("change", function () { refreshAlloyInfo(); clearResults(); });
+  refreshAlloyInfo();
+
+  /* ─── Modal open / close ─── */
+  var overlay = document.getElementById("gen-modal-overlay");
+  document.getElementById("open-gen-modal-btn").addEventListener("click", function () {
+    overlay.classList.add("open");
+  });
+  function closeModal() { overlay.classList.remove("open"); }
+  document.getElementById("modal-close-btn").addEventListener("click", closeModal);
+  document.getElementById("modal-cancel-btn").addEventListener("click", closeModal);
+  overlay.addEventListener("click", function (e) { if (e.target === overlay) closeModal(); });
+
+  /* ─── Clear results ─── */
+  function clearResults() {
+    document.getElementById("results-empty").style.display   = "";
+    document.getElementById("results-content").style.display = "none";
+    document.getElementById("modal-apply-btn").disabled      = true;
+    document.getElementById("modal-footer-hint").textContent = "Review the generated values, then click Apply to populate the schedule.";
+    lastResult = null;
+  }
+  document.getElementById("gen-rod-dia").addEventListener("input", clearResults);
+  document.getElementById("gen-gauge").addEventListener("input",   clearResults);
+  document.getElementById("gen-width").addEventListener("input",   clearResults);
+  document.getElementById("gen-edge").addEventListener("change",   clearResults);
+
+  var lastResult = null;
+
+  /* ─── Validation ─── */
+  function parsePositive(id, errId, min, max) {
+    var val = parseFloat(document.getElementById(id).value);
+    var errEl = document.getElementById(errId);
+    var inputEl = document.getElementById(id);
+    if (isNaN(val) || val < min || val > max) {
+      errEl.classList.add("show");
+      inputEl.classList.add("error");
+      return null;
+    }
+    errEl.classList.remove("show");
+    inputEl.classList.remove("error");
+    return val;
+  }
+
+  /* ─── Algorithm ─── */
+  function runAlgorithm() {
+    // Validate
+    var rodDia     = parsePositive("gen-rod-dia", "err-rod-dia", 0.100, 0.750);
+    var gauge      = parsePositive("gen-gauge",   "err-gauge",   0.010, 0.500);
+    var width      = parsePositive("gen-width",   "err-width",   0.050, 3.000);
+    if (rodDia === null || gauge === null || width === null) return;
+
+    var alloy    = genAlloyEl.value;
+    var edgeType = document.getElementById("gen-edge").value;
+    var d        = ALLOY_DATA[alloy] || ALLOY_DATA["1100"];
+
+    var warnings = [];
+    var errors   = [];
+    var notes    = [];
+
+    /* Step 1 — pre-flatten diameter */
+    var dPre = Math.sqrt(4 * gauge * width / Math.PI);
+
+    /* Step 2 — total area reduction */
+    var aRod  = Math.PI * Math.pow(rodDia / 2, 2);
+    var aPre  = Math.PI * Math.pow(dPre   / 2, 2);
+    var totalRed = (aRod - aPre) / aRod;
+
+    /* Guard: pre-flatten larger than rod */
+    if (dPre >= rodDia) {
+      notes.push({ type: "info", text: "Target dimensions require no wire drawing — rod diameter already within FM1 feed range. DB1 and DB2 bypassed." });
+    }
+
+    /* Step 3 — draw passes */
+    var db1Active = false, db2Active = false;
+    var db1Die = null, db2Die = null;
+
+    if (totalRed <= 0.02) {
+      /* No drawing needed */
+    } else if (totalRed <= d.maxRed) {
+      db1Active = true;
+      db1Die    = dPre;
+    } else if (totalRed <= d.maxRed * 2.0) {
+      db1Active = true;
+      db2Active = true;
+      var dInt  = Math.sqrt(rodDia * dPre);
+      db1Die    = dInt;
+      db2Die    = dPre;
+    } else {
+      db1Active = true;
+      db2Active = true;
+      var dInt  = Math.sqrt(rodDia * dPre);
+      db1Die    = dInt;
+      db2Die    = dPre;
+      errors.push({
+        type: "error",
+        text: "Total area reduction (" + (totalRed * 100).toFixed(1) + "%) exceeds 2× " + alloy + " alloy maximum (" + (d.maxRed * 200).toFixed(0) + "%). Pre-drawn round wire is required as input, or adjust target gauge/width."
+      });
+    }
+
+    /* Step 4 — die snapping (nearest 0.005") */
+    function snapDie(v) {
+      if (!v) return null;
+      return (Math.round(v / 0.005) * 0.005);
+    }
+    var db1DieSnapped = snapDie(db1Die);
+    var db2DieSnapped = snapDie(db2Die);
+    if (db1Active && db1Die && Math.abs(db1DieSnapped - db1Die) > 0.001) {
+      notes.push({ type: "info", text: "DB1 die snapped from calculated " + db1Die.toFixed(3) + "” to nearest 0.005\" increment (" + db1DieSnapped.toFixed(3) + "”). Verify against die inventory before saving." });
+    }
+    if (db2Active && db2Die && Math.abs(db2DieSnapped - db2Die) > 0.001) {
+      notes.push({ type: "info", text: "DB2 die snapped from calculated " + db2Die.toFixed(3) + "” to nearest 0.005\" increment (" + db2DieSnapped.toFixed(3) + "”). Verify against die inventory before saving." });
+    }
+
+    /* Step 5 — FM1 gap */
+    var fm1Gap    = gauge * d.springback;
+    var fm1Width  = width * (1 + (1 - d.springback));
+
+    /* Step 6 — FM2 requirement */
+    var aspectRatio  = width / gauge;
+    var isWeldWire   = !!d.weldingWire;
+    var fm2_8Active  = aspectRatio > 5.5 || isWeldWire;
+    var fm2S1Active  = aspectRatio > 7.0 || isWeldWire;
+    var fm2S2Active  = true;
+
+    var fm2_8Gap  = gauge * 1.06;
+    var fm2S1Gap  = gauge * 1.02;
+    var fm2S2Gap  = gauge * d.springback;
+
+    var routeMode = fm2_8Active ? "Hybrid FL3" : "Standalone FL1";
+
+    /* Warnings */
+    if (aspectRatio > 5.5) {
+      warnings.push({ type: "warning", text: "Aspect ratio " + aspectRatio.toFixed(2) + " (width/gauge > 5.5) — FM2 stands activated. Route mode set to Hybrid FL3." });
+    }
+    if (isWeldWire) {
+      warnings.push({ type: "warning", text: "1350 alloy detected — welding wire precision mode. All FM2 stands activated and tighter tolerances applied." });
+    }
+    if (aspectRatio > 10) {
+      warnings.push({ type: "warning", text: "Very high aspect ratio (" + aspectRatio.toFixed(1) + "). Verify FM2 capability with Maintenance before activating this schedule." });
+    }
+
+    var passCount = (db1Active ? 1 : 0) + (db2Active ? 1 : 0);
+
+    return {
+      alloy: alloy, edgeType: edgeType, rodDia: rodDia,
+      dPre: dPre, totalRed: totalRed, passCount: passCount, aspectRatio: aspectRatio,
+      db1Active: db1Active, db1Die: db1DieSnapped,
+      db2Active: db2Active, db2Die: db2DieSnapped,
+      fm1Gap: fm1Gap, fm1Width: fm1Width,
+      fm2_8Active: fm2_8Active, fm2_8Gap: fm2_8Gap,
+      fm2S1Active: fm2S1Active, fm2S1Gap: fm2S1Gap,
+      fm2S2Active: fm2S2Active, fm2S2Gap: fm2S2Gap,
+      routeMode: routeMode,
+      gauge: gauge, width: width,
+      gaugeTol: d.gaugeTol, widthTol: d.widthTol,
+      speedMin: d.speedMin, speedMax: d.speedMax,
+      warnings: warnings, errors: errors, notes: notes
+    };
+  }
+
+  /* ─── Format helpers ─── */
+  function fmt(n, dec) { return n.toFixed(dec !== undefined ? dec : 3) + "”"; }
+  function fmtPlain(n, dec) { return n.toFixed(dec !== undefined ? dec : 3); }
+
+  function pillHtml(active, locked) {
+    if (locked)  return '<span class="status-pill locked"><span class="dot"></span>Active (mandatory)</span>';
+    if (active)  return '<span class="status-pill active"><span class="dot"></span>Active</span>';
+    return '<span class="status-pill bypass"><span class="dot"></span>Bypassed</span>';
+  }
+
+  /* ─── Render results ─── */
+  function renderResults(r) {
+    document.getElementById("results-empty").style.display   = "none";
+    document.getElementById("results-content").style.display = "";
+
+    /* Calc chips */
+    var chips = [
+      { label: "Pre-flatten ⌀", value: fmt(r.dPre), sub: "required wire diameter" },
+      { label: "Area reduction", value: (r.totalRed * 100).toFixed(1) + "%", sub: "rod → pre-flatten" },
+      { label: "Draw passes", value: String(r.passCount), sub: r.passCount === 0 ? "no drawing needed" : (r.passCount === 1 ? "DB1 only" : "DB1 + DB2") },
+      { label: "Aspect ratio", value: r.aspectRatio.toFixed(2), sub: "width ÷ gauge" }
+    ];
+    document.getElementById("calc-chips").innerHTML = chips.map(function (c) {
+      return '<div class="calc-chip"><span class="calc-chip-label">' + c.label + '</span><span class="calc-chip-value">' + c.value + '</span><span class="calc-chip-sub">' + c.sub + '</span></div>';
+    }).join("");
+
+    /* Component table */
+    var edgeLabel = r.edgeType === "round" ? "Round edge" : r.edgeType === "flat" ? "Flat edge" : "Bevel edge";
+    var rows = [
+      { tag: "FL1", name: "DB1",          active: r.db1Active,   locked: false, value: r.db1Active  ? "Die " + fmt(r.db1Die)  : "—" },
+      { tag: "FL1", name: "DB2",          active: r.db2Active,   locked: false, value: r.db2Active  ? "Die " + fmt(r.db2Die)  : "—" },
+      { tag: "FL1", name: "FM1 12\" mill", active: true,          locked: false, value: "Gap " + fmt(r.fm1Gap) + "  Width " + fmt(r.fm1Width) },
+      { tag: "FL2", name: "8\" Roller",    active: r.fm2_8Active, locked: false, value: r.fm2_8Active  ? "Gap " + fmt(r.fm2_8Gap)  : "—" },
+      { tag: "FL2", name: "6\" Roller S1", active: r.fm2S1Active, locked: false, value: r.fm2S1Active  ? "Gap " + fmt(r.fm2S1Gap) : "—" },
+      { tag: "FL2", name: "6\" Roller S2", active: true,          locked: false, value: "Gap " + fmt(r.fm2S2Gap) },
+      { tag: "FL2", name: "↳ Edger (S2)", active: true,          locked: false, value: edgeLabel },
+      { tag: "FL2", name: "6\" Roller S3 (mandatory)", active: true, locked: true, value: "Gap " + fmt(r.fm2S2Gap * 0.99) },
+      { tag: "FL2", name: "↳ Edger (S3)", active: true,          locked: false, value: edgeLabel }
+    ];
+    document.getElementById("result-table-body").innerHTML = rows.map(function (row) {
+      return '<tr><td class="label-col"><span class="line-tag">' + row.tag + '</span>' + row.name + '</td><td>' + pillHtml(row.active, row.locked) + '</td><td>' + (row.active || row.locked ? '<span style="font-family:var(--font-mono);font-size:12px;">' + row.value + '</span>' : '<span style="color:var(--color-text-tertiary);font-style:italic;font-size:12px;">bypassed</span>') + '</td></tr>';
+    }).join("");
+
+    /* Route + targets */
+    document.getElementById("result-route-pill").textContent = r.routeMode;
+    document.getElementById("result-targets").innerHTML =
+      "Gauge: " + fmtPlain(r.gauge) + "” &plusmn; " + fmtPlain(r.gaugeTol) + "” &nbsp;&nbsp; " +
+      "Width: " + fmtPlain(r.width) + "” &plusmn; " + fmtPlain(r.widthTol) + "” &nbsp;&nbsp; " +
+      "Speed: " + r.speedMin + " &ndash; " + r.speedMax + " FPM";
+
+    /* Warnings, errors, notes */
+    var all = r.errors.concat(r.warnings).concat(r.notes);
+    var warnSection = document.getElementById("warnings-section");
+    if (all.length > 0) {
+      warnSection.style.display = "";
+      document.getElementById("warnings-list").innerHTML = all.map(function (w) {
+        var icon = w.type === "error"
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+          : w.type === "info"
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+        return '<div class="warning-item ' + w.type + '">' + icon + '<span>' + w.text + '</span></div>';
+      }).join("");
+    } else {
+      warnSection.style.display = "none";
+    }
+
+    /* Enable apply (unless hard error about impossible reduction AND we still want to allow) */
+    document.getElementById("modal-apply-btn").disabled = false;
+    if (r.errors.length > 0) {
+      document.getElementById("modal-footer-hint").textContent = "Errors found — review before applying. You can still apply to inspect the draft.";
+    } else {
+      document.getElementById("modal-footer-hint").textContent = "Review the generated values, then click Apply to populate the schedule.";
+    }
+  }
+
+  document.getElementById("gen-run-btn").addEventListener("click", function () {
+    lastResult = runAlgorithm();
+    if (lastResult) renderResults(lastResult);
+  });
+
+  /* ─── Apply to schedule ─── */
+  function setRowState(rowId, toggleId, paramId, active, paramHtml) {
+    var row    = document.getElementById(rowId);
+    var toggle = document.getElementById(toggleId);
+    if (!row || !toggle) return;
+    if (active) {
+      toggle.classList.add("on");
+      row.classList.remove("bypass");
+    } else {
+      toggle.classList.remove("on");
+      row.classList.add("bypass");
+    }
+    if (paramHtml !== undefined) {
+      document.getElementById(paramId).innerHTML = paramHtml;
+    }
+  }
+
+  function setInputVal(id, val, generated) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.value = val;
+    if (generated) { el.classList.add("generated"); }
+    else            { el.classList.remove("generated"); }
+  }
+
+  function applyToSchedule(r) {
+    /* DB1 */
+    setRowState("row-db1", "toggle-db1", "param-db1", r.db1Active,
+      r.db1Active
+        ? '<span class="param-row"><span class="param-sep">Die</span><input class="param-input generated" id="db1-die" type="text" value="' + fmtPlain(r.db1Die) + '&quot;"></span>'
+        : '<span class="bypass-label">Bypassed &middot; no parameters</span>'
+    );
+
+    /* DB2 */
+    setRowState("row-db2", "toggle-db2", "param-db2", r.db2Active,
+      r.db2Active
+        ? '<span class="param-row"><span class="param-sep">Die</span><input class="param-input generated" id="db2-die" type="text" value="' + fmtPlain(r.db2Die) + '&quot;"></span>'
+        : '<span class="bypass-label">Bypassed &middot; no parameters</span>'
+    );
+
+    /* FM1 */
+    document.getElementById("param-fm1").innerHTML =
+      '<span class="param-row"><span class="param-sep">Gap</span><input class="param-input generated" id="fm1-gap" type="text" value="' + fmtPlain(r.fm1Gap) + '&quot;"><span class="param-sep">Width</span><input class="param-input generated" id="fm1-width" type="text" value="' + fmtPlain(r.fm1Width) + '&quot;"></span>';
+
+    /* Edge */
+    var edgeLabel = r.edgeType === "round" ? "Round edge" : r.edgeType === "flat" ? "Flat edge" : "Bevel edge";
+    document.getElementById("param-edge").innerHTML =
+      '<span class="param-row"><span class="param-sep">Type</span><select class="param-input generated" id="edge-type" style="width:140px;padding-right:10px;"><option>' + edgeLabel + '</option></select></span>';
+
+    /* FM2 8" */
+    setRowState("row-fm2-8", "toggle-fm2-8", "param-fm2-8", r.fm2_8Active,
+      r.fm2_8Active
+        ? '<span class="param-row"><span class="param-sep">Gap</span><input class="param-input generated" id="fm2-8-gap" type="text" value="' + fmtPlain(r.fm2_8Gap) + '&quot;"></span>'
+        : '<span class="bypass-label">Bypassed &middot; no parameters</span>'
+    );
+
+    /* FM2 S1 */
+    setRowState("row-fm2-s1", "toggle-fm2-s1", "param-fm2-s1", r.fm2S1Active,
+      r.fm2S1Active
+        ? '<span class="param-row"><span class="param-sep">Gap</span><input class="param-input generated" id="fm2-s1-gap" type="text" value="' + fmtPlain(r.fm2S1Gap) + '&quot;"></span>'
+        : '<span class="bypass-label">Bypassed &middot; no parameters</span>'
+    );
+
+    /* FM2 S2 — always on, update gap */
+    document.getElementById("param-fm2-s2").innerHTML =
+      '<span class="param-row"><span class="param-sep">Gap</span><input class="param-input generated" id="fm2-s2-gap" type="text" value="' + fmtPlain(r.fm2S2Gap) + '&quot;"><span class="param-sep">final</span></span>';
+
+    /* Targets */
+    setInputVal("target-gauge",     fmtPlain(r.gauge),    true);
+    setInputVal("target-gauge-tol", fmtPlain(r.gaugeTol), true);
+    setInputVal("target-width",     fmtPlain(r.width),    true);
+    setInputVal("target-width-tol", fmtPlain(r.widthTol), true);
+    document.getElementById("target-gauge-item").classList.add("generated");
+    document.getElementById("target-width-item").classList.add("generated");
+    setInputVal("target-speed-min", r.speedMin, true);
+    setInputVal("target-speed-max", r.speedMax, true);
+
+    /* Rod specs panel */
+    document.getElementById("rod-spec-dia").textContent   = fmtPlain(r.rodDia, 3) + '"';
+    document.getElementById("rod-spec-alloy").textContent = r.alloy;
+    document.getElementById("rod-spec-temper").textContent = ALLOY_TEMPER[r.alloy]    || "H19";
+    document.getElementById("rod-spec-cond").textContent   = ALLOY_CONDITION[r.alloy] || "Hard drawn";
+
+    /* Meta strip */
+    document.getElementById("meta-alloy").textContent = r.alloy;
+    document.getElementById("meta-line").textContent  = r.routeMode === "Hybrid FL3" ? "FL3" : "FL1";
+    document.getElementById("meta-description").innerHTML =
+      r.alloy + " rod &rarr; " + fmtPlain(r.gauge) + "&Prime; &times; " + fmtPlain(r.width) + "&Prime; " +
+      (r.edgeType === "round" ? "round edge" : r.edgeType === "flat" ? "flat edge" : "bevel edge");
+
+    /* Status badge → Draft */
+    var badge = document.getElementById("meta-status-badge");
+    badge.className = "status-draft-badge";
+    badge.innerHTML = '<span class="dot"></span>Draft';
+
+    /* Footer */
+    document.getElementById("footer-unsaved").style.display = "none";
+    document.getElementById("footer-draft").style.display   = "";
+    document.getElementById("save-btn").style.display       = "none";
+    document.getElementById("save-active-btn").style.display = "";
+
+    closeModal();
+  }
+
+  document.getElementById("modal-apply-btn").addEventListener("click", function () {
+    if (lastResult) applyToSchedule(lastResult);
+  });
+
+  /* ─── Save as active ─── */
+  document.getElementById("save-active-btn").addEventListener("click", function () {
+    var badge = document.getElementById("meta-status-badge");
+    badge.className = "status-active-badge";
+    badge.innerHTML = '<span class="dot"></span>Active';
+    document.getElementById("footer-draft").style.display    = "none";
+    document.getElementById("footer-unsaved").style.display  = "";
+    document.getElementById("footer-unsaved").innerHTML      = '<span class="dot"></span>Saved as active';
+    document.getElementById("footer-saved-by").innerHTML     = 'Saved just now by <strong style="color:var(--color-text-primary);">Tim O.</strong>';
+    document.getElementById("save-btn").style.display        = "";
+    document.getElementById("save-active-btn").style.display = "none";
+    /* Clear generated highlights */
+    document.querySelectorAll(".generated").forEach(function (el) { el.classList.remove("generated"); });
+    document.querySelectorAll(".target-item").forEach(function (el) { el.classList.remove("generated"); });
+  });
+
+  /* ─── Discard changes ─── */
+  document.getElementById("discard-btn").addEventListener("click", function () {
+    location.reload();
+  });
+
+})();
+</script>
+
+<script src="flat-wire-topbar.js"></script>
+</body>
+</html>

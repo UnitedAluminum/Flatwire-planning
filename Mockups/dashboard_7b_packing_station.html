@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>Packing Station · FL2 · SK-00201</title>
+<link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
+<style>
+  body { min-height: 1024px; }
+  .dashboard { height: 1024px; }
+  .mono { font-family: var(--font-mono); }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 24px;
+    height: 72px;
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    text-decoration: none;
+  }
+  .back-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .back-btn svg { width: 14px; height: 14px; }
+  .station-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--color-background-secondary);
+    color: var(--color-text-secondary);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .header h1 { margin: 0; font-size: 22px; font-weight: 500; }
+  .header-meta {
+    display: flex;
+    gap: 24px;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    align-items: center;
+  }
+  .header-meta strong { color: var(--color-text-primary); font-weight: 500; }
+
+  /* ── Incoming strip ── */
+  .incoming-strip {
+    height: 100px;
+    background: var(--color-background-success);
+    border: 1px solid rgba(29, 158, 117, 0.3);
+    border-radius: var(--border-radius-lg);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .incoming-pulse {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--color-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #ffffff;
+    position: relative;
+  }
+  .incoming-pulse::after {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    border: 2px solid var(--color-green);
+    opacity: 0;
+    animation: ripple 2s ease-out infinite;
+  }
+  @keyframes ripple { 0% { opacity: 0.6; transform: scale(0.9); } 100% { opacity: 0; transform: scale(1.45); } }
+  @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  .incoming-pulse svg { width: 20px; height: 20px; }
+  .incoming-body { flex: 1; }
+  .incoming-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--color-text-success);
+    margin-bottom: 4px;
+  }
+  .incoming-alpha {
+    font-size: 26px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    line-height: 1;
+  }
+  .incoming-sub { font-size: 12px; color: var(--color-text-secondary); margin-top: 4px; }
+  .incoming-specs { display: flex; gap: 24px; flex-shrink: 0; }
+  .ispec { display: flex; flex-direction: column; gap: 3px; }
+  .ispec-label { font-size: 10px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.3px; }
+  .ispec-value { font-size: 14px; font-weight: 500; font-family: var(--font-mono); }
+  .incoming-skid {
+    border-left: 1px solid rgba(29, 158, 117, 0.25);
+    padding-left: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .incoming-skid-label { font-size: 11px; color: var(--color-text-secondary); }
+  .incoming-skid-value { font-size: 20px; font-weight: 500; font-family: var(--font-mono); }
+  .closing-chip {
+    padding: 3px 10px;
+    background: var(--color-background-warning);
+    color: var(--color-text-warning);
+    border-radius: var(--border-radius-md);
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  /* ── Shared section ── */
+  .section {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+  }
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .section-title { font-size: 14px; font-weight: 500; }
+  .section-hint { font-size: 11px; color: var(--color-text-tertiary); }
+  .section-badge {
+    padding: 3px 10px;
+    border-radius: var(--border-radius-md);
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .badge-warn { background: var(--color-background-warning); color: var(--color-text-warning); }
+  .badge-success { background: var(--color-background-success); color: var(--color-text-success); }
+  .badge-info { background: var(--color-background-info); color: var(--color-text-info); }
+
+  /* ── Main row ── */
+  .main-row {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 0.85fr;
+    gap: 12px;
+    height: 420px;
+  }
+
+  /* Coil verification */
+  .coil-alpha-block {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 14px;
+    background: var(--color-background-info);
+    border-radius: var(--border-radius-md);
+    border-left: 3px solid var(--color-blue);
+    margin-bottom: 10px;
+  }
+  .coil-alpha-label { font-size: 11px; color: var(--color-text-info); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; margin-bottom: 4px; }
+  .coil-alpha-value { font-size: 24px; font-weight: 500; font-family: var(--font-mono); line-height: 1; }
+  .coil-alpha-meta { font-size: 11px; color: var(--color-text-info); margin-top: 3px; }
+  .from-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: var(--color-background-success);
+    color: var(--color-text-success);
+    border-radius: var(--border-radius-md);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+    align-self: flex-start;
+  }
+
+  .spec-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .spec-tile { background: var(--color-background-secondary); padding: 7px 10px; border-radius: var(--border-radius-md); }
+  .spec-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 3px; }
+  .spec-value { font-size: 14px; font-weight: 500; font-family: var(--font-mono); }
+  .spec-value.plain { font-family: var(--font-sans); }
+
+  .weight-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: auto;
+  }
+  .weight-field { display: flex; flex-direction: column; gap: 3px; }
+  .weight-label { font-size: 11px; color: var(--color-text-secondary); }
+  .weight-label-req::after { content: " *"; color: var(--color-red); }
+  .weight-input {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    outline: none;
+    width: 100%;
+    color: var(--color-text-primary);
+  }
+  .weight-input:focus { border-color: var(--color-blue); box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.18); }
+  .weight-readonly {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    display: flex;
+    align-items: center;
+    color: var(--color-text-primary);
+    gap: 8px;
+  }
+  .calc-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    background: var(--color-background-primary);
+    color: var(--color-text-tertiary);
+    border-radius: 4px;
+    font-family: var(--font-sans);
+    font-weight: 400;
+    margin-left: auto;
+  }
+  .variance-pending { color: var(--color-text-tertiary); font-size: 13px; font-family: var(--font-sans); font-weight: 400; }
+
+  /* ── Skid assignment ── */
+  .skid-capacity-bar {
+    height: 6px;
+    background: var(--color-background-secondary);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .skid-capacity-fill { height: 100%; background: var(--color-green); border-radius: 3px; }
+  .skid-visual {
+    flex: 1;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+  }
+  .skid-visual-label {
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .skid-visual-label strong { color: var(--color-text-primary); font-family: var(--font-mono); font-weight: 500; text-transform: none; letter-spacing: normal; }
+  .skid-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex: 1; }
+  .skid-slot {
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+    padding: 10px 8px;
+  }
+  .skid-slot.filled { background: var(--color-background-info); border-color: var(--color-blue); }
+  .skid-slot.current { background: var(--color-background-success); border-color: var(--color-green); box-shadow: 0 0 0 2px rgba(29, 158, 117, 0.2); }
+  .slot-pos { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; color: var(--color-text-tertiary); }
+  .skid-slot.filled .slot-pos { color: var(--color-text-info); }
+  .skid-slot.current .slot-pos { color: var(--color-text-success); }
+  .slot-alpha { font-family: var(--font-mono); font-size: 13px; font-weight: 500; }
+  .slot-wt { font-size: 11px; color: var(--color-text-secondary); font-family: var(--font-mono); }
+  .skid-base {
+    margin-top: 10px;
+    height: 6px;
+    background: repeating-linear-gradient(90deg, var(--color-border-primary) 0 3px, transparent 3px 10px);
+    border-radius: 2px;
+    opacity: 0.35;
+  }
+  .skid-weight-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+  }
+  .skid-weight-label { color: var(--color-text-secondary); }
+  .skid-weight-value { font-family: var(--font-mono); font-weight: 500; font-size: 15px; }
+
+  /* ── Label preview ── */
+  .label-preview {
+    flex: 1;
+    background: #ffffff;
+    color: #1a1a19;
+    border: 1.5px dashed var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden;
+  }
+  .label-head { text-align: center; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding-bottom: 6px; border-bottom: 1px solid #e0ddd4; }
+  .label-alpha { font-size: 19px; font-weight: 700; text-align: center; letter-spacing: 0.5px; }
+  .label-barcode { height: 28px; display: flex; align-items: center; justify-content: center; gap: 1px; }
+  .barcode-bar { height: 100%; background: #000000; }
+  .label-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; font-size: 10px; line-height: 1.3; }
+  .label-grid .k { color: #6a6866; font-family: var(--font-sans); }
+  .label-grid .v { font-weight: 600; }
+  .label-footer { margin-top: auto; padding-top: 5px; border-top: 1px solid #e0ddd4; font-size: 9px; color: #6a6866; display: flex; justify-content: space-between; font-family: var(--font-sans); }
+  .print-btn {
+    margin-top: 10px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    width: 100%;
+  }
+  .print-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .print-btn svg { width: 13px; height: 13px; }
+
+  /* ── Bottom row ── */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 12px;
+    height: 270px;
+  }
+
+  /* Skid history table */
+  .skid-table { width: 100%; border-collapse: collapse; }
+  .skid-table th {
+    font-size: 11px;
+    color: var(--color-text-tertiary);
+    text-align: left;
+    padding: 0 10px 8px;
+    font-weight: 500;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .skid-table td {
+    font-size: 12px;
+    padding: 9px 10px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    vertical-align: middle;
+  }
+  .skid-table tr:last-child td { border-bottom: none; }
+  .skid-table td.m { font-family: var(--font-mono); font-weight: 500; }
+  .skid-table td.dim { color: var(--color-text-secondary); }
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .status-chip.staged { background: var(--color-background-success); color: var(--color-text-success); }
+  .status-chip.closing { background: var(--color-background-warning); color: var(--color-text-warning); }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+  .row-active td { background: var(--color-background-warning); }
+  .row-active td:first-child { border-radius: var(--border-radius-md) 0 0 var(--border-radius-md); }
+  .row-active td:last-child { border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0; }
+
+  /* Pending arrivals */
+  .pending-list { display: flex; flex-direction: column; gap: 8px; }
+  .pending-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+  }
+  .pending-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .pending-dot.running { background: var(--color-green); animation: pulse-dot 1.5s infinite; }
+  .pending-dot.idle { background: var(--color-gray); opacity: 0.35; }
+  .pending-body { flex: 1; }
+  .pending-title { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+  .pending-sub { font-size: 11px; color: var(--color-text-secondary); }
+  .pending-eta { font-size: 11px; font-family: var(--font-mono); color: var(--color-text-tertiary); white-space: nowrap; }
+  .staging-note {
+    margin-top: auto;
+    padding: 10px 14px;
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    line-height: 1.4;
+  }
+  .staging-note svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  /* ── Footer ── */
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 22px;
+    height: 82px;
+  }
+  .footer-stamp { display: flex; align-items: center; gap: 20px; }
+  .footer-stamp-item { display: flex; flex-direction: column; gap: 2px; }
+  .footer-stamp-label { font-size: 11px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.4px; }
+  .footer-stamp-value { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+  .footer-actions { display: flex; gap: 10px; }
+  .btn {
+    height: 54px;
+    padding: 0 20px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn:active { transform: scale(0.98); }
+  .btn svg { width: 16px; height: 16px; }
+  .btn-primary {
+    background: var(--color-green);
+    border-color: var(--color-green);
+    color: #ffffff;
+    padding: 0 28px;
+  }
+  .btn-primary:hover { background: #168962; }
+
+  /* ── Success overlay ── */
+  .overlay-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .overlay-backdrop.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .overlay-card {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 40px 48px;
+    width: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
+    transform: scale(0.96);
+    transition: transform 0.2s ease;
+  }
+  .overlay-backdrop.visible .overlay-card {
+    transform: scale(1);
+  }
+  .overlay-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--color-background-success);
+    border: 2px solid var(--color-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-green);
+    margin-bottom: 20px;
+  }
+  .overlay-icon svg { width: 28px; height: 28px; }
+  .overlay-title { font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+  .overlay-sub { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 22px; }
+  .overlay-kpi-row {
+    display: flex;
+    width: 100%;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .overlay-kpi {
+    flex: 1;
+    padding: 12px 16px;
+    border-right: 1px solid var(--color-border-tertiary);
+  }
+  .overlay-kpi:last-child { border-right: none; }
+  .overlay-kpi-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 5px; }
+  .overlay-kpi-value { font-size: 17px; font-weight: 500; font-family: var(--font-mono); }
+  .overlay-kpi-value.green { color: var(--color-text-success); }
+  .overlay-manifest {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 26px;
+  }
+  .overlay-manifest-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 14px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+  }
+  .overlay-manifest-alpha { font-family: var(--font-mono); font-weight: 500; }
+  .overlay-manifest-detail { color: var(--color-text-secondary); }
+  .overlay-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .overlay-countdown { font-size: 13px; color: var(--color-text-tertiary); }
+  .overlay-done-btn {
+    height: 40px;
+    padding: 0 20px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    border: none;
+    background: var(--color-green);
+    color: #ffffff;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s;
+  }
+  .overlay-done-btn:hover { background: #168962; }
+  .overlay-done-btn svg { width: 13px; height: 13px; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- ── Header ── -->
+  <div class="header panel">
+    <div class="header-left">
+      <a class="back-btn" href="dashboard_7_coil_completion.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Coil Completion
+      </a>
+      <span class="station-chip">Packing &middot; FL2</span>
+      <h1>Packing Station</h1>
+    </div>
+    <div class="header-meta">
+      <span>Order <strong class="mono">FW-00421</strong></span>
+      <span>Packing op <strong>Rick M.</strong></span>
+    </div>
+  </div>
+
+  <!-- ── Incoming coil strip ── -->
+  <div class="incoming-strip">
+    <div class="incoming-pulse">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="incoming-body">
+      <div class="incoming-eyebrow">New arrival from FL2</div>
+      <div class="incoming-alpha">FW-00421-C01</div>
+      <div class="incoming-sub">Confirmed 07:42 AM &middot; coil completion by Linda K.</div>
+    </div>
+    <div class="incoming-specs">
+      <div class="ispec">
+        <span class="ispec-label">Alloy</span>
+        <span class="ispec-value">1100 · H18</span>
+      </div>
+      <div class="ispec">
+        <span class="ispec-label">Gauge</span>
+        <span class="ispec-value">0.110"</span>
+      </div>
+      <div class="ispec">
+        <span class="ispec-label">Width</span>
+        <span class="ispec-value">0.625"</span>
+      </div>
+      <div class="ispec">
+        <span class="ispec-label">Footage</span>
+        <span class="ispec-value">14,200 ft</span>
+      </div>
+      <div class="ispec">
+        <span class="ispec-label">Net wt</span>
+        <span class="ispec-value">980 lb</span>
+      </div>
+    </div>
+    <div class="incoming-skid">
+      <span class="incoming-skid-label">Assigned skid</span>
+      <span class="incoming-skid-value">SK-00201</span>
+      <span class="closing-chip">Closing &middot; slot 2 of 2</span>
+    </div>
+  </div>
+
+  <!-- ── Main row: 3 columns ── -->
+  <div class="main-row">
+
+    <!-- Left: Coil verification -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Coil Verification</span>
+        <span class="section-hint">Confirm physical receipt &amp; weight</span>
+      </div>
+
+      <div class="coil-alpha-block">
+        <div>
+          <div class="coil-alpha-label">Output coil alpha</div>
+          <div class="coil-alpha-value">FW-00421-C01</div>
+          <div class="coil-alpha-meta">Order FW-00421 &middot; FL2 &middot; confirmed 07:42 AM</div>
+        </div>
+        <span class="from-badge">&#x2713; From completion</span>
+      </div>
+
+      <div class="spec-grid">
+        <div class="spec-tile">
+          <div class="spec-label">Alloy</div>
+          <div class="spec-value plain">1100</div>
+        </div>
+        <div class="spec-tile">
+          <div class="spec-label">Temper</div>
+          <div class="spec-value plain">H18</div>
+        </div>
+        <div class="spec-tile">
+          <div class="spec-label">Footage</div>
+          <div class="spec-value">14,200 ft</div>
+        </div>
+        <div class="spec-tile">
+          <div class="spec-label">Gauge</div>
+          <div class="spec-value">0.110"</div>
+        </div>
+        <div class="spec-tile">
+          <div class="spec-label">Width</div>
+          <div class="spec-value">0.625"</div>
+        </div>
+        <div class="spec-tile">
+          <div class="spec-label">Lot</div>
+          <div class="spec-value">FW-00421</div>
+        </div>
+      </div>
+
+      <div class="weight-grid">
+        <div class="weight-field">
+          <label class="weight-label">Gross wt (from completion)</label>
+          <div class="weight-readonly">1,010 lb</div>
+        </div>
+        <div class="weight-field">
+          <label class="weight-label weight-label-req">Physical scale weight</label>
+          <input class="weight-input" id="scale-input" type="text" placeholder="Enter lb" oninput="calcVariance()">
+        </div>
+        <div class="weight-field">
+          <label class="weight-label">Net wt (calculated)</label>
+          <div class="weight-readonly">
+            980 lb
+            <span class="calc-badge">14,200 ft × 0.069</span>
+          </div>
+        </div>
+        <div class="weight-field">
+          <label class="weight-label">Variance vs. gross</label>
+          <div class="weight-readonly" id="variance-display">
+            <span class="variance-pending">— awaiting scale</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center: Skid assignment -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Skid SK-00201</span>
+        <span class="section-badge badge-warn">Closing &middot; 2 / 2</span>
+      </div>
+
+      <div class="skid-capacity-bar">
+        <div class="skid-capacity-fill" style="width: 100%;"></div>
+      </div>
+
+      <div class="skid-visual">
+        <div class="skid-visual-label">
+          <span>Slot layout</span>
+          <strong>SK-00201</strong>
+        </div>
+        <div class="skid-slots">
+          <div class="skid-slot filled">
+            <span class="slot-pos">Slot 1 &middot; done</span>
+            <span class="slot-alpha">FW-00421-C00</span>
+            <span class="slot-wt">980 lb</span>
+          </div>
+          <div class="skid-slot current">
+            <span class="slot-pos">Slot 2 &middot; this coil</span>
+            <span class="slot-alpha">FW-00421-C01</span>
+            <span class="slot-wt">980 lb</span>
+          </div>
+        </div>
+        <div class="skid-base"></div>
+      </div>
+
+      <div class="skid-weight-row">
+        <span class="skid-weight-label">Combined net weight</span>
+        <span class="skid-weight-value">1,960 lb</span>
+      </div>
+    </div>
+
+    <!-- Right: Coil label preview -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Coil Label</span>
+        <span class="section-hint">Prints on confirm</span>
+      </div>
+
+      <div class="label-preview">
+        <div class="label-head">CORELESS OSCILLATED FLAT WIRE</div>
+
+        <div class="label-alpha">FW-00421-C01</div>
+
+        <div class="label-barcode">
+          <span class="barcode-bar" style="width:2px"></span><span class="barcode-bar" style="width:1px"></span>
+          <span class="barcode-bar" style="width:3px"></span><span class="barcode-bar" style="width:1px"></span>
+          <span class="barcode-bar" style="width:2px"></span><span class="barcode-bar" style="width:1px"></span>
+          <span class="barcode-bar" style="width:2px"></span><span class="barcode-bar" style="width:3px"></span>
+          <span class="barcode-bar" style="width:1px"></span><span class="barcode-bar" style="width:2px"></span>
+          <span class="barcode-bar" style="width:1px"></span><span class="barcode-bar" style="width:1px"></span>
+          <span class="barcode-bar" style="width:2px"></span><span class="barcode-bar" style="width:3px"></span>
+          <span class="barcode-bar" style="width:1px"></span><span class="barcode-bar" style="width:2px"></span>
+          <span class="barcode-bar" style="width:2px"></span><span class="barcode-bar" style="width:1px"></span>
+          <span class="barcode-bar" style="width:3px"></span><span class="barcode-bar" style="width:1px"></span>
+          <span class="barcode-bar" style="width:1px"></span><span class="barcode-bar" style="width:2px"></span>
+          <span class="barcode-bar" style="width:1px"></span><span class="barcode-bar" style="width:2px"></span>
+          <span class="barcode-bar" style="width:3px"></span><span class="barcode-bar" style="width:1px"></span>
+          <span class="barcode-bar" style="width:2px"></span><span class="barcode-bar" style="width:1px"></span>
+          <span class="barcode-bar" style="width:2px"></span><span class="barcode-bar" style="width:1px"></span>
+          <span class="barcode-bar" style="width:3px"></span><span class="barcode-bar" style="width:1px"></span>
+          <span class="barcode-bar" style="width:2px"></span><span class="barcode-bar" style="width:1px"></span>
+        </div>
+
+        <div class="label-grid">
+          <span class="k">Alloy</span><span class="v">1100 &middot; H18</span>
+          <span class="k">Gauge</span><span class="v">0.110"</span>
+          <span class="k">Width</span><span class="v">0.625"</span>
+          <span class="k">Footage</span><span class="v">14,200 ft</span>
+          <span class="k">Gross wt</span><span class="v">1,010 lb</span>
+          <span class="k">Net wt</span><span class="v">980 lb</span>
+          <span class="k">Lot</span><span class="v">FW-00421</span>
+          <span class="k">Source</span><span class="v">R00041, R00042</span>
+        </div>
+
+        <div class="label-footer">
+          <span>Apr 23, 2026 &middot; Linda K.</span>
+          <span>Rev 2026.04</span>
+        </div>
+      </div>
+
+      <button class="print-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print coil label
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ── Bottom row: 2 columns ── -->
+  <div class="bottom-row">
+
+    <!-- Left: Skids this shift -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Skids this shift</span>
+        <span class="section-hint">Day &middot; 07:00 &rarr; 15:00</span>
+      </div>
+
+      <table class="skid-table">
+        <thead>
+          <tr>
+            <th>Skid</th>
+            <th>Line</th>
+            <th>Coils</th>
+            <th>Net wt</th>
+            <th>Closed</th>
+            <th>Staging</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="m">SK-00199</td>
+            <td class="dim">FL1</td>
+            <td class="dim">FW-00419-C00 &middot; C01</td>
+            <td class="m">1,940 lb</td>
+            <td class="m dim">07:18 AM</td>
+            <td class="dim">A-3</td>
+            <td><span class="status-chip staged"><span class="status-dot"></span>Staged</span></td>
+          </tr>
+          <tr>
+            <td class="m">SK-00200</td>
+            <td class="dim">FL1</td>
+            <td class="dim">FW-00420-C00 &middot; C01</td>
+            <td class="m">1,920 lb</td>
+            <td class="m dim">07:35 AM</td>
+            <td class="dim">A-4</td>
+            <td><span class="status-chip staged"><span class="status-dot"></span>Staged</span></td>
+          </tr>
+          <tr class="row-active">
+            <td class="m">SK-00201</td>
+            <td class="dim">FL2</td>
+            <td class="dim">FW-00421-C00 &middot; C01</td>
+            <td class="m">1,960 lb</td>
+            <td class="m dim">—</td>
+            <td class="dim">—</td>
+            <td><span class="status-chip closing"><span class="status-dot"></span>Closing now</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Right: Pending arrivals -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Pending arrivals</span>
+        <span class="section-hint">From production lines</span>
+      </div>
+
+      <div class="pending-list">
+        <div class="pending-item">
+          <div class="pending-dot running"></div>
+          <div class="pending-body">
+            <div class="pending-title">FL1 &middot; order FW-00422</div>
+            <div class="pending-sub">Running &middot; next coil est. 12,800 ft</div>
+          </div>
+          <span class="pending-eta">~08:30</span>
+        </div>
+        <div class="pending-item">
+          <div class="pending-dot running"></div>
+          <div class="pending-body">
+            <div class="pending-title">FL2 &middot; next order FW-00423</div>
+            <div class="pending-sub">Rod change in progress &middot; starting shortly</div>
+          </div>
+          <span class="pending-eta">~08:15</span>
+        </div>
+        <div class="pending-item">
+          <div class="pending-dot idle"></div>
+          <div class="pending-body">
+            <div class="pending-title">FL3 &middot; offline</div>
+            <div class="pending-sub">No coils expected this shift</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="staging-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        SK-00201 &rarr; assign staging location <strong>A-5</strong> after closing
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="footer panel">
+    <div class="footer-stamp">
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Packing operator</span>
+        <span class="footer-stamp-value">Rick M.</span>
+      </div>
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Arrival confirmed at</span>
+        <span class="footer-stamp-value mono" id="stamp-time">07:42:18 AM &middot; Apr 23, 2026</span>
+      </div>
+    </div>
+    <div class="footer-actions">
+      <button class="btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print coil label
+      </button>
+      <button class="btn btn-primary" id="btn-close-skid">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        Close SK-00201 &amp; print skid label
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Success overlay ── -->
+<div class="overlay-backdrop" id="success-overlay">
+  <div class="overlay-card">
+    <div class="overlay-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="overlay-title">SK-00201 Closed</div>
+    <div class="overlay-sub">Skid label sent to printer &middot; 2 coil labels confirmed</div>
+
+    <div class="overlay-kpi-row">
+      <div class="overlay-kpi">
+        <div class="overlay-kpi-label">Staging location</div>
+        <div class="overlay-kpi-value green">A-5</div>
+      </div>
+      <div class="overlay-kpi">
+        <div class="overlay-kpi-label">Total net weight</div>
+        <div class="overlay-kpi-value">1,960 lb</div>
+      </div>
+      <div class="overlay-kpi">
+        <div class="overlay-kpi-label">Coils</div>
+        <div class="overlay-kpi-value">2 / 2</div>
+      </div>
+    </div>
+
+    <div class="overlay-manifest">
+      <div class="overlay-manifest-row">
+        <span class="overlay-manifest-alpha">FW-00421-C00</span>
+        <span class="overlay-manifest-detail">Slot 1 &middot; 980 lb &middot; &#x2713; label printed</span>
+      </div>
+      <div class="overlay-manifest-row">
+        <span class="overlay-manifest-alpha">FW-00421-C01</span>
+        <span class="overlay-manifest-detail">Slot 2 &middot; 980 lb &middot; &#x2713; label printed</span>
+      </div>
+    </div>
+
+    <div class="overlay-footer">
+      <span class="overlay-countdown" id="overlay-countdown">Returning to queue in 5s</span>
+      <button class="overlay-done-btn" id="overlay-done-btn">
+        Done
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    function pad(n) { return String(n).padStart(2, "0"); }
+
+    function updateClock() {
+      var now = new Date();
+      var h = now.getHours();
+      var m = pad(now.getMinutes());
+      var s = pad(now.getSeconds());
+      var ampm = h < 12 ? "AM" : "PM";
+      var h12 = h % 12 || 12;
+      var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      var dateStr = months[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();
+      var timeStr = pad(h12) + ":" + m + " " + ampm;
+      var clockEl = document.getElementById("clock");
+      var dateEl  = document.getElementById("date");
+      var stampEl = document.getElementById("stamp-time");
+      if (clockEl) clockEl.textContent = timeStr;
+      if (dateEl)  dateEl.textContent  = dateStr;
+      if (stampEl) stampEl.textContent = pad(h12) + ":" + m + ":" + s + " " + ampm + " · " + dateStr;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // ── Success overlay ──
+    var countdownTimer = null;
+    var countdownVal   = 5;
+
+    function showOverlay() {
+      var overlay = document.getElementById("success-overlay");
+      overlay.classList.add("visible");
+      countdownVal = 5;
+      document.getElementById("overlay-countdown").textContent = "Returning to queue in 5s";
+      countdownTimer = setInterval(function () {
+        countdownVal--;
+        var el = document.getElementById("overlay-countdown");
+        if (el) el.textContent = "Returning to queue in " + countdownVal + "s";
+        if (countdownVal <= 0) { dismissOverlay(); }
+      }, 1000);
+    }
+
+    function dismissOverlay() {
+      clearInterval(countdownTimer);
+      var overlay = document.getElementById("success-overlay");
+      overlay.classList.remove("visible");
+      // Update SK-00201 table row to Staged state
+      var activeRow = document.querySelector(".row-active");
+      if (activeRow) {
+        activeRow.classList.remove("row-active");
+        var cells = activeRow.querySelectorAll("td");
+        cells[4].textContent = "07:42 AM";
+        cells[4].classList.add("m", "dim");
+        cells[5].textContent = "A-5";
+        cells[5].classList.add("dim");
+        cells[6].innerHTML = '<span class="status-chip staged"><span class="status-dot"></span>Staged</span>';
+      }
+      // Disable the close button to prevent re-trigger
+      var btn = document.getElementById("btn-close-skid");
+      if (btn) { btn.disabled = true; btn.style.opacity = "0.5"; btn.style.cursor = "default"; }
+    }
+
+    document.getElementById("btn-close-skid").addEventListener("click", showOverlay);
+    document.getElementById("overlay-done-btn").addEventListener("click", dismissOverlay);
+
+    window.calcVariance = function () {
+      var raw = document.getElementById("scale-input").value.replace(/[^0-9.]/g, "");
+      var el  = document.getElementById("variance-display");
+      var gross = 1010;
+      if (raw === "" || isNaN(parseFloat(raw))) {
+        el.innerHTML = '<span class="variance-pending">— awaiting scale</span>';
+        return;
+      }
+      var scale = parseFloat(raw);
+      var diff  = scale - gross;
+      var pct   = ((diff / gross) * 100).toFixed(1);
+      var sign  = diff >= 0 ? "+" : "";
+      var cls   = Math.abs(diff) <= 20 ? "variance-ok" : "variance-warn";
+      el.innerHTML = '<span class="' + cls + '">' + sign + diff + ' lb (' + sign + pct + '%)</span>';
+    };
+  })();
+</script>
+
+<script src="flat-wire-topbar.js"></script>
+</body>
+</html>

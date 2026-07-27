@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>FL2 roll adjust · SP-00031</title>
+<link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
+<style>
+  body { min-height: 1024px; }
+  .dashboard { height: 1024px; }
+  .panel { flex-shrink: 0; }
+  .mono { font-family: var(--font-mono); }
+
+  /* ── Header  68 px ───────────────────────────────────────── */
+  .header {
+    height: 68px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: all 0.15s;
+  }
+  .back-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .back-btn svg { width: 14px; height: 14px; }
+  .context-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 13px;
+    background: var(--color-background-success);
+    color: var(--color-text-success);
+    border-radius: var(--border-radius-md);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .context-chip .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--color-green);
+    animation: pulse 1.5s infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .header h1 { margin: 0; font-size: 21px; font-weight: 500; }
+  .header-meta {
+    display: flex;
+    gap: 22px;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    align-items: center;
+  }
+  .header-meta strong { color: var(--color-text-primary); font-weight: 500; }
+
+  /* ── Context strip  78 px ────────────────────────────────── */
+  .context-strip {
+    height: 78px;
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1fr 1.1fr 1.5fr;
+    padding: 0 24px;
+    align-items: center;
+  }
+  .cs-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 0 18px 0 0;
+    border-right: 0.5px solid var(--color-border-tertiary);
+    height: 48px;
+    justify-content: center;
+  }
+  .cs-cell + .cs-cell { padding-left: 18px; }
+  .cs-cell:first-child { padding-left: 0; }
+  .cs-cell:last-child { border-right: none; padding-right: 0; }
+  .cs-label {
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .cs-value {
+    font-size: 15px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .cs-sub { font-size: 11px; color: var(--color-text-secondary); white-space: nowrap; }
+  .override-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--color-background-warning);
+    color: var(--color-text-warning);
+    border-radius: var(--border-radius-md);
+    font-size: 11px;
+    font-weight: 500;
+    width: fit-content;
+  }
+  .override-badge svg { width: 11px; height: 11px; flex-shrink: 0; }
+
+  /* ── Main row  572 px  (flex: 1 fills remainder) ─────────── */
+  .main-row {
+    display: grid;
+    grid-template-columns: 1.85fr 1fr;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* shared section shell */
+  .section {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .section-pad { padding: 16px 20px; }
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+  }
+  .section-title { font-size: 14px; font-weight: 500; }
+  .section-hint { font-size: 11px; color: var(--color-text-tertiary); }
+
+  /* ── Roll adjustment table (left panel) ──────────────────── */
+  .roll-panel { padding: 16px 20px; }
+  .roll-table-wrap {
+    flex: 1;
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+  }
+  .roll-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .roll-table thead { background: var(--color-background-secondary); }
+  .roll-table th {
+    text-align: left;
+    padding: 10px 16px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .roll-table th.right { text-align: right; }
+  .roll-table tbody tr { border-top: 0.5px solid var(--color-border-tertiary); }
+  .roll-table tbody tr:not(.bypass-row):hover { background: var(--color-background-secondary); }
+  .roll-table tbody tr.has-change { background: var(--color-background-warning); }
+  .roll-table tbody tr.has-change:hover { background: #f3dfc0; }
+  .roll-table td { padding: 14px 16px; vertical-align: middle; }
+
+  .roll-name { display: flex; align-items: center; gap: 7px; font-weight: 500; }
+  .line-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+  }
+  .final-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    background: var(--color-background-tertiary);
+    color: var(--color-text-secondary);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+  .gap-ref { font-family: var(--font-mono); font-size: 13px; color: var(--color-text-secondary); }
+  .gap-input {
+    width: 110px;
+    height: 38px;
+    padding: 0 10px;
+    font-size: 14px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    outline: none;
+    text-align: center;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  }
+  .gap-input:focus { border-color: var(--color-blue); box-shadow: 0 0 0 2px rgba(24,95,165,0.18); }
+  .gap-input.changed { border-color: var(--color-amber); background: rgba(239,159,39,0.08); }
+  .gap-input.unchanged { background: var(--color-background-secondary); border-color: var(--color-border-tertiary); color: var(--color-text-secondary); }
+  .delta-cell { text-align: right; }
+  .delta {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-block;
+    min-width: 76px;
+    text-align: right;
+    color: var(--color-text-tertiary);
+  }
+  .delta.neg { color: var(--color-green); }
+  .delta.pos { color: var(--color-red); }
+  .bypass-row td { opacity: 0.35; }
+  .bypass-label { font-size: 12px; font-style: italic; color: var(--color-text-tertiary); }
+
+  /* ── Right column ────────────────────────────────────────── */
+  .right-col { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+  /* Measurements gets ~57% of the right col height, reason ~43% */
+  .meas-section { flex: 1.4; min-height: 0; }
+  .reason-section { flex: 1; min-height: 0; }
+
+  /* ── Measurement items ───────────────────────────────────── */
+  .meas-list { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; }
+  .meas-item {
+    padding: 12px 14px;
+    border-radius: var(--border-radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    min-height: 0;
+  }
+  .meas-item.oos { background: var(--color-background-warning); border: 1px solid rgba(239,159,39,0.3); }
+  .meas-item.ok  { background: var(--color-background-success);  border: 1px solid rgba(29,158,117,0.25); }
+
+  .meas-head { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+  .meas-name { font-size: 12px; font-weight: 500; }
+  .meas-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: #fff;
+  }
+  .meas-badge.oos { background: var(--color-amber); }
+  .meas-badge.ok  { background: var(--color-green); }
+
+  .meas-vals { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; flex-shrink: 0; }
+  .meas-val-cell { display: flex; flex-direction: column; gap: 1px; }
+  .meas-val-label { font-size: 9px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.3px; }
+  .meas-num { font-family: var(--font-mono); font-size: 18px; font-weight: 600; line-height: 1.2; }
+  .meas-num.oos { color: var(--color-text-warning); }
+  .meas-num.ok  { color: var(--color-text-success); }
+  .meas-num.ref { font-size: 13px; color: var(--color-text-secondary); font-weight: 500; }
+
+  .meas-deviation { font-size: 11px; font-family: var(--font-mono); font-weight: 500; flex-shrink: 0; }
+  .meas-deviation.oos { color: var(--color-text-warning); }
+  .meas-deviation.ok  { color: var(--color-text-success); }
+
+  /* Range bar — sits in flow, no absolute labels */
+  .meas-bar-wrap {
+    position: relative;
+    height: 8px;
+    background: var(--color-background-tertiary);
+    border-radius: 4px;
+    flex-shrink: 0;
+    overflow: visible;
+  }
+  .meas-bar-zone {
+    position: absolute;
+    height: 100%;
+    border-radius: 4px;
+    background: var(--color-green);
+    opacity: 0.4;
+  }
+  .meas-bar-marker {
+    position: absolute;
+    width: 3px;
+    height: 14px;
+    top: -3px;
+    border-radius: 2px;
+    transform: translateX(-50%);
+  }
+  .meas-bar-marker.oos { background: var(--color-amber); }
+  .meas-bar-marker.ok  { background: var(--color-green); }
+
+  /* ── Reason section ──────────────────────────────────────── */
+  .reason-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; flex-shrink: 0; }
+  .reason-chip {
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: all 0.15s;
+    white-space: nowrap;
+    line-height: 1.4;
+  }
+  .reason-chip:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .reason-chip.selected { background: var(--color-blue); border-color: var(--color-blue); color: #fff; }
+  .notes-label { font-size: 10px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; flex-shrink: 0; }
+  .notes-input {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: var(--font-sans);
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    outline: none;
+    resize: none;
+    line-height: 1.4;
+  }
+  .notes-input:focus { border-color: var(--color-blue); box-shadow: 0 0 0 2px rgba(24,95,165,0.18); }
+  .notes-input::placeholder { color: var(--color-text-tertiary); }
+
+  /* ── History  162 px ─────────────────────────────────────── */
+  .history-section {
+    height: 162px;
+    flex-shrink: 0;
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 14px 20px;
+    display: flex;
+    flex-direction: column;
+  }
+  .history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+  }
+  .history-title { font-size: 14px; font-weight: 500; }
+  .history-meta { display: flex; gap: 14px; font-size: 11px; color: var(--color-text-tertiary); align-items: center; }
+  .history-meta a { color: var(--color-text-info); text-decoration: none; font-weight: 500; }
+  .history-list { flex: 1; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+  .history-entry {
+    display: grid;
+    grid-template-columns: 120px 140px 150px 1fr 140px;
+    gap: 10px;
+    padding: 7px 12px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    font-size: 12px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .history-time { font-family: var(--font-mono); color: var(--color-text-secondary); font-size: 11px; }
+  .history-user { font-weight: 500; }
+  .history-roll { color: var(--color-text-secondary); font-size: 11px; }
+  .history-change { font-family: var(--font-mono); font-size: 11px; }
+  .history-change .from { color: var(--color-text-tertiary); text-decoration: line-through; }
+  .history-change .arrow { color: var(--color-text-tertiary); margin: 0 3px; }
+  .history-change .to { font-weight: 500; }
+  .history-reason {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /* ── Footer  68 px ───────────────────────────────────────── */
+  .footer {
+    height: 68px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 22px;
+  }
+  .footer-stamp { display: flex; align-items: center; gap: 28px; }
+  .footer-stamp-item { display: flex; flex-direction: column; gap: 2px; }
+  .footer-stamp-label { font-size: 10px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.4px; }
+  .footer-stamp-value { font-size: 13px; font-weight: 500; }
+  .footer-stamp-value.mono { font-family: var(--font-mono); }
+  .footer-actions { display: flex; gap: 10px; }
+  .btn {
+    height: 44px;
+    padding: 0 22px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    transition: all 0.15s;
+  }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn-primary {
+    background: var(--color-blue);
+    border-color: var(--color-blue);
+    color: #fff;
+    padding: 0 26px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .btn-primary:hover { background: #13497d; }
+  .btn-primary svg { width: 16px; height: 16px; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- ── Header ── -->
+  <div class="header panel">
+    <div class="header-left">
+      <button class="back-btn" onclick="window.location.href='dashboard_3_active_run_fl2.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back to run
+      </button>
+      <span class="context-chip">
+        <span class="dot"></span>
+        FL2 running &middot; SP-00031
+      </span>
+      <h1>Roll adjust</h1>
+    </div>
+    <div class="header-meta">
+      <span>Order <strong class="mono">FW-00421</strong></span>
+    </div>
+  </div>
+
+  <!-- ── Context strip ── -->
+  <div class="panel context-strip">
+    <div class="cs-cell">
+      <span class="cs-label">Spool / Alpha</span>
+      <span class="cs-value">SP-00031</span>
+      <span class="cs-sub">Source: R00041, R00042</span>
+    </div>
+    <div class="cs-cell">
+      <span class="cs-label">Pass Schedule</span>
+      <span class="cs-value">PS-1100-FL2-007</span>
+    </div>
+    <div class="cs-cell">
+      <span class="cs-label">Footage at adjust</span>
+      <span class="cs-value">13,060 ft</span>
+    </div>
+    <div class="cs-cell">
+      <span class="cs-label">Output targets</span>
+      <span class="cs-value">0.0160&Prime;</span>
+      <span class="cs-sub">Gauge &plusmn;&thinsp;0.0002&Prime; &nbsp;&middot;&nbsp; Width 0.625&Prime; &plusmn;&thinsp;0.005&Prime;</span>
+    </div>
+    <div class="cs-cell">
+      <span class="cs-label">Override type</span>
+      <span class="override-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+        Run-level &middot; pass schedule unchanged
+      </span>
+    </div>
+  </div>
+
+  <!-- ── Main row ── -->
+  <div class="main-row">
+
+    <!-- Left: roll gap table -->
+    <div class="section">
+      <div class="section-pad" style="display:flex;flex-direction:column;height:100%;">
+        <div class="section-header">
+          <span class="section-title">Roll gap adjustments</span>
+          <span class="section-hint">Edit New gap only &middot; scheduled values are read-only</span>
+        </div>
+        <div class="roll-table-wrap">
+          <table class="roll-table">
+            <thead>
+              <tr>
+                <th style="width:28%;">Component</th>
+                <th style="width:17%;">Scheduled gap</th>
+                <th style="width:17%;">Current gap</th>
+                <th style="width:20%;">New gap</th>
+                <th style="width:18%;" class="right">Delta</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="bypass-row">
+                <td><span class="roll-name"><span class="line-tag">FL2</span>8&Prime; Roller</span></td>
+                <td><span class="bypass-label">Bypassed</span></td>
+                <td>&mdash;</td>
+                <td>&mdash;</td>
+                <td class="delta-cell">&mdash;</td>
+              </tr>
+              <tr>
+                <td><span class="roll-name"><span class="line-tag">FL2</span>6&Prime; Roller S1</span></td>
+                <td><span class="gap-ref">0.0162&Prime;</span></td>
+                <td><span class="gap-ref">0.0162&Prime;</span></td>
+                <td>
+                  <input class="gap-input unchanged" type="text" id="input-s1"
+                         value='0.0162"' data-current="0.0162" data-delta-id="delta-s1">
+                </td>
+                <td class="delta-cell"><span class="delta" id="delta-s1">0.0000&Prime;</span></td>
+              </tr>
+              <tr class="has-change">
+                <td>
+                  <span class="roll-name">
+                    <span class="line-tag">FL2</span>6&Prime; Roller S2
+                    <span class="final-tag">final</span>
+                  </span>
+                </td>
+                <td><span class="gap-ref">0.0160&Prime;</span></td>
+                <td><span class="gap-ref">0.0161&Prime;</span></td>
+                <td>
+                  <input class="gap-input changed" type="text" id="input-s2"
+                         value='0.0158"' data-current="0.0161" data-delta-id="delta-s2">
+                </td>
+                <td class="delta-cell"><span class="delta neg" id="delta-s2">&minus;0.0003&Prime;</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="right-col">
+
+      <!-- Measurements -->
+      <div class="section meas-section">
+        <div class="section-pad" style="display:flex;flex-direction:column;height:100%;">
+          <div class="section-header">
+            <span class="section-title">Measurements at 13,060 ft</span>
+            <span class="section-hint">Values that triggered this adjustment</span>
+          </div>
+          <div class="meas-list">
+
+            <!-- Gauge: OUT OF SPEC -->
+            <div class="meas-item oos">
+              <div class="meas-head">
+                <span class="meas-name">Output gauge</span>
+                <span class="meas-badge oos">OUT OF SPEC &uarr;</span>
+              </div>
+              <div class="meas-vals">
+                <div class="meas-val-cell">
+                  <span class="meas-val-label">Measured</span>
+                  <span class="meas-num oos">0.0164&Prime;</span>
+                </div>
+                <div class="meas-val-cell">
+                  <span class="meas-val-label">Target</span>
+                  <span class="meas-num ref">0.0160&Prime;</span>
+                </div>
+                <div class="meas-val-cell">
+                  <span class="meas-val-label">Tolerance</span>
+                  <span class="meas-num ref">&plusmn;&thinsp;0.0002&Prime;</span>
+                </div>
+              </div>
+              <div class="meas-deviation oos">+0.0002&Prime; above maximum &nbsp;(max&nbsp;0.0162&Prime;)</div>
+              <!-- range bar: zone 29–57%, marker at 71% -->
+              <div class="meas-bar-wrap">
+                <div class="meas-bar-zone" style="left:28.6%;width:28.6%;"></div>
+                <div class="meas-bar-marker oos" style="left:71.4%;"></div>
+              </div>
+            </div>
+
+            <!-- Width: IN SPEC -->
+            <div class="meas-item ok">
+              <div class="meas-head">
+                <span class="meas-name">Output width</span>
+                <span class="meas-badge ok">&#x2713;&nbsp;IN SPEC</span>
+              </div>
+              <div class="meas-vals">
+                <div class="meas-val-cell">
+                  <span class="meas-val-label">Measured</span>
+                  <span class="meas-num ok">0.627&Prime;</span>
+                </div>
+                <div class="meas-val-cell">
+                  <span class="meas-val-label">Target</span>
+                  <span class="meas-num ref">0.625&Prime;</span>
+                </div>
+                <div class="meas-val-cell">
+                  <span class="meas-val-label">Tolerance</span>
+                  <span class="meas-num ref">&plusmn;&thinsp;0.005&Prime;</span>
+                </div>
+              </div>
+              <div class="meas-deviation ok">+0.002&Prime; within range &nbsp;(max&nbsp;0.630&Prime;)</div>
+              <!-- range bar: zone 25–75%, marker at 60% -->
+              <div class="meas-bar-wrap">
+                <div class="meas-bar-zone" style="left:25%;width:50%;"></div>
+                <div class="meas-bar-marker ok" style="left:60%;"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Reason for adjustment -->
+      <div class="section reason-section">
+        <div class="section-pad" style="display:flex;flex-direction:column;height:100%;">
+          <div class="section-header">
+            <span class="section-title">Reason for adjustment</span>
+            <span class="section-hint">Required before applying</span>
+          </div>
+          <div class="reason-chips" id="reason-chips">
+            <button class="reason-chip selected" data-reason="Gauge drift (high)">Gauge drift (high)</button>
+            <button class="reason-chip" data-reason="Gauge drift (low)">Gauge drift (low)</button>
+            <button class="reason-chip" data-reason="Width drift">Width drift</button>
+            <button class="reason-chip" data-reason="SPC flag">SPC flag</button>
+            <button class="reason-chip" data-reason="Roll wear">Roll wear</button>
+            <button class="reason-chip" data-reason="Post-weld correction">Post-weld correction</button>
+            <button class="reason-chip" data-reason="Operator discretion">Operator discretion</button>
+          </div>
+          <div class="notes-label">Notes (optional)</div>
+          <textarea class="notes-input" placeholder="Add detail if needed&hellip;" id="notes-field"></textarea>
+        </div>
+      </div>
+
+    </div><!-- /right-col -->
+  </div><!-- /main-row -->
+
+  <!-- ── History ── -->
+  <div class="history-section">
+    <div class="history-header">
+      <div style="display:flex;gap:12px;align-items:baseline;">
+        <span class="history-title">Recent roll adjustments</span>
+        <span style="font-size:11px;color:var(--color-text-tertiary);">PS-1100-FL2-007 &middot; all operators</span>
+      </div>
+      <div class="history-meta">
+        <span>Showing last 3</span>
+        <a href="#">View all &rarr;</a>
+      </div>
+    </div>
+    <div class="history-list">
+      <div class="history-entry">
+        <span class="history-time">Apr 23 &nbsp;06:15</span>
+        <span class="history-user">Dave M.</span>
+        <span class="history-roll">6&Prime; Roller S2</span>
+        <span class="history-change"><span class="from">0.0160&Prime;</span><span class="arrow">&rarr;</span><span class="to">0.0161&Prime;</span></span>
+        <span class="history-reason">Roll warm-up</span>
+      </div>
+      <div class="history-entry">
+        <span class="history-time">Apr 22 &nbsp;14:30</span>
+        <span class="history-user">Bob S.</span>
+        <span class="history-roll">6&Prime; Roller S2</span>
+        <span class="history-change"><span class="from">0.0162&Prime;</span><span class="arrow">&rarr;</span><span class="to">0.0160&Prime;</span></span>
+        <span class="history-reason">SPC flag</span>
+      </div>
+      <div class="history-entry">
+        <span class="history-time">Apr 21 &nbsp;09:45</span>
+        <span class="history-user">Dave M.</span>
+        <span class="history-roll">6&Prime; Roller S1</span>
+        <span class="history-change"><span class="from">0.0164&Prime;</span><span class="arrow">&rarr;</span><span class="to">0.0162&Prime;</span></span>
+        <span class="history-reason">Gauge drift (high)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="footer panel">
+    <div class="footer-stamp">
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Operator</span>
+        <span class="footer-stamp-value">Dave M.</span>
+      </div>
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Timestamp</span>
+        <span class="footer-stamp-value mono" id="stamp-time">08:22:05 AM &middot; Apr 23, 2026</span>
+      </div>
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Changes</span>
+        <span class="footer-stamp-value mono" id="change-summary">6&Prime; Roller S2 &minus;0.0003&Prime;</span>
+      </div>
+    </div>
+    <div class="footer-actions">
+      <button class="btn" onclick="window.location.href='dashboard_3_active_run_fl2.html'">Cancel</button>
+      <button class="btn btn-primary" id="apply-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Apply adjustment
+      </button>
+    </div>
+  </div>
+
+</div><!-- /dashboard -->
+
+<script>
+(function () {
+  function pad(n) { return String(n).padStart(2, "0"); }
+
+  function updateClock() {
+    var now = new Date();
+    var h = now.getHours(), m = pad(now.getMinutes()), s = pad(now.getSeconds());
+    var ampm = h < 12 ? "AM" : "PM", h12 = h % 12 || 12;
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var dateStr = months[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();
+    var el = document.getElementById("clock");
+    if (el) el.textContent = pad(h12) + ":" + m + " " + ampm;
+    var del = document.getElementById("date");
+    if (del) del.textContent = dateStr;
+    var sel = document.getElementById("stamp-time");
+    if (sel) sel.textContent = pad(h12) + ":" + m + ":" + s + " " + ampm + " · " + dateStr;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Reason chip selector
+  document.querySelectorAll(".reason-chip").forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      document.querySelectorAll(".reason-chip").forEach(function (c) { c.classList.remove("selected"); });
+      chip.classList.add("selected");
+    });
+  });
+
+  // Delta calculation
+  function parseGap(str) { return parseFloat(str.replace(/[^0-9.]/g, "")) || 0; }
+
+  function updateDelta(input) {
+    var current = parseFloat(input.getAttribute("data-current"));
+    var newVal = parseGap(input.value);
+    var delta = newVal - current;
+    var deltaEl = document.getElementById(input.getAttribute("data-delta-id"));
+    if (!deltaEl) return;
+
+    var absDelta = Math.abs(delta);
+    var sign = delta > 0 ? "+" : (delta < 0 ? "−" : "");
+    deltaEl.textContent = (delta === 0 ? "0.0000" : sign + absDelta.toFixed(4)) + "″";
+    deltaEl.className = "delta " + (delta < 0 ? "neg" : delta > 0 ? "pos" : "");
+
+    var row = input.closest("tr");
+    if (absDelta > 0.000005) {
+      input.classList.replace("unchanged", "changed");
+      if (row) row.classList.add("has-change");
+    } else {
+      input.classList.replace("changed", "unchanged");
+      if (row) row.classList.remove("has-change");
+    }
+    updateChangeSummary();
+  }
+
+  function updateChangeSummary() {
+    var parts = [];
+    document.querySelectorAll(".gap-input.changed").forEach(function (inp) {
+      var delta = parseGap(inp.value) - parseFloat(inp.getAttribute("data-current"));
+      var nameEl = inp.closest("tr") && inp.closest("tr").querySelector(".roll-name");
+      var name = nameEl ? nameEl.textContent.trim().replace(/\s+/g, " ") : "Roll";
+      parts.push(name + " " + (delta >= 0 ? "+" : "−") + Math.abs(delta).toFixed(4) + "″");
+    });
+    var el = document.getElementById("change-summary");
+    if (el) el.textContent = parts.length ? parts.join(", ") : "No changes";
+  }
+
+  document.querySelectorAll(".gap-input").forEach(function (input) {
+    input.addEventListener("input", function () { updateDelta(input); });
+  });
+})();
+</script>
+<script src="flat-wire-topbar.js"></script>
+</body>
+</html>
