@@ -5,7 +5,7 @@
 
 ---
 
-*The core operator entry point: validate material, inspect, confirm the pass schedule, push PLC tags, start the run.*
+*The core operator entry point: validate material, inspect, confirm the pass schedule, push PLC tags, start the run — plus the Pre-Check-In station that stages the next rod while the current one runs.*
 
 ## Business Overview
 - **Objective:** guided check-in that captures incoming rod, forces visual inspection, requires explicit pass-schedule confirmation, writes audit records, then pushes PLC tags and starts the run.
@@ -14,6 +14,13 @@
 - **Entry conditions:** rod STAGED (upstream rod receiving); Active pass schedule (Phase 2); job scheduled (upstream planning/scheduling); real-time spine (Phase 3).
 - **Exit conditions:** run `Running`, rod `INFLAT`, PLC tags pushed, transition to Dashboard 3.
 
+### Scope addition — Pre-Check-in (Dashboard 2A)
+This phase also owns **pre-check-in / payoff staging**: registering the *next* rod against the idle VPS bay while the current coil is still running, so FL1/FL3 can run continuously through an induction weld. It is what `SRS §4.2 PCI001`–`PCI008` specifies, and it had no screen, data model, API or phase owner until now — see **[RodPreCheckin.md](../../Analysis/RodPreCheckin.md)** and gap **G19**.
+- **FL1/FL3 only** — `PCI002` excludes FL2 (no staging space).
+- Priority is SRS **Should**, not Must: check-in does *not* depend on it. Scanning an unstaged rod straight into Dashboard 2 stays valid.
+- **No PLC write occurs at pre-check-in.** Tags are pushed only at the acknowledgement in step 4 below.
+- Check-in **consumes** the staged row (`RodStaging.Status → CheckedIn`, `RodCheckinId` linked) rather than creating a parallel record. Where a staged row exists, the request's `payoffPosition` must match it (409 on mismatch).
+
 ## User Journey (RocCheckin logical flow — delivered as the new 6-step wizard)
 > **UI shape (new mockup):** a 6-step guided tab-wizard with progressive unlock — **(1) Visual Inspection · (2) Pass Schedule · (3) Pre-run SPC · (4) Die Block (DB1/DB2) · (5) Rolling Mill (FM1) · (6) Lube & Safety**; Acknowledge is disabled until all six clear (or a supervisor override is on file for a deviation). The logical gate sequence below still holds within that wizard.
 1. **Pre-flight validation:** rod alpha valid (`GET /rod/{alpha}`), diameter/weights/payoff filled, **all inspection items Pass**, pre-run SPC diameter entered, pass schedule loaded. Any fail disables Acknowledge.
@@ -21,33 +28,42 @@
 3. **Write records BEFORE PLC push:** inspection result → rod record; pre-run SPC diameter → SPC checkpoint (PreRun); schedule ID+version → run record; acknowledgment → audit log.
 4. **PLC tag push** (component activation, die sizes, FM1 gap, edge type, speed limits, gauge/width targets) to the selected payoff position; transactional.
 5. **Run starts:** timer starts; Dashboard 1 → RUNNING (schedule ID shown); transition to Dashboard 3.
-- **Decision points:** inspection pass/fail (fail → Dashboard 8 hard block); Payoff 1/2; Mode-A checkout (footage=0).
+- **Decision points:** inspection pass/fail (fail → Dashboard 8 hard block); Payoff 1/2; Mode-A checkout (footage=0); at the **staging** scan, carry-forward vs fresh — forced to carry-forward when prior footage exists (`PRC007`/`PRC008`).
 - **Error scenarios:** PLC write fails → **entire check-in rolled back** (500); line already running → 409; Draft schedule → 422.
 
 ## UI Implementation (Angular)
-- **Screens:** Dashboard 2 — **new approved mockup** `dashboard_2_rod_checkin - New.html` (FL3 variant to follow; old `dashboard_2_rod_checkin.html` / `- Old.html` retired).
+- **Screens:** Dashboard 2 — **new approved mockup** `dashboard_2_rod_checkin - New.html` (FL3 variant to follow; old `dashboard_2_rod_checkin.html` / `- Old.html` retired). Dashboard **2A** — `dashboard_2a_rod_precheckin.html` (Pre-Check-In station).
+- **Dashboard 2A layout:** two payoff bay cards (states `NOT STAGED` / `PRE-CHECKED-IN` / `ACTIVE` / `BLOCKED`), a weld-readiness strip with **Mark as Welded** (`WLD010`, enabled only when a rod is pre-checked-in), and a Queue table implementing `TRV004`/`TRV009`. Two modals: a **3-step** pre-check-in wizard (Identify rod → Assign bay → Visual inspection) and pre-check-out.
+- **Dashboard 2A components:** reuses the `.payoff`/`.payoff-badge` bay cards from `dashboard_3_active_run_fl3.html`, the `Payoff No` queue table from `dashboard_3_active_run.html`, `payoff-option` selector cards and the `tab-strip` unlock idiom from Dashboard 2, and `option-card`/`consequence-box`/`footer-stamp` from Dashboard 12. **Clone the Dashboard 12 skeleton, not Dashboard 2's** — DB2 inlines its own app bar and omits `flat-wire-topbar.js`.
+- **Dashboard 2 change (`CHK005`):** the payoff selector stays for the direct-check-in fallback but renders **pre-filled and read-only** when the rod arrived via pre-check-in. `CHK005` reads as "Pre-Check-In station only"; this satisfies both readings without discarding approved markup. Confirm with the business.
 - **Layout:** 6-step guided **tab-wizard** (Visual Inspection → Pass Schedule → Pre-run SPC → Die Block → Rolling Mill → Lube & Safety) with progressive unlock; footer **Acknowledge & Begin Check-in** disabled until all steps complete; supervisor-override path for any deviation/out-of-spec.
 - **Components:** `dashboard-2-rod-checkin` (wizard host), shared `pass-schedule-table`, `confirm-bar` (amber→green, retained), `payoff-option` selector cards, pass/fail `pill-btn` + OK/NG/NA machine-inspection buttons, `tolerance-viz` (SPC marker on a band — **replaces the old inline-SVG progress ring**), standard `.input` fields with `.invalid`/`field-error` states.
-- **Services/models:** `flat-wire-api` (`checkin/rod`, `rod/{alpha}`), `line-context`, `run-state`; `checkin.model.ts`. *(Inspection scope expanded vs the DTO — the new wizard adds machine-inspection steps (Die Block, Rolling Mill, Lube & Safety) and OK/NG/NA states beyond the 3-item DTO; reconcile — see G14.)*
+- **Services/models:** `flat-wire-api` (`checkin/rod`, `rod/{alpha}`, `payoff/status`, `staging/**`), `line-context`, `run-state`, `payoff-state`; `checkin.model.ts`, `staging.model.ts`. *(Inspection scope expanded vs the DTO — the new wizard adds machine-inspection steps (Die Block, Rolling Mill, Lube & Safety) and OK/NG/NA states beyond the 3-item DTO; reconcile — see G14.)*
 - **Forms/validation:** each step gates the next; Acknowledge enabled only when all steps complete + confirm-bar green (or supervisor override on file).
-- **Navigation/error:** → Dashboard 3 on success; → Dashboard 8 on inspection fail; → Dashboard 12 Mode A via footer; rollback error toast.
+- **Navigation/error:** → Dashboard 3 on success; → Dashboard 8 on inspection fail; → Dashboard 12 Mode A via footer; rollback error toast. Dashboard 2A → Dashboard 2 (Proceed to check-in), → Dashboard 8 (inspection fail, hard block), → Dashboard 4 (Mark as Welded), → Dashboard 3/12 from the active bay. A `Rod Pre-Check-in` tile is added to the shared topbar so the station is reachable from every screen.
 
 ## Backend Implementation (.NET)
-- **APIs:** `CheckInController` `POST /checkin/rod`.
+- **APIs:** `CheckInController` `POST /checkin/rod`; **`PayoffStagingController`** — `GET /payoff/status`, `GET /staging/queue`, `POST /staging/rod`, `POST /staging/rod/unstage`, `POST /staging/rod/mark-welded`.
+- **Staging commands:** `StageRodCommand` (reuses the 3-item `InspectionDto` — do **not** add a connector-tag item, see G14), `UnstageRodCommand` (writes `RodCheckout` with `Mode='ModeP'`), `MarkStagedRodWeldedCommand` (validates alloy/temper/diameter against the running coil per `WLD006`).
+- **Staging rules:** bay-occupancy conflicts surface as `409` from the filtered unique indexes rather than a read-then-write race; `FL2` rejected `422` (`PCI002`); inspection `Fail` returns the WIP-rejection route with **no override**; prior footage without acknowledgement rejected `422` (`PRC007`).
 - **Request/Response:** `CheckInRodCommand` (line, rodAlpha, payoff, diameterMeasured, weights, `InspectionDto`, passScheduleId, operatorId, orderId) → `CheckInRodResponse` (runId, checkedInAt, plcTagsPushed).
 - **Business services:** `CheckInService` (records-before-push orchestration) → `PLCTagService.PushPassSchedule(passScheduleId, lineId, payoffPosition)`.
 - **MediatR handlers:** `CheckInRodCommand` handler with **atomic** side-effects (INFLAT, ack record, PLC push, timer, `LineStatus` broadcast).
-- **Business rules:** all-or-nothing; Draft not acknowledgeable; single active run per line.
+- **Business rules:** all-or-nothing; Draft not acknowledgeable; single active run per line; **one rod per payoff bay and one bay per rod** — enforced in the database, not in application code.
+- **Wording:** staging spans `FlatWireDB` + `coils` + `wip_coil_orders` and is **not** one ACID transaction — describe these as **compensating writes**, never "atomic rollback" (G2/G16).
 - **Logging/authz:** PLC push audited (tag/value/operator/result); Operator+ policy.
 
 ## Database Changes
-- **Tables (write):** `RodCheckin` (inspection cols, payoff, `PlcTagsPushed`, pre-run SPC M1/M2/ovality), `FlatWireRun` (create run header, `Status=Running`, `StartedAt`), `SpcCheckpoint`+`SpcMeasurement` (PreRun); **existing `coils` rod row → status `INFLAT`** (FW-002; cross-DB write — see G2).
-- **Reads:** `PassSchedule`(+components) for the push payload; `coils` for rod validation.
-- **Indexes:** `RodCheckin(RunId)`, `RodCheckin(RodAlpha)`.
+- **Tables (write):** **`RodStaging`** (pre-check-in row, 3-item inspection, `RodSeqno`, `IsWelded`, carry-forward evidence, un-stage audit); `RodCheckin` (inspection cols, payoff, `PlcTagsPushed`, pre-run SPC M1/M2/ovality); `FlatWireRun` (create run header, `Status=Running`, `StartedAt`); `SpcCheckpoint`+`SpcMeasurement` (PreRun); `RodCheckout` with `Mode='ModeP'` on pre-check-out; **existing `coils` rod row → status `INFLAT`** (FW-002; cross-DB write — see G2).
+- **Reference data:** new `PayoffPosition` lookup (3 pinned rows) seeded by the DDL; `FlatWireRunDetail.PayoffPositionId` now has an enforced FK parent (REVIEW.md #15).
+- **WIP stations:** **`FL1PO` is now seeded** by `CommonDB_Insert_WIPStations_FlatWire.sql` (`PCI003`). It shares FL1's `MachineIdx` — the same pattern as legacy `ZR23`/`ZR23PO`. `FL2PO` stays absent per `PCI002`. That script's D2 note previously refused the station outright; that was correct about the *legacy* flow, not about the feature.
+- **Reads:** `PassSchedule`(+components) for the push payload; `coils` for rod validation; `RodStaging` for bay occupancy.
+- **Indexes:** `RodCheckin(RunId)`, `RodCheckin(RodAlpha)`, **`RodCheckin(LineId, PayoffPosition)`** (was missing), `RodStaging(LineId, Status)`, `RodStaging(RodAlpha)`, plus the filtered unique indexes `UX_RodStaging_Bay` and `UX_RodStaging_RodActive`.
 - **Relationships:** `FlatWireRun` hub row created here anchors all subsequent events; `RodCheckin.RodAlpha` is a logical link to the `coils` R-series row (cross-DB).
 
 ## Real-Time Functionality
 - **Publisher:** on success, broadcast `LineStatus {status:Running}` → Dashboard 1 flips to RUNNING; `ComponentStatus` reflects pushed values.
+- **New event `PayoffStateChanged`** `{lineId, position, state, rodAlpha, rodSeqno, isWelded}` on every bay-occupancy change (stage, un-stage, mark-welded, check-in consuming a staged row). Per §0.4 this is a **rare domain event — send immediately, unbatched**; it must not enter the ~100 ms/10 Hz telemetry batch. Live weight keeps coming from the batched `PayoffWeight`.
 - **Retry:** if PLC push fails, no broadcast (state rolled back).
 
 ## Integration Flow
@@ -79,6 +95,6 @@ sequenceDiagram
 - **Acceptance:** operator checks in a rod → PLC tags pushed (simulated) → run active → Dashboard 3.
 
 ## Deliverables
-Dashboard 2 (+FL3); `CheckInController` + `CheckInService`; `PLCTagService.PushPassSchedule`; INFLAT + run header; audit logging.
+Dashboard 2 (+FL3); **Dashboard 2A (Pre-Check-In station)**; `CheckInController` + `CheckInService`; **`PayoffStagingController` + `RodStagingService`**; `PLCTagService.PushPassSchedule`; INFLAT + run header; `PayoffStateChanged`; the `FL1PO` station; audit logging.
 
-**OQ blockers:** **OQ-14** (traveler fields per station — Critical, gates final field list), **OQ-51** (no-match path — Critical residual; stub assumes single active schedule → `PS-1100-FL1-003`), OQ-27 (mid-run schedule change/alpha — decided), OQ-30 (roll-gap validation before start). **Stories:** FW-061, FW-082, FW-010, FW-002. *(Consumes upstream FW-020 rod alphas via `GET /rod/{alpha}`.)*
+**OQ blockers:** **OQ-14** (traveler fields per station — Critical, gates final field list), **OQ-51** (no-match path — Critical residual; stub assumes single active schedule → `PS-1100-FL1-003`), OQ-27 (mid-run schedule change/alpha — decided), OQ-30 (roll-gap validation before start). **New pre-check-in blockers:** whether pre-check-out requires supervisor approval; whether pre-check-in really sets `coils.coil_status = INFLAT` (SRS) or `STAGED` (walkthrough), and what reverses it on un-stage; the scope of `RodSeqno`. **Stories:** FW-061, FW-082, FW-010, FW-002. *(Consumes upstream FW-020 rod alphas via `GET /rod/{alpha}`.)*

@@ -38,8 +38,10 @@ BEGIN
         [InventoryType] VARCHAR(20)  NULL,                  -- planning/cost inventory classification (OQ-18 PROVISIONAL)
         [Status]       VARCHAR(20)   NOT NULL,              -- RECEIVED|STAGED|INFLAT|COMPLETE|HOLD|SCRAP
         [Location]     VARCHAR(50)   NULL,                  -- physical floor location
-        [StagedPayoffPosition] INT   NULL,                  -- pre-check-in staging: intended payoff (1|2); FlatwireQueue model (PROVISIONAL)
-        [IsWelded]     BIT           NOT NULL CONSTRAINT [DF_Rod_IsWelded] DEFAULT (0),  -- pre-check-in "Mark as Welded" flag
+        -- NOTE: [StagedPayoffPosition] and [IsWelded] were removed here. Pre-check-in
+        -- staging now lives in [dbo].[RodStaging] (04_Runs), which can enforce the
+        -- one-rod-per-payoff-bay invariant that a nullable column on Rod cannot.
+        -- See Analysis/RodPreCheckin.md and SRS §4.2 PCI001-PCI008 / WLD010.
         [FootageRunToDate] DECIMAL(10,2) NULL,              -- cumulative footage produced across partial runs (Phase 7 / OQ-47)
         [RemainingWeightEstimateLb] DECIMAL(8,2) NULL,      -- estimated remaining weight after a partial run (lb)
         [ReceivedAt]   DATETIMEOFFSET NOT NULL CONSTRAINT [DF_Rod_ReceivedAt] DEFAULT (SYSDATETIMEOFFSET()),
@@ -51,8 +53,7 @@ BEGIN
         CONSTRAINT [PK_Rod]         PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_Rod_Alpha]   UNIQUE ([Alpha]),
         CONSTRAINT [CK_Rod_Status]  CHECK ([Status] IN ('RECEIVED','STAGED','INFLAT','COMPLETE','HOLD','SCRAP')),
-        CONSTRAINT [CK_Rod_DiamPos] CHECK ([DiameterIn] > 0),
-        CONSTRAINT [CK_Rod_StagedPayoff] CHECK ([StagedPayoffPosition] IN (1, 2) OR [StagedPayoffPosition] IS NULL)
+        CONSTRAINT [CK_Rod_DiamPos] CHECK ([DiameterIn] > 0)
     );
     PRINT 'Created table: Rod';
 END

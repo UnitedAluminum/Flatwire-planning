@@ -30,9 +30,10 @@
 
 ## Backend Implementation (.NET)
 - **APIs:** `LinesController` `GET /lines/status` (snapshot for load; live via hub).
-- **Response models:** `LinesStatusResponse`/`LineStatusDto`/`PayoffStatusDto`/`ActiveAlertDto`.
+- **Response models:** `LinesStatusResponse`/`LineStatusDto`/`PayoffStatusDto`/`ActiveAlertDto`. `PayoffStatusDto` carries bay **occupancy** (`state`, `rodAlpha`) alongside live weight — see `GET /payoff/status` for the fuller per-bay shape used by Dashboard 2A.
 - **Business services:** `LineStatusService` (composes scheduling + run + latest OPC readings); strongly-typed `FlatWireHub : Hub<IFlatWireClient>` (MessagePack; `JoinLineGroup`); OPC ingest → bounded channel → cadence-driven broadcast loop emitting `GaugeReading[]/WidthReading[]/SpeedFPM/PayoffWeight/ComponentStatus/LineStatus/FootageCounter` + `AlertRaised/AlertCleared` from the rules engine (see §0.4).
 - **Business rules (alert engine):** Payoff1<3,000 lb → Warning; gauge outside ±tol → Warning; component fault → Critical; active WIP rejection → Warning; Payoff2 not loaded & Payoff1<2,000 lb → Critical.
+- **Data source for "Payoff2 not loaded":** `RodStaging` — a `Staged` row on `(LineId, PayoffPosition)` means loaded. Until Phase 4 delivered that table this rule had **no way to be evaluated**, since nothing recorded bay occupancy; `PayoffWeight` alone cannot distinguish "empty bay" from "sensor reading zero". Consume the `PayoffStateChanged` event to keep the evaluation live.
 - **Logging/authz:** any authenticated role reads.
 
 ## Database Changes

@@ -1,7 +1,7 @@
 # Flat Wire Mill — Run Tracking Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 26, 2026
+**Last Updated:** July 30, 2026
 **Document Type:** Final Schema — Run Tracking Tables
 **Source:** Derived from `FlatWireTables.md` recommendations
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `SQL/FlatWire_DDL_04_Runs.sql` (`FlatWireRun` itself is created in `DDL_03`)
@@ -56,7 +56,7 @@ Per-stop and per-sequence detail records for a run. Each row captures footage, g
 | `PlanId` | int | NULL | — | FK to the production planning table |
 | `CoilOrderPlanId` | int | NULL | — | FK to the coil-level order plan; review for redundancy with `PlanId` |
 | `HomeMfgOrderNo` | varchar(50) | NULL | — | Home or parent manufacturing order number |
-| `PayoffPositionId` | int | NOT NULL | — | FK to the payoff position reference — Payoff1, Payoff2, or TraversingTakeup |
+| `PayoffPositionId` | int | NOT NULL | `PayoffPosition.Id` | FK to the payoff position reference — `1` Payoff1, `2` Payoff2, `3` TraversingTakeup. The parent table now exists (`FlatWireSchema_Lookup.md`); previously this was an FK-style int with no parent (REVIEW.md #15) |
 | `FootageFt` | decimal | NOT NULL | — | Footage counter reading at which this stop event occurred |
 | `OnGaugeWeight` | decimal | NULL | — | Weight of on-gauge material produced to this stop point, in pounds |
 | `TargetGauge` | decimal | NULL | — | Target gauge for quality control at this stop, in inches |
@@ -70,9 +70,100 @@ Per-stop and per-sequence detail records for a run. Each row captures footage, g
 
 ---
 
+## `RodStaging`
+
+**Pre-check-in.** The next rod is registered against a VPS payoff bay while the current coil is still running, so the line can run continuously through an induction weld. One row per staging event. No `RunId` — a staged rod has no run yet, and **no PLC tags are pushed at this stage**.
+
+Implements SRS §4.2 `PCI001`–`PCI008`, `WLD003`/`WLD010` (Mark as Welded), `TRV004`/`TRV009` (Traveler Queue), and the §4.18 `PRC007` carry-forward gate. **FL1 and FL3 only** — `PCI002` excludes FL2, which has no staging space.
+
+Supersedes the retired `Rod.StagedPayoffPosition` / `Rod.IsWelded` columns.
+
+> **Planned order is authorised, not enforced — and both sequences are retained.** Rods are planned in a predefined order (say `R00043 → R00044 → R00045`). Departing from it is permitted, but it is **not** the operator's unilateral call: the operator is **notified** that the rod is not the one planning expects next, and a **supervisor authorises** the deviation (`OutOfSequenceOverride`). It is never a hard refusal — the commit control stays reachable once signed off.
+>
+> There is deliberately **no constraint relating `PlannedSeqno` to `RodSeqno`**. A difference between them is a legitimate, authorised outcome, not a data error; the authorisation columns are what make it accountable.
+>
+> That is why this table carries **two** sequence columns rather than one. `RodSeqno` records what actually happened, for traceability; `PlannedSeqno` preserves what planning intended, for reporting. Variance is then a subtraction rather than a reconstruction.
+>
+> *(Superseded July 30 2026: an earlier requirement had the operator free to re-order without any authorisation. The notify-and-authorise rule replaces it.)*
+>
+> `PlannedSeqno` is a **snapshot**, not a live join back to planning — the same pattern the design already uses for the pass schedule, whose id, version and effective date are copied onto the run record at check-in rather than re-resolved later. A traceability record that has to reach into current planning data years afterwards to answer "was this run in planned order?" is exactly the join that breaks.
+>
+> Do not read `PCI008` ("surface pre-checked-in material during weld selection **to enforce sequencing**") as planned-order enforcement. It means *physical* weld sequencing — the weld defaults to whichever rod is actually staged on the idle bay, and the operator can still override by scanning.
+
+| Column | Data Type | Nullable | FK Reference | Description |
+|---|---|---|---|---|
+| `Id` | int | NOT NULL | — | Surrogate primary key |
+| `LineId` | varchar(5) | NOT NULL | — | Line the bay belongs to: `FL1` or `FL3` |
+| `PayoffPosition` | int | NOT NULL | `PayoffPosition.Id` | Intended payoff bay: `1` or `2` (`PCI006`) |
+| `RodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | FK to the rod being staged |
+| `RodSeqno` | int | NOT NULL | — | **Actual** processing sequence, assigned here at pre-check-in. This is the SRS `FlatwireQueue` sequence (`Rodno`/`RodSeqno`/`Welded`), which that model inserts at pre-check-in. Monotonic per line. Drives Traveler Queue ordering |
+| `PlannedSeqno` | int | NULL | — | **Planned** sequence, snapshotted at staging. NULL when the rod has no planned position (e.g. a substitution). See the free-order note below |
+| `IsWelded` | bit | NOT NULL | — | `1` once the operator records the induction weld to the running rod (`WLD010`); default `0` |
+| `Status` | varchar(12) | NOT NULL | — | `Staged` → `CheckedIn`, or `Unstaged` — see allowed values |
+| `OrderId` | varchar(20) | NULL | — | Order this rod is staged against, **resolved from `planning_routings` at the scan** — never typed. On a cold line this is what the first rod reveals |
+| `OffScheduleOverride` | bit | NOT NULL | — | `1` when the order was booked on a **different line** and a supervisor authorised staging it here anyway; default `0` |
+| `OutOfSequenceOverride` | bit | NOT NULL | — | `1` when the rod was **not the one planning expected next** and a supervisor authorised the deviation; default `0` |
+| `ScheduledLineId` | varchar(5) | NULL | — | Line the order was actually booked on. Set exactly with `OffScheduleOverride`, and must differ from `LineId` |
+| `ExpectedRodAlpha` | varchar(20) | NULL | — | The rod planning expected next, captured at the moment of deviation. Set exactly with `OutOfSequenceOverride`, and must differ from `RodAlpha` |
+| `OverrideBy` | varchar(50) | NULL | — | Authorising supervisor badge/ID. **The PIN is never stored** |
+| `OverrideAt` | datetimeoffset | NULL | — | Timestamp of the authorisation |
+| `OverrideReason` | varchar(200) | NULL | — | Why the line is running off-schedule |
+| `ScrapBoxRef` | varchar(20) | NULL | — | Optional scrap box, same-alloy carry-forward as check-in (`PCI005`) |
+| `DiameterIn` | decimal(8,4) | NOT NULL | — | Diameter measured at staging (`PCI004`), in inches |
+| `GrossWeightLb` | decimal(8,2) | NOT NULL | — | Gross weight at staging, in pounds |
+| `NetWeightLb` | decimal(8,2) | NOT NULL | — | Net weight at staging, in pounds |
+| `FootageRunToDateAtStaging` | decimal(10,2) | NOT NULL | — | Rod's prior footage captured at the staging scan; `> 0` forces the carry-forward path (`PRC007`) and blocks the fresh-start path. Default `0` |
+| `InspectionOxidation` | varchar(10) | NOT NULL | — | Visual oxidation result before unbanding: `Pass` or `Fail` |
+| `InspectionSurfaceDefects` | varchar(10) | NOT NULL | — | Visual surface defect result: `Pass` or `Fail` |
+| `InspectionWaterStains` | varchar(10) | NOT NULL | — | Water stain result: `Pass` or `Fail` |
+| `InspectionNotes` | varchar(500) | NULL | — | Free-text observation; expected when any item fails |
+| `StagedAt` | datetimeoffset | NOT NULL | — | Timestamp the rod was staged |
+| `StagedBy` | varchar(50) | NOT NULL | — | Operator who staged it |
+| `WeldedAt` | datetimeoffset | NULL | — | Timestamp of the Mark-as-Welded action (`WLD003`) |
+| `WeldedBy` | varchar(50) | NULL | — | Operator who recorded the weld (`WLD003`) |
+| `CheckedInAt` | datetimeoffset | NULL | — | Set when check-in consumes this staged row |
+| `RodCheckinId` | int | NULL | `RodCheckin.Id` | FK closing the staging → check-in chain |
+| `UnstagedAt` | datetimeoffset | NULL | — | Timestamp of pre-check-out |
+| `UnstagedBy` | varchar(50) | NULL | — | Operator who un-staged it |
+| `UnstageReasonCode` | varchar(40) | NULL | — | Pre-check-out reason code |
+| `RowVersion` | rowversion | NOT NULL | — | Optimistic-concurrency token |
+
+**Allowed values — `Status`:**
+
+| Value | Meaning |
+|---|---|
+| `Staged` | Rod is physically at the bay, pre-checked-in, not yet checked in |
+| `CheckedIn` | Consumed by check-in on Dashboard 2; the bay is now running or ready to run |
+| `Unstaged` | Removed by pre-check-out (`RodCheckout.Mode = ModeP`) without ever being checked in |
+
+> **There is no `Blocked` status — it is derived.** Dashboard 2A and `GET /payoff/status` both expose a **`Blocked`** bay state meaning "inspection failed at staging". That is `Status = 'Staged'` with any of the three inspection columns `= 'Fail'`, **not** a fourth `Status` value. Deriving it is also the operationally correct reading: `UX_RodStaging_Bay` is filtered on `Status = 'Staged'`, and a failed bundle is still physically in the bay, so it must keep the bay occupied. Adding a `Blocked` status would fall outside that filter and free a bay that is not free.
+>
+> **Open (Q72):** nothing currently *writes* such a row. A failed inspection is a hard block with no bypass (`CHK010`) and routes straight to WIP Rejection, so the staging record is never committed and the `Blocked` state is unreachable in practice. Whether pre-check-in commits the row before handing off — and what then releases it — is unresolved.
+
+**Inspection columns:** `Pass`, `Fail`. **Three items, not four** — the connector-tag item belongs to check-in (gap **G14**); do not add it here. `InspectionNotes` is nullable but expected whenever an item fails; **Q72** asks whether that should be enforced by a constraint, in the same all-or-nothing style as the welded / unstaged / checked-in column groups below.
+
+**Constraints:**
+
+- `CK_RodStaging_Override` — the credential stamp is **all-or-nothing** and required by **either** deviation: `OverrideBy`/`OverrideAt`/`OverrideReason` are all set exactly when `OffScheduleOverride = 1` **or** `OutOfSequenceOverride = 1`. An override with no supervisor or no reason is unauditable, which defeats the point of permitting the deviation
+- `CK_RodStaging_OffSched` — `ScheduledLineId` present exactly when `OffScheduleOverride = 1`
+- `CK_RodStaging_OutOfSeq` — `ExpectedRodAlpha` present exactly when `OutOfSequenceOverride = 1`
+- `CK_RodStaging_OffSchedLine` — `ScheduledLineId <> LineId`; an override only means anything against a line the order was *not* booked on
+- `CK_RodStaging_OutOfSeqRod` — `ExpectedRodAlpha <> RodAlpha`; "out of sequence" means the rod staged is not the one expected
+- `CK_RodStaging_LineId` — `FL1` or `FL3` only (`PCI002`)
+- `CK_RodStaging_PayoffPos` — `1` or `2`
+- `CK_RodStaging_Welded` — `WeldedAt`/`WeldedBy` are both set exactly when `IsWelded = 1`
+- `CK_RodStaging_Unstaged` — the three `Unstaged*` columns are all set exactly when `Status = 'Unstaged'`
+- `CK_RodStaging_CheckedIn` — `CheckedInAt`/`RodCheckinId` are both set exactly when `Status = 'CheckedIn'`
+- **`UX_RodStaging_Bay`** — filtered UNIQUE on `(LineId, PayoffPosition) WHERE Status = 'Staged'`: **one rod per payoff bay**
+- **`UX_RodStaging_RodActive`** — filtered UNIQUE on `(RodAlpha) WHERE Status = 'Staged'`: **one bay per rod**
+
+> The two filtered unique indexes are the reason this is a table rather than columns on `Rod`: they make the bay-occupancy invariant impossible to violate, including under concurrent staging from two clients. Note that any client writing to this table needs `QUOTED_IDENTIFIER ON` (a filtered-index requirement, same as the PERSISTED computed columns elsewhere in this schema).
+
+---
+
 ## `RodCheckin`
 
-Captures every rod check-in event with inspection results and pre-run SPC measurements. One row is created per rod loaded at a payoff position. Initiates or contributes to a `FlatWireRun`.
+Captures every rod check-in event with inspection results and pre-run SPC measurements. One row is created per rod loaded at a payoff position. Initiates or contributes to a `FlatWireRun`. Where the rod was pre-checked-in, check-in **consumes** the `RodStaging` row (`Status → CheckedIn`, `RodCheckinId` linked) rather than creating a parallel record.
 
 | Column | Data Type | Nullable | FK Reference | Description |
 |---|---|---|---|---|
@@ -170,6 +261,8 @@ Rod-to-rod weld join events recorded during a run. A weld joins the tail of the 
 | `LineId` | varchar(5) | NOT NULL | — | Line where the weld was performed |
 | `OutgoingRodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | Alpha of the rod being depleted — the tail (outgoing) end |
 | `IncomingRodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | Alpha of the rod being joined — the leading (incoming) end |
+| `OutgoingPayoffPosition` | int | NULL | — | Bay the depleting rod is drawing from (`1`/`2`). The weld *is* the payoff handover, so recording it makes the handover directly queryable instead of inferred by joining `RodCheckin`/`RodStaging` |
+| `IncomingPayoffPosition` | int | NULL | — | Bay the staged rod occupies (`1`/`2`) |
 | `FootagePosition` | int | NOT NULL | — | Footage counter value at the moment the weld was made |
 | `WeldType` | varchar(20) | NOT NULL | — | Welding process used: `InductionWeld` (only type per May-21-2026 revision) or `LaserWeld` (retained for historical genealogy) |
 | `WeldQuality` | varchar(10) | NOT NULL | — | Weld quality assessment: `Pass` or `Fail` |
@@ -180,6 +273,9 @@ Rod-to-rod weld join events recorded during a run. A weld joins the tail of the 
 **Allowed values:**
 - `WeldType`: `InductionWeld`, `LaserWeld`
 - `WeldQuality`: `Pass`, `Fail`
+- `OutgoingPayoffPosition` / `IncomingPayoffPosition`: `1`, `2`, or NULL
+
+**Constraints:** `CK_WeldEvent_PayoffDiff` — a weld joins two *different* bays; a bay cannot be welded to itself.
 
 ---
 
@@ -259,4 +355,7 @@ Sampled gauge/width/speed profile persisted per run. Live telemetry stays in-mem
 
 | Date | Change |
 |---|---|
+| July 29, 2026 | **Free rod processing order.** Planned sequence is not enforced — staging validates only current-order membership and availability. Added **`RodStaging.PlannedSeqno` (int NULL)** and redefined `RodSeqno` as the **actual** processing sequence assigned at pre-check-in, monotonic per line; `PlannedSeqno` snapshots the planned position (same snapshot pattern as pass schedule id/version on the run record). Added `CK_RodStaging_SeqPos` / `CK_RodStaging_PlannedSeqPos`; deliberately **no** constraint relating the two, since a difference is the normal case. Also annotated that `PCI008`'s "enforce sequencing" means *physical weld* sequencing, not planned order (**Q70** partly resolved). |
+| July 29, 2026 | Documented that the Dashboard 2A / `GET /payoff/status` **`Blocked`** bay state is **derived** (`Status = 'Staged'` + any inspection column `= 'Fail'`), not a fourth `Status` value — adding one would fall outside the `UX_RodStaging_Bay` filter and free a bay that is still physically occupied. Flagged **Q72**: nothing currently writes such a row, because a failed inspection routes straight to WIP Rejection without committing, so `Blocked` is unreachable in practice; also asks whether `InspectionNotes` should be constraint-enforced when any item fails. No DDL change. |
+| July 29, 2026 | Added **`RodStaging`** (pre-check-in / payoff staging) implementing SRS §4.2 `PCI001`–`PCI008`, `WLD010` and `TRV004`; two filtered unique indexes enforce one-rod-per-bay and one-bay-per-rod. `FlatWireRunDetail.PayoffPositionId` now has a real FK parent (`PayoffPosition`, REVIEW.md #15). `WeldEvent`: added `OutgoingPayoffPosition`/`IncomingPayoffPosition` + `CK_WeldEvent_PayoffDiff` so the payoff handover is queryable. `RodCheckin` documented as *consuming* the staged row. |
 | July 26, 2026 | Added `RunReading` (sampled gauge profile, G3). `FlatWireRun.FootageFt` → `decimal(10,2)`; added audit + `RowVersion` on `FlatWireRun`. `RodCheckin`: computed `SpcOvalityIn`, added `MmsId`/`MmsStatus`/`ScrapBoxRef`. `SpoolCheckin`: added `MmsId`/`MmsStatus`. `RunPauseEvent`: added `OperatorId`/`ResumedBy`, computed `PauseDurationSeconds`, Notes-when-Other CHECK. `WeldEvent`: fail-reason-required CHECK. `RollOverride`: computed `Delta`, ReasonCode CHECK. `DieChangeEvent`: ReasonCode CHECK. Retargeted to `FlatWireDB`. |

@@ -16,9 +16,10 @@
 
 ## User Journey
 - **WIP Rejection (Dashboard 8):** context auto (alpha, stage, footage, time); group→reason dropdowns; details (measured/target/deviation); disposition Suspend(→HOLD)/Scrap(→SCRAP)/Rework(→return stage); observation required for Suspend; Submit → status set, WIP-Held queue, `AlertRaised` to Dashboard 1.
+- **Rod Pre-Check-out / Mode P (never checked in, Dashboard 2A):** releases a rod that was only *pre*-checked-in, so there is **no acknowledgement to void and no PLC tags to clear** — and, unlike Modes A/B, **no `FL{n}.LineState` gate is needed** because an idle bay is not running. Reason (Wrong rod/Order cancelled/Failed re-inspection/Relocated/Other); disposition Return-to-floor / Return-to-warehouse; Confirm → `RodStaging.Status='Unstaged'`, `RodCheckout` row with `Mode='ModeP'`, the WIP queue entry created at staging **reversed**, `PayoffStateChanged → NotStaged`. Distinct from Mode A: see the modes-compared table in `FlatWireSchema_QualityOutput.md`.
 - **Rod Checkout Mode A (footage=0, Dashboard 12):** from DB2 footer or DB3 (footage=0); reason (Wrong rod/Order cancelled/Failed re-inspection/Relocated/Other); disposition Return-to-floor(→STAGED)/Return-to-warehouse(→RECEIVED); Confirm → ack voided, `ClearPayoffTags`, line IDLE.
 - **Rod Checkout Mode B (footage>0):** **only** via Pause→"Check out rod"; DB3 button disabled when footage>0; line-state guard (app reads `FL1.LineState`, blocks if Running); reason; rod disposition Hold/Scrap/Defer; **in-process material disposition** Hold/Scrap/Accept-partial → **PENDING DISPOSITION** record, material locked (no alpha), **SignalR to Supervisor**; supervisor Accept(→partial spool alpha, spool queue)/Hold(→alpha Hold, QC release)/Reject(→WIP Rejection→scrap).
-- **Partial-rod re-check-in (carry-forward):** scanning a rod with `footage_run_to_date>0` forces carry-forward path (fresh-start blocked); supervisor sign-off; opens a new run at 0 ft; each segment → its own spool alpha with `source_rod_alpha`.
+- **Partial-rod re-check-in (carry-forward):** scanning a rod with `footage_run_to_date>0` forces carry-forward path (fresh-start blocked); supervisor sign-off; opens a new run at 0 ft; each segment → its own spool alpha with `source_rod_alpha`. **The gate now fires earlier — at the Dashboard 2A staging scan**, which is where the rod is first identified, so a partial rod is caught before it is ever mounted. `RodStaging.FootageRunToDateAtStaging` records the evidence and `POST /staging/rod` rejects `422` without `acknowledgedCarryForward` (`PRC007`); the fresh-start control is absent from the DOM, not merely disabled (`PRC008`).
 - **Error scenarios:** checkout while line Running → blocked; Accept-partial without supervisor → no alpha.
 
 ## UI Implementation (Angular)
@@ -37,7 +38,7 @@
 - **Logging/authz:** operator flags, supervisor disposes; all audited.
 
 ## Database Changes
-- **Tables (write):** `WipRejection` (nullable `RunId`), `RodCheckout` (Mode A/B, `PartialSpoolAlpha`, dispositions); status transitions on the existing **`coils`** rod row / `Spool.Status` / `CoilOutput.Status`; carry-forward columns added to the existing **`coils`** rod row (`footage_run_to_date`, `remaining_weight_estimate`) + `source_rod_alpha` on `Spool` (**new columns — schema addition this phase**, per PartialRodReCheckin design).
+- **Tables (write):** `WipRejection` (nullable `RunId`), `RodCheckout` (**Mode P**/A/B, `PartialSpoolAlpha`, dispositions — `CK_RodCheckout_ModeP` and `CK_RodCheckout_ModeB` now enforce the per-mode field rules in the database rather than in prose, closing REVIEW.md #20); `RodStaging.Status → 'Unstaged'` on Mode P; status transitions on the existing **`coils`** rod row / `Spool.Status` / `CoilOutput.Status`; carry-forward columns added to the existing **`coils`** rod row (`footage_run_to_date`, `remaining_weight_estimate`) + `source_rod_alpha` on `Spool` (**new columns — schema addition this phase**, per PartialRodReCheckin design).
 - **Indexes:** `WipRejection(RunId)`, `RodCheckout(RunId)`.
 - **Relationships:** polymorphic `WipRejection.MaterialAlpha` (rod or spool, no FK), `RodCheckout.PartialSpoolAlpha` (no FK).
 

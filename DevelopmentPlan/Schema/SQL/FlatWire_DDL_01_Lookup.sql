@@ -1,7 +1,8 @@
 -- ============================================================
 -- Flat Wire Mill — DDL Script 01: Lookup / Reference Tables
 -- Run order : 01 of 09
--- Tables    : Stand, Drawer, Edger, SpoolConfiguration, AlloyProperty
+-- Tables    : Stand, Drawer, Edger, SpoolConfiguration, AlloyProperty,
+--             PayoffPosition
 -- Dependencies: 00_Database (FlatWireDB)
 -- ============================================================
 
@@ -155,4 +156,55 @@ BEGIN
 END
 ELSE
     PRINT 'Table already exists: AlloyProperty';
+GO
+
+-- ------------------------------------------------------------
+-- PayoffPosition
+-- Reference table for material input/output positions. Gives
+-- FlatWireRunDetail.PayoffPositionId a real parent — previously it
+-- was an FK-style INT pointing at a table that did not exist
+-- (REVIEW.md #15).
+--
+-- Three positions are modelled, not two: FL1/FL3 draw rod from the
+-- dual-position VPS (1 and 2), while FL2 uses a traversing take-up.
+-- Rod-fed tables (RodStaging, RodCheckin, RodCheckout, SpoolCheckin)
+-- deliberately narrow to CHECK (1,2) — that is intentional, not an
+-- oversight: a rod bundle is only ever mounted on a VPS bay.
+--
+-- Id is explicit (no IDENTITY) so the values are pinned and match the
+-- API enum PayoffPosition { Payoff1 = 1, Payoff2 = 2 }.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[PayoffPosition]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[PayoffPosition] (
+        [Id]          INT         NOT NULL,               -- 1 | 2 | 3 — pinned, not generated
+        [Code]        VARCHAR(20) NOT NULL,               -- Payoff1 | Payoff2 | TraversingTakeup
+        [DisplayName] VARCHAR(40) NOT NULL,               -- operator-facing label
+        [Equipment]   VARCHAR(20) NOT NULL,               -- VPS | TraversingTakeup
+        [MaxWeightLb] DECIMAL(8,2) NULL,                  -- position capacity (lb)
+        [IsRodFed]    BIT         NOT NULL,               -- 1 = accepts a rod bundle (FL1/FL3)
+        [IsActive]    BIT         NOT NULL CONSTRAINT [DF_PayoffPosition_IsActive] DEFAULT (1),
+
+        CONSTRAINT [PK_PayoffPosition]        PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [UQ_PayoffPosition_Code]   UNIQUE ([Code]),
+        CONSTRAINT [CK_PayoffPosition_Id]     CHECK ([Id] IN (1, 2, 3)),
+        CONSTRAINT [CK_PayoffPosition_Code]   CHECK ([Code] IN ('Payoff1','Payoff2','TraversingTakeup')),
+        CONSTRAINT [CK_PayoffPosition_Equip]  CHECK ([Equipment] IN ('VPS','TraversingTakeup'))
+    );
+    PRINT 'Created table: PayoffPosition';
+END
+ELSE
+    PRINT 'Table already exists: PayoffPosition';
+GO
+
+-- Seed the three fixed positions. Idempotent.
+IF NOT EXISTS (SELECT 1 FROM [dbo].[PayoffPosition] WHERE [Id] = 1)
+    INSERT INTO [dbo].[PayoffPosition] ([Id],[Code],[DisplayName],[Equipment],[MaxWeightLb],[IsRodFed])
+    VALUES (1, 'Payoff1', 'Payoff 1', 'VPS', 9000.00, 1);
+IF NOT EXISTS (SELECT 1 FROM [dbo].[PayoffPosition] WHERE [Id] = 2)
+    INSERT INTO [dbo].[PayoffPosition] ([Id],[Code],[DisplayName],[Equipment],[MaxWeightLb],[IsRodFed])
+    VALUES (2, 'Payoff2', 'Payoff 2', 'VPS', 9000.00, 1);
+IF NOT EXISTS (SELECT 1 FROM [dbo].[PayoffPosition] WHERE [Id] = 3)
+    INSERT INTO [dbo].[PayoffPosition] ([Id],[Code],[DisplayName],[Equipment],[MaxWeightLb],[IsRodFed])
+    VALUES (3, 'TraversingTakeup', 'Traversing take-up (FL2)', 'TraversingTakeup', NULL, 0);
 GO

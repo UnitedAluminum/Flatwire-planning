@@ -1,7 +1,7 @@
 -- ============================================================
 -- Flat Wire Mill — DDL Script 04: Run Tracking Tables
 -- Run order : 04 of 09
--- Tables    : FlatWireRunDetail, RodCheckin, SpoolCheckin,
+-- Tables    : FlatWireRunDetail, RodStaging, RodCheckin, SpoolCheckin,
 --             RunPauseEvent, WeldEvent, RollOverride, DieChangeEvent,
 --             RunReading
 -- Dependencies: 03_Materials (FlatWireRun, Rod, Spool), 02_Schedule (PassSchedule)
@@ -52,6 +52,154 @@ BEGIN
 END
 ELSE
     PRINT 'Table already exists: FlatWireRunDetail';
+GO
+
+-- ------------------------------------------------------------
+-- RodStaging
+-- Pre-check-in: the next rod is registered against a VPS payoff
+-- bay while the current coil is still running, so the line can
+-- run continuously through an induction weld.
+--   SRS §4.2 PCI001-PCI008 (station, payoff capture, weld surfacing)
+--   SRS WLD003/WLD010      ("Mark as Welded" + operator/timestamp)
+--   SRS TRV004/TRV009      (Traveler Queue section)
+--   SRS §4.18 PRC007       (carry-forward evidence at the staging scan)
+-- FL1 and FL3 only — PCI002 excludes FL2, which has no staging space.
+-- Supersedes the retired Rod.StagedPayoffPosition / Rod.IsWelded columns:
+-- only a dedicated row can enforce one-rod-per-bay (see filtered indexes
+-- in 07_Indexes).
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[RodStaging]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[RodStaging] (
+        [Id]                      INT           NOT NULL IDENTITY(1,1),
+        [LineId]                  VARCHAR(5)    NOT NULL,   -- FL1 | FL3 (PCI002 excludes FL2)
+        [PayoffPosition]          INT           NOT NULL,   -- 1 or 2 (PCI006)
+        [RodAlpha]                VARCHAR(20)   NOT NULL,   -- FK → Rod.Alpha
+        -- TWO sequences, deliberately. Planning sets an order (R00043→R00044→R00045) and
+        -- departing from it is PERMITTED BUT AUTHORISED: the operator is notified that the
+        -- rod is not the one expected next, and a supervisor signs off
+        -- (OutOfSequenceOverride below). It is never a hard refusal, and the deviation is
+        -- recorded as well as authorised.
+        --   RodSeqno    = ACTUAL processing order, assigned here at pre-check-in.
+        --                 This is the SRS FlatwireQueue sequence (Rodno/RodSeqno/Welded),
+        --                 which that model inserts at pre-check-in. Monotonic per line.
+        --   PlannedSeqno = SNAPSHOT of the planned position at staging time. Snapshot, not
+        --                 a join back to planning: same pattern as the pass schedule
+        --                 id/version/effective-date already copied onto the run record.
+        --                 NULL when the rod has no planned position (e.g. a substitution).
+        -- Variance = RodSeqno vs PlannedSeqno, reportable without reconstructing history.
+        [RodSeqno]                INT           NOT NULL,   -- actual processing sequence
+        [PlannedSeqno]            INT           NULL,       -- planned sequence, snapshotted
+        [IsWelded]                BIT           NOT NULL CONSTRAINT [DF_RodStaging_IsWelded] DEFAULT (0),  -- WLD010
+        [Status]                  VARCHAR(12)   NOT NULL,   -- Staged | CheckedIn | Unstaged
+        -- Resolved from planning_routings at the scan, never typed. On a cold line this is
+        -- what the first rod REVEALS, which is why even the first rod is validatable.
+        [OrderId]                 VARCHAR(20)   NULL,       -- order this rod is staged against
+        -- Supervisor authorisation. TWO independent deviations, neither of them a refusal:
+        -- the operator is notified and a supervisor signs off. Same shape as the Q66
+        -- spool-weight override — reason + supervisor badge/ID + PIN — with the deviation,
+        -- the authorising supervisor and the reason recorded. The PIN is NEVER stored.
+        --   OffScheduleOverride    the order is booked on a DIFFERENT LINE
+        --   OutOfSequenceOverride  the rod is not the one planning expects next
+        -- They can occur together and share one credential stamp.
+        [OffScheduleOverride]     BIT           NOT NULL CONSTRAINT [DF_RodStaging_OffSched] DEFAULT (0),
+        [OutOfSequenceOverride]   BIT           NOT NULL CONSTRAINT [DF_RodStaging_OutOfSeq] DEFAULT (0),
+        [ScheduledLineId]         VARCHAR(5)    NULL,       -- line the order was actually booked on
+        [ExpectedRodAlpha]        VARCHAR(20)   NULL,       -- rod planning expected next, at the moment of deviation
+        [OverrideBy]              VARCHAR(50)   NULL,       -- authorising supervisor badge/ID
+        [OverrideAt]              DATETIMEOFFSET NULL,
+        [OverrideReason]          VARCHAR(200)  NULL,
+        [ScrapBoxRef]             VARCHAR(20)   NULL,       -- optional scrap box (PCI005)
+        [DiameterIn]              DECIMAL(8,4)  NOT NULL,   -- measured at staging (PCI004)
+        [GrossWeightLb]           DECIMAL(8,2)  NOT NULL,
+        [NetWeightLb]             DECIMAL(8,2)  NOT NULL,
+        [FootageRunToDateAtStaging] DECIMAL(10,2) NOT NULL CONSTRAINT [DF_RodStaging_Footage] DEFAULT (0),  -- >0 forces carry-forward (PRC007)
+        [InspectionOxidation]     VARCHAR(10)   NOT NULL,   -- Pass | Fail
+        [InspectionSurfaceDefects] VARCHAR(10)  NOT NULL,   -- Pass | Fail
+        [InspectionWaterStains]   VARCHAR(10)   NOT NULL,   -- Pass | Fail
+                                                            -- 3 items, not 4: the connector-tag item is a
+                                                            -- check-in concern (gap G14 — do not add it here)
+        [InspectionNotes]         VARCHAR(500)  NULL,
+        [StagedAt]                DATETIMEOFFSET NOT NULL CONSTRAINT [DF_RodStaging_StagedAt] DEFAULT (SYSDATETIMEOFFSET()),
+        [StagedBy]                VARCHAR(50)   NOT NULL,
+        [WeldedAt]                DATETIMEOFFSET NULL,      -- WLD003 operator + timestamp
+        [WeldedBy]                VARCHAR(50)   NULL,
+        [CheckedInAt]             DATETIMEOFFSET NULL,      -- set when check-in consumes this row
+        [RodCheckinId]            INT           NULL,       -- FK → RodCheckin.Id (see 06_ForeignKeys)
+        [UnstagedAt]              DATETIMEOFFSET NULL,      -- pre-check-out
+        [UnstagedBy]              VARCHAR(50)   NULL,
+        [UnstageReasonCode]       VARCHAR(40)   NULL,
+        [RowVersion]              ROWVERSION    NOT NULL,   -- optimistic-concurrency token
+
+        CONSTRAINT [PK_RodStaging]              PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [CK_RodStaging_LineId]       CHECK ([LineId] IN ('FL1','FL3')),
+        CONSTRAINT [CK_RodStaging_PayoffPos]    CHECK ([PayoffPosition] IN (1, 2)),
+        CONSTRAINT [CK_RodStaging_Status]       CHECK ([Status] IN ('Staged','CheckedIn','Unstaged')),
+        CONSTRAINT [CK_RodStaging_Oxidation]    CHECK ([InspectionOxidation]      IN ('Pass','Fail')),
+        CONSTRAINT [CK_RodStaging_Surface]      CHECK ([InspectionSurfaceDefects] IN ('Pass','Fail')),
+        CONSTRAINT [CK_RodStaging_WaterStains]  CHECK ([InspectionWaterStains]    IN ('Pass','Fail')),
+        CONSTRAINT [CK_RodStaging_DiamPos]      CHECK ([DiameterIn] > 0),
+        CONSTRAINT [CK_RodStaging_SeqPos]       CHECK ([RodSeqno] > 0),
+        -- Positive when present. Deliberately NO constraint tying PlannedSeqno to RodSeqno:
+        -- they are free to differ, and a difference is the normal case, not an error.
+        CONSTRAINT [CK_RodStaging_PlannedSeqPos] CHECK ([PlannedSeqno] IS NULL OR [PlannedSeqno] > 0),
+        -- The credential stamp is all-or-nothing and required by EITHER deviation. An
+        -- override with no supervisor or no reason is unauditable, which defeats the point
+        -- of permitting the deviation at all.
+        CONSTRAINT [CK_RodStaging_Override]      CHECK (
+                                                    (([OffScheduleOverride] = 1 OR [OutOfSequenceOverride] = 1)
+                                                        AND [OverrideBy] IS NOT NULL
+                                                        AND [OverrideAt] IS NOT NULL
+                                                        AND [OverrideReason] IS NOT NULL)
+                                                 OR ([OffScheduleOverride] = 0
+                                                        AND [OutOfSequenceOverride] = 0
+                                                        AND [OverrideBy] IS NULL
+                                                        AND [OverrideAt] IS NULL
+                                                        AND [OverrideReason] IS NULL)
+                                                ),
+        -- Each deviation's evidence is present exactly when that deviation is claimed.
+        CONSTRAINT [CK_RodStaging_OffSched]      CHECK (
+                                                    ([OffScheduleOverride] = 1 AND [ScheduledLineId] IS NOT NULL)
+                                                 OR ([OffScheduleOverride] = 0 AND [ScheduledLineId] IS NULL)
+                                                ),
+        CONSTRAINT [CK_RodStaging_OutOfSeq]      CHECK (
+                                                    ([OutOfSequenceOverride] = 1 AND [ExpectedRodAlpha] IS NOT NULL)
+                                                 OR ([OutOfSequenceOverride] = 0 AND [ExpectedRodAlpha] IS NULL)
+                                                ),
+        -- An off-schedule override only means anything against a line the order was NOT booked on.
+        CONSTRAINT [CK_RodStaging_OffSchedLine]  CHECK ([ScheduledLineId] IS NULL OR [ScheduledLineId] <> [LineId]),
+        -- "Out of sequence" means the rod staged is not the one expected.
+        CONSTRAINT [CK_RodStaging_OutOfSeqRod]   CHECK ([ExpectedRodAlpha] IS NULL OR [ExpectedRodAlpha] <> [RodAlpha]),
+        -- Welded stamp is all-or-nothing, and only meaningful once IsWelded is set.
+        CONSTRAINT [CK_RodStaging_Welded]       CHECK (
+                                                    ([IsWelded] = 0 AND [WeldedAt] IS NULL AND [WeldedBy] IS NULL)
+                                                 OR ([IsWelded] = 1 AND [WeldedAt] IS NOT NULL AND [WeldedBy] IS NOT NULL)
+                                                ),
+        -- Unstage stamp is all-or-nothing, and present exactly when Status = 'Unstaged'.
+        CONSTRAINT [CK_RodStaging_Unstaged]     CHECK (
+                                                    ([Status] = 'Unstaged'
+                                                        AND [UnstagedAt] IS NOT NULL
+                                                        AND [UnstagedBy] IS NOT NULL
+                                                        AND [UnstageReasonCode] IS NOT NULL)
+                                                 OR ([Status] <> 'Unstaged'
+                                                        AND [UnstagedAt] IS NULL
+                                                        AND [UnstagedBy] IS NULL
+                                                        AND [UnstageReasonCode] IS NULL)
+                                                ),
+        -- Check-in stamp is all-or-nothing, and present exactly when Status = 'CheckedIn'.
+        CONSTRAINT [CK_RodStaging_CheckedIn]    CHECK (
+                                                    ([Status] = 'CheckedIn'
+                                                        AND [CheckedInAt] IS NOT NULL
+                                                        AND [RodCheckinId] IS NOT NULL)
+                                                 OR ([Status] <> 'CheckedIn'
+                                                        AND [CheckedInAt] IS NULL
+                                                        AND [RodCheckinId] IS NULL)
+                                                )
+    );
+    PRINT 'Created table: RodStaging';
+END
+ELSE
+    PRINT 'Table already exists: RodStaging';
 GO
 
 -- ------------------------------------------------------------
@@ -188,6 +336,10 @@ BEGIN
         [LineId]                VARCHAR(5)    NOT NULL,
         [OutgoingRodAlpha]      VARCHAR(20)   NOT NULL,     -- FK → Rod.Alpha (depleting tail rod)
         [IncomingRodAlpha]      VARCHAR(20)   NOT NULL,     -- FK → Rod.Alpha (joining lead rod)
+        -- The weld IS the payoff handover. Recording both positions makes it directly
+        -- queryable instead of inferred by joining RodCheckin/RodStaging per rod alpha.
+        [OutgoingPayoffPosition] INT          NULL,         -- bay the depleting rod is drawing from (1|2)
+        [IncomingPayoffPosition] INT          NULL,         -- bay the staged rod occupies (1|2)
         [FootagePosition]       INT           NOT NULL,     -- footage at moment of weld
         [WeldType]              VARCHAR(20)   NOT NULL,     -- InductionWeld | LaserWeld
         [WeldQuality]           VARCHAR(10)   NOT NULL,     -- Pass | Fail
@@ -202,6 +354,12 @@ BEGIN
         CONSTRAINT [CK_WeldEvent_WeldType]     CHECK ([WeldType]    IN ('InductionWeld','LaserWeld')),
         CONSTRAINT [CK_WeldEvent_Quality]      CHECK ([WeldQuality] IN ('Pass','Fail')),
         CONSTRAINT [CK_WeldEvent_FootagePos]   CHECK ([FootagePosition] >= 0),
+        CONSTRAINT [CK_WeldEvent_OutPayoff]    CHECK ([OutgoingPayoffPosition] IN (1,2) OR [OutgoingPayoffPosition] IS NULL),
+        CONSTRAINT [CK_WeldEvent_InPayoff]     CHECK ([IncomingPayoffPosition] IN (1,2) OR [IncomingPayoffPosition] IS NULL),
+        -- A weld joins two different bays; it cannot be a bay welded to itself.
+        CONSTRAINT [CK_WeldEvent_PayoffDiff]   CHECK ([OutgoingPayoffPosition] IS NULL
+                                                   OR [IncomingPayoffPosition] IS NULL
+                                                   OR [OutgoingPayoffPosition] <> [IncomingPayoffPosition]),
         -- Fail reason is mandatory when the weld quality result is Fail (WLD013)
         CONSTRAINT [CK_WeldEvent_FailReason]   CHECK ([WeldQuality] <> 'Fail' OR [WeldQualityFailReason] IS NOT NULL)
     );

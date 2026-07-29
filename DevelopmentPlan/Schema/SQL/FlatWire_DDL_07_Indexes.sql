@@ -92,11 +92,40 @@ GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_FlatWireRunDetail_RunId' AND object_id = OBJECT_ID(N'dbo.FlatWireRunDetail'))
     CREATE NONCLUSTERED INDEX [IX_FlatWireRunDetail_RunId] ON [dbo].[FlatWireRunDetail] ([RunId]);
 GO
+-- ------------------------------------------------------------
+-- RodStaging — the bay-occupancy invariants are enforced here.
+-- These two FILTERED UNIQUE indexes are the reason RodStaging is a
+-- table rather than a pair of nullable columns on Rod: they make
+-- "one rod per payoff bay" and "one bay per rod" impossible to
+-- violate, including under concurrent staging from two clients.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_RodStaging_Bay' AND object_id = OBJECT_ID(N'dbo.RodStaging'))
+    CREATE UNIQUE NONCLUSTERED INDEX [UX_RodStaging_Bay]
+        ON [dbo].[RodStaging] ([LineId], [PayoffPosition])
+        WHERE [Status] = 'Staged';
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_RodStaging_RodActive' AND object_id = OBJECT_ID(N'dbo.RodStaging'))
+    CREATE UNIQUE NONCLUSTERED INDEX [UX_RodStaging_RodActive]
+        ON [dbo].[RodStaging] ([RodAlpha])
+        WHERE [Status] = 'Staged';
+GO
+-- Primary dashboard query: "what is on each bay of this line right now".
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RodStaging_LineId_Status' AND object_id = OBJECT_ID(N'dbo.RodStaging'))
+    CREATE NONCLUSTERED INDEX [IX_RodStaging_LineId_Status] ON [dbo].[RodStaging] ([LineId], [Status]);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RodStaging_RodAlpha' AND object_id = OBJECT_ID(N'dbo.RodStaging'))
+    CREATE NONCLUSTERED INDEX [IX_RodStaging_RodAlpha] ON [dbo].[RodStaging] ([RodAlpha]);
+GO
+
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RodCheckin_RunId' AND object_id = OBJECT_ID(N'dbo.RodCheckin'))
     CREATE NONCLUSTERED INDEX [IX_RodCheckin_RunId] ON [dbo].[RodCheckin] ([RunId]);
 GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RodCheckin_RodAlpha' AND object_id = OBJECT_ID(N'dbo.RodCheckin'))
     CREATE NONCLUSTERED INDEX [IX_RodCheckin_RodAlpha] ON [dbo].[RodCheckin] ([RodAlpha]);
+GO
+-- Was missing: resolving the active rod on a given bay required a scan.
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RodCheckin_LineId_PayoffPosition' AND object_id = OBJECT_ID(N'dbo.RodCheckin'))
+    CREATE NONCLUSTERED INDEX [IX_RodCheckin_LineId_PayoffPosition] ON [dbo].[RodCheckin] ([LineId], [PayoffPosition]);
 GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RodCheckin_PassScheduleId' AND object_id = OBJECT_ID(N'dbo.RodCheckin'))
     CREATE NONCLUSTERED INDEX [IX_RodCheckin_PassScheduleId] ON [dbo].[RodCheckin] ([PassScheduleId]);

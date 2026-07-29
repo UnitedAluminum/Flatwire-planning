@@ -1,7 +1,7 @@
 # Flat Wire Mill — Material Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 26, 2026
+**Last Updated:** July 29, 2026
 **Document Type:** Final Schema — Material Tracking Tables
 **Source:** Derived from `FlatWireTables.md` recommendations
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `SQL/FlatWire_DDL_03_Materials.sql`
@@ -30,8 +30,6 @@ Wire rod receiving and lifecycle tracking. Each row represents one physical rod 
 | `InventoryType` | varchar(20) | NULL | — | Planning/cost inventory classification (**OQ-18 PROVISIONAL**) |
 | `Status` | varchar(20) | NOT NULL | — | Material lifecycle status — see allowed values |
 | `Location` | varchar(50) | NULL | — | Current physical floor location (e.g. bay/row/rack position) |
-| `StagedPayoffPosition` | int | NULL | — | Pre-check-in staging: intended payoff (`1`/`2`); FlatwireQueue model (**PROVISIONAL**) |
-| `IsWelded` | bit | NOT NULL | — | Pre-check-in "Mark as Welded" flag; default `0` |
 | `FootageRunToDate` | decimal(10,2) | NULL | — | Cumulative footage produced across partial runs (Phase 7 / OQ-47) |
 | `RemainingWeightEstimateLb` | decimal(8,2) | NULL | — | Estimated remaining weight after a partial run, in pounds |
 | `ReceivedAt` | datetimeoffset | NOT NULL | — | Timestamp when this rod was received and entered into the system |
@@ -40,7 +38,13 @@ Wire rod receiving and lifecycle tracking. Each row represents one physical rod 
 | `ModifiedAt` | datetimeoffset | NULL | — | Audit: last-modified timestamp |
 | `RowVersion` | rowversion | NOT NULL | — | Optimistic-concurrency token |
 
-**Constraints:** `CK_Rod_StagedPayoff` — `StagedPayoffPosition IN (1,2)` or NULL.
+**Constraints:** `CK_Rod_Status`, `CK_Rod_DiamPos` — `DiameterIn > 0`.
+
+> **Pre-check-in staging is not stored here.** The former `StagedPayoffPosition` / `IsWelded`
+> columns (and `CK_Rod_StagedPayoff`) were retired: a nullable column pair on `Rod` cannot
+> express "one rod per payoff bay", which is the core invariant of the Pre-Check-In station.
+> Staging now lives in [`RodStaging`](FlatWireSchema_Runs.md) with filtered unique indexes that
+> enforce it. See `Analysis/RodPreCheckin.md` and SRS §4.2 `PCI001`–`PCI008`.
 
 **Allowed values — `Status`:**
 
@@ -103,4 +107,5 @@ Pre-drawn wire spool tracking. Spools are produced on FL1 in Hybrid route mode a
 
 | Date | Change |
 |---|---|
+| July 29, 2026 | Retired `Rod.StagedPayoffPosition`, `Rod.IsWelded` and `CK_Rod_StagedPayoff`. Pre-check-in staging moved to the new `RodStaging` table (`FlatWireSchema_Runs.md`), which enforces one-rod-per-payoff-bay via filtered unique indexes — an invariant a nullable column pair on `Rod` could not express. Implements SRS §4.2 `PCI001`–`PCI008`. |
 | July 26, 2026 | `Rod` kept as FlatWireDB-local master; `TareWeightLb` now computed PERSISTED; added carry-forward (`FootageRunToDate`, `RemainingWeightEstimateLb`), pre-check-in staging (`StagedPayoffPosition`, `IsWelded`), `InventoryType`, audit + `RowVersion`. `Spool` added `SourceRodAlpha`, `OriginRouteMode`, `LineId` CHECK, audit + `RowVersion`. Corrected bare `decimal` weights to `decimal(8,2)`. Retargeted to `FlatWireDB`. |

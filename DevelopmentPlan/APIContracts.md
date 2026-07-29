@@ -1,7 +1,7 @@
 # Flat Wire Mill — API Development Plan & Contracts
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** April 30, 2026
+**Last Updated:** July 29, 2026 (pre-check-in APIs added; body otherwise April 30, 2026 — see `REVIEW.md`)
 **Document Type:** API Contract Reference
 **Microservice:** `FlatWire.API` (new service in `ual-api`)
 **Base URL:** `/api/v1/flatwire`
@@ -20,6 +20,7 @@ All endpoints live in a single new `FlatWire` microservice following the existin
 | `LinesController` | `/lines/status` | S1 |
 | `PassScheduleController` | `/passschedule/**` | S2 |
 | `RodReceivingController` | `/rod/**` | S2 |
+| `PayoffStagingController` | `/payoff/status`, `/staging/**` | S3 |
 | `CheckInController` | `/checkin/**` | S3 |
 | `RunController` | `/run/**` | S3 |
 | `SpcController` | `/spc` | S3 |
@@ -683,13 +684,29 @@ Validates and returns details for a rod alpha (used during check-in scan).
     "netWeightLb": 1980.0,
     "status": "STAGED",
     "location": "Floor-A3",
-    "receivedAt": "2026-04-29T14:00:00Z"
+    "receivedAt": "2026-04-29T14:00:00Z",
+
+    "orderId": "FW-00421",
+    "scheduledLineId": "FL1",
+
+    "footageRunToDate": 0.0,
+    "remainingWeightEstimateLb": null,
+    "stagedPayoffPosition": null,
+    "isWelded": false
   },
   "success": true
 }
 ```
 
 **Response `404 Not Found`:** Rod alpha not found in the system.
+
+> **`orderId` / `scheduledLineId` are the rod→order resolution**, read from `planning_routings` (rod→order, written by planning at allocation) joined to scheduling (order→line). They are what let a station with no active order identify which order it is starting, and what let the caller detect an off-schedule rod *before* committing. `orderId` is **null** for a rod planning has not yet allocated — such a rod cannot be staged. These fields did not exist in the April contract, which is why the queue projection had no documented source.
+
+> **The last four fields are required, not optional.** Without `footageRunToDate` the caller
+> cannot enforce the `PRC007` carry-forward gate — the scan would silently offer a fresh-start
+> check-in for a rod that has already run footage, which `PRC008` forbids. `stagedPayoffPosition`
+> and `isWelded` are projected from the current `RodStaging` row where `Status = 'Staged'`
+> (NULL/false when the rod is not staged); they are no longer columns on `Rod`.
 
 ---
 
@@ -736,6 +753,346 @@ Receives a new wire rod and generates an R-series alpha. Backend only in Phase 1
 
 ---
 
+## Pre-Check-in / Payoff Staging APIs
+
+**Implements:** SRS §4.2 `PCI001`–`PCI008`, `WLD003`/`WLD006`/`WLD010`, `TRV004`/`TRV009`, §4.18 `PRC007`/`PRC008`/`PRC014`
+**Blocks:** Dashboard 2A — Rod Pre-Check-in Station
+**Lines:** FL1 and FL3 only. `PCI002` excludes FL2, which has no staging space — a `lineId` of `FL2` is rejected `422`.
+
+Pre-check-in registers the *next* rod against a VPS payoff bay while the current coil is still running, so the line can run continuously through an induction weld. **No PLC write occurs on any endpoint in this section** — tags are pushed only when the pass schedule is acknowledged at check-in.
+
+---
+
+### GET `/api/v1/flatwire/payoff/status`
+
+The Dashboard 2A primary read: the state of both payoff bays on one line. Backs the bay cards, the weld-readiness strip, and the Phase-3 alert rule *"Payoff2 not loaded & Payoff1 < 2,000 lb → Critical"*, which previously had no data source.
+
+**Auth:** Bearer JWT — any authenticated role
+
+**Query Parameters:** `lineId` — `FL1` or `FL3` (required)
+
+**Response `200 OK`:**
+
+```json
+{
+  "data": {
+    "lineId": "FL1",
+    "bays": [
+      {
+        "position": 1,
+        "state": "Active",
+        "rodAlpha": "R00042",
+        "rodSeqno": 1,
+        "alloy": "1100",
+        "temper": "F",
+        "diameterIn": 0.375,
+        "grossWeightLb": 8840.0,
+        "netWeightLb": 8500.0,
+        "weightLb": 2840.0,
+        "percentRemaining": 33.4,
+        "isWelded": false,
+        "stagedAt": "2026-07-29T11:02:00Z",
+        "stagedBy": "dave.m",
+        "footageRunToDate": 14320.0,
+        "runId": "RUN-0418",
+        "inspection": { "oxidation": "Pass", "surfaceDefects": "Pass", "waterStains": "Pass", "notes": null }
+      },
+      {
+        "position": 2,
+        "state": "NotStaged",
+        "rodAlpha": null,
+        "rodSeqno": null,
+        "weightLb": null,
+        "percentRemaining": null,
+        "isWelded": false,
+        "runId": null,
+        "inspection": null
+      }
+    ],
+    "weldReadiness": {
+      "severity": "Critical",
+      "message": "Payoff 1 below 3,000 lb and Payoff 2 not staged"
+    }
+  },
+  "success": true
+}
+```
+
+**`state` values:** `NotStaged` · `Staged` · `Active` · `Blocked` (inspection failed at staging)
+
+`weightLb` / `percentRemaining` are live values sourced from the `PayoffWeight` hub feed, not from `RodStaging`; they are `null` on a bay that is not drawing.
+
+---
+
+### POST `/api/v1/flatwire/staging/rod`
+
+Pre-check-in: stage a rod at a payoff bay (`PCI001`, `PCI004`, `PCI005`, `PCI006`).
+
+**Auth:** Bearer JWT — Operator or above
+
+**Request Body:**
+
+```json
+{
+  "lineId": "FL1",
+  "payoffPosition": 2,
+  "rodAlpha": "R00043",
+  "orderId": "FW-00421",
+  "scrapBoxRef": "SB-1100-04",
+  "diameterIn": 0.375,
+  "grossWeightLb": 8780.0,
+  "netWeightLb": 8440.0,
+  "inspection": {
+    "oxidation": "Pass",
+    "surfaceDefects": "Pass",
+    "waterStains": "Pass",
+    "observationNotes": null
+  },
+  "acknowledgedCarryForward": false,
+  "operatorId": "dave.m"
+}
+```
+
+> **`rodSeqno` is not a request field — the server assigns it.** It is the *actual* processing sequence, so letting a client supply it would let two operators claim the same position, and would let the UI echo back a rod's *planned* number as though it were the order it ran in. The server takes the next value for the line. `plannedSeqno` is likewise not sent: the server snapshots it from the planning allocation it already resolved to validate order membership.
+
+**Validation — order membership and availability only:**
+
+| Check | Rule | Outcome |
+|---|---|---|
+| Allocation | The rod must have a `planning_routings` entry, which **yields the order** | `422` if absent |
+| Order membership | Once an order is established, the rod must belong to **that** order | `409` — welding across orders would break genealogy |
+| Order's line | The resolved order must be scheduled on **this** line | **Not a refusal** — supervisor override, see below |
+| Availability | `coils.coil_status` not `INFLAT`/`COMPLETE`/`HOLD`/`SCRAP`, and no `RodStaging` row with `Status = 'Staged'` | `409` |
+| Planned sequence | The rod must be the one planning expects next — the lowest `plannedSeqno` still available | **Not a refusal** — supervisor override, see below |
+
+> **The order is resolved, not supplied.** `orderId` in the body is the value the client resolved from `planning_routings` for that rod; the server re-resolves and rejects a mismatch. On a **cold line** (`activeOrderId` null) the first rod is what establishes the order — it *reveals* an allocation planning already made rather than the operator choosing one, which is what keeps even the first rod validatable.
+
+**Two deviations — notify and authorise, never refuse.** Both keep the commit control reachable once a supervisor signs off, and both use the same `Q66` credential shape: reason + supervisor badge/ID + PIN, with a remote-approval fallback when no supervisor is on the floor.
+
+| Deviation | Trigger | Recorded as |
+|---|---|---|
+| **Off-schedule** | The resolved order is booked on a different line — staging it here starts another line's job | `OffScheduleOverride` + `ScheduledLineId` |
+| **Out of sequence** | The rod is not the one planning expects next | `OutOfSequenceOverride` + `ExpectedRodAlpha` |
+
+They can occur together and are covered by **one** authorisation:
+
+```json
+"supervisorOverride": {
+  "offSchedule":   { "scheduledLineId": "FL2" },
+  "outOfSequence": { "expectedRodAlpha": "R00043" },
+  "supervisorBadge": "SUP-204",
+  "supervisorPin": "••••",
+  "reason": "FL2 down for maintenance; R00043 blocked behind a forklift"
+}
+```
+
+Include only the deviation objects that apply, and omit `supervisorOverride` entirely when neither does. `422` if a deviation applies and the authorisation is missing or incomplete. The flags, the authorising supervisor and the reason are persisted on `RodStaging`; **the PIN is never stored**. `CK_RodStaging_Override` makes the credential stamp all-or-nothing, and `CK_RodStaging_OffSched` / `CK_RodStaging_OutOfSeq` tie each deviation's evidence to its flag, so an unauditable override cannot be written.
+
+> **Superseded (Jul 30 2026).** An earlier requirement had the planned sequence entirely unenforced — *"the operator must be allowed to process the rods in any sequence"*, with explicitly no warning and no override. That is replaced by the notify-and-authorise rule above. The two `RodStaging` sequence columns are unchanged: `PlannedSeqno` still records intent and `RodSeqno` still records what actually ran, so the deviation remains reportable as well as authorised.
+
+> **Open:** whether the PIN validates against the existing login/authorisation service or a separate supervisor credential store — carried over from `Q66`, unresolved for both overrides.
+
+**Planned order is authorised, not enforced.** Planned `R00043 → R00044 → R00045` may legitimately be staged `R00045 → R00043 → R00044` — but not silently. Out-of-sequence staging is **notified and supervisor-authorised** (see the deviations table below); it is never a `409`. The deviation is both authorised and recorded.
+
+**Side effects** (see the ordering note below — these are **compensating writes**, not one ACID transaction, per gap G2/G16):
+
+1. `RodStaging` row inserted with `Status = 'Staged'`, `RodSeqno` = next actual position for the line, `PlannedSeqno` = the rod's planned position snapshotted from the allocation (NULL if it has none)
+2. Shared `coils.coil_status` set per the SRS `PCI` data note, plus reqsum and the `wip_coil_orders` insert — **cross-database**
+3. `PayoffStateChanged` SignalR event broadcast to the line group
+4. **No PLC write.** Nothing is pushed until check-in acknowledgement
+
+**Response `201 Created`:**
+
+```json
+{
+  "data": {
+    "stagingId": 412,
+    "lineId": "FL1",
+    "payoffPosition": 2,
+    "rodAlpha": "R00043",
+    "rodSeqno": 2,
+    "state": "Staged",
+    "stagedAt": "2026-07-29T12:02:00Z",
+    "plcTagsPushed": false
+  },
+  "success": true
+}
+```
+
+**Error responses:**
+
+| Status | Condition |
+|---|---|
+| `409 Conflict` | Bay already occupied — `UX_RodStaging_Bay` violation |
+| `409 Conflict` | Rod already staged on another bay — `UX_RodStaging_RodActive` violation |
+| `409 Conflict` | Rod is already checked in on a line (`CHK009`) |
+| `422 Unprocessable Entity` | `lineId` is `FL2` — pre-check-in is not supported there (`PCI002`) |
+| `422 Unprocessable Entity` | Any inspection item is `Fail`. Response includes `{ "route": "wipRejection", "rodAlpha": "…" }`. **Hard block, no override** (`CHK010`) |
+| `422 Unprocessable Entity` | `footageRunToDate > 0` and `acknowledgedCarryForward` is `false` (`PRC007`) |
+| `422 Unprocessable Entity` | Measured diameter outside nominal ± lookup tolerance (`CHK007`) |
+| `404 Not Found` | Rod alpha not found in the coils table |
+
+**C# Request DTO:**
+
+```csharp
+public record StageRodCommand(
+    string LineId,
+    PayoffPosition PayoffPosition,
+    string RodAlpha,
+    int RodSeqno,
+    string? OrderId,
+    string? ScrapBoxRef,
+    decimal DiameterIn,
+    decimal GrossWeightLb,
+    decimal NetWeightLb,
+    InspectionDto Inspection,      // reuses the 3-item DTO — see note
+    bool AcknowledgedCarryForward, // PRC007/PRC014
+    string OperatorId) : IRequest<StageRodResponse>;
+```
+
+> **Reuses the 3-item `InspectionDto`** defined under `POST /checkin/rod`. Do **not** add a
+> connector-tag item here — that is a check-in concern, and the 3-vs-4-item divergence is gap
+> **G14**, still unresolved. `RodStaging` persists exactly the three items this DTO carries,
+> which is why staging does not inherit the `REVIEW.md` #37 defect where `RodCheckin` requires
+> NOT NULL columns the check-in command never sends.
+
+---
+
+### POST `/api/v1/flatwire/staging/rod/unstage`
+
+Pre-check-out: release a staged rod that was never checked in.
+
+**Auth:** Bearer JWT — Operator or above *(whether this should require supervisor approval is an open question — see `Analysis/FlatWireOpenQuestions.md`. Contrast OQ-48, where **mid-run** checkout does require it.)*
+
+**Request Body:**
+
+```json
+{
+  "stagingId": 412,
+  "reasonCode": "WrongRodMisScan",
+  "reasonOther": null,
+  "disposition": "ReturnToFloorStorage",
+  "notes": null,
+  "operatorId": "dave.m"
+}
+```
+
+**`reasonCode` values:** `WrongRodMisScan` · `OrderCancelledDeferred` · `FailedReInspection` · `RelocatedToLine` · `Other` (`reasonOther` required)
+**`disposition` values:** `ReturnToFloorStorage` · `ReturnToWarehouse`
+
+**Side effects:**
+
+1. `RodStaging.Status → 'Unstaged'` with the un-stage audit stamp
+2. `RodCheckout` row written with `Mode = 'ModeP'`, `RunId` NULL, `FootageAtCheckout` 0, `PlcTagsCleared` **false**
+3. Shared `coils` status reverted and the `wip_coil_orders` insert from staging **reversed** — compensating write
+4. `PayoffStateChanged` broadcast with `state: "NotStaged"`
+5. **No PLC tag clear.** Nothing was pushed, so there is nothing to clear — and unlike Mode A/B this needs **no `FL{n}.LineState` gate**, because an idle bay is not running
+
+**Response `200 OK`:**
+
+```json
+{
+  "data": {
+    "checkoutId": "CO-0052",
+    "mode": "ModeP",
+    "rodAlpha": "R00043",
+    "newRodStatus": "RECEIVED",
+    "plcTagsCleared": false
+  },
+  "success": true
+}
+```
+
+**Response `409 Conflict`:** The staged row is already `CheckedIn` — the caller must use `POST /checkout` with `mode: "ModeA"` instead, which does void the acknowledgement and clear tags.
+
+**Response `422 Unprocessable Entity`:** `reasonCode` is `Other` with no `reasonOther`.
+
+---
+
+### POST `/api/v1/flatwire/staging/rod/mark-welded`
+
+Records the induction weld joining the running rod to the staged rod (`WLD010`, `WLD003`).
+
+**Auth:** Bearer JWT — Operator or above
+
+**Request Body:**
+
+```json
+{ "stagingId": 412, "operatorId": "dave.m" }
+```
+
+**Side effects:**
+
+1. `RodStaging.IsWelded = 1` with `WeldedAt` / `WeldedBy` (`WLD003`)
+2. `PayoffStateChanged` broadcast with `isWelded: true`
+
+**Response `200 OK`:**
+
+```json
+{
+  "data": { "stagingId": 412, "isWelded": true, "weldedAt": "2026-07-29T12:41:00Z" },
+  "success": true
+}
+```
+
+**Response `409 Conflict`:** No rod is pre-checked-in on the idle bay, or it is already marked welded. The Dashboard 2A button is disabled in both cases.
+
+**Response `422 Unprocessable Entity`:** Alloy, temper or diameter do not match the running coil (`WLD006`).
+
+> **This records the weld; it does not switch bays.** Per `WLD005` the payoff transition is driven
+> **solely by material consumption reaching 0 ft remaining**. Reversing a welded coil is a
+> supervisor action (`WLD011`) and is not yet specified.
+
+---
+
+### GET `/api/v1/flatwire/staging/queue`
+
+The Traveler Queue section (`TRV004`, `TRV009`): pre-checked-in, welded, and available rod for the current order at the line.
+
+**Auth:** Bearer JWT — any authenticated role
+
+**Query Parameters:** `lineId` — `FL1` or `FL3` (required)
+
+**Response `200 OK`:**
+
+```json
+{
+  "data": [
+    {
+      "plannedSeqno": 1, "rodSeqno": 2, "rodAlpha": "R00043", "alloy": "1100",
+      "temper": "F", "diameterIn": 0.375, "grossWeightLb": 8780.0,
+      "payoffPosition": 2, "status": "PreCheckedIn",
+      "isWelded": false, "footageRunToDate": 0.0
+    },
+    {
+      "plannedSeqno": 3, "rodSeqno": null, "rodAlpha": "R00045", "alloy": "1100",
+      "temper": "F", "diameterIn": 0.375, "grossWeightLb": 8690.0,
+      "payoffPosition": null, "status": "Available",
+      "isWelded": false, "footageRunToDate": 0.0
+    }
+  ],
+  "success": true
+}
+```
+
+**`status` values:** `Available` · `PreCheckedIn` · `Welded`
+
+**Two sequences, and they are allowed to disagree.** `plannedSeqno` is the order planning intended; `rodSeqno` is the order the rod was actually staged in. An `Available` row has **`rodSeqno: null`** — it has not been processed, so it has no actual position yet. A processed row carries both, and `rodSeqno < plannedSeqno` (as above: planned 1st, run 2nd) is a normal, non-exceptional outcome.
+
+**Planned order is authorised, not enforced.** Rods may be run out of planned order — `R00045 → R00043 → R00044` is legitimate — but `POST /staging/rod` **notifies and requires supervisor authorisation** when the rod is not the one planning expects next. It must never *refuse* on that ground, and this endpoint must not omit or disable later-planned rods: they stay listed and stageable, just gated. The row whose `plannedSeqno` is lowest among `Available` rods is the expected one.
+
+**Ordering.** Rows sort by `rodSeqno` where present (the actual run order, which is what the traveler documents), then by `plannedSeqno` for unprocessed rod.
+
+**Empty on a cold line.** The queue is a projection of *an order's* rod list, so with no order established it returns `[]`. `GET /linestatus` reports `activeOrderId: null` while a line is `Idle`, and the station must not display an order it has not started. The first rod staged or checked in resolves the order from `planning_routings`, and the rest of that order's rod appears here.
+
+**Source.** This is a **derived projection, not a stored queue** — there is no `RodQueue` table and there must not be one. `PreCheckedIn`/`Welded` rows come from `RodStaging`; `Available` rows are resolved at request time from **`planning_routings`** (rod→order, written by planning at allocation) for the established order, filtered to rod whose `coils.coil_status` is not `INFLAT`/`COMPLETE`/`HOLD`/`SCRAP` and which has no `RodStaging` row with `Status = 'Staged'`. Planning owns rod→order allocation and scheduling owns order→line; mirroring either into `FlatWireDB` would create a second source of truth with no event channel to keep it current, re-introducing exactly the problem `00-foundations.md` decision 3 avoided by making `coils` the single source of truth for rod material. Read across via the indexed-alpha + read-only-view route in **G17**.
+
+> **Mapped (Jul 29 2026):** the rod→order side is **`planning_routings`**, written by planning at allocation and readable at pre-check-in / check-in; order→line comes from scheduling. Both live outside `FlatWireDB`, so this is a cross-DB read — use the indexed-alpha + read-only-view route in **G17**. Remaining work is the exact column names in `ual-database`, which is the **Tables (read)** entry still missing from `phase-04`.
+
+`footageRunToDate` is included on every row so the UI can flag partial rods **before** staging, rather than surprising the operator with a forced carry-forward path mid-scan.
+
+---
+
 ### POST `/api/v1/flatwire/checkin/rod`
 
 Records FL1/FL3 rod check-in, writes pass schedule acknowledgment, and triggers PLC tag push. This is the most critical command in the system — all side effects must succeed atomically or the check-in is aborted.
@@ -771,6 +1128,12 @@ Records FL1/FL3 rod check-in, writes pass schedule acknowledgment, and triggers 
 3. `PLCTagService.PushPassSchedule(passScheduleId, lineId, payoffPosition)` — all OPC tag writes
 4. Run timer started
 5. `LineStatus` SignalR event broadcast → `{ lineId: "FL1", status: "Running" }`
+6. **If the rod was pre-checked-in, the staged row is *consumed*** — `RodStaging.Status → 'CheckedIn'`, `CheckedInAt` and `RodCheckinId` set — and `PayoffStateChanged` is broadcast with `state: "Active"`. Check-in never creates a parallel staging record.
+
+> **Scanning an unstaged rod straight into check-in remains valid.** Pre-check-in is a `Should`
+> priority in the SRS, not a `Must`, and the dual-payoff continuous-feed workflow is what makes it
+> worthwhile — it is not a gate on check-in. Where a staged row *does* exist, `payoffPosition` in
+> this request must match `RodStaging.PayoffPosition`; a mismatch is a `409`.
 
 **Response `200 OK`:**
 
@@ -1615,6 +1978,26 @@ All events are scoped to a line group (`FL1Data`, `FL2Data`, `FL3Data`).
 }
 ```
 
+#### `PayoffStateChanged`
+```json
+{
+  "lineId": "FL1",
+  "position": 2,
+  "state": "Staged",
+  "rodAlpha": "R00043",
+  "rodSeqno": 2,
+  "isWelded": false
+}
+```
+
+Bay **occupancy** changes: pre-check-in, pre-check-out, Mark-as-Welded, and check-in consuming a staged row. `state` is `NotStaged` · `Staged` · `Active` · `Blocked`.
+
+> **Rare domain event — send immediately, unbatched.** Per `00-foundations.md` §0.4 this must
+> **not** enter the ~100 ms / 10 Hz telemetry batch: a bay changing hands is an operator-visible
+> state transition, not a sampled reading. `PayoffWeight` above stays in the batched hot path;
+> these two are complementary and both are needed by Dashboard 2A — occupancy from here, live
+> weight from `PayoffWeight`.
+
 #### `ComponentStatus`
 ```json
 {
@@ -1662,6 +2045,7 @@ gaugeReading$(lineId: string): Observable<GaugeReadingEvent>
 widthReading$(lineId: string): Observable<WidthReadingEvent>
 speedFpm$(lineId: string): Observable<SpeedFpmEvent>
 payoffWeight$(lineId: string): Observable<PayoffWeightEvent>
+payoffStateChanged$(lineId: string): Observable<PayoffStateChangedEvent>
 componentStatus$(lineId: string): Observable<ComponentStatusEvent>
 lineStatus$(lineId: string): Observable<LineStatusEvent>
 alertRaised$(lineId: string): Observable<AlertRaisedEvent>
@@ -1678,7 +2062,7 @@ alertCleared$(lineId: string): Observable<AlertClearedEvent>
 |---|---|---|
 | S1 | `GET /lines/status`, SignalR hub skeleton | S1 |
 | S2 | `GET /passschedule`, `GET /passschedule/{id}`, `POST /passschedule`, `PUT /passschedule/{id}`, `PATCH /passschedule/{id}/status`, `POST /passschedule/generate`, `GET /rod/{alpha}`, `POST /rod` | S2 |
-| S3 | `POST /checkin/rod`, `POST /checkin/spool`, `GET /run/active`, `GET /run/{id}/gaugetrace`, `POST /run/{id}/pause`, `POST /run/{id}/resume`, `POST /spc` | S3 |
+| S3 | `POST /checkin/rod`, `POST /checkin/spool`, `GET /run/active`, `GET /run/{id}/gaugetrace`, `POST /run/{id}/pause`, `POST /run/{id}/resume`, `POST /spc`, `GET /payoff/status`, `POST /staging/rod`, `POST /staging/rod/unstage`, `POST /staging/rod/mark-welded`, `GET /staging/queue` | S3 |
 | S4 | `POST /weldevent`, `POST /rolloverride`, `POST /diechange`, `POST /checkout`, `POST /wipreject`, `POST /coil/complete`, `GET /coil/{alpha}/label` | S4 |
 | S5 | `GET /shiftsummary` | S5 |
 
@@ -1699,6 +2083,11 @@ alertCleared$(lineId: string): Observable<AlertClearedEvent>
 | `POST /passschedule/generate` | — | ✓ | ✓ | — | ✓ |
 | `GET /rod/{alpha}` | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `POST /rod` | — | — | — | ✓ | ✓ |
+| `GET /payoff/status` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /staging/queue` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `POST /staging/rod` | ✓ | ✓ | — | ✓ | ✓ |
+| `POST /staging/rod/unstage` | ✓ | ✓ | — | ✓ | ✓ |
+| `POST /staging/rod/mark-welded` | ✓ | ✓ | — | ✓ | ✓ |
 | `POST /checkin/rod` | ✓ | ✓ | — | ✓ | ✓ |
 | `POST /checkin/spool` | ✓ | ✓ | — | ✓ | ✓ |
 | `GET /run/active` | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -1725,3 +2114,13 @@ alertCleared$(lineId: string): Observable<AlertClearedEvent>
 | [FlatWireJiraStories.md](FlatWireJiraStories.md) | Full backlog — main track stories (FW-010, FW-020 etc.) |
 | [TechStackRecommendation.md](TechStackRecommendation.md) | Architecture decisions and microservice structure |
 | [FlatWireOpenQuestions.md](../Analysis/FlatWireOpenQuestions.md) | Open questions — OQ-36 (weight formula), OQ-48 (checkout auth), OQ-51 (pass schedule selection), OQ-52 (FL3 schedules) |
+| [RodPreCheckin.md](../Analysis/RodPreCheckin.md) | Pre-check-in / payoff staging analysis — the requirement trace behind the `/staging/**` endpoints |
+
+---
+
+## Change Log
+
+| Date | Change |
+|---|---|
+| July 29, 2026 | Added the **Pre-Check-in / Payoff Staging** section: `GET /payoff/status`, `POST /staging/rod`, `POST /staging/rod/unstage`, `POST /staging/rod/mark-welded`, `GET /staging/queue`, plus the `PayoffStateChanged` hub event and `PayoffStagingController`. Extended `GET /rod/{alpha}` with `footageRunToDate`, `remainingWeightEstimateLb`, `stagedPayoffPosition`, `isWelded` — without them the `PRC007` carry-forward gate cannot be enforced. Documented check-in *consuming* the staged row. |
+| April 30, 2026 | Original contract set. **Known correctness bugs catalogued in `REVIEW.md` Tier 1** — notably #37 (`RodCheckin` NOT NULL columns the check-in command never sends), the `/passschedule/generate` worked example, a missing `CheckpointType` value, and three edge-type vocabularies. Cross-check before implementing. |

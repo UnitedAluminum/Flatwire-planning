@@ -101,11 +101,18 @@
       PassScheduleComponent) and do not belong in the shared shop-floor station registry.
       See the optional block at the foot of this file if component-level stations are wanted.
 
-  D2. No per-line PRE / payoff station. Every legacy line has one (N36PRE, UA36PRE, D72PRE,
-      R48PRE, ZR23PO, ZR24PO) because it feeds the legacy precheckin flow
-      (PreCheckIn_PreCheckInCheckIn_Transaction). Flat wire does not use that flow - rod and
-      spool check-in are FlatWireDB.RodCheckin / SpoolCheckin, and ShopfloorPlan/00-foundations.md
-      Sec 0.2 rules `checkin-precheckin` explicitly out as a reference. Optional block at the foot.
+  D2. FL1 payoff station IS created; FL2's is not.  [REVISED Jul 29 2026]
+      Flat wire does NOT use the legacy precheckin flow (PreCheckIn_PreCheckInCheckIn_Transaction),
+      and ShopfloorPlan/00-foundations.md Sec 0.2 rules the `checkin-precheckin` Angular library
+      explicitly out as a reference. Both of those remain true.
+      BUT that is a statement about the legacy *implementation*, not about the feature: SRS 4.2
+      PCI003 requires a dedicated Pre-Check-In station for FL1, where the next rod is registered
+      against a VPS payoff bay while the current coil is still running (PCI001). FL1PO is therefore
+      created below, backed by FlatWireDB.RodStaging and Dashboard 2A - a flat-wire-native flow,
+      not the legacy one.
+      FL2PO is deliberately NOT created: PCI002 excludes FL2 from pre-check-in (no staging space).
+      Legacy equivalents for reference: N36PRE, UA36PRE, D72PRE, R48PRE, ZR23PO, ZR24PO.
+      See Analysis/RodPreCheckin.md.
 
   D3. WIPStations.StationType = 'R' for the three lines. 'R' is the existing letter for rolling
       mills (ZR23, ZR24); the flattening mills are rolling mills. Blast-radius check performed
@@ -192,7 +199,7 @@
       If a flat wire phase is ever wanted in the shared menu, add a row to lookups in category
       4198 (e.g. display_name 'FLATTEN') and put its lookup_id here - do not reuse 21712.
 
-  D13. WindowsUserName = the station code ('FL1', 'FL2', 'FL3', 'FWPACK'), NOT a Windows account.
+  D13. WindowsUserName = the station code ('FL1', 'FL2', 'FL3', 'FWPACK', 'FL1PO'), NOT a Windows account.
       The column name is a legacy misnomer: united_db.dbo.GetMachineIdAndStationFromMachineConfig
       selects `WindowsUserName AS [Station]`, and all 34 existing rows hold station codes
       ('D72', 'N36HD1', 'ZR23PO'). So it matches the WIPStation name, which is what 4e writes.
@@ -343,7 +350,14 @@ VALUES
     , ( 'FL3   ', 'FL3      ', 'FL3', 'R', 'N', 'N', 'FL3$PRINT   '
       , 'FL3 hybrid continuous route: FL1 feeding FL2 with no intermediate anneal and no intermediate spool' )
     , ( 'FWPACK', 'FWPACK   ', NULL , 'P', 'N', 'N', 'FWPACK$PRINT'
-      , 'Shared flat wire packing / skid build station serving FL1, FL2 and FL3 (coil + skid label printing)' );
+      , 'Shared flat wire packing / skid build station serving FL1, FL2 and FL3 (coil + skid label printing)' )
+      -- FL1 Pre-Check-In station (SRS 4.2 PCI003). Registers the next rod against a VPS payoff
+      -- bay while the current coil is still running (PCI001). Backed by FlatWireDB.RodStaging and
+      -- Dashboard 2A - NOT the legacy PreCheckIn_PreCheckInCheckIn_Transaction flow. See D2.
+      -- MachineName is FL1: the station belongs to the FL1 machine, it is not a machine itself.
+      -- No FL2PO row - PCI002 excludes FL2 from pre-check-in (no staging space).
+    , ( 'FL1PO ', 'FL1PO    ', 'FL1', 'R', 'N', 'N', 'FL1$PRINT   '
+      , 'FL1 rod pre-check-in / VPS payoff staging: stages the next rod on the idle payoff bay while the current coil runs, enabling continuous feed through an induction weld (SRS PCI001-PCI008)' );
 
 -- Guard: the CoilNo sentinel must not collide with a coil that is genuinely checked in
 -- elsewhere, or with another station's sentinel (unique index wip_stations_k1).
@@ -568,7 +582,7 @@ BEGIN TRY
                   END
                 , ws.[WIPStationId]
         FROM      dbo.[WIPStations] AS ws
-        WHERE     ws.[WIPStation] IN ( 'FL1', 'FL2', 'FL3', 'FWPACK' );
+        WHERE     ws.[WIPStation] IN ( 'FL1', 'FL2', 'FL3', 'FWPACK', 'FL1PO' );
 
         -- A row whose MachineId will not resolve is unreadable through
         -- Common_GetMachineStationsConfiguration (INNER JOIN), so skip it rather than leave a
@@ -697,7 +711,7 @@ SELECT    ws.[WIPStationId]
 FROM      dbo.[WIPStations] AS ws
           LEFT JOIN dbo.[Machines] AS m
               ON m.[MachineIdx] = ws.[MachineIdx]
-WHERE     ws.[WIPStation] IN ( 'FL1', 'FL2', 'FL3', 'FWPACK' )
+WHERE     ws.[WIPStation] IN ( 'FL1', 'FL2', 'FL3', 'FWPACK', 'FL1PO' )
 ORDER BY  ws.[WIPStation];
 
 PRINT '--- MachineStationsConfiguration ---';
@@ -727,7 +741,7 @@ FROM      dbo.[MachineStationsConfiguration] AS msc
               ON ws.[WIPStationId] = msc.[WipStationId]
           LEFT JOIN [united_db].[dbo].[lookups] AS lk
               ON lk.[lookup_id] = msc.[StationType]
-WHERE     RTRIM(ISNULL(msc.[WindowsUserName], '')) IN ( 'FL1', 'FL2', 'FL3', 'FWPACK' )
+WHERE     RTRIM(ISNULL(msc.[WindowsUserName], '')) IN ( 'FL1', 'FL2', 'FL3', 'FWPACK', 'FL1PO' )
 ORDER BY  msc.[WindowsUserName];
 GO
 
@@ -735,10 +749,10 @@ GO
   ROLLBACK  (dev only - never run against a line with material checked in)
 ----------------------------------------------------------------------------------------------
   DELETE FROM CommonDB.dbo.MachineStationsConfiguration
-  WHERE  RTRIM(ISNULL(WindowsUserName, '')) IN ( 'FL1', 'FL2', 'FL3', 'FWPACK' );
+  WHERE  RTRIM(ISNULL(WindowsUserName, '')) IN ( 'FL1', 'FL2', 'FL3', 'FWPACK', 'FL1PO' );
 
   DELETE FROM CommonDB.dbo.WIPStations
-  WHERE  WIPStation IN ( 'FL1', 'FL2', 'FL3', 'FWPACK' );
+  WHERE  WIPStation IN ( 'FL1', 'FL2', 'FL3', 'FWPACK', 'FL1PO' );
 
   DELETE FROM united_db.dbo.machines
   WHERE  RTRIM(machine_name) IN ( 'FL1', 'FL2', 'FL3' );
@@ -783,7 +797,6 @@ GO
       FL2S8            FM2 8" stand                FL2S1 / FL2S2 / FL2S3  FM2 6" stands
       (edgers sit at S2 and S3 only; FL1 has no edger)
 
-  OPTIONAL - per-line staging / payoff stations (see D2). Only add these if flat wire is made to
-  use the legacy precheckin flow:
-      FL1PO  rod payoff / staging       FL2PO  spool payoff / staging
+  FL1PO is now seeded above (see D2) - SRS PCI003 requires it. FL2PO remains deliberately absent
+  per PCI002 (FL2 has no staging space); add it only if the business later reverses that.
 ==============================================================================================*/

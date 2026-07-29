@@ -5,7 +5,7 @@ The FlatWire database schema manages the complete lifecycle of aluminum flat wir
 
 **Target database:** `FlatWireDB` (standalone SQL Server database on `ual-database`), schema `dbo`. Created by `FlatWire_DDL_00_Database.sql`. The `Rod` table is kept as a FlatWireDB-local master (Hybrid foundation decision) mirroring the shared legacy `coils` record; rod-alpha FKs are therefore enforced in-database.
 
-**Table count:** 25 tables across five domains — Lookup (5), Schedule (3), Materials (3), Runs (8), Quality/Output (6). Build scripts run in order `00 → 08` plus the two seed scripts (Lookup seed before Schedule seed). The full set has been validated on SQL Server 2019 (clean build + idempotent re-run + constraint/genealogy tests).
+**Table count:** 27 tables across five domains — Lookup (6), Schedule (3), Materials (3), Runs (9), Quality/Output (6). Build scripts run in order `00 → 08` plus the two seed scripts (Lookup seed before Schedule seed). The full set has been validated on SQL Server 2019 (clean build + idempotent re-run + constraint/genealogy tests).
 
 ---
 
@@ -21,6 +21,7 @@ Core reference data used throughout the system:
 | **Edger** | Edger tooling configurations (Round/Square edge profiles) | Id (PK), Name (UK), EdgeType (Round\|Square), ToolingSetNo, IsActive |
 | **SpoolConfiguration** | Spool type definitions with weight/diameter constraints | Id (PK), Name (UK), MinWeightLb, MaxWeightLb, MinCoreDiameterIn, MaxCoreDiameterIn, MinOuterDiameterIn, MaxOuterDiameterIn, IsActive |
 | **AlloyProperty** | Per-alloy process properties (generator inputs + footage→weight factor) | Id (PK), Alloy (UK), MaxReductionPerPass, SpringbackFactor, GaugeToleranceDefault, WidthToleranceDefault, SpeedRangeMin/MaxFpm, LbPerFtFactor, DensityLbPerIn3, IsWeldingWire, IsActive |
+| **PayoffPosition** | Material input positions. Gives `FlatWireRunDetail.PayoffPositionId` a real parent — it was previously an FK-style INT with no table (REVIEW.md #15). Seeded with three pinned rows: the dual VPS bays used by FL1/FL3 plus FL2's traversing take-up | Id (PK, **pinned** 1\|2\|3 — not IDENTITY), Code (UK: Payoff1\|Payoff2\|TraversingTakeup), DisplayName, Equipment (VPS\|TraversingTakeup), MaxWeightLb, IsRodFed, IsActive |
 
 ---
 
@@ -47,7 +48,7 @@ Track material flow from receipt through processing:
 
 | Table | Purpose | Key Relationships |
 |-------|---------|-------------------|
-| **Rod** | Wire rod receiving & lifecycle (RECEIVED→STAGED→INFLAT→COMPLETE→HOLD→SCRAP). FlatWireDB-local master mirroring legacy `coils`. Adds carry-forward (FootageRunToDate, RemainingWeightEstimateLb), pre-check-in staging (StagedPayoffPosition, IsWelded), InventoryType, computed TareWeightLb, audit + RowVersion | 1-N with RodCheckin, Spool (ParentRod + SourceRod), WeldEvent, RollOverride, DieChangeEvent, CoilTraceability, RodCheckout |
+| **Rod** | Wire rod receiving & lifecycle (RECEIVED→STAGED→INFLAT→COMPLETE→HOLD→SCRAP). FlatWireDB-local master mirroring legacy `coils`. Adds carry-forward (FootageRunToDate, RemainingWeightEstimateLb), InventoryType, computed TareWeightLb, audit + RowVersion. **Pre-check-in staging moved out** to `RodStaging` — the retired `StagedPayoffPosition`/`IsWelded` columns could not enforce one-rod-per-bay | 1-N with RodStaging, RodCheckin, Spool (ParentRod + SourceRod), WeldEvent, RollOverride, DieChangeEvent, CoilTraceability, RodCheckout |
 | **FlatWireRun** | Core run header (one per check-in event). FootageFt standardized to DECIMAL(10,2); audit + RowVersion | 1-N hub connecting to all run tracking & quality tables |
 | **Spool** | Pre-drawn wire spools (FL1 Hybrid output → FL2/FL3 input). Adds SourceRodAlpha (partial-run), OriginRouteMode (hybrid-origin validation), LineId CHECK, audit + RowVersion | FK → SpoolConfiguration, Rod (ParentRodAlpha + SourceRodAlpha), FlatWireRun |
 
@@ -63,7 +64,8 @@ Capture all run events and modifications:
 
 | Table | Purpose | Key Relationships |
 |-------|---------|-------------------|
-| **FlatWireRunDetail** | Per-stop detail rows with footage & dimension readings | FK → FlatWireRun |
+| **FlatWireRunDetail** | Per-stop detail rows with footage & dimension readings | FK → FlatWireRun, **PayoffPosition** |
+| **RodStaging** | **Pre-check-in**: the next rod registered against a VPS bay while the current coil still runs (SRS §4.2 PCI001–PCI008). Carries RodSeqno, IsWelded (WLD010), 3-item inspection, carry-forward evidence, and the un-stage audit. Status `Staged → CheckedIn` \| `Unstaged`. FL1/FL3 only — PCI002 excludes FL2 | FK → Rod, PayoffPosition, RodCheckin; two **filtered unique** indexes enforce one rod per bay and one bay per rod |
 | **RodCheckin** | Rod check-in event + pre-run SPC measurements (FL1, FL2, FL3) | FK → FlatWireRun, Rod, PassSchedule |
 | **SpoolCheckin** | Spool check-in event for hybrid route (FL2, FL3 only) | FK → FlatWireRun, Spool, PassSchedule |
 | **RunPauseEvent** | Pause/resume cycles with reason codes & outcomes | FK → FlatWireRun; Active pause has NULL ResumedAt |
@@ -90,7 +92,7 @@ Track quality measurements and final outputs:
 | **WipRejection** | Material rejection events (pre-run or mid-run); RunId is nullable | FK → FlatWireRun (0-N, nullable) |
 | **CoilOutput** | Finished output coils (one per completed run segment). Adds PassScheduleId + PassScheduleSnapshot (OQ-54), NetWeightOverrideLb + ScaleWeightLb (OQ-36 / packing), StagingLocation, audit + RowVersion | FK → FlatWireRun, PassSchedule; 1-N with CoilTraceability |
 | **CoilTraceability** | Maps footage ranges within output coil back to source rod | FK → CoilOutput, Rod; Enables genealogy: coil → rod → supplier heat |
-| **RodCheckout** | Rod removal from payoff position (Mode A: pre-run; Mode B: mid-run emergency) | FK → FlatWireRun (nullable), Rod |
+| **RodCheckout** | Rod removal from a payoff position (Mode P: pre-check-out, never checked in; Mode A: pre-run; Mode B: mid-run emergency) | FK → FlatWireRun (nullable), Rod |
 
 **Key IDs:**
 - `SpcCheckpoint.CheckpointId`: e.g., "SPC-0041"
@@ -135,7 +137,8 @@ PassSchedule (1) ──┬──→ (N) PassScheduleComponent ──┬──→
 
 ### Material Traceability Chain
 ```
-Rod (1) ──┬──→ (N) RodCheckin (pre-run validation)
+Rod (1) ──┬──→ (N) RodStaging (pre-check-in: staged at a payoff bay)
+          ├──→ (N) RodCheckin (pre-run validation)
           ├──→ (N) WeldEvent (as OutgoingRod or IncomingRod)
           ├──→ (N) RollOverride (modifications)
           ├──→ (N) DieChangeEvent (maintenance)
@@ -147,6 +150,10 @@ Spool (1) ──┬──→ (N) SpoolCheckin (pre-run validation)
             ├──→ (1) SpoolConfiguration (constraints)
             ├──→ (0-1) Rod (parent rod Alpha, if hybrid-produced)
             └──→ (0-1) FlatWireRun.SourceRunId (FL1 run that produced it)
+
+RodStaging (1) ──→ (0-1) RodCheckin (set when check-in consumes the staged row)
+    Status: Staged ──→ CheckedIn   (operator acknowledges on Dashboard 2)
+                  └─→ Unstaged     (pre-check-out / Mode P)
 ```
 
 ### Quality Traceability
@@ -198,8 +205,10 @@ WipRejection ──→ FlatWireRun (nullable for pre-run rejections)
 - **Disposition**: Suspend, Scrap, Rework (maps to `NewMaterialStatus`: HOLD or SCRAP)
 
 ### Rod Removal (Checkout)
-- **RodCheckout.Mode**: ModeA (pre-run) or ModeB (mid-run emergency)
-- **RodCheckout.RunId**: NULL for ModeA, populated for ModeB
+- **RodCheckout.Mode**: ModeP (pre-check-out — never checked in), ModeA (pre-run), or ModeB (mid-run emergency)
+- **RodCheckout.RunId**: NULL for ModeP and ModeA, populated for ModeB
+- **RodCheckout ModeP**: enforced to RunId NULL, footage 0, PlcTagsCleared 0, no in-process disposition — nothing was acknowledged and no tags were ever pushed
+- **RodStaging.Status**: exactly one `Staged` row per (LineId, PayoffPosition), and per RodAlpha, via filtered unique indexes
 - **ModeB Disposition**: HoldPendingSupervisor, Scrap, or AcceptAsPartialRun
 
 ---
@@ -271,11 +280,13 @@ All of the following are created by `FlatWire_DDL_07_Indexes.sql` (40 non-cluste
 - `PassSchedule`: LineSpeedMinFpm < LineSpeedMaxFpm; GaugeTolerance > 0; WidthTolerance > 0
 - `PassScheduleComponent`: State ∈ {Active, Bypass, Skip}; EdgeType required when EdgeSet Active
 - `FlatWireRun`: Status ∈ {Running, Paused, Complete, Aborted}; FootageFt ≥ 0
+- `RodStaging`: LineId ∈ {FL1, FL3} (PCI002 excludes FL2); PayoffPosition ∈ {1, 2}; Status ∈ {Staged, CheckedIn, Unstaged}; welded/unstage/check-in stamps are all-or-nothing
+- `PayoffPosition`: Id ∈ {1, 2, 3} pinned — Payoff1, Payoff2, TraversingTakeup (FL2). Rod-fed tables deliberately narrow to {1, 2}
 - `RodCheckin`: PayoffPosition ∈ {1, 2}; InspectionOxidation ∈ {Pass, Fail}; SpcOvalityIn ≥ 0
 - `WeldEvent`: WeldQuality ∈ {Pass, Fail}; FootagePosition ≥ 0
 - `SpcCheckpoint`: CheckpointType ∈ {PreRun, PostDieChange, ManualSpotCheck, PostRun, RollAdjustTrigger}
 - `WipRejection`: RejectionGroup ∈ {SurfaceQuality, Dimensional, WeldQuality, Material, Process}; Disposition ∈ {Suspend, Scrap, Rework}
-- `RodCheckout`: Mode ∈ {ModeA, ModeB}
+- `RodCheckout`: Mode ∈ {ModeP, ModeA, ModeB}
 
 ---
 
@@ -394,10 +405,10 @@ GROUP BY f.RunId, rp.ReasonCode, rp.ReasonCategory
 
 ## Appendix: Build / Run Order
 0. **Database & security** (`DDL_00`) — create `FlatWireDB`, RCSI, `ua_user` grants
-1. **Lookup tables** (`DDL_01`) — Stand, Drawer, Edger, SpoolConfiguration, **AlloyProperty**
+1. **Lookup tables** (`DDL_01`) — Stand, Drawer, Edger, SpoolConfiguration, **AlloyProperty**, **PayoffPosition**
 2. **Schedule tables** (`DDL_02`) — PassSchedule, PassScheduleComponent, **PassScheduleChangeLog**
 3. **Material tables** (`DDL_03`) — Rod, FlatWireRun, Spool
-4. **Run tracking tables** (`DDL_04`) — FlatWireRunDetail, RodCheckin, SpoolCheckin, RunPauseEvent, WeldEvent, RollOverride, DieChangeEvent, **RunReading**
+4. **Run tracking tables** (`DDL_04`) — FlatWireRunDetail, **RodStaging**, RodCheckin, SpoolCheckin, RunPauseEvent, WeldEvent, RollOverride, DieChangeEvent, **RunReading**
 5. **Quality & output tables** (`DDL_05`) — SpcCheckpoint, SpcMeasurement, WipRejection, CoilOutput, CoilTraceability, RodCheckout
 6. **Foreign keys** (`DDL_06`) — all references added last
 7. **Indexes** (`DDL_07`) — performance + filtered-unique active schedule

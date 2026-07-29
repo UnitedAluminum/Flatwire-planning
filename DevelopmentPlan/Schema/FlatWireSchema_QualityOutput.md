@@ -1,7 +1,7 @@
 # Flat Wire Mill — Quality Control & Output Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 26, 2026
+**Last Updated:** July 29, 2026
 **Document Type:** Final Schema — Quality Control & Output Tables
 **Source:** Derived from `FlatWireTables.md` recommendations
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `SQL/FlatWire_DDL_05_QualityOutput.sql`
@@ -152,27 +152,44 @@ Records rod removal from a payoff position. Supports two modes: **Mode A** = pre
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `CheckoutId` | varchar(20) | NOT NULL UNIQUE | — | Unique checkout identifier (e.g. `CO-0041`) |
-| `RunId` | varchar(20) | NULL | `FlatWireRun.RunId` | FK to the run from which the rod was removed; NULL for Mode A pre-run checkout |
+| `RunId` | varchar(20) | NULL | `FlatWireRun.RunId` | FK to the run from which the rod was removed; NULL for Mode P and Mode A |
 | `LineId` | varchar(5) | NOT NULL | — | Line from which the rod is being removed |
 | `RodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | Alpha of the rod being checked out |
 | `PayoffPosition` | int | NOT NULL | — | Payoff position from which the rod is being removed |
-| `Mode` | varchar(10) | NOT NULL | — | Checkout mode: `ModeA` = pre-run removal; `ModeB` = mid-run removal |
-| `FootageAtCheckout` | int | NOT NULL | — | Footage counter value at the time of checkout; `0` for Mode A |
+| `Mode` | varchar(10) | NOT NULL | — | Checkout mode: `ModeP` = pre-check-out (never checked in); `ModeA` = pre-run removal; `ModeB` = mid-run removal |
+| `FootageAtCheckout` | int | NOT NULL | — | Footage counter value at the time of checkout; `0` for Mode P and Mode A |
 | `ReasonCode` | varchar(50) | NOT NULL | — | Coded reason for the checkout (e.g. `WrongRod`, `MaterialDefect`, `EmergencyStop`) |
 | `RodDisposition` | varchar(30) | NOT NULL | — | Where the rod goes after checkout — see allowed values |
 | `RemainingWeightLbEstimate` | decimal | NULL | — | Estimated remaining material weight on the rod in pounds; Mode B only |
 | `InProcessMaterialDisposition` | varchar(30) | NULL | — | Disposition of the in-process material at the time of checkout — see allowed values; Mode B only |
 | `PartialSpoolAlpha` | varchar(20) | NULL | — | Alpha generated for the partial spool if `InProcessMaterialDisposition = 'AcceptAsPartialRun'` |
 | `NewRodStatus` | varchar(20) | NOT NULL | — | Status the rod record is updated to after checkout (e.g. `HOLD`, `SCRAP`, `RECEIVED`) |
-| `PlcTagsCleared` | bit | NOT NULL | — | `1` if the PLC tags were successfully cleared for this rod; `0` if clear failed |
+| `PlcTagsCleared` | bit | NOT NULL | — | `1` if the PLC tags were successfully cleared for this rod; `0` if clear failed. Always `0` for Mode P — no tags were ever pushed, so there are none to clear |
 | `OperatorId` | varchar(50) | NOT NULL | — | User ID of the operator performing the checkout |
 | `Timestamp` | datetimeoffset | NOT NULL | — | Timestamp of the checkout event |
 
 **Allowed values:**
-- `Mode`: `ModeA`, `ModeB`
+- `Mode`: `ModeP`, `ModeA`, `ModeB`
 - `RodDisposition`: `ReturnToFloorStorage`, `ReturnToWarehouse`, `HoldReturnToStorage`, `Scrap`, `DeferContinueLater`
 - `InProcessMaterialDisposition`: `HoldPendingSupervisor`, `Scrap`, `AcceptAsPartialRun`
 - `NewRodStatus` (CHECK `CK_RodCheckout_NewRodStatus`): `RECEIVED`, `STAGED`, `INFLAT`, `COMPLETE`, `HOLD`, `SCRAP`
+
+### Modes compared
+
+| | Mode P — pre-check-out | Mode A — pre-run | Mode B — mid-run |
+|---|---|---|---|
+| Was the rod checked in? | **No** — only pre-checked-in | Yes | Yes |
+| `RunId` | NULL | NULL | Populated |
+| Footage | 0 | 0 | > 0 |
+| Pass schedule acknowledgement | None to void | Voided | Voided |
+| PLC tags | **None were pushed** | Cleared | Cleared (after confirmed stop) |
+| In-process material | None | None | Requires disposition |
+| Approval | Operator *(open question — see `FlatWireOpenQuestions.md`)* | Operator | **Supervisor** (OQ-48) |
+| Screen | Dashboard 2A | Dashboard 12 | Dashboard 12 via Pause |
+
+**Constraints:**
+- `CK_RodCheckout_ModeP` — when `Mode = 'ModeP'`: `RunId` NULL, `FootageAtCheckout` 0, `PlcTagsCleared` 0, and both `InProcessMaterialDisposition` and `PartialSpoolAlpha` NULL
+- `CK_RodCheckout_ModeB` — `InProcessMaterialDisposition` is only permitted when `Mode = 'ModeB'`
 
 ---
 
@@ -180,4 +197,5 @@ Records rod removal from a payoff position. Supports two modes: **Mode A** = pre
 
 | Date | Change |
 |---|---|
+| July 29, 2026 | `RodCheckout.Mode` extended with **`ModeP`** (pre-check-out — un-stages a pre-checked-in rod that was never checked in). Added `CK_RodCheckout_ModeP` and `CK_RodCheckout_ModeB` so the per-mode field rules are enforced in the database rather than only stated in prose (`REVIEW.md` #20). Added a modes-compared table. |
 | July 26, 2026 | `SpcMeasurement`: added `ToleranceValue`; `Deviation` + `InSpec` now computed PERSISTED. `CoilOutput`: `FootageFt` → `decimal(10,2)`; added `PassScheduleId` + `PassScheduleSnapshot` (OQ-54/NFR013), `NetWeightOverrideLb` + `ScaleWeightLb` (OQ-36/packing), `StagingLocation`, expanded `SkidStatus` domain, audit + `RowVersion`; corrected bare `decimal` weights to `decimal(8,2)`. `CoilTraceability`: overlap now enforced by trigger. `RodCheckout`: `NewRodStatus` CHECK. Retargeted to `FlatWireDB`. |

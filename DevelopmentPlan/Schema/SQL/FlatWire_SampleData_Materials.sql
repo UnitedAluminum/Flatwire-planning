@@ -28,16 +28,16 @@ GO
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Rod])
 INSERT INTO [dbo].[Rod]
     ([Alpha],[Alloy],[Temper],[DiameterIn],[GrossWeightLb],[NetWeightLb],[SupplierHeat],[InventoryType],
-     [Status],[Location],[StagedPayoffPosition],[IsWelded],[FootageRunToDate],[RemainingWeightEstimateLb],[ReceivedAt],[CreatedBy])
+     [Status],[Location],[FootageRunToDate],[RemainingWeightEstimateLb],[ReceivedAt],[CreatedBy])
 VALUES
-    ('R00041','1100','H19',0.3750,9000.00,8950.00,'HT-1100-2451','RawRod','COMPLETE','FL1 Payoff 1',NULL,1,2100.00,   0.00,'2026-07-15 07:10:00 -05:00','recv-op'),
-    ('R00042','1100','H19',0.3750,9000.00,8955.00,'HT-1100-2452','RawRod','COMPLETE','FL1 Payoff 2',NULL,1,2100.00,4700.00,'2026-07-15 07:20:00 -05:00','recv-op'),
-    ('R00043','3003','H18',0.3750,8800.00,8760.00,'HT-3003-3310','RawRod','COMPLETE','FL1 Payoff 1',NULL,1,1600.00,   0.00,'2026-07-16 06:40:00 -05:00','recv-op'),
-    ('R00044','3003','H18',0.3750,8800.00,8765.00,'HT-3003-3311','RawRod','STAGED', 'FL1 Payoff 2',   2,0,1600.00,4300.00,'2026-07-16 06:50:00 -05:00','recv-op'),
-    ('R00045','1100','H19',0.3750,9000.00,8970.00,'HT-1100-2461','RawRod','COMPLETE','FL3 Payoff 1',NULL,0,3800.00,   0.00,'2026-07-16 07:05:00 -05:00','recv-op'),
-    ('R00046','5052','H34',0.3750,8600.00,8560.00,'HT-5052-2201','RawRod','HOLD',   'QA Hold',    NULL,0, 900.00,4200.00,'2026-07-17 08:00:00 -05:00','recv-op'),
-    ('R00047','1100','H19',0.3750,9000.00,8952.00,'HT-1100-2470','RawRod','HOLD',   'QA Hold',    NULL,0,   NULL,   NULL,'2026-07-18 09:15:00 -05:00','recv-op'),
-    ('R00048','6061','T8', 0.3750,8500.00,8470.00,'HT-6061-6101','RawRod','RECEIVED','Warehouse',  NULL,0,   NULL,   NULL,'2026-07-18 10:00:00 -05:00','recv-op');
+    ('R00041','1100','H19',0.3750,9000.00,8950.00,'HT-1100-2451','RawRod','COMPLETE','FL1 Payoff 1',2100.00,   0.00,'2026-07-15 07:10:00 -05:00','recv-op'),
+    ('R00042','1100','H19',0.3750,9000.00,8955.00,'HT-1100-2452','RawRod','COMPLETE','FL1 Payoff 2',2100.00,4700.00,'2026-07-15 07:20:00 -05:00','recv-op'),
+    ('R00043','3003','H18',0.3750,8800.00,8760.00,'HT-3003-3310','RawRod','COMPLETE','FL1 Payoff 1',1600.00,   0.00,'2026-07-16 06:40:00 -05:00','recv-op'),
+    ('R00044','3003','H18',0.3750,8800.00,8765.00,'HT-3003-3311','RawRod','STAGED', 'FL1 Payoff 2',1600.00,4300.00,'2026-07-16 06:50:00 -05:00','recv-op'),
+    ('R00045','1100','H19',0.3750,9000.00,8970.00,'HT-1100-2461','RawRod','COMPLETE','FL3 Payoff 1',3800.00,   0.00,'2026-07-16 07:05:00 -05:00','recv-op'),
+    ('R00046','5052','H34',0.3750,8600.00,8560.00,'HT-5052-2201','RawRod','HOLD',   'QA Hold',      900.00,4200.00,'2026-07-17 08:00:00 -05:00','recv-op'),
+    ('R00047','1100','H19',0.3750,9000.00,8952.00,'HT-1100-2470','RawRod','HOLD',   'QA Hold',        NULL,   NULL,'2026-07-18 09:15:00 -05:00','recv-op'),
+    ('R00048','6061','T8', 0.3750,8500.00,8470.00,'HT-6061-6101','RawRod','RECEIVED','Warehouse',     NULL,   NULL,'2026-07-18 10:00:00 -05:00','recv-op');
 GO
 
 -- ============================================================

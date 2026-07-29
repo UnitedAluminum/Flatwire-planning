@@ -28,7 +28,7 @@ JOIN sys.tables t ON fk.parent_object_id = t.object_id
 WHERE fk.name LIKE 'FK_FlatWire%'
    OR t.name IN (
        'PassSchedule','PassScheduleComponent','PassScheduleChangeLog','FlatWireRun','Spool','FlatWireRunDetail',
-       'RodCheckin','SpoolCheckin','RunPauseEvent','WeldEvent','RollOverride',
+       'RodStaging','RodCheckin','SpoolCheckin','RunPauseEvent','WeldEvent','RollOverride',
        'DieChangeEvent','RunReading','SpcCheckpoint','SpcMeasurement','WipRejection',
        'CoilOutput','CoilTraceability','RodCheckout'
    );
@@ -127,6 +127,36 @@ IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_FlatWireRunDetail
     ALTER TABLE [dbo].[FlatWireRunDetail]
         ADD CONSTRAINT [FK_FlatWireRunDetail_FlatWireRun]
         FOREIGN KEY ([RunId]) REFERENCES [dbo].[FlatWireRun] ([RunId]);
+GO
+
+-- PayoffPositionId was previously an FK-style INT with no parent table
+-- (REVIEW.md #15). PayoffPosition now exists in 01_Lookup, so enforce it.
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_FlatWireRunDetail_PayoffPosition')
+    ALTER TABLE [dbo].[FlatWireRunDetail]
+        ADD CONSTRAINT [FK_FlatWireRunDetail_PayoffPosition]
+        FOREIGN KEY ([PayoffPositionId]) REFERENCES [dbo].[PayoffPosition] ([Id]);
+GO
+
+-- ------------------------------------------------------------
+-- RodStaging (pre-check-in)
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_RodStaging_Rod')
+    ALTER TABLE [dbo].[RodStaging]
+        ADD CONSTRAINT [FK_RodStaging_Rod]
+        FOREIGN KEY ([RodAlpha]) REFERENCES [dbo].[Rod] ([Alpha]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_RodStaging_PayoffPosition')
+    ALTER TABLE [dbo].[RodStaging]
+        ADD CONSTRAINT [FK_RodStaging_PayoffPosition]
+        FOREIGN KEY ([PayoffPosition]) REFERENCES [dbo].[PayoffPosition] ([Id]);
+GO
+
+-- Set when check-in consumes the staged row, closing the staging → check-in chain.
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_RodStaging_RodCheckin')
+    ALTER TABLE [dbo].[RodStaging]
+        ADD CONSTRAINT [FK_RodStaging_RodCheckin]
+        FOREIGN KEY ([RodCheckinId]) REFERENCES [dbo].[RodCheckin] ([Id]);
 GO
 
 -- ------------------------------------------------------------

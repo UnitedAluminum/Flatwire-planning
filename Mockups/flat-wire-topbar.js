@@ -71,6 +71,7 @@
   var TILES = [
     { t: "Pass Schedule",      s: "View schedule",         href: "dashboard_9_pass_schedule.html", ic: mt('<line x1="8" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="8" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>') },
     { t: "WIP Rejection",      s: "Reject material",       href: "dashboard_8_wip_rejection.html", ic: mt('<path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z"/><path d="M15 9l-6 6M9 9l6 6"/>') },
+    { t: "Rod Pre-Check-in",   s: "Stage at payoff",       href: "dashboard_2a_rod_precheckin.html", ic: mt('<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3.5v3M12 17.5v3"/>') },
     { t: "Rod Checkout",       s: "Return rod",            href: "dashboard_12_rod_checkout.html", ic: mt('<path d="M14 3h5a2 2 0 012 2v14a2 2 0 01-2 2h-5"/><path d="M9 16l4-4-4-4"/><path d="M13 12H3"/>') },
     { t: "Shift Summary",      s: "Shift report",          href: "dashboard_10_shift_summary.html", ic: mt('<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><line x1="10" y1="13" x2="16" y2="13"/><line x1="10" y1="17" x2="16" y2="17"/>') },
     { t: "Downtime",           s: "Log downtime",          href: null, ic: mt('<circle cx="12" cy="12" r="9"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/>') },

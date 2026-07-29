@@ -1,8 +1,8 @@
 # Flat Wire Mill — Open Questions Register
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 28, 2026
-**Total Questions:** 66
+**Last Updated:** July 30, 2026
+**Total Questions:** 74
 **Status Legend:** `Open` · `In Progress` · `Decided` · `Deferred`
 
 > Questions marked **Critical** must be resolved before development begins on the dependent module.
@@ -82,6 +82,14 @@
 | 64 | Stop-confirmation popup — supervisor visibility and multi-operator arbitration | Medium | Tim O. / IT | Open | |
 | 65 | Short-close path — closing a spool below target weight | Medium | Tim O. / Operations | Open | |
 | 66 | Scale-vs-calculated spool weight — tolerance, default basis, approval authority | High | Tim O. / Shannon R. | In Progress | |
+| 67 | Pre-check-in coil status — `INFLAT` (SRS) or `STAGED` (walkthrough), and what reverses it | Critical | Tim O. / IT | Open | |
+| 68 | Does pre-check-out (un-staging) require supervisor approval? | High | Tim O. / Shannon R. | Open | |
+| 69 | Can a rod be pre-checked-in against a future order, or only the current one? | Medium | Tim O. / Planning | Open | |
+| 70 | `RodSeqno` scope — per line, per order, or global | Medium | IT / Team | Open | |
+| 71 | Rod diameter tolerance (`CHK007`) has no column anywhere in the schema | High | Tim O. / IT | Open | |
+| 72 | Does a failed staging inspection persist a `RodStaging` row, or is nothing written? | High | Tim O. / IT | Open | |
+| 73 | Which WIP station does FL3 pre-check-in post to? There is no `FL3PO` | Medium | Tim O. / IT | Open | |
+| 74 | Staging overrides — off-schedule + out-of-sequence, PIN source, and the mid-order case | High | Tim O. / Shannon R. | In Progress | |
 
 ---
 
@@ -674,6 +682,150 @@ Directly related: **Q58** (OD → weight conversion formula) — accumulated sca
 
 ---
 
+**Q67** · `Critical` · Owner: Tim O. / IT · `Open`
+**Pre-check-in coil status — `INFLAT` or `STAGED`, and what reverses it**
+
+Two delivered documents disagree about what happens to the shared coil record when a rod is pre-checked-in at the payoff:
+
+- **SRS §4.2** (`PCI` data note) has pre-check-in performing the `FlatwireQueue` insert (`Rodno`, `RodSeqno`, `Welded`), setting `proddb..coils.coil_status = INFLAT`, and doing the reqsum + `wip_coil_orders` insert — i.e. the material is **committed** as soon as it is queued.
+- **[FlatWireProcessWalkthrough.md](FlatWireProcessWalkthrough.md) step 8** has it as `RECEIVED → STAGED`, with `INFLAT` arriving later at check-in.
+
+The interim design follows the SRS and treats the two as orthogonal — `RodStaging.Status` is bay occupancy, `coils.coil_status` follows the SRS — which makes rod status `STAGED` effectively vestigial for FL1. Three things need confirming:
+
+1. Does pre-check-in really commit the material to `INFLAT`, or should the shared status stay `STAGED` until acknowledgement?
+2. If `INFLAT`: pre-check-out must **reverse** the `wip_coil_orders` insert and reqsum. Is that reversal safe for planning, and does it leave any trace planners need to see?
+3. If `STAGED`: does anything downstream (planning availability, WIP queue, traveler) actually need the material committed at staging time — which is presumably why the SRS specified `INFLAT` in the first place?
+
+This is **Critical** because staging writes cross database boundaries and are **compensating writes, not one transaction** (gaps G2/G16) — the more state pre-check-in commits, the more there is to unwind correctly. Blocks the Phase 4 staging build. Detail in [RodPreCheckin.md](RodPreCheckin.md).
+
+---
+
+**Q68** · `High` · Owner: Tim O. / Shannon R. · `Open`
+**Does pre-check-out (un-staging) require supervisor approval?**
+
+**Q48** decided that a **mid-run** checkout (footage > 0) requires supervisor approval, because footage has been produced and material must be dispositioned. Pre-check-out is the opposite end of the scale: the rod was never checked in, no pass schedule was acknowledged, no PLC tags were pushed and no footage exists — so the interim design allows **operator-only** un-staging.
+
+Confirm that is right. The counter-argument is inventory discipline rather than material risk: un-staging returns a bundle to the floor or warehouse and reverses a WIP queue entry, and a mis-scan corrected quietly leaves no supervisor visibility. If approval *is* wanted, is it a blocking gate (as in Q50's notification-driven remote model) or an after-the-fact notification?
+
+Related: pre-check-out has **no SRS requirement ID at all** — §4.17 covers only post-check-in removal. A new `PCI`-series requirement block is needed regardless of how this is decided.
+
+---
+
+**Q69** · `Medium` · Owner: Tim O. / Planning · `Open`
+**Can a rod be pre-checked-in against a future order, or only the current one?**
+
+Dashboard 2A stages a rod against an `OrderId`. In the continuous-feed case that is the order already running, but the physical workflow does not require it: an operator could stage the first bundle of the *next* job on the idle bay near the end of a campaign. Is that allowed, and if so:
+
+- Does the weld-selection surfacing (`PCI008`) need to exclude a staged rod belonging to a different order, since welding rod from one order into another would break coil genealogy?
+- Should `Mark as Welded` be blocked outright when the staged rod's order differs from the running order — over and above the existing alloy/temper/diameter match check (`WLD006`)?
+
+**Leaning toward "no" (Jul 29, 2026).** The free-processing-order requirement specifies that staging validates the rod *"belongs to the **current** production order"* — singular. Scoped that way, a future-order rod is not a staging candidate at all, and the `PCI008` genealogy concern above resolves itself because cross-order material never reaches the bay.
+
+Not treated as decided, because that requirement is about *processing order within* an order and does not address the cross-order case head-on. Two consequences need confirming before it closes:
+
+1. **Continuous feed cannot cross an order boundary.** The last rod of order A cannot be welded to the first rod of order B. Probably correct — the pass schedule may change between orders anyway, so the line would stop regardless — but it should be confirmed, not discovered on the floor.
+2. If the answer is genuinely "current order only", the interim design is already right and the `Available` projection needs no change. If future-order staging is later allowed, `PCI008` weld selection must exclude cross-order rod explicitly.
+
+---
+
+**Q70** · `Medium` · Owner: IT / Team · `Open`
+**`RodSeqno` scope — per line, per order, or global**
+
+The SRS `FlatwireQueue` model carries `RodSeqno` alongside `Rodno` and `Welded`, and it drives the ordering of the Traveler Queue section (`TRV004`). Its scope is not stated: is the sequence numbered within a line, within an order, or globally across flat wire? The choice determines whether numbers restart (and when), whether two lines can show the same `Seq 2`, and whether the queue ordering survives an order change.
+
+**Partly resolved (Jul 29, 2026).** The requirement to retain **both** the planned and the actual sequence — planned for planning and reporting, actual in the transaction history for traceability — showed the original framing was too narrow: the question was never only "what is the scope", it was "**which of two sequences is this field**". A single `RodSeqno` could not answer that, and the ambiguity was a live defect rather than a deferred decision.
+
+> **Superseded in part (Jul 30, 2026).** The first version of that requirement also said planned order was *not enforced at all* — the operator free to re-sequence with no warning and no override. That is **replaced** by the notify-and-authorise rule in **Q74**: departing from the planned order is permitted, but the operator is notified and a **supervisor authorises** it. The two-sequence data model is unaffected — both columns stay, for exactly the reasons above.
+
+Applied: `RodStaging.RodSeqno` is the **actual** processing sequence, assigned server-side at pre-check-in (consistent with the SRS inserting `FlatwireQueue` at pre-check-in, and with the column already being `NOT NULL`), **monotonic per line**. A new `RodStaging.PlannedSeqno int NULL` snapshots the planned position at staging time, nullable for a rod with no planned position. `GET /staging/queue` returns `rodSeqno: null` on `Available` rows.
+
+Still to confirm:
+
+1. **Per line** is the interim choice for `RodSeqno` scope. Per *order* would restart numbering at each order boundary, which reads more naturally on a traveler but makes two concurrent orders on one line show duplicate positions. Per line avoids that at the cost of ever-growing numbers — does it need a reset point (per shift, per campaign, per order)?
+2. Does `PlannedSeqno` scope per order (the natural reading, since planning generates stops per order), and should it be displayed as `3 of 5` rather than a bare ordinal?
+3. Should un-staging **release** the actual position for reuse, or leave a gap? The interim design releases it, since the rod was never processed — but that means the same number can be issued twice, which a traceability audit may object to.
+
+---
+
+**Q71** · `High` · Owner: Tim O. / IT · `Open`
+**Rod diameter tolerance (`CHK007`) has no column anywhere in the schema**
+
+`CHK007` requires the measured rod diameter to be validated against nominal **± a lookup tolerance**, at both pre-check-in (Dashboard 2A) and check-in (Dashboard 2). There is nowhere to read that tolerance from.
+
+`AlloyProperty` carries `GaugeToleranceDefault` and `WidthToleranceDefault`, but those are **flat wire output** dimensions — the gauge and width the mill produces. Incoming rod diameter is a different measurement, and no column for its tolerance exists in `FlatWireDB` or in the shared `coils` schema. A search across `Schema/` returns gauge and width tolerances only.
+
+As a result the Dashboard 2A mockup hard-coded a single `0.005"` for every alloy, which is wider than every value in the standards table in [FlatWireShopfloorDashboards.md](FlatWireShopfloorDashboards.md) (*Alloy Lookup Table*: 1100 → ± 0.003", 1350 → ± 0.002", 3003 → ± 0.004") — so out-of-tolerance rod would have been accepted. The mockup now reads a per-alloy map mirroring that table, but the map is mock data with no backing store.
+
+To resolve:
+
+1. Add `AlloyProperty.RodDiameterToleranceDefault` (or confirm the tolerance belongs on a rod-spec record rather than the alloy)?
+2. Are the standards-table values authoritative, or do they need Process Engineering sign-off first? That table already carries the note *"must be confirmed and maintained by Process Engineering (Tim O.) — editable via an admin table, not hardcoded."*
+3. Can tolerance vary by rod vendor or by nominal size within one alloy, or is per-alloy sufficient?
+
+Blocks the Phase 4 check-in and staging validation. Detail in [RodPreCheckin.md](RodPreCheckin.md).
+
+---
+
+**Q72** · `High` · Owner: Tim O. / IT · `Open`
+**Does a failed staging inspection persist a `RodStaging` row, or is nothing written?**
+
+Dashboard 2A and `GET /payoff/status` both expose a **`Blocked`** bay state, defined as *"inspection failed at staging"*. `RodStaging.Status` has no such value — it is only `Staged | CheckedIn | Unstaged`.
+
+The state *is* derivable: the three inspection columns are `NOT NULL` `Pass`/`Fail`, so a blocked bay is `Status = 'Staged'` with any inspection column `= 'Fail'`. That reading is also the correct one operationally, because `UX_RodStaging_Bay` is filtered on `Status = 'Staged'` — the failed bundle is still physically in the bay and must keep it occupied. But no artifact states this, and the alternative (a fourth status value) would change the filtered index.
+
+The sharper problem is that **nothing currently writes the row**. On a failed inspection the wizard is a hard block with no bypass (`CHK010`) and the only forward action is a link to WIP Rejection, so the staging record is never committed and the inspection evidence is lost at navigation. The `Blocked` state is therefore unreachable in practice.
+
+To resolve:
+
+1. Confirm `Blocked` is **derived** (`Staged` + any `Fail`) rather than a fourth `Status` value.
+2. Does pre-check-in commit a `RodStaging` row *before* routing to WIP Rejection, so the failure and its observation are persisted and the bay reads BLOCKED?
+3. If yes, what releases that row — a pre-check-out (`ModeP`), or does the WIP rejection itself un-stage it?
+4. `InspectionNotes` is nullable but documented as *"expected when any item fails."* Should it be enforced NOT NULL when any item is `Fail`, matching the constraint style already used for the welded/unstaged/checked-in column groups?
+
+Related to `CHK010` and gap **G14**. Detail in [RodPreCheckin.md](RodPreCheckin.md).
+
+---
+
+**Q73** · `Medium` · Owner: Tim O. / IT · `Open`
+**Which WIP station does FL3 pre-check-in post to? There is no `FL3PO`**
+
+The data model, DDL and API all scope staging to **FL1 and FL3** — `CK_RodStaging_LineId` allows `FL1` or `FL3`, and `/staging/**` rejects only `FL2` (`PCI002`). The WIP station seed does not match: [CommonDB_Insert_WIPStations_FlatWire.sql](../DevelopmentPlan/DBScripts/CommonDB_Insert_WIPStations_FlatWire.sql) creates `FL1PO`, deliberately omits `FL2PO`, and **never mentions `FL3PO`**. The SRS text is no help either — `PCI003` names a dedicated Pre-Check-In station for **FL1** only; FL3's inclusion is an inference from the fact that the hybrid line draws rod from the same VPS.
+
+The Dashboard 2A mockup previously wrote `FL3PO` into the station stamp when the FL3 toggle was selected — a station code that exists nowhere. It now assumes FL3 posts to `FL1PO`, on the reading that FL3 *is* FL1 running hybrid into FL2, so there is one physical payoff and one station.
+
+To confirm:
+
+1. Is that reading right — one VPS shared between FL1 and FL3 modes, so `FL1PO` covers both?
+2. If instead FL3 warrants its own station row, `FL3PO` must be seeded and the D2 note updated.
+3. Either way, should staging rows record `LineId = 'FL3'` when the line is in hybrid mode, even though the station is `FL1PO`? That decides whether the Traveler Queue for FL3 is a distinct queue or the same one.
+
+Detail in [RodPreCheckin.md](RodPreCheckin.md).
+
+---
+
+**Q74** · `High` · Owner: Tim O. / Shannon R. · `In Progress`
+**Supervisor overrides at staging — off-schedule, out-of-sequence, PIN source, and the mid-order case**
+
+**Decided (July 30, 2026) — out-of-planned-sequence.** The operator must be **notified** when the rod being checked in / pre-checked-in is not the one the planning system expects next, and a **supervisor override is required** to depart from the planned sequence. Same credential block as below: reason + badge/ID + PIN, remote-approval fallback, all recorded (`RodStaging.OutOfSequenceOverride` + `ExpectedRodAlpha`, sharing the credential stamp). "Expects next" is the lowest planned sequence still available, so a blocked bundle does not freeze the sequence behind it.
+
+> This **supersedes** the earlier free-processing-order requirement, which had the operator re-sequencing at will with explicitly no warning and no override (see **Q70**). Both sequence columns are retained regardless — the deviation is now authorised *and* recorded.
+
+**Decided (July 29, 2026) — off-schedule.** A rod whose order is scheduled on a **different line** is **not refused**. The operator is notified at pre-check-in / check-in that the order belongs to another line, and a **supervisor override** authorises staging it here. Following the pattern already decided in **Q66** part 3: reason + supervisor badge/ID + PIN, remote-approval fallback when no supervisor is on the floor. The override, the authorising supervisor and the reason are recorded on the staging record (`RodStaging.OffScheduleOverride` / `ScheduledLineId` / `OverrideBy` / `OverrideAt` / `OverrideReason`, all-or-nothing via `CK_RodStaging_OffSched`). The PIN is never stored.
+
+Rod→order comes from **`planning_routings`**, so the order is *resolved* from the scan rather than chosen — which is what makes even the first rod on a cold line validatable.
+
+Still to confirm:
+
+1. **PIN validation source** — the existing login/authorisation service, or a separate supervisor credential store? Inherited unresolved from Q66; it now gates two overrides, so it should be settled once for both.
+2. **The mid-order case is different and currently a hard refusal.** Once a line has an order established, a rod from *another* order is rejected outright rather than offered an override, because welding across orders breaks coil genealogy (see **Q69**, **Q72**). Is that right, or should a supervisor be able to authorise an order switch mid-run too — and if so, what happens to the weld?
+3. **Does the same override apply at check-in (Dashboard 2)?** The decision says "checkin/precheckin", so Dashboard 2 needs the identical panel and the same columns on `RodCheckin`. Only Dashboard 2A carries it today.
+4. **Does the scheduled line need updating** when an order is authorised to run elsewhere — i.e. should scheduling be corrected, or is the override purely a shop-floor exception that leaves the booking untouched? This affects whether the *next* rod of that order also triggers the override.
+5. **Should an off-schedule run notify the other line's operator**, whose scheduled material has just been consumed elsewhere?
+
+Detail in [RodPreCheckin.md](RodPreCheckin.md).
+
+---
+
 ### Section F — Die Change and SPC
 
 ---
@@ -718,3 +870,8 @@ For flat wire orders in the planning screen, should they appear in the existing 
 | Jul 29, 2026 | Analysis team | Q60 updated with the assumed **2,000 lb** default target spool weight. Added **Q63–Q65** from the machine-stop confirmation requirement (Part B of [SpoolCompletionNotification.md](SpoolCompletionNotification.md)): `FL{n}.LineState` vocabulary + stop dwell + pause-reason suppression, supervisor visibility and multi-operator arbitration of the prompt, and the short-close-below-target path. Total questions: 65. |
 | Jul 29, 2026 | Analysis team | Added **Q66** — scale-vs-calculated spool weight reconciliation on the completion step: variance tolerance (±2 % proposed), which weight is the default basis, whether an out-of-tolerance variance needs supervisor approval rather than just a reason, and whether a scale exists at the take-up at all (overlaps Q47, feeds Q58). Total questions: 66. |
 | Jul 29, 2026 | Client direction | **Q66 part 3 Decided**: an out-of-tolerance spool weight must not block spool creation — the completion is authorised by a **supervisor override** (reason + badge/ID + PIN, remote-approval fallback) and the override is recorded on the spool. Q66 now In Progress; tolerance value, default basis, scale availability and PIN validation source remain open. |
+| Jul 29, 2026 | Analysis team | Added **Q67–Q70** from the pre-check-in / payoff-staging build ([RodPreCheckin.md](RodPreCheckin.md)): coil status at staging (`INFLAT` per SRS §4.2 vs `STAGED` per the process walkthrough, and what reverses it — **Critical**, blocks the Phase 4 staging build), whether pre-check-out needs supervisor approval (contrast Q48 for mid-run), staging against a future order and its effect on weld selection, and the scope of `RodSeqno`. Also noted: pre-check-out has **no SRS requirement ID** — §4.17 covers only post-check-in removal, so a new `PCI`-series block is needed. Total questions: 70. |
+| Jul 29, 2026 | Analysis team | Added **Q71–Q73** from the Dashboard 2A mockup review: rod diameter tolerance (`CHK007`) has **no column anywhere in the schema** — `AlloyProperty` carries only gauge/width, which are flat-wire *output* dimensions, so the mockup had hard-coded a single 0.005" that is wider than every value in the standards table; whether a failed staging inspection persists a `RodStaging` row at all, given that the UI/API `Blocked` bay state is derivable (`Staged` + any `Fail`) but nothing currently writes it; and which WIP station FL3 pre-check-in posts to, since the schema/DDL/API all scope staging to FL1 **and FL3** while only `FL1PO` is seeded and no `FL3PO` exists. Total questions: 73. |
+| Jul 29, 2026 | Client requirement | **Free rod processing order.** Planned rod sequence is explicitly **not enforced** — the operator may process rods in any order; staging validates only current-order membership and availability, and must never block because an earlier-planned rod is unprocessed. Both sequences are retained: planned for planning/reporting, actual in the transaction history for traceability. **Q70 partly resolved** — reframed from "what is `RodSeqno`'s scope" to "which of two sequences is it"; `RodSeqno` is now the *actual* sequence and a new `RodStaging.PlannedSeqno` snapshots the planned one. **Q69 leaning "no"** — validation is scoped to the *current* order, which makes a future-order rod a non-candidate; not closed, because continuous feed then cannot cross an order boundary and that consequence needs confirming. |
+| Jul 29, 2026 | Client direction | **Q74 added, part-decided.** Rod→order resolves from **`planning_routings`** at pre-check-in / check-in, so the order is *revealed* by the scan rather than chosen — which makes the first rod on a cold line validatable and removes the need for an order chooser. A rod whose order is scheduled on **another line** is **not refused**: the operator is notified and a **supervisor override** (reason + badge/ID + PIN, remote-approval fallback — the Q66 pattern) authorises it, with the override, supervisor and reason recorded on `RodStaging`. Still open: PIN validation source (shared with Q66), whether the mid-order cross-order case should also be overridable given the weld/genealogy constraint, applying the same panel at Dashboard 2, whether scheduling gets corrected, and whether the other line's operator is notified. |
+| Jul 30, 2026 | Client direction | **Q74 extended — out-of-planned-sequence now requires supervisor authorisation.** The operator is notified when the rod is not the one planning expects next, and a supervisor override is required to depart from the planned sequence — same credential block as the off-schedule override (reason + badge/ID + PIN, remote-approval fallback), recorded as `RodStaging.OutOfSequenceOverride` + `ExpectedRodAlpha`. Two deviations can co-occur and share one sign-off. **This supersedes the earlier free-processing-order requirement** (Q70), which had the operator re-sequencing at will with no warning and no override; both sequence columns are retained regardless, so the deviation is now authorised as well as recorded. |

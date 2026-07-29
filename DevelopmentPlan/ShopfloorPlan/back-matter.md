@@ -13,7 +13,7 @@
 ```
 Phase 1 (Platform: Angular scaffold + FlatWire service + FlatWireDB schema + FlatWireHub/OPC)
    └─> Phase 2 (Pass Schedule)  ── highest dependency; blocks all check-in/PLC
-        └─> Phase 4 (Rod Check-in FL1/FL3)  [also needs upstream rod + Phase 3 real-time]
+        └─> Phase 4 (Rod Check-in FL1/FL3 + Pre-Check-in/Dashboard 2A)  [also needs upstream rod + Phase 3 real-time]
              └─> Phase 5 (Active Run + live trace)
                   └─> Phase 6 (In-run events)
                        └─> Phase 7 (WIP/Checkout)
@@ -23,6 +23,9 @@ Phase 1 (Platform: Angular scaffold + FlatWire service + FlatWireDB schema + Fla
 Upstream (external, existing systems: CoilReceiving + Planning/Scheduling)
    Rod Receiving + Order Planning/Line Scheduling ──> feed material + scheduled jobs into Phase 4
 Phase 3 (Line board + real-time backbone) ──> consumed by Phases 4,5,6,8,9
+Phase 4 RodStaging ──> back-feeds Phase 3 (the "Payoff2 not loaded" alert has no other data source)
+                  └─> Phase 6 (PCI008: weld selection defaults to the staged rod)
+                  └─> Phase 7 (Mode P pre-check-out; carry-forward gate moves to the staging scan)
 Phases 11/12/13 ──> consume completed-run + reference data
 Phase 14 ──> requires all critical-path phases
 ```
@@ -63,7 +66,7 @@ Phase 14 ──> requires all critical-path phases
 | W1 | Aug 17–23 | **1** Core Platform (1A/1B/1C parallel) | Angular scaffold, FlatWire service, FlatWireDB schema, hub/OPC skeleton | E01 (FW-001–007), FW-004 |
 | W2 | Aug 24–30 | **2** Pass Schedule (start) · **3** real-time backbone (start) | Recipe library, hub streaming | E02, FW-080 |
 | W3 | Aug 31–Sep 6 | **2** (finish) · **3** Dashboard 1 live | Generate-from-Specs; line board | E02, FW-060 |
-| W4 | Sep 7–13 | **4** Rod Check-in · **5** Active Run + trace | PLC push + INFLAT; live gauge/width + DB13/14 | FW-061/062/081/082 |
+| W4 | Sep 7–13 | **4** Rod Check-in **+ Pre-Check-in (DB2A)** · **5** Active Run + trace | PLC push + INFLAT; **`RodStaging` + payoff staging + `FL1PO`**; live gauge/width + DB13/14 | FW-061/062/081/082 |
 | W5 | Sep 14–20 | **6** In-run events · **7** WIP/Checkout · **8** FL2 spool (start) | Weld/die/SPC/roll/pause; rejection/checkout; spool check-in | FW-063/065/067/070/071/072/073, FW-064 |
 | W6 | Sep 21–27 | **8** (finish) · **9** Coil completion · **10** FL3 hybrid · **11** Shift/Reports | Historical profile; coil/label/skid; hybrid; shift + reports | FW-066/100, FW-122, FW-069/090–095 |
 | W7 | Sep 28–30 | **12** Yield/Cost/Scrap · **13** Admin · **14** Integration/UAT | Yield/cost/scrap*; admin; 3-route E2E + UAT/sign-off | FW-101/102*/110*, FW-120–123 |
@@ -114,24 +117,26 @@ Consolidated review findings, prioritised. **Critical** items should be resolved
 | **G2** | Check-in spans `FlatWireDB` (run/checkin/SPC) + existing `coils` `INFLAT` + PLC push — **not one ACID transaction** | Architecture / Data | **Critical** | Partial failure → inconsistent state; "atomic rollback" claim invalid | Saga/outbox + compensating PLC clear; or mirror an `INFLAT` marker into `FlatWireDB`; define incomplete-push recovery | Open |
 | **G3** | No table persists raw AGC gauge/width readings, yet FL2 historical profile + Gauge Trace / Cut Traceability reports require them | Data / Schema | **Critical** | FL2 profile + reports have no data source | Add a time-series `RunReading` table (footage, gauge, width, ts, in-spec) + retention/rollup; make it a Phase 1/3 deliverable | Open |
 | **G4** | Story→phase coverage not provable | Traceability | High | Backlog items silently dropped | Added **Appendix C** (all 58 FW-### → phase + deferred flag) | ✅ Resolved |
-| **G5** | Rod source-of-truth ambiguity (new `Rod` table vs `coils`) | Data | High | Conflicting rod status | Use existing `coils` as single source of truth; drop `Rod` table | ✅ Resolved (decision 3) |
+| **G5** | Rod source-of-truth ambiguity (new `Rod` table vs `coils`) | Data | High | Conflicting rod status | Use existing `coils` as single source of truth; drop `Rod` table | ✅ Resolved (decision 3). *Note (Jul 29 2026): the DDL/ERD still keep `Rod` as a FlatWireDB-local master under the later "Hybrid foundation" decision — see G12. The two provisional pre-check-in columns that hung off it (`StagedPayoffPosition`, `IsWelded`) are now **retired** in favour of `RodStaging`.* |
 | **G6** | Roles (Operator/Ops Mgr/Maintenance/Supervisor/Admin) not confirmed as existing JWT roles vs new | Security | High | Auth may block build | Confirm role/claim mapping in `Login`; add a provisioning story if new | Open |
 | **G7** | Mid-run checkout supervisor approval relies only on transient SignalR | Reliability | High | Approval lost if no supervisor connected; material stuck locked | Durable pending-approval queue + `Notification` fallback; SignalR = live nudge only | Open |
 | **G8** | No data-migration deliverable for legacy `FlatLineSetup`/`FlatLineProcessing` | Data | High | Legacy data stranded on drop | Add mapping + migration + validation + drop-criteria deliverable | Open |
 | **G9** | NFRs absent (AGC Hz, concurrent clients, latency, reading retention) | Performance | High | Real-time may not scale/perform | Define NFR targets; hub load test added to **QA2** (N clients × 3 lines × cadence) | Open — load test scheduled |
 | **G17** | rod→`coils` multiplies cross-DB logical FKs (every `Rod.Alpha` ref) | Architecture / Data | High | No referential integrity; cross-DB joins for traceability/reports | Consistency checks + indexed alpha on `coils`; consider a replicated view / linked server for report joins | Open |
-| **G14** | Pre-build data inconsistencies: 3- vs 4-item inspection (+M1/M2 ovality), `R#####` vs `ROD-#####`, `FootageFt` INT vs DECIMAL, `CoilOrderPlanId` vs `PlanId` | Data / Contract | High | Rework if resolved late | Stand up a "Pre-Build Decisions" register with owners; resolve before the owning phase | Open |
+| **G14** | Pre-build data inconsistencies: 3- vs 4-item inspection (+M1/M2 ovality), `R#####` vs `ROD-#####`, `FootageFt` INT vs DECIMAL, `CoilOrderPlanId` vs `PlanId` | Data / Contract | High | Rework if resolved late | Stand up a "Pre-Build Decisions" register with owners; resolve before the owning phase | Open — `RodStaging` and Dashboard 2A deliberately use **3 inspection items** and `R#####`, and do not inherit the 4th item; that scopes the gap to check-in but does not close it |
 | **G10** | Real-time deploy prereqs / MessagePack dependency | Infra | Medium | IIS WebSockets off → transport fallback; new client dep the repo doesn't use | Enable IIS WebSockets (added to deploy); treat MessagePack as **measure-first/optional** — batching+decimation is the real win | Open |
 | **G11** | Phases 10/12/13 don't follow the full 8-section template | Doc consistency | Medium | Uneven detail vs stated template | Expand 10/12/13 to the full template | Open |
-| **G12** | Source artifacts (DDL, `FlatWireTables.md`, ERD) still say `united_db` and include the dropped `Rod` table | Doc consistency | Medium | Conflicting source-of-truth | Retarget DDL to `FlatWireDB`; drop `Rod` DDL; update Schema docs/ERD | Open |
+| **G12** | Source artifacts (DDL, `FlatWireTables.md`, ERD) still say `united_db` and include the dropped `Rod` table | Doc consistency | Medium | Conflicting source-of-truth | Retarget DDL to `FlatWireDB`; drop `Rod` DDL; update Schema docs/ERD | Open — DDL/ERD are on `FlatWireDB` and now agree at **27 tables**; the provisional `Rod.StagedPayoffPosition`/`IsWelded` columns are removed. The `Rod`-table-vs-`coils` divergence itself is unchanged |
 | **G16** | PLC "rollback" wording — OPC writes are not transactional | Architecture | Medium | Misleads implementers | Reword as compensating writes (re-clear tags) — see G2 | Open — partly reworded |
 | **G13** | `slitter-interface` / `CoilDataHub` reference ambiguity | Doc consistency | Low | Wrong pattern copied | Removed as a reference | ✅ Resolved (decision 5) |
 | **G15** | No executive summary / 11-stage→phase map | Doc usability | Low | Hard to skim a ~1,250-line doc | Add a one-screen exec summary + process-stage→phase table | Open |
+| **G19** | **Pre-check-in was fully specified in the SRS but absent from every other artifact.** `SRS §4.2 PCI001`–`PCI008` (+ `WLD010`, `TRV004`/`TRV009`, §4.18 `PRC001`–`PRC019`) define a dedicated FL1 Pre-Check-In station, yet there was no analysis note, no mockup, no data model, no API, no phase owner — and `CommonDB_Insert_WIPStations_FlatWire.sql` D2 **deliberately declined to create the station**. Root cause: `.docx` files are zip containers, so `grep` never reached the requirements; every markdown search for "pre-checkin" returned hits about the *forbidden* `checkin-precheckin` Angular library instead | Requirements / Traceability | High | A `Should`-priority feature that the continuous-feed workflow depends on would have been missed entirely; the Phase-3 "Payoff2 not loaded" alert stays unimplementable | Delivered: `Analysis/RodPreCheckin.md`, Dashboard 2A mockup, `RodStaging` table, `/staging/**` endpoints, `PayoffStateChanged`, `FL1PO` station, Phase 4 scope addition | ✅ Resolved (Jul 29 2026) — **but** two items still need business sign-off: `INFLAT`-vs-`STAGED` on staging, and whether pre-check-out needs supervisor approval |
+| **G20** | Payoff position modelled **three incompatible ways**: `INT CHECK (1,2)` on rod-fed tables, an FK-style `PayoffPositionId` in `FlatWireRunDetail` pointing at a **table that did not exist**, and the API enum `{Payoff1,Payoff2}` — with FL2's traversing take-up unrepresented (`REVIEW.md` #15) | Data / Schema | Medium | Unenforced FK; no vocabulary for FL2's take-up; "payoff 3" has no meaning | Added the `PayoffPosition` lookup (3 **pinned** Ids: Payoff1, Payoff2, TraversingTakeup) and the real FK on `FlatWireRunDetail`. Rod-fed tables keep `CHECK (1,2)` as a *documented deliberate narrowing* | ✅ Resolved for the data model — `REVIEW.md` #15 stays **partly open**: `TraversingTakeup` has no UI |
 | **G18** | Source docs (CLAUDE.md / CheckinImplementationPrompt) describe a `--fw-*` design system, but the actual mockups **and** `flat-wire-shopfloor.styles.scss/.css` use `--color-*` semantic tokens (no `--fw-*` anywhere); separately, DB2 was revised to the tab-wizard `- New.html` | UI / Design | Medium | Devs following the stale `--fw-*` docs build wrong token names; DB2 UI must follow the new layout | Correct `--fw-*` → `--color-*` in the source docs; build against the shared `--color-*` stylesheet as-is (no migration needed); ground every dashboard UI section in its `Mockups/*.html`; DB2 = `- New.html` tab-wizard; a new-layout FL3 check-in variant to follow | Open |
 
 ## Future enhancements (Phase 2 / post-go-live)
 - EDI rod receiving + Angular receiving screen (deferred from Phase 1).
-- Full spool state machine (OQ-57) and formal partial-rod carry-forward (OQ-47).
+- Full spool state machine (OQ-57) and formal partial-rod carry-forward (OQ-47). *The `PRC007`/`PRC008` gate now fires at the Dashboard 2A staging scan, so a partial rod is caught before it is mounted; the full carry-forward accounting remains post-go-live.*
 - Rolls-in-Flattening report, extended SCADA history, WIP Log enhancements (Low priority).
 - Message broker (Kafka/RabbitMQ) if AGC throughput outgrows SignalR (revisit post-go-live).
 - Die-life predictive thresholds once failure data exists (OQ-41).

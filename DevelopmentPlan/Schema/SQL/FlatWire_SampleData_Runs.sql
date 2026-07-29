@@ -1,7 +1,7 @@
 -- ============================================================
 -- Flat Wire Mill — Sample Data: Run Tracking Tables
 -- Run order : after Materials seed (needs Rod, FlatWireRun, Spool)
--- Tables    : RodCheckin, SpoolCheckin, FlatWireRunDetail,
+-- Tables    : RodCheckin, RodStaging, SpoolCheckin, FlatWireRunDetail,
 --             RunPauseEvent, WeldEvent, RollOverride,
 --             DieChangeEvent, RunReading
 -- ============================================================
@@ -31,6 +31,57 @@ VALUES
     ('RUN-0002','FL3','R00045',1,0.3753,9000.00,8970.00,'PS-1100-FL3-001','FW-00600','SB-1100-A','MMS-0002',  'Closed','Linda K.','2026-07-20 10:00:00 -05:00',1,'Pass','Pass','Pass','Pass',NULL,              0.3753,0.3750),
     ('RUN-0003','FL1','R00043',1,0.3750,8800.00,8760.00,'PS-3003-FL1-001','FW-00500','SB-3003-A','MMS-0003',  'Closed','Dave M.', '2026-07-21 06:30:00 -05:00',1,'Pass','Pass','Pass','Pass',NULL,              0.3750,0.3749),
     ('RUN-0005','FL1','R00046',1,0.3749,8600.00,8560.00,'PS-5052-FL1-001','FW-00700','SB-5052-A','MMS-0005',  'Active','Marcus T.','2026-07-22 06:30:00 -05:00',1,'Pass','Pass','Pass','Pass','Strain-hardened',0.3749,0.3747);
+GO
+
+-- ============================================================
+-- RodStaging  (pre-check-in — seeded after RodCheckin because the
+-- CheckedIn row links back to a RodCheckin.Id)
+-- Exercises all three statuses, the welded stamp (WLD010) and the
+-- carry-forward field (PRC007). Only ONE row may be 'Staged' per
+-- (LineId, PayoffPosition) — enforced by UX_RodStaging_Bay.
+--
+-- Also exercises the two sequences. Planned order is NOT enforced, so
+-- RodSeqno (actual staging order) and PlannedSeqno (what planning
+-- intended) are free to differ — and here they deliberately do:
+--   R00041  run 1, plan 1  — in planned order
+--   R00044  run 4, plan 2  — run late, deviation
+--   R00048  run 5, plan 3  — run late, then un-staged
+-- A row with PlannedSeqno NULL would represent a substitution with no
+-- planned position; none is seeded, but the column allows it.
+-- ============================================================
+IF NOT EXISTS (SELECT 1 FROM [dbo].[RodStaging])
+INSERT INTO [dbo].[RodStaging]
+    ([LineId],[PayoffPosition],[RodAlpha],[RodSeqno],[PlannedSeqno],[IsWelded],[Status],[OrderId],[ScrapBoxRef],
+     [DiameterIn],[GrossWeightLb],[NetWeightLb],[FootageRunToDateAtStaging],
+     [InspectionOxidation],[InspectionSurfaceDefects],[InspectionWaterStains],[InspectionNotes],
+     [StagedAt],[StagedBy],[WeldedAt],[WeldedBy],[CheckedInAt],[RodCheckinId],
+     [UnstagedAt],[UnstagedBy],[UnstageReasonCode])
+VALUES
+    -- Consumed by check-in: staged, then acknowledged on Dashboard 2.
+    ('FL1',1,'R00041',1,1,0,'CheckedIn','FW-00421','SB-1100-A',
+     0.3750,9000.00,8950.00,0.00,
+     'Pass','Pass','Pass','Staged from floor storage',
+     '2026-07-20 06:18:00 -05:00','Dave M.',NULL,NULL,
+     '2026-07-20 06:30:00 -05:00',
+     (SELECT [Id] FROM [dbo].[RodCheckin] WHERE [RunId] = 'RUN-0001' AND [RodAlpha] = 'R00041'),
+     NULL,NULL,NULL),
+
+    -- Currently staged on the idle bay AND marked as welded to the running rod.
+    -- FootageRunToDateAtStaging > 0 means this was a forced carry-forward scan.
+    ('FL1',2,'R00044',4,2,1,'Staged','FW-00500','SB-3003-A',
+     0.3750,8800.00,8765.00,1600.00,
+     'Pass','Pass','Pass','Partial rod returned from RUN-0003; carry-forward acknowledged',
+     '2026-07-22 07:05:00 -05:00','Marcus T.',
+     '2026-07-22 07:41:00 -05:00','Marcus T.',
+     NULL,NULL,NULL,NULL,NULL),
+
+    -- Pre-checked-in in error, then un-staged (Mode P) and returned to the warehouse.
+    ('FL3',2,'R00048',5,3,0,'Unstaged','FW-00600',NULL,
+     0.3750,8500.00,8470.00,0.00,
+     'Pass','Pass','Pass','Wrong bundle brought to the payoff',
+     '2026-07-22 08:02:00 -05:00','Linda K.',NULL,NULL,
+     NULL,NULL,
+     '2026-07-22 08:19:00 -05:00','Linda K.','WrongRodMisScan');
 GO
 
 -- ============================================================

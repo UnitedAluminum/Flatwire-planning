@@ -1,7 +1,7 @@
 # Flat Wire — Step-by-Step Process Walkthrough (Rod Check-in → Finished Coil)
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 28, 2026
+**Last Updated:** July 29, 2026
 **Document Type:** Process Reference — Sequential Walkthrough
 **Status:** Reference — assembled from existing analysis docs; equipment facts per the May 21, 2026 client corrections
 
@@ -37,7 +37,9 @@ This document **does not introduce new requirements**. It is a navigational over
 
 ## B. Pre-Check-in — Rod Staged at the Payoff
 
-8. **Rod moved to the VPS** (Variable Position Payoff) — dual position, eye-to-sky, 9,000 lb per position. Rod is staged against an intended payoff (`StagedPayoffPosition` = 1 or 2) and may carry the `IsWelded` flag. Status `RECEIVED` → `STAGED`.
+8. **Rod moved to the VPS** (Variable Position Payoff) — dual position, eye-to-sky, 9,000 lb per position. Rod is staged against an intended payoff position (1 or 2) on **Dashboard 2A — Rod Pre-Check-in Station**, recorded as a `RodStaging` row, and may later carry the `IsWelded` flag once the operator records the weld. One rod per bay is enforced by the database. Full detail: [RodPreCheckin.md](RodPreCheckin.md).
+
+   > **Coil status here is an open question (Q67).** This step originally read `RECEIVED → STAGED`. The SRS §4.2 `PCI` data note instead has pre-check-in performing the `FlatwireQueue` insert, setting `proddb..coils.coil_status = INFLAT`, and doing reqsum + the `wip_coil_orders` insert — i.e. the material is committed as soon as it is queued. The interim design follows the SRS and treats the two as orthogonal (`RodStaging.Status` is bay occupancy; `coils.coil_status` follows the SRS), which makes rod status `STAGED` effectively vestigial for FL1. **Awaiting business confirmation** — the earlier `RECEIVED → STAGED` wording should not be relied on until Q67 closes.
 
 9. **Visual inspection before unbanding** — oxidation, surface defects, water stains. Bundles are **not unbanded until positioned at the payoff** (safety and bundling integrity). Any fail: add observation → **Dashboard 8 (WIP Rejection)**. This is a hard block with no bypass.
 
@@ -229,3 +231,4 @@ Terminology rule throughout: always "flat wire," never "strip."
 | Date | Changed By | Description |
 |------|-----------|-------------|
 | July 28, 2026 | Analysis Team | Initial document — sequential 45-step walkthrough from rod procurement to shipment, covering pre-check-in staging, Dashboard 2 check-in gate, in-run events, both route branches, FM2 finishing, coil completion and packing. Equipment facts aligned to the May 21, 2026 client corrections; April-source conflicts catalogued. |
+| July 29, 2026 | Analysis Team | Step 8 (pre-check-in) corrected: staging is now a `RodStaging` row set on **Dashboard 2A**, not the retired `Rod.StagedPayoffPosition`/`IsWelded` columns. The `RECEIVED → STAGED` status claim is flagged as **Q67** — SRS §4.2 has pre-check-in committing the coil to `INFLAT` instead, and the conflict is unresolved. See [RodPreCheckin.md](RodPreCheckin.md). |

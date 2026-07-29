@@ -184,7 +184,10 @@ GO
 -- ------------------------------------------------------------
 -- RodCheckout
 -- Records rod removal from a payoff position.
--- Mode A = pre-run; Mode B = mid-run emergency removal.
+--   Mode P = pre-check-out — un-stages a pre-checked-in rod that was
+--            never checked in (RunId NULL, footage 0, no tags to clear)
+--   Mode A = pre-run — checked in and acknowledged, footage still 0
+--   Mode B = mid-run emergency removal, footage > 0, supervisor approval
 -- ------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[RodCheckout]') AND type = N'U')
 BEGIN
@@ -195,7 +198,7 @@ BEGIN
         [LineId]                       VARCHAR(5)    NOT NULL,
         [RodAlpha]                     VARCHAR(20)   NOT NULL,  -- FK → Rod.Alpha
         [PayoffPosition]               INT           NOT NULL,  -- 1 or 2
-        [Mode]                         VARCHAR(10)   NOT NULL,  -- ModeA | ModeB
+        [Mode]                         VARCHAR(10)   NOT NULL,  -- ModeP | ModeA | ModeB
         [FootageAtCheckout]            INT           NOT NULL CONSTRAINT [DF_RodCheckout_Footage] DEFAULT (0),
         [ReasonCode]                   VARCHAR(50)   NOT NULL,
         [RodDisposition]               VARCHAR(30)   NOT NULL,  -- see CK below
@@ -211,11 +214,23 @@ BEGIN
         CONSTRAINT [UQ_RodCheckout_CheckoutId]     UNIQUE ([CheckoutId]),
         CONSTRAINT [CK_RodCheckout_LineId]         CHECK ([LineId]          IN ('FL1','FL2','FL3')),
         CONSTRAINT [CK_RodCheckout_PayoffPos]      CHECK ([PayoffPosition]  IN (1, 2)),
-        CONSTRAINT [CK_RodCheckout_Mode]           CHECK ([Mode]            IN ('ModeA','ModeB')),
+        CONSTRAINT [CK_RodCheckout_Mode]           CHECK ([Mode]            IN ('ModeP','ModeA','ModeB')),
         CONSTRAINT [CK_RodCheckout_RodDisposition] CHECK ([RodDisposition]  IN ('ReturnToFloorStorage','ReturnToWarehouse','HoldReturnToStorage','Scrap','DeferContinueLater')),
         CONSTRAINT [CK_RodCheckout_IPDisposition]  CHECK ([InProcessMaterialDisposition] IN ('HoldPendingSupervisor','Scrap','AcceptAsPartialRun') OR [InProcessMaterialDisposition] IS NULL),
         CONSTRAINT [CK_RodCheckout_NewRodStatus]   CHECK ([NewRodStatus] IN ('RECEIVED','STAGED','INFLAT','COMPLETE','HOLD','SCRAP')),
-        CONSTRAINT [CK_RodCheckout_Footage]        CHECK ([FootageAtCheckout] >= 0)
+        CONSTRAINT [CK_RodCheckout_Footage]        CHECK ([FootageAtCheckout] >= 0),
+        -- Mode P (pre-check-out) un-stages a rod that was never checked in: no run exists,
+        -- no footage was produced, no pass-schedule acknowledgement to void, and no PLC
+        -- tags were ever pushed — so there are none to clear.
+        CONSTRAINT [CK_RodCheckout_ModeP]          CHECK ([Mode] <> 'ModeP'
+                                                       OR ([RunId] IS NULL
+                                                           AND [FootageAtCheckout] = 0
+                                                           AND [PlcTagsCleared] = 0
+                                                           AND [InProcessMaterialDisposition] IS NULL
+                                                           AND [PartialSpoolAlpha] IS NULL)),
+        -- Mode B is the only mode that can produce in-process material to dispose of.
+        CONSTRAINT [CK_RodCheckout_ModeB]          CHECK ([Mode] = 'ModeB'
+                                                       OR [InProcessMaterialDisposition] IS NULL)
     );
     PRINT 'Created table: RodCheckout';
 END

@@ -1,7 +1,7 @@
 # Flat Wire Mill — Lookup & Reference Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 26, 2026
+**Last Updated:** July 29, 2026
 **Document Type:** Final Schema — Lookup / Configuration Tables
 **Source:** Derived from `FlatWireTables.md` recommendations
 **Target DB:** `FlatWireDB` (schema `dbo`)
@@ -120,10 +120,42 @@ Per-alloy process properties. Consumed by the pass-schedule generator (max reduc
 - `SpeedRangeMinFpm < SpeedRangeMaxFpm`
 - `GaugeToleranceDefault > 0`, `WidthToleranceDefault > 0`
 
+> **Gap — no rod diameter tolerance (Q71).** `CHK007` requires the measured **incoming rod diameter** to be validated against nominal ± a lookup tolerance, at both pre-check-in (Dashboard 2A) and check-in (Dashboard 2). The two tolerance columns above are **flat wire output** dimensions — the gauge and width the mill produces — and no rod-diameter tolerance column exists anywhere in `FlatWireDB` or the shared `coils` schema. `CHK007` is therefore not implementable as written, and the Dashboard 2A mockup carries a mock per-alloy map with no backing store. Likely resolution is a `RodDiameterToleranceDefault decimal(8,4)` here, pending confirmation that the tolerance is per-alloy rather than per rod spec or vendor. Values to seed are in the *Alloy Lookup Table* in `Analysis/FlatWireShopfloorDashboards.md`, which is itself marked as needing Process Engineering sign-off.
+
+---
+
+## `PayoffPosition`
+
+Reference table for material input positions. Gives `FlatWireRunDetail.PayoffPositionId` a real parent — previously it was an FK-style `int` pointing at a table that did not exist (`REVIEW.md` #15).
+
+Three positions are modelled, not two: FL1/FL3 draw rod from the dual-position **VPS** (Variable Position Payoff, 9,000 lb per bay), while FL2 uses a **traversing take-up**.
+
+| Column | Data Type | Nullable | FK Reference | Description |
+|---|---|---|---|---|
+| `Id` | int | NOT NULL | — | Primary key. **Pinned, not IDENTITY** — `1`, `2`, `3` so values match the API enum `PayoffPosition { Payoff1 = 1, Payoff2 = 2 }` |
+| `Code` | varchar(20) | NOT NULL UNIQUE | — | `Payoff1`, `Payoff2`, or `TraversingTakeup` |
+| `DisplayName` | varchar(40) | NOT NULL | — | Operator-facing label (e.g. "Payoff 1") |
+| `Equipment` | varchar(20) | NOT NULL | — | `VPS` or `TraversingTakeup` |
+| `MaxWeightLb` | decimal(8,2) | NULL | — | Position capacity in pounds; 9,000 lb for each VPS bay |
+| `IsRodFed` | bit | NOT NULL | — | `1` = accepts a rod bundle (the two VPS bays on FL1/FL3) |
+| `IsActive` | bit | NOT NULL | — | `1` = active/selectable; default `1` |
+
+**Seed rows** (created by the DDL, not the sample-data script — these are fixed physical positions, and the `FlatWireRunDetail` FK depends on them existing):
+
+| Id | Code | Equipment | MaxWeightLb | IsRodFed |
+|---|---|---|---|---|
+| 1 | `Payoff1` | `VPS` | 9000.00 | 1 |
+| 2 | `Payoff2` | `VPS` | 9000.00 | 1 |
+| 3 | `TraversingTakeup` | `TraversingTakeup` | NULL | 0 |
+
+> **Deliberate narrowing.** Rod-fed tables (`RodStaging`, `RodCheckin`, `RodCheckout`, `SpoolCheckin`) keep `CHECK (PayoffPosition IN (1,2))`. That is intentional, not an oversight: a rod bundle is only ever mounted on a VPS bay. `TraversingTakeup` exists so FL2 can be represented without inventing a fourth vocabulary, but it currently has no UI (`REVIEW.md` #15 remains partly open).
+
 ---
 
 ## Change Log
 
 | Date | Change |
 |---|---|
+| July 29, 2026 | Documented a gap on `AlloyProperty`: `CHK007` validates **incoming rod diameter** against nominal ± a lookup tolerance, but the only tolerance columns here are `GaugeToleranceDefault`/`WidthToleranceDefault`, which are flat-wire *output* dimensions. No rod-diameter tolerance column exists anywhere in the schema, so `CHK007` is not implementable as written (**Q71**). No DDL change yet — the column shape and owner need confirming first. |
+| July 29, 2026 | Added **`PayoffPosition`** with three pinned rows (Payoff1, Payoff2, TraversingTakeup), giving `FlatWireRunDetail.PayoffPositionId` an enforced FK parent and resolving the "payoff modelled three ways" contradiction in `REVIEW.md` #15. Seeded in the DDL rather than the sample-data script because the FK depends on the rows existing. |
 | July 26, 2026 | Added `AlloyProperty` lookup (FW-004); added `IsActive` to `SpoolConfiguration`; added unique constraints on `Drawer.Name`, `Edger.Name`, `SpoolConfiguration.Name`; corrected bare `decimal` weights to `decimal(8,2)`. Retargeted to `FlatWireDB`. |
