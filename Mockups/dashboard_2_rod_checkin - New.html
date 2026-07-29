@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
 <style>
   html, body { overflow: hidden; width: 1280px; height: 1024px; }
-  body { font-size: 13px; }
+  body { font-size: 14px; }
   /*
    * Pixel budget (1280×1024, flex column, overflow hidden — no scroll):
    *   padding top+bottom: 12+12 = 24px
@@ -41,7 +41,7 @@
   }
   .line-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-blue); }
   .header h1 { margin: 0; font-size: 18px; font-weight: 500; }
-  .header-meta { display: flex; gap: 24px; font-size: 13px; color: var(--color-text-secondary); }
+  .header-meta { display: flex; gap: 24px; font-size: 14px; color: var(--color-text-secondary); }
   .header-meta strong { color: var(--color-text-primary); font-weight: 500; }
   .mono { font-family: var(--font-mono); }
 
@@ -69,19 +69,19 @@
     background: #fff; padding: 3px 6px; border-radius: 5px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.14);
   }
-  .gb-copyright { font-size: 10px; color: var(--color-text-tertiary); letter-spacing: 0.3px; white-space: nowrap; }
+  .gb-copyright { font-size: 14px; color: var(--color-text-tertiary); letter-spacing: 0.3px; white-space: nowrap; }
 
   /* ── Center: greeting + environment banner ── */
   .gb-center { display: flex; flex-direction: column; align-items: center; gap: 1px; text-align: center; min-width: 0; overflow: hidden; }
-  .gb-greeting { font-size: 13px; color: var(--color-text-secondary); white-space: nowrap; }
+  .gb-greeting { font-size: 14px; color: var(--color-text-secondary); white-space: nowrap; }
   .gb-greeting strong { color: var(--color-text-primary); font-weight: 600; }
-  .gb-env { font-size: 13px; font-weight: 700; color: var(--color-red); letter-spacing: 0.4px; white-space: nowrap; }
+  .gb-env { font-size: 14px; font-weight: 700; color: var(--color-red); letter-spacing: 0.4px; white-space: nowrap; }
 
   /* ── Right: signed-in users + action buttons ── */
   .gb-right { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
 
   .gb-users { display: flex; align-items: center; gap: 6px; }
-  .gb-users-label { font-size: 11px; color: var(--color-text-tertiary); white-space: nowrap; margin-right: 2px; }
+  .gb-users-label { font-size: 14px; color: var(--color-text-tertiary); white-space: nowrap; margin-right: 2px; }
   .user-chip {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 3px 6px 3px 3px;
@@ -106,12 +106,12 @@
   .user-chip .avatar {
     width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 700; color: #fff;
+    font-size: 14px; font-weight: 700; color: #fff;
     filter: grayscale(45%);
   }
   .user-chip.active .avatar { filter: none; }
   /* Idle chips collapse to just the avatar; the active one shows name + sign-out */
-  .user-chip .u-name { display: none; font-size: 12px; font-weight: 500; color: var(--color-text-secondary); white-space: nowrap; }
+  .user-chip .u-name { display: none; font-size: 14px; font-weight: 500; color: var(--color-text-secondary); white-space: nowrap; }
   .user-chip.active .u-name { display: inline; color: var(--color-text-info); font-weight: 600; }
   .user-chip .u-close {
     display: none;
@@ -129,7 +129,7 @@
     gap: 2px; min-width: 50px; height: 46px; padding: 4px 7px;
     border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md);
     background: var(--color-background-secondary); color: var(--color-text-secondary);
-    font-size: 10px; font-weight: 500; font-family: var(--font-sans);
+    font-size: 14px; font-weight: 500; font-family: var(--font-sans);
     cursor: pointer; text-decoration: none; transition: all 0.15s;
   }
   .gb-btn svg { width: 17px; height: 17px; }
@@ -159,7 +159,7 @@
     padding: 16px 20px; border-bottom: 0.5px solid var(--color-border-tertiary);
   }
   .gb-modal-title { font-size: 17px; font-weight: 600; color: var(--color-text-primary); }
-  .gb-modal-sub { font-size: 12px; color: var(--color-text-tertiary); margin-top: 2px; }
+  .gb-modal-sub { font-size: 14px; color: var(--color-text-tertiary); margin-top: 2px; }
   .gb-modal-close {
     width: 34px; height: 34px; border-radius: var(--border-radius-md);
     border: 1px solid var(--color-border-secondary); background: var(--color-background-primary);
@@ -195,7 +195,7 @@
   }
   .sc-badge {
     position: absolute; right: 8px; bottom: 8px;
-    padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600;
+    padding: 2px 10px; border-radius: 999px; font-size: 14px; font-weight: 600;
     background: var(--color-background-primary); color: var(--color-text-secondary);
     border: 1px solid var(--color-border-tertiary);
   }
@@ -203,15 +203,15 @@
 
   .sc-body { padding: 11px 13px 13px; display: flex; flex-direction: column; }
   .sc-name { font-size: 14px; font-weight: 600; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .sc-role { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .sc-contact { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--color-text-secondary); margin-top: 3px; }
+  .sc-role { font-size: 14px; color: var(--color-text-tertiary); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sc-contact { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--color-text-secondary); margin-top: 3px; }
   .sc-contact svg { width: 13px; height: 13px; flex-shrink: 0; color: var(--color-text-tertiary); }
   .sc-contact span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .sc-logout {
     margin-top: 11px; height: 32px; border-radius: var(--border-radius-md);
     border: 1px solid var(--color-border-secondary); background: var(--color-background-primary);
-    color: var(--color-text-secondary); font-size: 12px; font-weight: 500; cursor: pointer;
+    color: var(--color-text-secondary); font-size: 14px; font-weight: 500; cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     font-family: var(--font-sans); transition: all 0.15s;
   }
@@ -225,21 +225,21 @@
   }
   .switch-card.add-card:hover { border-color: var(--color-blue); box-shadow: none; }
   .add-card-body { padding: 16px 14px; display: flex; flex-direction: column; gap: 9px; }
-  .add-card-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--color-text-primary); }
+  .add-card-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
   .add-card-title svg { width: 17px; height: 17px; color: var(--color-blue); }
   .add-input {
-    height: 36px; padding: 0 11px; font-size: 13px; font-family: var(--font-sans);
+    height: 36px; padding: 0 11px; font-size: 14px; font-family: var(--font-sans);
     color: var(--color-text-primary); background: var(--color-background-primary);
     border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md);
     outline: none; width: 100%;
   }
   .add-input:focus { border-color: var(--color-blue); box-shadow: 0 0 0 3px rgba(24,95,165,0.18); }
-  .add-error { font-size: 11px; color: var(--color-text-danger); font-weight: 500; display: none; }
+  .add-error { font-size: 14px; color: var(--color-text-danger); font-weight: 500; display: none; }
   .add-error.show { display: block; }
   .add-login-btn {
     height: 36px; border-radius: var(--border-radius-md); margin-top: 2px;
     border: 1px solid var(--color-green); background: var(--color-green); color: #fff;
-    font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font-sans);
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--font-sans);
     display: inline-flex; align-items: center; justify-content: center; gap: 7px; transition: opacity 0.15s;
   }
   .add-login-btn svg { width: 15px; height: 15px; }
@@ -264,9 +264,9 @@
   .more-tile:hover .mt-icon { color: var(--color-blue); }
   .more-tile.active .mt-icon { color: var(--color-green); }
   .more-tile .mt-title { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
-  .more-tile .mt-sub { font-size: 11px; color: var(--color-text-tertiary); }
+  .more-tile .mt-sub { font-size: 14px; color: var(--color-text-tertiary); }
   .more-tile .mt-badge {
-    margin-top: 3px; font-size: 10px; font-weight: 600; padding: 1px 8px; border-radius: 999px;
+    margin-top: 3px; font-size: 14px; font-weight: 600; padding: 1px 8px; border-radius: 999px;
     background: var(--color-green); color: #fff;
   }
 
@@ -336,13 +336,13 @@
     display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
   }
   .section-title { font-size: 15px; font-weight: 500; }
-  .section-meta { display: flex; gap: 10px; align-items: center; font-size: 13px; }
+  .section-meta { display: flex; gap: 10px; align-items: center; font-size: 14px; }
   .section-subtitle { color: var(--color-text-tertiary); font-family: var(--font-mono); }
   .readonly-badge {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 3px 10px;
     background: var(--color-background-secondary); color: var(--color-text-secondary);
-    border-radius: var(--border-radius-md); font-size: 12px; font-weight: 500;
+    border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500;
   }
 
   /* ── Rod scan row ── */
@@ -362,7 +362,7 @@
 
   /* ── Form fields ── */
   .field { display: flex; flex-direction: column; gap: 4px; }
-  .field-label { font-size: 13px; color: var(--color-text-secondary); }
+  .field-label { font-size: 14px; color: var(--color-text-secondary); }
   .field-required::after { content: " *"; color: var(--color-red); }
   .input {
     height: 40px; padding: 0 12px;
@@ -380,7 +380,7 @@
   .input.invalid { border-color: var(--color-red); background: var(--color-background-danger); }
   .input.invalid:focus { box-shadow: 0 0 0 3px rgba(216,90,48,0.18); }
   .field-error {
-    display: none; font-size: 12px; color: var(--color-text-danger); font-weight: 500;
+    display: none; font-size: 14px; color: var(--color-text-danger); font-weight: 500;
   }
   .field.has-error .field-error { display: block; }
   .input-readonly {
@@ -433,7 +433,7 @@
   .pill-btn.fail.selected { background: var(--color-red); border-color: var(--color-red); color: #fff; }
 
   .textarea {
-    width: 100%; padding: 6px 10px; font-size: 13px; font-family: var(--font-sans);
+    width: 100%; padding: 6px 10px; font-size: 14px; font-family: var(--font-sans);
     color: var(--color-text-primary); background: var(--color-background-primary);
     border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md);
     resize: none; height: 46px; outline: none;
@@ -442,11 +442,11 @@
 
   /* ── Pass schedule ── */
   .schedule-table {
-    width: 100%; border-collapse: collapse; font-size: 13px;
+    width: 100%; border-collapse: collapse; font-size: 14px;
     border: 1px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); overflow: hidden;
   }
   .schedule-table thead tr { background: var(--color-background-secondary); }
-  .schedule-table th { text-align: left; padding: 4px 10px; font-weight: 500; color: var(--color-text-secondary); font-size: 12px; }
+  .schedule-table th { text-align: left; padding: 4px 10px; font-weight: 500; color: var(--color-text-secondary); font-size: 14px; }
   .schedule-table tbody tr { border-top: 0.5px solid var(--color-border-tertiary); }
   .schedule-table td { padding: 4px 10px; vertical-align: middle; }
   .schedule-table .component-name { font-weight: 500; }
@@ -457,21 +457,21 @@
   .callout {
     margin-top: 6px; padding: 8px 12px;
     background: var(--color-background-info); color: var(--color-text-info);
-    border-radius: var(--border-radius-md); font-size: 12px;
+    border-radius: var(--border-radius-md); font-size: 14px;
     display: flex; gap: 10px; align-items: flex-start; line-height: 1.4;
   }
   .callout-icon {
     flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%;
-    background: var(--color-blue); color: #fff; font-size: 12px; font-weight: 500;
+    background: var(--color-blue); color: #fff; font-size: 14px; font-weight: 500;
     display: flex; align-items: center; justify-content: center;
   }
 
   .order-spec-bar {
     display: flex; gap: 12px; align-items: center;
     padding: 5px 10px; background: var(--color-background-secondary);
-    border-radius: var(--border-radius-md); margin-bottom: 4px; font-size: 13px; flex-wrap: wrap;
+    border-radius: var(--border-radius-md); margin-bottom: 4px; font-size: 14px; flex-wrap: wrap;
   }
-  .order-spec-label { font-size: 12px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.3px; margin-right: 4px; }
+  .order-spec-label { font-size: 14px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.3px; margin-right: 4px; }
   .order-spec-value { font-family: var(--font-mono); font-weight: 500; }
   .order-spec-sep { color: var(--color-border-primary); }
 
@@ -481,11 +481,11 @@
     border-radius: var(--border-radius-md); margin-bottom: 5px; gap: 10px; transition: background 0.2s;
   }
   .ps-confirm-bar.confirmed { background: var(--color-background-success); }
-  .ps-confirm-match { font-size: 13px; color: var(--color-text-warning); line-height: 1.45; flex: 1; }
+  .ps-confirm-match { font-size: 14px; color: var(--color-text-warning); line-height: 1.45; flex: 1; }
   .ps-confirm-bar.confirmed .ps-confirm-match { color: var(--color-text-success); }
   .ps-confirm-actions { display: flex; gap: 8px; flex-shrink: 0; }
   .btn-confirm-ps {
-    height: 32px; padding: 0 14px; font-size: 13px; font-weight: 500;
+    height: 32px; padding: 0 14px; font-size: 14px; font-weight: 500;
     border-radius: var(--border-radius-md); cursor: pointer; font-family: var(--font-sans);
     border: 1px solid var(--color-green); background: var(--color-green); color: #fff;
     white-space: nowrap; transition: opacity 0.15s;
@@ -493,7 +493,7 @@
   .btn-confirm-ps:hover { opacity: 0.85; }
   .ps-change-wrap { position: relative; }
   .btn-change-ps {
-    height: 32px; padding: 0 12px; font-size: 13px; font-weight: 500;
+    height: 32px; padding: 0 12px; font-size: 14px; font-weight: 500;
     border-radius: var(--border-radius-md); cursor: pointer; font-family: var(--font-sans);
     border: 1px solid var(--color-border-secondary); background: var(--color-background-primary);
     color: var(--color-text-primary); display: inline-flex; align-items: center; gap: 5px;
@@ -512,10 +512,10 @@
   }
   .ps-dropdown-item:hover { background: var(--color-background-secondary); }
   .ps-dropdown-item.recommended { background: var(--color-background-info); }
-  .ps-dropdown-id { font-size: 13px; font-family: var(--font-mono); font-weight: 500; color: var(--color-text-primary); }
-  .ps-dropdown-desc { font-size: 12px; color: var(--color-text-secondary); }
+  .ps-dropdown-id { font-size: 14px; font-family: var(--font-mono); font-weight: 500; color: var(--color-text-primary); }
+  .ps-dropdown-desc { font-size: 14px; color: var(--color-text-secondary); }
   .ps-dropdown-warning {
-    padding: 8px 16px; font-size: 12px; color: var(--color-text-danger);
+    padding: 8px 16px; font-size: 14px; color: var(--color-text-danger);
     border-top: 0.5px solid var(--color-border-tertiary); margin-top: 4px;
   }
 
@@ -524,7 +524,7 @@
   .spc-status {
     display: flex; align-items: center; gap: 7px; padding: 0 14px; height: 40px;
     background: var(--color-background-success); color: var(--color-text-success);
-    border-radius: var(--border-radius-md); font-size: 13px; font-weight: 500; white-space: nowrap;
+    border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500; white-space: nowrap;
   }
   .spc-status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-green); }
   .spc-status.out-of-spec { background: var(--color-background-danger); color: var(--color-text-danger); }
@@ -533,18 +533,18 @@
   .input.spc-out-of-spec:focus { box-shadow: 0 0 0 3px rgba(216,90,48,0.18); }
 
   .tolerance-viz { padding: 8px 14px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); }
-  .tolerance-viz-title { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .tolerance-viz-title { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 4px; }
   .tolerance-track { position: relative; height: 8px; margin: 28px 12px 20px; }
   .tolerance-range { position: absolute; top: 0; left: 0; right: 0; height: 100%; background: var(--color-background-success); border-radius: 4px; }
   .tolerance-tick { position: absolute; top: -5px; width: 2px; height: 18px; background: var(--color-border-primary); }
   .tolerance-tick.left { left: 0; }
   .tolerance-tick.center { left: 50%; transform: translateX(-1px); }
   .tolerance-tick.right { right: 0; }
-  .tolerance-tick-label { position: absolute; top: -22px; font-size: 12px; font-family: var(--font-mono); color: var(--color-text-tertiary); white-space: nowrap; transform: translateX(-50%); }
+  .tolerance-tick-label { position: absolute; top: -22px; font-size: 14px; font-family: var(--font-mono); color: var(--color-text-tertiary); white-space: nowrap; transform: translateX(-50%); }
   .tolerance-tick.left .tolerance-tick-label { left: 1px; }
   .tolerance-tick.right .tolerance-tick-label { left: 1px; }
   .tolerance-marker { position: absolute; top: -7px; width: 22px; height: 22px; background: var(--color-blue); border: 3px solid var(--color-background-primary); border-radius: 50%; transform: translateX(-50%); box-shadow: 0 0 0 1px var(--color-blue); }
-  .tolerance-marker-label { position: absolute; top: 20px; font-size: 12px; font-family: var(--font-mono); font-weight: 500; color: var(--color-text-primary); white-space: nowrap; transform: translateX(-50%); }
+  .tolerance-marker-label { position: absolute; top: 20px; font-size: 14px; font-family: var(--font-mono); font-weight: 500; color: var(--color-text-primary); white-space: nowrap; transform: translateX(-50%); }
 
   /* ── Machine inspection ── */
   .insp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -558,10 +558,10 @@
     padding: 4px 0; border-bottom: 0.5px solid var(--color-border-tertiary);
   }
   .insp-check-row:last-child { border-bottom: none; }
-  .insp-check-label { font-size: 13px; color: var(--color-text-primary); }
+  .insp-check-label { font-size: 14px; color: var(--color-text-primary); }
   .insp-btns { display: flex; gap: 5px; }
   .insp-btn {
-    height: 34px; padding: 0 14px; font-size: 13px; font-weight: 500;
+    height: 34px; padding: 0 14px; font-size: 14px; font-weight: 500;
     border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md);
     background: var(--color-background-primary); color: var(--color-text-secondary);
     cursor: pointer; font-family: var(--font-sans); transition: all 0.15s;
@@ -575,7 +575,7 @@
   }
   .insp-measure-row .field { flex: 1; }
   .insp-spec-tag {
-    height: 40px; padding: 0 10px; font-size: 13px;
+    height: 40px; padding: 0 10px; font-size: 14px;
     background: var(--color-background-tertiary); color: var(--color-text-secondary);
     border-radius: var(--border-radius-md); display: flex; align-items: center;
     white-space: nowrap; font-family: var(--font-mono);
@@ -618,18 +618,18 @@
   .tab-index {
     width: 26px; height: 26px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 600; flex-shrink: 0;
+    font-size: 14px; font-weight: 600; flex-shrink: 0;
     background: var(--color-background-secondary);
     color: var(--color-text-secondary);
     transition: all 0.18s;
   }
   .tab-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
   .tab-name {
-    font-size: 13px; font-weight: 500; color: var(--color-text-primary);
+    font-size: 14px; font-weight: 500; color: var(--color-text-primary);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .tab-hint {
-    font-size: 11px; color: var(--color-text-tertiary);
+    font-size: 14px; color: var(--color-text-tertiary);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .tab-lock { flex-shrink: 0; color: var(--color-text-tertiary); display: none; }
@@ -707,16 +707,16 @@
   .hold-head { display: flex; align-items: center; gap: 12px; }
   .hold-bar .hold-icon {
     flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
-    background: var(--color-amber); color: #fff; font-size: 13px; font-weight: 700;
+    background: var(--color-amber); color: #fff; font-size: 14px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
   }
   .hold-main { flex: 1; min-width: 0; }
-  .hold-title { font-size: 13px; font-weight: 600; color: var(--color-text-warning); }
-  .hold-detail { font-size: 12px; color: var(--color-text-warning); line-height: 1.35; }
+  .hold-title { font-size: 14px; font-weight: 600; color: var(--color-text-warning); }
+  .hold-detail { font-size: 14px; color: var(--color-text-warning); line-height: 1.35; }
   .hold-actions { display: flex; gap: 8px; align-items: center; }
   .hold-field {
     height: 38px; padding: 0 12px;
-    font-family: var(--font-sans); font-size: 13px; font-weight: 400;
+    font-family: var(--font-sans); font-size: 14px; font-weight: 400;
     color: var(--color-text-primary); background: var(--color-background-primary);
     border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md);
     outline: none;
@@ -746,7 +746,7 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--color-text-secondary);
     text-align: center;
     line-height: 1.3;
@@ -754,7 +754,7 @@
   .wizard-status .status-icon {
     flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700; color: #fff;
+    font-size: 14px; font-weight: 700; color: #fff;
   }
   .wizard-status.error { color: var(--color-text-danger); font-weight: 500; }
   .wizard-status.error .status-icon { background: var(--color-red); }
@@ -790,7 +790,7 @@
   .progress-ring svg { width: 34px; height: 34px; transform: rotate(-90deg); }
   .progress-ring-bg { fill: none; stroke: var(--color-background-secondary); stroke-width: 3; }
   .progress-ring-fill { fill: none; stroke: var(--color-green); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 0.3s; }
-  .progress-ring-text { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--color-text-primary); }
+  .progress-ring-text { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
   .footer-status strong { color: var(--color-text-primary); font-weight: 500; }
   .footer-actions { display: flex; gap: 12px; }
   .btn {
@@ -832,7 +832,7 @@
   @media (max-width: 1100px) {
     .tab-hint { display: none; }
     .tab { padding: 8px 10px; gap: 8px; }
-    .tab-name { font-size: 12px; }
+    .tab-name { font-size: 14px; }
   }
 </style>
 </head>
@@ -999,7 +999,7 @@
         <div class="tab-panel active" role="tabpanel" data-step="0">
           <div class="section-header">
             <span class="section-title">Visual Inspection</span>
-            <span style="font-size:12px;color:var(--color-text-tertiary);">Step 1 of 6</span>
+            <span style="font-size:14px;color:var(--color-text-tertiary);">Step 1 of 6</span>
           </div>
           <div class="inspection-row">
             <span class="inspection-label">Oxidation</span>
@@ -1042,7 +1042,7 @@
             <div class="section-meta">
               <span class="section-subtitle mono" id="ps-schedule-id-label">PS-1100-FL1-003</span>
               <span class="readonly-badge">Read-only</span>
-              <span style="font-size:12px;color:var(--color-text-tertiary);">Step 2 of 6</span>
+              <span style="font-size:14px;color:var(--color-text-tertiary);">Step 2 of 6</span>
             </div>
           </div>
           <div class="order-spec-bar">
@@ -1102,8 +1102,8 @@
           <div class="section-header">
             <span class="section-title">Pre-run SPC</span>
             <div class="section-meta">
-              <span style="color:var(--color-text-secondary);font-family:var(--font-sans);font-size:13px;">Incoming Rod Diameter Check</span>
-              <span style="font-size:12px;color:var(--color-text-tertiary);">Step 3 of 6</span>
+              <span style="color:var(--color-text-secondary);font-family:var(--font-sans);font-size:14px;">Incoming Rod Diameter Check</span>
+              <span style="font-size:14px;color:var(--color-text-tertiary);">Step 3 of 6</span>
             </div>
           </div>
           <div class="spc-measurement">
@@ -1146,7 +1146,7 @@
         <div class="tab-panel" role="tabpanel" data-step="3">
           <div class="section-header">
             <span class="section-title">Die Block Inspection</span>
-            <span style="font-size:12px;color:var(--color-text-tertiary);">Machine Inspection · Step 4 of 6</span>
+            <span style="font-size:14px;color:var(--color-text-tertiary);">Machine Inspection · Step 4 of 6</span>
           </div>
           <div class="insp-grid">
             <div class="insp-card">
@@ -1218,7 +1218,7 @@
         <div class="tab-panel" role="tabpanel" data-step="4">
           <div class="section-header">
             <span class="section-title">Rolling Mill Inspection</span>
-            <span style="font-size:12px;color:var(--color-text-tertiary);">Machine Inspection · Step 5 of 6</span>
+            <span style="font-size:14px;color:var(--color-text-tertiary);">Machine Inspection · Step 5 of 6</span>
           </div>
           <div class="insp-grid">
             <div class="insp-card">
@@ -1259,7 +1259,7 @@
         <div class="tab-panel" role="tabpanel" data-step="5">
           <div class="section-header">
             <span class="section-title">Lubrication &amp; Safety Pre-start</span>
-            <span style="font-size:12px;color:var(--color-text-tertiary);">Machine Inspection · Step 6 of 6</span>
+            <span style="font-size:14px;color:var(--color-text-tertiary);">Machine Inspection · Step 6 of 6</span>
           </div>
           <div class="insp-grid">
             <div class="insp-card">
@@ -1275,7 +1275,7 @@
                 <span class="insp-check-label">Lube temperature (°F)</span>
                 <div style="display:flex;align-items:center;gap:8px;">
                   <input class="input" type="text" value="72" style="width:76px;">
-                  <span style="font-size:12px;color:var(--color-text-tertiary);">Target: 68–80°F</span>
+                  <span style="font-size:14px;color:var(--color-text-tertiary);">Target: 68–80°F</span>
                 </div>
               </div>
               <div class="insp-check-row">
@@ -1536,7 +1536,7 @@
       psConfirmMatch.innerHTML = "&#10003; Schedule confirmed &mdash; <strong>" + id + "</strong>";
       overrideReasons[1] = undefined;
     } else {
-      psConfirmMatch.innerHTML = "&#10003; Schedule changed to <strong>" + id + "</strong> &mdash; <span style=\"color:var(--color-text-danger);font-size:12px;\">&#9888; Flagged for Operations review</span>";
+      psConfirmMatch.innerHTML = "&#10003; Schedule changed to <strong>" + id + "</strong> &mdash; <span style=\"color:var(--color-text-danger);font-size:14px;\">&#9888; Flagged for Operations review</span>";
       overrideReasons[1] = "Non-recommended schedule " + id + " selected — flagged for Operations review";
     }
     /* If this step is already completed, keep its deviation state in sync */
@@ -2149,7 +2149,7 @@
       toastEl.style.cssText =
         "position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:9999;" +
         "background:var(--color-text-primary);color:var(--color-background-primary);" +
-        "padding:8px 16px;border-radius:8px;font-size:13px;font-family:var(--font-sans);" +
+        "padding:8px 16px;border-radius:8px;font-size:14px;font-family:var(--font-sans);" +
         "box-shadow:0 6px 20px rgba(0,0,0,0.25);opacity:0;transition:opacity 0.2s;pointer-events:none;max-width:520px;text-align:center;";
       document.body.appendChild(toastEl);
     }
@@ -2307,5 +2307,6 @@
   });
 })();
 </script>
+<script src="flat-wire-fit.js" data-fit="fill"></script>
 </body>
 </html>

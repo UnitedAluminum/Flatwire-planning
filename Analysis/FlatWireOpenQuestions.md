@@ -1,8 +1,8 @@
 # Flat Wire Mill — Open Questions Register
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** May 4, 2026
-**Total Questions:** 59
+**Last Updated:** July 28, 2026
+**Total Questions:** 66
 **Status Legend:** `Open` · `In Progress` · `Decided` · `Deferred`
 
 > Questions marked **Critical** must be resolved before development begins on the dependent module.
@@ -75,6 +75,13 @@
 | 57 | Spool status state machine — all valid transitions | High | Tim O. / Jaspreet | In Progress | |
 | 58 | OD/diameter → weight conversion formula for spool | High | Tim O. | Open | |
 | 59 | Planning: flat wire orders in existing grid vs new dedicated section | Medium | IT / Team | Open | |
+| 60 | Target spool weight source for the completion alert + over-target behavior | High | Tim O. / Operations | Open | |
+| 61 | Does the spool completion alert ladder apply to finished coils at TKUP-2 (FL2/FL3)? | Medium | Tim O. / Jaspreet | Open | |
+| 62 | Supervisor mirroring and audit persistence of milestone acknowledgements | Medium | Tim O. / IT | Open | |
+| 63 | `FL{n}.LineState` vocabulary, stop-dwell value, and pause-reason suppression | High | Engineering / Tim O. | Open | |
+| 64 | Stop-confirmation popup — supervisor visibility and multi-operator arbitration | Medium | Tim O. / IT | Open | |
+| 65 | Short-close path — closing a spool below target weight | Medium | Tim O. / Operations | Open | |
+| 66 | Scale-vs-calculated spool weight — tolerance, default basis, approval authority | High | Tim O. / Shannon R. | In Progress | |
 
 ---
 
@@ -605,6 +612,68 @@ The full formal state machine (all valid statuses and the events that trigger ea
 
 ---
 
+**Q60** · `High` · Owner: Tim O. / Operations · `Open`
+**Target spool weight source for the completion alert, and over-target behavior**
+
+The spool completion alert ([SpoolCompletionNotification.md](SpoolCompletionNotification.md)) compares actual processed weight against a target. Two candidate sources exist: the order's **Max Wgt of Spool** (customer/order-driven) and the **take-up equipment capacity** (TKUP-1 = 3,500 lb). Working assumption is *order value, capped by equipment capacity*, with a **default target spool weight of 2,000 lb** (the value assumed July 29, 2026 and used in the mockup) when the order carries none — needs confirmation. Note the default exceeds the TKUP-2 capacity of 1,100 lb, so on FL2/FL3 the cap would govern.
+
+Second part: if the operator does not acknowledge the 100% notification, live weight keeps climbing past target. Should the notification escalate to a distinct **over-target** state (proposed as milestone M4, red, "over by *n* lb"), or continue showing "target reached" with a percentage above 100? Depends on **Q58** for the authoritative weight source.
+
+---
+
+**Q61** · `Medium` · Owner: Tim O. / Jaspreet · `Open`
+**Does the completion alert ladder apply to finished coils at TKUP-2 (FL2 / FL3)?**
+
+The 75 / 90 / 100 ladder was specified for spool creation at FL1 TKUP-1. FL2 and FL3 wind finished coreless coils at TKUP-2 (1,100 lb) with the same "approaching target weight" concern. Should the same notification run there with "coil" wording and the coil target weight? If yes, note that FL2 standalone broadcasts `null` live gauge/width, so its lb/ft factor must come from the pass schedule / order rather than live measurement.
+
+---
+
+**Q62** · `Medium` · Owner: Tim O. / IT · `Open`
+**Supervisor mirroring and audit persistence of milestone acknowledgements**
+
+Is the spool completion alert an operator-only notification, or is it also surfaced to the supervisor (Dashboard 1 line status / Operations Manager view) — particularly an **unacknowledged** 100% milestone, which indicates nobody is at the machine as the spool fills? And where does the acknowledgement audit record live: a new milestone/acknowledgement table hanging off `FlatWireRun`, or an entry in the existing run-event stream?
+
+---
+
+**Q63** · `High` · Owner: Engineering / Tim O. · `Open`
+**`FL{n}.LineState` state vocabulary, stop-dwell value, and pause-reason suppression**
+
+Part B of [SpoolCompletionNotification.md](SpoolCompletionNotification.md) conditions the spool-removal popup on the PLC confirming a `RUNNING → STOPPED` transition, using the same `FL{n}.LineState` tag the system already reads as the rod-checkout gatekeeper. Three specifics are needed before it can be built:
+
+1. **The tag's actual state vocabulary** — is it a two-state run/stop bit, or does it distinguish `RUNNING / STOPPED / PAUSED / FAULT / THREADING / JOG`? A jog or thread state that reports as STOPPED changes the filtering required.
+2. **Dwell time** — how long must STOPPED persist before the stop is treated as real? Proposed default **5 seconds**, with speed ≈ 0 as corroboration. Needs a value from someone who knows how the drives behave on slow-down.
+3. **Pause-reason suppression** — if the operator already used the software Pause dialog and captured a reason (die change, weld prep, break), should the popup be suppressed because the reason is already known? Proposed yes, unless the reason indicates spool removal.
+
+---
+
+**Q64** · `Medium` · Owner: Tim O. / IT · `Open`
+**Stop-confirmation popup — supervisor visibility and multi-operator arbitration**
+
+Is the spool-removal confirmation strictly an operator-at-the-HMI decision, or does the supervisor see that a prompt is pending (particularly one left unanswered with the line stopped at target, which means production is halted with no transaction recorded)? And with several operators signed in on the shared screen, does the prompt appear once per line with first-answer-wins (proposed), or per operator session? The answering operator is recorded on the audit record either way.
+
+---
+
+**Q65** · `Medium` · Owner: Tim O. / Operations · `Open`
+**Short-close path — closing a spool below target weight**
+
+The stop-confirmation popup is armed only at or above target weight, so a spool the operator wants to close **early** — order satisfied, rod exhausted, quality problem, end of campaign — gets no prompt. Is a short close a real operational case, and if so should stopping below target also prompt (with a reason code and a partial-spool alpha), or should it stay a purely manual action the operator initiates? This overlaps the partial-spool handling already discussed in **Q47** and [PartialRodReCheckin.md](PartialRodReCheckin.md).
+
+---
+
+**Q66** · `High` · Owner: Tim O. / Shannon R. · `Open`
+**Scale-vs-calculated spool weight — tolerance, default basis, and approval authority**
+
+The spool completion step now captures a **scale weight** (gross) alongside the **system-calculated** net (footage × cross-section × density) and asks the operator which to record ([SpoolCompletionNotification.md](SpoolCompletionNotification.md) Part B, rules S-16…S-21). Four points need a decision:
+
+1. **Variance tolerance** — proposed **±2 %** of the calculated weight, matching the spirit of the existing scale-vs-vendor check at rod receiving. What is the real acceptable spread on a ~2,000 lb spool?
+2. **Default basis** — proposed: the **scale reading wins** once entered (a weighing outranks a derivation), operator able to override to calculated. Confirm that is right for FL1, and whether it also holds for finished coils at TKUP-2.
+3. ~~**Out-of-tolerance authority**~~ — **DECIDED (July 29, 2026):** an out-of-tolerance variance must **not** stop the operator from creating the spool. The completion is **authorised, not blocked**: a **supervisor override** (reason + supervisor badge/ID + PIN) appears and the commit control stays enabled, with a remote-approval fallback when no supervisor is on the floor. The override, the authorising supervisor and the reason are recorded on the spool. Still to confirm: whether the PIN is validated against the existing login/authorisation service or a separate supervisor credential store.
+4. **Is a scale even available at the take-up?** The weigh-at-payoff question is already open in **Q47**; the same uncertainty applies here. If there is no scale at TKUP-1, the capture is optional and the calculated weight stands — but then **Q58**'s formula never gets validated against measured data.
+
+Directly related: **Q58** (OD → weight conversion formula) — accumulated scale-vs-calculated variances are the data that would settle it.
+
+---
+
 ### Section F — Die Change and SPC
 
 ---
@@ -645,3 +714,7 @@ For flat wire orders in the planning screen, should they appear in the existing 
 | Apr 28, 2026 | Analysis team | Updated Q51 and Q52 to reflect dashboard changes: selection mechanism (attribute-based lookup + confirm bar) now shown in dashboards 2, 5, FL3; unified pass schedule approach now implied by FL3 check-in. Residual open points scoped: Q51 = no-match notification path; Q52 = FL2 check-in validation for hybrid-origin spools. Q53 and Q54 remain fully open. |
 | Apr 28, 2026 | MOM — Planning & Shopfloor meeting | **Q32 Decided**: max finished coil weight = 1,000 lb (TKUP-2 limit); orders split into multiple stops with alphas generated at planning time. Added **Q58** (OD → weight conversion formula, Tim O. to share) and **Q59** (planning grid vs new flat-wire section, team to decide internally). Key decisions recorded: alpha generation at planning (not execution); stop/calculation logic system-driven; pattern visualization replaced with tabular order → spool → weight grid; three spool-to-order allocation scenarios confirmed; "assign as-is" stock checkbox added; routing retains Add Operation with no child coil hierarchy; fully digital traveler (printing disabled for flat wire). Total questions: 59. |
 | May 4, 2026 | Analysis team — Tim O. review | **Q27 Decided**: five-case alpha-handling rules confirmed (same-spec swap = single alpha; size change / edge type / roll gap to new target = new child alpha; AGC roll gap adjustment = single alpha, no change). **Q28 Decided**: four-step pass schedule override flow confirmed; operator read-only except one-for-one same-size die swap. **Q29 Decided**: unplanned component bypass event confirmed as distinct transaction; alpha split, supervisor acknowledgment, and pre-bypass material disposition all required. **Q30 In Progress**: roll gap validation approach deferred pending engineering confirmation. **Q31 In Progress**: OD/ID limits from both UA equipment and customer; Tim to provide specifics. **Q32 Updated**: TKUP-2 capacity revised to 1,100 lb (up from 1,000 lb stated Apr 28). **Q33 Decided**: no separator capability; no interleave field required. **Q39 Decided**: camber SPC feature conditional on customer specification. **Q40 Decided**: edge burr not currently measured; no implementation required. **Q41 Decided**: system-level die footage tracking confirmed; unique die IDs; threshold deferred until failure data available. **Q44 Decided**: line speeds unknown; determined by trial; table-driven design. **Q45 Decided**: FL1/FL2 independent simultaneous operation confirmed; throughput ratio 3:1; FL3 blocks FL1 and FL2. **Q47 In Progress**: multiple partial spool alphas confirmed needed; weigh-at-payoff scale question open (Scott/Bob/Shannon); carry-forward design deferred. **Q48 Decided**: supervisor approval required for mid-run checkout. **Q49 In Progress**: PLC tag behavior deferred pending engineering confirmation. **Q50 Decided**: supervisor must approve partial-run disposition; notification-driven remote approval model confirmed. **Q54 Decided**: pass schedule data not on label; logged for technical traceability. **Q55 Decided**: anneal modifies existing alpha; no FL1 re-pass capability for spools. **Q56 Decided**: thread mode allowed until SPC complete post die change; system routes to SPC Checkpoint screen for gauge drift and size change cases. **Q57 In Progress**: spool unique IDs confirmed (like furnace plates); tracking workflow FL1→furnace→cooling→FL2 confirmed; full state machine transitions still TBD. **Q10 In Progress**: FL3 cannot run if orders scheduled on FL1 or FL2 (partial decision from Q45). |
+| Jul 28, 2026 | Analysis team | Added **Q60–Q62** from the spool completion alert requirement ([SpoolCompletionNotification.md](SpoolCompletionNotification.md)): target weight source and over-target behavior, applicability to finished coils at TKUP-2, supervisor mirroring and acknowledgement audit persistence. Total questions: 62. |
+| Jul 29, 2026 | Analysis team | Q60 updated with the assumed **2,000 lb** default target spool weight. Added **Q63–Q65** from the machine-stop confirmation requirement (Part B of [SpoolCompletionNotification.md](SpoolCompletionNotification.md)): `FL{n}.LineState` vocabulary + stop dwell + pause-reason suppression, supervisor visibility and multi-operator arbitration of the prompt, and the short-close-below-target path. Total questions: 65. |
+| Jul 29, 2026 | Analysis team | Added **Q66** — scale-vs-calculated spool weight reconciliation on the completion step: variance tolerance (±2 % proposed), which weight is the default basis, whether an out-of-tolerance variance needs supervisor approval rather than just a reason, and whether a scale exists at the take-up at all (overlaps Q47, feeds Q58). Total questions: 66. |
+| Jul 29, 2026 | Client direction | **Q66 part 3 Decided**: an out-of-tolerance spool weight must not block spool creation — the completion is authorised by a **supervisor override** (reason + badge/ID + PIN, remote-approval fallback) and the override is recorded on the spool. Q66 now In Progress; tolerance value, default basis, scale availability and PIN validation source remain open. |

@@ -33,7 +33,7 @@
     background: var(--color-background-primary);
     color: var(--color-text-secondary);
     border-radius: var(--border-radius-md);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     font-family: var(--font-sans);
@@ -53,7 +53,7 @@
     background: var(--color-background-success);
     color: var(--color-text-success);
     border-radius: var(--border-radius-md);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
   }
   .context-chip .dot {
@@ -100,7 +100,7 @@
     font-weight: 500;
   }
   .section-hint {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--color-text-tertiary);
   }
 
@@ -126,7 +126,7 @@
     font-family: var(--font-sans);
     transition: all 0.15s;
     text-align: left;
-    font-size: 13px;
+    font-size: 14px;
   }
   .cp-option:hover { background: var(--color-background-secondary); }
   .cp-option:active { transform: scale(0.98); }
@@ -162,7 +162,7 @@
   }
   .cp-option.selected .cp-name { color: var(--color-text-info); }
   .cp-desc {
-    font-size: 11px;
+    font-size: 14px;
     color: var(--color-text-tertiary);
   }
 
@@ -174,7 +174,7 @@
     background: var(--color-background-warning);
     color: var(--color-text-warning);
     border-radius: var(--border-radius-md);
-    font-size: 13px;
+    font-size: 14px;
   }
   .trigger-banner-icon {
     flex-shrink: 0;
@@ -204,12 +204,12 @@
     background: rgba(255, 255, 255, 0.55);
     border-radius: var(--border-radius-md);
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
   }
   .trigger-banner-body .dim {
     opacity: 0.75;
-    font-size: 12px;
+    font-size: 14px;
   }
 
   /* Measurements */
@@ -227,7 +227,7 @@
     background: var(--color-background-success);
     color: var(--color-text-success);
     border-radius: var(--border-radius-md);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
   }
   .measurement-summary.has-fail {
@@ -274,11 +274,11 @@
     font-weight: 500;
   }
   .measurement-context {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--color-text-tertiary);
   }
   .measurement-target {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--color-text-secondary);
     font-family: var(--font-mono);
     margin-top: 2px;
@@ -290,7 +290,7 @@
     gap: 4px;
   }
   .measurement-input-label {
-    font-size: 11px;
+    font-size: 14px;
     color: var(--color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.3px;
@@ -372,7 +372,7 @@
   .tolerance-labels {
     display: flex;
     justify-content: space-between;
-    font-size: 11px;
+    font-size: 14px;
     font-family: var(--font-mono);
     color: var(--color-text-tertiary);
     padding: 0 4px;
@@ -391,7 +391,7 @@
     gap: 6px;
     padding: 4px 12px;
     border-radius: var(--border-radius-md);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     background: var(--color-background-success);
     color: var(--color-text-success);
@@ -403,7 +403,7 @@
   }
   .measurement-status svg { width: 11px; height: 11px; }
   .measurement-deviation {
-    font-size: 13px;
+    font-size: 14px;
     font-family: var(--font-mono);
     color: var(--color-text-success);
     font-weight: 500;
@@ -417,7 +417,7 @@
     height: 110px;
   }
   .observation-label {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--color-text-secondary);
     margin-bottom: 8px;
   }
@@ -425,7 +425,7 @@
     width: 100%;
     height: 60px;
     padding: 10px 14px;
-    font-size: 13px;
+    font-size: 14px;
     font-family: var(--font-sans);
     color: var(--color-text-primary);
     background: var(--color-background-primary);
@@ -451,7 +451,7 @@
     display: flex;
     align-items: center;
     gap: 20px;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--color-text-secondary);
   }
   .footer-stamp-item {
@@ -460,7 +460,7 @@
     gap: 2px;
   }
   .footer-stamp-label {
-    font-size: 11px;
+    font-size: 14px;
     color: var(--color-text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.4px;
@@ -801,7 +801,7 @@
 
       if (isNaN(measured)) {
         markerEl.style.left = "50%";
-        statusEl.innerHTML = '<span style="font-size: 12px;">&mdash;</span>';
+        statusEl.innerHTML = '<span style="font-size: 14px;">&mdash;</span>';
         devEl.textContent = "—";
         measEl.classList.remove("oos");
         return { inSpec: false, measured: false };
@@ -872,5 +872,6 @@
 </script>
 
 <script src="flat-wire-topbar.js"></script>
+<script src="flat-wire-fit.js" data-fit="fill"></script>
 </body>
 </html>

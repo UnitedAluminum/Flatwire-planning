@@ -80,7 +80,7 @@
     border-bottom: 0.5px solid var(--color-border-tertiary);
   }
   .route-label {
-    font-size: 11px; font-weight: 600;
+    font-size: 14px; font-weight: 600;
     color: var(--color-text-tertiary);
     text-transform: uppercase; letter-spacing: 0.5px;
     margin-right: 4px;
@@ -104,10 +104,10 @@
   .schematic-canvas { width: 100%; height: 100%; display: block; }
 
   /* SVG text defaults */
-  .sec-label  { font-size: 11px; font-weight: 700; fill: var(--color-text-tertiary); letter-spacing: 0.7px; text-transform: uppercase; }
-  .comp-label { font-size: 12px; font-weight: 700; fill: var(--color-text-secondary); letter-spacing: 0.3px; text-transform: uppercase; }
+  .sec-label  { font-size: 14px; font-weight: 700; fill: var(--color-text-tertiary); letter-spacing: 0.7px; text-transform: uppercase; }
+  .comp-label { font-size: 14px; font-weight: 700; fill: var(--color-text-secondary); letter-spacing: 0.3px; text-transform: uppercase; }
   .comp-val   { font-size: 22px; font-weight: 500; font-family: 'SF Mono','Consolas',monospace; fill: var(--color-text-primary); }
-  .comp-sub   { font-size: 13px; fill: var(--color-text-secondary); }
+  .comp-sub   { font-size: 14px; fill: var(--color-text-secondary); }
 
   /* Flow animation */
   @keyframes flowAnim { to { stroke-dashoffset: -28; } }
@@ -124,7 +124,7 @@
     background: var(--color-background-primary);
     font-size: 14px;
   }
-  .alert-lbl { font-size: 11px; font-weight: 700; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+  .alert-lbl { font-size: 14px; font-weight: 700; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
   .alert-item { display: flex; align-items: center; gap: 8px; }
   .alert-item.warn { color: var(--color-text-warning); }
   .alert-item.ok   { color: var(--color-text-success); }
@@ -271,10 +271,10 @@
       <text class="comp-val"   x="952"  y="176">Gap: 0.112"</text>
       <line x1="952" y1="200" x2="1208" y2="200" stroke="var(--color-border-tertiary)" stroke-width="0.5"/>
       <circle cx="960" cy="228" r="7" fill="#185FA5"/>
-      <text x="976" y="233" font-size="12" font-weight="700" fill="#185FA5" letter-spacing="0.4">GAUGE OUT</text>
+      <text x="976" y="233" font-size="14" font-weight="700" fill="#185FA5" letter-spacing="0.4">GAUGE OUT</text>
       <text x="952" y="272" font-size="26" font-weight="500"
             font-family="'SF Mono','Consolas',monospace" fill="#1D9E75" id="gauge-live">0.110"</text>
-      <text x="952" y="292" font-size="13" fill="#1D9E75" font-weight="600"
+      <text x="952" y="292" font-size="14" fill="#1D9E75" font-weight="600"
             id="gauge-status">✓  In spec  ·  Target 0.110 ± 0.002"</text>
 
       <!-- FM1 → EdgeSet connector -->
@@ -353,10 +353,10 @@
       <rect id="width-sensor" x="680" y="652" width="190" height="108" rx="12"
             fill="#EFF6FB" stroke="#185FA5" stroke-width="2"/>
       <circle cx="704" cy="672" r="7" fill="#185FA5"/>
-      <text x="718" y="677" font-size="12" font-weight="700" fill="#185FA5" letter-spacing="0.4">WIDTH OUT</text>
+      <text x="718" y="677" font-size="14" font-weight="700" fill="#185FA5" letter-spacing="0.4">WIDTH OUT</text>
       <text x="690" y="720" font-size="26" font-weight="500"
             font-family="'SF Mono','Consolas',monospace" fill="#1D9E75" id="width-live">0.625"</text>
-      <text x="690" y="740" font-size="13" fill="#1D9E75" font-weight="600">✓  In spec  ·  Target 0.625 ± 0.005"</text>
+      <text x="690" y="740" font-size="14" fill="#1D9E75" font-weight="600">✓  In spec  ·  Target 0.625 ± 0.005"</text>
 
       <!-- Width sensor → TKUP-2 connector  (870 → 940, 70px gap) -->
       <path id="path-to-tkup2" class="flow running" d="M 870 700 L 940 700"/>
@@ -373,7 +373,7 @@
       <text id="tkup2-val"   x="952" y="720" font-size="22" font-weight="500"
             font-family="'SF Mono','Consolas',monospace"
             fill="var(--color-text-tertiary)">— — —</text>
-      <text id="tkup2-sub"   x="952" y="740" font-size="13"
+      <text id="tkup2-sub"   x="952" y="740" font-size="14"
             fill="var(--color-text-tertiary)">Not used on FL1 route</text>
 
       <!-- ═══ FM2 bypass overlay (FL1 route, hidden by default) ═══
@@ -552,5 +552,6 @@
   setInterval(tickReadings, 2500);
 </script>
 <script src="flat-wire-topbar.js"></script>
+<script src="flat-wire-fit.js" data-fit="fill"></script>
 </body>
 </html>

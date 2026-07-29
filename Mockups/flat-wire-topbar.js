@@ -332,7 +332,7 @@
         toastEl = document.createElement("div");
         toastEl.style.cssText = "position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:9999;" +
           "background:var(--color-text-primary);color:var(--color-background-primary);padding:8px 16px;border-radius:8px;" +
-          "font-size:13px;font-family:var(--font-sans);box-shadow:0 6px 20px rgba(0,0,0,0.25);opacity:0;transition:opacity 0.2s;pointer-events:none;max-width:520px;text-align:center;";
+          "font-size:14px;font-family:var(--font-sans);box-shadow:0 6px 20px rgba(0,0,0,0.25);opacity:0;transition:opacity 0.2s;pointer-events:none;max-width:520px;text-align:center;";
         document.body.appendChild(toastEl);
       }
       toastEl.textContent = msg; toastEl.style.opacity = "1";
