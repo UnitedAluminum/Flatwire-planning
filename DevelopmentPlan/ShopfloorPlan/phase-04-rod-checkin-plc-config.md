@@ -5,6 +5,14 @@
 
 ---
 
+**Project:** Flat Wire Mill Implementation
+**Last Updated:** 2026-07-31
+**Status:** Ready to build
+**Layer:** Full-stack vertical slice
+**Owner:** **FE + BE + RT** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Effort:** **255 h** (31.9 d) — FE 60 · BE 62 · DB 28 · RT 28 · QA 36 · BA 8 · cont. 33 · **Window:** W4 (Sep 8–11, **4** working days — Labor Day Mon Sep 7)
+**Scope call:** **Not deferrable.** ⚠ **Estimate provisional:** carries a **24–64 h reserve** (excluded from the total) pending OI-39 / G2 — cross-DB check-in recovery is undecided between saga/outbox and an `INFLAT` mirror. Worked derivation for this phase is in the model §3.
+
 *The core operator entry point: validate material, inspect, confirm the pass schedule, push PLC tags, start the run — plus the Pre-Check-In station that stages the next rod while the current one runs.*
 
 ## Business Overview
@@ -45,7 +53,7 @@ This phase also owns **pre-check-in / payoff staging**: registering the *next* r
 ## Backend Implementation (.NET)
 - **APIs:** `CheckInController` `POST /checkin/rod`; **`PayoffStagingController`** — `GET /payoff/status`, `GET /staging/queue`, `POST /staging/rod`, `POST /staging/rod/unstage`, `POST /staging/rod/mark-welded`.
 - **Staging commands:** `StageRodCommand` (reuses the 3-item `InspectionDto` — do **not** add a connector-tag item, see G14), `UnstageRodCommand` (writes `RodCheckout` with `Mode='ModeP'`), `MarkStagedRodWeldedCommand` (validates alloy/temper/diameter against the running coil per `WLD006`).
-- **Staging rules:** bay-occupancy conflicts surface as `409` from the filtered unique indexes rather than a read-then-write race; `FL2` rejected `422` (`PCI002`); inspection `Fail` returns the WIP-rejection route with **no override**; prior footage without acknowledgement rejected `422` (`PRC007`).
+- **Staging rules:** bay-occupancy conflicts surface as `409` from the filtered unique indexes rather than a read-then-write race; `FL2` rejected `422` (`PCI002`); inspection `Fail` **commits the staging row** and returns `201` with `state: "Blocked"` plus the WIP-rejection route, still with **no override** (`CHK010`) — the bay must stay occupied because the failed bundle is physically on it (changed Jul 31 2026, was `422`-and-write-nothing; see `APIContracts.md` and the Q72 note in `FlatWireSchema_Runs.md`, whose *release* half stays open); prior footage without acknowledgement rejected `422` (`PRC007`).
 - **Request/Response:** `CheckInRodCommand` (line, rodAlpha, payoff, diameterMeasured, weights, `InspectionDto`, passScheduleId, operatorId, orderId) → `CheckInRodResponse` (runId, checkedInAt, plcTagsPushed).
 - **Business services:** `CheckInService` (records-before-push orchestration) → `PLCTagService.PushPassSchedule(passScheduleId, lineId, payoffPosition)`.
 - **MediatR handlers:** `CheckInRodCommand` handler with **atomic** side-effects (INFLAT, ack record, PLC push, timer, `LineStatus` broadcast).

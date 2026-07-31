@@ -5,6 +5,14 @@
 
 ---
 
+**Project:** Flat Wire Mill Implementation
+**Last Updated:** 2026-07-30
+**Status:** Ready to build
+**Layer:** Full-stack vertical slice
+**Owner:** **FE + BE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Effort:** **118 h** (14.8 d) — FE 48 · BE 18 · DB 12 · RT 8 · QA 17 · cont. 15 · **Window:** W5–W6 (Sep 14–25, 10 working days)
+**Scope call:** **Not deferrable.** The **smallest check-in phase** — it reuses the Phase 2 `pass-schedule-table`/`confirm-bar` and the Phase 5 `gauge-trace-chart` in profile mode.
+
 *The FL2 operator journey: check in an FL1-produced spool, review its historical gauge profile, run the 3-stand finishing mill.*
 
 ## Business Overview

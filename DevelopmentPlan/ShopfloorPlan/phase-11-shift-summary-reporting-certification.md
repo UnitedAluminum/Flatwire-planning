@@ -5,6 +5,14 @@
 
 ---
 
+**Project:** Flat Wire Mill Implementation
+**Last Updated:** 2026-07-30
+**Status:** Ready to build
+**Layer:** Full-stack vertical slice (back-office)
+**Owner:** **BE + FE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Effort:** **246 h** (30.8 d) — FE 64 · BE 76 · DB 28 · RT 4 · QA 34 · BA 8 · cont. 32 · **Window:** W6 (Sep 21–25, 5 working days)
+**Scope call:** **Partly deferrable** — reports FW-092/093/094/095 (4 of the 5) are **ladder rung 6** (105 h recovered), leaving only the Gauge Trace report. Latest call: W5. This phase's seven stories cannot co-exist with Phases 8, 9 and 10 in W6 at any credible team size — that is why rung 6 exists.
+
 *Back-office visibility: the per-machine shift board plus the reporting suite and welding-wire certification traceability.*
 
 ## Business Overview

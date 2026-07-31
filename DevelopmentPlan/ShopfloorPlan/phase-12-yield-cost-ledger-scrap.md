@@ -5,6 +5,14 @@
 
 ---
 
+**Project:** Flat Wire Mill Implementation
+**Last Updated:** 2026-07-30
+**Status:** Ready to build
+**Layer:** Full-stack vertical slice (back-office)
+**Owner:** **BE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Effort:** **177 h** (22.1 d) — FE 44 · BE 72 · DB 12 · QA 26 · cont. 23 · **Window:** W7 (Sep 28–30, **3** working days)
+**Scope call:** **Deferrable — this phase is the whole of ladder rungs 1–4** (177 h recovered in total): rungs 1–3 defer FW-110 (33 h), FW-102 (49 h) and FW-101 (28 h) individually, and rung 4 is the **67 h remainder**. Latest call: W6. ⚠ **Estimate provisional:** OQ-3 (costing), OQ-5 (standard times) and OQ-35 (yield per route) are all open, and OQ-36 gates the weight formula.
+
 *Costing/accounting and scrap disposition — Medium/Low priority; first candidates to slip past the Sep 30 window (post-trial acceptable).*
 
 ## Business Overview

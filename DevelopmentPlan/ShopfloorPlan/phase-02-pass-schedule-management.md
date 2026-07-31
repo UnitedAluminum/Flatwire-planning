@@ -9,6 +9,14 @@
 
 ---
 
+**Project:** Flat Wire Mill Implementation
+**Last Updated:** 2026-07-30
+**Status:** Ready to build
+**Layer:** Full-stack vertical slice
+**Owner:** **FE + BE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Effort:** **231 h** (28.9 d) — FE 80 · BE 62 · DB 12 · QA 31 · BA 16 · cont. 30 · **Window:** W2–W3 (Aug 24–Sep 4, 10 working days)
+**Scope call:** **Not deferrable** — the highest-priority dependency in the plan; gates every check-in phase. The 2.0 BA-days are the pass-schedule content liaison, which is the project's top-ranked risk.
+
 *The machine "recipe" library. Highest dependency in the whole project — no check-in, PLC push, or run can occur without an Active pass schedule.*
 
 ## Business Overview

@@ -7,9 +7,11 @@
 ---
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-07-26
+**Last Updated:** 2026-07-30
 **Status:** Ready to build
 **Layer:** Angular frontend (`ual-angular`)
+**Owner:** **FE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Effort:** **370 h** (46.2 d) — FE 224 · RT 44 · QA 54 · cont. 48 · **Window:** W0 (to Aug 14, 12 working days = 96 h/person) · ⚠ **needs 3.8 FTE on this layer alone** — see model §4
 
 > ### ⏱ Due: **14 Aug 2026** (Phase-1 gate)
 > Phase 1 must be complete by **14 Aug 2026** (user mandate; supersedes the roadmap's W1 = Aug 17–23). Today is Jul 26 → ~2.5 working weeks. 1A/1B/1C run **in parallel** and converge only on the shared API contract (`APIContracts.md`) + seed fixtures. This layer is not blocked by 1B/1C because it develops against the **mock** API + **mock** SignalR (`useMockData: true`).

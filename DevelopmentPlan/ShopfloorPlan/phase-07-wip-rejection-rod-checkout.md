@@ -5,6 +5,14 @@
 
 ---
 
+**Project:** Flat Wire Mill Implementation
+**Last Updated:** 2026-07-30
+**Status:** Ready to build
+**Layer:** Full-stack vertical slice
+**Owner:** **FE + BE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Effort:** **205 h** (25.6 d) — FE 64 · BE 40 · DB 28 · RT 16 · QA 30 · cont. 27 · **Window:** W5 (Sep 14–18, 5 working days)
+**Scope call:** **Not deferrable.** The DB line includes **16 h for new columns on the shared `coils` table** (`footage_run_to_date`, `remaining_weight_estimate`) plus `Spool.source_rod_alpha` — a second shared-schema change after FW-001, with its own audit need. The BE line includes 16 h for the durable pending-approval queue (G7).
+
 *Formal off-ramps for suspect material and for rods removed before natural completion, including supervisor-approved partial runs.*
 
 ## Business Overview

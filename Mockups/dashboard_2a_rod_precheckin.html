@@ -57,9 +57,25 @@
        • Bay "BLOCKED" is DERIVED, not stored. RodStaging.Status is only
          Staged | CheckedIn | Unstaged; a failed bay is Status='Staged' with an inspection
          column = 'Fail'. It still occupies the bay, which is correct — UX_RodStaging_Bay
-         is filtered on Status='Staged'. OPEN: nothing currently writes that row, because
-         a failed inspection routes straight to WIP Rejection without committing.
-       • "Welded" is the IsWelded flag on a Staged row, never a status of its own.
+         is filtered on Status='Staged'.
+         RESOLVED Jul 31 2026: staging now COMMITS the row before the inspection gate, so this
+         state is reachable. POST /staging/rod returns 201 with state 'Blocked' instead of the
+         old 422-and-write-nothing, which left a rejected bundle physically on the bay while
+         the screen showed NOT STAGED and offered the position to the next rod. The forward
+         path is still WIP Rejection only, with no override (CHK010) — what CHANGED is that
+         the bay stays occupied in the record, not that the rod can proceed.
+         STILL OPEN: what RELEASES a blocked row. Status has no value for a WIP-rejection
+         outcome, and CK_RodStaging_Unstaged ties 'Unstaged' to the pre-check-out column group.
+       • "Welded" is the IsWelded flag on a Staged row, never a status of its own — and a
+         welded rod CANNOT BE UN-STAGED. It is induction-welded to the rod in the mill, so the
+         pre-check-out promise ("the bay is released and the rod returns to inventory") is
+         physically false. Neither the queue row nor the bay card offers the control, and
+         openPreCheckout() rejects it. Reversing a weld is WLD011 and is unspecified; do not
+         add a control for it before it is.
+       • NEVER RESOLVE A BAY POSITIONALLY. Any action against a named rod resolves its bay via
+         bayNoOfAlpha(). A "bay 2 first, else bay 1" fallback used to stand in for the bay the
+         caller forgot to pass, so un-staging the Payoff 1 queue row released Payoff 2's rod
+         whenever both bays were staged — reachable from cold start.
        • The WIP station code is not derived from the line; only FL1PO exists.
        • Rod diameter tolerance is per alloy and has no column yet (CHK007) — see the
          DIA_TOL_BY_ALLOY note in script.
@@ -191,7 +207,11 @@
   .payoff-bar-fill.flash { background: var(--color-red); animation: barFlash 1s ease-in-out infinite; }
   @keyframes barFlash { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-  .bay-facts { display: grid; grid-template-columns: repeat(5, auto); gap: 4px 16px; margin-bottom: 8px; justify-content: start; }
+  /* Equal tracks, NOT auto. The two bays are peers rendered side by side, but the fact labels
+     differ by state ("Net weight"/"Gross weight", "Run"/"Run / plan seq."), so content-sized
+     columns land at different x-positions on each card and the eye cannot scan across. Column
+     gap trimmed 16→12px so the longest label ("Run / plan seq.") still clears its track. */
+  .bay-facts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px 12px; margin-bottom: 8px; }
   .bay-fact { display: flex; flex-direction: column; gap: 1px; font-size: 14px; min-width: 0; }
   .bay-fact-label { color: var(--color-text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bay-fact-value { color: var(--color-text-primary); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -214,6 +234,22 @@
      action buttons out of the card. */
   .bay-alert strong { font-weight: 600; }
   .bay-alert strong::after { content: " \2014 "; font-weight: 400; }
+
+  /* Authorised-deviation line. Its OWN slot, not a branch of .bay-alert.
+     Sharing the alert slot meant the override lost to the weld alerts the moment the rod was
+     checked in — so "Off-schedule — authorised by …" vanished exactly while the deviating rod
+     was running, which is when it matters most. The requirement is that it stays visible for
+     as long as the rod is on the bay (RodPreCheckin.md, "Planned sequence — notify and
+     authorise"), and a checked-in rod is still on the bay. */
+  .bay-auth {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 6px 12px; border-radius: var(--border-radius-md);
+    font-size: 14px; line-height: 1.35; margin-bottom: 8px;
+    background: var(--color-background-warning); color: var(--color-text-warning);
+  }
+  .bay-auth svg { width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px; }
+  .bay-auth strong { font-weight: 600; }
+  .bay-auth strong::after { content: " \2014 "; font-weight: 400; }
 
   /* Empty-bay illustration */
   .bay-empty-body {
@@ -367,7 +403,11 @@
   /* An <a> cannot take :disabled. The reject route is a link, and it must not be followed
      until the failure observation is recorded — hence a class plus a click guard. */
   .btn.link-disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
-  .btn-sm { min-height: 36px; padding: 0 13px; }
+  /* 44px, not 36px. This class carries every queue action — Stage, Unstage, WIP Rejection —
+     which is the most-tapped control on the screen. "Small" here meant visually secondary,
+     not physically smaller than a gloved fingertip. Padding stays tight so the actions
+     column does not widen. */
+  .btn-sm { min-height: 44px; padding: 0 13px; }
   .btn-primary { background: var(--color-blue); border-color: var(--color-blue); color: #ffffff; }
   .btn-primary:hover:not(:disabled) { background: #144e88; }
   .btn-lg { min-height: 52px; padding: 0 24px; font-size: 15px; }
@@ -429,6 +469,22 @@
   }
   .gb-modal-title { font-size: 17px; font-weight: 600; color: var(--color-text-primary); }
   .gb-modal-sub { font-size: 14px; color: var(--color-text-tertiary); margin-top: 3px; }
+
+  /* Live weight of the RUNNING bay, carried into the staging wizard.
+     The modal is 760px, centred, over a 45% scrim — it lands on the bays row and the weld
+     strip. So the operator opens this wizard *because* a payoff is draining and immediately
+     loses sight of the draining payoff, including a WELD NOW escalation. In the port this
+     binds to the batched PayoffWeight hub feed; here it is set once at open time. */
+  .wiz-weight {
+    display: flex; flex-direction: column; gap: 2px; align-items: flex-end;
+    padding: 6px 12px; border-radius: var(--border-radius-md);
+    background: var(--color-background-secondary); margin-right: 12px; white-space: nowrap;
+  }
+  .wiz-weight.warn { background: var(--color-background-warning); color: var(--color-text-warning); }
+  .wiz-weight.crit { background: var(--color-background-danger);  color: var(--color-text-danger); }
+  .wiz-weight-val { font-family: var(--font-mono); font-size: 15px; font-weight: 600; }
+  .wiz-weight-lbl { font-size: 14px; color: inherit; opacity: 0.85; }
+  .gb-modal-head .wiz-weight + .gb-modal-close { flex-shrink: 0; }
   .gb-modal-close {
     width: 44px; height: 44px; border-radius: var(--border-radius-md);
     border: 1px solid var(--color-border-secondary); background: var(--color-background-primary);
@@ -613,11 +669,14 @@
   .cf-fact { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
   .cf-fact-value { font-family: var(--font-mono); font-weight: 600; }
   .cf-confirm { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.45; }
+  /* 44px. This is the PRC014 physical-identity acknowledgement — the operator asserting the
+     bundle on the payoff is the rod with prior run history. It was 22px: a mouse-sized target
+     on the one control here that carries a traceability claim. */
   .cf-check {
-    width: 22px; height: 22px; border-radius: 5px; flex-shrink: 0; margin-top: 1px;
+    width: 44px; height: 44px; border-radius: 8px; flex-shrink: 0;
     border: 2px solid var(--color-text-warning); background: transparent;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
-    color: transparent; font-size: 14px; font-weight: 700;
+    color: transparent; font-size: 18px; font-weight: 700;
   }
   .cf-check.on { background: var(--color-text-warning); color: #fff; }
 
@@ -735,6 +794,11 @@
             </span>
           </div>
         </div>
+        <!-- Authorised deviation — own slot, survives check-in. See .bay-auth in the styles. -->
+        <div class="bay-auth hide" id="auth-1">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v4.5M12 16.4v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span></span>
+        </div>
         <div class="bay-alert info" id="alert-1">
           <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5.5M12 7.6v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           <span></span>
@@ -784,6 +848,11 @@
               Passed
             </span>
           </div>
+        </div>
+        <!-- Authorised deviation — own slot, survives check-in. See .bay-auth in the styles. -->
+        <div class="bay-auth hide" id="auth-2">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v4.5M12 16.4v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span></span>
         </div>
         <div class="bay-alert info" id="alert-2">
           <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5.5M12 7.6v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -837,7 +906,7 @@
       <div class="scan-wrap">
         <span class="queue-full-note" id="queue-full-note">
           <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v4.5M12 16.4v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          Both bays occupied &mdash; check in or un-stage first
+          <span id="queue-full-text">Both bays occupied &mdash; check in or un-stage first</span>
         </span>
         <input class="scan-input" id="scan-input" type="text" placeholder="Scan rod alpha&hellip;" aria-label="Scan rod alpha">
         <button class="btn btn-sm" type="button" id="btn-scan">Find</button>
@@ -851,7 +920,7 @@
         order is resolved from <span class="mono">planning_routings</span>, and the rest of that
         order&rsquo;s rod appears here.</span>
     </div>
-    <div class="info-table-wrap">
+    <div class="info-table-wrap" id="queue-table-wrap">
       <table class="info-table">
         <!-- Two sequence columns, deliberately: departing from the planned order is
              permitted (with supervisor authorisation), so what planning intended and what
@@ -923,6 +992,12 @@
       <div>
         <div class="gb-modal-title" id="pci-title">Pre-check-in rod &mdash; stage at the payoff</div>
         <div class="gb-modal-sub" id="pci-sub">FL1 &middot; Payoff 2 &middot; the current coil keeps running</div>
+      </div>
+      <!-- The draining payoff, kept in view while staging. This modal covers the bays row, so
+           without it the operator loses the weight that sent them here. -->
+      <div class="wiz-weight" id="pci-weight" aria-live="polite">
+        <span class="wiz-weight-val" id="pci-weight-val">&mdash;</span>
+        <span class="wiz-weight-lbl" id="pci-weight-lbl">No rod running</span>
       </div>
       <button class="gb-modal-close" type="button" data-close="pci-overlay" aria-label="Close">&times;</button>
     </div>
@@ -1431,9 +1506,15 @@
        blocked — staged but an inspection item failed (derived: Staged + any Fail)
        active  — checked in on Dashboard 2, rod INFLAT, run open, drawing
      At most one bay is `active` at a time: only one rod feeds the line. */
+  /* Every key the renderer reads is declared here, including the six override fields that used
+     to be bolted on in commitPreCheckin(). Undefined-is-falsy hid that in JS; in the typed
+     Angular port a partial shape is a compile error, and a bay that silently lacks
+     `offScheduleOverride` renders an authorised deviation as an ordinary one. */
   function emptyBay() {
     return { state: "empty", alpha: null, seq: null, plannedSeq: null, stagedAt: null,
              isWelded: false, inspectionFailed: false,
+             offScheduleOverride: false, outOfSequenceOverride: false,
+             overrideBy: null, overrideReason: null, overrideAt: null, scheduledLine: null,
              weightLb: null, netLb: null, runId: null, checkedInAt: null, operator: null };
   }
   function mk(over) { var b = emptyBay(); for (var k in over) b[k] = over[k]; return b; }
@@ -1443,6 +1524,13 @@
   function bayOf(n) { return n === 1 ? bay1 : bay2; }
   function otherBay(n) { return n === 1 ? bay2 : bay1; }
   function activeBayNo() { return bay1.state === "active" ? 1 : bay2.state === "active" ? 2 : null; }
+  /* Resolve a bay from the rod on it. Every caller that acts on a specific rod must go through
+     this — NEVER through a positional fallback like `bay2 first, else bay1`. The queue's
+     Unstage button used to drop the alpha it was given and let such a fallback pick the bay,
+     so un-staging the Payoff 1 row released Payoff 2's rod whenever both bays were staged. */
+  function bayNoOfAlpha(alpha) {
+    return bay1.alpha === alpha ? 1 : bay2.alpha === alpha ? 2 : null;
+  }
 
   /* The planned rod list per order, as planning allocated it (planning_routings + the
      stop/alpha generation from planning step 5). The screen holds no queue of its own:
@@ -1578,8 +1666,14 @@
       return '<a class="btn" href="dashboard_3_active_run.html">Open active run ' + SVG_CHEV + '</a>' +
              '<a class="btn" href="dashboard_12_rod_checkout.html">Check out rod</a>';
     }
+    /* A WELDED rod has no Pre-check-out. It is physically induction-welded to the rod in the
+       mill, so "release the bay and return it to inventory" is not a thing that can happen.
+       Supervisor reversal of a weld is WLD011 and is not specified — until it is, there is no
+       control for it here. Note welded is the IsWelded flag on a Staged row, not a state, so
+       this branch is reached for both. */
     return '<a class="btn btn-primary" href="dashboard_2_rod_checkin%20-%20New.html">Proceed to check-in ' + SVG_CHEV + '</a>' +
-           '<button class="btn" type="button" data-precheckout="' + n + '">Pre-check-out</button>';
+           (b.isWelded ? ''
+             : '<button class="btn" type="button" data-precheckout="' + n + '">Pre-check-out</button>');
   }
 
   /* ───────────────── Render: one bay, any state, either side ─────────────────
@@ -1631,10 +1725,20 @@
         ? "BLOCKED"
         : (b.isWelded ? "PRE-CHECKED-IN &middot; WELDED" : "PRE-CHECKED-IN"));
 
-      $("wt-" + n).textContent = fmt(r.remaining != null ? r.remaining : r.net) + " lb";
+      /* Proportional, NOT pinned to 100%. A staged bay was hard-coded to a full green bar while
+         displaying the *remaining* pounds, so a partial rod — R00040 carries 3,980 lb of a
+         7,900 lb net after 4,120 ft — showed a full bar over a half-consumed bundle. The one
+         judgement this screen exists to support is "will the bundle on the idle bay carry me
+         past the next weld", and it was being made against a bar that read full for every
+         staged rod. Bar length is % of the rod, same meaning as on an active bay. */
+      var onBay = r.remaining != null ? r.remaining : r.net;
+      var stagedPct = r.net ? Math.round((onBay / r.net) * 100) : 100;
+      $("wt-" + n).textContent = fmt(onBay) + " lb";
       $("wt-" + n).className = "payoff-weight";
-      $("pct-" + n).innerHTML = b.state === "blocked" ? "Held &mdash; not available" : "100% &mdash; not yet drawing";
-      $("bar-" + n).style.width = "100%";
+      $("pct-" + n).innerHTML = b.state === "blocked"
+        ? "Held &mdash; not available"
+        : stagedPct + "% &mdash; not yet drawing";
+      $("bar-" + n).style.width = stagedPct + "%";
       $("bar-" + n).className = "payoff-bar-fill " + (b.state === "blocked" ? "gray" : "green");
 
       setFact(n, 1, "Gross weight", fmt(r.gross) + " lb", true);
@@ -1658,6 +1762,25 @@
     insp.className = "insp-summary" + (b.inspectionFailed ? " fail" : "");
     insp.innerHTML = (b.inspectionFailed ? SVG_CROSS + "Failed" : SVG_CHECK + "Passed");
 
+    /* ── Authorised deviation — its OWN slot, independent of the alert below ──
+       An authorised deviation must stay visible for as long as the rod is on the bay; the
+       authorisation is not a dismissal. It used to be a branch in the alert chain BELOW the
+       `state === "active"` test, so it was rendered only while the rod was staged and vanished
+       the moment the rod was checked in — i.e. exactly while the deviating rod was running,
+       which is when "this run was authorised by …" actually matters. It now renders for
+       staged, welded, blocked and active alike. */
+    var auth = $("auth-" + n);
+    var hasOverride = !!(b.offScheduleOverride || b.outOfSequenceOverride);
+    show(auth, hasOverride);
+    if (hasOverride) {
+      var what = b.offScheduleOverride && b.outOfSequenceOverride
+        ? "off-schedule and out of planned sequence"
+        : b.offScheduleOverride ? "order " + orderOf(b.alpha) + " is scheduled on " + b.scheduledLine
+        : "out of planned sequence";
+      auth.querySelector("span").innerHTML =
+        "<strong>Authorised by " + b.overrideBy + "</strong>" + what;
+    }
+
     var alert = $("alert-" + n), body = alert.querySelector("span");
     show($("blocked-" + n), b.state === "blocked");
     show(alert, b.state !== "blocked");
@@ -1676,15 +1799,6 @@
       } else {
         show(alert, false);
       }
-    } else if (b.offScheduleOverride || b.outOfSequenceOverride) {
-      /* An authorised deviation must stay visible for as long as the rod is on the bay —
-         the authorisation is not a dismissal. */
-      alert.className = "bay-alert warn";
-      var what = b.offScheduleOverride && b.outOfSequenceOverride
-        ? "off-schedule and out of planned sequence"
-        : b.offScheduleOverride ? "order " + orderOf(b.alpha) + " is scheduled on " + b.scheduledLine
-        : "out of planned sequence";
-      body.innerHTML = "<strong>Authorised by " + b.overrideBy + "</strong>" + what;
     } else if (b.isWelded) {
       alert.className = "bay-alert info";
       body.innerHTML = "<strong>Welded</strong>transition at 0&nbsp;ft remaining on Payoff " + (n === 1 ? 2 : 1);
@@ -1776,8 +1890,14 @@
         statusCell = '<span class="q-status pre">Pre-checked-in</span>';
         actionCell = '<button class="btn btn-sm" type="button" data-unstage="' + q.alpha + '">Unstage</button>';
       } else if (q.status === "welded") {
+        /* No Unstage on a welded rod. It is induction-welded to the rod currently in the mill,
+           so releasing the bay and returning it to inventory — what the pre-check-out modal
+           promises — is physically impossible. The guard in openPreCheckout() admitted it
+           because welded is IsWelded on a Staged row, not a state of its own, so `state ===
+           "staged"` passed. Reversing a weld is WLD011, which is unspecified; there is
+           deliberately no control for it until it is. */
         statusCell = '<span class="q-status welded">Welded</span>';
-        actionCell = '<button class="btn btn-sm" type="button" data-unstage="' + q.alpha + '">Unstage</button>';
+        actionCell = '';
       } else {
         statusCell = r.footage > 0
           ? '<span class="partial-flag"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v4.5M12 16.4v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Partial &middot; ' + fmt(r.footage) + ' ft run</span>'
@@ -1825,9 +1945,13 @@
       $("queue-count").innerHTML =
         "no order yet &mdash; scan the first rod to load its order";
       show($("queue-empty-note"), true);
+      /* Hide the table entirely, not just its rows. Leaving it mounted rendered eight sticky
+         column headers over nothing — and cold start is the first thing anyone sees. */
+      show($("queue-table-wrap"), false);
       return;
     }
     show($("queue-empty-note"), false);
+    show($("queue-table-wrap"), true);
     $("queue-order").textContent = CURRENT_ORDER;
 
     /* Progress. Necessary because the planned order can be departed from: with a strictly
@@ -1849,11 +1973,16 @@
         first.alloy + " &middot; " + first.temper + " &middot; " + first.nominal.toFixed(3) + "&Prime;";
     }
 
-    /* Scanning is staging: gate it on the same condition as the Stage buttons, or the scan
-       box becomes a second route into the dead end the buttons now block. */
+    /* The Stage buttons are gated on a full station, but the SCAN BOX STAYS ENABLED.
+       Disabling it was worse than it looked: a disabled input cannot report why it did
+       nothing, so a barcode gun fired at a full station produced pure silence — the worst
+       possible feedback on a glare-lit panel where the operator is holding a bundle and
+       looking at the tag, not at a note in the queue header. Scanning is still refused, but
+       now it is refused *out loud*, naming the rod (see doScan). */
     $("queue-full-note").classList.toggle("visible", full);
-    $("scan-input").disabled = full;
-    $("btn-scan").disabled = full;
+    if (full) {
+      $("queue-full-text").innerHTML = "Both bays occupied &mdash; check in or un-stage first";
+    }
 
     body.querySelectorAll("[data-stage]").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -1861,8 +1990,13 @@
         openPreCheckin(b.getAttribute("data-stage"));
       });
     });
-    body.querySelectorAll("[data-unstage]").forEach(function (b) {
-      b.addEventListener("click", function () { openPreCheckout(); });
+    /* Resolve the bay from the rod on the row. Calling openPreCheckout() with no argument let
+       it fall back to "bay 2 first", so clicking Unstage on the Payoff 1 row released Payoff
+       2's rod whenever both bays held staged rod — which is reachable from cold start. */
+    body.querySelectorAll("[data-unstage]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        openPreCheckout(bayNoOfAlpha(btn.getAttribute("data-unstage")));
+      });
     });
   }
 
@@ -1939,15 +2073,50 @@
       }
     });
 
-    /* Pre-select the bay they launched from, when it is actually free. */
-    if (preferBay && bayOf(preferBay).state === "empty") {
-      selectPayoff(document.querySelector('#pci-payoff [data-payoff="' + preferBay + '"]'));
+    /* Pre-select the bay: the one they launched from when it is free, otherwise the only free
+       bay when there is exactly one. In the steady state — one payoff drawing, one free —
+       step 2 offered a single enabled card next to a disabled one, and staging from the queue
+       (which passes no preferBay) made the operator select it by hand and press Next. Two of
+       the eight interactions on the primary path were spent choosing between one option and a
+       disabled one, with gloves, while a payoff drained. PCI006 still captures the position;
+       it is simply no longer *asked* when there is only one possible answer. */
+    var freeBays = [1, 2].filter(function (k) { return bayOf(k).state === "empty"; });
+    var autoBay = (preferBay && bayOf(preferBay).state === "empty") ? preferBay
+                : (freeBays.length === 1 ? freeBays[0] : null);
+    if (autoBay) {
+      selectPayoff(document.querySelector('#pci-payoff [data-payoff="' + autoBay + '"]'));
     }
 
+    renderWizardWeight();
     if (prefillAlpha) resolveAlpha();
     goStep(0);
     openModal("pci-overlay");
     if (!prefillAlpha) setTimeout(function () { $("pci-alpha").focus(); }, 60);
+  }
+
+  /* The draining payoff, shown in the wizard header.
+     This modal is 760px, vertically centred, over a 45% scrim — it covers the bays row and the
+     weld strip. The operator opens it *because* a payoff is running low, and in doing so lost
+     sight of that payoff entirely, including a WELD NOW escalation arriving mid-wizard.
+     Snapshot-at-open here; in the Angular port this is the one part of the modal bound to the
+     batched PayoffWeight feed, and the only subtree that re-renders at telemetry cadence. */
+  function renderWizardWeight() {
+    var runNo = activeBayNo();
+    var el = $("pci-weight"), val = $("pci-weight-val"), lbl = $("pci-weight-lbl");
+    if (!runNo) {
+      el.className = "wiz-weight";
+      val.textContent = "—";
+      lbl.textContent = "No rod running";
+      return;
+    }
+    var run = bayOf(runNo);
+    var pct = Math.round((run.weightLb / run.netLb) * 100);
+    el.className = "wiz-weight" +
+      (run.weightLb < WELD_NOW_LB ? " crit" : run.weightLb < WELD_SOON_LB ? " warn" : "");
+    val.textContent = fmt(run.weightLb) + " lb";
+    lbl.textContent = "Payoff " + runNo + " · " + pct + "%" +
+      (run.weightLb < WELD_NOW_LB ? " · WELD NOW"
+        : run.weightLb < WELD_SOON_LB ? " · WELD SOON" : "");
   }
 
   function svFields() {
@@ -2214,8 +2383,24 @@
     }
   }
 
-  /* Step 1 inputs */
-  $("pci-alpha").addEventListener("input", resolveAlpha);
+  /* Step 1 inputs.
+     Debounced, NOT per-keystroke. A barcode gun delivers R00043 as a burst of six keydowns in
+     ~30 ms, and resolving on every one of them strobed "Invalid rod alpha" then "Rod not
+     found" through the first five characters before the sixth resolved. Operators learn to
+     ignore that error region — which is also where the off-schedule and out-of-sequence
+     notices appear. Enter resolves immediately so a scanner with a trailing CR is unaffected. */
+  var alphaDebounce = null;
+  function resolveAlphaSoon() {
+    clearTimeout(alphaDebounce);
+    alphaDebounce = setTimeout(resolveAlpha, 250);
+  }
+  $("pci-alpha").addEventListener("input", resolveAlphaSoon);
+  $("pci-alpha").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    clearTimeout(alphaDebounce);
+    resolveAlpha();
+  });
   $("pci-dia").addEventListener("input", updateStatus);
   /* Step 3: typing the observation is what unblocks the reject route. */
   $("pci-notes").addEventListener("input", updateStatus);
@@ -2340,11 +2525,13 @@
   /* ══════════════════ Pre-check-out ══════════════════ */
   var pcoBay = null;
   function openPreCheckout(n) {
-    /* Only a staged bay can be un-staged. A blocked bay routes to WIP Rejection instead —
-       the queue no longer offers Unstage on one, so this guard is now a backstop rather
-       than the sole (and silent) enforcement it used to be. */
-    n = n || (bay2.state === "staged" ? 2 : bay1.state === "staged" ? 1 : null);
-    if (!n || bayOf(n).state !== "staged") return;
+    /* Only a staged, un-welded bay can be un-staged. A blocked bay routes to WIP Rejection and
+       a welded one cannot be released at all (WLD011, unspecified) — the queue no longer
+       offers Unstage on either, so this is a backstop rather than the sole enforcement.
+       NO POSITIONAL FALLBACK: the caller must name the bay. The old
+       `n || (bay2 staged ? 2 : bay1 staged ? 1 : null)` silently retargeted the action to the
+       other payoff whenever the caller omitted it, which the queue's Unstage always did. */
+    if (!n || bayOf(n).state !== "staged" || bayOf(n).isWelded) return;
     pcoBay = n;
     $("pco-sub").innerHTML = CURRENT_LINE + " &middot; <span class='mono'>" + bayOf(n).alpha +
                              "</span> &middot; Payoff " + n + " &middot; staged " + bayOf(n).stagedAt;
@@ -2397,7 +2584,10 @@
       $("pco-other-text").focus();
       return;
     }
-    var n = pcoBay || 2;
+    /* No `|| 2` default — the dialog is always opened against a named bay, and defaulting here
+       would re-introduce the wrong-bay release that openPreCheckout() no longer allows. */
+    var n = pcoBay;
+    if (!n) return;
     var alpha = bayOf(n).alpha;
     var q = QUEUE.filter(function (x) { return x.alpha === alpha; })[0];
     /* Un-staging releases the actual position too — the rod was never processed, so it
@@ -2471,6 +2661,15 @@
     var v = $("scan-input").value.trim().toUpperCase();
     if (!v) return;
     $("scan-input").value = "";
+    /* Refuse out loud. The input stays enabled so the scan is *received* and can be answered;
+       a disabled input would swallow it and say nothing at all. */
+    if (stationFull()) {
+      $("queue-full-text").innerHTML =
+        "<span class='mono'>" + v + "</span> cannot be staged &mdash; both bays are occupied. " +
+        "Check in or un-stage a rod first.";
+      $("queue-full-note").classList.add("visible");
+      return;
+    }
     openPreCheckin(v);
   }
   $("btn-scan").addEventListener("click", doScan);

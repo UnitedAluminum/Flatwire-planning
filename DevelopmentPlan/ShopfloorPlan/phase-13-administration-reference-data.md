@@ -5,6 +5,14 @@
 
 ---
 
+**Project:** Flat Wire Mill Implementation
+**Last Updated:** 2026-07-30
+**Status:** Ready to build
+**Layer:** Full-stack vertical slice (admin)
+**Owner:** **FE + BE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Effort:** **209 h** (26.1 d) — FE 80 · BE 48 · DB 16 · RT 4 · QA 30 · BA 4 · cont. 27 · **Window:** W7 (Sep 28–30, **3** working days)
+**Scope call:** **Partly deferrable** — the Die Management screen + role-assignment UI are **ladder rung 5** (99 h recovered); the alloy lookup and machine tabs are not. Latest call: W6. ⚠ **Schema gap:** 8 h is costed for a **die inventory table that does not exist** in the `FlatWireDB` set (only the `Drawer` lookup and `DieChangeEvent` do) — raised in the model §8, not yet in the gaps register.
+
 *The admin surfaces that keep the platform running: alloy lookup, die management, machine config, roles.*
 
 ## Business Overview

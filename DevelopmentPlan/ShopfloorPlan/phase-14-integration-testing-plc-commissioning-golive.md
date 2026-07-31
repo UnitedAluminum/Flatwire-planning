@@ -5,6 +5,14 @@
 
 ---
 
+**Project:** Flat Wire Mill Implementation
+**Last Updated:** 2026-07-30
+**Status:** Ready to build
+**Layer:** Integration, QA & commissioning
+**Owner:** **QA + BA** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Effort:** **267 h** (33.4 d) — QA 112 · RT 40 (PLC commissioning) · BA 40 (UAT) · FE 16 · BE 16 · DB 8 (defect allowance) · cont. 35 · **Window:** W7 (Sep 28–30, **3** working days)
+**Scope call:** **Not deferrable — but W7 cannot hold it.** 267 hours into 3 working days (72 person-hours available at 3 FTE), alongside Phases 12 and 13, is the single worst compression in the plan (W7 needs **27.2 FTE**). UAT and stakeholder sign-off cannot begin the day feature work completes. **Pull this into a dedicated post-feature-complete window regardless of team size** — model §7. The 20% QA uplift is not applied here because this phase *is* the QA phase; its QA days are explicit.
+
 *The convergence phase: three-route E2E, PLC commissioning support, UAT, trial, production.*
 
 ## Business Overview

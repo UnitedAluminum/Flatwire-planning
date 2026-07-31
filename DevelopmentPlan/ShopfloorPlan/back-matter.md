@@ -59,28 +59,34 @@ Phase 14 ──> requires all critical-path phases
 
 ## Phase-wise implementation roadmap (development window: 17 Aug → 30 Sep 2026, ~6.5 weeks)
 
-> **This window is aggressive** — 14 shopfloor phases (Phases 1–14; upstream rod receiving & planning/scheduling are out of shopfloor scope) in ~6.5 weeks only closes if the parallel streams below are staffed concurrently and the Critical OQs are resolved *before* their phase starts. If capacity is short, defer Phase 12 (Yield/Cost/Scrap) and non-Critical Phase-13 admin past 30 Sep (they are Medium/Low priority). See Gaps register G1.
+> **This window does not close as scoped — this is now arithmetic, not judgement.** 14 shopfloor phases (**1 platform + 13 workflow phases 2–14**; upstream rod receiving & planning/scheduling are out of shopfloor scope) total **3,727 hours** (465.9 dev-days) against **32 post-gate working days** (44 including the run-up to the Aug-14 gate, i.e. **352 h per person**). That is **10.6 people sustained**, a **10.7-FTE Phase-1 gate**, and an arithmetically impossible **27.2 FTE in W7**. The full descope ladder recovers only **12%** (448 h), leaving **9.3 FTE**. Deferring Phase 12 and non-Critical Phase-13 admin — the mitigation previously recorded here — is worth **276 h ≈ 0.8 FTE**, roughly an order of magnitude short. On a hands-on-keyboard reading (6.5 productive h/day) the requirement is **13.0 FTE**, not 10.6. See **[Capacity & Effort Model](../CapacityAndEffortModel.md)** for the per-phase derivation, the required-FTE-by-week table, the descope ladder, and the three options (staff up / move the date / cut scope). Gaps register **G1**.
 
-| Week | Dates | Phase(s) | Deliverable focus | Backlog |
-|---|---|---|---|---|
-| W1 | Aug 17–23 | **1** Core Platform (1A/1B/1C parallel) | Angular scaffold, FlatWire service, FlatWireDB schema, hub/OPC skeleton | E01 (FW-001–007), FW-004 |
-| W2 | Aug 24–30 | **2** Pass Schedule (start) · **3** real-time backbone (start) | Recipe library, hub streaming | E02, FW-080 |
-| W3 | Aug 31–Sep 6 | **2** (finish) · **3** Dashboard 1 live | Generate-from-Specs; line board | E02, FW-060 |
-| W4 | Sep 7–13 | **4** Rod Check-in **+ Pre-Check-in (DB2A)** · **5** Active Run + trace | PLC push + INFLAT; **`RodStaging` + payoff staging + `FL1PO`**; live gauge/width + DB13/14 | FW-061/062/081/082 |
-| W5 | Sep 14–20 | **6** In-run events · **7** WIP/Checkout · **8** FL2 spool (start) | Weld/die/SPC/roll/pause; rejection/checkout; spool check-in | FW-063/065/067/070/071/072/073, FW-064 |
-| W6 | Sep 21–27 | **8** (finish) · **9** Coil completion · **10** FL3 hybrid · **11** Shift/Reports | Historical profile; coil/label/skid; hybrid; shift + reports | FW-066/100, FW-122, FW-069/090–095 |
-| W7 | Sep 28–30 | **12** Yield/Cost/Scrap · **13** Admin · **14** Integration/UAT | Yield/cost/scrap*; admin; 3-route E2E + UAT/sign-off | FW-101/102*/110*, FW-120–123 |
+**Working days are counted, not assumed:** **Labor Day falls on Mon 7 Sep 2026** (inside W4) and W7 holds only 3 days. Per-phase effort and owner live in each phase file's doc-control block and in the [roadmap nav table](../ShopfloorAndRealTimePlan.md#roadmap-navigation).
 
-\* Medium/Low priority — first candidates to slip past 30 Sep if the window tightens.
+| Week | Dates | Wk days | Cap/person | Phase(s) | Hours | Peak FTE | Deliverable focus | Backlog |
+|---|---|---|---|---|---|---|---|---|
+| **W0** | to **Aug 14** | 12 | 96 h | **1** Core Platform (1A/1B/1C parallel) — **hard gate** | 1,027 | **10.7** | Angular scaffold, FlatWire service, FlatWireDB schema, hub/OPC skeleton | E01 (FW-001–007), FW-004 |
+| W1 | Aug 17–21 | 5 | 40 h | **1** completion / carry-over | — | 0.0 | *the only slack in the plan — the whole recovery budget* | — |
+| W2 | Aug 24–28 | 5 | 40 h | **2** Pass Schedule (start) · **3** real-time backbone (start) | 211 | 5.3 | Recipe library, hub streaming | E02, FW-080 |
+| W3 | Aug 31–Sep 4 | 5 | 40 h | **2** (finish) · **3** Dashboard 1 live | 210 | 5.3 | Generate-from-Specs; line board | E02, FW-060 |
+| W4 | Sep 8–11 | **4** | **32 h** | **4** Rod Check-in **+ Pre-Check-in (DB2A)** · **5** Active Run + trace | 476 | **14.9** | PLC push + INFLAT; **`RodStaging` + payoff staging + `FL1PO`**; live gauge/width + DB13/14 | FW-061/062/081/082 |
+| W5 | Sep 14–18 | 5 | 40 h | **6** In-run events · **7** WIP/Checkout · **8** FL2 spool (start) | 562 | **14.1** | Weld/die/SPC/roll/pause; rejection/checkout; spool check-in | FW-063/065/067/070/071/072/073, FW-064 |
+| W6 | Sep 21–25 | 5 | 40 h | **8** (finish) · **9** Coil completion · **10** FL3 hybrid · **11** Shift/Reports | 588 | **14.7** | Historical profile; coil/label/skid; hybrid; shift + reports | FW-066/100, FW-122, FW-069/090–095 |
+| W7 | Sep 28–30 | **3** | **24 h** | **12** Yield/Cost/Scrap · **13** Admin · **14** Integration/UAT | 653 | **27.2** | Yield/cost/scrap*; admin; 3-route E2E + UAT/sign-off | FW-101/102*/110*, FW-120–123 |
+
+\* Medium/Low priority — rungs 1–4 of the descope ladder; see the model §5 for the full ordered ladder, what each rung costs the business, and the latest date each call can be made.
+
+**W4 loses Labor Day; W7 is 3 days.** Post-gate total **32 working days** (256 h/person); whole window **44** = **352 h/person**. **W7 cannot hold Phase 14** — UAT and stakeholder sign-off cannot start the same day feature work completes, at any team size.
 
 ## Development milestones
-- **M1 (Aug 23):** platform ready — scaffolded UI ↔ stubbed service ↔ created schema ↔ simulated hub.
+- **M1 (Aug 14):** platform ready — scaffolded UI ↔ stubbed service ↔ created schema ↔ simulated hub. **Hard gate** (user mandate; supersedes the earlier M1 of Aug 23, per `REVIEW.md` #31). Also the **calibration checkpoint** for the effort model — record Phase 1 actual hours vs the **370 / 442 / 215 h** estimates and restate the rate card.
 - **M2 (Sep 6):** Pass Schedule Active-able; Dashboard 1 live (upstream rod receiving & planning/scheduling assumed available on the existing systems).
 - **M3 (Sep 13):** first full FL1 slice live — check-in → PLC push (simulate) → live trace.
 - **M4 (Sep 20–27):** FL1 + FL2 complete a coil with traceability and label; FL3 hybrid + reporting.
 - **M5 (Sep 30):** critical-path feature-complete; ready for UAT/sign-off.
 
 ## QA milestones
+- **QA0 (Aug 14):** Phase-1 gate suites green — Jest smoke (1A), xUnit + stub-fixture + validator suites (1B), DDL/seed idempotency + 22-table post-run checks (1C). Re-baselined to the Aug-14 gate per `REVIEW.md` #31.
 - **QA1 (Sep 6):** Pass Schedule + generator unit/contract suites green.
 - **QA2 (Sep 13):** check-in rollback + real-time integration verified on staging; hub load test (N clients × 3 lines × cadence).
 - **QA3 (Sep 24):** FL1 + FL2 E2E (FW-120/121) pass.
@@ -103,7 +109,9 @@ Phase 14 ──> requires all critical-path phases
 | FW-001 column renames break existing reports | Medium | High | Full query/SP/view audit before migration; regression at QA4 |
 | OQ-36 (footage→weight) unresolved | Medium | High | Dashboard 7 shows "pending confirmation" + operator override; table-driven factor |
 | SignalR drops on shop-floor network | Medium | Medium | Auto-reconnect + group re-join; PWA cache; "Reconnecting…" banner |
-| 6.5-week window (Aug 17–Sep 30) / scope creep | High | High | Parallel streams; critical path only; defer Medium/Low (yield/cost/scrap, non-critical admin) past Sep 30 — see G1 |
+| **6.5-week window (Aug 17–Sep 30) is 3,727 hours against 32 post-gate working days** | **Certain** (measured, not forecast) | **Critical** | Not mitigable by parallelism or descoping: the full ladder recovers 12% (448 h, leaving 9.3 FTE), and deferring Phase 12 + non-critical 13 is worth 276 h ≈ 0.8 FTE against a 10.6-FTE requirement. Requires a programme decision — staff to ~11 FTE, move the date (6 FTE → 18 Nov; 8 FTE → 22 Oct, both inside the planned Q4 window), or cut scope below the critical path. See [Capacity & Effort Model](../CapacityAndEffortModel.md) §5–§7 and G1 |
+| Phase-1 gate (Aug 14) needs 1,027 h — 10.7 FTE across 12 working days (96 h/person) | High | **Critical** | 1A/1B/1C genuinely parallelise, so this is headcount not sequencing. Decide staffing or cut Phase-1 scope before the gate; the model calibrates on Phase 1 actuals (model §6) |
+| UAT + sign-off share W7 (3 days) with Phase 12/13 feature work | High | High | Pull Phase 14 UAT into a dedicated post-feature-complete window whichever date that lands on — independent of team size (model §7) |
 | Touch-screen usability | Medium | Medium | Mockups for early user testing; UAT at Phase 14 start |
 | Alpha-naming inconsistency (`R#####` vs `ROD-#####`) | Low | Medium | Normalize to `R#####` before the upstream rod-receiving build |
 
@@ -113,7 +121,7 @@ Consolidated review findings, prioritised. **Critical** items should be resolved
 
 | ID | Gap / Issue | Area | Priority | Impact if unaddressed | Recommended resolution | Status |
 |---|---|---|---|---|---|---|
-| **G1** | 14 phases in a ~6.5-week window (Aug 17–Sep 30) with no capacity/effort model | Planning | **Critical** | Phases miss Sep 30; silent scope loss | Staff the parallel streams; add per-phase owners + effort; defer Phase 12 & non-critical 13 past Sep 30 | Open — window set; compression risk remains |
+| **G1** | 14 phases (1 platform + 13 workflow phases 2–14) in a ~6.5-week window (Aug 17–Sep 30) with no capacity/effort model | Planning | **Critical** | Phases miss Sep 30; silent scope loss | Delivered: **[`CapacityAndEffortModel.md`](../CapacityAndEffortModel.md)** — six delivery streams + roster, a published unit-rate card, per-phase effort **in hours** for all 17 phase specs (**3,727 h**), a working-day capacity model, an ordered descope ladder, and a calibration checkpoint at the Aug-14 gate. Per-phase **Owner** + **Effort** stamped on every phase file (also closes `REVIEW.md` #53) and surfaced in the roadmap nav table; week grid re-baselined to W0/Aug-14 with Labor Day deducted (closes `REVIEW.md` #31) | ✅ **Resolved (Jul 30 2026) for the model — but the finding is worse than the gap stated.** The plan is **3,727 hours against 32 post-gate working days (44 total = 352 h/person)** = **10.6 FTE sustained**, a **10.7-FTE Phase-1 gate**, and an impossible **27.2 FTE in W7**. G1's own recommended mitigation (defer Phase 12 + non-critical 13) is worth **276 h ≈ 0.8 FTE**; the *full* descope ladder recovers only **12%** (448 h), leaving 9.3 FTE. **Two residuals: (1)** the §1 roster is unfilled, so required-vs-available FTE cannot be computed — programme management must complete it; **(2)** the 30 Sep date now requires an explicit decision (staff to ~11 FTE / move the date / cut below critical path — model §7). The escalation, not the model, is the open item |
 | **G2** | Check-in spans `FlatWireDB` (run/checkin/SPC) + existing `coils` `INFLAT` + PLC push — **not one ACID transaction** | Architecture / Data | **Critical** | Partial failure → inconsistent state; "atomic rollback" claim invalid | Saga/outbox + compensating PLC clear; or mirror an `INFLAT` marker into `FlatWireDB`; define incomplete-push recovery | Open |
 | **G3** | No table persists raw AGC gauge/width readings, yet FL2 historical profile + Gauge Trace / Cut Traceability reports require them | Data / Schema | **Critical** | FL2 profile + reports have no data source | Add a time-series `RunReading` table (footage, gauge, width, ts, in-spec) + retention/rollup; make it a Phase 1/3 deliverable | Open |
 | **G4** | Story→phase coverage not provable | Traceability | High | Backlog items silently dropped | Added **Appendix C** (all 58 FW-### → phase + deferred flag) | ✅ Resolved |
@@ -132,6 +140,7 @@ Consolidated review findings, prioritised. **Critical** items should be resolved
 | **G15** | No executive summary / 11-stage→phase map | Doc usability | Low | Hard to skim a ~1,250-line doc | Add a one-screen exec summary + process-stage→phase table | Open |
 | **G19** | **Pre-check-in was fully specified in the SRS but absent from every other artifact.** `SRS §4.2 PCI001`–`PCI008` (+ `WLD010`, `TRV004`/`TRV009`, §4.18 `PRC001`–`PRC019`) define a dedicated FL1 Pre-Check-In station, yet there was no analysis note, no mockup, no data model, no API, no phase owner — and `CommonDB_Insert_WIPStations_FlatWire.sql` D2 **deliberately declined to create the station**. Root cause: `.docx` files are zip containers, so `grep` never reached the requirements; every markdown search for "pre-checkin" returned hits about the *forbidden* `checkin-precheckin` Angular library instead | Requirements / Traceability | High | A `Should`-priority feature that the continuous-feed workflow depends on would have been missed entirely; the Phase-3 "Payoff2 not loaded" alert stays unimplementable | Delivered: `Analysis/RodPreCheckin.md`, Dashboard 2A mockup, `RodStaging` table, `/staging/**` endpoints, `PayoffStateChanged`, `FL1PO` station, Phase 4 scope addition | ✅ Resolved (Jul 29 2026) — **but** two items still need business sign-off: `INFLAT`-vs-`STAGED` on staging, and whether pre-check-out needs supervisor approval |
 | **G20** | Payoff position modelled **three incompatible ways**: `INT CHECK (1,2)` on rod-fed tables, an FK-style `PayoffPositionId` in `FlatWireRunDetail` pointing at a **table that did not exist**, and the API enum `{Payoff1,Payoff2}` — with FL2's traversing take-up unrepresented (`REVIEW.md` #15) | Data / Schema | Medium | Unenforced FK; no vocabulary for FL2's take-up; "payoff 3" has no meaning | Added the `PayoffPosition` lookup (3 **pinned** Ids: Payoff1, Payoff2, TraversingTakeup) and the real FK on `FlatWireRunDetail`. Rod-fed tables keep `CHECK (1,2)` as a *documented deliberate narrowing* | ✅ Resolved for the data model — `REVIEW.md` #15 stays **partly open**: `TraversingTakeup` has no UI |
+| **G21** | **`UX_RodStaging_Bay` does not enforce "one rod per payoff bay" across FL1/FL3.** The filtered unique index is keyed `(LineId, PayoffPosition) WHERE Status = 'Staged'` and `CK_RodStaging_LineId` admits **both** `FL1` and `FL3` — so `(FL1,1)` and `(FL3,1)` are distinct entries. Everything in the design assumes the two lines share **one physical VPS** (`STATION_BY_LINE = {FL1:"FL1PO", FL3:"FL1PO"}` in Dashboard 2A; only `FL1PO` is seeded, no `FL3PO` — G19/Q73), so **two different rods can be `Staged` on the same physical bay with every constraint satisfied**. Distinct from G20, which settled the payoff-position *vocabulary*, not its *uniqueness scope* | Data / Schema | **High** | The invariant the table exists to defend does not hold; weld genealogy attributes output to whichever row a query picks | Answer **Q76** first — the fix is opposite depending on the answer. One station → key the index on the station (`FL1PO`) or a persisted station column. Two stations → seed `FL3PO` and the index is already correct. **Blocks the Phase-4 schema freeze** | Open — raised Jul 31 2026 from the [Dashboard 2A UX review](../../Analysis/Dashboard2A_UXReview.md) |
 | **G18** | Source docs (CLAUDE.md / CheckinImplementationPrompt) describe a `--fw-*` design system, but the actual mockups **and** `flat-wire-shopfloor.styles.scss/.css` use `--color-*` semantic tokens (no `--fw-*` anywhere); separately, DB2 was revised to the tab-wizard `- New.html` | UI / Design | Medium | Devs following the stale `--fw-*` docs build wrong token names; DB2 UI must follow the new layout | Correct `--fw-*` → `--color-*` in the source docs; build against the shared `--color-*` stylesheet as-is (no migration needed); ground every dashboard UI section in its `Mockups/*.html`; DB2 = `- New.html` tab-wizard; a new-layout FL3 check-in variant to follow | Open |
 
 ## Future enhancements (Phase 2 / post-go-live)
@@ -239,8 +248,9 @@ Every shopfloor backlog story is mapped to a phase, so coverage is provable. Rod
 ## Related Documents
 | Document | Purpose |
 |---|---|
+| [CapacityAndEffortModel.md](../CapacityAndEffortModel.md) | **Per-phase owners + dev-day effort, working-day capacity model, descope ladder (resolves G1)** |
 | [APIContracts.md](../APIContracts.md) | `FlatWire.API` REST + `FlatWireHub` contract |
-| [FlatWireJiraStories.md](../FlatWireJiraStories.md) | Full backlog (12 epics / 58 stories) |
+| [FlatWireJiraStories.md](../FlatWireJiraStories.md) | Full backlog (12 epics / 58 stories) — the 184-point cross-check basis; **not** a schedule |
 | [FlatWireTables.md](../FlatWireTables.md) | Table designs + existing-table renames |
 | [Schema/SQL/FlatWire_ERDiagram_Documentation.md](../Schema/SQL/FlatWire_ERDiagram_Documentation.md) | Source ERD (22 tables → **21** once `Rod` is dropped per G12) |
 | [../Analysis/FlatWireShopfloorDashboards.md](../../Analysis/FlatWireShopfloorDashboards.md) | Screen specs (DB1–14) |

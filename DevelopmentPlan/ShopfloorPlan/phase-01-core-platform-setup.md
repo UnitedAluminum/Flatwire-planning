@@ -5,6 +5,20 @@
 
 ---
 
+**Project:** Flat Wire Mill Implementation
+**Last Updated:** 2026-07-30
+**Status:** Ready to build
+**Layer:** Angular + .NET + SQL Server (the only layer-organised phase)
+**Owner:** **FE** (1A) · **BE + RT** (1B) · **DB** (1C) — *named owners TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Effort:** **1,027 h** (128.4 d) roll-up — 1A **370 h** · 1B **442 h** · 1C **215 h** · **Window:** W0 (to Aug 14, 12 working days = 96 h/person)
+
+> ### ⚠ Capacity warning
+> 1,027 hours in 12 working days — 96 h per person — requires **10.7 FTE**. 1A/1B/1C genuinely parallelise, so this is a **headcount** problem, not a sequencing one. Either staff to it or cut Phase-1 scope **before** the gate — see [Capacity & Effort Model](../CapacityAndEffortModel.md) §4 and §7. This phase is also the model's **calibration checkpoint** (§6): record actual hours against the three estimates (370 / 442 / 215 h) and restate the rate card.
+>
+> Note that epic **E01 (7 stories / 28 points) is entirely database work** — there is no backlog story covering the Angular library scaffold, the `FlatWire` .NET solution and its 13 controllers, or the OPC ingest and `PLCTagService`. That omission is the main reason this phase was believed to fit.
+
+---
+
 **Objective:** stand up a reusable Angular + .NET + SQL Server platform so that every workflow phase is pure feature work with no further infrastructure lift. This is the only layer-organised phase.
 **Backlog coverage:** FW-001, FW-002, FW-004, FW-005, FW-006, FW-007 (Epic 1 Foundation) + the scaffold portions of FW-080/FW-082 (SignalR/OPC skeletons).
 **Exit condition:** an authenticated, routable `flat-wire-shopfloor` Angular library talking (via mock and real toggles) to a running `FlatWire` .NET microservice, whose EF/Dapper layer targets the fully-created `FlatWireDB` schema, with a `FlatWireHub` skeleton streaming simulated data.

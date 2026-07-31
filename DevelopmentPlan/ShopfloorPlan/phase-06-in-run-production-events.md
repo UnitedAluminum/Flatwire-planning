@@ -5,6 +5,14 @@
 
 ---
 
+**Project:** Flat Wire Mill Implementation
+**Last Updated:** 2026-07-30
+**Status:** Ready to build
+**Layer:** Full-stack vertical slice
+**Owner:** **FE + BE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Effort:** **298 h** (37.2 d) — FE 120 · BE 56 · DB 20 · RT 20 · QA 43 · cont. 39 · **Window:** W5 (Sep 14–18, 5 working days)
+**Scope call:** **Not deferrable.** The **largest workflow phase** — 4 full dashboards + 2 dialogs + 6 endpoints + 5 write tables. The five events parallelise by feature once Phase 5 exists.
+
 *Every transaction an operator logs mid-run without ending the run. Grouped because they share the active-run context and the SPC/PLC/override plumbing.*
 
 ## Business Overview

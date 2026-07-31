@@ -5,6 +5,14 @@
 
 ---
 
+**Project:** Flat Wire Mill Implementation
+**Last Updated:** 2026-07-30
+**Status:** Ready to build
+**Layer:** Full-stack vertical slice (mostly reuse)
+**Owner:** **BE + FE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Effort:** **61 h** (7.6 d) — FE 12 · BE 20 · DB 4 · RT 8 · QA 9 · cont. 8 · **Window:** W6 (Sep 21–25, 5 working days)
+**Scope call:** **Not deferrable — FL3 is one of the three production routes.** The **cheapest phase in the plan** because it reuses Phases 4–6 and 9 behind mode flags; only the FL3 screen variants and the single-batch hybrid push are new. The FL3 E2E (FW-122) is costed in Phase 14, not here.
+
 *Validating the most complex route: FL1 feeds FL2 continuously with a single acknowledgment, no intermediate spool, continuous real-time trace.*
 
 ## Business Overview

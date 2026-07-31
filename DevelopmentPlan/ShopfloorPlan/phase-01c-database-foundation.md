@@ -7,9 +7,11 @@
 ---
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-07-26
+**Last Updated:** 2026-07-30
 **Status:** Ready to build
 **Layer:** SQL Server (`ual-database`)
+**Owner:** **DB** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Effort:** **215 h** (26.9 d) — DB 156 · QA 31 · cont. 28 · **Window:** W0 (to Aug 14, 12 working days = 96 h/person) · includes a discrete **40 h FW-001 impact audit** across `united_db` + the legacy tier — see model §2
 
 > ### ⏱ Due: **14 Aug 2026** (Phase-1 gate)
 > Phase 1 must be complete by **14 Aug 2026** (user mandate; supersedes the roadmap's W1 = Aug 17–23). The DDL already exists in `Schema/SQL/`; this layer's job is to **retarget, harden, seed, and wire** it so 1B's `FlatWireDbContext` maps cleanly and 1A's fixtures are backed by real rows. **FW-001 column renames touch the existing shared scheduling schema — high blast radius; front-load the impact audit.**

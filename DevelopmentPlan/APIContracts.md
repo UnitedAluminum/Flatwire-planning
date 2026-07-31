@@ -1,7 +1,7 @@
 # Flat Wire Mill — API Development Plan & Contracts
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 29, 2026 (pre-check-in APIs added; body otherwise April 30, 2026 — see `REVIEW.md`)
+**Last Updated:** July 31, 2026 (staging failed-inspection response changed; body otherwise April 30, 2026 — see `REVIEW.md`)
 **Document Type:** API Contract Reference
 **Microservice:** `FlatWire.API` (new service in `ual-api`)
 **Base URL:** `/api/v1/flatwire`
@@ -919,6 +919,40 @@ Include only the deviation objects that apply, and omit `supervisorOverride` ent
 }
 ```
 
+### Failed inspection — `201 Created` with `state: "Blocked"`, not `422`
+
+**Changed Jul 31 2026.** A `Fail` on any of the three inspection items previously returned `422`
+and wrote **nothing**. That was wrong about the physical situation: bundles are not unbanded until
+they are positioned at the payoff (which is *why* the visual inspection happens at staging), so a
+rod that fails inspection is **already on the bay**. Writing no row left `GET /payoff/status`
+reporting `NotStaged` for an occupied position, Dashboard 2A offering that bay as "Empty —
+available", and the next rod stageable into it. It also made the `Blocked` bay state — implemented
+across the API enum, the schema and the whole of Dashboard 2A — unreachable in practice.
+
+Staging therefore **commits the row before the inspection gate**:
+
+1. `RodStaging` row inserted with `Status = 'Staged'` and the failing inspection column(s) `= 'Fail'`
+   (`InspectionNotes` required — the observation is what WIP Rejection consumes)
+2. Response `201 Created`, body as above but `"state": "Blocked"`, plus the routing hint
+   `{ "route": "wipRejection", "rodAlpha": "…" }`
+3. `PayoffStateChanged` broadcast so the bay shows as occupied-and-blocked
+4. **No PLC write** (unchanged — nothing is pushed until check-in acknowledgement)
+
+**`CHK010` is unchanged.** The rod still cannot proceed, the only forward path is still WIP
+Rejection, and there is still **no override**. What changed is that the bay stays occupied *in the
+record* — not that a failed bundle can be run.
+
+> **Open — what releases a blocked row.** `Status` has only `Staged | CheckedIn | Unstaged`, and
+> `CK_RodStaging_Unstaged` ties `Unstaged` to the pre-check-out column group, so a WIP-rejection
+> outcome has no status to land in. Adding `Rejected` would change the vocabulary, the constraint
+> and the filtered index together, so it is **not** invented here. Until this is answered a blocked
+> bay is enterable but not clearable. See the Q72 residual in `FlatWireSchema_Runs.md`.
+>
+> **Two untraced consequences**, recorded rather than resolved: `RodStaging` now holds rows for
+> material that was never accepted, which affects the **`TRV009`** traveler (is `Blocked` a third
+> class alongside pre-checked-in and welded?); and the **`Available`** projection must exclude rods
+> sitting blocked, or a rejected bundle reappears as stageable.
+
 **Error responses:**
 
 | Status | Condition |
@@ -927,7 +961,7 @@ Include only the deviation objects that apply, and omit `supervisorOverride` ent
 | `409 Conflict` | Rod already staged on another bay — `UX_RodStaging_RodActive` violation |
 | `409 Conflict` | Rod is already checked in on a line (`CHK009`) |
 | `422 Unprocessable Entity` | `lineId` is `FL2` — pre-check-in is not supported there (`PCI002`) |
-| `422 Unprocessable Entity` | Any inspection item is `Fail`. Response includes `{ "route": "wipRejection", "rodAlpha": "…" }`. **Hard block, no override** (`CHK010`) |
+| ~~`422 Unprocessable Entity`~~ | ~~Any inspection item is `Fail`~~ — **superseded Jul 31 2026**: now `201 Created` with `state: "Blocked"`, see the section above. Still a hard block with no override (`CHK010`); the row is committed so the bay is not falsely reported free |
 | `422 Unprocessable Entity` | `footageRunToDate > 0` and `acknowledgedCarryForward` is `false` (`PRC007`) |
 | `422 Unprocessable Entity` | Measured diameter outside nominal ± lookup tolerance (`CHK007`) |
 | `404 Not Found` | Rod alpha not found in the coils table |
@@ -2122,5 +2156,6 @@ alertCleared$(lineId: string): Observable<AlertClearedEvent>
 
 | Date | Change |
 |---|---|
+| July 31, 2026 | **Failed staging inspection now returns `201 Created` with `state: "Blocked"`, not `422`.** The old behaviour wrote no row at all, so a bundle that failed inspection — already physically on the payoff, since bundles are not unbanded until positioned there — left `GET /payoff/status` reporting the occupied bay as `NotStaged`, Dashboard 2A offering it as "Empty — available", and the next rod stageable into it. It also made the `Blocked` state unreachable despite being implemented across the API enum, the schema and the whole of Dashboard 2A. Staging now commits the row before the inspection gate. `CHK010` is unchanged — no bypass, WIP Rejection is still the only forward path. Closes **Q72** items 1–2; item 3 (*what releases a blocked row*) is the blocking residual, and two consequences are recorded but untraced (`TRV009` traveler class, `Available` projection exclusion). From the [Dashboard 2A UX review](../Analysis/Dashboard2A_UXReview.md) finding F2. |
 | July 29, 2026 | Added the **Pre-Check-in / Payoff Staging** section: `GET /payoff/status`, `POST /staging/rod`, `POST /staging/rod/unstage`, `POST /staging/rod/mark-welded`, `GET /staging/queue`, plus the `PayoffStateChanged` hub event and `PayoffStagingController`. Extended `GET /rod/{alpha}` with `footageRunToDate`, `remainingWeightEstimateLb`, `stagedPayoffPosition`, `isWelded` — without them the `PRC007` carry-forward gate cannot be enforced. Documented check-in *consuming* the staged row. |
 | April 30, 2026 | Original contract set. **Known correctness bugs catalogued in `REVIEW.md` Tier 1** — notably #37 (`RodCheckin` NOT NULL columns the check-in command never sends), the `/passschedule/generate` worked example, a missing `CheckpointType` value, and three edge-type vocabularies. Cross-check before implementing. |

@@ -5,6 +5,14 @@
 
 ---
 
+**Project:** Flat Wire Mill Implementation
+**Last Updated:** 2026-07-30
+**Status:** Ready to build
+**Layer:** Full-stack vertical slice
+**Owner:** **FE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Effort:** **221 h** (27.6 d) — FE 116 · BE 12 · DB 8 · RT 24 · QA 32 · cont. 29 · **Window:** W4 (Sep 8–11, **4** working days — Labor Day Mon Sep 7)
+**Scope call:** **Partly deferrable** — DB13 HMI schematic + DB14 SCADA trends are **ladder rung 7** (67 h recovered); the DB3 run cockpit is not deferrable. Latest call: W4.
+
 *The continuously-displayed run cockpit — live streaming traces, payoff bars, machine status, action bar, and the Machine-View/SCADA extensions.*
 
 ## Business Overview

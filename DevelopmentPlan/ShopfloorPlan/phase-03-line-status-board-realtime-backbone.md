@@ -5,6 +5,14 @@
 
 ---
 
+**Project:** Flat Wire Mill Implementation
+**Last Updated:** 2026-07-30
+**Status:** Ready to build
+**Layer:** Full-stack vertical slice + real-time backbone
+**Owner:** **RT + FE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Effort:** **190 h** (23.8 d) — FE 64 · BE 16 · DB 4 · RT 40 · QA 41 · cont. 25 · **Window:** W2–W3 (Aug 24–Sep 4, 10 working days)
+**Scope call:** **Not deferrable.** Includes a discrete **16 h hub load test whose pass criteria do not exist** — the NFRs (AGC sample rate, concurrent clients, latency budget, `RunReading` retention) are undefined (G9 / OI-34). Any resulting real-time rework is **not** in this estimate.
+
 *First live end-to-end slice: OPC → FlatWireHub → Dashboard 1. Establishes the real-time spine every later shopfloor phase consumes.*
 
 ## Business Overview

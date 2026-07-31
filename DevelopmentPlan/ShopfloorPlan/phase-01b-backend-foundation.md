@@ -7,9 +7,11 @@
 ---
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-07-26
+**Last Updated:** 2026-07-30
 **Status:** Ready to build
 **Layer:** .NET 8 microservice (`ual-api`)
+**Owner:** **BE + RT** (streams) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Effort:** **442 h** (55.2 d) — BE 208 · RT 112 · QA 64 · cont. 58 · **Window:** W0 (to Aug 14, 12 working days = 96 h/person) · ⚠ **the largest single layer in the plan; needs 4.6 FTE** — see model §4
 
 > ### ⏱ Due: **14 Aug 2026** (Phase-1 gate)
 > Phase 1 must be complete by **14 Aug 2026** (user mandate; supersedes the roadmap's W1 = Aug 17–23). 1A/1B/1C run **in parallel**; 1B ships **stub** endpoints returning schema-valid fixtures first so 1A can build against the real service early, and wires the real repositories to 1C's `FlatWireDB` as the schema lands.
