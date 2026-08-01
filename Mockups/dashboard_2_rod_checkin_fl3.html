@@ -3,6 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1280, initial-scale=1">
+<!-- ══════════════════════════════════════════════════════════════════════════════════
+     STATION SELECTION IS AUTOMATIC (client decision, 30 Jul 2026 — Q74).
+     A rod whose order is booked on the OTHER rod line does not raise a message and does not
+     need a supervisor: the system SELECTS THE CORRECT STATION and the transaction continues.
+     If the rod is planned for FL3 and the operator is on the FL1 tab, the screen switches to
+     FL3. Identical behaviour at pre-check-in (Dashboard 2A) and here at check-in.
+       The client's phrasing was explicit: "No blocking message."
+       Implementation: read `scheduledLineId` from GET /rod/{alpha} at the scan; if it differs
+     from the line on screen, switch. A POST that still arrives with the wrong lineId returns
+     409 WRONG_STATION carrying `correctLineId`, and the client switches and re-posts.
+       SUPERSEDED: the earlier design notified the operator and required a supervisor override,
+     recorded on RodStaging.OffScheduleOverride / ScheduledLineId. Those columns are dropped.
+       NOT YET IMPLEMENTED IN THIS MOCKUP — this screen is single-line (FL1) with no station
+     toggle, so there is nothing here to switch. Dashboard 2A carries the working version.
+       OPEN: what a part-completed wizard does when the station changes under it (this screen
+     is a 6-step wizard, so it is the sharper case), and whether an order scheduled on NEITHER
+     rod line is permitted at all — there is no station to switch to (Q78, still open).
+     ══════════════════════════════════════════════════════════════════════════════════ -->
 <title>FL3 rod check-in · FW-00422</title>
 <link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
 <style>

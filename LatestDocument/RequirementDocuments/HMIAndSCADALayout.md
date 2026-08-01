@@ -436,11 +436,11 @@ Dashboard 14 ──[← Active Run]───────────────
 
 | Document | Purpose |
 |----------|---------|
-| [FlatWireShopfloorDashboards.md](FlatWireShopfloorDashboards.md) | Full shopfloor dashboard inventory — all 14 screens |
-| [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) | Open questions register — OQ-4 resolved by this document |
-| [ShopfloorAndRealTimePlan.md](../DevelopmentPlan/ShopfloorAndRealTimePlan.md) | Sprint plan — SignalR hub, PLC tag service |
-| [APIContracts.md](../DevelopmentPlan/APIContracts.md) | API and SignalR event contracts |
-| [TechStackRecommendation.md](../DevelopmentPlan/TechStackRecommendation.md) | Stack decisions — Chart.js, SignalR, Angular |
+| [FlatWireShopfloorDashboards.md](../../Analysis/FlatWireShopfloorDashboards.md) | Full shopfloor dashboard inventory — all 14 screens |
+| [FlatWireOpenQuestions.md](../../Analysis/FlatWireOpenQuestions.md) | Open questions register — OQ-4 resolved by this document |
+| [ShopfloorAndRealTimePlan.md](../../DevelopmentPlan/ShopfloorAndRealTimePlan.md) | Sprint plan — SignalR hub, PLC tag service |
+| [APIContracts.md](../../DevelopmentPlan/APIContracts.md) | API and SignalR event contracts |
+| [TechStackRecommendation.md](../../DevelopmentPlan/TechStackRecommendation.md) | Stack decisions — Chart.js, SignalR, Angular |
 
 ---
 

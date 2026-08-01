@@ -85,3 +85,13 @@ sequenceDiagram
 Dashboard 7 + packing station; `CoilController` + completion/label services; traceability build; footage→weight; skid rule.
 
 **OQ blockers:** OQ-36 (footage→weight — Critical), OQ-16 (skid labeling), OQ-31 (coil OD/ID limits), OQ-54 (schedule snapshot on coil — decided). **Stories:** FW-066, FW-100 (weight).
+
+---
+
+## Client answers of 30 Jul 2026
+
+**Finished-coil weight is bounded by the customer's range, not by a system default.** The customer specifies a **min/max weight** on the order (example figures: 900 lb max / 800 lb min) and a coil is graded against it **by weight**. The **2,000 lb default target is withdrawn** — it exceeded the TKUP-2 ceiling of 1,100 lb and had no basis (**OQ-60**). Two finished coils are cut from one ~1,800 lb spool, which is where the ~900 lb figure comes from.
+
+**A coil finished outside the customer range must be flagged**, not silently completed: **supervisor override + production hold**, or an **offer to the customer under concession** before a remake is planned — offer first (**OQ-65**). On FL2 the alternative for leftover material is to run it to a finished stop and offer it, or scrap it.
+
+**Mid-run coil break:** the stop is removed and a **new stop starts from zero**; accumulated weight does not resume from the break point. Check this against `CoilOutput` accumulation and `CoilTraceability`'s coil-local footage before building — the two footage coordinate systems are still unreconciled (**OI-25**).

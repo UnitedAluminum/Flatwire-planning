@@ -20,7 +20,7 @@ Core reference data used throughout the system:
 | **Drawer** | Draw box die configurations (DB1, DB2) | Id (PK), Name, DiameterIn (output wire size), MinDiameterIn, MaxDiameterIn, IsActive |
 | **Edger** | Edger tooling configurations (Round/Square edge profiles) | Id (PK), Name (UK), EdgeType (Round\|Square), ToolingSetNo, IsActive |
 | **SpoolConfiguration** | Spool type definitions with weight/diameter constraints | Id (PK), Name (UK), MinWeightLb, MaxWeightLb, MinCoreDiameterIn, MaxCoreDiameterIn, MinOuterDiameterIn, MaxOuterDiameterIn, IsActive |
-| **AlloyProperty** | Per-alloy process properties (generator inputs + footage→weight factor) | Id (PK), Alloy (UK), MaxReductionPerPass, SpringbackFactor, GaugeToleranceDefault, WidthToleranceDefault, SpeedRangeMin/MaxFpm, LbPerFtFactor, DensityLbPerIn3, IsWeldingWire, IsActive |
+| **AlloyProperty** | Per-alloy process properties (generator inputs + footage→weight factor) | Id (PK), Alloy (UK), MaxReductionPerPass, SpringbackFactor, GaugeTolerance Minus/PlusIn, WidthTolerance Minus/PlusIn, RodDiameterTolerance Minus/PlusIn (NULL until the values arrive), RodOvalityMaxIn, SpeedRangeMin/MaxFpm, LbPerFtFactor, DensityLbPerIn3, IsWeldingWire, IsActive |
 | **PayoffPosition** | Material input positions. Gives `FlatWireRunDetail.PayoffPositionId` a real parent — it was previously an FK-style INT with no table (REVIEW.md #15). Seeded with three pinned rows: the dual VPS bays used by FL1/FL3 plus FL2's traversing take-up | Id (PK, **pinned** 1\|2\|3 — not IDENTITY), Code (UK: Payoff1\|Payoff2\|TraversingTakeup), DisplayName, Equipment (VPS\|TraversingTakeup), MaxWeightLb, IsRodFed, IsActive |
 
 ---
@@ -65,7 +65,7 @@ Capture all run events and modifications:
 | Table | Purpose | Key Relationships |
 |-------|---------|-------------------|
 | **FlatWireRunDetail** | Per-stop detail rows with footage & dimension readings | FK → FlatWireRun, **PayoffPosition** |
-| **RodStaging** | **Pre-check-in**: the next rod registered against a VPS bay while the current coil still runs (SRS §4.2 PCI001–PCI008). Carries RodSeqno, IsWelded (WLD010), 3-item inspection, carry-forward evidence, and the un-stage audit. Status `Staged → CheckedIn` \| `Unstaged`. FL1/FL3 only — PCI002 excludes FL2 | FK → Rod, PayoffPosition, RodCheckin; two **filtered unique** indexes enforce one rod per bay and one bay per rod |
+| **RodStaging** | **Pre-check-in**: the next rod registered against a VPS bay while the current coil still runs (SRS §4.2 PCI001–PCI008). Carries RodSeqno, IsWelded (WLD010), 3-item inspection, carry-forward evidence, and the release audit. Status `Staged → CheckedIn` \| `Unstaged`, where `Unstaged` has **two routes** distinguished by `UnstageKind`: a pre-check-out, or a **WIP rejection** after a failed staging inspection. FL1/FL3 only — PCI002 excludes FL2 | FK → Rod, PayoffPosition, RodCheckin, **WipRejection**; two **filtered unique** indexes enforce one rod per bay and one bay per rod |
 | **RodCheckin** | Rod check-in event + pre-run SPC measurements (FL1, FL2, FL3) | FK → FlatWireRun, Rod, PassSchedule |
 | **SpoolCheckin** | Spool check-in event for hybrid route (FL2, FL3 only) | FK → FlatWireRun, Spool, PassSchedule |
 | **RunPauseEvent** | Pause/resume cycles with reason codes & outcomes | FK → FlatWireRun; Active pause has NULL ResumedAt |
@@ -92,7 +92,7 @@ Track quality measurements and final outputs:
 | **WipRejection** | Material rejection events (pre-run or mid-run); RunId is nullable | FK → FlatWireRun (0-N, nullable) |
 | **CoilOutput** | Finished output coils (one per completed run segment). Adds PassScheduleId + PassScheduleSnapshot (OQ-54), NetWeightOverrideLb + ScaleWeightLb (OQ-36 / packing), StagingLocation, audit + RowVersion | FK → FlatWireRun, PassSchedule; 1-N with CoilTraceability |
 | **CoilTraceability** | Maps footage ranges within output coil back to source rod | FK → CoilOutput, Rod; Enables genealogy: coil → rod → supplier heat |
-| **RodCheckout** | Rod removal from a payoff position (Mode P: pre-check-out, never checked in; Mode A: pre-run; Mode B: mid-run emergency) | FK → FlatWireRun (nullable), Rod |
+| **RodCheckout** | Rod removal from a payoff position (Mode P: pre-check-out, never checked in; Mode A: pre-run; Mode B: mid-run emergency). Carries the **supervisor approval stamp** — required for Mode B (OQ-48) and for a **welded** Mode P removal, which is a rejection to HOLD (OQ-68) | FK → FlatWireRun (nullable), Rod |
 
 **Key IDs:**
 - `SpcCheckpoint.CheckpointId`: e.g., "SPC-0041"
@@ -208,6 +208,7 @@ WipRejection ──→ FlatWireRun (nullable for pre-run rejections)
 - **RodCheckout.Mode**: ModeP (pre-check-out — never checked in), ModeA (pre-run), or ModeB (mid-run emergency)
 - **RodCheckout.RunId**: NULL for ModeP and ModeA, populated for ModeB
 - **RodCheckout ModeP**: enforced to RunId NULL, footage 0, PlcTagsCleared 0, no in-process disposition — nothing was acknowledged and no tags were ever pushed
+- **RodCheckout approval**: the `ApprovedBy`/`ApprovedAt`/`OverrideReason` stamp is all-or-nothing, required for Mode B, and required together with `NewRodStatus='HOLD'` when `WasWelded=1`. `WasWelded` is Mode P only
 - **RodStaging.Status**: exactly one `Staged` row per (LineId, PayoffPosition), and per RodAlpha, via filtered unique indexes
 - **ModeB Disposition**: HoldPendingSupervisor, Scrap, or AcceptAsPartialRun
 
@@ -280,7 +281,7 @@ All of the following are created by `FlatWire_DDL_07_Indexes.sql` (40 non-cluste
 - `PassSchedule`: LineSpeedMinFpm < LineSpeedMaxFpm; GaugeTolerance > 0; WidthTolerance > 0
 - `PassScheduleComponent`: State ∈ {Active, Bypass, Skip}; EdgeType required when EdgeSet Active
 - `FlatWireRun`: Status ∈ {Running, Paused, Complete, Aborted}; FootageFt ≥ 0
-- `RodStaging`: LineId ∈ {FL1, FL3} (PCI002 excludes FL2); PayoffPosition ∈ {1, 2}; Status ∈ {Staged, CheckedIn, Unstaged}; welded/unstage/check-in stamps are all-or-nothing
+- `RodStaging`: LineId ∈ {FL1, FL3} (PCI002 excludes FL2); PayoffPosition ∈ {1, 2}; Status ∈ {Staged, CheckedIn, Unstaged}; UnstageKind ∈ {PreCheckOut, WipRejection}; welded/unstage/check-in stamps are all-or-nothing, and the rejection link is present exactly when the release was a rejection
 - `PayoffPosition`: Id ∈ {1, 2, 3} pinned — Payoff1, Payoff2, TraversingTakeup (FL2). Rod-fed tables deliberately narrow to {1, 2}
 - `RodCheckin`: PayoffPosition ∈ {1, 2}; InspectionOxidation ∈ {Pass, Fail}; SpcOvalityIn ≥ 0
 - `WeldEvent`: WeldQuality ∈ {Pass, Fail}; FootagePosition ≥ 0
@@ -420,4 +421,6 @@ All scripts are idempotent (`IF NOT EXISTS` / `IF EXISTS…DROP…CREATE`) and r
 ---
 
 *Document generated from FlatWire DDL scripts (DDL_00 through DDL_08).*
-*Last updated: July 26, 2026 — retargeted to FlatWireDB; added AlloyProperty, PassScheduleChangeLog, RunReading; production-readiness hardening (rowversion, computed columns, indexes, overlap trigger, filtered-unique active schedule). Validated on SQL Server 2019.*
+*Last updated: August 1, 2026 — applied the 30 Jul client decisions: `RodStaging` loses its `OffScheduleOverride`/`ScheduledLineId` pair (a rod booked on the other rod line now triggers an **automatic station switch**, not an override) and gains `UnstageKind`/`WipRejectionId` so a **WIP rejection releases a blocked bay**; `AlloyProperty` tolerances become **min/max pairs** for gauge, width and diameter plus an ovality maximum, with diameter and ovality NULL until the values arrive; `RodCheckout` gains the **supervisor approval stamp** it never had (gap G24), enforced for Mode B and for a welded Mode P removal. Table count unchanged at 27. Rebuilt and validated on SQL Server 2019 — `RunAll` clean, 15 constraint tests pass.*
+
+*Previously: July 26, 2026 — retargeted to FlatWireDB; added AlloyProperty, PassScheduleChangeLog, RunReading; production-readiness hardening (rowversion, computed columns, indexes, overlap trigger, filtered-unique active schedule).*

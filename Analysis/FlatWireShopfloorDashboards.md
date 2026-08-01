@@ -1,7 +1,7 @@
 # Flat Wire Mill — Shopfloor Dashboard Designs
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 30, 2026
+**Last Updated:** August 1, 2026
 **Document Type:** UX / Screen Design Reference
 **Status:** Draft — Pending Tim O. / Shannon R. / Jaspreet review
 
@@ -97,7 +97,7 @@ This document defines the shopfloor dashboard screens required to operate the fl
 **When:** While the current coil is still running — staging the *next* rod at the free payoff bay
 **Purpose:** Register the next rod against a VPS payoff position so the line can run continuously through an induction weld; inspect the bundle before unbanding; release a mis-staged rod
 **Mockup:** `Mockups/dashboard_2a_rod_precheckin.html`
-**Full analysis:** [RodPreCheckin.md](RodPreCheckin.md)
+**Full analysis:** [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md)
 **Requirements:** SRS §4.2 `PCI001`–`PCI008` · `WLD003`/`WLD005`/`WLD006`/`WLD010` · `TRV004`/`TRV009` · §4.18 `PRC007`/`PRC008`/`PRC011`/`PRC014`
 
 **Not available on FL2** — `PCI002`: no staging space. FL2 is check-in only (Dashboard 5).
@@ -137,9 +137,10 @@ This document defines the shopfloor dashboard screens required to operate the fl
 | State | Chip | Meaning | Actions |
 |-------|------|---------|---------|
 | `NOT STAGED` | Gray | Empty bay | Pre-check-in rod |
-| `PRE-CHECKED-IN` | Blue | Staged, inspection passed, not yet checked in | Pre-check-out · Proceed to check-in · Mark as welded |
+| `PRE-CHECKED-IN` | Blue | Staged, inspection passed, not yet checked in. **The shared `coils.coil_status` is *not* `INFLAT` here** — that is set at check-in (**Q67**) | Pre-check-out · Proceed to check-in · Mark as welded |
+| `PRE-CHECKED-IN` **· welded** | Blue | Staged and induction-welded to the running rod. Welded is a **flag**, not a status | Proceed to check-in · **Pre-check-out behind a supervisor override** (documented reason, rod → `HOLD` — it is a rejection, **Q68**/**Q77**) |
 | `ACTIVE` | Green | Checked in, rod `INFLAT`, run open | Open active run · Check out rod |
-| `BLOCKED` | Red | Visual inspection failed at staging | Go to WIP Rejection — **only** action |
+| `BLOCKED` | Red | Visual inspection failed at staging | Go to WIP Rejection — **only** action. The rejection captures the reason and puts the rod on **`HOLD`**, which **releases the row and frees the bay** (**Q72** item 3) |
 
 Weight-bar colours and weld thresholds are the same rules as Dashboard 3 — see [Payoff Weight Indicator Rules](#payoff-weight-indicator-rules). Critical alert when **Payoff 2 is not staged and Payoff 1 is below 2,000 lb**.
 
@@ -147,7 +148,7 @@ Weight-bar colours and weld thresholds are the same rules as Dashboard 3 — see
 
 Lists pre-checked-in, welded, and available rod **for the current order**, each with serial number, **payoff position number**, dimensional attributes and current status. Rows with prior footage carry a **partial** flag so a carry-forward rod is visible *before* it is staged.
 
-**Two sequence columns, because planned order is authorised rather than enforced.** `Plan` is the sequence planning intended, with a green `▸` on the rod expected next; `Run` is the order the rod was actually staged in (the SRS `RodSeqno`), blank until processed, with `⇅` where the two differ. Staging any other rod is permitted but **notified and supervisor-authorised** — never refused. See [RodPreCheckin.md](RodPreCheckin.md#planned-sequence-notify-and-authorise).
+**Two sequence columns, because planned order is authorised rather than enforced.** `Plan` is the sequence planning intended, with a green `▸` on the rod expected next; `Run` is the order the rod was actually staged in (the SRS `RodSeqno`), blank until processed, with `⇅` where the two differ. Staging any other rod is permitted but **notified and supervisor-authorised** — never refused. See [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md#planned-sequence-notify-and-authorise).
 
 **Order context header.** The queue header states the order once: line, order number, the order's material spec (`1100 · F · 0.375"`), and progress (`1 staged · 3 available · 4 on order`). Two reasons it lives here rather than in a strip of its own: the queue *is* the order's rod list, and the screen is a fixed 1024px budget in which the queue is the only flexible region — a dedicated strip would cost roughly two visible rows. Measured: the block adds **zero** height, since the header was already sized by the scan input beside it.
 
@@ -161,7 +162,7 @@ Progress counts are not decoration. With a fixed sequence an operator could read
 
 | Step | Content | Rules |
 |------|---------|-------|
-| 1 — Identify rod | Rod alpha (scan or type), measured diameter, optional scrap box. Alloy / temper / weights pre-populate | Validates `R#####` against `proddb..coils` (`CHK006`); diameter ± lookup tolerance (`CHK007`); rejects a rod already checked in (`CHK009`) |
+| 1 — Identify rod | Rod alpha (scan or type), measured diameter, optional scrap box. Alloy / temper / weights pre-populate | Validates `R#####` against `proddb..coils` (`CHK006`); **diameter against a min/max lookup tolerance** (`CHK007` — one of **four** min/max pairs with gauge, width and ovality; values owed by e-mail, so the screen's per-alloy map stays mock, **Q71**); rejects a rod already checked in (`CHK009`) |
 | 2 — Assign bay | Payoff 1 / Payoff 2 selector cards | Occupied bay disabled and labelled with its occupant (`PCI006`) |
 | 3 — Visual inspection | Oxidation · Surface defects · Water stains, Pass/Fail each, plus observation | **Three items, not four.** Any Fail → WIP Rejection only, **no bypass** (`CHK010`) |
 
@@ -215,7 +216,7 @@ Recorded as `RodCheckout` with `Mode = 'ModeP'`; reverses the WIP queue entry cr
 
 ### Open Questions
 
-See [RodPreCheckin.md](RodPreCheckin.md) — notably whether pre-check-in sets coil status to `INFLAT` (SRS) or `STAGED` (walkthrough), and whether `CHK005` removes the payoff selector from Dashboard 2.
+See [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md) — notably whether pre-check-in sets coil status to `INFLAT` (SRS) or `STAGED` (walkthrough), and whether `CHK005` removes the payoff selector from Dashboard 2.
 
 ---
 
@@ -282,7 +283,7 @@ See [RodPreCheckin.md](RodPreCheckin.md) — notably whether pre-check-in sets c
 **Who:** FL1 Operator
 **When:** Continuously displayed during an active production run
 **Purpose:** Real-time gauge/width trace, machine status, payoff monitoring, quick actions
-**Enhancement (May 15, 2026):** A **Machine View** tab has been added alongside the Traces tab, showing a compressed SVG line schematic with live PLC data. A **View Trends** button has been added to the action bar linking to Dashboard 14. See [HMIAndSCADALayout.md](HMIAndSCADALayout.md) for the full Machine View tab specification.
+**Enhancement (May 15, 2026):** A **Machine View** tab has been added alongside the Traces tab, showing a compressed SVG line schematic with live PLC data. A **View Trends** button has been added to the action bar linking to Dashboard 14. See [HMIAndSCADALayout.md](../LatestDocument/RequirementDocuments/HMIAndSCADALayout.md) for the full Machine View tab specification.
 
 ```
 ┌───────────────────────────────────────────────────────────────────┐
@@ -1320,7 +1321,7 @@ Shows the last 3 roll adjustments against the active pass schedule (across all r
 **Who:** FL1 Operator
 **When:** A rod must be removed from a payoff position before the run completes naturally
 **Purpose:** Formally close out a checked-in rod without a weld event, run completion, or WIP rejection; preserve traceability and reset the payoff position
-**Full analysis:** [RodCheckout.md](RodCheckout.md)
+**Full analysis:** [RodCheckout.md](../LatestDocument/RequirementDocuments/RodCheckout.md)
 
 Two modes exist depending on whether footage has been produced:
 
@@ -1426,7 +1427,7 @@ Accessible only from the Pause Run dialog (Dashboard 3 → Pause Run → fourth 
 
 ### Open Questions
 
-See [RodCheckout.md](RodCheckout.md) — Open Questions OQ-A through OQ-D for items that require customer confirmation before implementation.
+See [RodCheckout.md](../LatestDocument/RequirementDocuments/RodCheckout.md) — Open Questions OQ-A through OQ-D for items that require customer confirmation before implementation.
 
 ---
 
@@ -1540,8 +1541,9 @@ Dashboard 14 ──[← Active Run]───────────────
 | Apr 25, 2026 | Analysis team | Dashboard 9A added — Pass Schedule List ("All Schedules"): toolbar wireframe, stats strip, table column definitions (8 columns including in-use chip), filter/sort behaviour, choice popup (manual vs generate), Generate from Specs shortcut, empty state, navigation table; Dashboard Inventory and navigation map updated |
 | Apr 28, 2026 | MOM — Planning & Shopfloor meeting | **Design Principle 8 added:** fully digital traveler — printing disabled for flat wire; coil labels (DB7) unaffected. Open questions register reference updated to 59 items. Shopfloor mockups and UX walkthrough was well received by the business team; clickable demo / staging access requested. |
 | May 21, 2026 | Client feedback | **Edger configuration corrected:** FL1 has no Edger — Edge Set removed from DB2 (FL1 rod check-in), DB3 FL1 (active run monitor), DB9 (pass schedule FL1). FL2 Edgers are at S2 and S3 only (not S1); FM2 now has three 6" stands (S1, S2, S3) — updated in DB5 (FL2 spool check-in), DB9 (pass schedule FL3), and all related component tables. **DB4 Weld Event:** Laser Weld option removed — not viable; Induction Weld only. **DB6 SPC Checkpoint:** "Post DB1" checkpoint type added. **DB7 Output Coil Completion:** Gauge and width display changed from average-measured to target value when in tolerance (no average displayed). **DB9 Pass Schedule:** FL1 schedule wireframe corrected to show FL1-only components (DB1, DB2, FM1); FM2 components now correctly shown only for FL3 hybrid schedules. **DB10 Shift Summary:** Broken into per-machine pages (FL1, FL2, FL3); KPI strip (footage & lbs) now reflects the selected machine. |
-| Jul 29, 2026 | Analysis team | **Dashboard 2A added — Rod Pre-Check-in Station (FL1/FL3):** bay-state table (NOT STAGED / PRE-CHECKED-IN / ACTIVE / BLOCKED), three-step pre-check-in wizard with the `PRC008` carry-forward gate, Queue panel implementing `TRV004`/`TRV009`, Mark-as-Welded (`WLD010`), pre-check-out (`ModeP`), field definitions and access control. Traces to SRS §4.2 `PCI001`–`PCI008` — requirements that existed only inside the consolidated SRS `.docx` and had no screen, data model, API or phase owner. Dashboard Inventory and Screen Navigation Map updated. Full analysis in [RodPreCheckin.md](RodPreCheckin.md). |
+| Jul 29, 2026 | Analysis team | **Dashboard 2A added — Rod Pre-Check-in Station (FL1/FL3):** bay-state table (NOT STAGED / PRE-CHECKED-IN / ACTIVE / BLOCKED), three-step pre-check-in wizard with the `PRC008` carry-forward gate, Queue panel implementing `TRV004`/`TRV009`, Mark-as-Welded (`WLD010`), pre-check-out (`ModeP`), field definitions and access control. Traces to SRS §4.2 `PCI001`–`PCI008` — requirements that existed only inside the consolidated SRS `.docx` and had no screen, data model, API or phase owner. Dashboard Inventory and Screen Navigation Map updated. Full analysis in [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md). |
 | Jul 29, 2026 | Analysis team | **Dashboard 2A layout corrected.** Bay cards were clipped by a fixed-height row and their action buttons spilled into the weld-readiness strip; the modal bodies pushed their own footer buttons outside the shell, making them unreachable at shorter viewports. Fixed by auto-sizing the bay row, giving the queue internal scrolling, and adding the required flex `min-height: 0`. Bay facts consolidated to one row and bay alerts shortened to one line (the weld strip already carried the longer wording), which brings the design height to exactly **1024px** — so the shopfloor panel renders at 1:1. |
 | Jul 29, 2026 | Client requirement | **Dashboard 2A queue reworked for free processing order + order context.** Planned rod sequence is **not enforced** — the operator may stage in any order; validation is current-order membership and availability only. `Seq` split into **Plan** (planning's intended order) and **Run** (actual staging order, blank until processed) with a neutral `⇅` deviation marker — never a warning, since out-of-order is an allowed choice. Added an **order context header** (line · order no · material spec · `n staged / n available / n on order`); progress counts are required because free ordering removes the implicit "what's left" cue a fixed sequence gave. **Alloy and Temper columns removed** — identical on every row of an order, now stated once in that header; Diameter stays per row per `TRV004`. **Location column removed** — not a `TRV004` field, dependent on the open Q19, and "bay" already means *payoff position* on this screen. |
 | Jul 29, 2026 | Analysis team | **Dashboard 2A cold start + bay symmetry.** Payoff 1 was modelled as an always-`ACTIVE` backdrop, so an empty Payoff 1 (cold start, post-checkout, between orders) crashed the first render and left the screen showing a phantom rod with a live weight, and no queue. Both bays now use one state machine and one renderer: all four states apply to either payoff, the wizard disables a bay for being *occupied* rather than for being bay 1, Payoff 2 can be the running bay after a transition, and weld readiness plus Mark-as-welded handle the no-material case. Empty bays state both cold-start routes — stage here, or go straight to rod check-in. |
 | Jul 30, 2026 | Client direction | **Dashboard 2A — planned sequence gated by supervisor authorisation.** Staging a rod other than the one planning expects next now notifies the operator and requires a supervisor override (reason + badge/ID + PIN), rather than proceeding silently. Never a refusal, and later-planned rods stay listed and stageable. Queue `Plan` column gained a green `▸` on the expected rod; `⇅` on `Run` now names the authorising supervisor. Supersedes the free-processing-order behaviour recorded the previous day. |
+| Aug 1, 2026 | Client sync (30 Jul call) | **Dashboard 2A — off-schedule becomes an automatic station switch; three other rules change.** A rod whose order is booked on the other rod line is no longer notified-and-authorised: **the screen switches to the correct station** and continues, with no message and no override, at both pre-check-in and check-in (**Q74**, reversing the Jul 29 design; the `OffSchedule*` columns are dropped). The FL1/FL3 toggle therefore stops being an operator-only control that merely relabels the chrome — it must **reload the bays and the queue**, and what happens to a part-completed wizard needs specifying (**Q76**/**Q73**, **F13**). Bay states gained a **welded** row: a welded rod may be un-staged **behind a supervisor override** with a documented reason, going to `HOLD` as a rejection (**Q68**/**Q77**, restoring the control removed on Jul 31); `PRE-CHECKED-IN` no longer implies `INFLAT`, which is now set at check-in (**Q67**); and `BLOCKED` gained its exit — the WIP rejection captures the reason, puts the rod on `HOLD` and releases the bay (**Q72** item 3). Wizard step 1 now validates diameter against a **min/max** tolerance, one of **four** pairs (gauge, width, diameter, ovality) whose values are owed by e-mail, so the alloy map stays mock (**Q71**). Not yet applied here: the order-membership rule is knowingly wrong for a **multi-order rod** (**Q69**/**G22**), pending the sequencing answer (**Q79**). |

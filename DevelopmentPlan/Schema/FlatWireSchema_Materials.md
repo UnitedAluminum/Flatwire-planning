@@ -44,7 +44,7 @@ Wire rod receiving and lifecycle tracking. Each row represents one physical rod 
 > columns (and `CK_Rod_StagedPayoff`) were retired: a nullable column pair on `Rod` cannot
 > express "one rod per payoff bay", which is the core invariant of the Pre-Check-In station.
 > Staging now lives in [`RodStaging`](FlatWireSchema_Runs.md) with filtered unique indexes that
-> enforce it. See `Analysis/RodPreCheckin.md` and SRS §4.2 `PCI001`–`PCI008`.
+> enforce it. See `LatestDocument/RequirementDocuments/RodPreCheckin.md` and SRS §4.2 `PCI001`–`PCI008`.
 
 **Allowed values — `Status`:**
 

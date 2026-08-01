@@ -1,9 +1,9 @@
 # Flat Wire — Spool Completion: Weight Milestone Alerts & Machine-Stop Confirmation
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 29, 2026
+**Last Updated:** August 1, 2026
 **Document Type:** Requirement Analysis — Real-Time Operator Notification
-**Status:** Draft — Part A recorded July 28, 2026; Part B recorded July 29, 2026; mockup delivered; open decisions listed below
+**Status:** Draft — Part A recorded July 28, 2026; Part B recorded July 29, 2026; **Part C (short close) recorded August 1, 2026** from the 30 Jul client call; mockup delivered; open decisions listed below
 
 ---
 
@@ -25,9 +25,9 @@ A real-time, **non-blocking** operator notification that warns the operator that
 Applies to the **active run monitor** screens — Dashboard 3 (FL1), Dashboard 3 FL2, Dashboard 3 FL3 — while the line is physically running.
 
 - **FL1 standalone** — take-up is **TKUP-1**, output is an intermediate **spool** (`SP-#####`). This is the primary case described in this document.
-- **FL2 / FL3** — take-up is **TKUP-2**, output is a finished **coreless coil** (`FW-#####-C##`). The same milestone ladder applies against the coil target weight; wording changes from "spool" to "coil". See [Q61](FlatWireOpenQuestions.md) before implementing.
+- **FL2 / FL3** — take-up is **TKUP-2**, output is a finished **coreless coil** (`FW-#####-C##`). The same milestone ladder applies against the coil target weight; wording changes from "spool" to "coil". See [Q61](../../Analysis/FlatWireOpenQuestions.md) before implementing.
 
-This notification is **advisory only**. It never stops, slows, or otherwise commands the machine — consistent with the standing rule that the application is a gatekeeper, not a remote stop controller ([RodCheckout.md](RodCheckout.md), step 27 of [FlatWireProcessWalkthrough.md](FlatWireProcessWalkthrough.md)).
+This notification is **advisory only**. It never stops, slows, or otherwise commands the machine — consistent with the standing rule that the application is a gatekeeper, not a remote stop controller ([RodCheckout.md](RodCheckout.md), step 27 of [FlatWireProcessWalkthrough.md](../../Analysis/FlatWireProcessWalkthrough.md)).
 
 ---
 
@@ -51,7 +51,7 @@ Live telemetry (FlatWireHub)      Spool progress evaluator          Operator scr
 | **M1** | Actual weight ≥ **75%** of target | Informational (blue) | Spool is nearing completion — current actual processed weight, target weight, % complete | Dismiss M1; arm M2 |
 | **M2** | Actual weight ≥ **90%** of target | Caution (amber) | Spool nearly full — current actual processed weight, target, % complete, remaining weight | Dismiss M2; arm M3 |
 | **M3** | Actual weight ≥ **100%** of target | Target reached (green) | Target spool weight reached — actual weight at/over target, ready to close the spool | Dismiss M3; no further milestone |
-| **M4** *(design addition)* | Actual weight **> 101%** of target (1% over, so the red state cannot flicker the instant target is touched) **and M3 not yet acknowledged** | Over-target (red) | Over target by *n* lb — take-up should be stopped and the spool closed | Dismiss; see [Q60](FlatWireOpenQuestions.md) |
+| **M4** *(design addition)* | Actual weight **> 101%** of target (1% over, so the red state cannot flicker the instant target is touched) **and M3 not yet acknowledged** | Over-target (red) | Over target by *n* lb — take-up should be stopped and the spool closed | Dismiss; see [Q60](../../Analysis/FlatWireOpenQuestions.md) |
 
 M4 is **not part of the recorded requirement**. It exists because an unacknowledged M3 keeps updating live and will therefore run past 100%; a notification that silently shows "104% of target" in a "target reached" style understates the situation. Confirm with Operations before building it (Q60).
 
@@ -71,7 +71,7 @@ M4 is **not part of the recorded requirement**. It exists because an unacknowled
 | **R-8** | It must not interrupt, slow, gate, or command machine operation in any way. |
 | **R-9** | Milestone state is **per spool**. When a spool is closed and a new one starts on the same run, the actual weight restarts from zero and all three milestones re-arm. |
 | **R-10** | It must not obscure the **command bar** or either trace panel's **header and live reading** — the values an operator watches continuously. The bottom-right corner placement overlaps only the lower plot area of the right-hand (secondary) trace, and clears on acknowledgement. After acknowledgement a compact progress indicator remains so the operator retains passive visibility of spool fill without a second alert. |
-| **R-11** | Acknowledgement is an **audited event** — operator, milestone, actual weight at acknowledgement, and timestamp are persisted against the run (see [Q62](FlatWireOpenQuestions.md)). |
+| **R-11** | Acknowledgement is an **audited event** — operator, milestone, actual weight at acknowledgement, and timestamp are persisted against the run (see [Q62](../../Analysis/FlatWireOpenQuestions.md)). |
 | **R-12** | Milestone thresholds (75 / 90 / 100) are **configuration, not constants** — table-driven so Operations can tune them without a release. |
 
 ---
@@ -90,24 +90,29 @@ spool weight = (current footage − footage at spool start) × lb per ft
 Worked example — the FL1 case shown in the mockup, alloy 1100 (0.098 lb/in³), gauge 0.110″, width 0.625″:
 
 ```
-0.110 × 0.625 × 12 × 0.098 = 0.0809 lb/ft  →  2,000 lb target ≈ 24,740 ft
+0.110 × 0.625 × 12 × 0.098 = 0.0809 lb/ft  →    900 lb target ≈ 11,130 ft   (customer max)
+                                                1,800 lb spool  ≈ 22,250 ft   (two finished coils)
 ```
 
-The OD-based verification formula for spool weight is still outstanding — **[Q58](FlatWireOpenQuestions.md)** — and this notification depends on whichever weight source that decision lands on. Until then, footage × density factor (the same basis used for coil net weight at Dashboard 7) is the working assumption.
+> The **2,000 lb figure this example previously used is withdrawn** (30 Jul 2026) — see the target-weight basis below. The arithmetic is unchanged; only the target it is applied to.
+
+The OD-based verification formula for spool weight is still outstanding — **[Q58](../../Analysis/FlatWireOpenQuestions.md)** — and this notification depends on whichever weight source that decision lands on. Until then, footage × density factor (the same basis used for coil net weight at Dashboard 7) is the working assumption.
 
 ### Target spool weight (the comparison basis)
 
-| Candidate source | Value in the mockup | Notes |
-|---|---|---|
-| Order — *Max Wgt of Spool* | **2,000 lb** — the assumed default | Shown on the Order Information grid of Dashboard 3; customer/order-driven |
-| Equipment capacity — TKUP-1 | 3,500 lb | Hard equipment ceiling ([Spool.md](Spool.md)); the 2,000 lb default sits inside it |
-| Equipment capacity — TKUP-2 | 1,100 lb | FL2/FL3 finished-coil ceiling — **below** the 2,000 lb default, so the cap governs there |
+> **Basis decided (30 Jul 2026) — the customer weight range. The 2,000 lb default is withdrawn.** Tim and Bob confirmed the customer specifies a **minimum and maximum weight** (figures given: **900 lb max / 800 lb min**) and completion is graded against **that range, by weight** — not by footage, and not against an assumed default. **Spools are sized at roughly 1,800 lb** so that **two finished coils** can be cut from one spool at FL2, which is where the ~900 lb figure comes from. Still open (**Q60**): *which order field* carries the customer min/max, and whether the ladder still escalates to a distinct over-target state.
 
-Working assumption: **target = order *Max Wgt of Spool*, capped by the take-up equipment capacity**, with **2,000 lb as the default target spool weight** when the order carries no value. On FL1 (TKUP-1, 3,500 lb) that default applies as-is; on FL2/FL3 (TKUP-2, 1,100 lb) the equipment cap wins and the effective target is 1,100 lb. Needs confirmation — **Q60**.
+| Candidate source | Value | Notes |
+|---|---|---|
+| **Order — customer min/max weight** | **e.g. 800–900 lb** | **The basis.** Customer-specified range on the order; completion is graded against it |
+| Spool sizing | ~**1,800 lb** | Two ~900 lb finished coils per spool, cut at FL2 |
+| Equipment capacity — TKUP-1 | 3,500 lb | Hard equipment ceiling ([Spool.md](../../Analysis/Spool.md)) |
+| Equipment capacity — TKUP-2 | 1,100 lb | FL2/FL3 finished-coil ceiling. The customer maximum is typically **below** it, so the customer value governs rather than the cap |
+| ~~Order *Max Wgt of Spool* default~~ | ~~**2,000 lb**~~ | **Withdrawn 30 Jul 2026.** It was an assumption made 29 Jul, it has no basis, and it exceeds the TKUP-2 ceiling. **Remove from the mockup and `spool_notification.js`** |
 
 ### Real-time plumbing
 
-Uses the existing `FlatWireHub` stream described in [`../DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.4 — `FootageCounter`, `GaugeReading`, `WidthReading` already broadcast per line group (`FL1Data` / `FL2Data` / `FL3Data`). Two additions are needed:
+Uses the existing `FlatWireHub` stream described in [`../DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../../DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.4 — `FootageCounter`, `GaugeReading`, `WidthReading` already broadcast per line group (`FL1Data` / `FL2Data` / `FL3Data`). Two additions are needed:
 
 1. A **derived spool-progress payload** (actual weight, target weight, percent, remaining, rate, ETA) so every subscribed client evaluates the same number rather than each computing its own.
 2. A **milestone event** (`SpoolWeightMilestone`) carrying line, run, spool, milestone (75/90/100), actual weight, and target — raised server-side on crossing, so the milestone is a fact on the run record and not a client-side coincidence.
@@ -131,7 +136,7 @@ New hub events for Part B, raised server-side so the prompt is auditable and sur
 
 ## UI Specification (as built in the mockup)
 
-**Mockup:** [`../Mockups/spool_notification.js`](../Mockups/spool_notification.js) — shared drop-in component, wired into [`../Mockups/dashboard_3_active_run_v2.html`](../Mockups/dashboard_3_active_run_v2.html).
+**Mockup:** [`../Mockups/spool_notification.js`](../../Mockups/spool_notification.js) — shared drop-in component, wired into [`../Mockups/dashboard_3_active_run_v2.html`](../../Mockups/dashboard_3_active_run_v2.html).
 
 | Element | Spec |
 |---|---|
@@ -169,7 +174,7 @@ The requirement is a two-condition gate on an **edge**, not a state, and the who
 
 **2. Firing condition (PLC edge).** The prompt fires on the **`RUNNING → STOPPED` transition** of the line state tag, not on the level. Reading the level would re-raise the popup on every poll for as long as the line sits stopped. One prompt per stop event, tracked by a handled-flag that clears when the line returns to RUNNING.
 
-**3. Which tag.** `FL{n}.LineState` — the tag the system already reads as the gatekeeper for rod checkout ([RodCheckout.md](RodCheckout.md), step 27 of [FlatWireProcessWalkthrough.md](FlatWireProcessWalkthrough.md)). Reusing it keeps one authority for "is the line running". `FL{n}.SpeedFPM ≈ 0` is read as corroboration so a stale or mis-scaled state bit alone cannot fire the prompt. The exact state vocabulary of that tag (`RUNNING / STOPPED / PAUSED / FAULT / THREADING`?) is not yet documented — **Q63**.
+**3. Which tag.** `FL{n}.LineState` — the tag the system already reads as the gatekeeper for rod checkout ([RodCheckout.md](RodCheckout.md), step 27 of [FlatWireProcessWalkthrough.md](../../Analysis/FlatWireProcessWalkthrough.md)). Reusing it keeps one authority for "is the line running". `FL{n}.SpeedFPM ≈ 0` is read as corroboration so a stale or mis-scaled state bit alone cannot fire the prompt. The exact state vocabulary of that tag (`RUNNING / STOPPED / PAUSED / FAULT / THREADING`?) is not yet documented — **Q63**.
 
 **4. Noise filter (dwell).** Lines momentarily read zero speed during threading, jogging, and slow-downs. The state must hold **STOPPED continuously for a configurable dwell (default 5 s)** before the prompt fires. Without this, a jog at 100 % pops a spool completion dialog in the operator's face mid-adjustment.
 
@@ -195,7 +200,7 @@ The requirement is a two-condition gate on an **edge**, not a state, and the who
 
 **15. The calculated weight is a derivation, not a measurement.** `footage × gauge × width × 12 × density` inherits every error in its inputs — counter slip, gauge/width drift between SPC checkpoints, and an assumed alloy density. The physical scale is the only ground truth available at the take-up, so the completion step **must be able to capture it** and must not quietly commit a derived number when a measured one exists. This is also the mechanism that finally answers **Q58**: accumulate scale-vs-calculated variances and the density factor and the OD formula can both be validated against real data.
 
-**16. Scale readings are gross; the record needs net.** The loaded spool goes on the floor scale, so what the operator reads is gross. Net = gross − spool tare, and the tare must be shown while they type so the arithmetic is never done in their head. This mirrors rod receiving, which already captures gross and net and validates scale-vs-vendor weight ([FlatWirePlan.md](FlatWirePlan.md)).
+**16. Scale readings are gross; the record needs net.** The loaded spool goes on the floor scale, so what the operator reads is gross. Net = gross − spool tare, and the tare must be shown while they type so the arithmetic is never done in their head. This mirrors rod receiving, which already captures gross and net and validates scale-vs-vendor weight ([FlatWirePlan.md](../../Analysis/FlatWirePlan.md)).
 
 **17. Which weight wins is the operator's call, but not a blind one.** The system pre-selects the scale reading once entered — a weighing outranks a derivation — and shows the variance in lb and % before the choice is made. Both figures are persisted whichever is chosen: the discrepancy itself is the useful data.
 
@@ -236,7 +241,7 @@ The requirement is a two-condition gate on an **edge**, not a state, and the who
 | **S-19** | The chosen basis governs the **spool record, the label, and everything downstream** (planning allocation, certs). The label prints the recorded weight, not the other one. |
 | **S-20** | Variance beyond a configurable tolerance (**default ±2 %**) is flagged but **does not stop the operator from creating the spool**. The completion is **authorised, not prevented**: a **supervisor override** appears and the commit control stays enabled throughout — it is never disabled by the variance. *(Client direction, July 29 2026.)* |
 | **S-22** | The override captures the **variance reason**, the **supervisor badge/ID** and a **PIN**. The PIN authenticates only — it is never carried in the payload or stored. Pressing complete with the override incomplete flags exactly the missing fields and focuses the first one; it does not commit, and it does not lock the operator out. |
-| **S-23** | When no supervisor is on the floor, a **Request remote approval** action notifies the supervisor — the notification-driven approval model already confirmed for mid-run checkout ([Q50](FlatWireOpenQuestions.md)). Requesting does not block or change the screen state; the operator can still take an on-floor override the moment one is available. |
+| **S-23** | When no supervisor is on the floor, a **Request remote approval** action notifies the supervisor — the notification-driven approval model already confirmed for mid-run checkout ([Q50](../../Analysis/FlatWireOpenQuestions.md)). Requesting does not block or change the screen state; the operator can still take an on-floor override the moment one is available. |
 | **S-24** | An overridden completion is **marked on the spool record** — override flag, authorising supervisor, reason, both weights and the variance — and the result step states it plainly so the next person sees the spool was accepted out of tolerance. Both weights, the variance, the chosen basis and any reason are persisted regardless of which weight won. |
 | **S-25** | If the variance is brought back inside tolerance (a re-weigh, a corrected entry), the override requirement **disappears** and the completion proceeds normally with nothing recorded against it. |
 | **S-21** | The scale reading is **retained on the record even when the operator selects calculated** — the discrepancy is the evidence needed to validate the density factor and the scale. |
@@ -257,7 +262,28 @@ The requirement is a two-condition gate on an **edge**, not a state, and the who
 | Stop at 104 % of target | Same prompt; overage flagged on the completion summary (analysis 12) |
 | OPC / PLC comms down | No prompt; manual path is the fallback (analysis 13) |
 | Yes, but per-spool SPC not yet recorded | Completion workflow enforces its own gate; prompt is an entry point only (S-11, analysis 11) |
-| Operator stops short of target intending to close the spool early | **Not covered by this requirement** — no prompt below target. Short-close path is manual; see **Q65** |
+| Operator stops short of target intending to close the spool early | **Specified 30 Jul 2026 — an unplanned stop, not a silent manual action.** See *Short close* below (**Q65**, decided) |
+
+### Short close — closing a spool below target (Part C, decided 30 Jul 2026)
+
+The milestone ladder and the stop prompt are both armed **at or above target**, so a spool the operator closes **early** — order satisfied, rod exhausted, quality problem, end of campaign — previously fell outside the requirement entirely. It does not any more.
+
+**A short close is an unplanned stop**, handled on the pattern of the mill **10-90 SOP**, with an unplanned-stop reason code.
+
+| Rule | Behaviour |
+|---|---|
+| **Grading basis** | The **customer min–max weight**, by weight — not footage, not a fixed target (see *Target spool weight* above) |
+| **Inside the range** | **Continue.** If the short weight still yields the finished coils the order requires, nothing escalates |
+| **Outside the range** | **Flagged.** Either a **supervisor override plus a production hold**, or the piece is **offered to the customer under concession** before a remake is planned. Shannon's direction is explicit: **offer first**, remake last |
+| **The spool still runs off** | **Always.** FL2 has **no spool stripper**, so the spool must be emptied and returned to FL1 whatever happens to the material on it. "Reject it" is never "stop and remove it" |
+
+**Mid-run coil break** — related, and a different rule from the above: the stop is **removed and a new stop starts from zero**. Weight does **not** resume from the break point. The leftover incoming material is **welded to the next coil on FL1**; on FL2 it is either run to a finished stop and offered to the customer, or scrapped.
+
+> **Two cautions before this is built.**
+>
+> 1. The **10-90 SOP document is not in this repository.** It must be obtained from Operations and cited — the pattern above is the call summary, not the SOP.
+> 2. The restart-from-zero rule is a **run/stop model** change, not a screen rule. Check it against `FlatWireRun` / `CoilOutput` footage accumulation and against `CoilTraceability`'s coil-local footage before implementing — run events use **cumulative run footage** and coil traceability uses **coil-local** footage, and the offset between them is still undefined (**OI-25**).
+
 
 ### UI specification (as built in the mockup)
 
@@ -282,7 +308,7 @@ The requirement is a two-condition gate on an **edge**, not a state, and the who
 | Step 3 — result | Band turns green, *"Spool completed"*. Committed facts (alpha, net, gross, commit time), a green label-print confirmation line, and a note that the spool is ACTIVE for planning and the ladder has re-armed for the next spool (**R-9**). |
 | Declined | Dialog closes; the docked progress pill shows `target reached` with a **Complete spool** button as the manual path. |
 | PLC state visibility | The line badge switches to *"FL1 stopped (PLC)"* with a static gray dot while the simulated tag reads STOPPED, the Machine card head flips *Running → Stopped*, and weight accumulation halts. |
-| Host-screen readout | Dashboard 3's Machine card carries a live `Spool SP-00031 · 1,460 / 2,000 lb` line (`#fw-spool-lb` / `#fw-spool-target`) that the component keeps in step, so the screen and the notification never disagree. |
+| Host-screen readout | Dashboard 3's Machine card carries a live `Spool SP-00031 · 1,460 / 2,000 lb` line (`#fw-spool-lb` / `#fw-spool-target`) — **the target here is the withdrawn 2,000 lb default and must be re-pointed at the customer max (W5)** that the component keeps in step, so the screen and the notification never disagree. |
 | Mockup demo controls | The demo strip adds **■ stop** / **▶ start** buttons that drive the simulated `FL{n}.LineState`, so the dwell, the prompt, the auto-dismiss-on-restart, and the below-target silence are all reviewable. Mockup-only. |
 
 ### Acceptance criteria — Part B
@@ -329,14 +355,14 @@ The requirement is a two-condition gate on an **edge**, not a state, and the who
 
 ## Open Decisions Raised by This Requirement
 
-Registered in [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) as **Q60–Q65**:
+Registered in [FlatWireOpenQuestions.md](../../Analysis/FlatWireOpenQuestions.md) as **Q60–Q65**:
 
 - **Q60** — Target spool weight source (order *Max Wgt of Spool* vs take-up capacity), default value, and whether over-target (M4) behavior is required.
 - **Q61** — Does the same ladder apply to finished coils at TKUP-2 on FL2/FL3, and does FL2's `null` live gauge/width change the weight basis?
 - **Q62** — Is the notification mirrored to the supervisor (Dashboard 1 / Operations Manager), and where does the acknowledgement audit record live?
 - **Q63** — `FL{n}.LineState` state vocabulary and stop-dwell value; and should the popup be suppressed when a software Pause has already captured a reason?
 - **Q64** — Does the stop-confirmation popup also surface to the supervisor, and how are multiple signed-in operator sessions arbitrated?
-- **Q65** — Is there a **short-close** path — operator stops below target intending to close the spool early (order satisfied, rod exhausted, quality issue) — and should that be prompted or purely manual?
+- ~~**Q65** — Is there a **short-close** path?~~ **DECIDED 30 Jul 2026** — see *Short close* below.
 - **Q66** — Scale-vs-calculated weight: variance tolerance (±2 % proposed), which weight is the default basis, whether out-of-tolerance needs supervisor approval rather than just a reason, and whether a scale exists at the take-up at all.
 
 Dependent on the already-open **Q58** (OD → weight conversion formula) for the authoritative weight source.
@@ -349,13 +375,13 @@ Dependent on the already-open **Q58** (OD → weight conversion formula) for the
 
 | Document | Relevance |
 |---|---|
-| [Spool.md](Spool.md) | Spool lifecycle, TKUP-1 capacity, "spool complete" definition |
-| [FlatWireProcessWalkthrough.md](FlatWireProcessWalkthrough.md) | Steps 28–30 (spool at TKUP-1), step 37 (coil at TKUP-2) |
-| [FlatWireShopfloorDashboards.md](FlatWireShopfloorDashboards.md) | Dashboard 3 active-run specification this notification overlays |
-| [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) | Q58, Q60–Q62 |
-| [`../DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../DevelopmentPlan/ShopfloorPlan/00-foundations.md) | §0.3 domain cheat-sheet, §0.4 real-time architecture (`FlatWireHub`) |
-| [`../DevelopmentPlan/ShopfloorPlan/phase-05-active-run-monitoring-gauge-trace.md`](../DevelopmentPlan/ShopfloorPlan/phase-05-active-run-monitoring-gauge-trace.md) | Phase that owns the active-run screen and its telemetry |
-| [`../Mockups/spool_notification.js`](../Mockups/spool_notification.js) | Delivered mockup component |
+| [Spool.md](../../Analysis/Spool.md) | Spool lifecycle, TKUP-1 capacity, "spool complete" definition |
+| [FlatWireProcessWalkthrough.md](../../Analysis/FlatWireProcessWalkthrough.md) | Steps 28–30 (spool at TKUP-1), step 37 (coil at TKUP-2) |
+| [FlatWireShopfloorDashboards.md](../../Analysis/FlatWireShopfloorDashboards.md) | Dashboard 3 active-run specification this notification overlays |
+| [FlatWireOpenQuestions.md](../../Analysis/FlatWireOpenQuestions.md) | Q58, Q60–Q62 |
+| [`../DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../../DevelopmentPlan/ShopfloorPlan/00-foundations.md) | §0.3 domain cheat-sheet, §0.4 real-time architecture (`FlatWireHub`) |
+| [`../DevelopmentPlan/ShopfloorPlan/phase-05-active-run-monitoring-gauge-trace.md`](../../DevelopmentPlan/ShopfloorPlan/phase-05-active-run-monitoring-gauge-trace.md) | Phase that owns the active-run screen and its telemetry |
+| [`../Mockups/spool_notification.js`](../../Mockups/spool_notification.js) | Delivered mockup component |
 
 ---
 
@@ -370,3 +396,4 @@ Dependent on the already-open **Q58** (OD → weight conversion formula) for the
 | July 29, 2026 | Client direction | **Out-of-tolerance weight no longer blocks spool creation.** The reason-required gate that disabled the commit button is replaced by a **supervisor override** (variance reason + supervisor badge/ID + PIN, PIN never stored) with a **remote-approval fallback** when no supervisor is on the floor. The commit control is never disabled by the variance; it relabels to *"Override & complete spool"*, and an incomplete override flags and focuses the missing fields instead of dead-ending. Overridden completions are marked on the spool record and stated on the result step. Rules **S-20 rewritten, S-22…S-25 added**, analysis item 18, acceptance criteria **28–32**, UI spec row rewritten. **Q66 part 3 Decided**; PIN validation source still open. |
 | July 29, 2026 | Analysis Team | **Scale weight added to the completion step.** Operator can enter the scale reading (gross); the system derives net from the spool tare, reconciles it against the calculated net (variance in lb and % of calculated), and **asks which weight to record** — scale pre-selected once entered, overridable to calculated. Variance beyond a configurable ±2 % is flagged and requires a reason before commit. Chosen basis governs the record, the label and everything downstream; both weights plus the variance, basis and reason are audited. Rules **S-16…S-21**, acceptance criteria **23–27**, UI spec rows and **Q66** added. Fixed the "Will record" strip rendering one value per line (`display:flex` split every text run into a flex item). |
 | July 29, 2026 | Analysis Team | Added **Part B — operator confirmation after the machine stops**: PLC-confirmed `RUNNING → STOPPED` edge trigger with dwell filter, latched weight, Yes → spool completion transaction + label print, No → close with no transaction. 14-point handling analysis, state machine, rules S-1…S-14, edge-case table, UI spec, acceptance criteria 11–22, PLC tag/hub-event requirements, and **Q63–Q65**. Doc retitled to cover both parts. |
+| Aug 1, 2026 | Client sync (30 Jul call) | **Part C added — the short close is specified, and the target basis changed.** The **2,000 lb default target is withdrawn**: completion is graded against the **customer min–max weight** (e.g. 900 max / 800 min), with spools sized ~1,800 lb so two finished coils can be cut at FL2 (**Q60** basis decided; the source field is still open). A short close is an **unplanned stop** on the mill **10-90** pattern with a reason code — inside the range continue, outside it a **supervisor override + production hold** or an **offer to the customer under concession** before any remake, and **the spool is run off either way** because FL2 has no spool stripper (**Q65** decided). Recorded the mid-run coil-break rule: the stop is removed and a **new stop starts from zero**, with the leftover welded to the next coil on FL1 or run off and offered/scrapped on FL2 — flagged as a run/stop model change to be checked against **OI-25** rather than implemented as a screen rule. The **10-90 SOP itself is not in the repository** and must be obtained. |

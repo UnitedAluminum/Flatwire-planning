@@ -327,7 +327,7 @@ In both cases, any material run before SPC verification could be out-of-spec. Fo
 
 ### Relationship to Open Question Q56
 
-Open question Q56 in [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) asks only about override authority. This analysis extends that question to include the more fundamental design decision: the toggle must enforce a **hard block** (conditional routing to SPC Checkpoint screen), not a **soft queue** (task added to a list the operator can defer). The override authority question is secondary — it only matters once the hard block is correctly implemented.
+Open question Q56 in [FlatWireOpenQuestions.md](../../Analysis/FlatWireOpenQuestions.md) asks only about override authority. This analysis extends that question to include the more fundamental design decision: the toggle must enforce a **hard block** (conditional routing to SPC Checkpoint screen), not a **soft queue** (task added to a list the operator can defer). The override authority question is secondary — it only matters once the hard block is correctly implemented.
 
 ---
 

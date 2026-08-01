@@ -1,7 +1,7 @@
 /* spool_notification.js — Shared "spool approaching target weight" operator notification.
  *
  * Non-blocking corner card raised automatically while the line is running, at 75% / 90% / 100%
- * of the target spool weight. See Analysis/SpoolCompletionNotification.md for the requirement.
+ * of the target spool weight. See LatestDocument/RequirementDocuments/SpoolCompletionNotification.md for the requirement.
  *
  * Behavior:
  *   · 75% / 90% / 100% of target → notification raised automatically
@@ -19,7 +19,8 @@
  *     var FW_SPOOL_CONFIG = {
  *       label:        'Spool',      // 'Spool' on FL1 (TKUP-1) · 'Coil' on FL2/FL3 (TKUP-2)
  *       takeup:       'TKUP-1',
- *       targetLb:     2000,         // order "Max Wgt of Spool", capped by take-up capacity
+ *       targetLb:     900,          // CUSTOMER MAXIMUM weight from the order — see the note below
+ *       targetMinLb:  800,          // CUSTOMER MINIMUM; a close below this is out of range
  *       startLb:      1440,         // simulated weight already on the take-up
  *       gaugeIn:      0.110,
  *       widthIn:      0.625,
@@ -30,6 +31,22 @@
  *     };
  *   </script>
  *
+ * TARGET BASIS — changed 30 Jul 2026 (client). The comparison basis is the CUSTOMER'S
+ * MIN/MAX WEIGHT RANGE from the order (e.g. 900 lb max / 800 lb min), graded BY WEIGHT — not
+ * by footage, and not against a fixed default. Spools are sized at roughly 1,800 lb so that
+ * TWO finished coils can be cut from one spool at FL2, which is where the ~900 lb figure comes
+ * from. The previous 2,000 lb default was an assumption made 29 Jul 2026; it has no basis, it
+ * exceeds the TKUP-2 ceiling of 1,100 lb, and it is WITHDRAWN. Still open (Q60): which order
+ * field carries the customer min/max.
+ *
+ * SHORT CLOSE (Q65, decided 30 Jul 2026) — closing below target is an UNPLANNED STOP on the
+ * mill 10-90 pattern, with a reason code. Inside the customer range it simply continues;
+ * outside it, the close is flagged for a supervisor override plus a production hold, or the
+ * piece is offered to the customer under concession before any remake is planned (offer
+ * first). The spool is run off either way — FL2 has no spool stripper, so it must return to
+ * FL1 emptied. NOT IMPLEMENTED HERE: this file still only arms at or above target. The
+ * short-close path needs its own prompt and reason capture.
+ *
  * Requires the flat wire shopfloor design tokens (flat-wire-shopfloor.styles.css).
  */
 (function () {
@@ -39,7 +56,12 @@
   var CFG = {
     label:        user.label        || 'Spool',
     takeup:       user.takeup       || 'TKUP-1',
-    targetLb:     user.targetLb     || 2000,   // default target spool weight (lb)
+    /* Customer max from the order. 900 lb is the figure the client gave as an example, not a
+       default to rely on — the real value comes from the order (Q60). */
+    targetLb:     user.targetLb     || 900,
+    /* Customer minimum. A spool closed below this is OUT OF RANGE and needs a supervisor
+       override + production hold, or a concession offer to the customer (Q65). */
+    targetMinLb:  user.targetMinLb  != null ? user.targetMinLb : 800,
     startLb:      user.startLb      != null ? user.startLb : 1440,
     gaugeIn:      user.gaugeIn      || 0.110,
     widthIn:      user.widthIn      || 0.625,

@@ -51,9 +51,15 @@
          the server, blank until staged, ⇅ where they differ).
          SUPERSEDED an earlier requirement that had the operator free to re-order with no
          warning and no override — do not reinstate it from older comments or docs.
-       • TWO deviations share ONE supervisor credential block (reason + badge/ID + PIN):
-         off-schedule (order booked on another line) and out-of-sequence. They can co-occur
-         and one sign-off covers both.
+       • ONE deviation needs a supervisor credential block (reason + badge/ID + PIN):
+         out-of-sequence. SUPERSEDED 1 Aug 2026: off-schedule (order booked on the other rod
+         line) used to be the second one. It is no longer a deviation at all — the system
+         AUTO-SELECTS THE CORRECT STATION and carries on, with no message and no override
+         (Q74). RodStaging.OffScheduleOverride / ScheduledLineId and CK_RodStaging_OffSched
+         are dropped; the shared OverrideBy/At/Reason columns stay for out-of-sequence.
+         OPEN: what a part-completed wizard does when the station switches under it, and
+         whether FL1/FL3 are one station or two (Q73/Q76) — if two, the switch must also
+         reload the bays and the queue, which this mockup does not yet do.
        • Bay "BLOCKED" is DERIVED, not stored. RodStaging.Status is only
          Staged | CheckedIn | Unstaged; a failed bay is Status='Staged' with an inspection
          column = 'Fail'. It still occupies the bay, which is correct — UX_RodStaging_Bay
@@ -64,21 +70,32 @@
          the screen showed NOT STAGED and offered the position to the next rod. The forward
          path is still WIP Rejection only, with no override (CHK010) — what CHANGED is that
          the bay stays occupied in the record, not that the rod can proceed.
-         STILL OPEN: what RELEASES a blocked row. Status has no value for a WIP-rejection
-         outcome, and CK_RodStaging_Unstaged ties 'Unstaged' to the pre-check-out column group.
-       • "Welded" is the IsWelded flag on a Staged row, never a status of its own — and a
-         welded rod CANNOT BE UN-STAGED. It is induction-welded to the rod in the mill, so the
-         pre-check-out promise ("the bay is released and the rod returns to inventory") is
-         physically false. Neither the queue row nor the bay card offers the control, and
-         openPreCheckout() rejects it. Reversing a weld is WLD011 and is unspecified; do not
-         add a control for it before it is.
+         RESOLVED Jul 30 2026 (client): the WIP REJECTION releases it. The operator captures the
+         rejection reason on the rejection screen, the rod goes to HOLD, and the row leaves
+         Status='Staged' as Unstaged with UnstageKind='WipRejection' + WipRejectionId. Reusing
+         'Unstaged' with a discriminator was chosen over a fourth 'Rejected' status, which
+         would have forced the vocabulary, CK_RodStaging_Unstaged and the UX_RodStaging_Bay
+         filter to change together.
+       • "Welded" is the IsWelded flag on a Staged row, never a status of its own. A welded rod
+         CAN be released — but only by a SUPERVISOR, and it is a REJECTION, not a return
+         (Q68/Q77, client 30 Jul 2026): the rod is induction-welded to the rod in the mill, so
+         removing it means cutting the material. Documented reason, rod to HOLD, recorded as
+         RodCheckout Mode P with WasWelded=1 and NewRodStatus='HOLD'. A released welded rod
+         does NOT return to the available pool.
+         SUPERSEDED 1 Aug 2026: from 31 Jul the control was removed outright, on the reasoning
+         that a welded rod cannot return to inventory. Right about the unqualified control,
+         wrong that there is no path at all.
+         STILL OPEN: reversing a weld IN PLACE on a rod that stays staged (WLD011).
        • NEVER RESOLVE A BAY POSITIONALLY. Any action against a named rod resolves its bay via
          bayNoOfAlpha(). A "bay 2 first, else bay 1" fallback used to stand in for the bay the
          caller forgot to pass, so un-staging the Payoff 1 queue row released Payoff 2's rod
          whenever both bays were staged — reachable from cold start.
        • The WIP station code is not derived from the line; only FL1PO exists.
-       • Rod diameter tolerance is per alloy and has no column yet (CHK007) — see the
-         DIA_TOL_BY_ALLOY note in script.
+       • Dimensional tolerances are MIN/MAX and there are FOUR of them — gauge (height), width,
+         diameter and ovality (Q71, client 30 Jul 2026). They live in AlloyProperty and apply at
+         BOTH pre-check-in and check-in. THE VALUES ARE OWED BY E-MAIL and are NOT seeded
+         anywhere: the diameter/ovality columns are NULL in the DDL on purpose, and
+         DIA_TOL_BY_ALLOY in script is MOCK DATA to be replaced, not extended.
        • All dynamic DOM here is built with innerHTML string concatenation. That is a
          mockup convenience only: the port must use templates and *ngFor, never innerHTML,
          and must never interpolate rod data into an HTML sink.
@@ -1066,10 +1083,16 @@
           <span id="pci-alpha-err-text"></span>
         </div>
 
-        <!-- Order booked on another line — NOTIFY + SUPERVISOR OVERRIDE, not a refusal.
-             Same shape as the Q66 spool-weight override already decided: reason +
+        <!-- WRONG STATION -> AUTO-SWITCH (Q74, 30 Jul 2026). Informational only: the station
+             has already changed and the wizard carries on. NOT a gate, NOT dismissable-before-
+             continuing, and NOT a supervisor prompt. Superseded the off-schedule override. -->
+        <div class="callout hide" id="pci-station-switch"></div>
+
+        <!-- Rod is not the one planning expects next — NOTIFY + SUPERVISOR OVERRIDE, not a
+             refusal. Same shape as the Q66 spool-weight override already decided: reason +
              supervisor badge/ID + PIN, remote-approval fallback, and the override, the
-             authorising supervisor and the reason are all recorded on the staging row. -->
+             authorising supervisor and the reason are all recorded on the staging row.
+             The off-schedule arm of this panel was removed 1 Aug 2026 — see above. -->
         <div class="sv-panel hide" id="pci-sv">
           <div class="sv-title">
             <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v4.5M12 16.4v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -1225,6 +1248,31 @@
     </div>
 
     <div class="gb-modal-body">
+      <!-- WELDED RELEASE (Q68 / Q77, 30 Jul 2026). Shown only when the staged rod carries the
+           IsWelded flag. Releasing it is a REJECTION, not a return: the rod is induction-welded
+           to the rod in the mill, so removal means cutting or splitting the material. Supervisor
+           credentials + a documented reason, and the rod ends on HOLD. Recorded as RodCheckout
+           Mode P with WasWelded = 1, ApprovedBy/ApprovedAt/OverrideReason and NewRodStatus =
+           'HOLD' — enforced by CK_RodCheckout_ModePWelded. The PIN is never stored. -->
+      <div class="sv-panel hide" id="pco-welded-note">
+        <div class="sv-title">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v4.5M12 16.4v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>This rod is welded &mdash; releasing it is a rejection</span>
+        </div>
+        <div class="sv-body">
+          The rod is induction-welded to the rod currently in the mill, so releasing it means
+          <strong>cutting or splitting the material</strong>. It does not return to inventory:
+          the rod goes to <strong>HOLD</strong> and a supervisor must authorise the removal with
+          a documented reason.
+        </div>
+        <div class="sv-grid">
+          <label class="sv-field"><span>Supervisor badge / ID</span><input class="input" type="text" id="pco-sv-badge" placeholder="SUP-000"></label>
+          <label class="sv-field"><span>PIN</span><input class="input" type="password" id="pco-sv-pin" placeholder="••••"></label>
+        </div>
+        <label class="sv-field"><span id="pco-sv-reason-label">Reason for releasing a welded rod</span>
+          <input class="input" type="text" id="pco-sv-reason" placeholder="e.g. wrong rod welded — cut back and held for disposition">
+        </label>
+      </div>
       <div class="callout">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5.5M12 7.6v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <span><strong>This rod was never checked in</strong>
@@ -1400,8 +1448,20 @@
      written. Values below mirror the alloy table in FlatWireShopfloorDashboards.md
      ("Alloy Lookup Table") so the *shape* of the lookup is right; the port must read them
      from the admin table once the column exists. See FlatWireOpenQuestions.md. */
-  var DIA_TOL_BY_ALLOY = { "1100": 0.003, "1350": 0.002, "3003": 0.004, "5052": 0.003, "6061": 0.003 };
-  var DIA_TOL_FALLBACK = 0.005;
+  /* MOCK DATA — NOT A SPECIFICATION.
+     Tolerances are min/max, and there are four of them: gauge (height), width, diameter and
+     ovality (client, 30 Jul 2026 — Q71). They live in the AlloyProperty lookup and apply at
+     BOTH pre-check-in and check-in. THE REAL VALUES ARE OWED BY E-MAIL and have deliberately
+     NOT been seeded anywhere — AlloyProperty.RodDiameterTolerance{Minus,Plus}In and
+     RodOvalityMaxIn are NULL in the DDL for exactly this reason. The symmetric numbers below
+     are the old mock map re-expressed as bands so the screen has something to render; they
+     must be replaced, not extended. */
+  var DIA_TOL_BY_ALLOY = {
+    "1100": { minus: 0.003, plus: 0.003 }, "1350": { minus: 0.002, plus: 0.002 },
+    "3003": { minus: 0.004, plus: 0.004 }, "5052": { minus: 0.003, plus: 0.003 },
+    "6061": { minus: 0.003, plus: 0.003 }
+  };
+  var DIA_TOL_FALLBACK = { minus: 0.005, plus: 0.005 };
 
   function diaTol(alloy) {
     var t = DIA_TOL_BY_ALLOY[alloy];
@@ -1666,13 +1726,19 @@
       return '<a class="btn" href="dashboard_3_active_run.html">Open active run ' + SVG_CHEV + '</a>' +
              '<a class="btn" href="dashboard_12_rod_checkout.html">Check out rod</a>';
     }
-    /* A WELDED rod has no Pre-check-out. It is physically induction-welded to the rod in the
-       mill, so "release the bay and return it to inventory" is not a thing that can happen.
-       Supervisor reversal of a weld is WLD011 and is not specified — until it is, there is no
-       control for it here. Note welded is the IsWelded flag on a Staged row, not a state, so
-       this branch is reached for both. */
+    /* A WELDED rod CAN be released — but only by a supervisor, and it is a REJECTION, not a
+       return (client decision, 30 Jul 2026 — Q68/Q77). The rod is induction-welded to the rod
+       in the mill, so releasing it means cutting or splitting the material: supervisor
+       override, documented reason, rod to HOLD.
+         Superseded (31 Jul 2026): the control was removed outright on the reasoning that a
+       welded rod cannot return to inventory. That was right about the UNQUALIFIED control and
+       wrong that there is no path at all.
+         Still unspecified: reversing a weld IN PLACE on a rod that stays staged (WLD011).
+       Note welded is the IsWelded flag on a Staged row, not a state, so this branch is
+       reached for both. */
     return '<a class="btn btn-primary" href="dashboard_2_rod_checkin%20-%20New.html">Proceed to check-in ' + SVG_CHEV + '</a>' +
-           (b.isWelded ? ''
+           (b.isWelded
+             ? '<button class="btn" type="button" data-precheckout="' + n + '" data-welded="1">Pre-check-out (supervisor)</button>'
              : '<button class="btn" type="button" data-precheckout="' + n + '">Pre-check-out</button>');
   }
 
@@ -1773,7 +1839,7 @@
     var hasOverride = !!(b.offScheduleOverride || b.outOfSequenceOverride);
     show(auth, hasOverride);
     if (hasOverride) {
-      var what = b.offScheduleOverride && b.outOfSequenceOverride
+      var what = false && b.outOfSequenceOverride   /* off-schedule arm removed 1 Aug 2026 */
         ? "off-schedule and out of planned sequence"
         : b.offScheduleOverride ? "order " + orderOf(b.alpha) + " is scheduled on " + b.scheduledLine
         : "out of planned sequence";
@@ -1890,14 +1956,22 @@
         statusCell = '<span class="q-status pre">Pre-checked-in</span>';
         actionCell = '<button class="btn btn-sm" type="button" data-unstage="' + q.alpha + '">Unstage</button>';
       } else if (q.status === "welded") {
-        /* No Unstage on a welded rod. It is induction-welded to the rod currently in the mill,
-           so releasing the bay and returning it to inventory — what the pre-check-out modal
-           promises — is physically impossible. The guard in openPreCheckout() admitted it
-           because welded is IsWelded on a Staged row, not a state of its own, so `state ===
-           "staged"` passed. Reversing a weld is WLD011, which is unspecified; there is
-           deliberately no control for it until it is. */
+        /* A welded rod IS releasable — by a supervisor, as a rejection (Q68/Q77, 30 Jul 2026).
+           It is induction-welded to the rod in the mill, so releasing it means cutting the
+           material: supervisor override, documented reason, rod to HOLD. The label says
+           "Release" rather than "Unstage" because nothing returns to inventory.
+             Superseded 1 Aug 2026: from 31 Jul this row carried no control at all, on the
+           reasoning that a welded rod cannot be un-staged. Right about the unqualified
+           control, wrong that there is no path. */
         statusCell = '<span class="q-status welded">Welded</span>';
-        actionCell = '';
+        actionCell = '<button class="btn btn-sm" type="button" data-unstage="' + q.alpha +
+                     '" title="Supervisor approval required — the rod is cut and held">Release (supervisor)</button>';
+      } else if (q.status === "held") {
+        /* A released WELDED rod does not return to the available pool: it was cut, so it sits
+           on HOLD pending disposition and must not be offered for staging again. Without this
+           branch it fell through to the Available case and rendered a Stage button. */
+        statusCell = '<span class="q-status blocked">On HOLD &middot; released after weld</span>';
+        actionCell = '<a class="btn btn-sm btn-danger" href="dashboard_8_wip_rejection.html">WIP Rejection</a>';
       } else {
         statusCell = r.footage > 0
           ? '<span class="partial-flag"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v4.5M12 16.4v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Partial &middot; ' + fmt(r.footage) + ' ft run</span>'
@@ -2202,18 +2276,22 @@
     }
 
     W.rodOrder = rodOrder;
-    /* TWO independent reasons a supervisor may be needed. Both are "notify and authorise",
-       never a refusal, and both use the same Q66 credential block — one authorisation
-       covers whichever apply to this rod. */
-    W.offLine  = orderIsOffLine(rodOrder);
+    /* WRONG STATION -> SWITCH, don't ask (Q74, 30 Jul 2026).
+       If the rod's order is booked on the other rod line, select that station and continue.
+       No supervisor, no override, no blocking message. This happens BEFORE the sequence check
+       so that "expected next" is evaluated against the line the rod actually belongs to. */
+    W.switchedFrom = null;
+    if (orderIsOffLine(rodOrder)) {
+      W.switchedFrom = CURRENT_LINE;
+      selectStation(orderScheduledOn(rodOrder));
+    }
+    W.offLine = false;   /* retained so the wizard's shared code paths stay single-shaped */
+
+    /* ONE reason a supervisor may still be needed: the rod is not the one planning expects
+       next. Notify and authorise, never a refusal (Q66 credential block). */
     W.outOfSeq = rodIsOutOfSequence(raw, rodOrder);
 
     var reasons = [];
-    if (W.offLine) {
-      reasons.push("<li><strong>Scheduled on another line.</strong> Order <span class='mono'>" + rodOrder +
-        "</span> is booked on <strong>" + orderScheduledOn(rodOrder) + "</strong>, not " + CURRENT_LINE +
-        ". Staging it here starts another line's job.</li>");
-    }
     if (W.outOfSeq) {
       var exp = expectedRodLabel(rodOrder);
       reasons.push("<li><strong>Out of planned sequence.</strong> Planning expects <span class='mono'>" +
@@ -2222,15 +2300,21 @@
     }
     W.needsOverride = reasons.length > 0;
     if (W.needsOverride) {
-      $("sv-heading").textContent = reasons.length > 1
-        ? "Two deviations need supervisor authorisation"
-        : (W.offLine ? "Order is scheduled on another line" : "Rod is out of planned sequence");
+      $("sv-heading").textContent = "Rod is out of planned sequence";
       $("sv-body").innerHTML = "<ul style='margin:0;padding-left:18px;'>" + reasons.join("") + "</ul>";
-      $("sv-reason-label").textContent = W.offLine && W.outOfSeq ? "Reason for both deviations"
-        : W.offLine ? "Reason for running off-schedule"
-        : "Reason for running out of sequence";
+      $("sv-reason-label").textContent = "Reason for running out of sequence";
     }
     show($("pci-sv"), W.needsOverride);
+
+    /* Informational only — the station has already switched and the wizard continues. */
+    var sw = $("pci-station-switch");
+    if (sw) {
+      if (W.switchedFrom) {
+        sw.innerHTML = "Station switched to <strong>" + CURRENT_LINE + "</strong> &mdash; order " +
+          "<span class='mono'>" + rodOrder + "</span> is scheduled there, not on " + W.switchedFrom + ".";
+      }
+      show(sw, !!W.switchedFrom);
+    }
 
     W.alpha = raw;
     $("rr-alloy").textContent  = r.alloy;
@@ -2238,10 +2322,12 @@
     $("rr-gross").textContent  = fmt(r.gross) + " lb";
     $("rr-net").textContent    = fmt(r.net) + " lb";
     $("rr-vendor").textContent = r.vendor;
-    $("rr-order").innerHTML    = rodOrder +
-      (W.offLine ? ' <span style="color:var(--color-text-warning);font-weight:600;">(' + orderScheduledOn(rodOrder) + ')</span>' : "");
+    $("rr-order").innerHTML    = rodOrder;
     $("rr-nom").innerHTML      = r.nominal.toFixed(3) + "&Prime;";
-    $("rr-tol").innerHTML      = "&plusmn; " + diaTol(r.alloy).toFixed(3) + "&Prime;";
+    var _t = diaTol(r.alloy);
+    $("rr-tol").innerHTML      = (_t.minus === _t.plus)
+      ? "&plusmn; " + _t.plus.toFixed(3) + "&Prime;"
+      : "&minus;" + _t.minus.toFixed(3) + " / +" + _t.plus.toFixed(3) + "&Prime;";
     show($("pci-readout"), true);
 
     /* PCI005: only same-alloy scrap boxes. A static list let a 3003 rod carry an 1100 box. */
@@ -2268,30 +2354,29 @@
       var dia = parseFloat($("pci-dia").value);
       if (isNaN(dia)) return { ok: false, msg: "Enter the measured diameter" };
       var r = ROD_MASTER[W.alpha];
+      /* MIN/MAX band, not a single ± (Q71). The band is asymmetric-capable:
+         nominal − minus .. nominal + plus. */
       var tol = diaTol(r.alloy);
-      if (Math.abs(dia - r.nominal) > tol + 1e-9) {
+      var lo = r.nominal - tol.minus, hi = r.nominal + tol.plus;
+      if (dia < lo - 1e-9 || dia > hi + 1e-9) {
         return { ok: false, fail: true,
-                 msg: "Diameter " + dia.toFixed(3) + "″ is outside " + r.nominal.toFixed(3) +
-                      "″ ± " + tol.toFixed(3) + "″ (alloy " + r.alloy + ")" };
+                 msg: "Diameter " + dia.toFixed(3) + "″ is outside " + lo.toFixed(3) +
+                      "″ – " + hi.toFixed(3) + "″ (alloy " + r.alloy + ")" };
       }
       if (r.footage > 0 && !W.cfAck) {
         return { ok: false, msg: "Confirm the rod identity to accept carry-forward" };
       }
-      /* Off-schedule and/or out-of-sequence: the commit control stays reachable, but only
-         once a supervisor has authorised. Reason + badge/ID + PIN, matching the Q66
-         override already decided. One authorisation covers both deviations. */
+      /* Out of planned sequence: the commit control stays reachable, but only once a
+         supervisor has authorised. Reason + badge/ID + PIN, matching the Q66 override.
+         The off-schedule arm was removed 1 Aug 2026 — the station switches instead. */
       if (W.needsOverride) {
         var sv = svFields();
         if (!sv.badge || !sv.pin || !sv.reason) {
-          var what = W.offLine && W.outOfSeq ? "off-schedule and out-of-sequence"
-                   : W.offLine ? "off-schedule" : "out-of-sequence";
+          var what = "out-of-sequence";
           return { ok: false,
                    msg: "Supervisor authorisation required for " + what + " staging — badge, PIN and reason" };
         }
-        return { ok: true, msg: "Authorised by " + sv.badge + " — " +
-                 (W.offLine && W.outOfSeq ? "off-schedule, out of sequence"
-                  : W.offLine ? "running " + W.rodOrder + " off-schedule"
-                  : "running out of planned sequence") };
+        return { ok: true, msg: "Authorised by " + sv.badge + " — running out of planned sequence" };
       }
       return { ok: true, msg: "Rod identified — order " + W.rodOrder + ", next in planned sequence" };
     }
@@ -2492,12 +2577,12 @@
        reason. Two independent flags share one credential stamp. The PIN is never stored. */
     if (W.needsOverride) {
       var sv = svFields();
-      b.offScheduleOverride  = !!W.offLine;
+      b.offScheduleOverride  = false;   /* dropped 1 Aug 2026 — the station switches instead */
       b.outOfSequenceOverride = !!W.outOfSeq;
       b.overrideBy = sv.badge;
       b.overrideReason = sv.reason;
       b.overrideAt = clockText(true);
-      if (W.offLine) b.scheduledLine = orderScheduledOn(W.rodOrder);
+      b.scheduledLine = null;           /* dropped with OffScheduleOverride */
     }
 
     /* The ACTUAL sequence is assigned here, in staging order — it is never the rod's
@@ -2525,16 +2610,24 @@
   /* ══════════════════ Pre-check-out ══════════════════ */
   var pcoBay = null;
   function openPreCheckout(n) {
-    /* Only a staged, un-welded bay can be un-staged. A blocked bay routes to WIP Rejection and
-       a welded one cannot be released at all (WLD011, unspecified) — the queue no longer
-       offers Unstage on either, so this is a backstop rather than the sole enforcement.
+    /* A blocked bay routes to WIP Rejection, not here. A WELDED bay IS releasable, but only
+       through the supervisor path — see Q68/Q77.
        NO POSITIONAL FALLBACK: the caller must name the bay. The old
        `n || (bay2 staged ? 2 : bay1 staged ? 1 : null)` silently retargeted the action to the
        other payoff whenever the caller omitted it, which the queue's Unstage always did. */
-    if (!n || bayOf(n).state !== "staged" || bayOf(n).isWelded) return;
+    if (!n || bayOf(n).state !== "staged") return;
+    var welded = !!bayOf(n).isWelded;
     pcoBay = n;
     $("pco-sub").innerHTML = CURRENT_LINE + " &middot; <span class='mono'>" + bayOf(n).alpha +
-                             "</span> &middot; Payoff " + n + " &middot; staged " + bayOf(n).stagedAt;
+                             "</span> &middot; Payoff " + n + " &middot; staged " + bayOf(n).stagedAt +
+                             (welded ? " &middot; <strong>welded</strong>" : "");
+    /* The welded path is a different transaction shape, so say so before anything is chosen:
+       supervisor credentials, a documented reason, and the rod ends on HOLD rather than back
+       in inventory. RodCheckout Mode P records it with WasWelded = 1. */
+    var wn = $("pco-welded-note");
+    if (wn) show(wn, welded);
+    var pcoTitle = $("pco-title");
+    if (pcoTitle) pcoTitle.textContent = welded ? "Pre-check-out — welded rod (supervisor)" : "Pre-check-out";
     openModal("pco-overlay");
   }
 
@@ -2588,12 +2681,32 @@
        would re-introduce the wrong-bay release that openPreCheckout() no longer allows. */
     var n = pcoBay;
     if (!n) return;
+    var welded = !!bayOf(n).isWelded;
+
+    /* A WELDED release needs supervisor credentials and a documented reason before it can be
+       committed (Q68/Q77). Unwelded needs neither — the operator's reason code is enough. */
+    if (welded) {
+      var badge  = ($("pco-sv-badge")  || {}).value || "";
+      var pin    = ($("pco-sv-pin")    || {}).value || "";
+      var reason = ($("pco-sv-reason") || {}).value || "";
+      if (!badge.trim() || !pin.trim() || !reason.trim()) {
+        (!badge.trim() ? $("pco-sv-badge") : !pin.trim() ? $("pco-sv-pin") : $("pco-sv-reason")).focus();
+        return;
+      }
+    }
+
     var alpha = bayOf(n).alpha;
     var q = QUEUE.filter(function (x) { return x.alpha === alpha; })[0];
-    /* Un-staging releases the actual position too — the rod was never processed, so it
-       has no place in the run order. The planned sequence is untouched: planning's
-       intent does not change because the floor changed its mind. */
-    if (q) { q.status = "available"; q.payoff = null; q.actualSeq = null; }
+    /* Releasing puts an UNWELDED rod back in the available pool. A WELDED one does not go
+       back: it has been cut, so it leaves the queue on HOLD and is not stageable again
+       (RodCheckout Mode P, WasWelded = 1, NewRodStatus = 'HOLD').
+       Either way the actual position is released — the rod was never processed, so it has no
+       place in the run order. The planned sequence is untouched: planning's intent does not
+       change because the floor changed its mind. */
+    if (q) {
+      q.status = welded ? "held" : "available";
+      q.payoff = null; q.actualSeq = null;
+    }
 
     if (n === 1) { bay1 = emptyBay(); } else { bay2 = emptyBay(); }
     pcoBay = null;
@@ -2685,21 +2798,39 @@
      wrote "FL3PO", a station that does not exist. */
   var STATION_BY_LINE = { FL1: "FL1PO", FL3: "FL1PO" };
 
+  /* Selecting a station is now BOTH an operator action and something the system does by
+     itself, so the body of the click handler is factored out. See selectStation(). */
   document.querySelectorAll(".station-btn").forEach(function (b) {
-    b.addEventListener("click", function () {
-      document.querySelectorAll(".station-btn").forEach(function (x) {
-        x.classList.remove("active");
-        x.setAttribute("aria-selected", "false");
-      });
-      b.classList.add("active");
-      b.setAttribute("aria-selected", "true");
-      CURRENT_LINE = b.getAttribute("data-station");
-      $("line-badge").textContent = CURRENT_LINE;
-      $("stamp-station").textContent = STATION_BY_LINE[CURRENT_LINE] || "—";
-      $("queue-line").textContent = CURRENT_LINE;
-      $("pci-sub").innerHTML = CURRENT_LINE + " &middot; Payoff 2 &middot; the current coil keeps running";
-    });
+    b.addEventListener("click", function () { selectStation(b.getAttribute("data-station")); });
   });
+
+  /* AUTO-SELECT THE CORRECT STATION (client decision, 30 Jul 2026 — Q74).
+     A rod whose order is booked on the other rod line is NOT a deviation and does NOT need a
+     supervisor: the system switches to the correct station and carries on. There is no
+     blocking message. The inline note below is a statement of what happened, not a gate —
+     it never stops the transaction and it is not dismissable-before-continuing.
+
+     Superseded: this used to raise the same supervisor credential block as an out-of-sequence
+     stage, recorded on RodStaging.OffScheduleOverride / ScheduledLineId. Those columns and
+     CK_RodStaging_OffSched are dropped.
+
+     OPEN (Q73/Q76): whether FL1 and FL3 are one physical station or two. If they are one, this
+     switch is a relabel; if they are two, it must also RELOAD the bays and the queue — which
+     this mockup does not yet do (UX review F13). And what a part-completed wizard should do
+     when the station changes under it is unspecified. */
+  function selectStation(line) {
+    document.querySelectorAll(".station-btn").forEach(function (x) {
+      var on = x.getAttribute("data-station") === line;
+      x.classList.toggle("active", on);
+      x.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    CURRENT_LINE = line;
+    $("line-badge").textContent = CURRENT_LINE;
+    $("stamp-station").textContent = STATION_BY_LINE[CURRENT_LINE] || "—";
+    $("queue-line").textContent = CURRENT_LINE;
+    $("pci-sub").innerHTML = CURRENT_LINE + " &middot; Payoff 2 &middot; the current coil keeps running";
+  }
+  window.selectStation = selectStation;
 
   /* ══════════════════ Modal close plumbing ══════════════════ */
   document.querySelectorAll("[data-close]").forEach(function (b) {

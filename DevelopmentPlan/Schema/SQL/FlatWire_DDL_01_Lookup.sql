@@ -136,8 +136,23 @@ BEGIN
         [Alloy]                 VARCHAR(10)  NOT NULL,       -- e.g. 1100, 1350, 3003, 5052, 6061
         [MaxReductionPerPass]   DECIMAL(5,3) NOT NULL,       -- fractional max area reduction per pass (e.g. 0.220 = 22%)
         [SpringbackFactor]      DECIMAL(5,3) NOT NULL,       -- roll-gap springback multiplier (e.g. 0.970)
-        [GaugeToleranceDefault] DECIMAL(8,4) NOT NULL,       -- default ± gauge tolerance (in)
-        [WidthToleranceDefault] DECIMAL(8,4) NOT NULL,       -- default ± width tolerance (in)
+        -- DIMENSIONAL TOLERANCES — min/max pairs, not a single ± (client, 30 Jul 2026, Q71).
+        -- Tim confirmed upper and lower limits for gauge (height), width and diameter, plus
+        -- ovality, held here in the lookup and applied at BOTH pre-check-in and check-in.
+        -- Modelled as OFFSETS about nominal, matching CHK007 / FR-065 ("0.30 with ±0.01 gives
+        -- 0.29–0.31"), so an asymmetric band is expressible: nominal − Minus .. nominal + Plus.
+        -- Gauge and width carry forward the previously seeded symmetric value in BOTH columns
+        -- (interim, not new data). Diameter and ovality are NULL: the values are OWED BY
+        -- E-MAIL and nothing is to be seeded until they arrive — "I want to say it's plus or
+        -- minus 10" is not a specification.
+        [GaugeToleranceMinusIn]     DECIMAL(8,4) NOT NULL,   -- lower gauge limit, as an offset below nominal (in)
+        [GaugeTolerancePlusIn]      DECIMAL(8,4) NOT NULL,   -- upper gauge limit, as an offset above nominal (in)
+        [WidthToleranceMinusIn]     DECIMAL(8,4) NOT NULL,   -- lower width limit (in)
+        [WidthTolerancePlusIn]      DECIMAL(8,4) NOT NULL,   -- upper width limit (in)
+        [RodDiameterToleranceMinusIn] DECIMAL(8,4) NULL,     -- lower incoming-rod diameter limit (in); CHK007
+        [RodDiameterTolerancePlusIn]  DECIMAL(8,4) NULL,     -- upper incoming-rod diameter limit (in); CHK007
+        [RodOvalityMaxIn]           DECIMAL(8,4) NULL,       -- max |M1 − M2| out-of-round; supersedes the
+                                                             -- hard-coded 0.003" in CheckinImplementationPlan.md
         [SpeedRangeMinFpm]      INT          NOT NULL,       -- default minimum line speed (ft/min)
         [SpeedRangeMaxFpm]      INT          NOT NULL,       -- default maximum line speed (ft/min)
         [LbPerFtFactor]         DECIMAL(10,6) NULL,          -- footage → weight factor (lb per ft); OQ-36 PROVISIONAL — confirm per cross-section
@@ -149,8 +164,19 @@ BEGIN
         CONSTRAINT [UQ_AlloyProperty_Alloy]     UNIQUE ([Alloy]),
         CONSTRAINT [CK_AlloyProperty_Reduction] CHECK ([MaxReductionPerPass] > 0 AND [MaxReductionPerPass] < 1),
         CONSTRAINT [CK_AlloyProperty_Speed]     CHECK ([SpeedRangeMinFpm] < [SpeedRangeMaxFpm]),
-        CONSTRAINT [CK_AlloyProperty_GaugeTol]  CHECK ([GaugeToleranceDefault] > 0),
-        CONSTRAINT [CK_AlloyProperty_WidthTol]  CHECK ([WidthToleranceDefault] > 0)
+        CONSTRAINT [CK_AlloyProperty_GaugeTol]  CHECK ([GaugeToleranceMinusIn] > 0 AND [GaugeTolerancePlusIn] > 0),
+        CONSTRAINT [CK_AlloyProperty_WidthTol]  CHECK ([WidthToleranceMinusIn] > 0 AND [WidthTolerancePlusIn] > 0),
+        -- Rod diameter is all-or-nothing: half a band cannot validate anything.
+        -- Note the explicit IS NOT NULL pair: `Minus > 0 AND Plus > 0` alone evaluates to
+        -- UNKNOWN when one side is NULL, and a CHECK constraint accepts UNKNOWN — so half a
+        -- band would have been admitted.
+        CONSTRAINT [CK_AlloyProperty_RodDiaTol] CHECK (
+                                                    ([RodDiameterToleranceMinusIn] IS NULL AND [RodDiameterTolerancePlusIn] IS NULL)
+                                                 OR ([RodDiameterToleranceMinusIn] IS NOT NULL AND [RodDiameterTolerancePlusIn] IS NOT NULL
+                                                        AND [RodDiameterToleranceMinusIn] > 0 AND [RodDiameterTolerancePlusIn] > 0)
+                                                ),
+        -- Ovality is |M1 − M2|, so only an upper limit is meaningful.
+        CONSTRAINT [CK_AlloyProperty_Ovality]   CHECK ([RodOvalityMaxIn] IS NULL OR [RodOvalityMaxIn] > 0)
     );
     PRINT 'Created table: AlloyProperty';
 END

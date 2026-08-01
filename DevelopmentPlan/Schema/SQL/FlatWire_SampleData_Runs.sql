@@ -45,7 +45,8 @@ GO
 -- intended) are free to differ — and here they deliberately do:
 --   R00041  run 1, plan 1  — in planned order
 --   R00044  run 4, plan 2  — run late, deviation
---   R00048  run 5, plan 3  — run late, then un-staged
+--   R00048  run 5, plan 3  — run late, then un-staged (pre-check-out)
+--   R00047  run 6, plan 4  — failed inspection: the derived BLOCKED bay
 -- A row with PlannedSeqno NULL would represent a substitution with no
 -- planned position; none is seeded, but the column allows it.
 -- ============================================================
@@ -55,7 +56,7 @@ INSERT INTO [dbo].[RodStaging]
      [DiameterIn],[GrossWeightLb],[NetWeightLb],[FootageRunToDateAtStaging],
      [InspectionOxidation],[InspectionSurfaceDefects],[InspectionWaterStains],[InspectionNotes],
      [StagedAt],[StagedBy],[WeldedAt],[WeldedBy],[CheckedInAt],[RodCheckinId],
-     [UnstagedAt],[UnstagedBy],[UnstageReasonCode])
+     [UnstagedAt],[UnstagedBy],[UnstageReasonCode],[UnstageKind],[WipRejectionId])
 VALUES
     -- Consumed by check-in: staged, then acknowledged on Dashboard 2.
     ('FL1',1,'R00041',1,1,0,'CheckedIn','FW-00421','SB-1100-A',
@@ -64,7 +65,7 @@ VALUES
      '2026-07-20 06:18:00 -05:00','Dave M.',NULL,NULL,
      '2026-07-20 06:30:00 -05:00',
      (SELECT [Id] FROM [dbo].[RodCheckin] WHERE [RunId] = 'RUN-0001' AND [RodAlpha] = 'R00041'),
-     NULL,NULL,NULL),
+     NULL,NULL,NULL,NULL,NULL),
 
     -- Currently staged on the idle bay AND marked as welded to the running rod.
     -- FootageRunToDateAtStaging > 0 means this was a forced carry-forward scan.
@@ -73,7 +74,23 @@ VALUES
      'Pass','Pass','Pass','Partial rod returned from RUN-0003; carry-forward acknowledged',
      '2026-07-22 07:05:00 -05:00','Marcus T.',
      '2026-07-22 07:41:00 -05:00','Marcus T.',
-     NULL,NULL,NULL,NULL,NULL),
+     NULL,NULL,NULL,NULL,NULL,NULL,NULL),
+
+    -- BLOCKED bay: staged, inspection FAILED, still physically on the payoff.
+    -- Blocked is DERIVED (Status='Staged' + any inspection column='Fail'), not a fourth
+    -- Status value (Q72 items 1-2). The bundle is not unbanded until it is positioned at
+    -- the payoff, so a rod that fails inspection is already in the bay and must keep it
+    -- occupied -- which is why the row is committed BEFORE the inspection gate.
+    -- It is released by a WIP rejection, which captures the reason and puts the rod on
+    -- HOLD (Q72 item 3, decided 30 Jul 2026): Status->'Unstaged', UnstageKind->
+    -- 'WipRejection', WipRejectionId->the rejection. Left blocked here on purpose so the
+    -- BLOCKED bay state is reachable in seeded data; REJ-0001 in the QualityOutput sample
+    -- is that rod's rejection, and applying it is what frees the bay.
+    ('FL1',1,'R00047',6,4,0,'Staged','FW-00421',NULL,
+     0.3750,9000.00,8952.00,0.00,
+     'Fail','Pass','Pass','Heavy oxidation on OD -- routed to WIP Rejection, no bypass (CHK010)',
+     '2026-07-22 09:10:00 -05:00','Marcus T.',NULL,NULL,
+     NULL,NULL,NULL,NULL,NULL,NULL,NULL),
 
     -- Pre-checked-in in error, then un-staged (Mode P) and returned to the warehouse.
     ('FL3',2,'R00048',5,3,0,'Unstaged','FW-00600',NULL,
@@ -81,7 +98,7 @@ VALUES
      'Pass','Pass','Pass','Wrong bundle brought to the payoff',
      '2026-07-22 08:02:00 -05:00','Linda K.',NULL,NULL,
      NULL,NULL,
-     '2026-07-22 08:19:00 -05:00','Linda K.','WrongRodMisScan');
+     '2026-07-22 08:19:00 -05:00','Linda K.','WrongRodMisScan','PreCheckOut',NULL);
 GO
 
 -- ============================================================

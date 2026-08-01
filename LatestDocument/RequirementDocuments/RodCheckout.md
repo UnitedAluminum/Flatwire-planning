@@ -2,9 +2,9 @@
 # Rod Checkout — Use Case Analysis
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** May 4, 2026
+**Last Updated:** August 1, 2026
 **Document Type:** Use Case Analysis
-**Status:** Partially Decided — See Open Questions section for per-question status
+**Status:** Partially Decided — See Open Questions section for per-question status. **Mode P (pre-check-out) added Aug 1, 2026** from the 30 Jul client call, together with a persistence gap this document's own May 4 decisions never got (**G24**)
 
 ---
 
@@ -12,7 +12,7 @@
 
 The existing rod lifecycle has no formal checkout step. A checked-in rod (`INFLAT` status) currently leaves that state only via **Run Complete**, **WIP Rejection/Scrap**, or a **Weld Event**. The customer requirement is to allow a rod to be **deliberately removed from a payoff position** without those outcomes — for example, when the wrong rod was scanned, an order is rescheduled, or the rod must be relocated.
 
-This analysis defines two distinct scenarios and recommends implementing them as **Dashboard 12 — Rod Checkout** (see [FlatWireShopfloorDashboards.md](FlatWireShopfloorDashboards.md)).
+This analysis defines two distinct scenarios and recommends implementing them as **Dashboard 12 — Rod Checkout** (see [FlatWireShopfloorDashboards.md](../../Analysis/FlatWireShopfloorDashboards.md)).
 
 ---
 
@@ -259,14 +259,34 @@ Jaspreet to confirm with the PLC/SCADA team the exact tag and threshold that con
 
 ---
 
+## Mode P — Pre-check-out (un-staging), added Aug 1, 2026
+
+A **third** checkout mode sits before the two scenarios above: removing a rod that was **pre-checked-in at the payoff but never checked in**. It is modelled as `RodCheckout.Mode = 'ModeP'` with `RunId` NULL, footage 0 and `PlcTagsCleared` false — there is no run to close, no pass-schedule acknowledgement to void and no PLC tag to clear. See [RodPreCheckin.md](RodPreCheckin.md) for the staging side.
+
+**Approval depends on the weld** (client decision, 30 Jul 2026 — **Q68**, which also closes **Q77**):
+
+| Rod state | Approval | Reason captured | Rod status | Why |
+|---|---|---|---|---|
+| **Not welded** | **None** — operator-only | Pre-check-out reason | Returns to inventory | Nothing was committed; the bundle simply comes off the bay |
+| **Welded** | **Supervisor override** | **Required, documented** | **`HOLD`** | The rod is induction-welded to the rod in the mill. Removing it means **cutting or splitting the material**, so this is a **rejection**, not a return |
+
+This is deliberately *not* the OQ-B rule. OQ-B gates on **footage produced**; Mode P has none. It gates on **whether the material has been physically joined**, which is a different risk and arrives earlier.
+
+> **⚠️ Gap G24 — the supervisor approvals decided in this document are not persisted.** `RodCheckout` has **no `ApprovedBy`, `ApprovedAt` or `OverrideReason` columns at all**. That means the **OQ-B** mid-run approval and the **OQ-D** disposition approval — both decided 4 May 2026 and both described above as producing "a disposition record with supervisor ID, decision, reason code, timestamp" — have **nowhere to write that record**, and neither does the new welded Mode P override. `RodStaging` has the credential trio; this table does not.
+>
+> **Fix:** add `ApprovedBy` / `ApprovedAt` / `OverrideReason` to `RodCheckout`, with a constraint tying them (plus `NewRodStatus = 'HOLD'`) to the welded Mode P case, and requiring them for Mode B. Settle the **PIN validation source** once for every override in the module (**OI-38**).
+
+
+---
+
 ## Related Documents
 
 | Document | Relevance |
 |----------|-----------|
-| [FlatWireShopfloorDashboards.md](FlatWireShopfloorDashboards.md) | Dashboard 12 — Rod Checkout screen design |
-| [FlatWireEndToEndProcess.md](FlatWireEndToEndProcess.md) | Rod lifecycle state machine |
-| [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) | Q47, Q48, Q49, Q50 — rod checkout questions |
-| [PartialRodReCheckin.md](PartialRodReCheckin.md) | Detailed design for partial re-check-in carry-forward |
+| [FlatWireShopfloorDashboards.md](../../Analysis/FlatWireShopfloorDashboards.md) | Dashboard 12 — Rod Checkout screen design |
+| [FlatWireEndToEndProcess.md](../../Analysis/FlatWireEndToEndProcess.md) | Rod lifecycle state machine |
+| [FlatWireOpenQuestions.md](../../Analysis/FlatWireOpenQuestions.md) | Q47, Q48, Q49, Q50 — rod checkout questions |
+| [PartialRodReCheckin.md](../../Analysis/PartialRodReCheckin.md) | Detailed design for partial re-check-in carry-forward |
 
 ---
 
@@ -276,3 +296,4 @@ Jaspreet to confirm with the PLC/SCADA team the exact tag and threshold that con
 |------|-----------|-------------|
 | Apr 24, 2026 | Analysis Team | Initial use case analysis — two scenarios (pre-run and mid-run), PLC tag behavior, data model, open questions |
 | May 4, 2026 | Analysis Team — Tim O. review | **OQ-B Decided:** supervisor approval required for mid-run checkout. **OQ-D Decided:** supervisor must approve before partial spool alpha is created; notification-driven remote approval model. Scenario B flow updated to reflect supervisor approval gate and pending disposition state. **OQ-A In Progress:** multiple partial spool alphas confirmed needed; weigh-at-payoff scale pending plant input; full carry-forward design deferred. **OQ-C In Progress:** PLC tag behavior pending engineering confirmation. |
+| Aug 1, 2026 | Client sync (30 Jul call) | **Mode P (pre-check-out) documented, and a persistence gap found.** Un-staging a rod that was never checked in is **operator-only when the rod is unwelded** and requires a **supervisor override, a documented reason and `HOLD` when it is welded**, because removal means cutting the material — a rejection rather than a return (**Q68**, which also closes **Q77**). Unlike OQ-B this gates on whether the material has been **joined**, not on footage produced. Recorded **G24**: `RodCheckout` has no `ApprovedBy`/`ApprovedAt`/`OverrideReason` columns, so the OQ-B and OQ-D supervisor approvals decided on 4 May 2026 have never had anywhere to write the disposition record this document describes. |

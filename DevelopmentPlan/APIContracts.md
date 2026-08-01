@@ -1,7 +1,7 @@
 # Flat Wire Mill — API Development Plan & Contracts
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 31, 2026 (staging failed-inspection response changed; body otherwise April 30, 2026 — see `REVIEW.md`)
+**Last Updated:** August 1, 2026 (30 Jul client decisions applied to `/staging/**`, `/rod/{alpha}` and `/wipreject`; body otherwise April 30, 2026 — see `REVIEW.md`)
 **Document Type:** API Contract Reference
 **Microservice:** `FlatWire.API` (new service in `ual-api`)
 **Base URL:** `/api/v1/flatwire`
@@ -700,7 +700,7 @@ Validates and returns details for a rod alpha (used during check-in scan).
 
 **Response `404 Not Found`:** Rod alpha not found in the system.
 
-> **`orderId` / `scheduledLineId` are the rod→order resolution**, read from `planning_routings` (rod→order, written by planning at allocation) joined to scheduling (order→line). They are what let a station with no active order identify which order it is starting, and what let the caller detect an off-schedule rod *before* committing. `orderId` is **null** for a rod planning has not yet allocated — such a rod cannot be staged. These fields did not exist in the April contract, which is why the queue projection had no documented source.
+> **`orderId` / `scheduledLineId` are the rod→order resolution**, read from `planning_routings` (rod→order, written by planning at allocation) joined to scheduling (order→line). They are what let a station with no active order identify which order it is starting, and — since 30 Jul 2026 — **what the client uses to switch itself to the correct station**: if `scheduledLineId` is not the line currently on screen, the UI switches to that line and continues, with no message and no override (**Q74**). Resolve this *before* posting to `/staging/rod` or `/checkin/rod`. `orderId` is **null** for a rod planning has not yet allocated — such a rod cannot be staged. These fields did not exist in the April contract, which is why the queue projection had no documented source.
 
 > **The last four fields are required, not optional.** Without `footageRunToDate` the caller
 > cannot enforce the `PRC007` carry-forward gate — the scan would silently offer a fresh-start
@@ -860,33 +860,43 @@ Pre-check-in: stage a rod at a payoff bay (`PCI001`, `PCI004`, `PCI005`, `PCI006
 | Check | Rule | Outcome |
 |---|---|---|
 | Allocation | The rod must have a `planning_routings` entry, which **yields the order** | `422` if absent |
-| Order membership | Once an order is established, the rod must belong to **that** order | `409` — welding across orders would break genealogy |
-| Order's line | The resolved order must be scheduled on **this** line | **Not a refusal** — supervisor override, see below |
+| Order membership | Once an order is established, the rod must belong to **that** order | `409` — welding across orders would break genealogy. ⚠ **Known wrong for a multi-order rod** — see the note below |
+| Order's line | The resolved order must be scheduled on **this** line | **Not a refusal and not an override** — the client switches station; a mismatched POST returns `409` with `correctLineId`, see below |
 | Availability | `coils.coil_status` not `INFLAT`/`COMPLETE`/`HOLD`/`SCRAP`, and no `RodStaging` row with `Status = 'Staged'` | `409` |
 | Planned sequence | The rod must be the one planning expects next — the lowest `plannedSeqno` still available | **Not a refusal** — supervisor override, see below |
 
 > **The order is resolved, not supplied.** `orderId` in the body is the value the client resolved from `planning_routings` for that rod; the server re-resolves and rejects a mismatch. On a **cold line** (`activeOrderId` null) the first rod is what establishes the order — it *reveals* an allocation planning already made rather than the operator choosing one, which is what keeps even the first rod validatable.
 
-**Two deviations — notify and authorise, never refuse.** Both keep the commit control reachable once a supervisor signs off, and both use the same `Q66` credential shape: reason + supervisor badge/ID + PIN, with a remote-approval fallback when no supervisor is on the floor.
+> **⚠ Order membership is knowingly wrong for a multi-order rod (gap G22).** The client confirmed on 30 Jul 2026 (**Q69**) that **one rod may carry more than one production order** — finishing order 1 on a 7,000 lb A-rod and starting order 2 on the remainder. A rod whose *successor* order differs from the established one must therefore **pass**, not `409`. The rule is left as-is deliberately: the replacement depends on the sequencing answer (**Q79**) and on whether the case is **MVP2**. Do not implement the `409` as final.
+
+**Wrong station is corrected, not authorised (changed 30 Jul 2026).** ~~Staging a rod whose order is booked on another line is a deviation requiring a supervisor override.~~ It is **not a deviation at all**: the system **selects the correct station**. The client resolves `scheduledLineId` from `GET /rod/{alpha}` at the scan and, if it differs from the line on screen, **switches to that line** and continues — no message, no override, no supervisor. The same behaviour applies at check-in.
+
+The server still defends the invariant, because a stale or racing client could post to the wrong line:
+
+| Situation | Server behaviour |
+|---|---|
+| `lineId` matches the resolved `scheduledLineId` | Normal — proceed |
+| `lineId` differs | **`409 Conflict`** with `{ "correctLineId": "FL3" }`. The client switches station and re-posts. It is a routing correction, **not** a rejection of the material |
+| The order is scheduled on **neither** FL1 nor FL3 | **Open — `Q78`.** There is no station to switch to. Not covered on the 30 Jul call; carried forward. Do not invent a path |
+
+**One deviation remains — notify and authorise, never refuse.** It keeps the commit control reachable once a supervisor signs off, using the `Q66` credential shape: reason + supervisor badge/ID + PIN, with a remote-approval fallback when no supervisor is on the floor.
 
 | Deviation | Trigger | Recorded as |
 |---|---|---|
-| **Off-schedule** | The resolved order is booked on a different line — staging it here starts another line's job | `OffScheduleOverride` + `ScheduledLineId` |
 | **Out of sequence** | The rod is not the one planning expects next | `OutOfSequenceOverride` + `ExpectedRodAlpha` |
-
-They can occur together and are covered by **one** authorisation:
 
 ```json
 "supervisorOverride": {
-  "offSchedule":   { "scheduledLineId": "FL2" },
   "outOfSequence": { "expectedRodAlpha": "R00043" },
   "supervisorBadge": "SUP-204",
   "supervisorPin": "••••",
-  "reason": "FL2 down for maintenance; R00043 blocked behind a forklift"
+  "reason": "R00043 blocked behind a forklift"
 }
 ```
 
-Include only the deviation objects that apply, and omit `supervisorOverride` entirely when neither does. `422` if a deviation applies and the authorisation is missing or incomplete. The flags, the authorising supervisor and the reason are persisted on `RodStaging`; **the PIN is never stored**. `CK_RodStaging_Override` makes the credential stamp all-or-nothing, and `CK_RodStaging_OffSched` / `CK_RodStaging_OutOfSeq` tie each deviation's evidence to its flag, so an unauditable override cannot be written.
+Omit `supervisorOverride` entirely when the rod is the expected one. `422` if the deviation applies and the authorisation is missing or incomplete. The flag, the authorising supervisor and the reason are persisted on `RodStaging`; **the PIN is never stored**. `CK_RodStaging_Override` makes the credential stamp all-or-nothing and `CK_RodStaging_OutOfSeq` ties the deviation's evidence to its flag, so an unauditable override cannot be written.
+
+> **Removed 1 Aug 2026:** the `offSchedule` override object, and with it `RodStaging.OffScheduleOverride`, `ScheduledLineId`, `CK_RodStaging_OffSched` and `CK_RodStaging_OffSchedLine`. The shared credential columns (`OverrideBy`/`OverrideAt`/`OverrideReason`) are retained for the surviving override. Two consequences to specify rather than assume: what happens to a **part-completed wizard** when the station switches mid-transaction, and whether an FL3 tab exists on the FL1 panel at all (**Q73**/**Q76**).
 
 > **Superseded (Jul 30 2026).** An earlier requirement had the planned sequence entirely unenforced — *"the operator must be allowed to process the rods in any sequence"*, with explicitly no warning and no override. That is replaced by the notify-and-authorise rule above. The two `RodStaging` sequence columns are unchanged: `PlannedSeqno` still records intent and `RodSeqno` still records what actually ran, so the deviation remains reportable as well as authorised.
 
@@ -897,7 +907,7 @@ Include only the deviation objects that apply, and omit `supervisorOverride` ent
 **Side effects** (see the ordering note below — these are **compensating writes**, not one ACID transaction, per gap G2/G16):
 
 1. `RodStaging` row inserted with `Status = 'Staged'`, `RodSeqno` = next actual position for the line, `PlannedSeqno` = the rod's planned position snapshotted from the allocation (NULL if it has none)
-2. Shared `coils.coil_status` set per the SRS `PCI` data note, plus reqsum and the `wip_coil_orders` insert — **cross-database**
+2. Shared `coils.coil_status` is **not** changed — `INFLAT` is set at **check-in**, not at staging (**Q67**, client 30 Jul 2026; the SRS §4.2 `PCI` data note is superseded on this point and `RECEIVED → STAGED` stands). **Still open:** whether the reqsum and the `wip_coil_orders` insert from that same note stay here or move to check-in — **cross-database** either way
 3. `PayoffStateChanged` SignalR event broadcast to the line group
 4. **No PLC write.** Nothing is pushed until check-in acknowledgement
 
@@ -942,11 +952,13 @@ Staging therefore **commits the row before the inspection gate**:
 Rejection, and there is still **no override**. What changed is that the bay stays occupied *in the
 record* — not that a failed bundle can be run.
 
-> **Open — what releases a blocked row.** `Status` has only `Staged | CheckedIn | Unstaged`, and
-> `CK_RodStaging_Unstaged` ties `Unstaged` to the pre-check-out column group, so a WIP-rejection
-> outcome has no status to land in. Adding `Rejected` would change the vocabulary, the constraint
-> and the filtered index together, so it is **not** invented here. Until this is answered a blocked
-> bay is enterable but not clearable. See the Q72 residual in `FlatWireSchema_Runs.md`.
+> **RESOLVED (client, 30 Jul 2026) — the WIP rejection releases it.** ~~`Status` has no value a
+> WIP-rejection outcome can land in, so a blocked bay is enterable but not clearable.~~ A failed
+> staging inspection is captured as a **rejection with a reason on the rejection screen**, and the
+> rod goes to **`HOLD`** — that is what frees the bay. `POST /wipreject` now also releases the
+> staging row: `Status → 'Unstaged'`, `UnstageKind = 'WipRejection'`, `WipRejectionId` set. The
+> alternative — a fourth `Rejected` status — was rejected because it would have forced the
+> vocabulary, `CK_RodStaging_Unstaged` and `UX_RodStaging_Bay`'s filter to change together.
 >
 > **Two untraced consequences**, recorded rather than resolved: `RodStaging` now holds rows for
 > material that was never accepted, which affects the **`TRV009`** traveler (is `Blocked` a third
@@ -960,10 +972,11 @@ record* — not that a failed bundle can be run.
 | `409 Conflict` | Bay already occupied — `UX_RodStaging_Bay` violation |
 | `409 Conflict` | Rod already staged on another bay — `UX_RodStaging_RodActive` violation |
 | `409 Conflict` | Rod is already checked in on a line (`CHK009`) |
+| `409 Conflict` | `lineId` is not the line the rod's order is scheduled on — body carries `correctLineId`; the client **switches station and re-posts** rather than surfacing an error |
 | `422 Unprocessable Entity` | `lineId` is `FL2` — pre-check-in is not supported there (`PCI002`) |
 | ~~`422 Unprocessable Entity`~~ | ~~Any inspection item is `Fail`~~ — **superseded Jul 31 2026**: now `201 Created` with `state: "Blocked"`, see the section above. Still a hard block with no override (`CHK010`); the row is committed so the bay is not falsely reported free |
 | `422 Unprocessable Entity` | `footageRunToDate > 0` and `acknowledgedCarryForward` is `false` (`PRC007`) |
-| `422 Unprocessable Entity` | Measured diameter outside nominal ± lookup tolerance (`CHK007`) |
+| `422 Unprocessable Entity` | Measured diameter outside the **min/max** lookup band (`CHK007`) — `nominal − RodDiameterToleranceMinusIn .. nominal + RodDiameterTolerancePlusIn` from `AlloyProperty`. **The band is nullable and currently unseeded**: the values are owed by e-mail (**Q71**), and until they land this check cannot fire |
 | `404 Not Found` | Rod alpha not found in the coils table |
 
 **C# Request DTO:**
@@ -996,7 +1009,7 @@ public record StageRodCommand(
 
 Pre-check-out: release a staged rod that was never checked in.
 
-**Auth:** Bearer JWT — Operator or above *(whether this should require supervisor approval is an open question — see `Analysis/FlatWireOpenQuestions.md`. Contrast OQ-48, where **mid-run** checkout does require it.)*
+**Auth:** Bearer JWT — Operator or above **when the rod is unwelded**. A **welded** rod additionally requires a **supervisor override** — see below (**Q68**, decided 30 Jul 2026).
 
 **Request Body:**
 
@@ -1011,14 +1024,33 @@ Pre-check-out: release a staged rod that was never checked in.
 }
 ```
 
-**`reasonCode` values:** `WrongRodMisScan` · `OrderCancelledDeferred` · `FailedReInspection` · `RelocatedToLine` · `Other` (`reasonOther` required)
-**`disposition` values:** `ReturnToFloorStorage` · `ReturnToWarehouse`
+**`reasonCode` values:** `WrongRodMisScan` · `OrderCancelledDeferred` · `FailedReInspection` · `RelocatedToLine` · `WrongRodWelded` · `Other` (`reasonOther` required)
+**`disposition` values:** `ReturnToFloorStorage` · `ReturnToWarehouse` · `HoldReturnToStorage` *(welded only)*
+
+**Approval depends on the weld (`Q68` / `Q77`, decided 30 Jul 2026):**
+
+| Rod state | Approval | Rod status after | Why |
+|---|---|---|---|
+| **Not welded** | **None** — operator-only, reason captured | `RECEIVED` | Nothing was committed; the bundle simply comes off the bay |
+| **Welded** (`IsWelded = 1`) | **Supervisor override required** — badge/ID + PIN + **documented reason** | **`HOLD`** | The rod is induction-welded to the rod in the mill. Removing it means **cutting or splitting the material**, so this is a **rejection**, not a return |
+
+```json
+"supervisorOverride": {
+  "supervisorBadge": "SUP-204",
+  "supervisorPin": "••••",
+  "reason": "Welded to the running rod in error; cut back and held for disposition"
+}
+```
+
+`422` when the staged rod is welded and `supervisorOverride` is missing or incomplete. **The PIN is never stored.**
+
+> **This restores a control removed on 31 Jul 2026.** Dashboard 2A had dropped Unstage from welded rows entirely, on the reasoning that a welded rod cannot be returned to inventory. That was right about the *unqualified* control and wrong that there is no path at all: the path is a supervisor-approved rejection. `WLD011` remains unspecified for reversing a weld **in place**, on a rod that stays staged.
 
 **Side effects:**
 
-1. `RodStaging.Status → 'Unstaged'` with the un-stage audit stamp
-2. `RodCheckout` row written with `Mode = 'ModeP'`, `RunId` NULL, `FootageAtCheckout` 0, `PlcTagsCleared` **false**
-3. Shared `coils` status reverted and the `wip_coil_orders` insert from staging **reversed** — compensating write
+1. `RodStaging.Status → 'Unstaged'` with the release stamp, `UnstageKind = 'PreCheckOut'`
+2. `RodCheckout` row written with `Mode = 'ModeP'`, `RunId` NULL, `FootageAtCheckout` 0, `PlcTagsCleared` **false**, `WasWelded` per the staged row, and — when welded — `ApprovedBy`/`ApprovedAt`/`OverrideReason` plus `NewRodStatus = 'HOLD'` (enforced by `CK_RodCheckout_ModePWelded`)
+3. Shared `coils` status: **nothing to revert for `INFLAT`**, which staging no longer sets (**Q67**). A welded release sets the rod to `HOLD`. Whether the `wip_coil_orders` insert still has to be reversed depends on the open half of Q67 — compensating write if so
 4. `PayoffStateChanged` broadcast with `state: "NotStaged"`
 5. **No PLC tag clear.** Nothing was pushed, so there is nothing to clear — and unlike Mode A/B this needs **no `FL{n}.LineState` gate**, because an idle bay is not running
 
@@ -1750,6 +1782,7 @@ Records a WIP rejection, updates material status, and broadcasts a supervisor al
 - Alpha status updated to `HOLD` or `SCRAP`
 - WIP Held queue updated
 - `AlertRaised` SignalR event broadcast to Dashboard 1
+- **When the material is a rod staged at a payoff bay** (`stage: "FL1PreCheckIn"` — a failed staging inspection): the `RodStaging` row is **released** — `Status → 'Unstaged'`, `UnstageKind = 'WipRejection'`, `WipRejectionId` set to this rejection — and `PayoffStateChanged` is broadcast with `state: "NotStaged"`. **This is what clears a `Blocked` bay** (`Q72` item 3, decided 30 Jul 2026); nothing else does
 
 **Response `200 OK`:**
 
@@ -2148,7 +2181,7 @@ alertCleared$(lineId: string): Observable<AlertClearedEvent>
 | [FlatWireJiraStories.md](FlatWireJiraStories.md) | Full backlog — main track stories (FW-010, FW-020 etc.) |
 | [TechStackRecommendation.md](TechStackRecommendation.md) | Architecture decisions and microservice structure |
 | [FlatWireOpenQuestions.md](../Analysis/FlatWireOpenQuestions.md) | Open questions — OQ-36 (weight formula), OQ-48 (checkout auth), OQ-51 (pass schedule selection), OQ-52 (FL3 schedules) |
-| [RodPreCheckin.md](../Analysis/RodPreCheckin.md) | Pre-check-in / payoff staging analysis — the requirement trace behind the `/staging/**` endpoints |
+| [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md) | Pre-check-in / payoff staging analysis — the requirement trace behind the `/staging/**` endpoints |
 
 ---
 
@@ -2159,3 +2192,4 @@ alertCleared$(lineId: string): Observable<AlertClearedEvent>
 | July 31, 2026 | **Failed staging inspection now returns `201 Created` with `state: "Blocked"`, not `422`.** The old behaviour wrote no row at all, so a bundle that failed inspection — already physically on the payoff, since bundles are not unbanded until positioned there — left `GET /payoff/status` reporting the occupied bay as `NotStaged`, Dashboard 2A offering it as "Empty — available", and the next rod stageable into it. It also made the `Blocked` state unreachable despite being implemented across the API enum, the schema and the whole of Dashboard 2A. Staging now commits the row before the inspection gate. `CHK010` is unchanged — no bypass, WIP Rejection is still the only forward path. Closes **Q72** items 1–2; item 3 (*what releases a blocked row*) is the blocking residual, and two consequences are recorded but untraced (`TRV009` traveler class, `Available` projection exclusion). From the [Dashboard 2A UX review](../Analysis/Dashboard2A_UXReview.md) finding F2. |
 | July 29, 2026 | Added the **Pre-Check-in / Payoff Staging** section: `GET /payoff/status`, `POST /staging/rod`, `POST /staging/rod/unstage`, `POST /staging/rod/mark-welded`, `GET /staging/queue`, plus the `PayoffStateChanged` hub event and `PayoffStagingController`. Extended `GET /rod/{alpha}` with `footageRunToDate`, `remainingWeightEstimateLb`, `stagedPayoffPosition`, `isWelded` — without them the `PRC007` carry-forward gate cannot be enforced. Documented check-in *consuming* the staged row. |
 | April 30, 2026 | Original contract set. **Known correctness bugs catalogued in `REVIEW.md` Tier 1** — notably #37 (`RodCheckin` NOT NULL columns the check-in command never sends), the `/passschedule/generate` worked example, a missing `CheckpointType` value, and three edge-type vocabularies. Cross-check before implementing. |
+| August 1, 2026 | **30 Jul client decisions applied.** **Wrong station is corrected, not authorised:** the `offSchedule` override object is **removed** from `POST /staging/rod` — the client resolves `scheduledLineId` from `GET /rod/{alpha}` and **switches station**, and a mismatched POST returns `409` with `correctLineId` for the client to switch and re-post (Q74). Out-of-sequence remains the one supervisor-authorised deviation. **`POST /staging/rod` no longer sets `coils.coil_status`** — `INFLAT` is set at check-in (Q67); the reqsum / `wip_coil_orders` half of that side effect is still open. **The blocked-row release is specified:** `POST /wipreject` releases the staging row (`Status → 'Unstaged'`, `UnstageKind = 'WipRejection'`, `WipRejectionId`) and broadcasts `PayoffStateChanged` — the Q72 item-3 residual, and the only thing that clears a `Blocked` bay. **`POST /staging/rod/unstage` gains a weld-dependent approval:** unwelded is operator-only, **welded requires a supervisor override and puts the rod on `HOLD`** because removal means cutting the material (Q68/Q77) — restoring, behind that gate, the control removed on 31 Jul. **`CHK007` becomes a min/max band** read from `AlloyProperty`, currently unseeded pending the values owed by e-mail (Q71). Flagged **G22**: the order-membership `409` is knowingly wrong for a **multi-order rod** (Q69) pending the Q79 sequencing answer, and **Q78** (order scheduled on neither rod line) has no station to switch to and no specified path. |

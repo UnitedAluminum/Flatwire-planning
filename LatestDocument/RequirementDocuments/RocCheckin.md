@@ -124,8 +124,8 @@ Same pattern as Dashboard 2 — operator must explicitly confirm pass schedule i
 ## Related Documents
 
 - [PassScheduleManagement.md](PassScheduleManagement.md) — Integration analysis; Gaps 1, 7, 8 directly addressed by this flow
-- [FlatWireShopfloorDashboards.md](FlatWireShopfloorDashboards.md) — Dashboard 2 and Dashboard 5 specifications
-- [FlatWireEndToEndProcess.md](FlatWireEndToEndProcess.md) — End-to-end process reference
+- [FlatWireShopfloorDashboards.md](../../Analysis/FlatWireShopfloorDashboards.md) — Dashboard 2 and Dashboard 5 specifications
+- [FlatWireEndToEndProcess.md](../../Analysis/FlatWireEndToEndProcess.md) — End-to-end process reference
 
 ---
 

@@ -26,8 +26,8 @@ plan, not an implementation.
 > 3. `DevelopmentPlan/ShopfloorPlan/phase-04-rod-checkin-plc-config.md` — the phase that owns this
 >    screen — plus `phase-02-pass-schedule-management.md` (its gating dependency).
 > 4. `DevelopmentPlan/ShopfloorPlan/back-matter.md` — the **G1–G18 gap register**.
-> 5. `Analysis/RodPreCheckin.md` — **the dedicated analysis for this exact screen; read it first of
->    the five.** Also `Analysis/WeldEvent.md`, `Analysis/FlatWireShopfloorDashboards.md` (the
+> 5. `LatestDocument/RequirementDocuments/RodPreCheckin.md` — **the dedicated analysis for this exact screen; read it first of
+>    the five.** Also `LatestDocument/RequirementDocuments/WeldEvent.md`, `Analysis/FlatWireShopfloorDashboards.md` (the
 >    Dashboard 2A screen spec and the *Payoff Weight Indicator Rules* the mockup cites), and
 >    `Analysis/FlatWireOpenQuestions.md` (the ~77-item decision register, `Q##`; resolved items are
 >    struck through or carry a **Decided (date)** note).

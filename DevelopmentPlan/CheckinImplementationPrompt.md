@@ -1052,5 +1052,5 @@ Manually verify the following after implementation. Open the original HTML mocku
 
 **Specs and contracts:**
 - `c:/UAL/Flat Wire/DevelopmentPlan/APIContracts.md` — full API contract reference (Sprint 3 section)
-- `c:/UAL/Flat Wire/Analysis/RocCheckin.md` — 5-step check-in flow design
+- `c:/UAL/Flat Wire/LatestDocument/RequirementDocuments/RocCheckin.md` — 5-step check-in flow design
 - `c:/UAL/Flat Wire/DevelopmentPlan/CheckinImplementationPlan.md` — the plan this prompt implements

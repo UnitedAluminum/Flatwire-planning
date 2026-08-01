@@ -101,13 +101,11 @@ Supersedes the retired `Rod.StagedPayoffPosition` / `Rod.IsWelded` columns.
 | `IsWelded` | bit | NOT NULL | — | `1` once the operator records the induction weld to the running rod (`WLD010`); default `0` |
 | `Status` | varchar(12) | NOT NULL | — | `Staged` → `CheckedIn`, or `Unstaged` — see allowed values |
 | `OrderId` | varchar(20) | NULL | — | Order this rod is staged against, **resolved from `planning_routings` at the scan** — never typed. On a cold line this is what the first rod reveals |
-| `OffScheduleOverride` | bit | NOT NULL | — | `1` when the order was booked on a **different line** and a supervisor authorised staging it here anyway; default `0` |
-| `OutOfSequenceOverride` | bit | NOT NULL | — | `1` when the rod was **not the one planning expected next** and a supervisor authorised the deviation; default `0` |
-| `ScheduledLineId` | varchar(5) | NULL | — | Line the order was actually booked on. Set exactly with `OffScheduleOverride`, and must differ from `LineId` |
+| `OutOfSequenceOverride` | bit | NOT NULL | — | `1` when the rod was **not the one planning expected next** and a supervisor authorised the deviation; default `0`. **The only staging deviation** since the off-schedule case became an auto-switch |
 | `ExpectedRodAlpha` | varchar(20) | NULL | — | The rod planning expected next, captured at the moment of deviation. Set exactly with `OutOfSequenceOverride`, and must differ from `RodAlpha` |
 | `OverrideBy` | varchar(50) | NULL | — | Authorising supervisor badge/ID. **The PIN is never stored** |
 | `OverrideAt` | datetimeoffset | NULL | — | Timestamp of the authorisation |
-| `OverrideReason` | varchar(200) | NULL | — | Why the line is running off-schedule |
+| `OverrideReason` | varchar(200) | NULL | — | Why the planned sequence was departed from |
 | `ScrapBoxRef` | varchar(20) | NULL | — | Optional scrap box, same-alloy carry-forward as check-in (`PCI005`) |
 | `DiameterIn` | decimal(8,4) | NOT NULL | — | Diameter measured at staging (`PCI004`), in inches |
 | `GrossWeightLb` | decimal(8,2) | NOT NULL | — | Gross weight at staging, in pounds |
@@ -123,10 +121,18 @@ Supersedes the retired `Rod.StagedPayoffPosition` / `Rod.IsWelded` columns.
 | `WeldedBy` | varchar(50) | NULL | — | Operator who recorded the weld (`WLD003`) |
 | `CheckedInAt` | datetimeoffset | NULL | — | Set when check-in consumes this staged row |
 | `RodCheckinId` | int | NULL | `RodCheckin.Id` | FK closing the staging → check-in chain |
-| `UnstagedAt` | datetimeoffset | NULL | — | Timestamp of pre-check-out |
-| `UnstagedBy` | varchar(50) | NULL | — | Operator who un-staged it |
-| `UnstageReasonCode` | varchar(40) | NULL | — | Pre-check-out reason code |
+| `UnstagedAt` | datetimeoffset | NULL | — | Timestamp of the release — pre-check-out **or** WIP rejection |
+| `UnstagedBy` | varchar(50) | NULL | — | Operator who released it |
+| `UnstageReasonCode` | varchar(40) | NULL | — | Release reason code |
+| `UnstageKind` | varchar(20) | NULL | — | **How** the bay was released: `PreCheckOut` or `WipRejection`. Required whenever `Status = 'Unstaged'` |
+| `WipRejectionId` | int | NULL | `WipRejection.Id` | The rejection that released the bay. Present exactly when `UnstageKind = 'WipRejection'` |
 | `RowVersion` | rowversion | NOT NULL | — | Optimistic-concurrency token |
+
+> **Dropped 1 Aug 2026 — `OffScheduleOverride`, `ScheduledLineId`.** A rod whose order is booked on the **other** rod line is no longer a deviation: the station **switches to the correct line automatically**, with no message and no override, at both pre-check-in and check-in (**Q74**, client 30 Jul 2026). `CK_RodStaging_OffSched` and `CK_RodStaging_OffSchedLine` went with them, and `CK_RodStaging_Override` — generalised on 30 Jul to cover *either* deviation — reverts to keying on `OutOfSequenceOverride` alone.
+>
+> **`OverrideBy` / `OverrideAt` / `OverrideReason` are retained**: they are shared with the out-of-sequence override, which stays. Dropping all five would have deleted the surviving override's audit trail.
+>
+> If **Q78** (an order scheduled on *neither* rod line) later needs an authorisation, it **re-adds** its own columns; only the credential trio is reusable.
 
 **Allowed values — `Status`:**
 
@@ -134,27 +140,31 @@ Supersedes the retired `Rod.StagedPayoffPosition` / `Rod.IsWelded` columns.
 |---|---|
 | `Staged` | Rod is physically at the bay, pre-checked-in, not yet checked in |
 | `CheckedIn` | Consumed by check-in on Dashboard 2; the bay is now running or ready to run |
-| `Unstaged` | Removed by pre-check-out (`RodCheckout.Mode = ModeP`) without ever being checked in |
+| `Unstaged` | Released from the bay without ever being checked in — **two routes**, distinguished by `UnstageKind`: a **pre-check-out** (`RodCheckout.Mode = ModeP`), or a **WIP rejection** after a failed staging inspection |
 
 > **There is no `Blocked` status — it is derived.** Dashboard 2A and `GET /payoff/status` both expose a **`Blocked`** bay state meaning "inspection failed at staging". That is `Status = 'Staged'` with any of the three inspection columns `= 'Fail'`, **not** a fourth `Status` value. Deriving it is also the operationally correct reading: `UX_RodStaging_Bay` is filtered on `Status = 'Staged'`, and a failed bundle is still physically in the bay, so it must keep the bay occupied. Adding a `Blocked` status would fall outside that filter and free a bay that is not free.
 >
 > **Q72 — first half resolved (Jul 31 2026): pre-check-in commits the row *before* the inspection gate.** Previously nothing wrote such a row: a failed inspection returned `422` and routed straight to WIP Rejection without committing, so the `Blocked` state was unreachable in practice. That was wrong about the physical situation — bundles are not unbanded until positioned at the payoff, which is why the inspection happens at staging, so a failed rod is **already on the bay**. With no row, `GET /payoff/status` reported the occupied position as `NotStaged` and the next rod could be staged into it. `POST /staging/rod` now returns `201` with `state: "Blocked"` (`APIContracts.md`). `CHK010` is unchanged — no bypass, WIP Rejection is still the only forward path.
 >
-> **Q72 residual — what *releases* a blocked row is still open.** `Status` has only the three values above, and `CK_RodStaging_Unstaged` ties `Unstaged` to the pre-check-out column group, so a WIP-rejection outcome has no status to land in. A fourth value would have to change the vocabulary, the constraint **and** `UX_RodStaging_Bay`'s filter together — and per the note above, anything outside `Status = 'Staged'` frees a bay that is not physically free. Deliberately not invented here. Until it is answered, a blocked bay is enterable but not clearable.
+> **Q72 residual — RESOLVED (client, 30 Jul 2026): the WIP rejection releases it.** A failed staging inspection is captured as a **rejection with a reason on the rejection screen**, and the rod goes to **`HOLD`**. That is what takes the row out of `Status = 'Staged'` and frees the bay — the bundle has physically left it, so the bay genuinely *is* free.
+>
+> Implemented by **reusing `Unstaged`** with a new `UnstageKind` discriminator (`PreCheckOut` | `WipRejection`) and a `WipRejectionId` link, rather than adding a fourth `Rejected` status. A fourth value would have forced the vocabulary, `CK_RodStaging_Unstaged` and `UX_RodStaging_Bay`'s filter to change together, and would have multiplied the branches in every query that asks "what is staged", for no operational gain. **A blocked bay is now clearable.**
+>
+> Still open from Q72: whether `InspectionNotes` should be constraint-enforced NOT NULL when any item fails.
 
 **Inspection columns:** `Pass`, `Fail`. **Three items, not four** — the connector-tag item belongs to check-in (gap **G14**); do not add it here. `InspectionNotes` is nullable but expected whenever an item fails; **Q72** asks whether that should be enforced by a constraint, in the same all-or-nothing style as the welded / unstaged / checked-in column groups below.
 
 **Constraints:**
 
-- `CK_RodStaging_Override` — the credential stamp is **all-or-nothing** and required by **either** deviation: `OverrideBy`/`OverrideAt`/`OverrideReason` are all set exactly when `OffScheduleOverride = 1` **or** `OutOfSequenceOverride = 1`. An override with no supervisor or no reason is unauditable, which defeats the point of permitting the deviation
-- `CK_RodStaging_OffSched` — `ScheduledLineId` present exactly when `OffScheduleOverride = 1`
+- `CK_RodStaging_Override` — the credential stamp is **all-or-nothing**: `OverrideBy`/`OverrideAt`/`OverrideReason` are all set exactly when `OutOfSequenceOverride = 1`. An override with no supervisor or no reason is unauditable, which defeats the point of permitting the deviation
 - `CK_RodStaging_OutOfSeq` — `ExpectedRodAlpha` present exactly when `OutOfSequenceOverride = 1`
-- `CK_RodStaging_OffSchedLine` — `ScheduledLineId <> LineId`; an override only means anything against a line the order was *not* booked on
 - `CK_RodStaging_OutOfSeqRod` — `ExpectedRodAlpha <> RodAlpha`; "out of sequence" means the rod staged is not the one expected
 - `CK_RodStaging_LineId` — `FL1` or `FL3` only (`PCI002`)
 - `CK_RodStaging_PayoffPos` — `1` or `2`
 - `CK_RodStaging_Welded` — `WeldedAt`/`WeldedBy` are both set exactly when `IsWelded = 1`
-- `CK_RodStaging_Unstaged` — the three `Unstaged*` columns are all set exactly when `Status = 'Unstaged'`
+- `CK_RodStaging_Unstaged` — `UnstagedAt`/`UnstagedBy`/`UnstageReasonCode`/`UnstageKind` are all set exactly when `Status = 'Unstaged'`
+- `CK_RodStaging_UnstageKind` — `UnstageKind` is NULL or one of `PreCheckOut` / `WipRejection`
+- `CK_RodStaging_RejectLink` — `WipRejectionId` present exactly when `UnstageKind = 'WipRejection'`. Written with `ISNULL(UnstageKind,'')` rather than a bare comparison: `UnstageKind = 'WipRejection'` evaluates to **UNKNOWN** while the column is NULL, and a CHECK constraint *accepts* UNKNOWN — a still-`Staged` row could otherwise carry a rejection link
 - `CK_RodStaging_CheckedIn` — `CheckedInAt`/`RodCheckinId` are both set exactly when `Status = 'CheckedIn'`
 - **`UX_RodStaging_Bay`** — filtered UNIQUE on `(LineId, PayoffPosition) WHERE Status = 'Staged'`: **one rod per payoff bay**
 - **`UX_RodStaging_RodActive`** — filtered UNIQUE on `(RodAlpha) WHERE Status = 'Staged'`: **one bay per rod**
@@ -362,3 +372,4 @@ Sampled gauge/width/speed profile persisted per run. Live telemetry stays in-mem
 | July 29, 2026 | Documented that the Dashboard 2A / `GET /payoff/status` **`Blocked`** bay state is **derived** (`Status = 'Staged'` + any inspection column `= 'Fail'`), not a fourth `Status` value — adding one would fall outside the `UX_RodStaging_Bay` filter and free a bay that is still physically occupied. Flagged **Q72**: nothing currently writes such a row, because a failed inspection routes straight to WIP Rejection without committing, so `Blocked` is unreachable in practice; also asks whether `InspectionNotes` should be constraint-enforced when any item fails. No DDL change. |
 | July 29, 2026 | Added **`RodStaging`** (pre-check-in / payoff staging) implementing SRS §4.2 `PCI001`–`PCI008`, `WLD010` and `TRV004`; two filtered unique indexes enforce one-rod-per-bay and one-bay-per-rod. `FlatWireRunDetail.PayoffPositionId` now has a real FK parent (`PayoffPosition`, REVIEW.md #15). `WeldEvent`: added `OutgoingPayoffPosition`/`IncomingPayoffPosition` + `CK_WeldEvent_PayoffDiff` so the payoff handover is queryable. `RodCheckin` documented as *consuming* the staged row. |
 | July 26, 2026 | Added `RunReading` (sampled gauge profile, G3). `FlatWireRun.FootageFt` → `decimal(10,2)`; added audit + `RowVersion` on `FlatWireRun`. `RodCheckin`: computed `SpcOvalityIn`, added `MmsId`/`MmsStatus`/`ScrapBoxRef`. `SpoolCheckin`: added `MmsId`/`MmsStatus`. `RunPauseEvent`: added `OperatorId`/`ResumedBy`, computed `PauseDurationSeconds`, Notes-when-Other CHECK. `WeldEvent`: fail-reason-required CHECK. `RollOverride`: computed `Delta`, ReasonCode CHECK. `DieChangeEvent`: ReasonCode CHECK. Retargeted to `FlatWireDB`. |
+| August 1, 2026 | **`RodStaging` — off-schedule columns dropped, blocked-row release added (client 30 Jul 2026).** `OffScheduleOverride`, `ScheduledLineId`, `CK_RodStaging_OffSched` and `CK_RodStaging_OffSchedLine` are **removed**: a rod booked on the other rod line now triggers an **automatic station switch**, not an override (**Q74**). `CK_RodStaging_Override` reverts to keying on `OutOfSequenceOverride` alone; the shared `OverrideBy`/`OverrideAt`/`OverrideReason` trio is retained for it. Added `UnstageKind` (`PreCheckOut` | `WipRejection`) and `WipRejectionId` so a **WIP rejection can release a blocked bay** — the Q72 item-3 residual, decided 30 Jul: the rejection captures the reason, the rod goes to `HOLD`, and the row leaves `Status='Staged'`. Chosen over a fourth `Rejected` status. `CK_RodStaging_RejectLink` uses `ISNULL(...)` after a rebuild showed the bare comparison admitted a rejection link on a still-staged row. Sample data gains a **blocked bay** (R00047, Staged + Fail). DDL rebuild clean, 15 constraint tests pass, 27 tables. |

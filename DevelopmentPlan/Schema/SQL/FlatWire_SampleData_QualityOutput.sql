@@ -84,13 +84,27 @@ VALUES
 GO
 
 -- ============================================================
--- RodCheckout  (Mode A pre-run return + Mode B mid-run partial)
+-- RodCheckout  (Mode A pre-run return + Mode B mid-run partial
+--               + Mode P welded pre-check-out)
+-- Supervisor approval is now PERSISTED (gap G24, columns added 1 Aug 2026).
+-- Mode B requires it per OQ-48 and Mode P requires it when the rod was welded
+-- per OQ-68; Mode A does not. The PIN is never stored -- only the badge/ID.
 -- ============================================================
 IF NOT EXISTS (SELECT 1 FROM [dbo].[RodCheckout])
 INSERT INTO [dbo].[RodCheckout]
     ([CheckoutId],[RunId],[LineId],[RodAlpha],[PayoffPosition],[Mode],[FootageAtCheckout],[ReasonCode],[RodDisposition],
-     [RemainingWeightLbEstimate],[InProcessMaterialDisposition],[PartialSpoolAlpha],[NewRodStatus],[PlcTagsCleared],[OperatorId],[Timestamp])
+     [RemainingWeightLbEstimate],[InProcessMaterialDisposition],[PartialSpoolAlpha],[NewRodStatus],[PlcTagsCleared],
+     [WasWelded],[ApprovedBy],[ApprovedAt],[OverrideReason],[OperatorId],[Timestamp])
 VALUES
-    ('CO-0001',NULL,      'FL1','R00048',1,'ModeA',  0,'WrongRod',        'ReturnToWarehouse',  NULL,   NULL,               NULL,      'RECEIVED',1,'Marcus T.','2026-07-19 08:20:00 -05:00'),
-    ('CO-0002','RUN-0005','FL1','R00046',1,'ModeB',900,'EquipmentFailure','HoldReturnToStorage',4200.00,'AcceptAsPartialRun','SP-00033','HOLD',    1,'Marcus T.','2026-07-22 07:12:00 -05:00');
+    -- Mode A: post-acknowledgement, zero footage. No approval required.
+    ('CO-0001',NULL,      'FL1','R00048',1,'ModeA',  0,'WrongRod',        'ReturnToWarehouse',  NULL,   NULL,               NULL,      'RECEIVED',1,
+     0,NULL,NULL,NULL,'Marcus T.','2026-07-19 08:20:00 -05:00'),
+    -- Mode B: mid-run, footage produced. Supervisor approval required (OQ-48).
+    ('CO-0002','RUN-0005','FL1','R00046',1,'ModeB',900,'EquipmentFailure','HoldReturnToStorage',4200.00,'AcceptAsPartialRun','SP-00033','HOLD',    1,
+     0,'S. Kowalski','2026-07-22 07:10:00 -05:00','FM1 bearing fault; partial run accepted as SP-00033','Marcus T.','2026-07-22 07:12:00 -05:00'),
+    -- Mode P: pre-check-out of a WELDED staged rod. Removal means cutting the material, so
+    -- this is a rejection, not a return -- supervisor approval, documented reason, HOLD
+    -- (OQ-68 / OQ-77, decided 30 Jul 2026). An UNWELDED pre-check-out needs none of that.
+    ('CO-0003',NULL,      'FL1','R00044',2,'ModeP',  0,'WrongRodWelded',  'HoldReturnToStorage',4300.00,NULL,               NULL,      'HOLD',    0,
+     1,'S. Kowalski','2026-07-22 07:52:00 -05:00','Welded to the running rod in error; cut back and held for disposition','Marcus T.','2026-07-22 07:55:00 -05:00');
 GO

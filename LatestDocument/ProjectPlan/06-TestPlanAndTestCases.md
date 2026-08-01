@@ -1,7 +1,7 @@
 # Flat Wire Mill — Test Plan & Test Cases
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** July 30, 2026
+**Last Updated:** August 1, 2026
 **Document Type:** Test plan + test case catalogue
 **Status:** Baselined — four NFRs are **untestable until their targets are defined** (§6.2)
 **Owner:** QA stream
@@ -258,7 +258,11 @@ Testing resumes when the suspending condition is cleared **and** the affected su
 | **TC-051** | Carry-forward gate at the API | I | **P1** | FR-043 / `PRC007` | POST without `acknowledgedCarryForward` for a rod with prior footage | `422 CARRY_FORWARD_REQUIRED` | — | ✓ |
 | **TC-052** | Diameter outside tolerance refused | I | P2 | FR-042 / `CHK007` | Enter a diameter outside nominal ± tolerance | `422 DIAMETER_OUT_OF_TOLERANCE`, valid range shown | — | ✓ |
 | **TC-053** | Unknown rod alpha | I | P3 | FR-042 / `CHK006` | Scan an alpha not in `coils` | `404 ROD_NOT_FOUND` | — | ✓ |
-| **TC-054** | **Off-schedule is notified and authorised, never refused** | I | **P1** | FR-045 | Rod whose order is booked on another line | Not refused; supervisor override required; on authorisation `OffScheduleOverride=1` and `ScheduledLineId` persisted | — | ✓ |
+| **TC-054** | **Wrong station auto-corrects — no message, no override** *(rewritten 1 Aug 2026)* | I | **P1** | FR-045 | On the FL1 tab, scan a rod whose order is booked on FL3 | The screen **switches to FL3** and the transaction continues. **No** blocking message, **no** supervisor prompt, and **no** `OffScheduleOverride` / `ScheduledLineId` written — those columns no longer exist | — | ✓ |
+| **TC-054a** | Server rejects a wrong-station POST rather than writing it | I | **P1** | FR-045 | `POST /staging/rod` with `lineId=FL1` for an FL3-scheduled rod (stale client) | `409 WRONG_STATION` carrying `correctLineId: "FL3"`; **no row written**; the client switches and re-posts | — | ✓ |
+| **TC-054b** | **Welded pre-check-out needs a supervisor and ends on HOLD** | I | **P1** | FR-052a | Release a staged rod with `IsWelded=1` | Refused without badge + PIN + reason. With them: `RodCheckout` Mode P, `WasWelded=1`, `NewRodStatus='HOLD'`; the rod does **not** return to the available pool. An **unwelded** release needs no approval | — | ✓ |
+| **TC-054c** | **A WIP rejection clears a blocked bay** | I | **P1** | FR-053a | Stage a rod failing inspection (bay reads `BLOCKED`), then submit the rejection | Rod → `HOLD`; `RodStaging.Status='Unstaged'` with `UnstageKind='WipRejection'` and `WipRejectionId` set; `PayoffStateChanged`; **the bay is free and stageable again**. Nothing else clears it | — | ✓ |
+| **TC-054d** | Diameter validates against an **asymmetric** min/max band | U | P2 | FR-042, FR-065 | Band −0.001 / +0.003 on nominal 0.375 | 0.3745 rejected, 0.3775 accepted, 0.3785 rejected. **Blocked until the values arrive** — the band is unseeded (OQ-71) | — | ✓ |
 | **TC-055** | **Out-of-sequence is notified and authorised, never refused** | I | **P1** | FR-045 | Rod that is not the lowest available `plannedSeqno` | Not refused; override required; `OutOfSequenceOverride=1` and `ExpectedRodAlpha` persisted | — | ✓ |
 | **TC-056** | One credential block covers both deviations | I | P2 | FR-046 | Both deviations apply | **One** sign-off satisfies both | — | ✓ |
 | **TC-057** | **The PIN is never stored or echoed** | I | **P1** | FR-046 | Authorise with a PIN → inspect the row and the response | **PIN absent from the database and from every response payload**; only the flag, badge, timestamp and reason persist | — | ✓ |
@@ -360,7 +364,7 @@ Testing resumes when the suspending condition is cleared **and** the affected su
 | **TC-164** | Milestone state is per spool and re-arms | I | P2 | FR-134 | Complete a spool → start the next on the same run | Ladder re-arms from zero | ✓ |
 | **TC-165** | Acknowledgement audited | I | P2 | FR-135 | Acknowledge | Operator, milestone, actual weight and timestamp recorded | ✓ |
 | **TC-166** | Thresholds are table-driven | I | P3 | FR-136 | Change a threshold in configuration | New value applies **without a release** | ✓ |
-| **TC-167** | **Weight derivation is correct** | U | **P1** | FR-137 | 1100, 0.110″ × 0.625″, square edge | **0.0809 lb/ft**; 2,000 lb ⇒ ≈ 24,700 ft. Round edge gives 0.0778 | ✓ |
+| **TC-167** | **Weight derivation is correct** | U | **P1** | FR-137 | 1100, 0.110″ × 0.625″, square edge | **0.0809 lb/ft**; 900 lb (customer max) ⇒ ≈ 11,100 ft, 1,800 lb spool ⇒ ≈ 22,250 ft. Round edge gives 0.0778. *(The 2,000 lb figure this case used was withdrawn 30 Jul 2026 — the basis is the customer min/max range, FR-130a.)* | ✓ |
 | **TC-168** | FL2 uses schedule/order dimensions, not live measurement | U | **P1** | FR-137 | FL2 spool progress | Gauge and width taken from the pass schedule / order, **because FL2 broadcasts `null`** | ✓ |
 | **TC-169** | **Prompt armed only at or above target** | I | **P1** | FR-140 | Stop below target | **Nothing raised** | ✓ |
 | **TC-170** | **Prompt fires on the edge, once per stop** | I | **P1** | FR-141 | `RUNNING → STOPPED` held, then a second stop without an intervening RUNNING | Fires **once**; re-arms only after RUNNING | ✓ |
@@ -929,5 +933,4 @@ One case per contested row of the `[SRS §8]` matrix, each executed as the permi
 | Date | Changed By | Description |
 |------|-----------|-------------|
 | Jul 30, 2026 | Plan team | Initial publication. Test strategy mapped onto the UAL stack (Jest at 95 %, xUnit + Moq, integration against a seeded `FlatWireDB`, contract tests including the three-way enum mirror, real-time/load, PLC commissioning, UAT), risk-based prioritisation naming seven P1 areas, environments and the SQLCMD build/teardown procedure, entry/exit criteria per level and per gate, and a catalogue of **~250 test cases** grouped to mirror `[SRS §5]` — covering happy path, boundary, negative, permission and real-time behaviour for every group, with the mandatory areas (PLC tag push and the non-dismissible override, all five ITInhibit conditions, weld genealogy end to end, MMS ID lifecycle, the three checkout modes and carry-forward, FL2's `null` trace, FL3 hybrid, recording cadence, reconnect, buildup alerts, SPC and SPC-HOLD, WIP rejection, the role matrix and audit) written explicitly. NFR verification carries measurable targets and **marks four real-time NFRs untestable-until-defined without inventing thresholds** — recording that the QA2 load test as scheduled cannot fail. Adds the UAT scenario scripts in operator language, the PLC commissioning sequence with safety preconditions and abort criteria, defect severity and release gates, and a bidirectional coverage matrix with an explicit list of what is **not** covered and why. |
-
-
+| Aug 1, 2026 | Client sync (30 Jul call) | **TC-054 rewritten and four cases added.** Off-schedule staging is no longer authorised-and-recorded — the station **auto-switches**, so the old expected result (`OffScheduleOverride=1`, `ScheduledLineId` persisted) asserts columns that no longer exist. Added **TC-054a** (server `409 WRONG_STATION` for a stale client), **TC-054b** (welded pre-check-out needs a supervisor and ends on `HOLD`), **TC-054c** (a WIP rejection clears a blocked bay — the only thing that does), **TC-054d** (asymmetric min/max diameter band, **blocked until the tolerance values arrive**). TC-167's worked example moves off the withdrawn 2,000 lb target to the customer range. |

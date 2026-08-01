@@ -1,7 +1,7 @@
 # Flat Wire Mill — Project Plan Document Set
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** July 30, 2026
+**Last Updated:** August 1, 2026
 **Document Type:** Index
 **Status:** Complete — seven documents published
 **Owner:** Programme management
@@ -76,6 +76,22 @@ Numbered `PP-##`. Each is recorded at the point it was found.
 | **PP-03** | **The OEE dashboard has no story, no phase and no owner** — it has an approved mockup and 17 source requirements | `[SRS §11.3]`, `[SP §7.3]` |
 | **PP-04** | **The hub event count is 10, not 9.** The "9" predates `PayoffStateChanged` | `[API §10.3]` |
 
+## 5a. Changed by the 30 Jul 2026 client call
+
+Applied 1 Aug 2026 across this set. **Three of these reverse decisions the set already documented**, so a reader working from a cached copy will be wrong about them:
+
+| Change | Was | Is |
+|---|---|---|
+| **Wrong station** | Notified, supervisor override, recorded on `RodStaging` | **Auto-switches to the correct station** — no message, no override; the columns are dropped (OQ-74) |
+| **Welded pre-check-out** | No control at all — a welded rod could not be released | **Supervisor override + documented reason + `HOLD`** — it is a rejection, not a return (OQ-68/OQ-77) |
+| **`INFLAT` at staging** | Set at pre-check-in per the delivered SRS | Set at **check-in only**; `RECEIVED → STAGED` stands (OQ-67) |
+| **Blocked bay** | Enterable but **not clearable** | The **WIP rejection** releases it (OQ-72) |
+| **Tolerances** | One ± per dimension, rod diameter missing | **Four min/max pairs** — gauge, width, diameter, ovality. **Values owed by e-mail; nothing seeded** (OQ-71) |
+| **Spool target** | 2,000 lb assumed default | **Customer min/max weight range**; short close is an unplanned stop on the 10-90 pattern (OQ-60/OQ-65) |
+| **One rod, one order** | Assumed, and enforced by refusal | **A rod may carry two orders** — the refusal is knowingly wrong pending OQ-79 (**G22**) |
+
+Four questions were added: **OQ-78** (order scheduled on neither rod line), **OQ-79** (multi-order sequencing / MVP scope), **OQ-80** (panel resolution — gates Phase 1A against the 14 Aug gate), **OQ-81** (rod bundle gross weight). Full propagation record in [`../../Analysis/ClientCall_2026-07-30_SyncPlan.md`](../../Analysis/ClientCall_2026-07-30_SyncPlan.md).
+
 ## 6. What these documents deliberately do **not** resolve
 
 Twelve requirements have no executable path, and every one is a decision someone else must make, not a gap in this document set:
@@ -92,3 +108,4 @@ And four NFR targets are undefined, which means **the QA2 hub load test as sched
 | Date | Changed By | Description |
 |------|-----------|-------------|
 | Jul 30, 2026 | Plan team | Created as the index to the seven-document project-plan set. Records the read order, the authority map, the precedence chain, the five most-often-misread facts, the four new `PP-##` findings, and what the set deliberately leaves unresolved. |
+| Aug 1, 2026 | Client sync | Added §5a recording the seven changes the 30 Jul client call made across this set, three of which **reverse** decisions the set documents, plus the four new open questions. |

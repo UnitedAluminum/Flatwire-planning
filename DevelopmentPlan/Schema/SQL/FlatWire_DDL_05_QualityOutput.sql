@@ -207,6 +207,15 @@ BEGIN
         [PartialSpoolAlpha]            VARCHAR(20)   NULL,      -- set when AcceptAsPartialRun
         [NewRodStatus]                 VARCHAR(20)   NOT NULL,  -- RECEIVED|HOLD|SCRAP etc.
         [PlcTagsCleared]               BIT           NOT NULL,  -- 1 = PLC tags cleared successfully
+        -- SUPERVISOR AUTHORISATION (added 1 Aug 2026, gap G24). Three approvals were decided
+        -- long before any column existed to record them: OQ-48 (mid-run checkout), OQ-50
+        -- (partial-run disposition, both 4 May 2026) and OQ-68 (welded pre-check-out,
+        -- 30 Jul 2026). Until now this table had NO approval columns at all, so every
+        -- supervisor-gated checkout was enforced at the UI and stored no evidence.
+        [WasWelded]                    BIT           NOT NULL CONSTRAINT [DF_RodCheckout_WasWelded] DEFAULT (0),  -- Mode P: rod was induction-welded when removed
+        [ApprovedBy]                   VARCHAR(50)   NULL,      -- authorising supervisor badge/ID; PIN is NEVER stored
+        [ApprovedAt]                   DATETIMEOFFSET NULL,
+        [OverrideReason]               VARCHAR(200)  NULL,
         [OperatorId]                   VARCHAR(50)   NOT NULL,
         [Timestamp]                    DATETIMEOFFSET NOT NULL CONSTRAINT [DF_RodCheckout_Timestamp] DEFAULT (SYSDATETIMEOFFSET()),
 
@@ -230,7 +239,29 @@ BEGIN
                                                            AND [PartialSpoolAlpha] IS NULL)),
         -- Mode B is the only mode that can produce in-process material to dispose of.
         CONSTRAINT [CK_RodCheckout_ModeB]          CHECK ([Mode] = 'ModeB'
-                                                       OR [InProcessMaterialDisposition] IS NULL)
+                                                       OR [InProcessMaterialDisposition] IS NULL),
+        -- Only a Mode P removal can be of a welded rod: Modes A and B follow a check-in, by
+        -- which point the weld is upstream history rather than a property of this removal.
+        CONSTRAINT [CK_RodCheckout_WasWelded]      CHECK ([WasWelded] = 0 OR [Mode] = 'ModeP'),
+        -- The approval stamp is all-or-nothing. An approval with no supervisor or no reason
+        -- is unauditable, which defeats the point of gating on it.
+        CONSTRAINT [CK_RodCheckout_Approval]       CHECK (
+                                                    ([ApprovedBy] IS NOT NULL AND [ApprovedAt] IS NOT NULL AND [OverrideReason] IS NOT NULL)
+                                                 OR ([ApprovedBy] IS NULL AND [ApprovedAt] IS NULL AND [OverrideReason] IS NULL)
+                                                ),
+        -- OQ-68: removing a WELDED staged rod means cutting the material, so it is a
+        -- rejection — supervisor approval, a documented reason, and the rod goes to HOLD.
+        CONSTRAINT [CK_RodCheckout_ModePWelded]    CHECK ([WasWelded] = 0
+                                                       OR ([ApprovedBy] IS NOT NULL
+                                                           AND [ApprovedAt] IS NOT NULL
+                                                           AND [OverrideReason] IS NOT NULL
+                                                           AND [NewRodStatus] = 'HOLD')),
+        -- OQ-48: a mid-run checkout requires supervisor approval. Decided 4 May 2026 and
+        -- unenforced until now.
+        CONSTRAINT [CK_RodCheckout_ModeBApproved]  CHECK ([Mode] <> 'ModeB'
+                                                       OR ([ApprovedBy] IS NOT NULL
+                                                           AND [ApprovedAt] IS NOT NULL
+                                                           AND [OverrideReason] IS NOT NULL))
     );
     PRINT 'Created table: RodCheckout';
 END

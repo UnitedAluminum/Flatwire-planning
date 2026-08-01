@@ -30,3 +30,17 @@
 - Die-life banner may use passive alert. Tests: alloy edit audit + restriction; die life thresholds + reset; register-before-scan rule. Deliverables: alloy admin, Die Management screen, machine tabs, role config.
 
 **OQ blockers:** OQ-41 (die life tracking — decided; threshold TBD), die-life threshold configurability, OQ-42/43 (edger profiles/roll spares). **Stories:** FW-004 (admin), FW-003 (machine tabs), Die Management from `DieChangeAndManagement.md`.
+
+---
+
+## Client answers of 30 Jul 2026 — alloy reference data
+
+**The alloy tolerance admin screen now maintains four min/max pairs, not two single ± values** (**OQ-71**). `AlloyProperty` carries `GaugeTolerance{Minus,Plus}In`, `WidthTolerance{Minus,Plus}In`, `RodDiameterTolerance{Minus,Plus}In` and `RodOvalityMaxIn`. The bands are **offsets about nominal and may be asymmetric**, so the editor must not collapse them to one field. Ovality takes an upper limit only.
+
+⛔ **Blocked on the client, and it blocks Phase 4 too.** Tim confirmed the tolerances exist and will **send the width, height, diameter and ovality values by e-mail**; he did not have them to hand (*"I want to say it's plus or minus 10"*). Until they arrive:
+
+- `RodDiameterTolerance{Minus,Plus}In` and `RodOvalityMaxIn` are **NULL in the seed on purpose** — do not populate them from the Dashboard 2A mock map, which is explicitly labelled mock data.
+- `CHK007` cannot fire, at pre-check-in or at check-in.
+- The hard-coded ovality limit of `0.003"` in `CheckinImplementationPlan.md` must move into this table rather than being duplicated.
+
+The values still need Process Engineering sign-off as well as the e-mail — the *Alloy Lookup Table* in `Analysis/FlatWireShopfloorDashboards.md` carries that caveat already.

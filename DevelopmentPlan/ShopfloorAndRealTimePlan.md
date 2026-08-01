@@ -64,8 +64,8 @@ Owner is a **delivery stream**, not a person — the named-owner roster is fille
 |---|---|
 | `Analysis/FlatWireEndToEndProcess.md` | The 11-stage material journey → phase ordering |
 | `Analysis/FlatWireShopfloorDashboards.md` | Authoritative screen specs for Dashboards 1–14 |
-| `Analysis/RocCheckin.md`, `RodCheckout.md`, `PartialRodReCheckin.md`, `Spool.md` | Check-in/checkout/spool operator flows |
-| `Analysis/PassScheduleManagement.md`, `DieChangeAndManagement.md`, `SPCCheckpoint.md`, `WeldEvent.md`, `OperationsManager.md`, `HMIAndSCADALayout.md` | Process workflows, role matrix, HMI/SCADA (DB13/14) |
+| `LatestDocument/RequirementDocuments/RocCheckin.md`, `RodCheckout.md`, `PartialRodReCheckin.md`, `Spool.md` | Check-in/checkout/spool operator flows |
+| `LatestDocument/RequirementDocuments/PassScheduleManagement.md`, `DieChangeAndManagement.md`, `SPCCheckpoint.md`, `WeldEvent.md`, `OperationsManager.md`, `HMIAndSCADALayout.md` | Process workflows, role matrix, HMI/SCADA (DB13/14) |
 | `DevelopmentPlan/APIContracts.md` | `FlatWire.API` REST surface + `FlatWireHub` contract |
 | `DevelopmentPlan/Schema/*` + `Schema/SQL/*` | The Flat Wire schema — **21 tables** in the new **`FlatWireDB`** (the designed `Rod` table is dropped; rod uses the existing `coils` table). DDL 01–06 + seed |
 | `DevelopmentPlan/CapacityAndEffortModel.md` | Per-phase owners + dev-day effort, working-day capacity model, descope ladder (resolves G1) |

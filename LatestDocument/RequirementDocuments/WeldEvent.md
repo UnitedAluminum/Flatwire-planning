@@ -166,3 +166,22 @@ For customers purchasing welding wire, the traceability chain must support:
 - **Server timestamp.** Always record the server time at API receipt, not the client clock displayed on screen.
 - **Immutable record.** Once confirmed, the weld event is never edited — only annotated or flagged. Corrections go through a separate audit flow.
 - **Fail path still completes.** A failed weld quality check still logs the event and links the rods; the run is not silently blocked. Supervisor review handles disposition.
+
+---
+
+## Client decisions affecting the weld (30 Jul 2026)
+
+| Topic | Decision | Consequence here |
+|---|---|---|
+| **Releasing a welded rod** (`WLD011`, **Q77**/**Q68**) | A welded staged rod **may** be released, by a **supervisor**, with a documented reason — the rod goes to **`HOLD`**. Removal means cutting or splitting the material, so it is a **rejection**, not a return | The un-staging direction of `WLD011` is now specified. **Reversing a weld *in place*** — mis-scan, wrong rod welded, weld failed after marking — is still **unspecified**: `CK_RodStaging_Welded` ties `WeldedAt`/`WeldedBy` to `IsWelded`, so a reversal is a three-column clear plus an audit trail that does not exist. The weld event record itself is **immutable** per the design principles above, so a reversal must be a new annotating record, never an edit |
+| **No welded-not-checked-in status** (**Q67**) | Confirmed not needed. `IsWelded` stays a **flag on a `Staged` row**, not a status | Any code branching on "staged" also matches welded rod unless it says otherwise — the defect behind the Jul 31 Dashboard 2A finding |
+| **No rod stacking** (**Q75**) | Rods are **never stacked**; two rods maximum, one per payoff | **`CK_WeldEvent_PayoffDiff` stays as it is.** The pre-emptive relaxation once proposed (keying the invariant on differing rod *alphas* rather than differing bays, plus a `WeldKind` of `InStack`/`BayHandover`) was insurance against a "yes" and is **not to be built**: every weld is a bay handover |
+| **Mid-run coil break** (**Q65**) | The stop is removed and a **new stop starts from zero** — weight does not resume from the break point. The leftover incoming material is **welded to the next coil on FL1**; on FL2 it is run to a finished stop and offered to the customer, or scrapped | The FL1 leftover weld is an ordinary weld event, but it lands against a **new stop**, so `FootagePosition` restarts. Check this against the two footage coordinate systems (**OI-25**) before implementing — run-cumulative for weld events, coil-local for `CoilTraceability` |
+
+---
+
+## Change Log
+
+| Date | Change |
+|---|---|
+| Aug 1, 2026 | Added the *Client decisions affecting the weld* section from the 30 Jul 2026 client call: welded-rod release is a supervisor-approved rejection to `HOLD` (`WLD011` in the un-staging direction only, in-place weld reversal still unspecified); no welded-not-checked-in status; no rod stacking, so `CK_WeldEvent_PayoffDiff` is correct as written and the in-stack relaxation is dropped; and the mid-run coil-break rule that restarts the stop from zero, flagged against **OI-25**. |

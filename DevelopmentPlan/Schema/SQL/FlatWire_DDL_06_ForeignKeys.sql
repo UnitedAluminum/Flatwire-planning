@@ -152,6 +152,14 @@ IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_RodStaging_Payoff
         FOREIGN KEY ([PayoffPosition]) REFERENCES [dbo].[PayoffPosition] ([Id]);
 GO
 
+-- A staged rod that failed inspection is released by its WIP rejection (Q72 item 3,
+-- decided 30 Jul 2026). The rejection is what carries the reason and puts the rod on HOLD.
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_RodStaging_WipRejection')
+    ALTER TABLE [dbo].[RodStaging]
+        ADD CONSTRAINT [FK_RodStaging_WipRejection]
+        FOREIGN KEY ([WipRejectionId]) REFERENCES [dbo].[WipRejection] ([Id]);
+GO
+
 -- Set when check-in consumes the staged row, closing the staging → check-in chain.
 IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_RodStaging_RodCheckin')
     ALTER TABLE [dbo].[RodStaging]

@@ -109,14 +109,20 @@ GO
 -- ============================================================
 IF NOT EXISTS (SELECT 1 FROM [dbo].[AlloyProperty])
 BEGIN
+    -- Gauge/width tolerances carry the previously seeded SYMMETRIC value into both the
+    -- Minus and Plus columns — same numbers as before, no new data invented.
+    -- Rod diameter and ovality are deliberately NULL: those values are OWED BY E-MAIL
+    -- (Q71 / OI-07). Do NOT seed them from the mockup's mock per-alloy map.
     INSERT INTO [dbo].[AlloyProperty]
-        ([Alloy], [MaxReductionPerPass], [SpringbackFactor], [GaugeToleranceDefault], [WidthToleranceDefault],
+        ([Alloy], [MaxReductionPerPass], [SpringbackFactor],
+         [GaugeToleranceMinusIn], [GaugeTolerancePlusIn], [WidthToleranceMinusIn], [WidthTolerancePlusIn],
+         [RodDiameterToleranceMinusIn], [RodDiameterTolerancePlusIn], [RodOvalityMaxIn],
          [SpeedRangeMinFpm], [SpeedRangeMaxFpm], [LbPerFtFactor], [DensityLbPerIn3], [IsWeldingWire], [IsActive]) VALUES
-        ('1100', 0.250, 0.980, 0.0020, 0.0050,  800, 1600, NULL, 0.098000, 0, 1),
-        ('1350', 0.220, 0.970, 0.0020, 0.0060,  600, 1200, NULL, 0.097400, 1, 1),  -- welding-wire grade
-        ('3003', 0.240, 0.975, 0.0030, 0.0080,  700, 1400, NULL, 0.099000, 0, 1),
-        ('5052', 0.200, 0.965, 0.0030, 0.0070,  500, 1200, NULL, 0.097100, 0, 1),
-        ('6061', 0.180, 0.960, 0.0020, 0.0060,  400,  900, NULL, 0.097500, 0, 1);
+        ('1100', 0.250, 0.980, 0.0020, 0.0020, 0.0050, 0.0050, NULL, NULL, NULL,  800, 1600, NULL, 0.098000, 0, 1),
+        ('1350', 0.220, 0.970, 0.0020, 0.0020, 0.0060, 0.0060, NULL, NULL, NULL,  600, 1200, NULL, 0.097400, 1, 1),  -- welding-wire grade
+        ('3003', 0.240, 0.975, 0.0030, 0.0030, 0.0080, 0.0080, NULL, NULL, NULL,  700, 1400, NULL, 0.099000, 0, 1),
+        ('5052', 0.200, 0.965, 0.0030, 0.0030, 0.0070, 0.0070, NULL, NULL, NULL,  500, 1200, NULL, 0.097100, 0, 1),
+        ('6061', 0.180, 0.960, 0.0020, 0.0020, 0.0060, 0.0060, NULL, NULL, NULL,  400,  900, NULL, 0.097500, 0, 1);
     PRINT 'Seeded: AlloyProperty (5 rows)';
 END
 ELSE

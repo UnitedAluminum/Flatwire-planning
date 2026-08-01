@@ -105,8 +105,13 @@ Per-alloy process properties. Consumed by the pass-schedule generator (max reduc
 | `Alloy` | varchar(10) | NOT NULL | — | Alloy designation (unique); e.g. `1100`, `1350`, `3003`, `5052`, `6061` |
 | `MaxReductionPerPass` | decimal(5,3) | NOT NULL | — | Fractional maximum area reduction per pass (e.g. `0.220` = 22%) |
 | `SpringbackFactor` | decimal(5,3) | NOT NULL | — | Roll-gap springback multiplier (e.g. `0.970`) |
-| `GaugeToleranceDefault` | decimal(8,4) | NOT NULL | — | Default ± gauge tolerance, in inches |
-| `WidthToleranceDefault` | decimal(8,4) | NOT NULL | — | Default ± width tolerance, in inches |
+| `GaugeToleranceMinusIn` | decimal(8,4) | NOT NULL | — | Lower gauge limit, as an offset **below** nominal (in) |
+| `GaugeTolerancePlusIn` | decimal(8,4) | NOT NULL | — | Upper gauge limit, as an offset **above** nominal (in) |
+| `WidthToleranceMinusIn` | decimal(8,4) | NOT NULL | — | Lower width limit (in) |
+| `WidthTolerancePlusIn` | decimal(8,4) | NOT NULL | — | Upper width limit (in) |
+| `RodDiameterToleranceMinusIn` | decimal(8,4) | NULL | — | Lower incoming-rod diameter limit (in); `CHK007`. **NULL until the values arrive** |
+| `RodDiameterTolerancePlusIn` | decimal(8,4) | NULL | — | Upper incoming-rod diameter limit (in); `CHK007`. **NULL until the values arrive** |
+| `RodOvalityMaxIn` | decimal(8,4) | NULL | — | Max \|M1 − M2\| out-of-round. Supersedes the hard-coded `0.003"` in `CheckinImplementationPlan.md` |
 | `SpeedRangeMinFpm` | int | NOT NULL | — | Default minimum line speed (ft/min) |
 | `SpeedRangeMaxFpm` | int | NOT NULL | — | Default maximum line speed (ft/min) |
 | `LbPerFtFactor` | decimal(10,6) | NULL | — | Footage → weight factor (lb per ft). **PROVISIONAL** — OQ-36 pending confirmation per cross-section |
@@ -118,9 +123,19 @@ Per-alloy process properties. Consumed by the pass-schedule generator (max reduc
 - `UQ_AlloyProperty_Alloy` — `Alloy` is unique
 - `0 < MaxReductionPerPass < 1`
 - `SpeedRangeMinFpm < SpeedRangeMaxFpm`
-- `GaugeToleranceDefault > 0`, `WidthToleranceDefault > 0`
+- `CK_AlloyProperty_GaugeTol` / `CK_AlloyProperty_WidthTol` — all four gauge/width limits `> 0`
+- `CK_AlloyProperty_RodDiaTol` — the rod-diameter band is **all-or-nothing**: both NULL, or both NOT NULL and `> 0`. Written with an explicit `IS NOT NULL` pair, because `Minus > 0 AND Plus > 0` evaluates to **UNKNOWN** when one side is NULL and a CHECK constraint *accepts* UNKNOWN — half a band was admitted until this was fixed
+- `CK_AlloyProperty_Ovality` — `RodOvalityMaxIn` NULL or `> 0` (ovality is an absolute difference, so only an upper limit is meaningful)
 
-> **Gap — no rod diameter tolerance (Q71).** `CHK007` requires the measured **incoming rod diameter** to be validated against nominal ± a lookup tolerance, at both pre-check-in (Dashboard 2A) and check-in (Dashboard 2). The two tolerance columns above are **flat wire output** dimensions — the gauge and width the mill produces — and no rod-diameter tolerance column exists anywhere in `FlatWireDB` or the shared `coils` schema. `CHK007` is therefore not implementable as written, and the Dashboard 2A mockup carries a mock per-alloy map with no backing store. Likely resolution is a `RodDiameterToleranceDefault decimal(8,4)` here, pending confirmation that the tolerance is per-alloy rather than per rod spec or vendor. Values to seed are in the *Alloy Lookup Table* in `Analysis/FlatWireShopfloorDashboards.md`, which is itself marked as needing Process Engineering sign-off.
+> **DECIDED (client, 30 Jul 2026) — four min/max pairs, values owed by e-mail (Q71).** Tim confirmed **upper and lower limits for gauge (height), width and diameter, plus ovality**, held here in the lookup and applied at **both** pre-check-in and check-in. The columns above implement that. Three things to know before using them:
+>
+> 1. **They are offsets about nominal, not absolute dimensions** — matching `CHK007` and `FR-065` ("0.30 with ±0.01 gives 0.29–0.31"). An asymmetric band is now expressible: `nominal − Minus .. nominal + Plus`. That interpretation is an assumption to confirm when the values arrive.
+> 2. **Gauge and width carry the previously seeded symmetric value into both columns.** No new numbers were invented; only the asymmetry is new.
+> 3. **Rod diameter and ovality are seeded NULL on purpose.** *"I want to say it's plus or minus 10"* is not a specification. The Dashboard 2A per-alloy map stays visibly mock until the e-mail lands, and `CHK007` is not implementable before then.
+>
+> The original gap statement is kept below for the audit trail.
+>
+> **~~Gap — no rod diameter tolerance (Q71).~~** `CHK007` requires the measured **incoming rod diameter** to be validated against nominal ± a lookup tolerance, at both pre-check-in (Dashboard 2A) and check-in (Dashboard 2). The two tolerance columns above are **flat wire output** dimensions — the gauge and width the mill produces — and no rod-diameter tolerance column exists anywhere in `FlatWireDB` or the shared `coils` schema. `CHK007` is therefore not implementable as written, and the Dashboard 2A mockup carries a mock per-alloy map with no backing store. Likely resolution is a `RodDiameterToleranceDefault decimal(8,4)` here, pending confirmation that the tolerance is per-alloy rather than per rod spec or vendor. Values to seed are in the *Alloy Lookup Table* in `Analysis/FlatWireShopfloorDashboards.md`, which is itself marked as needing Process Engineering sign-off.
 
 ---
 
@@ -159,3 +174,4 @@ Three positions are modelled, not two: FL1/FL3 draw rod from the dual-position *
 | July 29, 2026 | Documented a gap on `AlloyProperty`: `CHK007` validates **incoming rod diameter** against nominal ± a lookup tolerance, but the only tolerance columns here are `GaugeToleranceDefault`/`WidthToleranceDefault`, which are flat-wire *output* dimensions. No rod-diameter tolerance column exists anywhere in the schema, so `CHK007` is not implementable as written (**Q71**). No DDL change yet — the column shape and owner need confirming first. |
 | July 29, 2026 | Added **`PayoffPosition`** with three pinned rows (Payoff1, Payoff2, TraversingTakeup), giving `FlatWireRunDetail.PayoffPositionId` an enforced FK parent and resolving the "payoff modelled three ways" contradiction in `REVIEW.md` #15. Seeded in the DDL rather than the sample-data script because the FK depends on the rows existing. |
 | July 26, 2026 | Added `AlloyProperty` lookup (FW-004); added `IsActive` to `SpoolConfiguration`; added unique constraints on `Drawer.Name`, `Edger.Name`, `SpoolConfiguration.Name`; corrected bare `decimal` weights to `decimal(8,2)`. Retargeted to `FlatWireDB`. |
+| August 1, 2026 | **`AlloyProperty` tolerances widened to min/max pairs, and two dimensions added (Q71, client 30 Jul 2026).** `GaugeToleranceDefault` / `WidthToleranceDefault` become `…MinusIn` / `…PlusIn` pairs, joined by `RodDiameterToleranceMinusIn` / `…PlusIn` and `RodOvalityMaxIn`. Gauge and width carry their existing symmetric values into both columns; **rod diameter and ovality are NULL until the values arrive by e-mail**. `CK_AlloyProperty_RodDiaTol` makes the diameter band all-or-nothing, written with an explicit `IS NOT NULL` pair after a rebuild showed the naive form accepted half a band (a CHECK constraint accepts UNKNOWN). Ovality moves off the hard-coded `0.003"` in `CheckinImplementationPlan.md`. DDL, seed script and 15 constraint tests re-run clean; table count unchanged at 27. |

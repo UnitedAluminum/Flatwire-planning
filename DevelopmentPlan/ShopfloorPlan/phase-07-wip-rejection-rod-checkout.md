@@ -84,3 +84,13 @@ sequenceDiagram
 Dashboards 8 + 12 (A/B) + partial re-check-in; `WipRejectionController`/`CheckOutController` + services; supervisor-approval flow; carry-forward schema columns.
 
 **OQ blockers:** OQ-47 (carry-forward design — in progress), OQ-48 (checkout auth — decided: supervisor), OQ-49 (PLC on checkout — in progress), OQ-50 (partial material auth — decided), OQ-8 (WIP reason list — Shannon R.). **Stories:** FW-067, FW-072, FW-071.
+
+---
+
+## Client answers of 30 Jul 2026
+
+**A WIP rejection now has a second job: releasing a payoff bay.** When the rejected material is a rod that failed its **staging** inspection (routed here from Dashboard 2A), submitting the rejection must also set `RodStaging.Status='Unstaged'` with `UnstageKind='WipRejection'` and `WipRejectionId`, and broadcast `PayoffStateChanged{NotStaged}`. **Nothing else clears a `BLOCKED` bay** (OQ-72 item 3) — without this write the bay is enterable but not clearable, and the next rod cannot be staged. Note `runId` and `footagePosition` are both **null** on that path; the rod never ran.
+
+**Welded pre-check-out is a rejection, and it lands in this phase's table.** Releasing a staged rod that has been induction-welded requires a **supervisor override** with a documented reason, and the rod goes to **`HOLD`** — removal means cutting the material (OQ-68/OQ-77). Recorded as `RodCheckout` Mode P with `WasWelded=1` and the approval stamp.
+
+> **⚠ Gap G24 — this phase inherits an unpersisted decision.** `RodCheckout` had **no `ApprovedBy`/`ApprovedAt`/`OverrideReason` columns at all** until 1 Aug 2026, so **OQ-48** (mid-run checkout approval) and **OQ-50** (partial-run disposition approval) — both decided 4 May 2026 and both described in `LatestDocument/RequirementDocuments/RodCheckout.md` as writing "a disposition record with supervisor ID, decision, reason code, timestamp" — had nowhere to write it. The columns now exist and Mode B approval is **enforced by constraint**, which is a behaviour change for any code that wrote a Mode B checkout without one. The **PIN validation source** is still undecided (**OI-38**).

@@ -95,16 +95,19 @@ BEGIN
         -- Resolved from planning_routings at the scan, never typed. On a cold line this is
         -- what the first rod REVEALS, which is why even the first rod is validatable.
         [OrderId]                 VARCHAR(20)   NULL,       -- order this rod is staged against
-        -- Supervisor authorisation. TWO independent deviations, neither of them a refusal:
-        -- the operator is notified and a supervisor signs off. Same shape as the Q66
-        -- spool-weight override — reason + supervisor badge/ID + PIN — with the deviation,
-        -- the authorising supervisor and the reason recorded. The PIN is NEVER stored.
-        --   OffScheduleOverride    the order is booked on a DIFFERENT LINE
+        -- Supervisor authorisation. ONE deviation, and it is not a refusal: the operator is
+        -- notified and a supervisor signs off. Same shape as the Q66 spool-weight override —
+        -- reason + supervisor badge/ID + PIN — with the deviation, the authorising supervisor
+        -- and the reason recorded. The PIN is NEVER stored.
         --   OutOfSequenceOverride  the rod is not the one planning expects next
-        -- They can occur together and share one credential stamp.
-        [OffScheduleOverride]     BIT           NOT NULL CONSTRAINT [DF_RodStaging_OffSched] DEFAULT (0),
+        --
+        -- OffScheduleOverride / ScheduledLineId DROPPED 1 Aug 2026 (client decision, 30 Jul).
+        -- A rod whose order is booked on the OTHER rod line is no longer a deviation at all:
+        -- the station SWITCHES to the correct line automatically, with no message and no
+        -- override, at both pre-check-in and check-in (Q74). If Q78 — an order scheduled on
+        -- NEITHER rod line — later needs an authorisation, it re-adds its own columns; the
+        -- three credential columns below are shared and survive for reuse.
         [OutOfSequenceOverride]   BIT           NOT NULL CONSTRAINT [DF_RodStaging_OutOfSeq] DEFAULT (0),
-        [ScheduledLineId]         VARCHAR(5)    NULL,       -- line the order was actually booked on
         [ExpectedRodAlpha]        VARCHAR(20)   NULL,       -- rod planning expected next, at the moment of deviation
         [OverrideBy]              VARCHAR(50)   NULL,       -- authorising supervisor badge/ID
         [OverrideAt]              DATETIMEOFFSET NULL,
@@ -126,9 +129,21 @@ BEGIN
         [WeldedBy]                VARCHAR(50)   NULL,
         [CheckedInAt]             DATETIMEOFFSET NULL,      -- set when check-in consumes this row
         [RodCheckinId]            INT           NULL,       -- FK → RodCheckin.Id (see 06_ForeignKeys)
-        [UnstagedAt]              DATETIMEOFFSET NULL,      -- pre-check-out
+        -- TWO routes out of a staged bay, not one (Q68 + Q72 item 3, decided 30 Jul 2026):
+        --   PreCheckOut   the operator un-stages the rod. Operator-only when unwelded; a
+        --                 WELDED rod needs a supervisor override and goes to HOLD, because
+        --                 removal means cutting the material — that is a rejection, and the
+        --                 approval evidence lives on RodCheckout (Mode P).
+        --   WipRejection  the rod failed the staging inspection. The rejection captures the
+        --                 reason and puts the rod on HOLD; THAT is what releases this row and
+        --                 frees the bay. Chosen over a fourth 'Rejected' Status value, which
+        --                 would have forced the vocabulary, CK_RodStaging_Unstaged and the
+        --                 UX_RodStaging_Bay filter to change together for no operational gain.
+        [UnstagedAt]              DATETIMEOFFSET NULL,      -- pre-check-out or rejection release
         [UnstagedBy]              VARCHAR(50)   NULL,
         [UnstageReasonCode]       VARCHAR(40)   NULL,
+        [UnstageKind]             VARCHAR(20)   NULL,       -- PreCheckOut | WipRejection
+        [WipRejectionId]          INT           NULL,       -- FK → WipRejection.Id (see 06_ForeignKeys)
         [RowVersion]              ROWVERSION    NOT NULL,   -- optimistic-concurrency token
 
         CONSTRAINT [PK_RodStaging]              PRIMARY KEY CLUSTERED ([Id] ASC),
@@ -147,27 +162,20 @@ BEGIN
         -- override with no supervisor or no reason is unauditable, which defeats the point
         -- of permitting the deviation at all.
         CONSTRAINT [CK_RodStaging_Override]      CHECK (
-                                                    (([OffScheduleOverride] = 1 OR [OutOfSequenceOverride] = 1)
+                                                    ([OutOfSequenceOverride] = 1
                                                         AND [OverrideBy] IS NOT NULL
                                                         AND [OverrideAt] IS NOT NULL
                                                         AND [OverrideReason] IS NOT NULL)
-                                                 OR ([OffScheduleOverride] = 0
-                                                        AND [OutOfSequenceOverride] = 0
+                                                 OR ([OutOfSequenceOverride] = 0
                                                         AND [OverrideBy] IS NULL
                                                         AND [OverrideAt] IS NULL
                                                         AND [OverrideReason] IS NULL)
                                                 ),
-        -- Each deviation's evidence is present exactly when that deviation is claimed.
-        CONSTRAINT [CK_RodStaging_OffSched]      CHECK (
-                                                    ([OffScheduleOverride] = 1 AND [ScheduledLineId] IS NOT NULL)
-                                                 OR ([OffScheduleOverride] = 0 AND [ScheduledLineId] IS NULL)
-                                                ),
+        -- The deviation's evidence is present exactly when the deviation is claimed.
         CONSTRAINT [CK_RodStaging_OutOfSeq]      CHECK (
                                                     ([OutOfSequenceOverride] = 1 AND [ExpectedRodAlpha] IS NOT NULL)
                                                  OR ([OutOfSequenceOverride] = 0 AND [ExpectedRodAlpha] IS NULL)
                                                 ),
-        -- An off-schedule override only means anything against a line the order was NOT booked on.
-        CONSTRAINT [CK_RodStaging_OffSchedLine]  CHECK ([ScheduledLineId] IS NULL OR [ScheduledLineId] <> [LineId]),
         -- "Out of sequence" means the rod staged is not the one expected.
         CONSTRAINT [CK_RodStaging_OutOfSeqRod]   CHECK ([ExpectedRodAlpha] IS NULL OR [ExpectedRodAlpha] <> [RodAlpha]),
         -- Welded stamp is all-or-nothing, and only meaningful once IsWelded is set.
@@ -180,11 +188,23 @@ BEGIN
                                                     ([Status] = 'Unstaged'
                                                         AND [UnstagedAt] IS NOT NULL
                                                         AND [UnstagedBy] IS NOT NULL
-                                                        AND [UnstageReasonCode] IS NOT NULL)
+                                                        AND [UnstageReasonCode] IS NOT NULL
+                                                        AND [UnstageKind] IS NOT NULL)
                                                  OR ([Status] <> 'Unstaged'
                                                         AND [UnstagedAt] IS NULL
                                                         AND [UnstagedBy] IS NULL
-                                                        AND [UnstageReasonCode] IS NULL)
+                                                        AND [UnstageReasonCode] IS NULL
+                                                        AND [UnstageKind] IS NULL)
+                                                ),
+        CONSTRAINT [CK_RodStaging_UnstageKind]  CHECK ([UnstageKind] IS NULL
+                                                    OR [UnstageKind] IN ('PreCheckOut','WipRejection')),
+        -- The rejection link is present exactly when the release was a rejection.
+        -- ISNULL, not a bare comparison: `[UnstageKind] = 'WipRejection'` evaluates to
+        -- UNKNOWN while UnstageKind is NULL, and a CHECK constraint accepts UNKNOWN — which
+        -- would have let a still-Staged row carry a rejection link.
+        CONSTRAINT [CK_RodStaging_RejectLink]   CHECK (
+                                                    (ISNULL([UnstageKind],'') =  'WipRejection' AND [WipRejectionId] IS NOT NULL)
+                                                 OR (ISNULL([UnstageKind],'') <> 'WipRejection' AND [WipRejectionId] IS NULL)
                                                 ),
         -- Check-in stamp is all-or-nothing, and present exactly when Status = 'CheckedIn'.
         CONSTRAINT [CK_RodStaging_CheckedIn]    CHECK (

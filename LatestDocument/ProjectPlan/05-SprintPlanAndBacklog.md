@@ -1,7 +1,7 @@
 # Flat Wire Mill — Sprint Plan & Backlog
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** July 30, 2026
+**Last Updated:** August 1, 2026
 **Document Type:** Sprint plan and delivery backlog
 **Status:** Published — **the plan below does not fit the window; §1 requires a programme decision before it can be committed**
 **Owner:** Delivery lead / programme management
@@ -607,4 +607,4 @@ A story is Done only when **all** hold:
 | Date | Changed By | Description |
 |------|-----------|-------------|
 | Jul 30, 2026 | Plan team | Initial publication. Leads with the **capacity reality check** — 3,727 h against 44 working days, 10.6 FTE sustained, an impossible 27.2-FTE W7 and a 12 % descope ceiling — and states the three programme options with their dates, unsoftened. Publishes the 14-phase delivery model, the six delivery streams with an **unfilled roster**, the unit-rate card, a five-sprint calendar mapped to the authoritative week grid with milestone and QA gates, the phase table with per-phase blockers, the dependency chain with **two corrections to the published graph**, all 12 epics and 44 shopfloor stories with Given/When/Then acceptance criteria, the ordered descope ladder with named sign-offs, Definition of Ready / Done, the risk and gaps registers, and a full `FR-###` → story coverage matrix. Adds **12 `[NEW]` stories** for work the specification requires that no existing story covered — including the Angular and .NET scaffolds absent from epic E01, the pre-check-in station, spool completion, the alert lifecycle, the die master and the stop-transaction popup — each flagged with its rationale rather than folded silently into an existing story. |
-
+| Aug 1, 2026 | Client sync (30 Jul call) | **A new MVP2 candidate, and one scope reduction.** **Multi-order rod (OQ-69/OQ-79) is a candidate for MVP2** — the client confirmed a single rod may carry more than one production order, but the sequencing rule is unanswered (Srikanth is checking his notes) and the deferral itself is still to be confirmed with him. Until it closes, Phase 4's staging validation ships a **knowingly wrong** order-membership refusal (**G22**) — that is a recorded decision, not an oversight. **Scope reduction:** the off-schedule supervisor override is **removed** from Phase 4 (OQ-74) — a rod booked on the other rod line now triggers an automatic station switch, which is less work than the override panel, the five columns and the two constraints it replaces. Offsetting that: Phase 4 gains the auto-switch behaviour on **two** screens (DB2A and DB2), Phase 7 gains the welded pre-check-out approval path, and Phase 8/9 gain the short-close unplanned-stop flow (FR-130a–d). **Blocked on the client:** the four tolerance values owed by e-mail gate `CHK007` in Phase 4, and the panel-resolution answer (**OQ-80**) gates the Phase-1A canvas against the 14 Aug gate. |

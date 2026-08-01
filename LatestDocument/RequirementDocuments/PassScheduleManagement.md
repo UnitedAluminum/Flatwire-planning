@@ -649,9 +649,9 @@ Pass Schedule Management integrates well with shopfloor check-in and real-time m
 
 ## Related Documents
 
-- [FlatWireShopfloorDashboards.md](FlatWireShopfloorDashboards.md) — Complete dashboard design specifications
-- [FlatWirePlan.md](FlatWirePlan.md) — Implementation plan and scope
-- [FlatWireEndToEndProcess.md](FlatWireEndToEndProcess.md) — End-to-end process reference
+- [FlatWireShopfloorDashboards.md](../../Analysis/FlatWireShopfloorDashboards.md) — Complete dashboard design specifications
+- [FlatWirePlan.md](../../Analysis/FlatWirePlan.md) — Implementation plan and scope
+- [FlatWireEndToEndProcess.md](../../Analysis/FlatWireEndToEndProcess.md) — End-to-end process reference
 
 ---
 

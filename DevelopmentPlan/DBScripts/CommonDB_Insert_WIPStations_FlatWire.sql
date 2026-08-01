@@ -112,7 +112,7 @@
       not the legacy one.
       FL2PO is deliberately NOT created: PCI002 excludes FL2 from pre-check-in (no staging space).
       Legacy equivalents for reference: N36PRE, UA36PRE, D72PRE, R48PRE, ZR23PO, ZR24PO.
-      See Analysis/RodPreCheckin.md.
+      See LatestDocument/RequirementDocuments/RodPreCheckin.md.
 
   D3. WIPStations.StationType = 'R' for the three lines. 'R' is the existing letter for rolling
       mills (ZR23, ZR24); the flattening mills are rolling mills. Blast-radius check performed

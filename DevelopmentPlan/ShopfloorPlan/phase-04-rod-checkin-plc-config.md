@@ -23,7 +23,7 @@
 - **Exit conditions:** run `Running`, rod `INFLAT`, PLC tags pushed, transition to Dashboard 3.
 
 ### Scope addition — Pre-Check-in (Dashboard 2A)
-This phase also owns **pre-check-in / payoff staging**: registering the *next* rod against the idle VPS bay while the current coil is still running, so FL1/FL3 can run continuously through an induction weld. It is what `SRS §4.2 PCI001`–`PCI008` specifies, and it had no screen, data model, API or phase owner until now — see **[RodPreCheckin.md](../../Analysis/RodPreCheckin.md)** and gap **G19**.
+This phase also owns **pre-check-in / payoff staging**: registering the *next* rod against the idle VPS bay while the current coil is still running, so FL1/FL3 can run continuously through an induction weld. It is what `SRS §4.2 PCI001`–`PCI008` specifies, and it had no screen, data model, API or phase owner until now — see **[RodPreCheckin.md](../../LatestDocument/RequirementDocuments/RodPreCheckin.md)** and gap **G19**.
 - **FL1/FL3 only** — `PCI002` excludes FL2 (no staging space).
 - Priority is SRS **Should**, not Must: check-in does *not* depend on it. Scanning an unstaged rod straight into Dashboard 2 stays valid.
 - **No PLC write occurs at pre-check-in.** Tags are pushed only at the acknowledgement in step 4 below.
@@ -62,7 +62,7 @@ This phase also owns **pre-check-in / payoff staging**: registering the *next* r
 - **Logging/authz:** PLC push audited (tag/value/operator/result); Operator+ policy.
 
 ## Database Changes
-- **Tables (write):** **`RodStaging`** (pre-check-in row, 3-item inspection, `RodSeqno`, `IsWelded`, carry-forward evidence, un-stage audit); `RodCheckin` (inspection cols, payoff, `PlcTagsPushed`, pre-run SPC M1/M2/ovality); `FlatWireRun` (create run header, `Status=Running`, `StartedAt`); `SpcCheckpoint`+`SpcMeasurement` (PreRun); `RodCheckout` with `Mode='ModeP'` on pre-check-out; **existing `coils` rod row → status `INFLAT`** (FW-002; cross-DB write — see G2).
+- **Tables (write):** **`RodStaging`** (pre-check-in row, 3-item inspection, `RodSeqno`, `IsWelded`, carry-forward evidence, release audit incl. `UnstageKind`/`WipRejectionId`); `RodCheckin` (inspection cols, payoff, `PlcTagsPushed`, pre-run SPC M1/M2/ovality); `FlatWireRun` (create run header, `Status=Running`, `StartedAt`); `SpcCheckpoint`+`SpcMeasurement` (PreRun); `RodCheckout` with `Mode='ModeP'` on pre-check-out (**+ `WasWelded` and the supervisor approval stamp when the rod was welded**); **existing `coils` rod row → status `INFLAT`** (FW-002; cross-DB write — see G2).
 - **Reference data:** new `PayoffPosition` lookup (3 pinned rows) seeded by the DDL; `FlatWireRunDetail.PayoffPositionId` now has an enforced FK parent (REVIEW.md #15).
 - **WIP stations:** **`FL1PO` is now seeded** by `CommonDB_Insert_WIPStations_FlatWire.sql` (`PCI003`). It shares FL1's `MachineIdx` — the same pattern as legacy `ZR23`/`ZR23PO`. `FL2PO` stays absent per `PCI002`. That script's D2 note previously refused the station outright; that was correct about the *legacy* flow, not about the feature.
 - **Reads:** `PassSchedule`(+components) for the push payload; `coils` for rod validation; `RodStaging` for bay occupancy.
@@ -105,4 +105,15 @@ sequenceDiagram
 ## Deliverables
 Dashboard 2 (+FL3); **Dashboard 2A (Pre-Check-In station)**; `CheckInController` + `CheckInService`; **`PayoffStagingController` + `RodStagingService`**; `PLCTagService.PushPassSchedule`; INFLAT + run header; `PayoffStateChanged`; the `FL1PO` station; audit logging.
 
-**OQ blockers:** **OQ-14** (traveler fields per station — Critical, gates final field list), **OQ-51** (no-match path — Critical residual; stub assumes single active schedule → `PS-1100-FL1-003`), OQ-27 (mid-run schedule change/alpha — decided), OQ-30 (roll-gap validation before start). **New pre-check-in blockers:** whether pre-check-out requires supervisor approval; whether pre-check-in really sets `coils.coil_status = INFLAT` (SRS) or `STAGED` (walkthrough), and what reverses it on un-stage; the scope of `RodSeqno`. **Stories:** FW-061, FW-082, FW-010, FW-002. *(Consumes upstream FW-020 rod alphas via `GET /rod/{alpha}`.)*
+**Client answers of 30 Jul 2026 — what changed for this phase:**
+
+| Change | Effect on the build |
+|---|---|
+| **Wrong station auto-switches** (OQ-74) | **Less work than specified.** The off-schedule override panel, five `RodStaging` columns and two CHECK constraints are **dropped**. Instead, both DB2A *and* DB2 read `scheduledLineId` at the scan and switch station. Two behaviours to specify first: what a part-completed wizard does when the station changes under it, and whether FL1/FL3 are one station or two (**OQ-76**/**OQ-73**) — if two, the switch must reload the bays and the queue |
+| **`INFLAT` at check-in only** (OQ-67) | Staging **must not** write `coils.coil_status`. Unblocks the staging build. The reqsum / `wip_coil_orders` half is still open |
+| **Welded pre-check-out** (OQ-68/OQ-77) | Mode P gains a supervisor path: approval stamp + `WasWelded` + `NewRodStatus='HOLD'`. **`RodCheckout` had no approval columns at all** — see **G24** |
+| **WIP rejection releases a blocked bay** (OQ-72) | New cross-phase link to Phase 7: `POST /wipreject` writes back to `RodStaging`. Nothing else clears a `BLOCKED` bay |
+| **Min/max tolerances** (OQ-71) | `CHK007` becomes a band check at **both** stations. ⛔ **Blocked on the client** — the four values are owed by e-mail and nothing is seeded, so this cannot be finished in this phase without them |
+| **Multi-order rod** (OQ-69) | The order-membership refusal is **knowingly wrong** (**G22**). Ships as-is pending **OQ-79** and the MVP2 decision — a recorded choice, not an oversight |
+
+**OQ blockers:** **OQ-14** (traveler fields per station — Critical, gates final field list), **OQ-51** (no-match path — Critical residual; stub assumes single active schedule → `PS-1100-FL1-003`), **OQ-71** (⛔ tolerance values owed by e-mail — gates `CHK007`), **OQ-78** (rod scheduled on neither rod line — the auto-switch has no target), **OQ-79** (multi-order sequencing), OQ-27 (mid-run schedule change/alpha — decided), OQ-30 (roll-gap validation before start). ~~**New pre-check-in blockers:** whether pre-check-out requires supervisor approval; whether pre-check-in really sets `coils.coil_status = INFLAT` (SRS) or `STAGED` (walkthrough), and what reverses it on un-stage; the scope of `RodSeqno`. **Stories:** FW-061, FW-082, FW-010, FW-002. *(Consumes upstream FW-020 rod alphas via `GET /rod/{alpha}`.)*

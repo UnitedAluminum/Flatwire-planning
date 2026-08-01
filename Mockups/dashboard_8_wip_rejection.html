@@ -492,6 +492,17 @@
     </div>
   </div>
 
+  <!-- ARRIVING FROM A FAILED STAGING INSPECTION (Q72 item 3, client 30 Jul 2026).
+       Dashboard 2A routes here when a rod fails its visual inspection at the payoff. Three
+       things are specific to that entry path and are NOT yet modelled on this screen:
+         1. Stage reads "FL1 · pre-check-in" and there is NO footage position — the rod never
+            ran. `runId` and `footagePosition` are both null on POST /wipreject.
+         2. Submitting the rejection is what RELEASES THE BAY: RodStaging.Status -> 'Unstaged'
+            with UnstageKind = 'WipRejection' and WipRejectionId set, plus a PayoffStateChanged
+            broadcast. Nothing else clears a Blocked bay. The operator's rejection reason is
+            the record of why.
+         3. The rod goes to HOLD (disposition Suspend), which is the client's stated outcome.
+       The banner below is still hard-coded to the mid-run case (R00042 at 8,220 ft). -->
   <div class="material-banner panel">
     <div class="material-facts">
       <div class="material-fact">

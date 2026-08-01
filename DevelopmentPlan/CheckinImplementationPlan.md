@@ -618,5 +618,5 @@ The following are explicitly **out of scope** for the stub-driven check-in phase
 |---|---|
 | [ShopfloorAndRealTimePlan.md](ShopfloorAndRealTimePlan.md) | Sprint plan — stories FW-S3-009, FW-S3-012 |
 | [APIContracts.md](APIContracts.md) | Full API contract — Sprint 3 section |
-| [RocCheckin.md](../Analysis/RocCheckin.md) | Acknowledge flow design — 5-step sequence |
+| [RocCheckin.md](../LatestDocument/RequirementDocuments/RocCheckin.md) | Acknowledge flow design — 5-step sequence |
 | [FlatWireShopfloorDashboards.md](../Analysis/FlatWireShopfloorDashboards.md) | Dashboard UX wireframes |

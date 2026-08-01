@@ -1458,9 +1458,9 @@ The following open questions must be resolved **before** their dependent stories
 
 | Document | Purpose |
 |----------|---------|
-| [FlatWirePlan.md](FlatWirePlan.md) | Full scope, milestones, risks |
-| [FlatWireEndToEndProcess.md](FlatWireEndToEndProcess.md) | End-to-end process — all 11 stages |
-| [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) | Open questions register — 59 items |
-| [FlatWireShopfloorDashboards.md](FlatWireShopfloorDashboards.md) | Dashboard UX specs and wireframes |
+| [FlatWirePlan.md](../Analysis/FlatWirePlan.md) | Full scope, milestones, risks |
+| [FlatWireEndToEndProcess.md](../Analysis/FlatWireEndToEndProcess.md) | End-to-end process — all 11 stages |
+| [FlatWireOpenQuestions.md](../Analysis/FlatWireOpenQuestions.md) | Open questions register — 59 items |
+| [FlatWireShopfloorDashboards.md](../Analysis/FlatWireShopfloorDashboards.md) | Dashboard UX specs and wireframes |
 | [TechStackRecommendation.md](TechStackRecommendation.md) | Architecture decisions |
 | [FlatWireTables.md](FlatWireTables.md) | Database table design — all 20 tables with column specs, analysis of existing tables, and missing table definitions |

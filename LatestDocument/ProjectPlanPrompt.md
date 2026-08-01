@@ -46,7 +46,7 @@ Optionally also write `00-README.md` — a one-page index of the seven with a re
 6. **`DevelopmentPlan/REVIEW.md`** — the audit of known contradictions between docs. **Consult it before trusting any single spec**; it tells you which document wins.
 7. **`Analysis/*.md`** — per-topic prose specs; `FlatWireOpenQuestions.md` is the authoritative decision register (`OQ-##`).
 8. **`DevelopmentPlan/APIContracts.md`**, `FlatWireTables.md`, `FlatWireJiraStories.md` (`FW-###`, 12 epics / 58 stories), `TechStackRecommendation.md` — **April 29–30 2026 vintage, superseded where they disagree with the July 26 roadmap and the master spec.** Mine them for detail, never for precedence. `APIContracts.md` carries four known Tier-1 correctness bugs already corrected in master spec §6 — use the corrected version.
-9. **`SRS/Shopfloor_Flat_wireSRS_Consolidated_v3.docx`** — the delivered SRS; source of the `OL`/`PCI`/`CHK`/`WLD`/`PSM`/`SPC`/`NFR`/… requirement IDs. Read via the master spec's citations rather than re-extracting the `.docx`.
+9. ~~**`SRS/Shopfloor_Flat_wireSRS_Consolidated_v3.docx`**~~ — **removed from the repository 1 Aug 2026** (git history `6096921`). Read [`ProjectPlan/02-SRS.md`](ProjectPlan/02-SRS.md) instead; it carries the rule text. Was the delivered SRS; source of the `OL`/`PCI`/`CHK`/`WLD`/`PSM`/`SPC`/`NFR`/… requirement IDs. Read via the master spec's citations rather than re-extracting the `.docx`.
 10. **`BaseDocuments/`** — read-only business source `.docx`/`.xlsx`. Cite, don't re-derive.
 11. **`../CLAUDE.md`** (`c:\UAL\CLAUDE.md`) — the ecosystem stack conventions the implementation must live inside.
 

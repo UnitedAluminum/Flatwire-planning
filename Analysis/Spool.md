@@ -2,7 +2,7 @@
 
 **Document Purpose:** Detailed explanation of what a spool is in the flat wire manufacturing process, its role in material flow, and system integration.
 
-**Last Updated:** May 4, 2026
+**Last Updated:** August 1, 2026
 
 **Status:** Reference — Material Flow Reference
 
@@ -57,7 +57,15 @@ TKUP-1 (Traversing Take-up, 3,500 lb capacity)
 - Flat wire has been drawn from rod
 - Gauge and width have been shaped to target specifications
 - Material is collected on TKUP-1 traversing take-up
-- When TKUP-1 reaches 3,500 lb capacity, spool is complete
+- ~~When TKUP-1 reaches 3,500 lb capacity, spool is complete~~ **Corrected 30 Jul 2026 — see below**
+
+> **The spool closes on the customer's weight range, not on TKUP-1's capacity (client, 30 Jul 2026).** 3,500 lb is the **equipment ceiling**, not the working target. In practice **spools are sized at roughly 1,800 lb**, so that **two finished coils** can be cut from one spool at FL2 against a customer maximum of about **900 lb** each (a customer min/max, e.g. 900 max / 800 min, is what completion is graded against — **Q60**). A spool run to the 3,500 lb equipment limit would not divide into the coils the order needs.
+>
+> **Closing early is a specified case, not an exception.** A spool closed below target is an **unplanned stop** on the mill **10-90** pattern with a reason code: inside the customer range it continues; outside it, a **supervisor override plus a production hold**, or the piece is **offered to the customer under concession** before a remake is planned (offer first). Detail in [SpoolCompletionNotification.md](../LatestDocument/RequirementDocuments/SpoolCompletionNotification.md) Part C (**Q65**).
+>
+> **The spool is always run off — FL2 has no spool stripper.** Whatever is decided about the *material*, the spool itself must be emptied at FL2 and returned to FL1. This is a hard constraint on any reject-and-remake path: rejecting the flat wire never means stopping and removing the spool part-full.
+>
+> **Mid-run coil break:** the stop is removed and a **new stop starts from zero** — weight does not resume from the break point. The leftover incoming material is welded to the next coil on FL1; on FL2 it is run to a finished stop and offered, or scrapped.
 
 ---
 
@@ -371,7 +379,7 @@ Based on FlatWirePlan.md Open Questions section:
 
 - [FlatWireShopfloorDashboards.md](FlatWireShopfloorDashboards.md) — Dashboard 2 (Rod Check-in), Dashboard 5 (Spool Check-in), Dashboard 7 (Output Coil Completion)
 - [FlatWirePlan.md](FlatWirePlan.md) — Process & Equipment Overview, Planning System Changes (Section 5)
-- [PassScheduleManagement.md](PassScheduleManagement.md) — Spool check-in integrates with pass schedule acknowledgment
+- [PassScheduleManagement.md](../LatestDocument/RequirementDocuments/PassScheduleManagement.md) — Spool check-in integrates with pass schedule acknowledgment
 
 ---
 
@@ -382,3 +390,4 @@ Based on FlatWirePlan.md Open Questions section:
 | Apr 24, 2026 | Analysis Team | Initial spool reference document created — comprehensive material flow explanation, system integration, and traceability chain documented |
 | Apr 28, 2026 | MOM — Planning & Shopfloor meeting | **Planning Role updated:** alpha generation now at planning time (not execution); stop calculation is system-driven; planner inputs weight only. Three spool-to-order allocation scenarios confirmed (full, partial+stock, multi-order). "Assign as-is" stock option documented. Spool remainder tracking status updated to Decided. Coil capacity (1,000 lb) confirmed in comparison table. |
 | May 4, 2026 | Analysis Team — Tim O. review | **Q55 Decided:** Anneal step modifies the existing spool alpha (no new child alpha); traceability maintained through the event log. Re-pass through FL1 not applicable (no capability). **Q57 In Progress:** Unique spool IDs confirmed (like furnace plates); tracking workflow FL1 → furnace → cooling → FL2 confirmed by operator spool number selection; full state machine transitions TBD. **Coil capacity updated** to 1,100 lb (revised from 1,000 lb per Tim O. May 4). |
+| Aug 1, 2026 | Client sync (30 Jul call) | **Spool completion is graded on the customer weight range, not TKUP-1 capacity.** 3,500 lb is the equipment ceiling; working spools are ~**1,800 lb** so two ~900 lb finished coils can be cut at FL2, and completion is graded against a customer **min/max weight** (Q60). Recorded the **short-close** rule as an unplanned stop on the mill 10-90 pattern — supervisor override + hold or a concession offer when outside the range, remake last (Q65) — and the hard constraint that **the spool is always run off because FL2 has no spool stripper**. Added the mid-run coil-break rule: the stop is removed and a new stop starts from zero. |

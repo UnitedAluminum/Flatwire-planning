@@ -1,7 +1,7 @@
 # Flat Wire Mill — API Contract
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** July 30, 2026
+**Last Updated:** August 1, 2026
 **Document Type:** API contract — REST + real-time hub + PLC/OPC surface
 **Status:** Baselined for build — four published defects corrected here; missing endpoint groups in §10
 **Owner:** Backend (.NET) stream
@@ -217,8 +217,8 @@ Roles use the matrix in `[SRS §8]`. "Any" means any authenticated role.
 | 8 | `GET /rod/{alpha}` | Validate + return rod details at scan | Any | `RodReceiving` | 4 (upstream data) | `FR-042`, `FR-064` |
 | 9 | `POST /rod` | Receive a rod, generate an R-series alpha | Receiving | `RodReceiving` | upstream | — |
 | 10 | `GET /payoff/status?lineId=` | Both payoff bays on one line — the DB2A primary read | Any | `PayoffStaging` | 4 | `FR-032`–`FR-034` |
-| 11 | `POST /staging/rod` | Pre-check-in: stage a rod at a bay | Operator (+Supervisor for override) | `PayoffStaging` | 4 | `FR-039`–`FR-049` |
-| 12 | `POST /staging/rod/unstage` | Pre-check-out — writes `RodCheckout` Mode P | Operator | `PayoffStaging` | 4 / 7 | `FR-052`–`FR-054` |
+| 11 | `POST /staging/rod` | Pre-check-in: stage a rod at a bay | Operator (+Supervisor for the out-of-sequence override) | `PayoffStaging` | 4 | `FR-039`–`FR-049` |
+| 12 | `POST /staging/rod/unstage` | Pre-check-out — writes `RodCheckout` Mode P | Operator; **+Supervisor when the rod is welded** | `PayoffStaging` | 4 / 7 | `FR-052`–`FR-054` |
 | 13 | `POST /staging/rod/mark-welded` | Record the induction weld to the running rod | Operator | `PayoffStaging` | 4 | `FR-050`, `FR-051` |
 | 14 | `GET /staging/queue?lineId=` | The Traveler Queue projection | Any | `PayoffStaging` | 4 | `FR-035`–`FR-038` |
 | 15 | `POST /checkin/rod` | FL1/FL3 rod check-in + PLC push | Operator | `CheckIn` | 4 | `FR-063`–`FR-084` |
@@ -356,7 +356,7 @@ Returns `alpha, alloy, temper, diameterIn, grossWeightLb, netWeightLb, status, l
 | Field | Why it cannot be omitted |
 |---|---|
 | `orderId` | The rod→order resolution read from `planning_routings`. **`null` for a rod planning has not allocated — such a rod cannot be staged.** This is what lets a cold station identify which order it is starting |
-| `scheduledLineId` | The line the order is booked on — lets the caller detect an off-schedule rod **before** committing |
+| `scheduledLineId` | The line the order is booked on. Since 30 Jul 2026 this **drives navigation**: if it is not the line on screen, the client **switches to that station** and continues — no message, no override (**Q74**). Resolve it before posting to `/staging/rod` or `/checkin/rod` |
 | `footageRunToDate` | Without it the caller cannot enforce the carry-forward gate; the scan would silently offer a fresh-start check-in for a rod that has already run footage, which `FR-043` forbids |
 | `remainingWeightEstimateLb` | Starting weight for a carry-forward run |
 | `stagedPayoffPosition`, `isWelded` | **Projected from the current `RodStaging` row where `Status='Staged'`** (null/false when not staged). They are **no longer columns on `Rod`** |
@@ -368,7 +368,7 @@ Returns `alpha, alloy, temper, diameterIn, grossWeightLb, netWeightLb, status, l
 **Purpose:** the Dashboard 2A primary read — both bays on one line, as peers.
 **Role:** any. **Idempotent.**
 
-Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `Blocked`), `rodAlpha`, `rodSeqno`, `plannedSeqno`, `isWelded`, `diameterIn`, `grossWeightLb`, `netWeightLb`, `weightLb`, `percentRemaining`, `stagedAt`, `stagedBy`, `checkedInAt`, `operatorId`, and the override stamp (`offScheduleOverride`, `outOfSequenceOverride`, `overrideBy`, `overrideAt`, `overrideReason`) where present — plus the order context header (`activeOrderId`, `orderMaterialSpec`, `stagedCount`, `availableCount`, `onOrderCount`).
+Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `Blocked`), `rodAlpha`, `rodSeqno`, `plannedSeqno`, `isWelded`, `diameterIn`, `grossWeightLb`, `netWeightLb`, `weightLb`, `percentRemaining`, `stagedAt`, `stagedBy`, `checkedInAt`, `operatorId`, and the override stamp (`outOfSequenceOverride`, `overrideBy`, `overrideAt`, `overrideReason`) where present — **`offScheduleOverride` was removed 1 Aug 2026**, see §4.5 — plus the order context header (`activeOrderId`, `orderMaterialSpec`, `stagedCount`, `availableCount`, `onOrderCount`).
 
 **`state` is derived, not stored.** `Blocked` = `Status='Staged'` **and** any inspection column `Fail`. Adding a fourth stored `Status` value would fall outside the `UX_RodStaging_Bay` filtered index and free a bay that is still physically occupied.
 
@@ -386,10 +386,9 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
                   "waterStains": "Pass", "observationNotes": null },
   "acknowledgedCarryForward": false,
   "supervisorOverride": {
-      "offSchedule":   { "scheduledLineId": "FL2" },
       "outOfSequence": { "expectedRodAlpha": "R00043" },
       "supervisorBadge": "SUP-204", "supervisorPin": "••••",
-      "reason": "FL2 down for maintenance; R00043 blocked behind a forklift" },
+      "reason": "R00043 blocked behind a forklift" },
   "operatorId": "dave.m" }
 ```
 
@@ -399,11 +398,11 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 | `payoffPosition` | int | ✓ | 1 or 2 only |
 | `rodAlpha` | string | ✓ | Must exist in `coils` |
 | `orderId` | string | ✓ | **Re-resolved server-side; a mismatch is rejected** |
-| `diameterIn` | number | ✓ | > 0, within nominal ± tolerance |
+| `diameterIn` | number | ✓ | > 0, within the **min/max** band `nominal − RodDiameterToleranceMinusIn .. nominal + RodDiameterTolerancePlusIn`. **Unseeded today** — values owed by e-mail (**Q71**) |
 | `grossWeightLb` / `netWeightLb` | number | ✓ | > 0 |
 | `inspection` | object | ✓ | **Exactly three items.** No connector-tag item |
 | `acknowledgedCarryForward` | bool | ✓ | Must be `true` when `footageRunToDate > 0` |
-| `supervisorOverride` | object | conditional | Include only the deviation objects that apply; **omit entirely when neither does** |
+| `supervisorOverride` | object | conditional | Required only for an **out-of-sequence** stage; **omit entirely otherwise**. The `offSchedule` object was removed 1 Aug 2026 |
 
 > **`rodSeqno` and `plannedSeqno` are not request fields — the server assigns and snapshots them.** Letting a client supply the actual sequence would let two operators claim the same position, and would let the UI echo a rod's *planned* number back as though it were the order it ran in.
 >
@@ -416,18 +415,22 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 | Check | Rule | Outcome |
 |---|---|---|
 | Allocation | Rod has a `planning_routings` entry, which **yields the order** | `422 ROD_NOT_ALLOCATED` |
-| Order membership | Once an order is established the rod must belong to **that** order | `409 ROD_WRONG_ORDER` — welding across orders breaks genealogy |
-| Order's line | The resolved order is scheduled on **this** line | **Not a refusal** — supervisor override |
+| Order membership | Once an order is established the rod must belong to **that** order | `409 ROD_WRONG_ORDER` — welding across orders breaks genealogy. ⚠ **Knowingly wrong for a multi-order rod** — G22 |
+| Order's line | The resolved order is scheduled on **this** line | **Not a refusal and not an override** — the client switches station. A mismatched POST returns `409 WRONG_STATION` with `correctLineId`; the client switches and re-posts |
 | Availability | `coils.coil_status` not `INFLAT`/`COMPLETE`/`HOLD`/`SCRAP`, and no `Staged` row | `409 ROD_UNAVAILABLE` |
 | Planned sequence | The rod is the one planning expects next (lowest `plannedSeqno` still available) | **Not a refusal** — supervisor override |
 | Bay occupancy | `UX_RodStaging_Bay` / `UX_RodStaging_RodActive` | `409` **from the index, not a read-then-write race** |
 | Line | `lineId = FL2` | `422 LINE_NOT_ELIGIBLE` |
-| Inspection | Any item `Fail` | `422 INSPECTION_FAILED` with `{"route":"wipRejection","rodAlpha":"…"}` — **hard block, no override** |
+| Inspection | Any item `Fail` | **`201 Created` with `state: "Blocked"`** and `{"route":"wipRejection","rodAlpha":"…"}` — the row is **committed before the inspection gate** (changed 31 Jul 2026), because the bundle is already on the bay and writing nothing reported an occupied position as free. Still a **hard block, no override** (`CHK010`) |
 | Carry-forward | `footageRunToDate > 0` without acknowledgement | `422 CARRY_FORWARD_REQUIRED` |
-| Diameter | Outside nominal ± lookup tolerance | `422 DIAMETER_OUT_OF_TOLERANCE` |
+| Diameter | Outside the min/max lookup band | `422 DIAMETER_OUT_OF_TOLERANCE` |
 | Rod | Not found in `coils` | `404 ROD_NOT_FOUND` |
 
-**Side effects — compensating writes, not one ACID transaction:** `RodStaging` insert with server-assigned `RodSeqno` and snapshotted `PlannedSeqno` · shared `coils.coil_status` + reqsum + `wip_coil_orders` insert (cross-database) · `PayoffStateChanged` broadcast. **No PLC write.**
+**Side effects — compensating writes, not one ACID transaction:** `RodStaging` insert with server-assigned `RodSeqno` and snapshotted `PlannedSeqno` · **`coils.coil_status` is not changed** — `INFLAT` is set at check-in (**Q67**, 30 Jul 2026), and whether the reqsum + `wip_coil_orders` insert stays here is the open half of that question (cross-database either way) · `PayoffStateChanged` broadcast. **No PLC write.**
+
+> **Wrong station is corrected, not authorised (30 Jul 2026).** ~~Staging a rod whose order is booked on another line is a deviation requiring a supervisor override.~~ The system **selects the correct station**: the client reads `scheduledLineId` at the scan and switches to that line. `RodStaging.OffScheduleOverride`, `ScheduledLineId`, `CK_RodStaging_OffSched` and `CK_RodStaging_OffSchedLine` are **dropped**; the shared credential trio survives for the out-of-sequence override. **Open:** what happens to a part-completed wizard when the station switches mid-transaction, whether an FL3 tab exists on the FL1 panel at all (**Q73**/**Q76**), and what to do when the order is scheduled on **neither** rod line — there is no station to switch to (**Q78**, not covered on the call).
+
+> **A blocked bay is cleared by the WIP rejection, and by nothing else.** `POST /wipreject` sets `RodStaging.Status → 'Unstaged'`, `UnstageKind = 'WipRejection'`, `WipRejectionId`, and broadcasts `PayoffStateChanged` (**Q72** item 3, 30 Jul 2026). Reusing `Unstaged` with a discriminator was chosen over a fourth `Rejected` status, which would have forced the vocabulary, `CK_RodStaging_Unstaged` and the `UX_RodStaging_Bay` filter to change together.
 
 ### 4.6 `POST /checkin/rod` — corrected request
 
@@ -464,6 +467,8 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 **Errors:** `409 RUN_ALREADY_ACTIVE` · `409 PAYOFF_MISMATCH` against an existing staged row · `422 SCHEDULE_NOT_ACTIVE` when the schedule is `Draft` · `422 INSPECTION_FAILED` routed to DB8 · `500 PLC_PUSH_FAILED` with the check-in aborted · **`422 SCHEDULE_NO_MATCH` — behaviour undefined, OI-46.**
 
 **FL3:** one acknowledgement pushes **all FM1 and FM2 tags in a single batch**; `RouteMode` is `Hybrid`; **no `Spool` row is created**.
+
+**Station selection applies here too (30 Jul 2026).** A rod scanned at check-in whose order is booked on the other rod line **switches the screen to that line** rather than being refused; a mismatched POST returns `409 WRONG_STATION` with `correctLineId`. Same rule as §4.5, same open questions.
 
 ### 4.7 `GET /staging/queue?lineId=`
 
@@ -585,13 +590,25 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 | Mode | `runId` | `footageAtCheckout` | Reasons | Rod disposition | In-process disposition |
 |---|---|---|---|---|---|
-| **`ModeP`** | **null** | **0** | `WrongRodMisScan`, `OrderCancelledDeferred`, `FailedReInspection`, `RelocatedToLine`, `Other` | `ReturnToFloorStorage` → `STAGED` · `ReturnToWarehouse` → `RECEIVED` | **must be null** |
+| **`ModeP`** — unwelded | **null** | **0** | `WrongRodMisScan`, `OrderCancelledDeferred`, `FailedReInspection`, `RelocatedToLine`, `Other` | `ReturnToFloorStorage` → `STAGED` · `ReturnToWarehouse` → `RECEIVED` | **must be null** |
+| **`ModeP`** — **welded** | **null** | **0** | + `WrongRodWelded` | `HoldReturnToStorage` → **`HOLD`** *(the only permitted outcome)* | **must be null** |
 | **`ModeA`** | **null** | **0** | Same five | Same two | **must be null** |
 | **`ModeB`** | required | > 0, **PLC-locked** | `EquipmentFailure`, `QualityHold`, `OrderQuantityReached`, `ShiftDeferral`, `Other` | `HoldReturnToStorage` → `HOLD` · `Scrap` → `SCRAP` · `DeferContinueLater` → `STAGED` | `HoldPendingSupervisor` \| `Scrap` \| `AcceptAsPartialRun` |
 
 `notes` is **required when `reasonCode = 'Other'`**.
 
-**Enforced in the database:** `CK_RodCheckout_ModeP` (Mode P must have null `runId`, footage 0, `PlcTagsCleared` false, and both in-process fields null) and `CK_RodCheckout_ModeB` (`inProcessMaterialDisposition` permitted **only** in Mode B).
+**Approval — added 1 Aug 2026, and it was missing entirely.** The request also carries `wasWelded`, `approvedBy`, `approvedAt` and `overrideReason`:
+
+| Mode | Supervisor approval | Source |
+|---|---|---|
+| `ModeP` **unwelded** | **Not required** — operator-only, reason captured | OQ-68 |
+| `ModeP` **welded** | **Required**, with a documented reason, and the rod goes to **`HOLD`** — removal means cutting the material, so it is a **rejection**, not a return | OQ-68 / OQ-77, 30 Jul 2026 |
+| `ModeA` | Not required | — |
+| `ModeB` | **Required** | OQ-48, decided 4 May 2026 |
+
+> **Until 1 Aug 2026 `RodCheckout` had no approval columns at all** (gap **G24**), so the OQ-48 and OQ-50 approvals decided in May were enforced at the UI and stored nothing. Adding them retro-enforced Mode B: the existing sample-data Mode B row failed the schema rebuild until it was given an approver. **The PIN is never stored** — only the badge/ID, the timestamp and the reason. Its validation source is still undecided and now gates three flows (**OI-38**).
+
+**Enforced in the database:** `CK_RodCheckout_ModeP` (Mode P must have null `runId`, footage 0, `PlcTagsCleared` false, and both in-process fields null) · `CK_RodCheckout_ModeB` (`inProcessMaterialDisposition` permitted **only** in Mode B) · `CK_RodCheckout_WasWelded` (a welded removal is Mode P only) · `CK_RodCheckout_Approval` (the approval stamp is all-or-nothing) · `CK_RodCheckout_ModePWelded` (a welded Mode P needs the stamp **and** `NewRodStatus='HOLD'`) · `CK_RodCheckout_ModeBApproved` (Mode B needs the stamp).
 
 **The PLC gatekeeper rule, for every mode with tags:**
 
@@ -611,7 +628,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 `runId` and `footagePosition` are **nullable** — a pre-run incoming rejection has neither. `rejectionGroup` is one of `SurfaceQuality`, `Dimensional`, `WeldQuality`, `Material`, `Process`. `observationNotes` is **required when `disposition = 'Suspend'`**.
 
-**Side effects:** `WipRejection` written · the alpha's status set (`HOLD` or `SCRAP`) · the WIP Held queue updated · **`AlertRaised` broadcast to DB1**.
+**Side effects:** `WipRejection` written · the alpha's status set (`HOLD` or `SCRAP`) · the WIP Held queue updated · **`AlertRaised` broadcast to DB1** · **when the material is a rod staged at a payoff bay** (a failed staging inspection), the `RodStaging` row is **released** — `Status → 'Unstaged'`, `UnstageKind = 'WipRejection'`, `WipRejectionId` set — and `PayoffStateChanged{NotStaged}` is broadcast. **This is the only thing that clears a `Blocked` bay** (**Q72** item 3, 30 Jul 2026).
 
 > **`Rework` is accepted by the disposition enum but is currently unpersistable.** `NewMaterialStatus` admits only `HOLD` or `SCRAP`, and **there is no column for `returnToStage`**, which `FR-297` and the mockup both require. **A third of the disposition options cannot be stored** — **OI-22**, resolve before Phase 7.
 >
@@ -710,7 +727,7 @@ Also broadcast, consumed by DB3 traces and DB14: `WeldJoinEvent` · `DieChangeEv
 
 ### 5.5 Events the spool-completion feature adds
 
-Specified in `Analysis/SpoolCompletionNotification.md`, **not yet in the published contract**:
+Specified in `LatestDocument/RequirementDocuments/SpoolCompletionNotification.md`, **not yet in the published contract**:
 
 | Event | Payload | Why it is server-side |
 |---|---|---|
@@ -921,4 +938,4 @@ A screen moves off the stub when: the real endpoint returns the contracted shape
 | Date | Changed By | Description |
 |------|-----------|-------------|
 | Jul 30, 2026 | Plan team | Initial publication. Conventions, canonical enums with the three-way mirroring rule, all **30 endpoints** with request/response shapes, validation, side effects, error codes and idempotency, the **`FlatWireHub` contract with all 10 events**, the PLC/OPC surface, the stub-first delivery contract, versioning policy and full traceability. **Corrects the four Tier-1 defects in the published April contract** — the `/passschedule/generate` worked example (`0.3732` / `0.95 %` / `Hybrid`, not `0.265` / `50.1` / `Standalone`), the missing `RollAdjustTrigger` checkpoint type, the component-state boolean, and the three edge-type vocabularies — plus two further corrections (the three `NOT NULL` fields missing from `POST /checkin/rod`, and the `ComponentName`/`PayoffPosition`/`LineState` enum fixes). Records **PP-04**: the hub event count is ten, not nine. |
-
+| Aug 1, 2026 | Client sync (30 Jul call) | **`/staging/**`, `/checkin/rod`, `/checkout` and `/wipreject` updated.** The `offSchedule` override object is **removed** — a rod booked on the other rod line makes the client **switch station** (`scheduledLineId` from `GET /rod/{alpha}`), and a mismatched POST returns `409 WRONG_STATION` with `correctLineId` (Q74). Staging **no longer sets `coils.coil_status`** — `INFLAT` is set at check-in (Q67). A failed inspection now returns **`201` + `state:"Blocked"`** (the 31 Jul contract change, not previously carried here), and **`POST /wipreject` releases the blocked row** — the only thing that clears a `Blocked` bay (Q72 item 3). `POST /staging/rod/unstage` and `POST /checkout` Mode P gain a **weld-dependent supervisor approval** with `HOLD` (Q68/Q77), and `/checkout` gains the approval columns the table never had — retro-enforcing OQ-48 for Mode B (**G24**). `CHK007` becomes a **min/max band**, unseeded pending the values owed by e-mail (Q71). Flagged **G22** (order membership is knowingly wrong for a multi-order rod, Q69/Q79) and **Q78** (an order scheduled on neither rod line has no station to switch to). |

@@ -41,7 +41,7 @@ BEGIN
         -- NOTE: [StagedPayoffPosition] and [IsWelded] were removed here. Pre-check-in
         -- staging now lives in [dbo].[RodStaging] (04_Runs), which can enforce the
         -- one-rod-per-payoff-bay invariant that a nullable column on Rod cannot.
-        -- See Analysis/RodPreCheckin.md and SRS §4.2 PCI001-PCI008 / WLD010.
+        -- See LatestDocument/RequirementDocuments/RodPreCheckin.md and SRS §4.2 PCI001-PCI008 / WLD010.
         [FootageRunToDate] DECIMAL(10,2) NULL,              -- cumulative footage produced across partial runs (Phase 7 / OQ-47)
         [RemainingWeightEstimateLb] DECIMAL(8,2) NULL,      -- estimated remaining weight after a partial run (lb)
         [ReceivedAt]   DATETIMEOFFSET NOT NULL CONSTRAINT [DF_Rod_ReceivedAt] DEFAULT (SYSDATETIMEOFFSET()),

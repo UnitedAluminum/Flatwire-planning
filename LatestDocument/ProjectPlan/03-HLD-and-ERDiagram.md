@@ -1,7 +1,7 @@
 # Flat Wire Mill — High-Level Design & ER Diagram
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** July 30, 2026
+**Last Updated:** August 1, 2026
 **Document Type:** High-Level Design + Entity-Relationship model
 **Status:** Baselined for build — design risks in §13.2, unresolved items in §13.3
 **Owner:** Architecture stream
@@ -448,11 +448,11 @@ The reusable constant is **`k = 12ρ`**, so `lb/ft = A × k`:
 | Nullability | `united_db..alloys.alloy_density` is **NULLABLE**; `proddb..alloys.alloy_density` is **NOT NULL** — which is authoritative is unstated | Null guard + a decision (**OI-93**) |
 | Join width | `alloys.alloy` is `varchar(50)`; `AlloyProperty.Alloy` and `PassSchedule.Alloy` are `varchar(10)` | Project a narrowed column, or key on `alloy_idx` |
 
-> **Tolerance caveat.** `GaugeToleranceDefault` is seeded ±0.0020″ for 1100. At the FL1 gauge of 0.110″ that is ±1.8 %; at the FL2 finished gauge of 0.0160″ it is **±12.5 %**, which is meaningless. **Tolerance belongs on `PassSchedule`**, which is where the DDL already puts it — treat the alloy columns strictly as seed defaults for a new schedule, **never as runtime limits**.
+> **Tolerance caveat.** `GaugeToleranceMinusIn`/`GaugeTolerancePlusIn` (renamed from `GaugeToleranceDefault` on 1 Aug 2026) are seeded ±0.0020″ for 1100. At the FL1 gauge of 0.110″ that is ±1.8 %; at the FL2 finished gauge of 0.0160″ it is **±12.5 %**, which is meaningless. **Tolerance belongs on `PassSchedule`**, which is where the DDL already puts it — treat the alloy columns strictly as seed defaults for a new schedule, **never as runtime limits**.
 >
 > **And the tolerance stack breaks the ±2 % variance rule.** Deriving weight from *target* dimensions at 0.110 ± 0.002 and 0.625 ± 0.005 gives a worst case of **±2.6 %** on weight — larger than the ±2 % scale-versus-calculated tolerance in `[SRS]` `FR-153`, so a perfectly in-spec coil trips the supervisor override for no reason. **Recommendation: integrate over `RunReading`** — `weight = Σᵢ A(gaugeᵢ, widthᵢ) × k × Δfootageᵢ` — which removes the tolerance error and uses data the system already persists. Fall back to pass-schedule targets only for **FL2 standalone**, which broadcasts `null`. Basis choice is **OI-45**.
 >
-> **Missing column, blocking `CHK007`.** There is **no rod-diameter tolerance column anywhere in the schema.** `GaugeToleranceDefault` and `WidthToleranceDefault` are flat-wire *output* dimensions. Likely resolution: add `AlloyProperty.RodDiameterToleranceDefault DECIMAL(8,4)`. **OI-07.**
+> **RESOLVED in shape, not in data (client, 30 Jul 2026 — OQ-71).** ~~There is no rod-diameter tolerance column anywhere in the schema.~~ `AlloyProperty` now carries **four min/max pairs** — gauge, width, rod diameter and an ovality maximum — applied at **both** pre-check-in and check-in, modelled as offsets about nominal so an asymmetric band is expressible. Gauge and width carry their previously seeded symmetric values into both columns; **rod diameter and ovality are NULL because the values are owed by e-mail**, so `CHK007` still cannot fire. The ovality constant hard-coded at `0.003"` in `CheckinImplementationPlan.md` moves here too. Original note follows. ~~`GaugeToleranceDefault` and `WidthToleranceDefault` are flat-wire *output* dimensions. Likely resolution: add `AlloyProperty.RodDiameterToleranceDefault DECIMAL(8,4)`. **OI-07.**
 
 **Prior art worth reading before writing `CoilCompletionService`:** `MillsDB..RollCoil_GetTotalRolledWeightinlastMillRun` already derives total rolled weight for a mill run from `alloy_density`. That is structurally the same problem, and it may already encode UA's convention for tail loss and net-versus-gross.
 
@@ -462,10 +462,12 @@ Two filtered unique indexes are the reason this is a table rather than columns o
 
 | Constraint | Rule |
 |---|---|
-| `CK_RodStaging_Override` | The credential stamp is **all-or-nothing** and required by **either** deviation |
-| `CK_RodStaging_OffSched` | `ScheduledLineId` present exactly when `OffScheduleOverride = 1` |
+| `CK_RodStaging_Override` | The credential stamp is **all-or-nothing**, keyed on `OutOfSequenceOverride` alone |
 | `CK_RodStaging_OutOfSeq` | `ExpectedRodAlpha` present exactly when `OutOfSequenceOverride = 1` |
-| `CK_RodStaging_OffSchedLine` | `ScheduledLineId <> LineId` |
+| `CK_RodStaging_UnstageKind` | `UnstageKind` is NULL or one of `PreCheckOut` / `WipRejection` |
+| `CK_RodStaging_RejectLink` | `WipRejectionId` present exactly when `UnstageKind = 'WipRejection'`. Written with `ISNULL(...)`, because a bare comparison is **UNKNOWN** while the column is NULL and a CHECK constraint *accepts* UNKNOWN |
+| ~~`CK_RodStaging_OffSched`~~ | **Dropped 1 Aug 2026** with `OffScheduleOverride` / `ScheduledLineId` — a rod booked on the other rod line now triggers an **automatic station switch**, not an override (OQ-74) |
+| ~~`CK_RodStaging_OffSchedLine`~~ | **Dropped 1 Aug 2026** |
 | `CK_RodStaging_OutOfSeqRod` | `ExpectedRodAlpha <> RodAlpha` |
 | `CK_RodStaging_Welded` | `WeldedAt` / `WeldedBy` both set exactly when `IsWelded = 1` |
 | `CK_RodStaging_Unstaged` | The three un-stage columns all set exactly when `Status='Unstaged'` |
@@ -587,8 +589,13 @@ erDiagram
         varchar Alloy UK
         decimal MaxReductionPerPass
         decimal SpringbackFactor
-        decimal GaugeToleranceDefault
-        decimal WidthToleranceDefault
+        decimal GaugeToleranceMinusIn
+        decimal GaugeTolerancePlusIn
+        decimal WidthToleranceMinusIn
+        decimal WidthTolerancePlusIn
+        decimal RodDiameterToleranceMinusIn "NULL - values owed"
+        decimal RodDiameterTolerancePlusIn "NULL - values owed"
+        decimal RodOvalityMaxIn "NULL - values owed"
         int SpeedRangeMinFpm
         int SpeedRangeMaxFpm
         bit IsWeldingWire
@@ -753,7 +760,8 @@ erDiagram
         int PlannedSeqno "snapshot"
         bit IsWelded
         varchar Status "Staged/CheckedIn/Unstaged"
-        bit OffScheduleOverride
+        varchar UnstageKind "PreCheckOut/WipRejection"
+        int WipRejectionId FK
         bit OutOfSequenceOverride
         decimal FootageRunToDateAtStaging
         int RodCheckinId FK }
@@ -946,7 +954,7 @@ FKs are added in a **single script after all tables exist** (`06_ForeignKeys`), 
 
 | Shared object | Database | Written when | Direction | Enforcement |
 |---|---|---|---|---|
-| `coils.coil_status = INFLAT` | shared | At check-in acknowledgement; **cleared** on checkout, run completion or WIP rejection | **Write** | Unenforced — compensating write |
+| `coils.coil_status = INFLAT` | shared | At check-in acknowledgement **only** — *not* at pre-check-in (OQ-67, decided 30 Jul 2026); **cleared** on checkout, run completion or WIP rejection | **Write** | Unenforced — compensating write |
 | `coils` R-series row | shared | At rod receipt | **Read** | Mirrored into local `Rod` (**OI-42**) |
 | `wip_coil_orders` | `proddb` | Reqsum entry at check-in if the rod is not yet reqsummed | **Write** | Unenforced |
 | `planning_routings` / `routings`.`actual_start_date` | shared | Updated at check-in | **Write** | Unenforced |
@@ -1152,4 +1160,4 @@ New here: **PP-01** (index count is 46, not 44).
 | Date | Changed By | Description |
 |------|-----------|-------------|
 | Jul 30, 2026 | Plan team | Initial publication. Architecture context and component views, the binding reference-code rules, backend layering and CQRS, the purpose-built real-time pipeline, the Angular library design, and the full data model. **Table count (27), FK count (41) and index count (46) were taken by counting the DDL, not quoted** — the index count corrects the master specification's 44 and is raised as **PP-01**. Publishes an ER overview plus five per-group detailed diagrams covering every table, the complete 41-FK list, the cross-database touchpoints, the PLC/OPC surface, the non-transactional check-in boundary with its compensating-write sequence, and seventeen architecture decisions with rationale. States the `Rod`-table resolution (**D-04**) explicitly and names the two stale documents that say the opposite. |
-
+| Aug 1, 2026 | Client sync (30 Jul call) | **Schema section updated to the as-built DDL.** `RodStaging` loses `OffScheduleOverride` / `ScheduledLineId` and their two CHECK constraints — a rod booked on the other rod line now triggers an **automatic station switch** (OQ-74) — and gains `UnstageKind` / `WipRejectionId` so a **WIP rejection releases a blocked bay** (OQ-72 item 3). `AlloyProperty`'s two single-± tolerance columns become **four min/max pairs** (gauge, width, rod diameter, ovality), with diameter and ovality **NULL pending the values owed by e-mail** (OQ-71) — the `CHK007` missing-column note is resolved in shape but not in data. `coils.coil_status = INFLAT` is written at **check-in only** (OQ-67). Not shown in the ER diagram but added to the DDL: `RodCheckout` gains `WasWelded` and the supervisor approval stamp it never had (**G24**), enforced for Mode B and for a welded Mode P removal. Rebuild verified — `RunAll` clean and idempotent, 27 tables, 15 constraint tests pass. |

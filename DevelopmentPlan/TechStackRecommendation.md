@@ -101,7 +101,7 @@ FlatWire/
 
 | Document | Purpose |
 |---|---|
-| [FlatWireEndToEndProcess.md](FlatWireEndToEndProcess.md) | Full end-to-end process reference with all 11 stages |
-| [FlatWirePlan.md](FlatWirePlan.md) | Implementation plan — scope, milestones, risks |
-| [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) | Open questions register |
-| [FlatWireShopfloorDashboards.md](FlatWireShopfloorDashboards.md) | Shopfloor screen specifications |
+| [FlatWireEndToEndProcess.md](../Analysis/FlatWireEndToEndProcess.md) | Full end-to-end process reference with all 11 stages |
+| [FlatWirePlan.md](../Analysis/FlatWirePlan.md) | Implementation plan — scope, milestones, risks |
+| [FlatWireOpenQuestions.md](../Analysis/FlatWireOpenQuestions.md) | Open questions register |
+| [FlatWireShopfloorDashboards.md](../Analysis/FlatWireShopfloorDashboards.md) | Shopfloor screen specifications |

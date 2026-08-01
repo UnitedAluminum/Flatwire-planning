@@ -66,3 +66,19 @@
 Dashboard 5 + Dashboard 3 FL2 variant; `POST /checkin/spool`; historical gauge-trace query; FL2 PLC tag push.
 
 **OQ blockers:** OQ-15 (spool identifier — needs confirmation), OQ-52 (hybrid-origin FL2 validation — residual), OQ-57 (spool state machine — in progress). **Stories:** FW-064, FW-070 (FL2 roll adjust reused from Phase 6).
+
+---
+
+## Client answers of 30 Jul 2026 — spool completion
+
+**The completion basis changed.** Completion is graded against the **customer's min/max weight range from the order** (e.g. 900 lb max / 800 lb min), **by weight** — not by footage, and **not** against the previously assumed **2,000 lb default, which is withdrawn** (it had no basis and exceeds the TKUP-2 ceiling of 1,100 lb). Spools are sized at roughly **1,800 lb** so that **two finished coils** can be cut at FL2. Still open: which order field carries the range (**OQ-60**).
+
+**A short close is a specified transaction, not an absence of one** (**OQ-65**). Closing below target is an **unplanned stop** on the mill **10-90 SOP** pattern with a reason code:
+
+- **Inside** the customer range → continue.
+- **Outside** it → **supervisor override + production hold**, or **offer to the customer under concession** before planning a remake. The offer comes first.
+- **The spool is run off either way.** FL2 has **no spool stripper**, so it must be emptied and returned to FL1 whatever is decided about the material. A reject-and-remake path must never imply stopping and removing a part-full spool.
+
+**Mid-run coil break:** the stop is **removed and a new stop starts from zero** — weight does **not** resume from the break point. Leftover incoming material is welded to the next coil on FL1; on FL2 it is run to a finished stop and offered, or scrapped.
+
+> **Two cautions.** The **10-90 SOP document is not in this repository** and must be obtained from Operations rather than paraphrased. And the restart-from-zero rule is a **run/stop model** change, not a screen rule — verify it against `FlatWireRun`/`CoilOutput` footage accumulation and against `CoilTraceability`'s coil-local footage (**OI-25**) before building.

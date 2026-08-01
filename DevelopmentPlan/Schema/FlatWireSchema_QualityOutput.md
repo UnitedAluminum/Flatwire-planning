@@ -165,6 +165,10 @@ Records rod removal from a payoff position. Supports two modes: **Mode A** = pre
 | `PartialSpoolAlpha` | varchar(20) | NULL | — | Alpha generated for the partial spool if `InProcessMaterialDisposition = 'AcceptAsPartialRun'` |
 | `NewRodStatus` | varchar(20) | NOT NULL | — | Status the rod record is updated to after checkout (e.g. `HOLD`, `SCRAP`, `RECEIVED`) |
 | `PlcTagsCleared` | bit | NOT NULL | — | `1` if the PLC tags were successfully cleared for this rod; `0` if clear failed. Always `0` for Mode P — no tags were ever pushed, so there are none to clear |
+| `WasWelded` | bit | NOT NULL | — | Mode P only: the staged rod had been **induction-welded** to the running rod when it was removed. Default `0` |
+| `ApprovedBy` | varchar(50) | NULL | — | Authorising supervisor badge/ID. **The PIN is never stored** |
+| `ApprovedAt` | datetimeoffset | NULL | — | Timestamp of the authorisation |
+| `OverrideReason` | varchar(200) | NULL | — | Documented reason for the approved removal |
 | `OperatorId` | varchar(50) | NOT NULL | — | User ID of the operator performing the checkout |
 | `Timestamp` | datetimeoffset | NOT NULL | — | Timestamp of the checkout event |
 
@@ -184,12 +188,20 @@ Records rod removal from a payoff position. Supports two modes: **Mode A** = pre
 | Pass schedule acknowledgement | None to void | Voided | Voided |
 | PLC tags | **None were pushed** | Cleared | Cleared (after confirmed stop) |
 | In-process material | None | None | Requires disposition |
-| Approval | Operator *(open question — see `FlatWireOpenQuestions.md`)* | Operator | **Supervisor** (OQ-48) |
+| Approval | **Depends on the weld** (OQ-68): unwelded → operator, reason only. Welded → **supervisor**, documented reason, rod to `HOLD` | Operator | **Supervisor** (OQ-48) |
 | Screen | Dashboard 2A | Dashboard 12 | Dashboard 12 via Pause |
 
 **Constraints:**
 - `CK_RodCheckout_ModeP` — when `Mode = 'ModeP'`: `RunId` NULL, `FootageAtCheckout` 0, `PlcTagsCleared` 0, and both `InProcessMaterialDisposition` and `PartialSpoolAlpha` NULL
 - `CK_RodCheckout_ModeB` — `InProcessMaterialDisposition` is only permitted when `Mode = 'ModeB'`
+- `CK_RodCheckout_WasWelded` — `WasWelded = 1` only on `ModeP`. Modes A and B follow a check-in, by which point the weld is upstream history rather than a property of *this* removal
+- `CK_RodCheckout_Approval` — the approval stamp is **all-or-nothing**: `ApprovedBy`/`ApprovedAt`/`OverrideReason` are set together or not at all
+- `CK_RodCheckout_ModePWelded` — a **welded** Mode P removal requires the full approval stamp **and** `NewRodStatus = 'HOLD'`. Removing a welded rod means cutting the material, so it is a rejection rather than a return (OQ-68 / OQ-77)
+- `CK_RodCheckout_ModeBApproved` — a Mode B removal requires the full approval stamp (OQ-48)
+
+> **Gap G24 — these approvals were decided long before any column could hold them.** Until 1 Aug 2026 this table had **no approval columns at all**, so **OQ-48** (mid-run checkout) and **OQ-50** (partial-run disposition), both decided 4 May 2026, were enforced at the UI and stored nothing — and [RodCheckout.md](../../LatestDocument/RequirementDocuments/RodCheckout.md) describes a "disposition record: supervisor ID, decision, reason code, timestamp" that had nowhere to go. Adding the columns also **retro-enforces Mode B**: the existing sample-data Mode B row failed the rebuild until it was given an approver, which is the gap demonstrating itself.
+>
+> The **PIN validation source** (existing login service vs a separate supervisor store) is still undecided and now gates three flows — spool weight, out-of-sequence staging, welded pre-check-out (**OI-38**).
 
 ---
 
@@ -199,3 +211,4 @@ Records rod removal from a payoff position. Supports two modes: **Mode A** = pre
 |---|---|
 | July 29, 2026 | `RodCheckout.Mode` extended with **`ModeP`** (pre-check-out — un-stages a pre-checked-in rod that was never checked in). Added `CK_RodCheckout_ModeP` and `CK_RodCheckout_ModeB` so the per-mode field rules are enforced in the database rather than only stated in prose (`REVIEW.md` #20). Added a modes-compared table. |
 | July 26, 2026 | `SpcMeasurement`: added `ToleranceValue`; `Deviation` + `InSpec` now computed PERSISTED. `CoilOutput`: `FootageFt` → `decimal(10,2)`; added `PassScheduleId` + `PassScheduleSnapshot` (OQ-54/NFR013), `NetWeightOverrideLb` + `ScaleWeightLb` (OQ-36/packing), `StagingLocation`, expanded `SkidStatus` domain, audit + `RowVersion`; corrected bare `decimal` weights to `decimal(8,2)`. `CoilTraceability`: overlap now enforced by trigger. `RodCheckout`: `NewRodStatus` CHECK. Retargeted to `FlatWireDB`. |
+| August 1, 2026 | **`RodCheckout` gains supervisor-approval columns (gap G24) and the welded Mode P rule (OQ-68, client 30 Jul 2026).** Added `WasWelded`, `ApprovedBy`, `ApprovedAt`, `OverrideReason` — this table previously had **no approval columns at all**, so the OQ-48 and OQ-50 approvals decided on 4 May 2026 had nowhere to be recorded. Added `CK_RodCheckout_WasWelded` (welded removals are Mode P only), `CK_RodCheckout_Approval` (all-or-nothing stamp), `CK_RodCheckout_ModePWelded` (a welded pre-check-out needs supervisor approval, a documented reason and `NewRodStatus='HOLD'` — it is a rejection, not a return) and `CK_RodCheckout_ModeBApproved` (retro-enforcing OQ-48). Sample data gains a Mode P welded row and an approver on the existing Mode B row, which failed the rebuild without one. DDL rebuild clean, 15 constraint tests pass. |
