@@ -32,7 +32,7 @@
 - **Error scenarios:** SignalR drop → banner + cached state; FL2 mode shows no live trace (Phase 8).
 
 ## UI Implementation (Angular)
-- **Screens:** Dashboard 3 (`dashboard_3_active_run.html`, FL3 `dashboard_3_active_run_fl3.html`), Dashboard 13 (`dashboard_13_hmi_schematic.html`), Dashboard 14 (`dashboard_14_scada_trends.html`).
+- **Screens:** Dashboard 3 (**`dashboard_3_active_run_v2.html`** — the FL1 layout since 1 Aug 2026, when the earlier left-rail `dashboard_3_active_run.html` was withdrawn; FL3 `dashboard_3_active_run_fl3.html`), Dashboard 13 (`dashboard_13_hmi_schematic.html`), Dashboard 14 (`dashboard_14_scada_trends.html`).
 - **Components:** `dashboard-3-active-run`, shared `gauge-trace-chart` (Chart.js streaming, `isLive` flag), `payoff-weight-bar`, `machine-status-panel`, `action-bar` (line-mode configurable), `dashboard-13-hmi-schematic`, `dashboard-14-scada-trends`.
 - **Services:** `flat-wire-signalr.service` (`gaugeReading$/widthReading$/speedFpm$/payoffWeight$/componentStatus$/footageCounter$`), `run-state.service`.
 - **Models:** `active-run.model.ts`, `signalr-events.model.ts`.

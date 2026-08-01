@@ -1,451 +1,437 @@
-# Flat Wire Mill — HMI Screen & SCADA Chart Layout
+# Flat Wire Processing — HMI Schematic and SCADA Trend Specification
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** May 15, 2026
-**Document Type:** UX / Screen Design Reference
-**Status:** Draft — Resolves OQ-4 (SCADA chart layout owner and timeline)
+**Document Type:** Functional Requirement Specification — Issued for Client Review
+**Applies to:** FL1 / FL2 / FL3
+**Version:** 2.0
+**Last Updated:** August 1, 2026
+**Status:** Issued for Client Review and Sign-off
+**Screen reference:** Dashboard 13 — Line Schematic (HMI view) · Dashboard 14 — SCADA Trends · Machine View tab on the Active Run Monitor
+**Requirement source:** SRS HMI rules (`HMI001` and following); resolves the outstanding question of SCADA chart layout ownership
 
 ---
 
-## Overview
+## Document Change History
 
-This document defines two new screens and one enhancement to an existing screen:
-
-| # | Screen | Primary User | Trigger | Priority |
-|---|--------|-------------|---------|----------|
-| 13 | Line Schematic (HMI View) | Supervisor / Operator | From Dashboard 1 line card or Dashboard 3 tab | High |
-| 14 | SCADA Multi-Trend Charts | Operations / Supervisor / Engineering | From Dashboard 1 header or Dashboard 3 action bar | High |
-| 3+ | Dashboard 3 — Machine View Tab | FL1 / FL2 / FL3 Operator | Tab toggle during active run | High |
-
-### Resolution of OQ-4
-
-OQ-4 asked: *"UA is responsible for defining the SCADA chart layout and machine tags for flat wire. No owner or delivery date has been specified."*
-
-**Decision (May 15, 2026):** The SCADA chart layout is defined in this document as Dashboard 14. All machine tags required for the HMI and SCADA displays are defined in the PLC Tag Mapping table at the end of this document. Owner: development team in coordination with Tim O. for tag path confirmation.
+| Version | Date | Description |
+|---|---|---|
+| 1.0 | May 15, 2026 | Initial specification — line schematic, SCADA multi-trend charts, the Machine View tab, and the machine tag map. Resolved the open question on SCADA chart layout ownership. |
+| 2.0 | Aug 1, 2026 | **Issued for client review.** Equipment corrected throughout: **FL1 has no edger**, and FM2 has **three** 6″ stands with edgers at S2 and S3. Payoff indication corrected from percentage bands to **absolute weight thresholds**, aligning it with the weld alerts. Restructured as a client deliverable; the missing tag path for the final stand and the panel resolution raised as client questions. |
 
 ---
 
-## Dashboard 13 — Line Schematic (HMI View)
+## Reading Convention
 
-**Who:** Supervisor / Operator
-**When:** Accessed from Dashboard 1 (click on a line card → "Open HMI" button) or from the Machine View tab in Dashboard 3
-**Purpose:** Full-screen graphical SVG schematic of the flat wire line with live PLC data overlaid on every component; route-adaptive layout that reconfigures for FL1, FL2, or FL3 operation
+| Tag | Meaning |
+|---|---|
+| `[CONFIRMED]` | Agreed with United Aluminum. Built as stated. |
+| `[PROPOSED]` | Our design recommendation, requiring your confirmation at review. |
+| `[CLIENT INPUT REQUIRED]` | We do not know this and will not assume it. Listed in Section 7. |
 
-### Wireframe
+Open item identifiers prefixed **Q** come from the project open-questions register; those prefixed **OI** come from the master specification's open-items register.
+
+---
+
+# 1. Introduction
+
+## 1.1 Purpose
+
+Two screens and one enhancement:
+
+| # | Screen | Primary user | Purpose |
+|---|---|---|---|
+| **13** | **Line Schematic (HMI view)** | Supervisor / Operator | A full-screen graphical representation of the line with live machine data on every component, reconfiguring itself for FL1, FL2 or FL3 |
+| **14** | **SCADA Trends** | Operations / Supervisor / Engineering | Multi-pen time-series trends for gauge, width, speed and payoff weight, with a configurable window, shared event markers and export |
+| **3+** | **Machine View tab** | Line operator | The same schematic, compressed, inside the active run monitor so the operator can switch between traces and machine view without leaving the run |
+
+## 1.2 What this document resolves `[CONFIRMED — May 15, 2026]`
+
+United Aluminum was to define the SCADA chart layout and the machine tags for flat wire, and no owner or date had been set. **The chart layout is specified here as Dashboard 14, and the tags required for both screens are listed in Section 6.** The remaining United Aluminum action is confirmation of the tag paths.
+
+## 1.3 Scope
+
+**In scope:** the schematic content and its route variants; live values shown per component; alerting on the schematic; the trend chart set, control limits, time windows, event markers, export and settings; navigation between the three views; and the machine tag map both screens depend on.
+
+**Not in scope:** the transactional screens these views link to; the underlying alert rules, which are specified with the line status board; SPC control-chart methodology beyond its display here.
+
+## 1.4 Equipment as built `[CONFIRMED — May 21, 2026]`
+
+| Line | Flow | Edger |
+|---|---|---|
+| **FL1** | Payoff → DB1 → DB2 → **FM1** → intermediate take-up | **None — FL1 has no edger** |
+| **FL2** | Spool payoff → **FM2** (8″ → 6″ S1 → 6″ S2 → 6″ S3) → final take-up | **S2 and S3 only** |
+| **FL3** | Payoff → DB1 → DB2 → FM1 → *(intermediate take-up bypassed)* → FM2 → final take-up | S2 and S3 |
+
+---
+
+# 2. Dashboard 13 — Line Schematic
+
+**Reached from** the line status board (a line card's *Open HMI* action) or the Machine View tab on the active run monitor.
+
+## 2.1 Layout
 
 ```
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│  [ ← Line Status ]   FL1 — LINE SCHEMATIC   ● RUNNING   FW-00421 / R00042        │
-│                       Speed: 1,620 FPM   Footage: 12,450 ft   07:42 AM            │
-│  Route: [● FL1 Standalone]  [ FL2 Standalone]  [ FL3 Hybrid]                     │
-├──────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                   │
-│  ══ PAYOFF ══════════════════════════════════════════════════════════════════════  │
-│                                                                                   │
-│   ┌─────────────────────┐      ┌─────────────────────┐                           │
-│   │    PAYOFF 1         │      │    PAYOFF 2          │                           │
-│   │  ■■■■■■■░░░░░░░░░░  │      │  ■■■■■■■■■■■■■■■■   │                           │
-│   │  4,200 lb  (47%)    │      │  8,500 lb  (READY)  │                           │
-│   │  ⚠ WELD SOON        │      │  ✓ READY            │                           │
-│   └─────────┬───────────┘      └──────────┬──────────┘                           │
-│             └──────────────┬──────────────┘                                       │
-│                            │  wire flow ───────────────►                          │
-│                            ▼                                                      │
-│  ══ DRAW ═══════════════════════════════════════════════════════════════════════  │
-│                                                                                   │
-│              ┌──────────────────┐     ┌──────────────────┐                       │
-│              │      DB1         │────►│      DB2         │                       │
-│              │  ● ACTIVE        │     │  ● ACTIVE        │                       │
-│              │  Die: 0.340"     │     │  Die: 0.310"     │                       │
-│              └──────────────────┘     └────────┬─────────┘                       │
-│                                                │                                  │
-│  ══ FLATTEN ════════════════════════════════════════════════════════════════════  │
-│                                                │                                  │
-│                                    ┌───────────▼──────────┐                      │
-│                                    │     FM1  12" MILL    │                      │
-│                                    │  ● ACTIVE            │                      │
-│                                    │  Roll Gap: 0.112"    │                      │
-│                                    │  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄  │                      │
-│                                    │  ◉ GAUGE: 0.110" ✓   │                      │
-│                                    └──────────┬───────────┘                      │
-│                                               │                                   │
-│                                    ┌──────────▼───────────┐                      │
-│                                    │      EDGE SET        │                      │
-│                                    │  ● ACTIVE            │                      │
-│                                    │  Type: Round Edge    │                      │
-│                                    └──────────┬───────────┘                      │
-│                                               │                                   │
-│                             ┌─────────────────┴────────────────────┐             │
-│                             │     (FL1 out)         (FL3 continues) │             │
-│                             ▼                                       ▼             │
-│  ══ TAKEUP-1 ══════════════════════  ══ 3-STAND MILL (FM2) ═════════════════════ │
-│                                                                                   │
-│  ┌──────────────────────────────┐   ┌──────────────────────────────────────────┐ │
-│  │    TKUP-1  (Intermediate)    │   │  FM2-8"      FM2-6"S1   FM2-6"S2 (final)│ │
-│  │  ● SPOOL FILLING             │   │  ● 0.117"  ─►● 0.0162" ─►● 0.0160"     │ │
-│  │  3,200 ft  /  2,400 lb       │   │  ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄  │ │
-│  └──────────────────────────────┘   │  ◉ WIDTH: 0.625" ✓                      │ │
-│                                     └────────────────────────────┬─────────────┘ │
-│                                                                   │               │
-│  ══ TAKEUP-2 ════════════════════════════════════════════════════════════════════ │
-│                                                                   ▼               │
-│                                          ┌────────────────────────────────────┐  │
-│                                          │    TKUP-2  (Output Coil)           │  │
-│                                          │  ● WINDING                         │  │
-│                                          │  14,200 ft  /  980 lb              │  │
-│                                          └────────────────────────────────────┘  │
-│                                                                                   │
-├──────────────────────────────────────────────────────────────────────────────────┤
-│  ALERTS  ⚠ Payoff 1 — 4,200 lb — prepare weld (Payoff 2 ready)                  │
-│           ✓ All gauge and width readings in spec                                  │
-└──────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  [← Line Status]   FL1 — LINE SCHEMATIC   ● RUNNING   FW-00421 / R00042      │
+│                    Speed 1,620 FPM   Footage 12,450 ft            07:42 AM   │
+│  Route:  [● FL1 Standalone]   [ FL2 Standalone ]   [ FL3 Hybrid ]            │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  ══ PAYOFF ═════════════════════════════════════════════════════════════════ │
+│    ┌──────────────────┐        ┌──────────────────┐                          │
+│    │   PAYOFF 1       │        │   PAYOFF 2       │                          │
+│    │  ■■■■■■■□□□□□□□  │        │  ■■■■■■■■■■■■■■  │                          │
+│    │  4,200 lb        │        │  8,500 lb        │                          │
+│    │  ⚠ WELD SOON     │        │  ✓ READY         │                          │
+│    └────────┬─────────┘        └────────┬─────────┘                          │
+│             └───────────┬───────────────┘      wire flow ──────►             │
+│  ══ DRAW ═══════════════▼═══════════════════════════════════════════════════ │
+│         ┌──────────────┐      ┌──────────────┐                               │
+│         │     DB1      │─────►│     DB2      │                               │
+│         │  ● ACTIVE    │      │  ● ACTIVE    │                               │
+│         │  Die 0.340"  │      │  Die 0.310"  │                               │
+│         └──────────────┘      └──────┬───────┘                               │
+│  ══ FLATTEN ═════════════════════════▼══════════════════════════════════════ │
+│                          ┌────────────────────────┐                          │
+│                          │    FM1 — 12" MILL      │   (no edger on FL1)      │
+│                          │  ● ACTIVE              │                          │
+│                          │  Roll gap 0.112"       │                          │
+│                          │  ◉ GAUGE 0.110" ✓      │                          │
+│                          └───────────┬────────────┘                          │
+│                    ┌─────────────────┴──────────────────┐                    │
+│                    │ (FL1 out)              (FL3 continues)                  │
+│                    ▼                                    ▼                    │
+│  ══ TAKE-UP 1 ═════════════════   ══ 3-STAND FINISHING MILL (FM2) ═════════ │
+│  ┌───────────────────────────┐   ┌───────────────────────────────────────┐  │
+│  │  TKUP-1  (intermediate)   │   │ 8"      6"S1     6"S2+edg  6"S3+edg   │  │
+│  │  ● SPOOL FILLING          │   │ ●0.117" ─►●0.0162" ─►●0.0161" ─►●0.0160"│ │
+│  │  3,200 ft / 2,400 lb      │   │ ◉ WIDTH 0.625" ✓                      │  │
+│  └───────────────────────────┘   └───────────────────┬───────────────────┘  │
+│  ══ TAKE-UP 2 ═══════════════════════════════════════▼═════════════════════ │
+│                                  ┌────────────────────────────────────────┐ │
+│                                  │  TKUP-2  (output coil)  ● WINDING      │ │
+│                                  │  14,200 ft / 980 lb                    │ │
+│                                  └────────────────────────────────────────┘ │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  ALERTS  ⚠ Payoff 1 — 4,200 lb — prepare weld (Payoff 2 ready)               │
+│          ✓ All gauge and width readings in spec                              │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Component Node Data
+## 2.2 Live values per component
 
-Each equipment box on the schematic shows the following live data:
+| Component | Status indication | Value shown | Source |
+|---|---|---|---|
+| Payoff 1 | By **absolute remaining weight** — see 2.3 | Weight and percent remaining | Load cell |
+| Payoff 2 | Ready / not loaded | Weight, with a ready badge | Load cell |
+| DB1 · DB2 | Active / bypassed | Die diameter | Pass schedule and component status |
+| FM1 | Active / fault | Roll gap | Pass schedule and component status |
+| Gauge sensor, FM1 output | In spec / out of spec | Live gauge reading | Live measurement |
+| FM2 8″ · 6″ S1 | Active / bypassed | Roll gap | Pass schedule and component status |
+| FM2 6″ S2 (+edger) | Active / bypassed | Roll gap, edge type | Pass schedule and component status |
+| FM2 6″ S3 (+edger) | Active / fault | Roll gap, edge type | Pass schedule and component status |
+| Width sensor, final stand output | In spec / out of spec | Live width reading | Live measurement |
+| Take-up 1 · Take-up 2 | Filling / winding / idle | Footage and weight | Footage counter and load cell |
 
-| Component | Status Indicator | Parameter Displayed | Live Measurement |
-|-----------|-----------------|---------------------|-----------------|
-| Payoff 1 | Green / Amber (≤25%) / Red (≤10%) + pulsing | Weight (lb) + % remaining | Load cell via PayoffWeight SignalR |
-| Payoff 2 | Green (ready) / Grey (not loaded) | Weight (lb) + READY / NOT LOADED badge | Load cell via PayoffWeight SignalR |
-| DB1 | Green (active) / Grey (bypassed) | Die diameter (inches) | Pass schedule + ComponentStatus SignalR |
-| DB2 | Green (active) / Grey (bypassed) | Die diameter (inches) | Pass schedule + ComponentStatus SignalR |
-| FM1 12" Mill | Green (active) / Red (fault) | Roll gap (inches) | Pass schedule + ComponentStatus SignalR |
-| Gauge sensor (FM1 out) | Green (in-spec) / Red (out-of-spec) | Live gauge reading (inches) | GaugeReading SignalR |
-| Edge Set | Green (active) / Grey (bypassed) | Edge type | Pass schedule + ComponentStatus SignalR |
-| FM2-8" Roller | Green (active) / Grey (bypassed) | Roll gap (inches) | Pass schedule + ComponentStatus SignalR |
-| FM2-6" S1 | Green (active) / Grey (bypassed) | Roll gap (inches) | Pass schedule + ComponentStatus SignalR |
-| FM2-6" S2 | Green (active) / Red (fault) — cannot be bypassed | Roll gap (inches) | Pass schedule + ComponentStatus SignalR |
-| Width sensor (FM2-S2 out) | Green (in-spec) / Red (out-of-spec) | Live width reading (inches) | WidthReading SignalR |
-| TKUP-1 | Green (filling) / Grey (idle) | Footage (ft) + Weight (lb) | Footage counter + load cell |
-| TKUP-2 | Green (winding) / Grey (idle) | Footage (ft) + Weight (lb) | Footage counter + load cell |
+> `[CLIENT INPUT REQUIRED]` **Which finishing stand cannot be bypassed** is stated two ways — 6″ S3 in the SRS, 6″ S2 in the validation rules and the HMI requirement. The equipment correction made S3 the final stand, so S3 is the working answer, but the schematic's "cannot be bypassed" marking depends on your confirmation (OI-04).
 
-### Flow Animation
+## 2.3 Payoff indication `[CONFIRMED]`
 
-When `SpeedFPM > 0`, animated dashes travel along the connector paths between components (CSS `stroke-dashoffset` animation at a rate proportional to FPM). Animation stops when the line is paused or idle. Paused state shows static orange dashes; fault state shows static red dashes.
+**Colour is driven by absolute remaining pounds, not by percentage bands.**
 
-### Route Variants
+| Condition | Indication |
+|---|---|
+| Below **3,000 lb** | Warning — *prepare weld* |
+| Payoff 2 not loaded **and** Payoff 1 below **2,000 lb** | Critical — no weld material available |
 
-The schematic reconfigures based on the active line route:
+Bar *length* still expresses percent remaining; only the colour is threshold-driven. Against a 9,000 lb position, a percentage ladder escalates against the alerts rather than with them — the strongest visual cue would arrive well after the urgency it signals.
 
-| Route | Active Components | Hidden / Greyed Components |
-|-------|-----------------|---------------------------|
-| FL1 Standalone | Payoffs → DB1/DB2 → FM1 → EdgeSet → TKUP-1 | FM2 stands, TKUP-2 (shown greyed) |
-| FL2 Standalone | TPO/Payoff → FM2 (8", 6"S1, EdgeSet, 6"S2) → TKUP-2 | DB1, DB2, FM1, EdgeSet, TKUP-1 (shown greyed) |
-| FL3 Hybrid | All components active end-to-end | TKUP-1 hidden (wire passes through without stopping) |
+## 2.4 Flow animation
 
-Greyed components display "BYPASS" or "OFFLINE" badge in place of parameter values. Component boxes are visually dimmed (40% opacity) to indicate they are inactive for the current route.
+While the line has speed, animated dashes travel along the connectors at a rate proportional to line speed. Animation stops when the line is paused or idle: a paused line shows static amber dashes, a fault shows static red.
 
-### Alert Bar
+## 2.5 Route variants
 
-Fixed at the bottom of the schematic. Displays the same alert rules as Dashboard 1:
+| Route | Active | Dimmed |
+|---|---|---|
+| **FL1 standalone** | Payoffs → DB1 / DB2 → FM1 → take-up 1 | The FM2 stands and take-up 2 |
+| **FL2 standalone** | Spool payoff → FM2 (8″, 6″ S1, 6″ S2, 6″ S3) → take-up 2 | DB1, DB2, FM1, take-up 1 |
+| **FL3 hybrid** | All components, end to end | Take-up 1 is bypassed — the wire passes through without stopping |
 
-| Condition | Alert Level | Message |
-|-----------|-------------|---------|
-| Payoff 1 weight < 3,000 lb | Warning | Prepare weld — Payoff 2 must be ready |
-| Gauge outside target ± tolerance | Warning | Gauge deviation — FL1 / FL3 |
-| Component PLC fault | Critical | Component fault — line stopped |
+**Bypassed components are dimmed, never removed.** The operator should see the whole machine at all times; a component that disappears reads as a component that is missing. Dimmed components show a bypass or offline badge in place of their values.
+
+## 2.6 Alert bar
+
+Fixed at the foot of the schematic, showing the same alerts as the line status board.
+
+| Condition | Level | Message |
+|---|---|---|
+| Payoff 1 below 3,000 lb | Warning | Prepare weld — Payoff 2 must be ready |
+| Gauge outside target tolerance | Warning | Gauge deviation |
+| Component fault | Critical | Component fault — line stopped |
 | Active WIP rejection | Warning | WIP rejection requires disposition |
-| Payoff 2 not loaded when Payoff 1 < 2,000 lb | Critical | No weld material available |
-
-### Navigation
-
-| From | To | Trigger |
-|------|----|---------|
-| Dashboard 1 line card | Dashboard 13 (that line) | "Open HMI" button on line card |
-| Dashboard 3 Machine View tab | Dashboard 13 (full screen) | "Open full screen" icon |
-| Dashboard 13 | Dashboard 1 | "← Line Status" back button |
-| Dashboard 13 | Dashboard 3 | "Active Run" button (if run is active) |
-| Dashboard 13 | Dashboard 14 | "SCADA Trends" button in header |
+| Payoff 2 not loaded with Payoff 1 below 2,000 lb | Critical | No weld material available |
 
 ---
 
-## Dashboard 3 Enhancement — Machine View Tab
+# 3. Machine View Tab on the Active Run Monitor
 
-**Where:** Inside Dashboard 3 — Active Run Monitor, replacing the two trace panels with a tab strip
-**Purpose:** Allow operators to toggle between the live trace chart view and the graphical machine schematic without leaving the active run context
+The trace panels gain a tab strip so the operator can switch between the live traces and a compressed schematic without leaving the run.
 
-### Tab Toggle Layout
+| Rule | Behaviour |
+|---|---|
+| Default tab | **Traces** — the existing view, unchanged |
+| Tab preference | Remembered per operator and restored on the next visit |
+| Machine status grid | Always visible below the tabs, whichever tab is active |
+| Action buttons | Always visible, whichever tab is active |
+| Full screen | The Machine View tab offers a link to the full schematic for the active line |
+| Live updates | The Machine View updates from the same live stream as the traces |
 
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│  [ Traces ]  [ Machine View ]                                             │
-├──────────────────────────────────────────────────────────────────────────┤
-│                                                                           │
-│   TRACES tab (default, unchanged):                                        │
-│   ┌────────────────────────┐  ┌────────────────────────┐                 │
-│   │  Gauge trace chart     │  │  Width trace chart     │                 │
-│   │  (existing DB3 panel)  │  │  (existing DB3 panel)  │                 │
-│   └────────────────────────┘  └────────────────────────┘                 │
-│                                                                           │
-│   MACHINE VIEW tab (new):                                                 │
-│   ┌──────────────────────────────────────────────────────────────────┐   │
-│   │  Compressed line schematic — same layout as Dashboard 13 but     │   │
-│   │  scaled to fit the 440px-tall trace area                         │   │
-│   │  Components: status + primary value only (no secondary readings)  │   │
-│   │  ┌─────────────┐  ┌─────────────┐  Gauge ◉ 0.110" ✓             │   │
-│   │  │  PAYOFF 1   │  │  PAYOFF 2   │                                │   │
-│   │  │  4,200 lb ⚠ │  │  READY ✓   │  ┌───────┐  ┌───────┐         │   │
-│   │  └──────┬──────┘  └──────┬──────┘  │  DB1  │─►│  DB2  │         │   │
-│   │         └────────┬───────┘          │ 0.340"│  │ 0.310"│         │   │
-│   │                  ▼                  └───────┘  └───────┘         │   │
-│   │         ┌─────────────────┐              │                        │   │
-│   │         │  FM1 / EdgeSet  │◄─────────────┘                        │   │
-│   │         │  Gap: 0.112"    │  Width ◉ 0.625" ✓                    │   │
-│   │         └────────┬────────┘                                       │   │
-│   │                  ▼                                                 │   │
-│   │         ┌─────────────────┐  [↗ Open full screen]                 │   │
-│   │         │  FM2 / TKUP     │                                       │   │
-│   │         │  Width: 0.625"  │                                       │   │
-│   │         └─────────────────┘                                       │   │
-│   └──────────────────────────────────────────────────────────────────┘   │
-│                                                                           │
-└──────────────────────────────────────────────────────────────────────────┘
-```
-
-### Tab Behaviour
-
-| Rule | Detail |
-|------|--------|
-| Default tab | Traces (unchanged existing view) |
-| Tab preference persisted | Browser localStorage — operator's last-used tab restored on page load |
-| Machine status grid | Always visible below tabs regardless of which tab is active |
-| Action buttons | Always visible at bottom regardless of which tab is active |
-| Full screen link | "↗ Open full screen" in Machine View tab opens Dashboard 13 for the active line |
-| Real-time updates | Machine View schematic updates from the same SignalR stream as the Traces tab |
-
-### Compressed Schematic Rules
-
-The Machine View tab fits the same schematic into 440px height by:
-- Removing section headers (PAYOFF / DRAW / FLATTEN labels)
-- Reducing component box height from ~70px to ~40px
-- Showing only: component name, status dot, and primary value (one line)
-- Removing the width sensor / gauge sensor labels (reading shown inline with component)
-- Keeping animated flow arrows but at smaller size
+**Compression rules.** The tab shows the same schematic reduced to fit the trace area: section headings removed, component boxes shortened, one value per component (name, status and primary value), sensor readings shown inline with their component rather than as separate nodes, and flow arrows retained at a smaller size.
 
 ---
 
-## Dashboard 14 — SCADA Multi-Trend Charts
+# 4. Dashboard 14 — SCADA Trends
 
-**Who:** Operations Manager / Supervisor / Engineering
-**When:** Accessed from Dashboard 1 header ("SCADA Trends" button), from Dashboard 3 action bar ("View Trends"), or from Dashboard 13 header ("SCADA Trends" button)
-**Purpose:** Multi-pen time-series trend chart for gauge, width, speed, and payoff weight; configurable time window; exportable; resolves OQ-4
+**Reached from** the line status board, the active run monitor, or the schematic.
 
-### Wireframe
+## 4.1 Chart set
 
 ```
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│  [ ← Active Run ]   SCADA TRENDS — FL1   FW-00421 / R00042              07:42 AM │
-│  Line: [● FL1]  [FL2]  [FL3]    Time: [30 min] [● 1 hr] [4 hr] [Shift] [Custom] │
-│                                                              [ Export CSV ]  [ ⚙ ] │
-├──────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                   │
-│  CHART 1 — GAUGE (inches)           Target: 0.110"  ±0.002"   UCL: 0.113" LCL: 0.107" │
-│  ┌─────────────────────────────────────────────────────────────────────────────┐ │
-│  │ 0.116 ─────────────────────────────────────────────────── ← OOS band (red) │ │
-│  │ 0.113 ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ← UCL (dashed)  │ │
-│  │       ┌─────────────────────────────────────────────────── ← spec band     │ │
-│  │ 0.110 │ ─────────────────────────────────────────────────── ← target       │ │
-│  │       └─────────────────────────────────────────────────── (green fill)    │ │
-│  │ 0.107 ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ← LCL (dashed)  │ │
-│  │ 0.104 ─────────────────────────────────────────────────── ← OOS band (red) │ │
-│  │                                                                             │ │
-│  │  ─── gauge trace (blue)    ▲ Weld @ 12,450ft    ✦ Die change @ 8,220ft    │ │
-│  └─────────────────────────────────────────────────────────────────────────────┘ │
-│                                                                                   │
-│  CHART 2 — WIDTH (inches)           Target: 0.625"  ±0.005"                      │
-│  ┌─────────────────────────────────────────────────────────────────────────────┐ │
-│  │  Width trace with tolerance band (green) + SPC control limits (dashed)     │ │
-│  │  Same visual language as Chart 1; shared event markers on x-axis           │ │
-│  └─────────────────────────────────────────────────────────────────────────────┘ │
-│                                                                                   │
-│  ┌──────────────────────────────────────┐  ┌─────────────────────────────────┐   │
-│  │  CHART 3 — SPEED (FPM)              │  │  CHART 4 — PAYOFF WEIGHT (lb)  │   │
-│  │  0 – 2,500 FPM                      │  │  0 – 10,000 lb                 │   │
-│  │  ─── speed trace (teal)             │  │  ─── Payoff 1 (solid blue)     │   │
-│  │  Grey shading = line paused         │  │  ─ ─ Payoff 2 (dashed blue)    │   │
-│  │  Pause reason label on hover        │  │  ── 3,000 lb weld threshold    │   │
-│  └──────────────────────────────────────┘  └─────────────────────────────────┘   │
-│                                                                                   │
-│  EVENT TIMELINE (shared x-axis, all charts synchronized)                          │
-│  ──────────────────────────────────────────────────────────────────────────────  │
-│  ▲ Weld (R00041→R00042)    ✦ Die change (DB2: 0.310→0.308)    ⏸ Pause (8 min)   │
-│  ◆ SPC checkpoint          ⚠ Alert raised                                         │
-└──────────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│ [← Active Run]  SCADA TRENDS — FL1   FW-00421 / R00042        07:42 AM │
+│ Line: [● FL1] [FL2] [FL3]   Window: [30 min] [● 1 hr] [4 hr] [Shift]   │
+│                                            [ Export CSV ]      [ ⚙ ]   │
+├────────────────────────────────────────────────────────────────────────┤
+│ CHART 1 — GAUGE       target 0.110" ±0.002"    UCL 0.113"  LCL 0.107"  │
+│ CHART 2 — WIDTH       target 0.625" ±0.005"                            │
+│ CHART 3 — SPEED (FPM)              │  CHART 4 — PAYOFF WEIGHT (lb)     │
+│                                                                        │
+│ EVENT TIMELINE — shared x-axis, all charts synchronised                │
+│  ▲ Weld    ✦ Die change    ⏸ Pause    ◆ SPC checkpoint    ⚠ Alert     │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Chart Specifications
+| Chart | Pens | Y range | Reference lines |
+|---|---|---|---|
+| **Gauge** | Gauge reading, live or historical | Auto-scaled around target ± 3 × tolerance | Target centre line; tolerance band; upper and lower control limits; out-of-specification shading beyond the band |
+| **Width** | Width reading | Auto-scaled around target | As gauge |
+| **Speed** | Line speed | Zero to the pass schedule maximum plus a margin | Maximum speed from the pass schedule; paused periods shaded |
+| **Payoff weight** | Payoff 1 solid, Payoff 2 dashed | Zero to the position rating | The 3,000 lb weld-soon threshold |
 
-| Chart | Pen(s) | Y-Axis Range | Default | Control Lines |
-|-------|--------|-------------|---------|---------------|
-| Gauge | Gauge reading (live / historical) | Auto-scaled around target ± 3× tolerance | 0.090"–0.130" | Target centerline (green dashed); ±tolerance band (green fill); UCL/LCL (red dashed); OOS shading (red fill beyond spec) |
-| Width | Width reading (live / historical) | Auto-scaled around target | 0.580"–0.670" | Same as gauge |
-| Speed | Line speed FPM | 0 – max speed from pass schedule + 10% | 0 – 2,500 FPM | Max speed line from pass schedule; paused periods shaded grey |
-| Payoff weight | Payoff 1 (solid) + Payoff 2 (dashed) | 0 – 10,000 lb | Fixed | 3,000 lb weld-soon threshold (amber dashed line) |
+## 4.2 Time windows
 
-### Time Window Options
+| Window | Content | Axis labels |
+|---|---|---|
+| 30 minutes | The last 30 minutes of run data | Every 5 minutes |
+| 1 hour | The last hour | Every 10 minutes |
+| 4 hours | Spans multiple rods where welds occurred | Every 30 minutes |
+| Shift | The full current shift, all runs on the line | Hourly |
+| Custom | A chosen date and time range | Configurable |
 
-| Window | Description | X-Axis Labels |
-|--------|-------------|--------------|
-| 30 min | Last 30 minutes of run data | Every 5 minutes |
-| 1 hr | Last hour | Every 10 minutes |
-| 4 hr | Last 4 hours (spans multiple rods if welds occurred) | Every 30 minutes |
-| Shift | Full current shift (all runs on this line) | Every hour |
-| Custom | Date/time range picker | Configurable |
+## 4.3 Event markers
 
-### Event Markers (shared across all charts on the same x-axis)
+Shared across all charts on the same axis, so a deviation can be read against what happened.
 
-| Event | Symbol | Colour | Data Source |
-|-------|--------|--------|-------------|
-| Weld join | ▲ triangle | Amber | WeldJoinEvent records |
-| Die change | ✦ diamond | Blue | DieChangeEvent records |
-| Pause start/end | ⏸ ▶ brackets | Grey | PauseEvent records |
-| SPC checkpoint | ◆ diamond | Purple | SPCCheckpoint records |
-| Alert raised | ⚠ warning | Red | AlertEvent records |
-| Alert cleared | ✓ checkmark | Green | AlertEvent records |
-| Rod checkout | ✕ cross | Orange | RodCheckoutEvent records |
+| Event | Marker |
+|---|---|
+| Weld join | Triangle |
+| Die change | Diamond |
+| Pause start and end | Bracket pair |
+| SPC checkpoint | Diamond, distinct colour |
+| Alert raised / cleared | Warning / check |
+| Rod checkout | Cross |
 
-### SPC Control Limits
+## 4.4 Control limits
 
-Control limits are calculated from the last N measurements (configurable, default N = 25 per run) using standard X̄-R chart methodology:
+Calculated from the last *N* measurements — configurable, default 25 per run — using standard control-chart methodology.
 
-| Limit | Formula | Display |
-|-------|---------|---------|
-| UCL (Upper Control) | X̄ + 3σ | Dashed red line above spec band |
-| LCL (Lower Control) | X̄ − 3σ | Dashed red line below spec band |
-| USL (Upper Spec) | Target + tolerance | Top edge of green band |
-| LSL (Lower Spec) | Target − tolerance | Bottom edge of green band |
+| Limit | Basis | Display |
+|---|---|---|
+| Upper / lower **control** limits | Mean ± 3 standard deviations | Dashed lines outside the specification band |
+| Upper / lower **specification** limits | Target ± tolerance | The edges of the tolerance band |
 
-Out-of-spec regions (between USL/UCL and beyond) shaded red with low opacity. In-spec region shaded green with low opacity.
+The in-specification region is shaded lightly; out-of-specification regions are shaded in the alert colour.
 
-### Export
+> `[CLIENT INPUT REQUIRED]` **The published tolerance bands per alloy and temper are undefined** — whether ASTM, customer purchase order, or United Aluminum internal. Without them, control limits cannot be configured and these charts produce no meaningful alarm (Q38 / OI-57).
 
-Clicking **Export CSV** generates a download with columns:
+## 4.5 Export
+
+**Export CSV** produces one row per reading interval, with event rows carrying the values in force at that moment:
 
 ```
 Timestamp, Footage_ft, Gauge_in, Width_in, Speed_FPM, Payoff1_lb, Payoff2_lb,
 GaugeSpec_in, GaugeTol_in, WidthSpec_in, WidthTol_in, EventType, EventDetail
 ```
 
-One row per SignalR reading interval (default: 1 second). Event rows have gauge/width/speed fields populated with the value at that moment.
-
-### Settings Panel (⚙ button)
+## 4.6 Settings
 
 | Setting | Options | Default |
-|---------|---------|---------|
-| Update interval | 1s / 5s / 10s / 30s (live mode) | 1s |
-| SPC sample size | 10 / 25 / 50 readings | 25 |
-| Show control limits | On / Off | On |
-| Chart layout | 2 tall + 2 small (default) / 4 equal / Gauge only / All stacked | Default |
-| Dark mode | Toggle | Inherited from system |
+|---|---|---|
+| Update interval (live mode) | 1 s / 5 s / 10 s / 30 s | 1 s |
+| Control-limit sample size | 10 / 25 / 50 readings | 25 |
+| Show control limits | On / off | On |
+| Chart layout | Two large plus two small / four equal / gauge only / all stacked | Two plus two |
 
-### Navigation
+---
+
+# 5. Navigation
 
 | From | To | Trigger |
-|------|----|---------|
-| Dashboard 1 header | Dashboard 14 (line selector shown) | "SCADA Trends" button |
-| Dashboard 3 action bar | Dashboard 14 (active line pre-selected) | "View Trends" button |
-| Dashboard 13 header | Dashboard 14 (same line) | "SCADA Trends" button |
-| Dashboard 14 | Dashboard 3 | "← Active Run" back button (if run active) |
-| Dashboard 14 | Dashboard 1 | "← Line Status" (if no active run) |
+|---|---|---|
+| Line status board | Line schematic | *Open HMI* on a line card |
+| Line status board | SCADA trends | *SCADA Trends* |
+| Active run monitor | Line schematic | Machine View tab → full screen |
+| Active run monitor | SCADA trends | *View Trends* |
+| Line schematic | SCADA trends | *SCADA Trends* |
+| Line schematic | Line status board / active run | Back, or *Active Run* when a run is open |
+| SCADA trends | Active run / line status board | Back |
 
 ---
 
-## PLC Tag Mapping
+# 6. Machine Data Required
 
-All tags required for the HMI schematic (Dashboard 13) and SCADA charts (Dashboard 14). Tag paths are configuration-driven in `appsettings.json` — not hardcoded.
+Tag paths are **configuration, not code** — they can be corrected without redeploying the application.
 
-### Real-Time SignalR Events (FlatWireHub)
+## 6.1 Live data streams
 
-| Event | Payload Fields | Consumers |
-|-------|---------------|-----------|
-| `GaugeReading` | `lineId, value (in), timestamp, footagePosition` | DB13 gauge sensor node, DB14 Chart 1, DB3 Machine View |
-| `WidthReading` | `lineId, value (in), timestamp, footagePosition` | DB13 width sensor node, DB14 Chart 2, DB3 Machine View |
-| `SpeedFPM` | `lineId, value (FPM), timestamp` | DB13 flow animation, DB14 Chart 3, DB13 header |
-| `PayoffWeight` | `lineId, position (1\|2), weightLb, percentRemaining` | DB13 payoff boxes, DB14 Chart 4 |
-| `ComponentStatus` | `lineId, component, isActive, currentValue` | DB13 all component boxes |
-| `LineStatus` | `lineId, status, orderId, alpha` | DB13 header badge |
-| `AlertRaised` | `lineId, alertType, severity, message, timestamp` | DB13 alert bar |
-| `AlertCleared` | `lineId, alertType` | DB13 alert bar |
-| `FootageCounter` | `lineId, footage (ft), timestamp` | DB13 TKUP nodes, DB13 header |
+| Stream | Content | Used by |
+|---|---|---|
+| Gauge reading | Line, value, timestamp, footage position | Schematic sensor node · gauge chart · Machine View |
+| Width reading | Line, value, timestamp, footage position | Schematic sensor node · width chart · Machine View |
+| Speed | Line, value, timestamp | Flow animation · speed chart · header |
+| Payoff weight | Line, position, weight, percent remaining | Payoff nodes · payoff chart |
+| Component status | Line, component, active flag, current value | Every component node |
+| Line status | Line, status, order, material identity | Header badge |
+| Alert raised / cleared | Line, type, severity, message, timestamp | Alert bar |
+| Footage counter | Line, footage, timestamp | Take-up nodes · header |
 
-### OPC Tag Paths (FL1 example — FL2/FL3 follow same pattern)
+## 6.2 Machine tag paths — FL1 shown, other lines follow the same pattern
 
-| Tag Path (OPC) | Description | Used In |
-|---------------|-------------|---------|
-| `FL1.DB1.Die.ActiveDiameter` | DB1 current die diameter (in) | DB13 DB1 node |
-| `FL1.DB1.Status.Active` | DB1 active (bool) | DB13 DB1 status colour |
-| `FL1.DB2.Die.ActiveDiameter` | DB2 current die diameter (in) | DB13 DB2 node |
-| `FL1.DB2.Status.Active` | DB2 active (bool) | DB13 DB2 status colour |
-| `FL1.FM1.RollGap.Current` | FM1 current roll gap (in) | DB13 FM1 node |
-| `FL1.FM1.Status.Active` | FM1 running (bool) | DB13 FM1 status colour |
-| `FL1.FM1.Status.Fault` | FM1 fault (bool) | DB13 FM1 fault colour |
-| `FL1.AGC.Gauge.Current` | Live gauge reading post-FM1 (in) | DB13 gauge sensor, DB14 Chart 1 |
-| `FL1.AGC.Width.Current` | Live width reading (in) | DB13 width sensor, DB14 Chart 2 |
-| `FL1.Speed.FPM` | Line speed (FPM) | DB13 animation, DB14 Chart 3 |
-| `FL1.Payoff1.Weight.Lb` | Payoff 1 load cell weight (lb) | DB13 payoff 1, DB14 Chart 4 |
-| `FL1.Payoff2.Weight.Lb` | Payoff 2 load cell weight (lb) | DB13 payoff 2, DB14 Chart 4 |
-| `FL1.EdgeSet.Status.Active` | Edge set active (bool) | DB13 EdgeSet node |
-| `FL1.TKUP1.Footage.Current` | TKUP-1 footage counter (ft) | DB13 TKUP-1 node |
-| `FL1.TKUP2.Footage.Current` | TKUP-2 footage counter (ft) | DB13 TKUP-2 node |
-| `FL2.FM2.Stand8.RollGap.Current` | FM2 8" roller current gap | DB13 FM2-8" node |
-| `FL2.FM2.Stand6S1.RollGap.Current` | FM2 6" S1 current gap | DB13 FM2-6"S1 node |
-| `FL2.FM2.Stand6S2.RollGap.Current` | FM2 6" S2 current gap (final) | DB13 FM2-6"S2 node |
-| `FL2.FM2.Stand8.Status.Active` | FM2 8" roller active | DB13 FM2-8" status |
-| `FL2.FM2.Stand6S1.Status.Active` | FM2 6" S1 active | DB13 FM2-6"S1 status |
-| `FL2.FM2.Stand6S2.Status.Active` | FM2 6" S2 active (always true) | DB13 FM2-6"S2 status |
+| Tag | Description |
+|---|---|
+| `FL1.DB1.Die.ActiveDiameter` · `FL1.DB1.Status.Active` | DB1 die size and active state |
+| `FL1.DB2.Die.ActiveDiameter` · `FL1.DB2.Status.Active` | DB2 die size and active state |
+| `FL1.FM1.RollGap.Current` · `FL1.FM1.Status.Active` · `FL1.FM1.Status.Fault` | FM1 gap, active state, fault |
+| `FL1.AGC.Gauge.Current` · `FL1.AGC.Width.Current` | Live gauge and width |
+| `FL1.Speed.FPM` | Line speed |
+| `FL1.Payoff1.Weight.Lb` · `FL1.Payoff2.Weight.Lb` | Payoff load cells |
+| `FL1.TKUP1.Footage.Current` · `FL1.TKUP2.Footage.Current` | Take-up footage counters |
+| `FL2.FM2.Stand8.RollGap.Current` · `.Status.Active` | FM2 8″ roller |
+| `FL2.FM2.Stand6S1.RollGap.Current` · `.Status.Active` | FM2 6″ S1 |
+| `FL2.FM2.Stand6S2.RollGap.Current` · `.Status.Active` | FM2 6″ S2 (with edger) |
+| **`FL2.FM2.Stand6S3.*`** | **FM2 6″ S3 (with edger) — the final stand. No tag path has been supplied** |
 
-> **Note:** Exact OPC tag paths must be confirmed with Tim O. and the PLC commissioning engineer before go-live. These paths follow the naming convention proposed in `appsettings.json` and can be updated without redeployment.
+> `[CLIENT INPUT REQUIRED]` **The final stand has no tag path.** The tag map was written before the May 21, 2026 equipment correction added the third 6″ stand and made it the final one. Paths for S3 — roll gap, active state and edger — are required (OI-36).
+
+> `[CLIENT INPUT REQUIRED]` **Every tag path above must be confirmed** with the controls commissioning engineer before go-live. They follow a proposed naming convention, not a verified map.
+
+> `[CLIENT INPUT REQUIRED]` **The line-state vocabulary is undocumented** — the exact values the line-state tag can take (running, stopped, paused, fault, threading?). Several behaviours across the system are conditioned on it (OI-35 / Q63).
 
 ---
 
-## Design Principles
+# 7. Design Principles
 
 | Principle | Detail |
-|-----------|--------|
-| **Route-adaptive schematic** | The HMI layout reconfigures automatically for FL1 / FL2 / FL3 — bypassed components are dimmed, not removed, so operators can see the full machine at all times |
-| **Touch-first** | All interactive elements ≥ 48px tap target; no hover-dependent states; component boxes large enough to read at arm's length from a shop floor monitor |
-| **Always-live** | HMI and SCADA charts reconnect automatically after network drop (matching the existing SignalR reconnect pattern from Dashboard 3) |
-| **Shared color tokens** | Use existing design tokens: green `#1D9E75` (active / in-spec), amber `#EF9F27` (warning / weld-soon), red `#D85A30` (fault / out-of-spec), grey (bypassed / offline) |
-| **Monospace readings** | All numeric values (gauge, width, speed, weight, footage) rendered in `var(--font-mono)` for operator readability |
-| **No printed output** | Consistent with the flat wire digital-traveler decision (April 28, 2026) — no print action on HMI or SCADA screens |
+|---|---|
+| **Route-adaptive** | The schematic reconfigures for FL1 / FL2 / FL3; bypassed components are dimmed, not removed |
+| **Touch-first** | Interactive elements sized for gloved use; no hover-dependent states; component boxes readable at arm's length |
+| **Always live** | Both screens reconnect automatically after a network interruption |
+| **Numeric values in a fixed-width face** | Gauge, width, speed, weight and footage are read as figures, not prose |
+| **No printed output** | Consistent with the flat wire digital-traveler decision — neither screen offers a print action |
+
+> `[CLIENT INPUT REQUIRED]` **The shopfloor panel resolution is unconfirmed** — the screens are authored for 1280 × 1024, and a different panel would change how much of the schematic and how many charts fit at readable size (Q80).
 
 ---
 
-## Navigation Map Update
+# 8. Confirmed Decisions
 
-```
-Dashboard 1 ──[Open HMI]──────────────────────► Dashboard 13 (Line Schematic)
-              ──[SCADA Trends]────────────────► Dashboard 14 (SCADA Trends)
-                                                       │
-Dashboard 3 ──[Machine View tab]──────────────► Dashboard 13 (full screen ↗)
-              ──[View Trends btn]─────────────► Dashboard 14
-
-Dashboard 13 ──[SCADA Trends btn]────────────► Dashboard 14
-              ──[← Line Status]──────────────► Dashboard 1
-              ──[Active Run btn]─────────────► Dashboard 3
-
-Dashboard 14 ──[← Active Run]────────────────► Dashboard 3
-              ──[← Line Status]──────────────► Dashboard 1
-```
+| # | Decision | Date |
+|---|---|---|
+| D1 | The SCADA chart layout is **specified here as Dashboard 14**; the remaining UA action is tag-path confirmation | May 15, 2026 |
+| D2 | Bypassed components are **dimmed, not removed** | May 15, 2026 |
+| D3 | Neither screen offers a print action | Apr 28, 2026 |
+| D4 | **FL1 has no edger**; FM2 has three 6″ stands with edgers at S2 and S3 | May 21, 2026 |
+| D5 | Payoff indication is driven by **absolute weight thresholds**, aligning it with the weld alerts | Jul 29, 2026 |
 
 ---
 
-## Related Documents
+# 9. Open Items Requiring Client Input
 
-| Document | Purpose |
-|----------|---------|
-| [FlatWireShopfloorDashboards.md](../../Analysis/FlatWireShopfloorDashboards.md) | Full shopfloor dashboard inventory — all 14 screens |
-| [FlatWireOpenQuestions.md](../../Analysis/FlatWireOpenQuestions.md) | Open questions register — OQ-4 resolved by this document |
-| [ShopfloorAndRealTimePlan.md](../../DevelopmentPlan/ShopfloorAndRealTimePlan.md) | Sprint plan — SignalR hub, PLC tag service |
-| [APIContracts.md](../../DevelopmentPlan/APIContracts.md) | API and SignalR event contracts |
-| [TechStackRecommendation.md](../../DevelopmentPlan/TechStackRecommendation.md) | Stack decisions — Chart.js, SignalR, Angular |
+| Ref | Priority | Question | What it blocks |
+|---|---|---|---|
+| **OI-36** | High | **Tag paths for the final finishing stand (6″ S3)** | The schematic node and the pass-schedule push for the final stand |
+| — | High | **Confirmation of every machine tag path** with the commissioning engineer | Both screens, before go-live |
+| **Q38 / OI-57** | High | **Published tolerance bands** per alloy and temper | Control limits and all trend alarming |
+| **OI-04** | High | **Which finishing stand cannot be bypassed** — 6″ S2 or 6″ S3 | The schematic's non-bypassable marking, and pass-schedule validation |
+| **OI-35 / Q63** | High | **The line-state vocabulary** | Status badges, flow animation, and several dependent behaviours |
+| **Q80** | High | **Shopfloor panel resolution** | Layout of both screens at readable size |
+
+---
+
+# 10. Assumptions
+
+| # | Assumption |
+|---|---|
+| A1 | The values in Section 6 are all readable from the machine controller and can be published continuously per line. |
+| A2 | Load cells are fitted on both payoff positions and on both take-ups. |
+| A3 | Gauge and width are measured live on FL1 and FL3; FL2's trace is historical, so its charts render recorded rather than live data. |
+| A4 | Historical readings are retained long enough to serve the shift and custom windows. |
+
+---
+
+# 11. Related Specifications
+
+| Document | Relationship |
+|---|---|
+| [SPC Checkpoint](SPCCheckpoint.md) | Checkpoints appear as event markers; control limits share their tolerance basis |
+| [Die Change and Die Management](DieChangeAndManagement.md) | Die changes appear as event markers |
+| [Weld Event](WeldEvent.md) | Welds appear as event markers |
+| [Rod Pre-Check-in](RodPreCheckin.md) | Source of the payoff weight thresholds shown here |
+| [Spool Completion](SpoolCompletionNotification.md) | Shares the line-state dependency |
+
+---
+
+# Client Sign-off
+
+## Part A — Rules for confirmation
+
+| Ref | Item | Accept | Amend |
+|---|---|:--:|:--:|
+| §1.4 | The equipment flow per line, including FL1 having no edger | ☐ | ☐ |
+| §2.1 | The schematic content and arrangement | ☐ | ☐ |
+| §2.3 | Payoff indication by absolute weight, not percentage | ☐ | ☐ |
+| §2.5 | Bypassed components dimmed rather than removed | ☐ | ☐ |
+| §2.6 | The five alert conditions on the schematic | ☐ | ☐ |
+| §3 | The Machine View tab and its compression rules | ☐ | ☐ |
+| §4.1 | The four-chart set and their reference lines | ☐ | ☐ |
+| §4.3 | The event markers carried on the shared axis | ☐ | ☐ |
+| §4.5 | The CSV export column set | ☐ | ☐ |
+| §7 | No printed output from either screen | ☐ | ☐ |
+
+## Part B — Information required
+
+| Ref | Item | Owner | Supplied |
+|---|---|---|:--:|
+| OI-36 | Tag paths for the final finishing stand | | ☐ |
+| — | Confirmation of all machine tag paths | | ☐ |
+| Q38 / OI-57 | Published tolerance bands | | ☐ |
+| OI-04 | Which finishing stand is non-bypassable | | ☐ |
+| OI-35 / Q63 | Line-state vocabulary | | ☐ |
+| Q80 | Shopfloor panel resolution | | ☐ |
+
+## Part C — Approval
+
+| | Name | Signature | Date |
+|---|---|---|---|
+| **Operations** | | | |
+| **Engineering / Controls** | | | |
+| **IT** | | | |
 
 ---
 
 ## Change Log
 
-| Date | Changed By | Description |
-|------|-----------|-------------|
-| May 15, 2026 | Plan team | Initial document — Dashboard 13 (HMI Schematic), Dashboard 14 (SCADA Trends), Dashboard 3 Machine View tab; resolves OQ-4 |
+| Date | Change |
+|---|---|
+| May 15, 2026 | Initial document — line schematic, SCADA trends, Machine View tab, machine tag map; resolved the SCADA chart layout ownership question. |
+| Aug 1, 2026 | **Reissued as version 2.0 for client review.** Equipment corrected throughout — the edger removed from the FL1 schematic and flow, and the third 6″ finishing stand added with edgers shown at S2 and S3. Payoff indication corrected from percentage bands to the absolute 3,000 / 2,000 lb thresholds so it escalates with the weld alerts rather than against them. Raised the missing tag path for the final stand, the unconfirmed tag map, the undefined tolerance bands, the non-bypassable stand conflict, the line-state vocabulary and the panel resolution as client questions. Layout wireframes reduced to those that carry information; styling and colour values removed. |

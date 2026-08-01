@@ -79,7 +79,7 @@ This document **does not introduce new requirements**. It is a navigational over
 
 ## E. Events That Can Interrupt the Run (any number, any order)
 
-21. **Weld for continuous feed (Dashboard 4).** Payoff 1 drops below 3,000 lb → "prepare weld" alert; a new bundle is pre-loaded on Payoff 2. Operator **induction-welds** rod tail to rod head (laser welding was dropped as not viable) and logs the event: weld footage auto-captured from the counter, incoming rod alpha, weld quality pass/fail. From that footage forward, output is attributed to the new rod — this is the `CoilTraceability` genealogy required for welding-wire customer certs. The line does not stop.
+21. **Weld for continuous feed (Dashboard 2A — *Mark as welded*).** Payoff 1 drops below 3,000 lb → "prepare weld" alert; a new bundle is pre-loaded on Payoff 2. Operator **induction-welds** rod tail to rod head (laser welding was dropped as not viable) and logs the event: weld footage auto-captured from the counter, incoming rod alpha, weld quality pass/fail. From that footage forward, output is attributed to the new rod — this is the `CoilTraceability` genealogy required for welding-wire customer certs. The line does not stop.
 
 22. **Die change (Dashboard DC).** Triggered by die wear, gauge drift, failure, or size change. Logged as `DC-####` with reason code, followed by a **mandatory post-die-change SPC** (manual wire diameter, plus FM1 gauge and width).
 

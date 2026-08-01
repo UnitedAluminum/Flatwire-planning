@@ -404,7 +404,7 @@ Any number, in any order, all stamped against `RunId` + footage position:
 
 | Event | Screen | Written | Gate / consequence |
 |---|---|---|---|
-| **Weld** | DB4 | `WeldEvent` (`WLD-###`) | Incoming rod **defaults to the `Staged` rod on the idle bay**; footage auto-read from the encoder; induction only; quality Pass/Fail with a mandatory fail reason. All later footage attributed to the incoming rod. A Fail still logs and links the rods and flags for supervisor review |
+| **Weld** | DB2A — *Mark as welded* | `WeldEvent` (`WLD-###`) | Incoming rod **defaults to the `Staged` rod on the idle bay**; footage auto-read from the encoder; induction only; quality Pass/Fail with a mandatory fail reason. All later footage attributed to the incoming rod. A Fail still logs and links the rods and flags for supervisor review |
 | **Die change** | DC | `DieChangeEvent` (`DC-####`) + auto-created `RollOverride` | `Gauge drift` / `Size change` route to SPC; the run stays blocked from full production, **thread mode permitted**. `Die failure` offers a QA hold on a footage range. `Planned life` returns straight to the run. An incoming die not in inventory is rejected at the scan |
 | **SPC checkpoint** | DB6 | `SpcCheckpoint` + `SpcMeasurement` | Two exits: *Submit · continue run*, or *Submit · suspend material* (coil to SPC-HOLD; **the machine keeps running**) |
 | **Roll adjust** | DB11 | `RollOverride` (`OVR-####`) + an SPC checkpoint of type `RollAdjustTrigger` | **Run-level override — never edits the pass schedule.** Measured gauge + width required, plus a reason chip. PLC tag written immediately. All-zero deltas write nothing |
@@ -645,7 +645,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.4 Active Run Monitor — Dashboard 3 (FL1 / FL2 / FL3)
 
-**Screens:** [`dashboard_3_active_run.html`](../../Mockups/dashboard_3_active_run.html) (FL1) · [`dashboard_3_active_run_v2.html`](../../Mockups/dashboard_3_active_run_v2.html) (FL1, revised layout + spool-completion overlay) · [`dashboard_3_active_run_fl2.html`](../../Mockups/dashboard_3_active_run_fl2.html) · [`dashboard_3_active_run_fl3.html`](../../Mockups/dashboard_3_active_run_fl3.html)
+**Screens:** [`dashboard_3_active_run_v2.html`](../../Mockups/dashboard_3_active_run_v2.html) (FL1 — grouped action cluster + spool-completion overlay; **the sole FL1 layout since 1 Aug 2026**, when the earlier left-rail `dashboard_3_active_run.html` was withdrawn) · [`dashboard_3_active_run_fl2.html`](../../Mockups/dashboard_3_active_run_fl2.html) · [`dashboard_3_active_run_fl3.html`](../../Mockups/dashboard_3_active_run_fl3.html)
 **Source IDs:** `ARM001`–`ARM024`, `TRV001`–`TRV010`, `GWT001`–`GWT006`
 **Actors:** line operator
 **Preconditions:** an active run on the line
@@ -739,9 +739,16 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ---
 
-### 5.6 Weld Event Logger — Dashboard 4
+### 5.6 Weld Event — captured at the Pre-Check-In station
 
-**Screen:** [`dashboard_4_weld_event.html`](../../Mockups/dashboard_4_weld_event.html)
+> **Dashboard 4 (Weld Event Logger) was retired on 1 Aug 2026**; the mockup was deleted (git history
+> at `2a0426b`). The weld is now captured by **Dashboard 2A's *Mark as welded* dialog**, which since
+> `PCI022` records the complete weld event — both rod alphas, weld type, footage and the mandatory
+> quality result — through the same `POST /weldevent`. The `FR-160`–`FR-175` requirements below are
+> unchanged in substance; the screen hosting them has moved. **`FR-175` (the traceability chain) and
+> the re-sequenceable rod queue did not move and currently have no host — gap G27.**
+
+**Screen:** [`dashboard_2a_rod_precheckin.html`](../../Mockups/dashboard_2a_rod_precheckin.html) — *Mark as welded* dialog
 **Source IDs:** `WLD001`–`WLD017`
 **Actors:** FL1 / FL3 operator; Supervisor (weld removal)
 **Priority:** **`Must`** *(derived — FW-063 is High; weld genealogy is contractual)*
@@ -1323,10 +1330,10 @@ The 27 HTML files in [`../../Mockups/`](../../Mockups/) are the **approved visua
 | **DB2A** | Rod Pre-Check-in Station (FL1/FL3) | `dashboard_2a_rod_precheckin.html` | FL1 operator | Staging the next rod while the current coil runs |
 | **DB2** | Rod Check-in & Pre-Run Setup | **`dashboard_2_rod_checkin - New.html`** | FL1 operator | Start of each rod |
 | **DB2-FL3** | Rod Check-in — FL3 hybrid variant | `dashboard_2_rod_checkin_fl3.html` | FL3 operator | Start of each hybrid rod *(older layout — OI-16)* |
-| **DB3** | Active Run Monitor (FL1) | `dashboard_3_active_run.html` · revised `dashboard_3_active_run_v2.html` | FL1 operator | During every run |
+| **DB3** | Active Run Monitor (FL1) | `dashboard_3_active_run_v2.html` *(the earlier left-rail `dashboard_3_active_run.html` was withdrawn 1 Aug 2026; git history at `2a0426b`)* | FL1 operator | During every run |
 | **DB3-FL2** | Active Run Monitor (FL2) | `dashboard_3_active_run_fl2.html` | FL2 operator | During every FL2 run |
 | **DB3-FL3** | Active Run Monitor (FL3) | `dashboard_3_active_run_fl3.html` | FL3 operator | During every hybrid run |
-| **DB4** | Weld Event Logger | `dashboard_4_weld_event.html` | FL1/FL3 operator | Payoff 1 nearing end |
+| ~~**DB4**~~ | ~~Weld Event Logger~~ — **RETIRED 1 Aug 2026**, folded into DB2A's *Mark as welded* dialog | ~~`dashboard_4_weld_event.html`~~ *(deleted; git history at `2a0426b`)* | — | — |
 | **DB5** | FL2 Spool Check-in | `dashboard_5_spool_checkin.html` | FL2 operator | Loading each spool onto the TPO |
 | **DB6** | SPC Checkpoint Entry | `dashboard_6_spc_checkpoint.html` | Any operator | Pre-run, post-die-change, spot check |
 | **DB7** | Output Coil Completion & Label | `dashboard_7_coil_completion.html` | FL2/FL3 operator | Coil complete at TKUP-2 |
@@ -1357,7 +1364,6 @@ flowchart TD
   DB9A["DB9A Schedule List"]
   DB9["DB9 Schedule Mgmt"]
   DB3["DB3 Active Run<br/>FL1 / FL2 / FL3"]
-  DB4["DB4 Weld Event"]
   DB6["DB6 SPC Checkpoint"]
   DB8["DB8 WIP Rejection"]
   DB11["DB11 Roll Adjust"]
@@ -1377,11 +1383,9 @@ flowchart TD
   DB9A --> DB9
   DB2A -->|Proceed to check-in| DB2
   DB2A -->|inspection Fail — hard block| DB8
-  DB2A -->|Mark as welded| DB4
   DB2 --> DB3
   DB2 -->|Check Out Rod, footage 0| DB12
   DB5 --> DB3
-  DB3 --> DB4
   DB3 --> DB6
   DB3 --> DB8
   DB3 --> DB11
@@ -1586,7 +1590,7 @@ Story **FW-001** applies **slash dual-naming** renames to the **existing shared 
 | 5.3 | FR-090 – FR-096 | 7 | `CHK`, `PSM`, `GWT`, `DAT` | DB5 | 8 |
 | 5.4 | FR-100 – FR-120 | 21 | `ARM`, `TRV`, `GWT`, `NFR`, `INT` | DB3 | 5, 8 |
 | 5.5 | FR-130 – FR-157 | 26 | Analysis, `NFR010`, OQ-66 | DB3 v2 overlay | 5, 9 |
-| 5.6 | FR-160 – FR-175 | 16 | `WLD`, `PCI`, `NFR012` | DB4 | 6 |
+| 5.6 | FR-160 – FR-175 | 16 | `WLD`, `PCI`, `NFR012` | DB2A dialog *(DB4 retired)* | 6 |
 | 5.7 | FR-180 – FR-197 | 18 | `SPC`, `DCH`, `STP`, OQ-39 | DB6 | 4, 6 |
 | 5.8 | FR-200 – FR-212 | 13 | `RAJ` | DB11 | 6, 10 |
 | 5.9 | FR-220 – FR-234 | 15 | `DCH`, `SHS` | DC | 6 |
@@ -1616,7 +1620,7 @@ Story **FW-001** applies **slash dual-naming** renames to the **existing shared 
 | DB2 Rod Check-in | 4 | | DB11 Roll Adjust | 6 (FL1/FL2), 10 (FL3) |
 | DB3 Active Run (FL1/FL3) | 5 | | DB12 Rod Checkout | 7 |
 | DB3 (FL2 variant) | 8 | | DC Die Change | 6 |
-| DB4 Weld Event | 6 | | DM Die Management | 13 |
+| ~~DB4 Weld Event~~ *(retired — DB2A dialog)* | 6 | | DM Die Management | 13 |
 | DB5 FL2 Spool Check-in | 8 | | DB13 HMI Schematic | 5 |
 | DB6 SPC Checkpoint | 4 (pre-run), 6 | | DB14 SCADA Trends | 5 |
 | DB7 / DB7b Coil Completion & Packing | 9 | | OEE | **unassigned** |

@@ -352,7 +352,7 @@ Any number, in any order, all stamped against `RunId` + footage position:
 
 | Event | Screen | Written | Gate / consequence |
 |---|---|---|---|
-| **Weld** | Dashboard 4 | `WeldEvent` (`WLD-###`) | Incoming rod **defaults to the `Staged` rod on the idle bay** (`PCI008`); footage auto-read from the encoder; induction only; quality Pass/Fail with a mandatory fail reason. All later footage attributed to the incoming rod. A Fail still logs and links the rods and flags for supervisor review — it does not silently block the run |
+| **Weld** | Dashboard 2A — *Mark as welded* | `WeldEvent` (`WLD-###`) | Incoming rod **defaults to the `Staged` rod on the idle bay** (`PCI008`); footage auto-read from the encoder; induction only; quality Pass/Fail with a mandatory fail reason. All later footage attributed to the incoming rod. A Fail still logs and links the rods and flags for supervisor review — it does not silently block the run |
 | **Die change** | Die Change (DC) | `DieChangeEvent` (`DC-####`) + auto-created `RollOverride` | Reason `Gauge drift` or `Size change` routes to the SPC Checkpoint screen, the run stays paused/blocked, **thread mode is permitted**, and full production is blocked until SPC passes. Reason `Die failure` shows an optional QA hold on a footage range. Reason `Planned life` returns straight to the run. An incoming die that is not in the Die Management inventory is rejected at the scan |
 | **SPC checkpoint** | Dashboard 6 | `SpcCheckpoint` (`SPC-####`) + `SpcMeasurement` rows | Two exits: *Submit · continue run*, or *Submit · suspend material* (coil to `SPC-HOLD`; the machine keeps running) |
 | **Roll adjust** | Dashboard 11 | `RollOverride` (`OVR-####`) + an SPC checkpoint of type `RollAdjustTrigger` | **Run-level override — never edits the pass schedule.** Requires measured gauge + width and a reason chip. PLC tag written immediately. All-zero deltas relabel the button "No changes — return to run" and write nothing |
@@ -629,7 +629,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 
 ### 4.4 Active Run Monitor — Dashboard 3 (FL1 / FL2 / FL3)
 
-**Screens:** [`../Mockups/dashboard_3_active_run.html`](../Mockups/dashboard_3_active_run.html) (FL1), [`../Mockups/dashboard_3_active_run_v2.html`](../Mockups/dashboard_3_active_run_v2.html) (FL1, revised layout + spool-completion overlay), [`../Mockups/dashboard_3_active_run_fl2.html`](../Mockups/dashboard_3_active_run_fl2.html), [`../Mockups/dashboard_3_active_run_fl3.html`](../Mockups/dashboard_3_active_run_fl3.html)
+**Screens:** [`../Mockups/dashboard_3_active_run_v2.html`](../Mockups/dashboard_3_active_run_v2.html) (FL1 — grouped action cluster + spool-completion overlay; **the sole FL1 layout since 1 Aug 2026**, when the earlier left-rail `dashboard_3_active_run.html` was withdrawn), [`../Mockups/dashboard_3_active_run_fl2.html`](../Mockups/dashboard_3_active_run_fl2.html), [`../Mockups/dashboard_3_active_run_fl3.html`](../Mockups/dashboard_3_active_run_fl3.html)
 **SRS:** `ARM001`–`ARM024`, `TRV001`–`TRV010`, `GWT001`–`GWT006`
 **Actors:** line operator
 **Preconditions:** an active run on the line
@@ -702,9 +702,17 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 | **FR-156** | Bringing the variance back inside tolerance shall remove the override requirement, and the completion then records no override. |
 | **FR-157** | Answering Yes shall not bypass the workflow's own gates — **per-spool SPC for gauge and width remains mandatory** before a spool alpha is issued. |
 
-### 4.6 Weld Event Logger — Dashboard 4
+### 4.6 Weld Event — captured at the Pre-Check-In station
 
-**Screen:** [`../Mockups/dashboard_4_weld_event.html`](../Mockups/dashboard_4_weld_event.html)
+> **Dashboard 4 (Weld Event Logger) was retired on 1 Aug 2026** (mockup deleted; in git history at
+> `2a0426b`). The weld is now captured by **Dashboard 2A's *Mark as welded* dialog**, which since
+> `PCI022` records the full weld event — both rod alphas, weld type, footage, and the quality result
+> with its mandatory fail reason — writing the same `WeldEvent` row through the same
+> `POST /weldevent`. The requirements below are unchanged in substance; only the screen that hosts
+> them has moved. **Two capabilities had no new home:** DB4's re-sequenceable *Rods In Queue* and its
+> *traceability chain* strip (see §DB4 note and gap **G27**).
+
+**Screen:** [`../Mockups/dashboard_2a_rod_precheckin.html`](../Mockups/dashboard_2a_rod_precheckin.html) — *Mark as welded* dialog
 **SRS:** `WLD001`–`WLD017`
 **Actors:** FL1 / FL3 operator; Supervisor (weld removal)
 
@@ -2458,10 +2466,10 @@ The 27 HTML files in [`../Mockups/`](../Mockups/) are the **approved visual base
 | **DB2A** | Rod Pre-Check-in Station (FL1/FL3) | `dashboard_2a_rod_precheckin.html` | FL1 operator | Staging the next rod while the current coil runs |
 | **DB2** | Rod Check-in & Pre-Run Setup (FL1/FL3) | **`dashboard_2_rod_checkin - New.html`** | FL1 operator | Start of each rod |
 | **DB2-FL3** | Rod Check-in — FL3 hybrid variant | `dashboard_2_rod_checkin_fl3.html` | FL3 operator | Start of each hybrid rod |
-| **DB3** | Active Run Monitor (FL1) | `dashboard_3_active_run.html` · revised `dashboard_3_active_run_v2.html` | FL1 operator | During every run |
+| **DB3** | Active Run Monitor (FL1) | `dashboard_3_active_run_v2.html` *(the earlier left-rail `dashboard_3_active_run.html` was withdrawn 1 Aug 2026; git history at `2a0426b`)* | FL1 operator | During every run |
 | **DB3-FL2** | Active Run Monitor (FL2) | `dashboard_3_active_run_fl2.html` | FL2 operator | During every FL2 run |
 | **DB3-FL3** | Active Run Monitor (FL3) | `dashboard_3_active_run_fl3.html` | FL3 operator | During every hybrid run |
-| **DB4** | Weld Event Logger | `dashboard_4_weld_event.html` | FL1/FL3 operator | Payoff 1 nearing end |
+| ~~**DB4**~~ | ~~Weld Event Logger~~ — **RETIRED 1 Aug 2026**, folded into DB2A's *Mark as welded* dialog | ~~`dashboard_4_weld_event.html`~~ *(deleted; git history at `2a0426b`)* | — | — |
 | **DB5** | FL2 Spool Check-in | `dashboard_5_spool_checkin.html` | FL2 operator | Loading each spool onto the TPO |
 | **DB6** | SPC Checkpoint Entry | `dashboard_6_spc_checkpoint.html` | Any operator | Pre-run, post-die-change, spot check |
 | **DB7** | Output Coil Completion & Label | `dashboard_7_coil_completion.html` | FL2/FL3 operator | Coil complete at TKUP-2 |
@@ -2495,7 +2503,6 @@ flowchart TD
   DB9A["DB9A Schedule List"]
   DB9["DB9 Schedule Mgmt"]
   DB3["DB3 Active Run<br/>FL1 / FL2 / FL3"]
-  DB4["DB4 Weld Event"]
   DB6["DB6 SPC Checkpoint"]
   DB8["DB8 WIP Rejection"]
   DB11["DB11 Roll Adjust"]
@@ -2515,12 +2522,10 @@ flowchart TD
   DB9A --> DB9
   DB2A -->|Proceed to check-in| DB2
   DB2A -->|inspection Fail — hard block| DB8
-  DB2A -->|Mark as welded| DB4
   DB2A -->|pre-check-out ModeP| DB2A
   DB2 --> DB3
   DB2 -->|Check Out Rod, footage 0| DB12
   DB5 --> DB3
-  DB3 --> DB4
   DB3 --> DB6
   DB3 --> DB8
   DB3 --> DB11
@@ -2541,7 +2546,7 @@ Additional routes: the shared topbar's **More Options** tile popup reaches Pass 
 
 **`flat-wire-topbar.js`** injects the shared application bar on `DOMContentLoaded`: the UA logo (`mainlogo.gif`), the environment / greeting strip (`THIS IS TESTING ENVIRONMENT (…)`, "Good Afternoon, <user>", the date), **multi-operator signed-in chips** with a switch-operator dialog, and the action group **Help · Refresh · Login · Switch · Logout**. It also injects the **More Options** tile popup. Include once before `</body>`; it needs the shared stylesheet and `mainlogo.gif` in the same folder.
 
-**25 of the 27 screens include it.** The two that do not: `coil-spinner.html` (a component demo) and **`dashboard_2_rod_checkin - New.html`, which inlines its own app bar**. When starting a new screen, **clone Dashboard 12's skeleton, not Dashboard 2's**.
+**23 of the 25 screens include it.** The two that do not: `coil-spinner.html` (a component demo) and **`dashboard_2_rod_checkin - New.html`, which inlines its own app bar**. When starting a new screen, **clone Dashboard 12's skeleton, not Dashboard 2's**.
 
 **`pause_run.js`** is the shared Pause/Resume modal for the FL1/FL2/FL3 active-run screens. It expects specific element IDs — `pause-btn`, `pause-timer-badge`, `footage-val`, `clock` — and hard-codes navigation to `dashboard_8_wip_rejection.html` and `dashboard_12_rod_checkout.html`.
 
@@ -2551,7 +2556,7 @@ Additional routes: the shared topbar's **More Options** tile popup reaches Pass 
 
 - It transforms **`<body>`**, not `.dashboard`, so body-level overlays scale too.
 - It **never scales above 1:1** — on the real shopfloor panel nothing is resized.
-- **26 of the 27 files use `data-fit="fill"`** (all but `coil-spinner.html`), which widens the design box to the window's full width as well. `data-fit="scale"` is a retained escape hatch that keeps the 1280 px width and letterboxes instead.
+- **24 of the 25 files use `data-fit="fill"`** (all but `coil-spinner.html`), which widens the design box to the window's full width as well. `data-fit="scale"` is a retained escape hatch that keeps the 1280 px width and letterboxes instead.
 - Design **height is measured, not assumed** — several screens legitimately need more than 1024 px and were previously clipped.
 - It normalises SVG charts: `preserveAspectRatio="none"` charts stretch their plot geometry, but their labels, live dots and `rect[rx]` chips are **counter-scaled** (via `--fw-unstretch` and `transform-box: fill-box`, so nothing breaks when page scripts move dots by setting `cy`), and chart labels are lifted toward the 14 px floor (`--fw-textgrow`) up to the point where an axis column would collide.
 
@@ -2622,9 +2627,11 @@ Only what a developer cannot infer from §4 is repeated here.
 
 **DB2 — Rod Check-in (approved wizard).** A rod-scan row and an Incoming Bundle Information grid stay visible above a **6-tab wizard** with a per-tab index, name and hint and a "Step n of 6" caption. Tabs unlock progressively. Step 2 carries the pass-schedule confirm bar (amber until confirmed, then green), a **Change** dropdown listing alternates with the recommended one flagged, a warning that a non-recommended selection is flagged for Operations review, the component table and an info callout stating that parameters push to PLC tags on acknowledgement. Step 3 carries M1, M2, the derived ovality and a **tolerance-band visualization** — this is what replaced the retired progress ring. Steps 4–6 are machine inspections using **OK / Not Good / N/A** buttons with measured-value fields against a stated spec. A failed-checks banner offers **Authorize Override** (supervisor badge, password, required reason). The footer shows an `n/6` progress ring, "n of 6 steps complete · complete each step to proceed", Cancel, and **Acknowledge & Begin Check-in**.
 
-**DB3 — Active Run.** Header with line badge, order, alpha, alloy and a pause-timer badge. A left action rail (v1) or a grouped action cluster (v2: *Run events* — Log Weld Event, SPC Checkpoint, WIP Reject; *Go to* — Die Change, Check Out Rod, View Trends; *Run control* — Pause run, Complete Run). A machine-status panel with run time, speed, footage, lube temperature and, in v2, the live spool fill (`SP-00031 · 1,460 / 2,000 lb`). Payoff blocks with progress fills. A components block naming the pass schedule. Collapsible **Rod Information** and **Order Information** accordions (order no, customer, due date, gauge tol, width tol, setup width, setup gauge, finish, OD min–max, max weight of spool, total spool weight, order weight) and a **Rods In Queue** table. Tab strip **Traces | Machine View**, with each trace panel carrying a title, target subtitle, live reading, in/out-of-spec badge, a maximize control and a stats row (min, max, avg, deviation). v2 adds a **Complete this run?** confirmation modal.
+**DB3 — Active Run.** Header with line badge, order, alpha, alloy and a pause-timer badge. A grouped action cluster (*Run events* — SPC Checkpoint, WIP Reject; *Go to* — Die Change, Check Out Rod, View Trends; *Run control* — Pause run, Complete Run). A machine-status panel with run time, speed, footage, lube temperature and, in v2, the live spool fill (`SP-00031 · 1,460 / 2,000 lb`). Payoff blocks with progress fills. A components block naming the pass schedule. Collapsible **Rod Information** and **Order Information** accordions (order no, customer, due date, gauge tol, width tol, setup width, setup gauge, finish, OD min–max, max weight of spool, total spool weight, order weight) and a **Rods In Queue** table. Tab strip **Traces | Machine View**, with each trace panel carrying a title, target subtitle, live reading, in/out-of-spec badge, a maximize control and a stats row (min, max, avg, deviation). v2 adds a **Complete this run?** confirmation modal.
 
-**DB4 — Weld Event.** A **Rods In Queue** accordion that can be re-sequenced by drag with an Undo; a **traceability chain** strip showing completed → outgoing (with remaining footage and a WELD NOW chip) → incoming (staged) → future rod, above the weld-point footage; two rod panels (outgoing auto-identified, incoming scan-or-enter) with alloy, diameter, temper, gross weight, check-in time and inspection result; a weld-type block showing **Induction only**; a quality Pass/Fail pair with a fail-reason select; a footer stamp (operator, timestamp, output alpha) and a confirm button labelled **"Confirm weld · link R00042 → R00043"**.
+**DB4 — Weld Event.** ~~A **Rods In Queue** accordion that can be re-sequenced by drag with an Undo; a **traceability chain** strip showing completed → outgoing (with remaining footage and a WELD NOW chip) → incoming (staged) → future rod, above the weld-point footage; two rod panels (outgoing auto-identified, incoming scan-or-enter) with alloy, diameter, temper, gross weight, check-in time and inspection result; a weld-type block showing **Induction only**; a quality Pass/Fail pair with a fail-reason select; a footer stamp (operator, timestamp, output alpha) and a confirm button labelled **"Confirm weld · link R00042 → R00043"**.~~
+
+> **RETIRED 1 Aug 2026.** The capture form moved to Dashboard 2A's *Mark as welded* dialog, which records the same `WeldEvent` row. **Two elements described above did not move and have no home in the design:** the re-sequenceable **Rods In Queue** accordion and the **traceability chain** strip. Logged as gap **G27**.
 
 **DB6 — SPC Checkpoint.** Fixed vertical rhythm: header 72 px, checkpoint type 148 px, measurements flex (~560 px), observation 110 px, footer 84 px. A 3-column checkpoint-type selector (the mockup offers **Pre-run · Post DB1 · Post die change · Manual spot check**); an amber **trigger banner** for a post-die-change; measurement rows as a 4-column grid — info · 56 px-tall 22 px monospace input · tolerance track with a 22 px marker · result badge and signed deviation.
 
@@ -2814,7 +2821,7 @@ Phase 1 is the only phase organised by technology layer. Phases 2–14 are **com
 | **3** | **Line Status Board & Real-Time Backbone** | First live end-to-end slice: OPC → hub → Dashboard 1 | DB1; `LinesController` + `LineStatusService`; `FlatWireHub` broadcasting; OPC poller + alert engine; `flat-wire-signalr.service` fully wired | 1 | FW-060, 080, 081 (chart groundwork) |
 | **4** | **Rod Check-In & PLC Configuration** (FL1/FL3) **+ Pre-Check-In** | The core operator entry point, and the staging station that makes continuous feed possible | DB2 (+FL3); **DB2A**; `CheckInController` + `CheckInService`; **`PayoffStagingController` + `RodStagingService`**; `PLCTagService.PushPassSchedule`; `INFLAT` + run header; `PayoffStateChanged`; the `FL1PO` station; audit logging | 2, 3, upstream rod + scheduling | FW-061, 082, 010, 002 |
 | **5** | **Active Run Monitoring & Live Gauge/Width Trace** | The run cockpit | DB3 (FL1/FL3) + DB13 + DB14; `gauge-trace-chart`; `RunController` (active + gaugetrace); SCADA multi-trend + settings | 4 | FW-062, 081, 080 |
-| **6** | **In-Run Production Events** (weld · die change · SPC · roll adjust · pause) | Every mid-run transaction | DB4, DB6, DB11, DC, Pause/Resume; five event controllers + services; die-inventory validation hook; override → PLC write; SPC gating | 5 | FW-063, 073, 065, 070, 071 |
+| **6** | **In-Run Production Events** (weld · die change · SPC · roll adjust · pause) | Every mid-run transaction | DB6, DB11, DC, Pause/Resume; five event controllers + services; die-inventory validation hook; override → PLC write; SPC gating | 5 | FW-063, 073, 065, 070, 071 |
 | **7** | **Exception Handling: WIP Rejection & Rod Checkout** | Formal off-ramps for suspect material and early rod removal | DB8 + DB12 (Modes A/B) + partial re-check-in; `WipRejectionController` / `CheckOutController` + services; supervisor-approval flow; carry-forward columns | 6 | FW-067, 072, 071 |
 | **8** | **FL2 Spool Check-In & Finishing Run** | The finishing leg | DB5 + DB3 FL2 variant; `POST /checkin/spool`; historical gauge-trace query; FL2 PLC push | 4–6 output (a spool must exist) | FW-064, 070 |
 | **9** | **Output Coil Completion, Labeling & Packing** | The customer-facing deliverable and the cert record | DB7 + DB7b; `CoilController` + completion/label services; traceability build; footage→weight; 2-per-skid rule | 8 | FW-066, 100 |
@@ -2930,7 +2937,7 @@ Working days are **counted, not assumed**: **Labor Day falls on Mon 7 Sep 2026**
 | FW-060 | DB1 — line status | 3 | High | 5 |
 | FW-061 | DB2 — rod check-in | 4 | Critical | 8 |
 | FW-062 | DB3 — active run | 5 | Critical | 8 |
-| FW-063 | DB4 — weld event | 6 | High | 5 |
+| FW-063 | Weld event capture — **DB2A dialog**, not a screen (DB4 retired) | 6 | High | 5 |
 | FW-064 | DB5 — FL2 spool check-in | 8 | High | 5 |
 | FW-065 | DB6 — SPC checkpoint | 4 (pre-run) & 6 | High | 3 |
 | FW-066 | DB7 — coil completion | 9 | High | 5 |
@@ -3203,7 +3210,7 @@ Every unresolved item, with impact, the phase it blocks, and who must decide. **
 | **OI-87** | **OQ-59 — planning grid versus a dedicated flat-wire section.** Existing grid with column renames and a filter dropdown, or an isolated flat-wire planning view | UI scoping and regression risk for non-flat-wire planning | IT / team |
 | **OI-88** | **OQ-1 — a Pass Schedule UI versus direct table management.** A UI is expected given the manual-maintenance requirement, and DB9/DB9A have been designed on that assumption; formal confirmation is outstanding | Formal confirmation only | Tim O. |
 | **OI-89** | **Documentation hygiene** across the four April docs: no change log, stale `Last Updated` (Apr 29–30) and `Status: Draft`; the 14 upstream stories still tagged in-scope; no sprint→phase crosswalk; `IsActive (bool)` in FW-010; the 20-table count; the E07 point total; and no document-control block on any of the 14 phase files | Readers trust superseded content | Documentation owner |
-| **OI-90** | **Minor count drift in `CLAUDE.md`:** it states 25 tables (actual 27) and "all 25 screens use `data-fit=fill`" (actual **26** of 27 — every file except `coil-spinner.html`) | A new joiner starts from wrong numbers | Documentation owner |
+| ~~**OI-90**~~ | ~~**Minor count drift in `CLAUDE.md`:** it states 25 tables (actual 27) and "all 25 screens use `data-fit=fill`"~~ **CLOSED 1 Aug 2026** — `CLAUDE.md` now states **27 tables**, and the `data-fit` claim was restated as **24 of 25 files** (every file but `coil-spinner.html`) after Dashboard 4 and the DB3 left-rail layout were withdrawn | — | Closed |
 | **OI-91** | **`LatestDocument/RequirementDocuments/LineStatusOverview.md` is an empty file** (0 bytes) | A named analysis document with no content; the Dashboard 1 spec lives in `FlatWireShopfloorDashboards.md` and the SRS instead | Analysis team |
 | **OI-92** | **Load-bearing TBD placeholders** remain in the phase files: the die-life threshold (Phase 13), trial and production dates (Phase 14 / back matter), FW-050 pricing, FW-102 configuration | Cannot be planned around | Programme management |
 
@@ -3285,7 +3292,7 @@ Every file in `c:\UAL\Flatwire-planning\` was consulted. Status values: **curren
 | File | Last Updated | Status | Fed into |
 |---|---|---|---|
 | `00-foundations.md` | 26 Jul 2026 | **current except decision 3** (the `Rod` drop, superseded by the DDL) | §2, §6.7, §8.2, §10 |
-| `back-matter.md` | 26–29 Jul 2026 | current — dependency chain, calendar, gaps G1–G24 | §9, §11 |
+| `back-matter.md` | 26–29 Jul 2026 | current — dependency chain, calendar, gaps G1–G28 | §9, §11 |
 | `phase-01-core-platform-setup.md` | 26 Jul 2026 | superseded by the 1A/1B/1C splits; its 21-table statement is stale | §9.2 |
 | `phase-01a-angular-foundation.md` | 26 Jul 2026 | current | §7, §8.1, §9.2 |
 | `phase-01b-backend-foundation.md` | 26 Jul 2026 | current | §6, §8.2, §9.2 |
@@ -3333,11 +3340,11 @@ Every file in `c:\UAL\Flatwire-planning\` was consulted. Status values: **curren
 | `SQL/FlatWire_SampleData_QualityOutput.sql` | — | current | §5.11 |
 | `DBScripts/CommonDB_Insert_WIPStations_FlatWire.sql` | 28 Jul 2026 (D2 revised 29 Jul) | current — Draft; `machine_type` and StationType pending sign-off | §5.12, §11 |
 
-### A.6 `Mockups/` — 35 files
+### A.6 `Mockups/` — 33 files
 
 | File | Status | Fed into |
 |---|---|---|
-| The **24 approved screens** — `dashboard_1_line_status` · `dashboard_2a_rod_precheckin` · `dashboard_2_rod_checkin - New` · `dashboard_2_rod_checkin_fl3` · `dashboard_3_active_run` · `dashboard_3_active_run_v2` · `dashboard_3_active_run_fl2` · `dashboard_3_active_run_fl3` · `dashboard_4_weld_event` · `dashboard_5_spool_checkin` · `dashboard_6_spc_checkpoint` · `dashboard_7_coil_completion` · `dashboard_7b_packing_station` · `dashboard_8_wip_rejection` · `dashboard_9_pass_schedule` · `dashboard_9a_schedule_list` · `dashboard_10_shift_summary` · `dashboard_11_roll_adjust` · `dashboard_12_rod_checkout` · `dashboard_13_hmi_schematic` · `dashboard_14_scada_trends` · `dashboard_die_change` · `dashboard_die_management` · `dashboard_oee` (all `.html`) | **current — approved visual baseline** | §4 (field lists, states, validations), §7 |
+| The **22 approved screens** — `dashboard_1_line_status` · `dashboard_2a_rod_precheckin` · `dashboard_2_rod_checkin - New` · `dashboard_2_rod_checkin_fl3` · `dashboard_3_active_run_v2` · `dashboard_3_active_run_fl2` · `dashboard_3_active_run_fl3` · `dashboard_5_spool_checkin` · `dashboard_6_spc_checkpoint` · `dashboard_7_coil_completion` · `dashboard_7b_packing_station` · `dashboard_8_wip_rejection` · `dashboard_9_pass_schedule` · `dashboard_9a_schedule_list` · `dashboard_10_shift_summary` · `dashboard_11_roll_adjust` · `dashboard_12_rod_checkout` · `dashboard_13_hmi_schematic` · `dashboard_14_scada_trends` · `dashboard_die_change` · `dashboard_die_management` · `dashboard_oee` (all `.html`) | **current — approved visual baseline** | §4 (field lists, states, validations), §7 |
 | `dashboard_2_rod_checkin.html` | **superseded** (interim 8-step layout) | §7.1 (listed as retired) |
 | `dashboard_2_rod_checkin - Old.html` | **retired** (grid + progress ring, 9-step) | §7.1 (listed as retired) |
 | `coil-spinner.html` | current — a loading-indicator component demo, not a screen | §7.1 |

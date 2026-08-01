@@ -59,7 +59,7 @@ Two further answers are **not decisions but scope changes** (item 7 multiple ord
 1. `OverrideBy` / `OverrideAt` / `OverrideReason` are **shared** with the out-of-sequence override (item 2 / Q74, which stays). Those three columns must **survive**; only `OffScheduleOverride` and `ScheduledLineId` are genuinely removed, and `CK_RodStaging_Override` must be rewritten to key the trio off `OutOfSequenceOverride` alone. Dropping all five would delete the surviving override's audit trail.
 2. If **Q78** (item 3 — rod scheduled on no rod line at all) later needs an authorisation, it re-adds a column group rather than reusing this one. Note that in Q78's text so the cost is visible when it is answered.
 
-**Files:** `RodPreCheckin.md` (order-lookup table row 4, the *Off-schedule staging is authorised* paragraph, validations table) · `FlatWireOpenQuestions.md` Q74 · `Dashboard2A_UXReview.md` · `FlatWireSchema_Runs.md` · `FlatWire_DDL_04_Runs.sql` (comment only, if retained) · `APIContracts.md` + `04-APIContract.md` (`POST /staging/rod`, `GET /rod/{alpha}` — `scheduledLineId` now drives navigation) · `02-SRS.md`, `03-HLD-and-ERDiagram.md`, `06-TestPlanAndTestCases.md` · `dashboard_2a_rod_precheckin.html` (override panel, `offScheduleOverride` state, the bay-card "Off-schedule — authorised by …" slot) · `dashboard_2_rod_checkin - New.html` + `_fl3.html` (auto-switch on scan) · `FlatWire_MasterSpecification.md`.
+**Files:** `RodPreCheckin.md` (order-lookup table row 4, the *Off-schedule staging is authorised* paragraph, validations table) · `FlatWireOpenQuestions.md` Q74 · ~~`Dashboard2A_UXReview.md`~~ (deleted 1 Aug 2026) · `FlatWireSchema_Runs.md` · `FlatWire_DDL_04_Runs.sql` (comment only, if retained) · `APIContracts.md` + `04-APIContract.md` (`POST /staging/rod`, `GET /rod/{alpha}` — `scheduledLineId` now drives navigation) · `02-SRS.md`, `03-HLD-and-ERDiagram.md`, `06-TestPlanAndTestCases.md` · `dashboard_2a_rod_precheckin.html` (override panel, `offScheduleOverride` state, the bay-card "Off-schedule — authorised by …" slot) · `dashboard_2_rod_checkin - New.html` + `_fl3.html` (auto-switch on scan) · `FlatWire_MasterSpecification.md`.
 
 **Consequence to state, not discover:** auto-switching moves the operator between two stations mid-transaction. Specify what happens to a partially completed wizard, and whether the FL3 tab exists on the FL1 panel at all (this is **Q73** — which station FL3 posts to — surfacing again as a UI question).
 
@@ -71,7 +71,7 @@ Two further answers are **not decisions but scope changes** (item 7 multiple ord
 
 **Closes `WLD011`** (supervisor reversal of a weld) in the un-staging direction only — say so, because `WLD011` also covers reversing a weld on a rod that stays staged.
 
-**Files:** `RodPreCheckin.md` (bay-state table, vocabulary table, non-decision #3) · `Dashboard2A_UXReview.md` (the Jul 31 "Unstage removed" finding is now superseded — annotate, do not delete) · `RodCheckout.md` · `WeldEvent.md` · `FlatWireSchema_QualityOutput.md` + `FlatWire_DDL_05_QualityOutput.sql` + `FlatWire_ERDiagram_Documentation.md` · `APIContracts.md`/`04-APIContract.md` (`DELETE|POST /staging/rod/{alpha}` un-stage body) · `dashboard_2a_rod_precheckin.html` (reinstate a supervisor-gated Unstage on welded rows, routed to rejection) · `phase-04`, `phase-07` · `02-SRS.md`, `06-TestPlanAndTestCases.md` · master spec.
+**Files:** `RodPreCheckin.md` (bay-state table, vocabulary table, non-decision #3) · ~~`Dashboard2A_UXReview.md` (the Jul 31 "Unstage removed" finding is now superseded — annotate, do not delete)~~ **— superseded 1 Aug 2026: the file was deleted instead (git history at `2a0426b`). The annotation is therefore not owed; the substance survives in Q77, which records that a welded rod may be released by a supervisor as a rejection to `HOLD`.** · `RodCheckout.md` · `WeldEvent.md` · `FlatWireSchema_QualityOutput.md` + `FlatWire_DDL_05_QualityOutput.sql` + `FlatWire_ERDiagram_Documentation.md` · `APIContracts.md`/`04-APIContract.md` (`DELETE|POST /staging/rod/{alpha}` un-stage body) · `dashboard_2a_rod_precheckin.html` (reinstate a supervisor-gated Unstage on welded rows, routed to rejection) · `phase-04`, `phase-07` · `02-SRS.md`, `06-TestPlanAndTestCases.md` · master spec.
 
 ### 3.3 Item 9 — `INFLAT` at check-in only (Critical, unblocks Phase 4)
 
@@ -89,7 +89,7 @@ Two further answers are **not decisions but scope changes** (item 7 multiple ord
 
 This is the **Q72 item 3 blocking residual** — "`Status` has no value for a WIP-rejection outcome". Pick one and write it into the DDL: either a new `Status` value (`Rejected`) outside `UX_RodStaging_Bay`'s filter, or reuse `Unstaged` with a `RodDisposition`-style discriminator. **Recommendation: reuse `Unstaged` plus a `ReleaseReason`** — a new status value multiplies the branches in every "staged" query, and the bay is genuinely free once the bundle leaves.
 
-**Files:** `FlatWireSchema_Runs.md` + `FlatWire_DDL_04_Runs.sql` (+ `07_Indexes` if the filter changes) · `RodPreCheckin.md` bay-state table · `Dashboard2A_UXReview.md` · `dashboard_2a_rod_precheckin.html` + `dashboard_8_wip_rejection.html` (rejection reason capture from a staging context; `WipRejection.MaterialAlpha` is already polymorphic — OI-20) · `phase-04`, `phase-07` · `FlatWireOpenQuestions.md` Q72 · master spec + `06-TestPlanAndTestCases.md`.
+**Files:** `FlatWireSchema_Runs.md` + `FlatWire_DDL_04_Runs.sql` (+ `07_Indexes` if the filter changes) · `RodPreCheckin.md` bay-state table · ~~`Dashboard2A_UXReview.md`~~ (deleted 1 Aug 2026) · `dashboard_2a_rod_precheckin.html` + `dashboard_8_wip_rejection.html` (rejection reason capture from a staging context; `WipRejection.MaterialAlpha` is already polymorphic — OI-20) · `phase-04`, `phase-07` · `FlatWireOpenQuestions.md` Q72 · master spec + `06-TestPlanAndTestCases.md`.
 
 ### 3.5 Item 6 — tolerances are min/max, and there are four of them
 
@@ -146,7 +146,7 @@ Ordered so that no wave leaves a document asserting a rule a later wave reverses
 | Wave | Content | Files | Size |
 |---|---|---|---|
 | **W1 — Registers** | `FlatWireOpenQuestions.md`: eight status changes, three new questions (Q78–Q80), Quick Reference + filtered index counts, change-log rows. Master spec §11 `OI-##` register: OI-01 closes, OI-07 respecified, OI-44 revisited. `back-matter.md`: G21 annotated, new gap for the multi-order validation | 3 | M |
-| **W2 — Analysis notes** | `RodPreCheckin.md` (five sections — items 4, 5, 8, 9 + the Q69 consequence), `Dashboard2A_UXReview.md` (annotate the two superseded findings), `RodCheckout.md`, `WeldEvent.md`, `SpoolCompletionNotification.md`, `Spool.md`, `FlatWireShopfloorDashboards.md`, `FlatWireProcessWalkthrough.md` | 8 | **L** |
+| **W2 — Analysis notes** | `RodPreCheckin.md` (five sections — items 4, 5, 8, 9 + the Q69 consequence), `RodCheckout.md`, `WeldEvent.md`, `SpoolCompletionNotification.md`, `Spool.md`, `FlatWireShopfloorDashboards.md`, `FlatWireProcessWalkthrough.md` | 7 | **L** |
 | **W3 — Schema + DDL** | `FlatWireSchema_Lookup.md` / `_Runs.md` / `_QualityOutput.md`; `FlatWire_DDL_01_Lookup.sql`, `04_Runs.sql`, `05_QualityOutput.sql`, `06_ForeignKeys.sql` (nothing expected), `07_Indexes.sql` (only if the blocked-row filter changes), `FlatWire_SampleData_Lookup.sql`, `FlatWire_ERDiagram_Documentation.md`. **Re-run `FlatWire_DDL_RunAll.sql` + the 10 constraint tests; table count stays 27** | 9 | **L** |
 | **W4 — Contracts** | `APIContracts.md` and `LatestDocument/ProjectPlan/04-APIContract.md` — staging POST/DELETE, `GET /rod/{alpha}`, the `CHK007` 422 rule, un-stage approval body, spool completion | 2 | M |
 | **W5 — Mockups** | `dashboard_2a_rod_precheckin.html` (four of the eight changes land here), `dashboard_2_rod_checkin - New.html`, `dashboard_2_rod_checkin_fl3.html`, `dashboard_8_wip_rejection.html`, `dashboard_7_coil_completion.html`, `spool_notification.js` | 6 | **L** |
@@ -202,7 +202,7 @@ Ordered so that no wave leaves a document asserting a rule a later wave reverses
 |---|---|
 | [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md) | Primary target — five of the eleven answers change it |
 | [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) | Authoritative register; W1 |
-| [Dashboard2A_UXReview.md](Dashboard2A_UXReview.md) | Source of the Jul 31 findings that items 5 and 8 supersede |
+| `Dashboard2A_UXReview.md` *(deleted 1 Aug 2026 — git history at `2a0426b`)* | Source of the Jul 31 findings that items 5 and 8 supersede |
 | [SpoolCompletionNotification.md](../LatestDocument/RequirementDocuments/SpoolCompletionNotification.md) | Target for item 10 |
 | [FlatWire_MasterSpecification.md](../LatestDocument/FlatWire_MasterSpecification.md) | `OI-##` register and the reconciliation authority |
 | [00-README.md](../LatestDocument/ProjectPlan/00-README.md) | Precedence chain the waves respect |

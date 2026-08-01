@@ -1,320 +1,297 @@
-# SPC Checkpoint — Dashboard Analysis
+# Flat Wire Processing — SPC Checkpoint Specification
 
-**Mockup file:** `Mockups/dashboard_6_spc_checkpoint.html`
-**Related mockup:** `Mockups/dashboard_die_change.html` (triggers this screen)
-
----
-
-## Purpose
-
-The SPC Checkpoint screen is a mandatory quality gate that blocks a flat-wire production run from continuing until an operator measures the output wire and confirms it is within dimensional specification. It is surfaced automatically after a die change when the reason is **Gauge drift** or **Size change**, and optionally at any time as a manual spot check.
-
-The screen has two exit paths:
-- **Submit · continue run** — all measurements are in spec; run resumes immediately
-- **Submit · suspend material** — one or more measurements are out of spec (or operator chooses to hold); output coil is placed on SPC-HOLD for QA review
+**Project:** Flat Wire Mill Implementation
+**Document Type:** Functional Requirement Specification — Issued for Client Review
+**Applies to:** FL1 / FL2 / FL3
+**Version:** 2.0
+**Last Updated:** August 1, 2026
+**Status:** Issued for Client Review and Sign-off
+**Screen reference:** Dashboard 6 — SPC Checkpoint
+**Requirement source:** SRS SPC rules (`SPC001` and following), `FR-184` (checkpoint types), die-change rules (`Q56`)
 
 ---
 
-## Entry Points / Triggers
+## Document Change History
 
-| Trigger | Source | Auto-queued? |
+| Version | Date | Description |
 |---|---|---|
-| Die change reason = Gauge drift | `dashboard_die_change.html` → "Require SPC on resume" toggle ON | Yes |
-| Die change reason = Size change | `dashboard_die_change.html` → "Require SPC on resume" toggle ON | Yes |
-| Operator discretion | Any active run | No — manual via spot-check type |
-
-When auto-queued, the run stays in a **blocked** state after the die change is confirmed. **Thread mode is permitted** — the operator may run the line slowly to verify the new die is seated and producing on-target material — but the run cannot return to full production until SPC passes. The "Require SPC on resume" toggle on the die change screen can be switched off to skip this gate; that override must be auditable and is restricted to Operations Manager or Quality role. *(Decided May 4, 2026 — Q56)*
+| 1.0 | Apr 2026 | Initial specification — purpose, triggers, checkpoint types, measurement rows, tolerance evaluation, the two submit paths. |
+| 2.0 | Aug 1, 2026 | **Issued for client review.** Checkpoint types corrected to the **five** persisted values. Adds the May 4, 2026 decision that a post-die-change checkpoint is a hard block with thread mode permitted, and the July 30, 2026 min/max tolerance decision. Restructured as a client deliverable; screen styling, layout dimensions and scripting detail removed. |
 
 ---
 
-## Screen Layout (1280 × 1024 px)
+## Reading Convention
 
-```
-┌─────────────────────────────────────────────────────┐
-│  Header                                    72 px     │
-├─────────────────────────────────────────────────────┤
-│  Checkpoint type                          148 px     │
-├─────────────────────────────────────────────────────┤
-│  Measurements                             flex / ~560 px │
-├─────────────────────────────────────────────────────┤
-│  Observation                              110 px     │
-├─────────────────────────────────────────────────────┤
-│  Footer                                    84 px     │
-└─────────────────────────────────────────────────────┘
-```
+| Tag | Meaning |
+|---|---|
+| `[CONFIRMED]` | Agreed with United Aluminum. Built as stated. |
+| `[PROPOSED]` | Our design recommendation, requiring your confirmation at review. |
+| `[CLIENT INPUT REQUIRED]` | We do not know this and will not assume it. Listed in Section 8. |
+
+Open item identifiers prefixed **Q** come from the project open-questions register; those prefixed **OI** come from the master specification's open-items register.
 
 ---
 
-## Section 1 — Header
+# 1. Introduction
 
-### Purpose
-Identifies the run context and operator so every checkpoint record is stamped with who, what, and when without the operator having to enter it manually.
+## 1.1 Purpose
 
-### Data displayed
+The SPC checkpoint is the **mandatory quality gate** that stops a production run from continuing until an operator has physically measured the wire and confirmed it is within dimensional specification. It is raised automatically after events that change what the machine is producing, and it can be opened at any time as a spot check.
 
-| Field | Example value | Notes |
+## 1.2 Why it exists
+
+Statistical process control on this line is not a reporting exercise. Out-of-specification gauge on welding wire causes jams in the customer's automated welding equipment, and it is a common first-shipment field failure. The checkpoint is the mechanism that stops unverified material from being produced at volume after the process has been disturbed.
+
+## 1.3 Scope
+
+**In scope:** when a checkpoint is raised, what is measured, how each measurement is evaluated against target and tolerance, the two exit paths and their consequences, and the audit record produced.
+
+**Not in scope:** the die change or roll adjustment that triggers a checkpoint; QA disposition of held material; control-chart reporting and trend analysis; the incoming-rod inspection performed at check-in.
+
+## 1.4 Where checkpoints are taken
+
+| Point | Typical trigger | Capture |
 |---|---|---|
-| Back button | "Back to run" | Returns to `dashboard_3_active_run.html`; does NOT cancel or delete the checkpoint |
-| Context chip | "FL1 running · checkpoint" | Green pulsing dot; status reflects that the line is running (checkpoint happens mid-run for spot checks) or paused (post-die-change) |
-| Page title | "SPC Checkpoint" | Static |
-| Order | `FW-00421` | Monospace; links to the active production order |
-| Alpha | `R00042` | Monospace; the input coil alpha currently being processed |
-| Operator | `Dave M.` | Pulled from the logged-in session; not editable on this screen |
-| Date / time | `Apr 23, 2026 · 07:42 AM` | Live clock updated every second via `setInterval` |
-
-### Controls
-- **Back to run button** — navigates away without submitting. If measurements have been started, the system should warn the operator that the checkpoint is incomplete and the coil remains in SPC-HOLD.
+| Incoming rod | Before a run starts | Manual |
+| Post-die-change | After a die swap for gauge drift or a size change | Manual |
+| FM1 output | Gauge and width at the flattening mill | Manual, with automatic gauge control data available |
+| FM2 final stand output | Finished dimensions on FL2 / FL3 | Manual, with automatic gauge control data available |
 
 ---
 
-## Section 2 — Checkpoint Type
+# 2. When a Checkpoint Is Raised
 
-### Purpose
-Distinguishes why this checkpoint was opened. The selected type determines which measurement parameters are required, how the record is categorized, and who may need to be notified.
+| Trigger | Raised automatically? |
+|---|---|
+| Die change with reason **gauge drift** | **Yes** |
+| Die change with reason **size change** | **Yes** |
+| Roll adjustment / override | **Yes** |
+| Mid-run pass schedule change | **Yes** |
+| Before a run starts | Yes — as part of check-in |
+| Operator discretion | No — opened manually as a spot check |
 
-### Checkpoint type options (3-column selector grid)
+## 2.1 The post-die-change gate `[CONFIRMED — May 4, 2026]`
 
-#### Pre-run
-- **Icon:** Waveform / signal
-- **Description:** Incoming material before run start
-- **When used:** Verifying incoming rod or intermediate coil dimensions before a new production run begins
-- **Measurements required:** Typically input material diameter; may vary by spec
+When a checkpoint is raised automatically after a die change, the run **is blocked** — this is a hard gate, not a queued task the operator can defer.
 
-#### Post die change *(default in mockup — selected)*
-- **Icon:** Circular arrows (swap/replace)
-- **Description:** Required after any die swap
-- **When used:** Auto-queued when die change reason is Gauge drift or Size change
-- **Measurements required:** Wire diameter at the changed draw box output, gauge, and width at final machine output
-- **Trigger banner shown:** Yes — displays the specific die change event that created this checkpoint
+| Rule | Behaviour |
+|---|---|
+| **Thread mode is permitted** | The operator may run the line slowly to confirm the new die is seated and producing on-target material |
+| **Full production is blocked** | The run cannot return to normal production until the checkpoint passes |
+| **Routing** | Confirming a gauge-drift or size-change die change routes directly to this screen, not back to the run |
+| **The gate may be waived** | Only by an Operations Manager or Quality role, and every waiver is audited |
 
-#### Manual spot check
-- **Icon:** Magnifying glass
-- **Description:** Operator discretion, any time
-- **When used:** Operator suspects a problem, routine interval check, or supervisor-requested verification
-- **Measurements required:** Same set as post-die-change by default; configurable per machine/spec
+> `[CLIENT INPUT REQUIRED]` **Who may waive the gate** was not settled beyond the hard-block behaviour itself. Our recommendation is Operations Manager as the minimum authority (Q56). Every waiver is written to the audit log with user, role, timestamp and the triggering event, and any run that resumed without a completed checkpoint after gauge drift or a size change appears as a flagged exception on the shift summary and quality reporting.
 
-### Interaction behavior
-- Clicking any option applies `.selected` styling (blue border + blue icon background + blue label text)
-- Only one option can be selected at a time
-- Changing the type after measurements are entered should warn or clear the measurement set if required parameters differ
+---
 
-### Trigger banner (shown for Post die change type only)
+# 3. Checkpoint Types
 
-A contextual amber banner below the selector that surfaces the specific die change event that created this checkpoint.
+## 3.1 Persisted types `[CONFIRMED]`
 
-| Element | Example | Purpose |
+Five values are recorded:
+
+| Type | Meaning |
+|---|---|
+| **Pre-run** | Incoming material verified before a run begins |
+| **Post die change** | Required after a die swap |
+| **Roll adjust trigger** | Raised by a roll gap override |
+| **Manual spot check** | Operator discretion, at any time |
+| **Post-run** | Final verification at run completion |
+
+The selected type determines which measurements are required, how the record is categorised, and who is notified.
+
+> `[CLIENT INPUT REQUIRED]` **"Post DB1" is offered on screen but is not one of the recorded types.** It was agreed as an addition on May 21, 2026 and applied to the screen, but never to the recorded value set. Either it becomes a sixth recorded type or the option is removed from the selector — it cannot remain as it is (OI-10).
+
+## 3.2 Trigger context
+
+When a checkpoint was raised by a die change, the screen shows the triggering event so the operator has the full context without navigating away: which draw box was changed, the size change (for example 0.310″ → 0.308″), the footage at which it was logged, who logged it, and how long ago.
+
+> `[CLIENT INPUT REQUIRED]` **A checkpoint cannot currently be joined back to its trigger.** The link is free text only, so it is not possible to prove programmatically which die change a given checkpoint verified. For a quality audit that is a real limitation, and we recommend adding an explicit link (OI-18).
+
+---
+
+# 4. Measurements
+
+## 4.1 What the operator does
+
+The operator measures the wire at the machine with a calibrated instrument and enters each value. Each entry is evaluated immediately against its target and tolerance, and the screen reports in-spec or out-of-spec per measurement together with the signed deviation. A live summary states how many measurements are in specification.
+
+## 4.2 The default measurement set for a post-die-change checkpoint
+
+| # | Measurement | Point of measurement |
 |---|---|---|
-| Amber circle icon | Circular arrows | Visual anchor matching the die change reason |
-| Die block + change label | "DB2 die change" | Identifies which draw box triggered the checkpoint |
-| Size change pill | `0.310" → 0.308"` | Shows the dimension change; monospace in a white-tinted pill |
-| Context metadata | "logged at footage 12,450 ft · by Tim O. · 07:38 AM · 4 min ago" | Gives the operator the full event context without leaving the screen |
+| 1 | Wire diameter | At the changed draw box output |
+| 2 | Gauge | At the flattening mill output |
+| 3 | Width | At the flattening mill output |
 
----
+Targets and tolerances are **not fixed in the screen** — they are read from the order's product specification for the alloy and die-size combination in force.
 
-## Section 3 — Measurements
+> `[CLIENT INPUT REQUIRED]` Two inputs are outstanding and both are required before this evaluation can be enforced:
+> - **The published tolerance bands** per alloy and temper — whether ASTM, customer purchase order, or United Aluminum internal (Q38 / OI-57). Without these, control limits cannot be configured and the gauge trace produces no meaningful alarm.
+> - **The min/max dimensional limits** for gauge, width, diameter and ovality agreed in shape on July 30, 2026, with values still owed (Q71).
 
-### Purpose
-The core of the checkpoint. The operator physically measures the wire at the machine and enters each value. The system evaluates each entry against a target and tolerance, visualizes the position on a tolerance track, and provides a real-time pass/fail result. The section summary and footer button states update live as values are entered.
+## 4.3 How a measurement is presented
 
-### Section header
+Each measurement shows four things together, because an operator reading a gauge needs more than a pass/fail verdict:
 
-| Element | Details |
+| Element | Purpose |
 |---|---|
-| Section title | "Measurements" (static) |
-| Section hint | "Measure each value and confirm in spec" |
-| Summary badge (right-aligned) | Live count pill — green when all in spec ("3 of 3 in spec"), red when any fail ("N of 3 out of spec"). CSS class `has-fail` switches it to danger styling. |
+| Target and tolerance | What the value is being judged against |
+| The entered value | Large, monospaced, on a touch target sized for gloved use |
+| A **tolerance track** with a position marker | Where the reading falls inside — or outside — the band |
+| Result and signed deviation | In spec / out of spec, and by how much |
 
-### Measurement row structure (3 rows in post-die-change mode)
+**The tolerance track is deliberate.** A number alone communicates pass or fail; a marker position communicates *how close to the limit* the reading is. Readings that consistently sit near one edge of the band indicate drift before any failure occurs — which is the entire purpose of statistical process control.
 
-Each row is a 4-column grid: **Info · Input · Tolerance viz · Result**
+## 4.4 Observation
+
+An optional free-text note for anything the structured fields do not capture: surface marks on the wire, unusual noise from a draw box, visible die wear that did not warrant a failure, or uncertainty about instrument calibration. It is stored with the checkpoint record.
 
 ---
 
-#### Column 1 — Measurement Info
+# 5. The Two Exit Paths
 
-| Sub-element | Details |
+Both paths save the checkpoint record in full. They differ in what happens to the material.
+
+## 5.1 Submit and continue the run
+
+| # | Effect |
 |---|---|
-| Measurement name | Bold, 15 px — e.g., "Wire diameter", "Gauge", "Width" |
-| Measurement context | 12 px grey — location/point of measurement, e.g., "post-DB2 draw", "at FM1 output" |
-| Target display | Monospace — e.g., `Target 0.308" ± 0.003"` — shows both target and tolerance |
+| 1 | The checkpoint record is saved with all measurements, type, trigger reference, operator, footage, timestamp and observation |
+| 2 | Any SPC hold placed by the triggering event is lifted |
+| 3 | The line returns to running |
+| 4 | The operator returns to the active run |
 
----
+**Used when** all measurements are in specification — the normal path — or when the operator re-measured and confirmed that a first reading was erroneous, which the observation should state.
 
-#### Column 2 — Input field
+## 5.2 Submit and suspend material
 
-| Property | Details |
+| # | Effect |
 |---|---|
-| Label | "MEASURED" in small caps above the input |
-| Input height | 56 px — large touch target for shop floor use |
-| Font | 22 px monospace, center-aligned |
-| Border | Default: secondary border. Focus: blue border + blue shadow ring |
-| Out-of-spec state | Red border + danger text color applied via `.oos` class on the parent `.measurement` row |
-| Input format | Accepts decimal with quote suffix (e.g., `0.309"`) — parser strips non-numeric characters |
+| 1 | The checkpoint record is saved identically |
+| 2 | The output coil is placed on **SPC hold** — it cannot advance to the next operation, be shipped, or be released until QA lifts the hold |
+| 3 | **The machine is not stopped.** The record marks the material already produced up to this footage as under review |
+| 4 | A QA notification is raised, carrying the footage range, the out-of-specification values and their deviations |
+| 5 | The operator returns to the active run; production may continue, but the flagged footage range is locked pending QA |
+
+**Used when** a measurement is out of specification and the operator cannot resolve it, when the operator wants QA to review before release, or on supervisor instruction.
+
+QA subsequently either accepts with a concession and lifts the hold, or rejects, and the material is quarantined or scrapped.
+
+## 5.3 Why two buttons rather than one
+
+The consequence is stated on the control itself. A single submit with a confirmation dialog adds a step and still describes the outcome in a place the operator has to read separately; the label *"submit · suspend material"* tells them what they are authorising before they press it.
+
+When any measurement is out of specification, the suspend action is **visually elevated** — the system has determined which path is appropriate and guides the operator toward it, without disabling the continue path for the operator who has legitimately re-measured.
+
+> `[CLIENT INPUT REQUIRED]` **SPC hold is not currently distinguishable from a WIP-rejection hold.** The requirement names it as a distinct state that blocks advancement, shipping and release, but the two holds would be recorded identically. Whether QA needs to tell them apart determines whether a separate state is added (OI-23).
 
 ---
 
-#### Column 3 — Tolerance visualization
+# 6. Audit Record
 
-A horizontal track that shows where the measured value falls relative to the target and tolerance band.
+Three values are stamped on every checkpoint and cannot be edited by the operator:
 
-| Element | Details |
+| Field | Source |
 |---|---|
-| Track | Rounded pill, white background with thin border |
-| Green band | Centered, spans ±tolerance range (10%–90% of track width in mockup; real implementation maps to ±tolerance) |
-| Center line | Vertical hairline at 50% = target value |
-| Marker dot | 22 px circle, blue when in spec / red when out of spec. Position is computed dynamically: `pct = 50 + ((measured − target) / (tolerance × 1.67)) × 50`, clamped to 4%–96% |
-| Min / center / max labels | Monospace below track showing lower limit, target, and upper limit values |
+| Operator | The active session |
+| **Footage at check** | The counter value **when the checkpoint was opened**, not when it was submitted |
+| Timestamp | Server-side |
 
-The display range is ±tolerance × 1.67, meaning the tolerance band occupies the center 60% of the track. Values beyond ±tolerance still show but the marker approaches the edge, making drift visually obvious.
+**Footage is captured on opening deliberately.** It marks the beginning of the potentially affected material range, and it must not move because the operator took several minutes to complete the measurements.
+
+Leaving the screen without submitting does not cancel or delete the checkpoint; the operator is warned that the checkpoint is incomplete and that the material remains held.
 
 ---
 
-#### Column 4 — Result
+# 7. Confirmed Decisions
 
-| Element | In-spec state | Out-of-spec state |
+| # | Decision | Date |
 |---|---|---|
-| Status badge | Green background · checkmark icon · "In spec" | Red background · × icon · "Out of spec" |
-| Deviation value | Green monospace · e.g., `+0.001"` | Red monospace · e.g., `-0.005"` |
+| D1 | **A post-die-change checkpoint is a hard block on full production**, not a queued task. Thread mode is permitted while measurements are taken | May 4, 2026 |
+| D2 | Confirming a **gauge drift** or **size change** die change routes directly to this screen | May 4, 2026 |
+| D3 | A waiver of the gate is auditable and restricted to Operations Manager or Quality | May 4, 2026 |
+| D4 | **Five checkpoint types are recorded**, including the roll-adjust trigger | Jul 2026 |
+| D5 | Targets and tolerances come from the order's product specification, not from the screen | Apr 2026 |
+| D6 | **Dimensional limits are min/max** on gauge, width, diameter and ovality, held as reference data | Jul 30, 2026 |
 
 ---
 
-### The three measurement rows (post-die-change defaults)
+# 8. Open Items Requiring Client Input
 
-| # | Measurement | Context | Target | Tolerance |
-|---|---|---|---|---|
-| 1 | Wire diameter | post-DB2 draw | 0.308" | ±0.003" |
-| 2 | Gauge | at FM1 output | 0.110" | ±0.002" |
-| 3 | Width | at FM1 output | 0.625" | ±0.005" |
-
-These are the configured spec values for this order/die size combination. Real implementation pulls them from the order's product spec record.
-
-### Live validation logic (JavaScript)
-
-1. `parseValue()` — extracts the numeric portion from the input string (strips `"`)
-2. `updateMeasurement()` — computes deviation, determines in/out of spec, moves the marker, updates status badge and deviation label, applies `.oos` class to the row
-3. `updateSummary()` — iterates all rows, counts in-spec vs total, updates the summary badge, and elevates the "Submit · suspend material" button to a filled red style when any measurement is out of spec
-4. Fires on `input` and `blur` events of each measurement input
+| Ref | Priority | Question | What it blocks |
+|---|---|---|---|
+| **Q38 / OI-57** | High | **Published tolerance bands** per alloy and temper — ASTM, customer PO, or UA internal | Control limits, evaluation, and every gauge-trace alarm |
+| **Q71** | High | **Min/max values** for gauge, width, diameter and ovality | Dimensional acceptance at every checkpoint |
+| **Q56** | Medium | **Who may waive the post-die-change gate** | The override authority and its audit |
+| **OI-10** | Medium | **"Post DB1"** — add it as a recorded type, or remove it from the selector | The checkpoint type list |
+| **OI-18** | Medium | Should a checkpoint carry an **explicit link to its triggering event**? | Proving which die change a checkpoint verified |
+| **OI-23** | Medium | Must **SPC hold** be distinguishable from a WIP-rejection hold? | The QA release flow |
 
 ---
 
-## Section 4 — Observation
+# 9. Assumptions
 
-### Purpose
-Optional free-text field for the operator to record anything noteworthy about the checkpoint that the structured fields do not capture.
-
-| Property | Details |
+| # | Assumption |
 |---|---|
-| Label | "Observation (optional)" |
-| Input type | `<textarea>`, not resizable, 60 px tall |
-| Placeholder | "Notes on the die change, surface appearance, or anything unusual about this checkpoint..." |
-| Focus state | Blue border + blue shadow ring (matches all other inputs) |
-| Saved with | Checkpoint record as a text note field |
-
-Examples of useful observations: surface marks on the wire, unusual noise from the draw box, visual die wear that wasn't enough to flag as a failure, operator uncertainty about the measurement tool calibration.
+| A1 | The operator measures with a calibrated instrument at the machine; the system does not read these values automatically. |
+| A2 | Target and tolerance values exist on the order's product specification for every alloy and die-size combination in production. |
+| A3 | QA has a route to review held material and lift or reject a hold; that workflow is specified elsewhere. |
+| A4 | Placing material on hold does not stop the machine — the physical line continues under operator control. |
 
 ---
 
-## Section 5 — Footer
+# 10. Related Specifications
 
-### Purpose
-Provides an immutable audit stamp for the checkpoint record and the two submission actions.
-
-### Footer stamp (left side — read-only)
-
-| Field | Example value | Notes |
-|---|---|---|
-| Operator | Dave M. | From active session; not editable |
-| Footage at check | 12,450 ft | Monospace; footage counter value at the moment the checkpoint was opened; not editable |
-| Timestamp | `07:42:18 AM · Apr 23, 2026` | Live-updating clock in monospace |
-
-These three fields are written to the checkpoint record on submit and cannot be changed by the operator.
-
-### Footer actions (right side)
-
----
-
-#### "Submit · suspend material" button
-
-**Default state:** Danger-outline style (white background, red border, red text)
-**Elevated state:** Filled red background (activates when any measurement is out of spec)
-
-| Aspect | Detail |
+| Document | Relationship |
 |---|---|
-| Icon | Warning triangle (SVG) |
-| Label | "Submit · suspend material" |
-| Color — default | Red border, danger text, white fill |
-| Color — elevated | Solid red fill, white text — system automatically applies when `inSpecCount < measurements.length` |
-| Hover | `background-danger` tint (default) / darker red (elevated) |
-
-**What it does:**
-1. Saves the checkpoint record with all entered measurements, type, operator, footage, timestamp, and observation
-2. Sets output coil status to `SPC-HOLD` — the coil cannot advance to the next operation, be shipped, or be released until a QA reviewer lifts the hold
-3. Does NOT stop the machine from running more footage — it records that the material already produced up to this footage point is under review
-4. Returns operator to the active run dashboard (run may continue physically, but the flagged footage range is locked for QA)
-5. Triggers a QA notification if configured
-
-**When to use:**
-- Any measurement is out of spec and the operator cannot resolve it (die re-seat, re-measure)
-- Operator is uncertain about the measurement and wants QA to review before releasing
-- Supervisor instruction to hold
+| [Die Change and Die Management](DieChangeAndManagement.md) | The event that raises most automatic checkpoints |
+| [Rod Check-in](RocCheckin.md) | Records the pre-run checkpoint |
+| [Pass Schedule Management](PassScheduleManagement.md) | A mid-run configuration change also raises a checkpoint |
+| [HMI and SCADA Layout](HMIAndSCADALayout.md) | Where checkpoints appear as event markers on the trend charts |
 
 ---
 
-#### "Submit · continue run" button
+# Client Sign-off
 
-**Style:** Primary — solid green fill, white text, checkmark icon
+## Part A — Rules for confirmation
 
-| Aspect | Detail |
+| Ref | Item | Accept | Amend |
+|---|---|:--:|:--:|
+| §2.1 | Post-die-change checkpoint is a hard block; thread mode permitted | ☐ | ☐ |
+| §3.1 | The five recorded checkpoint types | ☐ | ☐ |
+| §4.2 | Targets and tolerances read from the order's product specification | ☐ | ☐ |
+| §4.3 | Tolerance track presentation, showing proximity to the limit | ☐ | ☐ |
+| §5.1 | Continue path lifts the hold and returns the line to running | ☐ | ☐ |
+| §5.2 | Suspend path holds the material but does not stop the machine | ☐ | ☐ |
+| §5.3 | Two explicit exit actions rather than one submit with a confirmation | ☐ | ☐ |
+| §6 | Footage stamped when the checkpoint opens, not when it is submitted | ☐ | ☐ |
+
+## Part B — Information required
+
+| Ref | Item | Owner | Supplied |
+|---|---|---|:--:|
+| Q38 / OI-57 | Published tolerance bands by alloy and temper | | ☐ |
+| Q71 | Min/max dimensional values | | ☐ |
+| Q56 | Waiver authority for the post-die-change gate | | ☐ |
+| OI-10 | "Post DB1" — add or remove | | ☐ |
+| OI-18 | Explicit checkpoint-to-trigger link | | ☐ |
+| OI-23 | SPC hold distinguishable from a rejection hold | | ☐ |
+
+## Part C — Approval
+
+| | Name | Signature | Date |
+|---|---|---|---|
+| **Quality** | | | |
+| **Operations** | | | |
+| **Process Engineering** | | | |
+
+---
+
+## Change Log
+
+| Date | Change |
 |---|---|
-| Icon | Checkmark (SVG) |
-| Label | "Submit · continue run" |
-| Color | Solid green (`#1D9E75`); darkens on hover |
-| Enabled condition | Available at all times (operator can force-continue even with OOS readings, but the elevated "suspend" button is the clearer path when failures exist) |
-
-**What it does:**
-1. Saves the checkpoint record with the same stamp fields
-2. Lifts the `SPC-HOLD` on the output coil (if it was set by the die change event)
-3. Sets FL1 status to Running
-4. Returns to the active run dashboard with the run able to continue
-
-**When to use:**
-- All measurements are in spec — this is the normal, expected exit path
-- Operator re-measured and confirmed the first reading was erroneous (observation field should note this)
-
----
-
-## State Machine: Submit · suspend material — Step-by-Step
-
-1. **Operator opens SPC Checkpoint** — queued automatically after a die change, or opened manually
-2. **Operator selects checkpoint type** — pre-filled as "Post die change" when auto-queued
-3. **Operator reads trigger banner** — confirms which die change and die size delta prompted this checkpoint
-4. **Operator measures wire at machine** — uses calibrated gauge/micrometer at the specified measurement points
-5. **Operator enters each measurement** — tolerance viz and status update live; summary badge tracks pass/fail count
-6. **If any row shows "Out of spec":**
-   - Summary badge turns red with failure count
-   - "Submit · suspend material" button elevates to filled red — draws the eye as the appropriate action
-7. **Operator may add an observation** — documents reason for suspension or circumstances of the OOS reading
-8. **Operator clicks "Submit · suspend material"**
-9. **System writes checkpoint record** — all measurements, type, trigger event reference, operator, footage, timestamp, observation
-10. **System sets coil `FW-00421-C01` status → `SPC-HOLD`** — prevents downstream use
-11. **System sends QA notification** (if configured) — includes footage range, OOS measurement values, and deviation amounts
-12. **Operator is returned to active run dashboard** — run may continue producing footage, but the held footage range is locked pending QA disposition
-13. **QA reviews and either:**
-    - Accepts with a concession → lifts hold → coil proceeds
-    - Rejects → coil is quarantined or scrapped
-
----
-
-## Key Design Decisions
-
-**Why two submit buttons instead of one?**
-The dual-button pattern makes the consequence explicit at the point of action. A single "Submit" with a modal confirmation adds a step; the label itself ("submit · suspend material") communicates the outcome so the operator understands what they are authorizing before clicking.
-
-**Why does the "suspend" button elevate automatically?**
-When measurements are out of spec the system has determined that suspension is the appropriate path. Elevating the button (filled red) guides the operator toward the correct action without blocking the "continue" path — an operator who re-measured and confirmed the first reading was wrong can still choose to continue and note it in the observation.
-
-**Why is footage-at-check immutable in the footer?**
-The footage counter is captured when the checkpoint is opened, not when it is submitted. This accurately stamps the beginning of the potentially affected material range, regardless of how long the operator takes to fill out measurements.
-
-**Why is the tolerance visualization a track with a marker rather than just a number?**
-Shop-floor operators reading a gauge need to see pattern over time, not just pass/fail. A marker position communicates how close to the limit a reading is. Consistently reading near one edge of the band indicates drift even before a failure occurs, which is the core purpose of SPC.
+| Apr 2026 | Initial specification — purpose, triggers, checkpoint types, measurement rows, tolerance evaluation, the two exit paths, audit stamp. |
+| Aug 1, 2026 | **Reissued as version 2.0 for client review.** Corrected the checkpoint type list to the five recorded values and flagged the "Post DB1" selector as unrecorded. Added the May 4, 2026 hard-block decision with thread mode, the roll-adjust and mid-run-change triggers, the checkpoint locations, and the July 30 min/max tolerance decision. Raised the missing checkpoint-to-trigger link and the undistinguished SPC hold as client questions. Screen styling, layout dimensions, colour values and scripting detail removed. |

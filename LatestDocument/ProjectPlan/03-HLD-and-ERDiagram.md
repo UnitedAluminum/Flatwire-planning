@@ -72,7 +72,7 @@ Three facts this diagram encodes that are easy to get wrong:
 
 | Component | Repository | Responsibility |
 |---|---|---|
-| `flat-wire-shopfloor` | `c:\UAL\ual-angular` | All 23 screens, all `fw`-prefixed controls, the SignalR client, line/run state |
+| `flat-wire-shopfloor` | `c:\UAL\ual-angular` | All 22 screens, all `fw`-prefixed controls, the SignalR client, line/run state |
 | `FlatWire.API` | `c:\UAL\ual-api` | Thin controllers over MediatR; `FlatWireHub`; OPC ingest hosted service; `PLCTagService` |
 | `FlatWire.Application` | `c:\UAL\ual-api` | Commands, queries, validators, pipeline behaviours |
 | `FlatWire.Domain` | `c:\UAL\ual-api` | Aggregates, param models, enums, `IFlatWireClient` |

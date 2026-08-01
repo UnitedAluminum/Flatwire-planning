@@ -779,7 +779,7 @@
 - [ ] Machine Status panel: Speed (FPM), Footage counter, DB1/DB2 status + die sizes, FM1 status
 - [ ] Payoff weight bars: colour-coded (green >50%, amber 25–50%, red <25%, red flashing <10%); "WELD SOON" alert shown at <25%
 - [ ] Action buttons:
-  - Log Weld Event → Dashboard 4
+  - *(Log Weld Event removed 1 Aug 2026 — Dashboard 4 retired; the weld is captured at DB2A)*
   - Die Change → Die Change screen (DC)
   - Roll Adjust → Dashboard 11 (FL3 only)
   - SPC Checkpoint → Dashboard 6
@@ -793,7 +793,7 @@
 
 ---
 
-### FW-063 · Dashboard 4 — Weld Event Logger
+### FW-063 · Weld Event capture — **DB2A dialog** *(Dashboard 4 retired 1 Aug 2026)*
 **Points:** 5 · **Priority:** High · **Sprint:** 4
 
 **As an** FL1 operator,
@@ -1416,7 +1416,7 @@ FW-005 (Fix existing FlatWire tables)
                 ├─> FW-011 / FW-012 / FW-013 (Pass Schedule UI)
                 └─> FW-061 (Dashboard 2 — Rod Check-in)
                     ├─> FW-062 (Dashboard 3 — Active Run)
-                    │   ├─> FW-063 (Dashboard 4 — Weld Event)
+                    │   ├─> FW-063 (Weld Event — DB2A dialog)
                     │   ├─> FW-065 (Dashboard 6 — SPC)
                     │   ├─> FW-070 (Dashboard 11 — Roll Adjust)
                     │   └─> FW-071 (Pause Run)

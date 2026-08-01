@@ -280,6 +280,12 @@ See [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md) 
 
 ## Dashboard 3 — Active Run Monitor (FL1 / FL3)
 
+> **Layout note (1 Aug 2026):** the FL1 screen is **`dashboard_3_active_run_v2.html`** — the grouped
+> action cluster (*Run events* / *Go to*). The earlier left-rail layout, `dashboard_3_active_run.html`,
+> was **withdrawn** and its file deleted (git history at `2a0426b`); every inbound link across the
+> mockups was repointed at `_v2`. The `_v2` suffix is now a misnomer — it is the only FL1 layout, not a
+> revision of a surviving one — and is worth renaming when the Angular port begins.
+
 **Who:** FL1 Operator
 **When:** Continuously displayed during an active production run
 **Purpose:** Real-time gauge/width trace, machine status, payoff monitoring, quick actions
@@ -334,7 +340,7 @@ See [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md) 
 
 | Button | Opens | Lines | Condition |
 |--------|-------|-------|-----------|
-| Log Weld Event | Dashboard 4 | FL1, FL3 | Payoff 1 nearing end |
+| ~~Log Weld Event~~ | ~~Dashboard 4~~ **retired 1 Aug 2026** — captured on Dashboard 2A (*Mark as welded*) | FL1, FL3 | Payoff 1 nearing end |
 | Die Change | Die Change screen (DC) | FL1, FL3 | Drawing die replacement needed |
 | Roll Adjust | Dashboard 11 | FL3 only | FM2 roll gap adjustment needed |
 | SPC Checkpoint | Dashboard 6 | FL1, FL3 | Any time |
@@ -1491,7 +1497,7 @@ See [RodCheckout.md](../LatestDocument/RequirementDocuments/RodCheckout.md) — 
 
 Dashboard 2A ─[inspection Fail]────────────────► Dashboard 8  (WIP Rejection — hard block)
 Dashboard 2A ─[Pre-check-out]──────────────────► releases the bay in place (ModeP, no PLC clear)
-Dashboard 2A ─[Mark as welded]─────────────────► Dashboard 4  (Weld Event log)
+Dashboard 2A ─[Mark as welded]─────────────────► (dialog in place — Dashboard 4 retired)
 Dashboard 2  ─[More options tile]──────────────► Dashboard 2A
 Any screen   ─[topbar More Options tile]───────► Dashboard 2A
 

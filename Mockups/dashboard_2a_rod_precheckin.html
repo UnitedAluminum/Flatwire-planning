@@ -304,6 +304,98 @@
   .weld-detail .mono { color: var(--color-text-primary); font-weight: 500; }
   .weld-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
+  /* ── Weld quality check (Mark as welded dialog) ──
+     Ported from dashboard_4_weld_event.html L454-524 — that screen was RETIRED and deleted on
+     1 Aug 2026 (in git history at 2a0426b), and this dialog is now the only weld capture path
+     in the system. Two differences from the original, both deliberate:
+
+       1. NEITHER button starts selected. Dashboard 4 pre-selects Pass. This is the gate whose
+          entire purpose is to make the operator look at the join before confirming, and a
+          pre-selected Pass can be confirmed without ever being read.
+       2. The fail reason STACKS below instead of sitting inline at 44% width. Dashboard 4 is a
+          fixed 1024px page, so it cannot afford the height; this is a 660px modal with a
+          scrollable body, and inline here would push both buttons under the 44px touch floor. */
+  .qc-block { margin-top: 14px; }
+  .qc-label {
+    font-size: 14px; font-weight: 600; color: var(--color-text-tertiary);
+    text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px;
+  }
+  .quality-row { display: flex; gap: 10px; }
+  .quality-btn {
+    flex: 1; min-width: 0; min-height: 44px;
+    font-size: 17px; font-weight: 500;
+    border: 2px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    border-radius: var(--border-radius-md);
+    cursor: pointer; font-family: var(--font-sans);
+    transition: all .15s;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+  }
+  .quality-btn:hover { background: var(--color-background-secondary); }
+  .quality-btn:active { transform: scale(0.98); }
+  .quality-btn svg { width: 22px; height: 22px; }
+  .quality-btn.pass.selected { background: var(--color-green); border-color: var(--color-green); color: #fff; }
+  .quality-btn.fail.selected { background: var(--color-red);   border-color: var(--color-red);   color: #fff; }
+
+  .fail-reason-wrap {
+    display: none; margin-top: 10px; padding: 10px 12px;
+    background: var(--color-background-danger);
+    border-radius: var(--border-radius-md);
+    border-left: 3px solid var(--color-red);
+  }
+  .fail-reason-wrap.visible { display: block; }
+  .fail-reason-label {
+    font-size: 14px; font-weight: 500; color: var(--color-text-danger); margin-bottom: 6px;
+  }
+  .fail-reason-select {
+    width: 100%; min-height: 44px; padding: 0 12px;
+    font-size: 14px; font-family: var(--font-sans);
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md); outline: none;
+  }
+  .fail-reason-select:focus { border-color: var(--color-red); }
+
+  /* ── Weld history dialog (read-only) ──
+     Row shape ported from dashboard_10_shift_summary.html .weld-list/.weld-entry, which is
+     the same information at shift scope. Renamed to .wh-* rather than reused verbatim:
+     dashboard 10's `.weld-detail` is an entry's middle column, while HERE `.weld-detail`
+     is the strip's narrative text above (L303) — the names collide and the strip loses. */
+  .wh-summary {
+    display: flex; gap: 10px; margin-bottom: 12px;
+  }
+  .wh-tile {
+    flex: 1; display: flex; flex-direction: column; gap: 2px;
+    padding: 10px 14px; border-radius: var(--border-radius-md);
+    background: var(--color-background-secondary);
+  }
+  .wh-tile-label { font-size: 14px; color: var(--color-text-tertiary); }
+  .wh-tile-value { font-size: 17px; font-weight: 600; color: var(--color-text-primary); }
+  .wh-list { display: flex; flex-direction: column; gap: 6px; }
+  .wh-entry {
+    display: grid; grid-template-columns: 68px 1fr auto;
+    gap: 12px; align-items: center;
+    padding: 10px 12px; border-radius: var(--border-radius-md);
+    background: var(--color-background-secondary);
+    border-left: 2px solid var(--color-green);
+  }
+  .wh-entry.fail { border-left-color: var(--color-red); }
+  .wh-time { font-family: var(--font-mono); font-size: 14px; color: var(--color-text-tertiary); }
+  .wh-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .wh-rods { font-family: var(--font-mono); font-size: 14px; font-weight: 500; }
+  .wh-meta { font-family: var(--font-mono); font-size: 14px; color: var(--color-text-tertiary); }
+  /* WeldQualityFailReason is mandatory on Fail (CK_WeldEvent_FailReason / WLD013), so a failed
+     weld must never render as a bare red bar with no stated cause. */
+  .wh-reason { font-size: 14px; color: var(--color-text-danger); }
+  .wh-result { font-size: 14px; font-weight: 500; color: var(--color-text-success); white-space: nowrap; }
+  .wh-result.fail { color: var(--color-text-danger); }
+  .wh-empty {
+    padding: 26px 14px; text-align: center;
+    font-size: 14px; color: var(--color-text-tertiary);
+  }
+
   /* ── Queue (TRV004 / TRV009) ── */
   /* flex 1 1 0 + min-height 0 lets this shrink below its content height so the
      table scrolls inside it. A queue is unbounded by nature — it must never be
@@ -905,7 +997,16 @@
         <svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5L20 6.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Mark as welded
       </button>
-      <a class="btn" href="dashboard_4_weld_event.html">Weld event log</a>
+      <!-- Was an <a> to dashboard_4_weld_event.html labelled "Weld event log". That link was
+           mislabelled — Dashboard 4 was the weld CAPTURE form, not a log of anything — and it
+           navigated away from the station. (Dashboard 4 has since been retired outright, 1 Aug
+           2026.) This opens a read-only list of the welds already
+           recorded against the running run. Read-only on purpose: correcting or reversing a
+           recorded weld is WLD011, which is explicitly unspecified. -->
+      <button class="btn" type="button" id="btn-weld-history" disabled
+              title="No run in progress &mdash; there are no welds to show">
+        Welds this run &middot; <span id="wh-count">0</span>
+      </button>
     </div>
   </div>
 
@@ -1416,16 +1517,77 @@
           the incoming rod for certificate traceability.</span>
       </div>
 
-      <div class="field">
-        <label class="field-label field-required" for="mw-badge">Operator badge</label>
-        <input class="input mono" id="mw-badge" type="text" placeholder="Badge no." value="149">
+      <!-- Weld quality check (WLD013). Same control and same six reasons as Dashboard 4, so the
+           weld is recorded identically whichever screen captured it. Neither button starts
+           selected — see the CSS note. A Fail is recorded as a weld EVENT but does NOT mark the
+           rod welded: the join has to be remade, so the bay stays "not yet welded" and this
+           dialog stays available. -->
+      <div class="qc-block">
+        <div class="qc-label">Weld quality check</div>
+        <div class="quality-row">
+          <button class="quality-btn pass" type="button" id="mw-q-pass" data-quality="Pass" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Pass
+          </button>
+          <button class="quality-btn fail" type="button" id="mw-q-fail" data-quality="Fail" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Fail
+          </button>
+        </div>
+
+        <div class="fail-reason-wrap" id="mw-fail-wrap">
+          <label class="fail-reason-label" for="mw-fail-reason">Fail reason (required)</label>
+          <select class="fail-reason-select" id="mw-fail-reason">
+            <option value="">Select reason&hellip;</option>
+            <option>Misalignment at join</option>
+            <option>Weld break on inspection</option>
+            <option>Surface burn / scorching</option>
+            <option>Weld not fully fused</option>
+            <option>Diameter mismatch at join</option>
+            <option>Other &mdash; see observation</option>
+          </select>
+        </div>
       </div>
+
     </div>
     <div class="gb-modal-foot">
+      <!-- No badge field: WLD003 wants the operator recorded, not re-keyed. The operator is
+           already established by the signed-in shared session (OPERATOR / the topbar's
+           multi-operator switcher), so asking for a badge here re-collected something the
+           system knows and let it disagree with the session that will actually be stamped. -->
       <span class="modal-status">Logged against the run with operator and timestamp</span>
       <div class="modal-foot-actions">
         <button class="btn" type="button" data-close="mw-overlay">Cancel</button>
         <button class="btn btn-primary" type="button" id="mw-confirm">Confirm weld</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ Modal 4 — Welds this run (read-only) ══════════════
+     Every weld recorded against the ACTIVE run, newest last. Scoped to the run, not the
+     shift and not the coil: WeldEvent is keyed on RunId, so this needs no date filtering
+     and no paging — a run carries a handful of welds.
+
+     There is no confirm, no edit and no delete. A recorded weld is a certificate input;
+     reversing one is WLD011, which no document specifies. -->
+<div class="gb-modal-overlay" id="wh-overlay">
+  <div class="gb-modal narrow" role="dialog" aria-modal="true" aria-labelledby="wh-title">
+    <div class="gb-modal-head">
+      <div>
+        <div class="gb-modal-title" id="wh-title">Welds this run</div>
+        <div class="gb-modal-sub" id="wh-sub">&mdash;</div>
+      </div>
+      <button class="gb-modal-close" type="button" data-close="wh-overlay" aria-label="Close">&times;</button>
+    </div>
+    <div class="gb-modal-body">
+      <div class="wh-summary" id="wh-summary"></div>
+      <div class="wh-list" id="wh-list"></div>
+    </div>
+    <div class="gb-modal-foot">
+      <span class="modal-status">Read-only &mdash; recorded welds cannot be edited here</span>
+      <div class="modal-foot-actions">
+        <button class="btn" type="button" data-close="wh-overlay">Close</button>
       </div>
     </div>
   </div>
@@ -1558,6 +1720,29 @@
     "R00039": { alloy: "3003", temper: "H14", nominal: 0.312, gross: 8240, net: 7900, vendor: "Nexans", footage: 0, remaining: null, lastRun: null, spools: null, orderId: "FW-00500" }
   };
 
+  /* ── WeldEvent rows for the active run (mock) ──
+     Keyed by RunId, which is how the real table is keyed — so no date filter and no paging.
+     Ordered oldest first, matching the footage progression.
+
+     One entry is deliberately a FAIL: WeldQuality is Pass|Fail and WeldQualityFailReason is
+     mandatory on Fail (CK_WeldEvent_FailReason / WLD013), yet every weld fixture elsewhere in
+     the mockups is a Pass — so the failure state had no visual anywhere in the design. The
+     reason string is from the WeldEvent.md §3.1 list, not invented.
+
+     Only RUN-0418 is populated ON PURPOSE. The "Swapped" demo state runs RUN-0419, so it
+     renders the empty state — which is the only way to reach it, since cold start disables
+     the button outright. Do not "fix" that by seeding RUN-0419; it is the empty-state demo,
+     and it also shows that the list really is scoped to the run rather than the line. */
+  var WELD_LOG = {
+    "RUN-0418": [
+      { time: "6:48 AM", outgoing: "R00040", incoming: "R00041", footage: 4120,
+        weldType: "Induction", quality: "Pass", failReason: null, operator: "J. Alvarez" },
+      { time: "9:22 AM", outgoing: "R00041", incoming: "R00042", footage: 9860,
+        weldType: "Induction", quality: "Fail", failReason: "Weld not fully fused &mdash; cut back and remade",
+        operator: "J. Alvarez" }
+    ]
+  };
+
   var CURRENT_LINE = "FL1";
 
   /* Both bays use ONE state shape and one renderer. Neither is special.
@@ -1573,6 +1758,10 @@
   function emptyBay() {
     return { state: "empty", alpha: null, seq: null, plannedSeq: null, stagedAt: null,
              isWelded: false, inspectionFailed: false,
+             /* A weld that FAILED its quality check leaves the rod un-welded but is not a
+                no-op — the attempt happened and the operator must remake it. isWelded alone
+                cannot express that, so the outcome is carried separately. */
+             lastWeldFailed: false, lastWeldFailReason: null,
              offScheduleOverride: false, outOfSequenceOverride: false,
              overrideBy: null, overrideReason: null, overrideAt: null, scheduledLine: null,
              weightLb: null, netLb: null, runId: null, checkedInAt: null, operator: null };
@@ -1723,7 +1912,7 @@
       return '<a class="btn btn-danger" href="dashboard_8_wip_rejection.html">Go to WIP Rejection ' + SVG_CHEV + '</a>';
     }
     if (b.state === "active") {
-      return '<a class="btn" href="dashboard_3_active_run.html">Open active run ' + SVG_CHEV + '</a>' +
+      return '<a class="btn" href="dashboard_3_active_run_v2.html">Open active run ' + SVG_CHEV + '</a>' +
              '<a class="btn" href="dashboard_12_rod_checkout.html">Check out rod</a>';
     }
     /* A WELDED rod CAN be released — but only by a supervisor, and it is a REJECTION, not a
@@ -1868,6 +2057,13 @@
     } else if (b.isWelded) {
       alert.className = "bay-alert info";
       body.innerHTML = "<strong>Welded</strong>transition at 0&nbsp;ft remaining on Payoff " + (n === 1 ? 2 : 1);
+    } else if (b.lastWeldFailed) {
+      /* Ranked ABOVE the plain "Pre-checked in" line: a failed weld is an outstanding action,
+         not a resting state. Without this branch, confirming a failed weld changed nothing on
+         the card and the operator had no way to tell the attempt had been recorded at all. */
+      alert.className = "bay-alert crit";
+      body.innerHTML = "<strong>Last weld failed</strong>" + b.lastWeldFailReason +
+                       " &mdash; remake the weld";
     } else {
       alert.className = "bay-alert info";
       body.innerHTML = "<strong>Pre-checked in</strong>no PLC tags pushed until check-in";
@@ -1902,6 +2098,12 @@
       } else if (other.isWelded) {
         txt += "staged and <strong>welded</strong> (<span class='mono'>" + other.alpha +
                "</span>). Transition occurs at 0&nbsp;ft remaining on Payoff " + runNo + ".";
+      } else if (other.lastWeldFailed) {
+        /* Distinct from plain "not yet welded": an attempt WAS made and failed its quality
+           check, so the operator is remaking a weld rather than making a first one. */
+        txt += "staged with <span class='mono'>" + other.alpha +
+               "</span> &mdash; <strong>last weld failed</strong> (" + other.lastWeldFailReason +
+               "). Remake the weld before Payoff " + runNo + " runs out.";
       } else {
         txt += "staged with <span class='mono'>" + other.alpha +
                "</span>, not yet welded. Induction-weld tail to head before Payoff " + runNo + " runs out.";
@@ -1914,14 +2116,71 @@
     var mw = $("btn-mark-welded");
     var canWeld = !!runNo && other.state === "staged" && !other.isWelded;
     mw.disabled = !canWeld;
-    mw.title = canWeld ? "Record the induction weld"
+    mw.title = canWeld ? (other.lastWeldFailed ? "Remake the failed weld" : "Record the induction weld")
       : !runNo ? "No rod is running — there is nothing to weld to"
       : other.state === "empty" ? "Enabled only when a rod is pre-checked-in on the idle bay"
       : other.state === "blocked" ? "The staged rod failed inspection"
       : "Already marked as welded";
 
+    /* Welds this run. Gated on a RUN, not on a weldable pair — the list stays readable while
+       the other bay is empty or blocked, and it is the ONLY control here that survives a
+       station with nothing stageable. Cold start has no run at all, hence disabled. */
+    var wh = $("btn-weld-history");
+    var runId = runNo ? bayOf(runNo).runId : null;
+    var welds = runId ? (WELD_LOG[runId] || []) : [];
+    $("wh-count").textContent = welds.length;
+    wh.disabled = !runId;
+    wh.title = !runId
+      ? "No run in progress — there are no welds to show"
+      : welds.length
+        ? "View the " + welds.length + " weld" + (welds.length === 1 ? "" : "s") + " recorded against " + runId
+        : "No welds recorded against " + runId + " yet";
+
     var occ = (bay1.state === "empty" ? 0 : 1) + (bay2.state === "empty" ? 0 : 1);
     $("stamp-bays").textContent = occ + " of 2";
+  }
+
+  /* ───────────────── Render: welds this run (read-only) ─────────────────
+     Built on open rather than on every render — the strip re-renders at bay-state changes
+     and this list only ever changes when a weld is recorded. */
+  function renderWeldHistory() {
+    var runNo = activeBayNo();
+    var runId = runNo ? bayOf(runNo).runId : null;
+    var welds = runId ? (WELD_LOG[runId] || []) : [];
+
+    $("wh-sub").innerHTML = CURRENT_LINE + " &middot; run <span class='mono'>" +
+      (runId || "&mdash;") + "</span>" +
+      (CURRENT_ORDER ? " &middot; order <span class='mono'>" + CURRENT_ORDER + "</span>" : "");
+
+    if (!welds.length) {
+      $("wh-summary").innerHTML = "";
+      $("wh-list").innerHTML =
+        '<div class="wh-empty">No welds recorded against this run yet.<br>' +
+        'A weld is recorded when the running rod is joined to the staged rod.</div>';
+      return;
+    }
+
+    var failed = welds.filter(function (w) { return w.quality === "Fail"; }).length;
+    $("wh-summary").innerHTML =
+      '<div class="wh-tile"><span class="wh-tile-label">Welds recorded</span>' +
+      '<span class="wh-tile-value">' + welds.length + '</span></div>' +
+      '<div class="wh-tile"><span class="wh-tile-label">Quality</span>' +
+      '<span class="wh-tile-value">' + (failed ? failed + " failed" : "All pass") + '</span></div>';
+
+    $("wh-list").innerHTML = welds.map(function (w) {
+      var isFail = w.quality === "Fail";
+      return '<div class="wh-entry' + (isFail ? " fail" : "") + '">' +
+        '<span class="wh-time">' + w.time + '</span>' +
+        '<div class="wh-body">' +
+          '<span class="wh-rods">' + w.outgoing + ' &rarr; ' + w.incoming + '</span>' +
+          '<span class="wh-meta">at ' + fmt(w.footage) + ' ft &middot; ' +
+            w.weldType.toLowerCase() + ' &middot; ' + w.operator + '</span>' +
+          (isFail ? '<span class="wh-reason">' + w.failReason + '</span>' : '') +
+        '</div>' +
+        '<span class="wh-result' + (isFail ? " fail" : "") + '">' +
+          (isFail ? '&#x2717; Fail' : '&#x2713; Pass') + '</span>' +
+      '</div>';
+    }).join("");
   }
 
   /* The station is full when neither bay can take a rod. A blocked bay still physically
@@ -2721,6 +2980,13 @@
     renderAll();
   });
 
+  /* ══════════════════ Welds this run (read-only) ══════════════════ */
+  $("btn-weld-history").addEventListener("click", function () {
+    if (this.disabled) return;
+    renderWeldHistory();
+    openModal("wh-overlay");
+  });
+
   /* ══════════════════ Mark as welded ══════════════════ */
   $("btn-mark-welded").addEventListener("click", function () {
     if (this.disabled) return;
@@ -2753,17 +3019,94 @@
         " at " + b.nominal.toFixed(3) + "&Prime;; the running coil is " + a.alloy + "-" + a.temper +
         " at " + a.nominal.toFixed(3) + "&Prime;. Alloy, temper and diameter must match.";
     }
-    $("mw-confirm").disabled = !match;
+    mwMaterialMatch = match;
+    resetWeldQuality();
     openModal("mw-overlay");
   });
 
+  /* ── Weld quality state (WLD013) ──
+     Held outside the DOM so the gate is evaluated from one place. Null until the operator
+     chooses — there is no default, so "Confirm weld" cannot be reached without an answer. */
+  var mwQuality = null;
+  var mwMaterialMatch = false;
+
+  function resetWeldQuality() {
+    mwQuality = null;
+    $("mw-q-pass").classList.remove("selected");
+    $("mw-q-fail").classList.remove("selected");
+    $("mw-q-pass").setAttribute("aria-pressed", "false");
+    $("mw-q-fail").setAttribute("aria-pressed", "false");
+    $("mw-fail-wrap").classList.remove("visible");
+    $("mw-fail-reason").value = "";
+    syncWeldConfirm();
+  }
+
+  /* Three gates, all of which must hold. The material check is WLD006; the mandatory reason on
+     a Fail mirrors CK_WeldEvent_FailReason (WLD013) so the UI cannot compose a row the database
+     would reject. */
+  function syncWeldConfirm() {
+    var ok = mwMaterialMatch &&
+             mwQuality !== null &&
+             (mwQuality === "Pass" || !!$("mw-fail-reason").value);
+    $("mw-confirm").disabled = !ok;
+    $("mw-confirm").title =
+      !mwMaterialMatch ? "Alloy, temper and diameter must match the running coil"
+      : mwQuality === null ? "Record the weld quality first"
+      : (mwQuality === "Fail" && !$("mw-fail-reason").value) ? "A fail reason is required"
+      : mwQuality === "Fail" ? "Record the failed weld — the rod stays un-welded for a remake"
+      : "Record the weld";
+  }
+
+  ["mw-q-pass", "mw-q-fail"].forEach(function (id) {
+    $(id).addEventListener("click", function () {
+      mwQuality = this.getAttribute("data-quality");
+      $("mw-q-pass").classList.toggle("selected", mwQuality === "Pass");
+      $("mw-q-fail").classList.toggle("selected", mwQuality === "Fail");
+      $("mw-q-pass").setAttribute("aria-pressed", String(mwQuality === "Pass"));
+      $("mw-q-fail").setAttribute("aria-pressed", String(mwQuality === "Fail"));
+      $("mw-fail-wrap").classList.toggle("visible", mwQuality === "Fail");
+      if (mwQuality === "Pass") $("mw-fail-reason").value = "";
+      syncWeldConfirm();
+    });
+  });
+  $("mw-fail-reason").addEventListener("change", syncWeldConfirm);
+
   $("mw-confirm").addEventListener("click", function () {
+    if (this.disabled) return;
     var runNo = activeBayNo();
     if (!runNo) return;
-    var stg = otherBay(runNo);
-    stg.isWelded = true;
-    var q = QUEUE.filter(function (x) { return x.alpha === stg.alpha; })[0];
-    if (q) q.status = "welded";
+    var run = bayOf(runNo), stg = otherBay(runNo);
+    var passed = mwQuality === "Pass";
+    var reason = passed ? null : $("mw-fail-reason").value;
+
+    /* A FAILED weld is a recorded event but NOT a completed join. The rod stays staged and
+       un-welded, the bay keeps reading "not yet welded", and Mark as welded stays enabled so
+       the operator can remake it. Only a Pass sets RodStaging.IsWelded — which is exactly what
+       POST /weldevent does in the real system, in the same transaction as the WeldEvent row. */
+    if (passed) {
+      stg.isWelded = true;
+      var q = QUEUE.filter(function (x) { return x.alpha === stg.alpha; })[0];
+      if (q) q.status = "welded";
+      stg.lastWeldFailed = false;
+      stg.lastWeldFailReason = null;
+    } else {
+      /* Without this the operator confirms a failed weld and NOTHING on the screen changes —
+         the strip still reads "not yet welded" with no hint that an attempt was made. */
+      stg.lastWeldFailed = true;
+      stg.lastWeldFailReason = reason;
+    }
+
+    /* One write in the real system: POST /weldevent records the WeldEvent row and, on a Pass,
+       sets RodStaging.IsWelded/WeldedAt/WeldedBy. The mockup must not let the flag and the
+       list diverge, so both are updated here together. */
+    if (run.runId) {
+      (WELD_LOG[run.runId] = WELD_LOG[run.runId] || []).push({
+        time: clockText(false), outgoing: run.alpha, incoming: stg.alpha,
+        footage: ROD_MASTER[run.alpha].footage, weldType: "Induction",
+        quality: mwQuality, failReason: reason, operator: OPERATOR
+      });
+    }
+
     closeModal("mw-overlay");
     syncSimButtons();
     renderAll();

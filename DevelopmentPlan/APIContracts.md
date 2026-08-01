@@ -1075,39 +1075,22 @@ Pre-check-out: release a staged rod that was never checked in.
 
 ---
 
-### POST `/api/v1/flatwire/staging/rod/mark-welded`
+### ~~POST `/api/v1/flatwire/staging/rod/mark-welded`~~ — **RETIRED 1 Aug 2026**
 
-Records the induction weld joining the running rod to the staged rod (`WLD010`, `WLD003`).
+**Superseded by `POST /weldevent`, which is now the single weld write.** Do not implement.
 
-**Auth:** Bearer JWT — Operator or above
+The endpoint recorded a weld as a bare flag — `RodStaging.IsWelded` / `WeldedAt` / `WeldedBy` — and captured
+**no quality result and no footage**. That produced a state `WeldEvent.md` §1.2 calls uncertifiable: a weld
+asserted to exist with nothing recorded about whether it held. Meanwhile `POST /weldevent` wrote a second,
+richer record of the *same physical join* from Dashboard 4, and nothing reconciled the two.
 
-**Request Body:**
+Dashboard 2A's Mark as welded dialog now captures the weld quality (`WLD013`), which was the **only** NOT NULL
+`WeldEvent` column it was missing — it already had both rod alphas, the weld type and the footage. Both screens
+therefore compose the same row, so there is one endpoint and one record. This is decision **D-A** in
+`WeldEventPopupPlan.md`, and it closes **Q-W1**.
 
-```json
-{ "stagingId": 412, "operatorId": "dave.m" }
-```
-
-**Side effects:**
-
-1. `RodStaging.IsWelded = 1` with `WeldedAt` / `WeldedBy` (`WLD003`)
-2. `PayoffStateChanged` broadcast with `isWelded: true`
-
-**Response `200 OK`:**
-
-```json
-{
-  "data": { "stagingId": 412, "isWelded": true, "weldedAt": "2026-07-29T12:41:00Z" },
-  "success": true
-}
-```
-
-**Response `409 Conflict`:** No rod is pre-checked-in on the idle bay, or it is already marked welded. The Dashboard 2A button is disabled in both cases.
-
-**Response `422 Unprocessable Entity`:** Alloy, temper or diameter do not match the running coil (`WLD006`).
-
-> **This records the weld; it does not switch bays.** Per `WLD005` the payoff transition is driven
-> **solely by material consumption reaching 0 ft remaining**. Reversing a welded coil is a
-> supervisor action (`WLD011`) and is not yet specified.
+**Migration:** callers move to `POST /weldevent`, which sets the `RodStaging` weld columns in the same
+transaction — **on a `Pass` result only**. See that endpoint for the conditional write.
 
 ---
 
@@ -1550,12 +1533,42 @@ Records a weld join between two rods. Updates traceability chain for the active 
 ```
 
 **Weld Types:** `InductionWeld` (rod-to-rod), `LaserWeld` (flat-to-flat)
+**Weld Quality:** `Pass`, `Fail`. **`weldQualityFailReason` is required when `weldQuality` is `Fail`** —
+`CK_WeldEvent_FailReason` / `WLD013`.
+
+**`weldQualityFailReason` values** (the same six offered on Dashboard 4 and Dashboard 2A):
+`Misalignment at join` · `Weld break on inspection` · `Surface burn / scorching` · `Weld not fully fused` ·
+`Diameter mismatch at join` · `Other — see observation`
+
+> **This is the single weld write.** `POST /staging/rod/mark-welded` is **retired** (see above). Both
+> Dashboard 2A's Mark as welded dialog and Dashboard 4 post here, so one physical join produces one record
+> whichever screen captured it.
 
 **Side Effects:**
-- Weld join event written with both alphas, footage position, operator, timestamp
+- `WeldEvent` row written with both alphas, footage position, weld type, **quality**, operator, timestamp
+- **`RodStaging` weld columns set — on a `Pass` result only** (see below)
 - All subsequent output footage linked to `incomingRodAlpha`
 - `PayoffWeight` SignalR event re-established for new payoff position
+- `PayoffStateChanged` broadcast — `isWelded: true` on a Pass; on a Fail the bay state is unchanged
 - Weld marker queued for gauge trace chart
+
+**The `RodStaging` write is conditional on quality:**
+
+| `weldQuality` | `WeldEvent` row | `RodStaging.IsWelded` / `WeldedAt` / `WeldedBy` | Bay state |
+|---|---|---|---|
+| **`Pass`** | Written | **Set**, in the same transaction | `Staged` → welded; transition awaits 0 ft remaining |
+| **`Fail`** | Written | **Not set** — left as they were | Stays **staged and un-welded**; the weld must be remade |
+
+> **Why a failed weld does not mark the rod welded.** The join did not hold, so the rod is not joined to the
+> running rod and the line cannot transition through it. Recording the failure and *also* flagging the rod as
+> welded would assert a continuous feed that does not physically exist. The failed attempt is still written —
+> it happened, it consumed footage, and it is a certificate-relevant event — but the bay keeps reading "not yet
+> welded" and Mark as welded stays available for the remake.
+>
+> **Consequence: several `WeldEvent` rows may describe one physical join** (a failed attempt, then the remake).
+> `CoilTraceability` attributes output footage to source rods *per weld boundary*, and two rows at nearly the
+> same footage is a case nothing currently specifies. This is **Q24** (re-weld on the certificate), which now
+> arises two ways; the footage-attribution half is **Q22**.
 
 **Response `200 OK`:**
 
@@ -1567,11 +1580,97 @@ Records a weld join between two rods. Updates traceability chain for the active 
     "footagePosition": 3840,
     "outgoingAlpha": "R00041",
     "incomingAlpha": "R00042",
+    "weldQuality": "Pass",
+    "isWelded": true,
     "timestamp": "2026-04-30T08:00:00Z"
   },
   "success": true
 }
 ```
+
+`isWelded` reports the resulting `RodStaging` state, so the client never has to infer it from the quality —
+`false` on a `Fail`.
+
+**Response `422 Unprocessable Entity`:**
+- `weldQuality` is `Fail` and `weldQualityFailReason` is missing or empty (`WLD013`)
+- Alloy, temper or diameter of the two rods do not match (`WLD006`)
+
+**Response `409 Conflict`:** no rod is staged on the idle bay, or the staged rod is already welded.
+
+---
+
+### GET `/api/v1/flatwire/run/{runId}/weldevents`
+
+Every weld recorded against one run, oldest first. Backs the **Welds this run** read-only dialog on
+Dashboard 2A (`PCI021`).
+
+**Auth:** Bearer JWT — any authenticated role. **Read-only: there is no PUT, PATCH or DELETE
+counterpart.** A recorded weld is a certificate input; reversing one in place is `WLD011`, which no
+document specifies.
+
+> **Why this is not served from `GET /run/active`.** That endpoint already returns a `weldEvents[]`
+> array, but a deliberately trimmed one — id, both alphas, footage, timestamp — which feeds Dashboard 3's
+> gauge-trace weld markers. It carries **no quality, operator or weld type**, which is most of what an
+> operator opens this list to see. Widening it would push chart-marker payload onto every Dashboard 3
+> poll. Dashboard 2A does not call `/run/active` at all, so a run-scoped resource is the cheaper split.
+> Leave `/run/active.weldEvents` as it is.
+
+**Path Parameters:** `runId` — e.g. `RUN-0418`
+
+**Response `200 OK`:**
+
+```json
+{
+  "data": {
+    "runId": "RUN-0418",
+    "lineId": "FL1",
+    "totalCount": 2,
+    "failedCount": 1,
+    "weldEvents": [
+      {
+        "weldEventId": "WLD-002",
+        "outgoingAlpha": "R00040",
+        "incomingAlpha": "R00041",
+        "outgoingPayoffPosition": 1,
+        "incomingPayoffPosition": 2,
+        "footagePosition": 4120,
+        "weldType": "InductionWeld",
+        "weldQuality": "Pass",
+        "weldQualityFailReason": null,
+        "operatorId": "j.alvarez",
+        "timestamp": "2026-07-31T06:48:00Z"
+      },
+      {
+        "weldEventId": "WLD-003",
+        "outgoingAlpha": "R00041",
+        "incomingAlpha": "R00042",
+        "outgoingPayoffPosition": 2,
+        "incomingPayoffPosition": 1,
+        "footagePosition": 9860,
+        "weldType": "InductionWeld",
+        "weldQuality": "Fail",
+        "weldQualityFailReason": "Weld not fully fused — cut back and remade",
+        "operatorId": "j.alvarez",
+        "timestamp": "2026-07-31T09:22:00Z"
+      }
+    ]
+  },
+  "success": true
+}
+```
+
+**Response `200 OK` with an empty array:** the run exists but no weld has been recorded yet — a normal
+state for a run that has not yet reached its first payoff handover. **Not a `404`.**
+
+**Response `404 Not Found`:** no run with this `runId`.
+
+**Notes:**
+
+- Ordered by `footagePosition` ascending, which is also chronological within a run.
+- `weldQualityFailReason` is non-null exactly when `weldQuality = 'Fail'` — enforced at write time by
+  `CK_WeldEvent_FailReason` (`WLD013`), so a consumer may rely on it and must render it.
+- No paging. A run carries a handful of welds — one per rod handover — so `RunId` alone bounds the set.
+- Rendered by the client oldest-first so the footage progression reads down the list.
 
 ---
 
@@ -2129,9 +2228,15 @@ alertCleared$(lineId: string): Observable<AlertClearedEvent>
 |---|---|---|
 | S1 | `GET /lines/status`, SignalR hub skeleton | S1 |
 | S2 | `GET /passschedule`, `GET /passschedule/{id}`, `POST /passschedule`, `PUT /passschedule/{id}`, `PATCH /passschedule/{id}/status`, `POST /passschedule/generate`, `GET /rod/{alpha}`, `POST /rod` | S2 |
-| S3 | `POST /checkin/rod`, `POST /checkin/spool`, `GET /run/active`, `GET /run/{id}/gaugetrace`, `POST /run/{id}/pause`, `POST /run/{id}/resume`, `POST /spc`, `GET /payoff/status`, `POST /staging/rod`, `POST /staging/rod/unstage`, `POST /staging/rod/mark-welded`, `GET /staging/queue` | S3 |
+| S3 | `POST /checkin/rod`, `POST /checkin/spool`, `GET /run/active`, `GET /run/{id}/gaugetrace`, `POST /run/{id}/pause`, `POST /run/{id}/resume`, `POST /spc`, `GET /payoff/status`, `POST /staging/rod`, `POST /staging/rod/unstage`, `GET /staging/queue`, `GET /run/{id}/weldevents` † | S3 |
 | S4 | `POST /weldevent`, `POST /rolloverride`, `POST /diechange`, `POST /checkout`, `POST /wipreject`, `POST /coil/complete`, `GET /coil/{alpha}/label` | S4 |
 | S5 | `GET /shiftsummary` | S5 |
+
+> † **`GET /run/{id}/weldevents` is read-before-write.** It sits in S3 because its only consumer is
+> Dashboard 2A, which is an S3 / phase-4 screen — but the rows it reads are written by `POST /weldevent`
+> in **S4**. Until that lands it returns an empty array, which is a legitimate response (a run with no
+> welds yet), so the screen is complete and reviewable at the phase-4 gate without pulling weld-event
+> work forward. Populate the S3 stub with non-empty sample data so the list renders in review.
 
 > **Stub protocol:** The backend team publishes an OpenAPI/Swagger stub (200 response with schema-valid dummy data, no database) at the start of each sprint. The shopfloor Angular team builds against the stub; stubs are replaced by real implementations as they land.
 
@@ -2154,11 +2259,12 @@ alertCleared$(lineId: string): Observable<AlertClearedEvent>
 | `GET /staging/queue` | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `POST /staging/rod` | ✓ | ✓ | — | ✓ | ✓ |
 | `POST /staging/rod/unstage` | ✓ | ✓ | — | ✓ | ✓ |
-| `POST /staging/rod/mark-welded` | ✓ | ✓ | — | ✓ | ✓ |
+| ~~`POST /staging/rod/mark-welded`~~ | — | — | — | — | — | *(retired — use `POST /weldevent`)* |
 | `POST /checkin/rod` | ✓ | ✓ | — | ✓ | ✓ |
 | `POST /checkin/spool` | ✓ | ✓ | — | ✓ | ✓ |
 | `GET /run/active` | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `GET /run/{id}/gaugetrace` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `GET /run/{id}/weldevents` | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `POST /run/{id}/pause` | ✓ | ✓ | — | ✓ | ✓ |
 | `POST /run/{id}/resume` | ✓ | ✓ | — | ✓ | ✓ |
 | `POST /spc` | ✓ | ✓ | — | ✓ | ✓ |
@@ -2189,7 +2295,9 @@ alertCleared$(lineId: string): Observable<AlertClearedEvent>
 
 | Date | Change |
 |---|---|
-| July 31, 2026 | **Failed staging inspection now returns `201 Created` with `state: "Blocked"`, not `422`.** The old behaviour wrote no row at all, so a bundle that failed inspection — already physically on the payoff, since bundles are not unbanded until positioned there — left `GET /payoff/status` reporting the occupied bay as `NotStaged`, Dashboard 2A offering it as "Empty — available", and the next rod stageable into it. It also made the `Blocked` state unreachable despite being implemented across the API enum, the schema and the whole of Dashboard 2A. Staging now commits the row before the inspection gate. `CHK010` is unchanged — no bypass, WIP Rejection is still the only forward path. Closes **Q72** items 1–2; item 3 (*what releases a blocked row*) is the blocking residual, and two consequences are recorded but untraced (`TRV009` traveler class, `Available` projection exclusion). From the [Dashboard 2A UX review](../Analysis/Dashboard2A_UXReview.md) finding F2. |
+| July 31, 2026 | **Failed staging inspection now returns `201 Created` with `state: "Blocked"`, not `422`.** The old behaviour wrote no row at all, so a bundle that failed inspection — already physically on the payoff, since bundles are not unbanded until positioned there — left `GET /payoff/status` reporting the occupied bay as `NotStaged`, Dashboard 2A offering it as "Empty — available", and the next rod stageable into it. It also made the `Blocked` state unreachable despite being implemented across the API enum, the schema and the whole of Dashboard 2A. Staging now commits the row before the inspection gate. `CHK010` is unchanged — no bypass, WIP Rejection is still the only forward path. Closes **Q72** items 1–2; item 3 (*what releases a blocked row*) is the blocking residual, and two consequences are recorded but untraced (`TRV009` traveler class, `Available` projection exclusion). From the Dashboard 2A UX review finding F2 (`Analysis/Dashboard2A_UXReview.md`, deleted 1 Aug 2026 — in git history at `2a0426b`). |
 | July 29, 2026 | Added the **Pre-Check-in / Payoff Staging** section: `GET /payoff/status`, `POST /staging/rod`, `POST /staging/rod/unstage`, `POST /staging/rod/mark-welded`, `GET /staging/queue`, plus the `PayoffStateChanged` hub event and `PayoffStagingController`. Extended `GET /rod/{alpha}` with `footageRunToDate`, `remainingWeightEstimateLb`, `stagedPayoffPosition`, `isWelded` — without them the `PRC007` carry-forward gate cannot be enforced. Documented check-in *consuming* the staged row. |
 | April 30, 2026 | Original contract set. **Known correctness bugs catalogued in `REVIEW.md` Tier 1** — notably #37 (`RodCheckin` NOT NULL columns the check-in command never sends), the `/passschedule/generate` worked example, a missing `CheckpointType` value, and three edge-type vocabularies. Cross-check before implementing. |
 | August 1, 2026 | **30 Jul client decisions applied.** **Wrong station is corrected, not authorised:** the `offSchedule` override object is **removed** from `POST /staging/rod` — the client resolves `scheduledLineId` from `GET /rod/{alpha}` and **switches station**, and a mismatched POST returns `409` with `correctLineId` for the client to switch and re-post (Q74). Out-of-sequence remains the one supervisor-authorised deviation. **`POST /staging/rod` no longer sets `coils.coil_status`** — `INFLAT` is set at check-in (Q67); the reqsum / `wip_coil_orders` half of that side effect is still open. **The blocked-row release is specified:** `POST /wipreject` releases the staging row (`Status → 'Unstaged'`, `UnstageKind = 'WipRejection'`, `WipRejectionId`) and broadcasts `PayoffStateChanged` — the Q72 item-3 residual, and the only thing that clears a `Blocked` bay. **`POST /staging/rod/unstage` gains a weld-dependent approval:** unwelded is operator-only, **welded requires a supervisor override and puts the rod on `HOLD`** because removal means cutting the material (Q68/Q77) — restoring, behind that gate, the control removed on 31 Jul. **`CHK007` becomes a min/max band** read from `AlloyProperty`, currently unseeded pending the values owed by e-mail (Q71). Flagged **G22**: the order-membership `409` is knowingly wrong for a **multi-order rod** (Q69) pending the Q79 sequencing answer, and **Q78** (order scheduled on neither rod line) has no station to switch to and no specified path. |
+| August 1, 2026 | **New read endpoint `GET /run/{runId}/weldevents`** — every weld recorded against one run, backing the read-only **Welds this run** dialog on Dashboard 2A (`PCI021`). It replaces a mislabelled "Weld event log" link that navigated to Dashboard 4, which is the weld *capture form* and not a log of anything. Deliberately **not** served by widening `GET /run/active.weldEvents`: that array is a trimmed marker list feeding Dashboard 3's gauge trace, carries no quality/operator/weld type, and Dashboard 2A never calls it. **Read-only by design** — no PUT/PATCH/DELETE counterpart, because reversing a recorded weld in place is `WLD011` and is unspecified. Empty array (not `404`) for a run with no welds yet. Placed in **S3** with Dashboard 2A even though `POST /weldevent` writes its rows in **S4**, so the screen is complete at the phase-4 gate; the S3 stub must return non-empty sample data. Closes `WeldEventPopupPlan.md` **Q-W3** and **withdraws the proposed gap G25**. |
+| August 1, 2026 | **Weld quality is captured at the weld, and `POST /staging/rod/mark-welded` is retired.** Dashboard 2A's Mark as welded dialog now captures Pass/Fail with a mandatory reason on Fail (`WLD013`, the same six reasons as Dashboard 4). Quality was the **only** NOT NULL `WeldEvent` column that dialog was missing — it already captured both rod alphas, weld type and footage — so the two screens now compose the same row and **`POST /weldevent` becomes the single weld write**, setting `RodStaging.IsWelded`/`WeldedAt`/`WeldedBy` in the same transaction. This is decision **D-A** in `WeldEventPopupPlan.md` and it closes **Q-W1**; it needs **no schema change**. **The `RodStaging` write is conditional:** a `Pass` sets the weld columns, a **`Fail` writes the `WeldEvent` row and leaves the rod staged and un-welded** — the join did not hold, so flagging it welded would assert a continuous feed that does not exist; the operator remakes the weld. Added the `422` for a missing fail reason and an `isWelded` field on the response so the client never infers bay state from quality. **Consequence — widens `Q24` rather than adding a question:** a fail-then-remake produces several `WeldEvent` rows for one physical join, which is the re-weld-on-certificate question `Q24` already asks; footage attribution across the two boundaries is `Q22`. |

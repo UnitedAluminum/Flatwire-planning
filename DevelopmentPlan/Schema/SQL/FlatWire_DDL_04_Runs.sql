@@ -60,7 +60,8 @@ GO
 -- bay while the current coil is still running, so the line can
 -- run continuously through an induction weld.
 --   SRS §4.2 PCI001-PCI008 (station, payoff capture, weld surfacing)
---   SRS WLD003/WLD010      ("Mark as Welded" + operator/timestamp)
+--   SRS WLD003/WLD010      ("Mark as Welded" + operator/timestamp; weld columns are written
+--                           by POST /weldevent on a PASS result only -- see IsWelded below)
 --   SRS TRV004/TRV009      (Traveler Queue section)
 --   SRS §4.18 PRC007       (carry-forward evidence at the staging scan)
 -- FL1 and FL3 only — PCI002 excludes FL2, which has no staging space.
@@ -90,7 +91,10 @@ BEGIN
         -- Variance = RodSeqno vs PlannedSeqno, reportable without reconstructing history.
         [RodSeqno]                INT           NOT NULL,   -- actual processing sequence
         [PlannedSeqno]            INT           NULL,       -- planned sequence, snapshotted
-        [IsWelded]                BIT           NOT NULL CONSTRAINT [DF_RodStaging_IsWelded] DEFAULT (0),  -- WLD010
+        -- WLD010. Set by POST /weldevent, in the same transaction as the WeldEvent row, and
+        -- ONLY when WeldQuality='Pass'. A failed weld writes the event and leaves this 0 --
+        -- the join did not hold, so the rod is not joined to the running rod. (Aug 1 2026)
+        [IsWelded]                BIT           NOT NULL CONSTRAINT [DF_RodStaging_IsWelded] DEFAULT (0),
         [Status]                  VARCHAR(12)   NOT NULL,   -- Staged | CheckedIn | Unstaged
         -- Resolved from planning_routings at the scan, never typed. On a cold line this is
         -- what the first rod REVEALS, which is why even the first rod is validatable.
@@ -125,8 +129,8 @@ BEGIN
         [InspectionNotes]         VARCHAR(500)  NULL,
         [StagedAt]                DATETIMEOFFSET NOT NULL CONSTRAINT [DF_RodStaging_StagedAt] DEFAULT (SYSDATETIMEOFFSET()),
         [StagedBy]                VARCHAR(50)   NOT NULL,
-        [WeldedAt]                DATETIMEOFFSET NULL,      -- WLD003 operator + timestamp
-        [WeldedBy]                VARCHAR(50)   NULL,
+        [WeldedAt]                DATETIMEOFFSET NULL,      -- WLD003 operator + timestamp of the PASSING weld
+        [WeldedBy]                VARCHAR(50)   NULL,       -- from the signed-in session, not re-keyed
         [CheckedInAt]             DATETIMEOFFSET NULL,      -- set when check-in consumes this row
         [RodCheckinId]            INT           NULL,       -- FK → RodCheckin.Id (see 06_ForeignKeys)
         -- TWO routes out of a staged bay, not one (Q68 + Q72 item 3, decided 30 Jul 2026):
@@ -179,6 +183,9 @@ BEGIN
         -- "Out of sequence" means the rod staged is not the one expected.
         CONSTRAINT [CK_RodStaging_OutOfSeqRod]   CHECK ([ExpectedRodAlpha] IS NULL OR [ExpectedRodAlpha] <> [RodAlpha]),
         -- Welded stamp is all-or-nothing, and only meaningful once IsWelded is set.
+        -- Unaffected by the Aug 1 2026 quality decision: a FAILED weld sets none of the three,
+        -- so the group still holds. Weld quality itself lives on WeldEvent, never mirrored
+        -- here -- one join must not have two quality answers that can disagree.
         CONSTRAINT [CK_RodStaging_Welded]       CHECK (
                                                     ([IsWelded] = 0 AND [WeldedAt] IS NULL AND [WeldedBy] IS NULL)
                                                  OR ([IsWelded] = 1 AND [WeldedAt] IS NOT NULL AND [WeldedBy] IS NOT NULL)

@@ -1041,7 +1041,7 @@ Manually verify the following after implementation. Open the original HTML mocku
 **Mockups (primary visual reference — port HTML directly):**
 - `C:\UAL\Flat Wire\Mockups\dashboard_2_rod_checkin.html` — Dashboard 2 complete HTML + CSS + JS
 - `C:\UAL\Flat Wire\Mockups\dashboard_5_spool_checkin.html` — Dashboard 5 complete HTML + CSS + JS
-- `C:\UAL\Flat Wire\Mockups\dashboard_3_active_run.html` — the destination after check-in
+- `C:\UAL\Flat Wire\Mockups\dashboard_3_active_run_v2.html` — the destination after check-in *(was `dashboard_3_active_run.html`, withdrawn 1 Aug 2026)*
 
 **API and backend patterns:**
 - `c:/UAL/ual-api/API/Domain/CoilCheckin/CoilCheckin.API/Controllers/CoilCheckin/CoilCheckinController.cs` — controller pattern

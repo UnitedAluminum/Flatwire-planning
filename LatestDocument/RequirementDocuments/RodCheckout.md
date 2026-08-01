@@ -1,299 +1,334 @@
----
-# Rod Checkout — Use Case Analysis
+# Flat Wire Processing — Rod Checkout Specification
 
 **Project:** Flat Wire Mill Implementation
+**Document Type:** Functional Requirement Specification — Issued for Client Review
+**Applies to:** FL1 / FL3
+**Version:** 2.0
 **Last Updated:** August 1, 2026
-**Document Type:** Use Case Analysis
-**Status:** Partially Decided — See Open Questions section for per-question status. **Mode P (pre-check-out) added Aug 1, 2026** from the 30 Jul client call, together with a persistence gap this document's own May 4 decisions never got (**G24**)
+**Status:** Issued for Client Review and Sign-off
+**Screen reference:** Dashboard 12 — Rod Checkout
+**Requirement source:** SRS §4.17 (post-check-in removal); pre-check-out has **no source requirement ID** — new text is proposed in Section 6
 
 ---
 
-## Background
+## Document Change History
 
-The existing rod lifecycle has no formal checkout step. A checked-in rod (`INFLAT` status) currently leaves that state only via **Run Complete**, **WIP Rejection/Scrap**, or a **Weld Event**. The customer requirement is to allow a rod to be **deliberately removed from a payoff position** without those outcomes — for example, when the wrong rod was scanned, an order is rescheduled, or the rod must be relocated.
-
-This analysis defines two distinct scenarios and recommends implementing them as **Dashboard 12 — Rod Checkout** (see [FlatWireShopfloorDashboards.md](../../Analysis/FlatWireShopfloorDashboards.md)).
+| Version | Date | Description |
+|---|---|---|
+| 1.0 | Apr 24, 2026 | Initial use-case analysis — two scenarios (pre-run and mid-run), machine-control behaviour, captured data, open questions. |
+| 1.1 | May 4, 2026 | Supervisor approval confirmed for mid-run checkout; no material identity issued until the supervisor dispositions it. |
+| 2.0 | Aug 1, 2026 | **Issued for client review.** Adds **Mode P** (removal of a rod that was staged but never checked in) with its weld-dependent approval rule, from the July 30, 2026 client call. States the approval record as an explicit requirement. Restructured as a client deliverable; internal schema detail removed. |
 
 ---
 
-## Scenario A — Pre-Run Checkout (Run Never Started)
+## Reading Convention
 
-Rod was checked in (payoff position assigned, pass schedule acknowledged) but the line has not yet started.
+| Tag | Meaning |
+|---|---|
+| `[CONFIRMED]` | Agreed with United Aluminum. Built as stated. |
+| `[PROPOSED]` | Our design recommendation, requiring your confirmation at review. |
+| `[CLIENT INPUT REQUIRED]` | We do not know this and will not assume it. Listed in Section 9. |
 
-### Triggers
+Open item identifiers prefixed **Q** come from the project open-questions register; those prefixed **OI** come from the master specification's open-items register.
+
+---
+
+# 1. Introduction
+
+## 1.1 Purpose
+
+The existing rod lifecycle has **no formal checkout step**. Once checked in, a rod leaves that state only by running to completion, by rejection or scrap, or by being welded to its successor. United Aluminum requires the ability to **deliberately remove a rod from a payoff position** without any of those outcomes — because the wrong rod was scanned, because an order was rescheduled, because a defect was found late, or because the rod must be relocated.
+
+This document specifies that capability.
+
+## 1.2 Scope
+
+**In scope:** removal of rod from a payoff position in three distinct situations; the reason and disposition captured in each; the approval required; the machine-control precondition; and the material status that results.
+
+**Not in scope:** WIP rejection processing; the partial re-check-in of a rod that comes back later; spool and coil completion; weld events.
+
+## 1.3 The three modes
+
+| Mode | Situation | Run exists | Footage | Pass schedule | Machine tags | Approval |
+|---|---|---|---|---|---|---|
+| **Mode P** — pre-check-out | Rod was **staged but never checked in** | No | 0 | Nothing to void | **Nothing to clear** | Depends on the weld (Section 6) |
+| **Mode A** — pre-run checkout | Checked in and acknowledged, **run not started** | Yes | 0 | **Voided** | **Cleared** | Operator |
+| **Mode B** — mid-run checkout | Checked in and **running** | Yes | > 0 | **Voided** | Cleared after a confirmed stop | **Supervisor** |
+
+The distinction that matters: **Mode A and B gate on footage produced; Mode P gates on whether the material has been physically joined.** These are different risks and they arrive at different moments.
+
+---
+
+# 2. Mode A — Pre-Run Checkout
+
+The rod was checked in — payoff assigned, pass schedule acknowledged — but the line has not yet started.
+
+## 2.1 Triggers
 
 | Trigger | Notes |
-|---------|-------|
-| Wrong rod scanned during check-in | Operator error on rod alpha |
-| Order cancelled or rescheduled before run | Planning change |
-| Rod fails physical re-inspection after check-in | Late discovery of surface defect |
+|---|---|
+| Wrong rod scanned during check-in | Operator error on the serial |
+| Order cancelled or rescheduled before the run | Planning change |
+| Rod fails a physical re-inspection after check-in | Late discovery of a surface defect |
 | Rod relocated to a different line | FL1 ↔ FL3 reassignment |
 
-### Flow
+## 2.2 What the operator provides
 
-```
-Dashboard 2 (Rod Check-in — pre-acknowledged)
-  OR
-Dashboard 3 (Active Run Monitor — footage = 0)
-    ↓ [Button: "Check Out Rod"]
-    ↓ Checkout dialog opens
-        ├─ Rod Alpha           (read-only — current rod)
-        ├─ Payoff Position     (read-only — 1 or 2)
-        ├─ Checkout Reason     (required — dropdown, see reason codes below)
-        ├─ Notes               (optional; required when reason = Other)
-        └─ [Cancel]  [Confirm Checkout]
-    ↓
-    System Actions:
-        ├─ Rod status:               INFLAT → STAGED or RECEIVED (operator choice)
-        ├─ Payoff position:          cleared
-        ├─ Pass schedule ack:        voided
-        ├─ PLC tags:                 cleared for that payoff position
-        ├─ Checkout event logged:    timestamp, operator, reason, new status
-        └─ Dashboard returns to "Ready for Check-In" state
-```
+| Field | Entry |
+|---|---|
+| Rod serial | Read-only — the current rod |
+| Payoff position | Read-only |
+| Checkout reason | **Required** — from the codes below |
+| Notes | Optional; **required** when the reason is *Other* |
+| Return destination | **Required** — floor storage or warehouse |
 
-### Pre-Run Checkout Reason Codes
+**Reason codes:** wrong rod / mis-scan · order cancelled or deferred · failed re-inspection · relocated to a different line · other.
 
-| Reason | Use When |
-|--------|----------|
-| Wrong rod / mis-scan | Operator scanned or entered the wrong alpha |
-| Order cancelled / deferred | Planning cancelled or rescheduled the job |
-| Failed re-inspection | Defect found after check-in was acknowledged |
-| Relocated to different line | Rod reassigned to FL3 or another FL1 position |
-| Other | Free-text required |
+## 2.3 What the system does
 
-### Status After Checkout
-
-| Operator Selection | Resulting Rod Status | Meaning |
-|-------------------|---------------------|---------|
-| Return to floor storage | `STAGED` | Rod stays in production area, ready for re-check-in |
-| Return to warehouse | `RECEIVED` | Rod returned to incoming storage |
+| # | Action |
+|---|---|
+| 1 | Rod status changes from `INFLAT` to `STAGED` (returned to the floor) or `RECEIVED` (returned to the warehouse), per the operator's selection |
+| 2 | The payoff position is cleared |
+| 3 | The pass-schedule acknowledgement is **voided** |
+| 4 | The machine tags for that payoff position are **cleared** |
+| 5 | The checkout event is logged — timestamp, operator, reason, resulting status |
+| 6 | The station returns to *ready for check-in* |
 
 ---
 
-## Scenario B — Mid-Run Checkout (Run Started, Rod Removed Early)
+# 3. Mode B — Mid-Run Checkout
 
-Rod is actively running (`INFLAT`, footage > 0) but must be removed before natural exhaustion.
+The rod is running and footage has been produced, but the rod must come off before it is exhausted.
 
-### Triggers
+## 3.1 Triggers
 
 | Trigger | Notes |
-|---------|-------|
-| Equipment failure requiring rod removal | PLC fault that cannot be cleared with rod loaded |
-| Quality hold decision | Supervisor decides to pull rod mid-run |
+|---|---|
+| Equipment failure requiring rod removal | A fault that cannot be cleared with the rod loaded |
+| Quality hold decision | A supervisor pulls the rod mid-run |
 | Order quantity reached early | Less footage needed than the rod can supply |
-| Shift deferral | Run not completable within current shift; rod must be off-loaded |
+| Shift deferral | The run cannot complete in the current shift |
 
-### Flow
+**Reason codes:** equipment failure · quality hold · order quantity reached · shift deferral · other.
 
-**Decided (May 4, 2026):** Mid-run checkout requires supervisor approval. Operator cannot unilaterally accept partial spool footage. The flow below reflects the confirmed notification-driven remote approval model.
+## 3.2 Supervisor approval is mandatory `[CONFIRMED — May 4, 2026]`
 
-```
-Dashboard 3 (Active Run Monitor — footage > 0)
-    ↓ [Pause Run — existing flow]
-    ↓ From Pause Resume dialog: "Check Out Rod (Partial Run)" option
-        ├─ Rod Alpha                   (read-only)
-        ├─ Footage at Removal          (required — auto-captured from PLC counter; read-only)
-        ├─ Remaining Weight Estimate   (optional — operator estimate)
-        ├─ Checkout Reason             (required — dropdown, see reason codes below)
-        ├─ Disposition of Rod          (required — radio)
-        │      • Hold — return to storage (partial rod, re-usable)
-        │      • Scrap — rod not re-usable
-        │      • Defer — continue later on same line
-        ├─ Notes                       (optional)
-        └─ [Cancel]  [Submit for Supervisor Approval]
-    ↓
-    System Actions on Submit:
-        ├─ Run event closed — partial run record saved with footage counter value
-        ├─ Rod status:   INFLAT → HOLD / SCRAP / STAGED (per rod disposition selection)
-        ├─ PLC tags:     cleared
-        ├─ Checkout event logged with footage, reason, rod disposition
-        ├─ PENDING DISPOSITION record created — material locked, not plannable, no alpha yet
-        └─ SignalR notification pushed to supervisor role
-    ↓
-    Supervisor reviews from any connected terminal:
-        ├─ Gauge trace for the partial run
-        ├─ Footage produced, reason for stop
-        ├─ Operator ID and timestamp
-        ↓
-        ├─ ACCEPT  → Partial spool alpha generated; enters spool queue
-        ├─ HOLD    → Partial spool alpha generated with Hold status; QC must release
-        └─ REJECT  → WIP Rejection flow triggered; material goes to scrap
-    ↓
-    Disposition record written: supervisor ID, decision, reason code, timestamp
-    Dashboard returns to "Ready for Check-In" state
-```
+**The operator cannot unilaterally accept partial material.** The operator submits; a supervisor reviews and dispositions. The approval is notification-driven, so the supervisor can act from any connected terminal rather than having to walk to the line.
 
-### Mid-Run Checkout Reason Codes
+## 3.3 Flow
 
-| Reason | Use When |
-|--------|----------|
-| Equipment failure | PLC fault or mechanical failure requiring rod removal |
-| Quality hold | Supervisor or operator decision to pull rod for quality review |
-| Order quantity reached | Required footage met before rod exhausted |
-| Shift deferral | Run cannot complete in current shift |
-| Other | Free-text required |
+| Stage | Detail |
+|---|---|
+| **Entry** | From the active run, through the Pause dialog — *Check out rod (partial run)* |
+| **Operator provides** | Footage at removal (**captured automatically from the counter, read-only**) · remaining weight estimate (optional) · checkout reason · rod disposition (hold / scrap / defer) · notes |
+| **On submit** | The run event closes with a partial run record at the counter value · rod status becomes `HOLD`, `SCRAP` or `STAGED` per the disposition · machine tags cleared · the checkout is logged with footage, reason and disposition · **a pending-disposition record is created — the material is locked, not plannable, and carries no identity yet** · the supervisor is notified |
+| **Supervisor reviews** | The gauge trace for the partial run, footage produced, the stated reason, operator and timestamp |
+| **Supervisor decides** | **Accept** → partial spool identity issued, enters the spool queue · **Hold** → identity issued with a hold status, QA must release · **Reject** → routed to WIP rejection, material to scrap |
+| **Recorded** | Supervisor, decision, reason code and timestamp |
+
+**No material identity is created until the supervisor has dispositioned it** `[CONFIRMED — May 4, 2026]`. Issuing an identity first and reversing it afterwards would put unapproved material into the planning pool.
+
+## 3.4 Entry-point rule
+
+| Situation | Entry point |
+|---|---|
+| Checked in, not acknowledged | Rod check-in screen — *Check out rod* |
+| Acknowledged, run not started (footage = 0) | Active run screen — *Check out rod* |
+| Footage > 0 | **Only** through the Pause dialog — *Check out rod (partial run)* |
+
+**The direct control is disabled once footage exceeds zero.** From that point the mid-run path is the only route, which guarantees that footage and material disposition are always captured for a partial run.
 
 ---
 
-## UI Placement Summary
+# 4. Machine-Control Precondition
 
-| Scenario | Screen | Button / Entry Point |
-|----------|--------|----------------------|
-| Pre-run (check-in not yet acknowledged) | Dashboard 2 footer | "Check Out Rod" (next to Cancel) |
-| Pre-run (check-in acknowledged, run not started) | Dashboard 3 header actions | "Check Out Rod" |
-| Mid-run (footage > 0) | Dashboard 3 → Pause dialog | "Check Out Rod (Partial Run)" as a fourth resume option |
+## 4.1 The application is a gatekeeper, not a stop controller `[CONFIRMED]`
 
-**Guard rule:** The "Check Out Rod" button on Dashboard 3 is **disabled once footage > 0**. At that point, only the mid-run path (accessed through the Pause dialog) is available, ensuring footage and material disposition are always captured for partial runs.
+Checked-in rod is represented to the mill by a set of machine-control values — which rod is loaded, whether the line is running, the footage counter, and the checked-in flag. Checking a rod out means clearing those values.
 
----
+**Before the checkout dialog opens, the application reads the line state.**
 
-## Data Model
+| Line state | Behaviour |
+|---|---|
+| **Running** | Checkout is **blocked**: *"Line is still running. Stop the line before checking out the rod."* The dialog does not open |
+| **Stopped** | The dialog opens, the footage counter value is read and locked at that moment, and the checkout may proceed |
 
-### New Table: `rod_checkout_events`
+**The application never issues a stop command.** The operator remains in physical control of the machine at all times; the software only enforces that the stop has already happened before any value is touched.
 
-| Column | Type | Notes |
-|--------|------|-------|
-| `checkout_id` | INT PK | |
-| `rod_alpha` | VARCHAR | FK → coils table |
-| `payoff_position` | INT | 1 or 2 |
-| `checkin_id` | INT FK | Links back to originating check-in record |
-| `scenario` | ENUM | `PRE_RUN`, `MID_RUN` |
-| `checkout_reason` | ENUM/LOOKUP | Reason codes from tables above |
-| `footage_at_checkout` | DECIMAL | 0 for pre-run; actual footage for mid-run |
-| `remaining_weight_estimate` | DECIMAL | Operator estimate; nullable |
-| `rod_disposition` | ENUM | `STAGED`, `RECEIVED`, `HOLD`, `SCRAP`, `DEFER` |
-| `material_disposition` | ENUM | `HOLD`, `SCRAP`, `ACCEPT_PARTIAL`; nullable (pre-run only) |
-| `partial_spool_alpha` | VARCHAR | Generated if material_disposition = ACCEPT_PARTIAL; nullable |
-| `operator_id` | INT FK | |
-| `checkout_timestamp` | DATETIME | Auto-stamped; operator cannot modify |
-| `notes` | VARCHAR(500) | |
+## 4.2 Why
 
-### Coil Status Changes
+| Reason | Detail |
+|---|---|
+| **Safer** | The software cannot initiate a motion change; physical control stays with the operator |
+| **Simpler** | One value is read; nothing is commanded. No bidirectional handshake is required |
+| **Independent of machine capability** | It does not depend on whether the controller supports a software-initiated safe stop |
+| **Footage is accurate** | By the time the dialog opens the line is confirmed stopped, so the counter value is final |
 
-No new status codes are required if `HOLD`, `RECEIVED`, and `STAGED` already exist:
+## 4.3 Why clearing while running is dangerous
 
-| Checkout Outcome | Rod Status Transition |
-|-----------------|----------------------|
-| Return to floor storage | `INFLAT` → `STAGED` |
-| Return to warehouse | `INFLAT` → `RECEIVED` |
-| Hold for review | `INFLAT` → `HOLD` |
-| Scrap | `INFLAT` → `SCRAP` |
-| Defer — same line | `INFLAT` → `STAGED` (re-check-in required) |
+- The drive loses the rod's identity mid-motion, and any control logic tied to those values may behave unpredictably.
+- The footage counter stops recording while wire is still moving — that footage is physically real but invisible to the system.
+- The partial material record then understates what is physically on the spool.
+- Interlocks that depend on the checked-in flag to permit motion could force an uncontrolled stop rather than a controlled deceleration.
+
+Small footage discrepancies compound across successive partial runs and end up as a traceability gap at certificate time.
+
+> `[CLIENT INPUT REQUIRED]` **What "stopped" means must be confirmed with the controls team** — whether the line-state value is a discrete stopped state, or whether it also requires drive speed below a threshold. The checkout guard must match the machine's own definition of stopped. The state vocabulary itself is also undocumented (OI-35, Q49).
 
 ---
 
-## PLC Tag Behavior on Checkout
+# 5. Mode P — Pre-Check-Out (Removing a Staged Rod)
 
-### What a PLC Tag Is
+A rod that was **pre-checked-in at the payoff but never checked in** has no run to close, no acknowledgement to void and no machine values to clear. Removing it is a different transaction, and its approval turns on one question only: **has the rod been welded?**
 
-The PLC (Programmable Logic Controller) is the industrial computer that directly controls the flat wire mill — motor speed, tension, drive state, line running/stopped. It communicates with the MES software through **tags**, which are named memory addresses that hold real-time values. For example:
-
-```
-FL1.ActiveRodAlpha     = "ROD-00412"
-FL1.LineState          = "Running"
-FL1.FootageCounter     = 312
-FL1.CheckedIn          = TRUE
-```
-
-When an operator checks a rod in, the system **writes** these tags — the machine knows which rod is loaded and that a run is active. When the run ends, the system **clears** the tags — the PLC knows the machine is idle. Rod checkout = clearing those tags.
-
-### Design Rule — Application Checks Line State Before Allowing Checkout
-
-The application must read the current line state from the PLC **before** the checkout dialog opens or Confirm is accepted. If the line is still running, checkout is blocked. The operator must physically stop the line first.
-
-```
-Operator clicks "Check Out Rod"
-        ↓
-Application reads FL1.LineState from PLC
-        ↓
-    ┌── LineState = "Running" ──────────────────────────────────┐
-    │   Block checkout                                          │
-    │   Show: "Line is still running.                          │
-    │          Stop the line before checking out the rod."     │
-    │   Checkout dialog does NOT open.                         │
-    └───────────────────────────────────────────────────────────┘
-        ↓
-    ┌── LineState = "Stopped" ─────────────────────────────────┐
-    │   Checkout dialog opens normally                         │
-    │   Footage counter value is read and locked at this point │
-    │   Operator completes checkout form and clicks Confirm    │
-    │   System clears PLC tags and writes checkout record      │
-    └───────────────────────────────────────────────────────────┘
-```
-
-This means the application is a **gatekeeper**, not a remote stop controller. It does not issue a stop command to the PLC — the operator is always responsible for stopping the machine physically. The application simply enforces that the stop has happened before any tags are touched.
-
-### Why This Is the Right Approach
-
-- **Simpler** — no bidirectional PLC command needed; the application only reads one tag, it never writes a stop request
-- **Safer** — the operator remains in physical control of the machine at all times; the software cannot initiate motion changes
-- **Works regardless of PLC capability** — does not depend on whether the PLC supports a software-initiated safe-stop handshake
-- **Footage accuracy guaranteed** — by the time the dialog opens, the line is confirmed stopped and the footage counter value is final
-
-### Why Clearing Tags While Running Is Dangerous
-
-If the application cleared tags while `FL1.LineState = "Running"`:
-
-- The drive loses its rod identity mid-motion — control logic tied to those tags may behave unpredictably
-- The footage counter stops recording while wire is still moving — those last feet are physically real but invisible to the system
-- The partial spool alpha records a shorter footage than what is actually on the spool
-- Safety interlocks that depend on `CheckedIn = TRUE` to permit motion could trigger an uncontrolled stop rather than a controlled deceleration
-
-Small footage discrepancies compound across multiple partial runs and become a traceability gap at cert time.
-
-### What "Stopped" Means
-
-Jaspreet to confirm with the PLC/SCADA team the exact tag and threshold that constitutes a safe-stopped state — for example, whether `FL1.LineState = "Stopped"` is a discrete tag or whether it requires `FL1.DriveSpeed < threshold` to be true. The checkout guard condition must match the PLC's own definition of stopped.
-
----
-
-## Open Questions for Customer — Status Update May 4, 2026
-
-| # | Question | Status | Decision |
-|---|----------|--------|----------|
-| OQ-A | Can a partially-run rod be re-checked-in later? Carry-forward footage and weight, or start fresh? | **In Progress** | Multiple partial spool alphas per rod: confirmed needed. Material remaining in the mill (drawn/rolled) will be scrapped — does not return with the rod. Remaining rod going back to WH may need to be weighed at payoff scale (Tim to confirm with Scott, Bob, Shannon). Full carry-forward design deferred — Tim will confirm. |
-| OQ-B | Who can authorise a mid-run checkout — operator only, or supervisor approval required? | **Decided** | Supervisor must approve a mid-run checkout. Operator submits; supervisor reviews and approves/holds/rejects via notification-driven remote approval. |
-| OQ-C | What is the required PLC behaviour on checkout — immediate tag clear, or "safe stop" handshake? | **In Progress** | Proposed design (pending engineering confirmation): application never sends stop command; operator stops machine physically; application checks `FL1.LineState` before allowing checkout; tags cleared only after confirmed stop. Tim to confirm with engineering. |
-| OQ-D | If footage was produced, does material always get a partial spool alpha, or held pending supervisor review? | **Decided** | Held pending supervisor review. No alpha is generated until supervisor approves the disposition. Supervisor chooses Accept / Hold / Reject. See updated Scenario B flow above. |
-
----
-
-## Mode P — Pre-check-out (un-staging), added Aug 1, 2026
-
-A **third** checkout mode sits before the two scenarios above: removing a rod that was **pre-checked-in at the payoff but never checked in**. It is modelled as `RodCheckout.Mode = 'ModeP'` with `RunId` NULL, footage 0 and `PlcTagsCleared` false — there is no run to close, no pass-schedule acknowledgement to void and no PLC tag to clear. See [RodPreCheckin.md](RodPreCheckin.md) for the staging side.
-
-**Approval depends on the weld** (client decision, 30 Jul 2026 — **Q68**, which also closes **Q77**):
-
-| Rod state | Approval | Reason captured | Rod status | Why |
+| Rod state | Approval | Reason | Resulting status | Why |
 |---|---|---|---|---|
-| **Not welded** | **None** — operator-only | Pre-check-out reason | Returns to inventory | Nothing was committed; the bundle simply comes off the bay |
-| **Welded** | **Supervisor override** | **Required, documented** | **`HOLD`** | The rod is induction-welded to the rod in the mill. Removing it means **cutting or splitting the material**, so this is a **rejection**, not a return |
+| **Not welded** | **Operator** | Captured | Returns to inventory | Nothing was committed; the bundle simply comes off the position |
+| **Welded** | **Supervisor override** | **Required, documented** | **`HOLD`** — routed to WIP rejection | The rod is induction-welded to the rod in the mill. Removing it means **cutting or splitting the material**, so it is a rejection, not a return |
 
-This is deliberately *not* the OQ-B rule. OQ-B gates on **footage produced**; Mode P has none. It gates on **whether the material has been physically joined**, which is a different risk and arrives earlier.
+`[CONFIRMED — July 30, 2026]`
 
-> **⚠️ Gap G24 — the supervisor approvals decided in this document are not persisted.** `RodCheckout` has **no `ApprovedBy`, `ApprovedAt` or `OverrideReason` columns at all**. That means the **OQ-B** mid-run approval and the **OQ-D** disposition approval — both decided 4 May 2026 and both described above as producing "a disposition record with supervisor ID, decision, reason code, timestamp" — have **nowhere to write that record**, and neither does the new welded Mode P override. `RodStaging` has the credential trio; this table does not.
->
-> **Fix:** add `ApprovedBy` / `ApprovedAt` / `OverrideReason` to `RodCheckout`, with a constraint tying them (plus `NewRodStatus = 'HOLD'`) to the welded Mode P case, and requiring them for Mode B. Settle the **PIN validation source** once for every override in the module (**OI-38**).
-
+Staging and un-staging need **no line-state precondition**. The gatekeeper rule of Section 4 exists because clearing values on a running line is dangerous; an idle payoff position is not running, which is precisely why staging is safe to perform while the other position draws.
 
 ---
 
-## Related Documents
+# 6. Proposed Requirement Text
 
-| Document | Relevance |
-|----------|-----------|
-| [FlatWireShopfloorDashboards.md](../../Analysis/FlatWireShopfloorDashboards.md) | Dashboard 12 — Rod Checkout screen design |
-| [FlatWireEndToEndProcess.md](../../Analysis/FlatWireEndToEndProcess.md) | Rod lifecycle state machine |
-| [FlatWireOpenQuestions.md](../../Analysis/FlatWireOpenQuestions.md) | Q47, Q48, Q49, Q50 — rod checkout questions |
-| [PartialRodReCheckin.md](../../Analysis/PartialRodReCheckin.md) | Detailed design for partial re-check-in carry-forward |
+The SRS covers removal only *after* check-in. The following have no source requirement and are proposed here for adoption.
+
+| Ref | Proposed requirement |
+|---|---|
+| **RC-1** | The system shall support removal of a rod that was pre-checked-in but never checked in, without creating or closing a production run. |
+| **RC-2** | Removal of an **unwelded** staged rod shall require the operator only, with a captured reason. |
+| **RC-3** | Removal of a **welded** staged rod shall require supervisor authorisation with a documented reason, and shall place the rod on `HOLD`. |
+| **RC-4** | Every supervisor authorisation in this process — mid-run checkout, partial-material disposition, and welded removal — shall record the **authorising supervisor, the timestamp, and the reason**, and that record shall be retrievable against the material. |
+| **RC-5** | No material identity shall be issued for partial material until a supervisor has dispositioned it. |
+| **RC-6** | The checkout control shall be unavailable while the line reports running. |
+
+> **RC-4 corrects an omission.** The mid-run and disposition approvals were agreed in May 2026 and described as producing a record of supervisor, decision, reason and timestamp — but no such record was ever specified into the design. It is being added for all three approval points at once, together with the pre-check-out override.
+
+---
+
+# 7. Information Captured
+
+| Item | Notes |
+|---|---|
+| Rod serial | |
+| Payoff position | |
+| Link to the originating check-in | Absent for Mode P |
+| Mode | Pre-check-out · pre-run · mid-run |
+| Checkout reason | From the mode's reason codes |
+| Footage at checkout | Zero for Mode P and Mode A; the locked counter value for Mode B |
+| Remaining weight estimate | Optional operator estimate |
+| Rod disposition | Returned to floor · returned to warehouse · hold · scrap · defer |
+| Material disposition | Hold · scrap · accept partial — Mode B only |
+| Partial material identity | Issued only on supervisor acceptance |
+| Authorising supervisor, timestamp, reason | Required wherever an approval or override applies |
+| Operator and timestamp | Server-stamped; not operator-editable |
+| Notes | |
+
+## 7.1 Resulting rod status
+
+No new status values are needed.
+
+| Outcome | Transition |
+|---|---|
+| Returned to floor storage | `INFLAT` → `STAGED` |
+| Returned to the warehouse | `INFLAT` → `RECEIVED` |
+| Held for review | `INFLAT` → `HOLD` |
+| Scrapped | `INFLAT` → `SCRAP` |
+| Deferred on the same line | `INFLAT` → `STAGED` (re-check-in required) |
+| Welded rod removed at staging | → `HOLD` |
+
+---
+
+# 8. Confirmed Decisions
+
+| # | Decision | Date |
+|---|---|---|
+| D1 | **Mid-run checkout requires supervisor approval.** The operator submits; the supervisor approves, holds or rejects, through a notification-driven remote approval | May 4, 2026 |
+| D2 | **Partial material is held pending supervisor review.** No identity is issued until the disposition is made | May 4, 2026 |
+| D3 | **Multiple partial identities per rod are supported.** Material remaining inside the mill is scrapped and does not return with the rod | May 4, 2026 |
+| D4 | **The application never commands a stop.** It reads the line state and refuses checkout while the line runs | Proposed May 4, 2026 — pending engineering confirmation |
+| D5 | **Pre-check-out approval depends on the weld** — operator for unwelded, supervisor and `HOLD` for welded | Jul 30, 2026 |
+
+---
+
+# 9. Open Items Requiring Client Input
+
+| Ref | Priority | Question | What it blocks |
+|---|---|---|---|
+| **Q47** | High | **Partial rod re-check-in** — is a payoff-side scale available for weighing the remnant, and what is the full carry-forward rule? | Mode B disposition and any later re-check-in |
+| **Q49 / OI-35** | High | **The definition of "stopped"** — the exact value and threshold that constitutes a safe-stopped line, and the state vocabulary | The checkout precondition (Section 4) |
+| **OI-38** | High | **Where a supervisor PIN is validated** — the existing login service or a separate credential store. It gates every override in this module | Mid-run approval, welded pre-check-out, and the staging overrides |
+| **OI-14** | Medium | **Pause resume outcomes** — four (including *check out rod, partial run*) or three (with checkout as a pause reason)? This determines where the door to Mode B sits | The Mode B entry point |
+| — | Medium | **Confirmation of RC-4** — that the approval record content (supervisor, timestamp, reason) is what Operations and Quality need | The approval audit trail |
+
+---
+
+# 10. Assumptions
+
+| # | Assumption |
+|---|---|
+| A1 | The footage counter is the authoritative measure of what was produced, and is read when the line is confirmed stopped. |
+| A2 | Supervisors are reachable by notification at the time of a mid-run checkout; where they are not, the remote-approval path applies. |
+| A3 | Existing material statuses — `STAGED`, `RECEIVED`, `HOLD`, `SCRAP` — are sufficient, and no new status is introduced. |
+| A4 | Material left inside the mill at removal is scrapped and is not credited back to the rod. |
+
+---
+
+# 11. Related Specifications
+
+| Document | Relationship |
+|---|---|
+| [Rod Pre-Check-in](RodPreCheckin.md) | The staging side of Mode P |
+| [Rod Check-in](RocCheckin.md) | Creates the run and pushes the configuration that checkout reverses |
+| [Partial Rod Re-Check-in](../../Analysis/PartialRodReCheckin.md) | Carry-forward design for a rod that returns to the line |
+| [Weld Event](WeldEvent.md) | Why removing a welded rod is a rejection rather than a return |
+
+---
+
+# Client Sign-off
+
+## Part A — Rules for confirmation
+
+| Ref | Item | Accept | Amend |
+|---|---|:--:|:--:|
+| §1.3 | Three checkout modes, distinguished as stated | ☐ | ☐ |
+| §2 | Mode A — operator only, reason and return destination captured | ☐ | ☐ |
+| §3.2 | Mode B — supervisor approval is mandatory | ☐ | ☐ |
+| §3.3 | No material identity until the supervisor dispositions it | ☐ | ☐ |
+| §3.4 | The direct control is disabled once footage exceeds zero | ☐ | ☐ |
+| §4 | The application is a gatekeeper and never commands a stop | ☐ | ☐ |
+| §5 | Mode P — approval determined by the weld | ☐ | ☐ |
+| §6 | Proposed requirements RC-1 to RC-6 to be added to the requirement set | ☐ | ☐ |
+| §7.1 | The rod status transitions, with no new status values | ☐ | ☐ |
+
+## Part B — Information required
+
+| Ref | Item | Owner | Supplied |
+|---|---|---|:--:|
+| Q47 | Payoff-side scale, and the carry-forward rule | | ☐ |
+| Q49 / OI-35 | The machine definition of "stopped" | | ☐ |
+| OI-38 | Supervisor PIN validation source | | ☐ |
+| OI-14 | Pause resume outcomes — three or four | | ☐ |
+| — | Approval record content | | ☐ |
+
+## Part C — Approval
+
+| | Name | Signature | Date |
+|---|---|---|---|
+| **Operations** | | | |
+| **Quality** | | | |
+| **Engineering / Controls** | | | |
 
 ---
 
 ## Change Log
 
-| Date | Changed By | Description |
-|------|-----------|-------------|
-| Apr 24, 2026 | Analysis Team | Initial use case analysis — two scenarios (pre-run and mid-run), PLC tag behavior, data model, open questions |
-| May 4, 2026 | Analysis Team — Tim O. review | **OQ-B Decided:** supervisor approval required for mid-run checkout. **OQ-D Decided:** supervisor must approve before partial spool alpha is created; notification-driven remote approval model. Scenario B flow updated to reflect supervisor approval gate and pending disposition state. **OQ-A In Progress:** multiple partial spool alphas confirmed needed; weigh-at-payoff scale pending plant input; full carry-forward design deferred. **OQ-C In Progress:** PLC tag behavior pending engineering confirmation. |
-| Aug 1, 2026 | Client sync (30 Jul call) | **Mode P (pre-check-out) documented, and a persistence gap found.** Un-staging a rod that was never checked in is **operator-only when the rod is unwelded** and requires a **supervisor override, a documented reason and `HOLD` when it is welded**, because removal means cutting the material — a rejection rather than a return (**Q68**, which also closes **Q77**). Unlike OQ-B this gates on whether the material has been **joined**, not on footage produced. Recorded **G24**: `RodCheckout` has no `ApprovedBy`/`ApprovedAt`/`OverrideReason` columns, so the OQ-B and OQ-D supervisor approvals decided on 4 May 2026 have never had anywhere to write the disposition record this document describes. |
+| Date | Change |
+|---|---|
+| Apr 24, 2026 | Initial use-case analysis — two scenarios, machine-control behaviour, captured data, open questions. |
+| May 4, 2026 | Supervisor approval confirmed for mid-run checkout; partial material held pending disposition; multiple partial identities per rod confirmed. |
+| Aug 1, 2026 | **Reissued as version 2.0 for client review.** Added **Mode P** and its weld-dependent approval. Stated the approval record as requirement **RC-4**, correcting an omission in which the May 2026 approvals were agreed but never specified into the design. Proposed requirements RC-1 to RC-6 for the removal cases the SRS does not cover. Restructured as a client deliverable; internal table and column detail removed. |

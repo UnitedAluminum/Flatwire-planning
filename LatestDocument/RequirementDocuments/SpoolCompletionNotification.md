@@ -1,399 +1,451 @@
-# Flat Wire — Spool Completion: Weight Milestone Alerts & Machine-Stop Confirmation
+# Flat Wire Processing — Spool Completion Specification
+
+**Weight milestone alerts · machine-stop confirmation · short close**
 
 **Project:** Flat Wire Mill Implementation
+**Document Type:** Functional Requirement Specification — Issued for Client Review
+**Applies to:** FL1 (spool at the intermediate take-up) · FL2 / FL3 (finished coil at the final take-up)
+**Version:** 2.0
 **Last Updated:** August 1, 2026
-**Document Type:** Requirement Analysis — Real-Time Operator Notification
-**Status:** Draft — Part A recorded July 28, 2026; Part B recorded July 29, 2026; **Part C (short close) recorded August 1, 2026** from the 30 Jul client call; mockup delivered; open decisions listed below
+**Status:** Issued for Client Review and Sign-off
+**Screen reference:** Dashboard 3 — Active Run Monitor (all lines)
 
 ---
 
-## Two-Part Scope
+## Document Change History
+
+| Version | Date | Description |
+|---|---|---|
+| 1.0 | Jul 28, 2026 | **Part A** — advisory weight milestone alerts at 75 / 90 / 100 % of target. |
+| 1.1 | Jul 29, 2026 | **Part B** — machine-stop confirmation on a confirmed stop, with scale-weight verification and a supervisor override for out-of-tolerance variance. |
+| 2.0 | Aug 1, 2026 | **Issued for client review.** **Part C — short close** added from the July 30, 2026 call. The assumed 2,000 lb default target is **withdrawn** in favour of the customer minimum/maximum weight range. Restructured as a client deliverable; screen styling, layout dimensions and mockup-only affordances removed. |
+
+---
+
+## Reading Convention
+
+| Tag | Meaning |
+|---|---|
+| `[CONFIRMED]` | Agreed with United Aluminum. Built as stated. |
+| `[PROPOSED]` | Our design recommendation, requiring your confirmation at review. |
+| `[CLIENT INPUT REQUIRED]` | We do not know this and will not assume it. Listed in Section 10. |
+
+Open item identifiers prefixed **Q** come from the project open-questions register; those prefixed **OI** come from the master specification's open-items register.
+
+---
+
+# 1. Introduction
+
+## 1.1 Purpose
+
+Three related behaviours around the completion of a spool or a finished coil:
 
 | Part | Covers | Blocking? |
 |---|---|---|
-| **[Part A](#purpose--scope)** | Advisory milestone alerts at **75 / 90 / 100 %** of target spool weight while the line runs | **Non-blocking** — informational, acknowledge-only |
-| **[Part B](#part-b--operator-confirmation-after-the-machine-stops)** | After target is reached and the operator **physically stops the machine**, a **PLC-confirmed** popup asking whether the stop was to remove the completed spool — **Yes** runs the spool completion transaction and prints labels, **No** closes with no transaction | **Modal decision** — the machine is already stopped, so nothing is interrupted |
+| **A — Milestone alerts** | Advisory notifications at **75 / 90 / 100 %** of target weight while the line runs | **Non-blocking** — informational, acknowledge only |
+| **B — Stop confirmation** | After target is reached and the operator **physically stops the machine**, a machine-confirmed prompt asking whether the stop was to remove the completed spool | **A decision** — but the machine is already stopped, so nothing is interrupted |
+| **C — Short close** | Closing a spool **below** target — order satisfied, rod exhausted, quality problem, end of campaign | Handled as an unplanned stop |
 
-Part A tells the operator the spool is filling. Part B catches the moment the spool is actually finished and turns the physical act of stopping into the system transaction, so completion is never missed or double-entered.
+Part A tells the operator the spool is filling. Part B catches the moment it is actually finished and turns the physical act of stopping into the system transaction, so a completion is never missed or entered twice. Part C covers everything that ends early.
 
----
+## 1.2 Scope
 
-## Purpose & Scope
+**In scope:** milestone evaluation and notification; the weight basis and its derivation; the stop-confirmation gate and its conditions; scale-weight verification and variance handling; short close and its grading; and the audit record produced by each.
 
-A real-time, **non-blocking** operator notification that warns the operator that the material accumulating on the take-up is approaching the **target weight required for spool creation**, so the operator can prepare to close the spool (slow down, stage the next spool, be at the machine when it fills) instead of discovering it at 100%.
+**Not in scope:** the spool completion workflow itself — identity finalisation, per-spool SPC and label content; planning consumption of the completed spool; the FL2 coil completion screen.
 
-Applies to the **active run monitor** screens — Dashboard 3 (FL1), Dashboard 3 FL2, Dashboard 3 FL3 — while the line is physically running.
+## 1.3 Applicability
 
-- **FL1 standalone** — take-up is **TKUP-1**, output is an intermediate **spool** (`SP-#####`). This is the primary case described in this document.
-- **FL2 / FL3** — take-up is **TKUP-2**, output is a finished **coreless coil** (`FW-#####-C##`). The same milestone ladder applies against the coil target weight; wording changes from "spool" to "coil". See [Q61](../../Analysis/FlatWireOpenQuestions.md) before implementing.
+- **FL1 standalone** — the take-up produces an intermediate **spool**. This is the primary case described here.
+- **FL2 / FL3** — the take-up produces a finished **coreless coil**. The same ladder applies against the coil target, with wording changed from spool to coil.
 
-This notification is **advisory only**. It never stops, slows, or otherwise commands the machine — consistent with the standing rule that the application is a gatekeeper, not a remote stop controller ([RodCheckout.md](RodCheckout.md), step 27 of [FlatWireProcessWalkthrough.md](../../Analysis/FlatWireProcessWalkthrough.md)).
+## 1.4 Standing constraint
 
----
-
-## Trigger Scenario
-
-While the flat wire machine is running, the system continuously tracks the **actual processed weight** wound onto the current take-up spool and compares it against the **target spool weight**. As the actual weight crosses defined completion milestones, the system proactively raises an on-screen notification to the operator.
-
-```
-Live telemetry (FlatWireHub)      Spool progress evaluator          Operator screen
-  FootageCounter ─┐
-  GaugeReading   ─┼─→ actual spool weight ─→ % of target ─→ milestone crossed? ─→ notification
-  WidthReading   ─┘                                                  75 / 90 / 100
-```
+**This function never stops, slows, gates or commands the machine.** It is advisory and transactional only, consistent with the standing rule that the application is a gatekeeper and not a remote stop controller.
 
 ---
 
-## Milestone Ladder
+# 2. Part A — Weight Milestone Alerts
 
-| # | Trigger | Banner intent | Message content | On acknowledge |
+## 2.1 The ladder
+
+| # | Trigger | Character | Content | On acknowledgement |
 |---|---|---|---|---|
-| **M1** | Actual weight ≥ **75%** of target | Informational (blue) | Spool is nearing completion — current actual processed weight, target weight, % complete | Dismiss M1; arm M2 |
-| **M2** | Actual weight ≥ **90%** of target | Caution (amber) | Spool nearly full — current actual processed weight, target, % complete, remaining weight | Dismiss M2; arm M3 |
-| **M3** | Actual weight ≥ **100%** of target | Target reached (green) | Target spool weight reached — actual weight at/over target, ready to close the spool | Dismiss M3; no further milestone |
-| **M4** *(design addition)* | Actual weight **> 101%** of target (1% over, so the red state cannot flicker the instant target is touched) **and M3 not yet acknowledged** | Over-target (red) | Over target by *n* lb — take-up should be stopped and the spool closed | Dismiss; see [Q60](../../Analysis/FlatWireOpenQuestions.md) |
+| **M1** | Weight ≥ **75 %** of target | Informational | Current processed weight, target, percent complete | Dismiss; arm M2 |
+| **M2** | Weight ≥ **90 %** of target | Caution | Adds remaining weight | Dismiss; arm M3 |
+| **M3** | Weight ≥ **100 %** of target | Target reached | Weight at or over target; ready to close | Dismiss; ladder ends |
+| **M4** `[PROPOSED]` | Weight > **101 %** of target **and M3 not yet acknowledged** | Over target | Over target by *n* lb; the take-up should be stopped and the spool closed | Dismiss |
 
-M4 is **not part of the recorded requirement**. It exists because an unacknowledged M3 keeps updating live and will therefore run past 100%; a notification that silently shows "104% of target" in a "target reached" style understates the situation. Confirm with Operations before building it (Q60).
+**M4 is a design addition, not part of the recorded requirement.** An unacknowledged M3 keeps updating and will therefore run past 100 %; a notification silently reading "104 % of target" in a *target reached* style understates the situation. The 1 % margin exists so the state cannot flicker the instant target is touched. Please confirm whether it is wanted (Q60).
 
----
-
-## Behavior Rules
+## 2.2 Behaviour rules
 
 | ID | Rule |
 |---|---|
-| **R-1** | The notification is raised automatically by the system — no operator action initiates it. |
-| **R-2** | It always displays the **current actual processed weight** and states that the machine is approaching the target spool weight. Target weight and % complete are shown alongside for context. |
-| **R-3** | The operator may **acknowledge** the notification. Acknowledging dismisses it. |
-| **R-4** | Acknowledging a milestone **arms the next one**: ack at 75% → next notification at 90%; ack at 90% → next notification at 100%. Acknowledging 100% ends the ladder for that spool. Acknowledging a milestone also closes every milestone **below** it — an operator who acknowledges a card that escalated straight to 90% is not then shown the 75% card. |
-| **R-5** | If a notification is **not acknowledged**, it stays visible and **keeps updating with live production data** — latest actual weight, % complete, remaining weight, and derived rate/ETA — until it is acknowledged or superseded. |
-| **R-6** | An unacknowledged notification is **superseded in place** when the next milestone is reached: the same notification escalates to the higher milestone (style, wording, and values all upgrade) rather than stacking a second notification. The operator is never faced with a queue of stale weight alerts. |
-| **R-7** | The notification is **non-blocking**: no modal overlay, no backdrop, no focus trap, no dimming of the screen. Every other control on the active-run screen (pause, weld event, SPC, die change, WIP reject, complete run, tab switching, trace maximize) stays fully operable while it is displayed. |
-| **R-8** | It must not interrupt, slow, gate, or command machine operation in any way. |
-| **R-9** | Milestone state is **per spool**. When a spool is closed and a new one starts on the same run, the actual weight restarts from zero and all three milestones re-arm. |
-| **R-10** | It must not obscure the **command bar** or either trace panel's **header and live reading** — the values an operator watches continuously. The bottom-right corner placement overlaps only the lower plot area of the right-hand (secondary) trace, and clears on acknowledgement. After acknowledgement a compact progress indicator remains so the operator retains passive visibility of spool fill without a second alert. |
-| **R-11** | Acknowledgement is an **audited event** — operator, milestone, actual weight at acknowledgement, and timestamp are persisted against the run (see [Q62](../../Analysis/FlatWireOpenQuestions.md)). |
-| **R-12** | Milestone thresholds (75 / 90 / 100) are **configuration, not constants** — table-driven so Operations can tune them without a release. |
+| **R-1** | The notification is raised automatically. No operator action initiates it. |
+| **R-2** | It always displays the **current actual processed weight**, with target and percent complete alongside for context. |
+| **R-3** | The operator may acknowledge it; acknowledging dismisses it. |
+| **R-4** | Acknowledging a milestone **arms the next one**. Acknowledging also closes every milestone below it, so an operator who acknowledges a card that escalated straight to 90 % is not then shown the 75 % card. |
+| **R-5** | An unacknowledged notification stays visible and **keeps updating with live production data** — weight, percent, remaining, fill rate and estimated time to target. |
+| **R-6** | An unacknowledged notification is **superseded in place** when the next milestone is reached — it escalates rather than stacking a second notification. The operator never faces a queue of stale weight alerts. |
+| **R-7** | It is **non-blocking**: no modal, no backdrop, no focus trap. Every control on the active run screen stays operable while it is displayed. |
+| **R-8** | It must not interrupt, slow, gate or command machine operation. |
+| **R-9** | Milestone state is **per spool**. When a spool closes and a new one starts on the same run, weight restarts from zero and all milestones re-arm. |
+| **R-10** | It must not obscure the command bar or either trace panel's header and live reading. After acknowledgement a compact progress indicator remains, so the operator keeps passive visibility without a second alert. |
+| **R-11** | Acknowledgement is an **audited event** — operator, milestone, weight at acknowledgement, timestamp, recorded against the run. |
+| **R-12** | The thresholds are **configuration, not constants** — tunable by Operations without a software release. |
 
----
+## 2.3 Presentation requirements
 
-## Data Requirements
-
-### Actual processed weight (the value shown)
-
-Weight wound onto the current take-up spool since the spool started. Derived from the live footage counter and the measured cross-section:
-
-```
-lb per ft   = gauge (in) × width (in) × 12 (in/ft) × alloy density (lb/in³)
-spool weight = (current footage − footage at spool start) × lb per ft
-```
-
-Worked example — the FL1 case shown in the mockup, alloy 1100 (0.098 lb/in³), gauge 0.110″, width 0.625″:
-
-```
-0.110 × 0.625 × 12 × 0.098 = 0.0809 lb/ft  →    900 lb target ≈ 11,130 ft   (customer max)
-                                                1,800 lb spool  ≈ 22,250 ft   (two finished coils)
-```
-
-> The **2,000 lb figure this example previously used is withdrawn** (30 Jul 2026) — see the target-weight basis below. The arithmetic is unchanged; only the target it is applied to.
-
-The OD-based verification formula for spool weight is still outstanding — **[Q58](../../Analysis/FlatWireOpenQuestions.md)** — and this notification depends on whichever weight source that decision lands on. Until then, footage × density factor (the same basis used for coil net weight at Dashboard 7) is the working assumption.
-
-### Target spool weight (the comparison basis)
-
-> **Basis decided (30 Jul 2026) — the customer weight range. The 2,000 lb default is withdrawn.** Tim and Bob confirmed the customer specifies a **minimum and maximum weight** (figures given: **900 lb max / 800 lb min**) and completion is graded against **that range, by weight** — not by footage, and not against an assumed default. **Spools are sized at roughly 1,800 lb** so that **two finished coils** can be cut from one spool at FL2, which is where the ~900 lb figure comes from. Still open (**Q60**): *which order field* carries the customer min/max, and whether the ladder still escalates to a distinct over-target state.
-
-| Candidate source | Value | Notes |
-|---|---|---|
-| **Order — customer min/max weight** | **e.g. 800–900 lb** | **The basis.** Customer-specified range on the order; completion is graded against it |
-| Spool sizing | ~**1,800 lb** | Two ~900 lb finished coils per spool, cut at FL2 |
-| Equipment capacity — TKUP-1 | 3,500 lb | Hard equipment ceiling ([Spool.md](../../Analysis/Spool.md)) |
-| Equipment capacity — TKUP-2 | 1,100 lb | FL2/FL3 finished-coil ceiling. The customer maximum is typically **below** it, so the customer value governs rather than the cap |
-| ~~Order *Max Wgt of Spool* default~~ | ~~**2,000 lb**~~ | **Withdrawn 30 Jul 2026.** It was an assumption made 29 Jul, it has no basis, and it exceeds the TKUP-2 ceiling. **Remove from the mockup and `spool_notification.js`** |
-
-### Real-time plumbing
-
-Uses the existing `FlatWireHub` stream described in [`../DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../../DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.4 — `FootageCounter`, `GaugeReading`, `WidthReading` already broadcast per line group (`FL1Data` / `FL2Data` / `FL3Data`). Two additions are needed:
-
-1. A **derived spool-progress payload** (actual weight, target weight, percent, remaining, rate, ETA) so every subscribed client evaluates the same number rather than each computing its own.
-2. A **milestone event** (`SpoolWeightMilestone`) carrying line, run, spool, milestone (75/90/100), actual weight, and target — raised server-side on crossing, so the milestone is a fact on the run record and not a client-side coincidence.
-
-**FL2 caveat:** FL2 standalone broadcasts `null` live gauge/width (its trace is historical/profile). Its target comparison must therefore use the pass-schedule/order gauge and width for the lb/ft factor, not live measurement.
-
-### PLC tags monitored (Part B)
-
-| Tag | Use | Status |
-|---|---|---|
-| `FL{n}.LineState` | The machine status tag the popup is conditioned on. Prompt fires on the `RUNNING → STOPPED` **transition**, held for the dwell. | Existing — already read as the rod-checkout gatekeeper. State vocabulary undocumented (**Q63**) |
-| `FL{n}.SpeedFPM` | Corroboration that the line is genuinely stopped (≈ 0), so a stale state bit alone cannot fire the prompt | Existing (broadcast as `SpeedFPM`) |
-| `FL{n}.FootageCounter` | Source of the latched weight at the stop timestamp | Existing |
-
-New hub events for Part B, raised server-side so the prompt is auditable and survives a client refresh:
-
-- `SpoolCompletionPromptDue` — line, run, spool alpha, PLC stop timestamp, latched weight, target weight.
-- `SpoolCompletionPromptResolved` — answer (`Yes` / `No` / `AutoDismissed`), operator, timestamp — also the audit record's payload.
-
----
-
-## UI Specification (as built in the mockup)
-
-**Mockup:** [`../Mockups/spool_notification.js`](../../Mockups/spool_notification.js) — shared drop-in component, wired into [`../Mockups/dashboard_3_active_run_v2.html`](../../Mockups/dashboard_3_active_run_v2.html).
-
-| Element | Spec |
+| Aspect | Requirement |
 |---|---|
-| Placement | Fixed bottom-right card, ~400 px wide, above the command bar. No overlay, no backdrop. |
-| Milestone header | Colored strip + milestone badge (`75%` / `90%` / `100%`) and title: *Spool nearing completion* / *Spool nearly full* / *Target spool weight reached*. |
-| Primary reading | Actual processed weight, large mono, with `/ target lb` beneath it — the requirement's mandated value. |
-| Progress bar | Fill = % of target, with tick marks at 75 / 90 / 100 so the operator sees where the current milestone sits on the ladder. |
-| Live secondary data | Percent complete, remaining lb, spool footage, fill rate (lb/min), estimated time to target, and a "Live · updated *hh:mm:ss*" line with a pulsing dot. All refresh while unacknowledged (R-5). |
-| Action | Single primary button — **Acknowledge**. No other action is offered; the notification is informational and the operator's real work happens on the screen behind it. |
-| Escalation | Supersede animates the card (pulse + color change) in place — never a second card (R-6). |
-| Post-acknowledge | The card collapses to a small docked pill showing live `Spool nn% · n,nnn / n,nnn lb` with a check mark. It re-expands automatically at the next milestone. |
-| Accessibility | `role="status"` + `aria-live="polite"` so updates are announced without interrupting; the pill is a labelled button; Escape does **not** dismiss (acknowledgement must be deliberate). |
-| Color mapping | 75% info blue · 90% warning amber · 100% success green · over-target danger red — all from the existing semantic tokens; no new colors. |
-
-The mockup includes a clearly-labelled **demo control strip** (bottom-left) to jump the simulated weight to just below/above each milestone. That strip is a mockup-only affordance and is not part of the requirement.
+| Placement | A fixed card in a screen corner, above the command bar. No overlay, no backdrop |
+| Primary reading | The **actual processed weight**, large, with the target beneath it |
+| Progress | A bar showing percent of target, marked at 75 / 90 / 100 so the operator sees where the current milestone sits |
+| Live secondary data | Percent, remaining, spool footage, fill rate, estimated time to target, and a visible "last updated" indication |
+| Action | A single **Acknowledge** control. Nothing else is offered; the operator's real work is on the screen behind it |
+| Escalation | The card changes in place, never as a second card |
+| After acknowledgement | Collapses to a small docked indicator showing live progress; re-expands at the next milestone |
+| Accessibility | Announced without interrupting; dismissal must be deliberate — pressing Escape does not acknowledge |
 
 ---
 
-## Part B — Operator Confirmation After the Machine Stops
+# 3. The Weight Basis
 
-### Requirement as recorded (July 29, 2026)
+## 3.1 Actual processed weight
 
-Once the flat wire machine reaches the **target spool weight** and the operator **physically stops the machine**, the system monitors the corresponding **PLC machine status tag**. When the PLC confirms the machine has stopped, the system displays a confirmation popup asking whether the machine was stopped **to remove the completed spool and perform the spool completion transaction, including label printing**.
+Weight wound onto the current take-up since the spool started, derived from the live footage counter and the measured cross-section:
 
-- **Yes** — the stop was to remove the completed spool. The system proceeds with the spool completion workflow, performs the transaction, and prints the spool labels.
-- **No** — the stop was for a different reason. The popup closes; **no** completion transaction and **no** label printing.
+```
+lb per ft     = gauge (in) × width (in) × 12 (in/ft) × alloy density (lb/in³)
+spool weight  = (current footage − footage at spool start) × lb per ft
+```
 
-The popup is displayed **only** after the PLC confirms the transition to the **stopped** state.
+Worked example — alloy 1100 at 0.098 lb/in³, gauge 0.110″, width 0.625″:
 
-### How this is handled — analysis
+```
+0.110 × 0.625 × 12 × 0.098 = 0.0809 lb/ft
+    900 lb  ≈ 11,130 ft   (customer maximum)
+  1,800 lb  ≈ 22,250 ft   (a spool yielding two finished coils)
+```
 
-The requirement is a two-condition gate on an **edge**, not a state, and the whole design hinges on that. A physically stopped line is an extremely common condition on FL1 (die change, weld prep, break, shift change, blockage), so the prompt must be armed by weight *and* fired by a transition *and* filtered for noise, or it becomes the alert operators learn to dismiss reflexively.
+**FL2 caveat.** FL2 standalone does not broadcast live gauge and width — its trace is historical. Its weight factor must therefore use the pass-schedule or order gauge and width, not a live measurement.
 
-**1. Arming condition (weight).** The prompt is armed only while `actual spool weight ≥ target spool weight` for the current spool — the same latched value Part A's M3 milestone uses. Below target, a stop raises nothing.
+## 3.2 Target weight `[CONFIRMED — July 30, 2026]`
 
-**2. Firing condition (PLC edge).** The prompt fires on the **`RUNNING → STOPPED` transition** of the line state tag, not on the level. Reading the level would re-raise the popup on every poll for as long as the line sits stopped. One prompt per stop event, tracked by a handled-flag that clears when the line returns to RUNNING.
+**The basis is the customer's weight range.** The customer specifies a **minimum and a maximum** weight (figures given on the call: 900 lb maximum, 800 lb minimum) and completion is graded against that range, **by weight** — not by footage, and not against an assumed default.
 
-**3. Which tag.** `FL{n}.LineState` — the tag the system already reads as the gatekeeper for rod checkout ([RodCheckout.md](RodCheckout.md), step 27 of [FlatWireProcessWalkthrough.md](../../Analysis/FlatWireProcessWalkthrough.md)). Reusing it keeps one authority for "is the line running". `FL{n}.SpeedFPM ≈ 0` is read as corroboration so a stale or mis-scaled state bit alone cannot fire the prompt. The exact state vocabulary of that tag (`RUNNING / STOPPED / PAUSED / FAULT / THREADING`?) is not yet documented — **Q63**.
+| Source | Value | Role |
+|---|---|---|
+| **Order — customer minimum/maximum** | e.g. 800–900 lb | **The basis.** Completion is graded against it |
+| Spool sizing | ~1,800 lb | Sized so **two finished coils** can be cut from one spool at FL2 |
+| Intermediate take-up capacity | 3,500 lb | Hard equipment ceiling |
+| Final take-up capacity | 1,100 lb | Finished-coil ceiling. The customer maximum is normally below it, so the customer value governs |
 
-**4. Noise filter (dwell).** Lines momentarily read zero speed during threading, jogging, and slow-downs. The state must hold **STOPPED continuously for a configurable dwell (default 5 s)** before the prompt fires. Without this, a jog at 100 % pops a spool completion dialog in the operator's face mid-adjustment.
+> **The previously assumed 2,000 lb default is withdrawn.** It had no basis and exceeded the finished-coil ceiling.
 
-**5. Latched weight.** The actual weight is **frozen at the PLC stop timestamp** and that latched value — not a value that keeps drifting afterward — is what the popup shows and what the completion transaction and label use. This matters because the footage counter can tick a little after the drives stop.
+> `[CLIENT INPUT REQUIRED]` **Which order field carries the customer minimum and maximum** is not yet identified (Q60). The formula also depends on the outstanding conversion between spool outside diameter and weight (Q58); until that closes, footage × cross-section × density is the working basis.
 
-**6. Server-owned, not browser-owned.** The evaluator watching the tag lives server-side in the `FlatWire` service, alongside the Part A milestone evaluator. It raises a **pending prompt** that is persisted against the run and pushed over `FlatWireHub`. Consequences: the prompt survives a browser refresh or the operator switching screens; it can be targeted at the line's operator session(s); and both the raise and the answer are auditable. A purely client-side popup would be lost on refresh, exactly when an operator is most likely to reload a screen that "looks stuck".
+## 3.3 A derivation is not a measurement
 
-**7. Suppression when the reason is already known.** If the operator used the software **Pause** dialog immediately before stopping — which already captured a reason (die change, weld prep, break…) — the system knows why the line stopped and asking again is noise. Working rule: suppress the prompt if an open `RunPauseEvent` exists whose reason is not spool removal. Needs confirmation — **Q63**.
+`footage × gauge × width × 12 × density` inherits every error in its inputs — counter slip, gauge and width drift between checkpoints, and an assumed alloy density. **The physical scale is the only ground truth available at the take-up**, so the completion step must be able to capture it and must never quietly commit a derived number when a measured one exists.
 
-**8. What "No" must not do.** No transaction, no print — and equally, no dead end. An operator can legitimately answer No and then decide five minutes later to close the spool. So No must not be the only path: a **manual "Complete spool" entry point** stays available on the docked progress pill whenever weight ≥ target. The prompt is a convenience over that path, never the only door to it.
+This is also how the outstanding weight-formula question eventually answers itself: accumulate scale-versus-calculated variances and both the density factor and the diameter formula can be validated against real production data.
 
-**9. What "No" also should not do.** Nag. After No, the prompt does not re-fire for the *same* stop event; it re-arms only on the next `RUNNING → STOPPED` transition.
+---
 
-**10. Line restarts while the popup is open.** The answer is implicitly "no, still producing". Auto-dismiss the popup, log it as system-dismissed with reason `line resumed`, and re-arm. Leaving a spool completion dialog open over a running line invites completing a spool that is still being wound.
+# 4. Part B — Confirmation After the Machine Stops
 
-**11. Yes is an entry point, not a bypass.** The spool completion workflow keeps its own gates — per-spool SPC for gauge and width is mandatory before a spool alpha is issued (step 29 of the walkthrough). Answering Yes routes into that workflow; it does not skip validation, and it does not print a label before the transaction commits.
+## 4.1 The requirement
 
-**12. Over-target stops.** If the operator stops at 104 % (Part A milestone M4 territory), the same prompt fires with the latched over-target weight, and the completion summary flags the overage rather than silently accepting it.
+Once the target weight is reached and the operator **physically stops the machine**, the system watches the machine status. When the stop is confirmed, it asks whether the machine was stopped **to remove the completed spool and perform the completion transaction, including label printing**.
 
-**13. PLC comms loss.** No tag, no confirmation, no prompt — by design, since the requirement conditions the popup on PLC confirmation. The manual "Complete spool" path is the fallback, and OPC health is already visible on Dashboard 1.
+- **Yes** — the completion workflow runs, the transaction is performed, and the labels print.
+- **No** — the prompt closes. No transaction, no labels.
 
-**14. Multiple operator sessions.** The topbar supports several signed-in operators per screen. One prompt per line; the first answer wins; the answering operator is recorded on the audit record. Whether the prompt should also appear on the supervisor view is **Q64**.
+The prompt appears **only** after the machine confirms it has stopped.
 
-**15. The calculated weight is a derivation, not a measurement.** `footage × gauge × width × 12 × density` inherits every error in its inputs — counter slip, gauge/width drift between SPC checkpoints, and an assumed alloy density. The physical scale is the only ground truth available at the take-up, so the completion step **must be able to capture it** and must not quietly commit a derived number when a measured one exists. This is also the mechanism that finally answers **Q58**: accumulate scale-vs-calculated variances and the density factor and the OD formula can both be validated against real data.
+## 4.2 Why this is a two-condition gate on an edge
 
-**16. Scale readings are gross; the record needs net.** The loaded spool goes on the floor scale, so what the operator reads is gross. Net = gross − spool tare, and the tare must be shown while they type so the arithmetic is never done in their head. This mirrors rod receiving, which already captures gross and net and validates scale-vs-vendor weight ([FlatWirePlan.md](../../Analysis/FlatWirePlan.md)).
+A physically stopped line is an extremely common condition on FL1 — die change, weld preparation, a break, shift change, a blockage. If the prompt were raised on the stopped *state* rather than the stop *transition*, and without a weight condition, it would become the alert operators learn to dismiss reflexively. It is therefore **armed by weight**, **fired by a transition**, and **filtered for noise**.
 
-**17. Which weight wins is the operator's call, but not a blind one.** The system pre-selects the scale reading once entered — a weighing outranks a derivation — and shows the variance in lb and % before the choice is made. Both figures are persisted whichever is chosen: the discrepancy itself is the useful data.
+| # | Design point | Rule |
+|---|---|---|
+| 1 | **Arming** | Only while weight ≥ target for the current spool. Below target, a stop raises nothing |
+| 2 | **Firing** | On the running → stopped **transition**, not the level. One prompt per stop event |
+| 3 | **Corroboration** | Line speed at approximately zero is read alongside the state, so a stale state value alone cannot fire the prompt |
+| 4 | **Noise filter** | The stop must hold continuously for a configurable dwell (**default 5 seconds**). Lines momentarily read zero during threading, jogging and slow-downs |
+| 5 | **Latched weight** | Weight is **frozen at the stop timestamp**; that value is what the prompt shows and what the transaction and label use. The counter can tick on after the drives stop |
+| 6 | **Server-owned** | The evaluator lives in the service, not the browser. The prompt survives a refresh or a screen change, can be targeted at the line's operator sessions, and both the raise and the answer are auditable |
+| 7 | **Suppression** | If the operator used the software pause immediately beforehand and gave a reason, the system already knows why the line stopped; asking again is noise |
+| 8 | **"No" is not a dead end** | An operator may answer No and decide five minutes later to close the spool. A **manual completion** entry point stays available whenever weight ≥ target |
+| 9 | **"No" does not nag** | After No, the prompt does not re-fire for the same stop; it re-arms on the next transition |
+| 10 | **Restart while open** | The answer is implicitly *still producing*. The prompt auto-dismisses, is logged as system-dismissed with reason *line resumed*, and re-arms |
+| 11 | **Yes is an entry point, not a bypass** | The completion workflow keeps its own gates — per-spool SPC for gauge and width is mandatory before an identity is issued. Yes routes into that workflow; it does not skip validation |
+| 12 | **Over-target stops** | A stop above target fires the same prompt with the latched over-target weight, and the completion summary flags the overage rather than silently accepting it |
+| 13 | **Communications loss** | No machine data, no confirmation, no prompt — by design, since the requirement conditions the prompt on machine confirmation. Manual completion is the fallback |
+| 14 | **Multiple operators** | One prompt per line; the first answer wins; the answering operator is recorded |
 
-**18. An out-of-tolerance variance must not strand the spool.** *(Client direction, July 29 2026.)* The physical spool is finished and sitting on the take-up — a screen that refuses to create it just moves the problem off-system, and the operator ends up completing it later from memory or not at all. So the variance is **authorised rather than blocked**: the commit control stays live and a **supervisor override** appears. This is the same authority model already confirmed for mid-run rod checkout, where a supervisor approves rather than the software refusing. The override is what makes the exception *visible* — flag, authorising supervisor, reason, both weights and the variance all land on the spool record, so accepting an odd weight is a traceable decision instead of a silent one. The PIN authenticates and is never stored. When no supervisor is on the floor, the remote-approval path (Q50's notification model) is offered, and even that does not freeze the screen.
-
-### State machine
+## 4.3 State machine
 
 | State | Entered when | Exits to |
 |---|---|---|
-| `IDLE` | Weight < target | `ARMED` when weight ≥ target |
-| `ARMED` | Weight ≥ target, line RUNNING | `PENDING` on PLC `RUNNING → STOPPED` held for the dwell; back to `IDLE` on new spool |
-| `PENDING` | PLC stop confirmed, weight latched, popup displayed | `COMPLETING` on **Yes** · `DECLINED` on **No** · `ARMED` if line returns to RUNNING (auto-dismiss) |
-| `COMPLETING` | Operator answered Yes | `COMPLETED` when the transaction commits and labels print → resets to `IDLE` for the next spool |
-| `DECLINED` | Operator answered No | `ARMED` (re-arms for the next stop edge); manual completion still available |
+| `Idle` | Weight below target | `Armed` when weight ≥ target |
+| `Armed` | Weight ≥ target, line running | `Pending` on a confirmed stop held for the dwell; back to `Idle` on a new spool |
+| `Pending` | Stop confirmed, weight latched, prompt displayed | `Completing` on **Yes** · `Declined` on **No** · `Armed` if the line resumes (auto-dismiss) |
+| `Completing` | Answered Yes | `Completed` when the transaction commits and labels print, then resets to `Idle` |
+| `Declined` | Answered No | `Armed` — re-arms for the next stop; manual completion remains available |
 
-### Behavior rules
+## 4.4 Behaviour rules
 
 | ID | Rule |
 |---|---|
-| **S-1** | The popup is displayed **only** after the PLC confirms the line has transitioned to STOPPED — never on a software-side assumption, never before the tag confirms. |
-| **S-2** | Both conditions must hold: weight ≥ target **and** a confirmed stop edge. A stop below target raises nothing. |
-| **S-3** | STOPPED must persist for the configured dwell (default **5 s**) with speed ≈ 0 before the popup is displayed. |
-| **S-4** | The displayed weight is **latched at the PLC stop timestamp** and is the value used by the transaction and the label. |
-| **S-5** | Exactly **one** popup per stop event. It does not re-raise while the line remains stopped. |
-| **S-6** | **Yes** → spool completion workflow: transaction committed, spool alpha finalized, spool labels printed. |
-| **S-7** | **No** → popup closes. No transaction, no alpha finalization, no label printing, no state change to the spool. The decline is logged. |
-| **S-8** | If the line returns to RUNNING while the popup is open, the popup auto-dismisses as `line resumed` and re-arms. |
-| **S-9** | The pending prompt is **server-owned state** — it survives browser refresh and screen navigation, and is re-delivered on reconnect. |
-| **S-10** | Escape / click-outside do **not** dismiss the popup; the operator must answer Yes or No. There is no close (×) affordance on the question step. |
-| **S-11** | Labels print **only** after the completion transaction commits — never on opening the popup, never on Yes alone if the transaction fails. |
-| **S-12** | Both outcomes are audited: prompt raised (PLC stop timestamp, latched weight), answer (Yes/No), answering operator, and answer timestamp. |
-| **S-13** | A manual **Complete spool** entry point remains available whenever weight ≥ target **and the PLC reports the line not running** — a spool cannot be removed from a turning take-up, and the same gatekeeper rule that blocks rod checkout on a running line applies here. It is independent of the prompt, so a declined prompt is never a dead end. |
-| **S-14** | Dwell time and the arming threshold are configuration, not constants (consistent with **R-12**). |
-| **S-15** | Each choice must state its **consequence** on the control itself, not in surrounding prose — the operator is deciding at the machine, often briefly. **Y** / **N** keyboard answers are provided and advertised on the choices. |
-| **S-16** | The completion step must offer the operator a **scale weight** entry. It is **optional** — with nothing entered the system-calculated weight is recorded and the step behaves as before. |
-| **S-17** | The scale reading is entered as **gross**; the system derives **net = gross − spool tare** and reconciles that against the calculated net, showing the variance in **lb and % of calculated**. |
-| **S-18** | The operator explicitly chooses **which weight is recorded** — scale or system-calculated. A scale reading is **pre-selected** once entered (a physical weighing outranks a derived figure) but the operator can override back to calculated. The choice is never made silently for them. |
-| **S-19** | The chosen basis governs the **spool record, the label, and everything downstream** (planning allocation, certs). The label prints the recorded weight, not the other one. |
-| **S-20** | Variance beyond a configurable tolerance (**default ±2 %**) is flagged but **does not stop the operator from creating the spool**. The completion is **authorised, not prevented**: a **supervisor override** appears and the commit control stays enabled throughout — it is never disabled by the variance. *(Client direction, July 29 2026.)* |
-| **S-22** | The override captures the **variance reason**, the **supervisor badge/ID** and a **PIN**. The PIN authenticates only — it is never carried in the payload or stored. Pressing complete with the override incomplete flags exactly the missing fields and focuses the first one; it does not commit, and it does not lock the operator out. |
-| **S-23** | When no supervisor is on the floor, a **Request remote approval** action notifies the supervisor — the notification-driven approval model already confirmed for mid-run checkout ([Q50](../../Analysis/FlatWireOpenQuestions.md)). Requesting does not block or change the screen state; the operator can still take an on-floor override the moment one is available. |
-| **S-24** | An overridden completion is **marked on the spool record** — override flag, authorising supervisor, reason, both weights and the variance — and the result step states it plainly so the next person sees the spool was accepted out of tolerance. Both weights, the variance, the chosen basis and any reason are persisted regardless of which weight won. |
-| **S-25** | If the variance is brought back inside tolerance (a re-weigh, a corrected entry), the override requirement **disappears** and the completion proceeds normally with nothing recorded against it. |
-| **S-21** | The scale reading is **retained on the record even when the operator selects calculated** — the discrepancy is the evidence needed to validate the density factor and the scale. |
+| **S-1** | The prompt appears **only** after the machine confirms the line has stopped — never on a software assumption. |
+| **S-2** | Both conditions must hold: weight ≥ target **and** a confirmed stop transition. |
+| **S-3** | The stopped state must persist for the configured dwell, with speed at approximately zero. |
+| **S-4** | The displayed weight is **latched at the stop timestamp** and is the value used by the transaction and the label. |
+| **S-5** | Exactly **one** prompt per stop event. It does not re-raise while the line remains stopped. |
+| **S-6** | **Yes** → the completion workflow: transaction committed, identity finalised, labels printed. |
+| **S-7** | **No** → the prompt closes with no transaction, no identity finalisation, no label print and no change to the spool. The decline is logged. |
+| **S-8** | If the line resumes while the prompt is open, it auto-dismisses as *line resumed* and re-arms. |
+| **S-9** | The pending prompt is **server-owned state** — it survives a browser refresh and is re-delivered on reconnect. |
+| **S-10** | Escape and clicking outside do **not** dismiss it; the operator must answer. There is no close affordance on the question. |
+| **S-11** | Labels print **only after** the completion transaction commits — never on opening the prompt, and never on Yes alone if the transaction fails. |
+| **S-12** | Both outcomes are audited: prompt raised (stop timestamp, latched weight), the answer, the answering operator, and the answer timestamp. |
+| **S-13** | A **manual completion** entry point remains available whenever weight ≥ target **and the line is not running** — a spool cannot be removed from a turning take-up, so the same gatekeeper rule that blocks rod checkout applies. |
+| **S-14** | Dwell time and the arming threshold are configuration, not constants. |
+| **S-15** | Each choice states its **consequence on the control itself**, not in surrounding prose. Keyboard answers (Y / N) are provided and advertised on the choices. |
 
-### Edge cases and their handling
+## 4.5 Weight verification at completion
+
+| ID | Rule |
+|---|---|
+| **S-16** | The completion step must offer a **scale weight** entry. It is **optional** — with nothing entered, the calculated weight is recorded. |
+| **S-17** | The scale reading is entered as **gross**; the system derives **net = gross − spool tare** and reconciles it against the calculated net, showing the variance in **pounds and percent**. |
+| **S-18** | The operator explicitly chooses **which weight is recorded**. A scale reading is **pre-selected once entered** — a physical weighing outranks a derivation — but the operator may revert to calculated. The choice is never made silently. |
+| **S-19** | The chosen basis governs the **spool record, the label and everything downstream**. The label prints the recorded weight. |
+| **S-20** | A variance beyond a configurable tolerance (**default ±2 %**) is flagged but **never prevents the spool from being created**. The completion is **authorised, not blocked**: a supervisor override appears and the commit control stays enabled throughout. |
+| **S-21** | The scale reading is **retained on the record even when calculated is selected** — the discrepancy is the evidence needed to validate the density factor and the scale. |
+| **S-22** | The override captures the **variance reason**, the **supervisor identity** and a **PIN**. The PIN authenticates only; it is never carried in the payload or stored. Committing with the override incomplete flags exactly the missing fields and focuses the first — it does not commit, and it does not lock the operator out. |
+| **S-23** | When no supervisor is on the floor, a **remote approval** request notifies one. Requesting does not block or change the screen; an on-floor override can still be taken the moment one is available. |
+| **S-24** | An overridden completion is **marked on the spool record** — flag, authorising supervisor, reason, both weights and the variance — and stated plainly on the result, so the next person sees the spool was accepted out of tolerance. |
+| **S-25** | If the variance is brought back inside tolerance by a re-weigh or a corrected entry, the override requirement **disappears** and the completion proceeds with nothing recorded against it. |
+
+**Why an out-of-tolerance variance must not strand the spool.** *(Client direction, July 29, 2026.)* The physical spool is finished and sitting on the take-up. A screen that refuses to create it merely moves the problem off-system, and the operator ends up completing it later from memory, or not at all. The override is what makes the exception **visible**: accepting an odd weight becomes a traceable decision rather than a silent one.
+
+## 4.6 Presentation requirements
+
+| Aspect | Requirement |
+|---|---|
+| Form | A centred modal. Acceptable here because the machine is already stopped |
+| **No scrolling** | The dialog must never scroll — the operator should take in the whole decision at once |
+| Priority | **Decision first, evidence last.** The identity band states what happened and shows the one number that matters; the question is asked once, in the largest type on screen; the machine-state provenance sits quietly at the bottom |
+| The question | *"Was the machine stopped to remove the completed spool?"* with a short clarifier that confirming runs the transaction and prints the labels. Asked **once** — not restated in the title |
+| The two choices | Full-width rows sized for gloved use, each with its **consequence spelled out** — Yes states what will be completed, at what weight, and that labels will print; No states that nothing is recorded and the spool can be completed later. Expected answer first |
+| Over target | An inline warning between question and choices, stating the overage and that it will be recorded |
+| Evidence footer | Machine state, dwell held, speed, stop timestamp, spool identity — provenance, not headline |
+| Completion step | Two columns — **weight verification** (calculated, scale, variance, tolerance state, basis choice, "will record") beside **the identity of what is being committed** (identity, footage, gauge, width, source rods, weld points) with the label set beneath. The supervisor override spans the full width below both. Actions last |
+| Result step | States the committed facts, the **weight basis** used, label print confirmation, and that the milestone ladder has re-armed for the next spool |
+| Declined | The docked progress indicator shows *target reached* with a manual **Complete spool** action |
+
+---
+
+# 5. Part C — Short Close `[CONFIRMED — July 30, 2026]`
+
+The milestone ladder and the stop prompt are both armed **at or above target**, so a spool closed **early** — order satisfied, rod exhausted, quality problem, end of campaign — would otherwise fall outside the requirement entirely.
+
+**A short close is an unplanned stop**, handled on the pattern of the mill 10-90 standard operating procedure, with an unplanned-stop reason code.
+
+| Rule | Behaviour |
+|---|---|
+| **Grading basis** | The **customer minimum–maximum weight**, by weight — not footage, and not a fixed target |
+| **Inside the range** | **Continue.** If the short weight still yields the finished coils the order requires, nothing escalates |
+| **Outside the range** | **Flagged.** Either a **supervisor override plus a production hold**, or the piece is **offered to the customer under concession** before a remake is planned. The direction is explicit: **offer first, remake last** |
+| **The spool still runs off** | **Always.** FL2 has no spool stripper, so the spool must be emptied and returned to FL1 whatever happens to the material on it. Rejecting the material is never the same as stopping and removing it |
+
+## 5.1 Mid-run coil break — a different rule
+
+The stop is **removed and a new stop starts from zero**. Weight does **not** resume from the break point. The leftover incoming material is **welded to the next coil on FL1**; on FL2 it is run off to a finished stop and offered to the customer, or scrapped.
+
+> **Two cautions before this is built.**
+> 1. **The 10-90 standard operating procedure is not in our possession.** It must be obtained from Operations and cited — what is recorded above is the call summary, not the procedure.
+> 2. **Restart-from-zero is a run and stop model change, not a screen rule.** It must be reconciled with how run footage accumulates and with the coil-local footage used for traceability; run events use cumulative run footage while traceability is coil-local, and the offset between them is undefined (OI-25).
+
+---
+
+# 6. Edge Cases
 
 | Scenario | Handling |
 |---|---|
 | Stop at 60 % for a die change | No prompt — not armed (S-2) |
-| Momentary zero speed / jog / threading at 100 % | Filtered by the dwell (S-3) |
-| Software Pause with a reason logged, then stop | Prompt suppressed — reason already known (Q63) |
-| Operator answers No, later removes the spool anyway | Manual **Complete spool** on the progress pill (S-13) |
-| Line restarted with the popup open | Auto-dismiss `line resumed`, re-arm (S-8) |
-| Popup left unanswered (operator away from the HMI) | Persists — it is a decision, not an alert; machine is stopped so nothing is blocked |
-| Browser refreshed / operator switched screens | Pending prompt re-delivered from server state (S-9) |
-| Two operators signed in on the line | One prompt, first answer wins, answering operator recorded (Q64) |
-| Footage ticks on after the drives stop | Latched weight is authoritative (S-4) |
-| Stop at 104 % of target | Same prompt; overage flagged on the completion summary (analysis 12) |
-| OPC / PLC comms down | No prompt; manual path is the fallback (analysis 13) |
-| Yes, but per-spool SPC not yet recorded | Completion workflow enforces its own gate; prompt is an entry point only (S-11, analysis 11) |
-| Operator stops short of target intending to close the spool early | **Specified 30 Jul 2026 — an unplanned stop, not a silent manual action.** See *Short close* below (**Q65**, decided) |
-
-### Short close — closing a spool below target (Part C, decided 30 Jul 2026)
-
-The milestone ladder and the stop prompt are both armed **at or above target**, so a spool the operator closes **early** — order satisfied, rod exhausted, quality problem, end of campaign — previously fell outside the requirement entirely. It does not any more.
-
-**A short close is an unplanned stop**, handled on the pattern of the mill **10-90 SOP**, with an unplanned-stop reason code.
-
-| Rule | Behaviour |
-|---|---|
-| **Grading basis** | The **customer min–max weight**, by weight — not footage, not a fixed target (see *Target spool weight* above) |
-| **Inside the range** | **Continue.** If the short weight still yields the finished coils the order requires, nothing escalates |
-| **Outside the range** | **Flagged.** Either a **supervisor override plus a production hold**, or the piece is **offered to the customer under concession** before a remake is planned. Shannon's direction is explicit: **offer first**, remake last |
-| **The spool still runs off** | **Always.** FL2 has **no spool stripper**, so the spool must be emptied and returned to FL1 whatever happens to the material on it. "Reject it" is never "stop and remove it" |
-
-**Mid-run coil break** — related, and a different rule from the above: the stop is **removed and a new stop starts from zero**. Weight does **not** resume from the break point. The leftover incoming material is **welded to the next coil on FL1**; on FL2 it is either run to a finished stop and offered to the customer, or scrapped.
-
-> **Two cautions before this is built.**
->
-> 1. The **10-90 SOP document is not in this repository.** It must be obtained from Operations and cited — the pattern above is the call summary, not the SOP.
-> 2. The restart-from-zero rule is a **run/stop model** change, not a screen rule. Check it against `FlatWireRun` / `CoilOutput` footage accumulation and against `CoilTraceability`'s coil-local footage before implementing — run events use **cumulative run footage** and coil traceability uses **coil-local** footage, and the offset between them is still undefined (**OI-25**).
-
-
-### UI specification (as built in the mockup)
-
-| Element | Spec |
-|---|---|
-| Type | Centered modal on the `.gb-modal` shell, **840 px**, with its own identity band in place of the standard head. Modal is acceptable here because the machine is already stopped. |
-| No scrolling | The dialog **must never scroll** — an operator at the machine should take in the whole decision at once. `max-height` is released and the body's `overflow` is `visible` on this dialog, and step 2 is laid out to fit: roughly **520 px** normally and **700 px** with the override panel open, against ~900 px available on the 1280 × 1024 shopfloor screen. |
-| Step 2 layout | **Two columns**, not one tall stack: left (1.3 fr) the **weight verification** panel — calculated / scale / variance, tolerance strip, basis choice, "Will record" — and right (1 fr) the **identity of what is being committed** — spool alpha, footage, gauge, width, source rods, weld point — with the label strip beneath it. The **supervisor override spans the full width below both columns** so its three fields stay on one row. Actions last. The standing note about SPC being enforced by the completion workflow was dropped from the screen to make room; it survives as rule **S-11**, and the label strip now carries the *"after the transaction commits"* clause. |
-| Layout principle | **Decision first, evidence last.** The band states what happened and shows the one number that matters; the body asks the question once in the largest type on screen; the PLC provenance sits at the bottom as a quiet footer instead of competing with the question. The earlier draft led with the tag readout and buried the question in 14 px body text — wrong priority for an operator reading at arm's length. |
-| Step 1 — identity band | Solid color band, white text: state icon, title (*"Target spool weight reached — machine stopped"*, or *"Over target spool weight — machine stopped"* in red), `FL1 · TKUP-1 · SP-00031` sub-line, and the **latched weight as a 33 px hero** with `of 2,000 lb target · 100%` beneath it. Tone: green at target, **red** over target, blue on the confirm step. |
-| Step 1 — the question | One 17 px line: *"Was the machine stopped to remove the completed spool?"* with a 13 px clarifier: *"Confirming runs the spool completion transaction and prints the spool labels."* Stated **once** — no restatement in the title. |
-| Step 1 — the two choices | Two **full-width, 78 px-tall choice rows** (the `outcome-option` pattern already used by the Pause/Resume dialog), each with an icon, a 16 px title, and its **consequence spelled out**: Yes → *"Completes SP-00031 at 2,014 lb net, records the transaction and prints 2 labels"*; No → *"Nothing is recorded — no transaction, no alpha, no labels. The spool stays open and can be completed later."* Expected answer on top. Gloved-hand targets, hover-tinted green (Yes) / gray (No), and each row prints its keyboard key. |
-| Step 1 — keyboard | **Y** and **N** answer the question, advertised as key chips on the rows. Escape is deliberately unbound and there is no × (**S-10**). |
-| Step 1 — over-target | Red inline warning between question and choices: *"Over target by n lb — the overage is recorded on the spool completion record."* |
-| Step 1 — evidence footer | Quiet 11.5 px line above nothing else: green dot, `FL1.LineState = STOPPED`, `held 5s · 0 FPM`, `Stopped 14:32:07`, spool alpha. This is why the popup appeared — provenance, not the headline. |
-| Step 2 — completion summary *(Yes only)* | Header reads *"Confirm spool completion"*. Opens with the **weight verification** block (below), then the identity summary — spool alpha, latched footage, gauge and width, source rod alphas with the weld point — and the label set (copies + printer). Actions: **Back** · **Complete spool & print labels**. |
-| Step 2 — weight verification | Three columns: **System calculated — net** (with `24,900 ft × 0.0809 lb/ft` shown as its derivation), **Scale weight — gross** (a 42 px numeric input with `− tare 120 lb = net …` resolving live beneath it), and **Variance vs calculated** (lb, plus `±n.nn % of calculated`). A tolerance strip appears once a reading exists: success-tinted *"Within the ±2 % tolerance"*, or danger-tinted, naming the overage and telling the operator to check the scale and the gauge/width used in the calculation — the same tint treatment the existing over-target and label-print strips use. |
-| Step 2 — "Will record" strip | A **flowing sentence**, not a flex row: *"Will record **1,885 lb** net · **2,005 lb** gross · basis **Scale weight** — this is what prints on the label."* (`display:flex` here put every value on its own line, because each `<strong>` and each bare text run becomes a separate flex item.) |
-| Step 2 — which weight to record | The question *"Which weight should be recorded for this spool?"* over **two radio cards** — **Scale weight** (*"Physically weighed — overrides the calculation"*) and **System calculated** (*"Footage × cross-section × density"*), each showing its net figure. The scale card is disabled until a reading is entered, then auto-selected; either can be chosen. A **"Will record …"** strip below states the resulting net, gross and basis, and notes that this is what prints on the label. |
-| Step 2 — out-of-tolerance override | Beyond ±2 %, a **supervisor override panel** appears — heading *"Supervisor override to proceed"*, a line stating the spool **can still be created**, then three fields on one row: **Reason for the variance** · **Supervisor badge / ID** · **PIN**. Below them, **"No supervisor on the floor? Request remote approval"** with a timestamped confirmation once pressed. The commit button **stays enabled** and relabels to **"Override & complete spool"**. Pressing it with fields empty outlines the missing ones, shows *"Required for the override"*, and focuses the first — never a disabled dead end. Within tolerance the panel is absent entirely. |
-| Step 3 — weight basis | The committed result adds a **Weight basis** row (*Scale weight* / *System calculated*) so the record shows which figure was used. |
-| Step 3 — result | Band turns green, *"Spool completed"*. Committed facts (alpha, net, gross, commit time), a green label-print confirmation line, and a note that the spool is ACTIVE for planning and the ladder has re-armed for the next spool (**R-9**). |
-| Declined | Dialog closes; the docked progress pill shows `target reached` with a **Complete spool** button as the manual path. |
-| PLC state visibility | The line badge switches to *"FL1 stopped (PLC)"* with a static gray dot while the simulated tag reads STOPPED, the Machine card head flips *Running → Stopped*, and weight accumulation halts. |
-| Host-screen readout | Dashboard 3's Machine card carries a live `Spool SP-00031 · 1,460 / 2,000 lb` line (`#fw-spool-lb` / `#fw-spool-target`) — **the target here is the withdrawn 2,000 lb default and must be re-pointed at the customer max (W5)** that the component keeps in step, so the screen and the notification never disagree. |
-| Mockup demo controls | The demo strip adds **■ stop** / **▶ start** buttons that drive the simulated `FL{n}.LineState`, so the dwell, the prompt, the auto-dismiss-on-restart, and the below-target silence are all reviewable. Mockup-only. |
-
-### Acceptance criteria — Part B
-
-11. With weight below target, stopping the machine raises no popup.
-12. With weight at or above target, stopping the machine raises the popup only after the PLC state has read STOPPED for the dwell period.
-13. A momentary stop shorter than the dwell raises no popup.
-14. The popup shows the weight latched at the stop timestamp; that value does not drift while the popup is open.
-15. Answering **No** closes the popup with no transaction, no alpha finalization, and no label print, and logs the decline.
-16. Answering **Yes** routes into the spool completion workflow; labels print only after the transaction commits.
-17. The popup does not re-raise while the line stays stopped; it re-arms on the next running→stopped transition.
-18. Restarting the line with the popup open auto-dismisses it and logs `line resumed`.
-19. Escape and click-outside do not dismiss the question step.
-20. After a completed spool, the Part A milestone ladder re-arms from zero for the next spool.
-21. A pending prompt survives a browser refresh and is re-delivered.
-22. The manual **Complete spool** path is available whenever weight ≥ target and the line is not running, including after a No; it is hidden while the line runs.
-23. With no scale weight entered, the completion commits the **system-calculated** weight and no reason is requested.
-24. Entering a gross scale reading resolves **net = gross − tare** and shows the variance in lb and % of calculated within the same interaction.
-25. A scale reading below the spool tare, blank, or non-numeric is **rejected** — the variance clears and the basis falls back to calculated.
-26. A variance inside ±2 % shows the within-tolerance state and commits with no override asked for.
-28. A variance beyond ±2 % **never disables the commit control** — the supervisor override panel appears and the button relabels to *"Override & complete spool"*.
-29. Pressing complete with an incomplete override flags exactly the missing fields, focuses the first, and commits nothing; supplying reason + supervisor + PIN completes the spool and prints the labels.
-30. An overridden completion records the override flag, the authorising supervisor and the reason, states it on the result step, and never puts the PIN in the payload.
-31. Requesting remote approval notifies the supervisor and logs it without changing what the operator can do next.
-32. Correcting the variance back inside tolerance removes the override requirement, and the completion then records no override.
-27. The recorded net, gross and **weight basis** follow the operator's choice, appear on the result step, and are what the label prints. Both weights, the variance, the basis and any reason are written to the audit record even when calculated is chosen over an entered scale reading.
+| Momentary zero speed, jog or threading at 100 % | Filtered by the dwell (S-3) |
+| Software pause with a reason logged, then a stop | Prompt suppressed — the reason is already known |
+| Operator answers No, then removes the spool anyway | Manual completion on the progress indicator (S-13) |
+| Line restarted with the prompt open | Auto-dismiss as *line resumed*, re-arm (S-8) |
+| Prompt left unanswered, operator away from the screen | It persists — it is a decision, not an alert. The machine is stopped, so nothing is blocked |
+| Browser refreshed, or the operator changed screens | Pending prompt re-delivered from server state (S-9) |
+| Two operators signed in on the line | One prompt, first answer wins, the answering operator recorded |
+| Footage ticks on after the drives stop | The latched weight is authoritative (S-4) |
+| Stop above target | Same prompt; the overage is flagged on the completion summary |
+| Machine communications down | No prompt; manual completion is the fallback |
+| Yes, but per-spool SPC not yet recorded | The completion workflow enforces its own gate; the prompt is an entry point only (S-11) |
+| Operator stops short of target, intending to close early | **Part C — short close** |
 
 ---
 
-## Acceptance Criteria — Part A
+# 7. Acceptance Criteria
 
-1. With the line running and actual weight below 75% of target, no notification is shown.
-2. Crossing 75% raises the notification within one telemetry tick, showing actual processed weight, target, and percent.
-3. The notification never blocks the screen — all Dashboard 3 controls remain usable while it is displayed, verified by interacting with each command-bar action.
-4. Leaving it unacknowledged updates the displayed actual weight and percent on every telemetry tick.
-5. Acknowledging at 75% dismisses it; nothing reappears until 90%.
-6. Acknowledging at 90% dismisses it; nothing reappears until 100%.
-7. Reaching 90% (or 100%) with the previous milestone unacknowledged escalates the existing notification in place — exactly one notification is ever on screen.
-8. Acknowledging at 100% dismisses it and no further milestone notification is raised for that spool.
-9. Each acknowledgement writes an audit record with operator, milestone, actual weight, and timestamp.
-10. Closing a spool and starting a new one on the same run re-arms all three milestones from zero.
+## 7.1 Part A — milestone alerts
 
----
-
-## Open Decisions Raised by This Requirement
-
-Registered in [FlatWireOpenQuestions.md](../../Analysis/FlatWireOpenQuestions.md) as **Q60–Q65**:
-
-- **Q60** — Target spool weight source (order *Max Wgt of Spool* vs take-up capacity), default value, and whether over-target (M4) behavior is required.
-- **Q61** — Does the same ladder apply to finished coils at TKUP-2 on FL2/FL3, and does FL2's `null` live gauge/width change the weight basis?
-- **Q62** — Is the notification mirrored to the supervisor (Dashboard 1 / Operations Manager), and where does the acknowledgement audit record live?
-- **Q63** — `FL{n}.LineState` state vocabulary and stop-dwell value; and should the popup be suppressed when a software Pause has already captured a reason?
-- **Q64** — Does the stop-confirmation popup also surface to the supervisor, and how are multiple signed-in operator sessions arbitrated?
-- ~~**Q65** — Is there a **short-close** path?~~ **DECIDED 30 Jul 2026** — see *Short close* below.
-- **Q66** — Scale-vs-calculated weight: variance tolerance (±2 % proposed), which weight is the default basis, whether out-of-tolerance needs supervisor approval rather than just a reason, and whether a scale exists at the take-up at all.
-
-Dependent on the already-open **Q58** (OD → weight conversion formula) for the authoritative weight source.
-
-**Gap:** there is no mockup for the FL1 **spool completion** screen itself (Dashboard 7 covers finished-coil completion at TKUP-2, not the TKUP-1 spool). Part B's Yes path is mocked as a compact completion summary + label print inside the dialog, standing in for that screen. The real workflow — per-spool SPC gate, alpha finalization, label content per step 30 of the walkthrough — needs its own screen.
-
----
-
-## Related Documents
-
-| Document | Relevance |
+| # | Criterion |
 |---|---|
-| [Spool.md](../../Analysis/Spool.md) | Spool lifecycle, TKUP-1 capacity, "spool complete" definition |
-| [FlatWireProcessWalkthrough.md](../../Analysis/FlatWireProcessWalkthrough.md) | Steps 28–30 (spool at TKUP-1), step 37 (coil at TKUP-2) |
-| [FlatWireShopfloorDashboards.md](../../Analysis/FlatWireShopfloorDashboards.md) | Dashboard 3 active-run specification this notification overlays |
-| [FlatWireOpenQuestions.md](../../Analysis/FlatWireOpenQuestions.md) | Q58, Q60–Q62 |
-| [`../DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../../DevelopmentPlan/ShopfloorPlan/00-foundations.md) | §0.3 domain cheat-sheet, §0.4 real-time architecture (`FlatWireHub`) |
-| [`../DevelopmentPlan/ShopfloorPlan/phase-05-active-run-monitoring-gauge-trace.md`](../../DevelopmentPlan/ShopfloorPlan/phase-05-active-run-monitoring-gauge-trace.md) | Phase that owns the active-run screen and its telemetry |
-| [`../Mockups/spool_notification.js`](../../Mockups/spool_notification.js) | Delivered mockup component |
+| A-1 | Below 75 % of target with the line running, no notification is shown. |
+| A-2 | Crossing 75 % raises the notification within one telemetry update, showing weight, target and percent. |
+| A-3 | The notification never blocks the screen — every active run control remains usable while it is displayed. |
+| A-4 | Left unacknowledged, the displayed weight and percent update on every telemetry update. |
+| A-5 | Acknowledging at 75 % dismisses it; nothing reappears until 90 %. |
+| A-6 | Acknowledging at 90 % dismisses it; nothing reappears until 100 %. |
+| A-7 | Reaching a milestone with the previous one unacknowledged escalates the existing notification in place — exactly one is ever on screen. |
+| A-8 | Acknowledging at 100 % ends the ladder for that spool. |
+| A-9 | Every acknowledgement writes an audit record with operator, milestone, weight and timestamp. |
+| A-10 | Closing a spool and starting another on the same run re-arms all milestones from zero. |
+
+## 7.2 Part B — stop confirmation
+
+| # | Criterion |
+|---|---|
+| B-1 | Below target, stopping the machine raises no prompt. |
+| B-2 | At or above target, stopping raises the prompt only after the machine state has read stopped for the dwell. |
+| B-3 | A stop shorter than the dwell raises no prompt. |
+| B-4 | The prompt shows the weight latched at the stop timestamp, and that value does not drift while it is open. |
+| B-5 | **No** closes it with no transaction, no identity finalisation and no label print, and logs the decline. |
+| B-6 | **Yes** routes into the completion workflow; labels print only after the transaction commits. |
+| B-7 | The prompt does not re-raise while the line stays stopped; it re-arms on the next running → stopped transition. |
+| B-8 | Restarting the line with the prompt open auto-dismisses it and logs *line resumed*. |
+| B-9 | Escape and clicking outside do not dismiss the question. |
+| B-10 | A pending prompt survives a browser refresh and is re-delivered. |
+| B-11 | Manual completion is available whenever weight ≥ target and the line is not running, including after a No; it is hidden while the line runs. |
+
+## 7.3 Part B — weight verification
+
+| # | Criterion |
+|---|---|
+| B-12 | With no scale weight entered, the completion commits the calculated weight and no reason is requested. |
+| B-13 | Entering a gross scale reading resolves net from the tare and shows the variance in pounds and percent within the same interaction. |
+| B-14 | A reading below the tare, blank, or non-numeric is rejected; the variance clears and the basis falls back to calculated. |
+| B-15 | A variance inside tolerance shows the within-tolerance state and commits with no override requested. |
+| B-16 | A variance beyond tolerance **never disables the commit control**; the override panel appears and the action relabels accordingly. |
+| B-17 | Committing with an incomplete override flags exactly the missing fields, focuses the first, and commits nothing. |
+| B-18 | Supplying reason, supervisor and PIN completes the spool and prints the labels. |
+| B-19 | An overridden completion records the flag, the supervisor and the reason, states it on the result, and never puts the PIN in the payload. |
+| B-20 | Requesting remote approval notifies the supervisor and is logged, without changing what the operator can do next. |
+| B-21 | Correcting the variance back inside tolerance removes the override requirement, and the completion records no override. |
+| B-22 | The recorded net, gross and **basis** follow the operator's choice, appear on the result, and are what the label prints. Both weights, the variance, the basis and any reason are audited even when calculated is chosen over an entered scale reading. |
+
+---
+
+# 8. Confirmed Decisions
+
+| # | Decision | Date |
+|---|---|---|
+| D1 | Milestone alerts are advisory, non-blocking, and escalate in place | Jul 28, 2026 |
+| D2 | The stop prompt is conditioned on machine confirmation of the stop, not on a software assumption | Jul 29, 2026 |
+| D3 | **The dialog must not scroll** — the whole decision must be visible at once | Jul 29, 2026 |
+| D4 | **An out-of-tolerance weight variance never blocks spool creation.** A supervisor override authorises it; the commit control is never disabled | Jul 29, 2026 |
+| D5 | **The target basis is the customer minimum/maximum weight.** The assumed 2,000 lb default is withdrawn | Jul 30, 2026 |
+| D6 | Spools are sized around 1,800 lb so two finished coils can be cut at FL2 | Jul 30, 2026 |
+| D7 | **A short close is an unplanned stop** graded against the customer range; outside it, override and hold or offer under concession — offer first, remake last | Jul 30, 2026 |
+| D8 | **The spool always runs off** — FL2 has no spool stripper | Jul 30, 2026 |
+| D9 | **A mid-run coil break restarts the stop from zero**; the leftover is welded to the next coil on FL1, or run off and offered or scrapped on FL2 | Jul 30, 2026 |
+
+---
+
+# 9. Assumptions
+
+| # | Assumption |
+|---|---|
+| A1 | Live footage, gauge and width are broadcast per line, so weight can be evaluated continuously on FL1 and FL3. |
+| A2 | A floor scale is available for weighing a completed spool, and the spool tare is known to the system. |
+| A3 | The machine exposes a line-state value and a speed value that can be read to confirm a stop. |
+| A4 | Alloy density is available per alloy for the weight derivation. |
+| A5 | Label printing is triggered by the completion transaction, not by the operator's answer. |
+
+---
+
+# 10. Open Items Requiring Client Input
+
+| Ref | Priority | Question | What it blocks |
+|---|---|---|---|
+| **Q58** | High | **Outside-diameter to weight conversion** — the authoritative weight source | The weight basis for every part of this document |
+| **Q60** | High | **Which order field carries the customer minimum and maximum**, and whether the over-target state (M4) is required | Target resolution and the ladder's top step |
+| **Q61** | Medium | Does the same ladder apply to finished coils at the final take-up, and does FL2's absent live measurement change the weight basis? | FL2 / FL3 applicability |
+| **Q62** | Medium | Is the notification **mirrored to the supervisor**, and where does the acknowledgement audit record live? | Supervisor visibility |
+| **Q63 / OI-35** | High | The **line-state vocabulary** and the stop dwell value; and should the prompt be suppressed when a software pause has already captured a reason? | The firing condition |
+| **Q64** | Medium | Does the stop prompt also surface to the supervisor, and how are multiple signed-in operator sessions arbitrated? | Prompt targeting |
+| **Q66 / OI-38** | High | **Where the supervisor PIN is validated**; and whether a scale exists at the take-up at all | The override, and scale verification |
+| **OI-25** | High | The **offset between run-cumulative and coil-local footage** | The coil-break restart rule |
+| — | Medium | **The 10-90 standard operating procedure document** | The short-close reason codes and escalation |
+
+> **Known gap in the deliverables.** There is no dedicated screen for the FL1 **spool completion** workflow itself — per-spool SPC gate, identity finalisation and label content. Part B's Yes path currently routes into a compact completion summary standing in for that screen. The real workflow needs its own specification and screen.
+
+---
+
+# 11. Related Specifications
+
+| Document | Relationship |
+|---|---|
+| [Rod Checkout](RodCheckout.md) | The gatekeeper rule reused here — no completion on a turning take-up |
+| [Weld Event](WeldEvent.md) | Weld markers aggregated onto the spool record; the coil-break rule |
+| [SPC Checkpoint](SPCCheckpoint.md) | The per-spool gate the completion workflow enforces |
+| [Rod Check-in](RocCheckin.md) | Opens the run whose footage this function measures |
+
+---
+
+# Client Sign-off
+
+## Part A — Rules for confirmation
+
+| Ref | Item | Accept | Amend |
+|---|---|:--:|:--:|
+| §2.1 | The 75 / 90 / 100 % ladder, and whether M4 (over target) is wanted | ☐ | ☐ |
+| §2.2 | Rules R-1 to R-12 | ☐ | ☐ |
+| §3.2 | Target graded against the customer minimum/maximum; 2,000 lb withdrawn | ☐ | ☐ |
+| §4.2 | Armed by weight, fired by a stop transition, filtered by a 5-second dwell | ☐ | ☐ |
+| §4.4 | Rules S-1 to S-15 | ☐ | ☐ |
+| §4.5 | Rules S-16 to S-25, including that variance never blocks completion | ☐ | ☐ |
+| §4.6 | The dialog must not scroll; consequences stated on the controls | ☐ | ☐ |
+| §5 | Short close as an unplanned stop, graded by weight; offer before remake | ☐ | ☐ |
+| §5 | The spool always runs off | ☐ | ☐ |
+| §5.1 | Mid-run coil break restarts the stop from zero | ☐ | ☐ |
+| §7 | Acceptance criteria A-1 to A-10 and B-1 to B-22 as the UAT basis | ☐ | ☐ |
+
+## Part B — Information required
+
+| Ref | Item | Owner | Supplied |
+|---|---|---|:--:|
+| Q58 | Outside-diameter to weight formula | | ☐ |
+| Q60 | The order field carrying customer min/max; M4 required? | | ☐ |
+| Q61 | Ladder applicability to finished coils | | ☐ |
+| Q62 / Q64 | Supervisor mirroring and multi-session arbitration | | ☐ |
+| Q63 / OI-35 | Line-state vocabulary and dwell value | | ☐ |
+| Q66 / OI-38 | Scale availability; PIN validation source | | ☐ |
+| OI-25 | Run-to-coil footage offset | | ☐ |
+| — | The 10-90 standard operating procedure | | ☐ |
+
+## Part C — Approval
+
+| | Name | Signature | Date |
+|---|---|---|---|
+| **Operations** | | | |
+| **Quality** | | | |
+| **Engineering / Controls** | | | |
 
 ---
 
 ## Change Log
 
-| Date | Changed By | Description |
-|------|-----------|-------------|
-| July 28, 2026 | Analysis Team | Initial document — spool completion alert requirement recorded: 75 / 90 / 100 milestone ladder, acknowledge-to-arm-next behavior, live update while unacknowledged, supersede-in-place, non-blocking constraint. Data requirements, UI spec as mocked, acceptance criteria, and Q60–Q62 captured. |
-| July 29, 2026 | Analysis Team | Default target spool weight assumed **2,000 lb** (was 1,200 lb from the sample order). Worked footage example, target-source table, Q60 wording, and the mockup (component default + Dashboard 3 order row) updated. Milestone percentages unchanged. |
-| July 29, 2026 | Analysis Team | **Machine-stopped popup redesigned** for shopfloor legibility: colored identity band with the latched weight as the hero figure (green / red over-target / blue on confirm), the question asked once in 17 px, two full-width 78 px choice rows with consequences printed on each control, Y/N keyboard answers, and the PLC evidence demoted to a footer. Step 3 simplified to committed facts + print confirmation. Rule **S-15** added; UI spec table rewritten. |
-| July 29, 2026 | Client direction | **Dialog must not scroll.** Widened to **840 px** and step 2 relaid as **two columns** (weight verification ¦ identity + label) with the supervisor override full-width beneath; `max-height` released and body `overflow:visible`; inner spacing tightened and the redundant SPC note dropped from the screen. Step 2 now ~520 px, ~700 px with the override open. |
-| July 29, 2026 | Client direction | **Out-of-tolerance weight no longer blocks spool creation.** The reason-required gate that disabled the commit button is replaced by a **supervisor override** (variance reason + supervisor badge/ID + PIN, PIN never stored) with a **remote-approval fallback** when no supervisor is on the floor. The commit control is never disabled by the variance; it relabels to *"Override & complete spool"*, and an incomplete override flags and focuses the missing fields instead of dead-ending. Overridden completions are marked on the spool record and stated on the result step. Rules **S-20 rewritten, S-22…S-25 added**, analysis item 18, acceptance criteria **28–32**, UI spec row rewritten. **Q66 part 3 Decided**; PIN validation source still open. |
-| July 29, 2026 | Analysis Team | **Scale weight added to the completion step.** Operator can enter the scale reading (gross); the system derives net from the spool tare, reconciles it against the calculated net (variance in lb and % of calculated), and **asks which weight to record** — scale pre-selected once entered, overridable to calculated. Variance beyond a configurable ±2 % is flagged and requires a reason before commit. Chosen basis governs the record, the label and everything downstream; both weights plus the variance, basis and reason are audited. Rules **S-16…S-21**, acceptance criteria **23–27**, UI spec rows and **Q66** added. Fixed the "Will record" strip rendering one value per line (`display:flex` split every text run into a flex item). |
-| July 29, 2026 | Analysis Team | Added **Part B — operator confirmation after the machine stops**: PLC-confirmed `RUNNING → STOPPED` edge trigger with dwell filter, latched weight, Yes → spool completion transaction + label print, No → close with no transaction. 14-point handling analysis, state machine, rules S-1…S-14, edge-case table, UI spec, acceptance criteria 11–22, PLC tag/hub-event requirements, and **Q63–Q65**. Doc retitled to cover both parts. |
-| Aug 1, 2026 | Client sync (30 Jul call) | **Part C added — the short close is specified, and the target basis changed.** The **2,000 lb default target is withdrawn**: completion is graded against the **customer min–max weight** (e.g. 900 max / 800 min), with spools sized ~1,800 lb so two finished coils can be cut at FL2 (**Q60** basis decided; the source field is still open). A short close is an **unplanned stop** on the mill **10-90** pattern with a reason code — inside the range continue, outside it a **supervisor override + production hold** or an **offer to the customer under concession** before any remake, and **the spool is run off either way** because FL2 has no spool stripper (**Q65** decided). Recorded the mid-run coil-break rule: the stop is removed and a **new stop starts from zero**, with the leftover welded to the next coil on FL1 or run off and offered/scrapped on FL2 — flagged as a run/stop model change to be checked against **OI-25** rather than implemented as a screen rule. The **10-90 SOP itself is not in the repository** and must be obtained. |
+| Date | Change |
+|---|---|
+| Jul 28, 2026 | Part A recorded — milestone ladder, acknowledge-to-arm behaviour, live update while unacknowledged, supersede in place, non-blocking constraint. |
+| Jul 29, 2026 | Part B recorded — stop-transition trigger with dwell filter, latched weight, Yes/No consequences, scale-weight verification, and the client direction that an out-of-tolerance variance is authorised rather than blocked. |
+| Aug 1, 2026 | **Reissued as version 2.0 for client review.** **Part C — short close** added, graded against the customer minimum/maximum with offer-before-remake escalation and the always-run-off rule; the mid-run coil-break rule recorded with its footage caution. The assumed 2,000 lb target **withdrawn** in favour of the customer range. Acceptance criteria renumbered as A-1…A-10 and B-1…B-22. Screen styling, layout dimensions, colour tokens, mockup demo affordances and internal component notes removed. |

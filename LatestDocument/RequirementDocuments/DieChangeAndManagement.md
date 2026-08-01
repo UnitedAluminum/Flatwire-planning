@@ -1,517 +1,390 @@
-# Die Change — Analysis & Behavior Spec
+# Flat Wire Processing — Die Change and Die Management Specification
 
-Source mockup: `Mockups/dashboard_die_change.html`
-Accessed from:
-- `Mockups/dashboard_3_active_run.html` (FL1) → "Die change" action button
-- `Mockups/dashboard_3_active_run_fl3.html` (FL3) → "Die change" action button
+**Project:** Flat Wire Mill Implementation
+**Document Type:** Functional Requirement Specification — Issued for Client Review
+**Applies to:** FL1 / FL3 (die change) · Maintenance (die management)
+**Version:** 2.0
+**Last Updated:** August 1, 2026
+**Status:** Issued for Client Review and Sign-off
+**Screen reference:** Die Change (operator, mid-run) · Die Management (maintenance, tooling inventory)
+**Requirement source:** SRS die-change rules; `Q56` (post-die-change resume gate); die identity convention `D-{size×1000}-{seq}`
 
-## Applicable Lines
+---
 
-| Line | DB1 | DB2 | Has Die Change? | Also Has |
+## Document Change History
+
+| Version | Date | Description |
+|---|---|---|
+| 1.0 | Apr 2026 | Initial specification — die change event capture, reason codes, conditional quality hold and SPC notice, die management screen and its lifecycle operations. |
+| 1.1 | May 4, 2026 | Post-die-change resume gate confirmed as a hard block with thread mode permitted; routing corrected for gauge drift and size change. |
+| 2.0 | Aug 1, 2026 | **Issued for client review.** FM2 corrected to three 6″ stands. The conflicting die-life colour bands between the two screens raised as a client decision rather than silently reconciled. Restructured as a client deliverable; screen styling, navigation targets and interface payloads removed. |
+
+---
+
+## Reading Convention
+
+| Tag | Meaning |
+|---|---|
+| `[CONFIRMED]` | Agreed with United Aluminum. Built as stated. |
+| `[PROPOSED]` | Our design recommendation, requiring your confirmation at review. |
+| `[CLIENT INPUT REQUIRED]` | We do not know this and will not assume it. Listed in Section 9. |
+
+Open item identifiers prefixed **Q** come from the project open-questions register; those prefixed **OI** come from the master specification's open-items register.
+
+---
+
+# 1. Introduction
+
+## 1.1 Purpose
+
+Two related capabilities are specified here:
+
+| | **Die Change** | **Die Management** |
+|---|---|---|
+| Audience | **Operator**, at the line | **Maintenance**, in tooling inventory |
+| Nature | A mid-run **event logger** | A **lifecycle manager** |
+| Records | That a die was physically replaced, and why | The die inventory, life thresholds, and disposition history |
+| Relationship | **Reads** die identity, footage and life threshold from die management | **Is the source of truth** for those three values |
+
+## 1.2 Scope
+
+**In scope:** capture of a mid-run die replacement and its consequences; the reason codes and what each one triggers; quality holds on suspect footage; the post-change verification gate; and the full die inventory lifecycle — registration, life thresholds, counter resets after reconditioning, and retirement.
+
+**Not in scope:** the SPC checkpoint procedure itself; WIP rejection processing; roll gap adjustment on the finishing stands; die procurement.
+
+## 1.3 Applicable lines
+
+| Line | Draw box 1 | Draw box 2 | Die change | Also has |
 |---|---|---|---|---|
-| FL1 | 0.340" | 0.310" | Yes | — |
-| FL3 (Hybrid) | 0.245" | 0.160" | Yes | Roll adjust (FM2 stands) |
-| FL2 | — | — | No | TPO spool-based, no drawing dies |
+| **FL1** | Yes | Yes | **Yes** | — |
+| **FL3** (hybrid) | Yes | Yes | **Yes** | Roll adjustment on the FM2 stands |
+| **FL2** | — | — | **No** | Spool-fed; no drawing dies |
 
-FL3 is the hybrid line — it has the same DB1/DB2 drawing section as FL1 but adds FM2 multi-stand rolling downstream (FM2 8" roller, FM2 6" S1, FM2 6" S2). Both Die change and Roll adjust are available on FL3's action bar. FL2 has no drawing dies and never needs a die change.
+FL3 has the same drawing section as FL1 and adds the three-stand finishing mill downstream — **8″ roller, 6″ S1, 6″ S2 with edger, 6″ S3 with edger**. FL2 has no drawing dies and never needs a die change.
 
----
-
-## Screen Purpose
-
-The Die Change screen is a mid-run event logging form. It records when a drawing die is physically replaced on the flat wire line (FL1), capturing which die block was changed, the outgoing and incoming die identities, the reason for the change, and any quality or safety actions required. The event is permanently tied to the output coil's traceability record at the current footage position.
+> `[CLIENT INPUT REQUIRED]` **Which lines expose roll adjustment is stated inconsistently** across the requirement set — FL1/FL2 in one place, FL3 only in another, FL2 and FL3 here. FL1, having only drawing and the flattening mill, is unlikely to expose it. Please confirm which action bars carry the control (OI-11).
 
 ---
 
-## Navigation
+# 2. The Die Change Event
 
-| Action | FL1 destination | FL3 destination |
-|---|---|---|
-| Back to run (header) | `dashboard_3_active_run.html` | `dashboard_3_active_run_fl3.html` |
-| Cancel (footer) | `dashboard_3_active_run.html` | `dashboard_3_active_run_fl3.html` |
-| Confirm die change (footer) | `dashboard_3_active_run.html` | `dashboard_3_active_run_fl3.html` |
+## 2.1 Context
 
-The run is shown as **paused** in the context chip while this screen is open. The operator must complete or cancel before resuming production.
+The screen is opened from the active run. **The run is paused while it is open**, and the operator must complete or cancel before production resumes. The event is permanently tied to the output coil's traceability record at the current footage position.
 
-> In the current mockup, the die change screen always returns to `dashboard_3_active_run.html`. In production the return target should be driven by which line context launched the screen.
+## 2.2 Which die block
 
-> **Decided (May 4, 2026):** For Gauge drift and Size change die replacements, the confirm button must route to the SPC Checkpoint screen — not Dashboard 3. Thread mode is permitted while SPC is being completed (to verify the die is seated and producing on-target material), but the run stays in a blocked/paused state until SPC passes. The mockup's current routing for these two reasons must be corrected in implementation. See [Gap Analysis — Post-Die-Change Resume Gate](#gap-analysis--post-die-change-resume-gate) below.
+Three mutually exclusive choices. The selection drives what the outgoing panel shows and what the confirm action is labelled.
 
----
-
-## Section 1 — Die Block Selector
-
-Three mutually exclusive radio-style cards. Selecting one updates the Outgoing Die panel on the left with that block's current die data, and updates the confirm button label.
-
-### DB1 — Draw box 1
-- **Die (FL1)**: 0.340" (roughing reduction — first pass on the rod)
-- **Die (FL3)**: 0.245" (roughing reduction — deeper initial draw for finer gauge target)
-- **Alpha shown**: D-340-087 (FL1) / D-245-xxx (FL3)
-- **Life status**: 73.7% used · 6,580 ft remaining (amber badge) — FL1 example
-- **When to select**: Changing only the roughing die
-
-### DB2 — Draw box 2
-- **Die (FL1)**: 0.310" (finishing reduction — sets final wire diameter before the flat mill)
-- **Die (FL3)**: 0.160" (finishing reduction — finer gauge for high aspect ratio product)
-- **Alpha shown**: D-310-034 (FL1) / D-160-xxx (FL3)
-- **Life status**: 83.7% used · 3,580 ft remaining (red badge — near end of life) — FL1 example
-- **Default selection**: DB2 is pre-selected because it is closer to end of scheduled life in the active run context
-- **When to select**: Changing only the finishing die (most common scenario)
-
-### Both blocks
-- Logs DB1 + DB2 as a single simultaneous change event
-- Outgoing die panel shows both alphas: `D-340-087 / D-310-034`
-- Incoming die input clears — operator must scan/enter each new die separately
-- **When to select**: Full-line die rebuild, or when a die failure on one block stresses the other
-
-### Behavior on click
-- Removes `selected` class from all three cards, applies it to the clicked card
-- Updates: outgoing die alpha, size, life bar %, footage on die, scheduled life, remaining footage, die type, installed time
-- Updates the confirm button label: "Confirm die change · **DB2**" (reflects selected block)
-
----
-
-## Section 2 — Die Detail Panels
-
-Two-column layout. Left = outgoing (current) die, Right = incoming (new) die.
-
-### Outgoing die panel (amber left border — being removed)
-
-Auto-filled from the machine's current die assignment. Read-only.
-
-| Field | Description |
+| Choice | Use when |
 |---|---|
-| Die alpha | Unique identifier of the die being removed (e.g. D-310-034) |
-| Die life bar | Visual progress bar showing % of scheduled footage life consumed. Color: green < 60%, amber 60–85%, red > 85% |
-| Die size | Hole diameter of the outgoing die |
-| Footage on die | Total footage run through this die since it was installed |
-| Sched. life | Manufacturer/engineering-specified maximum footage for this die |
-| Remaining | Calculated footage left before scheduled end of life |
-| Die type | Material/construction (e.g. TC Mono = tungsten carbide monoblock) |
-| Installed | Time the outgoing die was originally loaded |
+| **DB1** — draw box 1 | Changing the roughing die only |
+| **DB2** — draw box 2 | Changing the finishing die only — **the most common case, and the default** |
+| **Both blocks** | A full-line die rebuild, or when a failure on one block has stressed the other. Logged as a single simultaneous event; each incoming die must be identified separately |
 
-### Incoming die panel (blue left border — being installed)
+The default falls to DB2 because it is the die that sets the final wire diameter before the flattening mill, and it is typically the one closer to end of life in an active run.
 
-Operator-entered. Requires a scan or manual alpha entry.
+## 2.3 The outgoing die — read-only
 
-**Scan / enter input field**
-- Large monospace input pre-focused for barcode scanner
-- Placeholder: `Scan die alpha…`
-- Pre-filled with the expected replacement alpha in the mockup (e.g. D-310-091)
-- On a real system: scanning triggers a lookup to populate the fields below
+Auto-filled from the machine's current die assignment. The operator confirms rather than types.
 
-**New / Reconditioned toggle**
-- Two-button toggle beneath the alpha input
-- **New** (default, green): Fresh die from supplier or die room — full scheduled life available
-- **Reconditioned**: Die that has been re-lapped or re-polished — reduced scheduled life, amber styling
-- Selection updates the Condition field in the die info grid
-
-| Field | Description |
+| Field | Meaning |
 |---|---|
-| Die size | Hole diameter of the incoming die — must match outgoing unless reason = Size change |
-| Condition | Reflects New / Reconditioned toggle selection |
-| Source | Where the die came from (Die room, External supplier, etc.) |
-| Inspection | Timestamp of pre-use inspection pass (pulled from die room check-in record) |
-| Die type | Must match outgoing die type |
-| Sched. life | Scheduled footage life of the incoming die |
+| Die identity | The die being removed |
+| Life consumed | Percentage of scheduled footage life used, with a visual bar |
+| Die size | Hole diameter |
+| Footage on die | Total footage run since installation |
+| Scheduled life | Engineering or supplier specified maximum footage |
+| Remaining | Footage left before scheduled end of life |
+| Die type | Material and construction |
+| Installed | When the outgoing die was loaded |
 
----
+## 2.4 The incoming die — operator entered
 
-## Section 3 — Reason for Change
-
-Five mutually exclusive buttons. Selecting one highlights it and may show a conditional section below. Only one reason can be active at a time.
-
-### Planned life (default selected)
-- Die has reached or is approaching its scheduled footage limit
-- No conditional section shown
-- Most common scenario — routine swap as part of planned maintenance
-
-### Gauge drift
-- Die wear is causing the gauge (wire thickness) to drift toward or outside spec
-- **Shows**: Blue SPC checkpoint notice
-- Operator must verify the new die hits target gauge before production resumes
-
-### Die failure
-- Die has cracked, chipped, or broken during the run
-- **Shows**: Red quality hold section
-- WIP produced with the failed die may be off-spec and requires QA review
-
-### Size change
-- A different die hole size is required (changing gauge target for the next footage range, or correcting a setup error)
-- **Shows**: Blue SPC checkpoint notice
-- New die will have a different size than outgoing — this is intentional
-
-### Other
-- Covers anything not in the above list
-- No conditional section shown
-- Operator should add detail in an observation/notes field (future implementation)
-
----
-
-## Section 4 — Conditional Sections
-
-Shown or hidden automatically based on the selected reason.
-
-### Quality hold (shown when: Die failure)
-
-Red danger banner with three elements:
-
-**Hold from footage** (editable input)
-- Start of the suspect footage range
-- Default: footage at which the current rod started on this die (e.g. 8,200 ft)
-- Operator can adjust if they know when the die failure actually occurred
-
-**Hold to footage** (read-only input)
-- End of the suspect footage range
-- Always set to the current footage counter at the time of the die change (e.g. 12,450 ft)
-- Read-only — the system knows when the die change was logged
-
-**Flag WIP for QA hold button**
-- Initially: blue-outline button labelled "Flag WIP for QA hold" with a flag icon
-- On click: toggles to a filled red/danger state labelled "QA hold flagged" with a checkmark
-- Clicking again: un-flags (toggle behavior)
-- Creates a quality hold record in the system against that footage range on coil FW-00421-C01
-- QA must review and disposition the flagged footage before the coil can ship
-
-### SPC checkpoint notice (shown when: Gauge drift or Size change)
-
-Blue info banner with:
-
-**Message**: "SPC checkpoint required on resume — Verify new die is hitting gauge target before the run continues. An SPC checkpoint will be queued automatically."
-
-**Require SPC on resume toggle** (pre-checked ON)
-- When ON: an SPC checkpoint event is automatically queued when the run resumes — operator cannot skip it
-- When OFF: operator acknowledges they are waiving the checkpoint (supervisor-level action in production)
-
-> **Decided (May 4, 2026):** This is a **hard block**, not a soft queue. When `spcCheckpointRequired = true`, the confirm button routes to the SPC Checkpoint screen rather than back to Dashboard 3. Thread mode (slow running) is allowed while SPC measurements are being taken — this ensures the correct die has been installed and is producing on-target material. The run cannot return to normal production until the SPC checkpoint passes. See [Gap Analysis — Post-Die-Change Resume Gate](#gap-analysis--post-die-change-resume-gate).
-
----
-
-## Section 5 — Footer
-
-### Audit stamp (left side — read-only)
-
-| Field | Value |
+| Field | Entry |
 |---|---|
-| Operator | From the active session (Dave M.) |
-| Timestamp | Live clock, server-stamped at submission |
-| Footage at change | Machine encoder position when the die change was initiated (12,450 ft) |
-| Output coil | The coil alpha this event is recorded against (FW-00421-C01) |
+| Die identity | **Scanned**, or keyed. The scan resolves against the die inventory and populates the fields below |
+| Condition | **New** (full scheduled life) or **Reconditioned** (reduced scheduled life) |
+| Die size | Must match the outgoing die **unless the reason is a size change** |
+| Source | Die room, or external supplier |
+| Inspection | Timestamp of the pre-use inspection, from the die room record |
+| Die type | Must match the outgoing die type |
+| Scheduled life | From the die record |
 
-### Action buttons (right side)
+**A die that is not in the inventory cannot be installed.** If a scanned die has no record, the scan is refused with an instruction to have Maintenance register it first. This is what keeps the footage counter and life threshold meaningful.
 
-**Cancel**
-- Discards all inputs, returns to active run screen
-- Run status returns to running (pause cleared)
-- No record is written
+## 2.5 Reason for the change
 
-**Confirm die change · [block]**
-- Label updates dynamically to reflect selected die block: e.g. "Confirm die change · DB2"
-- On click: navigates to `dashboard_3_active_run.html`
-- On a real system: POSTs the event record, updates the component list on the active run screen with the new die alpha and size, clears the pause, and queues any downstream actions (SPC checkpoint, QA hold)
+Five mutually exclusive reasons. Each determines what else the system does.
 
----
-
-## Data Written on Confirm
-
-```json
-{
-  "dieBlock": "DB2",
-  "outgoingDieAlpha": "D-310-034",
-  "outgoingDieSize": "0.310\"",
-  "footageOnOutgoingDie": 18420,
-  "incomingDieAlpha": "D-310-091",
-  "incomingDieSize": "0.310\"",
-  "incomingDieCondition": "new",
-  "reasonCode": "planned",
-  "footageAtChange": 12450,
-  "outputAlpha": "FW-00421-C01",
-  "operatorId": "<from session>",
-  "timestamp": "<server-side>",
-  "qualityHold": null,
-  "spcCheckpointRequired": false
-}
-```
-
-For a die failure with QA hold:
-```json
-{
-  "reasonCode": "failure",
-  "qualityHold": {
-    "fromFootage": 8200,
-    "toFootage": 12450,
-    "flagged": true
-  }
-}
-```
-
-For gauge drift or size change:
-```json
-{
-  "reasonCode": "gauge",
-  "spcCheckpointRequired": true
-}
-```
-
----
-
-## Design Principles
-
-- **Immutable record.** Once confirmed, the die change event is never edited — corrections go through a separate audit flow.
-- **Default to the most common case.** DB2 pre-selected, "Planned life" pre-selected, "New" condition pre-selected — operator only overrides when something unusual applies.
-- **Conditional sections are additive.** Selecting "Die failure" adds a quality hold workflow; it does not replace the normal die change flow. Both happen.
-- **Server timestamp.** The footer clock is for operator visibility only. The actual event timestamp is captured server-side at API receipt.
-- **Cancel is always safe.** No partial records are written; the run simply unpauses with no die change logged.
-
----
-
-## Gap Analysis — Post-Die-Change Resume Gate
-
-### Background: No Standalone "Resume Run" Button on Dashboard 3
-
-There is no permanent **Resume Run** button on the active run dashboard. The Resume Run button only exists inside the **Pause/Resume flow** — it appears after an operator presses **Pause Run** and wants to restart the line. It is not a general-purpose run control.
-
-The die change screen is launched while the run is paused. When the operator confirms or cancels the die change, the screen navigates back to Dashboard 3 — it does not go through the normal pause/resume dialog. The run unpauses as a side-effect of returning to Dashboard 3.
-
-This matters because the SPC gate must be enforced at the die change confirm step, not at the resume step — there is no resume step in this flow.
-
-### Current Behavior vs. Required Behavior
-
-**Decision (May 4, 2026):** Confirmed correct routing for all reason codes.
-
-| Scenario | Current mockup | Required behavior (confirmed) |
+| Reason | Meaning | Consequence |
 |---|---|---|
-| Planned life die change | Confirm → Dashboard 3, run resumes | Confirm → Dashboard 3, run resumes ✓ |
-| Die failure | Confirm → Dashboard 3, run resumes | Confirm → Dashboard 3, run resumes ✓ (QA hold is on the footage, not the run) |
-| **Gauge drift** | Confirm → Dashboard 3, run resumes ❌ | Confirm → **SPC Checkpoint screen**; thread mode allowed; run blocked until SPC passes ✓ |
-| **Size change** | Confirm → Dashboard 3, run resumes ❌ | Confirm → **SPC Checkpoint screen**; thread mode allowed; run blocked until SPC passes ✓ |
+| **Planned life** *(default)* | The die reached or approached its scheduled footage limit | None — routine swap |
+| **Gauge drift** | Die wear is pushing gauge toward or outside specification | **SPC checkpoint required before full production** |
+| **Die failure** | The die cracked, chipped or broke during the run | **Quality hold section opens** for the suspect footage range |
+| **Size change** | A different hole size is deliberately required | **SPC checkpoint required before full production** |
+| **Other** | Anything not covered above | Detail expected in the observation |
 
-### Required Post-Confirm Routing Logic
+## 2.6 Quality hold — when the die failed
 
-The confirm button's navigation target must be conditional on `spcCheckpointRequired`:
+Material produced with a failing die may be off specification, so the operator marks the suspect range.
 
-```
-Operator clicks "Confirm die change · [block]"
-        ↓
-reasonCode = "planned" or "failure"
-    → POST event record
-    → Navigate to Dashboard 3
-    → Run resumes (pause cleared)
-
-reasonCode = "gauge" or "size"
-    → POST event record (spcCheckpointRequired: true)
-    → Navigate to SPC Checkpoint screen
-    → Run remains PAUSED
-    → SPC samples collected and validated
-    → SPC checkpoint PASSES → Navigate to Dashboard 3 → Run resumes
-    → SPC checkpoint FAILS  → Operator disposition (hold, re-adjust, re-run SPC)
-```
-
-### "Require SPC on Resume" Toggle — DECIDED May 4, 2026 (Q56)
-
-**Decision:** Thread mode is allowed until SPC has been completed. This ensures the correct die has been installed and is producing on-target material before committing to full production.
-
-| Design Point | Decision |
+| Field | Behaviour |
 |---|---|
-| **Enforcement type** | Hard block on full-production resume. Confirm button routes to SPC Checkpoint screen for Gauge drift and Size change. Thread mode permitted during SPC measurement. |
-| **Override authority** | Open — Q56 override authority (who can turn OFF the toggle) is a related question that was not specifically resolved beyond the general hard-block behavior. Operations Manager role minimum is the recommendation. |
-| **Override logging** | Every toggle-OFF event must be written to audit log: user, role, timestamp, die change event ID, reason code. |
-| **Override in reports** | Any run that resumed without a completed SPC checkpoint after Gauge drift or Size change must appear as a flagged exception on Shift Summary and Quality dashboard. |
+| **Hold from footage** | Editable. Defaults to the footage at which the current rod started on this die; the operator can move it if they know when the failure actually occurred |
+| **Hold to footage** | **Read-only** — the current counter value at the time of the die change. The system knows when the change was logged |
+| **Flag for QA hold** | Creates a quality hold against that footage range on the output coil. QA must review and disposition the range before the coil can ship |
 
-### Why Gauge Drift and Size Change Both Require SPC
+## 2.7 The verification gate — when gauge drifted or size changed `[CONFIRMED — May 4, 2026]`
 
-- **Gauge drift**: The die was replaced because dimensions were drifting out of spec. The new die's output dimensions are unverified — the process is not confirmed in control until SPC samples pass.
-- **Size change**: The die hole size has changed deliberately. The new target dimensions are unverified until SPC confirms the new die is hitting the intended gauge and width.
+| Rule | Behaviour |
+|---|---|
+| **Hard block, not a soft queue** | Confirming the die change routes **directly to the SPC checkpoint**, not back to the run |
+| **Thread mode permitted** | The line may be run slowly to confirm the new die is seated and producing on-target material |
+| **Full production blocked** | The run cannot return to normal production until the checkpoint passes |
+| **The requirement may be waived** | Only as a supervisor-level action, and every waiver is audited and appears as a flagged exception on shift and quality reporting |
 
-In both cases, any material run before SPC verification could be out-of-spec. For welding wire specifically, out-of-spec gauge causes wire jams in customer automated welding equipment and is a common first-shipment field failure.
+### Why both reasons require it
 
-### Relationship to Open Question Q56
+- **Gauge drift** — the die was replaced *because* dimensions were drifting. The replacement's output is unverified, and the process is not back in control until measurements confirm it.
+- **Size change** — the hole size changed deliberately, so the new target dimensions are unverified until measured.
 
-Open question Q56 in [FlatWireOpenQuestions.md](../../Analysis/FlatWireOpenQuestions.md) asks only about override authority. This analysis extends that question to include the more fundamental design decision: the toggle must enforce a **hard block** (conditional routing to SPC Checkpoint screen), not a **soft queue** (task added to a list the operator can defer). The override authority question is secondary — it only matters once the hard block is correctly implemented.
+In both cases, material run before verification could be out of specification.
+
+> **This gate is enforced at confirmation, not at resume.** There is no general-purpose resume control on the active run screen — resume exists only inside the pause flow, and the die change screen returns directly to the run. The gate therefore has to sit on the confirm action, which is where it is specified.
+
+## 2.8 Post-change routing `[CONFIRMED]`
+
+| Reason | On confirm |
+|---|---|
+| Planned life | Return to the run; production resumes |
+| Die failure | Return to the run; production resumes — **the hold is on the footage, not on the run** |
+| **Gauge drift** | **Route to the SPC checkpoint.** Run stays blocked; thread mode allowed |
+| **Size change** | **Route to the SPC checkpoint.** Run stays blocked; thread mode allowed |
+
+## 2.9 Audit stamp and confirmation
+
+| Field | Source |
+|---|---|
+| Operator | The active session |
+| Timestamp | **Server-stamped at submission** — the screen clock is for operator visibility only |
+| Footage at change | Machine encoder position when the change was initiated |
+| Output coil | The coil the event is recorded against |
+
+**Cancel is always safe.** No partial record is written; the run simply resumes with no die change logged.
+
+## 2.10 Information recorded on confirmation
+
+| Item |
+|---|
+| Die block changed |
+| Outgoing die identity, size, and footage accumulated on it |
+| Incoming die identity, size and condition |
+| Reason code |
+| Footage at the change |
+| Output coil identity |
+| Operator and server timestamp |
+| Quality hold range, where a die failure was flagged |
+| Whether an SPC checkpoint is required |
 
 ---
 
-## Die Management Screen
+# 3. Die Change — Design Principles
 
-Source mockup: `Mockups/dashboard_die_management.html`
-Accessed from: Machines Application → Tooling Inventory tab (Maintenance role — not accessible from the shopfloor dashboard).
-
-This is a companion screen to the die change event. The die change screen is an **operator-facing, run-time event logger**. The die management screen is a **maintenance-facing, lifecycle manager** — it owns the die inventory, life thresholds, and disposition records that the die change screen reads from.
+| Principle | Detail |
+|---|---|
+| **Immutable record** | Once confirmed, a die change event is never edited. Corrections go through a separate audit route |
+| **Default to the common case** | DB2, planned life and new condition are pre-selected; the operator overrides only when something unusual applies |
+| **Conditional sections are additive** | Selecting *die failure* adds a quality hold workflow — it does not replace the normal die change flow. Both happen |
+| **Server timestamp** | The event time is captured server-side at receipt |
+| **Cancel writes nothing** | No partial records |
 
 ---
 
-### Purpose and Scope
+# 4. Die Management
 
-| Capability | Die change screen | Die management screen |
+The maintenance-facing counterpart, reached from tooling inventory. It is not accessible from the shopfloor screens.
+
+## 4.1 Division of responsibility
+
+| Capability | Die change | Die management |
 |---|---|---|
-| Log a mid-run die swap | Yes | No |
-| View outgoing die remaining life | Yes (read-only) | Yes (editable) |
-| Scan / assign incoming die | Yes | No |
-| Register a new die into inventory | No | Yes |
-| Set or edit a die's life threshold | No | Yes |
-| Reset footage counter after reconditioning | No | Yes |
-| Retire a die permanently | No | Yes |
-| View full run history per die | No | Yes |
-| View replacement / reset log | No | Yes |
+| Log a mid-run die swap | **Yes** | No |
+| View outgoing die remaining life | Yes — read only | Yes — editable |
+| Scan and assign an incoming die | **Yes** | No |
+| Register a new die into inventory | No | **Yes** |
+| Set or edit a life threshold | No | **Yes** |
+| Reset the footage counter after reconditioning | No | **Yes** |
+| Retire a die permanently | No | **Yes** |
+| View full run history per die | No | **Yes** |
+| View the replacement and reset log | No | **Yes** |
 
----
+## 4.2 Inventory view
 
-### Screen Layout
-
-**Header**
-Back button to Tooling Inventory, "Die management" title, line filter pills (All lines / FL1 / FL3), live clock, and "Register new die" primary button.
-
-**Stats strip — 4 summary cards**
-
-| Card | Color | Value in mockup |
-|---|---|---|
-| Active on line | Neutral | 4 |
-| Overdue for replacement | Red (danger) | 1 |
-| Nearing end of life | Amber (warning) | 2 |
-| Spare / ready | Green (success) | 1 |
-
-**Main layout — two columns**
-- Left (fluid): Die inventory list
-- Right (464 px): Selected die detail panel
-
----
-
-### Die Inventory List
-
-**Filter tabs:** All · Active · Nearing end · Overdue · Spare · Retired — each with a count badge. Nearing and Overdue tabs use warning/danger color on their count badges.
-
-**Line filter pills** (header): All lines · FL1 · FL3 — narrows both the list and the stats.
-
-**Column layout per row:**
+A summary strip states how many dies are active on line, overdue for replacement, nearing end of life, and available as spares. The list is filterable by status and by line, and is sorted by urgency — overdue first, then nearing end, active, spare and retired.
 
 | Column | Content |
 |---|---|
-| Alpha | Monospace die identifier (e.g. D-310-034) |
-| Block | DB1 or DB2 badge |
-| Size | Hole diameter in inches |
-| Line | Currently assigned line (FL1, FL3, or — if spare/retired) |
-| Status | Color-coded badge: Active (green) · Nearing end (amber) · Overdue (red) · Spare (blue) · Retired (gray) |
-| Life used | Inline progress bar + percentage (green < 65%, amber 65–79%, red ≥ 80%) |
-| Footage | Footage run / threshold (e.g. 18,420 / 22,000) |
-| Last reset | Date of last counter reset or "New" for first-install spares |
+| Identity | Die identifier |
+| Block | DB1 or DB2 |
+| Size | Hole diameter |
+| Line | Currently assigned line, or none for a spare |
+| Status | Active · Nearing end · Overdue · Spare · Retired |
+| Life used | Progress bar and percentage |
+| Footage | Footage run against threshold |
+| Last reset | Date of the last counter reset, or *new* for a first-install spare |
 
-Rows are sorted: Overdue → Nearing → Active → Spare → Retired. Retired rows render at reduced opacity.
+## 4.3 Die detail
 
-Clicking a row selects it (blue left border + info background) and populates the detail panel.
-
----
-
-### Die Detail Panel
-
-Shown on the right when a die row is selected. Default selected die in the mockup is D-310-034 (overdue, FL1 DB2).
-
-**Header area**
-- Large monospace alpha
-- Status badge (matches list badge)
-- Meta line: Block · Size · Die type · Currently on [line]
-
-**Life bar**
-Full-width bar with percentage label. Color follows the same green/amber/red thresholds as the inline bar. Label reads "X% used".
-
-**Field grid (6 cells, 3 × 2)**
+Selecting a die shows its identity, status, block, size and type, the line it is on, its life bar, and:
 
 | Field | Notes |
 |---|---|
-| Footage on die | Total footage since last counter reset |
-| Life threshold | Configured maximum footage for this die |
-| Remaining | Threshold minus footage; shown in amber/red when near or past limit |
-| Die size | Hole diameter |
-| Die type | Material construction (TC Mono, TC Poly, Natural Diamond) |
-| Last reset by | Operator name · Date of last counter reset |
+| Footage on die | Since the last counter reset |
+| Life threshold | Configured maximum footage |
+| Remaining | Threshold less footage; emphasised when near or past the limit |
+| Die size and type | |
+| Last reset by | Operator and date |
 
-**Alert banners**
-- Red danger banner when status = Overdue: "Replacement overdue — pull at end of current run."
-- Amber warning banner when status = Nearing: "Schedule a replacement die — do not load for a new order without a spare on hand."
-- No banner for Active, Spare, or Retired.
+Alerts are stated in plain language: *"Replacement overdue — pull at end of current run"* for an overdue die, and *"Schedule a replacement die — do not load for a new order without a spare on hand"* for one nearing end of life.
 
-**Action buttons**
+Two history views are available: **run history** (order, line, footage added, date, operator — one row per run in which the die was active) and the **replacement log** (install, reset and retirement events, each with who performed it and what changed).
 
-| Button | Style | Opens | Disabled when |
-|---|---|---|---|
-| Reset counter | Blue primary | Reset counter modal | Die is retired |
-| Edit threshold | Default | Edit threshold modal | Die is retired |
-| Retire die | Danger outline | Retire die modal | Die is already retired |
+## 4.4 Lifecycle operations
 
-**History section** (tabbed, below actions)
-
-*Run history tab* — columns: Order · Line · Footage added · Date · Operator. One row per run event where this die was active. Most recent first.
-
-*Replacement log tab* — one card per event: install, reset, or retirement. Each card shows a headline (event type · date) and a detail line (by whom · previous die replaced · threshold set).
-
----
-
-### Modals
-
-#### Reset counter
-
-Triggered when a die has been physically removed and returned from reconditioning, or when a brand-new spare is being formally entered into the counter system.
-
-| Field | Notes |
-|---|---|
-| Disposition toggle | Reconditioned (default) or New spare registered |
-| Date removed from line | Defaults to today |
-| Returned / ready date | Defaults to today |
-| New life threshold (ft) | Shown only when Reconditioned; defaults to ~82% of original (e.g. 18,000 ft for a 22,000 ft die) |
-| Inspection date | Shown only when Reconditioned |
-| Performed by | Read-only — from session |
-| Die room source | In-house reconditioning or External supplier |
-| Notes | Optional free text |
-
-Counter resets footage to 0. If Reconditioned, the threshold field also updates. The event is written to the Replacement log tab.
-
-#### Edit threshold
-
-Allows changing the footage limit for a die — either this die only or all dies of the same type/size. Requires a reason. Changes to "all dies of same type" update the default threshold for future registrations.
-
-#### Retire die
-
-Permanent action. Requires: date retired, reason (dropdown — end of life, physical damage, bore out of tolerance, size discontinued, other), and optional notes. Retired dies remain in history for traceability but do not appear in active or spare counts.
-
-#### Register new die
-
-Creates a new die record in inventory. Status is set to Spare on creation.
-
-| Field | Notes |
-|---|---|
-| Alpha (unique ID) | Format convention: D-[size×1000]-[seq] — e.g. D-310-092 |
-| Compatible block | DB1, DB2, or Both |
-| Die hole size | In inches |
-| Die type / material | TC Mono, TC Poly, Natural Diamond |
-| Life threshold (ft) | Engineering or supplier specification |
-| Source | Die room stock or External supplier |
-| Condition | New or Reconditioned |
-| Inspection date | Must be provided |
-| Notes | Optional — supplier lot, PO number, etc. |
-
----
-
-### Data Relationships
-
-The die management screen is the source of truth for three data points that the shopfloor die change screen consumes at runtime:
-
-1. **Die alpha → size, type, condition** — when the operator scans an incoming die on the die change screen, the lookup resolves against the die inventory created here.
-2. **Footage counter** — the die change screen reads the outgoing die's accumulated footage and remaining life from the counter maintained here and incremented per run.
-3. **Scheduled life (threshold)** — the life bar and "remaining" field on the die change screen are calculated from the threshold set here.
-
-If a die is scanned on the die change screen that does not exist in the die management inventory, the system must reject the scan with an error prompting Maintenance to register the die first.
-
----
-
-### Life Status Thresholds
-
-| Status | Condition | Color |
+| Operation | Purpose | What it captures |
 |---|---|---|
-| Active | < 65% of threshold used | Green |
-| Nearing end | 65–79% used | Amber |
-| Overdue | ≥ 80% used | Red |
-| Spare | 0 footage, not installed | Blue |
-| Retired | Permanently removed | Gray |
+| **Reset counter** | The die has returned from reconditioning, or a new spare is being entered into the counter system | Disposition (reconditioned or new spare) · date removed from line · date returned and ready · **new life threshold** (reconditioned only) · inspection date · performed by · die room source · notes. Footage resets to zero |
+| **Edit threshold** | Change the footage limit — for this die, or for **all dies of the same type and size** | A reason is required. Changing the type-level value updates the default for future registrations |
+| **Retire die** | Permanent removal | Date retired · reason (end of life · physical damage · bore out of tolerance · size discontinued · other) · notes. Retired dies remain in history for traceability but leave the active and spare counts |
+| **Register new die** | Bring a die into inventory as a spare | Identity (`D-{size×1000}-{seq}`) · compatible block · hole size · type and material · life threshold · source · condition · inspection date · notes |
 
-These thresholds apply consistently across: the stats strip, the filter tab counts, the list row status badge, the inline bar color, the detail panel life bar, and the alert banners.
+**A reconditioned die does not return with its original life.** The reset defaults its threshold to a reduced figure, because a re-lapped die has less remaining life than a new one — the default is a starting point that Maintenance can adjust.
 
-> **Open question:** Are these thresholds fixed system constants, or should Maintenance be able to configure the nearing/overdue boundary per die type? A TC Mono die used for a roughing pass (DB1) may warrant a different alert threshold than a finishing die (DB2) where gauge drift risk is higher.
+## 4.5 What the die change screen consumes from here
+
+| Value | Used for |
+|---|---|
+| Die identity → size, type, condition | Resolving the incoming die scan |
+| Footage counter | The outgoing die's accumulated footage and remaining life |
+| Life threshold | The life bar and the remaining figure |
+
+---
+
+# 5. Die Life Status
+
+| Status | Condition | Meaning |
+|---|---|---|
+| **Active** | Well inside the threshold | Normal |
+| **Nearing end** | Approaching the threshold | Schedule a replacement |
+| **Overdue** | At or past the threshold | Pull at the end of the current run |
+| **Spare** | No footage, not installed | Available |
+| **Retired** | Permanently removed | Historical only |
+
+> `[CLIENT INPUT REQUIRED]` **The two screens currently use different bands for the same die**, and both are internally consistent with their own source:
+>
+> | Screen | Bands |
+> |---|---|
+> | Die Change | Green below 60 % · amber 60–85 % · red above 85 % |
+> | Die Management | Active below 65 % · nearing end 65–79 % · overdue at 80 % and above |
+>
+> The same die therefore reads differently depending on where it is viewed, which is exactly the kind of inconsistency that erodes trust in a life indicator. **One set must be chosen** (OI-12).
+
+> `[CLIENT INPUT REQUIRED]` **Are these bands fixed, or configurable per die type?** A roughing die at DB1 may warrant a different alert point from a finishing die at DB2, where gauge drift risk is higher. Our recommendation is that Maintenance be able to configure the boundary per die type, with a system default.
+
+---
+
+# 6. Confirmed Decisions
+
+| # | Decision | Date |
+|---|---|---|
+| D1 | **The post-die-change gate is a hard block on full production**, enforced at the confirm action, with thread mode permitted | May 4, 2026 |
+| D2 | **Gauge drift and size change both route to the SPC checkpoint**; planned life and die failure return to the run | May 4, 2026 |
+| D3 | A **die failure** holds the suspect **footage range**, not the run | Apr 2026 |
+| D4 | A die that is not registered in inventory **cannot be installed** | Apr 2026 |
+| D5 | Die change events are **immutable**; corrections are separate records | Apr 2026 |
+| D6 | Die management is the **source of truth** for die identity, footage and life threshold | Apr 2026 |
+
+---
+
+# 7. Assumptions
+
+| # | Assumption |
+|---|---|
+| A1 | Every die in physical circulation is registered in inventory before it reaches the line. |
+| A2 | The machine reports the current die assignment, so the outgoing panel does not need operator entry. |
+| A3 | The footage encoder is the authoritative source of both the change position and the accumulated die footage. |
+| A4 | Die room inspection records exist and are readable, so the incoming die's inspection date can be displayed rather than typed. |
+| A5 | Reconditioning reduces available life, and the reduced figure is set at the counter reset. |
+
+---
+
+# 8. Open Items Requiring Client Input
+
+| Ref | Priority | Question | What it blocks |
+|---|---|---|---|
+| **OI-12** | Medium | **Which die-life colour bands apply** — 60/85 % or 65/79/80 % | A consistent operator signal across both screens |
+| — | Medium | **Are life bands configurable per die type**, or fixed system constants? | Die management configuration |
+| **OI-11** | Medium | **Which lines expose roll adjustment** | Which action bars carry the control |
+| **Q56** | Medium | **Who may waive the post-die-change verification gate** | Override authority and audit |
+| **Q41** | Medium | **Die life tracking basis** — is scheduled life expressed in footage alone, or does another measure apply? | The threshold model |
+| **OI-18** | Medium | Should the SPC checkpoint carry an **explicit link to the die change** that raised it? | Proving which change a checkpoint verified |
+
+---
+
+# 9. Related Specifications
+
+| Document | Relationship |
+|---|---|
+| [SPC Checkpoint](SPCCheckpoint.md) | The verification gate a gauge-drift or size-change die change routes into |
+| [Pass Schedule Management](PassScheduleManagement.md) | Die sizes are pass-schedule parameters; a size change is a configuration change |
+| [Rod Check-in](RocCheckin.md) | Pushes the die configuration to machine control at acknowledgement |
+| [HMI and SCADA Layout](HMIAndSCADALayout.md) | Die changes appear as event markers on the trend charts |
+
+---
+
+# Client Sign-off
+
+## Part A — Rules for confirmation
+
+| Ref | Item | Accept | Amend |
+|---|---|:--:|:--:|
+| §1.3 | Die change applies to FL1 and FL3 only | ☐ | ☐ |
+| §2.2 | Three die block choices, DB2 defaulted | ☐ | ☐ |
+| §2.4 | An unregistered die cannot be installed | ☐ | ☐ |
+| §2.5 | The five reason codes and what each triggers | ☐ | ☐ |
+| §2.6 | Quality hold captures a footage range, with the end read-only | ☐ | ☐ |
+| §2.7 | Hard block with thread mode after gauge drift or size change | ☐ | ☐ |
+| §2.8 | The post-change routing table | ☐ | ☐ |
+| §4.4 | The four lifecycle operations and what each captures | ☐ | ☐ |
+| §4.4 | A reconditioned die returns with a reduced default life | ☐ | ☐ |
+| §5 | The five life statuses | ☐ | ☐ |
+
+## Part B — Information required
+
+| Ref | Item | Owner | Supplied |
+|---|---|---|:--:|
+| OI-12 | Which die-life bands apply | | ☐ |
+| — | Whether bands are configurable per die type | | ☐ |
+| OI-11 | Which lines expose roll adjustment | | ☐ |
+| Q56 | Waiver authority for the verification gate | | ☐ |
+| Q41 | Die life tracking basis | | ☐ |
+| OI-18 | Checkpoint-to-die-change link | | ☐ |
+
+## Part C — Approval
+
+| | Name | Signature | Date |
+|---|---|---|---|
+| **Maintenance** | | | |
+| **Operations** | | | |
+| **Quality** | | | |
+
+---
+
+## Change Log
+
+| Date | Change |
+|---|---|
+| Apr 2026 | Initial specification — die change event capture, reason codes, conditional quality hold and SPC notice; die management screen, lifecycle operations and life thresholds. |
+| May 4, 2026 | Post-die-change resume gate confirmed as a hard block with thread mode permitted; routing corrected for gauge drift and size change. |
+| Aug 1, 2026 | **Reissued as version 2.0 for client review.** FM2 corrected to three 6″ stands with edgers at S2 and S3. The conflicting die-life colour bands between the two screens raised as a client decision instead of being silently reconciled, alongside the band-configurability question. Roll-adjust line applicability flagged as unresolved. Screen styling, navigation targets, interface payloads and mockup-state commentary removed; the gap-analysis framing replaced by the confirmed routing rules it produced. |
