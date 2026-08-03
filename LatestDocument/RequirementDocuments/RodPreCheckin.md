@@ -2,7 +2,7 @@
 
 **Project:** Flat Wire Mill Implementation
 **Applies to:** Flattening Line 1 (FL1) and Flattening Line 3 (FL3)
-**Version:** 2.2
+**Version:** 2.3
 **Last Updated:** August 1, 2026
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** [Dashboard 2A — Rod Pre-Check-In](../../Mockups/dashboard_2a_rod_precheckin.html)
@@ -18,6 +18,7 @@
 | 2.0 | Aug 1, 2026 | **Issued for client review.** Consolidated to current rules only. Incorporates the decisions of the July 30, 2026 client call (Section 10): shared coil status set at check-in only; pre-check-out approval determined by weld state; failed inspection released by WIP rejection to `HOLD`; automatic line selection replacing the off-schedule override; min/max dimensional limits for four attributes; a rod may carry more than one order. Superseded rules, prior design iterations and internal implementation detail removed. |
 | 2.1 | Aug 1, 2026 | Added Section 8.2 — a **read-only list of the welds recorded against the current run** (`PCI021`), replacing a control labelled *Weld event log* that in fact opened the weld-recording form. Recorded in Section 8 that the weld is **not** confirmed by keying an operator badge; the operator comes from the signed-in station session, as `WLD003` requires it to be recorded rather than re-entered. |
 | 2.2 | Aug 1, 2026 | Added Section 8.1 — **weld quality is now mandatory** to record a weld (`PCI022`), Pass or Fail with a reason required on Fail, matching the Weld Event screen. **A failed weld is recorded but does not mark the rod welded**: the join did not hold, so the position keeps reading *not yet welded* and the operator remakes it. Existing open item **Q24** widened — whether a superseded failed attempt belongs on the customer certificate. |
+| 2.3 | Aug 1, 2026 | **The station-level weld readiness band is removed; each control now sits on the payoff position it acts on.** *Mark as welded* moves onto the **staged** position (Section 8), *Welds this run* onto the **running** position (Section 8.2). The band's wording was already carried by the position cards; the one instruction it alone carried — *induction-weld tail to head* — is now stated on the staged position whenever a rod is running (Section 4.1). **Consequence for review:** with nothing running, *Welds this run* is **not offered** rather than shown-but-unavailable — new open item **Q83** (Sections 4.3, 8.2). *Open the active run* is withdrawn as a position action (Section 4.1). The traveler queue gains the heading **"Rods In Queue"** (Section 4.5). |
 
 ---
 
@@ -110,9 +111,15 @@ Each payoff position presents exactly one of four states.
 | State | Meaning | Available actions |
 |---|---|---|
 | **Not Staged** | Position empty | Pre-check-in a rod · (when the whole station is empty, also a direct route to check-in) |
-| **Pre-Checked-In** | Rod staged, inspection passed, not yet checked in | Pre-check-out · Proceed to check-in · Mark as welded |
-| **Active** | Rod checked in, run open | Open the active run · Check out the rod |
+| **Pre-Checked-In** | Rod staged, inspection passed, not yet checked in | Proceed to check-in · Mark as welded · Pre-check-out |
+| **Active** | Rod checked in, run open | Check out the rod · Welds this run |
 | **Blocked** | Rod staged but visual inspection failed | **WIP Rejection only** — no other forward action |
+
+**Every action sits on the position it acts on** (revised August 1, 2026). *Mark as welded* is offered on the **staged** position because that position is the incoming rod; *Welds this run* is offered on the **running** position because the run belongs to it. Neither is a station-level control any longer.
+
+**"Open the active run" is withdrawn as a position action.** The active run screen remains reachable from the application bar and from the Line Status board; the pre-check-in station's purpose is preparing the *next* rod, not driving the current one.
+
+**Recommended next action.** Where a position has an obvious next step it is shown as the emphasised action — *Pre-check-in a rod* on an empty position, *Proceed to check-in* on a staged one. **The running position emphasises nothing**: both of its actions are exceptional, and emphasising either would read as a recommendation to take it.
 
 **Blocked is a derived condition**, not a separate record state: a rod is blocked when it is staged and any inspection item has failed. The rod remains physically on the payoff and the position remains occupied — this is deliberate, because a bundle that fails inspection is already at the payoff and must not be reported as an empty position.
 
@@ -127,7 +134,9 @@ At the beginning of a campaign the line holds no material and the station knows 
 1. **Directly to check-in.** Nothing is drawing, so there is nothing to weld to and staging achieves nothing. Scan the first rod at check-in, acknowledge the pass schedule, tags are pushed, the run starts. **This is the normal cold-start path.**
 2. **Stage first, then check in.** Useful only when the bundle is physically positioned before the operator is ready to start the run.
 
-With both positions free the wizard offers **both** — a position is offered or withheld according to whether it is *occupied*, never according to which position it is. Weld readiness reads *"no material on either payoff"* and **Mark as welded is unavailable**, because a weld requires a running rod as well as a staged one.
+With both positions free the wizard offers **both** — a position is offered or withheld according to whether it is *occupied*, never according to which position it is. Both positions read *"No material on this line"* and state the two routes above.
+
+**Neither weld control is available at cold start**, and they are unavailable in different ways. *Mark as welded* requires a staged rod, so there is no position to offer it on. *Welds this run* is offered on the **running** position, and at cold start there is none — so **the control is not present at all**, rather than present and unavailable. This is a change from the earlier design, in which a station-level control was shown greyed with the explanation *"no run in progress"*; **please confirm this is acceptable** (open item **Q83**).
 
 ## 4.4 Payoff weight indication and weld alerts
 
@@ -142,7 +151,7 @@ Colour is driven by **absolute remaining pounds**, not by percentage bands. Agai
 
 ## 4.5 Traveler queue `[TRV004, TRV009]`
 
-The station presents a queue of rod for the current order, showing serial number, payoff position, dimensional attributes and current status, and including **both pre-checked-in and welded rods**.
+The station presents a queue of rod for the current order, headed **"Rods In Queue"** and showing serial number, payoff position, dimensional attributes and current status, and including **both pre-checked-in and welded rods**.
 
 | Row type | Meaning |
 |---|---|
@@ -267,6 +276,8 @@ Two options are presented. An occupied position is unavailable and is labelled w
 
 A rod that fails inspection remains recorded at the payoff and the position shows **Blocked**. The WIP rejection captures the reason and places the rod on **`HOLD`** — and that is what **releases the record and frees the position**. There is no other release path, and the position is never reported as empty while the bundle is physically on it.
 
+The rejection is captured **at this station**, without leaving it: the operator does not navigate away to a separate screen and then find their way back. The station knows which rod and which position failed, so the rejection opens already describing them, and because the rod never ran there is **no run and no footage position** to record against it — the two facts a mid-run rejection carries and this one cannot.
+
 ## Partial rod carry-forward `[PRC007, PRC008, PRC011, PRC014]`
 
 If the rod has footage already run, the wizard presents the prior run history and offers **only** *proceed as a partial re-check-in*, together with an explicit confirmation of physical identity. **A fresh-start path is not offered and is not present on the screen.**
@@ -277,7 +288,21 @@ Applying this gate at the staging scan is deliberate: staging is where the rod i
 
 # 8. Marking the Weld `[WLD010]`
 
-A station-level action, available **only when a rod is pre-checked-in on the idle position** and a rod is running on the other.
+**Offered on the staged payoff position** (revised August 1, 2026 — it was previously a station-level action in a weld readiness band beneath both positions). The staged position *is* the incoming rod, so the action carries that rod into the record without the operator selecting it.
+
+Available **only when a rod is pre-checked-in on that position** and a rod is running on the other.
+
+**Which rod is outgoing and which is incoming is determined from the line, not from the position the operator pressed.** After a payoff transition the running rod may sit on either position, so the record always takes the outgoing rod from whichever position is actually running.
+
+When the action is unavailable, **the station states why** rather than simply withholding it:
+
+| Situation | Explanation shown |
+|---|---|
+| Nothing running | "No rod is running — there is nothing to weld to" |
+| The other position failed inspection | "No rod is running — the other position failed inspection" |
+| Both positions staged, none running | "No rod is running — check in the other position to start the line" |
+| Already welded | "Already marked as welded" |
+| Previous attempt failed | "Remake the failed weld" *(available)* |
 
 - Captures the operator and timestamp `[WLD003]`.
 - Validates that **alloy, temper and diameter match the running rod** `[WLD006]`.
@@ -308,14 +333,15 @@ Recording a weld **requires a quality result**. This is the same check, with the
 
 ## 8.2 Welds recorded against the current run `[PROPOSED — PCI021]`
 
-The station provides a **read-only list of the welds already recorded against the run in progress**, opened from the weld readiness area and closed without any further action.
+The station provides a **read-only list of the welds already recorded against the run in progress**, opened from the **running payoff position** and closed without any further action. It sits there because the run belongs to that position; the count of welds so far is shown on the control itself.
 
 | Aspect | Rule |
 |---|---|
 | Scope | The **current run only** — every weld recorded against the run now on the line. Not the shift, and not the output coil. |
 | Shown per weld | Time · outgoing rod → incoming rod · footage position at the weld · weld type · operator · quality result. |
 | Failed welds | A failed weld is listed with its **failure reason**, which is mandatory whenever quality is Fail `[WLD013]`. |
-| Availability | Available whenever a run is in progress, including while the idle position is empty or blocked. Unavailable before the first check-in, when there is no run to report against. |
+| Availability | Available whenever a run is in progress, including while the idle position is empty or blocked. **Before the first check-in there is no running position, so the control is not present** — it is not shown-and-greyed. See 4.3 and open item **Q83**. |
+| No welds yet | The control remains available and reports "none recorded yet". A run with no welds is a legitimate answer, not an error. |
 | Editing | **None.** The list is read-only; a recorded weld cannot be corrected or reversed from it (see the open item above on `WLD011`). |
 
 **Why this exists.** The screen previously offered a control labelled *Weld event log* that navigated away to the weld-recording form — it recorded a new weld rather than showing the welds already recorded. Nothing anywhere in the system listed the welds made during a run, although each one is a traceability input for the customer certificate. This replaces that control with the list its label promised.
@@ -368,6 +394,7 @@ Each item below blocks or qualifies part of this specification. They are drawn f
 | **Q76** | High | **Are FL1 and FL3 one station or two?** If they share one physical payoff, the "one rod per position" rule must be scoped across both lines, otherwise two rods can be staged on one physical position. | The staging data model |
 | **Q78** | High | **May a rod run when its order is scheduled on neither flattening line?** Automatic line selection has no line to switch to. If an authorisation is required, one must be added. | Automatic line selection (5.2) |
 | **Q81** | High | **The actual received bundle gross weight.** The payoff weight bar and both weld alerts are calibrated to it, and earlier documents state it two incompatible ways. | Weight indication and weld alerting (4.4) |
+| **Q83** | Medium | **At cold start, should *Welds this run* be absent or shown-and-unavailable?** Now that it sits on the running payoff position, there is no position to show it on before the first check-in, so it is simply not there. The previous station-level control was shown greyed with the explanation *"no run in progress"*. Absent is the honest representation of "there is no run"; visible-but-greyed teaches the operator where the control will be. | Cold start (4.3) and the run weld list (8.2) |
 | **Q24** | Medium | **A failed weld is recorded and then remade, so one physical join carries more than one record.** Should a superseded attempt appear on the customer certificate as part of the material's history, or be excluded as an abandoned attempt? *(Widened Aug 1, 2026 — this question already covered a weld that breaks mid-run; a weld that fails its quality check before anything runs through the join may deserve a different answer.)* | Certificate traceability across a remade weld (8.1) |
 | **Q79** | Medium | **Sequencing across a multi-order rod.** If a rod straddling two orders is staged out of planned order, is that the standard supervisor authorisation, or something stricter? Also: is this in the first release or a later phase? | The order-membership rule (5.3), which is knowingly unfinished until this closes |
 | **Q73** | Medium | **The station for FL3**, and what automatic line selection does to a part-completed wizard. | Automatic line selection (5.2) |
@@ -429,6 +456,10 @@ Please review each item and mark accordingly. Items marked *Amend* should carry 
 | 8.1 | Weld quality (Pass/Fail) is **mandatory** to record a weld, with a reason required on Fail (`PCI022`) | ☐ | ☐ |
 | 8.1 | A **failed weld does not mark the rod welded** — it is recorded, and the weld must be remade | ☐ | ☐ |
 | 8.2 | Read-only list of welds recorded against the current run, scoped to the run (`PCI021`) | ☐ | ☐ |
+| §4.1 | **Every action sits on the payoff position it acts on** — *Mark as welded* on the staged position, *Welds this run* on the running position; neither is a station-level control | ☐ | ☐ |
+| §4.1 | **"Open the active run" is withdrawn** as a payoff-position action; the run screen stays reachable from the application bar and Line Status | ☐ | ☐ |
+| §4.1 | The running position **emphasises no action**, because both of its actions are exceptional | ☐ | ☐ |
+| §8 | When *Mark as welded* is unavailable, the station **states why** | ☐ | ☐ |
 
 ## Part B — Information required
 
@@ -438,6 +469,7 @@ Please review each item and mark accordingly. Items marked *Amend* should carry 
 | Q76 | FL1 / FL3 — one physical station or two | | ☐ |
 | Q78 | Rod scheduled on neither flattening line | | ☐ |
 | Q81 | Received bundle gross weight | | ☐ |
+| Q83 | *Welds this run* at cold start — absent, or shown and unavailable | | ☐ |
 | Q79 | Sequencing across a multi-order rod, and its release scope | | ☐ |
 | Q73 | FL3 station, and the part-completed wizard on automatic switch | | ☐ |
 | Q70 | Scope of the actual run sequence number | | ☐ |
@@ -461,5 +493,7 @@ Please review each item and mark accordingly. Items marked *Amend* should carry 
 |---|---|
 | Jul 29, 2026 | Initial specification: station concept, bay state model, staging validations, traveler queue, three-step wizard, and the two-sequence model. |
 | Aug 1, 2026 | **Reissued as version 2.0 for client review.** Applied the July 30, 2026 client decisions: shared coil status set at check-in only; pre-check-out approval determined by weld state, with welded removal a supervisor-authorised rejection to `HOLD`; failed inspection released by WIP rejection; off-schedule staging replaced by automatic line selection; min/max limits for four dimensional attributes; a rod may carry more than one order; bundles are never stacked; no welded-not-checked-in status. Document restructured to client-deliverable form — superseded rules, prior design iterations, internal schema and interface detail, and repository-internal commentary removed. New requirements `PCI009`–`PCI020` proposed for the removal, bay-state, order-resolution and sequence-authorisation rules the SRS does not currently cover. Open items consolidated into Section 11 with a sign-off checklist. New requirement identifiers span `PCI009`–`PCI017`. |
+| Aug 1, 2026 | **Rejection captured at the station.** The WIP rejection that releases a blocked position is now raised on this screen rather than reached by navigating to a separate one, so the failing rod and its position are already known and the operator returns to a station that has not lost its state. No rule in this document changed. |
 | Aug 1, 2026 | **Version 2.1.** Added **Section 8.1 `PCI021`** — a read-only list of the welds already recorded against the run in progress: time, rod pair, footage at the weld, weld type, operator and quality, with the mandatory failure reason on a failed weld (`WLD013`). Scoped to the **current run** (not the shift, not the coil), available whenever a run exists including while the idle position is empty or blocked, and not editable — correcting a recorded weld remains the unspecified `WLD011`. This replaces a station control labelled *Weld event log*, which navigated to the weld-**recording** form; nothing in the system previously listed the welds made during a run, although each is a certificate traceability input. Also recorded in Section 8 that marking the weld does **not** ask for an operator badge — the operator is taken from the signed-in station session, since `WLD003` requires it recorded, not re-entered, and a keyed value could disagree with the session actually stamped. |
 | Aug 1, 2026 | **Version 2.2.** Added **Section 8.1 `PCI022` — weld quality.** Recording a weld now **requires** a Pass/Fail result, with a reason mandatory on Fail (`WLD013`), using the same six reasons as the Weld Event screen so a weld is documented identically wherever it is captured. Neither result is pre-selected: this is the check whose purpose is to make the operator look at the join, and a pre-selected Pass can be confirmed without being read. **A failing weld is recorded but does not mark the rod welded** — the join did not hold, so the rod is not joined to the running rod and the line cannot transition through it; the position keeps reading *not yet welded*, the station states that the last weld failed and why, and the operator remakes it. Previously the station recorded only *that* a weld happened, with no statement of whether it held, while the same join captured on the Weld Event screen did record a quality result — one physical join, documented two ways. Renumbered the run weld list to **8.2**. **Q24 widened** rather than a new question raised: a remade weld leaves more than one record of one physical join, which is the re-weld-on-certificate question Q24 already asks — now reachable both by a weld that breaks mid-run and by one that fails its quality check before anything runs through it. |
+| Aug 1, 2026 | **Version 2.3. The station-level weld readiness band is removed and every control moves onto the payoff position it acts on.** The band sat between the two positions and the traveler queue, carrying a sentence of narrative and two buttons. Its narrative was already on the position cards — the weight and percentage on the payoff bar, the weld states in the position's alert line, the cold-start message in the empty-position text — so the band restated at station level what the operator was already reading on the card. Its two controls were station-level for no reason other than where they happened to sit. **Mark as welded now sits on the staged position** (Section 8): that position *is* the incoming rod, so the action carries the rod into the record instead of asking which rod is meant. Its unavailable states now state their reason on the card, which the band never did. **Welds this run now sits on the running position** (Section 8.2), because the run belongs to that position, and carries its count on the control. **Open the active run is withdrawn as a position action** (Section 4.1) — the run screen remains reachable from the application bar and the Line Status board, and this station's purpose is preparing the *next* rod rather than driving the current one. The one instruction the band alone carried, *induction-weld tail to head*, is now stated on the staged position whenever a rod is running. **One consequence needs client confirmation** (**Q83**): with the control on the running position, at cold start there is no position to show it on, so *Welds this run* is **absent** rather than shown-and-greyed as it was before. The traveler queue gained the heading **"Rods In Queue"** (Section 4.5) — the queue head had been an unlabelled empty row since the order-context line was removed, leaving the table with no name. Also recorded: where a position has an obvious next step it is emphasised, and **the running position deliberately emphasises nothing**, because both of its actions are exceptional and emphasising either would read as a recommendation. |

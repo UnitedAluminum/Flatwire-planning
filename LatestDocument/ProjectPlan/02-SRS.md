@@ -16,7 +16,7 @@
 
 ### 1.1 Purpose
 
-This document specifies what the **Flat Wire Mill module** must do. It is the reference a developer builds from and a tester writes cases against. It carries **363 numbered functional requirements (`FR-001` … `FR-508`)**, every one traceable to a source requirement ID in the delivered SRS, an analysis note, or an approved mockup.
+This document specifies what the **Flat Wire Mill module** must do. It is the reference a developer builds from and a tester writes cases against. It carries **366 numbered functional requirements (`FR-001` … `FR-508`)**, every one traceable to a source requirement ID in the delivered SRS, an analysis note, or an approved mockup. *(The count exceeds the span because `FR-097`–`FR-099` were added on 2 Aug 2026 into the gap between §5.3 and §5.4 rather than appended, so the new screen sits beside the one it feeds.)*
 
 Requirement numbers are **carried forward unchanged** from [`../FlatWire_MasterSpecification.md`](../FlatWire_MasterSpecification.md) §4. Nothing has been renumbered, merged or dropped.
 
@@ -391,7 +391,7 @@ sequenceDiagram
     PLC-->>SVC: all tags OK — any failure aborts, compensating clears run
     SVC->>DB: RodStaging.Status → CheckedIn when the rod was staged
     SVC->>HUB: LineStatus Running + PayoffStateChanged Active
-    API-->>NG: 200 runId → navigate to DB3
+    API-->>NG: 200 runId → return to DB2A (stage the next rod)
 ```
 
 **Order of writes is mandatory: records first, PLC second.** If the PLC write fails there is then an incomplete-push marker to recover from.
@@ -555,8 +555,11 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 | **FR-047** | The override flag, the authorising supervisor, the timestamp and the reason shall be persisted on the staging record, and the bay card shall keep showing the authorisation for as long as the rod is there. *(`RodStaging.OffScheduleOverride` and `ScheduledLineId` were **dropped** 1 Aug 2026 with the off-schedule case; `OverrideBy`/`OverrideAt`/`OverrideReason` are retained and shared.)* | Must | OQ-74 |
 | **FR-048** | On confirm the system shall write a `RodStaging` row with `Status='Staged'`, assign `RodSeqno` **server-side** (never client-supplied), snapshot `PlannedSeqno` from the allocation, **leave `coils.coil_status` unchanged** — `INFLAT` is set at check-in, not at staging (OQ-67, 30 Jul 2026) — update the WIP queue entry as a **compensating write** *(whether that insert stays at staging is the open half of OQ-67)*, and broadcast `PayoffStateChanged`. | Must | OQ-70, Analysis |
 | **FR-049** | **No PLC write shall occur at pre-check-in.** Component flags, die sizes, roll gaps and gauge/width targets are pushed only on pass-schedule acknowledgement at check-in. | Must | Analysis |
-| **FR-050** | **Mark as Welded** shall be enabled only when a rod is pre-checked-in on the idle bay **and** a rod is running on the other bay; it shall validate alloy, temper and diameter against the running coil and record operator + timestamp. | Should | `WLD003`, `WLD006`, `WLD010` |
+| **FR-050** | **Mark as Welded** shall be presented **on the staged bay card** and shall be enabled only when a rod is pre-checked-in on that bay **and** a rod is running on the other bay; it shall validate alloy, temper and diameter against the running coil and record operator + timestamp. When disabled it shall state the reason. *(Relocated from the station-level weld-readiness strip, 1 Aug 2026.)* | Should | `WLD003`, `WLD006`, `WLD010` |
+| **FR-050a** | The outgoing and incoming rods shall be resolved from **which bay is actually running**, not from the card the operator activated — after a payoff transition the running bay may be either one. | Must | `WLD010`; TC-068 |
 | **FR-051** | Mark as Welded shall record the weld only — it shall **not** switch bays. The payoff transition is driven **solely by material consumption reaching 0 ft remaining**. | Must | `WLD005` |
+| **FR-051a** | **Welds this run** shall be presented **on the active bay card**, carrying the weld count, and shall remain available at a count of zero. Where no run exists there is no active bay, so **the control shall be absent** rather than disabled. *(Relocated from the weld-readiness strip, 1 Aug 2026; supersedes the disabled-at-cold-start behaviour. Client confirmation pending — Q83.)* | Should | `PCI021` |
+| **FR-051b** | The pre-check-in station shall **not** offer a link to the active run monitor from the active bay card; that screen is reached from the application bar and the line status board. *(1 Aug 2026.)* | Should | Mockup DB2A |
 | **FR-052** | **Pre-check-out** shall release a staged rod that was never checked in: reason (Wrong rod / mis-scan · Order cancelled or deferred · Failed re-inspection · Relocated to different line · **Wrong rod welded** · Other with free text) and disposition (Return to floor storage · Return to warehouse · **Hold return to storage**, welded only), plus optional notes. | Should | Analysis *(no source ID exists — OI-44)* |
 | **FR-052a** | Pre-check-out approval shall depend on the weld: an **unwelded** rod is **operator-only** with a reason captured; a **welded** rod shall require a **supervisor override** — badge/ID + PIN + a **documented reason** — and the rod shall be set to **`HOLD`**. Removing a welded rod means cutting or splitting the material, so it is a **rejection, not a return**. *(Decided 30 Jul 2026 — OQ-68, which also closes OQ-77. Restores, behind that gate, the control removed on 31 Jul 2026.)* | Must | OQ-68, OQ-77 |
 | **FR-053** | Pre-check-out shall set `RodStaging.Status='Unstaged'` with the release stamp and `UnstageKind='PreCheckOut'`, write a `RodCheckout` row with `Mode='ModeP'`, `RunId` NULL, footage 0, `PlcTagsCleared` false and `WasWelded` per the staged row — plus `ApprovedBy`/`ApprovedAt`/`OverrideReason` and `NewRodStatus='HOLD'` when welded — **reverse** the WIP queue entry created at staging, and broadcast `PayoffStateChanged{state:"NotStaged"}`. It requires **no line-state gate**. *(There is nothing to revert for `INFLAT`: staging no longer sets it — OQ-67.)* | Should | Analysis |
@@ -605,6 +608,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 | **FR-077** | On successful check-in the system shall update the `coilno` field in WIP stations, set `coils.coil_status = INFLAT`, perform reqsum and insert `wip_coil_orders` if the rod is not yet reqsummed, and update `actual_start_date` in `planning_routings` and `routings`. | Must | `CHK019`, `DM002` |
 | **FR-078** | Where a `RodStaging` row exists for the rod, check-in shall **consume** it (`Status → CheckedIn`, `CheckedInAt` and `RodCheckinId` set) rather than creating a parallel record, and the request's `payoffPosition` **must match** the staged position (mismatch → `409`). | Must | Analysis |
 | **FR-079** | The wizard shall present six steps with **progressive unlock** — Visual Inspection, Pass Schedule, Pre-run SPC, Die Block (DB1/DB2), Rolling Mill (FM1), Lube & Safety — and shall keep the footer **Acknowledge & Begin Check-in** disabled until all six clear or a supervisor override is on file. | Must | Mockup DB2 |
+| **FR-079a** | On a successful acknowledgement the operator shall be returned to **DB2A — Rod Pre-Check-in**, not to DB3. Check-in is complete at that point and the next task is staging the following rod on the idle payoff; the run monitor remains reachable from the application bar and the line status board. *(1 Aug 2026 — supersedes "navigate to Dashboard 3". Client confirmation pending — Q84.)* | Should | Mockup DB2 |
 | **FR-080** | Machine-inspection steps 4–6 shall use **OK / NG / N/A** buttons and measured-value fields against a stated spec: DB1 and DB2 (die ring diameter vs spec, die surface condition, lubricant flow, bearing wear), FM1 (roll gap measured vs target, roll width measured vs target, roll surface condition, coolant flow), and Lubrication & Safety (drawing lubricant level, lube temperature vs 68–80 °F target, pump running, filter condition, all guards in place, E-stop verified, area clear, PPE worn) plus optional notes. | Must | Mockup DB2 |
 | **FR-081** | Failed machine-inspection checks shall place the rod **on hold** and expose an **Authorize Override** path capturing supervisor badge, password and a required override reason. | Must | Mockup DB2 |
 | **FR-082** | The payoff selector shall remain on Dashboard 2 for the direct-check-in fallback but shall render **pre-filled and read-only** when the rod arrived via pre-check-in. *(Reconciles `CHK005` with the approved mockup — confirm with the business, **OI-08**.)* | Must | `CHK005` |
@@ -640,6 +644,32 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 **Pre-flight validation:** spool alpha valid and ready for FL2 · gauge and width entered (or confirmed from FL1 data) · weight entered · pass schedule loaded · hybrid-origin guard where applicable *(**OI-47**)*.
 
 **Open:** which identifier is scanned — SP-series alpha, spool number or bundle ID — is **OI-50** (Critical).
+
+---
+
+### 5.3a Spool Queue — Dashboard 5A (FL2)
+
+**Screen:** [`dashboard_5a_spool_queue.html`](../../Mockups/dashboard_5a_spool_queue.html)
+**Source IDs:** `CHK012`; **Q57** (operator selects by spool number)
+**Actors:** FL2 operator
+**Preconditions:** none — the screen is usable on opening
+**Priority:** **`Must`** *(derived — FW-124)*
+
+*Added 2 Aug 2026. FL1 has a pre-check-in station listing the rods planned for the running order; FL2 has no equivalent because `PCI002` excludes it from staging, so the FL2 operator had **no view of waiting material at all**. `FR-090` has the operator scan the FL1-printed label; **Q57** records the client stating the operator "selects it by spool number for check-in" — both stand, and only the scan had a screen. This is the selection half. It is also the first thing named "the spool queue", a phrase `FR-326`, `TC-389`, `RodCheckout.md` and phase 7 all use with no table, endpoint, screen or status behind it.*
+
+| ID | Requirement | Priority | Source |
+|---|---|---|---|
+| **FR-097** | Dashboard 5A shall, **on opening and without requiring a scan**, list every spool **available for processing irrespective of order**, showing per spool the identifier, order, source FL1 run and source rod alphas, gauge × width, net weight, origin route mode and status, with a rollup of spool count, ready count and total weight. **Gauge and width shall be read from the source FL1 run, not from `Spool.GaugeIn`/`WidthIn`, which are null until check-in.** | Must | Q57, Analysis |
+| **FR-098** | On entry of a spool identifier the system shall **resolve that spool's order server-side and return the order context and every spool on that order in a single response**; the screen shall populate the order bar (order no, customer, alloy, temper, setup gauge/width, due date) and narrow the list together, mark the scanned spool, and offer a **Show all** action to restore the unfiltered list. Resolution shall trigger on the scanner's terminating keypress and on a short debounce after manual entry, with **no submit control**. | Must | `CHK012`, Q57 |
+| **FR-099** | Dashboard 5A shall offer a **check-in action leading to Dashboard 5 only for spools that may be run** (`RECEIVED`, `STAGED`); shall list `HOLD` spools marked and without the action pending QA release; shall list `INFLAT`/`COMPLETE`/`SCRAP` without action; shall **mark hybrid-origin spools**; and shall treat an **unallocated spool (`OrderNo` null) as a valid single-spool result, not an error**, still eligible for check-in. An unresolved identifier shall mark the field and **leave the displayed list unchanged**. | Must | Analysis, OI-47 |
+
+**Read-only:** this screen writes nothing. All state change happens at Dashboard 5.
+
+**Error paths:** unknown identifier → `404`, field marked, **list unchanged** · unallocated spool → `200` with a null order and a single row, **not** an error · no spools available → distinct empty state naming FL1 output and the hold queue as next places to look.
+
+**Open:** *which statuses constitute "available for processing"* is undefined — **OI-55/Q57**, and the two competing spool status vocabularies are **OI-06**; the identifier and its format are **OI-50** and **OI-02**; the hybrid-origin consequence is **OI-47**. **Critically, `Spool.OrderNo` must be populated from planning for FR-098 to work at all** — if allocation is not readable by the shopfloor system, this screen cannot resolve an order.
+
+**Not shown, deliberately:** spool age (no creation timestamp exists on `Spool`) and physical location (`Spool.Location` has no writer and no location scheme).
 
 ---
 
@@ -771,7 +801,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 | **[NFR]** | **`NFR012` — traceability retention.** The weld genealogy chain is a **contractual deliverable for welding-wire customers** and must remain queryable for the certificate lifetime. Verification: `[TP]` weld genealogy suite + retention check. | Must | `NFR012` |
 | **FR-173** | Removal or reversal of a welded coil shall require a **mandatory supervisor override**, capturing credentials, logging who/when/why, revoking welded eligibility and preventing invalid consumption. **The reversal flow is not yet specified.** | Must | `WLD011` |
 | **FR-174** | The timestamp written shall be the **server-side timestamp at API receipt**, never the client clock displayed on screen. | Must | Analysis |
-| **FR-175** | The screen shall display the **traceability chain** (completed rod → outgoing rod with remaining footage → incoming staged rod → future rod) and a **Rods In Queue** table that can be re-sequenced by drag, with an Undo. | Should | Mockup DB4 |
+| **FR-175** | ~~The screen shall display the **traceability chain** (completed rod → outgoing rod with remaining footage → incoming staged rod → future rod) and a **Rods In Queue** table that can be re-sequenced by drag, with an Undo.~~ **⚠ NO HOST since 1 Aug 2026** — both elements lived on Dashboard 4, which was retired; neither moved to the DB2A dialog. Rehome, fold into *Welds this run*, or withdraw this requirement — gap **G27**. | Should | Mockup DB4 |
 
 **Side effects on confirm:** `WeldEvent` written with both alphas, both payoff positions, footage, weld type, quality, operator and timestamp · the run's active-rod pointer advances · the weld-pending flag is cleared · a weld marker is queued for the gauge trace · `PayoffWeight` is re-established for the new payoff.
 
@@ -779,7 +809,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.7 SPC Checkpoint — Dashboard 6
 
-**Screen:** [`dashboard_6_spc_checkpoint.html`](../../Mockups/dashboard_6_spc_checkpoint.html)
+**Dialog:** `spc_checkpoint.js` — `openSpcCheckpoint(ctx)`, a popup over the run being measured (converted from a screen 1 Aug 2026; [`dashboard_6_spc_checkpoint.html`](../../Mockups/dashboard_6_spc_checkpoint.html) is now its launcher)
 **Source IDs:** `SPC001`–`SPC015`
 **Actors:** any operator; QA (disposition of held material)
 **Priority:** **`Must`** *(derived — FW-065 is High; SPC gates check-in and die change)*
@@ -838,7 +868,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.9 Die Change — DC screen
 
-**Screen:** [`dashboard_die_change.html`](../../Mockups/dashboard_die_change.html)
+**Dialog:** `die_change.js` — `openDieChange(ctx)`, a popup over the paused run (converted from a screen 1 Aug 2026; [`dashboard_die_change.html`](../../Mockups/dashboard_die_change.html) is now its launcher)
 **Source IDs:** `DCH001`–`DCH028`
 **Actors:** FL1 / FL3 operator; Operations Manager (SPC-waiver authority)
 **Priority:** **`Must`** *(derived — FW-073 is High)*
@@ -905,15 +935,20 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 | ID | Requirement | Priority | Source |
 |---|---|---|---|
 | **FR-260** | Exactly **one** pause reason shall be selected before a pause can be confirmed; the Confirm Pause button stays disabled until then. | Must | `PRN001`, `PRN010` |
-| **FR-261** | Pause reasons shall be organised under: **Equipment/Mechanical** (die change mid-run no weld · roll adjustment · lubrication/coolant · draw box inspection · component inspection non-fault) · **Material Handling** (Payoff 2 loading / weld preparation · downstream blockage) · **Quality/Measurement** (gauge/width investigation · manual SPC measurement · surface inspection) · **Operational** (operator break · shift changeover · awaiting supervisor instruction) · **Safety** (safety observation non-fault) · **Rod Checkout** · **Other** (free text stored as the reason). | Must | `PRN002`–`PRN009` |
-| **FR-262** | Selecting the **Rod Checkout** reason shall navigate to the Rod Checkout screen **instead of pausing** the run. | Must | `PRN011` |
+| **FR-261** | Pause reasons shall be organised under: **Equipment/Mechanical** (die change mid-run no weld · roll adjustment · lubrication/coolant · draw box inspection · component inspection non-fault) · **Material Handling** (Payoff 2 loading / weld preparation · downstream blockage) · **Quality/Measurement** (gauge/width investigation · manual SPC measurement · surface inspection) · **Operational** (operator break · shift changeover · awaiting supervisor instruction) · **Safety** (safety observation non-fault) · **Other**. Each reason shall be presented as a **glove-sized touch target, not a radio row**. Each reason is an **icon tile** in one of five category columns, every column headed by a category glyph and label; `Other` sits at the foot of the Equipment column. Above them a single row of **context chips** carries status, order, alpha, footage and pause start, and **footage and clock tick while the dialog is open** — the line is still running, so a frozen figure would be a lie about the value the operator is committing to. **Rod Checkout is no longer among them** (`FR-262`). | Must | `PRN002`–`PRN009` |
+| **FR-261a** | The dialog shall submit a **reason code and reason category** (`RunPauseEvent.ReasonCode` / `.ReasonCategory`), not a display label. **`Other` keeps the code `Other`** and carries the operator's text in `Notes`; the note shall **not** replace the code. | Must | `CK_RunPauseEvent_NotesOther` |
+| **FR-261b** | Notes shall be **mandatory when the reason is `Other`** and the Confirm button shall stay disabled until they are entered, matching `CK_RunPauseEvent_NotesOther`. | Must | Schema |
+| **FR-261c** | Reasons that name an activity with its own dialog — **die change** and **manual SPC measurement** — shall apply the pause and then **open that dialog directly**, rather than returning the operator to the action bar to find it. The die change hand-off shall not be offered on **FL2**, which has no draw boxes. | Should | Build decision, 1 Aug 2026 |
+| **FR-262** | ~~Selecting the **Rod Checkout** reason shall navigate to the Rod Checkout screen **instead of pausing** the run.~~ **SUPERSEDED 1 Aug 2026 (OI-14 closed).** Rod Checkout is **not** a pause reason — it was the only one of fifteen that did not pause, presented identically to the fourteen that did. It is now the fourth **resume outcome** (`FR-266`), which is what `POST /run/{runId}/resume` and `CK_RunPauseEvent_Outcome` already accept. Mode B checkout needs the line stopped, so the sequence is pause with a real reason → resume as *Check out rod*. | — | `PRN011` |
 | **FR-263** | On pause the system shall pause the run timer and track pause duration separately from productive run time, **freeze the footage counter** and record the position against the run and alpha, log the reason code, set PLC tags to a **hold/idle state**, and change the DB1 line status from RUNNING to **PAUSED with the reason visible to the supervisor**. | Must | `PRN012`–`PRN016` |
 | **FR-264** | The pause start time shall be **auto-stamped and not editable**. The line badge and pause-timer badge shall switch to a paused presentation and the action button shall change to **Resume Run**. | Must | `PRN017`, `PRN018` |
 | **FR-265** | On resume the system shall display a confirmation showing the pause reason and **elapsed pause duration**, and shall offer the resume outcomes with an optional "activity completed during pause" notes field; Confirm stays disabled until an outcome is selected. | Must | `PRN019`–`PRN022` |
-| **FR-266** | **"Yes — resume run"** shall restart the run timer, restore the PLC tags, return DB3 to the active state and close the pause event with an end time and duration. **"No — log WIP rejection"** shall close the pause event and open DB8. **"No — continue pause"** shall dismiss the dialog, leave the line paused and keep the timer running. | Must | `PRN023`–`PRN025` |
+| **FR-266** | The resume dialog shall offer **four** outcomes, matching `POST /run/{runId}/resume` and `CK_RunPauseEvent_Outcome`. **`ResumeRun`** restarts the run timer, restores the PLC tags, returns DB3 to the active state and closes the pause event with an end time and duration. **`LogWipRejection`** opens the WIP rejection dialog with the frozen footage carried over; the line **stays paused and the timer keeps counting** until the material is dispositioned. **`CheckOutRod`** closes the pause and opens Rod Checkout in **Mode B** with the frozen footage pre-populated. **`ContinuePause`** dismisses the dialog, leaves the line paused and keeps the timer running. | Must | `PRN023`–`PRN025`, OI-14 |
+| **FR-266a** | The resume dialog shall carry the same chip row and show the recorded **reason, elapsed duration, footage frozen at pause and pause start time**; each of the four outcomes shall be an icon card. Duration shall read **h:mm:ss** once a pause exceeds one hour — shift changeover and awaiting-supervisor pauses routinely do. | Must | Build decision, 1 Aug 2026 |
+| **FR-266b** | The resume dialog shall not carry a separate **Cancel** control: dismissing it and choosing **`ContinuePause`** are the same act, and two controls for one outcome invite the wrong one. | Should | Build decision, 1 Aug 2026 |
 | **FR-267** | Pause events shall roll into the Shift Summary as total downtime minutes, a downtime reason breakdown by category, line utilisation and the WIP rejection count. | Must | `PRN026` |
 
-> **⚠️ UNRESOLVED — three resume outcomes or four?** `Analysis/FlatWireShopfloorDashboards.md` specifies **four**, including *"No — check out rod (partial run)"* opening Rod Checkout Mode B; `pause_run.js` implements **three** and instead exposes Rod Checkout as a pause *reason* (`FR-262`). Both readings reach Mode B; they disagree on where the door is. **The API's `POST /run/{runId}/resume` accepts a `CheckOutRod` outcome, so the four-outcome model is what the contract currently supports.** **OI-14.**
+> **✅ RESOLVED 1 Aug 2026 — four outcomes. OI-14 closed.** The contract (`POST /run/{runId}/resume`), the schema (`CK_RunPauseEvent_Outcome`) and `Analysis/FlatWireShopfloorDashboards.md` all specified four; only `pause_run.js` dissented, exposing Rod Checkout as a pause *reason* instead. It now implements four, and `FR-262` is superseded. The deciding argument beyond the contract: a reason that uniquely does **not** pause, rendered identically to fourteen that do, is a trap on a touch panel — and Mode B needs the line stopped anyway, so reaching it *through* a pause is also the truthful sequence.
 
 ---
 
@@ -952,7 +987,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.14 WIP Rejection — Dashboard 8
 
-**Screen:** [`dashboard_8_wip_rejection.html`](../../Mockups/dashboard_8_wip_rejection.html)
+**Dialog:** `wip_rejection.js` — `openWipRejection(ctx)`, a popup raised by whichever screen rejects the material (converted from a screen 1 Aug 2026; [`dashboard_8_wip_rejection.html`](../../Mockups/dashboard_8_wip_rejection.html) is now its launcher)
 **Source IDs:** `WRJ001`–`WRJ004`
 **Actors:** any operator (flag); Supervisor / QA (dispose)
 **Priority:** **`Must`** *(derived — FW-067 is High; it is the only forward action from a failed inspection)*
@@ -1006,7 +1041,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 | ID | Requirement | Priority | Source |
 |---|---|---|---|
-| **FR-320** | Mode B shall be reachable **only** through the DB3 Pause dialog as a "Check Out Rod (Partial Run)" option. | Must | `RCO029` |
+| **FR-320** | Mode B shall be reachable **only** through the DB3 pause flow — since 1 Aug 2026 as the **`CheckOutRod` resume outcome** (`FR-266`), not as a pause reason. The line stays paused behind the checkout dialog; the pause closes when the checkout is confirmed, not when it is opened. | Must | `RCO029` |
 | **FR-321** | The dialog shall show rod alpha read-only, **auto-capture footage at removal from the PLC counter** as read-only, and allow an optional remaining-weight estimate. | Must | `RCO030`–`RCO032` |
 | **FR-322** | A reason shall be required from: **Equipment failure · Quality hold · Order quantity reached · Shift deferral · Other**, and a rod disposition from: **Hold — return to storage · Scrap — not re-usable · Defer — continue later on same line**, driving `INFLAT →` `HOLD` / `SCRAP` / `STAGED` respectively. | Must | `RCO033`–`RCO037` |
 | **FR-323** | **Supervisor approval shall be required before a mid-run checkout is finalised**; the operator may not unilaterally accept partial spool footage. The confirm action shall read **"Submit for Supervisor Approval"**. | Must | `RCO038`, `RCO039` |
@@ -1334,17 +1369,18 @@ The 27 HTML files in [`../../Mockups/`](../../Mockups/) are the **approved visua
 | **DB3-FL2** | Active Run Monitor (FL2) | `dashboard_3_active_run_fl2.html` | FL2 operator | During every FL2 run |
 | **DB3-FL3** | Active Run Monitor (FL3) | `dashboard_3_active_run_fl3.html` | FL3 operator | During every hybrid run |
 | ~~**DB4**~~ | ~~Weld Event Logger~~ — **RETIRED 1 Aug 2026**, folded into DB2A's *Mark as welded* dialog | ~~`dashboard_4_weld_event.html`~~ *(deleted; git history at `2a0426b`)* | — | — |
+| **DB5A** | FL2 Spool Queue | `dashboard_5a_spool_queue.html` | FL2 operator | Choosing which spool to run next *(added 2 Aug 2026)* |
 | **DB5** | FL2 Spool Check-in | `dashboard_5_spool_checkin.html` | FL2 operator | Loading each spool onto the TPO |
-| **DB6** | SPC Checkpoint Entry | `dashboard_6_spc_checkpoint.html` | Any operator | Pre-run, post-die-change, spot check |
+| **DB6** | SPC Checkpoint Entry — **dialog** | `spc_checkpoint.js` *(launcher: `dashboard_6_spc_checkpoint.html`)* | Any operator | Pre-run, post-die-change, spot check |
 | **DB7** | Output Coil Completion & Label | `dashboard_7_coil_completion.html` | FL2/FL3 operator | Coil complete at TKUP-2 |
 | **DB7b** | Packing Station | `dashboard_7b_packing_station.html` | Packing operator | Coil arrives from a line |
-| **DB8** | WIP Rejection | `dashboard_8_wip_rejection.html` | Any operator | Material fails at any stage |
+| **DB8** | WIP Rejection — **dialog** | `wip_rejection.js` *(launcher: `dashboard_8_wip_rejection.html`)* | Any operator | Material fails at any stage |
 | **DB9** | Pass Schedule Management | `dashboard_9_pass_schedule.html` | Ops Manager / Maintenance | Before a new product campaign |
 | **DB9A** | Pass Schedule List | `dashboard_9a_schedule_list.html` | Ops Manager / Maintenance | Browsing the schedule library |
 | **DB10** | Supervisor Shift Summary | `dashboard_10_shift_summary.html` | Supervisor / Shift Manager | End of shift or on demand |
 | **DB11** | Roll Adjust | `dashboard_11_roll_adjust.html` | Line operator | FM2 roll-gap drift during a run |
-| **DB12** | Rod Checkout (Mode A / Mode B) | `dashboard_12_rod_checkout.html` | FL1/FL3 operator | Rod removed before natural completion |
-| **DC** | Die Change | `dashboard_die_change.html` | FL1/FL3 operator | Drawing die replaced mid-run |
+| **DB12** | Rod Checkout (Mode A / Mode B) — **dialog** | `rod_checkout.js` *(launcher: `dashboard_12_rod_checkout.html`)* | FL1/FL3 operator | Rod removed before natural completion |
+| **DC** | Die Change — **dialog** | `die_change.js` *(launcher: `dashboard_die_change.html`)* | FL1/FL3 operator | Drawing die replaced mid-run |
 | **DM** | Die Management | `dashboard_die_management.html` | Maintenance | Machines App → Tooling Inventory |
 | **DB13** | HMI Line Schematic | `dashboard_13_hmi_schematic.html` | Supervisor / Operator | From DB1 card or DB3 Machine View |
 | **DB14** | SCADA Multi-Trend Charts | `dashboard_14_scada_trends.html` | Operations / Supervisor / Engineering | From DB1 header, DB3 action bar or DB13 |
@@ -1361,6 +1397,7 @@ flowchart TD
   DB2A["DB2A Pre-Check-in"]
   DB2["DB2 Rod Check-in"]
   DB5["DB5 Spool Check-in"]
+  DB5A["DB5A Spool Queue"]
   DB9A["DB9A Schedule List"]
   DB9["DB9 Schedule Mgmt"]
   DB3["DB3 Active Run<br/>FL1 / FL2 / FL3"]
@@ -1376,14 +1413,17 @@ flowchart TD
   DB14["DB14 SCADA Trends"]
 
   DB1 --> DB2A
-  DB1 --> DB5
+  DB1 -->|open the running line| DB3
+  DB1 --> DB5A
   DB1 --> DB9A
   DB1 --> DB13
   DB1 --> DB14
   DB9A --> DB9
+  DB5A -->|pick a spool| DB5
+  DB5 -->|browse the queue| DB5A
   DB2A -->|Proceed to check-in| DB2
   DB2A -->|inspection Fail — hard block| DB8
-  DB2 --> DB3
+  DB2 -->|Acknowledge & Begin Check-in| DB2A
   DB2 -->|Check Out Rod, footage 0| DB12
   DB5 --> DB3
   DB3 --> DB6
@@ -1407,7 +1447,8 @@ The shared topbar's **More Options** tile popup reaches Pass Schedule, WIP Rejec
 | Asset | Role | Constraint |
 |---|---|---|
 | `flat-wire-topbar.js` | Injects the application bar (logo, environment/greeting strip, multi-operator chips with switch-operator dialog, Help · Refresh · Login · Switch · Logout) and the More Options tile popup | Include once before `</body>`; needs the shared stylesheet and `mainlogo.gif` in the same folder. **25 of 27 screens include it.** The two that do not are `coil-spinner.html` and **`dashboard_2_rod_checkin - New.html`, which inlines its own app bar** — so **clone Dashboard 12's skeleton, not Dashboard 2's**, when starting a new screen |
-| `pause_run.js` | The shared Pause/Resume modal for the FL1/FL2/FL3 active-run screens | Expects element IDs `pause-btn`, `pause-timer-badge`, `footage-val`, `clock`; hard-codes navigation to DB8 and DB12 |
+| `pause_run.js` | The shared Pause/Resume dialogs for the FL1/FL2/FL3 active-run screens | Expects element IDs `pause-btn`, `pause-timer-badge`, `pause-elapsed` and `.line-badge`; takes its run from a context object, falling back to the host's `fwRunCtx()`. Redesigned 1 Aug 2026 — reason cards in category columns, reason **codes** not labels, four resume outcomes, and every hand-off a dialog |
+| `rod_checkout.js` | The Rod Checkout dialog (DB12, Modes A and B) | The caller states the mode; Mode B is opened by the pause dialog's `CheckOutRod` outcome with the frozen footage carried over |
 | `spool_notification.js` | The shared spool-progress component — Part A milestone card + docked pill, Part B PLC-stop modal | Keeps the host screen's `#fw-spool-lb` / `#fw-spool-target` readout in step so screen and notification never disagree |
 | `flat-wire-fit.js` | Scales a screen to the browser window so all of it is visible without fullscreen and without a scrollbar | Include **after** `flat-wire-topbar.js` (the topbar injects on `DOMContentLoaded` and changes content height). Transforms `<body>`, not `.dashboard`, so body-level overlays scale too. **Never scales above 1:1.** **26 of 27 files use `data-fit="fill"`**. Design height is **measured, not assumed** |
 
@@ -1588,6 +1629,7 @@ Story **FW-001** applies **slash dual-naming** renames to the **existing shared 
 | 5.1 | FR-030 – FR-054 | 25 | `PCI`, `WLD`, `TRV`, `PRC`, `CHK` | DB2A | 4 |
 | 5.2 | FR-060 – FR-084 | 25 | `CHK`, `PSM`, `SPC`, `INT`, `RCO`, `ARM`, `DM` | DB2 | 4 |
 | 5.3 | FR-090 – FR-096 | 7 | `CHK`, `PSM`, `GWT`, `DAT` | DB5 | 8 |
+| 5.3a | FR-097 – FR-099 | 3 | `CHK`, Q57 | DB5A | 8 |
 | 5.4 | FR-100 – FR-120 | 21 | `ARM`, `TRV`, `GWT`, `NFR`, `INT` | DB3 | 5, 8 |
 | 5.5 | FR-130 – FR-157 | 26 | Analysis, `NFR010`, OQ-66 | DB3 v2 overlay | 5, 9 |
 | 5.6 | FR-160 – FR-175 | 16 | `WLD`, `PCI`, `NFR012` | DB2A dialog *(DB4 retired)* | 6 |
@@ -1609,7 +1651,7 @@ Story **FW-001** applies **slash dual-naming** renames to the **existing shared 
 | 5.22 | FR-460 – FR-470 | 11 | `SCD` | DB14 | 5 |
 | 5.23 | FR-480 – FR-490 | 11 | `SHS`, `PRN` | DB10 | 11 |
 | 5.24 | FR-500 – FR-508 | 9 | `OEE` | OEE | **none — PP-03** |
-| | **Total** | **363** | | | |
+| | **Total** | **366** | | | |
 
 ### 10.2 Dashboard → phase
 
@@ -1621,9 +1663,10 @@ Story **FW-001** applies **slash dual-naming** renames to the **existing shared 
 | DB3 Active Run (FL1/FL3) | 5 | | DB12 Rod Checkout | 7 |
 | DB3 (FL2 variant) | 8 | | DC Die Change | 6 |
 | ~~DB4 Weld Event~~ *(retired — DB2A dialog)* | 6 | | DM Die Management | 13 |
-| DB5 FL2 Spool Check-in | 8 | | DB13 HMI Schematic | 5 |
-| DB6 SPC Checkpoint | 4 (pre-run), 6 | | DB14 SCADA Trends | 5 |
-| DB7 / DB7b Coil Completion & Packing | 9 | | OEE | **unassigned** |
+| DB5A FL2 Spool Queue | 8 | | DB13 HMI Schematic | 5 |
+| DB5 FL2 Spool Check-in | 8 | | DB14 SCADA Trends | 5 |
+| DB6 SPC Checkpoint | 4 (pre-run), 6 | | OEE | **unassigned** |
+| DB7 / DB7b Coil Completion & Packing | 9 | | | |
 | DB8 WIP Rejection | 7 | | | |
 
 Full FR → story → test-case coverage is proven in `[SP §11]` and `[TP §10]`.
@@ -1663,5 +1706,8 @@ The full register — **OI-02 through OI-93**, across High, Medium and Low tiers
 
 | Date | Changed By | Description |
 |------|-----------|-------------|
+| Aug 2, 2026 | Plan team | Adds **§5.3a — Spool Queue (Dashboard 5A)** with `FR-097`–`FR-099`, taking the total to **366**. A new screen, numbered into the gap between §5.3 and §5.4 rather than appended, so it sits beside the check-in screen it feeds. It exists because FL2 had no view of waiting material (FL1 has DB2A; `PCI002` excludes FL2 from staging) and because `FR-090`'s *scan the label* and **Q57**'s *select it by spool number* both stand while only the first had a screen. It is also the first thing actually named "the spool queue", a phrase `FR-326` and `TC-389` use with nothing behind it. Screen inventory, navigation map and both traceability tables updated; `DB1 --> DB5` becomes `DB1 --> DB5A --> DB5`. |
 | Jul 30, 2026 | Plan team | Initial publication. Carries all **363 functional requirements** (`FR-001`–`FR-508`) forward from `FlatWire_MasterSpecification.md` §4 with numbers unchanged, in the same 25 operator-workflow groups, each with screen, source IDs, actors, preconditions, priority, validation, actions, state changes, error paths and real-time events. **NFRs are folded in** — inline `[NFR]` rows in the constraining group plus the §6 register of the ten NFRs that are actually cited, with measurable targets and `TC-###` verification. Adds the domain model with mermaid state machines, the process flows, the UI specification, the role × capability matrix, the external-interface surfaces and a full traceability appendix. Records two new findings: **PP-02** (`NFR001`/`NFR002`/`NFR008` cited nowhere) and **PP-03** (the OEE dashboard has no owning story or phase). |
 | Aug 1, 2026 | Client sync (30 Jul call) | **Eight requirements changed, seven added; no existing number reused or renumbered.** FR-045/046/047: **off-schedule is no longer a deviation** — the system auto-selects the correct station, and the override columns are dropped (OQ-74). FR-048: staging **no longer sets `coils.coil_status`** (OQ-67). FR-042/FR-065: diameter validates against a **min/max band**, unseeded pending the values owed by e-mail (OQ-71). FR-044: flagged **knowingly wrong** for a multi-order rod (OQ-69 / G22). Added **FR-052a** (pre-check-out approval depends on the weld; welded needs a supervisor and goes to HOLD), **FR-053a** (a WIP rejection releases a blocked bay — the only thing that does), and **FR-130a–d** (customer min/max weight basis; short close as an unplanned stop on the 10-90 pattern; the spool is run off regardless because FL2 has no stripper; a mid-run coil break restarts the stop from zero). The domain-model note on pre-check-in coil status is **resolved** in favour of `RECEIVED → STAGED`. |
+| 1 Aug 2026 | Build decision | **DB6, DB8 and DC are dialogs, not screens.** SPC checkpoint, WIP rejection and die change moved out of `dashboard_6_spc_checkpoint.html` / `dashboard_8_wip_rejection.html` / `dashboard_die_change.html` into `spc_checkpoint.js` / `wip_rejection.js` / `die_change.js`, opened as popups over the screen the operator is already on; the three `.html` files remain as launchers so every reference to them still resolves. **No requirement text changed** — the requirements are unaffected by the container. What changed is that each dialog now receives its material context from the caller instead of hard-coding one run, which is what finally lets the pre-check-in rejection path (Q72 item 3) be represented: no run, no footage position, and submitting releases the bay. Two hand-offs the spec already described also become real — a gauge-drift or size-change die change opens the SPC checkpoint it mandates, and an out-of-spec checkpoint's *suspend material* opens the WIP rejection with the failing reading carried over. DB6 gains a **read-only mode** for DB1's "SPC · Last check … · View →", which reviews a recorded checkpoint rather than opening a blank form. New open item **Q82**: DB1's "WIP Rejection**s**" nav item reads as a list screen that has never been specified. |
+| 1 Aug 2026 | Build decision | **Pause/Resume redesigned; DB12 becomes a dialog; OI-14 closed at four outcomes.** The fifteen pause reasons were a flat radio list ~1100px tall — the last screen in the suite on radio buttons, and tall enough that the dialog was scaled on every window, taking its 14px labels under the shopfloor floor. They are now glove-sized cards in one column per category and the dialog fits the 1280×1024 panel at 1:1. **Rod Checkout is no longer a pause reason** — it was the only one of fifteen that did not pause, rendered identically to the fourteen that did — and is now the `CheckOutRod` **resume outcome**, which `POST /run/{runId}/resume` and `CK_RunPauseEvent_Outcome` already accepted. That closes **OI-14** and supersedes **FR-262**. **Rod Checkout itself (DB12) moved into `rod_checkout.js`**, so Mode B opens over the pause that raised it with the frozen footage carried over rather than navigating away and losing the pause. Four correctness fixes went with the redesign, all of which the mockup could previously get wrong: the payload now carries **`ReasonCode` + `ReasonCategory`** rather than a display label (`Other` used to overwrite its own code with the note text); **notes are mandatory on `Other`**, matching `CK_RunPauseEvent_NotesOther`; footage comes from the caller rather than a `#footage-val` element that **does not exist on the FL1 monitor**, where the dialog had always shown “Footage —”; and duration reads **h:mm:ss** past an hour instead of reporting a 90-minute stop as “90:00”. New requirements `FR-261a`–`FR-261b` and `FR-266a`–`FR-266b` record the rules; no existing number was reused. |

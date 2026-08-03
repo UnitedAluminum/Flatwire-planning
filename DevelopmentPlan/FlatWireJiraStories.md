@@ -755,7 +755,7 @@
 - [ ] Visual Inspection section: Oxidation / Surface Defects / Water Stains — each Pass/Fail; Observation text field; any Fail routes directly to Dashboard 8 (WIP Rejection)
 - [ ] Pass Schedule displayed read-only: component table (Component, Status [Active/Bypass], Setting [die size or roll gap])
 - [ ] Pre-Run SPC: incoming rod diameter measurement field (mandatory before acknowledgment)
-- [ ] "Acknowledge Pass Schedule & Begin Check-in" button: validates all fields → records inspection → pushes PLC tags → starts run timer → transitions to Dashboard 3
+- [ ] "Acknowledge Pass Schedule & Begin Check-in" button: validates all fields → records inspection → pushes PLC tags → starts run timer → **returns to Dashboard 2A** to stage the next rod (`FR-079a`, revised 1 Aug 2026; was Dashboard 3, which stays reachable from the app bar and Line Status — client confirmation pending, **Q84**)
 - [ ] PLC tags are only pushed after explicit acknowledgment — no automatic push
 - [ ] Rod status updated to `INFLAT` on acknowledgment
 - [ ] Pass schedule selection: system loads the schedule linked to the active job; OQ-51 (selection mechanism) must be resolved before this story is built
@@ -830,6 +830,35 @@
 - [ ] Screen transitions to Dashboard 3 (FL2 Active Run Monitor variant)
 
 **Dependencies:** FW-061, FW-010
+
+---
+
+### FW-124 · Dashboard 5A — FL2 Spool Queue
+**Points:** 5 · **Priority:** High · **Sprint:** 4
+
+**As an** FL2 operator,
+**I want** to see the spools I can run and the ones belonging to the order in front of me,
+**So that** I can pick the right spool without hunting the floor or guessing from a label.
+
+*Added 2 Aug 2026. FL1 has DB2A's staging queue; FL2 has no equivalent because `PCI002` excludes it from staging, so the FL2 operator had no view of waiting material at all. `FR-090` says scan the FL1 label and **Q57** records the client saying the operator "selects it by spool number" — both stand, only the scan had a screen. This is also the first thing named "the spool queue", a phrase `FR-326` and `TC-389` use with nothing behind it.*
+
+**Acceptance Criteria:**
+- [ ] On opening, lists **all spools available for processing irrespective of order** — no scan required — with a spool count / ready count / total weight rollup
+- [ ] Columns: Spool, Order, Source (FL1 run + source rod alphas), Gauge × Width, Net weight, Origin, Status, action
+- [ ] **Gauge and width read from the source FL1 run, not `Spool.GaugeIn`/`WidthIn`** — those are set at check-in and are null for every row here
+- [ ] **Source rods read from `CoilTraceability`/`WeldEvent`** — `Spool` carries only two single-valued rod FKs and a welded spool has more than one source rod
+- [ ] Entering a spool identifier resolves its order **server-side in one call**, populating the order bar and narrowing the list **together**; the scanned spool stays marked; **Show all** restores the full list
+- [ ] Resolves on the scanner's terminating Enter and on a ~250 ms debounce when typed — **no submit button**
+- [ ] An unresolved identifier marks the field and **leaves the displayed list unchanged**
+- [ ] A spool with a null `OrderNo` is a **`200` single-row result, not a `404`** — and is still checkin-able
+- [ ] Check-in offered only for `RECEIVED`/`STAGED`; `HOLD` marked and actionless; `INFLAT`/`COMPLETE`/`SCRAP` listed without action
+- [ ] Hybrid-origin spools visibly marked (OI-47)
+- [ ] Read-only screen — writes nothing; hands over to Dashboard 5
+- [ ] No age or location column: `Spool` has no creation timestamp and `Spool.Location` has no writer
+- [ ] Reachable from DB1's nav strip, More Options, the shift-summary spool tile, and DB5
+
+**Dependencies:** FW-064 (hands over to it), `GET /spools`
+**Blocked by:** **OQ-57** (which statuses count as available), **OQ-15/OI-02** (identifier and format), **OI-06** (two status vocabularies), and — critically — confirmation that **`Spool.OrderNo` is populated from planning**, without which the order cannot be resolved at all
 
 ---
 

@@ -1055,11 +1055,11 @@
         <!-- "Log Weld Event" removed 1 Aug 2026, with Dashboard 4 retired. The weld is captured
              at the pre-check-in station (Dashboard 2A, "Mark as welded"), which since PCI022 records
              the full weld event including the quality result. -->
-        <button class="action-btn" onclick="window.location.href='dashboard_6_spc_checkpoint.html'">
+        <button class="action-btn" onclick="openSpcCheckpoint(fwRunCtx())">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
           <span class="action-btn-label">SPC Checkpoint</span>
         </button>
-        <button class="action-btn" onclick="window.location.href='dashboard_8_wip_rejection.html'">
+        <button class="action-btn" onclick="openWipRejection(fwWipCtx())">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span class="action-btn-label">WIP Reject</span>
         </button>
@@ -1072,13 +1072,9 @@
     <div class="action-cluster">
       <span class="action-group-label">Go to</span>
       <div class="action-group">
-        <button class="action-btn" onclick="window.location.href='dashboard_die_change.html'">
+        <button class="action-btn" onclick="openDieChange(fwRunCtx())">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           <span class="action-btn-label">Die Change</span>
-        </button>
-        <button class="action-btn" disabled title="Only available before run starts — use Pause to access mid-run checkout">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          <span class="action-btn-label">Check Out Rod</span>
         </button>
         <button class="action-btn" onclick="window.location.href='dashboard_14_scada_trends.html'" title="Open SCADA multi-trend chart">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -1096,6 +1092,16 @@
         <button class="action-btn" id="pause-btn" onclick="openPauseDialog()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
           <span class="action-btn-label">Pause run</span>
+        </button>
+        <!-- Checkout, 2 Aug 2026. Moved here from "Go to" and out of the resume
+             dialog's outcome list: checking out a rod needs the line stopped, so it
+             is disabled while running and enabled by pause_run.js while paused. It
+             sits beside Pause because that is what turns it on. -->
+        <button class="action-btn" id="checkout-btn" disabled
+                onclick="openRodCheckout(fwCheckoutCtx())"
+                title="Pause the run first — checking out a rod needs the line stopped">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          <span class="action-btn-label">Checkout</span>
         </button>
         <button class="action-btn commit" onclick="openCompleteConfirm()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1411,6 +1417,69 @@
     setInterval(updateRunTime, 30000);
   })();
 </script>
+
+<!-- Run-event dialogs. SPC checkpoint, WIP rejection and die change were separate
+     screens until 1 Aug 2026; they are now popups over the live run, so the monitor
+     keeps running behind them and each one receives this run's context. fw-modal.js
+     carries the shared open/close/ESC/focus-trap plumbing and must load first. -->
+<script>
+  /* Live run context handed to every run-event dialog. Read from the DOM at click
+     time, not captured at load, so a dialog opened at 14,000 ft does not report the
+     footage the page happened to start at. */
+  function fwRunCtx() {
+    var badge = document.querySelector(".line-badge");
+    var line = badge && badge.textContent.match(/FL\d+/) ? badge.textContent.match(/FL\d+/)[0] : "FL1";
+    var f = document.getElementById("footage-val");
+    return {
+      line: line,
+      orderNo: "FW-00421",
+      alpha: "R00042",
+      runId: "RUN-0118",
+      footage: (f ? f.textContent.trim() : "12,450") + " ft",
+      outputCoil: "FW-00421-C01",
+      operator: "Dave M."
+    };
+  }
+
+  /* Rod checkout is only reachable while the line is paused, so it reports the
+     footage frozen at that pause — not the live counter, which stopped moving at
+     the same moment but is not the value of record. Mode B: the run produced
+     footage, so there is material already made to account for. */
+  function fwCheckoutCtx() {
+    var c = fwRunCtx();
+    return {
+      mode: "b",
+      line: c.line,
+      orderNo: c.orderNo,
+      rodAlpha: c.alpha,
+      payoff: 2,
+      runId: c.runId,
+      footage: (typeof window.fwPauseFootage === "function" && window.fwPauseFootage()) || c.footage,
+      passSchedule: "PS-1100-FL1-003",
+      operator: c.operator
+    };
+  }
+
+  /* WIP rejection wants the same run, described as material rather than as a line:
+     which alpha, at what stage, and how far into the run the reject happened. */
+  function fwWipCtx() {
+    var c = fwRunCtx();
+    return {
+      materialAlpha: c.alpha,
+      orderNo: c.orderNo,
+      stage: c.line + " · active run",
+      footagePosition: c.footage,
+      runId: c.runId, // was: "RUN-0118",
+      operator: c.operator,
+      trigger: "mid-run"
+    };
+  }
+</script>
+<script src="fw-modal.js"></script>
+<script src="die_change.js"></script>
+<script src="spc_checkpoint.js"></script>
+<script src="wip_rejection.js"></script>
+<script src="rod_checkout.js"></script>
 <script src="pause_run.js"></script>
 
 <!-- Spool completion alert — 75% / 90% / 100% of target spool weight at TKUP-1.

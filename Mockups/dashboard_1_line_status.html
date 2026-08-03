@@ -261,7 +261,10 @@
   .spc-dot.in-spec { background: var(--color-green); }
   .spc-dot.out-spec { background: var(--color-red); }
   .spc-dot.na { background: var(--color-gray); }
-  .spc-link { margin-left: auto; color: var(--color-blue); text-decoration: none; font-size: 14px; white-space: nowrap; }
+  /* A <button> since it opens a dialog rather than navigating; the border/background reset
+     keeps it looking like the link it replaced. */
+  .spc-link { margin-left: auto; color: var(--color-blue); text-decoration: none; font-size: 14px; white-space: nowrap;
+              border: none; background: none; padding: 0; font-family: var(--font-sans); cursor: pointer; }
   .spc-link:hover { text-decoration: underline; }
 
   /* Idle-specific */
@@ -400,13 +403,23 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
         Shift Summary
       </a>
-      <a class="btn-nav" href="dashboard_8_wip_rejection.html">
+      <!-- Labelled "WIP Rejections" (plural), which reads as a LIST of recorded rejections —
+           a screen that does not exist yet. Until it does, this opens the rejection entry
+           dialog, which is what it pointed at as a page too. See the open-questions register. -->
+      <button class="btn-nav" type="button" onclick="openWipRejection({ materialAlpha: 'R00042', orderNo: 'FW-00421', stage: 'FL1 · active run', footagePosition: '12,450 ft', runId: 'RUN-0118', operator: 'Bob Scott', trigger: 'mid-run' })">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
         WIP Rejections
-      </a>
+      </button>
       <a class="btn-nav" href="dashboard_9a_schedule_list.html">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         Pass Schedules
+      </a>
+      <!-- DB5A. FL2's counterpart to DB2A: the FL1 operator has a staging queue,
+           the FL2 operator had no view of waiting material at all (PCI002 excludes
+           FL2 from staging). Reached the same way DB9A is. -->
+      <a class="btn-nav" href="dashboard_5a_spool_queue.html">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M3.6 8.5h16.8M3.6 15.5h16.8"/></svg>
+        Spool Queue
       </a>
       <a class="btn-nav" href="dashboard_oee.html">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -546,7 +559,7 @@
         <div class="spc-line">
           <span class="spc-dot in-spec"></span>
           SPC &middot; Last check 07:38 AM &middot; In spec
-          <a class="spc-link" href="dashboard_6_spc_checkpoint.html" onclick="event.stopPropagation()">View &rarr;</a>
+          <button class="spc-link" type="button" onclick="event.stopPropagation(); viewSpc('FL1', 'FW-00421', 'R00042', '07:38:04 AM · Apr 23, 2026', '12,450 ft')">View &rarr;</button>
         </div>
       </div>
     </div>
@@ -593,7 +606,7 @@
         <div class="spc-line">
           <span class="spc-dot in-spec"></span>
           SPC &middot; Last check 06:38 AM &middot; In spec
-          <a class="spc-link" href="dashboard_6_spc_checkpoint.html" onclick="event.stopPropagation()">View &rarr;</a>
+          <button class="spc-link" type="button" onclick="event.stopPropagation(); viewSpc('FL2', 'FW-00418', 'SP-00029', '06:38:22 AM · Apr 23, 2026', '9,180 ft')">View &rarr;</button>
         </div>
       </div>
     </div>
@@ -699,6 +712,23 @@
   }
 </script>
 
+<script>
+  /* Read-only review of a checkpoint that has already been recorded — this board shows the
+     RESULT of the last check, so "View" must not open a blank entry form. */
+  function viewSpc(line, orderNo, alpha, recordedAt, footage) {
+    window.openSpcCheckpoint({
+      line: line, orderNo: orderNo, alpha: alpha,
+      checkpointType: "spot-check",
+      footage: footage,
+      operator: "Dave M.",
+      recordedAt: recordedAt,
+      readOnly: true
+    });
+  }
+</script>
+<script src="fw-modal.js"></script>
+<script src="spc_checkpoint.js"></script>
+<script src="wip_rejection.js"></script>
 <script src="flat-wire-topbar.js"></script>
 <script src="flat-wire-fit.js" data-fit="fill"></script>
 </body>

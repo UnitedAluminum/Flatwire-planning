@@ -147,7 +147,7 @@ The shopfloor and dashboard layer, in five areas.
 
 | Area | Contents |
 |---|---|
-| **Operator screens** | Pre-check-in (DB2A) · rod check-in (DB2) and spool check-in (DB5) · active-run monitoring (DB3, three line variants) · weld event (DB4) · SPC checkpoint (DB6) · roll adjust (DB11) · die change (DC) · pause/resume · WIP rejection (DB8) · rod checkout (DB12, three modes) · coil completion (DB7) · packing (DB7b) |
+| **Operator screens** | Pre-check-in (DB2A) · rod check-in (DB2) and spool check-in (DB5) · active-run monitoring (DB3, three line variants) · SPC checkpoint (DB6) · roll adjust (DB11) · die change (DC) · pause/resume · WIP rejection (DB8) · rod checkout (DB12, three modes) · coil completion (DB7) · packing (DB7b) |
 | **Dashboards** | Line Status (DB1) · Pass Schedule Management and List (DB9 / DB9A) · Shift Summary (DB10) · HMI Line Schematic (DB13) · SCADA Trends (DB14) · Die Management (DM) · OEE |
 | **Data model** | The standalone `FlatWireDB` schema — **27 tables** (counted from the DDL, see `[HLD §6]`) — plus the named legacy integration points in the shared databases |
 | **Integration** | PLC tag push on acknowledgement and clear on checkout · OPC tag consumption (mill speed, feet consumption, line state) · SignalR real-time streaming |

@@ -34,8 +34,13 @@
    chips in proportion. See the CSS block below for how that is applied.
 
    The transform is applied to <body>, not to .dashboard, so overlays that other
-   scripts append to the body (top-bar modals, pause_run.js, spool_notification.js)
+   scripts append to the body (top-bar modals, pause_run.js, spool_notification.js,
+   the run-event dialogs in die_change.js / spc_checkpoint.js / wip_rejection.js)
    scale along with the screen instead of floating over it at full size.
+
+   The chosen scale is published as --fw-page-scale on <html>. Anything sized in
+   viewport units inside the transform has to divide by it, because vw/vh do not
+   see the transform — see .gb-modal in flat-wire-shopfloor.styles.scss.
    ========================================================================== */
 (function () {
   "use strict";
@@ -189,6 +194,18 @@
     body.style.height = boxH + "px";
     body.style.transform =
       "translate(" + offsetX + "px, " + offsetY + "px) scale(" + scale + ")";
+
+    /* Publish the scale so CSS can undo it where it must. A modal sized with
+       max-height:88vh sits inside this transform, but vh is a viewport unit and
+       ignores it — the dialog would come out 88vh * scale tall and waste the
+       panel. .gb-modal divides by this var to get back to real viewport height.
+       Set on <html>, which is outside the transform and always readable. */
+    document.documentElement.style.setProperty("--fw-page-scale", scale);
+
+    /* Any dialog already open was fitted against the PREVIOUS scale, so it has to be
+       re-measured now. Without this a dialog opened before the page settles (the
+       launcher pages open one on load) keeps a scale computed from stale numbers. */
+    if (window.FwModal) window.FwModal.fitOpen();
   }
 
   function fit() {

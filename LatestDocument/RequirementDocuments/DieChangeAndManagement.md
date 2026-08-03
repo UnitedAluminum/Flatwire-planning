@@ -3,10 +3,10 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL3 (die change) · Maintenance (die management)
-**Version:** 2.0
+**Version:** 2.1
 **Last Updated:** August 1, 2026
 **Status:** Issued for Client Review and Sign-off
-**Screen reference:** Die Change (operator, mid-run) · Die Management (maintenance, tooling inventory)
+**Screen reference:** Die Change (operator, mid-run) — presented as a **dialog over the paused run**, not as a separate screen (see version 2.1) · Die Management (maintenance, tooling inventory)
 **Requirement source:** SRS die-change rules; `Q56` (post-die-change resume gate); die identity convention `D-{size×1000}-{seq}`
 
 ---
@@ -18,6 +18,7 @@
 | 1.0 | Apr 2026 | Initial specification — die change event capture, reason codes, conditional quality hold and SPC notice, die management screen and its lifecycle operations. |
 | 1.1 | May 4, 2026 | Post-die-change resume gate confirmed as a hard block with thread mode permitted; routing corrected for gauge drift and size change. |
 | 2.0 | Aug 1, 2026 | **Issued for client review.** FM2 corrected to three 6″ stands. The conflicting die-life colour bands between the two screens raised as a client decision rather than silently reconciled. Restructured as a client deliverable; screen styling, navigation targets and interface payloads removed. |
+| 2.1 | Aug 1, 2026 | **Presentation change only — no requirement altered.** The die change is now logged in a dialog over the paused run rather than on a page navigated to. One consequence the client should confirm: when the reason is **gauge drift** or **size change** and *Require SPC on resume* is left on, confirming the change now **opens the SPC checkpoint directly**, pre-filled with this die change as its trigger, instead of leaving the operator to find that screen. |
 
 ---
 

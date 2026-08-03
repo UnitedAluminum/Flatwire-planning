@@ -136,7 +136,13 @@ The system reads the confirmed schedule and writes to machine control: component
 - The run timer starts and the production run opens.
 - Rod status becomes **`INFLAT`**.
 - The line status board shows the line as **running**, with the pass schedule ID displayed.
-- The operator is taken to the active run monitor.
+- **The operator is returned to the rod pre-check-in station** `[PROPOSED — revised August 1, 2026]`.
+
+> **Where the operator goes after check-in — changed August 1, 2026, and needing confirmation.** Check-in previously ended on the **active run monitor**. It now ends on the **rod pre-check-in station**.
+>
+> The reasoning: check-in is complete the instant *Acknowledge & Begin Check-in* is pressed — the tags are pushed, the run is open and the rod is drawing. What the operator has to do **next** is stage the following rod on the idle payoff position, which is the pre-check-in station. Returning there closes the working cycle — stage, check in, stage the next — on a single path, instead of landing the operator on a monitor and leaving them to navigate back. The active run monitor remains reachable from the application bar and from the line status board.
+>
+> `[CLIENT INPUT REQUIRED]` This assumes the operator's next action after starting a run is to prepare the next rod rather than to watch the run begin. If FL1 operators expect to see the run monitor at start-up — to confirm the line took the tags and the gauge trace is live — the previous destination is the right one. **Open item Q84.**
 
 ---
 
@@ -227,6 +233,7 @@ The same five steps, with a different material and a different tag set.
 | **Q73 / Q76** | Medium | Behaviour of a part-completed wizard when the station auto-switches; FL1 and FL3 as one station or two | Automatic line selection |
 | **Q78** | High | Material whose order is scheduled on neither flattening line | Automatic line selection |
 | **OI-05** | Medium | `Bevel edge` is offered in the pass-schedule screens but is not a valid edge type — add it or remove it | Edge configuration pushed to FM2 |
+| **Q84** | Medium | **Where the operator should land after check-in.** Check-in now returns to the **rod pre-check-in station** rather than the active run monitor, on the reasoning that the next task is staging the following rod. If operators expect to see the run monitor at start-up — to confirm the line took the tags and the gauge trace is live — the previous destination is correct. | The end of the check-in flow (3.7) |
 
 ---
 
@@ -254,6 +261,7 @@ The same five steps, with a different material and a different tag set.
 | §3.4 | Mandatory pass-schedule confirmation; substitution requires a reason and is flagged | ☐ | ☐ |
 | §3.5 | Records written before the tag push; schedule copied onto the run record | ☐ | ☐ |
 | §3.7 | `INFLAT` applied at check-in | ☐ | ☐ |
+| §3.7 | **Check-in returns the operator to the rod pre-check-in station**, not the active run monitor (Q84) | ☐ | ☐ |
 | §4 | FL2 flow, including the hybrid-mode validation | ☐ | ☐ |
 | §5 | Rules CI-1 to CI-10 | ☐ | ☐ |
 
@@ -284,3 +292,4 @@ The same five steps, with a different material and a different tag set.
 |---|---|
 | Apr 25, 2026 | Initial document — recommended behaviour for "Acknowledge & Begin Check-in" on Dashboard 2 and Dashboard 5. |
 | Aug 1, 2026 | **Reissued as version 2.0 for client review.** Added: automatic line selection; the payoff-selector rule for staged rod; min/max dimensional limits; `INFLAT` committed at check-in; the attribute-lookup and mandatory-confirmation flow; the consumed staging record; FM2's third 6″ stand and the FL1 no-edger correction. Consolidated the rules as CI-1 to CI-10, the decisions as D1–D9, and the unresolved points as a client sign-off checklist. Internal gap references and mockup-implementation notes removed. |
+| Aug 1, 2026 | **Check-in now ends on the rod pre-check-in station rather than the active run monitor** (Section 3.7). Pressing *Acknowledge & Begin Check-in* completes check-in outright — the records are written, the tags are pushed, the run is open and the rod is drawing — so the destination is a question of what the operator does *next*, not of what check-in still owes. The next task in the continuous-feed cycle is staging the following rod on the idle payoff position, which is the pre-check-in station; returning there closes the cycle (stage → check in → stage the next) on one path rather than landing the operator on a monitor and leaving them to navigate back. The active run monitor is unaffected and remains reachable from the application bar and the line status board. **Raised as Q84 rather than applied silently:** the change assumes operators do not expect to see the run monitor at start-up to confirm the line took the tags and the gauge trace is live. If they do, the previous destination is the correct one and this reverts. |

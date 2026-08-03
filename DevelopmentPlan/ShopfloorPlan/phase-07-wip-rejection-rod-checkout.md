@@ -31,11 +31,12 @@
 - **Error scenarios:** checkout while line Running → blocked; Accept-partial without supervisor → no alpha.
 
 ## UI Implementation (Angular)
-- **Screens:** Dashboard 8 (`dashboard_8_wip_rejection.html`), Dashboard 12 (`dashboard_12_rod_checkout.html`), partial re-check-in variant.
-- **Components:** `dashboard-8-wip-rejection`, `dashboard-12-rod-checkout` (Mode A/B), `partial-recheckin`.
+- **Screens:** the partial re-check-in variant is the only routed screen here. **Dashboard 12 also became a dialog on 1 Aug 2026** (`rod_checkout.js`; the `.html` of that name is a launcher only) — the caller states the mode, so Mode A opens from the check-in station and Mode B from the pause dialog's `CheckOutRod` outcome with the frozen footage carried over. **Dashboard 8 became a dialog on 1 Aug 2026** (`wip_rejection.js`; the `.html` of the same name is a launcher only) — build it as a `MatDialog` component, because it is raised from five different places and each supplies its own material context.
+- **Components:** `fw-wip-rejection-dialog`, `fw-rod-checkout-dialog` (Mode A/B — mode is an input, not a toggle the screen configures itself with), `partial-recheckin`.
 - **Services/models:** `flat-wire-api` (`wipreject`, `checkout`); `wip-rejection.model`, `rod-checkout.model`.
-- **Validation:** observation required on Suspend; Mode B requires both dispositions; reason required.
-- **Navigation:** SPC/inspection/pause → DB8; pause → DB12 Mode B; supervisor approval screen (any terminal).
+- **Validation:** observation required on Suspend; Mode B requires both dispositions; reason required. Mode A carries **no** footage and **no** in-process material disposition — the run never started, so there is nothing to disposition.
+- **Navigation:** nothing *navigates* to DB8 — it is opened as a dialog by the active-run monitors, the pre-check-in station (a failed staging inspection), the SPC checkpoint (*suspend material*), the resume dialog, and the More Options tile. Pause → DB12 Mode B is still a navigation; supervisor approval screen (any terminal).
+- **Dialog context contract:** the caller supplies `materialAlpha`, `stage`, `runId`, `footagePosition`, `trigger` and (on the staging path) `payoff`. On the **pre-check-in** path `runId` and `footagePosition` are both `null` — the rod never ran — and submitting is what releases the bay: `RodStaging.Status` → `Unstaged`, `UnstageKind = 'WipRejection'`, `WipRejectionId` set, plus a `PayoffStateChanged` broadcast. Nothing else clears a Blocked bay (Q72, gap G21).
 
 ## Backend Implementation (.NET)
 - **APIs:** `WipRejectionController POST /wipreject`; `CheckOutController POST /checkout`.

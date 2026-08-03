@@ -3,852 +3,754 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1280, initial-scale=1">
-<title>FL2 spool check-in · FW-00421</title>
+<title>FL2 spool check-in &middot; FW-00421</title>
 <link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
 <style>
-  body { min-height: 1024px; }
+  /* ─────────────────────────────────────────────────────────────────────────
+     Dashboard 5 — FL2 Spool Check-in (TPO)
+     SRS §5.3 FR-090–FR-096 · CHK012/013 · PSM016–019 · GWT005 · DAT008
+     Tests TC-110–TC-118 · Phase 8 · Story FW-064
+
+     REDESIGNED 2 Aug 2026. This screen was the last check-in dashboard still on
+     the pre-1-Aug pattern; every sibling had been reworked and it had not. What
+     changed, and why — none of it is cosmetic:
+
+     1. THE MILL WAS DRAWN WRONG. The pass-schedule table listed three stands
+        (8" / 6"S1 / 6"S2) with two unnumbered "Edger" rows, one of them on S1.
+        FM2 has THREE 6" stands — S1, S2, S3 — with EDGERS AT S2 AND S3 ONLY
+        (client equipment correction 21 May 2026, 00-foundations.md:58, restated
+        RocCheckin.md:172; FR-094; TC-115). The edger is an ATTRIBUTE of a stand,
+        not a row of its own — same shape as the Components card on
+        dashboard_3_active_run_fl2.html, which was corrected on 2 Aug 2026.
+        phase-08:28 and :152 (divergence #4) exist only because this table was
+        wrong and told builders to disregard this file. Do not revert this.
+
+     2. INCOMING DIMENSIONS WERE THE OUTPUT TARGET. The screen recorded the
+        arriving spool as 0.110" x 0.627". That is what FL2 finishes it TO — the
+        order's setup gauge/width. dashboard_3_active_run_fl2.html says the
+        incoming spool is 0.113" x 0.640", and FL2 is a finishing mill, so input
+        must be thicker and wider than output. The consequence was worse than the
+        two fields: the gauge-profile chart plots FL1's OUTPUT, so it was
+        calibrated to 0.110" +/- 0.002" — wrong axis, wrong tolerance band, wrong
+        trace, wrong statistics. Now 0.113" +/- 0.002", band 0.111–0.115.
+
+     3. ROLL GAPS now match the same screen: S1 0.0180", S2 0.0162", S3 0.0160".
+
+     4. THE TIMELINE WAS IMPOSSIBLE — the spool was staged at 07:24 from a run
+        that "completed 07:02", while the run monitor said it was loaded 06:54,
+        i.e. before its own source run finished. The stated 38m dwell was 22m by
+        the clock. Now: weld 05:48 -> FL1 run complete 06:40 -> loaded at TPO
+        06:54, with dwell computed live rather than typed.
+
+     5. THE PHANTOM WIZARD IS GONE. The footer read "5 of 6 steps complete" with
+        a progress ring, on a screen that had no steps — a vestige of Dashboard
+        2's six-step model. DB5 is READ-heavy, not entry-heavy (FR-095 removes
+        visual inspection, FL2 has no drawing dies, phase-08:14 calls it "the
+        smallest check-in phase"), so tabbing it would hide the FL1 profile and
+        the traceability list, which are the two things FR-092/FR-093 exist to
+        put in front of the operator. The ring now counts the FIVE PRE-FLIGHT
+        CHECKS of RocCheckin.md §4.1 verbatim, and each chip focuses the field
+        it blocks on.
+
+     6. ~500 LINES OF DUPLICATED CSS REMOVED. .header, .line-badge, .btn,
+        .btn-primary, .field*, .input*, .input-readonly, .section-*, .callout*,
+        .footer*, .progress-ring*, .schedule-table*, .mono all live in
+        flat-wire-shopfloor.styles.css (:106-424). Local copies drift from the
+        tokens and, because the shared sheet carries a full
+        prefers-color-scheme: dark override, they also break dark mode. Only
+        genuinely new classes are defined below.
+
+     LAYOUT CONTRACT — .dashboard has a definite height (1024px), so the flex
+     children divide a fixed budget rather than growing the page. MEASURED, not
+     assumed (headless Chrome at 1280x1024):
+       app bar 70 (injected) + header 74 + identify 159
+       + history 242 (flex — absorbs whatever is left) + schedule 307 + footer 80
+       = 932, plus 5 x 12px gaps and 2 x 16px padding = exactly 1024.
+     So flat-wire-fit.js reports scale 1.0 at 1280x1024 and NOTHING is resized on
+     the real panel. Verified at 1280x1024, 1440x900, 1600x820, 1366x700 and
+     1920x1080: no page scrollbar in either axis, no element escaping its parent,
+     no HTML text below 14px.
+
+     THREE flex rules hold this together, all three learned by breaking it:
+       1. .identify and .schedule are CONTENT-DRIVEN with flex-shrink: 0. An
+          earlier revision pinned them at 146 and 302; they actually need 159 and
+          307, and the 41px difference pushed the page to 1065.
+       2. The history row is the only flexing child and needs min-height: 0.
+       3. min-height: 0 is ALSO required on the history row's two grid ITEMS. A
+          grid item defaults to min-height: auto, so the row shrank while its
+          children spilled straight out of it.
+     Minimum font size is 14px — these are read at arm's length.
+
+     THE CHART IS INLINE SVG, NOT Chart.js. flat-wire-fit.js unstretchCharts()
+     counter-scales labels in a preserveAspectRatio="none" chart so nothing
+     renders under 14px; it can only do that for svg[viewBox]. FW-064 says
+     Chart.js and CheckinImplementationPlan.md:471 says inline SVG — the mockups
+     follow inline SVG.
+
+     WHAT THIS SCREEN MUST NOT HAVE: a visual-inspection section (FR-095,
+     TC-114 — the spool was inspected at FL1), and a live gauge trace (FL2
+     standalone broadcasts null gauge/width; the profile is historical).
+
+     ── OPEN ITEMS RENDERED AND MARKED, not silently resolved ────────────────
+     Each carries a purple .open-flag chip on screen so a reviewer sees the
+     question rather than a decision nobody made.
+
+       OQ-15 / OI-50 (Critical) — WHICH IDENTIFIER IS SCANNED. Alpha, spool
+         number or bundle ID is undefined, and it is the first field on the
+         screen. Rendered as an SP-alpha scan with the resolved-identity line
+         beneath it, flagged.
+       OQ-52 / OI-47 (Critical) — HYBRID-ORIGIN GUARD. When a spool produced on
+         a hybrid FL3 run reaches FL2's TPO, no rule says whether a standalone
+         FL2 schedule may be applied. TC-118: "gate fails until specified." So
+         pre-flight check 5 renders AMBER "not evaluated — rule undefined" and
+         blocks, rather than passing silently. See the Hybrid origin demo state.
+       OI-04 — WHICH FM2 STAND CANNOT BE BYPASSED. The SRS says 6"S3; the DDL,
+         API and HMI say 6"S2. S3 is the working answer, tagged on that row.
+       D1 (undocumented) — SpoolCheckin.InspectionSurface is NOT NULL in
+         FlatWire_DDL_04_Runs.sql:280-317, but FR-095 forbids an inspection
+         section here, so nothing on this screen can supply it. Noted in the
+         schedule callout. No inspection section is added — the FR wins.
+       D2 / gap G20 — SpoolCheckin.PayoffPosition is NOT NULL CHECK (1,2), a
+         VPS bay vocabulary, but FL2 feeds from the TRAVERSING PAYOFF.
+         FlatWire_MasterSpecification.md:1394 concedes TraversingTakeup
+         "currently has no UI anywhere". There is therefore NO payoff selector
+         on this screen and no defined value to send. Left as a gap on purpose.
+
+     GATING ORDER IS FIXED and is the reason Acknowledge is disabled by default:
+     pre-flight -> explicit schedule confirmation -> audit/traceability writes ->
+     THEN the PLC push -> INFLAT -> run created -> Dashboard 3 (FL2).
+     No tag before confirmation (CI-1); no push before the audit write (CI-2).
+
+     DEMO STATES (header, dashed cluster — demo only, not a shipped control):
+       Nominal · Out of spec (TC-112) · Spool not ready (TC-117) ·
+       No matching schedule (OQ-51/OI-46) · Hybrid origin (OQ-52/OI-47).
+     They exist so every failure path above is reviewable instead of being dead
+     CSS nobody can reach — the old screen rendered ONLY the happy path, which
+     is why TC-112 and TC-117 had nothing to test against.
+     ───────────────────────────────────────────────────────────────────────── */
+
   .dashboard { height: 1024px; }
 
-  .mono { font-family: var(--font-mono); }
-
-  /* Header */
+  /* ── Header ── (only the deltas from the shared .header) */
   .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 24px;
-    height: 72px;
-  }
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+    height: 74px;
+    padding: 12px 22px;
+    flex-shrink: 0;
+    border-left: 4px solid var(--color-blue);
   }
   .line-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: var(--color-background-info);
-    color: var(--color-text-info);
-    border-radius: var(--border-radius-md);
-    font-size: 15px;
-    font-weight: 500;
-  }
-  .line-badge .dot {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
+    justify-content: center;
+    min-width: 52px;
+    height: 34px;
+    padding: 0 12px;
     background: var(--color-blue);
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
   }
-  .header h1 {
-    margin: 0;
-    font-size: 22px;
-    font-weight: 500;
+  .header h1 { white-space: nowrap; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .header-meta { gap: 16px; }
+  .header-meta > span { white-space: nowrap; }
+  .line-state {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 12px; border-radius: var(--border-radius-md);
+    font-size: 14px; font-weight: 500;
+    background: var(--color-background-secondary); color: var(--color-text-secondary);
   }
-  .header-meta {
-    display: flex;
-    gap: 24px;
-    font-size: 14px;
-    color: var(--color-text-secondary);
-    align-items: center;
-  }
-  .header-meta strong {
-    color: var(--color-text-primary);
-    font-weight: 500;
-  }
-
-  /* Top row — bundle info + source traceability */
-  .top-row {
-    display: grid;
-    grid-template-columns: 1.25fr 1fr;
-    gap: 12px;
-    height: 256px;
+  .line-state .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--color-gray);
   }
 
+  /* ── Open-item flag ──
+     Purple (--color-background-draft / --color-text-draft) deliberately: amber
+     already means "warning" and red means "error" on these screens, and an
+     unanswered specification question is neither. It means "not settled yet". */
+  .open-flag {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 8px; border-radius: var(--border-radius-md);
+    background: var(--color-background-draft); color: var(--color-text-draft);
+    font-size: 14px; font-weight: 500; white-space: nowrap;
+  }
+  .open-flag::before { content: "?"; font-weight: 700; }
+
+  /* ── Section shell ── */
   .section {
     background: var(--color-background-primary);
     border: 0.5px solid var(--color-border-tertiary);
     border-radius: var(--border-radius-lg);
-    padding: 18px 22px;
-    display: flex;
-    flex-direction: column;
+    padding: 10px 18px 12px;
+    display: flex; flex-direction: column;
   }
+  .section-hint { font-size: 14px; color: var(--color-text-tertiary); }
+  .queue-link {
+    font-size: 14px; font-weight: 500; color: var(--color-text-info);
+    text-decoration: none; white-space: nowrap;
+  }
+  .queue-link:hover { text-decoration: underline; }
 
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 14px;
-  }
-  .section-title {
-    font-size: 15px;
-    font-weight: 500;
-  }
-  .section-subtitle {
-    font-size: 14px;
-    color: var(--color-text-tertiary);
-    font-family: var(--font-mono);
-  }
-  .section-hint {
-    font-size: 14px;
-    color: var(--color-text-tertiary);
-  }
-
-  /* Bundle info */
-  .field-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-  }
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-  .field-label {
-    font-size: 14px;
-    color: var(--color-text-secondary);
-  }
-  .field-required::after {
-    content: " *";
-    color: var(--color-red);
-  }
-  .input {
-    height: 44px;
-    padding: 0 14px;
-    font-size: 16px;
-    font-family: var(--font-mono);
-    font-weight: 500;
-    color: var(--color-text-primary);
-    background: var(--color-background-primary);
-    border: 1px solid var(--color-border-secondary);
-    border-radius: var(--border-radius-md);
-    outline: none;
-    width: 100%;
-  }
-  .input:focus {
-    border-color: var(--color-blue);
-    box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.18);
-  }
-  .input-readonly {
-    height: 44px;
-    padding: 0 14px;
-    font-size: 16px;
-    font-weight: 500;
-    background: var(--color-background-secondary);
-    border-radius: var(--border-radius-md);
-    display: flex;
-    align-items: center;
-    color: var(--color-text-primary);
-  }
-  .input-readonly.mono { font-family: var(--font-mono); }
-  .input-with-prefix {
-    position: relative;
-  }
-  .input-prefix {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--color-text-tertiary);
-    pointer-events: none;
-  }
-  .input-prefix svg { width: 18px; height: 18px; }
-  .input.with-prefix { padding-left: 38px; }
-
-  /* Source traceability */
-  .traceability-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex: 1;
-  }
-  .trace-rod {
-    display: grid;
-    grid-template-columns: 24px 1fr auto;
-    gap: 14px;
-    align-items: center;
-    padding: 10px 14px;
-    background: var(--color-background-secondary);
-    border-radius: var(--border-radius-md);
-  }
-  .trace-rod-icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--color-background-primary);
-    border: 1px solid var(--color-border-tertiary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-secondary);
-    flex-shrink: 0;
-  }
-  .trace-rod-icon svg { width: 12px; height: 12px; }
-  .trace-rod-body {
-    display: flex;
-    align-items: baseline;
+  /* ── 1. Identify & measure ──
+     Height is CONTENT-DRIVEN, not pinned: an earlier revision pinned it at
+     146px, it actually needs ~156, and the 26px difference pushed the whole
+     column 41px past the 1024 budget. flex-shrink: 0 keeps it at its natural
+     size and the history row absorbs whatever is left. */
+  .identify { flex-shrink: 0; gap: 6px; }
+  .identify .section-header { margin-bottom: 2px; }
+  .identify .field-grid {
+    grid-template-columns: 1.5fr 0.7fr 0.7fr 1fr 1fr 1fr;
     gap: 10px;
   }
-  .trace-rod-alpha {
-    font-size: 15px;
-    font-weight: 500;
-    font-family: var(--font-mono);
-  }
-  .trace-rod-range {
-    font-size: 14px;
-    color: var(--color-text-secondary);
-    font-family: var(--font-mono);
-  }
-  .trace-rod-status {
-    font-size: 14px;
-    padding: 3px 9px;
-    border-radius: var(--border-radius-md);
-    font-weight: 500;
-    background: var(--color-background-success);
-    color: var(--color-text-success);
-  }
-  .trace-weld-row {
-    display: grid;
-    grid-template-columns: 24px 1fr auto;
-    gap: 14px;
-    align-items: center;
-    padding: 7px 14px;
-    background: var(--color-background-warning);
-    color: var(--color-text-warning);
-    border-radius: var(--border-radius-md);
-  }
-  .trace-weld-icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--color-amber);
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-  .trace-weld-icon svg { width: 12px; height: 12px; }
-  .trace-weld-body {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-  }
-  .trace-weld-label {
-    font-size: 14px;
-    font-weight: 500;
-  }
-  .trace-weld-detail {
-    font-size: 14px;
-    font-family: var(--font-mono);
-    opacity: 0.85;
-  }
-  .trace-weld-badge {
-    font-size: 14px;
-    font-weight: 500;
-  }
-  .trace-footer {
-    margin-top: 10px;
-    padding: 10px 14px;
-    background: var(--color-background-info);
-    color: var(--color-text-info);
-    border-radius: var(--border-radius-md);
-    font-size: 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .trace-footer strong { font-weight: 500; font-family: var(--font-mono); }
+  .field { gap: 3px; }
 
-  /* Gauge profile chart */
-  .profile-section {
-    background: var(--color-background-primary);
-    border: 0.5px solid var(--color-border-tertiary);
-    border-radius: var(--border-radius-lg);
-    padding: 18px 22px;
-    height: 270px;
-    display: flex;
-    flex-direction: column;
+  .scan-wrap { position: relative; display: flex; align-items: center; }
+  .scan-wrap .input { padding-left: 40px; padding-right: 34px; }
+  .scan-icon {
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    color: var(--color-text-tertiary); pointer-events: none;
+    width: 18px; height: 18px;
   }
-  .profile-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
+  .scan-state {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 15px; font-weight: 700; pointer-events: none;
   }
-  .profile-title {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-  }
-  .profile-title h2 {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 500;
-  }
-  .profile-spec-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    background: var(--color-background-success);
-    color: var(--color-text-success);
-    border-radius: var(--border-radius-md);
-    font-size: 14px;
-    font-weight: 500;
-  }
-  .profile-spec-badge .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--color-green);
-  }
-  .profile-legend {
-    display: flex;
-    gap: 16px;
-    font-size: 14px;
-    color: var(--color-text-secondary);
-  }
-  .legend-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .legend-swatch {
-    width: 14px;
-    height: 3px;
-    border-radius: 2px;
-  }
-  .legend-swatch.trace { background: var(--color-blue); }
-  .legend-swatch.target {
-    background: var(--color-green);
-    opacity: 0.25;
-    height: 8px;
-  }
-  .legend-swatch.weld {
-    background: var(--color-amber);
-    height: 10px;
-    width: 2px;
+  .scan-state.ok  { color: var(--color-green); }
+  .scan-state.err { color: var(--color-red); }
+  .input.invalid {
+    border-color: var(--color-red);
+    background: var(--color-background-danger);
   }
 
-  .profile-chart {
-    flex: 1;
-    position: relative;
+  /* Resolved identity + provenance. Deliberately ONE line — it must not wrap,
+     because this section's height is content-driven and a second line comes
+     straight out of the chart below. */
+  .fact-strip {
+    display: flex; align-items: center; gap: 14px;
+    white-space: nowrap; overflow: hidden;
+    padding-top: 6px; border-top: 0.5px solid var(--color-border-tertiary);
+    font-size: 14px; color: var(--color-text-secondary);
   }
-  .profile-chart svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-  .chart-axis-label {
+  .fact-strip strong {
+    color: var(--color-text-primary); font-weight: 500;
     font-family: var(--font-mono);
-    font-size: 14px;
-    fill: var(--color-text-tertiary);
   }
-  .chart-gridline {
-    stroke: var(--color-border-tertiary);
-    stroke-width: 0.5;
+  .fact-sep { color: var(--color-border-secondary); }
+  .fact-err { color: var(--color-text-danger); font-weight: 500; }
+
+  /* ── 2. FL1 history — profile + traceability ── */
+  .history-row {
+    display: grid; grid-template-columns: 1.62fr 1fr; gap: 12px;
+    flex: 1 1 0; min-height: 0;      /* the only flexing child — must be able to shrink */
   }
+  /* min-height: 0 on the GRID ITEMS as well, not just the container. A grid item
+     defaults to min-height: auto, so without this the two sections refuse to go
+     below their content height: the row shrank on paper and its children spilled
+     out of it, and the page measured 1065px instead of 1024. */
+  .history-row > .section { min-height: 0; }
+
+  .profile-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .profile-title { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+  .profile-title h2 { margin: 0; font-size: 16px; font-weight: 500; white-space: nowrap; }
+  .profile-title .section-subtitle { white-space: nowrap; }
+  .profile-legend { display: flex; gap: 14px; font-size: 14px; color: var(--color-text-secondary); }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .legend-swatch { width: 14px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+  .legend-swatch.trace  { background: var(--color-blue); }
+  .legend-swatch.target { background: var(--color-green); opacity: 0.28; height: 9px; }
+  .legend-swatch.weld   { background: var(--color-amber); height: 11px; width: 2px; }
+
+  .verdict {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 4px 11px; border-radius: var(--border-radius-md);
+    font-size: 14px; font-weight: 500; white-space: nowrap;
+    background: var(--color-background-success); color: var(--color-text-success);
+  }
+  .verdict .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-green); }
+  .verdict.bad { background: var(--color-background-danger); color: var(--color-text-danger); }
+  .verdict.bad .dot { background: var(--color-red); }
+
+  .profile-chart { flex: 1 1 0; min-height: 0; position: relative; margin-top: 4px; }
+  .profile-chart svg { width: 100%; height: 100%; display: block; }
+  .chart-axis-label { font-family: var(--font-mono); font-size: 14px; fill: var(--color-text-tertiary); }
+  .chart-gridline { stroke: var(--color-border-tertiary); stroke-width: 0.5; }
 
   .profile-stats {
-    display: flex;
-    gap: 20px;
-    padding-top: 10px;
+    display: flex; gap: 18px; align-items: center;
+    padding-top: 7px; margin-top: 5px;
     border-top: 0.5px solid var(--color-border-tertiary);
-    margin-top: 4px;
-    font-size: 14px;
-    color: var(--color-text-secondary);
+    font-size: 14px; color: var(--color-text-secondary);
   }
   .profile-stat strong {
-    color: var(--color-text-primary);
-    font-weight: 500;
-    font-family: var(--font-mono);
-    margin-left: 6px;
+    color: var(--color-text-primary); font-weight: 500;
+    font-family: var(--font-mono); margin-left: 5px;
   }
+  .btn-reject {
+    min-height: 34px; padding: 0 12px; margin-left: auto;
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 14px; font-weight: 500; font-family: var(--font-sans);
+    border: 1px solid var(--color-red); border-radius: var(--border-radius-md);
+    background: var(--color-background-primary); color: var(--color-text-danger);
+    cursor: pointer;
+  }
+  .btn-reject:hover { background: var(--color-background-danger); }
+  .btn-reject svg { width: 14px; height: 14px; }
 
-  /* Pass schedule */
-  .schedule-section {
-    height: 258px;
-    display: flex;
-    flex-direction: column;
+  /* Source traceability — read-only genealogy (FR-092, TC-113) */
+  .trace-list { display: flex; flex-direction: column; gap: 6px; flex: 1 1 0; min-height: 0; margin-top: 4px; }
+  .trace-rod, .trace-weld {
+    display: grid; grid-template-columns: 22px 1fr auto;
+    gap: 12px; align-items: center;
+    padding: 8px 12px; border-radius: var(--border-radius-md);
   }
-  .schedule-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
+  .trace-rod  { background: var(--color-background-secondary); }
+  .trace-weld { background: var(--color-background-warning); color: var(--color-text-warning); }
+  .trace-icon {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .trace-rod .trace-icon {
+    background: var(--color-background-primary);
     border: 1px solid var(--color-border-tertiary);
-    border-radius: var(--border-radius-md);
-    overflow: hidden;
-  }
-  .schedule-table thead tr {
-    background: var(--color-background-secondary);
-  }
-  .schedule-table th {
-    text-align: left;
-    padding: 9px 16px;
-    font-weight: 500;
-    color: var(--color-text-secondary);
-    font-size: 14px;
-  }
-  .schedule-table tbody tr {
-    border-top: 0.5px solid var(--color-border-tertiary);
-  }
-  .schedule-table tbody tr.bypass {
-    opacity: 0.6;
-  }
-  .schedule-table td {
-    padding: 10px 16px;
-    vertical-align: middle;
-  }
-  .schedule-table .component-name { font-weight: 500; }
-  .status-cell {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .status-cell .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--color-green);
-  }
-  .status-cell.bypass .dot { background: var(--color-gray); }
-  .setting-cell {
-    font-family: var(--font-mono);
     color: var(--color-text-secondary);
   }
-  .setting-cell.plain {
-    font-family: var(--font-sans);
-  }
-  .setting-cell.bypass-label {
-    font-family: var(--font-sans);
-    font-style: italic;
-  }
-  .schedule-stage {
-    font-size: 14px;
-    color: var(--color-text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    padding: 0;
-  }
-
-  .callout {
-    margin-top: 10px;
-    padding: 10px 14px;
-    background: var(--color-background-info);
-    color: var(--color-text-info);
+  .trace-weld .trace-icon { background: var(--color-amber); color: #ffffff; }
+  .trace-icon svg { width: 11px; height: 11px; }
+  .trace-body { display: flex; align-items: baseline; gap: 9px; min-width: 0; }
+  .trace-alpha  { font-size: 15px; font-weight: 500; font-family: var(--font-mono); }
+  .trace-detail { font-size: 14px; font-family: var(--font-mono); color: var(--color-text-secondary); }
+  .trace-weld .trace-detail { color: inherit; opacity: 0.85; }
+  .trace-label { font-size: 14px; font-weight: 500; }
+  .trace-badge {
+    font-size: 14px; font-weight: 500; padding: 2px 8px;
     border-radius: var(--border-radius-md);
-    font-size: 14px;
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    line-height: 1.5;
+    background: var(--color-background-success); color: var(--color-text-success);
   }
-  .callout-icon {
-    flex-shrink: 0;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--color-blue);
-    color: #ffffff;
-    font-size: 14px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+  .trace-weld .trace-badge { background: transparent; color: inherit; padding: 0; }
 
-  /* Pass schedule confirm bar */
+  .trace-foot {
+    margin-top: 8px; padding: 8px 12px;
+    background: var(--color-background-info); color: var(--color-text-info);
+    border-radius: var(--border-radius-md);
+    font-size: 14px; display: flex; justify-content: space-between; gap: 10px;
+  }
+  .trace-foot strong { font-weight: 500; font-family: var(--font-mono); }
+  /* Hybrid-origin banner replaces the footer when the spool came off an FL3 run. */
+  .trace-foot.hybrid { background: var(--color-background-draft); color: var(--color-text-draft); }
+
+  /* ── 3. Pass schedule ──
+     Content-driven height for the same reason as .identify. Row padding is
+     tightened to 5px so four stands plus the confirm bar and the note fit
+     without the note escaping the panel. */
+  .schedule { flex-shrink: 0; }
+  .schedule .section-header { margin-bottom: 6px; }
+  .schedule-table th { padding: 6px 12px; }
+  .schedule-table td { padding: 5px 12px; }
+
   .ps-confirm-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 9px 13px; margin-bottom: 9px;
     background: var(--color-background-warning);
     border-radius: var(--border-radius-md);
-    margin-bottom: 10px;
-    gap: 14px;
     transition: background 0.2s;
   }
   .ps-confirm-bar.confirmed { background: var(--color-background-success); }
+  .ps-confirm-bar.none      { background: var(--color-background-danger); }
   .ps-confirm-match {
-    font-size: 14px;
-    color: var(--color-text-warning);
-    line-height: 1.45;
-    flex: 1;
+    font-size: 14px; color: var(--color-text-warning); line-height: 1.45; flex: 1;
   }
   .ps-confirm-bar.confirmed .ps-confirm-match { color: var(--color-text-success); }
+  .ps-confirm-bar.none      .ps-confirm-match { color: var(--color-text-danger); }
   .ps-confirm-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
   .btn-confirm-ps {
-    height: 32px;
-    padding: 0 14px;
-    font-size: 14px;
-    font-weight: 500;
-    border-radius: var(--border-radius-md);
-    cursor: pointer;
-    font-family: var(--font-sans);
-    border: 1px solid var(--color-green);
-    background: var(--color-green);
-    color: #ffffff;
+    height: 34px; padding: 0 14px;
+    font-size: 14px; font-weight: 500; font-family: var(--font-sans);
+    border-radius: var(--border-radius-md); cursor: pointer;
+    border: 1px solid var(--color-green); background: var(--color-green); color: #ffffff;
     white-space: nowrap;
-    transition: opacity 0.15s;
   }
   .btn-confirm-ps:hover { opacity: 0.85; }
   .ps-change-wrap { position: relative; }
   .btn-change-ps {
-    height: 32px;
-    padding: 0 11px;
-    font-size: 14px;
-    font-weight: 500;
-    border-radius: var(--border-radius-md);
-    cursor: pointer;
-    font-family: var(--font-sans);
+    height: 34px; padding: 0 11px;
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 14px; font-weight: 500; font-family: var(--font-sans);
+    border-radius: var(--border-radius-md); cursor: pointer;
     border: 1px solid var(--color-border-secondary);
-    background: var(--color-background-primary);
-    color: var(--color-text-primary);
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+    background: var(--color-background-primary); color: var(--color-text-primary);
     white-space: nowrap;
-    transition: background 0.15s;
   }
   .btn-change-ps:hover { background: var(--color-background-secondary); }
   .ps-change-dropdown {
-    position: absolute;
-    top: calc(100% + 4px);
-    right: 0;
+    position: absolute; bottom: calc(100% + 4px); right: 0;
     background: var(--color-background-primary);
     border: 1px solid var(--color-border-secondary);
     border-radius: var(--border-radius-md);
-    padding: 6px 0;
-    min-width: 270px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-    z-index: 200;
-    display: none;
+    padding: 6px 0; min-width: 300px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+    z-index: 200; display: none;
   }
   .ps-change-dropdown.open { display: block; }
   .ps-dropdown-item {
-    padding: 9px 16px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    transition: background 0.1s;
+    padding: 8px 15px; cursor: pointer;
+    display: flex; flex-direction: column; gap: 2px;
   }
   .ps-dropdown-item:hover { background: var(--color-background-secondary); }
   .ps-dropdown-item.recommended { background: var(--color-background-info); }
-  .ps-dropdown-id { font-size: 14px; font-family: var(--font-mono); font-weight: 500; color: var(--color-text-primary); }
+  .ps-dropdown-id { font-size: 14px; font-family: var(--font-mono); font-weight: 500; }
   .ps-dropdown-desc { font-size: 14px; color: var(--color-text-secondary); }
   .ps-dropdown-warning {
-    padding: 8px 16px;
-    font-size: 14px;
-    color: var(--color-text-danger);
-    border-top: 0.5px solid var(--color-border-tertiary);
-    margin-top: 4px;
+    padding: 8px 15px; font-size: 14px; color: var(--color-text-danger);
+    border-top: 0.5px solid var(--color-border-tertiary); margin-top: 4px;
   }
 
-  /* Footer */
-  .footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 24px;
-    height: 80px;
+  .schedule-table tbody tr.bypass { opacity: 0.62; }
+  .schedule-table tbody tr.bypass .component-name {
+    text-decoration: line-through;
+    text-decoration-color: var(--color-text-tertiary);
   }
-  .footer-status {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    font-size: 14px;
-    color: var(--color-text-secondary);
+  .schedule-table.disabled { opacity: 0.4; }
+  .status-cell { display: inline-flex; align-items: center; gap: 8px; }
+  .status-cell .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-green); }
+  .status-cell.bypass .dot { background: var(--color-gray); }
+  .setting-cell { font-family: var(--font-mono); color: var(--color-text-secondary); }
+  .setting-cell.plain { font-family: var(--font-sans); font-style: italic; }
+  .stage-cell {
+    font-size: 14px; color: var(--color-text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.4px;
   }
-  .progress-ring {
-    width: 36px;
-    height: 36px;
-    position: relative;
-  }
-  .progress-ring svg {
-    width: 36px;
-    height: 36px;
-    transform: rotate(-90deg);
-  }
-  .progress-ring-bg {
-    fill: none;
-    stroke: var(--color-background-secondary);
-    stroke-width: 3;
-  }
-  .progress-ring-fill {
-    fill: none;
-    stroke: var(--color-green);
-    stroke-width: 3;
-    stroke-linecap: round;
-  }
-  .progress-ring-text {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--color-text-primary);
-  }
-  .footer-status strong {
-    color: var(--color-text-primary);
-    font-weight: 500;
-  }
-  .footer-actions {
-    display: flex;
-    gap: 12px;
-  }
-  .btn {
-    height: 52px;
-    padding: 0 28px;
-    font-size: 15px;
-    font-weight: 500;
+  .nobypass-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 7px; margin-left: 8px;
     border-radius: var(--border-radius-md);
-    cursor: pointer;
-    font-family: var(--font-sans);
+    background: var(--color-background-info); color: var(--color-text-info);
+    font-size: 14px; font-weight: 500; font-family: var(--font-sans);
+  }
+
+  .ps-note {
+    margin-top: 7px; font-size: 14px; color: var(--color-text-secondary);
+    display: flex; align-items: flex-start; gap: 9px; line-height: 1.35;
+  }
+  .ps-note-icon {
+    flex-shrink: 0; width: 17px; height: 17px; border-radius: 50%;
+    background: var(--color-blue); color: #ffffff;
+    font-size: 14px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── 4. Footer — the pre-flight gate ──
+     Five checks, verbatim from RocCheckin.md §4.1. The ring counts them, which
+     is the whole point: it used to count six steps that did not exist. */
+  .footer { height: 80px; padding: 10px 20px; flex-shrink: 0; gap: 16px; }
+  .preflight { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; }
+  /* nowrap: five chips wrapping to a second row made .preflight taller than the
+     80px footer and it spilled out the bottom. They stay on one line and the
+     message beside them is what gives way. */
+  .pf-chips { display: flex; gap: 6px; flex-wrap: nowrap; flex-shrink: 0; }
+  .pf-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px; min-height: 34px;
+    border-radius: var(--border-radius-md);
+    font-size: 14px; font-weight: 500; font-family: var(--font-sans);
+    border: 1px solid transparent; cursor: pointer; white-space: nowrap;
+    background: var(--color-background-success); color: var(--color-text-success);
+  }
+  .pf-chip::before { content: "\2713"; font-weight: 700; }
+  .pf-chip.warn {
+    background: var(--color-background-warning); color: var(--color-text-warning);
+  }
+  .pf-chip.warn::before { content: "\26A0"; }
+  .pf-chip.err {
+    background: var(--color-background-danger); color: var(--color-text-danger);
+  }
+  .pf-chip.err::before { content: "\2715"; }
+  .pf-chip:focus-visible { outline: 3px solid var(--color-blue); outline-offset: 2px; }
+
+  .pf-summary { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+  .pf-count { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+  .pf-msg   { font-size: 14px; color: var(--color-text-secondary); line-height: 1.3; }
+  .pf-msg.blocked { color: var(--color-text-danger); }
+
+  .footer-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .btn { height: 46px; padding: 0 22px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn svg { width: 15px; height: 15px; }
+  .btn-primary { padding: 0 26px; }
+
+  /* Demo-only state simulator — not a shipped control. It lives in the HEADER,
+     not the footer: the footer already carries the ring, the message, five
+     pre-flight chips, Cancel and Acknowledge, and at 1280px the cluster pushed
+     that row ~200px past the available width. */
+  .sim {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 9px;
+    background: var(--color-background-secondary);
+    border: 1px dashed var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+  }
+  .sim-label { font-size: 14px; color: var(--color-text-tertiary); letter-spacing: 0.3px; }
+  /* A select, not the row of buttons 2A uses. Five labelled buttons need ~500px
+     and the header has ~340 spare once the back link, badge, title, order chip,
+     line state, clock and the injected More Options button have taken theirs —
+     they collided with the h1. The control is demo-only, so a select costs
+     nothing and keeps the state names readable. */
+  .sim-select {
+    min-height: 32px; padding: 0 8px;
+    font-size: 14px; font-family: var(--font-sans);
     border: 1px solid var(--color-border-secondary);
     background: var(--color-background-primary);
     color: var(--color-text-primary);
-    transition: all 0.15s;
-  }
-  .btn:hover { background: var(--color-background-secondary); }
-  .btn:active { transform: scale(0.98); }
-  .btn-primary {
-    background: var(--color-blue);
-    border-color: var(--color-blue);
-    color: #ffffff;
-    padding: 0 36px;
-  }
-  .btn-primary:hover { background: #13497d; }
-  .btn-primary:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-    transform: none;
+    border-radius: 6px; cursor: pointer;
   }
 
+  .hide { display: none !important; }
 </style>
 </head>
 <body>
 <div class="dashboard">
 
+  <!-- ═══ Header ═══ -->
   <div class="header panel">
     <div class="header-left">
-      <span class="line-badge">
-        <span class="dot"></span>
-        FL2
-      </span>
+      <a class="back-btn" href="dashboard_1_line_status.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        Line status
+      </a>
+      <span class="line-badge">FL2</span>
       <h1>Spool check-in</h1>
     </div>
-    <div class="header-meta">
-      <span>Order <strong class="mono">FW-00421</strong></span>
+    <div class="header-right">
+      <div class="sim">
+        <label class="sim-label" for="sim-select">DEMO</label>
+        <select class="sim-select" id="sim-select">
+          <option value="nominal">Nominal</option>
+          <option value="outofspec">Out of spec &mdash; TC-112</option>
+          <option value="notready">Spool not ready &mdash; TC-117</option>
+          <option value="noschedule">No matching schedule &mdash; OQ-51</option>
+          <option value="hybrid">Hybrid origin &mdash; OQ-52</option>
+        </select>
+      </div>
+      <div class="header-meta">
+        <span>Order <strong class="mono">FW-00421</strong></span>
+        <span class="line-state" id="line-state"><span class="dot"></span>IDLE</span>
+        <span class="mono" id="clock">08:31 AM</span>
+      </div>
     </div>
   </div>
 
-  <div class="top-row">
-
-    <div class="section">
-      <div class="section-header">
-        <span class="section-title">Incoming Bundle Information</span>
-        <span class="section-hint">Measured values at TPO load</span>
-      </div>
-
-      <div class="field-grid" style="grid-template-columns: 1.5fr 1fr 1fr; margin-bottom: 12px;">
-        <div class="field">
-          <label class="field-label field-required">Spool alpha</label>
-          <div class="input-with-prefix">
-            <span class="input-prefix">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5a2 2 0 0 1 2-2h2"/><path d="M16 3h2a2 2 0 0 1 2 2v2"/><path d="M20 17v2a2 2 0 0 1-2 2h-2"/><path d="M8 21H6a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
-            </span>
-            <input class="input with-prefix" type="text" value="SP-00031">
-          </div>
-        </div>
-        <div class="field">
-          <label class="field-label">Alloy</label>
-          <div class="input-readonly">1100</div>
-        </div>
-        <div class="field">
-          <label class="field-label">Temper</label>
-          <div class="input-readonly">O &middot; annealed</div>
-        </div>
-      </div>
-
-      <div class="field-grid">
-        <div class="field">
-          <label class="field-label field-required">Gauge</label>
-          <input class="input" type="text" value='0.110"'>
-        </div>
-        <div class="field">
-          <label class="field-label field-required">Width</label>
-          <input class="input" type="text" value='0.627"'>
-        </div>
-        <div class="field">
-          <label class="field-label field-required">Gross weight</label>
-          <input class="input" type="text" value="3,480 lb">
-        </div>
-      </div>
-
-      <div class="field-grid" style="grid-template-columns: 1fr 2fr; margin-top: 12px;">
-        <div class="field">
-          <label class="field-label">Net weight (calculated)</label>
-          <div class="input-readonly mono">3,200 lb</div>
-        </div>
-        <div class="field">
-          <label class="field-label">Handling history</label>
-          <div class="input-readonly" style="font-family: var(--font-sans); font-size: 14px; color: var(--color-text-secondary);">
-            Spooled 07:02 AM &middot; staged at TPO 07:24 AM &middot; 38m dwell
-          </div>
-        </div>
+  <!-- ═══ 1. Identify & measure ═══
+       No payoff selector: FL2 feeds from the traversing payoff, and
+       SpoolCheckin.PayoffPosition's CHECK (1,2) is VPS-bay vocabulary with no
+       FL2 representation (gap G20). Rendering a selector would invent a value. -->
+  <div class="section identify">
+    <div class="section-header">
+      <span class="section-title">Incoming spool</span>
+      <div class="section-meta">
+        <span class="section-hint">Scan the label printed at FL1 output &middot; measured at TPO load</span>
+        <!-- FR-090 says scan; Q57 records the client saying the FL2 operator
+             "selects it by spool number". DB5A is that select half. -->
+        <a class="queue-link" href="dashboard_5a_spool_queue.html">Browse spool queue &rarr;</a>
+        <span class="open-flag" title="OQ-15 / OI-50 (Critical): whether check-in scans the SP-series alpha, the spool number or a bundle ID is undefined.">OQ-15 identifier type</span>
       </div>
     </div>
 
+    <div class="field-grid">
+      <div class="field">
+        <label class="field-label field-required" for="spool-alpha">Spool identifier</label>
+        <div class="scan-wrap">
+          <svg class="scan-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5a2 2 0 0 1 2-2h2"/><path d="M16 3h2a2 2 0 0 1 2 2v2"/><path d="M20 17v2a2 2 0 0 1-2 2h-2"/><path d="M8 21H6a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+          <input class="input mono" id="spool-alpha" type="text" value="SP-00031" autocomplete="off">
+          <span class="scan-state ok" id="scan-state">&#10003;</span>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Alloy</label>
+        <div class="input-readonly" id="f-alloy">1100</div>
+      </div>
+      <div class="field">
+        <label class="field-label">Temper</label>
+        <div class="input-readonly" id="f-temper">O</div>
+      </div>
+      <div class="field">
+        <label class="field-label field-required" for="in-gauge">Gauge</label>
+        <input class="input mono" id="in-gauge" type="text" value="0.113&quot;" autocomplete="off">
+      </div>
+      <div class="field">
+        <label class="field-label field-required" for="in-width">Width</label>
+        <input class="input mono" id="in-width" type="text" value="0.640&quot;" autocomplete="off">
+      </div>
+      <div class="field">
+        <label class="field-label field-required" for="in-gross">Gross weight</label>
+        <input class="input mono" id="in-gross" type="text" value="3,480 lb" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="fact-strip" id="fact-strip">
+      <span id="fact-resolved">Resolved <strong>SP-00031</strong> &middot; ready for FL2</span>
+      <span class="fact-sep">|</span>
+      <span>Source rods <strong>R00041, R00042</strong></span>
+      <span class="fact-sep">|</span>
+      <span>Net <strong>3,200 lb</strong></span>
+      <span class="fact-sep">|</span>
+      <span>FL1 complete <strong id="t-fl1done">&mdash;</strong> &middot; at TPO <strong id="t-loaded">&mdash;</strong> &middot; dwell <strong id="dwell">&mdash;</strong></span>
+    </div>
+  </div>
+
+  <!-- ═══ 2. FL1 history ═══ -->
+  <div class="history-row">
+
+    <!-- Gauge profile. This plots FL1's OUTPUT, so the target is the spool's own
+         0.113", NOT the 0.110" FL2 will finish it to. FL2 standalone broadcasts
+         null live gauge — there is deliberately no live trace here. -->
+    <div class="section">
+      <div class="profile-head">
+        <div class="profile-title">
+          <h2>Gauge profile</h2>
+          <span class="section-subtitle">target 0.113&Prime; &plusmn;0.002&Prime;</span>
+        </div>
+        <div style="display:flex; gap:14px; align-items:center;">
+          <div class="profile-legend">
+            <span class="legend-item"><span class="legend-swatch trace"></span>Gauge</span>
+            <span class="legend-item"><span class="legend-swatch target"></span>Tolerance</span>
+            <span class="legend-item"><span class="legend-swatch weld"></span>Weld</span>
+          </div>
+          <span class="verdict" id="verdict"><span class="dot"></span>All 3,200 ft in spec</span>
+        </div>
+      </div>
+
+      <div class="profile-chart">
+        <!-- viewBox + preserveAspectRatio="none": flat-wire-fit.js counter-scales
+             the labels so none renders below the 14px floor. -->
+        <svg viewBox="0 0 1200 150" preserveAspectRatio="none">
+          <line class="chart-gridline" x1="72" y1="18"  x2="1180" y2="18"/>
+          <line class="chart-gridline" x1="72" y1="46"  x2="1180" y2="46"/>
+          <line class="chart-gridline" x1="72" y1="74"  x2="1180" y2="74"/>
+          <line class="chart-gridline" x1="72" y1="102" x2="1180" y2="102"/>
+          <line class="chart-gridline" x1="72" y1="130" x2="1180" y2="130"/>
+
+          <!-- Tolerance band 0.111–0.115 -->
+          <rect x="72" y="46" width="1108" height="56" fill="#1D9E75" fill-opacity="0.14"/>
+          <line x1="72" y1="74" x2="1180" y2="74" stroke="#1D9E75" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
+
+          <!-- Weld marker at 2,100 ft -->
+          <line x1="798" y1="10" x2="798" y2="134" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.9"/>
+          <rect x="734" y="4" width="128" height="15" rx="3" fill="#FAEEDA"/>
+          <text x="798" y="15" text-anchor="middle" fill="#633806" font-size="14" font-weight="600">R00041 &rarr; R00042</text>
+
+          <!-- Nominal trace: wanders 0.1114–0.1147, fully inside the band -->
+          <path id="trace-ok"
+            d="M 72,80 L 130,76 L 190,68 L 250,60 L 310,58 L 370,64 L 430,70 L 490,76 L 550,72 L 610,66 L 670,62 L 730,68 L 798,76 L 850,82 L 910,78 L 970,70 L 1030,66 L 1090,72 L 1140,78 L 1180,74"
+            stroke="#185FA5" stroke-width="2" fill="none" stroke-linejoin="round"/>
+
+          <!-- Out-of-spec trace: excursion above 0.115 between ~1,150 and ~1,600 ft -->
+          <g id="trace-bad" class="hide">
+            <path d="M 72,80 L 130,76 L 190,68 L 250,60 L 310,56 L 370,50 L 430,38 L 490,32 L 550,40 L 610,54 L 670,62 L 730,68 L 798,76 L 850,82 L 910,78 L 970,70 L 1030,66 L 1090,72 L 1140,78 L 1180,74"
+              stroke="#185FA5" stroke-width="2" fill="none" stroke-linejoin="round"/>
+            <path d="M 370,50 L 430,38 L 490,32 L 550,40"
+              stroke="#D85A30" stroke-width="3" fill="none" stroke-linejoin="round"/>
+          </g>
+
+          <text class="chart-axis-label" x="67" y="22"  text-anchor="end">0.117</text>
+          <text class="chart-axis-label" x="67" y="50"  text-anchor="end">0.115</text>
+          <text class="chart-axis-label" x="67" y="78"  text-anchor="end">0.113</text>
+          <text class="chart-axis-label" x="67" y="106" text-anchor="end">0.111</text>
+          <text class="chart-axis-label" x="67" y="134" text-anchor="end">0.109</text>
+
+          <text class="chart-axis-label" x="72"   y="148">0 ft</text>
+          <text class="chart-axis-label" x="349"  y="148" text-anchor="middle">800 ft</text>
+          <text class="chart-axis-label" x="626"  y="148" text-anchor="middle">1,600 ft</text>
+          <text class="chart-axis-label" x="903"  y="148" text-anchor="middle">2,400 ft</text>
+          <text class="chart-axis-label" x="1180" y="148" text-anchor="end" font-weight="500">3,200 ft</text>
+        </svg>
+      </div>
+
+      <div class="profile-stats">
+        <span class="profile-stat">Min <strong id="st-min">0.111&Prime;</strong></span>
+        <span class="profile-stat">Max <strong id="st-max">0.115&Prime;</strong></span>
+        <span class="profile-stat">Avg <strong id="st-avg">0.113&Prime;</strong></span>
+        <span class="profile-stat">Std dev <strong id="st-sd">0.0011&Prime;</strong></span>
+        <span class="profile-stat">Samples <strong id="st-n">3,194</strong></span>
+        <button class="btn-reject hide" id="btn-reject" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Log WIP Rejection
+        </button>
+      </div>
+    </div>
+
+    <!-- Source traceability — read-only (FR-092, TC-113). -->
     <div class="section">
       <div class="section-header">
         <span class="section-title">Source traceability</span>
-        <span class="section-hint">From FL1 run &middot; read-only</span>
+        <span class="readonly-badge">Read-only</span>
       </div>
 
-      <div class="traceability-list">
+      <div class="trace-list">
         <div class="trace-rod">
-          <span class="trace-rod-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>
-          </span>
-          <div class="trace-rod-body">
-            <span class="trace-rod-alpha">R00041</span>
-            <span class="trace-rod-range">0 – 2,100 ft</span>
+          <span class="trace-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/></svg></span>
+          <div class="trace-body">
+            <span class="trace-alpha">R00041</span>
+            <span class="trace-detail">0 &ndash; 2,100 ft</span>
           </div>
-          <span class="trace-rod-status">Complete</span>
+          <span class="trace-badge">Complete</span>
         </div>
 
-        <div class="trace-weld-row">
-          <span class="trace-weld-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-          </span>
-          <div class="trace-weld-body">
-            <span class="trace-weld-label">Induction weld</span>
-            <span class="trace-weld-detail">at 2,100 ft &middot; 06:31 AM</span>
+        <div class="trace-weld">
+          <span class="trace-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
+          <div class="trace-body">
+            <span class="trace-label">Induction weld</span>
+            <span class="trace-detail">2,100 ft &middot; <span id="t-weld">&mdash;</span></span>
           </div>
-          <span class="trace-weld-badge">&#x2713; Pass</span>
+          <span class="trace-badge">&#10003; Pass</span>
         </div>
 
         <div class="trace-rod">
-          <span class="trace-rod-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>
-          </span>
-          <div class="trace-rod-body">
-            <span class="trace-rod-alpha">R00042</span>
-            <span class="trace-rod-range">2,100 – 3,200 ft</span>
+          <span class="trace-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/></svg></span>
+          <div class="trace-body">
+            <span class="trace-alpha">R00042</span>
+            <span class="trace-detail">2,100 &ndash; 3,200 ft</span>
           </div>
-          <span class="trace-rod-status">Complete</span>
+          <span class="trace-badge">Complete</span>
         </div>
       </div>
 
-      <div class="trace-footer">
-        <span>FL1 run completed 07:02 AM</span>
-        <span>Output alpha <strong>SP-00031</strong></span>
+      <div class="trace-foot" id="trace-foot">
+        <span>FL1 run <strong>RUN-0117</strong> &middot; standalone</span>
+        <span>Output <strong>SP-00031</strong></span>
       </div>
     </div>
 
   </div>
 
-  <div class="profile-section">
-    <div class="profile-header">
-      <div class="profile-title">
-        <h2>Gauge profile &middot; FL1 run history</h2>
-        <span class="section-subtitle">Target 0.110" &plusmn; 0.002"</span>
-      </div>
-      <div style="display: flex; gap: 16px; align-items: center;">
-        <div class="profile-legend">
-          <span class="legend-item">
-            <span class="legend-swatch trace"></span>
-            Gauge
-          </span>
-          <span class="legend-item">
-            <span class="legend-swatch target"></span>
-            Tolerance band
-          </span>
-          <span class="legend-item">
-            <span class="legend-swatch weld"></span>
-            Weld point
-          </span>
-        </div>
-        <span class="profile-spec-badge">
-          <span class="dot"></span>
-          All 3,200 ft in spec
-        </span>
-      </div>
-    </div>
-
-    <div class="profile-chart">
-      <svg viewBox="0 0 1200 180" preserveAspectRatio="none">
-        <line class="chart-gridline" x1="70" y1="20" x2="1180" y2="20"/>
-        <line class="chart-gridline" x1="70" y1="60" x2="1180" y2="60"/>
-        <line class="chart-gridline" x1="70" y1="100" x2="1180" y2="100"/>
-        <line class="chart-gridline" x1="70" y1="140" x2="1180" y2="140"/>
-
-        <rect x="70" y="73" width="1110" height="54" fill="#1D9E75" fill-opacity="0.14"/>
-        <line x1="70" y1="100" x2="1180" y2="100" stroke="#1D9E75" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"/>
-
-        <line x1="798" y1="12" x2="798" y2="150" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.85"/>
-        <rect x="730" y="6" width="136" height="16" rx="3" fill="#FAEEDA"/>
-        <text x="798" y="18" text-anchor="middle" fill="#633806" font-size="14" font-weight="600">R00041 &rarr; R00042</text>
-
-        <path d="M 70,106 L 120,104 L 160,100 L 210,95 L 260,93 L 320,96 L 380,99 L 440,101 L 500,99 L 560,97 L 620,95 L 680,97 L 740,100 L 798,102 L 830,104 L 880,101 L 940,99 L 1000,97 L 1060,99 L 1110,102 L 1180,100"
-          stroke="#185FA5" stroke-width="2" fill="none" stroke-linejoin="round"/>
-
-        <text class="chart-axis-label" x="65" y="24" text-anchor="end">0.115</text>
-        <text class="chart-axis-label" x="65" y="64" text-anchor="end">0.113</text>
-        <text class="chart-axis-label" x="65" y="104" text-anchor="end">0.110</text>
-        <text class="chart-axis-label" x="65" y="144" text-anchor="end">0.108</text>
-
-        <text class="chart-axis-label" x="70" y="168">0 ft</text>
-        <text class="chart-axis-label" x="348" y="168" text-anchor="middle">800 ft</text>
-        <text class="chart-axis-label" x="625" y="168" text-anchor="middle">1,600 ft</text>
-        <text class="chart-axis-label" x="902" y="168" text-anchor="middle">2,400 ft</text>
-        <text class="chart-axis-label" x="1180" y="168" text-anchor="end" font-weight="500">3,200 ft</text>
-      </svg>
-    </div>
-
-    <div class="profile-stats">
-      <span class="profile-stat">Min <strong>0.108"</strong></span>
-      <span class="profile-stat">Max <strong>0.112"</strong></span>
-      <span class="profile-stat">Avg <strong>0.110"</strong></span>
-      <span class="profile-stat">Std dev <strong>0.0011"</strong></span>
-      <span class="profile-stat" style="margin-left: auto;">Samples <strong>3,194</strong></span>
-    </div>
-  </div>
-
-  <div class="section schedule-section">
+  <!-- ═══ 3. Pass schedule ═══
+       FOUR stands. The edger is an attribute of S2 and S3, not a row. See the
+       head comment — this is the assertion phase-08:102 exists to protect. -->
+  <div class="section schedule">
     <div class="section-header">
-      <span class="section-title">Pass Schedule</span>
-      <div style="display: flex; gap: 12px; align-items: center;">
-        <span class="section-subtitle" id="ps-schedule-id-label">PS-1100-FL2-007</span>
-        <span style="font-size: 14px; padding: 3px 10px; background: var(--color-background-secondary); color: var(--color-text-secondary); border-radius: var(--border-radius-md); font-weight: 500;">Read-only</span>
+      <span class="section-title">Pass schedule</span>
+      <div class="section-meta">
+        <span class="section-subtitle" id="ps-id-label">PS-1100-FL2-007</span>
+        <span class="readonly-badge">Read-only</span>
       </div>
     </div>
 
     <div class="ps-confirm-bar" id="ps-confirm-bar">
-      <span class="ps-confirm-match" id="ps-confirm-match">System recommends <strong>PS-1100-FL2-007</strong> &mdash; matched on Alloy&nbsp;1100, Gauge&nbsp;0.110&Prime;&nbsp;&times;&nbsp;0.625&Prime;, Round&nbsp;edge</span>
-      <div class="ps-confirm-actions">
-        <button class="btn-confirm-ps" id="btn-confirm-ps">Confirm Schedule</button>
+      <span class="ps-confirm-match" id="ps-confirm-match">System recommends <strong>PS-1100-FL2-007</strong> &mdash; matched on Alloy&nbsp;1100, in&nbsp;0.113&Prime;&nbsp;&times;&nbsp;0.640&Prime;, out&nbsp;0.110&Prime;&nbsp;&times;&nbsp;0.630&Prime;, Round&nbsp;edge</span>
+      <div class="ps-confirm-actions" id="ps-confirm-actions">
+        <button class="btn-confirm-ps" id="btn-confirm-ps" type="button">Confirm schedule</button>
         <div class="ps-change-wrap">
-          <button class="btn-change-ps" id="btn-change-ps">Change <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1.5 3.5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button class="btn-change-ps" id="btn-change-ps" type="button">Change <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1.5 3.5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <div class="ps-change-dropdown" id="ps-change-dropdown">
             <div class="ps-dropdown-item recommended" data-id="PS-1100-FL2-007">
               <span class="ps-dropdown-id">PS-1100-FL2-007</span>
-              <span class="ps-dropdown-desc">Alloy 1100 &middot; 0.110&Prime; &times; 0.625&Prime; &middot; Round edge &mdash; Recommended</span>
+              <span class="ps-dropdown-desc">1100 &middot; 0.113&Prime; &rarr; 0.110&Prime; &middot; Round edge &mdash; Recommended</span>
             </div>
             <div class="ps-dropdown-item" data-id="PS-1100-FL2-006">
               <span class="ps-dropdown-id">PS-1100-FL2-006</span>
-              <span class="ps-dropdown-desc">Alloy 1100 &middot; 0.110&Prime; &times; 0.625&Prime; &middot; Flat edge</span>
+              <span class="ps-dropdown-desc">1100 &middot; 0.113&Prime; &rarr; 0.110&Prime; &middot; Flat edge</span>
             </div>
             <div class="ps-dropdown-item" data-id="PS-1100-FL2-005">
               <span class="ps-dropdown-id">PS-1100-FL2-005</span>
-              <span class="ps-dropdown-desc">Alloy 1100 &middot; 0.112&Prime; &times; 0.625&Prime; &middot; Round edge</span>
+              <span class="ps-dropdown-desc">1100 &middot; 0.115&Prime; &rarr; 0.112&Prime; &middot; Round edge</span>
             </div>
             <div class="ps-dropdown-warning">&#9888; Selecting a different schedule will be flagged for Operations review.</div>
           </div>
@@ -856,146 +758,422 @@
       </div>
     </div>
 
-    <table class="schedule-table">
+    <table class="schedule-table" id="schedule-table">
       <thead>
         <tr>
-          <th style="width: 30%;">Component</th>
-          <th style="width: 20%;">Status</th>
-          <th style="width: 32%;">Setting</th>
-          <th style="width: 18%;">Stage</th>
+          <th style="width:26%;">Component</th>
+          <th style="width:16%;">Status</th>
+          <th style="width:40%;">Setting</th>
+          <th style="width:18%;">Stage</th>
         </tr>
       </thead>
       <tbody>
         <tr class="bypass">
-          <td class="component-name">8" Roller</td>
+          <td class="component-name">8&Prime; Roller</td>
           <td><span class="status-cell bypass"><span class="dot"></span>Bypass</span></td>
-          <td class="setting-cell bypass-label">&mdash;</td>
-          <td class="schedule-stage">pre-finishing</td>
+          <td class="setting-cell plain">&mdash;</td>
+          <td class="stage-cell">pre-finishing</td>
         </tr>
         <tr>
-          <td class="component-name">6" Roller S1</td>
+          <td class="component-name">6&Prime; Roller S1</td>
           <td><span class="status-cell"><span class="dot"></span>Active</span></td>
-          <td class="setting-cell">Gap 0.0162"</td>
-          <td class="schedule-stage">stage 1</td>
+          <td class="setting-cell">Gap 0.0180&Prime;</td>
+          <td class="stage-cell">stage 1</td>
         </tr>
         <tr>
-          <td class="component-name">Edger</td>
+          <td class="component-name">6&Prime; Roller S2</td>
           <td><span class="status-cell"><span class="dot"></span>Active</span></td>
-          <td class="setting-cell plain">Round edge</td>
-          <td class="schedule-stage">stage 1</td>
+          <td class="setting-cell">Gap 0.0162&Prime; &middot; Edger: Round edge</td>
+          <td class="stage-cell">stage 2</td>
         </tr>
         <tr>
-          <td class="component-name">6" Roller S2</td>
+          <td class="component-name">6&Prime; Roller S3<span class="nobypass-tag" title="OI-04: the SRS names 6&quot;S3 as the stand that cannot be bypassed; the DDL, API and HMI name 6&quot;S2. S3 is the working answer.">cannot bypass &middot; OI-04</span></td>
           <td><span class="status-cell"><span class="dot"></span>Active</span></td>
-          <td class="setting-cell">Gap 0.0160" &middot; final</td>
-          <td class="schedule-stage">stage 2</td>
-        </tr>
-        <tr>
-          <td class="component-name">Edger</td>
-          <td><span class="status-cell"><span class="dot"></span>Active</span></td>
-          <td class="setting-cell plain">Round edge</td>
-          <td class="schedule-stage">stage 2</td>
+          <td class="setting-cell">Gap 0.0160&Prime; &middot; Edger: Round edge &middot; final</td>
+          <td class="stage-cell">stage 3</td>
         </tr>
       </tbody>
     </table>
+
+    <div class="ps-note">
+      <span class="ps-note-icon">i</span>
+      <span>FM2 tags push <strong>only on acknowledgement</strong>, after the traceability records are written. No visual inspection here &mdash; the spool was inspected at FL1.
+        <span class="open-flag" title="Undocumented: SpoolCheckin.InspectionSurface is NOT NULL in FlatWire_DDL_04_Runs.sql:280-317, but FR-095 forbids an inspection section on this screen, so nothing here can supply the value.">InspectionSurface has no source</span>
+      </span>
+    </div>
   </div>
 
+  <!-- ═══ 4. Footer — pre-flight gate ═══ -->
   <div class="footer panel">
-    <div class="footer-status">
+    <div class="preflight">
       <div class="progress-ring">
-        <svg viewBox="0 0 36 36">
-          <circle class="progress-ring-bg" cx="18" cy="18" r="15"/>
-          <circle class="progress-ring-fill" cx="18" cy="18" r="15" stroke-dasharray="94" stroke-dashoffset="15.7"/>
+        <svg viewBox="0 0 34 34">
+          <circle class="progress-ring-bg" cx="17" cy="17" r="14"/>
+          <circle class="progress-ring-fill" id="ring-fill" cx="17" cy="17" r="14" stroke-dasharray="87.96" stroke-dashoffset="87.96"/>
         </svg>
-        <div class="progress-ring-text">5/6</div>
+        <div class="progress-ring-text" id="ring-text">0/5</div>
       </div>
-      <span id="footer-status-text"><strong>5 of 6 steps complete</strong> &middot; confirm pass schedule to proceed</span>
+      <div class="pf-summary">
+        <span class="pf-count" id="pf-count">Pre-flight</span>
+        <span class="pf-msg" id="pf-msg">Checking&hellip;</span>
+      </div>
+      <div class="pf-chips" id="pf-chips">
+        <button class="pf-chip" type="button" data-pf="0" data-focus="spool-alpha">Spool ready</button>
+        <button class="pf-chip" type="button" data-pf="1" data-focus="in-gauge">Dimensions</button>
+        <button class="pf-chip" type="button" data-pf="2" data-focus="in-gross">Weight</button>
+        <button class="pf-chip" type="button" data-pf="3" data-focus="btn-confirm-ps">Schedule</button>
+        <button class="pf-chip" type="button" data-pf="4">Origin</button>
+      </div>
     </div>
+
     <div class="footer-actions">
-      <button class="btn">Cancel</button>
-      <button class="btn btn-primary" id="acknowledge-btn" disabled>Acknowledge &amp; Begin Check-in</button>
+      <button class="btn" type="button" id="cancel-btn">Cancel</button>
+      <button class="btn btn-primary" id="acknowledge-btn" type="button" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        Acknowledge &amp; start FL2 run
+      </button>
     </div>
   </div>
 
 </div>
 
 <script>
-  (function () {
-    function pad(n) { return String(n).padStart(2, "0"); }
-
-    function updateClock() {
-      var now = new Date();
-      var h = now.getHours();
-      var m = pad(now.getMinutes());
-      var ampm = h < 12 ? "AM" : "PM";
-      var h12 = h % 12 || 12;
-      var clockEl = document.getElementById("clock");
-      if (clockEl) clockEl.textContent = pad(h12) + ":" + m + " " + ampm;
-      var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-      var dateEl = document.getElementById("date");
-      if (dateEl) dateEl.textContent = months[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
-
-    // Pass schedule confirmation
-    var psRecommendedId = "PS-1100-FL2-007";
-    var psCurrentId = psRecommendedId;
-    var psConfirmBar = document.getElementById("ps-confirm-bar");
-    var psConfirmMatch = document.getElementById("ps-confirm-match");
-    var btnConfirmPs = document.getElementById("btn-confirm-ps");
-    var btnChangePs = document.getElementById("btn-change-ps");
-    var psChangeDropdown = document.getElementById("ps-change-dropdown");
-    var psScheduleLabel = document.getElementById("ps-schedule-id-label");
-    var acknowledgeBtn = document.getElementById("acknowledge-btn");
-    var footerText = document.getElementById("footer-status-text");
-    var ringFill = document.querySelector(".progress-ring-fill");
-    var ringText = document.querySelector(".progress-ring-text");
-
-    function setProgress(done, total) {
-      var offset = 94.25 * (1 - done / total);
-      if (ringFill) ringFill.setAttribute("stroke-dashoffset", offset.toFixed(1));
-      if (ringText) ringText.textContent = done + "/" + total;
-    }
-
-    function confirmSchedule(id) {
-      psCurrentId = id;
-      if (psScheduleLabel) psScheduleLabel.textContent = id;
-      psConfirmBar.classList.add("confirmed");
-      btnConfirmPs.style.display = "none";
-      if (id === psRecommendedId) {
-        psConfirmMatch.innerHTML = "&#10003; Schedule confirmed &mdash; <strong>" + id + "</strong>";
-      } else {
-        psConfirmMatch.innerHTML = "&#10003; Schedule changed to <strong>" + id + "</strong> &mdash; <span style=\"color:var(--color-text-danger);font-size:14px;\">&#9888; Flagged for Operations review</span>";
+  /* Context provider for the shared WIP rejection dialog. The out-of-spec path
+     is a PRE-CHECK-IN rejection: the spool has not run on FL2, so there is no
+     FL2 runId and no footage position on this line. */
+  function fwWipCtx() {
+    return {
+      materialAlpha: document.getElementById("spool-alpha").value.trim() || "SP-00031",
+      orderNo: "FW-00421",
+      stage: "FL2 · spool check-in",
+      footagePosition: null,
+      runId: null,
+      operator: "Sam Patel",
+      trigger: "pre-checkin",
+      measurement: {
+        name: "Gauge (FL1 profile)",
+        measured: "0.1163″ peak",
+        targetMin: "0.111″",
+        targetMax: "0.115″",
+        deviation: "+0.0013″ over max"
       }
-      acknowledgeBtn.disabled = false;
-      if (footerText) footerText.innerHTML = "<strong>All required fields complete</strong> &middot; ready to acknowledge &amp; load to TPO";
-      setProgress(6, 6);
-    }
-
-    acknowledgeBtn.addEventListener("click", function () {
-      window.location.href = "dashboard_3_active_run_fl2.html";
-    });
-
-    btnConfirmPs.addEventListener("click", function () { confirmSchedule(psCurrentId); });
-
-    btnChangePs.addEventListener("click", function (e) {
-      e.stopPropagation();
-      psChangeDropdown.classList.toggle("open");
-    });
-
-    document.querySelectorAll(".ps-dropdown-item").forEach(function (item) {
-      item.addEventListener("click", function (e) {
-        e.stopPropagation();
-        psChangeDropdown.classList.remove("open");
-        confirmSchedule(item.getAttribute("data-id"));
-      });
-    });
-
-    document.addEventListener("click", function () { psChangeDropdown.classList.remove("open"); });
-  })();
+    };
+  }
 </script>
 
+<script>
+(function () {
+  "use strict";
+
+  /* ── State ─────────────────────────────────────────────────────────────── */
+  var RECOMMENDED = "PS-1100-FL2-007";
+  var state = {
+    sim: "nominal",
+    spoolReady: true,       // pre-flight 1
+    scheduleFound: true,    // pre-flight 4 (resolved)
+    scheduleConfirmed: false,
+    scheduleId: RECOMMENDED,
+    deviation: false,       // a non-recommended schedule was chosen
+    hybridOrigin: false,    // pre-flight 5
+    outOfSpec: false
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  function show(el, on) { if (el) el.classList.toggle("hide", !on); }
+
+  /* ── Clock + timeline ──────────────────────────────────────────────────
+     The old screen TYPED its timestamps and they contradicted each other: the
+     spool was staged at 07:24 from a run that "completed 07:02" while the run
+     monitor said it was loaded 06:54 — before its own source run finished — and
+     the stated 38m dwell was 22m by the clock. The whole timeline is now
+     DERIVED from the wall clock and stays internally consistent whenever the
+     page is opened. Order is fixed: weld -> FL1 run complete -> loaded at TPO. */
+  var AGO_MIN = { weld: 163, fl1Done: 111, loaded: 97 };
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+
+  function clockStr(d) {
+    var h = d.getHours();
+    return pad(h % 12 || 12) + ":" + pad(d.getMinutes()) + " " + (h < 12 ? "AM" : "PM");
+  }
+
+  function minutesAgo(n) { return new Date(Date.now() - n * 60000); }
+
+  function fmtDur(mins) {
+    return mins >= 60 ? Math.floor(mins / 60) + "h " + (mins % 60) + "m" : mins + "m";
+  }
+
+  function tick() {
+    var el = $("clock");
+    if (el) el.textContent = clockStr(new Date());
+
+    setText("t-fl1done", clockStr(minutesAgo(AGO_MIN.fl1Done)));
+    setText("t-loaded",  clockStr(minutesAgo(AGO_MIN.loaded)));
+    setText("t-weld",    clockStr(minutesAgo(AGO_MIN.weld)));
+    setText("dwell",     fmtDur(AGO_MIN.loaded));
+  }
+
+  function setText(id, v) { var e = $(id); if (e) e.textContent = v; }
+
+  /* ── Pre-flight gate ───────────────────────────────────────────────────
+     Five checks, verbatim from RocCheckin.md §4.1. Each returns one of
+     "ok" | "warn" | "err" plus the message shown when it is not ok. */
+  var CHECKS = [
+    {
+      label: "Spool ready",
+      run: function () {
+        var v = $("spool-alpha").value.trim();
+        if (!v) return { s: "err", m: "Scan or enter the spool identifier printed at FL1 output." };
+        if (!state.spoolReady) {
+          return { s: "err", m: "Spool " + v + " is not ready for FL2 — status is Running at FL1." };
+        }
+        return { s: "ok" };
+      }
+    },
+    {
+      label: "Dimensions",
+      run: function () {
+        var g = $("in-gauge").value.trim(), w = $("in-width").value.trim();
+        if (!g || !w) return { s: "err", m: "Enter the measured gauge and width, or confirm them from the FL1 production data." };
+        return { s: "ok" };
+      }
+    },
+    {
+      label: "Weight",
+      run: function () {
+        if (!$("in-gross").value.trim()) return { s: "err", m: "Enter the gross weight." };
+        return { s: "ok" };
+      }
+    },
+    {
+      label: "Schedule",
+      run: function () {
+        /* CI-1: no PLC tag is pushed before an explicit confirmation, so
+           "resolved" is not the same as "confirmed" and does not pass. */
+        if (!state.scheduleFound) {
+          return { s: "err", m: "No active FL2 pass schedule — contact Operations." };
+        }
+        if (!state.scheduleConfirmed) {
+          return { s: "warn", m: "Confirm the schedule — FM2 tags are pushed from it." };
+        }
+        return { s: "ok" };
+      }
+    },
+    {
+      label: "Origin",
+      run: function () {
+        /* OQ-52 / OI-47. TC-118: "Behaviour undefined — gate fails until
+           specified." So a hybrid-origin spool blocks rather than passing. */
+        if (state.hybridOrigin) {
+          return { s: "warn", m: "Hybrid-origin spool — applying a standalone FL2 schedule is undefined (OQ-52)." };
+        }
+        return { s: "ok" };
+      }
+    }
+  ];
+
+  function evaluate() {
+    var results = CHECKS.map(function (c) { return c.run(); });
+    var passed = 0, firstBad = null;
+
+    results.forEach(function (r, i) {
+      var chip = document.querySelector('.pf-chip[data-pf="' + i + '"]');
+      if (!chip) return;
+      chip.classList.remove("warn", "err");
+      if (r.s === "ok") { passed++; }
+      else {
+        chip.classList.add(r.s);
+        if (firstBad === null) firstBad = { i: i, r: r };
+      }
+    });
+
+    /* Ring: circumference for r=14 is 2*pi*14 = 87.96. */
+    var ring = $("ring-fill");
+    if (ring) ring.setAttribute("stroke-dashoffset", (87.96 * (1 - passed / 5)).toFixed(2));
+    $("ring-text").textContent = passed + "/5";
+    $("pf-count").textContent = passed + " of 5 pre-flight checks passed";
+
+    var msg = $("pf-msg");
+    if (firstBad) {
+      msg.textContent = firstBad.r.m;
+      msg.classList.toggle("blocked", firstBad.r.s === "err");
+    } else {
+      msg.textContent = state.deviation
+        ? "Ready — schedule change flagged for Operations review."
+        : "Ready to acknowledge — FM2 tags push on confirm.";
+      msg.classList.remove("blocked");
+    }
+
+    $("acknowledge-btn").disabled = passed < 5;
+
+    /* Field-level invalid marks, so the chip and the field agree. */
+    $("spool-alpha").classList.toggle("invalid", results[0].s === "err");
+    var scan = $("scan-state");
+    scan.textContent = results[0].s === "ok" ? "✓" : "✕";
+    scan.className = "scan-state " + (results[0].s === "ok" ? "ok" : "err");
+    ["in-gauge", "in-width"].forEach(function (id) {
+      $(id).classList.toggle("invalid", !$(id).value.trim());
+    });
+    $("in-gross").classList.toggle("invalid", !$("in-gross").value.trim());
+  }
+
+  /* Clicking a chip takes the operator to what is blocking it. */
+  $("pf-chips").addEventListener("click", function (e) {
+    var chip = e.target.closest(".pf-chip");
+    if (!chip) return;
+    var target = chip.getAttribute("data-focus");
+    var el = target && $(target);
+    if (el && !el.disabled && el.offsetParent !== null) { el.focus(); el.select && el.select(); }
+  });
+
+  ["spool-alpha", "in-gauge", "in-width", "in-gross"].forEach(function (id) {
+    $(id).addEventListener("input", evaluate);
+  });
+
+  /* ── Pass-schedule confirmation (CI-1 / CI-5) ──────────────────────────── */
+  function confirmSchedule(id) {
+    state.scheduleId = id;
+    state.scheduleConfirmed = true;
+    state.deviation = (id !== RECOMMENDED);
+
+    $("ps-id-label").textContent = id;
+    var bar = $("ps-confirm-bar");
+    bar.classList.remove("none");
+    bar.classList.add("confirmed");
+    show($("btn-confirm-ps"), false);
+
+    $("ps-confirm-match").innerHTML = state.deviation
+      ? "&#10003; Schedule changed to <strong>" + id + "</strong> &mdash; <span style=\"color:var(--color-text-danger)\">&#9888; flagged for Operations review</span>"
+      : "&#10003; Schedule confirmed &mdash; <strong>" + id + "</strong>";
+
+    evaluate();
+  }
+
+  $("btn-confirm-ps").addEventListener("click", function () { confirmSchedule(state.scheduleId); });
+
+  $("btn-change-ps").addEventListener("click", function (e) {
+    e.stopPropagation();
+    $("ps-change-dropdown").classList.toggle("open");
+  });
+
+  document.querySelectorAll(".ps-dropdown-item").forEach(function (item) {
+    item.addEventListener("click", function (e) {
+      e.stopPropagation();
+      $("ps-change-dropdown").classList.remove("open");
+      confirmSchedule(item.getAttribute("data-id"));
+    });
+  });
+
+  document.addEventListener("click", function () {
+    $("ps-change-dropdown").classList.remove("open");
+  });
+
+  /* ── Out-of-spec routing ───────────────────────────────────────────────
+     TC-112's badge needs somewhere to go. A pre-check-in WIP rejection is the
+     route; never navigate away and never stack a second dialog. */
+  $("btn-reject").addEventListener("click", function () {
+    if (typeof window.openWipRejection === "function") {
+      window.openWipRejection(fwWipCtx());
+    } else {
+      window.location.href = "dashboard_8_wip_rejection.html";
+    }
+  });
+
+  $("acknowledge-btn").addEventListener("click", function () {
+    if (this.disabled) return;
+    window.location.href = "dashboard_3_active_run_fl2.html";
+  });
+
+  $("cancel-btn").addEventListener("click", function () {
+    window.location.href = "dashboard_1_line_status.html";
+  });
+
+  /* ── Demo states ───────────────────────────────────────────────────────
+     Every failure path above is reachable from here, so none of it is dead CSS. */
+  function resetSchedule() {
+    state.scheduleConfirmed = false;
+    state.deviation = false;
+    state.scheduleId = RECOMMENDED;
+    var bar = $("ps-confirm-bar");
+    bar.classList.remove("confirmed", "none");
+    show($("btn-confirm-ps"), true);
+    show($("ps-confirm-actions"), true);
+    $("ps-id-label").textContent = RECOMMENDED;
+    $("ps-confirm-match").innerHTML = "System recommends <strong>" + RECOMMENDED + "</strong> &mdash; matched on Alloy&nbsp;1100, in&nbsp;0.113&Prime;&nbsp;&times;&nbsp;0.640&Prime;, out&nbsp;0.110&Prime;&nbsp;&times;&nbsp;0.630&Prime;, Round&nbsp;edge";
+    $("schedule-table").classList.remove("disabled");
+  }
+
+  function applySim(kind) {
+    state.sim = kind;
+    state.spoolReady = true;
+    state.scheduleFound = true;
+    state.hybridOrigin = false;
+    state.outOfSpec = false;
+    resetSchedule();
+
+    $("spool-alpha").value = "SP-00031";
+    $("in-gauge").value = "0.113″";
+    $("in-width").value = "0.640″";
+    $("in-gross").value = "3,480 lb";
+    $("fact-resolved").innerHTML = "Resolved <strong>SP-00031</strong> &middot; ready for FL2";
+    $("trace-foot").className = "trace-foot";
+    $("trace-foot").innerHTML = "<span>FL1 run <strong>RUN-0117</strong> &middot; standalone</span><span>Output <strong>SP-00031</strong></span>";
+
+    /* Profile: nominal vs the out-of-spec excursion. */
+    var bad = kind === "outofspec";
+    state.outOfSpec = bad;
+    show($("trace-ok"), !bad);
+    show($("trace-bad"), bad);
+    show($("btn-reject"), bad);
+    var v = $("verdict");
+    v.classList.toggle("bad", bad);
+    v.innerHTML = bad
+      ? "<span class=\"dot\"></span>412 ft out of spec"
+      : "<span class=\"dot\"></span>All 3,200 ft in spec";
+    $("st-min").innerHTML = bad ? "0.111&Prime;" : "0.111&Prime;";
+    $("st-max").innerHTML = bad ? "0.1163&Prime;" : "0.115&Prime;";
+    $("st-sd").innerHTML  = bad ? "0.0019&Prime;" : "0.0011&Prime;";
+
+    if (kind === "notready") {
+      state.spoolReady = false;
+      $("spool-alpha").value = "SP-00033";
+      $("fact-resolved").innerHTML = "<span class=\"fact-err\">SP-00033 — status Running at FL1, not released for FL2</span>";
+    }
+
+    if (kind === "noschedule") {
+      /* OQ-51 / OI-46 (Critical): the no-match path was undefined and no screen
+         showed it. This is a proposal, not a settled rule. */
+      state.scheduleFound = false;
+      var bar = $("ps-confirm-bar");
+      bar.classList.add("none");
+      show($("ps-confirm-actions"), false);
+      $("ps-confirm-match").innerHTML = "&#9888; <strong>No active FL2 pass schedule</strong> matches Alloy&nbsp;1100, in&nbsp;0.113&Prime;&nbsp;&times;&nbsp;0.640&Prime;, out&nbsp;0.110&Prime;&nbsp;&times;&nbsp;0.630&Prime; &mdash; contact Operations. <em>No-match behaviour is undefined (OQ-51).</em>";
+      $("ps-id-label").textContent = "—";
+      $("schedule-table").classList.add("disabled");
+    }
+
+    if (kind === "hybrid") {
+      state.hybridOrigin = true;
+      $("trace-foot").className = "trace-foot hybrid";
+      $("trace-foot").innerHTML = "<span>FL1 leg of hybrid run <strong>RUN-0121</strong> &middot; schedule <strong>PS-1100-FL3-003</strong></span><span class=\"open-flag\">OQ-52 guard undefined</span>";
+    }
+
+    if ($("sim-select").value !== kind) $("sim-select").value = kind;
+
+    evaluate();
+  }
+
+  $("sim-select").addEventListener("change", function () { applySim(this.value); });
+
+  /* ── Boot ──────────────────────────────────────────────────────────────── */
+  tick();
+  setInterval(tick, 1000);
+  applySim("nominal");
+})();
+</script>
+
+<script src="fw-modal.js"></script>
+<script src="wip_rejection.js"></script>
 <script src="flat-wire-topbar.js"></script>
 <script src="flat-wire-fit.js" data-fit="fill"></script>
 </body>

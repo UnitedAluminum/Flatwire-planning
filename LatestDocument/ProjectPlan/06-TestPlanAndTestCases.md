@@ -275,8 +275,17 @@ Testing resumes when the suspending condition is cleared **and** the affected su
 | **TC-064** | `Available` rows have null `rodSeqno` | K | P2 | `[API §4.7]` | Query the queue | Unprocessed rods carry `rodSeqno: null` and sort after processed rods | — | ✓ |
 | **TC-065** | Payoff bar coloured by **absolute pounds** | C | P2 | FR-034 | Weight at 2,900 lb on a large-capacity bay | **Warning colour** (below 3,000 lb) regardless of percent | — | ✓ |
 | **TC-066** | Critical when Payoff 2 unstaged and Payoff 1 < 2,000 lb | C | **P1** | FR-034 | Set that state | Critical styling and the "no weld material" alert | — | ✓ |
-| **TC-067** | Mark-as-Welded validates against the running coil | I | P2 | FR-050 / `WLD006` | Staged rod with a different alloy → mark as welded | Rejected with a clear validation error | — | ✓ |
-| **TC-068** | **Mark-as-Welded does not switch bays** | I | **P1** | FR-051 / `WLD005` | Mark as welded → inspect bay state | Weld recorded; **bays unchanged**. Transition happens only at 0 ft remaining | — | ✓ |
+| **TC-067** | Mark-as-Welded validates against the running coil | I | P2 | FR-050 / `WLD006` | Staged rod with a different alloy → mark as welded | Rejected with a clear validation error, **regardless of the quality result selected** | — | ✓ |
+| **TC-068** | **Mark-as-Welded does not switch bays** | I | **P1** | FR-051 / `WLD005` | Mark as welded (**quality Pass**) → inspect bay state | Weld recorded; **bays unchanged**. Transition happens only at 0 ft remaining | — | ✓ |
+| **TC-068i** | **Outgoing / incoming resolved from the running bay, not the clicked card** | I | **P1** | FR-050a / `WLD010` | Reach the **transposed** arrangement — **Payoff 2 running, Payoff 1 staged** — then open *Mark as welded* from the Payoff 1 card | Outgoing = Payoff **2**'s rod, incoming = Payoff **1**'s rod, and the labels read *Outgoing — Payoff 2* / *Incoming — Payoff 1*. **Never transposed.** This is the rule the control's move onto the bay cards could most easily have broken | — | ✓ |
+| **TC-068a** | **Weld quality is mandatory** | C | **P1** | `PCI022` / `WLD013` | Open Mark as welded | **Neither Pass nor Fail pre-selected**; Confirm disabled until one is chosen | — | ✓ |
+| **TC-068b** | **A fail reason is mandatory on Fail** | C | **P1** | `PCI022` / `WLD013` / `CK_WeldEvent_FailReason` | Select **Fail**, leave the reason unset | Confirm **disabled**; enabled only once a reason is chosen; API returns `422` if posted without one | — | ✓ |
+| **TC-068c** | **A failed weld does not mark the rod welded** | I | **P1** | `PCI022` (D7) | Record a weld with quality **Fail** + reason | `WeldEvent` row written with `WeldQuality='Fail'`; **`RodStaging.IsWelded` stays `0`**; bay still reads *not yet welded*; the station states the failure and its reason; Mark as welded **stays enabled** | — | ✓ |
+| **TC-068d** | **A remade weld keeps both records** | I | P2 | `PCI022` (D7) / Q24 | After TC-068c, record a second weld with quality **Pass** | Bay now reads **welded**; **two** `WeldEvent` rows exist for the same rod pair; *Welds this run* lists both, the failure in its fail styling with its reason | — | ✓ |
+| **TC-068e** | **Welds this run is read-only and run-scoped** | C | P2 | `PCI021` / FR-051a | Open *Welds this run* **on the active bay card** | Lists only welds for the **active `RunId`**; **no confirm, edit or delete control**; a run with no welds shows the empty state, not an error, and the control stays **enabled at count 0** | — | ✓ |
+| **TC-068f** | **Welds this run is absent at cold start** | C | P2 | FR-051a / Q83 | Cold start — no rod running on either payoff | There is no active bay card, so **the control is not rendered at all**. *(Revised 1 Aug 2026 — it was previously a station-level control shown disabled with "no run in progress". Retest against Q83 once the client confirms.)* | — | ✓ |
+| **TC-068g** | **Mark as welded lives on the staged card and states why it is unavailable** | C | P2 | FR-050 | Cycle the staged card through: nothing running · other bay blocked · already welded · previous weld failed | Control is present on the **staged** card in every case; disabled for the first three with the matching explanation, enabled for the fourth reading *"Remake the failed weld"* | — | ✓ |
+| **TC-068h** | **The active bay card offers no run link and no primary** | C | P3 | FR-051b | Inspect the active bay card | Actions are **Check out rod** and **Welds this run · N** only — **no *Open active run*** and **no emphasised (primary) action** | — | ✓ |
 | **TC-069** | Pre-check-out reverses the WIP queue entry | I | P2 | FR-053 | Staged rod → pre-check-out | `Status='Unstaged'` with the audit stamp; `RodCheckout` Mode P written with null `RunId`, footage 0, `PlcTagsCleared` false; **the `wip_coil_orders` entry created at staging is reversed**; `PayoffStateChanged{NotStaged}` broadcast; **no line-state gate applied** | — | ✓ |
 
 ### 5.2 Rod check-in — TC-070 … TC-109
@@ -293,6 +302,7 @@ Testing resumes when the suspending condition is cleared **and** the affected su
 | **TC-077** | Inspection failure routes to WIP Rejection | C | **P1** | FR-068 / `CHK010` | Fail a visual inspection item | Hard block; routed to DB8; **no bypass** | — | ✓ |
 | **TC-078** | Pre-run SPC ovality derived and gated | C | **P1** | FR-069 / `CHK011` | Enter M1 0.375, M2 0.374 | Ovality shows **0.001**; Acknowledge stays disabled until it is within tolerance | — | ✓ |
 | **TC-079** | **Acknowledge disabled until all six wizard steps clear** | C | **P1** | FR-079 | Complete five of six steps | Footer **Acknowledge & Begin Check-in** disabled; `n/6` progress accurate | — | ✓ |
+| **TC-079a** | **Acknowledge returns the operator to DB2A** | C | P2 | FR-079a / Q84 | Clear all six steps and press **Acknowledge & Begin Check-in** | Run opens and the operator lands on **DB2A — Rod Pre-Check-in**, *not* DB3. *(Revised 1 Aug 2026 — previously DB3. Retest against Q84 once the client confirms.)* | — | ✓ |
 | **TC-080** | Supervisor override unlocks a failed machine inspection | C | P2 | FR-081 | Mark an OK/NG/NA item NG → authorise override | Rod on hold; override requires badge, password **and a reason**; then Acknowledge enables | — | ✓ |
 | **TC-081** | Attribute lookup recommends a schedule | I | P2 | FR-070 / `CHK014` | Alloy + diameter + target + route match one Active schedule | Confirm bar surfaces the recommendation; component table shows Active vs Bypassed | — | ✓ |
 | **TC-082** | Non-recommended selection requires a reason and is flagged | I | P2 | FR-071 / `PSM018` | Choose an alternate schedule | Free-text reason required; selection flagged for Operations review | — | ✓ |
@@ -315,7 +325,7 @@ Testing resumes when the suspending condition is cleared **and** the affected su
 | **TC-099** | Hub events on successful check-in | R | P2 | `[SRS §5.2]` | Successful check-in | `LineStatus{Running}`, `PayoffStateChanged{Active}` and `ComponentStatus` all emitted | — | ✓ |
 | **TC-100** | **No-match schedule path** | I | **P1** | FR-070 | Order attributes match no Active schedule | **Behaviour is undefined — OI-46.** Test **records observed behaviour** and fails the gate until the path is specified | — | ✗ |
 
-### 5.3 Spool check-in — TC-110 … TC-124
+### 5.3 Spool check-in — TC-110 … TC-118
 
 | TC | Title | Lvl | Pri | FR / Source | Preconditions → Steps | Expected result | Auto |
 |---|---|---|---|---|---|---|---|
@@ -328,6 +338,23 @@ Testing resumes when the suspending condition is cleared **and** the affected su
 | **TC-116** | Acknowledgement pushes FM2 tags and opens the run | I | **P1** | FR-096 | Acknowledge | FM2 tags pushed (8″, S1/S2/S3 gaps, edger activation, edge type); `Spool.Status = INFLAT`; FL2 run created linked to the spool **and its source rod alphas** | ✓ |
 | **TC-117** | Pre-flight validation battery | I | P2 | `[SRS §5.3]` | Each of: invalid spool · missing gauge/width · missing weight · no schedule | Each blocks with its own message | ✓ |
 | **TC-118** | Hybrid-origin guard | I | **P1** | FR-091 | Standalone FL2 schedule applied to Hybrid-origin material | **Behaviour undefined — OI-47.** Records observed behaviour; gate fails until specified | ✗ |
+
+### 5.3a Spool queue (DB5A) — TC-119 … TC-126
+
+| TC | Title | Lvl | Pri | FR / Source | Preconditions → Steps | Expected result | Auto |
+|---|---|---|---|---|---|---|---|
+| **TC-119** | Default list needs no scan | C | **P1** | FR-097 | Open DB5A with spools available | Every spool available for processing is listed **irrespective of order**, with the count / ready / weight rollup. No interaction required | ✓ |
+| **TC-120** | Scan resolves the order and its spools in one call | I | **P1** | FR-098 | Enter `SP-00031` | **One** request; the order bar fills with order no, customer, alloy, temper, setup dims and due date, **and** the list narrows to that order's spools together. The scanned spool is marked | ✓ |
+| **TC-121** | No submit control; scanner and keyboard both work | C | P2 | FR-098 | Enter via a wedge scanner (terminating Enter) and by typing | Both resolve — Enter immediately, typing after a short debounce. **No Find/Search button exists** | ✓ |
+| **TC-122** | **A failed scan does not move the list** | C | **P1** | FR-099 | With a list displayed, scan an unknown alpha | Field marked, message names the alpha, **the displayed list is byte-identical to before the scan** | ✓ |
+| **TC-123** | Unallocated spool is a result, not an error | I | **P1** | FR-099 | Scan a spool whose `OrderNo` is null | `200` with a null order and a **single row**; bar states it is unallocated; **check-in is still offered**. Must not be a `404` | ✓ |
+| **TC-124** | Eligibility gates the check-in action | C | P2 | FR-099 | List containing `RECEIVED`, `STAGED`, `HOLD`, `INFLAT`, `COMPLETE` | Check-in offered only for `RECEIVED`/`STAGED`; `HOLD` marked and actionless; the rest listed without action | ✓ |
+| **TC-125** | Hybrid-origin spools are marked | C | P2 | FR-099 | List containing a `Hybrid` origin spool | Row visibly marked and cites OI-47 | ✓ |
+| **TC-126** | Column set is identical in both modes | C | P2 | FR-097, 098 | Compare default and scanned views | Same columns in the same order. **Order column present in both** — it is meaningful in the default view and holds the table steady in the scanned one | ✓ |
+
+> **TC-120 depends on `Spool.OrderNo` being populated from planning.** If allocation is not written
+> back to the shopfloor system there is nothing to resolve and the whole screen fails, not just this
+> case. Confirm before executing the suite.
 
 ### 5.4 Active run — TC-130 … TC-159
 

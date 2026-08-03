@@ -8,6 +8,17 @@ Hand the block below to Claude Code (or any agent with repo access) to get a cri
 re-plan of the Dashboard 2A operator screen. It is a **design/analysis** prompt — it asks for a
 plan, not an implementation.
 
+> **⚠ The prompt below describes the screen as it stood on 30 Jul 2026 and is now partly out of
+> date.** It says *"Five regions compete for a fixed 1024px: header, two payoff bays, weld strip,
+> queue, footer"* (lens 2) and asks whether *"the weld strip is in the right place relative to the two
+> bays it joins"* (lens 5). **The weld strip was removed on 1 Aug 2026** — there are now four regions,
+> and its two controls sit on the bay cards (*Mark as welded* on the staged card, *Welds this run* on
+> the active one). Lens 5's question was, in effect, answered: it was not in the right place.
+>
+> The prompt is kept because the other eight lenses are unaffected and the framing is still the right
+> one. **Re-word lenses 2 and 5 before reusing it**, or the reviewer will critique a layout that no
+> longer exists. Current layout: `Analysis/FlatWireShopfloorDashboards.md` § *Dashboard 2A*.
+
 ---
 
 ## The prompt

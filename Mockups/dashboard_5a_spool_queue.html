@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>FL2 spool queue &middot; DB5A</title>
+<link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
+<style>
+  /* ─────────────────────────────────────────────────────────────────────────
+     Dashboard 5A — FL2 Spool Queue
+     SRS §5.3a FR-097–FR-099 · Phase 8 · Story FW-124 · Tests TC-119–TC-126
+
+     NEW SCREEN, 2 Aug 2026. Before this there was no spool list anywhere in the
+     system: no screen, no nav tile, and no read endpoint — POST /checkin/spool
+     was the ONLY spool endpoint, so even DB5's scan field validated against
+     nothing. The nearest things were a count tile on the shift summary
+     ("Spools on floor · 2") whose link arrow went nowhere, and a one-row test
+     fixture in CheckinImplementationPlan.md.
+
+     WHY IT EXISTS — three reasons, in order of weight:
+
+       1. FL2 HAS NO VIEW OF ITS OWN WORK QUEUE. FL1 has DB2A's staging queue.
+          FL2 is excluded from staging by PCI002 ("no staging space. FL2 is
+          check-in only"), so the FL2 operator had no way to see what was
+          waiting for them at all.
+       2. FR-090 SAYS SCAN; Q57 SAYS SELECT. The SRS has the operator scanning
+          the FL1-printed label. Q57 records the client saying "the operator on
+          FL2 selects it by spool number for check-in." Both are true here: the
+          scan resolves the order, and the list is what you select from.
+       3. "THE SPOOL QUEUE" WAS A DANGLING TERM. FR-326, TC-389, RodCheckout.md
+          and phase-07 all say an accepted partial spool "enters the spool
+          queue" — eight uses, and no table, endpoint, screen or status of that
+          name existed. This screen is it.
+
+     TWO MODES OVER ONE TABLE
+       Default  — every spool available for processing, irrespective of order.
+                  Useful the moment it opens; no scan required.
+       Scanned  — enter a spool number and the BACKEND resolves its order in a
+                  single round trip, returning the order details and that
+                  order's spools together. "Show all" returns to default.
+     The COLUMN SET NEVER CHANGES between modes. A table that grows and loses
+     columns as you scan reads as two different tables and costs the operator
+     their place. The Order column therefore stays in both.
+
+     NO SUBMIT BUTTON. The field resolves on Enter (how a wedge scanner
+     terminates) and on a 250ms debounce for hand typing — DB2A's barcode
+     handling. A "Find order" button would be dead weight; the scanner presses
+     Enter before an operator could reach it.
+
+     A FAILED SCAN MUST NEVER EMPTY THE SCREEN. Because the default list is
+     already up, an unmatched scan marks the field invalid and LEAVES THE LIST
+     EXACTLY AS IT WAS. Losing your place because you fat-fingered a digit is
+     the single most annoying thing a screen like this can do.
+
+     NO ALLOY / TEMPER COLUMNS. They are order-level, so they live in the
+     context bar — DB2A's stated rule: "every rod on the order shares them, so
+     they are stated once in the order header instead of repeated down every
+     row." This is also why dbo.Spool having no Alloy/Temper column stops
+     being a problem.
+
+     ── ONE SPOOL AT A TIME (client, 2 Aug 2026) ─────────────────────────────
+     FL2 HAS NO SPACE TO STAGE ANYTHING. A spool is therefore either waiting to
+     go on the line or it is on it — there is no third place for it to be.
+     Two consequences, both enforced on this screen:
+
+       1. TWO OPERATOR-VISIBLE STATUSES ONLY — "Ready for FL2" and
+          "Checked in". STAGED is an FL1/DB2A concept and PCI002 excludes FL2
+          from staging, so FL2 never sets it and the "At TPO" pill this screen
+          used to render is gone.
+       2. CHECK-IN IS EXCLUSIVE. While a spool is checked in, NO row offers
+          "Check in" — not the other spools and not the checked-in one. The
+          action comes back only after that spool is checked out. The
+          checked-in row sorts to the TOP and offers "View run" instead, so
+          the reason the button is missing is the first row on the screen,
+          reinforced by the amber lock bar above the list.
+
+     THE UI IS NOT THE ENFORCEMENT. Hiding a button is not a constraint:
+     nothing in dbo.Spool prevents two rows going INFLAT at once — there is no
+     filtered unique index, and Spool carries no LineId at all, so "checked in
+     on FL2" is not even expressible as a constraint today. POST /checkin/spool
+     has to reject the second check-in itself (409), and the schema needs a way
+     to say which line a spool is on. Flagged on screen, not assumed.
+
+     LAYOUT CONTRACT — .dashboard has a definite height (1024px), so the flex
+     children divide a fixed budget rather than growing the page:
+       app bar 70 (injected) + header 74 + scan 88 + context 56
+       + queue (flex, absorbs the remainder ~570, scrolls internally)
+       + footer 74, plus 5 x 12px gaps and 2 x 16px padding = 1024.
+     The lock bar is a SIXTH child (46px + gap) that exists only while a spool
+     is checked in; it comes out of the queue's flex remainder, which is why
+     the queue and not the page absorbs it.
+
+     THREE FLEX RULES, all three load-bearing:
+       1. .queue           { flex: 1 1 0; min-height: 0 }  — a flex item's
+          default min-height:auto refuses to shrink below its content.
+       2. .info-table-wrap { overflow: auto; flex: 1 1 0; min-height: 0 }
+          — the same trick one level down; THIS is what actually scrolls.
+       3. Sticky on TH, not THEAD, with an explicit background. A transparent
+          sticky th lets rows show through it.
+
+     ── WHAT THE DATA MODEL CANNOT GIVE US ───────────────────────────────────
+     dbo.Spool is built for a spool ARRIVING at FL2, not one waiting to go
+     there, so several obvious columns are impossible and are absent on purpose:
+
+       • NO AGE / DWELL COLUMN. There is no CreatedAt on Spool at all — only
+         CreatedBy. Spool age is not queryable. ReceivedAt is documented as
+         "received at FL2/FL3", so it is NULL for everything listed here.
+       • NO LOCATION COLUMN. Spool.Location is VARCHAR(50), nullable,
+         unindexed, and no document anywhere specifies what writes it.
+       • GAUGE/WIDTH ARE NOT FROM Spool. Spool.GaugeIn/WidthIn are documented
+         "set at FL2/FL3 check-in" — NULL for every row here. They must come
+         from the FL1 run via SourceRunId.
+       • SOURCE RODS ARE NOT FROM Spool EITHER. ParentRodAlpha and
+         SourceRodAlpha are two SINGLE-valued FKs. A spool carrying two welded
+         rods is many-to-many and lives in CoilTraceability/WeldEvent.
+       • Spool.OrderNo — the column this whole screen pivots on — is nullable,
+         unindexed and NOT a foreign key. Order attributes live in the shared
+         order schema, so the context bar is a CROSS-DATABASE read.
+
+     ── OPEN ITEMS RENDERED AND MARKED, not silently resolved ────────────────
+     Purple .open-flag chips, same convention as DB5.
+
+       OI-06 (PARTIALLY DECIDED) — TWO spool status vocabularies exist with
+         NOTHING mapping them: the schema's RECEIVED/STAGED/INFLAT/COMPLETE/
+         HOLD/SCRAP and the planning narrative's ACTIVE/IN-PLAN/IN-USE/
+         COMPLETED/SCRAPPED. The client has now fixed the FL2 OPERATOR-VISIBLE
+         set at two, which this screen binds to RECEIVED ("Ready for FL2") and
+         INFLAT ("Checked in"). That decides what the operator sees; it does
+         not decide the storage vocabulary, and the other four schema values
+         still have no defined FL2 presentation.
+       Q57 / OI-55 (SUPERSEDED for this screen) — no spool state machine
+         exists, so "which statuses count as available" had no defined answer;
+         RECEIVED + STAGED was this screen's proposal. The 2 Aug client rule
+         replaces it: RECEIVED is the only waiting state and INFLAT is listed
+         alongside it purely so the operator can see what is holding the line.
+         The rest of Q57 still stands — the alpha and the physical spool
+         NUMBER are different identifiers ("alphas are loaded onto a spool
+         number"), and dbo.Spool models only the alpha.
+       Q15 / OI-50 (Critical) — which identifier is scanned.
+       OI-02 (UNRESOLVED) — the alpha FORMAT is contested: SP-##### (schema)
+         vs TS###### (SRS narrative).
+       NEW, UNRAISED — single-check-in exclusivity has no backing constraint.
+         See "THE UI IS NOT THE ENFORCEMENT" above; flagged in the queue head.
+
+     DEMO STATES (header, dashed cluster — demo only, not a shipped control):
+       Default · Spool checked in · Order resolved · Spool not found ·
+       Unallocated spool · Hybrid origin · Nothing available.
+     The last two empty cases are DIFFERENT and are rendered differently:
+     "nothing available" is real and the operator should go find out why;
+     "scan matched nothing" is a typo and the list must not have moved.
+     ───────────────────────────────────────────────────────────────────────── */
+
+  .dashboard { height: 1024px; }
+
+  /* ── Header ── */
+  .header {
+    height: 74px;
+    padding: 12px 22px;
+    flex-shrink: 0;
+    border-left: 4px solid var(--color-blue);
+  }
+  .line-badge {
+    justify-content: center;
+    min-width: 52px; height: 34px; padding: 0 12px;
+    background: var(--color-blue); color: #ffffff;
+    font-size: 15px; font-weight: 600; letter-spacing: 0.4px;
+  }
+  .header h1 { white-space: nowrap; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .header-meta { gap: 16px; }
+  .header-meta > span { white-space: nowrap; }
+
+  /* The shared .btn is 52px — far too tall for a 74px header once the injected
+     "More Options" button lands in it. Every list screen in the suite
+     redefines it; 38-44px is the working range. */
+  .btn {
+    height: 40px; padding: 0 16px; font-size: 14px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    white-space: nowrap; text-decoration: none;
+  }
+  .btn svg { width: 14px; height: 14px; }
+  .btn-sm { height: 34px; padding: 0 12px; font-size: 14px; }
+
+  /* ── Open-item flag ──
+     Purple deliberately: amber already means "warning" and red means "error"
+     on these screens, and an unanswered specification question is neither. */
+  .open-flag {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 8px; border-radius: var(--border-radius-md);
+    background: var(--color-background-draft); color: var(--color-text-draft);
+    font-size: 14px; font-weight: 500; white-space: nowrap;
+  }
+  .open-flag::before { content: "?"; font-weight: 700; }
+
+  /* ── Scan panel ── */
+  .scan-panel {
+    height: 88px; flex-shrink: 0;
+    padding: 0 22px;
+    display: flex; align-items: center; gap: 18px;
+  }
+  .scan-lead { display: flex; flex-direction: column; gap: 2px; }
+  .scan-lead-title { font-size: 16px; font-weight: 500; }
+  .scan-lead-sub { font-size: 14px; color: var(--color-text-tertiary); }
+
+  .scan-wrap { position: relative; display: flex; align-items: center; width: 300px; }
+  .scan-wrap .input { padding-left: 40px; padding-right: 36px; }
+  .scan-icon {
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    color: var(--color-text-tertiary); pointer-events: none;
+    width: 18px; height: 18px;
+  }
+  .scan-state {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 15px; font-weight: 700; pointer-events: none;
+  }
+  .scan-state.ok  { color: var(--color-green); }
+  .scan-state.err { color: var(--color-red); }
+  .input.invalid {
+    border-color: var(--color-red);
+    background: var(--color-background-danger);
+  }
+  .scan-error {
+    font-size: 14px; color: var(--color-text-danger); font-weight: 500;
+  }
+  .scan-spacer { flex: 1; }
+
+  /* ── Context bar ──
+     One element, two modes. Default = the floor-wide rollup; scanned = the
+     resolved order. Swapping content rather than showing a second bar keeps
+     the budget fixed and stops the list jumping. */
+  .ctx-bar {
+    height: 56px; flex-shrink: 0;
+    padding: 0 22px;
+    display: flex; align-items: center; gap: 14px;
+    background: var(--color-background-info);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    color: var(--color-text-info);
+  }
+  .ctx-bar.order { background: var(--color-background-success); color: var(--color-text-success); }
+  .ctx-bar.none  { background: var(--color-background-draft);   color: var(--color-text-draft); }
+  .ctx-title { font-size: 15px; font-weight: 600; white-space: nowrap; }
+  .ctx-facts { display: flex; align-items: center; gap: 12px; font-size: 14px; min-width: 0; }
+  .ctx-facts .sep { opacity: 0.4; }
+  .ctx-facts strong { font-weight: 600; font-family: var(--font-mono); }
+  .ctx-spacer { flex: 1; }
+  .ctx-count { font-size: 14px; font-weight: 500; white-space: nowrap; }
+
+  /* ── Lock bar ──
+     Present only while a spool is checked in. It is the answer to "where did
+     the Check in button go", so it sits above the list rather than inside it —
+     an operator who cannot find the button will not find an explanation
+     hidden in a row they have to scroll to. Amber, not red: the line is
+     working exactly as intended, the operator simply cannot start another. */
+  .lock-bar {
+    height: 46px; flex-shrink: 0;
+    padding: 0 22px;
+    display: none; align-items: center; gap: 11px;
+    background: var(--color-background-warning);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    color: var(--color-text-warning);
+    font-size: 15px;
+  }
+  .lock-bar.show { display: flex; }
+  .lock-bar svg.lock-icon { width: 18px; height: 18px; flex-shrink: 0; }
+  .lock-bar .mono { font-family: var(--font-mono); font-weight: 600; }
+  .lock-sub { font-size: 14px; opacity: 0.85; }
+  .lock-spacer { flex: 1; }
+
+  /* ── Queue ──
+     flex 1 1 0 + min-height 0 lets this shrink below its content so the table
+     scrolls inside it. A queue is unbounded by nature — it must never be what
+     sets the page height. */
+  .queue {
+    flex: 1 1 0; min-height: 0;
+    display: flex; flex-direction: column;
+    padding: 12px 22px 14px;
+  }
+  .queue-head {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0; gap: 16px; margin-bottom: 9px;
+  }
+  .queue-title { font-size: 15px; font-weight: 600; }
+  .queue-meta { display: flex; align-items: center; gap: 10px; }
+
+  .info-table-wrap { overflow: auto; flex: 1 1 0; min-height: 0; }
+  .info-table { width: 100%; border-collapse: collapse; font-size: 14px; white-space: nowrap; }
+  .info-table th {
+    text-align: left; padding: 8px 10px; font-weight: 500; font-size: 14px;
+    color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.3px;
+    background: var(--color-background-secondary);
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    position: sticky; top: 0; z-index: 1;
+  }
+  .info-table th .open-flag { text-transform: none; letter-spacing: 0; margin-left: 6px; }
+  /* 6px, not 8: the Source cell is two lines (run over rods), so a row costs
+     ~52px. At 8px the nine-row default case already scrolled at the design
+     size — it still works, but a queue this size should fit without scrolling
+     and only overflow when the floor genuinely has more material than usual. */
+  .info-table td {
+    padding: 6px 10px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    color: var(--color-text-primary);
+    line-height: 1.35;
+  }
+  .info-table tbody tr:last-child td { border-bottom: none; }
+  .info-table tbody tr:hover { background: var(--color-background-secondary); }
+  /* The checked-in row carries a green rail and NOTHING else — no tint, no
+     dimming. It is the most important row on the screen for as long as it
+     exists, because it is the reason every "Check in" button has gone; the
+     old .inert treatment would have greyed out precisely the row the operator
+     needs to read. Rail-only also means it cannot fight the scanned-row tint
+     when that same spool is scanned: the scanned rules are declared after
+     this one and win. */
+  .info-table tr.checked-row td:first-child { box-shadow: inset 3px 0 0 var(--color-green); }
+  .info-table tr.scanned-row, .info-table tr.scanned-row:hover { background: var(--color-background-info); }
+  /* A 3px rail marks the scanned row (the house pattern — .die-row.selected,
+     .bay.state-*). It carries the emphasis so the row TINT does not have to,
+     which matters because the tint and the "Ready for FL2" pill are the same
+     info blue and the pill disappeared into the row without this. */
+  .info-table tr.scanned-row td:first-child { box-shadow: inset 3px 0 0 var(--color-blue); }
+  .info-table tr.scanned-row .q-status { background: var(--color-background-primary); }
+  .info-table .mono { font-family: var(--font-mono); }
+  .info-table .dash { color: var(--color-text-tertiary); }
+  .info-table td.actions-cell { text-align: right; }
+  .sub { font-size: 14px; color: var(--color-text-tertiary); }
+
+  /* Marks the spool physically in the operator's hand once the list replaces
+     the thing they scanned. Neutral on purpose — it is a locator, not a
+     warning. */
+  .scan-marker { color: var(--color-blue); font-weight: 700; margin-right: 4px; }
+
+  .origin-tag { font-size: 14px; color: var(--color-text-secondary); }
+  .origin-tag.hybrid {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 8px; border-radius: var(--border-radius-md);
+    background: var(--color-background-warning); color: var(--color-text-warning);
+    font-weight: 500;
+  }
+
+  .q-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 9px; border-radius: var(--border-radius-md);
+    font-size: 14px; font-weight: 500;
+  }
+  /* TWO pills, and only two — the client's 2 Aug rule. The pills for STAGED
+     ("At TPO"), HOLD, COMPLETE and SCRAP were removed rather than hidden: a
+     status the FL2 operator can never be shown is not a presentation this
+     screen should carry around. */
+  .q-status.ready     { background: var(--color-background-info);    color: var(--color-text-info); }
+  .q-status.checkedin { background: var(--color-background-success); color: var(--color-text-success); }
+
+  /* Two different empties, deliberately different treatments. */
+  .empty-state {
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; padding: 54px 0; color: var(--color-text-tertiary); font-size: 14px;
+    text-align: center; line-height: 1.5;
+  }
+  .empty-state.show { display: flex; }
+  .empty-state svg { width: 34px; height: 34px; opacity: 0.25; }
+  .empty-state strong { color: var(--color-text-secondary); font-weight: 600; }
+
+  /* ── Footer ── */
+  .footer { height: 74px; padding: 12px 22px; flex-shrink: 0; gap: 16px; }
+  .footer-stamp { display: flex; align-items: center; gap: 22px; }
+  .footer-stamp-item { display: flex; flex-direction: column; gap: 2px; }
+  .footer-stamp-label {
+    font-size: 14px; color: var(--color-text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .footer-stamp-value { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+  .footer-stamp-value.mono { font-family: var(--font-mono); }
+  .footer-actions { display: flex; align-items: center; gap: 10px; }
+
+  /* Demo-only state simulator. A select, not the row of buttons 2A uses:
+     six labelled states need ~600px and the header has nothing like that
+     spare once the injected More Options button has taken its share. */
+  .sim {
+    display: flex; align-items: center; gap: 7px;
+    padding: 5px 9px;
+    background: var(--color-background-secondary);
+    border: 1px dashed var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+  }
+  .sim-label { font-size: 14px; color: var(--color-text-tertiary); letter-spacing: 0.3px; }
+  .sim-select {
+    min-height: 32px; padding: 0 8px;
+    font-size: 14px; font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    border-radius: 6px; cursor: pointer;
+  }
+
+  .hide { display: none !important; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- ═══ Header ═══ -->
+  <div class="header panel">
+    <div class="header-left">
+      <a class="back-btn" href="dashboard_1_line_status.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        Line status
+      </a>
+      <span class="line-badge">FL2</span>
+      <h1>Spool queue</h1>
+    </div>
+    <div class="header-right">
+      <div class="sim">
+        <label class="sim-label" for="sim-select">DEMO</label>
+        <select class="sim-select" id="sim-select">
+          <option value="default">Default &mdash; all available</option>
+          <option value="checkedin">Spool checked in &mdash; FL2 occupied</option>
+          <option value="scanned">Order resolved &mdash; SP-00031</option>
+          <option value="notfound">Spool not found</option>
+          <option value="unallocated">Unallocated spool &mdash; SP-00034</option>
+          <option value="hybrid">Hybrid origin &mdash; OQ-52</option>
+          <option value="empty">Nothing available</option>
+        </select>
+      </div>
+      <div class="header-meta">
+        <span class="mono" id="clock">08:31 AM</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Scan panel ═══
+       Resolves on Enter and on a 250ms debounce. No submit button — see the
+       head comment. -->
+  <div class="scan-panel panel">
+    <div class="scan-lead">
+      <span class="scan-lead-title">Scan a spool to load its order</span>
+      <span class="scan-lead-sub">Or pick any spool below &mdash; all available material is listed by default</span>
+    </div>
+    <div class="scan-wrap">
+      <svg class="scan-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5a2 2 0 0 1 2-2h2"/><path d="M16 3h2a2 2 0 0 1 2 2v2"/><path d="M20 17v2a2 2 0 0 1-2 2h-2"/><path d="M8 21H6a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+      <input class="input mono" id="scan-input" type="text" placeholder="SP-&hellip;" autocomplete="off">
+      <span class="scan-state hide" id="scan-state"></span>
+    </div>
+    <span class="scan-error hide" id="scan-error"></span>
+    <span class="open-flag" title="OQ-15 / OI-50 (Critical): whether check-in scans the SP-series alpha, the spool number or a bundle ID is undefined. OI-02: the format is contested — SP-##### in the schema, TS###### in the SRS narrative.">OQ-15 identifier type</span>
+    <span class="scan-spacer"></span>
+    <button class="btn hide" id="show-all-btn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      Show all spools
+    </button>
+  </div>
+
+  <!-- ═══ Context bar ═══ -->
+  <div class="ctx-bar" id="ctx-bar">
+    <span class="ctx-title" id="ctx-title">All spools available for processing</span>
+    <div class="ctx-facts" id="ctx-facts"></div>
+    <span class="ctx-spacer"></span>
+    <span class="ctx-count" id="ctx-count"></span>
+  </div>
+
+  <!-- ═══ Lock bar ═══
+       Only while a spool is checked in. FL2 runs one spool at a time; this is
+       why no row is offering "Check in". -->
+  <div class="lock-bar" id="lock-bar">
+    <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <span><strong class="mono" id="lock-alpha">&mdash;</strong> is checked in on FL2.</span>
+    <span class="lock-sub">FL2 runs one spool at a time &mdash; check it out before another can be checked in.</span>
+    <span class="lock-spacer"></span>
+    <a class="btn btn-sm" href="dashboard_3_active_run_fl2.html">
+      Go to active run
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </a>
+  </div>
+
+  <!-- ═══ Queue ═══ -->
+  <div class="queue panel">
+    <div class="queue-head">
+      <span class="queue-title" id="queue-title">Spools</span>
+      <div class="queue-meta">
+        <span class="open-flag" title="OI-06 (partially decided, 2 Aug 2026): the client fixed the FL2 operator-visible vocabulary at two states — Ready for FL2 (schema RECEIVED) and Checked in (schema INFLAT). The storage vocabulary is still unmapped: the schema allows RECEIVED/STAGED/INFLAT/COMPLETE/HOLD/SCRAP and the planning narrative uses a different five, and the four values this screen no longer renders still have no defined FL2 presentation.">OI-06 storage vocabulary</span>
+        <span class="open-flag" title="Single check-in is enforced only in this UI. dbo.Spool has no filtered unique index on Status and carries no LineId at all, so 'one spool checked in per line' is not expressible as a database constraint today. POST /checkin/spool must reject the second check-in with a 409 — a hidden button is not a constraint.">Server must enforce exclusivity</span>
+      </div>
+    </div>
+
+    <div class="info-table-wrap" id="table-wrap">
+      <table class="info-table">
+        <thead>
+          <tr>
+            <th style="width:130px;">Spool</th>
+            <th style="width:120px;">Order</th>
+            <th style="width:200px;">Source</th>
+            <th style="width:140px;">Gauge &times; Width</th>
+            <th style="width:110px;">Net wt</th>
+            <th style="width:140px;">Origin</th>
+            <th style="width:150px;">Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="queue-body"></tbody>
+      </table>
+    </div>
+
+    <div class="empty-state" id="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
+      <span id="empty-text"></span>
+    </div>
+  </div>
+
+  <!-- ═══ Footer ═══ -->
+  <div class="footer panel">
+    <div class="footer-stamp">
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Operator</span>
+        <span class="footer-stamp-value">Sam Patel</span>
+      </div>
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Station</span>
+        <span class="footer-stamp-value">FL2 &middot; TPO</span>
+      </div>
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Showing</span>
+        <span class="footer-stamp-value mono" id="stamp-showing">&mdash;</span>
+      </div>
+      <div class="footer-stamp-item">
+        <span class="footer-stamp-label">Refreshed</span>
+        <span class="footer-stamp-value mono" id="stamp-refreshed">&mdash;</span>
+      </div>
+    </div>
+    <div class="footer-actions">
+      <a class="btn" href="dashboard_5_spool_checkin.html">
+        Go to spool check-in
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var $ = function (id) { return document.getElementById(id); };
+  function show(el, on) { if (el) el.classList.toggle("hide", !on); }
+  function fmt(n) { return n.toLocaleString("en-US"); }
+
+  /* ── Demo data ────────────────────────────────────────────────────────────
+     Gauge/width and source rods are shown as they would arrive from the API,
+     which reads them from the FL1 run and CoilTraceability — NOT from
+     dbo.Spool, whose GaugeIn/WidthIn are null until check-in and whose rod
+     FKs are single-valued. See the head comment. */
+  var ORDERS = {
+    "FW-00419": { customer: "Daddario",   alloy: "1100", temper: "O",   setup: "0.110″ × 0.630″", due: "07/18/2026" },
+    "FW-00421": { customer: "Daddario",   alloy: "1100", temper: "O",   setup: "0.110″ × 0.630″", due: "07/21/2026" },
+    "FW-00422": { customer: "Kingsley",   alloy: "3003", temper: "H14", setup: "0.118″ × 0.490″", due: "07/24/2026" },
+    "FW-00423": { customer: "Northvolt",  alloy: "5052", temper: "O",   setup: "0.095″ × 0.740″", due: "07/28/2026" }
+  };
+
+  var SPOOLS = [
+    { alpha: "SP-00031", order: "FW-00421", run: "RUN-0117", rods: "R00041, R00042", gauge: "0.113″", width: "0.640″", net: 3200, origin: "Standalone", status: "RECEIVED" },
+    { alpha: "SP-00032", order: "FW-00421", run: "RUN-0118", rods: "R00043",          gauge: "0.113″", width: "0.640″", net: 3180, origin: "Standalone", status: "RECEIVED" },
+    { alpha: "SP-00035", order: "FW-00421", run: "RUN-0119", rods: "R00044",          gauge: "0.113″", width: "0.640″", net: 2980, origin: "Standalone", status: "RECEIVED" },
+    { alpha: "SP-00036", order: "FW-00421", run: "RUN-0120", rods: "R00045",          gauge: "0.113″", width: "0.640″", net: 3050, origin: "Standalone", status: "RECEIVED" },
+    { alpha: "SP-00033", order: "FW-00422", run: "RUN-0121", rods: "R00046",          gauge: "0.120″", width: "0.500″", net: 2940, origin: "Hybrid",     status: "RECEIVED" },
+    { alpha: "SP-00037", order: "FW-00422", run: "RUN-0123", rods: "R00048",          gauge: "0.120″", width: "0.500″", net: 2760, origin: "Standalone", status: "RECEIVED" },
+    { alpha: "SP-00038", order: "FW-00423", run: "RUN-0124", rods: "R00049, R00050",  gauge: "0.098″", width: "0.750″", net: 3120, origin: "Standalone", status: "RECEIVED" },
+    /* Unallocated — a planning remainder. OrderNo is genuinely NULL on these,
+       which is why the null-order path is a designed state, not an edge case. */
+    { alpha: "SP-00034", order: null,       run: "RUN-0122", rods: "R00047",          gauge: "0.113″", width: "0.640″", net: 1410, origin: "Standalone", status: "RECEIVED" },
+    { alpha: "SP-00030", order: "FW-00419", run: "RUN-0116", rods: "R00040",          gauge: "0.113″", width: "0.640″", net: 1180, origin: "Standalone", status: "RECEIVED" }
+  ];
+
+  /* ── The two-status rule (client, 2 Aug 2026) ─────────────────────────────
+     FL2 has nowhere to stage, so a spool is either waiting or on the line.
+     Only these two schema values can reach this screen; STAGED is never set at
+     FL2, and COMPLETE / HOLD / SCRAP spools are not this screen's business —
+     it lists runnable material and the one spool blocking it, nothing else. */
+  var AVAILABLE = ["RECEIVED", "INFLAT"];
+
+  var STATUS = {
+    RECEIVED: { label: "Ready for FL2", cls: "ready",     eligible: true  },
+    INFLAT:   { label: "Checked in",    cls: "checkedin", eligible: false }
+  };
+
+  /* ── View state ──────────────────────────────────────────────────────────
+     mode: "all" | "order" | "unallocated" | "empty"
+     Mirrors the one endpoint's two shapes: { order, spools[] }. */
+  var view = { mode: "all", order: null, rows: [], scanned: null };
+
+  /* The spool occupying FL2, or null. This is the whole exclusivity rule: one
+     lookup, global to the screen rather than per-row, because the answer does
+     not change with which order the operator is looking at. Server-side this
+     is a query on the LINE, not on the row being checked in — see the flag in
+     the queue head. */
+  function checkedInSpool() {
+    return SPOOLS.filter(function (s) { return s.status === "INFLAT"; })[0] || null;
+  }
+
+  /* The checked-in spool sorts to the top wherever it appears. The operator's
+     first question when the buttons are missing is "which one is on the line",
+     and the answer should not be somewhere down a scrolling list. */
+  function sortRows(list) {
+    return list.slice().sort(function (a, b) {
+      return (b.status === "INFLAT") - (a.status === "INFLAT");
+    });
+  }
+
+  function availableSpools() {
+    return sortRows(SPOOLS.filter(function (s) { return AVAILABLE.indexOf(s.status) !== -1; }));
+  }
+
+  /* The single backend call this screen makes, faked.
+     GET /spools                      -> { order: null, spools: [...] }
+     GET /spools?spoolAlpha=SP-00031  -> { order: {...}, spools: [...] } | 404 */
+  function fetchSpools(alpha) {
+    if (!alpha) return { status: 200, order: null, spools: availableSpools() };
+
+    var hit = SPOOLS.filter(function (s) { return s.alpha.toUpperCase() === alpha.toUpperCase(); })[0];
+    if (!hit) return { status: 404 };
+
+    /* Unallocated: a 200 with a null order and a single row, NOT a 404.
+       They are different outcomes and must not share a status code. */
+    if (!hit.order) return { status: 200, order: null, spools: [hit], unallocated: true };
+
+    return {
+      status: 200,
+      order: Object.assign({ orderNo: hit.order }, ORDERS[hit.order]),
+      spools: sortRows(SPOOLS.filter(function (s) { return s.order === hit.order; }))
+    };
+  }
+
+  /* ── Render ──────────────────────────────────────────────────────────── */
+  function render() {
+    var body = $("queue-body");
+    body.innerHTML = "";
+
+    var rows = view.rows;
+    var occupied = checkedInSpool();
+    /* "Ready" means ready TO BE CHECKED IN, so while FL2 is occupied the
+       honest count is zero — but zero-ready reads as "no material", which is
+       the opposite of the truth. The count is replaced outright instead. */
+    var eligible = rows.filter(function (s) { return STATUS[s.status].eligible; }).length;
+    var readyText = occupied ? "FL2 occupied" : eligible + " ready";
+
+    /* Lock bar */
+    $("lock-bar").classList.toggle("show", !!occupied);
+    if (occupied) $("lock-alpha").textContent = occupied.alpha;
+
+    /* Context bar */
+    var bar = $("ctx-bar");
+    bar.classList.remove("order", "none");
+    var facts = $("ctx-facts");
+    facts.innerHTML = "";
+
+    if (view.mode === "order" && view.order) {
+      bar.classList.add("order");
+      $("ctx-title").textContent = view.order.orderNo;
+      facts.innerHTML =
+        '<span>' + view.order.customer + '</span><span class="sep">·</span>' +
+        '<span>Alloy <strong>' + view.order.alloy + '</strong></span><span class="sep">·</span>' +
+        '<span>Temper <strong>' + view.order.temper + '</strong></span><span class="sep">·</span>' +
+        '<span>Setup <strong>' + view.order.setup + '</strong></span><span class="sep">·</span>' +
+        '<span>Due <strong>' + view.order.due + '</strong></span>';
+      $("ctx-count").textContent = rows.length + " spools · " + readyText;
+    } else if (view.mode === "unallocated") {
+      bar.classList.add("none");
+      $("ctx-title").textContent = view.scanned + " · not allocated to an order";
+      facts.innerHTML = occupied
+        ? '<span>Planning has not assigned this spool to an order yet. That does not block check-in &mdash; the spool already on FL2 does.</span>'
+        : '<span>Planning has not assigned this spool to an order yet &mdash; it can still be checked in.</span>';
+      $("ctx-count").textContent = "1 spool";
+    } else {
+      $("ctx-title").textContent = "All spools available for processing";
+      var orders = {};
+      rows.forEach(function (s) { if (s.order) orders[s.order] = 1; });
+      var lbs = rows.reduce(function (a, s) { return a + s.net; }, 0);
+      facts.innerHTML = rows.length
+        ? '<span>Across <strong>' + Object.keys(orders).length + '</strong> orders</span>' +
+          '<span class="sep">·</span><span><strong>' + fmt(lbs) + '</strong> lb total</span>'
+        : '<span>No spool is currently available for FL2.</span>';
+      $("ctx-count").textContent = rows.length ? rows.length + " spools · " + readyText : "";
+    }
+
+    $("queue-title").textContent = view.mode === "order"
+      ? "Spools on " + view.order.orderNo
+      : "Spools";
+
+    /* Empty state — the two empties are different and read differently. */
+    if (!rows.length) {
+      show($("table-wrap"), false);
+      $("empty-state").classList.add("show");
+      $("empty-text").innerHTML =
+        "<strong>No spools are available for FL2.</strong><br>" +
+        "Nothing is ready and nothing is checked in. Check FL1 output or the hold queue.";
+    } else {
+      show($("table-wrap"), true);
+      $("empty-state").classList.remove("show");
+    }
+
+    rows.forEach(function (s) {
+      var st = STATUS[s.status];
+      var tr = document.createElement("tr");
+      var cls = [];
+      if (s.status === "INFLAT") cls.push("checked-row");
+      if (s.alpha === view.scanned) cls.push("scanned-row");
+      tr.className = cls.join(" ");
+
+      /* THE EXCLUSIVITY RULE, in one expression. While a spool is checked in
+         NO row offers check-in — not the others and not the checked-in one.
+         The action is not disabled-in-place either: a greyed button on nine
+         rows is nine invitations to press it, where the lock bar states the
+         reason once. The checked-in row gets the one action that is actually
+         useful, a way through to the run it is feeding. */
+      var action;
+      if (s.status === "INFLAT") {
+        action = '<a class="btn btn-sm" href="dashboard_3_active_run_fl2.html">View run &rarr;</a>';
+      } else if (occupied) {
+        action = '<span class="dash" title="' + occupied.alpha + ' is checked in on FL2. Check it out before checking in another spool.">&mdash;</span>';
+      } else {
+        action = '<button class="btn btn-sm btn-primary" type="button" data-checkin="' + s.alpha + '">Check in &rarr;</button>';
+      }
+
+      var origin = s.origin === "Hybrid"
+        ? '<span class="origin-tag hybrid" title="OQ-52 / OI-47: whether a standalone FL2 schedule may be applied to hybrid-origin material is undefined. Dashboard 5 blocks on this.">&#9888; Hybrid</span>'
+        : '<span class="origin-tag">Standalone</span>';
+
+      tr.innerHTML =
+        '<td class="mono">' +
+          (s.alpha === view.scanned ? '<span class="scan-marker" title="The spool you scanned">&#9666;</span>' : "") +
+          s.alpha + '</td>' +
+        '<td class="mono">' + (s.order || '<span class="dash">&mdash;</span>') + '</td>' +
+        '<td><span class="mono">' + s.run + '</span><br><span class="sub mono">' + s.rods + '</span></td>' +
+        '<td class="mono">' + s.gauge + " × " + s.width + '</td>' +
+        '<td class="mono">' + fmt(s.net) + ' lb</td>' +
+        '<td>' + origin + '</td>' +
+        '<td><span class="q-status ' + st.cls + '">' + st.label + '</span></td>' +
+        '<td class="actions-cell">' + action + '</td>';
+      body.appendChild(tr);
+    });
+
+    show($("show-all-btn"), view.mode !== "all");
+    $("stamp-showing").textContent = rows.length + " of " + availableSpools().length;
+  }
+
+  /* ── Scan resolution — the single round trip ──────────────────────────── */
+  function resolve(alpha) {
+    var res = fetchSpools(alpha);
+
+    if (res.status === 404) {
+      /* The list does NOT move. Losing your place because of a mistyped digit
+         is the worst thing this screen could do. */
+      $("scan-input").classList.add("invalid");
+      $("scan-state").textContent = "✕";
+      $("scan-state").className = "scan-state err";
+      $("scan-error").textContent = "No spool matches " + alpha + ".";
+      show($("scan-error"), true);
+      return;
+    }
+
+    $("scan-input").classList.remove("invalid");
+    $("scan-state").textContent = "✓";
+    $("scan-state").className = "scan-state ok";
+    show($("scan-error"), false);
+
+    view.scanned = alpha.toUpperCase();
+    view.order = res.order;
+    view.rows = res.spools;
+    view.mode = res.unallocated ? "unallocated" : "order";
+    render();
+  }
+
+  function showAll() {
+    view = { mode: "all", order: null, rows: availableSpools(), scanned: null };
+    $("scan-input").value = "";
+    $("scan-input").classList.remove("invalid");
+    show($("scan-state"), false);
+    show($("scan-error"), false);
+    render();
+  }
+
+  /* Barcode handling: immediate on Enter (how a wedge scanner terminates),
+     debounced at 250ms for hand typing. No submit button. */
+  var debounce = null;
+  $("scan-input").addEventListener("input", function () {
+    var v = this.value.trim();
+    clearTimeout(debounce);
+    this.classList.remove("invalid");
+    show($("scan-error"), false);
+    if (!v) { showAll(); return; }
+    show($("scan-state"), true);
+    debounce = setTimeout(function () { resolve(v); }, 250);
+  });
+
+  $("scan-input").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    clearTimeout(debounce);
+    var v = this.value.trim();
+    if (v) { show($("scan-state"), true); resolve(v); }
+  });
+
+  $("show-all-btn").addEventListener("click", showAll);
+
+  /* Row actions by delegation, not inline onclick. */
+  $("queue-body").addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-checkin]");
+    if (!btn) return;
+    window.location.href = "dashboard_5_spool_checkin.html";
+  });
+
+  /* ── Clock ───────────────────────────────────────────────────────────── */
+  function pad(n) { return String(n).padStart(2, "0"); }
+  function tick() {
+    var d = new Date(), h = d.getHours();
+    var s = pad(h % 12 || 12) + ":" + pad(d.getMinutes()) + " " + (h < 12 ? "AM" : "PM");
+    $("clock").textContent = s;
+    $("stamp-refreshed").textContent = s;
+  }
+
+  /* ── Demo states ───────────────────────────────────────────────────────
+     setOccupied flips SP-00032 into and out of the checked-in state so a
+     reviewer can see both sides of the exclusivity rule. Demo only — real
+     rows arrive with a status, and this screen never writes one. */
+  function setOccupied(on) {
+    SPOOLS.forEach(function (s) { if (s.status === "INFLAT") s.status = "RECEIVED"; });
+    if (on) SPOOLS.filter(function (s) { return s.alpha === "SP-00032"; })[0].status = "INFLAT";
+  }
+
+  var SIM = {
+    "default":     function () { setOccupied(false); showAll(); },
+    "checkedin":   function () { setOccupied(true);  showAll(); },
+    "scanned":     function () { setOccupied(false); showAll(); $("scan-input").value = "SP-00031"; resolve("SP-00031"); },
+    "notfound":    function () { setOccupied(false); showAll(); $("scan-input").value = "SP-00099"; show($("scan-state"), true); resolve("SP-00099"); },
+    "unallocated": function () { setOccupied(false); showAll(); $("scan-input").value = "SP-00034"; resolve("SP-00034"); },
+    "hybrid":      function () { setOccupied(false); showAll(); $("scan-input").value = "SP-00033"; resolve("SP-00033"); },
+    "empty":       function () { setOccupied(false); showAll(); view.rows = []; render(); }
+  };
+
+  $("sim-select").addEventListener("change", function () { SIM[this.value](); });
+
+  /* ── Boot ────────────────────────────────────────────────────────────── */
+  tick();
+  setInterval(tick, 1000);
+  showAll();
+})();
+</script>
+
+<script src="flat-wire-topbar.js"></script>
+<script src="flat-wire-fit.js" data-fit="fill"></script>
+</body>
+</html>

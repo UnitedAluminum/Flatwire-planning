@@ -12,14 +12,22 @@
 
      LAYOUT CONTRACT — .dashboard has a definite height (1024px), so the flex
      children divide a fixed budget rather than growing the page:
-       app bar 70 (injected) + header 78 + bays-row 294 (min 292, auto-grows)
-       + weld strip 96 + queue (flex, absorbs the remainder ~320, scrolls
-       internally) + footer 74, plus 5 x 12px gaps and 2 x 16px padding.
+       app bar 70 (injected) + header 78 + bays-row 302 (min 292, auto-grows)
+       + queue (flex, absorbs the remainder ~412, scrolls internally) + footer 74,
+       plus 4 x 12px gaps and 2 x 16px padding.
+
+     THREE body regions, not four. A 96px weld-readiness strip sat between the bays
+     row and the queue until 1 Aug 2026; it was removed because the bay cards already
+     carried its narrative and its two buttons belonged on the bays they act on. Its
+     96px plus one 12px gap went to the queue, which is the only flexing child — the
+     queue is ~108px taller than it was and shows about four more rows before it
+     scrolls. Anything describing this screen as bays / strip / queue is stale.
 
      Two flexbox rules keep this from breaking, both learned the hard way:
        1. .bays-row uses min-height, NOT height. The bay cards carry variable
-          content (4 states, optional alert rows); a fixed height clipped them and
-          spilled the action buttons 47px into the weld strip below.
+          content (4 states, optional alert rows, an action row that WRAPS on a
+          welded staged card); a fixed height clipped them and spilled the action
+          buttons 47px into the region below.
        2. .queue and .gb-modal-body need min-height: 0. A flex item will not shrink
           below its content height without it, so the queue grew the page and the
           modal body pushed its own footer buttons outside the shell.
@@ -40,7 +48,14 @@
          as "the one you stage" — an earlier revision did, and an empty Payoff 1 threw on
          first render, killed the whole paint, and left the screen showing a rod that was
          not there. Disable a bay because it is OCCUPIED, never because of its number.
-       • A weld needs a RUNNING rod and a staged one. Gate Mark-as-welded on both.
+       • A weld needs a RUNNING rod and a staged one. Gate Mark-as-welded on both. The gate
+         lives in actionsFor(), read from the staged card's side (otherBay(n) is active and
+         this rod is not already welded) — the rule is unchanged, only its vantage point.
+       • CARD ACTIONS: at most one primary per card, and where there is one it is the
+         recommended next action. The ACTIVE card deliberately has none — both of its actions
+         are exceptional, so promoting either would recommend it. A leading icon marks a
+         button that DOES something; a trailing chevron marks the two that NAVIGATE away
+         (Go to rod check-in, Proceed to check-in). Do not put both on one control.
        • PLANNED ORDER IS AUTHORISED, NOT ENFORCED. Rods are planned in an order (R00043 →
          R00044 → R00045) and may be run out of it — but not silently: the operator is told
          which rod planning expects next and a SUPERVISOR AUTHORISES the deviation. It is
@@ -282,27 +297,21 @@
   .bay-empty-ring svg { width: 26px; height: 26px; }
   .bay-empty-text { font-size: 14px; color: var(--color-text-tertiary); max-width: 320px; line-height: 1.5; }
 
-  .bay-actions { display: flex; gap: 9px; margin-top: auto; padding-top: 4px; flex-shrink: 0; }
-
-  /* ── Weld readiness strip ── */
-  .weld-strip {
-    height: 96px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 20px; padding: 16px 22px;
-    border-left: 4px solid var(--color-amber);
+  /* wrap, not nowrap. MEASURED at 1280x1024: the action row needs 516px on an active card and
+     530px on a staged one against 573px of container — but once the rod is WELDED the third
+     button reads "Pre-check-out (supervisor)" (234px, up from 155px) and the row needs 609px.
+     That one state is 36px over, and it is the only one. Wrapping costs a second row and grows
+     .bays-row from 294px to 355px, which the queue absorbs; nowrap would cost an overflow.
+     .bays-row is a 1fr 1fr grid, so both cards stretch to the taller one and stay level when
+     one wraps. The row height already varies by state (blocked sits at 337px), so this is
+     within the tolerance the layout was built with — but it IS a visible 61px shift at the
+     moment a weld is confirmed. To remove it, hide Mark as welded on a welded card instead of
+     disabling it; that was rejected because its disabled tooltip is the only thing on the card
+     that says WHY the control is unavailable. */
+  .bay-actions {
+    display: flex; flex-wrap: wrap; gap: 9px; row-gap: 9px;
+    margin-top: auto; padding-top: 4px; flex-shrink: 0;
   }
-  .weld-left { display: flex; align-items: center; gap: 18px; min-width: 0; }
-  .weld-icon {
-    width: 44px; height: 44px; border-radius: var(--border-radius-md);
-    background: var(--color-background-warning); color: var(--color-text-warning);
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  }
-  .weld-icon svg { width: 22px; height: 22px; }
-  .weld-text { min-width: 0; }
-  .weld-title { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
-  .weld-detail { font-size: 14px; color: var(--color-text-secondary); line-height: 1.45; }
-  .weld-detail .mono { color: var(--color-text-primary); font-weight: 500; }
-  .weld-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
   /* ── Weld quality check (Mark as welded dialog) ──
      Ported from dashboard_4_weld_event.html L454-524 — that screen was RETIRED and deleted on
@@ -361,8 +370,11 @@
   /* ── Weld history dialog (read-only) ──
      Row shape ported from dashboard_10_shift_summary.html .weld-list/.weld-entry, which is
      the same information at shift scope. Renamed to .wh-* rather than reused verbatim:
-     dashboard 10's `.weld-detail` is an entry's middle column, while HERE `.weld-detail`
-     is the strip's narrative text above (L303) — the names collide and the strip loses. */
+     dashboard 10's `.weld-detail` was an entry's middle column, while HERE `.weld-detail`
+     was the weld strip's narrative text — the names collided and the strip lost.
+     The strip is gone (1 Aug 2026) and the collision with it, but KEEP THE .wh-* NAMES:
+     reverting to dashboard 10's names would only re-import its assumptions about shift
+     scope into a dialog that is scoped to one run. */
   .wh-summary {
     display: flex; gap: 10px; margin-bottom: 12px;
   }
@@ -401,26 +413,17 @@
      table scrolls inside it. A queue is unbounded by nature — it must never be
      what sets the page height. */
   .queue { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; padding: 14px 22px; }
-  .queue-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0; }
-  /* Order context lives on ONE line. The screen is a fixed 1024px budget and the queue is
-     the only flexible region, so a second line here costs a visible queue row. */
-  .queue-title { display: flex; align-items: baseline; gap: 9px; font-size: 15px; font-weight: 500; min-width: 0; }
-  .queue-title .q-sep { color: var(--color-border-secondary); font-weight: 400; }
-  /* The order's material spec: the reference every rod in the list matches, and what
-     WLD006 checks at the weld. Stated once here instead of repeating identically down an
-     Alloy and a Temper column on every row. */
-  .queue-title .q-spec { font-family: var(--font-mono); font-size: 14px; color: var(--color-text-secondary); font-weight: 400; white-space: nowrap; }
-  .queue-title .count { font-size: 14px; color: var(--color-text-tertiary); font-weight: 400; white-space: nowrap; }
-  .queue-title .count strong { color: var(--color-text-primary); font-weight: 600; }
-  .scan-wrap { display: flex; align-items: center; gap: 9px; }
-  .scan-input {
-    height: 44px; width: 240px; padding: 0 14px;
-    font-size: 14px; font-family: var(--font-mono);
-    color: var(--color-text-primary); background: var(--color-background-primary);
-    border: 1px solid var(--color-border-secondary);
-    border-radius: var(--border-radius-md); outline: none;
+  /* The order-context line and the scan box were removed on 1 Aug 2026. What remained was the
+     full-station note alone, hidden unless both bays are occupied — so the head was an unlabelled
+     empty row in the usual case and the table below it began with no name at all. It now carries
+     a standing title on the left and the note on the right, hence space-between and an
+     unconditional bottom margin. */
+  .queue-head {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0; gap: 16px; margin-bottom: 10px;
   }
-  .scan-input:focus { border-color: var(--color-blue); box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.18); }
+  .queue-title { font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
+  .scan-wrap { display: flex; align-items: center; gap: 9px; }
 
   .info-table-wrap { overflow: auto; flex: 1 1 0; min-height: 0; }
   .info-table { width: 100%; border-collapse: collapse; font-size: 14px; white-space: nowrap; }
@@ -504,6 +507,12 @@
     color: var(--color-text-primary);
     transition: all 0.15s;
     display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    /* The shared sheet sets text-decoration: none on .btn-nav, .back-btn, .gb-btn and
+       .more-tile but NOT on .btn — so the three card actions that are <a href> (Go to rod
+       check-in, Proceed to check-in) rendered underlined while the <button> beside them did
+       not, splitting one row of peers into two visual kinds. The trailing chevron is what
+       marks a navigation here; an underline on top of it is noise. */
+    text-decoration: none;
   }
   .btn:hover:not(:disabled) { background: var(--color-background-secondary); }
   .btn:active:not(:disabled) { transform: scale(0.98); }
@@ -512,14 +521,20 @@
   /* An <a> cannot take :disabled. The reject route is a link, and it must not be followed
      until the failure observation is recorded — hence a class plus a click guard. */
   .btn.link-disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
-  /* 44px, not 36px. This class carries every queue action — Stage, Unstage, WIP Rejection —
-     which is the most-tapped control on the screen. "Small" here meant visually secondary,
-     not physically smaller than a gloved fingertip. Padding stays tight so the actions
-     column does not widen. */
+  /* HEIGHT IS 52px, NOT 44px — for this class and for .btn above. The shared stylesheet sets
+     a hard `height: 52px` on .btn, and a hard height beats a min-height, so the 44px here has
+     never governed anything: it is a floor that cannot bind, kept only so the rule still reads
+     as a floor if the shared height is ever relaxed. Measured, not assumed — every .btn on this
+     screen renders at 52px. (An earlier comment here claimed "44px, not 36px"; it was describing
+     an intent, not the render.) 52px clears the gloved-fingertip floor with room to spare, so
+     there is nothing to fix — but do not quote 44px at anyone.
+     Padding stays tight on .btn-sm so the queue's actions column does not widen. */
   .btn-sm { min-height: 44px; padding: 0 13px; }
-  .btn-primary { background: var(--color-blue); border-color: var(--color-blue); color: #ffffff; }
+  /* 600, not 500. The primary is the recommended next action and there is exactly one per
+     card; at 500 it was carried entirely by the blue fill, which is the one channel a
+     colour-blind operator may not have. */
+  .btn-primary { background: var(--color-blue); border-color: var(--color-blue); color: #ffffff; font-weight: 600; }
   .btn-primary:hover:not(:disabled) { background: #144e88; }
-  .btn-lg { min-height: 52px; padding: 0 24px; font-size: 15px; }
   .btn-danger { background: var(--color-red); border-color: var(--color-red); color: #ffffff; }
   .btn-danger:hover:not(:disabled) { background: #bd4a24; }
   .btn-amber { background: var(--color-amber); border-color: var(--color-amber); color: #ffffff; }
@@ -566,7 +581,9 @@
     background: var(--color-background-primary);
     border: 0.5px solid var(--color-border-tertiary);
     border-radius: var(--border-radius-lg);
-    width: 760px; max-width: 94vw; max-height: 90vh; overflow: hidden;
+    /* No max-height: fw-modal.js scales an oversized dialog to fit rather than
+       letting it scroll — an operator in gloves cannot drag a scrollbar. */
+    width: 760px; overflow: hidden;
     box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
     display: flex; flex-direction: column;
   }
@@ -580,8 +597,8 @@
   .gb-modal-sub { font-size: 14px; color: var(--color-text-tertiary); margin-top: 3px; }
 
   /* Live weight of the RUNNING bay, carried into the staging wizard.
-     The modal is 760px, centred, over a 45% scrim — it lands on the bays row and the weld
-     strip. So the operator opens this wizard *because* a payoff is draining and immediately
+     The modal is 760px, centred, over a 45% scrim — it lands on the bays row.
+     So the operator opens this wizard *because* a payoff is draining and immediately
      loses sight of the draining payoff, including a WELD NOW escalation. In the port this
      binds to the batched PayoffWeight hub feed; here it is set once at open time. */
   .wiz-weight {
@@ -609,7 +626,7 @@
                       action buttons) outside the overflow:hidden shell: unreachable,
                       not merely ugly. Do not change this to `flex: 1` -- a zero
                       basis collapses the shell to head+footer. */
-  .gb-modal-body { padding: 18px 20px; overflow: auto; flex: 0 1 auto; min-height: 0; }
+  .gb-modal-body { padding: 18px 20px; overflow: visible; flex: 0 0 auto; min-height: 0; }
   .gb-modal-foot {
     display: flex; align-items: center; justify-content: space-between; gap: 14px;
     padding: 14px 20px; border-top: 0.5px solid var(--color-border-tertiary);
@@ -978,65 +995,33 @@
 
   </div>
 
-  <!-- ═══ Weld readiness ═══ -->
-  <div class="weld-strip panel">
-    <div class="weld-left">
-      <div class="weld-icon">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M3 12h5l2-3 2 6 2-3h7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-      <div class="weld-text">
-        <div class="weld-title">Weld readiness</div>
-        <div class="weld-detail" id="weld-detail">
-          Payoff 1 at <span class="mono">2,840 lb</span> (33%) &middot; Payoff 2 <strong>not staged</strong>.
-          Stage a bundle on Payoff 2 before Payoff 1 reaches 2,000&nbsp;lb.
-        </div>
-      </div>
-    </div>
-    <div class="weld-actions">
-      <button class="btn" type="button" id="btn-mark-welded" disabled title="Enabled only when a rod is pre-checked-in">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5L20 6.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Mark as welded
-      </button>
-      <!-- Was an <a> to dashboard_4_weld_event.html labelled "Weld event log". That link was
-           mislabelled — Dashboard 4 was the weld CAPTURE form, not a log of anything — and it
-           navigated away from the station. (Dashboard 4 has since been retired outright, 1 Aug
-           2026.) This opens a read-only list of the welds already
-           recorded against the running run. Read-only on purpose: correcting or reversing a
-           recorded weld is WLD011, which is explicitly unspecified. -->
-      <button class="btn" type="button" id="btn-weld-history" disabled
-              title="No run in progress &mdash; there are no welds to show">
-        Welds this run &middot; <span id="wh-count">0</span>
-      </button>
-    </div>
-  </div>
+  <!-- The WELD READINESS STRIP stood here — a 96px band carrying a status narrative and the
+       two weld controls. Removed 1 Aug 2026. Its narrative was duplicated by the bay cards
+       (weight and percentage on the payoff bar, WELD NOW / WELD SOON / Welded / Last weld
+       failed / Pre-checked in in .bay-alert, the cold-start message in .bay-empty-text); the
+       one sentence that was NOT duplicated — induction-weld tail to head — moved into the
+       staged card's alert. Both buttons moved onto the bay they act on, in actionsFor():
+       Mark as welded on the STAGED card, Welds this run on the ACTIVE card.
+       The 96px plus a 12px gap went to the queue, which is the only flexing child. -->
 
   <!-- ═══ Queue — TRV004 / TRV009 ═══ -->
   <div class="queue panel">
     <div class="queue-head">
-      <div class="queue-title">
-        <span id="queue-line">FL1</span>
-        <span class="q-sep">&middot;</span>
-        <span>Order <strong class="mono" id="queue-order">FW-00421</strong></span>
-        <span class="q-spec" id="queue-spec">1100 &middot; F &middot; 0.375&Prime;</span>
-        <span class="q-sep">&middot;</span>
-        <span class="count" id="queue-count">4 on order</span>
-      </div>
+      <span class="queue-title">Rods In Queue</span>
       <div class="scan-wrap">
         <span class="queue-full-note" id="queue-full-note">
           <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v4.5M12 16.4v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           <span id="queue-full-text">Both bays occupied &mdash; check in or un-stage first</span>
         </span>
-        <input class="scan-input" id="scan-input" type="text" placeholder="Scan rod alpha&hellip;" aria-label="Scan rod alpha">
-        <button class="btn btn-sm" type="button" id="btn-scan">Find</button>
       </div>
     </div>
     <!-- Shown until a rod resolves an order. The queue is a projection of the order's rod
          list, so with no order there is genuinely nothing to list. -->
     <div class="queue-empty-note hide" id="queue-empty-note">
       <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5.5M12 7.6v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <span>No order is running on this line. Scan or pre-check-in the first rod &mdash; its
-        order is resolved from <span class="mono">planning_routings</span>, and the rest of that
-        order&rsquo;s rod appears here.</span>
+      <span>No order is running on this line. Pre-check-in the first rod from a payoff bay above
+        &mdash; its order is resolved from <span class="mono">planning_routings</span>, and the rest
+        of that order&rsquo;s rod appears here.</span>
     </div>
     <div class="info-table-wrap" id="queue-table-wrap">
       <table class="info-table">
@@ -1330,7 +1315,7 @@
       <div class="modal-foot-actions">
         <button class="btn" type="button" data-close="pci-overlay">Cancel</button>
         <button class="btn" type="button" id="pci-prev" disabled>Back</button>
-        <a class="btn btn-danger hide" id="pci-reject" href="dashboard_8_wip_rejection.html">Go to WIP Rejection</a>
+        <button class="btn btn-danger hide" type="button" id="pci-reject">Log WIP Rejection</button>
         <button class="btn btn-primary" type="button" id="pci-next" disabled>Next</button>
       </div>
     </div>
@@ -1813,32 +1798,14 @@
   function fmt(n) { return n.toLocaleString("en-US"); }
   function show(el, on) { if (el) el.classList.toggle("hide", !on); }
 
-  /* openModal/closeModal, not open/close: a bare `open` shadows window.open inside this IIFE. */
-  var lastFocus = null;
-  var FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]),' +
-                  ' textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-  function openModal(id) {
-    lastFocus = document.activeElement;
-    $(id).classList.add("open");
-  }
-  function closeModal(id) {
-    $(id).classList.remove("open");
-    /* Return focus to whatever opened the dialog. Without this, dismissing a modal drops
-       focus to <body> and the keyboard user restarts from the top of the page. */
-    if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
-    lastFocus = null;
-  }
-  function closeAllModals() {
-    document.querySelectorAll(".gb-modal-overlay.open").forEach(function (o) { o.classList.remove("open"); });
-    if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
-    lastFocus = null;
-  }
-  function visibleFocusables(root) {
-    return Array.prototype.filter.call(root.querySelectorAll(FOCUSABLE), function (el) {
-      return el.offsetParent !== null && !el.classList.contains("link-disabled");
-    });
-  }
+  /* Modal open/close, focus restore, ESC, backdrop dismissal, focus trap and the
+     fit-to-window scaling all live in fw-modal.js now (extracted from this file on
+     1 Aug 2026 so the converted run-event dialogs behave identically). These stay as
+     thin named wrappers because the call sites below read better with them, and
+     because a bare `open` would shadow window.open inside this IIFE. */
+  function openModal(id) { window.FwModal.open(id); }
+  function closeModal(id) { window.FwModal.close(id); }
+  function closeAllModals() { window.FwModal.closeAll(); }
 
   function pad(n) { return n < 10 ? "0" + n : "" + n; }
   function clockText(withSeconds) {
@@ -1876,6 +1843,16 @@
   var SVG_CROSS = '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   var SVG_CHEV  = '<svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var SVG_PLUS  = '<svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  /* Card-action glyphs. Every button that DOES something carries a leading icon; the three
+     that NAVIGATE carry a trailing chevron instead, and that is the only thing distinguishing
+     the two at a glance. Icons were patchy before — Pre-check-in rod had a plus and the rest
+     had nothing, so the icon signalled nothing at all.
+       SVG_BOLT is lifted verbatim from the deleted weld strip's 44px icon tile. */
+  var SVG_BOLT  = '<svg viewBox="0 0 24 24" fill="none"><path d="M3 12h5l2-3 2 6 2-3h7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var SVG_OUT   = '<svg viewBox="0 0 24 24" fill="none"><path d="M14 4h4.5A1.5 1.5 0 0120 5.5v13a1.5 1.5 0 01-1.5 1.5H14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 8l4 4-4 4M13 12H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var SVG_BACK  = '<svg viewBox="0 0 24 24" fill="none"><path d="M9 5L3 11l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 11h11a6 6 0 016 6v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  var SVG_LIST  = '<svg viewBox="0 0 24 24" fill="none"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  var SVG_WARN  = '<svg viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v4.5M12 16.4v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 
   function setFact(n, i, label, value, mono) {
     $("fl" + i + "-" + n).textContent = label;
@@ -1900,6 +1877,16 @@
     return "Not staged &mdash; Payoff " + (n === 1 ? 2 : 1) + " is loaded but not yet running";
   }
 
+  /* ───────────────────────── Bay card actions ─────────────────────────
+     AT MOST ONE PRIMARY PER CARD, and where there is one it is the recommended next action.
+     Before this pass two primaries could be lit at once on cards whose actions were unranked.
+     The ACTIVE card is the deliberate exception and carries none — see its branch below.
+
+     The two weld controls arrived here from the deleted strip and each went to the bay it
+     acts on: Mark as welded to the STAGED card (that card IS the incoming rod, which is the
+     PCI008 defaulting behaviour), Welds this run to the ACTIVE card (the run IS the active
+     bay). Consequence worth knowing: on a cold start there is no active card, so Welds this
+     run is now ABSENT rather than disabled-with-a-tooltip. */
   function actionsFor(n, b) {
     if (b.state === "empty") {
       return '<button class="btn btn-primary" type="button" data-precheckin="' + n + '">' +
@@ -1909,11 +1896,34 @@
                : '');
     }
     if (b.state === "blocked") {
-      return '<a class="btn btn-danger" href="dashboard_8_wip_rejection.html">Go to WIP Rejection ' + SVG_CHEV + '</a>';
+      /* Dialog, not a page. Navigating away used to lose which bay and which rod had
+         failed, so the rejection screen could only describe a generic mid-run reject —
+         and submitting it could not release the bay it came from (Q72).
+         No chevron, therefore: it opens a dialog, it does not leave the screen. It kept one
+         from before the 1 Aug dialog conversion and was the only button on the card lying
+         about where it went. */
+      return '<button class="btn btn-danger" type="button" data-wipreject="' + n + '">' +
+             SVG_WARN + 'Log WIP Rejection</button>';
     }
     if (b.state === "active") {
-      return '<a class="btn" href="dashboard_3_active_run_v2.html">Open active run ' + SVG_CHEV + '</a>' +
-             '<a class="btn" href="dashboard_12_rod_checkout.html">Check out rod</a>';
+      /* Welds this run. Gated on a RUN, not on a weldable pair — the list stays readable
+         while the other bay is empty or blocked. On this card a run always exists, so it is
+         never disabled; at count 0 it stays live and the dialog renders its empty state,
+         because "no welds yet" is an answer the operator came for. */
+      var welds = (WELD_LOG[b.runId] || []).length;
+      /* NO "Open active run" link, and no primary at all on this card. Removed 1 Aug 2026:
+         the active run is reachable from the app bar and from Line Status, and this station's
+         job is staging the NEXT rod, not driving the current one. The two actions left are
+         both exceptional — a mid-run checkout and a read-only list — so promoting either to
+         primary would recommend it, which is the opposite of the intent. The one-primary-per-
+         card rule therefore reads: AT MOST one, and the running bay deliberately has none. */
+      return '<button class="btn" type="button" data-checkout="' + n + '">' +
+             SVG_OUT + 'Checkout</button>' +
+             '<button class="btn" type="button" data-weldhistory="' + n + '" title="' +
+             (welds
+               ? 'View the ' + welds + ' weld' + (welds === 1 ? '' : 's') + ' recorded against ' + b.runId
+               : 'No welds recorded against ' + b.runId + ' yet') +
+             '">' + SVG_LIST + 'Welds this run &middot; ' + welds + '</button>';
     }
     /* A WELDED rod CAN be released — but only by a supervisor, and it is a REJECTION, not a
        return (client decision, 30 Jul 2026 — Q68/Q77). The rod is induction-welded to the rod
@@ -1925,10 +1935,29 @@
          Still unspecified: reversing a weld IN PLACE on a rod that stays staged (WLD011).
        Note welded is the IsWelded flag on a Staged row, not a state, so this branch is
        reached for both. */
+
+    /* A weld needs BOTH a running rod and a staged, un-welded one. Testing only the staged
+       side let Mark-as-welded enable with nothing running, then throw on ROD_MASTER[null].
+       Read from the staged card's point of view now, but the RULE is unchanged — as are all
+       five tooltips, which are the only thing telling the operator WHY it is unavailable. */
+    var other = otherBay(n);
+    var canWeld = other.state === "active" && !b.isWelded;
+    var weldTitle = canWeld
+      ? (b.lastWeldFailed ? "Remake the failed weld" : "Record the induction weld")
+      : b.isWelded ? "Already marked as welded"
+      : other.state === "empty" ? "No rod is running — there is nothing to weld to"
+      : other.state === "blocked" ? "No rod is running — the other bay failed inspection"
+      : "No rod is running — check in the other bay to start the line";
+
     return '<a class="btn btn-primary" href="dashboard_2_rod_checkin%20-%20New.html">Proceed to check-in ' + SVG_CHEV + '</a>' +
+           '<button class="btn" type="button" data-markwelded="' + n + '"' +
+           (canWeld ? '' : ' disabled') + ' title="' + weldTitle + '">' +
+           SVG_BOLT + 'Mark as welded</button>' +
            (b.isWelded
-             ? '<button class="btn" type="button" data-precheckout="' + n + '" data-welded="1">Pre-check-out (supervisor)</button>'
-             : '<button class="btn" type="button" data-precheckout="' + n + '">Pre-check-out</button>');
+             ? '<button class="btn" type="button" data-precheckout="' + n + '" data-welded="1">' +
+               SVG_BACK + 'Pre-check-out (supervisor)</button>'
+             : '<button class="btn" type="button" data-precheckout="' + n + '">' +
+               SVG_BACK + 'Pre-check-out</button>');
   }
 
   /* ───────────────── Render: one bay, any state, either side ─────────────────
@@ -2066,76 +2095,25 @@
                        " &mdash; remake the weld";
     } else {
       alert.className = "bay-alert info";
-      body.innerHTML = "<strong>Pre-checked in</strong>no PLC tags pushed until check-in";
+      /* Two readings of the same state, split on whether there is anything to weld TO.
+         "Induction-weld tail to head" was the weld strip's one sentence that no card
+         carried; with a rod running it is the outstanding action on this card and outranks
+         the PLC note, so it lands here rather than being lost with the strip. With nothing
+         running there is no weld to make and the PLC note is the useful thing to say. */
+      body.innerHTML = otherBay(n).state === "active"
+        ? "<strong>Not yet welded</strong>induction-weld tail to head before Payoff " +
+          (n === 1 ? 2 : 1) + " runs out"
+        : "<strong>Pre-checked in</strong>no PLC tags pushed until check-in";
     }
   }
 
-  /* ─────────────────── Render: weld strip + footer ─────────────────── */
-  function renderWeldStrip() {
-    var runNo = activeBayNo();
-    var run = runNo ? bayOf(runNo) : null;
-    var otherNo = runNo === 1 ? 2 : 1;
-    var other = runNo ? bayOf(otherNo) : null;
-    var txt;
-
-    if (!runNo) {
-      /* Nothing is drawing, so there is nothing to weld to. Say so plainly rather than
-         implying a weld is pending. */
-      var anyStaged = bay1.state !== "empty" || bay2.state !== "empty";
-      txt = anyStaged
-        ? "No rod is running. A weld joins a <em>running</em> rod to a staged one &mdash; check in the staged rod to start the line."
-        : "<strong>No material on either payoff.</strong> Pre-check-in a rod, or go straight to rod check-in to start the line.";
-    } else {
-      var pct = Math.round((run.weightLb / run.netLb) * 100);
-      txt = "Payoff " + runNo + " at <span class='mono'>" + fmt(run.weightLb) + " lb</span> (" + pct +
-            "%) &middot; Payoff " + otherNo + " ";
-      if (other.state === "empty") {
-        txt += "<strong>not staged</strong>. Stage a bundle on Payoff " + otherNo +
-               " before Payoff " + runNo + " reaches " + fmt(WELD_NOW_LB) + "&nbsp;lb.";
-      } else if (other.state === "blocked") {
-        txt += "<strong>blocked</strong> (<span class='mono'>" + other.alpha +
-               "</span> failed inspection). Route it to WIP Rejection and stage a replacement.";
-      } else if (other.isWelded) {
-        txt += "staged and <strong>welded</strong> (<span class='mono'>" + other.alpha +
-               "</span>). Transition occurs at 0&nbsp;ft remaining on Payoff " + runNo + ".";
-      } else if (other.lastWeldFailed) {
-        /* Distinct from plain "not yet welded": an attempt WAS made and failed its quality
-           check, so the operator is remaking a weld rather than making a first one. */
-        txt += "staged with <span class='mono'>" + other.alpha +
-               "</span> &mdash; <strong>last weld failed</strong> (" + other.lastWeldFailReason +
-               "). Remake the weld before Payoff " + runNo + " runs out.";
-      } else {
-        txt += "staged with <span class='mono'>" + other.alpha +
-               "</span>, not yet welded. Induction-weld tail to head before Payoff " + runNo + " runs out.";
-      }
-    }
-    $("weld-detail").innerHTML = txt;
-
-    /* A weld needs BOTH a running rod and a staged, un-welded one. Testing only the staged
-       side let Mark-as-welded enable with nothing running, then throw on ROD_MASTER[null]. */
-    var mw = $("btn-mark-welded");
-    var canWeld = !!runNo && other.state === "staged" && !other.isWelded;
-    mw.disabled = !canWeld;
-    mw.title = canWeld ? (other.lastWeldFailed ? "Remake the failed weld" : "Record the induction weld")
-      : !runNo ? "No rod is running — there is nothing to weld to"
-      : other.state === "empty" ? "Enabled only when a rod is pre-checked-in on the idle bay"
-      : other.state === "blocked" ? "The staged rod failed inspection"
-      : "Already marked as welded";
-
-    /* Welds this run. Gated on a RUN, not on a weldable pair — the list stays readable while
-       the other bay is empty or blocked, and it is the ONLY control here that survives a
-       station with nothing stageable. Cold start has no run at all, hence disabled. */
-    var wh = $("btn-weld-history");
-    var runId = runNo ? bayOf(runNo).runId : null;
-    var welds = runId ? (WELD_LOG[runId] || []) : [];
-    $("wh-count").textContent = welds.length;
-    wh.disabled = !runId;
-    wh.title = !runId
-      ? "No run in progress — there are no welds to show"
-      : welds.length
-        ? "View the " + welds.length + " weld" + (welds.length === 1 ? "" : "s") + " recorded against " + runId
-        : "No welds recorded against " + runId + " yet";
-
+  /* ─────────────────── Render: footer stamp ───────────────────
+     All that survives of renderWeldStrip(). That function did four jobs and only two were
+     about its own text: it also computed the Mark-as-welded gate (now in actionsFor(), on
+     the staged card) and the Welds-this-run count (now on the active card). "Bays occupied"
+     was the fourth, and it is a FOOTER fact — it lived there only by accident of adjacency,
+     which is why deleting the strip wholesale would have frozen the stamp with no error. */
+  function renderFooterStamp() {
     var occ = (bay1.state === "empty" ? 0 : 1) + (bay2.state === "empty" ? 0 : 1);
     $("stamp-bays").textContent = occ + " of 2";
   }
@@ -2210,7 +2188,8 @@
            button that openPreCheckout() silently refused — a visible control that did
            nothing, contradicting the bay card right above it. */
         statusCell = '<span class="q-status blocked">Blocked &middot; inspection failed</span>';
-        actionCell = '<a class="btn btn-sm btn-danger" href="dashboard_8_wip_rejection.html">WIP Rejection</a>';
+        actionCell = '<button class="btn btn-sm btn-danger" type="button" data-wipreject-alpha="' +
+                     q.alpha + '">WIP Rejection</button>';
       } else if (q.status === "pre") {
         statusCell = '<span class="q-status pre">Pre-checked-in</span>';
         actionCell = '<button class="btn btn-sm" type="button" data-unstage="' + q.alpha + '">Unstage</button>';
@@ -2230,7 +2209,8 @@
            on HOLD pending disposition and must not be offered for staging again. Without this
            branch it fell through to the Available case and rendered a Stage button. */
         statusCell = '<span class="q-status blocked">On HOLD &middot; released after weld</span>';
-        actionCell = '<a class="btn btn-sm btn-danger" href="dashboard_8_wip_rejection.html">WIP Rejection</a>';
+        actionCell = '<button class="btn btn-sm btn-danger" type="button" data-wipreject-alpha="' +
+                     q.alpha + '">WIP Rejection</button>';
       } else {
         statusCell = r.footage > 0
           ? '<span class="partial-flag"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v4.5M12 16.4v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Partial &middot; ' + fmt(r.footage) + ' ft run</span>'
@@ -2273,10 +2253,6 @@
     /* No order established yet — the cold-start state. Say so plainly rather than
        showing an order the line has not started. */
     if (!CURRENT_ORDER) {
-      $("queue-order").textContent = "—";
-      $("queue-spec").textContent = "";
-      $("queue-count").innerHTML =
-        "no order yet &mdash; scan the first rod to load its order";
       show($("queue-empty-note"), true);
       /* Hide the table entirely, not just its rows. Leaving it mounted rendered eight sticky
          column headers over nothing — and cold start is the first thing anyone sees. */
@@ -2285,33 +2261,10 @@
     }
     show($("queue-empty-note"), false);
     show($("queue-table-wrap"), true);
-    $("queue-order").textContent = CURRENT_ORDER;
 
-    /* Progress. Necessary because the planned order can be departed from: with a strictly
-       enforced sequence you could read "what's left" off position in the list, but once
-       rods can be run out of order the remaining count has to be stated outright.
-       "Staged" counts anything physically occupying a bay — pre-checked-in, welded, and
-       blocked alike, since a failed bundle is still sitting there. */
-    var nStaged = QUEUE.filter(function (q) { return q.status !== "available"; }).length;
-    var nAvail  = QUEUE.length - nStaged;
-    $("queue-count").innerHTML =
-      "<strong>" + nStaged + "</strong> staged &middot; <strong>" + nAvail + "</strong> available &middot; " +
-      QUEUE.length + " on order";
-
-    /* The order's spec is the spec of its rod — read it off the first row rather than
-       hard-coding, so the header can never drift from the list beneath it. */
-    var first = QUEUE.length ? ROD_MASTER[QUEUE[0].alpha] : null;
-    if (first) {
-      $("queue-spec").innerHTML =
-        first.alloy + " &middot; " + first.temper + " &middot; " + first.nominal.toFixed(3) + "&Prime;";
-    }
-
-    /* The Stage buttons are gated on a full station, but the SCAN BOX STAYS ENABLED.
-       Disabling it was worse than it looked: a disabled input cannot report why it did
-       nothing, so a barcode gun fired at a full station produced pure silence — the worst
-       possible feedback on a glare-lit panel where the operator is holding a bundle and
-       looking at the tag, not at a note in the queue header. Scanning is still refused, but
-       now it is refused *out loud*, naming the rod (see doScan). */
+    /* The Stage buttons are gated on a full station; this states why they are disabled.
+       It is the only survivor of the queue head — the order-context line and the scan box
+       were removed on 1 Aug 2026. */
     $("queue-full-note").classList.toggle("visible", full);
     if (full) {
       $("queue-full-text").innerHTML = "Both bays occupied &mdash; check in or un-stage first";
@@ -2331,10 +2284,49 @@
         openPreCheckout(bayNoOfAlpha(btn.getAttribute("data-unstage")));
       });
     });
+    body.querySelectorAll("[data-wipreject-alpha]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        openStagingRejection(btn.getAttribute("data-wipreject-alpha"));
+      });
+    });
   }
 
+  /* ─────────────────── WIP rejection from the staging station ───────────────────
+     The rejection dialog is shared with the active-run monitors, so it has to be told
+     that this is the pre-check-in path: no run, no footage position, and submitting is
+     what releases the bay (Q72 item 2 / gap G21). Everything it needs comes from here;
+     nothing is inferred inside the dialog. */
+  function openStagingRejection(alpha, payoffNo) {
+    var bayNo = payoffNo != null ? payoffNo : bayNoOfAlpha(alpha);
+    window.openWipRejection({
+      materialAlpha: alpha,
+      orderNo: orderOf(alpha),
+      stage: CURRENT_LINE + " · pre-check-in",
+      footagePosition: null,
+      runId: null,
+      trigger: "pre-checkin",
+      payoff: bayNo || null,
+      operator: "Bob Scott",
+      onSubmit: function (result) {
+        /* Submitting IS the bay release: Staged -> Unstaged with unstage kind
+           WipRejection. Nothing else clears a Blocked bay. */
+        if (result.releasesBay && bayNo) {
+          var bay = bayNo === 1 ? bay1 : bay2;
+          if (bay && bay.state === "blocked") {
+            if (bayNo === 1) bay1 = emptyBay(); else bay2 = emptyBay();
+          }
+        }
+        var row = null;
+        for (var i = 0; i < QUEUE.length; i++) if (QUEUE[i].alpha === alpha) row = QUEUE[i];
+        if (row) row.status = "held";
+        renderAll();
+      }
+    });
+  }
+  window.openStagingRejection = openStagingRejection;
+
   function renderAll() {
-    renderBay(1); renderBay(2); renderWeldStrip(); renderQueue(); wireBayButtons();
+    renderBay(1); renderBay(2); renderFooterStamp(); renderQueue(); wireBayButtons();
   }
 
   /* ─────────────────── Bay action buttons (re-wired on render) ───────────────────
@@ -2349,6 +2341,39 @@
     document.querySelectorAll("[data-precheckout]").forEach(function (b) {
       b.addEventListener("click", function () {
         openPreCheckout(parseInt(b.getAttribute("data-precheckout"), 10));
+      });
+    });
+    document.querySelectorAll("[data-checkout]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var n = parseInt(b.getAttribute("data-checkout"), 10);
+        var bay = n === 1 ? bay1 : bay2;
+        /* The bay is running, so this is a mid-run removal — Mode B. */
+        window.openRodCheckout({
+          mode: "b", line: CURRENT_LINE, orderNo: orderOf(bay.alpha),
+          rodAlpha: bay.alpha, payoff: n, operator: "Bob Scott"
+        });
+      });
+    });
+    document.querySelectorAll("[data-wipreject]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var n = parseInt(b.getAttribute("data-wipreject"), 10);
+        var bay = n === 1 ? bay1 : bay2;
+        openStagingRejection(bay.alpha, n);
+      });
+    });
+    /* The two weld controls, moved here from the deleted strip. Both guard on .disabled:
+       these are real <button disabled>, so the browser suppresses the click anyway, but the
+       guard survives anyone later styling a control as disabled without setting the property. */
+    document.querySelectorAll("[data-markwelded]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (b.disabled) return;
+        openMarkWelded();
+      });
+    });
+    document.querySelectorAll("[data-weldhistory]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (b.disabled) return;
+        openWeldHistory();
       });
     });
   }
@@ -2428,8 +2453,9 @@
   }
 
   /* The draining payoff, shown in the wizard header.
-     This modal is 760px, vertically centred, over a 45% scrim — it covers the bays row and the
-     weld strip. The operator opens it *because* a payoff is running low, and in doing so lost
+     This modal is 760px, vertically centred, over a 45% scrim — it covers the bays row. (It
+     also covered the weld strip, which is gone; the bays-row half is the load-bearing half
+     and is reason enough on its own.) The operator opens it *because* a payoff is running low, and in doing so lost
      sight of that payoff entirely, including a WELD NOW escalation arriving mid-wizard.
      Snapshot-at-open here; in the Angular port this is the one part of the modal bound to the
      batched PayoffWeight feed, and the only subtree that re-renders at telemetry cadence. */
@@ -2703,8 +2729,9 @@
     show($("pci-reject"), inspBlocked);
     show($("pci-insp-fail"), inspBlocked);
 
-    /* The reject route is an <a>, which cannot be disabled — gate it with a class and a
-       click guard so a failure cannot be routed onward with no observation recorded. */
+    /* Gated with a class rather than the disabled attribute so the click guard below can
+       explain WHY (focus the observation field) instead of the control going silently dead:
+       a failure must not be routed onward with no observation recorded. */
     var reject = $("pci-reject");
     reject.classList.toggle("link-disabled", !!res.noteMissing);
     reject.setAttribute("aria-disabled", res.noteMissing ? "true" : "false");
@@ -2753,7 +2780,13 @@
     $(id).addEventListener("input", updateStatus);
   });
   $("pci-reject").addEventListener("click", function (e) {
-    if (this.classList.contains("link-disabled")) { e.preventDefault(); $("pci-notes").focus(); }
+    if (this.classList.contains("link-disabled")) { e.preventDefault(); $("pci-notes").focus(); return; }
+    /* Hand the wizard's own state to the rejection dialog — the rod that just failed and the
+       bay it was being staged into — then close the wizard so only one dialog is ever open. */
+    var alpha = W.alpha;
+    var payoff = W.payoff || null;
+    closeModal("pci-overlay");
+    openStagingRejection(alpha, payoff);
   });
   $("cf-check").addEventListener("click", function () {
     W.cfAck = !W.cfAck;
@@ -2980,18 +3013,23 @@
     renderAll();
   });
 
-  /* ══════════════════ Welds this run (read-only) ══════════════════ */
-  $("btn-weld-history").addEventListener("click", function () {
-    if (this.disabled) return;
+  /* ══════════════════ Welds this run (read-only) ══════════════════
+     Named functions, not id-bound listeners. Both controls used to hang off fixed ids in the
+     weld strip and could be bound once at load; they now live on bay cards, which actionsFor()
+     regenerates via innerHTML on EVERY render. A listener bound to the old node dies with it,
+     so these are called from wireBayButtons() instead. */
+  function openWeldHistory() {
     renderWeldHistory();
     openModal("wh-overlay");
-  });
+  }
 
   /* ══════════════════ Mark as welded ══════════════════ */
-  $("btn-mark-welded").addEventListener("click", function () {
-    if (this.disabled) return;
+  function openMarkWelded() {
     /* Resolve which bay is running and which is staged rather than assuming 1 and 2 —
-       after a payoff transition the running bay is 2 and the staged one is 1. */
+       after a payoff transition the running bay is 2 and the staged one is 1. Deliberately
+       NOT taken from the clicked card's bay number: this resolution is the rule TC-068
+       exists to protect, and it must not weaken just because the button moved onto a card
+       that already knows which bay it is. */
     var runNo = activeBayNo();
     if (!runNo) return;
     var stagedNo = runNo === 1 ? 2 : 1;
@@ -3022,7 +3060,7 @@
     mwMaterialMatch = match;
     resetWeldQuality();
     openModal("mw-overlay");
-  });
+  }
 
   /* ── Weld quality state (WLD013) ──
      Held outside the DOM so the gate is evaluated from one place. Null until the operator
@@ -3112,25 +3150,6 @@
     renderAll();
   });
 
-  /* ══════════════════ Scan box ══════════════════ */
-  function doScan() {
-    var v = $("scan-input").value.trim().toUpperCase();
-    if (!v) return;
-    $("scan-input").value = "";
-    /* Refuse out loud. The input stays enabled so the scan is *received* and can be answered;
-       a disabled input would swallow it and say nothing at all. */
-    if (stationFull()) {
-      $("queue-full-text").innerHTML =
-        "<span class='mono'>" + v + "</span> cannot be staged &mdash; both bays are occupied. " +
-        "Check in or un-stage a rod first.";
-      $("queue-full-note").classList.add("visible");
-      return;
-    }
-    openPreCheckin(v);
-  }
-  $("btn-scan").addEventListener("click", doScan);
-  $("scan-input").addEventListener("keydown", function (e) { if (e.key === "Enter") doScan(); });
-
   /* ══════════════════ Station toggle ══════════════════ */
   /* The WIP station code is NOT derived from the line. Only FL1PO is seeded — see
      CommonDB_Insert_WIPStations_FlatWire.sql D2, which creates FL1PO and deliberately omits
@@ -3170,34 +3189,12 @@
     CURRENT_LINE = line;
     $("line-badge").textContent = CURRENT_LINE;
     $("stamp-station").textContent = STATION_BY_LINE[CURRENT_LINE] || "—";
-    $("queue-line").textContent = CURRENT_LINE;
     $("pci-sub").innerHTML = CURRENT_LINE + " &middot; Payoff 2 &middot; the current coil keeps running";
   }
   window.selectStation = selectStation;
 
-  /* ══════════════════ Modal close plumbing ══════════════════ */
-  document.querySelectorAll("[data-close]").forEach(function (b) {
-    b.addEventListener("click", function () { closeModal(b.getAttribute("data-close")); });
-  });
-  document.querySelectorAll(".gb-modal-overlay").forEach(function (ov) {
-    ov.addEventListener("click", function (e) { if (e.target === ov) closeAllModals(); });
-  });
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") { closeAllModals(); return; }
-
-    /* Focus trap. aria-modal alone does not stop Tab from walking out of the dialog and
-       into the dashboard behind it, which on a touch panel means the operator loses the
-       modal entirely with no visible way back. */
-    if (e.key !== "Tab") return;
-    var openOverlay = document.querySelector(".gb-modal-overlay.open");
-    if (!openOverlay) return;
-    var items = visibleFocusables(openOverlay);
-    if (!items.length) return;
-    var first = items[0], last = items[items.length - 1];
-    if (!openOverlay.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
-    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-  });
+  /* Modal close plumbing (data-close, backdrop click, ESC, focus trap) is bound by
+     fw-modal.js for every .gb-modal-overlay on the page — nothing to do here. */
 
   /* ══════════════════ Demo-only state simulator ══════════════════
      Cycles the WHOLE STATION, not just Payoff 2. The old simulator only ever varied bay 2,
@@ -3296,6 +3293,11 @@
 })();
 </script>
 
+<!-- Shared dialog plumbing (open/close, ESC, focus trap, fit-to-window) and the WIP
+     rejection dialog this station raises when a staging inspection fails. -->
+<script src="fw-modal.js"></script>
+<script src="wip_rejection.js"></script>
+<script src="rod_checkout.js"></script>
 <script src="flat-wire-topbar.js"></script>
 <script src="flat-wire-fit.js" data-fit="fill"></script>
 </body>

@@ -84,63 +84,238 @@
   }
   .target-strip strong { color: var(--color-text-primary); font-weight: 500; font-family: var(--font-mono); }
 
-  /* Pause badge (hidden by default, shown by pause_run.js) */
-  .pause-timer-badge {
-    display: none;
+  /* ── Info grids (Rod Information / Order Information) ── */
+  .info-section { display: flex; flex-direction: column; gap: 10px; }
+  .info-card {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 10px 14px;
+  }
+  .info-card-title {
+    font-size: 14px; font-weight: 600; color: var(--color-text-primary);
+    margin-bottom: 6px; display: flex; align-items: center; gap: 8px;
+  }
+  .info-table-wrap { overflow-x: auto; }
+  .info-table { width: 100%; border-collapse: collapse; font-size: 14px; white-space: nowrap; }
+  .info-table th {
+    text-align: left; padding: 5px 10px; font-weight: 500; font-size: 14px;
+    color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.3px;
+    background: var(--color-background-secondary); border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .info-table td { padding: 5px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); }
+  .info-table tbody tr:last-child td { border-bottom: none; }
+  .info-table tbody tr:hover { background: var(--color-background-secondary); }
+  .info-table .active-row, .info-table .active-row:hover { background: var(--color-background-info); }
+  .info-table .mono { font-family: var(--font-mono); }
+
+  /* Accordion toggle for the info cards */
+  .info-card-title.acc-toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    width: 100%; background: none; border: none; padding: 0; text-align: left;
+    cursor: pointer; font-family: var(--font-sans);
+  }
+  .info-card-title.acc-toggle .acc-label { display: inline-flex; align-items: center; gap: 8px; }
+  .info-card.collapsed .info-card-title { margin-bottom: 0; }
+  .info-card.collapsed .acc-body { display: none; }
+  .acc-icon { position: relative; width: 18px; height: 18px; flex-shrink: 0; }
+  .acc-icon::before, .acc-icon::after {
+    content: ""; position: absolute; left: 50%; top: 50%;
+    background: var(--color-text-secondary); border-radius: 1px;
+    transform: translate(-50%, -50%);
+  }
+  .acc-icon::before { width: 12px; height: 2px; }
+  .acc-icon::after { width: 2px; height: 12px; transition: transform 0.2s ease; }
+  .info-card:not(.collapsed) .acc-icon::after { transform: translate(-50%, -50%) scaleY(0); }
+  .info-card-title.acc-toggle:hover .acc-icon::before,
+  .info-card-title.acc-toggle:hover .acc-icon::after { background: var(--color-blue); }
+
+  /* ── Machine / Payoffs / Components — three side-by-side cards ── */
+  .mpc-strip {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr 1.55fr;
+    gap: 12px;
+  }
+  .mpc-card {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 10px 14px 11px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+  }
+  .mpc-card-head {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    padding-bottom: 6px; border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .mpc-card-head .ss-dot { width: 9px; height: 9px; }
+  .mpc-card-body { display: flex; flex-direction: column; gap: 6px; }
+
+  .ss-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-green); flex-shrink: 0; }
+  .ss-dot.idle { background: var(--color-gray); }
+
+  /* Label:value row inside a card */
+  .mpc-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .mpc-line .k { font-size: 14px; color: var(--color-text-secondary); font-weight: 500; }
+  .mpc-line .v { font-size: 15px; color: var(--color-text-primary); font-weight: 600; font-family: var(--font-mono); white-space: nowrap; }
+  .mpc-line .v .u { font-size: 14px; color: var(--color-text-tertiary); font-family: var(--font-sans); font-weight: 500; margin-left: 3px; }
+
+  /* Payoff block inside its card */
+  .mpc-payoff { display: flex; flex-direction: column; gap: 5px; }
+  .mpc-payoff + .mpc-payoff { padding-top: 8px; border-top: 0.5px solid var(--color-border-tertiary); }
+  .mpc-payoff-head { display: flex; align-items: center; gap: 8px; }
+  .pf-tag { font-size: 14px; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: var(--color-green); color: #fff; flex-shrink: 0; }
+  .pf-tag.idle { background: var(--color-gray); }
+  .mpc-payoff-head .rod { font-size: 15px; font-weight: 600; font-family: var(--font-mono); color: var(--color-text-primary); }
+  .mpc-payoff-head .rod.active { color: var(--color-text-info); }
+  .mpc-payoff-head .rod.none { font-family: var(--font-sans); font-weight: 500; color: var(--color-text-tertiary); }
+  .pf-progress { width: 100%; height: 10px; background: var(--color-background-secondary); border-radius: 999px; overflow: hidden; }
+  .pf-progress-fill { display: block; height: 100%; background: var(--color-green); border-radius: 999px; transition: width 0.4s ease; }
+  .pf-progress-fill.idle { background: var(--color-border-primary); }
+  .mpc-payoff .pf-num { font-size: 14px; color: var(--color-text-secondary); font-family: var(--font-mono); }
+  .mpc-payoff .pf-num.plain { font-family: var(--font-sans); }
+
+  /* Component rows. FL3 is the only monitor that shows BOTH legs of the line, so
+     its Components card runs two columns — Drawing and Finishing — rather than one
+     tall stack that would make this card twice the height of its neighbours. */
+  .mpc-comp-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; }
+  .mpc-comp-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .mpc-comp-colhead {
+    font-size: 14px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;
+    color: var(--color-text-tertiary); padding-bottom: 3px;
+  }
+  .mpc-comp-colhead.finishing { color: var(--color-text-purple); }
+  .mpc-comp { display: flex; align-items: center; gap: 8px; font-size: 14px; min-width: 0; }
+  .mpc-comp .name { font-weight: 600; color: var(--color-text-primary); min-width: 46px; flex-shrink: 0; }
+  .mpc-comp .cset {
+    font-family: var(--font-mono); color: var(--color-text-secondary); font-size: 14px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+  }
+
+  /* ── Tab / collapse strip above the charts ── */
+  .tab-strip {
+    display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    background: var(--color-background-warning);
-    color: var(--color-text-warning);
-    border-radius: var(--border-radius-md);
+    gap: 4px;
+    padding: 10px 18px 0;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    background: var(--color-background-primary);
+  }
+  .tab-btn {
+    padding: 7px 18px;
+    border: none;
+    background: transparent;
     font-size: 14px;
     font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -0.5px;
+    transition: all 0.12s;
   }
+  .tab-btn.active { color: var(--color-text-primary); border-bottom-color: #185FA5; }
+  .tab-btn:hover:not(.active) { color: var(--color-text-primary); }
+  .tab-spacer { flex: 1 1 auto; }
+  .chart-collapse-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; margin: 0 4px 8px 0; padding: 0;
+    border: none; background: none; cursor: pointer; font-family: var(--font-sans);
+  }
+  .chart-collapse-btn:hover .acc-icon::before,
+  .chart-collapse-btn:hover .acc-icon::after { background: var(--color-blue); }
+  /* Expanded → show minus (−); collapsed → show plus (+), matching the info cards */
+  body:not(.charts-collapsed) .chart-collapse-btn .acc-icon::after { transform: translate(-50%, -50%) scaleY(0); }
+  /* When collapsed, hide both chart panels regardless of active tab */
+  body.charts-collapsed #traces-panel,
+  body.charts-collapsed #machine-panel { display: none !important; }
 
   /* Traces */
   .traces {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
-    height: 366px;
+    flex: 1 1 auto;
+    min-height: 0;
   }
 
   .trace-panel {
     background: var(--color-background-primary);
     border: 0.5px solid var(--color-border-tertiary);
     border-radius: var(--border-radius-lg);
-    padding: 18px 20px;
+    padding: 14px 18px;
     display: flex;
     flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
   }
+
+  /* Maximize a single trace to full screen */
+  .trace-maximize {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; margin-left: 4px; padding: 0;
+    border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+    background: var(--color-background-primary); color: var(--color-text-secondary);
+    cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+  }
+  .trace-maximize:hover { background: var(--color-background-secondary); color: var(--color-text-primary); border-color: var(--color-blue); }
+  .trace-maximize svg { width: 16px; height: 16px; }
+  .trace-maximize .ic-restore { display: none; }
+  .trace-panel.maximized {
+    position: fixed; inset: 40px; z-index: 9990; margin: 0;
+    border-radius: var(--border-radius-lg);
+    border: 0.5px solid var(--color-border-tertiary);
+    padding: 22px 30px 18px;
+    box-shadow: 0 30px 90px rgba(0,0,0,0.45);
+    animation: fsIn 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  @keyframes fsIn { from { opacity: 0; transform: scale(0.985); } to { opacity: 1; transform: scale(1); } }
+  .trace-panel.maximized .trace-header { margin-bottom: 16px; }
+  .trace-panel.maximized .trace-title h2 { font-size: 24px; }
+  .trace-panel.maximized .trace-subtitle { font-size: 15px; }
+  .trace-panel.maximized .trace-value { font-size: 44px; }
+  .trace-panel.maximized .trace-status { font-size: 14px; padding: 6px 14px; }
+  .trace-panel.maximized .trace-stats { font-size: 15px; gap: 28px; padding-top: 14px; margin-top: 12px; }
+  .trace-panel.maximized .trace-maximize { width: 42px; height: 42px; }
+  .trace-panel.maximized .trace-maximize svg { width: 20px; height: 20px; }
+  .trace-panel.maximized .trace-maximize .ic-expand { display: none; }
+  .trace-panel.maximized .trace-maximize .ic-restore { display: inline; }
+  .trace-maxed-backdrop {
+    position: fixed; inset: 0; z-index: 9989; display: none;
+    background: rgba(15, 18, 22, 0.55);
+    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  }
+  .trace-maxed-backdrop.show { display: block; animation: fsIn 0.22s ease; }
 
   .trace-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
     margin-bottom: 8px;
   }
   .trace-title {
     display: flex;
     align-items: baseline;
     gap: 12px;
+    min-width: 0;
+    overflow: hidden;
   }
-  .trace-title h2 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 500;
-  }
+  .trace-title h2 { margin: 0; font-size: 16px; font-weight: 500; flex-shrink: 0; }
   .trace-subtitle {
     font-size: 14px;
     color: var(--color-text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
   }
-  .trace-reading {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-  }
+  .trace-reading { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
   .trace-value {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 500;
     font-family: var(--font-mono);
     line-height: 1;
@@ -155,6 +330,7 @@
     border-radius: var(--border-radius-md);
     font-size: 14px;
     font-weight: 500;
+    white-space: nowrap;
   }
   .trace-status.in-spec { background: var(--color-background-success); color: var(--color-text-success); }
   .trace-status.oos { background: var(--color-background-danger); color: var(--color-text-danger); }
@@ -162,8 +338,8 @@
   .trace-status.in-spec .dot { background: var(--color-green); }
   .trace-status.oos .dot { background: var(--color-red); }
 
-  .trace-chart { flex: 1; position: relative; }
-  .trace-chart svg { width: 100%; height: 100%; display: block; }
+  .trace-chart { flex: 1; position: relative; min-height: 0; }
+  .trace-chart svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   .trace-axis-label { font-family: var(--font-mono); font-size: 14px; fill: var(--color-text-tertiary); }
   .trace-gridline { stroke: var(--color-border-tertiary); stroke-width: 0.5; }
 
@@ -183,135 +359,49 @@
     margin-left: 6px;
   }
 
-  /* Machine status */
-  .machine-status {
-    display: grid;
-    grid-template-columns: 220px 1fr 360px;
-    gap: 12px;
-    padding: 18px 20px;
-    height: 310px;
-  }
-
-  .status-col {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  /* ── Machine View tab — the hybrid line schematic ── */
+  #machine-panel {
+    display: none;
+    flex: 1 1 auto;
     min-height: 0;
+    /* 4px, not 10px: this panel's height is the traces' flex slot, and every pixel
+       of vertical padding scales the schematic down — which drags its 14px labels
+       under the shopfloor floor. */
+    padding: 4px 12px;
+    box-sizing: border-box;
+    background: var(--color-background-tertiary);
+    border-radius: var(--border-radius-lg);
+    position: relative;
   }
+  #machine-panel.show { display: block; }
+  .mv-fullscreen-btn {
+    position: absolute; top: 12px; right: 14px;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary); border-radius: var(--border-radius-md);
+    font-size: 14px; font-weight: 500; color: var(--color-text-secondary);
+    cursor: pointer; text-decoration: none;
+  }
+  .mv-fullscreen-btn:hover { background: var(--color-background-secondary); }
 
-  .status-col-title {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--color-text-secondary);
-    margin-bottom: 2px;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-  }
-
-  .metric-tile {
-    background: var(--color-background-secondary);
-    padding: 12px 16px;
-    border-radius: var(--border-radius-md);
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  .metric-label { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 4px; }
-  .metric-value { font-size: 24px; font-weight: 500; font-family: var(--font-mono); line-height: 1; }
-  .metric-unit { font-size: 14px; color: var(--color-text-secondary); font-family: var(--font-sans); font-weight: 400; margin-left: 5px; }
-
-  /* Payoff bars */
-  .payoffs-container { display: flex; flex-direction: column; gap: 10px; flex: 1; }
-  .payoff {
-    background: var(--color-background-secondary);
-    padding: 12px 16px;
-    border-radius: var(--border-radius-md);
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  .payoff-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
-  .payoff-name { font-size: 14px; font-weight: 500; }
-  .payoff-weight { font-family: var(--font-mono); font-size: 17px; font-weight: 500; }
-  .payoff-weight.warn { color: var(--color-text-warning); }
-  .payoff-pct { font-size: 14px; color: var(--color-text-secondary); margin-left: 5px; }
-  .payoff-bar { height: 10px; background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 5px; overflow: hidden; margin-bottom: 6px; }
-  .payoff-bar-fill { height: 100%; border-radius: 5px; }
-  .payoff-bar-fill.green { background: var(--color-green); }
-  .payoff-bar-fill.amber { background: var(--color-amber); }
-  .payoff-bar-fill.gray { background: var(--color-gray); opacity: 0.4; }
-  .payoff-meta { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--color-text-secondary); }
-  .payoff-badge {
-    display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
-    border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500;
-  }
-  .payoff-badge.ready { background: var(--color-background-success); color: var(--color-text-success); }
-  .payoff-badge.not-staged { background: var(--color-background-secondary); color: var(--color-text-tertiary); border: 0.5px solid var(--color-border-tertiary); }
-  .payoff-badge .dot { width: 5px; height: 5px; border-radius: 50%; }
-  .payoff-badge.ready .dot { background: var(--color-green); }
-
-  /* Components — compact FL3 hybrid layout */
-  .components-list {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-height: 0;
-  }
-  .stage-header {
-    padding: 3px 10px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--color-text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    background: var(--color-background-secondary);
-    border-radius: var(--border-radius-md);
-    margin-top: 2px;
-    line-height: 1;
-  }
-  .stage-header.finishing {
-    color: var(--color-text-purple);
-    background: var(--color-background-purple);
-  }
-  .component-row {
-    display: grid;
-    grid-template-columns: 10px 1fr auto;
-    gap: 10px;
-    align-items: center;
-    padding: 4px 10px;
-    background: var(--color-background-secondary);
-    border-radius: var(--border-radius-md);
-    font-size: 14px;
-    line-height: 1;
-  }
-  .component-row .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-green); }
-  .component-name { font-weight: 500; }
-  .component-setting { font-family: var(--font-mono); color: var(--color-text-secondary); font-size: 14px; }
-  .schedule-ref {
-    margin-top: 3px;
-    padding: 5px 10px;
-    background: var(--color-background-info);
-    color: var(--color-text-info);
-    border-radius: var(--border-radius-md);
-    font-size: 14px;
-    line-height: 1;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  /* Actions */
+  /* ── Command bar — grouped by intent: run events · navigate · lifecycle ── */
   .actions {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 10px;
-    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 18px;
     height: 104px;
   }
+  .action-cluster { display: flex; flex-direction: column; justify-content: center; gap: 5px; }
+  .action-group-label {
+    font-size: 14px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+    color: var(--color-text-tertiary); padding-left: 2px;
+  }
+  .action-group { display: flex; align-items: stretch; gap: 10px; }
+  .action-divider { width: 1px; background: var(--color-border-tertiary); align-self: stretch; margin: 12px 0; flex-shrink: 0; }
+  .action-spacer { flex: 1 1 auto; }
   .action-btn {
+    min-width: 118px;
     border: 1px solid var(--color-border-secondary);
     background: var(--color-background-primary);
     color: var(--color-text-primary);
@@ -328,19 +418,23 @@
     gap: 6px;
     transition: all 0.15s;
   }
-  .action-btn:hover { background: var(--color-background-secondary); }
+  .action-btn:hover { background: var(--color-background-secondary); border-color: var(--color-blue); }
   .action-btn:active { transform: scale(0.97); }
   .action-btn:disabled { opacity: 0.38; cursor: not-allowed; pointer-events: none; }
-  .action-btn svg { width: 22px; height: 22px; opacity: 0.75; }
-  .action-btn.primary {
-    background: var(--color-amber);
-    border-color: var(--color-amber);
-    color: #ffffff;
-  }
-  .action-btn.primary:hover { background: #D98A14; }
-  .action-btn.primary svg { opacity: 1; }
-  .action-btn.danger { color: var(--color-text-danger); }
-  .action-btn.danger:hover { background: var(--color-background-danger); border-color: var(--color-red); }
+  .action-btn svg { width: 22px; height: 22px; opacity: 0.8; transition: color 0.15s, opacity 0.15s; }
+  .action-btn:not(.warn):not(.commit):hover svg { color: var(--color-blue); opacity: 1; }
+  .action-btn:not(.warn):not(.commit):hover .action-btn-label { color: var(--color-text-info); }
+
+  #more-btn { transition: background 0.15s, color 0.15s, border-color 0.15s; }
+  #more-btn:hover { background: var(--color-background-info); border-color: var(--color-blue); color: var(--color-text-info); }
+  /* Caution / hold — amber (also the state pause_run.js sets when paused) */
+  .action-btn.warn { background: var(--color-background-warning); border-color: var(--color-amber); color: var(--color-text-warning); }
+  .action-btn.warn:hover { background: var(--color-amber); color: #fff; }
+  .action-btn.warn svg { opacity: 1; }
+  /* Commit / finalize — blue, irreversible (confirmation required) */
+  .action-btn.commit { min-width: 148px; background: var(--color-blue); border-color: var(--color-blue); color: #fff; }
+  .action-btn.commit:hover { background: #13497d; }
+  .action-btn.commit svg { opacity: 1; }
   .action-btn-label { text-align: center; line-height: 1.2; }
 </style>
 </head>
@@ -362,57 +456,197 @@
       </span>
       <span class="pause-timer-badge" id="pause-timer-badge">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-        Paused &nbsp;<span style="font-family:var(--font-mono)" id="pause-elapsed">00:00</span>
+        Paused &nbsp;<span class="mono" id="pause-elapsed">00:00</span>
       </span>
     </div>
     <div class="header-meta">
     </div>
   </div>
 
-  <div class="traces">
+  <!-- ═══ Machine / Payoffs / Components status cards ═══ -->
+  <div class="mpc-strip">
+
+    <!-- Machine -->
+    <div class="mpc-card">
+      <div class="mpc-card-head"><span class="ss-dot"></span>Machine &middot; FL3 Running</div>
+      <div class="mpc-card-body">
+        <div class="mpc-line"><span class="k">Run time</span><span class="v" id="run-time">00:22:00</span></div>
+        <div class="mpc-line"><span class="k">Speed</span><span class="v"><span id="speed-val">1,080</span><span class="u">FPM</span></span></div>
+        <div class="mpc-line"><span class="k">Footage</span><span class="v"><span id="footage-val">23,440</span><span class="u">ft</span></span></div>
+        <!-- FL3 is continuous: no intermediate spool, so the fill being watched is
+             the output coil at TKUP-2, not a TKUP-1 spool as on FL1. -->
+        <div class="mpc-line"><span class="k">Coil <span class="mono" style="font-size:14px">TKUP-2</span></span>
+          <span class="v"><span id="coil-lb">457</span><span class="u">/ 900 lb</span></span></div>
+        <div class="mpc-line"><span class="k">Lube temp</span><span class="v">74<span class="u">&deg;F</span></span></div>
+      </div>
+    </div>
+
+    <!-- Payoffs. FL3 stages the next rod reactively, so P2 is idle rather than
+         pre-loaded — do not copy FL1's "Ready" second payoff here. -->
+    <div class="mpc-card">
+      <div class="mpc-card-head">Payoffs</div>
+      <div class="mpc-card-body">
+        <div class="mpc-payoff">
+          <div class="mpc-payoff-head"><span class="pf-tag">P1</span><span class="rod active">R00044</span></div>
+          <span class="pf-progress"><span class="pf-progress-fill" id="payoff1-bar" style="width:83%"></span></span>
+          <span class="pf-num"><span id="payoff1-pct">83%</span> &middot; <span id="payoff1-weight">6,900 lb</span> left &middot; <span id="payoff1-consumed">1,400 lb</span> used</span>
+        </div>
+        <div class="mpc-payoff">
+          <div class="mpc-payoff-head"><span class="pf-tag idle">P2</span><span class="rod none">Not staged</span></div>
+          <span class="pf-progress"><span class="pf-progress-fill idle" style="width:0%"></span></span>
+          <span class="pf-num plain">Load next rod when P1 falls below 3,000 lb</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Components — both legs of the hybrid line, side by side.
+         Corrected 2 Aug 2026 against the authoritative equipment note at
+         00-foundations.md:58 (client feedback, 21 May 2026), closing open
+         divergence #5 in phase-08:
+           · FM2 has THREE 6" stands (S1, S2, S3) with EDGERS AT S2 AND S3 ONLY.
+             This screen showed only S1 and S2.
+           · FL1 HAS NO EDGER, and FL3's drawing leg is FL1 — so the "Edge set ·
+             Round edge" row that sat under Drawing stage is removed. The edging
+             happens at FM2 S2/S3, which is where it now appears.
+         Do not revert either as a typo. -->
+    <div class="mpc-card">
+      <div class="mpc-card-head">Components &middot; PS-1350-FL3-001</div>
+      <div class="mpc-card-body">
+        <div class="mpc-comp-cols">
+          <div class="mpc-comp-col">
+            <div class="mpc-comp-colhead">Drawing</div>
+            <div class="mpc-comp"><span class="ss-dot"></span><span class="name">DB1</span><span class="cset">Die 0.245&Prime;</span></div>
+            <div class="mpc-comp"><span class="ss-dot"></span><span class="name">DB2</span><span class="cset">Die 0.160&Prime;</span></div>
+            <div class="mpc-comp"><span class="ss-dot"></span><span class="name">FM1</span><span class="cset">Gap 0.039&Prime; &middot; W 0.508&Prime;</span></div>
+          </div>
+          <div class="mpc-comp-col">
+            <div class="mpc-comp-colhead finishing">Finishing (FM2)</div>
+            <div class="mpc-comp"><span class="ss-dot"></span><span class="name">8&Prime;</span><span class="cset">Gap 0.042&Prime;</span></div>
+            <div class="mpc-comp"><span class="ss-dot"></span><span class="name">6&Prime;S1</span><span class="cset">Gap 0.041&Prime;</span></div>
+            <div class="mpc-comp"><span class="ss-dot"></span><span class="name">6&Prime;S2</span><span class="cset">Gap 0.040&Prime; &middot; Round edge</span></div>
+            <div class="mpc-comp"><span class="ss-dot"></span><span class="name">6&Prime;S3</span><span class="cset">Gap 0.039&Prime; &middot; Round edge &middot; final</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ Rod / Order information grids ═══ -->
+  <div class="info-section">
+
+    <div class="info-card panel">
+      <button class="info-card-title acc-toggle" type="button" onclick="toggleAcc(this)" aria-expanded="true">
+        <span class="acc-label">Rod Information</span>
+        <span class="acc-icon" aria-hidden="true"></span>
+      </button>
+      <div class="info-table-wrap acc-body">
+        <table class="info-table">
+          <thead><tr>
+            <th>Rod No</th><th>Vendor</th><th>Alloy</th><th>Temper</th><th>Gauge</th>
+            <th>Rod Weight</th><th>Next Op</th><th>Temp</th>
+          </tr></thead>
+          <tbody>
+            <tr class="active-row">
+              <td class="mono">R00044</td><td>Southwire</td><td>1350</td><td>F</td><td class="mono">0.375&Prime;</td>
+              <td class="mono">8,300 lb</td><td>FM1 &rarr; FM2</td><td class="mono">74&deg;F</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Order Information.
+         Two columns differ from the FL1 grid, because FL3 makes a coreless coil
+         straight through with no intermediate spool: "Max Wgt of Spool" becomes
+         "Coil Min–Max Wgt" (the completion basis — which order field carries the
+         range is OQ-60), and "Total Spool Wgt" becomes "Total Coil Wgt". -->
+    <div class="info-card panel">
+      <button class="info-card-title acc-toggle" type="button" onclick="toggleAcc(this)" aria-expanded="true">
+        <span class="acc-label">Order Information</span>
+        <span class="acc-icon" aria-hidden="true"></span>
+      </button>
+      <div class="info-table-wrap acc-body">
+        <table class="info-table">
+          <thead><tr>
+            <th>Order No</th><th>Customer</th><th>Due Date</th><th>Gauge Tol</th><th>Width Tol</th>
+            <th>Setup Width</th><th>Setup Gauge</th><th>Finish</th><th>OD Min&ndash;Max</th>
+            <th>Coil Min&ndash;Max Wgt</th><th>Total Coil Wgt</th><th>Order Wgt</th>
+          </tr></thead>
+          <tbody>
+            <tr class="active-row">
+              <td class="mono">FW-00422</td><td>Daddario</td><td class="mono">07/28/2026</td><td class="mono">&plusmn;0.003&Prime;</td><td class="mono">&plusmn;0.008&Prime;</td>
+              <td class="mono">0.500&Prime;</td><td class="mono">0.040&Prime;</td><td>UU</td><td class="mono">30.0&Prime;&ndash;34.0&Prime;</td>
+              <td class="mono">800&ndash;900 lb</td><td class="mono">3,600 lb</td><td class="mono">4,500 lb</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tab strip -->
+  <div class="tab-strip panel" id="chart-tab-strip">
+    <button class="tab-btn active" id="tab-traces" onclick="switchTab('traces')">Traces</button>
+    <button class="tab-btn" id="tab-machine" onclick="switchTab('machine')">Machine View</button>
+    <span class="tab-spacer"></span>
+    <button class="chart-collapse-btn" id="chart-collapse-btn" onclick="toggleChartSection()"
+            title="Collapse charts" aria-label="Collapse charts" aria-expanded="true">
+      <span class="acc-icon" aria-hidden="true"></span>
+    </button>
+  </div>
+
+  <!-- Backdrop shown behind a maximized trace graph -->
+  <div class="trace-maxed-backdrop" id="trace-maxed-backdrop" onclick="restoreTraceMax()"></div>
+
+  <div class="traces" id="traces-panel">
 
     <div class="trace-panel">
       <div class="trace-header">
         <div class="trace-title">
           <h2>Final gauge</h2>
-          <span class="trace-subtitle">Target 0.040" &plusmn; 0.003" &middot; post FM2 6"S2</span>
+          <span class="trace-subtitle">0.040" &plusmn; 0.003" &middot; post FM2 6"S3</span>
         </div>
         <div class="trace-reading">
           <span class="trace-value" id="gauge-value">0.040"</span>
           <span class="trace-status in-spec" id="gauge-status">
             <span class="dot"></span>In spec
           </span>
+          <button class="trace-maximize" onclick="toggleTraceMax(this)" title="Maximize" aria-label="Maximize graph">
+            <svg class="ic-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+            <svg class="ic-restore" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h3a2 2 0 0 0 2-2V4M20 9h-3a2 2 0 0 1-2-2V4M4 15h3a2 2 0 0 1 2 2v3M20 15h-3a2 2 0 0 0-2 2v3"/></svg>
+          </button>
         </div>
       </div>
 
       <div class="trace-chart">
-        <svg viewBox="0 0 600 260" preserveAspectRatio="none">
-          <line class="trace-gridline" x1="55" y1="30" x2="590" y2="30"/>
-          <line class="trace-gridline" x1="55" y1="90" x2="590" y2="90"/>
-          <line class="trace-gridline" x1="55" y1="150" x2="590" y2="150"/>
-          <line class="trace-gridline" x1="55" y1="210" x2="590" y2="210"/>
+        <svg viewBox="0 0 600 280" preserveAspectRatio="none">
+          <line class="trace-gridline" x1="55" y1="40" x2="590" y2="40"/>
+          <line class="trace-gridline" x1="55" y1="100" x2="590" y2="100"/>
+          <line class="trace-gridline" x1="55" y1="160" x2="590" y2="160"/>
+          <line class="trace-gridline" x1="55" y1="220" x2="590" y2="220"/>
 
-          <!-- Tolerance band: 0.037–0.043 -->
-          <rect x="55" y="97" width="535" height="54" fill="#1D9E75" fill-opacity="0.12"/>
-          <!-- Target dashed line at 0.040 (center) -->
-          <line x1="55" y1="124" x2="590" y2="124" stroke="#1D9E75" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
+          <!-- Tolerance band 0.037–0.043 on the 0.030–0.050 scale -->
+          <rect x="55" y="103" width="535" height="54" fill="#1D9E75" fill-opacity="0.12"/>
+          <line x1="55" y1="130" x2="590" y2="130" stroke="#1D9E75" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
 
           <path id="gauge-path" d="" stroke="#185FA5" stroke-width="2" fill="none" stroke-linejoin="round"/>
-          <circle id="gauge-dot" cx="590" cy="124" r="4" fill="#185FA5">
+          <circle id="gauge-dot" cx="590" cy="130" r="4" fill="#185FA5">
             <animate attributeName="r" values="4;6;4" dur="1.5s" repeatCount="indefinite"/>
           </circle>
 
-          <text class="trace-axis-label" x="50" y="34" text-anchor="end">0.050</text>
-          <text class="trace-axis-label" x="50" y="94" text-anchor="end">0.043</text>
-          <text class="trace-axis-label" x="50" y="128" text-anchor="end">0.040</text>
-          <text class="trace-axis-label" x="50" y="158" text-anchor="end">0.037</text>
-          <text class="trace-axis-label" x="50" y="214" text-anchor="end">0.030</text>
+          <text class="trace-axis-label" x="50" y="44" text-anchor="end">0.050</text>
+          <text class="trace-axis-label" x="50" y="104" text-anchor="end">0.043</text>
+          <text class="trace-axis-label" x="50" y="134" text-anchor="end">0.040</text>
+          <text class="trace-axis-label" x="50" y="164" text-anchor="end">0.037</text>
+          <text class="trace-axis-label" x="50" y="224" text-anchor="end">0.030</text>
 
-          <text class="trace-axis-label" x="55" y="244">-5m</text>
-          <text class="trace-axis-label" x="210" y="244" text-anchor="middle">-3m</text>
-          <text class="trace-axis-label" x="370" y="244" text-anchor="middle">-2m</text>
-          <text class="trace-axis-label" x="530" y="244" text-anchor="middle">-30s</text>
-          <text class="trace-axis-label" x="590" y="244" text-anchor="end" font-weight="500">now</text>
+          <text class="trace-axis-label" x="55" y="262">-5m</text>
+          <text class="trace-axis-label" x="210" y="262" text-anchor="middle">-3m</text>
+          <text class="trace-axis-label" x="370" y="262" text-anchor="middle">-2m</text>
+          <text class="trace-axis-label" x="530" y="262" text-anchor="middle">-30s</text>
+          <text class="trace-axis-label" x="590" y="262" text-anchor="end" font-weight="500">now</text>
         </svg>
       </div>
 
@@ -428,44 +662,47 @@
       <div class="trace-header">
         <div class="trace-title">
           <h2>Final width</h2>
-          <span class="trace-subtitle">Target 0.500" &plusmn; 0.008" &middot; post edger</span>
+          <span class="trace-subtitle">0.500" &plusmn; 0.008" &middot; post edger</span>
         </div>
         <div class="trace-reading">
           <span class="trace-value" id="width-value">0.500"</span>
           <span class="trace-status in-spec" id="width-status">
             <span class="dot"></span>In spec
           </span>
+          <button class="trace-maximize" onclick="toggleTraceMax(this)" title="Maximize" aria-label="Maximize graph">
+            <svg class="ic-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+            <svg class="ic-restore" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h3a2 2 0 0 0 2-2V4M20 9h-3a2 2 0 0 1-2-2V4M4 15h3a2 2 0 0 1 2 2v3M20 15h-3a2 2 0 0 0-2 2v3"/></svg>
+          </button>
         </div>
       </div>
 
       <div class="trace-chart">
-        <svg viewBox="0 0 600 260" preserveAspectRatio="none">
-          <line class="trace-gridline" x1="55" y1="30" x2="590" y2="30"/>
-          <line class="trace-gridline" x1="55" y1="90" x2="590" y2="90"/>
-          <line class="trace-gridline" x1="55" y1="150" x2="590" y2="150"/>
-          <line class="trace-gridline" x1="55" y1="210" x2="590" y2="210"/>
+        <svg viewBox="0 0 600 280" preserveAspectRatio="none">
+          <line class="trace-gridline" x1="55" y1="40" x2="590" y2="40"/>
+          <line class="trace-gridline" x1="55" y1="100" x2="590" y2="100"/>
+          <line class="trace-gridline" x1="55" y1="160" x2="590" y2="160"/>
+          <line class="trace-gridline" x1="55" y1="220" x2="590" y2="220"/>
 
-          <!-- Tolerance band: 0.492–0.508 -->
-          <rect x="55" y="81" width="535" height="72" fill="#1D9E75" fill-opacity="0.12"/>
-          <!-- Target dashed line at 0.500 (center) -->
-          <line x1="55" y1="117" x2="590" y2="117" stroke="#1D9E75" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
+          <!-- Tolerance band 0.492–0.508 on the 0.480–0.520 scale -->
+          <rect x="55" y="94" width="535" height="72" fill="#1D9E75" fill-opacity="0.12"/>
+          <line x1="55" y1="130" x2="590" y2="130" stroke="#1D9E75" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
 
           <path id="width-path" d="" stroke="#185FA5" stroke-width="2" fill="none" stroke-linejoin="round"/>
-          <circle id="width-dot" cx="590" cy="117" r="4" fill="#185FA5">
+          <circle id="width-dot" cx="590" cy="130" r="4" fill="#185FA5">
             <animate attributeName="r" values="4;6;4" dur="1.5s" repeatCount="indefinite"/>
           </circle>
 
-          <text class="trace-axis-label" x="50" y="34" text-anchor="end">0.520</text>
-          <text class="trace-axis-label" x="50" y="94" text-anchor="end">0.509</text>
-          <text class="trace-axis-label" x="50" y="121" text-anchor="end">0.500</text>
-          <text class="trace-axis-label" x="50" y="154" text-anchor="end">0.491</text>
-          <text class="trace-axis-label" x="50" y="214" text-anchor="end">0.480</text>
+          <text class="trace-axis-label" x="50" y="44" text-anchor="end">0.520</text>
+          <text class="trace-axis-label" x="50" y="104" text-anchor="end">0.509</text>
+          <text class="trace-axis-label" x="50" y="134" text-anchor="end">0.500</text>
+          <text class="trace-axis-label" x="50" y="164" text-anchor="end">0.491</text>
+          <text class="trace-axis-label" x="50" y="224" text-anchor="end">0.480</text>
 
-          <text class="trace-axis-label" x="55" y="244">-5m</text>
-          <text class="trace-axis-label" x="210" y="244" text-anchor="middle">-3m</text>
-          <text class="trace-axis-label" x="370" y="244" text-anchor="middle">-2m</text>
-          <text class="trace-axis-label" x="530" y="244" text-anchor="middle">-30s</text>
-          <text class="trace-axis-label" x="590" y="244" text-anchor="end" font-weight="500">now</text>
+          <text class="trace-axis-label" x="55" y="262">-5m</text>
+          <text class="trace-axis-label" x="210" y="262" text-anchor="middle">-3m</text>
+          <text class="trace-axis-label" x="370" y="262" text-anchor="middle">-2m</text>
+          <text class="trace-axis-label" x="530" y="262" text-anchor="middle">-30s</text>
+          <text class="trace-axis-label" x="590" y="262" text-anchor="end" font-weight="500">now</text>
         </svg>
       </div>
 
@@ -477,152 +714,267 @@
       </div>
     </div>
 
-  </div>
+  </div><!-- /traces -->
 
-  <div class="machine-status panel">
+  <!-- Machine View tab — the whole hybrid chain, nothing bypassed. This is the one
+       screen where both legs run at once, which is why FL3 carries this tab and FL2
+       does not: on FL2 the drawing leg is a finished spool, on FL1 the FM2 leg is
+       idle. There is no TKUP-1 and no intermediate spool here — the material never
+       stops between FM1 and FM2. -->
+  <div id="machine-panel">
+    <a class="mv-fullscreen-btn" href="dashboard_13_hmi_schematic.html">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+      Open full screen
+    </a>
+    <!-- Wide single-flow layout: the whole hybrid chain reads left to right in one
+         pass, which is what FL3 actually is. The panel shares the traces' flex slot,
+         so the box is deliberately wide-and-short (1200x260) to fill it rather than
+         letterboxing a tall drawing into a short strip. -->
+    <!-- Wide single-flow layout: the whole hybrid chain reads left to right in one
+         pass, which is what FL3 physically is. The panel shares the traces' flex
+         slot (~215px at the 1280x1024 design size), so the viewBox is 1200x200 —
+         sized to render at roughly 1:1 there, which is what keeps the 14px labels
+         at 14px. A taller box would letterbox and shrink every label below the
+         shopfloor floor. -->
+    <svg viewBox="0 0 1200 200" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">
+      <text x="1122" y="20" text-anchor="middle" font-size="14" fill="var(--color-text-tertiary)">&#8968; = edger</text>
 
-    <div class="status-col">
-      <div class="status-col-title">Machine</div>
-      <div class="metric-tile">
-        <div class="metric-label">Speed</div>
-        <div class="metric-value"><span id="speed-val">1,080</span><span class="metric-unit">FPM</span></div>
-      </div>
-      <div class="metric-tile">
-        <div class="metric-label">Footage</div>
-        <div class="metric-value"><span id="footage-val">23,440</span><span class="metric-unit">ft</span></div>
-      </div>
-      <div class="metric-tile">
-        <div class="metric-label">Run time</div>
-        <div class="metric-value" id="runtime-val">22m</div>
-      </div>
-    </div>
+      <!-- Payoffs: two parallel inputs merging into the drawing chain -->
+      <rect x="13" y="28" width="152" height="44" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
+      <circle cx="29" cy="46" r="5" fill="#1D9E75"/>
+      <text x="41" y="50" font-size="14" font-weight="600" fill="var(--color-text-secondary)">P1 · R00044</text>
+      <text x="25" y="67" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="#1D9E75">6,900 lb · running</text>
+      <rect x="13" y="78" width="152" height="44" rx="8" fill="var(--color-background-secondary)" stroke="var(--color-border-tertiary)" stroke-width="1.2"/>
+      <circle cx="29" cy="96" r="5" fill="var(--color-gray)"/>
+      <text x="41" y="100" font-size="14" font-weight="600" fill="var(--color-text-tertiary)">P2</text>
+      <text x="25" y="117" font-size="14" fill="var(--color-text-tertiary)">Not staged</text>
+      <path d="M 165 50 L 182 50 L 182 100 L 165 100" fill="none" stroke="var(--color-border-secondary)" stroke-width="1.2"/>
+      <path d="M 182 75 L 196 75" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
+        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
+      </path>
 
-    <div class="status-col">
-      <div class="status-col-title">Payoffs</div>
-      <div class="payoffs-container">
+      <!-- Drawing leg (this is FL1) -->
+      <rect x="196" y="41" width="124" height="68" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
+      <circle cx="212" cy="61" r="5" fill="#1D9E75"/>
+      <text x="224" y="65" font-size="14" font-weight="600" fill="var(--color-text-secondary)">DB1</text>
+      <text x="208" y="91" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">0.245"</text>
+      <path d="M 320 75 L 340 75" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
+        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
+      </path>
+      <rect x="340" y="41" width="124" height="68" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
+      <circle cx="356" cy="61" r="5" fill="#1D9E75"/>
+      <text x="368" y="65" font-size="14" font-weight="600" fill="var(--color-text-secondary)">DB2</text>
+      <text x="352" y="91" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">0.160"</text>
+      <path d="M 464 75 L 484 75" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
+        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
+      </path>
+      <rect x="484" y="41" width="160" height="68" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
+      <circle cx="500" cy="61" r="5" fill="#1D9E75"/>
+      <text x="512" y="65" font-size="14" font-weight="600" fill="var(--color-text-secondary)">FM1 · 12&#34; MILL</text>
+      <text x="496" y="91" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">Gap 0.039" · W 0.508"</text>
 
-        <div class="payoff">
-          <div class="payoff-head">
-            <span class="payoff-name">Payoff 1 <span style="color: var(--color-text-tertiary); font-weight: 400; font-size: 14px;">&middot; <span class="mono">R00044</span></span></span>
-            <span>
-              <span class="payoff-weight" id="payoff1-weight">6,900 lb</span>
-              <span class="payoff-pct" id="payoff1-pct">83%</span>
-            </span>
-          </div>
-          <div class="payoff-bar">
-            <div class="payoff-bar-fill green" id="payoff1-bar" style="width: 83%;"></div>
-          </div>
-          <div class="payoff-meta">
-            <span>Consumed <span class="mono" id="payoff1-consumed">1,400 lb</span> since rod start</span>
-            <span class="payoff-badge ready">
-              <span class="dot"></span>Running
-            </span>
-          </div>
-        </div>
+      <!-- The defining hand-off: no stop, no spool, no anneal between the legs -->
+      <path d="M 644 75 L 676 75" fill="none" stroke="#7C5BB8" stroke-width="2.6" stroke-dasharray="6 5">
+        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
+      </path>
+      <text x="660" y="31" text-anchor="middle" font-size="14" font-weight="700" fill="var(--color-text-purple)">continuous</text>
 
-        <div class="payoff">
-          <div class="payoff-head">
-            <span class="payoff-name">Payoff 2</span>
-            <span>
-              <span class="payoff-weight" style="color: var(--color-text-tertiary);">—</span>
-            </span>
-          </div>
-          <div class="payoff-bar">
-            <div class="payoff-bar-fill gray" style="width: 0%;"></div>
-          </div>
-          <div class="payoff-meta">
-            <span style="color: var(--color-text-tertiary);">Not staged — load next rod when Payoff 1 falls below 3,000 lb</span>
-            <span class="payoff-badge not-staged">Not staged</span>
-          </div>
-        </div>
+      <!-- Finishing leg (this is FL2) — live on FL3, never bypassed -->
+      <rect x="676" y="41" width="112" height="68" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
+      <circle cx="692" cy="61" r="5" fill="#1D9E75"/>
+      <text x="704" y="65" font-size="14" font-weight="600" fill="var(--color-text-secondary)">FM2 8&#34;</text>
+      <text x="688" y="91" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">0.042"</text>
+      <path d="M 788 75 L 804 75" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
+        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
+      </path>
+      <rect x="804" y="41" width="112" height="68" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
+      <circle cx="820" cy="61" r="5" fill="#1D9E75"/>
+      <text x="832" y="65" font-size="14" font-weight="600" fill="var(--color-text-secondary)">6&#34; S1</text>
+      <text x="816" y="91" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">0.041"</text>
+      <path d="M 916 75 L 932 75" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
+        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
+      </path>
+      <rect x="932" y="41" width="112" height="68" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
+      <circle cx="948" cy="61" r="5" fill="#1D9E75"/>
+      <text x="960" y="65" font-size="14" font-weight="600" fill="var(--color-text-secondary)">6&#34; S2 &#8968;</text>
+      <text x="944" y="91" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">0.040"</text>
+      <path d="M 1044 75 L 1060 75" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
+        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
+      </path>
+      <rect x="1060" y="41" width="124" height="68" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="2"/>
+      <circle cx="1076" cy="61" r="5" fill="#1D9E75"/>
+      <text x="1088" y="65" font-size="14" font-weight="600" fill="var(--color-text-secondary)">6&#34; S3 &#8968;</text>
+      <text x="1072" y="91" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">0.039" final</text>
 
-      </div>
-    </div>
+      <!-- Readouts, measured after the final stand -->
+      <path d="M 1122 109 L 1122 122 L 415 122 L 415 136 M 581 122 L 581 136" fill="none" stroke="#185FA5" stroke-width="1" stroke-dasharray="4 3" opacity="0.55"/>
+      <rect x="340" y="136" width="150" height="62" rx="8" fill="#EFF6FB" stroke="#185FA5" stroke-width="1.5"/>
+      <circle cx="356" cy="156" r="5" fill="#185FA5"/>
+      <text x="368" y="160" font-size="14" font-weight="600" fill="#185FA5">GAUGE</text>
+      <text x="352" y="184" font-size="18" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="#1D9E75">0.040" &#10003;</text>
+      <rect x="506" y="136" width="150" height="62" rx="8" fill="#EFF6FB" stroke="#185FA5" stroke-width="1.5"/>
+      <circle cx="522" cy="156" r="5" fill="#185FA5"/>
+      <text x="534" y="160" font-size="14" font-weight="600" fill="#185FA5">WIDTH</text>
+      <text x="518" y="184" font-size="18" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="#1D9E75">0.500" &#10003;</text>
 
-    <div class="status-col">
-      <div class="status-col-title">Components</div>
-      <div class="components-list">
-        <div class="stage-header">Drawing stage</div>
-        <div class="component-row">
-          <span class="dot"></span>
-          <span class="component-name">DB1</span>
-          <span class="component-setting">Die 0.245"</span>
-        </div>
-        <div class="component-row">
-          <span class="dot"></span>
-          <span class="component-name">DB2</span>
-          <span class="component-setting">Die 0.160"</span>
-        </div>
-        <div class="component-row">
-          <span class="dot"></span>
-          <span class="component-name">FM1 12" mill</span>
-          <span class="component-setting">Gap 0.039" / W 0.508"</span>
-        </div>
-        <div class="component-row">
-          <span class="dot"></span>
-          <span class="component-name">Edge set</span>
-          <span class="component-setting">Round edge</span>
-        </div>
-        <div class="stage-header finishing">Finishing stage (FM2)</div>
-        <div class="component-row">
-          <span class="dot"></span>
-          <span class="component-name">FM2 8" roller</span>
-          <span class="component-setting">Gap 0.042"</span>
-        </div>
-        <div class="component-row">
-          <span class="dot"></span>
-          <span class="component-name">FM2 6" S1</span>
-          <span class="component-setting">Gap 0.041"</span>
-        </div>
-        <div class="component-row">
-          <span class="dot"></span>
-          <span class="component-name">FM2 6" S2</span>
-          <span class="component-setting">Gap 0.039" (final)</span>
-        </div>
-        <div class="schedule-ref">
-          <span>Pass Schedule</span>
-          <span class="mono" style="font-weight: 500;">PS-1350-FL3-001</span>
-        </div>
-      </div>
-    </div>
+      <!-- Output coil -->
+      <path d="M 1122 109 L 1122 136" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
+        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
+      </path>
+      <rect x="900" y="136" width="284" height="62" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
+      <circle cx="918" cy="156" r="5" fill="#1D9E75"/>
+      <text x="930" y="160" font-size="14" font-weight="600" fill="var(--color-text-secondary)">TKUP-2 — CORELESS COIL</text>
+      <text x="912" y="184" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">23,440 ft / 457 lb</text>
 
+      <!-- What makes this route the hybrid one -->
+      <rect x="13" y="136" width="310" height="62" rx="8" fill="var(--color-background-purple)" stroke="none"/>
+      <text x="29" y="160" font-size="14" font-weight="700" fill="var(--color-text-purple)">HYBRID ROUTE</text>
+      <text x="29" y="182" font-size="14" fill="var(--color-text-purple)">No intermediate spool, no anneal</text>
+    </svg>
   </div>
 
   <div class="actions panel">
-    <!-- "Log Weld Event" removed 1 Aug 2026, with Dashboard 4 retired. The weld is captured
-         at the pre-check-in station (Dashboard 2A, "Mark as welded"), which since PCI022 records
-         the full weld event including the quality result. -->
-    <button class="action-btn" onclick="window.location.href='dashboard_die_change.html'">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      <span class="action-btn-label">Die Change</span>
-    </button>
-    <button class="action-btn" onclick="window.location.href='dashboard_11_roll_adjust.html'">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
-      <span class="action-btn-label">Roll Adjust</span>
-    </button>
-    <button class="action-btn" onclick="window.location.href='dashboard_6_spc_checkpoint.html'">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-      <span class="action-btn-label">SPC Checkpoint</span>
-    </button>
-    <button class="action-btn" id="pause-btn" onclick="openPauseDialog()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-      <span class="action-btn-label">Pause run</span>
-    </button>
-    <button class="action-btn danger" onclick="window.location.href='dashboard_8_wip_rejection.html'">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <span class="action-btn-label">WIP Reject</span>
-    </button>
-    <button class="action-btn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      <span class="action-btn-label">Complete Run</span>
-    </button>
-    <button class="action-btn" disabled title="Only available before run starts — use Pause to access mid-run checkout">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-      <span class="action-btn-label">Check Out Rod</span>
-    </button>
+
+    <!-- Run events / data entry.
+         "Log Weld Event" removed 1 Aug 2026, with Dashboard 4 retired. The weld is
+         captured at the pre-check-in station (Dashboard 2A, "Mark as welded").
+         Die Change and Roll Adjust both sit here rather than under "Go to": both
+         became dialogs over the live run (1 and 2 Aug 2026) and navigate nowhere.
+         FL1's bar still lists Die Change under "Go to" — it should follow. -->
+    <div class="action-cluster">
+      <span class="action-group-label">Run events</span>
+      <div class="action-group">
+        <button class="action-btn" onclick="openSpcCheckpoint(fwRunCtx())">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span class="action-btn-label">SPC Checkpoint</span>
+        </button>
+        <button class="action-btn" onclick="openDieChange(fwRunCtx())">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span class="action-btn-label">Die Change</span>
+        </button>
+        <button class="action-btn" onclick="openRollAdjust(fwRollCtx())">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+          <span class="action-btn-label">Roll Adjust</span>
+        </button>
+        <button class="action-btn" onclick="openWipRejection(fwWipCtx())">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span class="action-btn-label">WIP Reject</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="action-divider"></div>
+
+    <div class="action-cluster">
+      <span class="action-group-label">Go to</span>
+      <div class="action-group">
+        <button class="action-btn" onclick="window.location.href='dashboard_14_scada_trends.html'" title="Open SCADA multi-trend chart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span class="action-btn-label">View Trends</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="action-spacer"></div>
+
+    <!-- Run lifecycle (critical, isolated) -->
+    <div class="action-cluster">
+      <span class="action-group-label">Run control</span>
+      <div class="action-group">
+        <button class="action-btn" id="pause-btn" onclick="openPauseDialog()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          <span class="action-btn-label">Pause run</span>
+        </button>
+        <!-- Checkout, 2 Aug 2026. Taken out of the resume dialog's outcome list:
+             checking out a rod needs the line stopped, so it is disabled while running
+             and enabled by pause_run.js while paused. -->
+        <button class="action-btn" id="checkout-btn" disabled
+                onclick="openRodCheckout(fwCheckoutCtx())"
+                title="Pause the run first — checking out a rod needs the line stopped">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          <span class="action-btn-label">Checkout</span>
+        </button>
+        <button class="action-btn commit" onclick="openCompleteConfirm()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span class="action-btn-label">Complete Run</span>
+        </button>
+      </div>
+    </div>
+
   </div>
 
 </div>
+
+<script>
+  /* Accordion toggle for the Rod / Order info cards */
+  function toggleAcc(btn) {
+    var card = btn.closest(".info-card");
+    if (!card) return;
+    var collapsed = card.classList.toggle("collapsed");
+    btn.setAttribute("aria-expanded", String(!collapsed));
+  }
+
+  /* Maximize / restore a single trace graph to full screen */
+  function toggleTraceMax(btn) {
+    var panel = btn.closest(".trace-panel");
+    if (!panel) return;
+    var backdrop = document.getElementById("trace-maxed-backdrop");
+    var isMax = panel.classList.toggle("maximized");
+    if (backdrop) backdrop.classList.toggle("show", isMax);
+    btn.title = isMax ? "Restore" : "Maximize";
+  }
+  function restoreTraceMax() {
+    var p = document.querySelector(".trace-panel.maximized");
+    if (p) {
+      p.classList.remove("maximized");
+      var bd = document.getElementById("trace-maxed-backdrop");
+      if (bd) bd.classList.remove("show");
+    }
+  }
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") restoreTraceMax(); });
+
+  function switchTab(tab) {
+    var traces = document.getElementById("traces-panel");
+    var machine = document.getElementById("machine-panel");
+    var tt = document.getElementById("tab-traces");
+    var tm = document.getElementById("tab-machine");
+    /* Selecting a tab re-opens the section if it was collapsed */
+    if (document.body.classList.contains("charts-collapsed")) setChartCollapsed(false);
+    if (tab === "traces") {
+      traces.style.display = "";
+      machine.classList.remove("show");
+      tt.classList.add("active");
+      tm.classList.remove("active");
+      localStorage.setItem("db3fl3-active-tab", "traces");
+    } else {
+      traces.style.display = "none";
+      machine.classList.add("show");
+      tt.classList.remove("active");
+      tm.classList.add("active");
+      localStorage.setItem("db3fl3-active-tab", "machine");
+    }
+  }
+
+  /* Collapse / expand the entire chart section (accordion) */
+  function setChartCollapsed(collapsed) {
+    var btn = document.getElementById("chart-collapse-btn");
+    document.body.classList.toggle("charts-collapsed", collapsed);
+    if (btn) {
+      btn.setAttribute("aria-expanded", String(!collapsed));
+      btn.title = collapsed ? "Expand charts" : "Collapse charts";
+    }
+    localStorage.setItem("db3fl3-charts-collapsed", collapsed ? "1" : "0");
+  }
+  function toggleChartSection() {
+    setChartCollapsed(!document.body.classList.contains("charts-collapsed"));
+  }
+
+  /* Restore last-used tab */
+  (function () {
+    if (localStorage.getItem("db3fl3-active-tab") === "machine") switchTab("machine");
+    if (localStorage.getItem("db3fl3-charts-collapsed") === "1") setChartCollapsed(true);
+  })();
+</script>
 
 <script>
   (function () {
@@ -633,7 +985,7 @@
     var baseFootage = 23440;
     var feedRate = 1080;
     var rodStartLb = 8300;
-    var rodStartFootage = 0;
+    var coilTargetLb = 900;
 
     function updateClock() {
       var now = new Date();
@@ -648,17 +1000,23 @@
       if (dateEl) dateEl.textContent = months[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();
     }
 
-    function updateRunTime() {
-      var elapsed = Date.now() - runStartMs;
-      var hours = Math.floor(elapsed / (60 * 60 * 1000));
-      var minutes = Math.floor((elapsed % (60 * 60 * 1000)) / (60 * 1000));
-      var el = document.getElementById("runtime-val");
-      if (el) el.textContent = (hours > 0 ? hours + "h " : "") + minutes + "m";
-    }
+    /* Run time ticks second-by-second, same as the FL1 and FL2 monitors */
+    (function () {
+      var el = document.getElementById("run-time");
+      if (!el) return;
+      var parts = (el.textContent || "0:0:0").split(":").map(Number);
+      var secs = (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
+      setInterval(function () {
+        secs++;
+        el.textContent = pad(Math.floor(secs / 3600)) + ":" + pad(Math.floor(secs / 60) % 60) + ":" + pad(secs % 60);
+      }, 1000);
+    })();
 
     var NUM_POINTS = 100;
     var PLOT_X_START = 55, PLOT_X_END = 590;
-    var PLOT_Y_TOP = 30, PLOT_Y_BOTTOM = 210;
+    /* Matches the FL1 and FL2 monitors' 0 0 600 280 chart box — phase 5 builds one
+       shared gauge-trace-chart for all three lines, so the geometry must agree. */
+    var PLOT_Y_TOP = 40, PLOT_Y_BOTTOM = 220;
 
     var gauge = { target: 0.040, yMin: 0.030, yMax: 0.050, tolerance: 0.003, data: [] };
     var width = { target: 0.500, yMin: 0.480, yMax: 0.520, tolerance: 0.008, data: [] };
@@ -700,17 +1058,13 @@
       return { min: min, max: max, avg: sum / cfg.data.length, cur: cfg.data[cfg.data.length - 1] };
     }
 
-    function fmtIn(v, d) { return v.toFixed(d !== undefined ? d : 3) + '"'; }
+    function fmtIn(v) { return v.toFixed(3) + '"'; }
 
     function renderTrace(cfg, prefix) {
       var pathEl = document.getElementById(prefix + "-path");
       var dotEl  = document.getElementById(prefix + "-dot");
       var valEl  = document.getElementById(prefix + "-value");
       var statEl = document.getElementById(prefix + "-status");
-      var minEl  = document.getElementById(prefix + "-min");
-      var maxEl  = document.getElementById(prefix + "-max");
-      var avgEl  = document.getElementById(prefix + "-avg");
-      var devEl  = document.getElementById(prefix + "-dev");
 
       pathEl.setAttribute("d", buildPath(cfg));
       dotEl.setAttribute("cy", yMap(cfg.data[cfg.data.length - 1], cfg).toFixed(1));
@@ -731,11 +1085,11 @@
         statEl.innerHTML = '<span class="dot"></span>Out of spec';
       }
 
-      minEl.textContent = fmtIn(stats.min);
-      maxEl.textContent = fmtIn(stats.max);
-      avgEl.textContent = fmtIn(stats.avg);
-      var devStr = (dev >= 0 ? "+" : "") + dev.toFixed(3) + '"';
-      devEl.textContent = devStr;
+      document.getElementById(prefix + "-min").textContent = fmtIn(stats.min);
+      document.getElementById(prefix + "-max").textContent = fmtIn(stats.max);
+      document.getElementById(prefix + "-avg").textContent = fmtIn(stats.avg);
+      var devEl = document.getElementById(prefix + "-dev");
+      devEl.textContent = (dev >= 0 ? "+" : "") + dev.toFixed(3) + '"';
       devEl.style.color = inSpec ? "var(--color-text-success)" : "var(--color-text-danger)";
     }
 
@@ -745,17 +1099,24 @@
       cfg.data.push(last + (Math.random() - 0.5) * cfg.tolerance * 0.28 + (cfg.target - last) * 0.07);
     }
 
+    /* No updateRunTime() here: FL3 is one continuous run with no per-coil timer to
+       show alongside it, so the Machine card carries a single #run-time value driven
+       by the second-by-second ticker above. FL1/FL2 keep a second "coil run time". */
+
     function updateMachineStatus() {
       var elapsedMin = (Date.now() - runStartMs) / 60000;
       var speed = 1080 + Math.floor((Math.random() - 0.5) * 10);
       var footage = Math.round(baseFootage + elapsedMin * feedRate);
-      var lbPerFt = 0.060;
-      var consumed = Math.round(footage * lbPerFt);
+      var consumed = Math.round(footage * 0.060);
       var remaining = Math.max(0, rodStartLb - consumed);
       var pct = Math.round((remaining / rodStartLb) * 100);
+      /* Output coil at TKUP-2 — FL3 runs straight through, so this is the only
+         accumulating weight on the line. */
+      var coilLb = Math.min(coilTargetLb, Math.round(footage * 0.0195));
 
       document.getElementById("speed-val").textContent = fmtNum(speed);
       document.getElementById("footage-val").textContent = fmtNum(footage);
+      document.getElementById("coil-lb").textContent = fmtNum(coilLb);
       document.getElementById("payoff1-weight").textContent = fmtNum(remaining) + " lb";
       document.getElementById("payoff1-pct").textContent = pct + "%";
       document.getElementById("payoff1-bar").style.width = pct + "%";
@@ -767,7 +1128,6 @@
     renderTrace(gauge, "gauge");
     renderTrace(width, "width");
     updateClock();
-    updateRunTime();
     updateMachineStatus();
 
     setInterval(updateClock, 1000);
@@ -778,12 +1138,132 @@
       renderTrace(width, "width");
     }, 2000);
     setInterval(updateMachineStatus, 3000);
-    setInterval(updateRunTime, 30000);
   })();
 </script>
+
+<!-- Run-event dialogs (popups since 1 Aug 2026). FL3 is FL1 feeding FL2 continuously, so
+     it carries the die change dialog as well — the draw boxes are still in the line. -->
+<script>
+  function fwRunCtx() {
+    var badge = document.querySelector(".line-badge");
+    var line = badge && badge.textContent.match(/FL\d+/) ? badge.textContent.match(/FL\d+/)[0] : "FL3";
+    var f = document.getElementById("footage-val");
+    return {
+      line: line,
+      orderNo: "FW-00422",
+      alpha: "R00044",
+      runId: "RUN-0120",
+      footage: (f ? f.textContent.trim() : "23,440") + " ft",
+      outputCoil: "FW-00422-C01",
+      operator: "Dave M."
+    };
+  }
+  function fwWipCtx() {
+    var c = fwRunCtx();
+    return {
+      materialAlpha: c.alpha,
+      orderNo: c.orderNo,
+      stage: c.line + " · active run",
+      footagePosition: c.footage,
+      runId: c.runId,
+      operator: c.operator,
+      trigger: "mid-run"
+    };
+  }
+  /* Rod checkout is only reachable while the line is paused, so it reports the
+     footage frozen at that pause rather than the live counter. */
+  function fwCheckoutCtx() {
+    var c = fwRunCtx();
+    return {
+      mode: "b",
+      line: c.line,
+      orderNo: c.orderNo,
+      rodAlpha: c.alpha,
+      runId: c.runId,
+      footage: (typeof window.fwPauseFootage === "function" && window.fwPauseFootage()) || c.footage,
+      passSchedule: "PS-1350-FL3-001",
+      operator: c.operator
+    };
+  }
+  /* Roll adjust became a dialog on 2 Aug 2026. It is the shared roll-adjust
+     screen for FL2 and FL3, which do not share a stand set — as a page it could
+     only hard-code one of them, so the caller now supplies the stands it can
+     reach. These are FL3's, matching the Components card above: FM1 plus the
+     four FM2 stands, with edging at S2 and S3. */
+  function fwRollCtx() {
+    var c = fwRunCtx();
+    return {
+      line: c.line,
+      orderNo: c.orderNo,
+      alpha: c.alpha,
+      alphaLabel: "Rod",
+      sourceRods: "",
+      runId: c.runId,
+      passSchedule: "PS-1350-FL3-001",
+      footage: c.footage,
+      operator: c.operator,
+      targets: { gauge: 0.040, gaugeTol: 0.003, gaugeDp: 3, width: 0.500, widthTol: 0.008, widthDp: 3 },
+      measurements: { gauge: 0.045, width: 0.503 },
+      rolls: [
+        { name: 'FM1',       scheduled: 0.0390, current: 0.0390 },
+        { name: 'FM2 8"',    scheduled: 0.0420, current: 0.0420 },
+        { name: 'FM2 6"S1',  scheduled: 0.0410, current: 0.0410 },
+        { name: 'FM2 6"S2',  scheduled: 0.0400, current: 0.0400 },
+        { name: 'FM2 6"S3',  scheduled: 0.0390, current: 0.0391, final: true }
+      ]
+    };
+  }
+</script>
+<script src="fw-modal.js"></script>
+<script src="die_change.js"></script>
+<script src="spc_checkpoint.js"></script>
+<script src="wip_rejection.js"></script>
+<script src="rod_checkout.js"></script>
+<script src="roll_adjust.js"></script>
 <script src="pause_run.js"></script>
 
 <script src="flat-wire-topbar.js"></script>
 <script src="flat-wire-fit.js" data-fit="fill"></script>
+
+<!-- ═══ COMPLETE RUN — confirmation (irreversible action) ═══
+     The button had no handler at all before 2 Aug 2026; FL1 and FL2 both gate
+     this, and it finalizes the run. -->
+<div class="gb-modal-overlay" id="complete-confirm">
+  <div class="gb-modal" style="width:460px;" role="dialog" aria-modal="true" aria-labelledby="cc-title">
+    <div class="gb-modal-head">
+      <div>
+        <div class="gb-modal-title" id="cc-title">Complete this run?</div>
+        <div class="gb-modal-sub">Order FW-00422 &middot; Alpha R00044 &mdash; this finalizes the run and cannot be undone.</div>
+      </div>
+      <button class="gb-modal-close" id="cc-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="gb-modal-body" style="display:flex; gap:10px; justify-content:flex-end;">
+      <button class="btn" id="cc-cancel" type="button">Cancel</button>
+      <button class="btn btn-primary" id="cc-confirm" type="button">Complete Run</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* Complete Run confirmation (error-prevention for the irreversible lifecycle action) */
+  (function () {
+    var overlay = document.getElementById("complete-confirm");
+    window.openCompleteConfirm = function () { if (overlay) overlay.classList.add("open"); };
+    function close() { if (overlay) overlay.classList.remove("open"); }
+    var cancel = document.getElementById("cc-cancel");
+    var closeX = document.getElementById("cc-close");
+    var confirm = document.getElementById("cc-confirm");
+    if (cancel) cancel.addEventListener("click", close);
+    if (closeX) closeX.addEventListener("click", close);
+    if (confirm) confirm.addEventListener("click", function () {
+      close();
+      window.location.href = "dashboard_7_coil_completion.html";
+    });
+    if (overlay) overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && overlay && overlay.classList.contains("open")) close();
+    });
+  })();
+</script>
 </body>
 </html>

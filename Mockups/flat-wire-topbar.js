@@ -67,12 +67,21 @@
   function mt(paths) {
     return '<svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg>';
   }
-  /* More Options tiles — href null renders a non-navigating placeholder tile */
+  /* More Options tiles.
+       href  — navigates to another screen
+       act   — name of a global function to CALL instead of navigating. Added 1 Aug 2026 for
+               the screens that became dialogs: navigating to one would throw away the very
+               context the dialog needs. An `act` tile MAY also carry an href, used as a
+               fallback when that dialog's script is not loaded on this screen — otherwise
+               the tile would silently do nothing on the two-thirds of screens that do not
+               load it.
+       both null — a non-navigating placeholder tile */
   var TILES = [
     { t: "Pass Schedule",      s: "View schedule",         href: "dashboard_9_pass_schedule.html", ic: mt('<line x1="8" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="8" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>') },
-    { t: "WIP Rejection",      s: "Reject material",       href: "dashboard_8_wip_rejection.html", ic: mt('<path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z"/><path d="M15 9l-6 6M9 9l6 6"/>') },
+    { t: "WIP Rejection",      s: "Reject material",       act: "openWipRejection", href: "dashboard_8_wip_rejection.html", ic: mt('<path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z"/><path d="M15 9l-6 6M9 9l6 6"/>') },
     { t: "Rod Pre-Check-in",   s: "Stage at payoff",       href: "dashboard_2a_rod_precheckin.html", ic: mt('<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3.5v3M12 17.5v3"/>') },
-    { t: "Rod Checkout",       s: "Return rod",            href: "dashboard_12_rod_checkout.html", ic: mt('<path d="M14 3h5a2 2 0 012 2v14a2 2 0 01-2 2h-5"/><path d="M9 16l4-4-4-4"/><path d="M13 12H3"/>') },
+    { t: "Rod Checkout",       s: "Return rod",            act: "openRodCheckout", href: "dashboard_12_rod_checkout.html", ic: mt('<path d="M14 3h5a2 2 0 012 2v14a2 2 0 01-2 2h-5"/><path d="M9 16l4-4-4-4"/><path d="M13 12H3"/>') },
+    { t: "Spool Queue",        s: "Spools for FL2",        href: "dashboard_5a_spool_queue.html", ic: mt('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M3.6 8.5h16.8M3.6 15.5h16.8"/>') },
     { t: "Shift Summary",      s: "Shift report",          href: "dashboard_10_shift_summary.html", ic: mt('<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><line x1="10" y1="13" x2="16" y2="13"/><line x1="10" y1="17" x2="16" y2="17"/>') },
     { t: "Downtime",           s: "Log downtime",          href: null, ic: mt('<circle cx="12" cy="12" r="9"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/>') },
     { t: "Supervisor Monitor", s: "Supervisor view",       href: null, ic: mt('<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M8.5 11.5l2.5 2 4-4.5"/>') },
@@ -154,6 +163,11 @@
         var body = x.ic + '<span class="mt-title">' + x.t + '</span><span class="mt-sub">' + x.s + '</span>' +
                    (isActive ? '<span class="mt-badge">Current</span>' : "");
         if (isActive) return '<div class="more-tile active" role="button" tabindex="0" aria-current="page">' + body + '</div>';
+        /* Action tiles close this popup first: two dialogs open at once means two focus
+           traps, and the operator can reach neither set of buttons. Checked before href,
+           since an act tile carries one only as its no-script fallback. */
+        if (x.act)    return '<button class="more-tile" type="button" data-act="' + x.act + '"' +
+                             (x.href ? ' data-fallback="' + x.href + '"' : '') + '>' + body + '</button>';
         if (x.href)   return '<a class="more-tile" href="' + x.href + '">' + body + '</a>';
         return '<div class="more-tile" role="button" tabindex="0">' + body + '</div>';
       }).join("");
@@ -169,6 +183,17 @@
           '<div class="gb-modal-body"><div class="more-grid">' + tiles + '</div></div>' +
         '</div>';
       document.body.appendChild(mo);
+      mo.querySelectorAll("[data-act]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var fn = window[b.getAttribute("data-act")];
+          mo.classList.remove("open");
+          if (typeof fn === "function") { fn(); return; }
+          /* The dialog's script is not loaded here — fall back to its launcher page
+             rather than leaving the tile dead. */
+          var href = b.getAttribute("data-fallback");
+          if (href) window.location.href = href;
+        });
+      });
     }
 
     wire(usersEl);

@@ -219,12 +219,14 @@ Roles use the matrix in `[SRS §8]`. "Any" means any authenticated role.
 | 10 | `GET /payoff/status?lineId=` | Both payoff bays on one line — the DB2A primary read | Any | `PayoffStaging` | 4 | `FR-032`–`FR-034` |
 | 11 | `POST /staging/rod` | Pre-check-in: stage a rod at a bay | Operator (+Supervisor for the out-of-sequence override) | `PayoffStaging` | 4 | `FR-039`–`FR-049` |
 | 12 | `POST /staging/rod/unstage` | Pre-check-out — writes `RodCheckout` Mode P | Operator; **+Supervisor when the rod is welded** | `PayoffStaging` | 4 / 7 | `FR-052`–`FR-054` |
-| 13 | `POST /staging/rod/mark-welded` | Record the induction weld to the running rod | Operator | `PayoffStaging` | 4 | `FR-050`, `FR-051` |
+| ~~13~~ | ~~`POST /staging/rod/mark-welded`~~ **RETIRED 1 Aug 2026** — superseded by `POST /weldevent`, which is now the single weld write | — | — | — | `FR-050`, `FR-051` |
 | 14 | `GET /staging/queue?lineId=` | The Traveler Queue projection | Any | `PayoffStaging` | 4 | `FR-035`–`FR-038` |
 | 15 | `POST /checkin/rod` | FL1/FL3 rod check-in + PLC push | Operator | `CheckIn` | 4 | `FR-063`–`FR-084` |
 | 16 | `POST /checkin/spool` | FL2 spool check-in + FM2 PLC push | Operator | `CheckIn` | 8 | `FR-090`–`FR-096` |
+| 16a | `GET /spools[?spoolAlpha=]` | Spools available for FL2; with `spoolAlpha` the **backend resolves the order** and returns it with that order's spools, in one response | Any | `Spool` | 8 | `FR-097`–`FR-099` |
 | 17 | `GET /run/active?line=` | Active run for a line (DB3 load/resume) | Any | `Run` | 5 | `FR-100` |
 | 18 | `GET /run/{runId}/gaugetrace` | Historical/decimated trace + weld markers | Any | `Run` | 5 / 8 | `FR-093`, `FR-120` |
+| 18a | `GET /run/{runId}/weldevents` | Every weld recorded against one run — read-only | Any | `Run` | 4 *(rows written in 6)* | `PCI021` |
 | 19 | `POST /run/{runId}/pause` | Pause with a categorised reason | Operator | `Run` | 6 | `FR-260`–`FR-264` |
 | 20 | `POST /run/{runId}/resume` | Resume with one of four outcomes | Operator | `Run` | 6 | `FR-265`, `FR-266` |
 | 21 | `POST /spc` | Record a checkpoint measurement set | Operator, QA | `Spc` | 4, 6 | `FR-180`–`FR-196` |
@@ -542,7 +544,18 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 **A `Fail` still writes the event and links the rods.** It flags for supervisor review and may raise an alert — **it does not silently block the run.** The confirmed event is **immutable**.
 
-**Side effects:** `WeldEvent` written · the run's active-rod pointer advances · the weld-pending flag clears · a weld marker is queued for the gauge trace · `PayoffWeight` re-establishes for the new payoff.
+**This is the single weld write** *(1 Aug 2026)*. `POST /staging/rod/mark-welded` is retired; Dashboard 2A's *Mark as welded* dialog posts here, having gained the quality result (`PCI022`) that was the only NOT NULL `WeldEvent` column it lacked.
+
+**The `RodStaging` write is conditional on quality:**
+
+| `weldQuality` | `WeldEvent` row | `RodStaging.IsWelded` / `WeldedAt` / `WeldedBy` | Bay state |
+|---|---|---|---|
+| **`Pass`** | Written | **Set**, same transaction | Welded; transition awaits 0 ft remaining |
+| **`Fail`** | Written | **Not set** | Stays **staged and un-welded** — the weld must be remade |
+
+> A failed weld did not hold, so the rod is not joined to the running rod and the line cannot transition through it. Flagging it welded would assert a continuous feed that does not exist. **Consequence:** a fail-then-remake writes several `WeldEvent` rows for one physical join — no uniqueness constraint exists on the rod pair and none should; whether a superseded attempt reaches the certificate is **Q24**, and footage attribution across the two boundaries is **Q22**.
+
+**Side effects:** `WeldEvent` written · `RodStaging` weld columns set **on a Pass only** · the run's active-rod pointer advances (Pass) · the weld-pending flag clears (Pass) · a weld marker is queued for the gauge trace · `PayoffWeight` re-establishes for the new payoff · `PayoffStateChanged` broadcast (Pass).
 
 > **`WLD016` cannot be enforced.** The maximum weld joints per finished coil is a customer contractual limit that the system is required to validate — **the limit is TBD (OI-59)**. The validation hook must exist; the threshold is configuration.
 >
@@ -665,6 +678,25 @@ Returns `alpha, alloy, temper, gaugeIn, widthIn, grossWeightLb, netWeightLb, foo
 **Response:** `{ readings[{footageFt, gaugeIn, widthIn, speedFpm, inSpec}], weldMarkers[{footagePosition, incomingRodAlpha, weldQuality}], stats{min, max, avg, stdDev, sampleCount, outOfSpecCount} }`
 
 **This is the FL2 profile source.** FL2 standalone broadcasts `null` live gauge and width, so DB5 and the FL2 variant of DB3 render from this endpoint, not from the hub.
+
+### 4.17a `GET /run/{runId}/weldevents`
+
+Every weld recorded against one run, oldest first. Backs the read-only **Welds this run** dialog on Dashboard 2A (`PCI021`), opened from the **active bay card** — so the caller always holds a `runId`. An **empty array is a normal response**, rendered as the dialog's empty state.
+
+**Response:** `{ runId, lineId, totalCount, failedCount, weldEvents[{weldEventId, outgoingAlpha, incomingAlpha, outgoingPayoffPosition, incomingPayoffPosition, footagePosition, weldType, weldQuality, weldQualityFailReason, operatorId, timestamp}] }`
+
+**Read-only — there is no PUT, PATCH or DELETE counterpart.** A recorded weld is a certificate input; reversing one in place is `WLD011`, which no document specifies.
+
+| Rule | Detail |
+|---|---|
+| Ordered by `footagePosition` ascending | Chronological within a run |
+| `weldQualityFailReason` is non-null exactly when `weldQuality = 'Fail'` | `CK_WeldEvent_FailReason` — consumers may rely on it and **must** render it |
+| An empty array is a **`200`**, not a `404` | A run that has not yet reached its first payoff handover has no welds |
+| No paging | `RunId` alone bounds the set — one weld per rod handover |
+
+> **Not served by widening `GET /run/active`.** That endpoint's `weldEvents[]` is a trimmed marker list feeding the gauge-trace chart: no quality, operator or weld type. Dashboard 2A never calls it, so a run-scoped resource is the cheaper split.
+
+> **Read lands a phase before write.** This sits in phase 4 with Dashboard 2A, while `POST /weldevent` writes its rows in phase 6. Until then it returns an empty array — a legitimate state — so **stub it with non-empty sample data** for the phase-4 gate review.
 
 ### 4.18 `GET /shiftsummary`
 
@@ -859,16 +891,18 @@ A screen moves off the stub when: the real endpoint returns the contracted shape
 | `GET /payoff/status` | FR-032–034, 037 | DB2A | 4 |
 | `POST /staging/rod` | FR-039–049 | DB2A | 4 |
 | `POST /staging/rod/unstage` | FR-052–054 | DB2A | 4 / 7 |
-| `POST /staging/rod/mark-welded` | FR-050, 051 | DB2A | 4 |
+| ~~`POST /staging/rod/mark-welded`~~ *(retired 1 Aug 2026)* | FR-050, 051 | — | — |
 | `GET /staging/queue` | FR-035, 036, 038 | DB2A / DB3 | 4 |
 | `POST /checkin/rod` | FR-063–084 | DB2 | 4 |
 | `POST /checkin/spool` | FR-090–096 | DB5 | 8 |
+| `GET /spools` | FR-097–099 | DB5A *(also serves DB5's scan)* | 8 |
 | `GET /run/active` | FR-100, 115–117 | DB3 | 5 |
 | `GET /run/{runId}/gaugetrace` | FR-093, 120 | DB5 / DB3-FL2 / DB14 | 5 / 8 |
+| `GET /run/{runId}/weldevents` | `PCI021` | DB2A | 4 *(rows written in 6)* |
 | `POST /run/{runId}/pause` | FR-260–264 | pause dialog | 6 |
 | `POST /run/{runId}/resume` | FR-265, 266 | pause dialog | 6 |
 | `POST /spc` | FR-180–196 | DB6 | 4, 6 |
-| `POST /weldevent` | FR-160–175 | DB4 | 6 |
+| `POST /weldevent` | FR-160–175 | **DB2A** *(DB4 retired 1 Aug 2026)* | 6 |
 | `POST /rolloverride` | FR-200–211 | DB11 | 6 |
 | `POST /diechange` | FR-220–234 | DC | 6 |
 | `POST /checkout` | FR-300–327 | DB12 / DB2A | 7 |

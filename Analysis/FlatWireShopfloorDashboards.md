@@ -107,39 +107,42 @@ This document defines the shopfloor dashboard screens required to operate the fl
 │  FL1 — ROD PRE-CHECK-IN STATION · VPS          Order: FW-00421   08:31     │
 │  Station: (●) FL1   ( ) FL3 (hybrid)           Line state: RUNNING         │
 ├──────────────────────────────────────┬─────────────────────────────────────┤
-│  PAYOFF 1                    ACTIVE  │  PAYOFF 2                 NOT STAGED│
-│  R00042  1100 · F · 0.375"           │                                     │
-│  2,840 lb            33% remaining   │              ◎                      │
-│  ██████████░░░░░░░░░░░░░░░░░░░░░░░   │                                     │
-│  Net wt   Run       Checked  Oper.  Insp                                   │
-│  8,500 lb RUN-0418  06:12 AM J. Alv ✓Passed                                │
-│  ⚠ WELD SOON — stage Payoff 2 before │  Not staged — load the next rod when │
-│    2,000 lb                          │  Payoff 1 falls below 3,000 lb      │
-│  [ Open active run ] [ Check out ]   │      [ + PRE-CHECK-IN ROD ]         │
+│  PAYOFF 1                    ACTIVE  │  PAYOFF 2        PRE-CHECKED-IN     │
+│  R00042  1100 · F · 0.375"           │  R00045  1100 · F · 0.375"          │
+│  2,840 lb          33% remaining     │  8,350 lb   100% — not drawing      │
+│  ██████████░░░░░░░░░░░░░░░░░░░░░     │  █████████████████████████████      │
+│  Net wt   Run      Checked  Insp     │  Gross wt  Run/plan  Pre-chk        │
+│  8,500 lb RUN-0418 06:12 AM ✓Pass    │  8,690 lb  2 / 3 ⇅  08:02 AM        │
+│  ⚠ WELD SOON — stage Payoff 2        │  ⓘ Not yet welded — induction-      │
+│    before 2,000 lb                   │    weld tail to head before P1      │
+│                                      │    runs out                         │
+│  [ Check out rod ]                   │  [ Proceed to check-in › ]          │
+│  [ Welds this run · 2 ]              │  [ Mark as welded ]                 │
+│                                      │  [ Pre-check-out ]                  │
 ├──────────────────────────────────────┴─────────────────────────────────────┤
-│  WELD READINESS   Payoff 1 at 2,840 lb (33%) · Payoff 2 not staged         │
-│                   [ MARK AS WELDED ]  (disabled — nothing pre-checked-in)  │
-├────────────────────────────────────────────────────────────────────────────┤
-│  FL1 · Order FW-00421  1100 · F · 0.375"                                   │
-│  1 staged · 3 available · 4 on order             [ scan rod alpha ______ ] │
+│  Rods In Queue            ⚠ Both bays occupied — check in first            │
 │  Plan  Run   Rod no    Diameter   Gross wt    Payoff    Status             │
-│   1     —    R00043    0.375"     8,780 lb      —       Available          │
+│   1 ▸   —    R00043    0.375"     8,780 lb      —       Available          │
 │   2     —    R00044    0.375"     8,810 lb      —       Available          │
 │   3    2 ⇅   R00045    0.375"     8,690 lb      P2      Pre-checked-in     │
 │   4     —    R00040    0.375"     8,240 lb      —     ⚑ Partial · 4,120 ft │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Layout note.** The bay facts (net weight · run · check-in time · operator · inspection) sit on **one row**, and the bay alert is **one line** — the weld-readiness strip below carries the fuller wording, so a second sentence inside the card was pure duplication. Both choices are what let the whole screen fit the 1024px panel at 1:1. The queue scrolls internally, so a longer queue never changes the page height.
+**Layout note.** The screen has **three body regions — bay cards, queue, footer.** A fourth, a 96px *weld-readiness strip* between the bays and the queue, was **removed on 1 Aug 2026**: it restated what the cards already showed (weight and percentage on the payoff bar, `WELD NOW` / `WELD SOON` / `Welded` / `Last weld failed` in the bay alert, the cold-start message in the empty-bay text), and its two buttons belonged on the bays they act on. Its 96px plus a 12px gap went to the queue, which is the only flexing region — **the queue is ~108px taller and shows about four more rows** before it scrolls.
+
+The bay facts sit on **one row** and each bay alert is **one line**. The one sentence the strip carried that no card did — *induction-weld tail to head* — is now the staged card's alert whenever a rod is running; with nothing running that card reverts to *"Pre-checked in — no PLC tags pushed until check-in"*. Both choices are what let the whole screen fit the 1024px panel at 1:1. The queue scrolls internally, so a longer queue never changes the page height.
+
+**Card action rules.** **At most one primary per card**, and where there is one it is the recommended next action. The `ACTIVE` card deliberately has **none** — both of its actions are exceptional, so promoting either would recommend it. A **leading icon** marks a button that *does* something; a **trailing chevron** marks the two that *navigate away* (`Go to rod check-in`, `Proceed to check-in`). Never both on one control.
 
 ### Bay States
 
 | State | Chip | Meaning | Actions |
 |-------|------|---------|---------|
 | `NOT STAGED` | Gray | Empty bay | Pre-check-in rod |
-| `PRE-CHECKED-IN` | Blue | Staged, inspection passed, not yet checked in. **The shared `coils.coil_status` is *not* `INFLAT` here** — that is set at check-in (**Q67**) | Pre-check-out · Proceed to check-in · Mark as welded |
-| `PRE-CHECKED-IN` **· welded** | Blue | Staged and induction-welded to the running rod. Welded is a **flag**, not a status | Proceed to check-in · **Pre-check-out behind a supervisor override** (documented reason, rod → `HOLD` — it is a rejection, **Q68**/**Q77**) |
-| `ACTIVE` | Green | Checked in, rod `INFLAT`, run open | Open active run · Check out rod |
+| `PRE-CHECKED-IN` | Blue | Staged, inspection passed, not yet checked in. **The shared `coils.coil_status` is *not* `INFLAT` here** — that is set at check-in (**Q67**) | **Proceed to check-in** *(primary)* · Mark as welded · Pre-check-out |
+| `PRE-CHECKED-IN` **· welded** | Blue | Staged and induction-welded to the running rod. Welded is a **flag**, not a status | **Proceed to check-in** *(primary)* · Mark as welded *(disabled — "already marked as welded")* · **Pre-check-out behind a supervisor override** (documented reason, rod → `HOLD` — it is a rejection, **Q68**/**Q77**) |
+| `ACTIVE` | Green | Checked in, rod `INFLAT`, run open | Check out rod · Welds this run · N — **no primary, and no *Open active run* link** (removed 1 Aug 2026: the run monitor is reachable from the app bar and Line Status, and this station's job is staging the *next* rod) |
 | `BLOCKED` | Red | Visual inspection failed at staging | Go to WIP Rejection — **only** action. The rejection captures the reason and puts the rod on **`HOLD`**, which **releases the row and frees the bay** (**Q72** item 3) |
 
 Weight-bar colours and weld thresholds are the same rules as Dashboard 3 — see [Payoff Weight Indicator Rules](#payoff-weight-indicator-rules). Critical alert when **Payoff 2 is not staged and Payoff 1 is below 2,000 lb**.
@@ -150,11 +153,13 @@ Lists pre-checked-in, welded, and available rod **for the current order**, each 
 
 **Two sequence columns, because planned order is authorised rather than enforced.** `Plan` is the sequence planning intended, with a green `▸` on the rod expected next; `Run` is the order the rod was actually staged in (the SRS `RodSeqno`), blank until processed, with `⇅` where the two differ. Staging any other rod is permitted but **notified and supervisor-authorised** — never refused. See [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md#planned-sequence-notify-and-authorise).
 
-**Order context header.** The queue header states the order once: line, order number, the order's material spec (`1100 · F · 0.375"`), and progress (`1 staged · 3 available · 4 on order`). Two reasons it lives here rather than in a strip of its own: the queue *is* the order's rod list, and the screen is a fixed 1024px budget in which the queue is the only flexible region — a dedicated strip would cost roughly two visible rows. Measured: the block adds **zero** height, since the header was already sized by the scan input beside it.
+**Panel header — "Rods In Queue"** (added 1 Aug 2026). The queue head previously held the order-context line and the scan box; both were removed, leaving an unlabelled empty row that only became visible when the full-station warning fired — so the table below it began with no name at all. The head now carries a standing **"Rods In Queue"** title on the left and the *both bays occupied* warning on the right.
 
-Progress counts are not decoration. With a fixed sequence an operator could read "what's left" off position in the list; once rods may be run **out of planned order**, the remaining count has to be stated outright. `staged` counts every rod physically occupying a bay — pre-checked-in, welded and blocked alike, since a failed bundle is still sitting there.
+> **Superseded — order-context header.** The head used to state the order once (line, order number, material spec `1100 · F · 0.375"`, and progress `1 staged · 3 available · 4 on order`). That block is **gone**; the order is stated in the screen header instead. The progress counts went with it — the argument below is retained because the *reasoning* still applies if they are ever reinstated, but nothing on the screen shows them today.
+>
+> Progress counts are not decoration. With a fixed sequence an operator could read "what's left" off position in the list; once rods may be run **out of planned order**, the remaining count has to be stated outright. `staged` counts every rod physically occupying a bay — pre-checked-in, welded and blocked alike, since a failed bundle is still sitting there.
 
-**No Alloy or Temper columns.** Every rod on an order shares them, so repeating them down each row was a column of identical values; they are stated once in the order header instead. **Diameter stays per row** — `TRV004` asks for dimensional attributes per row, and a substitution with a different nominal should stand out against the order spec above it.
+**No Alloy or Temper columns.** Every rod on an order shares them, so repeating them down each row was a column of identical values; they are stated once in the screen header instead. **Diameter stays per row** — `TRV004` asks for dimensional attributes per row, and a substitution with a different nominal should stand out against the order spec above it.
 
 **No rod-storage location column** (dropped Jul 29 2026). It is not a `TRV004` field, it depended on the still-open **Q19**, and "bay" already means *payoff position* everywhere else on this screen.
 
@@ -189,9 +194,32 @@ Progress counts are not decoration. With a fixed sequence an operator could read
 
 ### Mark as Welded — `WLD010`
 
-Enabled **only** when a rod is pre-checked-in on the idle bay. Confirms operator and timestamp (`WLD003`) and validates alloy / temper / diameter against the running coil (`WLD006`).
+**Lives on the staged bay card** (moved off the station-level weld-readiness strip, 1 Aug 2026). That card *is* the incoming rod, so the control carries the bay → rod identity into the dialog — the `PCI008` defaulting behaviour.
+
+Enabled **only** when a rod is pre-checked-in on the idle bay *and* a rod is running on the other. Confirms operator and timestamp (`WLD003`), validates alloy / temper / diameter against the running coil (`WLD006`), and captures the weld quality result (`PCI022`).
+
+**The disabled tooltip is the requirement, not decoration** — it is the only thing on the card that says *why* the control is unavailable:
+
+| Condition | State | Tooltip |
+|---|---|---|
+| Other bay running, this rod staged and un-welded | Enabled | "Record the induction weld" |
+| …and the last attempt failed | Enabled | "Remake the failed weld" |
+| Already welded | Disabled | "Already marked as welded" |
+| Other bay empty | Disabled | "No rod is running — there is nothing to weld to" |
+| Other bay blocked | Disabled | "No rod is running — the other bay failed inspection" |
+| Other bay staged, nothing running | Disabled | "No rod is running — check in the other bay to start the line" |
+
+**Which bay is which is resolved at open time, not from the clicked card.** After a payoff transition the running bay is 2 and the staged one is 1; the dialog reads the running bay via the active-bay lookup so the outgoing/incoming pair is never transposed. This is the rule **TC-068** exists to protect.
 
 Per `WLD005` the **payoff transition is driven solely by material consumption reaching 0 ft remaining** — this records the physical weld, it does not switch bays. Supervisor reversal is `WLD011`, not yet specified.
+
+### Welds this run — `PCI021`
+
+**Lives on the active bay card.** A read-only list of every weld recorded against the run in progress; the run *is* the active bay, so the control sits on it. Gated on a **run existing**, not on a weldable pair, so it stays available while the idle bay is empty or blocked.
+
+The count rides on the label (*Welds this run · 2*). At **count 0 it stays enabled** — "none yet" is an answer the operator came for, and the dialog carries an empty state rather than an error. **At cold start there is no active card, so the control is absent** rather than disabled — this changed on 1 Aug 2026 when it moved off the strip, and it supersedes the earlier "disabled at cold start with *no run in progress*" behaviour asserted by **TC-068e**.
+
+No edit path: reversing a recorded weld is `WLD011`, unspecified.
 
 ### Pre-Check-out (un-stage)
 
@@ -212,6 +240,7 @@ Recorded as `RodCheckout` with `Mode = 'ModeP'`; reverses the WIP queue entry cr
 | Pre-check-in | FL1 / FL3 operators |
 | Pre-check-out | FL1 / FL3 operators *(supervisor approval is an open question — contrast OQ-48 for mid-run checkout)* |
 | Mark as welded | FL1 / FL3 operators |
+| Welds this run (read-only) | FL1 / FL3 operators |
 | Reverse a welded coil (`WLD011`) | Supervisor — not yet specified |
 
 ### Open Questions
@@ -274,7 +303,7 @@ See [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md) 
 2. Inspection result recorded against the rod alpha.
 3. Pass schedule settings pushed to PLC as tag values.
 4. Run timer starts.
-5. Screen transitions to Dashboard 3 — Active Run Monitor.
+5. **Screen returns to Dashboard 2A — Rod Pre-Check-in Station** (changed 1 Aug 2026; it previously went to Dashboard 3). Check-in is finished the instant *Acknowledge & Begin Check-in* is pressed — the rod is drawing and the run monitor is reachable from the app bar and from Line Status. What the operator has to do **next** is stage the following rod on the idle payoff, which is Dashboard 2A. Routing here closes the two-bay loop (stage → check in → stage the next) on one path instead of leaving the operator to navigate back.
 
 ---
 
@@ -352,46 +381,79 @@ See [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md) 
 > **FL1 action bar**: 6 buttons — Log Weld Event, Die Change, SPC Checkpoint, Pause Run, WIP Reject, Complete Run (no Roll Adjust, no Edger controls).
 > **FL3 action bar**: 7 buttons — Log Weld Event, Die Change, Roll Adjust, SPC Checkpoint, Pause Run, WIP Reject, Complete Run.
 
-### Pause Run — Confirmation Dialog
+### Pause Run — Dialog
+
+*Redesigned 1 Aug 2026 to the client's supplied reference. The fifteen reasons were a flat radio
+list ~1100px tall — the only screen in the suite still on radio buttons, and tall enough that the
+dialog had to be scaled down on every window, taking its 14px labels under the shopfloor floor.
+They are now icon tiles in five category columns; the dialog is 817px and never self-scales.
+**Rod Checkout is no longer a reason** — see the resume outcomes below.*
 
 ```
-┌───────────────────────────────────────────────────────────────────┐
-│  PAUSE RUN — CONFIRMATION           FL1  |  Order: FW-00421        │
-│  Alpha: R00042  |  Footage: 14,320 ft  |  08:31 AM                 │
-├───────────────────────────────────────────────────────────────────┤
-│  PAUSE REASON  (required — select one)                             │
-│                                                                    │
-│  Equipment / Mechanical                                            │
-│  ( ) Die change (mid-run, no weld)                                 │
-│  ( ) Roll adjustment                                               │
-│  ( ) Lubrication / coolant                                         │
-│  ( ) Draw box inspection                                           │
-│  ( ) Component inspection (non-fault)                             │
-│                                                                    │
-│  Material Handling                                                 │
-│  ( ) Payoff 2 loading / weld preparation                           │
-│  ( ) Downstream blockage (TKUP-2 full / FL2 not ready)            │
-│                                                                    │
-│  Quality / Measurement                                             │
-│  ( ) Gauge / width investigation                                   │
-│  ( ) Manual SPC measurement                                        │
-│  ( ) Surface inspection                                            │
-│                                                                    │
-│  Operational                                                       │
-│  ( ) Operator break                                                │
-│  ( ) Shift changeover                                              │
-│  ( ) Awaiting supervisor instruction                              │
-│                                                                    │
-│  Safety                                                            │
-│  ( ) Safety observation (non-fault)                                │
-│                                                                    │
-│  ( ) Other: [                                               ]      │
-│                                                                    │
-│  Notes: [                                                   ]      │
-│                                                                    │
-│  [ CANCEL ]                              [ CONFIRM PAUSE ]         │
-└───────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ (⏸) Pause Run                                                                     [×] │
+│      Log the reason for pausing the run                                                │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│ (● FL1 running) (☷ Order FW-00421) (⚑ Alpha R00042) (↕ Footage 12,450 ft ‹live›)     │
+│ (◷ Pause Start 10:23:28 PM ‹live›)                                                     │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│ Pause reason *          Select one · logged against the run, the alpha, the frozen ft │
+│                                                                                        │
+│ ⚙ EQUIPMENT/       ⬚ MATERIAL       ✎ QUALITY/        ὆5 OPERATIONAL    ⛨ SAFETY       │
+│   MECHANICAL         HANDLING          MEASUREMENT                                     │
+│ ┌────────────┐   ┌──────────┐   ┌──────────┐   ┌─────────┐   ┌──────────┐ │
+│ │▤ Die change  │   │◎ Payoff 2 │   │⌷ Gauge /  │   │☕ Operator│   │⛨ Safety  │ │
+│ │  mid-run,    │   │  loading  │   │  width    │   │  break   │   │  observ. │ │
+│ │  no weld     │   │  weld prep│   │  investig.│   └─────────┘   │  non-fault││
+│ │  → opens die │   └──────────┘   └──────────┘   ┌─────────┐   └──────────┘ │
+│ │    change    │   ┌──────────┐   ┌──────────┐   │⇄ Shift   │                │
+│ └────────────┘   │◌ Downstr.│   │↗ Manual  │   │  change- │                │
+│ ┌────────────┐   │  blockage│   │  SPC     │   │  over    │                │
+│ │◎ Roll adjust│   │  TKUP-2..│   │  → opens │   └─────────┘                │
+│ └────────────┘   └──────────┘   │    SPC   │   ┌─────────┐                │
+│ ┌────────────┐                 └──────────┘   │὆4 Awaiting│                │
+│ │◇ Lubrication│                 ┌──────────┐   │  super-  │                │
+│ └────────────┘                 │◉ Surface │   │  visor   │                │
+│ ┌────────────┐                 │  inspect.│   └─────────┘                │
+│ │▤ Draw box   │                 └──────────┘                                  │
+│ └────────────┘                                                                  │
+│ ┌────────────┐                                                                  │
+│ │⌕ Component  │                                                                  │
+│ └────────────┘                                                                  │
+│ ┌────────────┐                                                                  │
+│ │⋯ Other      │   ← the catch-all lives at the foot of the first column            │
+│ └────────────┘                                                                  │
+│                                                                                        │
+│ Notes (optional)   [ Add additional details…                                        ]  │
+│                    [ 0 / 500                                                        ]  │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│ ὆4 OPERATOR   FOOTAGE FROZEN AT   PAUSE START      [ Cancel ]   [⏸ Confirm Pause]     │
+│   Dave M.    12,450 ft            — running —                                        │
+└──────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Live read-outs.** Footage and clock tick while the dialog is open, because the line is still
+running. Confirming **freezes** them, and the footer states the value the freeze actually took —
+not the one on screen when the operator reached for the button.
+
+**Reason codes.** The dialog submits `ReasonCode` + `ReasonCategory`, not a display label —
+`GaugeWidthInvestigation` / `QualityMeasurement` and so on, exactly the vocabulary
+`POST /run/{runId}/pause` accepts. **`Other` keeps the code `Other`** and puts the operator's
+text in `Notes`; notes are mandatory in that case, matching `CK_RunPauseEvent_NotesOther`, and the
+field is tinted and relabelled *(required)* while that is true.
+
+**Route lines.** *Die change* and *Manual SPC measurement* name activities that have their own
+dialogs, and say so on the tile before the operator commits. Choosing one applies the pause and
+then opens that dialog. The die change hand-off is suppressed on **FL2**, which has no draw boxes.
+
+**Button icons.** Across every dialog in the suite the rule is the same: the **action** button
+carries an icon (⏸ confirm pause, ▶ resume, ✓ confirm, ⚠ submit rejection), the **dismiss**
+button does not. Cancel and Close are plain text — an ✕ on them repeats the close control already
+in the dialog corner and reads heavier than the action it sits beside.
+
+> **Type sizes deviate from the supplied reference deliberately.** It sets labels at 10–13px; the
+> shopfloor floor is **14px** (`MIN_FONT` in `flat-wire-fit.js`) because these screens are read at
+> arm's length. Sizes are lifted; the layout, iconography and hierarchy are the reference's.
 
 ### Pause Reason Categories
 
@@ -411,6 +473,11 @@ See [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md) 
 | | Shift changeover | Incoming operator walkthrough before resuming |
 | | Awaiting supervisor instruction | Supervisor review required before continuing |
 | Safety | Safety observation (non-fault) | Hazard present that does not trigger a PLC fault |
+| Other | Other | Free text, **required** — the code stays `Other` |
+
+> **Rod Checkout was removed from this table on 1 Aug 2026 (OI-14).** It was the only entry
+> that did not pause the run, presented identically to the fourteen that did. It is now the
+> `CheckOutRod` **resume outcome**.
 
 ### System Actions on Pause
 
@@ -450,7 +517,14 @@ When the operator presses **Resume Run**, a brief confirmation is required befor
 | Yes — resume run | Run timer restarts; PLC tags restored; Dashboard 3 returns to active state; pause event closed with end time and duration |
 | No — log WIP rejection | Pause event closed; Dashboard 8 (WIP Rejection) opened automatically |
 | No — continue pause | Dialog dismissed; line remains paused |
-| No — check out rod (partial run) | Pause event closed; Dashboard 12 (Rod Checkout — Mode B) opened with footage pre-populated |
+| No — check out rod (partial run) | Rod Checkout opens in **Mode B** with the frozen footage pre-populated. The line stays paused behind it: the pause closes when the checkout is confirmed, not when it is opened |
+
+**Confirmed 1 Aug 2026 — four outcomes, and this document was right.** `pause_run.js`
+implemented three and exposed Rod Checkout as a pause *reason* instead; it now implements four,
+matching this table, `POST /run/{runId}/resume` and `CK_RunPauseEvent_Outcome`. **OI-14 closed.**
+The resume dialog also shows the **footage frozen at the pause** alongside reason and duration,
+and reads duration as **h:mm:ss** past an hour — shift changeover and awaiting-supervisor pauses
+routinely run long, and the old mm:ss reported a 90-minute stop as "90:00".
 
 ### Impact on Shift Summary (Dashboard 10)
 
@@ -515,11 +589,65 @@ Pause events roll up into the Shift Summary as follows:
 
 ---
 
+## Dashboard 5A — FL2 Spool Queue
+
+**Who:** FL2 Operator
+**When:** Before check-in — deciding which spool to run next
+**Purpose:** List the spools available for FL2, and resolve an order from any one of them
+**Added:** 2 Aug 2026 · screen `dashboard_5a_spool_queue.html` · `FR-097`–`FR-099` · story FW-124
+
+**Why it exists.** FL1 operators have Dashboard 2A, which lists the rods planned for the running
+order. FL2 has no equivalent, because `PCI002` excludes FL2 from staging (see the note at the top of
+this document) — so the FL2 operator had **no view of waiting material at all** until they were
+holding a spool. Separately, `FR-090` has the operator *scan the FL1-printed label* while **Q57**
+records the client saying the operator *"selects it by spool number for check-in"*. Both stand; only
+the scan had a screen. And "the spool queue" — a phrase `FR-326`, `TC-389`, `RodCheckout.md` and
+phase 7 all use for where an accepted partial spool goes — had **no table, endpoint, screen or status
+of that name anywhere**. This screen is it.
+
+```
+┌───────────────────────────────────────────────────────────────────┐
+│  FL2 — SPOOL QUEUE                                    09:59 AM    │
+├───────────────────────────────────────────────────────────────────┤
+│  Scan a spool to load its order   [ SP-…            ]  ? OQ-15    │
+├───────────────────────────────────────────────────────────────────┤
+│  All spools available for processing                              │
+│  Across 4 orders · 23,820 lb total          9 spools · 8 ready    │
+├───────────────────────────────────────────────────────────────────┤
+│ SPOOL     ORDER     SOURCE        GAUGE×WIDTH  NET WT  ORIGIN  ST │
+│ SP-00031  FW-00421  RUN-0117      0.113×0.640  3,200lb Standal ●  │
+│                     R00041,R00042                          [Check]│
+│ SP-00033  FW-00422  RUN-0121      0.120×0.500  2,940lb ⚠Hybrid ●  │
+│ SP-00034  —         RUN-0122      0.113×0.640  1,410lb Standal ●  │
+│ SP-00030  FW-00419  RUN-0116      0.113×0.640  1,180lb Standal ◐  │
+│                                                    On hold · QC   │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+**Two modes, one table.** Default lists everything runnable irrespective of order. Entering a spool
+number resolves its order **server-side in a single call** and narrows the list to that order's
+spools, marking the scanned one. *Show all* returns. The **column set never changes between modes**.
+
+**Four ways a scan ends** — all from the same response: order resolved · unknown alpha (`404`; the
+field is marked and **the list does not move**) · **unallocated spool** (`200`, null order, one row,
+still checkin-able — planning remainders and accepted partials legitimately have no order) ·
+not-runnable spool (siblings still list, which is usually what was wanted).
+
+**Deliberately absent:** spool age (`Spool` has no creation timestamp — it is not queryable),
+location (`Spool.Location` has no writer), and filter/sort controls (the scan is the real filter).
+**Alloy and temper get no columns** — they are order-level and sit in the context bar, the same rule
+Dashboard 2A states for rods.
+
+**Read-only.** It writes nothing; Dashboard 5 does that.
+
+---
+
 ## Dashboard 5 — FL2 Spool Check-in
 
 **Who:** FL2 Operator
 **When:** Loading a spool onto the TPO to begin FL2 processing
 **Purpose:** Check in incoming spool, review historical gauge profile from FL1, acknowledge FL2 pass schedule
+**Reached from:** Dashboard 5A, or directly
 
 ```
 ┌───────────────────────────────────────────────────────────────────┐
@@ -1553,3 +1681,5 @@ Dashboard 14 ──[← Active Run]───────────────
 | Jul 29, 2026 | Analysis team | **Dashboard 2A cold start + bay symmetry.** Payoff 1 was modelled as an always-`ACTIVE` backdrop, so an empty Payoff 1 (cold start, post-checkout, between orders) crashed the first render and left the screen showing a phantom rod with a live weight, and no queue. Both bays now use one state machine and one renderer: all four states apply to either payoff, the wizard disables a bay for being *occupied* rather than for being bay 1, Payoff 2 can be the running bay after a transition, and weld readiness plus Mark-as-welded handle the no-material case. Empty bays state both cold-start routes — stage here, or go straight to rod check-in. |
 | Jul 30, 2026 | Client direction | **Dashboard 2A — planned sequence gated by supervisor authorisation.** Staging a rod other than the one planning expects next now notifies the operator and requires a supervisor override (reason + badge/ID + PIN), rather than proceeding silently. Never a refusal, and later-planned rods stay listed and stageable. Queue `Plan` column gained a green `▸` on the expected rod; `⇅` on `Run` now names the authorising supervisor. Supersedes the free-processing-order behaviour recorded the previous day. |
 | Aug 1, 2026 | Client sync (30 Jul call) | **Dashboard 2A — off-schedule becomes an automatic station switch; three other rules change.** A rod whose order is booked on the other rod line is no longer notified-and-authorised: **the screen switches to the correct station** and continues, with no message and no override, at both pre-check-in and check-in (**Q74**, reversing the Jul 29 design; the `OffSchedule*` columns are dropped). The FL1/FL3 toggle therefore stops being an operator-only control that merely relabels the chrome — it must **reload the bays and the queue**, and what happens to a part-completed wizard needs specifying (**Q76**/**Q73**, **F13**). Bay states gained a **welded** row: a welded rod may be un-staged **behind a supervisor override** with a documented reason, going to `HOLD` as a rejection (**Q68**/**Q77**, restoring the control removed on Jul 31); `PRE-CHECKED-IN` no longer implies `INFLAT`, which is now set at check-in (**Q67**); and `BLOCKED` gained its exit — the WIP rejection captures the reason, puts the rod on `HOLD` and releases the bay (**Q72** item 3). Wizard step 1 now validates diameter against a **min/max** tolerance, one of **four** pairs (gauge, width, diameter, ovality) whose values are owed by e-mail, so the alloy map stays mock (**Q71**). Not yet applied here: the order-membership rule is knowingly wrong for a **multi-order rod** (**Q69**/**G22**), pending the sequencing answer (**Q79**). |
+| Aug 1, 2026 | Analysis team | **Dashboard 2A — weld-readiness strip removed; every control moves onto the bay it acts on.** The 96px strip between the bays and the queue is **gone**. Its narrative was already duplicated by the cards (weight/percentage on the payoff bar, the four weld states in the bay alert, cold start in the empty-bay text); the one sentence no card carried — *induction-weld tail to head* — became the staged card's alert whenever a rod is running. **Mark as welded** moved to the **staged** card (it *is* the incoming rod — `PCI008` defaulting) with all five disabled-tooltips intact; **Welds this run · N** moved to the **active** card (the run *is* the active bay), which means it is now **absent at cold start rather than disabled** — this supersedes **TC-068e**. **Open active run** was removed from the active card: the run monitor is reachable from the app bar and Line Status, and this station's job is staging the *next* rod. The reclaimed 96px + 12px gap went to the queue, which is **~108px taller (about four more rows)**; the screen is now **three body regions, not four**, and still measures exactly 1024px. Button rules formalised: **at most one primary per card** (the active card deliberately has none), a leading icon for actions and a trailing chevron for the two navigations, never both. Queue head gained a standing **"Rods In Queue"** title — it had been an unlabelled empty row since the order-context line and scan box were removed. **Dashboard 2:** *Acknowledge & Begin Check-in* now returns to **Dashboard 2A**, not Dashboard 3, closing the stage → check-in → stage-next loop. Verified in headless Chrome across six viewport heights and all six station states: 1024px exactly, no overflow, no console errors, and the payoff-transition rule (**TC-068**) confirmed live with Payoff 2 running and Payoff 1 staged. |
+| Aug 2, 2026 | Analysis team | **New — Dashboard 5A, the FL2 Spool Queue.** FL2 had no view of its own waiting material: FL1 operators have Dashboard 2A's staging queue, and FL2 has no equivalent because `PCI002` excludes it from staging. Separately, `FR-090` has the operator *scan the FL1-printed label* while **Q57** records the client saying they *"select it by spool number"* — both stand, and only the scan had a screen. And "the spool queue", the phrase `FR-326`, `TC-389`, `RodCheckout.md` and phase 7 all use for where an accepted partial spool goes, had **no table, endpoint, screen or status of that name anywhere**. DB5A is all three. **Two modes over one table:** on opening it lists every spool available for processing irrespective of order; entering a spool number resolves that spool's order **server-side in a single call** and narrows the list to that order's spools, marking the scanned one. The **column set never changes between modes**, and a failed scan **leaves the list unchanged** — losing your place to a mistyped digit is the worst thing a screen like this can do. An **unallocated spool is a valid single-row result, not an error** (planning remainders and supervisor-accepted partials legitimately have no order). Deliberately absent: spool age (`Spool` has no creation timestamp, so it is not queryable), location (`Spool.Location` has no writer), and filter/sort furniture. Read-only — it writes nothing. Reached from DB1's nav strip, More Options, the shift-summary spool tile (whose arrow had gone nowhere since it was drawn) and DB5. Backed by a **new** `GET /spools[?spoolAlpha=]`; before it, `POST /checkin/spool` was the only spool endpoint in the contract, so even DB5's scan validated against nothing. Verified in headless Chrome at five viewport sizes: exactly 1024px, scale 1:1 on the panel, no overflow, no console errors, 44 assertions. **Blocked on OQ-57** (what "available" means), **OI-06** (two unmapped status vocabularies), **OQ-15/OI-02** (identifier and format), and — critically — confirmation that **`Spool.OrderNo` is populated from planning**, without which nothing can be resolved. |

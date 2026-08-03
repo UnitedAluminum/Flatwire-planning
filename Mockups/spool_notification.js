@@ -927,7 +927,10 @@
     renderVerify();
 
     showStep(manual ? 2 : 1);
-    overlay.classList.add('open');
+    /* Through FwModal so the dialog is scaled to fit the window rather than scrolled.
+       Falls back to the bare class for any screen that has not loaded fw-modal.js. */
+    if (window.FwModal) { window.FwModal.register(overlay); window.FwModal.open(overlay); }
+    else overlay.classList.add('open');
     audit(manual ? 'spool completion started manually' : 'spool removal prompt raised', {
       latchedLb: Math.round(latchedLb), targetLb: CFG.targetLb, stoppedAt: latchedAtStr
     });
@@ -936,7 +939,8 @@
   function closePrompt() {
     promptOpen = false;
     manualPath = false;
-    overlay.classList.remove('open');
+    if (window.FwModal) window.FwModal.close(overlay);
+    else overlay.classList.remove('open');
     showStep(1);
     paint(false);
   }

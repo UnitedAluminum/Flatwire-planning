@@ -60,7 +60,16 @@ Removing the button collapses these into one. **`POST /weldevent` becomes the on
 
 `FR-050` puts the alloy / temper / diameter match on Mark as Welded. `WeldEvent.md` §3.2 already requires the same check before a weld event is accepted (`WLD006`). Removing the button therefore **consolidates a duplicated rule rather than dropping one**. The popup blocks confirmation on mismatch, exactly as the retired modal did.
 
-### D-C — The button belongs on the staged card, not the running one `[recommended]`
+### D-C — The button belongs on the staged card, not the running one `[recommended]` — **BUILT 1 Aug 2026**
+
+> **Implemented as written.** *Mark as welded* sits on the staged card, the `canWeld` rule and all its
+> tooltips carried over unchanged, and the outgoing/incoming pair is still resolved from whichever bay
+> is *running* rather than from the card that was activated (`FR-050a`, TC-068i) — the rule TC-068
+> exists to protect, and the one this move could most easily have broken.
+>
+> **One line below is now wrong:** "The running card keeps its existing two actions (*Open active run*,
+> *Check out rod*)". It keeps **Check out rod** and gains **Welds this run · N**; ***Open active run*
+> was removed** (`FR-051b`).
 
 The control goes on the **staged, un-welded** payoff card. That card *is* the incoming rod, so the button carries the bay → rod identity into the popup, which is precisely the `PCI008` defaulting behaviour ("the weld defaults to whichever rod is actually staged on the idle payoff").
 
@@ -76,7 +85,28 @@ Enablement reuses the existing `canWeld` rule from `renderWeldStrip()`, unchange
 | This bay is blocked | No weld action — WIP Rejection only |
 | Already welded | Disabled — "Already marked as welded" |
 
-### D-D — The weld-readiness strip keeps its text and loses its buttons `[recommended]`
+### ~~D-D~~ — The weld-readiness strip keeps its text and loses its buttons ~~`[recommended]`~~
+
+> **OVERTAKEN 1 Aug 2026 — the strip was removed outright, text and all.** D-D proposed keeping the
+> narrative and dropping the buttons. What was built went one step further: the **whole 96px band is
+> gone**. The reason D-D did not see is that the narrative was not unique either — the bay cards
+> already carried the weight and percentage on the payoff bar, all four weld states in the bay alert,
+> and the cold-start message in the empty-bay text. Exactly **one** sentence was unique to the strip,
+> *"induction-weld tail to head before Payoff N runs out"*, and it moved into the staged card's alert.
+> Once that was true the band was 96px of a 1024px budget spent restating the row above it, so it went
+> to the queue instead (~108px, about four more rows).
+>
+> **D-C is confirmed and extended.** *Mark as welded* went to the staged card exactly as D-C
+> recommended, with the `canWeld` rule and its tooltips intact. *Welds this run* went to the **active**
+> card — D-D's resolution below assumed it would stay on the strip, which no longer exists. That move
+> has one consequence D-D could not have: at cold start there is no active card, so the control is
+> **absent** rather than disabled, superseding **TC-068e** and raising **Q83**.
+>
+> **One thing removed that no section here proposed:** the *Open active run* link on the active card
+> (`FR-051b`). The run monitor is reachable from the app bar and Line Status, and this station's job is
+> staging the next rod.
+>
+> The section below is kept for the record only.
 
 After C1 the strip has one button left: **Weld event log**, linking to Dashboard 4. That link is **already misnamed** — it opens the logging form, not a log of anything. Once the form is a popup owned by the card, the recommendation is to remove the strip's buttons entirely and leave it as the status narrative it already is ("Payoff 1 at 2,840 lb (33%) · Payoff 2 staged with R00043, not yet welded…").
 
@@ -197,7 +227,7 @@ Both were reissued for client review on 1 Aug 2026, so each needs a **version bu
 | S2 | `LatestDocument/ProjectPlan/02-SRS.md` | The same five points at L360, L558–559, §5.6 (L742), L1329, L1380. **These are `FR-###` requirement text — the authoritative source per `CLAUDE.md` — so they must not drift from S1.** |
 | S3 | `LatestDocument/ProjectPlan/04-APIContract.md` | L222 endpoint 13 retired; L862 traceability row; L231/L529/L871 `/weldevent` gains the `RodStaging` flag write; L885 operator scope. |
 | S4 | `DevelopmentPlan/APIContracts.md` | §L1078 `POST /staging/rod/mark-welded` marked retired with its rationale; L1530 `/weldevent` amended to set `IsWelded`/`WeldedAt`/`WeldedBy`; sprint tables L2132–2133, permission matrix L2157/L2165, L2193. *(April-dated doc with known Tier 1 bugs — reconcile up to the roadmap, do not maintain in parallel.)* |
-| S5 | `DevelopmentPlan/ShopfloorPlan/phase-04-rod-checkin-plc-config.md` | L44 (weld-readiness strip / Mark as Welded), L51 (navigation → Dashboard 4), L54 (endpoint list), L74 (`PayoffStateChanged.isWelded` — the event still fires, but now on the weld-event write). Add the post-staging offer to the DB2A scope. |
+| ~~S5~~ | `DevelopmentPlan/ShopfloorPlan/phase-04-rod-checkin-plc-config.md` | **DONE 1 Aug 2026.** The layout bullet now reads *three body regions, not four*, with Mark as Welded on the staged card and Welds this run on the active card; navigation reads → Dashboard 2A on success; the Dashboard-4 link is gone. Two build rules were added that this row did not anticipate: the outgoing/incoming pair resolves from the **running** bay rather than the activated card, and bay-card handlers must be bound per render because `actionsFor()` regenerates them. *(Was: L44 weld-readiness strip / Mark as Welded, L51 navigation → Dashboard 4, L54 endpoint list, L74 `PayoffStateChanged.isWelded`.)* |
 | S6 | `DevelopmentPlan/ShopfloorPlan/phase-06-in-run-production-events.md` | L26 and L34 — Dashboard 4 becomes a dialog component; add the merged `RodStaging` write; add the DB2A entry points. |
 | S7 | `DevelopmentPlan/ShopfloorPlan/back-matter.md` | Add G25 and G26; adjust the FW-063 line (L218) for the dialog. |
 | S8 | `LatestDocument/ProjectPlan/05-SprintPlanAndBacklog.md` (L369) and `DevelopmentPlan/FlatWireJiraStories.md` (L782, L796 FW-063, L1419) | FW-063 acceptance criteria: dialog rather than screen, three entry points, merged write. |
@@ -245,3 +275,4 @@ Items 3 and 4 can run in parallel with each other but not ahead of item 2 — th
 | Date | Change |
 |---|---|
 | Aug 1, 2026 | Initial plan: retire Mark as Welded, move the weld action onto the payoff card, convert Dashboard 4 to a dialog, offer the weld log after pre-check-in. Four open questions (Q-W1–Q-W4) and two gaps (G25, G26) raised. |
+| Aug 1, 2026 | **D-C built; D-D overtaken.** *Mark as welded* moved onto the staged bay card exactly as D-C recommended, rule and tooltips intact. **D-D was overtaken rather than implemented** — it proposed keeping the weld-readiness strip's narrative and dropping only its buttons; in the event the whole 96px band was removed, because the narrative turned out to be duplicated by the bay cards in every branch but one (*induction-weld tail to head*, which moved into the staged card's alert). *Welds this run* went onto the **active** card, which D-D could not have anticipated since it assumed a surviving strip; the consequence is that at cold start the control is **absent rather than disabled**, superseding **TC-068e** and raising **Q83**. Additionally, and proposed by no section of this plan: ***Open active run* was removed** from the active card (`FR-051b`), and Dashboard 2's *Acknowledge & Begin Check-in* now returns to Dashboard 2A rather than Dashboard 3 (`FR-079a`, **Q84**). New requirement IDs `FR-050a`, `FR-051a`, `FR-051b`, `FR-079a`; new test cases TC-068f/g/h/i and TC-079a. |

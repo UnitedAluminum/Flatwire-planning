@@ -765,7 +765,7 @@ Pre-check-in registers the *next* rod against a VPS payoff bay while the current
 
 ### GET `/api/v1/flatwire/payoff/status`
 
-The Dashboard 2A primary read: the state of both payoff bays on one line. Backs the bay cards, the weld-readiness strip, and the Phase-3 alert rule *"Payoff2 not loaded & Payoff1 < 2,000 lb → Critical"*, which previously had no data source.
+The Dashboard 2A primary read: the state of both payoff bays on one line. Backs the bay cards — including the two weld controls they now carry, *Mark as welded* on the staged card and *Welds this run* on the active one (the weld-readiness strip they used to sit in was removed 1 Aug 2026) — and the Phase-3 alert rule *"Payoff2 not loaded & Payoff1 < 2,000 lb → Critical"*, which previously had no data source.
 
 **Auth:** Bearer JWT — any authenticated role
 
@@ -1272,6 +1272,86 @@ Records FL2 spool check-in and pushes FL2-specific PLC tags.
 
 ---
 
+### GET `/api/v1/flatwire/spools`
+
+**Added 2 Aug 2026 for Dashboard 5A (FL2 Spool Queue).** One endpoint, two modes — the response
+shape is identical in both, so the screen has one renderer.
+
+| Call | Meaning |
+|---|---|
+| `GET /spools` | Every spool **available for processing, irrespective of order**. `order` is `null`. |
+| `GET /spools?spoolAlpha=SP-00031` | **The backend resolves that spool's order** and returns the order context plus **only that order's spools**. |
+
+**Auth:** Bearer JWT — any authenticated role (read-only).
+
+**Query parameters:**
+
+| Name | Type | Notes |
+|---|---|---|
+| `spoolAlpha` | string | Optional. When present the backend resolves the order. |
+
+**Response 200:**
+
+```json
+{
+  "data": {
+    "scannedAlpha": "SP-00031",
+    "order": {
+      "orderNo": "FW-00421",
+      "customer": "Daddario",
+      "alloy": "1100",
+      "temper": "O",
+      "setupGaugeIn": 0.110,
+      "setupWidthIn": 0.630,
+      "dueDate": "2026-07-21"
+    },
+    "spools": [
+      {
+        "alpha": "SP-00031",
+        "orderNo": "FW-00421",
+        "sourceRunId": "RUN-0117",
+        "sourceRodAlphas": ["R00041", "R00042"],
+        "gaugeIn": 0.113,
+        "widthIn": 0.640,
+        "netWeightLb": 3200.0,
+        "originRouteMode": "Standalone",
+        "status": "RECEIVED",
+        "eligible": true
+      }
+    ]
+  },
+  "success": true,
+  "errors": []
+}
+```
+
+**Contract notes — each of these is easy to get wrong:**
+
+- **`order` is `null` in two different situations** and both are `200`: the unfiltered default view,
+  and a scanned spool whose `OrderNo` is null. In the second case `spools` contains **just that
+  spool**, so the client renders one shape either way.
+- **`404` only for an unknown `spoolAlpha`.** An unallocated spool is **not** an error — planning
+  remainders and supervisor-accepted partial spools legitimately have no order, and the screen shows
+  them differently from a bad scan.
+- **`gaugeIn`/`widthIn` must be read from the source FL1 run**, not from `Spool.GaugeIn`/`WidthIn` —
+  those are documented *"set at FL2/FL3 check-in"* and are therefore **null for every row this
+  endpoint returns**.
+- **`sourceRodAlphas` is a list and must come from `CoilTraceability`/`WeldEvent`.** `Spool` carries
+  only two single-valued rod FKs (`ParentRodAlpha`, `SourceRodAlpha`); a spool with a mid-run weld
+  has more than one source rod.
+- **The `order` block is a cross-database read** — order attributes live in the shared
+  order/scheduling schema, not `FlatWireDB`, on the same unenforced-link basis as rod alphas.
+- **`eligible` encodes the availability rule, which is undefined (OQ-57).** The proposal is
+  `RECEIVED` + `STAGED`; `HOLD` is returned but not eligible. Do not hard-code this silently.
+- **Add an index on `Spool.OrderNo`.** It is unindexed today, and the `spoolAlpha` mode is a
+  `WHERE OrderNo = …` on a `VARCHAR(50)`.
+- No pagination — the list scrolls, consistent with every other list in the suite.
+
+**Blocks:** Dashboard 5A. **Also serves Dashboard 5**, whose scan field currently validates against
+nothing because `POST /checkin/spool` was the only spool endpoint.
+
+---
+
 ### GET `/api/v1/flatwire/run/active?line={lineId}`
 
 Returns the active run for a given line. Used by Dashboard 3 on load and resume.
@@ -1602,7 +1682,9 @@ Records a weld join between two rods. Updates traceability chain for the active 
 ### GET `/api/v1/flatwire/run/{runId}/weldevents`
 
 Every weld recorded against one run, oldest first. Backs the **Welds this run** read-only dialog on
-Dashboard 2A (`PCI021`).
+Dashboard 2A (`PCI021`), opened from the **active bay card** — so the caller always has a `runId` and
+this is never called without one. An **empty array is a normal response** and renders as the dialog's
+empty state; the control stays enabled at a count of zero.
 
 **Auth:** Bearer JWT — any authenticated role. **Read-only: there is no PUT, PATCH or DELETE
 counterpart.** A recorded weld is a certificate input; reversing one in place is `WLD011`, which no
@@ -2262,6 +2344,7 @@ alertCleared$(lineId: string): Observable<AlertClearedEvent>
 | ~~`POST /staging/rod/mark-welded`~~ | — | — | — | — | — | *(retired — use `POST /weldevent`)* |
 | `POST /checkin/rod` | ✓ | ✓ | — | ✓ | ✓ |
 | `POST /checkin/spool` | ✓ | ✓ | — | ✓ | ✓ |
+| `GET /spools` | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `GET /run/active` | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `GET /run/{id}/gaugetrace` | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `GET /run/{id}/weldevents` | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -2295,6 +2378,7 @@ alertCleared$(lineId: string): Observable<AlertClearedEvent>
 
 | Date | Change |
 |---|---|
+| August 2, 2026 | Added **`GET /spools[?spoolAlpha=]`** for Dashboard 5A (FL2 Spool Queue). One endpoint, two modes, identical `{ order, spools[] }` shape: without the parameter it lists everything available for processing with a null order; with it, **the backend resolves that spool's order** and returns the order plus that order's spools in one response. Before this, **`POST /checkin/spool` was the only spool endpoint in the contract** — there was no read at all, not even a single-spool lookup, so Dashboard 5's scan field validated against nothing. Four contract points are easy to get wrong and are called out inline: `404` is for an unknown alpha only and an **unallocated spool is a `200` with a null order**; `gaugeIn`/`widthIn` must come from the source FL1 run because `Spool.GaugeIn`/`WidthIn` are set at check-in and are null for every row returned; `sourceRodAlphas` is a list from `CoilTraceability`/`WeldEvent` because `Spool` holds only two single-valued rod FKs; and the `order` block is a cross-database read. **Also recommends an index on `Spool.OrderNo`**, which is unindexed today. The availability rule is `RECEIVED` + `STAGED` as a **proposal** — OQ-57 leaves it undefined. |
 | July 31, 2026 | **Failed staging inspection now returns `201 Created` with `state: "Blocked"`, not `422`.** The old behaviour wrote no row at all, so a bundle that failed inspection — already physically on the payoff, since bundles are not unbanded until positioned there — left `GET /payoff/status` reporting the occupied bay as `NotStaged`, Dashboard 2A offering it as "Empty — available", and the next rod stageable into it. It also made the `Blocked` state unreachable despite being implemented across the API enum, the schema and the whole of Dashboard 2A. Staging now commits the row before the inspection gate. `CHK010` is unchanged — no bypass, WIP Rejection is still the only forward path. Closes **Q72** items 1–2; item 3 (*what releases a blocked row*) is the blocking residual, and two consequences are recorded but untraced (`TRV009` traveler class, `Available` projection exclusion). From the Dashboard 2A UX review finding F2 (`Analysis/Dashboard2A_UXReview.md`, deleted 1 Aug 2026 — in git history at `2a0426b`). |
 | July 29, 2026 | Added the **Pre-Check-in / Payoff Staging** section: `GET /payoff/status`, `POST /staging/rod`, `POST /staging/rod/unstage`, `POST /staging/rod/mark-welded`, `GET /staging/queue`, plus the `PayoffStateChanged` hub event and `PayoffStagingController`. Extended `GET /rod/{alpha}` with `footageRunToDate`, `remainingWeightEstimateLb`, `stagedPayoffPosition`, `isWelded` — without them the `PRC007` carry-forward gate cannot be enforced. Documented check-in *consuming* the staged row. |
 | April 30, 2026 | Original contract set. **Known correctness bugs catalogued in `REVIEW.md` Tier 1** — notably #37 (`RodCheckin` NOT NULL columns the check-in command never sends), the `/passschedule/generate` worked example, a missing `CheckpointType` value, and three edge-type vocabularies. Cross-check before implementing. |

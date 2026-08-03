@@ -5,952 +5,114 @@
 <meta name="viewport" content="width=1280, initial-scale=1">
 <title>Rod checkout · FL1 · R00042</title>
 <link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
+<!--
+  ============================================================================
+  ROD CHECKOUT IS A DIALOG, NOT A SCREEN (converted 1 Aug 2026)
+  ============================================================================
+  The screen this file used to hold now lives in rod_checkout.js and opens as a
+  popup over whatever raised it.
+
+  The two modes are reached from opposite directions, and the page could not know
+  which it was in — it defaulted to Mode B behind a toggle:
+
+    Mode A · pre-run   the rod was checked in but the run never started, so there
+                       is no footage. Two columns: why, and where the rod goes.
+                       Raised from the check-in station.
+    Mode B · mid-run   the run produced footage, so there is a third decision:
+                       what happens to the material already made. Raised only
+                       from a paused run — and as a page, going there meant
+                       navigating away from that pause and losing it.
+
+  Mode B is now the fourth **resume outcome** on the pause dialog (OI-14, closed
+  1 Aug 2026), so the footage frozen at the pause carries straight into the
+  checkout instead of being re-keyed.
+
+  This file is kept as a LAUNCHER so the references to the filename across the
+  master specification, the SRS and the phase plans keep resolving, and so a
+  reviewer can still open the screen on its own. The More Options tile also falls
+  back to it on screens that do not load the dialog script.
+  ============================================================================
+-->
 <style>
-  body { min-height: 1024px; }
-  .dashboard { height: 1024px; }
-
-  .mono { font-family: var(--font-mono); }
-
-  /* ── Header ── */
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 20px;
-    height: 72px;
-    border-left: 4px solid var(--color-amber);
-  }
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-  .back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 14px;
-    border: 1px solid var(--color-border-secondary);
-    background: var(--color-background-primary);
-    color: var(--color-text-secondary);
-    border-radius: var(--border-radius-md);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    font-family: var(--font-sans);
-    transition: all 0.15s;
-  }
-  .back-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
-  .back-btn svg { width: 14px; height: 14px; }
-
-  .warning-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    background: var(--color-background-warning);
-    color: var(--color-text-warning);
-    border-radius: var(--border-radius-md);
-    font-size: 14px;
-    font-weight: 500;
-  }
-  .warning-chip svg { width: 13px; height: 13px; }
-
-  .header h1 { margin: 0; font-size: 22px; font-weight: 500; }
-
-  /* Mode toggle */
-  .mode-toggle {
-    display: flex;
-    background: var(--color-background-secondary);
-    border: 1px solid var(--color-border-secondary);
-    border-radius: var(--border-radius-md);
-    padding: 3px;
-    gap: 2px;
-  }
-  .mode-btn {
-    padding: 7px 0;
-    width: 148px;
+  .dashboard { min-height: 1024px; justify-content: center; align-items: center; }
+  .launcher {
+    max-width: 660px;
     text-align: center;
-    font-size: 14px;
-    font-weight: 500;
-    border-radius: 6px;
-    cursor: pointer;
-    font-family: var(--font-sans);
-    border: none;
-    background: transparent;
-    color: var(--color-text-secondary);
-    transition: background 0.15s, color 0.15s;
-    flex-shrink: 0;
-  }
-  .mode-btn.active {
-    background: var(--color-background-primary);
-    color: var(--color-text-primary);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-  }
-
-  .header-meta {
-    display: flex;
-    gap: 24px;
-    font-size: 14px;
-    color: var(--color-text-secondary);
-    align-items: center;
-  }
-  .header-meta strong { color: var(--color-text-primary); font-weight: 500; }
-
-  /* ── Context banner ── */
-  .context-banner {
-    padding: 14px 22px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 94px;
-  }
-  .context-facts {
-    display: flex;
-    gap: 28px;
-    align-items: center;
-  }
-  .context-fact { display: flex; flex-direction: column; gap: 3px; }
-  .context-fact-label {
-    font-size: 14px;
-    color: var(--color-text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-  }
-  .context-fact-value {
-    font-size: 17px;
-    font-weight: 500;
-    font-family: var(--font-mono);
-    color: var(--color-text-primary);
-  }
-  .context-fact-value.plain { font-family: var(--font-sans); }
-  .context-fact-value.warn { color: var(--color-text-warning); }
-  .context-divider { width: 1px; height: 32px; background: var(--color-border-tertiary); }
-
-  .consequence-box {
-    display: flex;
-    gap: 12px;
-    padding: 12px 16px;
-    background: var(--color-background-warning);
-    color: var(--color-text-warning);
-    border-radius: var(--border-radius-md);
-    font-size: 14px;
-    max-width: 420px;
-    align-items: flex-start;
-  }
-  .consequence-box.pre-run {
-    background: var(--color-background-info);
-    color: var(--color-text-info);
-  }
-  .consequence-icon {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: var(--color-amber);
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    margin-top: 1px;
-  }
-  .consequence-box.pre-run .consequence-icon { background: var(--color-blue); }
-  .consequence-icon svg { width: 12px; height: 12px; }
-  .consequence-body { line-height: 1.5; }
-  .consequence-body strong { font-weight: 600; display: block; margin-bottom: 2px; }
-  .consequence-body ul { margin: 4px 0 0 0; padding-left: 14px; }
-  .consequence-body ul li { margin-bottom: 1px; }
-
-  /* ── Main grid ── */
-  .main-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-    flex: 1;
-    min-height: 0;
-  }
-  .main-row.three-col {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-
-  .section {
-    background: var(--color-background-primary);
-    border: 0.5px solid var(--color-border-tertiary);
-    border-radius: var(--border-radius-lg);
-    padding: 18px 22px;
     display: flex;
     flex-direction: column;
-  }
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 14px;
-  }
-  .section-title { font-size: 15px; font-weight: 500; }
-  .section-hint { font-size: 14px; color: var(--color-text-tertiary); }
-  .required::after { content: " *"; color: var(--color-red); }
-
-  /* Radio option cards */
-  .option-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex: 1;
-  }
-  .option-card {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 13px 16px;
-    border: 2px solid var(--color-border-secondary);
-    border-radius: var(--border-radius-md);
-    cursor: pointer;
-    background: var(--color-background-primary);
-    user-select: none;
-    transition: all 0.15s;
-  }
-  .option-card:hover { background: var(--color-background-secondary); }
-  .option-card.selected {
-    border-color: var(--color-amber);
-    background: var(--color-background-warning);
-  }
-  .option-card.selected.blue-sel {
-    border-color: var(--color-blue);
-    background: var(--color-background-info);
-  }
-  .option-card.selected.red-sel {
-    border-color: var(--color-red);
-    background: var(--color-background-danger);
-  }
-  .option-card.selected.green-sel {
-    border-color: var(--color-green);
-    background: var(--color-background-success);
-  }
-  .option-radio {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border: 2px solid var(--color-border-primary);
-    flex-shrink: 0;
-    position: relative;
-  }
-  .option-card.selected .option-radio { border-width: 6px; }
-  .option-card.selected .option-radio { border-color: var(--color-amber); }
-  .option-card.selected.blue-sel .option-radio { border-color: var(--color-blue); }
-  .option-card.selected.red-sel .option-radio { border-color: var(--color-red); }
-  .option-card.selected.green-sel .option-radio { border-color: var(--color-green); }
-  .option-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--border-radius-md);
-    background: var(--color-background-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    color: var(--color-text-secondary);
-  }
-  .option-card.selected .option-icon { background: var(--color-amber); color: #ffffff; }
-  .option-card.selected.blue-sel .option-icon { background: var(--color-blue); color: #ffffff; }
-  .option-card.selected.red-sel .option-icon { background: var(--color-red); color: #ffffff; }
-  .option-card.selected.green-sel .option-icon { background: var(--color-green); color: #ffffff; }
-  .option-icon svg { width: 20px; height: 20px; }
-  .option-body { flex: 1; }
-  .option-name { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
-  .option-desc { font-size: 14px; color: var(--color-text-secondary); line-height: 1.4; }
-  .option-card.selected .option-desc { color: inherit; opacity: 0.8; }
-
-  /* Other free-text */
-  .other-wrap {
-    display: none;
-    margin-top: 4px;
-    padding: 12px 14px;
-    background: var(--color-background-secondary);
-    border-radius: var(--border-radius-md);
-    border-left: 3px solid var(--color-amber);
-  }
-  .other-wrap.visible { display: block; }
-  .other-label {
-    font-size: 14px;
-    color: var(--color-text-secondary);
-    margin-bottom: 6px;
-    font-weight: 500;
-  }
-
-  /* Weight estimate row */
-  .weight-row {
-    display: none;
-    margin-top: 6px;
-    padding: 12px 14px;
-    background: var(--color-background-secondary);
-    border-radius: var(--border-radius-md);
-    gap: 12px;
-    align-items: center;
-  }
-  .weight-row.visible { display: flex; }
-  .weight-label { font-size: 14px; color: var(--color-text-secondary); white-space: nowrap; }
-  .weight-input-wrap { position: relative; flex: 1; }
-  .weight-input {
-    width: 100%;
-    height: 40px;
-    padding: 0 40px 0 14px;
-    font-size: 14px;
-    font-family: var(--font-mono);
-    color: var(--color-text-primary);
-    background: var(--color-background-primary);
-    border: 1px solid var(--color-border-secondary);
-    border-radius: var(--border-radius-md);
-    outline: none;
-  }
-  .weight-input:focus { border-color: var(--color-blue); box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.18); }
-  .weight-unit {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 14px;
-    color: var(--color-text-tertiary);
-    pointer-events: none;
-  }
-  .weight-optional { font-size: 14px; color: var(--color-text-tertiary); white-space: nowrap; }
-
-  /* Notes / textarea */
-  .textarea {
-    width: 100%;
-    padding: 12px 14px;
-    font-size: 14px;
-    font-family: var(--font-sans);
-    color: var(--color-text-primary);
-    background: var(--color-background-primary);
-    border: 1px solid var(--color-border-secondary);
-    border-radius: var(--border-radius-md);
-    resize: none;
-    outline: none;
-    flex: 1;
-    min-height: 70px;
-  }
-  .textarea:focus { border-color: var(--color-blue); box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.18); }
-
-  .input {
-    width: 100%;
-    height: 46px;
-    padding: 0 14px;
-    font-size: 14px;
-    font-family: var(--font-sans);
-    color: var(--color-text-primary);
-    background: var(--color-background-primary);
-    border: 1px solid var(--color-border-secondary);
-    border-radius: var(--border-radius-md);
-    outline: none;
-  }
-  .input:focus { border-color: var(--color-blue); box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.18); }
-
-  /* Footage produced callout — Mode B only */
-  .footage-callout {
-    display: flex;
     align-items: center;
     gap: 16px;
-    padding: 12px 16px;
-    background: var(--color-background-secondary);
-    border-radius: var(--border-radius-md);
-    margin-bottom: 12px;
-    border-left: 3px solid var(--color-amber);
+    padding: 34px 40px;
   }
-  .footage-callout-label { font-size: 14px; color: var(--color-text-secondary); }
-  .footage-callout-value {
-    font-size: 22px;
-    font-weight: 600;
-    font-family: var(--font-mono);
-    color: var(--color-text-primary);
+  .launcher-icon {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: var(--color-background-warning);
+    color: var(--color-amber);
+    display: flex; align-items: center; justify-content: center;
   }
-  .footage-callout-sub { font-size: 14px; color: var(--color-text-tertiary); }
-
-  /* Partial alpha note */
-  .partial-note {
-    display: none;
-    margin-top: 6px;
-    padding: 10px 14px;
-    background: var(--color-background-success);
-    color: var(--color-text-success);
-    border-radius: var(--border-radius-md);
-    font-size: 14px;
-    border-left: 3px solid var(--color-green);
-    line-height: 1.5;
-  }
-  .partial-note.visible { display: block; }
-  .partial-note strong { font-weight: 600; }
-
-  /* ── Footer ── */
-  .footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 22px;
-    height: 78px;
-  }
-  .footer-stamp { display: flex; align-items: center; gap: 20px; }
-  .footer-stamp-item { display: flex; flex-direction: column; gap: 2px; }
-  .footer-stamp-label {
-    font-size: 14px;
-    color: var(--color-text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-  }
-  .footer-stamp-value { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
-  .footer-stamp-value.mono { font-family: var(--font-mono); }
-
-  .footer-actions { display: flex; gap: 10px; }
-  .btn {
-    height: 52px;
-    padding: 0 24px;
-    font-size: 14px;
-    font-weight: 500;
+  .launcher-icon svg { width: 30px; height: 30px; }
+  .launcher h1 { margin: 0; font-size: 22px; font-weight: 500; }
+  .launcher p { margin: 0; font-size: 14px; color: var(--color-text-secondary); line-height: 1.5; }
+  .launcher-actions { display: flex; gap: 10px; margin-top: 4px; }
+  .launcher-btn {
+    height: 48px; padding: 0 24px;
+    font-size: 14px; font-weight: 500; font-family: var(--font-sans);
+    border: 1px solid var(--color-amber);
+    background: var(--color-amber);
+    color: #fff;
     border-radius: var(--border-radius-md);
     cursor: pointer;
-    font-family: var(--font-sans);
-    border: 1px solid var(--color-border-secondary);
+  }
+  .launcher-btn:hover { background: #d18a1a; }
+  .launcher-btn.secondary {
     background: var(--color-background-primary);
+    border-color: var(--color-border-secondary);
     color: var(--color-text-primary);
-    transition: all 0.15s;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
   }
-  .btn:hover { background: var(--color-background-secondary); }
-  .btn:active { transform: scale(0.98); }
-  .btn svg { width: 16px; height: 16px; }
-  .btn-confirm {
-    background: var(--color-amber);
-    border-color: var(--color-amber);
-    color: #ffffff;
-    padding: 0 30px;
-  }
-  .btn-confirm:hover { background: #d18a1a; }
-
-  /* ── Mode visibility helpers ── */
-  .mode-a-only { display: none; }
-  .mode-b-only { display: flex; }
-  body.mode-a .mode-a-only { display: flex; }
-  body.mode-a .mode-b-only { display: none; }
-  body.mode-a .main-row { grid-template-columns: 1fr 1fr; }
-
-  /* hide/show items within sections */
-  .hide { display: none !important; }
+  .launcher-btn.secondary:hover { background: var(--color-background-secondary); }
 </style>
 </head>
 <body>
 <div class="dashboard">
-
-  <!-- ── Header ── -->
-  <div class="header panel">
-    <div class="header-left">
-      <button class="back-btn" onclick="window.location.href='dashboard_3_active_run_v2.html'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        Back to run
-      </button>
-
-      <span class="warning-chip" id="header-chip">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <span id="chip-label">FL1 paused &middot; mid-run checkout</span>
-      </span>
-
-      <h1 id="page-title">Checkout Rod</h1>
-
-      <div class="mode-toggle">
-        <button class="mode-btn" id="btn-mode-a" onclick="setMode('a')">Mode A &middot; Pre-Run</button>
-        <button class="mode-btn active" id="btn-mode-b" onclick="setMode('b')">Mode B &middot; Mid-Run</button>
-      </div>
-    </div>
-
-    <div class="header-meta">
-      <span>FL1 &middot; <strong>Payoff 2</strong></span>
+  <div class="launcher panel">
+    <span class="launcher-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+    </span>
+    <h1>Checkout</h1>
+    <p>
+      This is now a dialog rather than a screen. Mid-run checkout is raised from a
+      paused run, so the footage frozen at that pause carries straight through;
+      pre-run checkout is raised from the check-in station, where there is no
+      footage to account for. It has opened over this page in the mid-run case.
+    </p>
+    <div class="launcher-actions">
+      <button class="launcher-btn" type="button" onclick="launch('b')">Open Mode B &middot; mid-run</button>
+      <button class="launcher-btn secondary" type="button" onclick="launch('a')">Open Mode A &middot; pre-run</button>
     </div>
   </div>
-
-  <!-- ── Context banner ── -->
-  <div class="context-banner panel">
-    <div class="context-facts">
-      <div class="context-fact">
-        <span class="context-fact-label">Rod alpha</span>
-        <span class="context-fact-value">R00042</span>
-      </div>
-      <div class="context-divider"></div>
-      <div class="context-fact">
-        <span class="context-fact-label">Payoff position</span>
-        <span class="context-fact-value plain">Payoff 2</span>
-      </div>
-      <div class="context-divider"></div>
-      <div class="context-fact">
-        <span class="context-fact-label">Order</span>
-        <span class="context-fact-value">FW-00421</span>
-      </div>
-      <div class="context-divider"></div>
-      <div class="context-fact" id="ctx-footage">
-        <span class="context-fact-label">Footage at checkout</span>
-        <span class="context-fact-value warn">8,220 ft</span>
-      </div>
-      <div class="context-divider" id="ctx-checkin-div" style="display:none;"></div>
-      <div class="context-fact" id="ctx-checkin" style="display:none;">
-        <span class="context-fact-label">Check-in time</span>
-        <span class="context-fact-value plain" style="font-size:15px;">08:14 AM</span>
-      </div>
-      <div class="context-divider"></div>
-      <div class="context-fact">
-        <span class="context-fact-label">Pass schedule</span>
-        <span class="context-fact-value plain" style="font-size:14px;">PS-1100-FL1-003</span>
-      </div>
-    </div>
-
-    <!-- Mode B consequence -->
-    <div class="consequence-box" id="consequence-b">
-      <span class="consequence-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      </span>
-      <span class="consequence-body">
-        <strong>This checkout closes the partial run</strong>
-        <ul>
-          <li>Pass schedule acknowledgment voided</li>
-          <li>PLC tags cleared for Payoff 2</li>
-          <li>Line returns to idle &mdash; Dashboard 2 ready</li>
-        </ul>
-      </span>
-    </div>
-
-    <!-- Mode A consequence -->
-    <div class="consequence-box pre-run" id="consequence-a" style="display:none;">
-      <span class="consequence-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      </span>
-      <span class="consequence-body">
-        <strong>No footage produced &mdash; safe to void</strong>
-        <ul>
-          <li>Pass schedule acknowledgment voided</li>
-          <li>PLC tags cleared for Payoff 2</li>
-          <li>Rod returned to inventory (status updated)</li>
-        </ul>
-      </span>
-    </div>
-  </div>
-
-  <!-- ── Main grid — Mode B (3 columns) ── -->
-  <div class="main-row" id="main-grid">
-
-    <!-- Column 1: Checkout reason -->
-    <div class="section">
-      <div class="section-header">
-        <span class="section-title required">Checkout reason</span>
-        <span class="section-hint" id="reason-hint">Why is this rod being removed?</span>
-      </div>
-
-      <!-- Mode B reasons -->
-      <div class="option-list" id="reasons-b">
-        <div class="option-card" data-group="reason-b" onclick="selectOption(this,'reason-b')">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Equipment failure</div>
-            <div class="option-desc">Machine fault, component failure, or unplanned downtime</div>
-          </div>
-        </div>
-
-        <div class="option-card" data-group="reason-b" onclick="selectOption(this,'reason-b')">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Quality hold</div>
-            <div class="option-desc">Out-of-spec gauge / width / surface — supervisor hold required</div>
-          </div>
-        </div>
-
-        <div class="option-card" data-group="reason-b" onclick="selectOption(this,'reason-b')">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Order quantity reached</div>
-            <div class="option-desc">Required footage or weight for the order is complete</div>
-          </div>
-        </div>
-
-        <div class="option-card selected" data-group="reason-b" onclick="selectOption(this,'reason-b')">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Shift deferral</div>
-            <div class="option-desc">Continuing on next shift or scheduled restart</div>
-          </div>
-        </div>
-
-        <div class="option-card" data-group="reason-b" data-other="true" onclick="selectOption(this,'reason-b')">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Other</div>
-            <div class="option-desc">Enter reason below</div>
-          </div>
-        </div>
-        <div class="other-wrap" id="other-b">
-          <div class="other-label">Specify reason (required)</div>
-          <input type="text" class="input" placeholder="Describe the reason for checkout...">
-        </div>
-      </div>
-
-      <!-- Mode A reasons (hidden by default) -->
-      <div class="option-list" id="reasons-a" style="display:none;">
-        <div class="option-card selected blue-sel" data-group="reason-a" onclick="selectOption(this,'reason-a')">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5a2 2 0 0 1 2-2h2"/><path d="M16 3h2a2 2 0 0 1 2 2v2"/><path d="M20 17v2a2 2 0 0 1-2 2h-2"/><path d="M8 21H6a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Wrong rod / mis-scan</div>
-            <div class="option-desc">Incorrect rod scanned or loaded into payoff position</div>
-          </div>
-        </div>
-
-        <div class="option-card blue-sel" data-group="reason-a" onclick="selectOption(this,'reason-a')">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Order cancelled / deferred</div>
-            <div class="option-desc">Job is no longer active; rod not needed on this line now</div>
-          </div>
-        </div>
-
-        <div class="option-card blue-sel" data-group="reason-a" onclick="selectOption(this,'reason-a')">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Failed re-inspection</div>
-            <div class="option-desc">Rod failed visual inspection after being staged at payoff</div>
-          </div>
-        </div>
-
-        <div class="option-card blue-sel" data-group="reason-a" onclick="selectOption(this,'reason-a')">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Relocated to different line</div>
-            <div class="option-desc">Rod reassigned to FL1 / FL3 by supervisor</div>
-          </div>
-        </div>
-
-        <div class="option-card blue-sel" data-group="reason-a" data-other="true" onclick="selectOption(this,'reason-a')">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Other</div>
-            <div class="option-desc">Enter reason below</div>
-          </div>
-        </div>
-        <div class="other-wrap" id="other-a">
-          <div class="other-label">Specify reason (required)</div>
-          <input type="text" class="input" placeholder="Describe the reason for checkout...">
-        </div>
-      </div>
-    </div>
-
-    <!-- Column 2: Rod disposition -->
-    <div class="section">
-      <div class="section-header">
-        <span class="section-title required">Rod disposition</span>
-        <span class="section-hint">Where does this rod go after checkout?</span>
-      </div>
-
-      <!-- Mode B rod disposition -->
-      <div class="option-list" id="rod-disp-b">
-        <div class="option-card" data-group="rod-b" onclick="selectOption(this,'rod-b')">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Hold — return to storage</div>
-            <div class="option-desc">Partial rod is re-usable &middot; status &rarr; <span class="mono" style="font-size:14px;">STAGED</span></div>
-          </div>
-        </div>
-        <div class="weight-row" id="weight-hold">
-          <span class="weight-label">Remaining weight estimate</span>
-          <div class="weight-input-wrap">
-            <input type="text" class="weight-input" placeholder="0" value="">
-            <span class="weight-unit">lb</span>
-          </div>
-          <span class="weight-optional">optional</span>
-        </div>
-
-        <div class="option-card selected" data-group="rod-b" onclick="selectOption(this,'rod-b')">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M8 12l2 2 4-4"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Defer — continue later on this line</div>
-            <div class="option-desc">Rod stays staged at FL1 &middot; status &rarr; <span class="mono" style="font-size:14px;">STAGED</span> &middot; resumes on next check-in</div>
-          </div>
-        </div>
-
-        <div class="option-card red-sel" data-group="rod-b" onclick="selectOption(this,'rod-b')">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Scrap — rod not re-usable</div>
-            <div class="option-desc">Rod too short or damaged &middot; status &rarr; <span class="mono" style="font-size:14px;">SCRAP</span> &middot; routes to scrap module</div>
-          </div>
-        </div>
-
-        <div class="section" style="margin-top:auto; padding:14px 16px; background:var(--color-background-secondary); border:none; flex:0;">
-          <div class="section-header" style="margin-bottom:6px;">
-            <span class="section-title" style="font-size:14px;">Notes</span>
-            <span class="section-hint">optional</span>
-          </div>
-          <textarea class="textarea" style="min-height:56px;" placeholder="Any additional context about the rod condition, remaining weight, or reason for disposition..."></textarea>
-        </div>
-      </div>
-
-      <!-- Mode A rod disposition -->
-      <div class="option-list" id="rod-disp-a" style="display:none;">
-        <div class="option-card selected blue-sel" data-group="rod-a" onclick="selectOption(this,'rod-a')">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Return to floor storage</div>
-            <div class="option-desc">Rod placed back in storage area &middot; status &rarr; <span class="mono" style="font-size:14px;">STAGED</span></div>
-          </div>
-        </div>
-
-        <div class="option-card blue-sel" data-group="rod-a" onclick="selectOption(this,'rod-a')">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Return to warehouse</div>
-            <div class="option-desc">Rod returned to main stock &middot; status &rarr; <span class="mono" style="font-size:14px;">RECEIVED</span></div>
-          </div>
-        </div>
-
-        <div class="section" style="margin-top:auto; padding:14px 16px; background:var(--color-background-secondary); border:none; flex:0;">
-          <div class="section-header" style="margin-bottom:6px;">
-            <span class="section-title" style="font-size:14px;">Notes</span>
-            <span class="section-hint">optional</span>
-          </div>
-          <textarea class="textarea" style="min-height:80px;" placeholder="Any additional context about this checkout..."></textarea>
-        </div>
-      </div>
-    </div>
-
-    <!-- Column 3: In-process material disposition (Mode B only) -->
-    <div class="section" id="material-disp-col">
-      <div class="section-header">
-        <span class="section-title required">In-process material</span>
-        <span class="section-hint">What happens to footage already produced?</span>
-      </div>
-
-      <div class="footage-callout">
-        <div>
-          <div class="footage-callout-label">Footage produced before checkout</div>
-          <div class="footage-callout-value">8,220 ft</div>
-          <div class="footage-callout-sub">from rod R00042 &middot; order FW-00421</div>
-        </div>
-      </div>
-
-      <div class="option-list">
-        <div class="option-card" data-group="mat" onclick="selectMatOption(this)">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Hold — pending supervisor review</div>
-            <div class="option-desc">Material placed in WIP held queue &middot; supervisor notified</div>
-          </div>
-        </div>
-
-        <div class="option-card red-sel" data-group="mat" onclick="selectMatOption(this)">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Scrap — discard all footage</div>
-            <div class="option-desc">All 8,220 ft scrapped &middot; material routed to scrap module</div>
-          </div>
-        </div>
-
-        <div class="option-card selected green-sel" data-group="mat" data-partial="true" onclick="selectMatOption(this)">
-          <div class="option-radio"></div>
-          <div class="option-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-          <div class="option-body">
-            <div class="option-name">Accept as partial run</div>
-            <div class="option-desc">Generate spool alpha for 8,220 ft &middot; available for FL2 check-in</div>
-          </div>
-        </div>
-
-        <div class="partial-note visible" id="partial-note">
-          <strong>Spool alpha will be generated on confirm</strong>
-          System will create a partial spool alpha linked to rod R00042 &middot; footage 0–8,220 ft &middot; available in FL2 check-in queue. Supervisor acknowledgment is required before the spool enters the FL2 queue.
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /.main-row -->
-
-  <!-- ── Footer ── -->
-  <div class="footer panel">
-    <div class="footer-stamp">
-      <div class="footer-stamp-item">
-        <span class="footer-stamp-label">Operator</span>
-        <span class="footer-stamp-value">Dave M.</span>
-      </div>
-      <div class="footer-stamp-item">
-        <span class="footer-stamp-label">Timestamp</span>
-        <span class="footer-stamp-value mono" id="stamp-time">08:31:07 AM &middot; Apr 23, 2026</span>
-      </div>
-      <div class="footer-stamp-item">
-        <span class="footer-stamp-label">Rod alpha</span>
-        <span class="footer-stamp-value mono">R00042</span>
-      </div>
-      <div class="footer-stamp-item" id="footer-footage-item">
-        <span class="footer-stamp-label">Footage at checkout</span>
-        <span class="footer-stamp-value mono">8,220 ft</span>
-      </div>
-    </div>
-    <div class="footer-actions">
-      <button class="btn" onclick="window.location.href='dashboard_3_active_run_v2.html'">Cancel</button>
-      <button class="btn btn-confirm" id="confirm-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        <span id="confirm-label">Confirm checkout</span>
-      </button>
-    </div>
-  </div>
-
-</div><!-- /.dashboard -->
+</div>
 
 <script>
-(function () {
-  /* ── Clock ── */
-  function pad(n) { return String(n).padStart(2, "0"); }
-  function updateClock() {
-    var now = new Date();
-    var h = now.getHours(), m = pad(now.getMinutes()), s = pad(now.getSeconds());
-    var ampm = h < 12 ? "AM" : "PM", h12 = h % 12 || 12;
-    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    var dateStr = months[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();
-    var el = document.getElementById("clock");
-    if (el) el.textContent = pad(h12) + ":" + m + " " + ampm;
-    el = document.getElementById("date");
-    if (el) el.textContent = dateStr;
-    el = document.getElementById("stamp-time");
-    if (el) el.textContent = pad(h12) + ":" + m + ":" + s + " " + ampm + " · " + dateStr;
-  }
-  updateClock();
-  setInterval(updateClock, 1000);
-
-  /* ── Mode toggle ── */
-  window.setMode = function (mode) {
-    var body = document.body;
-    var btnA = document.getElementById("btn-mode-a");
-    var btnB = document.getElementById("btn-mode-b");
-    var title = document.getElementById("page-title");
-    var chipLabel = document.getElementById("chip-label");
-    var reasonsA = document.getElementById("reasons-a");
-    var reasonsB = document.getElementById("reasons-b");
-    var rodDispA = document.getElementById("rod-disp-a");
-    var rodDispB = document.getElementById("rod-disp-b");
-    var matCol   = document.getElementById("material-disp-col");
-    var ctxFootage = document.getElementById("ctx-footage");
-    var ctxCheckin = document.getElementById("ctx-checkin");
-    var ctxCheckinDiv = document.getElementById("ctx-checkin-div");
-    var conseqA = document.getElementById("consequence-a");
-    var conseqB = document.getElementById("consequence-b");
-    var footerFootage = document.getElementById("footer-footage-item");
-    var mainGrid = document.getElementById("main-grid");
-
-    if (mode === "a") {
-      btnA.classList.add("active"); btnB.classList.remove("active");
-      title.textContent = "Checkout Rod";
-      chipLabel.textContent = "FL1 · pre-run checkout";
-      reasonsA.style.display = ""; reasonsB.style.display = "none";
-      rodDispA.style.display = ""; rodDispB.style.display = "none";
-      matCol.style.display = "none";
-      ctxFootage.style.display = "none";
-      ctxCheckin.style.display = ""; ctxCheckinDiv.style.display = "";
-      conseqA.style.display = ""; conseqB.style.display = "none";
-      footerFootage.style.display = "none";
-      mainGrid.style.gridTemplateColumns = "1fr 1fr";
-      document.getElementById("confirm-label").textContent = "Confirm checkout";
-    } else {
-      btnB.classList.add("active"); btnA.classList.remove("active");
-      title.textContent = "Checkout Rod";
-      chipLabel.textContent = "FL1 paused · mid-run checkout";
-      reasonsA.style.display = "none"; reasonsB.style.display = "";
-      rodDispA.style.display = "none"; rodDispB.style.display = "";
-      matCol.style.display = "";
-      ctxFootage.style.display = ""; ctxFootage.style.display = "";
-      ctxCheckin.style.display = "none"; ctxCheckinDiv.style.display = "none";
-      conseqA.style.display = "none"; conseqB.style.display = "";
-      footerFootage.style.display = "";
-      mainGrid.style.gridTemplateColumns = "1fr 1fr 1fr";
-      document.getElementById("confirm-label").textContent = "Confirm checkout";
-    }
-  };
-
-  /* ── Generic single-select within a group ── */
-  window.selectOption = function (card, group) {
-    document.querySelectorAll("[data-group='" + group + "']").forEach(function (c) {
-      c.classList.remove("selected");
+  function launch(mode) {
+    window.openRodCheckout({
+      mode: mode,
+      line: "FL1",
+      orderNo: "FW-00421",
+      rodAlpha: "R00042",
+      payoff: 2,
+      runId: "RUN-0118",
+      footage: "8,220 ft",
+      checkinTime: "08:14 AM",
+      passSchedule: "PS-1100-FL1-003",
+      operator: "Dave M."
     });
-    card.classList.add("selected");
-
-    /* other free-text */
-    var otherId = group === "reason-b" ? "other-b" : "other-a";
-    var otherWrap = document.getElementById(otherId);
-    if (otherWrap) {
-      otherWrap.classList.toggle("visible", !!card.getAttribute("data-other"));
-    }
-
-    /* weight estimate field for rod-b Hold option */
-    if (group === "rod-b") {
-      var wh = document.getElementById("weight-hold");
-      if (wh) wh.classList.toggle("visible", card.querySelector(".option-name").textContent.indexOf("Hold") === 0);
-    }
-  };
-
-  /* ── Material disposition ── */
-  window.selectMatOption = function (card) {
-    document.querySelectorAll("[data-group='mat']").forEach(function (c) { c.classList.remove("selected"); });
-    card.classList.add("selected");
-    var note = document.getElementById("partial-note");
-    if (note) note.classList.toggle("visible", !!card.getAttribute("data-partial"));
-  };
-
-})();
+  }
+  window.addEventListener("load", function () { launch("b"); });
 </script>
 
+<script src="fw-modal.js"></script>
+<script src="rod_checkout.js"></script>
 <script src="flat-wire-topbar.js"></script>
 <script src="flat-wire-fit.js" data-fit="fill"></script>
 </body>

@@ -167,9 +167,12 @@
     background: var(--color-background-primary);
     border: 0.5px solid var(--color-border-tertiary);
     border-radius: var(--border-radius-lg);
-    width: 660px; max-width: 94vw; max-height: 88vh; overflow: hidden;
+    /* No max-height: fw-modal.js scales an oversized dialog to fit rather than
+       letting it scroll. */
+    width: 660px; overflow: hidden;
     box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
     display: flex; flex-direction: column;
+    transform: scale(var(--fw-modal-fit, 1)); transform-origin: center center;
     animation: panelIn 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .gb-modal-head {
@@ -273,6 +276,9 @@
     padding: 18px 10px 15px;
     border: 1px solid var(--color-border-tertiary); border-radius: var(--border-radius-md);
     background: var(--color-background-primary); cursor: pointer; text-decoration: none;
+    /* The WIP Rejection tile is a <button> since it opens a dialog; a button inherits
+       neither the page font nor the text colour. */
+    font-family: var(--font-sans); color: inherit;
     transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
   }
   .more-tile:hover { border-color: var(--color-blue); box-shadow: 0 6px 16px rgba(0,0,0,0.10); transform: translateY(-1px); }
@@ -708,9 +714,10 @@
     display: flex;
     animation: panelIn 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   }
+  /* See the shared stylesheet: --fw-modal-fit must survive this animation. */
   @keyframes panelIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(8px) scale(var(--fw-modal-fit, 1)); }
+    to   { opacity: 1; transform: translateY(0) scale(var(--fw-modal-fit, 1)); }
   }
 
   /* ── Hold / deviation override bar ── */
@@ -1432,18 +1439,18 @@
           <svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="8" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
           <span class="mt-title">Pass Schedule</span><span class="mt-sub">View schedule</span>
         </a>
-        <a class="more-tile" href="dashboard_8_wip_rejection.html">
+        <button class="more-tile" type="button" onclick="closeMoreAndReject()">
           <svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
           <span class="mt-title">WIP Rejection</span><span class="mt-sub">Reject material</span>
-        </a>
+        </button>
         <a class="more-tile" href="dashboard_2a_rod_precheckin.html">
           <svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3.5v3M12 17.5v3"/></svg>
           <span class="mt-title">Rod Pre-Check-in</span><span class="mt-sub">Stage at payoff</span>
         </a>
-        <a class="more-tile" href="dashboard_12_rod_checkout.html">
+        <button class="more-tile" type="button" onclick="closeMoreAndCheckout()">
           <svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h5a2 2 0 012 2v14a2 2 0 01-2 2h-5"/><path d="M9 16l4-4-4-4"/><path d="M13 12H3"/></svg>
           <span class="mt-title">Rod Checkout</span><span class="mt-sub">Return rod</span>
-        </a>
+        </button>
         <a class="more-tile" href="dashboard_10_shift_summary.html">
           <svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><line x1="10" y1="13" x2="16" y2="13"/><line x1="10" y1="17" x2="16" y2="17"/></svg>
           <span class="mt-title">Shift Summary</span><span class="mt-sub">Shift report</span>
@@ -1532,9 +1539,14 @@
     if (ringText) ringText.textContent = done + "/" + total;
   }
 
+  /* Lands on the PRE-CHECK-IN station (DB2A), not the active run (DB3). Check-in is finished
+     the moment this is pressed — the rod is drawing and the run monitor is reachable from the
+     app bar and from Line Status. What the operator has to do NEXT is stage the following rod
+     on the idle payoff, which is DB2A. Closing the loop back to the payoff station keeps the
+     two-bay cycle (stage → check in → stage the next) on one path. */
   acknowledgeBtn.addEventListener("click", function () {
     if (acknowledgeBtn.disabled) return;
-    window.location.href = "dashboard_3_active_run_v2.html";
+    window.location.href = "dashboard_2a_rod_precheckin.html";
   });
 
   /* ── Pass schedule ── */
@@ -2329,6 +2341,34 @@
   });
 })();
 </script>
+<script>
+  /* The More Options popup and the rejection dialog must never be open together —
+     two focus traps at once leaves the operator unable to reach either one. */
+  /* Reached from the check-in station, where the run has not started — Mode A,
+     the pre-run case with no footage to disposition. */
+  function closeMoreAndCheckout() {
+    window.FwModal.close("more-overlay");
+    window.openRodCheckout({
+      mode: "a", line: "FL1", orderNo: "FW-00421", rodAlpha: "R00042",
+      payoff: 2, operator: "Bob Scott"
+    });
+  }
+  function closeMoreAndReject() {
+    window.FwModal.close("more-overlay");
+    window.openWipRejection({
+      materialAlpha: "R00042",
+      orderNo: "FW-00421",
+      stage: "FL1 · rod check-in",
+      footagePosition: null,
+      runId: null,
+      trigger: "mid-run",
+      operator: "Bob Scott"
+    });
+  }
+</script>
+<script src="fw-modal.js"></script>
+<script src="wip_rejection.js"></script>
+<script src="rod_checkout.js"></script>
 <script src="flat-wire-fit.js" data-fit="fill"></script>
 </body>
 </html>

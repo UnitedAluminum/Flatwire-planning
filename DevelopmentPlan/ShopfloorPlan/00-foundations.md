@@ -52,10 +52,10 @@ The shopfloor build chain is a real npm script (`build:shop-floor`). **The new `
 | Route | Lines | Flow | Gauge trace | Intermediate spool |
 |---|---|---|---|---|
 | **FL1 Standalone** | FL1 | Rod → DB1/DB2 → FM1 → TKUP-1 spool | Real-time | Yes (SP alpha) |
-| **FL2 Standalone** | FL2 | Spool → FM2 (8"→6"S1→6"S2 + edgers) → TKUP-2 coreless coil | Historical/profile | N/A |
+| **FL2 Standalone** | FL2 | Spool → FM2 (8" → 6"S1 → 6"S2 → 6"S3; **edgers at S2 and S3 only**) → TKUP-2 coreless coil | Historical/profile | N/A |
 | **FL3 Hybrid** | FL1+FL2 continuous | Rod → both mills, no stop, no intermediate anneal | Real-time | No |
 
-**Equipment corrections (client feedback, May 21 2026 — authoritative):** FL1 has **no Edger** (Edge Set removed from FL1 check-in / active run / FL1 pass schedule). FM2 has **three** 6" stands (S1, S2, S3); **Edgers sit at S2 and S3 only**. Weld is **Induction only** (Laser removed — not viable). Traveler is **fully digital** (no printing; coil/skid labels are separate and still printed). Shift Summary is **per-machine** (FL1/FL2/FL3 tabs + All Lines).
+**Equipment corrections (client feedback, May 21 2026 — authoritative):** FL1 has **no Edger** (Edge Set removed from FL1 check-in / active run / FL1 pass schedule). FM2 has **three** 6" stands (S1, S2, S3); **Edgers sit at S2 and S3 only**. *(The FL2 row of the route table above said `8"→6"S1→6"S2 + edgers` — the pre-correction two-stand form — until 2 Aug 2026. It is the likely source of the same stale list in three mockups and in `dashboard_5_spool_checkin.html`'s schedule table; the table now agrees with this paragraph. Anywhere else that shows FM2 with two 6" stands or unnumbered edgers is wrong.)* Weld is **Induction only** (Laser removed — not viable). Traveler is **fully digital** (no printing; coil/skid labels are separate and still printed). Shift Summary is **per-machine** (FL1/FL2/FL3 tabs + All Lines).
 
 **Alpha / ID formats** (`Schema/FlatWireSchema_Mapping.md`): Rod `R#####` (R00041) · Spool `SP-#####` (SP-00021) · Run `RUN-####` · Pass schedule `PS-{alloy}-{line}-{seq}` (PS-1100-FL1-003) · Weld `WLD-###` · Roll override `OVR-####` · Die change `DC-####` · SPC `SPC-####` · WIP rejection `REJ-####` · Rod checkout `CO-####` · Output coil `FW-#####-C##` (FW-00421-C01) · mid-run child alpha `FW-00421-C01-A` · Skid `SK-#####` · Die tooling `D-{size×1000}-{seq}` (D-310-034).
 

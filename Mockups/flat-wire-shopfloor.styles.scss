@@ -516,9 +516,13 @@ input, select, textarea, button, option {
    GLOBAL APPLICATION BAR (top strip) + operator sessions + More Options popup
    Injected on every dashboard by flat-wire-topbar.js
    ============================================================================= */
+/* --fw-modal-fit is the shrink factor fw-modal.js applies to a dialog too tall for the
+   window. It has to appear in these keyframes as well: an animation's transform overrides
+   the element's own transform while it runs, so without it every oversized dialog would
+   flash at full size for 220ms before snapping down. Defaults to 1 everywhere else. */
 @keyframes panelIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(8px) scale(var(--fw-modal-fit, 1)); }
+  to   { opacity: 1; transform: translateY(0) scale(var(--fw-modal-fit, 1)); }
 }
 
 .global-bar {
@@ -566,17 +570,48 @@ input, select, textarea, button, option {
 .gb-btn.danger:hover { background: var(--color-background-danger); color: var(--color-text-danger); border-color: var(--color-red); }
 .gb-btn.accent:hover { background: var(--color-background-success); color: var(--color-text-success); border-color: var(--color-green); }
 
-/* Shared modal shell (Switch + More Options) */
+/* Shared modal shell (Switch + More Options + the converted run-event dialogs) */
 .gb-modal-overlay { position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; }
 .gb-modal-overlay.open { display: flex; }
-.gb-modal { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); width: 660px; max-width: 94vw; max-height: 88vh; overflow: hidden; box-shadow: 0 24px 64px rgba(0,0,0,0.35); display: flex; flex-direction: column; animation: panelIn 0.22s cubic-bezier(0.4,0,0.2,1); }
+/* NO max-height, deliberately. A dialog that outgrows the window is scaled down to fit by
+   fw-modal.js (see its fit()), never scrolled: an operator in gloves on a touch panel cannot
+   be asked to drag a scrollbar to reach Confirm. Capping the height here would re-introduce
+   exactly the overflow the fit exists to remove. */
+.gb-modal { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); width: 660px; overflow: hidden; box-shadow: 0 24px 64px rgba(0,0,0,0.35); display: flex; flex-direction: column; transform: scale(var(--fw-modal-fit, 1)); transform-origin: center center; animation: panelIn 0.22s cubic-bezier(0.4,0,0.2,1); }
 .gb-modal.wide { width: 800px; }
+/* xwide carries the three converted full-screen dialogs (die change, SPC checkpoint, WIP
+   rejection). Their internal grids — SPC's 240/180/1fr/170 measurement row, die change's
+   5-column reason grid — do not survive below ~1050px. */
+.gb-modal.xwide { width: 1120px; }
 .gb-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 0.5px solid var(--color-border-tertiary); }
 .gb-modal-title { font-size: 17px; font-weight: 600; color: var(--color-text-primary); }
 .gb-modal-sub { font-size: 14px; color: var(--color-text-tertiary); margin-top: 2px; }
 .gb-modal-close { width: 34px; height: 34px; border-radius: var(--border-radius-md); border: 1px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-secondary); cursor: pointer; font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
 .gb-modal-close:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
-.gb-modal-body { padding: 18px 20px; overflow: auto; }
+/* overflow:visible, not auto — the shell is never height-capped, so the body always has room
+   for its content and a scrollbar could only ever appear as a rounding artefact. */
+.gb-modal-body { padding: 18px 20px; overflow: visible; flex: 0 0 auto; min-height: 0; }
+.gb-modal-foot { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 20px; border-top: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary); flex-shrink: 0; flex-wrap: wrap; }
+.modal-status { font-size: 14px; color: var(--color-text-secondary); }
+.modal-status.blocked { color: var(--color-text-danger); font-weight: 500; }
+.modal-foot-actions { display: flex; gap: 10px; }
+
+/* Footer identity stamp shared by the converted dialogs (operator · timestamp · footage). */
+.gb-modal-stamp { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.gb-modal-stamp-item { display: flex; flex-direction: column; gap: 2px; }
+.gb-modal-stamp-label { font-size: 14px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.4px; }
+.gb-modal-stamp-value { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+.gb-modal-stamp-value.mono { font-family: var(--font-mono); }
+
+/* Context chips in a dialog head — the converted screens' old page-header meta row. */
+.gb-modal-ctx { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.gb-modal-ctx .ctx-chip { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px; border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500; background: var(--color-background-secondary); color: var(--color-text-secondary); }
+.gb-modal-ctx .ctx-chip.info { background: var(--color-background-info); color: var(--color-text-info); }
+.gb-modal-ctx .ctx-chip.success { background: var(--color-background-success); color: var(--color-text-success); }
+.gb-modal-ctx .ctx-chip.warning { background: var(--color-background-warning); color: var(--color-text-warning); }
+.gb-modal-ctx .ctx-chip.danger { background: var(--color-background-danger); color: var(--color-text-danger); }
+.gb-modal-ctx .ctx-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.gb-modal-ctx .ctx-chip .mono { font-family: var(--font-mono); }
 
 /* Switch operator cards */
 .switch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -611,7 +646,10 @@ input, select, textarea, button, option {
 
 /* More Options tiles */
 .more-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-.more-tile { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 5px; padding: 18px 10px 15px; border: 1px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); background: var(--color-background-primary); cursor: pointer; text-decoration: none; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
+/* Rendered as <a> (navigating tiles) or <button> (action tiles, added 1 Aug 2026) — the
+   font-family reset is what keeps the two visually identical, since a button does not
+   inherit it. */
+.more-tile { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 5px; padding: 18px 10px 15px; border: 1px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); background: var(--color-background-primary); cursor: pointer; text-decoration: none; font-family: var(--font-sans); color: inherit; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
 .more-tile:hover { border-color: var(--color-blue); box-shadow: 0 6px 16px rgba(0,0,0,0.10); transform: translateY(-1px); }
 .more-tile.active { border-color: var(--color-green); box-shadow: 0 0 0 1px var(--color-green); cursor: default; }
 .more-tile.active:hover { transform: none; box-shadow: 0 0 0 1px var(--color-green); }
