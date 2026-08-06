@@ -34,10 +34,9 @@
          footage:      '13,060 ft',       // read live at click time, not page load
          targets:      { gauge: 0.110, gaugeTol: 0.002, gaugeDp: 4,
                          width: 0.625, widthTol: 0.005, widthDp: 3 },
-         rolls:        [ { name: '8"',   bypassed: true },
-                         { name: '6"S1', scheduled: 0.0180, current: 0.0180 },
-                         { name: '6"S2', scheduled: 0.0162, current: 0.0162 },
-                         { name: '6"S3', scheduled: 0.0160, current: 0.0161, final: true } ],
+         rolls:        [ { name: 'S1 (8")', scheduled: 0.0180, current: 0.0180 },
+                         { name: 'S2 (6")', scheduled: 0.0162, current: 0.0162 },
+                         { name: 'S3 (6")', scheduled: 0.0160, current: 0.0161, final: true } ],
          measurements: { gauge: 0.1135, width: 0.627 },
          history:      [ { time, user, roll, from, to, reason } ],
          operator:     'Sam Patel',
@@ -575,16 +574,19 @@
         { gauge: 0.110, gaugeTol: 0.002, gaugeDp: 4, width: 0.625, widthTol: 0.005, widthDp: 3 },
         ctx.targets || {}),
       measurements: Object.assign({ gauge: 0.1135, width: 0.627 }, ctx.measurements || {}),
+      // FM2 has THREE stands: S1 carries the 8" roller, S2 and S3 carry 6".
+      // S3 is final and non-bypassable. Corrected 4 Aug 2026 (client) — this
+      // fallback previously listed four rolls with a separate bypassed 8" entry,
+      // and it reaches every screen that calls openRollAdjust without ctx.rolls.
       rolls: ctx.rolls || [
-        { name: '8"',   bypassed: true },
-        { name: '6"S1', scheduled: 0.0180, current: 0.0180 },
-        { name: '6"S2', scheduled: 0.0162, current: 0.0162 },
-        { name: '6"S3', scheduled: 0.0160, current: 0.0161, final: true }
+        { name: 'S1 (8")', scheduled: 0.0180, current: 0.0180 },
+        { name: 'S2 (6")', scheduled: 0.0162, current: 0.0162 },
+        { name: 'S3 (6")', scheduled: 0.0160, current: 0.0161, final: true }
       ],
       history: ctx.history || [
-        { time: "Aug 01  06:15", user: "Dave M.", roll: '6"S3', from: '0.0160″', to: '0.0161″', reason: "Roll warm-up" },
-        { time: "Jul 31  14:30", user: "Bob S.",  roll: '6"S3', from: '0.0162″', to: '0.0160″', reason: "SPC flag" },
-        { time: "Jul 31  09:45", user: "Dave M.", roll: '6"S1', from: '0.0184″', to: '0.0180″', reason: "Gauge drift (high)" }
+        { time: "Aug 01  06:15", user: "Dave M.", roll: 'S3 (6")', from: '0.0160″', to: '0.0161″', reason: "Roll warm-up" },
+        { time: "Jul 31  14:30", user: "Bob S.",  roll: 'S3 (6")', from: '0.0162″', to: '0.0160″', reason: "SPC flag" },
+        { time: "Jul 31  09:45", user: "Dave M.", roll: 'S1 (8")', from: '0.0184″', to: '0.0180″', reason: "Gauge drift (high)" }
       ]
     };
 

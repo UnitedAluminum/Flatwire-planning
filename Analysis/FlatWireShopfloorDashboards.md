@@ -30,8 +30,6 @@ This document defines the shopfloor dashboard screens required to operate the fl
 | 11 | Roll Adjust | FL3 Operator | FM2 roll gap adjustment during run | High |
 | 12 | Rod Checkout | FL1 / FL3 Operator | Rod removed from payoff before run completes naturally | High |
 | DC | Die Change | FL1 / FL3 Operator | Drawing die replaced mid-run (planned, gauge drift, failure, or size change) | High |
-| 13 | Line Schematic (HMI View) | Supervisor / Operator | From Dashboard 1 line card or Dashboard 3 Machine View tab | High |
-| 14 | SCADA Multi-Trend Charts | Operations / Supervisor / Engineering | From Dashboard 1 header, Dashboard 3 action bar, or Dashboard 13 | High |
 
 ---
 
@@ -318,7 +316,7 @@ See [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md) 
 **Who:** FL1 Operator
 **When:** Continuously displayed during an active production run
 **Purpose:** Real-time gauge/width trace, machine status, payoff monitoring, quick actions
-**Enhancement (May 15, 2026):** A **Machine View** tab has been added alongside the Traces tab, showing a compressed SVG line schematic with live PLC data. A **View Trends** button has been added to the action bar linking to Dashboard 14. See [HMIAndSCADALayout.md](../LatestDocument/RequirementDocuments/HMIAndSCADALayout.md) for the full Machine View tab specification.
+**Descoped (Aug 4, 2026):** the **Machine View** tab and the **View Trends** action are both withdrawn at client request, together with Dashboards 13 and 14. The chart section keeps its collapse toggle; the tab strip now carries a single inert *Traces* label, matching FL2, which never had a second tab. The machine tags the Machine View displayed are specified in [PLCTagSpecification.md](../LatestDocument/RequirementDocuments/PLCTagSpecification.md).
 
 ```
 ┌───────────────────────────────────────────────────────────────────┐
@@ -674,12 +672,11 @@ Dashboard 2A states for rods.
 │  ┌──────────────┬────────────┬──────────────────────────────────┐ │
 │  │ Component    │ Status     │ Setting                          │ │
 │  ├──────────────┼────────────┼──────────────────────────────────┤ │
-│  │ 8" Roller    │ ○ BYPASS   │ —                                │ │
-│  │ 6" Roller S1 │ ● ACTIVE   │ Roll Gap: 0.0164"                │ │
-│  │ 6" Roller S2 │ ● ACTIVE   │ Roll Gap: 0.0162"                │ │
-│  │ Edger        │ ● ACTIVE   │ Round Edge                       │ │
-│  │ 6" Roller S3 │ ● ACTIVE   │ Roll Gap: 0.0160" (final)        │ │
-│  │ Edger        │ ● ACTIVE   │ Round Edge                       │ │
+│  │ S1 · 8"      │ ● ACTIVE   │ Roll Gap: 0.0164"                │ │
+│  │ S2 · 6"      │ ● ACTIVE   │ Roll Gap: 0.0162"                │ │
+│  │ Edger (S2)   │ ● ACTIVE   │ Round Edge                       │ │
+│  │ S3 · 6"      │ ● ACTIVE   │ Roll Gap: 0.0160" (final)        │ │
+│  │ Edger (S3)   │ ● ACTIVE   │ Round Edge                       │ │
 │  └──────────────┴────────────┴──────────────────────────────────┘ │
 │                                                                    │
 │  [ ACKNOWLEDGE PASS SCHEDULE & BEGIN CHECK-IN ]                    │
@@ -694,7 +691,7 @@ Dashboard 2A states for rods.
 | Gauge trace shown | None (run not started yet) | Historical profile from FL1 run |
 | Weld markers | Not applicable | Shown on gauge profile chart |
 | Visual inspection | Full inspection required | Not required (spool already inspected at FL1) |
-| Pass schedule components | DB1, DB2, FM1 | 8" Roller, 6"S1, 6"S2 + Edger, 6"S3 + Edger |
+| Pass schedule components | DB1, DB2, FM1 | S1 (8"), S2 (6") + Edger, S3 (6") + Edger |
 
 ---
 
@@ -885,7 +882,7 @@ Dashboard 2A states for rods.
 │  └──────────────┴──────────┴────────────────────────────────────┘ │
 │                                                                   │
 │  NOTE: FL3 (Hybrid) schedules also include FM2 components:        │
-│  FM2 8" Roll, FM2 6" S1, FM2 6" S2 + Edger, FM2 6" S3 + Edger    │
+│  FM2 S1 (8"), FM2 S2 (6") + Edger, FM2 S3 (6") + Edger           │
 │                                                                   │
 │  TARGETS                                                          │
 │  Output Gauge:   0.110"    Tolerance: ± 0.002"                   │
@@ -942,8 +939,8 @@ Triggered by the **⚡ Generate from Specs** button in the footer. Opens a two-p
 │  Width tolerance   ± 0.010"     │  │ FL1  DB2     │ ACTIVE   │ Die 0.295"│ │
 │                                 │  │ FL1  FM1     │ ACTIVE   │ Gap 0.108"│ │
 │  [ ⚡ GENERATE ]                │  │ FL1  Edge    │ ACTIVE   │ Round edge│ │
-│                                 │  │ FL2  8" Roll │ ACTIVE   │ Gap 0.117"│ │
-│                                 │  │ FL2  6" S1   │ ACTIVE   │ Gap 0.112"│ │
+│                                 │  │ FL2  S1  8"  │ ACTIVE   │ Gap 0.117"│ │
+│                                 │  │ FL2  S2  6"  │ ACTIVE   │ Gap 0.112"│ │
 │                                 │  │ FL2  6" S2   │ ACTIVE   │ Gap 0.108"│ │
 │                                 │  └──────────────┴──────────┴───────────┘ │
 │                                 │                                           │
@@ -997,18 +994,18 @@ STEP 5 — FM1 roll gap
 STEP 6 — FM2 requirement
   aspect_ratio = target_width / target_gauge
   If aspect_ratio > 5.5 OR alloy is 1350 (welding wire):
-    FM2 8"   → ACTIVE
-    FM2 6"S1 → ACTIVE  (also if aspect_ratio > 7.0)
+    FM2 S1 (8") → ACTIVE
+    FM2 S2 (6") → ACTIVE  (also if aspect_ratio > 7.0)
     Route    → Hybrid FL3
   Else:
-    FM2 8", FM2 6"S1 → BYPASSED
+    FM2 S1, FM2 S2 → BYPASSED  (S3 is never bypassed)
     Route → Standalone FL1
-  FM2 6"S2 → always ACTIVE (mandatory — cannot bypass)
+  FM2 S3 (6") → always ACTIVE (mandatory — cannot bypass; final gauge control)
 
 STEP 7 — FM2 roll gaps (if active)
-  FM2 8"   gap = target_gauge × 1.06  (progressive squeeze)
-  FM2 6"S1 gap = target_gauge × 1.02
-  FM2 6"S2 gap = target_gauge × springback_factor
+  FM2 S1 (8") gap = target_gauge × 1.06  (progressive squeeze)
+  FM2 S2 (6") gap = target_gauge × 1.02
+  FM2 S3 (6") gap = target_gauge × springback_factor
 ```
 
 #### Alloy Lookup Table (required in database)
@@ -1319,10 +1316,10 @@ The machine tab selector (FL1 / FL2 / FL3 / All Lines) controls which machine's 
 │  ROLL GAP ADJUSTMENTS               │  MEASUREMENTS AT 13,060 ft  │
 │                                     │                             │
 │  Component  Scheduled  Current  New │  Output gauge               │
-│  8" Roller  BYPASS     —        —   │  ⚠  0.0164"  OUT OF SPEC ↑  │
-│  6" Roller  0.0162"    0.0162"  —   │  Target: 0.0160" ±0.0002"   │
+│  S1 · 8"    ACTIVE  0.0164"  0.0164"│  ⚠  0.0164"  OUT OF SPEC ↑  │
+│  S2 · 6"    0.0162"    0.0162"  —   │  Target: 0.0160" ±0.0002"   │
 │  S1         (no change)             │  +0.0002" above max         │
-│  6" Roller  0.0160"    0.0161"      │                             │
+│  S3 · 6"    0.0160"    0.0161"      │                             │
 │  S2 (final)            [0.0158"]    │  Output width               │
 │             Δ = −0.0003"            │  ✓  0.627"   IN SPEC        │
 │                                     │  Target: 0.625" ±0.005"     │
@@ -1335,9 +1332,9 @@ The machine tab selector (FL1 / FL2 / FL3 / All Lines) controls which machine's 
 │                                     │  Notes: [               ]   │
 ├─────────────────────────────────────┴─────────────────────────────┤
 │  RECENT ROLL ADJUSTMENTS (PS-1100-FL2-007)                         │
-│  Apr 23 06:15  Dave M.  6" Roller S2  0.0160" → 0.0161"  Roll warm-up   │
-│  Apr 22 14:30  Bob S.   6" Roller S2  0.0162" → 0.0160"  SPC flag       │
-│  Apr 21 09:45  Dave M.  6" Roller S1  0.0164" → 0.0162"  Gauge drift    │
+│  Apr 23 06:15  Dave M.  S3 (6")       0.0160" → 0.0161"  Roll warm-up   │
+│  Apr 22 14:30  Bob S.   S3 (6")       0.0162" → 0.0160"  SPC flag       │
+│  Apr 21 09:45  Dave M.  S1 (8")       0.0164" → 0.0162"  Gauge drift    │
 ├───────────────────────────────────────────────────────────────────┤
 │  Operator: Dave M.  │  08:22:05 AM · Apr 23 2026  │  S2 −0.0003"  │
 │                                [ CANCEL ]  [ APPLY ADJUSTMENT ]   │
@@ -1365,7 +1362,7 @@ The machine tab selector (FL1 / FL2 / FL3 / All Lines) controls which machine's 
 | Delta | Auto | New − Current; colour-coded: green = tightening, red = opening, grey = no change |
 
 **Interaction rules:**
-- Bypassed components (e.g. 8" Roller when bypassed) are shown read-only and greyed out — no input rendered.
+- Bypassed components (e.g. S1 or S2 when bypassed) are shown read-only and greyed out — no input rendered. S3 is never bypassable.
 - Only rollers with a gap parameter are shown. Edgers (edge shape, no gap setting) are excluded.
 - Delta auto-calculates on every keystroke.
 - Rows with a non-zero delta are highlighted amber to draw attention.
@@ -1629,12 +1626,6 @@ Dashboard 2A ─[Mark as welded]────────────────
 Dashboard 2  ─[More options tile]──────────────► Dashboard 2A
 Any screen   ─[topbar More Options tile]───────► Dashboard 2A
 
-Dashboard 1 ──[Open HMI]───────────────────────► Dashboard 13 (Line Schematic / HMI)
-Dashboard 1 ──[SCADA Trends]───────────────────► Dashboard 14 (SCADA Multi-Trend Charts)
-Dashboard 3 ──[Machine View tab → full screen]─► Dashboard 13
-Dashboard 3 ──[View Trends button]─────────────► Dashboard 14
-Dashboard 13 ──[SCADA Trends]──────────────────► Dashboard 14
-Dashboard 14 ──[← Active Run]──────────────────► Dashboard 3
 ```
 
 ---
@@ -1683,3 +1674,4 @@ Dashboard 14 ──[← Active Run]───────────────
 | Aug 1, 2026 | Client sync (30 Jul call) | **Dashboard 2A — off-schedule becomes an automatic station switch; three other rules change.** A rod whose order is booked on the other rod line is no longer notified-and-authorised: **the screen switches to the correct station** and continues, with no message and no override, at both pre-check-in and check-in (**Q74**, reversing the Jul 29 design; the `OffSchedule*` columns are dropped). The FL1/FL3 toggle therefore stops being an operator-only control that merely relabels the chrome — it must **reload the bays and the queue**, and what happens to a part-completed wizard needs specifying (**Q76**/**Q73**, **F13**). Bay states gained a **welded** row: a welded rod may be un-staged **behind a supervisor override** with a documented reason, going to `HOLD` as a rejection (**Q68**/**Q77**, restoring the control removed on Jul 31); `PRE-CHECKED-IN` no longer implies `INFLAT`, which is now set at check-in (**Q67**); and `BLOCKED` gained its exit — the WIP rejection captures the reason, puts the rod on `HOLD` and releases the bay (**Q72** item 3). Wizard step 1 now validates diameter against a **min/max** tolerance, one of **four** pairs (gauge, width, diameter, ovality) whose values are owed by e-mail, so the alloy map stays mock (**Q71**). Not yet applied here: the order-membership rule is knowingly wrong for a **multi-order rod** (**Q69**/**G22**), pending the sequencing answer (**Q79**). |
 | Aug 1, 2026 | Analysis team | **Dashboard 2A — weld-readiness strip removed; every control moves onto the bay it acts on.** The 96px strip between the bays and the queue is **gone**. Its narrative was already duplicated by the cards (weight/percentage on the payoff bar, the four weld states in the bay alert, cold start in the empty-bay text); the one sentence no card carried — *induction-weld tail to head* — became the staged card's alert whenever a rod is running. **Mark as welded** moved to the **staged** card (it *is* the incoming rod — `PCI008` defaulting) with all five disabled-tooltips intact; **Welds this run · N** moved to the **active** card (the run *is* the active bay), which means it is now **absent at cold start rather than disabled** — this supersedes **TC-068e**. **Open active run** was removed from the active card: the run monitor is reachable from the app bar and Line Status, and this station's job is staging the *next* rod. The reclaimed 96px + 12px gap went to the queue, which is **~108px taller (about four more rows)**; the screen is now **three body regions, not four**, and still measures exactly 1024px. Button rules formalised: **at most one primary per card** (the active card deliberately has none), a leading icon for actions and a trailing chevron for the two navigations, never both. Queue head gained a standing **"Rods In Queue"** title — it had been an unlabelled empty row since the order-context line and scan box were removed. **Dashboard 2:** *Acknowledge & Begin Check-in* now returns to **Dashboard 2A**, not Dashboard 3, closing the stage → check-in → stage-next loop. Verified in headless Chrome across six viewport heights and all six station states: 1024px exactly, no overflow, no console errors, and the payoff-transition rule (**TC-068**) confirmed live with Payoff 2 running and Payoff 1 staged. |
 | Aug 2, 2026 | Analysis team | **New — Dashboard 5A, the FL2 Spool Queue.** FL2 had no view of its own waiting material: FL1 operators have Dashboard 2A's staging queue, and FL2 has no equivalent because `PCI002` excludes it from staging. Separately, `FR-090` has the operator *scan the FL1-printed label* while **Q57** records the client saying they *"select it by spool number"* — both stand, and only the scan had a screen. And "the spool queue", the phrase `FR-326`, `TC-389`, `RodCheckout.md` and phase 7 all use for where an accepted partial spool goes, had **no table, endpoint, screen or status of that name anywhere**. DB5A is all three. **Two modes over one table:** on opening it lists every spool available for processing irrespective of order; entering a spool number resolves that spool's order **server-side in a single call** and narrows the list to that order's spools, marking the scanned one. The **column set never changes between modes**, and a failed scan **leaves the list unchanged** — losing your place to a mistyped digit is the worst thing a screen like this can do. An **unallocated spool is a valid single-row result, not an error** (planning remainders and supervisor-accepted partials legitimately have no order). Deliberately absent: spool age (`Spool` has no creation timestamp, so it is not queryable), location (`Spool.Location` has no writer), and filter/sort furniture. Read-only — it writes nothing. Reached from DB1's nav strip, More Options, the shift-summary spool tile (whose arrow had gone nowhere since it was drawn) and DB5. Backed by a **new** `GET /spools[?spoolAlpha=]`; before it, `POST /checkin/spool` was the only spool endpoint in the contract, so even DB5's scan validated against nothing. Verified in headless Chrome at five viewport sizes: exactly 1024px, scale 1:1 on the panel, no overflow, no console errors, 44 assertions. **Blocked on OQ-57** (what "available" means), **OI-06** (two unmapped status vocabularies), **OQ-15/OI-02** (identifier and format), and — critically — confirmation that **`Spool.OrderNo` is populated from planning**, without which nothing can be resolved. |
+| Aug 4, 2026 | Client direction | **FM2 roller sizes corrected — three stands, `S1` 8″, `S2` 6″, `S3` 6″.** Every FM2 component table, roll-adjust panel and generator formula in this document listed **four** FM2 rows: a separate `8" Roller` above `6" Roller S1 / S2 / S3`. That came from this document's own May 21 2026 change-log entry — *"FM2 now has three 6" stands (S1, S2, S3)"* — which was a **misreading** of the client note. **The 8″ roller is S1**, and there is no fourth stand. Corrected here: DB5's pass-schedule table, the FL2/FL3 component strips, the DB1 line-status component list, the DB11 roll-adjust panel and its override history, and the DB9 generator pseudocode (`FM2 S1 gap = gauge × 1.06`, `S2 = × 1.02`, `S3 = × springback` — the multipliers are unchanged; they move from diameter labels to positions, which fixes the earlier state where three formulas covered four stands and the final stand had none). The mandatory stand is stated as **`S3`**, closing **OI-04** — its two "rival" names, `FM2_6inS2` and `6" S3`, were the same physical stand. Edger placement (S2 and S3) and the stand count are unchanged from May 21. Authoritative source remains [`00-foundations.md`](../DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.3; decision **D-26**. |

@@ -1,7 +1,7 @@
 # Flat Wire Mill — Vision & Scope
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** July 30, 2026
+**Last Updated:** August 4, 2026
 **Document Type:** Vision & Scope
 **Status:** Baselined — open items in §13; the schedule position in §11 requires a programme decision
 **Owner:** Programme management
@@ -69,7 +69,7 @@ Output winds at a **traversing take-up** that oscillates across the coil face. T
 | | **FL1 (standalone)** | **FL2 (standalone)** | **FL3 (hybrid)** |
 |---|---|---|---|
 | Input | Rod or round wire, at the VPS | Flat wire **spool** on the TPO | Rod or round wire, at the VPS |
-| Flow | VPS → DB1 → DB2 → **FM1** → TKUP-1 | TPO → **FM2** (8″ → 6″S1 → 6″S2 → 6″S3) → TKUP-2 | VPS → DB1 → DB2 → FM1 → *(TKUP-1 bypassed)* → TPO → FM2 → TKUP-2 |
+| Flow | VPS → DB1 → DB2 → **FM1** → TKUP-1 | TPO → **FM2** (**S1 8″ → S2 6″ → S3 6″**) → TKUP-2 | VPS → DB1 → DB2 → FM1 → *(TKUP-1 bypassed)* → TPO → FM2 → TKUP-2 |
 | Output | Intermediate **spool**, `SP-#####`, ≤ 3,500 lb | Coreless oscillated **coil**, `FW-#####-C##`, ≤ 1,100 lb | Coreless oscillated **coil**, ≤ 1,100 lb |
 | **Edger** | **None — FL1 has no edger** | Edgers at **S2 and S3 only** | Edgers at S2 and S3 (the FM2 side) |
 | Gauge trace | **Real-time** (live AGC feed) | **Historical / profile** — broadcasts `null` live gauge and width | **Real-time**, end to end |
@@ -88,13 +88,14 @@ FL1 and FL2 may run **independent orders simultaneously**; their throughput rati
 | **FM1** — 12″ flattening mill | FL1 / FL3 | Round → flat; gauge stands + dancer; **no edger** | — | **No** |
 | **TKUP-1** traversing take-up | FL1 | Intermediate spool | **3,500 lb** | Non-hybrid only |
 | **TPO** traversing payoff | FL2 / FL3 | Feeds FM2 | 3,500 lb | N/A |
-| **FM2 — 8″ roller** | FL2 / FL3 | Intermediate reduction | — | **Yes** |
-| **FM2 — 6″ S1** | FL2 / FL3 | Finishing stand 1 | — | **Yes** |
-| **FM2 — 6″ S2** (+ edger) | FL2 / FL3 | Finishing stand 2 | — | Yes *(contested — see OI-04)* |
-| **FM2 — 6″ S3** (+ edger) | FL2 / FL3 | Final gauge control | — | **No** *(contested — see OI-04)* |
+| **FM2 — S1 (8″ roller)** | FL2 / FL3 | Finishing stand 1; no edger | — | **Yes** |
+| **FM2 — S2 (6″ roller)** (+ edger) | FL2 / FL3 | Finishing stand 2 | — | **Yes** |
+| **FM2 — S3 (6″ roller)** (+ edger) | FL2 / FL3 | Final gauge control | — | **No** |
 | **TKUP-2** traversing take-up | FL2 / FL3 | Finished coreless coil | **1,100 lb** | No |
 | Line speed | all | Governed by the final take-up | **~1,800–2,000 FPM** | — |
 | Skid | packing | Finished output | **2 coreless coils per skid** | — |
+
+> **FM2 has three stands, not four `[CONFIRMED — Aug 4 2026]`.** The 8″ roller **is S1**; it is not a separate component upstream of three 6″ stands. Earlier revisions of this table listed four FM2 rows, and the *contested — see OI-04* notes on the last two are removed: **`OI-04` is closed** because the DDL's `FM2_6inS2` and the SRS's `6″ S3` named the same physical stand. Decision **D-26**.
 
 The physical layout is illustrated in [`Flat Wire Machine - Big Beautiful Diagram.png`](../../Mockups/Flat%20Wire%20Machine%20-%20Big%20Beautiful%20Diagram.png) — orientation only, not a specification.
 
@@ -148,7 +149,7 @@ The shopfloor and dashboard layer, in five areas.
 | Area | Contents |
 |---|---|
 | **Operator screens** | Pre-check-in (DB2A) · rod check-in (DB2) and spool check-in (DB5) · active-run monitoring (DB3, three line variants) · SPC checkpoint (DB6) · roll adjust (DB11) · die change (DC) · pause/resume · WIP rejection (DB8) · rod checkout (DB12, three modes) · coil completion (DB7) · packing (DB7b) |
-| **Dashboards** | Line Status (DB1) · Pass Schedule Management and List (DB9 / DB9A) · Shift Summary (DB10) · HMI Line Schematic (DB13) · SCADA Trends (DB14) · Die Management (DM) · OEE |
+| **Dashboards** | Line Status (DB1) · Pass Schedule Management and List (DB9 / DB9A) · Shift Summary (DB10) · Die Management (DM) · OEE |
 | **Data model** | The standalone `FlatWireDB` schema — **27 tables** (counted from the DDL, see `[HLD §6]`) — plus the named legacy integration points in the shared databases |
 | **Integration** | PLC tag push on acknowledgement and clear on checkout · OPC tag consumption (mill speed, feet consumption, line state) · SignalR real-time streaming |
 | **Quality** | SPC checkpoints at four process points · SPC-HOLD · CPK per run · WIP rejection and dispositions |
@@ -277,7 +278,8 @@ Twenty-five design, equipment and business decisions are closed and recorded in 
 | **D-08** | Dashboard 2 is the `- New.html` 6-step tab wizard; both earlier layouts are retired |
 | **D-09** | Stay within the UAL stack — no new frameworks |
 | **D-17** | The traveler is fully digital; labels still print |
-| **D-20 / D-21 / D-22** | FL1 has no edger · FM2 has three 6″ stands with edgers at S2 and S3 · induction welding only |
+| **D-20 / D-22** | FL1 has no edger · induction welding only |
+| **D-26** | **FM2 has three stands — `S1` 8″, `S2` 6″, `S3` 6″** — with edgers at S2 and S3 and S3 final and non-bypassable. Supersedes **D-21**'s "three 6″ stands", which had been read as a separate 8″ roller plus three 6″ stands. Component names become position-only (`FM2_S1/S2/S3`) and roll diameter becomes data (`Stand.RollDiameterIn`); closes `OI-04` and `OI-36` |
 
 ---
 
@@ -314,3 +316,4 @@ New contradictions found while producing these seven documents, not present in a
 | Date | Changed By | Description |
 |------|-----------|-------------|
 | Jul 30, 2026 | Plan team | Initial publication. Vision & Scope derived from `FlatWire_MasterSpecification.md` §1/§2/§9.6/§10/§11, the Capacity & Effort Model and the gaps register. Carries the capacity finding (RISK-01/G1/OI-51) unsoftened, the in/out-of-scope split with consumed interfaces, eleven measurable success criteria written for `[TP]` and `[DR]` to gate on, twelve risks and the Critical open-item tier. Opens the `PP-##` series with the index-count divergence found by counting the DDL. |
+| Aug 4, 2026 | Client direction | **HMI/SCADA descoped.** Dashboard 13 (HMI Line Schematic), Dashboard 14 (SCADA Trends) and the Machine View tab on the active run monitor are **withdrawn at client request**. `FR-111`, `FR-112`, `FR-114`, `FR-425`, `FR-440`–`FR-451` and `FR-460`–`FR-470` are marked **withdrawn** — numbers retained, never renumbered — and `FR-113` **reworded**, since it asserted a rule about "the active tab" that outlives the tabs. Both mockups and `HMIAndSCADALayout.md` are deleted. **Descope-ladder rung 7 is removed entirely:** its 67 h stops being *recoverable* effort and becomes *never-planned*, so Phase 5 drops 221 → ~154 h and the programme 3,727 → ~3,660 h, but the ladder loses its largest optional rung and Phase 5 is no longer deferrable. **Nothing structural was removed:** all six run event markers still land on the DB3 traces and no hub event, endpoint, table or column is deleted — every DB13/DB14 reference in the real-time and tag tables was a *consumer* entry, not a row. `Q4`/`OQ-4` is **superseded**, because Dashboard 14 was its answer. In this document: DB13 and DB14 removed from the in-scope dashboard list. |

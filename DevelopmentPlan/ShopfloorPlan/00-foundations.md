@@ -52,10 +52,35 @@ The shopfloor build chain is a real npm script (`build:shop-floor`). **The new `
 | Route | Lines | Flow | Gauge trace | Intermediate spool |
 |---|---|---|---|---|
 | **FL1 Standalone** | FL1 | Rod → DB1/DB2 → FM1 → TKUP-1 spool | Real-time | Yes (SP alpha) |
-| **FL2 Standalone** | FL2 | Spool → FM2 (8" → 6"S1 → 6"S2 → 6"S3; **edgers at S2 and S3 only**) → TKUP-2 coreless coil | Historical/profile | N/A |
+| **FL2 Standalone** | FL2 | Spool → FM2 (**8" S1 → 6" S2 → 6" S3**; **edgers at S2 and S3 only**) → TKUP-2 coreless coil | Historical/profile | N/A |
 | **FL3 Hybrid** | FL1+FL2 continuous | Rod → both mills, no stop, no intermediate anneal | Real-time | No |
 
-**Equipment corrections (client feedback, May 21 2026 — authoritative):** FL1 has **no Edger** (Edge Set removed from FL1 check-in / active run / FL1 pass schedule). FM2 has **three** 6" stands (S1, S2, S3); **Edgers sit at S2 and S3 only**. *(The FL2 row of the route table above said `8"→6"S1→6"S2 + edgers` — the pre-correction two-stand form — until 2 Aug 2026. It is the likely source of the same stale list in three mockups and in `dashboard_5_spool_checkin.html`'s schedule table; the table now agrees with this paragraph. Anywhere else that shows FM2 with two 6" stands or unnumbered edgers is wrong.)* Weld is **Induction only** (Laser removed — not viable). Traveler is **fully digital** (no printing; coil/skid labels are separate and still printed). Shift Summary is **per-machine** (FL1/FL2/FL3 tabs + All Lines).
+**Equipment corrections (client feedback — authoritative):** FL1 has **no Edger** (Edge Set removed from FL1 check-in / active run / FL1 pass schedule) *(May 21 2026)*. Weld is **Induction only** (Laser removed — not viable). Traveler is **fully digital** (no printing; coil/skid labels are separate and still printed). Shift Summary is **per-machine** (FL1/FL2/FL3 tabs + All Lines).
+
+**FM2 has three stands: `S1` = 8", `S2` = 6", `S3` = 6". Edgers sit at S2 and S3 only, and S3 is the final, non-bypassable stand.** `[CONFIRMED — Aug 4 2026]`
+
+| Stand | Roller | Edger | Bypassable |
+|---|---|---|---|
+| **S1** | **8"** | No | Yes |
+| **S2** | **6"** | Yes | Yes |
+| **S3** | **6"** | Yes | **No — final gauge control** |
+
+FL3 drives the same FM2, so it inherits this. FL1's FM1 is a **12"** mill and is unaffected.
+
+> **What changed, and why the old shape is everywhere (Aug 4 2026).** The May 21 2026 note was recorded here as *"FM2 has **three** 6" stands (S1, S2, S3)"*, which was read as **a separate 8" roller upstream of three 6" stands — four components**. That is wrong: the 8" roller **is S1**, and there is no fourth stand. The four-slot reading propagated from this paragraph into ~50 files, the `Stand` seed data, two SQL `CHECK` constraints, the `ComponentName` enum, the PLC tag grammar and eight mockups. Three pieces of evidence pin the correction: the client's **published PLC map has exactly three FM2 stations**, **every seeded pass schedule has exactly three FM2 component rows** with a descending gap chain, and the invented `FM2_6inS3` **never had a tag path or a seed row**. Anything showing four FM2 stands, a separate `8" Roller` component, or a stand named `6" S1` is superseded.
+
+**Component rename (Aug 4 2026).** Diameter has left the identifier — it is now data (`Stand.RollDiameterIn`), so a re-roll is a one-row update instead of a repo-wide rename.
+
+| Old | New | `RollDiameterIn` | Notes |
+|---|---|---|---|
+| `FM2_8in` | **`FM2_S1`** | 8.000 | `Stand.Id` 2 unchanged; bypassable |
+| `FM2_6inS1` | **`FM2_S2`** | 6.000 | `Stand.Id` 3 unchanged; bypassable; edger |
+| `FM2_6inS2` | **`FM2_S3`** | 6.000 | `Stand.Id` 4 unchanged; edger; **final, non-bypassable** |
+| `FM2_6inS3` | *(withdrawn)* | — | Never existed; `Stand.Id` 5 removed |
+
+PLC tag stations follow the same rule — `FL2.FM2.S1`, `FL2.FM2.S2`, `FL2.FM2.S3` (was `Stand8` / `Stand6S1` / `Stand6S2`). Tag paths live only in [`PLCTagSpecification.md`](../../LatestDocument/RequirementDocuments/PLCTagSpecification.md); the as-published → as-specified mapping is in its §2.5, and the rename awaits controls-engineer sign-off as **`PLC-Q04`**.
+
+**This closes `OI-04`** ("is the mandatory stand `FM2_6inS2` or `6" S3`?"). Old `FM2_6inS2` **is** new `FM2_S3` — the DDL/API and the SRS were naming the same physical stand, and only the phantom fourth stand made them look contradictory. It also closes **`OI-36`**: the final stand's tag path is the observed one, now `FL2.FM2.S3`.
 
 **Alpha / ID formats** (`Schema/FlatWireSchema_Mapping.md`): Rod `R#####` (R00041) · Spool `SP-#####` (SP-00021) · Run `RUN-####` · Pass schedule `PS-{alloy}-{line}-{seq}` (PS-1100-FL1-003) · Weld `WLD-###` · Roll override `OVR-####` · Die change `DC-####` · SPC `SPC-####` · WIP rejection `REJ-####` · Rod checkout `CO-####` · Output coil `FW-#####-C##` (FW-00421-C01) · mid-run child alpha `FW-00421-C01-A` · Skid `SK-#####` · Die tooling `D-{size×1000}-{seq}` (D-310-034).
 
@@ -65,7 +90,7 @@ The shopfloor build chain is a real npm script (`build:shop-floor`). **The new `
 - **Pass schedule (`PassSchedule.Status`):** `Draft / Active / Inactive`.
 - **Line-state (Dashboard 1 / PLC display):** `RUNNING / IDLE / SETUP / OFFLINE / FAULT / PAUSED`.
 
-**`FlatWireHub` SignalR events** (`APIContracts.md` + `HMIAndSCADALayout.md`): `GaugeReading`, `WidthReading`, `SpeedFPM`, `PayoffWeight`, **`PayoffStateChanged`** (bay occupancy — rare domain event, sent immediately and unbatched, never inside the 10 Hz telemetry batch), `ComponentStatus`, `LineStatus`, `AlertRaised`, `AlertCleared`, `FootageCounter`; SCADA event markers `WeldJoinEvent`, `DieChangeEvent`, `PauseEvent`, `SPCCheckpoint`, `AlertEvent`, `RodCheckoutEvent`. Groups: `FL1Data`, `FL2Data`, `FL3Data`. FL2 standalone broadcasts `null` gauge/width (historical only).
+**`FlatWireHub` SignalR events** (`APIContracts.md` + `RequirementDocuments/PLCTagSpecification.md`): `GaugeReading`, `WidthReading`, `SpeedFPM`, `PayoffWeight`, **`PayoffStateChanged`** (bay occupancy — rare domain event, sent immediately and unbatched, never inside the 10 Hz telemetry batch), `ComponentStatus`, `LineStatus`, `AlertRaised`, `AlertCleared`, `FootageCounter`; run event markers `WeldJoinEvent`, `DieChangeEvent`, `PauseEvent`, `SPCCheckpoint`, `AlertEvent`, `RodCheckoutEvent`. Groups: `FL1Data`, `FL2Data`, `FL3Data`. FL2 standalone broadcasts `null` gauge/width (historical only).
 
 ---
 

@@ -41,7 +41,7 @@ purpose-built high-throughput `FlatWireHub` — so every later phase adds comman
 | **Authentication** | JWT bearer (inherited); hub auth via `?access_token=` query param |
 | **Authorization** | Role policies matching the Authorization Matrix in `APIContracts.md` — Operator / Operations Manager / Maintenance / Supervisor / Admin. **`[Authorize]` on every controller/endpoint** (see Review-fixes) |
 | **Exception handling** | Global exception middleware → envelope (`400` validation, `404` not found, `409` conflict, `422` unprocessable, `500` PLC/server) |
-| **Validation** | FluentValidation per command (e.g. `FM2_6inS2` must be Active; FL3 requires Hybrid; `PassScheduleComponent.State ∈ {Active,Bypass,Skip}`) |
+| **Validation** | FluentValidation per command (e.g. `FM2_S3` must be Active; FL3 requires Hybrid; `PassScheduleComponent.State ∈ {Active,Bypass,Skip}`) |
 | **Health checks** | ASP.NET Core health checks (DB + OPC reachability) at `/health` |
 
 ## Real-time / OPC slice (server half — per §0.4)
@@ -58,7 +58,7 @@ purpose-built high-throughput `FlatWireHub` — so every later phase adds comman
 - **xUnit** boots `FlatWire.API`; all **stub endpoints** return schema-valid fixtures (`APIContracts.md` shapes) so 1A can integrate before the DB is populated.
 - `/health` green (DB + OPC checks; OPC may report simulated-healthy in dev).
 - Hub smoke test: a client `JoinLineGroup('FL1Data')` receives simulated batched `GaugeReading[]` at the configured cadence; reconnect re-joins the group.
-- FluentValidation unit tests for the sample rules (FM2_6inS2 Active, FL3⇒Hybrid, component `State` enum).
+- FluentValidation unit tests for the sample rules (`FM2_S3` Active, FL3⇒Hybrid, component `State` enum).
 
 ## Acceptance criteria (exit)
 1. `FlatWire.sln` builds; `FlatWire.API` boots under Development with `useStub` on.

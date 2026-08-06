@@ -1,7 +1,7 @@
 # Flat Wire Mill — Sprint Plan & Backlog
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 1, 2026
+**Last Updated:** August 4, 2026
 **Document Type:** Sprint plan and delivery backlog
 **Status:** Published — **the plan below does not fit the window; §1 requires a programme decision before it can be committed**
 **Owner:** Delivery lead / programme management
@@ -190,7 +190,7 @@ Working days are **counted, not assumed**: **Labor Day falls on Mon 7 Sep 2026**
 | W1 | Aug 17–21 | 5 | 40 h | 1 completion / carry-over | — | 0.0 | *the only slack in the plan — the whole recovery budget, 200 person-hours at 5 FTE* |
 | W2 | Aug 24–28 | 5 | 40 h | **2** (start) · **3** (start) | 211 | 5.3 | Recipe library; hub streaming |
 | W3 | Aug 31–Sep 4 | 5 | 40 h | **2** (finish) · **3** (DB1 live) | 210 | 5.3 | Generate-from-Specs; line board |
-| W4 | Sep 8–11 | **4** | **32 h** | **4** (+ DB2A) · **5** | 476 | **14.9** | PLC push + `INFLAT`; `RodStaging` + `FL1PO`; live gauge/width + DB13/14 |
+| W4 | Sep 8–11 | **4** | **32 h** | **4** (+ DB2A) · **5** | 409 | **12.8** | PLC push + `INFLAT`; `RodStaging` + `FL1PO`; live gauge/width *(DB13/14 descoped 4 Aug — −67 h)* |
 | W5 | Sep 14–18 | 5 | 40 h | **6** · **7** · **8** (start) | 562 | **14.1** | Weld/die/SPC/roll/pause; rejection/checkout; spool check-in |
 | W6 | Sep 21–25 | 5 | 40 h | **8** (finish) · **9** · **10** · **11** | 588 | **14.7** | Historical profile; coil/label/skid; hybrid; shift + reports |
 | W7 | Sep 28–30 | **3** | **24 h** | **12*** · **13** · **14** | 653 | **27.2** | Yield/cost/scrap*; admin; 3-route E2E + UAT sign-off |
@@ -458,12 +458,13 @@ Pre-agreed and ordered, so descoping is a decision already taken rather than an 
 | 4 | Remainder of **Phase 12** (footage-based weight + yield form) | 67 | **177** = whole of Phase 12 | No footage-based yield at go-live | Programme | W6 |
 | 5 | Phase 13 non-critical (Die Management screen, role assignment UI) | 99 | 276 | Die life tracked on paper; roles assigned by DBA | Maintenance / IT | W6 |
 | 6 | Phase 11 reports FW-092/093/094/095 (4 of 5) | 105 | 381 | Only Gauge Trace ships; CPK / SPC / **Cut Traceability** deferred | Tim O. / Quality | W5 |
-| 7 | DB13 HMI schematic + DB14 SCADA trends (Phase 5) | 67 | **448** | Operators lose the schematic and trend views; the run cockpit (DB3) is unaffected | Engineering | W4 |
 | — | *Phase 10 FL3 hybrid* | *61* | — | **Not deferrable** — FL3 is one of the three production routes | — | — |
 
 > **Rung 6 carries a shipment risk.** FW-095 Cut Traceability is marked "needed before first shipment" — deferring it may block the first welding-wire delivery, not just a report.
 
-**The ladder recovers 448 of 3,727 hours — 12 % — leaving 3,279 h, still 9.3 FTE over 44 working days.** Below rung 7 there is nothing left that is not a production route, a check-in path, or the traveler.
+**The ladder recovers 381 of 3,660 hours — 10 % — leaving 3,279 h, still 9.3 FTE over 44 working days.** Below rung 6 there is nothing left that is not a production route, a check-in path, or the traveler.
+
+> **Rung 7 was removed on 4 Aug 2026, and this made the schedule *worse*, not better.** DB13 and DB14 were descoped at client request, so their **67 h stops being recoverable effort and becomes never-planned effort**. The programme total drops 3,727 → **3,660 h** and Phase 5 drops 221 → **~154 h**, but the ladder loses its largest optional rung: the residual after descoping everything is unchanged at 3,279 h, and the ladder now recovers **10 %** rather than 12 %. **Phase 5 is no longer partly deferrable.**
 
 **Nothing here is a silent cap.** Every rung has a named sign-off and a latest-call date, and deferring any of them is a recorded decision, not a slip.
 
@@ -583,8 +584,8 @@ A story is Done only when **all** hold:
 | 5.18 | FR-360 – FR-391 | 28 | FW-010, FW-012, FW-013, FW-014 | 2 |
 | 5.19 | FR-400 – FR-410 | 11 | FW-011, FW-068 | 2 |
 | 5.20 | FR-420 – FR-428 | 9 | FW-060 *(+ FW-N06 for alert persistence)* | 3 |
-| 5.21 | FR-440 – FR-451 | 12 | FW-062 (DB13 scope) | 5 |
-| 5.22 | FR-460 – FR-470 | 11 | FW-062 (DB14 scope) | 5 |
+| ~~5.21~~ | ~~FR-440 – FR-451~~ | ~~12~~ | ~~FW-062 (DB13 scope)~~ | **withdrawn 4 Aug 2026** |
+| ~~5.22~~ | ~~FR-460 – FR-470~~ | ~~11~~ | ~~FW-062 (DB14 scope)~~ | **withdrawn 4 Aug 2026** |
 | 5.23 | FR-480 – FR-490 | 11 | FW-069 | 11 |
 | 5.24 | FR-500 – FR-508 | 9 | **`[NEW]` FW-N09 — `Could`, no phase** | **unassigned** |
 | | **Total** | **363** | | |
@@ -595,7 +596,7 @@ A story is Done only when **all** hold:
 |---|---|---|
 | **FR-280 – FR-282** (wire break, 3) | **Not deliverable** | `FW-N08` is blocked by **OI-13** — no screen, no table, no persistence target. The requirements are unimplementable as written |
 | **FR-500 – FR-508** (OEE, 9) | **Not scheduled** | `FW-N09` has no phase and no owner (**PP-03**). Either schedule it or record OEE as out of scope |
-| **FR-440 – FR-470** (DB13 + DB14, 23) | **Descope rung 7** | Deferring loses the schematic and trend views; the run cockpit DB3 is unaffected |
+| ~~**FR-440 – FR-470**~~ (DB13 + DB14, 23) | **[WITHDRAWN — descoped by client, Aug 4 2026]** | Withdrawn from scope entirely, not deferred. **FW-062 keeps its 8 points** — DB13, DB14 and the Machine View had no acceptance criteria of their own in it |
 | **FR-500-series and FR-480-series reporting** | **Descope rung 6** | Four of five Phase-11 reports; Cut Traceability's deferral carries a shipment risk |
 
 **All 363 requirements map to a story.** Of those, **351 (96.7 %) are schedulable**: the nine OEE requirements have a story (`FW-N09`) with no phase or owner, and the three wire-break requirements have a story (`FW-N08`) that is blocked by **OI-13**. Both are carried in the backlog rather than dropped, so neither can be lost — but neither can be committed to a sprint today. This matches `[TP §10.4]` exactly.
@@ -608,3 +609,4 @@ A story is Done only when **all** hold:
 |------|-----------|-------------|
 | Jul 30, 2026 | Plan team | Initial publication. Leads with the **capacity reality check** — 3,727 h against 44 working days, 10.6 FTE sustained, an impossible 27.2-FTE W7 and a 12 % descope ceiling — and states the three programme options with their dates, unsoftened. Publishes the 14-phase delivery model, the six delivery streams with an **unfilled roster**, the unit-rate card, a five-sprint calendar mapped to the authoritative week grid with milestone and QA gates, the phase table with per-phase blockers, the dependency chain with **two corrections to the published graph**, all 12 epics and 44 shopfloor stories with Given/When/Then acceptance criteria, the ordered descope ladder with named sign-offs, Definition of Ready / Done, the risk and gaps registers, and a full `FR-###` → story coverage matrix. Adds **12 `[NEW]` stories** for work the specification requires that no existing story covered — including the Angular and .NET scaffolds absent from epic E01, the pre-check-in station, spool completion, the alert lifecycle, the die master and the stop-transaction popup — each flagged with its rationale rather than folded silently into an existing story. |
 | Aug 1, 2026 | Client sync (30 Jul call) | **A new MVP2 candidate, and one scope reduction.** **Multi-order rod (OQ-69/OQ-79) is a candidate for MVP2** — the client confirmed a single rod may carry more than one production order, but the sequencing rule is unanswered (Srikanth is checking his notes) and the deferral itself is still to be confirmed with him. Until it closes, Phase 4's staging validation ships a **knowingly wrong** order-membership refusal (**G22**) — that is a recorded decision, not an oversight. **Scope reduction:** the off-schedule supervisor override is **removed** from Phase 4 (OQ-74) — a rod booked on the other rod line now triggers an automatic station switch, which is less work than the override panel, the five columns and the two constraints it replaces. Offsetting that: Phase 4 gains the auto-switch behaviour on **two** screens (DB2A and DB2), Phase 7 gains the welded pre-check-out approval path, and Phase 8/9 gain the short-close unplanned-stop flow (FR-130a–d). **Blocked on the client:** the four tolerance values owed by e-mail gate `CHK007` in Phase 4, and the panel-resolution answer (**OQ-80**) gates the Phase-1A canvas against the 14 Aug gate. |
+| Aug 4, 2026 | Client direction | **HMI/SCADA descoped.** Dashboard 13 (HMI Line Schematic), Dashboard 14 (SCADA Trends) and the Machine View tab on the active run monitor are **withdrawn at client request**. `FR-111`, `FR-112`, `FR-114`, `FR-425`, `FR-440`–`FR-451` and `FR-460`–`FR-470` are marked **withdrawn** — numbers retained, never renumbered — and `FR-113` **reworded**, since it asserted a rule about "the active tab" that outlives the tabs. Both mockups and `HMIAndSCADALayout.md` are deleted. **Descope-ladder rung 7 is removed entirely:** its 67 h stops being *recoverable* effort and becomes *never-planned*, so Phase 5 drops 221 → ~154 h and the programme 3,727 → ~3,660 h, but the ladder loses its largest optional rung and Phase 5 is no longer deferrable. **Nothing structural was removed:** all six run event markers still land on the DB3 traces and no hub event, endpoint, table or column is deleted — every DB13/DB14 reference in the real-time and tag tables was a *consumer* entry, not a row. `Q4`/`OQ-4` is **superseded**, because Dashboard 14 was its answer. **FW-062 keeps its 8 points** — DB13, DB14 and the Machine View had no acceptance criteria of their own in it, and no `FW-###` was ever dedicated to them. The two traceability rows and the `FR-440`–`FR-470` range row are marked withdrawn, and the W4 hours drop from 476 to 409. |

@@ -557,18 +557,20 @@
     </div>
 
     <!-- Components.
-         Corrected 2 Aug 2026 to the four-stand FL2 configuration with EDGERS AT
-         S2 AND S3 ONLY, per phase-08-fl2-spool-checkin-finishing-run.md §User
-         Journey step 3 (and CLAUDE.md's domain summary). This screen previously
-         showed three stands with a generic "Edger 1" after S1 and "Edger 2" after
-         S2, which contradicted both. Do not revert this as a typo. -->
+         FM2 HAS THREE STANDS: S1 carries the 8" roller, S2 and S3 carry 6"
+         rollers, and EDGERS ARE AT S2 AND S3 ONLY. S3 is the final,
+         non-bypassable gauge-control stand.
+         Corrected 4 Aug 2026 (client). This screen previously showed FOUR rows —
+         a separate 8" roller above "6"S1 / 6"S2 / 6"S3" — following a misreading
+         of the May 21 note as "three 6-inch stands". The 8" roller IS S1 and
+         there is no fourth stand. Do not revert this as a typo, and do not
+         re-add an 8" row: see 00-foundations.md §0.3 and decision D-26. -->
     <div class="mpc-card">
       <div class="mpc-card-head">Components &middot; PS-1100-FL2-007</div>
       <div class="mpc-card-body">
-        <div class="mpc-comp bypass"><span class="ss-dot idle"></span><span class="name">8&Prime;</span><span class="cset">Bypassed</span></div>
-        <div class="mpc-comp"><span class="ss-dot"></span><span class="name">6&Prime;S1</span><span class="cset">Gap 0.0180&Prime;</span></div>
-        <div class="mpc-comp"><span class="ss-dot"></span><span class="name">6&Prime;S2</span><span class="cset">Gap 0.0162&Prime; &middot; Round edge</span></div>
-        <div class="mpc-comp"><span class="ss-dot"></span><span class="name">6&Prime;S3</span><span class="cset">Gap 0.0160&Prime; &middot; Round edge &middot; final</span></div>
+        <div class="mpc-comp"><span class="ss-dot"></span><span class="name">S1 &middot; 8&Prime;</span><span class="cset">Gap 0.0180&Prime;</span></div>
+        <div class="mpc-comp"><span class="ss-dot"></span><span class="name">S2 &middot; 6&Prime;</span><span class="cset">Gap 0.0162&Prime; &middot; Round edge</span></div>
+        <div class="mpc-comp"><span class="ss-dot"></span><span class="name">S3 &middot; 6&Prime;</span><span class="cset">Gap 0.0160&Prime; &middot; Round edge &middot; final</span></div>
       </div>
     </div>
 
@@ -632,7 +634,9 @@
 
   </div>
 
-  <!-- Tab / collapse strip. There is no Machine View tab on FL2. -->
+  <!-- Tab / collapse strip. One inert tab plus the collapse toggle. FL2 never had a
+       second tab; since 4 Aug 2026 neither do FL1 and FL3 — the Machine View tab is
+       descoped, so this is now the shape on all three lines. -->
   <div class="tab-strip panel" id="chart-tab-strip">
     <button class="tab-btn active" type="button" tabindex="-1">Traces</button>
     <span class="tab-spacer"></span>
@@ -651,7 +655,7 @@
       <div class="trace-header">
         <div class="trace-title">
           <h2>Final gauge</h2>
-          <span class="trace-subtitle" id="gauge-subtitle">0.110" &plusmn; 0.002" &middot; post 6"S3</span>
+          <span class="trace-subtitle" id="gauge-subtitle">0.110" &plusmn; 0.002" &middot; post S3 (6&Prime;)</span>
         </div>
         <div class="trace-reading">
           <span class="trace-value" id="gauge-value">0.110"</span>
@@ -825,19 +829,12 @@
       </div>
     </div>
 
-    <div class="action-divider"></div>
-
-    <!-- Navigation / secondary. No Die Change: the drawing dies live on FL1's
-         draw boxes, so that dialog is deliberately not loaded on this screen. -->
-    <div class="action-cluster">
-      <span class="action-group-label">Go to</span>
-      <div class="action-group">
-        <button class="action-btn" onclick="window.location.href='dashboard_14_scada_trends.html'" title="Open SCADA multi-trend chart">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          <span class="action-btn-label">View Trends</span>
-        </button>
-      </div>
-    </div>
+    <!-- The "Go to" cluster is gone (4 Aug 2026). Its only member was View Trends
+         → Dashboard 14, and SCADA Trends is descoped. No Die Change either: the
+         drawing dies live on FL1's draw boxes, so that dialog is deliberately not
+         loaded on this screen. FL2's run monitor therefore has exactly ONE true
+         navigation left — Complete Coil, in the run-lifecycle cluster below.
+         Everything else on this screen is a dialog raised over the run. -->
 
     <div class="action-spacer"></div>
 
@@ -970,7 +967,7 @@
       tolerance: 0.002,
       data: [], profile: [],
       mode: "live",
-      liveSubtitle: '0.110" &plusmn; 0.002" &middot; post 6"S3',
+      liveSubtitle: '0.110" &plusmn; 0.002" &middot; post S3 (6&Prime;)',
       profileSubtitle: 'FL1 history &middot; SP-00031 &middot; 0.110" &plusmn; 0.002"'
     };
     var width = {
@@ -1225,10 +1222,9 @@
       targets: { gauge: 0.110, gaugeTol: 0.002, gaugeDp: 4, width: 0.625, widthTol: 0.005, widthDp: 3 },
       measurements: { gauge: 0.1135, width: 0.627 },
       rolls: [
-        { name: '8"',   bypassed: true },
-        { name: '6"S1', scheduled: 0.0180, current: 0.0180 },
-        { name: '6"S2', scheduled: 0.0162, current: 0.0162 },
-        { name: '6"S3', scheduled: 0.0160, current: 0.0161, final: true }
+        { name: 'S1 (8\")', scheduled: 0.0180, current: 0.0180 },
+        { name: 'S2 (6\")', scheduled: 0.0162, current: 0.0162 },
+        { name: 'S3 (6\")', scheduled: 0.0160, current: 0.0161, final: true }
       ]
     };
   }

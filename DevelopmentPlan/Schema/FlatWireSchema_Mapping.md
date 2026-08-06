@@ -177,12 +177,13 @@ Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
 | `DB2` | Draw box | FL1, FL2, FL3 | Second draw box — secondary die reduction |
 | `FM1` | Finishing mill | FL1, FL2, FL3 | First finishing mill stand |
 | `EdgeSet` | Edger | FL1, FL2, FL3 | Edge profile tooling station |
-| `FM2_8in` | Finishing mill | FL2, FL3 | FM2 8-inch roll (legacy; retained for pre-May-21 schedules) |
-| `FM2_6inS1` | Finishing mill | FL2, FL3 | FM2 6-inch stand S1 |
-| `FM2_6inS2` | Finishing mill | FL2, FL3 | FM2 6-inch stand S2 (edger position) |
-| `FM2_6inS3` | Finishing mill | FL2, FL3 | FM2 6-inch stand S3, final (edger position; May-21-2026 revision) |
+| `FM2_S1` | Finishing mill | FL2, FL3 | FM2 stand **S1 — 8-inch roller**; bypassable, no edger |
+| `FM2_S2` | Finishing mill | FL2, FL3 | FM2 stand **S2 — 6-inch roller**; bypassable, edger position |
+| `FM2_S3` | Finishing mill | FL2, FL3 | FM2 stand **S3 — 6-inch roller**; edger position, **final gauge control, not bypassable** |
 
 *Note: `FM1` is not bypassable; `EdgeSet` is FL1-legacy (FL1 has no edger per the May-21-2026 revision — edgers are at FM2 S2/S3).*
+
+> **FM2 correction `[CONFIRMED — Aug 4 2026]`:** FM2 has **three** stands, not four — the 8" roller **is S1**. Renamed `FM2_8in`→`FM2_S1`, `FM2_6inS1`→`FM2_S2`, `FM2_6inS2`→`FM2_S3`; `FM2_6inS3` withdrawn. Roll diameter is now `Stand.RollDiameterIn` (8.000 / 6.000 / 6.000) rather than part of the name. Closes **OI-04**.
 
 ### Component State Values
 *Used by:* `PassScheduleComponent.State`

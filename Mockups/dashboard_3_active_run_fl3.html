@@ -229,9 +229,8 @@
   .chart-collapse-btn:hover .acc-icon::after { background: var(--color-blue); }
   /* Expanded → show minus (−); collapsed → show plus (+), matching the info cards */
   body:not(.charts-collapsed) .chart-collapse-btn .acc-icon::after { transform: translate(-50%, -50%) scaleY(0); }
-  /* When collapsed, hide both chart panels regardless of active tab */
-  body.charts-collapsed #traces-panel,
-  body.charts-collapsed #machine-panel { display: none !important; }
+  /* When collapsed, hide the chart panel */
+  body.charts-collapsed #traces-panel { display: none !important; }
 
   /* Traces */
   .traces {
@@ -359,30 +358,8 @@
     margin-left: 6px;
   }
 
-  /* ── Machine View tab — the hybrid line schematic ── */
-  #machine-panel {
-    display: none;
-    flex: 1 1 auto;
-    min-height: 0;
-    /* 4px, not 10px: this panel's height is the traces' flex slot, and every pixel
-       of vertical padding scales the schematic down — which drags its 14px labels
-       under the shopfloor floor. */
-    padding: 4px 12px;
-    box-sizing: border-box;
-    background: var(--color-background-tertiary);
-    border-radius: var(--border-radius-lg);
-    position: relative;
-  }
-  #machine-panel.show { display: block; }
-  .mv-fullscreen-btn {
-    position: absolute; top: 12px; right: 14px;
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 5px 12px; border: 1px solid var(--color-border-secondary);
-    background: var(--color-background-primary); border-radius: var(--border-radius-md);
-    font-size: 14px; font-weight: 500; color: var(--color-text-secondary);
-    cursor: pointer; text-decoration: none;
-  }
-  .mv-fullscreen-btn:hover { background: var(--color-background-secondary); }
+  /* The #machine-panel and .mv-fullscreen-btn rules were removed 4 Aug 2026 with the
+     Machine View tab and Dashboard 13. */
 
   /* ── Command bar — grouped by intent: run events · navigate · lifecycle ── */
   .actions {
@@ -500,15 +477,16 @@
     </div>
 
     <!-- Components — both legs of the hybrid line, side by side.
-         Corrected 2 Aug 2026 against the authoritative equipment note at
-         00-foundations.md:58 (client feedback, 21 May 2026), closing open
-         divergence #5 in phase-08:
-           · FM2 has THREE 6" stands (S1, S2, S3) with EDGERS AT S2 AND S3 ONLY.
-             This screen showed only S1 and S2.
-           · FL1 HAS NO EDGER, and FL3's drawing leg is FL1 — so the "Edge set ·
-             Round edge" row that sat under Drawing stage is removed. The edging
-             happens at FM2 S2/S3, which is where it now appears.
-         Do not revert either as a typo. -->
+         Authoritative equipment note: 00-foundations.md §0.3.
+           · FM2 HAS THREE STANDS: S1 carries the 8" roller, S2 and S3 carry 6"
+             rollers, and EDGERS ARE AT S2 AND S3 ONLY. S3 is final and cannot
+             be bypassed. Corrected 4 Aug 2026 (client) — this column previously
+             listed FOUR rows, a separate 8" roller above "6"S1 / 6"S2 / 6"S3",
+             from reading the May 21 note as "three 6-inch stands". The 8" roller
+             IS S1; there is no fourth stand. See decision D-26.
+           · FL1 HAS NO EDGER, and FL3's drawing leg is FL1 — so no "Edge set"
+             row belongs under Drawing. The edging happens at FM2 S2/S3.
+         Do not revert either as a typo, and do not re-add an 8" row. -->
     <div class="mpc-card">
       <div class="mpc-card-head">Components &middot; PS-1350-FL3-001</div>
       <div class="mpc-card-body">
@@ -521,10 +499,9 @@
           </div>
           <div class="mpc-comp-col">
             <div class="mpc-comp-colhead finishing">Finishing (FM2)</div>
-            <div class="mpc-comp"><span class="ss-dot"></span><span class="name">8&Prime;</span><span class="cset">Gap 0.042&Prime;</span></div>
-            <div class="mpc-comp"><span class="ss-dot"></span><span class="name">6&Prime;S1</span><span class="cset">Gap 0.041&Prime;</span></div>
-            <div class="mpc-comp"><span class="ss-dot"></span><span class="name">6&Prime;S2</span><span class="cset">Gap 0.040&Prime; &middot; Round edge</span></div>
-            <div class="mpc-comp"><span class="ss-dot"></span><span class="name">6&Prime;S3</span><span class="cset">Gap 0.039&Prime; &middot; Round edge &middot; final</span></div>
+            <div class="mpc-comp"><span class="ss-dot"></span><span class="name">S1 &middot; 8&Prime;</span><span class="cset">Gap 0.042&Prime;</span></div>
+            <div class="mpc-comp"><span class="ss-dot"></span><span class="name">S2 &middot; 6&Prime;</span><span class="cset">Gap 0.040&Prime; &middot; Round edge</span></div>
+            <div class="mpc-comp"><span class="ss-dot"></span><span class="name">S3 &middot; 6&Prime;</span><span class="cset">Gap 0.039&Prime; &middot; Round edge &middot; final</span></div>
           </div>
         </div>
       </div>
@@ -588,8 +565,10 @@
 
   <!-- Tab strip -->
   <div class="tab-strip panel" id="chart-tab-strip">
-    <button class="tab-btn active" id="tab-traces" onclick="switchTab('traces')">Traces</button>
-    <button class="tab-btn" id="tab-machine" onclick="switchTab('machine')">Machine View</button>
+    <!-- One tab since 4 Aug 2026: the Machine View tab is descoped. Kept as a
+         non-interactive label so the strip still titles the section and the collapse
+         toggle keeps its home. Same shape as FL1 and FL2. -->
+    <button class="tab-btn active" id="tab-traces" type="button" tabindex="-1">Traces</button>
     <span class="tab-spacer"></span>
     <button class="chart-collapse-btn" id="chart-collapse-btn" onclick="toggleChartSection()"
             title="Collapse charts" aria-label="Collapse charts" aria-expanded="true">
@@ -606,7 +585,7 @@
       <div class="trace-header">
         <div class="trace-title">
           <h2>Final gauge</h2>
-          <span class="trace-subtitle">0.040" &plusmn; 0.003" &middot; post FM2 6"S3</span>
+          <span class="trace-subtitle">0.040" &plusmn; 0.003" &middot; post FM2 S3 (6&Prime;)</span>
         </div>
         <div class="trace-reading">
           <span class="trace-value" id="gauge-value">0.040"</span>
@@ -716,122 +695,9 @@
 
   </div><!-- /traces -->
 
-  <!-- Machine View tab — the whole hybrid chain, nothing bypassed. This is the one
-       screen where both legs run at once, which is why FL3 carries this tab and FL2
-       does not: on FL2 the drawing leg is a finished spool, on FL1 the FM2 leg is
-       idle. There is no TKUP-1 and no intermediate spool here — the material never
-       stops between FM1 and FM2. -->
-  <div id="machine-panel">
-    <a class="mv-fullscreen-btn" href="dashboard_13_hmi_schematic.html">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-      Open full screen
-    </a>
-    <!-- Wide single-flow layout: the whole hybrid chain reads left to right in one
-         pass, which is what FL3 actually is. The panel shares the traces' flex slot,
-         so the box is deliberately wide-and-short (1200x260) to fill it rather than
-         letterboxing a tall drawing into a short strip. -->
-    <!-- Wide single-flow layout: the whole hybrid chain reads left to right in one
-         pass, which is what FL3 physically is. The panel shares the traces' flex
-         slot (~215px at the 1280x1024 design size), so the viewBox is 1200x200 —
-         sized to render at roughly 1:1 there, which is what keeps the 14px labels
-         at 14px. A taller box would letterbox and shrink every label below the
-         shopfloor floor. -->
-    <svg viewBox="0 0 1200 200" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">
-      <text x="1122" y="20" text-anchor="middle" font-size="14" fill="var(--color-text-tertiary)">&#8968; = edger</text>
-
-      <!-- Payoffs: two parallel inputs merging into the drawing chain -->
-      <rect x="13" y="28" width="152" height="44" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
-      <circle cx="29" cy="46" r="5" fill="#1D9E75"/>
-      <text x="41" y="50" font-size="14" font-weight="600" fill="var(--color-text-secondary)">P1 · R00044</text>
-      <text x="25" y="67" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="#1D9E75">6,900 lb · running</text>
-      <rect x="13" y="78" width="152" height="44" rx="8" fill="var(--color-background-secondary)" stroke="var(--color-border-tertiary)" stroke-width="1.2"/>
-      <circle cx="29" cy="96" r="5" fill="var(--color-gray)"/>
-      <text x="41" y="100" font-size="14" font-weight="600" fill="var(--color-text-tertiary)">P2</text>
-      <text x="25" y="117" font-size="14" fill="var(--color-text-tertiary)">Not staged</text>
-      <path d="M 165 50 L 182 50 L 182 100 L 165 100" fill="none" stroke="var(--color-border-secondary)" stroke-width="1.2"/>
-      <path d="M 182 75 L 196 75" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
-        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
-      </path>
-
-      <!-- Drawing leg (this is FL1) -->
-      <rect x="196" y="41" width="124" height="68" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
-      <circle cx="212" cy="61" r="5" fill="#1D9E75"/>
-      <text x="224" y="65" font-size="14" font-weight="600" fill="var(--color-text-secondary)">DB1</text>
-      <text x="208" y="91" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">0.245"</text>
-      <path d="M 320 75 L 340 75" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
-        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
-      </path>
-      <rect x="340" y="41" width="124" height="68" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
-      <circle cx="356" cy="61" r="5" fill="#1D9E75"/>
-      <text x="368" y="65" font-size="14" font-weight="600" fill="var(--color-text-secondary)">DB2</text>
-      <text x="352" y="91" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">0.160"</text>
-      <path d="M 464 75 L 484 75" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
-        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
-      </path>
-      <rect x="484" y="41" width="160" height="68" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
-      <circle cx="500" cy="61" r="5" fill="#1D9E75"/>
-      <text x="512" y="65" font-size="14" font-weight="600" fill="var(--color-text-secondary)">FM1 · 12&#34; MILL</text>
-      <text x="496" y="91" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">Gap 0.039" · W 0.508"</text>
-
-      <!-- The defining hand-off: no stop, no spool, no anneal between the legs -->
-      <path d="M 644 75 L 676 75" fill="none" stroke="#7C5BB8" stroke-width="2.6" stroke-dasharray="6 5">
-        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
-      </path>
-      <text x="660" y="31" text-anchor="middle" font-size="14" font-weight="700" fill="var(--color-text-purple)">continuous</text>
-
-      <!-- Finishing leg (this is FL2) — live on FL3, never bypassed -->
-      <rect x="676" y="41" width="112" height="68" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
-      <circle cx="692" cy="61" r="5" fill="#1D9E75"/>
-      <text x="704" y="65" font-size="14" font-weight="600" fill="var(--color-text-secondary)">FM2 8&#34;</text>
-      <text x="688" y="91" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">0.042"</text>
-      <path d="M 788 75 L 804 75" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
-        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
-      </path>
-      <rect x="804" y="41" width="112" height="68" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
-      <circle cx="820" cy="61" r="5" fill="#1D9E75"/>
-      <text x="832" y="65" font-size="14" font-weight="600" fill="var(--color-text-secondary)">6&#34; S1</text>
-      <text x="816" y="91" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">0.041"</text>
-      <path d="M 916 75 L 932 75" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
-        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
-      </path>
-      <rect x="932" y="41" width="112" height="68" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
-      <circle cx="948" cy="61" r="5" fill="#1D9E75"/>
-      <text x="960" y="65" font-size="14" font-weight="600" fill="var(--color-text-secondary)">6&#34; S2 &#8968;</text>
-      <text x="944" y="91" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">0.040"</text>
-      <path d="M 1044 75 L 1060 75" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
-        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
-      </path>
-      <rect x="1060" y="41" width="124" height="68" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="2"/>
-      <circle cx="1076" cy="61" r="5" fill="#1D9E75"/>
-      <text x="1088" y="65" font-size="14" font-weight="600" fill="var(--color-text-secondary)">6&#34; S3 &#8968;</text>
-      <text x="1072" y="91" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">0.039" final</text>
-
-      <!-- Readouts, measured after the final stand -->
-      <path d="M 1122 109 L 1122 122 L 415 122 L 415 136 M 581 122 L 581 136" fill="none" stroke="#185FA5" stroke-width="1" stroke-dasharray="4 3" opacity="0.55"/>
-      <rect x="340" y="136" width="150" height="62" rx="8" fill="#EFF6FB" stroke="#185FA5" stroke-width="1.5"/>
-      <circle cx="356" cy="156" r="5" fill="#185FA5"/>
-      <text x="368" y="160" font-size="14" font-weight="600" fill="#185FA5">GAUGE</text>
-      <text x="352" y="184" font-size="18" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="#1D9E75">0.040" &#10003;</text>
-      <rect x="506" y="136" width="150" height="62" rx="8" fill="#EFF6FB" stroke="#185FA5" stroke-width="1.5"/>
-      <circle cx="522" cy="156" r="5" fill="#185FA5"/>
-      <text x="534" y="160" font-size="14" font-weight="600" fill="#185FA5">WIDTH</text>
-      <text x="518" y="184" font-size="18" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="#1D9E75">0.500" &#10003;</text>
-
-      <!-- Output coil -->
-      <path d="M 1122 109 L 1122 136" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
-        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
-      </path>
-      <rect x="900" y="136" width="284" height="62" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
-      <circle cx="918" cy="156" r="5" fill="#1D9E75"/>
-      <text x="930" y="160" font-size="14" font-weight="600" fill="var(--color-text-secondary)">TKUP-2 — CORELESS COIL</text>
-      <text x="912" y="184" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">23,440 ft / 457 lb</text>
-
-      <!-- What makes this route the hybrid one -->
-      <rect x="13" y="136" width="310" height="62" rx="8" fill="var(--color-background-purple)" stroke="none"/>
-      <text x="29" y="160" font-size="14" font-weight="700" fill="var(--color-text-purple)">HYBRID ROUTE</text>
-      <text x="29" y="182" font-size="14" fill="var(--color-text-purple)">No intermediate spool, no anneal</text>
-    </svg>
-  </div>
+  <!-- The Machine View tab and its hybrid-chain schematic were removed 4 Aug 2026:
+       the Machine View tab and Dashboard 13 (HMI Line Schematic) are both descoped.
+       This was the only artifact showing both FL3 legs running at once. -->
 
   <div class="actions panel">
 
@@ -863,17 +729,10 @@
       </div>
     </div>
 
-    <div class="action-divider"></div>
-
-    <div class="action-cluster">
-      <span class="action-group-label">Go to</span>
-      <div class="action-group">
-        <button class="action-btn" onclick="window.location.href='dashboard_14_scada_trends.html'" title="Open SCADA multi-trend chart">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          <span class="action-btn-label">View Trends</span>
-        </button>
-      </div>
-    </div>
+    <!-- The "Go to" cluster is gone (4 Aug 2026). Its only member was View Trends
+         → Dashboard 14, and SCADA Trends is descoped. Die Change and Roll Adjust
+         already live under "Run events" because they are dialogs over the live run,
+         so FL3's monitor now navigates nowhere except Complete Run. -->
 
     <div class="action-spacer"></div>
 
@@ -933,27 +792,8 @@
   }
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") restoreTraceMax(); });
 
-  function switchTab(tab) {
-    var traces = document.getElementById("traces-panel");
-    var machine = document.getElementById("machine-panel");
-    var tt = document.getElementById("tab-traces");
-    var tm = document.getElementById("tab-machine");
-    /* Selecting a tab re-opens the section if it was collapsed */
-    if (document.body.classList.contains("charts-collapsed")) setChartCollapsed(false);
-    if (tab === "traces") {
-      traces.style.display = "";
-      machine.classList.remove("show");
-      tt.classList.add("active");
-      tm.classList.remove("active");
-      localStorage.setItem("db3fl3-active-tab", "traces");
-    } else {
-      traces.style.display = "none";
-      machine.classList.add("show");
-      tt.classList.remove("active");
-      tm.classList.add("active");
-      localStorage.setItem("db3fl3-active-tab", "machine");
-    }
-  }
+  /* switchTab() removed 4 Aug 2026 with the Machine View tab. One tab remains, so
+     there is nothing to switch. #traces-panel keeps its stylesheet default. */
 
   /* Collapse / expand the entire chart section (accordion) */
   function setChartCollapsed(collapsed) {
@@ -969,9 +809,10 @@
     setChartCollapsed(!document.body.classList.contains("charts-collapsed"));
   }
 
-  /* Restore last-used tab */
+  /* Restore the collapsed/expanded state of the chart section.
+     The "db3fl3-active-tab" restore was dropped 4 Aug 2026 with the Machine View tab;
+     "db3fl3-charts-collapsed" shares this IIFE and must stay. */
   (function () {
-    if (localStorage.getItem("db3fl3-active-tab") === "machine") switchTab("machine");
     if (localStorage.getItem("db3fl3-charts-collapsed") === "1") setChartCollapsed(true);
   })();
 </script>
@@ -1189,7 +1030,7 @@
      screen for FL2 and FL3, which do not share a stand set — as a page it could
      only hard-code one of them, so the caller now supplies the stands it can
      reach. These are FL3's, matching the Components card above: FM1 plus the
-     four FM2 stands, with edging at S2 and S3. */
+     three FM2 stands (S1 8", S2 6", S3 6"), with edging at S2 and S3. */
   function fwRollCtx() {
     var c = fwRunCtx();
     return {
@@ -1206,10 +1047,9 @@
       measurements: { gauge: 0.045, width: 0.503 },
       rolls: [
         { name: 'FM1',       scheduled: 0.0390, current: 0.0390 },
-        { name: 'FM2 8"',    scheduled: 0.0420, current: 0.0420 },
-        { name: 'FM2 6"S1',  scheduled: 0.0410, current: 0.0410 },
-        { name: 'FM2 6"S2',  scheduled: 0.0400, current: 0.0400 },
-        { name: 'FM2 6"S3',  scheduled: 0.0390, current: 0.0391, final: true }
+        { name: 'FM2 S1 (8\")', scheduled: 0.0420, current: 0.0420 },
+        { name: 'FM2 S2 (6\")', scheduled: 0.0400, current: 0.0400 },
+        { name: 'FM2 S3 (6\")', scheduled: 0.0390, current: 0.0391, final: true }
       ]
     };
   }

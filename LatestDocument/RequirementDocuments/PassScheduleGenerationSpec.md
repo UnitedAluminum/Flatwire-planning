@@ -1,7 +1,7 @@
 # Flat Wire Processing — Pass Schedule Generation Specification
 
 **Project:** Flat Wire Mill
-**Last Updated:** August 1, 2026
+**Last Updated:** August 4, 2026
 **Status:** Draft — Issued for Client Review and Sign-off
 
 ---
@@ -15,6 +15,7 @@
 | Version | Date | Changed By | Description |
 |---|------|----------|-------------|
 | 1.0 | Aug 1, 2026 | Analysis Team | Initial specification issued for client review — 13 sections, 23 data items (PSG-D01–D23), 26 open questions (PSG-Q01–Q26), 10 assumptions, 10 risks, 35 validations, 30 engineering rules, two worked examples, and a consolidated sign-off checklist |
+| **1.1** | **Aug 4, 2026** | Analysis Team | **FM2 roller-size correction — three stands, `S1` = 8″, `S2` = 6″, `S3` = 6″.** v1.0 described a separate 8″ stand upstream of three 6″ stands; the 8″ roller **is S1** and there is no fourth stand. **Roll radius is a real input to three of this document's formulas, so this changes engineering content, not just labels.** §3.3.2 — the bite limit `Δh ≤ μ²R` is linear in `R`, so **S1 admits ~1.33× the draft** of a 6″ stand and the stands cannot share one radius. §3.3.6 — contact length `L_p = √(R′·Δh)` means **S1 sees ~1.16× the separating force** at equal draft, so `F_max` (**PSG-D10**) is required per stand, not per mill. §3.3.7 — `K` itself is diameter-independent but the gap inherits the force difference through `F/K`, so **PSG-D12** is likewise per stand. **§3.3.5's worked illustration is recomputed at `k` = 3**: for a 0.110″ final gauge the per-stand draft becomes **5.4% / 9.8% / 13.5%** (was 4.1% / 7.5% / 10.4% at `k` = 4) — total FM2 reduction is unchanged, since it depends only on entry and exit gauge. **PSG-Q10** now flags that equal draft loads unequal stands unequally; **PSG-Q11** corrected to *S1 and S2 bypassable, S3 not*; **PSG-Q13**'s regrind question is split **per stand**, since it had assumed every finishing roll was nominally 6.000″. The §7 roll-diameter input row and the available-stands row are corrected. **Worked Examples A and B are unaffected** — both are pure drawing arithmetic and report the roll gap as undetermined pending mill calibration. |
 
 ---
 
@@ -168,7 +169,7 @@ The plant comprises three line configurations.
 | | **FL1 (standalone)** | **FL2 (standalone)** | **FL3 (hybrid)** |
 |---|---|---|---|
 | Input | Rod or round wire at the payoff | Flat wire spool | Rod or round wire at the payoff |
-| Sequence | Payoff → DB1 → DB2 → **FM1** → take-up | Payoff → **FM2** (8″ → 6″ S1 → 6″ S2 → 6″ S3) → take-up | Payoff → DB1 → DB2 → FM1 → **FM2** → take-up, continuous |
+| Sequence | Payoff → DB1 → DB2 → **FM1** → take-up | Payoff → **FM2** (**S1 8″ → S2 6″ → S3 6″**) → take-up | Payoff → DB1 → DB2 → FM1 → **FM2** → take-up, continuous |
 | Output | Intermediate spool | Finished coreless coil | Finished coreless coil |
 | **Edger** | **None** | Edgers at **S2 and S3 only** | Edgers at S2 and S3 |
 | Intermediate anneal | Optional, off-line after the spool | Not applicable | **None** — bypassed by definition |
@@ -412,6 +413,15 @@ A stand whose gap is set **at or above the incoming thickness performs no work a
 no roll bite, no separating force, and no reduction. This sounds obvious, but it is a common failure
 mode in a poorly allocated schedule, and §3.3.5 explains how it arises.
 
+> **`R` is per stand, and FM2's stands do not share a radius.** `S1` carries an **8″** roller
+> (`R` = 4″); `S2` and `S3` carry **6″** rollers (`R` = 3″). The limit is linear in `R`.
+> **S1 therefore admits about 1.33× the draft** of either 6″ stand at the same friction
+> coefficient — a difference no allocation rule should ignore. Anything that
+> allocates draft across the stands must read `RollDiameterIn` per stand rather than assume a single
+> finishing-mill radius. FM1's roller is 12″ (`R` = 6″), which is why it takes the heaviest draft on
+> the line. *(Corrected 4 Aug 2026 — the earlier four-stand model treated the finishing mill as
+> uniformly 6″ with a separate 8″ pre-stage.)*
+
 ### 3.3.3 Lateral Spread — Why Width Is Predicted, Not Assumed
 
 When material is compressed in a rolling pass, the displaced volume divides between **elongation**
@@ -516,20 +526,30 @@ Per-stand draft:        d_stand = 1 − (h_final / h_entry)^(1/k)
 Required FM1 exit:      h_entry = h_final / (1 − d_stand)^k
 ```
 
-**Worked illustration.** For a 0.110″ final gauge through four active finishing stands:
+**Worked illustration.** For a 0.110″ final gauge through **all three** active finishing stands
+(`k` = 3 — S1, S2 and S3):
 
 | FM1 exit gauge | Total FM2 reduction | Draft per stand |
 |---|---|---|
-| 0.130″ | 15.4% | **4.1%** |
-| 0.150″ | 26.7% | **7.5%** |
-| 0.170″ | 35.3% | **10.4%** |
+| 0.130″ | 15.4% | **5.4%** |
+| 0.150″ | 26.7% | **9.8%** |
+| 0.170″ | 35.3% | **13.5%** |
 
 All three are plausible finishing sequences. What is *not* plausible is FM1 delivering 0.110″, which
-leaves all four stands with nothing to do.
+leaves all three stands with nothing to do.
+
+> **Recomputed 4 Aug 2026 at `k` = 3.** FM2 has three stands, not four, so the same three FM1 exit
+> gauges now demand a **heavier draft at each stand** — the table previously read 4.1% / 7.5% / 10.4%
+> at `k` = 4. The total FM2 reduction column is unchanged, because it depends only on entry and exit
+> gauge. Two consequences worth carrying into `PSG-D09`: the per-stand load is roughly a third higher
+> than the earlier figures implied, and the **equal-draft assumption is now questionable** — S1's 8″
+> roller admits about 1.33× the draft of S2 and S3 (§3.3.2), so an equal split leaves S1 working well
+> inside its bite limit while the 6″ stands work closer to theirs.
 
 The preferred per-stand draft for your finishing mill is `[CLIENT INPUT REQUIRED]` — **PSG-D09**.
 It is bounded above by roll separating force and drive power, and below by the need for enough load
-to hold gauge stably.
+to hold gauge stably. **Because the three stands do not share a roll diameter, state whether you
+want equal draft per stand or a distribution weighted toward S1.**
 
 ### 3.3.6 Rolling Force and Machine Limits
 
@@ -548,6 +568,12 @@ F = w̄ · L_p · Q_p · σ̄_f
 Force and drive power set the real ceiling on draft per stand — well before any material limit is
 reached. Both are machine properties and are `[CLIENT INPUT REQUIRED]` — **PSG-D10**, **PSG-D11**.
 These normally come from the mill builder's datasheet.
+
+> **Contact length carries the roll radius, so force differs by stand.** `L_p = √(R′ · Δh)` means that
+> at equal draft, **S1 (8″ roller) sees roughly 1.16× the separating force** of S2 or S3 (6″), since
+> √(8/6) ≈ 1.155. The larger roll admits more draft (§3.3.2) but pays for it in force — the two limits
+> pull in opposite directions, which is exactly why `F_max` must be supplied **per stand** and not as
+> one finishing-mill figure. *(Clarified 4 Aug 2026 with the roller-size correction.)*
 
 ### 3.3.7 Roll Gap and Mill Spring
 
@@ -569,6 +595,11 @@ The critical property is that **`F/K` is load-dependent**. A wide, heavy-reducti
 stand far more than a light, narrow one. A fixed percentage offset per alloy cannot express this: it
 will be approximately right at one width and reduction, and progressively wrong away from that
 point.
+
+> **`K` is stand stiffness and does not depend on roll diameter — but `F` does.** The set gap at S1
+> therefore differs from a 6″ stand's even at identical draft and width, through the force term
+> (§3.3.6). Supply `K` per stand as well as `F_max`; the compensation cannot be shared across the
+> three stands.
 
 > **Terminology.** This effect is *mill spring*, sometimes *mill stretch* or *roll-force
 > compensation*. It is a property of the **machine**, not the material. It should not be conflated
@@ -676,10 +707,10 @@ Aluminum rather than being derived by the engine or read from the order.
 |---|---|---|---|---|---|---|---|
 | Line selection | FL1, FL2, or FL3 | — | Enum | **M** | FL1 | Order / planning | No |
 | Available draw boxes | Count and identity | — | Integer | **M** | 2 | Machine master | **Yes** |
-| Available stands | Count, identity, sequence | — | List | **M** | 8″, S1, S2, S3 | Machine master | **Yes** |
+| Available stands | Count, identity, sequence | — | List | **M** | FM1; FM2 S1, S2, S3 | Machine master | **Yes** |
 | Stand gauge range | Min / max input gauge per stand | in | Decimal (4 dp) | **M** | ____ | Machine master | **Yes** |
 | Stand width range | Min / max width per stand | in | Decimal (4 dp) | **M** | ____ | Machine master | **Yes** |
-| Roll diameter | Working roll diameter per stand | in | Decimal | **M** | 12.0 / 8.0 / 6.0 | Machine master | **Yes** |
+| Roll diameter | Working roll diameter **per stand** | in | Decimal | **M** | FM1 12.0 · **FM2 S1 8.0, S2 6.0, S3 6.0** | Machine master | **Yes** |
 | Max roll separating force | Per stand | lbf | Decimal | **M** | ____ | Machine master | **Yes** |
 | Max drive power | Per stand | hp | Decimal | **M** | ____ | Machine master | **Yes** |
 | Mill modulus | Stand stiffness per stand | lbf/in | Decimal | **M** | ____ | Mill calibration | **Yes** |
@@ -729,7 +760,7 @@ incomplete), or *Not established* (must be created).
 | M1 | **Material master** | Identify each alloy the engine can process | Alloy designation, description, active flag | Process Engineering | Available | — |
 | M2 | **Material property master** | Supply mechanical behaviour to the stress and force calculations | Yield, tensile, elongation, work-hardening coefficients, density — per alloy **and per temper** | Process Engineering | **Partial** | **PSG-D03** |
 | M3 | **Reduction rule master** | Per-pass limits for drawing and rolling | Max/min reduction per pass per alloy (drawing); max/min draft per stand per alloy (rolling) | Process Engineering | **Not established** | **PSG-D01**, **PSG-D02** |
-| M4 | **Machine master** | Machine capability envelope | Per stand: roll diameter, gauge range, width range, max separating force, max drive power, mill modulus, edger fitted | Maintenance / Engineering | **Partial** | **PSG-D10–D12** |
+| M4 | **Machine master** | Machine capability envelope | Per stand: **roll diameter (FM1 12″; FM2 S1 8″, S2 6″, S3 6″)**, gauge range, width range, max separating force, max drive power, mill modulus, edger fitted (S2 and S3 only) | Maintenance / Engineering | **Partial** | **PSG-D10–D12** |
 | M5 | **Roll master** | Roll identity and condition | Roll ID, diameter, surface condition, footage run, location, regrind history | Maintenance | **Partial** | **PSG-Q13** |
 | M6 | **Die / tooling master** | Available drawing tooling | Die ID, hole diameter, **semi-angle**, **bearing length**, condition, footage run | Maintenance | **Partial** | **PSG-D05**, **PSG-Q05** |
 | M7 | **Product master** | Finished product definitions | Alloy, gauge, width, edge profile, tolerances, surface finish class, certification requirement | Sales / Process Engineering | **Partial** | **PSG-D13** |
@@ -738,8 +769,9 @@ incomplete), or *Not established* (must be created).
 | M10 | **Quality rule master** | Acceptance criteria | Acceptance limits per product class, inspection points, disposition rules | Quality | **Partial** | **PSG-D15** |
 | M11 | **Tolerance rule master** | Default and customer-specific tolerances | Default gauge/width bands per alloy; customer overrides; process capability data | Quality / Sales | **Partial** | **PSG-D13** |
 
-> **The critical observation.** Three of the eleven masters — M3, M8, M9 — are **not established
-> today**, and they are precisely the masters that carry the engineering coefficients. M8 in
+> **The critical observation.** Three of the eleven masters — M3, M8, M9 — are
+> **not established today**, and they are precisely the masters that carry the engineering
+> coefficients. M8 in
 > particular cannot be fully populated from existing knowledge; it requires measured production data.
 > Section 12 addresses how development proceeds in the meantime.
 
@@ -1218,9 +1250,9 @@ Ordered by priority. High-priority items block correct generation.
 | **PSG-D02** | Max and min draft per rolling stand, per alloy | Thickness reduction limits at FM1 and each finishing stand | Determines allocation across stands and whether each stand does useful work | Cannot allocate reduction; finishing stands may be configured to do nothing | **High** | From mill builder datasheet | Yes | | |
 | **PSG-D03** | Mechanical property data per alloy and temper | Yield, tensile, elongation, and work-hardening behaviour | Required by both drawing stress and roll force calculations | Neither stress nor force can be computed; core safety checks disabled | **High** | Published alloy data as a starting point, confirmed against your material | Yes | | |
 | **PSG-D08** | Spread behaviour, round→flat and flat→flat | How thickness reduction divides between width and length, per alloy and stand | Width on FL1 is set entirely by free spread — without this, width cannot be designed | Width becomes an outcome to be measured, not a target to be hit | **High** | Requires trial data; no published value transfers | Yes | | |
-| **PSG-D10** | Roll separating force capacity per stand | Maximum force each stand can apply | The real limit on draft per pass | Schedules may exceed machine capability | **High** | Mill builder datasheet | Yes | | |
+| **PSG-D10** | Roll separating force capacity per stand | Maximum force each stand can apply. **Per stand, not per mill** — S1's 8″ roller develops ~1.16× the force of a 6″ stand at equal draft (§3.3.6) | The real limit on draft per pass | Schedules may exceed machine capability | **High** | Mill builder datasheet | Yes | | |
 | **PSG-D11** | Drive power rating per stand | Maximum power available at each stand | Second limit on draft, often binding before force | Schedules may stall the mill | **High** | Mill builder datasheet | Yes | | |
-| **PSG-D12** | Mill modulus per stand | Stand stiffness relating roll force to deflection | Roll gap cannot be set without it — gap is not gauge | Gap settings cannot be calculated; first-off setup becomes trial and error | **High** | From mill calibration under load | Yes | | |
+| **PSG-D12** | Mill modulus per stand | Stand stiffness relating roll force to deflection. **Per stand** — stiffness itself does not depend on roll diameter, but the gap compensation `F/K` inherits S1's higher force (§3.3.7) | Roll gap cannot be set without it — gap is not gauge | Gap settings cannot be calculated; first-off setup becomes trial and error | **High** | From mill calibration under load | Yes | | |
 | **PSG-D07** | Cold work threshold requiring anneal, per alloy | Accumulated strain above which an anneal is needed | Governs route selection — the hybrid route has no intermediate anneal | Hybrid route may be selected for material that cannot tolerate it | **High** | Alloy-specific; from your metallurgical practice | Yes | | |
 | **PSG-D13** | Tolerance defaults and process capability | Default gauge/width bands per alloy, and demonstrated capability | Determines whether a requested tolerance is achievable | Unachievable tolerances accepted, producing guaranteed rejections | **High** | Customer specification with alloy defaults | Yes | | |
 | **PSG-D04** | Friction coefficients | Die/wire and roll/material friction | Required by drawing stress, bite condition, and roll force | Three validations disabled | **Medium** | Typical lubricated aluminium 0.03–0.10 | Yes | | |
@@ -1318,12 +1350,15 @@ and measured exit width, across alloys.
 an intermediate gauge rather than the final gauge.
 *Why needed:* Sets the intermediate target FM1 works to.
 *Example:* equal draft across active stands, or progressively lighter toward S3?
+*Note:* the three stands **do not share a roll diameter** — S1 is 8″, S2 and S3 are 6″ — so equal
+draft loads them unequally against their bite limits (§3.3.2) and their force limits (§3.3.6).
 *Response:* ______________________________________________
 
 **PSG-Q11 — Which stands are normally active**
-*Background:* The 8″ stand and 6″ S1 and S2 are bypassable; S3 is not.
+*Background:* **S1 (8″) and S2 (6″) are bypassable; S3 (6″) is not** — it is the final gauge-control
+stand.
 *Why needed:* The typical active set determines the default allocation.
-*Example:* is all-four typical, or is a subset more common?
+*Example:* are all three typically active, or is a subset more common?
 *Response:* ______________________________________________
 
 **PSG-Q12 — Edger blade profiles and the schedule**
@@ -1336,7 +1371,12 @@ and the engine must validate availability.
 **PSG-Q13 — Roll condition and its effect on setup**
 *Background:* Roll diameter changes with regrinding, which changes contact length and roll force.
 *Why needed:* If the change through a regrind cycle is significant, the engine should use actual rather than nominal diameter.
-*Example:* nominal 6.000″, minimum after regrind ____″
+*Example, per stand — the three FM2 stands do not share a nominal:*
+- FM2 **S1** — nominal 8.000″, minimum after regrind ____″
+- FM2 **S2** — nominal 6.000″, minimum after regrind ____″
+- FM2 **S3** — nominal 6.000″, minimum after regrind ____″
+- FM1 — nominal 12.000″, minimum after regrind ____″
+
 *Response:* ______________________________________________
 
 ## 10.4 Product

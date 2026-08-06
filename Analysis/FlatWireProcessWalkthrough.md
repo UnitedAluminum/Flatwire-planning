@@ -85,7 +85,7 @@ This document **does not introduce new requirements**. It is a navigational over
 
 23. **Roll adjust (Dashboard 11, FL3).** FM2 roll-gap adjustment mid-run, logged as a roll override `OVR-####`.
 
-24. **SPC checkpoints (Dashboard 6).** Manual: pre-run, post-DB1, post-die-change, manual spot check. Automatic (AGC): FM1 output and FM2 S2 output. Out of spec → operator either continues the run or suspends the material, which auto-opens Dashboard 8.
+24. **SPC checkpoints (Dashboard 6).** Manual: pre-run, post-DB1, post-die-change, manual spot check. Automatic (AGC): FM1 output and **FM2 final-stand (S3) output**. Out of spec → operator either continues the run or suspends the material, which auto-opens Dashboard 8.
 
 25. **Pause / resume.** Logged as a `RunPauseEvent` with reason; Dashboard 1 flips RUNNING → PAUSED with the reason visible to the supervisor.
 
@@ -114,7 +114,7 @@ This document **does not introduce new requirements**. It is a navigational over
 
 32. **Back into planning.** Spool sits in warehouse inventory (`ACTIVE`); planner allocates weight to an order (`IN-PLAN`) and the remainder receives a child alpha; scheduling books it on FL2 and it moves to the TPO (`IN-USE`).
 
-33. **FL2 spool check-in (Dashboard 5).** Spool loaded onto the **TPO** (Traversing Payoff, 3,500 lb). Operator enters or confirms spool alpha, gauge, width, weight. The screen shows source rods and the **historical gauge profile from the FL1 run with weld points marked** — FL2's trace is historical/profile, not live (FL2 standalone broadcasts `null` live gauge/width). **No visual inspection** — already performed at FL1. Same mandatory pass-schedule confirmation dialog, then FM2 tags are pushed (8" roller, 6" S1/S2/S3, edger activation and roll gaps) and the FL2 run starts, linked to the spool and its source rod alphas.
+33. **FL2 spool check-in (Dashboard 5).** Spool loaded onto the **TPO** (Traversing Payoff, 3,500 lb). Operator enters or confirms spool alpha, gauge, width, weight. The screen shows source rods and the **historical gauge profile from the FL1 run with weld points marked** — FL2's trace is historical/profile, not live (FL2 standalone broadcasts `null` live gauge/width). **No visual inspection** — already performed at FL1. Same mandatory pass-schedule confirmation dialog, then FM2 tags are pushed (roll gaps and stand states for S1/S2/S3, plus edger activation and edge type at S2 and S3) and the FL2 run starts, linked to the spool and its source rod alphas.
 
 ### Route B — FL3 Hybrid (produces finished goods in one pass)
 
@@ -124,7 +124,7 @@ This document **does not introduce new requirements**. It is a navigational over
 
 ## G. FM2 Finishing — Both Routes Converge
 
-35. **Material passes the FM2 stands in sequence:** 8" roller (bypassable) → 6" S1 (bypassable) → 6" S2 + edger → 6" S3 + edger. **Edgers sit at S2 and S3 only.** The final 6" stand is **mandatory** — it is the gauge-control stand and cannot be bypassed.
+35. **Material passes FM2's three stands in sequence:** **S1 — 8" roller** (bypassable) → **S2 — 6" roller + edger** (bypassable) → **S3 — 6" roller + edger**. **Edgers sit at S2 and S3 only** — the two 6" stands. **S3 is mandatory** — it is the final gauge-control stand and cannot be bypassed.
 
 36. **Automatic gauge and width measurement after the final 6" roller** (AGC), recorded as an SPC checkpoint.
 
@@ -199,7 +199,7 @@ This document **does not introduce new requirements**. It is a navigational over
 | Topic | April source says | Authoritative (May 21, 2026) |
 |---|---|---|
 | Weld types | Induction (rod-to-rod) **and** laser (flat-to-flat) | **Induction only** — laser removed, not viable |
-| FM2 stands | 8" → 6" S1 → 6" S2 (S2 final, mandatory) | 8" → 6" **S1 / S2 / S3**; **S3** is the final mandatory stand |
+| FM2 stands | 8" → 6" S1 → 6" S2 (S2 final, mandatory) | **Three stands: `S1` 8" → `S2` 6" → `S3` 6"**; **S3** is the final mandatory stand. *(Corrected 4 Aug 2026 — an intermediate revision read this as a separate 8" roller plus three 6" stands; the 8" roller **is S1**.)* |
 | Edgers | Single edger shown in FM2 sequence; edge set listed on FL1 | **Edgers at S2 and S3 only**; **FL1 has no edger** |
 | Traveler | Printing implied | **Fully digital** — coil/spool/skid labels still print |
 
@@ -222,7 +222,7 @@ Terminology rule throughout: always "flat wire," never "strip."
 | [SPCCheckpoint.md](../LatestDocument/RequirementDocuments/SPCCheckpoint.md) | Checkpoint types, tolerances, disposition rules (step 24) |
 | [DieChangeAndManagement.md](../LatestDocument/RequirementDocuments/DieChangeAndManagement.md) | Die change flow and tooling inventory (step 22) |
 | [FlatWireShopfloorDashboards.md](FlatWireShopfloorDashboards.md) | All dashboard specifications referenced by number |
-| [HMIAndSCADALayout.md](../LatestDocument/RequirementDocuments/HMIAndSCADALayout.md) | Machine View tab, SCADA trend charts, event markers |
+| [PLCTagSpecification.md](../LatestDocument/RequirementDocuments/PLCTagSpecification.md) | The machine tag surface — what is written at each step, what is read, and the tag lifecycle across all sixteen moments |
 | [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) | Open decisions that affect steps above (~59 items) |
 | [`../DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../DevelopmentPlan/ShopfloorPlan/00-foundations.md) | §0.3 domain cheat-sheet (authoritative equipment facts, alphas, hub events), §0.4 real-time architecture |
 

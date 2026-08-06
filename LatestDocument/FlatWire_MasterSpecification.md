@@ -1,8 +1,9 @@
 # Flat Wire Mill — Master Specification
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 1, 2026
+**Last Updated:** August 4, 2026
 **Status:** Consolidated master specification — implementation-ready, with open items listed in §11. The 30 Jul 2026 client answers are applied to **§11 and to the affected body sections** (§3 flow, §4 pre-check-in note, FR-045, §5 `AlloyProperty` and `RodStaging`) — see [`../Analysis/ClientCall_2026-07-30_SyncPlan.md`](../Analysis/ClientCall_2026-07-30_SyncPlan.md)
+**Latest change (4 Aug 2026):** the **FM2 roller-size correction** — FM2 has **three** stands, **S1 = 8", S2 = 6", S3 = 6"** (decision **D-26**, §10.2). This supersedes **D-21**'s "three 6-inch stands" and closes **OI-04** and **OI-36**. Component names are now position-only (`FM2_S1`/`FM2_S2`/`FM2_S3`) and roll diameter is data (`Stand.RollDiameterIn`).
 **Supersedes (as a reading path, not as files):** every artifact in `../Analysis/`, `../DevelopmentPlan/`, `../DevelopmentPlan/Schema/`, `../SRS/` and `../BaseDocuments/`. Those files remain the audit trail and are **not** modified by this document. Where two of them disagree, this document states the single resolved answer and records the losing side in §10 or §11.
 **Scope of authority:** this document is a *reconciliation*. It is authoritative for what to build. The executable DDL in [`../DevelopmentPlan/Schema/SQL/`](../DevelopmentPlan/Schema/SQL/) remains authoritative for column-level types, and the HTML in [`../Mockups/`](../Mockups/) remains authoritative for pixel-level layout.
 
@@ -51,7 +52,7 @@ Two things make this module different from every other UAL shopfloor module:
 | Area | Contents |
 |---|---|
 | Operator screens | Pre-check-in, check-in (rod and spool), active-run monitoring, welding, SPC, roll adjust, die change, pause/resume, WIP rejection, rod checkout, coil completion, packing |
-| Dashboards | Line Status (DB1), Active Run Monitor (DB3), Pass Schedule Management + List (DB9 / DB9A), Shift Summary (DB10), Roll Adjust (DB11), Rod Checkout (DB12), HMI Line Schematic (DB13), SCADA Trends (DB14), Die Change, Die Management, OEE |
+| Dashboards | Line Status (DB1), Active Run Monitor (DB3), Pass Schedule Management + List (DB9 / DB9A), Shift Summary (DB10), Roll Adjust (DB11), Rod Checkout (DB12), Die Change, Die Management, OEE |
 | Data model | The standalone `FlatWireDB` schema (**27 tables**) plus the named legacy integration points in the shared databases |
 | Integration | PLC tag push/clear, OPC tag consumption (mill speed, feet consumption), SignalR real-time streaming |
 | Quality | SPC checkpoints, SPC-HOLD, CPK, WIP rejection |
@@ -129,7 +130,7 @@ Output is wound at a **traversing take-up** that oscillates across the coil face
 |---|---|---|---|
 | Machine entry | Flattening Line 1 | Flattening Line 2 | Flattening Line 3 (FL1 + FL2 continuous) |
 | Input | Rod or round wire, at the VPS | Flat wire **spool** on the TPO | Rod or round wire, at the VPS |
-| Flow | VPS → DB1 → DB2 → **FM1** → TKUP-1 | TPO → **FM2** (8" → 6"S1 → 6"S2 → 6"S3) → TKUP-2 | VPS → DB1 → DB2 → FM1 → *(TKUP-1 bypassed)* → TPO → FM2 → TKUP-2 |
+| Flow | VPS → DB1 → DB2 → **FM1** → TKUP-1 | TPO → **FM2** (**8" S1 → 6" S2 → 6" S3**) → TKUP-2 | VPS → DB1 → DB2 → FM1 → *(TKUP-1 bypassed)* → TPO → FM2 → TKUP-2 |
 | Output | Intermediate **spool**, `SP-#####`, ≤ 3,500 lb | Coreless oscillated **coil**, `FW-#####-C##`, ≤ 1,100 lb | Coreless oscillated **coil**, ≤ 1,100 lb |
 | **Edger** | **None** — FL1 has no edger | Edgers at **S2 and S3 only** | Edgers at S2 and S3 (the FM2 side) |
 | Gauge trace | **Real-time** (live AGC feed) | **Historical / profile** — broadcasts `null` live gauge and width | **Real-time**, end to end |
@@ -143,7 +144,7 @@ Output is wound at a **traversing take-up** that oscillates across the coil face
 
 FL1 and FL2 may run **independent orders simultaneously** in standalone mode; their throughput ratio is roughly **3:1** (FL1 faster), so FL1 opens capacity more often than FL2 [OQ-45, Decided May 4 2026].
 
-**Authoritative equipment configuration is the May 21 2026 client correction** [`00-foundations.md` §0.3]. Any April-dated source that shows an edger on FL1, or shows FM2 as `8" → 6"S1 → 6"S2` with S2 final, is superseded.
+**Authoritative equipment configuration is `00-foundations.md` §0.3**, as corrected by the client on May 21 2026 (FL1 has no edger) and **Aug 4 2026 (FM2 roller sizes)**. Superseded, in any source of any date: an edger on FL1; FM2 shown as `8" → 6"S1 → 6"S2` with S2 final; **FM2 shown with four stands, with a separate `8" Roller` component, or with a 6" stand named S1**. FM2 has **three** stands — **S1 (8"), S2 (6"), S3 (6", final)**.
 
 ### 2.3 Equipment inventory
 
@@ -155,18 +156,17 @@ FL1 and FL2 may run **independent orders simultaneously** in standalone mode; th
 | **FM1** — 12" flattening mill | FL1 / FL3 | Round → flat; gauge stands + dancer; **no edger** | — | **No** (`CK_PSC_FM1NotBypassable`) |
 | **TKUP-1** traversing take-up | FL1 | Intermediate spool | **3,500 lb** | N/A — non-hybrid only |
 | **TPO** traversing payoff | FL2 / FL3 | Feeds FM2 | 3,500 lb | N/A |
-| **FM2 — 8" roller** | FL2 / FL3 | Intermediate reduction | — | **Yes** |
-| **FM2 — 6" S1** | FL2 / FL3 | Finishing stand 1 | — | **Yes** |
-| **FM2 — 6" S2** (+ edger) | FL2 / FL3 | Finishing stand 2; edger here | — | Yes (see note) |
-| **FM2 — 6" S3** (+ edger) | FL2 / FL3 | Finishing stand 3, **final gauge control**; edger here | — | **No** |
+| **FM2 — S1 (8" roller)** | FL2 / FL3 | Finishing stand 1; no edger | — | **Yes** |
+| **FM2 — S2 (6" roller)** (+ edger) | FL2 / FL3 | Finishing stand 2; edger here | — | **Yes** |
+| **FM2 — S3 (6" roller)** (+ edger) | FL2 / FL3 | Finishing stand 3, **final gauge control**; edger here | — | **No** |
 | **TKUP-2** traversing take-up | FL2 / FL3 | Finished coreless coil | **1,100 lb** (OQ-32, revised up from 1,000 lb May 4 2026) | No |
 | Line speed | all | Governed by the final take-up | **~1,800–2,000 FPM** | — |
 | Skid | packing | Finished output | **2 coreless coils per skid** | — |
 | Anneal furnace | off-line | Intermediate anneal between FL1 and FL2 | shared capacity — see OI-19 | Optional |
 
-> **Note on the mandatory stand.** SRS §2.7 marks **6" S3** non-bypassable and 6" S2 bypassable. The pass-schedule DDL, the API validation rules and the HMI spec all still name **`FM2_6inS2`** as the one that "must always be Active" [`APIContracts.md` POST /passschedule; `HMI008`]. This is a live contradiction — see **OI-04** in §11. Until it closes, implement the constraint against `FM2_6inS3` (the later, equipment-corrected source) and keep `FM2_6inS2` bypassable, but do not delete the `FM2_6inS2` validation until the business confirms.
+> **Note on the mandatory stand — `OI-04` is closed (Aug 4 2026).** The mandatory stand is **`FM2_S3`**, FM2's final gauge-control stand. The contradiction was apparent, not real: the DDL/API/HMI rule *"`FM2_6inS2` must always be Active"* and SRS §2.7's *"6" S3 is non-bypassable"* named **the same physical stand**. Only the phantom fourth stand made them look inconsistent. Implement the constraint against `FM2_S3`; `FM2_S1` and `FM2_S2` are bypassable.
 
-**Legacy component name retained:** `FM2_8in` stays in the component vocabulary for pre-May-21 schedules. `EdgeSet` likewise remains a valid component name but is FL1-legacy — FL1 has no edger, so no new FL1 schedule should carry it.
+**Component vocabulary (Aug 4 2026).** FM2's components are **`FM2_S1`** (8"), **`FM2_S2`** (6") and **`FM2_S3`** (6", final) — position only, with roll diameter held in `Stand.RollDiameterIn`. The former `FM2_8in` / `FM2_6inS1` / `FM2_6inS2` / `FM2_6inS3` set is retired and maps `FM2_8in`→`FM2_S1`, `FM2_6inS1`→`FM2_S2`, `FM2_6inS2`→`FM2_S3`, with `FM2_6inS3` withdrawn as never-existent. `EdgeSet` remains a valid component name but is FL1-legacy — FL1 has no edger, so no new FL1 schedule should carry it.
 
 ### 2.4 Alpha / identifier formats
 
@@ -211,7 +211,7 @@ Every material and event unit carries an **alpha** — the traceability handle t
 
 **Pass schedule status** — `PassSchedule.Status`: `Draft` → `Active` → `Inactive` (and `Inactive` → `Active` to re-activate).
 
-**Line state** (Dashboard 1 / DB13 / PLC display): `RUNNING` · `IDLE` · `SETUP` · `OFFLINE` · `FAULT` · `PAUSED`.
+**Line state** (Dashboard 1 / PLC display): `RUNNING` · `IDLE` · `SETUP` · `OFFLINE` · `FAULT` · `PAUSED`.
 
 **Staging status** — `RodStaging.Status`: `Staged` → `CheckedIn` | `Unstaged`. The **`Blocked`** bay state exposed by the UI and `GET /payoff/status` is **derived** (`Status='Staged'` with any inspection column `= 'Fail'`), not a fourth value — adding one would fall outside the `UX_RodStaging_Bay` filtered index and free a bay that is still physically occupied.
 
@@ -234,7 +234,7 @@ Every material and event unit carries an **alpha** — the traceability handle t
 | **Digital traveler** | The screen-based work instruction that adapts to the active station. Never printed for flat wire |
 | **DB1 / DB2** | Draw box 1 / 2 — the wire drawing die blocks |
 | **Edger** | Edge-conditioning tooling. On FM2 stands S2 and S3 only |
-| **FM1 / FM2** | The 12" flattening mill (FL1) / the 3-stand 6" finishing mill (FL2) |
+| **FM1 / FM2** | The 12" flattening mill (FL1) / the 3-stand finishing mill (FL2) — **S1 8", S2 6", S3 6"** |
 | **Footage counter** | The PLC-sourced cumulative feet produced on a run. The clock everything mid-run is stamped against |
 | **ITInhibit** | A system-controlled PLC tag that blocks machine run when prerequisites are unmet. Set and cleared **only** by the system, never by an operator |
 | **MMS ID** | Material-management identifier generated per input coil at check-in; activated when a welded coil becomes active and closed **strictly on material consumption** (remaining ft = 0), never on operator action |
@@ -469,7 +469,7 @@ A rod removed mid-run and returned to storage is only partly consumed. The desig
 
 ### 3.11 FM2 finishing, coil completion, packing, shipment
 
-1. Material passes the FM2 stands in sequence: **8" roller (bypassable), 6" S1 (bypassable), 6" S2 + edger, 6" S3 + edger (final)**.
+1. Material passes the FM2 stands in sequence: **S1 — 8" roller (bypassable), S2 — 6" roller + edger (bypassable), S3 — 6" roller + edger (final)**.
 2. Automatic gauge and width measurement after the final 6" stand, recorded as an SPC checkpoint.
 3. Output winds at **TKUP-2** (1,100 lb equipment maximum; a customer may specify lower in the order) as a coreless oscillated coil, oscillation width per the order's bundle-width range.
 4. **Coil completion (Dashboard 7):** coil alpha `FW-#####-C##` issued — mid-run child `...-A` when a product-spec change split the coil. Footage from the counter. **Net weight = footage x density factor**, operator-overridable with a scale reading. **Gauge and width display the *target* value when SPC confirms in tolerance**; the measured value shows only when out of tolerance.
@@ -592,8 +592,8 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 | **FR-070** | The system shall retrieve the applicable pass schedule at check-in via **attribute lookup** (alloy + rod diameter + target gauge × width + route mode), surface the recommendation in a **confirm bar**, and present the component table clearly indicating which components are Active and which are Bypassed. [`CHK014`, `PSM015`–`PSM017`] |
 | **FR-071** | The operator shall **explicitly confirm** pass-schedule identity in a mandatory confirmation before any PLC tags are pushed, and shall supply a **free-text reason** when selecting a schedule other than the recommended one; that selection is flagged for Operations review. [`CHK015`, `PSM015`, `PSM018`] |
 | **FR-072** | The system shall write the audit records — visual inspection result, Pre-Run SPC checkpoint, pass-schedule **ID + version + effective date** on the run record, and the acknowledgement event — **before** the PLC push, retaining an incomplete-push recovery marker if the write fails. [`CHK016`] |
-| **FR-073** | On acknowledgement the system shall push component activation flags, die sizes, roll gaps, speed limits and gauge/width targets to the controller for the selected payoff position, as a **single transactional batch**, and log the push timestamp, schedule ID and triggering operator. [`CHK017`, `INT001`, `INT002`] |
-| **FR-074** | If any individual tag write fails, the batch shall be rolled back, an exception raised and the check-in aborted. Because the write set spans `FlatWireDB`, the shared `coils` schema and the PLC, the recovery is **compensating writes**, not an ACID rollback — see §8.6. [`INT002`; gaps G2/G16] |
+| **FR-073** | On acknowledgement the system shall push component activation flags, die sizes, roll gaps, speed limits and gauge/width targets to the controller for the selected payoff position, **as one batch**, and log the push timestamp, schedule ID and triggering operator. *(“Speed **limits**” versus “speed **targets**” is unresolved and deliberately left as-is — `PLC-Q06`.)* [`CHK017`, `INT001`, `INT002`] |
+| **FR-074** | If any individual tag write fails, an exception shall be raised, **compensating writes shall re-clear the tags already written** and revert the shared-schema changes, and the check-in shall be aborted. The write set spans `FlatWireDB`, the shared `coils` schema and the PLC, **so this is a compensating re-clear and not an ACID rollback** — machine writes are not transactional. See §8.6 and `[PLC §7.5]`. *(Reworded 4 Aug 2026; closes gap **G16**.)* [`INT002`; gap G2] |
 | **FR-075** | The system shall record the outcome of every tag push in `RodCheckin.PlcTagsPushed` / `SpoolCheckin.PlcTagsPushed`, and audit-log each write (tag path, value, operator, timestamp, result). [`INT004`] |
 | **FR-076** | SPC prompts shall be initiated automatically after the traveler loads at check-in. [`CHK018`, `SPC003`] |
 | **FR-077** | On successful check-in the system shall update the `coilno` field in WIP stations, set `coils.coil_status = INFLAT`, perform reqsum and insert `wip_coil_orders` if the rod is not yet reqsummed, and update `actual_start_date` in `planning_routings` and `routings`. [`CHK019`, `DM002`] |
@@ -625,9 +625,9 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 | **FR-091** | For a hybrid context the system shall validate that the spool's FL1 pass-schedule route mode is `Hybrid` and matches the expected FL2 input before allowing check-in. **Whether an FL2 check-in occurs at all in hybrid mode is contradictory across sources — see OI-09.** [`CHK013`] |
 | **FR-092** | Dashboard 5 shall display **source traceability** from the FL1 run — each contributing rod with its footage range, and the induction weld rows between them with quality result and timestamp — as read-only. |
 | **FR-093** | Dashboard 5 shall display the **historical FL1 gauge profile** with target line, tolerance band and weld markers, plus min / max / avg / std-dev / sample-count statistics and an "all in spec" or "N out of spec" badge. [`GWT005`, `DAT008`] |
-| **FR-094** | Dashboard 5 shall show the FL2 pass-schedule component table (8" Roller, 6" S1, 6" S2 + edger, 6" S3 + edger) read-only, with the same mandatory confirm bar as Dashboard 2. |
+| **FR-094** | Dashboard 5 shall show the FL2 pass-schedule component table (**S1 — 8" roller · S2 — 6" roller + edger · S3 — 6" roller + edger, final**) read-only, with the same mandatory confirm bar as Dashboard 2. |
 | **FR-095** | Dashboard 5 shall have **no visual inspection section** — the spool was inspected at FL1. |
-| **FR-096** | On acknowledgement the system shall push FM2-specific tags (8" roller, 6" S1/S2/S3 gaps, edger activation and edge type), set `Spool.Status = INFLAT`, create the FL2 `FlatWireRun` linked to the source spool and its source rod alphas, and start the FL2 run. |
+| **FR-096** | On acknowledgement the system shall push FM2-specific tags (**S1/S2/S3 roll gaps and stand states, edger activation and edge type at S2 and S3**), set `Spool.Status = INFLAT`, create the FL2 `FlatWireRun` linked to the source spool and its source rod alphas, and start the FL2 run. |
 
 **Pre-flight validation:** spool alpha valid and ready for FL2 · gauge and width entered (or confirmed from FL1 data) · weight entered · pass schedule loaded · hybrid-origin guard where applicable.
 
@@ -672,10 +672,10 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 | **FR-108** | The **FL3 action bar** shall have seven buttons — the six above plus **Roll Adjust**. [`ARM014`] |
 | **FR-109** | The **FL2 action bar** shall omit Weld and Die Change (FL2 has no drawing dies) and shall include Roll Adjust and Complete Coil. |
 | **FR-110** | **Check Out Rod** shall be enabled only when the footage counter equals zero. [`ARM015`] |
-| **FR-111** | A **View Trends** action shall navigate to SCADA Trends (Dashboard 14) with the active line pre-selected. [`ARM016`] |
-| **FR-112** | A tab strip shall offer **Traces** (default) and **Machine View**, persisting the last-used tab in browser `localStorage` and restoring it on load. [`ARM017`–`ARM019`] |
-| **FR-113** | The machine-status grid and the action buttons shall stay visible regardless of the active tab. [`ARM020`, `ARM021`] |
-| **FR-114** | The Machine View tab shall render a **compressed line schematic scaled to the 440 px trace area**, showing each component's status and primary value only, driven by the same SignalR stream, with an "Open full screen" link to Dashboard 13. [`ARM022`–`ARM024`] |
+| ~~**FR-111**~~ | ~~A **View Trends** action shall navigate to SCADA Trends (Dashboard 14) with the active line pre-selected.~~ **[WITHDRAWN — descoped by client, Aug 4 2026]** [~~`ARM016`~~] |
+| ~~**FR-112**~~ | ~~A tab strip shall offer **Traces** (default) and **Machine View**, persisting the last-used tab.~~ **[WITHDRAWN — descoped by client, Aug 4 2026]** — one tab remains, so there is nothing to persist. **The chart-section collapse toggle shares this strip and survives**, with its own `localStorage` key. [~~`ARM017`–`ARM019`~~] |
+| **FR-113** | The **machine-status grid and the action buttons shall remain visible at all times**, including while the chart section is collapsed. *(Reworded 4 Aug 2026: previously “regardless of the active tab” — the tabs went with the Machine View, the rule did not.)* [`ARM020`, `ARM021`] |
+| ~~**FR-114**~~ | ~~The Machine View tab shall render a compressed line schematic in the trace area, with a link to the full schematic.~~ **[WITHDRAWN — descoped by client, Aug 4 2026]** — the tab and DB13 are both descoped. [~~`ARM022`–`ARM024`~~] |
 | **FR-115** | The screen shall carry the **Traveler** sections adapted to the active station: Incoming Bundle Information, Queue (pre-checked-in material), Pass/Reduction Schedule, Edger Configuration, Order/Constraint data, Current Run Status. [`TRV001`, `TRV002`] |
 | **FR-116** | The Order/Constraint section shall display maximum and current spool/package weight, order weight, OD minimum and maximum limits and package width limits, and shall use them for runtime validation. [`TRV006`] |
 | **FR-117** | The Traveler layout and stop-transaction popups shall vary automatically by output type — FL1-only intermediate spool versus FL2/FL3 finished product. [`TRV007`] |
@@ -925,7 +925,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 | **FR-294** | Rejection groups and reasons shall be: **Surface Quality** (oxidation · water stain · surface defect · scratch · pit) · **Dimensional** (gauge out of spec · width out of spec · edge burr · camber) · **Weld Quality** (weld failure · weld break mid-run) · **Material** (chemistry non-conformance · wrong alloy · temper incorrect) · **Process** (die failure · roll gap error · component fault). |
 | **FR-295** | The screen shall offer **quick-reason chips** for the common cases (gauge out of spec · width out of spec · surface defect · oxidation · weld failure · die failure · component fault) alongside the full group/reason dropdowns. |
 | **FR-296** | An observation shall be **required for Suspend** and recommended otherwise. |
-| **FR-297** | Selecting **Rework** shall reveal a Return-to-stage selector (e.g. FL1 draw bench 2 re-draw · FL1 FM1 re-roll · FL2 6" S1 re-finish). |
+| **FR-297** | Selecting **Rework** shall reveal a Return-to-stage selector (e.g. FL1 draw bench 2 re-draw · FL1 FM1 re-roll · FL2 FM2 S2 re-finish). |
 | **FR-298** | Selecting **Suspend** shall state that supervisor review is required and name the notified supervisor. |
 | **FR-299** | On submit the system shall set the alpha status, update the WIP Held queue and broadcast `AlertRaised` to Dashboard 1. |
 
@@ -1042,8 +1042,8 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 | **FR-383** | **Step 3 — draw passes:** `areaRed ≤ 2 %` → DB1 and DB2 both **Bypass**; `≤ 1× alloy max` → DB1 Active, DB2 Bypass; `≤ 2× alloy max` → both Active; `> 2× alloy max` → **error flag** ("Target cannot be achieved in 2 draw passes; pre-drawn wire required, or adjust target gauge/width") while still returning the result. **"Alloy max" shall be read from `united_db..alloys.Draw_max_reduction`** — the draw-specific limit Process Engineering already maintains — **not** from the provisional `AlloyProperty.MaxReductionPerPass` seed (§5.4, OI-93). Whether that upstream column is expressed **per pass or cumulative** must be confirmed before use; the algorithm needs per-pass. |
 | **FR-384** | **Step 4 — die sizes:** `DB1 = geometric_mean(rodDia, D_pre)` and `DB2 = D_pre`, each **snapped to the nearest 0.005"**, with an informational warning naming the snap. |
 | **FR-385** | **Step 5 — FM1 roll gap:** `gauge × alloy springback factor`. |
-| **FR-386** | **Step 6 — FM2 requirement:** `aspectRatio = width / gauge`. If `aspectRatio > 5.5` **or** alloy is `1350` (welding wire) → **activate FM2 and set `routeMode = Hybrid`**. Otherwise FM2 8" and 6"S1 are bypassed and the route is Standalone. The mandatory final FM2 stand is always Active. |
-| **FR-387** | **Step 7 — FM2 roll gaps:** `8" = gauge × 1.06`, `6"S1 = gauge × 1.02`, `6"S2 = gauge × springback factor`. |
+| **FR-386** | **Step 6 — FM2 requirement:** `aspectRatio = width / gauge`. If `aspectRatio > 5.5` **or** alloy is `1350` (welding wire) → **activate FM2 and set `routeMode = Hybrid`**. Otherwise `FM2_S1` and `FM2_S2` are bypassed and the route is Standalone. **`FM2_S3`, the final stand, is always Active.** |
+| **FR-387** | **Step 7 — FM2 roll gaps**, one per stand: `FM2_S1 = gauge × 1.06`, `FM2_S2 = gauge × 1.02`, `FM2_S3 = gauge × springback factor`. *(Aug 4 2026: the multipliers are unchanged; they were previously labelled by roll diameter — `8"`, `6"S1`, `6"S2` — which left FM2's final stand with no formula. Labelling by position fixes that.)* |
 | **FR-388** | Warnings shall be raised for: FM2 activated (aspect ratio > 5.5) · route set to Hybrid · 1350 precision mode · very high aspect ratio (> 10, verify FM2 capability) · die size snapped · target gauge below machine minimum (error) · alloy not configured (error) · no die in inventory within 0.005" of the calculated size. |
 | **FR-389** | **Apply shall remain enabled for all results including error cases**, so Operations can inspect and adjust the draft manually before deciding whether to proceed. |
 | **FR-390** | Applying shall populate the Dashboard 9 form with the calculated values **highlighted to indicate algorithm-generated origin**, set the status to `Draft`, and replace "Save Changes" with **"Save as Active"**. The highlight clears on save. |
@@ -1105,53 +1105,33 @@ These values require Process Engineering sign-off and are maintained via an admi
 | **FR-422** | A **floor-wide alerts panel** driven by the rules engine shall be displayed. [`LST011`] |
 | **FR-423** | The alert rules shall be exactly: **Payoff 1 weight < 3,000 lb → Warning** "Prepare weld — Payoff 2 must be ready" · **gauge outside target ± tolerance on FL1/FL3 → Warning** · **component PLC fault → Critical** "Component fault — line stopped" · **active WIP rejection on any line → Warning** "WIP rejection requires disposition" · **Payoff 2 not loaded and Payoff 1 < 2,000 lb → Critical** "No weld material available". [`LST012`–`LST016`] |
 | **FR-424** | The data source for "Payoff 2 not loaded" shall be **`RodStaging`** — a `Staged` row on `(LineId, PayoffPosition)` means loaded. `PayoffWeight` alone cannot distinguish an empty bay from a sensor reading zero; the `PayoffStateChanged` event keeps the evaluation live. |
-| **FR-425** | A per-line **"Open HMI"** drill-down shall navigate to the Line Schematic (Dashboard 13) for that line, and a header **"SCADA Trends"** action to Dashboard 14. [`LST017`, `LST018`] |
+| ~~**FR-425**~~ | ~~A per-line **"Open HMI"** drill-down shall navigate to the Line Schematic (Dashboard 13), and a header **"SCADA Trends"** action to Dashboard 14.~~ **[WITHDRAWN — descoped by client, Aug 4 2026]** — both destinations are descoped, so DB1 loses both header drill-downs. *(Neither was ever implemented in the mockup.)* [~~`LST017`, `LST018`~~] |
 | **FR-426** | All live readings and alerts shall update in real time via the SignalR stream. [`LST019`] |
 | **FR-427** | The board shall additionally surface, per the approved mockup: a shift strip (lines active, lbs this shift against target, orders completed, average shift utilisation, shift end and time remaining); per-line welds this run, scrap rate, component list with die sizes and **die life percentages**, the **active pass schedule ID**, the last SPC check time and result, next-job context for an idle line, and idle-for / last-run context. |
 | **FR-428** | Alerts shall be individually **acknowledgeable**, with an acknowledged count shown alongside the active count. |
 
 > `FR-427` resolves gap **GAP-8** from `PassScheduleManagement.md`: the pass schedule ID is now shown on Dashboard 1 for supervisor situational awareness.
 
-### 4.21 HMI Line Schematic — Dashboard 13
+### 4.21 HMI Line Schematic — Dashboard 13 — [WITHDRAWN — descoped by client, Aug 4 2026]
 
-**Screen:** [`../Mockups/dashboard_13_hmi_schematic.html`](../Mockups/dashboard_13_hmi_schematic.html)
-**SRS:** `HMI001`–`HMI017`
+### 4.22 SCADA Trends — Dashboard 14 — [WITHDRAWN — descoped by client, Aug 4 2026]
 
-| ID | Requirement |
+> **Withdrawn from scope at client request (4 Aug 2026)**, together with the **Machine View tab** on the active run monitor (`FR-112`, `FR-114`). The two mockups and `HMIAndSCADALayout.md` are deleted. Requirement numbers are retained and never reused: **`FR-440`–`FR-451`** (`HMI001`–`HMI017`, the route-adaptive SVG schematic) and **`FR-460`–`FR-470`** (`SCD001`–`SCD015`, the four trend charts).
+
+**Nothing structural was removed with them.** All six run event markers still land on the DB3 traces, `sp_GetGaugeTrace` keeps its other consumers, and no hub event, endpoint, table or column is deleted — every DB13/DB14 reference in the real-time and tag tables was a *consumer* entry, never a row.
+
+| Concern these screens carried | Where it lives now |
 |---|---|
-| **FR-440** | The system shall display a **full-screen, route-adaptive SVG schematic** of the flat wire line with live PLC data overlaid on every component, reconfiguring automatically for FL1 Standalone, FL2 Standalone or FL3 Hybrid. [`HMI001`, `HMI002`] |
-| **FR-441** | Each component node shall display a **status indicator, the configured parameter and the live measurement**. [`HMI003`] |
-| **FR-442** | Payoff nodes shall render **green above 25 %, amber at or below 25 %, red with pulsing at or below 10 %**, alongside weight and percent remaining. [`HMI004`] |
-| **FR-443** | Gauge and width sensor nodes shall render **green in spec, red out of spec**, showing the live reading. [`HMI005`, `HMI006`] |
-| **FR-444** | Components shall render **green active, grey bypassed, red faulted**; the mandatory final FM2 stand shall render **non-bypassable** (green active or red fault only). [`HMI007`, `HMI008`] |
-| **FR-445** | Flow dashes shall animate along connector paths when `SpeedFPM > 0`, stop when paused or idle, show **static orange** when paused and **static red** on fault. [`HMI009`] |
-| **FR-446** | Components inactive for the current route shall be **greyed at 40 % opacity with a BYPASS or OFFLINE badge in place of parameter values** — dimmed, never removed, so operators see the whole machine at all times. [`HMI010`, `HMI011`] |
-| **FR-447** | A fixed **bottom alert bar** shall use the same alert rules as Dashboard 1, and a header shall show route selector, line status, order/alpha, live speed and footage. [`HMI012`, `HMI013`] |
-| **FR-448** | Navigation shall be provided to Line Status (DB1), Active Run (DB3, when a run is active) and SCADA Trends (DB14). [`HMI014`] |
-| **FR-449** | The schematic shall be driven from `FlatWireHub` events and shall **reconnect automatically** after a network drop. [`HMI015`] |
-| **FR-450** | All interactive elements shall have a **tap target of at least 48 px** and all numeric readings shall render in the **monospace** token. [`HMI016`] |
-| **FR-451** | **No print action** shall be provided on the HMI schematic. [`HMI017`] |
+| The **machine tag map** | [`RequirementDocuments/PLCTagSpecification.md`](RequirementDocuments/PLCTagSpecification.md) §3, split per line — now the only tag map |
+| The **five alert conditions** | `FR-423`, unchanged. DB1 is unaffected |
+| **SPC control-limit methodology** (`FR-466`) | The SPC checkpoint and the gauge-trace report, both unaffected |
+| **Which finishing stand cannot be bypassed** (`FR-444`) | Still open and still consequential — it governs pass-schedule validation and the tag push, not a schematic marking (**OI-04**) |
+| **`FR-442`’s payoff percentage bands** | Moot. The contradiction with `FR-034`’s absolute thresholds dies with the screen — but **`FR-106` carries the same defect on DB3** and is untouched |
+| The **no-print rule** | `D-17`, unchanged |
 
-> **The FL1 route variant must not show an Edge Set node.** `HMIAndSCADALayout.md` (May 15) still depicts one; the May 21 correction removed the edger from FL1. Correct the FL1 schematic. [SRS §4.26 open item]
+**Schedule effect:** **descope-ladder rung 7 is removed entirely.** Its 67 h stops being *recoverable* effort and becomes *never-planned* effort — Phase 5 drops 221 → **~154 h** and the programme 3,727 → **~3,660 h**, but the ladder loses its largest optional rung and Phase 5 is no longer partly deferrable.
 
-### 4.22 SCADA Trends — Dashboard 14
-
-**Screen:** [`../Mockups/dashboard_14_scada_trends.html`](../Mockups/dashboard_14_scada_trends.html)
-**SRS:** `SCD001`–`SCD015`
-
-| ID | Requirement |
-|---|---|
-| **FR-460** | The system shall display **multi-pen time-series trend charts for gauge, width, speed and payoff weight**. [`SCD001`] |
-| **FR-461** | The gauge chart shall show a **target centerline, ± tolerance band, UCL/LCL control lines and out-of-spec shading**; the width chart shall use the same visual language. [`SCD002`, `SCD003`] |
-| **FR-462** | The speed chart shall show a **max-speed line from the pass schedule**, grey shading over paused periods and the **pause reason on hover**. [`SCD004`] |
-| **FR-463** | The payoff weight chart shall show **Payoff 1 solid, Payoff 2 dashed and a 3,000 lb weld-soon threshold line**. [`SCD005`] |
-| **FR-464** | Time-window options shall be **30 min · 1 hr · 4 hr · Shift · Custom** with appropriate x-axis labels. [`SCD006`] |
-| **FR-465** | **Shared event markers** shall be displayed on a synchronised x-axis for weld join (▲ amber), die change (✦ blue), pause start/end (⏸ grey), SPC checkpoint (◆ purple), alert raised (⚠ red), alert cleared (✓ green) and rod checkout (✕ orange). [`SCD007`] |
-| **FR-466** | SPC control limits shall be calculated from the **last N measurements (default 25 per run)** using X̄-R methodology: `UCL = X̄ + 3σ`, `LCL = X̄ − 3σ`, `USL = target + tolerance`, `LSL = target − tolerance`. Out-of-spec regions shall be shaded red and in-spec green at low opacity. [`SCD008`, `SCD009`] |
-| **FR-467** | **CSV export** shall contain `Timestamp, Footage_ft, Gauge_in, Width_in, Speed_FPM, Payoff1_lb, Payoff2_lb, GaugeSpec_in, GaugeTol_in, WidthSpec_in, WidthTol_in, EventType, EventDetail`, one row per SignalR reading interval. [`SCD010`] |
-| **FR-468** | A settings panel shall control **update interval (1/5/10/30 s) · SPC sample size (10/25/50) · show/hide control limits · chart layout · dark mode**. [`SCD011`] |
-| **FR-469** | A **line selector (FL1 / FL2 / FL3)** shall be provided, with navigation from Dashboards 1, 3 and 13 and back to Active Run or Line Status. [`SCD012`, `SCD013`] |
-| **FR-470** | Charts shall be driven from `FlatWireHub` events with automatic reconnect, and **no print action** shall be provided. [`SCD014`, `SCD015`] |
+---
 
 ### 4.23 Shift Summary — Dashboard 10
 
@@ -1280,8 +1260,9 @@ erDiagram
 | Column | Type | Null | Notes |
 |---|---|---|---|
 | `Id` | INT IDENTITY | NOT NULL | PK clustered |
-| `Name` | VARCHAR(30) | NOT NULL | UNIQUE. e.g. `FM1`, `FM2_8in`, `FM2_6inS1`, `FM2_6inS2` |
+| `Name` | VARCHAR(30) | NOT NULL | UNIQUE. Position only: `FM1`, `FM2_S1`, `FM2_S2`, `FM2_S3` |
 | `LineId` | VARCHAR(5) | NULL | `FL1`/`FL2`/`FL3`; NULL = shared across lines |
+| `RollDiameterIn` | DECIMAL(5,3) | NOT NULL | Working roll diameter, inches — **FM1 12.000; FM2 `S1` 8.000, `S2` 6.000, `S3` 6.000**. `CK_Stand_RollDiameterIn`: > 0. Added Aug 4 2026 so diameter is data rather than part of the name |
 | `MinGaugeIn` / `MaxGaugeIn` | DECIMAL(8,4) | NOT NULL | Input gauge range, inches. `CK_Stand_Gauge`: Min < Max |
 | `MinWidthIn` / `MaxWidthIn` | DECIMAL(8,4) | NOT NULL | Flat wire width range, inches. `CK_Stand_Width`: Min < Max. *(The DDL comment reads "strip width" — a terminology slip in the source; the column means flat wire width.)* |
 | `IsActive` | BIT | NOT NULL | default 1 — soft delete |
@@ -1445,7 +1426,7 @@ Seeded **by the DDL itself** (not the sample-data script — the `FlatWireRunDet
 |---|---|---|---|
 | `Id` | INT IDENTITY | NOT NULL | PK |
 | `PassScheduleId` | VARCHAR(30) | NOT NULL | FK → `PassSchedule.ScheduleId` |
-| `ComponentName` | VARCHAR(20) | NOT NULL | `CK`: IN (`DB1`,`DB2`,`FM1`,`EdgeSet`,`FM2_8in`,`FM2_6inS1`,`FM2_6inS2`,`FM2_6inS3`) |
+| `ComponentName` | VARCHAR(20) | NOT NULL | `CK`: IN (`DB1`,`DB2`,`FM1`,`EdgeSet`,`FM2_S1`,`FM2_S2`,`FM2_S3`) |
 | `State` | VARCHAR(10) | NOT NULL | `CK`: IN (`Active`,`Bypass`,`Skip`) — **three values, never a boolean** |
 | `ParameterValue` | DECIMAL(8,4) | NULL | Die diameter or roll gap. `CK_PSC_ParamValue`: must be NULL unless `State='Active'` |
 | `EdgeType` | VARCHAR(10) | NULL | `CK`: IN (`Round`,`Square`) or NULL. `CK_PSC_EdgeTypeReq`: required when an `EdgeSet` component is Active |
@@ -1936,7 +1917,7 @@ The seed set is a **coherent demo dataset**, not disconnected fixtures — it is
 
 | Seed | Content |
 |---|---|
-| Lookup | `Stand` with **fixed IDENTITY** 1=FM1, 2=FM2_8in, 3=FM2_6inS1, 4=FM2_6inS2, **5=FM2_6inS3** · `Drawer` 1–13 (`DIE-0210` … `DIE-0340`) · `Edger` 1=`EDGE-ROUND-A`, 2=`EDGE-SQUARE-B` · `SpoolConfiguration` · `AlloyProperty` for 1100 / 1350 / 3003 / 5052 / 6061 |
+| Lookup | `Stand` with **fixed IDENTITY** 1=FM1 (12"), 2=FM2_S1 (8"), 3=FM2_S2 (6"), 4=FM2_S3 (6", final) — **four rows; the former Id 5 is withdrawn** · `Drawer` 1–13 (`DIE-0210` … `DIE-0340`) · `Edger` 1=`EDGE-ROUND-A`, 2=`EDGE-SQUARE-B` · `SpoolConfiguration` · `AlloyProperty` for 1100 / 1350 / 3003 / 5052 / 6061 |
 | Schedule | 10 `PassSchedule` + 70 `PassScheduleComponent` (7 per schedule) + `PassScheduleChangeLog` rows. Coverage: Draft 3 / Active 6 / Inactive 1 · FL1 8 / FL2 1 / FL3 1 · Round 6 / Square 4 |
 | Materials | 8 rods, 5 runs, 3 spools — `RUN-0001` FL1 standalone → coil `FW-00421-C01` from `R00041` + welded `R00042` · `RUN-0002` FL3 hybrid → coil, no spool · `RUN-0003` FL1 hybrid → spools `SP-00031/32` · `RUN-0004` FL2 finishing, **Paused**, consuming `SP-00031` · `RUN-0005` FL1 **aborted** with a mid-run checkout producing partial spool `SP-00033` |
 | Runs | `RodCheckin`, `RodStaging`, `SpoolCheckin`, `FlatWireRunDetail`, `RunPauseEvent`, `WeldEvent`, `RollOverride`, `DieChangeEvent`, `RunReading` |
@@ -2113,7 +2094,7 @@ enum LineId          { FL1, FL2, FL3 }
 enum LineState       { Running, Idle, Setup, Paused, Fault, Offline }
 enum RouteMode       { Standalone, Hybrid }
 enum ScheduleStatus  { Draft, Active, Inactive }
-enum ComponentName   { DB1, DB2, FM1, EdgeSet, FM2_8in, FM2_6inS1, FM2_6inS2, FM2_6inS3 }
+enum ComponentName   { DB1, DB2, FM1, EdgeSet, FM2_S1, FM2_S2, FM2_S3 }   // FM2: S1 = 8", S2 = 6", S3 = 6" final
 enum ComponentState  { Active, Bypass, Skip }          // three values — never a boolean
 enum EdgeType        { Round, Square }                  // UI labels: "Round Edge" / "Flat Edge"
 enum MaterialStatus  { RECEIVED, STAGED, INFLAT, COMPLETE, HOLD, SCRAP }
@@ -2127,7 +2108,7 @@ enum StagingStatus   { Staged, CheckedIn, Unstaged }
 
 **Four corrections applied to the April contract** (all from `REVIEW.md` Tier 1):
 
-1. `ComponentName` gains **`FM2_6inS3`** (the May 21 third stand) and drops the stray `Edger` value — the edger is expressed by `EdgeType` on the `EdgeSet` component, not by a component name.
+1. `ComponentName` is **`FM2_S1` / `FM2_S2` / `FM2_S3`** and drops the stray `Edger` value — the edger is expressed by `EdgeType` on the component, not by a component name. *(Aug 4 2026: supersedes the four-name set. FM2 has three stands and the 8" roller is S1; `FM2_6inS3` is withdrawn as never-existent.)*
 2. `CheckpointType` gains **`RollAdjustTrigger`** — `POST /rolloverride` writes a checkpoint of that type and the DB `CHECK` already allows it, but the published enum had only four values.
 3. `PayoffPosition` gains **`TraversingTakeup = 3`** to match the pinned lookup rows. Rod-fed endpoints still accept only 1 and 2.
 4. `LineStatus` (the enum) is renamed **`LineState`** so it does not collide with the `LineStatus` hub event name.
@@ -2220,14 +2201,13 @@ Response carries `preflattenDiameterIn`, `areaReductionPct`, `drawPasses`, `aspe
       { "componentName": "DB1",       "state": "Bypass", "parameterValue": null,  "edgeType": null },
       { "componentName": "DB2",       "state": "Bypass", "parameterValue": null,  "edgeType": null },
       { "componentName": "FM1",       "state": "Active", "parameterValue": 0.1225, "edgeType": null },
-      { "componentName": "FM2_8in",   "state": "Active", "parameterValue": 0.1325, "edgeType": null },
-      { "componentName": "FM2_6inS1", "state": "Active", "parameterValue": 0.1275, "edgeType": null },
-      { "componentName": "FM2_6inS2", "state": "Active", "parameterValue": 0.1225, "edgeType": "Round" },
-      { "componentName": "FM2_6inS3", "state": "Active", "parameterValue": 0.1225, "edgeType": "Round" } ] },
+      { "componentName": "FM2_S1",    "state": "Active", "parameterValue": 0.1325, "edgeType": null },
+      { "componentName": "FM2_S2",    "state": "Active", "parameterValue": 0.1275, "edgeType": "Round" },
+      { "componentName": "FM2_S3",    "state": "Active", "parameterValue": 0.1225, "edgeType": "Round" } ] },
   "success": true }
 ```
 
-Derivation: `D_pre = sqrt(4 × 0.125 × 0.875 / π) = 0.3732"`; `areaRed = 1 − (0.3732² / 0.375²) = 0.95 %`, which is ≤ 2 %, so **both draw boxes bypass**; `aspectRatio = 0.875 / 0.125 = 7.0 > 5.5`, so **FM2 activates and the route is Hybrid**; `FM1 gap = 0.125 × 0.98 = 0.1225`. The published example's `0.265` / `50.1 %` / `Standalone` is wrong on all three counts and must not be copied.
+Derivation: `D_pre = sqrt(4 × 0.125 × 0.875 / π) = 0.3732"`; `areaRed = 1 − (0.3732² / 0.375²) = 0.95 %`, which is ≤ 2 %, so **both draw boxes bypass**; `aspectRatio = 0.875 / 0.125 = 7.0 > 5.5`, so **FM2 activates and the route is Hybrid**; `FM1 gap = 0.125 × 0.98 = 0.1225`; FM2 gaps per `FR-387` — `FM2_S1 = 0.125 × 1.06 = 0.1325`, `FM2_S2 = 0.125 × 1.02 = 0.1275`, `FM2_S3 = 0.125 × 0.98 = 0.1225`. The published example's `0.265` / `50.1 %` / `Standalone` is wrong on all three counts and must not be copied.
 
 **Warning codes:** `FM2Activated` · `RouteSetToHybrid` · `PrecisionMode1350` · `HighAspectRatioWarning` (> 10) · `DieSizeSnapped` · `TooManyDrawPasses` (error) · `GaugeBelowMachineMinimum` (error) · `AlloyNotConfigured` (error) · `NoDieInInventory`.
 
@@ -2372,22 +2352,22 @@ Response: `{ coilAlpha, skidId, skidStatus, footageTotal, netWeightLb, sourceTra
 
 | Event | Payload | Cadence | Consumers |
 |---|---|---|---|
-| `GaugeReading` | `GaugeReading[]` — each `{lineId, value(in), timestamp, footagePosition}` | **batched**, ~10 Hz | DB3 traces, DB13 gauge node, DB14 chart 1 |
-| `WidthReading` | `WidthReading[]` — same shape | **batched**, ~10 Hz | DB3, DB13 width node, DB14 chart 2 |
-| `SpeedFPM` | `{lineId, value(FPM), timestamp}` | batched / decimated | DB13 flow animation + header, DB14 chart 3 |
-| `PayoffWeight` | `{lineId, position, weightLb, percentRemaining}` | batched | DB1, DB2A, DB3 payoff bars, DB13, DB14 chart 4 |
-| `FootageCounter` | `{lineId, footage(ft), timestamp}` | batched | DB3, DB13 TKUP nodes + header |
-| `ComponentStatus` | `{lineId, component, isActive, currentValue}` | **on change only** | DB3, DB13 component boxes |
-| `LineStatus` | `{lineId, status, orderId, alpha}` | **on change only, immediate** | DB1, DB13 header badge |
-| `AlertRaised` | `{lineId, alertType, severity, message, timestamp}` | **immediate, unbatched** | DB1 + DB13 alert bars |
-| `AlertCleared` | `{lineId, alertType}` | **immediate, unbatched** | DB1 + DB13 alert bars |
+| `GaugeReading` | `GaugeReading[]` — each `{lineId, value(in), timestamp, footagePosition}` | **batched**, ~10 Hz | DB3 traces, DB1 live gauge |
+| `WidthReading` | `WidthReading[]` — same shape | **batched**, ~10 Hz | DB3 traces, DB1 live width |
+| `SpeedFPM` | `{lineId, value(FPM), timestamp}` | batched / decimated | DB1 board, DB3 header, **the machine-stop prompt** |
+| `PayoffWeight` | `{lineId, position, weightLb, percentRemaining}` | batched | DB1, DB2A, DB3 payoff bars |
+| `FootageCounter` | `{lineId, footage(ft), timestamp}` | batched | DB3 header, spool progress, die-life accumulation |
+| `ComponentStatus` | `{lineId, component, isActive, currentValue}` | **on change only** | DB3 component panel, roll-adjust dialog |
+| `LineStatus` | `{lineId, status, orderId, alpha}` | **on change only, immediate** | DB1 header badge |
+| `AlertRaised` | `{lineId, alertType, severity, message, timestamp}` | **immediate, unbatched** | DB1 alert bar |
+| `AlertCleared` | `{lineId, alertType}` | **immediate, unbatched** | DB1 alert bar |
 | `PayoffStateChanged` | `{lineId, position, state, rodAlpha, rodSeqno, isWelded}` | **immediate, unbatched** | DB2A bay cards, DB1 "Payoff 2 not loaded" rule |
 
 `state` on `PayoffStateChanged` is `NotStaged` · `Staged` · `Active` · `Blocked`. It fires on every bay-occupancy change: pre-check-in, pre-check-out, mark-as-welded, and check-in consuming a staged row.
 
 > **`PayoffStateChanged` must never enter the ~100 ms telemetry batch.** A bay changing hands is an operator-visible state transition, not a sampled reading. `PayoffWeight` stays in the batched hot path; the two are complementary and Dashboard 2A needs both — occupancy from one, live weight from the other.
 
-**SCADA event markers** (also broadcast, consumed by DB3 traces and DB14): `WeldJoinEvent` · `DieChangeEvent` · `PauseEvent` · `SPCCheckpoint` · `AlertEvent` · `RodCheckoutEvent`.
+**Run event markers** (also broadcast, consumed by DB3 traces): `WeldJoinEvent` · `DieChangeEvent` · `PauseEvent` · `SPCCheckpoint` · `AlertEvent` · `RodCheckoutEvent`.
 
 > **Naming:** the domain aggregate, the table, the endpoint and the story are all **`WeldEvent`**. The SignalR *marker method* may keep the name `WeldJoinEvent`, but only because it is documented here — do not let the aggregate drift back to `WeldJoinEvent` [REVIEW Tier 3 #29].
 
@@ -2440,46 +2420,9 @@ Purpose-built for high-frequency AGC telemetry. Design goals: low latency, minim
 
 **The integration layer is the existing `OPCConnection` service, extended to subscribe to FL1/FL2/FL3 tags.** PLCs are new hardware; **OPC servers are unchanged**; no new integration layer is introduced (`INT007`).
 
-**Push (write) — `PLCTagService`**
-
-| Operation | When | Content |
-|---|---|---|
-| `PushPassSchedule(scheduleId, lineId, payoffPosition)` | **only** on explicit operator acknowledgement of the pass schedule at check-in — never on schedule save, load or generation | component active/bypass state, DB1/DB2 die sizes, FM1 and FM2 roll gaps, edge type, speed targets, gauge/width targets |
-| `ClearPayoffTags(lineId, payoffPosition)` | on rod checkout, **after the line is confirmed stopped** | reset to idle/bypass defaults; result recorded in `RodCheckout.PlcTagsCleared` |
-| per-component write | on Roll Adjust Apply | the new roll gap; result in `RollOverride.PlcTagWritten` |
-| hold/idle | on pause | drive enable / speed to idle |
-| `SimulatePLCTagPush` | dev and pre-commissioning | logs intended writes with no live PLC connection |
-
-Every write is audit-logged with tag path, value, operator, timestamp and result (`INT004`).
-
-> **OPC writes are not transactional.** `INT002` says the batch is "rolled back" on any failure; in reality the recovery is a **compensating re-clear**. Describe it that way in code and comments — gap **G16**.
-
-**Read (subscribe) — representative FL1 tag map** (FL2/FL3 follow the same pattern; all paths come from `appsettings.json`):
-
-| Tag path | Description | Used in |
-|---|---|---|
-| `FL1.DB1.Die.ActiveDiameter` / `FL1.DB2.Die.ActiveDiameter` | current die diameter (in) | DB13 DB nodes, DB3 component panel |
-| `FL1.DB1.Status.Active` / `FL1.DB2.Status.Active` | active (bool) | DB13 status colour |
-| `FL1.FM1.RollGap.Current` | FM1 current roll gap (in) | DB13 FM1 node |
-| `FL1.FM1.Status.Active` / `.Status.Fault` | running / fault (bool) | DB13 status + fault colour |
-| `FL1.AGC.Gauge.Current` | live gauge post-FM1 (in) | DB13 gauge sensor, DB14 chart 1, DB3 |
-| `FL1.AGC.Width.Current` | live width (in) | DB13 width sensor, DB14 chart 2, DB3 |
-| `FL1.Speed.FPM` | line speed | DB13 animation, DB14 chart 3, **and the stop-popup trigger** |
-| `FL1.Payoff1.Weight.Lb` / `FL1.Payoff2.Weight.Lb` | load-cell weight | DB1/DB2A/DB3 payoff bars, DB13, DB14 chart 4 |
-| `FL1.EdgeSet.Status.Active` | edge set active | DB13 EdgeSet node *(FL1 has no edger — remove from the FL1 route variant)* |
-| `FL1.TKUP1.Footage.Current` / `FL1.TKUP2.Footage.Current` | footage counter | DB3, DB13 TKUP nodes, spool progress |
-| `FL2.FM2.Stand8.RollGap.Current` / `.Stand6S1.` / `.Stand6S2.` | FM2 stand gaps | DB13 FM2 nodes |
-| `FL2.FM2.Stand8.Status.Active` / `.Stand6S1.` / `.Stand6S2.` | FM2 stand active | DB13 status |
-| **`FL{n}.LineState`** | the run/stop state tag | **rod-checkout gatekeeper** and the **spool stop-confirmation trigger** |
-
-> `FL{n}.LineState`'s actual **state vocabulary is undocumented** — whether it is a two-state run/stop bit or distinguishes `RUNNING / STOPPED / PAUSED / FAULT / THREADING / JOG`. Two features depend on the answer. **OQ-63 / OI-35.**
-> The FM2 tag map above lists only **S1 and S2**; the May 21 revision added **S3** and made it final. Extend the tag map. **OI-36.**
-
-**Feet consumption:** sourced from the PLC wherever available, continuously updating remaining feet and derived weight for **both the active input coil and the next welded (queued) coil** (`INT011`). Unavailable or invalid feet data sets ITInhibit and prevents rolling (`INT012`).
-
-Exact tag paths must be confirmed with Tim O. and the PLC commissioning engineer before go-live; because they are configuration-driven they can be corrected without redeployment.
-
----
+> **Everything else in this section is superseded by [`RequirementDocuments/PLCTagSpecification.md`](RequirementDocuments/PLCTagSpecification.md) (4 Aug 2026)** — the write surface (`[PLC §7]`), the **per-line tag map** (`[PLC §5.2]`), the naming convention (`[PLC §4]`), `ITInhibit` (`[PLC §8]`), the sixteen-moment tag lifecycle (`[PLC §9]`), feet consumption (`[PLC §5.1]`), the commissioning sequence (`[PLC §12]`) and the `PLC-Q##` open-item register (`[PLC §13]`).
+>
+> That document is the **only** tag map in the repository. This section carried a 13-row FL1 map; the sixth copy, in `HMIAndSCADALayout.md`, was deleted with the DB13/DB14 descope on the same day, and the two facts only it recorded — the **FM2 6″ S3 row** and the register entry for **confirming every tag path** — were rescued before deletion.
 
 ## 7. User Interface Specification
 
@@ -2510,8 +2453,6 @@ The 27 HTML files in [`../Mockups/`](../Mockups/) are the **approved visual base
 | **DB12** | Rod Checkout (Mode A / Mode B) — **dialog** | `rod_checkout.js` *(launcher: `dashboard_12_rod_checkout.html`)* | FL1/FL3 operator | Rod removed before natural completion |
 | **DC** | Die Change — **dialog** | `die_change.js` *(launcher: `dashboard_die_change.html`)* | FL1/FL3 operator | Drawing die replaced mid-run |
 | **DM** | Die Management | `dashboard_die_management.html` | Maintenance | Machines App → Tooling Inventory |
-| **DB13** | HMI Line Schematic | `dashboard_13_hmi_schematic.html` | Supervisor / Operator | From DB1 card or DB3 Machine View |
-| **DB14** | SCADA Multi-Trend Charts | `dashboard_14_scada_trends.html` | Operations / Supervisor / Engineering | From DB1 header, DB3 action bar or DB13 |
 | **OEE** | OEE Dashboard | `dashboard_oee.html` | Supervisor / CI engineer | On demand |
 | — | Coil Spinner (loading indicator) | `coil-spinner.html` | — | A component demo, not a screen |
 
@@ -2540,15 +2481,11 @@ flowchart TD
   DB7["DB7 Coil Completion"]
   DB7b["DB7b Packing"]
   DB10["DB10 Shift Summary"]
-  DB13["DB13 HMI Schematic"]
-  DB14["DB14 SCADA Trends"]
 
   DB1 --> DB2A
   DB1 -->|open the running line| DB3
   DB1 --> DB5A
   DB1 --> DB9A
-  DB1 --> DB13
-  DB1 --> DB14
   DB9A --> DB9
   DB2A -->|Proceed to check-in| DB2
   DB2A -->|inspection Fail — hard block| DB8
@@ -2563,12 +2500,9 @@ flowchart TD
   DB3 --> DB11
   DB3 --> DC
   DB3 --> DB7
-  DB3 -->|Machine View — full screen| DB13
-  DB3 -->|View Trends| DB14
   DB3 -->|Pause then Check Out Rod| DB12
   DC -->|Gauge drift or Size change| DB6
   DB7 --> DB7b
-  DB13 --> DB14
   DB10 --> DB8
 ```
 
@@ -2630,9 +2564,9 @@ Colour semantics used consistently: **green = active / in spec / on target · am
 | Data entry | on-screen virtual keyboard and numeric keypad | No physical keyboard at the machine |
 | Transactional actions | modal pop-ups that must be resolved or explicitly dismissed | Stop, Weld, Checkout, SPC entry |
 | Supervisor overrides | **block passive dismissal** (`NFR009`) | An override must be a decision, not an accident |
-| Print | **no print action** on HMI (DB13) or SCADA (DB14) | Consistent with the digital-traveler decision |
+| Print | **no print action** on any operator screen | Consistent with the digital-traveler decision |
 
-**The documented exception to the 14 px floor** is axis labels inside vertically compressed SVG charts — `dashboard_3_active_run` and `_v2`, `dashboard_13_hmi_schematic`, `dashboard_14_scada_trends` — where tick spacing cannot fit 14 px without dropping ticks or making the charts taller. Do **not** "fix" these by shrinking text elsewhere.
+**The documented exception to the 14 px floor** is axis labels inside vertically compressed SVG charts — `dashboard_3_active_run_v2`, `_fl2` and `_fl3` — where tick spacing cannot fit 14 px without dropping ticks or making the charts taller. Do **not** "fix" these by shrinking text elsewhere.
 
 ### 7.6 Screen notes — layout and behaviour worth carrying forward
 
@@ -2665,7 +2599,7 @@ Only what a developer cannot infer from §4 is repeated here.
 
 **DB2 — Rod Check-in (approved wizard).** A rod-scan row and an Incoming Bundle Information grid stay visible above a **6-tab wizard** with a per-tab index, name and hint and a "Step n of 6" caption. Tabs unlock progressively. Step 2 carries the pass-schedule confirm bar (amber until confirmed, then green), a **Change** dropdown listing alternates with the recommended one flagged, a warning that a non-recommended selection is flagged for Operations review, the component table and an info callout stating that parameters push to PLC tags on acknowledgement. Step 3 carries M1, M2, the derived ovality and a **tolerance-band visualization** — this is what replaced the retired progress ring. Steps 4–6 are machine inspections using **OK / Not Good / N/A** buttons with measured-value fields against a stated spec. A failed-checks banner offers **Authorize Override** (supervisor badge, password, required reason). The footer shows an `n/6` progress ring, "n of 6 steps complete · complete each step to proceed", Cancel, and **Acknowledge & Begin Check-in**.
 
-**DB3 — Active Run.** Header with line badge, order, alpha, alloy and a pause-timer badge. A grouped action cluster (*Run events* — SPC Checkpoint, WIP Reject; *Go to* — Die Change, Check Out Rod, View Trends; *Run control* — Pause run, Complete Run). A machine-status panel with run time, speed, footage, lube temperature and, in v2, the live spool fill (`SP-00031 · 1,460 / 2,000 lb`). Payoff blocks with progress fills. A components block naming the pass schedule. Collapsible **Rod Information** and **Order Information** accordions (order no, customer, due date, gauge tol, width tol, setup width, setup gauge, finish, OD min–max, max weight of spool, total spool weight, order weight) and a **Rods In Queue** table. Tab strip **Traces | Machine View**, with each trace panel carrying a title, target subtitle, live reading, in/out-of-spec badge, a maximize control and a stats row (min, max, avg, deviation). v2 adds a **Complete this run?** confirmation modal.
+**DB3 — Active Run.** Header with line badge, order, alpha, alloy and a pause-timer badge. A grouped action cluster (*Run events* — SPC Checkpoint, WIP Reject; *Go to* — Die Change, Check Out Rod; *Run control* — Pause run, Complete Run). A machine-status panel with run time, speed, footage, lube temperature and, in v2, the live spool fill (`SP-00031 · 1,460 / 2,000 lb`). Payoff blocks with progress fills. A components block naming the pass schedule. Collapsible **Rod Information** and **Order Information** accordions (order no, customer, due date, gauge tol, width tol, setup width, setup gauge, finish, OD min–max, max weight of spool, total spool weight, order weight) and a **Rods In Queue** table. Tab strip **Traces | Machine View**, with each trace panel carrying a title, target subtitle, live reading, in/out-of-spec badge, a maximize control and a stats row (min, max, avg, deviation). v2 adds a **Complete this run?** confirmation modal.
 
 **DB4 — Weld Event.** ~~A **Rods In Queue** accordion that can be re-sequenced by drag with an Undo; a **traceability chain** strip showing completed → outgoing (with remaining footage and a WELD NOW chip) → incoming (staged) → future rod, above the weld-point footage; two rod panels (outgoing auto-identified, incoming scan-or-enter) with alloy, diameter, temper, gross weight, check-in time and inspection result; a weld-type block showing **Induction only**; a quality Pass/Fail pair with a fail-reason select; a footer stamp (operator, timestamp, output alpha) and a confirm button labelled **"Confirm weld · link R00042 → R00043"**.~~
 
@@ -2679,9 +2613,7 @@ Only what a developer cannot infer from §4 is repeated here.
 
 **DB12 — Rod Checkout.** A **Mode A / Mode B toggle**, a context banner of facts (rod alpha, payoff, order, footage at checkout, check-in time, pass schedule), a **consequence box** spelling out exactly what the checkout will do, then option-card lists for checkout reason, rod disposition and — Mode B only — in-process material disposition, each card carrying a name and a plain-language consequence including the resulting status. A footer stamp and **Confirm checkout**.
 
-**DB13 — HMI Schematic.** A full-screen SVG with section bands (PAYOFF / DRAW / FLATTEN / TAKEUP-1 / 3-STAND MILL / TAKEUP-2), a route bar switching FL1 Standalone / FL2 Standalone / FL3 Hybrid, a header with line badge, order, alpha, alloy, speed and footage, and a fixed bottom alert bar. Component boxes carry a status dot, the configured parameter and the live measurement.
-
-**DB14 — SCADA Trends.** Toolbar with line selector, time-window segmented control, show-limits and show-events toggles, Export CSV and a settings button. Four chart cards — gauge and width full width with target centreline, tolerance band, UCL/LCL and OOS shading; speed and payoff weight side by side. A shared **event timeline** strip beneath, listing weld, die change, pause and SPC events with symbol, description, footage and time.
+**DB13 — HMI Schematic** and **DB14 — SCADA Trends** were **descoped on 4 Aug 2026** together with the Machine View tab. Both mockups are deleted and the screen count is now **20**.
 
 **DM — Die Management.** Header with line pills and a **Register new die** button; a 4-card stats strip; a two-column body — inventory list on the left with filter tabs and count badges, detail panel on the right (464 px) with header, life bar, six-field grid, alert banners, action buttons and a tabbed history. Four modals: Reset counter · Edit threshold · Retire die · Register new die.
 
@@ -2858,7 +2790,7 @@ Phase 1 is the only phase organised by technology layer. Phases 2–14 are **com
 | **2** | **Pass Schedule Management** | The machine recipe library — **the highest dependency in the project** | DB9 + DB9A + Generate-from-Specs modal; `PassScheduleController` + handlers + generator; alloy lookup consumption; override/audit logging | 1 | FW-010, 011, 012, 013, 014, 004 |
 | **3** | **Line Status Board & Real-Time Backbone** | First live end-to-end slice: OPC → hub → Dashboard 1 | DB1; `LinesController` + `LineStatusService`; `FlatWireHub` broadcasting; OPC poller + alert engine; `flat-wire-signalr.service` fully wired | 1 | FW-060, 080, 081 (chart groundwork) |
 | **4** | **Rod Check-In & PLC Configuration** (FL1/FL3) **+ Pre-Check-In** | The core operator entry point, and the staging station that makes continuous feed possible | DB2 (+FL3); **DB2A**; `CheckInController` + `CheckInService`; **`PayoffStagingController` + `RodStagingService`**; `PLCTagService.PushPassSchedule`; `INFLAT` + run header; `PayoffStateChanged`; the `FL1PO` station; audit logging | 2, 3, upstream rod + scheduling | FW-061, 082, 010, 002 |
-| **5** | **Active Run Monitoring & Live Gauge/Width Trace** | The run cockpit | DB3 (FL1/FL3) + DB13 + DB14; `gauge-trace-chart`; `RunController` (active + gaugetrace); SCADA multi-trend + settings | 4 | FW-062, 081, 080 |
+| **5** | **Active Run Monitoring & Live Gauge/Width Trace** | The run cockpit | DB3 (FL1/FL3); `gauge-trace-chart`; `RunController` (active + gaugetrace) | 4 | FW-062, 081, 080 |
 | **6** | **In-Run Production Events** (weld · die change · SPC · roll adjust · pause) | Every mid-run transaction | DB6, DB11, DC, Pause/Resume; five event controllers + services; die-inventory validation hook; override → PLC write; SPC gating | 5 | FW-063, 073, 065, 070, 071 |
 | **7** | **Exception Handling: WIP Rejection & Rod Checkout** | Formal off-ramps for suspect material and early rod removal | DB8 + DB12 (Modes A/B) + partial re-check-in; `WipRejectionController` / `CheckOutController` + services; supervisor-approval flow; carry-forward columns | 6 | FW-067, 072, 071 |
 | **8** | **FL2 Spool Check-In & Finishing Run** | The finishing leg | DB5 + DB3 FL2 variant; `POST /checkin/spool`; historical gauge-trace query; FL2 PLC push | 4–6 output (a spool must exist) | FW-064, 070 |
@@ -2922,7 +2854,7 @@ Working days are **counted, not assumed**: **Labor Day falls on Mon 7 Sep 2026**
 | W1 | Aug 17–21 | 5 | 1 completion / carry-over | — | 0.0 | *the only slack in the plan — the whole recovery budget* |
 | W2 | Aug 24–28 | 5 | 2 (start) · 3 (start) | 26.4 | 5.3 | Recipe library; hub streaming |
 | W3 | Aug 31–Sep 4 | 5 | 2 (finish) · 3 (DB1 live) | 26.3 | 5.3 | Generate-from-Specs; line board |
-| W4 | Sep 8–11 | **4** | 4 (+ DB2A) · 5 | 59.6 | **14.9** | PLC push + `INFLAT`; `RodStaging` + payoff staging + `FL1PO`; live gauge/width + DB13/14 |
+| W4 | Sep 8–11 | **4** | 4 (+ DB2A) · 5 | 59.6 | **14.9** | PLC push + `INFLAT`; `RodStaging` + payoff staging + `FL1PO`; live gauge/width *(DB13/14 descoped 4 Aug — −67 h)* |
 | W5 | Sep 14–18 | 5 | 6 · 7 · 8 (start) | 70.2 | **14.0** | Weld/die/SPC/roll/pause; rejection/checkout; spool check-in |
 | W6 | Sep 21–25 | 5 | 8 (finish) · 9 · 10 · 11 | 73.3 | **14.7** | Historical profile; coil/label/skid; hybrid; shift + reports |
 | W7 | Sep 28–30 | **3** | 12\* · 13 · 14 | 81.5 | **27.2** | Yield/cost/scrap\*; admin; 3-route E2E + UAT sign-off |
@@ -3068,7 +3000,7 @@ Every decision that is closed. **Do not re-open these.** Where a decision replac
 | **D-14** | Component state is a **three-value enum** `Active` / `Bypass` / `Skip` | Jul 2026 | A boolean cannot express Bypass versus Skip | FW-010's `IsActive (bool)` |
 | **D-15** | Edge type has **one domain value set** `Round` / `Square`, with display labels "Round Edge" / "Flat Edge" | Jul 2026 | One enum, one CHECK, one display pipe | The three competing vocabularies (`Round/Square`, `Round/Flat`, `Round Edge/Flat Edge`) |
 | **D-16** | `CheckpointType` has **five** values, including `RollAdjustTrigger` | Jul 2026 | `POST /rolloverride` can write the checkpoint it is specified to write | The four-value API enum |
-| **D-17** | The **traveler is fully digital**; printing is disabled for flat wire. Coil, spool and skid **labels still print** | 28 Apr 2026 | No "Print Traveler" action; no print action on DB13/DB14 either | — |
+| **D-17** | The **traveler is fully digital**; printing is disabled for flat wire. Coil, spool and skid **labels still print** | 28 Apr 2026 | No "Print Traveler" action; no print action on any operator screen either | — |
 | **D-18** | Alpha generation happens **at planning time**, not during execution; stop calculation is system-driven; the planner enters **weight only** | 28 Apr 2026 | "Number of Cuts" / "Number of Stops" are not used for flat wire; a remainder alpha is generated; "Assign as-is" routes the remainder to stock | Execution-time alpha generation |
 | **D-19** | The rectangular pattern picture in Planning is replaced by a **tabular order → spool → weight grid** | 28 Apr 2026 | Flat wire output is not a rectangular pattern | — |
 
@@ -3077,17 +3009,18 @@ Every decision that is closed. **Do not re-open these.** Where a decision replac
 | ID | Decision | Consequence | Supersedes |
 |---|---|---|---|
 | **D-20** | **FL1 has no edger.** Edge Set removed from FL1 check-in, FL1 active run and FL1 pass schedules | No edge-set fields on FL1 screens; the FL1 HMI route variant must drop its Edge Set node | Every April-dated source showing an edger on FL1 |
-| **D-21** | **FM2 has three 6" stands (S1, S2, S3); edgers sit at S2 and S3 only** | `FM2_6inS3` added to the component vocabulary; `FM2_8in` retained for legacy schedules | The `8" → 6"S1 → 6"S2` sequence with S2 final |
+| ~~**D-21**~~ | ~~**FM2 has three 6" stands (S1, S2, S3); edgers sit at S2 and S3 only**~~ · **SUPERSEDED by D-26 (4 Aug 2026)** — the stand *count* and the edger placement were right, the *diameters* were not | ~~`FM2_6inS3` added to the component vocabulary; `FM2_8in` retained for legacy schedules~~ | The `8" → 6"S1 → 6"S2` sequence with S2 final |
 | **D-22** | **Weld is induction only.** Laser welding removed as not viable | `LaserWeld` retained in the data model for historical genealogy only; never selectable | Laser welding for flat-to-flat joins |
 | **D-23** | **Shift Summary is per-machine** — FL1/FL2/FL3 tabs plus All Lines; the KPI strip reflects the selected machine | One screen, four scopes | A single combined view |
 | **D-24** | **SPC checkpoint types add "Post DB1"** | Available in the UI selector | — |
 | **D-25** | Dashboard 7 shows gauge and width as the **target value when in tolerance**, not the measured average | Cleaner label and cert data | Average-measured display |
+| **D-26** *(4 Aug 2026)* | **FM2 has three stands: `S1` = 8", `S2` = 6", `S3` = 6". Edgers at S2 and S3 only; S3 is the final, non-bypassable stand.** The 8" roller **is** S1 — it is not a separate component upstream of three 6" stands | Component vocabulary becomes position-only — `FM2_S1` / `FM2_S2` / `FM2_S3` — and roll diameter moves into the new `Stand.RollDiameterIn` column (12.000 / 8.000 / 6.000 / 6.000), so a re-roll is a one-row update. `FM2_6inS3` is **withdrawn as never-existent** (it never had a tag path or a seed row). Mapping: `FM2_8in`→`FM2_S1`, `FM2_6inS1`→`FM2_S2`, `FM2_6inS2`→`FM2_S3`. `Stand.Id` 1–4 keep their meaning; Id 5 is removed. PLC stations become `FL2.FM2.S1/S2/S3` pending `PLC-Q04`. **Closes `OI-04` and `OI-36`** | **D-21**, and every source showing four FM2 stands, a separate `8" Roller` component, or a 6" stand named S1 |
 
 ### 10.3 Business decisions from the open-questions register
 
 | OQ | Decision | Date | Consequence |
 |---|---|---|---|
-| **OQ-4** | SCADA chart layout is **defined as Dashboard 14**; the HMI schematic as Dashboard 13; all PLC tag paths documented | 15 May 2026 | Unblocked SCADA report development. Tag paths still need commissioning confirmation |
+| ~~**OQ-4**~~ | ~~SCADA chart layout is **defined as Dashboard 14**~~ — **SUPERSEDED 4 Aug 2026.** DB13, DB14 and the Machine View are descoped, so the chart-layout half is moot. Its *other* subject — **machine tags for flat wire** — survives, is specified in `RequirementDocuments/PLCTagSpecification.md`, and remains unconfirmed as **`PLC-Q02`**. *(Raised, not asked: DB14 was also the answer to the legacy .NET SCADA report.)* | ~~15 May 2026~~ | ~~Unblocked SCADA report development. Tag paths still need commissioning confirmation |
 | **OQ-27** | Mid-run pass-schedule change — **five cases**: (1) same-spec tooling swap → **single alpha** + die-change event at footage; (2) size/product-config change → **new child alpha** at the footage breakpoint; (3) edge-type change → **new child alpha**; (4) roll-gap adjustment within tolerance (AGC) → **single alpha, no change**; (5) roll-gap change to a new target → **new child alpha** | 4 May 2026 | Determines when `FW-…-C##-A` children are minted |
 | **OQ-28** | Pass-schedule override authority — **four-step flow**: Ops Manager logs the override in DB9 → Active Run Monitor raises an alert requiring explicit **Acknowledge or Stop Run** (no passive dismissal) → the system records material before and after under their respective configurations → an **automatic SPC checkpoint** fires post-change. Operators are read-only except a one-for-one same-size die swap | 4 May 2026 | The machine keeps running on the **old** PLC values until the operator acknowledges |
 | **OQ-29** | Component failure mid-run — build an **unplanned component bypass** as a distinct transaction from a planned bypass: captures component, time, footage at failure, reason, operator; **alpha split** at the bypass point; **supervisor acknowledgement** required; a **disposition step** for pre-bypass material | 4 May 2026 | A new event type not yet in the schema — see OI-43 |
@@ -3149,11 +3082,13 @@ Every unresolved item, with impact, the phase it blocks, and who must decide. **
 | **OI-50** | **OQ-15 — which identifier is scanned at FL2 check-in** (SP-series alpha, spool number or bundle ID) and how it links to the outgoing coil record. Interacts with OI-02 | Gates the FL2 check-in scan | **Phase 8** | Jaspreet / Tim O. |
 | **OI-51** | ~~**G1 — no capacity or effort model.** Thirteen workflow phases in ~6.5 weeks with no per-phase owner or effort estimate~~ **✅ MODEL DELIVERED (Jul 30 2026)** — `DevelopmentPlan/CapacityAndEffortModel.md`: six delivery streams, a published unit-rate card, per-phase dev-day effort for all 17 phase specs, a working-day capacity model, an ordered descope ladder, and an Aug-14 calibration checkpoint. Per-phase **Owner** + **Effort** are stamped on every phase file and in the roadmap nav table. *(Both counts were correct — 14 phases = 1 platform + 13 workflow phases 2–14.)* **The finding is worse than the gap stated:** **465.6 dev-days vs 32 post-gate working days (44 total) = 10.6 FTE sustained**, a **10.7-FTE Phase-1 gate**, an impossible **27.2-FTE W7**; the full descope ladder recovers **12%** (55.9 days, leaving 9.3 FTE), and this row's original mitigation is worth **34.5 days ≈ 0.8 FTE**. **Two residuals, both for programme management: (1)** the §1 named-owner roster is unfilled, so required-vs-available FTE cannot be computed; **(2)** the 30 Sep date requires an explicit decision — staff to ~11 FTE, move the date (6 FTE → 18 Nov; 8 FTE → 22 Oct, both inside the planned Q4 window), or cut below the critical path (model §7) | ~~Phases miss 30 Sep; silent scope loss~~ → **quantified**: 30 Sep is unreachable at any plausible team size. The escalation, not the model, is the open item | all | Programme management |
 
+| ~~**OI-36**~~ | ~~**The final finishing stand (6″ S3) has no tag path, and the *write* side already targets it.**~~ **DECIDED (4 Aug 2026) — the final stand's tag path exists and always did.** The FM2 roller-size correction (**D-26**) establishes that FM2 has three stands, so the client's published map — which carries exactly **three** FM2 stations, all `[CONFIRMED]` by observation — was complete. The station formerly read as *"6″ S2"* **is** the final stand, now specified as **`FL2.FM2.S3`**. The stand that had no path was the phantom `FM2_6inS3`, which does not exist. The residual is not a missing tag but a **naming** question: the rename from the observed `Stand8`/`Stand6S1`/`Stand6S2` to `S1`/`S2`/`S3` needs controls-engineer sign-off — tracked as **`PLC-Q04`** / gap **G32**, with the as-published → as-specified mapping in `[PLC §4.3]`. **The stand that had no path does not exist.** The edger paths at S2 and S3 remain genuinely absent — that is **`PLC-Q07`** / **G29**, unaffected | ~~The FL2/FL3 pass-schedule push~~ → narrowed to station naming | Closed | Closed |
+
 ### 11.2 High — resolve before the dependent build
 
 | ID | Issue | Impact | Blocks | Owner |
 |---|---|---|---|---|
-| **OI-04** | **⚠️ UNRESOLVED** — Which FM2 stand is non-bypassable? SRS §2.7 says **6" S3**; the DDL comment, the API validation rules and `HMI008` all say **`FM2_6inS2`** | The wrong stand locked on produces the wrong pass schedule and the wrong PLC push | Phases 2, 8 | Tim O. |
+| ~~**OI-04**~~ | ~~Which FM2 stand is non-bypassable? SRS §2.7 says **6" S3**; the DDL comment, the API validation rules and `HMI008` all say **`FM2_6inS2`**~~ · **DECIDED (4 Aug 2026) — `FM2_S3`.** There was never a real contradiction: under the three-stand correction (**D-26**) the DDL's `FM2_6inS2` and the SRS's `6" S3` are **the same physical stand**, FM2's final gauge-control stand. Only the phantom fourth stand made them look inconsistent. Enforce against `FM2_S3`; `FM2_S1` and `FM2_S2` are bypassable | — | Closed | Closed |
 | **OI-07** | **RESPECIFIED (client, 30 Jul 2026) — four min/max tolerance pairs, values owed.** ~~Add `AlloyProperty.RodDiameterToleranceDefault`~~ Tim confirmed **upper and lower limits for gauge (height), width and diameter, plus ovality**, held in the lookup and applied at **both** staging and check-in. That makes this a **rename-and-widen** of the two existing single-± columns plus two new dimensions — not a single column add. The hard-coded ovality `≤ 0.003"` in `CheckinImplementationPlan.md` must move into the lookup too. **The values are owed by e-mail** ("I want to say it's plus or minus 10" is not a specification), so columns go in nullable and **nothing is seeded**; the Dashboard 2A per-alloy map stays visibly mock | `CHK007` is not implementable until the values land; out-of-tolerance rod would be accepted | Phase 4 | Tim O. / IT |
 | **OI-14** | **✅ CLOSED 1 Aug 2026 — four outcomes.** `pause_run.js` now implements `ResumeRun` / `LogWipRejection` / `CheckOutRod` / `ContinuePause`, matching `POST /run/{runId}/resume` and `CK_RunPauseEvent_Outcome`. Rod Checkout is no longer a pause reason and `FR-262` is superseded | — | Phase 6 | Closed |
 | **OI-34** | **G9 — the non-functional targets are absent.** AGC sample rate, concurrent client count, latency budget and reading-retention period are all undefined. A hub load test is scheduled at QA2 but has no pass criteria | Real-time may not scale or perform; `RunReading` has no retention policy | Phases 3, 5 | Architecture / Engineering |
@@ -3217,7 +3152,6 @@ Every unresolved item, with impact, the phase it blocks, and who must decide. **
 | **OI-31** | **G8 — no data-migration deliverable for legacy `FlatLineSetup` / `FlatLineProcessing`.** Both are renamed into the new model, but there is no mapping, migration, validation or drop-criteria plan | Legacy data stranded when the old tables are dropped | Phase 1C | DBA / Jaspreet |
 | **OI-32** | **Six endpoint groups the contract lacks:** alloy-lookup CRUD with audit, roll-override revert, the supervisor disposition command for a pending Mode B checkout, die-inventory CRUD, spool-completion prompt/commit, and SPC-HOLD QA release | Six specified behaviours have no API surface | Phases 2, 6, 7, 9, 13 | Backend / Jaspreet |
 | **OI-33** | **The `planning_routings` column mapping is unmapped.** The `Available` queue projection and the rod→order resolution read planning and scheduling tables in `ual-database` whose exact names and columns are outside this repository. This is the missing "Tables (read)" entry in the Phase 4 spec | Phase 4 cannot be built without it | **Phase 4** | Planning DB owner |
-| **OI-36** | **The FM2 OPC tag map lists only S1 and S2.** The May 21 revision added S3 and made it the final stand | The final stand has no tag path | Phases 5, 8 | Engineering |
 | **OI-40** | **The calendar is internally inconsistent.** The Phase-1 gate is 14 Aug; the week grid puts Phase 1 in W1 = Aug 17–23 and M1 at Aug 23. Nobody has re-baselined M1 and QA1 against the gate | Milestones cannot be reported against | all | Programme management |
 | **OI-41** | **Phase 6 depends on Phase 13.** Die-change validation needs the die inventory Die Management creates. Either pull a minimal die reference into Phase 6 or resequence | Die-change scan validation has no inventory to check against | Phase 6 | Programme management |
 | **OI-43** | **The OQ-29 unplanned-component-bypass event has no home.** The decision specifies a distinct transaction with component, time, footage, reason, operator, an alpha split, supervisor acknowledgement and a pre-bypass disposition step — **no table, endpoint, screen or story exists for it** | A decided requirement is unimplemented | Phase 6 | Architecture / Jaspreet |
@@ -3258,7 +3192,12 @@ These are **not** in the existing registers and are recorded here for the first 
 
 | ID | Finding |
 |---|---|
-| **OI-04** | The **mandatory FM2 stand** is `S3` per SRS §2.7 but `FM2_6inS2` per the DDL comment, the API validation rules and `HMI008`. Three artifacts enforce a rule the equipment correction moved. *(Also listed in 11.2 — repeated here because it is a new finding, not a tracked gap.)* |
+| **`PLC-Q06`** | **The SRS contradicts itself on speed.** §9.1 said the push carries *speed **targets***; `FR-073` says *speed **limits***. A setpoint and a safety clamp are different tags with opposite failure modes — write a setpoint where the machine expected a ceiling and a check-in starts a threading line at production speed. Raised as `Q85`; `FR-073`’s wording is deliberately left unfixed until it closes |
+| **`PLC-Q07`** | **No edger tag path exists on any line, yet edge type is in the push payload.** The only edger-adjacent tag in any published map was on **FL1 — the one line with no edger**. FM2’s edgers at S2 and S3 have no activation, status or profile path. Raised as `Q86` / gap **G29** |
+| **`PLC-Q08`** | **FM2’s controller namespace on FL3 is undetermined.** Every published map addresses the finishing stands under the **FL2** namespace — including the map headed *"FL1 shown, other lines follow the same pattern"* — while FL3 pushes FM1 **and** FM2 in one batch. So it is unknown whether that batch crosses a controller boundary, which decides whether there is one failure domain or two for the compensating re-clear to undo. **Commissioning test `C5` passes under either topology and cannot distinguish them.** Raised as `Q87` / gap **G30** |
+| **`PLC-Q15`** | **Units are stated in two tag paths and absent from nine.** Speed and payoff weight name their unit; gauge, width, roll gap and die diameter do not, and inches are assumed everywhere without ever being stated. A controller reporting gauge in **mils** would pass every structural check and produce out-of-specification wire. Raised as `Q88` |
+| **`LineState` × 3** | **Three different things were called "line state"**: the machine tag, a six-member application enum with **no `Stopped`**, and a hub event — while `FR-141` fires the spool prompt on a *running → stopped* transition, a value the enum does not contain. Resolved by renaming the enum and the event, and by publishing the machine-value→state mapping as **configuration** (`[PLC §6]`); the machine’s vocabulary itself is **`PLC-Q01`** |
+| ~~**OI-04**~~ | ~~The **mandatory FM2 stand** is `S3` per SRS §2.7 but `FM2_6inS2` per the DDL comment, the API validation rules and `HMI008`.~~ **DECIDED 4 Aug 2026 — `FM2_S3`.** Both sources named the same physical stand; the phantom fourth stand created the appearance of a conflict. See **D-26** and §11.2. |
 | **OI-05** | **`Bevel edge`** appears as a third option in the Generate-from-Specs modal on **two** screens, with no domain value, no CHECK value and no mention in any requirement. It is a **fourth** edge-type vocabulary on top of the three `REVIEW.md` already catalogued. |
 | **OI-10** | **"Post DB1"** is offered as a checkpoint type by the Dashboard 6 selector and named as a decided addition in the May 21 corrections, but it is **absent from the persisted `CheckpointType` domain** in both the API enum and the DB CHECK. The May 21 decision was applied to the UI and never to the data model. |
 | **OI-12** | The **die-life colour bands differ between the two die screens** — 60/85 % on Die Change versus 65/79/80 % on Die Management — for the same underlying die. Both are internally consistent with their own source, so neither document flags it. |
@@ -3292,7 +3231,7 @@ Every file in `c:\UAL\Flatwire-planning\` was consulted. Status values: **curren
 | File | Last Updated | Status | Fed into |
 |---|---|---|---|
 | `FlatWireOpenQuestions.md` | 30 Jul 2026 | **current — the authoritative decision register (74 items)** | §10, §11 (every OQ reference) |
-| `FlatWireShopfloorDashboards.md` | 30 Jul 2026 | **current — authoritative screen specs DB1–DB14 + 2A** | §4, §7 |
+| `FlatWireShopfloorDashboards.md` | 4 Aug 2026 | **current — authoritative screen specs DB1–DB12 + 2A** (DB13/DB14 removed with the descope) | §4, §7 |
 | `FlatWireProcessWalkthrough.md` | 29 Jul 2026 | current — the 45-step sequential overlay | §3 |
 | `RodPreCheckin.md` | 30 Jul 2026 | current | §3.3, §4.1, §5.7, §6.5 |
 | `SpoolCompletionNotification.md` | 29 Jul 2026 | current | §3.10, §4.5, §6.6 |
@@ -3306,7 +3245,8 @@ Every file in `c:\UAL\Flatwire-planning\` was consulted. Status values: **curren
 | `SPCCheckpoint.md` | — | current | §4.7 |
 | `DieChangeAndManagement.md` | — | current | §4.9, §4.10 |
 | `Spool.md` | 4 May 2026 | current | §2, §3.10, §11 |
-| `HMIAndSCADALayout.md` | 15 May 2026 | **partially superseded** — still depicts an FL1 Edge Set node and an FM2 tag map without S3 | §4.4, §4.21, §4.22, §6.8 |
+| ~~`HMIAndSCADALayout.md`~~ | — | **DELETED 4 Aug 2026** with the DB13/DB14 descope. Its machine tag map — including the FM2 S3 row that no other copy carried — was rescued into `RequirementDocuments/PLCTagSpecification.md` first | ~~§4.21, §4.22, §6.8~~ |
+| `RequirementDocuments/PLCTagSpecification.md` | 4 Aug 2026 | **current — authoritative for the PLC/OPC tag surface.** Supersedes §6.8 and the tag map formerly in `HMIAndSCADALayout.md`; carries the `PLC-Q##` series | §6.8 |
 | `OperationsManager.md` | — | current — role definition | §8.5 |
 | `ClientQuestionsEmail.md` | 27 Apr 2026 | superseded by the register, retained as the decision audit trail | §10, §11 (cross-check) |
 | `LineStatusOverview.md` | — | **empty file (0 bytes)** — OI-91 | nothing |
@@ -3382,7 +3322,7 @@ Every file in `c:\UAL\Flatwire-planning\` was consulted. Status values: **curren
 
 | File | Status | Fed into |
 |---|---|---|
-| The **22 approved screens** — `dashboard_1_line_status` · `dashboard_2a_rod_precheckin` · `dashboard_2_rod_checkin - New` · `dashboard_2_rod_checkin_fl3` · `dashboard_3_active_run_v2` · `dashboard_3_active_run_fl2` · `dashboard_3_active_run_fl3` · `dashboard_5_spool_checkin` · `dashboard_6_spc_checkpoint` · `dashboard_7_coil_completion` · `dashboard_7b_packing_station` · `dashboard_8_wip_rejection` · `dashboard_9_pass_schedule` · `dashboard_9a_schedule_list` · `dashboard_10_shift_summary` · `dashboard_11_roll_adjust` · `dashboard_12_rod_checkout` · `dashboard_13_hmi_schematic` · `dashboard_14_scada_trends` · `dashboard_die_change` · `dashboard_die_management` · `dashboard_oee` (all `.html`) | **current — approved visual baseline** | §4 (field lists, states, validations), §7 |
+| The **20 approved screens** *(DB13 and DB14 removed 4 Aug 2026)* — `dashboard_1_line_status` · `dashboard_2a_rod_precheckin` · `dashboard_2_rod_checkin - New` · `dashboard_2_rod_checkin_fl3` · `dashboard_3_active_run_v2` · `dashboard_3_active_run_fl2` · `dashboard_3_active_run_fl3` · `dashboard_5_spool_checkin` · `dashboard_6_spc_checkpoint` · `dashboard_7_coil_completion` · `dashboard_7b_packing_station` · `dashboard_8_wip_rejection` · `dashboard_9_pass_schedule` · `dashboard_9a_schedule_list` · `dashboard_10_shift_summary` · `dashboard_11_roll_adjust` · `dashboard_12_rod_checkout` · `dashboard_die_change` · `dashboard_die_management` · `dashboard_oee` (all `.html`) | **current — approved visual baseline** | §4 (field lists, states, validations), §7 |
 | `dashboard_2_rod_checkin.html` | **superseded** (interim 8-step layout) | §7.1 (listed as retired) |
 | `dashboard_2_rod_checkin - Old.html` | **retired** (grid + progress ring, 9-step) | §7.1 (listed as retired) |
 | `coil-spinner.html` | current — a loading-indicator component demo, not a screen | §7.1 |
@@ -3472,3 +3412,12 @@ Text was extracted from the `.docx` zip containers (`python-docx`) and the workb
 | 1 Aug 2026 | Client sync (30 Jul call) | **§11 updated with eleven client answers; body sections deliberately untouched.** Seven open items move — **OI-01** `INFLAT` is set only at check-in (the SRS §4.2 `PCI` data note is superseded; the reqsum / `wip_coil_orders` residual stays open); **OI-07** respecified as **four min/max tolerance pairs** (gauge, width, diameter, ovality) with the values owed by e-mail and nothing to be seeded; **OI-44** pre-check-out needs supervisor approval **only when the rod is welded**, where it is a rejection to `HOLD` — which also settles `WLD011` for the un-staging direction and reverses the 31 Jul removal of that control; **OI-70** WIP rejection releases the blocked staging row; **OI-71** *inverted* — a rod may carry more than one order, so "current order only, else refuse" is wrong for the same-rod successor; **OI-73** *reversed* — off-schedule is no longer an override but an **auto-switch to the correct station**, and the `OffSchedule*` columns are dropped; **OI-74/OI-75** the completion basis is the **customer min/max weight** (the 2,000 lb default is withdrawn) and a short close is an **unplanned stop** on the mill 10-90 pattern, with the mid-run coil break restarting the stop from zero. Four added: **OI-94** (rod scheduled on neither rod line), **OI-95** (multi-order sequencing / MVP scope), **OI-96** (panel resolution — gates Phase 1A against the 14 Aug gate), **OI-97** (bundle gross weight, re-homed from OQ-75). **The body of this document still states the superseded rules** — §4 pre-check-in note, §5 tolerance and staging columns, §6 staging contracts, §7 Dashboard 2A — and is scheduled for wave W6 in [`../Analysis/ClientCall_2026-07-30_SyncPlan.md`](../Analysis/ClientCall_2026-07-30_SyncPlan.md). |
 | 1 Aug 2026 | Build decision | **DB6, DB8 and DC are dialogs, not screens.** SPC checkpoint, WIP rejection and die change moved out of `dashboard_6_spc_checkpoint.html` / `dashboard_8_wip_rejection.html` / `dashboard_die_change.html` into `spc_checkpoint.js` / `wip_rejection.js` / `die_change.js`, opened as popups over the screen the operator is already on; the three `.html` files remain as launchers so every reference to them still resolves. **No requirement text changed** — the requirements are unaffected by the container. What changed is that each dialog now receives its material context from the caller instead of hard-coding one run, which is what finally lets the pre-check-in rejection path (Q72 item 3) be represented: no run, no footage position, and submitting releases the bay. Two hand-offs the spec already described also become real — a gauge-drift or size-change die change opens the SPC checkpoint it mandates, and an out-of-spec checkpoint's *suspend material* opens the WIP rejection with the failing reading carried over. DB6 gains a **read-only mode** for DB1's "SPC · Last check … · View →", which reviews a recorded checkpoint rather than opening a blank form. New open item **Q82**: DB1's "WIP Rejection**s**" nav item reads as a list screen that has never been specified. |
 | 1 Aug 2026 | Build decision | **Pause/Resume redesigned; DB12 becomes a dialog; OI-14 closed at four outcomes.** The fifteen pause reasons were a flat radio list ~1100px tall — the last screen in the suite on radio buttons, and tall enough that the dialog was scaled on every window, taking its 14px labels under the shopfloor floor. They are now glove-sized cards in one column per category and the dialog fits the 1280×1024 panel at 1:1. **Rod Checkout is no longer a pause reason** — it was the only one of fifteen that did not pause, rendered identically to the fourteen that did — and is now the `CheckOutRod` **resume outcome**, which `POST /run/{runId}/resume` and `CK_RunPauseEvent_Outcome` already accepted. That closes **OI-14** and supersedes **FR-262**. **Rod Checkout itself (DB12) moved into `rod_checkout.js`**, so Mode B opens over the pause that raised it with the frozen footage carried over rather than navigating away and losing the pause. Four correctness fixes went with the redesign, all of which the mockup could previously get wrong: the payload now carries **`ReasonCode` + `ReasonCategory`** rather than a display label (`Other` used to overwrite its own code with the note text); **notes are mandatory on `Other`**, matching `CK_RunPauseEvent_NotesOther`; footage comes from the caller rather than a `#footage-val` element that **does not exist on the FL1 monitor**, where the dialog had always shown “Footage —”; and duration reads **h:mm:ss** past an hour instead of reporting a 90-minute stop as “90:00”. New requirements `FR-261a`–`FR-261b` and `FR-266a`–`FR-266b` record the rules; no existing number was reused. |
+
+---
+
+## Change Log
+
+| Date | Change |
+|---|---|
+| Aug 4, 2026 | **FM2 roller-size correction (client).** FM2 has **three** stands — **S1 = 8", S2 = 6", S3 = 6"** — with edgers at S2 and S3 and S3 final. This is not a digit swap: the repo had modelled a **separate 8" roller upstream of three 6" stands (four components)**, a misreading of the May 21 note recorded in `00-foundations.md` §0.3 as *"three 6-inch stands"*. The 8" roller **is S1**, and `FM2_6inS3` never corresponded to real equipment. New decision **D-26** supersedes **D-21**. Component vocabulary becomes **position-only** — `FM2_S1` / `FM2_S2` / `FM2_S3` — and roll diameter moves into a new **`Stand.RollDiameterIn`** column (12.000 / 8.000 / 6.000 / 6.000), because diameter-in-the-name is what let the error hide for ten weeks. Mapping: `FM2_8in`→`FM2_S1`, `FM2_6inS1`→`FM2_S2`, `FM2_6inS2`→`FM2_S3`; `Stand.Id` 1–4 keep their meaning and Id 5 is removed. `FR-094`, `FR-096`, `FR-297`, `FR-386` and `FR-387` reworded — **`FR-387`'s multipliers are unchanged** (1.06 / 1.02 / springback), they simply move from diameter labels to positions, which incidentally fixes a pre-existing defect where FM2's final stand had no gap formula. `CK_PSC_ComponentName` and `CK_RollOverride_Component` updated; the `Stand` seed drops 5 rows → 4. **Two open items close. `OI-04`** (mandatory stand: `FM2_6inS2` or `6" S3`?) was never a real contradiction — both named the same physical stand, now `FM2_S3`. **`OI-36`** (the final stand has no tag path) is void: the client's published map carries exactly **three** FM2 stations, all `[CONFIRMED]` by observation, so it was complete — the stand with no path was the phantom. PLC stations are renamed to bare position (`FL2.FM2.S1/S2/S3`) pending controls-engineer sign-off as **`PLC-Q04`** / gap **G32**, with the as-published mapping preserved in `[PLC §4.3]`. `PassScheduleGenerationSpec.md` §3.3.5's worked illustration is recomputed at **k = 3**, and §3.3.2's bite condition now states that **S1's larger radius admits ~1.33× the draft** of a 6" stand. |
+| Aug 4, 2026 | **HMI/SCADA descoped.** Dashboard 13 (HMI Line Schematic), Dashboard 14 (SCADA Trends) and the Machine View tab on the active run monitor are **withdrawn at client request**. `FR-111`, `FR-112`, `FR-114`, `FR-425`, `FR-440`–`FR-451` and `FR-460`–`FR-470` are marked **withdrawn** — numbers retained, never renumbered — and `FR-113` **reworded**, since it asserted a rule about "the active tab" that outlives the tabs. Both mockups and `HMIAndSCADALayout.md` are deleted. **Descope-ladder rung 7 is removed entirely:** its 67 h stops being *recoverable* effort and becomes *never-planned*, so Phase 5 drops 221 → ~154 h and the programme 3,727 → ~3,660 h, but the ladder loses its largest optional rung and Phase 5 is no longer deferrable. **Nothing structural was removed:** all six run event markers still land on the DB3 traces and no hub event, endpoint, table or column is deleted — every DB13/DB14 reference in the real-time and tag tables was a *consumer* entry, not a row. `Q4`/`OQ-4` is **superseded**, because Dashboard 14 was its answer. §4.21 and §4.22 replaced with withdrawal notices; the approved-screen count drops 22 → **20**. **PLC tag surface consolidated.** The surface existed in six partial, mutually contradictory copies; it now has one home in [`PLCTagSpecification.md`](RequirementDocuments/PLCTagSpecification.md) (client-facing, `[PLC]`, with its own `PLC-Q##` register) plus `DevelopmentPlan/PLCTagImplementation.md` (internal). This document’s tag-surface section is reduced to a pointer, keeping only what is genuinely its own job. §6.8 keeps only the `INT007` *no new integration layer* sentence. **`OI-36` escalated Medium → Critical** and moved to §11.1: the *write* side already pushes a roll gap and an edge configuration to FM2 6″ S3, for which **no read path exists in any document**, so it blocks the FL2/FL3 push rather than a schematic node — and with DB13 descoped its old *"schematic node"* impact clause is void. §11.5 gains four contradictions surfaced only by reading the six copies as one: speed **target vs limit**, the **edger paths that exist nowhere**, **FM2’s namespace on FL3**, and **units in the path**. |

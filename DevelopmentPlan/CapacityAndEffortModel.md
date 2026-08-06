@@ -124,7 +124,7 @@ All figures in **hours**. `Cont` = contingency. The `Days` column is derived (ho
 | **2** Pass Schedule Management | FE + BE | 80 | 62 | 12 | — | 31 | 16 | 30 | **231** | 28.9 | W2–W3 | No |
 | **3** Line Status Board & Real-Time Backbone | RT + FE | 64 | 16 | 4 | 40 | 41 | — | 25 | **190** | 23.8 | W2–W3 | No |
 | **4** Rod Check-In & PLC Config | FE + BE + RT | 60 | 62 | 28 | 28 | 36 | 8 | 33 | **255** | 31.9 | W4 | No |
-| **5** Active Run Monitoring & Gauge Trace | FE | 116 | 12 | 8 | 24 | 32 | — | 29 | **221** | 27.6 | W4 | Partly — DB13/14 |
+| **5** Active Run Monitoring & Gauge Trace | FE | 76 | 12 | 8 | 24 | 22 | — | 12 | **154** | 19.3 | W4 | **No** — DB13/14 descoped 4 Aug |
 | **6** In-Run Production Events | FE + BE | 120 | 56 | 20 | 20 | 43 | — | 39 | **298** | 37.2 | W5 | No |
 | **7** WIP Rejection & Rod Checkout | FE + BE | 64 | 40 | 28 | 16 | 30 | — | 27 | **205** | 25.6 | W5 | No |
 | **8** FL2 Spool Check-In & Finishing Run | FE + BE | 48 | 18 | 12 | 8 | 17 | — | 15 | **118** | 14.8 | W5–W6 | No |
@@ -254,12 +254,13 @@ Pre-agreed and ordered, so descoping is a decision already taken rather than an 
 | 4 | Remainder of **Phase 12** (footage-based weight + yield form) | 67 | **177** = whole of Phase 12 | No footage-based yield at go-live | Programme | W6 |
 | 5 | Phase 13 non-critical (Die Management screen, role assignment UI) | 99 | 276 | Die life tracked on paper; roles assigned by DBA | Maintenance / IT | W6 |
 | 6 | Phase 11 reports FW-092/093/094/095 (4 of 5) | 105 | 381 | Only the Gauge Trace report ships; CPK/SPC/traceability reports deferred | Tim O. / Quality | W5 |
-| 7 | DB13 HMI schematic + DB14 SCADA trends (Phase 5) | 67 | **448** | Operators lose the schematic and trend views; run cockpit (DB3) unaffected | Engineering | W4 |
 | — | *Phase 10 FL3 hybrid* | *61* | — | **Not deferrable** — FL3 is one of the three production routes | — | — |
 
 **The ladder is not enough.** Rungs 1–7 recover **448 of 3,727 hours — 12%** — leaving **3,279 h, still 9.3 FTE** over 44 working days. G1's own stated mitigation is rungs 1–5 (defer Phase 12 entirely plus non-critical Phase 13): **276 h ≈ 0.8 FTE**, against a shortfall measured in whole people.
 
-Rungs 6 and 7 are **new to the ladder** and are the model's own additions: Phase 11's seven stories cannot co-exist with Phases 8, 9 and 10 in W6 at any credible team size, and DB13/DB14 are the largest genuinely-optional FE items in the critical-path phases.
+Rung 6 is **new to the ladder** and is the model's own addition: Phase 11's seven stories cannot co-exist with Phases 8, 9 and 10 in W6 at any credible team size.
+
+> **Rung 7 was removed on 4 Aug 2026 — and this made the schedule harder, not easier.** DB13 and DB14 were the largest genuinely-optional FE items in the critical-path phases, and the client has now **descoped them outright**. Their 67 h therefore stops being *recoverable* effort and becomes *never-planned* effort: the programme total drops 3,727 → **~3,660 h** and Phase 5 drops 221 → **~154 h**, but the residual after descoping everything is unchanged at 3,279 h, the ladder now recovers **10 %** rather than 12 %, and **Phase 5 is no longer deferrable at all**.
 
 Below rung 7 there is nothing left that is not a production route, a check-in path, or the traveler — i.e. every remaining rung would cut something the mill cannot run without. **That is the finding: scope is not where the 30 Sep date can be recovered.**
 

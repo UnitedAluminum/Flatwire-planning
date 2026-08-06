@@ -133,7 +133,7 @@ enum LineId          { FL1, FL2, FL3 }
 enum LineStatus      { Running, Idle, Setup, Paused, Fault, Offline }
 enum RouteMode       { Standalone, Hybrid }
 enum ScheduleStatus  { Draft, Active, Inactive }
-enum ComponentName   { DB1, DB2, FM1, EdgeSet, FM2_8in, FM2_6inS1, FM2_6inS2, Edger }
+enum ComponentName   { DB1, DB2, FM1, EdgeSet, FM2_S1, FM2_S2, FM2_S3 }   // FM2: S1 = 8", S2 = 6", S3 = 6" final (Aug 4 2026)
 enum ComponentState  { Active, Bypass, Skip }
 enum CoilStatus      { RECEIVED, STAGED, INFLAT, COMPLETE, HOLD, SCRAP }
 enum PayoffPosition  { Payoff1 = 1, Payoff2 = 2 }
@@ -400,19 +400,19 @@ Returns full detail of a single pass schedule including all component rows and r
         "edgeType": "Round"
       },
       {
-        "componentName": "FM2_8in",
+        "componentName": "FM2_S1",
         "state": "Bypass",
         "parameterValue": null,
         "edgeType": null
       },
       {
-        "componentName": "FM2_6inS1",
+        "componentName": "FM2_S2",
         "state": "Bypass",
         "parameterValue": null,
         "edgeType": null
       },
       {
-        "componentName": "FM2_6inS2",
+        "componentName": "FM2_S3",
         "state": "Active",
         "parameterValue": 0.125,
         "edgeType": null
@@ -504,15 +504,15 @@ Creates a new pass schedule record. New records start in `Draft` status.
     { "componentName": "DB2",      "state": "Active", "parameterValue": 0.260, "edgeType": null },
     { "componentName": "FM1",      "state": "Active", "parameterValue": 0.128, "edgeType": null },
     { "componentName": "EdgeSet",  "state": "Active", "parameterValue": null,  "edgeType": "Round" },
-    { "componentName": "FM2_8in",  "state": "Bypass", "parameterValue": null,  "edgeType": null },
-    { "componentName": "FM2_6inS1","state": "Bypass", "parameterValue": null,  "edgeType": null },
-    { "componentName": "FM2_6inS2","state": "Active", "parameterValue": 0.125, "edgeType": null }
+    { "componentName": "FM2_S1", "state": "Bypass", "parameterValue": null,  "edgeType": null },
+    { "componentName": "FM2_S2", "state": "Bypass", "parameterValue": null,  "edgeType": null },
+    { "componentName": "FM2_S3", "state": "Active", "parameterValue": 0.125, "edgeType": null }
   ]
 }
 ```
 
 **Validation Rules:**
-- `FM2_6inS2` must always be `Active` — reject `Bypass` or `Skip`
+- `FM2_S3` must always be `Active` — reject `Bypass` or `Skip`. *(It is FM2's final gauge-control stand. Aug 4 2026: this rule previously named `FM2_6inS2`, which is the same physical stand under the three-stand correction — see `00-foundations.md` §0.3. Closes **OI-04**.)*
 - `FM1` must always be `Active` — reject `Bypass` or `Skip`
 - If `routeMode = Standalone` and `line = FL3` → reject (FL3 requires Hybrid)
 - All component rows for the given line/routeMode must be present
@@ -616,10 +616,10 @@ Runs the pass schedule generation algorithm from raw specs. Returns a draft comp
 6. FM1 gap  = gauge × springbackFactor
 7. AspectRatio = width / gauge
    If aspectRatio > 5.5 OR alloy = "1350" → activate FM2, routeMode = Hybrid
-8. FM2 gaps:
-     8"    = gauge × 1.06
-     6"S1  = gauge × 1.02
-     6"S2  = gauge × springbackFactor
+8. FM2 gaps (three stands — S1 is the 8" roller, S2 and S3 are 6"):
+     FM2_S1 = gauge × 1.06
+     FM2_S2 = gauge × 1.02
+     FM2_S3 = gauge × springbackFactor        -- final gauge control
 ```
 
 **Response `200 OK`:**
@@ -641,9 +641,9 @@ Runs the pass schedule generation algorithm from raw specs. Returns a draft comp
       { "componentName": "DB2",       "state": "Active", "parameterValue": 0.265, "edgeType": null },
       { "componentName": "FM1",       "state": "Active", "parameterValue": 0.128, "edgeType": null },
       { "componentName": "EdgeSet",   "state": "Active", "parameterValue": null,  "edgeType": "Round" },
-      { "componentName": "FM2_8in",   "state": "Bypass", "parameterValue": null,  "edgeType": null },
-      { "componentName": "FM2_6inS1", "state": "Bypass", "parameterValue": null,  "edgeType": null },
-      { "componentName": "FM2_6inS2", "state": "Active", "parameterValue": 0.125, "edgeType": null }
+      { "componentName": "FM2_S1", "state": "Bypass", "parameterValue": null,  "edgeType": null },
+      { "componentName": "FM2_S2", "state": "Bypass", "parameterValue": null,  "edgeType": null },
+      { "componentName": "FM2_S3", "state": "Active", "parameterValue": 0.125, "edgeType": null }
     ]
   },
   "success": true

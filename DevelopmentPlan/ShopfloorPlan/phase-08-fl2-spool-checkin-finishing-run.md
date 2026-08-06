@@ -26,13 +26,13 @@
 0. **Dashboard 5A — the spool queue (added 2 Aug 2026).** The operator opens DB5A and sees **every spool available for processing, irrespective of order**, with no scan required. Entering a spool identifier resolves that spool's order **server-side in one call** and narrows the list to that order's spools, with the scanned one marked; *Show all* restores the full list. Check-in is offered only for runnable spools and leads to DB5. **Why it exists:** FL1 has DB2A's staging queue and FL2 has no equivalent (`PCI002` excludes FL2 from staging), so the FL2 operator had no view of waiting material at all; and `FR-090`'s *scan the label* and **OQ-57**'s *select it by spool number* both stand while only the scan had a screen. It is also the first thing actually named "the spool queue" — a phrase FR-326, TC-389, `RodCheckout.md` and phase 7 all use with no table, endpoint, screen or status behind it. **Read-only; it writes nothing.**
 1. Operator opens **Dashboard 5**; scans spool alpha; source rods auto-populate from FL1 run traceability; alloy/temper read-only; enters measured gauge/width/weights.
 2. **Historical gauge profile** chart (from the FL1 run) with target/tolerance and weld markers; "✓ all in spec" or "⚠ N out of spec".
-3. FL2 pass schedule table (8" Roller, 6"S1, 6"S2, 6"S3; **Edgers at S2 and S3**) read-only; **no visual inspection** (done at FL1). ⚠ `dashboard_5_spool_checkin.html` still renders the superseded **three**-stand table (8" / 6"S1 / 6"S2 with two unnumbered "Edger" rows) — build the four-stand set above, not the mockup's table. DB3's Components card was corrected on 2 Aug 2026; DB5's was not.
+3. FL2 pass schedule table — **three stands: `S1` (8″), `S2` (6″) + edger, `S3` (6″) + edger, final** — read-only; **no visual inspection** (done at FL1). `dashboard_5_spool_checkin.html` now matches (corrected 4 Aug 2026 with the roller-size correction), so build the mockup's table.
 4. Acknowledge (same confirm gate) → push FL2 PLC tags → spool `INFLAT` → FL2 Dashboard 3 variant.
 5. On the run monitor the operator reads the spool being consumed and the coil being built, records in-run events without leaving the screen, and completes the coil. **Command bar, grouped by intent** (`dashboard_3_active_run_fl2.html`, 2 Aug 2026):
    - **Run events** — SPC Checkpoint · Roll Adjust · WIP Reject. All three are dialogs over the live run.
-   - **Go to** — View Trends (DB14) · Check Out Rod *(disabled; mid-run checkout is reached through Pause, per phase 7)*.
+   - **Go to** — *(cluster removed 4 Aug 2026: View Trends/DB14 was its only member and SCADA Trends is descoped)* · Check Out Rod *(disabled; mid-run checkout is reached through Pause, per phase 7)*.
    - **Run control** — Pause run · **Complete Coil** (confirmation-gated, → Dashboard 7).
-   - **No Weld and no Die Change.** FL2 has no drawing dies, and the weld is captured at pre-check-in (DB2A). SPC Checkpoint is present — the earlier "Pause, WIP Reject, Roll Adjust, Complete" list omitted it, but FM2 S2 output is a specified checkpoint site.
+   - **No Weld and no Die Change.** FL2 has no drawing dies, and the weld is captured at pre-check-in (DB2A). SPC Checkpoint is present — the earlier "Pause, WIP Reject, Roll Adjust, Complete" list omitted it, but FM2's final-stand (S3) output is a specified checkpoint site.
 - **Decision points:** hybrid-origin spool validation (OQ-52 residual — must not apply a standalone FL2 schedule to hybrid material).
 - **Error scenarios:** spool not ready-for-FL2 → blocked; hybrid mismatch → blocked (pending OQ-52).
 
@@ -45,7 +45,7 @@
   1. **Status-card strip**, three cards on a `1fr 1.35fr 1fr` grid:
      - *Machine* — run time, speed, coil footage, coil run time, lube temp.
      - *Material flow* — FL2's counterpart of FL1's two rod payoffs: **spool in** (alpha, source rods, load time, consumption bar, lb remaining / consumed) and **coil out** (output alpha, take-up, fill bar, lb, ft / ft target, skid + coil-of-N badge). One is draining, one is filling; they are not payoffs and should not reuse the payoff component's labels.
-     - *Components* — the four-stand set from §User Journey 3, bypassed stands greyed and struck through, headed by the acknowledged pass-schedule id.
+     - *Components* — the three-stand set from §User Journey 3, bypassed stands greyed and struck through, headed by the acknowledged pass-schedule id.
   2. **Spool Information** grid — spool no, source rods, alloy, temper, gauge, width, net weight, remaining, next op. FL1's equivalent grid omits width; FL2 carries it, because material arriving here is already flattened.
   3. **Order Information** grid — as FL1's, except `Max Wgt of Spool` is replaced by **`Coil Min–Max Wgt`**, which is the completion basis (see §Client answers). Field source is **OQ-60**.
   4. Both grids are **collapsible** and independently persist nothing — collapse state is per-session.
@@ -57,7 +57,7 @@
   |---|---|---|
   | Middle status card | Payoffs (two rods) | **Material flow** (spool in, coil out) |
   | Info grid subject | Rod Information | **Spool Information** (+ width column) |
-  | Chart tabs | Traces + Machine View | **Traces only** |
+  | Chart tabs | **Traces only** *(the Machine View tab was descoped 4 Aug 2026, so this row no longer distinguishes the lines)* | **Traces only** |
   | Trace source | Live (FL3 also has profile) | **Live / Profile toggle**, profile authoritative |
   | Action clusters | incl. Die Change | **no Die Change, no Weld** |
   These two monitors diverged once already and that divergence is what this pass undid. Do not fork an FL2 copy.
@@ -69,13 +69,13 @@
   - **Pause hand-off:** the `RollAdjustment` pause reason routes into this dialog once the pause is applied, the same way *Die change* and *Manual SPC measurement* already do, carrying the frozen footage. It was the one Equipment/Mechanical reason with no destination.
 - **Services:** `flat-wire-api` (`checkin/spool`, `run/{runId}/gaugetrace`, `rolloverride`), `line-context` (FL2).
 - **Validation:** measured gauge/width required; acknowledge gate.
-- **Navigation:** → Dashboard 3 (FL2 mode). From DB3 the only true navigations are **View Trends** (DB14) and **Complete Coil** (DB7); everything else is a dialog.
+- **Navigation:** → Dashboard 3 (FL2 mode). From DB3 the only true navigation left is **Complete Coil** (Dashboard 7) — View Trends went with the DB14 descope on 4 Aug 2026. ~~(DB14) and **Complete Coil** (DB7); everything else is a dialog.
 
 ## Backend Implementation (.NET)
 - **APIs:** `CheckInController POST /checkin/spool`; `RunController GET /run/{runId}/gaugetrace` (historical FL1 readings + weld markers); **`SpoolController GET /spools[?spoolAlpha=]`** — one endpoint, two modes, identical response shape `{ order, spools[] }`. Without `spoolAlpha` it returns everything available for processing with a null order; with it, **the backend resolves the order** and returns it plus that order's spools in the same response. `404` only for an unknown alpha — **an unallocated spool is a `200` with a null order**, and conflating the two is the mistake to avoid. The DTO joins `CoilTraceability`/`WeldEvent` for source rods, the FL1 run for gauge/width, and the **shared order schema cross-database** for the order block. **Add an index on `Spool.OrderNo`** — unindexed today and this is a `WHERE OrderNo =` on a `VARCHAR(50)`. It also fixes DB5's scan, which validates against nothing today.
 - **Request/Response:** `CheckInSpoolCommand` (spoolAlpha, measured gauge/width, weights, passScheduleId) → run response; gauge-trace DTO.
 - **Business services:** `CheckInService` (spool path, FL2 tags), `RunQueryService` (historical trace).
-- **Business rules:** FL2 tags = 8"/6"S1/6"S2/6"S3 + edgers (no DB/FM1); no visual inspection; hybrid-origin validation (OQ-52).
+- **Business rules:** FL2 tags = `S1`/`S2`/`S3` roll gaps and stand states + edgers at S2/S3 (no DB/FM1); no visual inspection; hybrid-origin validation (OQ-52).
 - **Authz:** Operator+.
 
 ## Database Changes
@@ -103,7 +103,7 @@
 - **API:** spool check-in + gauge-trace contracts.
 - **UI:** historical profile with weld markers; **command bar has no Weld and no Die Change, and does have SPC Checkpoint**; Check Out Rod disabled on a running line; Complete Coil confirms before navigating.
 - **UI — the null-gauge case, the one most likely to ship wrong:** with the hub sending `null` gauge/width, the Live view shows its empty state and **does not** draw a line at target. Profile stays static across several live ticks.
-- **UI — the four stands:** Components card shows 8" bypassed, 6"S1, 6"S2, 6"S3 with **edgers on S2 and S3 only**. This is the assertion that catches a regression to the old three-stand list.
+- **UI — the three stands:** Components card shows **exactly three** FM2 rows — `S1` (8″), `S2` (6″), `S3` (6″, final) — with **edgers on S2 and S3 only**, and **no separate "8″ Roller" row**. *(Assertion inverted 4 Aug 2026. It previously required a four-stand list and existed to catch "a regression to the old three-stand list". The three-stand list was right all along on count; what was wrong was the roller sizes. A fourth FM2 row is now the regression.)*
 - **UI — DB5A (TC-119–126):** the default list populates with no scan; a scan resolves the order and narrows the list **in one call**; **a failed scan leaves the list unchanged** (the case most likely to be got wrong, and the most annoying when it is); an unallocated spool is a single-row `200` and still checkin-able, **not** a `404`; check-in is offered only for `RECEIVED`/`STAGED`; the column set is identical in both modes.
 - **UI — Roll Adjust as a dialog:** the run monitor keeps updating behind it and survives Cancel; the roll table shows **FL2's** stands from FL2 and **FL3's** from FL3; footage matches the counter at the moment of the click, not at page load; pause → *Roll adjustment* → Confirm closes the pause **then** opens the dialog, never both at once.
 - **Integration:** FL1 run → spool → FL2 check-in shows correct profile.
@@ -140,7 +140,9 @@
 
 **What the screen gained.** A Machine / Material-flow / Components status-card strip in place of the old flat three-column block; collapsible **Spool Information** and **Order Information** grids, which the FL2 operator previously had to leave the screen to see; a chart tab strip with a section collapse; maximizable trace panels; a **Live / Profile** source toggle per panel; and a command bar grouped **Run events · Go to · Run control** instead of seven undifferentiated buttons. Detail in §UI Implementation.
 
-**What the mockup fixed rather than introduced.** The Components list showed **three** stands with generic "Edger 1" / "Edger 2" rows, contradicting this document and the authoritative equipment correction at `00-foundations.md:58` (client feedback, 21 May 2026: *"FM2 has **three** 6" stands (S1, S2, S3); **Edgers sit at S2 and S3 only**"*). It now shows the four-stand set. The mockup came up to the plan; the plan did not move. Do not treat the four-stand list as new scope.
+**What the mockup fixed rather than introduced.** The Components list showed three stands with generic "Edger 1" / "Edger 2" rows, one of them on S1 — the edger placement was wrong, and the edger belongs as a stand *attribute*, not a row. It was corrected to name the edgers at S2 and S3.
+
+> **Superseded on the stand count (4 Aug 2026).** The 2 Aug pass also expanded the list to **four** stands, reading the 21 May note (*"FM2 has **three** 6" stands (S1, S2, S3)"*) as a separate 8″ roller feeding three 6″ stands. **The client has since corrected the roller sizes: FM2 has three stands — `S1` 8″, `S2` 6″, `S3` 6″ — and the 8″ roller *is* S1.** So the original three-stand count was right and the four-stand expansion was the error; only the edger correction from that pass survives. Decision **D-26**; see `00-foundations.md` §0.3. **Do not re-add a fourth FM2 row.**
 
 **Roll Adjust.** Converted 2 Aug 2026 (`roll_adjust.js`), the last in-run event screen to become a dialog — die change, SPC checkpoint, WIP rejection and rod checkout went on 1 Aug 2026. It had a second problem those did not: as a page it hard-coded FL2's spool, stands and measurements, yet it is the shared roll-adjust screen for **FL2 and FL3, which have different stand sets**. A page cannot know which line opened it. The stand set is now caller-supplied. `dashboard_11_roll_adjust.html` is a launcher only.
 
@@ -156,8 +158,8 @@
 
 | # | Divergence | Where it bites |
 |---|---|---|
-| 4 | **`dashboard_5_spool_checkin.html` still shows the superseded three-stand schedule table** with two unnumbered Edger rows. | The check-in screen in this same phase. Build the four-stand set; the mockup is stale. |
-| 5 | **`dashboard_3_active_run_fl3.html` also still shows a three-stand Components list** (8" / 6"S1 / 6"S2). | Phase 10 (FL3 hybrid), not here — but it is the same stale list and should be corrected with it. |
+| ~~4~~ | ~~**`dashboard_5_spool_checkin.html` still shows the superseded three-stand schedule table**~~ **CLOSED 4 Aug 2026.** DB5 now carries the correct three-stand set — `S1` (8″), `S2` (6″) + edger, `S3` (6″) + edger — with the edgers as stand attributes. | — |
+| ~~5~~ | ~~**`dashboard_3_active_run_fl3.html` also still shows a three-stand Components list**~~ **CLOSED 4 Aug 2026.** Corrected with the roller-size correction, alongside DB5, DB9, DB9A, DB11, DB2-FL3 and `roll_adjust.js`. | — |
 | 6 | **The prose docs still describe Roll Adjust as a screen** — master spec §4.8, `FlatWireShopfloorDashboards.md` "Dashboard 11", `OperationsManager.md`, `back-matter.md`, FW-070. Two of them also disagree on which lines have it (`FlatWireShopfloorDashboards.md` says FL3 only; `back-matter.md:192` says FL1/FL2; **FR-107/108/109 and the mockups say FL2 + FL3**). | Same follow-up pass that Dashboards 6/8/12 and die change need. The launcher keeps every link resolving meanwhile. |
 | 7 | **The mockup's Live trace animates simulated data**, which no FL2 standalone run will ever have. | §Real-Time carries the instruction: render an empty state on `null`, never a flat line at target. |
 

@@ -266,9 +266,9 @@ private readonly PASS_SCHEDULE: PassScheduleDetail = {
     { componentName: 'DB2',       state: 'Active', parameterValue: 0.260, edgeType: null },
     { componentName: 'FM1',       state: 'Active', parameterValue: 0.128, edgeType: null },
     { componentName: 'EdgeSet',   state: 'Active', parameterValue: null,  edgeType: 'Round' },
-    { componentName: 'FM2_8in',   state: 'Bypass', parameterValue: null,  edgeType: null },
-    { componentName: 'FM2_6inS1', state: 'Bypass', parameterValue: null,  edgeType: null },
-    { componentName: 'FM2_6inS2', state: 'Active', parameterValue: 0.125, edgeType: null }
+    { componentName: 'FM2_S1', state: 'Bypass', parameterValue: null,  edgeType: null },
+    { componentName: 'FM2_S2', state: 'Bypass', parameterValue: null,  edgeType: null },
+    { componentName: 'FM2_S3', state: 'Active', parameterValue: 0.125, edgeType: null }
   ]
 };
 
@@ -1007,7 +1007,7 @@ Manually verify the following after implementation. Open the original HTML mocku
 1. Source traceability section shows rod rows and weld event row with amber icon
 2. Gauge profile is an SVG — blue trace line, green tolerance band, amber weld marker
 3. Stats row shows min/max/avg/samples below the chart
-4. Pass schedule table has 5 rows; 8" Roller row is visually dimmed (opacity 0.6, bypass state)
+4. Pass schedule table has 4 rows (DB1, DB2, FM1, Edge Set on FL1; FM2 S1/S2/S3 on FL2/FL3); a bypassed row is visually dimmed (opacity 0.6, bypass state)
 
 **Dashboard 5 functional:**
 1. Type `SP-00021` → source rods "R00041, R00042", alloy "1100" auto-fill

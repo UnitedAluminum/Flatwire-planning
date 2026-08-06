@@ -18,23 +18,31 @@ GO
 -- Stand
 -- Rolling mill finishing stands. Referenced by PassScheduleComponent
 -- for FM-type component slots.
+--
+-- Aug-4-2026 correction: FM2 has THREE stands — S1 (8"), S2 (6"),
+-- S3 (6", final) — not a separate 8" roller plus three 6" stands.
+-- Roll diameter is now DATA (RollDiameterIn), not part of the name:
+--   FM2_8in -> FM2_S1 (8.000)   FM2_6inS1 -> FM2_S2 (6.000)
+--   FM2_6inS2 -> FM2_S3 (6.000, final)   FM2_6inS3 -> withdrawn
 -- ------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Stand]') AND type = N'U')
 BEGIN
     CREATE TABLE [dbo].[Stand] (
-        [Id]         INT          NOT NULL IDENTITY(1,1),
-        [Name]       VARCHAR(30)  NOT NULL,               -- e.g. FM1, FM2_8in, FM2_6inS1, FM2_6inS2
-        [LineId]     VARCHAR(5)   NULL,                   -- FL1 / FL2 / FL3; NULL = shared across lines
-        [MinGaugeIn] DECIMAL(8,4) NOT NULL,               -- minimum input gauge in inches
-        [MaxGaugeIn] DECIMAL(8,4) NOT NULL,               -- maximum input gauge in inches
-        [MinWidthIn] DECIMAL(8,4) NOT NULL,               -- minimum strip width in inches
-        [MaxWidthIn] DECIMAL(8,4) NOT NULL,               -- maximum strip width in inches
-        [IsActive]   BIT          NOT NULL CONSTRAINT [DF_Stand_IsActive] DEFAULT (1),
+        [Id]             INT          NOT NULL IDENTITY(1,1),
+        [Name]           VARCHAR(30)  NOT NULL,               -- position only: FM1, FM2_S1, FM2_S2, FM2_S3
+        [LineId]         VARCHAR(5)   NULL,                   -- FL1 / FL2 / FL3; NULL = shared across lines
+        [RollDiameterIn] DECIMAL(5,3) NOT NULL,               -- working roll diameter in inches (FM1 12.000; FM2 S1 8.000, S2/S3 6.000)
+        [MinGaugeIn]     DECIMAL(8,4) NOT NULL,               -- minimum input gauge in inches
+        [MaxGaugeIn]     DECIMAL(8,4) NOT NULL,               -- maximum input gauge in inches
+        [MinWidthIn]     DECIMAL(8,4) NOT NULL,               -- minimum strip width in inches
+        [MaxWidthIn]     DECIMAL(8,4) NOT NULL,               -- maximum strip width in inches
+        [IsActive]       BIT          NOT NULL CONSTRAINT [DF_Stand_IsActive] DEFAULT (1),
 
-        CONSTRAINT [PK_Stand]          PRIMARY KEY CLUSTERED ([Id] ASC),
-        CONSTRAINT [UQ_Stand_Name]     UNIQUE ([Name]),
-        CONSTRAINT [CK_Stand_Gauge]    CHECK ([MinGaugeIn] < [MaxGaugeIn]),
-        CONSTRAINT [CK_Stand_Width]    CHECK ([MinWidthIn] < [MaxWidthIn])
+        CONSTRAINT [PK_Stand]                  PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [UQ_Stand_Name]             UNIQUE ([Name]),
+        CONSTRAINT [CK_Stand_Gauge]            CHECK ([MinGaugeIn] < [MaxGaugeIn]),
+        CONSTRAINT [CK_Stand_Width]            CHECK ([MinWidthIn] < [MaxWidthIn]),
+        CONSTRAINT [CK_Stand_RollDiameterIn]   CHECK ([RollDiameterIn] > 0)
     );
     PRINT 'Created table: Stand';
 END

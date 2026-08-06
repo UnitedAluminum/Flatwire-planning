@@ -107,11 +107,12 @@
       passSchedule: "PS-1100-FL2-007",
       footage: "13,060 ft",
       operator: "Sam Patel",
+      /* FM2 has THREE stands: S1 = 8", S2 = 6", S3 = 6" (final). Corrected
+         4 Aug 2026 (client) from a four-roll list with a separate 8" entry. */
       rolls: [
-        { name: '8"',   bypassed: true },
-        { name: '6"S1', scheduled: 0.0180, current: 0.0180 },
-        { name: '6"S2', scheduled: 0.0162, current: 0.0162 },
-        { name: '6"S3', scheduled: 0.0160, current: 0.0161, final: true }
+        { name: 'S1 (8")', scheduled: 0.0180, current: 0.0180 },
+        { name: 'S2 (6")', scheduled: 0.0162, current: 0.0162 },
+        { name: 'S3 (6")', scheduled: 0.0160, current: 0.0161, final: true }
       ]
     },
     FL3: {
@@ -124,14 +125,13 @@
       passSchedule: "PS-1100-FL3-002",
       footage: "26,410 ft",
       operator: "Dave M.",
-      /* FL3 is FL1 feeding FL2 continuously, so FM1 is in the chain as well as
-         the three finishing stands. */
+      /* FL3 is FL1 feeding FL2 continuously, so FM1 (12") is in the chain as
+         well as FM2's three finishing stands. */
       rolls: [
-        { name: 'FM1',  scheduled: 0.1120, current: 0.1120 },
-        { name: '8"',   bypassed: true },
-        { name: '6"S1', scheduled: 0.0180, current: 0.0180 },
-        { name: '6"S2', scheduled: 0.0162, current: 0.0163 },
-        { name: '6"S3', scheduled: 0.0160, current: 0.0160, final: true }
+        { name: 'FM1 (12")', scheduled: 0.1120, current: 0.1120 },
+        { name: 'S1 (8")',   scheduled: 0.0180, current: 0.0180 },
+        { name: 'S2 (6")',   scheduled: 0.0162, current: 0.0163 },
+        { name: 'S3 (6")',   scheduled: 0.0160, current: 0.0160, final: true }
       ]
     }
   };

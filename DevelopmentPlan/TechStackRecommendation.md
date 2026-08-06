@@ -81,7 +81,7 @@ FlatWire/
 | Weld join traceability | `WeldJoinEvent` domain entity linking Rod 1 alpha → Rod 2 alpha → output coil alpha; required for cert generation |
 | Gauge trace (live) | SignalR hub streaming AGC data → Chart.js component; FL1 and FL3 hybrid mode |
 | Gauge trace (historical) | Query-based profile view for FL2 standalone mode |
-| SPC checkpoints | Five defined checkpoints (incoming rod, post-die, FM1 output, FM2 S2 output, final coil); stored per run, surfaced in reports |
+| SPC checkpoints | Five defined checkpoints (incoming rod, post-die, FM1 output, **FM2 final-stand (S3) output**, final coil); stored per run, surfaced in reports |
 | WIP rejection | Existing WIP rejection module extended with flat wire outlet options and observation codes |
 | Certificate of Conformance | Existing Certs module; traceability chain must include all weld join events for welding wire customers |
 | Scrap disposition | Scrap module extended with new outlet: `Scrap Box` vs. `Scrap Skid` |

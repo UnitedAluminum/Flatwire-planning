@@ -69,7 +69,7 @@ BEGIN
     CREATE TABLE [dbo].[PassScheduleComponent] (
         [Id]             INT          NOT NULL IDENTITY(1,1),
         [PassScheduleId] VARCHAR(30)  NOT NULL,             -- FK → PassSchedule.ScheduleId
-        [ComponentName]  VARCHAR(20)  NOT NULL,             -- DB1|DB2|FM1|EdgeSet|FM2_8in|FM2_6inS1|FM2_6inS2|FM2_6inS3
+        [ComponentName]  VARCHAR(20)  NOT NULL,             -- DB1|DB2|FM1|EdgeSet|FM2_S1|FM2_S2|FM2_S3
         [State]          VARCHAR(10)  NOT NULL,             -- Active | Bypass | Skip
         [ParameterValue] DECIMAL(8,4) NULL,                 -- die diameter or roll gap; NULL when Bypass/Skip
         [EdgeType]       VARCHAR(10)  NULL,                 -- Round | Square — edger components only
@@ -84,8 +84,13 @@ BEGIN
 
         CONSTRAINT [PK_PassScheduleComponent]            PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_PassScheduleComponent_Sequence]   UNIQUE ([PassScheduleId], [Sequence]),
-        -- May-21-2026 revision: FL1 has no edger; FM2 is three 6" stands with edgers at S2 and S3.
-        CONSTRAINT [CK_PSC_ComponentName]  CHECK ([ComponentName] IN ('DB1','DB2','FM1','EdgeSet','FM2_8in','FM2_6inS1','FM2_6inS2','FM2_6inS3')),
+        -- FL1 has no edger (May-21-2026).
+        -- Aug-4-2026 correction: FM2 is THREE stands — S1 (8"), S2 (6"), S3 (6", final) — with
+        -- edgers at S2 and S3 only. Diameter left the identifier (see Stand.RollDiameterIn):
+        --   FM2_8in -> FM2_S1 · FM2_6inS1 -> FM2_S2 · FM2_6inS2 -> FM2_S3 · FM2_6inS3 withdrawn.
+        -- This closes OI-04: the mandatory final stand named 'FM2_6inS2' here and '6" S3' in the
+        -- SRS were always the same physical stand — now unambiguously FM2_S3.
+        CONSTRAINT [CK_PSC_ComponentName]  CHECK ([ComponentName] IN ('DB1','DB2','FM1','EdgeSet','FM2_S1','FM2_S2','FM2_S3')),
         CONSTRAINT [CK_PSC_State]          CHECK ([State]         IN ('Active', 'Bypass', 'Skip')),
         CONSTRAINT [CK_PSC_EdgeType]       CHECK ([EdgeType]      IN ('Round', 'Square') OR [EdgeType] IS NULL),
         -- ParameterValue must be NULL when component is not active

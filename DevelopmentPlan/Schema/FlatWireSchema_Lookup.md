@@ -17,8 +17,9 @@ Rolling mill finishing stands. A stand applies compressive force to reduce mater
 | Column | Data Type | Nullable | FK Reference | Description |
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | — | Surrogate primary key |
-| `Name` | varchar(30) | NOT NULL | — | Stand identifier used in pass schedules and UI (e.g. `FM1`, `FM2_8in`, `FM2_6inS1`, `FM2_6inS2`) |
+| `Name` | varchar(30) | NOT NULL | — | Stand identifier used in pass schedules and UI — **position only**: `FM1`, `FM2_S1`, `FM2_S2`, `FM2_S3` |
 | `LineId` | varchar(5) | NULL | — | Flat wire line this stand belongs to (`FL1`, `FL2`, `FL3`); NULL if the stand is shared across lines |
+| `RollDiameterIn` | decimal(5,3) | NOT NULL | — | Working roll diameter in inches. **FM1 `12.000`; FM2 `S1` `8.000`, `S2` `6.000`, `S3` `6.000`.** Feeds the bite condition and roll-force limits in the generation engine ([PassScheduleGenerationSpec](../../LatestDocument/RequirementDocuments/PassScheduleGenerationSpec.md) §3.3.2 / §3.3.6) |
 | `MinGaugeIn` | decimal(8,4) | NOT NULL | — | Minimum input gauge this stand can process, in inches |
 | `MaxGaugeIn` | decimal(8,4) | NOT NULL | — | Maximum input gauge this stand can process, in inches |
 | `MinWidthIn` | decimal(8,4) | NOT NULL | — | Minimum strip width this stand can process, in inches |
@@ -28,7 +29,10 @@ Rolling mill finishing stands. A stand applies compressive force to reduce mater
 **Constraints:**
 - `MinGaugeIn < MaxGaugeIn`
 - `MinWidthIn < MaxWidthIn`
+- `CK_Stand_RollDiameterIn` — `RollDiameterIn > 0`
 - `UQ_Stand_Name` — `Name` is unique
+
+> **FM2 configuration `[CONFIRMED — Aug 4 2026]`.** FM2 has **three** stands: **S1 (8")**, **S2 (6", edger)**, **S3 (6", edger, final and non-bypassable)**. The earlier four-name set (`FM2_8in`, `FM2_6inS1`, `FM2_6inS2`, `FM2_6inS3`) wrongly modelled a separate 8" roller upstream of three 6" stands — the 8" roller **is S1**. Mapping: `FM2_8in`→`FM2_S1`, `FM2_6inS1`→`FM2_S2`, `FM2_6inS2`→`FM2_S3`, `FM2_6inS3` withdrawn. `Stand.Id` 1–4 are unchanged for 1–4; Id 5 is removed. Diameter moved into `RollDiameterIn` so a re-roll is a one-row update rather than a repo-wide rename. See [`00-foundations.md`](../ShopfloorPlan/00-foundations.md) §0.3.
 
 ---
 

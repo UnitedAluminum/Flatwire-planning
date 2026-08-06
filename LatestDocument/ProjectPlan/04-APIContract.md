@@ -1,7 +1,7 @@
 # Flat Wire Mill — API Contract
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 1, 2026
+**Last Updated:** August 4, 2026
 **Document Type:** API contract — REST + real-time hub + PLC/OPC surface
 **Status:** Baselined for build — four published defects corrected here; missing endpoint groups in §10
 **Owner:** Backend (.NET) stream
@@ -128,7 +128,7 @@ enum LineId          { FL1, FL2, FL3 }
 enum LineState       { Running, Idle, Setup, Paused, Fault, Offline }
 enum RouteMode       { Standalone, Hybrid }
 enum ScheduleStatus  { Draft, Active, Inactive }
-enum ComponentName   { DB1, DB2, FM1, EdgeSet, FM2_8in, FM2_6inS1, FM2_6inS2, FM2_6inS3 }
+enum ComponentName   { DB1, DB2, FM1, EdgeSet, FM2_S1, FM2_S2, FM2_S3 }   // FM2: S1 = 8", S2 = 6", S3 = 6" final
 enum ComponentState  { Active, Bypass, Skip }          // three values — never a boolean
 enum EdgeType        { Round, Square }                  // UI labels: "Round Edge" / "Flat Edge"
 enum MaterialStatus  { RECEIVED, STAGED, INFLAT, COMPLETE, HOLD, SCRAP }
@@ -176,7 +176,7 @@ Two further corrections this document also carries:
 | # | Defect | Correction |
 |---|---|---|
 | 5 | **`POST /checkin/rod` omits three `NOT NULL` columns.** `RodCheckin.InspectionConnectorTag`, `SpcM1In` and `SpcM2In` are `NOT NULL`; the April body sent none of them, so **inserts fail as specified** | The contract is **extended** — §4.6 |
-| 6 | **`ComponentName` was missing `FM2_6inS3`** (the 21 May third stand) and carried a stray `Edger` value | `FM2_6inS3` added; the stray `Edger` dropped — the edger is expressed by `EdgeType` on the `EdgeSet` component, not by a component name. `PayoffPosition` also gains `TraversingTakeup = 3`, and the enum formerly called `LineStatus` is renamed **`LineState`** so it does not collide with the `LineStatus` hub event |
+| 6 | **`ComponentName` modelled FM2 as four stands** and carried a stray `Edger` value | **Superseded Aug 4 2026 — FM2 has three stands and the 8" roller is S1.** The enum is now `FM2_S1` (8") / `FM2_S2` (6") / `FM2_S3` (6", final); the never-existent `FM2_6inS3` is withdrawn and diameter moved to `Stand.RollDiameterIn`. The stray `Edger` is dropped — the edger is expressed by `EdgeType` on the component, not by a component name. `PayoffPosition` also gains `TraversingTakeup = 3`, and the enum formerly called `LineStatus` is renamed **`LineState`** so it does not collide with the `LineStatus` hub event |
 
 ---
 
@@ -319,14 +319,13 @@ For alloy 1100, rod 0.375″, gauge 0.125″, width 0.875″:
       { "componentName": "DB1",       "state": "Bypass", "parameterValue": null,   "edgeType": null },
       { "componentName": "DB2",       "state": "Bypass", "parameterValue": null,   "edgeType": null },
       { "componentName": "FM1",       "state": "Active", "parameterValue": 0.1225, "edgeType": null },
-      { "componentName": "FM2_8in",   "state": "Active", "parameterValue": 0.1325, "edgeType": null },
-      { "componentName": "FM2_6inS1", "state": "Active", "parameterValue": 0.1275, "edgeType": null },
-      { "componentName": "FM2_6inS2", "state": "Active", "parameterValue": 0.1225, "edgeType": "Round" },
-      { "componentName": "FM2_6inS3", "state": "Active", "parameterValue": 0.1225, "edgeType": "Round" } ] },
+      { "componentName": "FM2_S1",    "state": "Active", "parameterValue": 0.1325, "edgeType": null },
+      { "componentName": "FM2_S2",    "state": "Active", "parameterValue": 0.1275, "edgeType": "Round" },
+      { "componentName": "FM2_S3",    "state": "Active", "parameterValue": 0.1225, "edgeType": "Round" } ] },
   "success": true }
 ```
 
-**Derivation:** `D_pre = sqrt(4 × 0.125 × 0.875 / π) = 0.3732″` · `areaRed = 1 − (0.3732² / 0.375²) = 0.95 %`, which is **≤ 2 %, so both draw boxes bypass** · `aspectRatio = 0.875 / 0.125 = 7.0 > 5.5`, so **FM2 activates and the route is Hybrid** · `FM1 gap = 0.125 × 0.98 = 0.1225`.
+**Derivation:** `D_pre = sqrt(4 × 0.125 × 0.875 / π) = 0.3732″` · `areaRed = 1 − (0.3732² / 0.375²) = 0.95 %`, which is **≤ 2 %, so both draw boxes bypass** · `aspectRatio = 0.875 / 0.125 = 7.0 > 5.5`, so **FM2 activates and the route is Hybrid** · `FM1 gap = 0.125 × 0.98 = 0.1225` · FM2 gaps per `FR-387`: `S1 = 0.125 × 1.06 = 0.1325`, `S2 = 0.125 × 1.02 = 0.1275`, `S3 = 0.125 × springback = 0.1225`.
 
 > **Correction 1 of 4 — this is the defect.** `DevelopmentPlan/APIContracts.md` publishes this same example returning `preflattenDiameterIn: 0.265`, `areaReductionPct: 50.1`, `drawPasses: 2` and `routeMode: "Standalone"` with FM2 bypassed and no warnings. **All four are wrong.** The published `areaReductionPct` of 50.1 is internally consistent with its own wrong 0.265 diameter, not with the stated formula; and an aspect ratio of 7.0 must, by the algorithm's own step 6, force `Hybrid`. **Implementers must build to the formula in `[SRS §5.18]` `FR-381`–`FR-387`, not to any published example.**
 
@@ -732,15 +731,15 @@ A strongly-typed `Hub<IFlatWireClient>` — **no magic-string method names.**
 
 | # | Event | Payload | Cadence | Consumers |
 |---|---|---|---|---|
-| 1 | `GaugeReading` | `GaugeReading[]` — each `{lineId, value(in), timestamp, footagePosition}` | **batched**, ~10 Hz | DB3 traces, DB13 gauge node, DB14 chart 1 |
-| 2 | `WidthReading` | `WidthReading[]` — same shape | **batched**, ~10 Hz | DB3, DB13 width node, DB14 chart 2 |
-| 3 | `SpeedFPM` | `{lineId, value(FPM), timestamp}` | batched / decimated | DB13 flow animation + header, DB14 chart 3 |
-| 4 | `PayoffWeight` | `{lineId, position, weightLb, percentRemaining}` | batched | DB1, DB2A, DB3 payoff bars, DB13, DB14 chart 4 |
-| 5 | `FootageCounter` | `{lineId, footage(ft), timestamp}` | batched | DB3, DB13 TKUP nodes + header |
-| 6 | `ComponentStatus` | `{lineId, component, isActive, currentValue}` | **on change only** | DB3, DB13 component boxes |
-| 7 | `LineStatus` | `{lineId, status, orderId, alpha}` | **on change only, immediate** | DB1, DB13 header badge |
-| 8 | `AlertRaised` | `{lineId, alertType, severity, message, timestamp}` | **immediate, unbatched** | DB1 + DB13 alert bars |
-| 9 | `AlertCleared` | `{lineId, alertType}` | **immediate, unbatched** | DB1 + DB13 alert bars |
+| 1 | `GaugeReading` | `GaugeReading[]` — each `{lineId, value(in), timestamp, footagePosition}` | **batched**, ~10 Hz | DB3 traces, DB1 live gauge |
+| 2 | `WidthReading` | `WidthReading[]` — same shape | **batched**, ~10 Hz | DB3 traces, DB1 live width |
+| 3 | `SpeedFPM` | `{lineId, value(FPM), timestamp}` | batched / decimated | DB1 board, DB3 header, **the machine-stop prompt** |
+| 4 | `PayoffWeight` | `{lineId, position, weightLb, percentRemaining}` | batched | DB1, DB2A, DB3 payoff bars |
+| 5 | `FootageCounter` | `{lineId, footage(ft), timestamp}` | batched | DB3 header, spool progress, die-life accumulation |
+| 6 | `ComponentStatus` | `{lineId, component, isActive, currentValue}` | **on change only** | DB3 component panel, roll-adjust dialog |
+| 7 | `LineStatus` | `{lineId, status, orderId, alpha}` | **on change only, immediate** | DB1 header badge |
+| 8 | `AlertRaised` | `{lineId, alertType, severity, message, timestamp}` | **immediate, unbatched** | DB1 alert bar |
+| 9 | `AlertCleared` | `{lineId, alertType}` | **immediate, unbatched** | DB1 alert bar |
 | 10 | `PayoffStateChanged` | `{lineId, position, state, rodAlpha, rodSeqno, isWelded}` | **immediate, unbatched** | DB2A bay cards, DB1 "Payoff 2 not loaded" rule |
 
 `state` on `PayoffStateChanged` is `NotStaged` · `Staged` · `Active` · `Blocked`. It fires on **every** bay-occupancy change: pre-check-in, pre-check-out, mark-as-welded, and check-in consuming a staged row.
@@ -753,9 +752,9 @@ A strongly-typed `Hub<IFlatWireClient>` — **no magic-string method names.**
 
 **FL2 standalone suppresses the batched gauge and width channels entirely.** Its historical profile is a REST query (`GET /run/{runId}/gaugetrace`). Status and marker events still flow. A client subscribed to `FL2Data` must not wait for `GaugeReading` — it will never arrive, and treating its absence as a fault is a defect.
 
-### 5.4 SCADA event markers
+### 5.4 Run event markers
 
-Also broadcast, consumed by DB3 traces and DB14: `WeldJoinEvent` · `DieChangeEvent` · `PauseEvent` · `SPCCheckpoint` · `AlertEvent` · `RodCheckoutEvent`.
+Also broadcast, consumed by DB3 traces: `WeldJoinEvent` · `DieChangeEvent` · `PauseEvent` · `SPCCheckpoint` · `AlertEvent` · `RodCheckoutEvent`.
 
 ### 5.5 Events the spool-completion feature adds
 
@@ -799,33 +798,32 @@ Callbacks run **outside the Angular zone**; batches land in a ring buffer and re
 
 The integration layer is the **existing `OPCConnection` service, extended** to subscribe to FL1/FL2/FL3 tags. PLCs are new hardware; **OPC servers are unchanged**; no new integration layer is introduced.
 
-### 6.1 Writes — `PLCTagService`
+### 6.1 `PLCTagService` — the service surface
 
-| Operation | Trigger | Content | Recorded in |
-|---|---|---|---|
-| `PushPassSchedule(scheduleId, lineId, payoffPosition)` | **Only** on explicit operator acknowledgement at check-in — **never** on schedule save, load or generation, and **never at pre-check-in** | Component active/bypass state, DB1/DB2 die sizes, FM1 and FM2 roll gaps, edge type, speed targets, gauge/width targets | `RodCheckin.PlcTagsPushed` / `SpoolCheckin.PlcTagsPushed` |
-| `ClearPayoffTags(lineId, payoffPosition)` | Rod checkout, **after the line is confirmed stopped** | Reset to idle/bypass defaults | `RodCheckout.PlcTagsCleared` |
-| per-component write | Roll Adjust Apply | The new roll gap | `RollOverride.PlcTagWritten` |
-| hold / idle | Pause | Drive enable / speed to idle | `RunPauseEvent` |
-| `SimulatePLCTagPush` | Dev and pre-commissioning | Logs intended writes, no live connection | log only |
+> **What each operation writes, when, and to which line is specified in [`PLCTagSpecification.md`](../RequirementDocuments/PLCTagSpecification.md) §4.** This section carries only the contract shape.
 
-Every write is audit-logged with **tag path, value, operator, timestamp and result**.
+| Operation | Signature |
+|---|---|
+| Pass-schedule push | `PushPassSchedule(scheduleId, lineId, payoffPosition)` |
+| Payoff clear | `ClearPayoffTags(lineId, payoffPosition)` |
+| Per-component write | one call per changed component, on roll-adjust Apply |
+| Hold / idle and restore | on pause and resume |
+| Simulated push | `SimulatePLCTagPush` — selected by configuration, not by call site |
 
-For **FL3**, one acknowledgement pushes **all FM1 and FM2 tags in a single batch**.
+**The first parameter is `scheduleId`.** `DevelopmentPlan/APIContracts.md` and `phase-04` use `passScheduleId`; that April document is superseded and the roadmap file needs the one-line correction.
 
-> **OPC writes are not transactional.** The recovery on failure is a **compensating re-clear**, not a rollback. Describe it that way in code and comments — gap **G16**.
+### 6.2 Error codes
 
-### 6.2 `ITInhibit`
+| Code | Status | Raised when |
+|---|---|---|
+| `PLC_PUSH_FAILED` | `500` | Any single tag write in a push batch fails. The check-in is aborted and compensated — **a compensating re-clear, not a rollback** (`[PLC §7.5]`) |
+| `LINE_STILL_RUNNING` | `422` | The line-state tag reports running at a checkout attempt — checked both at dialog open and at confirm |
 
-A **system-controlled** tag that blocks machine run. **Set and cleared only by the system, never by an operator.** Set when any of: no coil/rod checked in · no active MMS ID · PLC feet data unavailable · PLC feet data invalid · **two or more consecutive data recordings missing**.
+### 6.3 `ITInhibit` and the read surface
 
-### 6.3 Reads
+> Both in [`PLCTagSpecification.md`](../RequirementDocuments/PLCTagSpecification.md) — `ITInhibit` and its five conditions at `[PLC §8]`, the per-line tag map at `[PLC §5.2]`.
 
-Tag paths come from `appsettings.json` — **never hardcoded**. The representative FL1 map is in `[SRS §9.2]`.
-
-Two open items: **`FL{n}.LineState`'s vocabulary is undocumented** and two features depend on the answer (**OI-35**); the **FM2 tag map lists only S1 and S2** while the 21 May revision added S3 and made it final, so **the final stand has no tag path** (**OI-36**).
-
----
+> **Naming.** The enum at §1 is renamed **`LineOperatingState`** and the hub event **`LineStateChanged`**, so that **`LineState`** unambiguously means the machine tag. The machine’s own vocabulary is undocumented and is being asked as **`PLC-Q01`**; it is resolved through a **configurable mapping table** (`[PLC §6]`), not by adding an enum member. Note `FR-141` fires the spool prompt on a *running → stopped* transition — a value the six-member enum does not contain.
 
 ## 7. Stub-first delivery contract
 
@@ -897,7 +895,7 @@ A screen moves off the stub when: the real endpoint returns the contracted shape
 | `POST /checkin/spool` | FR-090–096 | DB5 | 8 |
 | `GET /spools` | FR-097–099 | DB5A *(also serves DB5's scan)* | 8 |
 | `GET /run/active` | FR-100, 115–117 | DB3 | 5 |
-| `GET /run/{runId}/gaugetrace` | FR-093, 120 | DB5 / DB3-FL2 / DB14 | 5 / 8 |
+| `GET /run/{runId}/gaugetrace` | FR-093, 120 | DB5 / DB3-FL2 | 5 / 8 |
 | `GET /run/{runId}/weldevents` | `PCI021` | DB2A | 4 *(rows written in 6)* |
 | `POST /run/{runId}/pause` | FR-260–264 | pause dialog | 6 |
 | `POST /run/{runId}/resume` | FR-265, 266 | pause dialog | 6 |
@@ -973,3 +971,4 @@ A screen moves off the stub when: the real endpoint returns the contracted shape
 |------|-----------|-------------|
 | Jul 30, 2026 | Plan team | Initial publication. Conventions, canonical enums with the three-way mirroring rule, all **30 endpoints** with request/response shapes, validation, side effects, error codes and idempotency, the **`FlatWireHub` contract with all 10 events**, the PLC/OPC surface, the stub-first delivery contract, versioning policy and full traceability. **Corrects the four Tier-1 defects in the published April contract** — the `/passschedule/generate` worked example (`0.3732` / `0.95 %` / `Hybrid`, not `0.265` / `50.1` / `Standalone`), the missing `RollAdjustTrigger` checkpoint type, the component-state boolean, and the three edge-type vocabularies — plus two further corrections (the three `NOT NULL` fields missing from `POST /checkin/rod`, and the `ComponentName`/`PayoffPosition`/`LineState` enum fixes). Records **PP-04**: the hub event count is ten, not nine. |
 | Aug 1, 2026 | Client sync (30 Jul call) | **`/staging/**`, `/checkin/rod`, `/checkout` and `/wipreject` updated.** The `offSchedule` override object is **removed** — a rod booked on the other rod line makes the client **switch station** (`scheduledLineId` from `GET /rod/{alpha}`), and a mismatched POST returns `409 WRONG_STATION` with `correctLineId` (Q74). Staging **no longer sets `coils.coil_status`** — `INFLAT` is set at check-in (Q67). A failed inspection now returns **`201` + `state:"Blocked"`** (the 31 Jul contract change, not previously carried here), and **`POST /wipreject` releases the blocked row** — the only thing that clears a `Blocked` bay (Q72 item 3). `POST /staging/rod/unstage` and `POST /checkout` Mode P gain a **weld-dependent supervisor approval** with `HOLD` (Q68/Q77), and `/checkout` gains the approval columns the table never had — retro-enforcing OQ-48 for Mode B (**G24**). `CHK007` becomes a **min/max band**, unseeded pending the values owed by e-mail (Q71). Flagged **G22** (order membership is knowingly wrong for a multi-order rod, Q69/Q79) and **Q78** (an order scheduled on neither rod line has no station to switch to). |
+| Aug 4, 2026 | Client direction | **HMI/SCADA descoped.** Dashboard 13 (HMI Line Schematic), Dashboard 14 (SCADA Trends) and the Machine View tab on the active run monitor are **withdrawn at client request**. `FR-111`, `FR-112`, `FR-114`, `FR-425`, `FR-440`–`FR-451` and `FR-460`–`FR-470` are marked **withdrawn** — numbers retained, never renumbered — and `FR-113` **reworded**, since it asserted a rule about "the active tab" that outlives the tabs. Both mockups and `HMIAndSCADALayout.md` are deleted. **Descope-ladder rung 7 is removed entirely:** its 67 h stops being *recoverable* effort and becomes *never-planned*, so Phase 5 drops 221 → ~154 h and the programme 3,727 → ~3,660 h, but the ladder loses its largest optional rung and Phase 5 is no longer deferrable. **Nothing structural was removed:** all six run event markers still land on the DB3 traces and no hub event, endpoint, table or column is deleted — every DB13/DB14 reference in the real-time and tag tables was a *consumer* entry, not a row. `Q4`/`OQ-4` is **superseded**, because Dashboard 14 was its answer. **Zero endpoints and zero hub events deleted** — consumer columns only, and §5.4 renamed from *SCADA event markers* to *Run event markers*. **PLC tag surface consolidated.** The surface existed in six partial, mutually contradictory copies; it now has one home in [`PLCTagSpecification.md`](../RequirementDocuments/PLCTagSpecification.md) (client-facing, `[PLC]`, with its own `PLC-Q##` register) plus `DevelopmentPlan/PLCTagImplementation.md` (internal). This document’s tag-surface section is reduced to a pointer, keeping only what is genuinely its own job. The `PLCTagService` signatures and the two error codes stay here — that is the API contract’s job. Also renamed for clarity: the state enum becomes **`LineOperatingState`** and the hub event **`LineStateChanged`**, so **`LineState`** unambiguously means the machine tag (`[PLC §6]`). |

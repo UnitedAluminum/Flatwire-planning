@@ -1,7 +1,7 @@
 # Flat Wire Mill — Test Plan & Test Cases
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 1, 2026
+**Last Updated:** August 4, 2026
 **Document Type:** Test plan + test case catalogue
 **Status:** Baselined — four NFRs are **untestable until their targets are defined** (§6.2)
 **Owner:** QA stream
@@ -49,8 +49,8 @@
 | 110–124 | Spool check-in (`§5.3`) | 435–444 | Packing (`§5.17`) |
 | 130–159 | Active run (`§5.4`) | 450–484 | Pass schedule (`§5.18`, `§5.19`) |
 | 160–184 | Spool completion (`§5.5`) | 490–509 | Line status (`§5.20`) |
-| 190–214 | Weld (`§5.6`) | 515–524 | HMI (`§5.21`) |
-| 220–244 | SPC (`§5.7`) | 530–539 | SCADA (`§5.22`) |
+| 190–214 | Weld (`§5.6`) | ~~515–524~~ | ~~HMI (`§5.21`)~~ — withdrawn |
+| 220–244 | SPC (`§5.7`) | ~~530–539~~ | ~~SCADA (`§5.22`)~~ — withdrawn |
 | 250–264 | Roll adjust (`§5.8`) | 545–554 | Shift summary (`§5.23`) |
 | 270–289 | Die change (`§5.9`) | 560–564 | OEE (`§5.24`) |
 | 295–309 | Die management (`§5.10`) | **600–629** | **NFR verification (§6)** |
@@ -84,14 +84,14 @@ Test depth is not spread evenly. **P1** areas get happy path, boundary, negative
 |---|---|---|
 | **P1** | **Weld genealogy end to end** | Contractual (`NFR012`). A wrong chain is a wrong certificate |
 | **P1** | **Pass-schedule acknowledgement → PLC tag push** | The only path that configures the machine. A wrong push is a wrong product |
-| **P1** | **`ITInhibit`** | The safety interlock. All five set conditions |
+| **P1** | **`ITInhibit`** | The safety interlock. All five set conditions, **and that it is line-scoped** — a blocked line must not block the other two (`[PLC §8.1]`, **D15**) |
 | **P1** | **Footage → weight** | Every weight, yield and remaining-weight figure. **And the ±2 % threshold is arithmetically unreachable from target dimensions** |
 | **P1** | **FL2's `null` live gauge/width** | A client that treats absence as a fault breaks the whole FL2 route |
 | **P1** | **The cross-system check-in boundary** | Not one ACID transaction; recovery is undecided (**OI-39**) |
 | **P1** | **MMS ID lifecycle** | Closes strictly on consumption, never on operator action — and ITInhibit depends on it |
 | **P2** | Check-in gates, the three checkout modes, carry-forward, SPC gating, roll adjust, die change, pause/resume, WIP rejection, skid rule, reconnect, role matrix, audit | Core operator journeys |
 | **P2** | FW-001 rename regression | High blast radius across other modules |
-| **P3** | DB13, DB14, shift summary, OEE, reports | Descope-ladder candidates; loss is visibility, not production |
+| **P3** | Shift summary, OEE, reports | Descope-ladder candidates; loss is visibility, not production. *(DB13 and DB14 were the other two and are descoped.)* |
 
 ---
 
@@ -136,7 +136,7 @@ Seed order is strict — **Lookup → Schedule → Materials → Runs → Qualit
 
 | Seed file | Content |
 |---|---|
-| `FlatWire_SampleData_Lookup.sql` | `Stand` with **fixed IDENTITY** 1=FM1, 2=FM2_8in, 3=FM2_6inS1, 4=FM2_6inS2, **5=FM2_6inS3** · `Drawer` 1–13 (`DIE-0210`…`DIE-0340`) · `Edger` 1=`EDGE-ROUND-A`, 2=`EDGE-SQUARE-B` · `SpoolConfiguration` · `AlloyProperty` for 1100 / 1350 / 3003 / 5052 / 6061 |
+| `FlatWire_SampleData_Lookup.sql` | `Stand` with **fixed IDENTITY** 1=FM1 (12″), 2=FM2_S1 (8″), 3=FM2_S2 (6″), 4=FM2_S3 (6″, final) — **four rows; the former Id 5 is withdrawn** · `Drawer` 1–13 (`DIE-0210`…`DIE-0340`) · `Edger` 1=`EDGE-ROUND-A`, 2=`EDGE-SQUARE-B` · `SpoolConfiguration` · `AlloyProperty` for 1100 / 1350 / 3003 / 5052 / 6061 |
 | `FlatWire_SampleData_Schedule.sql` | 10 `PassSchedule` + 70 `PassScheduleComponent` (7 per schedule) + change-log rows. Coverage: Draft 3 / Active 6 / Inactive 1 · FL1 8 / FL2 1 / FL3 1 · Round 6 / Square 4 |
 | `FlatWire_SampleData_Materials.sql` | 8 rods, 5 runs, 3 spools — `RUN-0001` FL1 standalone → coil `FW-00421-C01` from `R00041` + welded `R00042` · `RUN-0002` FL3 hybrid → coil, no spool · `RUN-0003` FL1 hybrid → spools `SP-00031/32` · `RUN-0004` FL2 finishing, **Paused**, consuming `SP-00031` · `RUN-0005` FL1 **aborted** with a mid-run checkout producing partial spool `SP-00033` |
 | `FlatWire_SampleData_Runs.sql` | `RodCheckin`, `RodStaging`, `SpoolCheckin`, `FlatWireRunDetail`, `RunPauseEvent`, `WeldEvent`, `RollOverride`, `DieChangeEvent`, `RunReading` |
@@ -224,6 +224,7 @@ Testing resumes when the suspending condition is cleared **and** the affected su
 | **TC-015** | **ITInhibit — two consecutive recordings missing** | I | **P1** | FR-009, FR-020 / `DAT009` | Suppress two consecutive recording intervals | ITInhibit **set** **and** a prominent data-recording alert displayed | — | ✓ |
 | **TC-016** | **ITInhibit clears only automatically** | I | **P1** | FR-008 / `ALT001` | ITInhibit set → attempt an operator clear via every UI surface | **No operator path exists.** Clears only when the condition resolves | — | ✓ |
 | **TC-017** | ITInhibit blocks transactions and rolling-data capture | I | **P1** | FR-010 / `ALT006` | ITInhibit set → attempt a run transaction | Blocked; **no rolling data recorded without an active coil** | — | ✓ |
+| **TC-017a** | **ITInhibit is line-scoped — a blocked line blocks only itself** | I | **P1** | FR-008 / `[PLC §8.1]` | FL2 running with a valid check-in → set each of the five conditions on FL1 in turn | FL1 **blocked** in every case; **FL2 unaffected throughout** — it keeps running, keeps recording and its own interlock stays clear. One tag per line, not one plant-level tag (`Q92`, decided Aug 4 2026) | — | ✓ |
 | **TC-018** | Buildup alerts at 50 % then every 10 % | I | P2 | FR-011 / `ALT007` | Run progresses toward planned length | Alerts at 50, 40, 30, 20, 10 % remaining — **five alerts, in order** | — | ✓ |
 | **TC-019** | Remaining-feed threshold alert | I | P2 | FR-012 / `ALT008` | Configure a threshold → cross it | Alert raised at the configured value | — | ✓ |
 | **TC-020** | **Enum mirror — C# ↔ TypeScript ↔ DB CHECK** | K | **P1** | `[API §2]` | For every canonical enum, compare all three definitions | **All three agree, value for value**, for all 14 enums. `CheckpointType` has five values including `RollAdjustTrigger`; `ComponentName` includes `FM2_6inS3` and excludes `Edger`; `EdgeType` is `Round`/`Square` only | — | ✓ |
@@ -334,8 +335,8 @@ Testing resumes when the suspending condition is cleared **and** the affected su
 | **TC-112** | In-spec / out-of-spec badge on the profile | C | P2 | FR-093 | Profile with 3 out-of-spec readings | Badge reads "3 out of spec", not "all in spec" | ✓ |
 | **TC-113** | Source traceability read-only | C | P2 | FR-092 | Open DB5 | Contributing rods with footage ranges and weld rows with quality and timestamp; **not editable** | ✓ |
 | **TC-114** | **No visual inspection section on DB5** | C | P2 | FR-095 | Open DB5 | Section absent — the spool was inspected at FL1 | ✓ |
-| **TC-115** | FM2 component table read-only with the confirm bar | C | P2 | FR-094 | Open DB5 | 8″, 6″S1, 6″S2+edger, 6″S3+edger shown read-only; confirm bar gates acknowledgement | ✓ |
-| **TC-116** | Acknowledgement pushes FM2 tags and opens the run | I | **P1** | FR-096 | Acknowledge | FM2 tags pushed (8″, S1/S2/S3 gaps, edger activation, edge type); `Spool.Status = INFLAT`; FL2 run created linked to the spool **and its source rod alphas** | ✓ |
+| **TC-115** | FM2 component table read-only with the confirm bar | C | P2 | FR-094 | Open DB5 | **Exactly three FM2 rows** — S1 (8″), S2 (6″)+edger, S3 (6″)+edger final — shown read-only; **no separate "8″ Roller" row and no row named 6″ S1**; confirm bar gates acknowledgement | ✓ |
+| **TC-116** | Acknowledgement pushes FM2 tags and opens the run | I | **P1** | FR-096 | Acknowledge | FM2 tags pushed (**S1/S2/S3 roll gaps and stand states**, edger activation and edge type at S2 and S3); `Spool.Status = INFLAT`; FL2 run created linked to the spool **and its source rod alphas** | ✓ |
 | **TC-117** | Pre-flight validation battery | I | P2 | `[SRS §5.3]` | Each of: invalid spool · missing gauge/width · missing weight · no schedule | Each blocks with its own message | ✓ |
 | **TC-118** | Hybrid-origin guard | I | **P1** | FR-091 | Standalone FL2 schedule applied to Hybrid-origin material | **Behaviour undefined — OI-47.** Records observed behaviour; gate fails until specified | ✗ |
 
@@ -368,8 +369,8 @@ Testing resumes when the suspending condition is cleared **and** the affected su
 | **TC-135** | **FL1 action bar has six buttons and no Roll Adjust** | C | **P1** | FR-107 / `ARM013` | Open DB3 on FL1 | Exactly six; **no Roll Adjust, no edger controls — FL1 has no edger** | ✓ |
 | **TC-136** | FL3 action bar has seven | C | P2 | FR-108 | Open DB3 on FL3 | Six plus Roll Adjust | ✓ |
 | **TC-137** | FL2 action bar omits Weld and Die Change | C | P2 | FR-109 | Open DB3 on FL2 | No Weld, no Die Change; includes Roll Adjust and Complete Coil | ✓ |
-| **TC-138** | Tab persistence in `localStorage` | C | P3 | FR-112 / `ARM017` | Switch to Machine View → reload | Machine View restored | ✓ |
-| **TC-139** | Machine status and actions stay visible on both tabs | C | P2 | FR-113 | Switch tabs | Grid and buttons remain | ✓ |
+| ~~**TC-138**~~ | ~~Tab persistence in `localStorage`~~ | — | — | ~~FR-112 / FR-114~~ | **[WITHDRAWN — descoped by client, Aug 4 2026]** — the Machine View tab is descoped. | — |
+| **TC-139** | **Machine status and actions stay visible at all times** | C | P2 | FR-113 | Collapse the chart section, then expand it | Grid and buttons remain visible throughout. *(Reworded 4 Aug 2026: was “on both tabs / switch tabs” — the tabs went with the Machine View, the rule did not.)* | ✓ |
 | **TC-140** | **FL2 renders the historical profile, not a live trace** | R | **P1** | FR-120 / `INT010` | Subscribe to `FL2Data` | **No `GaugeReading` or `WidthReading` events arrive**; the screen renders from `GET /run/{runId}/gaugetrace`; **absence is not treated as a fault** | ✓ |
 | **TC-141** | **`null` live gauge/width for FL2 in `GET /lines/status`** | K | **P1** | `[API §4.1]` | Query with FL2 idle and running | `currentGauge` and `currentWidth` are `null` in both states | ✓ |
 | **TC-142** | **Reconnect shows cached state, never a blank screen** | R | **P1** | FR-119 / `NFR006` | Active run → kill the transport | "Reconnecting…" banner over **cached last-known state**; no blank screen at any point | ✓ |
@@ -378,7 +379,7 @@ Testing resumes when the suspending condition is cleared **and** the affected su
 | **TC-145** | Traveler adapts by output type | C | P2 | FR-117 / `TRV007` | FL1 run, then FL2 run | Layout and stop popups differ — intermediate spool versus finished product | ✓ |
 | **TC-146** | Main-station traveler shows only relevant welded rods | C | P2 | FR-118 / `TRV009` | Compare DB3 and DB2A travelers | DB3 shows welded rods for the current running rod; DB2A shows pre-checked-in **and** welded; welded distinguished by **colour and explicit text** | ✓ |
 | **TC-147** | Order/constraint values used for runtime validation | I | P2 | FR-116 / `TRV006` | Exceed the package OD limit | Validation fires at the constraint | ✓ |
-| **TC-148** | Machine View schematic driven by the same stream | C | P3 | FR-114 | Open Machine View | Renders in the 440 px trace area from the same SignalR stream, with an "Open full screen" link to DB13 | ✓ |
+| ~~**TC-148**~~ | ~~Machine View schematic driven by the same stream~~ | — | — | ~~FR-112 / FR-114~~ | **[WITHDRAWN — descoped by client, Aug 4 2026]** — the Machine View tab is descoped. | — |
 
 ### 5.5 Spool completion — TC-160 … TC-184
 
@@ -633,7 +634,7 @@ Testing resumes when the suspending condition is cleared **and** the affected su
 | **TC-452** | **No PLC write during generation or apply** | I | **P1** | FR-391 | Generate and apply with the PLC path instrumented | **Zero tag writes** | ✓ |
 | **TC-453** | One Active schedule per line + alloy | I | **P1** | `[HLD §6.5]` | Activate a second for the same pair | Rejected by `UX_PassSchedule_OneActivePerLineAlloy` | ✓ |
 | **TC-454** | **Component state is a three-value enum** | K | **P1** | FR-371 | Set each of Active / Bypass / Skip | All three persist and round-trip. **A boolean cannot express Bypass vs Skip** | ✓ |
-| **TC-455** | Mandatory final stand locked on | C | **P1** | FR-371 | Attempt to bypass it | Toggle locked. **Which stand is mandatory is contested — build against `FM2_6inS3`, keep `FM2_6inS2` bypassable, do not delete the S2 validation (OI-04)** | ✓ |
+| **TC-455** | Mandatory final stand locked on | C | **P1** | FR-371 | Attempt to bypass **`FM2_S3`** | Toggle locked; `Bypass` and `Skip` rejected. **`FM2_S1` and `FM2_S2` remain bypassable.** *(`OI-04` closed 4 Aug 2026 — the two "contested" names were the same physical stand.)* | ✓ |
 | **TC-456** | `ParameterValue` null unless Active | I | P2 | `CK_PSC_ParamValue` | Set a value on a Bypass row | Rejected | ✓ |
 | **TC-457** | `FM1` cannot be bypassed | I | P2 | `CK_PSC_FM1NotBypassable` | Set FM1 to Bypass | Rejected | ✓ |
 | **TC-458** | Edge type required when an EdgeSet component is Active | I | P2 | `CK_PSC_EdgeTypeReq` | Active EdgeSet with null edge type | Rejected | ✓ |
@@ -677,24 +678,21 @@ Testing resumes when the suspending condition is cleared **and** the affected su
 | **TC-500** | **Alerts survive a service restart** | I | **P1** | OI-28 | Raise an alert → restart the service | **Currently fails — no table stores alerts.** Records the gap; story `FW-N06` closes it | ✗ |
 | **TC-501** | Active pass schedule ID shown per line | C | P3 | FR-427 | Open DB1 → schedule ID visible on the card | ✓ |
 | **TC-502** | Shift strip contents | C | P3 | FR-427 | Open DB1 → lines active, lbs this shift vs target, orders completed, average utilisation, shift end and time remaining | ✓ |
-| **TC-503** | Drill-downs | C | P3 | FR-425 | Click Open HMI, then SCADA Trends → DB13 for that line; DB14 | ✓ |
+| ~~**TC-503**~~ | ~~Drill-downs~~ | — | — | ~~FR-425~~ | **[WITHDRAWN — descoped by client, Aug 4 2026]** — both DB1 drill-down destinations are descoped, so there is nothing to drill into. *(Neither was implemented in the mockup.)* | — |
 
-### 5.21 / 5.22 HMI and SCADA — TC-515 … TC-539
+### 5.21 / 5.22 HMI and SCADA — [WITHDRAWN — descoped by client, Aug 4 2026]
 
-| TC | Title | Lvl | Pri | FR | Steps → Expected result | Auto |
-|---|---|---|---|---|---|---|
-| **TC-515** | Route-adaptive schematic | C | P3 | FR-440 | Switch FL1 / FL2 / FL3 | Schematic reconfigures automatically | ✓ |
-| **TC-516** | **FL1 variant shows no Edge Set node** | C | **P1** | `[SRS §5.21]` | Open the FL1 route | **No Edge Set node** — the 21 May correction removed the edger from FL1 | ✓ |
-| **TC-517** | Component colours and the non-bypassable stand | C | P2 | FR-444 | Active, bypassed, faulted, and the final FM2 stand | Green · grey · red; the final stand renders **green or red only** | ✓ |
-| **TC-518** | Inactive components dimmed, never removed | C | P2 | FR-446 | Route excluding FM2 | 40 % opacity with a BYPASS/OFFLINE badge in place of values | ✓ |
-| **TC-519** | Flow animation follows speed | C | P3 | FR-445 | Speed > 0, paused, faulted | Animated · static orange · static red | ✓ |
-| **TC-520** | **48 px tap targets and monospace readings** | C | **P1** | FR-450 | Measure every interactive element | All ≥ 48 px; all numeric readings in `--font-mono` | ✓ |
-| **TC-521** | **No print action on DB13 or DB14** | C | P2 | FR-451, FR-470 | Inspect both screens | No print control anywhere | ✓ |
-| **TC-530** | Four trend charts with the specified overlays | C | P3 | FR-460–463 | Open DB14 | Gauge and width with target, tolerance band, UCL/LCL and OOS shading; speed with the max line and paused shading; payoff with P1 solid, P2 dashed and the 3,000 lb threshold | ✓ |
-| **TC-531** | Control-limit calculation | U | P2 | FR-466 | 25 measurements | `UCL = X̄ + 3σ`, `LCL = X̄ − 3σ`, `USL/LSL = target ± tolerance` | ✓ |
-| **TC-532** | Event markers on a synchronised axis | C | P3 | FR-465 | Run with all seven event types | All seven render with their symbols on a shared x-axis | ✓ |
-| **TC-533** | CSV export column set | I | P3 | FR-467 | Export | Exactly the 14 specified columns, one row per reading interval | ✓ |
-| **TC-534** | Update-interval setting applies | R | P2 | FR-468 / `NFR005` | Set 1, 5, 10, 30 s | Each applies | ✓ |
+> **`TC-515` – `TC-534` are withdrawn** with Dashboard 13, Dashboard 14 and the Machine View tab (4 Aug 2026). Case numbers are retained and never reused.
+
+| Withdrawn | Was | Note |
+|---|---|---|
+| `TC-515` – `TC-521` | The HMI schematic: route variants, component nodes, flow animation, bypass rendering, alert bar, no-print | `TC-516` (“FL1 shows no Edge Set node”) was **P1** and is moot — there is no schematic. The underlying fact it defended, **FL1 has no edger**, is unchanged and is asserted in the pass-schedule and tag-map cases |
+| `TC-530` – `TC-534` | The trend charts: overlays, control limits, event markers, CSV export, update interval | **`TC-531` (control-limit calculation) tested SPC methodology, not the chart** — that methodology still applies to the SPC checkpoint and the gauge-trace report and is covered in §5.7 |
+
+**Two anchors moved rather than lapsed:**
+
+- **`NFR005`** (1 s default push, configurable) lost `TC-534` as a verification anchor. It is still verified by **`TC-604`**/**`TC-605`** and by the §5.4 real-time cases.
+- **The six run event markers** (`TC-532`) still render on the DB3 traces and are verified in §5.4 and §5.6. **No hub event was removed by this descope.**
 
 ### 5.23 / 5.24 Shift summary and OEE — TC-545 … TC-564
 
@@ -812,6 +810,8 @@ Testing resumes when the suspending condition is cleared **and** the affected su
 
 Executed on the physical line with the commissioning engineer. **This is the only place several behaviours can be proven at all** — see §3.4.
 
+> **C1–C11 are reproduced in [`PLCTagSpecification.md`](../RequirementDocuments/PLCTagSpecification.md) §11** so the client can read the commissioning plan alongside the tag map they are being asked to sign. **This document remains authoritative for the pass criteria.** **Applied 4 Aug 2026 — the two documents now agree:** `C5` above records *which controller(s) were written*. Without it the test passed whether the FL3 batch reached one controller or two, which is the open question (**`PLC-Q08`** / gap **G30**).
+
 ### 8.1 Safety preconditions
 
 - [ ] The line is under the commissioning engineer's control, not production control.
@@ -831,13 +831,13 @@ Commissioning engineer (PLC) · Engineering (tag map owner) · one line operator
 | **C2** | **`FL{n}.LineState` vocabulary** | Drive the line through run, stop, pause, fault, thread and jog, recording the tag value at each | **The observed vocabulary is documented.** This closes **OI-35**, on which both the checkout gatekeeper and the spool prompt depend |
 | **C3** | **Footage counter** | Run a measured length | Counter matches within tolerance |
 | **C4** | **Tag push configures the machine** | Acknowledge a pass schedule at check-in | Component states, die sizes, roll gaps, edge type and targets **all take effect on the machine** |
-| **C5** | **FL3 single-batch push** | Acknowledge an FL3 hybrid check-in | **One** acknowledgement configures FM1 **and** FM2 |
+| **C5** | **FL3 single-batch push** | Acknowledge an FL3 hybrid check-in | **One** acknowledgement configures FM1 **and** FM2, **and the controller(s) actually written are recorded** — without that step the test passes under either topology and cannot settle whether the FL3 batch crosses a controller boundary (**`PLC-Q08`** / **G30**) |
 | **C6** | **Tag clear on checkout** | Stop the line, check the rod out | Tags cleared **only after the confirmed stop**; payoff assignment cleared |
-| **C7** | **`ITInhibit` blocks run** | Set each of the five conditions | Machine run **blocked** in each case; cleared only when the condition resolves |
+| **C7** | **`ITInhibit` blocks run, on that line only** | Set each of the five conditions on one line, **with a second line running** | Machine run **blocked** in each case and cleared only when the condition resolves — and **the second line is unaffected throughout**. The interlock is line-scoped (`[PLC §8.1]`, **D15**) |
 | **C8** | **AGC feed reaches the screen** | Run at speed | Gauge and width stream to DB3 at the configured cadence; **the latency is measured and recorded — this is the number OI-34 needs** |
 | **C9** | **Stop-confirmation edge** | Run to target weight, stop, hold past the dwell | Prompt fires once; weight latched at the stop timestamp |
 | **C10** | **Checkout gatekeeper** | Attempt a checkout with the line running | Blocked with the specified message; **no stop command observed on the wire** |
-| **C11** | **FM2 S3 tag path** | Read the S3 stand's gap and status | **Closes OI-36** — the published map lists only S1 and S2 |
+| **C11** | **FM2 station names and the three-stand set** | Read the gap and status of **each of the three FM2 stands** and record the **path string the controller actually accepted** | **Exactly three FM2 stands respond, and the accepted station names are recorded.** This settles **`PLC-Q04`**: `S1`/`S2`/`S3` as specified, or the controller's own `Stand8`/`Stand6S1`/`Stand6S2`. **A fourth stand must not respond** — if one does, the three-stand correction is wrong and Phase 2/8 stop. *(Rewritten 4 Aug 2026: this test previously read "FM2 S3 tag path … closes OI-36", which assumed a missing tag. `OI-36` is closed by the correction itself — the published map's three stations are the three real stands — so what commissioning must now confirm is the naming, not the existence.)* |
 
 ### 8.4 Abort criteria
 
@@ -880,7 +880,7 @@ Independent of severity, set by risk area (§2.3). A P1-area S3 outranks a P3-ar
 | 5.1 | FR-030 – FR-054 | TC-040 – TC-069 | happy · negative · boundary · concurrency · permission |
 | 5.2 | FR-060 – FR-084 | TC-070 – TC-100 | happy · negative · boundary · real-time · compensating-write |
 | 5.3 | FR-090 – FR-096 | TC-110 – TC-118 | happy · negative |
-| 5.4 | FR-100 – FR-120 | TC-130 – TC-148, TC-606 – TC-608 | happy · boundary · real-time · resilience |
+| 5.4 | FR-100 – FR-120 | TC-130 – TC-137, TC-140 – TC-147, TC-606 – TC-608 *(TC-138, TC-148 withdrawn)* | happy · boundary · real-time · resilience |
 | 5.5 | FR-130 – FR-157 | TC-160 – TC-184 | happy · boundary · negative · real-time |
 | 5.6 | FR-160 – FR-175 | TC-190 – TC-207, TC-616 – TC-617 | **deepest — contractual** |
 | 5.7 | FR-180 – FR-197 | TC-220 – TC-238 | happy · negative · boundary |
@@ -896,9 +896,9 @@ Independent of severity, set by risk area (§2.3). A P1-area S3 outranks a P3-ar
 | 5.17 | FR-345 – FR-352 | TC-435 – TC-439 | happy |
 | 5.18 | FR-360 – FR-391 | TC-450 – TC-475 | happy · negative · boundary · permission |
 | 5.19 | FR-400 – FR-410 | TC-476 – TC-480 | happy · permission |
-| 5.20 | FR-420 – FR-428 | TC-490 – TC-503 | happy · **all five alert rules** |
-| 5.21 | FR-440 – FR-451 | TC-515 – TC-521 | happy · UI conformance |
-| 5.22 | FR-460 – FR-470 | TC-530 – TC-534 | happy |
+| 5.20 | FR-420 – FR-428 | TC-490 – TC-502 *(TC-503 withdrawn)* | happy · **all five alert rules** |
+| ~~5.21~~ | ~~FR-440 – FR-451~~ | ~~TC-515 – TC-521~~ | **withdrawn 4 Aug 2026** |
+| ~~5.22~~ | ~~FR-460 – FR-470~~ | ~~TC-530 – TC-534~~ | **withdrawn 4 Aug 2026** |
 | 5.23 | FR-480 – FR-490 | TC-545 – TC-550 | happy · permission |
 | 5.24 | FR-500 – FR-508 | TC-560 | **not scheduled — PP-03** |
 | §6 NFRs | `NFR003`–`NFR013` | TC-601 – TC-629 | measurable targets |
@@ -961,3 +961,5 @@ One case per contested row of the `[SRS §8]` matrix, each executed as the permi
 |------|-----------|-------------|
 | Jul 30, 2026 | Plan team | Initial publication. Test strategy mapped onto the UAL stack (Jest at 95 %, xUnit + Moq, integration against a seeded `FlatWireDB`, contract tests including the three-way enum mirror, real-time/load, PLC commissioning, UAT), risk-based prioritisation naming seven P1 areas, environments and the SQLCMD build/teardown procedure, entry/exit criteria per level and per gate, and a catalogue of **~250 test cases** grouped to mirror `[SRS §5]` — covering happy path, boundary, negative, permission and real-time behaviour for every group, with the mandatory areas (PLC tag push and the non-dismissible override, all five ITInhibit conditions, weld genealogy end to end, MMS ID lifecycle, the three checkout modes and carry-forward, FL2's `null` trace, FL3 hybrid, recording cadence, reconnect, buildup alerts, SPC and SPC-HOLD, WIP rejection, the role matrix and audit) written explicitly. NFR verification carries measurable targets and **marks four real-time NFRs untestable-until-defined without inventing thresholds** — recording that the QA2 load test as scheduled cannot fail. Adds the UAT scenario scripts in operator language, the PLC commissioning sequence with safety preconditions and abort criteria, defect severity and release gates, and a bidirectional coverage matrix with an explicit list of what is **not** covered and why. |
 | Aug 1, 2026 | Client sync (30 Jul call) | **TC-054 rewritten and four cases added.** Off-schedule staging is no longer authorised-and-recorded — the station **auto-switches**, so the old expected result (`OffScheduleOverride=1`, `ScheduledLineId` persisted) asserts columns that no longer exist. Added **TC-054a** (server `409 WRONG_STATION` for a stale client), **TC-054b** (welded pre-check-out needs a supervisor and ends on `HOLD`), **TC-054c** (a WIP rejection clears a blocked bay — the only thing that does), **TC-054d** (asymmetric min/max diameter band, **blocked until the tolerance values arrive**). TC-167's worked example moves off the withdrawn 2,000 lb target to the customer range. |
+| Aug 4, 2026 | Client direction | **HMI/SCADA descoped.** Dashboard 13 (HMI Line Schematic), Dashboard 14 (SCADA Trends) and the Machine View tab on the active run monitor are **withdrawn at client request**. `FR-111`, `FR-112`, `FR-114`, `FR-425`, `FR-440`–`FR-451` and `FR-460`–`FR-470` are marked **withdrawn** — numbers retained, never renumbered — and `FR-113` **reworded**, since it asserted a rule about "the active tab" that outlives the tabs. Both mockups and `HMIAndSCADALayout.md` are deleted. **Descope-ladder rung 7 is removed entirely:** its 67 h stops being *recoverable* effort and becomes *never-planned*, so Phase 5 drops 221 → ~154 h and the programme 3,727 → ~3,660 h, but the ladder loses its largest optional rung and Phase 5 is no longer deferrable. **Nothing structural was removed:** all six run event markers still land on the DB3 traces and no hub event, endpoint, table or column is deleted — every DB13/DB14 reference in the real-time and tag tables was a *consumer* entry, not a row. `Q4`/`OQ-4` is **superseded**, because Dashboard 14 was its answer. `TC-138`, `TC-148`, `TC-503` and `TC-515`–`TC-534` are withdrawn (numbers retained); **`TC-139` is reworded** rather than withdrawn, because the always-visible rule survives the tabs. Two anchors moved rather than lapsed: **`NFR005`** loses `TC-534` and is still verified by `TC-604`/`TC-605`, and **`TC-531`** tested SPC control-limit methodology rather than the chart, which still applies to the SPC checkpoint and the gauge-trace report. §8 gains a note that **C1–C11 is reproduced in `[PLC §12]`** for the client while this document stays authoritative for the pass criteria — and that **`C5` needs a step recording which controller(s) were written**, since as written it cannot distinguish the one- and two-controller FL3 topologies (**`PLC-Q08`** / **G30**). |
+| Aug 4, 2026 | Client direction | **`ITInhibit` confirmed line-scoped — `TC-017a` added and `C7` tightened.** The client confirmed one interlock tag per line, so **a blocked line blocks only itself**; the plant-level reading, in which an idle FL1 would have stopped a scheduled FL2, is excluded (`Q92`, `[PLC §8.1]`, decision **D15**). `TC-011`–`TC-017` were all single-line and would have passed under either scoping, so **new `TC-017a`** asserts the isolation directly: FL2 running, each of FL1's five conditions set in turn, FL2 unaffected throughout. **`C7` gains the same second line** — as written it exercised one line and could not have detected a plant-level tag. The P1 risk row for `ITInhibit` now names line-scoping alongside the five conditions. **No requirement text changes:** `FR-008`–`FR-010` and `FR-020` were always silent on scope. |

@@ -634,7 +634,11 @@
   .action-btn.commit svg { opacity: 1; }
   .action-btn-label { text-align: center; line-height: 1.2; }
 
-  /* ── Machine View Tab ── */
+  /* ── Chart section tab strip ──
+     Was the Machine View tab strip. The Machine View tab was descoped 4 Aug 2026,
+     so the strip now carries one inert tab plus the collapse toggle. The .tab-btn
+     rules are kept: the single tab still renders through them, matching FL2, which
+     never had a second tab. */
   .tab-strip {
     display: flex;
     align-items: center;
@@ -671,30 +675,8 @@
   .chart-collapse-btn:hover .acc-icon::after { background: var(--color-blue); }
   /* Expanded → show minus (−); collapsed → show plus (+), matching the info cards */
   body:not(.charts-collapsed) .chart-collapse-btn .acc-icon::after { transform: translate(-50%, -50%) scaleY(0); }
-  /* When collapsed, hide both chart panels regardless of active tab */
-  body.charts-collapsed #traces-panel,
-  body.charts-collapsed #machine-panel { display: none !important; }
-
-  /* Machine view schematic (compressed) */
-  .machine-view-panel {
-    display: flex;
-    height: 440px;
-    background: var(--color-background-primary);
-    border: 0.5px solid var(--color-border-tertiary);
-    border-radius: var(--border-radius-lg);
-    overflow: hidden;
-    position: relative;
-  }
-  .mv-svg { width: 100%; height: 100%; }
-  .mv-fullscreen-btn {
-    position: absolute; top: 12px; right: 14px;
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 5px 12px; border: 1px solid var(--color-border-secondary);
-    background: var(--color-background-primary); border-radius: var(--border-radius-md);
-    font-size: 14px; font-weight: 500; color: var(--color-text-secondary);
-    cursor: pointer; text-decoration: none;
-  }
-  .mv-fullscreen-btn:hover { background: var(--color-background-secondary); }
+  /* When collapsed, hide the chart panel */
+  body.charts-collapsed #traces-panel { display: none !important; }
 
   /* Traces wrapper to allow tab switching */
   .traces-tab-content { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: 440px; }
@@ -828,8 +810,10 @@
 
   <!-- Tab strip -->
   <div class="tab-strip panel" id="chart-tab-strip" style="padding-bottom:0">
-    <button class="tab-btn active" id="tab-traces" onclick="switchTab('traces')">Traces</button>
-    <button class="tab-btn" id="tab-machine" onclick="switchTab('machine')">Machine View</button>
+    <!-- One tab since 4 Aug 2026: the Machine View tab is descoped. The button is
+         kept as a non-interactive label so the strip still reads as a titled section
+         and the collapse toggle keeps its home. Same shape as FL2. -->
+    <button class="tab-btn active" id="tab-traces" type="button" tabindex="-1">Traces</button>
     <span class="tab-spacer"></span>
     <button class="chart-collapse-btn" id="chart-collapse-btn" onclick="toggleChartSection()"
             title="Collapse charts" aria-label="Collapse charts" aria-expanded="true">
@@ -961,89 +945,8 @@
 
   </div><!-- /traces -->
 
-  <!-- Machine View tab content -->
-  <div id="machine-panel" style="display:none; height:440px; padding:10px 12px; box-sizing:border-box; background:var(--color-background-tertiary); position:relative;">
-    <a class="mv-fullscreen-btn" href="dashboard_13_hmi_schematic.html">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
-      Open full screen
-    </a>
-    <!-- Compressed schematic SVG -->
-    <svg viewBox="0 0 900 400" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">
-      <!-- Payoffs row -->
-      <rect x="60" y="16" width="140" height="72" rx="8" fill="var(--color-background-primary)" stroke="#EF9F27" stroke-width="1.5"/>
-      <circle cx="78" cy="34" r="5" fill="#EF9F27" style="animation:pulse 1.6s infinite"/>
-      <text x="90" y="38" font-size="14" font-weight="600" fill="var(--color-text-secondary)">PAYOFF 1</text>
-      <text x="70" y="58" font-size="15" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="#EF9F27">4,200 lb</text>
-      <text x="70" y="76" font-size="14" fill="#EF9F27" font-weight="600">⚠ Weld soon</text>
-
-      <rect x="230" y="16" width="140" height="72" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
-      <circle cx="248" cy="34" r="5" fill="#1D9E75"/>
-      <text x="260" y="38" font-size="14" font-weight="600" fill="var(--color-text-secondary)">PAYOFF 2</text>
-      <text x="240" y="58" font-size="15" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="#1D9E75">8,500 lb</text>
-      <text x="240" y="76" font-size="14" fill="#1D9E75" font-weight="600">✓ Ready</text>
-
-      <!-- Merge + flow to DB1 -->
-      <path d="M 130 88 L 130 104 L 300 104 L 300 88" fill="none" stroke="var(--color-border-secondary)" stroke-width="1.2"/>
-      <path d="M 215 104 L 215 130" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
-        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
-      </path>
-
-      <!-- DB1 -->
-      <rect x="145" y="130" width="140" height="58" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
-      <circle cx="163" cy="146" r="5" fill="#1D9E75"/>
-      <text x="174" y="150" font-size="14" font-weight="600" fill="var(--color-text-secondary)">DB1 — DRAW BOX 1</text>
-      <text x="155" y="172" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">0.340"</text>
-
-      <!-- DB1→DB2 -->
-      <path d="M 215 188 L 215 212" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
-        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
-      </path>
-
-      <!-- DB2 -->
-      <rect x="145" y="212" width="140" height="58" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
-      <circle cx="163" cy="228" r="5" fill="#1D9E75"/>
-      <text x="174" y="232" font-size="14" font-weight="600" fill="var(--color-text-secondary)">DB2 — DRAW BOX 2</text>
-      <text x="155" y="254" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">0.310"</text>
-
-      <!-- DB2→FM1 -->
-      <path d="M 215 270 L 215 294" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
-        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
-      </path>
-
-      <!-- FM1 -->
-      <rect x="100" y="294" width="230" height="60" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
-      <circle cx="120" cy="312" r="5" fill="#1D9E75"/>
-      <text x="132" y="316" font-size="14" font-weight="600" fill="var(--color-text-secondary)">FM1 — 12" FLATTENING MILL</text>
-      <text x="112" y="340" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">Gap: 0.112"</text>
-
-      <!-- GAUGE reading (right side) -->
-      <rect x="480" y="294" width="130" height="60" rx="8" fill="#EFF6FB" stroke="#185FA5" stroke-width="1.5"/>
-      <circle cx="496" cy="312" r="5" fill="#185FA5"/>
-      <text x="508" y="316" font-size="14" font-weight="600" fill="#185FA5">GAUGE (FM1 out)</text>
-      <text x="490" y="340" font-size="20" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="#1D9E75">0.110"</text>
-      <text x="490" y="356" font-size="14" fill="#1D9E75">✓ In spec</text>
-      <path d="M 330 324 L 480 324" fill="none" stroke="#185FA5" stroke-width="1" stroke-dasharray="4 3" opacity="0.6"/>
-
-      <!-- WIDTH reading -->
-      <rect x="480" y="372" width="130" height="46" rx="8" fill="#EFF6FB" stroke="#185FA5" stroke-width="1.5"/>
-      <circle cx="496" cy="388" r="5" fill="#185FA5"/>
-      <text x="508" y="392" font-size="14" font-weight="600" fill="#185FA5">WIDTH</text>
-      <text x="490" y="412" font-size="20" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="#1D9E75">0.625"</text>
-
-      <!-- TKUP-1 -->
-      <path d="M 330 397 L 380 397 L 380 326 L 640 326" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6 5">
-        <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="0.8s" repeatCount="indefinite"/>
-      </path>
-      <rect x="640" y="294" width="200" height="60" rx="8" fill="var(--color-background-primary)" stroke="#1D9E75" stroke-width="1.5"/>
-      <circle cx="660" cy="312" r="5" fill="#1D9E75"/>
-      <text x="672" y="316" font-size="14" font-weight="600" fill="var(--color-text-secondary)">TKUP-1 — SPOOL OUTPUT</text>
-      <text x="652" y="340" font-size="14" font-weight="500" font-family="'SF Mono','Consolas',monospace" fill="var(--color-text-primary)">18,058 ft / 1,460 lb</text>
-
-      <!-- FM2 (greyed / bypassed for FL1) -->
-      <rect x="640" y="372" width="200" height="46" rx="8" fill="var(--color-background-secondary)" stroke="var(--color-border-tertiary)" stroke-width="1" opacity="0.5"/>
-      <text x="740" y="400" text-anchor="middle" font-size="14" fill="var(--color-text-tertiary)">FM2 — BYPASSED</text>
-    </svg>
-  </div>
+  <!-- The Machine View tab and its compressed schematic were removed 4 Aug 2026:
+       the Machine View tab and Dashboard 13 (HMI Line Schematic) are both descoped. -->
 
 
   <div class="actions panel">
@@ -1076,10 +979,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           <span class="action-btn-label">Die Change</span>
         </button>
-        <button class="action-btn" onclick="window.location.href='dashboard_14_scada_trends.html'" title="Open SCADA multi-trend chart">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          <span class="action-btn-label">View Trends</span>
-        </button>
+        <!-- View Trends → Dashboard 14 removed 4 Aug 2026: SCADA Trends descoped. -->
       </div>
     </div>
 
@@ -1154,27 +1054,9 @@
     }, 1000);
   })();
 
-  function switchTab(tab) {
-    const tracesPanel = document.getElementById('traces-panel');
-    const machinePanel = document.getElementById('machine-panel');
-    const tabTraces = document.getElementById('tab-traces');
-    const tabMachine = document.getElementById('tab-machine');
-    // Selecting a tab re-opens the section if it was collapsed
-    if (document.body.classList.contains('charts-collapsed')) setChartCollapsed(false);
-    if (tab === 'traces') {
-      tracesPanel.style.display = '';
-      machinePanel.style.display = 'none';
-      tabTraces.classList.add('active');
-      tabMachine.classList.remove('active');
-      localStorage.setItem('db3-active-tab', 'traces');
-    } else {
-      tracesPanel.style.display = 'none';
-      machinePanel.style.display = 'block';
-      tabTraces.classList.remove('active');
-      tabMachine.classList.add('active');
-      localStorage.setItem('db3-active-tab', 'machine');
-    }
-  }
+  // switchTab() removed 4 Aug 2026 with the Machine View tab. There is one tab, so
+  // there is nothing to switch. #traces-panel's display was only ever set here, so it
+  // now relies on its stylesheet default — which is what the collapse rule toggles.
 
   // Collapse / expand the entire chart section (accordion)
   function setChartCollapsed(collapsed) {
@@ -1190,10 +1072,10 @@
     setChartCollapsed(!document.body.classList.contains('charts-collapsed'));
   }
 
-  // Restore last-used tab
+  // Restore the collapsed/expanded state of the chart section.
+  // The 'db3-active-tab' restore was dropped 4 Aug 2026 with the Machine View tab;
+  // 'db3-charts-collapsed' shares this IIFE and must stay.
   (function() {
-    const saved = localStorage.getItem('db3-active-tab');
-    if (saved === 'machine') switchTab('machine');
     if (localStorage.getItem('db3-charts-collapsed') === '1') setChartCollapsed(true);
   })();
 

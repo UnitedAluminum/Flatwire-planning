@@ -25,7 +25,7 @@
 ## User Journey
 1. Supervisor opens **Dashboard 1**; sees FL1/FL2/FL3 panels with status badge, order/alpha, alloy/route, speed, gauge/width (real-time FL1/FL3; blank for FL2 idle), payoff weight bar + Payoff-2 status, run time.
 2. Alert chips below (payoff low, gauge deviation, component fault, WIP rejection, no weld material).
-3. Clicking a panel → that line's Dashboard 3 (running) or Dashboard 2/5 (idle); header links → Dashboard 13 (HMI) / Dashboard 14 (SCADA).
+3. Clicking a panel → that line's Dashboard 3 (running) or Dashboard 2/5 (idle); the two header drill-downs to Dashboard 13 / 14 are **removed — both screens descoped 4 Aug 2026** (`FR-425` withdrawn).
 - **Decision points:** navigate by line state.
 - **Error scenarios:** SignalR drop → "Reconnecting…" banner, cached last-known state; no blank screen.
 
@@ -78,4 +78,4 @@ sequenceDiagram
 ## Deliverables
 Dashboard 1; `LinesController` + `LineStatusService`; `FlatWireHub` broadcasting; OPC poller + alert engine; `flat-wire-signalr.service` fully wired.
 
-**OQ blockers:** OQ-4 (SCADA tag paths — decided, confirm with Tim O./commissioning), GAP-8 (show pass-schedule ID on DB1 — open, low). **Stories:** FW-060, FW-080, FW-081 (chart component groundwork).
+**OQ blockers:** **`PLC-Q02`** (confirm every machine tag path with the commissioning engineer — successor to the superseded OQ-4), GAP-8 (show pass-schedule ID on DB1 — open, low). **Stories:** FW-060, FW-080, FW-081 (chart component groundwork).

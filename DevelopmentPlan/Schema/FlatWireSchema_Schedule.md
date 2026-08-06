@@ -78,14 +78,15 @@ Per-component rows belonging to a pass schedule. Each row defines one tool stati
 |---|---|---|
 | `DB1` | Draw box | First draw box — primary die reduction |
 | `DB2` | Draw box | Second draw box — secondary die reduction |
-| `FM1` | Finishing mill | First finishing mill stand |
-| `EdgeSet` | Edger | Edge profile tooling station |
-| `FM2_8in` | Finishing mill | FM2 with 8-inch roll (legacy; retained for pre-May-21 schedules) |
-| `FM2_6inS1` | Finishing mill | FM2 6-inch stand S1 |
-| `FM2_6inS2` | Finishing mill | FM2 6-inch stand S2 (edger position) |
-| `FM2_6inS3` | Finishing mill | FM2 6-inch stand S3, final (edger position) |
+| `FM1` | Finishing mill | FL1's 12-inch flattening mill — not bypassable |
+| `EdgeSet` | Edger | Edge profile tooling station (FL1 legacy — FL1 has no edger) |
+| `FM2_S1` | Finishing mill | FM2 stand **S1 — 8-inch roller**; bypassable, no edger |
+| `FM2_S2` | Finishing mill | FM2 stand **S2 — 6-inch roller**; bypassable, edger position |
+| `FM2_S3` | Finishing mill | FM2 stand **S3 — 6-inch roller**; edger position, **final gauge control, not bypassable** |
 
-> **May-21-2026 machine revision:** FL1 has no edger; FM2 is three 6" stands (S1/S2/S3) with edgers at **S2 and S3**. `FM2_6inS3` added; `FM2_8in` kept for legacy schedules.
+> **FM2 configuration `[CONFIRMED — Aug 4 2026]`:** FM2 has **three** stands — **S1 (8")**, **S2 (6")**, **S3 (6", final)** — with edgers at S2 and S3 only. The May-21-2026 note recorded here as *"three 6-inch stands"* was misread as a separate 8" roller plus three 6" stands; the 8" roller **is S1**, and `FM2_6inS3` never corresponded to real equipment. Rename: `FM2_8in`→`FM2_S1`, `FM2_6inS1`→`FM2_S2`, `FM2_6inS2`→`FM2_S3`, `FM2_6inS3` withdrawn. Roll diameter now lives in [`Stand.RollDiameterIn`](./FlatWireSchema_Lookup.md#stand), not in the identifier.
+>
+> **This closes `OI-04`.** The rule *"`FM2_6inS2` must always be Active"* (DDL/API) and *"6" S3 is non-bypassable"* (SRS §2.7) were describing the **same physical stand** — now unambiguously **`FM2_S3`**.
 
 **Allowed values — `State`:** `Active`, `Bypass`, `Skip`
 
@@ -126,3 +127,4 @@ Immutable audit trail of every post-`Active` pass-schedule action — overrides,
 | Date | Change |
 |---|---|
 | July 26, 2026 | Added `PassScheduleChangeLog` (OQ-28); added `PassSchedule.ActiveJobId` + `RowVersion`; `PassSchedule.Alloy` FK → `AlloyProperty`; enforced one-Active-per-line+alloy via filtered unique index; added component `FM2_6inS3` + `IsMandatory` + FM1-not-bypassable CHECK (May-21 revision). Retargeted to `FlatWireDB`. |
+| August 4, 2026 | **FM2 roller-size correction.** FM2 is three stands — S1 (8"), S2 (6"), S3 (6", final) — not a separate 8" roller plus three 6" stands. `ComponentName` vocabulary renamed to position-only (`FM2_S1`/`FM2_S2`/`FM2_S3`); `FM2_6inS3` withdrawn as never-existent; `CK_PSC_ComponentName` and `CK_RollOverride_Component` updated; roll diameter moved to the new `Stand.RollDiameterIn` column. Closes **OI-04**. |

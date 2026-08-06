@@ -274,7 +274,7 @@ Recorded as direction, not as commitments in the current scope.
 | [Rod and Spool Check-in](RocCheckin.md) | Where the schedule is resolved, confirmed, acknowledged and pushed |
 | [SPC Checkpoint](SPCCheckpoint.md) | The verification a configuration change raises |
 | [Die Change and Die Management](DieChangeAndManagement.md) | Die sizes are schedule parameters; a size change is a configuration change |
-| [HMI and SCADA Layout](HMIAndSCADALayout.md) | Displays the configuration in force against live measurement |
+| [PLC Tag Specification](PLCTagSpecification.md) | What of this record is pushed to the machine, and the rule that approving a schedule configures nothing |
 
 ---
 

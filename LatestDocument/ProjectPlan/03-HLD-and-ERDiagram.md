@@ -1,7 +1,7 @@
 # Flat Wire Mill — High-Level Design & ER Diagram
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 1, 2026
+**Last Updated:** August 4, 2026
 **Document Type:** High-Level Design + Entity-Relationship model
 **Status:** Baselined for build — design risks in §13.2, unresolved items in §13.3
 **Owner:** Architecture stream
@@ -165,7 +165,7 @@ Two read procedures back the heaviest queries (§6.8): `sp_GetGaugeTrace` and `s
 
 | Concern | Implementation |
 |---|---|
-| Request validation | **FluentValidation** per command, invoked by a MediatR pipeline behaviour. Examples: the mandatory FM2 stand must be `Active`; FL3 requires `RouteMode = Hybrid`; `State ∈ {Active, Bypass, Skip}`; `lineId = FL2` is rejected at `/staging/rod` |
+| Request validation | **FluentValidation** per command, invoked by a MediatR pipeline behaviour. Examples: the mandatory FM2 stand `FM2_S3` must be `Active`; FL3 requires `RouteMode = Hybrid`; `State ∈ {Active, Bypass, Skip}`; `lineId = FL2` is rejected at `/staging/rod` |
 | Response envelope | `UAController` standard `Data` / `Success` / `Errors` — see `[API §1]` |
 | Logging | **Serilog**, structured, with the correlation ID from the inbound header |
 | Error handling | Domain rule violation → `422`; concurrency / uniqueness → `409`; not found → `404`; PLC failure → `500` with the transaction aborted and compensating writes issued |
@@ -238,7 +238,7 @@ Scaffolded with `ng generate library flat-wire-shopfloor --prefix=fw`, registere
 
 ```
 projects/flat-wire-shopfloor/src/lib/
-├── components/            one folder per screen (DB1 … DB14, DB2A, DB7b, DB9A, DC, DM, OEE)
+├── components/            one folder per screen (DB1 … DB12, DB2A, DB7b, DB9A, DC, DM, OEE)
 ├── components/shared/     the fw-prefixed reusable controls ([SRS §7.6])
 ├── services/              flat-wire-api-*.service, flat-wire-signalr.service,
 │                          line-context.service, run-state.service
@@ -264,7 +264,6 @@ Lazily-loaded `FLAT_WIRE_ROUTES` under `/flat-wire`, per-line:
 /flat-wire/line/:lineId/run/weld | spc | rolladjust | diechange | checkout
 /flat-wire/status                          (DB1)
 /flat-wire/passschedule | /passschedule/:id  (DB9A / DB9 — role-guarded)
-/flat-wire/hmi/:lineId | /trends           (DB13 / DB14)
 /flat-wire/shift | /packing | /dies
 ```
 
@@ -291,8 +290,6 @@ The mock service must mirror the **DB seed**, not invent fixtures: alphas `R0004
 |---|---|---|
 | Live streaming gauge/width traces | **Chart.js**, updated in place with `update('none')` | Bounded redraw cost under a 10 Hz feed |
 | Historical FL2 profile | **Inline SVG** | The mockup's profile is hand-crafted SVG, not Chart.js |
-| HMI schematic (DB13) | **Inline SVG**, route-adaptive | Component nodes carry live values and status colours |
-| SCADA multi-pen (DB14) | Chart.js with a shared event-marker strip | Synchronised x-axis across four charts |
 
 `gauge-trace-chart` is **one component with an `isLive` flag**, not two components.
 
@@ -356,7 +353,7 @@ CoilOutput.CoilAlpha → CoilTraceability(FootageFrom..FootageTo) → Rod.Alpha 
 
 | Table | Purpose | Key columns / constraints |
 |---|---|---|
-| `Stand` | Rolling-mill finishing stands | `Name` UNIQUE (`FM1`, `FM2_8in`, `FM2_6inS1`, `FM2_6inS2`, `FM2_6inS3`), `LineId` (NULL = shared), gauge and width ranges `DECIMAL(8,4)` with Min<Max checks. *(The DDL comment on `MinWidthIn` says "strip width" — a source terminology slip; the column means flat wire width.)* |
+| `Stand` | Rolling-mill finishing stands | `Name` UNIQUE — position only (`FM1`, `FM2_S1`, `FM2_S2`, `FM2_S3`), `LineId` (NULL = shared), **`RollDiameterIn DECIMAL(5,3)` > 0** (FM1 12.000; FM2 S1 8.000, S2 6.000, S3 6.000), gauge and width ranges `DECIMAL(8,4)` with Min<Max checks. *(Aug 4 2026: FM2 is three stands and diameter moved out of the name into `RollDiameterIn`. The DDL comment on `MinWidthIn` says "strip width" — a source terminology slip; the column means flat wire width.)* |
 | `Drawer` | Draw-box die configurations | `Name` UNIQUE, `DiameterIn DECIMAL(8,4)` > 0, optional feed-diameter range |
 | `Edger` | Edger tooling configurations | `EdgeType` CHECK IN (`Round`,`Square`), `ToolingSetNo` |
 | `SpoolConfiguration` | Spool type constraints | Weight / core-diameter / outer-diameter ranges with Min<Max checks |
@@ -500,7 +497,7 @@ Coverage: every FK / `RunId` join column and the hot query paths — `PassSchedu
 | Object | Purpose |
 |---|---|
 | `trg_CoilTraceability_NoOverlap` | AFTER INSERT/UPDATE trigger rejecting overlapping footage ranges within one coil |
-| `sp_GetGaugeTrace(@RunId, @FromFt, @ToFt, @Resolution)` | Paged, decimated gauge/width trace **plus the weld markers in the window as a second result set**. Backs DB3/DB14 and the Gauge-Trace report |
+| `sp_GetGaugeTrace(@RunId, @FromFt, @ToFt, @Resolution)` | Paged, decimated gauge/width trace **plus the weld markers in the window as a second result set**. Backs DB3 and the Gauge-Trace report |
 | `sp_ShiftSummary(@LineId, @ShiftStart, @ShiftEnd)` | Per-line shift aggregation: coils completed, net weight, footage, WIP rejections, SPC checkpoints, checkpoints in spec, pause seconds |
 
 Both procedures carry a least-privilege `GRANT EXECUTE` to `ua_user`.
@@ -982,41 +979,16 @@ Script constraints worth knowing before running it: `machines.machine_idx` is **
 
 **PLC tags are pushed on exactly one trigger: explicit operator acknowledgement of a pass schedule at check-in.** Never on schedule save, load or generation. Never at pre-check-in.
 
-### 9.2 Write surface
+### 9.2 The tag surface
 
-| Operation | Trigger | Content | Result recorded in |
-|---|---|---|---|
-| `PushPassSchedule(scheduleId, lineId, payoffPosition)` | Check-in acknowledgement | Component active/bypass state, DB1/DB2 die sizes, FM1 and FM2 roll gaps, edge type, speed targets, gauge/width targets | `RodCheckin.PlcTagsPushed` / `SpoolCheckin.PlcTagsPushed` |
-| `ClearPayoffTags(lineId, payoffPosition)` | Rod checkout, **after** the line is confirmed stopped | Reset to idle/bypass defaults | `RodCheckout.PlcTagsCleared` |
-| per-component write | Roll Adjust Apply | The new roll gap | `RollOverride.PlcTagWritten` |
-| hold / idle | Pause | Drive enable / speed to idle | `RunPauseEvent` |
-| `SimulatePLCTagPush` | Dev and pre-commissioning | Logs intended writes, no live connection | log only |
+> **Specified in [`PLCTagSpecification.md`](../RequirementDocuments/PLCTagSpecification.md)** — the write operations and their triggers (`[PLC §7]`), the per-line tag map (`[PLC §5.2]`), `ITInhibit` and its five conditions (`[PLC §8]`), and the full tag lifecycle (`[PLC §9]`).
 
-For **FL3**, one acknowledgement pushes **all FM1 and FM2 tags in a single batch**.
+The architectural facts that belong here rather than there:
 
-### 9.3 `ITInhibit` — the five set conditions
-
-`ITInhibit` is a **system-controlled** tag that blocks machine run. It is set and cleared **only** by the system, never by an operator. It is set when **any** of:
-
-1. No coil/rod is checked in
-2. No active MMS ID exists
-3. PLC feet data is **unavailable**
-4. PLC feet data is **invalid**
-5. **Two or more consecutive data recordings are missing**
-
-While set, the system blocks machine run and related transactions and records no rolling data.
-
-### 9.4 Read surface
-
-Tag paths come from `appsettings.json` — **never hardcoded** — so they can be corrected after commissioning without redeployment. The representative FL1 map is in `[SRS §9.2]`.
-
-Two open items constrain this surface: **`FL{n}.LineState`'s vocabulary is undocumented** (**OI-35**) and two features depend on the answer; and the **FM2 tag map lists only S1 and S2** while the 21 May revision added S3 and made it final (**OI-36**).
-
-### 9.5 The non-transactional reality
-
-> **OPC writes are not transactional.** `INT002` says the batch is "rolled back" on failure; the actual recovery is a **compensating re-clear**. Describe it that way in code and comments — gap **G16**. This wording has misled implementers before.
-
----
+- **The integration layer is the existing OPC service, extended.** PLCs are new hardware; **OPC servers are unchanged**; no new integration layer is introduced (`INT007`).
+- **Tag paths and the line-state mapping are configuration**, so both can be corrected after commissioning without redeployment.
+- **Machine writes are not transactional.** Recovery is a **compensating re-clear**, never a rollback — gap **G16**. §9.1 above states the single-trigger rule; §10 below is the transactional boundary this creates.
+- **On FL3 it is undetermined whether the single-batch push crosses a controller boundary** — every published map addresses the finishing stands under the FL2 namespace. That decides whether there are one or two failure domains for §10 to compensate. Gap **G30** / **`PLC-Q08`**.
 
 ## 10. The transactional boundary — read this before writing check-in
 
@@ -1132,7 +1104,7 @@ The same reasoning applies to **pre-check-in** (writes `RodStaging` + `coils` + 
 | **D-14** | Component state is a **three-value enum** | A boolean cannot express Bypass versus Skip | Mirrored in C#, TypeScript and the DB CHECK |
 | **D-15** | Edge type has **one domain value set** `Round`/`Square` with a display pipe | Three vocabularies were circulating | One enum, one CHECK, one pipe |
 | **D-16** | `CheckpointType` has **five** values including `RollAdjustTrigger` | `/rolloverride` writes a checkpoint of that type | The four-value API enum is corrected |
-| **D-17** | The **traveler is fully digital**; labels still print | Business decision, 28 Apr 2026 | No print action on DB13/DB14 either |
+| **D-17** | The **traveler is fully digital**; labels still print | Business decision, 28 Apr 2026 | No print action on the run monitor either |
 
 ### 13.2 Design risks
 
@@ -1161,3 +1133,4 @@ New here: **PP-01** (index count is 46, not 44).
 |------|-----------|-------------|
 | Jul 30, 2026 | Plan team | Initial publication. Architecture context and component views, the binding reference-code rules, backend layering and CQRS, the purpose-built real-time pipeline, the Angular library design, and the full data model. **Table count (27), FK count (41) and index count (46) were taken by counting the DDL, not quoted** — the index count corrects the master specification's 44 and is raised as **PP-01**. Publishes an ER overview plus five per-group detailed diagrams covering every table, the complete 41-FK list, the cross-database touchpoints, the PLC/OPC surface, the non-transactional check-in boundary with its compensating-write sequence, and seventeen architecture decisions with rationale. States the `Rod`-table resolution (**D-04**) explicitly and names the two stale documents that say the opposite. |
 | Aug 1, 2026 | Client sync (30 Jul call) | **Schema section updated to the as-built DDL.** `RodStaging` loses `OffScheduleOverride` / `ScheduledLineId` and their two CHECK constraints — a rod booked on the other rod line now triggers an **automatic station switch** (OQ-74) — and gains `UnstageKind` / `WipRejectionId` so a **WIP rejection releases a blocked bay** (OQ-72 item 3). `AlloyProperty`'s two single-± tolerance columns become **four min/max pairs** (gauge, width, rod diameter, ovality), with diameter and ovality **NULL pending the values owed by e-mail** (OQ-71) — the `CHK007` missing-column note is resolved in shape but not in data. `coils.coil_status = INFLAT` is written at **check-in only** (OQ-67). Not shown in the ER diagram but added to the DDL: `RodCheckout` gains `WasWelded` and the supervisor approval stamp it never had (**G24**), enforced for Mode B and for a welded Mode P removal. Rebuild verified — `RunAll` clean and idempotent, 27 tables, 15 constraint tests pass. |
+| Aug 4, 2026 | Client direction | **HMI/SCADA descoped.** Dashboard 13 (HMI Line Schematic), Dashboard 14 (SCADA Trends) and the Machine View tab on the active run monitor are **withdrawn at client request**. `FR-111`, `FR-112`, `FR-114`, `FR-425`, `FR-440`–`FR-451` and `FR-460`–`FR-470` are marked **withdrawn** — numbers retained, never renumbered — and `FR-113` **reworded**, since it asserted a rule about "the active tab" that outlives the tabs. Both mockups and `HMIAndSCADALayout.md` are deleted. **Descope-ladder rung 7 is removed entirely:** its 67 h stops being *recoverable* effort and becomes *never-planned*, so Phase 5 drops 221 → ~154 h and the programme 3,727 → ~3,660 h, but the ladder loses its largest optional rung and Phase 5 is no longer deferrable. **Nothing structural was removed:** all six run event markers still land on the DB3 traces and no hub event, endpoint, table or column is deleted — every DB13/DB14 reference in the real-time and tag tables was a *consumer* entry, not a row. `Q4`/`OQ-4` is **superseded**, because Dashboard 14 was its answer. The `SCADA multi-pen (DB14)` component row and the `/trends` route are deleted; `sp_GetGaugeTrace` is **unchanged** — it had three consumers and only one was removed. **PLC tag surface consolidated.** The surface existed in six partial, mutually contradictory copies; it now has one home in [`PLCTagSpecification.md`](../RequirementDocuments/PLCTagSpecification.md) (client-facing, `[PLC]`, with its own `PLC-Q##` register) plus `DevelopmentPlan/PLCTagImplementation.md` (internal). This document’s tag-surface section is reduced to a pointer, keeping only what is genuinely its own job. §9.1 (the single-trigger rule) and §10 (the transactional boundary and its compensating-write sequence) are **kept here** — they are architecture, not tag surface, and §10 is the home of **G2**/**OI-39**. |

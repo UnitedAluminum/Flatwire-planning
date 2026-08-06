@@ -267,9 +267,9 @@ Pass schedule PS-1100-FL1-003 components:
 - DB2: Active, 0.260"
 - FM1: Active, 0.128"
 - EdgeSet: Active, Round
-- FM2_8in: Bypass
-- FM2_6inS1: Bypass
-- FM2_6inS2: Active, 0.125"
+- FM2_S1: Bypass
+- FM2_S2: Bypass
+- FM2_S3: Active, 0.125"
 
 ### Spools available for FL2 check-in
 
@@ -476,8 +476,8 @@ Same Confirm Bar pattern as Dashboard 2 (amber → green on confirmation).
 Recommend PS-1100-FL2-007 by default.
 
 Table: Component | Status | Setting | Stage
-  8" Roller    ○ Bypass    —             pre-finishing  (row has .bypass class, opacity 0.6)
-  6" Roller S1 ● Active    Gap 0.0162"   stage 1
+  S1 · 8"      ● Active    Gap 0.0164"   stage 1
+  S2 · 6"      ● Active    Gap 0.0162"   stage 2
   Edger        ● Active    Round edge    stage 1
   6" Roller S2 ● Active    Gap 0.0160"   stage 2
   Edger        ● Active    Round edge    stage 2

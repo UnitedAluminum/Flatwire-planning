@@ -5,7 +5,7 @@
 -- ============================================================
 -- These fixed IDENTITY values are the FK targets the schedule
 -- sample data (FlatWire_SampleData_Schedule.sql) references:
---   Stand.Id  1=FM1  2=FM2_8in  3=FM2_6inS1  4=FM2_6inS2  5=FM2_6inS3
+--   Stand.Id  1=FM1  2=FM2_S1  3=FM2_S2  4=FM2_S3
 --   Drawer.Id 1..13 (die hole diameter = output wire size)
 --   Edger.Id  1=Round  2=Square
 -- AlloyProperty seeds the 5 alloys referenced by PassSchedule
@@ -24,20 +24,22 @@ GO
 
 -- ============================================================
 -- Stand  (IDENTITY_INSERT for stable FK IDs)
--- May-21-2026 revision: FM1 (no edger) + FM2 three 6" stands
--- (edgers at S2 and S3). FM2_8in retained for legacy schedules.
+-- FM1 has no edger (May-21-2026).
+-- Aug-4-2026 correction: FM2 has THREE stands — S1 (8"), S2 (6"),
+-- S3 (6", final) — with edgers at S2 and S3 only. The former
+-- FM2_6inS3 row never corresponded to real equipment and is removed;
+-- roll diameter is now data, not part of the name.
 -- ============================================================
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Stand])
 BEGIN
     SET IDENTITY_INSERT [dbo].[Stand] ON;
-    INSERT INTO [dbo].[Stand] ([Id], [Name], [LineId], [MinGaugeIn], [MaxGaugeIn], [MinWidthIn], [MaxWidthIn], [IsActive]) VALUES
-        (1, 'FM1',        'FL1', 0.0700, 0.2000, 0.4000, 0.9000, 1),
-        (2, 'FM2_8in',    'FL2', 0.0700, 0.1600, 0.4000, 0.9000, 1),
-        (3, 'FM2_6inS1',  'FL2', 0.0700, 0.1600, 0.4000, 0.9000, 1),
-        (4, 'FM2_6inS2',  'FL2', 0.0700, 0.1600, 0.4000, 0.9000, 1),
-        (5, 'FM2_6inS3',  'FL2', 0.0700, 0.1600, 0.4000, 0.9000, 1);
+    INSERT INTO [dbo].[Stand] ([Id], [Name], [LineId], [RollDiameterIn], [MinGaugeIn], [MaxGaugeIn], [MinWidthIn], [MaxWidthIn], [IsActive]) VALUES
+        (1, 'FM1',     'FL1', 12.000, 0.0700, 0.2000, 0.4000, 0.9000, 1),
+        (2, 'FM2_S1',  'FL2',  8.000, 0.0700, 0.1600, 0.4000, 0.9000, 1),
+        (3, 'FM2_S2',  'FL2',  6.000, 0.0700, 0.1600, 0.4000, 0.9000, 1),
+        (4, 'FM2_S3',  'FL2',  6.000, 0.0700, 0.1600, 0.4000, 0.9000, 1);
     SET IDENTITY_INSERT [dbo].[Stand] OFF;
-    PRINT 'Seeded: Stand (5 rows)';
+    PRINT 'Seeded: Stand (4 rows)';
 END
 ELSE
     PRINT 'Stand already seeded — skipped';

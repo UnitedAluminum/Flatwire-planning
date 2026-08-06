@@ -425,7 +425,8 @@ BEGIN
         CONSTRAINT [PK_RollOverride]              PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_RollOverride_OverrideId]   UNIQUE ([OverrideId]),
         CONSTRAINT [CK_RollOverride_LineId]       CHECK ([LineId] IN ('FL1','FL2','FL3')),
-        CONSTRAINT [CK_RollOverride_Component]    CHECK ([ComponentName] IN ('DB1','DB2','FM1','EdgeSet','FM2_8in','FM2_6inS1','FM2_6inS2','FM2_6inS3')),
+        -- Aug-4-2026: FM2 is three stands — S1 (8"), S2 (6"), S3 (6", final). See CK_PSC_ComponentName.
+        CONSTRAINT [CK_RollOverride_Component]    CHECK ([ComponentName] IN ('DB1','DB2','FM1','EdgeSet','FM2_S1','FM2_S2','FM2_S3')),
         CONSTRAINT [CK_RollOverride_ReasonCode]   CHECK ([ReasonCode] IN ('GaugeDriftHigh','GaugeDriftLow','WidthDrift','SpcFlag','RollWear','PostWeldCorrection','OperatorDiscretion','Other')),
         CONSTRAINT [CK_RollOverride_FootagePos]   CHECK ([FootagePosition] >= 0)
     );

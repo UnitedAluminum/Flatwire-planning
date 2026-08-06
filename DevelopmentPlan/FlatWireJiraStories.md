@@ -141,7 +141,7 @@
 
 **`FlatLineSetup` → rename to `PassScheduleComponent`:**
 - [ ] Add `PassScheduleId` varchar(30) NOT NULL — FK to `PassSchedule.ScheduleId`
-- [ ] Add `ComponentName` varchar(20) NOT NULL — enum: `DB1`, `DB2`, `FM1`, `EdgeSet`, `FM2_8in`, `FM2_6inS1`, `FM2_6inS2`
+- [ ] Add `ComponentName` varchar(20) NOT NULL — enum: `DB1`, `DB2`, `FM1`, `EdgeSet`, `FM2_S1`, `FM2_S2`, `FM2_S3` (FM2's three stands: S1 8", S2 6", S3 6" final)
 - [ ] Add `State` varchar(10) NOT NULL — `Active`, `Bypass`, `Skip`
 - [ ] Add `ParameterValue` decimal NULL
 - [ ] Add `EdgeType` varchar(10) NULL — `Round`, `Square`
@@ -304,7 +304,7 @@
 
 **Acceptance Criteria:**
 - [ ] `PassSchedule` entity created with fields: ScheduleId, Alloy, Line (FL1/FL2/FL3), Description, Status (Draft/Active/Inactive), RouteMode (Standalone/Hybrid), TargetGauge, GaugeTolerance, TargetWidth, WidthTolerance, LineSpeedMinFPM, LineSpeedMaxFPM, CreatedBy, CreatedAt, ModifiedBy, ModifiedAt
-- [ ] `PassScheduleComponent` child entity: ComponentName (DB1/DB2/FM1/FM2-8"/FM2-6"S1/FM2-6"S2/EdgeSet), IsActive (bool), ParameterValue (die size or roll gap), EdgeType (Round/Flat)
+- [ ] `PassScheduleComponent` child entity: ComponentName (DB1/DB2/FM1/FM2_S1/FM2_S2/FM2_S3/EdgeSet), IsActive (bool), ParameterValue (die size or roll gap), EdgeType (Round/Flat)
 - [ ] `PassScheduleOverride` entity for run-level gap adjustments: RunId, ComponentName, OldValue, NewValue, Reason, OperatorId, Timestamp, FootagePosition
 - [ ] CRUD API endpoints: GET list, GET by ID, POST create, PUT update, PATCH status
 - [ ] Only Active schedules are returned by the check-in query endpoint
@@ -345,7 +345,7 @@
 
 **Acceptance Criteria:**
 - [ ] Header: Schedule ID (auto-generated), Alloy, Line, Description, Status badge, Last Modified
-- [ ] Component Configuration table: one row per component (DB1, DB2, FM1, Edge Set, FM2-8", FM2-6"S1, FM2-6"S2), with toggle (Active/Bypass/Skip), parameter input (die diameter or roll gap), edge type selector where applicable
+- [ ] Component Configuration table: one row per component (DB1, DB2, FM1, Edge Set, FM2 S1 (8"), FM2 S2 (6"), FM2 S3 (6", final)), with toggle (Active/Bypass/Skip), parameter input (die diameter or roll gap), edge type selector where applicable
 - [ ] FM2-6"S2 cannot be set to Bypass/Skip — enforced in UI and API
 - [ ] Targets section: Output Gauge + tolerance, Output Width + tolerance, Line Speed range
 - [ ] Override Log panel: last 5 overrides shown (date, operator, component, old→new, reason)
@@ -376,7 +376,7 @@
   4. Die sizes: DB1 = geometric mean(rod_dia, D_pre) snapped to nearest 0.005"; DB2 = D_pre snapped to 0.005"
   5. FM1 roll gap: `target_gauge × alloy_springback_factor`
   6. FM2 requirement: if aspect_ratio > 5.5 OR alloy = 1350 → FM2 activated; route = Hybrid FL3
-  7. FM2 roll gaps: 8" = gauge × 1.06; 6"S1 = gauge × 1.02; 6"S2 = gauge × spring-back
+  7. FM2 roll gaps, one per stand: `FM2_S1` = gauge × 1.06; `FM2_S2` = gauge × 1.02; `FM2_S3` = gauge × spring-back
 - [ ] Calculation summary chips shown: Pre-flatten ⌀, Area reduction %, Draw passes, Aspect ratio
 - [ ] Warnings shown for: aspect ratio > 5.5, 1350 alloy (welding wire precision mode), aspect ratio > 10, die snapping, gauge below machine minimum
 - [ ] Error shown (Apply still enabled for manual review) when total reduction > 2× alloy max
@@ -823,7 +823,7 @@
 **Acceptance Criteria:**
 - [ ] Fields: Spool/Alpha identifier, Source Rods (auto-linked from FL1 run), Alloy, Temper, Gauge (operator-entered measured value), Width, Gross Weight, Net Weight
 - [ ] Historical Gauge Profile chart displayed: Chart.js profile of FL1 gauge trace for this spool; weld point markers shown on the chart
-- [ ] Pass Schedule (FL2-specific components): 8" Roller, 6"S1, Edger, 6"S2, Edger — shown read-only
+- [ ] Pass Schedule (FL2-specific components): S1 (8"), S2 (6") + Edger, S3 (6") + Edger, final — shown read-only
 - [ ] "Acknowledge Pass Schedule & Begin Check-in" — same gate as FL1 check-in; pushes FL2 PLC tags
 - [ ] Visual inspection NOT required (spool was already inspected at FL1)
 - [ ] Spool status updated to `INFLAT` on acknowledgment
@@ -1117,7 +1117,7 @@
 
 **Acceptance Criteria:**
 - [ ] On Dashboard 2 / Dashboard 5 "Acknowledge" action: API reads the active pass schedule and writes OPC tags for FL1 or FL2 PLC
-- [ ] Tags written: component active/bypass state, die sizes (DB1, DB2), FM1 roll gap, FM2 roll gaps (8", 6"S1, 6"S2), edge type, speed targets
+- [ ] Tags written: component active/bypass state, die sizes (DB1, DB2), FM1 roll gap, FM2 roll gaps (S1, S2, S3), edge type at S2/S3, speed targets
 - [ ] PLC tag write is transactional: if any tag write fails, the entire check-in is rolled back and the operator is notified
 - [ ] Tags are written to the specific payoff position (1 or 2) that the operator selected
 - [ ] On rod checkout (Dashboard 12): PLC tags for the checked-out payoff position are cleared
@@ -1214,7 +1214,7 @@
 **Acceptance Criteria:**
 - [ ] Based on SPC at Mill
 - [ ] FL1/FL2/FL3 dropdown added
-- [ ] All five SPC checkpoint types displayed (incoming rod diameter, post die-change, FM1 output, FM2 S2 output, final coil)
+- [ ] All five SPC checkpoint types displayed (incoming rod diameter, post die-change, FM1 output, FM2 final-stand (S3) output, final coil)
 
 **Dependencies:** FW-065, FW-090
 

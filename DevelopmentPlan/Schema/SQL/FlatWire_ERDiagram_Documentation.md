@@ -16,7 +16,7 @@ Core reference data used throughout the system:
 
 | Table | Purpose | Key Attributes |
 |-------|---------|-----------------|
-| **Stand** | Rolling mill finishing stands (FM1, FM2_8in, etc.) | Id (PK), Name (UK), LineId, MinGaugeIn, MaxGaugeIn, MinWidthIn, MaxWidthIn, IsActive |
+| **Stand** | Rolling mill finishing stands (FM1, FM2_S1, FM2_S2, FM2_S3) | Id (PK), Name (UK), LineId, **RollDiameterIn**, MinGaugeIn, MaxGaugeIn, MinWidthIn, MaxWidthIn, IsActive |
 | **Drawer** | Draw box die configurations (DB1, DB2) | Id (PK), Name, DiameterIn (output wire size), MinDiameterIn, MaxDiameterIn, IsActive |
 | **Edger** | Edger tooling configurations (Round/Square edge profiles) | Id (PK), Name (UK), EdgeType (Round\|Square), ToolingSetNo, IsActive |
 | **SpoolConfiguration** | Spool type definitions with weight/diameter constraints | Id (PK), Name (UK), MinWeightLb, MaxWeightLb, MinCoreDiameterIn, MaxCoreDiameterIn, MinOuterDiameterIn, MaxOuterDiameterIn, IsActive |
@@ -275,7 +275,7 @@ All of the following are created by `FlatWire_DDL_07_Indexes.sql` (40 non-cluste
 ## Data Validation & Constraints
 
 ### Check Constraints (Key Examples)
-- `Stand`: MinGaugeIn < MaxGaugeIn; MinWidthIn < MaxWidthIn
+- `Stand`: MinGaugeIn < MaxGaugeIn; MinWidthIn < MaxWidthIn; RollDiameterIn > 0
 - `Drawer`: DiameterIn > 0; MinDiameterIn < MaxDiameterIn (if both set)
 - `SpoolConfiguration`: MinWeightLb < MaxWeightLb; MinCoreDiameterIn < MaxCoreDiameterIn; MinOuterDiameterIn < MaxOuterDiameterIn
 - `PassSchedule`: LineSpeedMinFpm < LineSpeedMaxFpm; GaugeTolerance > 0; WidthTolerance > 0
@@ -306,7 +306,8 @@ All of the following are created by `FlatWire_DDL_07_Indexes.sql` (40 non-cluste
 - **DB1, DB2**: Draw box dies (stage 1)
 - **FM1**: 12" flattening mill — **not bypassable** (CHECK `CK_PSC_FM1NotBypassable`)
 - **EdgeSet**: Edging station (FL1 legacy; per May-21-2026 revision FL1 has no edger)
-- **FM2_8in, FM2_6inS1, FM2_6inS2, FM2_6inS3**: FL2 finishing stands. May-21-2026 revision: FM2 is three 6" stands (S1/S2/S3) with edgers at **S2 and S3**; `FM2_8in` retained for legacy schedules
+- **FM2_S1, FM2_S2, FM2_S3**: FL2/FL3 finishing stands — **three stands only**. `FM2_S1` carries the **8"** roller; `FM2_S2` and `FM2_S3` carry **6"** rollers, and both have edgers. `FM2_S3` is the final gauge-control stand and is **not bypassable**. Diameter is data (`Stand.RollDiameterIn`), not part of the name.
+  - *Aug-4-2026 correction.* The old four-name set `FM2_8in / FM2_6inS1 / FM2_6inS2 / FM2_6inS3` modelled a separate 8" roller upstream of three 6" stands. The 8" roller **is S1** and there is no fourth stand. Mapping: `FM2_8in`→`FM2_S1`, `FM2_6inS1`→`FM2_S2`, `FM2_6inS2`→`FM2_S3`, `FM2_6inS3` withdrawn (it never had a tag path or a seed row). This closes **OI-04** — the DDL's `FM2_6inS2` and the SRS's `6" S3` named the same physical stand
 
 ### Checkpoint Types
 - **PreRun**: Before run starts (Rod/Spool SPC validation)

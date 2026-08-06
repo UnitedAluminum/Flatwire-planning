@@ -33,7 +33,7 @@
 4. **Apply to Schedule** → Dashboard 9 form populated (generated fields highlighted purple), status `Draft`.
 5. Reviews/adjusts every field; **Save as Active** (Ops Manager only) → status `Active`, purple cleared, audit record written.
 - **Decision points:** manual vs generate; Draft vs Active; route Standalone vs Hybrid (FL3 forces Hybrid).
-- **Validation:** `FM2_6inS2` and `FM1` cannot be bypassed; FL3 must be Hybrid; all component rows for the line/route present; edge type required when EdgeSet active.
+- **Validation:** `FM2_S3` (FM2's final stand) and `FM1` cannot be bypassed; FL3 must be Hybrid; all component rows for the line/route present; edge type required when EdgeSet active.
 - **Error scenarios:** generate reduction > 2× alloy max → error banner (Apply still enabled for manual review); gauge below machine minimum → error; unauthorized edit → 403 (logged).
 
 ## UI Implementation (Angular)
@@ -41,7 +41,7 @@
 - **Components:** `dashboard-9-pass-schedule`, `dashboard-9a-pass-schedule-list`, `generate-from-specs-modal`, shared `pass-schedule-table`.
 - **Shared components/services:** `common-grid`/`multi-grid-layout` for the list; `flat-wire-api` service; role guard.
 - **Models:** `pass-schedule.model.ts` (header + `PassScheduleComponentDto[]` + `PassScheduleOverrideDto[]`), `generate-request/result.model.ts`.
-- **Forms/validation:** reactive form; component toggle rows; FM2_6inS2 toggle disabled; live delta on generate inputs; purple-highlight state cleared on manual edit.
+- **Forms/validation:** reactive form; component toggle rows; `FM2_S3` toggle disabled; live delta on generate inputs; purple-highlight state cleared on manual edit.
 - **API calls:** `GET/POST/PUT /passschedule`, `PATCH /passschedule/{id}/status`, `POST /passschedule/generate`.
 - **State/navigation:** filter/sort state persists on the list; 9A ↔ 9 navigation; "← All schedules" back link.
 - **Error handling:** inline validation + envelope errors surfaced as toasts.
@@ -52,7 +52,7 @@
 - **Business services:** `PassScheduleService`, `PassScheduleGeneratorService` (the algorithm).
 - **MediatR handlers:** `CreatePassSchedule`, `UpdatePassSchedule`, `GeneratePassSchedule`, `GetPassScheduleList`, `GetPassSchedule`, status-transition command.
 - **Repository:** `PassScheduleRepository` (EF writes; Dapper list query with filters/paging).
-- **Business rules:** only one Active per line+alloy; only Active returned to check-in; Draft cannot be acknowledged; **Generate-from-Specs algorithm** — `D_pre=√(4·gauge·width/π)`; area reduction → draw-pass decision (≤2% both bypass; ≤1× max DB1; ≤2× max DB1+DB2; >2× error); DB1=geomean(rod,D_pre) snapped 0.005"; DB2=D_pre snapped; FM1 gap=gauge×springback; aspect=width/gauge, if >5.5 or alloy 1350 → activate FM2 + Hybrid; FM2 gaps 8"=g×1.06, 6"S1=g×1.02, 6"S2=g×springback.
+- **Business rules:** only one Active per line+alloy; only Active returned to check-in; Draft cannot be acknowledged; **Generate-from-Specs algorithm** — `D_pre=√(4·gauge·width/π)`; area reduction → draw-pass decision (≤2% both bypass; ≤1× max DB1; ≤2× max DB1+DB2; >2× error); DB1=geomean(rod,D_pre) snapped 0.005"; DB2=D_pre snapped; FM1 gap=gauge×springback; aspect=width/gauge, if >5.5 or alloy 1350 → activate FM2 + Hybrid; FM2 gaps per stand — `FM2_S1`=g×1.06, `FM2_S2`=g×1.02, `FM2_S3`=g×springback (FM2 has three stands: S1 8″, S2 6″, S3 6″ final).
 - **Logging/validation/authz:** every save audited; FluentValidation for component rules; `Operations Manager`/`Maintenance` policy (status→Active is Ops-Manager-only).
 - **Error handling:** 422 on acknowledging a Draft; 403 on unauthorized edit.
 
@@ -88,7 +88,7 @@ sequenceDiagram
 ## Testing
 - **Unit:** generator algorithm cases (bypass/1-draw/2-draw/error; 1350 precision; aspect thresholds; die snapping); validation rules.
 - **API:** CRUD + generate contract tests; authz (403 for operator).
-- **UI:** list filter/sort/stats; modal apply → purple highlight → save; FM2_6inS2 lock.
+- **UI:** list filter/sort/stats; modal apply → purple highlight → save; `FM2_S3` lock.
 - **Integration/DB:** header+components persist atomically; only-one-Active rule.
 - **Acceptance:** an Ops Manager can generate, review, and activate a schedule that then appears at check-in.
 

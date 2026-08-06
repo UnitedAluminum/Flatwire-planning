@@ -5,6 +5,14 @@
 **Working Directory:** UAL Manufacturing Execution System
 **Phase:** Phase 1 (Critical-path go-live scope)
 
+> ### ⚠ FM2 equipment configuration in this document is superseded (4 Aug 2026)
+>
+> **FM2 has three stands: `S1` = 8″, `S2` = 6″, `S3` = 6″.** Edgers are at **S2 and S3 only**, and **S3 is the final, non-bypassable gauge-control stand**.
+>
+> Every FM2 description below is stale in one of two ways — either the pre-May-21 **two** 6″ stand form (`8" → 6"S1 → 6"S2`, S2 final), or the four-component form that read the May 21 note as a separate 8″ roller feeding three 6″ stands. **The 8″ roller *is* S1**, and there is no fourth stand. Component identifiers are now position-only — `FM2_S1` / `FM2_S2` / `FM2_S3` — with roll diameter held as data in `Stand.RollDiameterIn`.
+>
+> **Authoritative source: [`00-foundations.md`](../DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.3**, decision **D-26** in [`FlatWire_MasterSpecification.md`](../LatestDocument/FlatWire_MasterSpecification.md) §10.2. Do not implement FM2 from this file.
+
 ---
 
 ## Overview

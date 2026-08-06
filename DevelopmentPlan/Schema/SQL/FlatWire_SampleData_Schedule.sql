@@ -6,8 +6,8 @@
 --
 -- FK assumptions (FlatWire_SampleData_Lookup.sql must be loaded first):
 --
---   Stand.Id
---     1 = FM1          2 = FM2_8in      3 = FM2_6inS1    4 = FM2_6inS2    5 = FM2_6inS3
+--   Stand.Id   (Aug-4-2026: FM2 is three stands — S1 8", S2 6", S3 6" final)
+--     1 = FM1 (12")    2 = FM2_S1 (8")  3 = FM2_S2 (6")  4 = FM2_S3 (6", final)
 --
 --   Drawer.Id  (die hole diameter = output wire size after drawing)
 --     1 = DIE-0210  0.210"     7 = DIE-0270  0.270"
@@ -185,6 +185,7 @@ GO
 
 -- ============================================================
 -- PassScheduleComponent — 7 rows per schedule
+--   DB1, DB2, FM1, EdgeSet, then the three FM2 stands FM2_S1 / FM2_S2 / FM2_S3.
 --
 -- State guide
 --   Active : component engaged; ParameterValue, FK set
@@ -216,9 +217,9 @@ VALUES
     ('PS-1100-FL1-001', 'DB2',       'Active', 0.2650, NULL,    2, NULL, 4,    NULL, 0.3150, 0.2650, 'FLS-2024-001'),
     ('PS-1100-FL1-001', 'FM1',       'Active', 0.1080, NULL,    3, 1,    NULL, NULL, 0.2650, 0.1100, 'FLS-2024-001'),
     ('PS-1100-FL1-001', 'EdgeSet',   'Active', 0.0020, 'Round', 4, NULL, NULL, 1,    0.1100, 0.1100, 'FLS-2024-001'),
-    ('PS-1100-FL1-001', 'FM2_8in',   'Skip',   NULL,   NULL,    5, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-001'),
-    ('PS-1100-FL1-001', 'FM2_6inS1', 'Skip',   NULL,   NULL,    6, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-001'),
-    ('PS-1100-FL1-001', 'FM2_6inS2', 'Skip',   NULL,   NULL,    7, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-001');
+    ('PS-1100-FL1-001', 'FM2_S1',    'Skip',   NULL,   NULL,    5, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-001'),
+    ('PS-1100-FL1-001', 'FM2_S2',    'Skip',   NULL,   NULL,    6, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-001'),
+    ('PS-1100-FL1-001', 'FM2_S3',    'Skip',   NULL,   NULL,    7, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-001');
 
 -- ── 2 · PS-1100-FL1-002 · Standalone · Inactive ─────────────
 -- Retired schedule. Single draw pass (DB2 bypassed).
@@ -233,9 +234,9 @@ VALUES
     ('PS-1100-FL1-002', 'DB2',       'Bypass', NULL,   NULL,    2, NULL, NULL, NULL, NULL,   NULL,   'FLS-2023-015'),
     ('PS-1100-FL1-002', 'FM1',       'Active', 0.1372, NULL,    3, 1,    NULL, NULL, 0.3350, 0.1400, 'FLS-2023-015'),
     ('PS-1100-FL1-002', 'EdgeSet',   'Active', 0.0022, 'Round', 4, NULL, NULL, 1,    0.1400, 0.1400, 'FLS-2023-015'),
-    ('PS-1100-FL1-002', 'FM2_8in',   'Bypass', NULL,   NULL,    5, NULL, NULL, NULL, NULL,   NULL,   'FLS-2023-015'),
-    ('PS-1100-FL1-002', 'FM2_6inS1', 'Bypass', NULL,   NULL,    6, NULL, NULL, NULL, NULL,   NULL,   'FLS-2023-015'),
-    ('PS-1100-FL1-002', 'FM2_6inS2', 'Bypass', NULL,   NULL,    7, NULL, NULL, NULL, NULL,   NULL,   'FLS-2023-015');
+    ('PS-1100-FL1-002', 'FM2_S1',    'Bypass', NULL,   NULL,    5, NULL, NULL, NULL, NULL,   NULL,   'FLS-2023-015'),
+    ('PS-1100-FL1-002', 'FM2_S2',    'Bypass', NULL,   NULL,    6, NULL, NULL, NULL, NULL,   NULL,   'FLS-2023-015'),
+    ('PS-1100-FL1-002', 'FM2_S3',    'Bypass', NULL,   NULL,    7, NULL, NULL, NULL, NULL,   NULL,   'FLS-2023-015');
 
 -- ── 3 · PS-1100-FL1-003 · Standalone · Draft ────────────────
 -- Thin-gauge development schedule. Two draw passes to reach
@@ -250,9 +251,9 @@ VALUES
     ('PS-1100-FL1-003', 'DB2',       'Active', 0.2500, NULL,    2, NULL, 3,    NULL, 0.3100, 0.2500, NULL),
     ('PS-1100-FL1-003', 'FM1',       'Active', 0.0882, NULL,    3, 1,    NULL, NULL, 0.2500, 0.0900, NULL),
     ('PS-1100-FL1-003', 'EdgeSet',   'Active', 0.0018, 'Round', 4, NULL, NULL, 1,    0.0900, 0.0900, NULL),
-    ('PS-1100-FL1-003', 'FM2_8in',   'Skip',   NULL,   NULL,    5, NULL, NULL, NULL, NULL,   NULL,   NULL),
-    ('PS-1100-FL1-003', 'FM2_6inS1', 'Skip',   NULL,   NULL,    6, NULL, NULL, NULL, NULL,   NULL,   NULL),
-    ('PS-1100-FL1-003', 'FM2_6inS2', 'Skip',   NULL,   NULL,    7, NULL, NULL, NULL, NULL,   NULL,   NULL);
+    ('PS-1100-FL1-003', 'FM2_S1',    'Skip',   NULL,   NULL,    5, NULL, NULL, NULL, NULL,   NULL,   NULL),
+    ('PS-1100-FL1-003', 'FM2_S2',    'Skip',   NULL,   NULL,    6, NULL, NULL, NULL, NULL,   NULL,   NULL),
+    ('PS-1100-FL1-003', 'FM2_S3',    'Skip',   NULL,   NULL,    7, NULL, NULL, NULL, NULL,   NULL,   NULL);
 
 -- ── 4 · PS-3003-FL1-001 · Hybrid · Active ───────────────────
 -- Two draw passes; FM1 overshoots to 0.097" then FM2 sequence
@@ -267,9 +268,9 @@ VALUES
     ('PS-3003-FL1-001', 'DB2',       'Active', 0.3000, NULL,     2, NULL, 9,    NULL, 0.3350, 0.3000, 'FLS-2024-028'),
     ('PS-3003-FL1-001', 'FM1',       'Active', 0.0950, NULL,     3, 1,    NULL, NULL, 0.3000, 0.0970, 'FLS-2024-028'),
     ('PS-3003-FL1-001', 'EdgeSet',   'Active', 0.0018, 'Square', 4, NULL, NULL, 2,    0.0970, 0.0970, 'FLS-2024-028'),
-    ('PS-3003-FL1-001', 'FM2_8in',   'Active', 0.0960, NULL,     5, 2,    NULL, NULL, 0.0970, 0.0960, 'FLS-2024-028'),
-    ('PS-3003-FL1-001', 'FM2_6inS1', 'Active', 0.0955, NULL,     6, 3,    NULL, NULL, 0.0960, 0.0955, 'FLS-2024-028'),
-    ('PS-3003-FL1-001', 'FM2_6inS2', 'Active', 0.0950, NULL,     7, 4,    NULL, NULL, 0.0955, 0.0950, 'FLS-2024-028');
+    ('PS-3003-FL1-001', 'FM2_S1',    'Active', 0.0960, NULL,     5, 2,    NULL, NULL, 0.0970, 0.0960, 'FLS-2024-028'),
+    ('PS-3003-FL1-001', 'FM2_S2',    'Active', 0.0955, NULL,     6, 3,    NULL, NULL, 0.0960, 0.0955, 'FLS-2024-028'),
+    ('PS-3003-FL1-001', 'FM2_S3',    'Active', 0.0950, NULL,     7, 4,    NULL, NULL, 0.0955, 0.0950, 'FLS-2024-028');
 
 -- ── 5 · PS-3003-FL1-002 · Hybrid · Draft ────────────────────
 -- Experimental ultra-wide product. All FM2 stands planned active.
@@ -284,9 +285,9 @@ VALUES
     ('PS-3003-FL1-002', 'DB2',       'Active', 0.2700, NULL,     2, NULL, 7,    NULL, 0.3200, 0.2700, NULL),
     ('PS-3003-FL1-002', 'FM1',       'Active', 0.0765, NULL,     3, 1,    NULL, NULL, 0.2700, 0.0780, NULL),
     ('PS-3003-FL1-002', 'EdgeSet',   'Active', 0.0015, 'Square', 4, NULL, NULL, 2,    0.0780, 0.0780, NULL),
-    ('PS-3003-FL1-002', 'FM2_8in',   'Active', 0.0775, NULL,     5, 2,    NULL, NULL, 0.0780, 0.0775, NULL),
-    ('PS-3003-FL1-002', 'FM2_6inS1', 'Active', 0.0762, NULL,     6, 3,    NULL, NULL, 0.0775, 0.0762, NULL),
-    ('PS-3003-FL1-002', 'FM2_6inS2', 'Active', 0.0750, NULL,     7, 4,    NULL, NULL, 0.0762, 0.0750, NULL);
+    ('PS-3003-FL1-002', 'FM2_S1',    'Active', 0.0775, NULL,     5, 2,    NULL, NULL, 0.0780, 0.0775, NULL),
+    ('PS-3003-FL1-002', 'FM2_S2',    'Active', 0.0762, NULL,     6, 3,    NULL, NULL, 0.0775, 0.0762, NULL),
+    ('PS-3003-FL1-002', 'FM2_S3',    'Active', 0.0750, NULL,     7, 4,    NULL, NULL, 0.0762, 0.0750, NULL);
 
 -- ── 6 · PS-1350-FL1-001 · Hybrid · Active ───────────────────
 -- Welding wire. 1350 springback factor 0.97 applied to FM gaps.
@@ -301,9 +302,9 @@ VALUES
     ('PS-1350-FL1-001', 'DB2',       'Active', 0.3000, NULL,    2, NULL, 9,    NULL, 0.3350, 0.3000, 'FLS-2024-041'),
     ('PS-1350-FL1-001', 'FM1',       'Active', 0.0990, NULL,    3, 1,    NULL, NULL, 0.3000, 0.1020, 'FLS-2024-041'),
     ('PS-1350-FL1-001', 'EdgeSet',   'Active', 0.0020, 'Round', 4, NULL, NULL, 1,    0.1020, 0.1020, 'FLS-2024-041'),
-    ('PS-1350-FL1-001', 'FM2_8in',   'Active', 0.1010, NULL,    5, 2,    NULL, NULL, 0.1020, 0.1010, 'FLS-2024-041'),
-    ('PS-1350-FL1-001', 'FM2_6inS1', 'Active', 0.1005, NULL,    6, 3,    NULL, NULL, 0.1010, 0.1005, 'FLS-2024-041'),
-    ('PS-1350-FL1-001', 'FM2_6inS2', 'Active', 0.1000, NULL,    7, 4,    NULL, NULL, 0.1005, 0.1000, 'FLS-2024-041');
+    ('PS-1350-FL1-001', 'FM2_S1',    'Active', 0.1010, NULL,    5, 2,    NULL, NULL, 0.1020, 0.1010, 'FLS-2024-041'),
+    ('PS-1350-FL1-001', 'FM2_S2',    'Active', 0.1005, NULL,    6, 3,    NULL, NULL, 0.1010, 0.1005, 'FLS-2024-041'),
+    ('PS-1350-FL1-001', 'FM2_S3',    'Active', 0.1000, NULL,    7, 4,    NULL, NULL, 0.1005, 0.1000, 'FLS-2024-041');
 
 -- ── 7 · PS-5052-FL1-001 · Standalone · Active ───────────────
 -- Strain-hardened 5052. Single draw pass (17.8% reduction < 20%
@@ -318,9 +319,9 @@ VALUES
     ('PS-5052-FL1-001', 'DB2',       'Skip',   NULL,   NULL,    2, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-055'),
     ('PS-5052-FL1-001', 'FM1',       'Active', 0.1552, NULL,    3, 1,    NULL, NULL, 0.3400, 0.1600, 'FLS-2024-055'),
     ('PS-5052-FL1-001', 'EdgeSet',   'Active', 0.0025, 'Round', 4, NULL, NULL, 1,    0.1600, 0.1600, 'FLS-2024-055'),
-    ('PS-5052-FL1-001', 'FM2_8in',   'Skip',   NULL,   NULL,    5, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-055'),
-    ('PS-5052-FL1-001', 'FM2_6inS1', 'Skip',   NULL,   NULL,    6, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-055'),
-    ('PS-5052-FL1-001', 'FM2_6inS2', 'Skip',   NULL,   NULL,    7, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-055');
+    ('PS-5052-FL1-001', 'FM2_S1',    'Skip',   NULL,   NULL,    5, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-055'),
+    ('PS-5052-FL1-001', 'FM2_S2',    'Skip',   NULL,   NULL,    6, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-055'),
+    ('PS-5052-FL1-001', 'FM2_S3',    'Skip',   NULL,   NULL,    7, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-055');
 
 -- ── 8 · PS-1100-FL2-001 · Hybrid · Active ───────────────────
 -- FL2 receives pre-drawn round wire (~0.260") from FL1 TKUP-1 spool.
@@ -336,9 +337,9 @@ VALUES
     ('PS-1100-FL2-001', 'DB2',       'Bypass', NULL,   NULL,     2, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-062'),
     ('PS-1100-FL2-001', 'FM1',       'Active', 0.0900, NULL,     3, 1,    NULL, NULL, 0.2600, 0.0920, 'FLS-2024-062'),
     ('PS-1100-FL2-001', 'EdgeSet',   'Active', 0.0018, 'Square', 4, NULL, NULL, 2,    0.0920, 0.0920, 'FLS-2024-062'),
-    ('PS-1100-FL2-001', 'FM2_8in',   'Active', 0.0912, NULL,     5, 2,    NULL, NULL, 0.0920, 0.0912, 'FLS-2024-062'),
-    ('PS-1100-FL2-001', 'FM2_6inS1', 'Active', 0.0905, NULL,     6, 3,    NULL, NULL, 0.0912, 0.0905, 'FLS-2024-062'),
-    ('PS-1100-FL2-001', 'FM2_6inS2', 'Active', 0.0900, NULL,     7, 4,    NULL, NULL, 0.0905, 0.0900, 'FLS-2024-062');
+    ('PS-1100-FL2-001', 'FM2_S1',    'Active', 0.0912, NULL,     5, 2,    NULL, NULL, 0.0920, 0.0912, 'FLS-2024-062'),
+    ('PS-1100-FL2-001', 'FM2_S2',    'Active', 0.0905, NULL,     6, 3,    NULL, NULL, 0.0912, 0.0905, 'FLS-2024-062'),
+    ('PS-1100-FL2-001', 'FM2_S3',    'Active', 0.0900, NULL,     7, 4,    NULL, NULL, 0.0905, 0.0900, 'FLS-2024-062');
 
 -- ── 9 · PS-6061-FL1-001 · Hybrid · Draft ────────────────────
 -- Solution-treated 6061 — max 18% reduction per pass.
@@ -354,9 +355,9 @@ VALUES
     ('PS-6061-FL1-001', 'DB2',       'Active', 0.3100, NULL,    2, NULL, 10,   NULL, 0.3400, 0.3100, NULL),
     ('PS-6061-FL1-001', 'FM1',       'Active', 0.1248, NULL,    3, 1,    NULL, NULL, 0.3100, 0.1320, NULL),
     ('PS-6061-FL1-001', 'EdgeSet',   'Active', 0.0022, 'Round', 4, NULL, NULL, 1,    0.1320, 0.1320, NULL),
-    ('PS-6061-FL1-001', 'FM2_8in',   'Active', 0.1315, NULL,    5, 2,    NULL, NULL, 0.1320, 0.1315, NULL),
-    ('PS-6061-FL1-001', 'FM2_6inS1', 'Active', 0.1308, NULL,    6, 3,    NULL, NULL, 0.1315, 0.1308, NULL),
-    ('PS-6061-FL1-001', 'FM2_6inS2', 'Active', 0.1300, NULL,    7, 4,    NULL, NULL, 0.1308, 0.1300, NULL);
+    ('PS-6061-FL1-001', 'FM2_S1',    'Active', 0.1315, NULL,    5, 2,    NULL, NULL, 0.1320, 0.1315, NULL),
+    ('PS-6061-FL1-001', 'FM2_S2',    'Active', 0.1308, NULL,    6, 3,    NULL, NULL, 0.1315, 0.1308, NULL),
+    ('PS-6061-FL1-001', 'FM2_S3',    'Active', 0.1300, NULL,    7, 4,    NULL, NULL, 0.1308, 0.1300, NULL);
 
 -- ── 10 · PS-1100-FL3-001 · Hybrid · Active ──────────────────
 -- Widest product in portfolio: 0.085" × 0.800" on FL3.
@@ -372,9 +373,9 @@ VALUES
     ('PS-1100-FL3-001', 'DB2',       'Active', 0.2700, NULL,     2, NULL, 7,    NULL, 0.3300, 0.2700, 'FLS-2024-075'),
     ('PS-1100-FL3-001', 'FM1',       'Active', 0.0855, NULL,     3, 1,    NULL, NULL, 0.2700, 0.0870, 'FLS-2024-075'),
     ('PS-1100-FL3-001', 'EdgeSet',   'Active', 0.0017, 'Square', 4, NULL, NULL, 2,    0.0870, 0.0870, 'FLS-2024-075'),
-    ('PS-1100-FL3-001', 'FM2_8in',   'Active', 0.0862, NULL,     5, 2,    NULL, NULL, 0.0870, 0.0862, 'FLS-2024-075'),
-    ('PS-1100-FL3-001', 'FM2_6inS1', 'Active', 0.0856, NULL,     6, 3,    NULL, NULL, 0.0862, 0.0856, 'FLS-2024-075'),
-    ('PS-1100-FL3-001', 'FM2_6inS2', 'Active', 0.0850, NULL,     7, 4,    NULL, NULL, 0.0856, 0.0850, 'FLS-2024-075');
+    ('PS-1100-FL3-001', 'FM2_S1',    'Active', 0.0862, NULL,     5, 2,    NULL, NULL, 0.0870, 0.0862, 'FLS-2024-075'),
+    ('PS-1100-FL3-001', 'FM2_S2',    'Active', 0.0856, NULL,     6, 3,    NULL, NULL, 0.0862, 0.0856, 'FLS-2024-075'),
+    ('PS-1100-FL3-001', 'FM2_S3',    'Active', 0.0850, NULL,     7, 4,    NULL, NULL, 0.0856, 0.0850, 'FLS-2024-075');
 
 END  -- idempotent component-block guard
 GO

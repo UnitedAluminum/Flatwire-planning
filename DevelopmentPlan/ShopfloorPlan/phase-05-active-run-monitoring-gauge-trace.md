@@ -10,10 +10,10 @@
 **Status:** Ready to build
 **Layer:** Full-stack vertical slice
 **Owner:** **FE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
-**Effort:** **221 h** (27.6 d) — FE 116 · BE 12 · DB 8 · RT 24 · QA 32 · cont. 29 · **Window:** W4 (Sep 8–11, **4** working days — Labor Day Mon Sep 7)
-**Scope call:** **Partly deferrable** — DB13 HMI schematic + DB14 SCADA trends are **ladder rung 7** (67 h recovered); the DB3 run cockpit is not deferrable. Latest call: W4.
+**Effort:** **~154 h** (19.3 d) — FE 76 · BE 12 · DB 8 · RT 24 · QA 22 · cont. 12 · *(was 221 h; −67 h on 4 Aug 2026 when DB13/DB14 were descoped)* · **Window:** W4 (Sep 8–11, **4** working days — Labor Day Mon Sep 7)
+**Scope call:** **Not deferrable.** DB13 and DB14 were ladder rung 7; on **4 Aug 2026 the client descoped both outright**, so the rung is gone rather than spent — their 67 h is now never-planned effort, and everything remaining in this phase is the DB3 run cockpit, which cannot be deferred.
 
-*The continuously-displayed run cockpit — live streaming traces, payoff bars, machine status, action bar, and the Machine-View/SCADA extensions.*
+*The continuously-displayed run cockpit — live streaming traces, payoff bars, machine status and the action bar.*
 
 ## Business Overview
 - **Objective:** real-time monitoring with streaming gauge/width traces, payoff status, machine status, weld markers, and one-click access to every in-run action.
@@ -26,12 +26,12 @@
 1. Header shows Order/Alpha/Alloy/Target Gauge/Target Width.
 2. **Status-card strip** — three cards: *Machine* (run time, speed, footage, spool fill, lube temp), *Payoffs* (P1/P2 with rod alpha and a consumption bar each), *Components* (DB1/DB2 dies, FM1 gap + width, headed by the pass-schedule id).
 3. **Spool Information** and **Order Information** grids, both collapsible. *(Rod Information on FL1 — the grid is per-line: rod on FL1/FL3, spool on FL2.)* Order Information carries customer, due date, tolerances, setup width/gauge, finish, OD min–max, weights.
-4. **Chart tab strip** with a section collapse toggle; tab and collapse state persist in `localStorage`.
+4. **Chart tab strip** with a section collapse toggle; the collapse state persists in `localStorage`. *(The tab state went with the Machine View tab on 4 Aug 2026 — one tab remains.)*
 5. **Traces tab:** streaming gauge + width (Chart.js), target dashed line, tolerance band, green/red points, vertical weld markers with rod alpha; after N consecutive out-of-spec readings (configurable, default 5) → auto-prompt SPC toast. Each panel **maximizes to full screen** (backdrop, ESC and backdrop-click restore).
-6. **Machine View tab (Dashboard 13 compressed):** live SVG schematic with flow animation, plus an *Open full screen* link to DB13.
+6. ~~**Machine View tab (Dashboard 13 compressed).**~~ **Descoped 4 Aug 2026** together with Dashboard 13 itself. The tab strip keeps a single inert *Traces* label so it still titles the section and hosts the collapse toggle — the shape FL2 always had.
 7. **Action bar, grouped by intent** (`dashboard_3_active_run_v2.html`, the approved FL1 layout):
    - **Run events** — SPC Checkpoint · WIP Reject.
-   - **Go to** — Die Change · Check Out Rod *(disabled once footage > 0; mid-run checkout is reached through Pause)* · View Trends (DB14).
+   - **Go to** — Die Change · Check Out Rod *(disabled once footage > 0; mid-run checkout is reached through Pause)*. *(View Trends/DB14 removed 4 Aug 2026.)*
    - **Run control** — Pause run · **Complete Run** (confirmation-gated).
    - **No Log Weld** — Dashboard 4 was retired 1 Aug 2026 and the weld is captured at pre-check-in (DB2A). *This line listed it until 2 Aug 2026.*
    - **FL1 has no Roll Adjust** (FR-107 — one mill); **FL3 adds it** (FR-108). See phase 6: it is a dialog, not a screen.
@@ -39,13 +39,13 @@
 - **Error scenarios:** SignalR drop → banner + cached state; FL2 mode has no live gauge/width — the hub sends `null` and the Live view must show an explicit empty state rather than a flat line at target (Phase 8).
 
 ## UI Implementation (Angular)
-- **Screens:** Dashboard 3 (**`dashboard_3_active_run_v2.html`** — the FL1 layout since 1 Aug 2026, when the earlier left-rail `dashboard_3_active_run.html` was withdrawn; FL3 `dashboard_3_active_run_fl3.html`), Dashboard 13 (`dashboard_13_hmi_schematic.html`), Dashboard 14 (`dashboard_14_scada_trends.html`).
-- **Components:** `dashboard-3-active-run`, shared `gauge-trace-chart` (Chart.js streaming; `isLive` is a **runtime-switchable** input, not mount-time — see below), `run-status-cards`, `info-grid`, `chart-tab-strip`, `action-bar` (line-mode configurable, intent-grouped), `dashboard-13-hmi-schematic`, `dashboard-14-scada-trends`.
+- **Screens:** Dashboard 3 only — **`dashboard_3_active_run_v2.html`** (the FL1 layout since 1 Aug 2026, when the earlier left-rail `dashboard_3_active_run.html` was withdrawn) and FL3 `dashboard_3_active_run_fl3.html`. *(Dashboards 13 and 14 were descoped on 4 Aug 2026 and both mockups are deleted.)*
+- **Components:** `dashboard-3-active-run`, shared `gauge-trace-chart` (Chart.js streaming; `isLive` is a **runtime-switchable** input, not mount-time — see below), `run-status-cards`, `info-grid`, `chart-tab-strip`, `action-bar` (line-mode configurable, intent-grouped). *(`dashboard-13-hmi-schematic` and `dashboard-14-scada-trends` removed 4 Aug 2026 with the descope.)*
 - **⚠ Component list revised 2 Aug 2026 to match the mockups.** `machine-status-panel` is absorbed, `payoff-weight-bar` stops being a **DB3** layout element, and three are new. **This phase owns the DB3 shell for all three lines**, so build these once here and let phases 8 (FL2) and 10 (FL3) configure them — do not let a line fork its own copy, which is the divergence the 2 Aug mockup pass undid:
   - **`run-status-cards`** *(absorbs `machine-status-panel`)* — the three-card strip on a `1fr 1.35fr 1fr` grid. The outer cards are Machine and Components on every line; **the middle card is line-specific** — *Payoffs* (two rod payoffs with consumption bars) on FL1/FL3, *Material flow* (spool draining in, coil filling out) on FL2. Same shell, different middle card; the FL2 card is not a payoff bar and must not reuse its labels.
   - **`payoff-weight-bar` survives as the Payoffs card's content**, not as a sibling of the status panel. It is still used directly by **Dashboard 1** (phase 3), so it stays in the shared control set from phase 1A — this is a change to DB3's composition, not a deletion.
   - **`info-grid`** *(new — had no owner in any phase)* — the collapsible titled data grid. Two instances per monitor: Rod/Spool Information and Order Information. Content is per-line; the accordion, table chrome and empty state are not.
-  - **`chart-tab-strip`** *(new)* — the tab row plus the section collapse toggle and its `localStorage` persistence. FL1/FL3 mount two tabs (Traces, Machine View); **FL2 mounts one** and has no schematic.
+  - **`chart-tab-strip`** *(new)* — **re-chartered 4 Aug 2026.** Its stated variation point was *"FL1/FL3 mount two tabs, FL2 mounts one"*; with the Machine View descoped **every line now mounts one**, so what survives is **the section collapse toggle and its `localStorage` persistence**, plus a single inert tab label that titles the section. Either keep it as the collapse control or fold it into the DB3 shell — but note the **collapse toggle has no requirement of its own** (`FR-112` covered only the tabs), which is a pre-existing gap now visible.
   - **`gauge-trace-chart` gains two things:** a **maximize** affordance, and a **runtime source toggle** — it must be able to switch between live streaming and a static historical profile *after* mount, not be fixed by an input at mount. Phase 8 needs exactly this for FL2's Live/Profile control; FL3 needs it because a hybrid run has both.
   - **`action-bar` gains intent grouping** (Run events · Go to · Run control) on top of its existing line-mode configurability, so the per-line difference is now *which buttons land in which cluster*, not just which buttons exist.
 - **Services:** `flat-wire-signalr.service` (`gaugeReading$/widthReading$/speedFpm$/payoffWeight$/componentStatus$/footageCounter$`), `run-state.service`.
@@ -71,7 +71,7 @@
 ## Real-Time Functionality
 - **Events consumed:** `GaugeReading`, `WidthReading`, `SpeedFPM`, `PayoffWeight`, `ComponentStatus`, `FootageCounter`; markers via `WeldJoinEvent/DieChangeEvent/PauseEvent/SPCCheckpoint`.
 - **Publishers:** OPC poller + event handlers.
-- **Cache sync/retry:** last-window buffer; reconnect re-join; SCADA settings (interval, SPC N, control limits) client-side.
+- **Cache sync/retry:** last-window buffer; reconnect re-join. *(The client-side SCADA settings store — interval, SPC N, control limits — went with DB14 on 4 Aug 2026.)*
 
 ## Integration Flow
 `PLC/OPC → poller → FlatWireHub (FLxData) → flat-wire-signalr.service → gauge-trace-chart / run-status-cards → operator`. Complete Run → `POST /coil/complete` (Phase 9).
@@ -85,9 +85,9 @@
 - **Acceptance:** operator sees live gauge/width with weld markers and can launch every action.
 
 ## Deliverables
-Dashboard 3 (FL1/FL3) + Dashboard 13 + Dashboard 14; **the shared DB3 shell — `run-status-cards`, `info-grid`, `chart-tab-strip`, the grouped `action-bar` and `gauge-trace-chart` with maximize + runtime source switching — which phases 8 (FL2) and 10 (FL3) configure rather than reimplement**; `RunController` (active + gaugetrace, now including order fields for the Order Information grid); SCADA multi-trend + settings.
+Dashboard 3 (FL1/FL3); **the shared DB3 shell — `run-status-cards`, `info-grid`, `chart-tab-strip`, the grouped `action-bar` and `gauge-trace-chart` with maximize + runtime source switching — which phases 8 (FL2) and 10 (FL3) configure rather than reimplement**; `RunController` (active + gaugetrace, now including order fields for the Order Information grid). *(The SCADA multi-trend screen and its settings panel were descoped 4 Aug 2026.)*
 
-**OQ blockers:** OQ-4 (SCADA/tag paths), configurable out-of-spec N, **OQ-60** (order field carrying the coil min–max weight range — surfaced by the new Order Information grid). **Stories:** FW-062, FW-081, FW-080; DB13/14 from `HMIAndSCADALayout.md`.
+**OQ blockers:** **`PLC-Q02`** (confirm every machine tag path with the commissioning engineer — successor to the superseded OQ-4), configurable out-of-spec N, **OQ-60** (order field carrying the coil min–max weight range — surfaced by the new Order Information grid). **Stories:** FW-062, FW-081, FW-080. *(The DB13/DB14 scope inside FW-062 is withdrawn; the story keeps its 8 points, since neither screen ever had acceptance criteria in it. `HMIAndSCADALayout.md` is deleted — the machine tags this phase reads are in [`PLCTagSpecification.md`](../../LatestDocument/RequirementDocuments/PLCTagSpecification.md).)*
 
 ---
 

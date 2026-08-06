@@ -105,7 +105,7 @@ Renamed and restructured from `FlatLineSetup`. Each row defines one component sl
 |---|---|---|
 | `Id` | int PK | |
 | `PassScheduleId` | varchar(30) NOT NULL | FK → `PassSchedule.ScheduleId` |
-| `ComponentName` | varchar(20) NOT NULL | `DB1`, `DB2`, `FM1`, `EdgeSet`, `FM2_8in`, `FM2_6inS1`, `FM2_6inS2` |
+| `ComponentName` | varchar(20) NOT NULL | `DB1`, `DB2`, `FM1`, `EdgeSet`, `FM2_S1`, `FM2_S2`, `FM2_S3` — FM2's three stands: S1 (8"), S2 (6"), S3 (6", final) |
 | `State` | varchar(10) NOT NULL | `Active`, `Bypass`, `Skip` |
 | `ParameterValue` | decimal(8,4) NULL | Die diameter or roll gap; NULL when Bypass/Skip |
 | `EdgeType` | varchar(10) NULL | `Round` or `Square`; only populated for `EdgeSet` component |
@@ -192,7 +192,7 @@ Represents rolling mill stands (FM1, FM2 variants).
 | Column | Type | Notes |
 |---|---|---|
 | `Id` | int PK | |
-| `Name` | varchar | Stand name (e.g. FM1, FM2_8in) |
+| `Name` | varchar | Stand name — position only (`FM1`, `FM2_S1`, `FM2_S2`, `FM2_S3`); roll diameter lives in `RollDiameterIn` |
 | `MinId` | decimal | Minimum — likely Inner Diameter |
 | `MaxId` | decimal | Maximum ID |
 | `MinOD` | decimal | Minimum Outer Diameter |

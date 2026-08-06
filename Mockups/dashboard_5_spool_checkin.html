@@ -17,11 +17,14 @@
 
      1. THE MILL WAS DRAWN WRONG. The pass-schedule table listed three stands
         (8" / 6"S1 / 6"S2) with two unnumbered "Edger" rows, one of them on S1.
-        FM2 has THREE 6" stands — S1, S2, S3 — with EDGERS AT S2 AND S3 ONLY
-        (client equipment correction 21 May 2026, 00-foundations.md:58, restated
-        RocCheckin.md:172; FR-094; TC-115). The edger is an ATTRIBUTE of a stand,
-        not a row of its own — same shape as the Components card on
-        dashboard_3_active_run_fl2.html, which was corrected on 2 Aug 2026.
+        FM2 has THREE stands — S1 with the 8" roller, S2 and S3 with 6" rollers —
+        and EDGERS AT S2 AND S3 ONLY (client corrections 21 May and 4 Aug 2026,
+        00-foundations.md §0.3, restated RocCheckin.md §4.2; FR-094; TC-115).
+        NOTE: between 2 Aug and 4 Aug this table carried FOUR rows, a separate
+        8" Roller above "6" Roller S1/S2/S3", from reading the May 21 note as
+        "three 6-inch stands". The 8" roller IS S1; there is no fourth stand.
+        The edger is an ATTRIBUTE of a stand, not a row of its own — same shape
+        as the Components card on dashboard_3_active_run_fl2.html.
         phase-08:28 and :152 (divergence #4) exist only because this table was
         wrong and told builders to disregard this file. Do not revert this.
 
@@ -104,8 +107,10 @@
          FL2 schedule may be applied. TC-118: "gate fails until specified." So
          pre-flight check 5 renders AMBER "not evaluated — rule undefined" and
          blocks, rather than passing silently. See the Hybrid origin demo state.
-       OI-04 — WHICH FM2 STAND CANNOT BE BYPASSED. The SRS says 6"S3; the DDL,
-         API and HMI say 6"S2. S3 is the working answer, tagged on that row.
+       OI-04 — CLOSED 4 Aug 2026. The SRS's "6"S3" and the DDL/API/HMI's
+         "FM2_6inS2" named the SAME physical stand; only the phantom fourth
+         stand made them look like two answers. S3 cannot be bypassed, and the
+         row is tagged plainly rather than as an open item. See decision D-26.
        D1 (undocumented) — SpoolCheckin.InspectionSurface is NOT NULL in
          FlatWire_DDL_04_Runs.sql:280-317, but FR-095 forbids an inspection
          section here, so nothing on this screen can supply it. Noted in the
@@ -722,8 +727,9 @@
   </div>
 
   <!-- ═══ 3. Pass schedule ═══
-       FOUR stands. The edger is an attribute of S2 and S3, not a row. See the
-       head comment — this is the assertion phase-08:102 exists to protect. -->
+       THREE stands: S1 (8"), S2 (6"), S3 (6", final). The edger is an attribute
+       of S2 and S3, not a row. See the head comment — this is the assertion
+       phase-08 exists to protect. Do not re-add a separate 8" row. -->
   <div class="section schedule">
     <div class="section-header">
       <span class="section-title">Pass schedule</span>
@@ -768,26 +774,20 @@
         </tr>
       </thead>
       <tbody>
-        <tr class="bypass">
-          <td class="component-name">8&Prime; Roller</td>
-          <td><span class="status-cell bypass"><span class="dot"></span>Bypass</span></td>
-          <td class="setting-cell plain">&mdash;</td>
-          <td class="stage-cell">pre-finishing</td>
-        </tr>
         <tr>
-          <td class="component-name">6&Prime; Roller S1</td>
+          <td class="component-name">S1 &middot; 8&Prime; Roller</td>
           <td><span class="status-cell"><span class="dot"></span>Active</span></td>
           <td class="setting-cell">Gap 0.0180&Prime;</td>
           <td class="stage-cell">stage 1</td>
         </tr>
         <tr>
-          <td class="component-name">6&Prime; Roller S2</td>
+          <td class="component-name">S2 &middot; 6&Prime; Roller</td>
           <td><span class="status-cell"><span class="dot"></span>Active</span></td>
           <td class="setting-cell">Gap 0.0162&Prime; &middot; Edger: Round edge</td>
           <td class="stage-cell">stage 2</td>
         </tr>
         <tr>
-          <td class="component-name">6&Prime; Roller S3<span class="nobypass-tag" title="OI-04: the SRS names 6&quot;S3 as the stand that cannot be bypassed; the DDL, API and HMI name 6&quot;S2. S3 is the working answer.">cannot bypass &middot; OI-04</span></td>
+          <td class="component-name">S3 &middot; 6&Prime; Roller<span class="nobypass-tag" title="FM2's final gauge-control stand. Confirmed 4 Aug 2026 (decision D-26) — OI-04 is closed: the SRS's &quot;6&quot;S3&quot; and the DDL/API's &quot;FM2_6inS2&quot; named this same stand.">cannot bypass</span></td>
           <td><span class="status-cell"><span class="dot"></span>Active</span></td>
           <td class="setting-cell">Gap 0.0160&Prime; &middot; Edger: Round edge &middot; final</td>
           <td class="stage-cell">stage 3</td>

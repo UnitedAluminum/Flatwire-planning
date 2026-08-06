@@ -3,8 +3,8 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL3 rod check-in · FL2 / FL3 spool check-in
-**Version:** 2.0
-**Last Updated:** August 1, 2026
+**Version:** 2.2
+**Last Updated:** August 4, 2026
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 2 — Rod Check-in · Dashboard 5 — Spool Check-in
 **Requirement source:** SRS check-in rules (`CHK005`–`CHK010`), `FR-094`/`FR-096` (FL2 acknowledgement and tag push), pass-schedule rules (`PSM005`–`PSM010`)
@@ -17,6 +17,8 @@
 |---|---|---|
 | 1.0 | Apr 25, 2026 | Initial flow — five-step acknowledgement sequence for Dashboard 2 and Dashboard 5, pass-schedule confirmation dialog, audit-before-push ordering. |
 | 2.0 | Aug 1, 2026 | **Issued for client review.** Incorporates decisions taken since: the shared coil status is set here and not at staging; automatic line selection when a rod is planned for the other line; min/max dimensional limits on four attributes; the payoff selector is pre-filled and read-only for a rod that arrived through pre-check-in; the pass-schedule attribute lookup with mandatory confirmation. Restructured as a client deliverable; internal gap references and mockup-implementation notes removed. |
+| 2.1 | Aug 4, 2026 | §3.6 (PLC tag push) reduced to the trigger and the records-before-tags ordering; the payload itself, which **contradicted the other four sources** on edge type and on speed target-vs-limit, now lives in [`PLCTagSpecification.md`](PLCTagSpecification.md) §4. |
+| **2.2** | **Aug 4, 2026** | **FM2 roller sizes corrected — and one open item closes.** The §4.2 equipment note read *"FM2 has three 6″ stands"* under a `[CONFIRMED — May 21, 2026]` tag; it is now **three stands: S1 8″, S2 6″, S3 6″**, with a per-stand table. The 8″ roller **is S1** — it had been read as a separate component feeding three 6″ stands, which is why the FL2 check-in screen listed four component rows. Edger placement (S2 and S3) and the stand count are unchanged. The FL2 tag-push row now names S1/S2/S3. **`OI-04` is closed and removed from the open-items table and the sign-off checklist:** *"is it 6″ S2 or 6″ S3?"* was two names for **one stand**, so no client decision is needed. One item is added to the checklist in its place — **confirm the corrected equipment note itself.** |
 
 ---
 
@@ -129,7 +131,9 @@ The system resolves a recommended schedule by **attribute lookup** — alloy, ro
 
 ## 3.6 Step 4 — PLC tag push `[CONFIRMED]`
 
-The system reads the confirmed schedule and writes to machine control: component activation flags, die sizes, roll gaps, speed limits, and gauge/width targets. The push is logged with its timestamp, the schedule ID, and the operator who triggered it.
+On the operator’s acknowledgement — and **only** after the schedule has been explicitly confirmed — the system writes the confirmed schedule to machine control. **Audit records are written first, the tags second**, so a failed push leaves a recoverable marker. The push is logged with its timestamp, the schedule ID and the operator who triggered it.
+
+> **The values pushed are specified in [`PLCTagSpecification.md`](PLCTagSpecification.md) §4.2**, per line, and the ordering and failure behaviour at §4.4–§4.5. This section previously listed the payload itself and **disagreed with the other four sources on two points** — whether *edge type* is pushed, and whether speed is a **target** or a **limit**. Both are now settled in one place: edge type is pushed on FL2/FL3 and is not applicable on FL1 (FL1 has no edger), and the speed question is open as **`PLC-Q06`**.
 
 ## 3.7 Step 5 — Run starts `[CONFIRMED]`
 
@@ -166,12 +170,20 @@ The same five steps, with a different material and a different tag set.
 |---|---|
 | **Confirmation** | Identical pattern to Section 3.4 — explicit confirmation of schedule identity before any tag is pushed |
 | **Records** | Spool check-in record; the FL2 run linked to the source spool **and to its source rod serials**, preserving the traceability chain; schedule ID and version on the run record |
-| **Tag push** | FM2 settings — 8″ roller, 6″ S1, 6″ S2, 6″ S3, edger activation and edge type, and the corresponding roll gaps |
+| **Tag push** | FM2 settings — the roll gap and stand state for **S1, S2 and S3**, plus edger activation and edge type at **S2 and S3** |
 | **Run start** | FL2 run timer starts; spool status becomes `INFLAT`; the operator moves to the FL2 active run view |
 
-> **Equipment note.** FM2 has **three** 6″ stands — S1, S2 and S3 — with **edgers at S2 and S3 only**. FL1 has **no edger**. `[CONFIRMED — May 21, 2026]`
+> **Equipment note.** FM2 has **three stands: S1 with an 8″ roller, S2 with a 6″ roller, and S3 with a 6″ roller.** **Edgers are at S2 and S3 only**, and **S3 is the final gauge-control stand and cannot be bypassed**. FL1 has **no edger**. `[CONFIRMED — August 4, 2026]`
+>
+> | FM2 stand | Roller | Edger | Bypassable |
+> |---|---|---|---|
+> | **S1** | **8″** | No | Yes |
+> | **S2** | **6″** | Yes | Yes |
+> | **S3** | **6″** | Yes | **No — final gauge control** |
+>
+> *This corrects the note previously carried here as `[CONFIRMED — May 21, 2026]`, which read "FM2 has three 6″ stands — S1, S2 and S3". That was understood as a separate 8″ roller feeding three 6″ stands — four components — and the check-in screen listed four rows. **The 8″ roller is S1.** The stand count and the edger placement were right; the roller sizes were not.*
 
-> `[CLIENT INPUT REQUIRED]` **Which FM2 stand cannot be bypassed** is stated two ways across the requirement set — 6″ S3 in the SRS, 6″ S2 in the validation rules and HMI specification. The equipment correction moved the final stand to S3, so S3 is the working answer, but this needs your confirmation before the pass-schedule validation is locked (OI-04).
+> **Resolved `[CONFIRMED — August 4, 2026]` — the stand that cannot be bypassed is `S3`.** This was previously flagged as needing your confirmation because the requirement set appeared to name two different stands (6″ S3 in the SRS, `FM2_6inS2` in the validation rules and HMI specification). With the three-stand correction the two are **the same physical stand**, so there was never a real disagreement — only a fourth stand that does not exist making one answer look like two. The pass-schedule validation can be locked (**OI-04 closed**).
 
 > `[CLIENT INPUT REQUIRED]` **Hybrid-origin spools at FL2.** If a spool produced by a hybrid FL3 run is later loaded on FL2 for a standalone pass, does the system (a) refuse a standalone FL2 schedule without an explicit re-classification, or (b) treat it as any other spool? Undefined today (Section 8, PSM-2).
 
@@ -229,7 +241,7 @@ The same five steps, with a different material and a different tag set.
 | **Q71** | High | Min/max values for gauge, width, diameter and ovality per alloy | Dimensional acceptance (check 3) |
 | **PSM-1** | High | **The no-match path** — what happens when no active pass schedule matches the order's attributes | First run of any new product variant |
 | **PSM-2** | Medium | **Hybrid-origin spools at FL2** — refuse a standalone schedule, or treat as any other spool | FL2 check-in validation |
-| **OI-04** | High | Which FM2 stand is non-bypassable — 6″ S2 or 6″ S3 | Pass-schedule validation and the tag push |
+| ~~**OI-04**~~ | — | ~~Which FM2 stand is non-bypassable — 6″ S2 or 6″ S3~~ **CLOSED Aug 4 2026 — `S3`.** Both names referred to the same physical stand; see the equipment note in 4.2 | — |
 | **Q73 / Q76** | Medium | Behaviour of a part-completed wizard when the station auto-switches; FL1 and FL3 as one station or two | Automatic line selection |
 | **Q78** | High | Material whose order is scheduled on neither flattening line | Automatic line selection |
 | **OI-05** | Medium | `Bevel edge` is offered in the pass-schedule screens but is not a valid edge type — add it or remove it | Edge configuration pushed to FM2 |
@@ -272,7 +284,8 @@ The same five steps, with a different material and a different tag set.
 | Q71 | Min/max dimensional values by alloy | | ☐ |
 | PSM-1 | No-match behaviour at check-in | | ☐ |
 | PSM-2 | Hybrid-origin spool handling at FL2 | | ☐ |
-| OI-04 | Which FM2 stand is non-bypassable | | ☐ |
+| ~~OI-04~~ | ~~Which FM2 stand is non-bypassable~~ — **closed Aug 4 2026: `S3`** | — | ✔ |
+| **New** | **Confirm the FM2 equipment note in 4.2** — three stands, S1 8″, S2 6″, S3 6″, edgers at S2/S3, S3 final | | ☐ |
 | OI-05 | Whether `Bevel` is a real edge type | | ☐ |
 | Q73/Q76/Q78 | Station scope and line-selection edge cases | | ☐ |
 
@@ -291,5 +304,7 @@ The same five steps, with a different material and a different tag set.
 | Date | Change |
 |---|---|
 | Apr 25, 2026 | Initial document — recommended behaviour for "Acknowledge & Begin Check-in" on Dashboard 2 and Dashboard 5. |
-| Aug 1, 2026 | **Reissued as version 2.0 for client review.** Added: automatic line selection; the payoff-selector rule for staged rod; min/max dimensional limits; `INFLAT` committed at check-in; the attribute-lookup and mandatory-confirmation flow; the consumed staging record; FM2's third 6″ stand and the FL1 no-edger correction. Consolidated the rules as CI-1 to CI-10, the decisions as D1–D9, and the unresolved points as a client sign-off checklist. Internal gap references and mockup-implementation notes removed. |
+| Aug 4, 2026 | **v2.2 — FM2 roller sizes corrected** (three stands: S1 8″, S2 6″, S3 6″; the 8″ roller is S1) and **OI-04 closed**, since its two candidate stands were one stand. See the Document Change History. |
+| Aug 1, 2026 | **Reissued as version 2.0 for client review.** Added: automatic line selection; the payoff-selector rule for staged rod; min/max dimensional limits; `INFLAT` committed at check-in; the attribute-lookup and mandatory-confirmation flow; the consumed staging record; FM2's third stand and the FL1 no-edger correction. Consolidated the rules as CI-1 to CI-10, the decisions as D1–D9, and the unresolved points as a client sign-off checklist. Internal gap references and mockup-implementation notes removed. |
 | Aug 1, 2026 | **Check-in now ends on the rod pre-check-in station rather than the active run monitor** (Section 3.7). Pressing *Acknowledge & Begin Check-in* completes check-in outright — the records are written, the tags are pushed, the run is open and the rod is drawing — so the destination is a question of what the operator does *next*, not of what check-in still owes. The next task in the continuous-feed cycle is staging the following rod on the idle payoff position, which is the pre-check-in station; returning there closes the cycle (stage → check in → stage the next) on one path rather than landing the operator on a monitor and leaving them to navigate back. The active run monitor is unaffected and remains reachable from the application bar and the line status board. **Raised as Q84 rather than applied silently:** the change assumes operators do not expect to see the run monitor at start-up to confirm the line took the tags and the gauge trace is live. If they do, the previous destination is the correct one and this reverts. |
+| Aug 4, 2026 | **§3.6 reduced to a pointer.** This document listed the tag-push payload and was the outlier on two points — whether **edge type** is pushed, and whether speed is a **target** or a **limit**. Both are now settled in one place: edge type is pushed on FL2/FL3 and is not applicable on FL1 (FL1 has no edger), and the speed question is open as **`PLC-Q06`**. What stays here is the acknowledgement sequence, which is this document’s job: **confirm the schedule → write every audit record → push the tags → open the run**. |

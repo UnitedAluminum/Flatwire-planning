@@ -1009,15 +1009,18 @@
       notes.push({ type:"info", text: "DB2 snapped " + db2Die.toFixed(3) + "\" → " + db2Snapped.toFixed(3) + "\". Verify die inventory." });
     var fm1Gap = gauge * d.springback, fm1Width = width * (1 + (1 - d.springback));
     var ar = width / gauge, isWeld = !!d.weldingWire;
-    var fm2_8 = ar > 5.5 || isWeld, fm2S1 = ar > 7.0 || isWeld, fm2S2 = true;
-    var fm2_8Gap = gauge * 1.06, fm2S1Gap = gauge * 1.02, fm2S2Gap = gauge * d.springback;
-    var routeMode = fm2_8 ? "Hybrid FL3" : "Standalone FL1";
+    /* FM2 has THREE stands: S1 = 8", S2 = 6", S3 = 6" (final, always Active).
+       FR-386 activation, FR-387 gaps. Corrected 4 Aug 2026 — this previously
+       modelled a separate 8" stand above S1/S2 and had no S3 at all. */
+    var fm2S1 = ar > 5.5 || isWeld, fm2S2 = ar > 7.0 || isWeld, fm2S3 = true;
+    var fm2S1Gap = gauge * 1.06, fm2S2Gap = gauge * 1.02, fm2S3Gap = gauge * d.springback;
+    var routeMode = fm2S1 ? "Hybrid FL3" : "Standalone FL1";
     if (ar > 5.5) warnings.push({ type:"warning", text: "Aspect ratio " + ar.toFixed(2) + " > 5.5 — FM2 activated. Route set to Hybrid FL3." });
     if (isWeld)   warnings.push({ type:"warning", text: "1350 alloy — welding wire precision mode. All FM2 stands activated." });
     if (ar > 10)  warnings.push({ type:"warning", text: "Very high aspect ratio (" + ar.toFixed(1) + "). Verify FM2 capability with Maintenance." });
     var passCount = (db1Active ? 1 : 0) + (db2Active ? 1 : 0);
     return { alloy, edgeType, dPre, totalRed, passCount, ar, db1Active, db1Die: db1Snapped, db2Active, db2Die: db2Snapped,
-      fm1Gap, fm1Width, fm2_8, fm2_8Gap, fm2S1, fm2S1Gap, fm2S2, fm2S2Gap, routeMode,
+      fm1Gap, fm1Width, fm2S1, fm2S1Gap, fm2S2, fm2S2Gap, fm2S3, fm2S3Gap, routeMode,
       gauge, width, gaugeTol: d.gaugeTol, widthTol: d.widthTol, speedMin: d.speedMin, speedMax: d.speedMax,
       warnings, errors, notes };
   }
@@ -1045,9 +1048,9 @@
       { tag:"FL1", name:"DB2",          active:r.db2Active, locked:false, value:r.db2Active?"Die "+fmt(r.db2Die):"—" },
       { tag:"FL1", name:"FM1 12\" mill", active:true,        locked:false, value:"Gap "+fmt(r.fm1Gap)+"  Width "+fmt(r.fm1Width) },
       { tag:"FL1", name:"Edge set",      active:true,        locked:false, value:r.edgeType==="round"?"Round edge":r.edgeType==="flat"?"Flat edge":"Bevel edge" },
-      { tag:"FL2", name:"8\" Roller",    active:r.fm2_8,     locked:false, value:r.fm2_8?"Gap "+fmt(r.fm2_8Gap):"—" },
-      { tag:"FL2", name:"6\" Roller S1", active:r.fm2S1,     locked:false, value:r.fm2S1?"Gap "+fmt(r.fm2S1Gap):"—" },
-      { tag:"FL2", name:"6\" Roller S2 (mandatory)", active:true, locked:true, value:"Gap "+fmt(r.fm2S2Gap) }
+      { tag:"FL2", name:"S1 &middot; 8\" Roller", active:r.fm2S1, locked:false, value:r.fm2S1?"Gap "+fmt(r.fm2S1Gap):"—" },
+      { tag:"FL2", name:"S2 &middot; 6\" Roller", active:r.fm2S2, locked:false, value:r.fm2S2?"Gap "+fmt(r.fm2S2Gap):"—" },
+      { tag:"FL2", name:"S3 &middot; 6\" Roller (mandatory)", active:true, locked:true, value:"Gap "+fmt(r.fm2S3Gap) }
     ];
     document.getElementById("result-table-body").innerHTML = rows.map(function(row){
       return '<tr><td class="label-col"><span class="line-tag-sm">'+row.tag+'</span>'+row.name+'</td><td>'+pillHtml(row.active,row.locked)+'</td><td>'+(row.active||row.locked?'<span style="font-family:var(--font-mono);font-size:14px;">'+row.value+'</span>':'<span style="color:var(--color-text-tertiary);font-style:italic;font-size:14px;">bypassed</span>')+'</td></tr>';

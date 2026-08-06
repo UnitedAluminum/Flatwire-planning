@@ -96,7 +96,7 @@
   DECISIONS / ASSUMPTIONS  (confirm before running outside DEV)
   ------------------------------------------------------------
   D1. Station granularity. One WIP station per line (FL1 / FL2 / FL3), NOT one per mill
-      component. The pass-schedule components (DB1, DB2, FM1, FM2_8in, FM2_6inS1/S2/S3, EdgeSet)
+      component. The pass-schedule components (DB1, DB2, FM1, FM2_S1/S2/S3, EdgeSet)
       are not material check-in points - they are modelled in FlatWireDB (Stand / Drawer / Edger /
       PassScheduleComponent) and do not belong in the shared shop-floor station registry.
       See the optional block at the foot of this file if component-level stations are wanted.
@@ -281,7 +281,7 @@ VALUES
       , 40.0, NULL, 3500.0, NULL
       , 0.40, 0.90, 0.07, 0.16
       , NULL, NULL
-      , 'FL2 standalone finishing line: spool -> FM2 stands (8in, 6in S1/S2/S3) -> coreless oscillated coil' )
+      , 'FL2 standalone finishing line: spool -> FM2 stands (S1 8in, S2 6in, S3 6in) -> coreless oscillated coil' )
 
       -- FL3: rod in, coreless coil out, continuous - inherits FL1 input and FL2 output limits.
     , ( @FL3Idx, 'FL3'
@@ -346,7 +346,7 @@ VALUES
       ( 'FL1   ', 'FL1      ', 'FL1', 'R', 'N', 'N', 'FL1$PRINT   '
       , 'FL1 standalone flattening line: rod check-in, DB1/DB2 draw, FM1 12" mill, TKUP-1 intermediate spool output' )
     , ( 'FL2   ', 'FL2      ', 'FL2', 'R', 'N', 'N', 'FL2$PRINT   '
-      , 'FL2 standalone finishing line: spool check-in, FM2 stands (8in, 6in S1/S2/S3), coreless oscillated coil output' )
+      , 'FL2 standalone finishing line: spool check-in, FM2 stands (S1 8in, S2 6in, S3 6in), coreless oscillated coil output' )
     , ( 'FL3   ', 'FL3      ', 'FL3', 'R', 'N', 'N', 'FL3$PRINT   '
       , 'FL3 hybrid continuous route: FL1 feeding FL2 with no intermediate anneal and no intermediate spool' )
     , ( 'FWPACK', 'FWPACK   ', NULL , 'P', 'N', 'N', 'FWPACK$PRINT'
@@ -794,8 +794,8 @@ GO
   OPTIONAL - component-level stations (see D1). Only add these if the client wants material
   tracked at each mill component rather than at the line. Names fit the VARCHAR(6) column:
       FL1DB1 / FL1DB2  draw boxes 1 and 2          FL1FM1  12" flattening mill
-      FL2S8            FM2 8" stand                FL2S1 / FL2S2 / FL2S3  FM2 6" stands
-      (edgers sit at S2 and S3 only; FL1 has no edger)
+      FL2S1            FM2 stand S1 (8" roller)    FL2S2 / FL2S3  FM2 stands S2 and S3 (6" rollers)
+      (FM2 has three stands only; edgers sit at S2 and S3; FL1 has no edger)
 
   FL1PO is now seeded above (see D2) - SRS PCI003 requires it. FL2PO remains deliberately absent
   per PCI002 (FL2 has no staging space); add it only if the business later reverses that.

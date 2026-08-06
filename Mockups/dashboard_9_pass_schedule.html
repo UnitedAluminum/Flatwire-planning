@@ -771,15 +771,8 @@
                 </span>
               </td>
             </tr>
-            <tr id="row-fm2-8" class="bypass">
-              <td class="component-cell"><span class="component-line-tag">FL2</span>8" Roller</td>
-              <td><span class="toggle" id="toggle-fm2-8"></span></td>
-              <td class="param-cell" id="param-fm2-8">
-                <span class="bypass-label">Bypassed &middot; no parameters</span>
-              </td>
-            </tr>
             <tr id="row-fm2-s1">
-              <td class="component-cell"><span class="component-line-tag">FL2</span>6" Roller S1</td>
+              <td class="component-cell"><span class="component-line-tag">FL2</span>S1 &middot; 8" Roller</td>
               <td><span class="toggle on" id="toggle-fm2-s1"></span></td>
               <td class="param-cell" id="param-fm2-s1">
                 <span class="param-row">
@@ -790,7 +783,7 @@
             </tr>
             <tr id="row-fm2-s2">
               <td class="component-cell">
-                <span class="component-line-tag">FL2</span>6" Roller S2
+                <span class="component-line-tag">FL2</span>S2 &middot; 6" Roller
               </td>
               <td><span class="toggle on" id="toggle-fm2-s2"></span></td>
               <td class="param-cell" id="param-fm2-s2">
@@ -818,7 +811,7 @@
             </tr>
             <tr id="row-fm2-s3">
               <td class="component-cell">
-                <span class="component-line-tag">FL2</span>6" Roller S3
+                <span class="component-line-tag">FL2</span>S3 &middot; 6" Roller
                 <span style="font-size:14px; color: var(--color-text-tertiary); margin-left:4px;">(mandatory)</span>
               </td>
               <td><span class="toggle on locked" id="toggle-fm2-s3" title="Cannot bypass"></span></td>
@@ -966,7 +959,7 @@
       <div class="history-entry">
         <span class="history-time">Apr 16 06:20</span>
         <span class="history-user">Bob S.</span>
-        <span class="history-change">FL2 8" Roller <span class="from">active</span><span class="arrow">&rarr;</span><span class="to">bypass</span></span>
+        <span class="history-change">FL2 S1 (8") <span class="from">active</span><span class="arrow">&rarr;</span><span class="to">bypass</span></span>
         <span class="history-reason">Process update</span>
       </div>
       <div class="history-entry">
@@ -1338,18 +1331,25 @@
     var fm1Gap    = gauge * d.springback;
     var fm1Width  = width * (1 + (1 - d.springback));
 
-    /* Step 6 — FM2 requirement */
+    /* Step 6 — FM2 requirement (FR-386).
+       FM2 has THREE stands: S1 carries the 8" roller, S2 and S3 carry 6".
+       S3 is the final gauge-control stand and is always Active.
+       Corrected 4 Aug 2026 — this block previously carried a separate
+       `fm2_8*` stand above S1/S2, i.e. four stands. */
     var aspectRatio  = width / gauge;
     var isWeldWire   = !!d.weldingWire;
-    var fm2_8Active  = aspectRatio > 5.5 || isWeldWire;
-    var fm2S1Active  = aspectRatio > 7.0 || isWeldWire;
-    var fm2S2Active  = true;
+    var fm2S1Active  = aspectRatio > 5.5 || isWeldWire;
+    var fm2S2Active  = aspectRatio > 7.0 || isWeldWire;
+    var fm2S3Active  = true;
 
-    var fm2_8Gap  = gauge * 1.06;
-    var fm2S1Gap  = gauge * 1.02;
-    var fm2S2Gap  = gauge * d.springback;
+    /* Step 7 — FM2 roll gaps (FR-387), one per stand. The multipliers are
+       unchanged; they used to be labelled by roll diameter, which left the
+       final stand with no formula of its own. */
+    var fm2S1Gap  = gauge * 1.06;
+    var fm2S2Gap  = gauge * 1.02;
+    var fm2S3Gap  = gauge * d.springback;
 
-    var routeMode = fm2_8Active ? "Hybrid FL3" : "Standalone FL1";
+    var routeMode = fm2S1Active ? "Hybrid FL3" : "Standalone FL1";
 
     /* Warnings */
     if (aspectRatio > 5.5) {
@@ -1370,9 +1370,9 @@
       db1Active: db1Active, db1Die: db1DieSnapped,
       db2Active: db2Active, db2Die: db2DieSnapped,
       fm1Gap: fm1Gap, fm1Width: fm1Width,
-      fm2_8Active: fm2_8Active, fm2_8Gap: fm2_8Gap,
       fm2S1Active: fm2S1Active, fm2S1Gap: fm2S1Gap,
       fm2S2Active: fm2S2Active, fm2S2Gap: fm2S2Gap,
+      fm2S3Active: fm2S3Active, fm2S3Gap: fm2S3Gap,
       routeMode: routeMode,
       gauge: gauge, width: width,
       gaugeTol: d.gaugeTol, widthTol: d.widthTol,
@@ -1413,11 +1413,10 @@
       { tag: "FL1", name: "DB1",          active: r.db1Active,   locked: false, value: r.db1Active  ? "Die " + fmt(r.db1Die)  : "—" },
       { tag: "FL1", name: "DB2",          active: r.db2Active,   locked: false, value: r.db2Active  ? "Die " + fmt(r.db2Die)  : "—" },
       { tag: "FL1", name: "FM1 12\" mill", active: true,          locked: false, value: "Gap " + fmt(r.fm1Gap) + "  Width " + fmt(r.fm1Width) },
-      { tag: "FL2", name: "8\" Roller",    active: r.fm2_8Active, locked: false, value: r.fm2_8Active  ? "Gap " + fmt(r.fm2_8Gap)  : "—" },
-      { tag: "FL2", name: "6\" Roller S1", active: r.fm2S1Active, locked: false, value: r.fm2S1Active  ? "Gap " + fmt(r.fm2S1Gap) : "—" },
-      { tag: "FL2", name: "6\" Roller S2", active: true,          locked: false, value: "Gap " + fmt(r.fm2S2Gap) },
-      { tag: "FL2", name: "↳ Edger (S2)", active: true,          locked: false, value: edgeLabel },
-      { tag: "FL2", name: "6\" Roller S3 (mandatory)", active: true, locked: true, value: "Gap " + fmt(r.fm2S2Gap * 0.99) },
+      { tag: "FL2", name: "S1 &middot; 8\" Roller", active: r.fm2S1Active, locked: false, value: r.fm2S1Active ? "Gap " + fmt(r.fm2S1Gap) : "—" },
+      { tag: "FL2", name: "S2 &middot; 6\" Roller", active: r.fm2S2Active, locked: false, value: r.fm2S2Active ? "Gap " + fmt(r.fm2S2Gap) : "—" },
+      { tag: "FL2", name: "↳ Edger (S2)", active: r.fm2S2Active, locked: false, value: edgeLabel },
+      { tag: "FL2", name: "S3 &middot; 6\" Roller (mandatory)", active: true, locked: true, value: "Gap " + fmt(r.fm2S3Gap) },
       { tag: "FL2", name: "↳ Edger (S3)", active: true,          locked: false, value: edgeLabel }
     ];
     document.getElementById("result-table-body").innerHTML = rows.map(function (row) {
@@ -1511,23 +1510,23 @@
     document.getElementById("param-edge").innerHTML =
       '<span class="param-row"><span class="param-sep">Type</span><select class="param-input generated" id="edge-type" style="width:140px;padding-right:10px;"><option>' + edgeLabel + '</option></select></span>';
 
-    /* FM2 8" */
-    setRowState("row-fm2-8", "toggle-fm2-8", "param-fm2-8", r.fm2_8Active,
-      r.fm2_8Active
-        ? '<span class="param-row"><span class="param-sep">Gap</span><input class="param-input generated" id="fm2-8-gap" type="text" value="' + fmtPlain(r.fm2_8Gap) + '&quot;"></span>'
-        : '<span class="bypass-label">Bypassed &middot; no parameters</span>'
-    );
-
-    /* FM2 S1 */
+    /* FM2 S1 — the 8" stand; bypassable */
     setRowState("row-fm2-s1", "toggle-fm2-s1", "param-fm2-s1", r.fm2S1Active,
       r.fm2S1Active
         ? '<span class="param-row"><span class="param-sep">Gap</span><input class="param-input generated" id="fm2-s1-gap" type="text" value="' + fmtPlain(r.fm2S1Gap) + '&quot;"></span>'
         : '<span class="bypass-label">Bypassed &middot; no parameters</span>'
     );
 
-    /* FM2 S2 — always on, update gap */
-    document.getElementById("param-fm2-s2").innerHTML =
-      '<span class="param-row"><span class="param-sep">Gap</span><input class="param-input generated" id="fm2-s2-gap" type="text" value="' + fmtPlain(r.fm2S2Gap) + '&quot;"><span class="param-sep">final</span></span>';
+    /* FM2 S2 — 6"; bypassable */
+    setRowState("row-fm2-s2", "toggle-fm2-s2", "param-fm2-s2", r.fm2S2Active,
+      r.fm2S2Active
+        ? '<span class="param-row"><span class="param-sep">Gap</span><input class="param-input generated" id="fm2-s2-gap" type="text" value="' + fmtPlain(r.fm2S2Gap) + '&quot;"></span>'
+        : '<span class="bypass-label">Bypassed &middot; no parameters</span>'
+    );
+
+    /* FM2 S3 — 6", final gauge control; always on, update gap */
+    document.getElementById("param-fm2-s3").innerHTML =
+      '<span class="param-row"><span class="param-sep">Gap</span><input class="param-input generated" id="fm2-s3-gap" type="text" value="' + fmtPlain(r.fm2S3Gap) + '&quot;"><span class="param-sep">final</span></span>';
 
     /* Targets */
     setInputVal("target-gauge",     fmtPlain(r.gauge),    true);

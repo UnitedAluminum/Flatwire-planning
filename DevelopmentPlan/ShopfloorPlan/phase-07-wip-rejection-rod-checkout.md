@@ -53,7 +53,7 @@
 
 ## Real-Time Functionality
 - **Publishers:** `AlertRaised` (WIP hold) → Dashboard 1; `RodCheckoutEvent` marker; **SignalR notification to Supervisor role** for pending disposition; `LineStatus` → IDLE on checkout.
-- **Subscribers:** Dashboard 1, supervisor terminals, Dashboard 14 markers.
+- **Subscribers:** Dashboard 1, supervisor terminals, **the Dashboard 3 traces** (`RodCheckoutEvent` renders there as a run event marker). *(Dashboard 14 was the previously-listed marker consumer and was descoped 4 Aug 2026 — DB3 is now named explicitly so the event is not left without one.)*
 
 ## Integration Flow
 ```mermaid

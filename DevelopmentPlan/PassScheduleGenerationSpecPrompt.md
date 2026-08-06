@@ -63,7 +63,7 @@ intended to be sent to the client for review, completion, and sign-off.
 > - **FL1** — rod payoff → wire drawing at two draw boxes (DB1, DB2) → 12" flattening mill FM1 →
 >   intermediate spool. **FL1 has no edger**, so flat wire width leaving FM1 is set entirely by free
 >   lateral spread.
-> - **FL2** — pre-flattened spool → finishing mill FM2: one 8" stand followed by three 6" stands
+> - **FL2** — pre-flattened spool → finishing mill FM2: **three stands — S1 (8"), S2 (6"), S3 (6", final)**, with edgers at S2 and S3 only
 >   (S1, S2, S3). **Edgers are fitted at S2 and S3 only.**
 > - **FL3** — FL1 feeding FL2 continuously as one line, **with no intermediate anneal**.
 > - Alloys in scope: **1100, 1350, 3003, 5052, 6061**.

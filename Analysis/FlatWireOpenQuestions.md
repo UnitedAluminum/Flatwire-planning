@@ -1,8 +1,8 @@
 # Flat Wire Mill — Open Questions Register
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 1, 2026
-**Total Questions:** 81 · **Shopfloor scope:** 54
+**Last Updated:** August 4, 2026
+**Total Questions:** 95 · **Shopfloor scope:** 68
 **Status Legend:** `Open` · `In Progress` · `Decided` · `Deferred`
 **Scope Legend:** `Shopfloor` — Flat Wire Mill shopfloor changes · `Other` — adjacent modules
 
@@ -15,24 +15,24 @@
 
 ## Shopfloor Scope — Filtered Index
 
-**54 of 81 questions relate to Flat Wire Mill shopfloor changes** — the operator execution screens (Dashboards 1–14+) plus the reference data, equipment limits and validation rules those screens consume. The remaining 27 belong to adjacent modules (orders/quotes, pricing, costing, planning, scheduling, receiving, certification, maintenance) and are retained here marked `Scope = Other`.
+**68 of 95 questions relate to Flat Wire Mill shopfloor changes** — the operator execution screens (Dashboards 1–12+) plus the reference data, equipment limits and validation rules those screens consume. The remaining 27 belong to adjacent modules (orders/quotes, pricing, costing, planning, scheduling, receiving, certification, maintenance) and are retained here marked `Scope = Other`.
 
 **Nothing is filtered out by deletion.** The Change Log at the foot of this file cites question numbers throughout, and `OQ-##` references point inbound from the phase files, [REVIEW.md](../DevelopmentPlan/REVIEW.md) and the master specification. The numbering must stay contiguous, per the register convention in [CLAUDE.md](../CLAUDE.md).
 
 **Filter rule applied:** a question is `Shopfloor` if a shopfloor screen **reads it, validates against it, or writes it**. That keeps reference data and equipment limits in scope (Q32 coil weight, Q36 footage-to-weight, Q38 tolerance bands, Q41 die life) and leaves scheduling representation (Q10), pre-scheduling validation (Q53) and order-entry behaviour (Q9, Q11, Q12) out, even where they touch flat wire.
 
-### Shopfloor — Open / In Progress (35)
+### Shopfloor — Open / In Progress (47)
 
 | Priority | Questions |
 |---|---|
-| `Critical` | **Q1** pass schedule UI · **Q14** traveler fields per station · **Q15** FL2 spool check-in identifier · **Q36** footage-to-weight factor · **Q51** pass schedule selection at check-in · **Q52** FL3 hybrid schedule + FL2 validation |
-| `High` | **Q16** skid labeling rules · **Q21** cert traceability granularity · **Q22** weld footage attribution · **Q23** max weld joints per coil · **Q30** roll gap validation *(IP)* · **Q38** published tolerance bands · **Q47** partial-rod re-check-in *(IP)* · **Q49** PLC tags on checkout *(IP)* · **Q57** spool state machine *(IP)* · **Q58** OD→weight formula · **Q60** target spool weight source *(IP)* · **Q63** `FL{n}.LineState` vocabulary · **Q66** scale-vs-calculated weight *(IP)* · **Q71** dimensional tolerance columns *(IP — values owed)* · **Q72** failed-inspection row *(IP)* · **Q74** staging overrides *(IP)* · **Q76** FL1/FL3 bay uniqueness · **Q78** rod scheduled on neither rod line · **Q80** shopfloor panel resolution · **Q81** rod bundle gross weight |
-| `Medium` | **Q24** rework weld on cert · **Q42** edger blade profiles · **Q61** TKUP-2 alert ladder · **Q62** supervisor mirroring · **Q64** stop-popup arbitration · **Q70** `RodSeqno` scope · **Q73** FL3 WIP station · **Q79** multi-order rod sequencing · **Q82** WIP rejection list screen · **Q83** *Welds this run* at cold start · **Q84** destination after check-in |
+| `Critical` | **Q1** pass schedule UI · **Q14** traveler fields per station · **Q15** FL2 spool check-in identifier · **Q36** footage-to-weight factor · **Q51** pass schedule selection at check-in · **Q52** FL3 hybrid schedule + FL2 validation · **Q90** confirm every machine tag path · **Q94** FM2 PLC station rename · **Q95** confirm every measure name |
+| `High` | **Q16** skid labeling rules · **Q21** cert traceability granularity · **Q22** weld footage attribution · **Q23** max weld joints per coil · **Q30** roll gap validation *(IP)* · **Q38** published tolerance bands · **Q47** partial-rod re-check-in *(IP)* · **Q49** PLC tags on checkout *(IP)* · **Q57** spool state machine *(IP)* · **Q58** OD→weight formula · **Q60** target spool weight source *(IP)* · **Q63** `FL{n}.LineState` vocabulary · **Q66** scale-vs-calculated weight *(IP)* · **Q71** dimensional tolerance columns *(IP — values owed)* · **Q72** failed-inspection row *(IP)* · **Q74** staging overrides *(IP)* · **Q76** FL1/FL3 bay uniqueness · **Q78** rod scheduled on neither rod line · **Q80** shopfloor panel resolution · **Q81** rod bundle gross weight · **Q85** speed pushed as target or limit · **Q86** edge type push + missing edger tags · **Q87** FM2 tag namespace on FL3 · **Q89** take-up load cells / completion weight |
+| `Medium` | **Q24** rework weld on cert · **Q42** edger blade profiles · **Q61** TKUP-2 alert ladder · **Q62** supervisor mirroring · **Q64** stop-popup arbitration · **Q70** `RodSeqno` scope · **Q73** FL3 WIP station · **Q79** multi-order rod sequencing · **Q82** WIP rejection list screen · **Q83** *Welds this run* at cold start · **Q84** destination after check-in · **Q88** units carried in tag paths · **Q91** ordinal naming convention |
 | `Low` | **Q8** WIP REJ report columns |
 
-### Shopfloor — Decided (19)
+### Shopfloor — Decided (20) · Superseded (1)
 
-**Q4** SCADA chart layout *(May 15)* · **Q27** mid-run alpha handling *(May 4)* · **Q28** pass schedule override authority *(May 4)* · **Q29** component failure protocol *(May 4)* · **Q32** max finished coil weight *(Apr 28)* · **Q39** camber *(May 4)* · **Q40** edge burr *(May 4)* · **Q41** die life tracking *(May 4)* · **Q48** mid-run checkout authorisation *(May 4)* · **Q50** partial-run disposition *(May 4)* · **Q54** pass schedule ID on cert record *(May 4)* · **Q55** spool alpha through anneal *(May 4)* · **Q56** SPC on resume *(May 4)* · **Q65** short-close path *(Jul 30)* · **Q67** pre-check-in coil status *(Jul 30)* · **Q68** pre-check-out approval *(Jul 30)* · **Q69** multi-order rod *(Jul 30)* · **Q75** VPS bundle stacking *(Jul 30)* · **Q77** welded-rod release *(Jul 30)*
+~~**Q4** SCADA chart layout *(May 15)*~~ **superseded Aug 4 — DB13/DB14 descoped; the tag half is now `PLC-Q02`** · **Q27** mid-run alpha handling *(May 4)* · **Q28** pass schedule override authority *(May 4)* · **Q29** component failure protocol *(May 4)* · **Q32** max finished coil weight *(Apr 28)* · **Q39** camber *(May 4)* · **Q40** edge burr *(May 4)* · **Q41** die life tracking *(May 4)* · **Q48** mid-run checkout authorisation *(May 4)* · **Q50** partial-run disposition *(May 4)* · **Q54** pass schedule ID on cert record *(May 4)* · **Q55** spool alpha through anneal *(May 4)* · **Q56** SPC on resume *(May 4)* · **Q65** short-close path *(Jul 30)* · **Q67** pre-check-in coil status *(Jul 30)* · **Q68** pre-check-out approval *(Jul 30)* · **Q69** multi-order rod *(Jul 30)* · **Q75** VPS bundle stacking *(Jul 30)* · **Q77** welded-rod release *(Jul 30)* · **Q92** `ITInhibit` line-scoped *(Aug 4)* · **Q93** FM2 three stands, S1 = 8″ *(Aug 4)*
 
 ### Out of shopfloor scope (27)
 
@@ -47,7 +47,7 @@
 | 1 | Pass Schedule UI vs. table management | `Shopfloor` | Critical | Tim O. | Open | |
 | 2 | Pricing auto-population mechanism | `Other` | High | Sales / Tim O. | Open | |
 | 3 | Costing standards and industry codes | `Other` | High | Jeff G. / Tim O. | Open | |
-| 4 | SCADA chart layout owner and timeline | `Shopfloor` | High | UA (Tim O.) | Decided | May 15, 2026 |
+| 4 | ~~SCADA chart layout owner and timeline~~ — **superseded**; DB13/DB14 descoped, tag half → `PLC-Q02` | `Shopfloor` | High | UA (Tim O.) | Superseded | Aug 4, 2026 |
 | 5 | Standard times for FL1/FL2/FL3 | `Other` | High | Tim O. / Jeff G. | Open | |
 | 6 | FL1/FL2/FL3 output throughput rates | `Other` | Medium | Bob S. | Open | |
 | 7 | Baler maximum dimensions | `Other` | Low | Plant / Tim O. | Open | |
@@ -125,6 +125,20 @@
 | 79 | Multi-order rod — sequencing rule and MVP1/MVP2 scope | `Shopfloor` | Medium | Srikanth / Tim O. | Open | |
 | 80 | Shopfloor panel resolution — 1280×1024 (stocked) vs 1920×1080 (required) | `Shopfloor` | High | Tim O. / Charles / Juan | Open | |
 | 81 | Rod bundle gross weight — 8,690–8,840 lb or ~2,000 lb? Calibrates the payoff bar and weld alerts | `Shopfloor` | High | Tim O. / Bob S. | Open | |
+| 82 | Dashboard 1's "WIP Rejections" — is a rejection *list* screen in scope? | `Shopfloor` | Medium | Tim O. / Shray | Open | |
+| 83 | At cold start, should *Welds this run* be absent, or present and unavailable? | `Shopfloor` | Medium | Tim O. / Bob S. | Open | |
+| 84 | Where should the operator land after pressing *Acknowledge & Begin Check-in*? | `Shopfloor` | Medium | Tim O. / Bob S. / Juan | Open | |
+| 85 | Is speed pushed to the PLC as a **target/setpoint** or a **limit/clamp**? | `Shopfloor` | High | Tim O. / Engineering | Open | |
+| 86 | Is edge type pushed to the machine, and where are the **edger** tag paths? | `Shopfloor` | High | Tim O. / Engineering | Open | |
+| 87 | On FL3, are FM2 tags addressed as `FL2.FM2.*` or `FL3.FM2.*`? | `Shopfloor` | High | Tim O. / Engineering | Open | |
+| 88 | ~~Are units carried in tag paths?~~ — **specified: no, units never appear in the path.** Open on the half that bites: **what unit are the values in?** | `Shopfloor` | Medium | Tim O. / Engineering | Open | Part 1 Aug 4, 2026 |
+| 89 | Do take-up load cells exist, and is the spool-completion weight **read** or **derived**? | `Shopfloor` | High | Tim O. / Bob S. / Engineering | Open | |
+| 90 | Confirmation of **every machine tag path** with the controls commissioning engineer | `Shopfloor` | **Critical** | Tim O. / Engineering | Open | |
+| 91 | Ordinal naming convention — **resolved as two non-competing rules** (R6 ordinals `DB1`/`Payoff2`, R5 assembly stations `FM2.S2`); confirmation still open | `Shopfloor` | Medium | Tim O. / Engineering | Open | Resolution Aug 4, 2026 |
+| 92 | ~~Is `ITInhibit` plant-level or line-scoped?~~ — **DECIDED: line-scoped, `FL1.ITInhibit` / `FL2.ITInhibit`** (one tag per line) | `Shopfloor` | High | Tim O. / Engineering | **Decided** | Aug 4, 2026 |
+| 93 | ~~FM2 roller sizes~~ — **DECIDED: three stands, `S1` = 8″, `S2` = 6″, `S3` = 6″** (client correction). Edgers at S2/S3 and S3 final are unchanged; the 8″ roller **is S1**, not a separate stand | `Shopfloor` | **Critical** | Tim O. | **Decided** | Aug 4, 2026 |
+| 94 | Confirm the FM2 **PLC station rename** — specified `S1`/`S2`/`S3` vs the controller's observed `Stand8`/`Stand6S1`/`Stand6S2` (`PLC-Q04`) | `Shopfloor` | **Critical** | Tim O. / Engineering | Open | |
+| 95 | Confirm **every measure name** in the tag map — the measure segment was reshaped on our own reading, departing from **13** observed `[CONFIRMED]` strings (`PLC-Q05`) | `Shopfloor` | **Critical** | Tim O. / Engineering | Open | |
 
 ---
 
@@ -321,11 +335,18 @@ Are new industry codes needed for flat wire, or do existing codes (e.g., 510 = F
 
 ---
 
-**Q4** · `High` · Owner: UA — Tim O. · **Decided — May 15, 2026**
+**Q4** · `High` · Owner: UA — Tim O. · **Decided — May 15, 2026** · ~~**SUPERSEDED — Aug 4, 2026**~~
 **SCADA chart layout owner and timeline**
 UA is responsible for defining the SCADA chart layout and machine tags for flat wire. No owner or delivery date has been specified. This blocks SCADA report development.
 
-**Decision (May 15, 2026):** The SCADA chart layout is now fully defined as **Dashboard 14 — SCADA Multi-Trend Charts** in [HMIAndSCADALayout.md](../LatestDocument/RequirementDocuments/HMIAndSCADALayout.md). This covers gauge, width, speed, and payoff weight trend charts with configurable time windows, SPC control limits, event markers (weld, die change, pause, SPC), and CSV export. The HMI line schematic is defined as Dashboard 13. All PLC tag paths required for both screens are documented in the PLC Tag Mapping table in that document. Tag paths must be confirmed with Tim O. and the commissioning engineer before go-live. Mockups: [dashboard_13_hmi_schematic.html](../Mockups/dashboard_13_hmi_schematic.html) and [dashboard_14_scada_trends.html](../Mockups/dashboard_14_scada_trends.html).
+~~**Decision (May 15, 2026):** The SCADA chart layout is now fully defined as **Dashboard 14 — SCADA Multi-Trend Charts** in `HMIAndSCADALayout.md`. This covers gauge, width, speed, and payoff weight trend charts with configurable time windows, SPC control limits, event markers (weld, die change, pause, SPC), and CSV export. The HMI line schematic is defined as Dashboard 13. All PLC tag paths required for both screens are documented in the PLC Tag Mapping table in that document. Tag paths must be confirmed with Tim O. and the commissioning engineer before go-live.~~
+
+**SUPERSEDED (Aug 4, 2026) — the answer has been withdrawn, not the question.** The client confirmed that **SCADA Trends (Dashboard 14), the HMI Line Schematic (Dashboard 13) and the Machine View tab are not required**, so the artifact that closed Q4 — `HMIAndSCADALayout.md` — is deleted along with both mockups. Q4 splits in two:
+
+- **The chart-layout half is moot.** There is no chart layout to own, because there are no trend charts. Nothing further is owed on it.
+- **The machine-tags half survives and is still open.** Q4's other subject was *"machine tags for flat wire"*, and those tags are still read — by the active run monitor, the line status board, the rod-checkout gatekeeper, the spool stop prompt and the die-life counter. They now have a single home in [PLCTagSpecification.md](../LatestDocument/RequirementDocuments/PLCTagSpecification.md) and remain unconfirmed: **`PLC-Q02`** (confirm every tag path with the commissioning engineer) is the successor open item.
+
+> **A consequence outside this register.** Dashboard 14 was also the answer to the legacy .NET **"SCADA Report"** line item in [FlatWirePlan.md](FlatWirePlan.md) §Reporting Suite (Medium priority) and to the risk *"SCADA chart layout and machine tags undetermined."* With DB14 withdrawn, that report has no design again. **Whether the legacy SCADA report is also descoped is a separate client decision and has not been asked.**
 
 ---
 
@@ -1151,6 +1172,231 @@ Related: `FR-079a`, **TC-079a**, **Q83** (the other DB2A behaviour raised by the
 
 ---
 
+**Q85** · `High` · Owner: Tim O. / Engineering · `Open`
+**Is speed pushed to the PLC as a target/setpoint, or as a limit/clamp?**
+
+Raised Aug 4, 2026 while consolidating the PLC tag surface into [PLCTagSpecification.md](../LatestDocument/RequirementDocuments/PLCTagSpecification.md) (`PLC-Q06`). The delivered artifacts say both, and **the SRS contradicts itself**:
+
+| Source | Wording |
+|---|---|
+| `02-SRS.md` §9.1 · `03-HLD` §9.2 · `04-APIContract` §6.1 · master spec §6.8 | speed **targets** |
+| `02-SRS.md` `FR-073` · [RocCheckin.md](../LatestDocument/RequirementDocuments/RocCheckin.md) §3.6 | speed **limits** |
+
+**These are not the same tag and they do not fail the same way.** A *setpoint* commands the drives to a speed; a *clamp* bounds whatever speed the operator selects. If the pass schedule's value is written to a setpoint tag when the machine expected a ceiling, acknowledging a check-in starts the line moving at the scheduled speed — which is a commissioning-time surprise on a threading line. If it is written to a clamp when the machine expected a setpoint, the line does not move at all and the fault looks like a missing tag.
+
+Not resolvable from documents. It needs a controls answer, and it is the reason `FR-073`'s wording is left unfixed until this closes.
+
+Related: **Q86**, **Q87**, `PLC-Q06`, `FR-073`, `OI-52`/**Q30** (roll-gap readback — the same "what does the machine actually accept" gap).
+
+---
+
+**Q86** · `High` · Owner: Tim O. / Engineering · `Open`
+**Is edge type pushed to the machine, and where are the edger tag paths?**
+
+Raised Aug 4, 2026 from the same consolidation (`PLC-Q07`). Two findings that only appear once the tag surface is read as one document:
+
+1. **Edge type is in the push payload in four sources and absent from a fifth.** `02-SRS` §9.1, `03-HLD` §9.2, `04-APIContract` §6.1 and master spec §6.8 all list *edge type* among the values written at acknowledgement; [RocCheckin.md](../LatestDocument/RequirementDocuments/RocCheckin.md) §3.6 and `FR-073` do not. The likely explanation is that RocCheckin's list was written FL1-first and FL1 has no edger — but that is inference, not a confirmation.
+2. **No edger tag path exists anywhere in the repo.** The only edger-adjacent tag in any published map is `FL1.EdgeSet.Status.Active` — on **FL1, the one line with no edger** (`D-20`/`D-21`, May 21 2026). FM2's edgers at S2 and S3 (the two 6″ stands) have no status, activation or blade-profile path. So the write side is specified to push an edge configuration to equipment that has no addressable tags on the read side.
+
+Paths are **proposed** in `[PLC §4]` from the derived naming grammar (`FL2.FM2.S2.Edger.Status.IsActive`, `.Edger.Profile`, and the same for S3) so there is something concrete to confirm or correct, but they are our invention and are marked as such.
+
+Related: **Q42** (edger blade profiles — the reference data these tags would carry), **OI-36** (the same stand has no roll-gap path either), **G29**, `PLC-Q07`.
+
+---
+
+**Q87** · `High` · Owner: Tim O. / Engineering · `Open`
+**On FL3, are FM2 tags addressed as `FL2.FM2.*` or `FL3.FM2.*`?**
+
+Raised Aug 4, 2026 from the same consolidation (`PLC-Q08`). Every published tag map writes the finishing-mill stands as **`FL2.FM2.…`** — including the map headed *"FL1 shown, other lines follow the same pattern"*. FL3 is the hybrid route and needs **both** FM1 and FM2 tags, pushed as a single batch on one acknowledgement (`FR-096`-adjacent; `phase-10:35`).
+
+So one of two things is true, and no artifact says which:
+
+1. **FM2 is physically owned by the FL2 controller**, and FL3 reaches it through the `FL2.*` namespace. The FL3 push then writes to **two controllers** in one logical batch — which is precisely the case where "the batch was rolled back" is least true (**G16**).
+2. **FL3 has its own FM2 address space** (`FL3.FM2.*`), and the FL3 push is one controller.
+
+**This is not a naming preference.** It decides whether the FL3 single-batch push crosses a controller boundary, which determines what partial failure looks like and what the compensating re-clear has to undo. Commissioning test **C5** — *"one acknowledgement configures FM1 and FM2"* — passes either way and therefore cannot distinguish them; it needs a step added once this is answered.
+
+Related: **Q45** (FL1/FL2 simultaneous operation — the same controller-ownership question from the scheduling side), **G16**, **G30**, `PLC-Q08`.
+
+---
+
+**Q88** · `Medium` · Owner: Tim O. / Engineering · `Open` — **part 1 specified Aug 4, 2026**
+**~~Are units carried in tag paths, or implied?~~ — implied. What unit are the values in?**
+
+Raised Aug 4, 2026 from the same consolidation (`PLC-Q15`). The paths were inconsistent: **`FL1.Speed.FPM`** and **`FL1.Payoff1.Weight.Lb`** named their unit in the path, while gauge, width, roll gap and die diameter did not (`FL1.AGC.Gauge.Current`, `FL1.FM1.RollGap.Current`, `FL1.DB1.Die.ActiveDiameter`) and were assumed to be inches.
+
+**Part 1 — specified, not confirmed (Aug 4, 2026).** **Units never appear in the path.** `Speed.FPM` → `Speed` and `Payoff{n}.Weight.Lb` → `Payoff{n}.Weight`, making the convention uniform across all nine measures. This is **our specification, `[PROPOSED]`**, published as rule **R7** in `[PLC §4.2]` and carried on the sign-off sheet — it is not a client answer, and it departs from two strings that had been `[CONFIRMED]` by observation. See **Q95**, which owns the whole measure-grammar reshaping.
+
+**Part 2 — open, and it is now the whole question.** **What are the values actually in?** Inches is the assumption throughout, but a controller reporting gauge in **mils** or **thousandths** is entirely normal on a flattening line, and nothing states the unit. A silent 1000× error on gauge would pass every structural check, push a plausible roll gap and produce out-of-spec wire.
+
+**Removing the suffixes made part 2 more load-bearing, not less** — with `.Lb` and `.FPM` gone, **no tag on the surface declares a unit at all**, so there is nothing left in the address to cross-check a misconfigured scale against. `PLC-Q15` was accordingly raised from Medium to **High** in the tag specification's own register.
+
+Best answered at commissioning test **C1** where every path is read back anyway — but it should be asked before then, because the *display* code assumes inches now.
+
+Related: **Q85**, **Q86**, **Q87**, **Q95**, `PLC-Q15`, `OI-45`/**Q36** (footage-to-weight — the other place a unit assumption is load-bearing).
+
+---
+
+**Q89** · `High` · Owner: Tim O. / Bob S. / Engineering · `Open`
+**Do take-up load cells exist, and is the spool-completion weight read from them or derived from footage?**
+
+Raised Aug 4, 2026 by the audit of [PLCTagSpecification.md](../LatestDocument/RequirementDocuments/PLCTagSpecification.md) (`PLC-Q14`). Two artifacts disagree about where the most consequential number in the completion transaction comes from.
+
+| Source | Says |
+|---|---|
+| The tag specification’s assumption **A2** — rescued from the deleted `HMIAndSCADALayout.md`, which was its **only** home | “Load cells are fitted on both payoff positions **and on both take-ups**” |
+| [SpoolCompletionNotification.md](../LatestDocument/RequirementDocuments/SpoolCompletionNotification.md) §“Weight” | The weight is “**derived from the live footage counter and the measured cross-section**” |
+
+**And the tag map contains no take-up weight path on any line.** So the interface currently specifies a behaviour — the machine-stop prompt fires when the take-up weight reaches target, and the latched value is what the completion records and the **printed label** carries — that reads a value with no published source.
+
+Three things follow from the answer:
+
+1. **If the weight is derived**, A2’s take-up load cells are real hardware that this interface never reads, and the accuracy of every completion weight rests entirely on **Q36 / `OI-45`** (the footage-to-weight dimensional basis) — already **Critical** and already open.
+2. **If the weight is read**, two tag paths are missing from the map and must be added before commissioning test **C9** can pass.
+3. **If both exist**, which one is authoritative when they disagree? The spool completion spec already has a scale-versus-calculated reconciliation question open as **Q66**, and this is the same question one step upstream.
+
+Not decided in the specification on purpose: it is answerable from `SpoolCompletionNotification.md` alone only if that document’s derivation is known to be the *whole* story, and A2 says it may not be.
+
+Related: **Q36** / `OI-45` (footage-to-weight basis), **Q66** (scale vs calculated spool weight), **Q58** (OD→weight formula), `PLC-Q03`, `PLC-Q14`.
+
+---
+
+**Q90** · `Critical` · Owner: Tim O. / Engineering · `Open`
+**Confirmation of every machine tag path with the controls commissioning engineer**
+
+Raised Aug 4, 2026 by the audit (`PLC-Q02`). This has been an outstanding action since **15 May 2026** and has never had a register entry — it existed as an untagged row on a client sign-off sheet in `HMIAndSCADALayout.md`, and after that file was deleted it survived only as prose in the master specification and inside the tag specification itself.
+
+**That is the exact failure the register exists to prevent**, and it applies to the single most important confirmation in the PLC interface: every tag path published in `[PLC §5.2]` follows **a proposed naming convention, not a verified map**. None has been read off a controller.
+
+Until it closes:
+
+- **C1** (“read every configured tag path in turn”) is the first commissioning test and has no confirmed list to read from.
+- A wrong path fails **silently** — the write reports success, nothing changes on the machine, and the line runs on whatever it was last set to. That is classified **Severity 1**.
+- The correction cost is deliberately low: paths are configuration, so a wrong one is a config edit and a pool recycle, not a redeployment. **The risk is not the fix; it is not knowing.**
+
+**The specification now states this rather than obscuring it (v1.0, 4 Aug 2026).** The `[CONFIRMED]` tag has been **retired from the document entirely** — the count of confirmed rows in the tag map is **zero**, and the Reading Convention says why: nothing has been agreed as a *string* with United Aluminum or read off a controller, so the tag would have no members. Previously eight items carried it, on the strength of the Reading Convention's second limb — *"or stated consistently across the source specifications"* — which allowed three internal copies of one unverified table agreeing with each other to read as confirmation. **That limb was the mechanism by which this question stayed invisible for eleven weeks**, and it is gone. A path becomes confirmed when **C1** or **C11** reports that the controller accepted it, and not before.
+
+Related: **Q4** (superseded — this is the surviving half of it), **Q95**, `PLC-Q02`, commissioning test **C1**, `FR-022`.
+
+---
+
+**Q91** · `Medium` · Owner: Tim O. / Engineering · `Open`
+**Ordinal naming convention — digit-suffixed element, or station segment?**
+
+Raised Aug 4, 2026 by the audit (`PLC-Q17`). The observed tag paths use **two incompatible conventions for the same idea** — “the *n*th instance of a thing”:
+
+| Convention | Examples | Rule |
+|---|---|---|
+| Digit suffixed onto the element name | `DB1`, `DB2`, `Payoff1`, `Payoff2`, `TKUP1`, `TKUP2` | R8 |
+| A separate station segment | `FM2.S1`, `FM2.S2`, `FM2.S3` *(observed as `FM2.Stand8`, `FM2.Stand6S1`, `FM2.Stand6S2` — renamed 4 Aug 2026, `PLC-Q04`)* | R7 |
+
+Both are defensible; they cannot both be the convention. It matters because the specification asks the client to confirm **the grammar** rather than thirty individual strings — that is the whole economy of the approach — and a grammar with two contradictory ordinal rules cannot be used to derive the paths that are still missing.
+
+**Our resolution (Aug 4, 2026, `[PROPOSED]`) — they are not rival conventions.** The digit-suffix rule is adopted as *the* ordinal rule: **the *n*th instance of a piece of equipment suffixes its digit onto the element name** — `DB1`, `Payoff2`, `TKUP1`. The station segment is a **different** matter — the internal stations of one assembly — so `FM2.S1/S2/S3` stands unchanged and the two rules govern different things rather than competing. Nothing in the tag map moves as a result.
+
+**This is our reading, not the client's answer, so the question stays `Open`** and both rules remain `[PROPOSED]` on the sign-off sheet. **If the machine's own addressing follows something else, we follow the machine** — commissioning test **C1** now records the string the controller accepted for every path, which is what closes this.
+
+**Rule renumbering.** With the two rules that the reshaping withdrew removed rather than struck through (the client deliverable carries no superseded content), `[PLC §4.2]` is renumbered **R1–R8**. The two rules this question is about moved: **old R7 → R5** (assembly stations) and **old R8 → R6** (ordinals). Old R2 is unmoved, so **Q92**'s citation still reads correctly. Full mapping: R1–R4 unchanged in position (R4 rewritten), old R5 and R6 withdrawn, old R7→R5, old R8→R6, old R9→R7, and a new R8 states the bare-analogue rule.
+
+Related: **Q88** (units in the path — the other naming-convention question, answerable in the same conversation), **Q90**, **Q95** (the measure-grammar reshaping that renumbered these rules), `PLC-Q17`.
+
+---
+
+**Q92** · `High` · Owner: Tim O. / Engineering · ~~Open~~ **`DECIDED Aug 4, 2026`**
+**~~Is `ITInhibit` plant-level or line-scoped?~~ — line-scoped: `FL1.ITInhibit` and `FL2.ITInhibit`**
+
+**Decision (client, Aug 4, 2026).** The interlock is **one tag per line** — **`FL1.ITInhibit`** for FL1 and **`FL2.ITInhibit`** for FL2. A line blocked from running blocks **only itself**.
+
+Raised the same day by the audit (`PLC-Q18`). **Every tag in every source was prefixed with its line — except this one**, written bare as `ITInhibit` in all six of the pre-consolidation copies. That left two readings, and one of them was a plant-stopping defect:
+
+1. **It is genuinely plant-level.** Then one line’s unmet prerequisite — no rod checked in, no active MMS ID, missing feet data — **blocks all three lines from running**. It would have been discovered the first time FL1 sat idle while FL2 was scheduled.
+2. **Every document has recorded it wrong**, and it is `FL{n}.ITInhibit`. ← **This one.**
+
+The tag specification had proposed the line-scoped form as an inference from the naming convention; it is now confirmed rather than inferred. **Two consequences beyond the tag itself.** Rule **R2** in `PLCTagSpecification.md` §2.2 — *"the first segment is always the line; there is no plant-level tag"* — was `[PROPOSED]` **solely because of this counterexample**, and is now `[CONFIRMED]`, which strengthens every path derived from the grammar rather than observed (the whole economy of confirming a convention instead of ~60 strings, **Q90**). And the interlock is now **testable per line**: commissioning test **C7** sets each of the five conditions on one line and asserts the other two still run.
+
+**One residual, on FL3 only.** FL3 spans both mills, so whether it carries `FL3.ITInhibit` or asserts FL1's and FL2's together follows from the FL3 namespace question, **Q87** / `PLC-Q08` — the same question that decides whether FL3's single-batch push crosses a controller boundary. This is the one line where a blocked line legitimately implicates a second, because on FL3 the two are one physical thread of material.
+
+**Where this now lives.** It was originally recorded as decision `D15` in the tag specification's decision log, with the question carried as `PLC-Q18`. The **v1.0 reissue (4 Aug 2026) removed both** — the decision log went with the document's revision history, and a decided question does not belong in a register of open items. The rule is now **normative prose in `[PLC §8.1]`**: *"It is one tag per line — `FL1.ITInhibit`, `FL2.ITInhibit` — so a line blocked from running blocks only itself."* Commissioning test **C7** was tightened to prove it per line. **This entry is the audit trail for the decision; the specification is the statement of the rule.**
+
+Related: `FR-008`–`FR-010`, `FR-020`, **Q87**, **Q90**, commissioning test **C7**, `PLC-Q08`. *(`PLC-Q18` is retired — see above.)*
+
+---
+
+**Q93** · `Critical` · Owner: Tim O. · ~~Open~~ **`DECIDED Aug 4, 2026`**
+**~~FM2 roller sizes~~ — FM2 has three stands: `S1` = 8″, `S2` = 6″, `S3` = 6″**
+
+**Decision (client, Aug 4, 2026).** FL2's finishing mill FM2 has **three stands**. **S1 carries the 8″ roller; S2 and S3 carry 6″ rollers.** Edgers remain at **S2 and S3 only**, and **S3 remains the final, non-bypassable gauge-control stand**. FL3 drives the same FM2. FL1's FM1 is unaffected at 12″.
+
+**Why this was a repo-wide change and not a digit swap.** The May 21 2026 equipment correction was recorded in `00-foundations.md` §0.3 as *"FM2 has **three** 6″ stands (S1, S2, S3)"*. That was read as **a separate 8″ roller upstream of three 6″ stands — four components** — and the reading propagated into roughly fifty files, the `Stand` seed data, two SQL `CHECK` constraints, the `ComponentName` enum, the PLC tag grammar and eight mockups. The 8″ roller **is S1**, and the fourth stand does not exist.
+
+Three pieces of evidence fix the mapping:
+
+1. The client's **published PLC map has exactly three FM2 stations** (`Stand8`, `Stand6S1`, `Stand6S2` — all `[CONFIRMED]` by observation). Three observed stations, three real stands.
+2. **Every seeded pass schedule has exactly three FM2 component rows**, with a monotonically descending gap chain.
+3. **`FM2_6inS3` never had a tag path or a seed row** — its absence was itself logged as `OI-36` and `G29`. It is the invented one.
+
+**Consequences.** Component names become **position-only** (`FM2_S1` / `FM2_S2` / `FM2_S3`) and roll diameter becomes data in a new **`Stand.RollDiameterIn`** column — diameter inside the identifier is what let the misreading survive ten weeks. Mapping: `FM2_8in`→`FM2_S1`, `FM2_6inS1`→`FM2_S2`, `FM2_6inS2`→`FM2_S3`, `FM2_6inS3` withdrawn. `Stand.Id` 1–4 keep their meaning; Id 5 is removed. **No gap or gauge value is recomputed** — the seeded three-row chains were always valid and `FR-387`'s multipliers (1.06 / 1.02 / springback) simply move from diameter labels to positions, which incidentally fixes a defect where FM2's final stand had no gap formula.
+
+**Two open items close, and neither was ever a real defect.** **OI-04** — *"is the mandatory stand `FM2_6inS2` or `6″ S3`?"* — both named **the same physical stand**; only the phantom made one answer look like two. **OI-36** — *"the final stand has no tag path"* — the published map was complete; the stand with no path was the one that does not exist.
+
+**One physics consequence.** Roll radius is a real input to the generation engine. The bite condition `Δh ≤ μ²R` is linear in `R`, so **S1 admits ~1.33× the draft** of a 6″ stand, while contact length `√(R′·Δh)` means it develops **~1.16× the separating force** at equal draft. `F_max` and mill modulus must therefore be supplied **per stand** (`PSG-D10`, `PSG-D12`), and `PassScheduleGenerationSpec.md` §3.3.5's allocation illustration is recomputed at `k` = 3 (**5.4% / 9.8% / 13.5%**, was 4.1% / 7.5% / 10.4%).
+
+**Successor question: Q94 / `PLC-Q04`** — the PLC station rename departs from observed `[CONFIRMED]` strings and needs the controls engineer's sign-off.
+
+**How this decision is presented to the client (v1.0, 4 Aug 2026).** The tag specification's equipment table — the three stands, FL1 having no edger, FL2 having no live measurement — **carries no status tag at all.** It previously read `[CONFIRMED — August 4, 2026]`, and when the `[CONFIRMED]` tag was retired the stamp was **removed rather than downgraded**, precisely so the deliverable does not describe the client's own correction as our proposal. The equipment description now reads as a statement of fact and is accepted via **Part A of the sign-off sheet**. **The decision itself is unchanged and still client-sourced; only the label is gone.**
+
+Related: `D-26` (master spec §10.2), **OI-04**, **OI-36**, **Q94**, `PLC-Q04`, gap **G32**, commissioning test **C11**.
+
+---
+
+**Q94** · `Critical` · Owner: Tim O. / Engineering · `Open`
+**Confirm the FM2 PLC station rename — `S1`/`S2`/`S3` or the controller's own names?**
+
+Raised Aug 4, 2026 as the successor to **Q93**. The controller's **observed** station names are `Stand8`, `Stand6S1` and `Stand6S2`; the tag specification now specifies **`S1`, `S2`, `S3`**, on the grounds that the 8″ roller is stand one and roll diameter belongs in machine data rather than in an address.
+
+Every FM2 row in `[PLC §5.2.2]` is `[PROPOSED]` until this is answered. If the controls engineer prefers the machine's existing names, reverting is a three-string edit. **The stand count and the roller diameters are not in question** — only the names.
+
+**No longer the only such departure, and no longer shown as a diff.** Two things changed on Aug 4 after this question was raised. First, **Q95**'s measure-grammar reshaping departs from **thirteen** observed `[CONFIRMED]` strings against this question's three, so the FM2 rename is now the smaller of two departures. Second, the client deliverable **no longer publishes the observed names at all** — `[PLC §4.3]`'s as-published → as-specified table, the `observed as FM2.Stand8` footnotes on the nine FM2 rows, and the two-column wording of `PLC-Q04` on the sign-off sheet were all removed, because neither client-facing artifact may carry old/new content. **The observed strings are `Stand8`, `Stand6S1` and `Stand6S2`, and this register is now the only place they are recorded.** Recovering them for a revert means coming here or to git.
+
+Related: **Q93**, **Q90**, **Q91**, **Q95**, `PLC-Q04`, gap **G32**, commissioning tests **C1** and **C11**.
+
+---
+
+**Q95** · `Critical` · Owner: Tim O. / Engineering · `Open`
+**Confirm every measure name in the tag map — the measure segment was reshaped on our own reading**
+
+Raised Aug 4, 2026 (`PLC-Q05`). The **measure** segment of every tag — the part after the line and the element — was respecified on the same day, from six corrections applied and then generalised across all three lines. **This register is the only record of what the strings were**, because neither client-facing artifact may carry old/new content.
+
+| Old measure | New measure | Rule |
+|---|---|---|
+| `.Status.Active` | `.Status.IsActive` | R4 |
+| `.Status.Fault` | `.Status.IsFaulted` | R4 |
+| `.RollGap.Current` | `.RollGap` | R8 |
+| `.Gauge.Current` | `.Gauge` | R8 |
+| `.Width.Current` | `.Width` | R8 |
+| `.Footage.Current` | `.Footage` | R8 |
+| `.Die.ActiveDiameter` | `.Diameter` | R8 |
+| `.Weight.Lb` | `.Weight` | R7 + R8 |
+| `.Speed.FPM` | `.Speed` | R7 |
+| `.Profile`, `.LineState`, `.ITInhibit` | *unchanged* | — |
+
+Element and station segments are untouched — `DB1`, `Payoff2`, `TKUP1`, `FM2.S1/S2/S3` and `Edger` all stand (**Q91**, **Q94**). The reshaped surface is **41 paths**: FL1 15, FL2 14, FL3 23.
+
+**Why this is Critical rather than cosmetic.** **Thirteen FL1 rows were `[CONFIRMED]` by observation** — every confirmed string on the surface except `FL1.LineState` and `FL1.ITInhibit` — and all thirteen are now `[PROPOSED]`. Where **Q94** departs from three observed strings, this departs from thirteen, and the failure mode is different in kind: if the controller really does use `Status.Active` and `.Current`, commissioning test **C1** fails **across the whole map on all three lines**, not on isolated rows. A wrong path fails silently — the write reports success and the line runs on whatever it was last set to, classified Severity 1.
+
+**Two specific things to put in front of the controls engineer:**
+
+1. **The analogue/boolean asymmetry is deliberate**, and worth confirming as a shape rather than row by row: booleans keep a `Status` group segment and take an `Is` prefix, while analogues are a single bare segment. The reasoning is that `Status` names a *kind* of signal, whereas a present-value suffix, a unit and a qualifier each restate something a live tag already says.
+2. **`Diameter` assumes one diameter per die block.** The old string was `Die.ActiveDiameter`, and the qualifier's stated purpose was to distinguish the *fitted* die from a scheduled one. The new rule (**R8**) carries that meaning by asserting the tag *is* the present value — the machine holds no scheduled die. **If the controller in fact exposes more than one diameter per die block, `Diameter` is ambiguous and the qualifier has to come back.**
+
+Note also that **`ActiveDiameter`** and a bare **`Active`**/**`Fault`** were intermediate forms during the same exchange and were corrected before being written anywhere; neither should appear in any artifact.
+
+Closed by commissioning test **C1**, which now records the string the controller accepted for every path. Carried on the tag specification's sign-off sheet as `PLC-Q05`.
+
+Related: **Q88** (units — part 1 of it is one line of this table), **Q90** (no path has been read off a controller), **Q91** (the rules and their renumbering), **Q94** (the FM2 station names — the other departure), `PLC-Q05`, gap **G33**, commissioning test **C1**.
+
+---
+
 ### Section F — Die Change and SPC
 
 ---
@@ -1209,3 +1455,11 @@ For flat wire orders in the planning screen, should they appear in the existing 
 | Aug 1, 2026 | Build decision | **DB6, DB8 and DC converted from screens to dialogs.** SPC checkpoint, WIP rejection and die change are now popups (`spc_checkpoint.js`, `wip_rejection.js`, `die_change.js`) raised over the screen the operator is already on, rather than pages navigated to. The reason is context: WIP rejection alone is reached from five places and, as a page, could describe only one — its material banner was hard-coded to *R00042 at 8,220 ft*, and the **Q72 item 3** pre-check-in path (rejection releases the bay, rod to `HOLD`) could not be represented at all. It now is: on that path `runId` and `footagePosition` are `null`, the dialog states on screen that submitting releases the bay, and it reports `releasesBay` back to the staging station. Two hand-offs the spec always described also start working — a gauge-drift/size-change die change opens the SPC checkpoint it mandates (**Q56**), and an out-of-spec checkpoint's *suspend material* opens the rejection with the failing reading carried over. **No dialog scrolls**: an oversized popup is scaled to fit the window, since an operator in gloves cannot drag a scrollbar to reach *Confirm*. Added **Q82** — DB1's "WIP Rejection**s**" nav item reads as a list screen that does not exist. Total questions: 82. |
 | Aug 1, 2026 | Build decision | **Dashboard 2A's weld-readiness strip removed; every control moved onto the bay it acts on.** The 96px band between the payoff cards and the traveler queue is gone. Its narrative was already duplicated by the cards in every branch but one — weight and percentage on the payoff bar, all four weld states in the bay alert, cold start in the empty-bay text — and the exception, *induction-weld tail to head*, became the staged card's alert while a rod is running. **Mark as welded** moved to the **staged** card (`PCI008` defaulting; all five disabled-tooltips kept, since they are the only statement of *why* it is unavailable) and **Welds this run · N** to the **active** card. The reclaimed space went to the queue, which is ~108px taller. Also removed: the **Open active run** link on the active card (`FR-051b`) — the run monitor is reachable from the app bar and Line Status, and this station's job is staging the next rod. The queue gained a standing **"Rods In Queue"** heading. Separately, Dashboard 2's *Acknowledge & Begin Check-in* now returns to **Dashboard 2A** rather than Dashboard 3 (`FR-079a`). Added **Q83** (at cold start *Welds this run* is now absent rather than shown-and-greyed — supersedes **TC-068e**) and **Q84** (whether the operator should land on the staging station or the run monitor after check-in). New requirements `FR-050a`, `FR-051a`, `FR-051b`, `FR-079a`; new cases TC-068f/g/h/i and TC-079a. **Note for G27:** the queue heading reuses the name *Rods In Queue* from the retired Dashboard 4 accordion but is **not** that control — it is a read-only table with no drag and no undo, so the re-sequencing capability remains homeless. Total questions: 84. |
 | Aug 2, 2026 | Client direction | **Q57 part-decided — FL2 has two spool statuses and runs one spool at a time.** FL2 has no space to stage material, so a spool is either waiting for the line or on it: the operator-visible vocabulary is fixed at **`Ready for FL2`** (`RECEIVED`) and **`Checked in`** (`INFLAT`), and **`STAGED` is never set at FL2** — the "At TPO" status is withdrawn from the spool queue, staging remaining the FL1 concept per `PCI002`. **Check-in is exclusive:** while any spool is checked in, **no spool offers a check-in action** — not the others and not the checked-in one — and it returns only on checkout. Applied to [dashboard_5a_spool_queue.html](../Mockups/dashboard_5a_spool_queue.html) (lock bar, checked-in row sorted first with a *View run* action, `HOLD`/`COMPLETE`/`SCRAP`/`STAGED` pills removed) and [SpoolQueue.md](../LatestDocument/RequirementDocuments/SpoolQueue.md) v1.1 §3.5, rules **SQ-7**–**SQ-10**. **Q57 stays In Progress** — this fixes what the FL2 operator *sees*, not what is stored, and **OI-06**'s two rival vocabularies are still unmapped. **Two residuals with no owner yet:** exclusivity has **no backing constraint** (`dbo.Spool` has no filtered unique index on `Status` and **no `LineId` column at all**, so "one checked-in spool per line" is not currently expressible — `POST /checkin/spool` must return `409` on the second attempt); and a **quality-held spool now has nowhere to appear** on a two-status queue, raised to the client as SpoolQueue.md open item 6. Total questions: 84. |
+| Aug 4, 2026 | Client direction | **HMI/SCADA descoped — `Q4` superseded.** The client confirmed that **SCADA Trends (DB14)**, the **HMI Line Schematic (DB13)** and the **Machine View tab** on the active run monitor are **not required**. `HMIAndSCADALayout.md` and both mockups are deleted; `FR-111`, `FR-112`, `FR-114`, `FR-440`–`FR-451` and `FR-460`–`FR-470` are marked withdrawn rather than renumbered. **`Q4` is superseded, not deleted** — its chart-layout half is moot because there is no chart layout to own, but its *other* subject, "machine tags for flat wire", survives: those tags are still read by the run monitor, the line status board, the rod-checkout gatekeeper, the spool stop prompt and the die-life counter. They are now specified in [PLCTagSpecification.md](../LatestDocument/RequirementDocuments/PLCTagSpecification.md) and remain unconfirmed as **`PLC-Q02`**. **Raised but not asked:** DB14 was also the answer to the legacy .NET **SCADA Report** in [FlatWirePlan.md](FlatWirePlan.md) §Reporting Suite — whether that report is also descoped is a separate client decision. |
+| Aug 4, 2026 | Analysis team | **Added `Q85`–`Q88` from the PLC tag-surface consolidation.** The surface existed in six partial, mutually contradictory copies; reading them as one document surfaced four questions no single copy could raise. **`Q85`** — speed is pushed as a **target** in four sources and a **limit** in two, including inside `02-SRS.md` itself (§9.1 vs `FR-073`); a setpoint and a safety clamp are different tags with opposite failure modes, so `FR-073`'s wording is deliberately left unfixed until this closes. **`Q86`** — edge type is in the push payload in four sources and absent from a fifth, and separately **no edger tag path exists anywhere in the repo**: the only edger-adjacent tag is `FL1.EdgeSet.Status.Active`, on the one line that has no edger. **`Q87`** — every map addresses FM2 as `FL2.FM2.*` even inside the FL1 map, so it is undetermined whether FL3's single-batch push crosses a controller boundary; commissioning test **C5** passes either way and cannot distinguish them. **`Q88`** — units are in the path for `Speed.FPM` and `Weight.Lb` but not for gauge, width, roll gap or die diameter, where inches are assumed and never stated; a controller reporting gauge in mils would pass every structural check and produce out-of-spec wire. Logged as **`G29`**/**`G30`** in [back-matter.md](../DevelopmentPlan/ShopfloorPlan/back-matter.md) where they carry schedule impact. Total questions: 88. |
+| Aug 4, 2026 | Analysis team | **Register index reconciled.** The counts had not been updated when `Q82`–`Q84` were added on Aug 1: the header read *"81 · Shopfloor 54"* and the Open/In-Progress heading read *(35)* against 38 actual entries, and `Q82`–`Q84` were missing from the Quick Reference table entirely. Now **88 total · 61 Shopfloor** (42 Open/In Progress · 18 Decided · 1 Superseded), with `Q82`–`Q88` added to the Quick Reference table. The filtered-index scope note also read *"Dashboards 1–14+"*, corrected to **1–12+** with the DB13/DB14 descope. |
+| Aug 4, 2026 | Analysis team | **Added `Q89`–`Q92` from the audit of the PLC tag deliverables.** All four are items the tag specification had marked `[CLIENT INPUT REQUIRED]` **without a register entry**, breaching its own stated rule that *"nothing is tracked only here."* **`Q90` is the serious one:** confirmation of every machine tag path has been an open action since **15 May 2026** and has never been tracked anywhere — it lived as an untagged row on the sign-off sheet of `HMIAndSCADALayout.md`, and when that file was deleted on 1 Aug it survived only as prose. It is **Critical**: every published path follows a proposed convention, none has been read off a controller, and a wrong path fails silently. **`Q89`** surfaced a contradiction the consolidation exposed — assumption A2 (rescued from the deleted file, its only home) says take-up load cells are fitted, while [SpoolCompletionNotification.md](../LatestDocument/RequirementDocuments/SpoolCompletionNotification.md) says the completion weight is *derived* from footage × cross-section, and **the tag map publishes no take-up weight path at all** — so the machine-stop prompt, the completion transaction and the printed label all read a value with no published source. **`Q91`** (ordinal convention: `DB1`/`Payoff2` vs `FM2.Stand6S1` — R7 and R8 contradict each other) and **`Q92`** (`ITInhibit` is unprefixed in all six sources while every other tag is line-scoped; if it is genuinely plant-level, one line’s unmet prerequisite blocks all three) complete the set. Total questions: 92. |
+| Aug 4, 2026 | Client direction | **`Q93` decided on arrival: FM2 has three stands — `S1` 8″, `S2` 6″, `S3` 6″.** The client corrected FL2's roller sizes. This is **not a digit swap**: the repo had modelled a separate 8″ roller upstream of three 6″ stands — **four components** — because the May 21 note was recorded as *"FM2 has three 6″ stands"* in `00-foundations.md` §0.3 and read that way. **The 8″ roller is S1**, and the fourth stand never existed. The misreading had propagated into ~50 files, the `Stand` seed data, two SQL `CHECK` constraints, the `ComponentName` enum, the PLC tag grammar and eight mockups. Three things pin the correction: the client's **published PLC map has exactly three FM2 stations**, all `[CONFIRMED]` by observation; **every seeded pass schedule has exactly three FM2 component rows** with a descending gap chain; and **`FM2_6inS3` never had a tag path or a seed row** — its absence was itself logged as `OI-36`/`G29`. **Two open items close, neither having been a real defect. `OI-04`** — *"is the mandatory stand `FM2_6inS2` or `6″ S3`?"* — both named **the same physical stand**; the phantom made one answer look like two. **`OI-36`** — *"the final stand has no tag path"* — the map was complete. **Component names become position-only** (`FM2_S1`/`FM2_S2`/`FM2_S3`) with roll diameter moved into a new `Stand.RollDiameterIn` column, because diameter inside an identifier is what let this survive ten weeks. **No gap or gauge value is recomputed** — the seeded chains were always right, and `FR-387`'s multipliers just move from diameter labels to positions, which fixes a defect where the final stand had no gap formula. **One real physics consequence:** roll radius feeds the generation engine, so S1 admits **~1.33×** the draft of a 6″ stand and develops **~1.16×** the force at equal draft — `F_max` and mill modulus become per-stand (`PSG-D10`, `PSG-D12`), and §3.3.5's allocation illustration is recomputed at `k` = 3 (**5.4% / 9.8% / 13.5%**). **Added `Q94`** (`PLC-Q04`, Critical) — the PLC station rename departs from observed `[CONFIRMED]` strings and needs the controls engineer's sign-off; gap **G32**. Total questions: 94. |
+| Aug 4, 2026 | Client direction | **`Q92` decided: `ITInhibit` is line-scoped — `FL1.ITInhibit` and `FL2.ITInhibit`.** One tag per line, so a line blocked from running blocks **only itself**. The plant-level reading — in which an idle FL1 with no rod checked in would have stopped a scheduled FL2 — is excluded. All six pre-consolidation sources had recorded the tag bare, without its line prefix. **The answer reaches further than one tag.** Rule **R2** of the naming convention (*"the first segment is always the line; there is no plant-level tag"*) was `[PROPOSED]` **only because of this single counterexample** and is now `[CONFIRMED]` — which matters because the specification asks the client to confirm **the grammar** rather than ~60 individual strings, and every `[PROPOSED]` path derived from that grammar now rests on a convention with no exception in it (**Q90**). Commissioning test **C7** also becomes a per-line test: set each of the five conditions on one line, assert the other two still run. **One residual, on FL3 only** — whether the hybrid line carries `FL3.ITInhibit` or asserts both controllers' interlocks follows from **Q87** / `PLC-Q08`, the same question that decides whether FL3's single-batch push crosses a controller boundary; FL3 is the one line where a block legitimately implicates a second, the two being one physical thread of material. Applied to [PLCTagSpecification.md](../LatestDocument/RequirementDocuments/PLCTagSpecification.md) v1.3 as decision **D15** (§2.2 R2, §2.3, §2.4, the three §3.2 tag maps, §3.4 item 4, **§5.1 — a new per-line tag table**, §12, §13.1, and Part A/Part B of the sign-off sheet), and re-rendered to `SRS/PLCTagSpecification.docx`. `PLC-Q18` closed. **Register index also reconciled:** `Q93` (decided Aug 4) and `Q94` (Critical, open) had been added without updating the filtered index — `Q93` is now listed under Decided and `Q94` under Critical/Open. Counts: **46 Open/In Progress unchanged** — less `Q92`, plus `Q94`, so 8 Critical · 24 High · 13 Medium · 1 Low — and **20 Decided** *(from 18, adding `Q92` and `Q93`)* · 1 Superseded. Total questions: 94. |
+| Aug 4, 2026 | Analysis team | **The tag surface's measure segment reshaped, and all old/new content stripped from the client deliverable. Added `Q95` (Critical).** Six corrections were applied and generalised across all three lines: `Speed.FPM`→`Speed`, `Payoff{n}.Weight.Lb`→`Weight`, `Die.ActiveDiameter`→`Diameter`, `Status.Active`→`Status.IsActive`, `Status.Fault`→`Status.IsFaulted`, and `.Current` dropped from roll gap, gauge, width and footage — **41 paths, FL1 15 · FL2 14 · FL3 23**. The measure now splits two ways: **analogues are a single bare segment; booleans keep a `Status` group and take an `Is` prefix.** Element and station segments are untouched, so `FM2.S1/S2/S3` stands. **`Q91` resolved without either side losing** — the digit-suffix rule and the station-segment rule govern different things (the *n*th instance of a piece of equipment versus a station inside an assembly), so they never competed; recorded as `D16`. **`Q88` part 1 specified** (units never appear in the path) while part 2 — *what unit are the values in* — is now the whole of it and was raised to **High**, because with `.Lb` and `.FPM` gone **no tag declares a unit at all** and there is nothing left in an address to catch a misconfigured scale. **The cost is `Q95`:** thirteen FL1 rows were `[CONFIRMED]` by observation — every confirmed string on the surface bar `LineState` and `ITInhibit` — and all thirteen are now `[PROPOSED]`, so where **Q94** departs from three observed strings this departs from thirteen and **C1** fails across the whole map rather than on isolated rows if the reading is wrong. **Second half of the change:** neither `PLCTagSpecification.md` nor `SRS/PLCTagSpecification.docx` may contain old/new content, so `[PLC §4.3]`'s as-published→as-specified table, the nine `observed as FM2.Stand8` footnotes, §2.3's *"inconsistencies in the observed set"* framing and `PLC-Q04`'s two-column sign-off wording were **all removed** — **this register is now the only record of the superseded strings** (`Q94`, `Q95`). Withdrawing two rules rather than striking them renumbered `[PLC §4.2]` to **R1–R8** (old R7→R5, old R8→R6, old R9→R7, new R8); `Q92`'s R2 citation is unaffected. Also **added the missing `D15` row** to `[PLC §12]`, which cited it three times without ever listing it, and added `D17`. Applied to `PLCTagSpecification.md` **v1.4**, re-rendered to `SRS/PLCTagSpecification.docx`, with `G31` restated and **`G33`** raised in [back-matter.md](../DevelopmentPlan/ShopfloorPlan/back-matter.md) and the config keys realigned in [PLCTagImplementation.md](../DevelopmentPlan/PLCTagImplementation.md). Counts: **47 Open/In Progress** *(9 Critical · 24 High · 13 Medium · 1 Low)* · 20 Decided · 1 Superseded. Total questions: 95. |
+| Aug 4, 2026 | Analysis team | **Tag specification reissued as v1.0 — a first issue, not a consolidation. `[CONFIRMED]` retired; both registers renumbered.** The document had accumulated three tells that it was a consolidation of six sources revised four times, and all three are gone. **(1) `[CONFIRMED]` is withdrawn entirely** — the legend row is deleted and the reading convention is now two tags. Tracing the status is what forced this: **no client artifact contains a single tag path** (all 14 `BaseDocuments/` files searched for every tag token returned one hit, *"~1800–2000 FPM"*, a speed figure), the strings trace to our own `HMIAndSCADALayout.md` §6.2 — deleted 4 Aug, which itself said *"they follow a proposed naming convention, not a verified map"* — and `[CONFIRMED]` was manufactured by the convention's own second limb, *"or stated consistently across the source specifications."* Eight items claimed it; the count is now **zero** (**Q90**). The dated form `[CONFIRMED — August 4, 2026]` was **removed, not downgraded**, on the equipment heading, so the deliverable does not label the client's own correction as our proposal (**Q93**). **(2) The decision log `§12` (D1–D17, Apr→Aug 2026) is deleted** — a revision history in disguise, whose every rule was already normative in the body and four of whose rows were purely editorial. `ITInhibit`'s line-scoping survived as prose in `[PLC §8.1]` with **C7** tightened to prove it per line; `D14`/`D15` citations were removed from four files and **this register is now the audit trail for both** (**Q92**, **Q93**). **(3) Restructured by subject** — equipment merged with per-line differences into §2, the one-trigger rule promoted to §3, line state reduced to what the client owns (§6, dropping the internal three-way naming collision), and the three separate lists of open questions consolidated into §13. **A live defect closed on the way:** `PLC-Q18` was listed as requiring client input although it was decided — deleted, not renumbered. **Two renumberings, both recorded here because the deliverable carries no history.** Sections: `§1.4`→`§2.1`, `§1.6`→`§3`, `§2`→`§4`, `§2.5`→`§4.3`, `§3`→`§5`, `§3.2*`→`§5.2*`, `§4`→`§7`, `§5`→`§8`, `§6`→`§9`, `§7`→`§2.2`, `§8`→`§6`, `§8.5`→`§6.2`, `§9`→`§10`, `§10`→`§11`, `§11`→`§12`, `§12`→**deleted**, `§13`–`§15` unchanged. Open items, now **numbered in priority order** (5 Critical, 10 High, 2 Medium): `Q03`→`Q02`, `Q04`→`Q03`, `Q19`→`Q04`, `Q20`→`Q05`, `Q16`→`Q14`, `Q14`→`Q16`, `Q18`→**retired**; `Q01`, `Q06`–`Q13`, `Q15`, `Q17` unmoved. **134 citations retargeted across 15 files** — 97 `[PLC §n]` section refs and 37 `PLC-Q` ids, the heaviest being [PLCTagImplementation.md](../DevelopmentPlan/PLCTagImplementation.md) (59 section refs). Re-rendered to `SRS/PLCTagSpecification.docx`. No question was added or closed by the reissue: totals stay **95 · 47 Open/In Progress · 20 Decided · 1 Superseded**. |

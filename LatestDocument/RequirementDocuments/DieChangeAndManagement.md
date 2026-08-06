@@ -3,7 +3,7 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL3 (die change) · Maintenance (die management)
-**Version:** 2.1
+**Version:** 2.2
 **Last Updated:** August 1, 2026
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Die Change (operator, mid-run) — presented as a **dialog over the paused run**, not as a separate screen (see version 2.1) · Die Management (maintenance, tooling inventory)
@@ -19,6 +19,7 @@
 | 1.1 | May 4, 2026 | Post-die-change resume gate confirmed as a hard block with thread mode permitted; routing corrected for gauge drift and size change. |
 | 2.0 | Aug 1, 2026 | **Issued for client review.** FM2 corrected to three 6″ stands. The conflicting die-life colour bands between the two screens raised as a client decision rather than silently reconciled. Restructured as a client deliverable; screen styling, navigation targets and interface payloads removed. |
 | 2.1 | Aug 1, 2026 | **Presentation change only — no requirement altered.** The die change is now logged in a dialog over the paused run rather than on a page navigated to. One consequence the client should confirm: when the reason is **gauge drift** or **size change** and *Require SPC on resume* is left on, confirming the change now **opens the SPC checkpoint directly**, pre-filled with this die change as its trigger, instead of leaving the operator to find that screen. |
+| **2.2** | **Aug 4, 2026** | **FM2 roller sizes corrected.** §2's FL3 description said *"three-stand finishing mill — 8″ roller, 6″ S1, 6″ S2 with edger, 6″ S3 with edger"*, which called it three-stand and then listed four components. It is genuinely **three stands: S1 (8″), S2 (6″, edger), S3 (6″, edger)** — the 8″ roller **is S1**. No die-change requirement is affected; FL2 and FL3 drawing dies are unchanged and FM2 carries rollers, not dies. |
 
 ---
 
@@ -61,7 +62,7 @@ Two related capabilities are specified here:
 | **FL3** (hybrid) | Yes | Yes | **Yes** | Roll adjustment on the FM2 stands |
 | **FL2** | — | — | **No** | Spool-fed; no drawing dies |
 
-FL3 has the same drawing section as FL1 and adds the three-stand finishing mill downstream — **8″ roller, 6″ S1, 6″ S2 with edger, 6″ S3 with edger**. FL2 has no drawing dies and never needs a die change.
+FL3 has the same drawing section as FL1 and adds the three-stand finishing mill downstream — **S1 with an 8″ roller, S2 with a 6″ roller and edger, S3 with a 6″ roller and edger**. FL2 has no drawing dies and never needs a die change.
 
 > `[CLIENT INPUT REQUIRED]` **Which lines expose roll adjustment is stated inconsistently** across the requirement set — FL1/FL2 in one place, FL3 only in another, FL2 and FL3 here. FL1, having only drawing and the flattening mill, is unlikely to expose it. Please confirm which action bars carry the control (OI-11).
 
@@ -340,7 +341,7 @@ Two history views are available: **run history** (order, line, footage added, da
 | [SPC Checkpoint](SPCCheckpoint.md) | The verification gate a gauge-drift or size-change die change routes into |
 | [Pass Schedule Management](PassScheduleManagement.md) | Die sizes are pass-schedule parameters; a size change is a configuration change |
 | [Rod Check-in](RocCheckin.md) | Pushes the die configuration to machine control at acknowledgement |
-| [HMI and SCADA Layout](HMIAndSCADALayout.md) | Die changes appear as event markers on the trend charts |
+| [PLC Tag Specification](PLCTagSpecification.md) | The footage counter this screen reads for die-life accumulation, and the roll-gap tag a linked override writes |
 
 ---
 
@@ -388,4 +389,5 @@ Two history views are available: **run history** (order, line, footage added, da
 |---|---|
 | Apr 2026 | Initial specification — die change event capture, reason codes, conditional quality hold and SPC notice; die management screen, lifecycle operations and life thresholds. |
 | May 4, 2026 | Post-die-change resume gate confirmed as a hard block with thread mode permitted; routing corrected for gauge drift and size change. |
-| Aug 1, 2026 | **Reissued as version 2.0 for client review.** FM2 corrected to three 6″ stands with edgers at S2 and S3. The conflicting die-life colour bands between the two screens raised as a client decision instead of being silently reconciled, alongside the band-configurability question. Roll-adjust line applicability flagged as unresolved. Screen styling, navigation targets, interface payloads and mockup-state commentary removed; the gap-analysis framing replaced by the confirmed routing rules it produced. |
+| Aug 4, 2026 | **v2.2 — FM2 roller sizes corrected** to three stands, S1 8″ and S2/S3 6″ (the 8″ roller is S1). No die-change requirement affected. |
+| Aug 1, 2026 | **Reissued as version 2.0 for client review.** FM2 corrected to three stands with edgers at S2 and S3. The conflicting die-life colour bands between the two screens raised as a client decision instead of being silently reconciled, alongside the band-configurability question. Roll-adjust line applicability flagged as unresolved. Screen styling, navigation targets, interface payloads and mockup-state commentary removed; the gap-analysis framing replaced by the confirmed routing rules it produced. |

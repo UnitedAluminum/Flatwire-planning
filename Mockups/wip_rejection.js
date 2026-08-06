@@ -59,7 +59,7 @@
   var DEFAULT_REWORK_STAGES = [
     'FL1 · draw bench 2 (re-draw)',
     'FL1 · FM1 (re-roll)',
-    'FL2 · 6" S1 (re-finish)'
+    'FL2 · FM2 S2 (re-finish)'
   ];
 
   /* ── Styles ─────────────────────────────────────────────────────

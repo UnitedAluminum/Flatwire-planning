@@ -3,8 +3,8 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL2 / FL3
-**Version:** 1.0
-**Last Updated:** August 1, 2026
+**Version:** 1.1
+**Last Updated:** August 4, 2026
 **Status:** **First issue** — consolidated from existing specifications; requires review
 **Screen reference:** Dashboard 1 — Line Status Overview
 **Requirement source:** SRS line-status rules; alert rules as specified in the shopfloor dashboard set
@@ -16,6 +16,7 @@
 | Version | Date | Description |
 |---|---|---|
 | 1.0 | Aug 1, 2026 | **First issue.** This screen had no requirement document of its own; its content was distributed across the dashboard inventory, the HMI specification and the pre-check-in specification. Consolidated here, with the later decisions applied — the active pass schedule on each line card, absolute-weight payoff alerting, and navigation to the schematic and trend screens. |
+| 1.1 | Aug 4, 2026 | Both header drill-downs removed — **Open HMI** and **SCADA Trends** pointed at Dashboards 13 and 14, which are descoped (`FR-425` withdrawn). Related-specification row repointed to the PLC tag specification. |
 
 > **Please read this one with particular attention.** Every other document in this set is a revision of an existing specification. This is the first statement of this screen as a requirement in its own right, so anything wrong here has not been reviewed before.
 
@@ -64,7 +65,7 @@ The line status overview is the **master board for the flat wire floor** — one
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │  FLAT WIRE MILL — LINE STATUS                     Aug 1, 2026  07:42 AM  │
-│                                                        [ SCADA Trends ]  │
+│                                                                          │
 ├────────────────────────┬────────────────────────┬────────────────────────┤
 │  FL1                   │  FL2                   │  FL3 (Hybrid)          │
 │  ● RUNNING             │  ● IDLE                │  ○ OFFLINE             │
@@ -151,8 +152,7 @@ Payoff alerting is driven by **absolute remaining pounds**. Against a 9,000 lb p
 
 | Action | Destination |
 |---|---|
-| **Open HMI** on a line card | The line schematic for that line |
-| **SCADA Trends** in the header | The trend charts, with a line selector |
+| *(Removed 4 Aug 2026)* | ~~**Open HMI** → the line schematic~~ and ~~**SCADA Trends** → the trend charts~~. Both destinations are descoped (`FR-425` withdrawn); neither header action was ever implemented in the mockup |
 | Selecting a running line | That line's active run monitor |
 | Selecting an idle line | That line's check-in station |
 
@@ -200,7 +200,7 @@ Payoff alerting is driven by **absolute remaining pounds**. Against a 9,000 lb p
 
 | Document | Relationship |
 |---|---|
-| [HMI and SCADA Layout](HMIAndSCADALayout.md) | The schematic and trend screens reached from here; shares the alert set |
+| [PLC Tag Specification](PLCTagSpecification.md) | The machine tags behind this board — line state, speed, live gauge and width, payoff weight and the component-fault signal |
 | [Rod Pre-Check-in](RodPreCheckin.md) | Source of the payoff thresholds and the Payoff 2 ready state |
 | [Pass Schedule Management](PassScheduleManagement.md) | Source of the schedule identity shown on each card |
 | [Rod and Spool Check-in](RocCheckin.md) | Sets the line running and starts the run timer |
@@ -250,3 +250,4 @@ Payoff alerting is driven by **absolute remaining pounds**. Against a 9,000 lb p
 | Date | Change |
 |---|---|
 | Aug 1, 2026 | **First issue.** Consolidated the Line Status Overview requirement from the shopfloor dashboard inventory, the HMI specification and the pre-check-in specification into a document of its own — the screen previously had none. Applied the later decisions: the active pass schedule identity per line card, absolute-weight payoff alerting aligned with the schematic and the staging station, Payoff 2 readiness sourced from the staging record, and navigation to the schematic and trend screens. Raised the line-state vocabulary, alert lifecycle, notification mirroring and panel resolution as client questions. |
+| Aug 4, 2026 | **Both header drill-downs removed.** *Open HMI* → Dashboard 13 and *SCADA Trends* → Dashboard 14 are gone with those screens (`FR-425` withdrawn); neither was ever implemented in the mockup, so the wireframe is now accurate rather than aspirational. The board itself is otherwise unchanged — **the five alert rules, the payoff thresholds and every live value it shows are untouched**. The machine tags behind it (line state, speed, live gauge and width, payoff weight, and the component-fault signal that raises the Critical alert) are specified in [`PLCTagSpecification.md`](PLCTagSpecification.md). |

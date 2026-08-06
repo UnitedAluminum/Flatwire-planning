@@ -250,7 +250,7 @@ Leaving the screen without submitting does not cancel or delete the checkpoint; 
 | [Die Change and Die Management](DieChangeAndManagement.md) | The event that raises most automatic checkpoints |
 | [Rod Check-in](RocCheckin.md) | Records the pre-run checkpoint |
 | [Pass Schedule Management](PassScheduleManagement.md) | A mid-run configuration change also raises a checkpoint |
-| [HMI and SCADA Layout](HMIAndSCADALayout.md) | Where checkpoints appear as event markers on the trend charts |
+| [Line Status Overview](LineStatusOverview.md) | Where an out-of-spec reading raises the gauge-deviation alert |
 
 ---
 

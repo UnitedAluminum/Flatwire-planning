@@ -1,7 +1,7 @@
 # Flat Wire Mill — Project Plan Document Set
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 1, 2026
+**Last Updated:** August 4, 2026
 **Document Type:** Index
 **Status:** Complete — seven documents published
 **Owner:** Programme management
@@ -51,6 +51,7 @@
 | When does it get built, and by whom? | `[SP]` |
 | How do we know it works? | `[TP]` |
 | How do we ship it, and how do we undo it? | `[DR]` |
+| **What tag is written to the machine or read from it, and when?** | **`[PLC]`** — [`../RequirementDocuments/PLCTagSpecification.md`](../RequirementDocuments/PLCTagSpecification.md), the single home for the PLC/OPC tag surface. A **client-facing companion** to this set, not an eighth member: it carries a sign-off sheet and the `PLC-Q##` register, because the tag map must be confirmed by the commissioning engineer before go-live |
 | Which of two conflicting older documents wins? | [`../FlatWire_MasterSpecification.md`](../FlatWire_MasterSpecification.md) §10, and [`../../DevelopmentPlan/REVIEW.md`](../../DevelopmentPlan/REVIEW.md) |
 
 **Precedence when sources disagree:** this document set → the master specification → the DDL (columns) and the mockups (pixels) → the July 26 roadmap and `ShopfloorPlan/*` → the April-dated documents.
@@ -109,3 +110,4 @@ And four NFR targets are undefined, which means **the QA2 hub load test as sched
 |------|-----------|-------------|
 | Jul 30, 2026 | Plan team | Created as the index to the seven-document project-plan set. Records the read order, the authority map, the precedence chain, the five most-often-misread facts, the four new `PP-##` findings, and what the set deliberately leaves unresolved. |
 | Aug 1, 2026 | Client sync | Added §5a recording the seven changes the 30 Jul client call made across this set, three of which **reverse** decisions the set documents, plus the four new open questions. |
+| Aug 4, 2026 | Client direction | §3 authority table gains **`[PLC]`** — *"What tag is written to the machine or read from it, and when?"* — pointing at `RequirementDocuments/PLCTagSpecification.md`. **The set is still seven documents:** `[PLC]` is a client-facing companion with its own sign-off sheet and `PLC-Q##` register, not an eighth member, and nothing is renumbered. |
