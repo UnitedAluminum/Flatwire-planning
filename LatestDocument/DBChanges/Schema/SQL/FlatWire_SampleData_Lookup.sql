@@ -47,24 +47,34 @@ GO
 
 -- ============================================================
 -- Drawer  (die hole diameter = output wire size after drawing)
+--
+-- Die life: LastGrindingFeet seeds at 0 -- a fresh counter, which is a
+-- fact rather than an assumption. TotalFeetAllowed seeds NULL: OQ-41
+-- records die-life tracking as decided but the THRESHOLD as TBD, and an
+-- invented engineering limit is worse than no limit. Same discipline as
+-- AlloyProperty's rod-diameter tolerances.
+--
+-- A database created before Aug-6-2026 needs a teardown + rebuild to pick
+-- these columns up -- the die-life columns are in the CREATE TABLE only,
+-- and 01_Lookup's CREATE is skipped whenever Drawer already exists.
 -- ============================================================
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Drawer])
 BEGIN
     SET IDENTITY_INSERT [dbo].[Drawer] ON;
-    INSERT INTO [dbo].[Drawer] ([Id], [Name], [DiameterIn], [MinDiameterIn], [MaxDiameterIn], [IsActive]) VALUES
-        ( 1, 'DIE-0210', 0.2100, NULL, NULL, 1),
-        ( 2, 'DIE-0240', 0.2400, NULL, NULL, 1),
-        ( 3, 'DIE-0250', 0.2500, NULL, NULL, 1),
-        ( 4, 'DIE-0265', 0.2650, NULL, NULL, 1),
-        ( 5, 'DIE-0315', 0.3150, NULL, NULL, 1),
-        ( 6, 'DIE-0330', 0.3300, NULL, NULL, 1),
-        ( 7, 'DIE-0270', 0.2700, NULL, NULL, 1),
-        ( 8, 'DIE-0275', 0.2750, NULL, NULL, 1),
-        ( 9, 'DIE-0300', 0.3000, NULL, NULL, 1),
-        (10, 'DIE-0310', 0.3100, NULL, NULL, 1),
-        (11, 'DIE-0320', 0.3200, NULL, NULL, 1),
-        (12, 'DIE-0335', 0.3350, NULL, NULL, 1),
-        (13, 'DIE-0340', 0.3400, NULL, NULL, 1);
+    INSERT INTO [dbo].[Drawer] ([Id], [Name], [DiameterIn], [MinDiameterIn], [MaxDiameterIn], [LastGrindingFeet], [TotalFeetAllowed], [IsActive]) VALUES
+        ( 1, 'DIE-0210', 0.2100, NULL, NULL, 0, NULL, 1),
+        ( 2, 'DIE-0240', 0.2400, NULL, NULL, 0, NULL, 1),
+        ( 3, 'DIE-0250', 0.2500, NULL, NULL, 0, NULL, 1),
+        ( 4, 'DIE-0265', 0.2650, NULL, NULL, 0, NULL, 1),
+        ( 5, 'DIE-0315', 0.3150, NULL, NULL, 0, NULL, 1),
+        ( 6, 'DIE-0330', 0.3300, NULL, NULL, 0, NULL, 1),
+        ( 7, 'DIE-0270', 0.2700, NULL, NULL, 0, NULL, 1),
+        ( 8, 'DIE-0275', 0.2750, NULL, NULL, 0, NULL, 1),
+        ( 9, 'DIE-0300', 0.3000, NULL, NULL, 0, NULL, 1),
+        (10, 'DIE-0310', 0.3100, NULL, NULL, 0, NULL, 1),
+        (11, 'DIE-0320', 0.3200, NULL, NULL, 0, NULL, 1),
+        (12, 'DIE-0335', 0.3350, NULL, NULL, 0, NULL, 1),
+        (13, 'DIE-0340', 0.3400, NULL, NULL, 0, NULL, 1);
     SET IDENTITY_INSERT [dbo].[Drawer] OFF;
     PRINT 'Seeded: Drawer (13 rows)';
 END

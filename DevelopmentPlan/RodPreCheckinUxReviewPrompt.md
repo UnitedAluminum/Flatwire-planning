@@ -100,7 +100,7 @@ plan, not an implementation.
 >    check the rest. Card-divs stand in for radios — verify roles, focus order, and keyboard path
 >    survive your proposal. Every state must survive a greyscale screenshot.
 > 9. **Data-model fit.** Cross-check what the screen displays and writes against
->    `DevelopmentPlan/Schema/` (`RodStaging`, `RodCheckin`, `WeldEvent`, `FlatWireRun`) and
+>    `LatestDocument/DBChanges/Schema/` (`RodStaging`, `RodCheckin`, `WeldEvent`, `FlatWireRun`) and
 >    `DevelopmentPlan/APIContracts.md`. Flag every field the UI shows that has no column, and every
 >    row the UI implies but nothing writes. The mockup already names some of these — the derived
 >    BLOCKED bay whose `RodStaging` row nothing currently writes, and the per-alloy rod diameter

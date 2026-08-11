@@ -6,7 +6,7 @@
 **Status:** Baselined for build — four published defects corrected here; missing endpoint groups in §10
 **Owner:** Backend (.NET) stream
 **Audience:** Frontend and backend developers, integration testers
-**Sources:** [`../FlatWire_MasterSpecification.md`](../FlatWire_MasterSpecification.md) §6 (**already corrected**) · [`../../DevelopmentPlan/REVIEW.md`](../../DevelopmentPlan/REVIEW.md) Tier 1 · [`../../DevelopmentPlan/APIContracts.md`](../../DevelopmentPlan/APIContracts.md) (April 2026 — **superseded, carries the defects**) · [`../../DevelopmentPlan/Schema/SQL/`](../../DevelopmentPlan/Schema/SQL/)
+**Sources:** [`../FlatWire_MasterSpecification.md`](../FlatWire_MasterSpecification.md) §6 (**already corrected**) · [`../../DevelopmentPlan/REVIEW.md`](../../DevelopmentPlan/REVIEW.md) Tier 1 · [`../../DevelopmentPlan/APIContracts.md`](../../DevelopmentPlan/APIContracts.md) (April 2026 — **superseded, carries the defects**) · [`../DBChanges/Schema/SQL/`](../DBChanges/Schema/SQL/)
 
 **Companion documents:** `[VS]` [01-VisionAndScope.md](./01-VisionAndScope.md) · `[SRS]` [02-SRS.md](./02-SRS.md) · `[HLD]` [03-HLD-and-ERDiagram.md](./03-HLD-and-ERDiagram.md) · `[SP]` [05-SprintPlanAndBacklog.md](./05-SprintPlanAndBacklog.md) · `[TP]` [06-TestPlanAndTestCases.md](./06-TestPlanAndTestCases.md) · `[DR]` [07-DeploymentRunbookAndRollback.md](./07-DeploymentRunbookAndRollback.md)
 

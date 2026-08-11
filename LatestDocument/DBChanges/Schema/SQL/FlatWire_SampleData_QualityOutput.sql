@@ -73,14 +73,25 @@ GO
 
 -- ============================================================
 -- CoilTraceability  (footage genealogy; non-overlapping per coil)
+--
+-- SpoolAlpha is NULL on every row here, and that is correct rather than a
+-- gap in the fixture: both seeded coils come from ROD-FED runs. RUN-0001 is
+-- FL1 Standalone, and RUN-0002 is FL3 fed directly from rod R00045 (see the
+-- RodCheckin seed) -- neither has an input spool to name.
+--
+-- KNOWN FIXTURE LIMITATION: the spool-fed case is therefore not exercised.
+-- The only run that consumes a spool, RUN-0004 (FL2, SP-00031), is still
+-- 'Paused' and has produced no coil. Completing it to demonstrate the column
+-- would mean rewriting the run/pause fixtures, so it is left alone -- add a
+-- spool-fed coil here when RUN-0004 gains a completed output.
 -- ============================================================
 IF NOT EXISTS (SELECT 1 FROM [dbo].[CoilTraceability])
 INSERT INTO [dbo].[CoilTraceability]
-    ([CoilAlpha],[RodAlpha],[FootageFrom],[FootageTo])
+    ([CoilAlpha],[RodAlpha],[SpoolAlpha],[FootageFrom],[FootageTo])
 VALUES
-    ('FW-00421-C01','R00041',   0,2100),
-    ('FW-00421-C01','R00042',2100,4200),
-    ('FW-00600-C01','R00045',   0,3800);
+    ('FW-00421-C01','R00041',NULL,   0,2100),
+    ('FW-00421-C01','R00042',NULL,2100,4200),
+    ('FW-00600-C01','R00045',NULL,   0,3800);
 GO
 
 -- ============================================================

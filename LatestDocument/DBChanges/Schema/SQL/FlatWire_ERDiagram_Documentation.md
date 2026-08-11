@@ -17,7 +17,7 @@ Core reference data used throughout the system:
 | Table | Purpose | Key Attributes |
 |-------|---------|-----------------|
 | **Stand** | Rolling mill finishing stands (FM1, FM2_S1, FM2_S2, FM2_S3) | Id (PK), Name (UK), LineId, **RollDiameterIn**, MinGaugeIn, MaxGaugeIn, MinWidthIn, MaxWidthIn, IsActive |
-| **Drawer** | Draw box die configurations (DB1, DB2) | Id (PK), Name, DiameterIn (output wire size), MinDiameterIn, MaxDiameterIn, IsActive |
+| **Drawer** | Draw box die configurations (DB1, DB2) | Id (PK), Name, DiameterIn (output wire size), MinDiameterIn, MaxDiameterIn, **LastGrindingFeet** (feet run *since* the last grind — a resettable counter, not the reading at it), **TotalFeetAllowed** (scheduled life; NULL until thresholds arrive, OQ-41), IsActive |
 | **Edger** | Edger tooling configurations (Round/Square edge profiles) | Id (PK), Name (UK), EdgeType (Round\|Square), ToolingSetNo, IsActive |
 | **SpoolConfiguration** | Spool type definitions with weight/diameter constraints | Id (PK), Name (UK), MinWeightLb, MaxWeightLb, MinCoreDiameterIn, MaxCoreDiameterIn, MinOuterDiameterIn, MaxOuterDiameterIn, IsActive |
 | **AlloyProperty** | Per-alloy process properties (generator inputs + footage→weight factor) | Id (PK), Alloy (UK), MaxReductionPerPass, SpringbackFactor, GaugeTolerance Minus/PlusIn, WidthTolerance Minus/PlusIn, RodDiameterTolerance Minus/PlusIn (NULL until the values arrive), RodOvalityMaxIn, SpeedRangeMin/MaxFpm, LbPerFtFactor, DensityLbPerIn3, IsWeldingWire, IsActive |
@@ -91,7 +91,7 @@ Track quality measurements and final outputs:
 | **SpcMeasurement** | Individual measurement readings (e.g., FM1Gauge, WireDiameterPostDraw) | FK → SpcCheckpoint; TargetValue, ToleranceValue, ActualValue → computed Deviation + InSpec |
 | **WipRejection** | Material rejection events (pre-run or mid-run); RunId is nullable | FK → FlatWireRun (0-N, nullable) |
 | **CoilOutput** | Finished output coils (one per completed run segment). Adds PassScheduleId + PassScheduleSnapshot (OQ-54), NetWeightOverrideLb + ScaleWeightLb (OQ-36 / packing), StagingLocation, audit + RowVersion | FK → FlatWireRun, PassSchedule; 1-N with CoilTraceability |
-| **CoilTraceability** | Maps footage ranges within output coil back to source rod | FK → CoilOutput, Rod; Enables genealogy: coil → rod → supplier heat |
+| **CoilTraceability** | Maps footage ranges within an output coil back to the source rod, and — on a spool-fed line — the source **spool** (`SpoolAlpha`, NULL when rod-fed) | FK → CoilOutput, Rod, **Spool**; Enables genealogy: coil → spool → rod → supplier heat (the `FR-333` chain) |
 | **RodCheckout** | Rod removal from a payoff position (Mode P: pre-check-out, never checked in; Mode A: pre-run; Mode B: mid-run emergency). Carries the **supervisor approval stamp** — required for Mode B (OQ-48) and for a **welded** Mode P removal, which is a rejection to HOLD (OQ-68) | FK → FlatWireRun (nullable), Rod |
 
 **Key IDs:**
@@ -159,6 +159,7 @@ RodStaging (1) ──→ (0-1) RodCheckin (set when check-in consumes the staged
 ### Quality Traceability
 ```
 CoilOutput (1) ──→ (N) CoilTraceability ──→ Rod (source material)
+                                         ├──→ Spool (source spool; NULL when rod-fed)
                                          └──→ Footage range mapping
 
 SpcCheckpoint (1) ──→ (N) SpcMeasurement (individual readings)
@@ -241,7 +242,7 @@ All of the following are created by `FlatWire_DDL_07_Indexes.sql` (40 non-cluste
 - `FlatWireRun(LineId,Status)`, `FlatWireRun(Status)`, `FlatWireRun(PassScheduleId)`, `FlatWireRun(OrderId)`
 - `Spool(SourceRunId)`, `Spool(ParentRodAlpha)`, `Spool(SourceRodAlpha)`, `Spool(Status)`
 - `RunReading(RunId, FootageFt)` — gauge-trace query path
-- `CoilTraceability(CoilAlpha, FootageFrom, FootageTo)`, `CoilTraceability(RodAlpha)`
+- `CoilTraceability(CoilAlpha, FootageFrom, FootageTo)`, `CoilTraceability(RodAlpha)`, `CoilTraceability(SpoolAlpha)` **filtered** `WHERE SpoolAlpha IS NOT NULL`
 - `SpcCheckpoint(RunId, CheckpointType)`, `SpcMeasurement(CheckpointId)`
 - `WipRejection(RunId)`, `WipRejection(MaterialAlpha)`
 - `CoilOutput(RunId/OrderId/SkidId/PassScheduleId)`, `PassSchedule(LineId,Alloy,Status)`
@@ -276,7 +277,7 @@ All of the following are created by `FlatWire_DDL_07_Indexes.sql` (40 non-cluste
 
 ### Check Constraints (Key Examples)
 - `Stand`: MinGaugeIn < MaxGaugeIn; MinWidthIn < MaxWidthIn; RollDiameterIn > 0
-- `Drawer`: DiameterIn > 0; MinDiameterIn < MaxDiameterIn (if both set)
+- `Drawer`: DiameterIn > 0; MinDiameterIn < MaxDiameterIn (if both set); LastGrindingFeet ≥ 0; TotalFeetAllowed > 0 when set. **No constraint that LastGrindingFeet ≤ TotalFeetAllowed** — *overdue* is a real state the Die Management screen displays, not a data error
 - `SpoolConfiguration`: MinWeightLb < MaxWeightLb; MinCoreDiameterIn < MaxCoreDiameterIn; MinOuterDiameterIn < MaxOuterDiameterIn
 - `PassSchedule`: LineSpeedMinFpm < LineSpeedMaxFpm; GaugeTolerance > 0; WidthTolerance > 0
 - `PassScheduleComponent`: State ∈ {Active, Bypass, Skip}; EdgeType required when EdgeSet Active
@@ -400,7 +401,7 @@ GROUP BY f.RunId, rp.ReasonCode, rp.ReasonCategory
 - **WipRejection**: Defect tracking & root cause analysis
 
 ### Traceability APIs
-- **CoilTraceability**: Genealogy queries (coil → rod → supplier)
+- **CoilTraceability**: Genealogy queries (coil → spool → rod → supplier)
 - **RodCheckout**: Material disposition tracking
 
 ---

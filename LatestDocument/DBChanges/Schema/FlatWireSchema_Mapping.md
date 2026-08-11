@@ -1,7 +1,7 @@
 # Flat Wire Mill — Schema Mapping & Entity Relationships
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 26, 2026
+**Last Updated:** August 6, 2026
 **Document Type:** Final Schema — Entity Relationships, FK Mapping & Enumeration Reference
 **Source:** Derived from `FlatWireTables.md` recommendations
 **Target DB:** `FlatWireDB` (schema `dbo`)
@@ -32,7 +32,8 @@ PassSchedule ──(1:many)──> PassScheduleComponent
      FlatWireRun ──(1:many)──> SpcCheckpoint ──(1:many)──> SpcMeasurement
      FlatWireRun ──(1:many)──> WipRejection
      FlatWireRun ──(1:many)──> RunReading (sampled gauge/width/speed profile)
-     FlatWireRun ──(1:many)──> CoilOutput ──(1:many)──> CoilTraceability ──> Rod (alpha)
+     FlatWireRun ──(1:many)──> CoilOutput ──(1:many)──> CoilTraceability ──┬──> Rod (alpha)
+                                                                           └──> Spool (alpha, NULL when rod-fed)
      FlatWireRun ──(1:many)──> RodCheckout
 
 Spool ──> SpoolConfiguration
@@ -78,6 +79,7 @@ Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
 | `RunReading` | `RunId` | `FlatWireRun` | `RunId` | NOT NULL | Sampled gauge profile per run |
 | `CoilTraceability` | `CoilAlpha` | `CoilOutput` | `CoilAlpha` | NOT NULL | Many traceability rows per coil |
 | `CoilTraceability` | `RodAlpha` | `Rod` | `Alpha` | NOT NULL | Source rod for this footage range |
+| `CoilTraceability` | `SpoolAlpha` | `Spool` | `Alpha` | NULL | Source spool for this footage range; NULL on a rod-fed run |
 | `RodCheckout` | `RunId` | `FlatWireRun` | `RunId` | NULL | NULL for Mode A pre-run checkout |
 | `RodCheckout` | `RodAlpha` | `Rod` | `Alpha` | NOT NULL | Rod being checked out |
 | `Spool` | `SpoolTypeId` | `SpoolConfiguration` | `Id` | NOT NULL | Spool type / size classification |
@@ -85,7 +87,7 @@ Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
 | `Spool` | `SourceRodAlpha` | `Rod` | `Alpha` | NULL | Partial-run source rod (Phase 7 / OQ-47) |
 | `Spool` | `SourceRunId` | `FlatWireRun` | `RunId` | NULL | FL1 run that produced this spool |
 
-**Total: 37 FK constraints** (added in `FlatWire_DDL_06_ForeignKeys.sql`).
+**43 FK constraints** as built, counted from the deployed database (added in `FlatWire_DDL_06_ForeignKeys.sql`). *The "37" previously quoted here counted the rows in this table rather than the script, and the table has never listed every FK — treat the script as authoritative.*
 
 ---
 
@@ -97,7 +99,7 @@ Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
 |---|---|---|---|
 | `FlatLineProcessing` | `FlatWireRunDetail` | Renamed; run-level columns removed; `RunId` FK added | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 | `FlatLineSetup` | `PassScheduleComponent` | Renamed; restructured; `RollGap` → `ParameterValue`; `ComponentName` / `State` / `EdgeType` added | [FlatWireSchema_Schedule.md](FlatWireSchema_Schedule.md) |
-| `Drawer` | `Drawer` | `Diameter` → `DiameterIn`; `MinDiameterIn` / `MaxDiameterIn` / `IsActive` added | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `Drawer` | `Drawer` | `Diameter` → `DiameterIn`; `MinDiameterIn` / `MaxDiameterIn` / `IsActive` added; **`LastGrindingFeet` / `TotalFeetAllowed` added (Aug 6 2026)** — die life | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `Edger` | `Edger` | `EdgeType` / `IsActive` added; `Set` → `ToolingSetNo` | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `Stand` | `Stand` | `MinId` / `MaxId` → `MinGaugeIn` / `MaxGaugeIn`; `MinOD` / `MaxOd` → `MinWidthIn` / `MaxWidthIn`; `LineId` / `IsActive` added | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `SpoolConfiguration` | `SpoolConfiguration` | Unit suffixes added to all dimension/weight columns; `MinId`/`MaxId` → `MinCoreDiameterIn`/`MaxCoreDiameterIn` | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
@@ -239,4 +241,6 @@ Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
 
 | Date | Change |
 |---|---|
+| August 6, 2026 | Added **`CoilTraceability.SpoolAlpha`** (NULL, FK → `Spool.Alpha`) — the coil → spool edge existed nowhere, so `FR-333`'s `rod → spool → coil` chain was unsatisfiable. `RunId` cannot substitute (`SpoolCheckin.RunId` non-unique, `CoilOutput.RunId` many-per-run → the join returns a set). Put on the range-grained row, not `CoilOutput`, so a coil spanning two spools is expressible; a separate `SpoolCoilMapping` junction table was rejected as a weaker duplicate carrying no footage. **Table count unchanged at 27; FKs 42 → 43.** The stated FK total is corrected to the as-built count. |
+| August 6, 2026 | `Drawer` gains **`LastGrindingFeet`** and **`TotalFeetAllowed`** — die-life counter and threshold, sourced from the `Drawer` sheet of `BaseDocuments/flatwire tables.xlsx` (a May 2026 proposed design never built) with semantics from `DieChangeAndManagement.md` §4.2/§4.4. **Table count and FK count are unchanged** (27 tables / 37 FKs) — two columns on an existing lookup, no new relationships. `OI-41` (the missing per-physical-die inventory) is narrowed, not closed. |
 | July 26, 2026 | Retargeted to `FlatWireDB`. Added 3 production-readiness tables (`AlloyProperty`, `PassScheduleChangeLog`, `RunReading`) → 25 tables, 37 FKs. Added FKs `PassSchedule.Alloy→AlloyProperty`, `PassScheduleChangeLog→PassSchedule`, `CoilOutput.PassScheduleId→PassSchedule`, `RunReading→FlatWireRun`, `Spool.SourceRodAlpha→Rod`. Added component `FM2_6inS3` (May-21-2026 revision). Documented MMS ID / spool-numbering resolutions. See per-domain docs for column-level changes; schema validated on SQL Server 2019. |

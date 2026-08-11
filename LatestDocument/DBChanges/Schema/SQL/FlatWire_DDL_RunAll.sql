@@ -11,7 +11,7 @@
 --
 -- Run this file FROM the SQL folder (the `:r` paths are relative
 -- to the invocation directory), e.g.:
---   cd "C:\UAL\Flat Wire\DevelopmentPlan\Schema\SQL"
+--   cd "C:\UAL\Flatwire-planning\LatestDocument\DBChanges\Schema\SQL"
 --   sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_RunAll.sql
 --
 -- Idempotent: every included script guards its objects, so this

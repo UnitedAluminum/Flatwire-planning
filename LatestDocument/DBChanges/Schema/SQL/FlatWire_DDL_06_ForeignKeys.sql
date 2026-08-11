@@ -341,6 +341,14 @@ IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_CoilTraceability_
         FOREIGN KEY ([RodAlpha]) REFERENCES [dbo].[Rod] ([Alpha]);
 GO
 
+-- SpoolAlpha is nullable, so this FK constrains only the rows that name a
+-- spool -- a rod-fed run leaves it NULL and the FK is not evaluated.
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_CoilTraceability_Spool')
+    ALTER TABLE [dbo].[CoilTraceability]
+        ADD CONSTRAINT [FK_CoilTraceability_Spool]
+        FOREIGN KEY ([SpoolAlpha]) REFERENCES [dbo].[Spool] ([Alpha]);
+GO
+
 -- ------------------------------------------------------------
 -- RodCheckout
 -- ------------------------------------------------------------

@@ -5,7 +5,7 @@
 **Status:** Internal — companion to the client-facing specification
 **Audience:** Developers building `FlatWire.API` and the `OPCConnection` extension
 
-> **Citation convention.** Paths are repo-root relative unless noted. Two shorthands recur: **`[PLC §n]`** = `LatestDocument/RequirementDocuments/PLCTagSpecification.md`, and **`[DR]`** = `LatestDocument/ProjectPlan/07-DeploymentRunbookAndRollback.md`. Bare `phase-NN` names live in `DevelopmentPlan/ShopfloorPlan/`; bare `NN-Name.md` names live in `LatestDocument/ProjectPlan/`; `Schema/SQL/*` is relative to `DevelopmentPlan/`.
+> **Citation convention.** Paths are repo-root relative unless noted. Two shorthands recur: **`[PLC §n]`** = `LatestDocument/RequirementDocuments/PLCTagSpecification.md`, and **`[DR]`** = `LatestDocument/ProjectPlan/07-DeploymentRunbookAndRollback.md`. Bare `phase-NN` names live in `DevelopmentPlan/ShopfloorPlan/`; bare `NN-Name.md` names live in `LatestDocument/ProjectPlan/`; `Schema/SQL/*` is relative to `LatestDocument/DBChanges/`.
 
 > **This document does not specify the tag surface.** The surface — what is written, what is read, when, and every tag path — is [`LatestDocument/RequirementDocuments/PLCTagSpecification.md`](../LatestDocument/RequirementDocuments/PLCTagSpecification.md), cited throughout as **`[PLC §n]`**. This file covers only what a client would not sign: service signatures, configuration binding, persistence, phase ownership, requirement traceability and provenance.
 

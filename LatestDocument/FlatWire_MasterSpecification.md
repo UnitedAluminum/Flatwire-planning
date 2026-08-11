@@ -1,11 +1,12 @@
 # Flat Wire Mill — Master Specification
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 4, 2026
+**Last Updated:** August 6, 2026
 **Status:** Consolidated master specification — implementation-ready, with open items listed in §11. The 30 Jul 2026 client answers are applied to **§11 and to the affected body sections** (§3 flow, §4 pre-check-in note, FR-045, §5 `AlloyProperty` and `RodStaging`) — see [`../Analysis/ClientCall_2026-07-30_SyncPlan.md`](../Analysis/ClientCall_2026-07-30_SyncPlan.md)
-**Latest change (4 Aug 2026):** the **FM2 roller-size correction** — FM2 has **three** stands, **S1 = 8", S2 = 6", S3 = 6"** (decision **D-26**, §10.2). This supersedes **D-21**'s "three 6-inch stands" and closes **OI-04** and **OI-36**. Component names are now position-only (`FM2_S1`/`FM2_S2`/`FM2_S3`) and roll diameter is data (`Stand.RollDiameterIn`).
-**Supersedes (as a reading path, not as files):** every artifact in `../Analysis/`, `../DevelopmentPlan/`, `../DevelopmentPlan/Schema/`, `../SRS/` and `../BaseDocuments/`. Those files remain the audit trail and are **not** modified by this document. Where two of them disagree, this document states the single resolved answer and records the losing side in §10 or §11.
-**Scope of authority:** this document is a *reconciliation*. It is authoritative for what to build. The executable DDL in [`../DevelopmentPlan/Schema/SQL/`](../DevelopmentPlan/Schema/SQL/) remains authoritative for column-level types, and the HTML in [`../Mockups/`](../Mockups/) remains authoritative for pixel-level layout.
+**Latest change (6 Aug 2026):** three client corrections from the 6 Aug call — **`OI-13` half-closed** (a welded wire break keeps the **same alpha**; only the persistence target remains, gap **G34**), **`D-27`** (the edgers are **inter-stand roll-formers**, not knives, and **S3 is a skim pass**), and **`D-28`** (**FM2 carries two dancers with two modes**, which qualifies `PSM012` — open as **Q97**/**G35**). See [`../Analysis/ClientCall_2026-08-06_SyncPlan.md`](../Analysis/ClientCall_2026-08-06_SyncPlan.md). **Also 6 Aug:** new **§10.5** records that **`FR-381`/`384`/`385`/`386`/`387` are superseded on the arithmetic** by `PassScheduleGenerationSpec.md` v1.5 — the pre-flatten diameter is a lower bound and needs the edge correction, the final die may not snap down from it, the roll gap sits **below** gauge by a load-dependent term, the finishing-mill test is not the route decision, and the non-hybrid default leaves the skim stand as the only active one. **Contract shape is unaffected; rebuild the five formulas before `FW-013`.**
+**Previous change (4 Aug 2026):** the **FM2 roller-size correction** — FM2 has **three** stands, **S1 = 8", S2 = 6", S3 = 6"** (decision **D-26**, §10.2). This supersedes **D-21**'s "three 6-inch stands" and closes **OI-04** and **OI-36**. Component names are now position-only (`FM2_S1`/`FM2_S2`/`FM2_S3`) and roll diameter is data (`Stand.RollDiameterIn`).
+**Supersedes (as a reading path, not as files):** every artifact in `../Analysis/`, `../DevelopmentPlan/`, `./DBChanges/Schema/`, `../SRS/` and `../BaseDocuments/`. Those files remain the audit trail and are **not** modified by this document. Where two of them disagree, this document states the single resolved answer and records the losing side in §10 or §11.
+**Scope of authority:** this document is a *reconciliation*. It is authoritative for what to build. The executable DDL in [`DBChanges/Schema/SQL/`](./DBChanges/Schema/SQL/) remains authoritative for column-level types, and the HTML in [`../Mockups/`](../Mockups/) remains authoritative for pixel-level layout.
 
 ---
 
@@ -230,7 +231,7 @@ Every material and event unit carries an **alpha** — the traceability handle t
 | **Bundle width** | The **oscillation width** of the wound coil — how wide the take-up traverses. A Min/Max range per order. Distinct from the flat wire's own width |
 | **Coreless oscillated coil** | The finished product: flat wire wound with no core mandrel; the collapsible spool ejects the coil |
 | **CPK** | Process capability index, computed per production run excluding unstable start/end regions |
-| **Dancer** | Tension-management roller between components; tension is derived from speed, never entered manually (`PSM012`) |
+| **Dancer** | Tension-management roller between components. **FM2 carries two** — between S1/S2 and between S2/S3 — each running in **dancer mode** (compensating speed control) or **tension mode** (`D-28`, 6 Aug 2026). `PSM012`'s *"tension is derived from speed, never entered manually"* holds **in dancer mode**; whether tension mode takes a setpoint, and from where, is **Q97**. **The same question is asked client-facing as `PSG-Q29`, with the setpoints as `PSG-D27`** — one answer closes both, and the client should not be asked twice. Tension also has an engineering consequence the register does not carry: applied tension **reduces roll separating force**, so it moves both the force check and the roll gap (`[PSG §3.3.6]`) |
 | **Digital traveler** | The screen-based work instruction that adapts to the active station. Never printed for flat wire |
 | **DB1 / DB2** | Draw box 1 / 2 — the wire drawing die blocks |
 | **Edger** | Edge-conditioning tooling. On FM2 stands S2 and S3 only |
@@ -359,7 +360,7 @@ Any number, in any order, all stamped against `RunId` + footage position:
 | **Pause / resume** | Pause dialog (shared) | `RunPauseEvent` | One reason from a governed taxonomy; footage frozen; PLC to hold/idle; Dashboard 1 to `PAUSED`. Resume outcomes: resume · log WIP rejection · continue pause · (per the dashboards spec) check out rod |
 | **WIP rejection** | Dashboard 8 | `WipRejection` (`REJ-####`) | Group + reason + measured/target + disposition Suspend/Scrap/Rework; `AlertRaised` to Dashboard 1 |
 | **Rod checkout** | Dashboard 12 | `RodCheckout` (`CO-####`) | Three modes — see 3.8 |
-| **Wire break** | prompt | *(no table defined — see OI-13)* | "Has the wire break happened?" then OD verification then defect inspection before resuming |
+| **Wire break** | prompt | *(no table defined — see OI-13)* | Machine stop → prompt for the stop reason → on **wire break**, offer **WIP reject** or **weld and continue**. Weld-and-continue keeps the **same alpha** and logs a `WeldEvent` at the footage position (client, 6 Aug 2026). Then "Has the wire break happened?", OD verification and defect inspection before resuming. **Persistence target still undefined — `G34`** |
 | **Spool weight milestones** | Dashboard 3 overlay | audit record per acknowledgement | Advisory 75 / 90 / 100 % ladder against target spool weight; non-blocking |
 
 ### 3.6 Run status state machine
@@ -908,7 +909,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 | **FR-281** | On **Yes** the system shall prompt the operator to perform **OD verification**. On No the prompt is dismissed with no recovery workflow. [`WBK002`] |
 | **FR-282** | Following a wire break the system shall prompt the operator to **inspect the wire for defects** before the line resumes normal operation. [`WBK003`] |
 
-> **Gap:** wire break has three requirements, **no screen, no table and no phase owner**. Where the confirmation and the two verification results are persisted is undefined. See **OI-13**.
+> **Gap — halved 6 Aug 2026.** Wire break has three requirements, **no screen, no table and no phase owner**. The **flow is now decided** (client, 6 Aug 2026): the machine stops, a physical component trips a tag, the system prompts for the stop reason, and on *wire break* it offers **WIP reject** or **weld and continue**. Weld-and-continue **does not create a new alpha** — the wire is still one piece — and the weld is recorded at its footage position with the material flagged in SCADA. **What is still undefined is where the stop reason, the break confirmation and the two verification results are persisted.** See **OI-13** and gap **G34**; the customer-accepts-no-welds branch is **Q96**.
 
 ### 4.14 WIP Rejection — Dashboard 8
 
@@ -1033,6 +1034,16 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 | **FR-375** | Footer actions shall be **Generate from Specs · Copy schedule · Deactivate · Discard changes · Save changes / Save as active**, with a status strip showing unsaved-changes and generated-draft states and the last-saved stamp. |
 
 **Generate from Specs — algorithm (corrected)**
+
+> ⚠️ **`FR-381`, `FR-384`, `FR-385`, `FR-386` and `FR-387` are superseded on the arithmetic — see §10.5.**
+> `LatestDocument/RequirementDocuments/PassScheduleGenerationSpec.md` v1.5 (6 Aug 2026) contradicts them
+> on five counts of physics: the pre-flatten diameter is a **lower bound**, not the answer, and needs the
+> round-edge correction; the final die may not be snapped **down** from it; the roll gap is set **below**
+> gauge by a **load-dependent** mill-spring term, not above it by a fixed alloy multiplier; the
+> finishing-mill test is **not** the route decision; and the non-hybrid default leaves the skim stand as
+> the only active one. **The contract shape below is unaffected** — request/response envelope,
+> apply-on-error (`FR-389`), the origin highlight (`FR-390`) and *never push tags at generate*
+> (`FR-391`) all stand. **Rebuild the five formulas to the generation spec before implementing `FW-013`.**
 
 | ID | Requirement |
 |---|---|
@@ -1275,7 +1286,11 @@ erDiagram
 | `Name` | VARCHAR(50) | NOT NULL | UNIQUE — die name or part number |
 | `DiameterIn` | DECIMAL(8,4) | NOT NULL | Die hole diameter = output wire size. `CK_Drawer_DiamPos`: > 0 |
 | `MinDiameterIn` / `MaxDiameterIn` | DECIMAL(8,4) | NULL | Acceptable feed diameter range. `CK_Drawer_FeedRange` when both present |
+| `LastGrindingFeet` | DECIMAL(10,2) | NOT NULL | Die life — feet run **since** the last grinding/reconditioning; a resettable counter, **not** the reading *at* that grind. Default 0; reset to 0 by the §5.10 *Reset counter* operation. `CK_Drawer_LastGrindingFeet`: ≥ 0 |
+| `TotalFeetAllowed` | DECIMAL(10,2) | NULL | Die life — scheduled life, the maximum footage before the die is pulled; set **lower** on a reconditioned die. NULL until the client supplies thresholds (**OI-77 / OQ-41**). `CK_Drawer_TotalFeetAllowed`: > 0 when set |
 | `IsActive` | BIT | NOT NULL | default 1 |
+
+> **Die life, added 6 Aug 2026.** These two columns give *"footage on die"* and *"scheduled life"* their first home in the schema; the screen derives `Remaining` and `Life used %` from them. There is deliberately **no** `LastGrindingFeet ≤ TotalFeetAllowed` constraint — *overdue* is a real operating state, not a data error. **`OI-41` is narrowed, not closed:** `Drawer` is a die-**size** catalogue (13 rows, one per hole diameter), so the counter accumulates against a size, not a physical tool — the per-die inventory (`D-{size×1000}-{seq}`, condition, Active/Nearing/Overdue/Spare/Retired) still does not exist and Phase 6 still depends on Phase 13. Nothing maintains the columns automatically either: `DieChangeEvent` identifies dies by `OldDieSizeIn`/`NewDieSizeIn` decimals with **no `DrawerId` FK**, so they are Maintenance-maintained until that FK or the PLC die counter arrives.
 
 #### `Edger` — edger tooling configurations
 
@@ -1797,11 +1812,14 @@ The weld **is** the payoff handover, which is why both positions are recorded he
 | `Id` | INT IDENTITY | NOT NULL | PK |
 | `CoilAlpha` | VARCHAR(30) | NOT NULL | FK → `CoilOutput.CoilAlpha` |
 | `RodAlpha` | VARCHAR(20) | NOT NULL | **FK → `Rod.Alpha`** |
+| `SpoolAlpha` | VARCHAR(20) | NULL | **FK → `Spool.Alpha`** — source spool for this footage range. **NULL on a rod-fed run** (FL1 standalone; FL3 fed directly from rod). Filtered index `IX_CoilTraceability_SpoolAlpha` |
 | `FootageFrom` / `FootageTo` | INT | NOT NULL | `CK_CoilTraceability_Range`: `From < To` |
 
 **Non-overlap is enforced by a trigger**, `trg_CoilTraceability_NoOverlap` (DDL_08), because SQL Server has no exclusion constraint. Ranges are treated as half-open `[From, To)`: two rows overlap when `a.From < b.To AND b.From < a.To` (`DM010`).
 
 > **Two coordinate systems.** Run events (`WeldEvent.FootagePosition`, `RollOverride.FootagePosition`, …) use **cumulative run footage**; `CoilTraceability.FootageFrom/To` are **coil-local**. Mapping a source rod to coil footage needs a coil-start offset that no artifact states. **OI-25.**
+
+> **`SpoolAlpha` added 6 Aug 2026 — the coil → spool edge previously existed nowhere.** `CoilOutput` has no spool column, so `FR-333`'s `rod → spool → coil` chain was not satisfiable. `RunId` cannot stand in: `SpoolCheckin.RunId` is not unique (many spools per run) and `CoilOutput.RunId` is many coils per run, so the join returns a **set** of spools. It is placed on this range-grained row rather than on `CoilOutput` because a spool that runs out mid-coil makes a header column wrong — the range records *which feet* came from which spool, which is what the welding-wire certificate needs. A separate `SpoolCoilMapping` junction table (the client's May 2026 proposed design, `(Id, SpoolId, CoilNo)`) was **rejected**: it carries no footage and would duplicate an edge this table already owns. One spool routinely yields ~2 coils (client 6 Aug 2026: FL1 ~1,800 lb spools, FL2 800/900 lb coils), so this is the ordinary case. **It does not close `FR-172`** — `Spool.ParentRodAlpha` is still singular, so a spool welded from several rods loses parents — **nor `OI-25`**, on which the attribution's accuracy depends.
 
 #### `RodCheckout`
 
@@ -1865,6 +1883,7 @@ FKs are deliberately added in a single script **after** all tables exist, so tab
 | `CoilOutput` | `PassScheduleId` | `PassSchedule.ScheduleId` | NULL | Schedule effective at creation |
 | `RunReading` | `RunId` | `FlatWireRun.RunId` | NOT NULL | |
 | `CoilTraceability` | `CoilAlpha` / `RodAlpha` | `CoilOutput.CoilAlpha` / `Rod.Alpha` | NOT NULL | 2 FKs |
+| `CoilTraceability` | `SpoolAlpha` | `Spool.Alpha` | NULL | Source spool; NULL on a rod-fed run |
 | `RodCheckout` | `RunId` | `FlatWireRun.RunId` | **NULL** | NULL for Modes P and A |
 | `RodCheckout` | `RodAlpha` | `Rod.Alpha` | NOT NULL | |
 
@@ -1906,8 +1925,8 @@ Scripts are **numbered by execution order** and every object is guarded (`IF NOT
 | 03 | `FlatWire_DDL_03_Materials.sql` | `Rod`, `FlatWireRun`, `Spool` |
 | 04 | `FlatWire_DDL_04_Runs.sql` | 9 run tables |
 | 05 | `FlatWire_DDL_05_QualityOutput.sql` | 6 quality/output tables |
-| 06 | `FlatWire_DDL_06_ForeignKeys.sql` | **all 41 FKs** |
-| 07 | `FlatWire_DDL_07_Indexes.sql` | indexes incl. the 3 filtered-unique |
+| 06 | `FlatWire_DDL_06_ForeignKeys.sql` | **all 43 FKs** (as-built count, 6 Aug 2026 — the earlier "41" had drifted) |
+| 07 | `FlatWire_DDL_07_Indexes.sql` | **64 non-clustered indexes** incl. the 3 filtered-unique |
 | 08 | `FlatWire_DDL_08_Programmability.sql` | trigger + 2 read procs + grants |
 | 99 | `FlatWire_DDL_99_Teardown.sql` | drop everything |
 
@@ -1929,7 +1948,7 @@ Every block is guarded by `IF NOT EXISTS`; computed columns and `ROWVERSION` are
 
 ```powershell
 # Full build + seed, in order. Run FROM the SQL folder.
-cd "c:\UAL\Flatwire-planning\DevelopmentPlan\Schema\SQL"
+cd "c:\UAL\Flatwire-planning\LatestDocument\DBChanges\Schema\SQL"
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_RunAll.sql
 
 # A single script
@@ -1975,7 +1994,7 @@ In SSMS use **Query → SQLCMD Mode** before executing `RunAll`.
 
 **Prior art worth reading before writing `CoilCompletionService`:** `MillsDB..RollCoil_GetTotalRolledWeightinlastMillRun` already derives total rolled weight for a mill run from `alloy_density`. That is structurally the same problem as flat-wire output weight, and it may already encode UA's convention for tail loss and net-versus-gross — the part of `FRT011` still open.
 
-**WIP station registration** (`DevelopmentPlan/DBScripts/CommonDB_Insert_WIPStations_FlatWire.sql`) creates:
+**WIP station registration** (`LatestDocument/DBChanges/DBScripts/CommonDB_Insert_WIPStations_FlatWire.sql`) creates:
 
 | Station | Machine | StationType | Notes |
 |---|---|---|---|
@@ -2025,7 +2044,7 @@ Recorded here rather than glossed over. Each is an open issue in §11.
 | **Alert lifecycle** | `LST011`–`LST016`, hub `AlertRaised`/`AlertCleared` | **No table stores alerts** and no story implements raise/clear — OI-28 |
 | **Lot number** | `GET /coil/{alpha}/label` returns `lotNumber` | No column, no generator — OI-24 |
 | **Rework return stage** | `WRJ003` | No column — OI-22 |
-| **Wire break record** | `WBK001`–`WBK003` | No table — OI-13 |
+| **Wire break record** | `WBK001`–`WBK003` | No table — OI-13. **Flow decided 6 Aug 2026**; the candidate sinks are `RunPauseEvent` (stop + reason), `WeldEvent` (the weld and its footage) and `WipRejection` (the reject branch), unallocated — gap **G34** |
 | **Rod bundle / receiving-lot header** | "rod bundle receiving" workflow | `Rod` and `coils` model one physical unit per row with no parent bundle grouping — OI-29 |
 | **Gap-free `R#####` sequence** | rod alpha "no gaps per lot" | Alphas are UNIQUE `varchar` only — no SEQUENCE or numbering table; app-enforced — OI-30 |
 | **Legacy `FlatLineSetup` / `FlatLineProcessing` data migration** | those tables are renamed into `PassScheduleComponent` / `FlatWireRunDetail` | No mapping, migration or drop-criteria deliverable exists — OI-31 (gap G8) |
@@ -3004,7 +3023,7 @@ Every decision that is closed. **Do not re-open these.** Where a decision replac
 | **D-18** | Alpha generation happens **at planning time**, not during execution; stop calculation is system-driven; the planner enters **weight only** | 28 Apr 2026 | "Number of Cuts" / "Number of Stops" are not used for flat wire; a remainder alpha is generated; "Assign as-is" routes the remainder to stock | Execution-time alpha generation |
 | **D-19** | The rectangular pattern picture in Planning is replaced by a **tabular order → spool → weight grid** | 28 Apr 2026 | Flat wire output is not a rectangular pattern | — |
 
-### 10.2 Equipment and process decisions — the May 21 2026 client corrections
+### 10.2 Equipment and process decisions — the client corrections (May 21, Aug 4 and Aug 6 2026)
 
 | ID | Decision | Consequence | Supersedes |
 |---|---|---|---|
@@ -3015,6 +3034,8 @@ Every decision that is closed. **Do not re-open these.** Where a decision replac
 | **D-24** | **SPC checkpoint types add "Post DB1"** | Available in the UI selector | — |
 | **D-25** | Dashboard 7 shows gauge and width as the **target value when in tolerance**, not the measured average | Cleaner label and cert data | Average-measured display |
 | **D-26** *(4 Aug 2026)* | **FM2 has three stands: `S1` = 8", `S2` = 6", `S3` = 6". Edgers at S2 and S3 only; S3 is the final, non-bypassable stand.** The 8" roller **is** S1 — it is not a separate component upstream of three 6" stands | Component vocabulary becomes position-only — `FM2_S1` / `FM2_S2` / `FM2_S3` — and roll diameter moves into the new `Stand.RollDiameterIn` column (12.000 / 8.000 / 6.000 / 6.000), so a re-roll is a one-row update. `FM2_6inS3` is **withdrawn as never-existent** (it never had a tag path or a seed row). Mapping: `FM2_8in`→`FM2_S1`, `FM2_6inS1`→`FM2_S2`, `FM2_6inS2`→`FM2_S3`. `Stand.Id` 1–4 keep their meaning; Id 5 is removed. PLC stations become `FL2.FM2.S1/S2/S3` pending `PLC-Q04`. **Closes `OI-04` and `OI-36`** | **D-21**, and every source showing four FM2 stands, a separate `8" Roller` component, or a 6" stand named S1 |
+| **D-27** *(6 Aug 2026)* | **The edgers are inter-stand, and edging is a forming operation.** The two edging devices sit **between S1 and S2** and **between S2 and S3**; there is **no edging capability on the exit side of the mill**. They are **vertical profiling rollers** — a roll-forming capability, **not a knifing or cutting operation**, so nothing is trimmed and there is no scrap stream at the edger. Passing an edger narrows width and pushes the displaced material into **length and a slight centre bulge**; the following stand flattens it and the edge widens again. **The first edger also converts the section from round to square.** The last 6" pass at **S3 is a skim pass** — light reduction, **no edging** — sized for a uniform cross-sectional area edge to edge | Pass schedule generation needs **a separate formula subset for the edger, treated as its own operation** — see `PassScheduleGenerationSpec.md` §3.3.5 and `PSG-D24`–`PSG-D26`. Confirms the *"edgers at S2 and S3"* reading as **entry-side**, which leaves the proposed `…S2.Edger.*` / `…S3.Edger.*` tag paths unchanged (**G29**). Register pointer **Q98** | Any description of the edger as knifing, cutting or trimming; any exit-side edger |
+| **D-28** *(6 Aug 2026)* | **FM2 carries two dancers, each with two modes.** They sit in the edger positions — between S1/S2 and between S2/S3 — and run in either **regular dancer mode** (compensating speed control) or **tension mode**, as on the current mills | **Nothing in the design models a dancer on FM2** — no lookup row, no `PassScheduleComponent`, no tag element — and **tension mode qualifies `PSM012`** (§3.4, *"tension is derived from speed, never entered manually"*), which is true in dancer mode only. Open as **Q97**, gap **G35** | The implication that FM1's dancer is the only one in the module |
 
 ### 10.3 Business decisions from the open-questions register
 
@@ -3059,6 +3080,47 @@ Every decision that is closed. **Do not re-open these.** Where a decision replac
 | A 3-item inspection DTO at check-in | **§6.5** — 3 items at **staging**, 4 at **check-in** | `RodCheckin.InspectionConnectorTag` is `NOT NULL` |
 | Max finished coil weight 1,000 lb | **OQ-32** — 1,100 lb | Two figures circulate; 1,100 is current |
 | Coils-table inventory "22 tables" in the SRS `DM001` | **D-03** — 27 | The SRS was written before `PayoffPosition` and `RodStaging` |
+| **`FR-381` / `FR-384` / `FR-385` / `FR-386` / `FR-387` — the generate-from-specs arithmetic** | **`LatestDocument/RequirementDocuments/PassScheduleGenerationSpec.md` v1.5** (6 Aug 2026) | **Five direct contradictions, on physics rather than wording — see §10.5** |
+
+### 10.5 `FR-380`–`FR-391` versus the generation specification
+
+**The authority split between these two documents no longer holds, and this section records why.**
+
+`CLAUDE.md` divides them: `PassScheduleGenerationSpec.md` wins on **physics**, this document's
+`FR-380`–`FR-391` and its `POST /passschedule/generate` section win on **contract shape and arithmetic**.
+That worked while the generation spec described *why* and the FRs described *what to compute*. It stopped
+working on 4–6 Aug 2026, when four revisions of the generation spec changed the arithmetic itself.
+
+| FR | What it specifies | What the generation spec establishes |
+|---|---|---|
+| **`FR-381`** | `D_pre = sqrt(4 × gauge × width / π)` | Two faults. It is the **zero-elongation bound used as the answer** — `[PSG §3.3.3]` states plainly that doing so "produces flat wire that is **under-width**", because real flattening elongates. And it uses the **rectangular** area, with **no round-edge correction**: `[PSG §6.4]` puts the difference at **0.0057″** on the worked case, "larger than a typical die increment" |
+| **`FR-384`** | Dies "snapped to the **nearest** 0.005″" | `[PSG §6.3 Step 6]`, rule `R36`, validation `V39`: the **final** die may never be snapped **below** an entry diameter that came from the bound. Because `FR-381` **always** produces a bound-derived entry, `FR-384` violates `R36` on **every** schedule — and silently, since every per-pass reduction check still passes (they test reduction, not width) |
+| **`FR-385`, `FR-387`** | `gap = gauge × alloy springback factor`; FM2 `S1 = gauge × 1.06`, `S2 = × 1.02`, `S3 = × springback` | `[PSG §3.3.7]`: the gaugemeter relation is `h₁ = S₀ + F/K`, so the compensation is **negative** — the set gap is **below** the target gauge, not 2–6% above it. `F/K` is **load-dependent**, so no fixed percentage can express it. And *springback* is a **material** property being used for **mill spring**, a machine stiffness — §3.3.7 names that conflation explicitly as the thing that "obscures the fact that it must be measured by mill calibration under load." The three multipliers also carry **no edger term** and treat `S3` as the gauge stand, where `[PSG §3.3.11]` and `D-26` make it a **skim** |
+| **`FR-386`** | `aspectRatio > 5.5` **or** alloy `1350` → activate FM2 **and set `routeMode = Hybrid`** | `[PSG §6.2]`: whether a product needs the finishing mill is **geometric**; which route delivers it is **metallurgical**, gated on cumulative cold work. Conflating them "means the engine can only ever produce hybrid or FL1-standalone schedules" — and it can select Hybrid, which has **no intermediate anneal**, for material that needs one. Hard-coding alloy `1350` also runs against `PSG-Q19`, which asks for a product or customer attribute so the rule survives a changing product mix |
+| **`FR-386`** (second) | Otherwise "`FM2_S1` and `FM2_S2` are bypassed", `FM2_S3` always Active | That is `k_bulk` = 0 — **the only active stand is the skim stand**. `[PSG §6.3 Step 9]` now handles it explicitly and rejects it where the required reduction exceeds the skim allowance. As written, `FR-386` makes it the **default** non-hybrid configuration |
+
+**A worked case that fails both documents.** This section's own corrected example — alloy 1100, rod
+0.375″, target 0.125″ × 0.875″ — has `A_rod` = 0.110447 in² against `A_final` = 0.109375 in²: **0.98% of
+area margin**, where the flattening pass needs roughly **11% elongation**. Reaching 0.875″ wide from
+0.375″ rod at that gauge would require a spread coefficient of about **0.77**, far outside real flat
+rolling. The product needs a **larger rod**. The generation spec now catches it at `[PSG §6.3 Step 3A]`
+(`V43`); `FR-383` does not, because a near-zero area reduction reads to it as a legitimate no-draw case.
+
+**What this does and does not mean.**
+
+- **Not** that the FRs are wrong about *contract shape*. The request/response envelope, `FR-389`'s
+  "apply stays enabled on errors", `FR-390`'s highlight-on-apply and `FR-391`'s **never push tags at
+  generate** are unaffected and remain authoritative.
+- **Is** that `FR-381`, `FR-384`, `FR-385`, `FR-386` and `FR-387` must be **rebuilt to the generation
+  spec's physics** before `FW-013` is implemented. Building to them as they stand produces an engine that
+  delivers under-width wire, sets every roll gap on the wrong side of target, and routes on geometry
+  alone.
+- The **2% no-draw threshold** in `FR-383` and `04-APIContract.md` §4.2 is a separate case: the generation
+  spec has **not adopted it** (`PSG-D28`) pending engineering review, rather than contradicted it.
+
+**Not propagated into the generation spec, deliberately.** That document is written
+implementation-agnostic — no tables, endpoints, screens or story IDs — which is what keeps it a client
+deliverable. The reconciliation therefore lives here and in `DevelopmentPlan/REVIEW.md`, not in it.
 
 ---
 
@@ -3132,7 +3194,7 @@ Every unresolved item, with impact, the phase it blocks, and who must decide. **
 | **OI-10** | **"Post DB1" checkpoint type is in the UI but not in the enum.** The Dashboard 6 selector offers Pre-run / **Post DB1** / Post die change / Manual spot check; the persisted `CheckpointType` domain has no `PostDb1` value | Either add the value or drop the selector option | Phase 6 | Tim O. / Jaspreet |
 | **OI-11** | **⚠️ UNRESOLVED** — Roll Adjust line applicability. The DB11 header and access-control table say **FL1 / FL2**, and the wireframe shows FL2; the DB3 quick-action table says **FL3 only**; `DieChangeAndManagement.md` says FL2 and FL3 are the lines with roller gaps. FL1 (drawing + FM1 only) is unlikely to expose it | Which action bars carry the button | Phases 6, 10 | Tim O. |
 | **OI-12** | **Die-life colour bands differ between two screens.** Die Change uses green < 60 % / amber 60–85 % / red > 85 %; Die Management uses Active < 65 % / Nearing 65–79 % / Overdue ≥ 80 %. Both are as-specified in their own source | Inconsistent operator signal for the same die | Phases 6, 13 | Maintenance / Tim O. |
-| **OI-13** | **Wire break has three requirements, no screen, no table and no phase owner.** Where the break confirmation and the OD-verification and defect-inspection results are persisted is undefined | `WBK001`–`WBK003` are unimplementable as written | unassigned | Jaspreet |
+| **OI-13** | ~~**Wire break has three requirements, no screen, no table and no phase owner.**~~ **Half-closed 6 Aug 2026 — the flow is decided, the persistence target is not.** The client specified the whole sequence: the machine stops, a physical component (*"a dancer or something"*) trips a tag, the system prompts **why the machine stopped**, and on *wire break* it offers **WIP reject** or **weld and continue**. **Weld-and-continue keeps the same alpha** — Bob Scott: *"if it's not actually splitting and you're welding back together, it's the same alpha, no new alpha"*; Shannon Riotte: *"it's coming off the machine as one piece"* — and the weld is recorded at its **footage position** with the material flagged in SCADA. Consistent with **Q27** Case 1. **Still undefined:** where the stop reason, the break confirmation and the `WBK002`/`WBK003` verification results are persisted | `WBK001`–`WBK003` are still unimplementable — the flow exists, the sink does not. Now tracked as gap **G34**; the no-weld-customer branch is **Q96** | unassigned | Jaspreet |
 | **OI-15** | **No scrap-box entity.** `ScrapBoxRef` is a free `varchar` on `RodStaging` and `RodCheckin`, and the Stop popup has a Scrap Box # field, but there is no lookup table. Either reuse the existing slitter scrap-box source or define a flat-wire lookup | The alloy-filtered list and carry-forward auto-select in `CHK008` have no source | Phases 4, 6 | Tim O. / IT |
 | **OI-16** | **No FL3 check-in wizard variant.** Dashboard 2 was revised to the 6-step wizard; `dashboard_2_rod_checkin_fl3.html` is still on the older single-page layout | FL3 operators get a different interaction model from FL1 | Phase 10 | UX / Analysis |
 | **OI-17** | **`RunReading` retention and rollup policy is undefined** (noted in the DDL itself as a G3 open item) | Unbounded time-series growth; report query performance | Phases 1C, 3 | Architecture / DBA |
@@ -3270,7 +3332,7 @@ Every file in `c:\UAL\Flatwire-planning\` was consulted. Status values: **curren
 | File | Last Updated | Status | Fed into |
 |---|---|---|---|
 | `00-foundations.md` | 26 Jul 2026 | **current except decision 3** (the `Rod` drop, superseded by the DDL) | §2, §6.7, §8.2, §10 |
-| `back-matter.md` | 26–29 Jul 2026 | current — dependency chain, calendar, gaps G1–G28 | §9, §11 |
+| `back-matter.md` | 26 Jul – 6 Aug 2026 | current — dependency chain, calendar, gaps G1–G35 | §9, §11 |
 | `phase-01-core-platform-setup.md` | 26 Jul 2026 | superseded by the 1A/1B/1C splits; its 21-table statement is stale | §9.2 |
 | `phase-01a-angular-foundation.md` | 26 Jul 2026 | current | §7, §8.1, §9.2 |
 | `phase-01b-backend-foundation.md` | 26 Jul 2026 | current | §6, §8.2, §9.2 |
@@ -3289,7 +3351,7 @@ Every file in `c:\UAL\Flatwire-planning\` was consulted. Status values: **curren
 | `phase-13-administration-reference-data.md` | 26 Jul 2026 | current; abbreviated, no acceptance criterion (OI-78) | §4.10, §9.2 |
 | `phase-14-integration-testing-plc-commissioning-golive.md` | 26 Jul 2026 | current; no exit-test matrix (OI-78) | §9.1, §9.2 |
 
-### A.5 `DevelopmentPlan/Schema/` and `Schema/SQL/`
+### A.5 `LatestDocument/DBChanges/Schema/` and `Schema/SQL/`
 
 | File | Last Updated | Status | Fed into |
 |---|---|---|---|
@@ -3306,7 +3368,7 @@ Every file in `c:\UAL\Flatwire-planning\` was consulted. Status values: **curren
 | `SQL/FlatWire_DDL_03_Materials.sql` | — | **current — authoritative** | §5.2, §5.6 |
 | `SQL/FlatWire_DDL_04_Runs.sql` | — | **current — authoritative** | §5.7 |
 | `SQL/FlatWire_DDL_05_QualityOutput.sql` | — | **current — authoritative** | §5.8 |
-| `SQL/FlatWire_DDL_06_ForeignKeys.sql` | — | **current — authoritative (41 FKs)** | §5.9 |
+| `SQL/FlatWire_DDL_06_ForeignKeys.sql` | — | **current — authoritative (43 FKs as built, 6 Aug 2026)** | §5.9 |
 | `SQL/FlatWire_DDL_07_Indexes.sql` | — | **current — authoritative** | §5.10 |
 | `SQL/FlatWire_DDL_08_Programmability.sql` | — | **current — authoritative** | §5.10 |
 | `SQL/FlatWire_DDL_99_Teardown.sql` | — | current | §5.11 |
@@ -3419,5 +3481,9 @@ Text was extracted from the `.docx` zip containers (`python-docx`) and the workb
 
 | Date | Change |
 |---|---|
+| Aug 6, 2026 | **`CoilTraceability.SpoolAlpha` — the coil → spool edge, which existed nowhere.** `VARCHAR(20)` NULL, `FK_CoilTraceability_Spool` → `Spool.Alpha`, filtered index `IX_CoilTraceability_SpoolAlpha` on `IS NOT NULL`. **`FR-333` requires the chain `rod → spool → coil` and the schema could not produce it:** `CoilOutput` has no spool column, and `RunId` cannot substitute because `SpoolCheckin.RunId` is non-unique and `CoilOutput.RunId` is many-per-run, so the join yields a set of spools rather than the spool. Placed on the range-grained traceability row rather than on `CoilOutput`, since a spool running out mid-coil makes a header column wrong; a separate `SpoolCoilMapping` junction table (the client's May 2026 design) was **rejected** as a footage-less duplicate of an edge this table already owns. `NULL` is correct and common — FL1 standalone and rod-fed FL3 runs have no input spool — so `NOT NULL` was rejected too. Verified on a clean rebuild: spool-fed row accepted, one spool feeding **two** coils accepted (the 1,800 lb → 2 × 900 lb case), one coil spanning **two** spools accepted, a bogus spool rejected by the FK, and `trg_CoilTraceability_NoOverlap` still fires. **Table count unchanged at 27; FKs 42 → 43.** Closes neither `FR-172` (`Spool.ParentRodAlpha` is still singular, so a multi-rod welded spool loses parents) nor `OI-25` (run-cumulative vs coil-local footage frames), on which the attribution's accuracy depends. |
+| Aug 6, 2026 | **Die-life columns on `Drawer` (§5 lookup schema).** `Drawer` gains **`LastGrindingFeet`** (`DECIMAL(10,2)` NOT NULL DEFAULT 0) and **`TotalFeetAllowed`** (`DECIMAL(10,2)` NULL), with `CK_Drawer_LastGrindingFeet` (≥ 0) and `CK_Drawer_TotalFeetAllowed` (> 0 when set). Sourced from the `Drawer` sheet of `BaseDocuments/flatwire tables.xlsx` — a **May 2026 proposed design that was never built** — with semantics taken from `DieChangeAndManagement.md` §4.2/§4.4 rather than invented: `LastGrindingFeet` is feet run **since** the last grind (a resettable counter, **not** the reading *at* it, which is what the name suggests), and `TotalFeetAllowed` is the scheduled-life threshold, set lower on a reconditioned die. **No `LastGrindingFeet ≤ TotalFeetAllowed` constraint** — *overdue* is a real state §5.10 displays, not a data error. `TotalFeetAllowed` seeds **NULL**, not an invented limit: **OI-77 / OQ-41** has die-life tracking decided but the thresholds TBD, the same discipline already applied to `AlloyProperty`'s rod-diameter tolerances. **`OI-41` is narrowed, not closed** — `Drawer` is a die-**size** catalogue (13 rows, one per hole diameter), so the counter accumulates against a size rather than a physical tool; registration, condition, status and disposition history are still missing and **Phase 6 still depends on Phase 13**. Nothing maintains the columns automatically either: `DieChangeEvent` identifies its dies by `OldDieSizeIn`/`NewDieSizeIn` decimals with **no `DrawerId` FK**, so run footage cannot be attributed to a `Drawer` row — Maintenance-maintained until that FK or the PLC die counter lands. **Table count unchanged at 27; no new FKs or indexes.** |
 | Aug 4, 2026 | **FM2 roller-size correction (client).** FM2 has **three** stands — **S1 = 8", S2 = 6", S3 = 6"** — with edgers at S2 and S3 and S3 final. This is not a digit swap: the repo had modelled a **separate 8" roller upstream of three 6" stands (four components)**, a misreading of the May 21 note recorded in `00-foundations.md` §0.3 as *"three 6-inch stands"*. The 8" roller **is S1**, and `FM2_6inS3` never corresponded to real equipment. New decision **D-26** supersedes **D-21**. Component vocabulary becomes **position-only** — `FM2_S1` / `FM2_S2` / `FM2_S3` — and roll diameter moves into a new **`Stand.RollDiameterIn`** column (12.000 / 8.000 / 6.000 / 6.000), because diameter-in-the-name is what let the error hide for ten weeks. Mapping: `FM2_8in`→`FM2_S1`, `FM2_6inS1`→`FM2_S2`, `FM2_6inS2`→`FM2_S3`; `Stand.Id` 1–4 keep their meaning and Id 5 is removed. `FR-094`, `FR-096`, `FR-297`, `FR-386` and `FR-387` reworded — **`FR-387`'s multipliers are unchanged** (1.06 / 1.02 / springback), they simply move from diameter labels to positions, which incidentally fixes a pre-existing defect where FM2's final stand had no gap formula. `CK_PSC_ComponentName` and `CK_RollOverride_Component` updated; the `Stand` seed drops 5 rows → 4. **Two open items close. `OI-04`** (mandatory stand: `FM2_6inS2` or `6" S3`?) was never a real contradiction — both named the same physical stand, now `FM2_S3`. **`OI-36`** (the final stand has no tag path) is void: the client's published map carries exactly **three** FM2 stations, all `[CONFIRMED]` by observation, so it was complete — the stand with no path was the phantom. PLC stations are renamed to bare position (`FL2.FM2.S1/S2/S3`) pending controls-engineer sign-off as **`PLC-Q04`** / gap **G32**, with the as-published mapping preserved in `[PLC §4.3]`. `PassScheduleGenerationSpec.md` §3.3.5's worked illustration is recomputed at **k = 3**, and §3.3.2's bite condition now states that **S1's larger radius admits ~1.33× the draft** of a 6" stand. |
 | Aug 4, 2026 | **HMI/SCADA descoped.** Dashboard 13 (HMI Line Schematic), Dashboard 14 (SCADA Trends) and the Machine View tab on the active run monitor are **withdrawn at client request**. `FR-111`, `FR-112`, `FR-114`, `FR-425`, `FR-440`–`FR-451` and `FR-460`–`FR-470` are marked **withdrawn** — numbers retained, never renumbered — and `FR-113` **reworded**, since it asserted a rule about "the active tab" that outlives the tabs. Both mockups and `HMIAndSCADALayout.md` are deleted. **Descope-ladder rung 7 is removed entirely:** its 67 h stops being *recoverable* effort and becomes *never-planned*, so Phase 5 drops 221 → ~154 h and the programme 3,727 → ~3,660 h, but the ladder loses its largest optional rung and Phase 5 is no longer deferrable. **Nothing structural was removed:** all six run event markers still land on the DB3 traces and no hub event, endpoint, table or column is deleted — every DB13/DB14 reference in the real-time and tag tables was a *consumer* entry, not a row. `Q4`/`OQ-4` is **superseded**, because Dashboard 14 was its answer. §4.21 and §4.22 replaced with withdrawal notices; the approved-screen count drops 22 → **20**. **PLC tag surface consolidated.** The surface existed in six partial, mutually contradictory copies; it now has one home in [`PLCTagSpecification.md`](RequirementDocuments/PLCTagSpecification.md) (client-facing, `[PLC]`, with its own `PLC-Q##` register) plus `DevelopmentPlan/PLCTagImplementation.md` (internal). This document’s tag-surface section is reduced to a pointer, keeping only what is genuinely its own job. §6.8 keeps only the `INT007` *no new integration layer* sentence. **`OI-36` escalated Medium → Critical** and moved to §11.1: the *write* side already pushes a roll gap and an edge configuration to FM2 6″ S3, for which **no read path exists in any document**, so it blocks the FL2/FL3 push rather than a schematic node — and with DB13 descoped its old *"schematic node"* impact clause is void. §11.5 gains four contradictions surfaced only by reading the six copies as one: speed **target vs limit**, the **edger paths that exist nowhere**, **FM2’s namespace on FL3**, and **units in the path**. |
+| Aug 6, 2026 | **Three corrections from the 6 Aug client call.** **(1) `OI-13` is half-closed** — the wire-break *flow* is decided and only the persistence target is missing (gap **G34**). The machine stops, a physical component trips a tag, the system prompts for the stop reason, and on *wire break* it offers **WIP reject** or **weld and continue**. **Weld-and-continue keeps the same alpha** — the wire is still one piece — with the weld recorded at its **footage position** and the material flagged in SCADA; consistent with **Q27** Case 1. Applied to the §3.5 event table, the §4.13 gap note, the §6 traceability table and the **OI-13** register row. The customer-accepts-no-welds branch is new **Q96**. **(2) `D-27`** — the FM2 edgers are **inter-stand** (between S1/S2 and between S2/S3) with **no exit-side edger**, and edging is **vertical profiling roll-forming, not a knifing cut**: nothing is trimmed, width is pushed into length and a slight centre bulge, the first edger converts round to square, and **S3 is a skim pass with no edging**. This gives the generation engine a formula subset it does not have (`PSG-D24`–`D26`, **Q98**) and confirms *“edgers at S2 and S3”* as **entry-side**, leaving the **G29** tag proposals unchanged. **(3) `D-28`** — **FM2 carries two dancers, each with dancer mode and tension mode**, which nothing in the design models and which qualifies `PSM012` (§3.4 glossary amended: the derived-from-speed rule holds **in dancer mode**); open as **Q97**, gap **G35**. Also corroborated without change: **D-26**'s stand sizes, re-stated by the client from the generation spec. §10.2 retitled, since it now carries corrections from three dates. Full record in [`../Analysis/ClientCall_2026-08-06_SyncPlan.md`](../Analysis/ClientCall_2026-08-06_SyncPlan.md). |
+| Aug 6, 2026 | **`FR-380`–`FR-391` reconciled against the generation specification — new §10.5.** A gap audit of [`PassScheduleGenerationSpec.md`](RequirementDocuments/PassScheduleGenerationSpec.md) (issued as **v1.5**) found that the authority split recorded in `CLAUDE.md` — that document winning on *physics*, this one on *contract shape and arithmetic* — **no longer holds**, because four revisions between 4 and 6 Aug changed the arithmetic itself. **Five contradictions, all in the unsafe direction. `FR-381`:** `D_pre = sqrt(4·t·w/π)` is the **zero-elongation lower bound used as the answer** — `[PSG §3.3.3]` says doing so "produces flat wire that is **under-width**" — and it omits the **round-edge correction**, worth **0.0057″** on the published case, "larger than a typical die increment". **`FR-384`:** snapping to *nearest* violates `R36`/`V39`, which forbid snapping the **final** die below a bounded entry — and since `FR-381` always yields a bounded entry, it violates it on **every** schedule, silently, because the reduction checks test reduction rather than width. **`FR-385`/`FR-387`:** `gauge × springback factor` and the `1.06`/`1.02` multipliers set the gap **above** target where `h₁ = S₀ + F/K` makes the compensation **negative** and **load-dependent**; they also conflate *springback* (a material property) with *mill spring* (a machine stiffness), which `[PSG §3.3.7]` names explicitly as the error that hides the need for mill calibration, carry **no edger term**, and treat `S3` as the gauge stand where `D-27` makes it a **skim**. **`FR-386`:** setting `routeMode = Hybrid` from the aspect-ratio test conflates a **geometric** question with a **metallurgical** one and can select the route with **no intermediate anneal** for material that needs one; its non-hybrid default also bypasses `FM2_S1` and `FM2_S2`, leaving the **skim stand as the only active stand**. **A worked case that fails both documents:** this section's own corrected example — 0.375″ rod to 0.125″ × 0.875″ — has **0.98% of area margin** where the flattening pass needs ~**11% elongation**, so it needs a *larger* rod; the generation spec now rejects it at Step 3A, `FR-383` reads it as a no-draw case. **Contract shape is unaffected** — the envelope, `FR-389`, `FR-390` and `FR-391` all stand — and **the FRs are not rewritten here**; §10.5 records the conflict, adds the row to §10.4, and warns at the head of the FR table that the five formulas must be **rebuilt to the generation spec before `FW-013`**. The 2% no-draw threshold in `FR-383` is a separate case: the generation spec has **not adopted** it (`PSG-D28`) rather than contradicted it. §3.4's **Dancer** entry gains a pointer that **`Q97` and `PSG-Q29` are the same question** — one answer closes both — and that tension **reduces roll separating force**, so it moves the gap as well as the force check. |

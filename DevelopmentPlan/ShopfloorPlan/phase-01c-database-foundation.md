@@ -2,7 +2,7 @@
 
 > **Part of the [Flat Wire Mill — Master Implementation Roadmap](../ShopfloorAndRealTimePlan.md).** One of the three layer specs that replace the combined Phase 1 doc — see the [Phase 1 index](./phase-01-core-platform-setup.md).
 > **Siblings:** [1A — Angular Foundation](./phase-01a-angular-foundation.md) · [1B — Backend Foundation](./phase-01b-backend-foundation.md)
-> **Reference context (do not restate):** [Foundations §0.2](./00-foundations.md) decisions 2 & 3 (new `FlatWireDB`; rod = existing `coils`). Source DDL: [`../Schema/SQL/`](../Schema/SQL/) (`FlatWire_DDL_01..06`, `FlatWire_SampleData_Schedule.sql`, `FlatWire_ERDiagram_Documentation.md`).
+> **Reference context (do not restate):** [Foundations §0.2](./00-foundations.md) decisions 2 & 3 (new `FlatWireDB`; rod = existing `coils`). Source DDL: [`LatestDocument/DBChanges/Schema/SQL/`](../../LatestDocument/DBChanges/Schema/SQL/) (`FlatWire_DDL_01..06`, `FlatWire_SampleData_Schedule.sql`, `FlatWire_ERDiagram_Documentation.md`).
 
 ---
 
@@ -14,7 +14,7 @@
 **Effort:** **215 h** (26.9 d) — DB 156 · QA 31 · cont. 28 · **Window:** W0 (to Aug 14, 12 working days = 96 h/person) · includes a discrete **40 h FW-001 impact audit** across `united_db` + the legacy tier — see model §2
 
 > ### ⏱ Due: **14 Aug 2026** (Phase-1 gate)
-> Phase 1 must be complete by **14 Aug 2026** (user mandate; supersedes the roadmap's W1 = Aug 17–23). The DDL already exists in `Schema/SQL/`; this layer's job is to **retarget, harden, seed, and wire** it so 1B's `FlatWireDbContext` maps cleanly and 1A's fixtures are backed by real rows. **FW-001 column renames touch the existing shared scheduling schema — high blast radius; front-load the impact audit.**
+> Phase 1 must be complete by **14 Aug 2026** (user mandate; supersedes the roadmap's W1 = Aug 17–23). The DDL already exists in `LatestDocument/DBChanges/Schema/SQL/`; this layer's job is to **retarget, harden, seed, and wire** it so 1B's `FlatWireDbContext` maps cleanly and 1A's fixtures are backed by real rows. **FW-001 column renames touch the existing shared scheduling schema — high blast radius; front-load the impact audit.**
 
 ## Objective
 Create and populate a new **`FlatWireDB`**, execute the numbered DDL in order, apply the Phase-1
@@ -23,7 +23,7 @@ sample data depends on, and run the FW-001/FW-002 existing-schema migrations —
 `FlatWireDbContext` binds to and reports can query.
 
 ## Dependencies
-- **Template/source:** the six DDL scripts + `FlatWire_SampleData_Schedule.sql` + ER doc in `Schema/SQL/`.
+- **Template/source:** the six DDL scripts + `FlatWire_SampleData_Schedule.sql` + ER doc in `LatestDocument/DBChanges/Schema/SQL/`.
 - **Converges with:** 1B (`FlatWireDbContext` + repositories) and 1A (fixture alphas). No blocker.
 - **Backlog:** FW-001 (renames), FW-002 (`INFLAT`), FW-004 (alloy lookup), FW-005/006/007 (tables).
 

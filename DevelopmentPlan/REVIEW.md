@@ -1,9 +1,9 @@
 # Flat Wire Mill — DevelopmentPlan Review
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-07-29
+**Last Updated:** 2026-08-06
 **Status:** Review — findings & recommendations (no source docs edited by this review, except the Phase-1 split)
-**Scope reviewed:** `DevelopmentPlan/` — `APIContracts.md`, `FlatWireJiraStories.md`, `FlatWireTables.md`, `TechStackRecommendation.md`, `ShopfloorAndRealTimePlan.md`, `Schema/*` + `Schema/SQL/*`, `ShopfloorPlan/*`, `CheckinImplementationPlan.md`, `CheckinImplementationPrompt.md`.
+**Scope reviewed:** `DevelopmentPlan/` — `APIContracts.md`, `FlatWireJiraStories.md`, `FlatWireTables.md`, `TechStackRecommendation.md`, `ShopfloorAndRealTimePlan.md`, `ShopfloorPlan/*`, `CheckinImplementationPlan.md`, `CheckinImplementationPrompt.md`; plus the schema design and DDL, since moved to `LatestDocument/DBChanges/Schema/*` + `Schema/SQL/*`.
 
 > **Blind spot this review shared with every other doc (added 2026-07-29).** The scope above is markdown- and SQL-only. **`.docx` files are zip containers, so `grep` never reaches inside them** — which is how `SRS §4.2 PCI001`–`PCI008` (pre-check-in), `WLD010`, `TRV004`/`TRV009` and §4.18 `PRC001`–`PRC019` went unnoticed across the whole `DevelopmentPlan/`. A specified, testable feature had no analysis note, mockup, table, endpoint or phase owner, and `CommonDB_Insert_WIPStations_FlatWire.sql` D2 explicitly declined to create its station. Recorded as **G19**. **Any future audit of this repo must extract the SRS `.docx` and read §4 requirement-by-requirement, not grep for it.**
 
@@ -39,6 +39,29 @@ The DevelopmentPlan is thorough and largely self-aware — its own [`ShopfloorPl
 > **(b) `02-SRS.md` contradicts itself on the tag push, twice.** Its interface section said *speed **targets*** while `FR-073` says *speed **limits***; and `FR-073`/`FR-074` still describe the batch as *"a single transactional batch"* that *"shall be rolled back"*, which four other sources correctly call a **compensating re-clear** (gap **G16**). **`[PLC §7.5]` wins on the rollback wording** — that is now a text fix owed in `FR-073`/`FR-074`, and G16 closes on it. **The speed question has no winner yet**: a setpoint and a safety clamp are different tags, so it is asked as **`PLC-Q06`** and `FR-073`’s wording is deliberately left alone until it closes.
 >
 > **(c) Three things were called `LineState`.** The machine tag, a six-member application enum with **no `Stopped`**, and a hub event named `LineStatus` — while `FR-141` fires the spool prompt on a *running → stopped* transition. **`[PLC §6]` wins:** the machine tag keeps the name, the enum becomes `LineOperatingState`, the event becomes `LineStateChanged`, and the machine-value→state mapping is published as **configuration** so the commissioning answer (**`PLC-Q01`**) needs no code change. **Do not add a seventh enum member.**
+
+> **The generate-from-specs *algorithm* is superseded, not only its example (added 6 Aug 2026).** Finding
+> #1 below is about `APIContracts.md`'s worked example disagreeing with `FR-381`. A gap audit of
+> [`PassScheduleGenerationSpec.md`](../LatestDocument/RequirementDocuments/PassScheduleGenerationSpec.md)
+> (v1.5) found the deeper problem: **`FR-381`, `FR-384`, `FR-385`, `FR-386` and `FR-387` are themselves
+> wrong on the physics**, so correcting the example to match them would harden the error rather than fix
+> it. The arbitration is published as **`FlatWire_MasterSpecification.md` §10.5**; in one line each —
+>
+> - **`FR-381`** uses the **zero-elongation lower bound as the answer** (produces **under-width** wire) and
+>   omits the **round-edge area correction** (0.0057″ on the published case, larger than a die increment).
+> - **`FR-384`** snaps dies to *nearest*, violating `R36`/`V39` — the final die may not go **below** a
+>   bounded entry — and since `FR-381` always produces one, it violates it on **every** schedule.
+> - **`FR-385`/`FR-387`** set the gap **above** gauge by a fixed alloy multiplier where `h₁ = S₀ + F/K`
+>   makes the compensation **negative** and **load-dependent**, and they conflate *springback* (material)
+>   with *mill spring* (machine stiffness). They also treat `S3` as the gauge stand, where `D-27` makes it
+>   a **skim**, and carry no edger term.
+> - **`FR-386`** derives `routeMode = Hybrid` from an aspect-ratio test, conflating a **geometric**
+>   question with a **metallurgical** one — it can route material needing an anneal onto the one route
+>   that has none. Its non-hybrid default also bypasses `FM2_S1` and `FM2_S2`, leaving the skim stand as
+>   the only active stand.
+>
+> **`FR-389`/`FR-390`/`FR-391` and the request/response envelope are unaffected.** **Build `FW-013` to the
+> generation spec, not to the FRs or to `APIContracts.md`.**
 
 1. **Generate example contradicts its own algorithm** — `APIContracts.md:606-657`. Step 1 `D_pre = sqrt(4·gauge·width/π)` for gauge 0.125 / width 0.875 yields ≈**0.373"**, but the response reports `preflattenDiameterIn: 0.265`; `areaReductionPct: 50.1` is consistent with 0.265, not the formula. Separately, `aspectRatio: 7.0` must (step 7 / warning table) **activate FM2 and set `routeMode: Hybrid`**, yet the example returns `Standalone` with FM2 bypassed and no FM2 warnings. **Fix:** correct the formula or the example so they agree, and make the aspect-ratio→Hybrid branch fire.
 2. **`CheckpointType` enum missing `RollAdjustTrigger`** — the enum at `APIContracts.md:139` lists `{PreRun, PostDieChange, ManualSpotCheck, PostRun}`, but `POST /rolloverride` writes a checkpoint of type `RollAdjustTrigger` (`:1183`) and `FlatWireTables.md:537` lists it. **Fix:** add the value. **[P1✓ 1B/1C]**
@@ -134,3 +157,4 @@ Treat the July 26 roadmap as source of truth; align each April doc **up to** it.
 | Date | Author | Change |
 |---|---|---|
 | 2026-07-26 | Review | Initial review of `DevelopmentPlan/`; Tiers 1–7 + reconcile-up appendix. Phase 1 split into 1A/1B/1C with the relevant fixes baked in. |
+| 2026-08-06 | Review | **Tier 1 finding #1 escalated: the generate-from-specs *algorithm* is superseded, not only its worked example.** A gap audit of `LatestDocument/RequirementDocuments/PassScheduleGenerationSpec.md` (issued as v1.5) found `FR-381`, `FR-384`, `FR-385`, `FR-386` and `FR-387` wrong on the physics — bound-as-answer with no edge correction; snap-to-nearest against `R36`/`V39`; a positive fixed-multiplier roll gap where mill spring is negative and load-dependent; and the finishing-mill test conflated with route selection. Correcting `APIContracts.md`'s example to match them would have hardened the error. Arbitration published as `FlatWire_MasterSpecification.md` **§10.5**; a callout above finding #1 carries the one-line summary of each. **Contract shape is unaffected** — the envelope, `FR-389`, `FR-390` and `FR-391` stand. Note that this makes finding #1 a *symptom*: it stays open, but the fix is to rebuild the formula, not to re-derive the example. |

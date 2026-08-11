@@ -24,7 +24,7 @@ This roadmap replaces the old shopfloor-only, technology-layered plan. It is org
 
 Each workflow phase (2–14) follows the fixed template: **Business Overview · User Journey · UI (Angular) · Backend (.NET) · Database · Real-Time · Integration Flow · Testing · Deliverables**, and closes with its **OQ blockers** and **backlog stories**.
 
-The single source of truth for scope is the `c:\UAL\Flat Wire` planning repository. Nothing here is invented: every table, endpoint, dashboard, status value, and algorithm below is traceable to an artifact in that repo (`Analysis/`, `DevelopmentPlan/`, `DevelopmentPlan/Schema/`, `Mockups/`). Where a decision is still open it is called out as an **OQ-##** blocker rather than assumed.
+The single source of truth for scope is the `c:\UAL\Flat Wire` planning repository. Nothing here is invented: every table, endpoint, dashboard, status value, and algorithm below is traceable to an artifact in that repo (`Analysis/`, `DevelopmentPlan/`, `LatestDocument/DBChanges/Schema/`, `Mockups/`). Where a decision is still open it is called out as an **OQ-##** blocker rather than assumed.
 
 ## Roadmap Navigation
 
@@ -67,7 +67,7 @@ Owner is a **delivery stream**, not a person — the named-owner roster is fille
 | `LatestDocument/RequirementDocuments/RocCheckin.md`, `RodCheckout.md`, `PartialRodReCheckin.md`, `Spool.md` | Check-in/checkout/spool operator flows |
 | `LatestDocument/RequirementDocuments/PassScheduleManagement.md`, `DieChangeAndManagement.md`, `SPCCheckpoint.md`, `WeldEvent.md`, `OperationsManager.md`, `PLCTagSpecification.md` | Process workflows, role matrix, **the PLC/OPC tag surface** *(replaced `HMIAndSCADALayout.md`, deleted 4 Aug 2026 with the DB13/DB14 descope)* |
 | `DevelopmentPlan/APIContracts.md` | `FlatWire.API` REST surface + `FlatWireHub` contract |
-| `DevelopmentPlan/Schema/*` + `Schema/SQL/*` | The Flat Wire schema — **21 tables** in the new **`FlatWireDB`** (the designed `Rod` table is dropped; rod uses the existing `coils` table). DDL 01–06 + seed |
+| `LatestDocument/DBChanges/Schema/*` + `Schema/SQL/*` | The Flat Wire schema — **21 tables** in the new **`FlatWireDB`** (the designed `Rod` table is dropped; rod uses the existing `coils` table). DDL 01–06 + seed |
 | `DevelopmentPlan/CapacityAndEffortModel.md` | Per-phase owners + dev-day effort, working-day capacity model, descope ladder (resolves G1) |
 | `DevelopmentPlan/FlatWireJiraStories.md` | 12 epics / 58 stories (FW-###) mapped into phases below. **Superseded as a schedule** (dead 5-sprint model); its points survive only as the 184-point cross-check in the Capacity & Effort Model |
 | `DevelopmentPlan/FlatWireTables.md` | Table-by-table design + existing-table renames |

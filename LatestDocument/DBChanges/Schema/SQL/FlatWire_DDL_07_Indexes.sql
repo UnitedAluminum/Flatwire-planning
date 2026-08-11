@@ -201,6 +201,11 @@ GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_CoilTraceability_RodAlpha' AND object_id = OBJECT_ID(N'dbo.CoilTraceability'))
     CREATE NONCLUSTERED INDEX [IX_CoilTraceability_RodAlpha] ON [dbo].[CoilTraceability] ([RodAlpha]);
 GO
+-- Filtered: SpoolAlpha is NULL on every rod-fed run, and "which coils came off
+-- this spool" is the only query that uses it. Matches IX_CoilOutput_PassScheduleId above.
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_CoilTraceability_SpoolAlpha' AND object_id = OBJECT_ID(N'dbo.CoilTraceability'))
+    CREATE NONCLUSTERED INDEX [IX_CoilTraceability_SpoolAlpha] ON [dbo].[CoilTraceability] ([SpoolAlpha]) WHERE [SpoolAlpha] IS NOT NULL;
+GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RodCheckout_RunId' AND object_id = OBJECT_ID(N'dbo.RodCheckout'))
     CREATE NONCLUSTERED INDEX [IX_RodCheckout_RunId] ON [dbo].[RodCheckout] ([RunId]);
 GO

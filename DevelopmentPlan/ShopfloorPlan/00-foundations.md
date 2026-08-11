@@ -82,7 +82,7 @@ PLC tag stations follow the same rule — `FL2.FM2.S1`, `FL2.FM2.S2`, `FL2.FM2.S
 
 **This closes `OI-04`** ("is the mandatory stand `FM2_6inS2` or `6" S3`?"). Old `FM2_6inS2` **is** new `FM2_S3` — the DDL/API and the SRS were naming the same physical stand, and only the phantom fourth stand made them look contradictory. It also closes **`OI-36`**: the final stand's tag path is the observed one, now `FL2.FM2.S3`.
 
-**Alpha / ID formats** (`Schema/FlatWireSchema_Mapping.md`): Rod `R#####` (R00041) · Spool `SP-#####` (SP-00021) · Run `RUN-####` · Pass schedule `PS-{alloy}-{line}-{seq}` (PS-1100-FL1-003) · Weld `WLD-###` · Roll override `OVR-####` · Die change `DC-####` · SPC `SPC-####` · WIP rejection `REJ-####` · Rod checkout `CO-####` · Output coil `FW-#####-C##` (FW-00421-C01) · mid-run child alpha `FW-00421-C01-A` · Skid `SK-#####` · Die tooling `D-{size×1000}-{seq}` (D-310-034).
+**Alpha / ID formats** (`LatestDocument/DBChanges/Schema/FlatWireSchema_Mapping.md`): Rod `R#####` (R00041) · Spool `SP-#####` (SP-00021) · Run `RUN-####` · Pass schedule `PS-{alloy}-{line}-{seq}` (PS-1100-FL1-003) · Weld `WLD-###` · Roll override `OVR-####` · Die change `DC-####` · SPC `SPC-####` · WIP rejection `REJ-####` · Rod checkout `CO-####` · Output coil `FW-#####-C##` (FW-00421-C01) · mid-run child alpha `FW-00421-C01-A` · Skid `SK-#####` · Die tooling `D-{size×1000}-{seq}` (D-310-034).
 
 **Status vocabularies:**
 - **Material (Rod / Spool / Coil):** `RECEIVED → STAGED → INFLAT → COMPLETE`, plus `HOLD`, `SCRAP` (and `SUSPENDED` at receiving). Spool working states `ACTIVE / IN-PLAN / IN-USE / COMPLETED` (full state machine is **OQ-57**, open).

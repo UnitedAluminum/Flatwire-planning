@@ -1,12 +1,12 @@
 # Flat Wire Mill — High-Level Design & ER Diagram
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 4, 2026
+**Last Updated:** August 6, 2026
 **Document Type:** High-Level Design + Entity-Relationship model
 **Status:** Baselined for build — design risks in §13.2, unresolved items in §13.3
 **Owner:** Architecture stream
 **Audience:** Architects, Angular / .NET developers, DBA
-**Sources:** [`../FlatWire_MasterSpecification.md`](../FlatWire_MasterSpecification.md) §5, §6.7, §8 · [`../../DevelopmentPlan/Schema/SQL/`](../../DevelopmentPlan/Schema/SQL/) (**counted, not quoted**) · [`../../DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../../DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.2 / §0.4 · [`c:\UAL\CLAUDE.md`](../../../CLAUDE.md) ecosystem conventions
+**Sources:** [`../FlatWire_MasterSpecification.md`](../FlatWire_MasterSpecification.md) §5, §6.7, §8 · [`../DBChanges/Schema/SQL/`](../DBChanges/Schema/SQL/) (**counted, not quoted**) · [`../../DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../../DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.2 / §0.4 · [`c:\UAL\CLAUDE.md`](../../../CLAUDE.md) ecosystem conventions
 
 **Companion documents:** `[VS]` [01-VisionAndScope.md](./01-VisionAndScope.md) · `[SRS]` [02-SRS.md](./02-SRS.md) · `[API]` [04-APIContract.md](./04-APIContract.md) · `[SP]` [05-SprintPlanAndBacklog.md](./05-SprintPlanAndBacklog.md) · `[TP]` [06-TestPlanAndTestCases.md](./06-TestPlanAndTestCases.md) · `[DR]` [07-DeploymentRunbookAndRollback.md](./07-DeploymentRunbookAndRollback.md)
 
@@ -77,7 +77,7 @@ Three facts this diagram encodes that are easy to get wrong:
 | `FlatWire.Application` | `c:\UAL\ual-api` | Commands, queries, validators, pipeline behaviours |
 | `FlatWire.Domain` | `c:\UAL\ual-api` | Aggregates, param models, enums, `IFlatWireClient` |
 | `FlatWire.Infrastructure` | `c:\UAL\ual-api` | `FlatWireDbContext` (EF Core), Dapper readers, repositories, `PLCTagService` |
-| `FlatWireDB` | `ual-database` | 27 tables, 41 FKs, 46 indexes, 1 trigger, 2 read procedures |
+| `FlatWireDB` | `ual-database` | 27 tables, **43 FKs, 64 non-clustered indexes**, 1 trigger, 2 read procedures — counted from the deployed database on 6 Aug 2026. *(The previous "41 FKs, 46 indexes" was a count of the DDL as it stood on 30 Jul and had already drifted before `CoilTraceability.SpoolAlpha` was added.)* |
 
 ---
 
@@ -354,7 +354,7 @@ CoilOutput.CoilAlpha → CoilTraceability(FootageFrom..FootageTo) → Rod.Alpha 
 | Table | Purpose | Key columns / constraints |
 |---|---|---|
 | `Stand` | Rolling-mill finishing stands | `Name` UNIQUE — position only (`FM1`, `FM2_S1`, `FM2_S2`, `FM2_S3`), `LineId` (NULL = shared), **`RollDiameterIn DECIMAL(5,3)` > 0** (FM1 12.000; FM2 S1 8.000, S2 6.000, S3 6.000), gauge and width ranges `DECIMAL(8,4)` with Min<Max checks. *(Aug 4 2026: FM2 is three stands and diameter moved out of the name into `RollDiameterIn`. The DDL comment on `MinWidthIn` says "strip width" — a source terminology slip; the column means flat wire width.)* |
-| `Drawer` | Draw-box die configurations | `Name` UNIQUE, `DiameterIn DECIMAL(8,4)` > 0, optional feed-diameter range |
+| `Drawer` | Draw-box die configurations | `Name` UNIQUE, `DiameterIn DECIMAL(8,4)` > 0, optional feed-diameter range. **Die life (6 Aug 2026):** `LastGrindingFeet DECIMAL(10,2)` NOT NULL DEFAULT 0 — feet run *since* the last grind, not the reading at it — and `TotalFeetAllowed DECIMAL(10,2)` NULL, the scheduled-life threshold (NULL until **OQ-41** supplies values). **No `LastGrindingFeet ≤ TotalFeetAllowed` check** — *overdue* is a displayed state, not a data error |
 | `Edger` | Edger tooling configurations | `EdgeType` CHECK IN (`Round`,`Square`), `ToolingSetNo` |
 | `SpoolConfiguration` | Spool type constraints | Weight / core-diameter / outer-diameter ranges with Min<Max checks |
 | `AlloyProperty` | Per-alloy process properties; the **local** parent for `PassSchedule.Alloy` | `Alloy` UNIQUE, `MaxReductionPerPass DECIMAL(5,3)`, `SpringbackFactor`, tolerance defaults, speed range, `IsWeldingWire`. **`LbPerFtFactor` must not be populated** (seeded NULL, "OQ-36 PENDING") and `DensityLbPerIn3` **duplicates `united_db..alloys.alloy_density`** — see §6.6 |
@@ -400,7 +400,7 @@ CoilOutput.CoilAlpha → CoilTraceability(FootageFrom..FootageTo) → Rod.Alpha 
 | `SpcMeasurement` | Per-measurement rows | `CheckpointId` FK; `Name`; target / tolerance / actual; **`Deviation` and `InSpec` both PERSISTED computed** |
 | `WipRejection` | WIP rejection | `RejectionId` UNIQUE; **`RunId` NULLABLE** for pre-run rejections; **`MaterialAlpha` is polymorphic (rod *or* spool) with no FK**; stage; group CHECK over five values; disposition CHECK (`Suspend`,`Scrap`,`Rework`); `NewMaterialStatus` CHECK (`HOLD`,`SCRAP`) |
 | `CoilOutput` | The finished coil | `CoilAlpha` UNIQUE; `RunId` FK; gross/net weight with `NetWeightOverrideLb` and `ScaleWeightLb`; final gauge/width; footage > 0; `PassScheduleId` FK + **`PassScheduleSnapshot NVARCHAR(MAX)` JSON**; **`SkidId` is an external reference**; `SkidStatus`; `StagingLocation`; `Status` CHECK (`COMPLETE`,`HOLD`,`SCRAP`); `ROWVERSION` |
-| `CoilTraceability` | **The genealogy chain** | `CoilAlpha` FK → `CoilOutput`; `RodAlpha` FK → `Rod`; `FootageFrom` < `FootageTo`. **Non-overlap enforced by trigger** `trg_CoilTraceability_NoOverlap`, because SQL Server has no exclusion constraint. Ranges are half-open `[From, To)` |
+| `CoilTraceability` | **The genealogy chain** | `CoilAlpha` FK → `CoilOutput`; `RodAlpha` FK → `Rod`; **`SpoolAlpha` FK → `Spool`, nullable — NULL on a rod-fed run, filtered index**; `FootageFrom` < `FootageTo`. **Non-overlap enforced by trigger** `trg_CoilTraceability_NoOverlap`, because SQL Server has no exclusion constraint. Ranges are half-open `[From, To)` |
 | `RodCheckout` | All three checkout modes | `CheckoutId` UNIQUE; **`RunId` NULLABLE** for Modes P and A; `Mode` CHECK (`ModeP`,`ModeA`,`ModeB`); footage; reason; `RodDisposition` CHECK over five values; `InProcessMaterialDisposition` **Mode B only**; `PartialSpoolAlpha` **no FK**; `NewRodStatus` CHECK; `PlcTagsCleared`. Per-mode rules enforced by `CK_RodCheckout_ModeP` and `CK_RodCheckout_ModeB` |
 
 ### 6.6 Weight derivation — and why `AlloyProperty` must not own density
@@ -510,7 +510,7 @@ Each is an open issue, listed here so nobody assumes a table exists.
 
 | Concept | Required by | Schema state |
 |---|---|---|
-| **Die master / inventory** | `[SRS]` `FR-233`, `FR-254`, all of §5.10 | **No table.** Only the `Drawer` lookup and `DieChangeEvent`. Die Change cannot validate a scan against an inventory that does not exist — this is why Phase 6 depends on Phase 13 (**OI-41**) |
+| **Die master / inventory** | `[SRS]` `FR-233`, `FR-254`, all of §5.10 | **No table.** Only the `Drawer` lookup and `DieChangeEvent`. Die Change cannot validate a scan against an inventory that does not exist — this is why Phase 6 depends on Phase 13 (**OI-41**). **Narrowed 6 Aug 2026, not closed:** `Drawer` now carries `LastGrindingFeet` / `TotalFeetAllowed`, so the counter and threshold have somewhere to live — but against a die **size**, not a physical tool, so registration, condition, status and disposition history are all still missing |
 | **Alert lifecycle** | `FR-422`–`FR-428`, hub `AlertRaised`/`AlertCleared` | **No table.** Alerts cannot survive a restart; acknowledgements cannot be audited — **OI-28** |
 | **MMS ID format and lifecycle** | `FR-013` | Columns exist on `RodCheckin` / `SpoolCheckin`; **no format, no generator** — **OI-03** |
 | **Lot number** | `GET /coil/{alpha}/label`, `FR-336` | **No column, no generator** — **OI-24** |
@@ -610,6 +610,8 @@ erDiagram
         int Id PK
         varchar Name UK
         decimal DiameterIn
+        decimal LastGrindingFeet
+        decimal TotalFeetAllowed
     }
     Edger {
         int Id PK
@@ -871,6 +873,7 @@ erDiagram
     CoilTraceability { int Id PK
         varchar CoilAlpha FK
         varchar RodAlpha FK
+        varchar SpoolAlpha FK "nullable - NULL when rod-fed"
         int FootageFrom
         int FootageTo }
     RodCheckout { int Id PK
@@ -887,9 +890,10 @@ erDiagram
 
     SpcCheckpoint ||--o{ SpcMeasurement : ""
     CoilOutput    ||--o{ CoilTraceability : ""
+    Spool         ||--o{ CoilTraceability : "SpoolAlpha"
 ```
 
-**In prose:** `CoilTraceability` is the genealogy chain and the reason `NFR012` is satisfiable. Its non-overlap invariant is enforced by trigger, not constraint. Three columns in this group are **deliberately unconstrained references** — `WipRejection.MaterialAlpha` (rod *or* spool), `RodCheckout.PartialSpoolAlpha`, `CoilOutput.SkidId` — and all three are orphan-prone (**OI-20**).
+**In prose:** `CoilTraceability` is the genealogy chain and the reason `NFR012` is satisfiable. Its non-overlap invariant is enforced by trigger, not constraint. **`SpoolAlpha` (6 Aug 2026)** completes the `FR-333` chain `rod → spool → coil`, which was previously unsatisfiable — `CoilOutput` has no spool column and `RunId` cannot substitute, since `SpoolCheckin.RunId` is non-unique and `CoilOutput.RunId` is many-per-run, so the join returns a *set*. It sits on this range-grained row rather than on `CoilOutput` so that a spool running out mid-coil is expressible. Three columns in this group are **deliberately unconstrained references** — `WipRejection.MaterialAlpha` (rod *or* spool), `RodCheckout.PartialSpoolAlpha`, `CoilOutput.SkidId` — and all three are orphan-prone (**OI-20**).
 
 ### 7.8 The 41 foreign keys
 
@@ -936,6 +940,7 @@ FKs are added in a **single script after all tables exist** (`06_ForeignKeys`), 
 | `CoilOutput` | `PassScheduleId` | `PassSchedule.ScheduleId` | NULL |
 | `CoilTraceability` | `CoilAlpha` | `CoilOutput.CoilAlpha` | NOT NULL |
 | `CoilTraceability` | `RodAlpha` | `Rod.Alpha` | NOT NULL |
+| `CoilTraceability` | `SpoolAlpha` | `Spool.Alpha` | NULL |
 | `RodCheckout` | `RunId` | `FlatWireRun.RunId` | **NULL** |
 | `RodCheckout` | `RodAlpha` | `Rod.Alpha` | NOT NULL |
 
@@ -1131,6 +1136,8 @@ New here: **PP-01** (index count is 46, not 44).
 
 | Date | Changed By | Description |
 |------|-----------|-------------|
+| Aug 6, 2026 | DB planning | **`CoilTraceability` gains `SpoolAlpha`** (`varchar(20)` NULL, FK → `Spool.Alpha`, filtered index on `IS NOT NULL`) — the coil → spool edge existed nowhere, leaving `FR-333`'s `rod → spool → coil` chain unsatisfiable. `RunId` cannot substitute: `SpoolCheckin.RunId` is non-unique and `CoilOutput.RunId` is many-per-run, so the join returns a set of spools. Placed on the range-grained row, not `CoilOutput`, so a spool running out mid-coil stays expressible; a separate `SpoolCoilMapping` junction table (the client's May 2026 design) was rejected as a footage-less duplicate. **Counts corrected to the as-built database while here — 27 tables, 43 FKs, 64 non-clustered indexes**; the previous 41/46 were a 30 Jul DDL count that had already drifted. Closes neither `FR-172` (singular `Spool.ParentRodAlpha`) nor `OI-25`. |
+| Aug 6, 2026 | DB planning | **`Drawer` gains the two die-life columns** — `LastGrindingFeet DECIMAL(10,2)` NOT NULL DEFAULT 0 (feet run *since* the last grind, a resettable counter, **not** the reading at it) and `TotalFeetAllowed DECIMAL(10,2)` NULL (scheduled life; NULL until **OQ-41** supplies thresholds), with two CHECKs and deliberately **no** `LastGrindingFeet ≤ TotalFeetAllowed` rule, since *overdue* is a displayed state. Semantics from `DieChangeAndManagement.md` §4.2/§4.4; source is the `Drawer` sheet of `BaseDocuments/flatwire tables.xlsx`, a May 2026 design never built. **No change to table, FK or index counts** — two columns on an existing lookup. The §13.3 die-inventory gap row is **narrowed, not closed**: the counter and threshold now have a home, but against a die *size*, not a physical tool, so **OI-41** stands and Phase 6 still depends on Phase 13. |
 | Jul 30, 2026 | Plan team | Initial publication. Architecture context and component views, the binding reference-code rules, backend layering and CQRS, the purpose-built real-time pipeline, the Angular library design, and the full data model. **Table count (27), FK count (41) and index count (46) were taken by counting the DDL, not quoted** — the index count corrects the master specification's 44 and is raised as **PP-01**. Publishes an ER overview plus five per-group detailed diagrams covering every table, the complete 41-FK list, the cross-database touchpoints, the PLC/OPC surface, the non-transactional check-in boundary with its compensating-write sequence, and seventeen architecture decisions with rationale. States the `Rod`-table resolution (**D-04**) explicitly and names the two stale documents that say the opposite. |
 | Aug 1, 2026 | Client sync (30 Jul call) | **Schema section updated to the as-built DDL.** `RodStaging` loses `OffScheduleOverride` / `ScheduledLineId` and their two CHECK constraints — a rod booked on the other rod line now triggers an **automatic station switch** (OQ-74) — and gains `UnstageKind` / `WipRejectionId` so a **WIP rejection releases a blocked bay** (OQ-72 item 3). `AlloyProperty`'s two single-± tolerance columns become **four min/max pairs** (gauge, width, rod diameter, ovality), with diameter and ovality **NULL pending the values owed by e-mail** (OQ-71) — the `CHK007` missing-column note is resolved in shape but not in data. `coils.coil_status = INFLAT` is written at **check-in only** (OQ-67). Not shown in the ER diagram but added to the DDL: `RodCheckout` gains `WasWelded` and the supervisor approval stamp it never had (**G24**), enforced for Mode B and for a welded Mode P removal. Rebuild verified — `RunAll` clean and idempotent, 27 tables, 15 constraint tests pass. |
 | Aug 4, 2026 | Client direction | **HMI/SCADA descoped.** Dashboard 13 (HMI Line Schematic), Dashboard 14 (SCADA Trends) and the Machine View tab on the active run monitor are **withdrawn at client request**. `FR-111`, `FR-112`, `FR-114`, `FR-425`, `FR-440`–`FR-451` and `FR-460`–`FR-470` are marked **withdrawn** — numbers retained, never renumbered — and `FR-113` **reworded**, since it asserted a rule about "the active tab" that outlives the tabs. Both mockups and `HMIAndSCADALayout.md` are deleted. **Descope-ladder rung 7 is removed entirely:** its 67 h stops being *recoverable* effort and becomes *never-planned*, so Phase 5 drops 221 → ~154 h and the programme 3,727 → ~3,660 h, but the ladder loses its largest optional rung and Phase 5 is no longer deferrable. **Nothing structural was removed:** all six run event markers still land on the DB3 traces and no hub event, endpoint, table or column is deleted — every DB13/DB14 reference in the real-time and tag tables was a *consumer* entry, not a row. `Q4`/`OQ-4` is **superseded**, because Dashboard 14 was its answer. The `SCADA multi-pen (DB14)` component row and the `/trends` route are deleted; `sp_GetGaugeTrace` is **unchanged** — it had three consumers and only one was removed. **PLC tag surface consolidated.** The surface existed in six partial, mutually contradictory copies; it now has one home in [`PLCTagSpecification.md`](../RequirementDocuments/PLCTagSpecification.md) (client-facing, `[PLC]`, with its own `PLC-Q##` register) plus `DevelopmentPlan/PLCTagImplementation.md` (internal). This document’s tag-surface section is reduced to a pointer, keeping only what is genuinely its own job. §9.1 (the single-trigger rule) and §10 (the transactional boundary and its compensating-write sequence) are **kept here** — they are architecture, not tag surface, and §10 is the home of **G2**/**OI-39**. |

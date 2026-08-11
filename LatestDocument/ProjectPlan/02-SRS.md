@@ -40,7 +40,7 @@ Full glossary in §3.6. The terms that most often cause misreadings:
 | Reference | Role |
 |---|---|
 | [`../FlatWire_MasterSpecification.md`](../FlatWire_MasterSpecification.md) | The reconciled source this SRS re-cuts. Authoritative where two older artifacts disagree |
-| [`../../DevelopmentPlan/Schema/SQL/`](../../DevelopmentPlan/Schema/SQL/) | Authoritative for column-level types, nullability and constraints |
+| [`../DBChanges/Schema/SQL/`](../DBChanges/Schema/SQL/) | Authoritative for column-level types, nullability and constraints |
 | [`../../Mockups/`](../../Mockups/) | Authoritative for pixel-level layout and screen behaviour |
 | [`../../DevelopmentPlan/REVIEW.md`](../../DevelopmentPlan/REVIEW.md) | Catalogue of known contradictions between older documents |
 | [`../../Analysis/FlatWireOpenQuestions.md`](../../Analysis/FlatWireOpenQuestions.md) | The open-questions register (`OQ-##`) |

@@ -1,7 +1,7 @@
 # Flat Wire Mill — Lookup & Reference Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 29, 2026
+**Last Updated:** August 6, 2026
 **Document Type:** Final Schema — Lookup / Configuration Tables
 **Source:** Derived from `FlatWireTables.md` recommendations
 **Target DB:** `FlatWireDB` (schema `dbo`)
@@ -47,12 +47,28 @@ Draw box die configurations (DB1, DB2). A die is a tungsten carbide tool with a 
 | `DiameterIn` | decimal(8,4) | NOT NULL | — | Die hole diameter in inches; determines the output wire diameter after drawing |
 | `MinDiameterIn` | decimal(8,4) | NULL | — | Minimum input wire diameter this die can accept, in inches |
 | `MaxDiameterIn` | decimal(8,4) | NULL | — | Maximum input wire diameter this die can accept, in inches |
+| `LastGrindingFeet` | decimal(10,2) | NOT NULL | — | Feet run **since the last grinding / reconditioning**. A resettable counter, defaulting to `0` |
+| `TotalFeetAllowed` | decimal(10,2) | NULL | — | Scheduled life — the maximum footage this die may run before it is pulled. NULL until thresholds arrive (`OQ-41`) |
 | `IsActive` | bit | NOT NULL | — | `1` = die is in service and selectable; `0` = retired / removed from service |
 
 **Constraints:**
 - `DiameterIn` must be positive
 - When both are non-null: `MinDiameterIn < MaxDiameterIn`
 - `UQ_Drawer_Name` — `Name` is unique
+- `CK_Drawer_LastGrindingFeet` — `LastGrindingFeet >= 0`
+- `CK_Drawer_TotalFeetAllowed` — `TotalFeetAllowed IS NULL OR TotalFeetAllowed > 0`
+
+### Die life
+
+`LastGrindingFeet` and `TotalFeetAllowed` are the two die-life numbers [DieChangeAndManagement.md](../../LatestDocument/RequirementDocuments/DieChangeAndManagement.md) §4.2 calls *"footage on die"* and *"scheduled life"*. The screen derives the rest: `Remaining = TotalFeetAllowed − LastGrindingFeet`, and `Life used % = LastGrindingFeet / TotalFeetAllowed`.
+
+- **`LastGrindingFeet` is feet accumulated *since* the last grind, not the odometer reading *at* it.** The name reads the other way round; the two differ by a subtraction. §4.4's *Reset counter* operation sets it back to `0` when a die returns from reconditioning.
+- **`TotalFeetAllowed` is set lower on a reconditioned die** than on a new one — §4.4: *"a re-lapped die has less remaining life."* It is Maintenance-editable, not a constant.
+- **There is deliberately no `LastGrindingFeet <= TotalFeetAllowed` constraint.** *Overdue* is a real state the Die Management screen displays (§5), not a data error.
+
+> **What these columns do not do.** `Drawer` is a die-**size** catalogue — 13 rows, one per hole diameter — so a counter here accumulates against a size, not against a physical tool. The per-die inventory (`D-{size×1000}-{seq}`, condition, Active/Nearing/Overdue/Spare/Retired, disposition history) still does not exist: **`OI-41` is narrowed, not closed**, and Phase 6 still depends on Phase 13. When that table lands, these two columns move to it.
+>
+> Nor can anything maintain them automatically yet. `DieChangeEvent` identifies its dies by `OldDieSizeIn` / `NewDieSizeIn` decimals with **no `DrawerId` FK**, so no run event can attribute footage to a row here. Until that FK or the PLC die counter arrives, both values are Maintenance-maintained.
 
 ---
 
@@ -175,6 +191,7 @@ Three positions are modelled, not two: FL1/FL3 draw rod from the dual-position *
 
 | Date | Change |
 |---|---|
+| August 6, 2026 | Added **`Drawer.LastGrindingFeet`** (`decimal(10,2)` NOT NULL DEFAULT 0) and **`Drawer.TotalFeetAllowed`** (`decimal(10,2)` NULL) with `CK_Drawer_LastGrindingFeet` and `CK_Drawer_TotalFeetAllowed`, giving the die-life counter and threshold their first home in the schema. Semantics taken from `DieChangeAndManagement.md` §4.2/§4.4, not invented. Source: the `Drawer` sheet of `BaseDocuments/flatwire tables.xlsx` (`Lastgrindingfeet` / `TotalFeet`), a May 2026 proposed design that was never built. **`OQ-41`'s threshold now has a column to land in** — the values themselves are still TBD, so `TotalFeetAllowed` seeds NULL rather than an invented engineering limit (same discipline as this table's rod-diameter tolerances). **`OI-41` is narrowed, not closed**: `Drawer` is a die-size catalogue, so the per-physical-die inventory is still missing and Phase 6 still depends on Phase 13. The columns are added in the `CREATE TABLE` only — an already-deployed `FlatWireDB` needs a teardown + rebuild to pick them up, since `01_Lookup`'s `CREATE` is skipped whenever `Drawer` exists. |
 | July 29, 2026 | Documented a gap on `AlloyProperty`: `CHK007` validates **incoming rod diameter** against nominal ± a lookup tolerance, but the only tolerance columns here are `GaugeToleranceDefault`/`WidthToleranceDefault`, which are flat-wire *output* dimensions. No rod-diameter tolerance column exists anywhere in the schema, so `CHK007` is not implementable as written (**Q71**). No DDL change yet — the column shape and owner need confirming first. |
 | July 29, 2026 | Added **`PayoffPosition`** with three pinned rows (Payoff1, Payoff2, TraversingTakeup), giving `FlatWireRunDetail.PayoffPositionId` an enforced FK parent and resolving the "payoff modelled three ways" contradiction in `REVIEW.md` #15. Seeded in the DDL rather than the sample-data script because the FK depends on the rows existing. |
 | July 26, 2026 | Added `AlloyProperty` lookup (FW-004); added `IsActive` to `SpoolConfiguration`; added unique constraints on `Drawer.Name`, `Edger.Name`, `SpoolConfiguration.Name`; corrected bare `decimal` weights to `decimal(8,2)`. Retargeted to `FlatWireDB`. |

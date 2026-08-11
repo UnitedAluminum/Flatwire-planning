@@ -45,7 +45,7 @@
 | What must the system do? | `[SRS]` — requirement numbers are stable and must not be renumbered |
 | What are the non-functional targets? | `[SRS §6]` — the register; each also appears inline in the group it constrains |
 | How is it structured? Where does the code land? | `[HLD]` |
-| What are the exact column types and constraints? | **The executable DDL** in [`../../DevelopmentPlan/Schema/SQL/`](../../DevelopmentPlan/Schema/SQL/) — `[HLD §6]` describes it, the DDL defines it |
+| What are the exact column types and constraints? | **The executable DDL** in [`../DBChanges/Schema/SQL/`](../DBChanges/Schema/SQL/) — `[HLD §6]` describes it, the DDL defines it |
 | What does the screen look like? | **The HTML in [`../../Mockups/`](../../Mockups/)** — `[SRS §7]` describes it, the mockups define it |
 | What is the request or response shape? | `[API]` |
 | When does it get built, and by whom? | `[SP]` |

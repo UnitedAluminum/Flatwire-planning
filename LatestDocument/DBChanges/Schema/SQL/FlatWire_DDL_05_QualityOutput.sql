@@ -161,7 +161,22 @@ GO
 -- ------------------------------------------------------------
 -- CoilTraceability
 -- Maps footage ranges within an output coil back to the source
--- rod alpha. Enables full genealogy: coil → rod → supplier heat.
+-- rod alpha, and on a spool-fed line to the source spool.
+-- Enables full genealogy: coil -> spool -> rod -> supplier heat,
+-- which is the chain FR-333 asks for ("rod -> spool -> coil").
+--
+-- SpoolAlpha added Aug-6-2026. Rationale, because the obvious
+-- alternatives are both wrong:
+--   * RunId cannot stand in for it. SpoolCheckin.RunId is NOT unique
+--     (many spools may be checked in against one run) and CoilOutput.RunId
+--     is many coils per run, so CoilOutput -> SpoolCheckin returns a SET of
+--     spools, never "the" spool.
+--   * CoilOutput.SpoolAlpha would be wrong the moment a spool runs out
+--     mid-coil and the next is mounted. The footage range here is the right
+--     grain: it says WHICH FEET came from which spool, which is what the
+--     welding-wire certificate needs.
+-- One spool routinely yields ~2 coils (client 6 Aug 2026: FL1 spools
+-- ~1,800 lb, FL2 coils 800/900 lb), so this is the normal case.
 -- ------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[CoilTraceability]') AND type = N'U')
 BEGIN
@@ -169,6 +184,10 @@ BEGIN
         [Id]          INT         NOT NULL IDENTITY(1,1),
         [CoilAlpha]   VARCHAR(30) NOT NULL,                 -- FK → CoilOutput.CoilAlpha
         [RodAlpha]    VARCHAR(20) NOT NULL,                 -- FK → Rod.Alpha (source rod for this range)
+        -- FK → Spool.Alpha. NULL on a rod-fed run (FL1 standalone, and FL3 when
+        -- fed directly from rod) -- there is no input spool to name. NOT NULL is
+        -- therefore wrong here: absence is a real, common state, not missing data.
+        [SpoolAlpha]  VARCHAR(20) NULL,                     -- FK → Spool.Alpha (source spool for this range; NULL when rod-fed)
         [FootageFrom] INT         NOT NULL,                 -- start footage (inclusive)
         [FootageTo]   INT         NOT NULL,                 -- end footage (inclusive)
 

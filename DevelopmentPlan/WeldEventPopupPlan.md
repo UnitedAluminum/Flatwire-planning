@@ -243,8 +243,8 @@ Small, but must not be skipped — the columns carry `WLD010` comments that will
 
 | # | File | Work |
 |---|---|---|
-| B1 | `DevelopmentPlan/Schema/FlatWireSchema_Runs.md` | L77 (`WLD003`/`WLD010` "Mark as Welded"), L101 `IsWelded`, L120–121 `WeldedAt`/`WeldedBy`, L164 `CK_RodStaging_Welded`. **No column changes** — only the description of what sets them (the weld event, not a station action). Change Log row. |
-| B2 | `DevelopmentPlan/Schema/SQL/FlatWire_DDL_04_Runs.sql` | Comments at L63, L93, L128–129, L181. Comment-only; **no DDL change, no rebuild required.** |
+| B1 | `LatestDocument/DBChanges/Schema/FlatWireSchema_Runs.md` | L77 (`WLD003`/`WLD010` "Mark as Welded"), L101 `IsWelded`, L120–121 `WeldedAt`/`WeldedBy`, L164 `CK_RodStaging_Welded`. **No column changes** — only the description of what sets them (the weld event, not a station action). Change Log row. |
+| B2 | `LatestDocument/DBChanges/Schema/SQL/FlatWire_DDL_04_Runs.sql` | Comments at L63, L93, L128–129, L181. Comment-only; **no DDL change, no rebuild required.** |
 
 ---
 

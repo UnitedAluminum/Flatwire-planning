@@ -6,7 +6,7 @@
 **Status:** Baselined — **rollback must be rehearsed before the first production deployment** (§3.6)
 **Owner:** Release manager / IT
 **Audience:** IT / DevOps, DBA, release manager, on-call engineer
-**Sources:** [`../FlatWire_MasterSpecification.md`](../FlatWire_MasterSpecification.md) §5.11, §8.4 · `[HLD]` [03-HLD-and-ERDiagram.md](./03-HLD-and-ERDiagram.md) §11 · [`c:\UAL\CLAUDE.md`](../../../CLAUDE.md) UAL deployment conventions · [`../../DevelopmentPlan/Schema/SQL/`](../../DevelopmentPlan/Schema/SQL/)
+**Sources:** [`../FlatWire_MasterSpecification.md`](../FlatWire_MasterSpecification.md) §5.11, §8.4 · `[HLD]` [03-HLD-and-ERDiagram.md](./03-HLD-and-ERDiagram.md) §11 · [`c:\UAL\CLAUDE.md`](../../../CLAUDE.md) UAL deployment conventions · [`../DBChanges/Schema/SQL/`](../DBChanges/Schema/SQL/)
 
 **Companion documents:** `[VS]` [01-VisionAndScope.md](./01-VisionAndScope.md) · `[SRS]` [02-SRS.md](./02-SRS.md) · `[HLD]` [03-HLD-and-ERDiagram.md](./03-HLD-and-ERDiagram.md) · `[API]` [04-APIContract.md](./04-APIContract.md) · `[SP]` [05-SprintPlanAndBacklog.md](./05-SprintPlanAndBacklog.md) · `[TP]` [06-TestPlanAndTestCases.md](./06-TestPlanAndTestCases.md)
 
@@ -162,7 +162,7 @@ SELECT RunId, PausedAt FROM dbo.RunPauseEvent WHERE ResumedAt IS NULL;
 
 ```powershell
 # 2.1 — go to the script folder. The :r includes are relative; running from anywhere else fails.
-cd "c:\UAL\Flatwire-planning\DevelopmentPlan\Schema\SQL"
+cd "c:\UAL\Flatwire-planning\LatestDocument\DBChanges\Schema\SQL"
 
 # 2.2 — full build, in order. Idempotent and safe to re-run against an existing FlatWireDB.
 sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll.sql
@@ -721,7 +721,7 @@ The on-call engineer should have: this document · `[API §1.8]` (the error-code
 
 ```powershell
 # --- Database -------------------------------------------------------------
-cd "c:\UAL\Flatwire-planning\DevelopmentPlan\Schema\SQL"   # required: :r paths are relative
+cd "c:\UAL\Flatwire-planning\LatestDocument\DBChanges\Schema\SQL"   # required: :r paths are relative
 sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll.sql       # full build + seed, idempotent
 sqlcmd -S "<server>" -E -C -i FlatWire_DDL_04_Runs.sql      # one script
 sqlcmd -S "<server>" -E -C -i FlatWire_DDL_99_Teardown.sql  # DROPS EVERYTHING — test only
@@ -752,8 +752,8 @@ Get-WindowsOptionalFeature -Online -FeatureName IIS-WebSockets | Select FeatureN
 | `FlatWire_DDL_03_Materials.sql` | `Rod`, `FlatWireRun`, `Spool` |
 | `FlatWire_DDL_04_Runs.sql` | 9 run tables |
 | `FlatWire_DDL_05_QualityOutput.sql` | 6 quality/output tables |
-| `FlatWire_DDL_06_ForeignKeys.sql` | **All 41 FKs** |
-| `FlatWire_DDL_07_Indexes.sql` | **46 indexes**, including the 3 filtered UNIQUE |
+| `FlatWire_DDL_06_ForeignKeys.sql` | **All 43 FKs** (as-built, 6 Aug 2026) |
+| `FlatWire_DDL_07_Indexes.sql` | **64 non-clustered indexes**, including the 3 filtered UNIQUE (as-built, 6 Aug 2026) |
 | `FlatWire_DDL_08_Programmability.sql` | Trigger + 2 read procedures + grants |
 | `FlatWire_DDL_RunAll.sql` | SQLCMD orchestrator — **requires SQLCMD mode** |
 | `FlatWire_DDL_99_Teardown.sql` | **Drops everything — test environments only** |
@@ -803,5 +803,5 @@ Completed: ______________     Signed: ______________
 
 | Date | Changed By | Description |
 |------|-----------|-------------|
-| Jul 30, 2026 | Plan team | Initial publication. An executable runbook with numbered steps, exact commands, and a verification after every step: release contents and ordering rationale, environment and configuration matrix, a pre-deployment checklist including the four line-state queries and a **mandatory rollback rehearsal**, and the five-component deployment sequence — `FlatWireDB` via SQLCMD with six post-run verifications (**27 tables, 41 FKs, 46 indexes**), the **FW-001 shared-schema renames as a separately approved step** with pre-flight impact check and dependency verification, `FlatWire.API` with the **IIS WebSockets prerequisite**, OPC configuration with tag-push verification **on a stopped line only**, and the Angular bundle. Publishes a fifteen-check smoke suite and a rollback plan with decision criteria and a 10-minute decision limit, per-component procedures in reverse dependency order, an explicit warning that the teardown script **drops everything**, a dedicated section on why the FW-001 renames are the **least-reversible element** and what to do when the reverse fails, an eight-item manual reconciliation list for in-flight runs, open MMS IDs and unlabeled coils, rollback verification, and a communication template. Closes with monitoring, Serilog locations, incident runbooks for the three most likely production failures, an escalation roster left for the release manager to fill, and a command and file reference. |
+| Jul 30, 2026 | Plan team | Initial publication. An executable runbook with numbered steps, exact commands, and a verification after every step: release contents and ordering rationale, environment and configuration matrix, a pre-deployment checklist including the four line-state queries and a **mandatory rollback rehearsal**, and the five-component deployment sequence — `FlatWireDB` via SQLCMD with six post-run verifications (**27 tables, 43 FKs, 64 non-clustered indexes**), the **FW-001 shared-schema renames as a separately approved step** with pre-flight impact check and dependency verification, `FlatWire.API` with the **IIS WebSockets prerequisite**, OPC configuration with tag-push verification **on a stopped line only**, and the Angular bundle. Publishes a fifteen-check smoke suite and a rollback plan with decision criteria and a 10-minute decision limit, per-component procedures in reverse dependency order, an explicit warning that the teardown script **drops everything**, a dedicated section on why the FW-001 renames are the **least-reversible element** and what to do when the reverse fails, an eight-item manual reconciliation list for in-flight runs, open MMS IDs and unlabeled coils, rollback verification, and a communication template. Closes with monitoring, Serilog locations, incident runbooks for the three most likely production failures, an escalation roster left for the release manager to fill, and a command and file reference. |
 

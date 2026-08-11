@@ -54,6 +54,24 @@ GO
 -- Drawer
 -- Draw box die configurations (DB1, DB2). Die hole diameter
 -- determines the output wire size after drawing.
+--
+-- DIE LIFE (Aug-6-2026). LastGrindingFeet / TotalFeetAllowed give the
+-- die-life numbers their first home in the schema. Semantics are from
+-- DieChangeAndManagement.md 4.2 / 4.4 -- read the column comments, because
+-- LastGrindingFeet does NOT mean "the odometer reading at the last grind".
+--
+-- SCOPE, so nobody reads more into these two columns than they carry:
+-- Drawer is a die-SIZE catalogue (13 rows, one per hole diameter), so a
+-- counter here accumulates against a size, not against a physical tool.
+-- The per-die inventory (D-{size*1000}-{seq}, condition, Active/Nearing/
+-- Overdue/Spare/Retired, disposition history) still does not exist --
+-- OI-41 is NARROWED, NOT CLOSED. When that table lands, these two columns
+-- move to it.
+--
+-- Nothing maintains them automatically yet: DieChangeEvent identifies its
+-- dies by OldDieSizeIn / NewDieSizeIn decimals with no DrawerId FK, so no
+-- run event can attribute footage to a row here. Until that FK or the PLC
+-- die counter arrives, both values are Maintenance-maintained.
 -- ------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Drawer]') AND type = N'U')
 BEGIN
@@ -63,12 +81,26 @@ BEGIN
         [DiameterIn]    DECIMAL(8,4) NOT NULL,             -- die hole diameter in inches (output wire size)
         [MinDiameterIn] DECIMAL(8,4) NULL,                 -- minimum acceptable feed diameter
         [MaxDiameterIn] DECIMAL(8,4) NULL,                 -- maximum acceptable feed diameter
+        -- Feet run SINCE the last grinding/reconditioning -- a resettable counter,
+        -- not the odometer value at that grind. Reset to 0 when the die returns
+        -- from the die room (DieChangeAndManagement.md 4.4 "Footage resets to zero").
+        [LastGrindingFeet] DECIMAL(10,2) NOT NULL CONSTRAINT [DF_Drawer_LastGrindingFeet] DEFAULT (0),
+        -- Scheduled life: the engineering/supplier maximum footage this die may run
+        -- before it is pulled. Configurable, and set LOWER on a reconditioned die.
+        -- NULL until the client supplies thresholds (OQ-41 -- tracking decided,
+        -- threshold TBD). Do not seed an invented limit.
+        [TotalFeetAllowed] DECIMAL(10,2) NULL,
         [IsActive]      BIT          NOT NULL CONSTRAINT [DF_Drawer_IsActive] DEFAULT (1),
 
         CONSTRAINT [PK_Drawer]             PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_Drawer_Name]        UNIQUE ([Name]),
         CONSTRAINT [CK_Drawer_DiamPos]     CHECK ([DiameterIn] > 0),
-        CONSTRAINT [CK_Drawer_FeedRange]   CHECK ([MinDiameterIn] IS NULL OR [MaxDiameterIn] IS NULL OR [MinDiameterIn] < [MaxDiameterIn])
+        CONSTRAINT [CK_Drawer_FeedRange]   CHECK ([MinDiameterIn] IS NULL OR [MaxDiameterIn] IS NULL OR [MinDiameterIn] < [MaxDiameterIn]),
+        CONSTRAINT [CK_Drawer_LastGrindingFeet] CHECK ([LastGrindingFeet] >= 0),
+        CONSTRAINT [CK_Drawer_TotalFeetAllowed] CHECK ([TotalFeetAllowed] IS NULL OR [TotalFeetAllowed] > 0)
+        -- Deliberately NO check that LastGrindingFeet <= TotalFeetAllowed. "Overdue"
+        -- is a real operating state the Die Management screen must display
+        -- (DieChangeAndManagement.md 5), not a data error to refuse at the database.
     );
     PRINT 'Created table: Drawer';
 END

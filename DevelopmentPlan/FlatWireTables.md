@@ -154,7 +154,11 @@ Represents draw box / wire drawing die configurations (DB1, DB2).
 | `DiameterIn` | decimal(8,4) | **Rename** from `Diameter` |
 | `MinDiameterIn` | decimal(8,4) NULL | **Add** — minimum feed diameter this die can accept |
 | `MaxDiameterIn` | decimal(8,4) NULL | **Add** — maximum feed diameter |
+| `LastGrindingFeet` | decimal(10,2) NOT NULL | **Added Aug 6 2026** — feet run *since* the last grinding; resettable counter, default 0 |
+| `TotalFeetAllowed` | decimal(10,2) NULL | **Added Aug 6 2026** — scheduled life; NULL until thresholds arrive (`OQ-41`) |
 | `IsActive` | bit NOT NULL | **Add** — default 1; set 0 for retired dies |
+
+> **Reconciled up to the as-built schema, 6 Aug 2026.** This April analysis was written against an earlier snapshot of the source workbook and lists `Drawer` as having only `Id` / `Diameter` / `Name`. The May revision now in the repo (`BaseDocuments/flatwire tables.xlsx`) also carries `Lastgrindingfeet`, `TotalFeet` and `Status`. The first two are adopted above as `LastGrindingFeet` / `TotalFeetAllowed`; `Status` is **not** adopted — `IsActive` covers the in-service/retired split, and the richer *Active · Nearing · Overdue · Spare · Retired* vocabulary belongs to the die-inventory table that still does not exist (**OI-41**).
 
 ---
 

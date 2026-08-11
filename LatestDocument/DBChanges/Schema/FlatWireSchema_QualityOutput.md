@@ -1,7 +1,7 @@
 # Flat Wire Mill — Quality Control & Output Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 29, 2026
+**Last Updated:** August 6, 2026
 **Document Type:** Final Schema — Quality Control & Output Tables
 **Source:** Derived from `FlatWireTables.md` recommendations
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `SQL/FlatWire_DDL_05_QualityOutput.sql`
@@ -128,19 +128,34 @@ Output coil records generated at run completion. One row per finished coil produ
 
 ## `CoilTraceability`
 
-Source traceability — maps footage ranges within an output coil back to the specific rod alpha that produced that material. Enables full genealogy from finished coil to supplier heat number. Multiple rows per coil when the run involved more than one rod.
+Source traceability — maps footage ranges within an output coil back to the specific rod alpha that produced that material, and on a spool-fed line to the source spool. Enables full genealogy from finished coil to supplier heat number, which is the `rod → spool → coil` chain `FR-333` requires. Multiple rows per coil when the run involved more than one rod or more than one spool.
 
 | Column | Data Type | Nullable | FK Reference | Description |
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `CoilAlpha` | varchar(30) | NOT NULL | `CoilOutput.CoilAlpha` | FK to the output coil this traceability row belongs to |
 | `RodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | FK to the rod that produced material in this footage range |
+| `SpoolAlpha` | varchar(20) | NULL | `Spool.Alpha` | FK to the spool that fed this footage range. **NULL on a rod-fed run** (FL1 standalone, and FL3 when fed directly from rod) — there is no input spool to name |
 | `FootageFrom` | int | NOT NULL | — | Start footage position (inclusive) in this coil that originated from `RodAlpha` |
 | `FootageTo` | int | NOT NULL | — | End footage position (inclusive) in this coil that originated from `RodAlpha` |
 
 **Constraints:**
 - `FootageFrom < FootageTo` (`CK_CoilTraceability_Range`)
 - **Enforced:** footage ranges within a coil must not overlap — trigger `trg_CoilTraceability_NoOverlap` (DDL_08, DM010)
+- `FK_CoilTraceability_Spool` constrains only the rows that name a spool; a NULL is not evaluated
+- `IX_CoilTraceability_SpoolAlpha` is **filtered** on `SpoolAlpha IS NOT NULL`
+
+### Why the spool lives here and not on `CoilOutput`
+
+Added 6 Aug 2026. The relationship was missing outright: `CoilOutput` has no spool column, so a finished coil could not be traced to the spool that fed it.
+
+- **`RunId` cannot stand in for it.** `SpoolCheckin.RunId` is not unique — many spools may be checked in against one run — and `CoilOutput.RunId` is many coils per run. `CoilOutput → SpoolCheckin` therefore returns a **set** of spools, never *the* spool.
+- **A `CoilOutput.SpoolAlpha` header column would be wrong** the moment a spool runs out mid-coil and the next is mounted. The footage range here is the right grain: it records *which feet* came from which spool, which is what the welding-wire certificate needs.
+- **A separate `SpoolCoilMapping` junction table was rejected** — the client's May 2026 proposed design (`BaseDocuments/flatwire tables.xlsx`) has one as `(Id, SpoolId, CoilNo)`. It records only *that* a spool contributed, carries no footage, and would be a second weaker copy of an edge this table already owns.
+
+One spool routinely yields about two coils (client, 6 Aug 2026: FL1 spools ~1,800 lb against FL2 coils of 800/900 lb), so this is the ordinary case, not an edge case.
+
+> **Two residual gaps this does not close.** `Spool.ParentRodAlpha` is **singular**, so a spool welded from several rods still loses parents — that is `FR-172`'s multi-parent genealogy, a separate defect; rods-per-spool is derivable through `Spool.SourceRunId → WeldEvent` but without footage attribution. And **`OI-25`** stands: run events use cumulative **run** footage while these ranges are **coil-local**, so the spool attribution is only as trustworthy as a coil-start offset no artifact yet states.
 
 ---
 
@@ -209,6 +224,7 @@ Records rod removal from a payoff position. Supports two modes: **Mode A** = pre
 
 | Date | Change |
 |---|---|
+| August 6, 2026 | Added **`CoilTraceability.SpoolAlpha`** (`varchar(20)` NULL, FK → `Spool.Alpha`, filtered index `IX_CoilTraceability_SpoolAlpha`). The coil → spool edge did not exist anywhere in the schema, so `FR-333`'s `rod → spool → coil` chain was not satisfiable: `CoilOutput` has no spool column, and `RunId` cannot substitute because `SpoolCheckin.RunId` is non-unique and `CoilOutput.RunId` is many-per-run, so the join returns a set. Placed on the range-grained row rather than on `CoilOutput` so a coil spanning two spools is expressible, and preferred over a separate `SpoolCoilMapping` junction table (the client's May 2026 proposal), which carries no footage. **Table count unchanged at 27; FK count 42 → 43.** Does not close `FR-172` (singular `Spool.ParentRodAlpha`) or `OI-25` (run-cumulative vs coil-local footage frames). |
 | July 29, 2026 | `RodCheckout.Mode` extended with **`ModeP`** (pre-check-out — un-stages a pre-checked-in rod that was never checked in). Added `CK_RodCheckout_ModeP` and `CK_RodCheckout_ModeB` so the per-mode field rules are enforced in the database rather than only stated in prose (`REVIEW.md` #20). Added a modes-compared table. |
 | July 26, 2026 | `SpcMeasurement`: added `ToleranceValue`; `Deviation` + `InSpec` now computed PERSISTED. `CoilOutput`: `FootageFt` → `decimal(10,2)`; added `PassScheduleId` + `PassScheduleSnapshot` (OQ-54/NFR013), `NetWeightOverrideLb` + `ScaleWeightLb` (OQ-36/packing), `StagingLocation`, expanded `SkidStatus` domain, audit + `RowVersion`; corrected bare `decimal` weights to `decimal(8,2)`. `CoilTraceability`: overlap now enforced by trigger. `RodCheckout`: `NewRodStatus` CHECK. Retargeted to `FlatWireDB`. |
 | August 1, 2026 | **`RodCheckout` gains supervisor-approval columns (gap G24) and the welded Mode P rule (OQ-68, client 30 Jul 2026).** Added `WasWelded`, `ApprovedBy`, `ApprovedAt`, `OverrideReason` — this table previously had **no approval columns at all**, so the OQ-48 and OQ-50 approvals decided on 4 May 2026 had nowhere to be recorded. Added `CK_RodCheckout_WasWelded` (welded removals are Mode P only), `CK_RodCheckout_Approval` (all-or-nothing stamp), `CK_RodCheckout_ModePWelded` (a welded pre-check-out needs supervisor approval, a documented reason and `NewRodStatus='HOLD'` — it is a rejection, not a return) and `CK_RodCheckout_ModeBApproved` (retro-enforcing OQ-48). Sample data gains a Mode P welded row and an approver on the existing Mode B row, which failed the rebuild without one. DDL rebuild clean, 15 constraint tests pass. |
