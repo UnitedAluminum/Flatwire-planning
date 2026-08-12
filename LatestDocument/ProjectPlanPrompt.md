@@ -3,7 +3,7 @@
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
 **Last Updated:** July 30, 2026
 **Document Type:** Reusable generation prompt (paste into a fresh Claude Code session opened at `c:\UAL\Flatwire-planning`)
-**Produces:** seven documents under `LatestDocument/ProjectPlan/`
+**Produces:** seven documents under `MVP-1/ProjectPlan/`
 **Status:** Ready to run
 
 ---
@@ -20,7 +20,7 @@ You are producing the formal project-plan document set for the **United Aluminum
 
 ## 1. Deliverables
 
-Create the directory `LatestDocument/ProjectPlan/` and write exactly these seven markdown documents:
+Create the directory `MVP-1/ProjectPlan/` and write exactly these seven markdown documents:
 
 | # | File | Document |
 |---|---|---|
@@ -34,19 +34,19 @@ Create the directory `LatestDocument/ProjectPlan/` and write exactly these seven
 
 Optionally also write `00-README.md` — a one-page index of the seven with a read order and a "which document is authoritative for what" table. Nothing else. Do not create sub-folders, do not emit `.docx`, do not write `.sql`, `.ts` or `.cs` files.
 
-**Do not modify any existing file in this repository.** `Analysis/`, `DevelopmentPlan/`, `Mockups/`, `SRS/`, `BaseDocuments/` and `LatestDocument/FlatWire_MasterSpecification.md` are read-only inputs for this task. Everything you write goes in `LatestDocument/ProjectPlan/`.
+**Do not modify any existing file in this repository.** `Analysis/`, `MVP-1/DevelopmentPlan/`, `MVP-1/Mockups/`, `MVP-1/SRS/`, `BaseDocuments/` and `LatestDocument/FlatWire_MasterSpecification.md` are read-only inputs for this task. Everything you write goes in `MVP-1/ProjectPlan/`.
 
 ## 2. Source hierarchy — read in this order, and obey this precedence
 
 1. **`LatestDocument/FlatWire_MasterSpecification.md`** (3,415 lines, Jul 30 2026) — the **primary input**. It is already a reconciliation of the whole repo, section-mapped as: §1 exec summary · §2 domain/glossary · §3 process flows · §4 functional requirements (`FR-###`) · §5 data model · §6 API & real-time · §7 UI · §8 architecture/integration · §9 delivery roadmap · §10 decisions register · §11 open issues (`OI-##`) · Appendix A provenance. Read it **in full** before writing anything. Most of your content is a re-cut of this document for a specific audience — so read it once, cut it many ways.
-2. **`LatestDocument/DBChanges/Schema/SQL/*.sql`** — authoritative for column-level types, nullability, constraints, indexes and FKs. `FlatWire_ERDiagram_Documentation.md` describes the as-built schema.
-3. **`Mockups/*.html`** — authoritative for pixel-level layout and screen behaviour. `Mockups/flat-wire-shopfloor.styles.scss` is the token system.
-4. **`DevelopmentPlan/ShopfloorPlan/`** — `00-foundations.md` (§0.2 reference-code map, §0.3 domain cheat-sheet, §0.4 real-time architecture), `phase-01..14-*.md`, `back-matter.md` (dependency chain, milestone calendar, gaps register **G1–G18**).
-5. **`DevelopmentPlan/CapacityAndEffortModel.md`** — the effort/capacity arithmetic behind the sprint plan (streams, unit-rate card, per-phase hours, descope ladder).
-6. **`DevelopmentPlan/REVIEW.md`** — the audit of known contradictions between docs. **Consult it before trusting any single spec**; it tells you which document wins.
+2. **`MVP-1/DBChanges/Schema/SQL/*.sql`** — authoritative for column-level types, nullability, constraints, indexes and FKs. `FlatWire_ERDiagram_Documentation.md` describes the as-built schema.
+3. **`MVP-1/Mockups/*.html`** — authoritative for pixel-level layout and screen behaviour. `MVP-1/Mockups/flat-wire-shopfloor.styles.scss` is the token system.
+4. **`MVP-1/DevelopmentPlan/ShopfloorPlan/`** — `00-foundations.md` (§0.2 reference-code map, §0.3 domain cheat-sheet, §0.4 real-time architecture), `phase-01..14-*.md`, `back-matter.md` (dependency chain, milestone calendar, gaps register **G1–G18**).
+5. **`MVP-1/DevelopmentPlan/CapacityAndEffortModel.md`** — the effort/capacity arithmetic behind the sprint plan (streams, unit-rate card, per-phase hours, descope ladder).
+6. **`MVP-1/DevelopmentPlan/REVIEW.md`** — the audit of known contradictions between docs. **Consult it before trusting any single spec**; it tells you which document wins.
 7. **`Analysis/*.md`** — per-topic prose specs; `FlatWireOpenQuestions.md` is the authoritative decision register (`OQ-##`).
-8. **`DevelopmentPlan/APIContracts.md`**, `FlatWireTables.md`, `FlatWireJiraStories.md` (`FW-###`, 12 epics / 58 stories), `TechStackRecommendation.md` — **April 29–30 2026 vintage, superseded where they disagree with the July 26 roadmap and the master spec.** Mine them for detail, never for precedence. `APIContracts.md` carries four known Tier-1 correctness bugs already corrected in master spec §6 — use the corrected version.
-9. ~~**`SRS/Shopfloor_Flat_wireSRS_Consolidated_v3.docx`**~~ — **removed from the repository 1 Aug 2026** (git history `6096921`). Read [`ProjectPlan/02-SRS.md`](ProjectPlan/02-SRS.md) instead; it carries the rule text. Was the delivered SRS; source of the `OL`/`PCI`/`CHK`/`WLD`/`PSM`/`SPC`/`NFR`/… requirement IDs. Read via the master spec's citations rather than re-extracting the `.docx`.
+8. **`MVP-1/DevelopmentPlan/APIContracts.md`**, `FlatWireTables.md`, `FlatWireJiraStories.md` (`FW-###`, 12 epics / 58 stories), `TechStackRecommendation.md` — **April 29–30 2026 vintage, superseded where they disagree with the July 26 roadmap and the master spec.** Mine them for detail, never for precedence. `APIContracts.md` carries four known Tier-1 correctness bugs already corrected in master spec §6 — use the corrected version.
+9. ~~**`MVP-1/SRS/Shopfloor_Flat_wireSRS_Consolidated_v3.docx`**~~ — **removed from the repository 1 Aug 2026** (git history `6096921`). Read [`ProjectPlan/02-SRS.md`](../MVP-1/ProjectPlan/02-SRS.md) instead; it carries the rule text. Was the delivered SRS; source of the `OL`/`PCI`/`CHK`/`WLD`/`PSM`/`SPC`/`NFR`/… requirement IDs. Read via the master spec's citations rather than re-extracting the `.docx`.
 10. **`BaseDocuments/`** — read-only business source `.docx`/`.xlsx`. Cite, don't re-derive.
 11. **`../CLAUDE.md`** (`c:\UAL\CLAUDE.md`) — the ecosystem stack conventions the implementation must live inside.
 
@@ -57,9 +57,9 @@ Optionally also write `00-README.md` — a one-page index of the seven with a re
 **Repository conventions (non-negotiable — match the existing docs):**
 
 - Open with the standard header block: **Project · Last Updated · Document Type · Status**, plus **Owner** and **Audience**, plus a **Sources** line listing the specific inputs that doc consolidates.
-- Close with a **Change Log** table (`| Date | Changed By | Description |`) with a single initial row dated **July 30, 2026**.
+- **Do not close with a Change Log table.** Since 12 Aug 2026 the repository has exactly one change log, [`../CHANGELOG.md`](../CHANGELOG.md) at the root; no document carries its own. Record the creation of each file as a row under that file's `##` section there (`| Date | Changed By | Description |`), adding the section if it does not exist yet.
 - All dates are **US business dates in 2026**. Never introduce a date outside the authoritative timeline (§4 below).
-- Markdown only. Use relative links (`../FlatWire_MasterSpecification.md`, `../../Mockups/dashboard_1_line_status.html`) and verify every link target exists before writing it.
+- Markdown only. Use relative links (`../FlatWire_MasterSpecification.md`, `../../MVP-1/Mockups/dashboard_1_line_status.html`) and verify every link target exists before writing it.
 - Tables over prose wherever the content is enumerable. Prose only where reasoning must be carried.
 
 **Terminology and domain rules:**
@@ -82,9 +82,9 @@ Optionally also write `00-README.md` — a one-page index of the seven with a re
 **Honesty rules — do not smooth these over:**
 
 - The schedule does not close as scoped. The plan is **3,727 hours / 465.9 dev-days across 14 phases against 44 working days (32 post-gate)** → **10.6 FTE sustained**, a 10.7-FTE Phase-1 gate, an arithmetically impossible 27.2-FTE W7, and a descope ladder recovering only **12%**. This is gap **G1** / **OI-51**. Carry it into the vision doc's risks and the sprint plan's front matter as a **programme decision required** (staff to ~11 FTE · move the date — 6 FTE → 18 Nov 2026, 8 FTE → 22 Oct 2026, both inside the planned Q4 window · or cut below the critical path). Do not silently rescope to make the plan look feasible; do not invent a staffing number the source doesn't support.
-- The **footage→weight conversion factor is undefined** (OQ-36 / OI-45) and every output weight, yield and remaining-weight estimate depends on it.
+- The **footage→weight conversion factor is undefined** (OQ-10 / OI-45) and every output weight, yield and remaining-weight estimate depends on it.
 - **Pass Schedule content is still being authored by Operations**, and Phase 2 gates every check-in phase.
-- **Known schema divergence — resolve it, loudly.** The master spec §5 and the current DDL/ER doc describe **27 tables** with a FlatWireDB-local `Rod` master; `00-foundations.md` decision 3 and `phase-01c` say `Rod` is *dropped* in favour of the shared `coils` table (21–22 tables, unenforced cross-DB rod-alpha links). The master spec §5.2 states the resolved position — follow it, restate it explicitly in doc 3 §data model, and flag the stale side. **Verify the table count against `LatestDocument/DBChanges/Schema/SQL/` before you publish a number.** Do not copy a table count from any doc without counting.
+- **Known schema divergence — resolve it, loudly.** The master spec §5 and the current DDL/ER doc describe **28 tables** with a FlatWireDB-local `Rod` master; `00-foundations.md` decision 3 and `phase-01c` say `Rod` is *dropped* in favour of the shared `coils` table (21–22 tables, unenforced cross-DB rod-alpha links). The master spec §5.2 states the resolved position — follow it, restate it explicitly in doc 3 §data model, and flag the stale side. **Verify the table count against `MVP-1/DBChanges/Schema/SQL/` before you publish a number.** Do not copy a table count from any doc without counting.
 - Where the source says "TBD", write "TBD" with the owning `OQ-##`/`OI-##` — never a plausible-looking placeholder value.
 
 **Section-numbering rule:** number every section (`§1`, `§1.1`) so the other six documents can cite it precisely. Cross-document citations use `[VS §3.2]`, `[SRS §4.7]`, `[HLD §5]`, `[API §6.4]`, `[SP §2]`, `[TP §7]`, `[DR §4]`.
@@ -138,7 +138,7 @@ Structure:
 6. **Non-functional requirements — folded in, not annexed.** This is an explicit requirement of this task. Do both:
    - Place each NFR **inline in the functional group it constrains**, marked `[NFR]`, so a developer reading the check-in section sees the latency and audit obligations that apply to check-in.
    - Then add **§6 NFR register** — a single table of every `NFR###` with ID, category (performance · reliability · availability · security · auditability · usability · data retention · maintainability · integration), the measurable target, the verification method (which `TC-###` proves it — fill after doc 6 exists, or state "TC pending"), and the FR groups it constrains. Where an NFR target is **undefined** (AGC sample rate, concurrent client count, latency budget, reading retention — gap **G9** / OI-34), say "undefined — G9/OI-34", never a guess. Known concrete NFR targets to carry: 1-second default push interval configurable to 5/10/30 s with **no polling** (`NFR005`), two simultaneous dashboard instances (`NFR007`), 4 ft/20 ft recording frequency rules (`NFR003`/`NFR004`, FR-018), R-series permanent retention (`NFR013`), block-passive-dismissal on supervisor overrides (`NFR009`), who/when/why audit on every override, supervisor action, pass-schedule change and PLC tag write/clear (`NFR010`/`NFR011`), reconnect-with-cached-state and never a blank screen (`NFR006`, FR-119).
-7. **UI requirements** — screen inventory with the **approved variant** named per screen (notably Dashboard 2 = `dashboard_2_rod_checkin - New.html`, the 6-step tab wizard; the `- Old.html` ring version is retired), navigation map, shared chrome, design-token system (`--color-*`; the `--fw-*` prefix in older docs is **stale** — gap G18), shopfloor constraints including the **14px minimum text size** and its documented SVG-axis exceptions, and the reusable `fw`-prefixed controls to build.
+7. **UI requirements** — screen inventory with the **approved variant** named per screen (notably Dashboard 2 = `dashboard_2_rod_checkin.html`, the 6-step tab wizard; the `- Old.html` ring version is retired), navigation map, shared chrome, design-token system (`--color-*`; the `--fw-*` prefix in older docs is **stale** — gap G18), shopfloor constraints including the **14px minimum text size** and its documented SVG-axis exceptions, and the reusable `fw`-prefixed controls to build.
 8. **Security, roles and permissions** — the full role × capability matrix from master spec §8.5, plus supervisor-override rules and audit obligations.
 9. **External interface requirements** — PLC tag push/clear, OPC tag consumption (mill speed, feet consumption, ITInhibit), SignalR events, cross-database touchpoints, and the FW-001 shared-schema renames (`CoilNo` → `Coil/BundleNo`, `SlitWidth` → `Slit/FlatWidth`) with their blast radius.
 10. **Traceability appendix** — `FR-###` ↔ SRS ID ↔ dashboard ↔ phase.
@@ -166,7 +166,7 @@ Required sections:
 
 ### Doc 4 — `04-APIContract.md`
 
-**Audience:** frontend and backend developers, integration testers. **Primary source:** master spec §6 (**already corrected** — it fixes four Tier-1 bugs present in `DevelopmentPlan/APIContracts.md`); cross-check `REVIEW.md` Tier 1 before carrying anything from the April contract.
+**Audience:** frontend and backend developers, integration testers. **Primary source:** master spec §6 (**already corrected** — it fixes four Tier-1 bugs present in `MVP-1/DevelopmentPlan/APIContracts.md`); cross-check `REVIEW.md` Tier 1 before carrying anything from the April contract.
 
 Required sections:
 
@@ -183,7 +183,7 @@ Required sections:
 
 ### Doc 5 — `05-SprintPlanAndBacklog.md`
 
-**Audience:** delivery lead, scrum team, programme management. **Primary source:** master spec §9; `DevelopmentPlan/CapacityAndEffortModel.md`; `ShopfloorPlan/back-matter.md`; `FlatWireJiraStories.md`.
+**Audience:** delivery lead, scrum team, programme management. **Primary source:** master spec §9; `MVP-1/DevelopmentPlan/CapacityAndEffortModel.md`; `ShopfloorPlan/back-matter.md`; `FlatWireJiraStories.md`.
 
 Required sections:
 
@@ -242,7 +242,7 @@ Required sections:
 2. **Environments** — dev/test1/test2/dev1/dev2/staging/production with server names, app pools, database servers, and the promotion path.
 3. **Pre-deployment checklist** — approvals, gates passed (`[TP §4]`), backups taken, line state (**no active run on FL1/FL2/FL3**), operator notification, maintenance window, rollback rehearsal confirmed.
 4. **Deployment sequence** — ordered, with commands:
-   - **Database first.** `FlatWireDB` build/upgrade via SQLCMD mode (`sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll.sql`, run from `LatestDocument/DBChanges/Schema/SQL/` because the `:r` includes are relative; SSMS requires **Query → SQLCMD Mode**). State that every script guards its objects so `RunAll` is idempotent, and the execution order `00 → 01 → 02 → 03 → 04 → 05 → 06 FKs → 07 indexes → 08 programmability`.
+   - **Database first.** `FlatWireDB` build/upgrade via SQLCMD mode (`sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll.sql`, run from `MVP-1/DBChanges/Schema/SQL/` because the `:r` includes are relative; SSMS requires **Query → SQLCMD Mode**). State that every script guards its objects so `RunAll` is idempotent, and the execution order `00 → 01 → 02 → 03 → 04 → 05 → 06 FKs → 07 indexes → 08 programmability`.
    - **The FW-001 shared-schema renames** — separately called out, because they touch the shared `coils`/scheduling schema used by other modules. Give the pre-flight impact check, the change, the verification, and the fact that this is the **hardest thing in the release to roll back**.
    - **API** — `dotnet publish` → IIS application pool, `appsettings.{Environment}.json` and environment variables (JWT and connection-string variables per the UAL conventions), app-pool recycle, health check.
    - **Angular** — `ng build` for the environment → static files to IIS, cache-busting, shell registration.
@@ -260,14 +260,14 @@ Required sections:
 
 ## 6. Diagrams
 
-Use **mermaid** fenced blocks (`erDiagram`, `flowchart`, `stateDiagram-v2`, `sequenceDiagram`). Every diagram is accompanied by prose that carries the same information — a reader with no mermaid renderer must lose nothing. Do not embed images; link to `../../Mockups/Flat Wire Machine - Big Beautiful Diagram.png` where the equipment layout is relevant.
+Use **mermaid** fenced blocks (`erDiagram`, `flowchart`, `stateDiagram-v2`, `sequenceDiagram`). Every diagram is accompanied by prose that carries the same information — a reader with no mermaid renderer must lose nothing. Do not embed images; link to `../../MVP-1/Mockups/Flat Wire Machine - Big Beautiful Diagram.png` where the equipment layout is relevant.
 
 ## 7. What "done" means — verify before you report completion
 
 Run this checklist and report the result honestly. If something fails, say so rather than fixing the checklist.
 
-- [ ] All seven files exist under `LatestDocument/ProjectPlan/` with the exact names in §1.
-- [ ] Every file has the header block (Project · Last Updated · Document Type · Status · Owner · Audience · Sources) and a Change Log table.
+- [ ] All seven files exist under `MVP-1/ProjectPlan/` with the exact names in §1.
+- [ ] Every file has the header block (Project · Last Updated · Document Type · Status · Owner · Audience · Sources), and **no file carries a Change Log table** — each is instead represented by a section in the root `CHANGELOG.md`.
 - [ ] Every relative link resolves to a file that exists.
 - [ ] Every `FR-###` in the master spec §4 appears in `[SRS §5]` with its number unchanged.
 - [ ] Every `FR-###` maps to ≥1 backlog story in `[SP §11]` and ≥1 `TC-###` in `[TP §10]`; the exceptions are listed explicitly with reasons.
@@ -278,7 +278,7 @@ Run this checklist and report the result honestly. If something fails, say so ra
 - [ ] The capacity gap (G1/OI-51) is stated in both `[VS]` and `[SP]` without softening.
 - [ ] No date outside §4's timeline appears as a plan date.
 - [ ] The word "strip" appears nowhere except in a note explaining that it is not used.
-- [ ] No file outside `LatestDocument/ProjectPlan/` was created or modified.
+- [ ] No file outside `MVP-1/ProjectPlan/` was created or modified.
 
 ## 8. Working method
 
@@ -289,11 +289,3 @@ Run this checklist and report the result honestly. If something fails, say so ra
 5. **Report at the end:** the file list with line counts, the checklist result from §7, every `PP-##` contradiction you discovered, and anything you could not complete and why.
 
 # ===== PROMPT ENDS HERE =====
-
----
-
-## Change Log
-
-| Date | Changed By | Description |
-|------|-----------|-------------|
-| Jul 30, 2026 | Plan team | Created. Generation prompt for the seven-document `LatestDocument/ProjectPlan/` set (Vision & Scope · SRS with NFRs folded in · HLD + ER · API contract · Sprint plan/backlog · Test plan + cases · Deployment runbook + rollback), grounded in `LatestDocument/FlatWire_MasterSpecification.md` as primary source with the repo's precedence, traceability, terminology and timeline rules made binding. |

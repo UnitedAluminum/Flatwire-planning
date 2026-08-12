@@ -1,0 +1,2374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<!-- ══════════════════════════════════════════════════════════════════════════════════
+     STATION SELECTION IS AUTOMATIC (client decision, 30 Jul 2026 — Q24).
+     A rod whose order is booked on the OTHER rod line does not raise a message and does not
+     need a supervisor: the system SELECTS THE CORRECT STATION and the transaction continues.
+     If the rod is planned for FL3 and the operator is on the FL1 tab, the screen switches to
+     FL3. Identical behaviour at pre-check-in (Dashboard 2A) and here at check-in.
+       The client's phrasing was explicit: "No blocking message."
+       Implementation: read `scheduledLineId` from GET /rod/{alpha} at the scan; if it differs
+     from the line on screen, switch. A POST that still arrives with the wrong lineId returns
+     409 WRONG_STATION carrying `correctLineId`, and the client switches and re-posts.
+       SUPERSEDED: the earlier design notified the operator and required a supervisor override,
+     recorded on RodStaging.OffScheduleOverride / ScheduledLineId. Those columns are dropped.
+       NOT YET IMPLEMENTED IN THIS MOCKUP — this screen is single-line (FL1) with no station
+     toggle, so there is nothing here to switch. Dashboard 2A carries the working version.
+       OPEN: what a part-completed wizard does when the station changes under it (this screen
+     is a 6-step wizard, so it is the sharper case), and whether an order scheduled on NEITHER
+     rod line is permitted at all — there is no station to switch to (Q25, still open).
+     ══════════════════════════════════════════════════════════════════════════════════ -->
+<title>FL1 rod check-in · FW-00421</title>
+<link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
+<style>
+  html, body { overflow: hidden; width: 1280px; height: 1024px; }
+  body { font-size: 14px; }
+  /*
+   * Pixel budget (1280×1024, flex column, overflow hidden — no scroll):
+   *   padding top+bottom: 12+12 = 24px
+   *   4 items → 3 gaps × 8px = 24px
+   *   global-bar ≈ 54px | header ≈ 54px | footer ≈ 62px
+   *   → content = 1024 − 24 − 24 − 54 − 54 − 62 = 806px
+   *
+   * Content (3 items, 2 gaps × 8px = 16px):
+   *   rod-scan ≈ 78px  |  bundle ≈ 98px
+   *   → wizard = 806 − 16 − 78 − 98 = 614px
+   *
+   * Wizard (tab-strip ≈ 54px + nav ≈ 46px + 2 gaps × 8px = 16px)
+   *   → panel area ≈ 498px  (tab-panels scroll internally if taller)
+   */
+  .dashboard { height: 1024px; padding: 12px; margin: 0; gap: 8px; overflow: hidden; }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    flex-shrink: 0;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .line-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 14px;
+    background: var(--color-background-info); color: var(--color-text-info);
+    border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500;
+  }
+  .line-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-blue); }
+  .header h1 { margin: 0; font-size: 18px; font-weight: 500; }
+  .header-meta { display: flex; gap: 24px; font-size: 14px; color: var(--color-text-secondary); }
+  .header-meta strong { color: var(--color-text-primary); font-weight: 500; }
+  .mono { font-family: var(--font-mono); }
+
+  /* ════════════════════════════════════════════════
+     GLOBAL APPLICATION BAR (top strip)
+     Logo · greeting/environment banner · signed-in
+     users (multi-session) · Help / Refresh / Login / Logout
+     ════════════════════════════════════════════════ */
+  .global-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 6px 16px;
+    min-height: 54px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  /* ── Brand mark ── */
+  .gb-left { display: flex; align-items: center; gap: 11px; flex-shrink: 0; }
+  .gb-logo { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+  .ua-logo {
+    display: block; height: 34px; width: auto;
+    background: #fff; padding: 3px 6px; border-radius: 5px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.14);
+  }
+  .gb-copyright { font-size: 14px; color: var(--color-text-tertiary); letter-spacing: 0.3px; white-space: nowrap; }
+
+  /* ── Center: greeting + environment banner ── */
+  .gb-center { display: flex; flex-direction: column; align-items: center; gap: 1px; text-align: center; min-width: 0; overflow: hidden; }
+  .gb-greeting { font-size: 14px; color: var(--color-text-secondary); white-space: nowrap; }
+  .gb-greeting strong { color: var(--color-text-primary); font-weight: 600; }
+  .gb-env { font-size: 14px; font-weight: 700; color: var(--color-red); letter-spacing: 0.4px; white-space: nowrap; }
+
+  /* ── Right: signed-in users + action buttons ── */
+  .gb-right { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+
+  .gb-users { display: flex; align-items: center; gap: 6px; }
+  .gb-users-label { font-size: 14px; color: var(--color-text-tertiary); white-space: nowrap; margin-right: 2px; }
+  .user-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 6px 3px 3px;
+    background: var(--color-background-secondary);
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: 999px; cursor: pointer;
+    opacity: 0.62; transition: all 0.15s;
+  }
+  .user-chip:hover { opacity: 0.85; }
+  .user-chip.active {
+    opacity: 1; cursor: default;
+    border-color: var(--color-blue); background: var(--color-background-info);
+    box-shadow: 0 0 0 1px var(--color-blue);
+  }
+  /* Pulsing "active" dot on the highlighted operator */
+  .user-chip .active-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    background: var(--color-green); margin-left: 2px; display: none;
+    animation: pulse-live 2.4s ease-out infinite;
+  }
+  .user-chip.active .active-dot { display: inline-block; }
+  .user-chip .avatar {
+    width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: #fff;
+    filter: grayscale(45%);
+  }
+  .user-chip.active .avatar { filter: none; }
+  /* Idle chips collapse to just the avatar; the active one shows name + sign-out */
+  .user-chip .u-name { display: none; font-size: 14px; font-weight: 500; color: var(--color-text-secondary); white-space: nowrap; }
+  .user-chip.active .u-name { display: inline; color: var(--color-text-info); font-weight: 600; }
+  .user-chip .u-close {
+    display: none;
+    width: 16px; height: 16px; border-radius: 50%; border: none; padding: 0;
+    background: transparent; color: var(--color-text-tertiary); cursor: pointer;
+    align-items: center; justify-content: center;
+    font-size: 14px; line-height: 1; transition: all 0.12s;
+  }
+  .user-chip.active .u-close { display: inline-flex; }
+  .user-chip .u-close:hover { background: var(--color-background-danger); color: var(--color-text-danger); }
+
+  .gb-actions { display: flex; gap: 7px; flex-shrink: 0; }
+  .gb-btn {
+    display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; min-width: 50px; height: 46px; padding: 4px 7px;
+    border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+    background: var(--color-background-secondary); color: var(--color-text-secondary);
+    font-size: 14px; font-weight: 500; font-family: var(--font-sans);
+    cursor: pointer; text-decoration: none; transition: all 0.15s;
+  }
+  .gb-btn svg { width: 17px; height: 17px; }
+  .gb-btn:hover { background: var(--color-background-info); color: var(--color-text-info); border-color: var(--color-blue); }
+  .gb-btn:active { transform: scale(0.96); }
+  .gb-btn.danger:hover { background: var(--color-background-danger); color: var(--color-text-danger); border-color: var(--color-red); }
+  .gb-btn.accent:hover { background: var(--color-background-success); color: var(--color-text-success); border-color: var(--color-green); }
+
+  /* ── Switch-operator modal ── */
+  .gb-modal-overlay {
+    position: fixed; inset: 0; z-index: 9998;
+    background: rgba(0, 0, 0, 0.45);
+    display: none; align-items: center; justify-content: center;
+  }
+  .gb-modal-overlay.open { display: flex; }
+  .gb-modal {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    /* No max-height: fw-modal.js scales an oversized dialog to fit rather than
+       letting it scroll. */
+    width: 660px; overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+    display: flex; flex-direction: column;
+    transform: scale(var(--fw-modal-fit, 1)); transform-origin: center center;
+    animation: panelIn 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .gb-modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .gb-modal-title { font-size: 17px; font-weight: 600; color: var(--color-text-primary); }
+  .gb-modal-sub { font-size: 14px; color: var(--color-text-tertiary); margin-top: 2px; }
+  .gb-modal-close {
+    width: 34px; height: 34px; border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-border-secondary); background: var(--color-background-primary);
+    color: var(--color-text-secondary); cursor: pointer; font-size: 18px; line-height: 1;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .gb-modal-close:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .gb-modal-body { padding: 18px 20px; overflow: auto; }
+
+  .switch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* User card — photo/avatar · name · role · phone · email · logout */
+  .switch-card {
+    display: flex; flex-direction: column;
+    border: 1.5px solid var(--color-border-secondary); border-radius: var(--border-radius-lg);
+    background: var(--color-background-primary); cursor: pointer; overflow: hidden;
+    text-align: left; font-family: var(--font-sans);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .switch-card:hover { border-color: var(--color-blue); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+  .switch-card.active { border-color: var(--color-blue); box-shadow: 0 0 0 1px var(--color-blue); cursor: default; }
+
+  .sc-photo {
+    position: relative; height: 88px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--color-background-info), var(--color-background-secondary));
+  }
+  .sc-photo .avatar-lg {
+    width: 54px; height: 54px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.22);
+  }
+  .sc-badge {
+    position: absolute; right: 8px; bottom: 8px;
+    padding: 2px 10px; border-radius: 999px; font-size: 14px; font-weight: 600;
+    background: var(--color-background-primary); color: var(--color-text-secondary);
+    border: 1px solid var(--color-border-tertiary);
+  }
+  .sc-badge.active { background: var(--color-green); color: #fff; border-color: transparent; }
+
+  .sc-body { padding: 11px 13px 13px; display: flex; flex-direction: column; }
+  .sc-name { font-size: 14px; font-weight: 600; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sc-role { font-size: 14px; color: var(--color-text-tertiary); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sc-contact { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--color-text-secondary); margin-top: 3px; }
+  .sc-contact svg { width: 13px; height: 13px; flex-shrink: 0; color: var(--color-text-tertiary); }
+  .sc-contact span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .sc-logout {
+    margin-top: 11px; height: 32px; border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-border-secondary); background: var(--color-background-primary);
+    color: var(--color-text-secondary); font-size: 14px; font-weight: 500; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    font-family: var(--font-sans); transition: all 0.15s;
+  }
+  .sc-logout svg { width: 14px; height: 14px; }
+  .sc-logout:hover { background: var(--color-background-danger); color: var(--color-text-danger); border-color: var(--color-red); }
+
+  /* Empty login card — sign in a new operator */
+  .switch-card.add-card {
+    border-style: dashed; cursor: default; justify-content: center;
+    background: var(--color-background-secondary);
+  }
+  .switch-card.add-card:hover { border-color: var(--color-blue); box-shadow: none; }
+  .add-card-body { padding: 16px 14px; display: flex; flex-direction: column; gap: 9px; }
+  .add-card-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
+  .add-card-title svg { width: 17px; height: 17px; color: var(--color-blue); }
+  .add-input {
+    height: 36px; padding: 0 11px; font-size: 14px; font-family: var(--font-sans);
+    color: var(--color-text-primary); background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+    outline: none; width: 100%;
+  }
+  .add-input:focus { border-color: var(--color-blue); box-shadow: 0 0 0 3px rgba(24,95,165,0.18); }
+  .add-error { font-size: 14px; color: var(--color-text-danger); font-weight: 500; display: none; }
+  .add-error.show { display: block; }
+  .add-login-btn {
+    height: 36px; border-radius: var(--border-radius-md); margin-top: 2px;
+    border: 1px solid var(--color-green); background: var(--color-green); color: #fff;
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--font-sans);
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px; transition: opacity 0.15s;
+  }
+  .add-login-btn svg { width: 15px; height: 15px; }
+  .add-login-btn:hover { opacity: 0.9; }
+
+  .switch-empty { padding: 30px 10px; text-align: center; color: var(--color-text-tertiary); font-size: 14px; }
+
+  /* ── More Options tile popup ── */
+  .gb-modal.wide { width: 800px; }
+  .more-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .more-tile {
+    display: flex; flex-direction: column; align-items: center; text-align: center; gap: 5px;
+    padding: 18px 10px 15px;
+    border: 1px solid var(--color-border-tertiary); border-radius: var(--border-radius-md);
+    background: var(--color-background-primary); cursor: pointer; text-decoration: none;
+    /* The WIP Rejection tile is a <button> since it opens a dialog; a button inherits
+       neither the page font nor the text colour. */
+    font-family: var(--font-sans); color: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  }
+  .more-tile:hover { border-color: var(--color-blue); box-shadow: 0 6px 16px rgba(0,0,0,0.10); transform: translateY(-1px); }
+  .more-tile.active { border-color: var(--color-green); box-shadow: 0 0 0 1px var(--color-green); cursor: default; }
+  .more-tile.active:hover { transform: none; box-shadow: 0 0 0 1px var(--color-green); }
+  .more-tile .mt-icon { width: 30px; height: 30px; color: var(--color-text-secondary); margin-bottom: 3px; }
+  .more-tile:hover .mt-icon { color: var(--color-blue); }
+  .more-tile.active .mt-icon { color: var(--color-green); }
+  .more-tile .mt-title { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
+  .more-tile .mt-sub { font-size: 14px; color: var(--color-text-tertiary); }
+  .more-tile .mt-badge {
+    margin-top: 3px; font-size: 14px; font-weight: 600; padding: 1px 8px; border-radius: 999px;
+    background: var(--color-green); color: #fff;
+  }
+
+  /* ── Aluminum coil spinner (pure CSS) + loading overlay ── */
+  .coil {
+    --coil-size: 64px;
+    position: relative; width: var(--coil-size); height: var(--coil-size); border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, #ffffff 0%, #eef1f3 12%, #c8cdd2 42%, #a7adb4 66%, #8b9198 82%, #6f757c 100%);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.35), inset 0 2px 3px rgba(255,255,255,0.55), 0 6px 16px rgba(0,0,0,0.28);
+    overflow: hidden; flex-shrink: 0;
+  }
+  .coil::before {
+    content: ""; position: absolute; inset: 0; border-radius: 50%;
+    background: repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,0.55) 0px, rgba(150,156,163,0.25) 1.4px, rgba(90,95,101,0.30) 2.4px, rgba(255,255,255,0.45) 3.4px);
+    mix-blend-mode: overlay; opacity: 0.9;
+  }
+  .coil::after {
+    content: ""; position: absolute; inset: -2%; border-radius: 50%;
+    background:
+      conic-gradient(from 0deg, rgba(60,64,68,0.55) 0deg, rgba(60,64,68,0) 14deg, rgba(0,0,0,0) 180deg, rgba(0,0,0,0) 360deg),
+      conic-gradient(from 0deg, rgba(255,255,255,0) 0deg, rgba(255,255,255,0.9) 46deg, rgba(255,255,255,0) 96deg, rgba(255,255,255,0) 205deg, rgba(255,255,255,0.5) 240deg, rgba(255,255,255,0) 285deg, rgba(255,255,255,0) 360deg);
+    animation: coil-spin 1.15s linear infinite;
+  }
+  .coil-core {
+    position: absolute; top: 50%; left: 50%; width: 34%; height: 34%; transform: translate(-50%,-50%); border-radius: 50%;
+    background: radial-gradient(circle at 42% 36%, #d8dce0 0%, #9aa0a6 55%, #5f646a 100%);
+    box-shadow: inset 0 0 9px rgba(0,0,0,0.65), 0 0 0 2px rgba(255,255,255,0.35), 0 1px 2px rgba(0,0,0,0.3); z-index: 2;
+  }
+  @keyframes coil-spin { to { transform: rotate(360deg); } }
+
+  .load-overlay {
+    position: fixed; inset: 0; z-index: 9997;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(1.5px);
+    display: none; align-items: center; justify-content: center;
+  }
+  .load-overlay.show { display: flex; }
+  .load-box {
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+    padding: 30px 42px; border-radius: var(--border-radius-lg);
+    background: transparent; border: none; box-shadow: none;
+  }
+  .load-box .load-text { font-size: 15px; font-weight: 500; color: var(--color-text-secondary); }
+  .load-box .load-text .dots::after { content: ""; animation: loaddots 1.4s steps(4, end) infinite; }
+  @keyframes loaddots { 0%{content:"";} 25%{content:".";} 50%{content:"..";} 75%{content:"...";} 100%{content:"";} }
+
+  /* ── Content wrapper ── */
+  .content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .section {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 8px 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .section-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
+  }
+  .section-title { font-size: 15px; font-weight: 500; }
+  .section-meta { display: flex; gap: 10px; align-items: center; font-size: 14px; }
+  .section-subtitle { color: var(--color-text-tertiary); font-family: var(--font-mono); }
+  .readonly-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px;
+    background: var(--color-background-secondary); color: var(--color-text-secondary);
+    border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500;
+  }
+
+  /* ── Rod scan row ── */
+  .rod-scan-row {
+    flex-direction: row; align-items: flex-end; gap: 16px;
+    flex-shrink: 0;
+  }
+  .input-scan-wrap { display: flex; gap: 7px; }
+  .btn-scan {
+    height: 40px; width: 44px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+    background: var(--color-background-primary); cursor: pointer; color: var(--color-text-secondary);
+    flex-shrink: 0; transition: all 0.15s;
+  }
+  .btn-scan:hover, .btn-scan.active { background: var(--color-background-info); color: var(--color-text-info); border-color: var(--color-blue); }
+
+  /* ── Form fields ── */
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field-label { font-size: 14px; color: var(--color-text-secondary); }
+  .field-required::after { content: " *"; color: var(--color-red); }
+  .input {
+    height: 40px; padding: 0 12px;
+    font-size: 15px; font-family: var(--font-mono); font-weight: 500;
+    color: var(--color-text-primary); background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+    outline: none; width: 100%;
+  }
+  .input:focus { border-color: var(--color-blue); box-shadow: 0 0 0 3px rgba(24,95,165,0.18); }
+  .input:disabled {
+    background: var(--color-background-secondary); color: var(--color-text-secondary);
+    cursor: default; border-color: var(--color-border-tertiary);
+  }
+  /* Validation error state */
+  .input.invalid { border-color: var(--color-red); background: var(--color-background-danger); }
+  .input.invalid:focus { box-shadow: 0 0 0 3px rgba(216,90,48,0.18); }
+  .field-error {
+    display: none; font-size: 14px; color: var(--color-text-danger); font-weight: 500;
+  }
+  .field.has-error .field-error { display: block; }
+  .input-readonly {
+    height: 40px; padding: 0 12px; font-size: 14px; font-weight: 500;
+    background: var(--color-background-secondary); border-radius: var(--border-radius-md);
+    display: flex; align-items: center; color: var(--color-text-primary);
+  }
+  .input-readonly.mono { font-family: var(--font-mono); }
+
+  /* ── Payoff selector ── */
+  .payoff-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .payoff-option {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    border: 1.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+    cursor: pointer; background: var(--color-background-primary); user-select: none; transition: all 0.15s;
+  }
+  .payoff-option:hover { background: var(--color-background-secondary); }
+  .payoff-option.selected { border-color: var(--color-blue); background: var(--color-background-info); }
+  .payoff-dot {
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 2px solid var(--color-border-primary); flex-shrink: 0; position: relative;
+  }
+  .payoff-option.selected .payoff-dot { border-color: var(--color-blue); }
+  .payoff-option.selected .payoff-dot::after {
+    content: ""; position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
+    border-radius: 50%; background: var(--color-blue);
+  }
+  .payoff-label { font-size: 16px; }
+  .payoff-option.selected .payoff-label { color: var(--color-text-info); font-weight: 500; }
+
+  /* ── Field grid ── */
+  .field-grid { display: grid; gap: 7px; margin-bottom: 0; }
+
+  /* ── Inspection rows ── */
+  .inspection-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 10px;
+    background: var(--color-background-secondary); border-radius: var(--border-radius-md); margin-bottom: 4px;
+  }
+  .inspection-label { font-size: 14px; }
+  .inspection-buttons { display: flex; gap: 8px; }
+  .pill-btn {
+    height: 36px; padding: 0 20px; font-size: 14px; font-weight: 500;
+    border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+    background: var(--color-background-primary); color: var(--color-text-secondary);
+    cursor: pointer; font-family: var(--font-sans); transition: all 0.15s;
+  }
+  .pill-btn:active { transform: scale(0.97); }
+  .pill-btn.pass.selected { background: var(--color-green); border-color: var(--color-green); color: #fff; }
+  .pill-btn.fail.selected { background: var(--color-red); border-color: var(--color-red); color: #fff; }
+
+  .textarea {
+    width: 100%; padding: 6px 10px; font-size: 14px; font-family: var(--font-sans);
+    color: var(--color-text-primary); background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+    resize: none; height: 46px; outline: none;
+  }
+  .textarea:focus { border-color: var(--color-blue); box-shadow: 0 0 0 3px rgba(24,95,165,0.18); }
+
+  /* ── Pass schedule ── */
+  .schedule-table {
+    width: 100%; border-collapse: collapse; font-size: 14px;
+    border: 1px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); overflow: hidden;
+  }
+  .schedule-table thead tr { background: var(--color-background-secondary); }
+  .schedule-table th { text-align: left; padding: 4px 10px; font-weight: 500; color: var(--color-text-secondary); font-size: 14px; }
+  .schedule-table tbody tr { border-top: 0.5px solid var(--color-border-tertiary); }
+  .schedule-table td { padding: 4px 10px; vertical-align: middle; }
+  .schedule-table .component-name { font-weight: 500; }
+  .status-cell { display: inline-flex; align-items: center; gap: 8px; }
+  .status-cell .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-green); }
+  .setting-cell { font-family: var(--font-mono); color: var(--color-text-secondary); }
+
+  .callout {
+    margin-top: 6px; padding: 8px 12px;
+    background: var(--color-background-info); color: var(--color-text-info);
+    border-radius: var(--border-radius-md); font-size: 14px;
+    display: flex; gap: 10px; align-items: flex-start; line-height: 1.4;
+  }
+  .callout-icon {
+    flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--color-blue); color: #fff; font-size: 14px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .order-spec-bar {
+    display: flex; gap: 12px; align-items: center;
+    padding: 5px 10px; background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md); margin-bottom: 4px; font-size: 14px; flex-wrap: wrap;
+  }
+  .order-spec-label { font-size: 14px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.3px; margin-right: 4px; }
+  .order-spec-value { font-family: var(--font-mono); font-weight: 500; }
+  .order-spec-sep { color: var(--color-border-primary); }
+
+  .ps-confirm-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 5px 10px; background: var(--color-background-warning);
+    border-radius: var(--border-radius-md); margin-bottom: 5px; gap: 10px; transition: background 0.2s;
+  }
+  .ps-confirm-bar.confirmed { background: var(--color-background-success); }
+  .ps-confirm-match { font-size: 14px; color: var(--color-text-warning); line-height: 1.45; flex: 1; }
+  .ps-confirm-bar.confirmed .ps-confirm-match { color: var(--color-text-success); }
+  .ps-confirm-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .btn-confirm-ps {
+    height: 32px; padding: 0 14px; font-size: 14px; font-weight: 500;
+    border-radius: var(--border-radius-md); cursor: pointer; font-family: var(--font-sans);
+    border: 1px solid var(--color-green); background: var(--color-green); color: #fff;
+    white-space: nowrap; transition: opacity 0.15s;
+  }
+  .btn-confirm-ps:hover { opacity: 0.85; }
+  .ps-change-wrap { position: relative; }
+  .btn-change-ps {
+    height: 32px; padding: 0 12px; font-size: 14px; font-weight: 500;
+    border-radius: var(--border-radius-md); cursor: pointer; font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary); background: var(--color-background-primary);
+    color: var(--color-text-primary); display: inline-flex; align-items: center; gap: 5px;
+    white-space: nowrap; transition: background 0.15s;
+  }
+  .btn-change-ps:hover { background: var(--color-background-secondary); }
+  .ps-change-dropdown {
+    position: absolute; top: calc(100% + 4px); right: 0;
+    background: var(--color-background-primary); border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md); padding: 6px 0; min-width: 270px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 200; display: none;
+  }
+  .ps-change-dropdown.open { display: block; }
+  .ps-dropdown-item {
+    padding: 8px 16px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; transition: background 0.1s;
+  }
+  .ps-dropdown-item:hover { background: var(--color-background-secondary); }
+  .ps-dropdown-item.recommended { background: var(--color-background-info); }
+  .ps-dropdown-id { font-size: 14px; font-family: var(--font-mono); font-weight: 500; color: var(--color-text-primary); }
+  .ps-dropdown-desc { font-size: 14px; color: var(--color-text-secondary); }
+  .ps-dropdown-warning {
+    padding: 8px 16px; font-size: 14px; color: var(--color-text-danger);
+    border-top: 0.5px solid var(--color-border-tertiary); margin-top: 4px;
+  }
+
+  /* ── SPC ── */
+  .spc-measurement { display: grid; grid-template-columns: 2fr 1.2fr auto; gap: 10px; align-items: end; margin-bottom: 7px; }
+  .spc-status {
+    display: flex; align-items: center; gap: 7px; padding: 0 14px; height: 40px;
+    background: var(--color-background-success); color: var(--color-text-success);
+    border-radius: var(--border-radius-md); font-size: 14px; font-weight: 500; white-space: nowrap;
+  }
+  .spc-status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-green); }
+  .spc-status.out-of-spec { background: var(--color-background-danger); color: var(--color-text-danger); }
+  .spc-status.out-of-spec .dot { background: var(--color-red); }
+  .input.spc-out-of-spec { border-color: var(--color-red); background: var(--color-background-danger); color: var(--color-text-danger); }
+  .input.spc-out-of-spec:focus { box-shadow: 0 0 0 3px rgba(216,90,48,0.18); }
+
+  .tolerance-viz { padding: 8px 14px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); }
+  .tolerance-viz-title { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .tolerance-track { position: relative; height: 8px; margin: 28px 12px 20px; }
+  .tolerance-range { position: absolute; top: 0; left: 0; right: 0; height: 100%; background: var(--color-background-success); border-radius: 4px; }
+  .tolerance-tick { position: absolute; top: -5px; width: 2px; height: 18px; background: var(--color-border-primary); }
+  .tolerance-tick.left { left: 0; }
+  .tolerance-tick.center { left: 50%; transform: translateX(-1px); }
+  .tolerance-tick.right { right: 0; }
+  .tolerance-tick-label { position: absolute; top: -22px; font-size: 14px; font-family: var(--font-mono); color: var(--color-text-tertiary); white-space: nowrap; transform: translateX(-50%); }
+  .tolerance-tick.left .tolerance-tick-label { left: 1px; }
+  .tolerance-tick.right .tolerance-tick-label { left: 1px; }
+  .tolerance-marker { position: absolute; top: -7px; width: 22px; height: 22px; background: var(--color-blue); border: 3px solid var(--color-background-primary); border-radius: 50%; transform: translateX(-50%); box-shadow: 0 0 0 1px var(--color-blue); }
+  .tolerance-marker-label { position: absolute; top: 20px; font-size: 14px; font-family: var(--font-mono); font-weight: 500; color: var(--color-text-primary); white-space: nowrap; transform: translateX(-50%); }
+
+  /* ── Machine inspection ── */
+  .insp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .insp-card {
+    background: var(--color-background-secondary); border-radius: var(--border-radius-md);
+    padding: 8px 12px;
+  }
+  .insp-card-title { font-size: 14px; font-weight: 500; margin-bottom: 6px; color: var(--color-text-primary); }
+  .insp-check-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 0; border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .insp-check-row:last-child { border-bottom: none; }
+  .insp-check-label { font-size: 14px; color: var(--color-text-primary); }
+  .insp-btns { display: flex; gap: 5px; }
+  .insp-btn {
+    height: 34px; padding: 0 14px; font-size: 14px; font-weight: 500;
+    border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+    background: var(--color-background-primary); color: var(--color-text-secondary);
+    cursor: pointer; font-family: var(--font-sans); transition: all 0.15s;
+  }
+  .insp-btn.ok.selected { background: var(--color-green); border-color: var(--color-green); color: #fff; }
+  .insp-btn.ng.selected { background: var(--color-red); border-color: var(--color-red); color: #fff; }
+  .insp-btn.na.selected { background: var(--color-gray); border-color: var(--color-gray); color: #fff; }
+
+  .insp-measure-row {
+    display: flex; align-items: flex-end; gap: 8px; margin-bottom: 6px;
+  }
+  .insp-measure-row .field { flex: 1; }
+  .insp-spec-tag {
+    height: 40px; padding: 0 10px; font-size: 14px;
+    background: var(--color-background-tertiary); color: var(--color-text-secondary);
+    border-radius: var(--border-radius-md); display: flex; align-items: center;
+    white-space: nowrap; font-family: var(--font-mono);
+  }
+
+  /* ════════════════════════════════════════════════
+     TAB WIZARD SYSTEM (replaces carousel/slider)
+     ════════════════════════════════════════════════ */
+  .wizard {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ── Tab strip ── */
+  .tab-strip {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .tab {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    min-height: 52px;
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    text-align: left;
+    transition: background 0.18s, border-color 0.18s, box-shadow 0.18s, opacity 0.18s;
+    position: relative;
+  }
+  .tab-index {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 600; flex-shrink: 0;
+    background: var(--color-background-secondary);
+    color: var(--color-text-secondary);
+    transition: all 0.18s;
+  }
+  .tab-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+  .tab-name {
+    font-size: 14px; font-weight: 500; color: var(--color-text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .tab-hint {
+    font-size: 14px; color: var(--color-text-tertiary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .tab-lock { flex-shrink: 0; color: var(--color-text-tertiary); display: none; }
+
+  /* Locked / disabled */
+  .tab.locked { cursor: not-allowed; opacity: 0.5; }
+  .tab.locked:hover { background: var(--color-background-primary); }
+  .tab.locked .tab-lock { display: block; }
+
+  /* Hover (only on reachable tabs) */
+  .tab:not(.locked):not(.active):hover { background: var(--color-background-secondary); }
+
+  /* Completed */
+  .tab.completed { border-color: var(--color-green); }
+  .tab.completed .tab-index { background: var(--color-green); color: #fff; }
+
+  /* Active (current) — wins over completed styling */
+  .tab.active {
+    border-color: var(--color-blue);
+    background: var(--color-background-info);
+    box-shadow: 0 0 0 1px var(--color-blue);
+  }
+  .tab.active .tab-name { color: var(--color-text-info); }
+  .tab.active:not(.completed):not(.deviation) .tab-index { background: var(--color-blue); color: #fff; }
+
+  /* Completed but carrying an overridden deviation (on hold) */
+  .tab.deviation:not(.active) { border-color: var(--color-amber); }
+  .tab.deviation .tab-index { background: var(--color-amber); color: #fff; }
+
+  /* Locked-tab rejection shake */
+  @keyframes tabShake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+  }
+  .tab.shake { animation: tabShake 0.35s ease; }
+
+  /* ── Tab panels ── */
+  .tab-panels {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+  }
+  .tab-panel {
+    display: none;
+    position: absolute;
+    inset: 0;
+    flex-direction: column;
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 10px 16px;
+    overflow: hidden auto;
+  }
+  .tab-panel.active {
+    display: flex;
+    animation: panelIn 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  /* See the shared stylesheet: --fw-modal-fit must survive this animation. */
+  @keyframes panelIn {
+    from { opacity: 0; transform: translateY(8px) scale(var(--fw-modal-fit, 1)); }
+    to   { opacity: 1; transform: translateY(0) scale(var(--fw-modal-fit, 1)); }
+  }
+
+  /* ── Hold / deviation override bar ── */
+  .hold-bar {
+    display: flex; flex-direction: column; gap: 8px;
+    padding: 8px 14px; flex-shrink: 0;
+    background: var(--color-background-warning);
+    border: 1px solid var(--color-amber);
+    border-radius: var(--border-radius-md);
+  }
+  .hold-bar[hidden] { display: none; }
+  .hold-head { display: flex; align-items: center; gap: 12px; }
+  .hold-bar .hold-icon {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--color-amber); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .hold-main { flex: 1; min-width: 0; }
+  .hold-title { font-size: 14px; font-weight: 600; color: var(--color-text-warning); }
+  .hold-detail { font-size: 14px; color: var(--color-text-warning); line-height: 1.35; }
+  .hold-actions { display: flex; gap: 8px; align-items: center; }
+  .hold-field {
+    height: 38px; padding: 0 12px;
+    font-family: var(--font-sans); font-size: 14px; font-weight: 400;
+    color: var(--color-text-primary); background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+    outline: none;
+  }
+  .hold-badge { width: 150px; flex-shrink: 0; }
+  .hold-pass  { width: 150px; flex-shrink: 0; }
+  .hold-reason { flex: 1; min-width: 160px; }
+  .hold-field:focus { border-color: var(--color-amber); box-shadow: 0 0 0 3px var(--color-amber-light); }
+  .hold-field.invalid { border-color: var(--color-red); background: var(--color-background-danger); }
+  .hold-bar.overridden { background: var(--color-background-success); border-color: var(--color-green); }
+  .hold-bar.overridden .hold-icon { background: var(--color-green); }
+  .hold-bar.overridden .hold-title,
+  .hold-bar.overridden .hold-detail { color: var(--color-text-success); }
+
+  /* ── Wizard nav bar ── */
+  .wizard-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 2px;
+    flex-shrink: 0;
+  }
+  .wizard-status {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    text-align: center;
+    line-height: 1.3;
+  }
+  .wizard-status .status-icon {
+    flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: #fff;
+  }
+  .wizard-status.error { color: var(--color-text-danger); font-weight: 500; }
+  .wizard-status.error .status-icon { background: var(--color-red); }
+  .wizard-status.success { color: var(--color-text-success); font-weight: 500; }
+  .wizard-status.success .status-icon { background: var(--color-green); }
+  .wizard-status.warn { color: var(--color-text-warning); font-weight: 500; }
+  .wizard-status.warn .status-icon { background: var(--color-amber); }
+
+  .btn-nav {
+    height: 38px; padding: 0 20px; font-size: 14px; font-weight: 500;
+    border-radius: var(--border-radius-md); cursor: pointer; font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary); color: var(--color-text-primary);
+    display: inline-flex; align-items: center; gap: 7px;
+    transition: all 0.15s; flex-shrink: 0;
+  }
+  .btn-nav:hover { background: var(--color-background-secondary); }
+  .btn-nav:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-nav:disabled:hover { background: var(--color-background-primary); }
+  .btn-nav.btn-nav-primary {
+    background: var(--color-blue); border-color: var(--color-blue); color: #fff;
+  }
+  .btn-nav.btn-nav-primary:hover { background: #13497d; }
+  .btn-nav.btn-nav-primary:disabled:hover { background: var(--color-blue); }
+
+  /* ── Footer ── */
+  .footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 20px; flex-shrink: 0;
+  }
+  .footer-status { display: flex; align-items: center; gap: 14px; font-size: 14px; color: var(--color-text-secondary); }
+  .progress-ring { width: 34px; height: 34px; position: relative; }
+  .progress-ring svg { width: 34px; height: 34px; transform: rotate(-90deg); }
+  .progress-ring-bg { fill: none; stroke: var(--color-background-secondary); stroke-width: 3; }
+  .progress-ring-fill { fill: none; stroke: var(--color-green); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 0.3s; }
+  .progress-ring-text { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+  .footer-status strong { color: var(--color-text-primary); font-weight: 500; }
+  .footer-actions { display: flex; gap: 12px; }
+  .btn {
+    height: 46px; padding: 0 24px; font-size: 15px; font-weight: 500;
+    border-radius: var(--border-radius-md); cursor: pointer; font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary); color: var(--color-text-primary);
+    transition: all 0.15s;
+  }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary {
+    background: var(--color-blue); border-color: var(--color-blue); color: #fff; padding: 0 28px;
+  }
+  .btn-primary:hover { background: #13497d; }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  /* ── Touch screen optimisations ── */
+  /* Prevent text selection on interactive elements */
+  button, .payoff-option, .tab, .ps-dropdown-item, .insp-btn, .pill-btn, .btn-nav, .btn, .btn-scan {
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  /* Minimum 44px tap targets on all clickable controls */
+  .pill-btn    { min-height: 44px; }
+  .insp-btn    { min-height: 44px; }
+  .btn-nav     { min-height: 44px; }
+  .btn         { min-height: 44px; }
+  .btn-scan    { min-height: 44px; min-width: 44px; }
+  .btn-confirm-ps { min-height: 44px; }
+  .btn-change-ps  { min-height: 44px; }
+  .payoff-option  { min-height: 44px; }
+  /* Slightly larger inspection rows for touch */
+  .inspection-row { padding: 8px 12px; }
+  .insp-check-row { padding: 7px 0; }
+
+  /* ── Tablet layout (≤1100px) ── */
+  @media (max-width: 1100px) {
+    .tab-hint { display: none; }
+    .tab { padding: 8px 10px; gap: 8px; }
+    .tab-name { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- ═══ GLOBAL APPLICATION BAR ═══ -->
+  <div class="global-bar panel">
+    <div class="gb-left">
+      <div class="gb-logo">
+        <span class="gb-copyright">&copy; UAC 2005</span>
+        <img class="ua-logo" src="mainlogo.gif" alt="United Aluminum" width="120" height="34">
+      </div>
+    </div>
+
+    <div class="gb-center">
+      <div class="gb-greeting"><span id="gb-greeting-text">Good Afternoon</span>, <strong id="gb-primary-user">Bob Scott</strong> &middot; <span id="gb-date">Sun, 26 July 2026</span></div>
+      <div class="gb-env">THIS IS TESTING ENVIRONMENT (DEV00164-003)</div>
+    </div>
+
+    <div class="gb-right">
+      <div class="gb-users" id="gb-users">
+        <span class="gb-users-label">Signed in:</span>
+        <span class="user-chip active" data-user="Bob Scott" title="Bob Scott — active">
+          <span class="active-dot"></span>
+          <span class="avatar" style="background:#185FA5;">BS</span>
+          <span class="u-name">Bob Scott</span>
+          <button class="u-close" title="Sign out Bob Scott" aria-label="Sign out Bob Scott">&times;</button>
+        </span>
+        <span class="user-chip" data-user="Dave Miller" title="Dave Miller — tap to activate">
+          <span class="active-dot"></span>
+          <span class="avatar" style="background:#1D9E75;">DM</span>
+          <span class="u-name">Dave M.</span>
+          <button class="u-close" title="Sign out Dave M." aria-label="Sign out Dave M.">&times;</button>
+        </span>
+        <span class="user-chip" data-user="Lena Ruiz" title="Lena Ruiz — tap to activate">
+          <span class="active-dot"></span>
+          <span class="avatar" style="background:#6B3FA0;">LR</span>
+          <span class="u-name">Lena R.</span>
+          <button class="u-close" title="Sign out Lena R." aria-label="Sign out Lena R.">&times;</button>
+        </span>
+      </div>
+
+      <div class="gb-actions">
+        <button class="gb-btn" id="gb-help" title="Help">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M9.4 9a2.6 2.6 0 015.1 0.4c0 1.6-2.5 2-2.5 3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg>
+          <span>Help</span>
+        </button>
+        <button class="gb-btn" id="gb-refresh" title="Refresh">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M20 11a8 8 0 10-2 5.3M20 5v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Refresh</span>
+        </button>
+        <button class="gb-btn accent" id="gb-login" title="Sign in another operator">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M15 3h3a2 2 0 012 2v14a2 2 0 01-2 2h-3M10 17l5-5-5-5M15 12H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Login</span>
+        </button>
+        <button class="gb-btn" id="gb-switch" title="Switch active operator">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M7 4L3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Switch</span>
+        </button>
+        <button class="gb-btn danger" id="gb-logout" title="Sign out active operator">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M9 3H6a2 2 0 00-2 2v14a2 2 0 002 2h3M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ HEADER ═══ -->
+  <div class="header panel">
+    <div class="header-left">
+      <span class="line-badge"><span class="dot"></span>FL1</span>
+      <h1>Rod check-in &amp; pre-run setup</h1>
+    </div>
+    <button class="btn" id="more-btn" title="More options" style="display:inline-flex;align-items:center;gap:8px;">
+      <svg viewBox="0 0 24 24" fill="none" style="width:17px;height:17px;"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/></svg>
+      More Options
+      <svg viewBox="0 0 24 24" fill="none" style="width:13px;height:13px;"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+
+  <!-- ═══ MAIN CONTENT ═══ -->
+  <div class="content">
+
+    <!-- Fixed context: Rod identification (always visible) -->
+    <div class="section rod-scan-row">
+      <div class="field" style="min-width:240px;max-width:320px;">
+        <label class="field-label field-required">Rod number</label>
+        <div class="input-scan-wrap">
+          <input class="input" id="rod-number-input" type="text" value="R00042" placeholder="Scan barcode or type" style="flex:1;min-width:0;" data-required autofocus>
+        </div>
+        <span class="field-error" id="rod-number-error">Rod number is required</span>
+      </div>
+      <div class="field" style="min-width:140px;max-width:200px;">
+        <label class="field-label field-required">Diameter</label>
+        <input class="input" id="rod-diameter-input" type="text" value='0.375"' data-required>
+        <span class="field-error" id="rod-diameter-error">Diameter is required</span>
+      </div>
+      <div class="field" style="min-width:220px;max-width:290px;">
+        <label class="field-label field-required">Payoff position</label>
+        <div class="payoff-selector">
+          <div class="payoff-option" data-payoff="1"><div class="payoff-dot"></div><span class="payoff-label">Payoff 1</span></div>
+          <div class="payoff-option selected" data-payoff="2"><div class="payoff-dot"></div><span class="payoff-label">Payoff 2</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fixed context: Bundle information (always visible) -->
+    <div class="section" style="flex-shrink:0;">
+      <div class="section-header">
+        <span class="section-title">Incoming Bundle Information</span>
+      </div>
+      <div class="field-grid" style="grid-template-columns:repeat(6,1fr);">
+        <div class="field"><label class="field-label">Alloy</label><div class="input-readonly">1100</div></div>
+        <div class="field"><label class="field-label">Temper</label><div class="input-readonly">F</div></div>
+        <div class="field"><label class="field-label">Gross weight</label><input class="input" type="text" value="8,840 lb" disabled></div>
+        <div class="field"><label class="field-label">Net weight</label><div class="input-readonly mono">8,500 lb</div></div>
+        <div class="field"><label class="field-label">Heat / Cast no.</label><input class="input" type="text" value="HC-2024-0892" disabled></div>
+        <div class="field"><label class="field-label">Supplier</label><div class="input-readonly">Southwire</div></div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB WIZARD ═══ -->
+    <div class="wizard">
+
+      <!-- ── Tab strip ── -->
+      <div class="tab-strip" role="tablist" id="tab-strip">
+        <button class="tab active" role="tab" data-step="0">
+          <span class="tab-index">1</span>
+          <span class="tab-body"><span class="tab-name">Visual Inspection</span><span class="tab-hint">Rod condition</span></span>
+          <svg class="tab-lock" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <button class="tab locked" role="tab" data-step="1">
+          <span class="tab-index">2</span>
+          <span class="tab-body"><span class="tab-name">Pass Schedule</span><span class="tab-hint">Confirm setup</span></span>
+          <svg class="tab-lock" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <button class="tab locked" role="tab" data-step="2">
+          <span class="tab-index">3</span>
+          <span class="tab-body"><span class="tab-name">Pre-run SPC</span><span class="tab-hint">Diameter check</span></span>
+          <svg class="tab-lock" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <button class="tab locked" role="tab" data-step="3">
+          <span class="tab-index">4</span>
+          <span class="tab-body"><span class="tab-name">Die Block</span><span class="tab-hint">DB1 &middot; DB2</span></span>
+          <svg class="tab-lock" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <button class="tab locked" role="tab" data-step="4">
+          <span class="tab-index">5</span>
+          <span class="tab-body"><span class="tab-name">Rolling Mill</span><span class="tab-hint">FM1 mill</span></span>
+          <svg class="tab-lock" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <button class="tab locked" role="tab" data-step="5">
+          <span class="tab-index">6</span>
+          <span class="tab-body"><span class="tab-name">Lube &amp; Safety</span><span class="tab-hint">Pre-start</span></span>
+          <svg class="tab-lock" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <!-- ── Tab panels ── -->
+      <div class="tab-panels" id="tab-panels">
+
+        <!-- Panel 1: Visual Inspection -->
+        <div class="tab-panel active" role="tabpanel" data-step="0">
+          <div class="section-header">
+            <span class="section-title">Visual Inspection</span>
+            <span style="font-size:14px;color:var(--color-text-tertiary);">Step 1 of 6</span>
+          </div>
+          <div class="inspection-row">
+            <span class="inspection-label">Oxidation</span>
+            <div class="inspection-buttons">
+              <button class="pill-btn pass selected" data-inspection="oxidation" data-value="pass">Pass</button>
+              <button class="pill-btn fail" data-inspection="oxidation" data-value="fail">Fail</button>
+            </div>
+          </div>
+          <div class="inspection-row">
+            <span class="inspection-label">Surface defects</span>
+            <div class="inspection-buttons">
+              <button class="pill-btn pass selected" data-inspection="surface" data-value="pass">Pass</button>
+              <button class="pill-btn fail" data-inspection="surface" data-value="fail">Fail</button>
+            </div>
+          </div>
+          <div class="inspection-row">
+            <span class="inspection-label">Water stains</span>
+            <div class="inspection-buttons">
+              <button class="pill-btn pass selected" data-inspection="water" data-value="pass">Pass</button>
+              <button class="pill-btn fail" data-inspection="water" data-value="fail">Fail</button>
+            </div>
+          </div>
+          <div class="inspection-row">
+            <span class="inspection-label">Connector tag present</span>
+            <div class="inspection-buttons">
+              <button class="pill-btn pass selected" data-inspection="tag" data-value="pass">Present</button>
+              <button class="pill-btn fail" data-inspection="tag" data-value="fail">Missing</button>
+            </div>
+          </div>
+          <div class="field" style="margin-top:10px;">
+            <label class="field-label">Observation (optional)</label>
+            <textarea class="textarea" placeholder="Notes on condition, packaging, surface marks..."></textarea>
+          </div>
+        </div>
+
+        <!-- Panel 2: Pass Schedule -->
+        <div class="tab-panel" role="tabpanel" data-step="1">
+          <div class="section-header">
+            <span class="section-title">Pass Schedule</span>
+            <div class="section-meta">
+              <span class="section-subtitle mono" id="ps-schedule-id-label">PS-1100-FL1-003</span>
+              <span class="readonly-badge">Read-only</span>
+              <span style="font-size:14px;color:var(--color-text-tertiary);">Step 2 of 6</span>
+            </div>
+          </div>
+          <div class="order-spec-bar">
+            <span><span class="order-spec-label">Target</span><span class="order-spec-value">0.110&Prime; &times; 0.625&Prime;</span></span>
+            <span class="order-spec-sep">/</span>
+            <span><span class="order-spec-label">Alloy</span><span class="order-spec-value">1100</span></span>
+            <span class="order-spec-sep">/</span>
+            <span><span class="order-spec-label">Temper</span><span class="order-spec-value">H19</span></span>
+            <span class="order-spec-sep">/</span>
+            <span><span class="order-spec-label">Order qty</span><span class="order-spec-value">3 coils</span></span>
+          </div>
+          <div class="ps-confirm-bar" id="ps-confirm-bar">
+            <span class="ps-confirm-match" id="ps-confirm-match">System recommends <strong>PS-1100-FL1-003</strong> &mdash; matched on Alloy&nbsp;1100, Rod&nbsp;0.375&Prime;, Target&nbsp;0.110&Prime;&nbsp;&times;&nbsp;0.625&Prime;</span>
+            <div class="ps-confirm-actions">
+              <button class="btn-confirm-ps" id="btn-confirm-ps">Confirm Schedule</button>
+              <div class="ps-change-wrap">
+                <button class="btn-change-ps" id="btn-change-ps">Change <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1.5 3.5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                <div class="ps-change-dropdown" id="ps-change-dropdown">
+                  <div class="ps-dropdown-item recommended" data-id="PS-1100-FL1-003">
+                    <span class="ps-dropdown-id">PS-1100-FL1-003</span>
+                    <span class="ps-dropdown-desc">Alloy 1100 &middot; Rod 0.375&Prime; &middot; 0.110&Prime; &times; 0.625&Prime; &mdash; Recommended</span>
+                  </div>
+                  <div class="ps-dropdown-item" data-id="PS-1100-FL1-002">
+                    <span class="ps-dropdown-id">PS-1100-FL1-002</span>
+                    <span class="ps-dropdown-desc">Alloy 1100 &middot; Rod 0.375&Prime; &middot; 0.112&Prime; &times; 0.625&Prime;</span>
+                  </div>
+                  <div class="ps-dropdown-item" data-id="PS-1100-FL1-001">
+                    <span class="ps-dropdown-id">PS-1100-FL1-001</span>
+                    <span class="ps-dropdown-desc">Alloy 1100 &middot; Rod 0.375&Prime; &middot; 0.125&Prime; &times; 0.625&Prime;</span>
+                  </div>
+                  <div class="ps-dropdown-warning">&#9888; Selecting a different schedule will be flagged for Operations review.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <table class="schedule-table">
+            <thead><tr>
+              <th style="width:34%;">Component</th>
+              <th style="width:24%;">Status</th>
+              <th>Setting</th>
+            </tr></thead>
+            <tbody>
+              <tr><td class="component-name">DB1</td><td><span class="status-cell"><span class="dot"></span>Active</span></td><td class="setting-cell">Die 0.340"</td></tr>
+              <tr><td class="component-name">DB2</td><td><span class="status-cell"><span class="dot"></span>Active</span></td><td class="setting-cell">Die 0.310"</td></tr>
+              <tr><td class="component-name">FM1 12" mill</td><td><span class="status-cell"><span class="dot"></span>Active</span></td><td class="setting-cell">Gap 0.112" / Width 0.630"</td></tr>
+              <tr><td class="component-name">Start speed</td><td><span class="status-cell"><span class="dot"></span>Active</span></td><td class="setting-cell">150 FPM</td></tr>
+            </tbody>
+          </table>
+          <div class="callout">
+            <span class="callout-icon">i</span>
+            <span>Parameters will be pushed to PLC tags on acknowledgment. Modifications require Operations Manager credentials and are logged in the override history.</span>
+          </div>
+        </div>
+
+        <!-- Panel 3: Pre-run SPC -->
+        <div class="tab-panel" role="tabpanel" data-step="2">
+          <div class="section-header">
+            <span class="section-title">Pre-run SPC</span>
+            <div class="section-meta">
+              <span style="color:var(--color-text-secondary);font-family:var(--font-sans);font-size:14px;">Incoming Rod Diameter Check</span>
+              <span style="font-size:14px;color:var(--color-text-tertiary);">Step 3 of 6</span>
+            </div>
+          </div>
+          <div class="spc-measurement">
+            <div class="field">
+              <label class="field-label field-required">Measurement 1</label>
+              <input class="input" id="spc-m1" type="text" value='0.375"' data-required data-spc="1">
+            </div>
+            <div class="field">
+              <label class="field-label">Target</label>
+              <div class="input-readonly mono">0.375" &plusmn; 0.005"</div>
+            </div>
+            <div class="spc-status" id="spc-status-1"><span class="dot"></span>In spec</div>
+          </div>
+          <div class="spc-measurement" style="margin-bottom:10px;">
+            <div class="field">
+              <label class="field-label field-required">Measurement 2 (90&deg;)</label>
+              <input class="input" id="spc-m2" type="text" value='0.374"' data-required data-spc="2">
+            </div>
+            <div class="field">
+              <label class="field-label">Ovality (M1 &minus; M2)</label>
+              <div class="input-readonly mono" id="spc-ovality">0.001"</div>
+            </div>
+            <div class="spc-status" id="spc-status-2"><span class="dot"></span>In spec</div>
+          </div>
+          <div class="tolerance-viz">
+            <div class="tolerance-viz-title">Diameter tolerance visualization — M1</div>
+            <div class="tolerance-track">
+              <div class="tolerance-range"></div>
+              <div class="tolerance-tick left"><span class="tolerance-tick-label">0.370"</span></div>
+              <div class="tolerance-tick center"><span class="tolerance-tick-label">0.375"</span></div>
+              <div class="tolerance-tick right"><span class="tolerance-tick-label">0.380"</span></div>
+              <div class="tolerance-marker" style="left:50%;">
+                <span class="tolerance-marker-label">0.375"</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 4: Die Block Inspection -->
+        <div class="tab-panel" role="tabpanel" data-step="3">
+          <div class="section-header">
+            <span class="section-title">Die Block Inspection</span>
+            <span style="font-size:14px;color:var(--color-text-tertiary);">Machine Inspection · Step 4 of 6</span>
+          </div>
+          <div class="insp-grid">
+            <div class="insp-card">
+              <div class="insp-card-title">DB1 — Drawing Die</div>
+              <div class="insp-measure-row">
+                <div class="field">
+                  <label class="field-label">Die ring diameter</label>
+                  <input class="input" type="text" value='0.340"' placeholder="0.000&quot;">
+                </div>
+                <div class="insp-spec-tag">Spec: 0.340"</div>
+              </div>
+              <div class="insp-check-row">
+                <span class="insp-check-label">Die surface condition</span>
+                <div class="insp-btns">
+                  <button class="insp-btn ok selected" data-g="db1-surface" data-v="ok">OK</button>
+                  <button class="insp-btn ng" data-g="db1-surface" data-v="ng">Not Good</button>
+                </div>
+              </div>
+              <div class="insp-check-row">
+                <span class="insp-check-label">Lubricant flow</span>
+                <div class="insp-btns">
+                  <button class="insp-btn ok selected" data-g="db1-lube" data-v="ok">OK</button>
+                  <button class="insp-btn ng" data-g="db1-lube" data-v="ng">Not Good</button>
+                </div>
+              </div>
+              <div class="insp-check-row">
+                <span class="insp-check-label">Bearing wear</span>
+                <div class="insp-btns">
+                  <button class="insp-btn ok selected" data-g="db1-bearing" data-v="ok">OK</button>
+                  <button class="insp-btn ng" data-g="db1-bearing" data-v="ng">Not Good</button>
+                </div>
+              </div>
+            </div>
+            <div class="insp-card">
+              <div class="insp-card-title">DB2 — Drawing Die</div>
+              <div class="insp-measure-row">
+                <div class="field">
+                  <label class="field-label">Die ring diameter</label>
+                  <input class="input" type="text" value='0.310"' placeholder="0.000&quot;">
+                </div>
+                <div class="insp-spec-tag">Spec: 0.310"</div>
+              </div>
+              <div class="insp-check-row">
+                <span class="insp-check-label">Die surface condition</span>
+                <div class="insp-btns">
+                  <button class="insp-btn ok selected" data-g="db2-surface" data-v="ok">OK</button>
+                  <button class="insp-btn ng" data-g="db2-surface" data-v="ng">Not Good</button>
+                </div>
+              </div>
+              <div class="insp-check-row">
+                <span class="insp-check-label">Lubricant flow</span>
+                <div class="insp-btns">
+                  <button class="insp-btn ok selected" data-g="db2-lube" data-v="ok">OK</button>
+                  <button class="insp-btn ng" data-g="db2-lube" data-v="ng">Not Good</button>
+                </div>
+              </div>
+              <div class="insp-check-row">
+                <span class="insp-check-label">Bearing wear</span>
+                <div class="insp-btns">
+                  <button class="insp-btn ok selected" data-g="db2-bearing" data-v="ok">OK</button>
+                  <button class="insp-btn ng" data-g="db2-bearing" data-v="ng">Not Good</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 5: Rolling Mill Inspection -->
+        <div class="tab-panel" role="tabpanel" data-step="4">
+          <div class="section-header">
+            <span class="section-title">Rolling Mill Inspection</span>
+            <span style="font-size:14px;color:var(--color-text-tertiary);">Machine Inspection · Step 5 of 6</span>
+          </div>
+          <div class="insp-grid">
+            <div class="insp-card">
+              <div class="insp-card-title">FM1 — 12" Flat Mill</div>
+              <div class="insp-measure-row">
+                <div class="field">
+                  <label class="field-label">Roll gap (measured)</label>
+                  <input class="input" type="text" value='0.112"' placeholder="0.000&quot;">
+                </div>
+                <div class="insp-spec-tag">Target: 0.112"</div>
+              </div>
+              <div class="insp-measure-row">
+                <div class="field">
+                  <label class="field-label">Roll width (measured)</label>
+                  <input class="input" type="text" value='0.630"' placeholder="0.000&quot;">
+                </div>
+                <div class="insp-spec-tag">Target: 0.630"</div>
+              </div>
+              <div class="insp-check-row">
+                <span class="insp-check-label">Roll surface condition</span>
+                <div class="insp-btns">
+                  <button class="insp-btn ok selected" data-g="fm1-surface" data-v="ok">OK</button>
+                  <button class="insp-btn ng" data-g="fm1-surface" data-v="ng">Not Good</button>
+                </div>
+              </div>
+              <div class="insp-check-row">
+                <span class="insp-check-label">Coolant flow</span>
+                <div class="insp-btns">
+                  <button class="insp-btn ok selected" data-g="fm1-coolant" data-v="ok">OK</button>
+                  <button class="insp-btn ng" data-g="fm1-coolant" data-v="ng">Not Good</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 6: Lubrication & Safety -->
+        <div class="tab-panel" role="tabpanel" data-step="5">
+          <div class="section-header">
+            <span class="section-title">Lubrication &amp; Safety Pre-start</span>
+            <span style="font-size:14px;color:var(--color-text-tertiary);">Machine Inspection · Step 6 of 6</span>
+          </div>
+          <div class="insp-grid">
+            <div class="insp-card">
+              <div class="insp-card-title">Lubrication System</div>
+              <div class="insp-check-row">
+                <span class="insp-check-label">Drawing lubricant level</span>
+                <div class="insp-btns">
+                  <button class="insp-btn ok selected" data-g="lube-level" data-v="ok">OK</button>
+                  <button class="insp-btn ng" data-g="lube-level" data-v="ng">Not Good</button>
+                </div>
+              </div>
+              <div class="insp-check-row">
+                <span class="insp-check-label">Lube temperature (°F)</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input class="input" type="text" value="72" style="width:76px;">
+                  <span style="font-size:14px;color:var(--color-text-tertiary);">Target: 68–80°F</span>
+                </div>
+              </div>
+              <div class="insp-check-row">
+                <span class="insp-check-label">Pump running</span>
+                <div class="insp-btns">
+                  <button class="insp-btn ok selected" data-g="lube-pump" data-v="ok">OK</button>
+                  <button class="insp-btn ng" data-g="lube-pump" data-v="ng">Not Good</button>
+                </div>
+              </div>
+              <div class="insp-check-row">
+                <span class="insp-check-label">Filter condition</span>
+                <div class="insp-btns">
+                  <button class="insp-btn ok selected" data-g="lube-filter" data-v="ok">OK</button>
+                  <button class="insp-btn ng" data-g="lube-filter" data-v="ng">Not Good</button>
+                </div>
+              </div>
+            </div>
+            <div class="insp-card">
+              <div class="insp-card-title">Safety &amp; Housekeeping</div>
+              <div class="insp-check-row">
+                <span class="insp-check-label">All guards in place</span>
+                <div class="insp-btns">
+                  <button class="insp-btn ok selected" data-g="safe-guards" data-v="ok">OK</button>
+                  <button class="insp-btn ng" data-g="safe-guards" data-v="ng">Not Good</button>
+                </div>
+              </div>
+              <div class="insp-check-row">
+                <span class="insp-check-label">E-stop function verified</span>
+                <div class="insp-btns">
+                  <button class="insp-btn ok selected" data-g="safe-estop" data-v="ok">OK</button>
+                  <button class="insp-btn ng" data-g="safe-estop" data-v="ng">Not Good</button>
+                </div>
+              </div>
+              <div class="insp-check-row">
+                <span class="insp-check-label">Area clear of debris</span>
+                <div class="insp-btns">
+                  <button class="insp-btn ok selected" data-g="safe-area" data-v="ok">OK</button>
+                  <button class="insp-btn ng" data-g="safe-area" data-v="ng">Not Good</button>
+                </div>
+              </div>
+              <div class="insp-check-row">
+                <span class="insp-check-label">PPE worn</span>
+                <div class="insp-btns">
+                  <button class="insp-btn ok selected" data-g="safe-ppe" data-v="ok">OK</button>
+                  <button class="insp-btn ng" data-g="safe-ppe" data-v="ng">Not Good</button>
+                  <button class="insp-btn na" data-g="safe-ppe" data-v="na">N/A</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="field" style="margin-top:10px;">
+            <label class="field-label">Machine inspection notes (optional)</label>
+            <textarea class="textarea" placeholder="Any issues observed, deferred items, or notes for maintenance..."></textarea>
+          </div>
+        </div>
+
+      </div><!-- /tab-panels -->
+
+      <!-- ── Hold / deviation override bar (shown when a check fails) ── -->
+      <div class="hold-bar" id="hold-bar" hidden>
+        <div class="hold-head">
+          <span class="hold-icon">&#9888;</span>
+          <div class="hold-main">
+            <div class="hold-title" id="hold-title">Failed checks — rod placed on hold</div>
+            <div class="hold-detail" id="hold-detail"></div>
+          </div>
+        </div>
+        <div class="hold-actions" id="hold-actions">
+          <input class="hold-field hold-badge" id="hold-badge" type="text" inputmode="numeric" autocomplete="off" placeholder="Supervisor badge #">
+          <input class="hold-field hold-pass" id="hold-pass" type="password" autocomplete="off" placeholder="Password">
+          <input class="hold-field hold-reason" id="hold-reason" type="text" placeholder="Override reason / comment (required)">
+          <button class="btn-nav" id="hold-override-btn">Authorize Override</button>
+        </div>
+      </div>
+
+      <!-- ── Wizard nav bar ── -->
+      <div class="wizard-nav">
+        <button class="btn-nav" id="wiz-prev" disabled>&#8592; Previous</button>
+        <div class="wizard-status" id="wiz-status"></div>
+        <button class="btn-nav btn-nav-primary" id="wiz-next">Next &#8594;</button>
+      </div>
+
+    </div><!-- /wizard -->
+
+  </div><!-- /content -->
+
+  <!-- ═══ FOOTER ═══ -->
+  <div class="footer panel">
+    <div class="footer-status">
+      <div class="progress-ring">
+        <svg viewBox="0 0 34 34">
+          <circle class="progress-ring-bg" cx="17" cy="17" r="14"/>
+          <circle class="progress-ring-fill" cx="17" cy="17" r="14" stroke-dasharray="88" stroke-dashoffset="88"/>
+        </svg>
+        <div class="progress-ring-text">0/6</div>
+      </div>
+      <span id="footer-status-text"><strong>0 of 6 steps complete</strong> &middot; complete each step to proceed</span>
+    </div>
+    <div class="footer-actions">
+      <button class="btn">Cancel</button>
+      <button class="btn btn-primary" id="acknowledge-btn" disabled>Acknowledge &amp; Begin Check-in</button>
+    </div>
+  </div>
+
+</div><!-- /dashboard -->
+
+<!-- ═══ SWITCH ACTIVE OPERATOR MODAL ═══ -->
+<div class="gb-modal-overlay" id="switch-overlay">
+  <div class="gb-modal" role="dialog" aria-modal="true" aria-labelledby="switch-modal-title">
+    <div class="gb-modal-head">
+      <div>
+        <div class="gb-modal-title" id="switch-modal-title">Switch active operator</div>
+        <div class="gb-modal-sub">Select an operator to make them the active session</div>
+      </div>
+      <button class="gb-modal-close" id="switch-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="gb-modal-body">
+      <div class="switch-grid" id="switch-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MORE OPTIONS MODAL ═══ -->
+<div class="gb-modal-overlay" id="more-overlay">
+  <div class="gb-modal wide" role="dialog" aria-modal="true" aria-labelledby="more-modal-title">
+    <div class="gb-modal-head">
+      <div>
+        <div class="gb-modal-title" id="more-modal-title">More options</div>
+        <div class="gb-modal-sub">Jump to another Flat Wire station or task</div>
+      </div>
+      <button class="gb-modal-close" id="more-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="gb-modal-body">
+      <div class="more-grid">
+        <a class="more-tile" href="../../MVP-2/Mockups/dashboard_9_pass_schedule.html">
+          <svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="8" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
+          <span class="mt-title">Pass Schedule</span><span class="mt-sub">View schedule</span>
+        </a>
+        <button class="more-tile" type="button" onclick="closeMoreAndReject()">
+          <svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+          <span class="mt-title">WIP Rejection</span><span class="mt-sub">Reject material</span>
+        </button>
+        <a class="more-tile" href="dashboard_2a_rod_precheckin.html">
+          <svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3.5v3M12 17.5v3"/></svg>
+          <span class="mt-title">Rod Pre-Check-in</span><span class="mt-sub">Stage at payoff</span>
+        </a>
+        <button class="more-tile" type="button" onclick="closeMoreAndCheckout()">
+          <svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h5a2 2 0 012 2v14a2 2 0 01-2 2h-5"/><path d="M9 16l4-4-4-4"/><path d="M13 12H3"/></svg>
+          <span class="mt-title">Rod Checkout</span><span class="mt-sub">Return rod</span>
+        </button>
+        <a class="more-tile" href="../../MVP-2/Mockups/dashboard_10_shift_summary.html">
+          <svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><line x1="10" y1="13" x2="16" y2="13"/><line x1="10" y1="17" x2="16" y2="17"/></svg>
+          <span class="mt-title">Shift Summary</span><span class="mt-sub">Shift report</span>
+        </a>
+        <div class="more-tile" role="button" tabindex="0">
+          <svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/></svg>
+          <span class="mt-title">Downtime</span><span class="mt-sub">Log downtime</span>
+        </div>
+        <div class="more-tile" role="button" tabindex="0">
+          <svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M8.5 11.5l2.5 2 4-4.5"/></svg>
+          <span class="mt-title">Supervisor Monitor</span><span class="mt-sub">Supervisor view</span>
+        </div>
+        <div class="more-tile" role="button" tabindex="0">
+          <svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span class="mt-title">Observation</span><span class="mt-sub">Add observation</span>
+        </div>
+        <div class="more-tile" role="button" tabindex="0">
+          <svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r="0.7" fill="currentColor" stroke="none"/></svg>
+          <span class="mt-title">Order Info</span><span class="mt-sub">Order details</span>
+        </div>
+        <div class="more-tile" role="button" tabindex="0">
+          <svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+          <span class="mt-title">Order Instruction</span><span class="mt-sub">Special instructions</span>
+        </div>
+        <div class="more-tile" role="button" tabindex="0">
+          <svg class="mt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><path d="M6 17H4a2 2 0 01-2-2v-3a2 2 0 012-2h16a2 2 0 012 2v3a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg>
+          <span class="mt-title">Reprint Labels</span><span class="mt-sub">Reprint labels</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  /* ── Clock ── */
+  function pad(n) { return String(n).padStart(2, "0"); }
+  function updateClock() {
+    var now = new Date();
+    var h = now.getHours(), m = pad(now.getMinutes());
+    var ampm = h < 12 ? "AM" : "PM", h12 = h % 12 || 12;
+    var el = document.getElementById("clock");
+    if (el) el.textContent = pad(h12) + ":" + m + " " + ampm;
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var de = document.getElementById("date");
+    if (de) de.textContent = months[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  /* ── Payoff selector ── */
+  document.querySelectorAll(".payoff-option").forEach(function (el) {
+    el.addEventListener("click", function () {
+      document.querySelectorAll(".payoff-option").forEach(function (o) { o.classList.remove("selected"); });
+      el.classList.add("selected");
+    });
+  });
+
+  /* ── Inspection pills ── */
+  document.querySelectorAll(".pill-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var group = btn.getAttribute("data-inspection");
+      document.querySelectorAll('.pill-btn[data-inspection="' + group + '"]').forEach(function (b) { b.classList.remove("selected"); });
+      btn.classList.add("selected");
+    });
+  });
+
+  /* ── Machine inspection buttons ── */
+  document.querySelectorAll(".insp-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var g = btn.getAttribute("data-g");
+      document.querySelectorAll('.insp-btn[data-g="' + g + '"]').forEach(function (b) { b.classList.remove("selected"); });
+      btn.classList.add("selected");
+    });
+  });
+
+  /* ── Shared footer helpers ── */
+  var acknowledgeBtn = document.getElementById("acknowledge-btn");
+  var footerText     = document.getElementById("footer-status-text");
+  var ringFill       = document.querySelector(".progress-ring-fill");
+  var ringText       = document.querySelector(".progress-ring-text");
+
+  function setProgress(done, total) {
+    var offset = 87.96 * (1 - done / total);
+    if (ringFill) ringFill.setAttribute("stroke-dashoffset", offset.toFixed(1));
+    if (ringText) ringText.textContent = done + "/" + total;
+  }
+
+  /* Lands on the PRE-CHECK-IN station (DB2A), not the active run (DB3). Check-in is finished
+     the moment this is pressed — the rod is drawing and the run monitor is reachable from the
+     app bar and from Line Status. What the operator has to do NEXT is stage the following rod
+     on the idle payoff, which is DB2A. Closing the loop back to the payoff station keeps the
+     two-bay cycle (stage → check in → stage the next) on one path. */
+  acknowledgeBtn.addEventListener("click", function () {
+    if (acknowledgeBtn.disabled) return;
+    window.location.href = "dashboard_2a_rod_precheckin.html";
+  });
+
+  /* ── Pass schedule ── */
+  var psRecommendedId = "PS-1100-FL1-003";
+  var psCurrentId = psRecommendedId;
+  var psConfirmed = false;                 /* gates the Pass Schedule tab */
+  var psConfirmBar     = document.getElementById("ps-confirm-bar");
+  var psConfirmMatch   = document.getElementById("ps-confirm-match");
+  var btnConfirmPs     = document.getElementById("btn-confirm-ps");
+  var btnChangePs      = document.getElementById("btn-change-ps");
+  var psChangeDropdown = document.getElementById("ps-change-dropdown");
+  var psScheduleLabel  = document.getElementById("ps-schedule-id-label");
+
+  function confirmSchedule(id) {
+    psConfirmed = true;
+    psCurrentId = id;
+    if (psScheduleLabel) psScheduleLabel.textContent = id;
+    psConfirmBar.classList.add("confirmed");
+    btnConfirmPs.style.display = "none";
+    if (id === psRecommendedId) {
+      psConfirmMatch.innerHTML = "&#10003; Schedule confirmed &mdash; <strong>" + id + "</strong>";
+      overrideReasons[1] = undefined;
+    } else {
+      psConfirmMatch.innerHTML = "&#10003; Schedule changed to <strong>" + id + "</strong> &mdash; <span style=\"color:var(--color-text-danger);font-size:14px;\">&#9888; Flagged for Operations review</span>";
+      overrideReasons[1] = "Non-recommended schedule " + id + " selected — flagged for Operations review";
+    }
+    /* If this step is already completed, keep its deviation state in sync */
+    if (completed[1]) {
+      stepState[1] = (id === psRecommendedId) ? "clean" : "deviation";
+      renderTabs();
+      updateFooter();
+    }
+    /* Clear any pending validation message on this tab */
+    if (current === 1) { setStatus(); renderHoldForStep(1); }
+  }
+
+  if (btnConfirmPs) btnConfirmPs.addEventListener("click", function () { confirmSchedule(psCurrentId); });
+
+  if (btnChangePs) btnChangePs.addEventListener("click", function (e) {
+    e.stopPropagation();
+    psChangeDropdown.classList.toggle("open");
+  });
+
+  document.querySelectorAll(".ps-dropdown-item").forEach(function (item) {
+    item.addEventListener("click", function (e) {
+      e.stopPropagation();
+      psChangeDropdown.classList.remove("open");
+      confirmSchedule(item.getAttribute("data-id"));
+    });
+  });
+  document.addEventListener("click", function () { psChangeDropdown.classList.remove("open"); });
+
+  /* ── SPC ── */
+  var spcDiameterMin = 0.370, spcDiameterMax = 0.380, spcOvalityMax = 0.003;
+  var spcM1Input = document.getElementById("spc-m1");
+  var spcM2Input = document.getElementById("spc-m2");
+  var spcStatus1 = document.getElementById("spc-status-1");
+  var spcStatus2 = document.getElementById("spc-status-2");
+  var spcOvalityDisp = document.getElementById("spc-ovality");
+
+  function parseInch(s) { return parseFloat(s.replace(/"/g, "").trim()); }
+  function setSpcStatus(statusEl, inputEl, inSpec) {
+    if (inSpec) {
+      statusEl.className = "spc-status";
+      statusEl.innerHTML = '<span class="dot"></span>In spec';
+      inputEl.classList.remove("spc-out-of-spec");
+    } else {
+      statusEl.className = "spc-status out-of-spec";
+      statusEl.innerHTML = '<span class="dot"></span>Out of spec';
+      inputEl.classList.add("spc-out-of-spec");
+    }
+  }
+  function evalSpc() {
+    var m1 = parseInch(spcM1Input.value), m2 = parseInch(spcM2Input.value);
+    if (!isNaN(m1)) setSpcStatus(spcStatus1, spcM1Input, m1 >= spcDiameterMin && m1 <= spcDiameterMax);
+    if (!isNaN(m1) && !isNaN(m2)) {
+      var ov = Math.abs(m1 - m2);
+      if (spcOvalityDisp) spcOvalityDisp.textContent = ov.toFixed(3) + '"';
+      setSpcStatus(spcStatus2, spcM2Input, m2 >= spcDiameterMin && m2 <= spcDiameterMax && ov <= spcOvalityMax);
+    } else if (!isNaN(m2)) {
+      setSpcStatus(spcStatus2, spcM2Input, m2 >= spcDiameterMin && m2 <= spcDiameterMax);
+    }
+  }
+  if (spcM1Input) spcM1Input.addEventListener("input", evalSpc);
+  if (spcM2Input) spcM2Input.addEventListener("input", evalSpc);
+  evalSpc();
+
+  /* ════════════════════════════════════════════════
+     TAB WIZARD ENGINE
+     ──────────────────────────────────────────────
+     - Only the first tab is enabled initially.
+     - Each tab validates its own mandatory fields on "Next".
+     - A successful "Next" marks the tab Completed, unlocks and
+       navigates to the next tab. A failed one shows a message
+       and keeps the user in place.
+     - Previous / clicking any already-unlocked tab is allowed;
+       locked (future) tabs are inert.
+     ════════════════════════════════════════════════ */
+  var tabs   = Array.prototype.slice.call(document.querySelectorAll(".tab"));
+  var panels = Array.prototype.slice.call(document.querySelectorAll(".tab-panel"));
+  var TOTAL  = tabs.length;
+  var names  = ["Visual Inspection", "Pass Schedule", "Pre-run SPC", "Die Block", "Rolling Mill", "Lube & Safety"];
+
+  var current     = 0;   /* active tab index */
+  var maxUnlocked = 0;   /* highest reachable tab index */
+  var completed   = [];  /* per-tab completion flags */
+  var stepState   = [];  /* "pending" | "clean" | "deviation" (overridden hold) */
+  var overrideReasons = {}; /* step index → supervisor override reason */
+  for (var i = 0; i < TOTAL; i++) { completed.push(false); stepState.push("pending"); }
+
+  var prevBtn = document.getElementById("wiz-prev");
+  var nextBtn = document.getElementById("wiz-next");
+  var statusEl = document.getElementById("wiz-status");
+  var holdBar = document.getElementById("hold-bar");
+  var holdTitle = document.getElementById("hold-title");
+  var holdDetail = document.getElementById("hold-detail");
+  var holdActions = document.getElementById("hold-actions");
+  var holdBadge = document.getElementById("hold-badge");
+  var holdPass = document.getElementById("hold-pass");
+  var holdReason = document.getElementById("hold-reason");
+  var holdOverrideBtn = document.getElementById("hold-override-btn");
+
+  /* Default supervisor credentials for a hold override */
+  var SUPERVISOR_BADGE = "149";
+  var SUPERVISOR_PASSWORD = "frankb";
+
+  /* ── Field-level validation helpers ── */
+  function clearFieldErrors() {
+    document.querySelectorAll(".input.invalid").forEach(function (el) { el.classList.remove("invalid"); });
+    document.querySelectorAll(".field.has-error").forEach(function (el) { el.classList.remove("has-error"); });
+  }
+  function flagField(inputEl) {
+    if (!inputEl) return;
+    inputEl.classList.add("invalid");
+    var field = inputEl.closest(".field");
+    if (field) field.classList.add("has-error");
+  }
+
+  /* ── Per-step validators ──
+     These are pre-run verification gates, not a data-entry form. Each returns:
+       { status:"incomplete", msg, focus }  → a required entry / check is unanswered
+       { status:"failed", failed:[...] }     → answered, but a check is unacceptable
+       { status:"ok" [, deviation:true] }    → step passes (deviation = passes-but-flagged)
+     "failed" routes the operator through the hold + supervisor-override path. */
+  function validateVisual() {
+    var bad = [];
+    var rod = document.getElementById("rod-number-input");
+    var dia = document.getElementById("rod-diameter-input");
+    if (!rod.value.trim()) bad.push(rod);
+    if (!dia.value.trim()) bad.push(dia);
+    if (!document.querySelector(".payoff-option.selected")) {
+      return { status: "incomplete", msg: "Select a payoff position to continue" };
+    }
+    if (bad.length) {
+      bad.forEach(flagField);
+      return { status: "incomplete", msg: "Enter the required rod number and diameter", focus: bad[0] };
+    }
+    var groups = [["oxidation", "Oxidation"], ["surface", "Surface defects"], ["water", "Water stains"], ["tag", "Connector tag"]];
+    var unanswered = [], failed = [];
+    groups.forEach(function (g) {
+      var sel = document.querySelector('.pill-btn[data-inspection="' + g[0] + '"].selected');
+      if (!sel) unanswered.push(g[1]);
+      else if (sel.getAttribute("data-value") === "fail") failed.push(g[1] + " — " + sel.textContent.trim());
+    });
+    if (unanswered.length) return { status: "incomplete", msg: "Record a result for every visual check (" + unanswered.length + " remaining)" };
+    if (failed.length) return { status: "failed", failed: failed };
+    return { status: "ok" };
+  }
+
+  function validatePassSchedule() {
+    if (!psConfirmed) {
+      return { status: "incomplete", msg: "Confirm the pass schedule before continuing" };
+    }
+    /* A non-recommended schedule completes the step but is flagged for review */
+    return { status: "ok", deviation: (psCurrentId !== psRecommendedId) };
+  }
+
+  function validateSpc() {
+    evalSpc();
+    var bad = [];
+    var m1 = parseInch(spcM1Input.value), m2 = parseInch(spcM2Input.value);
+    if (isNaN(m1)) bad.push(spcM1Input);
+    if (isNaN(m2)) bad.push(spcM2Input);
+    if (bad.length) {
+      bad.forEach(flagField);
+      return { status: "incomplete", msg: "Enter both diameter measurements", focus: bad[0] };
+    }
+    var failed = [];
+    if (!(m1 >= spcDiameterMin && m1 <= spcDiameterMax)) failed.push('M1 ' + m1.toFixed(3) + '" outside 0.370–0.380"');
+    if (!(m2 >= spcDiameterMin && m2 <= spcDiameterMax)) {
+      failed.push('M2 ' + m2.toFixed(3) + '" outside 0.370–0.380"');
+    } else {
+      var ov = Math.abs(m1 - m2);
+      if (ov > spcOvalityMax) failed.push('Ovality ' + ov.toFixed(3) + '" exceeds ' + spcOvalityMax.toFixed(3) + '"');
+    }
+    if (failed.length) return { status: "failed", failed: failed };
+    return { status: "ok" };
+  }
+
+  /* Generic: every OK/NG/NA group in a panel must be answered; any "Not Good" fails */
+  function validatePanelInspections(panelEl) {
+    var groups = {};
+    panelEl.querySelectorAll(".insp-btn[data-g]").forEach(function (b) {
+      var g = b.getAttribute("data-g");
+      if (!(g in groups)) groups[g] = null;
+      if (b.classList.contains("selected")) groups[g] = b.getAttribute("data-v");
+    });
+    var unanswered = [], failed = [];
+    Object.keys(groups).forEach(function (g) {
+      var anyBtn = panelEl.querySelector('.insp-btn[data-g="' + g + '"]');
+      var row = anyBtn ? anyBtn.closest(".insp-check-row") : null;
+      var label = row ? row.querySelector(".insp-check-label").textContent.trim() : g;
+      if (groups[g] === null) unanswered.push(label);
+      else if (groups[g] === "ng") failed.push(label + " — Not Good");
+    });
+    if (unanswered.length) return { status: "incomplete", msg: "Answer every inspection check (" + unanswered.length + " remaining)" };
+    if (failed.length) return { status: "failed", failed: failed };
+    return { status: "ok" };
+  }
+
+  var validators = [
+    validateVisual,
+    validatePassSchedule,
+    validateSpc,
+    function () { return validatePanelInspections(panels[3]); },
+    function () { return validatePanelInspections(panels[4]); },
+    function () { return validatePanelInspections(panels[5]); }
+  ];
+
+  /* ── Rendering ── */
+  function renderTabs() {
+    tabs.forEach(function (tab, i) {
+      tab.classList.remove("active", "completed", "deviation", "locked");
+      var idx = tab.querySelector(".tab-index");
+      if (i > maxUnlocked) {
+        tab.classList.add("locked");
+        tab.setAttribute("aria-disabled", "true");
+      } else {
+        tab.removeAttribute("aria-disabled");
+      }
+      if (completed[i]) tab.classList.add(stepState[i] === "deviation" ? "deviation" : "completed");
+      if (i === current) tab.classList.add("active");
+      if (!completed[i]) idx.innerHTML = String(i + 1);
+      else idx.innerHTML = stepState[i] === "deviation" ? "!" : "&#10003;";
+    });
+  }
+
+  function setStatus(msg, kind) {
+    statusEl.classList.remove("error", "success", "warn");
+    if (!msg) {
+      statusEl.textContent = "Step " + (current + 1) + " of " + TOTAL + " · " + names[current];
+      return;
+    }
+    if (kind) statusEl.classList.add(kind);
+    var icon = kind === "error" ? "!" : (kind === "success" ? "✓" : (kind === "warn" ? "!" : ""));
+    statusEl.innerHTML = (icon ? '<span class="status-icon">' + icon + "</span>" : "") +
+      "<span>" + msg + "</span>";
+  }
+
+  function allDone() {
+    for (var i = 0; i < TOTAL; i++) if (!completed[i]) return false;
+    return true;
+  }
+
+  function updateNavButtons() {
+    prevBtn.disabled = (current === 0);
+    if (current === TOTAL - 1) {
+      nextBtn.innerHTML = completed[current] ? "Completed &#10003;" : "Complete Setup &#10003;";
+      nextBtn.disabled = completed[current];
+    } else {
+      nextBtn.innerHTML = "Next &#8594;";
+      nextBtn.disabled = false;
+    }
+  }
+
+  function deviationCount() {
+    return stepState.filter(function (s) { return s === "deviation"; }).length;
+  }
+
+  function updateFooter() {
+    var done = completed.filter(Boolean).length;
+    var dv = deviationCount();
+    var holdNote = dv ? " &middot; <span style=\"color:var(--color-text-warning);font-weight:500;\">" + dv + " on override hold</span>" : "";
+    setProgress(done, TOTAL);
+    if (allDone()) {
+      footerText.innerHTML = "<strong>All " + TOTAL + " steps complete</strong>" + holdNote + " &middot; ready to acknowledge";
+    } else {
+      footerText.innerHTML = "<strong>" + done + " of " + TOTAL + " steps complete</strong>" + (holdNote || " &middot; complete each step to proceed");
+    }
+  }
+
+  function showTab(i, statusMsg, statusKind) {
+    current = i;
+    panels.forEach(function (p, idx) { p.classList.toggle("active", idx === i); });
+    renderTabs();
+    updateNavButtons();
+    renderHoldForStep(i);
+    if (statusMsg !== undefined) setStatus(statusMsg, statusKind);
+    else setStatus();
+    /* For guided entry, focus the first required input inside the panel (if any).
+       Panels whose required fields live in the fixed context row leave the
+       autofocused rod-number field alone. */
+    var firstInput = panels[i].querySelector("input[data-required]:not([disabled])");
+    if (firstInput) { try { firstInput.focus({ preventScroll: true }); } catch (e) {} }
+  }
+
+  /* Show the hold bar in "needs override" mode for a fresh failure */
+  function showHoldNeedsOverride(failedList) {
+    holdBar.classList.remove("overridden");
+    holdActions.style.display = "";
+    holdTitle.textContent = "Failed checks — supervisor authorization required to place on hold";
+    holdDetail.textContent = failedList.join("   ·   ");
+    holdBadge.value = ""; holdPass.value = ""; holdReason.value = "";
+    holdBadge.classList.remove("invalid");
+    holdPass.classList.remove("invalid");
+    holdReason.classList.remove("invalid");
+    holdBar.hidden = false;
+    try { holdBadge.focus(); } catch (e) {}
+  }
+
+  /* Reflect a step's persisted hold state when it is (re)shown */
+  function renderHoldForStep(idx) {
+    if (stepState[idx] === "deviation") {
+      holdBar.classList.add("overridden");
+      holdActions.style.display = "none";
+      holdTitle.innerHTML = "&#10003; Deviation acknowledged — supervisor override on file";
+      holdDetail.textContent = overrideReasons[idx] || "—";
+      holdBar.hidden = false;
+    } else {
+      holdBar.hidden = true;
+      holdBar.classList.remove("overridden");
+      holdActions.style.display = "";
+    }
+  }
+
+  /* Advance past a step that is now complete (clean or overridden) */
+  function advanceFrom(idx) {
+    updateFooter();
+    if (idx < TOTAL - 1) {
+      if (maxUnlocked < idx + 1) maxUnlocked = idx + 1;
+      showTab(idx + 1);
+    } else {
+      /* Final step complete — unlock acknowledge */
+      renderTabs();
+      updateNavButtons();
+      renderHoldForStep(idx);
+      acknowledgeBtn.disabled = false;
+      var dv = deviationCount();
+      setStatus(dv
+        ? "All steps cleared — " + dv + " under supervisor override; press Acknowledge to begin"
+        : "All checks complete — press Acknowledge to begin check-in",
+        dv ? "warn" : "success");
+      try { acknowledgeBtn.focus({ preventScroll: true }); } catch (e) {}
+    }
+  }
+
+  function goNext() {
+    clearFieldErrors();
+    var res = validators[current]();
+
+    if (res.status === "incomplete") {
+      renderHoldForStep(current); /* nothing to override yet — hide/reset the bar */
+      setStatus(res.msg || "Complete this step's checks to continue", "error");
+      if (res.focus) { try { res.focus.focus(); } catch (e) {} }
+      return;
+    }
+
+    if (res.status === "failed") {
+      if (stepState[current] === "deviation") {
+        advanceFrom(current); /* already overridden earlier — proceed */
+        return;
+      }
+      showHoldNeedsOverride(res.failed);
+      setStatus("Failed checks — a supervisor override is required to proceed", "error");
+      return;
+    }
+
+    /* status === "ok" */
+    completed[current] = true;
+    stepState[current] = res.deviation ? "deviation" : "clean";
+    advanceFrom(current);
+  }
+
+  function goPrev() {
+    if (current > 0) showTab(current - 1);
+  }
+
+  /* Supervisor override: place the failed step on hold after authenticating */
+  holdOverrideBtn.addEventListener("click", function () {
+    var badge = holdBadge.value.trim();
+    var pass = holdPass.value;
+    var reason = holdReason.value.trim();
+    holdBadge.classList.remove("invalid");
+    holdPass.classList.remove("invalid");
+    holdReason.classList.remove("invalid");
+
+    if (!badge) {
+      holdBadge.classList.add("invalid");
+      setStatus("Enter the supervisor badge number to authorize", "error");
+      try { holdBadge.focus(); } catch (e) {}
+      return;
+    }
+    if (!pass) {
+      holdPass.classList.add("invalid");
+      setStatus("Enter the supervisor password to authorize", "error");
+      try { holdPass.focus(); } catch (e) {}
+      return;
+    }
+    if (!reason) {
+      holdReason.classList.add("invalid");
+      setStatus("Enter an override reason / comment to authorize", "error");
+      try { holdReason.focus(); } catch (e) {}
+      return;
+    }
+    if (badge !== SUPERVISOR_BADGE || pass !== SUPERVISOR_PASSWORD) {
+      holdBadge.classList.add("invalid");
+      holdPass.classList.add("invalid");
+      holdPass.value = "";
+      setStatus("Invalid supervisor badge or password — authorization denied", "error");
+      try { holdPass.focus(); } catch (e) {}
+      return;
+    }
+
+    completed[current] = true;
+    stepState[current] = "deviation";
+    overrideReasons[current] = "Authorized by supervisor badge #" + badge + (reason ? " · " + reason : "");
+    advanceFrom(current);
+  });
+
+  /* Clear error styling as fields are corrected; Enter submits the override */
+  [holdBadge, holdPass, holdReason].forEach(function (el) {
+    el.addEventListener("input", function () { el.classList.remove("invalid"); });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); holdOverrideBtn.click(); }
+    });
+  });
+
+  prevBtn.addEventListener("click", goPrev);
+  nextBtn.addEventListener("click", goNext);
+
+  /* ── Tab clicks: only reachable tabs are navigable ── */
+  tabs.forEach(function (tab, i) {
+    tab.addEventListener("click", function () {
+      if (i > maxUnlocked) {
+        /* Locked tab — reject with feedback, no navigation */
+        tab.classList.remove("shake");
+        void tab.offsetWidth; /* reflow to restart animation */
+        tab.classList.add("shake");
+        setStatus("Complete the current step to unlock this tab", "error");
+        return;
+      }
+      if (i === current) return;
+      showTab(i);
+    });
+  });
+
+  /* Clear field error styling as the user corrects an input */
+  ["rod-number-input", "rod-diameter-input", "spc-m1", "spc-m2"].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener("input", function () {
+      el.classList.remove("invalid");
+      var f = el.closest(".field");
+      if (f) f.classList.remove("has-error");
+    });
+  });
+
+  /* ── Keyboard navigation (arrow keys) ── */
+  document.addEventListener("keydown", function (e) {
+    var tag = document.activeElement && document.activeElement.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if (e.key === "ArrowRight") { e.preventDefault(); goNext(); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
+  });
+
+  /* ── Init ── */
+  showTab(0);
+  updateFooter();
+
+})();
+
+/* ── Global application bar: greeting + multi-user sessions ── */
+(function () {
+  var DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var AVATAR_COLORS = ["#185FA5", "#1D9E75", "#6B3FA0", "#EF9F27", "#D85A30", "#0c447c"];
+
+  /* Operator directory — role / contact detail shown on the switch cards */
+  var USER_DIRECTORY = {
+    "Bob Scott":   { role: "FL1 Shift Lead",       phone: "+1 203 265 8010", email: "bob.scott@unitedaluminum.com",   color: "#185FA5" },
+    "Dave Miller": { role: "FL1 Line Operator",    phone: "+1 203 265 8021", email: "dave.miller@unitedaluminum.com", color: "#1D9E75" },
+    "Lena Ruiz":   { role: "Quality Technician",   phone: "+1 203 265 8033", email: "lena.ruiz@unitedaluminum.com",   color: "#6B3FA0" },
+    "Sam Patel":   { role: "FL2 Line Operator",    phone: "+1 203 265 8044", email: "sam.patel@unitedaluminum.com",   color: "#EF9F27" },
+    "Nora Kim":    { role: "Maintenance Tech",     phone: "+1 203 265 8055", email: "nora.kim@unitedaluminum.com",    color: "#D85A30" },
+    "Omar Diaz":   { role: "Furnace Operator",     phone: "+1 203 265 8066", email: "omar.diaz@unitedaluminum.com",   color: "#0c447c" },
+    "Rita Vaughn": { role: "Packing Operator",     phone: "+1 203 265 8077", email: "rita.vaughn@unitedaluminum.com", color: "#185FA5" },
+    "Carl Bishop": { role: "Shift Supervisor",     phone: "+1 203 265 8088", email: "carl.bishop@unitedaluminum.com", color: "#1D9E75" }
+  };
+  function details(name) {
+    return USER_DIRECTORY[name] || {
+      role: "Line Operator",
+      phone: "+1 203 265 8000",
+      email: name.toLowerCase().replace(/[^a-z0-9]+/g, ".") + "@unitedaluminum.com"
+    };
+  }
+  function resolveName(input) {
+    var keys = Object.keys(USER_DIRECTORY), lc = input.toLowerCase();
+    for (var i = 0; i < keys.length; i++) { if (keys[i].toLowerCase() === lc) return keys[i]; }
+    return input;
+  }
+
+  /* Inline icons for the switch cards */
+  var PHONE_SVG = '<svg viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8a15 15 0 006.6 6.6l2.2-2.2a1 1 0 011-.24 11 11 0 003.4.55 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1 11 11 0 00.55 3.4 1 1 0 01-.25 1z" fill="currentColor"/></svg>';
+  var MAIL_SVG  = '<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  var OUT_SVG   = '<svg viewBox="0 0 24 24" fill="none"><path d="M9 3H6a2 2 0 00-2 2v14a2 2 0 002 2h3M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var IN_SVG    = '<svg viewBox="0 0 24 24" fill="none"><path d="M15 3h3a2 2 0 012 2v14a2 2 0 01-2 2h-3M10 17l5-5-5-5M15 12H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var ADD_SVG   = '<svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="2"/><path d="M3.5 19a5.5 5.5 0 0111 0M18 8v6M15 11h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+
+  /* Extra operators available via the top-bar Login button (quick sign-in) */
+  var SIGN_IN_POOL = ["Sam Patel", "Nora Kim", "Omar Diaz", "Rita Vaughn", "Carl Bishop"];
+  var colorIx = 3;
+
+  var usersEl = document.getElementById("gb-users");
+
+  function initials(name) {
+    var parts = name.trim().split(/\s+/);
+    return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+  }
+  function shortName(name) {
+    var parts = name.trim().split(/\s+/);
+    return parts.length > 1 ? parts[0] + " " + parts[parts.length - 1][0] + "." : name;
+  }
+
+  function updateGreeting() {
+    var now = new Date();
+    var h = now.getHours();
+    var greet = h < 12 ? "Good Morning" : (h < 17 ? "Good Afternoon" : "Good Evening");
+    var gt = document.getElementById("gb-greeting-text");
+    if (gt) gt.textContent = greet;
+    var de = document.getElementById("gb-date");
+    if (de) de.textContent = DAYS[now.getDay()] + ", " + now.getDate() + " " + MONTHS[now.getMonth()] + " " + now.getFullYear();
+  }
+  updateGreeting();
+  setInterval(updateGreeting, 30000);
+
+  /* Exactly one operator is active; the rest sit idle. Keep the highlight
+     and the greeting's primary user in sync with the active chip. */
+  function syncPrimary() {
+    var chips = usersEl.querySelectorAll(".user-chip");
+    var active = usersEl.querySelector(".user-chip.active");
+    if (!active && chips.length) { chips[0].classList.add("active"); active = chips[0]; }
+    var primary = document.getElementById("gb-primary-user");
+    if (primary) primary.textContent = active ? shortName(active.getAttribute("data-user")) : "No active session";
+  }
+
+  function setActive(chip) {
+    usersEl.querySelectorAll(".user-chip").forEach(function (c) { c.classList.remove("active"); });
+    if (chip) chip.classList.add("active");
+    syncPrimary();
+  }
+
+  function addUser(name) {
+    var chip = document.createElement("span");
+    chip.className = "user-chip";            /* new operators join as idle */
+    chip.setAttribute("data-user", name);
+    chip.setAttribute("title", name + " — tap to activate");
+    var d = USER_DIRECTORY[name] || {};
+    var color = d.color || AVATAR_COLORS[colorIx++ % AVATAR_COLORS.length];
+    chip.innerHTML =
+      '<span class="active-dot"></span>' +
+      '<span class="avatar" style="background:' + color + ';">' + initials(name) + '</span>' +
+      '<span class="u-name">' + shortName(name) + '</span>' +
+      '<button class="u-close" title="Sign out ' + shortName(name) + '" aria-label="Sign out ' + shortName(name) + '">&times;</button>';
+    usersEl.appendChild(chip);
+    syncPrimary();
+  }
+
+  usersEl.addEventListener("click", function (e) {
+    /* Sign out via the × on any chip */
+    var btn = e.target.closest(".u-close");
+    if (btn) {
+      e.stopPropagation();
+      var chip = btn.closest(".user-chip");
+      if (chip) { chip.remove(); syncPrimary(); }
+      return;
+    }
+    /* Otherwise make the clicked operator the active one */
+    var target = e.target.closest(".user-chip");
+    if (target && !target.classList.contains("active")) setActive(target);
+  });
+
+  /* Login — sign in the next available operator */
+  var MAX_SESSIONS = 6;
+  var loginBtn = document.getElementById("gb-login");
+  if (loginBtn) loginBtn.addEventListener("click", function () {
+    var chips = usersEl.querySelectorAll(".user-chip");
+    if (chips.length >= MAX_SESSIONS) { toast("Maximum concurrent operator sessions reached"); return; }
+    var signedIn = Array.prototype.map.call(chips, function (c) { return c.getAttribute("data-user"); });
+    var next = SIGN_IN_POOL.filter(function (n) { return signedIn.indexOf(n) === -1; })[0];
+    if (next) addUser(next);
+    else toast("All available operators are already signed in");
+  });
+
+  /* Logout — sign out the active operator (next idle operator takes over) */
+  var logoutBtn = document.getElementById("gb-logout");
+  if (logoutBtn) logoutBtn.addEventListener("click", function () {
+    var active = usersEl.querySelector(".user-chip.active") || usersEl.querySelector(".user-chip");
+    if (active) { active.remove(); syncPrimary(); }
+    else toast("No operator is currently signed in");
+  });
+
+  /* Refresh — spin the icon and re-sync greeting/clock */
+  var refreshBtn = document.getElementById("gb-refresh");
+  if (refreshBtn) refreshBtn.addEventListener("click", function () {
+    updateGreeting();
+    var svg = refreshBtn.querySelector("svg");
+    if (svg) {
+      svg.style.transition = "transform 0.6s ease";
+      svg.style.transform = "rotate(360deg)";
+      setTimeout(function () { svg.style.transition = "none"; svg.style.transform = "rotate(0deg)"; }, 620);
+    }
+  });
+
+  /* Help — lightweight toast */
+  var helpBtn = document.getElementById("gb-help");
+  if (helpBtn) helpBtn.addEventListener("click", function () {
+    toast("Rod check-in help — scan the rod barcode, then complete each step in order.");
+  });
+
+  /* Tiny transient toast */
+  var toastEl;
+  function toast(msg) {
+    if (!toastEl) {
+      toastEl = document.createElement("div");
+      toastEl.style.cssText =
+        "position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:9999;" +
+        "background:var(--color-text-primary);color:var(--color-background-primary);" +
+        "padding:8px 16px;border-radius:8px;font-size:14px;font-family:var(--font-sans);" +
+        "box-shadow:0 6px 20px rgba(0,0,0,0.25);opacity:0;transition:opacity 0.2s;pointer-events:none;max-width:520px;text-align:center;";
+      document.body.appendChild(toastEl);
+    }
+    toastEl.textContent = msg;
+    toastEl.style.opacity = "1";
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { toastEl.style.opacity = "0"; }, 2600);
+  }
+
+  /* ── Switch active operator (modal) ── */
+  var switchBtn = document.getElementById("gb-switch");
+  var overlay = document.getElementById("switch-overlay");
+  var grid = document.getElementById("switch-grid");
+  var switchClose = document.getElementById("switch-close");
+
+  function renderSwitchCards() {
+    var chips = usersEl.querySelectorAll(".user-chip");
+    grid.innerHTML = "";
+    chips.forEach(function (chip) {
+      var name = chip.getAttribute("data-user");
+      var av = chip.querySelector(".avatar");
+      var color = av ? av.style.background : "#185FA5";
+      var ini = av ? av.textContent : initials(name);
+      var isActive = chip.classList.contains("active");
+      var d = details(name);
+      var card = document.createElement("div");
+      card.className = "switch-card" + (isActive ? " active" : "");
+      card.setAttribute("data-user", name);
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
+      card.setAttribute("title", isActive ? name + " (active)" : "Make " + name + " the active operator");
+      card.innerHTML =
+        '<div class="sc-photo">' +
+          '<span class="avatar-lg" style="background:' + color + ';">' + ini + '</span>' +
+          '<span class="sc-badge' + (isActive ? ' active' : '') + '">' + (isActive ? 'Active' : 'Idle') + '</span>' +
+        '</div>' +
+        '<div class="sc-body">' +
+          '<span class="sc-name">' + name + '</span>' +
+          '<span class="sc-role">' + d.role + ' &middot; United Aluminum</span>' +
+          '<span class="sc-contact">' + PHONE_SVG + '<span>' + d.phone + '</span></span>' +
+          '<span class="sc-contact">' + MAIL_SVG + '<span>' + d.email + '</span></span>' +
+          '<button class="sc-logout" type="button">' + OUT_SVG + 'Log out</button>' +
+        '</div>';
+      grid.appendChild(card);
+    });
+
+    /* Empty card — sign in a new operator with user name + password */
+    var atCap = chips.length >= MAX_SESSIONS;
+    var add = document.createElement("div");
+    add.className = "switch-card add-card";
+    add.innerHTML =
+      '<div class="add-card-body">' +
+        '<div class="add-card-title">' + ADD_SVG + 'Sign in operator</div>' +
+        (atCap
+          ? '<div class="add-error show">Maximum concurrent sessions reached (' + MAX_SESSIONS + ').</div>'
+          : ('<input class="add-input" id="add-username" type="text" placeholder="User name" autocomplete="off" autocapitalize="words">' +
+             '<input class="add-input" id="add-password" type="password" placeholder="Password" autocomplete="off">' +
+             '<div class="add-error" id="add-error"></div>' +
+             '<button class="add-login-btn" id="add-login-btn" type="button">' + IN_SVG + 'Log in</button>')
+        ) +
+      '</div>';
+    grid.appendChild(add);
+  }
+
+  function doModalLogin() {
+    var u = document.getElementById("add-username");
+    var p = document.getElementById("add-password");
+    var err = document.getElementById("add-error");
+    if (!u || !p) return;
+    function fail(m) { if (err) { err.textContent = m; err.classList.add("show"); } }
+    var raw = (u.value || "").trim();
+    if (!raw) { fail("Enter a user name."); u.focus(); return; }
+    if (!(p.value || "").length) { fail("Enter a password."); p.focus(); return; }
+    var name = resolveName(raw);
+    if (usersEl.querySelector('.user-chip[data-user="' + name + '"]')) { fail(name + " is already signed in."); return; }
+    if (usersEl.querySelectorAll(".user-chip").length >= MAX_SESSIONS) { fail("Maximum concurrent sessions reached."); return; }
+    addUser(name);              /* joins as idle — click the card to activate */
+    renderSwitchCards();        /* refresh: new card appears, form resets */
+    toast(name + " signed in");
+  }
+
+  function openSwitch() { renderSwitchCards(); overlay.classList.add("open"); }
+  function closeSwitch() { overlay.classList.remove("open"); }
+
+  if (switchBtn) switchBtn.addEventListener("click", openSwitch);
+  if (switchClose) switchClose.addEventListener("click", closeSwitch);
+  if (overlay) overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) closeSwitch();
+  });
+  if (grid) grid.addEventListener("click", function (e) {
+    /* Login (empty) card — only the "Log in" button acts; inputs stay editable */
+    if (e.target.closest(".add-card")) {
+      if (e.target.closest("#add-login-btn")) { e.stopPropagation(); doModalLogin(); }
+      return;
+    }
+    var card = e.target.closest(".switch-card");
+    if (!card) return;
+    var name = card.getAttribute("data-user");
+    var chip = usersEl.querySelector('.user-chip[data-user="' + name + '"]');
+    /* Per-card Log out */
+    if (e.target.closest(".sc-logout")) {
+      e.stopPropagation();
+      if (chip) { chip.remove(); syncPrimary(); }
+      renderSwitchCards();       /* keep the modal open, reflect the change */
+      return;
+    }
+    /* Otherwise activate this operator and close */
+    if (chip) setActive(chip);
+    closeSwitch();
+  });
+  /* Enter inside the login card submits */
+  if (grid) grid.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && e.target.closest(".add-card")) { e.preventDefault(); doModalLogin(); }
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && overlay.classList.contains("open")) closeSwitch();
+  });
+
+  /* ── More Options (tile popup) ── */
+  var moreBtn = document.getElementById("more-btn");
+  var moreOverlay = document.getElementById("more-overlay");
+  var moreClose = document.getElementById("more-close");
+  function closeMore() { if (moreOverlay) moreOverlay.classList.remove("open"); }
+  if (moreBtn) moreBtn.addEventListener("click", function () { if (moreOverlay) moreOverlay.classList.add("open"); });
+  if (moreClose) moreClose.addEventListener("click", closeMore);
+  if (moreOverlay) moreOverlay.addEventListener("click", function (e) { if (e.target === moreOverlay) closeMore(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && moreOverlay && moreOverlay.classList.contains("open")) closeMore();
+  });
+
+  syncPrimary();
+})();
+</script>
+
+<!-- ═══ ALUMINUM COIL LOADING OVERLAY ═══ -->
+<div class="load-overlay" id="load-overlay">
+  <div class="load-box">
+    <div class="coil"><div class="coil-core"></div></div>
+    <span class="load-text">Loading flat wire data<span class="dots"></span></span>
+  </div>
+</div>
+<script>
+(function () {
+  var ov = document.getElementById("load-overlay");
+  var t;
+  function showLoading(ms) {
+    if (!ov) return;
+    ov.classList.add("show");
+    clearTimeout(t);
+    t = setTimeout(function () { ov.classList.remove("show"); }, ms || 1300);
+  }
+  /* Show the coil spinner when a payoff position (radio) is chosen */
+  document.querySelectorAll(".payoff-option").forEach(function (el) {
+    el.addEventListener("click", function () { showLoading(1300); });
+  });
+})();
+</script>
+<script>
+  /* The More Options popup and the rejection dialog must never be open together —
+     two focus traps at once leaves the operator unable to reach either one. */
+  /* Reached from the check-in station, where the run has not started — Mode A,
+     the pre-run case with no footage to disposition. */
+  function closeMoreAndCheckout() {
+    window.FwModal.close("more-overlay");
+    window.openRodCheckout({
+      mode: "a", line: "FL1", orderNo: "FW-00421", rodAlpha: "R00042",
+      payoff: 2, operator: "Bob Scott"
+    });
+  }
+  function closeMoreAndReject() {
+    window.FwModal.close("more-overlay");
+    window.openWipRejection({
+      materialAlpha: "R00042",
+      orderNo: "FW-00421",
+      stage: "FL1 · rod check-in",
+      footagePosition: null,
+      runId: null,
+      trigger: "mid-run",
+      operator: "Bob Scott"
+    });
+  }
+</script>
+<script src="fw-modal.js"></script>
+<script src="wip_rejection.js"></script>
+<script src="rod_checkout.js"></script>
+<script src="flat-wire-fit.js" data-fit="fill"></script>
+</body>
+</html>

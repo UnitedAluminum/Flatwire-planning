@@ -13,7 +13,7 @@ A single sequential read-through of the flat wire process, from rod procurement 
 
 This document **does not introduce new requirements**. It is a navigational overlay on the existing analysis set — [FlatWireEndToEndProcess.md](FlatWireEndToEndProcess.md) remains the stage-by-stage process reference, and the docs listed under [Related Documents](#related-documents) remain authoritative for their own subject areas.
 
-**Equipment facts used here follow the May 21, 2026 client corrections** recorded in [`../DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.3, not the April-dated equipment descriptions still present in `FlatWireEndToEndProcess.md`. See [Known Source Conflicts](#known-source-conflicts).
+**Equipment facts used here follow the May 21, 2026 client corrections** recorded in [`../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.3, not the April-dated equipment descriptions still present in `FlatWireEndToEndProcess.md`. See [Known Source Conflicts](#known-source-conflicts).
 
 ---
 
@@ -37,9 +37,9 @@ This document **does not introduce new requirements**. It is a navigational over
 
 ## B. Pre-Check-in — Rod Staged at the Payoff
 
-8. **Rod moved to the VPS** (Variable Position Payoff) — dual position, eye-to-sky, 9,000 lb per position. Rod is staged against an intended payoff position (1 or 2) on **Dashboard 2A — Rod Pre-Check-in Station**, recorded as a `RodStaging` row, and may later carry the `IsWelded` flag once the operator records the weld. One rod per bay is enforced by the database. Full detail: [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md).
+8. **Rod moved to the VPS** (Variable Position Payoff) — dual position, eye-to-sky, 9,000 lb per position. Rod is staged against an intended payoff position (1 or 2) on **Dashboard 2A — Rod Pre-Check-in Station**, recorded as a `RodStaging` row, and may later carry the `IsWelded` flag once the operator records the weld. One rod per bay is enforced by the database. Full detail: [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md).
 
-   > **DECIDED (client, 30 Jul 2026) — `RECEIVED → STAGED` is correct, and this document is the winning source (Q67).** `coils.coil_status` becomes **`INFLAT` only when the rod is actually checked in at FL1**, and there is **no intermediate status** for a rod that is welded but not yet checked in. ~~The SRS §4.2 `PCI` data note has pre-check-in setting `coil_status = INFLAT`; the interim design followed it, making rod status `STAGED` vestigial for FL1.~~ **That note is superseded** for the status, and rod status `STAGED` is the real staging status. Unblocks the Phase 4 staging build.
+   > **DECIDED (client, 30 Jul 2026) — `RECEIVED → STAGED` is correct, and this document is the winning source (Q68).** `coils.coil_status` becomes **`INFLAT` only when the rod is actually checked in at FL1**, and there is **no intermediate status** for a rod that is welded but not yet checked in. ~~The SRS §4.2 `PCI` data note has pre-check-in setting `coil_status = INFLAT`; the interim design followed it, making rod status `STAGED` vestigial for FL1.~~ **That note is superseded** for the status, and rod status `STAGED` is the real staging status. Unblocks the Phase 4 staging build.
    >
    > **Residual:** the same data note also performs the `FlatwireQueue` insert, the reqsum and the `wip_coil_orders` insert. Whether **those** stay at pre-check-in is unanswered — sent back to Tim O. / IT. If they do, staging still spans three databases as compensating writes (**G2/G16**); if they move to check-in, pre-check-out becomes a pure `FlatWireDB` delete.
 
@@ -49,7 +49,7 @@ This document **does not introduce new requirements**. It is a navigational over
 
 ## C. Rod Check-in (Dashboard 2, FL1 / FL3) — the Gate for Everything
 
-10. **Operator opens the 6-step guided wizard** (`Mockups/dashboard_2_rod_checkin - New.html`): ① Visual Inspection → ② Pass Schedule → ③ Pre-run SPC → ④ Die Block (DB1 · DB2) → ⑤ Rolling Mill (FM1) → ⑥ Lube & Safety. Tabs unlock in sequence.
+10. **Operator opens the 6-step guided wizard** (`MVP-1/Mockups/dashboard_2_rod_checkin.html`): ① Visual Inspection → ② Pass Schedule → ③ Pre-run SPC → ④ Die Block (DB1 · DB2) → ⑤ Rolling Mill (FM1) → ⑥ Lube & Safety. Tabs unlock in sequence.
 
 11. **Bundle data entered:** rod alpha (scanned or typed, validated against the R-series), diameter, gross/net weight, payoff position. Alloy, temper, and diameter pre-populate from the PO/order. **FL1 has no edger** — no edge-set fields appear on this screen.
 
@@ -142,7 +142,7 @@ This document **does not introduce new requirements**. It is a navigational over
 
 41. **Coil label printed** — alpha, alloy, gauge, width, temper, gross/net weight, lot number, footage, source rod alphas. Gauge and width print the **target** value when SPC confirms in tolerance; the measured value is shown only when out of tolerance.
 
-42. **Skid tracking.** Exactly **2 coreless coils per skid** (consistent with transformer-line packaging). The first coil opens skid `SK-#####`; the second closes it, prints the skid label, and queues it for packing with a staging location.
+42. **Skid tracking.** Exactly **2 coreless coils per skid**. The first coil opens skid `SK-#####`; the second closes it, prints the skid label, and queues it for packing with a staging location.
 
 43. **Packing station.** Pack spec applied per order: coil orientation eye-to-side or eye-to-sky, optional layer interleave between winding layers, banding steel vs aluminum alloy (TBD). No Inspection Bench changes.
 
@@ -194,7 +194,7 @@ This document **does not introduce new requirements**. It is a navigational over
 
 ## Known Source Conflicts
 
-[FlatWireEndToEndProcess.md](FlatWireEndToEndProcess.md) is April 28, 2026-dated and predates the client equipment corrections. Where it disagrees with this walkthrough, the **May 21, 2026 corrections win** ([`../DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.3):
+[FlatWireEndToEndProcess.md](FlatWireEndToEndProcess.md) is April 28, 2026-dated and predates the client equipment corrections. Where it disagrees with this walkthrough, the **May 21, 2026 corrections win** ([`../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.3):
 
 | Topic | April source says | Authoritative (May 21, 2026) |
 |---|---|---|
@@ -213,25 +213,15 @@ Terminology rule throughout: always "flat wire," never "strip."
 |---|---|
 | [FlatWireEndToEndProcess.md](FlatWireEndToEndProcess.md) | Stage-by-stage process reference; equipment capacity table; scrap dispositions |
 | [FlatWirePlan.md](FlatWirePlan.md) | Rod receiving validations, pre-check-in inspection, planning and machines application changes |
-| [RocCheckin.md](../LatestDocument/RequirementDocuments/RocCheckin.md) | "Acknowledge & Begin Check-in" flow for Dashboards 2 and 5 (steps 13–17, 33) |
-| [Spool.md](Spool.md) | Spool lifecycle, anneal alpha handling, planning allocation and remainder (steps 28–33) |
-| [SpoolCompletionNotification.md](../LatestDocument/RequirementDocuments/SpoolCompletionNotification.md) | Operator alert at 75 / 90 / 100 % of target spool weight as the take-up fills (step 28) |
-| [RodCheckout.md](../LatestDocument/RequirementDocuments/RodCheckout.md) | Pre-run and mid-run checkout, PLC line-state gatekeeper rule (step 27) |
-| [PartialRodReCheckin.md](PartialRodReCheckin.md) | Carry-forward design for re-checking-in a partially run rod |
-| [WeldEvent.md](../LatestDocument/RequirementDocuments/WeldEvent.md) | Weld traceability detail (step 21) |
-| [SPCCheckpoint.md](../LatestDocument/RequirementDocuments/SPCCheckpoint.md) | Checkpoint types, tolerances, disposition rules (step 24) |
-| [DieChangeAndManagement.md](../LatestDocument/RequirementDocuments/DieChangeAndManagement.md) | Die change flow and tooling inventory (step 22) |
+| [RocCheckin.md](../MVP-1/RequirementDocuments/RocCheckin.md) | "Acknowledge & Begin Check-in" flow for Dashboards 2 and 5 (steps 13–17, 33) |
+| [Spool.md](../MVP-1/RequirementDocuments/Spool.md) | Spool lifecycle, anneal alpha handling, planning allocation and remainder (steps 28–33) |
+| [SpoolCompletionNotification.md](../MVP-1/RequirementDocuments/SpoolCompletionNotification.md) | Operator alert at 75 / 90 / 100 % of target spool weight as the take-up fills (step 28) |
+| [RodCheckout.md](../MVP-1/RequirementDocuments/RodCheckout.md) | Pre-run and mid-run checkout, PLC line-state gatekeeper rule (step 27) |
+| [PartialRodReCheckin.md](../MVP-1/RequirementDocuments/PartialRodReCheckin.md) | Carry-forward design for re-checking-in a partially run rod |
+| [WeldEvent.md](../MVP-1/RequirementDocuments/WeldEvent.md) | Weld traceability detail (step 21) |
+| [SPCCheckpoint.md](../MVP-1/RequirementDocuments/SPCCheckpoint.md) | Checkpoint types, tolerances, disposition rules (step 24) |
+| [DieChangeAndManagement.md](../MVP-1/RequirementDocuments/DieChangeAndManagement.md) | Die change flow and tooling inventory (step 22) |
 | [FlatWireShopfloorDashboards.md](FlatWireShopfloorDashboards.md) | All dashboard specifications referenced by number |
-| [PLCTagSpecification.md](../LatestDocument/RequirementDocuments/PLCTagSpecification.md) | The machine tag surface — what is written at each step, what is read, and the tag lifecycle across all sixteen moments |
+| [PLCTagSpecification.md](../MVP-1/RequirementDocuments/PLCTagSpecification.md) | The machine tag surface — what is written at each step, what is read, and the tag lifecycle across all sixteen moments |
 | [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) | Open decisions that affect steps above (~59 items) |
-| [`../DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../DevelopmentPlan/ShopfloorPlan/00-foundations.md) | §0.3 domain cheat-sheet (authoritative equipment facts, alphas, hub events), §0.4 real-time architecture |
-
----
-
-## Change Log
-
-| Date | Changed By | Description |
-|------|-----------|-------------|
-| July 28, 2026 | Analysis Team | Initial document — sequential 45-step walkthrough from rod procurement to shipment, covering pre-check-in staging, Dashboard 2 check-in gate, in-run events, both route branches, FM2 finishing, coil completion and packing. Equipment facts aligned to the May 21, 2026 client corrections; April-source conflicts catalogued. |
-| July 29, 2026 | Analysis Team | Step 8 (pre-check-in) corrected: staging is now a `RodStaging` row set on **Dashboard 2A**, not the retired `Rod.StagedPayoffPosition`/`IsWelded` columns. The `RECEIVED → STAGED` status claim is flagged as **Q67** — SRS §4.2 has pre-check-in committing the coil to `INFLAT` instead, and the conflict is unresolved. See [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md). |
-| Aug 1, 2026 | Client sync (30 Jul call) | **Step 8's coil status resolved in this document's favour.** The client confirmed `INFLAT` is set **only at check-in**, with no welded-not-checked-in status — so the original `RECEIVED → STAGED` wording stands and the SRS §4.2 `PCI` data note is superseded for the status (**Q67**, Critical, unblocks Phase 4). The reqsum / `wip_coil_orders` half of that note is still open. |
+| [`../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md) | §0.3 domain cheat-sheet (authoritative equipment facts, alphas, hub events), §0.4 real-time architecture |

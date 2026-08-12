@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>Shift Summary · Day · Apr 23, 2026</title>
+<link rel="stylesheet" href="../../MVP-1/Mockups/flat-wire-shopfloor.styles.css">
+<style>
+  body { min-height: 1024px; }
+  .dashboard { height: 1024px; }
+  .mono { font-family: var(--font-mono); }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 24px;
+    height: 60px;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .supervisor-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+    border-radius: var(--border-radius-md);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .supervisor-chip svg { width: 13px; height: 13px; }
+  .header h1 { margin: 0; font-size: 22px; font-weight: 500; }
+  .header-meta {
+    display: flex;
+    gap: 18px;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    align-items: center;
+  }
+  .shift-selector {
+    display: inline-flex;
+    padding: 3px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    gap: 2px;
+  }
+  .shift-tab {
+    padding: 6px 14px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+  }
+  .shift-tab.active {
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  }
+  .shift-range {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    padding: 6px 12px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    color: var(--color-text-secondary);
+  }
+  .shift-range strong { color: var(--color-text-primary); font-weight: 500; }
+
+  /* Machine card */
+  .machine-card {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    height: 42px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 12px;
+  }
+
+  /* Machine selector */
+  .machine-selector {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px 3px 3px 10px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+  }
+  .machine-selector-label {
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+    font-weight: 500;
+    padding-right: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+  }
+  .machine-tab {
+    height: 34px;
+    padding: 0 14px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: background 0.12s, color 0.12s;
+  }
+  .machine-tab.active {
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  }
+  .machine-tab:active { transform: scale(0.97); }
+  .btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  .btn-back:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+
+  /* KPI strip */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    height: 118px;
+  }
+  .kpi-tile {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-label {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .kpi-value {
+    font-size: 30px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    line-height: 1;
+  }
+  .kpi-unit {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    font-family: var(--font-sans);
+    font-weight: 400;
+    margin-left: 4px;
+  }
+  .kpi-sub {
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+    margin-top: 6px;
+  }
+  .kpi-tile.warn {
+    border-left: 3px solid var(--color-amber);
+  }
+
+  /* Main row */
+  .main-row {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr 1.1fr;
+    gap: 12px;
+    height: 430px;
+  }
+
+  .section {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+  }
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .section-title {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .section-sub {
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+  }
+
+  /* Line utilization */
+  .util-line {
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .util-line:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+  .util-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .util-head-left {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .util-name {
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .util-pct {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-weight: 500;
+  }
+  .util-time {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+  }
+
+  .util-timeline {
+    display: flex;
+    height: 22px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--color-background-secondary);
+    border: 0.5px solid var(--color-border-tertiary);
+  }
+  .util-segment {
+    height: 100%;
+    position: relative;
+  }
+  .util-segment.running { background: var(--color-green); }
+  .util-segment.setup { background: var(--color-amber); opacity: 0.75; }
+  .util-segment.downtime { background: var(--color-red); opacity: 0.7; }
+  .util-segment.idle { background: var(--color-gray); opacity: 0.25; }
+  .util-timeline-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    font-family: var(--font-mono);
+    color: var(--color-text-tertiary);
+    padding: 3px 2px 0;
+  }
+  .util-note {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    margin-top: 8px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .util-note-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--color-red);
+    flex-shrink: 0;
+  }
+  .util-legend {
+    display: flex;
+    gap: 14px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 0.5px solid var(--color-border-tertiary);
+    font-size: 14px;
+    color: var(--color-text-secondary);
+  }
+  .legend-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .legend-swatch.running { background: var(--color-green); }
+  .legend-swatch.setup { background: var(--color-amber); }
+  .legend-swatch.downtime { background: var(--color-red); }
+  .legend-swatch.idle { background: var(--color-gray); opacity: 0.4; }
+
+  /* Quality */
+  .quality-donut-wrap {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .donut {
+    width: 108px;
+    height: 108px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .donut-center {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .donut-value {
+    font-size: 24px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    line-height: 1;
+  }
+  .donut-label {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-top: 4px;
+  }
+  .quality-summary {
+    flex: 1;
+  }
+  .quality-summary-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .quality-summary-meta {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+
+  .rejection-section-title {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .rejection-count-badge {
+    padding: 2px 8px;
+    background: var(--color-background-danger);
+    color: var(--color-text-danger);
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+  }
+  .rejection-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .rejection-row {
+    display: grid;
+    grid-template-columns: 20px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    font-size: 14px;
+  }
+  .rejection-count {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--color-text-danger);
+    text-align: center;
+  }
+  .rejection-bar {
+    height: 6px;
+    background: var(--color-background-secondary);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .rejection-bar-fill {
+    height: 100%;
+    background: var(--color-red);
+    opacity: 0.75;
+    border-radius: 3px;
+  }
+  .rejection-reason-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .rejection-reason-name {
+    font-size: 14px;
+  }
+
+  .suspended-banner {
+    margin-top: auto;
+    padding: 10px 14px;
+    background: var(--color-background-warning);
+    color: var(--color-text-warning);
+    border-radius: var(--border-radius-md);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-size: 14px;
+  }
+  .suspended-banner-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-amber);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .suspended-banner-icon svg { width: 11px; height: 11px; }
+  .suspended-banner-body { flex: 1; line-height: 1.4; }
+  .suspended-banner-body strong { font-weight: 500; }
+  .suspended-link {
+    font-size: 14px;
+    color: var(--color-text-warning);
+    text-decoration: none;
+    font-weight: 500;
+    padding-left: 8px;
+    border-left: 1px solid rgba(99, 56, 6, 0.3);
+  }
+
+  /* Weld events */
+  .weld-summary-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .weld-summary-tile {
+    background: var(--color-background-secondary);
+    padding: 10px 14px;
+    border-radius: var(--border-radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .weld-summary-label {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+  }
+  .weld-summary-value {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1;
+  }
+  .weld-summary-sub {
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+  }
+  .weld-summary-sub.success {
+    color: var(--color-text-success);
+    font-weight: 500;
+  }
+
+  .weld-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    overflow: auto;
+  }
+  .weld-entry {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    border-left: 2px solid var(--color-green);
+  }
+  .weld-time {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+  }
+  .weld-detail {
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .weld-line-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    background: var(--color-background-info);
+    color: var(--color-text-info);
+    border-radius: 3px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-right: 6px;
+  }
+  .weld-rods {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 14px;
+  }
+  .weld-footage {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+  }
+  .weld-pass {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-success);
+  }
+
+  /* Material status */
+  .material-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    height: 208px;
+  }
+  .material-tile {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+  }
+  .material-tile.warn {
+    border-left: 3px solid var(--color-amber);
+  }
+  .material-tile.alert {
+    border-left: 3px solid var(--color-red);
+  }
+  .material-tile-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--color-background-secondary);
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+  }
+  .material-tile-icon svg { width: 16px; height: 16px; }
+  .material-tile.warn .material-tile-icon {
+    background: var(--color-background-warning);
+    color: var(--color-text-warning);
+  }
+  .material-tile.alert .material-tile-icon {
+    background: var(--color-background-danger);
+    color: var(--color-text-danger);
+  }
+  .material-tile-label {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+  }
+  .material-tile-value {
+    font-size: 34px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    line-height: 1;
+  }
+  .material-tile-detail {
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+    margin-top: auto;
+    line-height: 1.4;
+  }
+  .material-tile-detail.warn { color: var(--color-text-warning); }
+  .material-tile-detail.alert { color: var(--color-text-danger); font-weight: 500; }
+  .material-tile-link {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    color: var(--color-text-tertiary);
+    cursor: pointer;
+  }
+  .material-tile-link:hover { color: var(--color-text-primary); }
+  .material-tile-link svg { width: 14px; height: 14px; }
+
+  /* Footer */
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 22px;
+    height: 74px;
+  }
+  .footer-info {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+  }
+  .footer-info strong { color: var(--color-text-primary); font-weight: 500; }
+  .footer-actions { display: flex; gap: 10px; }
+  .btn {
+    height: 44px;
+    padding: 0 18px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn svg { width: 14px; height: 14px; }
+  .btn-primary {
+    background: var(--color-blue);
+    border-color: var(--color-blue);
+    color: #ffffff;
+  }
+  .btn-primary:hover { background: #13497d; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <div class="header panel">
+    <div class="header-left">
+      <a class="btn-back" href="../../MVP-1/Mockups/dashboard_1_line_status.html">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Line Status
+      </a>
+      <span class="supervisor-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Supervisor &middot; Marcus T.
+      </span>
+      <h1>Shift Summary</h1>
+    </div>
+    <div class="header-meta">
+      <span class="shift-range">
+        <strong>Apr 23, 2026</strong> &middot; 07:00 &rarr; 15:00
+      </span>
+    </div>
+  </div>
+
+  <div class="machine-card">
+    <div class="machine-selector" id="machine-group">
+      <span class="machine-selector-label">Machine</span>
+      <button class="machine-tab active" onclick="setMachine(this)">FL1</button>
+      <button class="machine-tab"        onclick="setMachine(this)">FL2</button>
+      <button class="machine-tab"        onclick="setMachine(this)">FL3</button>
+      <button class="machine-tab"        onclick="setMachine(this)">All Lines</button>
+    </div>
+    <span style="width:1px;height:22px;background:var(--color-border-tertiary);flex-shrink:0;"></span>
+    <div class="shift-selector">
+      <button class="shift-tab active">Day</button>
+      <button class="shift-tab">Night</button>
+      <button class="shift-tab">Previous</button>
+    </div>
+  </div>
+
+  <div class="kpi-strip">
+    <div class="kpi-tile">
+      <span class="kpi-label">Orders run</span>
+      <span class="kpi-value" id="kpi-orders-val">2</span>
+      <span class="kpi-sub"  id="kpi-orders-sub">1 complete &middot; 1 in progress</span>
+    </div>
+    <div class="kpi-tile">
+      <span class="kpi-label">Footage</span>
+      <span class="kpi-value" id="kpi-footage-val">24,800<span class="kpi-unit">ft</span></span>
+      <span class="kpi-sub"  id="kpi-footage-sub">target 28,000 &middot; 89%</span>
+    </div>
+    <div class="kpi-tile">
+      <span class="kpi-label">Weight out</span>
+      <span class="kpi-value" id="kpi-weight-val">1,840<span class="kpi-unit">lb</span></span>
+      <span class="kpi-sub"  id="kpi-weight-sub">net, completed coils</span>
+    </div>
+    <div class="kpi-tile">
+      <span class="kpi-label">Coils out</span>
+      <span class="kpi-value" id="kpi-coils-val">4</span>
+      <span class="kpi-sub"  id="kpi-coils-sub">avg 460 lb per coil</span>
+    </div>
+    <div class="kpi-tile">
+      <span class="kpi-label">Skids closed</span>
+      <span class="kpi-value" id="kpi-skids-val">2</span>
+      <span class="kpi-sub"  id="kpi-skids-sub">SK-00199 &middot; SK-00200</span>
+    </div>
+    <div class="kpi-tile warn" id="kpi-downtime-tile">
+      <span class="kpi-label">Downtime</span>
+      <span class="kpi-value" id="kpi-downtime-val">22<span class="kpi-unit">min</span></span>
+      <span class="kpi-sub"  id="kpi-downtime-sub">DB2 die change @ 13:18</span>
+    </div>
+  </div>
+
+  <div class="main-row">
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title" id="util-section-title">FL1 Utilization</span>
+        <span class="section-sub">Shift 07:00 &rarr; 15:00 (8h)</span>
+      </div>
+
+      <div id="util-content"><div class="util-line">
+        <div class="util-head">
+          <div class="util-head-left">
+            <span class="util-name">FL1</span>
+            <span class="util-pct">82%</span>
+          </div>
+          <span class="util-time">6h 34m running</span>
+        </div>
+        <div class="util-timeline">
+          <div class="util-segment running" style="width: 32%;"></div>
+          <div class="util-segment setup" style="width: 4%;"></div>
+          <div class="util-segment running" style="width: 28%;"></div>
+          <div class="util-segment downtime" style="width: 5%;"></div>
+          <div class="util-segment running" style="width: 22%;"></div>
+          <div class="util-segment idle" style="width: 9%;"></div>
+        </div>
+        <div class="util-timeline-labels">
+          <span>07:00</span>
+          <span>09:00</span>
+          <span>11:00</span>
+          <span>13:00</span>
+          <span>15:00</span>
+        </div>
+        <div class="util-note">
+          <span class="util-note-dot"></span>
+          22m downtime at 13:18 &middot; DB2 die change
+        </div>
+      </div>
+
+      <div class="util-line">
+        <div class="util-head">
+          <div class="util-head-left">
+            <span class="util-name">FL2</span>
+            <span class="util-pct">61%</span>
+          </div>
+          <span class="util-time">4h 53m running</span>
+        </div>
+        <div class="util-timeline">
+          <div class="util-segment idle" style="width: 14%;"></div>
+          <div class="util-segment running" style="width: 40%;"></div>
+          <div class="util-segment idle" style="width: 8%;"></div>
+          <div class="util-segment running" style="width: 22%;"></div>
+          <div class="util-segment idle" style="width: 16%;"></div>
+        </div>
+        <div class="util-timeline-labels">
+          <span>07:00</span>
+          <span>09:00</span>
+          <span>11:00</span>
+          <span>13:00</span>
+          <span>15:00</span>
+        </div>
+        <div class="util-note">
+          <span style="opacity: 0.5;">&middot;</span>
+          Idle gaps waiting on spool output from FL1
+        </div>
+      </div>
+
+      <div class="util-line">
+        <div class="util-head">
+          <div class="util-head-left">
+            <span class="util-name">FL3</span>
+            <span class="util-pct">0%</span>
+          </div>
+          <span class="util-time">Offline full shift</span>
+        </div>
+        <div class="util-timeline">
+          <div class="util-segment idle" style="width: 100%;"></div>
+        </div>
+        <div class="util-timeline-labels">
+          <span>07:00</span>
+          <span>09:00</span>
+          <span>11:00</span>
+          <span>13:00</span>
+          <span>15:00</span>
+        </div>
+      </div>
+
+      <div class="util-legend">
+        <span><span class="legend-swatch running"></span>Running</span>
+        <span><span class="legend-swatch setup"></span>Setup</span>
+        <span><span class="legend-swatch downtime"></span>Downtime</span>
+        <span><span class="legend-swatch idle"></span>Idle / offline</span>
+      </div>
+      </div><!-- /util-content -->
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Quality</span>
+        <span class="section-sub">SPC &amp; rejections</span>
+      </div>
+
+      <div id="quality-content"><div class="quality-donut-wrap">
+        <div class="donut">
+          <svg width="108" height="108" viewBox="0 0 108 108">
+            <circle cx="54" cy="54" r="44" fill="none" stroke="var(--color-background-secondary)" stroke-width="12"/>
+            <circle cx="54" cy="54" r="44" fill="none" stroke="var(--color-green)" stroke-width="12"
+              stroke-dasharray="276.5" stroke-dashoffset="9.95" stroke-linecap="round"
+              transform="rotate(-90 54 54)"/>
+          </svg>
+          <div class="donut-center">
+            <span class="donut-value">96.4%</span>
+            <span class="donut-label">SPC pass</span>
+          </div>
+        </div>
+        <div class="quality-summary">
+          <div class="quality-summary-title">55 of 57 measurements in spec</div>
+          <div class="quality-summary-meta">Across 28 checkpoints<br>Avg 2 measurements per checkpoint</div>
+        </div>
+      </div>
+
+      <div class="rejection-section-title">
+        <span>WIP rejections</span>
+        <span class="rejection-count-badge">2 total</span>
+      </div>
+
+      <div class="rejection-list">
+        <div class="rejection-row">
+          <span class="rejection-count">1</span>
+          <div class="rejection-reason-wrap">
+            <span class="rejection-reason-name">Gauge out of spec</span>
+            <div class="rejection-bar"><div class="rejection-bar-fill" style="width: 50%;"></div></div>
+          </div>
+          <span style="font-size: 14px; color: var(--color-text-tertiary); font-family: var(--font-mono);">FL1</span>
+        </div>
+        <div class="rejection-row">
+          <span class="rejection-count">1</span>
+          <div class="rejection-reason-wrap">
+            <span class="rejection-reason-name">Surface defect &middot; oxidation</span>
+            <div class="rejection-bar"><div class="rejection-bar-fill" style="width: 50%;"></div></div>
+          </div>
+          <span style="font-size: 14px; color: var(--color-text-tertiary); font-family: var(--font-mono);">FL1</span>
+        </div>
+      </div>
+
+      <div class="suspended-banner">
+        <span class="suspended-banner-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </span>
+        <span class="suspended-banner-body">
+          <strong>1 coil suspended</strong> &middot; FW-00419-C02 pending review
+        </span>
+        <a href="#" class="suspended-link">Review &rarr;</a>
+      </div>
+      </div><!-- /quality-content -->
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title" id="welds-section-title">FL1 Weld Events</span>
+        <span class="section-sub" id="welds-section-sub">All pass</span>
+      </div>
+
+      <div id="welds-content"><div class="weld-summary-row">
+        <div class="weld-summary-tile">
+          <span class="weld-summary-label">FL1 welds</span>
+          <span class="weld-summary-value">3</span>
+          <span class="weld-summary-sub">Induction, rod&ndash;rod</span>
+        </div>
+        <div class="weld-summary-tile">
+          <span class="weld-summary-label">FL2 welds</span>
+          <span class="weld-summary-value">1</span>
+          <span class="weld-summary-sub">Laser, flat&ndash;flat</span>
+        </div>
+      </div>
+
+      <div style="font-size: 14px; color: var(--color-text-secondary); font-weight: 500; margin-bottom: 8px;">Event log</div>
+
+      <div class="weld-list">
+        <div class="weld-entry">
+          <span class="weld-time">07:44</span>
+          <div class="weld-detail">
+            <span class="weld-rods"><span class="weld-line-tag">FL1</span>R00042 &rarr; R00043</span>
+            <span class="weld-footage">at 12,450 ft &middot; induction</span>
+          </div>
+          <span class="weld-pass">&#x2713; Pass</span>
+        </div>
+        <div class="weld-entry">
+          <span class="weld-time">09:18</span>
+          <div class="weld-detail">
+            <span class="weld-rods"><span class="weld-line-tag">FL1</span>R00040 &rarr; R00041</span>
+            <span class="weld-footage">at 9,200 ft &middot; induction</span>
+          </div>
+          <span class="weld-pass">&#x2713; Pass</span>
+        </div>
+        <div class="weld-entry">
+          <span class="weld-time">11:05</span>
+          <div class="weld-detail">
+            <span class="weld-rods"><span class="weld-line-tag">FL1</span>R00041 &rarr; R00042</span>
+            <span class="weld-footage">at 8,800 ft &middot; induction</span>
+          </div>
+          <span class="weld-pass">&#x2713; Pass</span>
+        </div>
+        <div class="weld-entry">
+          <span class="weld-time">12:38</span>
+          <div class="weld-detail">
+            <span class="weld-rods"><span class="weld-line-tag">FL2</span>SP-00029 &rarr; SP-00030</span>
+            <span class="weld-footage">at 2,150 ft &middot; induction</span>
+          </div>
+          <span class="weld-pass">&#x2713; Pass</span>
+        </div>
+      </div>
+      </div><!-- /welds-content -->
+    </div>
+
+  </div>
+
+  <div class="material-row">
+    <div class="material-tile">
+      <div class="material-tile-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      </div>
+      <div class="material-tile-label">Rod in storage</div>
+      <div class="material-tile-value">12</div>
+      <div class="material-tile-detail">bundles &middot; R00044 – R00055<br>~102,000 lb total</div>
+      <span class="material-tile-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+      </span>
+    </div>
+
+    <div class="material-tile">
+      <div class="material-tile-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
+      </div>
+      <div class="material-tile-label">Spools on floor</div>
+      <div class="material-tile-value">2</div>
+      <div class="material-tile-detail">SP-00032 &middot; SP-00033<br>awaiting FL2 check-in</div>
+      <!-- This arrow was a bare <span> that went nowhere until DB5A existed —
+           the tile counted spools with no screen to drill into. -->
+      <a class="material-tile-link" href="../../MVP-1/Mockups/dashboard_5a_spool_queue.html" title="Open the FL2 spool queue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+      </a>
+    </div>
+
+    <div class="material-tile">
+      <div class="material-tile-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+      </div>
+      <div class="material-tile-label">Coils in packing</div>
+      <div class="material-tile-value">3</div>
+      <div class="material-tile-detail">awaiting label print<br>SK-00202 open</div>
+      <span class="material-tile-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+      </span>
+    </div>
+
+    <div class="material-tile warn">
+      <div class="material-tile-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="material-tile-label">WIP held</div>
+      <div class="material-tile-value">1</div>
+      <div class="material-tile-detail warn">FW-00419-C02<br>gauge out of spec &middot; needs review</div>
+      <span class="material-tile-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+      </span>
+    </div>
+
+    <div class="material-tile">
+      <div class="material-tile-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      </div>
+      <div class="material-tile-label">Scrapped today</div>
+      <div class="material-tile-value">0</div>
+      <div class="material-tile-detail">no scrap events<br>this shift</div>
+    </div>
+  </div>
+
+  <div class="footer panel">
+    <div class="footer-info">
+      <span>Data as of <strong id="data-timestamp" class="mono">07:42 AM</strong></span>
+      <span>&middot;</span>
+      <span>Auto-refresh every 60s</span>
+      <span>&middot;</span>
+      <span>Report window 07:00 &rarr; 15:00</span>
+    </div>
+    <div class="footer-actions">
+      <button class="btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        View WIP rejections
+      </button>
+      <button class="btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print
+      </button>
+      <button class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export shift report
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  (function () {
+    function pad(n) { return String(n).padStart(2, "0"); }
+    function updateClock() {
+      var now = new Date();
+      var h = now.getHours();
+      var m = pad(now.getMinutes());
+      var ampm = h < 12 ? "AM" : "PM";
+      var h12 = h % 12 || 12;
+      var clockEl = document.getElementById("clock");
+      var timestampEl = document.getElementById("data-timestamp");
+      var t = pad(h12) + ":" + m + " " + ampm;
+      if (clockEl) clockEl.textContent = t;
+      if (timestampEl) timestampEl.textContent = t;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Shift tabs
+    document.querySelectorAll(".shift-tab").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        document.querySelectorAll(".shift-tab").forEach(function (t) { t.classList.remove("active"); });
+        tab.classList.add("active");
+      });
+    });
+
+    // ─── Machine switching ───
+    var MACHINE = {
+      fl1: {
+        kpi: {
+          orders: "2", ordersSub: "1 complete &middot; 1 in progress",
+          footage: "24,800<span class=\"kpi-unit\">ft</span>", footageSub: "target 28,000 &middot; 89%",
+          weight:  "1,840<span class=\"kpi-unit\">lb</span>", weightSub: "net, completed coils",
+          coils:   "4",  coilsSub: "avg 460 lb per coil",
+          skids:   "2",  skidsSub: "SK-00199 &middot; SK-00200",
+          downtime:"22<span class=\"kpi-unit\">min</span>", downtimeSub: "DB2 die change @ 13:18", downtimeWarn: true
+        },
+        utilTitle: "FL1 Utilization",
+        util: '<div class="util-line">' +
+          '<div class="util-head"><div class="util-head-left"><span class="util-name">FL1</span><span class="util-pct">82%</span></div><span class="util-time">6h 34m running</span></div>' +
+          '<div class="util-timeline"><div class="util-segment running" style="width:32%"></div><div class="util-segment setup" style="width:4%"></div><div class="util-segment running" style="width:28%"></div><div class="util-segment downtime" style="width:5%"></div><div class="util-segment running" style="width:22%"></div><div class="util-segment idle" style="width:9%"></div></div>' +
+          '<div class="util-timeline-labels"><span>07:00</span><span>09:00</span><span>11:00</span><span>13:00</span><span>15:00</span></div>' +
+          '<div class="util-note"><span class="util-note-dot"></span>22m downtime at 13:18 &middot; DB2 die change</div></div>' +
+          '<div class="util-legend"><span><span class="legend-swatch running"></span>Running</span><span><span class="legend-swatch setup"></span>Setup</span><span><span class="legend-swatch downtime"></span>Downtime</span><span><span class="legend-swatch idle"></span>Idle</span></div>',
+        quality: '<div class="quality-donut-wrap"><div class="donut"><svg width="108" height="108" viewBox="0 0 108 108"><circle cx="54" cy="54" r="44" fill="none" stroke="var(--color-background-secondary)" stroke-width="12"/><circle cx="54" cy="54" r="44" fill="none" stroke="var(--color-green)" stroke-width="12" stroke-dasharray="276.5" stroke-dashoffset="6.1" stroke-linecap="round" transform="rotate(-90 54 54)"/></svg><div class="donut-center"><span class="donut-value">97.8%</span><span class="donut-label">SPC pass</span></div></div><div class="quality-summary"><div class="quality-summary-title">45 of 46 measurements in spec</div><div class="quality-summary-meta">Across 23 checkpoints<br>Avg 2 measurements per checkpoint</div></div></div>' +
+          '<div class="rejection-section-title"><span>WIP rejections</span><span class="rejection-count-badge">1 total</span></div>' +
+          '<div class="rejection-list"><div class="rejection-row"><span class="rejection-count">1</span><div class="rejection-reason-wrap"><span class="rejection-reason-name">Gauge out of spec</span><div class="rejection-bar"><div class="rejection-bar-fill" style="width:100%"></div></div></div><span style="font-size:14px;color:var(--color-text-tertiary);font-family:var(--font-mono);">FL1</span></div></div>',
+        weldsTitle: "FL1 Weld Events", weldsSub: "All pass",
+        welds: '<div class="weld-summary-row"><div class="weld-summary-tile"><span class="weld-summary-label">Total welds</span><span class="weld-summary-value">3</span><span class="weld-summary-sub">Induction, rod&ndash;rod</span></div><div class="weld-summary-tile"><span class="weld-summary-label">Weld type</span><span class="weld-summary-value" style="font-size:17px">Induction</span><span class="weld-summary-sub success">All &#10003; Pass</span></div></div>' +
+          '<div style="font-size:14px;color:var(--color-text-secondary);font-weight:500;margin-bottom:8px;">Event log</div>' +
+          '<div class="weld-list">' +
+          '<div class="weld-entry"><span class="weld-time">07:44</span><div class="weld-detail"><span class="weld-rods"><span class="weld-line-tag">FL1</span>R00042 &rarr; R00043</span><span class="weld-footage">at 12,450 ft &middot; induction</span></div><span class="weld-pass">&#x2713; Pass</span></div>' +
+          '<div class="weld-entry"><span class="weld-time">09:18</span><div class="weld-detail"><span class="weld-rods"><span class="weld-line-tag">FL1</span>R00040 &rarr; R00041</span><span class="weld-footage">at 9,200 ft &middot; induction</span></div><span class="weld-pass">&#x2713; Pass</span></div>' +
+          '<div class="weld-entry"><span class="weld-time">11:05</span><div class="weld-detail"><span class="weld-rods"><span class="weld-line-tag">FL1</span>R00041 &rarr; R00042</span><span class="weld-footage">at 8,800 ft &middot; induction</span></div><span class="weld-pass">&#x2713; Pass</span></div>' +
+          '</div>'
+      },
+      fl2: {
+        kpi: {
+          orders: "1", ordersSub: "1 complete",
+          footage: "13,600<span class=\"kpi-unit\">ft</span>", footageSub: "target 14,000 &middot; 97%",
+          weight:  "1,000<span class=\"kpi-unit\">lb</span>", weightSub: "net, completed coils",
+          coils:   "2",  coilsSub: "avg 500 lb per coil",
+          skids:   "1",  skidsSub: "SK-00201",
+          downtime: "0<span class=\"kpi-unit\">min</span>", downtimeSub: "no downtime events", downtimeWarn: false
+        },
+        utilTitle: "FL2 Utilization",
+        util: '<div class="util-line">' +
+          '<div class="util-head"><div class="util-head-left"><span class="util-name">FL2</span><span class="util-pct">61%</span></div><span class="util-time">4h 53m running</span></div>' +
+          '<div class="util-timeline"><div class="util-segment idle" style="width:14%"></div><div class="util-segment running" style="width:40%"></div><div class="util-segment idle" style="width:8%"></div><div class="util-segment running" style="width:22%"></div><div class="util-segment idle" style="width:16%"></div></div>' +
+          '<div class="util-timeline-labels"><span>07:00</span><span>09:00</span><span>11:00</span><span>13:00</span><span>15:00</span></div>' +
+          '<div class="util-note"><span style="opacity:0.5">&middot;</span> Idle gaps waiting on spool output from FL1</div></div>' +
+          '<div class="util-legend"><span><span class="legend-swatch running"></span>Running</span><span><span class="legend-swatch setup"></span>Setup</span><span><span class="legend-swatch downtime"></span>Downtime</span><span><span class="legend-swatch idle"></span>Idle</span></div>',
+        quality: '<div class="quality-donut-wrap"><div class="donut"><svg width="108" height="108" viewBox="0 0 108 108"><circle cx="54" cy="54" r="44" fill="none" stroke="var(--color-background-secondary)" stroke-width="12"/><circle cx="54" cy="54" r="44" fill="none" stroke="var(--color-amber)" stroke-width="12" stroke-dasharray="276.5" stroke-dashoffset="22.9" stroke-linecap="round" transform="rotate(-90 54 54)"/></svg><div class="donut-center"><span class="donut-value">91.7%</span><span class="donut-label">SPC pass</span></div></div><div class="quality-summary"><div class="quality-summary-title">11 of 12 measurements in spec</div><div class="quality-summary-meta">Across 6 checkpoints<br>Avg 2 measurements per checkpoint</div></div></div>' +
+          '<div class="rejection-section-title"><span>WIP rejections</span><span class="rejection-count-badge">1 total</span></div>' +
+          '<div class="rejection-list"><div class="rejection-row"><span class="rejection-count">1</span><div class="rejection-reason-wrap"><span class="rejection-reason-name">Surface defect &middot; oxidation</span><div class="rejection-bar"><div class="rejection-bar-fill" style="width:100%"></div></div></div><span style="font-size:14px;color:var(--color-text-tertiary);font-family:var(--font-mono);">FL2</span></div></div>' +
+          '<div class="suspended-banner" style="margin-top:auto"><span class="suspended-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></span><span class="suspended-banner-body"><strong>1 coil suspended</strong> &middot; FW-00419-C02 pending review</span><a href="#" class="suspended-link">Review &rarr;</a></div>',
+        weldsTitle: "FL2 Weld Events", weldsSub: "All pass",
+        welds: '<div class="weld-summary-row"><div class="weld-summary-tile"><span class="weld-summary-label">Total welds</span><span class="weld-summary-value">1</span><span class="weld-summary-sub">Induction, rod&ndash;rod</span></div><div class="weld-summary-tile"><span class="weld-summary-label">Weld type</span><span class="weld-summary-value" style="font-size:17px">Induction</span><span class="weld-summary-sub success">&#10003; Pass</span></div></div>' +
+          '<div style="font-size:14px;color:var(--color-text-secondary);font-weight:500;margin-bottom:8px;">Event log</div>' +
+          '<div class="weld-list">' +
+          '<div class="weld-entry"><span class="weld-time">12:38</span><div class="weld-detail"><span class="weld-rods"><span class="weld-line-tag">FL2</span>SP-00029 &rarr; SP-00030</span><span class="weld-footage">at 2,150 ft &middot; induction</span></div><span class="weld-pass">&#x2713; Pass</span></div>' +
+          '</div>'
+      },
+      "all lines": {
+        kpi: {
+          orders: "3", ordersSub: "2 complete &middot; 1 in progress",
+          footage: "38,400<span class=\"kpi-unit\">ft</span>", footageSub: "combined &middot; FL1 89% &middot; FL2 97%",
+          weight:  "2,840<span class=\"kpi-unit\">lb</span>", weightSub: "net, completed coils",
+          coils:   "6",  coilsSub: "avg 473 lb per coil",
+          skids:   "3",  skidsSub: "SK-00199 &middot; SK-00200 &middot; SK-00201",
+          downtime:"22<span class=\"kpi-unit\">min</span>", downtimeSub: "FL1 DB2 die change @ 13:18", downtimeWarn: true
+        },
+        utilTitle: "All Lines Utilization",
+        util: '<div class="util-line"><div class="util-head"><div class="util-head-left"><span class="util-name">FL1</span><span class="util-pct">82%</span></div><span class="util-time">6h 34m running</span></div><div class="util-timeline"><div class="util-segment running" style="width:32%"></div><div class="util-segment setup" style="width:4%"></div><div class="util-segment running" style="width:28%"></div><div class="util-segment downtime" style="width:5%"></div><div class="util-segment running" style="width:22%"></div><div class="util-segment idle" style="width:9%"></div></div><div class="util-timeline-labels"><span>07:00</span><span>09:00</span><span>11:00</span><span>13:00</span><span>15:00</span></div><div class="util-note"><span class="util-note-dot"></span>22m downtime at 13:18 &middot; DB2 die change</div></div>' +
+          '<div class="util-line"><div class="util-head"><div class="util-head-left"><span class="util-name">FL2</span><span class="util-pct">61%</span></div><span class="util-time">4h 53m running</span></div><div class="util-timeline"><div class="util-segment idle" style="width:14%"></div><div class="util-segment running" style="width:40%"></div><div class="util-segment idle" style="width:8%"></div><div class="util-segment running" style="width:22%"></div><div class="util-segment idle" style="width:16%"></div></div><div class="util-timeline-labels"><span>07:00</span><span>09:00</span><span>11:00</span><span>13:00</span><span>15:00</span></div><div class="util-note"><span style="opacity:0.5">&middot;</span> Idle gaps waiting on spool output from FL1</div></div>' +
+          '<div class="util-line"><div class="util-head"><div class="util-head-left"><span class="util-name">FL3</span><span class="util-pct" style="color:var(--color-text-tertiary)">0%</span></div><span class="util-time">Offline full shift</span></div><div class="util-timeline"><div class="util-segment idle" style="width:100%"></div></div><div class="util-timeline-labels"><span>07:00</span><span>09:00</span><span>11:00</span><span>13:00</span><span>15:00</span></div></div>' +
+          '<div class="util-legend"><span><span class="legend-swatch running"></span>Running</span><span><span class="legend-swatch setup"></span>Setup</span><span><span class="legend-swatch downtime"></span>Downtime</span><span><span class="legend-swatch idle"></span>Idle / offline</span></div>',
+        quality: '<div class="quality-donut-wrap"><div class="donut"><svg width="108" height="108" viewBox="0 0 108 108"><circle cx="54" cy="54" r="44" fill="none" stroke="var(--color-background-secondary)" stroke-width="12"/><circle cx="54" cy="54" r="44" fill="none" stroke="var(--color-green)" stroke-width="12" stroke-dasharray="276.5" stroke-dashoffset="9.4" stroke-linecap="round" transform="rotate(-90 54 54)"/></svg><div class="donut-center"><span class="donut-value">96.6%</span><span class="donut-label">SPC pass</span></div></div><div class="quality-summary"><div class="quality-summary-title">56 of 58 measurements in spec</div><div class="quality-summary-meta">Across 29 checkpoints<br>All three lines combined</div></div></div>' +
+          '<div class="rejection-section-title"><span>WIP rejections</span><span class="rejection-count-badge">2 total</span></div>' +
+          '<div class="rejection-list"><div class="rejection-row"><span class="rejection-count">1</span><div class="rejection-reason-wrap"><span class="rejection-reason-name">Gauge out of spec</span><div class="rejection-bar"><div class="rejection-bar-fill" style="width:50%"></div></div></div><span style="font-size:14px;color:var(--color-text-tertiary);font-family:var(--font-mono);">FL1</span></div><div class="rejection-row"><span class="rejection-count">1</span><div class="rejection-reason-wrap"><span class="rejection-reason-name">Surface defect &middot; oxidation</span><div class="rejection-bar"><div class="rejection-bar-fill" style="width:50%"></div></div></div><span style="font-size:14px;color:var(--color-text-tertiary);font-family:var(--font-mono);">FL2</span></div></div>' +
+          '<div class="suspended-banner" style="margin-top:auto"><span class="suspended-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></span><span class="suspended-banner-body"><strong>1 coil suspended</strong> &middot; FW-00419-C02 pending review</span><a href="#" class="suspended-link">Review &rarr;</a></div>',
+        weldsTitle: "All Lines Weld Events", weldsSub: "All pass",
+        welds: '<div class="weld-summary-row"><div class="weld-summary-tile"><span class="weld-summary-label">FL1 welds</span><span class="weld-summary-value">3</span><span class="weld-summary-sub">Induction, rod&ndash;rod</span></div><div class="weld-summary-tile"><span class="weld-summary-label">FL2 welds</span><span class="weld-summary-value">1</span><span class="weld-summary-sub">Induction</span></div></div>' +
+          '<div style="font-size:14px;color:var(--color-text-secondary);font-weight:500;margin-bottom:8px;">Event log</div>' +
+          '<div class="weld-list">' +
+          '<div class="weld-entry"><span class="weld-time">07:44</span><div class="weld-detail"><span class="weld-rods"><span class="weld-line-tag">FL1</span>R00042 &rarr; R00043</span><span class="weld-footage">at 12,450 ft &middot; induction</span></div><span class="weld-pass">&#x2713; Pass</span></div>' +
+          '<div class="weld-entry"><span class="weld-time">09:18</span><div class="weld-detail"><span class="weld-rods"><span class="weld-line-tag">FL1</span>R00040 &rarr; R00041</span><span class="weld-footage">at 9,200 ft &middot; induction</span></div><span class="weld-pass">&#x2713; Pass</span></div>' +
+          '<div class="weld-entry"><span class="weld-time">11:05</span><div class="weld-detail"><span class="weld-rods"><span class="weld-line-tag">FL1</span>R00041 &rarr; R00042</span><span class="weld-footage">at 8,800 ft &middot; induction</span></div><span class="weld-pass">&#x2713; Pass</span></div>' +
+          '<div class="weld-entry"><span class="weld-time">12:38</span><div class="weld-detail"><span class="weld-rods"><span class="weld-line-tag">FL2</span>SP-00029 &rarr; SP-00030</span><span class="weld-footage">at 2,150 ft &middot; induction</span></div><span class="weld-pass">&#x2713; Pass</span></div>' +
+          '</div>'
+      },
+      fl3: {
+        kpi: {
+          orders: "0", ordersSub: "offline full shift",
+          footage: "0<span class=\"kpi-unit\">ft</span>", footageSub: "line offline",
+          weight:  "0<span class=\"kpi-unit\">lb</span>", weightSub: "—",
+          coils:   "0",  coilsSub: "no coils produced",
+          skids:   "0",  skidsSub: "—",
+          downtime: "—", downtimeSub: "scheduled offline", downtimeWarn: false
+        },
+        utilTitle: "FL3 Utilization",
+        util: '<div class="util-line">' +
+          '<div class="util-head"><div class="util-head-left"><span class="util-name">FL3</span><span class="util-pct" style="color:var(--color-text-tertiary)">0%</span></div><span class="util-time">Offline full shift</span></div>' +
+          '<div class="util-timeline"><div class="util-segment idle" style="width:100%"></div></div>' +
+          '<div class="util-timeline-labels"><span>07:00</span><span>09:00</span><span>11:00</span><span>13:00</span><span>15:00</span></div></div>' +
+          '<div style="margin-top:auto;padding:14px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);font-size:14px;color:var(--color-text-secondary);">FL3 is scheduled offline this shift. Next planned startup: tomorrow 07:00 AM.</div>' +
+          '<div class="util-legend"><span><span class="legend-swatch running"></span>Running</span><span><span class="legend-swatch setup"></span>Setup</span><span><span class="legend-swatch downtime"></span>Downtime</span><span><span class="legend-swatch idle"></span>Idle</span></div>',
+        quality: '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--color-text-tertiary);font-size:14px;text-align:center;gap:12px;padding:24px 0;">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:36px;height:36px;opacity:0.3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+          '<div><div style="font-weight:500;margin-bottom:4px;">No SPC data</div>FL3 was offline — no measurements recorded this shift.</div></div>',
+        weldsTitle: "FL3 Weld Events", weldsSub: "None",
+        welds: '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--color-text-tertiary);font-size:14px;text-align:center;gap:12px;padding:24px 0;">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:36px;height:36px;opacity:0.3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>' +
+          '<div><div style="font-weight:500;margin-bottom:4px;">No weld events</div>FL3 did not run this shift.</div></div>'
+      }
+    };
+
+    window.setMachine = function setMachine(btn) {
+      document.getElementById("machine-group").querySelectorAll(".machine-tab")
+        .forEach(function (b) { b.classList.remove("active"); });
+      btn.classList.add("active");
+      var key = btn.textContent.trim().toLowerCase();
+      var d = MACHINE[key];
+
+      // KPI strip
+      document.getElementById("kpi-orders-val").innerHTML   = d.kpi.orders;
+      document.getElementById("kpi-orders-sub").innerHTML   = d.kpi.ordersSub;
+      document.getElementById("kpi-footage-val").innerHTML  = d.kpi.footage;
+      document.getElementById("kpi-footage-sub").innerHTML  = d.kpi.footageSub;
+      document.getElementById("kpi-weight-val").innerHTML   = d.kpi.weight;
+      document.getElementById("kpi-weight-sub").innerHTML   = d.kpi.weightSub;
+      document.getElementById("kpi-coils-val").innerHTML    = d.kpi.coils;
+      document.getElementById("kpi-coils-sub").innerHTML    = d.kpi.coilsSub;
+      document.getElementById("kpi-skids-val").innerHTML    = d.kpi.skids;
+      document.getElementById("kpi-skids-sub").innerHTML    = d.kpi.skidsSub;
+      document.getElementById("kpi-downtime-val").innerHTML = d.kpi.downtime;
+      document.getElementById("kpi-downtime-sub").innerHTML = d.kpi.downtimeSub;
+      var dt = document.getElementById("kpi-downtime-tile");
+      if (d.kpi.downtimeWarn) { dt.classList.add("warn"); }
+      else                    { dt.classList.remove("warn"); }
+
+      // Utilization section
+      document.getElementById("util-section-title").textContent = d.utilTitle;
+      document.getElementById("util-content").innerHTML = d.util;
+
+      // Quality section
+      document.getElementById("quality-content").innerHTML = d.quality;
+
+      // Weld events section
+      document.getElementById("welds-section-title").textContent = d.weldsTitle;
+      document.getElementById("welds-section-sub").textContent   = d.weldsSub;
+      document.getElementById("welds-content").innerHTML = d.welds;
+    }
+  })();
+</script>
+
+<script src="../../MVP-1/Mockups/flat-wire-topbar.js"></script>
+<script src="../../MVP-1/Mockups/flat-wire-fit.js" data-fit="fill"></script>
+</body>
+</html>

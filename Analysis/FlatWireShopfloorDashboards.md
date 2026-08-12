@@ -1,9 +1,53 @@
 # Flat Wire Mill — Shopfloor Dashboard Designs
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 1, 2026
-**Document Type:** UX / Screen Design Reference
-**Status:** Draft — Pending Tim O. / Shannon R. / Jaspreet review
+**Last Updated:** August 11, 2026
+**Document Type:** UX / Screen Design Reference — **internal**
+**Status:** Reference — superseded as a requirements source by `MVP-1/RequirementDocuments/`
+
+---
+
+> ## ⚠ This document is no longer the requirements source for any screen
+>
+> **Every screen below now has an owning client-facing requirement document** in
+> [`../MVP-1/RequirementDocuments/`](../MVP-1/RequirementDocuments/). The owning document
+> is named in the inventory table and again under each dashboard heading.
+>
+> **When this document and an owning document disagree, the owning document wins.** This file is retained
+> as the internal UX and wireframe record — the ASCII layouts, the navigation map, the design principles and
+> the **[Alloy Reference Data](#alloy-reference-data)** table — and as the change-log audit trail for design
+> decisions taken between April and August 2026. It is **not** to be cited as a requirement, and it must not be updated to state a new rule:
+> new rules belong in the owning document.
+>
+> Consolidation history: ten per-screen documents were moved out of `Analysis/` on **1 Aug 2026**; DB1 was
+> consolidated out of this file in the same pass; **DB3, DB7, DB8, DB10 and DB11 were consolidated out on
+> 11 Aug 2026**, which is when the last screen in this file acquired an owner.
+>
+> **DB7B was added to the inventory on 11 Aug 2026 and is the one screen that never appeared in it.** The
+> Packing Station had a mockup and requirement text (`FR-345`–`FR-352`) but no owner and no inventory row —
+> it was invisible to the very check that is supposed to guarantee every screen has an owning document. It is
+> now owned by `OutputCoilCompletion.md` **§8**, alongside DB7, because the two are one operator flow.
+>
+> ### Divided by MVP scope — 11 Aug 2026
+>
+> **The inventory carries an `MVP` column and every dashboard section carries a scope badge.** Three screens
+> are **MVP-2**: **DB9** Pass Schedule Management · **DB9A** Pass Schedule List · **DB10** Supervisor Shift
+> Summary. Everything else is **MVP-1**, including **DB7** and **DB7B**, which returned with Phase 9.
+>
+> **The file was not split**, and two things stayed whole on purpose:
+>
+> - The **Screen Navigation Map** is one diagram spanning both scopes. Halving it would leave two partial maps
+>   with dangling edges — the same call the repository made for the ER diagram.
+> - The **change log** is the audit trail this file exists to hold; it is not divisible by scope. It moved
+>   **undivided** to [CHANGELOG.md](../CHANGELOG.md) on 12 Aug 2026, when every per-document change log in the
+>   repository was consolidated there.
+>
+> **The alloy lookup table was lifted out of the Dashboard 9 section** in the same pass and promoted to the
+> top-level [Alloy Reference Data](#alloy-reference-data). It is **MVP-1** reference data — cited by the master
+> specification and by `phase-13`, whose alloy-lookup admin is the non-deferrable half of that phase — and it
+> had been sitting inside an MVP-2 screen. Tagging DB9 without moving it first would have carried MVP-1
+> reference data out of scope, which is the same seam that `CoilCompletionService` created and cost a full
+> remediation pass to undo.
 
 ---
 
@@ -13,27 +57,85 @@ This document defines the shopfloor dashboard screens required to operate the fl
 
 ### Dashboard Inventory
 
-| # | Dashboard | Primary User | Trigger | Priority |
-|---|-----------|-------------|---------|----------|
-| 1 | Line Status Overview | Supervisor / Foreman | Always visible | High |
-| 2A | Rod Pre-Check-in Station (FL1/FL3) | FL1 Operator | Staging the next rod while the current coil still runs | High |
-| 2 | Rod Check-in & Pre-Run Setup (FL1/FL3) | FL1 Operator | Start of each rod | High |
-| 3 | Active Run Monitor (FL1/FL3) | FL1 Operator | During every run | High |
-| 4 | Weld Event Logger | FL1 Operator | When Payoff 1 nears end | High |
-| 5 | FL2 Spool Check-in | FL2 Operator | Loading each spool onto TPO | High |
-| 6 | SPC Checkpoint Entry | Any operator | Pre-run, post die-change | High |
-| 7 | Output Coil Completion & Label | FL2 Operator | When TKUP-2 coil is complete | High |
-| 8 | WIP Rejection Screen | Any operator | Material fails at any stage | High |
-| 9 | Pass Schedule Management | Operations / Maintenance | Before a new product campaign | High |
-| 9A | Pass Schedule List ("All Schedules") | Operations / Maintenance | Via Dashboard 9 "← All schedules" button; direct navigation | High |
-| 10 | Supervisor Shift Summary | Supervisor / Shift Manager | End of shift / on-demand | Medium |
-| 11 | Roll Adjust | FL3 Operator | FM2 roll gap adjustment during run | High |
-| 12 | Rod Checkout | FL1 / FL3 Operator | Rod removed from payoff before run completes naturally | High |
-| DC | Die Change | FL1 / FL3 Operator | Drawing die replaced mid-run (planned, gauge drift, failure, or size change) | High |
+**"Owning specification"** is the authoritative requirement document for that screen. All paths are relative to `../MVP-1/RequirementDocuments/`.
+
+| # | Dashboard | **MVP** | Primary User | Trigger | Owning specification |
+|---|-----------|:---:|-------------|---------|----------------------|
+| 1 | Line Status Overview | MVP-1 | Supervisor / Foreman | Always visible | [LineStatusOverview.md](../MVP-1/RequirementDocuments/LineStatusOverview.md) |
+| 2A | Rod Pre-Check-in Station (FL1/FL3) | MVP-1 | FL1 Operator | Staging the next rod while the current coil still runs | [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md) |
+| 2 | Rod Check-in & Pre-Run Setup (FL1/FL3) | MVP-1 | FL1 Operator | Start of each rod | [RocCheckin.md](../MVP-1/RequirementDocuments/RocCheckin.md) |
+| 3 | Active Run Monitor | MVP-1 | FL1 / FL2 / FL3 Operator | During every run | [ActiveRunMonitor.md](../MVP-1/RequirementDocuments/ActiveRunMonitor.md) |
+| ~~4~~ | ~~Weld Event Logger~~ — **retired 1 Aug 2026** | *(retired)* | — | Weld capture moved to DB2A *Mark as welded* | [WeldEvent.md](../MVP-1/RequirementDocuments/WeldEvent.md) |
+| 5 | FL2 Spool Check-in | MVP-1 | FL2 Operator | Loading each spool onto TPO | [RocCheckin.md](../MVP-1/RequirementDocuments/RocCheckin.md) §4 |
+| 5A | FL2 Spool Queue | MVP-1 | FL2 Operator | Selecting the next spool, ahead of check-in | [SpoolQueue.md](../MVP-1/RequirementDocuments/SpoolQueue.md) |
+| 6 | SPC Checkpoint Entry | MVP-1 | Any operator | Pre-run, post die-change | [SPCCheckpoint.md](../MVP-1/RequirementDocuments/SPCCheckpoint.md) |
+| 7 | Output Coil Completion & Label | MVP-1 | FL2 Operator | When TKUP-2 coil is complete | [OutputCoilCompletion.md](../MVP-1/RequirementDocuments/OutputCoilCompletion.md) |
+| 7B | **Packing Station** | MVP-1 | **Packing operator** | Coil arrives from the line; skid seated and staged | [OutputCoilCompletion.md](../MVP-1/RequirementDocuments/OutputCoilCompletion.md) **§8** |
+| 8 | WIP Rejection | MVP-1 | Any operator | Material fails at any stage | [WipRejection.md](../MVP-1/RequirementDocuments/WipRejection.md) |
+| 9 | Pass Schedule Management | **MVP-2** | Operations / Maintenance | Before a new product campaign | [PassScheduleManagement.md](../MVP-2/RequirementDocuments/PassScheduleManagement.md) |
+| 9A | Pass Schedule List ("All Schedules") | **MVP-2** | Operations / Maintenance | Via Dashboard 9 "← All schedules" button; direct navigation | [PassScheduleManagement.md](../MVP-2/RequirementDocuments/PassScheduleManagement.md) |
+| 10 | Supervisor Shift Summary | **MVP-2** | Supervisor / Shift Manager | End of shift / on-demand | [ShiftSummary.md](../MVP-2/RequirementDocuments/ShiftSummary.md) |
+| 11 | Roll Adjust | MVP-1 | **FL2 / FL3 operator** (not FL1) | Roll gap adjustment during run | [RollAdjust.md](../MVP-1/RequirementDocuments/RollAdjust.md) |
+| 12 | Rod Checkout | MVP-1 | FL1 / FL3 Operator | Rod removed from payoff before run completes naturally | [RodCheckout.md](../MVP-1/RequirementDocuments/RodCheckout.md) |
+| DC | Die Change | MVP-1 | FL1 / FL3 Operator | Drawing die replaced mid-run (planned, gauge drift, failure, or size change) | [DieChangeAndManagement.md](../MVP-1/RequirementDocuments/DieChangeAndManagement.md) |
+| — | *(no dashboard)* | — | — | Machine / OPC tag surface | [PLCTagSpecification.md](../MVP-1/RequirementDocuments/PLCTagSpecification.md) |
+| — | *(no dashboard)* | — | — | Pass schedule generation engine | [PassScheduleGenerationSpec.md](../MVP-2/RequirementDocuments/PassScheduleGenerationSpec.md) |
+
+> **DB13 and DB14 are descoped** (4 Aug 2026, `PLC-Q02` superseded) and were never in this inventory. Their tag map
+> lives in [PLCTagSpecification.md](../MVP-1/RequirementDocuments/PLCTagSpecification.md).
+>
+> **Dashboard 11's primary user was stated three different ways in this file** — this inventory said *FL3 Operator*,
+> the DB11 section below says *FL1 / FL2 Operator*, and the DB3 quick-action table says *FL3 only*. **All three were
+> wrong or incomplete.** `FR-107`–`FR-109` and all three active-run mockups agree the answer is **FL2 and FL3, and
+> not FL1** — FL1's mockup carries no Roll Adjust control at all. Corrected in this inventory row; the two stale
+> statements below are left in place as the design record. Reconciliation in
+> [RollAdjust.md](../MVP-1/RequirementDocuments/RollAdjust.md) §1.5.
+
+---
+
+## Alloy Reference Data
+
+**Scope: MVP-1.** Seeded in Phase 1 and maintained through the Phase-13 alloy-lookup admin grid, which is the
+**non-deferrable** half of that phase.
+
+This table lived inside the **Dashboard 9** section until 11 Aug 2026 — MVP-1 reference data buried in an
+MVP-2 screen. Two live citations depend on it and neither is about Dashboard 9:
+
+- `LatestDocument/FlatWire_MasterSpecification.md` — *"maintained via an admin screen"*, carrying its own copy of these values
+- `MVP-1/DevelopmentPlan/ShopfloorPlan/phase-13-administration-reference-data.md` — cites this table for the Process-Engineering sign-off caveat
+
+Its six columns map 1:1 onto the **`AlloyProperty`** table (`Alloy`, `MaxReductionPerPass`, `SpringbackFactor`,
+`GaugeToleranceDefault`, `WidthToleranceDefault`, `SpeedRangeMinFPM`, `SpeedRangeMaxFPM`) seeded by
+`FlatWire_SampleData_Lookup.sql`.
+
+### Alloy Lookup Table (required in database)
+
+| Alloy | Max reduction / pass | Spring-back factor | Gauge tol. default | Width tol. default | Speed range (FPM) |
+|-------|---------------------|-------------------|--------------------|--------------------|--------------------|
+| 1100  | 26% | 0.98 | ± 0.003" | ± 0.010" | 800 – 2,000 |
+| 1350  | 22% | 0.97 | ± 0.002" | ± 0.008" | 600 – 1,600 |
+| 3003  | 24% | 0.98 | ± 0.004" | ± 0.012" | 700 – 1,800 |
+| 5052  | 20% | 0.97 | ± 0.003" | ± 0.010" | 500 – 1,400 |
+| 6061  | 18% | 0.96 | ± 0.003" | ± 0.010" | 400 – 1,200 |
+
+> These values must be confirmed and maintained by Process Engineering (Tim O.). They are editable via an admin table — not hardcoded.
+
+> **⚠ `Spring-back factor` is a contested quantity — do not build physics on it.** Master specification
+> **§10.5** arbitrates the springback model as wrong: the roll gap sits **below** gauge by a **load-dependent
+> mill-spring** term (`h₁ = S₀ + F/K`), not above it by a fixed per-alloy multiplier, and springback
+> (material) has been conflated with mill spring (machine stiffness). The column stays because
+> `AlloyProperty` carries it and the schema is seeded from this table; **the pass-schedule generation that
+> consumes it is MVP-2**, and `PassScheduleGenerationSpec.md` is the authority on the physics.
+
+> **Rod diameter and ovality tolerances are deliberately absent.** They are owed by e-mail (`Q22`) and are
+> seeded `NULL` in `AlloyProperty` rather than guessed — see `FlatWireSchema_Lookup.md`.
 
 ---
 
 ## Dashboard 1 — Line Status Overview
+> **Scope: MVP-1.**
+
+> **Owning specification: [LineStatusOverview.md](../MVP-1/RequirementDocuments/LineStatusOverview.md)**. DB1 content was consolidated out of this file on 1 Aug 2026 — that document was written from this section. Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** Supervisor / Foreman
 **When:** Persistently displayed — master board for the flat wire floor
@@ -90,12 +192,15 @@ This document defines the shopfloor dashboard screens required to operate the fl
 ---
 
 ## Dashboard 2A — Rod Pre-Check-in Station (FL1 / FL3)
+> **Scope: MVP-1.**
+
+> **Owning specification: [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md)**. The owning document is materially ahead of this section: it carries the order-membership rule, the sequence authorisation, and the four min/max tolerance pairs. Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** FL1 Operator
 **When:** While the current coil is still running — staging the *next* rod at the free payoff bay
 **Purpose:** Register the next rod against a VPS payoff position so the line can run continuously through an induction weld; inspect the bundle before unbanding; release a mis-staged rod
-**Mockup:** `Mockups/dashboard_2a_rod_precheckin.html`
-**Full analysis:** [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md)
+**Mockup:** `MVP-1/Mockups/dashboard_2a_rod_precheckin.html`
+**Full analysis:** [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md)
 **Requirements:** SRS §4.2 `PCI001`–`PCI008` · `WLD003`/`WLD005`/`WLD006`/`WLD010` · `TRV004`/`TRV009` · §4.18 `PRC007`/`PRC008`/`PRC011`/`PRC014`
 
 **Not available on FL2** — `PCI002`: no staging space. FL2 is check-in only (Dashboard 5).
@@ -138,10 +243,10 @@ The bay facts sit on **one row** and each bay alert is **one line**. The one sen
 | State | Chip | Meaning | Actions |
 |-------|------|---------|---------|
 | `NOT STAGED` | Gray | Empty bay | Pre-check-in rod |
-| `PRE-CHECKED-IN` | Blue | Staged, inspection passed, not yet checked in. **The shared `coils.coil_status` is *not* `INFLAT` here** — that is set at check-in (**Q67**) | **Proceed to check-in** *(primary)* · Mark as welded · Pre-check-out |
-| `PRE-CHECKED-IN` **· welded** | Blue | Staged and induction-welded to the running rod. Welded is a **flag**, not a status | **Proceed to check-in** *(primary)* · Mark as welded *(disabled — "already marked as welded")* · **Pre-check-out behind a supervisor override** (documented reason, rod → `HOLD` — it is a rejection, **Q68**/**Q77**) |
+| `PRE-CHECKED-IN` | Blue | Staged, inspection passed, not yet checked in. **The shared `coils.coil_status` is *not* `INFLAT` here** — that is set at check-in (**Q68**) | **Proceed to check-in** *(primary)* · Mark as welded · Pre-check-out |
+| `PRE-CHECKED-IN` **· welded** | Blue | Staged and induction-welded to the running rod. Welded is a **flag**, not a status | **Proceed to check-in** *(primary)* · Mark as welded *(disabled — "already marked as welded")* · **Pre-check-out behind a supervisor override** (documented reason, rod → `HOLD` — it is a rejection, **Q69**/**Q72**) |
 | `ACTIVE` | Green | Checked in, rod `INFLAT`, run open | Check out rod · Welds this run · N — **no primary, and no *Open active run* link** (removed 1 Aug 2026: the run monitor is reachable from the app bar and Line Status, and this station's job is staging the *next* rod) |
-| `BLOCKED` | Red | Visual inspection failed at staging | Go to WIP Rejection — **only** action. The rejection captures the reason and puts the rod on **`HOLD`**, which **releases the row and frees the bay** (**Q72** item 3) |
+| `BLOCKED` | Red | Visual inspection failed at staging | Go to WIP Rejection — **only** action. The rejection captures the reason and puts the rod on **`HOLD`**, which **releases the row and frees the bay** (**Q23** item 3) |
 
 Weight-bar colours and weld thresholds are the same rules as Dashboard 3 — see [Payoff Weight Indicator Rules](#payoff-weight-indicator-rules). Critical alert when **Payoff 2 is not staged and Payoff 1 is below 2,000 lb**.
 
@@ -149,7 +254,7 @@ Weight-bar colours and weld thresholds are the same rules as Dashboard 3 — see
 
 Lists pre-checked-in, welded, and available rod **for the current order**, each with serial number, **payoff position number**, dimensional attributes and current status. Rows with prior footage carry a **partial** flag so a carry-forward rod is visible *before* it is staged.
 
-**Two sequence columns, because planned order is authorised rather than enforced.** `Plan` is the sequence planning intended, with a green `▸` on the rod expected next; `Run` is the order the rod was actually staged in (the SRS `RodSeqno`), blank until processed, with `⇅` where the two differ. Staging any other rod is permitted but **notified and supervisor-authorised** — never refused. See [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md#planned-sequence-notify-and-authorise).
+**Two sequence columns, because planned order is authorised rather than enforced.** `Plan` is the sequence planning intended, with a green `▸` on the rod expected next; `Run` is the order the rod was actually staged in (the SRS `RodSeqno`), blank until processed, with `⇅` where the two differ. Staging any other rod is permitted but **notified and supervisor-authorised** — never refused. See [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md#planned-sequence-notify-and-authorise).
 
 **Panel header — "Rods In Queue"** (added 1 Aug 2026). The queue head previously held the order-context line and the scan box; both were removed, leaving an unlabelled empty row that only became visible when the full-station warning fired — so the table below it began with no name at all. The head now carries a standing **"Rods In Queue"** title on the left and the *both bays occupied* warning on the right.
 
@@ -159,17 +264,17 @@ Lists pre-checked-in, welded, and available rod **for the current order**, each 
 
 **No Alloy or Temper columns.** Every rod on an order shares them, so repeating them down each row was a column of identical values; they are stated once in the screen header instead. **Diameter stays per row** — `TRV004` asks for dimensional attributes per row, and a substitution with a different nominal should stand out against the order spec above it.
 
-**No rod-storage location column** (dropped Jul 29 2026). It is not a `TRV004` field, it depended on the still-open **Q19**, and "bay" already means *payoff position* everywhere else on this screen.
+**No rod-storage location column** (dropped Jul 29 2026). It is not a `TRV004` field, it depended on the still-open **OI-85**, and "bay" already means *payoff position* everywhere else on this screen.
 
 ### Pre-Check-in — Three-Step Wizard
 
 | Step | Content | Rules |
 |------|---------|-------|
-| 1 — Identify rod | Rod alpha (scan or type), measured diameter, optional scrap box. Alloy / temper / weights pre-populate | Validates `R#####` against `proddb..coils` (`CHK006`); **diameter against a min/max lookup tolerance** (`CHK007` — one of **four** min/max pairs with gauge, width and ovality; values owed by e-mail, so the screen's per-alloy map stays mock, **Q71**); rejects a rod already checked in (`CHK009`) |
+| 1 — Identify rod | Rod alpha (scan or type), measured diameter, optional scrap box. Alloy / temper / weights pre-populate | Validates `R#####` against `proddb..coils` (`CHK006`); **diameter against a min/max lookup tolerance** (`CHK007` — one of **four** min/max pairs with gauge, width and ovality; values owed by e-mail, so the screen's per-alloy map stays mock, **Q22**); rejects a rod already checked in (`CHK009`) |
 | 2 — Assign bay | Payoff 1 / Payoff 2 selector cards | Occupied bay disabled and labelled with its occupant (`PCI006`) |
 | 3 — Visual inspection | Oxidation · Surface defects · Water stains, Pass/Fail each, plus observation | **Three items, not four.** Any Fail → WIP Rejection only, **no bypass** (`CHK010`) |
 
-**Carry-forward gate.** When `footageRunToDate > 0` the wizard shows footage already run, remaining weight estimate, last run and prior spool alphas, and offers only *Proceed as partial re-check-in* plus an explicit physical-identity confirmation. **The fresh-start path does not exist** (`PRC008`) — see [PartialRodReCheckin.md](PartialRodReCheckin.md).
+**Carry-forward gate.** When `footageRunToDate > 0` the wizard shows footage already run, remaining weight estimate, last run and prior spool alphas, and offers only *Proceed as partial re-check-in* plus an explicit physical-identity confirmation. **The fresh-start path does not exist** (`PRC008`) — see [PartialRodReCheckin.md](../MVP-1/RequirementDocuments/PartialRodReCheckin.md).
 
 ### Field Definitions
 
@@ -236,18 +341,21 @@ Recorded as `RodCheckout` with `Mode = 'ModeP'`; reverses the WIP queue entry cr
 | Action | Permitted Roles |
 |--------|----------------|
 | Pre-check-in | FL1 / FL3 operators |
-| Pre-check-out | FL1 / FL3 operators *(supervisor approval is an open question — contrast OQ-48 for mid-run checkout)* |
+| Pre-check-out | FL1 / FL3 operators *(supervisor approval is an open question — contrast OQ-74 for mid-run checkout)* |
 | Mark as welded | FL1 / FL3 operators |
 | Welds this run (read-only) | FL1 / FL3 operators |
 | Reverse a welded coil (`WLD011`) | Supervisor — not yet specified |
 
 ### Open Questions
 
-See [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md) — notably whether pre-check-in sets coil status to `INFLAT` (SRS) or `STAGED` (walkthrough), and whether `CHK005` removes the payoff selector from Dashboard 2.
+See [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md) — notably whether pre-check-in sets coil status to `INFLAT` (SRS) or `STAGED` (walkthrough), and whether `CHK005` removes the payoff selector from Dashboard 2.
 
 ---
 
 ## Dashboard 2 — Rod Check-in & Pre-Run Setup (FL1 / FL3)
+> **Scope: MVP-1.**
+
+> **Owning specification: [RocCheckin.md](../MVP-1/RequirementDocuments/RocCheckin.md)**. The owning document covers both this screen and Dashboard 5 (spool check-in), and reduces the PLC push detail to a pointer into the tag specification. Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** FL1 Operator
 **When:** At the start of each new rod or job
@@ -306,17 +414,21 @@ See [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md) 
 ---
 
 ## Dashboard 3 — Active Run Monitor (FL1 / FL3)
+> **Scope: MVP-1.**
 
-> **Layout note (1 Aug 2026):** the FL1 screen is **`dashboard_3_active_run_v2.html`** — the grouped
-> action cluster (*Run events* / *Go to*). The earlier left-rail layout, `dashboard_3_active_run.html`,
-> was **withdrawn** and its file deleted (git history at `2a0426b`); every inbound link across the
-> mockups was repointed at `_v2`. The `_v2` suffix is now a misnomer — it is the only FL1 layout, not a
-> revision of a surviving one — and is worth renaming when the Angular port begins.
+> **Owning specification: [ActiveRunMonitor.md](../MVP-1/RequirementDocuments/ActiveRunMonitor.md)** (consolidated out of this file 11 Aug 2026). The trace rules, payoff thresholds, quick-action sets, pause reason vocabulary, four resume outcomes and shift-summary contribution below are **reproduced here as the design record only** — the owning document is authoritative and carries the client sign-off. Note that the heading says FL1/FL3; the screen also serves FL2, with a historical profile in place of a live trace.
+
+> **Layout note (1 Aug 2026, updated 11 Aug 2026):** the FL1 screen is **`dashboard_3_active_run.html`**
+> — the grouped action cluster (*Run events* / *Go to*). The earlier left-rail layout, which held this
+> same filename, was **withdrawn** and its file deleted on 1 Aug 2026 (git history at `2a0426b`); every
+> inbound link across the mockups was repointed at the surviving screen, then carried the `_v2` suffix.
+> That suffix was a misnomer — it was the only FL1 layout, not a revision of a surviving one — and the
+> file was **renamed `dashboard_3_active_run.html` on 11 Aug 2026**.
 
 **Who:** FL1 Operator
 **When:** Continuously displayed during an active production run
 **Purpose:** Real-time gauge/width trace, machine status, payoff monitoring, quick actions
-**Descoped (Aug 4, 2026):** the **Machine View** tab and the **View Trends** action are both withdrawn at client request, together with Dashboards 13 and 14. The chart section keeps its collapse toggle; the tab strip now carries a single inert *Traces* label, matching FL2, which never had a second tab. The machine tags the Machine View displayed are specified in [PLCTagSpecification.md](../LatestDocument/RequirementDocuments/PLCTagSpecification.md).
+**Descoped (Aug 4, 2026):** the **Machine View** tab and the **View Trends** action are both withdrawn at client request, together with Dashboards 13 and 14. The chart section keeps its collapse toggle; the tab strip now carries a single inert *Traces* label, matching FL2, which never had a second tab. The machine tags the Machine View displayed are specified in [PLCTagSpecification.md](../MVP-1/RequirementDocuments/PLCTagSpecification.md).
 
 ```
 ┌───────────────────────────────────────────────────────────────────┐
@@ -538,6 +650,9 @@ Pause events roll up into the Shift Summary as follows:
 ---
 
 ## Dashboard 4 — Weld Event Logger
+> **Retired 1 Aug 2026** — weld capture moved to the Dashboard 2A *Mark as welded* dialog. MVP-1 by lineage; the screen no longer exists.
+
+> **Owning specification: [WeldEvent.md](../MVP-1/RequirementDocuments/WeldEvent.md)**. **This screen is retired (1 Aug 2026).** Weld capture is the *Mark as welded* action on Dashboard 2A, because the rod being welded in is the staged one. Retained here as the design record of a withdrawn screen; gaps G27 and G28 record the two capabilities that were not rehoused. Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** FL1 Operator
 **When:** When Payoff 1 rod nears its end and a weld is performed
@@ -588,6 +703,9 @@ Pause events roll up into the Shift Summary as follows:
 ---
 
 ## Dashboard 5A — FL2 Spool Queue
+> **Scope: MVP-1.**
+
+> **Owning specification: [SpoolQueue.md](../MVP-1/RequirementDocuments/SpoolQueue.md)**. Added 2 Aug 2026 as the eleventh per-screen document; this section and that document were authored together. Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** FL2 Operator
 **When:** Before check-in — deciding which spool to run next
@@ -597,7 +715,7 @@ Pause events roll up into the Shift Summary as follows:
 **Why it exists.** FL1 operators have Dashboard 2A, which lists the rods planned for the running
 order. FL2 has no equivalent, because `PCI002` excludes FL2 from staging (see the note at the top of
 this document) — so the FL2 operator had **no view of waiting material at all** until they were
-holding a spool. Separately, `FR-090` has the operator *scan the FL1-printed label* while **Q57**
+holding a spool. Separately, `FR-090` has the operator *scan the FL1-printed label* while **Q17**
 records the client saying the operator *"selects it by spool number for check-in"*. Both stand; only
 the scan had a screen. And "the spool queue" — a phrase `FR-326`, `TC-389`, `RodCheckout.md` and
 phase 7 all use for where an accepted partial spool goes — had **no table, endpoint, screen or status
@@ -607,7 +725,7 @@ of that name anywhere**. This screen is it.
 ┌───────────────────────────────────────────────────────────────────┐
 │  FL2 — SPOOL QUEUE                                    09:59 AM    │
 ├───────────────────────────────────────────────────────────────────┤
-│  Scan a spool to load its order   [ SP-…            ]  ? OQ-15    │
+│  Scan a spool to load its order   [ SP-…            ]  ? OQ-76    │
 ├───────────────────────────────────────────────────────────────────┤
 │  All spools available for processing                              │
 │  Across 4 orders · 23,820 lb total          9 spools · 8 ready    │
@@ -641,6 +759,9 @@ Dashboard 2A states for rods.
 ---
 
 ## Dashboard 5 — FL2 Spool Check-in
+> **Scope: MVP-1.**
+
+> **Owning specification: [RocCheckin.md](../MVP-1/RequirementDocuments/RocCheckin.md)**. Covered as section 4 of the check-in specification, alongside rod check-in, rather than as a separate document. Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** FL2 Operator
 **When:** Loading a spool onto the TPO to begin FL2 processing
@@ -696,6 +817,9 @@ Dashboard 2A states for rods.
 ---
 
 ## Dashboard 6 — SPC Checkpoint Entry
+> **Scope: MVP-1.**
+
+> **Owning specification: [SPCCheckpoint.md](../MVP-1/RequirementDocuments/SPCCheckpoint.md)**. **This is no longer a screen** — it is a dialog over the run being measured. The owning document also flags that the "Post DB1" option offered on screen is not one of the five recorded checkpoint types (OI-10). Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** FL1 / FL2 Operator
 **When:** Pre-run, after any die change, or manual spot check
@@ -745,6 +869,12 @@ Dashboard 2A states for rods.
 ---
 
 ## Dashboard 7 — Output Coil Completion & Label
+> **Scope: MVP-1.** Returned to MVP-1 on 11 Aug 2026 with Phase 9, together with **DB7B (Packing Station)**.
+> **DB7B has no section in this document and never had one** — that is why it reached 11 Aug 2026 with no owning
+> specification at all. It is now owned by [`OutputCoilCompletion.md` §8](../MVP-1/RequirementDocuments/OutputCoilCompletion.md);
+> its wireframe is the mockup `MVP-1/Mockups/dashboard_7b_packing_station.html`.
+
+> **Owning specification: [OutputCoilCompletion.md](../MVP-1/RequirementDocuments/OutputCoilCompletion.md)** (consolidated out of this file 11 Aug 2026, together with the source-traceability block from `Spool.md`). Reproduced below as the design record only. The owning document additionally raises four open items this section does not: the alloy density factor, the lot number rule for a multi-rod coil, whether gross weight is scale-entered or calculated, and the disposition of an odd final coil.
 
 **Who:** FL2 Operator
 **When:** When a coreless oscillated coil is complete on TKUP-2
@@ -797,13 +927,16 @@ Dashboard 2A states for rods.
 | Source Rod Alphas | All R-series alphas in traceability chain |
 
 ### Skid Completion Rules
-- Each skid holds exactly **2 coreless coils** (consistent with transformer line).
+- Each skid holds exactly **2 coreless coils**.
 - First coil: skid opened, coil alpha linked to skid.
 - Second coil: skid closed, skid label printed, skid moved to packing queue.
 
 ---
 
 ## Dashboard 8 — WIP Rejection Screen
+> **Scope: MVP-1.**
+
+> **Owning specification: [WipRejection.md](../MVP-1/RequirementDocuments/WipRejection.md)** (consolidated out of this file 11 Aug 2026). **This is no longer a screen** — it became a dialog on 1 Aug 2026 precisely because it is reached from five different places and a page could describe only one of them. The single hard-coded material banner below is the symptom that forced the change. The owning document also carries the blocked-bay release rule (Q23), which this section predates.
 
 **Who:** Any operator (FL1, FL2, or supervisor)
 **When:** Material fails visual inspection, SPC, or any in-process quality check
@@ -858,6 +991,9 @@ Dashboard 2A states for rods.
 ---
 
 ## Dashboard 9 — Pass Schedule Management
+> **⚠ MVP-2 — deferred screen.** Not part of MVP-1 or of MVP-1 planning. Mockup in [`../MVP-2/Mockups/`](../MVP-2/Mockups/), owning specification in [`../MVP-2/RequirementDocuments/`](../MVP-2/RequirementDocuments/). Retained here as the UX record.
+
+> **Owning specification: [PassScheduleManagement.md](../MVP-2/RequirementDocuments/PassScheduleManagement.md)**. The *Generate from Specs* algorithm reproduced in this section is **superseded**: the engineering basis is [PassScheduleGenerationSpec.md](../MVP-2/RequirementDocuments/PassScheduleGenerationSpec.md) v1.5, which now wins on physics and arithmetic both. Do not implement the generator from this section. Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** Operations Manager / Maintenance (not floor operators)
 **When:** Before a new product campaign; when die or roll parameters change
@@ -1008,17 +1144,14 @@ STEP 7 — FM2 roll gaps (if active)
   FM2 S3 (6") gap = target_gauge × springback_factor
 ```
 
-#### Alloy Lookup Table (required in database)
+#### Alloy Lookup Table — moved out of this section
 
-| Alloy | Max reduction / pass | Spring-back factor | Gauge tol. default | Width tol. default | Speed range (FPM) |
-|-------|---------------------|-------------------|--------------------|--------------------|--------------------|
-| 1100  | 26% | 0.98 | ± 0.003" | ± 0.010" | 800 – 2,000 |
-| 1350  | 22% | 0.97 | ± 0.002" | ± 0.008" | 600 – 1,600 |
-| 3003  | 24% | 0.98 | ± 0.004" | ± 0.012" | 700 – 1,800 |
-| 5052  | 20% | 0.97 | ± 0.003" | ± 0.010" | 500 – 1,400 |
-| 6061  | 18% | 0.96 | ± 0.003" | ± 0.010" | 400 – 1,200 |
-
-> These values must be confirmed and maintained by Process Engineering (Tim O.). They are editable via an admin table — not hardcoded.
+> **The alloy lookup table is MVP-1 reference data and no longer lives here.** It was inside this MVP-2
+> screen section until 11 Aug 2026, while being cited as MVP-1 reference data by the master specification
+> and by `phase-13`, whose alloy-lookup admin is the **non-deferrable** half of that phase. It is now
+> **[§ Alloy Reference Data](#alloy-reference-data)**, a top-level section of this document.
+>
+> The generator reads it; it does not own it.
 
 #### Calculation Summary Chips (displayed in modal right panel)
 
@@ -1106,12 +1239,15 @@ Every parameter change after a schedule is active must record:
 ---
 
 ## Dashboard 9A — Pass Schedule List ("All Schedules")
+> **⚠ MVP-2 — deferred screen.** Not part of MVP-1 or of MVP-1 planning. Mockup in [`../MVP-2/Mockups/`](../MVP-2/Mockups/), owning specification in [`../MVP-2/RequirementDocuments/`](../MVP-2/RequirementDocuments/). Retained here as the UX record.
+
+> **Owning specification: [PassScheduleManagement.md](../MVP-2/RequirementDocuments/PassScheduleManagement.md)**. Covered by the same owning document as Dashboard 9. Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** Operations Manager / Maintenance
 **When:** Browsing the full pass schedule library; selecting a schedule to view or edit; starting a new schedule
 **Purpose:** Index and search view for all pass schedule records; entry point for both manual creation and Generate from Specs
 **Navigated from:** Dashboard 9 "← All schedules" back button; direct navigation link
-**Mockup:** [dashboard_9a_schedule_list.html](../Mockups/dashboard_9a_schedule_list.html)
+**Mockup:** [dashboard_9a_schedule_list.html](../MVP-2/Mockups/dashboard_9a_schedule_list.html)
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
@@ -1234,6 +1370,9 @@ The stats strip shows "0 total · 0 Active · 0 Draft · 0 Inactive" and remains
 ---
 
 ## Dashboard 10 — Supervisor Shift Summary
+> **⚠ MVP-2 — deferred screen.** Not part of MVP-1 or of MVP-1 planning. Mockup in [`../MVP-2/Mockups/`](../MVP-2/Mockups/), owning specification in [`../MVP-2/RequirementDocuments/`](../MVP-2/RequirementDocuments/). Retained here as the UX record.
+
+> **Owning specification: [ShiftSummary.md](../MVP-2/RequirementDocuments/ShiftSummary.md)** (consolidated out of this file 11 Aug 2026). Reproduced below as the design record only. The owning document raises **OI-46** — shift start and end times, shift names, the weekend and holiday pattern, and how a run crossing a boundary is attributed are all undefined, which blocks every figure on the screen.
 
 **Who:** Supervisor / Shift Manager
 **When:** End of shift or on-demand during shift
@@ -1299,6 +1438,11 @@ The machine tab selector (FL1 / FL2 / FL3 / All Lines) controls which machine's 
 ---
 
 ## Dashboard 11 — Roll Adjust
+> **Scope: MVP-1.**
+
+> **Owning specification: [RollAdjust.md](../MVP-1/RequirementDocuments/RollAdjust.md)** (consolidated out of this file 11 Aug 2026). **This is no longer a screen** — it is a dialog over the paused run.
+>
+> **Two defects in this section were corrected in the owning document rather than carried across.** First, the *"Who"* line below says **FL1 / FL2 Operator**, the Dashboard Inventory says **FL3 Operator**, and the DB3 quick-action table says **FL3 only** — three statements, three answers, and **all three are wrong or incomplete**. `FR-107`–`FR-109` and all three active-run mockups agree: **Roll Adjust is on FL2 and FL3, and not on FL1.** Second, the wireframe's roll-gap table is **internally inconsistent**: the 4 Aug 2026 three-stand correction left five rows for three stands, with `S1` and `S2` each appearing twice and one row labelled *"S2 (final)"* when **S3** is the final stand. The owning document renders it as three position-identified rows — S1 (8″), S2 (6″), S3 (6″, never bypassed).
 
 **Who:** FL1 / FL2 Operator
 **When:** During an active run when measured gauge or width drifts out of the pass schedule tolerance
@@ -1448,11 +1592,14 @@ Shows the last 3 roll adjustments against the active pass schedule (across all r
 ---
 
 ## Dashboard 12 — Rod Checkout
+> **Scope: MVP-1.**
+
+> **Owning specification: [RodCheckout.md](../MVP-1/RequirementDocuments/RodCheckout.md)**. **This is no longer a screen** — it is a dialog. The owning document defines three modes (A pre-run, B mid-run, P pre-check-out) and records that rod checkout is a *resume outcome* rather than a pause reason (OI-14). Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** FL1 Operator
 **When:** A rod must be removed from a payoff position before the run completes naturally
 **Purpose:** Formally close out a checked-in rod without a weld event, run completion, or WIP rejection; preserve traceability and reset the payoff position
-**Full analysis:** [RodCheckout.md](../LatestDocument/RequirementDocuments/RodCheckout.md)
+**Full analysis:** [RodCheckout.md](../MVP-1/RequirementDocuments/RodCheckout.md)
 
 Two modes exist depending on whether footage has been produced:
 
@@ -1558,11 +1705,21 @@ Accessible only from the Pause Run dialog (Dashboard 3 → Pause Run → fourth 
 
 ### Open Questions
 
-See [RodCheckout.md](../LatestDocument/RequirementDocuments/RodCheckout.md) — Open Questions OQ-A through OQ-D for items that require customer confirmation before implementation.
+See [RodCheckout.md](../MVP-1/RequirementDocuments/RodCheckout.md) — Open Questions OQ-A through OQ-D for items that require customer confirmation before implementation.
 
 ---
 
 ## Screen Navigation Map
+
+> **This map spans both MVP scopes and is deliberately NOT divided.** It is one diagram; halving it would
+> produce two partial maps with dangling edges. The repository has already ruled on this shape — *"One ER
+> diagram covering all 28 tables. **Not divided — a half-ER is worse than none**"*
+> ([`../MVP-2/DBChanges/README.md`](../MVP-2/DBChanges/README.md)).
+>
+> **MVP-2 nodes in the diagram below: `Dashboard 9`, `Dashboard 9A`, `Dashboard 10`.** Every other node is
+> MVP-1. Two edges therefore cross the scope boundary and are expected to dangle in an MVP-1-only build —
+> `Dashboard 1 → Dashboard 9A` and the `Dashboard 9A → Dashboard 9` open/row edge.
+
 
 ```
                     ┌─────────────────────────────────┐
@@ -1645,33 +1802,15 @@ Any screen   ─[topbar More Options tile]───────► Dashboard 2A
 
 ## Related Documents
 
+**The requirement documents that own these screens are listed in the Dashboard Inventory above.** This table covers the cross-cutting sources only.
+
 | Document | Purpose |
 |----------|---------|
-| [FlatWirePlan.md](FlatWirePlan.md) | Full implementation plan — scope, milestones, risks |
-| [FlatWireEndToEndProcess.md](FlatWireEndToEndProcess.md) | End-to-end process reference — all stages |
-| [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) | Open questions register — 59 items |
-| Shopfloor Flat Wire SRS.docx | Detailed software requirements specification |
+| [`../MVP-1/RequirementDocuments/`](../MVP-1/RequirementDocuments/) | **The owning requirement documents for every screen in this file** — client-facing, with sign-off sheets |
+| [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) | Open questions register — **99 items** (authoritative for decisions) |
+| [FlatWirePlan.md](FlatWirePlan.md) | Implementation plan — scope, milestones, risks. **Partially superseded**: dead timeline and pre-May-21 equipment |
+| [FlatWireEndToEndProcess.md](FlatWireEndToEndProcess.md) | End-to-end process reference — 11 stages. **Partially superseded**: FM2 description predates the May 21 and Aug 4 corrections |
+| [FlatWireProcessWalkthrough.md](FlatWireProcessWalkthrough.md) | Sequential operator walkthrough, and the `Known Source Conflicts` arbitration table |
+| [`../LatestDocument/FlatWire_MasterSpecification.md`](../LatestDocument/FlatWire_MasterSpecification.md) | Reconciliation authority when two documents disagree (§10), and the `OI-##` register |
+| [`../MVP-1/Mockups/`](../MVP-1/Mockups/) | **The approved visual baseline.** The ASCII wireframes in this file are a design record, not the pixels |
 | Flat Wire Machine - Big Beautiful Diagram.png | Equipment layout schematic |
-
----
-
-## Change Log
-
-| Date | Changed By | Description |
-|------|-----------|-------------|
-| Apr 23, 2026 | Plan team | Initial document created — 10 dashboards defined |
-| Apr 24, 2026 | Plan team | Added Dashboard 11 — Roll Adjust; updated DB3 quick actions table and navigation map |
-| Apr 24, 2026 | Plan team | Added Dashboard 12 — Rod Checkout (pre-run and mid-run modes); updated inventory, navigation map; full analysis in RodCheckout.md |
-| Apr 25, 2026 | Analysis team | Dashboard 9 expanded — added Generate from Specs workflow: two-panel modal wireframe, 5 modal inputs, 7-step algorithm with calculation steps, alloy lookup table (5 alloys), calculation summary chips, warnings/error cases table, Apply & Save lifecycle, Draft status behaviour table, updated Access Control with generate and lookup-table edit roles |
-| Apr 25, 2026 | Analysis team | Dashboard 9A added — Pass Schedule List ("All Schedules"): toolbar wireframe, stats strip, table column definitions (8 columns including in-use chip), filter/sort behaviour, choice popup (manual vs generate), Generate from Specs shortcut, empty state, navigation table; Dashboard Inventory and navigation map updated |
-| Apr 28, 2026 | MOM — Planning & Shopfloor meeting | **Design Principle 8 added:** fully digital traveler — printing disabled for flat wire; coil labels (DB7) unaffected. Open questions register reference updated to 59 items. Shopfloor mockups and UX walkthrough was well received by the business team; clickable demo / staging access requested. |
-| May 21, 2026 | Client feedback | **Edger configuration corrected:** FL1 has no Edger — Edge Set removed from DB2 (FL1 rod check-in), DB3 FL1 (active run monitor), DB9 (pass schedule FL1). FL2 Edgers are at S2 and S3 only (not S1); FM2 now has three 6" stands (S1, S2, S3) — updated in DB5 (FL2 spool check-in), DB9 (pass schedule FL3), and all related component tables. **DB4 Weld Event:** Laser Weld option removed — not viable; Induction Weld only. **DB6 SPC Checkpoint:** "Post DB1" checkpoint type added. **DB7 Output Coil Completion:** Gauge and width display changed from average-measured to target value when in tolerance (no average displayed). **DB9 Pass Schedule:** FL1 schedule wireframe corrected to show FL1-only components (DB1, DB2, FM1); FM2 components now correctly shown only for FL3 hybrid schedules. **DB10 Shift Summary:** Broken into per-machine pages (FL1, FL2, FL3); KPI strip (footage & lbs) now reflects the selected machine. |
-| Jul 29, 2026 | Analysis team | **Dashboard 2A added — Rod Pre-Check-in Station (FL1/FL3):** bay-state table (NOT STAGED / PRE-CHECKED-IN / ACTIVE / BLOCKED), three-step pre-check-in wizard with the `PRC008` carry-forward gate, Queue panel implementing `TRV004`/`TRV009`, Mark-as-Welded (`WLD010`), pre-check-out (`ModeP`), field definitions and access control. Traces to SRS §4.2 `PCI001`–`PCI008` — requirements that existed only inside the consolidated SRS `.docx` and had no screen, data model, API or phase owner. Dashboard Inventory and Screen Navigation Map updated. Full analysis in [RodPreCheckin.md](../LatestDocument/RequirementDocuments/RodPreCheckin.md). |
-| Jul 29, 2026 | Analysis team | **Dashboard 2A layout corrected.** Bay cards were clipped by a fixed-height row and their action buttons spilled into the weld-readiness strip; the modal bodies pushed their own footer buttons outside the shell, making them unreachable at shorter viewports. Fixed by auto-sizing the bay row, giving the queue internal scrolling, and adding the required flex `min-height: 0`. Bay facts consolidated to one row and bay alerts shortened to one line (the weld strip already carried the longer wording), which brings the design height to exactly **1024px** — so the shopfloor panel renders at 1:1. |
-| Jul 29, 2026 | Client requirement | **Dashboard 2A queue reworked for free processing order + order context.** Planned rod sequence is **not enforced** — the operator may stage in any order; validation is current-order membership and availability only. `Seq` split into **Plan** (planning's intended order) and **Run** (actual staging order, blank until processed) with a neutral `⇅` deviation marker — never a warning, since out-of-order is an allowed choice. Added an **order context header** (line · order no · material spec · `n staged / n available / n on order`); progress counts are required because free ordering removes the implicit "what's left" cue a fixed sequence gave. **Alloy and Temper columns removed** — identical on every row of an order, now stated once in that header; Diameter stays per row per `TRV004`. **Location column removed** — not a `TRV004` field, dependent on the open Q19, and "bay" already means *payoff position* on this screen. |
-| Jul 29, 2026 | Analysis team | **Dashboard 2A cold start + bay symmetry.** Payoff 1 was modelled as an always-`ACTIVE` backdrop, so an empty Payoff 1 (cold start, post-checkout, between orders) crashed the first render and left the screen showing a phantom rod with a live weight, and no queue. Both bays now use one state machine and one renderer: all four states apply to either payoff, the wizard disables a bay for being *occupied* rather than for being bay 1, Payoff 2 can be the running bay after a transition, and weld readiness plus Mark-as-welded handle the no-material case. Empty bays state both cold-start routes — stage here, or go straight to rod check-in. |
-| Jul 30, 2026 | Client direction | **Dashboard 2A — planned sequence gated by supervisor authorisation.** Staging a rod other than the one planning expects next now notifies the operator and requires a supervisor override (reason + badge/ID + PIN), rather than proceeding silently. Never a refusal, and later-planned rods stay listed and stageable. Queue `Plan` column gained a green `▸` on the expected rod; `⇅` on `Run` now names the authorising supervisor. Supersedes the free-processing-order behaviour recorded the previous day. |
-| Aug 1, 2026 | Client sync (30 Jul call) | **Dashboard 2A — off-schedule becomes an automatic station switch; three other rules change.** A rod whose order is booked on the other rod line is no longer notified-and-authorised: **the screen switches to the correct station** and continues, with no message and no override, at both pre-check-in and check-in (**Q74**, reversing the Jul 29 design; the `OffSchedule*` columns are dropped). The FL1/FL3 toggle therefore stops being an operator-only control that merely relabels the chrome — it must **reload the bays and the queue**, and what happens to a part-completed wizard needs specifying (**Q76**/**Q73**, **F13**). Bay states gained a **welded** row: a welded rod may be un-staged **behind a supervisor override** with a documented reason, going to `HOLD` as a rejection (**Q68**/**Q77**, restoring the control removed on Jul 31); `PRE-CHECKED-IN` no longer implies `INFLAT`, which is now set at check-in (**Q67**); and `BLOCKED` gained its exit — the WIP rejection captures the reason, puts the rod on `HOLD` and releases the bay (**Q72** item 3). Wizard step 1 now validates diameter against a **min/max** tolerance, one of **four** pairs (gauge, width, diameter, ovality) whose values are owed by e-mail, so the alloy map stays mock (**Q71**). Not yet applied here: the order-membership rule is knowingly wrong for a **multi-order rod** (**Q69**/**G22**), pending the sequencing answer (**Q79**). |
-| Aug 1, 2026 | Analysis team | **Dashboard 2A — weld-readiness strip removed; every control moves onto the bay it acts on.** The 96px strip between the bays and the queue is **gone**. Its narrative was already duplicated by the cards (weight/percentage on the payoff bar, the four weld states in the bay alert, cold start in the empty-bay text); the one sentence no card carried — *induction-weld tail to head* — became the staged card's alert whenever a rod is running. **Mark as welded** moved to the **staged** card (it *is* the incoming rod — `PCI008` defaulting) with all five disabled-tooltips intact; **Welds this run · N** moved to the **active** card (the run *is* the active bay), which means it is now **absent at cold start rather than disabled** — this supersedes **TC-068e**. **Open active run** was removed from the active card: the run monitor is reachable from the app bar and Line Status, and this station's job is staging the *next* rod. The reclaimed 96px + 12px gap went to the queue, which is **~108px taller (about four more rows)**; the screen is now **three body regions, not four**, and still measures exactly 1024px. Button rules formalised: **at most one primary per card** (the active card deliberately has none), a leading icon for actions and a trailing chevron for the two navigations, never both. Queue head gained a standing **"Rods In Queue"** title — it had been an unlabelled empty row since the order-context line and scan box were removed. **Dashboard 2:** *Acknowledge & Begin Check-in* now returns to **Dashboard 2A**, not Dashboard 3, closing the stage → check-in → stage-next loop. Verified in headless Chrome across six viewport heights and all six station states: 1024px exactly, no overflow, no console errors, and the payoff-transition rule (**TC-068**) confirmed live with Payoff 2 running and Payoff 1 staged. |
-| Aug 2, 2026 | Analysis team | **New — Dashboard 5A, the FL2 Spool Queue.** FL2 had no view of its own waiting material: FL1 operators have Dashboard 2A's staging queue, and FL2 has no equivalent because `PCI002` excludes it from staging. Separately, `FR-090` has the operator *scan the FL1-printed label* while **Q57** records the client saying they *"select it by spool number"* — both stand, and only the scan had a screen. And "the spool queue", the phrase `FR-326`, `TC-389`, `RodCheckout.md` and phase 7 all use for where an accepted partial spool goes, had **no table, endpoint, screen or status of that name anywhere**. DB5A is all three. **Two modes over one table:** on opening it lists every spool available for processing irrespective of order; entering a spool number resolves that spool's order **server-side in a single call** and narrows the list to that order's spools, marking the scanned one. The **column set never changes between modes**, and a failed scan **leaves the list unchanged** — losing your place to a mistyped digit is the worst thing a screen like this can do. An **unallocated spool is a valid single-row result, not an error** (planning remainders and supervisor-accepted partials legitimately have no order). Deliberately absent: spool age (`Spool` has no creation timestamp, so it is not queryable), location (`Spool.Location` has no writer), and filter/sort furniture. Read-only — it writes nothing. Reached from DB1's nav strip, More Options, the shift-summary spool tile (whose arrow had gone nowhere since it was drawn) and DB5. Backed by a **new** `GET /spools[?spoolAlpha=]`; before it, `POST /checkin/spool` was the only spool endpoint in the contract, so even DB5's scan validated against nothing. Verified in headless Chrome at five viewport sizes: exactly 1024px, scale 1:1 on the panel, no overflow, no console errors, 44 assertions. **Blocked on OQ-57** (what "available" means), **OI-06** (two unmapped status vocabularies), **OQ-15/OI-02** (identifier and format), and — critically — confirmation that **`Spool.OrderNo` is populated from planning**, without which nothing can be resolved. |
-| Aug 4, 2026 | Client direction | **FM2 roller sizes corrected — three stands, `S1` 8″, `S2` 6″, `S3` 6″.** Every FM2 component table, roll-adjust panel and generator formula in this document listed **four** FM2 rows: a separate `8" Roller` above `6" Roller S1 / S2 / S3`. That came from this document's own May 21 2026 change-log entry — *"FM2 now has three 6" stands (S1, S2, S3)"* — which was a **misreading** of the client note. **The 8″ roller is S1**, and there is no fourth stand. Corrected here: DB5's pass-schedule table, the FL2/FL3 component strips, the DB1 line-status component list, the DB11 roll-adjust panel and its override history, and the DB9 generator pseudocode (`FM2 S1 gap = gauge × 1.06`, `S2 = × 1.02`, `S3 = × springback` — the multipliers are unchanged; they move from diameter labels to positions, which fixes the earlier state where three formulas covered four stands and the final stand had none). The mandatory stand is stated as **`S3`**, closing **OI-04** — its two "rival" names, `FM2_6inS2` and `6" S3`, were the same physical stand. Edger placement (S2 and S3) and the stand count are unchanged from May 21. Authoritative source remains [`00-foundations.md`](../DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.3; decision **D-26**. |

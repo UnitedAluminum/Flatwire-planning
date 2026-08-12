@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>WIP rejection · FL1 · R00042</title>
+<link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
+<!--
+  ============================================================================
+  WIP REJECTION IS A DIALOG, NOT A SCREEN (converted 1 Aug 2026)
+  ============================================================================
+  The screen this file used to hold now lives in wip_rejection.js and opens as a
+  popup over whatever the operator is already looking at — the active-run monitor,
+  the pre-check-in station, the SPC checkpoint, or the resume dialog.
+
+  It was moved because rejection is reached from five different places and the
+  page could only ever describe one of them: its material banner was hard-coded to
+  "R00042 at 8,220 ft", and the pre-check-in entry path (Q23, client 30 Jul 2026)
+  could not be represented at all. A dialog receives its context from the caller.
+
+  This file is kept as a LAUNCHER so that the ~20 references to the filename across
+  the master specification, the SRS, the phase plans and the More Options tile keep
+  resolving, and so a reviewer can still open the screen on its own. It opens the
+  dialog immediately, in the mid-run case, over a neutral backdrop.
+
+  To see the other entry paths, open the screens that raise them:
+    · mid-run              dashboard_3_active_run.html      → WIP Reject
+    · failed staging       dashboard_2a_rod_precheckin.html → a blocked bay
+    · out-of-spec SPC      dashboard_6_spc_checkpoint.html → Submit · suspend material
+    · during a pause       dashboard_3_active_run.html      → Pause → Resume → "No"
+  ============================================================================
+-->
+<style>
+  .dashboard { min-height: 1024px; justify-content: center; align-items: center; }
+  .launcher {
+    max-width: 640px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 34px 40px;
+  }
+  .launcher-icon {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: var(--color-background-danger);
+    color: var(--color-red);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .launcher-icon svg { width: 30px; height: 30px; }
+  .launcher h1 { margin: 0; font-size: 22px; font-weight: 500; }
+  .launcher p { margin: 0; font-size: 14px; color: var(--color-text-secondary); line-height: 1.5; }
+  .launcher-btn {
+    height: 48px; padding: 0 26px;
+    font-size: 14px; font-weight: 500; font-family: var(--font-sans);
+    border: 1px solid var(--color-red);
+    background: var(--color-red);
+    color: #fff;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .launcher-btn:hover { background: #bc4921; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+  <div class="launcher panel">
+    <span class="launcher-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </span>
+    <h1>Log rejection</h1>
+    <p>
+      This is now a dialog rather than a screen, so it can be raised over the run,
+      the staging station or a failed checkpoint without losing their context.
+      It has opened over this page in the mid-run case.
+    </p>
+    <button class="launcher-btn" type="button" onclick="launch()">Open the rejection dialog</button>
+  </div>
+</div>
+
+<script>
+  function launch() {
+    window.openWipRejection({
+      materialAlpha: "R00042",
+      orderNo: "FW-00421",
+      stage: "FL1 · active run",
+      footagePosition: "8,220 ft",
+      runId: "RUN-0118",
+      operator: "Dave M.",
+      trigger: "mid-run",
+      measurement: {
+        name: "Gauge",
+        measured: '0.118"',
+        targetMin: '0.108"',
+        targetMax: '0.112"',
+        deviation: '+0.006" above max'
+      }
+    });
+  }
+  window.addEventListener("load", launch);
+</script>
+
+<script src="fw-modal.js"></script>
+<script src="wip_rejection.js"></script>
+<script src="flat-wire-topbar.js"></script>
+<script src="flat-wire-fit.js" data-fit="fill"></script>
+</body>
+</html>

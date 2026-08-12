@@ -11,7 +11,7 @@
 >
 > Every FM2 description below is stale in one of two ways — either the pre-May-21 **two** 6″ stand form (`8" → 6"S1 → 6"S2`, S2 final), or the four-component form that read the May 21 note as a separate 8″ roller feeding three 6″ stands. **The 8″ roller *is* S1**, and there is no fourth stand. Component identifiers are now position-only — `FM2_S1` / `FM2_S2` / `FM2_S3` — with roll diameter held as data in `Stand.RollDiameterIn`.
 >
-> **Authoritative source: [`00-foundations.md`](../DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.3**, decision **D-26** in [`FlatWire_MasterSpecification.md`](../LatestDocument/FlatWire_MasterSpecification.md) §10.2. Do not implement FM2 from this file.
+> **Authoritative source: [`00-foundations.md`](../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.3**, decision **D-26** in [`FlatWire_MasterSpecification.md`](../LatestDocument/FlatWire_MasterSpecification.md) §10.2. Do not implement FM2 from this file.
 
 ---
 
@@ -25,7 +25,7 @@ The flat wire manufacturing process converts aluminum rod into coreless oscillat
 | **FL2 Standalone** | FL2 only | Pre-flattened spool in → 3-stand finishing mill → coreless coil out |
 | **FL3 Hybrid** | FL1 + FL2 continuous | Rod in → both mills without stopping → coreless coil out; no intermediate anneal |
 
-**Final product:** Coreless oscillated coils, 2 per skid — consistent with transformer line packaging.
+**Final product:** Coreless oscillated coils, **2 per skid**.
 
 ---
 
@@ -508,19 +508,10 @@ Scrap can arise at any stage. Disposition depends on the scrap type and source.
 | Document | Purpose |
 |----------|---------|
 | [FlatWirePlan.md](FlatWirePlan.md) | Full implementation plan — scope, milestones, risks |
-| [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) | Open questions register — 59 items (Q32 decided; see register for full status) |
+| [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) | Open questions register — open items only; the answered questions are in [FlatWireDecidedQuestions.md](FlatWireDecidedQuestions.md) |
 | Shopfloor Flat Wire SRS.docx | Detailed software requirements for shopfloor screens |
 | Flat Wire Coil Receiving.docx | Rod receiving SRS — screen logic and validations |
 | Flat Wire Machine - Web Changes 04132026.docx | .NET web application change specifications |
 | Scheduling System Wire Flattening Process 04132026.docx | Database schema changes |
 | Planning System Changes 04172026.docx | Planning screen modifications |
 | Flat Wire Machine - Big Beautiful Diagram.png | Equipment layout schematic |
-
----
-
-## Change Log
-
-| Date | Changed By | Description |
-|------|-----------|-------------|
-| Apr 23, 2026 | Plan team | Initial document created from source SRS, meeting notes, and process diagrams |
-| Apr 28, 2026 | MOM — Planning & Shopfloor meeting | **Stage 2 updated:** alpha generation at planning time (not execution); stop calculation system-driven; planner inputs weight only; three allocation scenarios confirmed; "assign as-is" stock option added; pattern picture replaced with tabular grid. Open questions reference updated to 59 items. |

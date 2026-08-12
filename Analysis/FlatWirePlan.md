@@ -11,7 +11,7 @@
 >
 > Every FM2 description below is stale in one of two ways — either the pre-May-21 **two** 6″ stand form (`8" → 6"S1 → 6"S2`, S2 final), or the four-component form that read the May 21 note as a separate 8″ roller feeding three 6″ stands. **The 8″ roller *is* S1**, and there is no fourth stand. Component identifiers are now position-only — `FM2_S1` / `FM2_S2` / `FM2_S3` — with roll diameter held as data in `Stand.RollDiameterIn`.
 >
-> **Authoritative source: [`00-foundations.md`](../DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.3**, decision **D-26** in [`FlatWire_MasterSpecification.md`](../LatestDocument/FlatWire_MasterSpecification.md) §10.2. Do not implement FM2 from this file.
+> **Authoritative source: [`00-foundations.md`](../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.3**, decision **D-26** in [`FlatWire_MasterSpecification.md`](../LatestDocument/FlatWire_MasterSpecification.md) §10.2. Do not implement FM2 from this file.
 
 ---
 
@@ -113,7 +113,7 @@ Process example: Rod → Round Wire → 1st Flat → (Optional Anneal) → Subse
 ### Final Product
 
 - Output form: **coreless oscillated coils**.
-- Packaging: **2 coils per skid** — consistent with existing transformer line behavior.
+- Packaging: **2 coils per skid** — consistent with UA's existing coil packaging behavior.
 
 ### Welding & Continuous Operation
 
@@ -631,7 +631,7 @@ The following items require a decision or further clarification before implement
 
 15. **FL2 spool traceability identifier:** When flat wire arrives at FL2 on a spool (via TPO), what identifier (alpha, spool number, bundle ID) is used for check-in, and how does it link to the outgoing coreless coil record?
 
-16. **Coreless coil skid labeling:** Final output is 2 coreless oscillated coils per skid (transformer line behavior). Do skid labeling, alpha assignment, and packaging records follow the exact same rules as the transformer line, or are flat wire-specific adjustments required?
+16. **Coreless coil skid labeling:** Final output is 2 coreless oscillated coils per skid. Do skid labeling, alpha assignment, and packaging records follow UA's existing coil packaging rules unchanged, or are flat wire-specific adjustments required?
 
 17. **Rod receiving label format:** Label format for received rod material is listed as TBD. Who defines this, and does it need to support tolling labels?
 
@@ -738,13 +738,3 @@ The following questions are standard for flat wire manufacturing operations and 
 50. ~~**Partial-run material disposition authority**~~ **DECIDED (May 4, 2026):** Supervisor must approve before partial spool alpha is created. Notification-driven remote approval: Accept / Hold / Reject.
 
 > **Note:** The authoritative open questions register is [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) — now contains 59 questions with decisions recorded. The list above is the original planning baseline (items 1–50); items 51–59 and all status updates are tracked in FlatWireOpenQuestions.md.
-
----
-
-## Change Log
-
-| Date | Changed By | Description |
-|------|-----------|-------------|
-| Apr 23, 2026 | Plan team | Initial document created |
-| Apr 28, 2026 | MOM — Planning & Shopfloor meeting | **Section 5 updated:** alpha generation moved to planning time; stop calculation is fully system-driven; pattern replaced with tabular order→spool→weight grid; spool-to-order allocation (3 scenarios) confirmed; "assign as-is" stock checkbox added. **Traveler:** fully digital traveler confirmed — printing disabled for flat wire. **Q32:** maximum finished coil weight decided at 1,000 lb. Open questions register reference updated to FlatWireOpenQuestions.md (59 questions). |
-| May 4, 2026 | Analysis Team — Tim O. review | **Q32 revised** to 1,100 lb (TKUP-2 capacity — revised from 1,000 lb; customer defines limit in orders/quotes). **Q27, 28, 29 Decided:** mid-run alpha handling (5 cases), pass schedule override flow, component failure protocol. **Q33, 39, 40, 41 Decided:** no interleave, camber conditional, burr not measured, system die life tracking. **Q44, 45 Decided:** line speeds TBD by trial; FL1/FL2 independent operation confirmed, 3:1 throughput ratio, FL3 blocks FL1/FL2. **Q48, 50 Decided:** supervisor approval for mid-run checkout and partial-run disposition. **Q30, 47, 49 In Progress.** |

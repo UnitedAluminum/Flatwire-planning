@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>OEE Dashboard · Day · Apr 21, 2026</title>
+<link rel="stylesheet" href="../../MVP-1/Mockups/flat-wire-shopfloor.styles.css">
+<style>
+  body { min-height: 1024px; }
+  .dashboard { height: 1024px; }
+  .mono { font-family: var(--font-mono); }
+
+  /* ── Header ── */
+  .header { height: 72px; padding: 0 24px; }
+  .header h1 { font-size: 21px; }
+  .header-left { gap: 14px; }
+  .shift-selector {
+    display: inline-flex; padding: 3px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md); gap: 2px;
+  }
+  .shift-tab {
+    padding: 6px 14px; border: none; background: transparent;
+    color: var(--color-text-secondary); font-size: 14px; font-weight: 500;
+    border-radius: 6px; cursor: pointer; font-family: var(--font-sans);
+  }
+  .shift-tab.active {
+    background: var(--color-background-primary); color: var(--color-text-primary);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+  .machine-selector {
+    display: inline-flex; align-items: center; gap: 2px;
+    padding: 3px 3px 3px 10px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+  }
+  .machine-selector-label {
+    font-size: 14px; color: var(--color-text-tertiary); font-weight: 500;
+    padding-right: 4px; text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .machine-tab {
+    height: 34px; padding: 0 14px; border: none; background: transparent;
+    color: var(--color-text-secondary); font-size: 14px; font-weight: 500;
+    border-radius: 6px; cursor: pointer; font-family: var(--font-sans);
+    transition: background 0.12s, color 0.12s;
+  }
+  .machine-tab.active {
+    background: var(--color-background-primary); color: var(--color-text-primary);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+  .meta-divider { width: 1px; height: 22px; background: var(--color-border-tertiary); flex-shrink: 0; }
+  .shift-range {
+    font-family: var(--font-mono); font-size: 14px; padding: 6px 12px;
+    background: var(--color-background-secondary); border-radius: var(--border-radius-md);
+    color: var(--color-text-secondary);
+  }
+  .shift-range strong { color: var(--color-text-primary); font-weight: 500; }
+
+  /* ── OEE Strip ── */
+  .oee-strip {
+    display: grid; grid-template-columns: 1fr 1fr 1fr 0.85fr 0.85fr;
+    gap: 12px; height: 116px; flex-shrink: 0;
+  }
+  .oee-tile {
+    display: flex; align-items: center; padding: 0 20px;
+    gap: 16px; cursor: pointer; transition: box-shadow 0.15s;
+  }
+  .oee-tile:hover { box-shadow: 0 0 0 1.5px var(--color-border-secondary); }
+  .oee-tile.selected { box-shadow: 0 0 0 2px var(--color-blue); }
+  .oee-tile-info { flex: 1; min-width: 0; }
+  .oee-machine-label {
+    font-size: 14px; font-weight: 600; color: var(--color-text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;
+  }
+  .oee-pct {
+    font-size: 32px; font-weight: 500; font-family: var(--font-mono);
+    line-height: 1; margin-bottom: 4px;
+  }
+  .oee-pct.amber { color: var(--color-amber); }
+  .oee-pct.red   { color: var(--color-red); }
+  .oee-pct.gray  { color: var(--color-gray); }
+  .oee-apq { font-size: 14px; color: var(--color-text-tertiary); margin-bottom: 6px; }
+  .oee-chip {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border-radius: 4px; font-size: 14px; font-weight: 500;
+  }
+  .oee-chip.chip-amber { background: var(--color-background-warning); color: var(--color-text-warning); }
+  .oee-chip.chip-red   { background: var(--color-background-danger);  color: var(--color-text-danger); }
+  .oee-chip.chip-gray  { background: var(--color-background-tertiary); color: var(--color-text-tertiary); }
+
+  /* ── MTBF / MTTR tiles ── */
+  .mtbf-tile {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 14px 18px; gap: 3px;
+  }
+  .mtbf-label {
+    font-size: 14px; font-weight: 600; color: var(--color-text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .mtbf-period { font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .mtbf-val {
+    font-size: 28px; font-weight: 500; font-family: var(--font-mono);
+    color: var(--color-text-primary); line-height: 1; margin: 2px 0;
+  }
+  .mtbf-unit { font-size: 14px; color: var(--color-text-secondary); font-family: var(--font-sans); font-weight: 400; }
+  .mtbf-sub  { font-size: 14px; color: var(--color-text-tertiary); margin-top: 2px; }
+  .trend-chip {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border-radius: 4px; font-size: 14px; font-weight: 500;
+  }
+  .trend-chip.chip-green { background: var(--color-background-success); color: var(--color-text-success); }
+  .trend-chip.chip-red   { background: var(--color-background-danger);  color: var(--color-text-danger); }
+  .trend-chip.chip-gray  { background: var(--color-background-tertiary); color: var(--color-text-tertiary); }
+
+  /* ── Availability split bar ── */
+  .avail-split-bar {
+    display: flex; height: 8px; border-radius: 4px; overflow: hidden; gap: 2px;
+  }
+  .split-seg { height: 100%; border-radius: 3px; transition: width 0.4s ease; min-width: 0; }
+  .split-seg.running   { background: var(--color-blue); }
+  .split-seg.planned   { background: var(--color-amber); }
+  .split-seg.unplanned { background: var(--color-red); }
+  .split-legend {
+    display: flex; gap: 12px; font-size: 14px; color: var(--color-text-tertiary); flex-wrap: wrap;
+  }
+  .split-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    margin-right: 3px; vertical-align: middle; flex-shrink: 0;
+  }
+  .split-dot.running   { background: var(--color-blue); }
+  .split-dot.planned   { background: var(--color-amber); }
+  .split-dot.unplanned { background: var(--color-red); }
+
+  /* ── Main Row ── */
+  .main-row {
+    display: grid; grid-template-columns: 1.3fr 1fr 0.9fr;
+    gap: 12px; height: 410px; flex-shrink: 0;
+  }
+
+  /* ── Section shared ── */
+  .section {
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .sec-hdr {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 18px 10px; flex-shrink: 0;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .sec-title { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
+  .sec-sub   { font-size: 14px; color: var(--color-text-tertiary); }
+  .sec-body  { flex: 1; overflow: hidden; padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+
+  /* ── Factor Breakdown panel ── */
+  .factor-block {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .factor-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .factor-name-group { display: flex; align-items: center; gap: 7px; }
+  .factor-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .factor-dot.avail { background: var(--color-blue); }
+  .factor-dot.perf  { background: var(--color-amber); }
+  .factor-dot.qual  { background: var(--color-green); }
+  .factor-label-text {
+    font-size: 14px; font-weight: 600; color: var(--color-text-secondary);
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .factor-desc { font-size: 14px; color: var(--color-text-tertiary); }
+  .factor-pct {
+    font-size: 22px; font-weight: 500; font-family: var(--font-mono);
+  }
+  .factor-pct.blue  { color: var(--color-blue); }
+  .factor-pct.amber { color: var(--color-amber); }
+  .factor-pct.green { color: var(--color-green); }
+  .factor-bar-track {
+    height: 7px; background: var(--color-background-tertiary);
+    border-radius: 4px; overflow: hidden;
+  }
+  .factor-bar-fill {
+    height: 100%; border-radius: 4px; transition: width 0.4s ease;
+  }
+  .factor-bar-fill.avail { background: var(--color-blue); }
+  .factor-bar-fill.perf  { background: var(--color-amber); }
+  .factor-bar-fill.qual  { background: var(--color-green); }
+  .factor-meta {
+    font-size: 14px; color: var(--color-text-tertiary); line-height: 1.4;
+  }
+  .factor-divider {
+    height: 0.5px; background: var(--color-border-tertiary); margin: 4px 0;
+  }
+  .oee-result-row {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 10px 14px; border-radius: var(--border-radius-md);
+    background: var(--color-background-secondary); margin-top: auto; flex-shrink: 0;
+  }
+  .result-label { font-size: 14px; font-weight: 600; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.3px; }
+  .result-formula { font-size: 14px; color: var(--color-text-secondary); font-family: var(--font-mono); }
+  .result-eq { color: var(--color-text-tertiary); font-size: 15px; }
+  .result-val { font-size: 26px; font-weight: 600; font-family: var(--font-mono); }
+  .result-val.amber { color: var(--color-amber); }
+  .result-val.red   { color: var(--color-red); }
+  .result-val.gray  { color: var(--color-gray); }
+  .result-chip {
+    padding: 3px 9px; border-radius: 5px; font-size: 14px; font-weight: 500;
+  }
+  .result-chip.amber { background: var(--color-background-warning); color: var(--color-text-warning); }
+  .result-chip.red   { background: var(--color-background-danger);  color: var(--color-text-danger); }
+  .result-chip.gray  { background: var(--color-background-tertiary); color: var(--color-text-tertiary); }
+
+  /* ── Trend panel ── */
+  .trend-body { flex: 1; overflow: hidden; padding: 10px 14px 14px; }
+  .trend-legend {
+    display: flex; gap: 14px; padding: 0 14px 10px; flex-shrink: 0;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 14px; color: var(--color-text-tertiary); }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* ── Six Big Losses panel ── */
+  .losses-body { flex: 1; overflow: hidden; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .loss-row { display: flex; flex-direction: column; gap: 3px; }
+  .loss-hdr { display: flex; align-items: center; gap: 6px; }
+  .loss-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+  .loss-cat {
+    padding: 1px 6px; border-radius: 3px; font-size: 14px; font-weight: 600; flex-shrink: 0;
+  }
+  .loss-cat.avail { background: var(--color-red-light); color: var(--color-red); }
+  .loss-cat.perf  { background: var(--color-amber-light); color: var(--color-amber); }
+  .loss-cat.qual  { background: var(--color-green-light); color: var(--color-green); }
+  .loss-time { font-size: 14px; font-weight: 600; font-family: var(--font-mono); color: var(--color-text-primary); flex-shrink: 0; }
+  .loss-bar-track { height: 5px; background: var(--color-background-tertiary); border-radius: 3px; overflow: hidden; }
+  .loss-bar-fill  { height: 100%; border-radius: 3px; }
+
+  /* ── Bottom Row ── */
+  .bottom-row {
+    display: grid; grid-template-columns: 1.5fr 1fr;
+    gap: 12px; height: 264px; flex-shrink: 0;
+  }
+
+  /* ── Comparison Table ── */
+  .cmp-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .cmp-table th {
+    text-align: left; padding: 6px 12px; font-size: 14px; font-weight: 600;
+    color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.3px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .cmp-table td { padding: 9px 12px; border-bottom: 0.5px solid var(--color-border-tertiary); vertical-align: middle; }
+  .cmp-table tr:last-child td { border-bottom: none; }
+  .cmp-table tr.row-active td { background: var(--color-background-info); }
+  .cmp-table tr.row-active td:first-child { border-left: 3px solid var(--color-blue); }
+  .cmp-machine { font-weight: 600; font-size: 14px; }
+  .td-mono { font-family: var(--font-mono); font-size: 14px; }
+  .td-oee-amber { font-family: var(--font-mono); font-weight: 600; color: var(--color-amber); }
+  .td-oee-red   { font-family: var(--font-mono); font-weight: 600; color: var(--color-red); }
+  .td-oee-green { font-family: var(--font-mono); font-weight: 600; color: var(--color-green); }
+  .td-oee-gray  { font-family: var(--font-mono); font-weight: 600; color: var(--color-gray); }
+  .td-neg-bad   { font-family: var(--font-mono); font-size: 14px; color: var(--color-red);   font-weight: 500; }
+  .td-neg       { font-family: var(--font-mono); font-size: 14px; color: var(--color-amber); font-weight: 500; }
+  .td-pos       { font-family: var(--font-mono); font-size: 14px; color: var(--color-green); font-weight: 500; }
+  .td-muted     { font-family: var(--font-mono); font-size: 14px; color: var(--color-text-tertiary); }
+  .thresh-row td { border-bottom: none !important; padding: 8px 12px 6px; }
+  .thresh-item  { display: inline-flex; align-items: center; gap: 5px; margin-right: 16px; font-size: 14px; color: var(--color-text-secondary); }
+  .thresh-dot   { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .offline-tag {
+    font-size: 14px; font-weight: 600; padding: 1px 5px; border-radius: 3px;
+    background: var(--color-background-tertiary); color: var(--color-text-tertiary);
+    text-transform: uppercase; vertical-align: middle; margin-left: 4px;
+  }
+
+  /* ── Events panel ── */
+  .event-list { display: flex; flex-direction: column; gap: 0; }
+  .event-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .event-row:last-child { border-bottom: none; }
+  .event-rank { font-size: 14px; font-weight: 700; color: var(--color-text-tertiary); width: 16px; flex-shrink: 0; padding-top: 1px; }
+  .event-info { flex: 1; min-width: 0; }
+  .event-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+  .event-time { font-size: 14px; color: var(--color-text-tertiary); font-family: var(--font-mono); margin-top: 1px; }
+  .event-dur  { font-size: 14px; font-weight: 600; font-family: var(--font-mono); flex-shrink: 0; padding-top: 1px; }
+  .event-cat  { padding: 2px 6px; border-radius: 3px; font-size: 14px; font-weight: 600; flex-shrink: 0; padding-top: 3px; }
+  .ack-chip   { padding: 2px 7px; border-radius: 3px; font-size: 14px; font-weight: 500; font-family: var(--font-mono); flex-shrink: 0; padding-top: 3px; }
+  .ack-chip.ack-ok      { background: var(--color-background-success); color: var(--color-text-success); }
+  .ack-chip.ack-pending { background: var(--color-background-warning); color: var(--color-text-warning); }
+  .loss-footage { font-size: 14px; color: var(--color-text-tertiary); font-family: var(--font-mono); flex-shrink: 0; }
+
+  /* ── Footer ── */
+  .footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 22px; height: 82px; flex-shrink: 0;
+  }
+  .footer-info { display: flex; gap: 20px; align-items: center; font-size: 14px; color: var(--color-text-tertiary); }
+  .footer-info strong { color: var(--color-text-primary); font-weight: 500; }
+  .footer-actions { display: flex; gap: 10px; }
+  .btn {
+    height: 40px; padding: 0 16px; font-size: 14px; font-weight: 500;
+    border-radius: var(--border-radius-md); cursor: pointer; font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary); color: var(--color-text-primary);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn svg { width: 14px; height: 14px; }
+  .btn-primary { background: var(--color-blue); border-color: var(--color-blue); color: #fff; }
+  .btn-primary:hover { background: #13497d; }
+
+  /* ── Offline placeholder ── */
+  .offline-placeholder {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 10px; color: var(--color-text-tertiary);
+    font-size: 14px; text-align: center;
+  }
+  .offline-placeholder svg { opacity: 0.3; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- ══ HEADER (72px) ══ -->
+  <div class="header panel">
+    <div class="header-left">
+      <a class="back-btn" href="../../MVP-1/Mockups/dashboard_1_line_status.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Line Status
+      </a>
+      <h1>OEE Dashboard</h1>
+      <div class="machine-selector" id="machine-group">
+        <span class="machine-selector-label">Detail</span>
+        <button class="machine-tab active" onclick="selectMachine('fl1')">FL1</button>
+        <button class="machine-tab"        onclick="selectMachine('fl2')">FL2</button>
+        <button class="machine-tab"        onclick="selectMachine('fl3')">FL3</button>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="shift-selector">
+        <button class="shift-tab active">Day</button>
+        <button class="shift-tab">Night</button>
+        <button class="shift-tab">Previous</button>
+      </div>
+      <div class="meta-divider"></div>
+      <span class="shift-range"><strong>Apr 21, 2026</strong> &middot; 07:00 &rarr; 15:00</span>
+    </div>
+  </div>
+
+  <!-- ══ OEE STRIP (116px) ══ -->
+  <div class="oee-strip">
+
+    <!-- FL1 tile -->
+    <div class="oee-tile panel selected" id="tile-fl1" onclick="selectMachine('fl1')">
+      <div class="oee-tile-info">
+        <div class="oee-machine-label">FL1</div>
+        <div class="oee-pct amber">82.7%</div>
+        <div class="oee-apq">A&nbsp;95.4%&nbsp;&middot;&nbsp;P&nbsp;88.6%&nbsp;&middot;&nbsp;Q&nbsp;97.8%</div>
+        <div class="oee-chip chip-amber">&#9660;&nbsp;2.3% vs target</div>
+      </div>
+      <!-- Donut: 82.7% amber, dashoffset=30.4 -->
+      <svg viewBox="0 0 72 72" width="68" height="68" style="flex-shrink:0">
+        <circle cx="36" cy="36" r="28" fill="none" stroke="#f0ede5" stroke-width="8"/>
+        <circle cx="36" cy="36" r="28" fill="none" stroke="#EF9F27" stroke-width="8"
+          stroke-dasharray="175.9" stroke-dashoffset="30.4"
+          transform="rotate(-90 36 36)" stroke-linecap="round"/>
+        <text x="36" y="41" text-anchor="middle" font-size="14" font-weight="600"
+          fill="#1a1a19" font-family="-apple-system,sans-serif">82.7</text>
+      </svg>
+    </div>
+
+    <!-- FL2 tile -->
+    <div class="oee-tile panel" id="tile-fl2" onclick="selectMachine('fl2')">
+      <div class="oee-tile-info">
+        <div class="oee-machine-label">FL2</div>
+        <div class="oee-pct red">54.4%</div>
+        <div class="oee-apq">A&nbsp;61.0%&nbsp;&middot;&nbsp;P&nbsp;97.1%&nbsp;&middot;&nbsp;Q&nbsp;91.7%</div>
+        <div class="oee-chip chip-red">&#9660;&nbsp;30.6% vs target</div>
+      </div>
+      <!-- Donut: 54.4% red, dashoffset=80.3 -->
+      <svg viewBox="0 0 72 72" width="68" height="68" style="flex-shrink:0">
+        <circle cx="36" cy="36" r="28" fill="none" stroke="#f0ede5" stroke-width="8"/>
+        <circle cx="36" cy="36" r="28" fill="none" stroke="#D85A30" stroke-width="8"
+          stroke-dasharray="175.9" stroke-dashoffset="80.3"
+          transform="rotate(-90 36 36)" stroke-linecap="round"/>
+        <text x="36" y="41" text-anchor="middle" font-size="14" font-weight="600"
+          fill="#1a1a19" font-family="-apple-system,sans-serif">54.4</text>
+      </svg>
+    </div>
+
+    <!-- FL3 tile -->
+    <div class="oee-tile panel" id="tile-fl3" onclick="selectMachine('fl3')">
+      <div class="oee-tile-info">
+        <div class="oee-machine-label">FL3</div>
+        <div class="oee-pct gray">—</div>
+        <div class="oee-apq">Scheduled offline full shift</div>
+        <div class="oee-chip chip-gray">Offline</div>
+      </div>
+      <!-- Donut: offline gray, no arc -->
+      <svg viewBox="0 0 72 72" width="68" height="68" style="flex-shrink:0">
+        <circle cx="36" cy="36" r="28" fill="none" stroke="#e5e3dc" stroke-width="8"/>
+        <text x="36" y="40" text-anchor="middle" font-size="18" fill="#888780"
+          font-family="-apple-system,sans-serif">—</text>
+      </svg>
+    </div>
+
+    <!-- MTBF tile -->
+    <div class="panel mtbf-tile">
+      <div class="mtbf-label">MTBF <span class="mtbf-period">7-shift avg</span></div>
+      <div class="mtbf-val" id="mtbf-val">6.2 <span class="mtbf-unit">hr</span></div>
+      <div id="mtbf-trend"><span class="trend-chip chip-green">&#8593;&nbsp;0.8 hr vs last</span></div>
+      <div class="mtbf-sub" id="mtbf-sub">0 unplanned stops this shift</div>
+    </div>
+
+    <!-- MTTR tile -->
+    <div class="panel mtbf-tile">
+      <div class="mtbf-label">MTTR <span class="mtbf-period">7-shift avg</span></div>
+      <div class="mtbf-val" id="mttr-val">14 <span class="mtbf-unit">min</span></div>
+      <div id="mttr-trend"><span class="trend-chip chip-green">&#8595;&nbsp;3 min vs last</span></div>
+      <div class="mtbf-sub" id="mttr-sub">No repair events this shift</div>
+    </div>
+
+  </div>
+
+  <!-- ══ MAIN ROW (410px) ══ -->
+  <div class="main-row">
+
+    <!-- LEFT: Factor Breakdown (1.3fr) -->
+    <div class="section panel">
+      <div class="sec-hdr">
+        <span class="sec-title" id="breakdown-title">OEE Breakdown &middot; FL1</span>
+        <span class="sec-sub">Target: 85.0%</span>
+      </div>
+      <div class="sec-body" id="breakdown-content">
+        <!-- FL1 default content injected by JS on load -->
+      </div>
+    </div>
+
+    <!-- CENTER: 7-Shift Trend (1fr) -->
+    <div class="section panel" style="overflow:hidden">
+      <div class="sec-hdr">
+        <span class="sec-title" id="trend-title">7-Shift OEE Trend &middot; FL1</span>
+        <span class="sec-sub" id="trend-sub">Day shifts, last 7</span>
+      </div>
+      <div class="trend-legend">
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--color-amber)"></span>Below target</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--color-green)"></span>At / above target</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--color-blue)"></span>Today</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:var(--color-red)"></span>Critical miss</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#6B3FA0;border-radius:50%"></span>3-shift MA</div>
+      </div>
+      <div class="trend-body" id="trend-content" style="padding:8px 10px 10px">
+        <!-- SVG injected by JS -->
+      </div>
+    </div>
+
+    <!-- RIGHT: Six Big Losses (0.9fr) -->
+    <div class="section panel">
+      <div class="sec-hdr">
+        <span class="sec-title" id="losses-title">Six Big Losses &middot; FL1</span>
+        <span class="sec-sub" id="losses-sub">83 min total</span>
+      </div>
+      <div class="losses-body" id="losses-content">
+        <!-- injected by JS -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ BOTTOM ROW (264px) ══ -->
+  <div class="bottom-row">
+
+    <!-- LEFT: Line Comparison Table (1.5fr) -->
+    <div class="section panel">
+      <div class="sec-hdr">
+        <span class="sec-title">Line Comparison</span>
+        <span class="sec-sub">Day vs Night shift &middot; Apr 21, 2026 &middot; Target OEE 85%</span>
+      </div>
+      <div style="flex:1;overflow:auto;padding:0">
+        <table class="cmp-table">
+          <thead>
+            <tr>
+              <th>Line</th>
+              <th>Availability</th>
+              <th>Performance</th>
+              <th>Quality</th>
+              <th>Day OEE</th>
+              <th>Night OEE</th>
+              <th>vs 85%</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-machine="fl1" class="row-active" id="cmp-fl1">
+              <td><span class="cmp-machine">FL1</span></td>
+              <td class="td-mono">95.4%</td>
+              <td class="td-mono">88.6%</td>
+              <td class="td-mono">97.8%</td>
+              <td class="td-oee-amber">82.7%</td>
+              <td class="td-oee-amber">78.1%</td>
+              <td class="td-neg">&#9660;&nbsp;2.3%</td>
+            </tr>
+            <tr data-machine="fl2" id="cmp-fl2">
+              <td><span class="cmp-machine">FL2</span></td>
+              <td class="td-mono">61.0%</td>
+              <td class="td-mono">97.1%</td>
+              <td class="td-mono">91.7%</td>
+              <td class="td-oee-red">54.4%</td>
+              <td class="td-oee-green">86.7%</td>
+              <td class="td-neg-bad">&#9660;&nbsp;30.6%</td>
+            </tr>
+            <tr data-machine="fl3" id="cmp-fl3">
+              <td><span class="cmp-machine">FL3</span><span class="offline-tag">Offline</span></td>
+              <td class="td-muted">—</td>
+              <td class="td-muted">—</td>
+              <td class="td-muted">—</td>
+              <td class="td-oee-gray">—</td>
+              <td class="td-oee-gray">—</td>
+              <td class="td-muted">—</td>
+            </tr>
+            <tr class="thresh-row">
+              <td colspan="7">
+                <span class="thresh-item"><span class="thresh-dot" style="background:var(--color-green)"></span>&#8805;85% On target</span>
+                <span class="thresh-item"><span class="thresh-dot" style="background:var(--color-amber)"></span>70–84% Needs improvement</span>
+                <span class="thresh-item"><span class="thresh-dot" style="background:var(--color-red)"></span>&lt;70% Critical</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIGHT: Top Loss Events (1fr) -->
+    <div class="section panel">
+      <div class="sec-hdr">
+        <span class="sec-title" id="events-title">Top Loss Events &middot; FL1</span>
+        <span class="sec-sub" id="events-sub">Ranked by duration</span>
+      </div>
+      <div class="sec-body" style="padding:8px 14px;gap:0" id="events-content">
+        <!-- injected by JS -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ FOOTER (82px) ══ -->
+  <div class="footer panel">
+    <div class="footer-info">
+      <span>Target OEE <strong>85.0%</strong></span>
+      <span>Shift <strong>Day &middot; 07:00–15:00</strong></span>
+      <span>Updated <strong id="footer-time">07:42 AM</strong></span>
+      <span>Data source <strong>OPC + Planning DB</strong></span>
+    </div>
+    <div class="footer-actions">
+      <button class="btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export PDF
+      </button>
+      <button class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print Report
+      </button>
+    </div>
+  </div>
+
+</div><!-- /.dashboard -->
+
+<script>
+(function () {
+
+  /* ── Clock ── */
+  (function tick() {
+    var now = new Date();
+    var h = now.getHours(), m = now.getMinutes();
+    var ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    var str = h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+    var el = document.getElementById('clock');
+    if (el) el.textContent = str;
+    var ft = document.getElementById('footer-time');
+    if (ft) ft.textContent = str;
+    setTimeout(tick, 30000);
+  })();
+
+  /* ── SVG Trend helpers ── */
+  function trendSVG(bars, yMin, yMax, target) {
+    var W = 380, H = 230;
+    var xL = 45, xR = 375, yT = 15, yB = 200;
+    var chartW = xR - xL, chartH = yB - yT;
+    var range = yMax - yMin;
+    var scale = chartH / range;
+    function fy(p) { return yB - (p - yMin) * scale; }
+
+    var n = bars.length;
+    var bw = 36, gap = 9;
+    var totalW = n * bw + (n - 1) * gap;
+    var startX = xL + (chartW - totalW) / 2;
+
+    var labels = ['Apr 15','Apr 16','Apr 17','Apr 18','Apr 19','Apr 20','Today'];
+
+    var out = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="100%" style="display:block;overflow:visible">';
+
+    /* grid lines */
+    var gridPcts = [];
+    for (var g = Math.ceil(yMin / 5) * 5; g <= yMax; g += 5) { gridPcts.push(g); }
+    gridPcts.forEach(function(p) {
+      var y = fy(p).toFixed(1);
+      out += '<line x1="' + xL + '" y1="' + y + '" x2="' + xR + '" y2="' + y +
+             '" stroke="#e8e6de" stroke-width="1" stroke-dasharray="3,3"/>';
+    });
+
+    /* target line */
+    var ty = fy(target).toFixed(1);
+    out += '<line x1="' + xL + '" y1="' + ty + '" x2="' + xR + '" y2="' + ty +
+           '" stroke="#1D9E75" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.8"/>';
+    out += '<text x="' + (xR + 4) + '" y="' + (parseFloat(ty) + 3) + '" font-size="14" fill="#1D9E75" font-family="-apple-system,sans-serif">' + target + '%</text>';
+
+    /* bars */
+    bars.forEach(function(b, i) {
+      var x = startX + i * (bw + gap);
+      var y = fy(b.val);
+      var barH = yB - y;
+      if (barH < 2) barH = 2;
+      out += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw + '" height="' + barH.toFixed(1) + '" fill="' + b.color + '" rx="3"/>';
+      /* value label */
+      if (b.val > 0) {
+        out += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (y - 3).toFixed(1) + '" text-anchor="middle" font-size="14" fill="' + b.color + '" font-weight="600" font-family="-apple-system,sans-serif">' + b.val + '</text>';
+      }
+    });
+
+    /* 3-shift moving average */
+    var maCoords = [];
+    for (var mi = 0; mi < bars.length; mi++) {
+      if (mi < 2) continue;
+      var w = [bars[mi-2].val, bars[mi-1].val, bars[mi].val].filter(function(v){return v > 0;});
+      if (w.length < 3) continue;
+      var avg = w.reduce(function(a,b){return a+b;},0) / w.length;
+      maCoords.push({x: startX + mi*(bw+gap) + bw/2, y: fy(avg)});
+    }
+    if (maCoords.length >= 2) {
+      var pts = maCoords.map(function(p){return p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' ');
+      out += '<polyline points="'+pts+'" fill="none" stroke="#6B3FA0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>';
+      maCoords.forEach(function(p){
+        out += '<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="3.5" fill="#6B3FA0" stroke="white" stroke-width="1.5"/>';
+      });
+    }
+
+    /* axes */
+    out += '<line x1="' + xL + '" y1="' + yT + '" x2="' + xL + '" y2="' + yB + '" stroke="#ccc" stroke-width="1"/>';
+    out += '<line x1="' + xL + '" y1="' + yB + '" x2="' + xR + '" y2="' + yB + '" stroke="#ccc" stroke-width="1"/>';
+
+    /* y-axis labels */
+    gridPcts.forEach(function(p) {
+      if (p % 10 === 0 || p === target) {
+        var y = (fy(p) + 4).toFixed(1);
+        var lbl = p === target ? p + '%' : p + '%';
+        out += '<text x="' + (xL - 4) + '" y="' + y + '" text-anchor="end" font-size="14" fill="#888780" font-family="-apple-system,sans-serif">' + lbl + '</text>';
+      }
+    });
+
+    /* x-axis labels */
+    bars.forEach(function(b, i) {
+      var cx = (startX + i * (bw + gap) + bw / 2).toFixed(1);
+      out += '<text x="' + cx + '" y="' + (yB + 14) + '" text-anchor="middle" font-size="14" fill="#888780" font-family="-apple-system,sans-serif">' + labels[i] + '</text>';
+    });
+
+    out += '</svg>';
+    return out;
+  }
+
+  var AMB = '#EF9F27', GRN = '#1D9E75', BLU = '#185FA5', RED = '#D85A30';
+
+  /* ── Machine data ── */
+  var MACHINE = {
+
+    fl1: {
+      breakdownTitle: 'OEE Breakdown &middot; FL1',
+      trendTitle: '7-Shift OEE Trend &middot; FL1',
+      lossesTitle: 'Six Big Losses &middot; FL1',
+      lossesSub: '83 min total',
+      eventsTitle: 'Top Loss Events &middot; FL1',
+      mtbf: { val: '6.2', unit: 'hr',  dir: '&#8593;', amt: '0.8 hr vs last', type: 'green', sub: '0 unplanned stops this shift' },
+      mttr: { val: '14',  unit: 'min', dir: '&#8595;', amt: '3 min vs last',  type: 'green', sub: 'No repair events this shift' },
+
+      trendBars: [
+        {val:79,   color:AMB},
+        {val:83,   color:AMB},
+        {val:81,   color:AMB},
+        {val:85,   color:GRN},
+        {val:78,   color:AMB},
+        {val:84,   color:AMB},
+        {val:82.7, color:BLU}
+      ],
+      trendYMin: 60, trendYMax: 95, trendTarget: 85,
+
+      breakdownHtml: function() {
+        return '' +
+        '<div class="factor-block">' +
+          '<div class="factor-row">' +
+            '<div class="factor-name-group"><span class="factor-dot avail"></span><span class="factor-label-text">Availability</span></div>' +
+            '<span class="factor-pct blue">95.4%</span>' +
+          '</div>' +
+          '<div class="avail-split-bar">' +
+            '<div class="split-seg running"   style="width:95.4%"></div>' +
+            '<div class="split-seg planned"   style="width:4.6%"></div>' +
+            '<div class="split-seg unplanned" style="width:0%"></div>' +
+          '</div>' +
+          '<div class="split-legend">' +
+            '<span><span class="split-dot running"></span>Running 95.4%</span>' +
+            '<span><span class="split-dot planned"></span>Planned 4.6%</span>' +
+            '<span><span class="split-dot unplanned"></span>Unplanned 0%</span>' +
+          '</div>' +
+          '<div class="factor-meta">Planned time 480 min &middot; Downtime 22 min &middot; Die change (planned)</div>' +
+        '</div>' +
+        '<div class="factor-divider"></div>' +
+        '<div class="factor-block">' +
+          '<div class="factor-row">' +
+            '<div class="factor-name-group"><span class="factor-dot perf"></span><span class="factor-label-text">Performance</span></div>' +
+            '<span class="factor-pct amber">88.6%</span>' +
+          '</div>' +
+          '<div class="factor-bar-track"><div class="factor-bar-fill perf" style="width:88.6%"></div></div>' +
+          '<div class="factor-meta">Theoretical 28,000 ft &middot; Actual 24,800 ft &middot; Speed loss 19 min</div>' +
+        '</div>' +
+        '<div class="factor-divider"></div>' +
+        '<div class="factor-block">' +
+          '<div class="factor-row">' +
+            '<div class="factor-name-group"><span class="factor-dot qual"></span><span class="factor-label-text">Quality</span></div>' +
+            '<span class="factor-pct green">97.8%</span>' +
+          '</div>' +
+          '<div class="factor-bar-track"><div class="factor-bar-fill qual" style="width:97.8%"></div></div>' +
+          '<div class="factor-meta">SPC checks 58 &middot; Rejected 2 &middot; Suspended 1 &middot; Startup loss 7 min</div>' +
+        '</div>' +
+        '<div class="oee-result-row">' +
+          '<span class="result-label">OEE</span>' +
+          '<span class="result-formula">95.4% &times; 88.6% &times; 97.8%</span>' +
+          '<span class="result-eq">=</span>' +
+          '<span class="result-val amber">82.7%</span>' +
+          '<span class="result-chip amber">&#9660;&nbsp;2.3% vs 85% target</span>' +
+        '</div>';
+      },
+
+      lossesHtml: function() {
+        var rows = [
+          {name:'Breakdowns',         cat:'avail', catLabel:'Availability', time:'22 min', footage:'~1,280 ft', pct:100},
+          {name:'Setup / Rod change',  cat:'avail', catLabel:'Availability', time:'18 min', footage:'~1,050 ft', pct:82},
+          {name:'Reduced speed',       cat:'perf',  catLabel:'Performance',  time:'19 min', footage:'~440 ft',   pct:86},
+          {name:'Micro-stops',         cat:'perf',  catLabel:'Performance',  time:'12 min', footage:'~700 ft',   pct:55},
+          {name:'Process defects',     cat:'qual',  catLabel:'Quality',      time:'7 min',  footage:'~410 ft',   pct:32},
+          {name:'Startup losses',      cat:'qual',  catLabel:'Quality',      time:'5 min',  footage:'~290 ft',   pct:23}
+        ];
+        var colors = {avail: RED, perf: AMB, qual: GRN};
+        return rows.map(function(r) {
+          return '<div class="loss-row">' +
+            '<div class="loss-hdr">' +
+              '<span class="loss-name">' + r.name + '</span>' +
+              '<span class="loss-cat ' + r.cat + '">' + r.catLabel + '</span>' +
+              '<span class="loss-time">' + r.time + '</span>' +
+              '<span class="loss-footage">' + r.footage + '</span>' +
+            '</div>' +
+            '<div class="loss-bar-track"><div class="loss-bar-fill" style="width:' + r.pct + '%;background:' + colors[r.cat] + '"></div></div>' +
+          '</div>';
+        }).join('');
+      },
+
+      eventsHtml: function() {
+        var evts = [
+          {rank:1, name:'DB2 Die Change',       time:'07:48 &ndash; 08:10', dur:'22 min', cat:'avail', catLabel:'Availability', ack:'ok',      ackLabel:'Mike R. &middot; 08:12'},
+          {rank:2, name:'Reduced Speed (spec)',  time:'09:15 &ndash; 09:34', dur:'19 min', cat:'perf',  catLabel:'Performance',  ack:'ok',      ackLabel:'Mike R. &middot; 09:36'},
+          {rank:3, name:'Rod Change / Setup',    time:'10:22 &ndash; 10:40', dur:'18 min', cat:'avail', catLabel:'Availability', ack:'ok',      ackLabel:'Mike R. &middot; 10:42'},
+          {rank:4, name:'Micro-stop (sensor)',   time:'11:42 &ndash; 11:54', dur:'12 min', cat:'perf',  catLabel:'Performance',  ack:'ok',      ackLabel:'Mike R. &middot; 11:56'},
+          {rank:5, name:'Process Defect (SPC)',  time:'08:45',               dur:'7 min',  cat:'qual',  catLabel:'Quality',      ack:'pending', ackLabel:'Pending'}
+        ];
+        return '<div class="event-list">' + evts.map(function(e) {
+          return '<div class="event-row">' +
+            '<span class="event-rank">#' + e.rank + '</span>' +
+            '<div class="event-info"><div class="event-name">' + e.name + '</div><div class="event-time">' + e.time + '</div></div>' +
+            '<span class="event-dur">' + e.dur + '</span>' +
+            '<span class="event-cat loss-cat ' + e.cat + '">' + e.catLabel + '</span>' +
+            '<span class="ack-chip ack-' + e.ack + '">' + (e.ack === 'ok' ? '&#10003;&nbsp;' : '&#9679;&nbsp;') + e.ackLabel + '</span>' +
+          '</div>';
+        }).join('') + '</div>';
+      }
+    },
+
+    fl2: {
+      breakdownTitle: 'OEE Breakdown &middot; FL2',
+      trendTitle: '7-Shift OEE Trend &middot; FL2',
+      lossesTitle: 'Six Big Losses &middot; FL2',
+      lossesSub: '216 min total',
+      eventsTitle: 'Top Loss Events &middot; FL2',
+      mtbf: { val: '2.1', unit: 'hr',  dir: '&#8595;', amt: '1.4 hr vs last',    type: 'red', sub: '1 unplanned stop this shift' },
+      mttr: { val: '28',  unit: 'min', dir: '&#8593;', amt: '137 min this event', type: 'red', sub: 'Motor trip: 165 min today' },
+
+      trendBars: [
+        {val:81,   color:AMB},
+        {val:79,   color:AMB},
+        {val:83,   color:AMB},
+        {val:77,   color:AMB},
+        {val:82,   color:AMB},
+        {val:85,   color:GRN},
+        {val:54.4, color:RED}
+      ],
+      trendYMin: 40, trendYMax: 100, trendTarget: 85,
+
+      breakdownHtml: function() {
+        return '' +
+        '<div class="factor-block">' +
+          '<div class="factor-row">' +
+            '<div class="factor-name-group"><span class="factor-dot avail"></span><span class="factor-label-text">Availability</span></div>' +
+            '<span class="factor-pct" style="color:var(--color-red)">61.0%</span>' +
+          '</div>' +
+          '<div class="avail-split-bar">' +
+            '<div class="split-seg running"   style="width:61%"></div>' +
+            '<div class="split-seg planned"   style="width:4.6%"></div>' +
+            '<div class="split-seg unplanned" style="width:34.4%"></div>' +
+          '</div>' +
+          '<div class="split-legend">' +
+            '<span><span class="split-dot running"></span>Running 61.0%</span>' +
+            '<span><span class="split-dot planned"></span>Planned 4.6%</span>' +
+            '<span><span class="split-dot unplanned"></span>Unplanned 34.4%</span>' +
+          '</div>' +
+          '<div class="factor-meta">Planned time 480 min &middot; Downtime 187 min &middot; Motor trip 165 min (unplanned)</div>' +
+        '</div>' +
+        '<div class="factor-divider"></div>' +
+        '<div class="factor-block">' +
+          '<div class="factor-row">' +
+            '<div class="factor-name-group"><span class="factor-dot perf"></span><span class="factor-label-text">Performance</span></div>' +
+            '<span class="factor-pct green">97.1%</span>' +
+          '</div>' +
+          '<div class="factor-bar-track"><div class="factor-bar-fill perf" style="width:97.1%"></div></div>' +
+          '<div class="factor-meta">Running near rated speed when available &middot; Speed loss 5 min</div>' +
+        '</div>' +
+        '<div class="factor-divider"></div>' +
+        '<div class="factor-block">' +
+          '<div class="factor-row">' +
+            '<div class="factor-name-group"><span class="factor-dot qual"></span><span class="factor-label-text">Quality</span></div>' +
+            '<span class="factor-pct amber">91.7%</span>' +
+          '</div>' +
+          '<div class="factor-bar-track"><div class="factor-bar-fill qual" style="width:91.7%"></div></div>' +
+          '<div class="factor-meta">SPC checks 148 &middot; Rejected 12 &middot; Post-restart quality issues</div>' +
+        '</div>' +
+        '<div class="oee-result-row">' +
+          '<span class="result-label">OEE</span>' +
+          '<span class="result-formula">61.0% &times; 97.1% &times; 91.7%</span>' +
+          '<span class="result-eq">=</span>' +
+          '<span class="result-val red">54.4%</span>' +
+          '<span class="result-chip red">&#9660;&nbsp;30.6% vs 85% target</span>' +
+        '</div>';
+      },
+
+      lossesHtml: function() {
+        var rows = [
+          {name:'Motor Trip Breakdown', cat:'avail', catLabel:'Availability', time:'165 min', footage:'~8,800 ft', pct:100},
+          {name:'Startup / Restart',    cat:'avail', catLabel:'Availability', time:'22 min',  footage:'~1,170 ft', pct:13},
+          {name:'Process defects',      cat:'qual',  catLabel:'Quality',      time:'14 min',  footage:'~750 ft',   pct:9},
+          {name:'Micro-stops',          cat:'perf',  catLabel:'Performance',  time:'6 min',   footage:'~320 ft',   pct:4},
+          {name:'Reduced speed',        cat:'perf',  catLabel:'Performance',  time:'5 min',   footage:'~150 ft',   pct:3},
+          {name:'Startup defects',      cat:'qual',  catLabel:'Quality',      time:'4 min',   footage:'~210 ft',   pct:2}
+        ];
+        var colors = {avail: RED, perf: AMB, qual: GRN};
+        return rows.map(function(r) {
+          return '<div class="loss-row">' +
+            '<div class="loss-hdr">' +
+              '<span class="loss-name">' + r.name + '</span>' +
+              '<span class="loss-cat ' + r.cat + '">' + r.catLabel + '</span>' +
+              '<span class="loss-time">' + r.time + '</span>' +
+              '<span class="loss-footage">' + r.footage + '</span>' +
+            '</div>' +
+            '<div class="loss-bar-track"><div class="loss-bar-fill" style="width:' + r.pct + '%;background:' + colors[r.cat] + '"></div></div>' +
+          '</div>';
+        }).join('');
+      },
+
+      eventsHtml: function() {
+        var evts = [
+          {rank:1, name:'Motor Trip (FL2 main drive)', time:'07:05 &ndash; 09:50', dur:'165 min', cat:'avail', catLabel:'Availability', ack:'ok',      ackLabel:'Tom K. &middot; 09:52'},
+          {rank:2, name:'Startup / Warmup',            time:'09:50 &ndash; 10:12', dur:'22 min',  cat:'avail', catLabel:'Availability', ack:'ok',      ackLabel:'Tom K. &middot; 10:14'},
+          {rank:3, name:'Process Defect (restart)',     time:'10:25',               dur:'14 min',  cat:'qual',  catLabel:'Quality',      ack:'pending', ackLabel:'Pending'},
+          {rank:4, name:'Micro-stop (guide roller)',    time:'12:08',               dur:'6 min',   cat:'perf',  catLabel:'Performance',  ack:'pending', ackLabel:'Pending'},
+          {rank:5, name:'Reduced Speed (startup)',      time:'10:15',               dur:'5 min',   cat:'perf',  catLabel:'Performance',  ack:'pending', ackLabel:'Pending'}
+        ];
+        return '<div class="event-list">' + evts.map(function(e) {
+          return '<div class="event-row">' +
+            '<span class="event-rank">#' + e.rank + '</span>' +
+            '<div class="event-info"><div class="event-name">' + e.name + '</div><div class="event-time">' + e.time + '</div></div>' +
+            '<span class="event-dur">' + e.dur + '</span>' +
+            '<span class="event-cat loss-cat ' + e.cat + '">' + e.catLabel + '</span>' +
+            '<span class="ack-chip ack-' + e.ack + '">' + (e.ack === 'ok' ? '&#10003;&nbsp;' : '&#9679;&nbsp;') + e.ackLabel + '</span>' +
+          '</div>';
+        }).join('') + '</div>';
+      }
+    },
+
+    fl3: {
+      breakdownTitle: 'OEE Breakdown &middot; FL3',
+      trendTitle: '7-Shift OEE Trend &middot; FL3',
+      lossesTitle: 'Six Big Losses &middot; FL3',
+      lossesSub: 'Offline — no data',
+      eventsTitle: 'Top Loss Events &middot; FL3',
+      mtbf: { val: '—', unit: '', dir: '', amt: 'Offline', type: 'gray', sub: 'No data this shift' },
+      mttr: { val: '—', unit: '', dir: '', amt: 'Offline', type: 'gray', sub: 'No data this shift' },
+
+      trendBars: [
+        {val:88, color:GRN},
+        {val:91, color:GRN},
+        {val:87, color:GRN},
+        {val:89, color:GRN},
+        {val:85, color:GRN},
+        {val:0,  color:'#d1d5db'},
+        {val:0,  color:'#d1d5db'}
+      ],
+      trendYMin: 60, trendYMax: 100, trendTarget: 85,
+
+      breakdownHtml: function() {
+        return '<div class="offline-placeholder">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+          '<div><div style="font-weight:600;margin-bottom:4px">FL3 Offline</div>Scheduled offline this shift. No OEE data available.<br>Next planned startup: tomorrow 07:00 AM.</div>' +
+        '</div>';
+      },
+
+      lossesHtml: function() {
+        return '<div class="offline-placeholder">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="36" height="36"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>' +
+          '<div>No loss events — FL3 did not run this shift.</div>' +
+        '</div>';
+      },
+
+      eventsHtml: function() {
+        return '<div class="offline-placeholder">' +
+          '<div style="font-size:14px;color:var(--color-text-tertiary)">No events recorded — FL3 offline.</div>' +
+        '</div>';
+      }
+    }
+
+  };
+
+  /* ── selectMachine ── */
+  window.selectMachine = function(key) {
+    var d = MACHINE[key];
+    if (!d) return;
+
+    /* header tabs */
+    document.getElementById('machine-group').querySelectorAll('.machine-tab')
+      .forEach(function(b) {
+        b.classList.toggle('active', b.textContent.trim().toLowerCase() === key);
+      });
+
+    /* oee-strip tiles */
+    ['fl1','fl2','fl3'].forEach(function(k) {
+      var t = document.getElementById('tile-' + k);
+      if (t) t.classList.toggle('selected', k === key);
+    });
+
+    /* comparison table rows */
+    ['fl1','fl2','fl3'].forEach(function(k) {
+      var r = document.getElementById('cmp-' + k);
+      if (r) r.classList.toggle('row-active', k === key);
+    });
+
+    /* panel titles */
+    document.getElementById('breakdown-title').innerHTML = d.breakdownTitle;
+    document.getElementById('trend-title').innerHTML     = d.trendTitle;
+    document.getElementById('losses-title').innerHTML    = d.lossesTitle;
+    document.getElementById('losses-sub').textContent    = d.lossesSub;
+    document.getElementById('events-title').innerHTML    = d.eventsTitle;
+
+    /* panel content */
+    document.getElementById('breakdown-content').innerHTML = d.breakdownHtml();
+    document.getElementById('trend-content').innerHTML     = trendSVG(d.trendBars, d.trendYMin, d.trendYMax, d.trendTarget);
+    document.getElementById('losses-content').innerHTML    = d.lossesHtml();
+    document.getElementById('events-content').innerHTML    = d.eventsHtml();
+
+    /* MTBF / MTTR tiles */
+    var m = d.mtbf, r = d.mttr;
+    document.getElementById('mtbf-val').innerHTML   = m.val + (m.unit ? ' <span class="mtbf-unit">'+m.unit+'</span>' : '');
+    document.getElementById('mtbf-trend').innerHTML = '<span class="trend-chip chip-'+m.type+'">'+(m.dir?m.dir+'&nbsp;':'')+m.amt+'</span>';
+    document.getElementById('mtbf-sub').textContent = m.sub;
+    document.getElementById('mttr-val').innerHTML   = r.val + (r.unit ? ' <span class="mtbf-unit">'+r.unit+'</span>' : '');
+    document.getElementById('mttr-trend').innerHTML = '<span class="trend-chip chip-'+r.type+'">'+(r.dir?r.dir+'&nbsp;':'')+r.amt+'</span>';
+    document.getElementById('mttr-sub').textContent = r.sub;
+  };
+
+  /* ── Initial render ── */
+  selectMachine('fl1');
+
+})();
+</script>
+<script src="../../MVP-1/Mockups/flat-wire-topbar.js"></script>
+<script src="../../MVP-1/Mockups/flat-wire-fit.js" data-fit="fill"></script>
+</body>
+</html>

@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>Die Management · Flat Wire</title>
+<link rel="stylesheet" href="../../MVP-1/Mockups/flat-wire-shopfloor.styles.css">
+<style>
+  .dashboard { min-height: 100vh; }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    height: 72px;
+    flex-shrink: 0;
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .header-right { display: flex; align-items: center; gap: 14px; }
+
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 14px;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    border-radius: var(--border-radius-md);
+    font-size: 14px; font-weight: 500;
+    cursor: pointer; font-family: var(--font-sans);
+    transition: all 0.15s;
+  }
+  .back-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .back-btn svg { width: 14px; height: 14px; }
+
+  .header h1 { margin: 0; font-size: 22px; font-weight: 500; }
+
+  .line-filter { display: flex; gap: 6px; }
+  .line-pill {
+    padding: 6px 14px;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    border-radius: 20px;
+    font-size: 14px; font-weight: 500;
+    cursor: pointer; font-family: var(--font-sans);
+    transition: all 0.15s;
+  }
+  .line-pill:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .line-pill.active { background: var(--color-blue); border-color: var(--color-blue); color: #fff; }
+
+  .header-meta { font-size: 14px; color: var(--color-text-tertiary); }
+  .header-meta strong { color: var(--color-text-secondary); font-weight: 500; }
+
+  .btn-register {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 0 18px; height: 40px;
+    background: var(--color-blue); border: none; border-radius: var(--border-radius-md);
+    color: #fff; font-size: 14px; font-weight: 500;
+    cursor: pointer; font-family: var(--font-sans);
+    transition: all 0.15s;
+  }
+  .btn-register:hover { background: #13497d; }
+  .btn-register svg { width: 16px; height: 16px; }
+
+  /* ── Stats strip ── */
+  .stats-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .stat-card {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 18px 22px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .stat-icon {
+    width: 44px; height: 44px;
+    border-radius: var(--border-radius-md);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .stat-icon svg { width: 22px; height: 22px; }
+  .stat-icon.default { background: var(--color-background-secondary); color: var(--color-text-secondary); }
+  .stat-icon.success { background: var(--color-background-success); color: var(--color-text-success); }
+  .stat-icon.warning { background: var(--color-background-warning); color: var(--color-text-warning); }
+  .stat-icon.danger  { background: var(--color-background-danger);  color: var(--color-text-danger);  }
+  .stat-number { font-size: 28px; font-weight: 500; font-family: var(--font-mono); line-height: 1; }
+  .stat-number.danger  { color: var(--color-text-danger); }
+  .stat-number.warning { color: var(--color-text-warning); }
+  .stat-number.success { color: var(--color-text-success); }
+  .stat-label { font-size: 14px; color: var(--color-text-secondary); margin-top: 5px; }
+
+  /* ── Main layout ── */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr 464px;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* ── Die list section ── */
+  .die-list-section {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 600px;
+  }
+
+  .filter-tabs {
+    display: flex;
+    padding: 12px 18px 0;
+    border-bottom: 1px solid var(--color-border-tertiary);
+    flex-shrink: 0;
+  }
+  .filter-tab {
+    padding: 9px 14px;
+    border: none; background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 14px; font-weight: 500;
+    cursor: pointer; font-family: var(--font-sans);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .filter-tab:hover { color: var(--color-text-primary); }
+  .filter-tab.active { color: var(--color-blue); border-bottom-color: var(--color-blue); }
+
+  .tab-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 18px; height: 17px; padding: 0 4px;
+    background: var(--color-background-secondary);
+    border-radius: 8px;
+    font-size: 14px; font-weight: 600;
+  }
+  .filter-tab.active .tab-count { background: var(--color-background-info); color: var(--color-text-info); }
+  .tab-count.danger  { background: var(--color-background-danger);  color: var(--color-text-danger); }
+  .tab-count.warning { background: var(--color-background-warning); color: var(--color-text-warning); }
+
+  .list-col-headers {
+    display: grid;
+    grid-template-columns: 110px 52px 58px 54px 96px 140px 100px 1fr;
+    padding: 8px 18px;
+    font-size: 14px; color: var(--color-text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.4px;
+    border-bottom: 1px solid var(--color-border-tertiary);
+    background: var(--color-background-secondary);
+    flex-shrink: 0;
+  }
+
+  .die-list { flex: 1; overflow-y: auto; }
+
+  .die-row {
+    display: grid;
+    grid-template-columns: 110px 52px 58px 54px 96px 140px 100px 1fr;
+    padding: 13px 18px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    cursor: pointer;
+    transition: background 0.12s;
+    align-items: center;
+  }
+  .die-row:last-child { border-bottom: none; }
+  .die-row:hover { background: var(--color-background-secondary); }
+  .die-row.selected {
+    background: var(--color-background-info);
+    border-left: 3px solid var(--color-blue);
+    padding-left: 15px;
+  }
+  .die-row.retired { opacity: 0.5; }
+
+  .die-row-alpha { font-family: var(--font-mono); font-size: 14px; font-weight: 500; }
+  .die-row.selected .die-row-alpha { color: var(--color-text-info); }
+
+  .block-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 2px 7px; border-radius: 4px;
+    font-size: 14px; font-weight: 600; font-family: var(--font-mono);
+    background: var(--color-background-tertiary);
+    color: var(--color-text-secondary);
+  }
+
+  .size-cell { font-family: var(--font-mono); font-size: 14px; }
+  .line-cell { font-size: 14px; font-weight: 500; color: var(--color-text-secondary); }
+
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: var(--border-radius-md);
+    font-size: 14px; font-weight: 500;
+  }
+  .status-badge .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .status-badge.active  { background: var(--color-background-success); color: var(--color-text-success); }
+  .status-badge.active  .dot { background: var(--color-green); }
+  .status-badge.nearing { background: var(--color-background-warning); color: var(--color-text-warning); }
+  .status-badge.nearing .dot { background: var(--color-amber); }
+  .status-badge.overdue { background: var(--color-background-danger);  color: var(--color-text-danger); }
+  .status-badge.overdue .dot { background: var(--color-red); }
+  .status-badge.spare   { background: var(--color-background-info);    color: var(--color-text-info); }
+  .status-badge.spare   .dot { background: var(--color-blue); }
+  .status-badge.retired { background: var(--color-background-secondary); color: var(--color-text-tertiary); }
+  .status-badge.retired .dot { background: var(--color-gray); }
+
+  .inline-bar-wrap { display: flex; align-items: center; gap: 7px; }
+  .inline-bar {
+    flex: 1; height: 6px;
+    background: var(--color-background-tertiary);
+    border-radius: 3px; overflow: hidden; min-width: 80px;
+  }
+  .inline-bar-fill { height: 100%; border-radius: 3px; }
+  .inline-bar-fill.green { background: var(--color-green); }
+  .inline-bar-fill.amber { background: var(--color-amber); }
+  .inline-bar-fill.red   { background: var(--color-red); }
+  .inline-bar-fill.gray  { background: var(--color-gray); opacity: 0.3; }
+  .inline-pct { font-size: 14px; font-family: var(--font-mono); width: 34px; text-align: right; color: var(--color-text-tertiary); }
+  .inline-pct.amber { color: var(--color-text-warning); }
+  .inline-pct.red   { color: var(--color-text-danger); }
+
+  .footage-cell { font-size: 14px; font-family: var(--font-mono); color: var(--color-text-secondary); }
+  .footage-cell em { color: var(--color-text-tertiary); font-style: normal; }
+  .date-cell { font-size: 14px; color: var(--color-text-tertiary); }
+
+  /* ── Detail panel ── */
+  .detail-panel {
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    min-height: 600px;
+  }
+
+  .detail-placeholder {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 12px; color: var(--color-text-tertiary); padding: 40px;
+  }
+  .detail-placeholder svg { width: 44px; height: 44px; opacity: 0.35; }
+  .detail-placeholder p { margin: 0; font-size: 14px; text-align: center; line-height: 1.5; }
+
+  .detail-content { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+  .detail-content.visible { display: flex; }
+
+  .detail-header {
+    padding: 20px 22px 16px;
+    border-bottom: 1px solid var(--color-border-tertiary);
+    flex-shrink: 0;
+  }
+  .detail-alpha-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+  .detail-alpha { font-size: 26px; font-weight: 500; font-family: var(--font-mono); }
+  .detail-meta { font-size: 14px; color: var(--color-text-secondary); }
+  .detail-meta strong { color: var(--color-text-primary); font-weight: 500; }
+
+  .detail-body {
+    padding: 16px 22px;
+    flex: 1; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+
+  /* Big life bar */
+  .big-life-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 7px; font-size: 14px; color: var(--color-text-secondary);
+  }
+  .big-life-pct { font-family: var(--font-mono); font-size: 20px; font-weight: 500; }
+  .big-life-pct.green { color: var(--color-text-success); }
+  .big-life-pct.amber { color: var(--color-text-warning); }
+  .big-life-pct.red   { color: var(--color-text-danger); }
+  .big-life-bar {
+    height: 12px;
+    background: var(--color-background-secondary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: 6px; overflow: hidden;
+  }
+  .big-life-fill { height: 100%; border-radius: 6px; transition: width 0.35s; }
+  .big-life-fill.green { background: var(--color-green); }
+  .big-life-fill.amber { background: var(--color-amber); }
+  .big-life-fill.red   { background: var(--color-red); }
+  .big-life-fill.gray  { background: var(--color-gray); opacity: 0.35; }
+
+  /* Field grid */
+  .detail-fields {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+  }
+  .detail-field {
+    background: var(--color-background-secondary);
+    padding: 10px 13px; border-radius: var(--border-radius-md);
+    display: flex; flex-direction: column;
+  }
+  .detail-field-label { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 3px; }
+  .detail-field-value { font-size: 14px; font-weight: 500; font-family: var(--font-mono); }
+  .detail-field-value.plain  { font-family: var(--font-sans); font-size: 14px; }
+  .detail-field-value.amber  { color: var(--color-text-warning); }
+  .detail-field-value.danger { color: var(--color-text-danger); }
+  .detail-field-value.success { color: var(--color-text-success); }
+
+  /* Alert banner */
+  .detail-alert {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 14px; border-radius: var(--border-radius-md);
+    font-size: 14px; line-height: 1.45;
+  }
+  .detail-alert.danger  { background: var(--color-background-danger);  color: var(--color-text-danger); }
+  .detail-alert.warning { background: var(--color-background-warning); color: var(--color-text-warning); }
+  .detail-alert svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; }
+  .detail-alert strong { font-weight: 600; display: block; margin-bottom: 2px; }
+
+  /* Action buttons */
+  .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-sm {
+    height: 36px; padding: 0 16px;
+    font-size: 14px; font-weight: 500;
+    border-radius: var(--border-radius-md);
+    cursor: pointer; font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-sm:hover { background: var(--color-background-secondary); }
+  .btn-sm.primary { background: var(--color-blue); border-color: var(--color-blue); color: #fff; }
+  .btn-sm.primary:hover { background: #13497d; }
+  .btn-sm.danger { border-color: rgba(216,90,48,0.4); color: var(--color-text-danger); }
+  .btn-sm.danger:hover { background: var(--color-background-danger); }
+  .btn-sm svg { width: 14px; height: 14px; }
+  .btn-sm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* History section */
+  .history-section {
+    border-top: 1px solid var(--color-border-tertiary);
+    display: flex; flex-direction: column;
+    flex: 1; min-height: 0;
+  }
+  .history-tabs {
+    display: flex; padding: 0 22px;
+    border-bottom: 1px solid var(--color-border-tertiary);
+    flex-shrink: 0;
+  }
+  .history-tab {
+    padding: 9px 12px;
+    border: none; background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 14px; font-weight: 500;
+    cursor: pointer; font-family: var(--font-sans);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+  .history-tab:hover { color: var(--color-text-primary); }
+  .history-tab.active { color: var(--color-blue); border-bottom-color: var(--color-blue); }
+
+  .history-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+
+  .history-item {
+    display: grid;
+    grid-template-columns: 80px 40px 80px 1fr 70px;
+    padding: 9px 22px;
+    gap: 0;
+    align-items: center;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    font-size: 14px;
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-alpha  { font-family: var(--font-mono); font-weight: 500; color: var(--color-text-primary); }
+  .history-line   { font-size: 14px; color: var(--color-text-secondary); }
+  .history-footage { font-family: var(--font-mono); color: var(--color-text-secondary); }
+  .history-date   { color: var(--color-text-tertiary); }
+  .history-op     { color: var(--color-text-tertiary); text-align: right; }
+
+  .replace-item {
+    padding: 10px 22px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    font-size: 14px; line-height: 1.55;
+  }
+  .replace-item:last-child { border-bottom: none; }
+  .replace-item-head { font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; }
+  .replace-item-sub  { color: var(--color-text-secondary); }
+  .replace-item-sub span { color: var(--color-text-tertiary); margin: 0 4px; }
+
+  /* ── Modals ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: none; align-items: center; justify-content: center;
+    z-index: 200;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--color-background-primary);
+    border-radius: var(--border-radius-lg);
+    border: 0.5px solid var(--color-border-tertiary);
+    width: 560px;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+  }
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--color-border-tertiary);
+    flex-shrink: 0;
+  }
+  .modal-title { font-size: 17px; font-weight: 500; }
+  .modal-close {
+    width: 32px; height: 32px;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    border-radius: var(--border-radius-md);
+    cursor: pointer; font-family: var(--font-sans);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--color-text-secondary);
+    transition: all 0.15s;
+  }
+  .modal-close:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .modal-close svg { width: 16px; height: 16px; }
+
+  .modal-body { padding: 20px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-field { display: flex; flex-direction: column; gap: 6px; }
+  .form-field.full { grid-column: 1 / -1; }
+  .form-label { font-size: 14px; font-weight: 500; color: var(--color-text-secondary); }
+  .form-input {
+    height: 40px; padding: 0 13px;
+    font-size: 14px; font-weight: 500;
+    font-family: var(--font-mono);
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    outline: none; transition: border-color 0.15s;
+  }
+  .form-input:focus { border-color: var(--color-blue); box-shadow: 0 0 0 3px rgba(24,95,165,0.15); }
+  .form-input.plain { font-family: var(--font-sans); }
+  .form-input[readonly] { background: var(--color-background-secondary); color: var(--color-text-secondary); cursor: default; }
+
+  .form-select {
+    height: 40px; padding: 0 13px;
+    font-size: 14px;
+    color: var(--color-text-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    outline: none; cursor: pointer;
+    font-family: var(--font-sans);
+    transition: border-color 0.15s;
+  }
+  .form-select:focus { border-color: var(--color-blue); box-shadow: 0 0 0 3px rgba(24,95,165,0.15); }
+
+  .form-hint { font-size: 14px; color: var(--color-text-tertiary); margin-top: -2px; }
+
+  .form-toggle-row {
+    display: flex; gap: 8px;
+  }
+  .form-toggle-btn {
+    flex: 1; height: 38px;
+    font-size: 14px; font-weight: 500;
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    border-radius: var(--border-radius-md);
+    cursor: pointer; font-family: var(--font-sans);
+    transition: all 0.15s;
+  }
+  .form-toggle-btn:hover { background: var(--color-background-secondary); }
+  .form-toggle-btn.active.new    { background: var(--color-background-success); border-color: var(--color-green); color: var(--color-text-success); }
+  .form-toggle-btn.active.recond { background: var(--color-background-warning); border-color: var(--color-amber); color: var(--color-text-warning); }
+  .form-toggle-btn.active.retire { background: var(--color-background-danger); border-color: var(--color-red); color: var(--color-text-danger); }
+
+  .modal-notice {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 14px;
+    border-radius: var(--border-radius-md);
+    font-size: 14px; line-height: 1.45;
+  }
+  .modal-notice.warning { background: var(--color-background-warning); color: var(--color-text-warning); }
+  .modal-notice svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  .modal-footer {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 16px 22px;
+    border-top: 1px solid var(--color-border-tertiary);
+    flex-shrink: 0;
+  }
+  .btn {
+    height: 44px; padding: 0 22px;
+    font-size: 14px; font-weight: 500;
+    border-radius: var(--border-radius-md);
+    cursor: pointer; font-family: var(--font-sans);
+    border: 1px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    transition: all 0.15s;
+  }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn.primary { background: var(--color-blue); border-color: var(--color-blue); color: #fff; }
+  .btn.primary:hover { background: #13497d; }
+
+  /* Reconditioned extra field (toggled) */
+  #recond-life-row { display: none; }
+  #recond-life-row.visible { display: grid; }
+
+  /* History tab panels */
+  .history-panel { display: none; }
+  .history-panel.active { display: flex; flex-direction: column; flex: 1; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- ── Header ── -->
+  <div class="header panel">
+    <div class="header-left">
+      <button class="back-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Line Status
+      </button>
+      <h1>Die Management</h1>
+      <div class="line-filter">
+        <button class="line-pill active" onclick="filterLine('all', this)">All lines</button>
+        <button class="line-pill" onclick="filterLine('FL1', this)">FL1</button>
+        <button class="line-pill" onclick="filterLine('FL3', this)">FL3</button>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="header-meta"><span id="date-str">Apr 28, 2026</span> &middot; <strong id="clock-str">08:12 AM</strong></span>
+      <button class="btn-register" onclick="openModal('register-modal')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Register new die
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Stats strip ── -->
+  <div class="stats-strip">
+    <div class="stat-card">
+      <div class="stat-icon default">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg>
+      </div>
+      <div>
+        <div class="stat-number">4</div>
+        <div class="stat-label">Active on line</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon danger">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div>
+        <div class="stat-number danger">1</div>
+        <div class="stat-label">Overdue for replacement</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon warning">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div>
+        <div class="stat-number warning">2</div>
+        <div class="stat-label">Nearing end of life</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon success">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div>
+        <div class="stat-number success">1</div>
+        <div class="stat-label">Spare / ready</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Main layout ── -->
+  <div class="main-layout">
+
+    <!-- Die list -->
+    <div class="die-list-section">
+
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-tab="all"     onclick="filterTab('all',this)">All <span class="tab-count">6</span></button>
+        <button class="filter-tab"        data-tab="active"  onclick="filterTab('active',this)">Active <span class="tab-count">4</span></button>
+        <button class="filter-tab"        data-tab="nearing" onclick="filterTab('nearing',this)">Nearing end <span class="tab-count warning">2</span></button>
+        <button class="filter-tab"        data-tab="overdue" onclick="filterTab('overdue',this)">Overdue <span class="tab-count danger">1</span></button>
+        <button class="filter-tab"        data-tab="spare"   onclick="filterTab('spare',this)">Spare <span class="tab-count">1</span></button>
+        <button class="filter-tab"        data-tab="retired" onclick="filterTab('retired',this)">Retired <span class="tab-count">1</span></button>
+      </div>
+
+      <div class="list-col-headers">
+        <span>Alpha</span>
+        <span>Block</span>
+        <span>Size</span>
+        <span>Line</span>
+        <span>Status</span>
+        <span>Life used</span>
+        <span>Footage</span>
+        <span>Last reset</span>
+      </div>
+
+      <div class="die-list" id="die-list">
+        <!-- Rows injected by JS -->
+      </div>
+    </div>
+
+    <!-- Detail panel -->
+    <div class="detail-panel panel" id="detail-panel">
+
+      <div class="detail-placeholder" id="detail-placeholder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg>
+        <p>Select a die from the list<br>to view details and history</p>
+      </div>
+
+      <div class="detail-content" id="detail-content">
+
+        <div class="detail-header">
+          <div class="detail-alpha-row">
+            <span class="detail-alpha" id="d-alpha">—</span>
+            <span class="status-badge" id="d-status-badge"><span class="dot"></span><span id="d-status-label">—</span></span>
+          </div>
+          <div class="detail-meta" id="d-meta">—</div>
+        </div>
+
+        <div class="detail-body">
+
+          <!-- Life bar -->
+          <div>
+            <div class="big-life-head">
+              <span>Life consumed</span>
+              <span class="big-life-pct" id="d-pct-label">—</span>
+            </div>
+            <div class="big-life-bar">
+              <div class="big-life-fill" id="d-life-fill" style="width:0%"></div>
+            </div>
+          </div>
+
+          <!-- Field grid -->
+          <div class="detail-fields">
+            <div class="detail-field">
+              <div class="detail-field-label">Footage on die</div>
+              <div class="detail-field-value" id="d-footage">—</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-field-label">Life threshold</div>
+              <div class="detail-field-value" id="d-threshold">—</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-field-label">Remaining</div>
+              <div class="detail-field-value" id="d-remaining">—</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-field-label">Die size</div>
+              <div class="detail-field-value" id="d-size">—</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-field-label">Die type</div>
+              <div class="detail-field-value plain" id="d-type">—</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-field-label">Last reset by</div>
+              <div class="detail-field-value plain" id="d-reset-by">—</div>
+            </div>
+          </div>
+
+          <!-- Alert (shown when overdue or nearing) -->
+          <div class="detail-alert danger" id="d-alert-overdue" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div><strong>Replacement overdue</strong>This die has exceeded its scheduled footage life. It should be pulled at the end of the current run and sent for reconditioning or retirement.</div>
+          </div>
+          <div class="detail-alert warning" id="d-alert-nearing" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <div><strong>Approaching end of life</strong>Schedule a replacement die from the die room. This die should not be loaded for a new order without a spare on hand.</div>
+          </div>
+
+          <!-- Actions -->
+          <div class="detail-actions">
+            <button class="btn-sm primary" id="btn-reset" onclick="openModal('reset-modal')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
+              Reset counter
+            </button>
+            <button class="btn-sm" id="btn-threshold" onclick="openModal('threshold-modal')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit threshold
+            </button>
+            <button class="btn-sm danger" id="btn-retire" onclick="openModal('retire-modal')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+              Retire die
+            </button>
+          </div>
+
+          <!-- History -->
+          <div class="history-section">
+            <div class="history-tabs">
+              <button class="history-tab active" onclick="switchHistory('runs',this)">Run history</button>
+              <button class="history-tab" onclick="switchHistory('replacements',this)">Replacement log</button>
+            </div>
+
+            <!-- Run history -->
+            <div class="history-panel active" id="hist-runs">
+              <div style="display:grid;grid-template-columns:80px 40px 80px 1fr 70px;padding:6px 22px;font-size:14px;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.4px;border-bottom:0.5px solid var(--color-border-tertiary);">
+                <span>Order</span><span>Line</span><span>Footage</span><span>Date</span><span style="text-align:right">Operator</span>
+              </div>
+              <div class="history-list" id="run-history-list"></div>
+            </div>
+
+            <!-- Replacement log -->
+            <div class="history-panel" id="hist-replacements">
+              <div class="history-list" id="replace-history-list"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /dashboard -->
+
+
+<!-- ══════════════════════════════════════════
+     MODAL: Reset counter
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="reset-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Reset counter — <span id="reset-die-alpha" style="font-family:var(--font-mono)">D-310-034</span></span>
+      <button class="modal-close" onclick="closeModal('reset-modal')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+
+      <div class="modal-notice warning">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Resetting a die counter is an irreversible action. Use this only after the die has been physically pulled from service and returned (reconditioned) or confirmed as a new spare.
+      </div>
+
+      <div>
+        <div class="form-label" style="margin-bottom:8px;">Disposition</div>
+        <div class="form-toggle-row">
+          <button class="form-toggle-btn active recond" id="disp-recond" onclick="selectDisposition('recond')">Reconditioned</button>
+          <button class="form-toggle-btn new" id="disp-new" onclick="selectDisposition('new')">New spare registered</button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Date removed from line</label>
+          <input class="form-input plain" type="date" value="2026-04-28">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Returned / ready date</label>
+          <input class="form-input plain" type="date" value="2026-04-28">
+        </div>
+      </div>
+
+      <div class="form-row" id="recond-life-row" style="display:grid">
+        <div class="form-field">
+          <label class="form-label">New life threshold (ft)</label>
+          <input class="form-input" type="text" value="18,000" id="recond-threshold-input">
+          <span class="form-hint">Original: 22,000 ft — typically 80–85% after reconditioning</span>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Inspection date</label>
+          <input class="form-input plain" type="date" value="2026-04-28">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Performed by</label>
+          <input class="form-input" type="text" value="B. Torres" readonly>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Die room source</label>
+          <select class="form-select">
+            <option>In-house reconditioning</option>
+            <option>External supplier</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label class="form-label">Notes (optional)</label>
+        <input class="form-input plain" type="text" placeholder="e.g. minor bore polish, no cracks observed">
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('reset-modal')">Cancel</button>
+      <button class="btn primary" onclick="closeModal('reset-modal')">Confirm reset</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     MODAL: Edit threshold
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="threshold-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Edit life threshold — <span id="thresh-die-alpha" style="font-family:var(--font-mono)">D-310-034</span></span>
+      <button class="modal-close" onclick="closeModal('threshold-modal')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Die</label>
+          <input class="form-input" type="text" id="thresh-die-field" value="D-310-034" readonly>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Die type</label>
+          <input class="form-input plain" type="text" value="TC Mono" readonly>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Current threshold (ft)</label>
+          <input class="form-input" type="text" id="thresh-current" value="22,000" readonly>
+        </div>
+        <div class="form-field">
+          <label class="form-label">New threshold (ft)</label>
+          <input class="form-input" type="text" id="thresh-new" value="22,000">
+        </div>
+      </div>
+      <div class="form-field full">
+        <label class="form-label">Reason for change</label>
+        <input class="form-input plain" type="text" placeholder="e.g. supplier updated specification for TC Mono 0.310&quot;">
+      </div>
+      <div class="form-field full">
+        <label class="form-label">Apply to</label>
+        <select class="form-select">
+          <option>This die only (D-310-034)</option>
+          <option>All TC Mono 0.310&quot; dies in inventory</option>
+        </select>
+        <span class="form-hint" style="margin-top:4px;">Applying to all dies of the same type will update the default threshold for future registrations.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('threshold-modal')">Cancel</button>
+      <button class="btn primary" onclick="closeModal('threshold-modal')">Save threshold</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     MODAL: Retire die
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="retire-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Retire die — <span id="retire-die-alpha" style="font-family:var(--font-mono)">D-310-034</span></span>
+      <button class="modal-close" onclick="closeModal('retire-modal')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-notice warning">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Retirement is permanent. The die alpha will remain in history for traceability but will no longer appear in the active or spare inventory.
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Date retired</label>
+          <input class="form-input plain" type="date" value="2026-04-28">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Retired by</label>
+          <input class="form-input" type="text" value="B. Torres" readonly>
+        </div>
+      </div>
+      <div class="form-field full">
+        <label class="form-label">Reason for retirement</label>
+        <select class="form-select">
+          <option>End of service life — not viable for reconditioning</option>
+          <option>Physical damage — cracked or chipped bore</option>
+          <option>Bore out of tolerance after reconditioning</option>
+          <option>Size discontinued — no longer used in product range</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-field full">
+        <label class="form-label">Notes (optional)</label>
+        <input class="form-input plain" type="text" placeholder="Additional detail">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('retire-modal')">Cancel</button>
+      <button class="btn" style="background:var(--color-red);border-color:var(--color-red);color:#fff;" onclick="closeModal('retire-modal')">Confirm retirement</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     MODAL: Register new die
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="register-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Register new die</span>
+      <button class="modal-close" onclick="closeModal('register-modal')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Die alpha (unique ID)</label>
+          <input class="form-input" type="text" placeholder="e.g. D-310-092" autofocus>
+          <span class="form-hint">Format: D-[size×1000]-[seq]</span>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Compatible block</label>
+          <select class="form-select">
+            <option>DB1 (Draw box 1)</option>
+            <option selected>DB2 (Draw box 2)</option>
+            <option>Both</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Die hole size (inches)</label>
+          <input class="form-input" type="text" placeholder='e.g. 0.310"'>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Die type / material</label>
+          <select class="form-select">
+            <option selected>TC Mono (Tungsten carbide monoblock)</option>
+            <option>TC Poly (Tungsten carbide polycrystalline)</option>
+            <option>Natural diamond</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Life threshold (ft)</label>
+          <input class="form-input" type="text" placeholder="e.g. 22,000">
+          <span class="form-hint">Manufacturer or engineering-specified footage limit</span>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Source</label>
+          <select class="form-select">
+            <option>Die room stock</option>
+            <option>External supplier</option>
+            <option>Reconditioned — returning from service</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="form-label">Condition</label>
+          <select class="form-select">
+            <option>New</option>
+            <option>Reconditioned</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Inspection date</label>
+          <input class="form-input plain" type="date" value="2026-04-28">
+        </div>
+      </div>
+      <div class="form-field full">
+        <label class="form-label">Notes (optional)</label>
+        <input class="form-input plain" type="text" placeholder="Supplier lot, PO number, or other detail">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('register-modal')">Cancel</button>
+      <button class="btn primary" onclick="closeModal('register-modal')">Register die</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+(function () {
+
+  /* ── Die data ── */
+  var DIES = [
+    { alpha:"D-310-034", block:"DB2", size:'0.310"', line:"FL1", status:"overdue",  pct:83.7, footage:18420, threshold:22000, remaining:3580,  type:"TC Mono",  lastReset:"Apr 3, 2026",  resetBy:"B. Torres" },
+    { alpha:"D-340-087", block:"DB1", size:'0.340"', line:"FL1", status:"nearing",  pct:73.7, footage:18420, threshold:25000, remaining:6580,  type:"TC Mono",  lastReset:"Apr 15, 2026", resetBy:"B. Torres" },
+    { alpha:"D-160-015", block:"DB2", size:'0.160"', line:"FL3", status:"nearing",  pct:78.1, footage:17180, threshold:22000, remaining:4820,  type:"TC Poly",  lastReset:"Apr 10, 2026", resetBy:"D. Hensley" },
+    { alpha:"D-245-021", block:"DB1", size:'0.245"', line:"FL3", status:"active",   pct:45.2, footage:11300, threshold:25000, remaining:13700, type:"TC Mono",  lastReset:"Apr 18, 2026", resetBy:"D. Hensley" },
+    { alpha:"D-310-091", block:"DB2", size:'0.310"', line:"—",   status:"spare",    pct:0,    footage:0,     threshold:22000, remaining:22000, type:"TC Mono",  lastReset:"New",           resetBy:"—" },
+    { alpha:"D-340-052", block:"DB1", size:'0.340"', line:"—",   status:"retired",  pct:100,  footage:25000, threshold:25000, remaining:0,     type:"TC Mono",  lastReset:"Mar 22, 2026", resetBy:"B. Torres" }
+  ];
+
+  /* Run history keyed by alpha */
+  var RUN_HISTORY = {
+    "D-310-034": [
+      { order:"FW-00421", line:"FL1", footage:"2,340 ft", date:"Apr 23, 2026", op:"Dave M." },
+      { order:"FW-00418", line:"FL1", footage:"3,120 ft", date:"Apr 22, 2026", op:"Dave M." },
+      { order:"FW-00415", line:"FL1", footage:"4,200 ft", date:"Apr 20, 2026", op:"S. Ramos" },
+      { order:"FW-00411", line:"FL1", footage:"3,800 ft", date:"Apr 18, 2026", op:"Dave M." },
+      { order:"FW-00409", line:"FL1", footage:"4,960 ft", date:"Apr 16, 2026", op:"S. Ramos" }
+    ],
+    "D-340-087": [
+      { order:"FW-00421", line:"FL1", footage:"2,340 ft", date:"Apr 23, 2026", op:"Dave M." },
+      { order:"FW-00416", line:"FL1", footage:"5,100 ft", date:"Apr 21, 2026", op:"S. Ramos" },
+      { order:"FW-00412", line:"FL1", footage:"3,640 ft", date:"Apr 17, 2026", op:"Dave M." }
+    ],
+    "D-160-015": [
+      { order:"FW-00420", line:"FL3", footage:"3,010 ft", date:"Apr 22, 2026", op:"K. Willis" },
+      { order:"FW-00414", line:"FL3", footage:"4,450 ft", date:"Apr 19, 2026", op:"K. Willis" },
+      { order:"FW-00408", line:"FL3", footage:"5,200 ft", date:"Apr 14, 2026", op:"K. Willis" }
+    ],
+    "D-245-021": [
+      { order:"FW-00419", line:"FL3", footage:"2,880 ft", date:"Apr 22, 2026", op:"K. Willis" },
+      { order:"FW-00413", line:"FL3", footage:"4,120 ft", date:"Apr 19, 2026", op:"K. Willis" }
+    ],
+    "D-310-091": [],
+    "D-340-052": [
+      { order:"FW-00402", line:"FL1", footage:"3,200 ft", date:"Mar 20, 2026", op:"B. Torres" },
+      { order:"FW-00398", line:"FL1", footage:"4,600 ft", date:"Mar 17, 2026", op:"S. Ramos" }
+    ]
+  };
+
+  var REPLACE_HISTORY = {
+    "D-310-034": [
+      { head:"Installed (reconditioned) · Apr 3, 2026", sub:"By B. Torres · Replaced D-310-027 · Life threshold reset to 22,000 ft" },
+      { head:"Installed (new) · Nov 12, 2025",          sub:"By B. Torres · Initial service entry · Threshold 22,000 ft" }
+    ],
+    "D-340-087": [
+      { head:"Installed (reconditioned) · Apr 15, 2026", sub:"By B. Torres · Replaced D-340-073 · Life threshold reset to 20,000 ft" }
+    ],
+    "D-160-015": [
+      { head:"Installed (new) · Apr 10, 2026", sub:"By D. Hensley · Initial service entry · Threshold 22,000 ft" }
+    ],
+    "D-245-021": [
+      { head:"Installed (new) · Apr 18, 2026", sub:"By D. Hensley · Initial service entry · Threshold 25,000 ft" }
+    ],
+    "D-310-091": [
+      { head:"Registered as spare · Apr 24, 2026", sub:"By B. Torres · New from die room · Not yet installed" }
+    ],
+    "D-340-052": [
+      { head:"Retired · Mar 22, 2026", sub:"By B. Torres · End of service life — 3rd reconditioning cycle, bore out of tolerance" },
+      { head:"Reset (reconditioned) · Jan 5, 2026",   sub:"By B. Torres · 3rd reconditioning cycle · Threshold 18,000 ft" }
+    ]
+  };
+
+  var currentFilter = "all";
+  var currentLineFilter = "all";
+  var selectedAlpha = "D-310-034";
+  var currentHistTab = "runs";
+
+  function pctClass(d) {
+    if (d.status === "retired") return "gray";
+    if (d.status === "spare") return "gray";
+    if (d.pct >= 80) return "red";
+    if (d.pct >= 65) return "amber";
+    return "green";
+  }
+
+  function statusLabel(s) {
+    return { active:"Active", nearing:"Nearing end", overdue:"Overdue", spare:"Spare", retired:"Retired" }[s] || s;
+  }
+
+  function fmt(n) { return n.toLocaleString() + " ft"; }
+
+  /* ── Render die list ── */
+  function renderList() {
+    var list = document.getElementById("die-list");
+    list.innerHTML = "";
+    DIES.forEach(function(d) {
+      if (currentFilter !== "all" && d.status !== currentFilter) return;
+      if (currentLineFilter !== "all" && d.line !== currentLineFilter) return;
+
+      var pc = pctClass(d);
+      var row = document.createElement("div");
+      row.className = "die-row" + (d.status === "retired" ? " retired" : "") + (d.alpha === selectedAlpha ? " selected" : "");
+      row.onclick = function() { selectDie(d.alpha); };
+      row.innerHTML =
+        '<span class="die-row-alpha">' + d.alpha + '</span>' +
+        '<span><span class="block-badge">' + d.block + '</span></span>' +
+        '<span class="size-cell">' + d.size + '</span>' +
+        '<span class="line-cell">' + d.line + '</span>' +
+        '<span><span class="status-badge ' + d.status + '"><span class="dot"></span>' + statusLabel(d.status) + '</span></span>' +
+        '<span><div class="inline-bar-wrap"><div class="inline-bar"><div class="inline-bar-fill ' + pc + '" style="width:' + d.pct + '%"></div></div><span class="inline-pct ' + (pc === "red" ? "red" : pc === "amber" ? "amber" : "") + '">' + d.pct + '%</span></div></span>' +
+        '<span class="footage-cell">' + d.footage.toLocaleString() + ' <em>/ ' + d.threshold.toLocaleString() + '</em></span>' +
+        '<span class="date-cell">' + d.lastReset + '</span>';
+      list.appendChild(row);
+    });
+  }
+
+  /* ── Render detail panel ── */
+  function renderDetail(alpha) {
+    var d = DIES.find(function(x){ return x.alpha === alpha; });
+    if (!d) return;
+
+    var pc = pctClass(d);
+
+    document.getElementById("detail-placeholder").style.display = "none";
+    document.getElementById("detail-content").classList.add("visible");
+
+    document.getElementById("d-alpha").textContent = d.alpha;
+    document.getElementById("d-meta").innerHTML =
+      '<strong>' + d.block + '</strong> &middot; ' + d.size + ' &middot; ' + d.type +
+      ' &middot; Currently on <strong>' + (d.line === "—" ? "— (not installed)" : d.line) + '</strong>';
+
+    var badge = document.getElementById("d-status-badge");
+    badge.className = "status-badge " + d.status;
+    badge.innerHTML = '<span class="dot"></span><span>' + statusLabel(d.status) + '</span>';
+
+    var pctEl = document.getElementById("d-pct-label");
+    pctEl.className = "big-life-pct " + pc;
+    pctEl.textContent = d.pct + "% used";
+
+    var fill = document.getElementById("d-life-fill");
+    fill.className = "big-life-fill " + pc;
+    fill.style.width = d.pct + "%";
+
+    document.getElementById("d-footage").textContent   = fmt(d.footage);
+    document.getElementById("d-threshold").textContent = fmt(d.threshold);
+
+    var remEl = document.getElementById("d-remaining");
+    remEl.textContent = fmt(d.remaining);
+    remEl.className = "detail-field-value" + (pc === "red" ? " danger" : pc === "amber" ? " amber" : "");
+
+    document.getElementById("d-size").textContent     = d.size;
+    document.getElementById("d-type").textContent     = d.type;
+    document.getElementById("d-reset-by").textContent = d.resetBy + " · " + d.lastReset;
+
+    document.getElementById("d-alert-overdue").style.display = (d.status === "overdue") ? "flex" : "none";
+    document.getElementById("d-alert-nearing").style.display = (d.status === "nearing") ? "flex" : "none";
+
+    var retired = (d.status === "retired");
+    document.getElementById("btn-reset").disabled    = retired;
+    document.getElementById("btn-threshold").disabled = retired;
+    document.getElementById("btn-retire").disabled   = retired;
+
+    /* update modal alpha labels */
+    ["reset-die-alpha","thresh-die-alpha","retire-die-alpha"].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) el.textContent = d.alpha;
+    });
+    var tf = document.getElementById("thresh-die-field");
+    if (tf) tf.value = d.alpha;
+    var tc = document.getElementById("thresh-current");
+    if (tc) tc.value = d.threshold.toLocaleString();
+
+    renderRunHistory(alpha);
+    renderReplaceHistory(alpha);
+  }
+
+  function renderRunHistory(alpha) {
+    var list = document.getElementById("run-history-list");
+    list.innerHTML = "";
+    var rows = RUN_HISTORY[alpha] || [];
+    if (rows.length === 0) {
+      list.innerHTML = '<div style="padding:20px 22px;font-size:14px;color:var(--color-text-tertiary)">No run events recorded for this die.</div>';
+      return;
+    }
+    rows.forEach(function(r) {
+      var el = document.createElement("div");
+      el.className = "history-item";
+      el.innerHTML =
+        '<span class="history-alpha">' + r.order + '</span>' +
+        '<span class="history-line">'  + r.line   + '</span>' +
+        '<span class="history-footage">' + r.footage + '</span>' +
+        '<span class="history-date">' + r.date + '</span>' +
+        '<span class="history-op">'  + r.op    + '</span>';
+      list.appendChild(el);
+    });
+  }
+
+  function renderReplaceHistory(alpha) {
+    var list = document.getElementById("replace-history-list");
+    list.innerHTML = "";
+    var rows = REPLACE_HISTORY[alpha] || [];
+    if (rows.length === 0) {
+      list.innerHTML = '<div style="padding:20px 22px;font-size:14px;color:var(--color-text-tertiary)">No replacement events recorded.</div>';
+      return;
+    }
+    rows.forEach(function(r) {
+      var el = document.createElement("div");
+      el.className = "replace-item";
+      el.innerHTML = '<div class="replace-item-head">' + r.head + '</div><div class="replace-item-sub">' + r.sub + '</div>';
+      list.appendChild(el);
+    });
+  }
+
+  function selectDie(alpha) {
+    selectedAlpha = alpha;
+    renderList();
+    renderDetail(alpha);
+  }
+
+  /* ── Tab filter ── */
+  window.filterTab = function(tab, el) {
+    currentFilter = tab;
+    document.querySelectorAll(".filter-tab").forEach(function(t){ t.classList.remove("active"); });
+    el.classList.add("active");
+    renderList();
+  };
+
+  /* ── Line filter ── */
+  window.filterLine = function(line, el) {
+    currentLineFilter = line;
+    document.querySelectorAll(".line-pill").forEach(function(p){ p.classList.remove("active"); });
+    el.classList.add("active");
+    renderList();
+  };
+
+  /* ── History tabs ── */
+  window.switchHistory = function(tab, el) {
+    currentHistTab = tab;
+    document.querySelectorAll(".history-tab").forEach(function(t){ t.classList.remove("active"); });
+    el.classList.add("active");
+    document.querySelectorAll(".history-panel").forEach(function(p){ p.classList.remove("active"); });
+    document.getElementById(tab === "runs" ? "hist-runs" : "hist-replacements").classList.add("active");
+  };
+
+  /* ── Modals ── */
+  window.openModal = function(id) {
+    document.getElementById(id).classList.add("open");
+  };
+  window.closeModal = function(id) {
+    document.getElementById(id).classList.remove("open");
+  };
+
+  /* close on backdrop click */
+  document.querySelectorAll(".modal-overlay").forEach(function(ov){
+    ov.addEventListener("click", function(e){ if (e.target === ov) ov.classList.remove("open"); });
+  });
+
+  /* Disposition toggle in reset modal */
+  window.selectDisposition = function(val) {
+    document.getElementById("disp-recond").className = "form-toggle-btn" + (val === "recond" ? " active recond" : "");
+    document.getElementById("disp-new").className    = "form-toggle-btn" + (val === "new"    ? " active new"   : "");
+    document.getElementById("recond-life-row").style.display = (val === "recond") ? "grid" : "none";
+  };
+
+  /* ── Clock ── */
+  function updateClock() {
+    var now = new Date();
+    var h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+    var ampm = h < 12 ? "AM" : "PM";
+    var h12 = h % 12 || 12;
+    var pad = function(n){ return String(n).padStart(2,"0"); };
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var d = document.getElementById("date-str");
+    var c = document.getElementById("clock-str");
+    if (d) d.textContent = months[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();
+    if (c) c.textContent = pad(h12) + ":" + pad(m) + " " + ampm;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  /* ── Init ── */
+  renderList();
+  renderDetail(selectedAlpha);
+
+})();
+</script>
+<script src="../../MVP-1/Mockups/flat-wire-topbar.js"></script>
+<script src="../../MVP-1/Mockups/flat-wire-fit.js" data-fit="fill"></script>
+</body>
+</html>
