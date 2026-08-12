@@ -1,6 +1,14 @@
 # Implementation Prompt — Flat Wire Check-in Feature (Sprint S3)
 
+**Project:** Flat Wire Mill Implementation
+**Last Updated:** August 13, 2026 *(header block only — the body is April 30, 2026 and unrevised)*
+**Status:** Draft — **superseded in five known respects; do not implement from it unedited**
+
 **Hand this prompt to an agent or developer to implement the check-in feature.**
+
+> **⚠ This document is April-dated and carries known defects, catalogued as `REVIEW.md` Tier 5 (#39–#44).** Read them before using it: it hard-codes the retired **`--fw-*`** design tokens where the mockups use **`--color-*`** semantic tokens (**G18**); it targets the **retired** grid + progress-ring check-in layout rather than the approved 6-step tab wizard now at `dashboard_2_rod_checkin.html`; it tells the reader to *"copy patterns from `checkin-precheckin`"*, a library `00-foundations.md` §0.2 **explicitly forbids as a reference**; it uses bare `ControllerBase` with no `[Authorize]` where the standard is `UAController` + `[Authorize]`; and its stub fixtures disagree with the DB seed. **Its "Sprint S3" framing is also superseded** — the plan is 14 phases, and check-in is Phase 4 (`FW-061`, `FW-082`).
+>
+> *This header block was added 13 Aug 2026. The file previously carried none at all, which is why none of the above was visible at the top of a document written to be handed to someone.*
 
 ---
 

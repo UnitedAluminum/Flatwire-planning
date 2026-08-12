@@ -1,8 +1,20 @@
 # Tools
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 6, 2026
+**Last Updated:** August 13, 2026
 **Status:** Working scripts, committed so they stop being re-derived
+
+---
+
+**Three scripts.** Two render a client deliverable from markdown; one is a check that fails
+the build. All three take the same position — **the markdown is the source and the generated
+file is output** — so never edit a `.docx` or `.xlsx` in this repository.
+
+| Script | Reads | Writes | Fails on |
+|---|---|---|---|
+| [`build_docx.py`](build_docx.py) | a spec in `MVP-1/RequirementDocuments/` | a branded `.docx` in `MVP-1/SRS/` | — |
+| [`build_questions_xlsx.py`](build_questions_xlsx.py) | both `Analysis/` question registers + `ClientQuestionsContent.md` | `MVP-1/SRS/FlatWire_ClientQuestions.xlsx` | coverage · drift · team names · leakage |
+| [`build_coverage_matrix.py`](build_coverage_matrix.py) | `02-SRS.md` + `06-TestPlanAndTestCases.md` | nothing — reports | a requirement with no case and no §10.4 entry |
 
 ---
 
@@ -92,3 +104,88 @@ assert txt.count('`') == 0 and txt.count('**') == 0 and txt.count('~~') == 0   #
 print(len(d.tables), 'tables')          # must match the source
 print(txt.count('☐'), 'checkboxes')     # sign-off sheet intact
 ```
+
+---
+
+## `build_questions_xlsx.py` — the client questions workbook
+
+```bash
+python MVP-1/DevelopmentPlan/Tools/build_questions_xlsx.py            # → MVP-1/SRS/FlatWire_ClientQuestions.xlsx
+python MVP-1/DevelopmentPlan/Tools/build_questions_xlsx.py other.xlsx
+```
+
+**Requires** `openpyxl` (tested against 3.1.5).
+
+United Aluminum owes answers on the open questions and confirmation of the decided ones.
+Both registers under `Analysis/` are written for the build team and are dense with table
+names, constraint names, endpoints and requirement identifiers — **none of which may appear
+in a client deliverable**. So the workbook is merged from two sources:
+
+- **Structure** — question number, priority, scope, owner, decided date — is parsed from the
+  registers' index tables, so it cannot drift from them.
+- **Prose** — the plain-language question, background, options, recommendation — comes from
+  [`../../RequirementDocuments/ClientQuestionsContent.md`](../../RequirementDocuments/ClientQuestionsContent.md),
+  which is the only place it is authored.
+
+### Four guards, all fatal
+
+| Guard | Catches |
+|---|---|
+| **Coverage** | A question in a register with no content entry, or the reverse |
+| **Drift** | The content entry's recorded register title no longer matches the register — i.e. a renumbering silently moved prose onto the wrong question |
+| **Team names** | A Nagarro-side name left in *Needs input from*, which names client stakeholders only |
+| **Leakage** | Any file name, path, requirement/gap/test id, table name, endpoint, code span or machine tag path reaching a cell of the built workbook |
+
+> **`Recommended answer` and `Why` are optional, and only for one reason.** A question may
+> deliberately go to the client with no vendor answer attached — `Q10` (footage-to-weight) is
+> the first, because the dimensional basis is a measurement UA must answer from its own
+> practice. `Why` exists to justify a recommendation, so a question carrying none has nothing
+> for it to say (`Q4`, skid labelling). **Do not add either to `REQUIRED_OPEN`.**
+
+Same gotcha as `build_docx.py`: a `~$…` lock file in `MVP-1/SRS/` means the workbook is open
+in Excel and the write will fail.
+
+---
+
+## `build_coverage_matrix.py` — does every requirement reach a test case?
+
+```bash
+python MVP-1/DevelopmentPlan/Tools/build_coverage_matrix.py           # check; exit 1 on a hole
+python MVP-1/DevelopmentPlan/Tools/build_coverage_matrix.py --emit    # also print the per-FR table
+```
+
+**Requires** nothing — standard library only. **Run it after editing either `02-SRS.md` or
+`06-TestPlanAndTestCases.md`.**
+
+### Why it exists
+
+`06-TestPlanAndTestCases.md` §10.1 used to map SRS **section ranges** to TC ranges
+(`FR-100 – FR-120 → TC-130 – TC-147`) and a coverage percentage was concluded from it. A
+range mapping cannot show that an *individual* requirement was tested. When coverage was
+first measured per requirement on 13 Aug 2026, **41 had no case at all — 32 of them `Must`**,
+and the published figure was 96.7 %. Nothing contradicted it because the figure came from
+the range table, not from the cases. Gap **`G25`**.
+
+### What counts as covered, in precedence order
+
+1. **Direct** — a §5 case names the requirement in its *FR / Source* column. **That column,
+   not the whole row**: a requirement mentioned in an expected result is discussed, not proven.
+2. **Indirect** — the SRS non-functional table names both the requirement and a `TC-###`.
+   `FR-018` (recording cadence) is proven this way by `TC-601`–`TC-603`.
+3. **Declared** — §10.4 records it as knowingly not covered, with a reason. **A declared hole
+   is a decision; an undeclared one is an accident**, and only the second kind fails the script.
+
+### Scope
+
+`02-SRS.md` carries MVP-1 requirements only — §5.10, §5.18, §5.19, §5.23 and §5.24 left with
+the 11 Aug 2026 MVP-2 split and §5.21/§5.22 were withdrawn with the DB13/DB14 descope — so
+those rows are simply absent and need no range filter. Requirements struck through as
+`~~**FR-###**~~` are individually withdrawn and are not counted; **`FR-111` is one, and
+counting it is how a false positive enters.**
+
+> **Known limitation — do not "fix" by guessing.** `05-SprintPlanAndBacklog.md` §11
+> (*"every `FR-###` reaches a story"*) has the same range granularity the old §10.1 had, but
+> unlike the test plan it holds **no per-requirement data to check against** — stories are
+> assigned to ranges, never to single requirements. Making it per-requirement means authoring
+> ~263 story assignments, which is a decision for the backlog owner. The script reports it as
+> an advisory count and it **never affects the exit status**.

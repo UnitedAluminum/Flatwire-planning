@@ -1,0 +1,13 @@
+# Python — the Tools/ scripts are committed, their build artifacts are not
+__pycache__/
+*.py[cod]
+
+# Word / Excel lock and recovery files. CLAUDE.md already tells readers to ignore these;
+# this stops them being committed in the first place.
+~$*
+~WRL*.tmp
+
+# Generated client deliverables are DELIBERATELY NOT LISTED HERE.
+# MVP-1/SRS/*.docx and *.xlsx are output, but they are the artifacts the client is sent
+# and signed off against, so they are committed on purpose. The rule is "edit the markdown
+# source and re-render", not "do not track the render".

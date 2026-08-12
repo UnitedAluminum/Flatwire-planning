@@ -2,7 +2,7 @@
 
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Change plan (internal working document)
-**Last Updated:** August 1, 2026
+**Last Updated:** August 13, 2026
 **Status:** Draft for approval — no edits made yet
 **Affects:** Dashboard 2A (Rod Pre-Check-In) · ~~Dashboard 4 (Log Weld Event)~~ *(retired 1 Aug 2026)* · Dashboard 3 family
 
@@ -190,8 +190,8 @@ For `MVP-1/DevelopmentPlan/ShopfloorPlan/back-matter.md`:
 
 | Gap | Description |
 |---|---|
-| ~~**G25**~~ | ~~**No weld-history view exists.**~~ **WITHDRAWN 1 Aug 2026 — built rather than deferred.** Dashboard 2A now carries a read-only **Welds this run** dialog over `GET /run/{runId}/weldevents`. Do not register G25; the next free gap ID remains **G25**. |
-| **G26** | **The merged weld write straddles two phases.** `POST /staging/rod/mark-welded` sits in S3 / phase 4 (with Dashboard 2A) and `POST /weldevent` in S4 / phase 6 (with Dashboard 4). Merging them means phase 4 ships a payoff-card button whose target lands in phase 6. See §6. |
+| ~~**G25**~~ | ~~**No weld-history view exists.**~~ **WITHDRAWN 1 Aug 2026 — built rather than deferred.** Dashboard 2A now carries a read-only **Welds this run** dialog over `GET /run/{runId}/weldevents`. ~~Do not register G25; the next free gap ID remains **G25**.~~ **The ID was reused on 13 Aug 2026** for the requirement-coverage gap — see [`back-matter.md`](./ShopfloorPlan/back-matter.md). This weld-history gap was withdrawn before it was ever registered, so nothing cites the old G25; if you find a citation dated on or before 12 Aug 2026, it means *this* row, not the coverage gap. |
+| **G26** | **The merged weld write straddles two phases.** `POST /staging/rod/mark-welded` sits in S3 / phase 4 (with Dashboard 2A) and `POST /weldevent` in S4 / phase 6 (with Dashboard 4). Merging them means phase 4 ships a payoff-card button whose target lands in phase 6. See §6. **Registered 13 Aug 2026** — twelve days late; `phase-06:45` had been citing it since 1 Aug against no register entry. |
 
 ---
 
@@ -229,7 +229,7 @@ Both were reissued for client review on 1 Aug 2026, so each needs a **version bu
 | S4 | `MVP-1/DevelopmentPlan/APIContracts.md` | §L1078 `POST /staging/rod/mark-welded` marked retired with its rationale; L1530 `/weldevent` amended to set `IsWelded`/`WeldedAt`/`WeldedBy`; sprint tables L2132–2133, permission matrix L2157/L2165, L2193. *(April-dated doc with known Tier 1 bugs — reconcile up to the roadmap, do not maintain in parallel.)* |
 | ~~S5~~ | `MVP-1/DevelopmentPlan/ShopfloorPlan/phase-04-rod-checkin-plc-config.md` | **DONE 1 Aug 2026.** The layout bullet now reads *three body regions, not four*, with Mark as Welded on the staged card and Welds this run on the active card; navigation reads → Dashboard 2A on success; the Dashboard-4 link is gone. Two build rules were added that this row did not anticipate: the outgoing/incoming pair resolves from the **running** bay rather than the activated card, and bay-card handlers must be bound per render because `actionsFor()` regenerates them. *(Was: L44 weld-readiness strip / Mark as Welded, L51 navigation → Dashboard 4, L54 endpoint list, L74 `PayoffStateChanged.isWelded`.)* |
 | S6 | `MVP-1/DevelopmentPlan/ShopfloorPlan/phase-06-in-run-production-events.md` | L26 and L34 — Dashboard 4 becomes a dialog component; add the merged `RodStaging` write; add the DB2A entry points. |
-| S7 | `MVP-1/DevelopmentPlan/ShopfloorPlan/back-matter.md` | Add G25 and G26; adjust the FW-063 line (L218) for the dialog. |
+| ~~S7~~ | `MVP-1/DevelopmentPlan/ShopfloorPlan/back-matter.md` | **DONE 13 Aug 2026 — this step was the one that did not get executed.** G25 was withdrawn (correctly) but **G26 was never added**, so `phase-06:45` cited a gap ID that resolved to nothing for twelve days. Both are now in the register: **G26** as written here, and **G25** reused for the requirement-coverage gap. *(Was: add G25 and G26; adjust the FW-063 line (L218) for the dialog.)* |
 | S8 | `MVP-1/ProjectPlan/05-SprintPlanAndBacklog.md` (L369) and `MVP-1/DevelopmentPlan/FlatWireJiraStories.md` (L782, L796 FW-063, L1419) | FW-063 acceptance criteria: dialog rather than screen, three entry points, merged write. |
 | S9 | `MVP-1/ProjectPlan/06-TestPlanAndTestCases.md` | **TC-068** ("Mark-as-Welded does not switch bays") rewritten against the weld event — the *rule* is unchanged and still needs a test, only its trigger moves. Add cases for the card button's enablement matrix and for the post-staging offer's trigger and dismissal. |
 | S10 | `Analysis/FlatWireShopfloorDashboards.md` | **Line anchors removed 11 Aug 2026 — they no longer resolve** (the file gained an authority banner and per-section pointers). Use section names: § *Dashboard 2A* (bay actions, the *Mark as Welded — WLD010* block, the role table), § *Overview → Dashboard Inventory* (screen inventory), § *Dashboard 4* (retired), § *Screen Navigation Map*. **Note this file is no longer a requirements source** — the owning specs are [`RodPreCheckin.md`](../RequirementDocuments/RodPreCheckin.md) and [`WeldEvent.md`](../RequirementDocuments/WeldEvent.md). |

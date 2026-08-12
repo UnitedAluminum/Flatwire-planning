@@ -6,8 +6,13 @@
 ---
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-07-30
-**Status:** Ready to build
+**Last Updated:** 2026-08-13
+**Status:** **Roll-up index — not the build spec.** The execution-ready specs are [1A](./phase-01a-angular-foundation.md) · [1B](./phase-01b-backend-foundation.md) · [1C](./phase-01c-database-foundation.md), and **they win on any disagreement with this file**
+
+> ### ⚠ Read the layer specs, not this file, to build Phase 1
+> This document is the **roll-up** — objective, exit condition, effort and the cross-layer picture. The three layer specs carry the deliverables, the acceptance criteria and **the Phase-1-relevant fixes from [`REVIEW.md`](../REVIEW.md)**, which this file predates and does not incorporate. Where the two differ, **1A / 1B / 1C are authoritative.**
+>
+> *Marked 13 Aug 2026. Until then this file and the three layer specs were all `Status: Ready to build`, with nothing saying which to follow — 107 lines of description maintained in parallel with 257 lines that supersede them, on the phase carrying the 14 Aug gate.*
 **Layer:** Angular + .NET + SQL Server (the only layer-organised phase)
 **Owner:** **FE** (1A) · **BE + RT** (1B) · **DB** (1C) — *named owners TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
 **Effort:** **1,027 h** (128.4 d) roll-up — 1A **370 h** · 1B **442 h** · 1C **215 h** · **Window:** W0 (to Aug 14, 12 working days = 96 h/person)

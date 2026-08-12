@@ -75,7 +75,7 @@ Phase 14 ──> requires all critical-path phases
 | W3 | Aug 31–Sep 4 | 5 | 40 h | **3** Dashboard 1 live *(Phase 2 left MVP-1)* | **95** | **2.4** | Line board | FW-060 |
 | W4 | Sep 8–11 | **4** | **32 h** | **4** Rod Check-in **+ Pre-Check-in (DB2A)** · **5** Active Run + trace | 409 | **12.8** | PLC push + INFLAT; **`RodStaging` + payoff staging + `FL1PO`**; live gauge/width *(DB13/14 descoped 4 Aug — −67 h)* | FW-061/062/081/082 |
 | W5 | Sep 14–18 | 5 | 40 h | **6** In-run events · **7** WIP/Checkout · **8** FL2 spool (start) | 562 | **14.1** | Weld/die/SPC/roll/pause; rejection/checkout; spool check-in | FW-063/065/067/070/071/072/073, FW-064 |
-| W6 | Sep 21–25 | 5 | 40 h | **8** (finish) · **9** Coil completion · **10** FL3 hybrid · **11** Reports/Certification *(DB10 is MVP-2)* | **517** | **12.9** | Historical profile; coil/label/skid; hybrid; shift + reports | FW-066/100, FW-122, FW-069/090–095 |
+| W6 | Sep 21–25 | 5 | 40 h | **8** (finish) · **9** Coil completion · **10** FL3 hybrid · **11** Reports/Certification *(DB10 is MVP-2)* | **517** | **12.9** | Historical profile; coil/label/skid; hybrid; reports *(shift summary is MVP-2)* | FW-066/100, FW-122, FW-090–095 |
 | W7 | Sep 28–30 | **3** | **24 h** | **12** Yield/Cost/Scrap · **13** Admin *(Die Mgmt is MVP-2)* · **14** Integration/UAT | **587** | **24.5** | Yield/cost/scrap*; admin; 3-route E2E + UAT/sign-off | FW-101/102*/110*, FW-120–123 |
 
 \* Medium/Low priority — rungs 1–4 of the descope ladder; see the model §5 for the full ordered ladder, what each rung costs the business, and the latest date each call can be made.
@@ -157,8 +157,10 @@ Consolidated review findings, prioritised. **Critical** items should be resolved
 | ~~**G22**~~ | ~~**The staging order-membership rule is knowingly wrong until Q73 closes.**~~ **✅ Resolved 6 Aug 2026 — `Q73` answered.** The consumption sequence is a three-tier rule: **full coils → partials → multi-order coils last** when welding is involved, with operators working a **pick list in planned order** and no jumping a multi-order coil to the head of the line; the validation applies at **pre-check-in and check-in**, and it is **MVP1**. The replacement for the wrong rule is now writable: `planning_routings` returns **orders (plural)**, *"belongs to the established order"* becomes membership in an **ordered set**, `RodStaging.OrderId` means **the order this staging is being consumed for**, and the ordering constraint above is enforced on top. **One residual, and it is a branch rather than the rule: `Q73`** — whether multi-order-last also holds when **no welding** is involved. Both readings are on the 6 Aug recording. Build the welding branch now; leave the no-weld branch behind the answer. *(Original text retained below for the audit trail.)* **The staging order-membership rule was knowingly wrong until Q73 closed.** The client confirmed (Jul 30 2026, **Q70**) that a single rod may carry **more than one production order** — finishing order 1 on a 7,000 lb A-rod and starting order 2 on the remainder. Every artifact validates the opposite: staging and check-in refuse any rod whose order differs from the established one, and [RodPreCheckin.md](../../RequirementDocuments/RodPreCheckin.md) records *"continuous feed cannot cross an order boundary"* as a consequence to confirm. Both are wrong for the **same-rod successor** | Data / Contract | **High** | The line stops mid-bundle at an order boundary that the material does not have; or the rule is relaxed without a sequencing rule and rods are consumed against the wrong order | ~~Do **not** edit the rule yet — the correct replacement depends on the sequencing answer (**Q73**, Srikanth) and on whether the case is **MVP2**.~~ **`Q73` landed 6 Aug 2026; the rule is now editable** — see the resolution at the head of this row. `planning_routings` returns **orders (plural)**, membership becomes an **ordered set**, and `RodStaging.OrderId` means *the order this staging is being consumed for* | ✅ **Resolved 6 Aug 2026** — raised Aug 1 2026 from the [30 Jul client call](../../../BaseDocuments/ClientCall_2026-07-30_SyncPlan.md), closed by the [6 Aug client call](../../../BaseDocuments/ClientCall_2026-08-06_SyncPlan.md). Residual branch tracked as **Q73**, not here |
 | **G23** | **The 1280×1024 shopfloor canvas is an acceptance criterion nobody has confirmed.** All 25+ mockups are authored at 1280×1024, `flat-wire-fit.js` measures and calibrates its 14 px text floor against that box, and [phase-01a](./phase-01a-angular-foundation.md) pins *"fixed 1280×1024 shopfloor canvas"* as acceptance. Tim expects the stocked 1280×1024 panels but will verify with Charles and Juan; we owe him the required **1920×1080** by e-mail (**Q26**) | UI / Design | **High** | 1920×1080 is **1.5× width, 1.05× height** — a re-layout of every screen, not a rescale. An answer arriving after Phase 1 closes lands against a **14 Aug gate** | Send the requirement now; do **not** re-author anything until answered. `data-fit="fill"` already widens to the window, so a wider panel is the cheap direction and the height barely moves | Open — raised Aug 1 2026 |
 | **G24** | **Supervisor approvals are decided but unpersisted.** Three decisions require supervisor authorisation — **Q74** mid-run checkout, **Q75** partial-run disposition, and now **Q69** welded pre-check-out — and `RodCheckout` has **no `ApprovedBy`, `ApprovedAt` or `OverrideReason` columns at all**. `RodStaging` has the credential trio; the checkout table does not | Data / Schema | **High** | Every supervisor-gated checkout is unauditable: the system enforces a gate at the UI and stores no evidence that it was passed, by whom, or why | Add `ApprovedBy` / `ApprovedAt` / `OverrideReason` to `RodCheckout` with a constraint tying them (plus `NewRodStatus='HOLD'`) to the welded Mode P case and to Mode B. Settle the **PIN validation source** once for all overrides (**OI-38**) | Open — raised Aug 1 2026 while applying Q69 |
-| **G27** | **The weld screen's rod queue and traceability chain have no host.** Dashboard 4 was **retired 1 Aug 2026** (mockup deleted; git history at `2a0426b`) and the weld moved to Dashboard 2A's *Mark as welded* dialog, which captures every field of the `WeldEvent` row. Two things did **not** move: the **re-sequenceable *Rods In Queue*** accordion (drag + undo) and the **traceability chain** strip — completed → outgoing (remaining footage, WELD NOW chip) → incoming (staged) → future rod. The latter is `FR-175`/`FR-484`-adjacent requirement text with no screen behind it. Either rehome them on DB2A, fold them into the *Welds this run* dialog, or withdraw `FR-175`. **Affects phase 6 / FW-063**<br><br>**Half-closed 1 Aug 2026 — read the distinction before quoting this gap.** DB2A's traveler queue is now **headed "Rods In Queue"**, which is the same *name* as the retired accordion but **not the same control**: it is a read-only status table with no drag and no undo. The name collision is a trap — the re-sequencing capability is still homeless, and so is the traceability chain. `FR-175` is unchanged. | Medium |
-| **G28** | **FL2 may have no way to record a weld.** The *Log Weld Event* action was removed from **all four** active-run monitors on 1 Aug 2026 and the weld now lives only at the pre-check-in station — **which FL2 does not have** (`PCI002` excludes FL2 from staging). Two artifacts disagree on whether this matters: `dashboard_10_shift_summary.html` renders **FL2 weld events** (`SP-00029 → SP-00030`, induction, with an "FL2 welds" tile), while [WeldEvent.md](../../RequirementDocuments/WeldEvent.md) §6 says a coil completing at FL2 **inherits the spool's** weld markers — i.e. the welds happened upstream on FL1. If the first is right, FL2 has a functional hole; if the second is right, the shift-summary fixture is wrong and should be corrected. **This closed `WeldEventPopupPlan` Q-W4 by decision rather than by answer.** Blocks nothing until FL2 build (phase 8) | **High** |
+| **G25** | **Requirement coverage was asserted from a range table, and 41 requirements had no test case.** `06-TestPlanAndTestCases.md` §10.1 mapped SRS **section ranges** to TC ranges (`FR-100 – FR-120 → TC-130 – TC-147`) and the coverage percentage was concluded from that mapping. A range mapping cannot show that an *individual* requirement was tested. Measured per requirement on 13 Aug 2026: **41 MVP-1 requirements had no case naming them, 32 of them `Must`** — against a published figure of **96.7 %**. The denominator was wrong too: **363** was the pre-split MVP-1 + MVP-2 total, where `02-SRS.md` now carries **263**. §10.2 (*every case names its requirement*) was true and machine-verified, and is the **opposite** direction — a suite can name a requirement on every case and still leave requirements untested. **`G25` is a reused ID**: it was allocated to a weld-history gap on 1 Aug 2026 and withdrawn the same day before use, with `WeldEventPopupPlan.md` recording *"the next free gap ID remains G25"* | Traceability / QA | **High** | UAT sign-off (**QA5**, `FW-123`) and the Phase-1 gate suites rest on this matrix. A coverage claim derived from the section headings rather than the cases cannot fail, so it would have been quoted intact to the client at sign-off | Delivered 13 Aug 2026: [`build_coverage_matrix.py`](../Tools/build_coverage_matrix.py) measures coverage per requirement and **exits non-zero** on any requirement with neither a case nor a §10.4 entry; §10.1 is demoted to a navigation aid; the 41 are itemised in new §10.4.2 with what closes each; §10.5 is generated, not asserted. **The 41 cases are still owed** — this gap tracks writing them. Two need only a citation added to an existing case (`FR-300` on `TC-377`, `FR-226` on `TC-284`); one is blocked on `G27`; one is not test-case shaped (`FR-161`, architectural) | Open — the guard is in place and the number is honest, but **31 of the 41 still need a case authored**. Raised and part-resolved 13 Aug 2026 |
+| **G26** | **The merged weld write straddles two phases.** Dashboard 2A's weld control ships in **phase 4**, and the endpoint it calls — `POST /weldevent` — is a **phase 6** deliverable. `POST /staging/rod/mark-welded` was retired on 1 Aug 2026 when the two writes were merged, so there is no phase-4-local endpoint left for the button to call. [`phase-06`](./phase-06-in-run-production-events.md) already states the consequence: *"this phase owns **both** weld entry points — a phase-4 screen depending on a phase-6 endpoint (**G26**); phase 4 ships it against a stub."* | Sequencing | Medium | Phase 4 cannot demonstrate a working weld at its own gate — the button is present and its target does not exist yet. Manageable while it is known; **it is a silent hole if the stub is mistaken for the real write** at the phase-4 acceptance review | Keep the merged write (splitting it back is worse — two endpoints composing one `WeldEvent` row is what the merge removed). **Phase 4 ships against a stub and its acceptance says so explicitly**, and phase 6 de-stubs. Verify at the phase-6 exit, not the phase-4 exit | Open — **raised 1 Aug 2026 and never entered in this register until 13 Aug 2026.** `WeldEventPopupPlan.md` §5.3 step **S7** carried the instruction *"Add G25 and G26"*; only the G25 withdrawal was executed, so `phase-06:45` cited a gap ID that resolved to nothing for twelve days |
+| **G27** | **The weld screen's rod queue and traceability chain have no host.** Dashboard 4 was **retired 1 Aug 2026** (mockup deleted; git history at `2a0426b`) and the weld moved to Dashboard 2A's *Mark as welded* dialog, which captures every field of the `WeldEvent` row. Two things did **not** move: the **re-sequenceable *Rods In Queue*** accordion (drag + undo) and the **traceability chain** strip — completed → outgoing (remaining footage, WELD NOW chip) → incoming (staged) → future rod. The latter is `FR-175`/`FR-484`-adjacent requirement text with no screen behind it.<br><br>**Half-closed 1 Aug 2026 — read the distinction before quoting this gap.** DB2A's traveler queue is now **headed "Rods In Queue"**, which is the same *name* as the retired accordion but **not the same control**: it is a read-only status table with no drag and no undo. The name collision is a trap — the re-sequencing capability is still homeless, and so is the traceability chain. `FR-175` is unchanged. | UI / Requirements | Medium | `FR-175` is requirement text with no screen behind it, so it can be neither built nor tested — it is one of the 41 requirements with no test case (`06-TestPlanAndTestCases.md` §10.4.2, gap **`G25`**), and the only one whose reason is a missing host rather than an unwritten case. The re-sequencing capability disappears silently: nothing errors, the queue simply cannot be reordered | Pick one of three and the test case follows the decision: **rehome** both controls on DB2A · **fold** them into the *Welds this run* dialog · **withdraw `FR-175`**. Do not resolve by renaming — DB2A's read-only table already carries the retired accordion's name, which is what makes this look closed when it is not. **Affects phase 6 / FW-063** | Open — raised 1 Aug 2026 with the Dashboard 4 retirement; half-closed the same day. **Row completed 13 Aug 2026** — it had been truncated at the Priority column since it was written, so it carried no impact, resolution or status |
+| **G28** | **FL2 may have no way to record a weld.** The *Log Weld Event* action was removed from **all four** active-run monitors on 1 Aug 2026 and the weld now lives only at the pre-check-in station — **which FL2 does not have** (`PCI002` excludes FL2 from staging). Two artifacts disagree on whether this matters: `dashboard_10_shift_summary.html` renders **FL2 weld events** (`SP-00029 → SP-00030`, induction, with an "FL2 welds" tile), while [WeldEvent.md](../../RequirementDocuments/WeldEvent.md) §6 says a coil completing at FL2 **inherits the spool's** weld markers — i.e. the welds happened upstream on FL1. If the first is right, FL2 has a functional hole; if the second is right, the shift-summary fixture is wrong and should be corrected. **This closed `WeldEventPopupPlan` Q-W4 by decision rather than by answer** | Requirements / UI | **High** | **Exactly one of the two artifacts is wrong and nobody has said which.** If FL2 does weld spool-to-spool, it has no capture path at all and the genealogy chain breaks at the FL2 boundary — which is the chain the **welding-wire customer certificates** are produced from (`CoilTraceability`, `NFR012`). If it does not, a client-facing mockup is showing weld events that can never occur, and the shift-summary fixture teaches operators to expect them | **Ask whether FL2 ever welds spool-to-spool** — one question, and it is the client's to answer, not ours. Yes → FL2 needs a weld entry point, and the natural host is the DB3 FL2 action bar the 1 Aug pass stripped it from. No → correct the `dashboard_10_shift_summary.html` fixture and state the inheritance rule in `WeldEvent.md` §6 as normative rather than descriptive. **Do not resolve by deleting the fixture** — that removes the evidence of the disagreement without answering it | Open — raised 1 Aug 2026 from the Dashboard 4 retirement (`Q-W4`). **Blocks nothing until the FL2 build (phase 8)**, which is where it becomes urgent. **Row completed 13 Aug 2026** — it had been truncated at the Priority column since it was written, so a `High` gap carried no impact, resolution or status |
 
 ## Future enhancements (Phase 2 / post-go-live)
 - EDI rod receiving + Angular receiving screen (deferred from Phase 1).
@@ -172,96 +174,112 @@ Consolidated review findings, prioritised. **Critical** items should be resolved
 
 ## Appendix A — `FlatWire.API` endpoint → phase map
 
-| Endpoint | Phase |
-|---|---|
-| `GET /lines/status` + `FlatWireHub` | 3 |
-| `GET/POST/PUT /passschedule`, `PATCH …/status`, `POST /passschedule/generate` | 2 |
-| `GET /rod/{alpha}`, `POST /rod` | upstream (rod validated at check-in in 4) |
-| `POST /checkin/rod` | 4 |
-| `POST /checkin/spool`, `GET /run/{id}/gaugetrace` | 8 |
-| `GET /run/active`, `POST /run/{id}/pause`,`/resume` | 5, 6 |
-| `POST /spc` | 4 (pre-run), 6 |
-| `POST /weldevent`, `/diechange`, `/rolloverride` | 6 |
-| `POST /wipreject`, `/checkout` | 7 |
-| `POST /coil/complete`, `GET /coil/{alpha}/label` | 9 |
-| `GET /shiftsummary` | 11 |
+**Scope** marks what left MVP-1 on 11 Aug 2026. An MVP-2 endpoint keeps its phase number — the phase is where it *would* be built, not a claim that MVP-1 builds it.
+
+| Endpoint | Phase | Scope |
+|---|---|---|
+| `GET /lines/status` + `FlatWireHub` | 3 | MVP-1 |
+| ~~`GET/POST/PUT /passschedule`, `PATCH …/status`, `POST /passschedule/generate`~~ | 2 | **MVP-2** — the pass schedule is owned by a separate track. MVP-1 only **reads** a schedule at check-in to build the PLC push payload; see `phase-04`, *The pass-schedule read contract* |
+| `GET /rod/{alpha}`, `POST /rod` | upstream (rod validated at check-in in 4) | upstream |
+| `POST /checkin/rod` | 4 | MVP-1 |
+| `POST /checkin/spool`, `GET /run/{id}/gaugetrace` | 8 | MVP-1 |
+| `GET /run/active`, `POST /run/{id}/pause`,`/resume` | 5, 6 | MVP-1 |
+| `POST /spc` | 4 (pre-run), 6 | MVP-1 |
+| `POST /weldevent`, `/diechange`, `/rolloverride` | 6 | MVP-1 |
+| `GET /run/{runId}/weldevents` | 4 *(stub)* / 6 *(de-stub)* | MVP-1 — see **G26** |
+| `POST /wipreject`, `/checkout` | 7 | MVP-1 |
+| `POST /coil/complete`, `GET /coil/{alpha}/label` | 9 | MVP-1 — **returned 11 Aug 2026** with Phase 9 |
+| ~~`GET /shiftsummary`~~ | 11 | **MVP-2** — DB10 Supervisor Shift Summary |
 
 ## Appendix B — Dashboard → phase map
 
-| Dashboard | Phase |
-|---|---|
-| 1 Line Status Overview | 3 |
-| 2 Rod Check-in (FL1/FL3) | 4 |
-| 3 Active Run Monitor (FL1/FL3) | 5 |
-| 3 (FL2 variant) | 8 |
-| 4 Weld Event | 6 |
-| 5A FL2 Spool Queue | 8 |
-| 5 FL2 Spool Check-in | 8 |
-| 6 SPC Checkpoint | 4 (pre-run), 6 |
-| 7 Output Coil Completion / 7b Packing | 9 |
-| 8 WIP Rejection | 7 |
-| 9 / 9A Pass Schedule Mgmt / List | 2 |
-| 10 Shift Summary | 11 |
-| 11 Roll Adjust | 6 (FL1/FL2), 10 (FL3) |
-| 12 Rod Checkout (A/B) | 7 |
-| DC Die Change / Die Management | 6 / 13 |
+| Dashboard | Phase | Scope |
+|---|---|---|
+| 1 Line Status Overview | 3 | MVP-1 |
+| 2 Rod Check-in (FL1/FL3) | 4 | MVP-1 |
+| 2A Rod Pre-Check-in | 4 | MVP-1 |
+| 3 Active Run Monitor (FL1/FL3) | 5 | MVP-1 |
+| 3 (FL2 variant) | 8 | MVP-1 |
+| ~~4 Weld Event~~ | ~~6~~ | **RETIRED 1 Aug 2026** — the mockup was deleted (git history at `2a0426b`) and weld capture moved to Dashboard 2A's dialog. `FW-063` still delivers the weld event; it has no screen of its own. Two things did not move — see **G27** |
+| 5A FL2 Spool Queue | 8 | MVP-1 |
+| 5 FL2 Spool Check-in | 8 | MVP-1 |
+| 6 SPC Checkpoint | 4 (pre-run), 6 | MVP-1 |
+| 7 Output Coil Completion / 7b Packing | 9 | MVP-1 — **returned 11 Aug 2026**; Phase 9 is wholly MVP-1 |
+| 8 WIP Rejection | 7 | MVP-1 |
+| ~~9 / 9A Pass Schedule Mgmt / List~~ | 2 | **MVP-2** |
+| ~~10 Shift Summary~~ | 11 | **MVP-2** |
+| 11 Roll Adjust | 6 (FL1/FL2), 10 (FL3) | MVP-1 |
+| 12 Rod Checkout (A/B) | 7 | MVP-1 |
+| DC Die Change | 6 | MVP-1 |
+| ~~Die Management~~ | ~~13~~ | **MVP-2** — split from `DieChangeAndManagement.md` §4 on 11 Aug 2026. **Phase 13 is not cut**; it keeps its other reference-data work |
 
 > **DB13 (HMI Line Schematic) and DB14 (SCADA Multi-Trend), 5 units each, were removed from this table on Aug 4 2026** — descoped at client request along with the Machine View tab. They were **descope-ladder rung 7** (67 h joint); the rung is gone, not merely un-recovered, so Phase 5 drops from 221 h to ~154 h and the ladder's cumulative-recovery column is re-derived in [`CapacityAndEffortModel.md`](../CapacityAndEffortModel.md).
 
 ## Appendix C — Story coverage: every FW-### → phase
 
-Every shopfloor backlog story is mapped to a phase, so coverage is provable. Rod receiving (Epic E03) and order planning / line scheduling / orders (Epics E04–E06) were removed from the shopfloor plan — they are handled upstream by the existing CoilReceiving / Planning / Scheduling systems — so their **14 stories are out of shopfloor scope** and listed under the table rather than mapped to a phase. **In scope** = targeted within the Aug 17–Sep 30 window (critical path). **Deferred** = Medium/Low priority, first to slip past Sep 30 / post-trial.
+Every shopfloor backlog story is mapped to a phase, so coverage is provable. Rod receiving (Epic E03) and order planning / line scheduling / orders (Epics E04–E06) were removed from the shopfloor plan — they are handled upstream by the existing CoilReceiving / Planning / Scheduling systems — so their **14 stories are out of shopfloor scope** and listed under the table rather than mapped to a phase.
 
-| Story | Title (short) | Phase(s) | Scope |
-|---|---|---|---|
-| FW-001 | Existing-schema column renames | 1 | In scope |
-| FW-002 | `INFLAT` coil status | 1 (used 4) | In scope |
-| FW-003 | Register FL1/FL2/FL3 machines | 13 | In scope |
-| FW-004 | Alloy properties lookup | 1 (2 generate, 13 admin) | In scope |
-| FW-005 | Fix existing FlatWire tables | 1 | In scope |
-| FW-006 | Core entity tables | 1 | In scope — *`Rod`-table portion dropped (rod = `coils`)* |
-| FW-007 | Event/output tables | 1 | In scope |
-| FW-010 | Pass Schedule data model + API | 2 | In scope |
-| FW-011 | Dashboard 9A — schedule list | 2 | In scope |
-| FW-012 | Dashboard 9 — schedule mgmt | 2 | In scope |
-| FW-013 | Generate-from-Specs algorithm | 2 | In scope |
-| FW-014 | Pass-schedule override logging | 2 (used 6) | In scope |
-| FW-054 | Alloys material type | 13 | In scope |
-| FW-060 | Dashboard 1 — line status | 3 | In scope |
-| FW-061 | Dashboard 2 — rod check-in | 4 | In scope |
-| FW-062 | Dashboard 3 — active run | 5 | In scope |
-| FW-063 | Weld event capture — **DB2A dialog** (Dashboard 4 retired 1 Aug 2026) | 6 | In scope |
-| FW-064 | Dashboard 5 — FL2 spool check-in | 8 | In scope |
-| FW-065 | Dashboard 6 — SPC checkpoint | 4 (pre-run) & 6 | In scope |
-| FW-066 | Dashboard 7 — coil completion | 9 | In scope |
-| FW-067 | Dashboard 8 — WIP rejection | 7 | In scope |
-| FW-068 | DB9/9A shopfloor integration | 2 | In scope |
-| FW-069 | Dashboard 10 — shift summary | 11 | In scope |
-| FW-070 | Dashboard 11 — roll adjust | 6 (FL3 in 10) | In scope |
-| FW-071 | Pause/Resume dialog | 6 | In scope |
-| FW-072 | Dashboard 12 — rod checkout A/B | 7 | In scope |
-| FW-073 | Die Change screen | 6 (Die Mgmt in 13) | In scope |
-| FW-080 | SignalR hub (`FlatWireHub`) | 1 / 3 | In scope |
-| FW-081 | Live gauge-trace chart | 5 (groundwork 3) | In scope |
-| FW-082 | PLC tag push on acknowledge | 4 | In scope |
-| FW-090 | Reports — Flattening Lines tab | 11 | In scope |
-| FW-091 | Gauge Trace report | 11 | In scope |
-| FW-092 | Gauge CPK reports | 11 | In scope |
-| FW-093 | Coil Pass Detail report | 11 | In scope |
-| FW-094 | SPC at Flattening Line report | 11 | In scope |
-| FW-095 | Cut Traceability report | 11 | In scope (needed before first shipment) |
-| FW-100 | Footage-based weight calc | 9 (yield 12) | In scope |
-| FW-101 | Weld traceability in yield | 12 | **Deferred candidate** (post-window) |
-| FW-102 | Cost Ledger config | 12 | **Deferred** (Medium, post-trial) |
-| FW-110 | Scrap Box/Skid outlet | 12 | **Deferred** (Low, post-go-live) |
-| FW-120 | E2E — FL1 standalone | 14 | In scope |
-| FW-121 | E2E — FL2 standalone | 14 | In scope |
-| FW-122 | E2E — FL3 hybrid | 10 / 14 | In scope |
-| FW-123 | UAT & stakeholder sign-off | 14 | In scope |
+**Two independent axes, and conflating them is how the closing figure went wrong.** *Scope* says whether MVP-1 builds the story at all; *Window* says whether it is targeted inside Aug 17 – Sep 30. A story can be MVP-1 and deferred past the window, or MVP-2 and not this programme's problem at all.
+
+- **MVP-1** / **MVP-2** — the 11 Aug 2026 split. **Rows are marked, never deleted**, the same convention `05-SprintPlanAndBacklog.md` §11 uses: deleting them tears holes in the coverage evidence this appendix exists to be.
+- **In window** = on the critical path to Sep 30 · **Deferred** = Medium/Low priority, first to slip past Sep 30 / post-trial.
+
+| Story | Title (short) | Phase(s) | Scope | Window |
+|---|---|---|---|---|
+| FW-001 | Existing-schema column renames | 1 | MVP-1 | In window |
+| FW-002 | `INFLAT` coil status | 1 (used 4) | MVP-1 | In window |
+| FW-003 | Register FL1/FL2/FL3 machines | 13 | MVP-1 | In window |
+| FW-004 | Alloy properties lookup | 1 (2 generate, 13 admin) | MVP-1 — *generate* consumer is MVP-2 | In window |
+| FW-005 | Fix existing FlatWire tables | 1 | MVP-1 | In window |
+| FW-006 | Core entity tables | 1 | MVP-1 — *the `Rod`-table portion of this story was dropped when rod became `coils`; **`D-04` later restored `Rod`** as a `FlatWireDB`-local master, so the table exists (see `G12`)* | In window |
+| FW-007 | Event/output tables | 1 | MVP-1 | In window |
+| FW-010 | Pass Schedule data model + API | 2 | **MVP-2** | — |
+| FW-011 | Dashboard 9A — schedule list | 2 | **MVP-2** | — |
+| FW-012 | Dashboard 9 — schedule mgmt | 2 | **MVP-2** | — |
+| FW-013 | Generate-from-Specs algorithm | 2 | **MVP-2** | — |
+| FW-014 | Pass-schedule override logging | 2 (used 6) | **Both** — log table MVP-2, mid-run trigger MVP-1 | In window |
+| FW-054 | Alloys material type | 13 | MVP-1 | In window |
+| FW-060 | Dashboard 1 — line status | 3 | MVP-1 | In window |
+| FW-061 | Dashboard 2 — rod check-in | 4 | MVP-1 | In window |
+| FW-062 | Dashboard 3 — active run | 5 | MVP-1 | In window |
+| FW-063 | Weld event capture — **DB2A dialog** (Dashboard 4 retired 1 Aug 2026) | 6 | MVP-1 | In window |
+| FW-064 | Dashboard 5 — FL2 spool check-in | 8 | MVP-1 | In window |
+| FW-065 | Dashboard 6 — SPC checkpoint | 4 (pre-run) & 6 | MVP-1 | In window |
+| FW-066 | Dashboard 7 — coil completion | 9 | MVP-1 | In window |
+| FW-067 | Dashboard 8 — WIP rejection | 7 | MVP-1 | In window |
+| FW-068 | DB9/9A shopfloor integration | 2 | **MVP-2** | — |
+| FW-069 | Dashboard 10 — shift summary | 11 | **MVP-2** | — |
+| FW-070 | Dashboard 11 — roll adjust | 6 (FL3 in 10) | MVP-1 | In window |
+| FW-071 | Pause/Resume dialog | 6 | MVP-1 | In window |
+| FW-072 | Dashboard 12 — rod checkout A/B | 7 | MVP-1 | In window |
+| FW-073 | Die Change screen | 6 (Die Mgmt in 13) | MVP-1 — *Die Management* portion is MVP-2 | In window |
+| FW-080 | SignalR hub (`FlatWireHub`) | 1 / 3 | MVP-1 | In window |
+| FW-081 | Live gauge-trace chart | 5 (groundwork 3) | MVP-1 | In window |
+| FW-082 | PLC tag push on acknowledge | 4 | MVP-1 | In window |
+| FW-090 | Reports — Flattening Lines tab | 11 | MVP-1 | In window |
+| FW-091 | Gauge Trace report | 11 | MVP-1 | In window |
+| FW-092 | Gauge CPK reports | 11 | MVP-1 | In window |
+| FW-093 | Coil Pass Detail report | 11 | MVP-1 | In window |
+| FW-094 | SPC at Flattening Line report | 11 | MVP-1 | In window |
+| FW-095 | Cut Traceability report | 11 | MVP-1 | In window — **needed before first shipment** |
+| FW-100 | Footage-based weight calc | 9 (yield 12) | MVP-1 | In window |
+| FW-101 | Weld traceability in yield | 12 | MVP-1 | **Deferred candidate** (post-window) |
+| FW-102 | Cost Ledger config | 12 | MVP-1 | **Deferred** (Medium, post-trial) |
+| FW-110 | Scrap Box/Skid outlet | 12 | MVP-1 | **Deferred** (Low, post-go-live) |
+| FW-120 | E2E — FL1 standalone | 14 | MVP-1 | In window |
+| FW-121 | E2E — FL2 standalone | 14 | MVP-1 | In window |
+| FW-122 | E2E — FL3 hybrid | 10 / 14 | MVP-1 | In window |
+| FW-123 | UAT & stakeholder sign-off | 14 | MVP-1 | In window |
 
 **Out of shopfloor scope — upstream (existing CoilReceiving / Planning / Scheduling systems):** FW-020, FW-021, FW-022 (rod receiving); FW-030, FW-031, FW-040, FW-041, FW-042, FW-043, FW-050, FW-051, FW-052, FW-053, FW-055 (orders / planning / line scheduling). These 14 stories are tracked in the upstream effort, not this shopfloor plan.
 
-**Coverage:** 44/44 shopfloor stories mapped (58 total − 14 upstream). Deferred (first to slip past Sep 30): FW-101, FW-102, FW-110. Everything else is on the critical path.
+**Coverage:** **44/44 shopfloor stories mapped** (58 total − 14 upstream) — every story has a phase, which is what this appendix proves and it is still true.
+
+**Of those 44, MVP-1 builds 38.** Six are MVP-2 — `FW-010`, `FW-011`, `FW-012`, `FW-013`, `FW-068`, `FW-069` — and `FW-014` spans both. **The 44/44 figure is mapping coverage, not an MVP-1 workload**; read before 13 Aug 2026 it was easy to take for the second, because every row said *"In scope"* whether or not MVP-1 built it.
+
+Deferred past Sep 30 (MVP-1, but first to slip): `FW-101`, `FW-102`, `FW-110`. Everything else MVP-1 is on the critical path.
+
+> **Two stories in `05-SprintPlanAndBacklog.md` §11 are not in this table** and should not be read as uncovered here: **`FW-N07`** (die master table + Die Management screen — the screen is MVP-2, and per `DieChangeAndManagement.md` v2.4 the table left with it, so `D4` is enforced at die-**size** level against the `Drawer` catalogue) and **`FW-N09`** (OEE dashboard — MVP-2, `Could`, no phase; `PP-03`). Both are `[NEW]` stories raised in the backlog after this appendix was written.
 
 ## Related Documents
 | Document | Purpose |

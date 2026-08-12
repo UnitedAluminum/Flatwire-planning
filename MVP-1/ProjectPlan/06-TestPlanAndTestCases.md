@@ -1,7 +1,7 @@
 # Flat Wire Mill — Test Plan & Test Cases
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 4, 2026
+**Last Updated:** August 13, 2026
 **Document Type:** Test plan + test case catalogue
 **Status:** Baselined — four NFRs are **untestable until their targets are defined** (§6.2)
 **Owner:** QA stream
@@ -816,7 +816,27 @@ Independent of severity, set by risk area (§2.3). A P1-area S3 outranks a P3-ar
 
 ## 10. Coverage matrix
 
-### 10.1 `FR-###` → `TC-###`
+> **⚠ Read this before quoting a coverage figure.** Until 13 Aug 2026 §10.1 mapped SRS
+> **section ranges** to TC ranges and a percentage was concluded from it. A range mapping
+> cannot show that an *individual* requirement was tested, and when coverage was first
+> measured per requirement, **41 had no case at all — 32 of them `Must`**. The percentage
+> had been computed from the range table, so nothing in the document contradicted it.
+>
+> Coverage is now measured per requirement by
+> [`build_coverage_matrix.py`](../DevelopmentPlan/Tools/build_coverage_matrix.py), which
+> **exits non-zero** if any requirement has neither a case nor an entry in §10.4. The
+> range table below is retained as a **navigation aid only — it is not the evidence.**
+> Registered as gap **`G25`**.
+>
+> **The denominator changed too.** `02-SRS.md` carries **263** MVP-1 requirements;
+> §5.10, §5.18, §5.19, §5.23 and §5.24 moved to MVP-2 on 11 Aug 2026 and §5.21/§5.22 were
+> withdrawn with the DB13/DB14 descope. The **363** figure quoted here before 13 Aug 2026
+> was the pre-split MVP-1 + MVP-2 total.
+
+### 10.1 `FR-###` → `TC-###` — section navigation
+
+**Not the coverage evidence.** Run the checker for that. Rows for sections that have left
+MVP-1 are marked and their requirements are no longer in `02-SRS.md`.
 
 | `[SRS]` § | FR range | Test cases | Depth |
 |---|---|---|---|
@@ -830,7 +850,7 @@ Independent of severity, set by risk area (§2.3). A P1-area S3 outranks a P3-ar
 | 5.7 | FR-180 – FR-197 | TC-220 – TC-238 | happy · negative · boundary |
 | 5.8 | FR-200 – FR-212 | TC-250 – TC-261 | happy · negative · permission |
 | 5.9 | FR-220 – FR-234 | TC-270 – TC-285 | happy · negative · routing |
-| 5.10 | FR-240 – FR-255 | TC-295 – TC-304 | happy · permission |
+| ~~5.10~~ | ~~FR-240 – FR-255~~ | ~~TC-295 – TC-304~~ | **MVP-2 — moved 11 Aug 2026** |
 | 5.11 | FR-260 – FR-267 | TC-315 – TC-326 | happy · negative · contract divergence |
 | 5.12 | FR-270 – FR-277 | TC-335 – TC-341 | happy · boundary · gating |
 | 5.13 | FR-280 – FR-282 | TC-350 – TC-352 | **not executable — OI-13** |
@@ -838,13 +858,13 @@ Independent of severity, set by risk area (§2.3). A P1-area S3 outranks a P3-ar
 | 5.15 | FR-300 – FR-327 | TC-375 – TC-396 | **deep — safety-critical gatekeeper** |
 | 5.16 | FR-330 – FR-340 | TC-405 – TC-421, TC-618 | **deep — weight and genealogy** |
 | 5.17 | FR-345 – FR-352 | TC-435 – TC-439 | happy |
-| 5.18 | FR-360 – FR-391 | TC-450 – TC-475 | happy · negative · boundary · permission |
-| 5.19 | FR-400 – FR-410 | TC-476 – TC-480 | happy · permission |
+| ~~5.18~~ | ~~FR-360 – FR-391~~ | ~~TC-450 – TC-475~~ | **MVP-2 — moved 11 Aug 2026** |
+| ~~5.19~~ | ~~FR-400 – FR-410~~ | ~~TC-476 – TC-480~~ | **MVP-2 — moved 11 Aug 2026** |
 | 5.20 | FR-420 – FR-428 | TC-490 – TC-502 *(TC-503 withdrawn)* | happy · **all five alert rules** |
 | ~~5.21~~ | ~~FR-440 – FR-451~~ | ~~TC-515 – TC-521~~ | **withdrawn 4 Aug 2026** |
 | ~~5.22~~ | ~~FR-460 – FR-470~~ | ~~TC-530 – TC-534~~ | **withdrawn 4 Aug 2026** |
-| 5.23 | FR-480 – FR-490 | TC-545 – TC-550 | happy · permission |
-| 5.24 | FR-500 – FR-508 | TC-560 | **not scheduled — PP-03** |
+| ~~5.23~~ | ~~FR-480 – FR-490~~ | ~~TC-545 – TC-550~~ | **MVP-2 — moved 11 Aug 2026** |
+| ~~5.24~~ | ~~FR-500 – FR-508~~ | ~~TC-560~~ | **MVP-2 — moved 11 Aug 2026** *(was: not scheduled — PP-03)* |
 | §6 NFRs | `NFR003`–`NFR013` | TC-601 – TC-629 | measurable targets |
 | Security | `[SRS §8]` | TC-640 – TC-659 *(§10.3)* | permission matrix |
 | Deployment | `[DR §5]` | TC-700 – TC-714 | smoke |
@@ -852,6 +872,8 @@ Independent of severity, set by risk area (§2.3). A P1-area S3 outranks a P3-ar
 ### 10.2 `TC-###` → `FR-###` — the reverse direction
 
 **Every test case in §5 names the `FR-###` it proves in its own row.** No test case exists without a requirement behind it. The §6 cases name their `NFR###`; the §10.3 cases name the permission matrix row; the §8 cases name the commissioning obligation.
+
+**This direction has been machine-verified and holds** — all 365 case rows name their requirement in the *FR / Source* column, and no case names one anywhere else instead. **It was never the direction in doubt.** A test suite can name a requirement on every case and still leave requirements untested; that is exactly what happened here, and only §10.1's per-requirement check detects it.
 
 ### 10.3 Security and role cases — TC-640 … TC-659
 
@@ -880,6 +902,15 @@ One case per contested row of the `[SRS §8]` matrix, each executed as the permi
 
 ### 10.4 What is **not** covered, and why
 
+**Two kinds of hole, and the difference is the point.** §10.4.1 lists what is knowingly
+excluded — each entry is a *decision*, with a blocking open item behind it. §10.4.2 lists
+requirements that simply have **no case authored**; those are *accidents*, found on
+13 Aug 2026 when coverage was first measured per requirement. Both are listed rather than
+omitted, and [`build_coverage_matrix.py`](../DevelopmentPlan/Tools/build_coverage_matrix.py)
+fails the build if a requirement appears in neither this section nor a case.
+
+#### 10.4.1 Knowingly excluded — a decision, with an owner
+
 | Not covered | Reason |
 |---|---|
 | **FR-280 – FR-282** (wire break, 3 requirements) | **No screen, no table, no persistence target — OI-13.** TC-350–352 are written and blocked. Story `FW-N08` is blocked |
@@ -895,4 +926,79 @@ One case per contested row of the `[SRS §8]` matrix, each executed as the permi
 | **Four real-time NFR targets** | **Undefined — G9 / OI-34.** TC-620–623 marked untestable-until-defined; **no threshold invented** |
 | Upstream rod receiving, planning, scheduling and web changes | Out of test scope (§2.2) — fixture-supplied |
 
-**Coverage summary: 351 of 363 requirements (96.7 %) have at least one executable test case.** The twelve that do not are the nine OEE requirements and the three wire-break requirements — both blocked on decisions, both listed above rather than omitted.
+#### 10.4.2 No case authored — owed work, not an exemption
+
+**Found 13 Aug 2026 by the first per-requirement measurement.** These 41 requirements are
+in MVP-1 scope, are not withdrawn, and no case names any of them. **32 are `Must`.** They
+are listed so the number in §10.5 is honest; none of these reasons is a justification for
+leaving it that way. Tracked as gap **`G25`**.
+
+Three of the four kinds below are cheap to close, and the distinction decides how:
+
+| `FR-###` | Pri | § | Why there is no case | What closes it |
+|---|---|---|---|---|
+| **FR-030** | Should | 5.1 | Section-opening scope statement — every §5.1 case runs at the Pre-Check-In station, none names the requirement that it exists | Name it on an existing case |
+| **FR-100** | Must | 5.4 | Section-opening scope statement — the header run-context fields are visible in every §5.4 case, asserted by none | Name it on an existing case |
+| **FR-160** | Must | 5.6 | Section-opening scope statement — mill-stopped and mill-running welds are both exercised in §5.6 | Name it on an existing case |
+| **FR-300** | Must | 5.15 | Section-opening scope statement — TC-377 proves no stop command is sent but names `FR-302` | Add `FR-300` to TC-377 |
+| **FR-276** | Must | 5.12 | Product-form statement (FL1 → ~3,500 lb reusable spool, system-generated number) — no case asserts the output form | New case, or name it on the spool-completion cases |
+| **FR-277** | Must | 5.12 | Product-form statement (FL2 → coreless oscillated ~1,100 lb coil, two per skid) | New case, or name it on TC-435–444 |
+| **FR-161** | Must | 5.6 | **Not test-case shaped.** "Event-driven and extensible so future continuous-operation welding needs no redesign" is an architectural quality with no black-box observation | Design review against `00-foundations.md` §0.4 — record the verdict here, do not fake a case |
+| **FR-022** | Must | 5.0 | Configuration requirement — tag paths sourced from `appsettings.json`, never hardcoded | Static check or a commissioning step in §8; `C1` already records accepted paths |
+| **FR-183** | Should | 5.7 | Configurability requirement — SPC sampling rules per customer and per process stage | New case once the configuration surface exists |
+| **FR-340** | Should | 5.16 | Hardware provisioning — two label printers per line (Sato + high-temperature) | Commissioning check in §8, not a §5 case |
+| **FR-175** | Should | 5.6 | **No host since 1 Aug 2026** — the traceability chain and the re-sequenceable *Rods In Queue* both lived on the retired Dashboard 4 and neither moved to the DB2A dialog | Gap **`G27`**. Rehome, fold into *Welds this run*, or withdraw `FR-175` — the case follows the decision |
+| **FR-021** | Must | 5.0 | Behavioural, no case authored — stop popup on the OPC mill-speed tag reading zero | New case |
+| **FR-054** | Should | 5.1 | Behavioural, no case authored — un-staging the last rod on an idle line clears the established order and returns to cold start | New case |
+| **FR-064** | Must | 5.2 | Behavioural, no case authored — rod number validated against `coils`, invalid rejected | New case |
+| **FR-080** | Must | 5.2 | Behavioural, no case authored — machine-inspection steps 4–6 use OK / NG / N/A with measured values against spec | New case |
+| **FR-110** | Must | 5.4 | Behavioural, no case authored — *Check Out Rod* enabled only at footage zero. **Adjacent to TC-375/376, which gate on line state, not footage** | New case |
+| **FR-156** | Must | 5.5 | Behavioural, no case authored — variance returning inside tolerance removes the override requirement and the completion records none | New case |
+| **FR-157** | Must | 5.5 | Behavioural, no case authored — answering *Yes* does not bypass mandatory per-spool gauge and width SPC | New case — this one is a gate, treat as `P1` |
+| **FR-194** | Must | 5.7 | Behavioural, no case authored — *Submit · suspend material* elevates to filled danger style when any measurement is out of spec | New case |
+| **FR-195** | Must | 5.7 | Behavioural, no case authored — default measurement sets per checkpoint type | New case per checkpoint type |
+| **FR-196** | Must | 5.7 | Behavioural, no case authored — `PostDieChange` trigger banner naming die block, size change and logging context | New case |
+| **FR-298** | Must | 5.14 | Behavioural, no case authored — *Suspend* states that supervisor review is required and names the notified supervisor | New case |
+| **FR-310** | Must | 5.15 | Behavioural, no case authored — Mode A availability (checked in, footage zero, entered from the DB2 footer or DB3) | New case |
+| **FR-339** | Must | 5.16 | Behavioural, no case authored — skid numbering follows existing skid rules. **Depends on `OI-104`** (the skid table nothing names or creates) | Blocked on `G36`; write the case when the skid source is confirmed |
+| **FR-426** | Must | 5.20 | Behavioural, no case authored — all live readings and alerts update via the SignalR stream | New case; overlaps the §6 real-time NFRs, which are themselves undefined (`G9`) |
+| **FR-032** | Should | 5.1 | UI content/layout — both payoff bays presented as peers, one state machine, one renderer | New case |
+| **FR-033** | Should | 5.1 | UI content/layout — the four bay states and their actions | New case |
+| **FR-035** | Should | 5.1 | UI content/layout — Traveler Queue row content | New case |
+| **FR-037** | Should | 5.1 | UI content/layout — queue header states the order once, with progress | New case |
+| **FR-105** | Must | 5.4 | UI content/layout — machine status (speed, footage) and component status (DB1/DB2 state, active die diameter, FM1 gap/width) | New case |
+| **FR-115** | Must | 5.4 | UI content/layout — Traveler sections adapted to the active station | New case |
+| **FR-201** | Must | 5.8 | UI content/layout — Roll Adjust context strip fields | New case |
+| **FR-208** | Must | 5.8 | UI content/layout — operator, timestamp and footage auto-populated and not editable | New case — the *not editable* half is a real assertion |
+| **FR-224** | Must | 5.9 | UI content/layout — incoming die scan field pre-focused, lookup populates size and condition | New case |
+| **FR-226** | Must | 5.9 | UI content/layout — five mutually exclusive reason codes. **TC-284 proves the list is exactly five but names `[API §4.12]`, not `FR-226`** | Add `FR-226` to TC-284 |
+| **FR-230** | Must | 5.9 | UI content/layout — read-only audit stamp (operator, server timestamp, footage, output coil alpha) | New case |
+| **FR-272** | Must | 5.12 | UI content/layout — stop popup next-section data | New case |
+| **FR-311** | Must | 5.15 | UI content/layout — checkout dialog read-only fields and the reason list | New case |
+| **FR-321** | Must | 5.15 | UI content/layout — Mode B dialog fields, footage auto-captured read-only | New case |
+| **FR-348** | Must | 5.17 | UI content/layout — coil label panel previews and prints on confirm | New case |
+| **FR-352** | Must | 5.17 | UI content/layout — R48-style packaging orientation prompts | New case |
+
+**Two are one-line fixes, not new cases** — `FR-300` on TC-377 and `FR-226` on TC-284. The
+case already proves the requirement; only the citation is missing. Look for that pattern
+before authoring anything new.
+
+### 10.5 Coverage summary — generated, not asserted
+
+Produced by [`build_coverage_matrix.py`](../DevelopmentPlan/Tools/build_coverage_matrix.py).
+**Do not hand-edit these figures; re-run the checker.**
+
+| Measure | Count |
+|---|---|
+| MVP-1 requirements (`02-SRS.md` rows) | **263** |
+| Withdrawn, not counted | 4 |
+| Covered by a case — direct | 220 |
+| Covered via the `NFR` table — indirect | 1 |
+| Declared not covered (§10.4.1) | 1 |
+| **No case authored (§10.4.2)** | **41** |
+| **Requirements with a case** | **84.0 %** |
+
+**"With a case" is not "executable."** `TC-350`–`TC-352` name `FR-280`–`FR-282` and cannot
+be run (`OI-13`); they count in the 220. The previous figure — *"351 of 363 (96.7 %)"* —
+was wrong in both terms: 363 was the pre-split MVP-1 + MVP-2 denominator, and 351 was
+derived from the §10.1 range table rather than from the cases.

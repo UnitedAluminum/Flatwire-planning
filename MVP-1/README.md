@@ -1,7 +1,7 @@
 # MVP-1 — Screens, Specifications and Client Deliverables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 11, 2026
+**Last Updated:** August 13, 2026
 **Status:** Active scope — this is what is being built
 
 ---
@@ -12,11 +12,11 @@
 MVP-1/
 ├── README.md                    ← this file
 ├── Mockups/                     ← 31 files: 17 dashboards + shared design system + shared JS chrome
-├── RequirementDocuments/        ← 16 documents (14 specifications)
+├── RequirementDocuments/        ← 17 documents (14 specifications + 3 that are not)
 ├── ProjectPlan/                 ← 8 documents (SRS, HLD/ER, API contract, sprint plan, test plan, runbook)
 ├── DBChanges/                   ← schema design + executable DDL (25 of the 28 tables)
-├── DevelopmentPlan/              ← the roadmap, 16 phase files, effort model, REVIEW, tools
-└── SRS/                         ← 2 client .docx deliverables
+├── DevelopmentPlan/              ← the roadmap, 18 phase files, effort model, REVIEW, tools
+└── SRS/                         ← 3 client deliverables (2 .docx + 1 .xlsx); 2 of the 3 generated
 ```
 
 > **The schema here is complete for MVP-1.** `DBChanges` was divided by MVP scope on 11 Aug 2026: the three pass-schedule tables — `PassSchedule`, `PassScheduleComponent`, `PassScheduleChangeLog` — live in [`../MVP-2/DBChanges/`](../MVP-2/DBChanges/) because **the pass schedule is owned outside MVP-1**. `PassScheduleId` on `FlatWireRun`, `RodCheckin`, `SpoolCheckin` and `CoilOutput` is therefore a **documented external reference**, unenforced by design and in the same class as `PlanId`, `CoilOrderPlanId` and `SkidId` (see `DevelopmentPlan/ShopfloorPlan/phase-01c-database-foundation.md`). **Running `FlatWire_DDL_RunAll.sql` produces a working MVP-1 database — there is no second runner to chase.**
@@ -38,7 +38,7 @@ MVP-1/
 | The master specification and its `OI-##` register | `../LatestDocument/FlatWire_MasterSpecification.md` |
 | Requirement text — every `FR-###` | now **here**, `ProjectPlan/02-SRS.md` (moved 11 Aug 2026) |
 | Schema design, executable DDL, ER documentation | now **here**, `DBChanges/` (moved and divided 11 Aug 2026) |
-| The open-questions register (**99 items, authoritative for decisions**) | `../Analysis/FlatWireOpenQuestions.md` |
+| The question registers (**authoritative for decisions**) — **33 open, `Q1`–`Q33`**, and **25 decided, `Q61`–`Q85`**, in one contiguous numbering space across two files | `../Analysis/FlatWireOpenQuestions.md` · `../Analysis/FlatWireDecidedQuestions.md` |
 | API contracts, effort model, `REVIEW.md` | now **here**, `DevelopmentPlan/` |
 | Source business documents and the client-call propagation ledgers | `../BaseDocuments/` |
 
@@ -57,10 +57,11 @@ Static HTML prototypes — **open directly in a browser**, no build step. The ap
 
 ## `RequirementDocuments/`
 
-Sixteen files. **Fourteen are specifications; two are not** — and the two that are not are cited as though they were, which is the trap:
+Seventeen files. **Fourteen are specifications; three are not** — and the three that are not are cited as though they were, which is the trap:
 
 - **`Spool.md`** is the **domain reference for what a spool is** (physical form, the 3,500 lb ceiling against the ~1,800 lb working target, material flow, lifecycle). *That* content is authoritative; its **screen** rules are not — those belong to `RocCheckin.md` §4.3, `SpoolQueue.md` and `OutputCoilCompletion.md` §4 — and its FM2 description is **superseded by `D-26`**.
 - **`PartialRodReCheckin.md`** is **internal design rationale** — nothing in it is citable as a requirement. Its rules live in `RodPreCheckin.md` §7 and `RodCheckout.md` §7.2; the requirement text is `FR-043`. Retained as the audit trail for the open **`Q12`**.
+- **`ClientQuestionsContent.md`** (12 Aug 2026) is **source content for a generated deliverable, not a specification.** It holds the client-facing prose for the questions workbook — and is the only place that prose is authored. [`build_questions_xlsx.py`](DevelopmentPlan/Tools/build_questions_xlsx.py) merges it with the two `Analysis/` registers to produce [`SRS/FlatWire_ClientQuestions.xlsx`](SRS/). **Structure comes from the registers and prose from this file; nothing is duplicated between them**, so a question's priority or owner is never edited here. Four fatal guards run at build — coverage, drift, team names, leakage.
 
 **`PLCTagSpecification.md`** is the **only** tag map in the repository (cited as `[PLC]`). The anti-drift rule holds: **the client doc owns every tag path string and `MVP-1/DevelopmentPlan/PLCTagImplementation.md` contains none.** If you are about to write a tag path anywhere else, stop.
 
@@ -68,9 +69,13 @@ Sixteen files. **Fourteen are specifications; two are not** — and the two that
 
 ## `SRS/`
 
-`Shopfloor_Flat_wireSRS.docx` — the delivered SRS. It has **no pre-check-in content**, so it is *not* the requirement source for `PCI`/`PRC`/`CHK`/`WLD`/`TRV` IDs; those rules are `FR-###` in `../MVP-1/ProjectPlan/02-SRS.md`.
+**Three client deliverables. Two are generated from markdown in this repository and must never be edited directly** — the next render overwrites them.
 
-`PLCTagSpecification.docx` — generated output. **The `.md` in `RequirementDocuments/` is the source** — edit it and re-render with [`../MVP-1/DevelopmentPlan/Tools/build_docx.py`](../MVP-1/DevelopmentPlan/Tools/build_docx.py), never edit the `.docx`.
+`Shopfloor_Flat_wireSRS.docx` — the delivered SRS, and the one file here that is **not** generated. It has **no pre-check-in content**, so it is *not* the requirement source for `PCI`/`PRC`/`CHK`/`WLD`/`TRV` IDs; those rules are `FR-###` in [`ProjectPlan/02-SRS.md`](ProjectPlan/02-SRS.md).
+
+`PLCTagSpecification.docx` — generated output. **The `.md` in `RequirementDocuments/` is the source** — edit it and re-render with [`DevelopmentPlan/Tools/build_docx.py`](DevelopmentPlan/Tools/build_docx.py).
+
+`FlatWire_ClientQuestions.xlsx` — generated output, the client questions workbook. Rendered by [`DevelopmentPlan/Tools/build_questions_xlsx.py`](DevelopmentPlan/Tools/build_questions_xlsx.py) from **two** sources: structure from the `Analysis/` question registers, prose from [`RequirementDocuments/ClientQuestionsContent.md`](RequirementDocuments/ClientQuestionsContent.md). Edit whichever of the two owns the field and re-run.
 
 > **The renderer reaches into MVP-2 for its branding.** `build_docx.py` opens `../MVP-2/SRS/PassScheduleGenerationSpec.docx` as a template, strips its body and keeps the final `<w:sectPr>` — which carries the header logo and confidentiality footer. **Deleting that MVP-2 file as deferred, inert content breaks the MVP-1 renderer.**
 
