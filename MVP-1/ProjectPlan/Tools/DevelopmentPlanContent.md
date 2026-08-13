@@ -117,13 +117,6 @@ and column names, screen numbers, machine tag paths, and code formatting of any 
 **Audience:** Quality and process engineering
 **Deferrable:** Partly — reporting could follow go-live; the certificate could not
 
-## 12
-**Reference title:** Yield, Cost Ledger & Scrap
-**Phase name:** Yield, cost and scrap
-**Delivers:** Yield measured the way flat wire is actually produced, cost standards for the new lines, and scrap routed like every other material.
-**Audience:** Production control and cost accounting
-**Deferrable:** Yes — wholly optional for go-live, and the first thing we would cut
-
 ## 13
 **Reference title:** Administration & Reference Data
 **Phase name:** Administration and reference data
@@ -748,30 +741,6 @@ and column names, screen numbers, machine tag paths, and code formatting of any 
 **Delivers:** An operator is never validating against a tolerance band that was changed while their screen was open.
 **Audience:** Line operator
 
-## FW-100
-**Reference title:** Footage-based yield and the weight formula
-**Work item:** Weight calculated from footage
-**Delivers:** Weight is derived from footage and cross-section rather than a scale, because flat wire is produced continuously and not weighed during the run.
-**Audience:** Production control
-
-## FW-101
-**Reference title:** Weld traceability attribution in yield
-**Work item:** Yield attributed per source rod
-**Delivers:** Yield is attributed across weld points to each source rod, so welding-wire certificates carry correct per-rod figures.
-**Audience:** Quality and production control
-
-## FW-102
-**Reference title:** Flat-wire cost ledger configuration
-**Work item:** Flat wire cost standards
-**Delivers:** Cost standards exist for the new lines, so costing reports are populated rather than blank.
-**Audience:** Cost accounting
-
-## FW-110
-**Reference title:** Scrap Box / Scrap Skid outlet
-**Work item:** Scrap outlet selection
-**Delivers:** Flat wire scrap is routed to the right outlet and handled like every other material.
-**Audience:** Production control
-
 ## FW-200
 **Reference title:** PLC commissioning support
 **Work item:** Machine commissioning support
@@ -789,24 +758,24 @@ and column names, screen numbers, machine tag paths, and code formatting of any 
 # Part 3 — What changes the date
 
 ## L1
-**Lever:** Defer the yield, cost and scrap work
-**Effect:** Removes about half a sprint at three or four developers.
-**Detail:** This is the one phase that is wholly optional for go-live. Yield would be reported the existing way and flat wire scrap routed manually until it lands. It is the first thing we would cut and the last thing that affects an operator.
+**Lever:** Complete the platform foundation before the sprints start
+**Effect:** Removes about two sprints.
+**Detail:** The foundation is the largest single block of work and every later stage depends on it. Delivering it in the run-up rather than inside the sprints is the largest lever available by some distance — but it needs about five people during that period, which is more than the team this plan is built on.
 
 ## L2
-**Lever:** Complete the platform foundation before the sprints start
-**Effect:** Removes two to three sprints from every plan.
-**Detail:** The foundation is the largest single block of work and every later stage depends on it. Delivering it in the run-up rather than inside the sprints is the single biggest lever available — but it needs about five developers during that period, which is more than any option on this sheet.
+**Lever:** Let the final testing and commissioning stage start early
+**Effect:** Removes one sprint — completion moves forward about two weeks.
+**Detail:** The last sprint exists because end-to-end testing and machine commissioning are held to a window of their own, after everything they verify is finished. Overlapping that window with the preceding stage would recover two weeks, but it means testing against a system that is still changing. **This is a decision to take deliberately, not a scheduling convenience.**
 
 ## L3
-**Lever:** Add a fifth developer
-**Effect:** Brings development completion into early October.
-**Detail:** Below about four people sustained, no team size reaches the end of September. Each person added shortens the plan roughly proportionally until the sequential dependencies between stages become the limit.
+**Lever:** Add a fourth developer
+**Effect:** Removes one sprint — completion moves forward about two weeks.
+**Detail:** Only a fortnight, and that is the important part: **the tail of the plan is waiting on dependencies, not on people.** A fourth developer leaves the last two sprints barely a third occupied, and a fifth brings completion only to the end of October. **No team size reaches the end of September on this start date.**
 
 ## L4
 **Lever:** Accept the date the plan gives
 **Effect:** No change to scope or team.
-**Detail:** All three options land inside or close to the planned production window. Moving the development completion date does not by itself move production, provided acceptance testing and commissioning are scheduled after it rather than alongside it.
+**Detail:** The plan lands inside the planned production window, though without margin for a trial. Moving the development completion date does not by itself move production, provided acceptance testing and stakeholder sign-off are scheduled after it rather than alongside it.
 
 ---
 
@@ -840,7 +809,7 @@ and column names, screen numbers, machine tag paths, and code formatting of any 
 **Item:** Development complete
 **Type:** Delivery milestone
 **Detail:** All planned scope built and internally tested. Acceptance testing and machine commissioning follow this date; they are not included in it.
-**Covers:** 1A,1B,1C,3,4,5,6,7,8,9,10,11,12,13,14
+**Covers:** 1A,1B,1C,3,4,5,6,7,8,9,10,11,13,14
 
 ## D1
 **Item:** Tolerance values per alloy
@@ -899,7 +868,7 @@ and column names, screen numbers, machine tag paths, and code formatting of any 
 ## R1
 **Item:** The team is smaller than the work requires
 **Type:** Risk — high
-**Detail:** None of the three team sizes completes development by the end of September. The dates on the options sheet are the honest consequence. **Mitigation:** choose deliberately between team size, scope and date rather than discovering the gap late.
+**Detail:** Three developers do not complete development by the end of September — the work needs about four people sustained, and the sprints start on 24 August, which removes the run-up from the available capacity. The date on the summary sheet is the honest consequence. **Mitigation:** choose deliberately between team size, scope and date rather than discovering the gap late.
 
 ## R2
 **Item:** Machine commissioning slips

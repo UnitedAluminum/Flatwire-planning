@@ -69,7 +69,6 @@ DEFAULT_OUT = os.path.join(ROOT, 'MVP-1', 'SRS', 'FlatWire_DevelopmentPlan.xlsx'
 
 ISSUE_DATE = 'August 13, 2026'
 HOURS_PER_DAY = 8
-SCENARIOS = (2, 3, 4)
 
 # Nagarro-side names. No client-facing cell may carry one.
 TEAM_NAMES = ('Jaspreet', 'Srikanth', 'Shray', 'Yogender')
@@ -237,6 +236,9 @@ def _table_after(text, heading_pattern, first_header):
     return header, rows
 
 
+WORD_NUMBERS = {w: i for i, w in enumerate(
+    'zero one two three four five six seven eight nine ten'.split())}
+
 MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 FIRST_YEAR = 2026        # the plan's sprints start Mon 24 Aug 2026
@@ -265,24 +267,30 @@ def _add_years(sprints):
 
 
 def parse_staffed(path):
-    """The three scenarios: headline, sprint schedule, and the story allocation matrix."""
+    """Headline, sprint schedule and story allocation, for however many team sizes the plan
+    carries. Sections are located by their content rather than their number, so renumbering
+    the document does not silently break the build."""
     text = open(path, encoding='utf-8').read()
 
-    # Headline - one row per team size.
-    _, rows = _table_after(text, r'^## 1\. .+$', 'Team')
+    # Headline - one row per team size, and the row order defines SCENARIOS.
+    _, rows = _table_after(text, r'^## \d+\. The answer.*$', 'Team')
     headline = []
     for r in rows:
         n = int(re.search(r'(\d+)', r[0]).group(1))
         headline.append(dict(devs=n, sprints=r[1], finish=r[2],
                              vs_target=r[3], vs_production=r[4]))
+    scenarios = tuple(h['devs'] for h in headline)
 
-    # Sprint schedule - one table per scenario, under sections 2, 3 and 4.
+    # Sprint schedule - one section per scenario, each headed "N developers ... finish DATE".
+    # The plan spells the team size out ("Three developers"), so both forms are accepted.
     schedule, finish = {}, {}
-    for section, devs in zip((2, 3, 4), SCENARIOS):
-        head = rf'^## {section}\. .+ developers .+$'
-        m = re.search(head, text, re.M)
-        finish[devs] = clean(re.search(r'finish\s+(.+)$', m.group(0)).group(1))
-        _, rows = _table_after(text, head, 'Sprint')
+    for m in re.finditer(r'^## \d+\. .*?(\w+) developers .*finish\s+(.+)$', text, re.M):
+        word = m.group(1).lower()
+        devs = int(word) if word.isdigit() else WORD_NUMBERS.get(word, 0)
+        if devs not in scenarios:
+            continue
+        finish[devs] = clean(m.group(2))
+        _, rows = _table_after(text, re.escape(m.group(0)), 'Sprint')
         parsed = [dict(sprint=r[0], dates=r[1], workdays=int(r[2]),
                        capacity=int(re.search(r'(\d+)', r[3]).group(1)),
                        planned=int(re.search(r'(\d+)', r[4]).group(1)),
@@ -295,17 +303,30 @@ def parse_staffed(path):
             sprints=[s for s in parsed if re.fullmatch(r'S\d+', s['sprint'])],
             total=next((s for s in parsed if not re.fullmatch(r'S\d+', s['sprint'])), None))
         _add_years(schedule[devs]['sprints'])
+    missing = [n for n in scenarios if n not in schedule]
+    if missing:
+        sys.exit(f'FATAL: the headline names {missing} developer(s) with no sprint table')
 
-    # Allocation matrix - the per-story effort and the sprint it lands in at each size.
-    _, rows = _table_after(text, r'^## 6\. .+$', 'Story')
+    # Allocation matrix - per-story effort and the sprint it lands in, one column per scenario
+    # after the fixed five. The header names them, so the column order is not assumed.
+    header, rows = _table_after(text, r'^## \d+\. Story.*$', 'Story')
+    sprint_cols = {}
+    for i, head in enumerate(header[5:], start=5):
+        found = re.search(r'(\d+)', head)
+        if found and int(found.group(1)) in scenarios:
+            sprint_cols[int(found.group(1))] = i
+        elif len(scenarios) == 1:
+            sprint_cols[scenarios[0]] = i        # a single-team plan needs no label
+    if sorted(sprint_cols) != sorted(scenarios):
+        sys.exit(f'FATAL: allocation matrix has sprint columns for {sorted(sprint_cols)}, '
+                 f'the headline names {sorted(scenarios)}')
     matrix = {}
     for r in rows:
-        matrix[r[0]] = dict(id=r[0], title=r[1], phase=r[2], stream=r[3],
-                            hours=int(r[4]),
-                            sprint={2: r[5], 3: r[6], 4: r[7]})
+        matrix[r[0]] = dict(id=r[0], title=r[1], phase=r[2], stream=r[3], hours=int(r[4]),
+                            sprint={n: r[i] for n, i in sprint_cols.items()})
     if not matrix:
         sys.exit('FATAL: no allocation matrix rows parsed')
-    return headline, schedule, finish, matrix
+    return scenarios, headline, schedule, finish, matrix
 
 
 PART_FIELDS = {
@@ -359,16 +380,26 @@ def parse_content(path):
 # ------------------------------------------------------------------------- guards
 
 def guard(tasks, matrix, content):
+    """Returns the deliberately-excluded story ids; exits non-zero on any real failure."""
     errors = []
 
     # 1/2. Coverage and drift, work items.
+    #
+    # The workbook's scope is the SPRINT PLAN, not the whole backlog - the sprint plan is
+    # what excluded Phase 12 (yield, cost ledger, scrap) on 13 Aug 2026. So coverage is
+    # checked against the allocation matrix, and a backlog story absent from it is an
+    # exclusion rather than an error. It is still reported: a story that fell out by
+    # accident and one that was removed by decision look identical here, and only the
+    # printed list distinguishes them.
     items = content['Work Items']
-    for sid in sorted(set(tasks) - set(items)):
-        errors.append(f'{sid} is in the plan with no content entry')
-    for sid in sorted(set(items) - set(tasks)):
-        errors.append(f'{sid} has a content entry but is not a development work item in the plan')
+    excluded = sorted(set(tasks) - set(matrix))
+    for sid in sorted(set(matrix) - set(items)):
+        errors.append(f'{sid} is in the sprint plan with no content entry')
     for sid in sorted(set(items) - set(matrix)):
-        errors.append(f'{sid} has a content entry but no sprint allocation')
+        errors.append(f'{sid} has a content entry but no sprint allocation'
+                      + (' - it is excluded from the plan' if sid in tasks else ''))
+    for sid in sorted(set(matrix) - set(tasks)):
+        errors.append(f'{sid} is allocated to a sprint but is not a development work item')
 
     for sid, entry in sorted(items.items()):
         for f in PART_FIELDS['Work Items']:
@@ -384,13 +415,13 @@ def guard(tasks, matrix, content):
                 f'but the plan says "{clean(tasks[sid]["title"])}" '
                 f'- a renumbering would put prose on the wrong work item')
 
-    # Coverage, phases.
-    plan_phases = {t['phase'] for t in tasks.values()}
+    # Coverage, phases - again against the sprint plan rather than the backlog.
+    plan_phases = {m['phase'] for m in matrix.values()}
     phases = content['Phases']
     for p in sorted(plan_phases - set(phases)):
-        errors.append(f'phase {p} carries work in the plan but has no content entry')
+        errors.append(f'phase {p} carries work in the sprint plan but has no content entry')
     for p in sorted(set(phases) - plan_phases):
-        errors.append(f'phase {p} has a content entry but carries no work in the plan')
+        errors.append(f'phase {p} has a content entry but carries no work in the sprint plan')
     for p, entry in sorted(phases.items()):
         for f in PART_FIELDS['Phases']:
             if not entry.get(f):
@@ -423,6 +454,7 @@ def guard(tasks, matrix, content):
         for e in errors:
             print('  *', e)
         sys.exit(1)
+    return excluded
 
 
 LEAKS = [
@@ -566,9 +598,16 @@ def note(ws, row, lines):
 
 def build(out_path):
     tasks = parse_tasks(TASKS)
-    headline, schedule, finish, matrix = parse_staffed(STAFFED)
+    scenarios, headline, schedule, finish, matrix = parse_staffed(STAFFED)
     content = parse_content(CONTENT)
-    guard(tasks, matrix, content)
+    excluded = guard(tasks, matrix, content)
+
+    # With one team size the column needs no label; with several it must carry one.
+    def sprint_head(n):
+        return 'Sprint' if len(scenarios) == 1 else f'Sprint — {n} devs'
+
+    def reached_head(n):
+        return 'Reached' if len(scenarios) == 1 else f'Reached with {n} developers'
 
     phases = content['Phases']
     items = content['Work Items']
@@ -620,15 +659,15 @@ def build(out_path):
               f'It covers **{days(total_h)} days of development effort** across '
               f'**{len(ordered_ids)} work items**, grouped into **{len(phases)} stages**.'),
         ('P', 'It is written to be discussed rather than filed. The sheet we would start on is '
-              '**Delivery Options** — it is the decision that everything else follows from.'),
+              '**Delivery Summary** — the date, and what would move it.'),
         ('GAP', ''),
         ('H', 'The sheets'),
-        ('K', '**Delivery Options** — what each team size delivers, and what would change the date. '
+        ('K', '**Delivery Summary** — when development completes, and what would change that date. '
               'Start here.'),
-        ('K', '**Plan by Stage** — the fifteen stages of the build, what each one gives you, and '
-              'when each lands under each option.'),
-        ('K', '**Sprint Schedule** — every two-week sprint under each option, with its dates, '
-              'capacity and workload.'),
+        ('K', f'**Plan by Stage** — the {len(phases)} stages of the build, what each one gives '
+              f'you, and the sprint each lands in.'),
+        ('K', '**Sprint Schedule** — every two-week sprint, with its dates, capacity and '
+              'workload.'),
         ('K', '**Work Items** — the full detail. Every item of work, what it delivers, and the '
               'sprint it lands in. Filter it during the discussion.'),
         ('K', '**Milestones and Needs** — the dates we are working to, what we need from you, and '
@@ -638,13 +677,16 @@ def build(out_path):
         ('H', 'How to read the effort figures'),
         ('P', '**Effort is in days, and a day is one person working for one day.** Twenty days of '
               'effort is one person for four weeks, or four people for one week — it is a measure '
-              'of size, not of elapsed time. The elapsed time is on the Delivery Options and '
+              'of size, not of elapsed time. The elapsed time is on the Delivery Summary and '
               'Sprint Schedule sheets, and it depends entirely on how many people are working.'),
         ('P', 'Sprints are **two weeks**, starting Monday 24 August 2026. **Working days are '
               'counted, not assumed** — public holidays are deducted from the sprints that '
               'contain them, which is why some sprints are shorter than others.'),
         ('GAP', ''),
         ('H', 'What these figures do not include'),
+        ('K', '**Coil yield, costing and scrap.** This work is out of the plan by agreement and no '
+              'part of it is in any figure on these sheets. Yield would continue to be reported '
+              'the way it is today, and flat wire scrap routed by hand, until it is picked up.'),
         ('K', '**Testing and business analysis.** The figures are development only. Quality '
               'assurance, business analysis and contingency are planned separately and are '
               'additional to every date shown here.'),
@@ -655,8 +697,8 @@ def build(out_path):
               'sheet.'),
         ('GAP', ''),
         ('H', 'What we need back'),
-        ('K', 'A decision on team size — the Delivery Options sheet sets out the three we have '
-              'costed and what each one delivers.'),
+        ('K', 'Confirmation of the team size the plan is built on, and of the completion date it '
+              'produces. The Delivery Summary sheet sets out what would move that date.'),
         ('K', 'The four items on the Milestones and Needs sheet marked as needed from you. Two of '
               'them gate work that starts early.'),
         ('K', 'Confirmation that the stage order matches your operational priorities. If something '
@@ -682,12 +724,13 @@ def build(out_path):
         r += 1
 
     # ------------------------------------------------------- Delivery Options
-    ws = wb.create_sheet('Delivery Options')
+    ws = wb.create_sheet('Delivery Summary')
     cols = [('Team size', 16), ('Sprints', 10), ('Development complete', 22),
             ('Against the end-September target', 26), ('Against fourth-quarter production', 32)]
-    sheet_header(ws, 'Delivery Options',
-                 f'{days(total_h)} days of development effort. What that means depends on how '
-                 f'many people are on it — the three options below are the ones we have costed.',
+    plural = 'the options below are' if len(scenarios) > 1 else 'the plan below is'
+    sheet_header(ws, 'Delivery Summary',
+                 f'{days(total_h)} days of development effort across {len(ordered_ids)} work '
+                 f'items — {plural} what that delivers, and when.',
                  tab='B71C1C')
     widths(ws, cols)
     rows = [[f'{h["devs"]} developers', h['sprints'], h['finish'],
@@ -703,23 +746,18 @@ def build(out_path):
              for k in sorted(content['What changes the date'])]
     r = table(ws, r, lever_cols, lrows)
 
-    r += 1
-    for line in (
-        'Every option above uses the same scope and the same effort. The only variable is how '
-        'many people are working on it.',
-        'These are development completion dates. Acceptance testing and machine commissioning '
-        'follow them and are not included.',
-    ):
-        c = ws.cell(row=r, column=1, value=render(line))
-        c.font = SUB_FONT
-        c.alignment = Alignment(vertical='top', wrap_text=True)
-        r += 1
+    r = note(ws, r + 1, [
+        'This is a development completion date. Acceptance testing and machine commissioning '
+        'follow it and are not included in it.',
+        'Coil yield, costing and scrap are out of the plan by agreement and are in none of these '
+        'figures.',
+    ])
 
     # ---------------------------------------------------------- Plan by Stage
     ws = wb.create_sheet('Plan by Stage')
     cols = [('#', 5), ('Stage', 34), ('What it delivers', 78), ('Who uses it', 26),
             ('Effort (days)', 12), ('Work items', 11)]
-    cols += [(f'Sprint — {n} devs', 14) for n in SCENARIOS]
+    cols += [(sprint_head(n), 14) for n in scenarios]
     cols += [('Can it be deferred?', 44)]
     sheet_header(ws, 'Plan by Stage',
                  f'The {len(phases)} stages of the build, in delivery order. Each row is a block '
@@ -730,7 +768,7 @@ def build(out_path):
         e = phases[p]
         rows.append([str(i), e['Phase name'], e['Delivers'], e['Audience'],
                      days(phase_h.get(p, 0)), str(phase_n.get(p, 0))]
-                    + [phase_sprints({p}, n) for n in SCENARIOS]
+                    + [phase_sprints({p}, n) for n in scenarios]
                     + [e['Deferrable']])
     last = table(ws, 4, cols, rows, centre_cols=(0, 4, 5, 6, 7, 8))
     ws.auto_filter.ref = f'A4:{get_column_letter(len(cols))}{last - 1}'
@@ -752,7 +790,7 @@ def build(out_path):
             ('What is delivered', 86)]
     widths(ws, cols)
     r = 4
-    for n in SCENARIOS:
+    for n in scenarios:
         r = section(ws, r, f'{n} developers — {len(schedule[n]["sprints"])} sprints, '
                            f'development complete {finish[n]}')
         rows = []
@@ -778,7 +816,7 @@ def build(out_path):
     ws = wb.create_sheet('Work Items')
     cols = [('#', 6), ('Work item', 46), ('What it delivers for you', 76), ('Stage', 30),
             ('Who it serves', 26), ('Area of the system', 30), ('Effort (days)', 12)]
-    cols += [(f'Sprint — {n} devs', 14) for n in SCENARIOS]
+    cols += [(sprint_head(n), 14) for n in scenarios]
     sheet_header(ws, 'Work Items',
                  f'All {len(ordered_ids)} items of development work, in the order they are built. '
                  f'Use the filters on the header row to narrow to a stage or a sprint.',
@@ -792,7 +830,7 @@ def build(out_path):
         rows.append([str(i), e['Work item'], e['Delivers'],
                      phases[m['phase']]['Phase name'], e['Audience'], disciplines,
                      days(m['hours'], dp=1)]
-                    + [m['sprint'][n] for n in SCENARIOS])
+                    + [m['sprint'][n] for n in scenarios])
     last = table(ws, 4, cols, rows, centre_cols=(0, 6, 7, 8, 9))
     ws.auto_filter.ref = f'A4:{get_column_letter(len(cols))}{last - 1}'
     ws.freeze_panes = 'C5'
@@ -804,7 +842,7 @@ def build(out_path):
                  'outside this team.', tab='EF6C00')
     md = content['Milestones and dependencies']
     cols = [('Milestone', 34)]
-    cols += [(f'Reached with {n} developers', 21) for n in SCENARIOS]
+    cols += [(reached_head(n), 21) for n in scenarios]
     cols += [('What it means', 100)]
     widths(ws, cols)
     r = section(ws, 4, 'Delivery milestones — the end of the sprint that completes them')
@@ -813,7 +851,7 @@ def build(out_path):
         e = md[k]
         codes = {c.strip() for c in e.get('Covers', '').split(',') if c.strip()}
         rows.append([e['Item']]
-                    + [sprint_end(codes, n) if codes else '' for n in SCENARIOS]
+                    + [sprint_end(codes, n) if codes else '' for n in scenarios]
                     + [e['Detail']])
     r = table(ws, r, cols, rows, centre_cols=(1, 2, 3)) + 1
     r = note(ws, r, ['Stages overlap, so two milestones can land in the same sprint — the plan '
@@ -851,6 +889,7 @@ def build(out_path):
 
     wb.save(out_path)
     return dict(phases=len(phases), items=len(ordered_ids), days=days(total_h),
+                scenarios=scenarios, excluded=excluded,
                 sheets=[w.title for w in wb.worksheets])
 
 
@@ -859,9 +898,13 @@ def main():
     stats = build(out)
     rel = os.path.relpath(out, ROOT)
     print(f'wrote {rel}')
+    print(f'  team sizes           : {" · ".join(f"{n} developers" for n in stats["scenarios"])}')
     print(f'  stages               : {stats["phases"]}')
     print(f'  work items           : {stats["items"]}')
     print(f'  development effort   : {stats["days"]} days')
+    if stats['excluded']:
+        print(f'  excluded from plan   : {len(stats["excluded"])} backlog stories '
+              f'({", ".join(stats["excluded"])}) - not allocated to any sprint')
     print(f'  sheets               : {" · ".join(stats["sheets"])}')
 
     hits = scan_for_leaks(out)

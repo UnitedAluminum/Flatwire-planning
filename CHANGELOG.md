@@ -75,6 +75,7 @@ a client deliverable, the second describes a screen.
 | &nbsp;&nbsp;[MVP-1/ProjectPlan/FlatWireJiraStories.md](#mvp-1projectplanflatwirejirastoriesmd) | 4 |
 | &nbsp;&nbsp;[MVP-1/ProjectPlan/FlatWireTables.md](#mvp-1projectplanflatwiretablesmd) | 1 |
 | &nbsp;&nbsp;[MVP-1/ProjectPlan/PLCTagImplementation.md](#mvp-1projectplanplctagimplementationmd) | 1 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/Development/StaffedSprintPlans.md](#mvp-1projectplandevelopmentstaffedsprintplansmd) | 2 |
 | &nbsp;&nbsp;[MVP-1/ProjectPlan/REVIEW.md](#mvp-1projectplanreviewmd) | 4 |
 | &nbsp;&nbsp;[MVP-1/ProjectPlan/RodPreCheckinUxReviewPrompt.md](#mvp-1projectplanrodprecheckinuxreviewpromptmd) | 2 |
 | &nbsp;&nbsp;[MVP-1/ProjectPlan/ShopfloorAndRealTimePlan.md](#mvp-1projectplanshopfloorandrealtimeplanmd) | 16 |
@@ -84,8 +85,8 @@ a client deliverable, the second describes a screen.
 | &nbsp;&nbsp;[MVP-1/ProjectPlan/TechStackRecommendation.md](#mvp-1projectplantechstackrecommendationmd) | 1 |
 | &nbsp;&nbsp;[MVP-1/ProjectPlan/Tools/README.md](#mvp-1projectplantoolsreadmemd) | 5 |
 | &nbsp;&nbsp;[MVP-1/ProjectPlan/Tools/build_coverage_matrix.py](#mvp-1projectplantoolsbuild_coverage_matrixpy) | 1 |
-| &nbsp;&nbsp;[MVP-1/ProjectPlan/Tools/build_development_plan_xlsx.py](#mvp-1projectplantoolsbuild_development_plan_xlsxpy) | 1 |
-| &nbsp;&nbsp;[MVP-1/ProjectPlan/Tools/DevelopmentPlanContent.md](#mvp-1projectplantoolsdevelopmentplancontentmd) | 1 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/Tools/build_development_plan_xlsx.py](#mvp-1projectplantoolsbuild_development_plan_xlsxpy) | 2 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/Tools/DevelopmentPlanContent.md](#mvp-1projectplantoolsdevelopmentplancontentmd) | 2 |
 | &nbsp;&nbsp;[MVP-1/ProjectPlan/WeldEventPopupPlan.md](#mvp-1projectplanweldeventpopupplanmd) | 4 |
 | &nbsp;&nbsp;[MVP-1/ProjectPlan/Development/YieldCostAndScrapStories.md](#mvp-1projectplanyieldcostandscrapjirastoriesmd) | 1 |
 | &nbsp;&nbsp;[MVP-1/ProjectPlan/YieldCostAndScrapSheet.md](#mvp-1projectplanyieldcostandscrapsheetmd) | 3 |
@@ -520,6 +521,15 @@ Changes that span the repository rather than one document.
 
 ---
 
+## [MVP-1/ProjectPlan/Development/StaffedSprintPlans.md](MVP-1/ProjectPlan/Development/StaffedSprintPlans.md)
+
+| Date | Changed By | Description |
+|------|-----------|-------------|
+| Aug 13, 2026 | Plan team | **Re-baselined at three developers, with yield/cost/scrap out of plan — and a sequencing defect corrected in the same pass.** The 2- and 4-developer scenarios were withdrawn (recoverable at `1b8814c`); **Phase 12** — coil yield, cost ledger and scrap — is excluded by direction, taking the plan to **103 stories / 1,396 h** from 107 / 1,485 h.<br><br>**The date does not move: 7 sprints, finish Wed 25 Nov 2026, unchanged.** All 89 h came out of `S6`, which was never the binding sprint — the finish is set by `S7`, which exists because **Phase 14 must have a sprint to itself**. What the removal buys is the plan's only real absorption: `S6` falls from **98 % to 60 %**, 95 free hours immediately before commissioning, with every earlier sprint still at 96–102 %. A new §3 states this outright, because the intuition is the opposite.<br><br>**⚠ The allocator had no barrier on Phase 14, and the published plans were right by accident.** `[SP §6.1]` lists `14` last under *Must be sequential* and phase-14's scope call says *"pull this into a dedicated post-feature-complete window regardless of team size"* — the greedy pass enforced neither. The 3-developer plan isolated Phase 14 only because nothing else fitted, and **the withdrawn 4-developer plan had Phase 14 sharing `S5` with Phases 11, 12 and 13, which the rule forbids**. With 89 h removed the greedy pass would have reported a **6-sprint plan finishing 13 Nov** — twelve days early and not deliverable. The barrier is now explicit and the allocation was regenerated under it.<br><br>**One published figure was wrong in consequence and is corrected:** the *add a 4th developer* lever claimed **30 Oct**, which was the withdrawn plan's barrier-violating date. Under the barrier four developers finish **13 Nov** and five finish **30 Oct**, so **no team size on this start date reaches 30 September** — because the last two sprints are dependency-bound, not effort-bound (at four developers `S5` is 31 % and `S6` 22 %). §1 now says so rather than resting on the 4.0-FTE arithmetic floor.<br><br>**Two notes kept deliberately.** The per-stream split (FE 545 · BE 354 · DB 202 · RT 305) sums to **1,406 h against the allocation's 1,396 h**: `[DE]` publishes a per-phase retention factor *and* a per-stream compression rate, and once Phase 12 is removed they disagree by 10 h because its stream mix compresses differently from its phase factor — the per-phase basis is the one every sprint figure reconciles to. And **`OQ-10` (footage→weight) still matters with yield out of plan**: it is a Phase 9 coil-completion question, printed on every customer label, not a Phase 12 one. |
+| Aug 13, 2026 | Plan team | **Created** as sprint plans at 2, 3 and 4 developers, with all 107 development stories allocated — two-week sprints from 24 Aug 2026 on the AI-assisted basis. Superseded the same day by the three-developer re-baseline above. |
+
+---
+
 ## [MVP-1/ProjectPlan/REVIEW.md](MVP-1/ProjectPlan/Development/REVIEW.md)
 
 | Date | Author | Change |
@@ -897,6 +907,8 @@ Changes that span the repository rather than one document.
 
 | Date | Author | Change |
 |---|---|---|
+| Aug 13, 2026 | Plan team | **Phase 12 and its four work items removed; three of the four date levers rewritten.** 14 stages and 103 work items. *Defer the yield, cost and scrap work* is no longer a lever — it is already out — and *add a fifth developer* was written against a four-developer baseline that no longer exists. They are replaced by **let the final testing and commissioning stage start early** (the one lever that removes a sprint) and **add a fourth developer**, whose effect is corrected from *four weeks* to *about two* now that Phase 14 is held to its own sprint. The milestone covering every stage no longer lists Phase 12, and the *team is smaller than the work requires* risk was rewritten from three team sizes to one. |
+| Aug 13, 2026 | Plan team | **Made scenario-count-agnostic, and coverage re-pointed at the sprint plan rather than the backlog.** The 3-developer re-baseline broke three assumptions at once. **(1)** `SCENARIOS` was the hard-coded tuple `(2, 3, 4)` and the sprint tables were found by fixed section numbers; both now come from the plan — the headline table's rows define the team sizes, sections are located by content, and the allocation matrix's sprint columns are matched by header. Team sizes spelled as words (*"Three developers"*) are accepted, which the old positional `zip` never had to handle; with one team size the sprint and milestone columns drop their *"— N devs"* labels. **(2)** Coverage checked every backlog work item against the content file, so excluding Phase 12 from the plan failed the build with five errors. **The workbook's scope is the sprint plan, not the backlog** — coverage now runs against the allocation matrix, and a backlog story absent from it is an exclusion rather than an error. **It is printed at the end of every build**, because a story dropped by accident and one removed by decision are otherwise indistinguishable. **(3)** Client wording written for three options was rewritten for one, the sheet renamed **Delivery Summary**, and the excluded scope named on both it and the read-me — a client should not have to infer that yield and costing are absent. |
 | Aug 2, 2026 | Plan team | v1.1. Two-status rule and single check-in, per client. Section 3.5 rewritten from a four-status proposal to the confirmed *Ready for FL2* / *Checked in* pair plus the exclusivity rule; Section 3.4 gains the two scan-while-occupied outcomes; rules renumbered SQ-7 to SQ-12; confirmed decisions 6 and 7 added; open item 2 reduced to the stored vocabulary only; open item 6 added, since a quality-held spool has no place on a two-status screen. |
 | Aug 2, 2026 | Plan team | Initial issue. New screen: Dashboard 5A, the FL2 spool queue. Records the reasons it is being added, the scan-resolves-order behaviour, the four ways a scan can end, and the five items still needing client input. |
 
