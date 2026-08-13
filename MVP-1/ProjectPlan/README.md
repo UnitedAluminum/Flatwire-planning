@@ -89,6 +89,7 @@ These three were sibling folders of `ProjectPlan/` until the consolidation. They
 | [Roadmap.md](Development/Roadmap.md) | `[RM]` | The 14-phase model, the phase table, milestones and risks |
 | [SprintPlan.md](Development/SprintPlan.md) | `[SP]` | The **programme** sprint plan — capacity position, delivery model, sprint calendar, dependencies, DoR/DoD |
 | [DevelopmentSprintPlan.md](Development/DevelopmentSprintPlan.md) | `[DSP]` | **The same sprints, build streams only** (FE/BE/DB/RT, no QA/BA/contingency) — what a development lead commits against. A derived view of `[CE]` and `[DE]` |
+| [StaffedSprintPlans.md](Development/StaffedSprintPlans.md) | `[SSP]` | **The same development scope at 2, 3 and 4 developers** — two-week sprints from 24 Aug, with all 107 development stories allocated. **None of the three lands on 30 Sep** |
 | [TaskBreakdown.md](Development/TaskBreakdown.md) | `[TB]` | **The backlog — 116 stories / 3,292 h**, the descope ladder, the `FR-###` coverage matrix |
 | [GapsRegister.md](Development/GapsRegister.md) | `[GAP]` | **The `G##` register.** `G1` is the capacity escalation |
 | [CapacityAndEffortModel.md](Development/CapacityAndEffortModel.md) | `[CE]` | **The hours model of record** — rate card, per-phase effort, MVP-1 apportionment, capacity grid |
