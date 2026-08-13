@@ -78,7 +78,7 @@ MVP-2. **But the 60/85 % die-life bands are MVP-1**, and MVP-1 reads life at **d
 `Drawer.LastGrindingFeet` / `Drawer.TotalFeetAllowed`.
 
 > **The decision below assumes per-tool tracking that MVP-1 does not have.** `D4` is restated at size level in
-> [`DieChangeAndManagement.md` §2.4a](../../MVP-1/RequirementDocuments/DieChangeAndManagement.md): MVP-1
+> [`DieChangeAndManagement.md` §2.4a](../../MVP-1/ProjectPlan/Business/Screens/DieChangeAndManagement.md): MVP-1
 > rejects an unrecognised die **size**, not an unregistered physical die, and **two dies of one diameter share
 > a counter**. Read the decision as the MVP-2 target state.
 

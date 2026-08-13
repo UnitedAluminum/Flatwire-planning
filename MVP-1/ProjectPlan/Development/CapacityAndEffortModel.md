@@ -80,7 +80,7 @@ No prior estimate of any kind exists, so the estimate is **derived, auditable an
 
 | Unit | Hours | Notes |
 |---|---|---|
-| New dashboard screen | **24 h** | `MVP-1/Mockups/*.html` is the approved visual spec — no design time included |
+| New dashboard screen | **24 h** | `MVP-1/ProjectPlan/Frontend/Mockups/*.html` is the approved visual spec — no design time included |
 | Screen variant (FL2/FL3 mode of an existing screen) | **8 h** | |
 | Modal / dialog | **12 h** | |
 | Shared composite control | **20 h** | `pass-schedule-table`, `gauge-trace-chart`, `tolerance-viz`, `tab-wizard`, `action-bar`, `payoff-weight-bar` |
@@ -394,7 +394,7 @@ A separate scheduling consequence, independent of team size: **UAT cannot share 
 ## 8. Assumptions and known estimate risks
 
 - **Hour definition:** one dev-day = **8 h** of a person's working day, normal overhead absorbed (the "calendar" reading). See §4's sensitivity table for the hands-on-keyboard alternative, which raises the requirement to 13–14 FTE.
-- **Other assumptions:** no ramp-up or onboarding time; mockups in `MVP-1/Mockups/` are final so no UI design time is costed; `MVP-1/Mockups/flat-wire-shopfloor.styles.scss` is consumed as-is with no token migration (G18); the `CoilCheckin` backend template is directly reusable (Foundations §0.2).
+- **Other assumptions:** no ramp-up or onboarding time; mockups in `MVP-1/ProjectPlan/Frontend/Mockups/` are final so no UI design time is costed; `MVP-1/ProjectPlan/Frontend/Mockups/flat-wire-shopfloor.styles.scss` is consumed as-is with no token migration (G18); the `CoilCheckin` backend template is directly reusable (Foundations §0.2).
 - **Phase 4 is provisional** until OI-39 / G2 (cross-DB check-in recovery) is decided — **24–64 h reserve**.
 - **Phase 9 is provisional** until OI-45 / OQ-10 (footage→weight basis) is decided — **16–32 h reserve**, and that reserve is now **understated**: it was scoped before DB7b's physical scale weight (`FR-346`) was MVP-1 scope, which adds a second weight-capture point to reconcile against the first. Integrating over `RunReading` is materially more work than a target-derived weight. Phase 9 also assumes the **skid table** and the **lot-number source** already exist — neither does (`REVIEW.md` #13), and neither is costed.
 - **Phase 12 is provisional** — OI-68 (costing), OI-68 (standard times) and OI-60 (yield per route) are all open; it is also rungs 1–4 of the ladder.

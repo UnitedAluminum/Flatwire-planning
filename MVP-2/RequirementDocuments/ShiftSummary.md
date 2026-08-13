@@ -198,14 +198,14 @@ A held count without identities is not actionable at a shift handover. The held 
 
 | Document | Relationship |
 |---|---|
-| [Active Run Monitor](../../MVP-1/RequirementDocuments/ActiveRunMonitor.md) | Produces the pause and downtime data, and the reason categories this report groups by |
-| [Line Status Overview](../../MVP-1/RequirementDocuments/LineStatusOverview.md) | The live floor view; this is its retrospective counterpart |
-| [SPC Checkpoint](../../MVP-1/RequirementDocuments/SPCCheckpoint.md) | Supplies the pass rate |
-| [WIP Rejection](../../MVP-1/RequirementDocuments/WipRejection.md) | Supplies the rejection count and the held material |
-| [Output Coil Completion](../../MVP-1/RequirementDocuments/OutputCoilCompletion.md) | Supplies coils out, weight out and skids closed |
-| [Weld Event](../../MVP-1/RequirementDocuments/WeldEvent.md) | Supplies the weld counts |
-| [Spool Queue](../../MVP-1/RequirementDocuments/SpoolQueue.md) | The target of the spools-on-floor navigation |
-| [Rod Checkout](../../MVP-1/RequirementDocuments/RodCheckout.md) | Rods that left the line during the shift |
+| [Active Run Monitor](../../MVP-1/ProjectPlan/Business/Screens/ActiveRunMonitor.md) | Produces the pause and downtime data, and the reason categories this report groups by |
+| [Line Status Overview](../../MVP-1/ProjectPlan/Business/Screens/LineStatusOverview.md) | The live floor view; this is its retrospective counterpart |
+| [SPC Checkpoint](../../MVP-1/ProjectPlan/Business/Screens/SPCCheckpoint.md) | Supplies the pass rate |
+| [WIP Rejection](../../MVP-1/ProjectPlan/Business/Screens/WipRejection.md) | Supplies the rejection count and the held material |
+| [Output Coil Completion](../../MVP-1/ProjectPlan/Business/Screens/OutputCoilCompletion.md) | Supplies coils out, weight out and skids closed |
+| [Weld Event](../../MVP-1/ProjectPlan/Business/Screens/WeldEvent.md) | Supplies the weld counts |
+| [Spool Queue](../../MVP-1/ProjectPlan/Business/Screens/SpoolQueue.md) | The target of the spools-on-floor navigation |
+| [Rod Checkout](../../MVP-1/ProjectPlan/Business/Screens/RodCheckout.md) | Rods that left the line during the shift |
 
 ---
 

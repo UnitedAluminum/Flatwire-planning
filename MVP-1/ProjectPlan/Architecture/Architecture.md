@@ -111,7 +111,7 @@ These are the rules most likely to be broken by a developer working from habit o
 
 > **`API/Domain/SlitterInterface` is explicitly NOT a reference** — neither for UI/structure nor for the real-time / `CoilDataHub` pattern.
 
-**Frontend — what NOT to copy.** There is **no Angular structural, UI or CSS template.** `flat-wire-shopfloor` is all-new screens and controls built from `MVP-1/Mockups/`. The following are **not** references: `checkin-precheckin`, `shop-floor` / `shop-floor-common`, `statistical-process-control`, `wip-rejection`, `slitter-*`, `coil-receiving`, `common-grid` / `multi-grid-layout`, `opc`, `label-printing`, `print-traveler`.
+**Frontend — what NOT to copy.** There is **no Angular structural, UI or CSS template.** `flat-wire-shopfloor` is all-new screens and controls built from `MVP-1/ProjectPlan/Frontend/Mockups/`. The following are **not** references: `checkin-precheckin`, `shop-floor` / `shop-floor-common`, `statistical-process-control`, `wip-rejection`, `slitter-*`, `coil-receiving`, `common-grid` / `multi-grid-layout`, `opc`, `label-printing`, `print-traveler`.
 
 **The only frontend reuse** is the foundational, app-wide `shared` services, consumed so the library plugs into the existing app shell rather than re-inventing plumbing:
 

@@ -30,11 +30,11 @@ MVP-2/
 | Folder | Contents | The thing to know |
 |---|---|---|
 | [`ProjectPlan/`](ProjectPlan/) | Requirements, endpoints, backlog rows and test cases for the five deferred screens, **copied verbatim** | **Deliberately not self-contained** — cross-cutting sections (domain model, response envelope, NFRs, test strategy) stayed in MVP-1 and are cited, never copied. [Index](ProjectPlan/00-README.md) |
-| [`DBChanges/`](DBChanges/) | **3** of the 28 tables (the pass-schedule group), 10 of 43 FKs, 6 of 47 indexes, 1 of 3 programmability objects | **Four of those FKs sit on MVP-1 tables**, and the runner is ordered seed-before-constrain because MVP-1 already seeded rows that point here. **`CoilOutput` and `CoilTraceability` are MVP-1** — the DB7/DB7b *screens* are deferred but the coil genealogy behind the welding-wire certs is not. [README](DBChanges/README.md) |
+| [`Database/`](DBChanges/) | **3** of the 28 tables (the pass-schedule group), 10 of 43 FKs, 6 of 47 indexes, 1 of 3 programmability objects | **Four of those FKs sit on MVP-1 tables**, and the runner is ordered seed-before-constrain because MVP-1 already seeded rows that point here. **`CoilOutput` and `CoilTraceability` are MVP-1** — the DB7/DB7b *screens* are deferred but the coil genealogy behind the welding-wire certs is not. [README](DBChanges/README.md) |
 | [`Analysis/`](Analysis/) | **3 of the register's 99 open questions** — `OI-88` (the only unambiguously MVP-2 one), `Q83` and `Q62`. **Copied, not moved:** [`../Analysis/FlatWireOpenQuestions.md`](../Analysis/FlatWireOpenQuestions.md) stays the master and keeps all 99 rows, so every inbound `OQ-##` still resolves there | **Mirrored** — nothing renumbered or deleted |
 | [`ProjectPlan/`](DevelopmentPlan/) | **Phase 2 whole** (with its 231 h), **two partial phase files** (DB10, Die Management) and the generation-spec prompt | **Effort is not apportioned** — only Phase 2 carries a real figure. The descope ladder cannot supply the rest: rung 5 bundles the MVP-2 Die Management screen with the MVP-1 role UI, rung 6 defers MVP-1 reports. Phases 9/11/13 still carry their whole hours in MVP-1, which **overstates** it. [README](DevelopmentPlan/README.md) |
 
-### Screens — `Mockups/`
+### Screens — `Frontend/Mockups/`
 
 | Mockup | DB id | Screen | Owning specification | Roadmap phase that carried it |
 |---|---|---|---|---|
@@ -44,9 +44,9 @@ MVP-2/
 | `dashboard_die_management.html` | — | Die Management (inventory, life, retire) | [DieManagement.md](RequirementDocuments/DieManagement.md) | Phase 13 |
 | `dashboard_oee.html` | OEE | OEE Dashboard | **none** — never in the dashboard inventory | — (no phase owned it) |
 
-**The screens still open and still render.** They load the shared design system and chrome from `../../MVP-1/Mockups/` (`flat-wire-shopfloor.styles.css`, `flat-wire-topbar.js`, `flat-wire-fit.js`) and link back to MVP-1 screens through the same relative path. `flat-wire-topbar.js` resolves its logo and its "More Options" tile targets from **its own script URL** rather than the host page, which is what lets one copy serve both trees.
+**The screens still open and still render.** They load the shared design system and chrome from `../../MVP-1/ProjectPlan/Frontend/Mockups/` (`flat-wire-shopfloor.styles.css`, `flat-wire-topbar.js`, `flat-wire-fit.js`) and link back to MVP-1 screens through the same relative path. `flat-wire-topbar.js` resolves its logo and its "More Options" tile targets from **its own script URL** rather than the host page, which is what lets one copy serve both trees.
 
-### Specifications — `RequirementDocuments/`
+### Specifications — `Business/Screens/`
 
 | Document | Owns | Note |
 |---|---|---|
@@ -67,7 +67,7 @@ MVP-2/
 
 | Part | Scope | Where it lives |
 |---|---|---|
-| §1–3 the mid-run **Die Change event**, §5 the die-life **status vocabulary** | **MVP-1** (Phase 6, the `die_change.js` dialog over the paused run) | Stays at [`../MVP-1/RequirementDocuments/DieChangeAndManagement.md`](../MVP-1/RequirementDocuments/DieChangeAndManagement.md), now v2.3 |
+| §1–3 the mid-run **Die Change event**, §5 the die-life **status vocabulary** | **MVP-1** (Phase 6, the `die_change.js` dialog over the paused run) | Stays at [`../MVP-1/ProjectPlan/Business/Screens/DieChangeAndManagement.md`](../MVP-1/ProjectPlan/Business/Screens/DieChangeAndManagement.md), now v2.3 |
 | §4 **Die Management** — inventory, die detail, the four lifecycle operations, its die-life bands | **MVP-2** | [`RequirementDocuments/DieManagement.md`](RequirementDocuments/DieManagement.md) |
 
 **No requirement was altered in the extraction.** The status vocabulary was deliberately **not** copied — the extracted document points back at the parent's §5, because a five-row vocabulary living in two scope buckets is how this repository has repeatedly ended up with copies that disagree.
@@ -81,7 +81,7 @@ MVP-2/
 - **Phase 2** is more than DB9/DB9A — the `PassSchedule` / `PassScheduleComponent` / `PassScheduleChangeLog` tables and the pass-schedule read path are what rod check-in acknowledges and what the PLC tags are pushed from.
 - ~~**Phase 9** is more than DB7/DB7b — `CoilOutput` and `CoilTraceability` persistence is the coil genealogy required for welding-wire customer certificates.~~ **Phase 9 left this folder entirely on 11 Aug 2026** — it is **wholly MVP-1**, screens included, precisely because the genealogy and the screens that write it cannot be separated.
 - **Phase 11** is more than DB10 — reporting and certification sit in the same phase.
-- **Phase 13** is more than die inventory — the die *change* dialog (`../MVP-1/Mockups/die_change.js`) is Phase 6 and stays in MVP-1. **The die inventory table itself is now MVP-2 too** (8 h, moved out of the MVP-1 phase-13 figure), so `FW-N07` no longer spans both scopes.
+- **Phase 13** is more than die inventory — the die *change* dialog (`../MVP-1/ProjectPlan/Frontend/Mockups/die_change.js`) is Phase 6 and stays in MVP-1. **The die inventory table itself is now MVP-2 too** (8 h, moved out of the MVP-1 phase-13 figure), so `FW-N07` no longer spans both scopes.
 
 ## Consequences — two closed, two open
 

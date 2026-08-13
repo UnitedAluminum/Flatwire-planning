@@ -250,6 +250,102 @@ Each is an open issue, listed here so nobody assumes a table exists.
 
 ---
 
+> **Absorbed from `Schema/SQL/FlatWire_ERDiagram_Documentation.md` on 13 Aug 2026**, which was deleted in the same
+> pass. That file was the designated "read this first" as-built description and `GapAnalysis.md` **E1** found it
+> **wrong in six ways** — it documented the three MVP-2 `PassSchedule*` tables as built here, listed a `DDL_02` and
+> a `FlatWire_SampleData_Schedule.sql` that are not in the folder, listed `sp_ShiftSummary` and
+> `UX_PassSchedule_OneActivePerLineAlloy` which do not exist, claimed "40 non-clustered + 1 filtered-unique", and
+> its header said 28 tables while its footer said 27. **Everything it carried that §6 and §7 did not already say
+> better was brought across and corrected on the way**; the rest was dropped rather than reconciled, because §6 and
+> §7 were the later and more accurate artifacts.
+>
+> **The operational procedure is not here.** `[DEP §4.2]` owns how the schema is deployed and verified; §6.11 below
+> is the *script* order and what each file contains.
+
+### 6.10 Query patterns
+
+### End-to-End Traceability (Finished Coil → Source Rod → Supplier)
+```sql
+-- Find all material lineage for a coil
+SELECT 
+    c.CoilAlpha,
+    ct.FootageFrom, ct.FootageTo,
+    r.Alpha as SourceRodAlpha,
+    r.Alloy, r.Temper, r.SupplierHeat
+FROM CoilOutput c
+JOIN CoilTraceability ct ON c.CoilAlpha = ct.CoilAlpha
+JOIN Rod r ON ct.RodAlpha = r.Alpha
+WHERE c.CoilAlpha = 'FW-00421-C01'
+```
+
+### Run Quality Summary
+```sql
+-- Count pass/fail at each SPC checkpoint type
+SELECT 
+    f.RunId,
+    sc.CheckpointType,
+    COUNT(*) as TotalReadings,
+    SUM(CASE WHEN sm.InSpec = 1 THEN 1 ELSE 0 END) as PassCount
+FROM FlatWireRun f
+JOIN SpcCheckpoint sc ON f.RunId = sc.RunId
+LEFT JOIN SpcMeasurement sm ON sc.CheckpointId = sm.CheckpointId
+GROUP BY f.RunId, sc.CheckpointType
+```
+
+### Rejection & Yield Analysis
+```sql
+-- Material disposition (Hold/Scrap) by line
+SELECT 
+    wr.LineId,
+    wr.RejectionGroup,
+    COUNT(*) as RejectionCount,
+    SUM(CASE WHEN wr.NewMaterialStatus = 'SCRAP' THEN 1 ELSE 0 END) as ScrapCount
+FROM WipRejection wr
+WHERE wr.Timestamp >= DATEADD(DAY, -30, SYSDATETIMEOFFSET())
+GROUP BY wr.LineId, wr.RejectionGroup
+```
+
+### Run Pause Analysis
+```sql
+-- Pause reasons and durations per run
+SELECT 
+    f.RunId,
+    rp.ReasonCode,
+    rp.ReasonCategory,
+    COUNT(*) as PauseCount,
+    SUM(DATEDIFF(SECOND, rp.PausedAt, ISNULL(rp.ResumedAt, SYSDATETIMEOFFSET()))) as TotalPauseSeconds
+FROM FlatWireRun f
+JOIN RunPauseEvent rp ON f.RunId = rp.RunId
+WHERE rp.ResumedAt IS NOT NULL
+GROUP BY f.RunId, rp.ReasonCode, rp.ReasonCategory
+```
+
+---
+
+### 6.11 Build and run order
+
+0. **Database & security** (`DDL_00`) — create `FlatWireDB`, RCSI, `ua_user` grants
+1. **Lookup tables** (`DDL_01`) — Stand, Drawer, Edger, SpoolConfiguration, **AlloyProperty**, **PayoffPosition**
+2. **Schedule tables** (`DDL_02`) — PassSchedule, PassScheduleComponent, **PassScheduleChangeLog**
+3. **Material tables** (`DDL_03`) — Rod, FlatWireRun, Spool
+4. **Run tracking tables** (`DDL_04`) — FlatWireRunDetail, **RodStaging**, RodCheckin, SpoolCheckin, RunPauseEvent, WeldEvent, RollOverride, DieChangeEvent, **RunReading**
+5. **Quality & output tables** (`DDL_05`) — SpcCheckpoint, SpcMeasurement, WipRejection, CoilOutput, CoilTraceability, RodCheckout
+6. **Foreign keys** (`DDL_06`) — all references added last
+7. **Indexes** (`DDL_07`) — performance + filtered-unique active schedule
+8. **Programmability** (`DDL_08`) — overlap trigger + read procs
+9. **Seed data** — `FlatWire_SampleData_Lookup.sql` (first) then `FlatWire_SampleData_Schedule.sql`
+
+All scripts are idempotent (`IF NOT EXISTS` / `IF EXISTS…DROP…CREATE`) and re-runnable.
+
+---
+
+*Document generated from FlatWire DDL scripts (DDL_00 through DDL_08).*
+*Last updated: August 1, 2026 — applied the 30 Jul client decisions: `RodStaging` loses its `OffScheduleOverride`/`ScheduledLineId` pair (a rod booked on the other rod line now triggers an **automatic station switch**, not an override) and gains `UnstageKind`/`WipRejectionId` so a **WIP rejection releases a blocked bay**; `AlloyProperty` tolerances become **min/max pairs** for gauge, width and diameter plus an ovality maximum, with diameter and ovality NULL until the values arrive; `RodCheckout` gains the **supervisor approval stamp** it never had (gap G24), enforced for Mode B and for a welded Mode P removal. Table count unchanged at 27. Rebuilt and validated on SQL Server 2019 — `RunAll` clean, 15 constraint tests pass.*
+
+*Previously: July 26, 2026 — retargeted to FlatWireDB; added AlloyProperty, PassScheduleChangeLog, RunReading; production-readiness hardening (rowversion, computed columns, indexes, overlap trigger, filtered-unique active schedule).*
+
+---
+
 ## 7. ER diagram
 
 The full model does not read at 28 tables in one diagram. This section publishes an **overview** of the five groups and their inter-group edges, then **one detailed diagram per group**. No table is omitted from either level.
@@ -620,9 +716,9 @@ erDiagram
 
 **In prose:** `CoilTraceability` is the genealogy chain and the reason `NFR012` is satisfiable. Its non-overlap invariant is enforced by trigger, not constraint. **`SpoolAlpha` (6 Aug 2026)** completes the `FR-333` chain `rod → spool → coil`, which was previously unsatisfiable — `CoilOutput` has no spool column and `RunId` cannot substitute, since `SpoolCheckin.RunId` is non-unique and `CoilOutput.RunId` is many-per-run, so the join returns a *set*. It sits on this range-grained row rather than on `CoilOutput` so that a spool running out mid-coil is expressible. Three columns in this group are **deliberately unconstrained references** — `WipRejection.MaterialAlpha` (rod *or* spool), `RodCheckout.PartialSpoolAlpha`, `CoilOutput.SkidId` — and all three are orphan-prone (**OI-20**).
 
-### 7.8 The 41 foreign keys
+### 7.8 The foreign keys — 33 in the MVP-1 build
 
-FKs are added in a **single script after all tables exist** (`06_ForeignKeys`), so tables can be created in logical groups without cross-group ordering concerns. **No delete cascades are declared** — all are `NO ACTION`, which is why the FK/`RunId` indexes in §6.8 matter for parent-delete checks.
+**`06_ForeignKeys.sql` creates 33 FKs; the full design has 43**, the other ten belonging to the MVP-2 `PassSchedule*` group and built by `MVP-2/DBChanges`'s `06b`. *(This heading said 41 until 13 Aug 2026 — a pre-MVP-split count.)* FKs are added in a **single script after all tables exist** (`06_ForeignKeys`), so tables can be created in logical groups without cross-group ordering concerns. **No delete cascades are declared** — all are `NO ACTION`, which is why the FK/`RunId` indexes in §6.8 matter for parent-delete checks.
 
 | Child | Column(s) | Parent | Nullable |
 |---|---|---|---|

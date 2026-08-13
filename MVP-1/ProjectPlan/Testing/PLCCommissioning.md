@@ -15,7 +15,7 @@
 
 Executed on the physical line with the commissioning engineer. **This is the only place several behaviours can be proven at all** — see §3.4.
 
-> **C1–C11 are reproduced in [`PLCTagSpecification.md`](../../RequirementDocuments/PLCTagSpecification.md) §11** so the client can read the commissioning plan alongside the tag map they are being asked to sign. **This document remains authoritative for the pass criteria.** **Applied 4 Aug 2026 — the two documents now agree:** `C5` above records *which controller(s) were written*. Without it the test passed whether the FL3 batch reached one controller or two, which is the open question (**`PLC-Q08`** / gap **G30**).
+> **C1–C11 are reproduced in [`PLCTagSpecification.md`](../Architecture/PLCTagSpecification.md) §11** so the client can read the commissioning plan alongside the tag map they are being asked to sign. **This document remains authoritative for the pass criteria.** **Applied 4 Aug 2026 — the two documents now agree:** `C5` above records *which controller(s) were written*. Without it the test passed whether the FL3 batch reached one controller or two, which is the open question (**`PLC-Q08`** / gap **G30**).
 
 ### 8.1 Safety preconditions
 

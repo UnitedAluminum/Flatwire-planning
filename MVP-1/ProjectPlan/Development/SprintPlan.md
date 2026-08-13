@@ -254,7 +254,7 @@ Phase 14 ──> requires all critical-path phases
 | Shared asset | Built in | Reused by |
 |---|---|---|
 | `flat-wire-signalr.service` + `FlatWireHub` | Phase 1/3 | 3, 5, 6, 7, 8, 9, 11 |
-| `PLCTagService` (push/clear) — surface in [`PLCTagSpecification.md`](../../RequirementDocuments/PLCTagSpecification.md), implementation in [`Architecture/PLCCommunication.md`](../Architecture/PLCCommunication.md) | Phase 1/4 | 4, 6 (roll override), 7 (checkout), 8, 10 |
+| `PLCTagService` (push/clear) — surface in [`PLCTagSpecification.md`](../Architecture/PLCTagSpecification.md), implementation in [`Architecture/PLCCommunication.md`](../Architecture/PLCCommunication.md) | Phase 1/4 | 4, 6 (roll override), 7 (checkout), 8, 10 |
 | `pass-schedule-table` + confirm-bar | Phase 2/4 | 2, 4, 8 |
 | `gauge-trace-chart` (live + profile) | Phase 3/5 | 5, 8, 11 |
 | `FlatWireRun` hub + event tables | Phase 1 | all shopfloor phases |

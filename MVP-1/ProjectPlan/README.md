@@ -1,7 +1,7 @@
 # Flat Wire Mill — Project Plan
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — **restructured into eight subject folders.** The seven numbered documents were split by section, and `MVP-1/DevelopmentPlan/` was consolidated in and deleted
+**Last Updated:** August 13, 2026 — **this folder is now the single source of truth for development, testing and deployment.** `DevelopmentPlan/`, `RequirementDocuments/`, `Mockups/` and `DBChanges/` were all consolidated in and no longer exist; the seven numbered documents were split by section into eight subject folders
 **Document Type:** Index
 **Status:** Active — the plan of record for development, testing and deployment
 **Owner:** Programme management
@@ -20,7 +20,7 @@
 **Precedence inside the folder**, in order:
 
 1. **The master specification** (external) — decisions and open issues.
-2. **The DDL** (`../DBChanges/Schema/SQL/`) for column types, nullability and constraints · **the mockups** (`../Mockups/`) for pixel-level layout · **the screen specifications** (`../RequirementDocuments/`) for screen rules. Each wins over the prose that describes it.
+2. **The DDL** (`Database/Schema/SQL/`) for column types, nullability and constraints · **the mockups** (`Frontend/Mockups/`) for pixel-level layout · **the screen specifications** (`Business/Screens/`) for screen rules. **All three are now inside this folder** and each still wins over the prose that describes it.
 3. **Everything else here.**
 
 ---
@@ -53,11 +53,11 @@ Every document declares its own **shortcode** in its header; citations use `[COD
 
 | Tier | Where | Authority |
 |---|---|---|
-| Rationale | [DatabaseDesign.md](Database/DatabaseDesign.md) `[DBD]` | Why the schema is shaped this way; the ER diagrams; **the counted object baseline** |
-| Column design | `../DBChanges/Schema/FlatWireSchema_*.md` | Per-domain, paired with the DDL file each names |
-| **Executable truth** | `../DBChanges/Schema/SQL/` | **Authoritative for types, nullability and constraints. Never regenerate it from the markdown** |
+| Rationale | [DatabaseDesign.md](Database/DatabaseDesign.md) `[DBD]` | Why the schema is shaped this way; the ER diagrams; **the counted object baseline** (§6.2), query patterns (§6.10), build order (§6.11) |
+| Column design | [Database/Schema/](Database/Schema/) | Five per-domain documents, each paired with the DDL file it names |
+| **Executable truth** | [Database/Schema/SQL/](Database/Schema/SQL/) | **Authoritative for types, nullability and constraints. Never regenerate it from the markdown** |
 
-**The MVP-1 build is `25 tables · 33 FKs · 41 index statements · 1 procedure · 1 trigger`.** The full design is 28 tables / 43 FKs; the three `PassSchedule*` tables are owned outside MVP-1. Defined once in `[DBD §6.2]` — every other mention is a citation.
+**The MVP-1 build is `25 tables · 33 FKs · 41 index statements · 1 procedure · 1 trigger`** — verified by a clean deploy and idempotent re-run from `Database/Schema/SQL/` on 13 Aug 2026. The full design is 28 tables / 43 FKs; the three `PassSchedule*` tables are owned outside MVP-1. Defined once in `[DBD §6.2]` — every other mention is a citation.
 
 ### `Backend/` · `Frontend/`
 
@@ -68,6 +68,19 @@ Every document declares its own **shortcode** in its header; citations use `[COD
 | [ScreenPlan.md](Frontend/ScreenPlan.md) | `[SCR]` | Screen inventory, navigation map, shared chrome, mockup → component mapping |
 | [Components.md](Frontend/Components.md) | `[CMP]` | Library structure, routing, state, charts, the design-token system |
 | [ValidationRules.md](Frontend/ValidationRules.md) | `[VAL]` | Shopfloor input constraints — 48 px targets, the 14 px floor, no hover |
+
+### `Business/Screens/` · `Frontend/Mockups/` · `Database/Schema/` — absorbed 13 Aug 2026
+
+These three were sibling folders of `ProjectPlan/` until the consolidation. They are **the authorities their prose describes**, which is why they had to come inside for this folder to be self-sufficient:
+
+| Now at | Was | Holds |
+|---|---|---|
+| [Business/Screens/](Business/Screens/) | `MVP-1/RequirementDocuments/` | **13 specifications, one per screen or screen family** — the owning document wins on any disagreement. They keep their `## Document Change History` blocks, the one documented exception to the single-CHANGELOG rule, because that block renders into the `.docx` the client signs. ⚠ **`Screens/` is shorthand:** `DieChangeAndManagement`, `WeldEvent` and `SpoolCompletionNotification` own a dialog or a behaviour, not a routed screen |
+| [Frontend/Mockups/](Frontend/Mockups/) | `MVP-1/Mockups/` | **31 files, flat and intact** — 17 HTML (11 routed screens, 5 dialog launchers, 1 component demo), 10 JS (3 shared runtime + 7 dialogs), the `.scss` source and its compiled `.css`, and two binary assets. **It must stay flat:** ~90 bare-filename asset references break all at once under any subfoldering |
+| [Database/Schema/](Database/Schema/), [Database/Scripts/](Database/Scripts/) | `MVP-1/DBChanges/` | The DDL, seed data and the five per-domain design documents; `Scripts/` holds work against the **shared** `united_db`/`CommonDB`, not `FlatWireDB` |
+| [Architecture/PLCTagSpecification.md](Architecture/PLCTagSpecification.md) | `MVP-1/RequirementDocuments/` | `[PLC]` — **the only tag map in the repository.** `PLCCommunication.md` carries none, by rule |
+
+**All five MVP-2 mockups load their stylesheet, app bar and fit script from `Frontend/Mockups/`** — 19 references, plus 5 the other way and the topbar's own tile targets. They have no build step, so a broken path is invisible until someone opens a screen.
 
 ### `Development/` — when it gets built, by whom, at what cost
 
@@ -127,7 +140,7 @@ Every document declares its own **shortcode** in its header; citations use `[COD
 | `../../Analysis/FlatWireOpenQuestions.md`, `FlatWireDecidedQuestions.md` | The decision registers — `Q1`–`Q33` open, `Q61`–`Q85` decided. Phases cite them as blockers |
 | `../../Analysis/FlatWireEndToEndProcess.md`, `FlatWireProcessWalkthrough.md` | Cross-cutting process narrative, cited by step number. **A residual seam:** `[BR §3]` sources the three operating routes from the first, and `[RM]` derives phase ordering from its 11 stages |
 | `../../BaseDocuments/` | Read-only business evidence, plus the two **live** client-call propagation ledgers |
-| `../SRS/` | Generated client deliverables — output of `Tools/`, not source |
+| `../SRS/` | Generated client deliverables — output of `Tools/`, not source. **Never edit a `.docx` or `.xlsx`**; edit the markdown and re-run |
 | `../../MVP-2/` | Deferred scope by decision |
 
 ---

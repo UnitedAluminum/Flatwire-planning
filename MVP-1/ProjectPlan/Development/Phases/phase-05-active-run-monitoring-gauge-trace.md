@@ -2,7 +2,7 @@
 
 > **Part of the [Flat Wire Mill — Master Implementation Roadmap](../Roadmap.md).** See [Foundations](../../Architecture/Architecture.md) for §0.2–0.4 shared context.
 > **Prev:** [Phase 4 — Rod Check-In & PLC Configuration](./phase-04-rod-checkin-plc-config.md) · **Next:** [Phase 6 — In-Run Production Events](./phase-06-in-run-production-events.md)
-> **Owning specification:** [`ActiveRunMonitor.md`](../../../RequirementDocuments/ActiveRunMonitor.md) (DB3) — authoritative on this phase's screen, including the Pause/Resume dialog (§6); the owning doc wins on any disagreement.
+> **Owning specification:** [`ActiveRunMonitor.md`](../../Business/Screens/ActiveRunMonitor.md) (DB3) — authoritative on this phase's screen, including the Pause/Resume dialog (§6); the owning doc wins on any disagreement.
 
 ---
 
@@ -88,7 +88,7 @@
 ## Deliverables
 Dashboard 3 (FL1/FL3); **the shared DB3 shell — `run-status-cards`, `info-grid`, `chart-tab-strip`, the grouped `action-bar` and `gauge-trace-chart` with maximize + runtime source switching — which phases 8 (FL2) and 10 (FL3) configure rather than reimplement**; `RunController` (active + gaugetrace, now including order fields for the Order Information grid). *(The SCADA multi-trend screen and its settings panel were descoped 4 Aug 2026.)*
 
-**OQ blockers:** **`PLC-Q02`** (confirm every machine tag path with the commissioning engineer — successor to the superseded PLC-Q02), configurable out-of-spec N, **OQ-18** (order field carrying the coil min–max weight range — surfaced by the new Order Information grid). **Stories:** FW-062, FW-081, FW-080. *(The DB13/DB14 scope inside FW-062 is withdrawn; the story keeps its 8 points, since neither screen ever had acceptance criteria in it. `HMIAndSCADALayout.md` is deleted — the machine tags this phase reads are in [`PLCTagSpecification.md`](../../../RequirementDocuments/PLCTagSpecification.md).)*
+**OQ blockers:** **`PLC-Q02`** (confirm every machine tag path with the commissioning engineer — successor to the superseded PLC-Q02), configurable out-of-spec N, **OQ-18** (order field carrying the coil min–max weight range — surfaced by the new Order Information grid). **Stories:** FW-062, FW-081, FW-080. *(The DB13/DB14 scope inside FW-062 is withdrawn; the story keeps its 8 points, since neither screen ever had acceptance criteria in it. `HMIAndSCADALayout.md` is deleted — the machine tags this phase reads are in [`PLCTagSpecification.md`](../../Architecture/PLCTagSpecification.md).)*
 
 ---
 

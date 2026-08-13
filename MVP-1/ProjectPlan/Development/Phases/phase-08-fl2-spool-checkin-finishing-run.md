@@ -2,7 +2,7 @@
 
 > **Part of the [Flat Wire Mill — Master Implementation Roadmap](../Roadmap.md).** See [Foundations](../../Architecture/Architecture.md) for §0.2–0.4 shared context.
 > **Prev:** [Phase 7 — Exception Handling: WIP Rejection & Rod Checkout](./phase-07-wip-rejection-rod-checkout.md) · **Next:** [Phase 9 — Output Coil Completion, Labeling & Packing](./phase-09-output-coil-completion-labeling-packing.md)
-> **Owning specifications:** [`SpoolQueue.md`](../../../RequirementDocuments/SpoolQueue.md) (DB5A) · [`RocCheckin.md`](../../../RequirementDocuments/RocCheckin.md) §4.3 (DB5 spool check-in) · [`SpoolCompletionNotification.md`](../../../RequirementDocuments/SpoolCompletionNotification.md) (weight milestones and the machine-stop confirmation) — the owning doc wins on any disagreement.
+> **Owning specifications:** [`SpoolQueue.md`](../../Business/Screens/SpoolQueue.md) (DB5A) · [`RocCheckin.md`](../../Business/Screens/RocCheckin.md) §4.3 (DB5 spool check-in) · [`SpoolCompletionNotification.md`](../../Business/Screens/SpoolCompletionNotification.md) (weight milestones and the machine-stop confirmation) — the owning doc wins on any disagreement.
 
 ---
 

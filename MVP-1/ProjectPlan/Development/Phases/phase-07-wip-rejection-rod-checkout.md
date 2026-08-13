@@ -2,7 +2,7 @@
 
 > **Part of the [Flat Wire Mill — Master Implementation Roadmap](../Roadmap.md).** See [Foundations](../../Architecture/Architecture.md) for §0.2–0.4 shared context.
 > **Prev:** [Phase 6 — In-Run Production Events](./phase-06-in-run-production-events.md) · **Next:** [Phase 8 — FL2 Spool Check-In & Finishing Run](./phase-08-fl2-spool-checkin-finishing-run.md)
-> **Owning specifications:** [`WipRejection.md`](../../../RequirementDocuments/WipRejection.md) (DB8) · [`RodCheckout.md`](../../../RequirementDocuments/RodCheckout.md) (DB12) — the owning doc wins on any disagreement.
+> **Owning specifications:** [`WipRejection.md`](../../Business/Screens/WipRejection.md) (DB8) · [`RodCheckout.md`](../../Business/Screens/RodCheckout.md) (DB12) — the owning doc wins on any disagreement.
 
 ---
 
@@ -95,4 +95,4 @@ Dashboards 8 + 12 (A/B) + partial re-check-in; `WipRejectionController`/`CheckOu
 
 **Welded pre-check-out is a rejection, and it lands in this phase's table.** Releasing a staged rod that has been induction-welded requires a **supervisor override** with a documented reason, and the rod goes to **`HOLD`** — removal means cutting the material (OQ-69/OQ-72). Recorded as `RodCheckout` Mode P with `WasWelded=1` and the approval stamp.
 
-> **⚠ Gap G24 — this phase inherits an unpersisted decision.** `RodCheckout` had **no `ApprovedBy`/`ApprovedAt`/`OverrideReason` columns at all** until 1 Aug 2026, so **OQ-74** (mid-run checkout approval) and **OQ-75** (partial-run disposition approval) — both decided 4 May 2026 and both described in `MVP-1/RequirementDocuments/RodCheckout.md` as writing "a disposition record with supervisor ID, decision, reason code, timestamp" — had nowhere to write it. The columns now exist and Mode B approval is **enforced by constraint**, which is a behaviour change for any code that wrote a Mode B checkout without one. The **PIN validation source** is still undecided (**OI-38**).
+> **⚠ Gap G24 — this phase inherits an unpersisted decision.** `RodCheckout` had **no `ApprovedBy`/`ApprovedAt`/`OverrideReason` columns at all** until 1 Aug 2026, so **OQ-74** (mid-run checkout approval) and **OQ-75** (partial-run disposition approval) — both decided 4 May 2026 and both described in `MVP-1/ProjectPlan/Business/Screens/RodCheckout.md` as writing "a disposition record with supervisor ID, decision, reason code, timestamp" — had nowhere to write it. The columns now exist and Mode B approval is **enforced by constraint**, which is a behaviour change for any code that wrote a Mode B checkout without one. The **PIN validation source** is still undecided (**OI-38**).

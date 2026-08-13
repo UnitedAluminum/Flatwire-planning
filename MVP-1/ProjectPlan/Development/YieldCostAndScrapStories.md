@@ -200,7 +200,7 @@ Its Phase 9 delivery is costed in that phase, not here.
 | `FW-102` | **none** | **none** |
 | `FW-110` | **none** | **none** |
 
-**Phase 12 has no owning requirement document** — it is not among the 17 files in `MVP-1/RequirementDocuments/` and has
+**Phase 12 has no owning requirement document** — it is not among the 17 files in `MVP-1/ProjectPlan/Business/Screens/` and has
 no dashboard in the Dashboard Inventory. Every other phase in the plan has one. So the acceptance criteria above are
 load-bearing in a way no other story file's are: **the 177 h estimate was priced against these four cards**, and
 writing the missing specification is not inside it.

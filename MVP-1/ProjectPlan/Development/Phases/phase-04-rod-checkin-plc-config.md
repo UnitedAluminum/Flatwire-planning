@@ -46,7 +46,7 @@
 - **Exit conditions:** run `Running`, rod `INFLAT`, PLC tags pushed, **return to Dashboard 2A** to stage the next rod (`FR-079a`; was Dashboard 3 — OI-109).
 
 ### Scope addition — Pre-Check-in (Dashboard 2A)
-This phase also owns **pre-check-in / payoff staging**: registering the *next* rod against the idle VPS bay while the current coil is still running, so FL1/FL3 can run continuously through an induction weld. It is what `SRS §4.2 PCI001`–`PCI008` specifies, and it had no screen, data model, API or phase owner until now — see **[RodPreCheckin.md](../../../RequirementDocuments/RodPreCheckin.md)** and gap **G19**.
+This phase also owns **pre-check-in / payoff staging**: registering the *next* rod against the idle VPS bay while the current coil is still running, so FL1/FL3 can run continuously through an induction weld. It is what `SRS §4.2 PCI001`–`PCI008` specifies, and it had no screen, data model, API or phase owner until now — see **[RodPreCheckin.md](../../Business/Screens/RodPreCheckin.md)** and gap **G19**.
 - **FL1/FL3 only** — `PCI002` excludes FL2 (no staging space).
 - Priority is SRS **Should**, not Must: check-in does *not* depend on it. Scanning an unstaged rod straight into Dashboard 2 stays valid.
 - **No PLC write occurs at pre-check-in.** Tags are pushed only at the acknowledgement in step 4 below.

@@ -7,7 +7,7 @@
 -- divided by MVP scope. 14 of the 43 FKs. THREE OF THEM ARE ON MVP-1 TABLES -- see the note below.
 --
 -- PREREQUISITE: the whole MVP-1 chain must already be deployed
--- (00_Database .. 08_Programmability under MVP-1/DBChanges).
+-- (00_Database .. 08_Programmability under MVP-1/ProjectPlan/Database).
 -- These objects are ADDITIVE on top of it.
 -- ============================================================
 

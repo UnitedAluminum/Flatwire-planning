@@ -24,7 +24,7 @@
 
 **Every question carries a `Recommendation:` at the foot of its body, with one deliberate exception.** That is **our proposed answer — it is not a decision and carries no client authority.** **`Q10` (footage-to-weight conversion factor) carries none, by decision.** The dimensional basis it turns on — nominal or measured gauge and width, and whether the round edge is corrected for — is a measurement question United Aluminum must answer from its own practice, and a proposed default risks being adopted as the basis rather than confirmed. Every derived weight in the system rests on it, so it goes to the client as an open question. The `Recommended answer` field is optional in the workbook generator for this reason. It exists so a review is a confirm-or-correct exercise rather than a blank page, and so the build has a defensible default to work to while an answer is outstanding. Where the body already recorded a proposal, leaning or option preference, the recommendation crystallises **that** rather than inventing a new one. **Confirming a recommendation closes the question** — move it to [FlatWireDecidedQuestions.md](FlatWireDecidedQuestions.md) with the confirmation date and who gave it. Nothing here should be cited as settled, and nothing should be implemented as irreversible on a recommendation alone.
 
-**Several recommendations deliberately point at the same conversation.** The three surviving PLC questions — **Q27**, **Q28** and **Q29** — all recommend closing in a single controls-engineer session, the one **`PLC-Q02`** asks for in [PLCTagSpecification.md](../MVP-1/RequirementDocuments/PLCTagSpecification.md); that document carries its own `PLC-Q##` register and sign-off sheet, which is why the tag-path, station-rename, measure-name, unit and ordinal questions are tracked there rather than here. **Q32** must be closed from `PSG-Q29` rather than asked twice.
+**Several recommendations deliberately point at the same conversation.** The three surviving PLC questions — **Q27**, **Q28** and **Q29** — all recommend closing in a single controls-engineer session, the one **`PLC-Q02`** asks for in [PLCTagSpecification.md](../MVP-1/ProjectPlan/Architecture/PLCTagSpecification.md); that document carries its own `PLC-Q##` register and sign-off sheet, which is why the tag-path, station-rename, measure-name, unit and ordinal questions are tracked there rather than here. **Q32** must be closed from `PSG-Q29` rather than asked twice.
 
 **Eight of these questions are partly answered, and the partial answer is in the body.** **Q1**, **Q12**, **Q13**, **Q17**, **Q18**, **Q22**, **Q23** and **Q24** each carry a decided portion — a basis, a shape, or some of their numbered items — with the rest still owed. They are `Open` because they are not closed; read them here, not in the decided file, and check the body before concluding nothing has been settled.
 
@@ -326,7 +326,7 @@ Should the scheduling or planning system warn when a job is scheduled for FL1/FL
 
 **Spool status state machine — all valid transitions**
 
-> **Decided (August 2, 2026) — FL2 shows two statuses and runs one spool at a time.** Because **FL2 has no space to stage material**, a spool is either waiting for the line or on it; there is no third place for it to be. The operator-visible vocabulary at FL2 is therefore fixed at **`Ready for FL2`** (schema `RECEIVED`) and **`Checked in`** (schema `INFLAT`). **`STAGED` is never set at FL2** — staging is the FL1 concept (PCI002), and there is no "At TPO" status on the spool queue. Second half of the decision: **check-in is exclusive.** While any spool is checked in, **no spool offers a check-in action** — not the others and not the checked-in one — and the action returns only on checkout. Applied to [dashboard_5a_spool_queue.html](../MVP-1/Mockups/dashboard_5a_spool_queue.html) and [SpoolQueue.md](../MVP-1/RequirementDocuments/SpoolQueue.md) §3.5 (rules SQ-7 to SQ-10). **Still open:** the stored status list and its transitions — this decision fixes what the FL2 operator sees, not what the database records, and the two rival vocabularies of **OI-06** are still unmapped. **Two consequences that need owners:** (1) exclusivity has **no backing constraint** — `dbo.Spool` has no filtered unique index on `Status` and carries **no `LineId` at all**, so "one spool checked in per line" cannot currently be expressed in the schema; `POST /checkin/spool` must reject the second check-in with a `409`. (2) A **quality-held spool now has no place on the FL2 queue** — it is neither ready nor checked in, so it simply is not listed. Raised to the client as SpoolQueue.md open item 6.
+> **Decided (August 2, 2026) — FL2 shows two statuses and runs one spool at a time.** Because **FL2 has no space to stage material**, a spool is either waiting for the line or on it; there is no third place for it to be. The operator-visible vocabulary at FL2 is therefore fixed at **`Ready for FL2`** (schema `RECEIVED`) and **`Checked in`** (schema `INFLAT`). **`STAGED` is never set at FL2** — staging is the FL1 concept (PCI002), and there is no "At TPO" status on the spool queue. Second half of the decision: **check-in is exclusive.** While any spool is checked in, **no spool offers a check-in action** — not the others and not the checked-in one — and the action returns only on checkout. Applied to [dashboard_5a_spool_queue.html](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_5a_spool_queue.html) and [SpoolQueue.md](../MVP-1/ProjectPlan/Business/Screens/SpoolQueue.md) §3.5 (rules SQ-7 to SQ-10). **Still open:** the stored status list and its transitions — this decision fixes what the FL2 operator sees, not what the database records, and the two rival vocabularies of **OI-06** are still unmapped. **Two consequences that need owners:** (1) exclusivity has **no backing constraint** — `dbo.Spool` has no filtered unique index on `Status` and carries **no `LineId` at all**, so "one spool checked in per line" cannot currently be expressed in the schema; `POST /checkin/spool` must reject the second check-in with a `409`. (2) A **quality-held spool now has no place on the FL2 queue** — it is neither ready nor checked in, so it simply is not listed. Raised to the client as SpoolQueue.md open item 6.
 
 **Status (May 4, 2026):** Tim provided the following operational framework:
 - Spools shall have unique identifiers similar to furnace plates.
@@ -344,7 +344,7 @@ The full formal state machine (all valid statuses and the events that trigger ea
 
 > **Decided (July 30, 2026) — the basis is the customer weight range, not a fixed default.** Tim/Bob: the customer specifies a **min–max weight** (e.g. 900 lb max / 800 lb min) and completion is graded against **that range, by weight** — not against footage and not against an assumed default. Spools are sized at roughly **1,800 lb** so that **two finished coils** can be cut from one spool at FL2. Still open: **which order field carries the customer min/max**, and whether the ladder still escalates to a distinct over-target state.
 
-The spool completion alert ([SpoolCompletionNotification.md](../MVP-1/RequirementDocuments/SpoolCompletionNotification.md)) compares actual processed weight against a target. Two candidate sources exist: the order's **Max Wgt of Spool** (customer/order-driven) and the **take-up equipment capacity** (TKUP-1 = 3,500 lb). Note the customer maximum can be well below the TKUP-2 capacity of 1,100 lb, so on FL2/FL3 the customer value governs rather than the cap.
+The spool completion alert ([SpoolCompletionNotification.md](../MVP-1/ProjectPlan/Business/Screens/SpoolCompletionNotification.md)) compares actual processed weight against a target. Two candidate sources exist: the order's **Max Wgt of Spool** (customer/order-driven) and the **take-up equipment capacity** (TKUP-1 = 3,500 lb). Note the customer maximum can be well below the TKUP-2 capacity of 1,100 lb, so on FL2/FL3 the customer value governs rather than the cap.
 
 Second part: if the operator does not acknowledge the 100% notification, live weight keeps climbing past target. Should the notification escalate to a distinct **over-target** state (proposed as milestone M4, red, "over by *n* lb"), or continue showing "target reached" with a percentage above 100? Depends on **Q33** for the authoritative weight source.
 
@@ -373,7 +373,7 @@ Is the spool completion alert an operator-only notification, or is it also surfa
 **Q21** · `High` · Owner: Engineering / Tim O. · `Open`
 **`FL{n}.LineState` state vocabulary, stop-dwell value, and pause-reason suppression**
 
-Part B of [SpoolCompletionNotification.md](../MVP-1/RequirementDocuments/SpoolCompletionNotification.md) conditions the spool-removal popup on the PLC confirming a `RUNNING → STOPPED` transition, using the same `FL{n}.LineState` tag the system already reads as the rod-checkout gatekeeper. Three specifics are needed before it can be built:
+Part B of [SpoolCompletionNotification.md](../MVP-1/ProjectPlan/Business/Screens/SpoolCompletionNotification.md) conditions the spool-removal popup on the PLC confirming a `RUNNING → STOPPED` transition, using the same `FL{n}.LineState` tag the system already reads as the rod-checkout gatekeeper. Three specifics are needed before it can be built:
 
 1. **The tag's actual state vocabulary** — is it a two-state run/stop bit, or does it distinguish `RUNNING / STOPPED / PAUSED / FAULT / THREADING / JOG`? A jog or thread state that reports as STOPPED changes the filtering required.
 2. **Dwell time** — how long must STOPPED persist before the stop is treated as real? Proposed default **5 seconds**, with speed ≈ 0 as corroboration. Needs a value from someone who knows how the drives behave on slow-down.
@@ -407,7 +407,7 @@ To resolve:
 2. Are the standards-table values authoritative, or do they need Process Engineering sign-off first? That table already carries the note *"must be confirmed and maintained by Process Engineering (Tim O.) — editable via an admin table, not hardcoded."*
 3. Can tolerance vary by rod vendor or by nominal size within one alloy, or is per-alloy sufficient?
 
-Blocks the Phase 4 check-in and staging validation. Detail in [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md).
+Blocks the Phase 4 check-in and staging validation. Detail in [RodPreCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md).
 
 **Recommendation:** **make the structural change now and seed nothing.** Rename `AlloyProperty`'s single ± columns to explicit `Min`/`Max` pairs, add diameter and ovality in the same change, and put the hard-coded ovality ≤ 0.003″ into the lookup so ovality is validated once rather than twice. The shape is decided and the columns are nullable, so the schema is not waiting on the values — chase the e-mail as a separate action. **Per-alloy is sufficient granularity** unless Process Engineering states that tolerance varies by vendor or by nominal size.
 
@@ -415,7 +415,7 @@ Blocks the Phase 4 check-in and staging validation. Detail in [RodPreCheckin.md]
 
 **Q23** · `High` · Owner: Tim O. / IT · `Open` — *items 1–2 decided Jul 31, 2026; item 3 decided Jul 30, 2026; item 4 open*
 
-> **Decided (Jul 31, 2026) — items 1 and 2.** `Blocked` is **derived** (`Status = 'Staged'` + any inspection column `= 'Fail'`), not a fourth `Status` value; and pre-check-in **commits the `RodStaging` row before the inspection gate**. `POST /staging/rod` now returns `201 Created` with `state: "Blocked"` and the WIP-rejection route, replacing the `422`-and-write-nothing behaviour. The deciding argument is physical: bundles are not unbanded until positioned at the payoff — which is *why* the inspection happens at staging — so a rod that fails is **already on the bay**. Writing no row left `GET /payoff/status` reporting an occupied position as `NotStaged`, Dashboard 2A offering it as "Empty — available", and the next rod stageable into a bay that physically holds a rejected bundle. `CHK010` is unchanged: no bypass, WIP Rejection remains the only forward path. Contracts updated in [04-APIContract.md](../MVP-1/ProjectPlan/Backend/APIs.md), [FlatWireSchema_Runs.md](../MVP-1/DBChanges/Schema/FlatWireSchema_Runs.md) and [phase-04](../MVP-1/ProjectPlan/Development/Phases/phase-04-rod-checkin-plc-config.md).
+> **Decided (Jul 31, 2026) — items 1 and 2.** `Blocked` is **derived** (`Status = 'Staged'` + any inspection column `= 'Fail'`), not a fourth `Status` value; and pre-check-in **commits the `RodStaging` row before the inspection gate**. `POST /staging/rod` now returns `201 Created` with `state: "Blocked"` and the WIP-rejection route, replacing the `422`-and-write-nothing behaviour. The deciding argument is physical: bundles are not unbanded until positioned at the payoff — which is *why* the inspection happens at staging — so a rod that fails is **already on the bay**. Writing no row left `GET /payoff/status` reporting an occupied position as `NotStaged`, Dashboard 2A offering it as "Empty — available", and the next rod stageable into a bay that physically holds a rejected bundle. `CHK010` is unchanged: no bypass, WIP Rejection remains the only forward path. Contracts updated in [04-APIContract.md](../MVP-1/ProjectPlan/Backend/APIs.md), [FlatWireSchema_Runs.md](../MVP-1/ProjectPlan/Database/Schema/FlatWireSchema_Runs.md) and [phase-04](../MVP-1/ProjectPlan/Development/Phases/phase-04-rod-checkin-plc-config.md).
 >
 > **Decided (July 30, 2026) — item 3, the blocking residual.** A failed staging inspection is **captured as a rejection on the rejection screen** — the operator enters the rejection reason there — and **the rod goes to `HOLD`**. That is what releases the `RodStaging` row and frees the bay: the WIP rejection carries the material out of the bay, so the row leaves `Status = 'Staged'` and `UX_RodStaging_Bay`'s filter with it. **A blocked bay is now clearable.**
 >
@@ -438,7 +438,7 @@ To resolve:
 
 **Two untraced consequences of the item-2 decision**, recorded rather than resolved: `RodStaging` now holds rows for material that was never accepted, which affects the **`TRV009`** traveler (is `Blocked` a third class alongside pre-checked-in and welded?); and the **`Available`** queue projection must exclude rods sitting blocked, or a rejected bundle reappears as stageable.
 
-Related to `CHK010` and gap **G14**. Detail in [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md).
+Related to `CHK010` and gap **G14**. Detail in [RodPreCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md).
 
 **Recommendation:** on the one item still open, **enforce `InspectionNotes` NOT NULL when any inspection column is `Fail`**, using the same constraint style already applied to the welded, unstaged and checked-in column groups. A failure with no observation is the one case where the note carries the whole evidentiary value, and the document already says it is expected. The release-route implementation choice is recorded above and stands: **reuse `Unstaged` plus a `ReleaseReason`**, not a fourth status value.
 
@@ -471,7 +471,7 @@ Still to confirm:
 
 **Recommendation:** **yes to item 3 — build the identical panel and columns on Dashboard 2**, because a validation enforced at one of two entry points is not enforced; `Q73` independently requires the same thing of the sequencing rule, so the two land together. Validate the **PIN against the existing login/authorisation service** (item 1), the same recommendation recorded at **`OI-38`**, so one credential path serves all three overrides. Item 2 follows `Q70`/`Q73` and needs no separate answer here. Separately, **close the committed re-review of the out-of-sequence override** — it is marked provisional pending Tim's spec check, and anything downstream treating it as final is doing so on an unconfirmed rule.
 
-Detail in [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md).
+Detail in [RodPreCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md).
 
 ---
 
@@ -518,12 +518,12 @@ Related: `flat-wire-fit.js`, [phase-01a](../MVP-1/ProjectPlan/Development/Phases
 **Q27** · `High` · Owner: Tim O. / Engineering · `Open`
 **Is speed pushed to the PLC as a target/setpoint, or as a limit/clamp?**
 
-Raised Aug 4, 2026 · client-facing as `PLC-Q06` in [PLCTagSpecification.md](../MVP-1/RequirementDocuments/PLCTagSpecification.md). The delivered artifacts say both, and **the SRS contradicts itself**:
+Raised Aug 4, 2026 · client-facing as `PLC-Q06` in [PLCTagSpecification.md](../MVP-1/ProjectPlan/Architecture/PLCTagSpecification.md). The delivered artifacts say both, and **the SRS contradicts itself**:
 
 | Source | Wording |
 |---|---|
 | `02-SRS.md` §9.1 · `03-HLD` §9.2 · `04-APIContract` §6.1 · master spec §6.8 | speed **targets** |
-| `02-SRS.md` `FR-073` · [RocCheckin.md](../MVP-1/RequirementDocuments/RocCheckin.md) §3.6 | speed **limits** |
+| `02-SRS.md` `FR-073` · [RocCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RocCheckin.md) §3.6 | speed **limits** |
 
 **These are not the same tag and they do not fail the same way.** A *setpoint* commands the drives to a speed; a *clamp* bounds whatever speed the operator selects. If the pass schedule's value is written to a setpoint tag when the machine expected a ceiling, acknowledging a check-in starts the line moving at the scheduled speed — which is a commissioning-time surprise on a threading line. If it is written to a clamp when the machine expected a setpoint, the line does not move at all and the fault looks like a missing tag.
 
@@ -540,7 +540,7 @@ Related: **Q28**, **Q29**, `PLC-Q06`, `FR-073`, `OI-52`/**Q1** (roll-gap readbac
 
 Raised Aug 4, 2026 · client-facing as `PLC-Q07`. Two findings that only appear once the tag surface is read as one document:
 
-1. **Edge type is in the push payload in four sources and absent from a fifth.** `02-SRS` §9.1, `03-HLD` §9.2, `04-APIContract` §6.1 and master spec §6.8 all list *edge type* among the values written at acknowledgement; [RocCheckin.md](../MVP-1/RequirementDocuments/RocCheckin.md) §3.6 and `FR-073` do not. The likely explanation is that RocCheckin's list was written FL1-first and FL1 has no edger — but that is inference, not a confirmation.
+1. **Edge type is in the push payload in four sources and absent from a fifth.** `02-SRS` §9.1, `03-HLD` §9.2, `04-APIContract` §6.1 and master spec §6.8 all list *edge type* among the values written at acknowledgement; [RocCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RocCheckin.md) §3.6 and `FR-073` do not. The likely explanation is that RocCheckin's list was written FL1-first and FL1 has no edger — but that is inference, not a confirmation.
 2. **No edger tag path exists anywhere in the repo.** The only edger-adjacent tag in any published map is `FL1.EdgeSet.Status.Active` — on **FL1, the one line with no edger** (`D-20`/`D-21`, May 21 2026). FM2's edgers at S2 and S3 (the two 6″ stands) have no status, activation or blade-profile path. So the write side is specified to push an edge configuration to equipment that has no addressable tags on the read side.
 
 Paths are **proposed** in `[PLC §4]` from the derived naming grammar (`FL2.FM2.S2.Edger.Status.IsActive`, `.Edger.Profile`, and the same for S3) so there is something concrete to confirm or correct, but they are our invention and are marked as such.
@@ -574,12 +574,12 @@ Related: **Q67** (FL1/FL2 simultaneous operation — the same controller-ownersh
 **Q30** · `High` · Owner: Tim O. / Bob S. / Engineering · `Open`
 **Do take-up load cells exist, and is the spool-completion weight read from them or derived from footage?**
 
-Raised Aug 4, 2026 · client-facing as `PLC-Q14` in [PLCTagSpecification.md](../MVP-1/RequirementDocuments/PLCTagSpecification.md). Two artifacts disagree about where the most consequential number in the completion transaction comes from.
+Raised Aug 4, 2026 · client-facing as `PLC-Q14` in [PLCTagSpecification.md](../MVP-1/ProjectPlan/Architecture/PLCTagSpecification.md). Two artifacts disagree about where the most consequential number in the completion transaction comes from.
 
 | Source | Says |
 |---|---|
 | The tag specification’s assumption **A2** — rescued from the deleted `HMIAndSCADALayout.md`, which was its **only** home | “Load cells are fitted on both payoff positions **and on both take-ups**” |
-| [SpoolCompletionNotification.md](../MVP-1/RequirementDocuments/SpoolCompletionNotification.md) §“Weight” | The weight is “**derived from the live footage counter and the measured cross-section**” |
+| [SpoolCompletionNotification.md](../MVP-1/ProjectPlan/Business/Screens/SpoolCompletionNotification.md) §“Weight” | The weight is “**derived from the live footage counter and the measured cross-section**” |
 
 **And the tag map contains no take-up weight path on any line.** So the interface currently specifies a behaviour — the machine-stop prompt fires when the take-up weight reaches target, and the latched value is what the completion records and the **printed label** carries — that reads a value with no published source.
 

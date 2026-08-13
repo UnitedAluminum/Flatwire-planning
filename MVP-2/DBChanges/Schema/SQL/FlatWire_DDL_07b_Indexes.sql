@@ -7,7 +7,7 @@
 -- divided by MVP scope. 13 of the 47 indexes.
 --
 -- PREREQUISITE: the whole MVP-1 chain must already be deployed
--- (00_Database .. 08_Programmability under MVP-1/DBChanges).
+-- (00_Database .. 08_Programmability under MVP-1/ProjectPlan/Database).
 -- These objects are ADDITIVE on top of it.
 -- ============================================================
 

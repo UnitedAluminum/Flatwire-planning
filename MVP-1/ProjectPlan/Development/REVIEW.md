@@ -87,7 +87,7 @@ The DevelopmentPlan is thorough and largely self-aware — its own [`ShopfloorPl
 
 ## Tier 1 — Correctness bugs (executable-spec is wrong; fix before code)
 
-> **Three PLC-surface arbitrations, added 4 Aug 2026 when the tag surface was consolidated into [`MVP-1/RequirementDocuments/PLCTagSpecification.md`](../../RequirementDocuments/PLCTagSpecification.md) (`[PLC]`).** Each names a winner, so no one has to re-derive it:
+> **Three PLC-surface arbitrations, added 4 Aug 2026 when the tag surface was consolidated into [`MVP-1/RequirementDocuments/PLCTagSpecification.md`](../Architecture/PLCTagSpecification.md) (`[PLC]`).** Each names a winner, so no one has to re-derive it:
 >
 > **(a) `scheduleId`, not `passScheduleId`.** `PushPassSchedule`’s first parameter is `scheduleId` in all four ProjectPlan documents and `passScheduleId` in `APIContracts.md:1177` and `phase-04:62`. **`scheduleId` wins** — `APIContracts.md` is already superseded, and the convention is to reconcile the April docs *up to* the roadmap. `phase-04:62` needs the one-line correction.
 >

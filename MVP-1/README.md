@@ -10,37 +10,29 @@
 
 ```
 MVP-1/
-├── README.md                    ← this file
-├── Mockups/                     ← 31 files: 17 dashboards + shared design system + shared JS chrome
-├── RequirementDocuments/        ← 17 documents (14 specifications + 3 that are not)
-├── ProjectPlan/                 ← the plan of record, in eight subject folders:
-│                                  Business/ Architecture/ Database/ Backend/
-│                                  Frontend/ Development/ Testing/ Operations/
-├── DBChanges/                   ← schema design + executable DDL (25 of the 28 tables)
-└── SRS/                         ← 3 client deliverables (2 .docx + 1 .xlsx); 2 of the 3 generated
+├── README.md        ← this file
+├── ProjectPlan/     ← the single source of truth for development, testing and deployment
+│                      Business/ Architecture/ Database/ Backend/ Frontend/
+│                      Development/ Testing/ Operations/ + Tools/ + README.md
+└── SRS/             ← 3 client deliverables (2 .docx + 1 .xlsx); 2 of the 3 generated
 ```
 
-> **`DevelopmentPlan/` no longer exists (13 Aug 2026).** Its contents moved into `ProjectPlan/`, which is now the single home for planning, development, testing and deployment material. Four April-dated documents were **absorbed into the documents that own their subjects and deleted** in the same pass:
+> **Four sibling folders were consolidated into `ProjectPlan/` on 13 Aug 2026 and no longer exist.**
 >
-> | Deleted | Absorbed into |
+> | Was | Now |
 > |---|---|
-> | `APIContracts.md` | `ProjectPlan/Backend/APIs.md` — four endpoint sections it indexed but never specified, plus worked examples on 16 endpoints |
-> | `FlatWireJiraStories.md` | `ProjectPlan/Development/TaskBreakdown.md` §4, §6, §7, §8 — 116 stories, one backlog |
-> | `TechStackRecommendation.md` | `ProjectPlan/Architecture/Architecture.md` §14 — the stack ADR |
-> | `FlatWireTables.md` | `DBChanges/Schema/FlatWireSchema_Mapping.md` — the legacy-table inventory, as an appendix |
+> | `DevelopmentPlan/` | `ProjectPlan/` — roadmap, sprint plan, backlog, effort models, `REVIEW.md`, `Development/Phases/`, `Tools/` |
+> | `RequirementDocuments/` | `ProjectPlan/Business/Screens/` (13 specifications) · `Architecture/PLCTagSpecification.md` · `Business/Spool.md` + `PartialRodReCheckin.md` · `Tools/ClientQuestionsContent.md` |
+> | `Mockups/` | `ProjectPlan/Frontend/Mockups/` — 31 files, **flat and intact** |
+> | `DBChanges/` | `ProjectPlan/Database/` — `Schema/` (design + DDL), `Scripts/` (shared-DB work), `GapAnalysis.md` |
 >
-> **`ProjectPlan/` was then restructured into eight subject folders (13 Aug 2026).** The seven numbered documents were **split by section**, and section numbers were preserved exactly — `BusinessRequirements.md` opens its requirements at §5 and `DatabaseDesign.md` numbers the data model §6 — so every `§n` citation in the repository still resolves. Each document declares a **shortcode** in its header; [`ProjectPlan/README.md`](ProjectPlan/README.md) is the map, and the only place all thirty documents are listed together.
+> **Five documents were absorbed into the documents that own their subjects and deleted:** `APIContracts.md` → `Backend/APIs.md` · `FlatWireJiraStories.md` → `Development/TaskBreakdown.md` · `TechStackRecommendation.md` → `Architecture/Architecture.md` §14 · `FlatWireTables.md` → `Database/Schema/FlatWireSchema_Mapping.md`'s appendix · `FlatWire_ERDiagram_Documentation.md` → `Database/DatabaseDesign.md` §6.10/§6.11.
 >
-> Three files in the old `ShopfloorPlan/` were **not** phase specs and were dissolved: `00-foundations.md` — all four of its sections duplicated a ProjectPlan section — `back-matter.md`, whose **`G1`–`G36` register was promoted** to `Development/GapsRegister.md`, and the `phase-01` roll-up index. The **15 phase specs** are now `ProjectPlan/Development/Phases/`; `phase-02` is wholly MVP-2 and lives under `../MVP-2/`.
+> **Two structural rules.** **(1) Section numbers are non-contiguous by design** — `BusinessRequirements.md` opens its requirements at §5, `DatabaseDesign.md` numbers the data model §6 — which is what keeps every `§n` citation resolving. **Never renumber a section to close a gap.** **(2) Documents are cited by shortcode**, declared in each header; [`ProjectPlan/README.md`](ProjectPlan/README.md) is the map.
 
-> **The schema here is complete for MVP-1.** `DBChanges` was divided by MVP scope on 11 Aug 2026: the three pass-schedule tables — `PassSchedule`, `PassScheduleComponent`, `PassScheduleChangeLog` — live in [`../MVP-2/DBChanges/`](../MVP-2/DBChanges/) because **the pass schedule is owned outside MVP-1**. `PassScheduleId` on `FlatWireRun`, `RodCheckin`, `SpoolCheckin` and `CoilOutput` is therefore a **documented external reference**, unenforced by design and in the same class as `PlanId`, `CoilOrderPlanId` and `SkidId` (see `ProjectPlan/Development/Phases/phase-01c-database-foundation.md`). **Running `FlatWire_DDL_RunAll.sql` produces a working MVP-1 database — there is no second runner to chase.**
+> **The schema builds from `ProjectPlan/Database/Schema/SQL/`** and produces a complete MVP-1 database: **25 tables · 33 FKs · 41 index statements · 1 procedure · 1 trigger**, verified by a clean deploy and idempotent re-run on 13 Aug 2026. The three pass-schedule tables live in [`../MVP-2/DBChanges/`](../MVP-2/DBChanges/) because **the pass schedule is owned outside MVP-1**; `PassScheduleId` is therefore a **documented external reference**, unenforced by design, in the same class as `PlanId`, `CoilOrderPlanId` and `SkidId`. **There is no second runner to chase.**
 >
-> **`CoilOutput` and `CoilTraceability` are MVP-1, and so is everything that writes them.** The coil genealogy those tables carry is what the **welding-wire customer certificates** are produced from. They returned on 11 Aug 2026 with their 4 FKs, 7 indexes, the DM010 non-overlap trigger and their seed data — and **Phase 9 followed in full**, because the tables had been left with no writer at all: `CoilCompletionService` and `POST /coil/complete` were on the MVP-2 side, so the non-overlap trigger guarded rows nothing inserted.
-
-`ProjectPlan/` and `DBChanges/` joined on 11 Aug 2026, divided by scope against `MVP-2/`; `LatestDocument/` now holds only the master specification and `ProjectPlanPrompt.md`. Originally moved here on 11 Aug 2026 to mirror [`../MVP-2/`](../MVP-2/), so the two scope buckets have the same shape. `Mockups/` came from the repository root; `RequirementDocuments/` came from `LatestDocument/`, which **no longer has a `RequirementDocuments/` folder**; `SRS/` came from the root.
-
-
-> **⚠ Two phase files carry hours that overstate MVP-1 — and the pass schedule is no longer an MVP-1 concern at all.** `DevelopmentPlan` was divided against MVP-2 on 11 Aug 2026. **Phase 2 left entirely** (231 h) and **stays gone**: pass schedule generation and management are owned by a separate track. Rod check-in still *reads* a schedule to build its PLC push payload, but MVP-1 builds no authoring UI, and `PassScheduleId` is a **documented external reference** in the same class as `PlanId` and `SkidId`. **Phases 11 and 13 were carved** (DB10; Die Management screen, lifecycle service and the die inventory table) and their figures are apportioned in [`ProjectPlan/Development/CapacityAndEffortModel.md`](ProjectPlan/Development/CapacityAndEffortModel.md) §3b. **Phase 9 is wholly MVP-1** and keeps its full 222 h. Details in [`../MVP-2/DevelopmentPlan/README.md`](../MVP-2/DevelopmentPlan/README.md).
+> **`CoilOutput` and `CoilTraceability` are MVP-1, and so is everything that writes them.** The coil genealogy they carry is what the **welding-wire customer certificates** are produced from.
 
 ## ⚠ This folder is not all of MVP-1
 
@@ -51,12 +43,12 @@ MVP-1/
 | The roadmap index, phase files, foundations, back matter, gaps register | now **here**, `ProjectPlan/` (moved and divided 11 Aug 2026) |
 | The master specification and its `OI-##` register | `../LatestDocument/FlatWire_MasterSpecification.md` |
 | Requirement text — every `FR-###` | now **here**, `ProjectPlan/Business/BusinessRequirements.md` (moved 11 Aug 2026) |
-| Schema design, executable DDL, ER documentation | now **here**, `DBChanges/` (moved and divided 11 Aug 2026) |
+| Schema design, executable DDL, ER documentation | now **here**, `Database/` (moved and divided 11 Aug 2026) |
 | The question registers (**authoritative for decisions**) — **33 open, `Q1`–`Q33`**, and **25 decided, `Q61`–`Q85`**, in one contiguous numbering space across two files | `../Analysis/FlatWireOpenQuestions.md` · `../Analysis/FlatWireDecidedQuestions.md` |
 | API contracts, effort model, `REVIEW.md` | now **here**, `ProjectPlan/` |
 | Source business documents and the client-call propagation ledgers | `../BaseDocuments/` |
 
-## `Mockups/`
+## `Frontend/Mockups/`
 
 Static HTML prototypes — **open directly in a browser**, no build step. The approved visual baseline for the Angular library (prefix `fw`). Shared assets and the rules that govern them are documented in [`../CLAUDE.md`](../CLAUDE.md) under *Working With the Artifacts → Mockups*; the ones most often got wrong:
 
@@ -67,9 +59,9 @@ Static HTML prototypes — **open directly in a browser**, no build step. The ap
 - Four screens are **thin launcher pages, not screens** — `dashboard_8_wip_rejection`, `dashboard_6_spc_checkpoint`, `dashboard_die_change`, `dashboard_12_rod_checkout`. To change those screens, edit the matching `.js`.
 - `dashboard_7_coil_completion.html` and `dashboard_7b_packing_station.html` **returned from MVP-2 on 11 Aug 2026**; both are owned by `RequirementDocuments/OutputCoilCompletion.md` (DB7b by its new §8).
 
-**Cross-tree links work in both directions.** `flat-wire-topbar.js` resolves its logo and its "More Options" tile targets from **its own `script.src`**, not the host page, which is what lets this one copy serve both `MVP-1/Mockups/` and `../MVP-2/Mockups/`. The five remaining MVP-2 screens load their chrome from `../../MVP-1/Mockups/`; the topbar's only forward targets are DB9 and DB10. **DB7 and DB7b came back on 11 Aug 2026** — their asset paths and the three active-run links that reach them are now all local.
+**Cross-tree links work in both directions.** `flat-wire-topbar.js` resolves its logo and its "More Options" tile targets from **its own `script.src`**, not the host page, which is what lets this one copy serve both `MVP-1/ProjectPlan/Frontend/Mockups/` and `../MVP-2/Mockups/`. The five remaining MVP-2 screens load their chrome from `../../MVP-1/ProjectPlan/Frontend/Mockups/`; the topbar's only forward targets are DB9 and DB10. **DB7 and DB7b came back on 11 Aug 2026** — their asset paths and the three active-run links that reach them are now all local.
 
-## `RequirementDocuments/`
+## `Business/Screens/`
 
 Seventeen files. **Fourteen are specifications; three are not** — and the three that are not are cited as though they were, which is the trap:
 
@@ -87,9 +79,9 @@ Seventeen files. **Fourteen are specifications; three are not** — and the thre
 
 `Shopfloor_Flat_wireSRS.docx` — the delivered SRS, and the one file here that is **not** generated. It has **no pre-check-in content**, so it is *not* the requirement source for `PCI`/`PRC`/`CHK`/`WLD`/`TRV` IDs; those rules are `FR-###` in [`ProjectPlan/Business/BusinessRequirements.md`](ProjectPlan/Business/BusinessRequirements.md).
 
-`PLCTagSpecification.docx` — generated output. **The `.md` in `RequirementDocuments/` is the source** — edit it and re-render with [`ProjectPlan/Tools/build_docx.py`](ProjectPlan/Tools/build_docx.py).
+`PLCTagSpecification.docx` — generated output. **The `.md` in `Business/Screens/` is the source** — edit it and re-render with [`ProjectPlan/Tools/build_docx.py`](ProjectPlan/Tools/build_docx.py).
 
-`FlatWire_ClientQuestions.xlsx` — generated output, the client questions workbook. Rendered by [`ProjectPlan/Tools/build_questions_xlsx.py`](ProjectPlan/Tools/build_questions_xlsx.py) from **two** sources: structure from the `Analysis/` question registers, prose from [`RequirementDocuments/ClientQuestionsContent.md`](RequirementDocuments/ClientQuestionsContent.md). Edit whichever of the two owns the field and re-run.
+`FlatWire_ClientQuestions.xlsx` — generated output, the client questions workbook. Rendered by [`ProjectPlan/Tools/build_questions_xlsx.py`](ProjectPlan/Tools/build_questions_xlsx.py) from **two** sources: structure from the `Analysis/` question registers, prose from [`RequirementDocuments/ClientQuestionsContent.md`](ProjectPlan/Tools/ClientQuestionsContent.md). Edit whichever of the two owns the field and re-run.
 
 > **The renderer reaches into MVP-2 for its branding.** `build_docx.py` opens `../MVP-2/SRS/PassScheduleGenerationSpec.docx` as a template, strips its body and keeps the final `<w:sectPr>` — which carries the header logo and confidentiality footer. **Deleting that MVP-2 file as deferred, inert content breaks the MVP-1 renderer.**
 

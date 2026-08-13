@@ -400,7 +400,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Acceptance Criteria:**
 - [ ] `appsettings.{Environment}.json` carries the **`FlatWireDB`** connection string, JWT settings and SignalR settings (MessagePack, keep-alive/timeout, cadence)
-- [ ] **OPC tag-path map is config-driven, not hardcoded** — the map's contents are owned by [`PLCTagSpecification.md`](../../RequirementDocuments/PLCTagSpecification.md); this story binds it, it does not author it
+- [ ] **OPC tag-path map is config-driven, not hardcoded** — the map's contents are owned by [`PLCTagSpecification.md`](../Architecture/PLCTagSpecification.md); this story binds it, it does not author it
 - [ ] `SimulatePLCTagPush` is a configuration flag, switchable without a rebuild
 
 **Rate-card basis:** configuration binding across four concern groups (12 h, §2)
@@ -594,7 +594,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Spec:** [`phase-01c-database-foundation.md`](Phases/phase-01c-database-foundation.md) · **Owner:** DB · **215 h** (DB 156 · QA 31 · cont. 28)
 
-> **The DDL already exists** in [`../DBChanges/Schema/SQL/`](../../DBChanges/Schema/SQL/). This layer **retargets, hardens, seeds and wires** it. Target is a new standalone **`FlatWireDB`**, not `united_db`.
+> **The DDL already exists** in [`../DBChanges/Schema/SQL/`](../Database/Schema/SQL/). This layer **retargets, hardens, seeds and wires** it. Target is a new standalone **`FlatWireDB`**, not `united_db`.
 >
 > **`Rod` is retained** — master-spec `D-04` supersedes Foundations decision 3. **Anything saying "`Rod` is dropped" or "21–22 tables" is stale** (**G12**, closed 11 Aug 2026).
 
@@ -780,7 +780,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ##### S1 · Phase 3 — Line Status Board & Real-Time Backbone
 
-**Spec:** [`phase-03-line-status-board-realtime-backbone.md`](Phases/phase-03-line-status-board-realtime-backbone.md) · **Owning specification:** [`LineStatusOverview.md`](../../RequirementDocuments/LineStatusOverview.md) (DB1) · **Owner:** RT + FE · **190 h** (FE 64 · BE 16 · DB 4 · RT 40 · QA 41 · cont. 25)
+**Spec:** [`phase-03-line-status-board-realtime-backbone.md`](Phases/phase-03-line-status-board-realtime-backbone.md) · **Owning specification:** [`LineStatusOverview.md`](../Business/Screens/LineStatusOverview.md) (DB1) · **Owner:** RT + FE · **190 h** (FE 64 · BE 16 · DB 4 · RT 40 · QA 41 · cont. 25)
 
 ---
 
@@ -927,7 +927,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ##### S2 · Phase 4 — Rod Check-In & PLC Configuration (FL1 / FL3)
 
-**Spec:** [`phase-04-rod-checkin-plc-config.md`](Phases/phase-04-rod-checkin-plc-config.md) · **Owning specifications:** [`RocCheckin.md`](../../RequirementDocuments/RocCheckin.md) (DB2) · [`RodPreCheckin.md`](../../RequirementDocuments/RodPreCheckin.md) (DB2A) · **Owner:** FE + BE + RT · **255 h** (FE 60 · BE 62 · DB 28 · RT 28 · QA 36 · BA 8 · cont. 33)
+**Spec:** [`phase-04-rod-checkin-plc-config.md`](Phases/phase-04-rod-checkin-plc-config.md) · **Owning specifications:** [`RocCheckin.md`](../Business/Screens/RocCheckin.md) (DB2) · [`RodPreCheckin.md`](../Business/Screens/RodPreCheckin.md) (DB2A) · **Owner:** FE + BE + RT · **255 h** (FE 60 · BE 62 · DB 28 · RT 28 · QA 36 · BA 8 · cont. 33)
 
 > **⚠ Estimate provisional — carries a 24–64 h reserve excluded from the total**, pending `OI-39` / **G2**: cross-database check-in recovery is undecided between saga/outbox and an `INFLAT` mirror.
 >
@@ -1114,7 +1114,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ##### S2 · Phase 5 — Active Run Monitoring & Live Gauge/Width Trace (FL1 / FL3)
 
-**Spec:** [`phase-05-active-run-monitoring-gauge-trace.md`](Phases/phase-05-active-run-monitoring-gauge-trace.md) · **Owning specification:** [`ActiveRunMonitor.md`](../../RequirementDocuments/ActiveRunMonitor.md) (DB3) · **Owner:** FE · **154 h** (FE 76 · BE 12 · DB 8 · RT 24 · QA 22 · cont. 12)
+**Spec:** [`phase-05-active-run-monitoring-gauge-trace.md`](Phases/phase-05-active-run-monitoring-gauge-trace.md) · **Owning specification:** [`ActiveRunMonitor.md`](../Business/Screens/ActiveRunMonitor.md) (DB3) · **Owner:** FE · **154 h** (FE 76 · BE 12 · DB 8 · RT 24 · QA 22 · cont. 12)
 
 > **This phase owns the DB3 shell for all three lines.** Build the components once here; Phases 8 (FL2) and 10 (FL3) **configure** them. FL1 and FL2 diverged once already and the 2 Aug 2026 mockup pass undid it — **do not let a line fork its own copy.**
 >
@@ -1251,7 +1251,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ##### S2 · Phase 6 — In-Run Production Events
 
-**Spec:** [`phase-06-in-run-production-events.md`](Phases/phase-06-in-run-production-events.md) · **Owning specifications:** [`SPCCheckpoint.md`](../../RequirementDocuments/SPCCheckpoint.md) (DB6) · [`DieChangeAndManagement.md`](../../RequirementDocuments/DieChangeAndManagement.md) §1–3, §5 · [`WeldEvent.md`](../../RequirementDocuments/WeldEvent.md) · [`RollAdjust.md`](../../RequirementDocuments/RollAdjust.md) (DB11) · [`ActiveRunMonitor.md`](../../RequirementDocuments/ActiveRunMonitor.md) §6 · **Owner:** FE + BE · **298 h** (FE 120 · BE 56 · DB 20 · RT 20 · QA 43 · cont. 39)
+**Spec:** [`phase-06-in-run-production-events.md`](Phases/phase-06-in-run-production-events.md) · **Owning specifications:** [`SPCCheckpoint.md`](../Business/Screens/SPCCheckpoint.md) (DB6) · [`DieChangeAndManagement.md`](../Business/Screens/DieChangeAndManagement.md) §1–3, §5 · [`WeldEvent.md`](../Business/Screens/WeldEvent.md) · [`RollAdjust.md`](../Business/Screens/RollAdjust.md) (DB11) · [`ActiveRunMonitor.md`](../Business/Screens/ActiveRunMonitor.md) §6 · **Owner:** FE + BE · **298 h** (FE 120 · BE 56 · DB 20 · RT 20 · QA 43 · cont. 39)
 
 > **The largest workflow phase, and it has no routed screens at all.** Every event it owns is a **dialog** over the active-run monitor. Dashboards 4, 6 and 11 and the die-change screen are **launcher pages only** — `../Mockups/dashboard_6_spc_checkpoint.html`, `dashboard_11_roll_adjust.html`, `dashboard_die_change.html` exist so filename references keep resolving. **Do not edit a launcher to change a screen — edit the `.js`.**
 >
@@ -1529,7 +1529,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ##### S2 · Phase 7 — Exception Handling: WIP Rejection & Rod Checkout
 
-**Spec:** [`phase-07-wip-rejection-rod-checkout.md`](Phases/phase-07-wip-rejection-rod-checkout.md) · **Owning specifications:** [`WipRejection.md`](../../RequirementDocuments/WipRejection.md) (DB8) · [`RodCheckout.md`](../../RequirementDocuments/RodCheckout.md) (DB12) · **Owner:** FE + BE · **205 h** (FE 64 · BE 40 · DB 28 · RT 16 · QA 30 · cont. 27)
+**Spec:** [`phase-07-wip-rejection-rod-checkout.md`](Phases/phase-07-wip-rejection-rod-checkout.md) · **Owning specifications:** [`WipRejection.md`](../Business/Screens/WipRejection.md) (DB8) · [`RodCheckout.md`](../Business/Screens/RodCheckout.md) (DB12) · **Owner:** FE + BE · **205 h** (FE 64 · BE 40 · DB 28 · RT 16 · QA 30 · cont. 27)
 
 > **Three checkout modes, and they are genuinely different transactions.** **Mode P** — pre-check-out from DB2A; the rod was never checked in, so there is **no acknowledgement to void, no PLC tags to clear and no line-state gate** (an idle bay is not running). **Mode A** — footage = 0. **Mode B** — footage > 0, reachable **only** through Pause.
 
@@ -1686,7 +1686,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ##### S2–S3 · Phase 8 — FL2 Spool Check-In & Finishing Run
 
-**Spec:** [`phase-08-fl2-spool-checkin-finishing-run.md`](Phases/phase-08-fl2-spool-checkin-finishing-run.md) · **Owning specifications:** [`SpoolQueue.md`](../../RequirementDocuments/SpoolQueue.md) (DB5A) · [`RocCheckin.md`](../../RequirementDocuments/RocCheckin.md) §4.3 (DB5) · [`SpoolCompletionNotification.md`](../../RequirementDocuments/SpoolCompletionNotification.md) · **Owner:** FE + BE · **118 h** (FE 48 · BE 18 · DB 12 · RT 8 · QA 17 · cont. 15)
+**Spec:** [`phase-08-fl2-spool-checkin-finishing-run.md`](Phases/phase-08-fl2-spool-checkin-finishing-run.md) · **Owning specifications:** [`SpoolQueue.md`](../Business/Screens/SpoolQueue.md) (DB5A) · [`RocCheckin.md`](../Business/Screens/RocCheckin.md) §4.3 (DB5) · [`SpoolCompletionNotification.md`](../Business/Screens/SpoolCompletionNotification.md) · **Owner:** FE + BE · **118 h** (FE 48 · BE 18 · DB 12 · RT 8 · QA 17 · cont. 15)
 
 > **This phase spans the sprint boundary: 59 h in S2, 59 h in S3**, matching the capacity model's even W5/W6 split. Story bodies are listed once, here.
 >
@@ -1835,7 +1835,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** the machine stop is expected rather than a surprise.
 
 **Acceptance Criteria:**
-- [ ] Weight-milestone notifications raised as the spool approaches target, per [`SpoolCompletionNotification.md`](../../RequirementDocuments/SpoolCompletionNotification.md)
+- [ ] Weight-milestone notifications raised as the spool approaches target, per [`SpoolCompletionNotification.md`](../Business/Screens/SpoolCompletionNotification.md)
 - [ ] Machine-stop confirmation surfaced to the operator
 - [ ] **Completion is graded against the customer's min/max weight range from the order, by weight** — **not** by footage and **not** against the withdrawn 2,000 lb default, which had no basis and exceeded the TKUP-2 ceiling of 1,100 lb
 - [ ] **A short close is a specified transaction:** inside the customer range → continue; outside it → **supervisor override + production hold, or an offer to the customer under concession before a remake is planned — the offer comes first**
@@ -1879,7 +1879,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ##### S3 · Phase 9 — Output Coil Completion, Labeling & Packing
 
-**Spec:** [`phase-09-output-coil-completion-labeling-packing.md`](Phases/phase-09-output-coil-completion-labeling-packing.md) · **Owning specification:** [`OutputCoilCompletion.md`](../../RequirementDocuments/OutputCoilCompletion.md) v1.1 (owns **DB7 and DB7b**) · **Owner:** FE + BE · **222 h** (FE 104 · BE 26 · DB 16 · RT 8 · QA 31 · BA 8 · cont. 29)
+**Spec:** [`phase-09-output-coil-completion-labeling-packing.md`](Phases/phase-09-output-coil-completion-labeling-packing.md) · **Owning specification:** [`OutputCoilCompletion.md`](../Business/Screens/OutputCoilCompletion.md) v1.1 (owns **DB7 and DB7b**) · **Owner:** FE + BE · **222 h** (FE 104 · BE 26 · DB 16 · RT 8 · QA 31 · BA 8 · cont. 29)
 
 > **Wholly MVP-1, and the 222 h figure is whole and correct.** DB7, DB7b, both coil endpoints, `CoilCompletionService` and `FW-066` were briefly carved to MVP-2 and **returned the same day**. The carve did not hold because `CoilOutput` and `CoilTraceability` are MVP-1 — the coil genealogy behind the **welding-wire customer certificates** is an MVP-1 obligation — but their **only writer** had gone to MVP-2, leaving the non-overlap trigger guarding rows nothing inserted.
 >

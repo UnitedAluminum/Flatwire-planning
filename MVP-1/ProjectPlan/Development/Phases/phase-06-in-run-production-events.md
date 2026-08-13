@@ -2,7 +2,7 @@
 
 > **Part of the [Flat Wire Mill — Master Implementation Roadmap](../Roadmap.md).** See [Foundations](../../Architecture/Architecture.md) for §0.2–0.4 shared context.
 > **Prev:** [Phase 5 — Active Run Monitoring & Live Gauge/Width Trace](./phase-05-active-run-monitoring-gauge-trace.md) · **Next:** [Phase 7 — Exception Handling: WIP Rejection & Rod Checkout](./phase-07-wip-rejection-rod-checkout.md)
-> **Owning specifications:** [`SPCCheckpoint.md`](../../../RequirementDocuments/SPCCheckpoint.md) (DB6) · [`DieChangeAndManagement.md`](../../../RequirementDocuments/DieChangeAndManagement.md) §1–3, §5 (die change event) · [`WeldEvent.md`](../../../RequirementDocuments/WeldEvent.md) · [`RollAdjust.md`](../../../RequirementDocuments/RollAdjust.md) (DB11) · [`ActiveRunMonitor.md`](../../../RequirementDocuments/ActiveRunMonitor.md) §6 (Pause/Resume) — the owning doc wins on any disagreement.
+> **Owning specifications:** [`SPCCheckpoint.md`](../../Business/Screens/SPCCheckpoint.md) (DB6) · [`DieChangeAndManagement.md`](../../Business/Screens/DieChangeAndManagement.md) §1–3, §5 (die change event) · [`WeldEvent.md`](../../Business/Screens/WeldEvent.md) · [`RollAdjust.md`](../../Business/Screens/RollAdjust.md) (DB11) · [`ActiveRunMonitor.md`](../../Business/Screens/ActiveRunMonitor.md) §6 (Pause/Resume) — the owning doc wins on any disagreement.
 
 ---
 
@@ -29,14 +29,14 @@
 >
 > **Accepted consequence, so it is not raised later as a bug: die life is per size.** Two dies of the same
 > diameter share one counter, and fitting a fresh die resets nothing. Authority:
-> [`DieChangeAndManagement.md`](../../../RequirementDocuments/DieChangeAndManagement.md) **§2.4a** (v2.4).
+> [`DieChangeAndManagement.md`](../../Business/Screens/DieChangeAndManagement.md) **§2.4a** (v2.4).
 > This also removes the old *"Phase 6 depends on Phase 13"* sequencing risk (`REVIEW.md` #34, `OI-41`) —
 > `Drawer` is a Phase-1 seed, so nothing in this phase waits on Phase 13.
 
 ## Business Overview
 - **Objective:** log weld joins (traceability), die changes (→ auto SPC), SPC checkpoints (quality gate), roll-gap overrides (correct drift without editing the schedule), and pause/resume (categorised downtime).
 - **Business purpose:** continuity, quality conformance, and full audit of every mid-run change.
-- **User roles:** FL1/FL3 operator (**Roll Adjust is FL2 + FL3, not FL1** — corrected 2 Aug 2026; this line read "FL1/FL2"). Master spec **FR-107** gives FL1 no Roll Adjust (it has one mill, FM1), **FR-108** adds it to FL3 and **FR-109** includes it on FL2, and the three mockups agree — `dashboard_3_active_run.html` has no Roll Adjust button, `_fl2` and `_fl3` do. *Note `FlatWireShopfloorDashboards.md` says **FL3 only** in its inventory and action table and **FL1/FL2** in its DB11 section, and `Development/GapsRegister.md` says FL1/FL2; all predate FR-107–109 and are wrong in different directions. Settled in [`RollAdjust.md`](../../../RequirementDocuments/RollAdjust.md) §1.5, which is now the owning spec; the dashboards file's inventory row was corrected 11 Aug 2026.* Ops Manager for override revert.
+- **User roles:** FL1/FL3 operator (**Roll Adjust is FL2 + FL3, not FL1** — corrected 2 Aug 2026; this line read "FL1/FL2"). Master spec **FR-107** gives FL1 no Roll Adjust (it has one mill, FM1), **FR-108** adds it to FL3 and **FR-109** includes it on FL2, and the three mockups agree — `dashboard_3_active_run.html` has no Roll Adjust button, `_fl2` and `_fl3` do. *Note `FlatWireShopfloorDashboards.md` says **FL3 only** in its inventory and action table and **FL1/FL2** in its DB11 section, and `Development/GapsRegister.md` says FL1/FL2; all predate FR-107–109 and are wrong in different directions. Settled in [`RollAdjust.md`](../../Business/Screens/RollAdjust.md) §1.5, which is now the owning spec; the dashboards file's inventory row was corrected 11 Aug 2026.* Ops Manager for override revert.
 - **Entry conditions:** active run (Phase 5).
 - **Exit conditions:** each event persisted against run+footage; run resumes or gates on SPC.
 

@@ -1,5 +1,5 @@
 -- ============================================================
--- SCOPE: MVP-2 (deferred) -- moved 11 Aug 2026 from MVP-1/DBChanges. NOT part of MVP-1.
+-- SCOPE: MVP-2 (deferred) -- moved 11 Aug 2026 from MVP-1/ProjectPlan/Database. NOT part of MVP-1.
 -- Requires the MVP-1 chain (00..08) to be deployed first.
 -- ============================================================
 -- Flat Wire Mill — Sample Data: PassSchedule + PassScheduleComponent

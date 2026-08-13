@@ -98,7 +98,7 @@ FL1 and FL2 may run **independent orders simultaneously**; their throughput rati
 
 > **FM2 has three stands, not four `[CONFIRMED — Aug 4 2026]`.** The 8″ roller **is S1**; it is not a separate component upstream of three 6″ stands. Earlier revisions of this table listed four FM2 rows, and the *contested — see OI-04* notes on the last two are removed: **`OI-04` is closed** because the DDL's `FM2_6inS2` and the SRS's `6″ S3` named the same physical stand. Decision **D-26**.
 
-The physical layout is illustrated in [`Flat Wire Machine - Big Beautiful Diagram.png`](../../Mockups/Flat%20Wire%20Machine%20-%20Big%20Beautiful%20Diagram.png) — orientation only, not a specification.
+The physical layout is illustrated in [`Flat Wire Machine - Big Beautiful Diagram.png`](../Frontend/Mockups/Flat%20Wire%20Machine%20-%20Big%20Beautiful%20Diagram.png) — orientation only, not a specification.
 
 ---
 
@@ -235,7 +235,7 @@ The design is therefore **records first, PLC second**, with **compensating write
 
 - Upstream rod receiving and planning/scheduling deliver on their own timelines; if they slip, Phase 4 has neither material nor a scheduled job.
 - PLC commissioning may slip past 30 Sep without blocking development — `SimulatePLCTagPush` plus a mock SignalR stream keep the UI fully testable. **Go-live** is gated on commissioning; development is not.
-- The mockups in `MVP-1/Mockups/` are final; no UI design time is costed.
+- The mockups in `MVP-1/ProjectPlan/Frontend/Mockups/` are final; no UI design time is costed.
 - The `CoilCheckin` backend template is directly reusable.
 - OPC servers are unchanged; only the PLCs are new hardware.
 

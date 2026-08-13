@@ -19,7 +19,7 @@
 
 ### 9.2 The tag surface
 
-> **Specified in [`PLCTagSpecification.md`](../../RequirementDocuments/PLCTagSpecification.md)** — the write operations and their triggers (`[PLC §7]`), the per-line tag map (`[PLC §5.2]`), `ITInhibit` and its five conditions (`[PLC §8]`), and the full tag lifecycle (`[PLC §9]`).
+> **Specified in [`PLCTagSpecification.md`](PLCTagSpecification.md)** — the write operations and their triggers (`[PLC §7]`), the per-line tag map (`[PLC §5.2]`), `ITInhibit` and its five conditions (`[PLC §8]`), and the full tag lifecycle (`[PLC §9]`).
 
 The architectural facts that belong here rather than there:
 
@@ -32,7 +32,7 @@ The architectural facts that belong here rather than there:
 
 ### 9.1 – 9.2 The PLC / OPC interface
 
-> **The full write surface, the read surface and the tag map are specified in [`PLCTagSpecification.md`](../../RequirementDocuments/PLCTagSpecification.md) — the single home for the tag surface since 4 Aug 2026.** This section previously carried a write table and a representative FL1 tag map; both are superseded there, where the map is published **per line** and carries the paths this document never had.
+> **The full write surface, the read surface and the tag map are specified in [`PLCTagSpecification.md`](PLCTagSpecification.md) — the single home for the tag surface since 4 Aug 2026.** This section previously carried a write table and a representative FL1 tag map; both are superseded there, where the map is published **per line** and carries the paths this document never had.
 
 The requirement-level rules, which remain normative here:
 
@@ -56,7 +56,7 @@ The integration layer is the **existing `OPCConnection` service, extended** to s
 
 ### 6.1 `PLCTagService` — the service surface
 
-> **What each operation writes, when, and to which line is specified in [`PLCTagSpecification.md`](../../RequirementDocuments/PLCTagSpecification.md) §4.** This section carries only the contract shape.
+> **What each operation writes, when, and to which line is specified in [`PLCTagSpecification.md`](PLCTagSpecification.md) §4.** This section carries only the contract shape.
 
 | Operation | Signature |
 |---|---|
@@ -77,7 +77,7 @@ The integration layer is the **existing `OPCConnection` service, extended** to s
 
 ### 6.3 `ITInhibit` and the read surface
 
-> Both in [`PLCTagSpecification.md`](../../RequirementDocuments/PLCTagSpecification.md) — `ITInhibit` and its five conditions at `[PLC §8]`, the per-line tag map at `[PLC §5.2]`.
+> Both in [`PLCTagSpecification.md`](PLCTagSpecification.md) — `ITInhibit` and its five conditions at `[PLC §8]`, the per-line tag map at `[PLC §5.2]`.
 
 > **Naming.** The enum at §1 is renamed **`LineOperatingState`** and the hub event **`LineStateChanged`**, so that **`LineState`** unambiguously means the machine tag. The machine’s own vocabulary is undocumented and is being asked as **`PLC-Q01`**; it is resolved through a **configurable mapping table** (`[PLC §6]`), not by adding an enum member. Note `FR-141` fires the spool prompt on a *running → stopped* transition — a value the six-member enum does not contain.
 
@@ -89,7 +89,7 @@ The integration layer is the **existing `OPCConnection` service, extended** to s
 > what a client would not sign: service signatures, configuration binding, persistence sinks, phase ownership,
 > requirement traceability and provenance.
 >
-> **The anti-drift rule is unchanged and now applies to this whole file:** `MVP-1/RequirementDocuments/PLCTagSpecification.md`
+> **The anti-drift rule is unchanged and now applies to this whole file:** `MVP-1/ProjectPlan/Architecture/PLCTagSpecification.md`
 > owns **every tag path string** and this document contains **none**. If you are about to write a tag path here,
 > you are creating a second copy of the tag map.
 

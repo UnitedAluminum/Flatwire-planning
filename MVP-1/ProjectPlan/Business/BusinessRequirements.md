@@ -41,8 +41,8 @@ Full glossary in §3.6. The terms that most often cause misreadings:
 | Reference | Role |
 |---|---|
 | [`../FlatWire_MasterSpecification.md`](../../../LatestDocument/FlatWire_MasterSpecification.md) | The reconciled source this SRS re-cuts. Authoritative where two older artifacts disagree |
-| [`../DBChanges/Schema/SQL/`](../../DBChanges/Schema/SQL/) | Authoritative for column-level types, nullability and constraints |
-| [`../../MVP-1/Mockups/`](../../Mockups/) | Authoritative for pixel-level layout and screen behaviour |
+| [`../DBChanges/Schema/SQL/`](../Database/Schema/SQL/) | Authoritative for column-level types, nullability and constraints |
+| [`../../MVP-1/ProjectPlan/Frontend/Mockups/`](../Frontend/Mockups/) | Authoritative for pixel-level layout and screen behaviour |
 | [`../../MVP-1/ProjectPlan/Development/REVIEW.md`](../Development/REVIEW.md) | Catalogue of known contradictions between older documents |
 | [`../../Analysis/FlatWireOpenQuestions.md`](../../../Analysis/FlatWireOpenQuestions.md) | The open-questions register (`OQ-##`) |
 
@@ -204,7 +204,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.1 Pre-Check-In Station — Dashboard 2A
 
-**Screen:** [`dashboard_2a_rod_precheckin.html`](../../Mockups/dashboard_2a_rod_precheckin.html)
+**Screen:** [`dashboard_2a_rod_precheckin.html`](../Frontend/Mockups/dashboard_2a_rod_precheckin.html)
 **Source IDs:** `PCI001`–`PCI008`, `WLD003`/`WLD005`/`WLD006`/`WLD010`, `TRV004`/`TRV009`, `PRC007`/`PRC008`/`PRC011`/`PRC014`
 **Actors:** FL1 / FL3 operator (primary); Supervisor (override authorisation)
 **Preconditions:** the line is FL1 or FL3; the rod exists in `coils`; planning has allocated the rod to an order in `planning_routings`
@@ -255,8 +255,8 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.2 Rod Check-In — Dashboard 2 (FL1 / FL3)
 
-**Screen (approved):** [`dashboard_2_rod_checkin.html`](../../Mockups/dashboard_2_rod_checkin.html) — a guided 6-step tab wizard.
-**FL3 variant:** [`dashboard_2_rod_checkin_fl3.html`](../../Mockups/dashboard_2_rod_checkin_fl3.html) *(still on the older single-page layout; a wizard-shaped FL3 variant is outstanding — **OI-16**)*.
+**Screen (approved):** [`dashboard_2_rod_checkin.html`](../Frontend/Mockups/dashboard_2_rod_checkin.html) — a guided 6-step tab wizard.
+**FL3 variant:** [`dashboard_2_rod_checkin_fl3.html`](../Frontend/Mockups/dashboard_2_rod_checkin_fl3.html) *(still on the older single-page layout; a wizard-shaped FL3 variant is outstanding — **OI-16**)*.
 **Source IDs:** `CHK001`–`CHK019`, `PSM015`–`PSM019`, `SPC003`, `INT001`–`INT004`
 **Actors:** FL1 / FL3 operator; Supervisor (deviation override)
 **Preconditions:** rod `STAGED` (or scanned directly); an `Active` pass schedule exists for the attribute combination; the job is scheduled; the real-time backbone is up
@@ -302,7 +302,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.3 Spool Check-In — Dashboard 5 (FL2)
 
-**Screen:** [`dashboard_5_spool_checkin.html`](../../Mockups/dashboard_5_spool_checkin.html)
+**Screen:** [`dashboard_5_spool_checkin.html`](../Frontend/Mockups/dashboard_5_spool_checkin.html)
 **Source IDs:** `CHK012`, `CHK013`, `PSM016`–`PSM019`, `GWT005`
 **Actors:** FL2 operator
 **Preconditions:** an FL1-produced spool exists and is ready for FL2; an `Active` FL2 pass schedule exists
@@ -326,7 +326,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.3a Spool Queue — Dashboard 5A (FL2)
 
-**Screen:** [`dashboard_5a_spool_queue.html`](../../Mockups/dashboard_5a_spool_queue.html)
+**Screen:** [`dashboard_5a_spool_queue.html`](../Frontend/Mockups/dashboard_5a_spool_queue.html)
 **Source IDs:** `CHK012`; **Q17** (operator selects by spool number)
 **Actors:** FL2 operator
 **Preconditions:** none — the screen is usable on opening
@@ -352,7 +352,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.4 Active Run Monitor — Dashboard 3 (FL1 / FL2 / FL3)
 
-**Screens:** [`dashboard_3_active_run.html`](../../Mockups/dashboard_3_active_run.html) (FL1 — grouped action cluster + spool-completion overlay; **the sole FL1 layout since 1 Aug 2026**, when the earlier left-rail layout that held this filename was withdrawn; this file was named `dashboard_3_active_run_v2.html` until 11 Aug 2026) · [`dashboard_3_active_run_fl2.html`](../../Mockups/dashboard_3_active_run_fl2.html) · [`dashboard_3_active_run_fl3.html`](../../Mockups/dashboard_3_active_run_fl3.html)
+**Screens:** [`dashboard_3_active_run.html`](../Frontend/Mockups/dashboard_3_active_run.html) (FL1 — grouped action cluster + spool-completion overlay; **the sole FL1 layout since 1 Aug 2026**, when the earlier left-rail layout that held this filename was withdrawn; this file was named `dashboard_3_active_run_v2.html` until 11 Aug 2026) · [`dashboard_3_active_run_fl2.html`](../Frontend/Mockups/dashboard_3_active_run_fl2.html) · [`dashboard_3_active_run_fl3.html`](../Frontend/Mockups/dashboard_3_active_run_fl3.html)
 **Source IDs:** `ARM001`–`ARM024`, `TRV001`–`TRV010`, `GWT001`–`GWT006`
 **Actors:** line operator
 **Preconditions:** an active run on the line
@@ -393,8 +393,8 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.5 Spool Completion Alerts and Machine-Stop Confirmation (FL1 primary)
 
-**Component:** [`spool_notification.js`](../../Mockups/spool_notification.js), hosted in `dashboard_3_active_run.html`
-**Source:** `MVP-1/RequirementDocuments/SpoolCompletionNotification.md` Parts A and B
+**Component:** [`spool_notification.js`](../Frontend/Mockups/spool_notification.js), hosted in `dashboard_3_active_run.html`
+**Source:** `MVP-1/ProjectPlan/Business/Screens/SpoolCompletionNotification.md` Parts A and B
 **Actors:** line operator; Supervisor (weight-variance override)
 **Priority:** Part A **`Should`** — *stated: advisory and non-blocking.* Part B **`Must`** — it is the gate on the spool completion transaction.
 
@@ -455,7 +455,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 > unchanged in substance; the screen hosting them has moved. **`FR-175` (the traceability chain) and
 > the re-sequenceable rod queue did not move and currently have no host — gap G27.**
 
-**Screen:** [`dashboard_2a_rod_precheckin.html`](../../Mockups/dashboard_2a_rod_precheckin.html) — *Mark as welded* dialog
+**Screen:** [`dashboard_2a_rod_precheckin.html`](../Frontend/Mockups/dashboard_2a_rod_precheckin.html) — *Mark as welded* dialog
 **Source IDs:** `WLD001`–`WLD017`
 **Actors:** FL1 / FL3 operator; Supervisor (weld removal)
 **Priority:** **`Must`** *(derived — FW-063 is High; weld genealogy is contractual)*
@@ -486,7 +486,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.7 SPC Checkpoint — Dashboard 6
 
-**Dialog:** `spc_checkpoint.js` — `openSpcCheckpoint(ctx)`, a popup over the run being measured (converted from a screen 1 Aug 2026; [`dashboard_6_spc_checkpoint.html`](../../Mockups/dashboard_6_spc_checkpoint.html) is now its launcher)
+**Dialog:** `spc_checkpoint.js` — `openSpcCheckpoint(ctx)`, a popup over the run being measured (converted from a screen 1 Aug 2026; [`dashboard_6_spc_checkpoint.html`](../Frontend/Mockups/dashboard_6_spc_checkpoint.html) is now its launcher)
 **Source IDs:** `SPC001`–`SPC015`
 **Actors:** any operator; QA (disposition of held material)
 **Priority:** **`Must`** *(derived — FW-065 is High; SPC gates check-in and die change)*
@@ -518,7 +518,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.8 Roll Adjust — Dashboard 11
 
-**Screen:** [`dashboard_11_roll_adjust.html`](../../Mockups/dashboard_11_roll_adjust.html)
+**Screen:** [`dashboard_11_roll_adjust.html`](../Frontend/Mockups/dashboard_11_roll_adjust.html)
 **Source IDs:** `RAJ001`–`RAJ022`
 **Actors:** line operator (apply); Operations Manager (revert)
 **Priority:** **`Must`** *(derived — FW-070 is High)*
@@ -545,7 +545,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.9 Die Change — DC screen
 
-**Dialog:** `die_change.js` — `openDieChange(ctx)`, a popup over the paused run (converted from a screen 1 Aug 2026; [`dashboard_die_change.html`](../../Mockups/dashboard_die_change.html) is now its launcher)
+**Dialog:** `die_change.js` — `openDieChange(ctx)`, a popup over the paused run (converted from a screen 1 Aug 2026; [`dashboard_die_change.html`](../Frontend/Mockups/dashboard_die_change.html) is now its launcher)
 **Source IDs:** `DCH001`–`DCH028`
 **Actors:** FL1 / FL3 operator; Operations Manager (SPC-waiver authority)
 **Priority:** **`Must`** *(derived — FW-073 is High)*
@@ -584,7 +584,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.11 Pause / Resume
 
-**Component:** [`pause_run.js`](../../Mockups/pause_run.js) — a shared dialog for the FL1/FL2/FL3 active-run screens
+**Component:** [`pause_run.js`](../Frontend/Mockups/pause_run.js) — a shared dialog for the FL1/FL2/FL3 active-run screens
 **Source IDs:** `PRN001`–`PRN026`, `STP013`–`STP015`
 **Priority:** **`Must`** *(derived — FW-071 is High and gates Mode B checkout)*
 
@@ -643,7 +643,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.14 WIP Rejection — Dashboard 8
 
-**Dialog:** `wip_rejection.js` — `openWipRejection(ctx)`, a popup raised by whichever screen rejects the material (converted from a screen 1 Aug 2026; [`dashboard_8_wip_rejection.html`](../../Mockups/dashboard_8_wip_rejection.html) is now its launcher)
+**Dialog:** `wip_rejection.js` — `openWipRejection(ctx)`, a popup raised by whichever screen rejects the material (converted from a screen 1 Aug 2026; [`dashboard_8_wip_rejection.html`](../Frontend/Mockups/dashboard_8_wip_rejection.html) is now its launcher)
 **Source IDs:** `WRJ001`–`WRJ004`
 **Actors:** any operator (flag); Supervisor / QA (dispose)
 **Priority:** **`Must`** *(derived — FW-067 is High; it is the only forward action from a failed inspection)*
@@ -667,7 +667,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.15 Rod Checkout — Dashboard 12
 
-**Screen:** [`dashboard_12_rod_checkout.html`](../../Mockups/dashboard_12_rod_checkout.html)
+**Screen:** [`dashboard_12_rod_checkout.html`](../Frontend/Mockups/dashboard_12_rod_checkout.html)
 **Source IDs:** `RCO001`–`RCO051`
 **Actors:** line operator; Supervisor (Mode B approval)
 **Priority:** **`Must`** *(derived — FW-072 is High)*
@@ -712,7 +712,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.16 Output Coil Completion — Dashboard 7
 
-**Screen:** [`dashboard_7_coil_completion.html`](../../Mockups/dashboard_7_coil_completion.html)
+**Screen:** [`dashboard_7_coil_completion.html`](../Frontend/Mockups/dashboard_7_coil_completion.html)
 **Source IDs:** `PR001`–`PR006`, `PKG001`–`PKG003`, `PSM024`
 **Actors:** FL2 / FL3 operator
 **Priority:** **`Must`** *(derived — FW-066 is High; this is the customer-facing deliverable)*
@@ -740,7 +740,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.17 Packing Station — Dashboard 7b
 
-**Screen:** [`dashboard_7b_packing_station.html`](../../Mockups/dashboard_7b_packing_station.html)
+**Screen:** [`dashboard_7b_packing_station.html`](../Frontend/Mockups/dashboard_7b_packing_station.html)
 **Source IDs:** `PKG001`–`PKG004`
 **Actors:** packing operator
 **Priority:** **`Must`** *(derived — part of FW-066)*
@@ -762,7 +762,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 ### 5.20 Line Status Overview — Dashboard 1
 
-**Screen:** [`dashboard_1_line_status.html`](../../Mockups/dashboard_1_line_status.html)
+**Screen:** [`dashboard_1_line_status.html`](../Frontend/Mockups/dashboard_1_line_status.html)
 **Source IDs:** `LST001`–`LST019`
 **Actors:** Supervisor / Foreman (primary); all authenticated users may view
 **Priority:** **`Must`** *(derived — FW-060 is High; it is the floor master board)*
@@ -800,7 +800,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 | Concern | Now |
 |---|---|
-| The **machine tag map** both screens consumed | [`PLCTagSpecification.md`](../../RequirementDocuments/PLCTagSpecification.md) §3, split per line — it is now the only tag map in the repository |
+| The **machine tag map** both screens consumed | [`PLCTagSpecification.md`](../Architecture/PLCTagSpecification.md) §3, split per line — it is now the only tag map in the repository |
 | The **five alert conditions** (`FR-447` reused DB1’s) | Unchanged in `FR-423`. DB1 is unaffected |
 | The **six run event markers** (`FR-465`) | Unchanged — they still mark the DB3 traces. **No hub event and no endpoint is removed by this descope** |
 | **SPC control-limit methodology** (`FR-466`) | Belongs to the SPC checkpoint and the gauge-trace report, both unaffected |

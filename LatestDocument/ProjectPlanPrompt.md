@@ -34,13 +34,13 @@ Create the directory `MVP-1/ProjectPlan/` and write exactly these seven markdown
 
 Optionally also write `00-README.md` — a one-page index of the seven with a read order and a "which document is authoritative for what" table. Nothing else. Do not create sub-folders, do not emit `.docx`, do not write `.sql`, `.ts` or `.cs` files.
 
-**Do not modify any existing file in this repository.** `Analysis/`, `MVP-1/ProjectPlan/`, `MVP-1/Mockups/`, `MVP-1/SRS/`, `BaseDocuments/` and `LatestDocument/FlatWire_MasterSpecification.md` are read-only inputs for this task. Everything you write goes in `MVP-1/ProjectPlan/`.
+**Do not modify any existing file in this repository.** `Analysis/`, `MVP-1/ProjectPlan/`, `MVP-1/ProjectPlan/Frontend/Mockups/`, `MVP-1/SRS/`, `BaseDocuments/` and `LatestDocument/FlatWire_MasterSpecification.md` are read-only inputs for this task. Everything you write goes in `MVP-1/ProjectPlan/`.
 
 ## 2. Source hierarchy — read in this order, and obey this precedence
 
 1. **`LatestDocument/FlatWire_MasterSpecification.md`** (3,415 lines, Jul 30 2026) — the **primary input**. It is already a reconciliation of the whole repo, section-mapped as: §1 exec summary · §2 domain/glossary · §3 process flows · §4 functional requirements (`FR-###`) · §5 data model · §6 API & real-time · §7 UI · §8 architecture/integration · §9 delivery roadmap · §10 decisions register · §11 open issues (`OI-##`) · Appendix A provenance. Read it **in full** before writing anything. Most of your content is a re-cut of this document for a specific audience — so read it once, cut it many ways.
-2. **`MVP-1/DBChanges/Schema/SQL/*.sql`** — authoritative for column-level types, nullability, constraints, indexes and FKs. `FlatWire_ERDiagram_Documentation.md` describes the as-built schema.
-3. **`MVP-1/Mockups/*.html`** — authoritative for pixel-level layout and screen behaviour. `MVP-1/Mockups/flat-wire-shopfloor.styles.scss` is the token system.
+2. **`MVP-1/ProjectPlan/Database/Schema/SQL/*.sql`** — authoritative for column-level types, nullability, constraints, indexes and FKs. `FlatWire_ERDiagram_Documentation.md` describes the as-built schema.
+3. **`MVP-1/ProjectPlan/Frontend/Mockups/*.html`** — authoritative for pixel-level layout and screen behaviour. `MVP-1/ProjectPlan/Frontend/Mockups/flat-wire-shopfloor.styles.scss` is the token system.
 4. **`MVP-1/ProjectPlan/Development/Phases/`** — `Architecture/Architecture.md` (§0.2 reference-code map, §0.3 domain cheat-sheet, §0.4 real-time architecture, §0.5 stub-first delivery contract), `phase-01..14-*.md`, `Development/GapsRegister.md` (dependency chain, milestone calendar, gaps register **G1–G18**).
 5. **`MVP-1/ProjectPlan/Development/CapacityAndEffortModel.md`** — the effort/capacity arithmetic behind the sprint plan (streams, unit-rate card, per-phase hours, descope ladder).
 6. **`MVP-1/ProjectPlan/Development/REVIEW.md`** — the audit of known contradictions between docs. **Consult it before trusting any single spec**; it tells you which document wins.
@@ -59,7 +59,7 @@ Optionally also write `00-README.md` — a one-page index of the seven with a re
 - Open with the standard header block: **Project · Last Updated · Document Type · Status**, plus **Owner** and **Audience**, plus a **Sources** line listing the specific inputs that doc consolidates.
 - **Do not close with a Change Log table.** Since 12 Aug 2026 the repository has exactly one change log, [`../CHANGELOG.md`](../CHANGELOG.md) at the root; no document carries its own. Record the creation of each file as a row under that file's `##` section there (`| Date | Changed By | Description |`), adding the section if it does not exist yet.
 - All dates are **US business dates in 2026**. Never introduce a date outside the authoritative timeline (§4 below).
-- Markdown only. Use relative links (`../FlatWire_MasterSpecification.md`, `../../MVP-1/Mockups/dashboard_1_line_status.html`) and verify every link target exists before writing it.
+- Markdown only. Use relative links (`../FlatWire_MasterSpecification.md`, `../../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_1_line_status.html`) and verify every link target exists before writing it.
 - Tables over prose wherever the content is enumerable. Prose only where reasoning must be carried.
 
 **Terminology and domain rules:**
@@ -84,7 +84,7 @@ Optionally also write `00-README.md` — a one-page index of the seven with a re
 - The schedule does not close as scoped. The plan is **3,727 hours / 465.9 dev-days across 14 phases against 44 working days (32 post-gate)** → **10.6 FTE sustained**, a 10.7-FTE Phase-1 gate, an arithmetically impossible 27.2-FTE W7, and a descope ladder recovering only **12%**. This is gap **G1** / **OI-51**. Carry it into the vision doc's risks and the sprint plan's front matter as a **programme decision required** (staff to ~11 FTE · move the date — 6 FTE → 18 Nov 2026, 8 FTE → 22 Oct 2026, both inside the planned Q4 window · or cut below the critical path). Do not silently rescope to make the plan look feasible; do not invent a staffing number the source doesn't support.
 - The **footage→weight conversion factor is undefined** (OQ-10 / OI-45) and every output weight, yield and remaining-weight estimate depends on it.
 - **Pass Schedule content is still being authored by Operations**, and Phase 2 gates every check-in phase.
-- **Known schema divergence — resolve it, loudly.** The master spec §5 and the current DDL/ER doc describe **28 tables** with a FlatWireDB-local `Rod` master; `Architecture/Architecture.md` §13.1 `D-04` and `phase-01c` say `Rod` is *dropped* in favour of the shared `coils` table (21–22 tables, unenforced cross-DB rod-alpha links). The master spec §5.2 states the resolved position — follow it, restate it explicitly in doc 3 §data model, and flag the stale side. **Verify the table count against `MVP-1/DBChanges/Schema/SQL/` before you publish a number.** Do not copy a table count from any doc without counting.
+- **Known schema divergence — resolve it, loudly.** The master spec §5 and the current DDL/ER doc describe **28 tables** with a FlatWireDB-local `Rod` master; `Architecture/Architecture.md` §13.1 `D-04` and `phase-01c` say `Rod` is *dropped* in favour of the shared `coils` table (21–22 tables, unenforced cross-DB rod-alpha links). The master spec §5.2 states the resolved position — follow it, restate it explicitly in doc 3 §data model, and flag the stale side. **Verify the table count against `MVP-1/ProjectPlan/Database/Schema/SQL/` before you publish a number.** Do not copy a table count from any doc without counting.
 - Where the source says "TBD", write "TBD" with the owning `OQ-##`/`OI-##` — never a plausible-looking placeholder value.
 
 **Section-numbering rule:** number every section (`§1`, `§1.1`) so the other six documents can cite it precisely. Cross-document citations use `[VS §3.2]`, `[EX §4.7]`, `[CMP §5]`, `[PLCC §6.4]`, `[SP §2]`, `[UAT §7]`, `[DEP §4]`.
@@ -242,7 +242,7 @@ Required sections:
 2. **Environments** — dev/test1/test2/dev1/dev2/staging/production with server names, app pools, database servers, and the promotion path.
 3. **Pre-deployment checklist** — approvals, gates passed (`[TS §4]`), backups taken, line state (**no active run on FL1/FL2/FL3**), operator notification, maintenance window, rollback rehearsal confirmed.
 4. **Deployment sequence** — ordered, with commands:
-   - **Database first.** `FlatWireDB` build/upgrade via SQLCMD mode (`sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll.sql`, run from `MVP-1/DBChanges/Schema/SQL/` because the `:r` includes are relative; SSMS requires **Query → SQLCMD Mode**). State that every script guards its objects so `RunAll` is idempotent, and the execution order `00 → 01 → 02 → 03 → 04 → 05 → 06 FKs → 07 indexes → 08 programmability`.
+   - **Database first.** `FlatWireDB` build/upgrade via SQLCMD mode (`sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll.sql`, run from `MVP-1/ProjectPlan/Database/Schema/SQL/` because the `:r` includes are relative; SSMS requires **Query → SQLCMD Mode**). State that every script guards its objects so `RunAll` is idempotent, and the execution order `00 → 01 → 02 → 03 → 04 → 05 → 06 FKs → 07 indexes → 08 programmability`.
    - **The FW-001 shared-schema renames** — separately called out, because they touch the shared `coils`/scheduling schema used by other modules. Give the pre-flight impact check, the change, the verification, and the fact that this is the **hardest thing in the release to roll back**.
    - **API** — `dotnet publish` → IIS application pool, `appsettings.{Environment}.json` and environment variables (JWT and connection-string variables per the UAL conventions), app-pool recycle, health check.
    - **Angular** — `ng build` for the environment → static files to IIS, cache-busting, shell registration.
@@ -260,7 +260,7 @@ Required sections:
 
 ## 6. Diagrams
 
-Use **mermaid** fenced blocks (`erDiagram`, `flowchart`, `stateDiagram-v2`, `sequenceDiagram`). Every diagram is accompanied by prose that carries the same information — a reader with no mermaid renderer must lose nothing. Do not embed images; link to `../../MVP-1/Mockups/Flat Wire Machine - Big Beautiful Diagram.png` where the equipment layout is relevant.
+Use **mermaid** fenced blocks (`erDiagram`, `flowchart`, `stateDiagram-v2`, `sequenceDiagram`). Every diagram is accompanied by prose that carries the same information — a reader with no mermaid renderer must lose nothing. Do not embed images; link to `../../MVP-1/ProjectPlan/Frontend/Mockups/Flat Wire Machine - Big Beautiful Diagram.png` where the equipment layout is relevant.
 
 ## 7. What "done" means — verify before you report completion
 

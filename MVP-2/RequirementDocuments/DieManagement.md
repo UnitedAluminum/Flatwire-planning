@@ -7,7 +7,7 @@
 **Last Updated:** August 12, 2026
 **Status:** **MVP-2 — not part of MVP-1 and not part of MVP-1 planning**
 **Screen reference:** Die Management (maintenance, tooling inventory) — [`../Mockups/dashboard_die_management.html`](../Mockups/dashboard_die_management.html)
-**Extracted from:** [`DieChangeAndManagement.md`](../../MVP-1/RequirementDocuments/DieChangeAndManagement.md) v2.2 §4, on 11 Aug 2026
+**Extracted from:** [`DieChangeAndManagement.md`](../../MVP-1/ProjectPlan/Business/Screens/DieChangeAndManagement.md) v2.2 §4, on 11 Aug 2026
 
 ---
 
@@ -109,7 +109,7 @@ Two history views are available: **run history** (order, line, footage added, da
 
 # 2. Die Life Status
 
-**The status vocabulary is not restated here.** It stays in [`DieChangeAndManagement.md` §5](../../MVP-1/RequirementDocuments/DieChangeAndManagement.md) — `Active` · `Nearing end` · `Overdue` · `Spare` · `Retired` — because the die change screen reads it too, and a second copy in a second scope bucket is how a five-row vocabulary becomes two five-row vocabularies that disagree.
+**The status vocabulary is not restated here.** It stays in [`DieChangeAndManagement.md` §5](../../MVP-1/ProjectPlan/Business/Screens/DieChangeAndManagement.md) — `Active` · `Nearing end` · `Overdue` · `Spare` · `Retired` — because the die change screen reads it too, and a second copy in a second scope bucket is how a five-row vocabulary becomes two five-row vocabularies that disagree.
 
 Two things about it *are* owned here:
 
@@ -170,8 +170,8 @@ Three shapes are possible and **none has been chosen**: seed the `Die` reference
 
 | Document | Relationship |
 |---|---|
-| [Die Change and Die Management](../../MVP-1/RequirementDocuments/DieChangeAndManagement.md) | **The parent.** Authority on the mid-run die change event (MVP-1) and on the die-life status vocabulary |
+| [Die Change and Die Management](../../MVP-1/ProjectPlan/Business/Screens/DieChangeAndManagement.md) | **The parent.** Authority on the mid-run die change event (MVP-1) and on the die-life status vocabulary |
 | [Pass Schedule Management](PassScheduleManagement.md) | Die sizes are pass-schedule parameters; a size change is a configuration change. **Also MVP-2** |
-| [SPC Checkpoint](../../MVP-1/RequirementDocuments/SPCCheckpoint.md) | The verification gate a gauge-drift or size-change die change routes into. MVP-1 |
-| [Rod Check-in](../../MVP-1/RequirementDocuments/RocCheckin.md) | Pushes the die configuration to machine control at acknowledgement. MVP-1 |
+| [SPC Checkpoint](../../MVP-1/ProjectPlan/Business/Screens/SPCCheckpoint.md) | The verification gate a gauge-drift or size-change die change routes into. MVP-1 |
+| [Rod Check-in](../../MVP-1/ProjectPlan/Business/Screens/RocCheckin.md) | Pushes the die configuration to machine control at acknowledgement. MVP-1 |
 | 1.1 | Aug 12, 2026 | **Question references realigned — no requirement changed.** The open-questions register was renumbered and 23 questions were withdrawn to named tracking homes in the master specification, the gap register and the PLC tag specification. Every question reference in this document was re-resolved **by subject** and rewritten to the current id; where the question it cited was withdrawn, the reference now names the tracking home. No rule, figure, screen behaviour or open item was added, removed or altered. |

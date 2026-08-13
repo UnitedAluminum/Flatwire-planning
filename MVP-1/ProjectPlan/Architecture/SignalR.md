@@ -127,7 +127,7 @@ Also broadcast, consumed by DB3 traces: `WeldJoinEvent` · `DieChangeEvent` · `
 
 ### 5.5 Events the spool-completion feature adds
 
-Specified in `MVP-1/RequirementDocuments/SpoolCompletionNotification.md`, **not yet in the published contract**:
+Specified in `MVP-1/ProjectPlan/Business/Screens/SpoolCompletionNotification.md`, **not yet in the published contract**:
 
 | Event | Payload | Why it is server-side |
 |---|---|---|

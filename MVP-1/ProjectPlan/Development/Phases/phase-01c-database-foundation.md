@@ -2,7 +2,7 @@
 
 > **Part of the [Flat Wire Mill — Master Implementation Roadmap](../Roadmap.md).** One of the three layer specs that replace the combined Phase 1 doc — see the [Phase 1 index](../Roadmap.md).
 > **Siblings:** [1A — Angular Foundation](./phase-01a-angular-foundation.md) · [1B — Backend Foundation](./phase-01b-backend-foundation.md)
-> **Reference context (do not restate):** [Foundations §0.2](../../Architecture/Architecture.md) decision 2 (new `FlatWireDB`). **Its decision 3 — "rod = existing `coils`, `Rod` dropped" — is SUPERSEDED by master-spec `D-04`: `Rod` is retained.** See *Target database & table set*. Source DDL: [`MVP-1/DBChanges/Schema/SQL/`](../../../DBChanges/Schema/SQL/) (`FlatWire_DDL_01`, `03`–`08`, the four `FlatWire_SampleData_*.sql` seeds, `FlatWire_ERDiagram_Documentation.md`). **`FlatWire_DDL_02_Schedule.sql` and `FlatWire_SampleData_Schedule.sql` are not in this set** — the pass schedule is owned outside MVP-1.
+> **Reference context (do not restate):** [Foundations §0.2](../../Architecture/Architecture.md) decision 2 (new `FlatWireDB`). **Its decision 3 — "rod = existing `coils`, `Rod` dropped" — is SUPERSEDED by master-spec `D-04`: `Rod` is retained.** See *Target database & table set*. Source DDL: [`MVP-1/ProjectPlan/Database/Schema/SQL/`](../../Database/Schema/SQL/) (`FlatWire_DDL_01`, `03`–`08`, the four `FlatWire_SampleData_*.sql` seeds, `FlatWire_ERDiagram_Documentation.md`). **`FlatWire_DDL_02_Schedule.sql` and `FlatWire_SampleData_Schedule.sql` are not in this set** — the pass schedule is owned outside MVP-1.
 
 ---
 
@@ -14,7 +14,7 @@
 **Effort:** **215 h** (26.9 d) — DB 156 · QA 31 · cont. 28 · **Window:** W0 (to Aug 14, 12 working days = 96 h/person) · includes a discrete **40 h FW-001 impact audit** across `united_db` + the legacy tier — see model §2
 
 > ### ⏱ Due: **14 Aug 2026** (Phase-1 gate)
-> Phase 1 must be complete by **14 Aug 2026** (user mandate; supersedes the roadmap's W1 = Aug 17–23). The DDL already exists in `MVP-1/DBChanges/Schema/SQL/`; this layer's job is to **retarget, harden, seed, and wire** it so 1B's `FlatWireDbContext` maps cleanly and 1A's fixtures are backed by real rows. **FW-001 column renames touch the existing shared scheduling schema — high blast radius; front-load the impact audit.**
+> Phase 1 must be complete by **14 Aug 2026** (user mandate; supersedes the roadmap's W1 = Aug 17–23). The DDL already exists in `MVP-1/ProjectPlan/Database/Schema/SQL/`; this layer's job is to **retarget, harden, seed, and wire** it so 1B's `FlatWireDbContext` maps cleanly and 1A's fixtures are backed by real rows. **FW-001 column renames touch the existing shared scheduling schema — high blast radius; front-load the impact audit.**
 
 ## Objective
 Create and populate a new **`FlatWireDB`**, execute the numbered DDL in order, apply the Phase-1
@@ -23,7 +23,7 @@ sample data depends on, and run the FW-001/FW-002 existing-schema migrations —
 `FlatWireDbContext` binds to and reports can query.
 
 ## Dependencies
-- **Template/source:** the DDL scripts (`01`, `03`–`08`) + the four `FlatWire_SampleData_*.sql` seeds + ER doc in `MVP-1/DBChanges/Schema/SQL/`. *(`02_Schedule` and its seed are not MVP-1.)*
+- **Template/source:** the DDL scripts (`01`, `03`–`08`) + the four `FlatWire_SampleData_*.sql` seeds + ER doc in `MVP-1/ProjectPlan/Database/Schema/SQL/`. *(`02_Schedule` and its seed are not MVP-1.)*
 - **Converges with:** 1B (`FlatWireDbContext` + repositories) and 1A (fixture alphas). No blocker.
 - **Backlog:** FW-001 (renames), FW-002 (`INFLAT`), FW-004 (alloy lookup), FW-005/006/007 (tables).
 

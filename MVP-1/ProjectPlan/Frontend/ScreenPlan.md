@@ -13,7 +13,7 @@
 
 ## 7. User interface requirements
 
-The 27 HTML files in [`../../MVP-1/Mockups/`](../../Mockups/) are the **approved visual baseline and the pixel authority**. They open directly in a browser with no build step. This section states what a developer cannot infer from §5.
+The 27 HTML files in [`../../MVP-1/ProjectPlan/Frontend/Mockups/`](Mockups/) are the **approved visual baseline and the pixel authority**. They open directly in a browser with no build step. This section states what a developer cannot infer from §5.
 
 ---
 

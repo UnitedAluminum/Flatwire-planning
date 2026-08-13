@@ -3,7 +3,7 @@
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** August 1, 2026
 **Status:** **Executed 1 Aug 2026 — waves W1–W7 complete, W8 cancelled.** Eleven client answers propagated across the registers, the analysis notes, the schema + DDL (rebuilt and constraint-tested), the contracts, the mockups and the July 30 project-plan set. Outstanding work is now the client follow-up list in §6, not document sync.
-**Source:** Client call 30 Jul 2026 (Tim O., Bob S., Shannon R., Srikanth, Shray) — answers to the eleven pre-check-in / check-in / spool questions raised from [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md) and [SpoolCompletionNotification.md](../MVP-1/RequirementDocuments/SpoolCompletionNotification.md).
+**Source:** Client call 30 Jul 2026 (Tim O., Bob S., Shannon R., Srikanth, Shray) — answers to the eleven pre-check-in / check-in / spool questions raised from [RodPreCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md) and [SpoolCompletionNotification.md](../MVP-1/ProjectPlan/Business/Screens/SpoolCompletionNotification.md).
 **Registers touched:** `OQ-##` ([FlatWireOpenQuestions.md](../Analysis/FlatWireOpenQuestions.md), 77 → 81) · `OI-##` ([FlatWire_MasterSpecification.md](../LatestDocument/FlatWire_MasterSpecification.md) §11) · `G##` ([Development/GapsRegister.md](../MVP-1/ProjectPlan/Development/GapsRegister.md))
 
 ---
@@ -200,10 +200,10 @@ Ordered so that no wave leaves a document asserting a rule a later wave reverses
 
 | Document | Why |
 |---|---|
-| [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md) | Primary target — five of the eleven answers change it |
+| [RodPreCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md) | Primary target — five of the eleven answers change it |
 | [FlatWireOpenQuestions.md](../Analysis/FlatWireOpenQuestions.md) | Authoritative register; W1 |
 | `Dashboard2A_UXReview.md` *(deleted 1 Aug 2026 — git history at `2a0426b`)* | Source of the Jul 31 findings that items 5 and 8 supersede |
-| [SpoolCompletionNotification.md](../MVP-1/RequirementDocuments/SpoolCompletionNotification.md) | Target for item 10 |
+| [SpoolCompletionNotification.md](../MVP-1/ProjectPlan/Business/Screens/SpoolCompletionNotification.md) | Target for item 10 |
 | [FlatWire_MasterSpecification.md](../LatestDocument/FlatWire_MasterSpecification.md) | `OI-##` register and the reconciliation authority |
 | [00-README.md](../MVP-2/ProjectPlan/00-README.md) | Precedence chain the waves respect |
 | [REVIEW.md](../MVP-1/ProjectPlan/Development/REVIEW.md) | Contradiction audit to re-check after W4 |

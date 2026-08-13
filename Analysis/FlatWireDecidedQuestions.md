@@ -232,7 +232,7 @@ Product spec changes — a deliberate operator-driven reset to a new target, not
 
 **Residual — still open, and it is not small.** The decision covers the **status column** only, not the rest of the SRS data note: whether pre-check-in still performs the `FlatwireQueue` insert, the reqsum and the `wip_coil_orders` insert. If those writes stay at staging, the compensating-write burden (**G2/G16**) is unchanged and only the status moved; if they move to check-in, pre-check-out becomes a pure `FlatWireDB` delete and **OI-01** closes completely. With Tim O. / IT — see the follow-up list in [ClientCall_2026-07-30_SyncPlan.md](../BaseDocuments/ClientCall_2026-07-30_SyncPlan.md) §6.
 
-Detail in [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md).
+Detail in [RodPreCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md).
 
 ---
 
@@ -263,7 +263,7 @@ Detail in [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md).
 
 > **Decision (July 30, 2026): a single rod may legitimately carry more than one production order.** Srikanth and Tim confirmed the case — finishing order 1 on a 7,000 lb A-rod and starting order 2 on the remainder, both orders being the same alloy. The intent is for this to be handled **in planning** (the upstream operation), in multiples of the ~900 lb outgoing coil.
 
-**What this overturned.** The interim rule — staging validates that the rod *"belongs to the **current** production order"*, singular, with a rod from any other order a **hard refusal** — is wrong as written: the successor order is on the *same rod*, so a refusal would stop the line mid-bundle. [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md)'s order-lookup table needs *"order differs → Refused"* rewritten as membership in an **ordered set** rather than equality with one order.
+**What this overturned.** The interim rule — staging validates that the rod *"belongs to the **current** production order"*, singular, with a rod from any other order a **hard refusal** — is wrong as written: the successor order is on the *same rod*, so a refusal would stop the line mid-bundle. [RodPreCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md)'s order-lookup table needs *"order differs → Refused"* rewritten as membership in an **ordered set** rather than equality with one order.
 
 **The sequencing question this opened is `Q73`, decided 6 Aug 2026** — see below.
 
@@ -321,7 +321,7 @@ Related: **Q74**, `WLD003`/`WLD010`.
 >
 > **Scope:** it is **in MVP-1** — the validation was assigned to the flat wire interface on the call *("please make sure you capture these in the validations")*.
 
-**The change this requires.** [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md) refuses any rod whose order differs from the established one, which **Q70** made wrong for the same-rod successor. The replacement: the `planning_routings` lookup returns **orders (plural)**, "belongs to the established order" becomes membership in an **ordered set**, and `RodStaging.OrderId` means *the order this staging is being consumed for*, with the successor visible in the queue — **plus** the three-tier ordering constraint above. This is what **`G22`** was waiting on.
+**The change this requires.** [RodPreCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md) refuses any rod whose order differs from the established one, which **Q70** made wrong for the same-rod successor. The replacement: the `planning_routings` lookup returns **orders (plural)**, "belongs to the established order" becomes membership in an **ordered set**, and `RodStaging.OrderId` means *the order this staging is being consumed for*, with the successor visible in the queue — **plus** the three-tier ordering constraint above. This is what **`G22`** was waiting on.
 
 **Two consequences worth stating outright.** Given the planned layout `R1 → O1`, `R2 → O1`, `R3 → O1`, `R4 → O1 / O2`:
 
@@ -441,7 +441,7 @@ Related: **Q17** (the FL2 queue the selection is made from), **Q15** (validating
 4. **The spool is run off in either case.** FL2 has **no spool stripper**, so the spool must be emptied and returned to FL1 regardless of the disposition of the material on it. This constrains the reject-and-remake path — "scrap it" is never "stop and remove it".
 5. **Coil break mid-run:** the stop is **removed and a new stop starts from zero** — weight does **not** resume from the break point. The leftover incoming material is welded to the next coil on FL1; on FL2 it is either run to a finished stop and offered to the customer, or scrapped.
 
-**Carry item.** Item 5 is a **run/stop model** change rather than a screen rule — check it against `FlatWireRun` / `CoilOutput` footage accumulation and against `CoilTraceability`'s coil-local footage (**OI-25**) before it is written as settled. Overlaps the partial-spool handling in **Q12** and [PartialRodReCheckin.md](../MVP-1/RequirementDocuments/PartialRodReCheckin.md); the **10-90 SOP document itself is not in this repository** and must be obtained rather than paraphrased.
+**Carry item.** Item 5 is a **run/stop model** change rather than a screen rule — check it against `FlatWireRun` / `CoilOutput` footage accumulation and against `CoilTraceability`'s coil-local footage (**OI-25**) before it is written as settled. Overlaps the partial-spool handling in **Q12** and [PartialRodReCheckin.md](../MVP-1/ProjectPlan/Business/PartialRodReCheckin.md); the **10-90 SOP document itself is not in this repository** and must be obtained rather than paraphrased.
 
 ---
 
@@ -485,7 +485,7 @@ Related: **Q17** (the FL2 queue the selection is made from), **Q15** (validating
 **Q83** · `Medium` · Owner: Tim O. / Maintenance · `Decided May 4, 2026` · **⚠ bands in scope; per-tool mechanism is not**
 **Die life tracking — system or manual**
 
-> **The decision below assumes per-tool tracking, which MVP-1 does not have.** Die inventory and lifecycle — including the die master table — left MVP-1 on 11 Aug 2026. MVP-1 reads die life at **die-size** granularity from `Drawer.LastGrindingFeet` / `Drawer.TotalFeetAllowed`, and **`D4` is restated at size level** — see [`DieChangeAndManagement.md` §2.4a](../MVP-1/RequirementDocuments/DieChangeAndManagement.md). **The 60/85 % bands are MVP-1 and are the half that applies.** Read what follows as the eventual target state, not as MVP-1 behaviour.
+> **The decision below assumes per-tool tracking, which MVP-1 does not have.** Die inventory and lifecycle — including the die master table — left MVP-1 on 11 Aug 2026. MVP-1 reads die life at **die-size** granularity from `Drawer.LastGrindingFeet` / `Drawer.TotalFeetAllowed`, and **`D4` is restated at size level** — see [`DieChangeAndManagement.md` §2.4a](../MVP-1/ProjectPlan/Business/Screens/DieChangeAndManagement.md). **The 60/85 % bands are MVP-1 and are the half that applies.** Read what follows as the eventual target state, not as MVP-1 behaviour.
 
 **Asked:** Should the system track footage run per die and generate a replacement alert?
 

@@ -10,7 +10,7 @@ WHY THIS EXISTS
     decisions. Both registers under Analysis/ are written for the build team and are dense
     with table names, constraint names, endpoints and requirement identifiers - none of which
     may appear in a client deliverable. The client-facing rewrite lives in
-    MVP-1/RequirementDocuments/ClientQuestionsContent.md and this script merges it with the
+    MVP-1/ProjectPlan/Tools/ClientQuestionsContent.md and this script merges it with the
     registers. Edit the markdown and re-run - never edit the .xlsx.
 
 WHERE EACH FIELD COMES FROM
@@ -54,7 +54,8 @@ ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..'))
 
 OPEN_REGISTER = os.path.join(ROOT, 'Analysis', 'FlatWireOpenQuestions.md')
 DECIDED_REGISTER = os.path.join(ROOT, 'Analysis', 'FlatWireDecidedQuestions.md')
-CONTENT = os.path.join(ROOT, 'MVP-1', 'RequirementDocuments', 'ClientQuestionsContent.md')
+# Moved beside this script on 13 Aug 2026 — it is build input, not a requirement document.
+CONTENT = os.path.join(HERE, 'ClientQuestionsContent.md')
 DEFAULT_OUT = os.path.join(ROOT, 'MVP-1', 'SRS', 'FlatWire_ClientQuestions.xlsx')
 
 ISSUE_DATE = 'August 12, 2026'
@@ -279,8 +280,15 @@ def guard(open_reg, decided_reg, content):
 
 LEAKS = [
     (r'\.(?:md|html|sql|docx|xlsx|py|js|scss|css)\b', 'file name'),
+    # The retired folder names (DevelopmentPlan, RequirementDocuments, ShopfloorPlan,
+    # DBChanges, Mockups) are KEPT deliberately, so a stale citation still trips the guard.
+    # Of the eight subject folders added on 13 Aug 2026 only Screens/ and Phases/ are listed:
+    # Business/, Testing/, Operations/, Backend/, Frontend/, Database/, Development/ and
+    # Architecture/ are ordinary English words and would false-positive on client prose.
+    # They are covered instead by the MVP-1/ and ProjectPlan/ prefixes above.
     (r'\b(?:MVP-1|MVP-2|Analysis|BaseDocuments|LatestDocument|DevelopmentPlan|'
-     r'RequirementDocuments|Mockups|DBChanges|ProjectPlan|ShopfloorPlan)/', 'repository path'),
+     r'RequirementDocuments|Mockups|DBChanges|ProjectPlan|ShopfloorPlan|Screens|Phases)/',
+     'repository path'),
     (r'\bFR-\d', 'requirement identifier'),
     (r'\bOI-\d', 'open-item identifier'),
     (r'\bG\d{1,2}\b', 'gap identifier'),

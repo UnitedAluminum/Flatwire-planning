@@ -49,3 +49,37 @@ Angular enforces this with `FlatWireAuthGuard` (authenticated) and `FlatWireRole
 > **Unverified.** Whether these roles exist as JWT claims or need provisioning has never been confirmed — **OI-37**, and it can block the build outright.
 
 ---
+
+---
+
+## 8.9 The Operations Manager role — copied in from MVP-2
+
+> **Why this is here.** `MVP-2/RequirementDocuments/PassScheduleManagement.md` §3.3–§3.4 held the **only**
+> definition of the Operations Manager role in the repository, and **MVP-1 enforces that role**: `FR-212`
+> restricts reverting a roll-gap override to it on **DB11 Roll Adjust**, an MVP-1 screen. An MVP-1 build
+> therefore had to reach into deferred scope to know what the role meant. Copied here on 13 Aug 2026; the
+> MVP-2 original stays for its own screen. `[CONFIRMED]`
+
+**Operations Manager and Supervisor are distinct roles.** They are frequently the same person in a small
+operation, and the system still treats them as separate permission levels.
+
+| Dimension | Supervisor | Operations Manager |
+|---|---|---|
+| Focus | People and shift management | Process configuration and machine parameters |
+| Primary screen | Shift summary | Pass Schedule Management *(MVP-2)* |
+| Approves | Run approvals, mid-run rod checkout | Schedule overrides and activation |
+| May edit a pass schedule | No | Yes |
+
+**Operations Manager is defined by what it can do that the other two cannot.** In practice it maps to a
+Production or Process Engineer, or a Line Superintendent — someone who owns the pass schedules and machine
+configuration without necessarily being on the floor for every run.
+
+**What an Operations Manager does *not* control:**
+
+| Area | Who owns it |
+|---|---|
+| **The alloy lookup table** | **Process Engineering / System Administration only** — not Operations Manager |
+| Shift staffing and attendance | Supervisor |
+| WIP rejection disposition | Any operator may raise it; a supervisor disposes |
+| Rod check-in inspection | The line operator |
+| **Reverting a roll gap override** | **Operations Manager** — operators may apply one but not undo it. This is the MVP-1 dependency: `FR-212`, DB11 Roll Adjust |

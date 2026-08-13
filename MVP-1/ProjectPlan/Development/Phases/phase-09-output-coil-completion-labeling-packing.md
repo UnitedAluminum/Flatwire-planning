@@ -2,7 +2,7 @@
 
 > **Part of the [Flat Wire Mill — Master Implementation Roadmap](../Roadmap.md).** See [Foundations](../../Architecture/Architecture.md) for §0.2–0.4 shared context.
 > **Prev:** [Phase 8 — FL2 Spool Check-In & Finishing Run](./phase-08-fl2-spool-checkin-finishing-run.md) · **Next:** [Phase 10 — FL3 Hybrid Continuous Operation](./phase-10-fl3-hybrid-continuous-operation.md)
-> **Owning specification:** [`OutputCoilCompletion.md`](../../../RequirementDocuments/OutputCoilCompletion.md) — v1.1 owns **DB7 and DB7b** (§8); the owning doc wins on any disagreement.
+> **Owning specification:** [`OutputCoilCompletion.md`](../../Business/Screens/OutputCoilCompletion.md) — v1.1 owns **DB7 and DB7b** (§8); the owning doc wins on any disagreement.
 
 ---
 

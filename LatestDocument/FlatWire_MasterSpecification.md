@@ -6,7 +6,7 @@
 **Latest change (6 Aug 2026):** three client corrections from the 6 Aug call — **`OI-13` half-closed** (a welded wire break keeps the **same alpha**; only the persistence target remains, gap **G34**), **`D-27`** (the edgers are **inter-stand roll-formers**, not knives, and **S3 is a skim pass**), and **`D-28`** (**FM2 carries two dancers with two modes**, which qualifies `PSM012` — open as **Q32**/**G35**). See [`../BaseDocuments/ClientCall_2026-08-06_SyncPlan.md`](../BaseDocuments/ClientCall_2026-08-06_SyncPlan.md). **Also 6 Aug:** new **§10.5** records that **`FR-381`/`384`/`385`/`386`/`387` are superseded on the arithmetic** by `PassScheduleGenerationSpec.md` v1.5 — the pre-flatten diameter is a lower bound and needs the edge correction, the final die may not snap down from it, the roll gap sits **below** gauge by a load-dependent term, the finishing-mill test is not the route decision, and the non-hybrid default leaves the skim stand as the only active one. **Contract shape is unaffected; rebuild the five formulas before `FW-013`.**
 **Previous change (4 Aug 2026):** the **FM2 roller-size correction** — FM2 has **three** stands, **S1 = 8", S2 = 6", S3 = 6"** (decision **D-26**, §10.2). This supersedes **D-21**'s "three 6-inch stands" and closes **OI-04** and **OI-36**. Component names are now position-only (`FM2_S1`/`FM2_S2`/`FM2_S3`) and roll diameter is data (`Stand.RollDiameterIn`).
 **Supersedes (as a reading path, not as files):** every artifact in `../Analysis/`, `../MVP-1/ProjectPlan/`, `./DBChanges/Schema/`, `../MVP-1/SRS/` and `../BaseDocuments/`. Those files remain the audit trail and are **not** modified by this document. Where two of them disagree, this document states the single resolved answer and records the losing side in §10 or §11.
-**Scope of authority:** this document is a *reconciliation*. It is authoritative for what to build. The executable DDL in [`DBChanges/Schema/SQL/`](../MVP-1/DBChanges/Schema/SQL/) remains authoritative for column-level types, and the HTML in [`../MVP-1/Mockups/`](../MVP-1/Mockups/) remains authoritative for pixel-level layout.
+**Scope of authority:** this document is a *reconciliation*. It is authoritative for what to build. The executable DDL in [`DBChanges/Schema/SQL/`](../MVP-1/ProjectPlan/Database/Schema/SQL/) remains authoritative for column-level types, and the HTML in [`../MVP-1/ProjectPlan/Frontend/Mockups/`](../MVP-1/ProjectPlan/Frontend/Mockups/) remains authoritative for pixel-level layout.
 
 ---
 
@@ -40,7 +40,7 @@ The Flat Wire module is the **shopfloor and dashboard layer** that drives operat
 Two things make this module different from every other UAL shopfloor module:
 
 1. **The Pass Schedule is the machine's brain.** A single configuration record decides which components are active or bypassed, the die sizes, the roll clearances, the edge configuration, the gauge and width targets and the route mode. Operator acknowledgement of that record at check-in is what pushes PLC tags to the line. Nothing runs without it [REQ §2.5, §4.7; `Analysis/FlatWirePlan.md` §1].
-2. **Weld genealogy is a contractual deliverable.** Welding-wire customers require a traceable chain from supplier heat, through every rod-to-rod induction weld, to the finished coil alpha — with footage attribution per source rod. That requirement shapes the run model, the traceability tables and the certificate query [SRS `WLD008`/`WLD009`, `NFR012`; `MVP-1/RequirementDocuments/WeldEvent.md`].
+2. **Weld genealogy is a contractual deliverable.** Welding-wire customers require a traceable chain from supplier heat, through every rod-to-rod induction weld, to the finished coil alpha — with footage attribution per source rod. That requirement shapes the run model, the traceability tables and the certificate query [SRS `WLD008`/`WLD009`, `NFR012`; `MVP-1/ProjectPlan/Business/Screens/WeldEvent.md`].
 
 ### 1.2 Why
 
@@ -76,7 +76,7 @@ Two things make this module different from every other UAL shopfloor module:
 - **No new frameworks.** Angular 18.2+, .NET 8, SQL Server, SignalR, Chart.js only. No React/Blazor, no separate mobile app, no message broker (Kafka/RabbitMQ) in Phase 1 [`MVP-1/ProjectPlan/TechStackRecommendation.md`].
 - **No printed traveler.** The traveler is fully digital; the "Print Traveler" action is disabled for flat wire. Coil, spool and skid **labels are still printed** [decision Apr 28 2026, `Analysis/FlatWireShopfloorDashboards.md` design principle 8].
 - **No auto-applied pass schedule.** "Generate from Specs" produces a *draft* for human approval; nothing reaches the PLC except by operator acknowledgement at check-in [`PSM003`].
-- **No software stop command to the PLC.** The application is a gatekeeper that reads line state; the operator always stops the machine physically [`RCO007`; `MVP-1/RequirementDocuments/RodCheckout.md`].
+- **No software stop command to the PLC.** The application is a gatekeeper that reads line state; the operator always stops the machine physically [`RCO007`; `MVP-1/ProjectPlan/Business/Screens/RodCheckout.md`].
 - **No laser welding.** Removed May 21 2026 as not viable; induction only [`WLD012`].
 - **The word "strip" is not used.** Always "flat wire" [REQ §6.3].
 
@@ -104,7 +104,7 @@ Two things make this module different from every other UAL shopfloor module:
 - §2–§3 are the domain. Read them once.
 - §4 is what to build, screen by screen, with numbered `FR-###` requirements traceable to SRS IDs.
 - §5–§6 are the contracts a developer codes against.
-- §7 describes the screens without reproducing them; the HTML in `../MVP-1/Mockups/` is the pixel authority.
+- §7 describes the screens without reproducing them; the HTML in `../MVP-1/ProjectPlan/Frontend/Mockups/` is the pixel authority.
 - §9 is the plan; §10 tells you what was already decided and must not be re-opened; §11 tells you what is still genuinely undecided.
 
 ---
@@ -531,7 +531,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 
 ### 4.1 Pre-Check-In Station — Dashboard 2A
 
-**Screen:** [`../MVP-1/Mockups/dashboard_2a_rod_precheckin.html`](../MVP-1/Mockups/dashboard_2a_rod_precheckin.html)
+**Screen:** [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_2a_rod_precheckin.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_2a_rod_precheckin.html)
 **SRS:** `PCI001`–`PCI008`, `WLD003`/`WLD005`/`WLD006`/`WLD010`, `TRV004`/`TRV009`, `PRC007`/`PRC008`/`PRC011`/`PRC014`
 **Actors:** FL1 / FL3 operator (primary); Supervisor (override authorisation)
 **Preconditions:** the line is FL1 or FL3; the rod exists in `coils`; planning has allocated the rod to an order in `planning_routings`
@@ -574,7 +574,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 
 ### 4.2 Rod Check-In — Dashboard 2 (FL1 / FL3)
 
-**Screen (approved):** [`../MVP-1/Mockups/dashboard_2_rod_checkin.html`](../MVP-1/Mockups/dashboard_2_rod_checkin.html) — a guided 6-step tab wizard. **FL3 variant:** [`../MVP-1/Mockups/dashboard_2_rod_checkin_fl3.html`](../MVP-1/Mockups/dashboard_2_rod_checkin_fl3.html) *(still on the older single-page layout; a wizard-shaped FL3 variant is outstanding — OI-16)*.
+**Screen (approved):** [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_2_rod_checkin.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_2_rod_checkin.html) — a guided 6-step tab wizard. **FL3 variant:** [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_2_rod_checkin_fl3.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_2_rod_checkin_fl3.html) *(still on the older single-page layout; a wizard-shaped FL3 variant is outstanding — OI-16)*.
 **SRS:** `CHK001`–`CHK019`, `PSM015`–`PSM019`, `SPC003`, `INT001`–`INT004`
 **Actors:** FL1 / FL3 operator; Supervisor (deviation override)
 **Preconditions:** rod `STAGED` (or scanned directly); an `Active` pass schedule exists for the attribute combination; the job is scheduled; the real-time backbone is up
@@ -616,7 +616,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 
 ### 4.3 Spool Check-In — Dashboard 5 (FL2)
 
-**Screen:** [`../MVP-1/Mockups/dashboard_5_spool_checkin.html`](../MVP-1/Mockups/dashboard_5_spool_checkin.html)
+**Screen:** [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_5_spool_checkin.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_5_spool_checkin.html)
 **SRS:** `CHK012`, `CHK013`, `PSM016`–`PSM019`, `GWT005`
 **Actors:** FL2 operator
 **Preconditions:** an FL1-produced spool exists and is ready for FL2; an `Active` FL2 pass schedule exists
@@ -635,7 +635,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 
 ### 4.3a Spool Queue — Dashboard 5A (FL2)
 
-**Screen:** [`../MVP-1/Mockups/dashboard_5a_spool_queue.html`](../MVP-1/Mockups/dashboard_5a_spool_queue.html)
+**Screen:** [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_5a_spool_queue.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_5a_spool_queue.html)
 **SRS:** `CHK012`; **Q17**
 **Actors:** FL2 operator
 **Preconditions:** none — usable on opening
@@ -656,7 +656,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 
 ### 4.4 Active Run Monitor — Dashboard 3 (FL1 / FL2 / FL3)
 
-**Screens:** [`../MVP-1/Mockups/dashboard_3_active_run.html`](../MVP-1/Mockups/dashboard_3_active_run.html) (FL1 — grouped action cluster + spool-completion overlay; **the sole FL1 layout since 1 Aug 2026**, when the earlier left-rail layout that held this filename was withdrawn; this file was named `dashboard_3_active_run_v2.html` until 11 Aug 2026), [`../MVP-1/Mockups/dashboard_3_active_run_fl2.html`](../MVP-1/Mockups/dashboard_3_active_run_fl2.html), [`../MVP-1/Mockups/dashboard_3_active_run_fl3.html`](../MVP-1/Mockups/dashboard_3_active_run_fl3.html)
+**Screens:** [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_3_active_run.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_3_active_run.html) (FL1 — grouped action cluster + spool-completion overlay; **the sole FL1 layout since 1 Aug 2026**, when the earlier left-rail layout that held this filename was withdrawn; this file was named `dashboard_3_active_run_v2.html` until 11 Aug 2026), [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_3_active_run_fl2.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_3_active_run_fl2.html), [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_3_active_run_fl3.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_3_active_run_fl3.html)
 **SRS:** `ARM001`–`ARM024`, `TRV001`–`TRV010`, `GWT001`–`GWT006`
 **Actors:** line operator
 **Preconditions:** an active run on the line
@@ -689,8 +689,8 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 
 ### 4.5 Spool Completion Alerts and Machine-Stop Confirmation (FL1 primary)
 
-**Component:** [`../MVP-1/Mockups/spool_notification.js`](../MVP-1/Mockups/spool_notification.js), hosted in `dashboard_3_active_run.html`
-**Source:** `MVP-1/RequirementDocuments/SpoolCompletionNotification.md` (Parts A and B)
+**Component:** [`../MVP-1/ProjectPlan/Frontend/Mockups/spool_notification.js`](../MVP-1/ProjectPlan/Frontend/Mockups/spool_notification.js), hosted in `dashboard_3_active_run.html`
+**Source:** `MVP-1/ProjectPlan/Business/Screens/SpoolCompletionNotification.md` (Parts A and B)
 **Actors:** line operator; Supervisor (weight-variance override)
 
 **Part A — advisory milestone ladder**
@@ -739,7 +739,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 > them has moved. **Two capabilities had no new home:** DB4's re-sequenceable *Rods In Queue* and its
 > *traceability chain* strip (see §DB4 note and gap **G27**).
 
-**Screen:** [`../MVP-1/Mockups/dashboard_2a_rod_precheckin.html`](../MVP-1/Mockups/dashboard_2a_rod_precheckin.html) — *Mark as welded* dialog
+**Screen:** [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_2a_rod_precheckin.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_2a_rod_precheckin.html) — *Mark as welded* dialog
 **SRS:** `WLD001`–`WLD017`
 **Actors:** FL1 / FL3 operator; Supervisor (weld removal)
 
@@ -766,7 +766,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 
 ### 4.7 SPC Checkpoint — Dashboard 6
 
-**Dialog:** `spc_checkpoint.js` — `openSpcCheckpoint(ctx)`. Converted from a screen to a popup 1 Aug 2026; [`../MVP-1/Mockups/dashboard_6_spc_checkpoint.html`](../MVP-1/Mockups/dashboard_6_spc_checkpoint.html) is now a launcher that opens it. Raised over the run being measured, and over the die change that mandated it.
+**Dialog:** `spc_checkpoint.js` — `openSpcCheckpoint(ctx)`. Converted from a screen to a popup 1 Aug 2026; [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_6_spc_checkpoint.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_6_spc_checkpoint.html) is now a launcher that opens it. Raised over the run being measured, and over the die change that mandated it.
 **SRS:** `SPC001`–`SPC015`
 **Actors:** any operator; QA (disposition of held material)
 
@@ -793,7 +793,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 
 ### 4.8 Roll Adjust — Dashboard 11
 
-**Screen:** [`../MVP-1/Mockups/dashboard_11_roll_adjust.html`](../MVP-1/Mockups/dashboard_11_roll_adjust.html)
+**Screen:** [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_11_roll_adjust.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_11_roll_adjust.html)
 **SRS:** `RAJ001`–`RAJ022`
 **Actors:** line operator (apply); Operations Manager (revert)
 
@@ -815,7 +815,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 
 ### 4.9 Die Change — DC screen
 
-**Dialog:** `die_change.js` — `openDieChange(ctx)`. Converted from a screen to a popup 1 Aug 2026; [`../MVP-1/Mockups/dashboard_die_change.html`](../MVP-1/Mockups/dashboard_die_change.html) is now a launcher that opens it. Raised over the paused run it is logged against.
+**Dialog:** `die_change.js` — `openDieChange(ctx)`. Converted from a screen to a popup 1 Aug 2026; [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_die_change.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_die_change.html) is now a launcher that opens it. Raised over the paused run it is logged against.
 **SRS:** `DCH001`–`DCH028`
 **Actors:** FL1 / FL3 operator; Operations Manager (SPC-waiver authority)
 
@@ -867,7 +867,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 
 ### 4.11 Pause / Resume
 
-**Component:** [`../MVP-1/Mockups/pause_run.js`](../MVP-1/Mockups/pause_run.js) — a shared dialog for the FL1/FL2/FL3 active-run screens
+**Component:** [`../MVP-1/ProjectPlan/Frontend/Mockups/pause_run.js`](../MVP-1/ProjectPlan/Frontend/Mockups/pause_run.js) — a shared dialog for the FL1/FL2/FL3 active-run screens
 **SRS:** `PRN001`–`PRN026`, `STP013`–`STP015`
 
 | ID | Requirement |
@@ -914,7 +914,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 
 ### 4.14 WIP Rejection — Dashboard 8
 
-**Dialog:** `wip_rejection.js` — `openWipRejection(ctx)`. Converted from a screen to a popup 1 Aug 2026; [`../MVP-1/Mockups/dashboard_8_wip_rejection.html`](../MVP-1/Mockups/dashboard_8_wip_rejection.html) is now a launcher that opens it. Raised from five callers — mid-run, a failed staging inspection, an out-of-spec checkpoint, the resume dialog, and the More Options tile — each of which supplies its own material context.
+**Dialog:** `wip_rejection.js` — `openWipRejection(ctx)`. Converted from a screen to a popup 1 Aug 2026; [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_8_wip_rejection.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_8_wip_rejection.html) is now a launcher that opens it. Raised from five callers — mid-run, a failed staging inspection, an out-of-spec checkpoint, the resume dialog, and the More Options tile — each of which supplies its own material context.
 **SRS:** `WRJ001`–`WRJ004`
 **Actors:** any operator (flag); Supervisor / QA (dispose)
 
@@ -933,7 +933,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 
 ### 4.15 Rod Checkout — Dashboard 12
 
-**Dialog:** `rod_checkout.js` — `openRodCheckout(ctx)`. Converted from a screen to a popup 1 Aug 2026; [`../MVP-1/Mockups/dashboard_12_rod_checkout.html`](../MVP-1/Mockups/dashboard_12_rod_checkout.html) is now a launcher that opens it. The **caller states the mode**: Mode A from the check-in station (no footage), Mode B from a paused run, which passes the footage frozen at that pause straight through.
+**Dialog:** `rod_checkout.js` — `openRodCheckout(ctx)`. Converted from a screen to a popup 1 Aug 2026; [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_12_rod_checkout.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_12_rod_checkout.html) is now a launcher that opens it. The **caller states the mode**: Mode A from the check-in station (no footage), Mode B from a paused run, which passes the footage frozen at that pause straight through.
 **SRS:** `RCO001`–`RCO051`
 **Actors:** line operator; Supervisor (Mode B approval)
 
@@ -973,7 +973,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 
 ### 4.16 Output Coil Completion — Dashboard 7
 
-**Screen:** [`../MVP-1/Mockups/dashboard_7_coil_completion.html`](../MVP-1/Mockups/dashboard_7_coil_completion.html)
+**Screen:** [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_7_coil_completion.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_7_coil_completion.html)
 **SRS:** `PR001`–`PR006`, `PKG001`–`PKG003`, `PSM024`
 **Actors:** FL2 / FL3 operator
 
@@ -994,7 +994,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 
 ### 4.17 Packing Station — Dashboard 7b
 
-**Screen:** [`../MVP-1/Mockups/dashboard_7b_packing_station.html`](../MVP-1/Mockups/dashboard_7b_packing_station.html)
+**Screen:** [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_7b_packing_station.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_7b_packing_station.html)
 **SRS:** `PKG001`–`PKG004`
 **Actors:** packing operator
 
@@ -1106,7 +1106,7 @@ These values require Process Engineering sign-off and are maintained via the Pha
 
 ### 4.20 Line Status Overview — Dashboard 1
 
-**Screen:** [`../MVP-1/Mockups/dashboard_1_line_status.html`](../MVP-1/Mockups/dashboard_1_line_status.html)
+**Screen:** [`../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_1_line_status.html`](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_1_line_status.html)
 **SRS:** `LST001`–`LST019`
 **Actors:** Supervisor / Foreman (primary); all authenticated users may view
 
@@ -1134,7 +1134,7 @@ These values require Process Engineering sign-off and are maintained via the Pha
 
 | Concern these screens carried | Where it lives now |
 |---|---|
-| The **machine tag map** | [`MVP-1/RequirementDocuments/PLCTagSpecification.md`](../MVP-1/RequirementDocuments/PLCTagSpecification.md) §3, split per line — now the only tag map |
+| The **machine tag map** | [`MVP-1/ProjectPlan/Architecture/PLCTagSpecification.md`](../MVP-1/ProjectPlan/Architecture/PLCTagSpecification.md) §3, split per line — now the only tag map |
 | The **five alert conditions** | `FR-423`, unchanged. DB1 is unaffected |
 | **SPC control-limit methodology** (`FR-466`) | The SPC checkpoint and the gauge-trace report, both unaffected |
 | **Which finishing stand cannot be bypassed** (`FR-444`) | Still open and still consequential — it governs pass-schedule validation and the tag push, not a schematic marking (**OI-04**) |
@@ -1995,7 +1995,7 @@ In SSMS use **Query → SQLCMD Mode** before executing `RunAll`.
 
 **Prior art worth reading before writing `CoilCompletionService`:** `MillsDB..RollCoil_GetTotalRolledWeightinlastMillRun` already derives total rolled weight for a mill run from `alloy_density`. That is structurally the same problem as flat-wire output weight, and it may already encode UA's convention for tail loss and net-versus-gross — the part of `FRT011` still open.
 
-**WIP station registration** (`MVP-1/DBChanges/DBScripts/CommonDB_Insert_WIPStations_FlatWire.sql`) creates:
+**WIP station registration** (`MVP-1/ProjectPlan/Database/Scripts/CommonDB_Insert_WIPStations_FlatWire.sql`) creates:
 
 | Station | Machine | StationType | Notes |
 |---|---|---|---|
@@ -2440,13 +2440,13 @@ Purpose-built for high-frequency AGC telemetry. Design goals: low latency, minim
 
 **The integration layer is the existing `OPCConnection` service, extended to subscribe to FL1/FL2/FL3 tags.** PLCs are new hardware; **OPC servers are unchanged**; no new integration layer is introduced (`INT007`).
 
-> **Everything else in this section is superseded by [`MVP-1/RequirementDocuments/PLCTagSpecification.md`](../MVP-1/RequirementDocuments/PLCTagSpecification.md) (4 Aug 2026)** — the write surface (`[PLC §7]`), the **per-line tag map** (`[PLC §5.2]`), the naming convention (`[PLC §4]`), `ITInhibit` (`[PLC §8]`), the sixteen-moment tag lifecycle (`[PLC §9]`), feet consumption (`[PLC §5.1]`), the commissioning sequence (`[PLC §12]`) and the `PLC-Q##` open-item register (`[PLC §13]`).
+> **Everything else in this section is superseded by [`MVP-1/ProjectPlan/Architecture/PLCTagSpecification.md`](../MVP-1/ProjectPlan/Architecture/PLCTagSpecification.md) (4 Aug 2026)** — the write surface (`[PLC §7]`), the **per-line tag map** (`[PLC §5.2]`), the naming convention (`[PLC §4]`), `ITInhibit` (`[PLC §8]`), the sixteen-moment tag lifecycle (`[PLC §9]`), feet consumption (`[PLC §5.1]`), the commissioning sequence (`[PLC §12]`) and the `PLC-Q##` open-item register (`[PLC §13]`).
 >
 > That document is the **only** tag map in the repository. This section carried a 13-row FL1 map; the sixth copy, in `HMIAndSCADALayout.md`, was deleted with the DB13/DB14 descope on the same day, and the two facts only it recorded — the **FM2 6″ S3 row** and the register entry for **confirming every tag path** — were rescued before deletion.
 
 ## 7. User Interface Specification
 
-The 27 HTML files in [`../MVP-1/Mockups/`](../MVP-1/Mockups/) are the **approved visual baseline** and the pixel authority. They open directly in a browser with no build step. This section describes them; it does not reproduce them.
+The 27 HTML files in [`../MVP-1/ProjectPlan/Frontend/Mockups/`](../MVP-1/ProjectPlan/Frontend/Mockups/) are the **approved visual baseline** and the pixel authority. They open directly in a browser with no build step. This section describes them; it does not reproduce them.
 
 ### 7.1 Screen inventory — approved variants
 
@@ -2647,7 +2647,7 @@ There is **no Angular structural or UI template** for this library. Every contro
 
 ### 7.8 Equipment reference image
 
-The physical line layout is illustrated in [`../MVP-1/Mockups/Flat Wire Machine - Big Beautiful Diagram.png`](../MVP-1/Mockups/Flat%20Wire%20Machine%20-%20Big%20Beautiful%20Diagram.png). Use it for orientation when reading the HMI schematic; it is not a specification.
+The physical line layout is illustrated in [`../MVP-1/ProjectPlan/Frontend/Mockups/Flat Wire Machine - Big Beautiful Diagram.png`](../MVP-1/ProjectPlan/Frontend/Mockups/Flat%20Wire%20Machine%20-%20Big%20Beautiful%20Diagram.png). Use it for orientation when reading the HMI schematic; it is not a specification.
 
 ---
 
@@ -2686,7 +2686,7 @@ The physical line layout is illustrated in [`../MVP-1/Mockups/Flat Wire Machine 
 
 **`API/Domain/SlitterInterface` is explicitly NOT a reference — neither for UI/structure nor for the real-time / `CoilDataHub` pattern.**
 
-**Frontend — what NOT to copy.** There is **no Angular structural, UI or CSS template**. `flat-wire-shopfloor` is all-new screens and controls built from `MVP-1/Mockups/`. The following are **not** references: `checkin-precheckin`, `shop-floor` / `shop-floor-common`, `statistical-process-control`, `wip-rejection`, `slitter-*`, `coil-receiving`, `common-grid` / `multi-grid-layout`, `opc`, `label-printing`, `print-traveler`.
+**Frontend — what NOT to copy.** There is **no Angular structural, UI or CSS template**. `flat-wire-shopfloor` is all-new screens and controls built from `MVP-1/ProjectPlan/Frontend/Mockups/`. The following are **not** references: `checkin-precheckin`, `shop-floor` / `shop-floor-common`, `statistical-process-control`, `wip-rejection`, `slitter-*`, `coil-receiving`, `common-grid` / `multi-grid-layout`, `opc`, `label-printing`, `print-traveler`.
 
 **The only frontend reuse** is the foundational, app-wide **`shared` services**, consumed so the library plugs into the existing app shell rather than re-inventing plumbing: `api-gateway.service` · `app-config.service` · `login.service` + `login-api.service` · `token-interceptor.service` · `correlation-id-interceptor.service` + `correlation-id.service` · `error-handler.service` + `global-error-handler-api.service` · `ui-log.service` · `notification.service` · `subscription.service` · `print-export.service` · `util.service`. **Do not rebuild these, and do not add new interceptors.**
 
@@ -2694,7 +2694,7 @@ The Flat Wire real-time client is purpose-built; existing SignalR hub clients su
 
 **`flat-wire-shopfloor` joins the `build:shop-floor` npm chain for build ordering only.** That is a build-sequencing concern and implies **no** UI or code reuse from the other libraries in the chain.
 
-> **The two check-in implementation documents that contradicted these rules were deleted on 13 Aug 2026** (recoverable at `1964086`). Recorded here because the instructions survive in git history and in any April copy: `CheckinImplementationPlan.md` and `CheckinImplementationPrompt.md` told developers to "copy patterns from `checkin-precheckin`", to port the **retired** interim DB2 layout (which held the `dashboard_2_rod_checkin.html` filename until 11 Aug 2026, when the approved wizard took it), and to build a `--fw-*` token system. **All three instructions are wrong**, and they cited story IDs (`FW-S3-009`, `FW-S1-001`) that do not exist in the backlog — the real ones are FW-061 and FW-082. The two things worth having from them were rehomed rather than lost: the **stub-first delivery contract** is `Architecture/Architecture.md` §2.2 §0.5, and the canonical **fixture set** is the DB seed in `MVP-1/DBChanges/Schema/SQL/`.
+> **The two check-in implementation documents that contradicted these rules were deleted on 13 Aug 2026** (recoverable at `1964086`). Recorded here because the instructions survive in git history and in any April copy: `CheckinImplementationPlan.md` and `CheckinImplementationPrompt.md` told developers to "copy patterns from `checkin-precheckin`", to port the **retired** interim DB2 layout (which held the `dashboard_2_rod_checkin.html` filename until 11 Aug 2026, when the approved wizard took it), and to build a `--fw-*` token system. **All three instructions are wrong**, and they cited story IDs (`FW-S3-009`, `FW-S1-001`) that do not exist in the backlog — the real ones are FW-061 and FW-082. The two things worth having from them were rehomed rather than lost: the **stub-first delivery contract** is `Architecture/Architecture.md` §2.2 §0.5, and the canonical **fixture set** is the DB seed in `MVP-1/ProjectPlan/Database/Schema/SQL/`.
 
 ### 8.3 Stack constraints
 
@@ -3015,8 +3015,8 @@ Every decision that is closed. **Do not re-open these.** Where a decision replac
 | **D-03** | The schema is **28 tables** | 29 Jul 2026 (as-built) | The count in the DDL and the ER document | 20 (`FlatWireJiraStories`) → 22 (original ERD, `FlatWireTables`, SRS `DM001`) → 21 (roadmap index, after the `Rod` drop) → 22 (`phase-01c`, + `RunReading`) → 25 (`Schema_Mapping`, CLAUDE.md, + `AlloyProperty`/`ChangeLog`/`RunReading`) → **27** (+ `PayoffPosition`, `RodStaging`) |
 | **D-04** | **`Rod` is retained** as a `FlatWireDB`-local master mirroring the shared `coils` record, with **enforced** rod-alpha FKs | Jul 2026 ("Hybrid foundation") | 28 tables; referential integrity for all rod references in-database | **Supersedes** `Architecture/Architecture.md` §13.1 `D-04` and `phase-01c`, which dropped `Rod` and made every rod-alpha reference an unenforced cross-DB link (21–22 tables) |
 | **D-05** | The real-time layer is **purpose-built**, self-contained in `FlatWire.API` — strongly-typed MessagePack hub, WebSockets-first, bounded-channel ingest with batching/decimation, NgZone-out + rAF rendering, backplane-ready | 26 Jul 2026 | `FlatWireHub` hosted only in `FlatWire.API`; the shared `Notification` service is not extended | **Supersedes** any plan to copy `CoilDataHub` / `OPCManagerHub` / `supervisor-monitor-hub` |
-| **D-06** | **`SlitterInterface` / `slitter-*` are explicitly NOT references** — neither UI/structure nor real-time. Backend template is `CoilCheckin`; **there is no frontend template at all** | 26 Jul 2026 | Every control built fresh from `MVP-1/Mockups/`; only foundational `shared` services consumed | **Supersedes** the earlier frontend-reuse plan that named `checkin-precheckin` etc. |
-| **D-07** | The UI is built from the approved `MVP-1/Mockups/`, which already share **one `--color-*` semantic token system** | 26 Jul 2026 | No token migration to perform | **Supersedes** the `--fw-*` system the two April check-in documents carried; both deleted 13 Aug 2026 (gap G18) |
+| **D-06** | **`SlitterInterface` / `slitter-*` are explicitly NOT references** — neither UI/structure nor real-time. Backend template is `CoilCheckin`; **there is no frontend template at all** | 26 Jul 2026 | Every control built fresh from `MVP-1/ProjectPlan/Frontend/Mockups/`; only foundational `shared` services consumed | **Supersedes** the earlier frontend-reuse plan that named `checkin-precheckin` etc. |
+| **D-07** | The UI is built from the approved `MVP-1/ProjectPlan/Frontend/Mockups/`, which already share **one `--color-*` semantic token system** | 26 Jul 2026 | No token migration to perform | **Supersedes** the `--fw-*` system the two April check-in documents carried; both deleted 13 Aug 2026 (gap G18) |
 | **D-08** | **Dashboard 2 is `dashboard_2_rod_checkin.html`** — a guided 6-step tab wizard with tolerance-viz, OK/NG/NA machine inspection and a supervisor-override path; the confirm-bar gate is retained | 26 Jul 2026 | `- Old.html` (grid + progress ring) and the interim single-page layout that then held the `dashboard_2_rod_checkin.html` filename are **retired** | Both earlier DB2 layouts |
 | **D-09** | Stay entirely within the existing UAL stack — **no new frameworks**, no separate mobile app, no message broker in Phase 1 | 29 Apr 2026 | Angular/.NET/SQL Server/SignalR/Chart.js only | — |
 | **D-10** | Pre-check-in state lives in a dedicated **`RodStaging`** table, not in columns on `Rod` | 29 Jul 2026 | Two filtered unique indexes make one-rod-per-bay unviolatable, including under concurrent staging. The provisional `Rod.StagedPayoffPosition` / `Rod.IsWelded` columns are **retired**. This is also the concrete home for the SRS narrative's `FlatwireQueue` (`Rodno` / `RodSeqno` / `Welded`) | The two nullable `Rod` columns; the un-modelled `FlatwireQueue` |
@@ -3069,7 +3069,7 @@ Every decision that is closed. **Do not re-open these.** Where a decision replac
 | **OQ-24 (out-of-sequence)** | Departing from the **planned rod sequence is permitted but authorised**: the operator is notified that the rod is not the one planning expects next, and a **supervisor signs off**. Never a hard refusal. "Expects next" is the lowest planned sequence still available, so a blocked bundle does not freeze the sequence behind it | 30 Jul 2026 | Recorded as `OutOfSequenceOverride` + `ExpectedRodAlpha`, sharing one credential stamp with the off-schedule override. **Supersedes** the 29 Jul "free processing order" requirement, which had the operator re-sequencing at will with explicitly no warning and no override |
 | **Rod sequencing — partly** *(the register question was withdrawn 12 Aug 2026; the residue is **OI-72**)* | **Both sequences are retained.** `RodStaging.RodSeqno` is the **actual** processing sequence, assigned server-side at pre-check-in, monotonic per line. `RodStaging.PlannedSeqno` **snapshots** the planned position at staging time | 29 Jul 2026 | Variance is a subtraction, not a reconstruction. `PlannedSeqno` is a snapshot, not a live join back to planning — the same pattern already used for the pass-schedule id/version on the run record |
 | **OQ-23 (partly)** | The `Blocked` bay state is **derived** (`Status='Staged'` + any inspection column `Fail`), **not** a fourth `Status` value | 29 Jul 2026 | A fourth value would fall outside the `UX_RodStaging_Bay` filter and free a bay that is still physically occupied |
-| **G19** | **Pre-check-in is delivered.** The SRS specified it with numbered, testable requirements, but it had no analysis note, no mockup, no data model, no API and no phase owner — and the WIP-station script explicitly declined to create its station | 29 Jul 2026 | Delivered as `MVP-1/RequirementDocuments/RodPreCheckin.md`, Dashboard 2A, the `RodStaging` table, `/staging/**`, `PayoffStateChanged` and the `FL1PO` station. Two items still need business sign-off (OI-01, OI-44) |
+| **G19** | **Pre-check-in is delivered.** The SRS specified it with numbered, testable requirements, but it had no analysis note, no mockup, no data model, no API and no phase owner — and the WIP-station script explicitly declined to create its station | 29 Jul 2026 | Delivered as `MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md`, Dashboard 2A, the `RodStaging` table, `/staging/**`, `PayoffStateChanged` and the `FL1PO` station. Two items still need business sign-off (OI-01, OI-44) |
 
 ### 10.4 Superseded decisions, preserved
 
@@ -3264,7 +3264,7 @@ Every unresolved item, with impact, the phase it blocks, and who must decide. **
 | **OI-88** | **A Pass Schedule UI versus direct table management.** A UI is expected given the manual-maintenance requirement, and DB9/DB9A have been designed on that assumption; formal confirmation is outstanding | Formal confirmation only | Tim O. |
 | **OI-89** | **Documentation hygiene** across the four April docs: ~~no change log~~ (void from 12 Aug 2026 — one repository change log, `CHANGELOG.md`, and no document carries its own; what is owed is a **section** there for each of the four, whose history was never recorded), stale `Last Updated` (Apr 29–30) and `Status: Draft`; the 14 upstream stories still tagged in-scope; no sprint→phase crosswalk; `IsActive (bool)` in FW-010; the 20-table count; the E07 point total; and no document-control block on any of the 14 phase files | Readers trust superseded content | Documentation owner |
 | ~~**OI-90**~~ | ~~**Minor count drift in `CLAUDE.md`:** it states 25 tables (actual 27) and "all 25 screens use `data-fit=fill`"~~ **CLOSED 1 Aug 2026** — `CLAUDE.md` now states **27 tables**, and the `data-fit` claim was restated as **24 of 25 files** (every file but `coil-spinner.html`) after Dashboard 4 and the DB3 left-rail layout were withdrawn | — | Closed |
-| **OI-91** | **`MVP-1/RequirementDocuments/LineStatusOverview.md` is an empty file** (0 bytes) | A named analysis document with no content; the Dashboard 1 spec lives in `FlatWireShopfloorDashboards.md` and the SRS instead | Analysis team |
+| **OI-91** | **`MVP-1/ProjectPlan/Business/Screens/LineStatusOverview.md` is an empty file** (0 bytes) | A named analysis document with no content; the Dashboard 1 spec lives in `FlatWireShopfloorDashboards.md` and the SRS instead | Analysis team |
 | **OI-92** | **Load-bearing TBD placeholders** remain in the phase files: the die-life threshold (Phase 13), trial and production dates (Phase 14 / back matter), FW-050 pricing, FW-102 configuration | Cannot be planned around | Programme management |
 
 ### 11.5 New contradictions found by this reconciliation
@@ -3288,7 +3288,7 @@ These are **not** in the existing registers and are recorded here for the first 
 | **OI-32** | **Six specified behaviours have no endpoint at all**: alloy-lookup CRUD, roll-override revert, supervisor disposition of a pending Mode B checkout, die-inventory CRUD, the spool-completion prompt and commit, and SPC-HOLD QA release. Two of these (revert, disposition) are named in *decided* requirements. |
 | **OI-43** | The **OQ-63 unplanned-component-bypass event** was decided on 4 May 2026 in full detail — distinct transaction, alpha split, supervisor acknowledgement, pre-bypass disposition — and then never given a table, an endpoint, a screen or a story. It is the only *decided* requirement in the register with no implementation path at all. |
 | **OI-79** | The **digital traveler** has ten `Must` requirements and no owning phase. |
-| **OI-91** | `MVP-1/RequirementDocuments/LineStatusOverview.md` is **empty**. |
+| **OI-91** | `MVP-1/ProjectPlan/Business/Screens/LineStatusOverview.md` is **empty**. |
 | **OI-93** | **`AlloyProperty` shadows `united_db..alloys`.** Density, draw-reduction limits and max gauge already exist upstream, maintained by the Alloys module with a full audit trail — and `Draw_max_reduction` is precisely the generator input the local table holds only as a provisional seed. Nothing in `REVIEW.md`, `Development/GapsRegister.md` or the open-questions register notices this, and story FW-054 is concurrently pushing *more* flat-wire alloy data into `united_db`, so the two diverge further with every sprint. It is the same single-source-of-truth failure that `Architecture/Architecture.md` §13.1 `D-04` identified for rod material and solved by making `coils` authoritative — applied to alloys, and unsolved. |
 | **OI-45** | **The ±2 % weight-variance threshold is arithmetically unreachable from target dimensions.** `FR-153` flags a scale-versus-calculated variance beyond ±2 % for supervisor override, but gauge ±0.002 on 0.110 (±1.8 %) stacked with width ±0.005 on 0.625 (±0.8 %) gives ±2.6 % worst case on a coil that is fully in spec. Neither `SpoolCompletionNotification.md` nor the open-questions register connects the tolerance bands to the variance threshold, so the override would fire on conforming material. |
 
@@ -3309,7 +3309,7 @@ Every file in `c:\UAL\Flatwire-planning\` was consulted. Status values: **curren
 
 ### A.2 `Analysis/` — 6 files
 
-**This table was rebuilt on 11 Aug 2026.** It previously listed **19 files** and was badly stale: ten of its rows had already moved to `MVP-1/RequirementDocuments/` (on 1 Aug 2026) or been deleted, neither client-call sync plan appeared at all, the register was recorded at 74 items, and `LineStatusOverview.md` was still listed as a 0-byte file although it had been written on 1 Aug. `Analysis/` **is no longer a requirements source for any screen** — see A.2a for where the screen content went. **As of 11 Aug 2026 `Analysis/` holds no pointer documents at all**: `Spool.md` and `PartialRodReCheckin.md` moved to `RequirementDocuments/` (both listed at the foot of A.2a — neither is one of the seventeen specifications) and `OperationsManager.md` was deleted (noted below the table). The six rows below are the whole folder.
+**This table was rebuilt on 11 Aug 2026.** It previously listed **19 files** and was badly stale: ten of its rows had already moved to `MVP-1/ProjectPlan/Business/Screens/` (on 1 Aug 2026) or been deleted, neither client-call sync plan appeared at all, the register was recorded at 74 items, and `LineStatusOverview.md` was still listed as a 0-byte file although it had been written on 1 Aug. `Analysis/` **is no longer a requirements source for any screen** — see A.2a for where the screen content went. **As of 11 Aug 2026 `Analysis/` holds no pointer documents at all**: `Spool.md` and `PartialRodReCheckin.md` moved to `Business/Screens/` (both listed at the foot of A.2a — neither is one of the seventeen specifications) and `OperationsManager.md` was deleted (noted below the table). The six rows below are the whole folder.
 
 > **The two client-call propagation ledgers moved to `BaseDocuments/` on 11 Aug 2026** and are now listed in **A.7**. Both remain **current** and the 6 Aug ledger's waves **W3–W8 are still unexecuted** — the move is a filing change, not a closure.
 
@@ -3322,11 +3322,11 @@ Every file in `c:\UAL\Flatwire-planning\` was consulted. Status values: **curren
 | `FlatWireEndToEndProcess.md` | 28 Apr 2026 | **partially superseded** — its equipment description predates the May 21 and Aug 4 corrections (edger on FL1, FM2 as 8"→S1→S2, laser welding) | §3 (stage structure, scrap, capacities); equipment facts taken from the corrections instead |
 | `FlatWireProcessWalkthrough.md` | 1 Aug 2026 | current — the 45-step sequential overlay, and the `Known Source Conflicts` arbitration table | §3 |
 
-> **Six rows, six files — the table is now exhaustive.** It stopped being so on 1 Aug and was reconciled on 11 Aug, when the last three non-listed files left: `Spool.md` and `PartialRodReCheckin.md` **moved to `RequirementDocuments/`** (both are noted at the foot of **A.2a**, and neither is one of the seventeen specifications), and `OperationsManager.md` was **deleted**, noted below. **The count held through the register split later that day** — `ClientQuestionsEmail.md` was merged into the new `FlatWireDecidedQuestions.md` and removed, so one row left as one arrived.
+> **Six rows, six files — the table is now exhaustive.** It stopped being so on 1 Aug and was reconciled on 11 Aug, when the last three non-listed files left: `Spool.md` and `PartialRodReCheckin.md` **moved to `Business/Screens/`** (both are noted at the foot of **A.2a**, and neither is one of the seventeen specifications), and `OperationsManager.md` was **deleted**, noted below. **The count held through the register split later that day** — `ClientQuestionsEmail.md` was merged into the new `FlatWireDecidedQuestions.md` and removed, so one row left as one arrived.
 
 > ~~`OperationsManager.md`~~ — **DELETED 11 Aug 2026** (recoverable at `d79ce78`, which holds the full pre-consolidation role document). Nothing unique was lost: the role definition and the Supervisor comparison are in `PassScheduleManagement.md` §3.3–§3.4, the alloy-table restriction in §3.4, revert authority in `RollAdjust.md` §8, the mid-run schedule-change acknowledgement in `ActiveRunMonitor.md` §2.5, and the permission matrix in `ProjectPlan/Business/BusinessRequirements.md` §8 — which is strictly more granular than the table it replaced. **The defect it carried is preserved at `Q74` in the register:** it cited *"open question OQ-B"*, an identifier in no register, and stated the question as open although `Q74` decided it on 4 May 2026. *(Formerly fed §8.1 role content.)*
 
-### A.2a `MVP-1/RequirementDocuments/` — 16 documents (14 per-screen specifications)
+### A.2a `MVP-1/ProjectPlan/Business/Screens/` — 16 documents (14 per-screen specifications)
 
 Ten were moved out of `Analysis/` on **1 Aug 2026** and reissued as client-facing deliverables; `SpoolQueue.md` was added **2 Aug 2026**; five more were consolidated out of `FlatWireShopfloorDashboards.md` on **11 Aug 2026**. Three then left for `MVP-2/` with the deferred screens (`PassScheduleManagement`, `ShiftSummary`, `PassScheduleGenerationSpec`) and `DieChangeAndManagement` was split — leaving **16 files, of which 14 are per-screen specifications**; `Spool.md` and `PartialRodReCheckin.md` are a domain reference and internal rationale respectively, and neither is citable as a requirement.
 
@@ -3408,7 +3408,7 @@ Ten were moved out of `Analysis/` on **1 Aug 2026** and reissued as client-facin
 | `phase-13-administration-reference-data.md` | 26 Jul 2026 | current; abbreviated, no acceptance criterion (OI-78) | §4.10, §9.2 |
 | `phase-14-integration-testing-plc-commissioning-golive.md` | 26 Jul 2026 | current; no exit-test matrix (OI-78) | §9.1, §9.2 |
 
-### A.5 `MVP-1/DBChanges/Schema/` and `Schema/SQL/`
+### A.5 `MVP-1/ProjectPlan/Database/Schema/` and `Schema/SQL/`
 
 | File | Last Updated | Status | Fed into |
 |---|---|---|---|
@@ -3437,7 +3437,7 @@ Ten were moved out of `Analysis/` on **1 Aug 2026** and reissued as client-facin
 | `SQL/FlatWire_SampleData_QualityOutput.sql` | — | current | §5.11 |
 | `DBScripts/CommonDB_Insert_WIPStations_FlatWire.sql` | 28 Jul 2026 (D2 revised 29 Jul) | current — Draft; `machine_type` and StationType pending sign-off | §5.12, §11 |
 
-### A.6 `MVP-1/Mockups/` — 33 files
+### A.6 `MVP-1/ProjectPlan/Frontend/Mockups/` — 33 files
 
 | File | Status | Fed into |
 |---|---|---|
@@ -3454,7 +3454,7 @@ Ten were moved out of `Analysis/` on **1 Aug 2026** and reissued as client-facin
 | `mainlogo.gif` | current — required asset for the topbar | §7.3 |
 | `Flat Wire Machine - Big Beautiful Diagram.png` | read-only evidence — equipment layout | §7.8 |
 
-All HTML files were parsed for structure (titles, script includes, `data-fit` mode, class inventory, every `input`/`select`/`textarea`/`button` with its id, type, placeholder and default value, and the full visible text). **Nothing in `MVP-1/Mockups/` was created, modified or reproduced.**
+All HTML files were parsed for structure (titles, script includes, `data-fit` mode, class inventory, every `input`/`select`/`textarea`/`button` with its id, type, placeholder and default value, and the full visible text). **Nothing in `MVP-1/ProjectPlan/Frontend/Mockups/` was created, modified or reproduced.**
 
 ### A.7 `BaseDocuments/` — 15 read-only business sources, plus 2 client-call ledgers
 
@@ -3498,8 +3498,8 @@ Text was extracted from the `.docx` zip containers (`python-docx`) and the workb
 | File | Reason |
 |---|---|
 | `MVP-1/SRS/~$opfloor_Flat_wireSRS.docx` | Word lock artifact, not content |
-| `MVP-1/Mockups/mainlogo.gif` | Binary image asset |
-| `MVP-1/Mockups/Flat Wire Machine - Big Beautiful Diagram.png` | Binary image; referenced by link, not transcribed |
+| `MVP-1/ProjectPlan/Frontend/Mockups/mainlogo.gif` | Binary image asset |
+| `MVP-1/ProjectPlan/Frontend/Mockups/Flat Wire Machine - Big Beautiful Diagram.png` | Binary image; referenced by link, not transcribed |
 
 **One caveat on completeness:** the `BaseDocuments/` `.docx` files are mostly annotated **screenshots**. Their extractable prose is fully captured above, but any requirement that exists **only** as an annotation inside an embedded image is not represented in this document. Given that the pre-check-in requirement set (`PCI001`–`PCI008`) hid inside a `.docx` for months precisely because `grep` cannot reach into zip containers, the same class of blind spot may still exist inside those images. **A human should page through the screenshots in `Flat Wire Machine - Web Changes 04132026.docx`, `Machines Application …`, `WIPREJ_WEB …` and `Flat wire Coil Receiving.docx` before Phase 1 closes.**
 

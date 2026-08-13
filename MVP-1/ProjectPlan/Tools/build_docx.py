@@ -6,7 +6,7 @@ Render a client-facing markdown specification to a branded .docx.
 With no arguments it rebuilds the PLC tag specification, which is the default below.
 
 WHY THIS EXISTS
-    The .md files in MVP-1/RequirementDocuments/ are the source of truth; the
+    The .md files in MVP-1/ProjectPlan/ are the source of truth; the
     .docx files in MVP-1/SRS/ are generated output. Edit the markdown and re-render - never
     edit the .docx. This script had to be re-derived three times because the pipeline
     was never committed, so it now lives here.
@@ -45,15 +45,20 @@ sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 # Three levels up: Tools/ -> DevelopmentPlan/ -> MVP-1/ -> repository root. The script
 # moved into MVP-1/ with the 11 Aug 2026 scope split and this was left at two, which made
 # every default path resolve under MVP-1/MVP-1/.
-ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..'))
 # The branding template moved with the MVP-2 scope split (11 Aug 2026). It is only ever
 # read - for its header/footer references and style set - so an MVP-2 file serving as the
 # template for an MVP-1 deliverable is a build-time detail, not a scope statement.
-TPL = os.path.join(ROOT, 'MVP-2', 'SRS', 'PassScheduleGenerationSpec.docx')
+# Branding template. Copied to Tools/ on 13 Aug 2026 so the MVP-1 renderer no longer
+# reaches into deferred scope for an asset that could be deleted as inert MVP-2 content.
+# It is a COPY of MVP-2/SRS/PassScheduleGenerationSpec.docx — a branding change must be
+# applied to both, or consciously to one. Only ever read, never written.
+TPL = os.path.join(HERE, 'template.docx')
 
 _args = sys.argv[1:]
 SRC = os.path.abspath(_args[0]) if len(_args) > 0 else \
-    os.path.join(ROOT, 'MVP-1', 'RequirementDocuments', 'PLCTagSpecification.md')
+    os.path.join(ROOT, 'MVP-1', 'ProjectPlan', 'Architecture', 'PLCTagSpecification.md')
 OUT = os.path.abspath(_args[1]) if len(_args) > 1 else \
     os.path.join(ROOT, 'MVP-1', 'SRS', 'PLCTagSpecification.docx')
 DOC_TITLE = _args[2] if len(_args) > 2 else \

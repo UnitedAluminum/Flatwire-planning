@@ -18,7 +18,7 @@
 >
 > **1. Three of its four stories have no requirement specification.** `FW-101`, `FW-102` and `FW-110` carry **no
 > `FR-` IDs anywhere in `02-SRS.md`**, and Phase 12 has **no owning requirement document** — it is not among the 17
-> files in `MVP-1/RequirementDocuments/` and has no dashboard in the Dashboard Inventory. The only requirement text in
+> files in `MVP-1/ProjectPlan/Business/Screens/` and has no dashboard in the Dashboard Inventory. The only requirement text in
 > existence is the Jira acceptance criteria (§3). Every other phase in the plan has an owning spec.
 >
 > **2. All four stories are blocked, and three of the four blockers are the client's to answer** (§5) — `Q10`

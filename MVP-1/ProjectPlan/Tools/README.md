@@ -12,7 +12,7 @@ file is output** — so never edit a `.docx` or `.xlsx` in this repository.
 
 | Script | Reads | Writes | Fails on |
 |---|---|---|---|
-| [`build_docx.py`](build_docx.py) | a spec in `MVP-1/RequirementDocuments/` | a branded `.docx` in `MVP-1/SRS/` | — |
+| [`build_docx.py`](build_docx.py) | a spec in `MVP-1/ProjectPlan/Business/Screens/` | a branded `.docx` in `MVP-1/SRS/` | — |
 | [`build_questions_xlsx.py`](build_questions_xlsx.py) | both `Analysis/` question registers + `ClientQuestionsContent.md` | `MVP-1/SRS/FlatWire_ClientQuestions.xlsx` | coverage · drift · team names · leakage |
 | [`build_coverage_matrix.py`](build_coverage_matrix.py) | `02-SRS.md` + `06-TestPlanAndTestCases.md` | nothing — reports | a requirement with no case and no §10.4 entry |
 
@@ -20,7 +20,7 @@ file is output** — so never edit a `.docx` or `.xlsx` in this repository.
 
 ## `build_docx.py` — markdown → branded `.docx`
 
-Renders a client-facing specification from `MVP-1/RequirementDocuments/*.md` to a branded Word document in `MVP-1/SRS/`.
+Renders a client-facing specification from `MVP-1/ProjectPlan/Business/Screens/*.md` to a branded Word document in `MVP-1/SRS/`.
 
 ```bash
 # Rebuild the PLC tag specification (the default)
@@ -28,7 +28,7 @@ python MVP-1/ProjectPlan/Tools/build_docx.py
 
 # Any other spec
 python MVP-1/ProjectPlan/Tools/build_docx.py \
-  MVP-1/RequirementDocuments/SomeSpec.md \
+  MVP-1/ProjectPlan/Business/Screens/SomeSpec.md \
   MVP-1/SRS/SomeSpec.docx \
   "Flat Wire - Some Spec"
 ```
@@ -124,7 +124,7 @@ in a client deliverable**. So the workbook is merged from two sources:
 - **Structure** — question number, priority, scope, owner, decided date — is parsed from the
   registers' index tables, so it cannot drift from them.
 - **Prose** — the plain-language question, background, options, recommendation — comes from
-  [`../../RequirementDocuments/ClientQuestionsContent.md`](../../RequirementDocuments/ClientQuestionsContent.md),
+  [`../../RequirementDocuments/ClientQuestionsContent.md`](ClientQuestionsContent.md),
   which is the only place it is authored.
 
 ### Four guards, all fatal

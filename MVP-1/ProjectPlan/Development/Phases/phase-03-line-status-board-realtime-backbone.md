@@ -2,7 +2,7 @@
 
 > **Part of the [Flat Wire Mill — Master Implementation Roadmap](../Roadmap.md).** See [Foundations](../../Architecture/Architecture.md) for §0.2–0.4 shared context (esp. §0.4 real-time architecture, which this phase realises).
 > **Prev:** [Phase 2 — Pass Schedule Management](../../../../MVP-2/DevelopmentPlan/ShopfloorPlan/phase-02-pass-schedule-management.md) · **Next:** [Phase 4 — Rod Check-In & PLC Configuration](./phase-04-rod-checkin-plc-config.md)
-> **Owning specification:** [`LineStatusOverview.md`](../../../RequirementDocuments/LineStatusOverview.md) (DB1) — authoritative on this phase's screen; the owning doc wins on any disagreement.
+> **Owning specification:** [`LineStatusOverview.md`](../../Business/Screens/LineStatusOverview.md) (DB1) — authoritative on this phase's screen; the owning doc wins on any disagreement.
 
 ---
 

@@ -98,7 +98,7 @@ figure in §2 is reproducible by a single multiplication.
 
 | Work class | Factor | Basis |
 |---|---|---|
-| FE — screens, dialogs, variants | **0.62** | `MVP-1/Mockups/` is a **complete, approved HTML visual spec** — the single highest-leverage input available. Conversion to Angular components, SCSS against one existing token system, and specs is largely mechanical |
+| FE — screens, dialogs, variants | **0.62** | `MVP-1/ProjectPlan/Frontend/Mockups/` is a **complete, approved HTML visual spec** — the single highest-leverage input available. Conversion to Angular components, SCSS against one existing token system, and specs is largely mechanical |
 | FE — shared controls (Phase 1A) | **0.60** | library scaffolding, 6 composite + the primitive controls |
 | BE — command / query endpoints | **0.58–0.60** | `API/Domain/CoilCheckin` is an **exact** template (Foundations §0.2); MediatR + FluentValidation + xUnit is pattern replication |
 | BE — non-trivial business services | **0.65–0.75** | domain reasoning, not boilerplate — AI drafts, a human verifies. The **0.75** end of the band applies to Phase 12's yield/cost work, which is priced in [`YieldCostAndScrapSheet.md`](./YieldCostAndScrapSheet.md) and cites this card |

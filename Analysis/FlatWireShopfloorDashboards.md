@@ -3,14 +3,14 @@
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** August 11, 2026
 **Document Type:** UX / Screen Design Reference — **internal**
-**Status:** Reference — superseded as a requirements source by `MVP-1/RequirementDocuments/`
+**Status:** Reference — superseded as a requirements source by `MVP-1/ProjectPlan/Business/Screens/`
 
 ---
 
 > ## ⚠ This document is no longer the requirements source for any screen
 >
 > **Every screen below now has an owning client-facing requirement document** in
-> [`../MVP-1/RequirementDocuments/`](../MVP-1/RequirementDocuments/). The owning document
+> [`../MVP-1/ProjectPlan/Business/Screens/`](../MVP-1/ProjectPlan/Business/Screens/). The owning document
 > is named in the inventory table and again under each dashboard heading.
 >
 > **When this document and an owning document disagree, the owning document wins.** This file is retained
@@ -57,85 +57,52 @@ This document defines the shopfloor dashboard screens required to operate the fl
 
 ### Dashboard Inventory
 
-**"Owning specification"** is the authoritative requirement document for that screen. All paths are relative to `../MVP-1/RequirementDocuments/`.
+**"Owning specification"** is the authoritative requirement document for that screen. All paths are relative to `../MVP-1/ProjectPlan/Business/Screens/`.
 
 | # | Dashboard | **MVP** | Primary User | Trigger | Owning specification |
 |---|-----------|:---:|-------------|---------|----------------------|
-| 1 | Line Status Overview | MVP-1 | Supervisor / Foreman | Always visible | [LineStatusOverview.md](../MVP-1/RequirementDocuments/LineStatusOverview.md) |
-| 2A | Rod Pre-Check-in Station (FL1/FL3) | MVP-1 | FL1 Operator | Staging the next rod while the current coil still runs | [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md) |
-| 2 | Rod Check-in & Pre-Run Setup (FL1/FL3) | MVP-1 | FL1 Operator | Start of each rod | [RocCheckin.md](../MVP-1/RequirementDocuments/RocCheckin.md) |
-| 3 | Active Run Monitor | MVP-1 | FL1 / FL2 / FL3 Operator | During every run | [ActiveRunMonitor.md](../MVP-1/RequirementDocuments/ActiveRunMonitor.md) |
-| ~~4~~ | ~~Weld Event Logger~~ — **retired 1 Aug 2026** | *(retired)* | — | Weld capture moved to DB2A *Mark as welded* | [WeldEvent.md](../MVP-1/RequirementDocuments/WeldEvent.md) |
-| 5 | FL2 Spool Check-in | MVP-1 | FL2 Operator | Loading each spool onto TPO | [RocCheckin.md](../MVP-1/RequirementDocuments/RocCheckin.md) §4 |
-| 5A | FL2 Spool Queue | MVP-1 | FL2 Operator | Selecting the next spool, ahead of check-in | [SpoolQueue.md](../MVP-1/RequirementDocuments/SpoolQueue.md) |
-| 6 | SPC Checkpoint Entry | MVP-1 | Any operator | Pre-run, post die-change | [SPCCheckpoint.md](../MVP-1/RequirementDocuments/SPCCheckpoint.md) |
-| 7 | Output Coil Completion & Label | MVP-1 | FL2 Operator | When TKUP-2 coil is complete | [OutputCoilCompletion.md](../MVP-1/RequirementDocuments/OutputCoilCompletion.md) |
-| 7B | **Packing Station** | MVP-1 | **Packing operator** | Coil arrives from the line; skid seated and staged | [OutputCoilCompletion.md](../MVP-1/RequirementDocuments/OutputCoilCompletion.md) **§8** |
-| 8 | WIP Rejection | MVP-1 | Any operator | Material fails at any stage | [WipRejection.md](../MVP-1/RequirementDocuments/WipRejection.md) |
+| 1 | Line Status Overview | MVP-1 | Supervisor / Foreman | Always visible | [LineStatusOverview.md](../MVP-1/ProjectPlan/Business/Screens/LineStatusOverview.md) |
+| 2A | Rod Pre-Check-in Station (FL1/FL3) | MVP-1 | FL1 Operator | Staging the next rod while the current coil still runs | [RodPreCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md) |
+| 2 | Rod Check-in & Pre-Run Setup (FL1/FL3) | MVP-1 | FL1 Operator | Start of each rod | [RocCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RocCheckin.md) |
+| 3 | Active Run Monitor | MVP-1 | FL1 / FL2 / FL3 Operator | During every run | [ActiveRunMonitor.md](../MVP-1/ProjectPlan/Business/Screens/ActiveRunMonitor.md) |
+| ~~4~~ | ~~Weld Event Logger~~ — **retired 1 Aug 2026** | *(retired)* | — | Weld capture moved to DB2A *Mark as welded* | [WeldEvent.md](../MVP-1/ProjectPlan/Business/Screens/WeldEvent.md) |
+| 5 | FL2 Spool Check-in | MVP-1 | FL2 Operator | Loading each spool onto TPO | [RocCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RocCheckin.md) §4 |
+| 5A | FL2 Spool Queue | MVP-1 | FL2 Operator | Selecting the next spool, ahead of check-in | [SpoolQueue.md](../MVP-1/ProjectPlan/Business/Screens/SpoolQueue.md) |
+| 6 | SPC Checkpoint Entry | MVP-1 | Any operator | Pre-run, post die-change | [SPCCheckpoint.md](../MVP-1/ProjectPlan/Business/Screens/SPCCheckpoint.md) |
+| 7 | Output Coil Completion & Label | MVP-1 | FL2 Operator | When TKUP-2 coil is complete | [OutputCoilCompletion.md](../MVP-1/ProjectPlan/Business/Screens/OutputCoilCompletion.md) |
+| 7B | **Packing Station** | MVP-1 | **Packing operator** | Coil arrives from the line; skid seated and staged | [OutputCoilCompletion.md](../MVP-1/ProjectPlan/Business/Screens/OutputCoilCompletion.md) **§8** |
+| 8 | WIP Rejection | MVP-1 | Any operator | Material fails at any stage | [WipRejection.md](../MVP-1/ProjectPlan/Business/Screens/WipRejection.md) |
 | 9 | Pass Schedule Management | **MVP-2** | Operations / Maintenance | Before a new product campaign | [PassScheduleManagement.md](../MVP-2/RequirementDocuments/PassScheduleManagement.md) |
 | 9A | Pass Schedule List ("All Schedules") | **MVP-2** | Operations / Maintenance | Via Dashboard 9 "← All schedules" button; direct navigation | [PassScheduleManagement.md](../MVP-2/RequirementDocuments/PassScheduleManagement.md) |
 | 10 | Supervisor Shift Summary | **MVP-2** | Supervisor / Shift Manager | End of shift / on-demand | [ShiftSummary.md](../MVP-2/RequirementDocuments/ShiftSummary.md) |
-| 11 | Roll Adjust | MVP-1 | **FL2 / FL3 operator** (not FL1) | Roll gap adjustment during run | [RollAdjust.md](../MVP-1/RequirementDocuments/RollAdjust.md) |
-| 12 | Rod Checkout | MVP-1 | FL1 / FL3 Operator | Rod removed from payoff before run completes naturally | [RodCheckout.md](../MVP-1/RequirementDocuments/RodCheckout.md) |
-| DC | Die Change | MVP-1 | FL1 / FL3 Operator | Drawing die replaced mid-run (planned, gauge drift, failure, or size change) | [DieChangeAndManagement.md](../MVP-1/RequirementDocuments/DieChangeAndManagement.md) |
-| — | *(no dashboard)* | — | — | Machine / OPC tag surface | [PLCTagSpecification.md](../MVP-1/RequirementDocuments/PLCTagSpecification.md) |
+| 11 | Roll Adjust | MVP-1 | **FL2 / FL3 operator** (not FL1) | Roll gap adjustment during run | [RollAdjust.md](../MVP-1/ProjectPlan/Business/Screens/RollAdjust.md) |
+| 12 | Rod Checkout | MVP-1 | FL1 / FL3 Operator | Rod removed from payoff before run completes naturally | [RodCheckout.md](../MVP-1/ProjectPlan/Business/Screens/RodCheckout.md) |
+| DC | Die Change | MVP-1 | FL1 / FL3 Operator | Drawing die replaced mid-run (planned, gauge drift, failure, or size change) | [DieChangeAndManagement.md](../MVP-1/ProjectPlan/Business/Screens/DieChangeAndManagement.md) |
+| — | *(no dashboard)* | — | — | Machine / OPC tag surface | [PLCTagSpecification.md](../MVP-1/ProjectPlan/Architecture/PLCTagSpecification.md) |
 | — | *(no dashboard)* | — | — | Pass schedule generation engine | [PassScheduleGenerationSpec.md](../MVP-2/RequirementDocuments/PassScheduleGenerationSpec.md) |
 
 > **DB13 and DB14 are descoped** (4 Aug 2026, `PLC-Q02` superseded) and were never in this inventory. Their tag map
-> lives in [PLCTagSpecification.md](../MVP-1/RequirementDocuments/PLCTagSpecification.md).
+> lives in [PLCTagSpecification.md](../MVP-1/ProjectPlan/Architecture/PLCTagSpecification.md).
 >
 > **Dashboard 11's primary user was stated three different ways in this file** — this inventory said *FL3 Operator*,
 > the DB11 section below says *FL1 / FL2 Operator*, and the DB3 quick-action table says *FL3 only*. **All three were
 > wrong or incomplete.** `FR-107`–`FR-109` and all three active-run mockups agree the answer is **FL2 and FL3, and
 > not FL1** — FL1's mockup carries no Roll Adjust control at all. Corrected in this inventory row; the two stale
 > statements below are left in place as the design record. Reconciliation in
-> [RollAdjust.md](../MVP-1/RequirementDocuments/RollAdjust.md) §1.5.
+> [RollAdjust.md](../MVP-1/ProjectPlan/Business/Screens/RollAdjust.md) §1.5.
 
 ---
 
 ## Alloy Reference Data
 
-**Scope: MVP-1.** Seeded in Phase 1 and maintained through the Phase-13 alloy-lookup admin grid, which is the
-**non-deferrable** half of that phase.
-
-This table lived inside the **Dashboard 9** section until 11 Aug 2026 — MVP-1 reference data buried in an
-MVP-2 screen. Two live citations depend on it and neither is about Dashboard 9:
-
-- `LatestDocument/FlatWire_MasterSpecification.md` — *"maintained via an admin screen"*, carrying its own copy of these values
-- `MVP-1/ProjectPlan/Development/Phases/phase-13-administration-reference-data.md` — cites this table for the Process-Engineering sign-off caveat
-
-Its six columns map 1:1 onto the **`AlloyProperty`** table (`Alloy`, `MaxReductionPerPass`, `SpringbackFactor`,
-`GaugeToleranceDefault`, `WidthToleranceDefault`, `SpeedRangeMinFPM`, `SpeedRangeMaxFPM`) seeded by
-`FlatWire_SampleData_Lookup.sql`.
-
-### Alloy Lookup Table (required in database)
-
-| Alloy | Max reduction / pass | Spring-back factor | Gauge tol. default | Width tol. default | Speed range (FPM) |
-|-------|---------------------|-------------------|--------------------|--------------------|--------------------|
-| 1100  | 26% | 0.98 | ± 0.003" | ± 0.010" | 800 – 2,000 |
-| 1350  | 22% | 0.97 | ± 0.002" | ± 0.008" | 600 – 1,600 |
-| 3003  | 24% | 0.98 | ± 0.004" | ± 0.012" | 700 – 1,800 |
-| 5052  | 20% | 0.97 | ± 0.003" | ± 0.010" | 500 – 1,400 |
-| 6061  | 18% | 0.96 | ± 0.003" | ± 0.010" | 400 – 1,200 |
-
-> These values must be confirmed and maintained by Process Engineering (Tim O.). They are editable via an admin table — not hardcoded.
-
-> **⚠ `Spring-back factor` is a contested quantity — do not build physics on it.** Master specification
-> **§10.5** arbitrates the springback model as wrong: the roll gap sits **below** gauge by a **load-dependent
-> mill-spring** term (`h₁ = S₀ + F/K`), not above it by a fixed per-alloy multiplier, and springback
-> (material) has been conflated with mill spring (machine stiffness). The column stays because
-> `AlloyProperty` carries it and the schema is seeded from this table; **the pass-schedule generation that
-> consumes it is MVP-2**, and `PassScheduleGenerationSpec.md` is the authority on the physics.
-
-> **Rod diameter and ovality tolerances are deliberately absent.** They are owed by e-mail (`Q22`) and are
-> seeded `NULL` in `AlloyProperty` rather than guessed — see `FlatWireSchema_Lookup.md`.
-
----
+> **Moved 13 Aug 2026 to [`MVP-1/ProjectPlan/Database/ReferenceData.md`](../MVP-1/ProjectPlan/Database/ReferenceData.md).** It is MVP-1 seed data feeding `AlloyProperty` and the
+> Phase-13 admin grid, and had been sitting inside this file's MVP-2 Dashboard 9 section. Cited from
+> `Schema/FlatWireSchema_Lookup.md` and `phase-13`.
 
 ## Dashboard 1 — Line Status Overview
 > **Scope: MVP-1.**
 
-> **Owning specification: [LineStatusOverview.md](../MVP-1/RequirementDocuments/LineStatusOverview.md)**. DB1 content was consolidated out of this file on 1 Aug 2026 — that document was written from this section. Reproduced here as the design record only; the owning document is authoritative.
+> **Owning specification: [LineStatusOverview.md](../MVP-1/ProjectPlan/Business/Screens/LineStatusOverview.md)**. DB1 content was consolidated out of this file on 1 Aug 2026 — that document was written from this section. Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** Supervisor / Foreman
 **When:** Persistently displayed — master board for the flat wire floor
@@ -194,13 +161,13 @@ Its six columns map 1:1 onto the **`AlloyProperty`** table (`Alloy`, `MaxReducti
 ## Dashboard 2A — Rod Pre-Check-in Station (FL1 / FL3)
 > **Scope: MVP-1.**
 
-> **Owning specification: [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md)**. The owning document is materially ahead of this section: it carries the order-membership rule, the sequence authorisation, and the four min/max tolerance pairs. Reproduced here as the design record only; the owning document is authoritative.
+> **Owning specification: [RodPreCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md)**. The owning document is materially ahead of this section: it carries the order-membership rule, the sequence authorisation, and the four min/max tolerance pairs. Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** FL1 Operator
 **When:** While the current coil is still running — staging the *next* rod at the free payoff bay
 **Purpose:** Register the next rod against a VPS payoff position so the line can run continuously through an induction weld; inspect the bundle before unbanding; release a mis-staged rod
-**Mockup:** `MVP-1/Mockups/dashboard_2a_rod_precheckin.html`
-**Full analysis:** [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md)
+**Mockup:** `MVP-1/ProjectPlan/Frontend/Mockups/dashboard_2a_rod_precheckin.html`
+**Full analysis:** [RodPreCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md)
 **Requirements:** SRS §4.2 `PCI001`–`PCI008` · `WLD003`/`WLD005`/`WLD006`/`WLD010` · `TRV004`/`TRV009` · §4.18 `PRC007`/`PRC008`/`PRC011`/`PRC014`
 
 **Not available on FL2** — `PCI002`: no staging space. FL2 is check-in only (Dashboard 5).
@@ -254,7 +221,7 @@ Weight-bar colours and weld thresholds are the same rules as Dashboard 3 — see
 
 Lists pre-checked-in, welded, and available rod **for the current order**, each with serial number, **payoff position number**, dimensional attributes and current status. Rows with prior footage carry a **partial** flag so a carry-forward rod is visible *before* it is staged.
 
-**Two sequence columns, because planned order is authorised rather than enforced.** `Plan` is the sequence planning intended, with a green `▸` on the rod expected next; `Run` is the order the rod was actually staged in (the SRS `RodSeqno`), blank until processed, with `⇅` where the two differ. Staging any other rod is permitted but **notified and supervisor-authorised** — never refused. See [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md#planned-sequence-notify-and-authorise).
+**Two sequence columns, because planned order is authorised rather than enforced.** `Plan` is the sequence planning intended, with a green `▸` on the rod expected next; `Run` is the order the rod was actually staged in (the SRS `RodSeqno`), blank until processed, with `⇅` where the two differ. Staging any other rod is permitted but **notified and supervisor-authorised** — never refused. See [RodPreCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md#planned-sequence-notify-and-authorise).
 
 **Panel header — "Rods In Queue"** (added 1 Aug 2026). The queue head previously held the order-context line and the scan box; both were removed, leaving an unlabelled empty row that only became visible when the full-station warning fired — so the table below it began with no name at all. The head now carries a standing **"Rods In Queue"** title on the left and the *both bays occupied* warning on the right.
 
@@ -274,7 +241,7 @@ Lists pre-checked-in, welded, and available rod **for the current order**, each 
 | 2 — Assign bay | Payoff 1 / Payoff 2 selector cards | Occupied bay disabled and labelled with its occupant (`PCI006`) |
 | 3 — Visual inspection | Oxidation · Surface defects · Water stains, Pass/Fail each, plus observation | **Three items, not four.** Any Fail → WIP Rejection only, **no bypass** (`CHK010`) |
 
-**Carry-forward gate.** When `footageRunToDate > 0` the wizard shows footage already run, remaining weight estimate, last run and prior spool alphas, and offers only *Proceed as partial re-check-in* plus an explicit physical-identity confirmation. **The fresh-start path does not exist** (`PRC008`) — see [PartialRodReCheckin.md](../MVP-1/RequirementDocuments/PartialRodReCheckin.md).
+**Carry-forward gate.** When `footageRunToDate > 0` the wizard shows footage already run, remaining weight estimate, last run and prior spool alphas, and offers only *Proceed as partial re-check-in* plus an explicit physical-identity confirmation. **The fresh-start path does not exist** (`PRC008`) — see [PartialRodReCheckin.md](../MVP-1/ProjectPlan/Business/PartialRodReCheckin.md).
 
 ### Field Definitions
 
@@ -348,14 +315,14 @@ Recorded as `RodCheckout` with `Mode = 'ModeP'`; reverses the WIP queue entry cr
 
 ### Open Questions
 
-See [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md) — notably whether pre-check-in sets coil status to `INFLAT` (SRS) or `STAGED` (walkthrough), and whether `CHK005` removes the payoff selector from Dashboard 2.
+See [RodPreCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md) — notably whether pre-check-in sets coil status to `INFLAT` (SRS) or `STAGED` (walkthrough), and whether `CHK005` removes the payoff selector from Dashboard 2.
 
 ---
 
 ## Dashboard 2 — Rod Check-in & Pre-Run Setup (FL1 / FL3)
 > **Scope: MVP-1.**
 
-> **Owning specification: [RocCheckin.md](../MVP-1/RequirementDocuments/RocCheckin.md)**. The owning document covers both this screen and Dashboard 5 (spool check-in), and reduces the PLC push detail to a pointer into the tag specification. Reproduced here as the design record only; the owning document is authoritative.
+> **Owning specification: [RocCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RocCheckin.md)**. The owning document covers both this screen and Dashboard 5 (spool check-in), and reduces the PLC push detail to a pointer into the tag specification. Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** FL1 Operator
 **When:** At the start of each new rod or job
@@ -416,7 +383,7 @@ See [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md) — notab
 ## Dashboard 3 — Active Run Monitor (FL1 / FL3)
 > **Scope: MVP-1.**
 
-> **Owning specification: [ActiveRunMonitor.md](../MVP-1/RequirementDocuments/ActiveRunMonitor.md)** (consolidated out of this file 11 Aug 2026). The trace rules, payoff thresholds, quick-action sets, pause reason vocabulary, four resume outcomes and shift-summary contribution below are **reproduced here as the design record only** — the owning document is authoritative and carries the client sign-off. Note that the heading says FL1/FL3; the screen also serves FL2, with a historical profile in place of a live trace.
+> **Owning specification: [ActiveRunMonitor.md](../MVP-1/ProjectPlan/Business/Screens/ActiveRunMonitor.md)** (consolidated out of this file 11 Aug 2026). The trace rules, payoff thresholds, quick-action sets, pause reason vocabulary, four resume outcomes and shift-summary contribution below are **reproduced here as the design record only** — the owning document is authoritative and carries the client sign-off. Note that the heading says FL1/FL3; the screen also serves FL2, with a historical profile in place of a live trace.
 
 > **Layout note (1 Aug 2026, updated 11 Aug 2026):** the FL1 screen is **`dashboard_3_active_run.html`**
 > — the grouped action cluster (*Run events* / *Go to*). The earlier left-rail layout, which held this
@@ -428,7 +395,7 @@ See [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md) — notab
 **Who:** FL1 Operator
 **When:** Continuously displayed during an active production run
 **Purpose:** Real-time gauge/width trace, machine status, payoff monitoring, quick actions
-**Descoped (Aug 4, 2026):** the **Machine View** tab and the **View Trends** action are both withdrawn at client request, together with Dashboards 13 and 14. The chart section keeps its collapse toggle; the tab strip now carries a single inert *Traces* label, matching FL2, which never had a second tab. The machine tags the Machine View displayed are specified in [PLCTagSpecification.md](../MVP-1/RequirementDocuments/PLCTagSpecification.md).
+**Descoped (Aug 4, 2026):** the **Machine View** tab and the **View Trends** action are both withdrawn at client request, together with Dashboards 13 and 14. The chart section keeps its collapse toggle; the tab strip now carries a single inert *Traces* label, matching FL2, which never had a second tab. The machine tags the Machine View displayed are specified in [PLCTagSpecification.md](../MVP-1/ProjectPlan/Architecture/PLCTagSpecification.md).
 
 ```
 ┌───────────────────────────────────────────────────────────────────┐
@@ -652,7 +619,7 @@ Pause events roll up into the Shift Summary as follows:
 ## Dashboard 4 — Weld Event Logger
 > **Retired 1 Aug 2026** — weld capture moved to the Dashboard 2A *Mark as welded* dialog. MVP-1 by lineage; the screen no longer exists.
 
-> **Owning specification: [WeldEvent.md](../MVP-1/RequirementDocuments/WeldEvent.md)**. **This screen is retired (1 Aug 2026).** Weld capture is the *Mark as welded* action on Dashboard 2A, because the rod being welded in is the staged one. Retained here as the design record of a withdrawn screen; gaps G27 and G28 record the two capabilities that were not rehoused. Reproduced here as the design record only; the owning document is authoritative.
+> **Owning specification: [WeldEvent.md](../MVP-1/ProjectPlan/Business/Screens/WeldEvent.md)**. **This screen is retired (1 Aug 2026).** Weld capture is the *Mark as welded* action on Dashboard 2A, because the rod being welded in is the staged one. Retained here as the design record of a withdrawn screen; gaps G27 and G28 record the two capabilities that were not rehoused. Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** FL1 Operator
 **When:** When Payoff 1 rod nears its end and a weld is performed
@@ -705,7 +672,7 @@ Pause events roll up into the Shift Summary as follows:
 ## Dashboard 5A — FL2 Spool Queue
 > **Scope: MVP-1.**
 
-> **Owning specification: [SpoolQueue.md](../MVP-1/RequirementDocuments/SpoolQueue.md)**. Added 2 Aug 2026 as the eleventh per-screen document; this section and that document were authored together. Reproduced here as the design record only; the owning document is authoritative.
+> **Owning specification: [SpoolQueue.md](../MVP-1/ProjectPlan/Business/Screens/SpoolQueue.md)**. Added 2 Aug 2026 as the eleventh per-screen document; this section and that document were authored together. Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** FL2 Operator
 **When:** Before check-in — deciding which spool to run next
@@ -761,7 +728,7 @@ Dashboard 2A states for rods.
 ## Dashboard 5 — FL2 Spool Check-in
 > **Scope: MVP-1.**
 
-> **Owning specification: [RocCheckin.md](../MVP-1/RequirementDocuments/RocCheckin.md)**. Covered as section 4 of the check-in specification, alongside rod check-in, rather than as a separate document. Reproduced here as the design record only; the owning document is authoritative.
+> **Owning specification: [RocCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RocCheckin.md)**. Covered as section 4 of the check-in specification, alongside rod check-in, rather than as a separate document. Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** FL2 Operator
 **When:** Loading a spool onto the TPO to begin FL2 processing
@@ -819,7 +786,7 @@ Dashboard 2A states for rods.
 ## Dashboard 6 — SPC Checkpoint Entry
 > **Scope: MVP-1.**
 
-> **Owning specification: [SPCCheckpoint.md](../MVP-1/RequirementDocuments/SPCCheckpoint.md)**. **This is no longer a screen** — it is a dialog over the run being measured. The owning document also flags that the "Post DB1" option offered on screen is not one of the five recorded checkpoint types (OI-10). Reproduced here as the design record only; the owning document is authoritative.
+> **Owning specification: [SPCCheckpoint.md](../MVP-1/ProjectPlan/Business/Screens/SPCCheckpoint.md)**. **This is no longer a screen** — it is a dialog over the run being measured. The owning document also flags that the "Post DB1" option offered on screen is not one of the five recorded checkpoint types (OI-10). Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** FL1 / FL2 Operator
 **When:** Pre-run, after any die change, or manual spot check
@@ -871,10 +838,10 @@ Dashboard 2A states for rods.
 ## Dashboard 7 — Output Coil Completion & Label
 > **Scope: MVP-1.** Returned to MVP-1 on 11 Aug 2026 with Phase 9, together with **DB7B (Packing Station)**.
 > **DB7B has no section in this document and never had one** — that is why it reached 11 Aug 2026 with no owning
-> specification at all. It is now owned by [`OutputCoilCompletion.md` §8](../MVP-1/RequirementDocuments/OutputCoilCompletion.md);
-> its wireframe is the mockup `MVP-1/Mockups/dashboard_7b_packing_station.html`.
+> specification at all. It is now owned by [`OutputCoilCompletion.md` §8](../MVP-1/ProjectPlan/Business/Screens/OutputCoilCompletion.md);
+> its wireframe is the mockup `MVP-1/ProjectPlan/Frontend/Mockups/dashboard_7b_packing_station.html`.
 
-> **Owning specification: [OutputCoilCompletion.md](../MVP-1/RequirementDocuments/OutputCoilCompletion.md)** (consolidated out of this file 11 Aug 2026, together with the source-traceability block from `Spool.md`). Reproduced below as the design record only. The owning document additionally raises four open items this section does not: the alloy density factor, the lot number rule for a multi-rod coil, whether gross weight is scale-entered or calculated, and the disposition of an odd final coil.
+> **Owning specification: [OutputCoilCompletion.md](../MVP-1/ProjectPlan/Business/Screens/OutputCoilCompletion.md)** (consolidated out of this file 11 Aug 2026, together with the source-traceability block from `Spool.md`). Reproduced below as the design record only. The owning document additionally raises four open items this section does not: the alloy density factor, the lot number rule for a multi-rod coil, whether gross weight is scale-entered or calculated, and the disposition of an odd final coil.
 
 **Who:** FL2 Operator
 **When:** When a coreless oscillated coil is complete on TKUP-2
@@ -936,7 +903,7 @@ Dashboard 2A states for rods.
 ## Dashboard 8 — WIP Rejection Screen
 > **Scope: MVP-1.**
 
-> **Owning specification: [WipRejection.md](../MVP-1/RequirementDocuments/WipRejection.md)** (consolidated out of this file 11 Aug 2026). **This is no longer a screen** — it became a dialog on 1 Aug 2026 precisely because it is reached from five different places and a page could describe only one of them. The single hard-coded material banner below is the symptom that forced the change. The owning document also carries the blocked-bay release rule (Q23), which this section predates.
+> **Owning specification: [WipRejection.md](../MVP-1/ProjectPlan/Business/Screens/WipRejection.md)** (consolidated out of this file 11 Aug 2026). **This is no longer a screen** — it became a dialog on 1 Aug 2026 precisely because it is reached from five different places and a page could describe only one of them. The single hard-coded material banner below is the symptom that forced the change. The owning document also carries the blocked-bay release rule (Q23), which this section predates.
 
 **Who:** Any operator (FL1, FL2, or supervisor)
 **When:** Material fails visual inspection, SPC, or any in-process quality check
@@ -1440,7 +1407,7 @@ The machine tab selector (FL1 / FL2 / FL3 / All Lines) controls which machine's 
 ## Dashboard 11 — Roll Adjust
 > **Scope: MVP-1.**
 
-> **Owning specification: [RollAdjust.md](../MVP-1/RequirementDocuments/RollAdjust.md)** (consolidated out of this file 11 Aug 2026). **This is no longer a screen** — it is a dialog over the paused run.
+> **Owning specification: [RollAdjust.md](../MVP-1/ProjectPlan/Business/Screens/RollAdjust.md)** (consolidated out of this file 11 Aug 2026). **This is no longer a screen** — it is a dialog over the paused run.
 >
 > **Two defects in this section were corrected in the owning document rather than carried across.** First, the *"Who"* line below says **FL1 / FL2 Operator**, the Dashboard Inventory says **FL3 Operator**, and the DB3 quick-action table says **FL3 only** — three statements, three answers, and **all three are wrong or incomplete**. `FR-107`–`FR-109` and all three active-run mockups agree: **Roll Adjust is on FL2 and FL3, and not on FL1.** Second, the wireframe's roll-gap table is **internally inconsistent**: the 4 Aug 2026 three-stand correction left five rows for three stands, with `S1` and `S2` each appearing twice and one row labelled *"S2 (final)"* when **S3** is the final stand. The owning document renders it as three position-identified rows — S1 (8″), S2 (6″), S3 (6″, never bypassed).
 
@@ -1594,12 +1561,12 @@ Shows the last 3 roll adjustments against the active pass schedule (across all r
 ## Dashboard 12 — Rod Checkout
 > **Scope: MVP-1.**
 
-> **Owning specification: [RodCheckout.md](../MVP-1/RequirementDocuments/RodCheckout.md)**. **This is no longer a screen** — it is a dialog. The owning document defines three modes (A pre-run, B mid-run, P pre-check-out) and records that rod checkout is a *resume outcome* rather than a pause reason (OI-14). Reproduced here as the design record only; the owning document is authoritative.
+> **Owning specification: [RodCheckout.md](../MVP-1/ProjectPlan/Business/Screens/RodCheckout.md)**. **This is no longer a screen** — it is a dialog. The owning document defines three modes (A pre-run, B mid-run, P pre-check-out) and records that rod checkout is a *resume outcome* rather than a pause reason (OI-14). Reproduced here as the design record only; the owning document is authoritative.
 
 **Who:** FL1 Operator
 **When:** A rod must be removed from a payoff position before the run completes naturally
 **Purpose:** Formally close out a checked-in rod without a weld event, run completion, or WIP rejection; preserve traceability and reset the payoff position
-**Full analysis:** [RodCheckout.md](../MVP-1/RequirementDocuments/RodCheckout.md)
+**Full analysis:** [RodCheckout.md](../MVP-1/ProjectPlan/Business/Screens/RodCheckout.md)
 
 Two modes exist depending on whether footage has been produced:
 
@@ -1705,7 +1672,7 @@ Accessible only from the Pause Run dialog (Dashboard 3 → Pause Run → fourth 
 
 ### Open Questions
 
-See [RodCheckout.md](../MVP-1/RequirementDocuments/RodCheckout.md) — Open Questions OQ-A through OQ-D for items that require customer confirmation before implementation.
+See [RodCheckout.md](../MVP-1/ProjectPlan/Business/Screens/RodCheckout.md) — Open Questions OQ-A through OQ-D for items that require customer confirmation before implementation.
 
 ---
 
@@ -1806,11 +1773,11 @@ Any screen   ─[topbar More Options tile]───────► Dashboard 2A
 
 | Document | Purpose |
 |----------|---------|
-| [`../MVP-1/RequirementDocuments/`](../MVP-1/RequirementDocuments/) | **The owning requirement documents for every screen in this file** — client-facing, with sign-off sheets |
+| [`../MVP-1/ProjectPlan/Business/Screens/`](../MVP-1/ProjectPlan/Business/Screens/) | **The owning requirement documents for every screen in this file** — client-facing, with sign-off sheets |
 | [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) | Open questions register — **99 items** (authoritative for decisions) |
 | [FlatWirePlan.md](FlatWirePlan.md) | Implementation plan — scope, milestones, risks. **Partially superseded**: dead timeline and pre-May-21 equipment |
 | [FlatWireEndToEndProcess.md](FlatWireEndToEndProcess.md) | End-to-end process reference — 11 stages. **Partially superseded**: FM2 description predates the May 21 and Aug 4 corrections |
 | [FlatWireProcessWalkthrough.md](FlatWireProcessWalkthrough.md) | Sequential operator walkthrough, and the `Known Source Conflicts` arbitration table |
 | [`../LatestDocument/FlatWire_MasterSpecification.md`](../LatestDocument/FlatWire_MasterSpecification.md) | Reconciliation authority when two documents disagree (§10), and the `OI-##` register |
-| [`../MVP-1/Mockups/`](../MVP-1/Mockups/) | **The approved visual baseline.** The ASCII wireframes in this file are a design record, not the pixels |
+| [`../MVP-1/ProjectPlan/Frontend/Mockups/`](../MVP-1/ProjectPlan/Frontend/Mockups/) | **The approved visual baseline.** The ASCII wireframes in this file are a design record, not the pixels |
 | Flat Wire Machine - Big Beautiful Diagram.png | Equipment layout schematic |

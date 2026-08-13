@@ -296,10 +296,10 @@ Recorded as direction, not as commitments in the current scope.
 | Document | Relationship |
 |---|---|
 | [Pass Schedule Generation](PassScheduleGenerationSpec.md) | **The authority on the generation engine** — calculations, master data, validations |
-| [Rod and Spool Check-in](../../MVP-1/RequirementDocuments/RocCheckin.md) | Where the schedule is resolved, confirmed, acknowledged and pushed |
-| [SPC Checkpoint](../../MVP-1/RequirementDocuments/SPCCheckpoint.md) | The verification a configuration change raises |
-| [Die Change and Die Management](../../MVP-1/RequirementDocuments/DieChangeAndManagement.md) | Die sizes are schedule parameters; a size change is a configuration change |
-| [PLC Tag Specification](../../MVP-1/RequirementDocuments/PLCTagSpecification.md) | What of this record is pushed to the machine, and the rule that approving a schedule configures nothing |
+| [Rod and Spool Check-in](../../MVP-1/ProjectPlan/Business/Screens/RocCheckin.md) | Where the schedule is resolved, confirmed, acknowledged and pushed |
+| [SPC Checkpoint](../../MVP-1/ProjectPlan/Business/Screens/SPCCheckpoint.md) | The verification a configuration change raises |
+| [Die Change and Die Management](../../MVP-1/ProjectPlan/Business/Screens/DieChangeAndManagement.md) | Die sizes are schedule parameters; a size change is a configuration change |
+| [PLC Tag Specification](../../MVP-1/ProjectPlan/Architecture/PLCTagSpecification.md) | What of this record is pushed to the machine, and the rule that approving a schedule configures nothing |
 
 ---
 

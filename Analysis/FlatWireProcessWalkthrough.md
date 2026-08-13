@@ -37,7 +37,7 @@ This document **does not introduce new requirements**. It is a navigational over
 
 ## B. Pre-Check-in — Rod Staged at the Payoff
 
-8. **Rod moved to the VPS** (Variable Position Payoff) — dual position, eye-to-sky, 9,000 lb per position. Rod is staged against an intended payoff position (1 or 2) on **Dashboard 2A — Rod Pre-Check-in Station**, recorded as a `RodStaging` row, and may later carry the `IsWelded` flag once the operator records the weld. One rod per bay is enforced by the database. Full detail: [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md).
+8. **Rod moved to the VPS** (Variable Position Payoff) — dual position, eye-to-sky, 9,000 lb per position. Rod is staged against an intended payoff position (1 or 2) on **Dashboard 2A — Rod Pre-Check-in Station**, recorded as a `RodStaging` row, and may later carry the `IsWelded` flag once the operator records the weld. One rod per bay is enforced by the database. Full detail: [RodPreCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md).
 
    > **DECIDED (client, 30 Jul 2026) — `RECEIVED → STAGED` is correct, and this document is the winning source (Q68).** `coils.coil_status` becomes **`INFLAT` only when the rod is actually checked in at FL1**, and there is **no intermediate status** for a rod that is welded but not yet checked in. ~~The SRS §4.2 `PCI` data note has pre-check-in setting `coil_status = INFLAT`; the interim design followed it, making rod status `STAGED` vestigial for FL1.~~ **That note is superseded** for the status, and rod status `STAGED` is the real staging status. Unblocks the Phase 4 staging build.
    >
@@ -49,7 +49,7 @@ This document **does not introduce new requirements**. It is a navigational over
 
 ## C. Rod Check-in (Dashboard 2, FL1 / FL3) — the Gate for Everything
 
-10. **Operator opens the 6-step guided wizard** (`MVP-1/Mockups/dashboard_2_rod_checkin.html`): ① Visual Inspection → ② Pass Schedule → ③ Pre-run SPC → ④ Die Block (DB1 · DB2) → ⑤ Rolling Mill (FM1) → ⑥ Lube & Safety. Tabs unlock in sequence.
+10. **Operator opens the 6-step guided wizard** (`MVP-1/ProjectPlan/Frontend/Mockups/dashboard_2_rod_checkin.html`): ① Visual Inspection → ② Pass Schedule → ③ Pre-run SPC → ④ Die Block (DB1 · DB2) → ⑤ Rolling Mill (FM1) → ⑥ Lube & Safety. Tabs unlock in sequence.
 
 11. **Bundle data entered:** rod alpha (scanned or typed, validated against the R-series), diameter, gross/net weight, payoff position. Alloy, temper, and diameter pre-populate from the PO/order. **FL1 has no edger** — no edge-set fields appear on this screen.
 
@@ -213,15 +213,15 @@ Terminology rule throughout: always "flat wire," never "strip."
 |---|---|
 | [FlatWireEndToEndProcess.md](FlatWireEndToEndProcess.md) | Stage-by-stage process reference; equipment capacity table; scrap dispositions |
 | [FlatWirePlan.md](FlatWirePlan.md) | Rod receiving validations, pre-check-in inspection, planning and machines application changes |
-| [RocCheckin.md](../MVP-1/RequirementDocuments/RocCheckin.md) | "Acknowledge & Begin Check-in" flow for Dashboards 2 and 5 (steps 13–17, 33) |
-| [Spool.md](../MVP-1/RequirementDocuments/Spool.md) | Spool lifecycle, anneal alpha handling, planning allocation and remainder (steps 28–33) |
-| [SpoolCompletionNotification.md](../MVP-1/RequirementDocuments/SpoolCompletionNotification.md) | Operator alert at 75 / 90 / 100 % of target spool weight as the take-up fills (step 28) |
-| [RodCheckout.md](../MVP-1/RequirementDocuments/RodCheckout.md) | Pre-run and mid-run checkout, PLC line-state gatekeeper rule (step 27) |
-| [PartialRodReCheckin.md](../MVP-1/RequirementDocuments/PartialRodReCheckin.md) | Carry-forward design for re-checking-in a partially run rod |
-| [WeldEvent.md](../MVP-1/RequirementDocuments/WeldEvent.md) | Weld traceability detail (step 21) |
-| [SPCCheckpoint.md](../MVP-1/RequirementDocuments/SPCCheckpoint.md) | Checkpoint types, tolerances, disposition rules (step 24) |
-| [DieChangeAndManagement.md](../MVP-1/RequirementDocuments/DieChangeAndManagement.md) | Die change flow and tooling inventory (step 22) |
+| [RocCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RocCheckin.md) | "Acknowledge & Begin Check-in" flow for Dashboards 2 and 5 (steps 13–17, 33) |
+| [Spool.md](../MVP-1/ProjectPlan/Business/Spool.md) | Spool lifecycle, anneal alpha handling, planning allocation and remainder (steps 28–33) |
+| [SpoolCompletionNotification.md](../MVP-1/ProjectPlan/Business/Screens/SpoolCompletionNotification.md) | Operator alert at 75 / 90 / 100 % of target spool weight as the take-up fills (step 28) |
+| [RodCheckout.md](../MVP-1/ProjectPlan/Business/Screens/RodCheckout.md) | Pre-run and mid-run checkout, PLC line-state gatekeeper rule (step 27) |
+| [PartialRodReCheckin.md](../MVP-1/ProjectPlan/Business/PartialRodReCheckin.md) | Carry-forward design for re-checking-in a partially run rod |
+| [WeldEvent.md](../MVP-1/ProjectPlan/Business/Screens/WeldEvent.md) | Weld traceability detail (step 21) |
+| [SPCCheckpoint.md](../MVP-1/ProjectPlan/Business/Screens/SPCCheckpoint.md) | Checkpoint types, tolerances, disposition rules (step 24) |
+| [DieChangeAndManagement.md](../MVP-1/ProjectPlan/Business/Screens/DieChangeAndManagement.md) | Die change flow and tooling inventory (step 22) |
 | [FlatWireShopfloorDashboards.md](FlatWireShopfloorDashboards.md) | All dashboard specifications referenced by number |
-| [PLCTagSpecification.md](../MVP-1/RequirementDocuments/PLCTagSpecification.md) | The machine tag surface — what is written at each step, what is read, and the tag lifecycle across all sixteen moments |
+| [PLCTagSpecification.md](../MVP-1/ProjectPlan/Architecture/PLCTagSpecification.md) | The machine tag surface — what is written at each step, what is read, and the tag lifecycle across all sixteen moments |
 | [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) | Open decisions that affect steps above (~59 items) |
 | [`../MVP-1/ProjectPlan/Architecture/Architecture.md`](../MVP-1/ProjectPlan/Architecture/Architecture.md) | §0.3 domain cheat-sheet (authoritative equipment facts, alphas, hub events), §0.4 real-time architecture |

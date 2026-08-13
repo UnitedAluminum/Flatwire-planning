@@ -62,8 +62,8 @@ schedule) and the Phase 11 shift summary are the roadmap homes; see
 
 **Effort:** Phase 2 is **231 h** all-in (**95 h** development) and moved whole;
 `FW-069`'s share of Phase 11 is the **32 h** development carve. Basis:
-[`../../MVP-1/DevelopmentPlan/CapacityAndEffortModel.md`](../../MVP-1/ProjectPlan/Development/CapacityAndEffortModel.md) §3b and
-[`../../MVP-1/DevelopmentPlan/DevelopmentEffortModel.md`](../../MVP-1/ProjectPlan/Development/DevelopmentEffortModel.md) §3.
+[`CapacityAndEffortModel.md`](../../MVP-1/ProjectPlan/Development/CapacityAndEffortModel.md) §3b and
+[`DevelopmentEffortModel.md`](../../MVP-1/ProjectPlan/Development/DevelopmentEffortModel.md) §3.
 
 ---
 

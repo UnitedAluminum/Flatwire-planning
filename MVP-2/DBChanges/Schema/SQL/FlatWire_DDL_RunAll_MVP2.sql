@@ -10,7 +10,7 @@
 -- welding-wire customer certificates are produced from, which is an
 -- MVP-1 obligation even though the DB7/DB7b SCREENS stay deferred.
 --
--- PREREQUISITE: MVP-1/DBChanges/Schema/SQL/FlatWire_DDL_RunAll.sql
+-- PREREQUISITE: MVP-1/ProjectPlan/Database/Schema/SQL/FlatWire_DDL_RunAll.sql
 -- must have been run first. This chain is purely ADDITIVE.
 --
 -- REQUIRES SQLCMD MODE (`:r` and `:on error exit` are SQLCMD-only):
