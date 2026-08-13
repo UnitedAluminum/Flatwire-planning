@@ -1,12 +1,12 @@
 # Flat Wire Mill — API Contract
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — **`APIContracts.md` absorbed and deleted.** Four endpoint sections added (§4.5a `unstage`, §4.6a `checkin/spool`, §4.6b `spools`, §4.7a `run/active`) which this contract indexed but never specified, plus worked request/response examples on 16 endpoints *(body otherwise August 4, 2026)*
+**Last Updated:** August 13, 2026 — **`04-APIContract.md` absorbed and deleted.** Four endpoint sections added (§4.5a `unstage`, §4.6a `checkin/spool`, §4.6b `spools`, §4.7a `run/active`) which this contract indexed but never specified, plus worked request/response examples on 16 endpoints *(body otherwise August 4, 2026)*
 **Document Type:** API contract — REST + real-time hub + PLC/OPC surface
 **Status:** Baselined for build — four published defects corrected here; missing endpoint groups in §10
 **Owner:** Backend (.NET) stream
 **Audience:** Frontend and backend developers, integration testers
-**Sources:** [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §6 (**already corrected**) · [`REVIEW.md`](REVIEW.md) Tier 1 · ~~`APIContracts.md`~~ (April 2026 — **absorbed into this document and deleted 13 Aug 2026**; recoverable in git history) · [`../DBChanges/Schema/SQL/`](../DBChanges/Schema/SQL/)
+**Sources:** [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §6 (**already corrected**) · [`REVIEW.md`](REVIEW.md) Tier 1 · ~~`04-APIContract.md`~~ (April 2026 — **absorbed into this document and deleted 13 Aug 2026**; recoverable in git history) · [`../DBChanges/Schema/SQL/`](../DBChanges/Schema/SQL/)
 
 **Companion documents:** `[VS]` [01-VisionAndScope.md](./01-VisionAndScope.md) · `[SRS]` [02-SRS.md](./02-SRS.md) · `[HLD]` [03-HLD-and-ERDiagram.md](./03-HLD-and-ERDiagram.md) · `[SP]` [05-SprintPlanAndBacklog.md](./05-SprintPlanAndBacklog.md) · `[TP]` [06-TestPlanAndTestCases.md](./06-TestPlanAndTestCases.md) · `[DR]` [07-DeploymentRunbookAndRollback.md](./07-DeploymentRunbookAndRollback.md)
 

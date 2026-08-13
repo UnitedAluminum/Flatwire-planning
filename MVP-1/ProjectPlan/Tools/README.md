@@ -24,10 +24,10 @@ Renders a client-facing specification from `MVP-1/RequirementDocuments/*.md` to 
 
 ```bash
 # Rebuild the PLC tag specification (the default)
-python MVP-1/DevelopmentPlan/Tools/build_docx.py
+python MVP-1/ProjectPlan/Tools/build_docx.py
 
 # Any other spec
-python MVP-1/DevelopmentPlan/Tools/build_docx.py \
+python MVP-1/ProjectPlan/Tools/build_docx.py \
   MVP-1/RequirementDocuments/SomeSpec.md \
   MVP-1/SRS/SomeSpec.docx \
   "Flat Wire - Some Spec"
@@ -110,8 +110,8 @@ print(txt.count('☐'), 'checkboxes')     # sign-off sheet intact
 ## `build_questions_xlsx.py` — the client questions workbook
 
 ```bash
-python MVP-1/DevelopmentPlan/Tools/build_questions_xlsx.py            # → MVP-1/SRS/FlatWire_ClientQuestions.xlsx
-python MVP-1/DevelopmentPlan/Tools/build_questions_xlsx.py other.xlsx
+python MVP-1/ProjectPlan/Tools/build_questions_xlsx.py            # → MVP-1/SRS/FlatWire_ClientQuestions.xlsx
+python MVP-1/ProjectPlan/Tools/build_questions_xlsx.py other.xlsx
 ```
 
 **Requires** `openpyxl` (tested against 3.1.5).
@@ -150,8 +150,8 @@ in Excel and the write will fail.
 ## `build_coverage_matrix.py` — does every requirement reach a test case?
 
 ```bash
-python MVP-1/DevelopmentPlan/Tools/build_coverage_matrix.py           # check; exit 1 on a hole
-python MVP-1/DevelopmentPlan/Tools/build_coverage_matrix.py --emit    # also print the per-FR table
+python MVP-1/ProjectPlan/Tools/build_coverage_matrix.py           # check; exit 1 on a hole
+python MVP-1/ProjectPlan/Tools/build_coverage_matrix.py --emit    # also print the per-FR table
 ```
 
 **Requires** nothing — standard library only. **Run it after editing either `02-SRS.md` or

@@ -6,7 +6,7 @@
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** July 26, 2026
 **Document Type:** Final Schema — Pass Schedule Tables
-**Source:** Derived from `FlatWireTables.md` recommendations
+**Source:** Derived from `FlatWireSchema_Mapping.md` recommendations
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `SQL/FlatWire_DDL_02_Schedule.sql`
 
 Pass schedules define the complete tooling configuration and dimensional targets for a flat wire production run. A schedule header (`PassSchedule`) specifies alloy, line, targets, and speed ranges. Its component rows (`PassScheduleComponent`) define each tool station in the pass sequence.

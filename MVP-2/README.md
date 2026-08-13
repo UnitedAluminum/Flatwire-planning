@@ -32,7 +32,7 @@ MVP-2/
 | [`ProjectPlan/`](ProjectPlan/) | Requirements, endpoints, backlog rows and test cases for the five deferred screens, **copied verbatim** | **Deliberately not self-contained** — cross-cutting sections (domain model, response envelope, NFRs, test strategy) stayed in MVP-1 and are cited, never copied. [Index](ProjectPlan/00-README.md) |
 | [`DBChanges/`](DBChanges/) | **3** of the 28 tables (the pass-schedule group), 10 of 43 FKs, 6 of 47 indexes, 1 of 3 programmability objects | **Four of those FKs sit on MVP-1 tables**, and the runner is ordered seed-before-constrain because MVP-1 already seeded rows that point here. **`CoilOutput` and `CoilTraceability` are MVP-1** — the DB7/DB7b *screens* are deferred but the coil genealogy behind the welding-wire certs is not. [README](DBChanges/README.md) |
 | [`Analysis/`](Analysis/) | **3 of the register's 99 open questions** — `OI-88` (the only unambiguously MVP-2 one), `Q83` and `Q62`. **Copied, not moved:** [`../Analysis/FlatWireOpenQuestions.md`](../Analysis/FlatWireOpenQuestions.md) stays the master and keeps all 99 rows, so every inbound `OQ-##` still resolves there | **Mirrored** — nothing renumbered or deleted |
-| [`DevelopmentPlan/`](DevelopmentPlan/) | **Phase 2 whole** (with its 231 h), **two partial phase files** (DB10, Die Management) and the generation-spec prompt | **Effort is not apportioned** — only Phase 2 carries a real figure. The descope ladder cannot supply the rest: rung 5 bundles the MVP-2 Die Management screen with the MVP-1 role UI, rung 6 defers MVP-1 reports. Phases 9/11/13 still carry their whole hours in MVP-1, which **overstates** it. [README](DevelopmentPlan/README.md) |
+| [`ProjectPlan/`](DevelopmentPlan/) | **Phase 2 whole** (with its 231 h), **two partial phase files** (DB10, Die Management) and the generation-spec prompt | **Effort is not apportioned** — only Phase 2 carries a real figure. The descope ladder cannot supply the rest: rung 5 bundles the MVP-2 Die Management screen with the MVP-1 role UI, rung 6 defers MVP-1 reports. Phases 9/11/13 still carry their whole hours in MVP-1, which **overstates** it. [README](DevelopmentPlan/README.md) |
 
 ### Screens — `Mockups/`
 
@@ -59,7 +59,7 @@ MVP-2/
 
 `PassScheduleGenerationSpec.docx` — the Word rendering of `RequirementDocuments/PassScheduleGenerationSpec.md`. **The `.md` is the source; the `.docx` is generated output** — edit the markdown and re-render, never the `.docx`.
 
-> **One build dependency crosses the scope boundary.** [`MVP-1/DevelopmentPlan/Tools/build_docx.py`](../MVP-1/ProjectPlan/Tools/build_docx.py) opens this `.docx` as its **branding template** — it strips the body and keeps the final `<w:sectPr>`, which carries the header logo and confidentiality footer — so it is what makes *every* client deliverable branded, including MVP-1's `PLCTagSpecification.docx`. Its `TPL` path was updated to `MVP-2/SRS/` on the move. **Do not delete or rename this file** on the assumption that MVP-2 content is inert; the MVP-1 renderer stops working if you do.
+> **One build dependency crosses the scope boundary.** [`MVP-1/ProjectPlan/Tools/build_docx.py`](../MVP-1/ProjectPlan/Tools/build_docx.py) opens this `.docx` as its **branding template** — it strips the body and keeps the final `<w:sectPr>`, which carries the header logo and confidentiality footer — so it is what makes *every* client deliverable branded, including MVP-1's `PLCTagSpecification.docx`. Its `TPL` path was updated to `MVP-2/SRS/` on the move. **Do not delete or rename this file** on the assumption that MVP-2 content is inert; the MVP-1 renderer stops working if you do.
 
 ## The die document was split, not moved
 
@@ -96,7 +96,7 @@ Four followed from the exclusion. **Two have since been decided** and are struck
 
 Propagation was **not** done. Links were repointed so nothing dangles, but the *scope claims* in these files are now stale:
 
-- `MVP-1/DevelopmentPlan/ShopfloorPlan/phase-11`, `phase-13` — full phase specs, now carrying **both** an MVP-1 and a both-scopes effort figure *(`phase-02` is wholly MVP-2; `phase-09` is wholly MVP-1)*
+- `MVP-1/ProjectPlan/ShopfloorPlan/phase-11`, `phase-13` — full phase specs, now carrying **both** an MVP-1 and a both-scopes effort figure *(`phase-02` is wholly MVP-2; `phase-09` is wholly MVP-1)*
 - [`back-matter.md`](../MVP-1/ProjectPlan/ShopfloorPlan/back-matter.md) — dependency chain, milestone calendar, gaps register
 - [`FlatWire_MasterSpecification.md`](../LatestDocument/FlatWire_MasterSpecification.md) — the OEE screen section, the dashboard inventory rows, and the *"20 approved screens"* list *(the DB7/DB7b sections are correct again — those screens returned to MVP-1)*
 - [`02-SRS.md`](../MVP-1/ProjectPlan/02-SRS.md) — the OEE screen references and inventory rows *(§5.16/§5.17 for DB7/DB7b were restored on 11 Aug 2026 and are current)*

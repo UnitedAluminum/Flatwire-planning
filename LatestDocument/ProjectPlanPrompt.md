@@ -34,18 +34,18 @@ Create the directory `MVP-1/ProjectPlan/` and write exactly these seven markdown
 
 Optionally also write `00-README.md` — a one-page index of the seven with a read order and a "which document is authoritative for what" table. Nothing else. Do not create sub-folders, do not emit `.docx`, do not write `.sql`, `.ts` or `.cs` files.
 
-**Do not modify any existing file in this repository.** `Analysis/`, `MVP-1/DevelopmentPlan/`, `MVP-1/Mockups/`, `MVP-1/SRS/`, `BaseDocuments/` and `LatestDocument/FlatWire_MasterSpecification.md` are read-only inputs for this task. Everything you write goes in `MVP-1/ProjectPlan/`.
+**Do not modify any existing file in this repository.** `Analysis/`, `MVP-1/ProjectPlan/`, `MVP-1/Mockups/`, `MVP-1/SRS/`, `BaseDocuments/` and `LatestDocument/FlatWire_MasterSpecification.md` are read-only inputs for this task. Everything you write goes in `MVP-1/ProjectPlan/`.
 
 ## 2. Source hierarchy — read in this order, and obey this precedence
 
 1. **`LatestDocument/FlatWire_MasterSpecification.md`** (3,415 lines, Jul 30 2026) — the **primary input**. It is already a reconciliation of the whole repo, section-mapped as: §1 exec summary · §2 domain/glossary · §3 process flows · §4 functional requirements (`FR-###`) · §5 data model · §6 API & real-time · §7 UI · §8 architecture/integration · §9 delivery roadmap · §10 decisions register · §11 open issues (`OI-##`) · Appendix A provenance. Read it **in full** before writing anything. Most of your content is a re-cut of this document for a specific audience — so read it once, cut it many ways.
 2. **`MVP-1/DBChanges/Schema/SQL/*.sql`** — authoritative for column-level types, nullability, constraints, indexes and FKs. `FlatWire_ERDiagram_Documentation.md` describes the as-built schema.
 3. **`MVP-1/Mockups/*.html`** — authoritative for pixel-level layout and screen behaviour. `MVP-1/Mockups/flat-wire-shopfloor.styles.scss` is the token system.
-4. **`MVP-1/DevelopmentPlan/ShopfloorPlan/`** — `00-foundations.md` (§0.2 reference-code map, §0.3 domain cheat-sheet, §0.4 real-time architecture, §0.5 stub-first delivery contract), `phase-01..14-*.md`, `back-matter.md` (dependency chain, milestone calendar, gaps register **G1–G18**).
-5. **`MVP-1/DevelopmentPlan/CapacityAndEffortModel.md`** — the effort/capacity arithmetic behind the sprint plan (streams, unit-rate card, per-phase hours, descope ladder).
-6. **`MVP-1/DevelopmentPlan/REVIEW.md`** — the audit of known contradictions between docs. **Consult it before trusting any single spec**; it tells you which document wins.
+4. **`MVP-1/ProjectPlan/ShopfloorPlan/`** — `00-foundations.md` (§0.2 reference-code map, §0.3 domain cheat-sheet, §0.4 real-time architecture, §0.5 stub-first delivery contract), `phase-01..14-*.md`, `back-matter.md` (dependency chain, milestone calendar, gaps register **G1–G18**).
+5. **`MVP-1/ProjectPlan/CapacityAndEffortModel.md`** — the effort/capacity arithmetic behind the sprint plan (streams, unit-rate card, per-phase hours, descope ladder).
+6. **`MVP-1/ProjectPlan/REVIEW.md`** — the audit of known contradictions between docs. **Consult it before trusting any single spec**; it tells you which document wins.
 7. **`Analysis/*.md`** — per-topic prose specs; `FlatWireOpenQuestions.md` is the authoritative decision register (`OQ-##`).
-8. **`MVP-1/DevelopmentPlan/APIContracts.md`**, `FlatWireTables.md`, `TechStackRecommendation.md` — **April 29–30 2026 vintage, superseded where they disagree with the July 26 roadmap and the master spec.** Mine them for detail, never for precedence. **`FlatWireJiraStories.md` is no longer in this group** — it was rewritten on 13 Aug 2026 as the **authoritative MVP-1 backlog** (**116 stories / 3,292 h**, four even two-week sprints, sized in **hours** off `CapacityAndEffortModel.md` §2 and reconciling to its §3b). Treat it as current and as the source for story ids, sprint assignment and per-story effort. `APIContracts.md` carries four known Tier-1 correctness bugs already corrected in master spec §6 — use the corrected version.
+8. **`MVP-1/ProjectPlan/APIContracts.md`**, `FlatWireSchema_Mapping.md`, `03-HLD-and-ERDiagram.md` §14 — **April 29–30 2026 vintage, superseded where they disagree with the July 26 roadmap and the master spec.** Mine them for detail, never for precedence. **`05-SprintPlanAndBacklog.md` is no longer in this group** — it was rewritten on 13 Aug 2026 as the **authoritative MVP-1 backlog** (**116 stories / 3,292 h**, four even two-week sprints, sized in **hours** off `CapacityAndEffortModel.md` §2 and reconciling to its §3b). Treat it as current and as the source for story ids, sprint assignment and per-story effort. `04-APIContract.md` carries four known Tier-1 correctness bugs already corrected in master spec §6 — use the corrected version.
 9. ~~**`MVP-1/SRS/Shopfloor_Flat_wireSRS_Consolidated_v3.docx`**~~ — **removed from the repository 1 Aug 2026** (git history `6096921`). Read [`ProjectPlan/02-SRS.md`](../MVP-1/ProjectPlan/02-SRS.md) instead; it carries the rule text. Was the delivered SRS; source of the `OL`/`PCI`/`CHK`/`WLD`/`PSM`/`SPC`/`NFR`/… requirement IDs. Read via the master spec's citations rather than re-extracting the `.docx`.
 10. **`BaseDocuments/`** — read-only business source `.docx`/`.xlsx`. Cite, don't re-derive.
 11. **`../CLAUDE.md`** (`c:\UAL\CLAUDE.md`) — the ecosystem stack conventions the implementation must live inside.
@@ -166,7 +166,7 @@ Required sections:
 
 ### Doc 4 — `04-APIContract.md`
 
-**Audience:** frontend and backend developers, integration testers. **Primary source:** master spec §6 (**already corrected** — it fixes four Tier-1 bugs present in `MVP-1/DevelopmentPlan/APIContracts.md`); cross-check `REVIEW.md` Tier 1 before carrying anything from the April contract.
+**Audience:** frontend and backend developers, integration testers. **Primary source:** master spec §6 (**already corrected** — it fixes four Tier-1 bugs present in `MVP-1/ProjectPlan/APIContracts.md`); cross-check `REVIEW.md` Tier 1 before carrying anything from the April contract.
 
 Required sections:
 
@@ -183,7 +183,7 @@ Required sections:
 
 ### Doc 5 — `05-SprintPlanAndBacklog.md`
 
-**Audience:** delivery lead, scrum team, programme management. **Primary source:** master spec §9; `MVP-1/DevelopmentPlan/CapacityAndEffortModel.md`; `ShopfloorPlan/back-matter.md`; `FlatWireJiraStories.md`.
+**Audience:** delivery lead, scrum team, programme management. **Primary source:** master spec §9; `MVP-1/ProjectPlan/CapacityAndEffortModel.md`; `ShopfloorPlan/back-matter.md`; `05-SprintPlanAndBacklog.md`.
 
 Required sections:
 

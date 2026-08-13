@@ -3,7 +3,7 @@
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** August 6, 2026
 **Document Type:** Final Schema — Quality Control & Output Tables
-**Source:** the April gap analysis, absorbed into `FlatWireSchema_Mapping.md`’s appendix on 13 Aug 2026 when `FlatWireTables.md` was deleted
+**Source:** the April gap analysis, absorbed into `FlatWireSchema_Mapping.md`’s appendix on 13 Aug 2026 when `FlatWireSchema_Mapping.md` was deleted
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `SQL/FlatWire_DDL_05_QualityOutput.sql`
 
 These tables capture SPC measurement sessions, material rejections, and the finished output coils produced by a run. Together they provide full quality traceability from raw rod through to the finished coil.

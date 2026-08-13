@@ -14,7 +14,7 @@
 **Effort:** **370 h** (46.2 d) — FE 224 · RT 44 · QA 54 · cont. 48 · **Window:** W0 (to Aug 14, 12 working days = 96 h/person) · ⚠ **needs 3.8 FTE on this layer alone** — see model §4
 
 > ### ⏱ Due: **14 Aug 2026** (Phase-1 gate)
-> Phase 1 must be complete by **14 Aug 2026** (user mandate; supersedes the roadmap's W1 = Aug 17–23). Today is Jul 26 → ~2.5 working weeks. 1A/1B/1C run **in parallel** and converge only on the shared API contract (`APIContracts.md`) + seed fixtures. This layer is not blocked by 1B/1C because it develops against the **mock** API + **mock** SignalR (`useMockData: true`).
+> Phase 1 must be complete by **14 Aug 2026** (user mandate; supersedes the roadmap's W1 = Aug 17–23). Today is Jul 26 → ~2.5 working weeks. 1A/1B/1C run **in parallel** and converge only on the shared API contract (`04-APIContract.md`) + seed fixtures. This layer is not blocked by 1B/1C because it develops against the **mock** API + **mock** SignalR (`useMockData: true`).
 
 ## Objective
 Stand up a reusable, authenticated, routable `flat-wire-shopfloor` Angular library so every later
@@ -23,7 +23,7 @@ a DI-swappable **real/mock** client and a purpose-built SignalR service.
 
 ## Dependencies
 - **Blocking:** none for the mock path. `shared` foundational services must exist (they do).
-- **Converges with:** 1B (`APIContracts.md` envelope + endpoints) and 1C (seed fixtures `R00041–R00043`, `SP-00021`, `PS-1100-FL1-003`, `RUN-0042/0043`) — used to shape the mock service.
+- **Converges with:** 1B (`04-APIContract.md` envelope + endpoints) and 1C (seed fixtures `R00041–R00043`, `SP-00021`, `PS-1100-FL1-003`, `RUN-0042/0043`) — used to shape the mock service.
 - **Backlog:** scaffold portions of FW-060…073 UI shells; client half of FW-080/FW-081.
 
 ## Setup tasks & concrete deliverables
@@ -36,7 +36,7 @@ a DI-swappable **real/mock** client and a purpose-built SignalR service.
 | **Routing** | Lazy-loaded `FLAT_WIRE_ROUTES` under `/flat-wire`; per-line routes e.g. `/flat-wire/line/:lineId/checkin/rod`, `/flat-wire/line/FL2/checkin/spool`, `/flat-wire/line/:lineId/run/active` |
 | **Layout** | Shell layout component: header (line context + operator + clock), sidebar nav to all dashboards, `alert-banner` slot; fixed **1280×1024** shopfloor canvas |
 | **Authentication** | Reuse `shared` `login.service` / `login-api.service` + `token-interceptor.service` (JWT bearer) |
-| **Authorization / route guards** | `FlatWireAuthGuard` (authenticated) + `FlatWireRoleGuard` (Operations-Manager routes — DB9/9A — gated from operator routes) per the Authorization Matrix in `APIContracts.md` |
+| **Authorization / route guards** | `FlatWireAuthGuard` (authenticated) + `FlatWireRoleGuard` (Operations-Manager routes — DB9/9A — gated from operator routes) per the Authorization Matrix in `04-APIContract.md` |
 | **Interceptors** | Reuse `token-interceptor` (JWT), `correlation-id-interceptor`, `global-error-handler-api` — **no new interceptors** |
 | **Shared UI controls (all new, `fw`-prefixed)** | `pass-schedule-table`, `payoff-weight-bar`, `gauge-trace-chart`, `alert-banner`, `action-bar`, `confirm-bar`, standard `.input` with validation states, `payoff-option` selector cards, pass/fail + OK/NG/NA inspection buttons, tab-wizard, SPC tolerance-viz, monospace readouts. Built fresh from the **approved `MVP-1/Mockups/*.html`** — **not** derived from `shop-floor-common`, `checkin-precheckin`, or any existing UI library (§0.2, decision 5) |
 | **Common services** | `line-context.service` (current FL1/FL2/FL3 scope), `run-state.service` (active alpha/footage/payoff via RxJS `BehaviorSubject`s; no NgRx — not used in repo) |

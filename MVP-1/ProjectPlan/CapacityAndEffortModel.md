@@ -23,7 +23,7 @@ G1 and OI-51 record the same defect: 14 phases in ~6.5 weeks with **no capacity 
 
 - Zero occurrences of effort, hours, days, FTE, capacity or velocity anywhere in `ShopfloorPlan/`'s 18 files.
 - No `Owner` on any phase file. Only `phase-01a/01b/01c` carried a doc-control block at all (`REVIEW.md` #53).
-- The one quantified basis — `FlatWireJiraStories.md` — sized its stories against the **dead 5-sprint model**, with no sprint→phase crosswalk (`REVIEW.md` #33; the crosswalk and an hours cross-check were added there 13 Aug 2026).
+- The one quantified basis — `05-SprintPlanAndBacklog.md` — sized its stories against the **dead 5-sprint model**, with no sprint→phase crosswalk (`REVIEW.md` #33; the crosswalk and an hours cross-check were added there 13 Aug 2026).
 
 **A note on the phase count.** OI-51 says *"thirteen workflow phases"*; G1 says *"14 phases"*. **Both are correct and neither is a drift.** `ShopfloorAndRealTimePlan.md` §0 defines Phase 1 as the layer-organised **platform** phase and Phases 2–14 as the **13 business-workflow phases**. The canonical phrasing, used throughout this document, is: **14 phases = 1 platform + 13 workflow phases (2–14)**.
 
@@ -66,7 +66,7 @@ This is the one table this document cannot fill. Until it is filled, §4's gap c
 
 One full-time person available for the whole window contributes **352 h** (44 working days × 8 h). Pro-rate for later start dates and absence. Every phase file's `**Owner:**` line names a **stream**, not a person, and points here.
 
-`TechStackRecommendation.md` asserts only that *"the team is already Angular/.NET"* — it never states team size, which is precisely the hole G1 identifies.
+`03-HLD-and-ERDiagram.md` §14 asserts only that *"the team is already Angular/.NET"* — it never states team size, which is precisely the hole G1 identifies.
 
 ---
 
@@ -159,7 +159,7 @@ The `TOTAL` row is the **raw column sum**: 1,056 + 732 + 352 + 356 + 611 + 84 + 
 
 > **⚠ This cross-check's denominator was retired on 13 Aug 2026.** [05-SprintPlanAndBacklog.md](./05-SprintPlanAndBacklog.md) was rewritten as the sprint-wise MVP-1 backlog and is now **sized in hours, not points** — the point totals below are historical and are preserved in that file's *Appendix A — Retired point basis*. **The cross-check is retained because its two findings are what mattered, and both still stand.** Finding 1 is now **closed**: the rewrite re-derived the backlog from the phase specs and Phase 1 carries **33 stories** where it previously had seven database-only ones. Finding 2 stands as the calibration argument for the §2 rate card. **Do not re-derive an h/point ratio from the current backlog** — it has no points.
 
-The backlog sized the **45 shopfloor stories at 189 points**, split across three files (`FlatWireJiraStories.md` 35 / 147 · `YieldCostAndScrapJiraStories.md` 4 / 11 · `MVP-2/.../FlatWireJiraStories-MVP2.md` 6 / 31). Against 3,660 h that is **19.4 h/point** — about 2½ days per point, roughly double a conventional ~1 day (8 h) per point. The divergence exceeds the 25% investigation threshold, so it was investigated. Two causes, both real:
+The backlog sized the **45 shopfloor stories at 189 points**, split across three files (`05-SprintPlanAndBacklog.md` 35 / 147 · `YieldCostAndScrapJiraStories.md` 4 / 11 · `MVP-2/.../FlatWireJiraStories-MVP2.md` 6 / 31). Against 3,660 h that is **19.4 h/point** — about 2½ days per point, roughly double a conventional ~1 day (8 h) per point. The divergence exceeds the 25% investigation threshold, so it was investigated. Two causes, both real:
 
 1. **The backlog has no story for most of Phase 1.** Epic E01 "Foundation & Infrastructure" is 7 stories / 28 points, and **all seven are database stories** (FW-001 renames, FW-002 `INFLAT`, FW-003 machines, FW-004 alloys, FW-005/006/007 tables). There is **no story anywhere in the backlog** for scaffolding the `flat-wire-shopfloor` Angular library, for creating the `FlatWire` .NET solution and its 13 controllers, or for the OPC ingest and `PLCTagService`. Phase 1 is **1,027 h** against ~28 points of nominal coverage. **This is a backlog gap, not an estimating error** — and it is the single largest reason the window was believed to fit.
 2. **Excluding Phase 1, the ratio is 2,633 h / 161 points = 16.4 h/point.** For touch-screen shopfloor dashboards built to mockup fidelity, with a full vertical slice (UI + MediatR command + validation + DDL + hub event + tests) per phase, ~16 h/point is the more defensible figure. Phase 6 is the clearest illustration: 4 full dashboards + 2 dialogs + 6 endpoints + 5 write tables was sized at 19 points ≈ 152 h if a point is a day — i.e. under 30 h per dashboard *including* backend, database and test. The model prices it at 298 h.

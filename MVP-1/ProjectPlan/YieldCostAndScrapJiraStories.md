@@ -33,7 +33,7 @@
 > **What this document is for:** the **story points and acceptance criteria**. For three of these four stories it is
 > the *only* requirement text that exists anywhere (§3) — which is a defect, not a feature of the document.
 >
-> **Split out of `FlatWireJiraStories.md` on 13 Aug 2026**, mirroring the effort split of the same day. That file's
+> **Split out of `05-SprintPlanAndBacklog.md` on 13 Aug 2026**, mirroring the effort split of the same day. That file's
 > Epic 10 and Epic 11 headings are retained there as pointers, and its Backlog Summary marks both epics *moved*.
 
 > ## ⚠ Phase 12 is wholly deferrable — these four stories *are* descope rungs 1–4

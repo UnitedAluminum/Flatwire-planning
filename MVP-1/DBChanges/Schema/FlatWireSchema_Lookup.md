@@ -3,7 +3,7 @@
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** August 6, 2026
 **Document Type:** Final Schema — Lookup / Configuration Tables
-**Source:** the April gap analysis, absorbed into `FlatWireSchema_Mapping.md`’s appendix on 13 Aug 2026 when `FlatWireTables.md` was deleted
+**Source:** the April gap analysis, absorbed into `FlatWireSchema_Mapping.md`’s appendix on 13 Aug 2026 when `FlatWireSchema_Mapping.md` was deleted
 **Target DB:** `FlatWireDB` (schema `dbo`)
 
 These tables define physical equipment configuration and reference data used throughout the flat wire mill system. They are relatively static — entries are added when equipment is commissioned and soft-deleted via `IsActive` when retired. DDL: `SQL/FlatWire_DDL_01_Lookup.sql`; seed: `SQL/FlatWire_SampleData_Lookup.sql`.

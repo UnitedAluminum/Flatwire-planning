@@ -13,7 +13,7 @@ A single sequential read-through of the flat wire process, from rod procurement 
 
 This document **does not introduce new requirements**. It is a navigational overlay on the existing analysis set — [FlatWireEndToEndProcess.md](FlatWireEndToEndProcess.md) remains the stage-by-stage process reference, and the docs listed under [Related Documents](#related-documents) remain authoritative for their own subject areas.
 
-**Equipment facts used here follow the May 21, 2026 client corrections** recorded in [`../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../MVP-1/ProjectPlan/ShopfloorPlan/00-foundations.md) §0.3, not the April-dated equipment descriptions still present in `FlatWireEndToEndProcess.md`. See [Known Source Conflicts](#known-source-conflicts).
+**Equipment facts used here follow the May 21, 2026 client corrections** recorded in [`../MVP-1/ProjectPlan/ShopfloorPlan/00-foundations.md`](../MVP-1/ProjectPlan/ShopfloorPlan/00-foundations.md) §0.3, not the April-dated equipment descriptions still present in `FlatWireEndToEndProcess.md`. See [Known Source Conflicts](#known-source-conflicts).
 
 ---
 
@@ -194,7 +194,7 @@ This document **does not introduce new requirements**. It is a navigational over
 
 ## Known Source Conflicts
 
-[FlatWireEndToEndProcess.md](FlatWireEndToEndProcess.md) is April 28, 2026-dated and predates the client equipment corrections. Where it disagrees with this walkthrough, the **May 21, 2026 corrections win** ([`../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../MVP-1/ProjectPlan/ShopfloorPlan/00-foundations.md) §0.3):
+[FlatWireEndToEndProcess.md](FlatWireEndToEndProcess.md) is April 28, 2026-dated and predates the client equipment corrections. Where it disagrees with this walkthrough, the **May 21, 2026 corrections win** ([`../MVP-1/ProjectPlan/ShopfloorPlan/00-foundations.md`](../MVP-1/ProjectPlan/ShopfloorPlan/00-foundations.md) §0.3):
 
 | Topic | April source says | Authoritative (May 21, 2026) |
 |---|---|---|
@@ -224,4 +224,4 @@ Terminology rule throughout: always "flat wire," never "strip."
 | [FlatWireShopfloorDashboards.md](FlatWireShopfloorDashboards.md) | All dashboard specifications referenced by number |
 | [PLCTagSpecification.md](../MVP-1/RequirementDocuments/PLCTagSpecification.md) | The machine tag surface — what is written at each step, what is read, and the tag lifecycle across all sixteen moments |
 | [FlatWireOpenQuestions.md](FlatWireOpenQuestions.md) | Open decisions that affect steps above (~59 items) |
-| [`../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../MVP-1/ProjectPlan/ShopfloorPlan/00-foundations.md) | §0.3 domain cheat-sheet (authoritative equipment facts, alphas, hub events), §0.4 real-time architecture |
+| [`../MVP-1/ProjectPlan/ShopfloorPlan/00-foundations.md`](../MVP-1/ProjectPlan/ShopfloorPlan/00-foundations.md) | §0.3 domain cheat-sheet (authoritative equipment facts, alphas, hub events), §0.4 real-time architecture |

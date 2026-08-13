@@ -1,7 +1,7 @@
 """
 Build the client-facing questions workbook.
 
-    python MVP-1/DevelopmentPlan/Tools/build_questions_xlsx.py [output.xlsx]
+    python MVP-1/ProjectPlan/Tools/build_questions_xlsx.py [output.xlsx]
 
 With no arguments it writes MVP-1/SRS/FlatWire_ClientQuestions.xlsx, which is the default below.
 

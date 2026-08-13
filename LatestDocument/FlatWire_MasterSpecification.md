@@ -5,7 +5,7 @@
 **Status:** Consolidated master specification — implementation-ready, with open items listed in §11. The 30 Jul 2026 client answers are applied to **§11 and to the affected body sections** (§3 flow, §4 pre-check-in note, FR-045, §5 `AlloyProperty` and `RodStaging`) — see [`../BaseDocuments/ClientCall_2026-07-30_SyncPlan.md`](../BaseDocuments/ClientCall_2026-07-30_SyncPlan.md)
 **Latest change (6 Aug 2026):** three client corrections from the 6 Aug call — **`OI-13` half-closed** (a welded wire break keeps the **same alpha**; only the persistence target remains, gap **G34**), **`D-27`** (the edgers are **inter-stand roll-formers**, not knives, and **S3 is a skim pass**), and **`D-28`** (**FM2 carries two dancers with two modes**, which qualifies `PSM012` — open as **Q32**/**G35**). See [`../BaseDocuments/ClientCall_2026-08-06_SyncPlan.md`](../BaseDocuments/ClientCall_2026-08-06_SyncPlan.md). **Also 6 Aug:** new **§10.5** records that **`FR-381`/`384`/`385`/`386`/`387` are superseded on the arithmetic** by `PassScheduleGenerationSpec.md` v1.5 — the pre-flatten diameter is a lower bound and needs the edge correction, the final die may not snap down from it, the roll gap sits **below** gauge by a load-dependent term, the finishing-mill test is not the route decision, and the non-hybrid default leaves the skim stand as the only active one. **Contract shape is unaffected; rebuild the five formulas before `FW-013`.**
 **Previous change (4 Aug 2026):** the **FM2 roller-size correction** — FM2 has **three** stands, **S1 = 8", S2 = 6", S3 = 6"** (decision **D-26**, §10.2). This supersedes **D-21**'s "three 6-inch stands" and closes **OI-04** and **OI-36**. Component names are now position-only (`FM2_S1`/`FM2_S2`/`FM2_S3`) and roll diameter is data (`Stand.RollDiameterIn`).
-**Supersedes (as a reading path, not as files):** every artifact in `../Analysis/`, `../MVP-1/DevelopmentPlan/`, `./DBChanges/Schema/`, `../MVP-1/SRS/` and `../BaseDocuments/`. Those files remain the audit trail and are **not** modified by this document. Where two of them disagree, this document states the single resolved answer and records the losing side in §10 or §11.
+**Supersedes (as a reading path, not as files):** every artifact in `../Analysis/`, `../MVP-1/ProjectPlan/`, `./DBChanges/Schema/`, `../MVP-1/SRS/` and `../BaseDocuments/`. Those files remain the audit trail and are **not** modified by this document. Where two of them disagree, this document states the single resolved answer and records the losing side in §10 or §11.
 **Scope of authority:** this document is a *reconciliation*. It is authoritative for what to build. The executable DDL in [`DBChanges/Schema/SQL/`](../MVP-1/DBChanges/Schema/SQL/) remains authoritative for column-level types, and the HTML in [`../MVP-1/Mockups/`](../MVP-1/Mockups/) remains authoritative for pixel-level layout.
 
 ---
@@ -66,14 +66,14 @@ Two things make this module different from every other UAL shopfloor module:
 | Rod receiving (R-series alpha generation, chemistry, suspend logic) | existing CoilReceiving module | a rod row in the shared `coils` table with status `RECEIVED`/`STAGED` |
 | Order planning & line scheduling | existing Planning / Scheduling systems | a rod→order allocation in `planning_routings` and an order→line booking |
 | Coil Yield and Cost Ledger | own module documents | run/traceability data produced here |
-| Web (Orders / Quotes / IQR / Item Template / Alloys / Vendor) | `FlatWireJiraStories.md` Epic E06 | the Flat Wire flag, Bundle Width, Edge Type on the order |
+| Web (Orders / Quotes / IQR / Item Template / Alloys / Vendor) | `05-SprintPlanAndBacklog.md` Epic E06 | the Flat Wire flag, Bundle Width, Edge Type on the order |
 | EDI rod receiving | deferred to Phase 2 | — |
 
-[Scope split per `MVP-1/DevelopmentPlan/ShopfloorAndRealTimePlan.md` scope note and SRS §1.2 / Appendix D.]
+[Scope split per `MVP-1/ProjectPlan/ShopfloorAndRealTimePlan.md` scope note and SRS §1.2 / Appendix D.]
 
 ### 1.4 Non-goals
 
-- **No new frameworks.** Angular 18.2+, .NET 8, SQL Server, SignalR, Chart.js only. No React/Blazor, no separate mobile app, no message broker (Kafka/RabbitMQ) in Phase 1 [`MVP-1/DevelopmentPlan/TechStackRecommendation.md`].
+- **No new frameworks.** Angular 18.2+, .NET 8, SQL Server, SignalR, Chart.js only. No React/Blazor, no separate mobile app, no message broker (Kafka/RabbitMQ) in Phase 1 [`MVP-1/ProjectPlan/TechStackRecommendation.md`].
 - **No printed traveler.** The traveler is fully digital; the "Print Traveler" action is disabled for flat wire. Coil, spool and skid **labels are still printed** [decision Apr 28 2026, `Analysis/FlatWireShopfloorDashboards.md` design principle 8].
 - **No auto-applied pass schedule.** "Generate from Specs" produces a *draft* for human approval; nothing reaches the PLC except by operator acknowledgement at check-in [`PSM003`].
 - **No software stop command to the PLC.** The application is a gatekeeper that reads line state; the operator always stops the machine physically [`RCO007`; `MVP-1/RequirementDocuments/RodCheckout.md`].
@@ -91,11 +91,11 @@ Two things make this module different from every other UAL shopfloor module:
 | Code | **None.** `ual-angular` library `flat-wire-shopfloor` and `ual-api` domain `FlatWire` are both un-started |
 | Decisions | 74 tracked questions; 21 Decided, 8 In Progress, 45 Open — 6 of the Open ones are Critical |
 | Schedule | Phase 1 (platform) due **14 Aug 2026**; feature work **17 Aug → 30 Sep 2026**; UAT 28–30 Sep; on-line trial early Oct 2026 (TBD); production Q4 2026 (TBD) |
-| Effort | **MVP-1 411.5 dev-days (3,292 h)** vs **44 working days** available (32 post-gate) → **9.4 FTE sustained**, 24.5 in W7. *(Both scopes 457.5 d / 3,660 h → 10.4 FTE; the 3,727 h figure quoted before 11 Aug 2026 was a stale TOTAL row.)* See `MVP-1/DevelopmentPlan/CapacityAndEffortModel.md` §3b |
+| Effort | **MVP-1 411.5 dev-days (3,292 h)** vs **44 working days** available (32 post-gate) → **9.4 FTE sustained**, 24.5 in W7. *(Both scopes 457.5 d / 3,660 h → 10.4 FTE; the 3,727 h figure quoted before 11 Aug 2026 was a stale TOTAL row.)* See `MVP-1/ProjectPlan/CapacityAndEffortModel.md` §3b |
 
 **The three things most likely to stop this project** are, in order:
 
-1. **The 30 Sep date is unreachable as scoped — and this is now measured, not feared.** The plan is **465.6 dev-days against 44 working days**: **10.6 people sustained**, **10.7 FTE** for the Phase-1 gate alone, and an arithmetically impossible **27.2 FTE in W7**. Descoping cannot rescue it — the full ladder recovers **12%** (55.9 days, leaving 9.3 FTE), and G1's own stated mitigation is worth **34.5 days ≈ 0.8 FTE**. A programme decision is required: staff to ~11 FTE, move the date (6 FTE → **18 Nov 2026**; 8 FTE → **22 Oct 2026**, both inside the already-planned Q4 window), or cut below the critical path. Gap **G1** / open issue **OI-51**; full derivation in `MVP-1/DevelopmentPlan/CapacityAndEffortModel.md`. *(This was previously third on this list and stated as "no staffing or effort model." The model now exists; the problem it revealed is larger than the missing model was.)*
+1. **The 30 Sep date is unreachable as scoped — and this is now measured, not feared.** The plan is **465.6 dev-days against 44 working days**: **10.6 people sustained**, **10.7 FTE** for the Phase-1 gate alone, and an arithmetically impossible **27.2 FTE in W7**. Descoping cannot rescue it — the full ladder recovers **12%** (55.9 days, leaving 9.3 FTE), and G1's own stated mitigation is worth **34.5 days ≈ 0.8 FTE**. A programme decision is required: staff to ~11 FTE, move the date (6 FTE → **18 Nov 2026**; 8 FTE → **22 Oct 2026**, both inside the already-planned Q4 window), or cut below the critical path. Gap **G1** / open issue **OI-51**; full derivation in `MVP-1/ProjectPlan/CapacityAndEffortModel.md`. *(This was previously third on this list and stated as "no staffing or effort model." The model now exists; the problem it revealed is larger than the missing model was.)*
 2. **The Pass Schedule content itself is still being authored by Operations** — every check-in depends on it, and Phase 2 gates every check-in phase.
 3. **The footage→weight conversion factor (OQ-10 / OI-45) is undefined** — every output weight, yield figure and remaining-weight estimate depends on it, and the choice of dimensional basis also decides whether `FR-153`'s ±2 % threshold is workable.
 
@@ -1061,7 +1061,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 | **FR-390** | Applying shall populate the Dashboard 9 form with the calculated values **highlighted to indicate algorithm-generated origin**, set the status to `Draft`, and replace "Save Changes" with **"Save as Active"**. The highlight clears on save. |
 | **FR-391** | **PLC tags shall never be pushed during generation or apply.** The generate workflow writes only to the pass schedule record. |
 
-> **Worked example, corrected.** `APIContracts.md` publishes a worked example for alloy 1100, rod 0.375", gauge 0.125", width 0.875" that is **internally inconsistent on three counts** (REVIEW Tier 1 #1). The corrected numbers are:
+> **Worked example, corrected.** `04-APIContract.md` publishes a worked example for alloy 1100, rod 0.375", gauge 0.125", width 0.875" that is **internally inconsistent on three counts** (REVIEW Tier 1 #1). The corrected numbers are:
 >
 > | Field | Published (wrong) | Correct |
 > |---|---|---|
@@ -2662,7 +2662,7 @@ The physical line layout is illustrated in [`../MVP-1/Mockups/Flat Wire Machine 
 | Database | `ual-database` | **new `FlatWireDB`**; FW-001 renames stay in the existing shared scheduling schema | DDL written and validated; not deployed |
 | Planning artifacts | `c:\UAL\Flatwire-planning` | this repository — requirements, schema, mockups, roadmap | Complete |
 
-`MVP-1/DevelopmentPlan/Flat Wire.code-workspace` opens this folder alongside both code repositories.
+`MVP-1/ProjectPlan/Flat Wire.code-workspace` opens this folder alongside both code repositories.
 
 **Angular library scaffold:** `ng generate library flat-wire-shopfloor --prefix=fw`, registered in `angular.json` and `tsconfig` paths, added to the `build:shop-floor` npm chain. Folder layout `src/lib/{components, components/shared, services, models, guards, styles}` plus `flat-wire-shopfloor.module.ts`, `flat-wire-shopfloor-routing.ts`, `public-api.ts` — the **standard Angular library layout, not copied from any existing feature library**.
 
@@ -2796,7 +2796,7 @@ The same reasoning applies to pre-check-in, which writes `RodStaging` + `coils` 
 | On-line trial | early **October 2026**, TBD with Tim O. / Shannon R. |
 | Production | after trial acceptance — **Q4 2026**, TBD |
 
-**Superseded targets — do not use.** The April-dated documents carry "machine setup and PLC commissioning complete end of June 2026 · trials 1 July 2026 · production 1 August 2026 · ~10-week window · 5 sprints". Every one of those is dead. `FlatWireJiraStories.md`, `APIContracts.md`, `FlatWireTables.md` and `TechStackRecommendation.md` still print them.
+**Superseded targets — do not use.** The April-dated documents carry "machine setup and PLC commissioning complete end of June 2026 · trials 1 July 2026 · production 1 August 2026 · ~10-week window · 5 sprints". Every one of those is dead. `05-SprintPlanAndBacklog.md`, `04-APIContract.md`, `FlatWireSchema_Mapping.md` and `03-HLD-and-ERDiagram.md` §14 still print them.
 
 > **Known calendar conflict, unresolved.** Phase 1 is due **14 Aug** but the roadmap's own week grid schedules it in W1 = **Aug 17–23**, and milestone M1 sits at **Aug 23**. The gate is the later directive and wins; M1 and QA1 need re-baselining against it. Nobody has done that re-baselining. See OI-40.
 
@@ -2866,7 +2866,7 @@ Upstream (existing CoilReceiving + Planning/Scheduling) ──> feed material an
 
 ### 9.4 Week grid
 
-Working days are **counted, not assumed**: **Labor Day falls on Mon 7 Sep 2026** (inside W4), and W7 holds only 3 days. Effort is in dev-days from `MVP-1/DevelopmentPlan/CapacityAndEffortModel.md`; peak FTE = that week's days ÷ its working days.
+Working days are **counted, not assumed**: **Labor Day falls on Mon 7 Sep 2026** (inside W4), and W7 holds only 3 days. Effort is in dev-days from `MVP-1/ProjectPlan/CapacityAndEffortModel.md`; peak FTE = that week's days ÷ its working days.
 
 | Week | Dates | Wk days | Phases | Effort | Peak FTE | Focus |
 |---|---|---|---|---|---|---|
@@ -2883,7 +2883,7 @@ Working days are **counted, not assumed**: **Labor Day falls on Mon 7 Sep 2026**
 
 **QA milestones:** QA1 (Sep 6) pass-schedule + generator unit/contract suites green · QA2 (Sep 13) check-in rollback + real-time integration verified on staging, **hub load test (N clients × 3 lines × cadence)** · QA3 (Sep 24) FL1 + FL2 E2E pass · QA4 (Sep 28) FL3 hybrid E2E pass, **regression on renamed-column reports** · QA5 (Sep 30) full UAT, all Critical OQs closed.
 
-> **The window does not close as scoped — this is now arithmetic, not judgement.** The 14 phases (1 platform + 13 workflow phases) total **465.6 dev-days** against **32 post-gate working days** (44 including the run-up to the Aug-14 gate): **10.6 people sustained**, a **10.7-FTE Phase-1 gate**, and an arithmetically impossible **27.2 FTE in W7**. The previously recorded mitigation — defer Phase 12 and the non-Critical parts of Phase 13 — is worth **34.5 days ≈ 0.8 FTE**; the *full* descope ladder recovers only **12%** (55.9 days), leaving **9.3 FTE**. **Three options, one of which must be chosen:** staff to ~11 FTE, move the date (6 FTE → 18 Nov 2026; 8 FTE → 22 Oct 2026, both inside the planned Q4 window), or cut below the critical path. Independently of team size, **UAT cannot share W7 with feature work.** Full derivation, per-phase owners, required-FTE-by-week, and the ordered descope ladder: `MVP-1/DevelopmentPlan/CapacityAndEffortModel.md` — gap **G1**, open issue **OI-51**.
+> **The window does not close as scoped — this is now arithmetic, not judgement.** The 14 phases (1 platform + 13 workflow phases) total **465.6 dev-days** against **32 post-gate working days** (44 including the run-up to the Aug-14 gate): **10.6 people sustained**, a **10.7-FTE Phase-1 gate**, and an arithmetically impossible **27.2 FTE in W7**. The previously recorded mitigation — defer Phase 12 and the non-Critical parts of Phase 13 — is worth **34.5 days ≈ 0.8 FTE**; the *full* descope ladder recovers only **12%** (55.9 days), leaving **9.3 FTE**. **Three options, one of which must be chosen:** staff to ~11 FTE, move the date (6 FTE → 18 Nov 2026; 8 FTE → 22 Oct 2026, both inside the planned Q4 window), or cut below the critical path. Independently of team size, **UAT cannot share W7 with feature work.** Full derivation, per-phase owners, required-FTE-by-week, and the ordered descope ladder: `MVP-1/ProjectPlan/CapacityAndEffortModel.md` — gap **G1**, open issue **OI-51**.
 >
 > Two things the effort derivation surfaced that the plan did not record: **(a)** epic **E01 (7 stories / 28 points) is entirely database work** — no story anywhere in the 58 covers the Angular library scaffold, the `FlatWire` .NET solution and its 13 controllers, or the OPC ingest and `PLCTagService`, which is the main reason the window was believed to fit; **(b)** the resulting ratio is **~2.2 dev-days per story point** excluding Phase 1, roughly double the ~1 day/point the April sizing implies.
 
@@ -2966,7 +2966,7 @@ Working days are **counted, not assumed**: **Labor Day falls on Mon 7 Sep 2026**
 
 **Coverage: 44/44 shopfloor stories mapped.** Deferred candidates, first to slip past 30 Sep: FW-101, FW-102, FW-110.
 
-**Effort roll-up per phase (dev-days).** Points are **not** the delivery unit — the schedulable estimate is in dev-days, derived in `MVP-1/DevelopmentPlan/CapacityAndEffortModel.md` §2–§3 from each phase's own deliverable inventory. Points appear below only as the cross-check basis.
+**Effort roll-up per phase (dev-days).** Points are **not** the delivery unit — the schedulable estimate is in dev-days, derived in `MVP-1/ProjectPlan/CapacityAndEffortModel.md` §2–§3 from each phase's own deliverable inventory. Points appear below only as the cross-check basis.
 
 | Phase | Owner (stream) | Dev-days | Wk | Phase | Owner (stream) | Dev-days | Wk |
 |---|---|---|---|---|---|---|---|
@@ -2983,7 +2983,7 @@ By stream, contingency included: FE **162.7** · BE **108.8** · QA **77.4** · 
 
 **Cross-check.** 44 shopfloor stories = **184 points** (226 − 42 upstream; FW-054 stays in shopfloor Phase 13). 465.6 days ÷ 184 = **2.53 days/point**; excluding Phase 1, 337.3 ÷ 156 = **2.16**. The divergence from the ~1 day/point the April sizing implies was investigated — see the §9.4 callout: E01 covers no scaffold work, and the April sizing is thin for mockup-fidelity shopfloor vertical slices.
 
-**Backlog housekeeping still outstanding:** `FlatWireJiraStories.md` still tags the 14 upstream stories as in-scope Critical/High Sprint 2–3, still uses the dead 5-sprint model with no sprint→phase crosswalk, still declares `IsActive (bool)` in FW-010 instead of the three-value `State` enum, and still prints the 20-table count. *(It also had no change log; since 12 Aug 2026 that is **correct** — the repository has one change log, [`../CHANGELOG.md`](../CHANGELOG.md), and no document carries its own. What is owed is a **section** for it there, since its history was never recorded anywhere.)* Reconcile it up to this document rather than maintaining two plans.
+**Backlog housekeeping still outstanding:** `05-SprintPlanAndBacklog.md` still tags the 14 upstream stories as in-scope Critical/High Sprint 2–3, still uses the dead 5-sprint model with no sprint→phase crosswalk, still declares `IsActive (bool)` in FW-010 instead of the three-value `State` enum, and still prints the 20-table count. *(It also had no change log; since 12 Aug 2026 that is **correct** — the repository has one change log, [`../CHANGELOG.md`](../CHANGELOG.md), and no document carries its own. What is owed is a **section** for it there, since its history was never recorded anywhere.)* Reconcile it up to this document rather than maintaining two plans.
 
 ### 9.6 Risks
 
@@ -3127,7 +3127,7 @@ rolling. The product needs a **larger rod**. The generation spec now catches it 
 
 **Not propagated into the generation spec, deliberately.** That document is written
 implementation-agnostic — no tables, endpoints, screens or story IDs — which is what keeps it a client
-deliverable. The reconciliation therefore lives here and in `MVP-1/DevelopmentPlan/REVIEW.md`, not in it.
+deliverable. The reconciliation therefore lives here and in `MVP-1/ProjectPlan/REVIEW.md`, not in it.
 
 ---
 
@@ -3149,7 +3149,7 @@ Every unresolved item, with impact, the phase it blocks, and who must decide. **
 | **OI-48** | **OQ-3 — the full traveler field list per station** (FL1 / FL2 / FL3) has never been documented. Generic labels are agreed in principle only | Gates the final field list on the check-in and active-run screens | **Phase 4** | Jaspreet / Tim O. |
 | **OI-49** | **Inventory type for rod entries in the `coils` table** is TBD | Affects planning allocation, cost tracking and yield reporting | **Phase 4** and upstream receiving | Tim O. / Jeff G. |
 | **OI-50** | **OQ-76 — which identifier is scanned at FL2 check-in** (SP-series alpha, spool number or bundle ID) and how it links to the outgoing coil record. Interacts with OI-02 | Gates the FL2 check-in scan | **Phase 8** | Jaspreet / Tim O. |
-| **OI-51** | ~~**G1 — no capacity or effort model.** Thirteen workflow phases in ~6.5 weeks with no per-phase owner or effort estimate~~ **✅ MODEL DELIVERED (Jul 30 2026)** — `MVP-1/DevelopmentPlan/CapacityAndEffortModel.md`: six delivery streams, a published unit-rate card, per-phase dev-day effort for all 17 phase specs, a working-day capacity model, an ordered descope ladder, and an Aug-14 calibration checkpoint. Per-phase **Owner** + **Effort** are stamped on every phase file and in the roadmap nav table. *(Both counts were correct — 14 phases = 1 platform + 13 workflow phases 2–14.)* **The finding is worse than the gap stated:** **465.6 dev-days vs 32 post-gate working days (44 total) = 10.6 FTE sustained**, a **10.7-FTE Phase-1 gate**, an impossible **27.2-FTE W7**; the full descope ladder recovers **12%** (55.9 days, leaving 9.3 FTE), and this row's original mitigation is worth **34.5 days ≈ 0.8 FTE**. **Two residuals, both for programme management: (1)** the §1 named-owner roster is unfilled, so required-vs-available FTE cannot be computed; **(2)** the 30 Sep date requires an explicit decision — staff to ~11 FTE, move the date (6 FTE → 18 Nov; 8 FTE → 22 Oct, both inside the planned PLC-Q02 window), or cut below the critical path (model §7) | ~~Phases miss 30 Sep; silent scope loss~~ → **quantified**: 30 Sep is unreachable at any plausible team size. The escalation, not the model, is the open item | all | Programme management |
+| **OI-51** | ~~**G1 — no capacity or effort model.** Thirteen workflow phases in ~6.5 weeks with no per-phase owner or effort estimate~~ **✅ MODEL DELIVERED (Jul 30 2026)** — `MVP-1/ProjectPlan/CapacityAndEffortModel.md`: six delivery streams, a published unit-rate card, per-phase dev-day effort for all 17 phase specs, a working-day capacity model, an ordered descope ladder, and an Aug-14 calibration checkpoint. Per-phase **Owner** + **Effort** are stamped on every phase file and in the roadmap nav table. *(Both counts were correct — 14 phases = 1 platform + 13 workflow phases 2–14.)* **The finding is worse than the gap stated:** **465.6 dev-days vs 32 post-gate working days (44 total) = 10.6 FTE sustained**, a **10.7-FTE Phase-1 gate**, an impossible **27.2-FTE W7**; the full descope ladder recovers **12%** (55.9 days, leaving 9.3 FTE), and this row's original mitigation is worth **34.5 days ≈ 0.8 FTE**. **Two residuals, both for programme management: (1)** the §1 named-owner roster is unfilled, so required-vs-available FTE cannot be computed; **(2)** the 30 Sep date requires an explicit decision — staff to ~11 FTE, move the date (6 FTE → 18 Nov; 8 FTE → 22 Oct, both inside the planned PLC-Q02 window), or cut below the critical path (model §7) | ~~Phases miss 30 Sep; silent scope loss~~ → **quantified**: 30 Sep is unreachable at any plausible team size. The escalation, not the model, is the open item | all | Programme management |
 
 | ~~**OI-36**~~ | ~~**The final finishing stand (6″ S3) has no tag path, and the *write* side already targets it.**~~ **DECIDED (4 Aug 2026) — the final stand's tag path exists and always did.** The FM2 roller-size correction (**D-26**) establishes that FM2 has three stands, so the client's published map — which carries exactly **three** FM2 stations, all `[CONFIRMED]` by observation — was complete. The station formerly read as *"6″ S2"* **is** the final stand, now specified as **`FL2.FM2.S3`**. The stand that had no path was the phantom `FM2_6inS3`, which does not exist. The residual is not a missing tag but a **naming** question: the rename from the observed `Stand8`/`Stand6S1`/`Stand6S2` to `S1`/`S2`/`S3` needs controls-engineer sign-off — tracked as **`PLC-Q04`** / gap **G32**, with the as-published → as-specified mapping in `[PLC §4.3]`. **The stand that had no path does not exist.** The edger paths at S2 and S3 remain genuinely absent — that is **`PLC-Q07`** / **G29**, unaffected | ~~The FL2/FL3 pass-schedule push~~ → narrowed to station naming | Closed | Closed |
 
@@ -3190,7 +3190,7 @@ Every unresolved item, with impact, the phase it blocks, and who must decide. **
 | **OI-101** | **Shift boundaries are undefined.** No shift start and end times, shift names, or weekend/holiday pattern exist anywhere in the design, and there is no rule for attributing a run that crosses a boundary. Raised 11 Aug 2026 by the shift summary consolidation | **Every figure on the supervisor shift summary** is filtered to a shift window that is not defined | Phase 12 | Operations / Tim O. |
 | **OI-99** | **Lot number is undefined when a coil has more than one source rod**, which is the normal case under continuous welded feed. Two rods from different heats give the coil two lots. Raised 11 Aug 2026 | Coil label content and certification; a welding-wire cert may be unissuable | Phases 9, 12 | Quality / Sales |
 | **OI-103** | **No bound exists on a roll-gap change.** Neither a maximum single-step change nor a cumulative limit is specified, and the entered value is written straight to the machine, so a mistyped gap reaches the mill. Raised 11 Aug 2026 | Validation before apply on the roll adjust dialog | Phase 6 | Process Engineering |
-| **OI-104** | **The skid table `CoilOutput.SkidId` points at has never been located or verified.** The schema and `FlatWireTables.md` both describe it as "the existing skid table", but **no document names it, no story creates it, and nothing confirms it exists** in `united_db` or the planning schema. Raised 11 Aug 2026 when Phase 9 returned to MVP-1 | **Skid closure at the packing station (DB7b)** and the skid label. Was tolerable while DB7b was deferred; it is now on the MVP-1 critical path, and `phase-09`'s 222 h assumes the table already exists | Phase 9 | IT / Planning |
+| **OI-104** | **The skid table `CoilOutput.SkidId` points at has never been located or verified.** The schema and `FlatWireSchema_Mapping.md` both describe it as "the existing skid table", but **no document names it, no story creates it, and nothing confirms it exists** in `united_db` or the planning schema. Raised 11 Aug 2026 when Phase 9 returned to MVP-1 | **Skid closure at the packing station (DB7b)** and the skid label. Was tolerable while DB7b was deferred; it is now on the MVP-1 critical path, and `phase-09`'s 222 h assumes the table already exists | Phase 9 | IT / Planning |
 | **OI-105** | **Which of three weights is authoritative on the coil record is undecided.** §3.3 calculates net weight from footage and density, the DB7 operator may override it with a scale reading, and `FR-346` now adds a **third** figure — a physical scale weight at the packing station. Three rules are possible and not equivalent: the packing scale replaces the record, it is recorded alongside with the calculated figure governing, or a variance beyond a threshold blocks skid closure. **The coil label is printed before packing sees the coil**, so any rule that changes the weight afterwards forces a reprint. Raised 11 Aug 2026 | The coil record, label accuracy, and every downstream yield figure. **Compounds `OI-45`** — the variance cannot be judged until the dimensional basis is fixed, and Phase 9's 16–32 h reserve was scoped before this second capture point was in scope | Phase 9 | Quality / Operations |
 | **OI-106** | **Staging locations are undefined.** `FR-351` requires the packing station to assign a staging location when a skid closes, but **no list of valid locations, no capacity per location and no selection rule** exists in any source document. A free-text field would defeat the purpose of recording it. Raised 11 Aug 2026 | Skid closure at DB7b; without it the staged-location record is unusable and the skids-this-shift table has an empty column | Phase 9 | Operations / Shipping |
 | **OI-100** | **Valid rework stages per material state are unspecified.** Rework requires a named return stage, and whether a partially flattened spool may return to the flattening mill is a process question with no answer. Raised 11 Aug 2026 | The rework return-stage list on the WIP rejection dialog | Phase 7 | Process Engineering / QC |
@@ -3303,7 +3303,7 @@ Every file in `c:\UAL\Flatwire-planning\` was consulted. Status values: **curren
 | File | Date | Status | Fed into |
 |---|---|---|---|
 | `CLAUDE.md` | — | current, with two count errors (OI-90) | §1, §2, §5, §7, §8, §10 |
-| `README.md` | — | current (a 1-line pointer to `MVP-1/DevelopmentPlan/ShopfloorAndRealTimePlan.md`) | §1.6 |
+| `README.md` | — | current (a 1-line pointer to `MVP-1/ProjectPlan/ShopfloorAndRealTimePlan.md`) | §1.6 |
 | `Shopfloor_Flat_wireSRS_Consolidated_v2.docx` | — | superseded by v3 | cross-checked against v3; no unique content carried |
 | `Flat Wire Mockups.xlsx` | — | read-only evidence (IQR / Item / Alloys / Scheduling sketch sheets) | §2.4, §5.13 |
 
@@ -3370,21 +3370,21 @@ Ten were moved out of `Analysis/` on **1 Aug 2026** and reissued as client-facin
 | *Gross weight — scale-entered or calculated?* | **Settled** by the same requirement: net weight is calculated and **never read from a scale during rolling**, with an operator scale override permitted |
 | *Which lines have Roll Adjust?* | **Answered 2 Aug 2026.** `FR-107`–`FR-109` and all three active-run mockups agree on **FL2 and FL3, not FL1**; the dashboard design reference stated it three contradictory ways and is simply stale. Verified against the mockups directly — FL1's has no Roll Adjust control |
 
-### A.3 `MVP-1/DevelopmentPlan/` — plan, contracts and backlog
+### A.3 `MVP-1/ProjectPlan/` — plan, contracts and backlog
 
 | File | Last Updated | Status | Fed into |
 |---|---|---|---|
 | `ShopfloorAndRealTimePlan.md` | 26 Jul 2026 | **current — the roadmap index** | §1.5, §9 |
 | `REVIEW.md` | 29 Jul 2026 | **current — the arbiter map** (Tiers 1–7, 56 findings) | §6 corrections, §10, §11 |
-| `APIContracts.md` | 29 Jul 2026 (staging section); **body 30 Apr 2026** | **partially superseded** — carries four Tier-1 correctness bugs, a dead sprint schedule and a four-value `CheckpointType` | §6 (with every correction stated) |
-| `FlatWireJiraStories.md` | 30 Apr 2026 | **partially superseded** — dead timeline, 5-sprint model, upstream stories still tagged in-scope, `IsActive` bool, 20-table count, wrong point total | §9.5 (story titles, points, priorities) |
-| `FlatWireTables.md` | 30 Apr 2026 | **superseded by the DDL** — bare `decimal` types, 22-table count, `Rod` as a new table, `united_db` target | §5 (design rationale only; never types) |
-| `TechStackRecommendation.md` | 29 Apr 2026 | **partially superseded** — dead timeline, "five SPC checkpoints" versus the four/five-type enum, "new `FlatWireDB` or schema extension" now decided | §8.3 |
+| `04-APIContract.md` | 29 Jul 2026 (staging section); **body 30 Apr 2026** | **partially superseded** — carries four Tier-1 correctness bugs, a dead sprint schedule and a four-value `CheckpointType` | §6 (with every correction stated) |
+| `05-SprintPlanAndBacklog.md` | 30 Apr 2026 | **partially superseded** — dead timeline, 5-sprint model, upstream stories still tagged in-scope, `IsActive` bool, 20-table count, wrong point total | §9.5 (story titles, points, priorities) |
+| `FlatWireSchema_Mapping.md` | 30 Apr 2026 | **superseded by the DDL** — bare `decimal` types, 22-table count, `Rod` as a new table, `united_db` target | §5 (design rationale only; never types) |
+| `03-HLD-and-ERDiagram.md` §14 | 29 Apr 2026 | **partially superseded** — dead timeline, "five SPC checkpoints" versus the four/five-type enum, "new `FlatWireDB` or schema extension" now decided | §8.3 |
 | ~~`CheckinImplementationPlan.md`~~ | 30 Apr 2026 | **DELETED 13 Aug 2026** (recoverable at `1964086`) — was superseded and actively misleading: `--fw-*` tokens, the retired DB2 layout, a forbidden reference library, non-existent story IDs, pre-replan fixtures | §8.2 (as a warning). Its three retained facts were rehomed: stub-first → `00-foundations.md` §0.5, ovality `0.003″` → `AlloyProperty.RodOvalityMaxIn`, `G14` → `back-matter.md` |
 | ~~`CheckinImplementationPrompt.md`~~ | 30 Apr 2026 | **DELETED 13 Aug 2026** (recoverable at `1964086`) — same defects plus bare `ControllerBase` with no `[Authorize]` | §8.2 (as a warning). The `[Authorize]` rule is stated at §7 and in `04-APIContract.md` |
 | `Flat Wire.code-workspace` | — | current — opens this repo alongside `ual-angular` and `ual-api` | §8.1 |
 
-### A.4 `MVP-1/DevelopmentPlan/ShopfloorPlan/` — 18 files
+### A.4 `MVP-1/ProjectPlan/ShopfloorPlan/` — 18 files
 
 | File | Last Updated | Status | Fed into |
 |---|---|---|---|

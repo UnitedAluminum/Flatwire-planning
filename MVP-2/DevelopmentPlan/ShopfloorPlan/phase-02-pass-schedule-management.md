@@ -65,7 +65,7 @@
 
 ## Backend Implementation (.NET)
 - **APIs:** `PassScheduleController` (list/detail/create/update/status/generate).
-- **Request/Response models:** records per `APIContracts.md` (`PassScheduleDetailResponse`, `PassScheduleComponentDto`, generate request/response with warnings/errors arrays).
+- **Request/Response models:** records per `04-APIContract.md` (`PassScheduleDetailResponse`, `PassScheduleComponentDto`, generate request/response with warnings/errors arrays).
 - **Business services:** `PassScheduleService`, `PassScheduleGeneratorService` (the algorithm).
 - **MediatR handlers:** `CreatePassSchedule`, `UpdatePassSchedule`, `GeneratePassSchedule`, `GetPassScheduleList`, `GetPassSchedule`, status-transition command.
 - **Repository:** `PassScheduleRepository` (EF writes; Dapper list query with filters/paging).

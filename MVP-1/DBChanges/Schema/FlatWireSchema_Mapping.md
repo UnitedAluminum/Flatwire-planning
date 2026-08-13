@@ -3,7 +3,7 @@
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** August 6, 2026
 **Document Type:** Final Schema — Entity Relationships, FK Mapping & Enumeration Reference
-**Source:** the April gap analysis, absorbed into `FlatWireSchema_Mapping.md`’s appendix on 13 Aug 2026 when `FlatWireTables.md` was deleted
+**Source:** the April gap analysis, absorbed into `FlatWireSchema_Mapping.md`’s appendix on 13 Aug 2026 when `FlatWireSchema_Mapping.md` was deleted
 **Target DB:** `FlatWireDB` (schema `dbo`)
 
 ---
@@ -240,7 +240,7 @@ Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
 
 ## Appendix — the pre-existing tables this schema replaced
 
-> **Absorbed from `FlatWireTables.md` on 13 Aug 2026**, which was deleted in the same pass. It was the April
+> **Absorbed from `FlatWireSchema_Mapping.md` on 13 Aug 2026**, which was deleted in the same pass. It was the April
 > gap analysis — *what existed, what was missing, what to add* — and the "missing tables" half is now
 > superseded by the DDL. **This half is not**: it is the only surviving inventory of the legacy
 > `FlatLineProcessing` / `FlatLineSetup` / `Drawer` / `Edger` / `Stand` / `SpoolConfiguration` / `Spool`

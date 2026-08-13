@@ -1,7 +1,7 @@
 # Flat Wire Mill — Sprint Plan & Backlog
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — **`FlatWireJiraStories.md` absorbed and deleted.** Its 116 story bodies, sprint calendar, sequencing, roll-up, blockers and both appendices are now §4, §6, §7 and §8 here. **Section numbers are unchanged** — `[SP §1]`, `§1.4`, `§2`, `§4`, `§6`, `§7`, `§7.3`, `§10`, `§10.3` and `§11` all still resolve. §1, §3, §5 and §10.2 are reduced to pointers at the documents that own those figures *(otherwise August 4, 2026)*
+**Last Updated:** August 13, 2026 — **`05-SprintPlanAndBacklog.md` absorbed and deleted.** Its 116 story bodies, sprint calendar, sequencing, roll-up, blockers and both appendices are now §4, §6, §7 and §8 here. **Section numbers are unchanged** — `[SP §1]`, `§1.4`, `§2`, `§4`, `§6`, `§7`, `§7.3`, `§10`, `§10.3` and `§11` all still resolve. §1, §3, §5 and §10.2 are reduced to pointers at the documents that own those figures *(otherwise August 4, 2026)*
 **Document Type:** Sprint plan and delivery backlog — story bodies, sequencing and effort
 **Status:** **Authoritative for MVP-1 shopfloor delivery** — **116 stories / 3,292 h** across 4 sprints and 15 phase specs. ⚠ **The plan does not fit the window; §1 requires a programme decision before it can be committed**
 **Owner:** Delivery lead / programme management
@@ -148,7 +148,7 @@ That file defines `S0`–`S4` on a phase-grouped cadence (S1 = W1–W3, S2 = W4�
 | On-line trial | early **Oct 2026** | TBD with Tim O. / Shannon R. |
 | Production | **Q4 2026** | After trial acceptance |
 
-> **Superseded — do not use.** The April-dated documents carry "commissioning end of June 2026 · trials 1 July 2026 · production 1 August 2026 · ~10-week window · 5 sprints". **Every one of those is dead.** `FlatWireJiraStories.md`, `APIContracts.md`, `FlatWireTables.md` and `TechStackRecommendation.md` still print them.
+> **Superseded — do not use.** The April-dated documents carry "commissioning end of June 2026 · trials 1 July 2026 · production 1 August 2026 · ~10-week window · 5 sprints". **Every one of those is dead.** `05-SprintPlanAndBacklog.md`, `04-APIContract.md`, `FlatWireSchema_Mapping.md` and `03-HLD-and-ERDiagram.md` §14 still print them.
 
 ---
 
@@ -270,7 +270,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **Demo:** scaffolded UI ↔ stubbed service ↔ created schema ↔ simulated hub, end to end.
 **Gates:** **M1 (14 Aug) hard gate** · **QA0** (Jest smoke; xUnit + stub-fixture + validator suites; DDL/seed idempotency + post-run table checks) · **effort calibration checkpoint** (model §6).
 
-> **1A, 1B and 1C run in parallel** and converge only on `APIContracts.md` and the seed fixtures (`R00041–R00043`, `SP-00021`, `RUN-0042/0043`). 1A is not blocked by 1B/1C because it develops against the mock API and mock SignalR (`useMockData: true`); 1B ships stub endpoints first.
+> **1A, 1B and 1C run in parallel** and converge only on `04-APIContract.md` and the seed fixtures (`R00041–R00043`, `SP-00021`, `RUN-0042/0043`). 1A is not blocked by 1B/1C because it develops against the mock API and mock SignalR (`useMockData: true`); 1B ships stub endpoints first.
 >
 > **⚠ The model predicts this gate fails.** 1,027 h in 12 working days needs **10.7 FTE on Phase 1 alone**. 1A/1B/1C genuinely parallelise, so this is a headcount problem, not a sequencing one.
 
@@ -506,7 +506,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] All thirteen exist and extend `UAController`: `LinesController`, `PassScheduleController`, `RodReceivingController`, `CheckInController`, `RunController`, `SpcController`, `WeldEventController`, `RollAdjustController`, `DieChangeController`, `CheckOutController`, `WipRejectionController`, `CoilController`, `ShiftSummaryController`
 - [ ] Each returns the `{Data, Success, Errors}` envelope
 - [ ] **`[Authorize]` on every controller and every endpoint** — no bare `ControllerBase`, no unprotected route
-- [ ] Stub endpoints return schema-valid fixtures for the seed alphas, per `APIContracts.md` shapes
+- [ ] Stub endpoints return schema-valid fixtures for the seed alphas, per `04-APIContract.md` shapes
 - [ ] xUnit boots the API and asserts every stub's contract shape
 
 **Rate-card basis:** 13 controllers @ 4 h = 52 h (§2, query-endpoint rate for scaffold + stub)
@@ -525,7 +525,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** every command gets cross-cutting concerns without repeating them.
 
 **Acceptance Criteria:**
-- [ ] `Commands/` and `Queries/` folders per `APIContracts.md`
+- [ ] `Commands/` and `Queries/` folders per `04-APIContract.md`
 - [ ] MediatR registered in `Program.cs` (copied from `CoilCheckin.API/Program.cs`)
 - [ ] Pipeline behaviours for validation and structured logging
 - [ ] A sample command round-trips controller → MediatR → handler → envelope
@@ -637,7 +637,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **Acceptance Criteria:**
 - [ ] JWT bearer authentication inherited from the UAL configuration
 - [ ] Hub authentication via `?access_token=` query parameter
-- [ ] Role policies for Operator / Operations Manager / Maintenance / Supervisor / Admin, matching `APIContracts.md`'s matrix
+- [ ] Role policies for Operator / Operations Manager / Maintenance / Supervisor / Admin, matching `04-APIContract.md`'s matrix
 - [ ] Authorization tests prove an operator cannot reach an Ops-Manager-only endpoint
 
 **Rate-card basis:** auth + five role policies (16 h, §2)
@@ -1055,7 +1055,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] `PayoffStatusDto` carries bay **occupancy** (`state`, `rodAlpha`) alongside live weight
 - [ ] `LineStatusService` composes scheduling data + run state + latest OPC readings
 - [ ] Any authenticated role may read
-- [ ] Contract test against `APIContracts.md`
+- [ ] Contract test against `04-APIContract.md`
 
 **Rate-card basis:** query endpoint 4 h + `LineStatusService` non-trivial service 12 h = 16 h (§2)
 **Dependencies:** FW-138, FW-141

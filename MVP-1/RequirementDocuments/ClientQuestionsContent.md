@@ -11,7 +11,7 @@
 
 **The client-facing prose for the questions workbook, and the only place it is authored.** The workbook
 `MVP-1/SRS/FlatWire_ClientQuestions.xlsx` is generated from this file plus the two registers by
-`MVP-1/DevelopmentPlan/Tools/build_questions_xlsx.py`. **Edit this file and re-run the generator; never edit the
+`MVP-1/ProjectPlan/Tools/build_questions_xlsx.py`. **Edit this file and re-run the generator; never edit the
 `.xlsx`.**
 
 **Division of labour with the registers.** Structural fields — question number, priority, scope, owner, decided

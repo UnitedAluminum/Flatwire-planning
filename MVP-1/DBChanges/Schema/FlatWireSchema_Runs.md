@@ -3,7 +3,7 @@
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** July 31, 2026
 **Document Type:** Final Schema — Run Tracking Tables
-**Source:** the April gap analysis, absorbed into `FlatWireSchema_Mapping.md`’s appendix on 13 Aug 2026 when `FlatWireTables.md` was deleted
+**Source:** the April gap analysis, absorbed into `FlatWireSchema_Mapping.md`’s appendix on 13 Aug 2026 when `FlatWireSchema_Mapping.md` was deleted
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `SQL/FlatWire_DDL_04_Runs.sql` (`FlatWireRun` itself is created in `DDL_03`)
 
 Run tables capture the complete lifecycle of a flat wire production run — from initial check-in through all in-process events. `FlatWireRun` is the central header record; all event tables reference it by `RunId`.
@@ -144,7 +144,7 @@ Supersedes the retired `Rod.StagedPayoffPosition` / `Rod.IsWelded` columns.
 
 > **There is no `Blocked` status — it is derived.** Dashboard 2A and `GET /payoff/status` both expose a **`Blocked`** bay state meaning "inspection failed at staging". That is `Status = 'Staged'` with any of the three inspection columns `= 'Fail'`, **not** a fourth `Status` value. Deriving it is also the operationally correct reading: `UX_RodStaging_Bay` is filtered on `Status = 'Staged'`, and a failed bundle is still physically in the bay, so it must keep the bay occupied. Adding a `Blocked` status would fall outside that filter and free a bay that is not free.
 >
-> **Q23 — first half resolved (Jul 31 2026): pre-check-in commits the row *before* the inspection gate.** Previously nothing wrote such a row: a failed inspection returned `422` and routed straight to WIP Rejection without committing, so the `Blocked` state was unreachable in practice. That was wrong about the physical situation — bundles are not unbanded until positioned at the payoff, which is why the inspection happens at staging, so a failed rod is **already on the bay**. With no row, `GET /payoff/status` reported the occupied position as `NotStaged` and the next rod could be staged into it. `POST /staging/rod` now returns `201` with `state: "Blocked"` (`APIContracts.md`). `CHK010` is unchanged — no bypass, WIP Rejection is still the only forward path.
+> **Q23 — first half resolved (Jul 31 2026): pre-check-in commits the row *before* the inspection gate.** Previously nothing wrote such a row: a failed inspection returned `422` and routed straight to WIP Rejection without committing, so the `Blocked` state was unreachable in practice. That was wrong about the physical situation — bundles are not unbanded until positioned at the payoff, which is why the inspection happens at staging, so a failed rod is **already on the bay**. With no row, `GET /payoff/status` reported the occupied position as `NotStaged` and the next rod could be staged into it. `POST /staging/rod` now returns `201` with `state: "Blocked"` (`04-APIContract.md`). `CHK010` is unchanged — no bypass, WIP Rejection is still the only forward path.
 >
 > **Q23 residual — RESOLVED (client, 30 Jul 2026): the WIP rejection releases it.** A failed staging inspection is captured as a **rejection with a reason on the rejection screen**, and the rod goes to **`HOLD`**. That is what takes the row out of `Status = 'Staged'` and frees the bay — the bundle has physically left it, so the bay genuinely *is* free.
 >

@@ -58,14 +58,14 @@
 |---|---|
 | **Solution architecture** | New domain `API/Domain/FlatWire/` with `FlatWire.sln` + 4 projects `FlatWire.API` / `FlatWire.Application` / `FlatWire.Domain` / `FlatWire.Infrastructure` (copied from `CoilCheckin`); refs `API→Application,Domain,Infrastructure`; `Application→Domain`; `Infrastructure→Domain` |
 | **API structure** | Thin controllers extending `UAController` (`UA.Framework.API`): `LinesController`, `PassScheduleController`, `RodReceivingController`, `CheckInController`, `RunController`, `SpcController`, `WeldEventController`, `RollAdjustController`, `DieChangeController`, `CheckOutController`, `WipRejectionController`, `CoilController`, `ShiftSummaryController` |
-| **MediatR setup** | `Commands/` + `Queries/` folders per `APIContracts.md`; MediatR registered in `Program.cs` (copy `CoilCheckin.API/Program.cs`); pipeline behaviors for validation + logging |
+| **MediatR setup** | `Commands/` + `Queries/` folders per `04-APIContract.md`; MediatR registered in `Program.cs` (copy `CoilCheckin.API/Program.cs`); pipeline behaviors for validation + logging |
 | **Dependency Injection** | `Program.cs` service registration; interface-driven services; `useStub`/environment swap of stub vs real service (as in `CoilCheckin`) |
 | **Repository pattern** | `FlatWire.Infrastructure/Repositories/` — `PassScheduleRepository`, `RodRepository`, `RunRepository`, `CoilRepository`, etc. behind interfaces |
 | **Dapper** | Dapper for high-volume reads (gauge trace, shift summary, list grids); EF Core `FlatWireDbContext` for entity writes — matching UAL's mixed data-access convention |
 | **Logging** | Serilog (inherited UAL config) — structured logs; audit log for PLC pushes and pass-schedule overrides |
 | **Configuration** | `appsettings.{Environment}.json`: connection string (**`FlatWireDB`**), JWT, **OPC tag-path map** (config-driven, not hardcoded), SignalR (MessagePack, keep-alive/timeout, cadence) |
 | **Authentication** | JWT bearer (inherited); hub auth via `?access_token=` query param |
-| **Authorization** | Role policies matching the Authorization Matrix in `APIContracts.md` (Operator / Operations Manager / Maintenance / Supervisor / Admin) |
+| **Authorization** | Role policies matching the Authorization Matrix in `04-APIContract.md` (Operator / Operations Manager / Maintenance / Supervisor / Admin) |
 | **Exception handling** | Global exception middleware → envelope (`400` validation, `404` not found, `409` conflict, `422` unprocessable, `500` PLC/server) |
 | **Validation** | FluentValidation validators per command (e.g. `FM2_S3` must be Active; FL3 requires Hybrid) |
 | **SignalR infrastructure** | `FlatWire.API/Hubs/FlatWireHub.cs` — **strongly-typed** `Hub<IFlatWireClient>`, **MessagePack** protocol, WebSockets-first, `[Authorize]`, `JoinLineGroup`/`LeaveLineGroup` (groups `FL1Data/FL2Data/FL3Data`); self-contained in FlatWire service; **purpose-built per §0.4 — not copied from existing hubs** |
@@ -76,7 +76,7 @@
 
 ## 1C. Database Foundation
 
-Target database: a **new `FlatWireDB`** (per the July 26 decision and the `TechStackRecommendation.md` "new `FlatWireDB`" option). The DDL scripts currently header `USE [united_db]` and must be **retargeted to `FlatWireDB`** (one find-replace across DDL 01–06 + seed). The Flat Wire schema is **21 tables** created by the numbered scripts + one seed — the designed `Rod` table is **dropped**: rod/R-series material lives in the existing **`coils`** table (single source of truth for rods). The existing-schema **column renames (FW-001) remain in the existing shared scheduling database** — the `coils`/scheduling schema is **not** moved into `FlatWireDB`. Cross-database references (`coils` rod rows referenced by `RodCheckin`/`WeldEvent`/`RollOverride`/`DieChangeEvent`/`CoilTraceability`/`RodCheckout`/`Spool.ParentRodAlpha`, plus `CoilOutput.SkidId`, planning `PlanId`) stay as unenforced logical FKs — see Gaps G2/G17.
+Target database: a **new `FlatWireDB`** (per the July 26 decision and the `03-HLD-and-ERDiagram.md` §14 "new `FlatWireDB`" option). The DDL scripts currently header `USE [united_db]` and must be **retargeted to `FlatWireDB`** (one find-replace across DDL 01–06 + seed). The Flat Wire schema is **21 tables** created by the numbered scripts + one seed — the designed `Rod` table is **dropped**: rod/R-series material lives in the existing **`coils`** table (single source of truth for rods). The existing-schema **column renames (FW-001) remain in the existing shared scheduling database** — the `coils`/scheduling schema is **not** moved into `FlatWireDB`. Cross-database references (`coils` rod rows referenced by `RodCheckin`/`WeldEvent`/`RollOverride`/`DieChangeEvent`/`CoilTraceability`/`RodCheckout`/`Spool.ParentRodAlpha`, plus `CoilOutput.SkidId`, planning `PlanId`) stay as unenforced logical FKs — see Gaps G2/G17.
 
 | Setup activity | Concrete deliverable |
 |---|---|
@@ -109,4 +109,4 @@ Target database: a **new `FlatWireDB`** (per the July 26 decision and the `TechS
 - **Tests:** Angular library builds + lints; Jest smoke tests for services/guards; xUnit boots `FlatWire.API`; stub endpoints return schema-valid fixtures; DDL runs clean on dev `FlatWireDB`; health check green.
 - **Deliverables:** `flat-wire-shopfloor` library scaffold; `FlatWire` 4-project solution + stubbed controllers; `FlatWireHub` skeleton; `PLCTagService` (simulate mode); `FlatWireDbContext` + 21 tables (rod = existing `coils`) + lookups + seed + indexes; FW-001/FW-002 migrations; updated `angular.json`/`package.json`; environment/config wiring.
 
-**Parallelism:** 1A / 1B / 1C proceed in parallel; they converge on the shared API contract (`APIContracts.md`) and the seed fixtures. This is the only cross-team barrier before feature work.
+**Parallelism:** 1A / 1B / 1C proceed in parallel; they converge on the shared API contract (`04-APIContract.md`) and the seed fixtures. This is the only cross-team barrier before feature work.

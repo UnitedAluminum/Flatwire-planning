@@ -1,7 +1,7 @@
 """
 Render a client-facing markdown specification to a branded .docx.
 
-    python MVP-1/DevelopmentPlan/Tools/build_docx.py <source.md> <output.docx> "<header title>"
+    python MVP-1/ProjectPlan/Tools/build_docx.py <source.md> <output.docx> "<header title>"
 
 With no arguments it rebuilds the PLC tag specification, which is the default below.
 

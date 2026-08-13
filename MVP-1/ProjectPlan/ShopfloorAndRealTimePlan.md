@@ -30,7 +30,7 @@ This roadmap replaces the old shopfloor-only, technology-layered plan. It is org
 
 Each workflow phase (2–14) follows the fixed template: **Business Overview · User Journey · UI (Angular) · Backend (.NET) · Database · Real-Time · Integration Flow · Testing · Deliverables**, and closes with its **OQ blockers** and **backlog stories**.
 
-The single source of truth for scope is the `c:\UAL\Flat Wire` planning repository. Nothing here is invented: every table, endpoint, dashboard, status value, and algorithm below is traceable to an artifact in that repo (`Analysis/`, `MVP-1/DevelopmentPlan/`, `MVP-1/DBChanges/Schema/`, `MVP-1/Mockups/`). Where a decision is still open it is called out as an **OQ-##** blocker rather than assumed.
+The single source of truth for scope is the `c:\UAL\Flat Wire` planning repository. Nothing here is invented: every table, endpoint, dashboard, status value, and algorithm below is traceable to an artifact in that repo (`Analysis/`, `MVP-1/ProjectPlan/`, `MVP-1/DBChanges/Schema/`, `MVP-1/Mockups/`). Where a decision is still open it is called out as an **OQ-##** blocker rather than assumed.
 
 ## Roadmap Navigation
 
@@ -79,11 +79,11 @@ Owner is a **delivery stream**, not a person — the named-owner roster is fille
 | `MVP-1/RequirementDocuments/PartialRodReCheckin.md` | **Design rationale, not one of the 17 specs** — moved here from `Analysis/` 11 Aug 2026 to sit beside its owners. Nothing in it is citable; rules are in `RodPreCheckin.md` §7 and `RodCheckout.md` §7.2, requirement text in `FR-043`. Audit trail for the open `Q12` |
 | `MVP-1/RequirementDocuments/Spool.md` | **Domain reference, not one of the 17 specs** — moved here from `Analysis/` 11 Aug 2026 to sit beside its owners. Authoritative for *what a spool is*; its screen sections were consolidated into `RocCheckin.md` §4.3, `SpoolQueue.md` and `OutputCoilCompletion.md` §4, and **its FM2 description is superseded by `D-26`** |
 | `MVP-2/RequirementDocuments/PassScheduleManagement.md`, `DieChangeAndManagement.md`, `SPCCheckpoint.md`, `WeldEvent.md`, `PLCTagSpecification.md` | Process workflows and the role matrix, which lives in `02-SRS.md` §8 and `PassScheduleManagement.md` §3.3 *(`Analysis/OperationsManager.md` was deleted 11 Aug 2026 — recoverable at `d79ce78`)*, **the PLC/OPC tag surface** *(replaced `HMIAndSCADALayout.md`, deleted 4 Aug 2026 with the DB13/DB14 descope)* |
-| `MVP-1/DevelopmentPlan/APIContracts.md` | `FlatWire.API` REST surface + `FlatWireHub` contract |
+| `MVP-1/ProjectPlan/APIContracts.md` | `FlatWire.API` REST surface + `FlatWireHub` contract |
 | `MVP-1/DBChanges/Schema/*` + `Schema/SQL/*` | The Flat Wire schema — **28 tables** in the new **`FlatWireDB`**, of which **24 are MVP-1** and 3 are the MVP-2 pass-schedule group. **`Rod` is retained** per master-spec **`D-04`** (the "Hybrid foundation" decision), which supersedes `00-foundations.md` decision 3 and its 21-table figure. Verified by a clean deploy on 11 Aug 2026: 25 tables, 33 FKs, 1 procedure, 1 trigger. *(the designed `Rod` table is dropped; rod uses the existing `coils` table). DDL 01–06 + seed |
-| `MVP-1/DevelopmentPlan/CapacityAndEffortModel.md` | Per-phase owners + dev-day effort, working-day capacity model, descope ladder (resolves G1) |
-| `MVP-1/DevelopmentPlan/FlatWireJiraStories.md` | **The authoritative MVP-1 shopfloor backlog** (rewritten 13 Aug 2026) — **116 stories / 3,292 h**, re-derived from the phase specs in `ShopfloorPlan/`, organised into four even two-week sprints (`S0`–`S3`, `S1` from **24 Aug**) and sized in **hours** off the Capacity & Effort Model's rate card. **Story points are retired**; the old 12-epic / 58-story / 184-point figures are historical and recorded in its Appendix A |
-| `MVP-1/DevelopmentPlan/FlatWireTables.md` | Table-by-table design + existing-table renames |
+| `MVP-1/ProjectPlan/CapacityAndEffortModel.md` | Per-phase owners + dev-day effort, working-day capacity model, descope ladder (resolves G1) |
+| `MVP-1/ProjectPlan/FlatWireJiraStories.md` | **The authoritative MVP-1 shopfloor backlog** (rewritten 13 Aug 2026) — **116 stories / 3,292 h**, re-derived from the phase specs in `ShopfloorPlan/`, organised into four even two-week sprints (`S0`–`S3`, `S1` from **24 Aug**) and sized in **hours** off the Capacity & Effort Model's rate card. **Story points are retired**; the old 12-epic / 58-story / 184-point figures are historical and recorded in its Appendix A |
+| `MVP-1/ProjectPlan/FlatWireTables.md` | Table-by-table design + existing-table renames |
 | `Analysis/FlatWireOpenQuestions.md` | **99** open questions (`Q##` / `OQ-##`) → per-phase blockers. **Authoritative decision register** |
-| `MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md` **§0.5** | The stub-first delivery contract. *(Rehomed there 13 Aug 2026 from `CheckinImplementationPlan.md` / `CheckinImplementationPrompt.md`, both **deleted** that day — recoverable at `1964086`.)* |
-| `MVP-1/DevelopmentPlan/TechStackRecommendation.md` | "Stay within the UAL stack" ADR |
+| `MVP-1/ProjectPlan/ShopfloorPlan/00-foundations.md` **§0.5** | The stub-first delivery contract. *(Rehomed there 13 Aug 2026 from `CheckinImplementationPlan.md` / `CheckinImplementationPrompt.md`, both **deleted** that day — recoverable at `1964086`.)* |
+| `MVP-1/ProjectPlan/TechStackRecommendation.md` | "Stay within the UAL stack" ADR |

@@ -5,7 +5,7 @@
 **Status:** Internal — companion to the client-facing specification
 **Audience:** Developers building `FlatWire.API` and the `OPCConnection` extension
 
-> **Citation convention.** Paths are repo-root relative unless noted. Two shorthands recur: **`[PLC §n]`** = `MVP-1/RequirementDocuments/PLCTagSpecification.md`, and **`[DR]`** = `MVP-1/ProjectPlan/07-DeploymentRunbookAndRollback.md`. Bare `phase-NN` names live in `MVP-1/DevelopmentPlan/ShopfloorPlan/`; bare `NN-Name.md` names live in `MVP-1/ProjectPlan/`; `Schema/SQL/*` is relative to `MVP-1/DBChanges/`.
+> **Citation convention.** Paths are repo-root relative unless noted. Two shorthands recur: **`[PLC §n]`** = `MVP-1/RequirementDocuments/PLCTagSpecification.md`, and **`[DR]`** = `MVP-1/ProjectPlan/07-DeploymentRunbookAndRollback.md`. Bare `phase-NN` names live in `MVP-1/ProjectPlan/ShopfloorPlan/`; bare `NN-Name.md` names live in `MVP-1/ProjectPlan/`; `Schema/SQL/*` is relative to `MVP-1/DBChanges/`.
 
 > **This document does not specify the tag surface.** The surface — what is written, what is read, when, and every tag path — is [`MVP-1/RequirementDocuments/PLCTagSpecification.md`](../RequirementDocuments/PLCTagSpecification.md), cited throughout as **`[PLC §n]`**. This file covers only what a client would not sign: service signatures, configuration binding, persistence, phase ownership, requirement traceability and provenance.
 
@@ -49,7 +49,7 @@ Five operations. Behaviour, triggers and payload are `[PLC §7]`; this is the sh
 
 ### 1.1 The parameter name is `scheduleId`
 
-**The parameter is `scheduleId`, not `passScheduleId`.** Where the ProjectPlan set names it at all it is `scheduleId` (`04-APIContract.md:463`, `:808`). The April-dated `MVP-1/DevelopmentPlan/APIContracts.md` still uses `passScheduleId`; it is declared superseded by `04-APIContract.md`, and the repo convention is to reconcile the April documents up to the roadmap rather than maintain both.
+**The parameter is `scheduleId`, not `passScheduleId`.** `04-APIContract.md` §6.1 rules it, and the April elaboration that used `passScheduleId` was absorbed into that document and deleted on 13 Aug 2026. **`phase-04` still says `passScheduleId` and needs the one-line correction.**
 
 ### 1.2 Ordering — records before tags, enforced in the service
 

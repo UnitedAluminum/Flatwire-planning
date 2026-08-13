@@ -1,12 +1,12 @@
 # Flat Wire Mill — High-Level Design & ER Diagram
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — **§14 added**: the stack ADR absorbed from `TechStackRecommendation.md`, which was deleted in the same pass *(body otherwise August 6, 2026)*
+**Last Updated:** August 13, 2026 — **§14 added**: the stack ADR absorbed from `03-HLD-and-ERDiagram.md` §14, which was deleted in the same pass *(body otherwise August 6, 2026)*
 **Document Type:** High-Level Design + Entity-Relationship model + the stack ADR (§14)
 **Status:** Baselined for build — design risks in §13.2, unresolved items in §13.3; the §14 decisions are **Accepted**, not proposed
 **Owner:** Architecture stream
 **Audience:** Architects, Angular / .NET developers, DBA
-**Sources:** [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §5, §6.7, §8 · [`../DBChanges/Schema/SQL/`](../DBChanges/Schema/SQL/) (**counted, not quoted**) · [`../../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md`](ShopfloorPlan/00-foundations.md) §0.2 / §0.4 · [`c:\UAL\CLAUDE.md`](../../../CLAUDE.md) ecosystem conventions
+**Sources:** [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §5, §6.7, §8 · [`../DBChanges/Schema/SQL/`](../DBChanges/Schema/SQL/) (**counted, not quoted**) · [`../../MVP-1/ProjectPlan/ShopfloorPlan/00-foundations.md`](ShopfloorPlan/00-foundations.md) §0.2 / §0.4 · [`c:\UAL\CLAUDE.md`](../../../CLAUDE.md) ecosystem conventions
 
 **Companion documents:** `[VS]` [01-VisionAndScope.md](./01-VisionAndScope.md) · `[SRS]` [02-SRS.md](./02-SRS.md) · `[API]` [04-APIContract.md](./04-APIContract.md) · `[SP]` [05-SprintPlanAndBacklog.md](./05-SprintPlanAndBacklog.md) · `[TP]` [06-TestPlanAndTestCases.md](./06-TestPlanAndTestCases.md) · `[DR]` [07-DeploymentRunbookAndRollback.md](./07-DeploymentRunbookAndRollback.md)
 
@@ -92,7 +92,7 @@ Three facts this diagram encodes that are easy to get wrong:
 | Database | `ual-database` | **New `FlatWireDB`**; the FW-001 renames stay in the existing shared scheduling schema | DDL written and validated; **not deployed** |
 | Planning artifacts | `c:\UAL\Flatwire-planning` | This repository | Complete |
 
-`MVP-1/DevelopmentPlan/Flat Wire.code-workspace` opens this folder alongside both code repositories.
+`MVP-1/ProjectPlan/Flat Wire.code-workspace` opens this folder alongside both code repositories.
 
 ### 2.2 Reference-code rules — binding, and non-obvious
 
@@ -338,7 +338,7 @@ This is the **"Hybrid foundation" decision (D-04)**, and it **reverses** the ear
 
 Consequence: `Spool.ParentRodAlpha`, `Spool.SourceRodAlpha`, `RodStaging.RodAlpha`, `RodCheckin.RodAlpha`, `WeldEvent.OutgoingRodAlpha` / `IncomingRodAlpha`, `RollOverride.RodAlpha`, `DieChangeEvent.RodAlpha`, `CoilTraceability.RodAlpha` and `RodCheckout.RodAlpha` all carry **real, enforced FKs** to `Rod.Alpha`.
 
-> **The stale side, named explicitly so nobody builds from it:** `MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md` decision 3 and `MVP-1/DevelopmentPlan/ShopfloorPlan/phase-01c-database-foundation.md` both describe dropping `Rod`. **Anyone reading either in isolation will build the wrong schema.**
+> **The stale side, named explicitly so nobody builds from it:** `MVP-1/ProjectPlan/ShopfloorPlan/00-foundations.md` decision 3 and `MVP-1/ProjectPlan/ShopfloorPlan/phase-01c-database-foundation.md` both describe dropping `Rod`. **Anyone reading either in isolation will build the wrong schema.**
 >
 > **The unresolved consequence** of keeping a mirror — how and when `Rod` is synchronised with `coils`, which side is master for each shared column, and what happens when they diverge — is **OI-42**. It is a real design hole, not a documentation nit: it creates two sources of truth for rod material with no reconciliation.
 
@@ -1148,7 +1148,7 @@ New here: **PP-01** (the MVP-1 index count is **41**, not 44 or 46 — see §6.8
 
 ## 14. Architecture Decision Record — the stack
 
-> **Absorbed from `TechStackRecommendation.md` on 13 Aug 2026**, which was deleted in the same pass. The ADR sat at *"Recommendation — Pending Review"* for fifteen weeks while the whole build proceeded on its decisions; it was marked **Accepted** on 13 Aug and is recorded here because §13.1 is where this repository keeps decisions.
+> **Absorbed from `03-HLD-and-ERDiagram.md` §14 on 13 Aug 2026**, which was deleted in the same pass. The ADR sat at *"Recommendation — Pending Review"* for fifteen weeks while the whole build proceeded on its decisions; it was marked **Accepted** on 13 Aug and is recorded here because §13.1 is where this repository keeps decisions.
 >
 > **Only what §1–§13 did not already carry was brought across.** The suggested microservice structure (§3.1 is more detailed), the SignalR design (§4), environments (§11), the PWA service worker (§5), Chart.js and the `isLive` flag (§5.5), and the `SlitterInterface`-is-not-a-reference correction (§2.2) were all **dropped as duplicates**, not summarised.
 

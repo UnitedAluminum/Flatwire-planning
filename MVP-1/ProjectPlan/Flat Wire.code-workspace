@@ -1,6 +1,6 @@
 {
 	// Opens the planning repo alongside the two code repos the work lands in.
-	// Paths are relative to this file at MVP-1/DevelopmentPlan/ — corrected 13 Aug 2026,
+	// Paths are relative to this file at MVP-1/ProjectPlan/ — corrected 13 Aug 2026,
 	// when "../../ual-angular" and "../../ual-api" both resolved to
 	// Flatwire-planning/ual-*, which does not exist. The code repos are siblings of
 	// Flatwire-planning under c:\UAL, so they are three levels up, not two.

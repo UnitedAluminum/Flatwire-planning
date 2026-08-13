@@ -1,10 +1,29 @@
-# Flat Wire Mill — DevelopmentPlan Review
+# Flat Wire Mill — Development Plan Review
 
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** 2026-08-13 — **#33, #51 and #57 re-closed** against the rewritten sprint-wise backlog (#51 now **moot** — no epics or points remain to be wrong about) and the `FlatWireJiraStories.md` worklist row retired. *(Earlier same day: the Appendix worklist executed; findings updated, three worklist rows struck as wrong, six new findings added.)*
 **Status:** Review — findings & recommendations. **The 13 Aug reconcile-up did edit source documents** (the April four, the two check-in docs, the workspace file and two `ShopfloorPlan/` headers)
 
 **Scope reviewed:** `MVP-1/DevelopmentPlan/` — `APIContracts.md`, `FlatWireJiraStories.md`, `FlatWireTables.md`, `TechStackRecommendation.md`, `ShopfloorAndRealTimePlan.md`, `ShopfloorPlan/*`, ~~`CheckinImplementationPlan.md`~~, ~~`CheckinImplementationPrompt.md`~~ *(both **deleted 13 Aug 2026** — recoverable at `1964086`; see the Tier 5 banner)*; plus the schema design and DDL, since moved to `MVP-1/DBChanges/Schema/*` + `Schema/SQL/*`.
+
+> ## ⚠ This document deliberately keeps the old file names
+>
+> **The folder it reviews no longer exists.** On 13 Aug 2026 `MVP-1/DevelopmentPlan/` was consolidated into
+> `MVP-1/ProjectPlan/`, and the four April documents were **absorbed into the documents that own their subjects
+> and deleted**:
+>
+> | Reviewed here as | Now resolves to |
+> |---|---|
+> | `APIContracts.md` | `04-APIContract.md` (its §2.3 records the four corrections) |
+> | `FlatWireJiraStories.md` | `05-SprintPlanAndBacklog.md` §4, §6, §7, §8 |
+> | `FlatWireTables.md` | `../DBChanges/Schema/FlatWireSchema_Mapping.md`, appendix |
+> | `TechStackRecommendation.md` | `03-HLD-and-ERDiagram.md` §14 |
+> | `ShopfloorAndRealTimePlan.md`, `ShopfloorPlan/*` | unchanged, now under `ProjectPlan/` |
+>
+> **The names below were not rewritten, and that is deliberate.** Every finding is a statement *about a document as
+> it stood when the finding was made*. Substituting the new names would make this document assert that
+> `04-APIContract.md` carries the defects its own §2.3 corrects — which is the opposite of true. Read the table
+> above, not the names, when following a finding to its current home. Same convention as `CHANGELOG.md`.
 
 > ## ⚠ Read this before using the Appendix worklist — it has been executed, and three of its rows were wrong
 >

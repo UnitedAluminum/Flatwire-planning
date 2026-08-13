@@ -100,7 +100,7 @@ PLC tag stations follow the same rule — `FL2.FM2.S1`, `FL2.FM2.S2`, `FL2.FM2.S
 - **Pass schedule (`PassSchedule.Status`):** `Draft / Active / Inactive`.
 - **Line-state (Dashboard 1 / PLC display):** `RUNNING / IDLE / SETUP / OFFLINE / FAULT / PAUSED`.
 
-**`FlatWireHub` SignalR events** (`APIContracts.md` + `RequirementDocuments/PLCTagSpecification.md`): `GaugeReading`, `WidthReading`, `SpeedFPM`, `PayoffWeight`, **`PayoffStateChanged`** (bay occupancy — rare domain event, sent immediately and unbatched, never inside the 10 Hz telemetry batch), `ComponentStatus`, `LineStatus`, `AlertRaised`, `AlertCleared`, `FootageCounter`; run event markers `WeldJoinEvent`, `DieChangeEvent`, `PauseEvent`, `SPCCheckpoint`, `AlertEvent`, `RodCheckoutEvent`. Groups: `FL1Data`, `FL2Data`, `FL3Data`. FL2 standalone broadcasts `null` gauge/width (historical only).
+**`FlatWireHub` SignalR events** (`04-APIContract.md` + `RequirementDocuments/PLCTagSpecification.md`): `GaugeReading`, `WidthReading`, `SpeedFPM`, `PayoffWeight`, **`PayoffStateChanged`** (bay occupancy — rare domain event, sent immediately and unbatched, never inside the 10 Hz telemetry batch), `ComponentStatus`, `LineStatus`, `AlertRaised`, `AlertCleared`, `FootageCounter`; run event markers `WeldJoinEvent`, `DieChangeEvent`, `PauseEvent`, `SPCCheckpoint`, `AlertEvent`, `RodCheckoutEvent`. Groups: `FL1Data`, `FL2Data`, `FL3Data`. FL2 standalone broadcasts `null` gauge/width (historical only).
 
 ---
 

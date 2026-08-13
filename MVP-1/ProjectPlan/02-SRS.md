@@ -6,7 +6,7 @@
 **Status:** Baselined for build — open requirements issues in §11
 **Owner:** BA / Analysis stream
 **Audience:** Developers (Angular, .NET, SQL), QA, BA, architects
-**Sources:** [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §2, §3, §4, §7, §8.5 · *(the consolidated SRS `.docx` was **removed from the repository 1 Aug 2026** — git history `6096921`. **This document is now the authority for requirement text**; the `OL`/`PCI`/`CHK`/`WLD`/`PRC`/`TRV` IDs it cites remain valid as references only.)* · `Shopfloor_Flat_wireSRS_Consolidated_v3.docx` *(deleted — not linkable)* · [`../../Analysis/`](../../Analysis/) · [`../../MVP-1/Mockups/`](../../MVP-1/Mockups/) · [`../../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md`](ShopfloorPlan/00-foundations.md)
+**Sources:** [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §2, §3, §4, §7, §8.5 · *(the consolidated SRS `.docx` was **removed from the repository 1 Aug 2026** — git history `6096921`. **This document is now the authority for requirement text**; the `OL`/`PCI`/`CHK`/`WLD`/`PRC`/`TRV` IDs it cites remain valid as references only.)* · `Shopfloor_Flat_wireSRS_Consolidated_v3.docx` *(deleted — not linkable)* · [`../../Analysis/`](../../Analysis/) · [`../../MVP-1/Mockups/`](../../MVP-1/Mockups/) · [`../../MVP-1/ProjectPlan/ShopfloorPlan/00-foundations.md`](ShopfloorPlan/00-foundations.md)
 
 **Companion documents:** `[VS]` [01-VisionAndScope.md](./01-VisionAndScope.md) · `[HLD]` [03-HLD-and-ERDiagram.md](./03-HLD-and-ERDiagram.md) · `[API]` [04-APIContract.md](./04-APIContract.md) · `[SP]` [05-SprintPlanAndBacklog.md](./05-SprintPlanAndBacklog.md) · `[TP]` [06-TestPlanAndTestCases.md](./06-TestPlanAndTestCases.md) · `[DR]` [07-DeploymentRunbookAndRollback.md](./07-DeploymentRunbookAndRollback.md)
 
@@ -44,7 +44,7 @@ Full glossary in §3.6. The terms that most often cause misreadings:
 | [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) | The reconciled source this SRS re-cuts. Authoritative where two older artifacts disagree |
 | [`../DBChanges/Schema/SQL/`](../DBChanges/Schema/SQL/) | Authoritative for column-level types, nullability and constraints |
 | [`../../MVP-1/Mockups/`](../../MVP-1/Mockups/) | Authoritative for pixel-level layout and screen behaviour |
-| [`../../MVP-1/DevelopmentPlan/REVIEW.md`](REVIEW.md) | Catalogue of known contradictions between older documents |
+| [`../../MVP-1/ProjectPlan/REVIEW.md`](REVIEW.md) | Catalogue of known contradictions between older documents |
 | [`../../Analysis/FlatWireOpenQuestions.md`](../../Analysis/FlatWireOpenQuestions.md) | The open-questions register (`OQ-##`) |
 
 ### 1.5 Document conventions and ID schemes

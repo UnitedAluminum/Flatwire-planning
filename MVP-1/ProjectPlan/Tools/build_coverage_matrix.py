@@ -1,8 +1,8 @@
 """
 Prove that every MVP-1 requirement reaches a test case.
 
-    python MVP-1/DevelopmentPlan/Tools/build_coverage_matrix.py            # check, exit 1 on a hole
-    python MVP-1/DevelopmentPlan/Tools/build_coverage_matrix.py --emit     # also print the tables
+    python MVP-1/ProjectPlan/Tools/build_coverage_matrix.py            # check, exit 1 on a hole
+    python MVP-1/ProjectPlan/Tools/build_coverage_matrix.py --emit     # also print the tables
 
 WHY THIS EXISTS
     06-TestPlanAndTestCases.md section 10.1 mapped SRS *section ranges* to TC ranges

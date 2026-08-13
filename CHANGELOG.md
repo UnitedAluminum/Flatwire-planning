@@ -67,26 +67,26 @@ a client deliverable, the second describes a screen.
 | &nbsp;&nbsp;[MVP-1/DBChanges/Schema/FlatWireSchema_Materials.md](#mvp-1dbchangesschemaflatwireschema_materialsmd) | 2 |
 | &nbsp;&nbsp;[MVP-1/DBChanges/Schema/FlatWireSchema_QualityOutput.md](#mvp-1dbchangesschemaflatwireschema_qualityoutputmd) | 4 |
 | &nbsp;&nbsp;[MVP-1/DBChanges/Schema/FlatWireSchema_Runs.md](#mvp-1dbchangesschemaflatwireschema_runsmd) | 7 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/APIContracts.md](#mvp-1developmentplanapicontractsmd) | 8 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/CapacityAndEffortModel.md](#mvp-1developmentplancapacityandeffortmodelmd) | 6 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/CheckinImplementationPlan.md](#mvp-1developmentplancheckinimplementationplanmd) *(deleted)* | 3 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/CheckinImplementationPrompt.md](#mvp-1developmentplancheckinimplementationpromptmd) *(deleted)* | 3 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/DevelopmentEffortModel.md](#mvp-1developmentplandevelopmenteffortmodelmd) | 3 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/FlatWireJiraStories.md](#mvp-1developmentplanflatwirejirastoriesmd) | 4 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/FlatWireTables.md](#mvp-1developmentplanflatwiretablesmd) | 1 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/PLCTagImplementation.md](#mvp-1developmentplanplctagimplementationmd) | 1 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/REVIEW.md](#mvp-1developmentplanreviewmd) | 4 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/RodPreCheckinUxReviewPrompt.md](#mvp-1developmentplanrodprecheckinuxreviewpromptmd) | 2 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/ShopfloorAndRealTimePlan.md](#mvp-1developmentplanshopfloorandrealtimeplanmd) | 16 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/ShopfloorPlan/back-matter.md](#mvp-1developmentplanshopfloorplanback-mattermd) | 4 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/ShopfloorPlan/phase-01-core-platform-setup.md](#mvp-1developmentplanshopfloorplanphase-01-core-platform-setupmd) | 1 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/ShopfloorPlan/phase-12-yield-cost-ledger-scrap.md](#mvp-1developmentplanshopfloorplanphase-12-yield-cost-ledger-scrapmd) | 1 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/TechStackRecommendation.md](#mvp-1developmentplantechstackrecommendationmd) | 1 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/Tools/README.md](#mvp-1developmentplantoolsreadmemd) | 4 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/Tools/build_coverage_matrix.py](#mvp-1developmentplantoolsbuild_coverage_matrixpy) | 1 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/WeldEventPopupPlan.md](#mvp-1developmentplanweldeventpopupplanmd) | 4 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/YieldCostAndScrapJiraStories.md](#mvp-1developmentplanyieldcostandscrapjirastoriesmd) | 1 |
-| &nbsp;&nbsp;[MVP-1/DevelopmentPlan/YieldCostAndScrapSheet.md](#mvp-1developmentplanyieldcostandscrapsheetmd) | 3 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/APIContracts.md](#mvp-1projectplanapicontractsmd) | 8 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/CapacityAndEffortModel.md](#mvp-1projectplancapacityandeffortmodelmd) | 6 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/CheckinImplementationPlan.md](#mvp-1projectplancheckinimplementationplanmd) *(deleted)* | 3 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/CheckinImplementationPrompt.md](#mvp-1projectplancheckinimplementationpromptmd) *(deleted)* | 3 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/DevelopmentEffortModel.md](#mvp-1projectplandevelopmenteffortmodelmd) | 3 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/FlatWireJiraStories.md](#mvp-1projectplanflatwirejirastoriesmd) | 4 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/FlatWireTables.md](#mvp-1projectplanflatwiretablesmd) | 1 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/PLCTagImplementation.md](#mvp-1projectplanplctagimplementationmd) | 1 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/REVIEW.md](#mvp-1projectplanreviewmd) | 4 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/RodPreCheckinUxReviewPrompt.md](#mvp-1projectplanrodprecheckinuxreviewpromptmd) | 2 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/ShopfloorAndRealTimePlan.md](#mvp-1projectplanshopfloorandrealtimeplanmd) | 16 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/ShopfloorPlan/back-matter.md](#mvp-1projectplanshopfloorplanback-mattermd) | 4 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/ShopfloorPlan/phase-01-core-platform-setup.md](#mvp-1projectplanshopfloorplanphase-01-core-platform-setupmd) | 1 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/ShopfloorPlan/phase-12-yield-cost-ledger-scrap.md](#mvp-1projectplanshopfloorplanphase-12-yield-cost-ledger-scrapmd) | 1 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/TechStackRecommendation.md](#mvp-1projectplantechstackrecommendationmd) | 1 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/Tools/README.md](#mvp-1projectplantoolsreadmemd) | 4 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/Tools/build_coverage_matrix.py](#mvp-1projectplantoolsbuild_coverage_matrixpy) | 1 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/WeldEventPopupPlan.md](#mvp-1projectplanweldeventpopupplanmd) | 4 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/YieldCostAndScrapJiraStories.md](#mvp-1projectplanyieldcostandscrapjirastoriesmd) | 1 |
+| &nbsp;&nbsp;[MVP-1/ProjectPlan/YieldCostAndScrapSheet.md](#mvp-1projectplanyieldcostandscrapsheetmd) | 3 |
 | &nbsp;&nbsp;[MVP-1/ProjectPlan/00-README.md](#mvp-1projectplan00-readmemd) | 3 |
 | &nbsp;&nbsp;[MVP-1/ProjectPlan/01-VisionAndScope.md](#mvp-1projectplan01-visionandscopemd) | 2 |
 | &nbsp;&nbsp;[MVP-1/ProjectPlan/02-SRS.md](#mvp-1projectplan02-srsmd) | 7 |
@@ -138,6 +138,7 @@ Changes that span the repository rather than one document.
 
 | Date | Changed By | Description |
 |------|-----------|-------------|
+| Aug 13, 2026 | Plan team | **`MVP-1/DevelopmentPlan/` was consolidated into `MVP-1/ProjectPlan/` and no longer exists** — phase A of making `ProjectPlan/` the single home for development, testing and deployment material. The two folders sat at equal depth under `MVP-1/`, so the move itself preserved every outbound relative link, the `../../../MVP-2/` links from `ShopfloorPlan/`, the three `Tools/*.py` `ROOT` calculations and the `.code-workspace` paths; **108 inbound links and 9 redundant self-referential forms were rewritten**.<br><br>**Four April-dated documents were absorbed into the documents that own their subjects and deleted** — closing the "split-brain by design" convention: **`APIContracts.md` → [04-APIContract.md](MVP-1/ProjectPlan/04-APIContract.md)**, which gained four MVP-1 endpoint sections it had *indexed but never specified* (`POST /staging/rod/unstage` §4.5a, `POST /checkin/spool` §4.6a, `GET /spools` §4.6b, `GET /run/active` §4.7a) plus worked request/response examples on 16 endpoints; **`FlatWireJiraStories.md` → [05-SprintPlanAndBacklog.md](MVP-1/ProjectPlan/05-SprintPlanAndBacklog.md)** §4/§6/§7/§8, leaving **one** backlog of 116 stories — 05's section *numbers* were preserved because `[SP §1]`, `§1.4`, `§2`, `§4`, `§6`, `§7`, `§10`, `§10.3` and `§11` are all cited elsewhere, and §1/§3/§5/§10.2 became pointers rather than four more restatements of the capacity model; **`TechStackRecommendation.md` → [03-HLD-and-ERDiagram.md](MVP-1/ProjectPlan/03-HLD-and-ERDiagram.md) §14**, carrying only what §1–§13 lacked; **`FlatWireTables.md` → [FlatWireSchema_Mapping.md](MVP-1/DBChanges/Schema/FlatWireSchema_Mapping.md)**'s appendix, retained because it is the **only** inventory of the legacy `FlatLineProcessing`/`FlatLineSetup` columns and `OI-31`/`G8` record that no legacy migration deliverable exists. `WeldEventPopupPlan.md`'s `Q-W#` register moved to [REVIEW.md](MVP-1/ProjectPlan/REVIEW.md)'s appendix — **`Q-W2` is open and that document stated it exists nowhere else.**<br><br>**Seven reconciliation rulings, all counted rather than quoted** (comments stripped from the scripts): the **MVP-1 build is 25 tables · 33 FKs · 41 index statements · 1 procedure · 1 trigger**, against a full design of 28 tables / 43 FKs. ⚠ **[07-DeploymentRunbookAndRollback.md](MVP-1/ProjectPlan/07-DeploymentRunbookAndRollback.md) §4.2 asserted 27 tables and told the deployer to STOP on 25 — as written it rejected a correct deployment.** `03` §6.2 said "28 tables" above a table summing to 27 and omitted `Dancer`, which `01_Lookup` creates. `PP-01`'s index count is **41**, not 44/46/"40+1" — four sources tabulated with what each was actually measuring, since a *deployed* database reports more than script 07 creates. `02-SRS` claimed 366 requirements and `00-README` 363; the document has **279 rows, 263 in MVP-1 scope**, and both older figures predate the MVP-2 split and were unreproducible. Master spec: 9 hub events → **10** (`PP-04`). Roadmap table: Phase 5 **221 h → 154 h**. `00-foundations` decision 3: 27/24 → **28/25**, the figure `[HLD §6.3]` had already flagged as the stale side.<br><br>**`REVIEW.md` deliberately keeps the old file names** and carries an old→new map in its header: its findings are statements about those documents *as they stood*, so substituting the new names would have made it assert that `04-APIContract.md` carries the defects its own §2.3 corrects. Same convention as this file. **Verified:** no `FW-###` story id lost, `build_coverage_matrix.py` still exits 0, and the link check ended **better than baseline** — 51 unresolved against 54 before the work, 1 dead anchor against 2. |
 | Aug 13, 2026 | Plan team | **The backlog's authority moved, and eight documents were repaired in the same pass.** [05-SprintPlanAndBacklog.md](MVP-1/ProjectPlan/05-SprintPlanAndBacklog.md) was rewritten as the sprint-wise MVP-1 backlog (**116 stories / 3,292 h** — see its own section) and promoted from *"a points cross-check, not a schedule"* to **authoritative**. That promotion has blast radius, and the ripple was treated as part of the work rather than as follow-up. **`05-SprintPlanAndBacklog.md` gives up §7/§7.2/§7.3** — its 44 shopfloor rows and twelve `[NEW]` `FW-N##` stories — and **§4.2's `S0`–`S4` cadence is marked retired**; both carry banners, and **the rows are retained, not deleted**, because §11's `FR-###` coverage matrix keys on them. **§11 itself stays there and still resolves**, since story ids are frozen. **`back-matter.md` Appendix C became a derived view**: correct for the 45 rows it maps, explicitly not complete, and marked *do not extend*. **`G4` stays closed and is closed harder** — the rewrite proves coverage at source by walking every phase's `Stories:` trailer, which is what makes `REVIEW.md` #57's class of defect (a live story reaching no summary) structurally impossible rather than merely fixed. **`CapacityAndEffortModel.md` keeps its §3 cross-check but loses its denominator**: the h/point ratios are marked historical with an instruction not to re-derive them, and **its finding 1 is recorded as closed by the rewrite** — Phase 1 went from seven database-only stories to 33. Its Related-Documents row now describes a document that **consumes** the model rather than one that offers a rival estimate. **`YieldCostAndScrapJiraStories.md` reduced to a pointer** after its four story bodies were absorbed; **`YieldCostAndScrapSheet.md` is untouched and remains the Phase-12 hours authority**, its 33/49/28/67 ladder split still reconciling on both axes. **`FlatWireJiraStories-MVP2.md` keeps its own point values** — MVP-2 was not re-derived — but is marked no longer comparable with MVP-1's sizing, and the `147 + 11 + 31 = 189` reconciliation is retired. **`ShopfloorAndRealTimePlan.md` §0.1 and `CLAUDE.md`** both still described *"12 epics / 58 stories / 184-point cross-check"*, stale on every figure; both now describe the current backlog. **`REVIEW.md` #33, #51 and #57 were re-closed on stronger grounds and #51 marked moot** — it concerned a wrong epic point total, and there are no longer epics or points to be wrong about. **The convention on retired figures is the reusable part: nothing was deleted to make the new numbers true.** Every superseded total — 147, 189, 31, 11, 184, 220, 224, 226, 231, the per-epic split and the retired epic ids — is preserved in the backlog's *Appendix A*, so a citation written against any of them still resolves. |
 | Aug 13, 2026 | Clean-up | **The two check-in documents deleted, and their 26 inbound citations repaired across 17 files — the reversal of the decision recorded in the entry below.** Earlier the same day both were *reduced to records* precisely because deleting them would orphan live traceability; on the request to remove them outright, the orphaning was fixed rather than accepted. **The method is the reusable part: three facts were cited *from* those documents rather than *about* them, and each was moved to a document that owns the rule before the source was removed.** The **stub-first delivery contract** became `ShopfloorPlan/00-foundations.md` **§0.5** — new, and stated more completely than the original, since it now also names the DI-level `useStub` swap, the DB seed as the one canonical fixture set, the switchover criterion, and the fact that the check-in stub routes around `OQ-3`/`OQ-14`/`OQ-15` on a tracked de-stub debt. The **`0.003″` ovality datum** was restated at all four *"supersedes the hard-coded value"* sites as **per-alloy reference data, not a constant**, with `AlloyProperty.RodOvalityMaxIn` named as its only home — the provenance pointer was what depended on the file, not the value. **`G14`** moved into `back-matter.md`'s register row, which now carries the *"every check-in insert fails as specified"* statement, and `REVIEW.md` #6 was rewritten from *"inside one doc"* to the live **DDL-four-NOT-NULL vs contract-three** form. **`G14` remains open and still blocks Phase 4.** The remaining citations were converted to past tense naming the deleted document (`--fw-*`/`G18`, the bare-`ControllerBase` finding, the `FW-S3-###` ids, the DB5 fixture and inline-SVG mockup notes, the master spec §8.2 and `03-HLD` §warnings, both Appendix A.3 rows struck), so the record of *what those documents got wrong* survives — the instructions are still in git history and in any April copy, which is the reason to keep saying so. **Files touched: 17.** `ClientCall_2026-07-30_SyncPlan.md` was deliberately not swept, on the same reasoning that excludes it from the numbering sweeps: it is a dated record of what was written that day. **Zero dangling links.** |
 | Aug 13, 2026 | Clean-up | **`MVP-1/DevelopmentPlan/` cleaned of irrelevant content — 12,700 words removed, about 11 % of the folder, with no requirement, hours figure or decision lost.** Four documents accounted for nearly all of it: three **reduced to records** and one **deleted** (see their own sections). **The headline finding is that three of the four could not simply be deleted.** A reference map run first found **50 inbound references across 18 files, nine of them outside this folder** — the master specification, `02-SRS.md`, `03-HLD-and-ERDiagram.md`, `04-APIContract.md`, `FlatWireSchema_Lookup.md`, `Analysis/FlatWireOpenQuestions.md`, `ProjectPlanPrompt.md`, the 30 Jul client-call ledger and `MVP-2/DevelopmentPlan/README.md` — and several cite those documents **as evidence**, not merely as further reading: the ovality datum `RodOvalityMaxIn` supersedes, `G18`'s stale-token evidence, the bare-`ControllerBase` finding, the stub-first delivery model, and gaps `G25`/`G26`/`G28`. Deleting them would have orphaned live traceability in governing documents or forced a rewrite of nine files outside the requested scope; in every case the **body** was the irrelevant part while the **file's existence** was load-bearing, so the bodies went and the cited facts stayed. **Two things were nearly lost and are now recorded:** `Q-W2`, a live `Medium` open question with no home outside `WeldEventPopupPlan.md`, and the per-stream QA-contingency correction, which had no entry in this log. **Two of the four requested categories turned out to be near-empty, and no deletions were manufactured to fill them.** *Out-of-scope residue*: the MVP-2 and upstream mentions that remain are **deliberate scope markers** added by the 11 Aug split and the 13 Aug backlog reduction — removing them would restore the ambiguity they were added to fix. *Duplicated content*: phase files barely restate `00-foundations.md`; the real defect there is the opposite one, that **13 of 16 carry no `reference context (do not restate)` pointer at all**, which is an addition and so out of scope here. **The in-document history sweep was also smaller than the marker count implied** — of 471 candidate markers, most are either **semantic state** (`~~POST /staging/rod/mark-welded~~ RETIRED`, `~~422~~ to 201`, `~~2~~ to Phase 2`), which prevents implementing the wrong thing, or **rationale for the current rule**, which prevents reverting to the old one. Only `CapacityAndEffortModel.md` carried substantial pure narrative. **`REVIEW.md`'s findings and `back-matter.md`'s gap register were deliberately left intact** — dated history is their content, not clutter in it. |
@@ -440,7 +441,7 @@ Changes that span the repository rather than one document.
 | Aug 13, 2026 | **Demoted below `ProjectPlan/04-APIContract.md` and reconciled to the phase model.** Two API contract documents had coexisted since 4 Aug with no statement of which governed; **the 4 Aug document is now the contract of record** and this one is an elaboration that is not citable — retained because it is 2.6× longer and carries request/response detail, worked examples and project structure the owner does not, all of which should be **migrated into the owner rather than cited from here**. The `S1`–`S5` delivery model is replaced throughout by the roadmap's **14 phases**, sourced from `back-matter.md` Appendix A; the five sprint sections became phase-labelled groups. `/passschedule/**` and `/shiftsummary` are **marked MVP-2 in place**. Correctness fixes: **`RollAdjustTrigger` added to `CheckpointType`** (`POST /rolloverride` already wrote it); the six-member `LineStatus` enum renamed **`LineOperatingState`** and the hub event **`LineStateChanged`** per `[PLC §6]`, with a standing note **not to add a seventh member** since the absence of `Stopped` is deliberate and the mapping is configuration (`PLC-Q01`); `PushPassSchedule`'s first parameter is **`scheduleId`**; `ComponentState` is the three-value enum; `EdgeType` is `Round`/`Square` with display labels mapped at the UI. The hub event list was verified complete at nine events. **Three missing endpoint families — alloy-lookup CRUD, roll-override revert (`OI-32`) and the alert lifecycle (`OI-28`) — are recorded as gaps rather than drafted**, because inventing a shape here would create exactly the second unowned contract this document was demoted for. **`POST /passschedule/generate`'s worked example is deliberately left uncorrected** and is marked as such. |
 ---
 
-## [MVP-1/DevelopmentPlan/CapacityAndEffortModel.md](MVP-1/ProjectPlan/CapacityAndEffortModel.md)
+## [MVP-1/ProjectPlan/CapacityAndEffortModel.md](MVP-1/ProjectPlan/CapacityAndEffortModel.md)
 
 | Date | Changed By | Description |
 |------|-----------|-------------|
@@ -477,7 +478,7 @@ Changes that span the repository rather than one document.
 
 ---
 
-## [MVP-1/DevelopmentPlan/DevelopmentEffortModel.md](MVP-1/ProjectPlan/DevelopmentEffortModel.md)
+## [MVP-1/ProjectPlan/DevelopmentEffortModel.md](MVP-1/ProjectPlan/DevelopmentEffortModel.md)
 
 | Date | Changed By | Description |
 |------|-----------|-------------|
@@ -507,7 +508,7 @@ Changes that span the repository rather than one document.
 
 ---
 
-## [MVP-1/DevelopmentPlan/PLCTagImplementation.md](MVP-1/ProjectPlan/PLCTagImplementation.md)
+## [MVP-1/ProjectPlan/PLCTagImplementation.md](MVP-1/ProjectPlan/PLCTagImplementation.md)
 
 | Date | Changed By | Description |
 |------|-----------|-------------|
@@ -515,7 +516,7 @@ Changes that span the repository rather than one document.
 
 ---
 
-## [MVP-1/DevelopmentPlan/REVIEW.md](MVP-1/ProjectPlan/REVIEW.md)
+## [MVP-1/ProjectPlan/REVIEW.md](MVP-1/ProjectPlan/REVIEW.md)
 
 | Date | Author | Change |
 |---|---|---|
@@ -536,7 +537,7 @@ Changes that span the repository rather than one document.
 
 ---
 
-## [MVP-1/DevelopmentPlan/ShopfloorAndRealTimePlan.md](MVP-1/ProjectPlan/ShopfloorAndRealTimePlan.md)
+## [MVP-1/ProjectPlan/ShopfloorAndRealTimePlan.md](MVP-1/ProjectPlan/ShopfloorAndRealTimePlan.md)
 
 | Date | Changed By | Description |
 |------|-----------|-------------|
@@ -559,7 +560,7 @@ Changes that span the repository rather than one document.
 
 ---
 
-## [MVP-1/DevelopmentPlan/ShopfloorPlan/back-matter.md](MVP-1/ProjectPlan/ShopfloorPlan/back-matter.md)
+## [MVP-1/ProjectPlan/ShopfloorPlan/back-matter.md](MVP-1/ProjectPlan/ShopfloorPlan/back-matter.md)
 
 | Date | Changed By | Description |
 |------|-----------|-------------|
@@ -569,7 +570,7 @@ Changes that span the repository rather than one document.
 | Aug 13, 2026 | Reconcile-up | **Header block added, and Appendix C's coverage claim corrected from 44/44 to 45/45.** This file and `00-foundations.md` were the only two in `ShopfloorPlan/` with no `Project` / `Last Updated` / `Status` block, though `CLAUDE.md` mandates one and all 17 phase files carry it — leaving the live `G##` register with no modification date a reader could check. **`FW-124` · Dashboard 5A — FL2 Spool Queue** (5 pts, `High`, phase 8) was **missing from Appendix C entirely**; it is built by `phase-08`, specified by `02-SRS.md` §5.3a and owned by `SpoolQueue.md`. The row is added and the closing figure restated — **the 44/44 claim was not a miscount, the row simply was not there**, which is the failure mode a coverage appendix exists to prevent. The *"184-point cross-check basis"* cited in Related Documents is likewise corrected to **189** (45 shopfloor stories), with a note that both it and "58 stories" were correct before `FW-124` and never updated. |
 ---
 
-## [MVP-1/DevelopmentPlan/ShopfloorPlan/phase-01-core-platform-setup.md](MVP-1/ProjectPlan/ShopfloorPlan/phase-01-core-platform-setup.md)
+## [MVP-1/ProjectPlan/ShopfloorPlan/phase-01-core-platform-setup.md](MVP-1/ProjectPlan/ShopfloorPlan/phase-01-core-platform-setup.md)
 
 | Date | Changed By | Description |
 |------|-----------|-------------|
@@ -577,7 +578,7 @@ Changes that span the repository rather than one document.
 
 ---
 
-## [MVP-1/DevelopmentPlan/ShopfloorPlan/phase-12-yield-cost-ledger-scrap.md](MVP-1/ProjectPlan/ShopfloorPlan/phase-12-yield-cost-ledger-scrap.md)
+## [MVP-1/ProjectPlan/ShopfloorPlan/phase-12-yield-cost-ledger-scrap.md](MVP-1/ProjectPlan/ShopfloorPlan/phase-12-yield-cost-ledger-scrap.md)
 
 | Date | Changed By | Description |
 |------|-----------|-------------|
@@ -593,7 +594,7 @@ Changes that span the repository rather than one document.
 
 ---
 
-## [MVP-1/DevelopmentPlan/Tools/README.md](MVP-1/ProjectPlan/Tools/README.md)
+## [MVP-1/ProjectPlan/Tools/README.md](MVP-1/ProjectPlan/Tools/README.md)
 
 | Date | Change |
 |---|---|
@@ -603,7 +604,7 @@ Changes that span the repository rather than one document.
 | Aug 13, 2026 | **Documented the two undocumented scripts.** The README covered `build_docx.py` only, while `build_questions_xlsx.py` had been committed and in use since 12 Aug 2026 — the same omission being corrected across the inventories this pass. Adds a three-row summary table at the top (what each reads, writes and fails on), a full section on `build_questions_xlsx.py` including its four fatal guards and the note that **`Recommended answer` and `Why` are optional for exactly one reason** and must not be restored to `REQUIRED_OPEN`, and a section on the new `build_coverage_matrix.py`. |
 ---
 
-## [MVP-1/DevelopmentPlan/Tools/build_coverage_matrix.py](MVP-1/ProjectPlan/Tools/build_coverage_matrix.py)
+## [MVP-1/ProjectPlan/Tools/build_coverage_matrix.py](MVP-1/ProjectPlan/Tools/build_coverage_matrix.py)
 
 | Date | Changed By | Description |
 |------|-----------|-------------|
@@ -621,7 +622,7 @@ Changes that span the repository rather than one document.
 | Aug 13, 2026 | **Step S7 closed and the stale gap-id instruction retired.** §5.3's **S7** (*"Add G25 and G26 to `back-matter.md`"*) was the one step of this plan never executed: G25 was withdrawn correctly, **G26 was never added**, and `phase-06:45` cited it against nothing for twelve days. Both are now in the register and S7 is struck as done. §4's note *"Do not register G25; the next free gap ID remains G25"* is struck — the id **was** reused on 13 Aug 2026 for the requirement-coverage gap — with a pointer that any `G25` citation dated on or before 12 Aug 2026 means this weld-history row instead. |
 ---
 
-## [MVP-1/DevelopmentPlan/YieldCostAndScrapJiraStories.md](MVP-1/ProjectPlan/YieldCostAndScrapJiraStories.md)
+## [MVP-1/ProjectPlan/YieldCostAndScrapJiraStories.md](MVP-1/ProjectPlan/YieldCostAndScrapJiraStories.md)
 
 | Date | Changed By | Description |
 |------|-----------|-------------|
@@ -629,7 +630,7 @@ Changes that span the repository rather than one document.
 
 ---
 
-## [MVP-1/DevelopmentPlan/YieldCostAndScrapSheet.md](MVP-1/ProjectPlan/YieldCostAndScrapSheet.md)
+## [MVP-1/ProjectPlan/YieldCostAndScrapSheet.md](MVP-1/ProjectPlan/YieldCostAndScrapSheet.md)
 
 | Date | Changed By | Description |
 |------|-----------|-------------|
