@@ -1,15 +1,15 @@
 # PHASE 11 (MVP-2 part) — Supervisor Shift Summary (DB10)
 
-> **⚠ MVP-2 — deferred scope.** This is a **partial phase file**: only the DB10 content was carved out of the MVP-1 phase, **verbatim at bullet level**. The rest of that phase — the reporting suite and the welding-wire certification — is MVP-1 and stays there. Read this alongside [`phase-11-shift-summary-reporting-certification.md`](../../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-11-shift-summary-reporting-certification.md), which remains the authority on the phase as a whole.
+> **⚠ MVP-2 — deferred scope.** This is a **partial phase file**: only the DB10 content was carved out of the MVP-1 phase, **verbatim at bullet level**. The rest of that phase — the reporting suite and the welding-wire certification — is MVP-1 and stays there. Read this alongside [`phase-11-shift-summary-reporting-certification.md`](../../../MVP-1/ProjectPlan/ShopfloorPlan/phase-11-shift-summary-reporting-certification.md), which remains the authority on the phase as a whole.
 >
-> **Effort: 71 h** (11 Aug 2026). Derived by re-pricing this file's deliverables from the rate card in [`CapacityAndEffortModel.md` §2](../../../MVP-1/DevelopmentPlan/CapacityAndEffortModel.md) rather than by dividing the published total — the descope ladder cannot supply a split, since its **rung 6 defers four of the five reports, which are MVP-1**, and says nothing about DB10. The carve: **DB10 screen 24 FE** (the MVP-1 phase's FE 64 is DB10 24 + five reports at 8 FE each = 40, which checks exactly), **`GET /shiftsummary` 4 BE + `ShiftSummaryService` 16 BE**, **`sp_ShiftSummary` 8 DB**; QA and contingency **re-derived** from the reduced base, not scaled. **MVP-1 keeps 175 h** — the reporting suite and the welding-wire certification. Full working in **§3b**.
+> **Effort: 71 h** (11 Aug 2026). Derived by re-pricing this file's deliverables from the rate card in [`CapacityAndEffortModel.md` §2](../../../MVP-1/ProjectPlan/CapacityAndEffortModel.md) rather than by dividing the published total — the descope ladder cannot supply a split, since its **rung 6 defers four of the five reports, which are MVP-1**, and says nothing about DB10. The carve: **DB10 screen 24 FE** (the MVP-1 phase's FE 64 is DB10 24 + five reports at 8 FE each = 40, which checks exactly), **`GET /shiftsummary` 4 BE + `ShiftSummaryService` 16 BE**, **`sp_ShiftSummary` 8 DB**; QA and contingency **re-derived** from the reduced base, not scaled. **MVP-1 keeps 175 h** — the reporting suite and the welding-wire certification. Full working in **§3b**.
 
 ---
 
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** August 11, 2026
 **Status:** **MVP-2 — deferred scope**
-**Carved from:** [`phase-11-shift-summary-reporting-certification.md`](../../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-11-shift-summary-reporting-certification.md) on 11 Aug 2026, bullets copied verbatim
+**Carved from:** [`phase-11-shift-summary-reporting-certification.md`](../../../MVP-1/ProjectPlan/ShopfloorPlan/phase-11-shift-summary-reporting-certification.md) on 11 Aug 2026, bullets copied verbatim
 
 *The **DB10 Supervisor Shift Summary** screen and the `GET /shiftsummary` endpoint behind it. The reporting suite and the welding-wire certification in this phase are MVP-1.*
 

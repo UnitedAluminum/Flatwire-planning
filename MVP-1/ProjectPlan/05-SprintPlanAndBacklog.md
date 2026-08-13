@@ -1,12 +1,12 @@
 # Flat Wire Mill — Sprint Plan & Backlog
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — **§7/§7.2/§7.3 superseded** by [`../DevelopmentPlan/FlatWireJiraStories.md`](../DevelopmentPlan/FlatWireJiraStories.md) as the MVP-1 backlog, and **§4.2's `S0`–`S4` cadence retired**. **§4.1's week grid, §8's ladder and §11's `FR-###` coverage matrix are unchanged and remain authoritative** *(otherwise August 4, 2026)*
+**Last Updated:** August 13, 2026 — **§7/§7.2/§7.3 superseded** by [`../DevelopmentPlan/FlatWireJiraStories.md`](FlatWireJiraStories.md) as the MVP-1 backlog, and **§4.2's `S0`–`S4` cadence retired**. **§4.1's week grid, §8's ladder and §11's `FR-###` coverage matrix are unchanged and remain authoritative** *(otherwise August 4, 2026)*
 **Document Type:** Sprint plan and delivery backlog
 **Status:** Published — **the plan below does not fit the window; §1 requires a programme decision before it can be committed**
 **Owner:** Delivery lead / programme management
 **Audience:** Delivery lead, scrum team, programme management
-**Sources:** [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §9 · [`../../MVP-1/DevelopmentPlan/CapacityAndEffortModel.md`](../../MVP-1/DevelopmentPlan/CapacityAndEffortModel.md) · [`../../MVP-1/DevelopmentPlan/ShopfloorPlan/back-matter.md`](../../MVP-1/DevelopmentPlan/ShopfloorPlan/back-matter.md) · [`../../MVP-1/DevelopmentPlan/FlatWireJiraStories.md`](../../MVP-1/DevelopmentPlan/FlatWireJiraStories.md) (April — **superseded as a schedule**)
+**Sources:** [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §9 · [`../../MVP-1/DevelopmentPlan/CapacityAndEffortModel.md`](CapacityAndEffortModel.md) · [`../../MVP-1/DevelopmentPlan/ShopfloorPlan/back-matter.md`](ShopfloorPlan/back-matter.md) · [`../../MVP-1/DevelopmentPlan/FlatWireJiraStories.md`](FlatWireJiraStories.md) (April — **superseded as a schedule**)
 
 **Companion documents:** `[VS]` [01-VisionAndScope.md](./01-VisionAndScope.md) · `[SRS]` [02-SRS.md](./02-SRS.md) · `[HLD]` [03-HLD-and-ERDiagram.md](./03-HLD-and-ERDiagram.md) · `[API]` [04-APIContract.md](./04-APIContract.md) · `[TP]` [06-TestPlanAndTestCases.md](./06-TestPlanAndTestCases.md) · `[DR]` [07-DeploymentRunbookAndRollback.md](./07-DeploymentRunbookAndRollback.md)
 
@@ -66,7 +66,7 @@ The full ordered ladder in §8 recovers **448 of 3,727 hours — 12 %**. The mit
 
 ### 1.5 Status
 
-**Gap `G1` / open issue `OI-51`.** The effort model itself is **delivered**; the **escalation is the open item**, together with the unfilled roster in §3. Full derivation: [`CapacityAndEffortModel.md`](../../MVP-1/DevelopmentPlan/CapacityAndEffortModel.md).
+**Gap `G1` / open issue `OI-51`.** The effort model itself is **delivered**; the **escalation is the open item**, together with the unfilled roster in §3. Full derivation: [`CapacityAndEffortModel.md`](CapacityAndEffortModel.md).
 
 > **Two things the effort derivation surfaced that no earlier plan recorded:**
 >
@@ -202,7 +202,7 @@ Working days are **counted, not assumed**: **Labor Day falls on Mon 7 Sep 2026**
 
 ### 4.2 Sprints
 
-> **⚠ This `S0`–`S4` cadence was retired on 13 Aug 2026.** The live sprint calendar is [`../DevelopmentPlan/FlatWireJiraStories.md`](../DevelopmentPlan/FlatWireJiraStories.md) §1 — **four** even two-week sprints with **`S1` starting Mon 24 Aug**, which leaves the 17–21 Aug carry-over week outside every sprint rather than absorbing it, and merges this table's `S3` and `S4`. **§4.1's week grid above is unchanged and is what both cadences derive from.** The entry/exit criteria, demos and gates below are preserved there.
+> **⚠ This `S0`–`S4` cadence was retired on 13 Aug 2026.** The live sprint calendar is [`../DevelopmentPlan/FlatWireJiraStories.md`](FlatWireJiraStories.md) §1 — **four** even two-week sprints with **`S1` starting Mon 24 Aug**, which leaves the 17–21 Aug carry-over week outside every sprint rather than absorbing it, and merges this table's `S3` and `S4`. **§4.1's week grid above is unchanged and is what both cadences derive from.** The entry/exit criteria, demos and gates below are preserved there.
 
 | Sprint | Weeks | Goal | Phases | Entry criteria | Exit criteria | Demo | Gates |
 |---|---|---|---|---|---|---|---|
@@ -230,22 +230,22 @@ Working days are **counted, not assumed**: **Labor Day falls on Mon 7 Sep 2026**
 
 | # | Phase | Streams | Hours | Days | Wk | Depends on | OQ / OI blockers | Stories | Spec |
 |---|---|---|---|---|---|---|---|---|---|
-| **1A** | Angular Foundation | FE (+RT) | **370** | 46.2 | W0 | — | — | `[NEW]` FW-N03 | [phase-01a](../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-01a-angular-foundation.md) |
-| **1B** | Backend Foundation | BE + RT | **442** | 55.2 | W0 | — | OI-37 (roles) | `[NEW]` FW-N04, FW-N05; FW-080 scaffold | [phase-01b](../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-01b-backend-foundation.md) |
-| **1C** | Database Foundation | DB | **215** | 26.9 | W0 | — | OI-31, OI-42, OI-93, OI-17 | FW-001, 002, 004, 005, 006, 007 | [phase-01c](../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-01c-database-foundation.md) |
+| **1A** | Angular Foundation | FE (+RT) | **370** | 46.2 | W0 | — | — | `[NEW]` FW-N03 | [phase-01a](ShopfloorPlan/phase-01a-angular-foundation.md) |
+| **1B** | Backend Foundation | BE + RT | **442** | 55.2 | W0 | — | OI-37 (roles) | `[NEW]` FW-N04, FW-N05; FW-080 scaffold | [phase-01b](ShopfloorPlan/phase-01b-backend-foundation.md) |
+| **1C** | Database Foundation | DB | **215** | 26.9 | W0 | — | OI-31, OI-42, OI-93, OI-17 | FW-001, 002, 004, 005, 006, 007 | [phase-01c](ShopfloorPlan/phase-01c-database-foundation.md) |
 | **2** | Pass Schedule Management | FE + BE | **231** | 28.9 | W2–W3 | 1 | **OI-04**, OI-05, OI-93 | FW-010, 011, 012, 013, 014, 068, 004 | [phase-02](../../MVP-2/DevelopmentPlan/ShopfloorPlan/phase-02-pass-schedule-management.md) |
-| **3** | Line Status Board & Real-Time Backbone | RT + FE | **190** | 23.8 | W2–W3 | 1 | **OI-28** (alerts unbacked), OI-34 | FW-060, 080, 081 (groundwork), `[NEW]` FW-N06 | [phase-03](../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-03-line-status-board-realtime-backbone.md) |
-| **4** | Rod Check-In & PLC Config **+ Pre-Check-In** | FE + BE + RT | **255** *(+24–64 reserve)* | 31.9 | W4 | 2, 3, upstream | **OI-01, OI-33, OI-39, OI-46, OI-48, OI-49**, OI-07, OI-38 | FW-061, 082, 010, 002, `[NEW]` FW-N01, FW-N12 | [phase-04](../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-04-rod-checkin-plc-config.md) |
-| **5** | Active Run Monitoring & Gauge Trace | FE | **221** | 27.6 | W4 | 4 | OI-34, OI-36 | FW-062, 081, 080 | [phase-05](../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-05-active-run-monitoring-gauge-trace.md) |
-| **6** | In-Run Production Events | FE + BE | **298** | 37.2 | W5 | 5 | **OI-41** (needs Phase 13 die data), OI-10, OI-11, OI-14, OI-18, OI-23, OI-43, OI-57 | FW-063, 065, 070, 071, 073, `[NEW]` FW-N11 | [phase-06](../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-06-in-run-production-events.md) |
-| **7** | WIP Rejection & Rod Checkout | FE + BE | **205** | 25.6 | W5 | 6 | **OI-22** (Rework unpersistable), OI-20, OI-21, OI-35, OI-44, OI-53, OI-54 | FW-067, 072, 071 | [phase-07](../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-07-wip-rejection-rod-checkout.md) |
-| **8** | FL2 Spool Check-In & Finishing Run | FE + BE | **118** | 14.8 | W5–W6 | 4–6 output | **OI-47, OI-50**, OI-02, OI-06, OI-09, OI-55, OI-80 | FW-064, 070 | [phase-08](../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-08-fl2-spool-checkin-finishing-run.md) |
-| **9** | Output Coil Completion, Labeling & Packing | FE + BE | **222** *(+16–32 reserve)* | 27.8 | W6 | 8 | **OI-45** (weight basis), **OI-25** (footage frames), OI-24, OI-65, OI-67 | FW-066, 100, `[NEW]` FW-N02 | [phase-09](../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-09-output-coil-completion-labeling-packing.md) |
-| **10** | FL3 Hybrid Continuous Operation | BE + FE | **61** | 7.6 | W6 | 4, 5, 6, 9 | OI-16, OI-26, OI-09 | FW-122; reuses 061/062/082/066 | [phase-10](../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-10-fl3-hybrid-continuous-operation.md) |
-| **11** | Shift Summary, Reporting & Certification | BE + FE | **175** *(246 both scopes)* | 21.9 | W6 | 4–10 run data | OI-57, OI-58, OI-59, OI-62 | FW-069, 090–095 | [phase-11](../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-11-shift-summary-reporting-certification.md) |
-| **12** | Yield, Cost Ledger & Scrap | BE | **177** | 22.1 | W7 | 9, 11 | OI-45, OI-60, OI-68 | FW-100, 101\*, 102\*, 110\* | [phase-12](../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-12-yield-cost-ledger-scrap.md) |
-| **13** | Administration & Reference Data | FE + BE | **143** *(209 both scopes)* | 17.9 | W7 | 1 | **OI-27** (no `F` case), OI-77, OI-93 | FW-003, 004 (admin), 054, `[NEW]` FW-N07 | [phase-13](../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-13-administration-reference-data.md) |
-| **14** | Integration Testing, PLC Commissioning & Go-Live | QA + BA | **267** | 33.4 | W7 | all | **OI-78** (no exit-test matrix) | FW-120, 121, 122, 123 | [phase-14](../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-14-integration-testing-plc-commissioning-golive.md) |
+| **3** | Line Status Board & Real-Time Backbone | RT + FE | **190** | 23.8 | W2–W3 | 1 | **OI-28** (alerts unbacked), OI-34 | FW-060, 080, 081 (groundwork), `[NEW]` FW-N06 | [phase-03](ShopfloorPlan/phase-03-line-status-board-realtime-backbone.md) |
+| **4** | Rod Check-In & PLC Config **+ Pre-Check-In** | FE + BE + RT | **255** *(+24–64 reserve)* | 31.9 | W4 | 2, 3, upstream | **OI-01, OI-33, OI-39, OI-46, OI-48, OI-49**, OI-07, OI-38 | FW-061, 082, 010, 002, `[NEW]` FW-N01, FW-N12 | [phase-04](ShopfloorPlan/phase-04-rod-checkin-plc-config.md) |
+| **5** | Active Run Monitoring & Gauge Trace | FE | **221** | 27.6 | W4 | 4 | OI-34, OI-36 | FW-062, 081, 080 | [phase-05](ShopfloorPlan/phase-05-active-run-monitoring-gauge-trace.md) |
+| **6** | In-Run Production Events | FE + BE | **298** | 37.2 | W5 | 5 | **OI-41** (needs Phase 13 die data), OI-10, OI-11, OI-14, OI-18, OI-23, OI-43, OI-57 | FW-063, 065, 070, 071, 073, `[NEW]` FW-N11 | [phase-06](ShopfloorPlan/phase-06-in-run-production-events.md) |
+| **7** | WIP Rejection & Rod Checkout | FE + BE | **205** | 25.6 | W5 | 6 | **OI-22** (Rework unpersistable), OI-20, OI-21, OI-35, OI-44, OI-53, OI-54 | FW-067, 072, 071 | [phase-07](ShopfloorPlan/phase-07-wip-rejection-rod-checkout.md) |
+| **8** | FL2 Spool Check-In & Finishing Run | FE + BE | **118** | 14.8 | W5–W6 | 4–6 output | **OI-47, OI-50**, OI-02, OI-06, OI-09, OI-55, OI-80 | FW-064, 070 | [phase-08](ShopfloorPlan/phase-08-fl2-spool-checkin-finishing-run.md) |
+| **9** | Output Coil Completion, Labeling & Packing | FE + BE | **222** *(+16–32 reserve)* | 27.8 | W6 | 8 | **OI-45** (weight basis), **OI-25** (footage frames), OI-24, OI-65, OI-67 | FW-066, 100, `[NEW]` FW-N02 | [phase-09](ShopfloorPlan/phase-09-output-coil-completion-labeling-packing.md) |
+| **10** | FL3 Hybrid Continuous Operation | BE + FE | **61** | 7.6 | W6 | 4, 5, 6, 9 | OI-16, OI-26, OI-09 | FW-122; reuses 061/062/082/066 | [phase-10](ShopfloorPlan/phase-10-fl3-hybrid-continuous-operation.md) |
+| **11** | Shift Summary, Reporting & Certification | BE + FE | **175** *(246 both scopes)* | 21.9 | W6 | 4–10 run data | OI-57, OI-58, OI-59, OI-62 | FW-069, 090–095 | [phase-11](ShopfloorPlan/phase-11-shift-summary-reporting-certification.md) |
+| **12** | Yield, Cost Ledger & Scrap | BE | **177** | 22.1 | W7 | 9, 11 | OI-45, OI-60, OI-68 | FW-100, 101\*, 102\*, 110\* | [phase-12](ShopfloorPlan/phase-12-yield-cost-ledger-scrap.md) |
+| **13** | Administration & Reference Data | FE + BE | **143** *(209 both scopes)* | 17.9 | W7 | 1 | **OI-27** (no `F` case), OI-77, OI-93 | FW-003, 004 (admin), 054, `[NEW]` FW-N07 | [phase-13](ShopfloorPlan/phase-13-administration-reference-data.md) |
+| **14** | Integration Testing, PLC Commissioning & Go-Live | QA + BA | **267** | 33.4 | W7 | all | **OI-78** (no exit-test matrix) | FW-120, 121, 122, 123 | [phase-14](ShopfloorPlan/phase-14-integration-testing-plc-commissioning-golive.md) |
 | | **Total — MVP-1** | | **3,292** | **411.5** | | | | | |
 | | *Total — both scopes* | | *3,660* | *457.5* | | | | | |
 
@@ -331,7 +331,7 @@ flowchart TD
 
 > ### ⚠ Superseded 13 Aug 2026 — §7, §7.2 and §7.3 are no longer the backlog
 >
-> The authoritative MVP-1 shopfloor backlog is now [`../DevelopmentPlan/FlatWireJiraStories.md`](../DevelopmentPlan/FlatWireJiraStories.md) — **116 stories / 3,292 h**, re-derived from the 15 `ShopfloorPlan/` phase specs, organised into even two-week sprints and sized in **hours**. **Story points are retired**; the point figures below are historical and are recorded in that file's *Appendix A — Retired point basis*.
+> The authoritative MVP-1 shopfloor backlog is now [`../DevelopmentPlan/FlatWireJiraStories.md`](FlatWireJiraStories.md) — **116 stories / 3,292 h**, re-derived from the 15 `ShopfloorPlan/` phase specs, organised into even two-week sprints and sized in **hours**. **Story points are retired**; the point figures below are historical and are recorded in that file's *Appendix A — Retired point basis*.
 >
 > **What moved:** §7.2's 44 shopfloor rows and §7.3's twelve `[NEW]` `FW-N##` stories are superseded there, with full provenance in its *Appendix B*. Six `FW-N##` stories are now costed; the other six are listed there as **adopted but uncosted**, which is a finding this file's format could not surface.
 >

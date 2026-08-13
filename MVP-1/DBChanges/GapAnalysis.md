@@ -18,10 +18,10 @@ and checked against:
   [`03-HLD-and-ERDiagram.md`](../ProjectPlan/03-HLD-and-ERDiagram.md) §6.9;
 - all sixteen specifications in [`MVP-1/RequirementDocuments/`](../RequirementDocuments/),
   including the five issued **11 Aug 2026**;
-- [`phase-01c-database-foundation.md`](../DevelopmentPlan/ShopfloorPlan/phase-01c-database-foundation.md),
-  [`PLCTagImplementation.md`](../DevelopmentPlan/PLCTagImplementation.md) §3,
-  [`REVIEW.md`](../DevelopmentPlan/REVIEW.md) and the Gaps register in
-  [`back-matter.md`](../DevelopmentPlan/ShopfloorPlan/back-matter.md);
+- [`phase-01c-database-foundation.md`](../ProjectPlan/ShopfloorPlan/phase-01c-database-foundation.md),
+  [`PLCTagImplementation.md`](../ProjectPlan/PLCTagImplementation.md) §3,
+  [`REVIEW.md`](../ProjectPlan/REVIEW.md) and the Gaps register in
+  [`back-matter.md`](../ProjectPlan/ShopfloorPlan/back-matter.md);
 - the `OI-##` register in [`FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §11.
 
 **Findings are classified A–E by what has to happen, not by severity alone.** Each finding
@@ -58,7 +58,7 @@ findings below sit *around* that build.
 
 ### A1. The FW-001 / FW-002 shared-schema migration has no script `[NEW]`
 
-The largest gap in the folder. [`phase-01c`](../DevelopmentPlan/ShopfloorPlan/phase-01c-database-foundation.md)
+The largest gap in the folder. [`phase-01c`](../ProjectPlan/ShopfloorPlan/phase-01c-database-foundation.md)
 makes the existing-schema migration a Phase-1C deliverable due **14 Aug 2026**:
 
 - eight slash-dual renames on the shared `coils` / scheduling schema — `CoilNo→Coil/BundleNo`,
@@ -102,7 +102,7 @@ record either a distinct material state or a destination.
 
 `FR-075` (`Must`, `INT004`) requires the outcome of every tag push to be recorded **and** each
 write audit-logged with tag path, value, operator, timestamp and result.
-[`PLCTagImplementation.md`](../DevelopmentPlan/PLCTagImplementation.md) §3 tables the four
+[`PLCTagImplementation.md`](../ProjectPlan/PLCTagImplementation.md) §3 tables the four
 durable flags and cites a DDL file and line for each —
 
 `RodCheckin.PlcTagsPushed` · `SpoolCheckin.PlcTagsPushed` · `RollOverride.PlcTagWritten` · `RodCheckout.PlcTagsCleared`

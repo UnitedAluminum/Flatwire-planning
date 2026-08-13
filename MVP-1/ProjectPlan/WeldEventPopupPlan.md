@@ -27,7 +27,7 @@ The weld capture moved off a standalone screen and onto the pre-check-in station
 is now a dialog reached from Dashboard 2A's staged payoff card. **`POST /staging/rod/mark-welded` was retired and
 `POST /weldevent` became the single weld write** — Dashboard 2A's *Mark as welded* dialog gained the quality check, so
 one row is composed by both entry points. That merge is **decision `D-A`**, which is what
-[`APIContracts.md`](APIContracts.md) attributes to this document. A read-only **Welds this run** dialog was built on
+[04-APIContract.md](04-APIContract.md) attributes to this document. A read-only **Welds this run** dialog was built on
 Dashboard 2A over `GET /run/{runId}/weldevents`. Welds are **induction** only; laser was dropped.
 
 ## `Q-W#` register — dispositions
@@ -69,4 +69,4 @@ Dashboard 2A over `GET /run/{runId}/weldevents`. Welds are **induction** only; l
 | [`ShopfloorPlan/phase-04-rod-checkin-plc-config.md`](./ShopfloorPlan/phase-04-rod-checkin-plc-config.md) | The Dashboard 2A build, where the weld control ships |
 | [`ShopfloorPlan/phase-06-in-run-production-events.md`](./ShopfloorPlan/phase-06-in-run-production-events.md) | `POST /weldevent`, the single weld write |
 | [`ShopfloorPlan/back-matter.md`](./ShopfloorPlan/back-matter.md) | Gaps **G25**, **G26**, **G28** |
-| [`APIContracts.md`](APIContracts.md) | The endpoint elaboration that attributes `D-A` here |
+| [04-APIContract.md](04-APIContract.md) | The endpoint elaboration that attributes `D-A` here |

@@ -6,7 +6,7 @@
 **Status:** Baselined — open items in §13; the schedule position in §11 requires a programme decision
 **Owner:** Programme management
 **Audience:** Sponsors, programme management, business owners, delivery leadership
-**Sources:** [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §1, §2, §9.6, §10, §11 · [`../../MVP-1/DevelopmentPlan/CapacityAndEffortModel.md`](../../MVP-1/DevelopmentPlan/CapacityAndEffortModel.md) · [`../../MVP-1/DevelopmentPlan/ShopfloorPlan/back-matter.md`](../../MVP-1/DevelopmentPlan/ShopfloorPlan/back-matter.md) · [`../../MVP-1/DevelopmentPlan/TechStackRecommendation.md`](../../MVP-1/DevelopmentPlan/TechStackRecommendation.md) · `BaseDocuments/` business inputs
+**Sources:** [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §1, §2, §9.6, §10, §11 · [`../../MVP-1/DevelopmentPlan/CapacityAndEffortModel.md`](CapacityAndEffortModel.md) · [`../../MVP-1/DevelopmentPlan/ShopfloorPlan/back-matter.md`](ShopfloorPlan/back-matter.md) · [03-HLD-and-ERDiagram.md §14](03-HLD-and-ERDiagram.md) · `BaseDocuments/` business inputs
 
 **Companion documents:** `[SRS]` [02-SRS.md](./02-SRS.md) · `[HLD]` [03-HLD-and-ERDiagram.md](./03-HLD-and-ERDiagram.md) · `[API]` [04-APIContract.md](./04-APIContract.md) · `[SP]` [05-SprintPlanAndBacklog.md](./05-SprintPlanAndBacklog.md) · `[TP]` [06-TestPlanAndTestCases.md](./06-TestPlanAndTestCases.md) · `[DR]` [07-DeploymentRunbookAndRollback.md](./07-DeploymentRunbookAndRollback.md)
 

@@ -82,7 +82,7 @@ propagation **wave W8** names `CapacityAndEffortModel.md` as an unexecuted targe
 half of W8.
 
 Nothing else in the repository carried an AI productivity assumption before this document —
-[`TechStackRecommendation.md`](./TechStackRecommendation.md) has none. *(Note: the "AI-assisted generation" in
+[03-HLD-and-ERDiagram.md §14](./03-HLD-and-ERDiagram.md) has none. *(Note: the "AI-assisted generation" in
 `PassScheduleGenerationSpec.md` is a **product** feature — ML proposing pass schedules from production history — and
 is unrelated to development productivity. Do not conflate the two.)*
 
@@ -324,4 +324,4 @@ capacity model's §7 decision cannot wait for the gate.
 | [`ShopfloorPlan/back-matter.md`](./ShopfloorPlan/back-matter.md) | Week grid, milestone calendar, gaps register (**G1**) |
 | [`ShopfloorPlan/phase-*.md`](./ShopfloorPlan/) | Per-phase deliverable inventories — what the rate card priced |
 | [`ClientCall_2026-07-23_SyncPlan.md`](../../BaseDocuments/ClientCall_2026-07-23_SyncPlan.md) | The AI-assisted development decision (§"Decisions recorded on the call") and propagation wave **W8** |
-| [`TechStackRecommendation.md`](./TechStackRecommendation.md) | Stack constraints the factors depend on — no new frameworks, team already Angular/.NET |
+| [03-HLD-and-ERDiagram.md §14](./03-HLD-and-ERDiagram.md) | Stack constraints the factors depend on — no new frameworks, team already Angular/.NET |

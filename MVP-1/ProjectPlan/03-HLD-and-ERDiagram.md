@@ -1,12 +1,12 @@
 # Flat Wire Mill — High-Level Design & ER Diagram
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 6, 2026
-**Document Type:** High-Level Design + Entity-Relationship model
-**Status:** Baselined for build — design risks in §13.2, unresolved items in §13.3
+**Last Updated:** August 13, 2026 — **§14 added**: the stack ADR absorbed from `TechStackRecommendation.md`, which was deleted in the same pass *(body otherwise August 6, 2026)*
+**Document Type:** High-Level Design + Entity-Relationship model + the stack ADR (§14)
+**Status:** Baselined for build — design risks in §13.2, unresolved items in §13.3; the §14 decisions are **Accepted**, not proposed
 **Owner:** Architecture stream
 **Audience:** Architects, Angular / .NET developers, DBA
-**Sources:** [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §5, §6.7, §8 · [`../DBChanges/Schema/SQL/`](../DBChanges/Schema/SQL/) (**counted, not quoted**) · [`../../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md`](../../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md) §0.2 / §0.4 · [`c:\UAL\CLAUDE.md`](../../../CLAUDE.md) ecosystem conventions
+**Sources:** [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §5, §6.7, §8 · [`../DBChanges/Schema/SQL/`](../DBChanges/Schema/SQL/) (**counted, not quoted**) · [`../../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md`](ShopfloorPlan/00-foundations.md) §0.2 / §0.4 · [`c:\UAL\CLAUDE.md`](../../../CLAUDE.md) ecosystem conventions
 
 **Companion documents:** `[VS]` [01-VisionAndScope.md](./01-VisionAndScope.md) · `[SRS]` [02-SRS.md](./02-SRS.md) · `[API]` [04-APIContract.md](./04-APIContract.md) · `[SP]` [05-SprintPlanAndBacklog.md](./05-SprintPlanAndBacklog.md) · `[TP]` [06-TestPlanAndTestCases.md](./06-TestPlanAndTestCases.md) · `[DR]` [07-DeploymentRunbookAndRollback.md](./07-DeploymentRunbookAndRollback.md)
 
@@ -1129,3 +1129,65 @@ The same reasoning applies to **pre-check-in** (writes `RodStaging` + `coils` + 
 **OI-17** (`RunReading` retention) · **OI-18** (SPC cannot join its trigger) · **OI-20** (polymorphic refs without integrity) · **OI-22** (`Rework` unpersistable) · **OI-23** (SPC-HOLD has no column) · **OI-24** (lot number) · **OI-25** (two footage coordinate systems) · **OI-26** (FL3 pre-check-in station) · **OI-27** (no `F` case in the op-letter map) · **OI-28** (alert lifecycle unbacked) · **OI-29** (no bundle header) · **OI-30** (no gap-free sequence) · **OI-31** (no legacy migration deliverable) · **OI-32** (six missing endpoint groups) · **OI-34** (NFRs absent) · **OI-35** (`LineState` vocabulary) · **OI-36** (FM2 S3 tag path) · **OI-37** (roles unconfirmed) · **OI-38** (PIN validation source) · **OI-39** (cross-DB recovery) · **OI-41** (Phase 6 ↔ 13) · **OI-42** (`Rod` ↔ `coils` sync) · **OI-43** (unplanned component bypass has no home) · **OI-45** (weight basis) · **OI-80** (`TraversingTakeup` has no UI) · **OI-93** (`AlloyProperty` shadows `alloys`).
 
 New here: **PP-01** (index count is 46, not 44).
+
+---
+
+## 14. Architecture Decision Record — the stack
+
+> **Absorbed from `TechStackRecommendation.md` on 13 Aug 2026**, which was deleted in the same pass. The ADR sat at *"Recommendation — Pending Review"* for fifteen weeks while the whole build proceeded on its decisions; it was marked **Accepted** on 13 Aug and is recorded here because §13.1 is where this repository keeps decisions.
+>
+> **Only what §1–§13 did not already carry was brought across.** The suggested microservice structure (§3.1 is more detailed), the SignalR design (§4), environments (§11), the PWA service worker (§5), Chart.js and the `isLive` flag (§5.5), and the `SlitterInterface`-is-not-a-reference correction (§2.2) were all **dropped as duplicates**, not summarised.
+
+**Status: Accepted.** These decisions are built against, not proposed. The original framing referenced a **July 1 trial**, superseded on 26 Jul 2026 by the **17 Aug – 30 Sep 2026** window with production in **Q4 2026**.
+
+### 14.1 Core stack, layer by layer
+
+The summary judgement: **stay entirely within the existing UAL stack.** The Flat Wire Mill module is an extension of the existing manufacturing execution system, not a greenfield application. The compressed window leaves no room for new-technology ramp-up, and every requirement maps to a pattern already running in the furnace or slitter modules.
+
+| Layer | Technology | Rationale |
+|---|---|---|
+| **Frontend** | Angular 18.2+ (existing `ual-angular`) | Mockups are already HTML; the shopfloor *platform* pattern exists in the slitter/furnace modules — **but see §2.2: that is not permission to copy them** |
+| **API** | .NET 8.0 — new `FlatWire` microservice in `ual-api` | Clean Architecture already established; MediatR CQRS fits command-heavy shopfloor operations (check-in, weld event, die change) |
+| **Database** | SQL Server — **a new standalone `FlatWireDB`** *(decided; the "or schema extension" alternative is closed)* | Consistent with every other UAL database; traceability joins across R-series, coil and order tables stay in-engine. Cross-database references (`PlanId`, `SkidId`, `PassScheduleId`, rod alphas into `coils`) are **documented logical FKs, unenforced by design** — the cost of the standalone choice, tracked as **`G17`** |
+| **Real-time / PLC data** | SignalR (existing pattern) | Gauge trace is live streaming — AGC data needs push, not polling; already wired in the `OPCConnection` service. Design in §4 |
+| **OPC / PLC tags** | Existing `OPCConnection` service, extended for FL1/FL2/FL3 | The PLCs are new hardware but the OPC servers are unchanged — no new integration layer needed |
+| **Auth / Logging** | JWT + Serilog (inherited from UAL) | Zero additional work |
+
+### 14.2 What was rejected, and why
+
+| Rejected | Reason |
+|---|---|
+| **New frameworks** (React, Blazor, …) | The window does not allow ramp-up; the team is already Angular/.NET. *(Written against the April 10-week estimate; the argument is **stronger** now — the window is ~6.5 weeks and already needs 9.4 FTE sustained.)* |
+| **A separate mobile app** | The Angular PWA covers the touchscreen case without a second codebase |
+| **A message broker** (Kafka/RabbitMQ) in Phase 1 | SignalR is sufficient for AGC gauge-trace volume; revisit post-go-live if throughput becomes an issue |
+
+### 14.3 Approach by feature area
+
+| Feature | Approach |
+|---|---|
+| Rod receiving (R-series alpha) | New `RodReceiving` controller in `FlatWire.API`; sequence managed in SQL with a no-gap guarantee |
+| ~~Pass schedule management~~ **(MVP-2)** | Dedicated module with versioned records. **The PLC tag push on operator acknowledgement is MVP-1** — it happens at rod check-in, reading a schedule the other track published |
+| Rod check-in / FL1 and FL2 | Shared Angular UI component; route mode (FL1/FL2/FL3) drives which fields and steps are shown |
+| Weld join traceability | `WeldJoinEvent` domain entity linking Rod 1 alpha → Rod 2 alpha → output coil alpha; required for certificate generation |
+| Gauge trace (live) | SignalR hub streaming AGC data → Chart.js component; FL1 and FL3 hybrid mode |
+| Gauge trace (historical) | Query-based profile view for FL2 standalone mode |
+| SPC checkpoints | **Five physical measurement points** — incoming rod, post-die, FM1 output, **FM2 final-stand (S3) output**, final coil; stored per run, surfaced in reports. **These are not the `CheckpointType` enum** — see §14.4 |
+| WIP rejection | The existing WIP rejection module, extended with flat-wire outlet options and observation codes |
+| Certificate of Conformance | The existing Certs module; the traceability chain must include every weld join event for welding-wire customers |
+| Scrap disposition | The Scrap module, extended with a new outlet: `Scrap Box` vs `Scrap Skid` |
+
+### 14.4 The "five SPC checkpoints" and the `CheckpointType` enum are different axes
+
+**Closed 13 Aug 2026** (`REVIEW.md` Tier 1 #7, which read the two lists as a contradiction).
+
+- **The five above are physical measurement points** — *where on the line* a checkpoint is taken.
+- **`CheckpointType`** — `{PreRun, PostDieChange, ManualSpotCheck, PostRun, RollAdjustTrigger}` — is *why the checkpoint fired*. It is an event cause, not a location.
+
+They do not map one-to-one and were never meant to: an incoming-rod measurement is a `PreRun`; an FM1-output measurement could be a `PostDieChange`, a `ManualSpotCheck` or a `RollAdjustTrigger` depending on what prompted it. **Neither list is wrong and neither needs reconciling to the other** — the measurement *name* is what distinguishes them within a checkpoint, which is why `SpcMeasurement` is a child of `SpcCheckpoint`. `RollAdjustTrigger` was missing from the enum until 13 Aug 2026 even though `POST /rolloverride` already wrote it.
+
+### 14.5 Phase 1 constraints (April 16 meeting)
+
+- No Angular/frontend receiving-screen changes in Phase 1 — rod receiving is backend only.
+- No EDI — manual rod receiving only.
+- One shared UI for FL1 and FL2 check-in and transactions.
+- The PLCs are new hardware; the OPC servers remain unchanged.

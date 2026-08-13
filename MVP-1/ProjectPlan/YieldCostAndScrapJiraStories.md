@@ -255,5 +255,5 @@ withdrawn on 12 Aug 2026, so there is no second place to look.
 | [`ShopfloorPlan/phase-12-yield-cost-ledger-scrap.md`](./ShopfloorPlan/phase-12-yield-cost-ledger-scrap.md) | The phase file — deliverable inventory |
 | [`CapacityAndEffortModel.md`](./CapacityAndEffortModel.md) | §3 the published 177 h and the programme points cross-check · §5 the descope ladder |
 | [`DevelopmentEffortModel.md`](./DevelopmentEffortModel.md) | The AI-assisted factor card (§1). Its per-phase table **excludes** Phase 12 |
-| [`../ProjectPlan/02-SRS.md`](../ProjectPlan/02-SRS.md) | `FR-332`/`FR-332a` (weight formula) · `FR-063`/`FR-066`/`FR-189`/`FR-273`/`FR-292` (scrap, **not** `FW-110`) |
+| [`../ProjectPlan/02-SRS.md`](02-SRS.md) | `FR-332`/`FR-332a` (weight formula) · `FR-063`/`FR-066`/`FR-189`/`FR-273`/`FR-292` (scrap, **not** `FW-110`) |
 | [`../../Analysis/FlatWireOpenQuestions.md`](../../Analysis/FlatWireOpenQuestions.md) | **`Q10`** — Critical, and the one question carrying no recommendation by decision |

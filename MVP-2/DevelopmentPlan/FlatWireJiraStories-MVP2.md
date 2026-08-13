@@ -1,12 +1,12 @@
 # Flat Wire Mill — Jira Story Plan, MVP-2 Deferred Stories
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 13, 2026 — point values retained but marked **no longer comparable** with MVP-1's sizing, which moved to hours *(earlier same day: split out of [`../../MVP-1/DevelopmentPlan/FlatWireJiraStories.md`](../../MVP-1/DevelopmentPlan/FlatWireJiraStories.md); story bodies otherwise April 30, 2026)*
+**Last Updated:** August 13, 2026 — point values retained but marked **no longer comparable** with MVP-1's sizing, which moved to hours *(earlier same day: split out of [`../../MVP-1/DevelopmentPlan/FlatWireJiraStories.md`](../../MVP-1/ProjectPlan/FlatWireJiraStories.md); story bodies otherwise April 30, 2026)*
 **Document Type:** Story backlog for **MVP-2** — a sizing basis, not a schedule
 **Status:** **MVP-2 — deferred scope.** Retained as the sizing basis for the deferred stories
 **Scope:** 6 stories — `FW-010`, `FW-011`, `FW-012`, `FW-013` (Epic 2) · `FW-068`, `FW-069` (Epic 7)
 
-> **⚠ Story points were retired from the MVP-1 backlog on 13 Aug 2026, and the "31 points" basis lost its sibling.** [`../../MVP-1/DevelopmentPlan/FlatWireJiraStories.md`](../../MVP-1/DevelopmentPlan/FlatWireJiraStories.md) was rewritten as a sprint-wise, **hours-sized** backlog, so the `147 + 11 + 31 = 189` reconciliation no longer has two of its three terms. The point values **below are unchanged and remain this file's own basis** — MVP-2 has not been re-derived — but **they are no longer comparable with MVP-1's sizing**, and the 189-point total is retired. It is recorded in the MVP-1 file's *Appendix A — Retired point basis*.
+> **⚠ Story points were retired from the MVP-1 backlog on 13 Aug 2026, and the "31 points" basis lost its sibling.** [`../../MVP-1/DevelopmentPlan/FlatWireJiraStories.md`](../../MVP-1/ProjectPlan/FlatWireJiraStories.md) was rewritten as a sprint-wise, **hours-sized** backlog, so the `147 + 11 + 31 = 189` reconciliation no longer has two of its three terms. The point values **below are unchanged and remain this file's own basis** — MVP-2 has not been re-derived — but **they are no longer comparable with MVP-1's sizing**, and the 189-point total is retired. It is recorded in the MVP-1 file's *Appendix A — Retired point basis*.
 >
 > **`FW-010` remains a live dependency of two Critical MVP-1 stories** — `FW-061` (rod check-in) and `FW-082` (PLC tag push). MVP-1 only *reads* a pass schedule at check-in to build the push payload; it authors none.
 
@@ -62,8 +62,8 @@ schedule) and the Phase 11 shift summary are the roadmap homes; see
 
 **Effort:** Phase 2 is **231 h** all-in (**95 h** development) and moved whole;
 `FW-069`'s share of Phase 11 is the **32 h** development carve. Basis:
-[`../../MVP-1/DevelopmentPlan/CapacityAndEffortModel.md`](../../MVP-1/DevelopmentPlan/CapacityAndEffortModel.md) §3b and
-[`../../MVP-1/DevelopmentPlan/DevelopmentEffortModel.md`](../../MVP-1/DevelopmentPlan/DevelopmentEffortModel.md) §3.
+[`../../MVP-1/DevelopmentPlan/CapacityAndEffortModel.md`](../../MVP-1/ProjectPlan/CapacityAndEffortModel.md) §3b and
+[`../../MVP-1/DevelopmentPlan/DevelopmentEffortModel.md`](../../MVP-1/ProjectPlan/DevelopmentEffortModel.md) §3.
 
 ---
 
@@ -86,7 +86,7 @@ schedule) and the Phase 11 shift summary are the roadmap homes; see
 **Acceptance Criteria:**
 - [ ] `PassSchedule` entity created with fields: ScheduleId, Alloy, Line (FL1/FL2/FL3), Description, Status (Draft/Active/Inactive), RouteMode (Standalone/Hybrid), TargetGauge, GaugeTolerance, TargetWidth, WidthTolerance, LineSpeedMinFPM, LineSpeedMaxFPM, CreatedBy, CreatedAt, ModifiedBy, ModifiedAt
 - [ ] `PassScheduleComponent` child entity: ComponentName (DB1/DB2/FM1/FM2_S1/FM2_S2/FM2_S3/EdgeSet), **`State` — the three-value enum `{Active, Bypass, Skip}`**, ParameterValue (die size or roll gap), **EdgeType (`Round`/`Square`)**
-  - ⚠ **Corrected 13 Aug 2026.** This read `IsActive (bool)`, which **cannot express Bypass vs Skip** and contradicted `FW-012`'s own three-state UI in the same epic. `EdgeType` read `Round/Flat`; the domain vocabulary is **`Round`/`Square`** — *Flat* was a third wording that nothing mapped to *Square*. Both are settled in [`../../MVP-1/DevelopmentPlan/APIContracts.md`](../../MVP-1/DevelopmentPlan/APIContracts.md) *Common Enums*.
+  - ⚠ **Corrected 13 Aug 2026.** This read `IsActive (bool)`, which **cannot express Bypass vs Skip** and contradicted `FW-012`'s own three-state UI in the same epic. `EdgeType` read `Round/Flat`; the domain vocabulary is **`Round`/`Square`** — *Flat* was a third wording that nothing mapped to *Square*. Both are settled in [04-APIContract.md](../../MVP-1/ProjectPlan/04-APIContract.md) *Common Enums*.
 - [ ] `PassScheduleOverride` entity for run-level gap adjustments: RunId, ComponentName, OldValue, NewValue, Reason, OperatorId, Timestamp, FootagePosition
 - [ ] CRUD API endpoints: GET list, GET by ID, POST create, PUT update, PATCH status
 - [ ] Only Active schedules are returned by the check-in query endpoint
@@ -252,7 +252,7 @@ schedule) and the Phase 11 shift summary are the roadmap homes; see
 | Document | Purpose |
 |---|---|
 | [`../ProjectPlan/05-Backlog-MVP2.md`](../ProjectPlan/05-Backlog-MVP2.md) | The **condensed row view** of these same six stories, plus the `[NEW]` `FW-N09` OEE story and the both-scopes split table |
-| [`../../MVP-1/DevelopmentPlan/FlatWireJiraStories.md`](../../MVP-1/DevelopmentPlan/FlatWireJiraStories.md) | The **35 MVP-1 shopfloor stories / 147 points** these were split from, the points legends, and the sprint → phase crosswalk these dead Sprint tags resolve through |
+| [`../../MVP-1/DevelopmentPlan/FlatWireJiraStories.md`](../../MVP-1/ProjectPlan/FlatWireJiraStories.md) | The **35 MVP-1 shopfloor stories / 147 points** these were split from, the points legends, and the sprint → phase crosswalk these dead Sprint tags resolve through |
 | [`../RequirementDocuments/PassScheduleGenerationSpec.md`](../RequirementDocuments/PassScheduleGenerationSpec.md) | **v1.5 — the engineering basis `FW-013` must be built to**, winning on physics and arithmetic over `FR-380`–`FR-391` |
 | [`../RequirementDocuments/PassScheduleManagement.md`](../RequirementDocuments/PassScheduleManagement.md) | Owning specification for DB9/DB9A (`FW-011`, `FW-012`) — and §3.3–§3.4 is the **only** surviving home of the Operations Manager role definition, which MVP-1 still needs for `FR-212` |
 | [`../RequirementDocuments/ShiftSummary.md`](../RequirementDocuments/ShiftSummary.md) | Owning specification for DB10 (`FW-069`) |

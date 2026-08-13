@@ -3,7 +3,7 @@
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** August 13, 2026 — **rewritten whole**: re-derived from [`ShopfloorPlan/`](ShopfloorPlan/)'s 15 MVP-1 phase specs, reorganised into even two-week sprints, re-sized in **hours**, and promoted to the authoritative MVP-1 shopfloor backlog
 **Document Type:** Sprint plan **and** backlog — story bodies, sequencing and effort
-**Status:** **Authoritative for MVP-1 shopfloor delivery.** Supersedes [`../ProjectPlan/05-SprintPlanAndBacklog.md`](../ProjectPlan/05-SprintPlanAndBacklog.md) §7 (backlog) and §7.3 (`[NEW]` stories)
+**Status:** **Authoritative for MVP-1 shopfloor delivery.** Supersedes [`../ProjectPlan/05-SprintPlanAndBacklog.md`](05-SprintPlanAndBacklog.md) §7 (backlog) and §7.3 (`[NEW]` stories)
 **Scope:** **MVP-1 shopfloor only — 116 stories / 3,292 h** across 4 sprints and 15 phase specs
 **Development Window:** **17 Aug → 30 Sep 2026**, with a hard **Phase-1 gate of 14 Aug 2026**
 **Trial Target:** post-sign-off, early **Oct 2026** (TBD) | **Production Target:** **Q4 2026** (TBD)
@@ -197,7 +197,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** no flat-wire screen is reachable without a valid token and the right role.
 
 **Acceptance Criteria:**
-- [ ] `FlatWireAuthGuard` (authenticated) and `FlatWireRoleGuard` (role-gated routes) per the Authorization Matrix in [`APIContracts.md`](APIContracts.md)
+- [ ] `FlatWireAuthGuard` (authenticated) and `FlatWireRoleGuard` (role-gated routes) per the Authorization Matrix in [04-APIContract.md](04-APIContract.md)
 - [ ] Reuses `shared` `login.service` / `login-api.service` / `token-interceptor.service` (JWT bearer) — **no new interceptors**
 - [ ] `correlation-id-interceptor` and `global-error-handler-api` wired
 - [ ] Standardises on the `{ success, data, errors[] }` envelope; toast + inline field errors via `error-handler.service`
@@ -3004,11 +3004,11 @@ All above the previous high-water mark `FW-124`, so nothing collides with upstre
 | [`CapacityAndEffortModel.md`](CapacityAndEffortModel.md) | **The hours model of record.** §2 rate card · §3b MVP-1 apportionment (**3,292 h / 9.4 FTE**) · §5 descope ladder · §7 the decision this forces. Every figure here is factored from it |
 | [`DevelopmentEffortModel.md`](DevelopmentEffortModel.md) | The **AI-assisted** second basis — development streams only, **1,397 h MVP-1**. Not comparable with 3,292 h |
 | [`YieldCostAndScrapSheet.md`](YieldCostAndScrapSheet.md) | **Phase 12 hours authority** — the 33/49/28/67 ladder split, and the record that its four stories carry no `FR-` IDs |
-| [`APIContracts.md`](APIContracts.md) | Endpoint shapes and the Authorization Matrix. ⚠ April-dated with known bugs catalogued in `REVIEW.md` Tier 1 — cross-check before implementing |
+| [04-APIContract.md](04-APIContract.md) | Endpoint shapes and the Authorization Matrix. ⚠ April-dated with known bugs catalogued in `REVIEW.md` Tier 1 — cross-check before implementing |
 | [`../RequirementDocuments/`](../RequirementDocuments/) | **The owning specifications — they win on any disagreement with a story here** |
 | [`../RequirementDocuments/PLCTagSpecification.md`](../RequirementDocuments/PLCTagSpecification.md) | `[PLC]` — the **only** tag map in the repository, and its `PLC-Q##` sign-off sheet. **No tag path string belongs anywhere else** |
 | [`REVIEW.md`](REVIEW.md) | Tiered audit of this folder — read it before trusting any single spec |
-| [`../ProjectPlan/05-SprintPlanAndBacklog.md`](../ProjectPlan/05-SprintPlanAndBacklog.md) | **§7 and §7.3 superseded by this document.** §11's `FR-###` coverage matrix is **retained there** and keys against the ids in Appendix B |
+| [`../ProjectPlan/05-SprintPlanAndBacklog.md`](05-SprintPlanAndBacklog.md) | **§7 and §7.3 superseded by this document.** §11's `FR-###` coverage matrix is **retained there** and keys against the ids in Appendix B |
 | [`../../Analysis/FlatWireOpenQuestions.md`](../../Analysis/FlatWireOpenQuestions.md) | Open questions `Q1`–`Q33`, authoritative for decisions. Answered items move to `FlatWireDecidedQuestions.md` (`Q61`–`Q85`) |
 | [`../../MVP-2/DevelopmentPlan/FlatWireJiraStories-MVP2.md`](../../MVP-2/DevelopmentPlan/FlatWireJiraStories-MVP2.md) | The deferred MVP-2 stories. **`FW-010` is a live dependency of two Critical MVP-1 stories** |
 | [`../../CHANGELOG.md`](../../CHANGELOG.md) | The single repository change log — **this document has no change-log section by convention** |

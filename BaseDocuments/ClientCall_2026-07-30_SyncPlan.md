@@ -4,7 +4,7 @@
 **Last Updated:** August 1, 2026
 **Status:** **Executed 1 Aug 2026 — waves W1–W7 complete, W8 cancelled.** Eleven client answers propagated across the registers, the analysis notes, the schema + DDL (rebuilt and constraint-tested), the contracts, the mockups and the July 30 project-plan set. Outstanding work is now the client follow-up list in §6, not document sync.
 **Source:** Client call 30 Jul 2026 (Tim O., Bob S., Shannon R., Srikanth, Shray) — answers to the eleven pre-check-in / check-in / spool questions raised from [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md) and [SpoolCompletionNotification.md](../MVP-1/RequirementDocuments/SpoolCompletionNotification.md).
-**Registers touched:** `OQ-##` ([FlatWireOpenQuestions.md](../Analysis/FlatWireOpenQuestions.md), 77 → 81) · `OI-##` ([FlatWire_MasterSpecification.md](../LatestDocument/FlatWire_MasterSpecification.md) §11) · `G##` ([back-matter.md](../MVP-1/DevelopmentPlan/ShopfloorPlan/back-matter.md))
+**Registers touched:** `OQ-##` ([FlatWireOpenQuestions.md](../Analysis/FlatWireOpenQuestions.md), 77 → 81) · `OI-##` ([FlatWire_MasterSpecification.md](../LatestDocument/FlatWire_MasterSpecification.md) §11) · `G##` ([back-matter.md](../MVP-1/ProjectPlan/ShopfloorPlan/back-matter.md))
 
 ---
 
@@ -206,4 +206,4 @@ Ordered so that no wave leaves a document asserting a rule a later wave reverses
 | [SpoolCompletionNotification.md](../MVP-1/RequirementDocuments/SpoolCompletionNotification.md) | Target for item 10 |
 | [FlatWire_MasterSpecification.md](../LatestDocument/FlatWire_MasterSpecification.md) | `OI-##` register and the reconciliation authority |
 | [00-README.md](../MVP-1/ProjectPlan/00-README.md) | Precedence chain the waves respect |
-| [REVIEW.md](../MVP-1/DevelopmentPlan/REVIEW.md) | Contradiction audit to re-check after W4 |
+| [REVIEW.md](../MVP-1/ProjectPlan/REVIEW.md) | Contradiction audit to re-check after W4 |

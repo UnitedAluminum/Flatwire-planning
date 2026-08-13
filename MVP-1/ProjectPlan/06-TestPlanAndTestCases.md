@@ -6,7 +6,7 @@
 **Status:** Baselined — four NFRs are **untestable until their targets are defined** (§6.2)
 **Owner:** QA stream
 **Audience:** QA, developers, UAT participants, PLC commissioning engineer
-**Sources:** `[SRS]` [02-SRS.md](./02-SRS.md) (what to prove) · `[API]` [04-APIContract.md](./04-APIContract.md) (contract shapes) · [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §4 error paths and §11 (risk-based prioritisation) · [`phase-14-integration-testing-plc-commissioning-golive.md`](../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-14-integration-testing-plc-commissioning-golive.md)
+**Sources:** `[SRS]` [02-SRS.md](./02-SRS.md) (what to prove) · `[API]` [04-APIContract.md](./04-APIContract.md) (contract shapes) · [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §4 error paths and §11 (risk-based prioritisation) · [`phase-14-integration-testing-plc-commissioning-golive.md`](ShopfloorPlan/phase-14-integration-testing-plc-commissioning-golive.md)
 
 **Companion documents:** `[VS]` [01-VisionAndScope.md](./01-VisionAndScope.md) · `[HLD]` [03-HLD-and-ERDiagram.md](./03-HLD-and-ERDiagram.md) · `[SP]` [05-SprintPlanAndBacklog.md](./05-SprintPlanAndBacklog.md) · `[DR]` [07-DeploymentRunbookAndRollback.md](./07-DeploymentRunbookAndRollback.md)
 
@@ -823,7 +823,7 @@ Independent of severity, set by risk area (§2.3). A P1-area S3 outranks a P3-ar
 > had been computed from the range table, so nothing in the document contradicted it.
 >
 > Coverage is now measured per requirement by
-> [`build_coverage_matrix.py`](../DevelopmentPlan/Tools/build_coverage_matrix.py), which
+> [`build_coverage_matrix.py`](Tools/build_coverage_matrix.py), which
 > **exits non-zero** if any requirement has neither a case nor an entry in §10.4. The
 > range table below is retained as a **navigation aid only — it is not the evidence.**
 > Registered as gap **`G25`**.
@@ -906,7 +906,7 @@ One case per contested row of the `[SRS §8]` matrix, each executed as the permi
 excluded — each entry is a *decision*, with a blocking open item behind it. §10.4.2 lists
 requirements that simply have **no case authored**; those are *accidents*, found on
 13 Aug 2026 when coverage was first measured per requirement. Both are listed rather than
-omitted, and [`build_coverage_matrix.py`](../DevelopmentPlan/Tools/build_coverage_matrix.py)
+omitted, and [`build_coverage_matrix.py`](Tools/build_coverage_matrix.py)
 fails the build if a requirement appears in neither this section nor a case.
 
 #### 10.4.1 Knowingly excluded — a decision, with an owner
@@ -985,7 +985,7 @@ before authoring anything new.
 
 ### 10.5 Coverage summary — generated, not asserted
 
-Produced by [`build_coverage_matrix.py`](../DevelopmentPlan/Tools/build_coverage_matrix.py).
+Produced by [`build_coverage_matrix.py`](Tools/build_coverage_matrix.py).
 **Do not hand-edit these figures; re-run the checker.**
 
 | Measure | Count |

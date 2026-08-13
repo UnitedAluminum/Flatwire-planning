@@ -52,7 +52,7 @@
 | How do we know it works? | `[TP]` |
 | How do we ship it, and how do we undo it? | `[DR]` |
 | **What tag is written to the machine or read from it, and when?** | **`[PLC]`** — [`MVP-1/RequirementDocuments/PLCTagSpecification.md`](../../MVP-1/RequirementDocuments/PLCTagSpecification.md), the single home for the PLC/OPC tag surface. A **client-facing companion** to this set, not an eighth member: it carries a sign-off sheet and the `PLC-Q##` register, because the tag map must be confirmed by the commissioning engineer before go-live |
-| Which of two conflicting older documents wins? | [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §10, and [`../../MVP-1/DevelopmentPlan/REVIEW.md`](../../MVP-1/DevelopmentPlan/REVIEW.md) |
+| Which of two conflicting older documents wins? | [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §10, and [`../../MVP-1/DevelopmentPlan/REVIEW.md`](REVIEW.md) |
 
 **Precedence when sources disagree:** this document set → the master specification → the DDL (columns) and the mockups (pixels) → the July 26 roadmap and `ShopfloorPlan/*` → the April-dated documents.
 

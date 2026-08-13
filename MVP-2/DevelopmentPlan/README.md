@@ -28,7 +28,7 @@
 | **Rung 5** — "Phase 13 non-critical (Die Management screen, role assignment UI)" | 99 h | Bundles the **MVP-2** Die Management screen with the **MVP-1** role-assignment UI, with no split between them |
 | **Rung 6** — "Phase 11 reports FW-092/093/094/095 (4 of 5)" | 105 h | Those four reports are **MVP-1**. The rung says nothing about DB10 |
 
-So each carved deliverable was **re-priced from the rate card** in [`../../MVP-1/DevelopmentPlan/CapacityAndEffortModel.md`](../../MVP-1/DevelopmentPlan/CapacityAndEffortModel.md) §2, and QA and contingency **re-derived** from the reduced base:
+So each carved deliverable was **re-priced from the rate card** in [`../../MVP-1/DevelopmentPlan/CapacityAndEffortModel.md`](../../MVP-1/ProjectPlan/CapacityAndEffortModel.md) §2, and QA and contingency **re-derived** from the reduced base:
 
 | Phase | MVP-2 share | What it covers | MVP-1 keeps |
 |---|---|---|---|

@@ -1,16 +1,16 @@
 # Flat Wire Mill — API Contract
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 4, 2026
+**Last Updated:** August 13, 2026 — **`APIContracts.md` absorbed and deleted.** Four endpoint sections added (§4.5a `unstage`, §4.6a `checkin/spool`, §4.6b `spools`, §4.7a `run/active`) which this contract indexed but never specified, plus worked request/response examples on 16 endpoints *(body otherwise August 4, 2026)*
 **Document Type:** API contract — REST + real-time hub + PLC/OPC surface
 **Status:** Baselined for build — four published defects corrected here; missing endpoint groups in §10
 **Owner:** Backend (.NET) stream
 **Audience:** Frontend and backend developers, integration testers
-**Sources:** [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §6 (**already corrected**) · [`../../MVP-1/DevelopmentPlan/REVIEW.md`](../../MVP-1/DevelopmentPlan/REVIEW.md) Tier 1 · [`../../MVP-1/DevelopmentPlan/APIContracts.md`](../../MVP-1/DevelopmentPlan/APIContracts.md) (April 2026 — **superseded, carries the defects**) · [`../DBChanges/Schema/SQL/`](../DBChanges/Schema/SQL/)
+**Sources:** [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §6 (**already corrected**) · [`REVIEW.md`](REVIEW.md) Tier 1 · ~~`APIContracts.md`~~ (April 2026 — **absorbed into this document and deleted 13 Aug 2026**; recoverable in git history) · [`../DBChanges/Schema/SQL/`](../DBChanges/Schema/SQL/)
 
 **Companion documents:** `[VS]` [01-VisionAndScope.md](./01-VisionAndScope.md) · `[SRS]` [02-SRS.md](./02-SRS.md) · `[HLD]` [03-HLD-and-ERDiagram.md](./03-HLD-and-ERDiagram.md) · `[SP]` [05-SprintPlanAndBacklog.md](./05-SprintPlanAndBacklog.md) · `[TP]` [06-TestPlanAndTestCases.md](./06-TestPlanAndTestCases.md) · `[DR]` [07-DeploymentRunbookAndRollback.md](./07-DeploymentRunbookAndRollback.md)
 
-> **Four correctness defects in the published April contract are corrected in this document.** They are called out at the point of correction in §2.3, §4.2 and §4.9. **Do not implement from `MVP-1/DevelopmentPlan/APIContracts.md`** — it still carries all four.
+> **Four correctness defects in the published April contract are corrected in this document.** They are called out at the point of correction in §2.3, §4.2 and §4.9. The April elaboration that carried all four was **absorbed into this document and deleted on 13 Aug 2026**; the corrections below are the record of what was wrong with it.
 
 ---
 
@@ -164,7 +164,7 @@ enum StagingStatus   { Staged, CheckedIn, Unstaged }
 
 ### 2.3 The four corrections applied to the published contract
 
-| # | Defect in `APIContracts.md` | Correction |
+| # | Defect in the April elaboration (now absorbed) | Correction |
 |---|---|---|
 | 1 | **`/passschedule/generate`'s worked example contradicts its own algorithm** on three counts | Corrected example published in §4.2. **Build to the formula, not the example** |
 | 2 | **`CheckpointType` is missing `RollAdjustTrigger`** | Added — §2.2 |
@@ -314,6 +314,33 @@ Returns `alpha, alloy, temper, diameterIn, grossWeightLb, netWeightLb, status, l
 
 **Errors:** `404 ROD_NOT_FOUND`.
 
+**Worked example**
+
+```json
+{
+  "data": {
+    "alpha": "R00041",
+    "alloy": "1100",
+    "temper": "O",
+    "diameterIn": 0.375,
+    "grossWeightLb": 2000.0,
+    "netWeightLb": 1980.0,
+    "status": "STAGED",
+    "location": "Floor-A3",
+    "receivedAt": "2026-04-29T14:00:00Z",
+
+    "orderId": "FW-00421",
+    "scheduledLineId": "FL1",
+
+    "footageRunToDate": 0.0,
+    "remainingWeightEstimateLb": null,
+    "stagedPayoffPosition": null,
+    "isWelded": false
+  },
+  "success": true
+}
+```
+
 ### 4.4 `GET /payoff/status?lineId=`
 
 **Purpose:** the Dashboard 2A primary read — both bays on one line, as peers.
@@ -324,6 +351,53 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 **`state` is derived, not stored.** `Blocked` = `Status='Staged'` **and** any inspection column `Fail`. Adding a fourth stored `Status` value would fall outside the `UX_RodStaging_Bay` filtered index and free a bay that is still physically occupied.
 
 **Errors:** `422 LINE_NOT_ELIGIBLE` when `lineId = FL2`.
+
+**Worked example**
+
+```json
+{
+  "data": {
+    "lineId": "FL1",
+    "bays": [
+      {
+        "position": 1,
+        "state": "Active",
+        "rodAlpha": "R00042",
+        "rodSeqno": 1,
+        "alloy": "1100",
+        "temper": "F",
+        "diameterIn": 0.375,
+        "grossWeightLb": 8840.0,
+        "netWeightLb": 8500.0,
+        "weightLb": 2840.0,
+        "percentRemaining": 33.4,
+        "isWelded": false,
+        "stagedAt": "2026-07-29T11:02:00Z",
+        "stagedBy": "dave.m",
+        "footageRunToDate": 14320.0,
+        "runId": "RUN-0418",
+        "inspection": { "oxidation": "Pass", "surfaceDefects": "Pass", "waterStains": "Pass", "notes": null }
+      },
+      {
+        "position": 2,
+        "state": "NotStaged",
+        "rodAlpha": null,
+        "rodSeqno": null,
+        "weightLb": null,
+        "percentRemaining": null,
+        "isWelded": false,
+        "runId": null,
+        "inspection": null
+      }
+    ],
+    "weldReadiness": {
+      "severity": "Critical",
+      "message": "Payoff 1 below 3,000 lb and Payoff 2 not staged"
+    }
+  },
+  "success": true
+}
+```
 
 ### 4.5 `POST /staging/rod`
 
@@ -383,6 +457,51 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 
 > **A blocked bay is cleared by the WIP rejection, and by nothing else.** `POST /wipreject` sets `RodStaging.Status → 'Unstaged'`, `UnstageKind = 'WipRejection'`, `WipRejectionId`, and broadcasts `PayoffStateChanged` (**Q23** item 3, 30 Jul 2026). Reusing `Unstaged` with a discriminator was chosen over a fourth `Rejected` status, which would have forced the vocabulary, `CK_RodStaging_Unstaged` and the `UX_RodStaging_Bay` filter to change together.
 
+### 4.5a `POST /staging/rod/unstage`
+
+**Purpose:** pre-check-out — release a staged rod that was never checked in. **Role:** Operator when the rod is unwelded; **a welded rod additionally requires a supervisor override** (`Q69`/`Q72`, decided 30 Jul 2026).
+
+**Request:** `stagingId, reasonCode, reasonOther, disposition, notes, operatorId` — plus `supervisorOverride` when welded.
+
+`reasonCode` — `WrongRodMisScan` · `OrderCancelledDeferred` · `FailedReInspection` · `RelocatedToLine` · `WrongRodWelded` · `Other` (`reasonOther` required).
+`disposition` — `ReturnToFloorStorage` · `ReturnToWarehouse` · `HoldReturnToStorage` *(welded only)*.
+
+**Approval depends on the weld:**
+
+| Rod state | Approval | Rod status after | Why |
+|---|---|---|---|
+| **Not welded** | **None** — operator-only, reason captured | `RECEIVED` | Nothing was committed; the bundle simply comes off the bay |
+| **Welded** (`IsWelded = 1`) | **Supervisor override** — badge/ID + PIN + documented reason | **`HOLD`** | The rod is induction-welded to the rod in the mill. Removing it means **cutting or splitting the material**, so this is a **rejection, not a return** |
+
+**Side effects:** `RodStaging.Status → 'Unstaged'` with `UnstageKind = 'PreCheckOut'` · `RodCheckout` row with `Mode = 'ModeP'`, `RunId` NULL, `FootageAtCheckout` 0, `PlcTagsCleared` **false**, `WasWelded` per the staged row, and when welded `ApprovedBy`/`ApprovedAt`/`OverrideReason` plus `NewRodStatus = 'HOLD'` (enforced by `CK_RodCheckout_ModePWelded`) · `PayoffStateChanged` broadcast with `state: "NotStaged"`.
+
+**No PLC tag clear.** Nothing was pushed, so there is nothing to clear — and unlike Mode A/B this needs **no `FL{n}.LineState` gate**, because an idle bay is not running. On the shared `coils` side there is **nothing to revert for `INFLAT`**, which staging no longer sets (`Q68`); whether the `wip_coil_orders` insert must be reversed depends on the open half of that question.
+
+**Errors:** `422` when the rod is welded and `supervisorOverride` is missing or incomplete, or when `reasonCode` is `Other` with no `reasonOther`. **`409`** when the staged row is already `CheckedIn` — the caller must use `POST /checkout` with `mode: "ModeA"`, which does void the acknowledgement and clear tags. **The PIN is never stored.**
+
+```json
+// request — welded rod
+{
+  "stagingId": 412,
+  "reasonCode": "WrongRodWelded",
+  "reasonOther": null,
+  "disposition": "HoldReturnToStorage",
+  "notes": null,
+  "operatorId": "dave.m",
+  "supervisorOverride": {
+    "supervisorBadge": "SUP-204",
+    "supervisorPin": "••••",
+    "reason": "Welded to the running rod in error; cut back and held for disposition"
+  }
+}
+
+// 200 OK
+{ "data": { "checkoutId": "CO-0052", "mode": "ModeP", "rodAlpha": "R00043",
+            "newRodStatus": "HOLD", "plcTagsCleared": false }, "success": true }
+```
+
+> **This restores a control removed on 31 Jul 2026.** Dashboard 2A had dropped Unstage from welded rows entirely, reasoning that a welded rod cannot be returned to inventory. That was right about the *unqualified* control and wrong that there is no path at all: the path is a supervisor-approved rejection. `WLD011` remains unspecified for reversing a weld **in place**, on a rod that stays staged.
+
 ### 4.6 `POST /checkin/rod` — corrected request
 
 **Purpose:** the gate for everything. **Role:** Operator. **Not idempotent** — a second call for the same line returns `409 RUN_ALREADY_ACTIVE`.
@@ -421,6 +540,106 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 
 **Station selection applies here too (30 Jul 2026).** A rod scanned at check-in whose order is booked on the other rod line **switches the screen to that line** rather than being refused; a mismatched POST returns `409 WRONG_STATION` with `correctLineId`. Same rule as §4.5, same open questions.
 
+### 4.6a `POST /checkin/spool`
+
+**Purpose:** FL2 spool check-in and the FM2 PLC tag push. **Role:** Operator. **Not idempotent** — same `409 RUN_ALREADY_ACTIVE` rule as `§4.6`.
+
+**Request:** `lineId, spoolAlpha, gaugeMeasuredIn, widthMeasuredIn, grossWeightLb, netWeightLb, passScheduleId, operatorId, orderId`
+
+**Response:** `{ runId, lineId, spoolAlpha, passScheduleId, checkedInAt, plcTagsPushed }`
+
+**Side effects:** the same shape as `§4.6` — `SpoolCheckin` + `FlatWireRun` written first, then the tag push, then `PlcTagsPushed` stamped — but against **FL2 component tags** (`FM2_S1`/`FM2_S2`/`FM2_S3`, edgers at S2/S3 only). **FL2 broadcasts `null` live gauge and width**; its trace is the historical profile, so no `GaugeReading`/`WidthReading` batch starts on this call.
+
+> **`OI-47` is open on this endpoint:** hybrid-origin validation at FL2 check-in is undefined — whether a spool produced by an FL3 hybrid run may be checked in to FL2 standalone, and on what basis.
+
+**Worked example**
+
+```json
+{
+  "lineId": "FL2",
+  "spoolAlpha": "SP-00021",
+  "gaugeMeasuredIn": 0.126,
+  "widthMeasuredIn": 0.877,
+  "grossWeightLb": 850.0,
+  "netWeightLb": 840.0,
+  "passScheduleId": "PS-1100-FL2-001",
+  "operatorId": "jane.s",
+  "orderId": "FW-00421"
+}
+```
+
+```json
+{
+  "data": {
+    "runId": "RUN-0043",
+    "lineId": "FL2",
+    "spoolAlpha": "SP-00021",
+    "passScheduleId": "PS-1100-FL2-001",
+    "checkedInAt": "2026-04-30T07:00:00Z",
+    "plcTagsPushed": true
+  },
+  "success": true
+}
+```
+
+### 4.6b `GET /spools[?spoolAlpha=]`
+
+**Purpose:** spools available for FL2. **Role:** any authenticated (read-only). **One endpoint, two modes, one response shape**, so the screen has a single renderer.
+
+| Call | Meaning |
+|---|---|
+| `GET /spools` | Every spool **available for processing, irrespective of order**. `order` is `null` |
+| `GET /spools?spoolAlpha=SP-00031` | The backend **resolves that spool's order** and returns the order context plus **only that order's spools** |
+
+**Response:** `{ scannedAlpha, order{orderNo, customer, alloy, temper, setupGaugeIn, setupWidthIn, dueDate}, spools[{alpha, orderNo, sourceRunId, sourceRodAlphas[], gaugeIn, widthIn, netWeightLb, originRouteMode, status, eligible}] }`
+
+**Seven contract notes, each of which is easy to get wrong:**
+
+- **`order` is `null` in two different situations and both are `200`** — the unfiltered default view, and a scanned spool whose `OrderNo` is null. In the second case `spools` contains **just that spool**, so the client renders one shape either way.
+- **`404` only for an unknown `spoolAlpha`.** An unallocated spool is **not** an error — planning remainders and supervisor-accepted partial spools legitimately have no order, and the screen shows them differently from a bad scan.
+- **`gaugeIn`/`widthIn` must be read from the source FL1 run**, not from `Spool.GaugeIn`/`WidthIn`, which are documented *"set at FL2/FL3 check-in"* and are therefore **null for every row this endpoint returns**.
+- **`sourceRodAlphas` is a list and must come from `CoilTraceability`/`WeldEvent`.** `Spool` carries only two single-valued rod FKs (`ParentRodAlpha`, `SourceRodAlpha`); a spool with a mid-run weld has more than one source rod.
+- **The `order` block is a cross-database read** — order attributes live in the shared order/scheduling schema, not `FlatWireDB`, on the same unenforced-link basis as rod alphas.
+- **`eligible` encodes an availability rule that is undefined (`Q17`).** The proposal is `RECEIVED` + `STAGED`, with `HOLD` returned but not eligible. **Do not hard-code this silently.**
+- **`Spool.OrderNo` needs an index.** It is unindexed today and the `spoolAlpha` mode is a `WHERE OrderNo = …` on a `VARCHAR(50)`.
+
+No pagination — the list scrolls, consistent with every other list in the suite. **Blocks DB5A, and also serves DB5**, whose scan field currently validates against nothing because `POST /checkin/spool` was the only spool endpoint.
+
+**Worked example**
+
+```json
+{
+  "data": {
+    "scannedAlpha": "SP-00031",
+    "order": {
+      "orderNo": "FW-00421",
+      "customer": "Daddario",
+      "alloy": "1100",
+      "temper": "O",
+      "setupGaugeIn": 0.110,
+      "setupWidthIn": 0.630,
+      "dueDate": "2026-07-21"
+    },
+    "spools": [
+      {
+        "alpha": "SP-00031",
+        "orderNo": "FW-00421",
+        "sourceRunId": "RUN-0117",
+        "sourceRodAlphas": ["R00041", "R00042"],
+        "gaugeIn": 0.113,
+        "widthIn": 0.640,
+        "netWeightLb": 3200.0,
+        "originRouteMode": "Standalone",
+        "status": "RECEIVED",
+        "eligible": true
+      }
+    ]
+  },
+  "success": true,
+  "errors": []
+}
+```
+
 ### 4.7 `GET /staging/queue?lineId=`
 
 Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, grossWeightLb, payoffPosition, status, isWelded, footageRunToDate }` with `status ∈ {Available, PreCheckedIn, Welded}`.
@@ -434,6 +653,67 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 > **This is a derived projection, not a stored queue, and there must not be a `RodQueue` table.** `PreCheckedIn`/`Welded` rows come from `RodStaging`; `Available` rows are resolved at request time from `planning_routings` for the established order. Planning owns rod→order and Scheduling owns order→line; mirroring either into `FlatWireDB` would create a second source of truth **with no event channel to keep it current** — and a stale row costs an operator a physical trip with a 9,000 lb bundle.
 >
 > **The exact `ual-database` column names behind this projection are still unmapped — OI-33**, and Phase 4 cannot be built without them.
+
+**Worked example**
+
+```json
+{
+  "data": [
+    {
+      "plannedSeqno": 1, "rodSeqno": 2, "rodAlpha": "R00043", "alloy": "1100",
+      "temper": "F", "diameterIn": 0.375, "grossWeightLb": 8780.0,
+      "payoffPosition": 2, "status": "PreCheckedIn",
+      "isWelded": false, "footageRunToDate": 0.0
+    },
+    {
+      "plannedSeqno": 3, "rodSeqno": null, "rodAlpha": "R00045", "alloy": "1100",
+      "temper": "F", "diameterIn": 0.375, "grossWeightLb": 8690.0,
+      "payoffPosition": null, "status": "Available",
+      "isWelded": false, "footageRunToDate": 0.0
+    }
+  ],
+  "success": true
+}
+```
+
+### 4.7a `GET /run/active?line=`
+
+**Purpose:** the active run for a line — Dashboard 3 calls it on load and on resume. **Role:** any authenticated. **Query:** `line` = `FL1` | `FL2` | `FL3` (required).
+
+**Response `200`:** `{ runId, lineId, orderId, alloy, passScheduleId, targetGauge, gaugeTolerance, targetWidth, widthTolerance, routeMode, status, startedAt, pausedAt, footageFt, payoffs[{position, alpha, weightLb, percentRemaining, status}], weldEvents[{weldEventId, outgoingAlpha, incomingAlpha, footagePosition, timestamp}], components[{componentName, state, currentValue}] }`
+
+**Response `204 No Content`:** no active run on this line. This is the normal idle state, not an error.
+
+```json
+{
+  "data": {
+    "runId": "RUN-0042", "lineId": "FL1", "orderId": "FW-00421", "alloy": "1100",
+    "passScheduleId": "PS-1100-FL1-003",
+    "targetGauge": 0.125, "gaugeTolerance": 0.003,
+    "targetWidth": 0.875, "widthTolerance": 0.005,
+    "routeMode": "Standalone", "status": "Running",
+    "startedAt": "2026-04-30T06:14:00Z", "pausedAt": null, "footageFt": 3840,
+    "payoffs": [
+      { "position": 1, "alpha": "R00041", "weightLb": 1240.0, "percentRemaining": 62.0 },
+      { "position": 2, "alpha": null, "weightLb": 0.0, "percentRemaining": 0.0, "status": "NotLoaded" }
+    ],
+    "weldEvents": [
+      { "weldEventId": "WLD-001", "outgoingAlpha": "R00040", "incomingAlpha": "R00041",
+        "footagePosition": 1850, "timestamp": "2026-04-30T06:50:00Z" }
+    ],
+    "components": [
+      { "componentName": "DB1", "state": "Active", "currentValue": 0.310 },
+      { "componentName": "DB2", "state": "Active", "currentValue": 0.260 },
+      { "componentName": "FM1", "state": "Active", "currentValue": 0.126 }
+    ]
+  },
+  "success": true
+}
+```
+
+> **`weldEvents[]` here is a trimmed marker list** feeding the gauge-trace chart — no quality, operator or weld type. Dashboard 2A needs those, which is why `§4.17a` exists as a separate run-scoped resource rather than this one being widened.
+>
+> **`gaugeTolerance` and `widthTolerance` are single-± fields**, and the 30 Jul client decision (`Q22`) replaced single-± tolerances with four min/max pairs. This response shape has not caught up — the same defect `GapAnalysis.md` **D1** records against `SpcMeasurement`.
 
 ### 4.8 `POST /run/{runId}/pause` and `/resume`
 
@@ -454,6 +734,27 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 **Resume** — outcomes: `ResumeRun` · `LogWipRejection` · `ContinuePause` · **`CheckOutRod`**. Response returns `resumedAt` and `pauseDurationSeconds`.
 
 > **The contract supports four outcomes; the shared `pause_run.js` implements three.** `Analysis/FlatWireShopfloorDashboards.md` specifies four including "No — check out rod (partial run)"; the script implements three and exposes Rod Checkout as a pause *reason* instead. **Both readings reach Mode B; they disagree on where the door is.** Since this endpoint accepts `CheckOutRod`, **the four-outcome model is what the contract currently supports** — **OI-14**.
+
+**Worked example**
+
+```json
+{
+  "reasonCode": "GaugeWidthInvestigation",
+  "reasonCategory": "QualityMeasurement",
+  "notes": "Gauge reading drifted high — investigating FM1 roll gap"
+}
+```
+
+```json
+{
+  "data": {
+    "runId": "RUN-0042",
+    "pausedAt": "2026-04-30T07:10:00Z",
+    "footageAtPause": 3840
+  },
+  "success": true
+}
+```
 
 ### 4.9 `POST /spc`
 
@@ -476,6 +777,39 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 **`footagePosition` is captured when the checkpoint opens, not when it is submitted** (`FR-191`). The client sends the value it captured on open.
 
 > **A checkpoint cannot join to its trigger.** `PostDieChange` and `RollAdjustTrigger` checkpoints are auto-created by a `DieChangeEvent` / `RollOverride`, but the only link is the free-text `triggerDescription` — **there is no `dieChangeId` or `overrideId` field**. You cannot programmatically prove which die change a checkpoint verified. **OI-18.**
+
+**Worked example**
+
+```json
+{
+  "runId": "RUN-0042",
+  "lineId": "FL1",
+  "checkpointType": "PostDieChange",
+  "footagePosition": 3840,
+  "operatorId": "john.d",
+  "triggerDescription": "DB2 die changed from 0.310\" → 0.308\"",
+  "measurements": [
+    { "name": "WireDiameterPostDraw", "targetValue": 0.260, "actualValue": 0.261 },
+    { "name": "FM1Gauge",             "targetValue": 0.125, "actualValue": 0.126 },
+    { "name": "FM1Width",             "targetValue": 0.875, "actualValue": 0.874 }
+  ]
+}
+```
+
+```json
+{
+  "data": {
+    "checkpointId": "SPC-0041",
+    "allInSpec": false,
+    "results": [
+      { "name": "WireDiameterPostDraw", "inSpec": true,  "deviation": 0.001 },
+      { "name": "FM1Gauge",             "inSpec": true,  "deviation": 0.001 },
+      { "name": "FM1Width",             "inSpec": true,  "deviation": -0.001 }
+    ]
+  },
+  "success": true
+}
+```
 
 ### 4.10 `POST /weldevent`
 
@@ -510,6 +844,38 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 >
 > **Naming.** The aggregate, the table, the endpoint and the story are all **`WeldEvent`**. The SignalR *marker method* keeps the name `WeldJoinEvent` — but only because it is documented here. **Do not let the aggregate drift back to `WeldJoinEvent`.**
 
+**Worked example**
+
+```json
+{
+  "runId": "RUN-0042",
+  "lineId": "FL1",
+  "outgoingRodAlpha": "R00041",
+  "incomingRodAlpha": "R00042",
+  "footagePosition": 3840,
+  "weldType": "InductionWeld",
+  "weldQuality": "Pass",
+  "weldQualityFailReason": null,
+  "operatorId": "john.d"
+}
+```
+
+```json
+{
+  "data": {
+    "weldEventId": "WLD-002",
+    "runId": "RUN-0042",
+    "footagePosition": 3840,
+    "outgoingAlpha": "R00041",
+    "incomingAlpha": "R00042",
+    "weldQuality": "Pass",
+    "isWelded": true,
+    "timestamp": "2026-04-30T08:00:00Z"
+  },
+  "success": true
+}
+```
+
 ### 4.11 `POST /rolloverride`
 
 **Request:** `runId, lineId, alpha, footagePosition, operatorId, reasonCode, notes, measuredGaugeIn, measuredWidthIn, adjustments[{componentName, scheduledValue, newValue}]`
@@ -530,6 +896,48 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 > **There is no revert endpoint.** `FR-212` restricts reverting to the Operations Manager, and nothing implements it — **OI-32**.
 
+**Worked example**
+
+```json
+{
+  "runId": "RUN-0042",
+  "lineId": "FL1",
+  "alpha": "R00041",
+  "footagePosition": 3840,
+  "operatorId": "john.d",
+  "reasonCode": "GaugeDriftHigh",
+  "notes": null,
+  "measuredGaugeIn": 0.128,
+  "measuredWidthIn": 0.876,
+  "adjustments": [
+    {
+      "componentName": "FM1",
+      "scheduledValue": 0.128,
+      "newValue": 0.126
+    }
+  ]
+}
+```
+
+```json
+{
+  "data": {
+    "overrides": [
+      {
+        "overrideId": "OVR-0042",
+        "componentName": "FM1",
+        "oldValue": 0.128,
+        "newValue": 0.126,
+        "delta": -0.002,
+        "plcTagWritten": true
+      }
+    ],
+    "spcCheckpointId": "SPC-0042"
+  },
+  "success": true
+}
+```
+
 ### 4.12 `POST /diechange`
 
 **Request:** `runId, lineId, rodAlpha, footagePosition, diePosition, outgoingDieAlpha, incomingDieAlpha, oldDieSizeIn, newDieSizeIn, incomingCondition, reasonCode, qualityHold{fromFootage, toFootage, flagForQa}, spcCheckpointRequired, operatorId`
@@ -545,6 +953,34 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 **Side effects:** `DieChangeEvent` written · **an auto-created linked `RollOverride`** for the die size change, referenced by `LinkedOverrideId` · a `PostDieChange` SPC checkpoint when required · the die's cumulative footage counter closes on the outgoing die and opens on the incoming one · every "Require SPC on resume" **toggle-off** is audit-logged and surfaces the run as a flagged exception.
 
 > **There is no die inventory in MVP-1, and there will not be one** — die inventory and lifecycle are owned outside MVP-1 (decision of 11 Aug 2026). This endpoint validates the incoming die **size** against the **`Drawer`** catalogue seeded in Phase 1, and reads life from `Drawer.LastGrindingFeet` / `TotalFeetAllowed` with the 60/85 % bands. **`D4` is enforced in its size-level form only**; the per-tool form is not implementable here. Note that `DieChangeEvent` stores `OldDieSizeIn`/`NewDieSizeIn` as decimals with **no `DrawerId` FK**, so this is an application check, not a database constraint. **Accepted consequence: die life is tracked per size — two dies of one diameter share a counter.** This closes **`OI-41`** (Phase 6 no longer depends on Phase 13); the missing die-inventory CRUD endpoint (**`OI-32`**) is moot in MVP-1. Authority: `DieChangeAndManagement.md` §2.4a.
+
+**Worked example**
+
+```json
+{
+  "runId": "RUN-0042",
+  "lineId": "FL1",
+  "alpha": "R00041",
+  "footagePosition": 3840,
+  "operatorId": "john.d",
+  "diePosition": "DB2",
+  "oldDieSizeIn": 0.310,
+  "newDieSizeIn": 0.308,
+  "reasonCode": "GaugeDrift"
+}
+```
+
+```json
+{
+  "data": {
+    "dieChangeId": "DC-0041",
+    "overrideId": "OVR-0043",
+    "spcCheckpointRequired": true,
+    "spcCheckpointMode": "PostDieChange"
+  },
+  "success": true
+}
+```
 
 ### 4.13 `POST /checkout`
 
@@ -584,6 +1020,38 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 > **`partialSpoolAlpha` stays `null` until a supervisor approves.** Mode B creates a **Pending Disposition** with the material locked, not plannable and carrying no alpha, and pushes a SignalR notification to the Supervisor role. **There is no endpoint for the supervisor's Accept / Hold / Reject decision** — **OI-32** — and relying on a transient notification to reach a supervisor is gap **G7**: a durable pending-approval queue is required, with SignalR as a live nudge only.
 
+**Worked example**
+
+```json
+{
+  "runId": "RUN-0042",
+  "lineId": "FL1",
+  "rodAlpha": "R00041",
+  "payoffPosition": 1,
+  "mode": "ModeA",
+  "footageAtCheckout": 0,
+  "reasonCode": "WrongRod",
+  "rodDisposition": "ReturnToFloorStorage",
+  "remainingWeightLbEstimate": null,
+  "inProcessMaterialDisposition": null,
+  "operatorId": "john.d"
+}
+```
+
+```json
+{
+  "data": {
+    "checkoutId": "CO-0041",
+    "lineId": "FL1",
+    "rodAlpha": "R00041",
+    "newRodStatus": "STAGED",
+    "plcTagsCleared": true,
+    "partialSpoolAlpha": null
+  },
+  "success": true
+}
+```
+
 ### 4.14 `POST /wipreject`
 
 **Request:** `runId, lineId, materialAlpha, stage, footagePosition, rejectionGroup, rejectionReason, measuredValue, targetMin, targetMax, disposition, observationNotes, returnToStage, operatorId`
@@ -595,6 +1063,38 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 > **`Rework` is accepted by the disposition enum but is currently unpersistable.** `NewMaterialStatus` admits only `HOLD` or `SCRAP`, and **there is no column for `returnToStage`**, which `FR-297` and the mockup both require. **A third of the disposition options cannot be stored** — **OI-22**, resolve before Phase 7.
 >
 > **`materialAlpha` is polymorphic (rod *or* spool) with no FK and no discriminator.** A typo produces a rejection against nothing — **OI-20**.
+
+**Worked example**
+
+```json
+{
+  "lineId": "FL1",
+  "materialAlpha": "R00041",
+  "stage": "FL1ActiveRun",
+  "footagePosition": 3840,
+  "rejectionGroup": "Dimensional",
+  "rejectionReason": "GaugeOutOfSpec",
+  "measuredValue": 0.131,
+  "targetMin": 0.122,
+  "targetMax": 0.128,
+  "disposition": "Suspend",
+  "observationNotes": "Gauge spiked after weld — FM1 roll may need inspection",
+  "operatorId": "john.d",
+  "runId": "RUN-0042"
+}
+```
+
+```json
+{
+  "data": {
+    "rejectionId": "REJ-0041",
+    "materialAlpha": "R00041",
+    "newStatus": "HOLD",
+    "alertBroadcast": true
+  },
+  "success": true
+}
+```
 
 ### 4.15 `POST /coil/complete`
 
@@ -612,6 +1112,42 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 >
 > **Two footage coordinate systems.** Run events use **cumulative run footage**; `CoilTraceability.FootageFrom/To` are **coil-local**. Mapping a source rod to coil footage needs a coil-start offset **that no artifact states**. **Any run producing more than one coil will build wrong traceability rows** — **OI-25**, and this is the highest-consequence open item on this endpoint because `NFR012` is contractual.
 
+**Worked example**
+
+```json
+{
+  "runId": "RUN-0042",
+  "lineId": "FL2",
+  "grossWeightLb": 900.0,
+  "netWeightLb": 885.0,
+  "finalGaugeMeasuredIn": 0.126,
+  "finalWidthMeasuredIn": 0.876,
+  "skidAssignment": "Coil1Of2",
+  "existingSkidId": null,
+  "operatorId": "jane.s"
+}
+```
+
+```json
+{
+  "data": {
+    "coilAlpha": "FW-00421-C01",
+    "skidId": "SKD-0021",
+    "skidStatus": "Open",
+    "footageTotal": 3840,
+    "netWeightLb": 885.0,
+    "sourceTraceability": [
+      { "rodAlpha": "R00040", "footageFrom": 0,    "footageTo": 1850 },
+      { "rodAlpha": "R00041", "footageFrom": 1851, "footageTo": 3840 }
+    ],
+    "finalSpc": {
+      "gaugeInSpec": true,
+      "widthInSpec": true
+    }
+  },
+  "success": true
+}
+```
 
 ### 4.16 `GET /coil/{alpha}/label`
 
@@ -623,6 +1159,26 @@ Returns `alpha, alloy, temper, gaugeIn, widthIn, grossWeightLb, netWeightLb, foo
 
 ---
 
+**Worked example**
+
+```json
+{
+  "data": {
+    "coilAlpha": "FW-00421-C01",
+    "alloy": "1100",
+    "gaugeDiameterIn": 0.125,
+    "widthIn": 0.875,
+    "temper": "O",
+    "grossWeightLb": 900.0,
+    "netWeightLb": 885.0,
+    "footageFt": 3840,
+    "lotNumber": "LOT-2026-042",
+    "sourceRodAlphas": ["R00040", "R00041"]
+  },
+  "success": true
+}
+```
+
 ### 4.17 `GET /run/{runId}/gaugetrace`
 
 **Query:** `fromFt`, `toFt`, `resolution`. Backed by `sp_GetGaugeTrace`, which returns **two result sets** — the decimated readings and **the weld markers in the window**.
@@ -630,6 +1186,31 @@ Returns `alpha, alloy, temper, gaugeIn, widthIn, grossWeightLb, netWeightLb, foo
 **Response:** `{ readings[{footageFt, gaugeIn, widthIn, speedFpm, inSpec}], weldMarkers[{footagePosition, incomingRodAlpha, weldQuality}], stats{min, max, avg, stdDev, sampleCount, outOfSpecCount} }`
 
 **This is the FL2 profile source.** FL2 standalone broadcasts `null` live gauge and width, so DB5 and the FL2 variant of DB3 render from this endpoint, not from the hub.
+
+**Worked example**
+
+```json
+{
+  "data": {
+    "runId": "RUN-0041",
+    "lineId": "FL1",
+    "targetGauge": 0.125,
+    "upperLimit": 0.128,
+    "lowerLimit": 0.122,
+    "readings": [
+      { "footage": 0,    "gauge": 0.124, "inSpec": true },
+      { "footage": 10,   "gauge": 0.126, "inSpec": true },
+      { "footage": 20,   "gauge": 0.131, "inSpec": false }
+    ],
+    "weldMarkers": [
+      { "footage": 1850, "incomingAlpha": "R00041" }
+    ],
+    "totalReadings": 1920,
+    "outOfSpecCount": 14
+  },
+  "success": true
+}
+```
 
 ### 4.17a `GET /run/{runId}/weldevents`
 
@@ -649,6 +1230,48 @@ Every weld recorded against one run, oldest first. Backs the read-only **Welds t
 > **Not served by widening `GET /run/active`.** That endpoint's `weldEvents[]` is a trimmed marker list feeding the gauge-trace chart: no quality, operator or weld type. Dashboard 2A never calls it, so a run-scoped resource is the cheaper split.
 
 > **Read lands a phase before write.** This sits in phase 4 with Dashboard 2A, while `POST /weldevent` writes its rows in phase 6. Until then it returns an empty array — a legitimate state — so **stub it with non-empty sample data** for the phase-4 gate review.
+
+**Worked example**
+
+```json
+{
+  "data": {
+    "runId": "RUN-0418",
+    "lineId": "FL1",
+    "totalCount": 2,
+    "failedCount": 1,
+    "weldEvents": [
+      {
+        "weldEventId": "WLD-002",
+        "outgoingAlpha": "R00040",
+        "incomingAlpha": "R00041",
+        "outgoingPayoffPosition": 1,
+        "incomingPayoffPosition": 2,
+        "footagePosition": 4120,
+        "weldType": "InductionWeld",
+        "weldQuality": "Pass",
+        "weldQualityFailReason": null,
+        "operatorId": "j.alvarez",
+        "timestamp": "2026-07-31T06:48:00Z"
+      },
+      {
+        "weldEventId": "WLD-003",
+        "outgoingAlpha": "R00041",
+        "incomingAlpha": "R00042",
+        "outgoingPayoffPosition": 2,
+        "incomingPayoffPosition": 1,
+        "footagePosition": 9860,
+        "weldType": "InductionWeld",
+        "weldQuality": "Fail",
+        "weldQualityFailReason": "Weld not fully fused — cut back and remade",
+        "operatorId": "j.alvarez",
+        "timestamp": "2026-07-31T09:22:00Z"
+      }
+    ]
+  },
+  "success": true
+}
+```
 
 ### 4.19 `GET /health`
 
@@ -759,7 +1382,7 @@ The integration layer is the **existing `OPCConnection` service, extended** to s
 | Hold / idle and restore | on pause and resume |
 | Simulated push | `SimulatePLCTagPush` — selected by configuration, not by call site |
 
-**The first parameter is `scheduleId`.** `MVP-1/DevelopmentPlan/APIContracts.md` and `phase-04` use `passScheduleId`; that April document is superseded and the roadmap file needs the one-line correction.
+**The first parameter is `scheduleId`.** `phase-04` still uses `passScheduleId` and needs the one-line correction; the April elaboration that also used it has been absorbed and deleted.
 
 ### 6.2 Error codes
 

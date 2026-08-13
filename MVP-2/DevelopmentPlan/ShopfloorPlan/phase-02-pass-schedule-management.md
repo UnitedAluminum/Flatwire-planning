@@ -1,9 +1,9 @@
 # PHASE 2 — Pass Schedule Management (Operations Manager)
 
-> **Part of the [Flat Wire Mill — Master Implementation Roadmap](../../../MVP-1/DevelopmentPlan/ShopfloorAndRealTimePlan.md).** See [Foundations](../../../MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md) for §0.2–0.4 shared context.
-> **Prev:** [Phase 1 — Core Platform Setup](../../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-01-core-platform-setup.md) · **Next:** [Phase 3 — Line Status Board & Real-Time Backbone](../../../MVP-1/DevelopmentPlan/ShopfloorPlan/phase-03-line-status-board-realtime-backbone.md)
+> **Part of the [Flat Wire Mill — Master Implementation Roadmap](../../../MVP-1/ProjectPlan/ShopfloorAndRealTimePlan.md).** See [Foundations](../../../MVP-1/ProjectPlan/ShopfloorPlan/00-foundations.md) for §0.2–0.4 shared context.
+> **Prev:** [Phase 1 — Core Platform Setup](../../../MVP-1/ProjectPlan/ShopfloorPlan/phase-01-core-platform-setup.md) · **Next:** [Phase 3 — Line Status Board & Real-Time Backbone](../../../MVP-1/ProjectPlan/ShopfloorPlan/phase-03-line-status-board-realtime-backbone.md)
 >
-> *Rod receiving and order planning/line scheduling (originally planned as separate phases) are handled upstream by the existing CoilReceiving / Planning / Scheduling systems and are out of shopfloor scope — see the [master index](../../../MVP-1/DevelopmentPlan/ShopfloorAndRealTimePlan.md).*
+> *Rod receiving and order planning/line scheduling (originally planned as separate phases) are handled upstream by the existing CoilReceiving / Planning / Scheduling systems and are out of shopfloor scope — see the [master index](../../../MVP-1/ProjectPlan/ShopfloorAndRealTimePlan.md).*
 >
 > *Workflow phases (2–14) each follow the fixed template: **Business Overview · User Journey · UI (Angular) · Backend (.NET) · Database · Real-Time · Integration Flow · Testing · Deliverables**, and close with **OQ blockers** and **backlog stories**.*
 
@@ -30,7 +30,7 @@
 **Last Updated:** 2026-07-30
 **Status:** Ready to build
 **Layer:** Full-stack vertical slice
-**Owner:** **FE + BE** (stream) — *named owner TBD, see [Capacity & Effort Model](../../../MVP-1/DevelopmentPlan/CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
+**Owner:** **FE + BE** (stream) — *named owner TBD, see [Capacity & Effort Model](../../../MVP-1/ProjectPlan/CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
 **Effort:** **231 h** (28.9 d) — FE 80 · BE 62 · DB 12 · QA 31 · BA 16 · cont. 30 · **Window:** W2–W3 (Aug 24–Sep 4, 10 working days)
 **Scope call:** **Not deferrable** — the highest-priority dependency in the plan; gates every check-in phase. The 2.0 BA-days are the pass-schedule content liaison, which is the project's top-ranked risk.
 

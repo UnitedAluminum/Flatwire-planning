@@ -235,6 +235,6 @@ adopted), the **expected yield per route** (`OI-60`), and the **confirmed** weig
 | [`CapacityAndEffortModel.md`](./CapacityAndEffortModel.md) | §2 rate card · §3 the published 177 h · §5 the descope ladder · §8 the provisional-estimate note |
 | [`DevelopmentEffortModel.md`](./DevelopmentEffortModel.md) | **The AI-assisted factor card (§1) this sheet applies.** Its per-phase table **excludes Phase 12** — this sheet owns those figures — so its 1,397 h MVP-1 development is net of the 89 h here |
 | [`FlatWireJiraStories.md`](./FlatWireJiraStories.md) | **The only requirement text for FW-101/102/110** — acceptance criteria at FW-100/101/102 (Epic 10) and FW-110 (Epic 11) |
-| [`../ProjectPlan/02-SRS.md`](../ProjectPlan/02-SRS.md) | `FR-332`/`FR-332a` (weight formula) · `FR-063`/`FR-066`/`FR-189`/`FR-273`/`FR-292` (scrap, **not** FW-110) |
+| [`../ProjectPlan/02-SRS.md`](02-SRS.md) | `FR-332`/`FR-332a` (weight formula) · `FR-063`/`FR-066`/`FR-189`/`FR-273`/`FR-292` (scrap, **not** FW-110) |
 | `LatestDocument/FlatWire_MasterSpecification.md` | §11 open-issue register — `OI-45`, `OI-60`, `OI-68`, `OI-83`, `OI-92` |
 | [`../../Analysis/FlatWireOpenQuestions.md`](../../Analysis/FlatWireOpenQuestions.md) | **`Q10`** — Critical, and the one question carrying no recommendation by decision |
