@@ -499,7 +499,7 @@ Changes that span the repository rather than one document.
 
 ---
 
-## [MVP-1/DevelopmentPlan/FlatWireTables.md](MVP-1/ProjectPlan/FlatWireTables.md)
+## [FlatWireSchema_Mapping.md](MVP-1/DBChanges/Schema/FlatWireSchema_Mapping.md)
 
 | Date | Changed By | Description |
 |------|-----------|-------------|
@@ -611,7 +611,7 @@ Changes that span the repository rather than one document.
 
 ---
 
-## [MVP-1/DevelopmentPlan/WeldEventPopupPlan.md](MVP-1/ProjectPlan/WeldEventPopupPlan.md)
+## [REVIEW.md](MVP-1/ProjectPlan/REVIEW.md) — *Appendix, WeldEventPopupPlan*
 
 | Date | Change |
 |---|---|

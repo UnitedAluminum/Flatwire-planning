@@ -77,7 +77,7 @@ Three facts this diagram encodes that are easy to get wrong:
 | `FlatWire.Application` | `c:\UAL\ual-api` | Commands, queries, validators, pipeline behaviours |
 | `FlatWire.Domain` | `c:\UAL\ual-api` | Aggregates, param models, enums, `IFlatWireClient` |
 | `FlatWire.Infrastructure` | `c:\UAL\ual-api` | `FlatWireDbContext` (EF Core), Dapper readers, repositories, `PLCTagService` |
-| `FlatWireDB` | `ual-database` | 28 tables, **43 FKs, 64 non-clustered indexes**, 1 trigger, 2 read procedures — counted from the deployed database on 6 Aug 2026. *(The previous "41 FKs, 46 indexes" was a count of the DDL as it stood on 30 Jul and had already drifted before `CoilTraceability.SpoolAlpha` was added.)* |
+| `FlatWireDB` | `ual-database` | **MVP-1 build: 25 tables · 33 FKs · 41 index statements in script 07 · 1 procedure · 1 trigger** — counted from the scripts, comments stripped, 13 Aug 2026. **The full design is 28 tables / 43 FKs**; the three `PassSchedule*` tables and ten of the FKs are owned outside MVP-1 and built by `MVP-2/DBChanges`. *(The "64 non-clustered indexes" previously quoted here was a `sys.indexes` count from a deployed database, which includes constraint-backed indexes script 07 does not create — see §6.8.)* |
 
 ---
 
@@ -312,18 +312,21 @@ The flat-wire-specific model lives in a **new standalone SQL Server database, `F
 
 ### 6.2 Table count — counted, not quoted
 
-**28 tables.** This figure was taken by counting `CREATE TABLE` statements across `FlatWire_DDL_01` … `_05`, not copied from any document:
+**MVP-1 builds 25 tables. The full design is 28.** Both figures were taken by counting `CREATE TABLE` statements with comments stripped, on 13 Aug 2026 — not copied from any document:
 
-| Group | Script | Count | Tables |
-|---|---|---|---|
-| **Lookup / Reference** | `01_Lookup` | **6** | `Stand` · `Drawer` · `Edger` · `SpoolConfiguration` · `AlloyProperty` · `PayoffPosition` |
-| **Schedule** | `02_Schedule` | **3** | `PassSchedule` · `PassScheduleComponent` · `PassScheduleChangeLog` |
-| **Materials** | `03_Materials` | **3** | `Rod` · `FlatWireRun` · `Spool` |
-| **Runs** | `04_Runs` | **9** | `FlatWireRunDetail` · `RodStaging` · `RodCheckin` · `SpoolCheckin` · `RunPauseEvent` · `WeldEvent` · `RollOverride` · `DieChangeEvent` · `RunReading` |
-| **Quality / Output** | `05_QualityOutput` | **6** | `SpcCheckpoint` · `SpcMeasurement` · `WipRejection` · `CoilOutput` · `CoilTraceability` · `RodCheckout` |
-| | | **27** | |
+| Group | Script | Count | Scope | Tables |
+|---|---|---|---|---|
+| **Lookup / Reference** | `01_Lookup` | **7** | MVP-1 | `Stand` · `Drawer` · `Edger` · `SpoolConfiguration` · `AlloyProperty` · `PayoffPosition` · **`Dancer`** |
+| **Schedule** | `02_Schedule` | **3** | **MVP-2** | `PassSchedule` · `PassScheduleComponent` · `PassScheduleChangeLog` |
+| **Materials** | `03_Materials` | **3** | MVP-1 | `Rod` · `FlatWireRun` · `Spool` |
+| **Runs** | `04_Runs` | **9** | MVP-1 | `FlatWireRunDetail` · `RodStaging` · `RodCheckin` · `SpoolCheckin` · `RunPauseEvent` · `WeldEvent` · `RollOverride` · `DieChangeEvent` · `RunReading` |
+| **Quality / Output** | `05_QualityOutput` | **6** | MVP-1 | `SpcCheckpoint` · `SpcMeasurement` · `WipRejection` · `CoilOutput` · `CoilTraceability` · `RodCheckout` |
+| | | **25** | **MVP-1 build** | `FlatWire_DDL_RunAll.sql` skips `02_Schedule` deliberately |
+| | | **28** | full design | MVP-1 + the three MVP-2 `PassSchedule*` tables |
 
-**Other counts circulating in the repository — all superseded:** 20 (`FlatWireJiraStories.md`) → 22 (original ERD, `FlatWireTables.md`, SRS `DM001`) → 21 (roadmap index, after the `Rod` drop) → 22 (`phase-01c`, plus `RunReading`) → 25 (`Schema_Mapping.md`, `CLAUDE.md`) → **27** (plus `PayoffPosition` and `RodStaging`).
+**Two corrections landed here on 13 Aug 2026.** The Lookup row said **6** and omitted **`Dancer`**, which `01_Lookup` does create — the same omission `GapAnalysis.md` **E1**/**E3** records against the ER documentation and the script's own header. And the prose said "28 tables" above a table that summed to **27**, which is how a figure nobody could reproduce stayed in circulation.
+
+**Other counts circulating in the repository — all superseded:** 20 → 21 → 22 → 24 → 27. `CLAUDE.md`'s *"verified … 24 tables"* is the most recent of them and is also wrong; the deployed-database check in `[DR §4.2]` now expects **25**.
 
 `FlatWireRun` is created in `03_Materials`, **not** `04_Runs`, so that `Spool.SourceRunId` can reference it.
 
@@ -486,9 +489,20 @@ Notable columns: `RodSeqno` (**actual** processing sequence, assigned server-sid
 | `UX_RodStaging_Bay` | One `Staged` rod per `(LineId, PayoffPosition)` |
 | `UX_RodStaging_RodActive` | One `Staged` bay per `RodAlpha` |
 
-**Index count — counted, not quoted.** `FlatWire_DDL_07_Indexes.sql` contains **46 index statements: 43 non-clustered plus the 3 filtered UNIQUE above.**
+**Index count — counted, not quoted.** `FlatWire_DDL_07_Indexes.sql` contains **41 index statements: 39 non-clustered plus 2 filtered UNIQUE** (`UX_RodStaging_Bay`, `UX_RodStaging_RodActive`). Counted from the script with comments stripped, 13 Aug 2026.
 
-> **`PP-01` — the master specification states "41 non-clustered indexes plus 3 filtered-unique" (44).** The DDL is authoritative; the correct figure is **46**. Correct the master spec.
+> ### `PP-01` — four index counts circulate, and they are not all measuring the same thing
+>
+> **The MVP-1 figure is 41** — what script 07 creates. Restated 13 Aug 2026 after counting the scripts directly.
+>
+> | Source | Claim | Status |
+> |---|---|---|
+> | **Script 07, counted** | **39 non-clustered + 2 filtered-unique = 41** | ✅ **Authoritative for MVP-1** |
+> | This document, before 13 Aug | 43 + 3 = 46 | ❌ Pre-MVP-split; counted the full design including MVP-2's `07b` |
+> | Master specification | "41 non-clustered plus 3 filtered-unique" (44) | ❌ Superseded |
+> | ER documentation | "40 non-clustered + 1 filtered-unique" | ❌ Superseded |
+>
+> **A fifth number is not wrong, and is the one most likely to cause an argument:** a *deployed* database reports far more non-clustered indexes than script 07 creates, because every `PRIMARY KEY` and `UNIQUE` constraint builds its own backing index. **41 is a count of DDL statements, not of `sys.indexes` rows.** `[DR §4.2]`'s V3 check says so explicitly.
 
 Coverage: every FK / `RunId` join column and the hot query paths — `PassSchedule(LineId,Alloy,Status)`; filtered indexes on `PassScheduleComponent.StandId`/`DrawerId`/`EdgerId`; `PassScheduleChangeLog(PassScheduleId, Timestamp DESC)`; `FlatWireRun(LineId,Status)`, `(Status)`, `(PassScheduleId)`, `(OrderId)`; `Spool(SourceRunId)`, `(ParentRodAlpha)`, `(SourceRodAlpha)`, `(Status)`; `RodStaging(LineId,Status)`, `(RodAlpha)`; `RodCheckin(RunId)`, `(RodAlpha)`, `(LineId,PayoffPosition)`, `(PassScheduleId)`; `(RunId)` on every event table; `WeldEvent(OutgoingRodAlpha)` and `(IncomingRodAlpha)`; **`RunReading(RunId, FootageFt)`** — the gauge-trace path; `SpcCheckpoint(RunId, CheckpointType)`; `WipRejection(RunId)`, `(MaterialAlpha)`; `CoilOutput(RunId)`, `(OrderId)`, filtered `(SkidId)` and `(PassScheduleId)`; `CoilTraceability(CoilAlpha, FootageFrom, FootageTo)` and `(RodAlpha)`; `RodCheckout(RunId)`, `(RodAlpha)`.
 
@@ -1128,7 +1142,7 @@ The same reasoning applies to **pre-check-in** (writes `RodStaging` + `coils` + 
 
 **OI-17** (`RunReading` retention) · **OI-18** (SPC cannot join its trigger) · **OI-20** (polymorphic refs without integrity) · **OI-22** (`Rework` unpersistable) · **OI-23** (SPC-HOLD has no column) · **OI-24** (lot number) · **OI-25** (two footage coordinate systems) · **OI-26** (FL3 pre-check-in station) · **OI-27** (no `F` case in the op-letter map) · **OI-28** (alert lifecycle unbacked) · **OI-29** (no bundle header) · **OI-30** (no gap-free sequence) · **OI-31** (no legacy migration deliverable) · **OI-32** (six missing endpoint groups) · **OI-34** (NFRs absent) · **OI-35** (`LineState` vocabulary) · **OI-36** (FM2 S3 tag path) · **OI-37** (roles unconfirmed) · **OI-38** (PIN validation source) · **OI-39** (cross-DB recovery) · **OI-41** (Phase 6 ↔ 13) · **OI-42** (`Rod` ↔ `coils` sync) · **OI-43** (unplanned component bypass has no home) · **OI-45** (weight basis) · **OI-80** (`TraversingTakeup` has no UI) · **OI-93** (`AlloyProperty` shadows `alloys`).
 
-New here: **PP-01** (index count is 46, not 44).
+New here: **PP-01** (the MVP-1 index count is **41**, not 44 or 46 — see §6.8).
 
 ---
 

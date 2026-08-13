@@ -3,7 +3,7 @@
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** July 31, 2026
 **Document Type:** Final Schema — Run Tracking Tables
-**Source:** Derived from `FlatWireTables.md` recommendations
+**Source:** the April gap analysis, absorbed into `FlatWireSchema_Mapping.md`’s appendix on 13 Aug 2026 when `FlatWireTables.md` was deleted
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `SQL/FlatWire_DDL_04_Runs.sql` (`FlatWireRun` itself is created in `DDL_03`)
 
 Run tables capture the complete lifecycle of a flat wire production run — from initial check-in through all in-process events. `FlatWireRun` is the central header record; all event tables reference it by `RunId`.

@@ -16,7 +16,9 @@
 
 ### 1.1 Purpose
 
-This document specifies what the **Flat Wire Mill module** must do. It is the reference a developer builds from and a tester writes cases against. It carries **366 numbered functional requirements (`FR-001` … `FR-508`)**, every one traceable to a source requirement ID in the delivered SRS, an analysis note, or an approved mockup. *(The count exceeds the span because `FR-097`–`FR-099` were added on 2 Aug 2026 into the gap between §5.3 and §5.4 rather than appended, so the new screen sits beside the one it feeds.)*
+This document specifies what the **Flat Wire Mill module** must do. It is the reference a developer builds from and a tester writes cases against. It carries **279 numbered functional requirements (`FR-001` … `FR-428`)**, every one traceable to a source requirement ID in the delivered SRS, an analysis note, or an approved mockup. **263 of the 279 are in MVP-1 scope** and 4 are withdrawn; the rest belong to screens deferred to MVP-2.
+
+> **Do not hand-edit these figures.** They are generated — run [`Tools/build_coverage_matrix.py`](Tools/build_coverage_matrix.py), which counts the rows in this document and cross-checks them against `[TP §5]`. The **363** and **366** previously quoted here and in `00-README.md` both predate the 11 Aug 2026 MVP-2 split, which withdrew §5.10, §5.18, §5.19, §5.23 and §5.24; neither was reproducible from the document. Corrected 13 Aug 2026.
 
 Requirement numbers are **carried forward unchanged** from [`../FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §4. Nothing has been renumbered, merged or dropped.
 

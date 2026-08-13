@@ -206,3 +206,52 @@ Treat the July 26 roadmap as source of truth; align each April doc **up to** it.
 | `APIContracts.md` | ✅ **DONE 13 Aug 2026.** `RollAdjustTrigger` added to `CheckpointType`; delivery schedule aligned to **phases**; hub event list verified complete (9 events, including `LineStateChanged`/`AlertRaised`/`AlertCleared`); the missing **alloy-lookup**, **override-revert** and **alert-lifecycle** endpoints are **recorded as gaps** rather than drafted here, because inventing a shape would create a second unowned contract. Also demoted below `ProjectPlan/04-APIContract.md` (**#59**) and given the `LineOperatingState` / `scheduleId` / edge-type fixes. ~~Fix the `/passschedule/generate` example~~ — **struck: out of MVP-1 scope.** |
 | `FlatWireTables.md` | ✅ **DONE 13 Aug 2026.** The bare-`decimal` hazard is called out at the head of the document as the largest sync risk in the folder — **the DDL is authoritative and the doc is the analysis**, so the types are not restated here; the `FlatWireRun`/`FlatWireRunDetail` split, `RunReading`, `PayoffPosition`, `RodStaging` and `Dancer` are all recorded, with `SpoolCheckin`'s owner (Phase 1C creates, Phase 8 populates). `united_db` was **already absent** — 0 occurrences. ~~drop the dedicated `Rod` table~~ — **struck: `D-04` retains it**, and `G12` closed on exactly that. |
 | `TechStackRecommendation.md` | ✅ **DONE 13 Aug 2026.** Status → **Accepted**; the database decision closed as **a new standalone `FlatWireDB`** (the *"or schema extension"* alternative struck), with `G17`'s cross-DB cost named. The SPC reconciliation resolved as **not a contradiction** — the five are physical measurement points, the enum is why a checkpoint fired; different axes, no mapping owed. Also corrected the Angular rationale, which cited the **forbidden** slitter/furnace modules as a pattern source. |
+
+
+---
+
+## Appendix — `WeldEventPopupPlan.md`, absorbed 13 Aug 2026
+
+> The weld-event change plan was **executed** (applied 1 Aug 2026; `S7`, its last step, closed 13 Aug) and the file
+> was deleted in the consolidation. Its design narrative and work breakdown had already been removed as spent.
+> **What is retained here is what other documents still cite**: the decision attribution, the `Q-W#` register with
+> its dispositions, and the gap-register outcomes. `S1`–`S9` all landed. Full text at commit `1964086`.
+
+### The change, in one paragraph
+
+The weld capture moved off a standalone screen and onto the pre-check-in station. **Dashboard 4 was retired**; the weld
+is now a dialog reached from Dashboard 2A's staged payoff card. **`POST /staging/rod/mark-welded` was retired and
+`POST /weldevent` became the single weld write** — Dashboard 2A's *Mark as welded* dialog gained the quality check, so
+one row is composed by both entry points. That merge is **decision `D-A`**, which is what
+[04-APIContract.md](04-APIContract.md) attributes to this document. A read-only **Welds this run** dialog was built on
+Dashboard 2A over `GET /run/{runId}/weldevents`. Welds are **induction** only; laser was dropped.
+
+### `Q-W#` register — dispositions
+
+| Ref | Disposition |
+|---|---|
+| ~~**Q-W1**~~ | **DECIDED 1 Aug 2026 — yes, quality is captured at the weld.** Rather than removing the lightweight flag, Dashboard 2A's *Mark as welded* dialog gained the quality check; it already captured both alphas, weld type and footage, so quality was the only NOT NULL `WeldEvent` column missing. `POST /staging/rod/mark-welded` retired. Closed by `D-A` |
+| **Q-W2** | **OPEN · Medium · ⚠ this document is its only home** — see the finding below |
+| ~~**Q-W3**~~ | **DECIDED 1 Aug 2026 — yes, a weld-history view is needed.** A read-only **Welds this run** dialog on Dashboard 2A, scoped to the active `RunId`, over `GET /run/{runId}/weldevents`. Built; `G25` withdrawn rather than registered |
+| ~~**Q-W4**~~ | **ACTED ON 1 Aug 2026 — the FL2 active-run link to the weld screen was removed**, along with the weld button on all four active-run screens. ⚠ **Decided rather than answered**, which is why it became gap **`G28`**: `dashboard_10_shift_summary.html` fixtures show FL2 welds (`SP-00029 → SP-00030`, induction) while `WeldEvent.md:166` says FL2 *inherits* the spool's weld markers. If FL2 does weld spool-to-spool it now has **no capture path at all** |
+
+> ### ⚠ `Q-W2` is live, unregistered, and was nearly lost
+>
+> **The question:** should the post-staging weld offer be **gated to the sub-3,000 lb window**, or shown on **every**
+> successful staging? It governs `D-G`, the offer's trigger rule.
+>
+> This document states that its `Q-W#` questions were *"to be added to `Analysis/FlatWireOpenQuestions.md`"*. **Only
+> `Q-W1` and `Q-W4` were ever propagated** — `Q-W1` through `APIContracts.md`, `Q-W4` through gap `G28`. `Q-W2` was
+> not, and a repository-wide search on 13 Aug 2026 found it **nowhere else**: not in the open-questions register, not
+> in the master spec's `OI-##` register, not in `RodPreCheckin.md`. The 3,000 lb *alert* threshold is well specified
+> (`FR-034`, `FR-423`, `RodPreCheckin.md` §alerts); **whether the weld offer follows that threshold is not.**
+>
+> **It needs registering in `Analysis/FlatWireOpenQuestions.md`.** Flagged rather than done, because that register is
+> outside the folder this clean-up covered.
+
+### Gap register outcomes
+
+| Gap | Outcome |
+|---|---|
+| ~~**G25**~~ | **WITHDRAWN 1 Aug 2026 — built rather than deferred** (the *Welds this run* dialog). It was withdrawn before it was ever registered, so nothing cited it, and **the ID was reused on 13 Aug 2026** for the requirement-coverage gap now in [`back-matter.md`](./ShopfloorPlan/back-matter.md) |
+| **G26** | **The merged weld write straddles two phases** — Dashboard 2A's weld control ships in **phase 4**, and `POST /weldevent` is a **phase 6** deliverable, so phase 4 ships a button whose target lands later. **Registered 13 Aug 2026, twelve days late**: `phase-06:45` had cited it since 1 Aug against no register entry. That omission was step `S7`, the one step of nine that did not execute on the day |

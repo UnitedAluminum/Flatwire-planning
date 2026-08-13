@@ -15,7 +15,7 @@
 | # | Document | Read it for | Audience |
 |---|---|---|---|
 | 1 | **[Vision & Scope](./01-VisionAndScope.md)** | Why the project exists, what is in and out of scope, the success criteria, the risks | Sponsors, programme management, business owners |
-| 2 | **[SRS](./02-SRS.md)** | **What to build** — 363 numbered requirements with NFRs folded in, the domain model, the process flows, the role matrix | Developers, QA, BA |
+| 2 | **[SRS](./02-SRS.md)** | **What to build** — **279 numbered requirements (263 in MVP-1 scope)** with NFRs folded in, the domain model, the process flows, the role matrix | Developers, QA, BA |
 | 3 | **[HLD + ER Diagram](./03-HLD-and-ERDiagram.md)** | How it is structured — architecture, the real-time pipeline, the 27-table data model, the ER diagrams, the transactional boundary | Architects, developers, DBA |
 | 4 | **[API Contract](./04-APIContract.md)** | What to code against — 30 endpoints, 10 hub events, the PLC surface, the enums | Frontend and backend developers, integration testers |
 | 5 | **[Sprint Plan & Backlog](./05-SprintPlanAndBacklog.md)** | When it gets built, by whom, in what order — **and why the window does not close** | Delivery lead, scrum team, programme management |

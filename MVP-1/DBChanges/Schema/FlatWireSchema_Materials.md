@@ -3,7 +3,7 @@
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** July 29, 2026
 **Document Type:** Final Schema — Material Tracking Tables
-**Source:** Derived from `FlatWireTables.md` recommendations
+**Source:** the April gap analysis, absorbed into `FlatWireSchema_Mapping.md`’s appendix on 13 Aug 2026 when `FlatWireTables.md` was deleted
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `SQL/FlatWire_DDL_03_Materials.sql`
 
 Material tables track the physical aluminum inputs to the flat wire mill. Wire rod (`Rod`) is the primary raw material fed at FL1. Pre-drawn spools (`Spool`) are FL1 output used as feed material at FL2 and FL3 in Hybrid route mode.

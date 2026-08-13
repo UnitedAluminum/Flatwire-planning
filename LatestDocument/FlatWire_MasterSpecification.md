@@ -86,7 +86,7 @@ Two things make this module different from every other UAL shopfloor module:
 |---|---|
 | Requirements | Consolidated SRS v3 (`MVP-1/SRS/Shopfloor_Flat_wireSRS_Consolidated_v3.docx`) — **removed from the repository 1 Aug 2026**, in git history at `6096921`; §4 below and `ProjectPlan/02-SRS.md` now carry its rules. ~29 feature areas, requirement IDs `OL`/`PCI`/`CHK`/`WLD`/`TRV`/`ORD`/`PSM`/`GWT`/`SPC`/`ALT`/`STP`/`WBK`/`PR`/`FRT`/`DAT`/`WRJ`/`PKG`/`RCO`/`PRC`/`LST`/`ARM`/`PSL`/`SHS`/`RAJ`/`DCH`/`DMG`/`HMI`/`SCD`/`OEE`/`PRN`/`DM`/`INT`/`NFR` |
 | Schema | Designed, scripted, and validated on SQL Server 2019 — 28 tables, 41 FK constraints, indexes, one trigger, two read procs, idempotent build+seed |
-| API | Contract published for 30 REST endpoints + 9 hub events; four Tier-1 correctness bugs identified and corrected in §6 of this document |
+| API | Contract published for 30 REST endpoints + **10** hub events; four Tier-1 correctness bugs identified and corrected in §6 of this document |
 | UI | 27 static HTML mockups delivered and approved as the visual baseline; no Angular code written |
 | Code | **None.** `ual-angular` library `flat-wire-shopfloor` and `ual-api` domain `FlatWire` are both un-started |
 | Decisions | 74 tracked questions; 21 Decided, 8 In Progress, 45 Open — 6 of the Open ones are Critical |

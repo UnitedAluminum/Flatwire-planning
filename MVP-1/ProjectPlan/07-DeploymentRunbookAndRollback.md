@@ -200,18 +200,20 @@ sqlcmd -S "<server>" -E -C -i FlatWire_SampleData_QualityOutput.sql
 ```sql
 USE FlatWireDB;
 
--- V1. Table count must be 27.
+-- V1. Table count must be 25 — this is the complete MVP-1 database.
 SELECT COUNT(*) AS TableCount FROM sys.tables WHERE is_ms_shipped = 0;
--- Expected: 27
+-- Expected: 25
 
--- V2. Foreign-key count must be 41.
+-- V2. Foreign-key count must be 33.
 SELECT COUNT(*) AS FkCount FROM sys.foreign_keys;
--- Expected: 41
+-- Expected: 33
 
--- V3. Index count — 46 created by script 07 (43 non-clustered + 3 filtered UNIQUE).
+-- V3. Index count — 41 created by script 07 (39 non-clustered + 2 filtered UNIQUE).
+--     NOTE: this counts script 07's statements only. sys.indexes will report MORE,
+--     because PRIMARY KEY and UNIQUE constraints create their own backing indexes.
 SELECT COUNT(*) AS IdxCount FROM sys.indexes
  WHERE type_desc = 'NONCLUSTERED' AND is_primary_key = 0 AND is_unique_constraint = 0;
--- Expected: 46
+-- Expected: 41
 
 -- V4. Programmability present.
 SELECT name, type_desc FROM sys.objects
@@ -240,7 +242,9 @@ SELECT a.CoilAlpha FROM dbo.CoilTraceability a
 - [ ] `ua_user` exists with `db_datareader`, `db_datawriter` and `GRANT EXECUTE ON SCHEMA::dbo`
 - [ ] On a seeded environment, the fixture alphas resolve: `R00041`–`R00043`, `SP-00021`, `PS-1100-FL1-003`, `RUN-0042`, `RUN-0043`
 
-> **If V1 returns 22, 25 or any other number**, the wrong script set ran or a script failed silently. **Stop.** Several documents in the repository quote table counts of 20, 21, 22 and 25 — **all are superseded. The DDL is authoritative and it creates 27.**
+> **If V1 returns anything other than 25**, the wrong script set ran or a script failed silently. **Stop.**
+>
+> ⚠ **This check asserted 27 until 13 Aug 2026 and explicitly told the deployer to stop on 25 — so as written it rejected a correct deployment.** The counts were fixed by counting the scripts directly, comments excluded: `CREATE TABLE` ×25, `FOREIGN KEY` ×33 in script 06, and 39 non-clustered + 2 filtered-unique in script 07. **28 tables and 43 FKs are the full design**, of which the three `PassSchedule*` tables and ten of the FKs are owned outside MVP-1 and are built by `MVP-2/DBChanges`. Counts of 20, 21, 22, 24 and 27 all circulate in older documents and are superseded.
 
 ### 4.3 Step 3 — The FW-001 shared-schema renames
 

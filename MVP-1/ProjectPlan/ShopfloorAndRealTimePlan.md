@@ -47,7 +47,7 @@ Owner is a **delivery stream**, not a person — the named-owner roster is fille
 | 2 | Pass Schedule Management (Operations Manager) — **wholly MVP-2** | FE + BE | 231 → MVP-2 | 28.9 | W2–W3 | [phase-02-pass-schedule-management.md](../../MVP-2/DevelopmentPlan/ShopfloorPlan/phase-02-pass-schedule-management.md) |
 | 3 | Line Status Board & Real-Time Backbone | RT + FE | 190 | 23.8 | W2–W3 | [phase-03-line-status-board-realtime-backbone.md](./ShopfloorPlan/phase-03-line-status-board-realtime-backbone.md) |
 | 4 | Rod Check-In & PLC Configuration (FL1 / FL3) | FE + BE + RT | 255 *(+24–64 h G2)* | 31.9 | W4 | [phase-04-rod-checkin-plc-config.md](./ShopfloorPlan/phase-04-rod-checkin-plc-config.md) |
-| 5 | Active Run Monitoring & Live Gauge/Width Trace (FL1 / FL3) | FE | 221 | 27.6 | W4 | [phase-05-active-run-monitoring-gauge-trace.md](./ShopfloorPlan/phase-05-active-run-monitoring-gauge-trace.md) |
+| 5 | Active Run Monitoring & Live Gauge/Width Trace (FL1 / FL3) | FE | **154** | 19.3 | W4 | [phase-05-active-run-monitoring-gauge-trace.md](./ShopfloorPlan/phase-05-active-run-monitoring-gauge-trace.md) |
 | 6 | In-Run Production Events (Weld · Die Change · SPC · Roll Adjust · Pause) | FE + BE | 298 | 37.2 | W5 | [phase-06-in-run-production-events.md](./ShopfloorPlan/phase-06-in-run-production-events.md) |
 | 7 | Exception Handling: WIP Rejection & Rod Checkout | FE + BE | 205 | 25.6 | W5 | [phase-07-wip-rejection-rod-checkout.md](./ShopfloorPlan/phase-07-wip-rejection-rod-checkout.md) |
 | 8 | FL2 Spool Check-In & Finishing Run (FL2 Standalone) | FE + BE | 118 | 14.8 | W5–W6 | [phase-08-fl2-spool-checkin-finishing-run.md](./ShopfloorPlan/phase-08-fl2-spool-checkin-finishing-run.md) |
