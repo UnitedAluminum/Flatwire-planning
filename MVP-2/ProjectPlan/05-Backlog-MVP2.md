@@ -3,7 +3,7 @@
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** August 11, 2026
 **Status:** **MVP-2 — deferred scope**
-**Extracted from:** [`../../MVP-1/ProjectPlan/05-SprintPlanAndBacklog.md`](../../MVP-1/ProjectPlan/05-SprintPlanAndBacklog.md) §7.2–§7.3, 11 Aug 2026
+**Extracted from:** [`../../MVP-1/ProjectPlan/Development/TaskBreakdown.md`](../../MVP-1/ProjectPlan/Development/TaskBreakdown.md) §7.2–§7.3, 11 Aug 2026
 
 ---
 

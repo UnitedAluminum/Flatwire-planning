@@ -3,7 +3,7 @@
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** August 11, 2026
 **Status:** **MVP-2 — deferred scope**
-**Extracted from:** [`../../MVP-1/ProjectPlan/06-TestPlanAndTestCases.md`](../../MVP-1/ProjectPlan/06-TestPlanAndTestCases.md), 11 Aug 2026
+**Extracted from:** [`../../MVP-1/ProjectPlan/Testing/TestCases.md`](../../MVP-1/ProjectPlan/Testing/TestStrategy.md), 11 Aug 2026
 
 ---
 
@@ -13,11 +13,11 @@
 
 Test-case blocks for the deferred screens: **TC-295–309** die management · **TC-450–484** pass schedule · **TC-545–564** shift summary and OEE.
 
-> **Two blocks returned to MVP-1 on 11 Aug 2026** — ~~TC-405–429 coil completion~~ and ~~TC-435–444 packing~~ — with Phase 9. They are in [`../../MVP-1/ProjectPlan/06-TestPlanAndTestCases.md`](../../MVP-1/ProjectPlan/06-TestPlanAndTestCases.md) §5.16–§5.17, unrenumbered.
+> **Two blocks returned to MVP-1 on 11 Aug 2026** — ~~TC-405–429 coil completion~~ and ~~TC-435–444 packing~~ — with Phase 9. They are in [`../../MVP-1/ProjectPlan/Testing/TestCases.md`](../../MVP-1/ProjectPlan/Testing/TestCases.md) §5.16–§5.17, unrenumbered.
 
 ## What stayed in MVP-1 and applies here
 
-Read alongside [`../../MVP-1/ProjectPlan/06-TestPlanAndTestCases.md`](../../MVP-1/ProjectPlan/06-TestPlanAndTestCases.md):
+Read alongside [`../../MVP-1/ProjectPlan/Testing/TestCases.md`](../../MVP-1/ProjectPlan/Testing/TestStrategy.md):
 
 | Section | Content |
 |---|---|
@@ -51,7 +51,7 @@ Read alongside [`../../MVP-1/ProjectPlan/06-TestPlanAndTestCases.md`](../../MVP-
 | **TC-450** | **Only Ops Manager / Maintenance may create, edit or activate** | I | **P1** | FR-361, FR-410 | Attempt each as Operator | All blocked; **read access permitted** | ✓ |
 | **TC-451** | **Generation never auto-applies** | I | **P1** | FR-362 | Generate → the result is a **`Draft` requiring explicit approval**; nothing becomes Active automatically | ✓ |
 | **TC-452** | **No PLC write during generation or apply** | I | **P1** | FR-391 | Generate and apply with the PLC path instrumented | **Zero tag writes** | ✓ |
-| **TC-453** | One Active schedule per line + alloy | I | **P1** | `[HLD §6.5]` | Activate a second for the same pair | Rejected by `UX_PassSchedule_OneActivePerLineAlloy` | ✓ |
+| **TC-453** | One Active schedule per line + alloy | I | **P1** | `[DBD §6.5]` | Activate a second for the same pair | Rejected by `UX_PassSchedule_OneActivePerLineAlloy` | ✓ |
 | **TC-454** | **Component state is a three-value enum** | K | **P1** | FR-371 | Set each of Active / Bypass / Skip | All three persist and round-trip. **A boolean cannot express Bypass vs Skip** | ✓ |
 | **TC-455** | Mandatory final stand locked on | C | **P1** | FR-371 | Attempt to bypass **`FM2_S3`** | Toggle locked; `Bypass` and `Skip` rejected. **`FM2_S1` and `FM2_S2` remain bypassable.** *(`OI-04` closed 4 Aug 2026 — the two "contested" names were the same physical stand.)* | ✓ |
 | **TC-456** | `ParameterValue` null unless Active | I | P2 | `CK_PSC_ParamValue` | Set a value on a Bypass row | Rejected | ✓ |

@@ -28,7 +28,7 @@
 | **Rung 5** — "Phase 13 non-critical (Die Management screen, role assignment UI)" | 99 h | Bundles the **MVP-2** Die Management screen with the **MVP-1** role-assignment UI, with no split between them |
 | **Rung 6** — "Phase 11 reports FW-092/093/094/095 (4 of 5)" | 105 h | Those four reports are **MVP-1**. The rung says nothing about DB10 |
 
-So each carved deliverable was **re-priced from the rate card** in [`../../MVP-1/ProjectPlan/CapacityAndEffortModel.md`](../../MVP-1/ProjectPlan/CapacityAndEffortModel.md) §2, and QA and contingency **re-derived** from the reduced base:
+So each carved deliverable was **re-priced from the rate card** in [`../../MVP-1/ProjectPlan/Development/CapacityAndEffortModel.md`](../../MVP-1/ProjectPlan/Development/CapacityAndEffortModel.md) §2, and QA and contingency **re-derived** from the reduced base:
 
 | Phase | MVP-2 share | What it covers | MVP-1 keeps |
 |---|---|---|---|
@@ -73,15 +73,15 @@ All of it is cross-cutting or MVP-1-owned, and **none of it is duplicated here**
 
 | Artifact | Why |
 |---|---|
-| `ShopfloorAndRealTimePlan.md` | The roadmap index — one plan, both scopes. Its phase table now flags which rows are split |
-| `ShopfloorPlan/00-foundations.md` | §0.2 reference map, §0.3 domain cheat-sheet, §0.4 real-time architecture. Carries an explicit **do-not-restate** rule |
-| `ShopfloorPlan/back-matter.md` | Dependency chain, milestone calendar, **gaps register G1–G35** |
+| `Development/Roadmap.md` | The roadmap index — one plan, both scopes. Its phase table now flags which rows are split |
+| `Architecture/Architecture.md` §2.2 | §0.2 reference map, §0.3 domain cheat-sheet, §0.4 real-time architecture. Carries an explicit **do-not-restate** rule |
+| `Development/GapsRegister.md` | Dependency chain, milestone calendar, **gaps register G1–G35** |
 | `CapacityAndEffortModel.md` | See above — annotated, not divided |
 | `phase-01`, `03`–`08`, `10`, `12`, `14` | Wholly MVP-1 |
 | `phase-09`, `11`, `13` | The MVP-1 remainder of each split phase |
 | `REVIEW.md` | Audits documents in both scopes |
 | ~~`APIContracts.md`, `FlatWireJiraStories.md`, `FlatWireTables.md`, `TechStackRecommendation.md`~~ | The four April-dated **split-brain** docs — **absorbed and deleted 13 Aug 2026** into `04-APIContract.md`, `05-SprintPlanAndBacklog.md`, `FlatWireSchema_Mapping.md`'s appendix and `03-HLD-and-ERDiagram.md` §14. They were never divided by MVP scope, on the reasoning that dividing a knowingly-broken document doubles the places its bugs live; consolidating them instead removed the split brain entirely. The `/passschedule/generate` example (`REVIEW.md` Tier 1 #1) was **not** migrated — it is out of MVP-1 scope |
-| `PLCTagImplementation.md` | The internal half of the PLC tag surface — MVP-1, and it carries **no tag path strings** by rule |
+| `Architecture/PLCCommunication.md` | The internal half of the PLC tag surface — MVP-1, and it carries **no tag path strings** by rule |
 | `REVIEW.md` *(appendix)* | MVP-1 feature. *(Reduced to a record on 13 Aug 2026. The two `Checkin*` documents were reduced the same day and then **deleted**, as was `RodPreCheckinUxReviewPrompt.md` — all recoverable at `1964086`.)* |
 | `Tools/build_docx.py` | Renders client deliverables in **both** scopes |
 | `Flat Wire.code-workspace` | Opens the repo alongside `ual-angular` / `ual-api` |

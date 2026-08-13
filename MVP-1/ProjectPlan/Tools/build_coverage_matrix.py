@@ -52,9 +52,11 @@ sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..'))
 
-SRS = os.path.join(ROOT, 'MVP-1', 'ProjectPlan', '02-SRS.md')
-TESTPLAN = os.path.join(ROOT, 'MVP-1', 'ProjectPlan', '06-TestPlanAndTestCases.md')
-BACKLOG = os.path.join(ROOT, 'MVP-1', 'ProjectPlan', '05-SprintPlanAndBacklog.md')
+# Repointed 13 Aug 2026: the three numbered documents were split by subject area.
+# ROOT is unchanged — Tools/ stays at ProjectPlan/Tools/, three levels below the repo root.
+SRS = os.path.join(ROOT, 'MVP-1', 'ProjectPlan', 'Business', 'BusinessRequirements.md')
+TESTPLAN = os.path.join(ROOT, 'MVP-1', 'ProjectPlan', 'Testing', 'TestCases.md')
+BACKLOG = os.path.join(ROOT, 'MVP-1', 'ProjectPlan', 'Development', 'TaskBreakdown.md')
 
 # The "FR / Source" column of every section 5 case table. The tables carry either 8 or 9
 # columns depending on whether they have a Data column, but the first five are identical.

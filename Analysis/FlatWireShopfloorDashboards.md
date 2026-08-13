@@ -102,7 +102,7 @@ This table lived inside the **Dashboard 9** section until 11 Aug 2026 — MVP-1 
 MVP-2 screen. Two live citations depend on it and neither is about Dashboard 9:
 
 - `LatestDocument/FlatWire_MasterSpecification.md` — *"maintained via an admin screen"*, carrying its own copy of these values
-- `MVP-1/ProjectPlan/ShopfloorPlan/phase-13-administration-reference-data.md` — cites this table for the Process-Engineering sign-off caveat
+- `MVP-1/ProjectPlan/Development/Phases/phase-13-administration-reference-data.md` — cites this table for the Process-Engineering sign-off caveat
 
 Its six columns map 1:1 onto the **`AlloyProperty`** table (`Alloy`, `MaxReductionPerPass`, `SpringbackFactor`,
 `GaugeToleranceDefault`, `WidthToleranceDefault`, `SpeedRangeMinFPM`, `SpeedRangeMaxFPM`) seeded by

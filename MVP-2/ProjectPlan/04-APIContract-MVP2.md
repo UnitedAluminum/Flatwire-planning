@@ -3,7 +3,7 @@
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** August 11, 2026
 **Status:** **MVP-2 — deferred scope**
-**Extracted from:** [`../../MVP-1/ProjectPlan/04-APIContract.md`](../../MVP-1/ProjectPlan/04-APIContract.md), 11 Aug 2026
+**Extracted from:** [`../../MVP-1/ProjectPlan/Backend/APIs.md`](../../MVP-1/ProjectPlan/Backend/APIs.md), 11 Aug 2026
 
 ---
 
@@ -13,11 +13,11 @@
 
 Endpoint detail for the deferred screens: **`POST /passschedule/generate`** · **`GET /shiftsummary`**.
 
-> **Two endpoints returned to MVP-1 on 11 Aug 2026** — ~~`POST /coil/complete`~~ and ~~`GET /coil/{alpha}/label`~~ — with Phase 9, which is **wholly MVP-1**. They are the only writers of `CoilOutput` and `CoilTraceability`, and those tables carry the welding-wire certificate genealogy. See [`../../MVP-1/ProjectPlan/04-APIContract.md`](../../MVP-1/ProjectPlan/04-APIContract.md) §4.15–§4.16.
+> **Two endpoints returned to MVP-1 on 11 Aug 2026** — ~~`POST /coil/complete`~~ and ~~`GET /coil/{alpha}/label`~~ — with Phase 9, which is **wholly MVP-1**. They are the only writers of `CoilOutput` and `CoilTraceability`, and those tables carry the welding-wire certificate genealogy. See [`../../MVP-1/ProjectPlan/Backend/APIs.md`](../../MVP-1/ProjectPlan/Backend/APIs.md) §4.15–§4.16.
 
 ## What stayed in MVP-1 and applies here
 
-Read alongside [`../../MVP-1/ProjectPlan/04-APIContract.md`](../../MVP-1/ProjectPlan/04-APIContract.md):
+Read alongside [`../../MVP-1/ProjectPlan/Backend/APIs.md`](../../MVP-1/ProjectPlan/Backend/APIs.md):
 
 | Section | Content |
 |---|---|
@@ -75,7 +75,7 @@ For alloy 1100, rod 0.375″, gauge 0.125″, width 0.875″:
 
 **Derivation:** `D_pre = sqrt(4 × 0.125 × 0.875 / π) = 0.3732″` · `areaRed = 1 − (0.3732² / 0.375²) = 0.95 %`, which is **≤ 2 %, so both draw boxes bypass** · `aspectRatio = 0.875 / 0.125 = 7.0 > 5.5`, so **FM2 activates and the route is Hybrid** · `FM1 gap = 0.125 × 0.98 = 0.1225` · FM2 gaps per `FR-387`: `S1 = 0.125 × 1.06 = 0.1325`, `S2 = 0.125 × 1.02 = 0.1275`, `S3 = 0.125 × springback = 0.1225`.
 
-> **Correction 1 of 4 — this is the defect.** `MVP-1/ProjectPlan/APIContracts.md` publishes this same example returning `preflattenDiameterIn: 0.265`, `areaReductionPct: 50.1`, `drawPasses: 2` and `routeMode: "Standalone"` with FM2 bypassed and no warnings. **All four are wrong.** The published `areaReductionPct` of 50.1 is internally consistent with its own wrong 0.265 diameter, not with the stated formula; and an aspect ratio of 7.0 must, by the algorithm's own step 6, force `Hybrid`. **Implementers must build to the formula in `[SRS §5.18]` `FR-381`–`FR-387`, not to any published example.**
+> **Correction 1 of 4 — this is the defect.** `MVP-1/ProjectPlan/APIContracts.md` publishes this same example returning `preflattenDiameterIn: 0.265`, `areaReductionPct: 50.1`, `drawPasses: 2` and `routeMode: "Standalone"` with FM2 bypassed and no warnings. **All four are wrong.** The published `areaReductionPct` of 50.1 is internally consistent with its own wrong 0.265 diameter, not with the stated formula; and an aspect ratio of 7.0 must, by the algorithm's own step 6, force `Hybrid`. **Implementers must build to the formula in `[REQ §5.18]` `FR-381`–`FR-387`, not to any published example.**
 
 **Warning and error codes**
 

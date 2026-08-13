@@ -103,7 +103,7 @@
 
   D2. FL1 payoff station IS created; FL2's is not.  [REVISED Jul 29 2026]
       Flat wire does NOT use the legacy precheckin flow (PreCheckIn_PreCheckInCheckIn_Transaction),
-      and ShopfloorPlan/00-foundations.md Sec 0.2 rules the `checkin-precheckin` Angular library
+      and Architecture/Architecture.md Sec 0.2 rules the `checkin-precheckin` Angular library
       explicitly out as a reference. Both of those remain true.
       BUT that is a statement about the legacy *implementation*, not about the feature: SRS 4.2
       PCI003 requires a dedicated Pre-Check-In station for FL1, where the next rod is registered

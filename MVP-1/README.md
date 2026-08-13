@@ -13,8 +13,9 @@ MVP-1/
 ├── README.md                    ← this file
 ├── Mockups/                     ← 31 files: 17 dashboards + shared design system + shared JS chrome
 ├── RequirementDocuments/        ← 17 documents (14 specifications + 3 that are not)
-├── ProjectPlan/                 ← the plan of record: 8 numbered documents + the roadmap,
-│                                  ShopfloorPlan/ (18 files), effort models, REVIEW, Tools/
+├── ProjectPlan/                 ← the plan of record, in eight subject folders:
+│                                  Business/ Architecture/ Database/ Backend/
+│                                  Frontend/ Development/ Testing/ Operations/
 ├── DBChanges/                   ← schema design + executable DDL (25 of the 28 tables)
 └── SRS/                         ← 3 client deliverables (2 .docx + 1 .xlsx); 2 of the 3 generated
 ```
@@ -23,21 +24,23 @@ MVP-1/
 >
 > | Deleted | Absorbed into |
 > |---|---|
-> | `APIContracts.md` | `ProjectPlan/04-APIContract.md` — four endpoint sections it indexed but never specified, plus worked examples on 16 endpoints |
-> | `FlatWireJiraStories.md` | `ProjectPlan/05-SprintPlanAndBacklog.md` §4, §6, §7, §8 — 116 stories, one backlog |
-> | `TechStackRecommendation.md` | `ProjectPlan/03-HLD-and-ERDiagram.md` §14 — the stack ADR |
+> | `APIContracts.md` | `ProjectPlan/Backend/APIs.md` — four endpoint sections it indexed but never specified, plus worked examples on 16 endpoints |
+> | `FlatWireJiraStories.md` | `ProjectPlan/Development/TaskBreakdown.md` §4, §6, §7, §8 — 116 stories, one backlog |
+> | `TechStackRecommendation.md` | `ProjectPlan/Architecture/Architecture.md` §14 — the stack ADR |
 > | `FlatWireTables.md` | `DBChanges/Schema/FlatWireSchema_Mapping.md` — the legacy-table inventory, as an appendix |
 >
-> `ShopfloorPlan/` moved **intact** and is now `ProjectPlan/ShopfloorPlan/` — 18 files: `00-foundations.md`, `back-matter.md`, the `phase-01` roll-up index, and 15 phase specs (`01a`, `01b`, `01c`, `03`–`14`). `phase-02` is wholly MVP-2 and lives under `../MVP-2/`.
+> **`ProjectPlan/` was then restructured into eight subject folders (13 Aug 2026).** The seven numbered documents were **split by section**, and section numbers were preserved exactly — `BusinessRequirements.md` opens its requirements at §5 and `DatabaseDesign.md` numbers the data model §6 — so every `§n` citation in the repository still resolves. Each document declares a **shortcode** in its header; [`ProjectPlan/README.md`](ProjectPlan/README.md) is the map, and the only place all thirty documents are listed together.
+>
+> Three files in the old `ShopfloorPlan/` were **not** phase specs and were dissolved: `00-foundations.md` — all four of its sections duplicated a ProjectPlan section — `back-matter.md`, whose **`G1`–`G36` register was promoted** to `Development/GapsRegister.md`, and the `phase-01` roll-up index. The **15 phase specs** are now `ProjectPlan/Development/Phases/`; `phase-02` is wholly MVP-2 and lives under `../MVP-2/`.
 
-> **The schema here is complete for MVP-1.** `DBChanges` was divided by MVP scope on 11 Aug 2026: the three pass-schedule tables — `PassSchedule`, `PassScheduleComponent`, `PassScheduleChangeLog` — live in [`../MVP-2/DBChanges/`](../MVP-2/DBChanges/) because **the pass schedule is owned outside MVP-1**. `PassScheduleId` on `FlatWireRun`, `RodCheckin`, `SpoolCheckin` and `CoilOutput` is therefore a **documented external reference**, unenforced by design and in the same class as `PlanId`, `CoilOrderPlanId` and `SkidId` (see `ProjectPlan/ShopfloorPlan/phase-01c-database-foundation.md`). **Running `FlatWire_DDL_RunAll.sql` produces a working MVP-1 database — there is no second runner to chase.**
+> **The schema here is complete for MVP-1.** `DBChanges` was divided by MVP scope on 11 Aug 2026: the three pass-schedule tables — `PassSchedule`, `PassScheduleComponent`, `PassScheduleChangeLog` — live in [`../MVP-2/DBChanges/`](../MVP-2/DBChanges/) because **the pass schedule is owned outside MVP-1**. `PassScheduleId` on `FlatWireRun`, `RodCheckin`, `SpoolCheckin` and `CoilOutput` is therefore a **documented external reference**, unenforced by design and in the same class as `PlanId`, `CoilOrderPlanId` and `SkidId` (see `ProjectPlan/Development/Phases/phase-01c-database-foundation.md`). **Running `FlatWire_DDL_RunAll.sql` produces a working MVP-1 database — there is no second runner to chase.**
 >
 > **`CoilOutput` and `CoilTraceability` are MVP-1, and so is everything that writes them.** The coil genealogy those tables carry is what the **welding-wire customer certificates** are produced from. They returned on 11 Aug 2026 with their 4 FKs, 7 indexes, the DM010 non-overlap trigger and their seed data — and **Phase 9 followed in full**, because the tables had been left with no writer at all: `CoilCompletionService` and `POST /coil/complete` were on the MVP-2 side, so the non-overlap trigger guarded rows nothing inserted.
 
 `ProjectPlan/` and `DBChanges/` joined on 11 Aug 2026, divided by scope against `MVP-2/`; `LatestDocument/` now holds only the master specification and `ProjectPlanPrompt.md`. Originally moved here on 11 Aug 2026 to mirror [`../MVP-2/`](../MVP-2/), so the two scope buckets have the same shape. `Mockups/` came from the repository root; `RequirementDocuments/` came from `LatestDocument/`, which **no longer has a `RequirementDocuments/` folder**; `SRS/` came from the root.
 
 
-> **⚠ Two phase files carry hours that overstate MVP-1 — and the pass schedule is no longer an MVP-1 concern at all.** `DevelopmentPlan` was divided against MVP-2 on 11 Aug 2026. **Phase 2 left entirely** (231 h) and **stays gone**: pass schedule generation and management are owned by a separate track. Rod check-in still *reads* a schedule to build its PLC push payload, but MVP-1 builds no authoring UI, and `PassScheduleId` is a **documented external reference** in the same class as `PlanId` and `SkidId`. **Phases 11 and 13 were carved** (DB10; Die Management screen, lifecycle service and the die inventory table) and their figures are apportioned in [`ProjectPlan/CapacityAndEffortModel.md`](ProjectPlan/CapacityAndEffortModel.md) §3b. **Phase 9 is wholly MVP-1** and keeps its full 222 h. Details in [`../MVP-2/DevelopmentPlan/README.md`](../MVP-2/DevelopmentPlan/README.md).
+> **⚠ Two phase files carry hours that overstate MVP-1 — and the pass schedule is no longer an MVP-1 concern at all.** `DevelopmentPlan` was divided against MVP-2 on 11 Aug 2026. **Phase 2 left entirely** (231 h) and **stays gone**: pass schedule generation and management are owned by a separate track. Rod check-in still *reads* a schedule to build its PLC push payload, but MVP-1 builds no authoring UI, and `PassScheduleId` is a **documented external reference** in the same class as `PlanId` and `SkidId`. **Phases 11 and 13 were carved** (DB10; Die Management screen, lifecycle service and the die inventory table) and their figures are apportioned in [`ProjectPlan/Development/CapacityAndEffortModel.md`](ProjectPlan/Development/CapacityAndEffortModel.md) §3b. **Phase 9 is wholly MVP-1** and keeps its full 222 h. Details in [`../MVP-2/DevelopmentPlan/README.md`](../MVP-2/DevelopmentPlan/README.md).
 
 ## ⚠ This folder is not all of MVP-1
 
@@ -47,7 +50,7 @@ MVP-1/
 |---|---|
 | The roadmap index, phase files, foundations, back matter, gaps register | now **here**, `ProjectPlan/` (moved and divided 11 Aug 2026) |
 | The master specification and its `OI-##` register | `../LatestDocument/FlatWire_MasterSpecification.md` |
-| Requirement text — every `FR-###` | now **here**, `ProjectPlan/02-SRS.md` (moved 11 Aug 2026) |
+| Requirement text — every `FR-###` | now **here**, `ProjectPlan/Business/BusinessRequirements.md` (moved 11 Aug 2026) |
 | Schema design, executable DDL, ER documentation | now **here**, `DBChanges/` (moved and divided 11 Aug 2026) |
 | The question registers (**authoritative for decisions**) — **33 open, `Q1`–`Q33`**, and **25 decided, `Q61`–`Q85`**, in one contiguous numbering space across two files | `../Analysis/FlatWireOpenQuestions.md` · `../Analysis/FlatWireDecidedQuestions.md` |
 | API contracts, effort model, `REVIEW.md` | now **here**, `ProjectPlan/` |
@@ -74,7 +77,7 @@ Seventeen files. **Fourteen are specifications; three are not** — and the thre
 - **`PartialRodReCheckin.md`** is **internal design rationale** — nothing in it is citable as a requirement. Its rules live in `RodPreCheckin.md` §7 and `RodCheckout.md` §7.2; the requirement text is `FR-043`. Retained as the audit trail for the open **`Q12`**.
 - **`ClientQuestionsContent.md`** (12 Aug 2026) is **source content for a generated deliverable, not a specification.** It holds the client-facing prose for the questions workbook — and is the only place that prose is authored. [`build_questions_xlsx.py`](ProjectPlan/Tools/build_questions_xlsx.py) merges it with the two `Analysis/` registers to produce [`SRS/FlatWire_ClientQuestions.xlsx`](SRS/). **Structure comes from the registers and prose from this file; nothing is duplicated between them**, so a question's priority or owner is never edited here. Four fatal guards run at build — coverage, drift, team names, leakage.
 
-**`PLCTagSpecification.md`** is the **only** tag map in the repository (cited as `[PLC]`). The anti-drift rule holds: **the client doc owns every tag path string and `MVP-1/ProjectPlan/PLCTagImplementation.md` contains none.** If you are about to write a tag path anywhere else, stop.
+**`PLCTagSpecification.md`** is the **only** tag map in the repository (cited as `[PLC]`). The anti-drift rule holds: **the client doc owns every tag path string and `MVP-1/ProjectPlan/Architecture/PLCCommunication.md` contains none.** If you are about to write a tag path anywhere else, stop.
 
 **`DieChangeAndManagement.md` is die change only** since 11 Aug 2026 (v2.4). Its §4 die management became [`../MVP-2/RequirementDocuments/DieManagement.md`](../MVP-2/RequirementDocuments/DieManagement.md); §5's die-life status vocabulary stays here as the single copy. `OI-12` is **dormant, not answered**. **Die inventory and lifecycle are out of MVP-1 for good**, so `D4` is restated at die-**size** level against the `Drawer` catalogue: it rejects an unrecognised size, not an unregistered physical tool, and die life is tracked per size — two dies of one diameter share a counter.
 
@@ -82,7 +85,7 @@ Seventeen files. **Fourteen are specifications; three are not** — and the thre
 
 **Three client deliverables. Two are generated from markdown in this repository and must never be edited directly** — the next render overwrites them.
 
-`Shopfloor_Flat_wireSRS.docx` — the delivered SRS, and the one file here that is **not** generated. It has **no pre-check-in content**, so it is *not* the requirement source for `PCI`/`PRC`/`CHK`/`WLD`/`TRV` IDs; those rules are `FR-###` in [`ProjectPlan/02-SRS.md`](ProjectPlan/02-SRS.md).
+`Shopfloor_Flat_wireSRS.docx` — the delivered SRS, and the one file here that is **not** generated. It has **no pre-check-in content**, so it is *not* the requirement source for `PCI`/`PRC`/`CHK`/`WLD`/`TRV` IDs; those rules are `FR-###` in [`ProjectPlan/Business/BusinessRequirements.md`](ProjectPlan/Business/BusinessRequirements.md).
 
 `PLCTagSpecification.docx` — generated output. **The `.md` in `RequirementDocuments/` is the source** — edit it and re-render with [`ProjectPlan/Tools/build_docx.py`](ProjectPlan/Tools/build_docx.py).
 

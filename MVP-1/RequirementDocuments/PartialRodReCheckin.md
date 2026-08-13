@@ -25,7 +25,7 @@
 > | The **carry-forward gate** at the staging scan, and the rule that no fresh-start path is offered | [`RodPreCheckin.md`](RodPreCheckin.md) §7 |
 > | **Why partial material takes its own identity**, linked back to the rod | [`RodCheckout.md`](RodCheckout.md) §7.2 |
 > | Mode B checkout, supervisor acceptance, and the resulting rod status | [`RodCheckout.md`](RodCheckout.md) §3, §7 |
-> | The **delivered requirement text** | `FR-043` in [`02-SRS.md`](../../MVP-1/ProjectPlan/02-SRS.md), tested by `TC-050` / `TC-051` |
+> | The **delivered requirement text** | `FR-043` in [`02-SRS.md`](../ProjectPlan/Business/BusinessRequirements.md), tested by `TC-050` / `TC-051` |
 >
 > ### Two reading traps
 >

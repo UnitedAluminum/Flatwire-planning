@@ -1,8 +1,8 @@
 # PHASE 13 (MVP-2 part) — Die Management
 
-> **⚠ MVP-2 — deferred scope.** This is a **partial phase file**: only the Die Management content was carved out of the MVP-1 phase, **verbatim at bullet level**. The rest of that phase — the alloy lookup admin, the machine template tabs and role assignment — is MVP-1 and stays there. Read this alongside [`phase-13-administration-reference-data.md`](../../../MVP-1/ProjectPlan/ShopfloorPlan/phase-13-administration-reference-data.md), which remains the authority on the phase as a whole.
+> **⚠ MVP-2 — deferred scope.** This is a **partial phase file**: only the Die Management content was carved out of the MVP-1 phase, **verbatim at bullet level**. The rest of that phase — the alloy lookup admin, the machine template tabs and role assignment — is MVP-1 and stays there. Read this alongside [`phase-13-administration-reference-data.md`](../../../MVP-1/ProjectPlan/Development/Phases/phase-13-administration-reference-data.md), which remains the authority on the phase as a whole.
 >
-> **Effort: 66 h** (11 Aug 2026) — **and it is not the ladder's 99 h.** Rung 5 puts *"Phase 13 non-critical (Die Management screen, role assignment UI)"* at **99 h**, which bundles this screen with the **MVP-1** role-assignment UI and gives no split; quoting it here would silently move MVP-1 work into MVP-2. The figure below is re-priced from the rate card in [`CapacityAndEffortModel.md` §2](../../../MVP-1/ProjectPlan/CapacityAndEffortModel.md) instead: **Die Management screen 24 FE**, **die lifecycle service 16 BE**, **die inventory table 8 DB**, with QA and contingency **re-derived** from the reduced base. **MVP-1 keeps 143 h.**
+> **Effort: 66 h** (11 Aug 2026) — **and it is not the ladder's 99 h.** Rung 5 puts *"Phase 13 non-critical (Die Management screen, role assignment UI)"* at **99 h**, which bundles this screen with the **MVP-1** role-assignment UI and gives no split; quoting it here would silently move MVP-1 work into MVP-2. The figure below is re-priced from the rate card in [`CapacityAndEffortModel.md` §2](../../../MVP-1/ProjectPlan/Development/CapacityAndEffortModel.md) instead: **Die Management screen 24 FE**, **die lifecycle service 16 BE**, **die inventory table 8 DB**, with QA and contingency **re-derived** from the reduced base. **MVP-1 keeps 143 h.**
 >
 > **The die inventory table moved here too, and that reverses an earlier instruction.** It was costed at 8 h in the MVP-1 phase on the reading that MVP-1's die change needed it to enforce `D4`. Die inventory and lifecycle are now **owned outside MVP-1 entirely**, so the table comes with the screen, and MVP-1's `D4` is restated at **die-size** level against the `Drawer` catalogue — see [`DieChangeAndManagement.md` §2.4a](../../../MVP-1/RequirementDocuments/DieChangeAndManagement.md). `FW-N07` is therefore wholly MVP-2, not a story spanning both scopes. Full working in **§3b**.
 
@@ -11,7 +11,7 @@
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** August 11, 2026
 **Status:** **MVP-2 — deferred scope**
-**Carved from:** [`phase-13-administration-reference-data.md`](../../../MVP-1/ProjectPlan/ShopfloorPlan/phase-13-administration-reference-data.md) on 11 Aug 2026, bullets copied verbatim
+**Carved from:** [`phase-13-administration-reference-data.md`](../../../MVP-1/ProjectPlan/Development/Phases/phase-13-administration-reference-data.md) on 11 Aug 2026, bullets copied verbatim
 
 *The **Die Management** screen, the die lifecycle service and the die inventory table. The alloy lookup admin, machine template tabs and role assignment in this phase are MVP-1.*
 

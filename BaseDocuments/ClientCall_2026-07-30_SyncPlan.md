@@ -4,7 +4,7 @@
 **Last Updated:** August 1, 2026
 **Status:** **Executed 1 Aug 2026 — waves W1–W7 complete, W8 cancelled.** Eleven client answers propagated across the registers, the analysis notes, the schema + DDL (rebuilt and constraint-tested), the contracts, the mockups and the July 30 project-plan set. Outstanding work is now the client follow-up list in §6, not document sync.
 **Source:** Client call 30 Jul 2026 (Tim O., Bob S., Shannon R., Srikanth, Shray) — answers to the eleven pre-check-in / check-in / spool questions raised from [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md) and [SpoolCompletionNotification.md](../MVP-1/RequirementDocuments/SpoolCompletionNotification.md).
-**Registers touched:** `OQ-##` ([FlatWireOpenQuestions.md](../Analysis/FlatWireOpenQuestions.md), 77 → 81) · `OI-##` ([FlatWire_MasterSpecification.md](../LatestDocument/FlatWire_MasterSpecification.md) §11) · `G##` ([back-matter.md](../MVP-1/ProjectPlan/ShopfloorPlan/back-matter.md))
+**Registers touched:** `OQ-##` ([FlatWireOpenQuestions.md](../Analysis/FlatWireOpenQuestions.md), 77 → 81) · `OI-##` ([FlatWire_MasterSpecification.md](../LatestDocument/FlatWire_MasterSpecification.md) §11) · `G##` ([Development/GapsRegister.md](../MVP-1/ProjectPlan/Development/GapsRegister.md))
 
 ---
 
@@ -110,9 +110,9 @@ Every staging and check-in validation currently assumes **one order per rod** an
 
 Minimum change if this lands in MVP1: `planning_routings` lookup returns **orders (plural)**; "belongs to the established order" becomes "belongs to the established order **or** its planned successor on this rod"; and `RodStaging.OrderId` needs a defined meaning when a rod spans two (recommend: the order the staging is being consumed for, with the successor visible in the queue).
 
-**Recommendation:** confirm the MVP2 deferral with Srikanth **before** writing any of it, and in the meantime record it as a **known-wrong validation** rather than editing the rule — Phase 4 is the owning phase and the sequencing answer is still outstanding. Log as **Q37** and as a new gap in `back-matter.md`.
+**Recommendation:** confirm the MVP2 deferral with Srikanth **before** writing any of it, and in the meantime record it as a **known-wrong validation** rather than editing the rule — Phase 4 is the owning phase and the sequencing answer is still outstanding. Log as **Q37** and as a new gap in `Development/GapsRegister.md`.
 
-**Files if deferred (small):** `FlatWireOpenQuestions.md` (Q34 decided in part, Q37 added) · `RodPreCheckin.md` (the *Consequence to confirm* note gets its answer: order boundaries **can** be crossed on one rod) · `back-matter.md` new gap · `05-SprintPlanAndBacklog.md` MVP2 line.
+**Files if deferred (small):** `FlatWireOpenQuestions.md` (Q34 decided in part, Q37 added) · `RodPreCheckin.md` (the *Consequence to confirm* note gets its answer: order boundaries **can** be crossed on one rod) · `Development/GapsRegister.md` new gap · `05-SprintPlanAndBacklog.md` MVP2 line.
 
 ### 3.7 Item 10 — short close is an unplanned stop against a weight range
 
@@ -145,10 +145,10 @@ Ordered so that no wave leaves a document asserting a rule a later wave reverses
 
 | Wave | Content | Files | Size |
 |---|---|---|---|
-| **W1 — Registers** | `FlatWireOpenQuestions.md`: eight status changes, three new questions (Q82–Q83), Quick Reference + filtered index counts, change-log rows. Master spec §11 `OI-##` register: OI-01 closes, OI-07 respecified, OI-44 revisited. `back-matter.md`: G21 annotated, new gap for the multi-order validation | 3 | M |
+| **W1 — Registers** | `FlatWireOpenQuestions.md`: eight status changes, three new questions (Q82–Q83), Quick Reference + filtered index counts, change-log rows. Master spec §11 `OI-##` register: OI-01 closes, OI-07 respecified, OI-44 revisited. `Development/GapsRegister.md`: G21 annotated, new gap for the multi-order validation | 3 | M |
 | **W2 — Analysis notes** | `RodPreCheckin.md` (five sections — items 4, 5, 8, 9 + the Q34 consequence), `RodCheckout.md`, `WeldEvent.md`, `SpoolCompletionNotification.md`, `Spool.md`, `FlatWireShopfloorDashboards.md`, `FlatWireProcessWalkthrough.md` | 7 | **L** |
 | **W3 — Schema + DDL** | `FlatWireSchema_Lookup.md` / `_Runs.md` / `_QualityOutput.md`; `FlatWire_DDL_01_Lookup.sql`, `04_Runs.sql`, `05_QualityOutput.sql`, `06_ForeignKeys.sql` (nothing expected), `07_Indexes.sql` (only if the blocked-row filter changes), `FlatWire_SampleData_Lookup.sql`, `FlatWire_ERDiagram_Documentation.md`. **Re-run `FlatWire_DDL_RunAll.sql` + the 10 constraint tests; table count stays 27** | 9 | **L** |
-| **W4 — Contracts** | `04-APIContract.md` and `MVP-1/ProjectPlan/04-APIContract.md` — staging POST/DELETE, `GET /rod/{alpha}`, the `CHK007` 422 rule, un-stage approval body, spool completion | 2 | M |
+| **W4 — Contracts** | `04-APIContract.md` and `MVP-1/ProjectPlan/Backend/APIs.md` — staging POST/DELETE, `GET /rod/{alpha}`, the `CHK007` 422 rule, un-stage approval body, spool completion | 2 | M |
 | **W5 — Mockups** | `dashboard_2a_rod_precheckin.html` (four of the eight changes land here), `dashboard_2_rod_checkin.html`, `dashboard_2_rod_checkin_fl3.html`, ~~`dashboard_8_wip_rejection.html`~~ **`wip_rejection.js`** *(the screen became a dialog on 1 Aug 2026; the staging-context rejection this row calls for is now delivered there — the `.html` is only a launcher)*, `dashboard_7_coil_completion.html`, `spool_notification.js` | 6 | **L** |
 | **W6 — July 30 project-plan set** | `02-SRS.md` (requirement text — **do not renumber**; supersede in place), `03-HLD-and-ERDiagram.md`, `05-SprintPlanAndBacklog.md` (MVP2 line), `06-TestPlanAndTestCases.md`, `00-README.md` §5–6, `FlatWire_MasterSpecification.md` | 6 | **L** |
 | **W7 — Phase files** | `phase-01c`, `phase-04` (heaviest), `phase-07`, `phase-08`, `phase-09`, `phase-13`; `phase-01a` only if item 11 resolves | 6 | M |
@@ -158,7 +158,7 @@ Ordered so that no wave leaves a document asserting a rule a later wave reverses
 
 > **Consequence of cancelling W8 — the requirement text is now split, and the `.docx` is not the place to look.** `MVP-1/SRS/Shopfloor_Flat_wireSRS.docx` (the older, pre-consolidation file) is the only SRS left in the repository, and it contains **zero pre-check-in content** — that was the whole reason `RodPreCheckin.md` had to be written. The numbered requirement IDs the whole repo cites (`PCI001`–`PCI008`, `CHK006`/`CHK007`/`CHK009`/`CHK010`, `PRC001`–`PRC019`, `WLD003`/`WLD005`/`WLD006`/`WLD010`/`WLD011`, `TRV002`/`TRV004`/`TRV009`) came from the removed consolidated v3.
 >
-> **What this means in practice.** Those IDs stay valid as *references* — every rule they carry has been restated in [`../MVP-1/ProjectPlan/02-SRS.md`](../MVP-1/ProjectPlan/02-SRS.md) as `FR-###`, which is the authority for what to build. But three items the 30 Jul call changed have **no source-document home** any more and live only in the `FR` set and the analysis notes:
+> **What this means in practice.** Those IDs stay valid as *references* — every rule they carry has been restated in [`../MVP-1/ProjectPlan/Business/BusinessRequirements.md`](../MVP-1/ProjectPlan/Business/BusinessRequirements.md) as `FR-###`, which is the authority for what to build. But three items the 30 Jul call changed have **no source-document home** any more and live only in the `FR` set and the analysis notes:
 >
 > 1. **Pre-check-out has no requirement ID at all** — §4.17 covered only post-check-in removal. This was already true before the removal (it is why **OI-44** exists); it is now unfixable in the source document. `FR-052`/`FR-052a` are the definition.
 > 2. The **SRS §4.2 `PCI` data note is superseded** by the `INFLAT`-at-check-in decision (**Q69**) and cannot be corrected in place. `FR-048` and [`FlatWireProcessWalkthrough.md`](../Analysis/FlatWireProcessWalkthrough.md) step 8 carry the correct rule.
@@ -205,5 +205,5 @@ Ordered so that no wave leaves a document asserting a rule a later wave reverses
 | `Dashboard2A_UXReview.md` *(deleted 1 Aug 2026 — git history at `2a0426b`)* | Source of the Jul 31 findings that items 5 and 8 supersede |
 | [SpoolCompletionNotification.md](../MVP-1/RequirementDocuments/SpoolCompletionNotification.md) | Target for item 10 |
 | [FlatWire_MasterSpecification.md](../LatestDocument/FlatWire_MasterSpecification.md) | `OI-##` register and the reconciliation authority |
-| [00-README.md](../MVP-1/ProjectPlan/00-README.md) | Precedence chain the waves respect |
-| [REVIEW.md](../MVP-1/ProjectPlan/REVIEW.md) | Contradiction audit to re-check after W4 |
+| [00-README.md](../MVP-2/ProjectPlan/00-README.md) | Precedence chain the waves respect |
+| [REVIEW.md](../MVP-1/ProjectPlan/Development/REVIEW.md) | Contradiction audit to re-check after W4 |

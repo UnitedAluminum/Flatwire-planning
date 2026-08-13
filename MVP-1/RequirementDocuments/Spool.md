@@ -29,7 +29,7 @@
 >
 > Every FM2 description below is stale in one of two ways — either the pre-May-21 **two** 6″ stand form (`8" → 6"S1 → 6"S2`, S2 final), or the four-component form that read the May 21 note as a separate 8″ roller feeding three 6″ stands. **The 8″ roller *is* S1**, and there is no fourth stand. Component identifiers are now position-only — `FM2_S1` / `FM2_S2` / `FM2_S3` — with roll diameter held as data in `Stand.RollDiameterIn`.
 >
-> **Authoritative source: [`00-foundations.md`](../ProjectPlan/ShopfloorPlan/00-foundations.md) §0.3**, decision **D-26** in [`FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §10.2. Do not implement FM2 from this file.
+> **Authoritative source: [`Architecture/Architecture.md`](../ProjectPlan/Business/BusinessRules.md) §0.3**, decision **D-26** in [`FlatWire_MasterSpecification.md`](../../LatestDocument/FlatWire_MasterSpecification.md) §10.2. Do not implement FM2 from this file.
 
 ---
 

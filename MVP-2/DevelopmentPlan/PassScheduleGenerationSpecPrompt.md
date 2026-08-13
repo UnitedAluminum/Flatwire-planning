@@ -35,7 +35,7 @@ intended to be sent to the client for review, completion, and sign-off.
 > manufacturing process, not for the software.**
 >
 > 1. `CLAUDE.md` — terminology rules and the flat wire domain summary.
-> 2. `MVP-1/ProjectPlan/01-VisionAndScope.md` — the FL1 / FL2 / FL3 line flows.
+> 2. `MVP-1/ProjectPlan/Business/VisionAndScope.md` — the FL1 / FL2 / FL3 line flows.
 > 3. `LatestDocument/FlatWire_MasterSpecification.md` — equipment configuration and process
 >    vocabulary. **Equipment sections only.**
 > 4. `Analysis/FlatWireProcessWalkthrough.md` — the end-to-end process narrative.

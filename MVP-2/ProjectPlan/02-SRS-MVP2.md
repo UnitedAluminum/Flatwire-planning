@@ -3,7 +3,7 @@
 **Project:** Flat Wire Mill Implementation
 **Last Updated:** August 11, 2026
 **Status:** **MVP-2 — deferred scope**
-**Extracted from:** [`../../MVP-1/ProjectPlan/02-SRS.md`](../../MVP-1/ProjectPlan/02-SRS.md), 11 Aug 2026
+**Extracted from:** [`../../MVP-1/ProjectPlan/Business/BusinessRequirements.md`](../../MVP-1/ProjectPlan/Business/BusinessRequirements.md), 11 Aug 2026
 
 ---
 
@@ -13,11 +13,11 @@
 
 Functional requirements for the five deferred screens: **§5.10** Die Management · **§5.18** Pass Schedule Management (DB9) · **§5.19** Pass Schedule List (DB9A) · **§5.23** Shift Summary (DB10) · **§5.24** OEE Dashboard.
 
-> **Two sections left on 11 Aug 2026 and are no longer here:** ~~§5.16 Output Coil Completion (DB7)~~ and ~~§5.17 Packing Station (DB7b)~~ **returned to [`../../MVP-1/ProjectPlan/02-SRS.md`](../../MVP-1/ProjectPlan/02-SRS.md)** when Phase 9 was confirmed wholly MVP-1. `FR-330`–`FR-340` and `FR-345`–`FR-352` live there, unrenumbered.
+> **Two sections left on 11 Aug 2026 and are no longer here:** ~~§5.16 Output Coil Completion (DB7)~~ and ~~§5.17 Packing Station (DB7b)~~ **returned to [`../../MVP-1/ProjectPlan/Business/BusinessRequirements.md`](../../MVP-1/ProjectPlan/Business/BusinessRequirements.md)** when Phase 9 was confirmed wholly MVP-1. `FR-330`–`FR-340` and `FR-345`–`FR-352` live there, unrenumbered.
 
 ## What stayed in MVP-1 and applies here
 
-Read alongside [`../../MVP-1/ProjectPlan/02-SRS.md`](../../MVP-1/ProjectPlan/02-SRS.md):
+Read alongside [`../../MVP-1/ProjectPlan/Business/BusinessRequirements.md`](../../MVP-1/ProjectPlan/Business/BusinessRequirements.md):
 
 | Section | Content |
 |---|---|
@@ -59,7 +59,7 @@ Read alongside [`../../MVP-1/ProjectPlan/02-SRS.md`](../../MVP-1/ProjectPlan/02-
 | **FR-254** | Die Management shall be the **source of truth** the Die Change screen reads at runtime for alpha→size/type/condition lookup, accumulated footage counter and scheduled-life threshold. | **Must** | `DMG017` |
 | **FR-255** | Cumulative footage per die shall be incremented from the **PLC footage counter** on each completed or partial run — **no new sensor is required**. On a mid-run swap the system closes accumulation on the outgoing die and starts a new counter on the incoming die. | Must | OQ-83 |
 
-**Open:** the die-life **threshold value** is deferred until production failure data exists (OQ-83). There is **no die master table** in the schema — raised in `[HLD §6.9]`.
+**Open:** the die-life **threshold value** is deferred until production failure data exists (OQ-83). There is **no die master table** in the schema — raised in `[DBD §6.9]`.
 
 ---
 
@@ -83,7 +83,7 @@ Read alongside [`../../MVP-1/ProjectPlan/02-SRS.md`](../../MVP-1/ProjectPlan/02-
 | **FR-367** | The pass schedule shall stay **read-only to floor operators mid-run**, permitting an operator-initiated change only for a **one-for-one same-size die swap**; any other change requires an Operations Manager. | Must | `PSM020` |
 | **FR-368** | Every mid-run override shall record **parameter changed, old value → new value, user ID, timestamp and a reason code or free-text reason**. | Must | `PSM021` |
 | **FR-369** | Saving a mid-run override shall raise a **real-time alert on the Active Run Monitor** of the affected line requiring an explicit **Acknowledge** (continue under the new configuration) or **Stop Run** (supervisor review). **Passive dismissal shall not be permitted**, and the line shall **continue running under the previous PLC values until the operator acknowledges**. | Must | `PSM022`, **`NFR009`** |
-| **[NFR]** | **`NFR009` — overrides block passive dismissal.** No supervisor override or mid-run configuration alert may be dismissed by clicking outside, pressing Escape, or navigating away. The measurable form is `FR-369` and `FR-149`. Verification: `[TP §6]`. | Must | `NFR009` |
+| **[NFR]** | **`NFR009` — overrides block passive dismissal.** No supervisor override or mid-run configuration alert may be dismissed by clicking outside, pressing Escape, or navigating away. The measurable form is `FR-369` and `FR-149`. Verification: `[NFR §6]`. | Must | `NFR009` |
 | **FR-370** | A mid-run pass schedule change — particularly a die-size or roll-gap change — shall **automatically set an SPC checkpoint as required**, and the "awaiting SPC checkpoint" status shall not be clearable until SPC is completed. | Must | `PSM023` |
 | **FR-371** | The component-configuration editor shall present per-component **toggles** and parameter inputs, with the **mandatory final stand locked on**, bypassed rows showing "Bypassed · no parameters", and edger rows offering an edge-type selector. | Must | Mockup DB9 |
 | **FR-372** | A **Targets & tolerances** panel shall carry output gauge ±, output width ±, and a line-speed min–max range, with helper text naming the measurement point (post-FM1 for gauge, post-edger for width). | Must | Mockup DB9 |

@@ -41,12 +41,12 @@ Optionally also write `00-README.md` — a one-page index of the seven with a re
 1. **`LatestDocument/FlatWire_MasterSpecification.md`** (3,415 lines, Jul 30 2026) — the **primary input**. It is already a reconciliation of the whole repo, section-mapped as: §1 exec summary · §2 domain/glossary · §3 process flows · §4 functional requirements (`FR-###`) · §5 data model · §6 API & real-time · §7 UI · §8 architecture/integration · §9 delivery roadmap · §10 decisions register · §11 open issues (`OI-##`) · Appendix A provenance. Read it **in full** before writing anything. Most of your content is a re-cut of this document for a specific audience — so read it once, cut it many ways.
 2. **`MVP-1/DBChanges/Schema/SQL/*.sql`** — authoritative for column-level types, nullability, constraints, indexes and FKs. `FlatWire_ERDiagram_Documentation.md` describes the as-built schema.
 3. **`MVP-1/Mockups/*.html`** — authoritative for pixel-level layout and screen behaviour. `MVP-1/Mockups/flat-wire-shopfloor.styles.scss` is the token system.
-4. **`MVP-1/ProjectPlan/ShopfloorPlan/`** — `00-foundations.md` (§0.2 reference-code map, §0.3 domain cheat-sheet, §0.4 real-time architecture, §0.5 stub-first delivery contract), `phase-01..14-*.md`, `back-matter.md` (dependency chain, milestone calendar, gaps register **G1–G18**).
-5. **`MVP-1/ProjectPlan/CapacityAndEffortModel.md`** — the effort/capacity arithmetic behind the sprint plan (streams, unit-rate card, per-phase hours, descope ladder).
-6. **`MVP-1/ProjectPlan/REVIEW.md`** — the audit of known contradictions between docs. **Consult it before trusting any single spec**; it tells you which document wins.
+4. **`MVP-1/ProjectPlan/Development/Phases/`** — `Architecture/Architecture.md` (§0.2 reference-code map, §0.3 domain cheat-sheet, §0.4 real-time architecture, §0.5 stub-first delivery contract), `phase-01..14-*.md`, `Development/GapsRegister.md` (dependency chain, milestone calendar, gaps register **G1–G18**).
+5. **`MVP-1/ProjectPlan/Development/CapacityAndEffortModel.md`** — the effort/capacity arithmetic behind the sprint plan (streams, unit-rate card, per-phase hours, descope ladder).
+6. **`MVP-1/ProjectPlan/Development/REVIEW.md`** — the audit of known contradictions between docs. **Consult it before trusting any single spec**; it tells you which document wins.
 7. **`Analysis/*.md`** — per-topic prose specs; `FlatWireOpenQuestions.md` is the authoritative decision register (`OQ-##`).
 8. **`MVP-1/ProjectPlan/APIContracts.md`**, `FlatWireSchema_Mapping.md`, `03-HLD-and-ERDiagram.md` §14 — **April 29–30 2026 vintage, superseded where they disagree with the July 26 roadmap and the master spec.** Mine them for detail, never for precedence. **`05-SprintPlanAndBacklog.md` is no longer in this group** — it was rewritten on 13 Aug 2026 as the **authoritative MVP-1 backlog** (**116 stories / 3,292 h**, four even two-week sprints, sized in **hours** off `CapacityAndEffortModel.md` §2 and reconciling to its §3b). Treat it as current and as the source for story ids, sprint assignment and per-story effort. `04-APIContract.md` carries four known Tier-1 correctness bugs already corrected in master spec §6 — use the corrected version.
-9. ~~**`MVP-1/SRS/Shopfloor_Flat_wireSRS_Consolidated_v3.docx`**~~ — **removed from the repository 1 Aug 2026** (git history `6096921`). Read [`ProjectPlan/02-SRS.md`](../MVP-1/ProjectPlan/02-SRS.md) instead; it carries the rule text. Was the delivered SRS; source of the `OL`/`PCI`/`CHK`/`WLD`/`PSM`/`SPC`/`NFR`/… requirement IDs. Read via the master spec's citations rather than re-extracting the `.docx`.
+9. ~~**`MVP-1/SRS/Shopfloor_Flat_wireSRS_Consolidated_v3.docx`**~~ — **removed from the repository 1 Aug 2026** (git history `6096921`). Read [`ProjectPlan/Business/BusinessRequirements.md`](../MVP-1/ProjectPlan/Business/BusinessRequirements.md) instead; it carries the rule text. Was the delivered SRS; source of the `OL`/`PCI`/`CHK`/`WLD`/`PSM`/`SPC`/`NFR`/… requirement IDs. Read via the master spec's citations rather than re-extracting the `.docx`.
 10. **`BaseDocuments/`** — read-only business source `.docx`/`.xlsx`. Cite, don't re-derive.
 11. **`../CLAUDE.md`** (`c:\UAL\CLAUDE.md`) — the ecosystem stack conventions the implementation must live inside.
 
@@ -84,10 +84,10 @@ Optionally also write `00-README.md` — a one-page index of the seven with a re
 - The schedule does not close as scoped. The plan is **3,727 hours / 465.9 dev-days across 14 phases against 44 working days (32 post-gate)** → **10.6 FTE sustained**, a 10.7-FTE Phase-1 gate, an arithmetically impossible 27.2-FTE W7, and a descope ladder recovering only **12%**. This is gap **G1** / **OI-51**. Carry it into the vision doc's risks and the sprint plan's front matter as a **programme decision required** (staff to ~11 FTE · move the date — 6 FTE → 18 Nov 2026, 8 FTE → 22 Oct 2026, both inside the planned Q4 window · or cut below the critical path). Do not silently rescope to make the plan look feasible; do not invent a staffing number the source doesn't support.
 - The **footage→weight conversion factor is undefined** (OQ-10 / OI-45) and every output weight, yield and remaining-weight estimate depends on it.
 - **Pass Schedule content is still being authored by Operations**, and Phase 2 gates every check-in phase.
-- **Known schema divergence — resolve it, loudly.** The master spec §5 and the current DDL/ER doc describe **28 tables** with a FlatWireDB-local `Rod` master; `00-foundations.md` decision 3 and `phase-01c` say `Rod` is *dropped* in favour of the shared `coils` table (21–22 tables, unenforced cross-DB rod-alpha links). The master spec §5.2 states the resolved position — follow it, restate it explicitly in doc 3 §data model, and flag the stale side. **Verify the table count against `MVP-1/DBChanges/Schema/SQL/` before you publish a number.** Do not copy a table count from any doc without counting.
+- **Known schema divergence — resolve it, loudly.** The master spec §5 and the current DDL/ER doc describe **28 tables** with a FlatWireDB-local `Rod` master; `Architecture/Architecture.md` §13.1 `D-04` and `phase-01c` say `Rod` is *dropped* in favour of the shared `coils` table (21–22 tables, unenforced cross-DB rod-alpha links). The master spec §5.2 states the resolved position — follow it, restate it explicitly in doc 3 §data model, and flag the stale side. **Verify the table count against `MVP-1/DBChanges/Schema/SQL/` before you publish a number.** Do not copy a table count from any doc without counting.
 - Where the source says "TBD", write "TBD" with the owning `OQ-##`/`OI-##` — never a plausible-looking placeholder value.
 
-**Section-numbering rule:** number every section (`§1`, `§1.1`) so the other six documents can cite it precisely. Cross-document citations use `[VS §3.2]`, `[SRS §4.7]`, `[HLD §5]`, `[API §6.4]`, `[SP §2]`, `[TP §7]`, `[DR §4]`.
+**Section-numbering rule:** number every section (`§1`, `§1.1`) so the other six documents can cite it precisely. Cross-document citations use `[VS §3.2]`, `[EX §4.7]`, `[CMP §5]`, `[PLCC §6.4]`, `[SP §2]`, `[UAT §7]`, `[DEP §4]`.
 
 ## 4. The authoritative timeline — use these dates and no others
 
@@ -146,14 +146,14 @@ Structure:
 
 ### Doc 3 — `03-HLD-and-ERDiagram.md`
 
-**Audience:** architects, developers, DBA. **Primary source:** master spec §5, §6.7, §8; `Schema/SQL/*`; `00-foundations.md` §0.2/§0.4.
+**Audience:** architects, developers, DBA. **Primary source:** master spec §5, §6.7, §8; `Schema/SQL/*`; `Architecture/Architecture.md` §2.2/§0.4.
 
 Required sections:
 
 1. **Architecture overview** — context diagram (mermaid) showing the flattening lines → PLC/OPC → `FlatWire.API` → `FlatWireDB`, alongside the shared UAL databases, the Angular shell and the existing services; then the component view.
-2. **Where the code lands** — Angular library `flat-wire-shopfloor` in `../ual-angular`; new `FlatWire` microservice in `../ual-api`. State the **binding reference-code rules** from `00-foundations.md` §0.2 explicitly, because they are non-obvious: `API/Domain/CoilCheckin` is the **primary backend template**; `OPCConnection` is the PLC tag layer to integrate with; **`SlitterInterface` is explicitly NOT a reference**; there is **no** Angular structural/UI template — the library is all-new screens, and the only frontend reuse is the foundational `shared` services (api-gateway, app-config, login, token/correlation interceptors, error handler, ui-log, notification, subscription, print-export, util). Membership of the `build:shop-floor` chain is **build ordering only** and implies no code reuse.
+2. **Where the code lands** — Angular library `flat-wire-shopfloor` in `../ual-angular`; new `FlatWire` microservice in `../ual-api`. State the **binding reference-code rules** from `Architecture/Architecture.md` §2.2 explicitly, because they are non-obvious: `API/Domain/CoilCheckin` is the **primary backend template**; `OPCConnection` is the PLC tag layer to integrate with; **`SlitterInterface` is explicitly NOT a reference**; there is **no** Angular structural/UI template — the library is all-new screens, and the only frontend reuse is the foundational `shared` services (api-gateway, app-config, login, token/correlation interceptors, error handler, ui-log, notification, subscription, print-export, util). Membership of the `build:shop-floor` chain is **build ordering only** and implies no code reuse.
 3. **Backend design** — Clean Architecture layering per the UAL pattern (API / Application / Domain / Infrastructure), MediatR CQRS, `UAController` envelope (`Data`/`Success`/`Errors`), validation and behaviors, logging/Serilog, error handling.
-4. **Real-time architecture** — from `00-foundations.md` §0.4 and master spec §6.7: `FlatWireHub` hosted **only** inside `FlatWire.API` (the shared `Notification` service is not extended; `CoilDataHub`/`OPCManagerHub`/`supervisor-monitor-hub` are **not** templates), WebSockets-first, MessagePack, strongly-typed `Hub<IFlatWireClient>`, bounded-channel ingest with batching/decimation, NgZone-out + rAF rendering, backplane-ready scale-out, group-per-line, reconnect/backoff semantics.
+4. **Real-time architecture** — from `Architecture/SignalR.md` §4 and master spec §6.7: `FlatWireHub` hosted **only** inside `FlatWire.API` (the shared `Notification` service is not extended; `CoilDataHub`/`OPCManagerHub`/`supervisor-monitor-hub` are **not** templates), WebSockets-first, MessagePack, strongly-typed `Hub<IFlatWireClient>`, bounded-channel ingest with batching/decimation, NgZone-out + rAF rendering, backplane-ready scale-out, group-per-line, reconnect/backoff semantics.
 5. **Frontend design** — library structure, routing, state, the SignalR client wrapper, chart strategy, the design-token system, and how the mockups map to components.
 6. **Data model** — target database is the **new standalone `FlatWireDB`** (not `united_db`). Give the five groups (Lookup → Schedule → Materials → Runs → Quality/Output), the table inventory with one-line purpose each, key columns, and the `FlatWireRun` hub role plus `RunReading` as the AGC time-series store (closes gap G3). **Count the tables from the DDL and state the number you counted**; restate the `Rod`-table resolution from master spec §5.2 and flag the stale opposing docs.
 7. **ER diagram** — a mermaid `erDiagram` covering all tables and all FK relationships with cardinality. If one diagram is unreadable, publish one **overview** diagram of the five groups and their inter-group edges plus one detailed diagram per group — never omit a table. Follow it with the full FK list (source table → target table → column → on-delete behaviour) and the index/programmability summary.
@@ -161,7 +161,7 @@ Required sections:
 9. **Integration design** — the PLC/OPC surface: which tags are pushed on pass-schedule acknowledgement, which are read, `ITInhibit` semantics and its five set conditions, tag paths sourced from `appsettings.json` and never hardcoded (FR-022).
 10. **The transactional boundary** — master spec §8.6; read this before writing check-in. State it as an explicit design rule.
 11. **Environments and topology** — dev/test/staging/production per the UAL conventions, and which services must be running for a full-stack run.
-12. **Cross-cutting concerns** — auth/JWT, correlation IDs, logging, caching, resilience, performance budgets, and how each NFR from `[SRS §6]` is architecturally satisfied.
+12. **Cross-cutting concerns** — auth/JWT, correlation IDs, logging, caching, resilience, performance budgets, and how each NFR from `[REQ §6]` is architecturally satisfied.
 13. **Architecture decisions** — an ADR-style table of the decisions from master spec §10.1 with their rationale; then the design risks.
 
 ### Doc 4 — `04-APIContract.md`
@@ -176,14 +176,14 @@ Required sections:
 4. **Endpoint detail** — for each: request shape (with per-field type, required/optional, validation rule), response shape, worked example request **and** response, status codes, error cases, side effects (rows written, PLC tags pushed, hub events emitted), and idempotency behaviour. Where the April doc's `/passschedule/generate` worked example is wrong, publish the corrected one and note the correction.
 5. **`FlatWireHub` contract** — all 9 events: name, payload shape, emitting trigger, subscriber group, cadence, and the FL2 `null` live-gauge/width rule. Include connection lifecycle, group join/leave by line, reconnect semantics, and the MessagePack/WebSockets transport requirements.
 6. **PLC / OPC surface** — tags pushed and cleared, tags read, `ITInhibit`, configuration-sourced paths.
-7. **Stub-first delivery contract** — the shopfloor UI builds against dummy data first (`ShopfloorPlan/00-foundations.md` **§0.5**, where the model was rehomed on 13 Aug 2026 when `CheckinImplementationPlan.md` was deleted). Define what a stub must return so the UI can develop against it, and the switchover criteria.
+7. **Stub-first delivery contract** — the shopfloor UI builds against dummy data first (`Architecture/Architecture.md` §2.2 **§0.5**, where the model was rehomed on 13 Aug 2026 when `CheckinImplementationPlan.md` was deleted). Define what a stub must return so the UI can develop against it, and the switchover criteria.
 8. **Versioning and change policy.**
 9. **Traceability** — endpoint ↔ `FR-###` ↔ screen ↔ phase.
 10. **Open contract issues** — anything still `OI-##`-blocked.
 
 ### Doc 5 — `05-SprintPlanAndBacklog.md`
 
-**Audience:** delivery lead, scrum team, programme management. **Primary source:** master spec §9; `MVP-1/ProjectPlan/CapacityAndEffortModel.md`; `ShopfloorPlan/back-matter.md`; `05-SprintPlanAndBacklog.md`.
+**Audience:** delivery lead, scrum team, programme management. **Primary source:** master spec §9; `MVP-1/ProjectPlan/Development/CapacityAndEffortModel.md`; `Development/GapsRegister.md`; `05-SprintPlanAndBacklog.md`.
 
 Required sections:
 
@@ -201,7 +201,7 @@ Required sections:
 
 ### Doc 6 — `06-TestPlanAndTestCases.md`
 
-**Audience:** QA, developers, UAT participants. **Primary source:** `[SRS]` (doc 2) for what to prove; master spec §4 error paths and §11 for risk-based prioritisation; `phase-14-integration-testing-plc-commissioning-golive.md` for the commissioning shape.
+**Audience:** QA, developers, UAT participants. **Primary source:** `[REQ]` (doc 2) for what to prove; master spec §4 error paths and §11 for risk-based prioritisation; `phase-14-integration-testing-plc-commissioning-golive.md` for the commissioning shape.
 
 Required sections:
 
@@ -209,7 +209,7 @@ Required sections:
 2. **Scope** — in/out of test scope; the risk-based prioritisation that decides depth (weld genealogy, pass-schedule→PLC push, ITInhibit, footage/weight, and FL2's `null` live-trace behaviour get the deepest coverage).
 3. **Environments and test data** — which environment each level runs in; the seed-data scripts (`FlatWire_SampleData_*.sql`); how to build/tear down (`FlatWire_DDL_RunAll.sql` / `_99_Teardown.sql`, SQLCMD mode required); PLC simulation vs real line, and what cannot be tested before commissioning.
 4. **Entry / exit criteria and suspension-resumption rules**, per level and per gate (QA0 at the Aug-14 gate, QA2, UAT 28–30 Sep).
-5. **Test cases** — the substance of this document. Number `TC-###`. Table columns: `TC-### | Title | Level | Priority | FR-### | SRS ID | Preconditions | Steps | Expected result | Data | Automatable?`. Group by the same operator workflows as `[SRS §5]`. **Cover happy path, boundary, negative/error path, permission/role, and real-time behaviour for each group.** Mandatory coverage — write these explicitly, they are where this system will actually break:
+5. **Test cases** — the substance of this document. Number `TC-###`. Table columns: `TC-### | Title | Level | Priority | FR-### | SRS ID | Preconditions | Steps | Expected result | Data | Automatable?`. Group by the same operator workflows as `[REQ §5]`. **Cover happy path, boundary, negative/error path, permission/role, and real-time behaviour for each group.** Mandatory coverage — write these explicitly, they are where this system will actually break:
    - Pass-schedule acknowledgement pushing PLC tags, and the mid-run override alert that **cannot be passively dismissed** (line continues on previous PLC values until acknowledged).
    - `ITInhibit` set/clear across all five set conditions, including two consecutive missed recordings.
    - Weld genealogy end-to-end: rod → induction weld → footage attribution → output coil alpha → customer certificate query.
@@ -240,14 +240,14 @@ Required sections:
 
 1. **Release overview** — what ships, version/tag, the components (Angular `flat-wire-shopfloor` build, `FlatWire.API`, `FlatWireDB` schema, `OPCConnection` configuration, shared-schema FW-001 renames), and the release calendar against the authoritative timeline.
 2. **Environments** — dev/test1/test2/dev1/dev2/staging/production with server names, app pools, database servers, and the promotion path.
-3. **Pre-deployment checklist** — approvals, gates passed (`[TP §4]`), backups taken, line state (**no active run on FL1/FL2/FL3**), operator notification, maintenance window, rollback rehearsal confirmed.
+3. **Pre-deployment checklist** — approvals, gates passed (`[TS §4]`), backups taken, line state (**no active run on FL1/FL2/FL3**), operator notification, maintenance window, rollback rehearsal confirmed.
 4. **Deployment sequence** — ordered, with commands:
    - **Database first.** `FlatWireDB` build/upgrade via SQLCMD mode (`sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll.sql`, run from `MVP-1/DBChanges/Schema/SQL/` because the `:r` includes are relative; SSMS requires **Query → SQLCMD Mode**). State that every script guards its objects so `RunAll` is idempotent, and the execution order `00 → 01 → 02 → 03 → 04 → 05 → 06 FKs → 07 indexes → 08 programmability`.
    - **The FW-001 shared-schema renames** — separately called out, because they touch the shared `coils`/scheduling schema used by other modules. Give the pre-flight impact check, the change, the verification, and the fact that this is the **hardest thing in the release to roll back**.
    - **API** — `dotnet publish` → IIS application pool, `appsettings.{Environment}.json` and environment variables (JWT and connection-string variables per the UAL conventions), app-pool recycle, health check.
    - **Angular** — `ng build` for the environment → static files to IIS, cache-busting, shell registration.
    - **OPC/PLC configuration** — tag paths from `appsettings.json`, and the tag-push verification on a line that is stopped.
-5. **Post-deployment verification** — a numbered smoke suite citing `TC-###` from `[TP]`: login, line status board, hub connection and a live event on each line, one check-in against a real pass schedule, PLC tag push verified, one full run to coil completion in the trial environment.
+5. **Post-deployment verification** — a numbered smoke suite citing `TC-###` from `[TS]`: login, line status board, hub connection and a live event on each line, one check-in against a real pass schedule, PLC tag push verified, one full run to coil completion in the trial environment.
 6. **Rollback plan** — this is the half of the document that must be right:
    - **Decision criteria** — what triggers a rollback vs a fix-forward, who decides, and the maximum time to decide.
    - **Per-component rollback**, in reverse dependency order: Angular (previous build artifacts), API (previous publish + app-pool), database (restore vs teardown-and-rebuild — note `FlatWire_DDL_99_Teardown.sql` **drops everything** and is only safe when `FlatWireDB` carries no production data yet), OPC/PLC configuration.
@@ -269,10 +269,10 @@ Run this checklist and report the result honestly. If something fails, say so ra
 - [ ] All seven files exist under `MVP-1/ProjectPlan/` with the exact names in §1.
 - [ ] Every file has the header block (Project · Last Updated · Document Type · Status · Owner · Audience · Sources), and **no file carries a Change Log table** — each is instead represented by a section in the root `CHANGELOG.md`.
 - [ ] Every relative link resolves to a file that exists.
-- [ ] Every `FR-###` in the master spec §4 appears in `[SRS §5]` with its number unchanged.
-- [ ] Every `FR-###` maps to ≥1 backlog story in `[SP §11]` and ≥1 `TC-###` in `[TP §10]`; the exceptions are listed explicitly with reasons.
+- [ ] Every `FR-###` in the master spec §4 appears in `[REQ §5]` with its number unchanged.
+- [ ] Every `FR-###` maps to ≥1 backlog story in `[TB §11]` and ≥1 `TC-###` in `[TCS §10]`; the exceptions are listed explicitly with reasons.
 - [ ] All 30 endpoints and all 9 hub events are documented in `[API]`.
-- [ ] Every `NFR###` appears both inline in its functional group and in the `[SRS §6]` register, with undefined targets marked undefined rather than guessed.
+- [ ] Every `NFR###` appears both inline in its functional group and in the `[REQ §6]` register, with undefined targets marked undefined rather than guessed.
 - [ ] The ER diagram covers every table in `Schema/SQL/`, and the table count you published matches the count you took from the DDL.
 - [ ] The four `REVIEW.md` Tier-1 API bugs are corrected, not propagated.
 - [ ] The capacity gap (G1/OI-51) is stated in both `[VS]` and `[SP]` without softening.
@@ -282,9 +282,9 @@ Run this checklist and report the result honestly. If something fails, say so ra
 
 ## 8. Working method
 
-1. **Read first, write second.** Read the master specification end to end, then `REVIEW.md`, `back-matter.md`, `00-foundations.md` and `CapacityAndEffortModel.md`, then skim the DDL for the table/FK inventory, before writing a line.
+1. **Read first, write second.** Read the master specification end to end, then `REVIEW.md`, `Development/GapsRegister.md`, `Architecture/Architecture.md` and `CapacityAndEffortModel.md`, then skim the DDL for the table/FK inventory, before writing a line.
 2. **Write in dependency order:** 1 → 2 → 3 → 4 → 5 → 6 → 7. Docs 5–7 cite IDs minted in 2–4, so do not reorder.
-3. **Two-pass option if context runs short:** Pass A = docs 1–4 + the ID inventories they mint (keep a scratch list of every `FR-###`, endpoint and table). Pass B = docs 5–7, then return to `[SRS §6]` to fill the NFR verification-method column with the `TC-###` numbers doc 6 created.
+3. **Two-pass option if context runs short:** Pass A = docs 1–4 + the ID inventories they mint (keep a scratch list of every `FR-###`, endpoint and table). Pass B = docs 5–7, then return to `[REQ §6]` to fill the NFR verification-method column with the `TC-###` numbers doc 6 created.
 4. **When a source is ambiguous, cite both readings and decide** per the §2 precedence rule — never average two specs into a third thing that appears in neither.
 5. **Report at the end:** the file list with line counts, the checklist result from §7, every `PP-##` contradiction you discovered, and anything you could not complete and why.
 
