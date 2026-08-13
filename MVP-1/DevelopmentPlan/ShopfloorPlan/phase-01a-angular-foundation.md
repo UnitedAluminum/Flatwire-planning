@@ -69,7 +69,7 @@ a DI-swappable **real/mock** client and a purpose-built SignalR service.
 5. Jest smoke suite green.
 
 ## Review-fixes applied in this layer
-- **G18 — `--color-*` not `--fw-*`:** the source `CheckinImplementationPrompt.md`/older docs use a stale `--fw-*` token system; this spec mandates the shared `--color-*` semantic tokens used by every mockup and the stylesheet.
+- **G18 — `--color-*` not `--fw-*`:** older April docs used a stale `--fw-*` token system (`CheckinImplementationPrompt.md` was its source and was **deleted 13 Aug 2026**); this spec mandates the shared `--color-*` semantic tokens used by every mockup and the stylesheet. No `--fw-*` token exists and there is no migration to perform.
 - **Retired DB2 UI:** Dashboard 2 uses its revised **`dashboard_2_rod_checkin.html`** — a guided **6-step tab-wizard** with SPC tolerance-viz and the confirm-bar gate — **not** the retired grid + progress-ring `- Old.html`.
 - **Forbidden references:** no structural/UI copy from `checkin-precheckin` or any feature library; only `shared` foundational services are consumed.
 - **Full SignalR event set:** the client subscribes to `LineStatus`/`AlertRaised`/`AlertCleared` (omitted in FW-080's list) in addition to the batched telemetry.

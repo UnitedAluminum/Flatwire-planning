@@ -70,7 +70,7 @@ purpose-built high-throughput `FlatWireHub` — so every later phase adds comman
 ## Review-fixes applied in this layer
 - **`RollAdjustTrigger` added to `CheckpointType`:** the enum used by `/rolloverride`'s side-effect (`APIContracts.md:1183`) and `SpcCheckpoint.CheckpointType` was missing this value — the backend enum here defines `{PreRun, PostDieChange, RollAdjustTrigger, ManualSpotCheck, PostRun}` (mirror in DB `CHECK` — 1C).
 - **Full SignalR event set:** `IFlatWireClient` includes `LineStatus`/`AlertRaised`/`AlertCleared` (omitted from FW-080's list) so command side-effects that broadcast them are typed.
-- **`[Authorize]` everywhere:** resolves the check-in-docs inconsistency (`CheckinImplementationPrompt` used bare `ControllerBase` with no `[Authorize]`); `APIContracts.md` Authorization Matrix is the source of truth.
+- **`[Authorize]` everywhere:** resolved the check-in-docs inconsistency (`CheckinImplementationPrompt.md` used bare `ControllerBase` with no `[Authorize]`; deleted 13 Aug 2026); `APIContracts.md` Authorization Matrix is the source of truth.
 - **PLC "rollback" reworded:** `PLCTagService` failure handling is compensating re-clears, not a transaction (G2/G16). Cross-DB check-in is **not** one ACID transaction — document the saga/compensation boundary.
 - **Canonical enums (cross-layer):** `PassScheduleComponent.State ∈ {Active,Bypass,Skip}` (not a bool); `EdgeType ∈ {Round,Square}`. Must match 1A model + 1C `CHECK`.
 - **Naming:** the domain aggregate and the table/endpoint/story name must agree — use **`WeldEvent`** consistently (source docs drift between `WeldJoinEvent` and `WeldEvent`); the SCADA marker event may keep `WeldJoinEvent` as the SignalR method name if documented.

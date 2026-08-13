@@ -26,7 +26,7 @@
 | Controller base class | `UAController` from `UA.Framework.API` |
 | Authorization | **Every controller and every endpoint carries `[Authorize]`** |
 
-> This resolves the inconsistency where `CheckinImplementationPrompt.md` used a bare `ControllerBase` with no attribute. Use `UAController` + `[Authorize]`.
+> This resolved the inconsistency where the April check-in implementation prompt used a bare `ControllerBase` with no attribute (deleted 13 Aug 2026). **Use `UAController` + `[Authorize]`** — this contract is now the source of record for the rule.
 
 ### 1.2 Response envelope
 

@@ -160,7 +160,7 @@ Per-alloy process properties. Consumed by the pass-schedule generator (max reduc
 | `WidthTolerancePlusIn` | decimal(8,4) | NOT NULL | — | Upper width limit (in) |
 | `RodDiameterToleranceMinusIn` | decimal(8,4) | NULL | — | Lower incoming-rod diameter limit (in); `CHK007`. **NULL until the values arrive** |
 | `RodDiameterTolerancePlusIn` | decimal(8,4) | NULL | — | Upper incoming-rod diameter limit (in); `CHK007`. **NULL until the values arrive** |
-| `RodOvalityMaxIn` | decimal(8,4) | NULL | — | Max \|M1 − M2\| out-of-round. Supersedes the hard-coded `0.003"` in `CheckinImplementationPlan.md` |
+| `RodOvalityMaxIn` | decimal(8,4) | NULL | — | Max \|M1 − M2\| out-of-round. **Per-alloy reference data, not a constant** — supersedes the hard-coded `0.003"` carried by the April check-in implementation plan (deleted 13 Aug 2026) |
 | `SpeedRangeMinFpm` | int | NOT NULL | — | Default minimum line speed (ft/min) |
 | `SpeedRangeMaxFpm` | int | NOT NULL | — | Default maximum line speed (ft/min) |
 | `LbPerFtFactor` | decimal(10,6) | NULL | — | Footage → weight factor (lb per ft). **PROVISIONAL** — OQ-10 pending confirmation per cross-section |

@@ -1324,7 +1324,7 @@ erDiagram
 | `SpringbackFactor` | DECIMAL(5,3) | NOT NULL | Roll-gap springback multiplier |
 | `GaugeToleranceMinusIn` / `GaugeTolerancePlusIn` | DECIMAL(8,4) | NOT NULL | Lower/upper gauge limit as an offset about nominal, in inches. `CK`: both > 0. *(Renamed from `GaugeToleranceDefault` on 1 Aug 2026 — tolerances are min/max, OQ-22)* |
 | `RodDiameterToleranceMinusIn` / `RodDiameterTolerancePlusIn` | DECIMAL(8,4) | **NULL** | Incoming-rod diameter band, `CHK007`. All-or-nothing. **Unseeded — values owed by e-mail** |
-| `RodOvalityMaxIn` | DECIMAL(8,4) | **NULL** | Max \|M1 − M2\|. Supersedes the hard-coded 0.003″ in `CheckinImplementationPlan.md`. **Unseeded** |
+| `RodOvalityMaxIn` | DECIMAL(8,4) | **NULL** | Max \|M1 − M2\|. **Ovality is per-alloy reference data, not a constant** — this column supersedes the hard-coded `0.003″` that the check-in implementation plan carried until it was deleted on 13 Aug 2026 (recoverable at `1964086`). **Unseeded** |
 | `WidthToleranceDefault` | DECIMAL(8,4) | NOT NULL | ± inches. `CK`: > 0 |
 | `SpeedRangeMinFpm` / `SpeedRangeMaxFpm` | INT | NOT NULL | `CK_AlloyProperty_Speed`: Min < Max |
 | `LbPerFtFactor` | DECIMAL(10,6) | NULL | **Do not populate.** Seeded NULL with the comment "OQ-10 PENDING"; a scalar lb/ft is the wrong shape — see below |
@@ -2073,7 +2073,7 @@ Project references: `API → Application, Domain, Infrastructure` · `Applicatio
 
 Controllers are **thin** and extend `UAController` from `UA.Framework.API`; all logic routes through MediatR commands and queries. Data access is mixed per UAL convention: **EF Core** (`FlatWireDbContext`) for entity writes, **Dapper** for high-volume reads (gauge trace, shift summary, list grids).
 
-**Every controller and endpoint carries `[Authorize]`.** This resolves the inconsistency where `CheckinImplementationPrompt.md` used a bare `ControllerBase` with no attribute [REVIEW Tier 5 #43].
+**Every controller and endpoint carries `[Authorize]`.** This resolved the inconsistency where the April check-in implementation prompt used a bare `ControllerBase` with no attribute [REVIEW Tier 5 #43]; that document was deleted on 13 Aug 2026, so this is now the only statement of the rule.
 
 **Response envelope** (all endpoints):
 
@@ -2556,7 +2556,7 @@ Additional routes: the shared topbar's **More Options** tile popup reaches Pass 
 
 Every screen uses **one semantic token system**, defined in `flat-wire-shopfloor.styles.scss` and compiled to `.css`. Edit the `.scss`; the `.css` is its output.
 
-> **The `--fw-*` token prefix that appears in older source documents is stale.** No mockup and no stylesheet uses it. `CheckinImplementationPlan.md` §1.2 and `CheckinImplementationPrompt.md` step 8 both hard-code a `--fw-*` system — **do not follow them**; there is no migration to perform. [gap G18, REVIEW Tier 5 #39]
+> **The `--fw-*` token prefix that appears in older source documents is stale.** No mockup and no stylesheet uses it, and **no `--fw-*` token exists** — there is no migration to perform. The two April check-in documents that hard-coded such a system were **deleted on 13 Aug 2026** (recoverable at `1964086`); if the prefix resurfaces from an older commit or an April copy, it is wrong. [gap G18, REVIEW Tier 5 #39]
 
 | Group | Tokens |
 |---|---|
@@ -2694,7 +2694,7 @@ The Flat Wire real-time client is purpose-built; existing SignalR hub clients su
 
 **`flat-wire-shopfloor` joins the `build:shop-floor` npm chain for build ordering only.** That is a build-sequencing concern and implies **no** UI or code reuse from the other libraries in the chain.
 
-> Two check-in implementation documents in this repository actively contradict these rules. `CheckinImplementationPlan.md` and `CheckinImplementationPrompt.md` instruct developers to "copy patterns from `checkin-precheckin`", to port the **retired** interim DB2 layout (which held the `dashboard_2_rod_checkin.html` filename until 11 Aug 2026, when the approved wizard took it), and to build a `--fw-*` token system. **All three instructions are wrong.** They also cite story IDs (`FW-S3-009`, `FW-S1-001`) that do not exist in the backlog — the real ones are FW-061 and FW-082. Use them only for their stub-first delivery model and their fixture set.
+> **The two check-in implementation documents that contradicted these rules were deleted on 13 Aug 2026** (recoverable at `1964086`). Recorded here because the instructions survive in git history and in any April copy: `CheckinImplementationPlan.md` and `CheckinImplementationPrompt.md` told developers to "copy patterns from `checkin-precheckin`", to port the **retired** interim DB2 layout (which held the `dashboard_2_rod_checkin.html` filename until 11 Aug 2026, when the approved wizard took it), and to build a `--fw-*` token system. **All three instructions are wrong**, and they cited story IDs (`FW-S3-009`, `FW-S1-001`) that do not exist in the backlog — the real ones are FW-061 and FW-082. The two things worth having from them were rehomed rather than lost: the **stub-first delivery contract** is `ShopfloorPlan/00-foundations.md` §0.5, and the canonical **fixture set** is the DB seed in `MVP-1/DBChanges/Schema/SQL/`.
 
 ### 8.3 Stack constraints
 
@@ -2889,6 +2889,12 @@ Working days are **counted, not assumed**: **Labor Day falls on Mon 7 Sep 2026**
 
 ### 9.5 Backlog — 12 epics, 58 stories
 
+> **⚠ Superseded 13 Aug 2026 — this section is a historical snapshot.** The MVP-1 backlog is [`MVP-1/DevelopmentPlan/FlatWireJiraStories.md`](../MVP-1/DevelopmentPlan/FlatWireJiraStories.md): **116 stories / 3,292 h**, re-derived from the 15 `ShopfloorPlan/` phase specs, organised into four even two-week sprints (`S0`–`S3`, `S1` from **24 Aug 2026**) and **sized in hours, not points**. **Epics and story points are both retired**; the table below — and every point total in it — is preserved there in *Appendix A — Retired point basis*.
+>
+> **Note (a) above is now closed.** The scaffold gap it identifies — *"no story anywhere in the 58 covers the Angular library scaffold, the `FlatWire` .NET solution and its 13 controllers, or the OPC ingest and `PLCTagService`"* — was the defect the rewrite existed to fix. Those three are now `FW-N03`, `FW-N04` and `FW-N05`, and **Phase 1 carries 33 stories** where it carried seven database-only ones. **Note (b)'s ratio has no denominator any more** and must not be re-derived.
+>
+> **Story ids are unchanged**, so every `FW-###` cited elsewhere in this specification still resolves; new work is minted at `FW-130`+.
+
 | Epic | Title | Stories | Points | Scope |
 |---|---|---|---|---|
 | E01 | Foundation & Infrastructure | 7 | 28 | Shopfloor |
@@ -3010,7 +3016,7 @@ Every decision that is closed. **Do not re-open these.** Where a decision replac
 | **D-04** | **`Rod` is retained** as a `FlatWireDB`-local master mirroring the shared `coils` record, with **enforced** rod-alpha FKs | Jul 2026 ("Hybrid foundation") | 28 tables; referential integrity for all rod references in-database | **Supersedes** `00-foundations.md` decision 3 and `phase-01c`, which dropped `Rod` and made every rod-alpha reference an unenforced cross-DB link (21–22 tables) |
 | **D-05** | The real-time layer is **purpose-built**, self-contained in `FlatWire.API` — strongly-typed MessagePack hub, WebSockets-first, bounded-channel ingest with batching/decimation, NgZone-out + rAF rendering, backplane-ready | 26 Jul 2026 | `FlatWireHub` hosted only in `FlatWire.API`; the shared `Notification` service is not extended | **Supersedes** any plan to copy `CoilDataHub` / `OPCManagerHub` / `supervisor-monitor-hub` |
 | **D-06** | **`SlitterInterface` / `slitter-*` are explicitly NOT references** — neither UI/structure nor real-time. Backend template is `CoilCheckin`; **there is no frontend template at all** | 26 Jul 2026 | Every control built fresh from `MVP-1/Mockups/`; only foundational `shared` services consumed | **Supersedes** the earlier frontend-reuse plan that named `checkin-precheckin` etc. |
-| **D-07** | The UI is built from the approved `MVP-1/Mockups/`, which already share **one `--color-*` semantic token system** | 26 Jul 2026 | No token migration to perform | **Supersedes** the `--fw-*` system in `CheckinImplementationPlan/Prompt` (gap G18) |
+| **D-07** | The UI is built from the approved `MVP-1/Mockups/`, which already share **one `--color-*` semantic token system** | 26 Jul 2026 | No token migration to perform | **Supersedes** the `--fw-*` system the two April check-in documents carried; both deleted 13 Aug 2026 (gap G18) |
 | **D-08** | **Dashboard 2 is `dashboard_2_rod_checkin.html`** — a guided 6-step tab wizard with tolerance-viz, OK/NG/NA machine inspection and a supervisor-override path; the confirm-bar gate is retained | 26 Jul 2026 | `- Old.html` (grid + progress ring) and the interim single-page layout that then held the `dashboard_2_rod_checkin.html` filename are **retired** | Both earlier DB2 layouts |
 | **D-09** | Stay entirely within the existing UAL stack — **no new frameworks**, no separate mobile app, no message broker in Phase 1 | 29 Apr 2026 | Angular/.NET/SQL Server/SignalR/Chart.js only | — |
 | **D-10** | Pre-check-in state lives in a dedicated **`RodStaging`** table, not in columns on `Rod` | 29 Jul 2026 | Two filtered unique indexes make one-rod-per-bay unviolatable, including under concurrent staging. The provisional `Rod.StagedPayoffPosition` / `Rod.IsWelded` columns are **retired**. This is also the concrete home for the SRS narrative's `FlatwireQueue` (`Rodno` / `RodSeqno` / `Welded`) | The two nullable `Rod` columns; the un-modelled `FlatwireQueue` |
@@ -3152,7 +3158,7 @@ Every unresolved item, with impact, the phase it blocks, and who must decide. **
 | ID | Issue | Impact | Blocks | Owner |
 |---|---|---|---|---|
 | ~~**OI-04**~~ | ~~Which FM2 stand is non-bypassable? SRS §2.7 says **6" S3**; the DDL comment, the API validation rules and `HMI008` all say **`FM2_6inS2`**~~ · **DECIDED (4 Aug 2026) — `FM2_S3`.** There was never a real contradiction: under the three-stand correction (**D-26**) the DDL's `FM2_6inS2` and the SRS's `6" S3` are **the same physical stand**, FM2's final gauge-control stand. Only the phantom fourth stand made them look inconsistent. Enforce against `FM2_S3`; `FM2_S1` and `FM2_S2` are bypassable | — | Closed | Closed |
-| **OI-07** | **RESPECIFIED (client, 30 Jul 2026) — four min/max tolerance pairs, values owed.** ~~Add `AlloyProperty.RodDiameterToleranceDefault`~~ Tim confirmed **upper and lower limits for gauge (height), width and diameter, plus ovality**, held in the lookup and applied at **both** staging and check-in. That makes this a **rename-and-widen** of the two existing single-± columns plus two new dimensions — not a single column add. The hard-coded ovality `≤ 0.003"` in `CheckinImplementationPlan.md` must move into the lookup too. **The values are owed by e-mail** ("I want to say it's plus or minus 10" is not a specification), so columns go in nullable and **nothing is seeded**; the Dashboard 2A per-alloy map stays visibly mock | `CHK007` is not implementable until the values land; out-of-tolerance rod would be accepted | Phase 4 | Tim O. / IT |
+| **OI-07** | **RESPECIFIED (client, 30 Jul 2026) — four min/max tolerance pairs, values owed.** ~~Add `AlloyProperty.RodDiameterToleranceDefault`~~ Tim confirmed **upper and lower limits for gauge (height), width and diameter, plus ovality**, held in the lookup and applied at **both** staging and check-in. That makes this a **rename-and-widen** of the two existing single-± columns plus two new dimensions — not a single column add. The hard-coded ovality `≤ 0.003"` that the check-in implementation plan carried must live in the lookup instead — **it is per-alloy reference data, not a constant**; that document was deleted on 13 Aug 2026, so `RodOvalityMaxIn` is now the only home for the value. **The values are owed by e-mail** ("I want to say it's plus or minus 10" is not a specification), so columns go in nullable and **nothing is seeded**; the Dashboard 2A per-alloy map stays visibly mock | `CHK007` is not implementable until the values land; out-of-tolerance rod would be accepted | Phase 4 | Tim O. / IT |
 | **OI-14** | **✅ CLOSED 1 Aug 2026 — four outcomes.** `pause_run.js` now implements `ResumeRun` / `LogWipRejection` / `CheckOutRod` / `ContinuePause`, matching `POST /run/{runId}/resume` and `CK_RunPauseEvent_Outcome`. Rod Checkout is no longer a pause reason and `FR-262` is superseded | — | Phase 6 | Closed |
 | **OI-34** | **G9 — the non-functional targets are absent.** AGC sample rate, concurrent client count, latency budget and reading-retention period are all undefined. A hub load test is scheduled at QA2 but has no pass criteria | Real-time may not scale or perform; `RunReading` has no retention policy | Phases 3, 5 | Architecture / Engineering |
 | **OI-35** | **OQ-21 — `FL{n}.LineState` vocabulary is undocumented.** Two-state run/stop bit, or `RUNNING / STOPPED / PAUSED / FAULT / THREADING / JOG`? Also needed: the **stop dwell value** (5 s proposed) and whether the prompt should be suppressed when a software Pause already captured a reason | Two features depend on it — the rod-checkout gatekeeper and the spool stop-confirmation | Phases 7, and the spool completion feature | Engineering / Tim O. |
@@ -3374,8 +3380,8 @@ Ten were moved out of `Analysis/` on **1 Aug 2026** and reissued as client-facin
 | `FlatWireJiraStories.md` | 30 Apr 2026 | **partially superseded** — dead timeline, 5-sprint model, upstream stories still tagged in-scope, `IsActive` bool, 20-table count, wrong point total | §9.5 (story titles, points, priorities) |
 | `FlatWireTables.md` | 30 Apr 2026 | **superseded by the DDL** — bare `decimal` types, 22-table count, `Rod` as a new table, `united_db` target | §5 (design rationale only; never types) |
 | `TechStackRecommendation.md` | 29 Apr 2026 | **partially superseded** — dead timeline, "five SPC checkpoints" versus the four/five-type enum, "new `FlatWireDB` or schema extension" now decided | §8.3 |
-| `CheckinImplementationPlan.md` | 30 Apr 2026 | **superseded and actively misleading** — `--fw-*` tokens, the retired DB2 layout, a forbidden reference library, non-existent story IDs, pre-replan fixtures | §8.2 (as a warning); fixture set retained |
-| `CheckinImplementationPrompt.md` | 30 Apr 2026 | **superseded and actively misleading** — same defects plus bare `ControllerBase` with no `[Authorize]` | §8.2 (as a warning) |
+| ~~`CheckinImplementationPlan.md`~~ | 30 Apr 2026 | **DELETED 13 Aug 2026** (recoverable at `1964086`) — was superseded and actively misleading: `--fw-*` tokens, the retired DB2 layout, a forbidden reference library, non-existent story IDs, pre-replan fixtures | §8.2 (as a warning). Its three retained facts were rehomed: stub-first → `00-foundations.md` §0.5, ovality `0.003″` → `AlloyProperty.RodOvalityMaxIn`, `G14` → `back-matter.md` |
+| ~~`CheckinImplementationPrompt.md`~~ | 30 Apr 2026 | **DELETED 13 Aug 2026** (recoverable at `1964086`) — same defects plus bare `ControllerBase` with no `[Authorize]` | §8.2 (as a warning). The `[Authorize]` rule is stated at §7 and in `04-APIContract.md` |
 | `Flat Wire.code-workspace` | — | current — opens this repo alongside `ual-angular` and `ual-api` | §8.1 |
 
 ### A.4 `MVP-1/DevelopmentPlan/ShopfloorPlan/` — 18 files

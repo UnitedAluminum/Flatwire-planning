@@ -1307,7 +1307,7 @@ Every screen uses **one semantic token system**, defined in `flat-wire-shopfloor
 
 **Dark mode** is supported via `@media (prefers-color-scheme: dark)`. Angular components must use `ViewEncapsulation.None` or `:host` scoping so the tokens resolve.
 
-> **The `--fw-*` token prefix in older source documents is stale.** No mockup and no stylesheet uses it. `CheckinImplementationPlan.md` §1.2 and `CheckinImplementationPrompt.md` step 8 both hard-code a `--fw-*` system — **do not follow them; there is no migration to perform.** Gap **G18**.
+> **The `--fw-*` token prefix in older source documents is stale.** No mockup and no stylesheet uses it, and **no `--fw-*` token exists — there is no migration to perform.** The two April check-in documents that hard-coded such a system were **deleted on 13 Aug 2026**; if the prefix resurfaces from an older commit, it is wrong. Gap **G18**.
 
 ### 7.5 Shopfloor constraints
 

@@ -1,7 +1,7 @@
 # Flat Wire Mill — Master Implementation Roadmap
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 26, 2026
+**Last Updated:** August 13, 2026 — §0.1's backlog row re-pointed at the rewritten sprint-wise backlog (**116 stories / 3,292 h**, hours not points); the *"12 epics / 58 stories / 184-point"* description was stale on every figure *(otherwise July 26, 2026)*
 **Document Type:** Implementation Roadmap (workflow-driven, end-to-end vertical slices)
 **Supersedes:** the previous *Shopfloor UI & Real-Time Integration Plan* (layer-oriented sprint plan)
 **Status:** Master roadmap — implementation-ready
@@ -35,7 +35,7 @@ The single source of truth for scope is the `c:\UAL\Flat Wire` planning reposito
 ## Roadmap Navigation
 
 **Shared context (read first):**
-- [Foundations — §0.2 Reference Codebase Map · §0.3 Domain Cheat-Sheet · §0.4 Real-Time Architecture](./ShopfloorPlan/00-foundations.md)
+- [Foundations — §0.2 Reference Codebase Map · §0.3 Domain Cheat-Sheet · §0.4 Real-Time Architecture · §0.5 Stub-First Delivery Contract](./ShopfloorPlan/00-foundations.md)
 
 **Phase files:**
 
@@ -82,8 +82,8 @@ Owner is a **delivery stream**, not a person — the named-owner roster is fille
 | `MVP-1/DevelopmentPlan/APIContracts.md` | `FlatWire.API` REST surface + `FlatWireHub` contract |
 | `MVP-1/DBChanges/Schema/*` + `Schema/SQL/*` | The Flat Wire schema — **28 tables** in the new **`FlatWireDB`**, of which **24 are MVP-1** and 3 are the MVP-2 pass-schedule group. **`Rod` is retained** per master-spec **`D-04`** (the "Hybrid foundation" decision), which supersedes `00-foundations.md` decision 3 and its 21-table figure. Verified by a clean deploy on 11 Aug 2026: 25 tables, 33 FKs, 1 procedure, 1 trigger. *(the designed `Rod` table is dropped; rod uses the existing `coils` table). DDL 01–06 + seed |
 | `MVP-1/DevelopmentPlan/CapacityAndEffortModel.md` | Per-phase owners + dev-day effort, working-day capacity model, descope ladder (resolves G1) |
-| `MVP-1/DevelopmentPlan/FlatWireJiraStories.md` | 12 epics / 58 stories (FW-###) mapped into phases below. **Superseded as a schedule** (dead 5-sprint model); its points survive only as the 184-point cross-check in the Capacity & Effort Model |
+| `MVP-1/DevelopmentPlan/FlatWireJiraStories.md` | **The authoritative MVP-1 shopfloor backlog** (rewritten 13 Aug 2026) — **116 stories / 3,292 h**, re-derived from the phase specs in `ShopfloorPlan/`, organised into four even two-week sprints (`S0`–`S3`, `S1` from **24 Aug**) and sized in **hours** off the Capacity & Effort Model's rate card. **Story points are retired**; the old 12-epic / 58-story / 184-point figures are historical and recorded in its Appendix A |
 | `MVP-1/DevelopmentPlan/FlatWireTables.md` | Table-by-table design + existing-table renames |
 | `Analysis/FlatWireOpenQuestions.md` | **99** open questions (`Q##` / `OQ-##`) → per-phase blockers. **Authoritative decision register** |
-| `MVP-1/DevelopmentPlan/CheckinImplementationPlan.md` / `CheckinImplementationPrompt.md` | The stub-first implementation model |
+| `MVP-1/DevelopmentPlan/ShopfloorPlan/00-foundations.md` **§0.5** | The stub-first delivery contract. *(Rehomed there 13 Aug 2026 from `CheckinImplementationPlan.md` / `CheckinImplementationPrompt.md`, both **deleted** that day — recoverable at `1964086`.)* |
 | `MVP-1/DevelopmentPlan/TechStackRecommendation.md` | "Stay within the UAL stack" ADR |

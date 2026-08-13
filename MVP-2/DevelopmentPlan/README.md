@@ -82,6 +82,6 @@ All of it is cross-cutting or MVP-1-owned, and **none of it is duplicated here**
 | `REVIEW.md` | Audits documents in both scopes |
 | `APIContracts.md`, `FlatWireJiraStories.md`, `FlatWireTables.md`, `TechStackRecommendation.md` | The four April-dated **split-brain** docs. Known superseded by the July roadmap; **not** divided, because dividing a knowingly-broken document doubles the places its bugs live. `APIContracts.md`'s `/passschedule/generate` example is `REVIEW.md` Tier 1 #1 |
 | `PLCTagImplementation.md` | The internal half of the PLC tag surface — MVP-1, and it carries **no tag path strings** by rule |
-| `Checkin*`, `RodPreCheckinUxReviewPrompt.md`, `WeldEventPopupPlan.md` | MVP-1 features |
+| `WeldEventPopupPlan.md` | MVP-1 feature. *(Reduced to a record on 13 Aug 2026. The two `Checkin*` documents were reduced the same day and then **deleted**, as was `RodPreCheckinUxReviewPrompt.md` — all recoverable at `1964086`.)* |
 | `Tools/build_docx.py` | Renders client deliverables in **both** scopes |
 | `Flat Wire.code-workspace` | Opens the repo alongside `ual-angular` / `ual-api` |

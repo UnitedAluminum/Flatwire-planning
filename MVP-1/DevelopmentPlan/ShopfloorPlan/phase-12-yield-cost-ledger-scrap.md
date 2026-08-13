@@ -6,8 +6,9 @@
 ---
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-07-30
-**Status:** Ready to build
+**Last Updated:** 2026-08-13 — pointer added to the new phase sheet; **no scope or effort figure in this file changed**
+**Status:** Ready to build — ⚠ but see the specification gap in the phase sheet below
+**Phase sheet:** [`YieldCostAndScrapSheet.md`](../YieldCostAndScrapSheet.md) — story-level effort on both delivery bases (hand-coded **177 h** / AI-assisted **126 h**), the descope-ladder role, and the blocker analysis. **Read it before scheduling this phase:** it records that `FW-101`, `FW-102` and `FW-110` carry **no `FR-` IDs and have no owning requirement document**, so this phase's 177 h was priced against four Jira cards.
 **Layer:** Full-stack vertical slice (back-office)
 **Owner:** **BE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
 **Effort:** **177 h** (22.1 d) — FE 44 · BE 72 · DB 12 · QA 26 · cont. 23 · **Window:** W7 (Sep 28–30, **3** working days)

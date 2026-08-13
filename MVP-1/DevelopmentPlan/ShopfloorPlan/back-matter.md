@@ -1,9 +1,17 @@
 # Back Matter — Dependencies, Roadmap, Gaps & Appendices
 
+**Project:** Flat Wire Mill Implementation
+**Last Updated:** August 13, 2026 — Appendix C marked a **derived view** (correct for its 45 rows, no longer complete) now that [`../FlatWireJiraStories.md`](../FlatWireJiraStories.md) proves story→phase coverage at source
+**Status:** Active — **the live home of the `G##` gaps register**
+**Layer:** Cross-phase planning
+**Scope:** MVP-1, with MVP-2 rows marked in place
+
 > **Part of the [Flat Wire Mill — Master Implementation Roadmap](../ShopfloorAndRealTimePlan.md).** See [Foundations](./00-foundations.md) for §0.2–0.4 shared context.
 > **Prev:** [Phase 14 — Integration Testing, PLC Commissioning & Go-Live](./phase-14-integration-testing-plc-commissioning-golive.md)
 >
 > This file collects the cross-phase planning material: the feature dependency mapping, the overall roadmap (window/milestones/risks/gaps), and Appendices A–C.
+
+*(Header block added 13 Aug 2026. This file and `00-foundations.md` were the only two in `ShopfloorPlan/` without one.)*
 
 ---
 
@@ -135,7 +143,7 @@ Consolidated review findings, prioritised. **Critical** items should be resolved
 | **G8** | No data-migration deliverable for legacy `FlatLineSetup`/`FlatLineProcessing` | Data | High | Legacy data stranded on drop | Add mapping + migration + validation + drop-criteria deliverable | Open |
 | **G9** | NFRs absent (AGC Hz, concurrent clients, latency, reading retention) | Performance | High | Real-time may not scale/perform | Define NFR targets; hub load test added to **QA2** (N clients × 3 lines × cadence). The **end-to-end latency figure** this gap needs is produced by commissioning test **`C8`** (*"AGC feed reaches the screen"*), reproduced with the rest of the sequence in [`PLCTagSpecification.md`](../../RequirementDocuments/PLCTagSpecification.md) §11; the AGC publish rate is asked as **`PLC-Q11`** | Open — load test scheduled |
 | **G17** | rod→`coils` multiplies cross-DB logical FKs (every `Rod.Alpha` ref) | Architecture / Data | High | No referential integrity; cross-DB joins for traceability/reports | Consistency checks + indexed alpha on `coils`; consider a replicated view / linked server for report joins | Open |
-| **G14** | Pre-build data inconsistencies: 3- vs 4-item inspection (+M1/M2 ovality), `R#####` vs `ROD-#####`, `FootageFt` INT vs DECIMAL, `CoilOrderPlanId` vs `PlanId` | Data / Contract | High | Rework if resolved late | Stand up a "Pre-Build Decisions" register with owners; resolve before the owning phase | Open — `RodStaging` and Dashboard 2A deliberately use **3 inspection items** and `R#####`, and do not inherit the 4th item; that scopes the gap to check-in but does not close it |
+| **G14** | Pre-build data inconsistencies: 3- vs 4-item inspection (+M1/M2 ovality), `R#####` vs `ROD-#####`, `FootageFt` INT vs DECIMAL, `CoilOrderPlanId` vs `PlanId` | Data / Contract | High | Rework if resolved late | Stand up a "Pre-Build Decisions" register with owners; resolve before the owning phase | Open — `RodStaging` and Dashboard 2A deliberately use **3 inspection items** and `R#####`, and do not inherit the 4th item; that scopes the gap to check-in but does not close it. **The check-in half still blocks Phase 4:** the DDL builds four inspection columns NOT NULL plus `SpcM1In`/`SpcM2In` and `POST /checkin/rod` supplies none, so **every check-in insert fails as specified** (`REVIEW.md` Tier 1 #5). *(Rehomed here 13 Aug 2026 from `CheckinImplementationPlan.md`, deleted that day.)* |
 | **G10** | Real-time deploy prereqs / MessagePack dependency | Infra | Medium | IIS WebSockets off → transport fallback; new client dep the repo doesn't use | Enable IIS WebSockets (added to deploy); treat MessagePack as **measure-first/optional** — batching+decimation is the real win | Open |
 | **G11** | Phases 10/12/13 don't follow the full 8-section template | Doc consistency | Medium | Uneven detail vs stated template | Expand 10/12/13 to the full template | Open |
 | ~~**G12**~~ | ~~Source artifacts (DDL, `FlatWireTables.md`, ERD) still say `united_db` and include the dropped `Rod` table~~ | Doc consistency | Medium | Conflicting source-of-truth | — | ✅ **Resolved 11 Aug 2026 — the DDL/ERD were right and the plan documents were stale.** Master-spec **`D-04`** (29 Jul 2026, "Hybrid foundation") **retains `Rod`** as a `FlatWireDB`-local master with **enforced** rod-alpha FKs, superseding `00-foundations.md` decision 3 and its 21-table figure; `coils` stays the source of truth for the rod *lifecycle*. A clean teardown-and-rebuild on 11 Aug 2026 confirms **24 MVP-1 tables · 33 FKs · 1 procedure · 1 trigger** (27 tables in the full design; the three `PassSchedule*` are owned outside MVP-1). `00-foundations.md` decision 3, `phase-01b` and `phase-01c` were corrected to match. **`G5` closes with it** — the rod source-of-truth ambiguity is what `D-04` settled |
@@ -217,6 +225,12 @@ Consolidated review findings, prioritised. **Critical** items should be resolved
 
 ## Appendix C — Story coverage: every FW-### → phase
 
+> **⚠ This appendix became a derived view on 13 Aug 2026.** [`../FlatWireJiraStories.md`](../FlatWireJiraStories.md) was rewritten as the authoritative sprint-wise MVP-1 backlog — **116 stories / 3,292 h** — and **every story there names its own phase and sprint**, so coverage is now proved at source rather than reconstructed here. Its §4.1 roll-up carries the per-phase story counts and its Appendix B the full id provenance.
+>
+> **This table is retained and still correct for the 45 stories it maps** — their ids and phase assignments are unchanged, because story ids are frozen. **It is no longer complete:** the 71 stories minted or adopted in the rewrite (`FW-130`–`FW-201` and the `FW-N##` set) are not listed. **Do not extend it** — add new stories to the backlog, which is where the coverage claim now lives.
+>
+> **`G4` stays closed.** It was closed by *making coverage provable*, and the rewrite proves it more directly: the Phase-1 hole that Appendix C could not see — 1,027 h against seven database-only stories — is now covered by **33 stories in S0**.
+
 Every shopfloor backlog story is mapped to a phase, so coverage is provable. Rod receiving (Epic E03) and order planning / line scheduling / orders (Epics E04–E06) were removed from the shopfloor plan — they are handled upstream by the existing CoilReceiving / Planning / Scheduling systems — so their **14 stories are out of shopfloor scope** and listed under the table rather than mapped to a phase.
 
 **Two independent axes, and conflating them is how the closing figure went wrong.** *Scope* says whether MVP-1 builds the story at all; *Window* says whether it is targeted inside Aug 17 – Sep 30. A story can be MVP-1 and deferred past the window, or MVP-2 and not this programme's problem at all.
@@ -244,6 +258,7 @@ Every shopfloor backlog story is mapped to a phase, so coverage is provable. Rod
 | FW-062 | Dashboard 3 — active run | 5 | MVP-1 | In window |
 | FW-063 | Weld event capture — **DB2A dialog** (Dashboard 4 retired 1 Aug 2026) | 6 | MVP-1 | In window |
 | FW-064 | Dashboard 5 — FL2 spool check-in | 8 | MVP-1 | In window |
+| FW-124 | Dashboard 5A — FL2 spool queue | 8 | MVP-1 | In window |
 | FW-065 | Dashboard 6 — SPC checkpoint | 4 (pre-run) & 6 | MVP-1 | In window |
 | FW-066 | Dashboard 7 — coil completion | 9 | MVP-1 | In window |
 | FW-067 | Dashboard 8 — WIP rejection | 7 | MVP-1 | In window |
@@ -273,9 +288,15 @@ Every shopfloor backlog story is mapped to a phase, so coverage is provable. Rod
 
 **Out of shopfloor scope — upstream (existing CoilReceiving / Planning / Scheduling systems):** FW-020, FW-021, FW-022 (rod receiving); FW-030, FW-031, FW-040, FW-041, FW-042, FW-043, FW-050, FW-051, FW-052, FW-053, FW-055 (orders / planning / line scheduling). These 14 stories are tracked in the upstream effort, not this shopfloor plan.
 
-**Coverage:** **44/44 shopfloor stories mapped** (58 total − 14 upstream) — every story has a phase, which is what this appendix proves and it is still true.
+> **⚠ Those 14 stories were deleted from [`FlatWireJiraStories.md`](../FlatWireJiraStories.md) on 13 Aug 2026** when it was reduced to shopfloor MVP-1 only — they are another team's backlog. **Their bodies are recoverable at commit `1964086`**, and their ids, titles and descriptions remain in [`05-SprintPlanAndBacklog.md`](../../ProjectPlan/05-SprintPlanAndBacklog.md) §7. The ids above still resolve; **`FW-061` still depends on `FW-020`** for R-series rod alphas, which is the dependency behind this plan's *"if upstream slips, Phase 4 has no material"* risk.
 
-**Of those 44, MVP-1 builds 38.** Six are MVP-2 — `FW-010`, `FW-011`, `FW-012`, `FW-013`, `FW-068`, `FW-069` — and `FW-014` spans both. **The 44/44 figure is mapping coverage, not an MVP-1 workload**; read before 13 Aug 2026 it was easy to take for the second, because every row said *"In scope"* whether or not MVP-1 built it.
+**Coverage:** **45/45 shopfloor stories mapped** — every story has a phase, which is what this appendix proves.
+
+> **The shopfloor 45 now live in three files (13 Aug 2026):** **35 stories / 147 points** in [`FlatWireJiraStories.md`](../FlatWireJiraStories.md) (shopfloor MVP-1) · **4 / 11** in [`YieldCostAndScrapJiraStories.md`](../YieldCostAndScrapJiraStories.md) (Phase 12) · **6 / 31** in [`FlatWireJiraStories-MVP2.md`](../../../MVP-2/DevelopmentPlan/FlatWireJiraStories-MVP2.md) (MVP-2). `147 + 11 + 31 = 189`. **The 59-story / 231-point totals retire** — upstream's 14 / 42 left the repository, so no file counts them.
+
+> **Corrected 13 Aug 2026: this read 44/44 and was missing a story.** **`FW-124` · Dashboard 5A — FL2 Spool Queue** (5 pts, `High`, phase 8) was added to Epic 7 and never reached any summary — not this appendix, not the backlog summary in [`FlatWireJiraStories.md`](../FlatWireJiraStories.md), not the *"184-point cross-check basis"* cited below. It is live: `phase-08` builds it, `02-SRS.md` §5.3a carries its requirements and `SpoolQueue.md` is its owning specification. **The 44/44 claim was not a miscount — the row simply was not here**, which is the failure mode a coverage appendix exists to prevent.
+
+**Of those 45, MVP-1 builds 39.** Six are MVP-2 — `FW-010`, `FW-011`, `FW-012`, `FW-013`, `FW-068`, `FW-069` — and `FW-014` spans both. **The 44/44 figure is mapping coverage, not an MVP-1 workload**; read before 13 Aug 2026 it was easy to take for the second, because every row said *"In scope"* whether or not MVP-1 built it.
 
 Deferred past Sep 30 (MVP-1, but first to slip): `FW-101`, `FW-102`, `FW-110`. Everything else MVP-1 is on the critical path.
 
@@ -286,7 +307,9 @@ Deferred past Sep 30 (MVP-1, but first to slip): `FW-101`, `FW-102`, `FW-110`. E
 |---|---|
 | [CapacityAndEffortModel.md](../CapacityAndEffortModel.md) | **Per-phase owners + dev-day effort, working-day capacity model, descope ladder (resolves G1)** |
 | [APIContracts.md](../APIContracts.md) | `FlatWire.API` REST + `FlatWireHub` contract |
-| [FlatWireJiraStories.md](../FlatWireJiraStories.md) | Full backlog (12 epics / 58 stories) — the 184-point cross-check basis; **not** a schedule |
+| [FlatWireJiraStories.md](../FlatWireJiraStories.md) | **Shopfloor MVP-1 backlog — 35 stories / 147 points**, a points cross-check, **not** a schedule. It also carries the sprint→phase crosswalk and the **points-vs-hours cross-check** (9.5 h/point AI-assisted, 7.7 excluding Phase 1). *(Reduced to one scope 13 Aug 2026: upstream **deleted**, Phase 12 and MVP-2 split to sibling files. The **184**- and **189**-point and "58/59 stories" figures quoted here previously spanned all three scopes.)* |
+| [YieldCostAndScrapJiraStories.md](../YieldCostAndScrapJiraStories.md) | Phase 12's stories — **4 / 11** (`FW-100`–`FW-102`, `FW-110`). The only requirement text in existence for three of the four |
+| [FlatWireJiraStories-MVP2.md](../../../MVP-2/DevelopmentPlan/FlatWireJiraStories-MVP2.md) | The deferred **6 / 31** (`FW-010`–`FW-013`, `FW-068`, `FW-069`). **`FW-061` and `FW-082` depend on `FW-010` there** |
 | [FlatWireTables.md](../FlatWireTables.md) | Table designs + existing-table renames |
 | [Schema/SQL/FlatWire_ERDiagram_Documentation.md](../../DBChanges/Schema/SQL/FlatWire_ERDiagram_Documentation.md) | Source ERD — the **as-built 28 tables** (24 MVP-1 + 3 MVP-2). **`Rod` is retained** per `D-04`; the old "22 → 21 once `Rod` is dropped" reading is superseded |
 | [MVP-1/RequirementDocuments/](../../RequirementDocuments/) | **16 documents — 14 per-screen specifications** (`OutputCoilCompletion.md` owns DB7 **and** DB7b at v1.1) **plus two that are not specifications**: `Spool.md` (domain reference) and `PartialRodReCheckin.md` (internal rationale). Authoritative since 11 Aug 2026 |
@@ -296,4 +319,4 @@ Deferred past Sep 30 (MVP-1, but first to slip): `FW-101`, `FW-102`, `FW-110`. E
 | [PLCTagImplementation.md](../PLCTagImplementation.md) | `PLCTagService` signatures, config binding, persistence sinks, traceability — **carries no tag path strings** |
 | [../Analysis/FlatWireOpenQuestions.md](../../../Analysis/FlatWireOpenQuestions.md) | Open-questions register (OQ-##) |
 | [TechStackRecommendation.md](../TechStackRecommendation.md) | Stack ADR |
-| [CheckinImplementationPlan.md](../CheckinImplementationPlan.md) / [CheckinImplementationPrompt.md](../CheckinImplementationPrompt.md) | Stub-first implementation model |
+| [00-foundations.md §0.5](00-foundations.md) | **Stub-first delivery contract** — rehomed there 13 Aug 2026 when `CheckinImplementationPlan.md` / `CheckinImplementationPrompt.md` were deleted (recoverable at `1964086`) |

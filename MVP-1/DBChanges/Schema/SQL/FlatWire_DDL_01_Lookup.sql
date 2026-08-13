@@ -229,8 +229,9 @@ BEGIN
         [WidthTolerancePlusIn]      DECIMAL(8,4) NOT NULL,   -- upper width limit (in)
         [RodDiameterToleranceMinusIn] DECIMAL(8,4) NULL,     -- lower incoming-rod diameter limit (in); CHK007
         [RodDiameterTolerancePlusIn]  DECIMAL(8,4) NULL,     -- upper incoming-rod diameter limit (in); CHK007
-        [RodOvalityMaxIn]           DECIMAL(8,4) NULL,       -- max |M1 − M2| out-of-round; supersedes the
-                                                             -- hard-coded 0.003" in CheckinImplementationPlan.md
+        [RodOvalityMaxIn]           DECIMAL(8,4) NULL,       -- max |M1 − M2| out-of-round; per-alloy reference
+                                                             -- data, NOT a constant. Supersedes the hard-coded
+                                                             -- 0.003" the April check-in plan carried (deleted)
         [SpeedRangeMinFpm]      INT          NOT NULL,       -- default minimum line speed (ft/min)
         [SpeedRangeMaxFpm]      INT          NOT NULL,       -- default maximum line speed (ft/min)
         [LbPerFtFactor]         DECIMAL(10,6) NULL,          -- footage → weight factor (lb per ft); OQ-10 PROVISIONAL — confirm per cross-section

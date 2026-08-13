@@ -1,7 +1,17 @@
 # Foundations — Shared Context for All Phases
 
+**Project:** Flat Wire Mill Implementation
+**Last Updated:** August 13, 2026
+**Status:** Reference — **binding on every phase**
+**Layer:** Cross-cutting (Angular · .NET · SQL Server · OPC)
+**Scope:** MVP-1
+
 > **Part of the [Flat Wire Mill — Master Implementation Roadmap](../ShopfloorAndRealTimePlan.md).**
-> This file holds the cross-cutting reference material every phase depends on: the reference codebase map (§0.2), the domain cheat-sheet (§0.3), and the real-time architecture (§0.4). Phase files refer back to these sections by number.
+> This file holds the cross-cutting reference material every phase depends on: the reference codebase map (§0.2), the domain cheat-sheet (§0.3), the real-time architecture (§0.4), and the stub-first delivery contract (§0.5). Phase files refer back to these sections by number.
+>
+> **Do not restate this content in a phase file — cite the section number.** That rule is what keeps §0.2's reference-code prohibitions in one place; a phase that paraphrases them will eventually paraphrase them wrong.
+
+*(Header block added 13 Aug 2026. This file and `back-matter.md` were the only two in `ShopfloorPlan/` without one, though all 17 phase files carry it.)*
 
 ---
 
@@ -118,3 +128,16 @@ Per the July 26 decision, the Flat Wire live layer is **designed fresh** for hig
 **Client rendering (Angular) — no change-detection storms**
 - SignalR callbacks run **outside the Angular zone** (`NgZone.runOutsideAngular`); incoming batches land in a **ring buffer** in `flat-wire-signalr.service`.
 - Charts/gauges refresh on a **`requestAnimationFrame` throttle** (coalesced to ~60 fps), re-entering the zone once per frame; Chart.js updated in-place (`update('none')`); `ChangeDetectionStrategy.OnPush` everywhere; trace components keep a fixed window (e.g. last 500 points) to bound DOM/GPU work.
+
+---
+
+## 0.5 Stub-First Delivery Contract
+
+*Rehomed here on 13 Aug 2026 from `CheckinImplementationPlan.md`, which was deleted that day. It was the only statement of the model, and `ProjectPlanPrompt.md` cites it as **the** model.*
+
+**The shopfloor UI is built against dummy data first.** The Angular library and its mock data service come up behind an environment flag; `FlatWire.API` runs in **stub mode** returning schema-valid fixtures with **no database and no PLC**; the screens are built and reviewed against that before either is wired. Contracts are published as stubs so the UI can develop in parallel with the backend — which is why [`APIContracts.md`](../APIContracts.md) exists as an elaboration rather than as a record of something already built.
+
+- **The stub/real swap is DI-level, not a code branch** — `useStub` + environment swap of the service implementation, as in `CoilCheckin` (§0.2). Applies on both ends: `MockSignalRService` is the hub's counterpart.
+- **One canonical fixture set, aligned to the DB seed** in [`../../DBChanges/Schema/SQL/`](../../DBChanges/Schema/SQL/) — `R00041`–`R00043`, `SP-00021`, `PS-1100-FL1-003`, `RUN-0042`/`RUN-0043`. Fixtures that disagree with the seed were a live defect (`REVIEW.md` Tier 5 #44); do not invent a second set.
+- **Switchover criterion:** a stub endpoint is retired when its real repository returns the same schema-valid shape against `FlatWireDB` and its phase's acceptance tests pass. Phase 1B ships stubs first precisely so 1A is unblocked before 1C's schema lands.
+- **Stubs also route around open questions, and that debt is tracked** — the check-in stub assumes a single active pass schedule to get past `OQ-3`/`OQ-14`/`OQ-15`; `back-matter.md` schedules a **de-stub pass** when they close. A stub standing in for an undecided rule is not the same as a stub standing in for unwritten code.

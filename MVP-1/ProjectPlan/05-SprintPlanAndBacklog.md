@@ -1,7 +1,7 @@
 # Flat Wire Mill — Sprint Plan & Backlog
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 4, 2026
+**Last Updated:** August 13, 2026 — **§7/§7.2/§7.3 superseded** by [`../DevelopmentPlan/FlatWireJiraStories.md`](../DevelopmentPlan/FlatWireJiraStories.md) as the MVP-1 backlog, and **§4.2's `S0`–`S4` cadence retired**. **§4.1's week grid, §8's ladder and §11's `FR-###` coverage matrix are unchanged and remain authoritative** *(otherwise August 4, 2026)*
 **Document Type:** Sprint plan and delivery backlog
 **Status:** Published — **the plan below does not fit the window; §1 requires a programme decision before it can be committed**
 **Owner:** Delivery lead / programme management
@@ -202,6 +202,8 @@ Working days are **counted, not assumed**: **Labor Day falls on Mon 7 Sep 2026**
 
 ### 4.2 Sprints
 
+> **⚠ This `S0`–`S4` cadence was retired on 13 Aug 2026.** The live sprint calendar is [`../DevelopmentPlan/FlatWireJiraStories.md`](../DevelopmentPlan/FlatWireJiraStories.md) §1 — **four** even two-week sprints with **`S1` starting Mon 24 Aug**, which leaves the 17–21 Aug carry-over week outside every sprint rather than absorbing it, and merges this table's `S3` and `S4`. **§4.1's week grid above is unchanged and is what both cadences derive from.** The entry/exit criteria, demos and gates below are preserved there.
+
 | Sprint | Weeks | Goal | Phases | Entry criteria | Exit criteria | Demo | Gates |
 |---|---|---|---|---|---|---|---|
 | **S0** | W0 (to 14 Aug) | **Stand up the platform.** Every later phase assumes it exists | 1A, 1B, 1C | Roster confirmed; `FlatWireDB` server available; `ual-angular` / `ual-api` branches cut | Angular library scaffolded and building; `FlatWire` 4-project solution with stubbed controllers returning contracted shapes; `FlatWireHub` skeleton broadcasting simulated data; `PLCTagService` in simulate mode; **`FlatWireDB` deployed with 28 tables, 43 FKs, 64 non-clustered indexes, trigger, 2 procs and full seed**; FW-001 impact audit complete | Scaffolded UI ↔ stubbed service ↔ created schema ↔ simulated hub, end to end | **M1 (14 Aug) hard gate** · **QA0** (Jest smoke, xUnit + stub-fixture + validator suites, DDL/seed idempotency + 27-table post-run check) · **Effort calibration checkpoint** |
@@ -326,6 +328,18 @@ flowchart TD
 ---
 
 ## 7. Backlog
+
+> ### ⚠ Superseded 13 Aug 2026 — §7, §7.2 and §7.3 are no longer the backlog
+>
+> The authoritative MVP-1 shopfloor backlog is now [`../DevelopmentPlan/FlatWireJiraStories.md`](../DevelopmentPlan/FlatWireJiraStories.md) — **116 stories / 3,292 h**, re-derived from the 15 `ShopfloorPlan/` phase specs, organised into even two-week sprints and sized in **hours**. **Story points are retired**; the point figures below are historical and are recorded in that file's *Appendix A — Retired point basis*.
+>
+> **What moved:** §7.2's 44 shopfloor rows and §7.3's twelve `[NEW]` `FW-N##` stories are superseded there, with full provenance in its *Appendix B*. Six `FW-N##` stories are now costed; the other six are listed there as **adopted but uncosted**, which is a finding this file's format could not surface.
+>
+> **What stays here and is still authoritative:** **§11's `FR-###` coverage matrix** — it keys on story ids, all of which are frozen, so it continues to resolve. **§8's descope ladder** and §10's registers also stand.
+>
+> **§4.2's `S0`–`S4` sprint cadence is retired** in favour of the even two-week cadence (`S1` starting **Mon 24 Aug**) defined in the new file's §1. §4.1's week grid is unchanged and is what both cadences derive from.
+>
+> The rows below are **retained, not deleted** — §11's matrix and a decade of citations key on them.
 
 ### 7.1 Epics
 

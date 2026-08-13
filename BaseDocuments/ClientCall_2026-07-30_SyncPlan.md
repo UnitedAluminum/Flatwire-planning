@@ -133,7 +133,7 @@ Rule 2 partly answers **Q62**: the target source is the order's customer weight 
 
 ### 3.8 Item 11 — resolution is unresolved, and it is pinned in 30+ places
 
-1280×1024 is baked into all 25–28 mockups, `flat-wire-fit.js` (design box + the 14px `MIN_FONT` calibration), `phase-01`/`phase-01a` ("fixed 1280×1024 shopfloor canvas"), `RodPreCheckinUxReviewPrompt.md`, `ProjectPlanPrompt.md` and the master spec constraints section.
+1280×1024 is baked into all 25–28 mockups, `flat-wire-fit.js` (design box + the 14px `MIN_FONT` calibration), `phase-01`/`phase-01a` ("fixed 1280×1024 shopfloor canvas"), `ProjectPlanPrompt.md` and the master spec constraints section.
 
 **Do not re-author anything yet.** Two actions only: (a) send Tim the 1920×1080 requirement by e-mail as agreed; (b) log **Q83** with the impact stated plainly — 1920×1080 is a **1.5× width, 1.05× height** change, so it is a re-layout of every screen, not a rescale, and `flat-wire-fit.js` already degrades gracefully downward but not upward. Note that `data-fit="fill"` means the screens already widen to the window, so a wider panel is the *cheap* direction; the height barely moves.
 

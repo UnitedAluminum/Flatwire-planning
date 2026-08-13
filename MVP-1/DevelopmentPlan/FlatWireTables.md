@@ -1,10 +1,28 @@
 # Flat Wire Mill — Database Table Design
 
 **Project:** Flat Wire Mill Implementation  
-**Last Updated:** April 30, 2026  
-**Document Type:** Database Schema Reference  
+**Last Updated:** August 13, 2026 — reconciled to the as-built schema and the 11 Aug MVP split *(the April analysis body is retained below)*  
+**Document Type:** Database schema **analysis** — not the schema of record  
 **Source:** Derived from `FlatWireTables.xlsx`, `APIContracts.md`, `FlatWireJiraStories.md`  
-**Status:** Analysis + Recommendations — Review Required
+**Status:** Superseded by the executable DDL — retained as the gap analysis that produced it
+
+---
+
+> ## ⚠ The DDL is authoritative, not this document
+>
+> **[`MVP-1/DBChanges/Schema/SQL/`](../DBChanges/Schema/SQL/) is the schema of record**, with [`FlatWire_ERDiagram_Documentation.md`](../DBChanges/Schema/SQL/FlatWire_ERDiagram_Documentation.md) as the as-built description and [`phase-01c`](ShopfloorPlan/phase-01c-database-foundation.md) stating the rule. This document is the April *analysis* — what existed, what was missing, what to add — and it is retained for that reasoning, not for its column types.
+>
+> ### The one thing that will bite you: bare `decimal`
+>
+> Many columns below are declared as bare **`decimal`**, which in SQL Server means **`decimal(18,0)` — zero decimal places**. The DDL correctly uses `DECIMAL(8,2)` for weights, `DECIMAL(8,4)` for gauges and diameters, and `DECIMAL(10,2)`/`(10,4)` for footage and measures. **Regenerating DDL from this document would round every weight, gauge and measurement to a whole number.** It is the largest sync hazard in the folder (`REVIEW.md` Tier 3 #18). Treat every bare `decimal` here as "see the DDL", not as a specification.
+>
+> ### Verified counts — 11 Aug 2026, from a clean teardown and rebuild
+>
+> **25 MVP-1 tables · 33 FKs · 41 indexes · 1 procedure · 1 trigger**, of **28 tables in the full design**. The three `PassSchedule*` tables are **MVP-2** — owned by a separate track, not deferred — and live in [`MVP-2/DBChanges/`](../../MVP-2/DBChanges/). `FlatWire_DDL_RunAll.sql` builds a complete, working MVP-1 database; there is no second runner to chase.
+>
+> ### `Rod` is retained — do not drop it
+>
+> An earlier decision dropped the `Rod` table in favour of the shared `coils`. **Master-spec `D-04` (29 Jul 2026, "Hybrid foundation") supersedes that**: `Rod` is a `FlatWireDB`-local master mirroring `coils`, and the mirror is what allows rod-alpha FKs to be **enforced**. `coils` remains the source of truth for the rod *lifecycle*. Gap **`G12` closed on 11 Aug 2026** with the finding that the DDL was right and the plan documents were stale — **`REVIEW.md`'s worklist row telling you to drop `Rod` is itself superseded and has been struck.**
 
 ---
 
@@ -693,7 +711,35 @@ Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
 | Existing — needs structural redesign | `FlatLineSetup` → `PassScheduleComponent` |
 | **Missing — must add** | `PassSchedule`, `Rod`, `FlatWireRun`, `RodCheckin`, `SpoolCheckin`, `RunPauseEvent`, `WeldEvent`, `RollOverride`, `DieChangeEvent`, `SpcCheckpoint`, `SpcMeasurement`, `WipRejection`, `CoilOutput`, `CoilTraceability`, `RodCheckout` |
 
-**Total tables needed: 22** (7 existing + 15 new, two existing renamed)
+**Total tables: 25 MVP-1** of 28 in the full design — the three `PassSchedule*` tables are owned outside MVP-1. Verified by a clean teardown-and-rebuild of `FlatWire_DDL_RunAll.sql`: **25 tables · 33 FKs · 1 procedure · 1 trigger**. *(This analysis originally concluded 22.)*
+
+**Total, as built and verified 11 Aug 2026: 28 tables in the full design — 25 of them MVP-1.**
+
+The April figure of 22 was an estimate against an earlier snapshot. What the design actually gained since:
+
+| Table | Why it exists | Scope |
+|---|---|---|
+| `PayoffPosition` | The payoff vocabulary had been modelled three incompatible ways, including an FK to a table that did not exist. Three **pinned** ids: `Payoff1`, `Payoff2`, `TraversingTakeup` (**`G20`**) | MVP-1 |
+| `RodStaging` | Pre-check-in / payoff staging — the whole feature was specified in the SRS and absent from every other artifact (**`G19`**) | MVP-1 |
+| `RunReading` | The time-series AGC gauge/width store. Nothing persisted raw readings, yet the FL2 historical profile and the Gauge-Trace and Cut-Traceability reports all require them (**`G3`**) | MVP-1 |
+| `FlatWireRunDetail` | The header/detail split — `FlatWireRun` is the run header hub, `FlatWireRunDetail` the per-pass detail. This document already renames `FlatLineProcessing` → `FlatWireRunDetail`; the **hub** is the part that was missing | MVP-1 |
+| `Dancer` | FM2 carries two dancers, disclosed 6 Aug 2026 (`D-28`). Lookup seeded with three rows; the mode vocabulary is still ours and unconfirmed (**`G35`**) | MVP-1 |
+| `AlloyProperty` | The per-alloy tolerance and property lookup (`FW-004`) | MVP-1 |
+| `PassSchedule`, `PassScheduleComponent`, `PassScheduleChangeLog` | The pass schedule itself | **MVP-2** — the three that make 25 into 28 |
+
+> **`PassScheduleId` is a documented external reference.** It sits on `FlatWireRun`, `RodCheckin`, `SpoolCheckin` and `CoilOutput` with **no local FK** — by design, not omission, and in the same class as `PlanId`, `CoilOrderPlanId` and `CoilOutput.SkidId`. The pass schedule is owned outside MVP-1 entirely, so seeded values like `PS-1100-FL1-001` are external identifiers, **not dangling orphans**. Do not "fix" them by adding a FK to a table this scope does not own.
+
+> **`SpoolCheckin` now has a creating story.** It was required by `POST /checkin/spool` and specified here, but neither `FW-006` nor `FW-007` created it (`REVIEW.md` Tier 2 #9). It is created in **Phase 1C** with the rest of the Runs group, and populated in **Phase 8**.
+
+> **⚠ `RodCheckin` requires fields the check-in contract does not send — still true in the as-built DDL, and narrower than `REVIEW.md` Tier 1 #5 describes.** Verified against [`FlatWire_DDL_04_Runs.sql`](../DBChanges/Schema/SQL/FlatWire_DDL_04_Runs.sql) on 13 Aug 2026:
+>
+> | Column | As built | Contract sends it? |
+> |---|---|---|
+> | `InspectionConnectorTag` | `VARCHAR(10) NOT NULL`, CHECK `Pass`/`Fail` | **No** — `InspectionDto` is the **three-item** form (oxidation, surface defects, water stains). This is gap **`G14`**, the 3-vs-4 inspection-item conflict, materialised as a constraint |
+> | `SpcM1In`, `SpcM2In` | `DECIMAL(8,4) NOT NULL` | **No** — the contract carries a single `diameterMeasuredIn`, not an M1/M2 pair |
+> | `SpcOvalityIn` | **computed** — `AS (ABS(SpcM1In - SpcM2In)) PERSISTED` | **n/a — derived, never supplied.** `REVIEW.md` lists `OvalityIn` among the fields the API must send; it cannot be sent and must not be added to the contract |
+>
+> **As specified, every rod check-in insert fails on four NOT NULL columns.** The fix is a decision, not an edit: either the DTO grows the fourth inspection item and the M1/M2 pair, or those columns become nullable. **Decide before the Phase-4 build** — it is the check-in path.
 
 ---
 
@@ -704,4 +750,4 @@ Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
 | [APIContracts.md](APIContracts.md) | Full API contract — the source of truth for all field names and types |
 | [FlatWireJiraStories.md](FlatWireJiraStories.md) | Sprint plan — FW-001 covers schema changes |
 | [TechStackRecommendation.md](TechStackRecommendation.md) | Architecture decisions |
-| [CheckinImplementationPlan.md](CheckinImplementationPlan.md) | Check-in implementation — uses `RodCheckin` and `Rod` tables |
+| [ShopfloorPlan/phase-04-rod-checkin-plc-config.md](ShopfloorPlan/phase-04-rod-checkin-plc-config.md) | Check-in implementation — uses `RodCheckin` and `Rod` tables. *(Replaces `CheckinImplementationPlan.md`, deleted 13 Aug 2026.)* |

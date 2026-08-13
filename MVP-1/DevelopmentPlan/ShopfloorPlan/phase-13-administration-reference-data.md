@@ -52,6 +52,6 @@
 
 - `RodDiameterTolerance{Minus,Plus}In` and `RodOvalityMaxIn` are **NULL in the seed on purpose** — do not populate them from the Dashboard 2A mock map, which is explicitly labelled mock data.
 - `CHK007` cannot fire, at pre-check-in or at check-in.
-- The hard-coded ovality limit of `0.003"` in `CheckinImplementationPlan.md` must move into this table rather than being duplicated.
+- The hard-coded ovality limit of `0.003"` must live in this table rather than in code — **it is per-alloy reference data, not a constant**. *(It was hard-coded in `CheckinImplementationPlan.md`, deleted 13 Aug 2026; `AlloyProperty.RodOvalityMaxIn` is now its only home, and it is unseeded pending `OI-07`.)*
 
 The values still need Process Engineering sign-off as well as the e-mail — the *Alloy Lookup Table* in [`Analysis/FlatWireShopfloorDashboards.md` § **Alloy Reference Data**](../../../Analysis/FlatWireShopfloorDashboards.md) carries that caveat already. **That section is MVP-1 and top-level since 11 Aug 2026**; it had been inside the MVP-2 Dashboard 9 section, where a scope tag would have carried this phase's own reference data out of MVP-1.

@@ -1,7 +1,7 @@
 # Flat Wire Mill — Capacity & Effort Model
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 30, 2026
+**Last Updated:** August 13, 2026 — §3's story-point cross-check marked **historical** (its denominator was retired when the backlog moved to hours) and its finding 1 recorded as **closed**; Related-Documents row re-pointed. *(Earlier same day: resolved-correction narrative removed to [`../../CHANGELOG.md`](../../CHANGELOG.md).)* **No hours figure changed**
 **Document Type:** Capacity & Effort Model (per-phase owners, effort in hours, working-day capacity)
 **Status:** Published — **roster unfilled**; §1 must be completed by programme management
 **Estimating unit:** **hours**. Day figures are derived (**1 dev-day = 8 h**) and shown only as a reading aid.
@@ -9,25 +9,11 @@
 **Scope:** the 14 shopfloor phases in [`ShopfloorPlan/`](./ShopfloorPlan/). Upstream rod receiving and order planning/line scheduling are out of scope and are **not** costed here.
 
 > ### ⚠ Headline finding
-> The plan as specified is **3,660 hours** (457.5 dev-days) for **both scopes**, and **3,292 h** for **MVP-1 alone** (§3b). The window to the 30 Sep target contains **44 working days** — **352 hours per person**. That requires **≈10.4 people sustained** for both scopes, **≈9.4 for MVP-1**, and **27.2 in W7** either way. *(The figure long quoted as 3,727 was a stale TOTAL row; corrected 11 Aug 2026.)*
+> The plan as specified is **3,660 hours** (457.5 dev-days) for **both scopes**, and **3,292 h** for **MVP-1 alone** (§3b). The window to the 30 Sep target contains **44 working days** — **352 hours per person**. That requires **≈10.4 people sustained** for both scopes, **≈9.4 for MVP-1**, and **27.2 in W7** either way.
 >
 > **The 30 Sep date is not achievable at any plausible team size, and descoping cannot rescue it.** The full descope ladder in §5 recovers only **448 h (12%)**, leaving a **9.3-FTE** requirement. G1's own recommended mitigation — *"defer Phase 12 & non-critical 13"* — recovers **276 h**, worth about **0.8 FTE**. That is roughly an order of magnitude short of the gap.
 >
 > This document does not solve that. It makes it **arithmetic instead of adjective**, so the choice between *more people*, *less scope*, and *a later date* is made deliberately in July rather than discovered in late September. See §7 for the three options and what each costs.
-
-> **⚠ These figures are NOT apportioned by MVP scope (11 Aug 2026), and this document was deliberately not re-derived.**
->
-> `DevelopmentPlan` was divided against `MVP-2/` on 11 Aug 2026. **Phase 2 is wholly MVP-2**, so its **231 h** belongs
-> entirely to deferred scope. **Phases 9, 11 and 13 are split** — their MVP-2 screen work was carved into partial phase
-> files under `MVP-2/DevelopmentPlan/ShopfloorPlan/` — but **222 h / 246 h / 209 h are still carried whole here and
-> therefore overstate MVP-1.**
->
-> **The descope ladder in § below cannot be used to apportion them.** It was built to answer a different question and
-> its rungs straddle the MVP boundary: **rung 5** (99 h) bundles the **MVP-2** Die Management screen with the **MVP-1**
-> role-assignment UI, and **rung 6** (105 h) defers four reports that are **MVP-1**. Quoting either figure as an MVP-2
-> share would move MVP-1 work into MVP-2 silently.
->
-> ~~So the **3,727 h** total, the **10.6 FTE** conclusion and every per-phase number below still mean **both scopes combined**. Re-deriving them per scope is open work.~~ **DONE 11 Aug 2026 — see §3b.** MVP-1 is **3,292 h / 9.4 FTE**; both scopes are **3,660 / 10.4** on the corrected base. §3's per-phase numbers stay both-scopes; §3b gives the MVP-1 view. It is an **input to G1**, not a resolution — the window still does not close.
 
 ---
 
@@ -35,9 +21,9 @@
 
 G1 and OI-51 record the same defect: 14 phases in ~6.5 weeks with **no capacity or effort model, no per-phase owner, and no effort estimate**. Verified before writing this:
 
-- Zero occurrences of effort, hours, days, FTE, capacity or velocity anywhere in `ShopfloorPlan/`'s 19 files.
+- Zero occurrences of effort, hours, days, FTE, capacity or velocity anywhere in `ShopfloorPlan/`'s 18 files.
 - No `Owner` on any phase file. Only `phase-01a/01b/01c` carried a doc-control block at all (`REVIEW.md` #53).
-- The one quantified basis — `FlatWireJiraStories.md` — points 58 stories against the **dead 5-sprint model**, with no sprint→phase crosswalk (`REVIEW.md` #33).
+- The one quantified basis — `FlatWireJiraStories.md` — sized its stories against the **dead 5-sprint model**, with no sprint→phase crosswalk (`REVIEW.md` #33; the crosswalk and an hours cross-check were added there 13 Aug 2026).
 
 **A note on the phase count.** OI-51 says *"thirteen workflow phases"*; G1 says *"14 phases"*. **Both are correct and neither is a drift.** `ShopfloorAndRealTimePlan.md` §0 defines Phase 1 as the layer-organised **platform** phase and Phases 2–14 as the **13 business-workflow phases**. The canonical phrasing, used throughout this document, is: **14 phases = 1 platform + 13 workflow phases (2–14)**.
 
@@ -58,8 +44,6 @@ Six streams, derived from the layers the phase files actually name.
 | | | **Total** | **3,660** | 100% |
 
 Stream hours **include each stream's pro-rata share of contingency** (factor **1.146976** = 3,660 ÷ 3,191 base), so the column sums exactly to 3,660. §3 shows the same total with contingency broken out as its own column.
-
-> **⚠ Recomputed 11 Aug 2026 — the previous row was wrong twice over.** It read FE 1,302 · BE 870 · QA 621 · RT 432 · DB 418 · BA 84 = 3,727. Two faults: the total descended from **§3's stale TOTAL row** (the 4 Aug Phase-5 descope never reached it — see the callout in §3), and **QA 621 was the raw QA column with no contingency loaded**, contradicting the sentence above it. The figures here are re-derived from §3's corrected columns. **The largest change is QA, 621 → 701** — it had been understated by its entire contingency share, which matters because QA is the stream with the thinnest published roster.
 
 **These are both scopes.** For MVP-1 only, scale to **3,292 h** — see §3b.
 
@@ -158,10 +142,6 @@ All figures in **hours**. `Cont` = contingency. The `Days` column is derived (ho
 
 The `TOTAL` row is the **raw column sum**: 1,056 + 732 + 352 + 356 + 611 + 84 + 469 = **3,660**.
 
-> **⚠ Corrected 11 Aug 2026 — the TOTAL row had said 3,727 and was wrong.** The 4 Aug DB13/DB14 descope reduced **Phase 5 from 221 h to 154 h** and the Phase-5 *row* was updated, but the TOTAL row was not: it kept the pre-descope FE 1,096 / QA 621 / cont 486, overstating by exactly the 67 h removed (40 FE + 10 QA + 17 cont). Every phase row sums to its own printed total and always did — **only the TOTAL row was stale**, so the model's "every column adds up as shown" claim was false for that one line. [`back-matter.md`](./ShopfloorPlan/back-matter.md) had already re-based to **~3,660**; this file now agrees with it.
->
-> **The per-stream figures in §1 and §4 were recomputed in the same pass** — FE 1,211 · BE 840 · QA **701** · RT 408 · DB 404 · BA 96 = 3,660, each carrying its pro-rata contingency at factor 1.146976. The old row was wrong twice: it descended from the stale total, **and QA appeared as its raw column with no contingency loaded**, which is why QA moves most (621 → 701).
-
 **Roll-ups:** Phase 1 (1A+1B+1C) = **1,027 h** (128.4 d) · Phases 2–14 = **2,633 h** (329.1 d) · grand total = **3,660 h** (both scopes). **MVP-1 only: 3,292 h** — see §3b.
 **Largest phases:** 1B (442) · 1A (370) · 6 (298) · 14 (267) · 4 (255). **Smallest:** 10 (61) · 8 (118).
 **Reserves excluded from the total:** G2/OI-39 on Phase 4 (**24–64 h**) · OQ-10/OI-45 on Phase 9 (**16–32 h**, now understated — see §3b).
@@ -177,10 +157,12 @@ The `TOTAL` row is the **raw column sum**: 1,056 + 732 + 352 + 356 + 611 + 84 + 
 
 ### Cross-check against the April story points — and what the divergence reveals
 
-The April backlog puts the **44 shopfloor stories at 184 points** (226 − 42 upstream; FW-054 stays in shopfloor Phase 13). Against 3,727 h that is **20.3 h/point** — about 2½ days per point, roughly double a conventional ~1 day (8 h) per point. The divergence exceeds the 25% investigation threshold, so it was investigated. Two causes, both real:
+> **⚠ This cross-check's denominator was retired on 13 Aug 2026.** [`FlatWireJiraStories.md`](./FlatWireJiraStories.md) was rewritten as the sprint-wise MVP-1 backlog and is now **sized in hours, not points** — the point totals below are historical and are preserved in that file's *Appendix A — Retired point basis*. **The cross-check is retained because its two findings are what mattered, and both still stand.** Finding 1 is now **closed**: the rewrite re-derived the backlog from the phase specs and Phase 1 carries **33 stories** where it previously had seven database-only ones. Finding 2 stands as the calibration argument for the §2 rate card. **Do not re-derive an h/point ratio from the current backlog** — it has no points.
 
-1. **The backlog has no story for most of Phase 1.** Epic E01 "Foundation & Infrastructure" is 7 stories / 28 points, and **all seven are database stories** (FW-001 renames, FW-002 `INFLAT`, FW-003 machines, FW-004 alloys, FW-005/006/007 tables). There is **no story anywhere in the 58** for scaffolding the `flat-wire-shopfloor` Angular library, for creating the `FlatWire` .NET solution and its 13 controllers, or for the OPC ingest and `PLCTagService`. Phase 1 is **1,027 h** against ~28 points of nominal coverage. **This is a backlog gap, not an estimating error** — and it is the single largest reason the window was believed to fit.
-2. **Excluding Phase 1, the ratio is 2,700 h / 156 points = 17.3 h/point.** For touch-screen shopfloor dashboards built to mockup fidelity, with a full vertical slice (UI + MediatR command + validation + DDL + hub event + tests) per phase, ~17 h/point is the more defensible figure. Phase 6 is the clearest illustration: 4 full dashboards + 2 dialogs + 6 endpoints + 5 write tables was sized at 19 points ≈ 152 h if a point is a day — i.e. under 30 h per dashboard *including* backend, database and test. The model prices it at 298 h.
+The backlog sized the **45 shopfloor stories at 189 points**, split across three files (`FlatWireJiraStories.md` 35 / 147 · `YieldCostAndScrapJiraStories.md` 4 / 11 · `MVP-2/.../FlatWireJiraStories-MVP2.md` 6 / 31). Against 3,660 h that is **19.4 h/point** — about 2½ days per point, roughly double a conventional ~1 day (8 h) per point. The divergence exceeds the 25% investigation threshold, so it was investigated. Two causes, both real:
+
+1. **The backlog has no story for most of Phase 1.** Epic E01 "Foundation & Infrastructure" is 7 stories / 28 points, and **all seven are database stories** (FW-001 renames, FW-002 `INFLAT`, FW-003 machines, FW-004 alloys, FW-005/006/007 tables). There is **no story anywhere in the backlog** for scaffolding the `flat-wire-shopfloor` Angular library, for creating the `FlatWire` .NET solution and its 13 controllers, or for the OPC ingest and `PLCTagService`. Phase 1 is **1,027 h** against ~28 points of nominal coverage. **This is a backlog gap, not an estimating error** — and it is the single largest reason the window was believed to fit.
+2. **Excluding Phase 1, the ratio is 2,633 h / 161 points = 16.4 h/point.** For touch-screen shopfloor dashboards built to mockup fidelity, with a full vertical slice (UI + MediatR command + validation + DDL + hub event + tests) per phase, ~16 h/point is the more defensible figure. Phase 6 is the clearest illustration: 4 full dashboards + 2 dialogs + 6 endpoints + 5 write tables was sized at 19 points ≈ 152 h if a point is a day — i.e. under 30 h per dashboard *including* backend, database and test. The model prices it at 298 h.
 
 **The rate card in §2 is the single calibration knob.** If the team's measured throughput at the Phase-1 gate is better than these rates, rescale §2 and re-publish §3/§4 — see §6.
 
@@ -240,8 +222,6 @@ Both derivations, reproducible from §2:
 
 **3,292 h ÷ 352 h per person over 44 working days = 9.4 FTE sustained**, against **10.4** for both scopes on the corrected base.
 
-> **The base itself was wrong until this pass.** §3's TOTAL row said **3,727 h**; the phase rows sum to **3,660**. The 4 Aug DB13/DB14 descope cut Phase 5 from 221 h to 154 h and updated the Phase-5 row, but not the TOTAL row and not §4's W4 column. **`back-matter.md` had already re-based to ~3,660** — so the two documents disagreed by 67 h for a week. Both are corrected here. Any figure of 3,727 or 10.6 FTE dated before 11 Aug 2026 descends from the stale total.
-
 ### ⚠ The recovered ~1 FTE lands where there was already slack
 
 This is the part that must not be read as relief. Recomputing §4's weekly grid on MVP-1 hours:
@@ -263,9 +243,8 @@ The grid sums to **3,292** with no leakage.
 
 **§7's forced decision therefore stands unchanged** — staff to ~10 FTE sustained, move the date, or cut below the critical path. Scoping MVP-1 out of MVP-2 was never going to recover the schedule, and now there is a number that says so.
 
-### Two figures that are still soft
+### One figure that is still soft
 
-- ~~**Phase 5** is carried as 221 h in §4's W4 column and 154 h in §3's table.~~ **RESOLVED in this pass — 154 is right.** The DB13/DB14 descope of 4 Aug 2026 reached §3's Phase-5 row and `back-matter.md`'s grid but neither §3's TOTAL row nor §4's W4 column. Both are now corrected: **W4 = 409 h / 12.8 FTE**, grand total **3,660** both scopes, **3,292** MVP-1. This is why the figures here differ from any pre-11-Aug quotation.
 - **Phase 9's 222 h excludes its 16–32 h `OQ-10`/`OI-45` reserve**, and that reserve is now *understated*: it was scoped before DB7b's **physical scale weight** (`FR-346`) was in MVP-1, which adds a second weight-capture point to reconcile. Phase 9 also assumes the **skid table** and **lot number** source already exist; neither does (`REVIEW.md` #13).
 
 ---
@@ -289,7 +268,7 @@ Working days are counted, not assumed. **Labor Day falls on Mon 7 Sep 2026**, in
 | W6 | Sep 21–25 | 5 | 40 h | 6.0 | 3.9 | 1.6 | 0.7 | 2.1 | 0.4 | 588 | **14.7** |
 | W7 | Sep 28–30 | **3** | **24 h** | 7.1 | 6.9 | 1.9 | 2.6 | 7.0 | 1.8 | 653 | **27.2** |
 
-The `Hours` column sums to **3,660** — the grand total, allocated with no leakage. *(**Corrected 11 Aug 2026:** W4 read 476 h / 14.9 FTE, carrying Phase 5 at its pre-descope 221 h; the 4 Aug DB13/DB14 descope had reached §3's Phase-5 row and `back-matter.md`'s grid but not this one. W4 is **409 h / 12.8 FTE**, matching back-matter.)* Phases spanning two weeks are split evenly (Phase 2 and 3 across W2/W3; Phase 8 across W5/W6). Phase 1 is allocated wholly to **W0** because the Aug-14 gate is hard; W1 therefore shows zero planned load.
+The `Hours` column sums to **3,660** — the grand total, allocated with no leakage. Phases spanning two weeks are split evenly (Phase 2 and 3 across W2/W3; Phase 8 across W5/W6). Phase 1 is allocated wholly to **W0** because the Aug-14 gate is hard; W1 therefore shows zero planned load.
 
 **Post-gate window (W1–W7) = 32 working days = 256 h/person.** Whole window inclusive of Thu 30 Jul = **44 working days = 352 h/person**.
 
@@ -372,7 +351,7 @@ Pre-agreed and ordered, so descoping is a decision already taken rather than an 
 
 Rung 6 is **new to the ladder** and is the model's own addition: Phase 11's seven stories cannot co-exist with Phases 8, 9 and 10 in W6 at any credible team size.
 
-> **Rung 7 was removed on 4 Aug 2026 — and this made the schedule harder, not easier.** DB13 and DB14 were the largest genuinely-optional FE items in the critical-path phases, and the client **descoped them outright**. Their 67 h therefore stopped being *recoverable* effort and became *never-planned* effort: the programme total dropped to **3,660 h** and Phase 5 to **154 h**, but the residual after descoping everything was unchanged, the ladder now recovers **~12 % of a smaller base**, and **Phase 5 is no longer deferrable at all**. *(**Note 11 Aug 2026:** the 3,660 figure was correct here from 4 Aug, but §3's TOTAL row and §4's W4 column kept the pre-descope numbers until this pass — which is the origin of the long-quoted 3,727.)*
+> **Rung 7 was removed on 4 Aug 2026 — and this made the schedule harder, not easier.** DB13 and DB14 were the largest genuinely-optional FE items in the critical-path phases, and the client **descoped them outright**. Their 67 h therefore stopped being *recoverable* effort and became *never-planned* effort: the programme total dropped to **3,660 h** and Phase 5 to **154 h**, but the residual after descoping everything was unchanged, the ladder now recovers **~12 % of a smaller base**, and **Phase 5 is no longer deferrable at all**.
 
 Below rung 7 there is nothing left that is not a production route, a check-in path, or the traveler — i.e. every remaining rung would cut something the mill cannot run without. **That is the finding: scope is not where the 30 Sep date can be recovered.**
 
@@ -396,7 +375,7 @@ Because the gate is 12 working days away and the model says Phase 1 needs 10.7 F
 
 Three options. They are not mutually exclusive, and doing none of them is itself a choice — the one G1 calls *"silent scope loss."*
 
-> **Restated on MVP-1 scope (§3b), 11 Aug 2026 — the decision does not change.** MVP-1 is **3,292 h / 9.4 FTE sustained**, not 3,660 / 10.4 (and certainly not the stale 3,727 / 10.6). That is a reduction of about **one FTE**, and it lands almost entirely in **W2–W3**, which were already the slackest weeks at 5.3 FTE. **W4 and W5 are unchanged**, and **W7 is still 24.5 FTE against three days.** Option A becomes ~9.4 concurrent people instead of ~10.4; **Options B and C are unaffected**, and B's dates move by days, not weeks. Deferring MVP-2 was not a schedule remedy and was never proposed as one.
+> **Restated on MVP-1 scope (§3b), 11 Aug 2026 — the decision does not change.** MVP-1 is **3,292 h / 9.4 FTE sustained** against 3,660 / 10.4 for both scopes. That is a reduction of about **one FTE**, and it lands almost entirely in **W2–W3**, which were already the slackest weeks at 5.3 FTE. **W4 and W5 are unchanged**, and **W7 is still 24.5 FTE against three days.** Option A becomes ~9.4 concurrent people instead of ~10.4; **Options B and C are unaffected**, and B's dates move by days, not weeks. Deferring MVP-2 was not a schedule remedy and was never proposed as one.
 
 | Option | What it means | Cost / consequence |
 |---|---|---|
@@ -418,8 +397,8 @@ A separate scheduling consequence, independent of team size: **UAT cannot share 
 - **Phase 9 is provisional** until OI-45 / OQ-10 (footage→weight basis) is decided — **16–32 h reserve**, and that reserve is now **understated**: it was scoped before DB7b's physical scale weight (`FR-346`) was MVP-1 scope, which adds a second weight-capture point to reconcile against the first. Integrating over `RunReading` is materially more work than a target-derived weight. Phase 9 also assumes the **skid table** and the **lot-number source** already exist — neither does (`REVIEW.md` #13), and neither is costed.
 - **Phase 12 is provisional** — OI-68 (costing), OI-68 (standard times) and OI-60 (yield per route) are all open; it is also rungs 1–4 of the ladder.
 - **Phase 3 carries a 16 h hub load test** whose pass criteria do not exist. G9 / OI-34 records that the NFRs (AGC sample rate, concurrent clients, latency budget, `RunReading` retention) are undefined. If the load test fails, the real-time rework is **not** in this model.
-- ~~**Die inventory has no table.**~~ **RESOLVED 11 Aug 2026 — it is not MVP-1's table.** Die inventory and lifecycle are owned outside MVP-1, so the **8 h left Phase 13** with the screen and the lifecycle service (§3b). MVP-1's die change reads size, footage and threshold from the **`Drawer`** lookup already seeded in Phase 1, and `D4` is enforced at **size** level — see `DieChangeAndManagement.md` §2.4a. This also removes the Phase 6 → Phase 13 dependency (`REVIEW.md` #34).
-- **Table-count drift is unresolved** (`phase-01c` says 22; G12 says DDL/ERD agree at 27). 1C is costed against the 22 the phase file states; each additional table is **4 h** plus its share of QA and contingency (~5.5 h all-in). **A verified clean deploy of `FlatWire_DDL_RunAll.sql` on 11 Aug 2026 produced 25 tables, 33 FKs, 1 procedure and 1 trigger** — that is the MVP-1 build, with the three pass-schedule tables owned elsewhere. The **`Rod`** question (G12) is what still moves the number.
+- **Die inventory is not MVP-1's table.** Die inventory and lifecycle are owned outside MVP-1, so its **8 h sits in Phase 13's MVP-2 carve**, with the screen and the lifecycle service (§3b). MVP-1's die change reads size, footage and threshold from the **`Drawer`** lookup already seeded in Phase 1, and `D4` is enforced at **size** level — see `DieChangeAndManagement.md` §2.4a. This also removes the Phase 6 → Phase 13 dependency (`REVIEW.md` #34).
+- **1C is costed against 22 tables, and the build is 25.** A verified clean deploy of `FlatWire_DDL_RunAll.sql` produced **25 tables, 33 FKs, 1 procedure and 1 trigger** — the MVP-1 build, the three pass-schedule tables being owned elsewhere (28 in the full design). Each table beyond the 22 is **4 h** plus its share of QA and contingency (~5.5 h all-in), so 1C is **understated by roughly 17 h**.
 - Upstream stories (rod receiving, order planning, line scheduling — 14 stories, 42 points) are **out of scope here** and are staffed by their own teams. If those slip, Phase 4 has no material and no scheduled job.
 
 ---
@@ -428,9 +407,11 @@ A separate scheduling consequence, independent of team size: **UAT cannot share 
 
 | Document | Purpose |
 |---|---|
+| [`DevelopmentEffortModel.md`](./DevelopmentEffortModel.md) | **Development effort only (FE/BE/DB/RT), re-derived on an AI-assisted (claude.ai) basis** per the 23 Jul 2026 client decision. **MVP-1 development = 1,397 h / 4.0 developer-FTE excluding Phase 12** (2,114 h hand-coded), or **1,486 h against 2,242 h** with Phase 12 added back from the sheet below. It factors *this* document's published columns and does **not** supersede any figure in it — QA, BA, contingency, the roster, the capacity decision and the descope ladder all remain owned here |
+| [`YieldCostAndScrapSheet.md`](./YieldCostAndScrapSheet.md) | **Phase 12 (Yield, Cost Ledger & Scrap) at story level**, on both delivery bases. Decomposes this document's published **177 h** to the descope ladder's own 33/49/28/67 split — both axes reconcile exactly to §3 and §5 here — and adds the AI-assisted view at **126 h**. ⚠ Records that `FW-101`, `FW-102` and `FW-110` carry **no `FR-` IDs** and the phase has **no owning requirement document**, so its 177 h was priced against four Jira cards |
 | [`ShopfloorAndRealTimePlan.md`](./ShopfloorAndRealTimePlan.md) | Master roadmap index — carries the per-phase Owner/Effort summary |
 | [`ShopfloorPlan/back-matter.md`](./ShopfloorPlan/back-matter.md) | Week grid, milestones, risks, gaps register (G1) |
 | [`ShopfloorPlan/phase-*.md`](./ShopfloorPlan/) | Per-phase `Owner:` / `Effort:` doc-control blocks and the deliverable inventories this model prices |
-| [`FlatWireJiraStories.md`](./FlatWireJiraStories.md) | The April 5-sprint backlog — source of the 184-point cross-check only; **not** a schedule |
+| [`FlatWireJiraStories.md`](./FlatWireJiraStories.md) | **The authoritative MVP-1 shopfloor backlog** (rewritten 13 Aug 2026) — **116 stories / 3,292 h** across four even two-week sprints, **sized in hours off §2's rate card and reconciling exactly to §3b**. Every story carries a `Rate-card basis:` line, and each phase closes on its §3b figure. **It consumes this document; it is not a second opinion** — if §3b changes, it is re-derived. Story points are retired (Appendix A there) |
 | [`REVIEW.md`](./REVIEW.md) | Audit findings #31 (calendar conflict) and #53 (no doc-control block) |
 | `LatestDocument/FlatWire_MasterSpecification.md` | §9.4 week grid, §9.5 backlog, §11.1 OI-51 |

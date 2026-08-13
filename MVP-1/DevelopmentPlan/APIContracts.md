@@ -1,13 +1,35 @@
 # Flat Wire Mill — API Development Plan & Contracts
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 1, 2026 (30 Jul client decisions applied to `/staging/**`, `/rod/{alpha}` and `/wipreject`; body otherwise April 30, 2026 — see `REVIEW.md`)
-**Document Type:** API Contract Reference
+**Last Updated:** August 13, 2026 — reconciled up to the 26 Jul roadmap and the 11 Aug MVP split *(30 Jul client decisions were applied to `/staging/**`, `/rod/{alpha}` and `/wipreject` on 1 Aug; the endpoint bodies are otherwise April 30, 2026)*
+**Document Type:** API elaboration — **not the contract of record**
 **Microservice:** `FlatWire.API` (new service in `ual-api`)
 **Base URL:** `/api/v1/flatwire`
-**Status:** Draft — For developer implementation
+**Status:** Superseded as the contract — retained for the detail it carries
 
 ---
+
+> ## ⚠ This is no longer the contract of record
+>
+> **[`MVP-1/ProjectPlan/04-APIContract.md`](../ProjectPlan/04-APIContract.md) (4 Aug 2026) owns the API contract and wins on any disagreement.** This document is April-dated and 2.6× longer; the extra length is request/response detail, worked examples and project structure that the owner does not carry — which is why it is retained rather than deleted.
+>
+> **How to use it:** read the owner first. Where this file adds detail the owner lacks, that detail should be **migrated into the owner**, not cited from here. Nothing in this document is citable as a requirement or as an interface commitment.
+>
+> *Ruling taken 13 Aug 2026. Two API contract documents had coexisted since 4 Aug with no statement of which governed.*
+>
+> ### What was corrected here on 13 Aug 2026
+>
+> The reconcile-up listed in [`REVIEW.md`](REVIEW.md)'s Appendix, minus one item that turned out to be wrong to execute:
+>
+> - **Delivery schedule** — the `S1`–`S5` sprint model is replaced by the roadmap's **14 phases**. The source is [`back-matter.md` Appendix A](ShopfloorPlan/back-matter.md), the endpoint → phase map.
+> - **Scope** — `/passschedule/**` and `/shiftsummary` are **MVP-2** and marked in place, not deleted.
+> - **`CheckpointType`** gains `RollAdjustTrigger`, which `POST /rolloverride` already writes.
+> - **Three things called `LineStatus`** are separated per `[PLC §6]` — see the enum note below.
+> - **`PushPassSchedule`'s first parameter is `scheduleId`**, not `passScheduleId`.
+> - **Component state** is the three-value enum `{Active, Bypass, Skip}`; a bool cannot express Bypass vs Skip.
+> - **Edge type** has one domain vocabulary, `Round`/`Square`, with display labels mapped at the UI.
+>
+> **`POST /passschedule/generate`'s worked example is deliberately NOT fixed.** `REVIEW.md` Tier 1 #1 is struck: generation is owned outside MVP-1, `FR-380`–`FR-391` are marked out of scope in `02-SRS.md`, and correcting the example would harden arithmetic that [`PassScheduleGenerationSpec.md`](../../MVP-2/RequirementDocuments/PassScheduleGenerationSpec.md) v1.5 has since superseded on the physics. **Do not implement `FW-013` from this document.**
 
 ## Overview
 
@@ -15,22 +37,24 @@ All endpoints live in a single new `FlatWire` microservice following the existin
 
 ### Controller Map
 
-| Controller | Routes | Sprint |
-|---|---|---|
-| `LinesController` | `/lines/status` | S1 |
-| `PassScheduleController` | `/passschedule/**` | S2 |
-| `RodReceivingController` | `/rod/**` | S2 |
-| `PayoffStagingController` | `/payoff/status`, `/staging/**` | S3 |
-| `CheckInController` | `/checkin/**` | S3 |
-| `RunController` | `/run/**` | S3 |
-| `SpcController` | `/spc` | S3 |
-| `WeldEventController` | `/weldevent` | S4 |
-| `RollAdjustController` | `/rolloverride` | S4 |
-| `DieChangeController` | `/diechange` | S4 |
-| `CheckOutController` | `/checkout` | S4 |
-| `WipRejectionController` | `/wipreject` | S4 |
-| `CoilController` | `/coil/**` | S4 |
-| `ShiftSummaryController` | `/shiftsummary` | S5 |
+**Phase, not sprint.** The authority for the mapping is [`back-matter.md` Appendix A](ShopfloorPlan/back-matter.md); the `S1`–`S5` sprint model it replaced does not exist.
+
+| Controller | Routes | Phase | Scope |
+|---|---|---|---|
+| `LinesController` | `/lines/status` | **3** | MVP-1 |
+| ~~`PassScheduleController`~~ | ~~`/passschedule/**`~~ | ~~2~~ | **MVP-2** — owned by a separate track; MVP-1 only *reads* a schedule at check-in |
+| `RodReceivingController` | `/rod/**` | **upstream** — rod validated at check-in in 4 | MVP-1 |
+| `PayoffStagingController` | `/payoff/status`, `/staging/**` | **4** | MVP-1 |
+| `CheckInController` | `/checkin/**` | **4** (rod) · **8** (spool) | MVP-1 |
+| `RunController` | `/run/**` | **5**, **6** · `/run/{id}/gaugetrace` in **8** | MVP-1 |
+| `SpcController` | `/spc` | **4** (pre-run), **6** | MVP-1 |
+| `WeldEventController` | `/weldevent`, `/run/{runId}/weldevents` | **6** *(read stubbed in 4 — **G26**)* | MVP-1 |
+| `RollAdjustController` | `/rolloverride` | **6** (FL1/FL2) · **10** (FL3) | MVP-1 |
+| `DieChangeController` | `/diechange` | **6** | MVP-1 — the **event** only; die inventory is MVP-2 |
+| `CheckOutController` | `/checkout` | **7** | MVP-1 |
+| `WipRejectionController` | `/wipreject` | **7** | MVP-1 |
+| `CoilController` | `/coil/**` | **9** | MVP-1 — returned 11 Aug 2026 with Phase 9 |
+| ~~`ShiftSummaryController`~~ | ~~`/shiftsummary`~~ | ~~11~~ | **MVP-2** — DB10 Supervisor Shift Summary |
 
 ### Microservice Project Structure
 
@@ -129,33 +153,47 @@ HTTP 500 Internal Server Error
 ### Common Enums (shared across all contracts)
 
 ```csharp
-enum LineId          { FL1, FL2, FL3 }
-enum LineStatus      { Running, Idle, Setup, Paused, Fault, Offline }
-enum RouteMode       { Standalone, Hybrid }
-enum ScheduleStatus  { Draft, Active, Inactive }
-enum ComponentName   { DB1, DB2, FM1, EdgeSet, FM2_S1, FM2_S2, FM2_S3 }   // FM2: S1 = 8", S2 = 6", S3 = 6" final (Aug 4 2026)
-enum ComponentState  { Active, Bypass, Skip }
-enum CoilStatus      { RECEIVED, STAGED, INFLAT, COMPLETE, HOLD, SCRAP }
-enum PayoffPosition  { Payoff1 = 1, Payoff2 = 2 }
-enum CheckpointType  { PreRun, PostDieChange, ManualSpotCheck, PostRun }
-enum DispositionCode { Suspend, Scrap, Rework }
-enum AlertSeverity   { Info, Warning, Critical }
+enum LineId              { FL1, FL2, FL3 }
+enum LineOperatingState  { Running, Idle, Setup, Paused, Fault, Offline }  // renamed from LineStatus, Aug 13 2026
+enum RouteMode           { Standalone, Hybrid }
+enum ScheduleStatus      { Draft, Active, Inactive }                        // MVP-2
+enum ComponentName       { DB1, DB2, FM1, EdgeSet, FM2_S1, FM2_S2, FM2_S3 } // FM2: S1 = 8", S2 = 6", S3 = 6" final (Aug 4 2026)
+enum ComponentState      { Active, Bypass, Skip }
+enum CoilStatus          { RECEIVED, STAGED, INFLAT, COMPLETE, HOLD, SCRAP }
+enum PayoffPosition      { Payoff1 = 1, Payoff2 = 2 }                       // see note on TraversingTakeup
+enum CheckpointType      { PreRun, PostDieChange, ManualSpotCheck, PostRun, RollAdjustTrigger }
+enum EdgeType            { Round, Square }                                  // one vocabulary; see note
+enum DispositionCode     { Suspend, Scrap, Rework }
+enum AlertSeverity       { Info, Warning, Critical }
 ```
 
----
+**Four notes on this block, each settling a contradiction between documents.**
+
+**`LineOperatingState` — three different things were called `LineStatus`.** The machine tag, this application enum, and a hub event. `[PLC §6]` arbitrates: **the machine tag keeps the name `LineState`**, this enum becomes **`LineOperatingState`**, and the hub event becomes **`LineStateChanged`**. **Do not add a seventh member.** There is deliberately no `Stopped` — `FR-141` fires the spool prompt on a *running → stopped* transition, and the machine-value → state mapping is published as **configuration** so the commissioning answer (`PLC-Q01`) needs no code change.
+
+**`CheckpointType` gained `RollAdjustTrigger`.** `POST /rolloverride` writes a checkpoint of that type, and `FlatWireTables.md` lists it; the enum omitted it, so the contract described a value the implementation had to invent. Note this enum is *why the checkpoint fired* — it is **not** the list of five physical measurement points in [`TechStackRecommendation.md`](TechStackRecommendation.md), which is a different axis.
+
+**`EdgeType` is `Round`/`Square`, once.** Three vocabularies had been in use — `Round`/`Square` here and in the schema, `Round`/`Flat` in `FW-010`, `Round Edge`/`Flat Edge` in `FW-050`/`FW-052` — with nothing mapping *Flat* to *Square*. **`Round`/`Square` is the domain value set**; any other wording is a display label mapped at the UI.
+
+**`ComponentState` is a three-value enum and always was.** `FW-010` specified `IsActive (bool)`, which cannot express **Bypass** vs **Skip** and contradicted `FW-012`'s own three-state UI. The enum wins.
+
+**`PayoffPosition` omits FL2's traversing take-up.** The `PayoffPosition` lookup table has three pinned ids — `Payoff1`, `Payoff2`, `TraversingTakeup` — and `FlatWireRunDetail` has a real FK to it. Rod-fed tables keep `CHECK (1,2)` as a documented deliberate narrowing, since a rod bundle only ever mounts on a VPS bay. **`TraversingTakeup` still has no UI anywhere — gap `G20`.**
 
 ---
 
-## SPRINT 1 — Foundation APIs
+---
 
-**Needed by:** Sprint S1 of the shopfloor workstream
+## GROUP 1 — Foundation APIs · **Phase 3**
+
+**Delivered in:** **Phase 3** — Line Status Board & Real-time Backbone
 **Blocks:** Dashboard 1 (Line Status Overview), SignalR hub connection
+**Scope:** MVP-1
 
 ---
 
 ### GET `/api/v1/flatwire/lines/status`
 
-Returns the current status summary of all three flat wire lines. Polled at startup; live updates delivered via SignalR `LineStatus` event.
+Returns the current status summary of all three flat wire lines. Polled at startup; live updates delivered via SignalR `LineStateChanged` event.
 
 **Auth:** Bearer JWT — any authenticated role
 
@@ -256,7 +294,7 @@ public record LinesStatusResponse(
 
 public record LineStatusDto(
     string LineId,
-    LineStatus Status,
+    LineOperatingState Status,
     string? ActiveOrderId,
     string? ActiveAlpha,
     string? Alloy,
@@ -290,10 +328,17 @@ public record ActiveAlertDto(
 
 ---
 
-## SPRINT 2 — Pass Schedule APIs + Rod Receiving
+## GROUP 2 — Pass Schedule APIs *(MVP-2)* + Rod Receiving *(upstream)*
 
-**Needed by:** Sprint S2 of the shopfloor workstream
-**Blocks:** Dashboard 9A, Dashboard 9, Pass Schedule Generation modal, Dashboard 2 (Rod Check-in)
+**Delivered in:** the pass-schedule endpoints are **not delivered by MVP-1 at all** — see the scope note below. `/rod/**` is **upstream**; the rod is validated at check-in in **Phase 4**.
+**Blocks:** Dashboard 9A, Dashboard 9, Pass Schedule Generation modal *(all MVP-2)*; Dashboard 2 (Rod Check-in) *(MVP-1)*
+**Scope:** **mixed — read the note**
+
+> ### ⚠ `/passschedule/**` is MVP-2 and is retained here for reference only
+>
+> Pass schedule authoring and generation are **owned by a separate track**, not deferred to a later MVP-1 sprint. **MVP-1 never creates or edits a schedule** — rod check-in *reads* one to build the PLC tag push payload, and that read boundary is specified in [`phase-04`](ShopfloorPlan/phase-04-rod-checkin-plc-config.md) and `PLCTagSpecification.md`. `PassScheduleId` is a **documented external reference** with no local FK, in the same class as `PlanId` and `SkidId`.
+>
+> **`POST /passschedule/generate`'s worked example is knowingly wrong and is deliberately left uncorrected** — see the banner at the head of this document. Do not implement from it.
 
 ---
 
@@ -746,10 +791,11 @@ Receives a new wire rod and generates an R-series alpha. Backend only in Phase 1
 
 ---
 
-## SPRINT 3 — Check-in, Active Run & SPC APIs
+## GROUP 3 — Check-in, Active Run & SPC APIs · **Phases 4, 5, 8**
 
-**Needed by:** Sprint S3 of the shopfloor workstream
-**Blocks:** Dashboard 2, Dashboard 3, Dashboard 5, Dashboard 6
+**Delivered in:** **Phase 4** (rod check-in, payoff staging, pre-run SPC) · **Phase 5** (active run + live trace) · **Phase 8** (FL2 spool check-in, `/run/{id}/gaugetrace`)
+**Blocks:** Dashboard 2, Dashboard 2A, Dashboard 3, Dashboard 5, Dashboard 5A, Dashboard 6
+**Scope:** MVP-1
 
 ---
 
@@ -1174,9 +1220,9 @@ Records FL1/FL3 rod check-in, writes pass schedule acknowledgment, and triggers 
 
 1. Rod status set to `INFLAT`
 2. Pass schedule acknowledgment record written
-3. `PLCTagService.PushPassSchedule(passScheduleId, lineId, payoffPosition)` — all OPC tag writes
+3. `PLCTagService.PushPassSchedule(scheduleId, lineId, payoffPosition)` — all OPC tag writes
 4. Run timer started
-5. `LineStatus` SignalR event broadcast → `{ lineId: "FL1", status: "Running" }`
+5. `LineStateChanged` SignalR event broadcast → `{ lineId: "FL1", status: "Running" }`
 6. **If the rod was pre-checked-in, the staged row is *consumed*** — `RodStaging.Status → 'CheckedIn'`, `CheckedInAt` and `RodCheckinId` set — and `PayoffStateChanged` is broadcast with `state: "Active"`. Check-in never creates a parallel staging record.
 
 > **Scanning an unstaged rod straight into check-in remains valid.** Pre-check-in is a `Should`
@@ -1449,7 +1495,7 @@ Returns historical gauge readings for a completed or FL2 incoming run. Used by D
 
 ### POST `/api/v1/flatwire/run/{runId}/pause`
 
-Pauses an active run. Freezes footage counter and broadcasts `LineStatus` event.
+Pauses an active run. Freezes footage counter and broadcasts `LineStateChanged` event.
 
 **Auth:** Bearer JWT — Operator or above
 
@@ -1583,10 +1629,11 @@ Records a manual SPC checkpoint measurement set. Called from Dashboard 6.
 
 ---
 
-## SPRINT 4 — Events, Completion & Special Cases APIs
+## GROUP 4 — Events, Completion & Special Cases APIs · **Phases 6, 7, 9**
 
-**Needed by:** Sprint S4 of the shopfloor workstream
-**Blocks:** Dashboard 4, 7, 8, 11, 12, Die Change screen
+**Delivered in:** **Phase 6** (weld, die change, roll override, pause/resume) · **Phase 7** (WIP rejection, rod checkout) · **Phase 9** (coil completion, label, skid)
+**Blocks:** Dashboards 7, 7b, 8, 11, 12 and the Die Change dialog. **Dashboard 4 was retired 1 Aug 2026** — weld capture moved to the Dashboard 2A dialog, so `POST /weldevent` now has two callers and no screen of its own.
+**Scope:** MVP-1 — Phase 9 returned whole on 11 Aug 2026
 
 ---
 
@@ -1901,7 +1948,7 @@ Checks out a rod from a payoff position. Supports both Mode A (pre-run, footage 
 - `PLCTagService.ClearPayoffTags(lineId, payoffPosition)` called
 - Rod status updated per disposition
 - Partial spool alpha generated if `inProcessMaterialDisposition = AcceptAsPartialRun` (Mode B)
-- `LineStatus` SignalR event broadcast → `Idle`
+- `LineStateChanged` SignalR event broadcast → `Idle`
 
 **Response `200 OK`:**
 
@@ -2011,7 +2058,7 @@ Completes a coil run: generates output coil alpha, records source traceability, 
 - Coil status → `COMPLETE`
 - If `Coil2Of2`: skid record finalized, skid appears in packing queue
 - Run marked complete; Dashboard 3 shows "Run Complete"
-- `LineStatus` SignalR event broadcast → `Idle`
+- `LineStateChanged` SignalR event broadcast → `Idle`
 
 **Response `200 OK`:**
 
@@ -2068,10 +2115,11 @@ Returns all data needed to render and print the physical coil label. Called by D
 
 ---
 
-## SPRINT 5 — Shift Summary API
+## GROUP 5 — Shift Summary API · **MVP-2**
 
-**Needed by:** Sprint S5 of the shopfloor workstream
-**Blocks:** Dashboard 10
+**Delivered in:** not delivered by MVP-1. Would be **Phase 11**.
+**Blocks:** Dashboard 10 (Supervisor Shift Summary)
+**Scope:** **MVP-2** — the screen and this endpoint moved out on 11 Aug 2026. Retained for reference; `OI-101` (shift boundaries undefined) blocks every figure on it and is still open.
 
 ---
 
@@ -2256,7 +2304,7 @@ Bay **occupancy** changes: pre-check-in, pre-check-out, Mark-as-Welded, and chec
 }
 ```
 
-#### `LineStatus`
+#### `LineStateChanged`
 ```json
 {
   "lineId": "FL1",
@@ -2295,7 +2343,7 @@ speedFpm$(lineId: string): Observable<SpeedFpmEvent>
 payoffWeight$(lineId: string): Observable<PayoffWeightEvent>
 payoffStateChanged$(lineId: string): Observable<PayoffStateChangedEvent>
 componentStatus$(lineId: string): Observable<ComponentStatusEvent>
-lineStatus$(lineId: string): Observable<LineStatusEvent>
+lineStateChanged$(lineId: string): Observable<LineStateChangedEvent>
 alertRaised$(lineId: string): Observable<AlertRaisedEvent>
 alertCleared$(lineId: string): Observable<AlertClearedEvent>
 ```
@@ -2304,23 +2352,32 @@ alertCleared$(lineId: string): Observable<AlertClearedEvent>
 
 ---
 
-## Sprint Delivery Schedule
+## Phase Delivery Schedule
 
-| Sprint | Endpoints to Publish as Stub | Real Implementation Due |
-|---|---|---|
-| S1 | `GET /lines/status`, SignalR hub skeleton | S1 |
-| S2 | `GET /passschedule`, `GET /passschedule/{id}`, `POST /passschedule`, `PUT /passschedule/{id}`, `PATCH /passschedule/{id}/status`, `POST /passschedule/generate`, `GET /rod/{alpha}`, `POST /rod` | S2 |
-| S3 | `POST /checkin/rod`, `POST /checkin/spool`, `GET /run/active`, `GET /run/{id}/gaugetrace`, `POST /run/{id}/pause`, `POST /run/{id}/resume`, `POST /spc`, `GET /payoff/status`, `POST /staging/rod`, `POST /staging/rod/unstage`, `GET /staging/queue`, `GET /run/{id}/weldevents` † | S3 |
-| S4 | `POST /weldevent`, `POST /rolloverride`, `POST /diechange`, `POST /checkout`, `POST /wipreject`, `POST /coil/complete`, `GET /coil/{alpha}/label` | S4 |
-| S5 | `GET /shiftsummary` | S5 |
+**Re-baselined 13 Aug 2026 from the `S1`–`S5` sprint model to the roadmap's 14 phases.** The authority for endpoint → phase is [`back-matter.md` Appendix A](ShopfloorPlan/back-matter.md); the calendar is `back-matter.md`'s week grid — **development window 17 Aug – 30 Sep 2026, with a hard Phase-1 gate of 14 Aug**.
 
-> † **`GET /run/{id}/weldevents` is read-before-write.** It sits in S3 because its only consumer is
-> Dashboard 2A, which is an S3 / phase-4 screen — but the rows it reads are written by `POST /weldevent`
-> in **S4**. Until that lands it returns an empty array, which is a legitimate response (a run with no
+| Phase | Endpoints to publish as stub | Real implementation due | Scope |
+|---|---|---|---|
+| **1** | — *(service skeleton, hub skeleton, `SimulatePLCTagPush`)* | 1 | MVP-1 |
+| **3** | `GET /lines/status`, SignalR hub streaming | 3 | MVP-1 |
+| **4** | `POST /checkin/rod`, `POST /spc` *(pre-run)*, `GET /payoff/status`, `POST /staging/rod`, `POST /staging/rod/unstage`, `GET /staging/queue`, `GET /run/{id}/weldevents` † | 4 | MVP-1 |
+| **5** | `GET /run/active` | 5 | MVP-1 |
+| **6** | `POST /weldevent`, `POST /rolloverride`, `POST /diechange`, `POST /spc`, `POST /run/{id}/pause`, `POST /run/{id}/resume` | 6 | MVP-1 |
+| **7** | `POST /wipreject`, `POST /checkout` | 7 | MVP-1 |
+| **8** | `POST /checkin/spool`, `GET /run/{id}/gaugetrace` | 8 | MVP-1 |
+| **9** | `POST /coil/complete`, `GET /coil/{alpha}/label` | 9 | MVP-1 |
+| — | `GET /rod/{alpha}`, `POST /rod` | existing CoilReceiving | **upstream** |
+| ~~2~~ | ~~`GET/POST/PUT /passschedule`, `PATCH …/status`, `POST /passschedule/generate`~~ | — | **MVP-2** |
+| ~~11~~ | ~~`GET /shiftsummary`~~ | — | **MVP-2** |
+
+> † **`GET /run/{id}/weldevents` is read-before-write, and that is gap `G26`.** Its only consumer is
+> Dashboard 2A, a **phase-4** screen — but the rows it reads are written by `POST /weldevent` in
+> **phase 6**. Until that lands it returns an empty array, which is a legitimate response (a run with no
 > welds yet), so the screen is complete and reviewable at the phase-4 gate without pulling weld-event
-> work forward. Populate the S3 stub with non-empty sample data so the list renders in review.
+> work forward. **Populate the phase-4 stub with non-empty sample data** so the list renders in review —
+> and verify the real write at the **phase-6** exit, not the phase-4 exit.
 
-> **Stub protocol:** The backend team publishes an OpenAPI/Swagger stub (200 response with schema-valid dummy data, no database) at the start of each sprint. The shopfloor Angular team builds against the stub; stubs are replaced by real implementations as they land.
+> **Stub protocol:** The backend team publishes an OpenAPI/Swagger stub (200 response with schema-valid dummy data, no database) at the start of each phase. The shopfloor Angular team builds against the stub; stubs are replaced by real implementations as they land. **Contracts are published as stubs first precisely so the UI is not blocked** — see `00-foundations.md` **§0.5**, the stub-first delivery contract. *(This pointer said §0.4, the real-time architecture, until 13 Aug 2026; §0.5 did not exist until the model was rehomed there from the deleted `CheckinImplementationPlan.md`.)*
 
 ---
 
@@ -2362,12 +2419,29 @@ alertCleared$(lineId: string): Observable<AlertClearedEvent>
 
 ---
 
+## Endpoints this contract does not define — and should
+
+**Recorded 13 Aug 2026.** Each is required by something already decided, and none has a contract anywhere. They are listed rather than drafted, because inventing a shape here would create a second unowned contract — the condition this document was just demoted for.
+
+| Missing | Required by | Register |
+|---|---|---|
+| **Alloy lookup CRUD + audit** | `FW-004` needs an editable, audit-logged alloy table; `TC-652` tests that only Process Engineering / System Admin may edit it, so the permission is specified against an endpoint that does not exist | `REVIEW.md` Tier 2 #11 |
+| **Roll-override revert** | `FR-212` restricts reverting a roll-gap override to the **Operations Manager**, and `TC-260` is written to prove the denial — the test currently *records the gap* rather than passing. `RollOverride` also has no revert columns, so a reverted override is indistinguishable from one in force | **`OI-32`** (endpoint) · `DBChanges/GapAnalysis.md` **B4** (columns) |
+| **Alert raise / acknowledge / clear** | The hub broadcasts `AlertRaised` / `AlertCleared` and `GET /lines/status` returns `activeAlerts`, but nothing persists an alert or defines its lifecycle. `TC-500` records that alerts do not survive a restart | **`OI-28`** · `REVIEW.md` Tier 2 #12 |
+
+**These belong in [`ProjectPlan/04-APIContract.md`](../ProjectPlan/04-APIContract.md), the contract of record** — not here.
+
+---
+
 ## Related Documents
 
 | Document | Purpose |
 |---|---|
-| [ShopfloorAndRealTimePlan.md](ShopfloorAndRealTimePlan.md) | Shopfloor sprint plan — UI stories and SignalR architecture |
-| [FlatWireJiraStories.md](FlatWireJiraStories.md) | Full backlog — main track stories (FW-010, FW-020 etc.) |
+| **[ProjectPlan/04-APIContract.md](../ProjectPlan/04-APIContract.md)** | **The contract of record — read this first; it wins over this document** |
+| [ShopfloorAndRealTimePlan.md](ShopfloorAndRealTimePlan.md) | Master implementation roadmap — the 14-phase model and the Aug 17 – Sep 30 window |
+| [ShopfloorPlan/back-matter.md](ShopfloorPlan/back-matter.md) | **Appendix A — the endpoint → phase map this document's delivery schedule is derived from**; also the `G##` gap register |
+| [FlatWireJiraStories.md](FlatWireJiraStories.md) | Full backlog — a **points cross-check, not a schedule** |
 | [TechStackRecommendation.md](TechStackRecommendation.md) | Architecture decisions and microservice structure |
-| [FlatWireOpenQuestions.md](../../Analysis/FlatWireOpenQuestions.md) | Open questions — OQ-10 (weight formula), OQ-74 (checkout auth), OQ-14 (pass schedule selection), OQ-15 (FL3 schedules) |
+| [PLCTagSpecification.md](../RequirementDocuments/PLCTagSpecification.md) | **The only tag map in the repository.** No tag path string may be written into this document |
+| [FlatWireOpenQuestions.md](../../Analysis/FlatWireOpenQuestions.md) | Open questions — **`OQ-10`** (footage-to-weight factor), **`OQ-14`** (pass schedule selection at check-in), **`OQ-15`** (FL3 hybrid — one schedule or two). All three are `Critical` and still open. *(`OQ-74`, mid-run checkout authorisation, was listed here as open; it was **decided** and now lives in [`FlatWireDecidedQuestions.md`](../../Analysis/FlatWireDecidedQuestions.md).)* |
 | [RodPreCheckin.md](../RequirementDocuments/RodPreCheckin.md) | Pre-check-in / payoff staging analysis — the requirement trace behind the `/staging/**` endpoints |

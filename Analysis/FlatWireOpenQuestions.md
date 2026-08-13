@@ -391,7 +391,7 @@ Part B of [SpoolCompletionNotification.md](../MVP-1/RequirementDocuments/SpoolCo
 > **Two structural consequences, both larger than this gap as first written:**
 >
 > 1. `AlloyProperty` holds `GaugeToleranceDefault` / `WidthToleranceDefault` as **single ± values**. Min/max means explicit `Min`/`Max` pairs — a **rename plus widen**, not the single `RodDiameterToleranceDefault` add proposed below (and in **OI-07**). Do diameter and ovality in the same change.
-> 2. Ovality already exists as a *computed* check — `RodCheckin.SpcOvalityIn` with a hard-coded **≤ 0.003"** in [CheckinImplementationPlan.md](../MVP-1/DevelopmentPlan/CheckinImplementationPlan.md). That constant must move into the lookup, or ovality is validated two ways.
+> 2. Ovality already exists as a *computed* check — `RodCheckin.SpcOvalityIn`, against a hard-coded **≤ 0.003"** that the April check-in implementation plan carried (deleted 13 Aug 2026, recoverable at `1964086`). **The value is per-alloy reference data, not a constant**, so it belongs in `AlloyProperty.RodOvalityMaxIn`; the computed check must read it from there, or ovality is validated two ways.
 >
 > **No values are to be seeded until the e-mail arrives.** "Plus or minus 10" is not a specification. Add the columns nullable, keep the Dashboard 2A per-alloy map visibly marked as mock, and hold the seed script. **Still blocks Phase 4 implementation** even though the shape is settled.
 
@@ -409,7 +409,7 @@ To resolve:
 
 Blocks the Phase 4 check-in and staging validation. Detail in [RodPreCheckin.md](../MVP-1/RequirementDocuments/RodPreCheckin.md).
 
-**Recommendation:** **make the structural change now and seed nothing.** Rename `AlloyProperty`'s single ± columns to explicit `Min`/`Max` pairs, add diameter and ovality in the same change, and move `CheckinImplementationPlan.md`'s hard-coded ovality ≤ 0.003″ into the lookup so ovality is validated once rather than twice. The shape is decided and the columns are nullable, so the schema is not waiting on the values — chase the e-mail as a separate action. **Per-alloy is sufficient granularity** unless Process Engineering states that tolerance varies by vendor or by nominal size.
+**Recommendation:** **make the structural change now and seed nothing.** Rename `AlloyProperty`'s single ± columns to explicit `Min`/`Max` pairs, add diameter and ovality in the same change, and put the hard-coded ovality ≤ 0.003″ into the lookup so ovality is validated once rather than twice. The shape is decided and the columns are nullable, so the schema is not waiting on the values — chase the e-mail as a separate action. **Per-alloy is sufficient granularity** unless Process Engineering states that tolerance varies by vendor or by nominal size.
 
 ---
 
