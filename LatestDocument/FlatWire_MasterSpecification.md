@@ -2889,7 +2889,7 @@ Working days are **counted, not assumed**: **Labor Day falls on Mon 7 Sep 2026**
 
 ### 9.5 Backlog — 12 epics, 58 stories
 
-> **⚠ Superseded 13 Aug 2026 — this section is a historical snapshot.** The MVP-1 backlog is [`MVP-1/DevelopmentPlan/FlatWireJiraStories.md`](../MVP-1/ProjectPlan/FlatWireJiraStories.md): **116 stories / 3,292 h**, re-derived from the 15 `ShopfloorPlan/` phase specs, organised into four even two-week sprints (`S0`–`S3`, `S1` from **24 Aug 2026**) and **sized in hours, not points**. **Epics and story points are both retired**; the table below — and every point total in it — is preserved there in *Appendix A — Retired point basis*.
+> **⚠ Superseded 13 Aug 2026 — this section is a historical snapshot.** The MVP-1 backlog is [05-SprintPlanAndBacklog.md](../MVP-1/ProjectPlan/05-SprintPlanAndBacklog.md): **116 stories / 3,292 h**, re-derived from the 15 `ShopfloorPlan/` phase specs, organised into four even two-week sprints (`S0`–`S3`, `S1` from **24 Aug 2026**) and **sized in hours, not points**. **Epics and story points are both retired**; the table below — and every point total in it — is preserved there in *Appendix A — Retired point basis*.
 >
 > **Note (a) above is now closed.** The scaffold gap it identifies — *"no story anywhere in the 58 covers the Angular library scaffold, the `FlatWire` .NET solution and its 13 controllers, or the OPC ingest and `PLCTagService`"* — was the defect the rewrite existed to fix. Those three are now `FW-N03`, `FW-N04` and `FW-N05`, and **Phase 1 carries 33 stories** where it carried seven database-only ones. **Note (b)'s ratio has no denominator any more** and must not be re-derived.
 >

@@ -74,7 +74,7 @@ Numbered `PP-##`. Each is recorded at the point it was found.
 |---|---|---|
 | **PP-01** | **The index count is 46, not 44.** Counted from `FlatWire_DDL_07_Indexes.sql`: 43 non-clustered + 3 filtered UNIQUE. The master specification says "41 plus 3" | `[HLD §6.8]`, `[DR §4.2]` |
 | **PP-02** | **`NFR001`, `NFR002` and `NFR008` are cited nowhere** in any downstream artifact. Either three NFRs exist that nothing consumes, or the numbering has gaps. **No NFR was invented to fill it** | `[SRS §6.4]` |
-| **PP-03** | **The OEE dashboard has no story, no phase and no owner** — it has an approved mockup and 17 source requirements | `[SRS §11.3]`, `[SP §7.3]` |
+| **PP-03** | **The OEE dashboard has no story, no phase and no owner** — it has an approved mockup and 17 source requirements | `[SRS §11.3]`, `[SP §7.7]` *(`FW-N09`, listed under B.4 "adopted but uncosted")* |
 | **PP-04** | **The hub event count is 10, not 9.** The "9" predates `PayoffStateChanged` | `[API §10.3]` |
 
 ## 5a. Changed by the 30 Jul 2026 client call

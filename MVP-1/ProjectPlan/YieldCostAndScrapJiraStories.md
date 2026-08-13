@@ -1,9 +1,9 @@
 # Flat Wire Mill — Jira Story Plan: Yield, Cost Ledger & Scrap
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 13, 2026 — **reduced to a pointer**: the four story bodies were absorbed back into [`FlatWireJiraStories.md`](./FlatWireJiraStories.md) when it became the single MVP-1 backlog *(earlier same day: split out of that file; story bodies otherwise April 30, 2026)*
+**Last Updated:** August 13, 2026 — **reduced to a pointer**: the four story bodies were absorbed back into [05-SprintPlanAndBacklog.md](./05-SprintPlanAndBacklog.md) when it became the single MVP-1 backlog *(earlier same day: split out of that file; story bodies otherwise April 30, 2026)*
 **Document Type:** ~~Story backlog for Phase 12~~ — **pointer document since 13 Aug 2026**
-**Status:** **Superseded.** The four story bodies were absorbed into [`FlatWireJiraStories.md`](./FlatWireJiraStories.md) (S3 · Phase 12) when it became the single MVP-1 backlog. Retained as a citation target
+**Status:** **Superseded.** The four story bodies were absorbed into [05-SprintPlanAndBacklog.md](./05-SprintPlanAndBacklog.md) (S3 · Phase 12) when it became the single MVP-1 backlog. Retained as a citation target
 **Scope:** **Epic 10 (Coil Yield & Cost Ledger)** and **Epic 11 (Scrap Management)** — `FW-100`, `FW-101`, `FW-102`, `FW-110`. **4 stories · 11 points.**
 **Phase:** **12** — Yield, Cost Ledger & Scrap · **Window:** W7 (Sep 28–30, 3 working days) · **Owner:** BE stream
 **Effort:** **177 h** hand-coded / **126 h** AI-assisted all-in; **128 h / 89 h** development-only — [`YieldCostAndScrapSheet.md`](./YieldCostAndScrapSheet.md)
@@ -12,7 +12,7 @@
 
 > ## ⚠ Pointer — the story bodies moved on 13 Aug 2026
 >
-> `FW-100`, `FW-101`, `FW-102` and `FW-110` now live in **[`FlatWireJiraStories.md`](./FlatWireJiraStories.md) → S3 · Phase 12**, which became the single MVP-1 shopfloor backlog. **Their ids and titles are unchanged.**
+> `FW-100`, `FW-101`, `FW-102` and `FW-110` now live in **[05-SprintPlanAndBacklog.md](./05-SprintPlanAndBacklog.md) → S3 · Phase 12**, which became the single MVP-1 shopfloor backlog. **Their ids and titles are unchanged.**
 >
 > **Story points are retired** — the 11-point basis is historical and is recorded in that file's *Appendix A*. Sizing is now in hours: FE 44 · BE 72 · DB 12 → QA 26 → cont. 23 = **177 h**, which reconciles to `CapacityAndEffortModel.md` §3b and to the descope ladder's `33 + 49 + 28 + 67` split on both axes.
 >
@@ -25,8 +25,10 @@
 > ## ⚠ This is not the schedule, and its sprints do not exist
 >
 > All four stories carry **Sprint 5** tags. Those sprints were **superseded on 26 July 2026** and resolve to *nothing*
-> in the roadmap — see the crosswalk in [`FlatWireJiraStories.md`](./FlatWireJiraStories.md#sprint--phase-crosswalk),
-> where Sprint 5 maps to **Phases 3, 11, 12 and 14**. Everything here is **Phase 12**.
+> in the roadmap. Under the old crosswalk Sprint 5 mapped to **Phases 3, 11, 12 and 14**; everything here is **Phase 12**.
+> The live cadence is four even two-week sprints — [`05-SprintPlanAndBacklog.md`](./05-SprintPlanAndBacklog.md) §4.2 — and
+> these four stories sit in **`S3` · Phase 12** there. *(The crosswalk this line used to cite went with the 13 Aug 2026
+> backlog rewrite; the anchor had been dead since before that document was absorbed.)*
 >
 > **What this document is for:** the **story points and acceptance criteria**. For three of these four stories it is
 > the *only* requirement text that exists anywhere (§3) — which is a defect, not a feature of the document.
@@ -251,7 +253,7 @@ withdrawn on 12 Aug 2026, so there is no second place to look.
 | Document | Purpose |
 |---|---|
 | [`YieldCostAndScrapSheet.md`](./YieldCostAndScrapSheet.md) | **The effort and scope home for Phase 12** — story-level hours on both bases, the descope ladder, the blocker analysis and the specification gap |
-| [`FlatWireJiraStories.md`](./FlatWireJiraStories.md) | The other 55 stories / 220 points, the **sprint → phase crosswalk** these Sprint 5 tags resolve through, and the points legends |
+| [05-SprintPlanAndBacklog.md](./05-SprintPlanAndBacklog.md) | The other 55 stories / 220 points, the **sprint → phase crosswalk** these Sprint 5 tags resolve through, and the points legends |
 | [`ShopfloorPlan/phase-12-yield-cost-ledger-scrap.md`](./ShopfloorPlan/phase-12-yield-cost-ledger-scrap.md) | The phase file — deliverable inventory |
 | [`CapacityAndEffortModel.md`](./CapacityAndEffortModel.md) | §3 the published 177 h and the programme points cross-check · §5 the descope ladder |
 | [`DevelopmentEffortModel.md`](./DevelopmentEffortModel.md) | The AI-assisted factor card (§1). Its per-phase table **excludes** Phase 12 |

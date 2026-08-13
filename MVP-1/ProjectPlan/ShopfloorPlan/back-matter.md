@@ -1,7 +1,7 @@
 # Back Matter — Dependencies, Roadmap, Gaps & Appendices
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 13, 2026 — Appendix C marked a **derived view** (correct for its 45 rows, no longer complete) now that [`../FlatWireJiraStories.md`](../FlatWireJiraStories.md) proves story→phase coverage at source
+**Last Updated:** August 13, 2026 — Appendix C marked a **derived view** (correct for its 45 rows, no longer complete) now that [05-SprintPlanAndBacklog.md](../05-SprintPlanAndBacklog.md) proves story→phase coverage at source
 **Status:** Active — **the live home of the `G##` gaps register**
 **Layer:** Cross-phase planning
 **Scope:** MVP-1, with MVP-2 rows marked in place
@@ -225,7 +225,7 @@ Consolidated review findings, prioritised. **Critical** items should be resolved
 
 ## Appendix C — Story coverage: every FW-### → phase
 
-> **⚠ This appendix became a derived view on 13 Aug 2026.** [`../FlatWireJiraStories.md`](../FlatWireJiraStories.md) was rewritten as the authoritative sprint-wise MVP-1 backlog — **116 stories / 3,292 h** — and **every story there names its own phase and sprint**, so coverage is now proved at source rather than reconstructed here. Its §4.1 roll-up carries the per-phase story counts and its Appendix B the full id provenance.
+> **⚠ This appendix became a derived view on 13 Aug 2026.** [05-SprintPlanAndBacklog.md](../05-SprintPlanAndBacklog.md) was rewritten as the authoritative sprint-wise MVP-1 backlog — **116 stories / 3,292 h** — and **every story there names its own phase and sprint**, so coverage is now proved at source rather than reconstructed here. Its §4.1 roll-up carries the per-phase story counts and its Appendix B the full id provenance.
 >
 > **This table is retained and still correct for the 45 stories it maps** — their ids and phase assignments are unchanged, because story ids are frozen. **It is no longer complete:** the 71 stories minted or adopted in the rewrite (`FW-130`–`FW-201` and the `FW-N##` set) are not listed. **Do not extend it** — add new stories to the backlog, which is where the coverage claim now lives.
 >
@@ -288,13 +288,13 @@ Every shopfloor backlog story is mapped to a phase, so coverage is provable. Rod
 
 **Out of shopfloor scope — upstream (existing CoilReceiving / Planning / Scheduling systems):** FW-020, FW-021, FW-022 (rod receiving); FW-030, FW-031, FW-040, FW-041, FW-042, FW-043, FW-050, FW-051, FW-052, FW-053, FW-055 (orders / planning / line scheduling). These 14 stories are tracked in the upstream effort, not this shopfloor plan.
 
-> **⚠ Those 14 stories were deleted from [`FlatWireJiraStories.md`](../FlatWireJiraStories.md) on 13 Aug 2026** when it was reduced to shopfloor MVP-1 only — they are another team's backlog. **Their bodies are recoverable at commit `1964086`**, and their ids, titles and descriptions remain in [`05-SprintPlanAndBacklog.md`](../05-SprintPlanAndBacklog.md) §7. The ids above still resolve; **`FW-061` still depends on `FW-020`** for R-series rod alphas, which is the dependency behind this plan's *"if upstream slips, Phase 4 has no material"* risk.
+> **⚠ Those 14 stories were deleted from [05-SprintPlanAndBacklog.md](../05-SprintPlanAndBacklog.md) on 13 Aug 2026** when it was reduced to shopfloor MVP-1 only — they are another team's backlog. **Their bodies are recoverable at commit `1964086`**, and their ids, titles and descriptions remain in [`05-SprintPlanAndBacklog.md`](../05-SprintPlanAndBacklog.md) §7. The ids above still resolve; **`FW-061` still depends on `FW-020`** for R-series rod alphas, which is the dependency behind this plan's *"if upstream slips, Phase 4 has no material"* risk.
 
 **Coverage:** **45/45 shopfloor stories mapped** — every story has a phase, which is what this appendix proves.
 
-> **The shopfloor 45 now live in three files (13 Aug 2026):** **35 stories / 147 points** in [`FlatWireJiraStories.md`](../FlatWireJiraStories.md) (shopfloor MVP-1) · **4 / 11** in [`YieldCostAndScrapJiraStories.md`](../YieldCostAndScrapJiraStories.md) (Phase 12) · **6 / 31** in [`FlatWireJiraStories-MVP2.md`](../../../MVP-2/DevelopmentPlan/FlatWireJiraStories-MVP2.md) (MVP-2). `147 + 11 + 31 = 189`. **The 59-story / 231-point totals retire** — upstream's 14 / 42 left the repository, so no file counts them.
+> **The shopfloor 45 now live in three files (13 Aug 2026):** **35 stories / 147 points** in [05-SprintPlanAndBacklog.md](../05-SprintPlanAndBacklog.md) (shopfloor MVP-1) · **4 / 11** in [`YieldCostAndScrapJiraStories.md`](../YieldCostAndScrapJiraStories.md) (Phase 12) · **6 / 31** in [`FlatWireJiraStories-MVP2.md`](../../../MVP-2/DevelopmentPlan/FlatWireJiraStories-MVP2.md) (MVP-2). `147 + 11 + 31 = 189`. **The 59-story / 231-point totals retire** — upstream's 14 / 42 left the repository, so no file counts them.
 
-> **Corrected 13 Aug 2026: this read 44/44 and was missing a story.** **`FW-124` · Dashboard 5A — FL2 Spool Queue** (5 pts, `High`, phase 8) was added to Epic 7 and never reached any summary — not this appendix, not the backlog summary in [`FlatWireJiraStories.md`](../FlatWireJiraStories.md), not the *"184-point cross-check basis"* cited below. It is live: `phase-08` builds it, `02-SRS.md` §5.3a carries its requirements and `SpoolQueue.md` is its owning specification. **The 44/44 claim was not a miscount — the row simply was not here**, which is the failure mode a coverage appendix exists to prevent.
+> **Corrected 13 Aug 2026: this read 44/44 and was missing a story.** **`FW-124` · Dashboard 5A — FL2 Spool Queue** (5 pts, `High`, phase 8) was added to Epic 7 and never reached any summary — not this appendix, not the backlog summary in [05-SprintPlanAndBacklog.md](../05-SprintPlanAndBacklog.md), not the *"184-point cross-check basis"* cited below. It is live: `phase-08` builds it, `02-SRS.md` §5.3a carries its requirements and `SpoolQueue.md` is its owning specification. **The 44/44 claim was not a miscount — the row simply was not here**, which is the failure mode a coverage appendix exists to prevent.
 
 **Of those 45, MVP-1 builds 39.** Six are MVP-2 — `FW-010`, `FW-011`, `FW-012`, `FW-013`, `FW-068`, `FW-069` — and `FW-014` spans both. **The 44/44 figure is mapping coverage, not an MVP-1 workload**; read before 13 Aug 2026 it was easy to take for the second, because every row said *"In scope"* whether or not MVP-1 built it.
 
@@ -307,7 +307,7 @@ Deferred past Sep 30 (MVP-1, but first to slip): `FW-101`, `FW-102`, `FW-110`. E
 |---|---|
 | [CapacityAndEffortModel.md](../CapacityAndEffortModel.md) | **Per-phase owners + dev-day effort, working-day capacity model, descope ladder (resolves G1)** |
 | [04-APIContract.md](../04-APIContract.md) | `FlatWire.API` REST + `FlatWireHub` contract |
-| [FlatWireJiraStories.md](../FlatWireJiraStories.md) | **Shopfloor MVP-1 backlog — 35 stories / 147 points**, a points cross-check, **not** a schedule. It also carries the sprint→phase crosswalk and the **points-vs-hours cross-check** (9.5 h/point AI-assisted, 7.7 excluding Phase 1). *(Reduced to one scope 13 Aug 2026: upstream **deleted**, Phase 12 and MVP-2 split to sibling files. The **184**- and **189**-point and "58/59 stories" figures quoted here previously spanned all three scopes.)* |
+| [05-SprintPlanAndBacklog.md](../05-SprintPlanAndBacklog.md) | **Shopfloor MVP-1 backlog — 35 stories / 147 points**, a points cross-check, **not** a schedule. It also carries the sprint→phase crosswalk and the **points-vs-hours cross-check** (9.5 h/point AI-assisted, 7.7 excluding Phase 1). *(Reduced to one scope 13 Aug 2026: upstream **deleted**, Phase 12 and MVP-2 split to sibling files. The **184**- and **189**-point and "58/59 stories" figures quoted here previously spanned all three scopes.)* |
 | [YieldCostAndScrapJiraStories.md](../YieldCostAndScrapJiraStories.md) | Phase 12's stories — **4 / 11** (`FW-100`–`FW-102`, `FW-110`). The only requirement text in existence for three of the four |
 | [FlatWireJiraStories-MVP2.md](../../../MVP-2/DevelopmentPlan/FlatWireJiraStories-MVP2.md) | The deferred **6 / 31** (`FW-010`–`FW-013`, `FW-068`, `FW-069`). **`FW-061` and `FW-082` depend on `FW-010` there** |
 | [FlatWireTables.md](../FlatWireTables.md) | Table designs + existing-table renames |

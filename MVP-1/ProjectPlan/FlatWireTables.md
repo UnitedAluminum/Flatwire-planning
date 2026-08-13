@@ -748,6 +748,6 @@ The April figure of 22 was an estimate against an earlier snapshot. What the des
 | Document | Purpose |
 |---|---|
 | [04-APIContract.md](04-APIContract.md) | Full API contract — the source of truth for all field names and types |
-| [FlatWireJiraStories.md](FlatWireJiraStories.md) | Sprint plan — FW-001 covers schema changes |
+| [05-SprintPlanAndBacklog.md](05-SprintPlanAndBacklog.md) | Sprint plan — FW-001 covers schema changes |
 | [03-HLD-and-ERDiagram.md §14](03-HLD-and-ERDiagram.md) | Architecture decisions |
 | [ShopfloorPlan/phase-04-rod-checkin-plc-config.md](ShopfloorPlan/phase-04-rod-checkin-plc-config.md) | Check-in implementation — uses `RodCheckin` and `Rod` tables. *(Replaces `CheckinImplementationPlan.md`, deleted 13 Aug 2026.)* |
