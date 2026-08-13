@@ -113,7 +113,7 @@ These three were sibling folders of `ProjectPlan/` until the consolidation. They
 | [Monitoring.md](Operations/Monitoring.md) | `[MON]` | Health monitoring and logging |
 | [SupportGuide.md](Operations/SupportGuide.md) | `[SUP]` | Incident runbook, handover, contacts, command reference |
 
-`Tools/` holds the three build scripts. **The markdown is always the source and the `.docx` / `.xlsx` is generated output** — never edit a generated file.
+`Tools/` holds the four build scripts. **The markdown is always the source and the `.docx` / `.xlsx` is generated output** — never edit a generated file. Two of them build a client workbook whose prose is authored beside the script (`ClientQuestionsContent.md`, `DevelopmentPlanContent.md`) and whose *figures are parsed from this folder*, so a plan change propagates on the next run. Both refuse to build — deleting their own output — if a file name, requirement id, endpoint, table name or screen number reaches a client cell. See [`Tools/README.md`](Tools/README.md).
 
 ---
 

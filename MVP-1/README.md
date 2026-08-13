@@ -14,7 +14,7 @@ MVP-1/
 ├── ProjectPlan/     ← the single source of truth for development, testing and deployment
 │                      Business/ Architecture/ Database/ Backend/ Frontend/
 │                      Development/ Testing/ Operations/ + Tools/ + README.md
-└── SRS/             ← 3 client deliverables (2 .docx + 1 .xlsx); 2 of the 3 generated
+└── SRS/             ← 4 client deliverables (2 .docx + 2 .xlsx); 3 of the 4 generated
 ```
 
 > **Four sibling folders were consolidated into `ProjectPlan/` on 13 Aug 2026 and no longer exist.**
@@ -67,6 +67,7 @@ Seventeen files. **Fourteen are specifications; three are not** — and the thre
 
 - **`Spool.md`** is the **domain reference for what a spool is** (physical form, the 3,500 lb ceiling against the ~1,800 lb working target, material flow, lifecycle). *That* content is authoritative; its **screen** rules are not — those belong to `RocCheckin.md` §4.3, `SpoolQueue.md` and `OutputCoilCompletion.md` §4 — and its FM2 description is **superseded by `D-26`**.
 - **`PartialRodReCheckin.md`** is **internal design rationale** — nothing in it is citable as a requirement. Its rules live in `RodPreCheckin.md` §7 and `RodCheckout.md` §7.2; the requirement text is `FR-043`. Retained as the audit trail for the open **`Q12`**.
+- **`DevelopmentPlanContent.md`** (13 Aug 2026) is the same kind of file for the development plan workbook — the only home of its client-facing prose, with every figure parsed from `ProjectPlan/Development/`. **Its `Reference title` fields mirror the plan's own titles and are never written to the workbook**; they exist so the drift guard can catch a renumbering moving prose onto the wrong work item, so copy them verbatim rather than paraphrasing.
 - **`ClientQuestionsContent.md`** (12 Aug 2026) is **source content for a generated deliverable, not a specification.** It holds the client-facing prose for the questions workbook — and is the only place that prose is authored. [`build_questions_xlsx.py`](ProjectPlan/Tools/build_questions_xlsx.py) merges it with the two `Analysis/` registers to produce [`SRS/FlatWire_ClientQuestions.xlsx`](SRS/). **Structure comes from the registers and prose from this file; nothing is duplicated between them**, so a question's priority or owner is never edited here. Four fatal guards run at build — coverage, drift, team names, leakage.
 
 **`PLCTagSpecification.md`** is the **only** tag map in the repository (cited as `[PLC]`). The anti-drift rule holds: **the client doc owns every tag path string and `MVP-1/ProjectPlan/Architecture/PLCCommunication.md` contains none.** If you are about to write a tag path anywhere else, stop.
@@ -75,13 +76,17 @@ Seventeen files. **Fourteen are specifications; three are not** — and the thre
 
 ## `SRS/`
 
-**Three client deliverables. Two are generated from markdown in this repository and must never be edited directly** — the next render overwrites them.
+**Four client deliverables. Three are generated from markdown in this repository and must never be edited directly** — the next render overwrites them.
 
 `Shopfloor_Flat_wireSRS.docx` — the delivered SRS, and the one file here that is **not** generated. It has **no pre-check-in content**, so it is *not* the requirement source for `PCI`/`PRC`/`CHK`/`WLD`/`TRV` IDs; those rules are `FR-###` in [`ProjectPlan/Business/BusinessRequirements.md`](ProjectPlan/Business/BusinessRequirements.md).
 
 `PLCTagSpecification.docx` — generated output. **The `.md` in `Business/Screens/` is the source** — edit it and re-render with [`ProjectPlan/Tools/build_docx.py`](ProjectPlan/Tools/build_docx.py).
 
-`FlatWire_ClientQuestions.xlsx` — generated output, the client questions workbook. Rendered by [`ProjectPlan/Tools/build_questions_xlsx.py`](ProjectPlan/Tools/build_questions_xlsx.py) from **two** sources: structure from the `Analysis/` question registers, prose from [`RequirementDocuments/ClientQuestionsContent.md`](ProjectPlan/Tools/ClientQuestionsContent.md). Edit whichever of the two owns the field and re-run.
+`FlatWire_ClientQuestions.xlsx` — generated output, the client questions workbook. Rendered by [`ProjectPlan/Tools/build_questions_xlsx.py`](ProjectPlan/Tools/build_questions_xlsx.py) from **two** sources: structure from the `Analysis/` question registers, prose from [`ClientQuestionsContent.md`](ProjectPlan/Tools/ClientQuestionsContent.md). Edit whichever of the two owns the field and re-run.
+
+`FlatWire_DevelopmentPlan.xlsx` (13 Aug 2026) — generated output, the client development plan workbook: seven sheets covering the delivery options at 2, 3 and 4 developers, the 15 stages, the sprint schedule, all 107 development work items, milestones and what is needed from the client, and the assumptions and risks. Rendered by [`ProjectPlan/Tools/build_development_plan_xlsx.py`](ProjectPlan/Tools/build_development_plan_xlsx.py) from **two** sources: every figure parsed from [`ProjectPlan/Development/`](ProjectPlan/Development/), all prose authored in [`DevelopmentPlanContent.md`](ProjectPlan/Tools/DevelopmentPlanContent.md). Edit whichever of the two owns the field and re-run.
+
+> **Both workbooks refuse to build rather than leak.** Every cell of the saved file is re-read and scanned; a file name, requirement/gap/test/backlog id, endpoint, table name, screen number or machine tag path deletes the output and exits non-zero. **A workbook on disk means the guards passed** — which is also why neither `.xlsx` can be repaired by hand.
 
 > **The renderer reaches into MVP-2 for its branding.** `build_docx.py` opens `../MVP-2/SRS/PassScheduleGenerationSpec.docx` as a template, strips its body and keeps the final `<w:sectPr>` — which carries the header logo and confidentiality footer. **Deleting that MVP-2 file as deferred, inert content breaks the MVP-1 renderer.**
 

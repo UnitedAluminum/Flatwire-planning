@@ -6,15 +6,21 @@
 
 ---
 
-**Three scripts.** Two render a client deliverable from markdown; one is a check that fails
-the build. All three take the same position — **the markdown is the source and the generated
+**Four scripts.** Three render a client deliverable from markdown; one is a check that fails
+the build. All four take the same position — **the markdown is the source and the generated
 file is output** — so never edit a `.docx` or `.xlsx` in this repository.
 
 | Script | Reads | Writes | Fails on |
 |---|---|---|---|
 | [`build_docx.py`](build_docx.py) | a spec in `MVP-1/ProjectPlan/Business/Screens/` | a branded `.docx` in `MVP-1/SRS/` | — |
 | [`build_questions_xlsx.py`](build_questions_xlsx.py) | both `Analysis/` question registers + `ClientQuestionsContent.md` | `MVP-1/SRS/FlatWire_ClientQuestions.xlsx` | coverage · drift · team names · leakage |
+| [`build_development_plan_xlsx.py`](build_development_plan_xlsx.py) | `Development/TaskBreakdown.md` + `Development/StaffedSprintPlans.md` + `DevelopmentPlanContent.md` | `MVP-1/SRS/FlatWire_DevelopmentPlan.xlsx` | coverage · drift · team names · leakage |
 | [`build_coverage_matrix.py`](build_coverage_matrix.py) | `02-SRS.md` + `06-TestPlanAndTestCases.md` | nothing — reports | a requirement with no case and no §10.4 entry |
+
+The two workbook builders share their helpers by **duplication, not import** — the style
+palette, `render()`, `_fold_blank_runs()` and the `LEAKS` list are copied. That is deliberate:
+each is a standalone deliverable generator that must keep building if the other is edited, and
+a shared module would make a change to one workbook's guard silently change the other's.
 
 ---
 
@@ -124,8 +130,8 @@ in a client deliverable**. So the workbook is merged from two sources:
 - **Structure** — question number, priority, scope, owner, decided date — is parsed from the
   registers' index tables, so it cannot drift from them.
 - **Prose** — the plain-language question, background, options, recommendation — comes from
-  [`../../RequirementDocuments/ClientQuestionsContent.md`](ClientQuestionsContent.md),
-  which is the only place it is authored.
+  [`ClientQuestionsContent.md`](ClientQuestionsContent.md), which is the only place it is
+  authored.
 
 ### Four guards, all fatal
 
@@ -144,6 +150,66 @@ in a client deliverable**. So the workbook is merged from two sources:
 
 Same gotcha as `build_docx.py`: a `~$…` lock file in `MVP-1/SRS/` means the workbook is open
 in Excel and the write will fail.
+
+---
+
+## `build_development_plan_xlsx.py` — the client development plan workbook
+
+```bash
+python MVP-1/ProjectPlan/Tools/build_development_plan_xlsx.py     # → MVP-1/SRS/FlatWire_DevelopmentPlan.xlsx
+python MVP-1/ProjectPlan/Tools/build_development_plan_xlsx.py other.xlsx
+```
+
+**Requires** `openpyxl` (tested against 3.1.5).
+
+Seven sheets — *Read Me · Delivery Options · Plan by Stage · Sprint Schedule · Work Items ·
+Milestones and Needs · Assumptions and Risks*. Same two-source construction as the questions
+workbook:
+
+- **Structure** — effort, phase, discipline, sprint, dates, working days, utilisation, finish
+  dates — is parsed from [`../Development/TaskBreakdown.md`](../Development/TaskBreakdown.md)
+  and [`../Development/StaffedSprintPlans.md`](../Development/StaffedSprintPlans.md), so it
+  cannot drift from the plan. Change the plan and re-run; the numbers follow.
+- **Prose** — stage and work-item names, what each delivers, who it serves, the levers,
+  milestones, dependencies, assumptions and risks — comes from
+  [`DevelopmentPlanContent.md`](DevelopmentPlanContent.md), the only place it is authored.
+
+### Why the prose had to be written rather than filtered
+
+**68 of the plan's 116 work-item titles trip the leakage guard** — 40 carry code spans, 11 name
+endpoints, 10 use screen numbers, 7 name database tables. A client sentence cannot be produced
+by deleting those; it has to be about the business outcome instead. The raw material is each
+story's `So that` clause, **only 4 of which trip the guard** — those are already client
+language, and every *Delivers* line is built from one.
+
+### Two numbers it deliberately does not carry
+
+- **Effort is in days, never hours.** Hours invite a rate conversation; days are the planning
+  unit. The conversion is at write time, 8 h/day.
+- **The unit rate card is never exported.** Per-stage and per-item totals are fine; *what a
+  screen costs* is internal pricing mechanics.
+
+### Guards
+
+The same four as the questions workbook, with coverage and drift checked against the plan's
+work items and phases rather than a question register. Two additions to `LEAKS`, both for
+things most likely to survive a careless edit of the content file: **library names**
+(`MediatR`, `Dapper`, `SignalR`…) and **code identifiers** — anything ending `Service`,
+`Controller`, `Repository`, `Component`, `Hub`, `Dto` or `Handler`. Bare `Angular`, `.NET` and
+`SQL` are **not** blocked: they name the technology, which the client already knows and may
+legitimately ask about.
+
+> **`Reference title` is a mirror of the plan's own title, not authored prose.** It exists only
+> so the drift guard can tell that a renumbering has not slid prose onto a different work item.
+> **Do not paraphrase it** — copy the plan's title verbatim, or the guard is checking nothing.
+> It is never written to the workbook.
+
+### Verifying it
+
+The build deletes its own output and exits non-zero on any guard failure, so **a workbook on
+disk means all four passed**. To confirm the leakage guard is live rather than merely present,
+paste a file name and a backlog identifier into two content entries and re-run: it must name
+both with sheet and cell coordinates and leave no `.xlsx` behind.
 
 ---
 
