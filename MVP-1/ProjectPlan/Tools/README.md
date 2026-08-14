@@ -1,26 +1,33 @@
 # Tools
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 13, 2026
+**Last Updated:** August 14, 2026 — [`build_trial_run_xlsx.py`](build_trial_run_xlsx.py) and [`TrialRunContent.md`](TrialRunContent.md) added: the trial-run workbook, the first generator to write outside `MVP-1/SRS/` and the first with an **abbreviation** guard in place of a leakage guard *(otherwise August 13, 2026)*
 **Status:** Working scripts, committed so they stop being re-derived
 
 ---
 
-**Four scripts.** Three render a client deliverable from markdown; one is a check that fails
-the build. All four take the same position — **the markdown is the source and the generated
-file is output** — so never edit a `.docx` or `.xlsx` in this repository.
+**Five scripts.** Four render a deliverable from markdown; one is a check that fails the build.
+All five take the same position — **the markdown is the source and the generated file is
+output** — so never edit a `.docx` or `.xlsx` in this repository.
 
 | Script | Reads | Writes | Fails on |
 |---|---|---|---|
 | [`build_docx.py`](build_docx.py) | a spec in `MVP-1/ProjectPlan/Business/Screens/` | a branded `.docx` in `MVP-1/SRS/` | — |
 | [`build_questions_xlsx.py`](build_questions_xlsx.py) | both `Analysis/` question registers + `ClientQuestionsContent.md` | `MVP-1/SRS/FlatWire_ClientQuestions.xlsx` | coverage · drift · team names · leakage |
 | [`build_development_plan_xlsx.py`](build_development_plan_xlsx.py) | `Development/TaskBreakdown.md` + `Development/StaffedSprintPlans.md` + `DevelopmentPlanContent.md` | `MVP-1/SRS/FlatWire_DevelopmentPlan.xlsx` | coverage · drift · team names · leakage |
+| [`build_trial_run_xlsx.py`](build_trial_run_xlsx.py) | `Development/TrialRunPlan.md` + `Development/TaskBreakdown.md` + `TrialRunContent.md` | **`Development/FlatWire_TrialRunPlan.xlsx`** | reconciliation · coverage · title · drift · **abbreviation** |
 | [`build_coverage_matrix.py`](build_coverage_matrix.py) | `02-SRS.md` + `06-TestPlanAndTestCases.md` | nothing — reports | a requirement with no case and no §10.4 entry |
 
-The two workbook builders share their helpers by **duplication, not import** — the style
-palette, `render()`, `_fold_blank_runs()` and the `LEAKS` list are copied. That is deliberate:
-each is a standalone deliverable generator that must keep building if the other is edited, and
-a shared module would make a change to one workbook's guard silently change the other's.
+The three workbook builders share their helpers by **duplication, not import** — the style
+palette, `render()`, `_fold_blank_runs()` and the guard lists are copied. That is deliberate:
+each is a standalone deliverable generator that must keep building if another is edited, and a
+shared module would make a change to one workbook's guard silently change the others'.
+
+> **⚠ Only the trial-run workbook writes outside `MVP-1/SRS/`, and that is the whole point.**
+> `MVP-1/SRS/` is where **leakage-guarded** client deliverables live. The trial-run workbook
+> carries story identifiers, hours and gap identifiers by design, so it is **internal, shared
+> with the client**, and lives in `Development/`. Moving it into `MVP-1/SRS/` would put an
+> unguarded file among guarded ones.
 
 ---
 
@@ -210,6 +217,84 @@ The build deletes its own output and exits non-zero on any guard failure, so **a
 disk means all four passed**. To confirm the leakage guard is live rather than merely present,
 paste a file name and a backlog identifier into two content entries and re-run: it must name
 both with sheet and cell coordinates and leave no `.xlsx` behind.
+
+---
+
+## `build_trial_run_xlsx.py` — the trial run workbook
+
+```bash
+python MVP-1/ProjectPlan/Tools/build_trial_run_xlsx.py   # → Development/FlatWire_TrialRunPlan.xlsx
+python MVP-1/ProjectPlan/Tools/build_trial_run_xlsx.py other.xlsx
+```
+
+**Requires** `openpyxl` (tested against 3.1.5).
+
+Ten sheets — *Read Me · Effort Summary · Effort by Phase and Discipline · Platform Detail ·
+Work Items · Sprint Plan · Sprint Allocation · Blockers · Deferred Items · Removal Impact* —
+covering the **61 work items / 778 hours** of the six-screen trial run. Same two-source
+construction as the other two workbooks:
+
+- **Structure** — every figure, story identifier, sprint, date, phase and blocker — is parsed
+  from [`../Development/TrialRunPlan.md`](../Development/TrialRunPlan.md), so it cannot drift.
+  Titles come from [`../Development/TaskBreakdown.md`](../Development/TaskBreakdown.md), which
+  is the title source rather than `StaffedSprintPlans.md` because that document predates
+  `FW-202`/`FW-203`/`FW-204` and does not carry them.
+- **Prose** — the plain-language *what it delivers* per item, the Read Me and the blocker
+  phrasing — comes from [`TrialRunContent.md`](TrialRunContent.md), the only place it is
+  authored.
+
+### Three deliberate departures from the development plan workbook
+
+Each is a recorded decision, and the script's header repeats them so none is "fixed" back.
+
+| | That workbook | This one |
+|---|---|---|
+| **Story identifiers** | `FW-\d` is in its fatal `LEAKS` list; rows are numbered `1..N` | **Present** — the client asked to be able to refer to a task by its identifier. There is therefore **no leakage guard** |
+| **Effort unit** | Days only — *"hours invite a rate conversation"* | **Hours**, because the plan is in hours and the audience is internal. A `Days` column is derived at 8 h/day |
+| **The "must not say that" guard** | Leakage | **Abbreviation** — no bare shorthand may reach a cell |
+
+### Why the abbreviation guard exists
+
+The plan writes `FE`, `BE`, `DB`, `RT`, `T1`, `1A`, `DB5`, `FL2` freely, because it is read as
+prose. **A filtered spreadsheet column has no surrounding sentence**, and one of those is
+actively ambiguous: **`DB` is both the Database discipline and the Dashboard prefix.** So a
+`LABELS` map expands every abbreviation at write time and a guard refuses the build if any bare
+one survives.
+
+Two things make the expansion safe, and neither should be simplified away:
+
+1. **Single pass.** All keys go into one alternation, longest first, so each position is
+   consumed once. Looping the keys would let one replacement's output be re-matched by a later
+   key.
+2. **No replacement contains its own key**, which is what makes `expand()` idempotent. This is
+   why phrase entries exist — `1A` alone cannot expand to *"Phase 1A — …"* without re-matching
+   itself.
+
+**The guard's token set is deliberately wider than `LABELS`.** `EF`, `DI`, `PWA` and `JWT`
+appear in it but only inside *phrases* in the expander, so a bare one in newly authored prose
+is **flagged** rather than silently expanded into something clumsy. `Phase 1A` and `Sprint 1`
+are exempt — they are identifiers, not shorthand — and code identifiers are never touched,
+because `\bPLC\b` does not match `PLCTagService`.
+
+### Five guards, all fatal — and all five verified live
+
+The build deletes its own output and exits non-zero on any failure, so **a workbook on disk
+means all five passed.** Each was proved by breaking it deliberately:
+
+| Guard | Broken by | Reported |
+|---|---|---|
+| **Reconciliation** | changing one hours cell in the plan's block table | `block table: computed 779, the plan prints 778` |
+| **Coverage** | deleting a content entry | `FW-133 is in the plan with no content entry` |
+| **Title** | renumbering a story heading in the backlog | `FW-133 has no title in the backlog — never blank-fill an identifier` |
+| **Drift** | paraphrasing a `Reference title` | `FW-133 drift: content says …, the backlog says …` |
+| **Abbreviation** | injecting a bare `JWT` and `DI` into a content entry | both named with sheet and cell |
+
+> **Do not "fix" the reconciliation guard by editing a footer row.** The tables' footer rows are
+> excluded from their own sums on purpose — counting them double-counts the total. Change a data
+> row to test it.
+
+Same gotcha as the others: a `~$…` lock file next to the output means the workbook is open in
+Excel and the write will fail.
 
 ---
 

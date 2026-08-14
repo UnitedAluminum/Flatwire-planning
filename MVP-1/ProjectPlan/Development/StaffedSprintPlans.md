@@ -1,7 +1,7 @@
 # Flat Wire Mill — Staffed Development Sprint Plan (3 Developers)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — re-baselined at three developers, yield/cost/scrap out of plan
+**Last Updated:** August 14, 2026 — Related Documents now points at [`TrialRunPlan.md`](TrialRunPlan.md) `[TRP]`, the client-requested six-screen trial subset. **No figure in this document changed** *(otherwise August 13, 2026 — re-baselined at three developers, yield/cost/scrap out of plan)*
 **Document Type:** Sprint plan at a fixed team of three, with story allocation
 **Status:** Published — **does not land on 30 Sep 2026.** The date below is what three developers actually deliver
 **Owner:** Development leads / delivery lead
@@ -255,6 +255,7 @@ in parallel within a sprint.
 
 | Document | Why you would open it |
 |---|---|
+| [`TrialRunPlan.md`](TrialRunPlan.md) `[TRP]` | **A scoped subset of this plan, on a different date.** The **six screens the client requested for a trial run on 14 Aug 2026** plus their dependencies — **778 h, four sprints from 17 Aug, feature-complete 18 Sep at five developers for T1 and four thereafter.** It does **not** supersede this document: this one remains the staffed plan for all of MVP-1 development. Read it for the trial only, and note two things it carries that the 1,396 h below does not: gap **`G37`** with story **`FW-202`**, and the fact that **three developers reach ~1 Oct on development alone** once DB1 and DB2A are out — the closest any shape has come to the client's date |
 | [`DevelopmentSprintPlan.md`](DevelopmentSprintPlan.md) `[DSP]` | The same development scope on the **programme** cadence at the modelled 4.2 FTE. **Note: it still includes Phase 12** |
 | [`SprintPlan.md`](SprintPlan.md) `[SP]` | The programme sprint plan — QA, BA and contingency included, plus DoR/DoD and §6.1's dependency chain |
 | [`TaskBreakdown.md`](TaskBreakdown.md) `[TB]` | The 116 story bodies — acceptance criteria, dependencies, `Rate-card basis:` per story |

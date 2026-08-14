@@ -1,9 +1,9 @@
 # Flat Wire Mill — Task Breakdown and Backlog
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** August 14, 2026 — **`FW-203`** (plant-data feed simulator, 8 h) and **`FW-204`** (minimal landing route, 8 h) minted for the trial run, both additive to `[CE §3b]` and both deliberately absent from `[SSP §5]`. Earlier same day: **`FW-202` minted** (FL1 spool completion — stop confirmation, weight basis and the `Spool` write, **98 h**) and `FW-N02` reduced to Part A; gap **`G37`** *(otherwise August 13, 2026)* — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
 **Document Type:** The MVP-1 shopfloor backlog — 116 stories, the descope ladder, the coverage matrix
-**Status:** **Authoritative for MVP-1 shopfloor delivery** — 116 stories / 3,292 h
+**Status:** **Authoritative for MVP-1 shopfloor delivery** — **116 stories / 3,292 h**, plus **`FW-202`** *(new 14 Aug 2026, gap `G37`)*, which is **additive and deliberately outside that baseline**: its 98 h base / 136 h all-in is carried in `[TRP]` and is **not** folded into the 3,292 h or into Phase 8's 118 h. **Keep citing "116 stories / 3,292 h"** — it is quoted in five other documents and re-counting it here would drift them all
 **Owner:** Delivery lead / programme management
 **Audience:** Delivery lead, scrum team, developers, QA
 **Shortcode:** `[TB]`
@@ -586,7 +586,37 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
+###### FW-203 · OPC feed simulator — a stand-in for the real ingest
+**Hours:** 8 h RT · **Priority:** High · **Sprint:** S0 · **Phase:** 1B · **Stream:** RT
+
+> **New 14 Aug 2026 for the six-screen trial run** ([`TrialRunPlan.md`](TrialRunPlan.md) §1.4). It **replaces
+> `FW-N05`** (real OPC ingest, 32 h) *for the trial only* — `[DE §1]` prices that work at retention **0.90** and
+> calls it *"not verifiable without the hardware"*, so it moves to the October commissioning window. **`FW-N05` is
+> not cancelled**; this story is what lets the trial run without it. Hours are **additional to `[CE §3b]`**.
+
+**As a** developer,
+**I want** a synthetic gauge, width, speed, weight and footage feed on the same contract the real ingest uses,
+**So that** every screen can be built, demonstrated and accepted before a controller is available.
+
+**Acceptance Criteria:**
+- [ ] Publishes to the **same bounded channel** `FW-N05` will publish to, at the same cadence, so `FW-150`'s broadcast loop is unchanged when the real ingest arrives
+- [ ] Drives `GaugeReading`, `WidthReading`, `SpeedFPM`, `PayoffWeight`, `FootageCounter`, `ComponentStatus` and `LineStatus` for **FL1**; FL2 broadcasts **`null`** gauge and width per `FR-120`
+- [ ] Traces can be steered to produce **in-spec, drifting and out-of-spec** runs, so the `FR-119` reconnect path and Dashboard 3's N-consecutive-out-of-spec auto-prompt are both demonstrable
+- [ ] Drives a `RUNNING → STOPPED` edge on demand, which is what `FW-202`'s stop-confirmation state machine is armed by
+- [ ] **Switchable by configuration alongside `SimulatePLCTagPush`** — one flag pair puts the whole system in simulation
+- [ ] ⚠ **Adds no interface of its own.** If the simulator needs a contract change, the contract is wrong — that is the whole reason `FW-150` and `FW-151` are not reduced for the trial
+
+**Rate-card basis:** non-trivial service, low end @ **8 h** (§2) — the contract already exists, so this is a publisher against it, not a design. **6 h AI-assisted** at `[DE §1]`'s 0.75 RT factor, which is the figure `[TRP §4]` schedules
+**Dependencies:** FW-N05 *(contract only — this story implements the other side of it)*, FW-150
+**Blockers:** **G9 / OI-34** *(the real-time NFRs are undefined, so the simulator has no target cadence to match — pick one and record it)*
+
+---
+
 **Phase 1B reconciliation** — BE `16+52+16+12+20+24+12+12+16+8+12+8 = 208` · RT `32+16+32+16+16 = 112` · base **320** → QA `0.20 × 320 = 64` → Cont `0.15 × (320+64) = 58` → **442 h** ✓ (§3b)
+
+> ⚠ **`FW-203` is not in that reconciliation.** It is trial-run scope introduced on 14 Aug 2026 and its **8 h is
+> additive to `[CE §3b]`**, like `FW-202`'s. Do not fold it in — and note it does **not** offset `FW-N05`'s 32 h
+> either, because that story still has to be built for production.
 
 ---
 
@@ -883,6 +913,33 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
+###### FW-204 · Minimal landing route — the entry point when Dashboard 1 is out of scope
+**Hours:** 8 h FE · **Priority:** High · **Sprint:** S1 · **Phase:** 3 · **Stream:** FE
+
+> **New 14 Aug 2026 for the six-screen trial run** ([`TrialRunPlan.md`](TrialRunPlan.md) §1.5). **Dashboard 1 was
+> removed from trial scope on client direction**, and it was the target of **every** mockup's back button plus
+> Dashboard 5's Cancel — so the trial had no entry point and no way back into a running line. This is the smallest
+> thing that closes that hole. It is **not** a reduced Dashboard 1: no live panels, no alert bar, no payoff bars.
+> `FW-060` is unaffected and still owns the real board. Hours are **additional to `[CE §3b]`**.
+
+**As an** operator arriving at a terminal,
+**I want** to pick my line and land on the right screen for its current state,
+**So that** I can start work without knowing which screen to open.
+
+**Acceptance Criteria:**
+- [ ] Route `/flat-wire` — two tiles, **FL1** and **FL2**, each showing line name and current state only
+- [ ] **Idle** routes to that line's check-in screen — Dashboard 2 for FL1, Dashboard 5 for FL2. **Running** routes to Dashboard 3 in that line's mode
+- [ ] State is read from **`GET /run/active?line=`** (`FW-164`, already in scope). ⚠ **Adds no endpoint** — in particular it must **not** pull in `GET /lines/status` (`FW-154`), which left trial scope with Dashboard 1
+- [ ] Becomes the target of every screen's back control and of Dashboard 5's Cancel, **replacing `dashboard_1_line_status.html`** for the trial
+- [ ] Carries the `FR-119` / `NFR006` reconnect banner over cached state like every other screen — it is a route in the shell, not an exception to it
+- [ ] ⚠ **Retired, not extended, when `FW-060` lands.** Dashboard 1 is the entry point in full MVP-1; leaving both in place gives the operator two front doors
+
+**Rate-card basis:** screen variant @ **8 h** (§2) — two tiles and a state-conditional route, well under a new screen's 24 h. **5 h AI-assisted** at `[DE §1]`'s 0.62 FE factor, which is the figure `[TRP §4]` schedules
+**Dependencies:** FW-N03, FW-130, FW-164
+**Blockers:** —
+
+---
+
 ###### FW-156 · Hub load test
 **Hours:** 16 h QA · **Priority:** High · **Sprint:** S1 · **Phase:** 3 · **Stream:** QA
 
@@ -902,6 +959,10 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 **Phase 3 reconciliation** — FE `44+20 = 64` · BE 16 · DB 4 · RT 40 · base **124** → QA `(0.20 × 124 = 25) + 16 load test = 41` → Cont `0.15 × (124+41) = 25` → **190 h** ✓ (§3b)
+
+> ⚠ **`FW-204` is not in that reconciliation.** Trial-run scope, 14 Aug 2026, and its **8 h is additive to
+> `[CE §3b]`** — the same treatment as `FW-202` and `FW-203`. It is also the only one of the three that is
+> **temporary**: it retires when `FW-060` ships, so it never enters the MVP-1 baseline at all.
 
 **S1 total** — **190 h** ✓ · 10 working days · **2.4 FTE**
 
@@ -1830,6 +1891,13 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ###### FW-N02 · Spool completion weight milestones and machine-stop confirmation
 **Hours:** 4 h RT · **Priority:** Medium · **Sprint:** S3 · **Phase:** 8 · **Stream:** RT
 
+> ⚠ **Superseded in part by `FW-202` (14 Aug 2026) — gap `G37`.** This story was the **only** costed work against
+> `FR-130`–`FR-155`, a 26-requirement subsystem with 25 test cases (`TC-160`–`TC-184`), an owning specification,
+> two hub events and a built mockup component. **4 h RT does not build it.** `FW-202` now owns **Part B**
+> (`FR-140`–`FR-155`) — the PLC-confirmed stop confirmation, the completion transaction and the `Spool` write.
+> **This story retains Part A only** (`FR-130`–`FR-136`, the advisory milestone ladder), which is `Should` and
+> explicitly *"advisory and non-blocking"*. Its hours are unchanged and remain inside Phase 8's reconciliation.
+
 **As an** FL1 operator,
 **I want** to be told as a spool approaches its target weight,
 **So that** the machine stop is expected rather than a surprise.
@@ -1847,7 +1915,53 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
+###### FW-202 · FL1 spool completion — stop confirmation, weight basis and the `Spool` write
+**Hours:** 98 h — FE 32 · BE 42 · DB 8 · RT 16 · **Priority:** Critical · **Sprint:** S3 · **Phase:** 5 / 8 boundary · **Stream:** FE + BE + DB + RT
+
+> **New 14 Aug 2026 — gap `G37`. These hours are ADDITIONAL to `[CE §3b]`** and are deliberately **outside** the
+> Phase 8 reconciliation below, which reconciles to a figure priced before this scope was visible. Do not fold
+> them in; re-derive additively. Scheduled in [`TrialRunPlan.md`](TrialRunPlan.md) §4.
+
+**As an** FL1 operator,
+**I want** the system to confirm the spool is finished when the machine actually stops, and record it,
+**So that** the spool exists as a real, weighed, traceable piece of material that FL2 can check in.
+
+**Acceptance Criteria — the prompt state machine (`FR-140`–`FR-145`):**
+- [ ] Armed **only while actual weight ≥ target** for the current spool; a stop below target raises nothing (`TC-169`)
+- [ ] Fires on the **`RUNNING → STOPPED` edge** of `FL{n}.LineState` — an edge, not a level — with speed ≈ 0 as corroboration, **exactly once per stop**, re-arming only on a return to RUNNING (`TC-170`)
+- [ ] STOPPED persists for a **configurable dwell (default 5 s)** before display, so a jog or thread does not trigger it (`TC-171`)
+- [ ] Weight **latched at the PLC stop timestamp** — the popup, the transaction and the label all use the latched value, not a later drifted one (`TC-172`)
+- [ ] **Server-owned state, persisted against the run** and pushed over `FlatWireHub`, so it survives a refresh or screen change and is **re-delivered on reconnect** (`TC-173`)
+- [ ] Suppressed when an open `RunPauseEvent` already captured a reason that is not spool removal (`TC-174`)
+- [ ] **Escape and backdrop-click do not dismiss**; `Y`/`N` keys work and are advertised (`TC-178`)
+
+**Acceptance Criteria — the completion transaction (`FR-146`–`FR-150`):**
+- [ ] Yes commits, **then** prints — labels never print before the commit (`TC-175`)
+- [ ] No records nothing — no transaction, no alpha, no print, no state change — and the **decline is logged** (`TC-176`)
+- [ ] Auto-dismiss on resume, logged as `line resumed`, ladder re-arms (`TC-177`)
+- [ ] A **manual complete-spool path stays available** — declining is never a dead end (`TC-179`)
+- [ ] **The `Spool` row is written here**: `SP-#####` alpha, `SourceRunId`, `ParentRodAlpha`, source rods from the run's `WeldEvent` chain, net weight, footage, `Status` — and the `FlatWireRun` closed. ⚠ **Nothing else in the plan creates it**; `POST /coil/complete` is Phase 9's **FL2 output coil** (`FW-185`), a different transaction on a different line
+
+**Acceptance Criteria — the weight basis (`FR-137`, `FR-151`–`FR-155`):**
+- [ ] `actual = (current footage − footage at spool start) × lb-per-ft`, where `lb-per-ft = A(in²) × 12 × ρ`, `A` applying the **round-edge correction** where applicable and ρ read from **`united_db..alloys.alloy_density`** (cross-database). Reference: 1100 at 0.110″ × 0.625″ → **0.0809 lb/ft** square edge, 0.0778 round (`TC-167`)
+- [ ] **FL2 takes gauge and width from the pass schedule / order, not live measurement**, because FL2 broadcasts `null` (`TC-168`)
+- [ ] Scale weight entered as **gross**, `net = gross − spool tare`; variance shown in **lb and % of calculated** (`TC-180`)
+- [ ] Scale basis **pre-selected once entered and still overridable** back to calculated (`TC-181`)
+- [ ] ⚠ **Variance beyond ±2 % never disables commit** (`TC-182`) — it is flagged, an override panel appears, the button relabels, the **commit control stays enabled** and remote approval is offered. An incomplete override flags the missing field, focuses the first, and commits nothing (`TC-183`)
+- [ ] **Both weights, the variance, the override flag, supervisor and reason persist regardless of basis; the PIN is absent from the payload** (`TC-184`)
+
+**Rate-card basis (§2):** stop-confirmation dialog 12 h + weight-basis/variance composite control 20 h (FE 32) · `SpoolCompletionService` prompt state machine 24 h + `CompleteSpool` command endpoint 6 h + `lb-per-ft` derivation service 12 h (BE 42) · `Spool` write path + index 8 h (DB 8) · 2 hub events @ 8 h (RT 16) = **98 h**
+**Dependencies:** FW-062, FW-081, FW-150, FW-171, FW-007
+**Blockers:** ⚠ **`OQ-10` / `OI-45`** *(footage→weight **dimensional basis** — `FR-137` cannot be implemented without it; `[CE §2]`'s **16–32 h reserve** applies here as well as on Phase 9, and it is the one open question deliberately carrying no recommendation)* · **`OQ-18`** *(which order field carries the min/max range)* · **`OQ-79`** *(short close)* · **`OI-25`** *(the two footage coordinate systems)* · **`G34`** *(wire break has no persistence target and shares this stop path)* · ⚠ **the 10-90 SOP document is not in this repository and must be obtained from Operations rather than paraphrased**
+
+---
+
 **Phase 8 reconciliation** — FE `24+16+8 = 48` · BE 18 · DB 12 · RT `4+4 = 8` · base **86** → QA `0.20 × 86 = 17` → Cont `0.15 × (86+17) = 15` → **118 h** ✓ (§3b) · **split 59 h S2 / 59 h S3**
+
+> ⚠ **`FW-202` is not in that reconciliation and must not be added to it.** `[CE §3b]`'s Phase 8 figure was priced
+> before the `FR-130`–`FR-155` surface was visible (gap **`G37`**). Its **98 h base** is new scope: adding QA and
+> contingency on `[CE §2]`'s rates gives `98 → QA 20 → Cont 18 → **136 h** all-in`, which belongs in an additive
+> restatement, **not** in this figure or in any published per-phase total.
 
 **S2 total** — `255 + 154 + 298 + 205 + 59 = **971 h**` ✓ · 9 working days · **13.5 FTE**
 

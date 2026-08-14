@@ -1,7 +1,7 @@
 # Flat Wire Mill — Real-Time Architecture and the FlatWireHub Contract
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — split out of `03-HLD-and-ERDiagram.md`, `02-SRS.md`, `04-APIContract.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** August 14, 2026 — **`SpoolCompletionPromptDue` and `SpoolCompletionPromptResolved` promoted into the published contract** as events 11 and 12 (§5.2); §5.5 split so it now holds only the two unpublished Part A events; `PP-04`'s count restated 10 → 12; `OI-32` half-closed. Gap **`G37`** *(otherwise August 13, 2026)* — split out of `03-HLD-and-ERDiagram.md`, `02-SRS.md`, `04-APIContract.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
 **Document Type:** Real-time design and the hub contract
 **Status:** Baselined for build
 **Owner:** Architecture / Real-time stream
@@ -110,12 +110,20 @@ A strongly-typed `Hub<IFlatWireClient>` — **no magic-string method names.**
 | 8 | `AlertRaised` | `{lineId, alertType, severity, message, timestamp}` | **immediate, unbatched** | DB1 alert bar |
 | 9 | `AlertCleared` | `{lineId, alertType}` | **immediate, unbatched** | DB1 alert bar |
 | 10 | `PayoffStateChanged` | `{lineId, position, state, rodAlpha, rodSeqno, isWelded}` | **immediate, unbatched** | DB2A bay cards, DB1 "Payoff 2 not loaded" rule |
+| 11 | `SpoolCompletionPromptDue` | `{lineId, runId, spoolAlpha, plcStopTimestamp, latchedWeightLb, targetLb}` | **immediate, unbatched · server-owned, durable** | DB3 machine-stop confirmation |
+| 12 | `SpoolCompletionPromptResolved` | `{lineId, runId, answer, operatorId, timestamp}` | **immediate, unbatched** | DB3 — closes the prompt across all clients |
 
 `state` on `PayoffStateChanged` is `NotStaged` · `Staged` · `Active` · `Blocked`. It fires on **every** bay-occupancy change: pre-check-in, pre-check-out, mark-as-welded, and check-in consuming a staged row.
 
 > **`PayoffStateChanged` must never enter the ~100 ms telemetry batch.** A bay changing hands is an operator-visible state transition, not a sampled reading. `PayoffWeight` stays in the batched hot path; the two are complementary and Dashboard 2A needs both — occupancy from one, live weight from the other.
 
-> **`PP-04` — the event count is 10, not 9.** The master specification's status summary says "30 REST endpoints + **9** hub events". The event table there, and the list in `Business/BusinessRules.md` §3, both enumerate **ten**. The "9" predates `PayoffStateChanged`, which was added with the pre-check-in feature on 29 Jul 2026. **Ten is correct.** Correct the summary line.
+**Events 11 and 12 were promoted into this contract on 14 Aug 2026** (gap **`G37`**, story **`FW-202`**) from §5.5, where they had sat marked *"not yet in the published contract"* while `FR-140`–`FR-149` specified them as `Must`. `answer` on `SpoolCompletionPromptResolved` is `Yes` · `No` · `AutoDismissed`.
+
+> **`SpoolCompletionPromptDue` is the only event in this contract that is not fire-and-forget.** `FR-144` requires the pending prompt to be **server-owned state, persisted against the run**, so it survives a browser refresh or a screen change and is **re-delivered on reconnect** (`TC-173`). Every other event here may be missed by a disconnected client and recovered from the next snapshot; this one may not — a stopped mill with an unanswered prompt is a spool nobody has committed. **Persist it, re-deliver it on group re-join, and do not treat it as telemetry.**
+>
+> Two further constraints the transport must respect, both from `FR-141`–`FR-143`: the event is raised on the **`RUNNING → STOPPED` edge exactly once per stop**, so a duplicate delivery must be idempotent at the client; and the weight it carries is **latched at the PLC stop timestamp**, so a client must render `latchedWeightLb` and never substitute a fresher `PayoffWeight` tick.
+
+> **`PP-04` — the event count was 10, not 9, and is now 12.** The master specification's status summary says "30 REST endpoints + **9** hub events". The event table there, and the list in `Business/BusinessRules.md` §3, both enumerated **ten**; the "9" predated `PayoffStateChanged`, added with the pre-check-in feature on 29 Jul 2026. **With events 11 and 12 promoted on 14 Aug 2026 the published count is twelve.** Correct the summary line to twelve, not ten.
 
 ### 5.3 The FL2 rule
 
@@ -127,16 +135,18 @@ Also broadcast, consumed by DB3 traces: `WeldJoinEvent` · `DieChangeEvent` · `
 
 ### 5.5 Events the spool-completion feature adds
 
-Specified in `MVP-1/ProjectPlan/Business/Screens/SpoolCompletionNotification.md`, **not yet in the published contract**:
+Specified in [`SpoolCompletionNotification.md`](../Business/Screens/SpoolCompletionNotification.md). **This section was split on 14 Aug 2026** — the two Part B (`Must`) events were promoted into §5.2 as events 11 and 12; what remains here are the two **Part A** (`Should`) events, still unpublished:
 
-| Event | Payload | Why it is server-side |
-|---|---|---|
-| *spool-progress payload* | actual weight, target, percent, remaining, rate, ETA | So **every client evaluates the same number** rather than each computing its own |
-| `SpoolWeightMilestone` | line, run, spool, milestone (75/90/100), actual, target | Raised **server-side on crossing**, not client-side on a threshold check |
-| `SpoolCompletionPromptDue` | line, run, spool alpha, PLC stop timestamp, latched weight, target | **Server-owned state**, persisted against the run, so it survives a browser refresh and is re-delivered on reconnect |
-| `SpoolCompletionPromptResolved` | answer (`Yes`/`No`/`AutoDismissed`), operator, timestamp | Closes the prompt across all clients |
+| Event | Payload | Why it is server-side | Status |
+|---|---|---|---|
+| *spool-progress payload* | actual weight, target, percent, remaining, rate, ETA | So **every client evaluates the same number** rather than each computing its own | **Unpublished** — Part A, `FR-130`–`FR-136` |
+| `SpoolWeightMilestone` | line, run, spool, milestone (75/90/100), actual, target | Raised **server-side on crossing**, not client-side on a threshold check | **Unpublished** — Part A |
+| ~~`SpoolCompletionPromptDue`~~ | — | — | ✅ **Promoted to §5.2 event 11** (14 Aug 2026) |
+| ~~`SpoolCompletionPromptResolved`~~ | — | — | ✅ **Promoted to §5.2 event 12** (14 Aug 2026) |
 
-There is **no endpoint** for the spool-completion prompt or commit — **OI-32**.
+**Part A is `Should` and explicitly *"advisory and non-blocking"***, so leaving its two events unpublished is a scope decision rather than an omission — it is deferred out of the trial run (`[TRP §4]`) and remains owned by `FW-N02`. **Part B was neither:** `FR-140`–`FR-149` are `Must` and `FR-144` is a durability requirement on the transport itself, which is why it could not stay in a section headed *"not yet in the published contract"*.
+
+> **`OI-32` is half-closed (14 Aug 2026).** It recorded that there is **no endpoint** for the spool-completion prompt or commit. The **commit** half is now `FW-202`'s `CompleteSpool` command, which writes the `Spool` row and closes the run — see `[TB]` `FW-202` and gap **`G37`**. The **prompt** half needs no endpoint by design: the prompt is raised by the server on the `RUNNING → STOPPED` edge and answered over the hub, so there is nothing for a client to poll. Restate `OI-32` accordingly rather than closing it outright — the Part A progress payload still has no published surface.
 
 ### 5.6 Angular observable map
 
@@ -151,9 +161,13 @@ componentStatus$(lineId): Observable<ComponentStatusEvent>
 lineStatus$(lineId): Observable<LineStatusEvent>
 alertRaised$(lineId): Observable<AlertRaisedEvent>
 alertCleared$(lineId): Observable<AlertClearedEvent>
+spoolCompletionPromptDue$(lineId): Observable<SpoolCompletionPromptDueEvent>
+spoolCompletionPromptResolved$(lineId): Observable<SpoolCompletionPromptResolvedEvent>
 ```
 
 Callbacks run **outside the Angular zone**; batches land in a ring buffer and render on a `requestAnimationFrame` throttle — `[SIG §4.4]`.
+
+> **`spoolCompletionPromptDue$` is the one stream a component must not merely subscribe to.** Because the prompt is durable server state (`FR-144`), a client joining or re-joining a line group **receives any outstanding prompt on join**, not only on the original edge. Subscribe before joining the group, and make the handler idempotent — re-delivery is the specified behaviour, not a fault.
 
 ### 5.7 Non-functional position
 

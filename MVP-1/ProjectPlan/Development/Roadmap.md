@@ -1,7 +1,7 @@
 # Flat Wire Mill — Master Implementation Roadmap
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 13, 2026 — §0.1's backlog row re-pointed at the rewritten sprint-wise backlog (**116 stories / 3,292 h**, hours not points); the *"12 epics / 58 stories / 184-point"* description was stale on every figure *(otherwise July 26, 2026)*
+**Last Updated:** August 14, 2026 — a callout above *Development milestones* records that **30 Sep is now a trial-run date**, planned in [`TrialRunPlan.md`](TrialRunPlan.md), and names the two findings that scoping raised (`G37`, `FW-202`). **No phase hour or total in this document changed** *(otherwise August 13, 2026)* — §0.1's backlog row re-pointed at the rewritten sprint-wise backlog (**116 stories / 3,292 h**, hours not points); the *"12 epics / 58 stories / 184-point"* description was stale on every figure *(otherwise July 26, 2026)*
 **Document Type:** Implementation Roadmap (workflow-driven, end-to-end vertical slices)
 **Supersedes:** the previous *Shopfloor UI & Real-Time Integration Plan* (layer-oriented sprint plan)
 **Status:** Master roadmap — implementation-ready
@@ -114,6 +114,16 @@ Owner is a **delivery stream**, not a person — the named-owner roster is fille
 \* Medium/Low priority — rungs 1–4 of the descope ladder; see the model §5 for the full ordered ladder, what each rung costs the business, and the latest date each call can be made.
 
 **W4 loses Labor Day; W7 is 3 days.** Post-gate total **32 working days** (256 h/person); whole window **44** = **352 h/person**. **W7 cannot hold Phase 14** — UAT and stakeholder sign-off cannot start the same day feature work completes, at any team size.
+
+> ### ⚠ 30 Sep is now a **trial-run** date, not an MVP-1 feature-complete date (14 Aug 2026)
+>
+> The client requested **six screens for a trial run finishing 30 Sep 2026, with UAT signed off inside that window** — DB2 rod check-in · DB3 active run FL1 · DB6 SPC checkpoint · DB8 WIP rejection · DB5 spool check-in · DB3 active run FL2. **PLC commissioning and the on-mill trial move to October**, which `[SP §4.3]` already assumed.
+>
+> That subset and its dependencies are planned in **[`TrialRunPlan.md`](TrialRunPlan.md) `[TRP]` — 778 h, four sprints from 17 Aug, feature-complete 18 Sep at five developers for T1 and four thereafter.** It does not change any figure in this roadmap: **MVP-1 remains 3,292 h**, and `[SSP]` remains the staffed plan for all of it, finishing 25 Nov 2026.
+>
+> **`DB1` Line Status and `DB2A` Pre-Check-in + weld capture were removed from the trial on client direction, also 14 Aug 2026** (−107 h). Both remain MVP-1. `[TRP §1.5]` records what each removal takes with it — the two worth knowing here are that **the trial no longer exercises weld traceability at all** (a single-rod spool only, so the `CoilTraceability` chain behind the welding-wire certificates is untested), and that **`AlertRaised`/`AlertCleared` lose their only consumer**, so no screen in the trial displays an alert. Gaps **`G21`** and **`G26`** leave trial scope with `RodStaging` and the weld write, and **stay open for MVP-1**.
+>
+> **Two findings from that scoping do change this plan, and neither is in the table above.** **(1)** `FR-130`–`FR-155` — FL1 spool completion, 26 requirements with 25 test cases, an owning specification, two hub events and a built mockup component loaded by `dashboard_3_active_run.html` — was costed as a **single 4 h story** (`FW-N02`). Re-priced at **98 h**; gap **`G37`**, story **`FW-202`**. **(2)** Consequently **nothing in the plan writes the FL1 `Spool` row** — `POST /coil/complete` is Phase 9's FL2 *coil*. Phase 8's published 118 h does not carry either, and must not be edited to absorb them.
 
 ### Development milestones
 - **M1 (Aug 14):** platform ready — scaffolded UI ↔ stubbed service ↔ created schema ↔ simulated hub. **Hard gate** (user mandate; supersedes the earlier M1 of Aug 23, per `REVIEW.md` #31). Also the **calibration checkpoint** for the effort model — record Phase 1 actual hours vs the **370 / 442 / 215 h** estimates and restate the rate card.
