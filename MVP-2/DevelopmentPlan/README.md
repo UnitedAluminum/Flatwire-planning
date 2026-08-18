@@ -54,7 +54,7 @@ Phase 2 is **wholly MVP-2**, and the roadmap described it as **"Not deferrable �
 
 Three consequences, each recorded where it applies:
 
-1. **`phase-04` treats the schedule as an external interface**, not a Phase-2 deliverable. It carries a read contract: the six value groups from `[PLC §351–356]`, who owns them, what happens when the source is unavailable (check-in cannot proceed — no schedule, no push), and the snapshot rule.
+1. **`phase-04` treats the schedule as an external interface**, not a Phase-2 deliverable. It carries a read contract: the six value groups from `[PLC §7.2]`, who owns them, what happens when the source is unavailable (check-in cannot proceed — no schedule, no push), and the snapshot rule.
 2. **`PassScheduleId` is a documented external reference** on `FlatWireRun`, `RodCheckin`, `SpoolCheckin` and `CoilOutput` — unenforced *by design*, the same class as `PlanId`, `CoilOrderPlanId` and `SkidId`. It is not a missing FK. `FlatWire_DDL_RunAll.sql` produces a complete MVP-1 database, and **MVP-2's `06b` is irrelevant to an MVP-1 build**.
 3. **`PLCTagSpecification.md:42` already read this way** — it lists *"the pass schedule's contents and how it is authored or generated"* under **Not in scope**. The client-facing PLC spec was written on this assumption before the split made it explicit.
 

@@ -1,10 +1,13 @@
 -- ============================================================
--- Flat Wire Mill (MVP-2) — DDL 07b: Indexes on MVP-2 tables
--- Run order : 07b of 06 (MVP-2 chain)
--- Scope     : MVP-2 (deferred). NOT part of MVP-1.
+-- SCOPE: MVP-1. Built by FlatWire_DDL_RunAll.sql immediately after 07
+-- (decision D-31, 15 Aug 2026; was MVP-2 from 11 Aug).
+-- Flat Wire Mill — DDL 07b: Indexes on the schedule tables
+-- Run order : 07b, immediately after 07
+-- Scope     : MVP-1
 -- ============================================================
 -- Split out of FlatWire_DDL_07_Indexes.sql on 11 Aug 2026 when the schema was
--- divided by MVP scope. 13 of the 47 indexes.
+-- divided by MVP scope, and returned to MVP-1 on 15 Aug 2026 by D-31.
+-- 6 of the 47 index statements (41 in 07, 6 here).
 --
 -- PREREQUISITE: the whole MVP-1 chain must already be deployed
 -- (00_Database .. 08_Programmability under MVP-1/ProjectPlan/Database).

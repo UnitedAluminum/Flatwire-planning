@@ -3,22 +3,11 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL3 rod check-in · FL2 / FL3 spool check-in
-**Version:** 2.3
-**Last Updated:** August 12, 2026
+**Version:** 2.4
+**Last Updated:** August 15, 2026
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 2 — Rod Check-in · Dashboard 5 — Spool Check-in
 **Requirement source:** SRS check-in rules (`CHK005`–`CHK010`), `FR-094`/`FR-096` (FL2 acknowledgement and tag push), pass-schedule rules (`PSM005`–`PSM010`)
-
----
-
-## Document Change History
-
-| Version | Date | Description |
-|---|---|---|
-| 1.0 | Apr 25, 2026 | Initial flow — five-step acknowledgement sequence for Dashboard 2 and Dashboard 5, pass-schedule confirmation dialog, audit-before-push ordering. |
-| 2.0 | Aug 1, 2026 | **Issued for client review.** Incorporates decisions taken since: the shared coil status is set here and not at staging; automatic line selection when a rod is planned for the other line; min/max dimensional limits on four attributes; the payoff selector is pre-filled and read-only for a rod that arrived through pre-check-in; the pass-schedule attribute lookup with mandatory confirmation. Restructured as a client deliverable; internal gap references and mockup-implementation notes removed. |
-| 2.1 | Aug 4, 2026 | §3.6 (PLC tag push) reduced to the trigger and the records-before-tags ordering; the payload itself, which **contradicted the other four sources** on edge type and on speed target-vs-limit, now lives in [`PLCTagSpecification.md`](../../Architecture/PLCTagSpecification.md) §4. |
-| **2.2** | **Aug 4, 2026** | **FM2 roller sizes corrected — and one open item closes.** The §4.2 equipment note read *"FM2 has three 6″ stands"* under a `[CONFIRMED — May 21, 2026]` tag; it is now **three stands: S1 8″, S2 6″, S3 6″**, with a per-stand table. The 8″ roller **is S1** — it had been read as a separate component feeding three 6″ stands, which is why the FL2 check-in screen listed four component rows. Edger placement (S2 and S3) and the stand count are unchanged. The FL2 tag-push row now names S1/S2/S3. **`OI-04` is closed and removed from the open-items table and the sign-off checklist:** *"is it 6″ S2 or 6″ S3?"* was two names for **one stand**, so no client decision is needed. One item is added to the checklist in its place — **confirm the corrected equipment note itself.** |
 
 ---
 

@@ -43,7 +43,7 @@ Owner is a **delivery stream**, not a person — the named-owner roster is fille
 
 | # | Phase | Owner (stream) | Hours | Days | Wk | File |
 |---|---|---|---|---|---|---|
-| 1 | Core Platform Setup | FE · BE+RT · DB | **1,027** (1A 370 · 1B 442 · 1C 215) | 128.4 | W0 | [Development/Roadmap.md](Roadmap.md) (index) → [1A Angular](Phases/phase-01a-angular-foundation.md) · [1B Backend](Phases/phase-01b-backend-foundation.md) · [1C Database](Phases/phase-01c-database-foundation.md) |
+| 1 | Core Platform Setup | FE · BE+RT · DB | **1,110** (1A 370 · 1B **519** · 1C **221**) | 138.8 | W0 | [Development/Roadmap.md](Roadmap.md) (index) → [1A Angular](Phases/phase-01a-angular-foundation.md) · [1B Backend](Phases/phase-01b-backend-foundation.md) · [1C Database](Phases/phase-01c-database-foundation.md) |
 | 2 | Pass Schedule Management (Operations Manager) — **wholly MVP-2** | FE + BE | 231 → MVP-2 | 28.9 | W2–W3 | [phase-02-pass-schedule-management.md](../../../MVP-2/DevelopmentPlan/ShopfloorPlan/phase-02-pass-schedule-management.md) |
 | 3 | Line Status Board & Real-Time Backbone | RT + FE | 190 | 23.8 | W2–W3 | [phase-03-line-status-board-realtime-backbone.md](Phases/phase-03-line-status-board-realtime-backbone.md) |
 | 4 | Rod Check-In & PLC Configuration (FL1 / FL3) | FE + BE + RT | 255 *(+24–64 h G2)* | 31.9 | W4 | [phase-04-rod-checkin-plc-config.md](Phases/phase-04-rod-checkin-plc-config.md) |
@@ -126,14 +126,30 @@ Owner is a **delivery stream**, not a person — the named-owner roster is fille
 > **Two findings from that scoping do change this plan, and neither is in the table above.** **(1)** `FR-130`–`FR-155` — FL1 spool completion, 26 requirements with 25 test cases, an owning specification, two hub events and a built mockup component loaded by `dashboard_3_active_run.html` — was costed as a **single 4 h story** (`FW-N02`). Re-priced at **98 h**; gap **`G37`**, story **`FW-202`**. **(2)** Consequently **nothing in the plan writes the FL1 `Spool` row** — `POST /coil/complete` is Phase 9's FL2 *coil*. Phase 8's published 118 h does not carry either, and must not be edited to absorb them.
 
 ### Development milestones
-- **M1 (Aug 14):** platform ready — scaffolded UI ↔ stubbed service ↔ created schema ↔ simulated hub. **Hard gate** (user mandate; supersedes the earlier M1 of Aug 23, per `REVIEW.md` #31). Also the **calibration checkpoint** for the effort model — record Phase 1 actual hours vs the **370 / 442 / 215 h** estimates and restate the rate card.
+- **M1 (Aug 14):** platform ready — scaffolded UI ↔ stubbed service ↔ created schema ↔ simulated hub. **Hard gate** (user mandate; supersedes the earlier M1 of Aug 23, per `REVIEW.md` #31). Also the **calibration checkpoint** for the effort model — record Phase 1 actual hours vs the **370 / 519 / 221 h** estimates and restate the rate card.
+
+> ⚠ **Phase 1 was restated three times: 1,027 → 1,054 h (14 Aug) → 1,132 h (15 Aug) → 1,110 h (15 Aug).**
+> **The third step is the withdrawal of all automated backend tests** (`[TS §1.2]`) — **1B 541 → 519**, itemised
+> across three stories that carried priced test content (`FW-138` 56→42, `FW-147` 16→12, `FW-080` 32→28) with
+> `FW-207` and `FW-150` **unchanged** because they are priced from production artifacts. ⚠ **The saving is only
+> −26 h**; applying a flat test fraction to the base overstates it by ~70 %. **QA is held at 78 h rather than
+> recomputed to 74** — with no automated tests, regression across Phases 4–14 is manual, so the mechanical
+> +20 % would book a saving on the line that must absorb the work.
+> The second step was decision **`D-29`**, tactical DDD for `FlatWire` — `FW-207`/`FW-208` minted and
+> `FW-141`/`FW-147` re-priced (**1B 469 → 541**), plus `FW-007` +4 h for `G21`'s `Station` column and re-keyed
+> index (**1C 215 → 221**). The first was — `FW-138` mis-counted at 13 controllers against an `[API §3.1]` that
+> lists 14 (+4 h BE), and `ITInhibit` minted as `FW-205` (+16 h RT) having had no phase home and no costed
+> story. The Phase-1 row above, the three phase files and `[TB §7]` carry the corrected figures.
+> **`[CE]`'s §2–§5 deliberately do not** — see `[CE §8]`; re-deriving them moves the grand total, the weekly
+> grid, the FTE columns and the descope ladder, so it is a programme re-baseline. **The W0 row below and the
+> 10.7 FTE figure are therefore still on the 1,027 basis; corrected, W0 is 1,110 h and ~11.6 FTE.**
 - **M2 (Sep 6):** Pass Schedule Active-able; Dashboard 1 live (upstream rod receiving & planning/scheduling assumed available on the existing systems).
 - **M3 (Sep 13):** first full FL1 slice live — check-in → PLC push (simulate) → live trace.
 - **M4 (Sep 20–27):** FL1 + FL2 complete a coil with traceability and label; FL3 hybrid + reporting.
 - **M5 (Sep 30):** critical-path feature-complete; ready for UAT/sign-off.
 
 ### QA milestones
-- **QA0 (Aug 14):** Phase-1 gate suites green — Jest smoke (1A), xUnit + stub-fixture + validator suites (1B), DDL/seed idempotency + 22-table post-run checks (1C). Re-baselined to the Aug-14 gate per `REVIEW.md` #31.
+- **QA0 (Aug 14):** Phase-1 gate green — Jest smoke (1A), **signed-off manual contract walkthrough + `/health` shape (1B — no automated backend tests, `[TS §1.2]`)**, DDL/seed idempotency + **25-table** post-run checks (1C). Re-baselined to the Aug-14 gate per `REVIEW.md` #31. *(Count corrected from 22 on 14 Aug 2026 — `[DBD §6.2]` is the counted baseline: **25 MVP-1, 28 full**.)*
 - **QA1 (Sep 6):** Pass Schedule + generator unit/contract suites green.
 - **QA2 (Sep 13):** check-in rollback + real-time integration verified on staging; hub load test (N clients × 3 lines × cadence).
 - **QA3 (Sep 24):** FL1 + FL2 E2E (FW-120/121) pass.

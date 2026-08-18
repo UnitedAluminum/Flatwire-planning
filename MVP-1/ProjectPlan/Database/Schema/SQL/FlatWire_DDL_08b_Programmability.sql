@@ -1,4 +1,6 @@
 -- ============================================================
+-- ⚠ MVP-2 SCOPE. NOT built by FlatWire_DDL_RunAll.sql -- that runner deliberately skips it.
+-- Co-located with the MVP-1 chain 15 Aug 2026 (was MVP-2/DBChanges/). See MVP2-SCOPE.md.
 -- Flat Wire Mill (MVP-2) — DDL 08b: MVP-2 programmability
 -- Run order : 08b of 06 (MVP-2 chain)
 -- Scope     : MVP-2 (deferred). NOT part of MVP-1.

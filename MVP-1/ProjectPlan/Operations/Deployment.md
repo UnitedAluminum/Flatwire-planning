@@ -243,7 +243,7 @@ SELECT a.CoilAlpha FROM dbo.CoilTraceability a
 
 > **If V1 returns anything other than 25**, the wrong script set ran or a script failed silently. **Stop.**
 >
-> ⚠ **This check asserted 27 until 13 Aug 2026 and explicitly told the deployer to stop on 25 — so as written it rejected a correct deployment.** The counts were fixed by counting the scripts directly, comments excluded: `CREATE TABLE` ×25, `FOREIGN KEY` ×33 in script 06, and 39 non-clustered + 2 filtered-unique in script 07. **28 tables and 43 FKs are the full design**, of which the three `PassSchedule*` tables and ten of the FKs are owned outside MVP-1 and are built by `MVP-2/DBChanges`. Counts of 20, 21, 22, 24 and 27 all circulate in older documents and are superseded.
+> ⚠ **This check asserted 27 until 13 Aug 2026 and explicitly told the deployer to stop on 25 — so as written it rejected a correct deployment.** The counts were fixed by counting the scripts directly, comments excluded: `CREATE TABLE` ×25, `FOREIGN KEY` ×33 in script 06, and 39 non-clustered + 2 filtered-unique in script 07. **28 tables and 43 FKs are the full design**, of which the three `PassSchedule*` tables and ten of the FKs are owned outside MVP-1 and are built by `MVP-1/ProjectPlan/Database/Schema/SQL`. Counts of 20, 21, 22, 24 and 27 all circulate in older documents and are superseded.
 
 ### 4.3 Step 3 — The FW-001 shared-schema renames
 

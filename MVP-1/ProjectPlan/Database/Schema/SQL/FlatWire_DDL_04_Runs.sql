@@ -74,6 +74,21 @@ BEGIN
     CREATE TABLE [dbo].[RodStaging] (
         [Id]                      INT           NOT NULL IDENTITY(1,1),
         [LineId]                  VARCHAR(5)    NOT NULL,   -- FL1 | FL3 (PCI002 excludes FL2)
+        -- G21. The PHYSICAL payoff station, written at staging time from the WIP-station
+        -- map (CommonDB..WIPStations). FL1 and FL3 SHARE ONE physical VPS -- Dashboard 2A
+        -- maps STATION_BY_LINE = {FL1:"FL1PO", FL3:"FL1PO"} and only FL1PO is seeded; the
+        -- client confirmed rods are never stacked, two maximum, one per payoff (Q71).
+        --
+        -- This column exists because UX_RodStaging_Bay CANNOT be keyed on LineId:
+        -- CK_RodStaging_LineId admits BOTH FL1 and FL3, so (FL1,1) and (FL3,1) are distinct
+        -- index entries for what is ONE bay -- two rods Staged on one physical position with
+        -- every constraint satisfied. Worse, Q24 makes the station SWITCH LINE BY ITSELF
+        -- when an order is booked on the other rod line (no message, no override), so LineId
+        -- is a uniqueness key the application rewrites underneath itself.
+        --
+        -- LineId is RETAINED -- the queue projection, the off-schedule check and reporting
+        -- all need it. It simply stops being the uniqueness key. See 07_Indexes.
+        [Station]                 VARCHAR(10)   NOT NULL,   -- e.g. FL1PO; G21 uniqueness key
         [PayoffPosition]          INT           NOT NULL,   -- 1 or 2 (PCI006)
         [RodAlpha]                VARCHAR(20)   NOT NULL,   -- FK → Rod.Alpha
         -- TWO sequences, deliberately. Planning sets an order (R00043→R00044→R00045) and

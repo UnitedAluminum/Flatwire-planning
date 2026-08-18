@@ -1,7 +1,7 @@
 # Flat Wire Mill — Test Strategy
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — split out of `06-TestPlanAndTestCases.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** August 15, 2026 — **E2E respecified on Playwright driving real OPC tags** (§1.2, §3.1) and **UAT's entry criterion given a trial-scoped substitution** (§4.1): automated E2E is Phase 14 and out of trial scope, so [TRP §8]'s manual acceptance run satisfies the gate for the trial. Same day: **all automated backend tests withdrawn**: §1.2's *Unit — .NET* and *Integration — API* rows struck, *Contract* demoted to manual inspection, and §4.2's **QA0 row re-specified** as a signed-off manual contract walkthrough for 1B. The Jest 95 % bar on 1A is untouched and the asymmetry is recorded as deliberate *(otherwise August 13, 2026 — split out of `06-TestPlanAndTestCases.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
 **Document Type:** Strategy, scope, environments, gates, defect management
 **Status:** Baselined
 **Owner:** QA stream
@@ -25,16 +25,39 @@
 | Level | Technology | Owns | Runs |
 |---|---|---|---|
 | **Unit — Angular** | **Jest 29**, at the repository's **95 % coverage bar** (branches, functions, lines, statements) | Component logic, pipes (including the edge-type display pipe), validators, the SignalR ring buffer, chart data transforms | Every commit |
-| **Unit — .NET** | **xUnit + Moq** | MediatR handlers, **every FluentValidation rule**, the generator algorithm, weight derivation, the alert rules engine | Every commit |
+| ~~**Unit — .NET**~~ | — | **Withdrawn 15 Aug 2026 — see the callout below.** There is **no automated backend test level** | — |
 | **Component — Angular** | Jest + Testing Library | A screen against a mocked API and a mocked hub, including error and permission states | Every commit |
-| **Integration — API** | xUnit against a **seeded `FlatWireDB`** | Command handlers writing real rows; constraint and trigger behaviour; cross-DB compensating writes against a stubbed shared schema | Per PR to `main` |
-| **Contract** | Schema assertions against `[API]` | Every endpoint's request/response shape, status codes and error codes; the C# ↔ TypeScript ↔ DB `CHECK` enum mirror | Per PR |
+| ~~**Integration — API**~~ | — | **Withdrawn 15 Aug 2026** — no xUnit suite against a seeded `FlatWireDB` | — |
+| **Contract** | **Manual** review against `[API]` | Every endpoint's request/response shape, status codes and error codes; the C# ↔ TypeScript ↔ DB `CHECK` enum mirror | Per PR — **by inspection**, no longer asserted by a suite |
 | **Real-time / load** | A hub client harness | Cadence, batching, decimation, group isolation, reconnect and group re-join | QA2, then nightly |
-| **E2E** | Playwright or the repository's existing E2E runner | The three route journeys FL1 / FL2 / FL3 end to end | QA3, QA4 |
+| **E2E** | **Playwright** (`@playwright/test`), driving **real OPC tags** into a test-only server — see §3.1 | The three route journeys FL1 / FL2 / FL3 end to end | QA3, QA4 |
 | **PLC / OPC commissioning** | Manual, on the line, with the commissioning engineer | Tag paths, tag push, `LineState`, footage counter, ITInhibit | On-line trial |
 | **UAT** | Manual, operator-run, on staging | The scenario scripts in §7 | QA5 (28–30 Sep) |
 
-**The enum mirror is a first-class contract test.** Three of the four corrections in `[API §2.3]` were a value present in one place and missing from another. `TC-020` asserts C#, TypeScript and the DB `CHECK` agree for **every** enum.
+> ### ⚠ There are no automated backend tests — decision of 15 Aug 2026
+>
+> **`FlatWire` ships with no xUnit suite of any kind**: no unit tests, no validator tests, no
+> stub-fixture/contract suite, and no integration suite against a seeded `FlatWireDB`. Two rows
+> above are struck for that reason and the **Contract** row is demoted to manual inspection.
+>
+> **The asymmetry with Angular is deliberate, not an oversight.** Jest stays at the repository's
+> **95 % coverage bar** on the frontend while the backend carries none. Anyone reading this table
+> and assuming the .NET rows were forgotten should read this callout instead.
+>
+> **What this costs, stated once so it is not rediscovered per phase:**
+> - **1B's QA0 component becomes manual** — §4.2, and see the walkthrough that replaces it.
+> - **`[API §7.3]`'s de-stub switchover has no completion test.** A screen moves off the stub when
+>   *"the real endpoint returns the contracted shape … its error cases return the contracted
+>   codes"* — now established by review, so the de-stub pass needs a named signer-off per screen.
+> - **Regression across Phases 4–14 is manual.** The saving is booked once in Phase 1B; the cost
+>   recurs in every later phase and lands hardest in Phase 14, which *is* the QA phase.
+> - **Two gap closures lose their evidence** — `G14`'s format half and `G21`'s domain half. Both
+>   are restated in `[GAP]` as *closed by design, unverified*.
+
+**The enum mirror is now a manual contract check.** Three of the four corrections in `[API §2.3]`
+were a value present in one place and missing from another. `TC-020` still requires C#, TypeScript
+and the DB `CHECK` to agree for **every** enum — but with no contract suite it is a **three-way
+diff across 14 enums performed by hand, and it needs a named owner** rather than a green build.
 
 ### 1.3 Test-case identifiers
 
@@ -108,8 +131,8 @@ Test depth is not spread evenly. **P1** areas get happy path, boundary, negative
 | Component (Angular) | Developer machine / CI | The **mock API service** and a **mock hub**, both mirroring the DB seed |
 | Integration (API) | `test1` / `test2` (`devual-uadev001` / `002`) | A **freshly built and seeded `FlatWireDB`**, torn down and rebuilt per run |
 | Contract | `test1` | Seeded `FlatWireDB`, real API |
-| Real-time / load | `dev1` or `staging` | Simulated tag source at the configured cadence |
-| E2E | `staging` | Full seed + the E2E fixtures |
+| Real-time / load | `dev1` or `staging` | Simulated tag source at the configured cadence — `FW-203` for the trial, `[SIM]`'s in-process adapter (`FW-211`) thereafter |
+| E2E | `staging` | Full seed (five seeds, 28 tables) + a **test-only OPC server sidecar** the suite writes tags into — **owned by `FW-217`** (`[SIM §3.3]`), which re-hosts the same line models behind a real OPC endpoint so `FW-N05`'s ingest is exercised rather than bypassed. ⚠ **Never the production OPC servers** — they are unchanged infrastructure (`[PLC §5.3]` A5) |
 | PLC commissioning | The physical line | Live PLC, live OPC — **no simulation** |
 | UAT | `staging` (`uanet-staging`, or `devual-uadev001` if staging is unavailable) | A UAT dataset refreshed the morning of each UAT day |
 
@@ -159,6 +182,8 @@ Every block is guarded by `IF NOT EXISTS`; computed columns and `ROWVERSION` are
 | A mock SignalR stream feeds gauge/width/speed/weight/footage at the configured cadence | Live OPC subscription |
 | `FL{n}.LineState` is a test double the harness drives | The real tag — **whose vocabulary is undocumented (OI-35)** |
 
+The machine model behind that stream is specified in [`MachineSimulator.md`](../Architecture/MachineSimulator.md) `[SIM]` — the scenario and fault catalogue a tester drives it with is `[SIM §7]`, and every behaviour it models is listed as an individually confirmable row in `[SIM §5.6]`.
+
 **What cannot be tested before commissioning**, and must therefore be on the commissioning checklist (§8):
 
 - That the configured **tag paths are correct** — they are confirmed with Tim O. and the commissioning engineer, and are config-driven so they can be corrected without a redeploy.
@@ -166,6 +191,7 @@ Every block is guarded by `IF NOT EXISTS`; computed columns and `ROWVERSION` are
 - That the **footage counter** increments as expected and that die-life accumulation reads it correctly.
 - That a **tag push actually configures the machine** — the end of the chain the whole system exists to drive.
 - That `ITInhibit` genuinely blocks machine run.
+- ⚠ **That the simulator's own model matches the machine.** Every channel it drives rests on an unconfirmed reading, and a convincing simulator makes that easier to forget rather than harder — gap **`G39`**. `[SIM §5.6]` lists the ten assumptions individually so each can be checked; the proposed act that checks them is **`C13`**, and it is **not yet written into `[COM]`**.
 
 ---
 
@@ -185,16 +211,50 @@ Every block is guarded by `IF NOT EXISTS`; computed columns and `ROWVERSION` are
 | **E2E** | All phases in the route complete; staging seeded | Three green route runs (FL1, FL2, FL3) | Any Critical defect open → suspend |
 | **UAT** | Three green E2E runs; Critical open issues closed | Sign-off recorded per scenario | > 2 Severity-1 defects → suspend and re-plan |
 
+> ### ⚠ UAT's entry criterion — one trial-scoped substitution
+>
+> **For MVP-1 go-live the criterion above is unchanged: three green *automated* E2E runs.**
+>
+> **For the 30 Sep trial run it cannot be met, and is substituted rather than waived.** Automated E2E is
+> **Phase 14 work and deliberately out of trial scope** (`[TRP]`), so no automated run will exist by
+> 30 Sep — while `[TRP]` commits to UAT signed off inside that window. Left alone, the trial's UAT would
+> start with its stated gate unmet and nobody would notice.
+>
+> **The substitute is `[TRP §8]`'s ten-step FL1 → FL2 acceptance run**, executed manually. That is not a
+> concession — it *is* an end-to-end journey, written as a numbered script, and it is what UAT executes
+> anyway. It covers check-in → active run → SPC → WIP rejection → spool completion → FL2 check-in → FL2
+> run → reconnect, with the negative cases named.
+>
+> **What the substitution does not cover, stated so it is not assumed:** FL3 hybrid (`FW-122`) is not in
+> the trial at all; weld traceability is out with the 14 Aug removal; and a manual run proves the journey
+> **once**, on one operator's path, with no regression value for the next change. Automated runs remain
+> the criterion for go-live precisely because of that last point.
+
 ### 4.2 Programme gates
 
 | Gate | Date | Contents | Blocks |
 |---|---|---|---|
-| **QA0** | **14 Aug** | Jest smoke suite (1A) · xUnit + stub-fixture + validator suites (1B) · **DDL/seed idempotency and the 27-table post-run check** (1C) | The Phase-1 hard gate |
+| **QA0** | **14 Aug** | Jest smoke suite (1A) · **signed-off manual contract walkthrough + `/health` shape (1B)** · **DDL/seed idempotency and the 25-table post-run check** (1C) | The Phase-1 hard gate |
 | **QA1** | 6 Sep | Pass-schedule and generator unit + contract suites green, **including the corrected worked example** | Phase 4 start |
 | **QA2** | 13 Sep | Check-in rollback and real-time integration verified on staging · **hub load test (N clients × 3 lines × cadence)** | Phase 6 confidence |
 | **QA3** | 24 Sep | FL1 + FL2 E2E pass (`FW-120`, `FW-121`) | Phase 14 |
 | **QA4** | 28 Sep | FL3 hybrid E2E pass (`FW-122`) · **regression on renamed-column reports** | Go-live |
 | **QA5** | 30 Sep | Full UAT (`FW-123`); all Critical open issues closed | Release |
+
+> **QA0's 1B component, in full.** With no backend suite to run, 1B's gate contribution is a
+> **manual contract walkthrough, signed off by a named reviewer**, covering `[API §7.2]`'s five
+> stub obligations against every stub endpoint:
+>
+> 1. the **exact envelope**, including `success` and `errors`;
+> 2. the **canonical fixture alphas** — `R00041`–`R00043`, `SP-00021`, `PS-1100-FL1-003`,
+>    `RUN-0042`/`RUN-0043` — matching the DB seed;
+> 3. **at least one failing case per endpoint**;
+> 4. **`null` live gauge and width for FL2**;
+> 5. a **mock hub stream** at the real cadence with real batch shapes.
+>
+> Plus `GET /health` returning the full documented shape, and **`TC-020`'s three-way enum diff**
+> with its owner named. **This is the whole of 1B's automated-to-manual substitution** — if the
+> walkthrough is not scheduled and staffed, the Phase-1 gate has no 1B criterion at all.
 
 > **QA2's hub load test has no pass criteria.** `N`, the latency budget and the AGC sample rate are all undefined (**G9 / OI-34**). **A test that cannot fail is not a gate.** Either the targets are set before 13 Sep or QA2 is recorded as executed-but-not-gating. This is stated so the gap cannot pass silently.
 

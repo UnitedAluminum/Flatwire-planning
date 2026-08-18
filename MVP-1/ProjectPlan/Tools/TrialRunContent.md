@@ -1,7 +1,7 @@
 # Trial Run Workbook — authored content
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 14, 2026 — initial publication
+**Last Updated:** August 15, 2026 — **client blocker `B4` restated**: the roles are confirmed to exist, so the ask is now the six role **codes** and how they map to the permissions matrix
 **Status:** Source content for a generated workbook
 **Part of:** `ProjectPlan/Tools/` — index: [README.md](README.md)
 
@@ -102,9 +102,9 @@ The one place shorthand appears. Everywhere else in the workbook these are writt
 **Delivers:** The service behind the screens exists with its layers separated, ready for the first feature.
 
 ### FW-138
-**Reference title:** Thirteen thin controllers over `UAController`
+**Reference title:** Fifteen thin controllers over `UAController`
 **Work item:** Service endpoints for every screen
-**Delivers:** Every screen has a service to call. Nine of the thirteen planned are needed for the trial; the other four belong to work outside it.
+**Delivers:** Every screen has a service to call. Eight of the fifteen planned are needed for the trial; the other seven belong to work outside it.
 
 ### FW-139
 **Reference title:** MediatR registration and pipeline behaviours
@@ -117,7 +117,7 @@ The one place shorthand appears. Everywhere else in the workbook these are writt
 **Delivers:** The whole system switches between sample data and live data with one setting. This is what makes the trial demonstrable before the plant is connected.
 
 ### FW-141
-**Reference title:** Repository layer
+**Reference title:** Repository layer — one per aggregate root
 **Work item:** Database access layer
 **Delivers:** One place where the application reads and writes stored data, so a change to the data model touches one layer instead of many.
 
@@ -147,7 +147,7 @@ The one place shorthand appears. Everywhere else in the workbook these are writt
 **Delivers:** An unexpected failure returns a readable response the screen can show, never a raw error.
 
 ### FW-147
-**Reference title:** FluentValidation and the canonical cross-layer enums
+**Reference title:** FluentValidation, value objects and the canonical cross-layer enums
 **Work item:** Input validation and shared vocabulary
 **Delivers:** Invalid entry is refused at the boundary with a specific message, and the screens, services and database all use one vocabulary for states and reasons.
 
@@ -221,10 +221,35 @@ The one place shorthand appears. Everywhere else in the workbook these are writt
 **Work item:** Machine settings service, with simulation
 **Delivers:** Machine settings can be written from the application, and simulated instead when no machine is connected. Every check-in stage can therefore be built and demonstrated long before commissioning.
 
+### FW-205
+**Reference title:** `ITInhibitService` — the run-block interlock
+**Work item:** Run-block interlock
+**Delivers:** The line is prevented from running whenever the system cannot account for what it is producing — no material checked in, or the footage feed missing or invalid. It clears by itself when the cause clears, and it blocks one line without affecting the others.
+
+### FW-207
+**Reference title:** Domain model — aggregates, value objects and invariants
+**Work item:** Core business rules
+**Delivers:** The rules that protect the data live in one place and cannot be bypassed by a screen or a service that forgets to check them. Identifiers validate themselves, so a malformed rod or coil number cannot be created at all.
+
+### FW-208
+**Reference title:** Domain events and post-commit dispatch
+**Work item:** Live updates from business events
+**Delivers:** When something happens — a run pauses, a weld is recorded, a coil completes — every open screen is told immediately, and only after the change is safely saved.
+
 ### FW-203
 **Reference title:** OPC feed simulator — a stand-in for the real ingest
 **Work item:** Simulated machine data feed
 **Delivers:** Realistic live readings without a machine, and steerable — an in-tolerance run, a drifting one, an out-of-tolerance excursion or a line stop can each be reproduced on demand, so the screens are accepted against known conditions rather than whatever the plant happens to be doing.
+
+### FW-214
+**Reference title:** Simulator control console — screen DB-S1
+**Work item:** Engineering console for the simulated machine
+**Delivers:** One screen an engineer drives all three simulated lines from, so the acceptance run is a few clicks rather than typed commands with a stopwatch — which matters because the run is performed in front of the client and one of its checks is a three-second stop measured against a five-second threshold. It is an engineering tool, not an operator screen: it is absent from the dashboard inventory and the navigation, and it does not exist at all once the system is connected to a real machine. Several of its controls arrive switched off, because the behaviour behind them is deliberately not being built for the trial.
+
+### FW-218
+**Reference title:** Trial control surface for the feed generator — steer, stop, drop, read
+**Work item:** Controls for the simulated machine data feed
+**Delivers:** A way to drive the simulated line while a run is in progress, so the acceptance run can be performed at all. Three of its ten steps depend on it: pushing a run out of tolerance to prove the automatic quality prompt fires, stopping the line at a chosen instant to prove the spool completion prompt behaves correctly on a brief stop, and interrupting the data feed to prove the machine is blocked when readings go missing. Restarting the feed with different settings cannot do any of this — it ends the run being demonstrated. The controls are for engineers, are never available to an operator, and do not exist at all once the system is connected to a real machine.
 
 ### FW-204
 **Reference title:** Minimal landing route — the entry point when Dashboard 1 is out of scope
@@ -394,12 +419,18 @@ The one place shorthand appears. Everywhere else in the workbook these are writt
 **Consequence if late:** The rod check-in estimate stays provisional and carries a separate allowance of three to eight days.
 
 ### B4
-**Reference:** G6 — roles not confirmed as existing JWT claims
-**Blocker:** Operator roles not confirmed
-**What we need:** Confirmation that the operator, supervisor and operations manager roles already exist as sign-in permissions, or a decision to create them.
-**Consequence if late:** Every supervisor override and approval in the trial is blocked, including the weight-variance override on spool completion.
+**Reference:** G6 — role sign-in permissions
+**Blocker:** ✅ **Largely answered 15 Aug 2026** — the six roles already exist as sign-in permissions, so none need creating. **One detail is still outstanding.**
+**What we need:** The exact codes used for the six roles. They are recorded in an abbreviated or coded form rather than as the role names we use in the permissions matrix, and we need the two lists lined up — which code corresponds to operator, supervisor, operations manager, engineering/maintenance, quality and administrator.
+**Consequence if late:** The supervisor overrides and approvals can be **built**, but cannot be **checked** before the trial. A mismatched code does not raise an error — it silently denies a legitimate supervisor, or in the case of the supervisor notification, sends it to nobody.
 
 ### B5
+**Reference:** G38 — the durable spool-completion prompt has a column and no owner
+**Blocker:** Spool-completion prompt is not durable
+**What we need:** An owner and an allowance for making the machine-stop prompt survive a page refresh and a dropped connection. The database column that holds it was added on 15 August 2026 and the platform sprint's exit criteria now require the behaviour, but no work item covers it — the story that owns spool completion runs two sprints later, and the obligation belongs to the platform.
+**Consequence if late:** A prompt raised when the line stops is lost the moment an operator refreshes the screen or the connection drops, and a finished spool is left uncommitted. The failure is silent: nothing errors, the screens compile, the durability simply never happens — and with automated tests withdrawn from the server side, nothing detects it.
+
+### TIER2
 **Reference:** Second tier — none stops the build
 **Blocker:** Nine open questions with agreed workarounds
 **What we need:** Answers in due course on the footage-to-weight basis, which identifier the spool check-in scans, how a spool produced on the hybrid line is treated at the finishing line, what happens when no schedule matches, which order field carries the coil weight range, how a short close is transacted, and the live-data performance targets.

@@ -3,21 +3,11 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL2 / FL3
-**Version:** 2.2
-**Last Updated:** August 12, 2026
+**Version:** 2.3
+**Last Updated:** August 15, 2026
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 6 — SPC Checkpoint. Presented as a **dialog over the run being measured**, not as a separate screen (see version 2.1).
 **Requirement source:** SRS SPC rules (`SPC001` and following), `FR-184` (checkpoint types), die-change rules (`Q65`)
-
----
-
-## Document Change History
-
-| Version | Date | Description |
-|---|---|---|
-| 1.0 | Apr 2026 | Initial specification — purpose, triggers, checkpoint types, measurement rows, tolerance evaluation, the two submit paths. |
-| 2.0 | Aug 1, 2026 | **Issued for client review.** Checkpoint types corrected to the **five** persisted values. Adds the May 4, 2026 decision that a post-die-change checkpoint is a hard block with thread mode permitted, and the July 30, 2026 min/max tolerance decision. Restructured as a client deliverable; screen styling, layout dimensions and scripting detail removed. |
-| 2.1 | Aug 1, 2026 | **Presentation change only — no requirement altered.** The checkpoint is now raised as a dialog over the screen the operator is already on rather than as a page navigated to, so the run stays visible behind it. Two consequences the client should confirm: a post-die-change checkpoint is opened **directly by** the die change that mandated it, carrying that change as its stated trigger; and the line status board's *last check … View* link now opens the checkpoint **read-only**, as a review of what was recorded, instead of a blank entry form. |
 
 ---
 

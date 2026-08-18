@@ -32,11 +32,11 @@
 
 | Aspect | Contract |
 |---|---|
-| **What is read** | The six value groups the push needs, per `[PLC §351–356]`: component active/bypass state · die sizes · roll gaps · edge type · speed · gauge and width targets. Nothing else. |
+| **What is read** | The six value groups the push needs, per `[PLC §7.2]`: component active/bypass state · die sizes · roll gaps · edge type · speed · gauge and width targets. Nothing else. |
 | **Who owns it** | The pass-schedule track. MVP-1 is a **consumer only** — no create, no edit, no approve. |
 | **Mechanism** | **Assumed:** an API read plus a locally persisted snapshot. **To confirm with the owning track** — the alternative is that they write into `FlatWireDB` and MVP-1 reads locally. It changes this phase's BE estimate and nothing structural, because the snapshot is required either way. |
 | **Unavailable at check-in** | **Check-in cannot proceed.** No schedule means no acknowledgement, and no acknowledgement means no PLC push — there is no partial path and no default schedule. Surface it as a blocking error on step 2, not a warning. |
-| **Snapshot (required)** | MVP-1 persists **its own copy of what it pushed** — schedule id, version and the effective configuration. Already half-specified: `phase-09` writes *"pass-schedule ID + snapshot to the coil record"* (`OQ-64`), and `[PLC §620]` requires *"which pass schedule configured it, at which version"*. A certificate must stay reproducible after the owning system later edits the schedule. |
+| **Snapshot (required)** | MVP-1 persists **its own copy of what it pushed** — schedule id, version and the effective configuration. Already half-specified: `phase-09` writes *"pass-schedule ID + snapshot to the coil record"* (`OQ-64`), and `[PLC §11.2]` requires *"which pass schedule configured it, at which version"*. A certificate must stay reproducible after the owning system later edits the schedule. |
 
 ## Business Overview
 - **Objective:** guided check-in that captures incoming rod, forces visual inspection, requires explicit pass-schedule confirmation, writes audit records, then pushes PLC tags and starts the run.
@@ -85,7 +85,7 @@ This phase also owns **pre-check-in / payoff staging**: registering the *next* r
 - **Business services:** `CheckInService` (records-before-push orchestration) → `PLCTagService.PushPassSchedule(scheduleId, lineId, payoffPosition)`.
 - **MediatR handlers:** `CheckInRodCommand` handler whose side-effects (INFLAT, ack record, PLC push, timer, `LineStatus` broadcast) are **ordered and compensating, not atomic** — see the line below and `[PLC §7.5]`.
 - **Business rules:** all-or-nothing; Draft not acknowledgeable; single active run per line; **one rod per payoff bay and one bay per rod** — enforced in the database, not in application code.
-- **Wording:** staging spans `FlatWireDB` + `coils` + `wip_coil_orders` and is **not** one ACID transaction — describe these as **compensating writes**, never "atomic rollback" (G2/G16).
+- **Wording:** staging spans `FlatWireDB` + `coils` + `wip_coil_orders` and is **not** one ACID transaction — describe these as **compensating writes**, never "atomic rollback" (**G2**; `G16` closed 4 Aug 2026).
 - **Logging/authz:** PLC push audited (tag/value/operator/result); Operator+ policy.
 
 ## Database Changes

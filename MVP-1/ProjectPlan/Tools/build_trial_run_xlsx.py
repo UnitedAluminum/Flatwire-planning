@@ -43,12 +43,23 @@ THREE DELIBERATE DEPARTURES FROM build_development_plan_xlsx.py
        spreadsheet column has no surrounding sentence, and DB is actively ambiguous - it is
        both the Database discipline and the Dashboard prefix.
 
-FIVE GUARDS, ALL FATAL
+FIVE GUARDS, ALL FATAL (plus one warning)
     1. Reconciliation - every total in the plan is recomputed from its own cells: the block and
-                        discipline tables and the sprint tables all sum to 778; the phase-by-
+                        discipline tables and the sprint tables all sum to 832; the phase-by-
                         discipline grid agrees on every row, column and corner; the three
-                        sub-phases sum to 423; the all-in table's columns equal its total row;
-                        the deferred table sums to 330.
+                        sub-phases sum to 462; the all-in table's columns equal its total row
+                        AND its development column equals those same 462; the deferred table
+                        sums to 330.
+                        EXTENDED 15 AUG 2026, and the reason is worth keeping: the 778 -> 806
+                        re-baseline reached sections 1.3 and 4, all five guards passed, and
+                        section 2 - capacity, utilisation, staffing options, margin - was left
+                        a whole revision behind, because nothing here read section 2. It now
+                        checks section 2's effort figure and every sprint's planned hours
+                        against section 4's allocation, and it reads the hand-coded baseline
+                        off the backlog's own reconciliation lines instead of trusting the
+                        plan's transcription of them.
+                        A sprint planned above its capacity is a WARNING, not a failure - see
+                        guard()'s docstring.
     2. Coverage       - every work item parsed from the plan has a content entry and vice versa.
     3. Title          - every identifier in the plan resolves to a title in TaskBreakdown.md.
                         An unresolved identifier is fatal, never blank-filled.
@@ -87,8 +98,8 @@ DEFAULT_OUT = os.path.join(DEV, 'FlatWire_TrialRunPlan.xlsx')
 
 ISSUE_DATE = 'August 14, 2026'
 HOURS_PER_DAY = 8
-TOTAL_HOURS = 778          # the plan's own headline; every guard reconciles to it
-PLATFORM_HOURS = 423       # Phase 1A + 1B + 1C
+TOTAL_HOURS = 832          # the plan's own headline; every guard reconciles to it
+PLATFORM_HOURS = 462       # Phase 1A + 1B + 1C
 DEFERRED_HOURS = 330
 
 GLOSSARY_SHEET = 'Read Me'
@@ -368,6 +379,26 @@ def _int(value, default=None):
     return int(m.group(0).replace(',', ''))
 
 
+def parse_handcoded(path):
+    """Phase 1A/1B/1C hand-coded all-in totals, read off the backlog's own reconciliation
+    lines rather than transcribed into the plan by hand.
+
+    Added 15 Aug 2026. 1B moved 442 -> 541 -> 519 and 1C 215 -> 221 while the plan still
+    printed the older pair, so its "43 % reduction against 1,027 h" headline was comparing
+    against a baseline that no longer existed. Transcribed figures go stale silently; parsed
+    ones cannot.
+    """
+    text = open(path, encoding='utf-8').read()
+    out = {}
+    for m in re.finditer(r'\*\*Phase (1[ABC]) reconciliation\*\*(.*)', text):
+        # The LAST bolded "N h" on the line is the all-in total; the earlier bolded figures
+        # are the base and (for 1B) a deliberately held QA number.
+        totals = re.findall(r'\*\*([\d,]+)\s*h\*\*', m.group(2))
+        if totals:
+            out[m.group(1)] = int(totals[-1].replace(',', ''))
+    return out
+
+
 def parse_titles(path):
     """Story identifier -> its verbatim title, from the backlog's story bodies."""
     text = open(path, encoding='utf-8').read()
@@ -424,6 +455,14 @@ def parse_plan(path):
                               story=sid.group(0) if sid else '',
                               trial=_int(r[-1], 0)))
         p['platform'][code] = [i for i in items if i['story']]
+
+    # ---- the capacity position
+    # Read since 15 Aug 2026. NOTHING here read section 2 before that date, which is how the
+    # 778 -> 806 re-baseline reached 1.3 and 4 and left 2's effort, utilisation, staffing and
+    # margin figures a whole revision behind. A guard that reconciles every total except the
+    # one the client reads first is not a guard.
+    _, rows = _rows_after(text, '## 2. The capacity position', 'Measure')
+    p['capacity'] = {r[0]: r[1] for r in rows if r[0].strip()}
 
     # ---- the sprint calendar and the staffing options
     _, rows = _rows_after(text, '### 2.1 Recommended shape', 'Sprint')
@@ -515,9 +554,15 @@ def parse_content(path):
 
 # ------------------------------------------------------------------------- guards
 
-def guard(plan, titles, content):
+def guard(plan, titles, content, handcoded):
     """Reconciliation, coverage, title resolution and drift. Every failure is collected so
-    one run reports all of them rather than the first."""
+    one run reports all of them rather than the first.
+
+    One thing here is a WARNING and not a failure, deliberately: a sprint planned above its
+    own capacity. That is a true statement about the plan, not a defect in it - section 2.1
+    documents T1 at 409 h against 400 h and names three ways out. A guard that refused to
+    build a document for saying something uncomfortable would just get switched off.
+    """
     bad = []
 
     def check(label, got, want):
@@ -553,6 +598,32 @@ def guard(plan, titles, content):
         want = next(b['trial'] for b in bases if b['subphase'].startswith(code))
         check(f'sub-phase {code} deliverables', sum(i['trial'] for i in items), want)
     check('deferred table', sum(d['hours'] for d in plan['deferred']), DEFERRED_HOURS)
+
+    # 1b - section 2, the capacity position. ADDED 15 AUG 2026, and this is the gap that let
+    # a whole stale revision ship: the 778 -> 806 re-baseline reached 1.3 and 4, every guard
+    # above passed, and section 2 - the first thing a reader looks at - still said 778 h,
+    # 101 % utilisation and 70 h of margin. Nothing read it.
+    effort = next((v for k, v in plan['capacity'].items()
+                   if 'development effort' in k.lower()), None)
+    if effort is None:
+        bad.append('section 2 has no "Trial development effort" row to reconcile')
+    else:
+        check('section 2 development effort', _int(effort), TOTAL_HOURS)
+    by_code = {s['sprint']: s for s in plan['sprints']}
+    for code, total in plan['sprint_totals'].items():
+        s = by_code.get(code)
+        if s is None:
+            bad.append(f'sprint {code} is allocated in section 4 but absent from 2.1')
+            continue
+        check(f'sprint {code} planned in 2.1', s['planned'], total)
+    # The all-in table is derived from the same sub-phases as the three-bases table and had
+    # drifted from it by 28 h - it was still carrying a 1B of 192.
+    check('all-in dev column', sum(r['dev'] for r in allin), PLATFORM_HOURS)
+    # The hand-coded baseline is the backlog's, not ours to transcribe.
+    for b in bases:
+        code = b['subphase'].strip('*').split()[0]
+        if code in handcoded:
+            check(f'{code} hand-coded against the backlog', b['handcoded'], handcoded[code])
 
     # 2 - coverage, both directions
     planned = {i['story'] for i in plan['items']}
@@ -686,7 +757,7 @@ def build(out_path):
     plan = parse_plan(PLAN)
     content = parse_content(CONTENT)
 
-    failures = guard(plan, titles, content)
+    failures = guard(plan, titles, content, parse_handcoded(TASKS))
     if failures:
         print('FATAL - build refused:')
         for f in failures:
@@ -694,6 +765,13 @@ def build(out_path):
         if os.path.exists(out_path):
             os.remove(out_path)
         sys.exit(1)
+
+    # Not fatal - see guard()'s docstring. Printed after the failures so it is the last thing
+    # on screen on a successful build rather than the first thing scrolled past.
+    over = [s for s in plan['sprints'] if s['capacity'] and s['planned'] > s['capacity']]
+    for s in over:
+        print(f'  ! WARNING  sprint {s["sprint"]} is over capacity: {s["planned"]} h planned '
+              f'against {s["capacity"]} h available')
 
     wb = Workbook()
 
@@ -893,8 +971,9 @@ def build(out_path):
     # ------------------------------------------------------- 8. Blockers
     ws = wb.create_sheet('Blockers')
     sheet_header(ws, 'Blockers',
-                 'What this plan needs from outside the development team, and when. Three of '
-                 'the four are decisions or values owed to us.', tab='C62828')
+                 'What must close before the work it gates can proceed, and when. Two of the '
+                 'five are values or confirmations owed to us from outside; three are ours '
+                 'to decide.', tab='C62828')
     cols = [('Number', 10), ('Blocker', 32), ('What we need', 88), ('What it blocks', 44),
             ('Needed by', 22), ('Consequence if late', 70)]
     widths(ws, cols)
@@ -905,7 +984,9 @@ def build(out_path):
         rows.append([clean(b['n']), e.get('Blocker', ''), e.get('What we need', ''),
                      b['blocks'], b['needed'], e.get('Consequence if late', '')])
     r = table(ws, 4, cols, rows, centre_cols=(0, 4), focus_cols=(4,)) + 1
-    tier2 = content['Blockers'].get('B5', {})
+    # Keyed TIER2, not B5: the plan's blocker table gained a real row 5 (G38) on
+    # 15 Aug 2026, and the second tier had been squatting on that key.
+    tier2 = content['Blockers'].get('TIER2', {})
     if tier2:
         r = section(ws, r, 'Second tier — none of these stops the build')
         r = table(ws, r, [('Blocker', 32), ('What we need', 88),

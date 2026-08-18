@@ -1,7 +1,7 @@
 # Flat Wire Mill — Task Breakdown and Backlog
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 14, 2026 — **`FW-203`** (plant-data feed simulator, 8 h) and **`FW-204`** (minimal landing route, 8 h) minted for the trial run, both additive to `[CE §3b]` and both deliberately absent from `[SSP §5]`. Earlier same day: **`FW-202` minted** (FL1 spool completion — stop confirmation, weight basis and the `Spool` write, **98 h**) and `FW-N02` reduced to Part A; gap **`G37`** *(otherwise August 13, 2026)* — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** August 15, 2026 — **`G6` resolved on both blocked story cards** (`FW-145` and the Angular guard story): the six roles exist as JWT claims on `ClaimTypes.Role` *(earlier: **the machine simulator story set minted**: `FW-210`–`FW-215` (**111 h dev** — RT 64 · FE 24 · BE 23) and `FW-217` (+24 h), specified in [`MachineSimulator.md`](../Architecture/MachineSimulator.md) `[SIM]`, gap **`G39`**. **Additive to `[CE §3b]`** like `FW-202`/`203`/`204`; **`FW-203` is unchanged** and becomes `FW-211`'s first increment. ⚠ **`FW-209` was already taken** — the next free id is now `FW-218`, and `FW-216` is deliberately skipped *(otherwise August 14, 2026 — **`FW-203`** (plant-data feed simulator, 8 h) and **`FW-204`** (minimal landing route, 8 h) minted for the trial run, both additive to `[CE §3b]` and both deliberately absent from `[SSP §5]`. Earlier same day: **`FW-202` minted** (FL1 spool completion — stop confirmation, weight basis and the `Spool` write, **98 h**) and `FW-N02` reduced to Part A; gap **`G37`** *(otherwise August 13, 2026)* — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure)*. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
 **Document Type:** The MVP-1 shopfloor backlog — 116 stories, the descope ladder, the coverage matrix
 **Status:** **Authoritative for MVP-1 shopfloor delivery** — **116 stories / 3,292 h**, plus **`FW-202`** *(new 14 Aug 2026, gap `G37`)*, which is **additive and deliberately outside that baseline**: its 98 h base / 136 h all-in is carried in `[TRP]` and is **not** folded into the 3,292 h or into Phase 8's 118 h. **Keep citing "116 stories / 3,292 h"** — it is quoted in five other documents and re-counting it here would drift them all
 **Owner:** Delivery lead / programme management
@@ -44,17 +44,17 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Dates:** Thu 30 Jul – Fri 14 Aug 2026 · **12 working days** · **96 h/person**
 **Phases:** 1A Angular Foundation · 1B Backend Foundation · 1C Database Foundation
-**Hours:** **1,027** · **Required FTE: 10.7**
+**Hours:** **1,110** (1A 370 · 1B 519 · 1C 221) · **Required FTE: 11.6**
 **Goal:** stand up the platform. Every later phase assumes it exists.
 
 **Entry criteria:** roster confirmed; `FlatWireDB` server available; `ual-angular` / `ual-api` branches cut.
 **Exit criteria:** Angular library scaffolded and building; `FlatWire` four-project solution with stubbed controllers returning contracted shapes; `FlatWireHub` skeleton broadcasting simulated data; `PLCTagService` in simulate mode; `FlatWireDB` deployed with **25 tables, 33 FKs, 1 procedure, 1 trigger** and full seed; FW-001 impact audit complete.
 **Demo:** scaffolded UI ↔ stubbed service ↔ created schema ↔ simulated hub, end to end.
-**Gates:** **M1 (14 Aug) hard gate** · **QA0** (Jest smoke; xUnit + stub-fixture + validator suites; DDL/seed idempotency + post-run table checks) · **effort calibration checkpoint** (model §6).
+**Gates:** **M1 (14 Aug) hard gate** · **QA0** (Jest smoke; **signed-off manual contract walkthrough + `/health` shape** — 1B carries no automated tests, `[TS §1.2]`; DDL/seed idempotency + post-run table checks) · **effort calibration checkpoint** (model §6).
 
 > **1A, 1B and 1C run in parallel** and converge only on `04-APIContract.md` and the seed fixtures (`R00041–R00043`, `SP-00021`, `RUN-0042/0043`). 1A is not blocked by 1B/1C because it develops against the mock API and mock SignalR (`useMockData: true`); 1B ships stub endpoints first.
 >
-> **⚠ The model predicts this gate fails.** 1,027 h in 12 working days needs **10.7 FTE on Phase 1 alone**. 1A/1B/1C genuinely parallelise, so this is a headcount problem, not a sequencing one.
+> **⚠ The model predicts this gate fails.** **1,110 h** in 12 working days needs **11.6 FTE on Phase 1 alone**. 1A/1B/1C genuinely parallelise, so this is a headcount problem, not a sequencing one. *(The widely-quoted **1,027 h / 10.7 FTE** is the pre-14-Aug basis and survives in `[CE §2]`–`§5`, which are deliberately not re-derived — see `[CE §8]`.)*
 
 ---
 
@@ -121,7 +121,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Rate-card basis:** shared primitive 8 h + guard/interceptor wiring 4 h (§2)
 **Dependencies:** FW-N03
-**Blockers:** **G6** (roles not confirmed as existing JWT roles vs new)
+**Blockers:** ~~**G6** (roles not confirmed as existing JWT roles vs new)~~ ✅ **Resolved 15 Aug 2026** — all six exist as JWT claims on `ClaimTypes.Role`. ⚠ Residual: the claim **values** are coded rather than labelled and the mapping is unsupplied — gates verification, not construction
 
 ---
 
@@ -252,9 +252,11 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ##### S0 · Phase 1B — Backend Foundation
 
-**Spec:** [`phase-01b-backend-foundation.md`](Phases/phase-01b-backend-foundation.md) · **Owner:** BE + RT · **442 h** (BE 208 · RT 112 · QA 64 · cont. 58)
+**Spec:** [`phase-01b-backend-foundation.md`](Phases/phase-01b-backend-foundation.md) · **Owner:** BE + RT · **519 h** (BE 249 · RT 124 · QA 78 · cont. 68)
 
-> **The largest single layer in the plan** — needs 4.6 FTE on its own. Template is `API/Domain/CoilCheckin` (controller, MediatR command, `Program.cs`, `.csproj`, NuGet set). **`SlitterInterface` is explicitly NOT a reference** (Foundations §0.2, decision 5).
+> **The largest single layer in the plan** — needs **5.4 FTE** on its own. Template is `API/Domain/CoilCheckin` (controller, MediatR command, `Program.cs`, `.csproj`, NuGet set). **`SlitterInterface` is explicitly NOT a reference** (`[ARC §2.2]`, `D-06`).
+>
+> **This header was stale at 442 h through both the 14 Aug and 15 Aug restatements** — corrected 15 Aug 2026 along with §7's reconciliation, the phase summary table and the S0 total. The figure history is **442 → 469 (14 Aug) → 541 (15 Aug, `D-29`) → 519 (15 Aug, backend tests withdrawn + `SpoolController`)**; the reconciliation below §7 is the derivation of record.
 
 ---
 
@@ -277,21 +279,28 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
-###### FW-138 · Thirteen thin controllers over `UAController`
-**Hours:** 52 h BE · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1B · **Stream:** BE
+###### FW-138 · Fifteen thin controllers over `UAController`
+**Hours:** **45 h BE** *(was 56)* · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1B · **Stream:** BE
+
+> **Restated 15 Aug 2026: 56 → 45 h, on two changes pulling opposite ways.** **(−)** The query-endpoint rate this story is priced at (4 h) bundles a unit test per `[CE §2]`; with backend tests withdrawn (`[TS §1.2]`) the rate is **3 h** and the **stub contract suite** goes with it. **(+)** **Fourteen → fifteen controllers**: `[API §3.1]` omitted **`SpoolController`** while §3.2 assigned `GET /spools` to it, so an MVP-1 endpoint had no host — resolved in `[API §3.1]` on 15 Aug 2026. **15 × 3 h = 45 h.** The controllers and their stub fixtures are unchanged; only the suite asserting them is gone.
+
+> **Corrected 14 Aug 2026: thirteen → fourteen, 52 → 56 h.** `[API §3.1]` has always listed **fourteen** controllers; `PayoffStagingController` — which owns **four of the 30 endpoints** (10, 11, 12, 14, the whole DB2A pre-check-in surface) — was never counted. This is an arithmetic correction against the story's own source, not new scope.
 
 **As a** developer,
 **I want** every controller present and returning the standard envelope from day one,
 **So that** the Angular library can build against the real service before any handler exists.
 
 **Acceptance Criteria:**
-- [ ] All thirteen exist and extend `UAController`: `LinesController`, `PassScheduleController`, `RodReceivingController`, `CheckInController`, `RunController`, `SpcController`, `WeldEventController`, `RollAdjustController`, `DieChangeController`, `CheckOutController`, `WipRejectionController`, `CoilController`, `ShiftSummaryController`
+- [ ] All **fifteen** exist and extend `UAController`: `LinesController`, `PassScheduleController`, `RodReceivingController`, **`PayoffStagingController`**, `CheckInController`, `RunController`, `SpcController`, `WeldEventController`, `RollAdjustController`, `DieChangeController`, `CheckOutController`, `WipRejectionController`, **`SpoolController`**, `CoilController`, `ShiftSummaryController`
+- [ ] **`SpoolController` covers `GET /spools`** — endpoint 16a, `FR-097`–`FR-099`, DB5/DB5A. ⚠ It is **MVP-1** and Phase 8; it was absent from `[API §3.1]` until 15 Aug 2026 while §3.2 already assigned it, so it is the one controller with no prior story coverage
+- [ ] **`PayoffStagingController` covers `/payoff/status` and `/staging/**`** — endpoints 10, 11, 12 and 14. ⚠ Endpoint 13 (`POST /staging/rod/mark-welded`) was **retired 1 Aug 2026** in favour of `POST /weldevent` as the single weld write — **do not scaffold it**
+- [ ] ⚠ **`POST /staging/rod` returns `201 Created` with `state:"Blocked"` on inspection failure** — the row is committed **before** the inspection gate, and it is still a hard block with no override. `Blocked` is a **derived** bay state, never a stored `Status`, and `POST /wipreject` is the only thing that clears it (**G21**)
 - [ ] Each returns the `{Data, Success, Errors}` envelope
 - [ ] **`[Authorize]` on every controller and every endpoint** — no bare `ControllerBase`, no unprotected route
-- [ ] Stub endpoints return schema-valid fixtures for the seed alphas, per `04-APIContract.md` shapes
-- [ ] xUnit boots the API and asserts every stub's contract shape
+- [ ] Stub endpoints return schema-valid fixtures for the seed alphas, per `[API §4]` shapes
+- [ ] ⚠ **The stub endpoints stay; the suite that asserted them is withdrawn** (15 Aug 2026, `[TS §1.2]`). `[API §7.2]`'s five obligations are verified by the **signed-off manual contract walkthrough** at QA0 (`[TS §4.2]`), not by xUnit. **1A still builds against these stubs** — dropping the test does not drop the fixtures
 
-**Rate-card basis:** 13 controllers @ 4 h = 52 h (§2, query-endpoint rate for scaffold + stub)
+**Rate-card basis:** 14 controllers @ 4 h = 56 h (§2, query-endpoint rate for scaffold + stub), **less the withdrawn contract suite → 42 h** (15 Aug 2026)
 **Dependencies:** FW-N04
 **Blockers:** —
 
@@ -336,8 +345,8 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
-###### FW-141 · Repository layer
-**Hours:** 20 h BE · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1B · **Stream:** BE
+###### FW-141 · Repository layer — one per aggregate root
+**Hours:** 28 h BE · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1B · **Stream:** BE
 
 **As a** developer,
 **I want** repositories behind interfaces for each aggregate,
@@ -363,7 +372,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Acceptance Criteria:**
 - [ ] **Dapper** for high-volume reads — gauge trace, list grids, report aggregations
-- [ ] **EF Core `FlatWireDbContext`** for entity writes, mapped to all **24 MVP-1 tables** (`Rod` **is** among them per `D-04`)
+- [ ] **EF Core `FlatWireDbContext`** for entity writes, mapped to all **25 MVP-1 tables** (`Rod` **is** among them per `D-04`; 28 in the full design — `[DBD §6.2]`)
 - [ ] A smoke insert→select round-trips through EF against every table
 - [ ] **The three `PassSchedule*` tables are not mapped** — they are owned outside MVP-1
 
@@ -424,7 +433,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Rate-card basis:** auth + five role policies (16 h, §2)
 **Dependencies:** FW-N04
-**Blockers:** **G6** (roles not confirmed as existing JWT roles vs new)
+**Blockers:** ~~**G6** (roles not confirmed as existing JWT roles vs new)~~ ✅ **Resolved 15 Aug 2026** — all six exist as JWT claims on `ClaimTypes.Role`. ⚠ Residual: the claim **values** are coded rather than labelled and the mapping is unsupplied — gates verification, not construction
 
 ---
 
@@ -446,8 +455,10 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
-###### FW-147 · FluentValidation and the canonical cross-layer enums
-**Hours:** 12 h BE · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1B · **Stream:** BE
+###### FW-147 · FluentValidation, value objects and the canonical cross-layer enums
+**Hours:** **12 h BE** *(was 16)* · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1B · **Stream:** BE
+
+> **Restated 15 Aug 2026: 16 → 12 h** — the validator unit tests are withdrawn (`[TS §1.2]`). **The validators themselves are production code and stay.**
 
 **As a** developer,
 **I want** command validation and one canonical enum definition per concept,
@@ -458,9 +469,9 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] **`CheckpointType` is five-valued** — `{PreRun, PostDieChange, RollAdjustTrigger, ManualSpotCheck, PostRun}`. `RollAdjustTrigger` was missing and is required by `/rolloverride`'s side-effect
 - [ ] **`EdgeType ∈ {Round, Square}`** — one vocabulary, not three
 - [ ] **`State` is an enum, never a boolean `IsActive`**
-- [ ] All three match FW-132 (Angular models) and FW-007 (DB `CHECK`s); validator unit tests cover each
+- [ ] All three match FW-132 (Angular models) and FW-007 (DB `CHECK`s). ⚠ **Validator unit tests are withdrawn** (15 Aug 2026, `[TS §1.2]`) — the three-way agreement is `TC-020`, now a **manual diff across 14 enums with a named owner**, not a green build
 
-**Rate-card basis:** validation layer + enum definitions (12 h, §2)
+**Rate-card basis:** validation layer + enum definitions (12 h, §2), **less the withdrawn validator tests → 12 h** (15 Aug 2026)
 **Dependencies:** FW-N04
 **Blockers:** —
 
@@ -487,7 +498,9 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 ###### FW-080 · `FlatWireHub` — strongly-typed, MessagePack, line groups
-**Hours:** 32 h RT · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1B · **Stream:** RT
+**Hours:** **28 h RT** *(was 32)* · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1B · **Stream:** RT
+
+> **Restated 15 Aug 2026: 32 → 28 h** — the automated hub smoke harness is withdrawn (`[TS §1.2]`); the behaviour moves to the QA0 manual walkthrough.
 
 **As an** operator,
 **I want** a purpose-built hub streaming per-line telemetry,
@@ -499,9 +512,9 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] `[Authorize]`; `JoinLineGroup` / `LeaveLineGroup` over groups `FL1Data` / `FL2Data` / `FL3Data`
 - [ ] **Hosted only inside `FlatWire.API`** — the shared `Notification` service is not extended, and `CoilDataHub` / `OPCManagerHub` / `supervisor-monitor-hub` are **not** templates (Foundations §0.4, decision 4)
 - [ ] Stateless hub; Redis / Azure SignalR backplane is a **config-only** path if the API goes multi-instance
-- [ ] Smoke test: a client joining `FL1Data` receives simulated batched `GaugeReading[]` at the configured cadence, and re-joins its group after a reconnect
+- [ ] ⚠ **The automated smoke test is withdrawn** (15 Aug 2026, `[TS §1.2]`). The behaviour it covered — a client joining `FL1Data` receiving simulated batched `GaugeReading[]` at cadence, and re-joining after a reconnect — moves into the **manual contract walkthrough** at QA0 (`[TS §4.2]`, obligation 5). It is still verified; it is no longer verified by a harness
 
-**Rate-card basis:** hub infrastructure priced against §0.4's stated design (32 h)
+**Rate-card basis:** hub infrastructure priced against `[SIG §4]`'s stated design (32 h), **less the withdrawn smoke harness → 28 h** (15 Aug 2026)
 **Dependencies:** FW-N04, FW-145
 **Blockers:** **G10** (deploy prereqs — IIS WebSockets feature) · **G9 / OI-34** (NFRs undefined; the load test in FW-156 has no pass criteria)
 
@@ -575,7 +588,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **Acceptance Criteria:**
 - [ ] `FlatWire.Infrastructure/Services/PLCTagService.cs` with `PushPassSchedule(...)` and `ClearPayoffTags(...)`, batch write
 - [ ] **`SimulatePLCTagPush` dev mode** logs an audit entry instead of writing, and is switchable by configuration
-- [ ] ⚠ **OPC writes are not transactional.** Failure recovery is modelled as **compensating re-clears**, and the code and comments say so — **the word "rollback" does not appear** (**G2 / G16**)
+- [ ] ⚠ **OPC writes are not transactional.** Failure recovery is modelled as **compensating re-clears**, and the code and comments say so — **the word "rollback" does not appear** (**G2**; `G16` closed 4 Aug 2026)
 - [ ] The saga/compensation boundary for a cross-database check-in is documented in the service
 
 **Rate-card basis:** PLC tag group push + compensating clear @ 16 h (§2)
@@ -600,7 +613,8 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Acceptance Criteria:**
 - [ ] Publishes to the **same bounded channel** `FW-N05` will publish to, at the same cadence, so `FW-150`'s broadcast loop is unchanged when the real ingest arrives
-- [ ] Drives `GaugeReading`, `WidthReading`, `SpeedFPM`, `PayoffWeight`, `FootageCounter`, `ComponentStatus` and `LineStatus` for **FL1**; FL2 broadcasts **`null`** gauge and width per `FR-120`
+- [ ] Drives `GaugeReading`, `WidthReading`, `SpeedFPM`, `PayoffWeight`, `FootageCounter`, `ComponentStatus` and `LineStatus` for **FL1**
+- [ ] ⚠ **FL2 is driven too, and only gauge/width are suppressed.** `[SIG §5.3]` suppresses **only** the batched gauge and width channels on FL2 — `SpeedFPM`, `FootageCounter`, `ComponentStatus` and `LineStatus` **still flow**, and `FR-120` makes live gauge/width **`null`**. Two of the six trial screens are FL2 (DB5, DB3-FL2) and `[TRP §8]` step 9 requires Profile to stay static *"across several live ticks"* — which needs FL2 ticking. **A simulator that drives FL1 only leaves both FL2 screens dead**
 - [ ] Traces can be steered to produce **in-spec, drifting and out-of-spec** runs, so the `FR-119` reconnect path and Dashboard 3's N-consecutive-out-of-spec auto-prompt are both demonstrable
 - [ ] Drives a `RUNNING → STOPPED` edge on demand, which is what `FW-202`'s stop-confirmation state machine is armed by
 - [ ] **Switchable by configuration alongside `SimulatePLCTagPush`** — one flag pair puts the whole system in simulation
@@ -612,11 +626,419 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
-**Phase 1B reconciliation** — BE `16+52+16+12+20+24+12+12+16+8+12+8 = 208` · RT `32+16+32+16+16 = 112` · base **320** → QA `0.20 × 320 = 64` → Cont `0.15 × (320+64) = 58` → **442 h** ✓ (§3b)
+###### FW-218 · Trial control surface for the feed generator — steer, stop, drop, read
+**Hours:** 18 h BE · **Priority:** Critical · **Sprint:** S1 · **Phase:** 1B · **Stream:** BE
+
+> **New 15 Aug 2026.** `[TRP §8]`'s acceptance run requires the simulated feed to be **steered while a run is
+> live**. `FW-203` is a publisher and has **no control surface** — `[SIM §1.2]`'s own comparison table marks it
+> ❌ on *"an operator-drivable control surface"* — and `FW-215`'s five endpoints are unscheduled post-trial work
+> that depends on `FW-210` and `FW-213`, neither of which is in the trial. **This is the three endpoints the
+> trial actually needs**, built over `FW-203` rather than over the line model. It is the **first increment of
+> `FW-215`**, the same relationship `FW-203` has to `FW-211` — a superset, not a replacement. Hours are
+> **additive to `[CE §3b]`**, like `FW-202`, `FW-203` and `FW-204`.
+
+**As a** test engineer running the trial,
+**I want** to steer and stop the simulated line while a run is live,
+**So that** the acceptance run's out-of-spec, stop-edge and missing-data assertions can be executed at all.
+
+**Acceptance Criteria:**
+- [ ] `POST /sim/{lineId}/steer` — move gauge and width toward or away from target **on a live run**, which is what `[TRP §8]` step 3's *"force N consecutive out-of-spec readings"* requires and what Dashboard 3's auto-prompt threshold is measured against
+- [ ] `DELETE /sim/{lineId}/run` — a `RUNNING → STOPPED` edge **at a chosen instant**, so `TC-171`'s **3 s stop against a 5 s dwell** and `TC-172`'s **weight latched at the stop timestamp** are executable. ⚠ **Configuration plus a restart cannot do this** — it destroys the run being demonstrated, and step 7's prompt-durability and step 10's reconnect assertions both need the run to survive
+- [ ] `POST /sim/{lineId}/fault` — **one fault only, dropped readings.** It is the sole way to exercise `FW-205`'s condition 5 (*two or more consecutive recordings missing*); the rest of `[SIM §7.2]`'s catalogue is `FW-213` and stays out
+- [ ] `GET /sim/state` — all three snapshots in one read, **so `FW-214`'s console populates on load without polling**. Added 15 Aug 2026 when the console entered trial scope; it is the fourth of `[SIM §8.1]`'s five, and `POST /sim/{lineId}/run` is the one that stays out (the trial starts runs through check-in, not through the simulator)
+- [ ] ⚠ **Routes are not registered at all when simulation is off — `404`, not `403`** (`[SIM §2.4]`). A present-but-forbidden control plane is one misconfigured role away from driving a live line
+- [ ] `Engineer` / `Admin` policy on top of that, **never `Operator`** (`[SIM §8.4]`)
+- [ ] ⚠ **Not among `[API]`'s 30 endpoints** and must not be added to that count — an engineering surface on a separate prefix (`[SIM §8.2]`)
+- [ ] **Adds nothing to the telemetry contract.** `FW-150` and `FW-151` are unchanged — the same rule that makes `FW-203` a publisher against an existing contract rather than a design
+
+**Rate-card basis:** 3 command endpoints @ 5 h + 1 query @ 3 h = **18 h** (§2, at the **15 Aug 2026 restated** rates). **11 h AI-assisted** at `[DE §1]`'s 0.60 backend factor, which is the figure `[TRP §4]` schedules
+**Dependencies:** FW-203, FW-138, FW-145
+**Blockers:** —
+
+> ⚠ **`FW-218` is not in the Phase 1B reconciliation below** and must not be folded into it — trial-run scope,
+> additive to `[CE §3b]`, exactly as `FW-203` is. It does **not** offset `FW-215`'s 23 h either: the remaining
+> two endpoints, the console and the line model behind them are all still to be built.
+
+---
+
+###### FW-205 · `ITInhibitService` — the run-block interlock
+**Hours:** 16 h RT · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1B · **Stream:** RT
+
+> **New 14 Aug 2026.** `ITInhibit` is specified in full at `[PLC §8]`, carries **seven P1 test cases**
+> (`TC-011`–`TC-017a`) and `FR-008`–`FR-010`/`FR-020`, and had **no phase home and no costed story** — it was
+> bundled into `FW-N11` *"Operator session / `ITInhibit`"*, which is uncosted and cited against Phase 6.
+> **This story is the split.** `FW-N11` keeps its id for the operator-session remainder.
+
+**As a** production system,
+**I want** the machine blocked whenever the prerequisites for recording a run are not met,
+**So that** it is impossible to produce material the system cannot account for.
+
+**Acceptance Criteria:**
+- [ ] **One tag per line** — `FL1.ITInhibit`, `FL2.ITInhibit` — **written, never read**, so it is a `PLCTagService` operation and not a subscription
+- [ ] **Line-scoped**: a blocked line blocks **only itself** — an idle FL1 does not stop a scheduled FL2 (`TC-017a`)
+- [ ] Sets on **conditions 3, 4 and 5** — feet data **unavailable**, feet data **invalid**, and **two or more consecutive recordings missing** — one shared watchdog over the footage tag the OPC ingest delivers
+- [ ] Condition 5 additionally raises the **prominent data-recording alert** via the existing `AlertRaised` event — no new hub event
+- [ ] **While set, no rolling data is recorded without an active coil** — the interlock gates `FW-150`'s broadcast loop before it persists `RunReading`
+- [ ] **Clears automatically only.** `TC-016` attempts an operator clear *via every UI surface* and must find none — **enforced by the absence** of any endpoint, command or hub method
+- [ ] Config key sits **inside each line's `Tags` block, never at the root** — a root key would surface the first time an idle line blocked a running one
+- [ ] Honours `SimulatePLCTagPush`; every set and clear is audit-logged with tag path, value, timestamp and result
+
+**Rate-card basis:** non-trivial business service, mid-band **16 h** (§2, *12–24 h priced individually*) — comparable to the card's *"PLC tag group push + compensating clear | 16 h"*: a tag write plus stateful evaluation, but one boolean per line rather than a group push
+**Dependencies:** FW-144 (config), FW-151 (`PLCTagService`), FW-N05 (the footage feed)
+**Blockers:** **`G30`** *(whether FL3 carries its own `FL3.ITInhibit` or asserts FL1's and FL2's together follows from the namespace question — build FL1/FL2 now and leave FL3 behind the same config switch)*
+
+> **`FW-205` + `FW-206` = 24 h**, the top of the 12–24 h band, which is where all five conditions price. Conditions
+> 1–2 are counted in `FW-206` **only** — carrying 24 h on both sides would double-count them.
+
+---
+
+###### FW-209 · DB2A line toggle must reload, not relabel
+**Hours:** 4 h FE · **Priority:** High · **Sprint:** S2 · **Phase:** 4 · **Stream:** FE
+
+> **New 15 Aug 2026** — the second half of **`G21`**, which no story covered. A schema fix cannot
+> reach it, and it is a defect *however* the uniqueness question closes.
+
+**As an** operator,
+**I want** switching the station between FL1 and FL3 to reload what I am looking at,
+**So that** rod already staged is not silently reclassified under a relabelled heading.
+
+**Acceptance Criteria:**
+- [ ] Toggling FL1↔FL3 **reloads the bays and the Traveler Queue** — it currently relabels the badge, station stamp, queue heading and modal subtitle and reloads nothing
+- [ ] ⚠ Because the off-schedule check reads the **current** line, a rod staged before the toggle must not change classification with no visible change
+- [ ] The station stamp reflects the reloaded data, not the toggle position
+
+**Rate-card basis:** small screen-behaviour fix, **4 h** — ⚠ **a proxy**: §2's smallest unit is 4 h for a whole table, and a behaviour fix has no card entry. Not measured
+**Dependencies:** FW-061
+**Blockers:** —
+
+---
+
+###### FW-206 · `ITInhibit` conditions 1–2 — check-in and material-tracking state
+**Hours:** 8 h BE · **Priority:** High · **Sprint:** S2 · **Phase:** 4 · **Stream:** BE
+
+> **New 14 Aug 2026**, the Phase-4 half of the `FW-205` split. **Blocked** — do not schedule until `PLC-Q12` closes.
+
+**As a** production system,
+**I want** the interlock also set when nothing is checked in or no material-tracking identifier is active,
+**So that** all five `[PLC §8.2]` conditions are enforced, not three.
+
+**Acceptance Criteria:**
+- [ ] Condition 1 — **no coil or rod is checked in** on the line
+- [ ] Condition 2 — **no active material-tracking identifier exists**
+- [ ] Both feed the same `ITInhibitService` evaluation built in `FW-205`; no second write path
+- [ ] The runbook reconciliation step for an **orphaned identifier** is covered — `[PLC §8.4]` names it the most common cause after an interrupted transaction
+
+**Rate-card basis:** two condition evaluators against existing check-in state, 8 h (§2)
+**Dependencies:** FW-205, FW-061
+**Blockers:** ⚠ **`PLC-Q12`** — `[PLC §8.5]`: the *"active material-tracking identifier"* **has never had its format specified**, and whether it is the same identity as the run is unresolved. Condition 2 is specified against a concept that is not yet fully defined
+
+---
+
+###### FW-207 · Domain model — aggregates, value objects and invariants
+**Hours:** 32 h BE · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1B · **Stream:** BE
+
+> **New 15 Aug 2026 — decision `D-29`, tactical DDD.** The framework already ships the toolkit:
+> `UA.Framework.Domain.EntityModels.Entity` (domain events, identity equality) and `ValueObject`
+> (`GetAtomicValues`, structural equality); `CoilCheckin` ships `IBusinessRule`/`CheckRule` →
+> `BusinessRuleValidationException`. **Inherit them — do not write new base classes.**
+
+**As a** developer,
+**I want** aggregates that enforce their own invariants,
+**So that** rules cannot be bypassed by a caller that forgets to run a validator.
+
+**Acceptance Criteria:**
+- [ ] **Seven aggregate roots** — `FlatWireRun`, `RodStaging`, `WeldEvent`, `Spool`, `CoilOutput`, `RodCheckout`, `WipRejection` — each inheriting `Entity`. Boundaries per `[SVC §3.2a]`
+- [ ] ⚠ **`RunReading` is in NO aggregate** — 10 Hz time series; it stays an append-only write model read by Dapper. Materialising it inside `FlatWireRun` is the failure this criterion exists to prevent
+- [ ] ⚠ **`Rod` and `PassSchedule` get no aggregate and no repository** — read models. `PassSchedule` is MVP-2-owned and reached only through `PassScheduleSnapshot`
+- [ ] **Six alpha value objects** with validating constructors — `RodAlpha` `R#####`, `SpoolAlpha` `SP-#####`, `RunAlpha` `RUN-####`, `CoilAlpha` `FW-#####-C##`, `DieAlpha`, `PassScheduleReference`. `RodAlpha("ROD-00041")` must throw (**closes `G14`'s format half**)
+- [ ] **Seven dimensioned quantities** — `Gauge`, `Width`, `Footage`, `WeightLb`, `SpeedFpm`, `RollGap`, `RollDiameter` — each inheriting `ValueObject`
+- [ ] Invariants as `IBusinessRule`, enforced by `CheckRule` → `BusinessRuleValidationException` → **`422`**. Includes **`G21` bay occupancy**, which must reject a second rod on the same physical station **with the DB index absent**
+- [ ] The **alpha is the identity** — repositories key on it, not on `Entity.Id`
+
+> ⚠ **Two criteria above are no longer demonstrable, and they are the evidence behind two closed gaps.**
+> With backend tests withdrawn (15 Aug 2026, `[TS §1.2]`), nothing exercises `RodAlpha("ROD-00041")` throwing
+> — which is what *"closes `G14`'s format half"* — and nothing runs the bay rule **with the DB index absent**,
+> which is what makes `G21`'s index *"belt-and-braces, not the sole defence"* rather than the only defence.
+> **Both criteria stay: the design is right and must still be built.** They are restated in `[GAP]` as
+> **closed by design, unverified**. Do not delete them to make the story pass.
+
+**Rate-card basis:** 7 roots × 3 h = 21 · 13 value objects × 0.5 h ≈ 7 · rules ≈ 4 = **32 h**. Above §2's *"non-trivial service 12–24 h"* band because it is ~20 items, not one. **Unchanged by the 15 Aug test withdrawal** — every hour here is production code; the withdrawn tests were never priced into it
+**Dependencies:** FW-N04
+**Blockers:** — *(⚠ **`D1` open**: `ROWVERSION` is absent on `WeldEvent`, `RodCheckout` and `WipRejection`, all three mutated after insert. Decide before the schema freeze)*
+
+---
+
+###### FW-208 · Domain events and post-commit dispatch
+**Hours:** 8 h BE · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1B · **Stream:** BE
+
+> **New 15 Aug 2026 (`D-29`).** Low because `MediatorExtension.DispatchDomainEventsAsync` and
+> `Entity.DomainEvents` **already exist** — this is wiring plus the translation handlers.
+
+**As a** developer,
+**I want** aggregates to raise domain events that reach the hub after commit,
+**So that** command handlers broadcast side effects without referencing SignalR.
+
+**Acceptance Criteria:**
+- [ ] Aggregates raise `RunPaused`, `WeldRecorded`, `CoilCompleted`, `BayStateChanged`, `SpoolCompletionPromptRaised` via the inherited `AddDomainEvent`
+- [ ] `FlatWireDbContext.SaveChangesAsync` calls **`DispatchDomainEventsAsync` after commit** — never before
+- [ ] Handlers in Infrastructure/API translate each to `IFlatWireClient`
+- [ ] ⚠ **No SignalR type is referenced from `FlatWire.Application`** — `[SVC §3.2]`'s rule is satisfied, not worked around
+- [ ] `WipRejection` clearing a `Blocked` bay goes **via a domain event**, not by reaching into the `RodStaging` aggregate
+
+**Rate-card basis:** dispatcher wiring + ~5 translation handlers @ 8 h (§2) — the dispatcher itself is inherited
+**Dependencies:** FW-207, FW-142, FW-080
+**Blockers:** —
+
+---
+
+**Phase 1B reconciliation** — BE `16+45+16+12+28+24+12+12+16+8+12+8+32+8 = 249` · RT `28+16+32+16+16+16 = 124` · base **373** → QA **78** *(held — see below)* → Cont `0.15 × (373+78) = 68` → **519 h**
+
+> ### Restated 15 Aug 2026: 541 → 519 h — backend tests withdrawn
+>
+> No automated backend tests of any kind (`[TS §1.2]`). **Itemised, not applied as a blanket fraction** —
+> three stories carry priced test content and the rest do not: **`FW-138` 56 → 45** (query-endpoint rate 4 h → 3 h and the stub contract suite goes, offset by **fourteen → fifteen controllers**), **`FW-147` 16 → 12** (validator tests), **`FW-080` 32 → 28**
+> (hub smoke harness). **BE 264 → 249 · RT 128 → 124 · base 392 → 373.**
+>
+> ⚠ **The saving is −22 h net (−26 on tests, +4 for `SpoolController`), not the ~−44 a percentage-of-base assumption suggests.** Most of 1B is production
+> artifacts with no test priced into them: **`FW-207`'s 32 h is itemised as 7 roots + 13 value objects +
+> rules**, and `FW-150` has no test criterion at all. Both are **unchanged**. Anyone re-deriving this by
+> applying a flat test fraction to the base will overstate the saving by ~70 %.
+>
+> ⚠ **QA is deliberately held at 78 h and NOT recomputed.** `[CE §2]` defines it as a mechanical +20 % of the
+> dev base, which would give `0.20 × 373 = 75` and book a *saving* on the one line that must absorb the work
+> — with no automated tests, regression across Phases 4–14 is manual. Holding QA is a **decision, not an
+> arithmetic slip**; the mechanical figure would be 515 h. **Do not "correct" 78 to 75.**
+>
+> ⚠ **The 1B saving is the small number in this change.** 22 h net leaves Phase 1; the cost recurs across
+> ~2,600 h of Phases 2–14 as manual regression and lands hardest in Phase 14, which *is* the QA phase and
+> where `[CE §2]` suppresses the QA uplift precisely because testing is the work. A re-derivation quoting
+> only the saving is misleading.
+
+> **Restated 14 Aug 2026 from 442 h.** Two corrections, both of omissions against published sources rather than
+> re-scopes: **`FW-138` 52 → 56 h** (priced at 13 controllers against an `[API §3.1]` that has always listed 14)
+> and **`FW-205` +16 h** (`ITInhibit`, specified at `[PLC §8]` with seven P1 test cases and no costed story).
+> `[RM]`'s Phase 1 row moves **1,027 → 1,054**. ⚠ **This is the hand-coded basis.** `[DE]` and `[SSP]` re-derive on
+> their own retention factors and **disagree with each other on Phase-1B RT by up to 19 h** — per `[TRP §1.4]`,
+> *never mix a `[DE §2]` stream cell with a `[SSP §5]` one.* Do not publish a single AI-assisted figure for either
+> story. **`FW-206`'s 8 h is Phase 4's, not counted here.**
 
 > ⚠ **`FW-203` is not in that reconciliation.** It is trial-run scope introduced on 14 Aug 2026 and its **8 h is
 > additive to `[CE §3b]`**, like `FW-202`'s. Do not fold it in — and note it does **not** offset `FW-N05`'s 32 h
 > either, because that story still has to be built for production.
+
+---
+
+##### Unscheduled · The machine simulator — `FW-210`–`FW-215`, `FW-217`
+
+**Spec:** [`MachineSimulator.md`](../Architecture/MachineSimulator.md) `[SIM]` · **Owner:** RT · **111 h dev**
+(RT 64 · FE 24 · BE 23), **+24 h** for the sidecar
+
+> **New 15 Aug 2026.** A **machine simulator** — a model of FL1/FL2/FL3 that runs a production run end to end
+> and reacts to what the application does to it — plus an engineering control console. It **extends
+> `FW-203`**, which stays exactly as published: its 8 h base / 6 h AI-assisted figure and its place in
+> `[TRP §4]`'s T2 tail are **unchanged**, and it becomes the first increment of `FW-211`'s in-process adapter.
+>
+> ⚠ **These hours are additive to `[CE §3b]`**, exactly as `FW-202`, `FW-203` and `FW-204` are. **Do not fold
+> them into the 3,292 h baseline** — that figure is quoted in five other documents and re-counting it here
+> would drift them all. They do **not** offset `FW-N05`'s 32 h either; real OPC ingest is still production work.
+>
+> ⚠ **Do not publish a single AI-assisted figure for these.** `[DE §2]` and `[SSP §5]` disagree on Phase-1B RT
+> by up to 19 h, and `[TRP §1.4]`'s rule is *never mix a `[DE §2]` stream cell with a `[SSP §5]` one.* Re-derive
+> per stream on `[DE §1]`'s own factors if one is wanted (RT is 0.75).
+>
+> **Priority is `High`, not `Critical`, throughout.** The 30 Sep trial does not depend on any of this —
+> `FW-203` covers it. Marking these Critical would misrepresent the trial's critical path.
+
+---
+
+###### FW-210 · Line model core — the kinematic state machine for FL1/FL2/FL3
+**Hours:** 24 h RT · **Priority:** High · **Sprint:** — *(unscheduled; post-trial)* · **Phase:** 1B · **Stream:** RT
+
+**As a** developer,
+**I want** three line models that hold run state and produce coupled, believable telemetry,
+**So that** a whole run can be exercised end to end before a controller exists.
+
+**Acceptance Criteria:**
+- [ ] `ILineModel` in `FlatWire.Domain` with **no infrastructure dependency** — `Tick`, `ApplyConfiguration`, `ApplyScenario`, `InjectFault`, `SetRunState` (`[SIM §3.2]`)
+- [ ] **Three distinct models, not three instances of one.** FL1 rod→`DB1`/`DB2`→`FM1`→spool · FL2 spool→`FM2_S1`/`S2`/`S3` · FL3 **one run**, `RouteMode='Hybrid'`, speeds coupled through the chain
+- [ ] ⚠ **FL2 ticks.** Only batched `GaugeReading`/`WidthReading` are suppressed (`[SIG §5.3]`); `SpeedFPM`, `FootageCounter`, `PayoffWeight`, `ComponentStatus` and `LineStatus` still flow, and `FR-120` makes live gauge/width **`null`**. Gauge is still computed internally for the `RunReading` profile
+- [ ] Kinematics per `[SIM §5]`: footage integrates speed and is **monotonic**; weight depletes by `footage × lbPerFt`; gauge/width converge first-order on target
+- [ ] **`lbPerFt` is read from configuration and never a constant** — `Q10` carries no recommendation and `OI-45` is open (`[SIM §5.3]`)
+- [ ] **Mill spring places the roll gap *below* gauge**, load-proportionally — master spec §10.5, not `FR-386`'s alloy multiplier
+- [ ] Component vocabulary is `CK_PSC_ComponentName`: `DB1`,`DB2`,`FM1`,`EdgeSet`,`FM2_S1`,`FM2_S2`,`FM2_S3`. **No `FM2_6inS3`** — withdrawn as never-existent
+- [ ] **Run status and line state are separate** (`[SIM §4.4]`) — `CK_FlatWireRun_Status` is ours and settled; the line-state vocabulary is **ours and unconfirmed** (`OI-35`)
+- [ ] Noise is **seeded and reproducible**; the seed is settable
+- [ ] ⚠ The `[SIM §5.6]` assumption table is filled in and kept current — it is `G39`'s only instrument
+
+**Rate-card basis:** non-trivial service / algorithm, **top** of the 12–24 h band (§2) — three distinct state machines with coupled kinematics, not one parameterised model
+**Dependencies:** FW-N05 *(the `Reading` contract only)*
+**Blockers:** **G9 / OI-34** *(no target cadence — pick one and record it)* · **`Q10` / OI-45** *(`lbPerFt` basis)* · **OI-35** *(line-state vocabulary)*
+
+---
+
+###### FW-211 · The simulation seam — `IReadingSource` and the in-process adapter
+**Hours:** 12 h RT · **Priority:** High · **Sprint:** — *(unscheduled; post-trial)* · **Phase:** 1B · **Stream:** RT
+
+**As a** developer,
+**I want** the simulated and real feeds behind one DI-swapped interface,
+**So that** the real ingest drops in with no call-site change anywhere.
+
+**Acceptance Criteria:**
+- [ ] `IReadingSource` in `FlatWire.Infrastructure`; **`FW-N05` and the simulation host are two implementations of it**, neither aware of the other
+- [ ] Publishes to the **same bounded `Channel<Reading>`** at the same cadence, so `FW-150`'s broadcast loop is untouched
+- [ ] **Selected by configuration, not by call site** — no `if (simulating)` anywhere. One flag pair with `SimulatePLCTagPush` puts the whole system in simulation (`[SIM §2.2]`)
+- [ ] Bound to a strongly-typed options class and **validated at startup**, per `[PLCC §1.7]`'s existing rule
+- [ ] ⚠ **Adds no interface of its own.** If the seam needs a change to `IFlatWireClient` or the `Reading` shape, the contract is wrong (`[SIM §2.1]`)
+- [ ] **`FW-203` is this story's first increment** and is not rewritten or re-priced
+
+**Rate-card basis:** non-trivial service, **low** end of the 12–24 h band (§2) — an interface, one implementation and options binding, against a contract that already exists
+**Dependencies:** FW-210, FW-144 *(config)*, FW-150
+**Blockers:** —
+
+---
+
+###### FW-212 · Closed loop — the model consumes the `SimulatePLCTagPush` payload
+**Hours:** 12 h RT · **Priority:** High · **Sprint:** — *(unscheduled; post-trial)* · **Phase:** 4 · **Stream:** RT
+
+**As an** operator,
+**I want** the simulated line to reconfigure itself when I acknowledge a check-in,
+**So that** the screens demonstrate a machine responding, not a feed replaying.
+
+**Acceptance Criteria:**
+- [ ] The model observes the simulated push and applies it per `[SIM §6]` — component active/bypass, die sizes, roll gaps, edge type, speed, gauge/width targets
+- [ ] **A roll adjust moves the trace within one cadence** — `FW-070`'s *Apply* writes one component's gap and that stand's target shifts. Without this the roll-adjust dialog is untestable
+- [ ] A **bypassed** component contributes nothing; `State` is `Active`/`Bypass`/`Skip` (`CK_PSC_State`)
+- [ ] **Ordering is observed, not inverted** — `[PLCC §1.2]` writes records *before* tags, so the model sees the push after the record exists
+- [ ] A `PushFailure` fault leaves the line on its **previous** configuration — the silent failure `G32`/`G33` warn about
+- [ ] ⚠ **The word "rollback" does not appear.** OPC writes are not transactional; recovery is a compensating re-clear (`G16`, closed 4 Aug 2026)
+
+**Rate-card basis:** non-trivial service, **low** end of the 12–24 h band (§2) — a payload reader and a target-setter over an existing model
+**Dependencies:** FW-210, FW-151, FW-082
+**Blockers:** **G2 / OI-39** *(cross-DB recovery undecided)* · **G30** *(one failure domain or two)*
+
+---
+
+###### FW-213 · Scenario and fault injection
+**Hours:** 16 h RT · **Priority:** High · **Sprint:** — *(unscheduled; post-trial)* · **Phase:** 5 · **Stream:** RT
+
+**As a** tester,
+**I want** to drive a line into any state a real one can reach,
+**So that** the exception paths are demonstrable and reproducible.
+
+**Acceptance Criteria:**
+- [ ] The five scenarios of `[SIM §7.1]`: `InSpec` · `Drifting` · `OutOfSpec` · `Erratic` · `ToTarget`
+- [ ] The seven faults of `[SIM §7.2]`: `LineStop` · `CommsDrop` · `Stall` · `WireBreak` · `DieWear` · `PushFailure` · `WeightVariance`
+- [ ] ⚠ **`LineStop` is edge-triggered exactly once per stop** (`FR-141`), with the weight **latched at the stop timestamp** (`FR-143`). A repeating edge would mask a non-idempotent client, and idempotency on re-delivery is specified behaviour
+- [ ] `CommsDrop` stops readings **without closing the hub connection** — exercises `FR-119`'s cached state behind *"Reconnecting…"*, never a blank screen
+- [ ] `OutOfSpec` reaches DB3's N-consecutive auto-prompt and the SPC → WIP-rejection chain
+- [ ] Every scenario and fault is **reproducible from a seed** (`[SIM §5.7]`)
+- [ ] `WireBreak` is simulatable **before it is storable** — `G34` has a decided flow and no persistence target; that is expected, not a defect
+
+**Rate-card basis:** non-trivial service, **mid** band (§2) — twelve behaviours over an existing model, comparable to the card's stateful-service entries
+**Dependencies:** FW-210
+**Blockers:** **G34** *(wire break has no persistence target)*
+
+---
+
+###### FW-215 · Simulator control API — `/api/v1/flatwire/sim/**`
+**Hours:** 23 h BE · **Priority:** High · **Sprint:** — *(unscheduled; post-trial)* · **Phase:** 1B · **Stream:** BE
+
+**As an** engineer,
+**I want** to drive the simulator over HTTP,
+**So that** the console and the automated suites use one control surface.
+
+**Acceptance Criteria:**
+- [ ] Five endpoints per `[SIM §8.1]`: `POST`/`DELETE /sim/{lineId}/run` · `POST /sim/{lineId}/steer` · `POST /sim/{lineId}/fault` · `GET /sim/state`
+- [ ] Thin controllers over MediatR extending `UAController`, standard `{data,success,errors}` envelope
+- [ ] ⚠ **When `SimulatePLCTagPush` is false the routes are not registered at all — `404`, not `403`** (`[SIM §2.4]`). A present-but-forbidden control plane is one misconfigured role away from driving a live line
+- [ ] `Engineer` / `Admin` policy **on top of** that, never `Operator`
+- [ ] ⚠ **Not among `[API]`'s 30 endpoints** and must not be added to that count — an engineering surface on a separate prefix (`[SIM §8.2]`)
+- [ ] `GET /sim/state` returns all three snapshots so the console needs no poll on load
+
+**Rate-card basis:** 4 command endpoints @ 5 h + 1 query @ 3 h = **23 h** (§2, at the **15 Aug 2026 restated** rates — the withdrawn bundled unit test is not priced)
+**Dependencies:** FW-210, FW-213, FW-138, FW-145
+**Blockers:** —
+
+---
+
+###### FW-214 · Simulator control console — screen `DB-S1`
+**Hours:** 24 h FE · **Priority:** High · **Sprint:** **S2** *(trial scope, 15 Aug 2026)* · **Phase:** 5 · **Stream:** FE
+
+> ⚠ **Brought into the trial 15 Aug 2026, and it ships with controls greyed — read this before building it.**
+> `[TRP §8]`'s acceptance run is executed **in front of the client during UAT**, and step 7 times a **3 s stop
+> against a 5 s dwell**. Driving that from a saved HTTP request collection with a stopwatch is where a sign-off
+> event goes wrong, which is why the screen is in and not just the API.
+>
+> **The screen is built whole; its backing is not.** This story's stated dependency is `FW-215` in full, which
+> depends on `FW-210` (the kinematic model, 24 h) and `FW-213` (scenarios and faults, 16 h). **None of those
+> is in the trial** — making every control live is **+50 h AI-assisted**, which the window does not have. So
+> the trial builds the screen against **`FW-218`'s four endpoints** and **greys what has no backing**, exactly
+> as `[TRP §4]` greys Die Change, Roll Adjust and *Browse spool queue* on shipped screens.
+>
+> | Control | Trial |
+> |---|---|
+> | **Stop** · speed slider · gauge/width nudges | ✅ live — `DELETE /sim/{lineId}/run`, `POST /sim/{lineId}/steer` |
+> | **Drop readings** fault | ✅ live — the one fault `FW-218` carries |
+> | Live readouts · dual state badges · target-vs-actual strips | ✅ live — `GET /sim/state` on load, then the hub |
+> | **Start** | ⚪ greyed — the trial starts runs through check-in, not the simulator (`POST /sim/{lineId}/run` is out) |
+> | **Scenario picker** (`InSpec`/`Drifting`/`OutOfSpec`/`Erratic`/`ToTarget`) | ⚪ greyed — whole-run shapes need `FW-210` |
+> | **Six of the seven fault buttons** | ⚪ greyed — `FW-213`. ⚠ `WeightVariance` would be inert anyway: `AlloyProperty.LbPerFtFactor` is seeded NULL (`OQ-10`) |
+> | Seed, displayed and settable | ⚪ greyed — determinism is `[SIM §5.7]`, which needs the model |
+> | `lbPerFt`, displayed | ✅ live, and it displays **NULL** — which is `OQ-10` made visible rather than buried, exactly as `[SIM §5.3]` intends |
+>
+> **Grey them, do not delete them.** Each returns as configuration when the simulator proper is built, and a
+> deleted control is rework. The mockup already draws all of them.
+
+**As an** engineer,
+**I want** one screen that drives all three simulated lines,
+**So that** a demo, a UAT rehearsal or a bug reproduction is a few clicks rather than a config edit.
+
+**Acceptance Criteria:**
+- [ ] Three line panels per `[SIM §9.2]` — dual state badges (**run status and line state are different things**), start/stop/pause, scenario picker, live speed/footage/weight readouts, target-vs-actual strips, speed slider, the seven fault buttons
+- [ ] **FL2's gauge/width strips render *"No live gauge · see Profile"*** — **never a flat line at target**, which reads as a real in-spec measurement. `[TRP §8]` calls this the single most likely thing to ship wrong
+- [ ] Global: a **simulation on/off indicator that reads configuration, not UI state**; the active **`lbPerFt`**; the noise **seed**, displayed and settable
+- [ ] ⚠ **Not a dashboard** (`[SIM §9.1]`) — absent from the fifteen-dashboard inventory, the navigation map and the topbar *More Options* tiles. It carries **no `DB##` number** deliberately
+- [ ] Built to the shared chrome: `--color-*` tokens *(**never** `--fw-*`, `G18`)* · `flat-wire-topbar.js` then `flat-wire-fit.js` with `data-fit="fill"` · `fw-modal.js` before any dialog and **never stacked** · **14 px minimum text** including form controls · action button carries an icon, dismiss does not
+- [ ] `data-testid` on every control — `[SP §9.2]`'s DoD requires them and retrofitting costs ~16 h
+- [ ] Route resolves **only** when simulation is on
+
+**Rate-card basis:** new dashboard screen @ **24 h** (§2) — `simulator_console.html` is the approved visual spec, so no design time is included. **15 h AI-assisted** at `[DE §1]`'s 0.62 frontend factor, which is the figure `[TRP §4]` schedules. ⚠ **The 24 h is unchanged by the greying** — the screen is drawn whole either way, and a disabled control costs the same as an enabled one to lay out
+**Dependencies:** **`FW-218`** *(trial — four endpoints; `FW-215` in full is the post-trial dependency)*, FW-135, FW-130
+**Blockers:** —
+
+---
+
+###### FW-217 · OPC sidecar adapter — the models behind a test-only OPC UA server
+**Hours:** 24 h RT · **Priority:** Medium · **Sprint:** — *(unscheduled)* · **Phase:** 14 · **Stream:** RT
+
+**As a** tester,
+**I want** the simulated lines served over a real OPC endpoint,
+**So that** E2E exercises the real ingest path instead of bypassing it.
+
+**Acceptance Criteria:**
+- [ ] The **same** `ILineModel` instances re-hosted behind a test-only OPC UA server — the physics is written once (`[SIM §3.1]`)
+- [ ] `FW-N05`'s real ingest subscribes normally and is **unmodified**
+- [ ] ⚠ **Never the production OPC servers** — `[PLC §5.3]` A5; they are unchanged infrastructure
+- [ ] Satisfies `[TS §3.1]`'s existing *"test-only OPC server sidecar"* row rather than adding a second sidecar
+- [ ] Available for commissioning **rehearsal** — and `[SIM §10]` still applies: it proves the pipeline, not the tag paths
+
+**Rate-card basis:** non-trivial service, top of the 12–24 h band (§2) plus the server host — the models are inherited, so this is an adapter, not a rebuild
+**Dependencies:** FW-210, FW-211, FW-N05
+**Blockers:** **G32** / **G33** *(the map is `[PROPOSED]`, so the sidecar serves paths we invented)*
+
+---
+
+**Simulator reconciliation** — RT `24+12+12+16 = 64` · FE `24` · BE `23` · dev base **111 h**; with `FW-217`
+**135 h**. Indicative all-in on 111 h: QA `0.20 × 111 = 22` → Cont `0.15 × (111+22) = 20` → **153 h**.
+
+> ⚠ **QA and contingency are shown here as an indication only.** `[CE §2]`'s convention is that both are
+> applied **at phase level, never per story** — pricing them per card double-counts. The 111 h dev figure is
+> the one to carry.
+>
+> ⚠ **`FW-216` is deliberately unused.** The console mockup
+> ([`simulator_console.html`](../Frontend/Mockups/simulator_console.html)) is a planning artifact, not a
+> story — `[CE §2]` prices a screen at 24 h **with** the mockup as its approved visual spec and no design
+> time included.
 
 ---
 
@@ -761,7 +1183,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 ###### FW-007 · Runs and Quality/Output group tables
-**Hours:** 48 h DB · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1C · **Stream:** DB
+**Hours:** 52 h DB · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1C · **Stream:** DB
 
 **As a** developer,
 **I want** every event and output table created with its constraints enforced in the database,
@@ -784,9 +1206,13 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
-**Phase 1C reconciliation** — DB `56+4+12+16+8+12+48 = 156` → QA `0.20 × 156 = 31` → Cont `0.15 × (156+31) = 28` → **215 h** ✓ (§3b)
+**Phase 1C reconciliation** — DB `56+4+12+16+8+12+52 = 160` → QA `0.20 × 160 = 32` → Cont `0.15 × (160+32) = 29` → **221 h** ✓ (§3b)
 
-**S0 total** — `370 + 442 + 215 = **1,027 h**` ✓ · 12 working days · **10.7 FTE**
+> **Restated 15 Aug 2026 from 215 h.** `FW-007` 48 → 52 h for **`G21`**: the `RodStaging.Station` column plus re-keying `UX_RodStaging_Bay` from `(LineId, PayoffPosition)` to `(Station, PayoffPosition)`. ⚠ **Separate from `[CE §8]`'s ~17 h understatement**, which is about the 22-vs-25 table count — **do not net them**; one is a costing gap, the other scoped work.
+
+**S0 total** — `370 + 519 + 221 = **1,110 h**` ✓ · 12 working days · **11.6 FTE**
+
+> **Corrected 15 Aug 2026.** This line read `370 + 442 + 215 = 1,027` and was stale by two restatements: 1B **442 → 519** (14 Aug omissions, then `D-29`, then the backend-test withdrawal and `SpoolController`) and 1C **215 → 221** (`G21`'s `Station` column). **`[CE §2]`–`§5` still publish 1,027 / 10.7 FTE deliberately** — re-deriving them there is a programme re-baseline, per `[CE §8]`.
 
 ---
 
@@ -1056,7 +1482,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] **MVP-1 persists its own snapshot of what it pushed** — schedule id, version and effective configuration — so a certificate stays reproducible after the owning system later edits the schedule
 - [ ] Business rules: Draft schedule not acknowledgeable (`422`); single active run per line (`409`); all-or-nothing
 - [ ] Where a staged row exists, the request's `payoffPosition` must match it (`409` on mismatch); check-in **consumes** the staged row (`RodStaging.Status → CheckedIn`, `RodCheckinId` linked) rather than creating a parallel record
-- [ ] ⚠ **Described and implemented as compensating writes, never "atomic rollback"** — check-in spans `FlatWireDB` + `coils` + `wip_coil_orders` + the PLC and **is not one ACID transaction** (**G2 / G16**)
+- [ ] ⚠ **Described and implemented as compensating writes, never "atomic rollback"** — check-in spans `FlatWireDB` + `coils` + `wip_coil_orders` + the PLC and **is not one ACID transaction** (**G2**; `G16` closed 4 Aug 2026)
 - [ ] PLC push audited (tag, value, operator, result); Operator+ policy
 
 **Rate-card basis:** complex command spanning two databases and the PLC 20 h + `CheckInRod` service and validation rules 16 h = 36 h (§3 worked derivation)
@@ -2688,7 +3114,8 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** the primary production route is known to work before go-live.
 
 **Acceptance Criteria:**
-- [ ] Rod received → planned → scheduled → check-in → active run → SPC → weld → complete → spool alpha → reporting
+- [ ] **Automated with Playwright** — `e2e/specs/fl1-standalone.spec.ts`, driving **real OPC tags** into the test-only server sidecar. Not a manual walkthrough
+- [ ] Check-in → active run → SPC → weld → complete → spool alpha → reporting. ⚠ **Starts at a seeded rod**: *received → planned → scheduled* are **upstream and out of test scope** (`[TS §2.2]`, *"fixture-supplied here"*), so the spec asserts them as preconditions rather than exercising them
 - [ ] **`INFLAT` verified set and cleared** at the right moments
 - [ ] PLC push logged (simulate or commissioning)
 - [ ] Weld traceability and SPC records verified against the database
@@ -2708,6 +3135,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** the coil the customer receives is known to be correct.
 
 **Acceptance Criteria:**
+- [ ] **Automated with Playwright** — `e2e/specs/fl2-standalone.spec.ts`
 - [ ] Spool → FL2 check-in (historical profile) → roll adjust → coil completion → skid close
 - [ ] **The null-gauge case verified** — Live shows its empty state and does not draw a line at target; Profile stays static across live ticks
 - [ ] **Components card shows exactly three FM2 stands**; a fourth row is a regression
@@ -2727,6 +3155,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** the most complex route is not first exercised in production.
 
 **Acceptance Criteria:**
+- [ ] **Automated with Playwright** — `e2e/specs/fl3-hybrid.spec.ts`. ⚠ **`G30` must close first**: it decides whether FL3's FM2 sits at `FL2.FM2.*` or `FL3.FM2.*`, and the test must write tags to whichever namespace the app reads. Until it closes this spec cannot be authored at all
 - [ ] **Single acknowledgement** → continuous run → **no intermediate alpha** → weld → coreless coil
 - [ ] **FL1 and FL2 confirmed unavailable** in scheduling during an FL3 run
 - [ ] Single PLC push covers all FM1 + FM2 components
@@ -2814,8 +3243,8 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 | Phase | Title | Sprint | FE | BE | DB | RT | QA | BA | Cont | **Hours** | Stories |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | **1A** | Angular Foundation | S0 | 224 | — | — | 44 | 54 | — | 48 | **370** | 9 |
-| **1B** | Backend Foundation | S0 | — | 208 | — | 112 | 64 | — | 58 | **442** | 17 |
-| **1C** | Database Foundation | S0 | — | — | 156 | — | 31 | — | 28 | **215** | 7 |
+| **1B** | Backend Foundation | S0 | — | 249 | — | 124 | 78 | — | 68 | **519** | 20 |
+| **1C** | Database Foundation | S0 | — | — | 160 | — | 32 | — | 29 | **221** | 7 |
 | **3** | Line Status Board & Real-Time Backbone | S1 | 64 | 16 | 4 | 40 | 41 | — | 25 | **190** | 6 |
 | **4** | Rod Check-In & PLC Configuration | S2 | 60 | 62 | 28 | 28 | 36 | 8 | 33 | **255** | 8 |
 | **5** | Active Run Monitoring & Gauge Trace | S2 | 76 | 12 | 8 | 24 | 22 | — | 12 | **154** | 6 |
@@ -2828,7 +3257,18 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 | **12** | Yield, Cost Ledger & Scrap | S3 | 44 | 72 | 12 | — | 26 | — | 23 | **177** | 4 |
 | **13** | Administration & Reference Data | S3 | 56 | 32 | 8 | 4 | 20 | 4 | 19 | **143** | 8 |
 | **14** | Integration, Commissioning & Go-Live | S3 | 16 | 16 | 8 | 40 | 112 | 40 | 35 | **267** | 6 |
-| | **TOTAL** | | **928** | **634** | **324** | **356** | **560** | **68** | **422** | **3,292** | **116** |
+| | **TOTAL** | | **928** | **675** | **328** | **368** | **575** | **68** | **433** | **3,375** | **119** |
+
+> ⚠ **This TOTAL is 3,375 h / 119 stories and deliberately differs from the widely-quoted 3,292 h / 116.**
+> The table has to add up, so absorbing the Phase-1 restatements into the 1B and 1C rows moves the
+> total with them: **1B 442 → 519** (14 Aug omissions · `D-29` · backend tests withdrawn · `SpoolController`) and
+> **1C 215 → 221** (`G21`'s `Station` column), plus three stories minted after the 116 baseline —
+> **`FW-205`, `FW-207`, `FW-208`**.
+>
+> **`[CE §3b]`'s 3,292 h / 116 stories remains the published programme figure** and is *not* wrong —
+> `[CE §2]`–`§5` are deliberately not re-derived, per `[CE §8]`, because doing so moves the weekly
+> grid, the FTE columns and the descope ladder. **Quote 3,292 to the client and 3,375 when you need a
+> table that reconciles.** They differ by exactly the 83 h above.
 
 Every row is the sum of its own printed cells, and every column sums as shown. Totals match `CapacityAndEffortModel.md` §3b's MVP-1 apportionment exactly.
 
@@ -2838,12 +3278,17 @@ Every row is the sum of its own printed cells, and every column sums as shown. T
 
 | Sprint | Phases | Hours | Wk days | Cap/person | Req. FTE | Stories |
 |---|---|---|---|---|---|---|
-| **S0** | 1A, 1B, 1C | **1,027** | 12 | 96 h | **10.7** | 33 |
+| **S0** | 1A, 1B, 1C | **1,110** | 12 | 96 h | **11.6** | 36 |
 | *carry-over* | *Phase 1 completion* | **0** | 5 | 40 h | *0.0* | — |
 | **S1** | 3 | **190** | 10 | 80 h | **2.4** | 6 |
 | **S2** | 4, 5, 6, 7, 8 *(start)* | **971** | 9 | 72 h | **13.5** | 40 |
 | **S3** | 8 *(finish)*, 9, 10, 11, 12, 13, 14 | **1,104** | 8 | 64 h | **17.3** | 37 |
-| | | **3,292** | **44** | **352 h** | **9.4** | **116** |
+| | | **3,375** | **44** | **352 h** | **9.6** | **119** |
+
+> **S0 moves 1,027 → 1,110 h and 10.7 → 11.6 FTE** on the Phase-1 restatements above; the programme
+> figure moves with it, 3,292 → 3,375 / 9.4 → 9.6 FTE. See the note under §Appendix's phase table for
+> why `[CE §3b]` still publishes 3,292 and why that is not a contradiction. **S1–S3 are untouched** —
+> every hour of the change is in Phase 1.
 
 *Phase 8's seven stories are counted in S2, where the phase starts; its **hours** split 59/59 across the boundary.*
 
@@ -3012,7 +3457,7 @@ All above the previous high-water mark `FW-124`, so nothing collides with upstre
 | `FW-N08` | Wire break | **Blocked — `G34`.** A decided flow with **no persistence target**. Must be decided before the Phase-6 build |
 | `FW-N09` | OEE dashboard | **MVP-2** — the mockup lives in `MVP-2/Mockups/` |
 | `FW-N10` | Stop popup | Uncosted; no phase assignment |
-| `FW-N11` | Operator session / `ITInhibit` | Cited against Phase 6, **uncosted**. `ITInhibit` is specified in `[PLC]` |
+| `FW-N11` | **Operator session** *(was "Operator session / `ITInhibit`")* | Cited against Phase 6, **still uncosted**. ⚠ **Split 14 Aug 2026 — the `ITInhibit` half has left.** It is now `FW-205` (Phase 1B, 16 h, the service and conditions 3–5) and `FW-206` (Phase 4, 8 h, conditions 1–2, blocked on `PLC-Q12`). Bundling two unrelated subjects on one card is why neither half was ever priced. The id is retained because it is cited against Phase 6 |
 | `FW-N12` | De-stub pass | Cited against Phase 4, **uncosted**. In practice absorbed by `FW-166` (weld) and `FW-201` (defect allowance) |
 
 #### B.5 Subsumed, superseded and out of scope

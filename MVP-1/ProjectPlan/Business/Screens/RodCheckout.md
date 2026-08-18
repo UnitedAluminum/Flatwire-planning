@@ -3,22 +3,11 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL3
-**Version:** 2.2
-**Last Updated:** August 12, 2026
+**Version:** 2.3
+**Last Updated:** August 15, 2026
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 12 — Rod Checkout. Presented as a **dialog** rather than a separate screen (see version 2.1); the caller states the mode.
 **Requirement source:** SRS §4.17 (post-check-in removal); pre-check-out has **no source requirement ID** — new text is proposed in Section 6
-
----
-
-## Document Change History
-
-| Version | Date | Description |
-|---|---|---|
-| 1.0 | Apr 24, 2026 | Initial use-case analysis — two scenarios (pre-run and mid-run), machine-control behaviour, captured data, open questions. |
-| 1.1 | May 4, 2026 | Supervisor approval confirmed for mid-run checkout; no material identity issued until the supervisor dispositions it. |
-| 2.0 | Aug 1, 2026 | **Issued for client review.** Adds **Mode P** (removal of a rod that was staged but never checked in) with its weld-dependent approval rule, from the July 30, 2026 client call. States the approval record as an explicit requirement. Restructured as a client deliverable; internal schema detail removed. |
-| 2.1 | Aug 1, 2026 | **Presentation change only — no requirement altered.** Checkout is now a dialog raised over whatever screen the operator is on. Two consequences the client should confirm: the **mode is set by where it is raised from** rather than chosen on the screen — pre-run from the check-in station, mid-run from a paused run — and mid-run checkout is now the **fourth outcome on the resume dialog**, so the footage frozen at the pause carries straight into the checkout instead of being re-entered. The line stays paused behind the dialog; the pause closes when the checkout is confirmed. The Mode A / Mode B toggle is retained so a mistake can be corrected. |
 
 ---
 

@@ -3,20 +3,11 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL2 spool selection, ahead of spool check-in
-**Version:** 1.2
-**Last Updated:** August 12, 2026
+**Version:** 1.3
+**Last Updated:** August 15, 2026
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 5A — FL2 Spool Queue
 **Requirement source:** `FR-097`–`FR-099`; check-in identifier rule `CHK012`; spool lifecycle question **Q17**
-
----
-
-## Document Change History
-
-| Version | Date | Description |
-|---|---|---|
-| 1.1 | Aug 2, 2026 | **Two statuses, one spool at a time.** You confirmed that FL2 has no room to stage material, so a spool is either waiting for the line or on it — there is no third place for it to be. Section 3.5 is rewritten accordingly: **Ready for FL2** and **Checked in** are the only statuses the operator sees, and while a spool is checked in **no spool offers a check-in action at all**. This replaces our earlier proposal, which had four statuses and allowed a check-in at any time. |
-| 1.0 | Aug 2, 2026 | **Initial issue.** A new screen. Written because FL2 had no view of the material waiting for it, and because two agreed statements about how the operator identifies a spool — *scan the printed label* and *select it by spool number* — had only ever had the first one built. |
 
 ---
 

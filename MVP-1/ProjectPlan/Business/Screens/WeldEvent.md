@@ -3,22 +3,11 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL3 (rod-to-rod joins at the payoff)
-**Version:** 2.3
-**Last Updated:** August 12, 2026
+**Version:** 2.4
+**Last Updated:** August 15, 2026
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 2A — Rod Pre-Check-In (*Mark as welded*) — see 4.1
 **Requirement source:** SRS welding rules (`WLD003`, `WLD005`, `WLD006`, `WLD010`, `WLD011`, `WLD012`), traceability rules (`TRV002`, `TRV004`)
-
----
-
-## Document Change History
-
-| Version | Date | Description |
-|---|---|---|
-| 1.0 | Apr 2026 | Initial specification — screen purpose, captured data, traceability chain, confirm behaviour, end-to-end flow. |
-| 2.0 | Aug 1, 2026 | **Issued for client review.** Weld type corrected to **induction only** (laser withdrawn May 21, 2026). Incorporates the July 30, 2026 decisions on releasing a welded rod, the absence of a welded-not-checked-in status, the no-stacking confirmation, and the mid-run coil-break rule. Restructured as a client deliverable; internal schema and interface detail removed. |
-| 2.1 | Aug 1, 2026 | Added Section 4.1 — the weld event is captured from **two screens** (Dashboard 4 and Dashboard 2A's *Mark as welded*), both writing the same record with the same mandatory quality result; there is no lighter path that omits it. Recorded that **a failed weld does not complete the join**: where the incoming rod is pre-checked-in, a Fail leaves it staged and un-welded for a remake, so only a Pass marks the rod welded. Noted that a remade weld leaves more than one record of one physical join — which **widens the existing OI-59** (re-welds on the certificate) to cover a weld that fails at capture, not only one that breaks mid-run; footage attribution across the two boundaries remains **Q6**. |
-| 2.2 | Aug 1, 2026 | **The separate Weld Event screen is retired.** Dashboard 4 was withdrawn and the *Log Weld Event* action removed from the active-run monitors on all three lines, so §4.1 now describes **one** capture point rather than two: the Rod Pre-Check-In station's *Mark as welded* dialog. Added decisions **D6–D8** (§8), the Pass-only annotation on the §4 effects table, and two new open items — **G27** (the retired screen's rod queue and traceability chain were not rehoused) and **G28** (FL2 has no pre-check-in station and therefore no weld capture path). |
 
 ---
 

@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>Flat wire mill — simulator console</title>
+<link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
+<!--
+  DB-S1 — Machine Simulator Control Console
+  Specification: ../../Architecture/MachineSimulator.md  [SIM §9]
+  Story:         FW-214 (24 h FE)
+
+  ⚠ THIS IS NOT A DASHBOARD. It is an engineering tool.
+     - Not in the fifteen-dashboard inventory
+     - Not in the operator navigation map
+     - Not in the topbar "More Options" tiles
+     - No DB## number, deliberately — "DB-S1" so no reader mistakes it for one of the fifteen
+     - The route resolves ONLY when simulation is on; with SimulatePLCTagPush false the
+       control endpoints return 404, not 403  ([SIM §2.4])
+
+  Three things in here are easy to "fix" wrongly:
+     1. FL2's gauge/width strips read "No live gauge · see Profile". They must NEVER draw a
+        flat line at target — that reads as a real in-spec measurement. [TRP §8] calls this
+        the single most likely thing in the whole build to ship wrong.
+     2. Run status and line state are TWO separate chips. A mill can stop with the run still
+        Running. Run status is ours and settled (CK_FlatWireRun_Status); the line-state
+        vocabulary is ours and UNCONFIRMED (OI-35, confirmed at C2).
+     3. lbPerFt and the noise seed are displayed on purpose. Q10 carries no recommendation
+        and OI-45 is open — burying lbPerFt as a constant is exactly what [SIM §5.3] forbids.
+-->
+<style>
+  html, body { width: 100%; height: 100%; }
+  .dashboard { min-height: 1024px; padding-bottom: 24px; }
+
+  /* ── Header ── */
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 24px;
+  }
+  .header h1 { margin: 0; font-size: 24px; font-weight: 500; }
+  .header .sub {
+    font-size: 14px; color: var(--color-text-secondary); margin-top: 3px;
+  }
+  .header-meta { display: flex; gap: 12px; align-items: center; font-size: 14px; }
+
+  /* The engineering-tool banner. Deliberately loud — this screen can drive a machine model. */
+  .eng-banner {
+    display: flex; align-items: center; gap: 10px;
+    margin: 0 24px 16px;
+    padding: 10px 14px;
+    background: var(--color-background-warning);
+    border: 1px solid var(--color-amber);
+    border-radius: var(--border-radius-md);
+    font-size: 14px; color: var(--color-text-warning);
+  }
+  .eng-banner strong { font-weight: 600; }
+
+  /* ── Global bar ── */
+  .global-bar {
+    display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+    margin: 0 24px 18px; padding: 14px 18px;
+    background: var(--color-background-secondary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-lg);
+  }
+  .gfield { display: flex; flex-direction: column; gap: 4px; }
+  .gfield label {
+    font-size: 14px; color: var(--color-text-secondary); font-weight: 500;
+  }
+  .gfield .val { font-family: var(--font-mono); font-size: 15px; }
+  .gfield input {
+    width: 108px; height: 34px; padding: 0 9px;
+    font-family: var(--font-mono);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+  }
+  .g-divider { width: 1px; align-self: stretch; background: var(--color-border-tertiary); }
+
+  .sim-state {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 13px; border-radius: 999px;
+    font-size: 14px; font-weight: 600;
+    background: var(--color-background-success); color: var(--color-text-success);
+    border: 1px solid var(--color-green);
+  }
+  .sim-state .dot {
+    width: 9px; height: 9px; border-radius: 50%; background: var(--color-green);
+  }
+  .config-note {
+    font-size: 14px; color: var(--color-text-tertiary); margin-left: auto; max-width: 330px;
+  }
+
+  /* ── Line panels ── */
+  .panels {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 16px; padding: 0 24px;
+  }
+  .panel {
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-lg);
+    display: flex; flex-direction: column;
+  }
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--color-border-tertiary);
+  }
+  .panel-head .line-id { font-size: 19px; font-weight: 600; }
+  .panel-head .route {
+    font-size: 14px; color: var(--color-text-secondary); margin-left: 8px; font-weight: 400;
+  }
+
+  /* Two chips, not one. See the header comment. */
+  .chips { display: flex; gap: 7px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 14px; font-weight: 500; white-space: nowrap;
+  }
+  .chip .k { font-size: 14px; opacity: .72; font-weight: 400; }
+  .chip-run     { background: var(--color-background-success); color: var(--color-text-success); }
+  .chip-idle    { background: var(--color-background-tertiary); color: var(--color-text-secondary); }
+  .chip-paused  { background: var(--color-background-warning); color: var(--color-text-warning); }
+  .chip-stopped { background: var(--color-background-danger);  color: var(--color-text-danger); }
+
+  .section { padding: 14px 16px; border-bottom: 1px solid var(--color-border-tertiary); }
+  .section:last-child { border-bottom: none; }
+  .section h3 {
+    margin: 0 0 10px; font-size: 14px; font-weight: 600;
+    color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: .4px;
+  }
+
+  /* ── Readouts ── */
+  .readouts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .readout {
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 9px 11px;
+  }
+  .readout .lbl { font-size: 14px; color: var(--color-text-secondary); }
+  .readout .num {
+    font-family: var(--font-mono); font-size: 20px; font-weight: 600; margin-top: 2px;
+  }
+  .readout .unit { font-size: 14px; font-weight: 400; color: var(--color-text-tertiary); }
+
+  /* ── Target-vs-actual strips ── */
+  .strip { margin-bottom: 11px; }
+  .strip:last-child { margin-bottom: 0; }
+  .strip-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 14px; margin-bottom: 5px;
+  }
+  .strip-head .name { color: var(--color-text-secondary); }
+  .strip-head .nums { font-family: var(--font-mono); }
+  .strip-head .actual { font-weight: 600; }
+  .strip-head .target { color: var(--color-text-tertiary); }
+  .track {
+    position: relative; height: 22px;
+    background: var(--color-background-tertiary);
+    border-radius: var(--border-radius-md); overflow: hidden;
+  }
+  .band {
+    position: absolute; top: 0; bottom: 0;
+    background: var(--color-background-success);
+  }
+  .tick { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--color-gray); }
+  .needle {
+    position: absolute; top: -2px; bottom: -2px; width: 3px;
+    background: var(--color-blue); border-radius: 2px;
+  }
+  .needle.out { background: var(--color-red); }
+
+  /* FL2's empty state — this is a requirement (FR-120), not a placeholder. */
+  .no-live {
+    display: flex; align-items: center; gap: 9px;
+    padding: 14px 13px;
+    background: var(--color-background-tertiary);
+    border: 1px dashed var(--color-border-primary);
+    border-radius: var(--border-radius-md);
+    font-size: 14px; color: var(--color-text-secondary);
+  }
+  .no-live .icon { font-size: 16px; }
+
+  /* ── Controls ── */
+  .btn-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    height: 40px; padding: 0 15px; flex: 1;
+    font-family: var(--font-sans); font-size: 14px; font-weight: 500;
+    border-radius: var(--border-radius-md); cursor: pointer;
+    border: 1px solid var(--color-border-primary);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+  }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn-primary {
+    background: var(--color-green); border-color: var(--color-green); color: #fff;
+  }
+  .btn-primary:hover { filter: brightness(.94); }
+  .btn-stop { background: var(--color-red); border-color: var(--color-red); color: #fff; }
+  .btn-stop:hover { filter: brightness(.94); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  .ctl { margin-bottom: 12px; }
+  .ctl:last-child { margin-bottom: 0; }
+  .ctl label {
+    display: block; font-size: 14px; color: var(--color-text-secondary);
+    margin-bottom: 5px; font-weight: 500;
+  }
+  .ctl select {
+    width: 100%; height: 40px; padding: 0 10px;
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+  }
+  .slider-row { display: flex; align-items: center; gap: 11px; }
+  .slider-row input[type=range] { flex: 1; height: 28px; }
+  .slider-row .sv {
+    font-family: var(--font-mono); font-size: 15px; font-weight: 600;
+    min-width: 74px; text-align: right;
+  }
+  .nudge { display: flex; align-items: center; gap: 7px; }
+  .nudge .nlabel { font-size: 14px; color: var(--color-text-secondary); flex: 1; }
+  .nudge button {
+    width: 40px; height: 36px; font-size: 15px; font-family: var(--font-mono);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary); cursor: pointer;
+  }
+  .nudge button:hover { background: var(--color-background-secondary); }
+  .nudge .nval {
+    font-family: var(--font-mono); font-size: 15px; min-width: 66px; text-align: right;
+  }
+
+  /* ── Fault buttons ── */
+  .faults { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+  .fault-btn {
+    display: flex; align-items: center; gap: 7px;
+    height: 38px; padding: 0 10px;
+    font-family: var(--font-sans); font-size: 14px;
+    border: 1px solid var(--color-red-light);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-danger);
+    color: var(--color-text-danger);
+    cursor: pointer; text-align: left;
+  }
+  .fault-btn:hover { filter: brightness(.96); }
+  .fault-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .fault-btn.wide { grid-column: 1 / -1; }
+  .fault-btn .fi { font-size: 15px; }
+
+  /* Not-in-scope marker, so a reviewer knows the greying is deliberate */
+  .scope-note {
+    font-size: 14px; color: var(--color-text-tertiary);
+    margin-top: 9px; line-height: 1.45;
+  }
+  .log {
+    margin: 18px 24px 0; padding: 13px 16px;
+    background: var(--color-background-secondary);
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-lg);
+  }
+  .log h3 {
+    margin: 0 0 9px; font-size: 14px; font-weight: 600;
+    color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: .4px;
+  }
+  .log-lines {
+    font-family: var(--font-mono); font-size: 14px; line-height: 1.65;
+    color: var(--color-text-secondary); max-height: 132px; overflow-y: auto;
+  }
+  .log-lines .ts { color: var(--color-text-tertiary); }
+  .log-lines .ok { color: var(--color-text-success); }
+  .log-lines .warn { color: var(--color-text-warning); }
+  .log-lines .err { color: var(--color-text-danger); }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <div class="header">
+    <div>
+      <h1>Simulator console</h1>
+      <div class="sub">DB-S1 · engineering tool · not an operator screen</div>
+    </div>
+    <div class="header-meta">
+      <span class="sim-state" data-testid="sim-global-state">
+        <span class="dot"></span> Simulation ON
+      </span>
+    </div>
+  </div>
+
+  <div class="eng-banner" data-testid="eng-banner">
+    <span>⚠</span>
+    <span>
+      <strong>Engineering tool.</strong>
+      This screen drives the machine model, not the mill. It resolves only while
+      <code>SimulatePLCTagPush</code> is true — with simulation off the control endpoints return
+      <strong>404, not 403</strong>, and this route does not exist.
+    </span>
+  </div>
+
+  <div class="global-bar">
+    <div class="gfield">
+      <label for="fld-lbperft">lb per ft</label>
+      <input id="fld-lbperft" type="text" value="0.0412" data-testid="global-lbperft">
+    </div>
+    <div class="gfield">
+      <label for="fld-seed">Noise seed</label>
+      <input id="fld-seed" type="text" value="41927" data-testid="global-seed">
+    </div>
+    <div class="g-divider"></div>
+    <div class="gfield">
+      <label for="fld-cadence">Cadence</label>
+      <select id="fld-cadence" style="height:34px;padding:0 8px;border:1px solid var(--color-border-primary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);" data-testid="global-cadence">
+        <option>100 ms · 10 Hz</option>
+        <option>1 s</option>
+        <option>5 s</option>
+      </select>
+    </div>
+    <div class="g-divider"></div>
+    <div class="gfield">
+      <label>Feed adapter</label>
+      <span class="val" data-testid="global-adapter">in-process</span>
+    </div>
+    <div class="config-note">
+      <strong>lb/ft is undecided</strong> — the dimensional basis is an open question with no
+      recommended answer, so it is shown here rather than buried as a constant.
+    </div>
+  </div>
+
+  <div class="panels">
+
+    <!-- ══════════════════ FL1 ══════════════════ -->
+    <div class="panel" data-testid="panel-FL1">
+      <div class="panel-head">
+        <div>
+          <span class="line-id">FL1</span>
+          <span class="route">standalone</span>
+        </div>
+        <div class="chips">
+          <span class="chip chip-run" data-testid="FL1-run-status">
+            <span class="k">run</span> Running
+          </span>
+          <span class="chip chip-run" data-testid="FL1-line-state">
+            <span class="k">line</span> RUNNING
+          </span>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Live</h3>
+        <div class="readouts">
+          <div class="readout">
+            <div class="lbl">Speed</div>
+            <div class="num" data-testid="FL1-speed">412 <span class="unit">fpm</span></div>
+          </div>
+          <div class="readout">
+            <div class="lbl">Footage</div>
+            <div class="num" data-testid="FL1-footage">18,340 <span class="unit">ft</span></div>
+          </div>
+          <div class="readout">
+            <div class="lbl">Payoff weight</div>
+            <div class="num" data-testid="FL1-weight">4,244 <span class="unit">lb</span></div>
+          </div>
+          <div class="readout">
+            <div class="lbl">Remaining</div>
+            <div class="num" data-testid="FL1-remaining">60.6 <span class="unit">%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Target vs actual</h3>
+        <div class="strip">
+          <div class="strip-head">
+            <span class="name">Gauge</span>
+            <span class="nums">
+              <span class="actual" data-testid="FL1-gauge-actual">0.0503</span>
+              <span class="target"> / 0.0500 in</span>
+            </span>
+          </div>
+          <div class="track">
+            <div class="band" style="left:30%;width:40%"></div>
+            <div class="tick" style="left:50%"></div>
+            <div class="needle" style="left:54%"></div>
+          </div>
+        </div>
+        <div class="strip">
+          <div class="strip-head">
+            <span class="name">Width</span>
+            <span class="nums">
+              <span class="actual" data-testid="FL1-width-actual">0.2497</span>
+              <span class="target"> / 0.2500 in</span>
+            </span>
+          </div>
+          <div class="track">
+            <div class="band" style="left:30%;width:40%"></div>
+            <div class="tick" style="left:50%"></div>
+            <div class="needle" style="left:47%"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Control</h3>
+        <div class="btn-row">
+          <button class="btn btn-stop" data-testid="FL1-stop">■ Stop</button>
+          <button class="btn" data-testid="FL1-pause">❚❚ Pause</button>
+        </div>
+        <div class="ctl">
+          <label for="FL1-scenario">Scenario</label>
+          <select id="FL1-scenario" data-testid="FL1-scenario">
+            <option>In spec</option>
+            <option selected>Drifting</option>
+            <option>Out of spec</option>
+            <option>Erratic</option>
+            <option>Run to target</option>
+          </select>
+        </div>
+        <div class="ctl">
+          <label for="FL1-speed-slider">Speed setpoint</label>
+          <div class="slider-row">
+            <input id="FL1-speed-slider" type="range" min="0" max="800" value="412"
+                   data-testid="FL1-speed-slider">
+            <span class="sv">412 fpm</span>
+          </div>
+        </div>
+        <div class="ctl">
+          <div class="nudge">
+            <span class="nlabel">Gauge target</span>
+            <button data-testid="FL1-gauge-down">−</button>
+            <span class="nval">0.0500</span>
+            <button data-testid="FL1-gauge-up">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Inject fault</h3>
+        <div class="faults">
+          <button class="fault-btn" data-testid="FL1-fault-linestop"><span class="fi">■</span> Line stop</button>
+          <button class="fault-btn" data-testid="FL1-fault-commsdrop"><span class="fi">⚡</span> Comms drop</button>
+          <button class="fault-btn" data-testid="FL1-fault-stall"><span class="fi">◐</span> Stall</button>
+          <button class="fault-btn" data-testid="FL1-fault-wirebreak"><span class="fi">✂</span> Wire break</button>
+          <button class="fault-btn" data-testid="FL1-fault-diewear"><span class="fi">◔</span> Die wear</button>
+          <button class="fault-btn" data-testid="FL1-fault-pushfailure"><span class="fi">⊘</span> Push failure</button>
+          <button class="fault-btn wide" data-testid="FL1-fault-weightvariance">
+            <span class="fi">⚖</span> Weight variance beyond ±2 %
+          </button>
+        </div>
+        <div class="scope-note">
+          Wire break can be simulated before it can be stored — the flow is decided, the
+          persistence target is not.
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ FL2 ══════════════════ -->
+    <div class="panel" data-testid="panel-FL2">
+      <div class="panel-head">
+        <div>
+          <span class="line-id">FL2</span>
+          <span class="route">standalone</span>
+        </div>
+        <div class="chips">
+          <span class="chip chip-run" data-testid="FL2-run-status">
+            <span class="k">run</span> Running
+          </span>
+          <span class="chip chip-run" data-testid="FL2-line-state">
+            <span class="k">line</span> RUNNING
+          </span>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Live</h3>
+        <div class="readouts">
+          <div class="readout">
+            <div class="lbl">Speed</div>
+            <div class="num" data-testid="FL2-speed">268 <span class="unit">fpm</span></div>
+          </div>
+          <div class="readout">
+            <div class="lbl">Footage</div>
+            <div class="num" data-testid="FL2-footage">7,105 <span class="unit">ft</span></div>
+          </div>
+          <div class="readout">
+            <div class="lbl">Payoff weight</div>
+            <div class="num" data-testid="FL2-weight">1,512 <span class="unit">lb</span></div>
+          </div>
+          <div class="readout">
+            <div class="lbl">Remaining</div>
+            <div class="num" data-testid="FL2-remaining">84.0 <span class="unit">%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Target vs actual</h3>
+        <!-- FR-120: FL2 broadcasts null live gauge/width. NEVER draw a flat line at target here. -->
+        <div class="no-live" data-testid="FL2-no-live-gauge">
+          <span class="icon">◌</span>
+          <span>
+            <strong>No live gauge or width on FL2</strong> — see Profile.
+            The model still computes both for the historical profile; only the batched live
+            channels are suppressed.
+          </span>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Control</h3>
+        <div class="btn-row">
+          <button class="btn btn-stop" data-testid="FL2-stop">■ Stop</button>
+          <button class="btn" data-testid="FL2-pause">❚❚ Pause</button>
+        </div>
+        <div class="ctl">
+          <label for="FL2-scenario">Scenario</label>
+          <select id="FL2-scenario" data-testid="FL2-scenario">
+            <option selected>In spec</option>
+            <option>Drifting</option>
+            <option>Out of spec</option>
+            <option>Erratic</option>
+            <option>Run to target</option>
+          </select>
+        </div>
+        <div class="ctl">
+          <label for="FL2-speed-slider">Speed setpoint</label>
+          <div class="slider-row">
+            <input id="FL2-speed-slider" type="range" min="0" max="600" value="268"
+                   data-testid="FL2-speed-slider">
+            <span class="sv">268 fpm</span>
+          </div>
+        </div>
+        <div class="ctl">
+          <div class="nudge">
+            <span class="nlabel">FM2_S3 roll gap</span>
+            <button data-testid="FL2-gap-down">−</button>
+            <span class="nval">0.0464</span>
+            <button data-testid="FL2-gap-up">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Inject fault</h3>
+        <div class="faults">
+          <button class="fault-btn" data-testid="FL2-fault-linestop"><span class="fi">■</span> Line stop</button>
+          <button class="fault-btn" data-testid="FL2-fault-commsdrop"><span class="fi">⚡</span> Comms drop</button>
+          <button class="fault-btn" data-testid="FL2-fault-stall"><span class="fi">◐</span> Stall</button>
+          <button class="fault-btn" disabled data-testid="FL2-fault-wirebreak"><span class="fi">✂</span> Wire break</button>
+          <button class="fault-btn" disabled data-testid="FL2-fault-diewear"><span class="fi">◔</span> Die wear</button>
+          <button class="fault-btn" data-testid="FL2-fault-pushfailure"><span class="fi">⊘</span> Push failure</button>
+          <button class="fault-btn wide" data-testid="FL2-fault-weightvariance">
+            <span class="fi">⚖</span> Weight variance beyond ±2 %
+          </button>
+        </div>
+        <div class="scope-note">
+          Wire break and die wear are greyed on FL2 — it draws no wire and carries no dies.
+          FM2 has <strong>three</strong> stands: S1 (8″), S2 (6″), S3 (6″, final, non-bypassable).
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ FL3 ══════════════════ -->
+    <div class="panel" data-testid="panel-FL3">
+      <div class="panel-head">
+        <div>
+          <span class="line-id">FL3</span>
+          <span class="route">hybrid</span>
+        </div>
+        <div class="chips">
+          <span class="chip chip-idle" data-testid="FL3-run-status">
+            <span class="k">run</span> Idle
+          </span>
+          <span class="chip chip-idle" data-testid="FL3-line-state">
+            <span class="k">line</span> IDLE
+          </span>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Live</h3>
+        <div class="readouts">
+          <div class="readout">
+            <div class="lbl">Speed</div>
+            <div class="num" data-testid="FL3-speed">0 <span class="unit">fpm</span></div>
+          </div>
+          <div class="readout">
+            <div class="lbl">Footage</div>
+            <div class="num" data-testid="FL3-footage">0 <span class="unit">ft</span></div>
+          </div>
+          <div class="readout">
+            <div class="lbl">Payoff weight</div>
+            <div class="num" data-testid="FL3-weight">— <span class="unit">lb</span></div>
+          </div>
+          <div class="readout">
+            <div class="lbl">Remaining</div>
+            <div class="num" data-testid="FL3-remaining">— <span class="unit">%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Target vs actual</h3>
+        <div class="strip">
+          <div class="strip-head">
+            <span class="name">Gauge</span>
+            <span class="nums"><span class="actual" data-testid="FL3-gauge-actual">—</span>
+              <span class="target"> / — in</span></span>
+          </div>
+          <div class="track"><div class="band" style="left:30%;width:40%"></div>
+            <div class="tick" style="left:50%"></div></div>
+        </div>
+        <div class="strip">
+          <div class="strip-head">
+            <span class="name">Width</span>
+            <span class="nums"><span class="actual" data-testid="FL3-width-actual">—</span>
+              <span class="target"> / — in</span></span>
+          </div>
+          <div class="track"><div class="band" style="left:30%;width:40%"></div>
+            <div class="tick" style="left:50%"></div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Control</h3>
+        <div class="btn-row">
+          <button class="btn btn-primary" data-testid="FL3-start">▶ Start run</button>
+          <button class="btn" disabled data-testid="FL3-pause">❚❚ Pause</button>
+        </div>
+        <div class="ctl">
+          <label for="FL3-scenario">Scenario</label>
+          <select id="FL3-scenario" data-testid="FL3-scenario">
+            <option selected>In spec</option>
+            <option>Drifting</option>
+            <option>Out of spec</option>
+            <option>Erratic</option>
+            <option>Run to target</option>
+          </select>
+        </div>
+        <div class="ctl">
+          <label for="FL3-speed-slider">Speed setpoint</label>
+          <div class="slider-row">
+            <input id="FL3-speed-slider" type="range" min="0" max="800" value="0"
+                   data-testid="FL3-speed-slider">
+            <span class="sv">0 fpm</span>
+          </div>
+        </div>
+        <div class="ctl">
+          <div class="nudge">
+            <span class="nlabel">Gauge target</span>
+            <button data-testid="FL3-gauge-down">−</button>
+            <span class="nval">—</span>
+            <button data-testid="FL3-gauge-up">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Inject fault</h3>
+        <div class="faults">
+          <button class="fault-btn" disabled data-testid="FL3-fault-linestop"><span class="fi">■</span> Line stop</button>
+          <button class="fault-btn" disabled data-testid="FL3-fault-commsdrop"><span class="fi">⚡</span> Comms drop</button>
+          <button class="fault-btn" disabled data-testid="FL3-fault-stall"><span class="fi">◐</span> Stall</button>
+          <button class="fault-btn" disabled data-testid="FL3-fault-wirebreak"><span class="fi">✂</span> Wire break</button>
+          <button class="fault-btn" disabled data-testid="FL3-fault-diewear"><span class="fi">◔</span> Die wear</button>
+          <button class="fault-btn" disabled data-testid="FL3-fault-pushfailure"><span class="fi">⊘</span> Push failure</button>
+          <button class="fault-btn wide" disabled data-testid="FL3-fault-weightvariance">
+            <span class="fi">⚖</span> Weight variance beyond ±2 %
+          </button>
+        </div>
+        <div class="scope-note">
+          Faults are disabled while the line is idle. FL3 is one run across both mills with
+          coupled speeds and a single batched push — <strong>whether that batch reaches one
+          controller or two is unresolved</strong>, and it is a configuration value in the model,
+          never a code branch.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /panels -->
+
+  <div class="log">
+    <h3>Control log</h3>
+    <div class="log-lines" data-testid="control-log">
+      <div><span class="ts">14:22:07</span> <span class="ok">✓</span> FL1 — pass schedule applied from simulated push · gauge target 0.0500 → model</div>
+      <div><span class="ts">14:22:07</span> <span class="ts">·</span> FL1 — components active DB1, DB2, FM1 · EdgeSet bypassed (no edger on FL1)</div>
+      <div><span class="ts">14:24:31</span> <span class="warn">▲</span> FL1 — scenario changed to Drifting · seed 41927</div>
+      <div><span class="ts">14:31:55</span> <span class="ok">✓</span> FL2 — pass schedule applied · FM2_S1 bypass, FM2_S2 bypass, FM2_S3 active (skim)</div>
+      <div><span class="ts">14:31:55</span> <span class="ts">·</span> FL2 — live gauge/width suppressed per contract; profile still computed</div>
+      <div><span class="ts">14:38:02</span> <span class="err">✕</span> FL1 — push failure injected · line retains PREVIOUS configuration (compensating re-clear, not rollback)</div>
+    </div>
+  </div>
+
+</div><!-- /dashboard -->
+
+<script src="fw-modal.js"></script>
+<script src="flat-wire-topbar.js"></script>
+<script src="flat-wire-fit.js" data-fit="fill"></script>
+</body>
+</html>

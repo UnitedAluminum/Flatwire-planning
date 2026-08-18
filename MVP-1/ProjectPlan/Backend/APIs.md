@@ -1,7 +1,7 @@
 # Flat Wire Mill — API Contract
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — split out of `04-APIContract.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** August 15, 2026 — **`SpoolController` added to §3.1** (fourteen → **fifteen**: §3.2 assigned `GET /spools` to a controller in no list) and the **endpoint count corrected to 31 live rows, of which MVP-1 implements 24** — *"28 of the 30"* contradicted this file's own *"the pass schedule is read, never written"*, which removes six endpoints rather than one. `[PLC §351–356]` retargeted to `[PLC §7.2]` *(otherwise August 13, 2026 — split out of `04-APIContract.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
 **Document Type:** REST contract — conventions, enums, endpoints, traceability
 **Status:** Baselined for build — missing endpoint groups in §10
 **Owner:** Backend (.NET) stream
@@ -199,12 +199,33 @@ Two further corrections this document also carries:
 | `DieChangeController` | `/diechange` |
 | `CheckOutController` | `/checkout` |
 | `WipRejectionController` | `/wipreject` |
+| `SpoolController` | `/spools` |
 | `CoilController` | `/coil/**` |
 | `ShiftSummaryController` | `/shiftsummary` |
 
-### 3.2 Endpoint index — 30 endpoints
+> **Fifteen controllers, not fourteen — resolved 15 Aug 2026.** This table listed **fourteen** while §3.2
+> row 16a assigned `GET /spools` to a `Spool` controller that appeared in no list, so an MVP-1 endpoint
+> (`FR-097`–`FR-099`, DB5/DB5A, Phase 8) had **no host**. It does not fit `/checkin/**`, and `[TRP §1.4]`
+> independently counts `Spool` among the trial's controllers. **§3.1 was the side that was wrong.**
+> `phase-01b`, its acceptance criterion 2 and `FW-138` (now 15 controllers) carry the corrected count.
+
+### 3.2 Endpoint index — 32 endpoints, of which MVP-1 implements 25
 
 Roles use the matrix in `[SEC §8]`. "Any" means any authenticated role.
+
+> **The count was corrected on 15 Aug 2026 and the arithmetic is worth stating, because three different
+> figures were in circulation.** The table below has **32 live rows** — numbered 1–30 with **#13 retired**,
+> plus **16a**, **16b** and **18a**. Of those, **seven are outside MVP-1**: the six pass-schedule endpoints
+> (**2–7**) and `GET /shiftsummary` (**29**). **MVP-1 therefore implements 25 of 32.**
+>
+> **16b `POST /spool/complete` was added 15 Aug 2026** — the spool-completion commit had no route at all
+> (`OI-32`), which is why `[TRP §1.4]` had it running through `CoilController`.
+>
+> ⚠ **The old "30 endpoints / MVP-1 implements 28 of the 30" was wrong in both halves.** It counted the
+> retired row, missed 16a and 18a, and — the substantive error — deducted only `POST /passschedule/generate`
+> when *"The pass schedule is read, never written"* below states that **MVP-1 exposes no pass-schedule
+> endpoint of its own: no create, no edit, no approve, no list.** That is five more. The rows are **kept in
+> the index on purpose** so the map shows the whole surface; deferred is not missing.
 
 | # | Method + route | Purpose | Role | Controller | Phase | Serves |
 |---|---|---|---|---|---|---|
@@ -224,7 +245,8 @@ Roles use the matrix in `[SEC §8]`. "Any" means any authenticated role.
 | 14 | `GET /staging/queue?lineId=` | The Traveler Queue projection | Any | `PayoffStaging` | 4 | `FR-035`–`FR-038` |
 | 15 | `POST /checkin/rod` | FL1/FL3 rod check-in + PLC push | Operator | `CheckIn` | 4 | `FR-063`–`FR-084` |
 | 16 | `POST /checkin/spool` | FL2 spool check-in + FM2 PLC push | Operator | `CheckIn` | 8 | `FR-090`–`FR-096` |
-| 16a | `GET /spools[?spoolAlpha=]` | Spools available for FL2; with `spoolAlpha` the **backend resolves the order** and returns it with that order's spools, in one response | Any | `Spool` | 8 | `FR-097`–`FR-099` |
+| 16a | `GET /spools[?spoolAlpha=]` | Spools available for FL2; with `spoolAlpha` the **backend resolves the order** and returns it with that order's spools, in one response | Any | `Spool` **(§3.1, added 15 Aug 2026)** | 8 | `FR-097`–`FR-099` |
+| 16b | **`POST /spool/complete`** | **Commit an FL1 spool**: writes the `Spool` row (`SP-#####` alpha, source rods, footage, latched weight) and closes the run. Answers the `SpoolCompletionPromptDue` prompt, **and** serves the manual complete-spool path | Operator | `Spool` | 5 *(rows written by `FW-202`)* | `FR-140`–`FR-155` |
 | 17 | `GET /run/active?line=` | Active run for a line (DB3 load/resume) | Any | `Run` | 5 | `FR-100` |
 | 18 | `GET /run/{runId}/gaugetrace` | Historical/decimated trace + weld markers | Any | `Run` | 5 / 8 | `FR-093`, `FR-120` |
 | 18a | `GET /run/{runId}/weldevents` | Every weld recorded against one run — read-only | Any | `Run` | 4 *(rows written in 6)* | `PCI021` |
@@ -288,17 +310,23 @@ Only shapes carrying a correction or a non-obvious rule are given in full. The r
 >
 > **Four were extracted on 11 Aug 2026; two came back the same day.** **§4.15 `POST /coil/complete`** and **§4.16 `GET /coil/{alpha}/label`** returned with Phase 9, which is **wholly MVP-1** — they are the only writers of `CoilOutput` and `CoilTraceability`, and those tables carry the welding-wire certificate genealogy. They are restored below.
 >
-> **§3.2's endpoint index still counts 30 endpoints and lists all of them.** Left as-is on purpose: the index is the contract's map of the whole surface, and holes in it would be read as missing endpoints rather than deferred ones. The MVP-1 service implements **28 of the 30**.
+> **§3.2's endpoint index lists all 31 rows and is left whole on purpose**: the index is the contract's map of the whole surface, and holes in it would be read as missing endpoints rather than deferred ones. **The MVP-1 service implements 25 of the 32** — the six pass-schedule endpoints and `GET /shiftsummary` are out. *(Corrected 15 Aug 2026 from "28 of the 30", which contradicted the very next section — see §3.2's note.)*
 
 ### The pass schedule is read, never written — and never by an endpoint here
 
 **Pass schedule generation and management are owned by a separate track.** `POST /passschedule/generate` above is theirs, and MVP-1 exposes **no** pass-schedule endpoint of its own: no create, no edit, no approve, no list.
 
-MVP-1 is a **consumer**. Rod check-in reads a schedule's contents to build the PLC push payload — the six value groups in `[PLC §351–356]` (component states, die sizes, roll gaps, edge type, speed, gauge/width targets) — and `POST /checkin/rod` carries only the `scheduleId` that identifies it. Three consequences for anyone implementing against this contract:
+> ⚠ **This heading still holds after `D-31` (15 Aug 2026), and the distinction is the whole point.**
+> MVP-1 now **owns the three `PassSchedule*` tables** — they are in the MVP-1 runner and `PassScheduleId`
+> is an enforced FK. **Owning the table is not owning the data.** MVP-1 reads; it does not author.
+> Anyone who reads "MVP-1 builds the schedule tables" as licence to add a write endpoint has inverted it.
 
-1. **`scheduleId` is an opaque external identifier.** It is not a foreign key into any table this service owns. `PassScheduleId` on `FlatWireRun`, `RodCheckin`, `SpoolCheckin` and `CoilOutput` is a documented external reference, the same class as `PlanId` and `SkidId`.
-2. **The read mechanism is an open assumption.** This contract assumes an API read from the owning track plus a locally persisted snapshot; the alternative is that they write into `FlatWireDB` and the read is a local query. **Confirm before building the client** — see `phase-04`, *The pass-schedule read contract*.
-3. **Unavailable means check-in fails.** There is no default schedule and no partial push. If the schedule cannot be read, `POST /checkin/rod` must fail before any PLC write, not after — the push is not transactional and a partial configuration is worse than none (`[PLC §7.5]`, G2/G16).
+MVP-1 is a **consumer**. Rod check-in reads a schedule's contents to build the PLC push payload — the six value groups in `[PLC §7.2]` (component states, die sizes, roll gaps, edge type, speed, gauge/width targets) — and `POST /checkin/rod` carries only the `scheduleId` that identifies it. Three consequences for anyone implementing against this contract:
+
+1. ⚠ **`scheduleId` is a real, enforced foreign key** — changed 15 Aug 2026 by **`D-31`**. `PassScheduleId` on `FlatWireRun`, `RodCheckin`, `SpoolCheckin` and `CoilOutput` each has a constraint into `PassSchedule`, verified enforced and trusted on a live deploy. *It was previously "an opaque external identifier … the same class as `PlanId` and `SkidId`", and that is superseded.* **`PlanId`, `CoilOrderPlanId` and `SkidId` are unaffected** and remain external references with no local parents.
+2. ✅ **The read mechanism is settled.** This contract carried an open assumption with two options — an API read from the owning track plus a local snapshot, *or* the owning track writes into `FlatWireDB` and the read is a local query. **`D-31` chooses the second.** The three `PassSchedule*` tables are built by the MVP-1 runner, so the read is a **local query**. This is arbitration between two published options, not new scope.
+3. **Unavailable means check-in fails.** There is no default schedule and no partial push. If the schedule cannot be read, `POST /checkin/rod` must fail before any PLC write, not after — the push is not transactional and a partial configuration is worse than none (`[PLC §7.5]`, **G2**; `G16` closed 4 Aug 2026).
+4. ⚠ **Nothing in MVP-1 populates these tables in production.** MVP-1 owns the tables and **reads** them; it has no authoring surface at all — no create, edit, approve or list, and DB9/DB9A are MVP-2. The seed covers development and the trial. **Who writes production schedules is `OI-110`**, and it is the residual risk `D-31` moved rather than removed.
 
 ### 4.3 `GET /rod/{alpha}`
 
@@ -642,6 +670,52 @@ No pagination — the list scrolls, consistent with every other list in the suit
   "errors": []
 }
 ```
+
+### 4.6c `POST /spool/complete`
+
+**Purpose:** commit an FL1 spool — write the `Spool` row and close the run. **Role:** Operator.
+**Added 15 Aug 2026.** `OI-32` recorded that the spool-completion **commit** had no endpoint; it was
+half-closed by naming `FW-202`'s `CompleteSpool` command without giving it a route, so the only published
+way to reach it was `POST /coil/complete` — which is **Phase 9's FL2 output coil** (`FW-185`), *"a
+different transaction on a different line"*. Routing a spool commit through it is exactly the conflation
+**`G37`** was raised to fix.
+
+> ⚠ **This is not the prompt.** `SpoolCompletionPromptDue` is raised **by the server** on the
+> `RUNNING → STOPPED` edge and delivered over `FlatWireHub` — there is nothing for a client to poll and
+> **no endpoint raises it** (`[SIG §5.5]`). This endpoint is the **answer**, and it is also the
+> **manual** complete-spool path `TC-179` requires, so it must work when no prompt is outstanding.
+
+```json
+// request
+{ "runId": "RUN-0042", "lineId": "FL1",
+  "answer": "Yes",                       // Yes | No | AutoDismissed  — [SIG §5.2]'s vocabulary
+  "scaleWeightLb": 1798.5,               // optional; null = use the calculated value
+  "varianceAcknowledged": false,         // required true when |scale − calculated| > 2 %
+  "operatorId": "jdoe" }
+
+// 201 Created
+{ "data": { "spoolAlpha": "SP-00022", "runId": "RUN-0042", "status": "COMPLETE",
+            "netWeightLb": 1798.5, "footageFt": 15920.00,
+            "weightBasis": "Scale",      // Scale | Calculated
+            "sourceRods": [ { "rodAlpha": "R00041", "footageFrom": 0, "footageTo": 15920 } ] },
+  "success": true }
+```
+
+**Five rules a client must implement:**
+
+- **`answer: "No"` records nothing** — no transaction, no alpha, no print, no state change — but the
+  decline **is logged** (`TC-176`). It is not an error and must not return one.
+- **Commit precedes print** (`TC-175`). The label never prints before the row exists.
+- **The weight is the latched one.** `PromptLatchedWeightLb` was captured at the PLC stop timestamp;
+  a fresher `PayoffWeight` tick must never be substituted (`TC-172`).
+- **A >2 % scale-vs-calculated variance requires `varianceAcknowledged`** → otherwise `422`
+  `SUPERVISOR_AUTH_REQUIRED`. ⚠ **The override must never disable commit** — it gates, it does not block.
+- **Idempotent per run.** A second call for a run already `COMPLETE` returns `409`
+  `RUN_ALREADY_ACTIVE`'s counterpart rather than minting a second spool; the prompt is raised **once per
+  stop** but duplicate *delivery* is expected, so the client may well call twice.
+
+⚠ **`answer` is persisted to `FlatWireRun.PromptAnswer`**, whose `CHECK` allows exactly
+`Yes` / `No` / `AutoDismissed` — the enum, the TypeScript union and that constraint are one mirror.
 
 ### 4.7 `GET /staging/queue?lineId=`
 
@@ -1308,6 +1382,27 @@ The shopfloor UI is built against dummy data before the service exists. This is 
 | **A mock SignalR stream** at the real cadence with real batch shapes | Rendering performance is a design constraint, not an afterthought |
 
 > **Older implementation documents ship inconsistent fixtures** — `PS-1100-FL2-001` versus `-007`, and `SP-00021` sourced from `RUN-0041` while its `sourceRods` `R00040`/`R00041` point to `SP-00031`. **Align to the DB seed, not to those documents.**
+
+> ### ⚠ `PS-1100-FL1-003` is a `Draft` schedule — it is the **negative** fixture, not the happy path
+>
+> Confirmed against a live deploy 15 Aug 2026. A `Draft` schedule **must be refused** at check-in with
+> `SCHEDULE_NOT_ACTIVE` → **422** (§1.8), so a stub or test that acknowledges `PS-1100-FL1-003`
+> successfully is asserting the opposite of the contract.
+>
+> **Use the right one for the case you are building:**
+>
+> | Case | Schedule | Status |
+> |---|---|---|
+> | **FL1 happy path** | **`PS-1100-FL1-001`** (1100, Standalone) | `Active` |
+> | **FL1 negative — `SCHEDULE_NOT_ACTIVE`** | `PS-1100-FL1-003` | `Draft` |
+> | FL1 negative — inactive | `PS-1100-FL1-002` | `Inactive` |
+> | **FL2 happy path** | **`PS-1100-FL2-001`** | `Active` |
+> | FL3 hybrid | `PS-1100-FL3-001` | `Active` |
+>
+> The seed deliberately carries `Active`, `Inactive` and `Draft` variants of the same line and alloy so
+> the status gate is testable. **`PS-1100-FL1-003` is still a canonical fixture** — it is named above and
+> in `[CMP]` because the mock must mirror the seed; it is simply not the one an acknowledgement succeeds
+> against. `[TRP §8]` step 2's happy path is **`PS-1100-FL1-001`**.
 
 ### 7.3 Switchover criteria
 

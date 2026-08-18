@@ -2,23 +2,11 @@
 
 **Project:** Flat Wire Mill Implementation
 **Applies to:** Flattening Line 1 (FL1) and Flattening Line 3 (FL3)
-**Version:** 2.4
-**Last Updated:** August 12, 2026
+**Version:** 2.5
+**Last Updated:** August 15, 2026
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** [Dashboard 2A — Rod Pre-Check-In](../../Frontend/Mockups/dashboard_2a_rod_precheckin.html)
 **Requirement source:** SRS §4.2 (`PCI001`–`PCI008`), §4.18 partial re-check-in (`PRC001`–`PRC019`), welding (`WLD003`, `WLD005`, `WLD006`, `WLD010`, `WLD011`), traveler (`TRV002`, `TRV004`, `TRV009`)
-
----
-
-## Document Change History
-
-| Version | Date | Description |
-|---|---|---|
-| 1.0 | Jul 29, 2026 | Initial specification — station concept, bay state model, staging validations, traveler queue, three-step wizard. |
-| 2.0 | Aug 1, 2026 | **Issued for client review.** Consolidated to current rules only. Incorporates the decisions of the July 30, 2026 client call (Section 10): shared coil status set at check-in only; pre-check-out approval determined by weld state; failed inspection released by WIP rejection to `HOLD`; automatic line selection replacing the off-schedule override; min/max dimensional limits for four attributes; a rod may carry more than one order. Superseded rules, prior design iterations and internal implementation detail removed. |
-| 2.1 | Aug 1, 2026 | Added Section 8.2 — a **read-only list of the welds recorded against the current run** (`PCI021`), replacing a control labelled *Weld event log* that in fact opened the weld-recording form. Recorded in Section 8 that the weld is **not** confirmed by keying an operator badge; the operator comes from the signed-in station session, as `WLD003` requires it to be recorded rather than re-entered. |
-| 2.2 | Aug 1, 2026 | Added Section 8.1 — **weld quality is now mandatory** to record a weld (`PCI022`), Pass or Fail with a reason required on Fail, matching the Weld Event screen. **A failed weld is recorded but does not mark the rod welded**: the join did not hold, so the position keeps reading *not yet welded* and the operator remakes it. Existing open item **OI-59** widened — whether a superseded failed attempt belongs on the customer certificate. |
-| 2.3 | Aug 1, 2026 | **The station-level weld readiness band is removed; each control now sits on the payoff position it acts on.** *Mark as welded* moves onto the **staged** position (Section 8), *Welds this run* onto the **running** position (Section 8.2). The band's wording was already carried by the position cards; the one instruction it alone carried — *induction-weld tail to head* — is now stated on the staged position whenever a rod is running (Section 4.1). **Consequence for review:** with nothing running, *Welds this run* is **not offered** rather than shown-but-unavailable — new open item **OI-108** (Sections 4.3, 8.2). *Open the active run* is withdrawn as a position action (Section 4.1). The traveler queue gains the heading **"Rods In Queue"** (Section 4.5). |
 
 ---
 
@@ -126,6 +114,17 @@ Each payoff position presents exactly one of four states.
 ## 4.2 Capacity `[CONFIRMED — PCI010]`
 
 One rod per payoff position; **two rods maximum per line**, one on each position. Bundles are **not stacked** on a position (confirmed July 30, 2026).
+
+### 4.2a FL1 and FL3 share one physical station `[CONFIRMED — 15 Aug 2026]`
+
+**FL1 and FL3 are two routes over one Variable Position Payoff, not two payoffs.** The station is **`FL1PO`**; there is no `FL3PO`, and its absence from the WIP-station registry is deliberate. So *"two rods maximum"* is a limit on the **physical station**, not per line name — a rod staged "on FL1" and a rod staged "on FL3" would be competing for the same two positions.
+
+**Two consequences for this screen:**
+
+1. ⚠ **Switching the line must reload, not relabel.** The toggle currently changes the badge, station stamp, queue heading and modal subtitle **without reloading the bays or the Traveler Queue**. Because the off-schedule check reads the *current* line, toggling **silently reclassifies rod that is already staged**, with nothing on screen changing. **It must reload both.** Story **`FW-209`**.
+2. The station **switches line by itself** when a rod's order is booked on the other rod line — no message, no override (`Q24`). The operator is not asked, so the displayed line is not a setting they own.
+
+*Both come from gap `G21`, resolved 15 Aug 2026. `RodStaging` now carries a persisted `Station` and its uniqueness index is keyed on it, so the database can no longer admit two rods to one physical bay — but the index cannot fix the toggle, which is why `FW-209` exists.*
 
 ## 4.3 Cold start — no material on either payoff
 

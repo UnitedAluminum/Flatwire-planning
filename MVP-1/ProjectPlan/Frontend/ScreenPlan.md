@@ -44,6 +44,24 @@ The 27 HTML files in [`../../MVP-1/ProjectPlan/Frontend/Mockups/`](Mockups/) are
 | **DM** | Die Management | `dashboard_die_management.html` | Maintenance | Machines App → Tooling Inventory |
 | **OEE** | OEE Dashboard | `dashboard_oee.html` | Supervisor / CI engineer | On demand |
 | — | Coil Spinner | `coil-spinner.html` | — | A component demo, not a screen |
+| **DB-S1** | Simulator Control Console — ⚠ **not an operator screen** | `simulator_console.html` | Engineer / Admin | Driving the machine model. **See the note below before treating this as one of the fifteen** |
+
+> ### ⚠ `DB-S1` is registered here so it is not lost, not because it is part of the suite
+>
+> The simulator control console ([`MachineSimulator.md`](../Architecture/MachineSimulator.md) `[SIM §9]`,
+> story `FW-214`) is an **engineering tool**. Four exclusions, all deliberate:
+>
+> - **Not in the dashboard inventory count.** The suite is fifteen dashboards; this is not one of them and
+>   has no `FR-###` behind it.
+> - **Not in the navigation map** (§7.2) and **not in the topbar *More Options* tiles** — those are operator
+>   actions.
+> - **No `DB##` number.** `DB-S1` sits deliberately outside the numbering so no reader mistakes it for one
+>   of the fifteen. Do not "tidy" it into the sequence.
+> - **Its route resolves only while simulation is on.** With `SimulatePLCTagPush` false the control endpoints
+>   return **404, not 403** (`[SEC §8.8b]`).
+>
+> It uses the shared chrome — topbar, fit script, `--color-*` tokens, `fw-modal.js` — because consistency is
+> free and divergence costs. That is not the same as being part of the suite.
 
 **Retired / superseded — do not re-adopt:** `dashboard_2_rod_checkin - Old.html` (grid + inline-SVG progress ring, 9-step footer counter) and the interim single-page rod-scan-row layout, 8-step counter, which held the `dashboard_2_rod_checkin.html` filename until 11 Aug 2026. Both are **retired** and both were **deleted from the repository 11 Aug 2026** (recoverable at `d79ce78`); the approved wizard took the plain filename the same day, so **that name no longer refers to a retired screen**; two implementation documents in this repository still point at them (see §9.4).
 

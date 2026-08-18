@@ -3,20 +3,11 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL2 / FL3 (finished goods). FL1 produces an intermediate spool, not a finished coil.
-**Version:** 1.3
-**Last Updated:** August 12, 2026
+**Version:** 1.4
+**Last Updated:** August 15, 2026
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 7 — Output Coil Completion & Label · **Dashboard 7b — Packing Station**
 **Requirement source:** SRS output and packing rules; coil alpha format `FW-#####-C##`; the May 21 2026 target-value display correction
-
----
-
-## Document Change History
-
-| Version | Date | Description |
-|---|---|---|
-| 1.0 | Aug 11, 2026 | **First issue.** Consolidated from the shopfloor dashboard design reference, which was the only home for this screen, together with the source-traceability capture block from the spool material reference. Carries the coil detail set, the traceability chain, the final quality confirmation, the skid rule, the label field list, and the May 21 2026 decision that dimensions print as target values when in tolerance. Screen styling, layout dimensions and scripting detail removed for the client issue. |
-| 1.1 | Aug 11, 2026 | **Dashboard 7b (Packing Station) brought under this document — new §8.** DB7b had requirement text (`FR-345`–`FR-352`) but **no owning specification**, the one dashboard in scope without one. It is placed here rather than in a separate document because DB7 and DB7b are a single operator flow: *Confirm & Move to Packing* on DB7 is what creates DB7b's arrival, and the two-per-skid rule of §6 opens on one screen and closes on the other. Sections 8–11 renumbered to **9–12**; §4, the only section cited externally, is unmoved. Two open items raised and registered in master spec §11 — **`OI-105`** the authoritative weight (§8.2) and **`OI-106`** staging locations (§8.3) — plus **`OI-104`**, the skid table that `CoilOutput.SkidId` points at and that nothing names, creates or verifies. **`OI-24`** (lot number has no generator at all) and **`OI-99`** (lot number for a multi-rod coil) are restated as packing blockers rather than labelling ones. All five are carried in §10 and on the client sign-off sheet, and the set is registered as gap **`G36`**. |
 
 ---
 

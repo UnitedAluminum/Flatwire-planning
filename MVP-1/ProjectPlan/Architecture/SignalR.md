@@ -47,6 +47,8 @@ flowchart LR
 - **Split by frequency:** hot telemetry batched; rare domain events sent immediately, unbatched. **`PayoffStateChanged` must never enter the ~100 ms telemetry batch** — a bay changing hands is an operator-visible state transition, not a sampled reading.
 - **FL2 standalone suppresses the batched gauge/width channels** — its historical profile is a REST query. Status and marker events still flow.
 
+> **The simulator enters this pipeline at the channel and changes nothing downstream of it.** `FW-203` and, after it, `[SIM]`'s in-process adapter (`FW-211`) publish `Reading` values into the **same bounded channel** the real ingest publishes into, at the same cadence — so the broadcast loop, the groups and **the whole of §5 are unchanged by simulation**. That is a rule, not an observation: `[SIM §2.1]` states that if the simulator ever needs a change to `IFlatWireClient` or to the `Reading` shape, **the contract is wrong and the contract gets fixed.** It is also why `FW-150` and `FW-151` are not reduced for the trial. `FW-217`'s sidecar enters one stage earlier still, at the OPC endpoint, so it exercises `FW-N05` as well.
+
 ### 4.3 Groups, reliability and scale
 
 - Per-line groups `FL1Data` / `FL2Data` / `FL3Data`; clients `JoinLineGroup` on the screens they open and `LeaveLineGroup` on teardown, so the server fans out only to interested clients.

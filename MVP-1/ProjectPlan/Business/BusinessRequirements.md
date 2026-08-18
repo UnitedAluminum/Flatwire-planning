@@ -1,7 +1,7 @@
 # Flat Wire Mill — Business Requirements
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — split out of `02-SRS.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** August 15, 2026 — the JWT-roles **assumption is now a confirmation** (`OI-37`/`G6`, `ClaimTypes.Role`); residual is the coded claim **values**
 **Document Type:** Functional and non-functional requirements — the `FR-###` register
 **Status:** Baselined for build — open requirements issues in §11
 **Owner:** BA / Analysis stream
@@ -155,7 +155,7 @@ Two constraints that change the shape of the code rather than the choice of libr
 |---|---|
 | A rod exists in `coils` with a `planning_routings` allocation before it reaches the line | Staging and check-in refuse it; the line has no material |
 | An `Active` pass schedule exists for the alloy + line + target combination | Check-in has no schedule to acknowledge; the no-match path is **undefined** (OI-46) |
-| The six roles exist as JWT claims in `Login` | Authorisation blocks the build (OI-37) |
+| ~~The six roles exist as JWT claims in `Login`~~ ✅ **Confirmed 15 Aug 2026, on `ClaimTypes.Role`** — no longer an assumption | ~~Authorisation blocks the build (OI-37)~~ — **did not materialise.** ⚠ Residual: the claim **values** are coded, not labelled, and the mapping is unsupplied — the matrix cannot be *verified* until it lands |
 | PLC tag paths are confirmed at commissioning | Simulated push covers development; go-live is gated |
 
 ---

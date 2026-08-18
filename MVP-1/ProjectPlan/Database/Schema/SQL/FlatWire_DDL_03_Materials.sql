@@ -83,6 +83,23 @@ BEGIN
         [CompletedAt]    DATETIMEOFFSET NULL,               -- NULL while run is still active
         [FootageFt]      DECIMAL(10,2) NOT NULL CONSTRAINT [DF_FlatWireRun_FootageFt] DEFAULT (0),  -- standardized to DECIMAL(10,2)
         [OperatorId]     VARCHAR(50)   NOT NULL,
+
+        -- ── Spool-completion prompt state (gap G38, 15 Aug 2026) ──
+        -- FR-144 requires the SpoolCompletionPromptDue prompt to be
+        -- SERVER-OWNED STATE, PERSISTED AGAINST THE RUN, so it survives a
+        -- browser refresh and is re-delivered on hub group re-join (TC-173,
+        -- P1).  It is the ONE event in the FlatWireHub contract that is not
+        -- fire-and-forget -- SignalR.md 5.2.  Before these columns existed
+        -- there was nowhere to hold it and the requirement was unbuildable.
+        --
+        -- ⚠ Columns, not a new table, deliberately: "persisted against the
+        --   run" is literal, and this keeps the table count at 28.
+        [PromptDueAt]            DATETIMEOFFSET NULL,       -- set on the RUNNING->STOPPED edge; NULL = no prompt outstanding
+        [PromptPlcStopTs]        DATETIMEOFFSET NULL,       -- the PLC stop instant the weight is latched at
+        [PromptLatchedWeightLb]  DECIMAL(8,2)   NULL,       -- weight AT that instant -- never a later drifted value
+        [PromptResolvedAt]       DATETIMEOFFSET NULL,       -- NULL while the prompt is still outstanding
+        [PromptAnswer]           VARCHAR(15)    NULL,       -- Yes | No | AutoDismissed  (SignalR.md 5.2)
+
         [CreatedBy]      VARCHAR(50)   NULL,                -- audit (StartedAt serves as created timestamp)
         [ModifiedBy]     VARCHAR(50)   NULL,
         [ModifiedAt]     DATETIMEOFFSET NULL,
@@ -93,7 +110,8 @@ BEGIN
         CONSTRAINT [CK_FlatWireRun_LineId]    CHECK ([LineId]    IN ('FL1','FL2','FL3')),
         CONSTRAINT [CK_FlatWireRun_RouteMode] CHECK ([RouteMode] IN ('Standalone','Hybrid')),
         CONSTRAINT [CK_FlatWireRun_Status]    CHECK ([Status]    IN ('Running','Paused','Complete','Aborted')),
-        CONSTRAINT [CK_FlatWireRun_Footage]   CHECK ([FootageFt] >= 0)
+        CONSTRAINT [CK_FlatWireRun_Footage]   CHECK ([FootageFt] >= 0),
+        CONSTRAINT [CK_FlatWireRun_PromptAnswer] CHECK ([PromptAnswer] IN ('Yes','No','AutoDismissed') OR [PromptAnswer] IS NULL)
     );
     PRINT 'Created table: FlatWireRun';
 END

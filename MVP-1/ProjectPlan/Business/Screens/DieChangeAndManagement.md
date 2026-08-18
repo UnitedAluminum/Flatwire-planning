@@ -3,25 +3,11 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL3 (die change). *Die management moved to MVP-2 on 11 Aug 2026 — §4.*
-**Version:** 2.5
-**Last Updated:** August 12, 2026
+**Version:** 2.6
+**Last Updated:** August 15, 2026
 **Status:** Issued for Client Review and Sign-off — **MVP-1, die change only**
 **Screen reference:** Die Change (operator, mid-run) — presented as a **dialog over the paused run**, not as a separate screen (see version 2.1). *The Die Management screen is [MVP-2](../../../../MVP-2/RequirementDocuments/DieManagement.md).*
 **Requirement source:** SRS die-change rules; `Q65` (post-die-change resume gate); die identity convention `D-{size×1000}-{seq}`
-
----
-
-## Document Change History
-
-| Version | Date | Description |
-|---|---|---|
-| 1.0 | Apr 2026 | Initial specification — die change event capture, reason codes, conditional quality hold and SPC notice, die management screen and its lifecycle operations. |
-| 1.1 | May 4, 2026 | Post-die-change resume gate confirmed as a hard block with thread mode permitted; routing corrected for gauge drift and size change. |
-| 2.0 | Aug 1, 2026 | **Issued for client review.** FM2 corrected to three 6″ stands. The conflicting die-life colour bands between the two screens raised as a client decision rather than silently reconciled. Restructured as a client deliverable; screen styling, navigation targets and interface payloads removed. |
-| 2.1 | Aug 1, 2026 | **Presentation change only — no requirement altered.** The die change is now logged in a dialog over the paused run rather than on a page navigated to. One consequence the client should confirm: when the reason is **gauge drift** or **size change** and *Require SPC on resume* is left on, confirming the change now **opens the SPC checkpoint directly**, pre-filled with this die change as its trigger, instead of leaving the operator to find that screen. |
-| **2.4** | **Aug 11, 2026** | **`D4` restated at die-size level; the MVP-1 data sources named — new §2.4a.** Die inventory and lifecycle were confirmed **owned outside MVP-1 permanently**, not deferred within it, so the `[CLIENT INPUT REQUIRED]` block in §4 is **answered rather than carried**: die identity resolves against the **`Drawer` 13-row size catalogue**, footage from `LastGrindingFeet`, threshold from `TotalFeetAllowed` with the §5 60/85 % bands. `D4` therefore rejects an unrecognised **size**, not an unregistered physical tool — the per-tool rule is unenforceable in MVP-1 and is not pursued. **The accepted consequence is stated explicitly: die life is per size, so two dies of one diameter share a counter.** `A1` superseded, the NEW open item closed, and two sign-off rows replace the old §2.4 row. `OI-12` remains **dormant** — only the Die Change bands apply. |
-| **2.3** | **Aug 11, 2026** | **Die management extracted to MVP-2 — no requirement altered.** This document covered two subjects: the mid-run **die change event** (operator, at the line) and **die management** (Maintenance, tooling inventory). Die management is **not part of MVP-1**, so §4 was extracted verbatim into [`../../MVP-2/RequirementDocuments/DieManagement.md`](../../../../MVP-2/RequirementDocuments/DieManagement.md) and §4 here is now a pointer. **The die change event remains MVP-1** (Phase 6, the `die_change.js` dialog) and this document is still its authority. Three consequences are recorded rather than resolved: the three values the die change **reads** from die management (identity, footage counter, life threshold) now have no MVP-1 source — raised as a new **High** open item in §8; **D4** *(an unregistered die cannot be installed)* is unenforceable without the registration flow that moved; and **`OI-12`**, the conflicting die-life colour bands, is **dormant rather than answered** — only the Die Change bands apply in MVP-1, and the conflict returns when die management is scheduled. The die-life **status vocabulary** in §5 deliberately stays here as the single copy, with the extracted document pointing back at it. `Q83` travels to MVP-2. |
-| **2.2** | **Aug 4, 2026** | **FM2 roller sizes corrected.** §2's FL3 description said *"three-stand finishing mill — 8″ roller, 6″ S1, 6″ S2 with edger, 6″ S3 with edger"*, which called it three-stand and then listed four components. It is genuinely **three stands: S1 (8″), S2 (6″, edger), S3 (6″, edger)** — the 8″ roller **is S1**. No die-change requirement is affected; FL2 and FL3 drawing dies are unchanged and FM2 carries rollers, not dies. |
 
 ---
 

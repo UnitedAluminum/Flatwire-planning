@@ -21,7 +21,7 @@ The flat-wire-specific model lives in a **new standalone SQL Server database, `F
 
 ### 6.2 Table count — counted, not quoted
 
-**MVP-1 builds 25 tables. The full design is 28.** Both figures were taken by counting `CREATE TABLE` statements with comments stripped, on 13 Aug 2026 — not copied from any document:
+**MVP-1 builds all 28 tables** — `D-31` (15 Aug 2026) moved the three `PassSchedule*` tables into MVP-1, so the "25 vs 28" split is retired and there is one figure. **Verified on a live teardown-and-deploy, not counted from scripts: 28 tables · 43 FKs · 47 index statements · 1 procedure · 1 trigger**, idempotent on re-run:
 
 | Group | Script | Count | Scope | Tables |
 |---|---|---|---|---|
@@ -198,7 +198,7 @@ Notable columns: `RodSeqno` (**actual** processing sequence, assigned server-sid
 | `UX_RodStaging_Bay` | One `Staged` rod per `(LineId, PayoffPosition)` |
 | `UX_RodStaging_RodActive` | One `Staged` bay per `RodAlpha` |
 
-**Index count — counted, not quoted.** `FlatWire_DDL_07_Indexes.sql` contains **41 index statements: 39 non-clustered plus 2 filtered UNIQUE** (`UX_RodStaging_Bay`, `UX_RodStaging_RodActive`). Counted from the script with comments stripped, 13 Aug 2026.
+**Index count — measured on a deployed database, not counted from scripts.** **47 index statements**: **41** in `FlatWire_DDL_07_Indexes.sql` (39 non-clustered plus 2 filtered UNIQUE — `UX_RodStaging_Bay`, `UX_RodStaging_RodActive`) and **6** in `07b` for the schedule group, which `D-31` brought into MVP-1 on 15 Aug 2026.
 
 > ### `PP-01` — four index counts circulate, and they are not all measuring the same thing
 >
@@ -718,7 +718,7 @@ erDiagram
 
 ### 7.8 The foreign keys — 33 in the MVP-1 build
 
-**`06_ForeignKeys.sql` creates 33 FKs; the full design has 43**, the other ten belonging to the MVP-2 `PassSchedule*` group and built by `MVP-2/DBChanges`'s `06b`. *(This heading said 41 until 13 Aug 2026 — a pre-MVP-split count.)* FKs are added in a **single script after all tables exist** (`06_ForeignKeys`), so tables can be created in logical groups without cross-group ordering concerns. **No delete cascades are declared** — all are `NO ACTION`, which is why the FK/`RunId` indexes in §6.8 matter for parent-delete checks.
+**`06_ForeignKeys.sql` creates 33 FKs and `06b` adds 10, for 43 — all of them MVP-1** since `D-31` (15 Aug 2026). ⚠ **Four of `06b`'s ten are on MVP-1 tables** (`FlatWireRun`, `RodCheckin`, `SpoolCheckin`, `CoilOutput` → `PassSchedule`) and are now **enforced**, where before they were absent and `PassScheduleId` was a free-text column. *(This heading said 41 until 13 Aug 2026 — a pre-MVP-split count.)* FKs are added in a **single script after all tables exist** (`06_ForeignKeys`), so tables can be created in logical groups without cross-group ordering concerns. **No delete cascades are declared** — all are `NO ACTION`, which is why the FK/`RunId` indexes in §6.8 matter for parent-delete checks.
 
 | Child | Column(s) | Parent | Nullable |
 |---|---|---|---|

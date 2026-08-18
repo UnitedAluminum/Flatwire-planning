@@ -35,7 +35,7 @@ check-in to build the PLC push payload and persists a snapshot of what it pushed
 |---|---|
 | **Q14** Pass schedule selection mechanism at check-in | The check-in read itself — `phase-04`, *The pass-schedule read contract* |
 | **Q15** FL3 hybrid pass schedule — one or two? | FL3 is a production route; check-in must read the right schedule for it |
-| **Q64** Pass schedule ID on coil completion and cert record | The snapshot rule. `[PLC §620]` requires *"which pass schedule configured it, at which version"* |
+| **Q64** Pass schedule ID on coil completion and cert record | The snapshot rule. `[PLC §11.2]` requires *"which pass schedule configured it, at which version"* |
 | **Q61** Mid-run pass schedule change — alpha handling | Mid-run is the active run — Phase 6 |
 
 Two more that look deferred and are not: **OI-77** edger blade profiles (the edgers are on FM2 `S2`/`S3` and

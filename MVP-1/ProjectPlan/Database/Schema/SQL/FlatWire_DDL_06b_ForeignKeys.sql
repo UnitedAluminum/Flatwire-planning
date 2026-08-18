@@ -1,18 +1,17 @@
 -- ============================================================
--- Flat Wire Mill (MVP-2) — DDL 06b: Foreign keys touching MVP-2 tables
--- Run order : 06b of 06 (MVP-2 chain)
--- Scope     : MVP-2 (deferred). NOT part of MVP-1.
+-- SCOPE: MVP-1. Built by FlatWire_DDL_RunAll.sql immediately after 06
+-- (decision D-31, 15 Aug 2026; was MVP-2 from 11 Aug).
+-- Flat Wire Mill — DDL 06b: Foreign keys touching the schedule tables
+-- Run order : 06b, immediately after 06
+-- Scope     : MVP-1
 -- ============================================================
 -- Split out of FlatWire_DDL_06_ForeignKeys.sql on 11 Aug 2026 when the schema was
--- divided by MVP scope. 14 of the 43 FKs. THREE OF THEM ARE ON MVP-1 TABLES -- see the note below.
---
--- PREREQUISITE: the whole MVP-1 chain must already be deployed
--- (00_Database .. 08_Programmability under MVP-1/ProjectPlan/Database).
--- These objects are ADDITIVE on top of it.
+-- divided by MVP scope, and returned to MVP-1 on 15 Aug 2026 by D-31.
+-- 10 of the 43 FKs. FOUR OF THEM ARE ON MVP-1 TABLES -- see the note below.
 -- ============================================================
 
 -- ============================================================
--- !!  FOUR OF THESE FKs ARE ON MVP-1 TABLES  !!
+-- !!  FOUR OF THESE FKs ARE NOW ENFORCED WHERE THEY WERE NOT  !!
 -- ============================================================
 --   FlatWireRun.PassScheduleId  -> PassSchedule
 --   RodCheckin.PassScheduleId   -> PassSchedule
@@ -20,24 +19,25 @@
 --   CoilOutput.PassScheduleId   -> PassSchedule   (added 11 Aug 2026,
 --       when CoilOutput and CoilTraceability returned to MVP-1)
 --
--- All four CHILD tables are MVP-1; only the PARENT is MVP-2. They
--- were routed here, not left in MVP-1's 06, for one reason: an
--- MVP-1-only build has no PassSchedule table, so leaving them there
--- made the MVP-1 chain undeployable. Putting them here keeps MVP-1
--- standalone-deployable with the columns present but UNENFORCED,
--- and makes enforcement an MVP-2 add-on.
+-- ⚠ THIS IS A DELIBERATE REVERSAL, 15 Aug 2026 (D-31). From 11 to 15
+--   Aug these four were routed out of MVP-1's 06 so that an MVP-1-only
+--   build stayed deployable without a PassSchedule table -- which left
+--   PassScheduleId as a free-text column on four tables, with nothing
+--   stopping a bad value going in, on the very path (rod check-in)
+--   that acknowledges a schedule and pushes PLC tags from it.
 --
--- WHAT THIS COSTS: between an MVP-1 deployment and an MVP-2
--- deployment, PassScheduleId is a free-text column on four tables.
--- Nothing stops a bad value going in, and rod check-in -- which
--- acknowledges a pass schedule and pushes PLC tags from it -- is
--- one of the three.
+--   With the schedule tables now in MVP-1 that trade-off is gone and
+--   the four links are REAL, ENFORCED foreign keys.
 --
--- ORDERING TRAP: these four constraints are added against rows
--- MVP-1 already seeded, so the pass-schedule rows must exist first.
--- FlatWire_DDL_RunAll_MVP2.sql runs the schedule seed before this
--- script for exactly that reason. Do not invoke this file by hand
--- on a freshly-seeded MVP-1 database.
+-- ⚠ PassScheduleId IS NO LONGER "a documented external reference".
+--   Any document still describing it as unenforced, or as the same
+--   class as PlanId / CoilOrderPlanId / SkidId, is STALE. Those three
+--   ARE still external references with no local parents -- only
+--   PassScheduleId changed.
+--
+-- ORDERING: FlatWire_DDL_RunAll.sql applies this to EMPTY tables
+-- (all DDL runs before any seed), so there is no data to violate it.
+-- The seed order still matters -- see the note in that runner.
 -- ============================================================
 
 USE [FlatWireDB]

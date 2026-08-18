@@ -1,6 +1,13 @@
 -- ============================================================
--- SCOPE: MVP-2 (deferred) -- moved 11 Aug 2026 from MVP-1/ProjectPlan/Database. NOT part of MVP-1.
--- Requires the MVP-1 chain (00..08) to be deployed first.
+-- SCOPE: MVP-1. Built by FlatWire_DDL_RunAll.sql in numeric order.
+-- ⚠ MOVED INTO MVP-1 ON 15 AUG 2026 -- decision D-31. It was MVP-2
+--   from 11 Aug to 15 Aug 2026; text elsewhere still calling these
+--   three tables "MVP-2-owned" or "not in the MVP-1 runner" is STALE.
+--   APIs.md 4.2's open assumption is resolved in favour of the local
+--   -query option: the owning track writes into FlatWireDB.
+-- ⚠ AUTHORING IS STILL NOT MVP-1. Dashboards 9/9A stay MVP-2 and no
+--   MVP-1 endpoint creates, edits, approves or lists a schedule.
+--   These tables are a READ MODEL here. See MVP2-SCOPE.md.
 -- ============================================================
 -- Flat Wire Mill — DDL Script 02: Pass Schedule Tables
 -- Run order : 02 of 09

@@ -1681,7 +1681,7 @@ See [RodCheckout.md](../MVP-1/ProjectPlan/Business/Screens/RodCheckout.md) — O
 > **This map spans both MVP scopes and is deliberately NOT divided.** It is one diagram; halving it would
 > produce two partial maps with dangling edges. The repository has already ruled on this shape — *"One ER
 > diagram covering all 28 tables. **Not divided — a half-ER is worse than none**"*
-> ([`../MVP-2/DBChanges/README.md`](../MVP-2/DBChanges/README.md)).
+> ([`../MVP-1/ProjectPlan/Database/Schema/SQL/MVP2-SCOPE.md`](../MVP-1/ProjectPlan/Database/Schema/SQL/MVP2-SCOPE.md)).
 >
 > **MVP-2 nodes in the diagram below: `Dashboard 9`, `Dashboard 9A`, `Dashboard 10`.** Every other node is
 > MVP-1. Two edges therefore cross the scope boundary and are expected to dangle in an MVP-1-only build —

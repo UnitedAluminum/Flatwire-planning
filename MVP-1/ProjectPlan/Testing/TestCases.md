@@ -1,7 +1,7 @@
 # Flat Wire Mill — Test Cases
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — split out of `06-TestPlanAndTestCases.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** August 15, 2026 — **the JWT-roles assumption is confirmed**, so `TC-640`–`TC-655` can run; recorded that `TC-655` cannot catch a wrong role **value**
 **Document Type:** Test case catalogue and the coverage matrix
 **Status:** Baselined
 **Owner:** QA stream
@@ -39,7 +39,7 @@
 | **TC-017a** | **ITInhibit is line-scoped — a blocked line blocks only itself** | I | **P1** | FR-008 / `[PLC §8.1]` | FL2 running with a valid check-in → set each of the five conditions on FL1 in turn | FL1 **blocked** in every case; **FL2 unaffected throughout** — it keeps running, keeps recording and its own interlock stays clear. One tag per line, not one plant-level tag (`Q84`, decided Aug 4 2026) | — | ✓ |
 | **TC-018** | Buildup alerts at 50 % then every 10 % | I | P2 | FR-011 / `ALT007` | Run progresses toward planned length | Alerts at 50, 40, 30, 20, 10 % remaining — **five alerts, in order** | — | ✓ |
 | **TC-019** | Remaining-feed threshold alert | I | P2 | FR-012 / `ALT008` | Configure a threshold → cross it | Alert raised at the configured value | — | ✓ |
-| **TC-020** | **Enum mirror — C# ↔ TypeScript ↔ DB CHECK** | K | **P1** | `[API §2]` | For every canonical enum, compare all three definitions | **All three agree, value for value**, for all 14 enums. `CheckpointType` has five values including `RollAdjustTrigger`; `ComponentName` includes `FM2_6inS3` and excludes `Edger`; `EdgeType` is `Round`/`Square` only | — | ✓ |
+| **TC-020** | **Enum mirror — C# ↔ TypeScript ↔ DB CHECK** | K | **P1** | `[API §2]` | For every canonical enum, compare all three definitions | **All three agree, value for value**, for all 14 enums. `CheckpointType` has five values including `RollAdjustTrigger`; **`ComponentName` is `{DB1, DB2, FM1, EdgeSet, FM2_S1, FM2_S2, FM2_S3}` — three FM2 stands, position-only, and excludes `Edger`**; `EdgeType` is `Round`/`Square` only. Also assert the two **rejections**: `Bevel` is not an `EdgeType` (`OI-05`) and `PostDb1` is not a `CheckpointType` (`OI-10`) | — | ✓ |
 | **TC-021** | **MMS ID generated per input coil at check-in** | I | **P1** | FR-013 / `FRT005` | Check in a rod | Exactly one MMS ID created, status `Open` | — | ✓ |
 | **TC-022** | **MMS ID activates when a welded coil becomes active** | I | **P1** | FR-013 / `FRT006` | Weld, then the running rod reaches 0 ft | The incoming coil's MMS ID becomes `Active` | — | ✓ |
 | **TC-023** | **Previous MMS ID closes automatically** | I | **P1** | FR-013 / `FRT007` | As TC-022 | The previous MMS ID closes **without operator action** | — | ✓ |
@@ -550,9 +550,9 @@ One case per contested row of the `[SEC §8]` matrix, each executed as the permi
 | **TC-652** | Edit the alloy lookup table | Eng (Process Eng / Sys Admin) | all others |
 | **TC-653** | View shift summary | Supervisor, OpsMgr | Operator, Eng, QA |
 | **TC-654** | Supervisor override for un-punched login | Supervisor, OpsMgr | Operator, Eng, QA |
-| **TC-655** | **Every endpoint requires authentication** | — | Unauthenticated → `401` on all 30 |
+| **TC-655** | **Every endpoint requires authentication** | — | Unauthenticated → `401` on **all 25 MVP-1 endpoints except `GET /health`**, which is **anonymous by policy** and must return **200** *(corrected 15 Aug 2026: expected "401 on all 30" — a count that predated the 31-row index, and a blanket assertion that `[API §3.2]` row 30 and `[DEP §5]`'s unauthenticated smoke probe both contradict. As written the case could not pass)* |
 
-> **These cases assume the roles exist as JWT claims.** Whether they do **has never been confirmed** — **OI-37**, and it can block the build outright. If provisioning is required, TC-640 – TC-655 cannot run until it lands.
+> ✅ **Confirmed 15 Aug 2026 — the roles do exist as JWT claims**, on the standard `ClaimTypes.Role` (**OI-37** / **G6**). No provisioning is required and **TC-640 – TC-655 can run.** ⚠ **But the residual bites here specifically:** the six claim **values** are abbreviated or coded rather than the matrix's labels, and until the mapping lands the role cases cannot pass. **`TC-655` will not catch it** — it asserts only that every endpoint *requires authentication*, and a wrong role value fails *closed*, presenting as a uniform and plausible `403`. The cell-by-cell matrix walk in TC-640 – TC-654 is what distinguishes *correctly denied* from *denied because the string is wrong*.
 
 ### 10.4 What is **not** covered, and why
 

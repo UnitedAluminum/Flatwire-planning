@@ -3,20 +3,13 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL2 / FL3
-**Version:** 1.2
-**Last Updated:** August 12, 2026
+**Version:** 1.3
+**Last Updated:** August 15, 2026
 **Status:** **First issue** — consolidated from existing specifications; requires review
 **Screen reference:** Dashboard 1 — Line Status Overview
 **Requirement source:** SRS line-status rules; alert rules as specified in the shopfloor dashboard set
 
 ---
-
-## Document Change History
-
-| Version | Date | Description |
-|---|---|---|
-| 1.0 | Aug 1, 2026 | **First issue.** This screen had no requirement document of its own; its content was distributed across the dashboard inventory, the HMI specification and the pre-check-in specification. Consolidated here, with the later decisions applied — the active pass schedule on each line card, absolute-weight payoff alerting, and navigation to the schematic and trend screens. |
-| 1.1 | Aug 4, 2026 | Both header drill-downs removed — **Open HMI** and **SCADA Trends** pointed at Dashboards 13 and 14, which are descoped (`FR-425` withdrawn). Related-specification row repointed to the PLC tag specification. |
 
 > **Please read this one with particular attention.** Every other document in this set is a revision of an existing specification. This is the first statement of this screen as a requirement in its own right, so anything wrong here has not been reviewed before.
 

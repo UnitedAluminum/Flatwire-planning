@@ -100,7 +100,7 @@ figure in §2 is reproducible by a single multiplication.
 |---|---|---|
 | FE — screens, dialogs, variants | **0.62** | `MVP-1/ProjectPlan/Frontend/Mockups/` is a **complete, approved HTML visual spec** — the single highest-leverage input available. Conversion to Angular components, SCSS against one existing token system, and specs is largely mechanical |
 | FE — shared controls (Phase 1A) | **0.60** | library scaffolding, 6 composite + the primitive controls |
-| BE — command / query endpoints | **0.58–0.60** | `API/Domain/CoilCheckin` is an **exact** template (Foundations §0.2); MediatR + FluentValidation + xUnit is pattern replication |
+| BE — command / query endpoints | **0.58–0.60** | `API/Domain/CoilCheckin` is an **exact** template (`[ARC §2.2]`); MediatR + FluentValidation is pattern replication. ⚠ *(This rationale read "+ xUnit" until 15 Aug 2026, when **all automated backend tests were withdrawn** — `[TS §1.2]`. The **retention factor is unchanged**: the withdrawn test effort came out of `[CE §2]`'s **base rate**, not out of this model's AI-assist ratio, and applying the withdrawal here as well would deduct it twice.)* |
 | BE — non-trivial business services | **0.65–0.75** | domain reasoning, not boilerplate — AI drafts, a human verifies. The **0.75** end of the band applies to Phase 12's yield/cost work, which is priced in [`YieldCostAndScrapSheet.md`](./YieldCostAndScrapSheet.md) and cites this card |
 | DB — DDL, EF mapping, repositories | **0.60** | mechanical |
 | DB — FW-001 rename impact audit (40 h, 1C) | **0.75** | the search across `united_db` and the legacy tier is assisted; the verification is not |

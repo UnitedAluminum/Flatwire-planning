@@ -87,7 +87,7 @@ Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
 | `Spool` | `SourceRodAlpha` | `Rod` | `Alpha` | NULL | Partial-run source rod (Phase 7 / OQ-12) |
 | `Spool` | `SourceRunId` | `FlatWireRun` | `RunId` | NULL | FL1 run that produced this spool |
 
-**`FlatWire_DDL_06_ForeignKeys.sql` creates 33 FKs — that is the MVP-1 build. 43 is the full design**, the other ten belonging to the MVP-2 `PassSchedule*` group and built by `MVP-2/DBChanges`'s `06b`. *(Corrected 13 Aug 2026, `GapAnalysis.md` **E2**: "43 as built" was the full-design figure quoted against a script that builds 33, and the ten MVP-2 FKs are listed below **with no scope marker** — a reader implementing from this table will expect constraints that cannot exist in an MVP-1 database. An earlier "37" counted the rows in this table rather than the script.)* **Treat the script as authoritative.**
+**`FlatWire_DDL_06_ForeignKeys.sql` creates 33 FKs — that is the MVP-1 build. 43 is the full design**, the other ten belonging to the MVP-2 `PassSchedule*` group and built by `MVP-1/ProjectPlan/Database/Schema/SQL`'s `06b`. *(Corrected 13 Aug 2026, `GapAnalysis.md` **E2**: "43 as built" was the full-design figure quoted against a script that builds 33, and the ten MVP-2 FKs are listed below **with no scope marker** — a reader implementing from this table will expect constraints that cannot exist in an MVP-1 database. An earlier "37" counted the rows in this table rather than the script.)* **Treat the script as authoritative.**
 
 ---
 
@@ -98,7 +98,7 @@ Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
 | Original Name | Final Name | Change Type | Schema File |
 |---|---|---|---|
 | `FlatLineProcessing` | `FlatWireRunDetail` | Renamed; run-level columns removed; `RunId` FK added | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
-| `FlatLineSetup` | `PassScheduleComponent` | Renamed; restructured; `RollGap` → `ParameterValue`; `ComponentName` / `State` / `EdgeType` added | [FlatWireSchema_Schedule.md](../../../../MVP-2/DBChanges/Schema/FlatWireSchema_Schedule.md) |
+| `FlatLineSetup` | `PassScheduleComponent` | Renamed; restructured; `RollGap` → `ParameterValue`; `ComponentName` / `State` / `EdgeType` added | [FlatWireSchema_Schedule.md](../../../../MVP-1/ProjectPlan/Database/Schema/FlatWireSchema_Schedule.md) |
 | `Drawer` | `Drawer` | `Diameter` → `DiameterIn`; `MinDiameterIn` / `MaxDiameterIn` / `IsActive` added; **`LastGrindingFeet` / `TotalFeetAllowed` added (Aug 6 2026)** — die life | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `Edger` | `Edger` | `EdgeType` / `IsActive` added; `Set` → `ToolingSetNo` | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `Stand` | `Stand` | `MinId` / `MaxId` → `MinGaugeIn` / `MaxGaugeIn`; `MinOD` / `MaxOd` → `MinWidthIn` / `MaxWidthIn`; `LineId` / `IsActive` added | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
@@ -111,7 +111,7 @@ Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
 
 | Table | Domain | Purpose | Schema File |
 |---|---|---|---|
-| `PassSchedule` | Schedule | Pass schedule header — alloy, line, targets, speed range | [FlatWireSchema_Schedule.md](../../../../MVP-2/DBChanges/Schema/FlatWireSchema_Schedule.md) |
+| `PassSchedule` | Schedule | Pass schedule header — alloy, line, targets, speed range | [FlatWireSchema_Schedule.md](../../../../MVP-1/ProjectPlan/Database/Schema/FlatWireSchema_Schedule.md) |
 | `Rod` | Material | Wire rod receiving and lifecycle tracking | [FlatWireSchema_Materials.md](FlatWireSchema_Materials.md) |
 | `FlatWireRun` | Runs | Run header — one row per check-in event | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 | `RodCheckin` | Runs | Rod check-in events with inspection and SPC data | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
@@ -135,7 +135,7 @@ Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
 | Table | Domain | Purpose | Schema File |
 |---|---|---|---|
 | `AlloyProperty` | Lookup | Per-alloy generator inputs + footage→weight factor; authoritative alloy list | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
-| `PassScheduleChangeLog` | Schedule | Override/edit/acknowledgment audit trail (OQ-62) | [FlatWireSchema_Schedule.md](../../../../MVP-2/DBChanges/Schema/FlatWireSchema_Schedule.md) |
+| `PassScheduleChangeLog` | Schedule | Override/edit/acknowledgment audit trail (OQ-62) | [FlatWireSchema_Schedule.md](../../../../MVP-1/ProjectPlan/Database/Schema/FlatWireSchema_Schedule.md) |
 | `RunReading` | Runs | Sampled gauge/width/speed profile per run (G3) | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 
 **Total: 28 tables in the full design — 25 of them MVP-1.** *(Corrected 13 Aug 2026, `GapAnalysis.md` **E2**: this line read "Total: 25" against an arithmetic of 7 + 16 + 3 = 26, with a "New Tables" heading saying 16 while the sum used 15 — and **`RodStaging` and `PayoffPosition` were missing from the inventory entirely**, though both are MVP-1 tables and `RodStaging` is the newest in the design. The MVP-1 build is `25 tables · 33 FKs · 41 index statements · 1 procedure · 1 trigger`; see `DatabaseDesign.md` §6.2, which is where the baseline is defined.)*

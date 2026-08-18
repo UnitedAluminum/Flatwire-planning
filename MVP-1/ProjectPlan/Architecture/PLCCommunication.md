@@ -129,6 +129,8 @@ Five operations. Behaviour, triggers and payload are `[PLC §7]`; this is the sh
 | Hold / idle and restore | drive enable and speed | `RunControlService`, on pause and resume |
 | Simulated push | `SimulatePLCTagPush` | Selected by configuration, not by call site |
 
+**The read side has a matching surface and it is specified elsewhere.** `SimulatePLCTagPush` governs what this service *writes*; the machine model that supplies what it *reads* is [`MachineSimulator.md`](MachineSimulator.md) `[SIM]`, switched by the root-level `SimulateMachineFeed` peer in §1.7's block. The two are a pair — one flag pair puts the whole system in simulation. `[SIM §6]` closes the loop between them: the model consumes the payload a simulated push would have written, so a check-in acknowledgement visibly reconfigures the simulated line and a roll adjust visibly moves the trace. Two rules carry across unchanged — **records before tags** (§1.2), which the model observes rather than inverts, and **compensating re-clear, never "rollback"** (`G16`), which is what a `PushFailure` injection must leave behind.
+
 #### 1.1 The parameter name is `scheduleId`
 
 **The parameter is `scheduleId`, not `passScheduleId`.** `04-APIContract.md` §6.1 rules it, and the April elaboration that used `passScheduleId` was absorbed into that document and deleted on 13 Aug 2026. **`phase-04` still says `passScheduleId` and needs the one-line correction.**
@@ -188,6 +190,10 @@ Every path is configuration (`FR-022` / `INT005`), owned by `OPCConnection`'s `a
 {
   "FlatWireOpc": {
     "SimulatePLCTagPush": true,        // true in every environment until commissioning
+    "SimulateMachineFeed": true,       // the READ side — [SIM]. Root-level like its write-side
+                                       // peer above, NOT per line: one flag pair puts the whole
+                                       // system in simulation. Contrast the interlock key in §1.6,
+                                       // which is line-scoped and belongs under Lines.FL{n}.Tags
     "PublishIntervalMs": 1000,         // 1000 | 5000 | 10000 | 30000
     "Lines": {
       "FL1": {

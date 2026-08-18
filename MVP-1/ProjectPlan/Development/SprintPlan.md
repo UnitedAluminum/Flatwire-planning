@@ -1,7 +1,7 @@
 # Flat Wire Mill — Sprint Plan
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** August 15, 2026 — §9.2 DoD requires **`data-testid` on every element an automated test must reach**, the one E2E obligation that lands inside the trial window *(otherwise August 13, 2026 — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
 **Document Type:** Capacity position, delivery model, sprint calendar, dependencies, DoR/DoD
 **Status:** Published — **the plan does not fit the window; §1 requires a programme decision**
 **Owner:** Delivery lead / programme management
@@ -295,9 +295,12 @@ A story is Done only when **all** hold:
 
 - [ ] Code merged, reviewed, and building in the `build:shop-floor` chain (FE) or the `FlatWire.sln` (BE).
 - [ ] **Angular: Jest unit + component tests at the 95 % coverage bar** (branches, functions, lines, statements).
-- [ ] **.NET: xUnit tests with Moq**, including validator tests for every FluentValidation rule.
+- [ ] **.NET: no automated tests are required or expected** — decision of 15 Aug 2026, `[TS §1.2]`. In their place: **code review against `[API]`'s contracted shape and status codes**, and the manual test evidence on the next line. ⚠ **The asymmetry with the Jest bar above is deliberate.** Do not reinstate an xUnit requirement here without reversing that decision in `[TS]`.
 - [ ] **Test evidence from `[TS]`:** every `TC-###` mapped to this story in `[TCS §10]` executes and passes, including at least one **negative/error-path** case and, where the story touches a role-gated action, one **permission** case.
 - [ ] UI conformance checked against the mockup at **1280 × 1024 at 1:1** — no text below 14 px (bar the documented SVG-axis exception), tap targets ≥ 48 px, no hover-dependent action.
+- [ ] ⚠ **`data-testid` on every element an automated test must reach** — every input, action button, status badge, numeric readout, table row and dialog root. **Kebab-case, prefixed by screen**: `fw-db2-scan-input`, `fw-db3-action-bar`, `fw-spc-submit-suspend`. **Stable across restyles** — it is a contract, not a class name, so never reuse a CSS class and never let a designer rename one.
+  - **Why this is on the DoD and not in Phase 14.** The Playwright suite that consumes these hooks is **Phase 14**, but the screens are written **now**, in Phases 1A and 4–8. There are **zero** `data-testid` attributes in any mockup today. Added while a component is being written this costs minutes; retrofitted across ~14 screens and their dialogs afterwards it is **~16 h of FE rework** — and the retrofit lands on the phase least able to absorb it.
+  - **Do not substitute CSS selectors, `id=`, or visible text.** A shopfloor UI is dense with numeric readouts and repeated controls; text-based selectors break on every wording change and `id=` is not reserved for testing. This bullet exists because the alternative is a suite nobody trusts.
 - [ ] Real-time behaviour verified where the story emits or consumes hub events, **including reconnect**.
 - [ ] Audit obligations verified where the story performs an override, a supervisor action, a pass-schedule change or a PLC write.
 - [ ] No new `--fw-*` tokens, no reference to a forbidden library, no copied `SlitterInterface` pattern.

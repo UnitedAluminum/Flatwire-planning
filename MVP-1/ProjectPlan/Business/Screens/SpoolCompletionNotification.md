@@ -5,20 +5,10 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 (spool at the intermediate take-up) · FL2 / FL3 (finished coil at the final take-up)
-**Version:** 2.1
-**Last Updated:** August 12, 2026
+**Version:** 2.2
+**Last Updated:** August 15, 2026
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 3 — Active Run Monitor (all lines)
-
----
-
-## Document Change History
-
-| Version | Date | Description |
-|---|---|---|
-| 1.0 | Jul 28, 2026 | **Part A** — advisory weight milestone alerts at 75 / 90 / 100 % of target. |
-| 1.1 | Jul 29, 2026 | **Part B** — machine-stop confirmation on a confirmed stop, with scale-weight verification and a supervisor override for out-of-tolerance variance. |
-| 2.0 | Aug 1, 2026 | **Issued for client review.** **Part C — short close** added from the July 30, 2026 call. The assumed 2,000 lb default target is **withdrawn** in favour of the customer minimum/maximum weight range. Restructured as a client deliverable; screen styling, layout dimensions and mockup-only affordances removed. |
 
 ---
 

@@ -1,7 +1,7 @@
 # Flat Wire Mill — Vision & Scope
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 4, 2026
+**Last Updated:** August 15, 2026 — **`RISK-06` retired** and the *unverified assumption* callout restated: all six roles exist as JWT claims on `ClaimTypes.Role` (`G6`/`OI-37`)
 **Document Type:** Vision & Scope
 **Status:** Baselined — open items in §13; the schedule position in §11 requires a programme decision
 **Owner:** Programme management
@@ -139,7 +139,7 @@ That requirement shapes the run model (`FlatWireRun` as the hub), the traceabili
 | **PLC / commissioning engineer** | Tag map confirmation, on-line trial | An application that reads line state and never sends a stop command |
 | **Planning / Scheduling (upstream)** | Allocate rod to orders; book jobs on FL1/FL2/FL3 | Consumes their outputs; does not replace them |
 
-> **Unverified assumption.** Whether these roles already exist as JWT claims in the `Login` service, or are new and need provisioning, **has never been confirmed**. `Engineering/Maintenance` and `QA` are themselves *inferred* definitions. This can block the build outright — gap **G6** / **OI-37**, listed in §13.
+> ✅ **Confirmed 15 Aug 2026 — no longer an assumption.** All six roles already exist as JWT claims in the `Login` service, on the standard `ClaimTypes.Role`; **none needed provisioning**, and the *"can block the build outright"* reading of gap **G6** / **OI-37** is spent. ⚠ **Residual:** the six claim **values** are abbreviated or coded rather than the matrix's labels and the mapping is unsupplied — that gates **verification, not construction**. ⚠ **And one thing is untouched:** `Engineering/Maintenance` and `QA` are still *inferred* definitions — confirming that a claim exists is not confirming that the capabilities attributed to it are right.
 
 ---
 
@@ -252,7 +252,7 @@ The design is therefore **records first, PLC second**, with **compensating write
 | **RISK-03** | **The footage→weight conversion basis is undefined.** The formula and density source are settled; the *dimensional basis* (target vs measured vs integrated over `RunReading`) is not | Medium | High | Tim O. / Process Engineering | DB7 shows "pending confirmation" with an operator override; keep the factor table-driven. Note the ±2 % variance threshold in `FR-153` is arithmetically unreachable from target dimensions (worst case ±2.6 %) | **OQ-10** / **OI-45** |
 | **RISK-04** | **Cross-database check-in has no defined recovery path** | High | **Critical** | Architecture / Jaspreet | Choose saga/outbox or a local `INFLAT` mirror **before Phase 4** | **G2** / **OI-39** |
 | **RISK-05** | **FW-001 column renames break existing reports.** The renames touch the shared `coils`/scheduling schema read by upstream receiving, planning, scheduling, reporting, yield and cost | Medium | High | DBA / IT | Full stored-procedure / view / report / query audit **before** migration (40 h costed in Phase 1C); regression pass at QA4. This is also the hardest element of the release to roll back — `[RB §6.3]` | `[INT §8]` |
-| **RISK-06** | **Roles may not exist as JWT claims** | Medium | High | Security / Login owner | Confirm the claim mapping in `Login` early; add a provisioning story if new | **G6** / **OI-37** |
+| **RISK-06** | ~~**Roles may not exist as JWT claims**~~ ✅ **Retired 15 Aug 2026 — did not materialise.** All six exist on `ClaimTypes.Role`; no provisioning story was needed | ~~Medium~~ — | ~~High~~ — | Security / Login owner | **Replaced by a smaller risk:** the claim **values** are coded rather than labelled and the mapping is unsupplied, so the authorization matrix cannot be *verified* until it lands. **Low / Medium**, mitigated by routing all six through one constants class | **G6** / **OI-37** |
 | **RISK-07** | **PLC commissioning slips past 30 Sep** | Medium | High | Engineering / Tim O. | `SimulatePLCTagPush` + mock SignalR keep the UI testable; **development is not blocked**, go-live is | — |
 | **RISK-08** | **Real-time NFRs are undefined** — AGC sample rate, concurrent client count, latency budget, `RunReading` retention. A hub load test is scheduled at QA2 **with no pass criteria** | High | High | Architecture / Engineering | Define targets before QA2, or the load test cannot fail. Rework cost if it fails is **not** in the effort model | **G9** / **OI-34** |
 | **RISK-09** | **SignalR drops on the shopfloor network** | Medium | Medium | Architecture | Auto-reconnect with backoff + group re-join; PWA cache; "Reconnecting…" banner over cached state | `FR-119` |

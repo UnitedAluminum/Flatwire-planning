@@ -1,0 +1,204 @@
+# FW-218 · Trial control surface for the feed generator — steer, stop, drop, read
+
+**Project:** United Aluminum (UAL) — Flat Wire Mill Module
+**Last Updated:** August 15, 2026 — first issue
+**Document Type:** Implementation plan for a single backlog story
+**Status:** Ready to build — **trial scope, additive to `[CE §3b]`**
+**Owner:** Backend (.NET) stream
+**Audience:** The .NET developer building `FW-218`
+**Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
+**Part of:** `ProjectPlan/Backend/TaskBreakdownPlans/` — index: [README.md](../../README.md)
+
+---
+
+> **Why this document exists.** This story exists because **the trial was specified to
+> demonstrate behaviour it had no way to trigger** — `G43`. Three of `[TRP §8]`'s ten
+> acceptance steps need the simulated feed **steered while a run is live**, and the only
+> lever without a control surface is a configuration change plus a restart, **which destroys
+> the run being demonstrated** — the very thing steps 7 and 10 are asserting about.
+>
+> The rule that shapes the code is a security one, and it is stated as an absolute:
+> **when simulation is off the routes are not registered at all — `404`, not `403`.**
+> A present-but-forbidden control plane is one misconfigured role away from driving a live
+> line.
+>
+> ⚠ **This story is in `[TB §7]` and `[TRP §1.4]` but appears nowhere in `phase-01b`** —
+> zero occurrences. Recorded in §7.
+
+---
+
+## 1. The story
+
+From `[TB §7]` — verbatim:
+
+> ###### FW-218 · Trial control surface for the feed generator — steer, stop, drop, read
+> **Hours:** 18 h BE · **Priority:** Critical · **Sprint:** S1 · **Phase:** 1B · **Stream:** BE
+>
+> > **New 15 Aug 2026.** `[TRP §8]`'s acceptance run requires the simulated feed to be **steered while a run is live**. `FW-203` is a publisher and has **no control surface** … **This is the three endpoints the trial actually needs**, built over `FW-203` rather than over the line model. It is the **first increment of `FW-215`**, the same relationship `FW-203` has to `FW-211` — a superset, not a replacement. Hours are **additive to `[CE §3b]`**.
+>
+> **As a** test engineer running the trial,
+> **I want** to steer and stop the simulated line while a run is live,
+> **So that** the acceptance run's out-of-spec, stop-edge and missing-data assertions can be executed at all.
+>
+> **Acceptance Criteria:**
+> - [ ] `POST /sim/{lineId}/steer` — move gauge and width toward or away from target **on a live run**
+> - [ ] `DELETE /sim/{lineId}/run` — a `RUNNING → STOPPED` edge **at a chosen instant**, so `TC-171`'s **3 s stop against a 5 s dwell** and `TC-172`'s **weight latched at the stop timestamp** are executable. ⚠ **Configuration plus a restart cannot do this**
+> - [ ] `POST /sim/{lineId}/fault` — **one fault only, dropped readings.** It is the sole way to exercise `FW-205`'s condition 5; the rest of `[SIM §7.2]`'s catalogue is `FW-213` and stays out
+> - [ ] `GET /sim/state` — all three snapshots in one read, **so `FW-214`'s console populates on load without polling**
+> - [ ] ⚠ **Routes are not registered at all when simulation is off — `404`, not `403`** (`[SIM §2.4]`)
+> - [ ] `Engineer` / `Admin` policy on top of that, **never `Operator`** (`[SIM §8.4]`)
+> - [ ] ⚠ **Not among `[API]`'s 30 endpoints** and must not be added to that count — an engineering surface on a separate prefix (`[SIM §8.2]`)
+> - [ ] **Adds nothing to the telemetry contract.** `FW-150` and `FW-151` are unchanged
+>
+> **Rate-card basis:** 3 command endpoints @ 5 h + 1 query @ 3 h = **18 h** · **11 h AI-assisted**
+> **Dependencies:** FW-203, FW-138, FW-145
+> **Blockers:** —
+>
+> > ⚠ **`FW-218` is not in the Phase 1B reconciliation** and must not be folded into it — trial-run scope, additive to `[CE §3b]`, exactly as `FW-203` is. It does **not** offset `FW-215`'s 23 h either.
+
+### 1.1 What each endpoint is for
+
+| Endpoint | Exists because |
+|---|---|
+| `POST /sim/{lineId}/steer` | `[TRP §8]` step 3 — *"force N consecutive out-of-spec readings"*, and Dashboard 3's auto-prompt threshold is measured against it |
+| `DELETE /sim/{lineId}/run` | Step 7 — `TC-171`'s **3 s stop against a 5 s dwell**; `TC-172`'s weight latched at the stop timestamp |
+| `POST /sim/{lineId}/fault` | The **only** way to reach [`FW-205`](FW-205-ITInhibitService.md)'s condition 5 (two or more consecutive recordings missing) |
+| `GET /sim/state` | `FW-214`'s console populates on load without polling |
+
+**`POST /sim/{lineId}/run` is deliberately out** — the trial starts runs through check-in,
+not through the simulator. Four of `[SIM §8.1]`'s five.
+
+### 1.2 Out of scope
+
+| Concern | Story |
+|---|---|
+| The mechanisms being exposed | [`FW-203`](FW-203-OPC-Feed-Simulator.md) `P-36` |
+| The console `DB-S1` | `FW-214`, FE — **ships with controls greyed** |
+| The kinematic line model · the closed loop · the full fault catalogue · the OPC sidecar | `FW-210` · `FW-212` · `FW-213` · `FW-217` — **all out** |
+| The remaining `FW-215` endpoints | `FW-215`, unscheduled |
+
+---
+
+## 2. The two rules that shape the code
+
+### 2.1 Not registered when simulation is off — `404`, not `403`
+
+`[SIM §2.4]`, and it is an absolute. **Register the routes conditionally at startup**, inside
+the same `if` that enables the simulator — do not map them and guard with a filter, and do
+not rely on the policy alone.
+
+*A present-but-forbidden control plane is one misconfigured role away from driving a live
+line.* `403` tells a caller the surface exists; `404` does not.
+
+`Engineer` / `Admin` policy sits **on top of** that, never `Operator` (`[SIM §8.4]`) — the
+two are layered, not alternatives.
+
+### 2.2 A separate prefix, and not in the endpoint count
+
+`/sim/**`, **not** under `/api/v1/flatwire`'s 32-row index (`[SIM §8.2]`). It is an
+engineering surface.
+
+> ⚠ **Do not add these four to `[API §3.2]`'s count.** That table is the MVP-1 contract
+> surface and its arithmetic — 32 live rows, MVP-1 implements 25 — is cited from
+> [`FW-138`](FW-138-Fifteen-Thin-Controllers.md), `phase-01b` L82 and `[TRP]`.
+
+---
+
+## 3. Build order
+
+1. A `SimController` (or minimal-API group) on the **`/sim`** prefix, registered **only**
+   when the simulator flag is on (§2.1).
+2. `Engineer`/`Admin` policy from [`FW-145`](FW-145-JWT-And-Role-Policies.md) — **never
+   `Operator`**.
+3. The four endpoints of §1.1, each calling a
+   [`FW-203`](FW-203-OPC-Feed-Simulator.md) capability and adding no logic of its own.
+4. `POST /sim/{lineId}/fault` accepts **one** fault kind — dropped readings. Reject anything
+   else rather than accepting and ignoring it.
+5. `GET /sim/state` returns all three lines in one read.
+6. Use [`FW-138`](FW-138-Fifteen-Thin-Controllers.md)'s envelope and
+   [`FW-146`](FW-146-Exception-Middleware-And-Envelope.md)'s middleware — the surface is
+   separate, the conventions are not.
+
+---
+
+## 4. Decisions this plan makes
+
+> `P-##` is continuous across this folder; `P-01`–`P-37` precede this story.
+
+### `P-38` — conditional route registration, not a policy guard
+
+Per §2.1. The distinction is worth writing down because the two look equivalent in review and
+are not: a mapped-but-forbidden route **exists**, is discoverable, and is protected only by
+correct role configuration; an unregistered route cannot be reached by any caller in any role.
+
+**Concretely:** the registration sits inside the simulator's own `if`, and **`GET /sim/state`
+is registered on the same condition** — a read-only endpoint still confirms the control plane
+exists.
+
+Verify by the negative: with simulation off, all four return **`404`**, and Swagger lists
+none of them.
+
+### `P-39` — this is an increment of `FW-215`, so build it as a subset, not a variant
+
+`[TRP §1.4]`: this is *"the first increment of `FW-215`"*, the relationship `FW-203` has to
+`FW-211` — **a superset, not a replacement**.
+
+So the four endpoints must carry the **paths, shapes and semantics `[SIM §8.1]` already
+specifies**, implemented over `FW-203` instead of over the line model. When `FW-210`/`FW-213`
+land, `FW-215` extends this surface rather than replacing it, and `FW-214`'s greyed controls
+light up **as configuration**.
+
+**Do not invent a simpler shape because only four endpoints are in scope.** A divergent shape
+makes `FW-215` a rewrite and strands the console.
+
+---
+
+## 5. Verification
+
+**No automated tests** — `[TS §1.2]`. Verified by executing `[TRP §8]`'s acceptance run,
+which is the reason this story exists.
+
+| Check | Expected |
+|---|---|
+| **Simulation off** | All four routes return **`404`**; absent from Swagger *(`P-38`)* |
+| Simulation on, `Operator` token | **`403`** |
+| Simulation on, `Engineer`/`Admin` | Works |
+| `steer` | Forces N consecutive out-of-spec readings **on a live run** — step 3 |
+| `DELETE /run` | Stop edge at a chosen instant; **`TC-171`'s 3 s stop against a 5 s dwell** and `TC-172`'s latched weight both executable — **and the run survives**, which steps 7 and 10 assert |
+| `fault` | Drops readings; reaches `FW-205` condition 5. Any other fault kind **rejected** |
+| `GET /sim/state` | Three lines in one read; console populates without polling |
+| Contract untouched | `FW-150` and `FW-151` unchanged; nothing added to `[API §3.2]`'s count |
+
+---
+
+## 6. Handoff
+
+`FW-214` (FE, 15 h) puts the console `DB-S1` over these four, **shipping with Start, the
+scenario picker, six of seven fault buttons and the seed greyed** — its own dependency is
+`FW-215` in full, behind which sit `FW-210` (24 h) and `FW-213` (16 h), and *"every control
+live is +50 h AI-assisted and the window does not have it."* **Grey them, do not delete
+them**; each returns as configuration.
+
+⚠ `FW-214`'s `lbPerFt` readout **displays NULL**, putting `Q10` on screen instead of burying
+it — deliberate.
+
+---
+
+## 7. Open items
+
+| Item | Effect here |
+|---|---|
+| **`G43`** | This story **is** the resolution |
+| **`G39`** | ⚠ **Applies to `FW-218` unchanged** — *"steering an unverified model does not make it verified."* A reproducible acceptance run driven by a feed we wrote is the *"convincing simulator"* that gap warns about |
+| **`Q10` / `OI-45`** | `AlloyProperty.LbPerFtFactor` is seeded **NULL, "OQ-10 PENDING"**, so step 7's calculated net weight is NULL and the ±2 % scale-vs-calculated variance **cannot execute**. Either seed a clearly-marked provisional factor or accept the assertion as untestable at trial |
+
+### 7.1 ⚠ Absent from `phase-01b`
+
+**`FW-218` appears nowhere in `phase-01b`** — not in the Stories trailer, not in the
+real-time slice, not in the simulation-seam row that lists `FW-210`/`FW-212`/`FW-213`/
+`FW-214`/`FW-215` as unscheduled. It has a full card in `[TB §7]` (Critical, S1, Phase 1B,
+Stream BE) and a row in `[TRP §1.4]`'s 1B table.
+
+**Reported, not fixed** — adding it to `phase-01b` changes an hours-bearing document, and
+`[TRP §1.4]`'s own arithmetic already carries it (BE 145 → 156, total 220 → 231). Raised so
+the phase spec can be reconciled deliberately rather than by a plan document.

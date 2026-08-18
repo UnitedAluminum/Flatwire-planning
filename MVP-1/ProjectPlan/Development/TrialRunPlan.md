@@ -1,9 +1,9 @@
 # Flat Wire Mill — Six-Screen Trial Run Plan (30 Sep 2026)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 14, 2026 — **this document is now the parse source for `FlatWire_TrialRunPlan.xlsx`** (see Related Documents), and **`FW-203`/`FW-204` were minted** so all 61 work items carry an identifier. Also: **§1.3 gains *What the four streams are*** — FE/BE/DB/RT defined against `[CE §1]`, with **RT decomposed to all 127 h** and the note that `RT`/`DB` are stream codes, not document shortcodes. Same day: **§1.4 completed** with the 1B sprint split (164 h T1 / 28 h T2) and Phase 1 **all-in at 584 h**, so it is comparable with the hand-coded 1,027 h. Also: **new §1.4 breaks Phase 1 out at deliverable level** (1A/1B/1C on all three bases, three trial reductions named), **§1.3 gains the phase × stream staffing grid**, the removals record renumbers **§1.4 → §1.5**, and **DB1 Line Status and DB2A Pre-Check-in + weld capture were removed from trial scope** on client direction, **885 h → 778 h** *(initial publication same day)*
+**Last Updated:** August 15, 2026 — **blocker 4 (`G6`) closed**: all six roles exist as JWT claims; its residual re-dated to the T1 QA0 walkthrough. Revision history in [`CHANGELOG.md`](../../../CHANGELOG.md)
 **Document Type:** Scoped delivery plan for the client-requested trial run
-**Status:** Published — **three developers reach ~1 Oct on development alone; UAT still needs its own window.** §2.2 states what each staffing option lands
+**Status:** Published — **three developers reach ~6 Oct on development alone; UAT still needs its own window.** §2.2 states what each staffing option lands
 **Owner:** Delivery lead / programme management
 **Audience:** Development leads, delivery lead, programme management, client stakeholders
 **Shortcode:** `[TRP]`
@@ -26,7 +26,7 @@
 > are separate streams and must not be booked against the capacity in §2.
 >
 > **⚠ The headline is not about the screens.** The six screens are **88 h** of Angular work. **Phase 1 — the
-> platform, not started, whose hard gate was 14 Aug and was not met — is 423 h, 54 % of the trial.** Cutting
+> platform, not started, whose hard gate was 14 Aug and was not met — is 460 h, 56 % of the trial.** Cutting
 > screens is the weakest lever available to this plan; shortening Phase 1 is the strongest. Both client removals
 > of 14 Aug together recovered **107 h**; one additional developer on Phase 1 for two weeks recovers more.
 
@@ -57,27 +57,28 @@ different places and each supplies its own material context.
 | **Pause / Resume** dialogs | 20 | Both active-run screens carry a Pause button, and DB6 is reached through the pause dialog's *Manual SPC measurement* route. Without it two requested screens ship with a dead control. FR-260–266, TC-315…329 |
 | **FL1 run completion → `Spool`** (`FW-202`) | **67** | ⚠ **Inside screen #2's approved mockup, and the only thing that creates what DB5 checks in.** See §5.1 |
 | **Minimal landing route** (`FW-204`) | 5 | Replaces DB1 as the entry point and the way back into a running line. **Retires when `FW-060` ships.** See §1.5 |
+| **Simulator console `DB-S1`** (`FW-214`) | 15 | ⚠ **Not a seventh screen and not a dashboard** — no `DB##` number, absent from the fifteen-dashboard inventory, the navigation map and the topbar tiles (`[SIM §9.1]`). It is the **engineer's half of the acceptance run**: UAT executes §8 in front of the client and step 7 times a **3 s stop against a 5 s dwell**, which is a button, not a saved HTTP request and a stopwatch. **Ships with unbacked controls greyed** — see §1.4 |
 
 ### 1.3 Total
 
 | Block | AI-assisted h | Share |
 |---|---|---|
-| **Phase 1 platform** (1A Angular · 1B Backend · 1C Database) | **423** | **54 %** |
+| **Phase 1 platform** (1A Angular · 1B Backend · 1C Database) | **462** | **56 %** |
 | Navigation, reconnect and the run index *(was Phase 3)* | 15 | 2 % |
-| Phase 4 — rod check-in *(no DB2A staging)* | 74 | 10 % |
-| Phase 5 — DB3 FL1 shell | 74 | 9 % |
+| Phase 4 — rod check-in *(no DB2A staging)* | 74 | 9 % |
+| Phase 5 — DB3 FL1 shell **+ the simulator console** | 89 | 11 % |
 | Phase 6 — SPC + Pause/Resume *(no weld, no die change, no roll adjust)* | 56 | 7 % |
 | Phase 7 — WIP rejection | 31 | 4 % |
-| **FL1 spool completion — Part B** (`FW-202`) | **67** | **9 %** |
+| **FL1 spool completion — Part B** (`FW-202`) | **67** | **8 %** |
 | Phase 8 — DB5 + DB3 FL2 | 38 | 5 % |
-| | **778 h** | |
+| | **832 h** | |
 
 | Stream | h | Share |
 |---|---|---|
-| **FE** Angular | 314 | 40 % |
-| **BE** .NET | 225 | 29 % |
-| **RT** real-time / PLC | 127 | 16 % |
-| **DB** SQL Server | 112 | 15 % |
+| **FE** Angular | 329 | 40 % |
+| **BE** .NET | 250 | 30 % |
+| **RT** real-time / PLC | 141 | 17 % |
+| **DB** SQL Server | 112 | 13 % |
 
 #### What the four streams are
 
@@ -94,18 +95,18 @@ The **delivery streams** of `[CE §1]`, which defines six — the two not costed
 **`RT` is the one worth spelling out, because this plan leans on it and it is not simply "the SignalR bit".** It is
 a separate stream rather than part of FE or BE precisely because it **spans both**: the Angular SignalR client and
 the .NET hub, ingest loop and tag push are one skill set, and splitting them across two owners is how a typed hub
-contract drifts from its client. In this trial RT's 127 h is:
+contract drifts from its client. In this trial RT's 141 h is:
 
 | Where | h | What |
 |---|---|---|
 | **1A** | 27 | `FW-135` SignalR client service · `FW-136` `MockSignalRService` · `FW-137` PWA cache + reconnect banner |
-| **1B** | 61 | `FW-080` `FlatWireHub` (typed, MessagePack, line groups) · `FW-149` `IFlatWireClient` · `FW-150` cadence broadcast loop · `FW-151` `PLCTagService` + `SimulatePLCTagPush` · the OPC feed simulator |
+| **1B** | 75 | `FW-080` `FlatWireHub` (typed, MessagePack, line groups) · `FW-149` `IFlatWireClient` · `FW-150` cadence broadcast loop · `FW-151` `PLCTagService` + `SimulatePLCTagPush` · **`FW-205` `ITInhibitService`** · the OPC feed simulator |
 | **Phase 4** | 11 | `FW-082` — the PLC tag group push on check-in acknowledgement |
 | **Phase 6** | 7 | `FW-172` — run-event markers and the `LineStatus` transitions |
 | **Phase 7** | 5 | `FW-177` — exception broadcasts |
 | **`FW-202`** | 13 | the two spool-completion hub events (§5.1) |
 | **Phase 8** | 3 | `FW-181` — the FL2 null-gauge contract and the Live/Profile binding |
-| | **127** | |
+| | **141** | |
 
 **Two properties of RT drive decisions elsewhere in this plan.** It is **the stream that does not compress** —
 `[DE §1]` puts OPC ingest and PLC tag push at retention **0.90** (*"integration against a real controller; not
@@ -127,24 +128,25 @@ convention, and verifiable by hand. Derived from the `[SSP §5]` story hours all
 | Phase | FE | BE | DB | RT | **Total** | Sprint |
 |---|---|---|---|---|---|---|
 | **1A** Angular foundation | **139** | — | — | 27 | **166** | T1 |
-| **1B** Backend foundation | — | **131** | — | **61** | **192** | T1 · T2 |
+| **1B** Backend foundation | — | **156** | — | **75** | **231** | T1 · T2 |
 | **1C** Database foundation | — | — | **65** | — | **65** | T1 |
 | Navigation, reconnect, run index | 12 | — | 3 | — | **15** | T2 |
 | **4** Rod check-in | 24 | 24 | 15 | 11 | **74** | T2 |
-| **5** DB3 FL1 shell | **61** | 8 | 5 | — | **74** | T2 |
+| **5** DB3 FL1 shell **+ console** | **76** | 8 | 5 | — | **89** | T2 |
 | **6** SPC + Pause/Resume | 30 | 13 | 6 | 7 | **56** | T2 · T3 |
 | **7** WIP rejection | 13 | 8 | 5 | 5 | **31** | T3 |
 | **`FW-202`** FL1 spool completion | 20 | **29** | 5 | 13 | **67** | T3 |
 | **8** DB5 + DB3 FL2 | 15 | 12 | 8 | 3 | **38** | T3 |
-| | **314** | **225** | **112** | **127** | **778** | |
+| | **329** | **250** | **112** | **141** | **832** | |
 
 **Four things this grid shows that the phase totals hide:**
 
-1. **Phase 1 is not one problem, it is three unequal ones** — 1A is **139 h of pure FE**, 1B is **131 BE + 61 RT**,
+1. **Phase 1 is not one problem, it is three unequal ones** — 1A is **139 h of pure FE**, 1B is **156 BE + 75 RT**,
    1C is **65 h of pure DB**. They genuinely parallelise across different people, which is why T1 is the only
    sprint where a fifth developer pays for itself.
-2. **RT is 88 of its 127 h inside Phase 1** — 27 in 1A (the SignalR client, `MockSignalRService`, the reconnect
-   banner) and 61 in 1B (the hub, `IFlatWireClient`, the broadcast loop, `PLCTagService`, the OPC simulator).
+2. **RT is 102 of its 141 h inside Phase 1** — 27 in 1A (the SignalR client, `MockSignalRService`, the reconnect
+   banner) and 75 in 1B (the hub, `IFlatWireClient`, the broadcast loop, `PLCTagService`, `ITInhibitService`,
+   the OPC simulator).
    **Outside Phase 1 the whole RT stream is 39 h**, spread thinly across five blocks, so the RT owner must pick up
    DB or BE work from T2 or idle. That is `[DE §4]`'s finding sharpened: **RT is the stream that does not
    compress**, and in this trial it is also the stream that does not spread.
@@ -158,10 +160,10 @@ convention, and verifiable by hand. Derived from the `[SSP §5]` story hours all
 > because the deliverable is an Angular component; splitting it 9/9 would move Phase 5 to FE 52 · RT 9 and the
 > trial totals to FE 305 · RT 136. **Pick one reading and keep it** — the tables above use FE throughout.
 
-### 1.4 Phase 1 in detail — 423 h, 54 % of the trial
+### 1.4 Phase 1 in detail — 462 h, 56 % of the trial
 
 Phase 1 is the largest block in this plan by a wide margin, it has not started, and its hard gate was 14 Aug and
-was not met. It is broken out here at deliverable level because *"the platform is 423 h"* is not actionable and
+was not met. It is broken out here at deliverable level because *"the platform is 462 h"* is not actionable and
 *"the shared composite controls are 75 h of it"* is.
 
 **Three bases, and they must not be mixed.** Hand-coded is `[CE §3]`'s and is the **base of record**; AI-assisted
@@ -171,15 +173,20 @@ reductions**.
 | | Hand-coded `[CE §3]` | AI-assisted, full | **Trial scope** | Reduction | T1 | T2 |
 |---|---|---|---|---|---|---|
 | **1A** Angular foundation | **370** | 166 | **166** | — | 166 | — |
-| **1B** Backend foundation | **442** | 217 | **192** | −25 | 164 | **28** |
-| **1C** Database foundation | **215** | 101 | **65** | −36 | 65 | — |
-| | **1,027 h** | **484 h** | **423 h** | **−61 h** | **395** | **28** |
+| **1B** Backend foundation | **519** | 268 | **231** | −37 | 178 | **53** |
+| **1C** Database foundation | **221** | 101 | **65** | −36 | 65 | — |
+| | **1,110 h** | **535 h** | **462 h** | **−73 h** | **409** | **53** |
 
-**1B is the only sub-phase that crosses a sprint boundary.** Its T2 tail is exactly three items — `FW-150`
-(broadcast loop 11), `FW-151` (`PLCTagService` + `SimulatePLCTagPush` 11) and the **OPC feed simulator** (6) — and
-they are last because they are the only 1B work with nothing downstream waiting on it inside T1. **1A and 1C must
+> **The hand-coded column is `[TB]`'s, not `[CE §3]`'s original**, and it moves whenever a story is repriced.
+> **Re-read it off `[TB]`'s `Phase 1X reconciliation` lines rather than transcribing it** — that is a build
+> guard, added because a transcribed baseline goes stale silently.
+
+**1B is the only sub-phase that crosses a sprint boundary.** Its T2 tail is `FW-150` (broadcast loop 11),
+`FW-151` (`PLCTagService` + `SimulatePLCTagPush` 11), `FW-205` (`ITInhibitService` 14), the **OPC feed
+simulator** `FW-203` (6) and its **control surface** `FW-218` (11) — they are last because they are the only 1B
+work with nothing downstream waiting on it inside T1. **1A and 1C must
 finish inside T1** or the whole T2 chain slips: 1A gates every screen and 1C gates every write. The T1 column sums
-to **395 h**, which is §2.1's T1 figure — the two reconcile by construction, not by coincidence.
+to **409 h**, which is §2.1's T1 figure — the two reconcile by construction, not by coincidence.
 
 #### Phase 1 all-in, on the trial's own basis
 
@@ -190,17 +197,17 @@ with `[CE §2]`'s uplifts applied:
 | | Dev | QA (+20 %) | Contingency (+15 %) | **All-in** |
 |---|---|---|---|---|
 | **1A** | 166 | 33 | 30 | **229** |
-| **1B** | 192 | 38 | 35 | **265** |
+| **1B** | 231 | 46 | 42 | **319** |
 | **1C** | 65 | 13 | 12 | **90** |
-| **Phase 1** | **423** | **84** | **77** | **584** |
+| **Phase 1** | **462** | **92** | **84** | **638** |
 
 *Rounding is **half-up per cell** and the total row is **the sum of the printed cells**, both per `[CE §3]`. Deriving
-the total from 423 directly would give QA 85 / cont. 76 — the same 584, distributed differently. The cell-sum
-convention wins so that every row and column verifies by hand.*
+the total from 462 directly would give QA 92 / cont. 83 — a 637, one hour off. The cell-sum convention is kept anyway
+so that every row and column verifies by hand.*
 
-**Quote 423 h against a developer roster and 584 h against a budget — never the other way round.** The 584 h is
-offered because a foundation phase is normally read for budgeting, and because comparing 423 against the
-hand-coded 1,027 overstates the saving: the like-for-like comparison is **584 against 1,027**, a **43 % reduction**,
+**Quote 462 h against a developer roster and 638 h against a budget — never the other way round.** The 638 h is
+offered because a foundation phase is normally read for budgeting, and because comparing 462 against the
+hand-coded 1,110 overstates the saving: the like-for-like comparison is **638 against 1,110**, a **43 % reduction**,
 not the 59 % the dev-only figures imply. `[DE §3]` makes the same caution about its own contingency line.
 
 #### 1A Angular foundation — 166 h (FE 139 · RT 27)
@@ -227,15 +234,15 @@ assumes, this is where that shows up first.
 **`FW-136` `MockSignalRService` is the keystone of stub-first delivery** (`[ARC §0.5]`). At 7 h it is the cheapest
 schedule insurance in the plan — without it the whole FE stream queues behind 1B.
 
-#### 1B Backend foundation — 192 h (BE 131 · RT 61) · **the largest sub-phase**
+#### 1B Backend foundation — 231 h (BE 156 · RT 75) · **the largest sub-phase**
 
 | Deliverable | Hand-coded | Story | Full | **Trial h** |
 |---|---|---|---|---|
 | `FlatWire` solution + four-project Clean Architecture skeleton | 16 | `FW-N04` | 11 | 11 |
-| **Thin controllers over `UAController`** @ 4 h | **52** *(13)* | **`FW-138`** | 35 | **26** *(9)* |
+| **Thin controllers over `UAController`** @ 3 h | **45** *(15)* | **`FW-138`** | 27 | **14** *(8)* |
 | MediatR registration and pipeline behaviours | 16 | `FW-139` | 11 | 11 |
 | DI registration and the stub/real service swap | 12 | `FW-140` | 8 | 8 |
-| Repository layer | 20 | `FW-141` | 14 | 14 |
+| Repository layer | 28 | `FW-141` | 14 | 14 |
 | Dapper/EF data access + `FlatWireDbContext` | 24 | `FW-142` | 16 | 16 |
 | Serilog structured logging and the audit log | 12 | `FW-143` | 8 | 8 |
 | Configuration binding | 12 | `FW-144` | 8 | 8 |
@@ -243,26 +250,89 @@ schedule insurance in the plan — without it the whole FE stream queues behind 
 | Global exception middleware and the response envelope | 8 | `FW-146` | 5 | 5 |
 | FluentValidation and the canonical cross-layer enums | 12 | `FW-147` | 8 | 8 |
 | Health checks | 8 | `FW-148` | 5 | 5 |
-| `FlatWireHub` — strongly-typed, MessagePack, line groups | 32 | `FW-080` | 22 | 22 |
+| `FlatWireHub` — strongly-typed, MessagePack, line groups | 28 | `FW-080` | 22 | 22 |
 | `IFlatWireClient` typed event contract | 16 | `FW-149` | 11 | 11 |
 | **OPC ingest hosted service + bounded channel** | **32** | **`FW-N05`** → **`FW-203`** | 22 | **6** ⚠ |
 | Cadence-driven broadcast loop | 16 | `FW-150` | 11 | 11 |
 | `PLCTagService` skeleton + `SimulatePLCTagPush` | 16 | `FW-151` | 11 | 11 |
-| | **320** base → QA 64 → cont. 58 = **442** | | **217** | **192** |
+| **`ITInhibitService`** — per-line tag write, conditions 3–5 | **16** | **`FW-205`** | 14 | **14** |
+| **Domain model** — 7 aggregates, 13 value objects, invariants | **32** | **`FW-207`** | 21 | **21** |
+| **Domain events** — post-commit dispatch to the hub | **8** | **`FW-208`** | 5 | **5** |
+| ⚠ **Simulator control surface** — steer · stop edge · dropped readings · state read | **18** | **`FW-218`** | 11 | **11** ⚠ |
+| | **373** base → QA 78 → cont. 68 = **519** | | **268** | **231** |
 
 **Two trial reductions, both deliberate:**
 
-- **`FW-138` 35 h → 26 h.** Thirteen controllers are priced; the trial needs **nine** — Lines *(now the landing
-  route)*, Rod, CheckIn, Run, Spc, WipRejection, Spool, Coil *(for `FW-202`'s `CompleteSpool`)* and Health.
-  `PassSchedule`, `PayoffStaging`, `WeldEvent`, `DieChange` and `RollAdjust` are out of trial scope.
+- **`FW-138` 27 h → 14 h, and its baseline moved twice.** `[API §3.1]` now lists **fifteen** controllers, not
+  thirteen — `PayoffStagingController` was never counted and **`SpoolController` was added 15 Aug 2026** — and the
+  rate fell **4 h → 3 h** when automated backend tests were withdrawn (`[TS §1.2]`). The trial needs **eight**:
+  Lines *(now the landing route)*, Rod, CheckIn, Run, Spc, WipRejection, **Spool** *(`GET /spools` **and**
+  `POST /spool/complete`)* and Coil. `PassSchedule`, `PayoffStaging`, `WeldEvent`, `DieChange` and `RollAdjust`
+  are out of trial scope.
+  ⚠ **Health is not a controller** and is not the ninth: `GET /health` is `MapHealthChecks` middleware and
+  appears in no controller list. Eight controllers @ 3 h = 24 h hand-coded, ×0.60 = **14 h**.
+  ⚠ **Two of the eight carry no in-scope endpoint, and that is deliberate.** `LinesController` hosts only
+  `/lines/status`, which **left with DB1** on 14 Aug (§1.5) — the landing route uses `GET /run/active?line=`
+  instead; and `CoilController` hosts `/coil/**`, which is **Phase 9**, wholly outside the trial. Only **six**
+  controllers serve a trial screen: Rod, CheckIn, Run, Spc, WipRejection, Spool. **The two are kept as empty
+  scaffolds on purpose** — DB1 returns after the trial and Phase 9 is the next thing built, and a scaffold is
+  where the de-stub pass hangs its fixtures. Restating to six would save **3 h** and re-baseline every total in
+  this document for it; **the 14 h stands**, and this note is why. *(Do not "correct" the eight to six without
+  re-running the workbook guards.)*
+> ### The machine simulator — what the trial takes from it, and what it leaves
+>
+> A **machine simulator** was specified on 15 Aug 2026 —
+> [`MachineSimulator.md`](../Architecture/MachineSimulator.md) `[SIM]`, stories **`FW-210`–`FW-215`** (111 h
+> dev) and **`FW-217`** (+24 h) — a model of FL1/FL2/FL3 that runs a whole production run and reacts to the
+> pass-schedule push, plus an engineering console `DB-S1`. **One 9 h increment of it is now in this plan; the
+> other 126 h is not.**
+>
+> ⚠ **Why any of it is in a plan that otherwise excludes the simulator.** `FW-203` is a **publisher with no
+> control surface** — `[SIM §1.2]`'s own comparison table marks it ❌ on *"an operator-drivable control
+> surface"* — yet **§8's acceptance run has to steer it while a run is live**:
+> step 3 forces N consecutive out-of-spec readings, step 7 needs a `RUNNING → STOPPED` edge at a chosen
+> instant (`TC-171`'s **3 s stop against a 5 s dwell**, `TC-172`'s weight latched at that timestamp), and
+> `FW-205`'s condition 5 can only be exercised by **dropping readings**. **Configuration plus a restart cannot
+> do any of it** — it destroys the run being demonstrated, which is also what steps 7 and 10 are asserting
+> about. **The trial would otherwise be specified to demonstrate behaviour it has no way to trigger.**
+>
+> **`FW-218` closes that** — four of `[SIM §8.1]`'s five endpoints (`steer`, `DELETE /run`, `fault` limited to
+> dropped readings, and `GET /sim/state`), built over `FW-203` rather than over the line model, **11 h**. It
+> is the **first increment of `FW-215`** exactly as `FW-203` is of `FW-211`. `[SIM §2.4]`'s rule travels with
+> it: **when simulation is off the routes are not registered at all — `404`, not `403`.**
+>
+> **And `FW-214`, the console `DB-S1`, is in at 15 h — with controls greyed.** An API alone means UAT is
+> executed by an engineer issuing HTTP calls beside the operators, and step 7 times a **3 s stop against a 5 s
+> dwell**. ⚠ **Its own dependency is `FW-215` in full**, which needs `FW-210` (24 h) and `FW-213` (16 h) —
+> **making every control live is +50 h AI-assisted and the window does not have it.** So the screen is built
+> whole against `FW-218`'s four endpoints and the rest is greyed: **Start**, the **scenario picker**, **six of
+> the seven fault buttons** and the **seed**. Live: stop, steer, drop-readings, the readouts, the dual state
+> badges, and `lbPerFt` — **which displays NULL, putting `OQ-10` on screen instead of burying it.** Grey them,
+> do not delete them; each returns as configuration. Same pattern as Die Change and Roll Adjust in §4.
+>
+> **Still out, deliberately:** `FW-210` (the kinematic model), `FW-211` (the seam), `FW-212` (the closed loop
+> that converges on the pushed pass schedule), `FW-213` (the fault catalogue beyond one fault), `POST /sim/{lineId}/run`,
+> and `FW-217` (the OPC sidecar). The trial does not need a machine that *reacts* — it needs a feed it can
+> *steer*, and a screen to steer it from.
+>
+> - **`FW-203` is not rewritten, re-priced or superseded.** Its **8 h base / 6 h AI-assisted** figure stands.
+>   The T2 close-out block it sits in is now **53 h** (`FW-150` 11 · `FW-151` 11 · `FW-205` 14 · `FW-203` 6 ·
+>   **`FW-218` 11**).
+> - **`FW-N05` is still deferred and still uncancelled.** Neither the simulator nor `FW-218` offsets its 32 h.
+> - **`G39` applies to `FW-218` too** — steering an unverified model does not make it verified. See §9.
+>
+> The 111 h and this 26 h are all **additive to `[CE §3b]`**, on the same footing as `FW-202`, `FW-203` and
+> `FW-204`. ⚠ **`FW-214`'s 24 h base is not additive twice** — it is the simulator set's own FE line, pulled
+> forward out of the unscheduled 111 h rather than minted on top of it, so the set's remainder is **87 h**.
+
 - ⚠ **`FW-N05` 22 h → a 6 h simulator.** `[DE §1]` prices real OPC ingest at retention **0.90** and calls it *"not
   verifiable without the hardware"*. Deferring it to the October commissioning window and driving the trial from a
   simulated feed is the single highest-value deferral in this plan: it moves 16 h *and* removes the trial's only
   hardware dependency. **The bounded-channel and broadcast-loop design must still be built to contract** so the
   real ingest drops in behind it — `FW-150` and `FW-151` are unreduced for exactly that reason.
 
-**RT is 61 of 1B's 192 h.** `FW-080` + `FW-149` + `FW-150` + `FW-151` are the real-time spine every later phase
-consumes (`[SP §6.3]`), and none of it compresses well — 0.75–0.90 against FE's 0.62.
+**RT is 75 of 1B's 220 h.** `FW-080` + `FW-149` + `FW-150` + `FW-151` + `FW-205` + `FW-203` are the real-time
+spine every later phase consumes (`[SP §6.3]`), and none of it compresses well — 0.75–0.90 against FE's 0.62.
 
 #### 1C Database foundation — 65 h (DB 65)
 
@@ -274,8 +344,14 @@ consumes (`[SP §6.3]`), and none of it compresses well — 0.75–0.90 against 
 | Lookup group tables + seed | 16 | `FW-005` | 10 | 10 |
 | `AlloyProperty` lookup + seed | 8 | `FW-004` | 5 | 5 |
 | Materials group tables | 12 | `FW-006` | 8 | 8 |
-| Runs and Quality/Output group tables | 48 | `FW-007` | 31 | 31 |
-| | **156** base → QA 31 → cont. 28 = **215** | | **101** | **65** |
+| Runs and Quality/Output group tables | 52 | `FW-007` | 31 | 31 |
+| | **160** base → QA 32 → cont. 29 = **221** | | **101** | **65** |
+
+> **`FW-007`'s 52 h includes** the `RodStaging.Station` column and the `UX_RodStaging_Bay` re-key from
+> `(LineId, PayoffPosition)` to `(Station, PayoffPosition)`, for **`G21`**. **The trial column is deliberately
+> not re-derived**: that work is bay-uniqueness work, and DB2A left the trial on 14 Aug, so the
+> +4 h is real on the hand-coded basis and absent from trial scope. The table still deploys (§8) — only the
+> re-key does not.
 
 ⚠ **`FW-001` is deferred and it is the largest single reduction in the trial (−36 h).** The `Coil/Bundle…`
 slash-dual renames land on the **shared** `coils`/scheduling schema that the legacy `ual-dot-net` tier and existing
@@ -283,10 +359,12 @@ reports read — `[CE §2]` prices the rename at 16 h and the **impact audit acr
 a separate 40 h**, and `phase-01c` flags *"high blast radius; front-load the impact audit."* **A trial does not need
 it; production does.** `FW-002` (`INFLAT`) stays, because check-in writes it.
 
-> **⚠ `[CE §8]` records that 1C is understated by ~17 h.** It was costed against **22 tables** and the build is
-> **25** — each extra table is 4 h plus its QA and contingency share (~5.5 h all-in). That understatement is
-> inherited here and is **not** corrected in the 65 h above, because correcting it in place would drift `[CE §3b]`.
-> Treat 1C as **65 h + ~11 h of known understatement on the trial's AI-assisted basis.**
+> **⚠ `[CE §8]` records that 1C is understated, and `D-31` widened the gap.** It was costed against **22 tables**;
+> the build is now **28** (`D-31`, 15 Aug 2026, moved the three `PassSchedule*` tables into MVP-1 — §8's live
+> deploy confirms 28). Each extra table is 4 h plus its QA and contingency share (~5.5 h all-in), so the
+> understatement is **~33 h all-in on the hand-coded basis, not ~17**. It is inherited here and **not** corrected
+> in the 65 h above, because correcting it in place would drift `[CE §3b]`. Treat 1C as **65 h + ~21 h of known
+> understatement on the trial's AI-assisted basis.**
 
 #### One reconciliation to know before quoting these figures
 
@@ -328,9 +406,15 @@ it wrong.
 #### DB2A Pre-Check-in + weld capture — **−70 h**
 
 Out: `FW-N01` (the station, 16 h FE), `FW-158` (`PayoffStagingController`, 18 h BE), `FW-160`
-(`PayoffStateChanged`, 8 h RT), the `RodStaging` table (4 h DB, out of `FW-159`), `FW-063` (the weld dialog,
-13 h FE), `FW-166` (`POST /weldevent` + `WeldService`, 8 h BE) and the `WeldEvent` table (3 h DB, out of
-`FW-171`).
+(`PayoffStateChanged`, 8 h RT), the `RodStaging` **write path** (4 h DB, out of `FW-159`), `FW-063` (the weld
+dialog, 13 h FE), `FW-166` (`POST /weldevent` + `WeldService`, 8 h BE) and the `WeldEvent` **write path**
+(3 h DB, out of `FW-171`).
+
+> ⚠ **Those two DB reductions are write paths, not tables.** `FW-007`
+> in **1C** builds the whole Runs/Quality group, and §8 requires `FlatWire_DDL_RunAll.sql` to deploy **all 28
+> tables, `RodStaging` and `WeldEvent` included** — *"do not remove them from the schema to match the trial's
+> scope."* Reading the 7 h as *"the tables leave"* would double-count against 1C, which is unreduced. **The
+> tables are created and go unwritten;** only the code that writes them is out.
 
 > **This is 70 h, where §5.2 priced the block at 64 h.** That figure was the *incremental* cost over a plan that
 > kept a trimmed 6 h staging controller to serve check-in's payoff read. With DB2A gone entirely there is nothing
@@ -364,21 +448,21 @@ counted on `[CE §4]`'s grid.
 
 | Measure | Value |
 |---|---|
-| Trial development effort | **778 h** |
+| Trial development effort | **832 h** |
 | 3 developers × 32 days × 8 h | **768 h** |
-| Utilisation, development alone | **101 %** — before one hour of QA |
+| Utilisation, development alone | **108 %** — before one hour of QA |
 | Development days available if UAT gets 21–30 Sep | **24** = **576 h** |
-| **Shortfall against that** | **202 h** |
+| **Shortfall against that** | **256 h** |
 
 **UAT cannot share a sprint with feature work.** `[SP §1.4]` states it independently of team size, and
 `phase-14`'s own scope call is blunter: *"pull this into a dedicated post-feature-complete window regardless of
 team size."* So the 576 h figure, not the 768 h one, is the one that governs.
 
-> **What the two removals changed, and what they did not.** 107 h came out, and the position improved materially:
-> three developers now finish development around **1 Oct** rather than 7–9 Oct, and **one additional developer
-> very nearly closes the whole trial** (4 × 24 days = 768 h against 778 — ten hours short) where before it was
-> 117 h short. **What did not change is the shape:** Phase 1 is still 54 % of the work, UAT still cannot overlap
-> feature work, and neither removal touched the platform.
+> **What the two removals changed, and what they did not.** 107 h came out, and the position improved:
+> three developers now finish development around **2 Oct** rather than 7–9 Oct. **One additional developer no
+> longer closes the trial on paper** — 4 × 24 days = 768 h against **806**, which is **38 h short**, not the ten
+> hours this paragraph claimed at 778, and **47 h at 815**. **What did not change is the shape:** Phase 1 is still 56 % of the work,
+> UAT still cannot overlap feature work, and neither removal touched the platform.
 
 ### 2.1 Recommended shape — five for the platform, four for the screens
 
@@ -388,40 +472,53 @@ do not.
 
 | Sprint | Dates | Wk days | Team | Capacity | Planned | Util | Content |
 |---|---|---|---|---|---|---|---|
-| **T1** | Mon 17 – Fri 28 Aug | 10 | **5** | 400 h | **395 h** | 99 % | Phase 1A ∥ 1B ∥ 1C |
-| **T2** | Mon 31 Aug – Fri 11 Sep | 9 | **4** | 288 h | **240 h** | 83 % | Phase 1 close-out · navigation · 4 · 5 · 6 (start) |
+| **T1** | Mon 17 – Fri 28 Aug | 10 | **5** | 400 h | **409 h** | **102 %** ⚠ | Phase 1A ∥ 1B ∥ 1C |
+| **T2** | Mon 31 Aug – Fri 11 Sep | 9 | **4** | 288 h | **280 h** | 97 % | Phase 1 close-out · navigation · 4 · 5 · 6 (start) |
 | **T3** | Mon 14 – Fri 18 Sep | 5 | **4** | 160 h | **143 h** | 89 % | 6 close · 7 · spool completion · 8 |
-| | **— feature complete Fri 18 Sep —** | **24** | | **848 h** | **778 h** | **92 %** | |
-| **T4** | Mon 21 – Wed 30 Sep | 8 | 3 + QA + BA | — | — | — | Regression · **de-stub pass** · defects · **UAT + sign-off** |
+| | **— feature complete Fri 18 Sep —** | **24** | | **848 h** | **832 h** | **98 %** | |
+| **T4** | Mon 21 – Wed 30 Sep | 8 | 3 + QA + BA | 192 h | **unsized** ⚠ | — | Regression · **de-stub pass** · defects · **UAT + sign-off** |
 
 **Five-person shape for T1: 2 FE · 1 BE · 1 BE/DB · 1 RT**, dropping to 2 FE · 1 BE · 1 RT/DB for T2–T3. FE is
 40 % of the work and is the binding constraint, as `[SP §3]` finds for the full plan.
 
-**This is the first version of this plan with real margin: 70 h in total — 5 h in T1, 48 h in T2 and 17 h in T3.**
-T2's 48 h is enough to absorb `G2`'s reserve at its lower bound (§2.3), which no earlier shape could do.
+> ⚠ **T1 no longer fits, and it is the sprint that cannot slip.** The platform sprint plans **409 h
+> against 400 h of capacity — 9 h over**. T2, carrying the simulator control surface and the console, runs at
+> **97 %**. **1A and 1C must
+> finish inside T1** or the whole T2 chain moves (§1.4), so this is not absorbable by letting T1 run long.
+> Three ways out, in preference order: **(a)** start T1 one day early — 17 Aug is a Monday and the gate has
+> already slipped; **(b)** move `FW-149` (`IFlatWireClient`, 11 h) into T2's 1B close-out block, which is where
+> its consumers are and which has 34 h spare; **(c)** a sixth pair of hands for T1 only. **Do not solve it by
+> trimming `FW-133`** — all six screens depend on all six controls.
+
+**Margin: 16 h in total — none in T1, and it is thin everywhere.** ⚠ **T2 no longer covers `G2`'s reserve** even at its 24 h
+lower bound (§2.3), and **T1's 9 h overrun has first claim on what is left**. **There is no version of this
+plan where either reserve lands at its upper bound and the date holds** — that is a decision for programme
+management, not something the schedule absorbs.
 
 ### 2.2 What each staffing option lands
 
 | Option | Feature complete | Sign-off | Note |
 |---|---|---|---|
-| **5 → 4 developers** (§2.1) | **Fri 18 Sep** | **Wed 30 Sep** | Meets the client's date with 70 h of slack. Requires two additional people for T1 and one for T2–T3 |
-| **4 developers throughout** | ~18–22 Sep | ~30 Sep – 2 Oct | **Ten hours short of closing on paper** (768 h against 778) and therefore zero-slack. Viable only if one reserve is dropped or T1 starts early |
-| **3 developers** *(current baseline)* | **~1 Oct** | **~mid Oct** | 778 h ÷ 24 h/day = 32.4 working days from 17 Aug. Development almost reaches 30 Sep; **UAT then has nowhere to go.** Lands inside the planned Q4 2026 production window |
+| **5 → 4 developers** (§2.1) | **Fri 18 Sep** | **Wed 30 Sep** | Meets the client's date with 42 h of slack, **none of it in T1** — see §2.1's three ways out. Requires two additional people for T1 and one for T2–T3 |
+| **4 developers throughout** | ~24–26 Sep | ~6–8 Oct | **64 h short of closing on paper** (768 h against 832). Viable only if both reserves are dropped *and* T1 starts early — it no longer closes on a single lever |
+| **3 developers** *(current baseline)* | **~6 Oct** | **~mid Oct** | 832 h ÷ 24 h/day = 34.7 working days from 17 Aug. Development overruns 30 Sep; **UAT then has nowhere to go.** Lands inside the planned Q4 2026 production window |
 
-**Recommendation: one additional developer, and a second for T1 only.** The two removals brought 30 Sep within
-reach of a small increment, which was not true before them. At three developers the honest answer is a **mid-October
-sign-off**, and that remains a legitimate outcome to publish.
+**Recommendation: one additional developer, and a second for T1 only — and T1 still needs one of §2.1's three
+ways out.** The two removals brought 30 Sep within reach of a small increment; the 15 Aug re-baseline consumed
+part of that reach, and the four-developer option no longer closes. At three developers the honest answer is a
+**mid-October sign-off**, and that remains a legitimate outcome to publish.
 
-### 2.3 Reserves, excluded from the 778 h
+### 2.3 Reserves, excluded from the 832 h
 
 | Reserve | h | Basis |
 |---|---|---|
 | `G2` / `OI-39` — cross-DB check-in recovery | **24–64** | `[CE §2]`. Phase 4's estimate is provisional until it closes |
 | `OQ-10` / `OI-45` — footage→weight dimensional basis | **16–32** | `[CE §2]` prices it on Phase 9, but `TC-167`/`TC-168` put the same calculation in the spool-completion path this trial builds. See §5.1 |
 
-Neither is a coding problem, so neither compresses under AI assistance. **T2's 48 h and T3's 17 h can absorb one
-of them at its lower bound, not both at their upper.** That is a genuine improvement on every earlier version of
-this plan, and it is the whole of the margin.
+Neither is a coding problem, so neither compresses under AI assistance. **T2's 25 h and T3's 17 h can absorb one
+of them at its lower bound, not both at their upper** — and **T1's 9 h overrun has first claim on that 25 h**
+unless §2.1's (a) or (b) is taken. That is still an improvement on every version of this plan before 14 Aug, and
+it is the whole of the margin.
 
 ---
 
@@ -444,6 +541,10 @@ Two rules the schedule depends on:
 2. **The de-stub pass in T4 is planned work, not contingency.** `[SP §2.3]` requires one: the check-in stub
    deliberately routes around `OQ-14`/`OQ-15` by assuming a single active schedule, and that assumption will not
    remove itself.
+3. **`FW-218` gates the acceptance run, not any screen.** Nothing renders differently without it — which is why
+   it is easy to drop and why dropping it is expensive. **Three of §8's ten steps cannot be executed at all**
+   without a way to steer the feed mid-run (3, 7, and condition 5 of the interlock). It must land in T2 with
+   `FW-203`, not be pushed into T4 alongside the run it is supposed to drive.
 
 *`G26`'s cross-phase weld hazard no longer applies to this plan — see §1.5.*
 
@@ -452,21 +553,23 @@ Two rules the schedule depends on:
 ## 4. Story → sprint allocation
 
 Story ids are frozen and are the repository's join key — import against these. **`FW-130`–`FW-201` are all
-allocated**, so this plan mints **`FW-202`**, **`FW-203`** and **`FW-204`**. *(Note: `CLAUDE.md`'s "new work is
-minted at `FW-130`+" is stale.)*
+allocated**, so this plan mints **`FW-202`**, **`FW-203`**, **`FW-204`** and **`FW-218`**, and pulls **`FW-214`** forward out of the unscheduled simulator set.
+*(Note: `CLAUDE.md`'s "new work is minted at `FW-130`+" is stale. **`FW-216` is burnt** — deliberately unused,
+`[TB]`'s simulator section — and `FW-217` is the OPC sidecar, which is why the new id is 218.)*
 
-> **All three new stories are defined in `[TB §7]` and all three are additive to `[CE §3b]`** — none is folded into
+> **All four new stories are defined in `[TB §7]` and all four are additive to `[CE §3b]`** — none is folded into
 > a published phase total. They are also **excluded from `[SSP §5]`'s allocation on purpose**, because that document
 > is the full-scope plan of record and these are trial scope; the full-plan workbook reports them as excluded rather
 > than absorbing them. **`FW-204` is the only one that is temporary** — it retires when `FW-060` ships, so it never
-> enters the MVP-1 baseline at all.
+> enters the MVP-1 baseline at all. **`FW-218` is not temporary**: it is the first three endpoints of `FW-215`
+> and survives into the simulator proper.
 
-### T1 — Phase 1 platform · 395 h
+### T1 — Phase 1 platform · 409 h
 
 | Stream | Stories | h |
 |---|---|---|
 | **FE** | `FW-N03` 15 · `FW-130` 10 · `FW-131` 7 · `FW-132` 12 · **`FW-133` 75** · `FW-134` 20 | **139** |
-| **BE** | `FW-N04` 11 · `FW-138` 26 *(9 controllers, not 13)* · `FW-139` 11 · `FW-140` 8 · `FW-141` 14 · `FW-142` 16 · `FW-143` 8 · `FW-144` 8 · `FW-145` 11 · `FW-146` 5 · `FW-147` 8 · `FW-148` 5 | **131** |
+| **BE** | `FW-N04` 11 · **`FW-138` 14** *(8 controllers @ 3 h, not 13 @ 4 h)* · `FW-139` 11 · `FW-140` 8 · `FW-141` 14 · `FW-142` 16 · `FW-143` 8 · `FW-144` 8 · `FW-145` 11 · `FW-146` 5 · `FW-147` 8 · `FW-148` 5 · **`FW-207` 21** · **`FW-208` 5** | **145** |
 | **RT** | `FW-135` 15 · `FW-136` 7 · `FW-137` 5 · `FW-080` 22 · `FW-149` 11 | **60** |
 | **DB** | `FW-002` 3 · `FW-152` 8 · `FW-005` 10 · `FW-004` 5 · `FW-006` 8 · `FW-007` 31 | **65** |
 
@@ -474,14 +577,14 @@ minted at `FW-130`+" is stale.)*
 on it** — `pass-schedule-table`, `confirm-bar`, `gauge-trace-chart`, `tab-wizard`, `action-bar`,
 `payoff-weight-bar`. It is not trimmable.
 
-### T2 — check-in and the run monitor · 240 h
+### T2 — check-in and the run monitor · 280 h
 
 | Phase | Stories | h |
 |---|---|---|
-| 1B close-out | `FW-150` 11 · `FW-151` 11 · **`FW-203` 6** — OPC feed simulator, *in place of `FW-N05`* | 28 |
+| 1B close-out | `FW-150` 11 · `FW-151` 11 · **`FW-205` 14** *(`ITInhibitService`; needs `FW-151`)* · **`FW-203` 6** — OPC feed simulator, *in place of `FW-N05`* · **`FW-218` 11** — its control surface *(steer · stop edge · dropped readings · state read; §8 cannot be executed without it)* | 53 |
 | navigation | **`FW-204` 5** — minimal landing route · `FW-153` 7 *(reconnect + cached fallback)* · `FW-155` 3 *(run index)* | 15 |
 | **4** | `FW-061` 24 · `FW-157` 24 · `FW-159` 15 *(check-in write path + cross-DB `INFLAT`; **no `RodStaging`**)* · `FW-082` 11 | 74 |
-| **5** | `FW-062` 17 *(FL1 only)* · `FW-162` 13 · `FW-081` 18 · `FW-163` 13 · `FW-164` 8 · `FW-165` 5 | 74 |
+| **5** | `FW-062` 17 *(FL1 only)* · `FW-162` 13 · `FW-081` 18 · `FW-163` 13 · `FW-164` 8 · `FW-165` 5 · **`FW-214` 15** — simulator console `DB-S1`, *unbacked controls greyed* | 89 |
 | **6** *(start)* | `FW-065` 15 · `FW-071` 15 · `FW-168` 8 · `FW-170` 5 · `FW-171` 6 *(SPC + pause tables; **no `WeldEvent`**)* | 49 |
 
 ### T3 — exceptions, completion, FL2 · 143 h
@@ -590,17 +693,51 @@ exactly the sort of thing that reads as a discrepancy later if it is not written
 is a defect *in `RodStaging`*. **`G26`** (the cross-phase weld write) was a sequencing hazard rather than a listed
 blocker and went with the same removal. Both **remain open for MVP-1**; neither blocks the trial. **Four remain:**
 
+> ### ✅ Blocker 1 closed — decision `D-31`
+> *"The pass schedule is external and MVP-1 cannot create one"* blocked **both** check-in screens, i.e. the whole
+> trial: `FlatWire_DDL_RunAll.sql` produced no schedule table, no schedule rows and no endpoint to fetch one.
+> **The three `PassSchedule*` tables, their seed, their 10 FKs and their 6 indexes moved into MVP-1**, settling
+> `[API §4.2]`'s open assumption in favour of the local-query option. A clean deploy now contains
+> **`PS-1100-FL1-001`** (FL1, Standalone, Active) and **`PS-1100-FL2-002`** (FL2, **Standalone**, Active).
+>
+> ⚠ **The FL2 fixture is `PS-1100-FL2-002`, and the trial cannot run without it.** The other FL2 schedule —
+> `PS-1100-FL2-001` — is **`Hybrid`**, and `FR-091`
+> has DB5 validate the schedule's route mode against the **spool's origin route mode**. The trial's spool is
+> produced by an FL1 **Standalone** run, so it had no FL2 schedule it could legally be checked in under and
+> §8's one continuous journey could not complete. `PS-1100-FL2-001` was **demoted to `Inactive`** to make room:
+> `UX_PassSchedule_OneActivePerLineAlloy` permits exactly **one Active schedule per line + alloy**, so the two
+> cannot coexist. Gap **`G40`**. *(A hybrid run is an FL3 run and `PS-1100-FL3-001` already covers it, which is
+> why the Hybrid FL2 row was the anomalous fixture of the two.)*
+>
+> ⚠ **Closed for the trial, not for production.** MVP-1 owns these tables and **never writes them** — no
+> authoring surface, DB9/DB9A still MVP-2 — so nothing populates them in production. **`OI-110`**, carried in §9.
+>
+> **The numbering below is unchanged** (2, 3, 4) so existing citations to "blocker #3" still resolve; **`G38`
+> is appended as 5** rather than renumbering.
+
 | # | Blocker | Blocks | Needed by |
 |---|---|---|---|
-| **1** | **The pass schedule is external and MVP-1 cannot create one.** Phase 2 and the three `PassSchedule*` tables are wholly MVP-2. Check-in *reads* a schedule to build the push payload; **no schedule means no acknowledgement, no push and no run** — there is no default schedule and no partial path (`phase-04`, *The pass-schedule read contract*). Confirm the read mechanism and that readable FL1 **and** FL2 schedules exist | DB2, DB5 — **both check-in screens, i.e. the whole trial** | **Before T2 (31 Aug)** |
 | **2** | **`OQ-22` — min/max tolerance values.** ⛔ Owed by the client by e-mail; nothing is seeded. `CHK007` is a band check at both stations | DB2 step 3, DB5 dimensions | Before T2 |
 | **3** | **`G2` / `OI-39` — cross-DB check-in recovery undecided.** Check-in spans `FlatWireDB` + `coils` + `wip_coil_orders` + the PLC and is **not one ACID transaction** — describe it as compensating writes, never "atomic rollback" (`G16`). Carries the 24–64 h reserve of §2.3 | Phase 4 is provisional until it closes | Before T2 |
-| **4** | **`G6` — roles not confirmed as existing JWT claims.** Operator / Supervisor / Ops Manager gate the DB2 supervisor overrides, the SPC skip, the WIP disposition and the spool weight-variance override | Every role-gated action in the trial | **Before T1 closes (28 Aug)** |
+| **4** | ✅ ~~**`G6`** — roles not confirmed as existing JWT claims~~ **— closed 15 Aug 2026: all six exist on `ClaimTypes.Role`.** The DB2 supervisor overrides, the SPC skip, the WIP disposition and the spool weight-variance override are all reachable. ⚠ **Residual:** the claim **values** are coded rather than labelled and the mapping is unsupplied — those actions **build** but cannot be **verified** until it lands, and in the supervisor notification a wrong value fails **silent** | ~~Every role-gated action in the trial~~ → the T1 QA0 walkthrough only | ~~Before T1 closes (28 Aug)~~ → **before the T1 QA0 walkthrough** |
+| **5** | ⚠ **`G38` — the durable spool-completion prompt has a column and no owner.** `FR-144` makes `SpoolCompletionPromptDue` **server-owned state, persisted against the run and re-delivered on group re-join** — the one event in `[SIG §5.2]` that is **not fire-and-forget**. The five prompt columns landed on `FlatWireRun` on 15 Aug, and `phase-01b` acceptance criterion 4 now requires the behaviour **in 1B**. **No line item in §1.4's 1B table covers it**, and `FW-202` — which owns spool completion — is **T3**. `TC-173` is **P1** and is §8 step 7. With backend tests withdrawn the failure is silent: the event is typed, everything compiles, the durability simply never happens | The spool-completion step of the acceptance run; the platform sprint cannot exit | **Inside T1**, with `FW-080` |
 
-**Second tier — none stops the build:** `OQ-10`/`OI-45` (§5.1) · `OQ-76` (which identifier DB5 scans) ·
-`OQ-15` (hybrid-origin guard — DB5 blocks amber by design, `TC-118`) · `OQ-14` (no-matching-schedule path —
+**Second tier — none stops the build:** `OQ-10`/`OI-45` (§5.1 — ⚠ **stops nothing in the *build* but does stop an *assertion***: `AlloyProperty.LbPerFtFactor` is seeded **NULL, "OQ-10 PENDING"**, so §8 step 7's calculated net weight is NULL and the ±2 % scale-vs-calculated variance cannot execute. Either seed a **clearly-marked provisional** factor or accept that assertion as untestable at trial) · `OQ-76` (which identifier DB5 scans) ·
+`OQ-15`/`OI-47` (hybrid-origin guard — ⚠ **undefined, not merely open.** `TC-118` is **P1** and its expected
+result is *"Behaviour undefined — `OI-47`. Records observed behaviour; gate fails until specified,"* and
+`[TCS §5.6]`'s coverage table says the same. The trial does not walk into it — `PS-1100-FL2-002` is
+Standalone-origin against a Standalone schedule — but **it must be specified before Phase 8 ships for real**) · `OQ-14` (no-matching-schedule path —
 stubbed to a single active schedule) · `OQ-18` (which order field carries coil min–max weight) · `OQ-79`
 (short-close transaction) · `G9`/`OI-34` (real-time NFRs undefined, so the hub load test has no pass criteria).
+⚠ **`G10` — IIS WebSockets must be enabled on the deployment target** and MessagePack is a client dependency the repo does not otherwise use. The trial leans on the hub for §8 steps 3, 7, 9 and **10 (reconnect and group re-join on staging)**; if `devual-uadev001` lacks the feature the transport silently falls back to long-poll and the cadence assertions change character. **Pre-check the environment before T2** — it is a provisioning task, not a build one.
+
+⚠ **`G23` — the 1280×1024 shopfloor canvas has never been confirmed.** All
+25+ mockups are authored to it, `flat-wire-fit.js` calibrates its 14 px floor against it, and **§7's DoD bar and
+T4's UAT both assert conformance at 1280×1024 at 1:1** — against a question (`Q26`) that is still open with Tim.
+**1920×1080 is 1.5× width and 1.05× height: a re-layout of every screen, not a rescale.** `data-fit="fill"` makes
+a wider panel the cheap direction, so the exposure is bounded, but an answer arriving after T1 lands on finished
+screens. **Chase it before T1 closes** — it is the one open item here that gets more expensive every sprint.
+
 **`G28`** (whether FL2 ever welds spool-to-spool) is **moot for the trial** now that no weld is captured anywhere,
 and stays open for MVP-1.
 
@@ -631,16 +768,39 @@ and stays open for MVP-1.
   **`SlitterInterface` is explicitly not a reference**. There is **no** Angular structural template —
   `flat-wire-shopfloor` is all-new from the mockups, and `checkin-precheckin`, `shop-floor*`, `common-grid`,
   `wip-rejection`, `slitter-*` are not to be copied. Only the foundational `shared` services are reused.
-- **DoD bar is unchanged** (`[SP §9.2]`): Jest 95 % coverage, xUnit + validator tests, UI conformance at
+- **DoD bar is unchanged in every respect but one** (`[SP §9.2]`): Jest 95 % coverage, UI conformance at
   1280×1024 at 1:1, **no text below 14 px**, tap targets ≥ 48 px, no hover-dependent action, no new `--fw-*`
-  tokens.
+  tokens. ⚠ **The exception: `.NET` carries no automated tests** — *"xUnit + validator tests"* was struck
+  from the DoD on **15 Aug 2026** (`[TS §1.2]`). The trial therefore verifies the backend by **manual
+  contract walkthrough**, which has to be staffed inside the window rather than assumed.
 
 ---
 
 ## 8. Acceptance — the trial run
 
 **Per story:** the `TC-###` ranges in §1.1, each executed with at least one negative path and one permission case.
-**75 cases are out of trial scope** with the two removals — TC-040…069, TC-190…214 and TC-490…509 (§1.5).
+
+**Out of trial scope: ~173 cases.** Counting only the two client removals gives 75 and leaves the reader to
+infer that everything else executes. It does not — §4 defers five more features, and their suites go with them:
+
+| Out | Cases | Why |
+|---|---|---|
+| TC-040…069 · pre-check-in | 30 | DB2A removed, 14 Aug (§1.5) |
+| TC-190…214 · weld genealogy — **the contractual suite** | 25 | weld capture removed, 14 Aug (§1.5) |
+| TC-490…509 · line status | 20 | DB1 removed, 14 Aug (§1.5) |
+| TC-250…264 · roll adjust | 15 | `FW-070`/`FW-169` deferred (§4) |
+| TC-270…289 · die change | 20 | `FW-073`/`FW-167` deferred (§4) |
+| TC-375…399 · rod checkout | 25 | `FW-072`/`FW-173`/`FW-175` deferred (§4) |
+| TC-405…429 · coil completion | 25 | Phase 9, wholly outside the trial |
+| TC-435…444 · packing | 10 | Phase 9, wholly outside the trial |
+| TC-350…352 · wire break | 3 | `FR-280`–`FR-282` are *"Not deliverable"*; `G34` has no persistence target |
+| | **~173** | |
+
+⚠ **This matters to more than the QA plan.** §9's ~161 h QA figure is `[CE §2]`'s mechanical +20 % of the build
+base — a **feature-volume proxy**, not a count of these cases — so it does not move. What moves is what the
+trial can be *said* to have verified at sign-off: **the deferred suites are the ones that come back**, and
+three of them (roll adjust, die change, rod checkout) have live mockups and greyed controls on screens the
+trial does ship. **State the number at sign-off.**
 
 **Schema** — deploy clean and confirm the count:
 
@@ -648,22 +808,64 @@ and stays open for MVP-1.
 cd "c:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Schema\SQL"
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_99_Teardown.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_RunAll.sql
-# expect 25 tables · 33 FKs · 41 index statements · 1 procedure · 1 trigger
+# expect 28 tables · 43 FKs · 47 index statements · 1 procedure · 1 trigger
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_RunAll.sql   # idempotent re-run
 ```
 
-**The DDL still builds all 25 tables.** `RodStaging` and `WeldEvent` are created and simply go unwritten in the
-trial — do not remove them from the schema to match the trial's scope.
+**Then assert the two fixtures the acceptance run depends on** — both cheap, and both the kind of thing that
+fails at step 8 with an unhelpful message if it is wrong:
+
+```sql
+-- (a) FL2 has exactly one Active schedule and it is Standalone.
+--     UX_PassSchedule_OneActivePerLineAlloy allows only one per line+alloy,
+--     so a second Active FL2/1100 row is not a warning — it is a failed insert.
+SELECT ScheduleId, RouteMode, Status FROM PassSchedule WHERE LineId = 'FL2';
+--     expect PS-1100-FL2-002 Standalone Active · PS-1100-FL2-001 Hybrid Inactive
+
+-- (b) No STANDALONE FL2 schedule engages FM1 (FL1's 12" mill).
+--     Expect exactly one row today: PS-1100-FL2-002 — forced by
+--     CK_PSC_FM1NotBypassable, which is line-blind. Gap G41.
+--     When G41 closes this must return zero rows.
+SELECT p.ScheduleId, c.ComponentName, c.State
+FROM   PassScheduleComponent c
+JOIN   PassSchedule p ON p.ScheduleId = c.PassScheduleId
+WHERE  p.LineId = 'FL2' AND p.RouteMode = 'Standalone'
+  AND  c.ComponentName = 'FM1' AND c.State = 'Active';
+```
+
+> ⚠ **Do not generalise (b) into *"a component's `Stand.LineId` must equal its schedule's `LineId`"*.** That
+> assertion returns **18 rows** and most are legitimate: an **FL3** schedule drives `FM1` (FL1's) *and*
+> `FM2_S1..S3` (FL2's) because FL3 **is** FL1 feeding FL2, and a **Hybrid FL1** schedule reaches FM2 for the
+> same reason. The defect is the single narrow case above. **Do not add a trigger for it either** — this
+> section publishes *"1 trigger"* as a verified count.
+
+**The DDL builds all 28 tables** — including the three `PassSchedule*`, which joined MVP-1 on 15 Aug 2026 (`D-31`).
+`RodStaging` and `WeldEvent` are created and simply go unwritten in the trial — do not remove them from the schema
+to match the trial's scope. ⚠ **The counts above are from a live deploy, not arithmetic**, and `sp_ShiftSummary`
+is deliberately **absent** (it is MVP-2's, for DB10). Any "25 tables / 33 FKs / 41 indexes" figure is pre-`D-31`.
 
 **The acceptance run is one continuous FL1 → FL2 journey.** This is the only thing that proves the six screens
 are a system rather than six pages, and it is what UAT executes:
 
+> ⚠ **Four of these steps are driven from the simulator console (`FW-214`) over `FW-218`'s endpoints, not from
+> an operator screen.** The operator drives the application; a test engineer drives the machine, from `DB-S1`. **`POST /sim/{lineId}/steer`** produces
+> step 3's out-of-spec run, **`DELETE /sim/{lineId}/run`** produces step 7's stop edge at a chosen instant, and
+> **`POST /sim/{lineId}/fault`** (dropped readings) is the only way to reach the interlock's condition 5.
+> ⚠ **The console and its endpoints are `Engineer`/`Admin` and are not registered at all when simulation is
+> off** — so `DB-S1` exists on staging and **cannot exist on a commissioned line** (`[SIM §2.4]`, `[SIM §8.4]`).
+> **Plan the UAT session around this**: the engineer's console is part of the run, it is a second screen in the
+> room, and the sequence should be rehearsed before operators are in it. ⚠ **Several of its controls are greyed**
+> (§1.4) — brief the client, or the greyed scenario picker reads as a defect on the day.
+
 1. **Landing route** — FL1 and FL2 both idle; each tile routes to its check-in screen.
 2. **DB2** — scan a rod, clear all six wizard steps, select the payoff, **Confirm Schedule** (amber → green),
+   against **`PS-1100-FL1-001`** — ⚠ **not `PS-1100-FL1-003`, which is seeded `Draft`** and must be *refused* with
+   `SCHEDULE_NOT_ACTIVE` → 422. The seed carries Active/Inactive/Draft variants of the same line and alloy so the
+   status gate is testable; `[API §7.2]` has the full mapping. Then
    Acknowledge. Assert **records are written before the PLC push**, tags push **only** on acknowledgement,
    `coils` → `INFLAT`, run `Running`, and the operator lands on **DB3**.
-3. **DB3 FL1** — live gauge/width streams with tolerance band. Force N consecutive out-of-spec readings → the
-   auto-prompt SPC toast fires. Action bar has **exactly six buttons and no Roll Adjust** (`TC-135`, `FR-107`).
+3. **DB3 FL1** — live gauge/width streams with tolerance band. Force N consecutive out-of-spec readings
+   (**`POST /sim/FL1/steer`**) → the auto-prompt SPC toast fires. Action bar has **exactly six buttons and no Roll Adjust** (`TC-135`, `FR-107`).
    **The weld-marker layer renders empty** — no welds are captured in the trial.
 4. **Pause** → *Manual SPC measurement* → the pause applies, **then** the SPC dialog opens carrying the frozen
    footage. Never both at once.
@@ -672,18 +874,26 @@ are a system rather than six pages, and it is what UAT executes:
 6. **DB8 WIP** — Suspend requires an observation; submit sets the material status and files the WIP-Held queue
    entry. ⚠ **The supervisor alert fires with no screen to display it** (§1.5) — verify the event on the wire, not
    on a dashboard.
-7. **Spool completion (`FW-202`)** — run to target, then stop the line. Assert: the prompt fires on the **edge**
+7. **Spool completion (`FW-202`)** — run to target, then stop the line with **`DELETE /sim/FL1/run`**. Assert: the prompt fires on the **edge**
    and only once (`TC-170`); a 3 s stop against a 5 s dwell raises **nothing** (`TC-171`); the weight is
    **latched at the PLC stop timestamp** (`TC-172`); **Escape and backdrop-click do not dismiss** (`TC-178`); the
    prompt **survives a browser refresh** (`TC-173`); Yes commits **before** it prints (`TC-175`). Result: a
    `Spool` row with an `SP-#####` alpha, **one** source rod and its footage.
-8. **DB5** — scan that spool. The source-traceability panel shows **a single rod and no weld row**; the
-   **historical** profile renders against the spool's own 0.113″ target **with an empty marker layer**; **no
-   visual-inspection section** (`TC-114`, `FR-095`); the FM2 table shows **exactly three rows** (`TC-115`); all
-   five pre-flight checks pass; Acknowledge pushes FM2 tags.
+8. **DB5** — scan that spool, against **`PS-1100-FL2-002`** (FL2, **Standalone**, Active). The
+   source-traceability panel shows **a single rod and no weld row**; the **historical** profile renders against
+   the spool's own **0.110″** arrival gauge **with an empty marker layer**; **no visual-inspection section**
+   (`TC-114`, `FR-095`); the FM2 table shows **exactly three rows** (`TC-115`) closing 0.110″ → 0.106″ → 0.103″
+   → 0.100″; all five pre-flight checks pass; Acknowledge pushes FM2 tags.
+   ⚠ **The schedule matters as much as the spool.** `FR-091` validates route mode against the spool's **origin**,
+   and the FL1 leg is Standalone — so a Hybrid FL2 schedule refuses this check-in. `PS-1100-FL2-001` is seeded
+   `Inactive` for exactly that reason (§6). ⚠ **The target is 0.110″, not the 0.113″ that appears in no seed** —
+   `PS-1100-FL1-001` produces 0.110″ × 0.500″.
 9. **DB3 FL2** — three FM2 rows, edgers on S2/S3 only; **Live shows its empty state and Profile stays static
    across several live ticks**; SPC and WIP Reject open over the live run; **no Weld and no Die Change**
    (`TC-137`, `FR-109`).
+   ⚠ **The empty-state assertion is only correct because step 8 checked in a *standalone* schedule.** `FR-120`
+   and `[SIG §5.3]` suppress live gauge/width for **FL2 in standalone mode** — not for FL2 as a line. Run this
+   step against a Hybrid schedule and the assertion is wrong rather than merely unmet.
 10. **Reconnect** — kill the hub mid-run: banner over cached last-known state, **never a blank screen**
     (`FR-119`/`NFR006`), backoff reconnect, group re-join, trace restored without a refresh.
 
@@ -703,6 +913,13 @@ names) and the on-mill trial follow in October, per `[SP §4.3]`.
   **welding-wire customer certificates** are produced from (`NFR012`). A single-rod spool is a real case, but it
   is the easy one. **This is the largest single thing the 14 Aug removals give up** and it should be signed off
   knowingly, not discovered at certificate time.
+- ⚠ **Automated E2E is not in this plan, and UAT's stated entry criterion therefore is not met by it.** `[TS §4.1]` makes **three green E2E runs** the entry criterion for UAT, and this plan commits to UAT signed off inside the window. **Automated E2E (`FW-120`–`FW-122`, plus the Playwright harness) is Phase 14 work and deliberately out of trial scope** — none of its ~152 h touches the 832 h here. **The substitute is §8's ten-step FL1 → FL2 acceptance run, executed manually**, recorded as a trial-scoped substitution in `[TS §4.1]` so the gate is met by something real rather than waived by omission. **What the substitute does not give you:** no FL3 hybrid, no weld traceability (out with the 14 Aug removal), and **no regression value** — a manual run proves the journey once, on one path, and proves nothing about the next change.
+- ⚠ **The screens must carry `data-testid` even though E2E is out of scope.** The Playwright suite is Phase 14, but the screens are written **here**, in Phases 1A and 4–8. There are **zero** test hooks in any mockup today. Added during the build this costs minutes per component; retrofitted afterwards it is **~16 h of FE rework**. `[SP §9.2]`'s DoD now requires them — **this is the one E2E-driven obligation that lands inside the trial window.**
+- ⚠ **Nothing populates the pass schedule in production.** `D-31` put the `PassSchedule*` tables into MVP-1 and
+  closed this plan's first blocker, but **MVP-1 reads them and never writes them** — there is no authoring surface
+  and DB9/DB9A stay MVP-2. `FlatWire_SampleData_Schedule.sql` covers the trial. **The trial will therefore pass
+  without ever exercising the real population path**, which is the same class of risk as *"the trial proves the
+  screens, not the machine"* below. Tracked as **`OI-110`**.
 - **Nothing in the trial displays an alert.** With DB1 out, `AlertRaised`/`AlertCleared` have no consumer, so the
   WIP rejection's supervisor notification is verifiable only on the wire.
 - **QA does not compress with development.** `[DE §0]` is explicit: building the same features faster does not
@@ -715,9 +932,46 @@ names) and the on-mill trial follow in October, per `[SP §4.3]`.
 - **The trial proves the screens, not the machine.** Every line runs `SimulatePLCTagPush` and a simulated OPC
   feed. **Nothing in this plan verifies a single tag path against a controller** — that is `C1`/`C11` in October,
   and `G32`/`G33` record that the whole tag map is currently `[PROPOSED]`.
+  ⚠ **`FW-218` makes this more comfortable, not more true.** A steerable feed means the acceptance run is
+  reproducible and the awkward cases (a 3 s stop, a dropped reading, a drift into out-of-spec) can be shown on
+  demand — which is exactly the *"convincing simulator"* `G39` warns about. **What we can steer, we have not
+  verified.** The trial's `FW-218` and the simulator's `FW-210`–`FW-215` sit on the same side of that line.
 - **Four deferred items are re-entry points, not deletions.** DB1, DB2A + weld, the die-change and roll-adjust
   dialogs all have live requirements, test suites and mockups. Keep their inputs, marker layers and greyed
   controls in place so their return is configuration rather than rework.
+- ⚠ **`ITInhibit` ships with three of its five conditions.** `FW-205` (conditions 3–5 — feet data unavailable,
+  invalid, or two consecutive recordings missing) is in T2. **`FW-206` (conditions 1–2) is in no sprint at all**,
+  and condition 1 is *"no coil or rod is checked in"* — precisely the state every check-in demonstration starts
+  from. It is **`Blocked` on `PLC-Q12`**: the *"active material-tracking identifier"* has never had its format
+  specified, and whether it is the same identity as the run is unresolved. **Either close `PLC-Q12` and add the
+  8 h, or state the partial build at sign-off** — what must not happen is UAT discovering that an idle line does
+  not interlock.
+- ⚠ **`FW-205`'s watchdog is exercised only through `FW-218`.** The story depends on `FW-N05` for its footage
+  feed; the trial defers `FW-N05` and drives everything from `FW-203`, whose criteria cover in-spec, drifting
+  and out-of-spec traces and a stop edge — **not dropped readings**, which is what condition 5 watches for.
+  That is why `FW-218`'s third endpoint exists and why its fault list is exactly one entry long. **If `FW-218`
+  is cut, condition 5 is assumed rather than tested**, and with backend tests withdrawn nothing else would
+  catch it.
+- ⚠ **`G39` — the simulator is becoming the specification, and its reconciliation is half-built.** Every channel
+  `FW-203` drives is modelled on an unconfirmed reading: the `LineStatus` vocabulary is ours (`OI-35`), the tag
+  map is `[PROPOSED]` throughout (`G32`/`G33`), the footage→weight basis is undecided (`Q10`/`OI-45`) and the
+  cadence has no target (`G9`/`OI-34`, `FW-203`'s own blocker). `[SIM §5.6]`'s **A1–A10 assumption table** is
+  written; commissioning step **`C13`** — *record the observed value for every simulated channel and diff it
+  against the model* — **is not yet in `[COM]`**. Until it is, the assumption table is documentation nobody is
+  required to read, and the divergence surfaces in October, in the window `[PLCC §4]` already calls *"the worst
+  compression in the schedule."*
+- ⚠ **`Spool` cannot represent multi-rod genealogy, and that outlives the trial.** §1.5 records the single-rod
+  spool as a **scope** consequence of the weld removal. It is also a **schema** one: `Spool` carries
+  `ParentRodAlpha` and `SourceRodAlpha` — two single-rod columns, the second documented as the *partial-run*
+  source (`OQ-12`) — and `CoilTraceability` is **coil**-level, not spool-level. So when weld capture returns
+  there is still nowhere to record *"this spool came from rods R00041 and R00042 at these footages."* **Raise it
+  now, while the change is free.** Gap **`G42`**.
+- ⚠ **T4 is the only sprint with no planned hours.** §3 calls the de-stub pass *"planned work, not
+  contingency"*, and `[SP §2.3]` requires one — the check-in stub deliberately routes around `OQ-14`/`OQ-15` by
+  assuming a single active schedule. Yet §2.1 prints **192 h of capacity against an unsized workload**:
+  de-stub, regression, defect fixing, **manual backend contract walkthrough** (§7 — there are no automated
+  backend suites) and UAT support, all in eight days that also have to produce a sign-off. **Size it before T3
+  closes.** An unsized sprint is where the 42 h of margin goes without anyone deciding to spend it.
 
 ---
 

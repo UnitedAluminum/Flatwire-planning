@@ -15,6 +15,14 @@
   so the order is fixed:
 
       1. united_db.dbo.machines                     <- FL1, FL2, FL3            (4a)
+
+  G21 (15 Aug 2026): the ABSENCE of an FL3PO station is DELIBERATE, not an omission.
+  FL1 and FL3 SHARE ONE physical payoff station, FL1PO -- Dashboard 2A maps
+  STATION_BY_LINE = {FL1:"FL1PO", FL3:"FL1PO"}, and the client confirmed rods are
+  never stacked, two maximum, one per payoff (Q71).  RodStaging.Station carries that
+  value and UX_RodStaging_Bay is keyed on it.  DO NOT "fix" this by seeding FL3PO --
+  doing so would let two rods occupy one physical bay with every constraint satisfied,
+  which is exactly the defect G21 recorded.
       2. resolve MachineIdx from what 4a created                                (4b)
       3. CommonDB.dbo.WIPStations                   <- FL1, FL2, FL3, FWPACK    (4c, 4d)
       4. CommonDB.dbo.MachineStationsConfiguration  <- one row per station      (4e)

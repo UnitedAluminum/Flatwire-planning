@@ -36,7 +36,7 @@ Counted from the scripts themselves, not from any document that describes them:
 
 | Object | MVP-1 count | Notes |
 |---|---|---|
-| Tables | **25** | 28 in the full design; the three `PassSchedule*` tables are owned outside MVP-1 |
+| Tables | **28** | ⚠ *This row read **25** until 15 Aug 2026. `D-31` moved the three `PassSchedule*` tables into MVP-1, so the 25-vs-28 split is retired — see `[DBD §6.2]`.* |
 | Foreign keys | **33** | `06_ForeignKeys.sql`; MVP-2's `06b` adds the other 10 of the design's 43 |
 | Indexes | **41** | 39 non-clustered + **2** filtered-unique (`UX_RodStaging_Bay`, `UX_RodStaging_RodActive`) |
 | Procedures | **1** | `sp_GetGaugeTrace`. `sp_ShiftSummary` is MVP-2's and `08` correctly refuses to touch it |

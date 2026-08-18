@@ -1,10 +1,19 @@
 -- ============================================================
--- SCOPE: MVP-2 (deferred) -- moved 11 Aug 2026 from MVP-1/ProjectPlan/Database. NOT part of MVP-1.
--- Requires the MVP-1 chain (00..08) to be deployed first.
+-- SCOPE: MVP-1. Run by FlatWire_DDL_RunAll.sql (decision D-31,
+-- 15 Aug 2026), AFTER the Lookup seed and BEFORE the Materials seed.
+-- ⚠ THAT ORDER IS LOAD-BEARING: Materials seeds FlatWireRun rows whose
+--   PassScheduleId now has a REAL FK into PassSchedule. Seeding
+--   Materials first fails the deployment.
+-- ⚠ DEVELOPMENT AND TRIAL DATA ONLY. MVP-1 has no authoring surface,
+--   so nothing in MVP-1 populates these tables in production -- that
+--   is an open item against the owning track, not something this seed
+--   answers. Supplies the three fixtures the six-screen trial run
+--   depends on: PS-1100-FL1-001 (the FL1 leg), PS-1100-FL2-002 (the
+--   FL2 leg) and PS-1100-FL1-003 (the Draft the status gate refuses).
 -- ============================================================
 -- Flat Wire Mill — Sample Data: PassSchedule + PassScheduleComponent
 -- Run order : after DDL scripts 01 and 02
--- Rows      : 10 PassSchedule  ·  70 PassScheduleComponent (7 per schedule)
+-- Rows      : 11 PassSchedule  ·  77 PassScheduleComponent (7 per schedule)
 -- ============================================================
 --
 -- FK assumptions (FlatWire_SampleData_Lookup.sql must be loaded first):
@@ -25,11 +34,15 @@
 --     1 = EDGE-ROUND-A  (Round)    2 = EDGE-SQUARE-B  (Square)
 --
 -- Coverage matrix
---   Status  : Draft (3) · Active (6) · Inactive (1)
---   LineId  : FL1 (8)   · FL2 (1)    · FL3 (1)
---   Route   : Standalone (3) · Hybrid (7)
---   Alloy   : 1100 (5) · 3003 (2) · 1350 (1) · 5052 (1) · 6061 (1)
---   EdgeType: Round (6) · Square (4)
+--   Status  : Draft (3) · Active (6) · Inactive (2)
+--     ⚠ Bounded by UX_PassSchedule_OneActivePerLineAlloy — one Active
+--       row per LineId + Alloy. Adding an Active schedule to a pair
+--       that already has one means DEMOTING the incumbent, not both
+--       coexisting. That is what happened to PS-1100-FL2-001.
+--   LineId  : FL1 (8)   · FL2 (2)    · FL3 (1)
+--   Route   : Standalone (4) · Hybrid (7)
+--   Alloy   : 1100 (6) · 3003 (2) · 1350 (1) · 5052 (1) · 6061 (1)
+--   EdgeType: Round (7) · Square (4)
 -- ============================================================
 
 USE [FlatWireDB]
@@ -146,12 +159,24 @@ VALUES
  'Bob S.',  '2026-04-22 08:00:00 -05:00',
  NULL, NULL),
 
--- 8 ── 1100 · FL2 · Hybrid · Active ──────────────────────────
+-- 8 ── 1100 · FL2 · Hybrid · Inactive ────────────────────────
 --     FL2 receives pre-drawn round wire from FL1 TKUP-1 spool.
 --     DB1 and DB2 bypassed — wire arrives already sized.
+--     ⚠ DEMOTED Active → Inactive on 15 Aug 2026, and it was not a
+--     free choice: UX_PassSchedule_OneActivePerLineAlloy allows
+--     exactly ONE Active schedule per LineId + Alloy, so FL2/1100
+--     cannot carry this row and the trial's PS-1100-FL2-002 at the
+--     same time. The trial's continuous FL1 → FL2 journey needs a
+--     Standalone FL2 schedule (see row 11), so this one yields.
+--     Kept, not deleted: it is the Hybrid-FL2 coverage case, and
+--     RUN-0004 / the SpoolCheckin seed still reference it — an
+--     Inactive schedule is a legal parent for a historical run.
+--     ⚠ Note a hybrid run is an FL3 run (PS-1100-FL3-001 already
+--     covers that route), which is why an Active FL2-Hybrid row was
+--     the anomalous fixture of the two. Gap G40.
 ('PS-1100-FL2-001',
  '1100 pre-drawn wire → 0.090" × 0.650" square edge — FL2 hybrid',
- '1100', 'FL2', 'Hybrid', 'Active',
+ '1100', 'FL2', 'Hybrid', 'Inactive',
  0.0900, 0.0020,
  0.6500, 0.0060,
  0.3750, 'H19', 'Hard drawn',
@@ -183,7 +208,32 @@ VALUES
  0.3750, 'H19', 'Hard drawn',
  700, 1500,
  'Tim O.',  '2026-04-08 06:45:00 -05:00',
- 'Tim O.',  '2026-04-28 13:30:00 -05:00');
+ 'Tim O.',  '2026-04-28 13:30:00 -05:00'),
+
+-- 11 ── 1100 · FL2 · Standalone · Active ─────────────────────
+--      ⚠ THE TRIAL RUN'S FL2 FIXTURE — TrialRunPlan.md §8 steps 8-9.
+--      Added 15 Aug 2026. The acceptance run produces an FL1 spool
+--      under PS-1100-FL1-001 (Standalone, 0.110" × 0.500") and checks
+--      it into FL2; every other Active FL2 schedule is Hybrid, and
+--      FR-091 has DB5 validate the schedule's route mode against the
+--      spool's ORIGIN route mode. A Standalone-origin spool therefore
+--      had no schedule it could legally be checked in under, and the
+--      trial's one continuous FL1 → FL2 journey could not complete.
+--      Input is this schedule's defining property: it is fed the
+--      0.110" × 0.500" round-edge spool FL1 produced, not rod.
+--      FM2 closes 0.110" → 0.100" and the section spreads to 0.560".
+--      ⚠ InputRodDiameterIn is the diameter of the rod FL1 drew, not
+--      an FL2 input — the column has no spool-fed meaning. Same
+--      reading as PS-1100-FL2-001; do not infer FL2 draws rod.
+('PS-1100-FL2-002',
+ '1100 pre-flattened 0.110" × 0.500" spool → 0.100" × 0.560" round edge — FL2 standalone',
+ '1100', 'FL2', 'Standalone', 'Active',
+ 0.1000, 0.0020,
+ 0.5600, 0.0050,
+ 0.3750, 'H19', 'Hard drawn',
+ 700, 1400,
+ 'Tim O.',  '2026-08-15 09:00:00 -05:00',
+ NULL, NULL);
 GO
 
 -- ============================================================
@@ -379,6 +429,40 @@ VALUES
     ('PS-1100-FL3-001', 'FM2_S1',    'Active', 0.0862, NULL,     5, 2,    NULL, NULL, 0.0870, 0.0862, 'FLS-2024-075'),
     ('PS-1100-FL3-001', 'FM2_S2',    'Active', 0.0856, NULL,     6, 3,    NULL, NULL, 0.0862, 0.0856, 'FLS-2024-075'),
     ('PS-1100-FL3-001', 'FM2_S3',    'Active', 0.0850, NULL,     7, 4,    NULL, NULL, 0.0856, 0.0850, 'FLS-2024-075');
+
+-- ── 11 · PS-1100-FL2-002 · Standalone · Active ──────────────
+-- THE TRIAL RUN'S FL2 FIXTURE. Input is the FL1 TKUP-1 spool —
+-- 0.110" × 0.500" round edge, already flattened by FL1's FM1 — so
+-- there is nothing to draw and DB1/DB2 are wired out.
+-- FM2 closes 0.110" → 0.106" → 0.103" → 0.100" across S1/S2/S3,
+-- with the section spreading 0.500" → 0.560". Edge stays Round to
+-- match the edge FL1 put on the spool.
+-- ⚠ FM1 is Active ONLY because CK_PSC_FM1NotBypassable forces it on
+--   EVERY schedule ("FM1 is not bypassable", SRS §2.8) — the CHECK is
+--   line-blind. Stand.Id 1 puts FM1 on FL1, and an FL2-standalone run
+--   is fed an already-flattened spool, so FL1's 12" mill is not in
+--   this material path at all. Entry = exit here, stated as
+--   pass-through so the gauge chain still reconciles.
+--   Gap G41. Do NOT read this row as FL2 owning a 12" mill, and do
+--   NOT "fix" it by setting Skip — the CHECK rejects the insert.
+--   ⚠ Cross-line component references are NOT wrong in general: an
+--   FL3 schedule legitimately drives FM1 (FL1's) and FM2_S1..S3
+--   (FL2's), because FL3 IS FL1 feeding FL2, and a Hybrid FL1
+--   schedule reaches FM2 for the same reason. The narrow defect is
+--   FM1 forced Active on a STANDALONE FL2 schedule — that one case.
+INSERT INTO [dbo].[PassScheduleComponent]
+    ([PassScheduleId],  [ComponentName], [State],
+     [ParameterValue],  [EdgeType], [Sequence],
+     [StandId], [DrawerId], [EdgerId],
+     [EntryGauge], [ExitGauge], [SetupNo])
+VALUES
+    ('PS-1100-FL2-002', 'DB1',       'Bypass', NULL,   NULL,    1, NULL, NULL, NULL, NULL,   NULL,   'FLS-2026-101'),
+    ('PS-1100-FL2-002', 'DB2',       'Bypass', NULL,   NULL,    2, NULL, NULL, NULL, NULL,   NULL,   'FLS-2026-101'),
+    ('PS-1100-FL2-002', 'FM1',       'Active', 0.1100, NULL,    3, 1,    NULL, NULL, 0.1100, 0.1100, 'FLS-2026-101'),
+    ('PS-1100-FL2-002', 'EdgeSet',   'Active', 0.0020, 'Round', 4, NULL, NULL, 1,    0.1100, 0.1100, 'FLS-2026-101'),
+    ('PS-1100-FL2-002', 'FM2_S1',    'Active', 0.1060, NULL,    5, 2,    NULL, NULL, 0.1100, 0.1060, 'FLS-2026-101'),
+    ('PS-1100-FL2-002', 'FM2_S2',    'Active', 0.1030, NULL,    6, 3,    NULL, NULL, 0.1060, 0.1030, 'FLS-2026-101'),
+    ('PS-1100-FL2-002', 'FM2_S3',    'Active', 0.1000, NULL,    7, 4,    NULL, NULL, 0.1030, 0.1000, 'FLS-2026-101');
 
 END  -- idempotent component-block guard
 GO

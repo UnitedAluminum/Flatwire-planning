@@ -3,19 +3,11 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL2 / FL3
-**Version:** 1.1
-**Last Updated:** August 12, 2026
+**Version:** 1.2
+**Last Updated:** August 15, 2026
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 3 — Active Run Monitor. The operator's continuously displayed screen during a production run.
 **Requirement source:** SRS run-monitoring and pause/resume rules; the four resume outcomes (OI-14); trace behaviour per line
-
----
-
-## Document Change History
-
-| Version | Date | Description |
-|---|---|---|
-| 1.0 | Aug 11, 2026 | **First issue.** Consolidated from the shopfloor dashboard design reference, which was the only home for this screen. Carries the trace display rules, payoff weight indication, the per-line quick-action sets, the redesigned pause dialog with its five reason categories, the four resume outcomes confirmed on August 1 2026, and the shift-summary contribution. Screen styling, layout dimensions, scripting detail and internal verification notes removed for the client issue. |
 
 ---
 

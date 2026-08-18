@@ -64,9 +64,16 @@ GO
 -- "one rod per payoff bay" and "one bay per rod" impossible to
 -- violate, including under concurrent staging from two clients.
 -- ------------------------------------------------------------
+-- G21 (resolved 15 Aug 2026): keyed on [Station], NOT [LineId].
+-- FL1 and FL3 share one physical VPS, so a (LineId, PayoffPosition) key admitted
+-- (FL1,1) AND (FL3,1) as distinct entries for ONE bay -- the invariant this index
+-- exists to defend did not hold. Q24 compounds it: the station switches line by
+-- itself, so LineId is rewritten underneath the key. See 04_Runs for the column.
+-- The RodStaging AGGREGATE enforces the same rule in code; this index is
+-- belt-and-braces, not the sole defence.
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_RodStaging_Bay' AND object_id = OBJECT_ID(N'dbo.RodStaging'))
     CREATE UNIQUE NONCLUSTERED INDEX [UX_RodStaging_Bay]
-        ON [dbo].[RodStaging] ([LineId], [PayoffPosition])
+        ON [dbo].[RodStaging] ([Station], [PayoffPosition])
         WHERE [Status] = 'Staged';
 GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_RodStaging_RodActive' AND object_id = OBJECT_ID(N'dbo.RodStaging'))

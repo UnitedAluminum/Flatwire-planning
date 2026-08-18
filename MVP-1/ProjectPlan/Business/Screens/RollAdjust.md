@@ -3,19 +3,11 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** **FL2 / FL3 only** — not FL1 (see §1.5)
-**Version:** 1.1
-**Last Updated:** August 12, 2026
+**Version:** 1.2
+**Last Updated:** August 15, 2026
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 11 — Roll Adjust. Presented as a **dialog over the paused run**, not as a separate screen (see §1.4).
 **Requirement source:** SRS roll override rules; the August 4 2026 FM2 three-stand correction (decision D-26)
-
----
-
-## Document Change History
-
-| Version | Date | Description |
-|---|---|---|
-| 1.0 | Aug 11, 2026 | **First issue.** Consolidated from the shopfloor dashboard design reference, which was the only home for this screen. The component table has been **rebuilt to the three-stand FM2 model** — the source table was left internally inconsistent by the August 4 2026 correction, listing five rows for three stands with duplicated position labels. Records the run-level override principle, the reason vocabulary, the measurement panel, the change history panel, and the automatic quality-checkpoint linkage. **Settles the line scope as FL2 / FL3** against four sources that disagreed. Screen styling, layout dimensions and scripting detail removed for the client issue. |
 
 ---
 

@@ -3,19 +3,11 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL2 / FL3, and the pre-check-in station
-**Version:** 1.1
-**Last Updated:** August 12, 2026
+**Version:** 1.2
+**Last Updated:** August 15, 2026
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 8 — WIP Rejection. Presented as a **dialog over the screen the operator is already on**, not as a separate screen (see §1.4).
 **Requirement source:** SRS WIP rejection and disposition rules; the blocked-bay release decision (Q23); the no-weld disposition question (Q31)
-
----
-
-## Document Change History
-
-| Version | Date | Description |
-|---|---|---|
-| 1.0 | Aug 11, 2026 | **First issue.** Consolidated from the shopfloor dashboard design reference, which was the only home for this screen. Records the conversion from a standalone screen to a dialog (1 Aug 2026) and the five entry paths that made it necessary, the rejection group and reason vocabulary, the three dispositions, and the July 30 2026 decision that this rejection is what releases a blocked staging bay. Screen styling, layout dimensions and scripting detail removed for the client issue. |
 
 ---
 
