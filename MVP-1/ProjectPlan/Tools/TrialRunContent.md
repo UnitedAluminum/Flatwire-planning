@@ -1,7 +1,7 @@
 # Trial Run Workbook — authored content
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — **client blocker `B4` restated**: the roles are confirmed to exist, so the ask is now the six role **codes** and how they map to the permissions matrix
+**Last Updated:** August 18, 2026 — `FW-002`’s entry removed (cancelled, no longer in the trial) and `FW-159` retitled *(previously August 15, 2026 — **client blocker `B4` restated**: the roles are confirmed to exist, so the ask is now the six role **codes** and how they map to the permissions matrix)*
 **Status:** Source content for a generated workbook
 **Part of:** `ProjectPlan/Tools/` — index: [README.md](README.md)
 
@@ -29,11 +29,11 @@ map them.
 ## Read Me
 
 **Title:** Flat Wire Mill — Six-Screen Trial Run
-**Purpose:** This workbook is the trial-run plan the client asked for on 14 August 2026: six operator screens working, with user acceptance testing signed off, by 30 September 2026. It is generated from the plan of record, so every figure in it reconciles to that document rather than being maintained separately.
+**Purpose:** This workbook is the trial-run plan the client asked for on 14 August 2026: six operator screens working, with user acceptance testing signed off. It is generated from the plan of record, so every figure in it reconciles to that document rather than being maintained separately. The request named 30 September 2026. On the staffed team — three resources at six and a half hours a day, starting 31 August — the work completes 3 November and sign-off follows around 16 November. The Sprint Plan sheet shows what a larger team would buy.
 **Scope:** Six screens — rod check-in, the active run monitor for both lines, the quality checkpoint, the rejection dialog and the finishing-line spool check-in — plus the platform they sit on, pause and resume, and the transaction that creates a finished spool.
 **Headline:** The six screens are 88 hours of screen work. The platform beneath them is 423 hours, which is 54 per cent of the trial. Cutting screens is the weakest lever available; shortening the platform is the strongest, and it is the only place extra people convert directly into calendar time.
-**Reading order:** Start at Effort Summary for the shape of the work, then Sprint Plan for the dates and what each staffing option lands. Work Items is the detail — every task with what it delivers. Blockers is what the plan needs from outside the development team. Deferred Items and Removal Impact are the boundary: what is deliberately not in the trial, and what that costs.
-**One caution:** Effort here is development effort only. Testing, business analysis and contingency are separate and are not included in any figure in this workbook.
+**Reading order:** Start at Effort Summary for the shape of the work, then Sprint Plan for the dates and what a larger team would buy. Work Items is the detail — every task with what it delivers. Blockers is what the plan needs from outside the development team. Deferred Items and Removal Impact are the boundary: what is deliberately not in the trial, and what that costs.
+**One caution:** Effort here is development effort only. Testing, business analysis and contingency are separate and are not included in any figure in this workbook. A day in this workbook is a six-and-a-half-hour day, being the time each resource commits to this project rather than the length of their working day; the hours themselves are unchanged.
 
 ---
 
@@ -181,10 +181,6 @@ The one place shorthand appears. Everywhere else in the workbook these are writt
 **Work item:** Live message definitions
 **Delivers:** One agreed definition of every live message, so the screens and the service cannot drift apart on what a reading contains.
 
-### FW-002
-**Reference title:** `INFLAT` coil status
-**Work item:** Being-flattened material status
-**Delivers:** A rod that is being flattened shows that state everywhere in the business, not only inside the new module.
 
 ### FW-152
 **Reference title:** `FlatWireDB` creation, ordered DDL runner, indexes and grants
@@ -277,7 +273,7 @@ The one place shorthand appears. Everywhere else in the workbook these are writt
 **Delivers:** Checking in a rod records the inspection, the measurements and the run before anything is sent to the machine, and marks the rod as being flattened across the business.
 
 ### FW-159
-**Reference title:** `RodStaging`, the check-in write path and the cross-DB `INFLAT` write
+**Reference title:** `RodStaging`, the check-in write path and the `INFLAT` write
 **Work item:** Check-in write sequence
 **Delivers:** The check-in writes land in the correct order across two databases, so a failure part-way through cannot leave one rod recorded in two different states.
 
@@ -367,7 +363,7 @@ The one place shorthand appears. Everywhere else in the workbook these are writt
 **Delivers:** A supervisor is told when material is held, rather than discovering it at the end of the shift.
 
 ### FW-202
-**Reference title:** FL1 spool completion — stop confirmation, weight basis and the `Spool` write
+**Reference title:** FL1 spool completion — stop confirmation, weight basis and the `SpoolProcessing` write
 **Work item:** Spool completion and weighing
 **Delivers:** The transaction that turns a finished run into a real, weighed, traceable spool. The machine stop is confirmed with the weight held at the moment it stopped, the operator can enter a scale weight instead and is warned if the two disagree, and the spool record is created with its source material and footage. Nothing else in the trial creates the spool that the finishing line checks in.
 
@@ -387,7 +383,7 @@ The one place shorthand appears. Everywhere else in the workbook these are writt
 **Delivers:** Checking in a spool configures the finishing mill and starts its run, and the operator can see what material is waiting to be processed.
 
 ### FW-180
-**Reference title:** `SpoolCheckin` table and the `Spool.OrderNo` index
+**Reference title:** `SpoolCheckin` table and the `SpoolProcessing.OrderNo` index
 **Work item:** Spool check-in records
 **Delivers:** Finishing-line check-ins have somewhere to be recorded, and finding a spool by its order stays fast.
 
@@ -395,6 +391,11 @@ The one place shorthand appears. Everywhere else in the workbook these are writt
 **Reference title:** FL2 null-gauge contract and the Live/Profile binding
 **Work item:** Honest live reading on the finishing line
 **Delivers:** The finishing line states plainly that it has no live thickness measurement, instead of drawing a flat line at target that an operator would reasonably read as a real in-tolerance measurement.
+
+### FW-219
+**Reference title:** FL2/FL3 run-end write-back into the shared schema
+**Work item:** Finished coil recorded plant-wide
+**Delivers:** A finished coil that the rest of the plant can actually see. Completing a coil currently records it in the flat wire system alone, so packing cannot find it, shipping cannot ship it, certification has no chain back to the rod, and it never reaches cost or yield reporting. This creates the same set of records any other finished coil at United Aluminum has — the coil itself, its link to the order, its genealogy back to the source rod, its cost record, its skid and its shop-floor transaction — either all together or not at all, so the coil is never complete on one system and missing from the others. It also settles where a flat wire skid is recorded: in the existing shop-floor skid register, numbered by the existing rule, with no new table built.
 
 ---
 
@@ -435,3 +436,9 @@ The one place shorthand appears. Everywhere else in the workbook these are writt
 **Blocker:** Nine open questions with agreed workarounds
 **What we need:** Answers in due course on the footage-to-weight basis, which identifier the spool check-in scans, how a spool produced on the hybrid line is treated at the finishing line, what happens when no schedule matches, which order field carries the coil weight range, how a short close is transacted, and the live-data performance targets.
 **Consequence if late:** None immediately. Each has an agreed assumption the trial builds against, and a pass is scheduled in the final sprint to replace those assumptions once answers arrive.
+
+### B6
+**Reference:** Q34 / Q35 / Q36 — three shared-record values with no flat wire precedent
+**Blocker:** Three plant-record values await confirmation
+**What we need:** Three values that a finished flat wire coil must carry in the existing plant records, each a question about systems that already exist rather than a design choice. First, the transaction name a flat wire coil completion should carry in the shop-floor history, and whether any current report or process filters on that name. Second, whether a finished flat wire coil should carry the existing on-skid status or needs one of its own. Third, what sample number and planned operations it should carry when they cannot be inherited from the rod. We have proposed an answer to each and each is a single-line change if the answer differs.
+**Consequence if late:** The work can be **built and tested against development copies**, but **must not run against live plant data**. Getting one of these wrong does not raise an error — it writes a value an existing report may quietly filter out, and the impact review that would have identified which reports care was removed along with the shared-schema migration.

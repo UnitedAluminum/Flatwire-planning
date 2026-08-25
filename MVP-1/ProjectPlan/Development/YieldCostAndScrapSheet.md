@@ -1,7 +1,7 @@
 # Flat Wire Mill — Yield, Cost Ledger & Scrap (Phase 12) Sheet
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 13, 2026 — initial publication
+**Last Updated:** August 18, 2026 — **`D-32`: there is no shared-schema migration.** The FW-001 yield-form field renames are cancelled; ⚠ **rung 4 is deliberately held at 67 h** — the renames were never priced as a separate line, so there is no defensible figure to subtract *(previously August 13, 2026 — initial publication)*
 **Document Type:** Phase sheet — scope, story-level effort on both delivery bases, descope role, blockers
 **Status:** Published — **⚠ the phase is 177 h with no requirement specification for three of its four stories** (§3)
 **Estimating unit:** **hours**. Day figures are derived (**1 dev-day = 8 h**) and shown only as a reading aid.
@@ -41,7 +41,7 @@
 | **User roles** | Production controller · Cost accountant · Scrap operator |
 | **Priority** | Medium / Low — *"first candidates to slip past the Sep 30 window (post-trial acceptable)"* |
 
-**Surfaces touched:** the yield form (a *"Flat Wire"* checkbox plus FW-001 field renames), cost ledger configuration,
+**Surfaces touched:** the yield form (a *"Flat Wire"* checkbox ~~plus FW-001 field renames~~ — **the renames are cancelled, `D-32`, 18 Aug 2026**; the form reads the existing field names), cost ledger configuration,
 and the scrap module outlet. It extends the existing `CoilYield`, `CoilCosting` and scrap services rather than building
 new ones, and it **reads** `CoilTraceability` / `WeldEvent` / `CoilOutput` without writing them.
 
@@ -63,7 +63,7 @@ The hand-coded discipline columns are Phase 12's published figures from
 | 1 | **FW-110** Scrap module — Box/Skid outlet *(Low)* | 12 | 12 | — | 5 | 4 | **33** | 4.1 |
 | 2 | **FW-102** Cost Ledger — flat-wire costing config *(Medium)* | 12 | 20 | 4 | 7 | 6 | **49** | 6.1 |
 | 3 | **FW-101** Weld traceability in yield *(High)* | — | 16 | 4 | 4 | 4 | **28** | 3.5 |
-| 4 | **FW-100** + remainder — footage weight, yield form, FW-001 renames | 20 | 24 | 4 | 10 | 9 | **67** | 8.4 |
+| 4 | **FW-100** + remainder — footage weight, yield form, ~~FW-001 renames~~ *(cancelled, `D-32`)* | 20 | 24 | 4 | 10 | 9 | **67** | 8.4 |
 | | | **44** | **72** | **12** | **26** | **23** | **177** | **22.1** |
 
 **This table reconciles exactly in both directions** — the four rung totals are the ladder's published 33 / 49 / 28 /
@@ -195,8 +195,9 @@ TBD placeholder** — one of only four such placeholders in the phase files.
 ### What is buildable now, and what is not
 
 **Buildable today, without any further answer:**
-- The **FW-001 field renames** on the yield form (*"Outgoing Gauge"* → *"Outgoing Gauge/Diameter"*, *"Coil #"* →
-  *"Coil/Bundle #"*, *"Gauge"* → *"Gauge/Diameter"*) and the **"Flat Wire" checkbox** — rung 4's FE.
+- ⚠ ~~The **FW-001 field renames** on the yield form~~ — **CANCELLED 18 Aug 2026, `D-32`: there is no shared-schema migration**, so the labels below are not applied and the form keeps the existing names. Retained as the record of what was cancelled (*"Outgoing Gauge"* → *"Outgoing Gauge/Diameter"*, *"Coil #"* →
+  *"Coil/Bundle #"*, *"Gauge"* → *"Gauge/Diameter"*). **The "Flat Wire" checkbox is unaffected and is still buildable today** — rung 4's FE.
+  > ⚠ **Rung 4 is deliberately left at 67 h.** The renames were part of its FE 20 h but were never priced as a separate line, so there is no defensible figure to subtract. **Re-price rung 4's FE when the phase is planned rather than carrying an invented reduction.** `[CE §3c]` re-derives Phases 1C and 7, which *were* separable, and does not touch this one.
 - The **weight service structure**. The formula is settled by `FR-332`/`FR-332a`, including the correction that the
   mockup's `14,200 ft × 0.069 lb/ft` **must not be implemented** (0.069 back-solves to ρ = 0.0836 lb/in³, which is not
   aluminium; `spool_notification.js`'s `24,900 ft × 0.0809 = 2,014 lb` is the correct reference). Only the

@@ -1,8 +1,8 @@
 -- ============================================================
 -- Flat Wire Mill — DDL Script 01: Lookup / Reference Tables
 -- Run order : 01 of 09
--- Tables    : Stand, Drawer, Edger, SpoolConfiguration, AlloyProperty,
---             PayoffPosition
+-- Tables    : Stand, Drawer, Edger, Dancer, AlloyProperty,
+--             PayoffPosition, Spool   (7)
 -- Dependencies: 00_Database (FlatWireDB)
 -- ============================================================
 
@@ -144,7 +144,7 @@ GO
 -- is added, because that is contingent on the answer and PassScheduleComponent
 -- is MVP-2. See [PLC 5.5] and ClientCall_2026-07-23_SyncPlan.md 3.1.
 -- ---------------------------------------------------------------------------
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name = 'Dancer' AND xtype = 'U')
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Dancer]') AND type = N'U')
 BEGIN
     CREATE TABLE [dbo].[Dancer] (
         [Id]                  INT         NOT NULL IDENTITY(1,1),
@@ -170,35 +170,6 @@ ELSE
     PRINT 'Table already exists: Dancer';
 GO
 
--- ------------------------------------------------------------
--- SpoolConfiguration
--- Reference table for spool types. Defines weight and
--- dimensional constraints validated at FL2/FL3 check-in.
--- ------------------------------------------------------------
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SpoolConfiguration]') AND type = N'U')
-BEGIN
-    CREATE TABLE [dbo].[SpoolConfiguration] (
-        [Id]                 INT          NOT NULL IDENTITY(1,1),
-        [Name]               VARCHAR(50)  NOT NULL,         -- configuration name (e.g. 15lb, 30lb)
-        [MinWeightLb]        DECIMAL(8,2) NOT NULL,         -- minimum acceptable spool weight (lb)
-        [MaxWeightLb]        DECIMAL(8,2) NOT NULL,         -- maximum acceptable spool weight (lb)
-        [MinCoreDiameterIn]  DECIMAL(8,4) NOT NULL,         -- minimum core (inside arbor) diameter (in)
-        [MaxCoreDiameterIn]  DECIMAL(8,4) NOT NULL,         -- maximum core diameter (in)
-        [MinOuterDiameterIn] DECIMAL(8,4) NOT NULL,         -- minimum outer diameter of loaded spool (in)
-        [MaxOuterDiameterIn] DECIMAL(8,4) NOT NULL,         -- maximum outer diameter of loaded spool (in)
-        [IsActive]           BIT          NOT NULL CONSTRAINT [DF_SpoolConfig_IsActive] DEFAULT (1),  -- soft-delete flag (consistent with other lookups)
-
-        CONSTRAINT [PK_SpoolConfiguration]         PRIMARY KEY CLUSTERED ([Id] ASC),
-        CONSTRAINT [UQ_SpoolConfig_Name]           UNIQUE ([Name]),
-        CONSTRAINT [CK_SpoolConfig_Weight]         CHECK ([MinWeightLb] < [MaxWeightLb]),
-        CONSTRAINT [CK_SpoolConfig_CoreDiam]       CHECK ([MinCoreDiameterIn] < [MaxCoreDiameterIn]),
-        CONSTRAINT [CK_SpoolConfig_OuterDiam]      CHECK ([MinOuterDiameterIn] < [MaxOuterDiameterIn])
-    );
-    PRINT 'Created table: SpoolConfiguration';
-END
-ELSE
-    PRINT 'Table already exists: SpoolConfiguration';
-GO
 
 -- ------------------------------------------------------------
 -- AlloyProperty
@@ -312,4 +283,91 @@ IF NOT EXISTS (SELECT 1 FROM [dbo].[PayoffPosition] WHERE [Id] = 2)
 IF NOT EXISTS (SELECT 1 FROM [dbo].[PayoffPosition] WHERE [Id] = 3)
     INSERT INTO [dbo].[PayoffPosition] ([Id],[Code],[DisplayName],[Equipment],[MaxWeightLb],[IsRodFed])
     VALUES (3, 'TraversingTakeup', 'Traversing take-up (FL2)', 'TraversingTakeup', NULL, 0);
+GO
+
+-- ------------------------------------------------------------
+-- Spool
+-- The REUSABLE PHYSICAL ARTICLE a spool of wire is wound onto --
+-- stencilled like a furnace plate, 30 purchased with 15 more under
+-- consideration, all one standard size (client, 20 Aug 2026).
+--
+-- SpoolConfiguration WAS MERGED INTO THIS TABLE, 23 Aug 2026. It was a
+-- SIZE CLASS (15lb / 30lb, with min/max weight and diameters) that held
+-- exactly ONE meaningful row -- the client confirmed every article is the
+-- same size -- while the articles number 30-45. The limits now live here,
+-- per article: Min/MaxWeightLb, Min/MaxCoreDiameterIn, Min/MaxOuterDiameterIn.
+-- Nothing in the schema was a carrier before 22 Aug 2026 (OI-120).
+--
+-- THE TRADE, stated because it is real. This DENORMALISES: the same eight
+-- values are repeated on all 30-45 rows, and a second purchased size means
+-- an UPDATE of many rows where the old shape needed one INSERT. It is worth
+-- it only while "every article is one size" holds. IF THE CLIENT CONFIRMS A
+-- SECOND SIZE, revisit the merge -- the fallback below stops being
+-- well-defined at exactly that moment.
+--
+-- THE NULLABLE-LIMITS FALLBACK. SpoolProcessing.SpoolId is NULLABLE by
+-- design (Q42 is open and nothing seeds articles in production yet), so a
+-- material row may have no article and therefore no limits to validate
+-- against. The documented fallback is ANY ACTIVE Spool ROW'S LIMITS --
+-- well-defined precisely because all articles are one size. It needs no
+-- external constant, which is the point: the previous shape had to keep a
+-- one-row table alive to answer the same question.
+--
+-- WHY THE STENCIL IS THE KEY. The operator types what is painted on
+-- the steel and the screen validates it against this list -- NOT a
+-- drop-down, because 30-45 rows is too long to scroll on a shopfloor
+-- panel (client, 20 Aug 2026). Matched case-insensitively by the
+-- database's default collation: the operator is reading paint.
+--
+-- The carrier OUTLIVES the material on it. SpoolProcessing.Alpha is
+-- the material identity; this is the article. Do not conflate them --
+-- that is the distinction SpoolQueue.md open item 1 was raised to force.
+--
+-- RENAMED 23 Aug 2026: this table was SpoolCarrier, and the material
+-- table was Spool. The names are SWAPPED -- physically a spool IS the
+-- reusable article, so it belongs here in Lookup beside Stand / Drawer /
+-- Edger / Dancer, and the material record is now SpoolProcessing in
+-- 03_Materials. CarrierNo became SpoolNo, matching the "Spool number"
+-- label SpoolQueue.md already shows the operator.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Spool]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[Spool] (
+        [Id]                 INT          NOT NULL IDENTITY(1,1),
+        [SpoolNo]            VARCHAR(20)  NOT NULL,         -- the stencilled string, e.g. S1 .. S45 (format open, Q42)
+        [SizeClass]          VARCHAR(50)  NULL,             -- descriptive size name, e.g. 'TKUP-1 Intermediate Spool'.
+                                                           -- NOT unique: every article is the same size, so they all
+                                                           -- share one name. Was SpoolConfiguration.Name, which DID
+                                                           -- carry UQ_SpoolConfig_Name -- that constraint cannot
+                                                           -- survive the merge and is deliberately not recreated.
+        -- MERGED FROM SpoolConfiguration, 23 Aug 2026. Limits are now per ARTICLE.
+        -- Validated at FL2/FL3 check-in against the material being wound on this article.
+        [MinWeightLb]        DECIMAL(8,2) NULL,             -- minimum acceptable loaded weight (lb)
+        [MaxWeightLb]        DECIMAL(8,2) NULL,             -- maximum acceptable loaded weight (lb)
+        [MinCoreDiameterIn]  DECIMAL(8,4) NULL,             -- minimum core (inside arbor) diameter (in)
+        [MaxCoreDiameterIn]  DECIMAL(8,4) NULL,             -- maximum core diameter (in)
+        [MinOuterDiameterIn] DECIMAL(8,4) NULL,             -- minimum outer diameter of the loaded article (in)
+        [MaxOuterDiameterIn] DECIMAL(8,4) NULL,             -- maximum outer diameter of the loaded article (in)
+        [IsActive]           BIT          NOT NULL CONSTRAINT [DF_Spool_IsActive] DEFAULT (1),  -- soft delete, per the other lookups
+        [Notes]              VARCHAR(200) NULL,             -- e.g. "re-stencilled 08/2026", "withdrawn - damaged flange"
+
+        CONSTRAINT [PK_Spool]        PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [UQ_Spool_No]     UNIQUE ([SpoolNo]),
+        -- Carried over from CK_SpoolConfig_*. NULL-tolerant now that the columns are
+        -- nullable: a CHECK accepts UNKNOWN, so a half-populated band would be admitted.
+        -- All-or-nothing per band is therefore asserted explicitly.
+        CONSTRAINT [CK_Spool_Weight]    CHECK (([MinWeightLb] IS NULL AND [MaxWeightLb] IS NULL)
+                                            OR ([MinWeightLb] IS NOT NULL AND [MaxWeightLb] IS NOT NULL
+                                                AND [MinWeightLb] < [MaxWeightLb])),
+        CONSTRAINT [CK_Spool_CoreDiam]  CHECK (([MinCoreDiameterIn] IS NULL AND [MaxCoreDiameterIn] IS NULL)
+                                            OR ([MinCoreDiameterIn] IS NOT NULL AND [MaxCoreDiameterIn] IS NOT NULL
+                                                AND [MinCoreDiameterIn] < [MaxCoreDiameterIn])),
+        CONSTRAINT [CK_Spool_OuterDiam] CHECK (([MinOuterDiameterIn] IS NULL AND [MaxOuterDiameterIn] IS NULL)
+                                            OR ([MinOuterDiameterIn] IS NOT NULL AND [MaxOuterDiameterIn] IS NOT NULL
+                                                AND [MinOuterDiameterIn] < [MaxOuterDiameterIn]))
+    );
+    PRINT 'Created table: Spool';
+END
+ELSE
+    PRINT 'Table already exists: Spool';
 GO

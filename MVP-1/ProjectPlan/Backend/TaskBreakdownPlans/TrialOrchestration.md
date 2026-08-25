@@ -79,7 +79,7 @@ template** to work from anyway.
 >
 > | Constraint | Why | Plan |
 > |---|---|---|
-> | **`FW-202` before Phase 8 *starts*, not beside it** | It writes the `Spool` row DB5 reads. `[TRP §3]`: *"In a five-day sprint that is a real sequencing constraint, not a formality"* | [FW-179 §4](FW-179-CheckIn-Spool-And-Spools-Query.md) |
+> | **`FW-202` before Phase 8 *starts*, not beside it** | It writes the `SpoolProcessing` row DB5 reads. `[TRP §3]`: *"In a five-day sprint that is a real sequencing constraint, not a formality"* | [FW-179 §4](FW-179-CheckIn-Spool-And-Spools-Query.md) |
 > | **`FW-218` before the acceptance run** | Three of `[TRP §8]`'s ten steps cannot be executed without a control surface (§7) | [FW-218](FW-218-Sim-Control-Surface.md) |
 >
 > For the **Phase-1B** stories in T1, the dependency waves and the 134 h critical path are in
@@ -92,7 +92,7 @@ template** to work from anyway.
 | **FE** | `FW-N03` · `FW-130` · `FW-131` · `FW-132` · **`FW-133` 75** · `FW-134` | 139 |
 | **BE** | [FW-N04](FW-N04-FlatWire-Solution-Skeleton.md) · [FW-138](FW-138-Fifteen-Thin-Controllers.md) *(8 controllers)* · [FW-139](FW-139-MediatR-Registration-And-Pipeline-Behaviours.md) · [FW-140](FW-140-DI-Registration-And-Stub-Swap.md) · [FW-141](FW-141-Repository-Layer.md) · [FW-142](FW-142-Dapper-EF-And-FlatWireDbContext.md) · [FW-143](FW-143-Serilog-And-Audit-Log.md) · [FW-144](FW-144-Configuration-Binding.md) · [FW-145](FW-145-JWT-And-Role-Policies.md) · [FW-146](FW-146-Exception-Middleware-And-Envelope.md) · [FW-147](FW-147-FluentValidation-Value-Objects-And-Enums.md) · [FW-148](FW-148-Health-Checks.md) · [FW-207](FW-207-Domain-Model.md) · [FW-208](FW-208-Domain-Events-Post-Commit-Dispatch.md) | 145 |
 | **RT** | `FW-135` · `FW-136` · `FW-137` *(Angular)* · [FW-080](FW-080-FlatWireHub.md) · [FW-149](FW-149-IFlatWireClient.md) | 60 |
-| **DB** | `FW-002` · `FW-152` · `FW-005` · `FW-004` · `FW-006` · **`FW-007` 31** | 65 |
+| **DB** | ~~`FW-002`~~ *(cancelled, `D-32`)* · `FW-152` · `FW-005` · `FW-004` · `FW-006` · **`FW-007` 31** | 65 *(62 after `D-32`; published figure held — see `[TRP §2.1]`)* |
 
 > **`FW-133` (75 h) is the single largest story in the trial and all six screens depend on
 > it** — `pass-schedule-table`, `confirm-bar`, `gauge-trace-chart`, `tab-wizard`,
@@ -117,7 +117,7 @@ template** to work from anyway.
 | **new** | **`FW-202` 67** — FL1 spool completion, Part B | 67 |
 | **Phase 8** | `FW-064` · `FW-178` · [FW-179](FW-179-CheckIn-Spool-And-Spools-Query.md) · `FW-180` · [FW-181](FW-181-FL2-Null-Gauge-Contract.md) | 38 |
 
-> ⚠ **`FW-202` must land *before* Phase 8 starts, not beside it** — it writes the `Spool` row
+> ⚠ **`FW-202` must land *before* Phase 8 starts, not beside it** — it writes the `SpoolProcessing` row
 > DB5 reads. `[TRP §3]`: *"In a five-day sprint that is a real sequencing constraint, not a
 > formality."*
 
@@ -172,7 +172,7 @@ accept it as untestable.
 |---|---|---|
 | **DB1** `FW-060` + `FW-154` | 42 | [FW-164](FW-164-Run-Queries-And-RunQueryService.md)'s `GET /run/active` becomes the landing route; [FW-177](FW-177-Exception-Broadcasts.md)'s `AlertRaised` **loses its consumer** and is built anyway |
 | **DB2A + weld** `FW-N01`, `FW-158`, `FW-160`, `FW-063`, `FW-166` | 70 | [FW-157](FW-157-CheckIn-Rod-And-CheckInService.md) runs without `RodStaging`; [FW-172](FW-172-Run-Event-Markers.md)'s weld marker renders empty |
-| **`FW-001`** shared-schema renames | 36 | **Highest blast radius in the plan.** *"A trial does not need it; production does"* |
+| ~~**`FW-001`**~~ shared-schema renames — **CANCELLED outright, `D-32`, 18 Aug 2026; no longer a descope decision** | 36 | **Highest blast radius in the plan.** *"A trial does not need it; production does"* |
 | **[`FW-N05`](FW-N05-OPC-Ingest-And-Bounded-Channel.md)** real OPC ingest | 22 | *"Not verifiable without the hardware"* — October commissioning |
 | **`FW-N06`** alert rules engine | 28 | Its only consumer was DB1's alert bar |
 | Spool completion **Part A** | 25 | `Should`, advisory. **Part B (`FW-202`) is `Must` and stays** |

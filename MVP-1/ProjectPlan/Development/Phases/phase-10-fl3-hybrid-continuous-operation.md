@@ -32,8 +32,8 @@
 ## UI / Backend / Database / Real-Time
 Reuses Phases 4–6, 9 with FL3 mode flags:
 - **UI:** Dashboard 2/3 FL3 variants (`*_fl3.html`); action bar includes Roll Adjust.
-- **Backend:** `CheckInRod` with route=Hybrid → `PLCTagService` pushes **all** FM1+FM2 tags in one batch; no `Spool` row created; `FlatWireRun.RouteMode=Hybrid`.
-- **Database:** `FlatWireRun(RouteMode=Hybrid)`; no intermediate `Spool`; `CoilOutput`/`CoilTraceability` as in Phase 9.
+- **Backend:** `CheckInRod` with route=Hybrid → `PLCTagService` pushes **all** FM1+FM2 tags in one batch; no `SpoolProcessing` row created; `FlatWireRun.RouteMode=Hybrid`.
+- **Database:** `FlatWireRun(RouteMode=Hybrid)`; no intermediate `SpoolProcessing`; `CoilOutput`/`CoilTraceability` as in Phase 9.
 - **Real-Time:** continuous `GaugeReading`/`WidthReading` end-to-end (no FL2 historical switch).
 
 ## Integration Flow

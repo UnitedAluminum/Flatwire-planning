@@ -1,5 +1,6 @@
 -- ============================================================
--- SCOPE: MVP-1. Run by FlatWire_DDL_RunAll.sql (decision D-31,
+-- SCOPE: MVP-1. Run by FlatWire_SampleData_RunAll.sql -- NOT by the schema
+-- runner, which stopped seeding on 19 Aug 2026. (Scope: D-31,
 -- 15 Aug 2026), AFTER the Lookup seed and BEFORE the Materials seed.
 -- ⚠ THAT ORDER IS LOAD-BEARING: Materials seeds FlatWireRun rows whose
 --   PassScheduleId now has a REAL FK into PassSchedule. Seeding
@@ -40,7 +41,9 @@
 --       that already has one means DEMOTING the incumbent, not both
 --       coexisting. That is what happened to PS-1100-FL2-001.
 --   LineId  : FL1 (8)   · FL2 (2)    · FL3 (1)
---   Route   : Standalone (4) · Hybrid (7)
+--   Route   : Standalone (5) · Hybrid (6)   [measured 23 Aug 2026]
+--             The 11th row, PS-1100-FL2-002, was added 15 Aug 2026 for gap G40
+--             and was never folded into this tally, which read 4/7 until now.
 --   Alloy   : 1100 (6) · 3003 (2) · 1350 (1) · 5052 (1) · 6061 (1)
 --   EdgeType: Round (7) · Square (4)
 -- ============================================================

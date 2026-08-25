@@ -1,9 +1,9 @@
 # Flat Wire Mill — Task Breakdown and Backlog
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — **`G6` resolved on both blocked story cards** (`FW-145` and the Angular guard story): the six roles exist as JWT claims on `ClaimTypes.Role` *(earlier: **the machine simulator story set minted**: `FW-210`–`FW-215` (**111 h dev** — RT 64 · FE 24 · BE 23) and `FW-217` (+24 h), specified in [`MachineSimulator.md`](../Architecture/MachineSimulator.md) `[SIM]`, gap **`G39`**. **Additive to `[CE §3b]`** like `FW-202`/`203`/`204`; **`FW-203` is unchanged** and becomes `FW-211`'s first increment. ⚠ **`FW-209` was already taken** — the next free id is now `FW-218`, and `FW-216` is deliberately skipped *(otherwise August 14, 2026 — **`FW-203`** (plant-data feed simulator, 8 h) and **`FW-204`** (minimal landing route, 8 h) minted for the trial run, both additive to `[CE §3b]` and both deliberately absent from `[SSP §5]`. Earlier same day: **`FW-202` minted** (FL1 spool completion — stop confirmation, weight basis and the `Spool` write, **98 h**) and `FW-N02` reduced to Part A; gap **`G37`** *(otherwise August 13, 2026)* — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure)*. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
-**Document Type:** The MVP-1 shopfloor backlog — 116 stories, the descope ladder, the coverage matrix
-**Status:** **Authoritative for MVP-1 shopfloor delivery** — **116 stories / 3,292 h**, plus **`FW-202`** *(new 14 Aug 2026, gap `G37`)*, which is **additive and deliberately outside that baseline**: its 98 h base / 136 h all-in is carried in `[TRP]` and is **not** folded into the 3,292 h or into Phase 8's 118 h. **Keep citing "116 stories / 3,292 h"** — it is quoted in five other documents and re-counting it here would drift them all
+**Last Updated:** August 25, 2026 — **`FW-224` recorded as reserved**; the FL2 `422` acceptance criterion withdrawn; `CoilNo` rename completed; object count 34 → 33 *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `FW-001` and `FW-002` **cancelled**; `FW-176`'s shared-`coils` column line cancelled with them; `FW-186`, `FW-201` and the FL1/FL2/FL3 machine story lose the acceptance criteria and dependencies that referenced them. **Phase 1C 221 → 138 h · Phase 7 205 → 182 h · Phase 1 1,110 → 1,027 h · baseline 116 / 3,292 h → 114 live / 3,186 h** *(earlier: **`G6` resolved on both blocked story cards** (`FW-145` and the Angular guard story): the six roles exist as JWT claims on `ClaimTypes.Role`; earlier still: **the machine simulator story set minted**: `FW-210`–`FW-215` (**111 h dev** — RT 64 · FE 24 · BE 23) and `FW-217` (+24 h), specified in [`MachineSimulator.md`](../Architecture/MachineSimulator.md) `[SIM]`, gap **`G39`**. **Additive to `[CE §3b]`** like `FW-202`/`203`/`204`; **`FW-203` is unchanged** and becomes `FW-211`'s first increment. ⚠ **`FW-209` was already taken** — `FW-218` was the next free id and is now used; **the next free id is `FW-220`** (`FW-219` = the FL2/FL3 run-end shared write-back, minted 18 Aug 2026), and `FW-216` is deliberately skipped *(otherwise August 14, 2026 — **`FW-203`** (plant-data feed simulator, 8 h) and **`FW-204`** (minimal landing route, 8 h) minted for the trial run, both additive to `[CE §3b]` and both deliberately absent from `[SSP §5]`. Earlier same day: **`FW-202` minted** (FL1 spool completion — stop confirmation, weight basis and the `SpoolProcessing` write, **98 h**) and `FW-N02` reduced to Part A; gap **`G37`** *(otherwise August 13, 2026)* — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure)*. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*
+**Document Type:** The MVP-1 shopfloor backlog — 116 story ids (**114 live**), the descope ladder, the coverage matrix
+**Status:** **Authoritative for MVP-1 shopfloor delivery** — **114 live stories / 3,186 h** *(re-baselined 18 Aug 2026 by `D-32`; previously **116 / 3,292 h**)*, plus **`FW-202`** *(new 14 Aug 2026, gap `G37`)*, which is **additive and deliberately outside that baseline**: its 98 h base / 136 h all-in is carried in `[TRP]` and is **not** folded into the 3,186 h or into Phase 8's 118 h.<br>⚠ **The baseline moved deliberately and this is the pass that moves it.** `D-32` cancels `FW-001` (56 h) and `FW-002` (4 h) outright and `FW-176`'s 16 h shared-`coils` column line, re-deriving **Phase 1C 221 → 138 h** and **Phase 7 205 → 182 h** from the reduced bases: **−106 h all-in.** Both phases sit wholly inside MVP-1, so the subtraction is valid whatever composition produced the 3,292 h. **Now cite "114 stories / 3,186 h"**, and expect the old pair to survive in documents this pass did not reach — the figure is quoted in five others and in `[CE]`, which is **not** re-derived (`[CE §8]`). **The 116 id count is unchanged** — ids are frozen and `FW-001`/`FW-002` keep theirs as cancelled cards.
 **Owner:** Delivery lead / programme management
 **Audience:** Delivery lead, scrum team, developers, QA
 **Shortcode:** `[TB]`
@@ -13,7 +13,7 @@
 
 ## 7. Backlog
 
-**116 stories / 3,292 h across four sprints and 15 phase specifications.** Every story carries a `Rate-card basis:` line, and each phase closes on its `CapacityAndEffortModel.md` §3b figure.
+**114 live stories / 3,186 h across four sprints and 15 phase specifications** *(116 ids, two cancelled by `D-32` on 18 Aug 2026; previously 3,292 h)*. Every story carries a `Rate-card basis:` line, and each phase closes on its `CapacityAndEffortModel.md` §3b figure — **except Phases 1C and 7, which `D-32` re-derives here** (138 h and 182 h) and which `[CE §3b]` still publishes at 221 h and 205 h.
 
 ### 7.1 How stories are sized
 
@@ -44,17 +44,19 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Dates:** Thu 30 Jul – Fri 14 Aug 2026 · **12 working days** · **96 h/person**
 **Phases:** 1A Angular Foundation · 1B Backend Foundation · 1C Database Foundation
-**Hours:** **1,110** (1A 370 · 1B 519 · 1C 221) · **Required FTE: 11.6**
+**Hours:** **1,027** (1A 370 · 1B 519 · 1C 138) · **Required FTE: 10.7** — ⚠ **re-derived 18 Aug 2026, `D-32`** *(previously **1,110**, 1C at 221, FTE 11.6)*
 **Goal:** stand up the platform. Every later phase assumes it exists.
 
 **Entry criteria:** roster confirmed; `FlatWireDB` server available; `ual-angular` / `ual-api` branches cut.
-**Exit criteria:** Angular library scaffolded and building; `FlatWire` four-project solution with stubbed controllers returning contracted shapes; `FlatWireHub` skeleton broadcasting simulated data; `PLCTagService` in simulate mode; `FlatWireDB` deployed with **25 tables, 33 FKs, 1 procedure, 1 trigger** and full seed; FW-001 impact audit complete.
+**Exit criteria:** Angular library scaffolded and building; `FlatWire` four-project solution with stubbed controllers returning contracted shapes; `FlatWireHub` skeleton broadcasting simulated data; `PLCTagService` in simulate mode; `FlatWireDB` deployed with **33 tables, 55 FKs, 1 procedure, 1 trigger** and full seed *(the 25/33 figures predate `D-31`)*. ~~FW-001 impact audit complete.~~ — **struck, `D-32`: there is no migration and no audit.**
 **Demo:** scaffolded UI ↔ stubbed service ↔ created schema ↔ simulated hub, end to end.
 **Gates:** **M1 (14 Aug) hard gate** · **QA0** (Jest smoke; **signed-off manual contract walkthrough + `/health` shape** — 1B carries no automated tests, `[TS §1.2]`; DDL/seed idempotency + post-run table checks) · **effort calibration checkpoint** (model §6).
 
 > **1A, 1B and 1C run in parallel** and converge only on `04-APIContract.md` and the seed fixtures (`R00041–R00043`, `SP-00021`, `RUN-0042/0043`). 1A is not blocked by 1B/1C because it develops against the mock API and mock SignalR (`useMockData: true`); 1B ships stub endpoints first.
 >
-> **⚠ The model predicts this gate fails.** **1,110 h** in 12 working days needs **11.6 FTE on Phase 1 alone**. 1A/1B/1C genuinely parallelise, so this is a headcount problem, not a sequencing one. *(The widely-quoted **1,027 h / 10.7 FTE** is the pre-14-Aug basis and survives in `[CE §2]`–`§5`, which are deliberately not re-derived — see `[CE §8]`.)*
+> **⚠ The model still predicts this gate fails.** **1,027 h** in 12 working days needs **10.7 FTE on Phase 1 alone**. 1A/1B/1C genuinely parallelise, so this is a headcount problem, not a sequencing one, and `D-32` has not changed that — it has moved the requirement from 11.6 FTE to 10.7.
+>
+> ⚠ **Do not read the new figure as a revert — the collision is a coincidence and it is a trap.** The **1,027 h / 10.7 FTE** that `[CE §2]`–`§5` carry is the **pre-14-Aug basis**, composed differently (it predates the 1B restatements). The 1,027 h above is the **post-`D-32`** figure and is composed **1A 370 · 1B 519 · 1C 138**. Two different derivations that happen to land on the same number; check the composition, never the total, when deciding which basis a document is on. *(`[CE §2]`–`§5` are still deliberately not re-derived — see `[CE §8]`.)*
 
 ---
 
@@ -376,7 +378,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] A smoke insert→select round-trips through EF against every table
 - [ ] **The three `PassSchedule*` tables are not mapped** — they are owned outside MVP-1
 
-**Rate-card basis:** context + mapping across 24 tables, priced as a non-trivial service (24 h, §2)
+**Rate-card basis:** context + mapping across 24 tables, priced as a non-trivial service (24 h, §2). ⚠ **The table count in this derivation is stale — flagged, not substituted (23 Aug 2026).** The live figure is `[DBD §6.2]`. Replacing the count without re-deriving the hours would make the arithmetic lie, and per the standing convention an effort change lands in an **additive new sheet, never an in-place edit of a total**. **Owed: re-derive against `[DBD §6.2]` using `[CE §2]`'s rate card** — `[CE]`'s owner, not this document's.
 **Dependencies:** FW-N04; converges with FW-006 / FW-007
 **Blockers:** —
 
@@ -661,6 +663,161 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
+###### FW-219 · FL2/FL3 run-end write-back into the shared schema
+**Hours:** 40 h (DB 26 · BE 14) · **Priority:** Critical · **Sprint:** S3 · **Phase:** 9 · **Stream:** DB + BE
+
+> **New 18 Aug 2026, client-directed.** Until now a completed FL2/FL3 coil was written **only** to
+> `FlatWireDB`. From `proddb`/`united_db`'s point of view the finished goods did not exist: no `coils` row,
+> no order link, no genealogy, no cost record, no skid, no WIP log entry — and **not one of those tables was
+> named anywhere in this repository**. Packing, shipping, certification, cost and yield all read them.
+> Specified as `FR-509`–`FR-518` and `[INT §8.1]`; the procedure is drafted at
+> [`Database/Scripts/50_united_db_Proc_FlatWire_CompleteCoilOnSkid.sql`](../Database/Scripts/50_united_db_Proc_FlatWire_CompleteCoilOnSkid.sql).
+> **It closes `OI-104`** — the skid table `CoilOutput.SkidId` has always pointed at, which no document named,
+> is `united_db..wip_skids` + `proddb..wip_skid_coils` — which makes **`FR-339` testable for the first time**.
+> Hours are **additive to `[CE §3b]`**, like `FW-202`, `FW-203`, `FW-204` and `FW-218`. Gap **`G44`**.
+
+**Acceptance Criteria:**
+- [ ] `united_db.dbo.FlatWire_CompleteCoilOnSkid` deployed, writing **eight** shared objects in **one transaction**: `proddb..coils` · `proddb..wip_coil_orders` · `united_db..coil_gen_history` · `coil_cost` (via `CoilCost_UpdateInsert`) · `SlitterDB..coil_slit_cuts` · `united_db..wip_skids` · `proddb..wip_skid_coils` · `proddb..wip_log_view`
+- [ ] **Every write lands in a column that already exists** — no rename, no new column, no new status value, so `D-32` is verifiably untouched
+- [ ] The shared coil identity comes from `CommonDB.dbo.GenerateCoilAlpha(rodAlpha, '')` and is persisted on **`CoilOutput.CoilNo`** (new column, `VARCHAR(9)`, filtered-UNIQUE `UX_CoilOutput_CoilNo`). `coils.coil_no` is `char(9)`; `FW-#####-C##` is twelve characters and is **never** written to the shared schema (`FR-509`)
+- [ ] `CoilOutput.SharedSkidNo` (new column) holds the legacy `char(9)` skid number from `proddb..generate_new_skid_no`, satisfying `FR-339`'s *"follow the existing skid rules"*
+- [ ] **One call per coil, never batched** — `coils_iud_tg` gates on `@ins_count = 1`, so a set-based insert silently skips the `coil_link_master_coil` row
+- [ ] `Coil1Of2` opens a skid with `IsComplete = 0`; `Coil2Of2` closes it with `IsComplete = 1`; a third coil is refused (`FR-335`, `FR-515`). ⚠ `wip_skids.IsComplete` is `NOT NULL` with no default and is **absent from `proddb..wip_skids`**, so the insert must target `united_db..wip_skids` — the view cannot be inserted through
+- [ ] Exactly **one** `coil_slit_cuts` row per coil, supplying `cutMovementCount` and `under_review` (both `NOT NULL`, no default) and a **derived** `skid_coil_seq_no` of 1 or 2 — every legacy template hard-codes 1, which flat wire cannot use
+- [ ] All **44** `wip_log` columns supplied, with the `(wip_log_rev_time, seq_no)` collision resolved by the second-granularity spin from `coils_iud_tg`
+- [ ] `CoilCompletionService` resolves the **primary source rod** (lowest `CoilTraceability.FootageFrom`) for the genealogy parent, and documents that the shared tree holds **one** parent while `CoilTraceability` remains authoritative for a welded coil (`OI-113`)
+- [ ] **The retry contract works and is tested:** `CoilNo` is persisted the moment the procedure returns, and a retry passing it back through `@expectedCoilNo` is a **no-op**. Without it a retry mints a *second* coil
+- [ ] A procedure failure rolls back its whole half and is **surfaced for operator retry, not swallowed** — the two halves are compensating writes, not one ACID transaction (`[ARC §10]`)
+- [ ] Out-of-spec final SPC takes the **existing** hold vocabulary — `skid_status = 'HOLDP'` plus a `SKIDHOLD`/`PRHOLD` WIP log row — not a flat-wire-only status (`FR-517`)
+- [ ] `FlatWire` service granted read/write on `proddb`, `united_db`, `SlitterDB` and `CommonDB` (extends `FW-144`)
+- [ ] ⚠ **Does not release `wip_stations.coilno`.** That is `OI-112`, it belongs to *run* completion, and it is unspecified — do not bolt it on here
+
+**Rate-card basis:** procedure 32 h hand-coded @ **0.75** (`[DE §1]` *non-trivial business service* — it is domain reasoning against an undocumented legacy schema with triggers, **not** the 0.60 mechanical-DDL case) = 24 h · `CoilOutput` columns, 2 indexes and schema docs 4 h @ 0.60 = 2 h · `CoilCompletionService` call, primary-rod resolution, retry/compensation and grants 20 h @ 0.70 = 14 h. **56 h hand-coded → 40 h AI-assisted.** All-in on `[CE §2]`'s uplifts: `56 → QA 11 → cont. 10 = **77 h**`, which belongs in an additive restatement (`[CE §3d]`) and **not** in Phase 9's published 222 h.
+
+> ⚠ **The drafted procedure is not a finished 40 hours.** Its structure, its 43/44-column lists and every column name are verified against the scripted DDL, which is what the 0.75 factor buys. What remains is the expensive half and is **not** assisted: executing it against a real `proddb`/`united_db`/`SlitterDB`, confirming the trigger side effects fire as read, and closing `Q34`–`Q36` and `OI-114` with IT.
+
+**Dependencies:** FW-066, FW-141, FW-142, FW-144
+**Blockers:** **Q34** (the eight-character transaction token), **Q35** (`coil_status = 'ONSKID'` for finished flat wire), **Q36** (sample number / planned operations) — all three must close before this runs outside DEV. **`OI-114`** (cut-record sentinels) is not a hard blocker: the procedure parameterises them, so a wrong answer is a one-line change.
+
+---
+
+###### FW-220 · FL1/FL3 check-in write-back into the shared schema
+**Hours:** 32 h (DB 24 · BE 8) · **Priority:** Critical · **Sprint:** S2 · **Phase:** 4 · **Stream:** DB + BE
+
+> **New 19 Aug 2026.** `FR-077` has named four shared writes at check-in since it was written — the reqsum
+> into `wip_coil_orders`, `actual_start_date` on `planning_routings` and `routings`, and the
+> `wip_stations.coilno` claim — and **there was no procedure, script or code for any of them.** The same
+> absence `FW-219` found at the other end of the run. Specified as `FR-519`–`FR-528` and `[INT §8.0]`;
+> the procedure is drafted at
+> [`Database/Scripts/40_united_db_Proc_FlatWire_CheckInRod.sql`](../Database/Scripts/40_united_db_Proc_FlatWire_CheckInRod.sql),
+> the plan at [`FW-220-FlatWire-CheckInRod.md`](../Backend/TaskBreakdownPlans/FW-220-FlatWire-CheckInRod.md).
+> **It largely closes `OI-111`** — stamping the rod's `coils` row with `wip_station` restores what the
+> shared schema lost when `D-32` cancelled `FW-002`, without touching the status vocabulary.
+> Hours are **additive to `[CE §3b]`**, like `FW-202` and `FW-219`. Gap **`G45`**.
+
+**Acceptance Criteria:**
+- [ ] `united_db.dbo.FlatWire_CheckInRod` deployed, writing **nine** shared objects: `routings` (copied from `planning_routings`, all 94 columns) · `mfg_sales_order_ref` · `routings_orders` · `proddb..wip_coil_orders` · `wip_orders` (via `del_or_upd_wip_orders`) · `planning_routings.actual_start_date` · `routings.actual_start_date`/`machine_idx`/`actual_weight_on` · `CommonDB..WIPStations` · `proddb..coils` rod stamp · `proddb..wip_log_view`
+- [ ] **Every write lands in a column that already exists** — `coil_status` is never written, and `'INFLAT'` in `wip_log.coil_skid_status` was **rejected** in favour of the existing `'INROLL'`, so `D-32` is verifiably untouched
+- [ ] ⚠ **The procedure does NOT open a transaction — the caller does**, and it asserts `@@TRANCOUNT > 0` rather than assuming. This is the opposite of `FlatWire_CompleteCoilOnSkid` and both headers say why
+- [ ] **The database half of check-in is one ACID transaction**: one `SqlConnection`, one `SqlTransaction`, EF writes first, the procedure **last**, commit, then the PLC push. **Requires `FlatWireDB` co-located with the shared databases** — verify before building on it
+- [ ] The `Rod` mirror is upserted **first**, inside the same transaction — `FK_RodCheckin_Rod` is an enforced FK and `OI-42` says nothing reliably populates the mirror
+- [ ] `machine_idx` is a **validated parameter**, not derived: `IsRollingOpLetter` matches only `'R'`, so the legacy CASE falls to its ELSE branch for the flattening letter `'F'`
+- [ ] `actual_start_date` writes are guarded on the `'1800-01-01'` sentinel, so a **partial-rod re-check-in** is a no-op rather than a false restart
+- [ ] All **44** `wip_log` columns supplied, with the `(wip_log_rev_time, seq_no)` collision resolved by the second-granularity spin from `coils_iud_tg`, **scoped to include `seq_no`**
+- [ ] Weights beyond the `smallint` bound on `WIPStations` are **refused**, not truncated
+- [ ] Re-entry inside one transaction is a **no-op** — the station claim and `actual_start_date` are their own evidence, so no caller-held retry token is needed (unlike `FW-219`)
+- [ ] `FlatWire` service granted read/write on `united_db`, `proddb`, `CommonDB`, `SlitterDB` and `wiplogdb` via `20_FlatWire_Grants.sql` (extends `FW-144`) — `[public]` membership is **per database**
+- [ ] ⚠ **FL2 is refused** (`@lineId` validated against FL1/FL3). Its shared write set is undefined — **`OI-115`**, and it blocks rather than merely awaiting sign-off
+
+**Rate-card basis:** procedure 32 h hand-coded @ **0.75** (`[DE §1]` *non-trivial business service* — domain reasoning against an undocumented legacy schema with triggers) = 24 h · `CheckInService` call, unit-of-work seam and grants 12 h @ 0.70 = 8 h. **44 h hand-coded → 32 h AI-assisted.**
+
+> ⚠ **The BE half is partly already priced.** `FW-157` is costed at 36 h for *"a complex command spanning two databases and the PLC"* — the shared half was always in that number, it simply had nothing to call. The 8 h here is the seam and the grants, not the command.
+
+**Dependencies:** FW-157, FW-159, FW-141, FW-142, FW-144, FW-003, `10_CommonDB_Insert_WIPStations_FlatWire.sql`
+**Blockers:** **Q37** (the check-in transaction token), **Q38** (the WIP-log status value), **Q39** (stamping the rod's `coils` row) — all three must close before this runs outside DEV. **`OI-115`** blocks the FL2 half. **`OI-116`** (the rolling-processing table) is not a hard blocker.
+
+---
+
+###### FW-221 · Station release and reqsum reversal
+**Hours:** 9 h DB · **Priority:** Critical · **Sprint:** S2 · **Phase:** 4 · **Stream:** DB
+
+> **New 19 Aug 2026. `FW-220` is a one-shot without this.** `FR-077` *sets* `wip_stations.coilno` and no
+> requirement clears it, against a UNIQUE index — so a line is unusable after its first run. `FW-219`
+> correctly refused to bolt the release onto *coil* completion because it belongs to *run* completion,
+> which left it owned by nobody. **This closes `OI-112`.** It also implements `[ARC §10]`'s closing line,
+> which required pre-check-out to reverse the reqsum and which nothing implemented — `OI-01`'s residual.
+
+**Acceptance Criteria:**
+- [ ] `FlatWire_ReleaseStation` returns `CoilNo` to the **station's own name padded to 9** — not NULL and not empty, because a plain UNIQUE index admits only one of each
+- [ ] Transaction-agnostic (called both inside a caller transaction and standalone), fully idempotent, and **refuses a late release** of a station already re-claimed by another rod
+- [ ] Called at FL1 spool completion (`FW-202`), FL2/FL3 run completion (`FW-185`/`FW-219`'s caller) and checkout modes A and B (`FW-174`) — **never at coil completion**
+- [ ] **Check in → release → check in another rod at the same station succeeds** — the failure mode `OI-112` predicted
+- [ ] `FlatWire_ReverseReqsum` deletes the reqsum row, resets both `actual_start_date` values to the sentinel, and releases the station — caller-owned transaction, same contract as `FW-220`
+- [ ] **It refuses when footage > 0.** That is a Mode B mid-run removal whose reqsum records material the order genuinely received; deleting it would make produced material vanish
+- [ ] It deletes only when **check-in created the row** — `RodCheckin.WipCoilOrdersWritten`, from `FW-222`
+- [ ] The delete is audited: `wip_coil_orders_d_tg` archives to `wip_coil_orders_hist` **and** sets `reassign_order_info.status = 2`. The trigger is **single-row-scalar**, so one row per call, never batched
+
+**Rate-card basis:** release procedure 6 h + reversal procedure 10 h + teardown script 2 h = 18 h hand-coded @ 0.50 (mechanical, against a schema already read for `FW-220`) = 9 h.
+
+**Dependencies:** FW-220, FW-222, FW-174, FW-185, FW-202
+**Blockers:** **Q40** (delete the reqsum row versus leave an orphan) — must close before this runs outside DEV. `@deleteOrphan = 0` makes it a no-op if the answer is "leave it".
+
+---
+
+###### FW-222 · Single-active-run index and the reversal flag
+**Hours:** 2 h DB · **Priority:** Critical · **Sprint:** S2 · **Phase:** 4 · **Stream:** DB
+
+> **New 19 Aug 2026, and the first half is a live correctness gap.** *"Single active run per line"* is stated
+> as a business rule in `phase-04`, owed as `409 RUN_ALREADY_ACTIVE` by `FW-157 §3`, and enforced **nowhere**:
+> `IX_FlatWireRun_LineId` is a **non-unique** index. Two concurrent check-ins on one line both pass the
+> aggregate check and both commit — precisely the read-then-write race `CoilCheckin`'s
+> `IsAnyCoilCheckedInRule` has, reproduced in new code.
+
+**Acceptance Criteria:**
+- [ ] `UX_FlatWireRun_ActiveLine` — filtered UNIQUE on `LineId` where `Status IN ('Running','Paused')`, in the `UX_RodStaging_Bay` idiom. The aggregate still enforces the rule in code; this is **belt-and-braces**, and it is what makes the `409` truthful under concurrency rather than merely likely
+- [ ] Two concurrent check-ins on one line: one succeeds, the other fails on the index and surfaces `409 RUN_ALREADY_ACTIVE`
+- [ ] `RodCheckin.WipCoilOrdersWritten BIT NOT NULL DEFAULT 0` — **defaults to the safe direction**, so a missing value never authorises `FW-221`'s delete
+- [ ] Object baseline moves **49 → 50 index statements**, verified by count; the table count stays **28**. `[DBD §6.2]` moves with it
+
+**Rate-card basis:** 3 h hand-coded @ 0.60 (mechanical DDL) = 2 h.
+
+**Dependencies:** FW-007
+**Blockers:** —
+
+---
+
+###### FW-223 · Rod ingestion — populating the FlatWire tables
+**Hours:** 14 h (DB 10 · BE 4) · **Priority:** Critical · **Sprint:** S2 · **Phase:** 4 · **Stream:** DB + BE
+
+> **New 19 Aug 2026, and it is a build blocker rather than an improvement.** **Nothing populated
+> `FlatWireDB.Rod` in production.** Rod receiving (`FW-020`–`FW-022`) is upstream, was deleted from this
+> backlog on 13 Aug 2026 as another team's work, and writes `proddb..coils` — not `FlatWireDB`. The only
+> thing that ever put a row in `Rod` is `FlatWire_SampleData_Materials.sql`, which seeds eight fake rods.
+> `FK_RodCheckin_Rod` and `FK_RodStaging_Rod` are **enforced**, so on a clean production database **the
+> first staging or check-in fails on a foreign key**. That is `OI-42`, open since `D-04` and described in
+> `[DBD]` as *"a real design hole, not a documentation nit"*. Specified as `FR-529`–`FR-532` and
+> `[INT §7.9]`; plan at [`FW-223-Rod-Ingestion.md`](../Backend/TaskBreakdownPlans/FW-223-Rod-Ingestion.md).
+> **It closes `OI-42`** and raises **`OI-117`**. Hours are **additive to `[CE §3b]`**.
+
+**Acceptance Criteria:**
+- [ ] `FlatWireDB.dbo.sp_IngestRodFromCoils` deployed, projecting one rod from `proddb..coils` into the local mirror **inside the caller's transaction** (asserts `@@TRANCOUNT > 0`, same contract as `FlatWire_CheckInRod`)
+- [ ] Called as the **first statement** of `POST /staging/rod` and `POST /checkin/rod`, before any other `FlatWireDB` write — both have an enforced FK to `Rod.Alpha`, and a direct scan into Dashboard 2 means check-in cannot assume staging ran
+- [ ] ⚠ **`GET /rod/{alpha}` does NOT ingest** (`FR-530`). It is documented `Idempotent` and any role may call it; a supervisor scanning a rod to look at it must not create records
+- [ ] **The refresh touches shared-mastered columns only** (`FR-531`). `Status`, `FootageRunToDate` and `RemainingWeightEstimateLb` are **locally mastered** — `Status` carries `INFLAT` (local since `D-32`) and resetting it un-marks a running rod; clearing `FootageRunToDate` offers a fresh-start check-in for a rod that has already run, which `FR-043` forbids. **This is why it is not a `MERGE`**
+- [ ] The alloy is resolved through `united_db..alloys` (`alloy_idx` → `alloy`) — a **lookup, not a cast**. `coil_alloy` is `smallint`, `Rod.Alloy` is `varchar(10)` holding `'1100'`; storing the code as text does not fail, it silently stops every downstream alloy comparison from matching
+- [ ] `Rod.DiameterIn` takes the **operator's measurement** — `proddb..coils` has no rod-diameter column and `coil_gauge` is a *strip* gauge. This is why ingestion is at first use and not at receipt: at receipt there is no measurement
+- [ ] `Rod.SupplierHeat` is left **`NULL` deliberately** — nothing sources it (**`OI-117`**)
+- [ ] A rod absent from `proddb..coils` is refused **before any `FlatWireDB` write** (`FR-532`)
+- [ ] Idempotent: twice in one transaction → one row, `@rodExisted` `0` then `1`
+- [ ] **Sample data no longer deploys with the schema.** The five seeds moved from `FlatWire_DDL_RunAll.sql` to a new `FlatWire_SampleData_RunAll.sql`; the schema runner now yields 33 tables and **zero rows**. A conditional `:r` was impossible — it is a SQLCMD **parse-time** directive
+- [ ] `FlatWireDB` object baseline is **1 procedure**; `sp_ShiftSummary` still absent (MVP-2)
+
+**Rate-card basis:** procedure 10 h hand-coded @ 0.75 (`[DE §1]` *non-trivial business service* — a cross-database projection against an undocumented legacy schema) = 8 h · seed-runner split 2 h @ 1.0 (mechanical, but it is a deployment-behaviour change and wants reading) = 2 h · two call sites and the ordering 5 h @ 0.80 = 4 h. **17 h hand-coded → 14 h AI-assisted.**
+
+**Dependencies:** FW-007, FW-142, FW-144, FW-157, FW-158, FW-159, FW-220
+**Blockers:** **None of its own** — every column either has a source or is deliberately `NULL`, so there is no IT sign-off item. **Shares `FW-220`'s deployment prerequisite**: `FlatWireDB` must be on the same instance as `proddb` and `united_db`, because the projection reads both inside the caller's transaction.
+---
+
 ###### FW-205 · `ITInhibitService` — the run-block interlock
 **Hours:** 16 h RT · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1B · **Stream:** RT
 
@@ -747,7 +904,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** rules cannot be bypassed by a caller that forgets to run a validator.
 
 **Acceptance Criteria:**
-- [ ] **Seven aggregate roots** — `FlatWireRun`, `RodStaging`, `WeldEvent`, `Spool`, `CoilOutput`, `RodCheckout`, `WipRejection` — each inheriting `Entity`. Boundaries per `[SVC §3.2a]`
+- [ ] **Seven aggregate roots** — `FlatWireRun`, `RodStaging`, `WeldEvent`, `SpoolProcessing`, `CoilOutput`, `RodCheckout`, `WipRejection` — each inheriting `Entity`. Boundaries per `[SVC §3.2a]`
 - [ ] ⚠ **`RunReading` is in NO aggregate** — 10 Hz time series; it stays an append-only write model read by Dapper. Materialising it inside `FlatWireRun` is the failure this criterion exists to prevent
 - [ ] ⚠ **`Rod` and `PassSchedule` get no aggregate and no repository** — read models. `PassSchedule` is MVP-2-owned and reached only through `PassScheduleSnapshot`
 - [ ] **Six alpha value objects** with validating constructors — `RodAlpha` `R#####`, `SpoolAlpha` `SP-#####`, `RunAlpha` `RUN-####`, `CoilAlpha` `FW-#####-C##`, `DieAlpha`, `PassScheduleReference`. `RodAlpha("ROD-00041")` must throw (**closes `G14`'s format half**)
@@ -839,7 +996,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 > `[TRP §4]`'s T2 tail are **unchanged**, and it becomes the first increment of `FW-211`'s in-process adapter.
 >
 > ⚠ **These hours are additive to `[CE §3b]`**, exactly as `FW-202`, `FW-203` and `FW-204` are. **Do not fold
-> them into the 3,292 h baseline** — that figure is quoted in five other documents and re-counting it here
+> them into the 3,186 h baseline** — that figure is quoted in five other documents and re-counting it here
 > would drift them all. They do **not** offset `FW-N05`'s 32 h either; real OPC ingest is still production work.
 >
 > ⚠ **Do not publish a single AI-assisted figure for these.** `[DE §2]` and `[SSP §5]` disagree on Phase-1B RT
@@ -1039,6 +1196,15 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 > ([`simulator_console.html`](../Frontend/Mockups/simulator_console.html)) is a planning artifact, not a
 > story — `[CE §2]` prices a screen at 24 h **with** the mockup as its approved visual spec and no design
 > time included.
+>
+> ⚠ **`FW-224` is RESERVED and not yet minted.** It is the **FL2 pre-check-in** story owed by the
+> 20 Aug 2026 client call, which reversed `FR-031` — see [`ClientCall_2026-08-20_SyncPlan.md`](../../../BaseDocuments/ClientCall_2026-08-20_SyncPlan.md)
+> wave **W7** and action **`A6`** (*size `FW-224`+ across DB, BE, FE and test, additive to the 3,186 h
+> baseline*), still unreported as of the 24 Aug call. **`FW-225`–`FW-230` were minted over it on
+> 22 Aug 2026**, so `FW-224` is a hole in the sequence rather than the tail — that is deliberate and the
+> id stays claimed for this story. It is **blocked on `Q41`** (what an FL2 pre-check-in actually does),
+> which is `Critical` and open. Cited from `Q41`'s Related line and `CHANGELOG.md`; **do not reuse it**
+> and do not read those citations as evidence it exists.
 
 ---
 
@@ -1046,36 +1212,50 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Spec:** [`phase-01c-database-foundation.md`](Phases/phase-01c-database-foundation.md) · **Owner:** DB · **215 h** (DB 156 · QA 31 · cont. 28)
 
-> **The DDL already exists** in [`../DBChanges/Schema/SQL/`](../Database/Schema/SQL/). This layer **retargets, hardens, seeds and wires** it. Target is a new standalone **`FlatWireDB`**, not `united_db`.
+> **The DDL already exists** in [`../Database/Schema/SQL/`](../Database/Schema/SQL/). This layer **retargets, hardens, seeds and wires** it. Target is a new standalone **`FlatWireDB`**, not `united_db`.
 >
 > **`Rod` is retained** — master-spec `D-04` supersedes Foundations decision 3. **Anything saying "`Rod` is dropped" or "21–22 tables" is stale** (**G12**, closed 11 Aug 2026).
 
 ---
 
 ###### FW-001 · Shared-schema column renames and new columns
-**Hours:** 56 h DB · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1C · **Stream:** DB
+**Hours:** 0 h DB *(was 56 h)* · **Priority:** Cancelled · **Sprint:** S0 · **Phase:** 1C · **Stream:** DB
 
-**As a** developer,
-**I want** the scheduling schema renamed to the slash-dual flat-wire convention behind a completed impact audit,
-**So that** flat wire material fits the existing schema without ambiguity and nothing downstream silently breaks.
+> ⚠ **CANCELLED — the heading keeps its id and title deliberately.** `FW-###` ids **and their titles** are the repo's join key: the workbook builds parse this heading and reject a story whose title drifts from the client-facing content files. Cancel in the body, never in the heading.
 
-**Acceptance Criteria:**
+> ⚠ **CANCELLED 18 Aug 2026 — decision `D-32`. There will not be any shared-schema migration.** The existing
+> `coils` / scheduling schema is **read and written as it stands and is never altered**. The card is retained
+> rather than deleted because `FW-###` ids are the repo's join key and six stories cite this one.
+> **−56 h from Phase 1C**; the 40 h impact audit goes with it, as does `[RB §6.3]`'s rename rollback treatment
+> and `FW-201`'s QA4 regression pass. **Dependent stories:** `FW-002` is cancelled too; `FW-004`, `FW-005`,
+> `FW-006` and `FW-007` build `FlatWireDB` and never needed the renames, so their dependency is **removed,
+> not satisfied**; `FW-176`, `FW-186` and `FW-201` lose the acceptance criteria that referenced it.
+
+**Acceptance Criteria — none of the following is to be built:**
 - [ ] Renames applied: `CoilNo → Coil/BundleNo` · `SlitWidth → Slit/FlatWidth` · `IsCampaingCoil → IsCampaignCoil/Bundle` *(typo corrected)* · `CoilLocation → Coil/BundleLocation` · `CoilWeight → Coil/BundleWeight` · `CoilStatus → Coil/BundleStatus` · `OutgoingCoilId → OutgoingCoil/BundleId` · `OutgoingCoilOd → OutgoingCoil/BundleOd`
 - [ ] New columns added: `OutgoingCoil/BundleWidth`, `IncomingWireDia`
 - [ ] **A full SP / view / report impact audit across `united_db` and the legacy `ual-dot-net` tier completes BEFORE the migration runs** — this is a discrete 40 h line item, not a rounding
 - [ ] All existing stored procedures, views and API queries updated to the new names
 - [ ] No regression in existing reports or screens; regression suite re-run in Phase 14 (FW-201)
 
-**Rate-card basis:** rename migration 16 h + **FW-001 impact audit 40 h** (discrete item, §2) = 56 h
+**Rate-card basis:** ~~rename migration 16 h + **FW-001 impact audit 40 h** (discrete item, §2) = 56 h~~ → **0 h, cancelled**
 **Dependencies:** None
 **Blockers:** —
 
-> **Highest blast radius in the plan.** These land on the **shared** `coils`/scheduling schema, which the legacy applications and existing reports also read. `phase-01c` itself says *"front-load the impact audit."*
+> ~~**Highest blast radius in the plan.**~~ It **had been** the highest blast radius in the plan — these would have landed on the **shared** `coils`/scheduling schema, which the legacy applications and existing reports also read, which is why `phase-01c` said *"front-load the impact audit."* **That risk is now removed rather than managed.** The residual is **`OI-111`**: with no shared marker, nothing in the shared schema shows that a rod is on a flattening line, and the 40 h audit that would have found any report depending on it is cancelled too.
 
 ---
 
 ###### FW-002 · `INFLAT` coil status
-**Hours:** 4 h DB · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1C · **Stream:** DB
+**Hours:** 0 h DB *(was 4 h)* · **Priority:** Cancelled · **Sprint:** S0 · **Phase:** 1C · **Stream:** DB
+
+> ⚠ **CANCELLED 18 Aug 2026 — decision `D-32`.** The shared coil-status vocabulary never gains `INFLAT`.
+> ⚠ **`INFLAT` itself is not cancelled** — it survives as a **`FlatWireDB`-local** value on `Rod.Status`,
+> `SpoolProcessing.Status` and `RodCheckout.NewRodStatus`, where the CHECK constraints in `03_Materials` and
+> `05_QualityOutput` already carry it and are untouched. What goes is the **shared** half: `FR-077`'s
+> `coils.coil_status = INFLAT` write and the `INFLAT` term in `FR-044`'s shared-side availability test,
+> which now reads local `Rod.Status`. **−4 h from Phase 1C. `OI-111`** carries the upstream-visibility
+> consequence; `OI-01`'s headline question is moot and only its reqsum residual survives.
 
 **As a** scheduling operator,
 **I want** a coil status marking material actively on a flattening line,
@@ -1089,7 +1269,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Existing status transition rules are unbroken
 
 **Rate-card basis:** reference-data change (4 h, §2)
-**Dependencies:** FW-001
+**Dependencies:** ~~FW-001~~ — cancelled with it
 **Blockers:** —
 
 ---
@@ -1107,7 +1287,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Every `CREATE` and FK guarded (`IF NOT EXISTS`); `FlatWire_DDL_RunAll.sql` is **idempotent and re-runnable**
 - [ ] All ER-doc recommended nonclustered indexes present, including `(RunId)` on every child/event table
 - [ ] `GRANT EXECUTE` / least-privilege for `ua_user`; audit columns on override tables
-- [ ] Post-run check: **25 tables · 33 FKs · 1 procedure (`sp_GetGaugeTrace`) · 1 trigger (`trg_CoilTraceability_NoOverlap`)**
+- [ ] Post-run check: **33 tables · 55 FKs · 69 index statements · 1 procedure (`sp_GetGaugeTrace`) · 1 trigger (`trg_CoilTraceability_NoOverlap`)**
 - [ ] **`sp_ShiftSummary` is MVP-2's and must not be created, dropped or granted from this scope**
 
 **Rate-card basis:** database creation + ordered runner + index strategy + security (12 h, §2)
@@ -1124,7 +1304,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** the sample data FK-resolves and the die change has a catalogue to validate against.
 
 **Acceptance Criteria:**
-- [ ] Tables created: `Stand`, `Drawer`, `Edger`, `SpoolConfiguration`, `PayoffPosition`
+- [ ] Tables created: `Stand`, `Drawer`, `Edger`, `Dancer`, `Spool`, `AlloyProperty`, `PayoffPosition` *(`SpoolConfiguration` merged into `Spool`, 23 Aug 2026 — `Q60`)*
 - [ ] `FlatWire_SampleData_Lookup.sql` authored — it was **missing**, and the schedule seed depended on it
 - [ ] `Stand` seeded with **four rows carrying `RollDiameterIn`**: FM1 12.000 · **`FM2_S1` 8.000 · `FM2_S2` 6.000 · `FM2_S3` 6.000**. Identifiers are **position-only**; diameter is data
 - [ ] `Drawer` seeded with the **13 size rows** (`DIE-0210`…`DIE-0340`) carrying `LastGrindingFeet` and `TotalFeetAllowed` — this is what MVP-1's die change validates against
@@ -1169,8 +1349,8 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Acceptance Criteria:**
 - [ ] `Rod` created — a `FlatWireDB`-local master **mirroring** the shared `coils` record, with **enforced** rod-alpha FKs. `coils` remains the source of truth for the rod *lifecycle*; the mirror is what makes the FKs enforceable (`D-04`)
-- [ ] `FlatWireRun` created — the hub table, so `Spool.SourceRunId` can reference it
-- [ ] `Spool` created
+- [ ] `FlatWireRun` created — the hub table, so `SpoolProcessing.SourceRunId` can reference it
+- [ ] `SpoolProcessing` created
 - [ ] Indexes: `FlatWireRun(LineId)`, `(Status)`, `(PassScheduleId)`, `Spool(SourceRunId)`, `Spool(ParentRodAlpha)`
 - [ ] **`PassScheduleId` carries no local FK** — it is a documented external reference on `FlatWireRun`, in the same class as `PlanId` and `SkidId`. Seeded values like `PS-1100-FL1-001` are **external identifiers, not orphans**
 
@@ -1200,13 +1380,15 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] **`RodCheckout` carries `WasWelded`, `ApprovedBy`, `ApprovedAt`, `OverrideReason`** — it had no approval columns at all, so two decided rules had nowhere to write (**G24**)
 - [ ] **Precision: the DDL scaled types are authoritative** — weights `DECIMAL(8,2)`, gauges `DECIMAL(8,4)`, footage `(10,2)`. **Do not regenerate DDL from the schema `.md` files**, which say bare `decimal` (= `decimal(18,0)`) and would drop precision
 
-**Rate-card basis:** 12 tables @ 4 h = 48 h (§2). **⚠ 15 tables are built here; 12 are costed** — §8 records that 1C is costed against 22 tables against a build of 25, and is therefore **understated by ~17 h all-in**. The figure above is the published one, not the rate-card sum
+**Rate-card basis:** 12 tables @ 4 h = 48 h (§2). **⚠ 15 tables are built here; 12 are costed** — §8 records that 1C is costed against 22 tables against a build of 25, and is therefore **understated by ~17 h all-in**. The figure above is the published one, not the rate-card sum. ⚠ **The table count in this derivation is stale — flagged, not substituted (23 Aug 2026).** The live figure is `[DBD §6.2]`. Replacing the count without re-deriving the hours would make the arithmetic lie, and per the standing convention an effort change lands in an **additive new sheet, never an in-place edit of a total**. **Owed: re-derive against `[DBD §6.2]` using `[CE §2]`'s rate card** — `[CE]`'s owner, not this document's.
 **Dependencies:** FW-152, FW-006
 **Blockers:** **G21** (`UX_RodStaging_Bay` does not enforce one-rod-per-bay across FL1/FL3 — **blocks the Phase-4 schema freeze**) · **G14** (`FootageFt` INT vs DECIMAL) · **G34** (wire break has a decided flow and still no persistence target)
 
 ---
 
-**Phase 1C reconciliation** — DB `56+4+12+16+8+12+52 = 160` → QA `0.20 × 160 = 32` → Cont `0.15 × (160+32) = 29` → **221 h** ✓ (§3b)
+**Phase 1C reconciliation** — DB `12+16+8+12+52 = 100` → QA `0.20 × 100 = 20` → Cont `0.15 × (100+20) = 18` → **138 h**
+
+> ⚠ **Re-derived 18 Aug 2026 — `D-32`.** Previously `56+4+12+16+8+12+52 = 160` → QA 32 → Cont 29 → **221 h** ✓ (§3b). `FW-001` (56) and `FW-002` (4) are **cancelled**, so the base falls by 60 h and QA and contingency are re-derived from the reduced base — the convention `[CE §3b]` uses for every carve. **221 → 138 h, −83 h all-in.** This is a **removal of scope, not a productivity claim**, so the QA line is re-derived rather than held; `[CE §8]`'s warning against mechanically re-applying the 20 % concerns work that *moved* into manual regression, and here there is no work left to regress.
 
 > **Restated 15 Aug 2026 from 215 h.** `FW-007` 48 → 52 h for **`G21`**: the `RodStaging.Station` column plus re-keying `UX_RodStaging_Bay` from `(LineId, PayoffPosition)` to `(Station, PayoffPosition)`. ⚠ **Separate from `[CE §8]`'s ~17 h understatement**, which is about the 22-vs-25 table count — **do not net them**; one is a costing gap, the other scoped work.
 
@@ -1453,7 +1635,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Acceptance Criteria:**
 - [ ] Built from `../Mockups/dashboard_2a_rod_precheckin.html` — **three body regions**: two payoff bay cards (`NOT STAGED` / `PRE-CHECKED-IN` / `ACTIVE` / `BLOCKED`) and a **"Rods In Queue"** table
-- [ ] **FL1/FL3 only** — `PCI002` excludes FL2, which has no staging space
+- [ ] **FL1/FL3 only for rod staging** — `RodStaging` stays `FL1`/`FL3`. ⚠ FL2 pre-check-in was granted 20 Aug 2026 (`FR-533`) and lands in `SpoolStaging`, story **`FW-224`** (reserved, unsized, blocked on `Q41`)
 - [ ] Three modals: a **3-step** pre-check-in wizard (Identify rod → Assign bay → Visual inspection), pre-check-out, and the read-only weld list
 - [ ] **Mark as Welded** sits on the **staged** card, enabled only when that bay is staged *and* the other is running; **Welds this run · N** sits on the **active** card. **There is no weld-readiness strip**
 - [ ] **Mark as welded captures quality** — Pass/Fail with a reason mandatory on Fail. **Neither result is pre-selected** and confirm stays disabled until one is chosen; a pre-selected Pass on the gate that exists to make the operator look at the join is a rubber stamp
@@ -1502,7 +1684,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] `GET /payoff/status`, `GET /staging/queue`, `POST /staging/rod`, `POST /staging/rod/unstage`
 - [ ] `StageRodCommand` (reuses the **3-item** `InspectionDto` — **do not add a connector-tag item**, see **G14**), `UnstageRodCommand` (writes `RodCheckout` with `Mode='ModeP'`), `MarkStagedRodWeldedCommand` (validates alloy/temper/diameter against the running coil)
 - [ ] **Bay-occupancy conflicts surface as `409` from the filtered unique indexes**, not from application-level checking
-- [ ] **FL2 rejected `422`** (`PCI002`)
+- [ ] ~~**FL2 rejected `422`**~~ ⚠ **withdrawn with `FR-031`, 20 Aug 2026 reversal** — FL2 pre-check-in is accepted (`FR-533`). The endpoint change is wave W5 of the 20 Aug ledger and is **not yet applied**
 - [ ] **An inspection `Fail` commits the staging row and returns `201` with `state: "Blocked"`** plus the WIP-rejection route, with **no override** — the bay must stay occupied because the failed bundle is physically on it *(changed 31 Jul 2026; was `422`-and-write-nothing)*
 - [ ] Prior footage without acknowledgement rejected `422` (`PRC007`)
 - [ ] **`POST /staging/rod/mark-welded` is not built** — it was retired 1 Aug 2026; DB2A's weld posts to `POST /weldevent` in Phase 6
@@ -1513,7 +1695,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
-###### FW-159 · `RodStaging`, the check-in write path and the cross-DB `INFLAT` write
+###### FW-159 · `RodStaging`, the check-in write path and the `INFLAT` write
 **Hours:** 28 h DB · **Priority:** Critical · **Sprint:** S2 · **Phase:** 4 · **Stream:** DB
 
 **As a** developer,
@@ -1523,13 +1705,13 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **Acceptance Criteria:**
 - [ ] `RodStaging` table live with the 3-item inspection, `RodSeqno`, `IsWelded`, carry-forward evidence (`FootageRunToDateAtStaging`) and release audit (`UnstageKind`, `WipRejectionId`)
 - [ ] Repository/EF writes across `RodCheckin`, `FlatWireRun`, `SpcCheckpoint`, `SpcMeasurement`, `RodCheckout`
-- [ ] **Cross-database write setting the `coils` rod row to `INFLAT`** — at check-in only, never at staging
+- [ ] ~~**Cross-database write setting the `coils` rod row to `INFLAT`**~~ → **`FlatWireDB`-local write setting `Rod.Status = 'INFLAT'`** — at check-in only, never at staging. ⚠ **Changed by `D-32` (18 Aug 2026):** `FW-002` is cancelled, so `INFLAT` is not a shared status value and this stops being a cross-database write at all. **The 8 h is deliberately held** — the write still has to be made, ordered and compensated; only its target moved
 - [ ] Indexes: `RodCheckin(RunId)`, `RodCheckin(RodAlpha)`, **`RodCheckin(LineId, PayoffPosition)`** *(was missing)*, `RodStaging(LineId, Status)`, `RodStaging(RodAlpha)`
 - [ ] **Filtered unique indexes `UX_RodStaging_Bay` and `UX_RodStaging_RodActive`** enforce one rod per bay and one bay per rod
 - [ ] `PayoffPosition` lookup has its 3 pinned rows and `FlatWireRunDetail.PayoffPositionId` now has an enforced FK parent
-- [ ] **`FL1PO` WIP station seeded** by `CommonDB_Insert_WIPStations_FlatWire.sql`, sharing FL1's `MachineIdx` — the legacy `ZR23`/`ZR23PO` pattern. **`FL2PO` stays absent** per `PCI002`
+- [ ] **`FL1PO` WIP station seeded** by `10_CommonDB_Insert_WIPStations_FlatWire.sql`, sharing FL1's `MachineIdx` — the legacy `ZR23`/`ZR23PO` pattern. **`FL2PO` stays absent** per `PCI002`
 
-**Rate-card basis:** `RodStaging` table 4 h + repository/EF writes across five tables 16 h + cross-DB `coils → INFLAT` write 8 h = 28 h (§3 worked derivation)
+**Rate-card basis:** `RodStaging` table 4 h + repository/EF writes across five tables 16 h + ~~cross-DB~~ **local** `Rod.Status → INFLAT` write 8 h = 28 h (§3 worked derivation) *(target changed by `D-32`; the 8 h is unchanged and Phase 4's published figure is unaffected)*
 **Dependencies:** FW-007
 **Blockers:** ⚠ **G21 — `UX_RodStaging_Bay` does not enforce one-rod-per-bay across FL1/FL3, and the uniqueness scope is unresolved. This blocks the schema freeze for this phase** · **G2 / G17**
 
@@ -2137,13 +2319,14 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **Acceptance Criteria:**
 - [ ] `WipRejection` write path live with **nullable `RunId`** (the pre-check-in path has none); index `WipRejection(RunId)`
 - [ ] `RodCheckout` write path live for Modes P / A / B with `PartialSpoolAlpha` and both dispositions; `CK_RodCheckout_ModeP` and `CK_RodCheckout_ModeB` enforce the per-mode field rules **in the database rather than in prose**; index `RodCheckout(RunId)`
-- [ ] ⚠ **New columns on the shared `coils` table** — `footage_run_to_date`, `remaining_weight_estimate` — plus `source_rod_alpha` on `Spool`. **This is a second shared-schema change after FW-001 and needs its own impact audit**
-- [ ] The delivered design is `Rod.FootageRunToDate`, `Rod.RemainingWeightEstimateLb` and `Spool.SourceRodAlpha`; the snake_case names in the May 2026 design doc are **proposals, not the schema**
-- [ ] Status transitions wired on the `coils` rod row, `Spool.Status` and `CoilOutput.Status`
+- [ ] ~~⚠ **New columns on the shared `coils` table** — `footage_run_to_date`, `remaining_weight_estimate` — plus `source_rod_alpha` on `SpoolProcessing`. **This is a second shared-schema change after FW-001 and needs its own impact audit**~~ — **CANCELLED 18 Aug 2026, `D-32`.** ⚠ **This was the plan's *second* shared-schema change and is easy to miss when reading `D-32` as being only about `FW-001`.** It is cancelled on the same ground, and cancelling it costs nothing: the bullet below records that the **delivered** design is already `FlatWireDB`-local
+- [ ] The delivered design is `Rod.FootageRunToDate`, `Rod.RemainingWeightEstimateLb` and `SpoolProcessing.SourceRodAlpha` — **all three `FlatWireDB`-local, all three already in the DDL since 26 Jul 2026**; the snake_case names in the May 2026 design doc are **proposals, not the schema**, and after `D-32` they are proposals against a table this module no longer alters
+- [ ] Status transitions wired on the `coils` rod row, `SpoolProcessing.Status` and `CoilOutput.Status`
 - [ ] Polymorphic `WipRejection.MaterialAlpha` (rod or spool, **no FK**) and `RodCheckout.PartialSpoolAlpha` (**no FK**) documented as such
 
-**Rate-card basis:** 2 tables @ 4 h = 8 h + shared-schema columns 16 h *(named in the scope call)* + indexes 4 h = 28 h (§2)
-**Dependencies:** FW-007, FW-001
+**Rate-card basis:** 2 tables @ 4 h = 8 h + ~~shared-schema columns 16 h *(named in the scope call)*~~ **cancelled, `D-32`** + indexes 4 h = **12 h** (§2, previously 28 h)
+> ⚠ **The 16 h priced the shared `coils` columns and their impact audit, and it falls to zero rather than shrinking** — the local columns that replace them (`Rod.FootageRunToDate`, `Rod.RemainingWeightEstimateLb`, `SpoolProcessing.SourceRodAlpha`) were **delivered in the DDL on 26 Jul 2026**, so there is no residual schema work hiding inside the removed line. **If wiring the carry-forward write paths needs time of its own it must be re-priced as a new line, not assumed to have been inside this one.**
+**Dependencies:** FW-007, ~~FW-001~~ *(cancelled)*
 **Blockers:** **G24** *(the approval columns exist now; PIN source is `OI-38`)* · **G21 / OQ-23**
 
 ---
@@ -2167,7 +2350,9 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
-**Phase 7 reconciliation** — FE `20+24+20 = 64` · BE `24+16 = 40` · DB 28 · RT 16 · base **148** → QA `0.20 × 148 = 30` → Cont `0.15 × (148+30) = 27` → **205 h** ✓ (§3b)
+**Phase 7 reconciliation** — FE `20+24+20 = 64` · BE `24+16 = 40` · DB 12 · RT 16 · base **132** → QA `0.20 × 132 = 26` → Cont `0.15 × (132+26) = 24` → **182 h**
+
+> ⚠ **Re-derived 18 Aug 2026 — `D-32`.** Previously FE 64 · BE 40 · **DB 28** · RT 16 · base **148** → QA 30 → Cont 27 → **205 h** ✓ (§3b). `FW-176`'s **16 h shared-`coils` column line is cancelled** — the plan's second shared-schema change — taking DB from 28 to 12. **205 → 182 h, −23 h all-in.**
 
 ---
 
@@ -2197,12 +2382,12 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] **All four scan outcomes are one response, not extra requests:** resolved order · **`404` unknown alpha (field marked, list unchanged)** · `200` with a null order and a single row for an **unallocated** spool (a real case — planning remainders and supervisor-accepted partials) · `200` with `eligible:false` for a spool that cannot run, **whose siblings still list**
 - [ ] Check-in offered only for `RECEIVED` / `STAGED` spools, and leads to DB5
 - [ ] **Read-only — it writes nothing**
-- [ ] **Deliberately absent:** age (no `CreatedAt` on `Spool`), location (`Spool.Location` has no writer and no scheme), and any filter/sort furniture (the list is already limited to runnable material and the scan is the real filter)
+- [ ] **Deliberately absent:** age (no `CreatedAt` on `SpoolProcessing`), location (`SpoolProcessing.Location` has no writer and no scheme), and any filter/sort furniture (the list is already limited to runnable material and the scan is the real filter)
 - [ ] Covered by `TC-119`–`TC-126`
 
 **Rate-card basis:** new dashboard 24 h (§2)
 **Dependencies:** FW-179
-**Blockers:** **OQ-17** *(spool state machine — "available for processing" has no defined meaning without it)* · **OI-06** *(two unmapped spool status vocabularies)* · **OI-02** *(`SP-#####` vs `TS######`)* · ⚠ **confirmation that `Spool.OrderNo` is populated from planning — if allocation is not readable by the shopfloor system, `FR-098` has nothing to resolve and this screen is invalid**
+**Blockers:** **OQ-17** *(spool state machine — "available for processing" has no defined meaning without it)* · **OI-06** *(two unmapped spool status vocabularies)* · **OI-02** *(`SP-#####` vs `TS######`)* · ⚠ **confirmation that `SpoolProcessing.OrderNo` is populated from planning — if allocation is not readable by the shopfloor system, `FR-098` has nothing to resolve and this screen is invalid**
 
 ---
 
@@ -2274,7 +2459,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
-###### FW-180 · `SpoolCheckin` table and the `Spool.OrderNo` index
+###### FW-180 · `SpoolCheckin` table and the `SpoolProcessing.OrderNo` index
 **Hours:** 12 h DB · **Priority:** High · **Sprint:** S2 · **Phase:** 8 · **Stream:** DB
 
 **As a** database owner,
@@ -2283,10 +2468,10 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Acceptance Criteria:**
 - [ ] `SpoolCheckin` write path live, `LineId` restricted to FL2/FL3
-- [ ] `FlatWireRun` FL2 run header created on check-in; `Spool.Status = INFLAT`
-- [ ] **New index on `Spool.OrderNo`** — unindexed today. It also fixes DB5's scan, which validates against nothing
-- [ ] Reads wired: source FL1 run gauge trace + `WeldEvent` markers, `Spool.SourceRunId` / `ParentRodAlpha`
-- [ ] `Spool.ParentRodAlpha` documented as a **logical link to the rod's `coils` row**, not an FK to a local table
+- [ ] `FlatWireRun` FL2 run header created on check-in; `SpoolProcessing.Status = INFLAT`
+- [ ] **New index on `SpoolProcessing.OrderNo`** — unindexed today. It also fixes DB5's scan, which validates against nothing
+- [ ] Reads wired: source FL1 run gauge trace + `WeldEvent` markers, `SpoolProcessing.SourceRunId` / `ParentRodAlpha`
+- [ ] `SpoolProcessing.ParentRodAlpha` documented as a **logical link to the rod's `coils` row**, not an FK to a local table
 
 **Rate-card basis:** 2 tables/indexes @ 4 h = 8 h + FL2 run header wiring 4 h = 12 h (§2)
 **Dependencies:** FW-007
@@ -2320,7 +2505,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 > ⚠ **Superseded in part by `FW-202` (14 Aug 2026) — gap `G37`.** This story was the **only** costed work against
 > `FR-130`–`FR-155`, a 26-requirement subsystem with 25 test cases (`TC-160`–`TC-184`), an owning specification,
 > two hub events and a built mockup component. **4 h RT does not build it.** `FW-202` now owns **Part B**
-> (`FR-140`–`FR-155`) — the PLC-confirmed stop confirmation, the completion transaction and the `Spool` write.
+> (`FR-140`–`FR-155`) — the PLC-confirmed stop confirmation, the completion transaction and the `SpoolProcessing` write.
 > **This story retains Part A only** (`FR-130`–`FR-136`, the advisory milestone ladder), which is `Should` and
 > explicitly *"advisory and non-blocking"*. Its hours are unchanged and remain inside Phase 8's reconciliation.
 
@@ -2341,7 +2526,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
-###### FW-202 · FL1 spool completion — stop confirmation, weight basis and the `Spool` write
+###### FW-202 · FL1 spool completion — stop confirmation, weight basis and the `SpoolProcessing` write
 **Hours:** 98 h — FE 32 · BE 42 · DB 8 · RT 16 · **Priority:** Critical · **Sprint:** S3 · **Phase:** 5 / 8 boundary · **Stream:** FE + BE + DB + RT
 
 > **New 14 Aug 2026 — gap `G37`. These hours are ADDITIONAL to `[CE §3b]`** and are deliberately **outside** the
@@ -2366,7 +2551,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] No records nothing — no transaction, no alpha, no print, no state change — and the **decline is logged** (`TC-176`)
 - [ ] Auto-dismiss on resume, logged as `line resumed`, ladder re-arms (`TC-177`)
 - [ ] A **manual complete-spool path stays available** — declining is never a dead end (`TC-179`)
-- [ ] **The `Spool` row is written here**: `SP-#####` alpha, `SourceRunId`, `ParentRodAlpha`, source rods from the run's `WeldEvent` chain, net weight, footage, `Status` — and the `FlatWireRun` closed. ⚠ **Nothing else in the plan creates it**; `POST /coil/complete` is Phase 9's **FL2 output coil** (`FW-185`), a different transaction on a different line
+- [ ] **The `SpoolProcessing` row is written here**: `SP-#####` alpha, `SourceRunId`, `ParentRodAlpha`, source rods from the run's `WeldEvent` chain, net weight, footage, `Status` — and the `FlatWireRun` closed. ⚠ **Nothing else in the plan creates it**; `POST /coil/complete` is Phase 9's **FL2 output coil** (`FW-185`), a different transaction on a different line
 
 **Acceptance Criteria — the weight basis (`FR-137`, `FR-151`–`FR-155`):**
 - [ ] `actual = (current footage − footage at spool start) × lb-per-ft`, where `lb-per-ft = A(in²) × 12 × ρ`, `A` applying the **round-edge correction** where applicable and ρ read from **`united_db..alloys.alloy_density`** (cross-database). Reference: 1100 at 0.110″ × 0.625″ → **0.0809 lb/ft** square edge, 0.0778 round (`TC-167`)
@@ -2376,7 +2561,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] ⚠ **Variance beyond ±2 % never disables commit** (`TC-182`) — it is flagged, an override panel appears, the button relabels, the **commit control stays enabled** and remote approval is offered. An incomplete override flags the missing field, focuses the first, and commits nothing (`TC-183`)
 - [ ] **Both weights, the variance, the override flag, supervisor and reason persist regardless of basis; the PIN is absent from the payload** (`TC-184`)
 
-**Rate-card basis (§2):** stop-confirmation dialog 12 h + weight-basis/variance composite control 20 h (FE 32) · `SpoolCompletionService` prompt state machine 24 h + `CompleteSpool` command endpoint 6 h + `lb-per-ft` derivation service 12 h (BE 42) · `Spool` write path + index 8 h (DB 8) · 2 hub events @ 8 h (RT 16) = **98 h**
+**Rate-card basis (§2):** stop-confirmation dialog 12 h + weight-basis/variance composite control 20 h (FE 32) · `SpoolCompletionService` prompt state machine 24 h + `CompleteSpool` command endpoint 6 h + `lb-per-ft` derivation service 12 h (BE 42) · `SpoolProcessing` write path + index 8 h (DB 8) · 2 hub events @ 8 h (RT 16) = **98 h**
 **Dependencies:** FW-062, FW-081, FW-150, FW-171, FW-007
 **Blockers:** ⚠ **`OQ-10` / `OI-45`** *(footage→weight **dimensional basis** — `FR-137` cannot be implemented without it; `[CE §2]`'s **16–32 h reserve** applies here as well as on Phase 9, and it is the one open question deliberately carrying no recommendation)* · **`OQ-18`** *(which order field carries the min/max range)* · **`OQ-79`** *(short close)* · **`OI-25`** *(the two footage coordinate systems)* · **`G34`** *(wire break has no persistence target and shares this stop path)* · ⚠ **the 10-90 SOP document is not in this repository and must be obtained from Operations rather than paraphrased**
 
@@ -2635,7 +2820,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Acceptance Criteria:**
 - [ ] `CheckInRod` with `route=Hybrid` → `PLCTagService` pushes **all FM1 + FM2 tags in one batch**
-- [ ] **No `Spool` row is created** — there is no intermediate spool on a hybrid run
+- [ ] **No `SpoolProcessing` row is created** — there is no intermediate spool on a hybrid run
 - [ ] `FlatWireRun.RouteMode = Hybrid`
 - [ ] **Single-push failure → full compensating clear** across both mills
 - [ ] Hybrid schedule selection validated; a standalone FL2 schedule must not be applied to hybrid material
@@ -2655,7 +2840,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Acceptance Criteria:**
 - [ ] `FlatWireRun.RouteMode` accepts `Hybrid` with an enumerating `CHECK`
-- [ ] A hybrid run has **no** `Spool` row, and this is assertable by query
+- [ ] A hybrid run has **no** `SpoolProcessing` row, and this is assertable by query
 - [ ] `CoilOutput` / `CoilTraceability` behave exactly as in Phase 9
 
 **Rate-card basis:** column + constraint as part of the table rate (4 h, §2)
@@ -2862,10 +3047,10 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Weight computed as **footage × area × density**; `CoilYield` extended
 - [ ] **Scrap is calculated in footage, not weight**, on the Material Loss tab
 - [ ] Reads `CoilTraceability` / `WeldEvent` / `CoilOutput`
-- [ ] Renamed yield fields from FW-001 consumed correctly
+- [ ] ~~Renamed yield fields from FW-001 consumed correctly~~ — **struck 18 Aug 2026, `D-32`**: there are no renamed fields. The yield form reads the shared columns under their **existing** names
 
 **Rate-card basis:** ladder rung 4 remainder — **67 h all-in**; dev base 48 h (§2, `YieldCostAndScrapSheet.md`)
-**Dependencies:** FW-001, FW-186
+**Dependencies:** ~~FW-001~~ *(cancelled, `D-32`)*, FW-186
 **Blockers:** **OQ-10** *(gates the weight formula)* · **OI-60** *(metallic yield per route)*
 
 ---
@@ -2994,7 +3179,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] **The Speed tab's checkboxes name three FM2 stands — `FM2-S1`, `FM2-S2`, `FM2-S3`. There is no fourth**
 
 **Rate-card basis:** 12 template tabs, priced as configuration rather than new screens (12 h, §2)
-**Dependencies:** FW-001, FW-002
+**Dependencies:** ~~FW-001, FW-002~~ — **both cancelled, `D-32`.** ⚠ **This story is not cancelled with them:** the FL1/FL2/FL3 machine rows and the operation letter `F` are values in columns that already exist, not a schema change, so `OI-27` (no `F` case in `GetMachineTypeFromOpLetter`) stands
 **Blockers:** ⚠ **the Naj/Bob/Tim standards spreadsheet must be finalised first — an external dependency**
 
 ---
@@ -3045,7 +3230,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** stands, drawers, edgers and spool configurations are maintainable.
 
 **Acceptance Criteria:**
-- [ ] `Stand`, `Drawer`, `Edger` and `SpoolConfiguration` reachable through the admin endpoints
+- [ ] `Stand`, `Drawer`, `Edger` and `Spool` reachable through the admin endpoints
 - [ ] Audit columns populated on edit
 - [ ] **`Drawer` is already seeded in Phase 1** — this exposes it, it does not create it
 - [ ] **No die inventory table is created** — die inventory and lifecycle are owned outside MVP-1
@@ -3219,12 +3404,12 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Acceptance Criteria:**
 - [ ] Defect allowance available across FE, BE and DB for issues raised by `FW-120`–`FW-122`
-- [ ] **Regression pass over every report and screen touched by the FW-001 renames**, run at **QA4 (28 Sep)** — this is the check that the highest-blast-radius change in the plan did not break the legacy tier
+- [ ] ~~**Regression pass over every report and screen touched by the FW-001 renames**, run at **QA4 (28 Sep)**~~ — **struck 18 Aug 2026, `D-32`**: no columns are renamed, so there is nothing to regress. ⚠ **The story's hours are deliberately held, not reduced** — this is a defect *allowance*, priced per stream rather than per acceptance criterion
 - [ ] Fixes verified by re-running the affected E2E route
 - [ ] Deployment path exercised: `ng build` → IIS static; `dotnet publish FlatWire.API` → IIS app pool with **WebSockets enabled**; DDL via the ordered migration scripts
 
 **Rate-card basis:** defect allowance, explicit per-stream hours (16+16+8 = 40 h dev + 16 h QA, §3)
-**Dependencies:** FW-001, FW-120, FW-121, FW-122
+**Dependencies:** ~~FW-001~~ *(cancelled, `D-32`)*, FW-120, FW-121, FW-122
 **Blockers:** —
 
 ---
@@ -3265,7 +3450,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 > **1C 215 → 221** (`G21`'s `Station` column), plus three stories minted after the 116 baseline —
 > **`FW-205`, `FW-207`, `FW-208`**.
 >
-> **`[CE §3b]`'s 3,292 h / 116 stories remains the published programme figure** and is *not* wrong —
+> **`[CE §3b]`'s 3,292 h / 116 stories was the published programme figure when this was written** and is *not* wrong — ⚠ **but it is superseded: `D-32` took the scheduled baseline to 3,186 h, and the live all-in figure is `3,358 h` (`[CE §3e]`, the only site that may assert it).** Read the comparison below against 3,186, not 3,292 —
 > `[CE §2]`–`§5` are deliberately not re-derived, per `[CE §8]`, because doing so moves the weekly
 > grid, the FTE columns and the descope ladder. **Quote 3,292 to the client and 3,375 when you need a
 > table that reconciles.** They differ by exactly the 83 h above.
@@ -3296,7 +3481,7 @@ Every row is the sum of its own printed cells, and every column sums as shown. T
 
 [`DevelopmentEffortModel.md`](DevelopmentEffortModel.md) re-derives **development hours only** (FE/BE/DB/RT) on an AI-assisted basis per the 23 Jul 2026 client decision: **MVP-1 development 1,397 h against 2,114 h hand-coded** — a 33.9% reduction, **4.0 developer-FTE against 6.0**.
 
-**It is not an alternative total and must not be compared with 3,292 h.** It excludes QA, BA and contingency entirely, and excludes Phase 12. It is shown here at phase and sprint level only; putting it per story would imply a precision the factors do not have — they are **assumed, not measured**, and the first calibration point is the 14 Aug gate.
+**It is not an alternative total and must not be compared with the programme figure** (3,292 h when this was written; **3,186 h scheduled / `3,358 h` all-in** since `D-32` — `[CE §3e]`). It excludes QA, BA and contingency entirely, and excludes Phase 12. It is shown here at phase and sprint level only; putting it per story would imply a precision the factors do not have — they are **assumed, not measured**, and the first calibration point is the 14 Aug gate.
 
 **The stream it does not compress is the one to staff against:** RT compresses only **14.3%** and is the only stream whose share *grows* (15.0% → 19.6%). Real-time is the constraint, not FE.
 
@@ -3318,7 +3503,7 @@ Sourced from each phase file's `OQ blockers:` trailer and the gaps register in [
 | ⚠ **G9 / OI-34** *(NFRs do not exist)* | `FW-156`, `FW-080`, `FW-165` | The 16 h hub load test **has no pass criteria**. Any resulting real-time rework is **not** in the 3,292 h |
 | **OQ-3**, **OQ-14** *(traveler fields, no-match path)* | `FW-061`, `FW-161` | Both **Critical**; gate the wizard's final field list |
 | **OQ-17** *(spool state machine)* | `FW-124`, `FW-179` | *"Available for processing"* has no defined meaning without it |
-| ⚠ **`Spool.OrderNo` populated from planning?** | `FW-124` | If allocation is not readable by the shopfloor system, **`FR-098` has nothing to resolve and DB5A is invalid** |
+| ⚠ **`SpoolProcessing.OrderNo` populated from planning?** | `FW-124` | If allocation is not readable by the shopfloor system, **`FR-098` has nothing to resolve and DB5A is invalid** |
 | **`PLC-Q04`, `PLC-Q05`** *(station names, measure segment)* | `FW-N05`, `FW-082`, `FW-200` | `PLC-Q05` risks **all 41 tag paths**. Three `PLC-Q` items are `Critical` |
 | **OI-101** *(shift boundaries undefined)* | `FW-090`, `FW-193` | Blocks every shift-scoped figure in reporting |
 
@@ -3343,16 +3528,20 @@ Sourced from each phase file's `OQ blockers:` trailer and the gaps register in [
 ---
 
 
-### 7.5 Out of shopfloor scope — 14 upstream stories, and the definition-of-done note on FW-001
+### 7.5 Out of shopfloor scope — 14 upstream stories, and the ~~definition-of-done note on FW-001~~ **cancellation of FW-001**
 
-**`FW-001` is flagged high blast radius.** The renames touch the shared `coils`/scheduling schema read by upstream receiving, planning, scheduling, reporting, yield and cost. Its Definition of Done includes:
+> ⚠ **`FW-001` is cancelled — `D-32`, 18 Aug 2026. There will not be any shared-schema migration.** The four
+> definition-of-done items below are cancelled with it, and so is `FW-176`'s second shared-schema change.
+> Retained as the record of what the change would have required.
 
-1. A completed stored-procedure / view / report / query audit across `united_db` **and the legacy `ual-dot-net` tier** (40 h, costed separately from the 16 h rename).
-2. A **reverse script**, tested.
-3. A dependent-object recompilation check.
-4. The regression pass scheduled at QA4.
+~~**`FW-001` is flagged high blast radius.**~~ The renames *would have* touched the shared `coils`/scheduling schema read by upstream receiving, planning, scheduling, reporting, yield and cost. Its Definition of Done *had* included:
 
-**Front-load it in Phase 1C.** It is the risk most likely to surface late, and `[RB §6.3]` records it as the hardest element of the release to roll back.
+1. ~~A completed stored-procedure / view / report / query audit across `united_db` **and the legacy `ual-dot-net` tier** (40 h, costed separately from the 16 h rename).~~
+2. ~~A **reverse script**, tested.~~
+3. ~~A dependent-object recompilation check.~~
+4. ~~The regression pass scheduled at QA4.~~
+
+~~**Front-load it in Phase 1C.**~~ It **had been** the risk most likely to surface late, and `[RB §6.3]` recorded it as the hardest element of the release to roll back. **Both statements are now historic.** ⚠ **One thing item 1 would have delivered is genuinely lost and is worth naming:** an inventory of every stored procedure, view and report that reads these columns. **`OI-111`** asks for the one-column version of it — who reads `coils.coil_status` — because that is the dependency the cancellation actually exposes.
 
 **Fourteen upstream stories are out of shopfloor scope**, handled by the existing CoilReceiving / Planning / Scheduling / Web systems. They remain **Critical/High for their own teams**; this plan consumes their outputs but does not build them, and **they are not costed in the 3,292 h**.
 
@@ -3393,11 +3582,11 @@ Every `FW-###` cited anywhere in the repository resolves through this table.
 
 #### B.1 Existing ids — numbers and titles frozen (39)
 
-**38 of these carry a story body here; `FW-014` is subsumed (see B.5).** `38 + 6 adopted + 72 minted = 116`.
+**38 of these carry a story body here; `FW-014` is subsumed (see B.5).** `38 + 6 adopted + 72 minted = 116` **ids** — of which **114 are live**, `FW-001` and `FW-002` having been cancelled by `D-32` on 18 Aug 2026. Their ids are **not** reissued.
 
 | Range | Stories | Where they are now |
 |---|---|---|
-| `FW-001`, `FW-002`, `FW-004`, `FW-005`, `FW-006`, `FW-007` | 6 | **S0 / Phase 1C** |
+| ~~`FW-001`, `FW-002`~~ *(cancelled 18 Aug 2026, `D-32`)*, `FW-004`, `FW-005`, `FW-006`, `FW-007` | 6 *(4 live)* | **S0 / Phase 1C** |
 | `FW-003`, `FW-054` | 2 | **S3 / Phase 13** |
 | `FW-060` | 1 | **S1 / Phase 3** |
 | `FW-061` | 1 | **S2 / Phase 4** |
@@ -3417,8 +3606,112 @@ Every `FW-###` cited anywhere in the repository resolves through this table.
 
 Absorbed from `05-SprintPlanAndBacklog.md` §7.3 under the single-backlog decision.
 
+---
+
+###### FW-225 · Rod ↔ order allocation — schema and domain model
+**Hours:** 28 h (DB 12 · BE 16) · **Priority:** Critical · **Sprint:** S2 · **Phase:** 4 · **Stream:** DB + BE
+
+> **New 22 Aug 2026.** Nothing persisted the rod ↔ order pairing — it existed only implicitly in
+> `united_db..planning_routings`, which `[INT §8]` records the flat wire side as reading and never writing.
+> Specified as `FR-541`–`FR-560` (`[REQ §5.28]`) with rule codes `ORD003`–`ORD017`; design at
+> [`RodOrderAllocation.md`](../../../LatestDocument/RodOrderAllocation.md). DDL is **already applied** —
+> `RodOrderAllocation` in `03_Materials`, `RodOrderConsumption` in `04_Runs`, 7 FKs, 12 index statements —
+> and verified on a live deploy, so the DB half is the domain mapping rather than the tables.
+
+- [ ] Map both tables for read and write; the allocation is **superseded, never updated** on a re-plan
+- [ ] The three invariants SQL cannot express: a rod's active ranges **tile the rod**; a `PinnedBoth` row is its order's only row; an order with an allocation has ≥ 1 rod
+- [ ] `RodOrderConsumption` snapshots the allocation it ran against — never a join back
+- [ ] ⚠ `UX_RodOrderConsumption_Station` is keyed on **`Station`**, not `LineId` — FL1 and FL3 share one physical VPS. Do not "fix" it to `LineId`
+
+**Blockers:** **`Q48`** (`Critical` — can two orders on one rod have different pass schedules? It decides whether the mounted handoff is universal or conditional)
+
+---
+
+###### FW-226 · Sequence validation — the four-tier partition
+**Hours:** 20 h (BE 14 · FE 6) · **Priority:** Critical · **Sprint:** S2 · **Phase:** 4 · **Stream:** BE + FE
+
+> Rule 5 and **`Q73`** combined: **pinned-first → free full → free partial → pinned-last**. Applied at
+> **both** pre-check-in and check-in (`Q73` item 7 — a rule enforced at one of two entry points is not
+> enforced).
+
+- [ ] **O(1) positional check, never enumeration** — `|freeFull|! × |freePartial|!` explodes. Enumeration exists for display and tests only, capped at 7 free rods
+- [ ] A rod may be **`PinnedBoth`** — the order lies wholly inside it, so first and last are the same row. Do not assume they differ
+- [ ] Out-of-tier is a **refusal**, not the `Q24` supervisor override — `Q73` consequence 1
+- [ ] Acceptance: for O1 = {R1A, R1B, R1C} exactly **2** legal sequences; for O2 = {R1C, R1D} exactly **1**
+
+**Blockers:** **`Q49`** (does multi-order-last hold with no weld? Build the stricter reading)
+
+---
+
+###### FW-227 · The order-boundary handoff and its notification
+**Hours:** 26 h (BE 16 · FE 10) · **Priority:** Critical · **Sprint:** S2 · **Phase:** 4 · **Stream:** BE + FE
+
+> The rod is checked in **once** and stays mounted across the boundary. The state machine is
+> `Pending → InProgress → ThresholdReached → Closed`, plus `Voided`.
+
+- [ ] Crossing detected **server-side on the footage stream**, once per pairing — not a client threshold check (`SpoolWeightMilestone`'s rule)
+- [ ] Hub events **13/14**, durable and re-delivered on group re-join, following event 11's contract
+- [ ] **Two weight latches** — at the crossing and at the acknowledgement. The difference is the overrun and it is persisted
+- [ ] ⚠ The close-and-open at a boundary must be **one transaction**, or `UX_RodOrderConsumption_Station` rejects the handover
+- [ ] The station is **handed over, not released**; release happens at checkout
+- [ ] `POST /order/{orderNo}/complete` — the only thing that closes an order
+
+**Blockers:** **`Q50`** (the escalation bound), **`Q51`** (the early-ack remainder)
+
+---
+
+###### FW-228 · Footage-to-weight converter
+**Hours:** 12 h (BE 12) · **Priority:** High · **Sprint:** S2 · **Phase:** 4 · **Stream:** BE
+
+> One interface, one implementation, a **selectable basis**. The formula is `FR-137` / `[DBD §6.6]`; what is
+> open is the dimensional basis (`Q10` / `OI-45`), which is what config selects.
+
+- [ ] `lb/ft = A × 12ρ`, round edge `A = t·w − 0.2146·t²`, ρ read across from the shared alloy table
+- [ ] Reference values: 1100 @ 0.110″ × 0.625″ → **0.0809** square / **0.0778** round (`TC-167`, `TC-409`)
+- [ ] ⚠ **`FR-332a`**: the mockup's `0.069 lb/ft` must **not** be implemented
+- [ ] Every consumption row persists **basis + factor + version** — a later `Q10` answer must not retro-change a historical record
+
+---
+
+###### FW-229 · Fulfilment rollup and order status
+**Hours:** 16 h (DB 6 · BE 10) · **Priority:** High · **Sprint:** S3 · **Phase:** 9 · **Stream:** DB + BE
+
+> Published as **views**, not service methods — the API, the reports and the certificate all need the same
+> number, and a view is the only form all three can read.
+
+- [ ] `vw_OrderFulfillment` (per order) and `vw_OrderRodAttribution` (per order, per rod)
+- [ ] Apportion a multi-parent coil by **footage share**, not by counting parents — a two-parent coil is rarely 50/50
+- [ ] Status: not started · in progress · **pending operator confirmation** · complete · short
+- [ ] Two yield figures, **named apart**: yield on metal *run* (`produced/consumed`) and on metal *issued* (`produced/allocated`)
+
+**Blockers:** **`Q53`** (is fulfilment consumed or produced pounds — and which does the certificate state?)
+
+---
+
+###### FW-230 · FL1 segment alpha — one namespace
+**Hours:** 14 h (DB 4 · BE 10) · **Priority:** High · **Sprint:** S2 · **Phase:** 8 · **Stream:** DB + BE
+
+> **`Q57`.** FL1 segment alphas and FL2 coil identities are the same strings off the same six-character
+> root, and `CommonDB.dbo.GenerateCoilAlpha` cannot see `FlatWireDB` — so both are minted through that one
+> function. `SpoolTraceability.ChildAlpha` is already applied.
+
+- [ ] Ignore list = **every** prior segment alpha for that rod, read from `SpoolTraceability` — not just this transaction's. Cap `VARCHAR(500)`
+- [ ] Replicate the caller's guards: the `' '` blank return and the `UPDLOCK, HOLDLOCK` re-check
+- [ ] `ChildAlpha` is **opaque** — never parsed, never rebuilt, and no stored letter index
+- [ ] ⚠ **Cannot be tested on LocalDB** — it has no `CommonDB`
+- [ ] Reference loop: `PlanningDB.dbo.GetCoilAlpha`'s `CONCAT_WS` accumulation — **cite it, do not call it** (it uses PlanningDB's divergent copy)
+
+**Residual:** **`Q59`** — a third-party caller cannot see `FlatWireDB` and can be issued an alpha a segment holds. Accepted and monitored; the `UNIQUE` index makes it loud
+
+
 | Story | Title | Sprint / Phase |
 |---|---|---|
+| `FW-225` | Rod ↔ order allocation — schema and domain model | S2 / 4 |
+| `FW-226` | Sequence validation — the four-tier partition | S2 / 4 |
+| `FW-227` | The order-boundary handoff and its notification | S2 / 4 |
+| `FW-228` | Footage-to-weight converter | S2 / 4 |
+| `FW-229` | Fulfilment rollup and order status | S3 / 9 |
+| `FW-230` | FL1 segment alpha — one namespace | S2 / 8 |
 | `FW-N01` | Dashboard 2A — Rod Pre-Check-in station | S2 / 4 |
 | `FW-N02` | Spool completion weight milestones | S3 / 8 |
 | `FW-N03` | Angular library scaffold | S0 / 1A |

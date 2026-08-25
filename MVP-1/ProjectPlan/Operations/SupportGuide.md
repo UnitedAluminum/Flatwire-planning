@@ -1,7 +1,7 @@
 # Flat Wire Mill — Support Guide
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** August 18, 2026 — **`D-32`: there is no shared-schema migration.** The FW-001 reversal escalation and its runbook checklist line are retired *(previously August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
 **Document Type:** Incident runbook, handover, contacts, command reference
 **Status:** Baselined
 **Owner:** Release manager / IT
@@ -76,7 +76,7 @@ The on-call engineer should have: this document · `[API §1.8]` (the error-code
 | Engineering (tag map owner) | *TBD* | *TBD* | Tag-path corrections |
 | Operations Manager | *TBD* | *TBD* | Pass-schedule content; production impact |
 | Shift supervisor (on shift) | *TBD* | *TBD* | Operator notification; line state |
-| Owners of affected modules | *TBD* | *TBD* | **Any FW-001 reversal** — receiving, planning, scheduling, reporting, yield, cost |
+| Owners of affected modules | *TBD* | *TBD* | ~~**Any FW-001 reversal**~~ — **retired 18 Aug 2026, `D-32`: there is no shared-schema migration to reverse.** Still notify receiving, planning, scheduling, reporting, yield and cost if the `machines` / WIP-station **row** writes are reversed, and for anything arising from **`OI-111`** |
 
 **Escalation path:** on-call engineer → component lead → release manager → programme management. **A shared-database restore requires the release manager, the DBA and every affected module owner** — it is never a single-person call.
 
@@ -90,7 +90,7 @@ The on-call engineer should have: this document · `[API §1.8]` (the error-code
 
 ```powershell
 # --- Database -------------------------------------------------------------
-cd "c:\UAL\Flatwire-planning\LatestDocument\DBChanges\Schema\SQL"   # required: :r paths are relative
+cd "c:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Schema\SQL"   # required: :r paths are relative
 sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll.sql       # full build + seed, idempotent
 sqlcmd -S "<server>" -E -C -i FlatWire_DDL_04_Runs.sql      # one script
 sqlcmd -S "<server>" -E -C -i FlatWire_DDL_99_Teardown.sql  # DROPS EVERYTHING — test only
@@ -113,23 +113,26 @@ Get-WindowsOptionalFeature -Online -FeatureName IIS-WebSockets | Select FeatureN
 
 ### 9.2 File inventory
 
-| File | Role |
-|---|---|
-| `FlatWire_DDL_00_Database.sql` | Creates `FlatWireDB`, RCSI + snapshot isolation, `ua_user` and grants |
-| `FlatWire_DDL_01_Lookup.sql` | 6 lookup tables **+ the three pinned `PayoffPosition` rows** |
-| `FlatWire_DDL_02_Schedule.sql` | 3 schedule tables |
-| `FlatWire_DDL_03_Materials.sql` | `Rod`, `FlatWireRun`, `Spool` |
-| `FlatWire_DDL_04_Runs.sql` | 9 run tables |
-| `FlatWire_DDL_05_QualityOutput.sql` | 6 quality/output tables |
-| `FlatWire_DDL_06_ForeignKeys.sql` | **All 43 FKs** (as-built, 6 Aug 2026) |
-| `FlatWire_DDL_07_Indexes.sql` | **64 non-clustered indexes**, including the 3 filtered UNIQUE (as-built, 6 Aug 2026) |
-| `FlatWire_DDL_08_Programmability.sql` | Trigger + 2 read procedures + grants |
-| `FlatWire_DDL_RunAll.sql` | SQLCMD orchestrator — **requires SQLCMD mode** |
-| `FlatWire_DDL_99_Teardown.sql` | **Drops everything — test environments only** |
-| `FlatWire_SampleData_*.sql` | Seed, in strict order — **non-production only** |
-| `FW001_SharedSchema_Renames.sql` | The shared-schema renames — **separate approval** |
-| `FW001_SharedSchema_Renames_REVERSE.sql` | **The reverse script. Must exist and be rehearsed before deployment** |
-| `CommonDB_Insert_WIPStations_FlatWire.sql` | Creates `FL1`, `FL2`, `FL3`, **`FL1PO`** and `FWPACK` stations |
+**Deleted 23 Aug 2026 — this table is now two pointers, and that is a deliberate downgrade.**
+
+- **`Schema/SQL/`** — [`Database/Schema/SQL/README.md`](../Database/Schema/SQL/README.md) is the
+  folder manifest: the three runners, what each builds, and the scope of every file.
+- **`Scripts/`** — [`Database/Scripts/README.md`](../Database/Scripts/README.md) is the
+  cross-database manifest, and the only place carrying each script's **sign-off state** and whether
+  it is **reversible**. Read it before running anything that writes a shared database.
+- **Deploy order across both folders** — `[DEP §4.2]`. Not restated here.
+
+**Why it was deleted rather than corrected.** A support guide does not need a second copy of a
+folder manifest, and this copy had never once been right. On the day it was removed it was wrong in
+eight ways at once: it credited `01_Lookup` with 6 lookup tables (8), `03_Materials` with three
+tables (6), `04_Runs` with 9 (11), `06_ForeignKeys` with *"All 57 FKs"* when it then held 47,
+`07_Indexes` with *"64 non-clustered indexes … the 3 filtered UNIQUE"* (69 statements, 11 unique),
+and `08_Programmability` with *"2 read procedures"* (one — the second ships in `Scripts/`); it omitted
+`06b`, `07b`, `08b` and both of the newer runners; and it listed
+**`FW001_SharedSchema_Renames.sql` and `FW001_SharedSchema_Renames_REVERSE.sql`, neither of which
+has ever existed** — cancelled with the shared-schema migration by `D-32` on 18 Aug 2026, while
+this table still told a deployer the reverse script *"must exist and be rehearsed before
+deployment"*.
 
 ### 9.3 Known script constraints
 
@@ -157,7 +160,8 @@ Pre-deployment
   [ ] Operators notified   [ ] Rollback rehearsed — elapsed: ______
 Steps
   [ ] 1 Prepare            [ ] 2 FlatWireDB   V1 __ V2 __ V3 __ V4 __ V5 __ V6 __
-  [ ] 3 FW-001 renames     V7 __ V8 __ V10 __        [ ] 4 API   V11 __
+  [ ] 3 ~~FW-001 renames~~ CANCELLED (D-32) - V7/V8 dropped; V10 (machines rows) moves to step 1
+                                              [ ] 4 API   V11 __
   [ ] 5 OPC config         V12 __                    [ ] 6 Angular
 Smoke suite
   S1 __ S2 __ S3 __ S4 __ S5 __ S6 __ S7 __ S8 __

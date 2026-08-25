@@ -1,7 +1,7 @@
 # Flat Wire Mill — Architecture
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — **`OI-37` struck from §13's open-item list** — the six roles are confirmed as JWT claims on `ClaimTypes.Role` *(earlier: split out of `03-HLD-and-ERDiagram.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
+**Last Updated:** August 18, 2026 — **`D-32`: there is no shared-schema migration**; `FW-001`/`FW-002` cancelled, §10's boundary and §13.2's recovery risk narrowed *(earlier: **`OI-37` struck from §13's open-item list** — the six roles are confirmed as JWT claims on `ClaimTypes.Role`; split out of `03-HLD-and-ERDiagram.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
 **Document Type:** High-level design, code locations, cross-cutting concerns, the stack ADR
 **Status:** Baselined for build — design risks in §13.2, unresolved items in §13.3
 **Owner:** Architecture stream
@@ -42,7 +42,7 @@ flowchart TB
     REPT["Reports / Planning / Scheduling /<br/>CoilReceiving / CoilYield / CoilCosting"]
   end
   subgraph DATA["SQL Server"]
-    FWDB[("FlatWireDB<br/>NEW — 28 tables")]
+    FWDB[("FlatWireDB<br/>NEW — 33 tables")]
     SHARED[("Shared: coils, planning_routings,<br/>wip_coil_orders, wip_stations,<br/>machines, alloys, Lots")]
   end
 
@@ -76,7 +76,7 @@ Three facts this diagram encodes that are easy to get wrong:
 | `FlatWire.Application` | `c:\UAL\ual-api` | Commands, queries, validators, pipeline behaviours |
 | `FlatWire.Domain` | `c:\UAL\ual-api` | **Seven aggregate roots** (`D-29`), value objects, invariant rules, domain events, repository **interfaces**, enums, param models, `IFlatWireClient`. Bases inherited from `UA.Framework.Domain` — **do not write new ones** |
 | `FlatWire.Infrastructure` | `c:\UAL\ual-api` | `FlatWireDbContext` (EF Core), Dapper readers, repositories, `PLCTagService` |
-| `FlatWireDB` | `ual-database` | **MVP-1 build: 28 tables · 43 FKs · 47 index statements · 1 procedure · 1 trigger** — verified on a live deploy 15 Aug 2026 (`D-31`). *Previously 25 / 33 / 41, counted from the scripts on 13 Aug 2026.* **MVP-1 and the full design are now the same set** — `D-31` moved the three `PassSchedule*` tables, their 10 FKs and their 6 indexes into MVP-1. Only `sp_ShiftSummary` is MVP-2. *(The "64 non-clustered indexes" previously quoted here was a `sys.indexes` count from a deployed database, which includes constraint-backed indexes script 07 does not create — see §6.8.)* |
+| `FlatWireDB` | `ual-database` | **MVP-1 build: 33 tables · 55 FKs · 69 index statements · 1 procedure · 1 trigger** — verified on a live deploy 15 Aug 2026 (`D-31`). *Previously 25 / 33 / 41, counted from the scripts on 13 Aug 2026.* **MVP-1 and the full design are now the same set** — `D-31` moved the three `PassSchedule*` tables, their 10 FKs and their 6 indexes into MVP-1. Only `sp_ShiftSummary` is MVP-2. *(The "64 non-clustered indexes" previously quoted here was a `sys.indexes` count from a deployed database, which includes constraint-backed indexes script 07 does not create — see §6.8.)* |
 
 ---
 
@@ -90,7 +90,7 @@ Three facts this diagram encodes that are easy to get wrong:
 |---|---|---|---|
 | Frontend | `c:\UAL\ual-angular` | **New library `flat-wire-shopfloor`**, prefix `fw`, at `projects/flat-wire-shopfloor/` | Not started |
 | Backend | `c:\UAL\ual-api` | **New domain `API/Domain/FlatWire/`**, 4 projects + `FlatWire.sln` | Not started |
-| Database | `ual-database` | **New `FlatWireDB`**; the FW-001 renames stay in the existing shared scheduling schema | DDL written and validated; **not deployed** |
+| Database | `ual-database` | **New `FlatWireDB`** — and **nothing else**. `D-32` (18 Aug 2026) cancels the FW-001/FW-002 shared-schema migration, so the existing scheduling schema is **read and written as it stands, never altered** | DDL written and validated; **not deployed** |
 | Planning artifacts | `c:\UAL\Flatwire-planning` | This repository | Complete |
 
 `MVP-1/ProjectPlan/Flat Wire.code-workspace` opens this folder alongside both code repositories.
@@ -131,7 +131,15 @@ These are the rules most likely to be broken by a developer working from habit o
 
 Check-in spans **three systems**: `FlatWireDB` (run, check-in, SPC, staging), the shared `coils` / `wip_coil_orders` / `planning_routings` schema, and the PLC via OPC.
 
-**This is not one ACID transaction, and it cannot be made into one.** OPC writes are not transactional at all, and the two databases are separate.
+**Check-in as a whole is not one ACID transaction. But the part that cannot be atomic is only the OPC write** — and that is a narrower statement than this section made until 19 Aug 2026.
+
+> ⚠ **Corrected 19 Aug 2026 (`FW-220`).** The clause *"and the two databases are separate"* was the load-bearing half of the old claim, and it is **wrong in the deployed topology**. `FlatWireDB` is co-located with `united_db` / `proddb` / `SlitterDB` / `CommonDB` / `wiplogdb` on **one SQL Server instance**, so a single `SqlConnection` with a single `SqlTransaction` spans both halves under the **local** transaction manager — no MSDTC, no linked server, no distributed transaction. **The database half of check-in is therefore one ACID transaction and may be described as one.** The PLC half is still compensation and must still never be called a rollback (`G16`).
+>
+> This removes two of the three failure windows in the diagram below and one of its two compensation paths. `[INT §8.0]` is the specification of record for the write set; `united_db.dbo.FlatWire_CheckInRod` implements it, inside the caller's transaction.
+>
+> ⚠ **It depends entirely on co-location.** As of 19 Aug 2026 `FlatWireDB` is on `(localdb)\MSSQLLocalDB` while the shared five are on `DEVUAL-UADEV001\TEST1` — in that split topology nothing errors, the design just silently stops being atomic. Prove it with the query in `20_FlatWire_Grants.sql` before relying on this.
+
+**The original claim, retained because the reasoning still applies to the PLC:** OPC writes are not transactional at all.
 
 The design rules are therefore:
 
@@ -148,7 +156,7 @@ sequenceDiagram
 
     SVC->>FWDB: 1. Run + checkin + SPC + inspection (local transaction)
     FWDB-->>SVC: committed
-    SVC->>LEG: 2. coils INFLAT + reqsum + wip_coil_orders + actual_start_date
+    SVC->>LEG: 2. reqsum + wip_coil_orders + actual_start_date
     alt legacy write fails
         SVC->>FWDB: COMPENSATE — mark run aborted, flag for recovery
         SVC-->>SVC: 500, check-in aborted
@@ -157,7 +165,7 @@ sequenceDiagram
     SVC->>PLC: 3. PushPassSchedule (batch)
     alt any tag write fails
         SVC->>PLC: COMPENSATE — ClearPayoffTags
-        SVC->>LEG: COMPENSATE — revert coils status, reverse wip_coil_orders
+        SVC->>LEG: COMPENSATE — reverse wip_coil_orders, revert actual_start_date
         SVC->>FWDB: COMPENSATE — mark run aborted, PlcTagsPushed = 0
         SVC-->>SVC: 500, check-in aborted
     end
@@ -166,6 +174,12 @@ sequenceDiagram
 ```
 
 **This is gap G2 (Critical) and gap G16.** The candidates on the table are a **saga/outbox pattern with compensating PLC clears**, or **mirroring an `INFLAT` marker into `FlatWireDB`** so local state is self-consistent. **Neither has been chosen — OI-39**, and it blocks Phase 4. Phase 4's estimate carries a **24–64 h reserve** against this decision.
+
+> ⚠ **`OI-39` narrows again, 19 Aug 2026 (`FW-220`).** The **cross-database half of the recovery question is answered**: there is nothing to compensate between the two databases, because they commit together — `FlatWireDB` is co-located with the shared schema on one instance, so one `SqlConnection` and one `SqlTransaction` cover both halves under the local transaction manager. What remains is the PLC clears plus one local status update: `ClearPayoffTags`, then a second small transaction marking the run `Aborted`, `PlcTagsPushed = 0` and the staged row back to `Staged`. **`G2` narrows with it and still does not close.**
+>
+> The **24–64 h reserve should be re-derived before S2 planning** rather than after: its cross-database portion is spent, its PLC portion stands. Phase 4 is the only phase already flagged provisional, so getting this netting wrong in either direction distorts it. See [`FW-220`](../Backend/TaskBreakdownPlans/FW-220-FlatWire-CheckInRod.md) and `[INT §8.0]`.
+
+> ⚠ **`D-32` (18 Aug 2026) has already settled half of this.** With the shared-schema migration cancelled there is **no `INFLAT` value in the shared `coils` status vocabulary**, so the local mirror is not one candidate among two — it is the only place in-process state can live, and `Rod.Status` / `SpoolProcessing.Status` already carry `INFLAT` as a **`FlatWireDB`-local** value. **`OI-39` narrows to the recovery pattern for the writes that remain** — the reqsum / `wip_coil_orders` insert, `actual_start_date` on `planning_routings` / `routings`, and `wip_stations.coilno` — all of which land in **existing columns**. **`G2` narrows with it and does not close:** check-in still spans two databases plus the PLC push, so it is still not one ACID transaction.
 
 The same reasoning applies to **pre-check-in** (writes `RodStaging` + `coils` + `wip_coil_orders`) and to **pre-check-out** (must **reverse** the `wip_coil_orders` insert).
 
@@ -229,11 +243,15 @@ The same reasoning applies to **pre-check-in** (writes `RodStaging` + `coils` + 
 
 ### 13.1 Decision record
 
+> ⚠ **`D-01`–`D-17` here are a RESTATEMENT of the master specification §10.1, not a separate series** — same decisions, different columns: that table carries **Date** and **Supersedes**, this one carries **Rationale**. **The master spec wins on the decision, its date and its supersession chain; this table wins on rationale.** Two copies can drift, so change both or neither — the failure class that produced six conflicting PLC tag maps.
+>
+> **`D-18`–`D-28` are NOT here** — they exist only in master spec §10.1. **`D-29`–`D-32` are here and nowhere else.** So neither table is complete on its own.
+
 | ID | Decision | Rationale | Consequence |
 |---|---|---|---|
 | **D-01** | The UI is a brand-new standalone Angular library `flat-wire-shopfloor` | The screen set has no analogue in the existing libraries; folding it in would couple it to a release train it does not share | New scaffold; joins `build:shop-floor` for ordering only |
 | **D-02** | Tables live in a **new `FlatWireDB`**, not `united_db` | Isolates a new domain from the shared schema's release risk; traceability joins stay in-engine | Cross-DB reads for planning/scheduling data; §10 exists because of this |
-| **D-03** | The schema is **28 tables** | The as-built count | See §6.2 for the full supersession history |
+| **D-03** | The schema is **33 tables** — 34 until the 23 Aug 2026 `SpoolConfiguration` merge (`Q60`) | The as-built count | See §6.2 for the full supersession history |
 | **D-04** | **`Rod` is retained** as a local master with enforced rod-alpha FKs | Referential integrity for the genealogy chain that `NFR012` makes contractual | **Reverses** `Architecture/Architecture.md` §13.1 `D-04` / `phase-01c`. Leaves **OI-42** (sync with `coils`) open |
 | **D-05** | The real-time layer is **purpose-built**, self-contained in `FlatWire.API` | AGC telemetry is a different workload from the event notifications the existing hubs carry | `CoilDataHub` / `OPCManagerHub` / `supervisor-monitor-hub` are **not** templates |
 | **D-06** | **`SlitterInterface` is not a reference**; backend template is `CoilCheckin`; **there is no frontend template at all** | The mockups are the design; copying an existing library would import decisions the mockups reversed | Every control built fresh; only foundational `shared` services consumed |
@@ -249,14 +267,15 @@ The same reasoning applies to **pre-check-in** (writes `RodStaging` + `coils` + 
 | **D-16** | `CheckpointType` has **five** values including `RollAdjustTrigger` | `/rolloverride` writes a checkpoint of that type | The four-value API enum is corrected |
 | **D-17** | The **traveler is fully digital**; labels still print | Business decision, 28 Apr 2026 | No print action on the run monitor either |
 | **D-29** | **`FlatWire` is built to tactical DDD** — aggregates carrying behaviour, value objects, domain events, and invariants enforced in the domain rather than in validators. Seven aggregate roots; full boundary table in `[SVC §3.2a]` | **The platform already ships the toolkit and nothing uses it.** `UA.Framework.Domain/EntityModels/` has **`Entity`** (domain events, identity equality) and **`ValueObject`** (`GetAtomicValues`, structural equality); `CoilCheckin` has **`IBusinessRule`**/**`CheckRule`** → `BusinessRuleValidationException` and **`MediatorExtension.DispatchDomainEventsAsync`**. `CoilCheckin` kept every piece and modelled `DBModels/` as anemic `{ get; set; }` bags. Adopting DDD here is a **first use of the framework as designed**, not a bespoke pattern | ⚠ **Overrides ONLY the Domain-layer half of §2.2.** `CoilCheckin` stays binding for controllers, `Program.cs`, `.csproj`/NuGet, DI, MediatR and pipeline behaviours — this is **not** "CoilCheckin is no longer the template". **`G21` closes** (bay uniqueness is an aggregate invariant a filtered index cannot express); **`G14`'s format half closes by construction** (validating alpha constructors); **`G2` gains a boundary** — one aggregate, one transaction, everything outside it a process manager with compensating actions — but **stays open pending `G30`**. **+72 h on Phase 1B (469 → 541 h).** `FlatWire` becomes the first UAL service on this pattern |
-| **D-30** *(open)* | **Where the `ROWVERSION` concurrency token belongs under DDD.** The DDL puts one on `Rod`, `FlatWireRun`, `Spool`, `RodStaging` and `CoilOutput`. Under `D-29` the token belongs on the **aggregate root** — and three roots have none: **`WeldEvent`, `RodCheckout`, `WipRejection`** | All three are **mutated after insert** — a weld's `Pass`/`Fail`, a checkout's approval stamp, a rejection's disposition — so each can be lost-updated by a concurrent editor with nothing to detect it | **Open — decide before the Phase-4 schema freeze.** ⚠ **Re-numbered 15 Aug 2026 from the bare `D1`** raised in `[SVC §3.4]`, which collided with `[PLC]`'s retired `D1`–`D17` decision log and did not match this register's `D-##` format. Cited from `phase-01b`'s blockers |
-| **D-31** | **The three `PassSchedule*` tables, their seed, their 10 foreign keys and their 6 indexes move into MVP-1** — `02_Schedule`, `FlatWire_SampleData_Schedule.sql`, `06b` and `07b` join the MVP-1 runner in contiguous numeric order. **`08b` (`sp_ShiftSummary`) stays MVP-2**, because it backs Dashboard 10, a deferred screen | **`[API §4.2]` carried an open assumption with exactly two options**: MVP-1 calls the owning track's API and snapshots locally, *or* **the owning track writes into `FlatWireDB` and the read is a local query**. This is the second — **arbitration between two published options, not new scope.** It closes `[TRP §6]` blocker #1, which blocked **both** check-in screens and therefore the whole six-screen trial | ⚠ **Reverses the 11 Aug 2026 scope split and four documented positions, all deliberately.** **(1)** `PassScheduleId` stops being *"a documented external reference, the same class as `PlanId` and `SkidId`"* and becomes a **real enforced FK** on `FlatWireRun`, `RodCheckin`, `SpoolCheckin`, `CoilOutput` — `PlanId`, `CoilOrderPlanId` and `SkidId` are **unaffected**. **(2)** `PassSchedule` returns to the `ROWVERSION` list, making it **six**. **(3)** The 1C enum mirror now exists for `CK_PSC_*`, so `TC-020` runs against one database. **(4)** `phase-01c`'s *"deliberate numbering gap"* closes. **Verified on a live deploy: 28 tables · 43 FKs · 47 index statements · 1 procedure · 1 trigger**, idempotent on re-run. ⚠ **Owning the table is not owning the data** — MVP-1 still has **no authoring surface** (DB9/DB9A stay MVP-2, no write endpoint), so **nothing in MVP-1 populates these tables in production**: `OI-110`, the residual risk this decision moves rather than removes |
+| **D-30** *(open)* | **Where the `ROWVERSION` concurrency token belongs under DDD.** The DDL puts one on `Rod`, `FlatWireRun`, `SpoolProcessing`, `RodStaging` and `CoilOutput`. Under `D-29` the token belongs on the **aggregate root** — and three roots have none: **`WeldEvent`, `RodCheckout`, `WipRejection`** | All three are **mutated after insert** — a weld's `Pass`/`Fail`, a checkout's approval stamp, a rejection's disposition — so each can be lost-updated by a concurrent editor with nothing to detect it | **Open — decide before the Phase-4 schema freeze.** ⚠ **Re-numbered 15 Aug 2026 from the bare `D1`** raised in `[SVC §3.4]`, which collided with `[PLC]`'s retired `D1`–`D17` decision log and did not match this register's `D-##` format. Cited from `phase-01b`'s blockers |
+| **D-31** | **The three `PassSchedule*` tables, their seed, their 10 foreign keys and their 6 indexes move into MVP-1** — `02_Schedule`, `FlatWire_SampleData_Schedule.sql` and the files then called `06b` and `07b` join the MVP-1 runner in contiguous numeric order — the latter two were folded into `06` and `07` on 23 Aug 2026. **`09_Programmability_MVP2` (`sp_ShiftSummary`) stays MVP-2**, because it backs Dashboard 10, a deferred screen | **`[API §4.2]` carried an open assumption with exactly two options**: MVP-1 calls the owning track's API and snapshots locally, *or* **the owning track writes into `FlatWireDB` and the read is a local query**. This is the second — **arbitration between two published options, not new scope.** It closes `[TRP §6]` blocker #1, which blocked **both** check-in screens and therefore the whole six-screen trial | ⚠ **Reverses the 11 Aug 2026 scope split and four documented positions, all deliberately.** **(1)** `PassScheduleId` stops being *"a documented external reference, the same class as `PlanId` and `SkidId`"* and becomes a **real enforced FK** on `FlatWireRun`, `RodCheckin`, `SpoolCheckin`, `CoilOutput` — `PlanId`, `CoilOrderPlanId` and `SkidId` are **unaffected**. **(2)** `PassSchedule` returns to the `ROWVERSION` list, making it **six**. **(3)** The 1C enum mirror now exists for `CK_PSC_*`, so `TC-020` runs against one database. **(4)** `phase-01c`'s *"deliberate numbering gap"* closes. **Verified on a live deploy (22 Aug 2026): 34 tables · 57 FKs · 69 index statements · 1 procedure · 1 trigger**, idempotent on re-run — **the 23 Aug `Q60` merge then took the baseline to 33 · 55 · 69 · 1 · 1 (`[DBD §6.2]`)**. ⚠ **Owning the table is not owning the data** — MVP-1 still has **no authoring surface** (DB9/DB9A stay MVP-2, no write endpoint), so **nothing in MVP-1 populates these tables in production**: `OI-110`, the residual risk this decision moves rather than removes |
+| **D-32** *(18 Aug 2026)* | **There is no shared-schema migration. `FW-001` and `FW-002` are cancelled.** The existing `coils` / scheduling schema is **read and written as it stands and is never altered** — no column renames, no new columns, no new status value | Client direction. The eight slash-dual renames (`CoilNo`→`Coil/BundleNo` and the rest), the two new columns (`OutgoingCoil/BundleWidth`, `IncomingWireDia`) and the new shared coil status **`INFLAT`** were the highest-blast-radius change in the plan — read by upstream receiving, planning, scheduling, reporting, yield and cost, and priced with a discrete **40 h impact audit** across `united_db` and the legacy `ual-dot-net` tier. Removing the change removes the audit, the regression exposure and the migration script that was never written (`[GAP]` A1) | **−60 h base** (`FW-001` 56 + `FW-002` 4), and **−16 h more** from `FW-176`’s shared-`coils` column line — the plan’s second shared-schema change. With QA and contingency re-derived from the reduced bases: **Phase 1C 221 → 138 h**, **Phase 7 205 → 182 h**, **−106 h all-in**; MVP-1 backlog **3,292 → 3,186 h**. Derivation in `[CE §3c]`. ⚠ **Draw the boundary correctly — three things are cancelled and everything else stands.** **(a) Still written, in existing columns:** the reqsum / `wip_coil_orders` insert, `actual_start_date` on `planning_routings` / `routings`, `wip_stations.coilno`, the `FW-003` `machines` rows (125/126/127) and the `CommonDB` WIP-station registration. **(b) Still read:** the `coils` R-series row, `alloys.alloy_density`, `alloys.Draw_max_reduction`. **(c) `INFLAT` survives as a `FlatWireDB`-local value** on `Rod.Status`, `SpoolProcessing.Status` and `RodCheckout.NewRodStatus` — those CHECK constraints are untouched. **What goes with it:** `FR-077`'s `coils.coil_status = INFLAT` write, the `INFLAT` term in `FR-044` / `ROD_UNAVAILABLE` shared-side eligibility, and the QA4 rename regression pass in `FW-201`. **`OI-39` and `G2` narrow** (§10). **New: `OI-111`** — with no shared marker, upstream can no longer see that a rod is on a flattening line, and who needs that visibility is unanswered. The operation letter **`F`** is data in existing columns and is **not** cancelled, so **`OI-27` stands** |
 
 ### 13.2 Design risks
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| **The cross-system boundary has no chosen recovery pattern** | Partial failure leaves inconsistent state across three systems | Choose saga/outbox or a local `INFLAT` mirror **before Phase 4**; 24–64 h reserved |
+| **The cross-system boundary has no chosen recovery pattern** | Partial failure leaves inconsistent state across three systems | Choose the saga/outbox shape **before Phase 4**; 24–64 h reserved. ⚠ **Narrowed by `D-32`** — the local `INFLAT` mirror is no longer an alternative to be chosen, it is the only option left, and the boundary now carries three shared writes rather than four |
 | **Real-time NFRs are undefined, so the QA2 load test cannot fail** | If it does fail, the rework is not in the effort model | Set AGC rate, client count and latency budget before QA2 |
 | **`Rod` ↔ `coils` synchronisation is unspecified** | Two sources of truth for rod material | Specify the sync direction and master-per-column before Phase 1C completes |
 | **`AlloyProperty` shadows `united_db..alloys`**, and FW-054 is concurrently pushing *more* alloy data upstream | The generator runs off a provisional seed while the maintained value sits upstream | Build the `FlatWireDB..Alloys` view (§6.6) and read `Draw_max_reduction` across |
@@ -269,7 +288,7 @@ The same reasoning applies to **pre-check-in** (writes `RodStaging` + `coils` + 
 
 **OI-17** (`RunReading` retention) · **OI-18** (SPC cannot join its trigger) · **OI-20** (polymorphic refs without integrity) · **OI-22** (`Rework` unpersistable) · **OI-23** (SPC-HOLD has no column) · **OI-24** (lot number) · **OI-25** (two footage coordinate systems) · **OI-26** (FL3 pre-check-in station) · **OI-27** (no `F` case in the op-letter map) · **OI-28** (alert lifecycle unbacked) · **OI-29** (no bundle header) · **OI-30** (no gap-free sequence) · **OI-31** (no legacy migration deliverable) · **OI-32** (six missing endpoint groups) · **OI-34** (NFRs absent) · **OI-35** (`LineState` vocabulary) · **OI-36** (FM2 S3 tag path) · ~~**OI-37** (roles unconfirmed)~~ ✅ *closed 15 Aug — residual is the coded claim values* · **OI-38** (PIN validation source) · **OI-39** (cross-DB recovery) · **OI-41** (Phase 6 ↔ 13) · **OI-42** (`Rod` ↔ `coils` sync) · **OI-43** (unplanned component bypass has no home) · **OI-45** (weight basis) · **OI-80** (`TraversingTakeup` has no UI) · **OI-93** (`AlloyProperty` shadows `alloys`).
 
-New here: **PP-01** (the MVP-1 index count is **41**, not 44 or 46 — see §6.8).
+New here: **PP-01** — why a deployed database reports more indexes than the scripts create. The count itself is `[DBD §6.2]`; see `[DBD §6.8]`.
 
 ---
 

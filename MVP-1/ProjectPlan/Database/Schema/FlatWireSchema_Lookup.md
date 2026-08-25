@@ -1,10 +1,16 @@
 # Flat Wire Mill — Lookup & Reference Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 6, 2026
+**Last Updated:** August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*
 **Document Type:** Final Schema — Lookup / Configuration Tables
-**Source:** the April gap analysis from `FlatWireTables.md`, absorbed into `FlatWireSchema_Mapping.md`'s appendix on 13 Aug 2026 when that file was deleted
+**Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`)
+**Status:** Active — corrected up to the DDL, August 23, 2026
+**Scope:** MVP-1
+**Owner:** Architecture stream / DBA
+**Audience:** DBA, .NET developers, BA
+**Part of:** `ProjectPlan/Database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
+**Authority:** `SQL/FlatWire_DDL_01_Lookup.sql` **wins** on types, nullability and constraints. This document explains them; it does not define them, and it states no object counts — those are `[DBD §6.2]`. No shortcode is declared, deliberately: these are derived documents and must not be cited as authority.
 
 These tables define physical equipment configuration and reference data used throughout the flat wire mill system. They are relatively static — entries are added when equipment is commissioned and soft-deleted via `IsActive` when retired. DDL: `SQL/FlatWire_DDL_01_Lookup.sql`; seed: `SQL/FlatWire_SampleData_Lookup.sql`.
 
@@ -32,7 +38,7 @@ Rolling mill finishing stands. A stand applies compressive force to reduce mater
 - `CK_Stand_RollDiameterIn` — `RollDiameterIn > 0`
 - `UQ_Stand_Name` — `Name` is unique
 
-> **FM2 configuration `[CONFIRMED — Aug 4 2026]`.** FM2 has **three** stands: **S1 (8")**, **S2 (6", edger)**, **S3 (6", edger, final and non-bypassable)**. The earlier four-name set (`FM2_8in`, `FM2_6inS1`, `FM2_6inS2`, `FM2_6inS3`) wrongly modelled a separate 8" roller upstream of three 6" stands — the 8" roller **is S1**. Mapping: `FM2_8in`→`FM2_S1`, `FM2_6inS1`→`FM2_S2`, `FM2_6inS2`→`FM2_S3`, `FM2_6inS3` withdrawn. `Stand.Id` 1–4 are unchanged for 1–4; Id 5 is removed. Diameter moved into `RollDiameterIn` so a re-roll is a one-row update rather than a repo-wide rename. See [`Architecture/Architecture.md`](../../Business/BusinessRules.md) §0.3.
+> **FM2 configuration `[CONFIRMED — Aug 4 2026]`.** FM2 has **three** stands: **S1 (8")**, **S2 (6", edger)**, **S3 (6", edger, final and non-bypassable)**. The earlier four-name set (`FM2_8in`, `FM2_6inS1`, `FM2_6inS2`, `FM2_6inS3`) wrongly modelled a separate 8" roller upstream of three 6" stands — the 8" roller **is S1**. Mapping: `FM2_8in`→`FM2_S1`, `FM2_6inS1`→`FM2_S2`, `FM2_6inS2`→`FM2_S3`, `FM2_6inS3` withdrawn. `Stand.Id` 1–4 are unchanged for 1–4; Id 5 is removed. Diameter moved into `RollDiameterIn` so a re-roll is a one-row update rather than a repo-wide rename. See [Business/BusinessRules.md](../../Business/BusinessRules.md) §0.3.
 
 ---
 
@@ -120,27 +126,53 @@ Tension-management rollers. **FM1 carries one; FM2 carries two**, sitting **betw
 
 ---
 
-## `SpoolConfiguration`
+## `Spool`
 
-Reference table for spool types. Defines the physical dimensional and weight constraints for each class of spool used as FL1 output and FL2/FL3 feed material. Used at check-in to validate that spool measurements fall within acceptable bounds for the spool type.
+**The physical article the wire is wound on.** A carrier outlives the material on it: `SpoolProcessing.Alpha`
+is the *material's* identity, this is the *article's*. Referenced by `Spool.SpoolId`.
+
+**`SpoolConfiguration` was merged into this table on 23 Aug 2026 (`Q60`).** It was a **size class**
+holding exactly **one** meaningful row — the client confirmed every article is the same size — while
+the articles number 30-45, so its six dimensional columns and its `Name` now live here, per article.
+
+> ⚠ **The trade, stated because it is real.** This **denormalises**: the same eight values repeat on
+> all 30-45 rows, and a second purchased size becomes a multi-row `UPDATE` where the old shape needed
+> one `INSERT`. It holds only while *"every article is one size"* does. **If the client confirms a
+> second size, revisit the merge** — the fallback below stops being well-defined at that moment.
+
+> **The nullable-limits fallback.** `SpoolProcessing.SpoolId` is **nullable by design** (`Q42` is open
+> and nothing seeds articles in production yet), so a material row may have no article and therefore
+> no limits to validate against. The documented fallback is **any active `Spool` row's limits** —
+> well-defined precisely because all articles are one size, and needing no external constant. The
+> previous shape had to keep a one-row table alive to answer the same question.
 
 | Column | Data Type | Nullable | FK Reference | Description |
 |---|---|---|---|---|
-| `Id` | int | NOT NULL | — | Surrogate primary key |
-| `Name` | varchar(50) | NOT NULL | — | Configuration name identifying the spool type (e.g. `15lb`, `30lb`, `Small`) |
-| `MinWeightLb` | decimal(8,2) | NOT NULL | — | Minimum acceptable loaded spool weight in pounds |
-| `MaxWeightLb` | decimal(8,2) | NOT NULL | — | Maximum acceptable loaded spool weight in pounds |
-| `MinCoreDiameterIn` | decimal(8,4) | NOT NULL | — | Minimum spool core (inside arbor) diameter in inches |
-| `MaxCoreDiameterIn` | decimal(8,4) | NOT NULL | — | Maximum spool core (inside arbor) diameter in inches |
-| `MinOuterDiameterIn` | decimal(8,4) | NOT NULL | — | Minimum overall outer diameter of a loaded spool in inches |
-| `MaxOuterDiameterIn` | decimal(8,4) | NOT NULL | — | Maximum overall outer diameter of a loaded spool in inches |
-| `IsActive` | bit | NOT NULL | — | `1` = active/selectable; `0` = retired (added for consistency with the other lookups) |
+| `Id` | int | NOT NULL | - | Surrogate primary key, IDENTITY |
+| `SpoolNo` | varchar(20) | NOT NULL | - | The **stencilled** string the operator reads off the carrier, e.g. `S1` .. `S45` |
+| `SizeClass` | varchar(50) | NULL | - | Descriptive size name, e.g. `TKUP-1 Intermediate Spool`. **Not unique** — every article shares one name, so `UQ_SpoolConfig_Name` could not survive the merge and is deliberately not recreated. Was `SpoolConfiguration.Name` |
+| `MinWeightLb` | decimal(8,2) | NULL | - | Minimum acceptable loaded weight (lb). *Merged from `SpoolConfiguration`* |
+| `MaxWeightLb` | decimal(8,2) | NULL | - | Maximum acceptable loaded weight (lb) |
+| `MinCoreDiameterIn` | decimal(8,4) | NULL | - | Minimum core (inside arbor) diameter (in) |
+| `MaxCoreDiameterIn` | decimal(8,4) | NULL | - | Maximum core diameter (in) |
+| `MinOuterDiameterIn` | decimal(8,4) | NULL | - | Minimum outer diameter of the loaded article (in) |
+| `MaxOuterDiameterIn` | decimal(8,4) | NULL | - | Maximum outer diameter of the loaded article (in) |
+| `IsActive` | bit | NOT NULL | - | Soft delete, as the other lookups. Default `1` |
+| `Notes` | varchar(200) | NULL | - | e.g. "re-stencilled 08/2026", "withdrawn - damaged flange" |
 
 **Constraints:**
-- `MinWeightLb < MaxWeightLb`
-- `MinCoreDiameterIn < MaxCoreDiameterIn`
-- `MinOuterDiameterIn < MaxOuterDiameterIn`
-- `UQ_SpoolConfig_Name` — `Name` is unique
+- `PK_Spool` - `Id`
+- `UQ_Spool_No` - `SpoolNo` is unique
+- `DF_Spool_IsActive` - defaults to `1`
+- `CK_Spool_Weight` / `CK_Spool_CoreDiam` / `CK_Spool_OuterDiam` - carried over from `CK_SpoolConfig_*`, each now **all-or-nothing per band**: both bounds NULL, or both set with `Min < Max`. The explicit `IS NOT NULL` pair matters — `Min < Max` alone evaluates to UNKNOWN when one side is NULL and **a CHECK accepts UNKNOWN**, so half a band would have been admitted
+
+> **The stencil is the key, and that is a UI decision as much as a data one.** The operator types
+> what is painted on the carrier rather than picking from a list, because 30-45 rows will not
+> scroll usefully on a shopfloor panel at arm's length.
+
+> **`SpoolNo`'s format is open - `Q42`** (format and mastering). The `S1..S45` pattern above is
+> illustrative, not ratified. Seed rows for this table are marked provisional for the same reason.
+> Raised as `OI-120`: nothing in the schema was a carrier before this table.
 
 ---
 
@@ -184,7 +216,48 @@ Per-alloy process properties. Consumed by the pass-schedule generator (max reduc
 >
 > The original gap statement is kept below for the audit trail.
 >
-> **~~Gap — no rod diameter tolerance (Q22).~~** `CHK007` requires the measured **incoming rod diameter** to be validated against nominal ± a lookup tolerance, at both pre-check-in (Dashboard 2A) and check-in (Dashboard 2). The two tolerance columns above are **flat wire output** dimensions — the gauge and width the mill produces — and no rod-diameter tolerance column exists anywhere in `FlatWireDB` or the shared `coils` schema. `CHK007` is therefore not implementable as written, and the Dashboard 2A mockup carries a mock per-alloy map with no backing store. Likely resolution is a `RodDiameterToleranceDefault decimal(8,4)` here, pending confirmation that the tolerance is per-alloy rather than per rod spec or vendor. Values to seed are in the *Alloy Lookup Table* in `Analysis/FlatWireShopfloorDashboards.md`, which is itself marked as needing Process Engineering sign-off.
+> **~~Gap — no rod diameter tolerance (Q22).~~** `CHK007` requires the measured **incoming rod diameter** to be validated against nominal ± a lookup tolerance, at both pre-check-in (Dashboard 2A) and check-in (Dashboard 2). The two tolerance columns above are **flat wire output** dimensions — the gauge and width the mill produces — and no rod-diameter tolerance column exists anywhere in `FlatWireDB` or the shared `coils` schema. `CHK007` is therefore not implementable as written, and the Dashboard 2A mockup carries a mock per-alloy map with no backing store. Likely resolution is a `RodDiameterToleranceDefault decimal(8,4)` here, pending confirmation that the tolerance is per-alloy rather than per rod spec or vendor. Values to seed are in the *Alloy Lookup Table* in the **Seeded values** table below, which is itself marked as needing Process Engineering sign-off.
+
+---
+
+
+### Seeded values
+
+Migrated from `ReferenceData.md` on 23 Aug 2026, when that document was retired: it held one table
+and two caveats, had exactly **one** inbound link in the repository, and its own header claimed
+citations from this file and from `phase-13` that neither actually carried. Keeping the seed values
+away from the column definitions is what let its column list drift out of date - it still named
+`GaugeToleranceDefault` and `WidthToleranceDefault`, which became min/max pairs on 1 Aug 2026.
+
+Seeded by `FlatWire_SampleData_Lookup.sql`. **Maintained through the Phase-13 alloy-lookup admin
+grid**, which is the non-deferrable half of that phase - these are editable reference data, not
+hardcoded constants.
+
+| Alloy | Max reduction / pass | Spring-back factor | Gauge tol. | Width tol. | Speed range (FPM) |
+|---|---|---|---|---|---|
+| 1100 | 26% | 0.98 | ± 0.003" | ± 0.010" | 800 - 2,000 |
+| 1350 | 22% | 0.97 | ± 0.002" | ± 0.008" | 600 - 1,600 |
+| 3003 | 24% | 0.98 | ± 0.004" | ± 0.012" | 700 - 1,800 |
+| 5052 | 20% | 0.97 | ± 0.003" | ± 0.010" | 500 - 1,400 |
+| 6061 | 18% | 0.96 | ± 0.003" | ± 0.010" | 400 - 1,200 |
+
+> **The tolerance columns above are a single symmetric figure; the table is not.** Each `± x` seeds
+> **both** halves of the corresponding min/max pair documented above. The pairs exist because `Q22`
+> established the bands may be asymmetric; the seed simply has no asymmetric values yet.
+
+> **These values must be confirmed and maintained by Process Engineering (Tim O.).**
+
+> **⚠ `Spring-back factor` is a contested quantity - do not build physics on it.** Master
+> specification **§10.5** arbitrates the springback model as wrong: the roll gap sits **below**
+> gauge by a **load-dependent mill-spring** term (`h1 = S0 + F/K`), not above it by a fixed
+> per-alloy multiplier, and springback (a **material** property) has been conflated with mill
+> spring (**machine stiffness**). The column stays because `AlloyProperty` carries it and the
+> schema is seeded from these values; **the pass-schedule generation that consumes it is MVP-2**,
+> and `PassScheduleGenerationSpec.md` is the authority on the physics. It is harmless where it
+> stands, but it is seeded with values that will be read as authoritative.
+
+> **Rod diameter and ovality tolerances are deliberately absent.** They are owed by e-mail (`Q22`)
+> and are seeded `NULL` rather than guessed.
 
 ---
 

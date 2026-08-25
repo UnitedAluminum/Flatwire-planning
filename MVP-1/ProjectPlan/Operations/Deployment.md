@@ -1,7 +1,7 @@
 # Flat Wire Mill — Deployment
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** August 23, 2026 — **§“Verification” corrected for the third time: as written it again rejected a correct deployment.** `V1`/`V2`/`V3` asserted **32 / 50 / 57** — the 32 predated the 22 Aug rod ↔ order pair and the 50/57 were never re-derived after `D-31`. Now **34 / 57 / 69**, counted from the DDL, with `[DBD §6.2]` named as the defining site *(previously August 22, 2026 — `V1`/`V2`/`V3` asserted 25/33/41 in SQL comments and 27/41/46 in the checklist beneath, and `V4` required the MVP-2 `sp_ShiftSummary`)* *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** **Deployment step 2 is cancelled** and §4.3 retained as the record; the 1→3→4→5 order no longer depends on the renames; `V7`/`V8`/`V9` dropped, `V10` kept *(previously August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)
 **Document Type:** Release overview, environments, pre-deployment, sequence, smoke suite
 **Status:** Baselined
 **Owner:** Release manager / IT
@@ -18,14 +18,14 @@
 | # | Component | Artifact | Deployed to |
 |---|---|---|---|
 | 1 | **`FlatWireDB` schema** | Ordered SQL scripts `00` → `08` (+ seed on non-production) | SQL Server |
-| 2 | **FW-001 shared-schema renames** | A separate migration script against the **shared** `coils`/scheduling schema | SQL Server — **shared databases** |
+| ~~2~~ | ~~**FW-001 shared-schema renames**~~ — **CANCELLED 18 Aug 2026, `D-32`. There is no shared-schema migration, so this component does not exist and step 2 is not deployed.** ⚠ **Step 4's `machines` rows (FL1/FL2/FL3, `FW-003`) and the `CommonDB` WIP-station registration are NOT cancelled** — they insert rows into existing tables and are still required | — | — |
 | 3 | **`FlatWire.API`** | `dotnet publish` output | IIS application pool |
 | 4 | **`OPCConnection` configuration** | `appsettings.{Environment}.json` tag-path map | IIS (existing service) |
 | 5 | **`flat-wire-shopfloor`** | `ng build` static output, inside the shop-floor bundle | IIS static site |
 
 ### 1.2 Deployment order — and why
 
-**1 → 2 → 3 → 4 → 5.** Database before API because the API's EF model and Dapper queries assume the tables exist. The shared renames before the API because `FlatWire.API` writes `coils.coil_status`. API before Angular because the Angular build is the last thing users see — if the API is not up, the UI shows an error rather than a blank screen, and rollback of a static bundle is the cheapest of the five.
+**1 → 3 → 4 → 5** *(step 2 cancelled — `D-32`, 18 Aug 2026)*. Database before API because the API's EF model and Dapper queries assume the tables exist. ~~The shared renames before the API because `FlatWire.API` writes `coils.coil_status`.~~ — **struck: `FlatWire.API` does not write `coils.coil_status`**, so that ordering constraint is gone with the migration. API before Angular because the Angular build is the last thing users see — if the API is not up, the UI shows an error rather than a blank screen, and rollback of a static bundle is the cheapest of the five.
 
 ### 1.3 Version and tag
 
@@ -62,7 +62,7 @@
 | **staging** | `uanet-staging` *(UAT may run on `devual-uadev001` if staging is unavailable)* | *fill* | `FlatWireAPI_Staging` | shop-floor bundle | Pre-production, UAT |
 | **production** | `uanet05` | *fill* | `FlatWireAPI_Prod` | shop-floor bundle | Live |
 
-**Promotion path:** `test1/test2` → `dev1/dev2` → `staging` → `production`. **No environment is skipped**, and the FW-001 renames must be exercised in at least one non-production environment that carries a realistic copy of the shared schema before they touch production.
+**Promotion path:** `test1/test2` → `dev1/dev2` → `staging` → `production`. **No environment is skipped.** ~~The FW-001 renames must be exercised in at least one non-production environment that carries a realistic copy of the shared schema before they touch production.~~ — **struck 18 Aug 2026, `D-32`: nothing in this release alters the shared schema.**
 
 ### 2.1 Configuration per environment
 
@@ -96,7 +96,7 @@ Configuration lives in `appsettings.{Environment}.json` plus environment variabl
 
 ### 3.2 Backups
 
-- [ ] **Full backup of every shared database the FW-001 renames touch** — taken tonight, restore-tested, location recorded. **This is the only real safety net for step 4.3.**
+- [ ] ~~**Full backup of every shared database the FW-001 renames touch** — taken tonight, restore-tested, location recorded. **This is the only real safety net for step 4.3.**~~ — **struck 18 Aug 2026, `D-32`: step 4.3 is cancelled.** ⚠ **Back up the shared databases anyway** if the release runs the `machines` / WIP-station row inserts — those are still row writes into shared tables, and a cheap backup is not the thing to economise on.
 - [ ] Full backup of `FlatWireDB` (if it already exists and holds data).
 - [ ] Current `FlatWire.API` publish folder copied to `\\<release-share>\flatwire\api\<previous-tag>\`.
 - [ ] Current Angular static output copied to `\\<release-share>\flatwire\web\<previous-tag>\`.
@@ -136,7 +136,7 @@ SELECT RunId, PausedAt FROM dbo.RunPauseEvent WHERE ResumedAt IS NULL;
 ### 3.6 Rollback rehearsal
 
 - [ ] **The rollback in §6 has been rehearsed in a non-production environment for this release**, and the elapsed time is recorded.
-- [ ] The **reverse script for the FW-001 renames exists and has been executed successfully** in that rehearsal.
+- [ ] ~~The **reverse script for the FW-001 renames exists and has been executed successfully** in that rehearsal.~~ — **struck 18 Aug 2026, `D-32`: there are no renames and therefore no reverse script.**
 - [ ] The decision-maker for a rollback call is named and reachable — §6.1.
 
 > **A rollback that has never been run is not a rollback plan.** For the first production deployment this is not optional.
@@ -161,7 +161,7 @@ SELECT RunId, PausedAt FROM dbo.RunPauseEvent WHERE ResumedAt IS NULL;
 
 ```powershell
 # 2.1 — go to the script folder. The :r includes are relative; running from anywhere else fails.
-cd "c:\UAL\Flatwire-planning\LatestDocument\DBChanges\Schema\SQL"
+cd "c:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Schema\SQL"
 
 # 2.2 — full build, in order. Idempotent and safe to re-run against an existing FlatWireDB.
 sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll.sql
@@ -169,7 +169,37 @@ sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll.sql
 
 **Execution order, which `RunAll` enforces:**
 
-`00` database → `01` Lookup → `02` Schedule → `03` Materials → `04` Runs → `05` Quality/Output → **`06` all foreign keys** → `07` indexes → `08` programmability.
+`00` database → `01` Lookup → `02` Schedule → `03` Materials → `04` Runs → `05` Quality/Output →
+**`06` all foreign keys** → **`07` all indexes** → `08` programmability. A contiguous `00`–`08`, so
+*"of 09"* in the script headers is accurate. `06b` and `07b` were folded into `06` and `07` on
+23 Aug 2026; `09_Programmability_MVP2` (`sp_ShiftSummary`) is **MVP-2 and not in this chain**, and
+`99_Teardown` is in neither runner by design.
+
+#### The full cross-folder sequence — this is its only home
+
+`FlatWire_DDL_RunAll.sql` is **one step of ten**. The `Database/Scripts/` half is not optional: the
+check-in procedure claims a WIP station, and it has nothing to claim until step 2 has run.
+
+| # | Step | Artifact |
+|---|---|---|
+| **0** | **Pre-flight: prove co-location and isolation.** `FlatWireDB` must sit on the **same instance** as `united_db` / `proddb` / `SlitterDB` / `CommonDB` / `wiplogdb` — the check-in model spans them in **one** `SqlTransaction` under the **local** transaction manager, with no MSDTC (`[INT §8.0]`, `[ARC §10]`). LocalDB has no `united_db`, so a build validated only there silently loses that atomicity | the verification query in `Database/Scripts/20_FlatWire_Grants.sql` |
+| **1** | **The schema.** 33 tables, empty. Idempotent | `Schema/SQL/FlatWire_DDL_RunAll.sql` |
+| **2** | ⚠ **SIGN-OFF GATE — shared-schema rows.** Writes `united_db..machines` and `CommonDB..WIPStations` / `MachineStationsConfiguration`. Still **Draft** (`machine_type`, the station set and `StationType` pending sign-off) and **there is no reverse script**. Run it **by hand**, after approval — the `Scripts/` runner deliberately skips it | `Scripts/10_CommonDB_Insert_WIPStations_FlatWire.sql` |
+| **3** | **Grants.** Creates `ua_user` in six databases. Run **once per environment** | `Scripts/20_FlatWire_Grants.sql` |
+| **4** | **Inbound procedure.** Lives in `FlatWireDB` but ships with the cross-database scripts, because it reads `proddb..coils` and `united_db..alloys` | `Scripts/30_FlatWireDB_Proc_sp_IngestRodFromCoils.sql` |
+| **5–8** | **The four `united_db` procedures — any order among themselves.** `CREATE PROCEDURE` uses **deferred name resolution**, so they have no compile-time dependency on one another. The numbering groups them; it does not impose an order. ⚠ `70_ReverseReqsum` contains a `proddb..wip_coil_orders` **DELETE** that is **not signed off for a shared environment** (`Q40`) — creating it is safe, calling it is not | `Scripts/40_…CheckInRod`, `50_…CompleteCoilOnSkid`, `60_…ReleaseStation`, `70_…ReverseReqsum` |
+| **9** | **The verification gate** — `V1`–`V6` below, then `V10`–`V12` | this section |
+| **10** | **DEV / TRIAL ONLY — seed data.** Never against production | `Schema/SQL/FlatWire_SampleData_RunAll.sql` |
+
+Steps 3–8 can be run together with `Scripts/FlatWire_Scripts_RunAll.sql`, **which excludes step 2
+on purpose.** See [`Database/Scripts/README.md`](../Database/Scripts/README.md) for each script's
+sign-off state and whether it is reversible.
+
+**Teardown reverses, code before data:** `Scripts/99_united_db_Proc_FlatWire_Teardown.sql` (drops
+the four `united_db` procedures — **code, not data**), then
+`Schema/SQL/FlatWire_DDL_99_Teardown.sql` (drops `FlatWireDB`, and `sp_IngestRodFromCoils` goes
+with it). ⚠ **Neither undoes step 2's shared rows.** Nothing does — remove them deliberately and by
+hand.
 
 **Every script guards its objects** (`IF NOT EXISTS` / `IF EXISTS…DROP…CREATE`), so the whole build is **idempotent**. FKs are deliberately in a single script **after** all tables exist, so the table scripts have no cross-group ordering concerns.
 
@@ -199,25 +229,41 @@ sqlcmd -S "<server>" -E -C -i FlatWire_SampleData_QualityOutput.sql
 ```sql
 USE FlatWireDB;
 
--- V1. Table count must be 25 — this is the complete MVP-1 database.
+-- V1. Table count must be 33 -- this is the complete MVP-1 database.
+--     33, not 34, since 23 Aug 2026: SpoolConfiguration was MERGED into
+--     Spool (Q60). If this returns 34, the pre-merge script set ran.
+--     Defining site: [DBD 6.2]. This is one of exactly three places permitted
+--     to restate the figures; if it disagrees with [DBD 6.2], [DBD 6.2] wins.
 SELECT COUNT(*) AS TableCount FROM sys.tables WHERE is_ms_shipped = 0;
--- Expected: 25
-
--- V2. Foreign-key count must be 33.
-SELECT COUNT(*) AS FkCount FROM sys.foreign_keys;
 -- Expected: 33
 
--- V3. Index count — 41 created by script 07 (39 non-clustered + 2 filtered UNIQUE).
---     NOTE: this counts script 07's statements only. sys.indexes will report MORE,
---     because PRIMARY KEY and UNIQUE constraints create their own backing indexes.
-SELECT COUNT(*) AS IdxCount FROM sys.indexes
- WHERE type_desc = 'NONCLUSTERED' AND is_primary_key = 0 AND is_unique_constraint = 0;
--- Expected: 41
+-- V2. Foreign-key count must be 55. Was 57 until 23 Aug 2026: the
+--     SpoolConfiguration merge dropped FK_SpoolProcessing_SpoolConfiguration
+--     and FK_Spool_SpoolConfiguration with the SpoolTypeId columns they
+--     constrained. All 55 are now in script 06 (06b was folded into it).
+SELECT COUNT(*) AS FkCount FROM sys.foreign_keys;
+-- Expected: 55
 
--- V4. Programmability present.
+-- V3. Index count -- 69 created by script 07 (07b was folded into it).
+--     UNCHANGED by the 23 Aug merge: nothing was ever indexed on SpoolTypeId.
+--     The 63 in script 07 are 53 CREATE NONCLUSTERED plus 10 CREATE UNIQUE
+--     NONCLUSTERED. See [DBD 6.8] PP-01 for why a deployed database reports
+--     more indexes than the scripts create.
+--     NOTE: PRIMARY KEY and UNIQUE CONSTRAINT backing indexes are excluded below,
+--     which is what makes this match the script count.
+SELECT COUNT(*) AS IdxCount FROM sys.indexes
+ WHERE object_id IN (SELECT object_id FROM sys.tables)
+   AND type <> 0 AND is_primary_key = 0 AND is_unique_constraint = 0;
+-- Expected: 69
+
+-- V4. Programmability. TWO of these come from FlatWire_DDL_RunAll.sql; the third,
+--     sp_IngestRodFromCoils, ships separately in Database/Scripts/ because it reads
+--     proddb + united_db -- so it is present only AFTER step 4 of the grants sequence.
+--     sp_ShiftSummary is MVP-2 (08b, for DB10) and must NOT be here on an MVP-1
+--     deploy -- asking for it is what failed a correct deployment before.
 SELECT name, type_desc FROM sys.objects
- WHERE name IN ('trg_CoilTraceability_NoOverlap','sp_GetGaugeTrace','sp_ShiftSummary');
--- Expected: 3 rows
+ WHERE name IN ('trg_CoilTraceability_NoOverlap','sp_GetGaugeTrace','sp_IngestRodFromCoils');
+-- Expected: 2 rows after RunAll; 3 once Database/Scripts/ has been applied
 
 -- V5. Business invariant — at most one Active PassSchedule per line + alloy.
 SELECT LineId, Alloy, COUNT(*) FROM dbo.PassSchedule
@@ -232,22 +278,28 @@ SELECT a.CoilAlpha FROM dbo.CoilTraceability a
 -- Expected: zero rows
 ```
 
-- [ ] V1 returns **27**
-- [ ] V2 returns **41**
-- [ ] V3 returns **46**
-- [ ] V4 returns **3 rows**
+- [ ] V1 returns **33**
+- [ ] V2 returns **55**
+- [ ] V3 returns **69**
+- [ ] V4 returns **2 rows** after `RunAll` (**3** once `Database/Scripts/` is applied)
 - [ ] V5 returns **zero rows**
 - [ ] V6 returns **zero rows**
 - [ ] `ua_user` exists with `db_datareader`, `db_datawriter` and `GRANT EXECUTE ON SCHEMA::dbo`
 - [ ] On a seeded environment, the fixture alphas resolve: `R00041`–`R00043`, `SP-00021`, `PS-1100-FL1-003`, `RUN-0042`, `RUN-0043`
 
-> **If V1 returns anything other than 25**, the wrong script set ran or a script failed silently. **Stop.**
+> **If V1 returns anything other than 33**, the wrong script set ran or a script failed silently. **Stop.**
 >
-> ⚠ **This check asserted 27 until 13 Aug 2026 and explicitly told the deployer to stop on 25 — so as written it rejected a correct deployment.** The counts were fixed by counting the scripts directly, comments excluded: `CREATE TABLE` ×25, `FOREIGN KEY` ×33 in script 06, and 39 non-clustered + 2 filtered-unique in script 07. **28 tables and 43 FKs are the full design**, of which the three `PassSchedule*` tables and ten of the FKs are owned outside MVP-1 and are built by `MVP-1/ProjectPlan/Database/Schema/SQL`. Counts of 20, 21, 22, 24 and 27 all circulate in older documents and are superseded.
+> ⚠ **`V1`/`V2` moved to 33 / 55 on 23 Aug 2026 — the fourth correction to this gate.** `SpoolConfiguration` was merged into `Spool` (`Q60`), removing one table and two foreign keys; `V3` is unchanged at 69 because nothing was indexed on `SpoolTypeId`. **A deployment of the current scripts returns 33 / 55 / 69, and the previous 34 / 57 / 69 would now reject it** — which is the exact failure mode this block has had three times before.
+>
+> ⚠ **This check asserted 27 until 13 Aug 2026 and explicitly told the deployer to stop on 25 — so as written it rejected a correct deployment.** The counts were fixed by counting the scripts directly, comments excluded: `CREATE TABLE` ×25, `FOREIGN KEY` ×33 in script 06, and 39 non-clustered + 2 filtered-unique in script 07. **34 tables and 57 FKs are the design and the MVP-1 build both** — `D-31` (15 Aug 2026) brought the three `PassSchedule*` tables and their ten FKs into MVP-1, the 20 Aug 2026 spool work added four tables and seven FKs (`Spool`, `SpoolTraceability`, `SpoolOrder`, `SpoolStaging`), and the 22 Aug 2026 rod ↔ order work added two more (`RodOrderAllocation`, `RodOrderConsumption`) — 28 → 32 → 34. ⚠ **This block was itself wrong again until 22 Aug 2026, and in three ways at once**: the SQL comments asserted 25/33/41, the checklist beneath asserted 27/41/46, and `V4` required `sp_ShiftSummary`, which is MVP-2 and is absent from a correct MVP-1 deploy. ⚠ **And wrong a third time until this pass, asserting 32 / 50 / 57** — the 32 predated the 22 Aug rod ↔ order pair and the 50/57 were never re-derived after `D-31`. Now **34 / 57 / 69**, counted from the DDL. Counts of 20, 21, 22, 24, 25, 27, 28 and 32 tables, 33 / 40 / 41 / 43 / 50 FKs and 41 / 44 / 46 / 57 indexes all circulate in older documents and are superseded — `[DBD §6.2]` is the defining site.
 
-### 4.3 Step 3 — The FW-001 shared-schema renames
+### 4.3 Step 3 — The FW-001 shared-schema renames — **CANCELLED**
 
-> ### ⚠ Read this whole section before running anything in it.
+> ### ⚠ CANCELLED 18 Aug 2026 — decision `D-32`. **Do not run anything in this section.**
+>
+> There is no shared-schema migration. The existing `coils` / scheduling schema is **read and written as it stands and is never altered**, so this step is removed from the deployment and from the pre-flight checklist. The section is retained because the rename table and the verification queries are quoted elsewhere, and a deployer who meets them needs one place that says they are dead. **`V7`, `V8` and `V9` below are cancelled with it; `V10` (the FL1/FL2/FL3 `machines` rows) stands** — those are rows in an existing table, not a schema change.
+>
+> ### ⚠ The original warning, retained: read this whole section before running anything in it.
 >
 > These renames land on the **shared** `coils`/scheduling schema, which is read by upstream receiving, planning, scheduling, reporting, yield and cost — **and by the legacy `ual-dot-net` tier**. This is the **single highest-blast-radius change in the project** and **the hardest element of this release to roll back** (§6.3).
 >
@@ -314,7 +366,8 @@ SELECT OBJECT_NAME(referencing_id) AS Referencing, referenced_entity_name
  WHERE referenced_id IS NULL;
 -- Expected: zero rows
 
--- V9. INFLAT is an accepted status value.
+-- V9. CANCELLED (D-32) - INFLAT is never added to the shared status vocabulary.
+--     It is a FlatWireDB-local value on Rod.Status / SpoolProcessing.Status only.
 -- V10. FL1/FL2/FL3 exist at machine_idx 125/126/127 with status = 1.
 SELECT machine_idx, machine_name, status FROM united_db.dbo.machines
  WHERE machine_idx IN (125,126,127);
@@ -449,7 +502,7 @@ Run in order. **Any failure is a rollback candidate** — apply the decision cri
 | **S5** | `TC-704` | **Hub connection** | Inspect the browser network tab | A **WebSocket** connection to `/hubs/flatwire`, not a fallback transport |
 | **S6** | `TC-705` | **A live event on each line** | Join `FL1Data`, `FL2Data`, `FL3Data` in turn | FL1 and FL3 receive batched `GaugeReading`; **FL2 receives none — this is correct, not a fault** |
 | **S7** | `TC-706` | Pass schedule reads | Open DB9A, then one schedule | List renders with counts; detail shows components with three-value state |
-| **S8** | `TC-707` | **One check-in against a real Active pass schedule** | Complete the 6-step wizard on the test order and acknowledge | Run created `Running`; `RodCheckin`, pre-run SPC and inspection rows written; `coils.coil_status = INFLAT`; **records written before the push** |
+| **S8** | `TC-707` | **One check-in against a real Active pass schedule** | Complete the 6-step wizard on the test order and acknowledge | Run created `Running`; `RodCheckin`, pre-run SPC and inspection rows written; **`Rod.Status = 'INFLAT'` in `FlatWireDB`, and `coils.coil_status` UNCHANGED** *(`D-32`)*; **records written before the push** |
 | **S9** | `TC-708` | **PLC tag push verified** | Read back the pushed tags (stopped line only) | Every tag matches the schedule; one audit entry per tag |
 | **S10** | `TC-709` | Active run monitor | Open DB3 for the checked-in line | Traces render; machine status populates; the action bar shows the correct button set for the line |
 | **S11** | `TC-710` | **Reconnect** | Kill and restore the transport | "Reconnecting…" over cached state, **never blank**; group re-joined automatically |

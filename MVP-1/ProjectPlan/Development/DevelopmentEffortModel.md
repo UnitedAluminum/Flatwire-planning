@@ -1,7 +1,7 @@
 # Flat Wire Mill — Development Effort Model (AI-Assisted)
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 13, 2026 — **Phase 12 removed** to its own sheet; every total re-derived *(initial publication same day)*
+**Last Updated:** August 18, 2026 — **`D-32`: there is no shared-schema migration.** The `FW-001` 40 h rename impact audit and its 0.75 AI-assist factor leave this sheet entirely *(previously August 13, 2026 — **Phase 12 removed** to its own sheet; every total re-derived *(initial publication same day)*)*
 **Document Type:** Development Effort Model (build-stream hours only, AI-assisted delivery basis)
 **Status:** Published — **factors are assumed, not measured**; the Aug-14 Phase-1 gate is the calibration point (§6)
 **Estimating unit:** **hours**. Day figures are derived (**1 dev-day = 8 h**) and shown only as a reading aid.
@@ -41,7 +41,7 @@
 |---|---|---|
 | **FE** | Angular | `ual-angular` → new library `flat-wire-shopfloor` (prefix `fw`) |
 | **BE** | .NET | `ual-api` → new `FlatWire` microservice |
-| **DB** | SQL Server | new `FlatWireDB` + the shared-schema FW-001 renames |
+| **DB** | SQL Server | new `FlatWireDB` ~~+ the shared-schema FW-001 renames~~ *(cancelled 18 Aug 2026, `D-32` — see `[CE §3c]`)* |
 | **RT** | Real-time / PLC | `FlatWireHub`, OPC ingest, `PLCTagService` |
 
 ### What this sheet is not
@@ -69,7 +69,7 @@ under AI assistance that folding them in would mislead:
   mode hand-coding does not: plausible-but-wrong code that survives review.
 
 > **⚠ `1,397 h` is not the MVP-1 programme total and must never be quoted as one.** The MVP-1 programme, including
-> Phase 12, QA, BA and contingency, is **3,292 h / 9.4 FTE** on the hand-coded basis published in
+> Phase 12, QA, BA and contingency, is **3,186 h / 9.1 FTE** *(re-baselined 18 Aug 2026 by `D-32`; previously 3,292 h / 9.4)* on the hand-coded basis published in
 > [`CapacityAndEffortModel.md`](./CapacityAndEffortModel.md) §3b — and **that document remains the base of record.**
 > This sheet does not restate, supersede or correct any programme figure in it. Every number here is one of its
 > published cells multiplied by one factor from §1.
@@ -103,7 +103,7 @@ figure in §2 is reproducible by a single multiplication.
 | BE — command / query endpoints | **0.58–0.60** | `API/Domain/CoilCheckin` is an **exact** template (`[ARC §2.2]`); MediatR + FluentValidation is pattern replication. ⚠ *(This rationale read "+ xUnit" until 15 Aug 2026, when **all automated backend tests were withdrawn** — `[TS §1.2]`. The **retention factor is unchanged**: the withdrawn test effort came out of `[CE §2]`'s **base rate**, not out of this model's AI-assist ratio, and applying the withdrawal here as well would deduct it twice.)* |
 | BE — non-trivial business services | **0.65–0.75** | domain reasoning, not boilerplate — AI drafts, a human verifies. The **0.75** end of the band applies to Phase 12's yield/cost work, which is priced in [`YieldCostAndScrapSheet.md`](./YieldCostAndScrapSheet.md) and cites this card |
 | DB — DDL, EF mapping, repositories | **0.60** | mechanical |
-| DB — FW-001 rename impact audit (40 h, 1C) | **0.75** | the search across `united_db` and the legacy tier is assisted; the verification is not |
+| ~~DB — FW-001 rename impact audit (40 h, 1C)~~ — **CANCELLED, `D-32`, 18 Aug 2026** | ~~**0.75**~~ | ~~the search across `united_db` and the legacy tier is assisted; the verification is not~~ — **the audit does not happen at all**, so both the hand-coded 40 h and its AI-assisted 30 h leave this sheet. See `[CE §3c]` |
 | RT — hub events, SignalR plumbing | **0.75–0.85** | typed contracts and publishers assisted |
 | RT — OPC ingest, PLC tag push | **0.90** | integration against a real controller; **not verifiable without the hardware** |
 | RT — Phase 14 PLC commissioning (40 h) | **1.00** | needs the mill |

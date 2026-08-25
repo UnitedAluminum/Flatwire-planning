@@ -1,7 +1,7 @@
 # Flat Wire Mill — Test Strategy
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — **E2E respecified on Playwright driving real OPC tags** (§1.2, §3.1) and **UAT's entry criterion given a trial-scoped substitution** (§4.1): automated E2E is Phase 14 and out of trial scope, so [TRP §8]'s manual acceptance run satisfies the gate for the trial. Same day: **all automated backend tests withdrawn**: §1.2's *Unit — .NET* and *Integration — API* rows struck, *Contract* demoted to manual inspection, and §4.2's **QA0 row re-specified** as a signed-off manual contract walkthrough for 1B. The Jest 95 % bar on 1A is untouched and the asymmetry is recorded as deliberate *(otherwise August 13, 2026 — split out of `06-TestPlanAndTestCases.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
+**Last Updated:** August 18, 2026 — **`D-32`: there is no shared-schema migration.** The FW-001 rename regression is struck from scope and **`P2` is retired** *(previously August 15, 2026 — **E2E respecified on Playwright driving real OPC tags** (§1.2, §3.1) and **UAT's entry criterion given a trial-scoped substitution** (§4.1): automated E2E is Phase 14 and out of trial scope, so [TRP §8]'s manual acceptance run satisfies the gate for the trial. Same day: **all automated backend tests withdrawn**: §1.2's *Unit — .NET* and *Integration — API* rows struck, *Contract* demoted to manual inspection, and §4.2's **QA0 row re-specified** as a signed-off manual contract walkthrough for 1B. The Jest 95 % bar on 1A is untouched and the asymmetry is recorded as deliberate *(otherwise August 13, 2026 — split out of `06-TestPlanAndTestCases.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*
 **Document Type:** Strategy, scope, environments, gates, defect management
 **Status:** Baselined
 **Owner:** QA stream
@@ -88,7 +88,7 @@ diff across 14 enums performed by hand, and it needs a named owner** rather than
 
 ### 2.1 In test scope
 
-Every screen, endpoint, hub event, database constraint and PLC interaction in `[REQ]`, `[API]` and `[ARC]`; the FW-001 shared-schema rename regression; the deployment and rollback procedures.
+Every screen, endpoint, hub event, database constraint and PLC interaction in `[REQ]`, `[API]` and `[ARC]`; ~~the FW-001 shared-schema rename regression;~~ *(struck 18 Aug 2026, `D-32` — there is no migration to regress)* the deployment and rollback procedures.
 
 ### 2.2 Out of test scope
 
@@ -114,7 +114,7 @@ Test depth is not spread evenly. **P1** areas get happy path, boundary, negative
 | **P1** | **The cross-system check-in boundary** | Not one ACID transaction; recovery is undecided (**OI-39**) |
 | **P1** | **MMS ID lifecycle** | Closes strictly on consumption, never on operator action — and ITInhibit depends on it |
 | **P2** | Check-in gates, the three checkout modes, carry-forward, SPC gating, roll adjust, die change, pause/resume, WIP rejection, skid rule, reconnect, role matrix, audit | Core operator journeys |
-| **P2** | FW-001 rename regression | High blast radius across other modules |
+| ~~**P2**~~ | ~~FW-001 rename regression~~ — **RETIRED 18 Aug 2026, `D-32`** | ~~High blast radius across other modules~~ — no migration, no regression surface. ⚠ **`OI-111` is not a test target**: it asks which existing reports read `coils.coil_status`, which is an inventory question for IT, not a case in this plan |
 | **P3** | Shift summary, OEE, reports | Descope-ladder candidates; loss is visibility, not production. *(DB13 and DB14 were the other two and are descoped.)* |
 
 ---
@@ -132,7 +132,7 @@ Test depth is not spread evenly. **P1** areas get happy path, boundary, negative
 | Integration (API) | `test1` / `test2` (`devual-uadev001` / `002`) | A **freshly built and seeded `FlatWireDB`**, torn down and rebuilt per run |
 | Contract | `test1` | Seeded `FlatWireDB`, real API |
 | Real-time / load | `dev1` or `staging` | Simulated tag source at the configured cadence — `FW-203` for the trial, `[SIM]`'s in-process adapter (`FW-211`) thereafter |
-| E2E | `staging` | Full seed (five seeds, 28 tables) + a **test-only OPC server sidecar** the suite writes tags into — **owned by `FW-217`** (`[SIM §3.3]`), which re-hosts the same line models behind a real OPC endpoint so `FW-N05`'s ingest is exercised rather than bypassed. ⚠ **Never the production OPC servers** — they are unchanged infrastructure (`[PLC §5.3]` A5) |
+| E2E | `staging` | Full seed (five seeds, 33 tables) + a **test-only OPC server sidecar** the suite writes tags into — **owned by `FW-217`** (`[SIM §3.3]`), which re-hosts the same line models behind a real OPC endpoint so `FW-N05`'s ingest is exercised rather than bypassed. ⚠ **Never the production OPC servers** — they are unchanged infrastructure (`[PLC §5.3]` A5) |
 | PLC commissioning | The physical line | Live PLC, live OPC — **no simulation** |
 | UAT | `staging` (`uanet-staging`, or `devual-uadev001` if staging is unavailable) | A UAT dataset refreshed the morning of each UAT day |
 
@@ -142,7 +142,7 @@ Test depth is not spread evenly. **P1** areas get happy path, boundary, negative
 
 ```powershell
 # Full build + seed, in order. Run FROM the SQL folder — the :r paths are relative.
-cd "c:\UAL\Flatwire-planning\LatestDocument\DBChanges\Schema\SQL"
+cd "c:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Schema\SQL"
 sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll.sql
 
 # A single script

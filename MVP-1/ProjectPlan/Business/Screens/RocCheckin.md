@@ -3,13 +3,15 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL3 rod check-in · FL2 / FL3 spool check-in
-**Version:** 2.4
-**Last Updated:** August 15, 2026
+**Version:** 2.6
+**Last Updated:** August 25, 2026 — `FR-542`, `FR-546`, `FR-547`, `FR-551` and `FR-560` cited on the order-set and boundary text; worked examples cited *(previously August 18, 2026)*
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 2 — Rod Check-in · Dashboard 5 — Spool Check-in
 **Requirement source:** SRS check-in rules (`CHK005`–`CHK010`), `FR-094`/`FR-096` (FL2 acknowledgement and tag push), pass-schedule rules (`PSM005`–`PSM010`)
 
 ---
+
+> **Worked numeric traces for the order dimension.** [`RodOrderAllocation_WorkedExamples.md`](../../../../LatestDocument/RodOrderAllocation_WorkedExamples.md) carries seven end-to-end traces covering {1 order, 1 rod} × {1 order, n rods} × {n orders, n rods}, welded and not, with every footage and weight reconciled. It is **rationale, not a requirement** — the requirements are `[REQ §5.28]`, `FR-541`–`FR-560`. Its client-facing twin is the `.html` of the same name. ⚠ Its §9 is gap **`G48`** made concrete and its §12 raised **`G52`** and **`OI-127`**; the 4,000 lb rod every count scales from is still open as `OI-97`.
 
 ## Reading Convention
 
@@ -73,6 +75,24 @@ The **Acknowledge & Begin Check-in** control is enabled only when every check be
 **Visual inspection failure is a hard block with no bypass.** The only forward action is WIP Rejection.
 
 > `[CLIENT INPUT REQUIRED]` The **min/max values** applied at check 3 are the same four-attribute set as at pre-check-in — gauge, width, diameter and ovality per alloy. The shape is agreed; the values are owed (Q22). Until they arrive, nothing is seeded and this check cannot be enforced.
+
+## 3.1a The rod's order set, and the boundary it may carry `[PROPOSED]`
+
+Pre-flight validation resolves the rod's **order set** from planning, not a single order (`Q70`) — requirement text `FR-547` (`[ORD008]`, `[ORD013]`: the selected order must be a member of the **active** allocation set), sequence enforcement `FR-546` (`[ORD004]`), and `FR-542` (planning authors the allocation; the shopfloor never does). Tested by `TC-770`–`TC-772`. Two checks are applied here that mirror pre-check-in exactly, because a rule enforced at one entry point is not enforced (`Q73` item 7): the selected order must be a **member of the active set** `[ORD008]`, and the rod must be **in tier order** — refused, not overridden `[ORD004]`.
+
+**Where this screen differs from pre-check-in: the rod may already be mounted.**
+
+| Situation | Behaviour |
+|---|---|
+| Rod not yet checked in | normal check-in |
+| **Rod already mounted and running** | **refused as a duplicate** `[ORD014]`. Treating a repeat scan as a fresh check-in would mint a second run and **re-push the PLC tags mid-material** |
+| Rod mounted, and the operator is starting its **next** order | **not a check-in at all** — the previous order's completion acknowledgement starts it (§ the order boundary, below) |
+
+## 3.1b The order boundary — no second check-in `[PROPOSED]`
+
+A rod carrying an order boundary is **checked in once, at mount**, and stays mounted across the boundary `[ORD014]` — `FR-551` (consumption tracked against the running order, with a **durable, re-delivered** notification when the allocated weight is reached; `TC-773`) and `FR-560` (the order and segment partitions are independent; `TC-746`). The operator marks the running order complete and the next order begins on the same rod. **Nothing is scanned, nothing is dismounted, and no tags are pushed again.**
+
+> ⚠ **One consequence the operator must be told about, because the system cannot work around it.** Check-in is the moment the pass schedule is acknowledged and the PLC tags are pushed. With no second check-in there is **no second push** — so both orders run under the **first** order's pass schedule. If the incoming order's schedule differs, the mounted handoff is **refused** and the operator is directed to check the rod out and back in `[ORD015]`, `FR-550`. Whether planning can produce that case at all is **`Q48`**, and it is `Critical`.
 
 ## 3.2 Payoff position `[CONFIRMED]`
 
@@ -205,7 +225,7 @@ The two are the same five-step sequence over different material, and the differe
 | **CI-3** | The pass schedule ID, version and effective date are **copied** onto the run record at acknowledgement. |
 | **CI-4** | A failed visual inspection is a hard block routed to WIP Rejection; there is no bypass. |
 | **CI-5** | Selecting a schedule other than the recommended one requires a reason and is flagged for Operations review. |
-| **CI-6** | The shared material status becomes `INFLAT` at check-in, and only at check-in. |
+| **CI-6** | The material status becomes `INFLAT` at check-in, and only at check-in. ⚠ **Changed 18 Aug 2026:** the status is recorded on the **flat wire module's own rod record**, not on the shared scheduling record — there is no change to the shared scheduling system at all. The timing rule is unaffected. |
 | **CI-7** | A rod arriving from pre-check-in has its payoff position pre-filled and read-only; the staging record is consumed and linked. |
 | **CI-8** | Material planned for the other flattening line switches the station automatically and continues. |
 | **CI-9** | Dimensional acceptance uses the alloy's min/max limits for gauge, width, diameter and ovality. |
@@ -223,7 +243,7 @@ The two are the same five-step sequence over different material, and the differe
 | D4 | The line status board displays the active pass schedule ID for supervisor awareness | May 4, 2026 |
 | D5 | Attribute-based lookup (alloy + rod diameter + target gauge × width + route mode) resolves the recommended schedule at check-in; schedules are not assigned at planning time | Apr 28, 2026 |
 | D6 | FL3 hybrid runs use a **single unified** pass schedule covering both the drawing and the finishing stages | Apr 28, 2026 |
-| D7 | `INFLAT` is set at check-in; pre-check-in does not commit the shared status | Jul 30, 2026 |
+| D7 | `INFLAT` is set at check-in; pre-check-in does not commit it. ⚠ **Amended 18 Aug 2026** — the status is held on the flat wire module's own rod record; the shared scheduling record is not written at all | Jul 30, 2026 *(amended Aug 18, 2026)* |
 | D8 | Material planned for the other line switches the station automatically, at check-in as well as at pre-check-in | Jul 30, 2026 |
 | D9 | Dimensional limits are min/max on four attributes, applied at both stations | Jul 30, 2026 |
 

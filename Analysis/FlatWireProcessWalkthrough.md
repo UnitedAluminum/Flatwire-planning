@@ -1,7 +1,7 @@
 # Flat Wire — Step-by-Step Process Walkthrough (Rod Check-in → Finished Coil)
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 1, 2026
+**Last Updated:** August 18, 2026 — step 8’s `Q68` callout notes that `coils.coil_status` is never written after `D-32` *(previously August 1, 2026)*
 **Document Type:** Process Reference — Sequential Walkthrough
 **Status:** Reference — assembled from existing analysis docs; equipment facts per the May 21, 2026 client corrections
 
@@ -39,6 +39,8 @@ This document **does not introduce new requirements**. It is a navigational over
 
 8. **Rod moved to the VPS** (Variable Position Payoff) — dual position, eye-to-sky, 9,000 lb per position. Rod is staged against an intended payoff position (1 or 2) on **Dashboard 2A — Rod Pre-Check-in Station**, recorded as a `RodStaging` row, and may later carry the `IsWelded` flag once the operator records the weld. One rod per bay is enforced by the database. Full detail: [RodPreCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md).
 
+   > ⚠ **`D-32` (18 Aug 2026): `coils.coil_status` is not written at all** — the shared-schema migration is cancelled, so `INFLAT` is set on `FlatWireDB`'s `Rod.Status`. The 30 Jul timing answer below stands; only the column changed.
+   >
    > **DECIDED (client, 30 Jul 2026) — `RECEIVED → STAGED` is correct, and this document is the winning source (Q68).** `coils.coil_status` becomes **`INFLAT` only when the rod is actually checked in at FL1**, and there is **no intermediate status** for a rod that is welded but not yet checked in. ~~The SRS §4.2 `PCI` data note has pre-check-in setting `coil_status = INFLAT`; the interim design followed it, making rod status `STAGED` vestigial for FL1.~~ **That note is superseded** for the status, and rod status `STAGED` is the real staging status. Unblocks the Phase 4 staging build.
    >
    > **Residual:** the same data note also performs the `FlatwireQueue` insert, the reqsum and the `wip_coil_orders` insert. Whether **those** stay at pre-check-in is unanswered — sent back to Tim O. / IT. If they do, staging still spans three databases as compensating writes (**G2/G16**); if they move to check-in, pre-check-out becomes a pure `FlatWireDB` delete.

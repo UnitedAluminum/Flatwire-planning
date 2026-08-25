@@ -1,7 +1,7 @@
 # Flat Wire Mill — Vision & Scope
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — **`RISK-06` retired** and the *unverified assumption* callout restated: all six roles exist as JWT claims on `ClaimTypes.Role` (`G6`/`OI-37`)
+**Last Updated:** August 25, 2026 — the line-capability table records FL2 pre-check-in (`FR-533`); object count 34 → 33; effort points at `[CE §3e]` *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `SC-01` retargeted to `Rod.Status`; **`RISK-05` retired** and replaced by the narrower **`OI-111`**; §1’s “largest single blast radius” claim withdrawn *(previously August 15, 2026 — **`RISK-06` retired** and the *unverified assumption* callout restated: all six roles exist as JWT claims on `ClaimTypes.Role` (`G6`/`OI-37`))*)*
 **Document Type:** Vision & Scope
 **Status:** Baselined — open items in §13; the schedule position in §11 requires a programme decision
 **Owner:** Programme management
@@ -31,7 +31,7 @@ The **Flat Wire Mill module** is the shopfloor and dashboard layer that drives o
 
 ### 1.3 Why it is not a small change to existing applications
 
-No current UAL application can represent **rod as an input**, a **flattening operation**, a **bundle width**, an **edge type**, or a **coreless oscillated coil**. Approximately **24 existing applications** need extension, catalogued in `BaseDocuments/New Flat Wire Machine - Impact on Applications 041726.xlsx`. The largest single blast radius is the shared-schema rename (story `FW-001`) described in §10.3 and `[INT §8]`.
+No current UAL application can represent **rod as an input**, a **flattening operation**, a **bundle width**, an **edge type**, or a **coreless oscillated coil**. Approximately **24 existing applications** need extension, catalogued in `BaseDocuments/New Flat Wire Machine - Impact on Applications 041726.xlsx`. ~~The largest single blast radius is the shared-schema rename (story `FW-001`) described in §10.3 and `[INT §8]`.~~ **Retired 18 Aug 2026 — `D-32`: there is no shared-schema migration.** The largest single blast radius has been removed rather than managed; the existing applications are read and written as they stand. What remains of it is **`OI-111`**, which asks which existing reports filter on the coil status field.
 
 ---
 
@@ -76,7 +76,7 @@ Output winds at a **traversing take-up** that oscillates across the coil face. T
 | Gauge trace | **Real-time** (live AGC feed) | **Historical / profile** — broadcasts `null` live gauge and width | **Real-time**, end to end |
 | Intermediate anneal | Yes, optional | N/A | **No** — bypassed by definition |
 | Intermediate alpha | Yes — spool alpha issued | N/A | **No** intermediate alpha |
-| Pre-check-in | **Yes** | **No** — no staging space | **Yes** |
+| Pre-check-in | **Yes** | **Yes** — *client reversal, 20 Aug 2026 (`FR-533`)*. Still **no staging space**: it is a validation queue, not a bay. `[PROPOSED]` pending **`Q41`** | **Yes** |
 
 FL1 and FL2 may run **independent orders simultaneously**; their throughput ratio is roughly **3:1** (FL1 faster). **FL3 cannot run if FL1 or FL2 have scheduled orders.**
 
@@ -151,7 +151,7 @@ The shopfloor and dashboard layer, in five areas.
 |---|---|
 | **Operator screens** | Pre-check-in (DB2A) · rod check-in (DB2) and spool check-in (DB5) · active-run monitoring (DB3, three line variants) · SPC checkpoint (DB6) · roll adjust (DB11) · die change (DC) · pause/resume · WIP rejection (DB8) · rod checkout (DB12, three modes) · coil completion (DB7) · packing (DB7b) |
 | **Dashboards** | Line Status (DB1) · Pass Schedule Management and List (DB9 / DB9A) · Shift Summary (DB10) · Die Management (DM) · OEE |
-| **Data model** | The standalone `FlatWireDB` schema — **28 tables** (counted from the DDL, see `[DBD §6]`) — plus the named legacy integration points in the shared databases |
+| **Data model** | The standalone `FlatWireDB` schema — **33 tables** (counted from the DDL, see `[DBD §6]`) — plus the named legacy integration points in the shared databases |
 | **Integration** | PLC tag push on acknowledgement and clear on checkout · OPC tag consumption (mill speed, feet consumption, line state) · SignalR real-time streaming |
 | **Quality** | SPC checkpoints at four process points · SPC-HOLD · CPK per run · WIP rejection and dispositions |
 
@@ -192,7 +192,7 @@ Written so `[TS]` can test them and `[DEP]` can gate a release on them.
 
 | ID | Success criterion | Acceptance measure | Verified by |
 |---|---|---|---|
-| **SC-01** | A rod can be checked in on FL1 and the line configured from the acknowledged pass schedule | One check-in writes the run, check-in, inspection and pre-run SPC records, sets `coils.coil_status = INFLAT`, and pushes the full tag set for the selected payoff — in that order | `[TS]` FL1 E2E (FW-120) |
+| **SC-01** | A rod can be checked in on FL1 and the line configured from the acknowledged pass schedule | One check-in writes the run, check-in, inspection and pre-run SPC records, sets **`Rod.Status = 'INFLAT'`** *(`FlatWireDB`-local since `D-32`; the shared `coils` row is not written)*, and pushes the full tag set for the selected payoff — in that order | `[TS]` FL1 E2E (FW-120) |
 | **SC-02** | An FL1 run produces an intermediate spool with a complete profile | Spool alpha issued only after per-spool SPC passes; gauge profile with weld markers stored and retrievable | `[TS]` FL1 E2E |
 | **SC-03** | An FL2 run finishes that spool into a coreless coil | FL2 check-in validates against the FL1 record, shows the historical profile, pushes FM2 tags, completes a coil with a label | `[TS]` FL2 E2E (FW-121) |
 | **SC-04** | FL3 hybrid runs rod to finished coil in one pass | One acknowledgement pushes FM1 **and** FM2 tags; no spool alpha; real-time trace end to end | `[TS]` FL3 E2E (FW-122) |
@@ -247,11 +247,11 @@ The design is therefore **records first, PLC second**, with **compensating write
 
 | ID | Risk | Likelihood | Impact | Owner | Mitigation | Links |
 |---|---|---|---|---|---|---|
-| **RISK-01** | **The 30 Sep date is unreachable as scoped.** **MVP-1 is 3,292 hours / 411.5 dev-days** against **44 working days** (32 post-gate) — **352 h per person** → **9.4 FTE sustained**, a **10.7-FTE Phase-1 gate**, and an arithmetically impossible **24.5 FTE in W7**. *(Both scopes: 3,660 h → 10.4 FTE, 27.2 in W7.)* **Deferring MVP-2 did not help the shape** — its hours came almost entirely out of W2–W3, already the slackest weeks | **Certain** — measured, not forecast | **Critical** | Programme management | **Not mitigable by parallelism or descoping.** The full descope ladder recovers **12 %** (448 h), leaving 9.3 FTE. A programme decision is required: **staff to ~11 FTE**, **move the date** (6 FTE → 18 Nov 2026; 8 FTE → 22 Oct 2026, both inside the already-planned Q4 window), or **cut below the critical path**. See `[SP §1]` | **G1** / **OI-51** |
+| **RISK-01** | **The 30 Sep date is unreachable as scoped.** **MVP-1 is 3,186 scheduled hours / 398.3 dev-days — `3,358 h` all-in (`[CE §3e]`)** against **44 working days** (32 post-gate) — **352 h per person** → **9.1 FTE sustained** *(re-baselined 18 Aug 2026 by `D-32`; previously 3,292 h / 9.4 FTE. **The risk does not clear** — it moves by 0.3 FTE)*, a **10.7-FTE Phase-1 gate**, and an arithmetically impossible **24.5 FTE in W7**. *(Both scopes: 3,660 h → 10.4 FTE, 27.2 in W7.)* **Deferring MVP-2 did not help the shape** — its hours came almost entirely out of W2–W3, already the slackest weeks | **Certain** — measured, not forecast | **Critical** | Programme management | **Not mitigable by parallelism or descoping.** The full descope ladder recovers **12 %** (448 h), leaving 9.3 FTE. A programme decision is required: **staff to ~11 FTE**, **move the date** (6 FTE → 18 Nov 2026; 8 FTE → 22 Oct 2026, both inside the already-planned Q4 window), or **cut below the critical path**. See `[SP §1]` | **G1** / **OI-51** |
 | **RISK-02** | **Pass Schedule content is still being authored by Operations.** Every check-in depends on it, and Phase 2 gates every check-in phase | High | **Critical** | Tim O. / Operations | Front-load Phase 2; the stub check-in assumes a single active schedule. **There is no other workaround** | `[SP §6]` |
 | **RISK-03** | **The footage→weight conversion basis is undefined.** The formula and density source are settled; the *dimensional basis* (target vs measured vs integrated over `RunReading`) is not | Medium | High | Tim O. / Process Engineering | DB7 shows "pending confirmation" with an operator override; keep the factor table-driven. Note the ±2 % variance threshold in `FR-153` is arithmetically unreachable from target dimensions (worst case ±2.6 %) | **OQ-10** / **OI-45** |
 | **RISK-04** | **Cross-database check-in has no defined recovery path** | High | **Critical** | Architecture / Jaspreet | Choose saga/outbox or a local `INFLAT` mirror **before Phase 4** | **G2** / **OI-39** |
-| **RISK-05** | **FW-001 column renames break existing reports.** The renames touch the shared `coils`/scheduling schema read by upstream receiving, planning, scheduling, reporting, yield and cost | Medium | High | DBA / IT | Full stored-procedure / view / report / query audit **before** migration (40 h costed in Phase 1C); regression pass at QA4. This is also the hardest element of the release to roll back — `[RB §6.3]` | `[INT §8]` |
+| ~~**RISK-05**~~ | ~~**FW-001 column renames break existing reports.**~~ **RETIRED 18 Aug 2026 — `D-32`: there is no shared-schema migration, so no rename can break a report.** ⚠ **Replaced by the narrower `OI-111`:** nothing marks flat-wire material in `coils.coil_status` any more, so a status-filtered report sees it as untouched — and the audit that would have found such reports is cancelled with the change. Original text: The renames touch the shared `coils`/scheduling schema read by upstream receiving, planning, scheduling, reporting, yield and cost | — | — | DBA / IT | Full stored-procedure / view / report / query audit **before** migration (40 h costed in Phase 1C); regression pass at QA4. This is also the hardest element of the release to roll back — `[RB §6.3]` | `[INT §8]` |
 | **RISK-06** | ~~**Roles may not exist as JWT claims**~~ ✅ **Retired 15 Aug 2026 — did not materialise.** All six exist on `ClaimTypes.Role`; no provisioning story was needed | ~~Medium~~ — | ~~High~~ — | Security / Login owner | **Replaced by a smaller risk:** the claim **values** are coded rather than labelled and the mapping is unsupplied, so the authorization matrix cannot be *verified* until it lands. **Low / Medium**, mitigated by routing all six through one constants class | **G6** / **OI-37** |
 | **RISK-07** | **PLC commissioning slips past 30 Sep** | Medium | High | Engineering / Tim O. | `SimulatePLCTagPush` + mock SignalR keep the UI testable; **development is not blocked**, go-live is | — |
 | **RISK-08** | **Real-time NFRs are undefined** — AGC sample rate, concurrent client count, latency budget, `RunReading` retention. A hub load test is scheduled at QA2 **with no pass criteria** | High | High | Architecture / Engineering | Define targets before QA2, or the load test cannot fail. Rework cost if it fails is **not** in the effort model | **G9** / **OI-34** |
@@ -274,7 +274,7 @@ Twenty-five design, equipment and business decisions are closed and recorded in 
 |---|---|
 | **D-01** | The UI is a brand-new standalone Angular library `flat-wire-shopfloor` |
 | **D-02** | The tables live in a **new `FlatWireDB`**, not `united_db` |
-| **D-03 / D-04** | The schema is **28 tables**, and **`Rod` is retained** as a local master with enforced rod-alpha FKs — superseding the earlier "drop `Rod`, 21–22 tables" position |
+| **D-03 / D-04** | The schema is **33 tables**, and **`Rod` is retained** as a local master with enforced rod-alpha FKs — superseding the earlier "drop `Rod`, 21–22 tables" position |
 | **D-05 / D-06** | The real-time layer is purpose-built inside `FlatWire.API`; **`SlitterInterface` is explicitly not a reference**, and there is **no** frontend template at all |
 | **D-08** | Dashboard 2 is the 6-step tab wizard, `dashboard_2_rod_checkin.html` (`- New.html` until 11 Aug 2026); both earlier layouts are retired |
 | **D-09** | Stay within the UAL stack — no new frameworks |
@@ -293,7 +293,7 @@ These block the phase named. The full register (Critical, High, Medium, Low — 
 | **OI-51** | **The 30 Sep date requires an explicit programme decision** — staff to ~11 FTE, move the date, or cut below the critical path. The effort model is delivered; the *escalation* is the open item. The named-owner roster is also still unfilled | all | Programme management | **Immediately** — before the 14 Aug gate |
 | **OI-39** | **Cross-database check-in has no defined recovery path.** Saga/outbox with compensating PLC clears, or an `INFLAT` mirror in `FlatWireDB` — neither chosen | Phase 4 | Architecture / Jaspreet | Before Phase 4 starts (W4) |
 | **OI-45** | **Footage→weight dimensional basis undecided** — target, measured-at-completion, or integrated over `RunReading` (integration recommended). Plus the round-edge coefficient, density sign-off and tail-loss treatment | Phases 9, 12 | Tim O. / Bob S. / Process Engineering | Before Phase 9 (W6) |
-| **OI-01** | **Does pre-check-in set `coils.coil_status = INFLAT` or leave it `STAGED`?** And if `INFLAT`, must pre-check-out reverse the reqsum and `wip_coil_orders` insert? | Phase 4 | Tim O. / IT | Before Phase 4 (W4) |
+| **OI-01** | ~~**Does pre-check-in set `coils.coil_status = INFLAT` or leave it `STAGED`?**~~ **Moot since `D-32` (18 Aug 2026)** — nothing writes `coils.coil_status`. The live residual: must pre-check-out reverse the reqsum and `wip_coil_orders` insert? *(Unaffected by `D-32` — existing columns.)* | Phase 4 | Tim O. / IT | Before Phase 4 (W4) |
 | **OI-46** | **The no-match path at check-in is undefined** — what happens when no active schedule matches the order's attributes | Phase 4 | Tim O. / Jaspreet | Before Phase 4 (W4) |
 | **OI-47** | **FL2 check-in validation for hybrid-origin spools is undefined** | Phase 8 | Tim O. / Jaspreet | Before Phase 8 (W5) |
 | **OI-48** | **The full traveler field list per station has never been documented** | Phase 4 | Jaspreet / Tim O. | Before Phase 4 (W4) |
@@ -308,7 +308,7 @@ New contradictions found while producing these seven documents, not present in a
 
 | ID | Finding | Raised in | Resolution taken here |
 |---|---|---|---|
-| **PP-01** | **Index count drift.** The master specification §5.1 states "41 non-clustered indexes plus 3 filtered-unique". Counted directly from `FlatWire_DDL_07_Indexes.sql`: **46 index statements — 43 non-clustered + 3 filtered UNIQUE** | `[DBD §6]`, `[DEP §4]` | The DDL is authoritative. **46** is published; the master spec figure should be corrected |
+| **PP-01** | **Index count drift.** Four sources published four different figures — including this row, which asserted **46**, while `[ARC]` and `[RM]` asserted **41**. Root cause: a `sys.indexes` count and a `CREATE … INDEX` statement count are not the same number, because every `PRIMARY KEY` and `UNIQUE` constraint builds a backing index | `[DBD §6.2]`, `[DBD §6.8]`, `[DEP §4.2]` | **Resolved.** The DDL is authoritative and the count is defined once, in `[DBD §6.2]`. No other document may restate it except the three named there |
 
 ---
 

@@ -1,7 +1,7 @@
 # Flat Wire Mill — Implementation Plan
 
 **Project Status:** Active Development — Pre-Trial Phase
-**Last Updated:** April 28, 2026
+**Last Updated:** August 18, 2026 — **`D-32`: there is no shared-schema migration.** The April column-rename table, the new columns, the new `INFLAT` coil status and the dependent UI label renames are all **cancelled**; the operation letter `F` and the Flattening Lines tab stand *(previously April 28, 2026)*
 **Working Directory:** UAL Manufacturing Execution System
 **Phase:** Phase 1 (Critical-path go-live scope)
 
@@ -318,12 +318,16 @@ The machine template for each flattening line is a hybrid of the existing Slitte
 - Use the letter **`F`** for flattening operations in: `PrevOpLetter`, `RemainingOps`, `RootRemainingOps`, `OpLetter`.
 
 #### New Coil Status
-- Add status **`INFLAT`** — material currently in a flattening operation.
+> ⚠ **CANCELLED 18 Aug 2026 — decision `D-32`: there is no shared-schema migration.** `INFLAT` is never added to the shared coil-status vocabulary (`FW-002` cancelled). It exists only on `FlatWireDB`'s `Rod.Status` / `SpoolProcessing.Status`. **The column renames and new columns below are cancelled on the same ground** (`FW-001`). ⚠ **The operation letter `F` above and the Flattening Lines tab are NOT cancelled** — they are values and UI in things that already exist.
+
+- ~~Add status **`INFLAT`** — material currently in a flattening operation.~~
 
 #### UI Changes
 - Add a **Flattening Lines** tab alongside existing tabs, listing machines FL1, FL2, FL3.
 
-#### Database Column Renames
+#### Database Column Renames — **CANCELLED**
+
+> ⚠ **CANCELLED 18 Aug 2026 — decision `D-32`: there is no shared-schema migration.** Story `FW-001` is cancelled and none of the renames or new columns below are applied. The table is retained because it is the April source the later documents quoted from, and a reader who meets it elsewhere needs one place that says it is dead. **The UI label renames further down this document go with it** — *"CoilNo" → "Coil/Bundle No."*, *"Outgoing Gauge" → "Outgoing Gauge/Diameter"*, *"Coil #" → "Coil/Bundle #"*, *"Gauge" → "Gauge/Diameter"* — because they renamed the same columns on the screens that read them.
 
 | Current Column | New Column |
 |----------------|------------|
@@ -563,7 +567,7 @@ The following table reflects the known application scope tracked as of April 17,
 1. **Standards Spec Complete** — Naj/Bob/Tim finalize the FL attributes standards spreadsheet. *(Blocks machine config)*
 2. **Pass Schedule Database Design** — Tim O. finalizes pass schedule layout and structure.
 3. **Rod Receiving Module** — Rod receiving screen with validations deployed to shopfloor/web.
-4. **Database Schema Changes** — Column renames, new columns, and `INFLAT` status applied.
+4. ~~**Database Schema Changes** — Column renames, new columns, and `INFLAT` status applied.~~ — **CANCELLED 18 Aug 2026, `D-32`.**
 5. **Machine Configuration** — FL1, FL2, FL3 added to the Machines application with all required tabs.
 6. **Scheduling & Planning UI** — Flattening Lines tab, planning filter dropdown, and material drop changes deployed.
 7. **Web Application Changes** — All Order/Quote/IQR/Alloys/Vendor screen changes released.

@@ -20,7 +20,7 @@ MVP-2/
 ├── Mockups/                     ← 7 HTML screens (open directly in a browser)
 ├── RequirementDocuments/        ← 5 owning specifications
 ├── ProjectPlan/                 ← 4 extracted documents (SRS §5, API, backlog, test cases)
-├── DBChanges/                   ← 3 tables, additive on top of the MVP-1 schema
+│   (no Database/ folder — emptied 15 Aug 2026 by D-31; MVP-2 owns ONE object)
 ├── DevelopmentPlan/              ← phase 2 whole + 3 partial phase files + 1 prompt
 └── SRS/                         ← 1 client .docx deliverable
 ```
@@ -30,7 +30,7 @@ MVP-2/
 | Folder | Contents | The thing to know |
 |---|---|---|
 | [`ProjectPlan/`](ProjectPlan/) | Requirements, endpoints, backlog rows and test cases for the five deferred screens, **copied verbatim** | **Deliberately not self-contained** — cross-cutting sections (domain model, response envelope, NFRs, test strategy) stayed in MVP-1 and are cited, never copied. [Index](ProjectPlan/00-README.md) |
-| [`Database/`](DBChanges/) | **3** of the 28 tables (the pass-schedule group), 10 of 43 FKs, 6 of 47 indexes, 1 of 3 programmability objects | **Four of those FKs sit on MVP-1 tables**, and the runner is ordered seed-before-constrain because MVP-1 already seeded rows that point here. **`CoilOutput` and `CoilTraceability` are MVP-1** — the DB7/DB7b *screens* are deferred but the coil genealogy behind the welding-wire certs is not. [README](DBChanges/README.md) |
+| *(no `Database/` folder)* | **MVP-2 owns ZERO tables, ZERO FKs and ZERO indexes — and exactly one object: `sp_ShiftSummary`.** ⚠ This row previously claimed *"3 of the 34 tables (the pass-schedule group), 10 of 57 FKs, 6 of 69 indexes"*; **`D-31` (15 Aug 2026) moved all of that into MVP-1** and the folder was emptied. The procedure lives with the MVP-1 chain as [`FlatWire_DDL_09_Programmability_MVP2.sql`](../MVP-1/ProjectPlan/Database/Schema/SQL/FlatWire_DDL_09_Programmability_MVP2.sql), built by `FlatWire_DDL_RunAll_MVP2.sql`, and backs **DB10** | **MVP-1 builds the pass-schedule tables and never *authors* a schedule** — no create, edit, approve or list, no endpoint, and nothing in MVP-1 populates them in production (`OI-110`). Owning the table is not owning the data. **`CoilOutput` and `CoilTraceability` are MVP-1** — the DB7/DB7b *screens* were deferred but the coil genealogy behind the welding-wire certs is not. Counts: `[DBD §6.2]`. Manifest: [`Schema/SQL/README.md`](../MVP-1/ProjectPlan/Database/Schema/SQL/README.md) |
 | [`Analysis/`](Analysis/) | **3 of the register's 99 open questions** — `OI-88` (the only unambiguously MVP-2 one), `Q83` and `Q62`. **Copied, not moved:** [`../Analysis/FlatWireOpenQuestions.md`](../Analysis/FlatWireOpenQuestions.md) stays the master and keeps all 99 rows, so every inbound `OQ-##` still resolves there | **Mirrored** — nothing renumbered or deleted |
 | [`ProjectPlan/`](DevelopmentPlan/) | **Phase 2 whole** (with its 231 h), **two partial phase files** (DB10, Die Management) and the generation-spec prompt | **Effort is not apportioned** — only Phase 2 carries a real figure. The descope ladder cannot supply the rest: rung 5 bundles the MVP-2 Die Management screen with the MVP-1 role UI, rung 6 defers MVP-1 reports. Phases 9/11/13 still carry their whole hours in MVP-1, which **overstates** it. [README](DevelopmentPlan/README.md) |
 

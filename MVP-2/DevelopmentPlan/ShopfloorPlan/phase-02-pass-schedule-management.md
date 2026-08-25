@@ -9,7 +9,7 @@
 
 > **⚠ MVP-2 — deferred scope (11 Aug 2026).** This phase moved here **whole and unedited**: all four of its screen and
 > engine stories are deferred (`FW-010` data model + API, `FW-011` DB9A, `FW-012` DB9, `FW-013` Generate-from-Specs),
-> as are the three `PassSchedule*` tables, now in [`../../DBChanges/`](../../DBChanges/).
+> The three `PassSchedule*` tables, however, are **MVP-1 since `D-31`** (15 Aug 2026) and are in [`../../DBChanges/`](../../../MVP-1/ProjectPlan/Database/Schema/SQL/).
 >
 > **Its `231 h` moves with it** — the only phase in this division with a clean, published, unapportioned figure.
 >

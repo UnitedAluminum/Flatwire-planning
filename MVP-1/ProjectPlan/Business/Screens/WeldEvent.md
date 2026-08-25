@@ -4,12 +4,14 @@
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL3 (rod-to-rod joins at the payoff)
 **Version:** 2.4
-**Last Updated:** August 15, 2026
+**Last Updated:** August 25, 2026 — worked examples cited *(previously August 15, 2026)*
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 2A — Rod Pre-Check-In (*Mark as welded*) — see 4.1
 **Requirement source:** SRS welding rules (`WLD003`, `WLD005`, `WLD006`, `WLD010`, `WLD011`, `WLD012`), traceability rules (`TRV002`, `TRV004`)
 
 ---
+
+> **Worked numeric traces for the order dimension.** [`RodOrderAllocation_WorkedExamples.md`](../../../../LatestDocument/RodOrderAllocation_WorkedExamples.md) carries seven end-to-end traces covering {1 order, 1 rod} × {1 order, n rods} × {n orders, n rods}, welded and not, with every footage and weight reconciled. It is **rationale, not a requirement** — the requirements are `[REQ §5.28]`, `FR-541`–`FR-560`. Its client-facing twin is the `.html` of the same name. ⚠ Its §9 is gap **`G48`** made concrete and its §12 raised **`G52`** and **`OI-127`**; the 4,000 lb rod every count scales from is still open as `OI-97`.
 
 ## Reading Convention
 

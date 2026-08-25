@@ -16,14 +16,18 @@
      nothing. The nearest things were a count tile on the shift summary
      ("Spools on floor · 2") whose link arrow went nowhere, and a one-row test
      fixture in the April check-in implementation plan (deleted 13 Aug 2026;
-     the canonical fixtures are now the DB seed in DBChanges/Schema/SQL/).
+     the canonical fixtures are now the DB seed in MVP-1/ProjectPlan/Database/Schema/SQL/).
 
      WHY IT EXISTS — three reasons, in order of weight:
 
        1. FL2 HAS NO VIEW OF ITS OWN WORK QUEUE. FL1 has DB2A's staging queue.
-          FL2 is excluded from staging by PCI002 ("no staging space. FL2 is
+          FL2 has no staging SPACE (PCI002, "no staging space. FL2 is
           check-in only"), so the FL2 operator had no way to see what was
-          waiting for them at all.
+          waiting for them at all. NOTE: on 20 Aug 2026 the client REVERSED
+          the no-pre-check-in inference -- FL2 now gets pre-check-in as a
+          VALIDATION QUEUE on this screen (FR-533, REQ 5.29), not a staging
+          bay; PCI002's physical premise is unchanged. The action is wave W6
+          and is NOT built here yet; PROPOSED pending Q41.
        2. FR-090 SAYS SCAN; Q17 SAYS SELECT. The SRS has the operator scanning
           the FL1-printed label. Q17 records the client saying "the operator on
           FL2 selects it by spool number for check-in." Both are true here: the
@@ -56,7 +60,7 @@
      NO ALLOY / TEMPER COLUMNS. They are order-level, so they live in the
      context bar — DB2A's stated rule: "every rod on the order shares them, so
      they are stated once in the order header instead of repeated down every
-     row." This is also why dbo.Spool having no Alloy/Temper column stops
+     row." This is also why dbo.SpoolProcessing having no Alloy/Temper column stops
      being a problem.
 
      ── ONE SPOOL AT A TIME (client, 2 Aug 2026) ─────────────────────────────
@@ -65,9 +69,10 @@
      Two consequences, both enforced on this screen:
 
        1. TWO OPERATOR-VISIBLE STATUSES ONLY — "Ready for FL2" and
-          "Checked in". STAGED is an FL1/DB2A concept and PCI002 excludes FL2
-          from staging, so FL2 never sets it and the "At TPO" pill this screen
-          used to render is gone.
+          "Checked in". STAGED is an FL1/DB2A bay concept and FL2 has no bay,
+          so FL2 never sets it and the "At TPO" pill this screen used to render
+          is gone. Still true after the 20 Aug 2026 reversal: FL2 pre-check-in
+          QUEUES a spool for validation (FR-540), it does not stage it.
        2. CHECK-IN IS EXCLUSIVE. While a spool is checked in, NO row offers
           "Check in" — not the other spools and not the checked-in one. The
           action comes back only after that spool is checked out. The
@@ -76,7 +81,7 @@
           reinforced by the amber lock bar above the list.
 
      THE UI IS NOT THE ENFORCEMENT. Hiding a button is not a constraint:
-     nothing in dbo.Spool prevents two rows going INFLAT at once — there is no
+     nothing in dbo.SpoolProcessing prevents two rows going INFLAT at once — there is no
      filtered unique index, and Spool carries no LineId at all, so "checked in
      on FL2" is not even expressible as a constraint today. POST /checkin/spool
      has to reject the second check-in itself (409), and the schema needs a way
@@ -100,21 +105,21 @@
           sticky th lets rows show through it.
 
      ── WHAT THE DATA MODEL CANNOT GIVE US ───────────────────────────────────
-     dbo.Spool is built for a spool ARRIVING at FL2, not one waiting to go
+     dbo.SpoolProcessing is built for a spool ARRIVING at FL2, not one waiting to go
      there, so several obvious columns are impossible and are absent on purpose:
 
        • NO AGE / DWELL COLUMN. There is no CreatedAt on Spool at all — only
          CreatedBy. Spool age is not queryable. ReceivedAt is documented as
          "received at FL2/FL3", so it is NULL for everything listed here.
-       • NO LOCATION COLUMN. Spool.Location is VARCHAR(50), nullable,
+       • NO LOCATION COLUMN. SpoolProcessing.Location is VARCHAR(50), nullable,
          unindexed, and no document anywhere specifies what writes it.
-       • GAUGE/WIDTH ARE NOT FROM Spool. Spool.GaugeIn/WidthIn are documented
+       • GAUGE/WIDTH ARE NOT FROM Spool. SpoolProcessing.GaugeIn/WidthIn are documented
          "set at FL2/FL3 check-in" — NULL for every row here. They must come
          from the FL1 run via SourceRunId.
        • SOURCE RODS ARE NOT FROM Spool EITHER. ParentRodAlpha and
          SourceRodAlpha are two SINGLE-valued FKs. A spool carrying two welded
          rods is many-to-many and lives in CoilTraceability/WeldEvent.
-       • Spool.OrderNo — the column this whole screen pivots on — is nullable,
+       • SpoolProcessing.OrderNo — the column this whole screen pivots on — is nullable,
          unindexed and NOT a foreign key. Order attributes live in the shared
          order schema, so the context bar is a CROSS-DATABASE read.
 
@@ -136,7 +141,7 @@
          alongside it purely so the operator can see what is holding the line.
          The rest of Q17 still stands — the alpha and the physical spool
          NUMBER are different identifiers ("alphas are loaded onto a spool
-         number"), and dbo.Spool models only the alpha.
+         number"), and dbo.SpoolProcessing models only the alpha.
        Q76 / OI-50 (Critical) — which identifier is scanned.
        OI-02 (UNRESOLVED) — the alpha FORMAT is contested: SP-##### (schema)
          vs TS###### (SRS narrative).
@@ -479,7 +484,7 @@
       <span class="queue-title" id="queue-title">Spools</span>
       <div class="queue-meta">
         <span class="open-flag" title="OI-06 (partially decided, 2 Aug 2026): the client fixed the FL2 operator-visible vocabulary at two states — Ready for FL2 (schema RECEIVED) and Checked in (schema INFLAT). The storage vocabulary is still unmapped: the schema allows RECEIVED/STAGED/INFLAT/COMPLETE/HOLD/SCRAP and the planning narrative uses a different five, and the four values this screen no longer renders still have no defined FL2 presentation.">OI-06 storage vocabulary</span>
-        <span class="open-flag" title="Single check-in is enforced only in this UI. dbo.Spool has no filtered unique index on Status and carries no LineId at all, so 'one spool checked in per line' is not expressible as a database constraint today. POST /checkin/spool must reject the second check-in with a 409 — a hidden button is not a constraint.">Server must enforce exclusivity</span>
+        <span class="open-flag" title="Single check-in is enforced only in this UI. dbo.SpoolProcessing has no filtered unique index on Status and carries no LineId at all, so 'one spool checked in per line' is not expressible as a database constraint today. POST /checkin/spool must reject the second check-in with a 409 — a hidden button is not a constraint.">Server must enforce exclusivity</span>
       </div>
     </div>
 
@@ -548,7 +553,7 @@
   /* ── Demo data ────────────────────────────────────────────────────────────
      Gauge/width and source rods are shown as they would arrive from the API,
      which reads them from the FL1 run and CoilTraceability — NOT from
-     dbo.Spool, whose GaugeIn/WidthIn are null until check-in and whose rod
+     dbo.SpoolProcessing, whose GaugeIn/WidthIn are null until check-in and whose rod
      FKs are single-valued. See the head comment. */
   var ORDERS = {
     "FW-00419": { customer: "Daddario",   alloy: "1100", temper: "O",   setup: "0.110″ × 0.630″", due: "07/18/2026" },

@@ -1,7 +1,7 @@
 # Flat Wire Mill — Shopfloor Dashboard Designs
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 11, 2026
+**Last Updated:** August 25, 2026 — the FL2 no-pre-check-in statements corrected for the 20 Aug 2026 client reversal (`FR-533`) *(previously August 18, 2026 — the DB2A `PRE-CHECKED-IN` status row corrected — the shared `coils.coil_status` is never written at any point after `D-32` *(previously August 11, 2026)*)*
 **Document Type:** UX / Screen Design Reference — **internal**
 **Status:** Reference — superseded as a requirements source by `MVP-1/ProjectPlan/Business/Screens/`
 
@@ -95,7 +95,7 @@ This document defines the shopfloor dashboard screens required to operate the fl
 
 ## Alloy Reference Data
 
-> **Moved 13 Aug 2026 to [`MVP-1/ProjectPlan/Database/ReferenceData.md`](../MVP-1/ProjectPlan/Database/ReferenceData.md).** It is MVP-1 seed data feeding `AlloyProperty` and the
+> **Moved 13 Aug 2026, and again on 23 Aug 2026 — it now lives with the column definitions it seeds, as the **Seeded values** block of [`MVP-1/ProjectPlan/Database/Schema/FlatWireSchema_Lookup.md`](../MVP-1/ProjectPlan/Database/Schema/FlatWireSchema_Lookup.md#alloyproperty).** The intermediate `ReferenceData.md` was retired: holding the seed values apart from the `AlloyProperty` column list is what let its column names drift out of date. It is MVP-1 seed data feeding `AlloyProperty` and the
 > Phase-13 admin grid, and had been sitting inside this file's MVP-2 Dashboard 9 section. Cited from
 > `Schema/FlatWireSchema_Lookup.md` and `phase-13`.
 
@@ -170,7 +170,7 @@ This document defines the shopfloor dashboard screens required to operate the fl
 **Full analysis:** [RodPreCheckin.md](../MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md)
 **Requirements:** SRS §4.2 `PCI001`–`PCI008` · `WLD003`/`WLD005`/`WLD006`/`WLD010` · `TRV004`/`TRV009` · §4.18 `PRC007`/`PRC008`/`PRC011`/`PRC014`
 
-**Not available on FL2** — `PCI002`: no staging space. FL2 is check-in only (Dashboard 5).
+⚠ **Now available on FL2** — the client reversed this on 20 Aug 2026; requirement text is `FR-533` (`[REQ]` §5.29), `[PROPOSED]` pending `Q41`. `PCI002`'s premise stands (no staging space) but FL2 gets a **validation queue** on Dashboard 5A. *(Read "Not available on FL2 — `PCI002`: no staging space. FL2 is check-in only" until 25 Aug 2026.)*
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
@@ -210,7 +210,7 @@ The bay facts sit on **one row** and each bay alert is **one line**. The one sen
 | State | Chip | Meaning | Actions |
 |-------|------|---------|---------|
 | `NOT STAGED` | Gray | Empty bay | Pre-check-in rod |
-| `PRE-CHECKED-IN` | Blue | Staged, inspection passed, not yet checked in. **The shared `coils.coil_status` is *not* `INFLAT` here** — that is set at check-in (**Q68**) | **Proceed to check-in** *(primary)* · Mark as welded · Pre-check-out |
+| `PRE-CHECKED-IN` | Blue | Staged, inspection passed, not yet checked in. **`INFLAT` is *not* set here** — that happens at check-in (**Q68**), on `FlatWireDB`'s `Rod.Status`; ⚠ since **`D-32`** (18 Aug 2026) the shared `coils.coil_status` is never written at any point | **Proceed to check-in** *(primary)* · Mark as welded · Pre-check-out |
 | `PRE-CHECKED-IN` **· welded** | Blue | Staged and induction-welded to the running rod. Welded is a **flag**, not a status | **Proceed to check-in** *(primary)* · Mark as welded *(disabled — "already marked as welded")* · **Pre-check-out behind a supervisor override** (documented reason, rod → `HOLD` — it is a rejection, **Q69**/**Q72**) |
 | `ACTIVE` | Green | Checked in, rod `INFLAT`, run open | Check out rod · Welds this run · N — **no primary, and no *Open active run* link** (removed 1 Aug 2026: the run monitor is reachable from the app bar and Line Status, and this station's job is staging the *next* rod) |
 | `BLOCKED` | Red | Visual inspection failed at staging | Go to WIP Rejection — **only** action. The rejection captures the reason and puts the rod on **`HOLD`**, which **releases the row and frees the bay** (**Q23** item 3) |
@@ -680,7 +680,7 @@ Pause events roll up into the Shift Summary as follows:
 **Added:** 2 Aug 2026 · screen `dashboard_5a_spool_queue.html` · `FR-097`–`FR-099` · story FW-124
 
 **Why it exists.** FL1 operators have Dashboard 2A, which lists the rods planned for the running
-order. FL2 has no equivalent, because `PCI002` excludes FL2 from staging (see the note at the top of
+order. FL2 gained an equivalent on 20 Aug 2026 (`FR-533`) — a validation queue on Dashboard 5A rather than a staging bay, since `PCI002`'s no-staging-space premise stands (see the note at the top of
 this document) — so the FL2 operator had **no view of waiting material at all** until they were
 holding a spool. Separately, `FR-090` has the operator *scan the FL1-printed label* while **Q17**
 records the client saying the operator *"selects it by spool number for check-in"*. Both stand; only
@@ -716,8 +716,8 @@ field is marked and **the list does not move**) · **unallocated spool** (`200`,
 still checkin-able — planning remainders and accepted partials legitimately have no order) ·
 not-runnable spool (siblings still list, which is usually what was wanted).
 
-**Deliberately absent:** spool age (`Spool` has no creation timestamp — it is not queryable),
-location (`Spool.Location` has no writer), and filter/sort controls (the scan is the real filter).
+**Deliberately absent:** spool age (`SpoolProcessing` has no creation timestamp — it is not queryable),
+location (`SpoolProcessing.Location` has no writer), and filter/sort controls (the scan is the real filter).
 **Alloy and temper get no columns** — they are order-level and sit in the context bar, the same rule
 Dashboard 2A states for rods.
 
@@ -1680,7 +1680,7 @@ See [RodCheckout.md](../MVP-1/ProjectPlan/Business/Screens/RodCheckout.md) — O
 
 > **This map spans both MVP scopes and is deliberately NOT divided.** It is one diagram; halving it would
 > produce two partial maps with dangling edges. The repository has already ruled on this shape — *"One ER
-> diagram covering all 28 tables. **Not divided — a half-ER is worse than none**"*
+> diagram covering all 34 tables. **Not divided — a half-ER is worse than none**"*
 > ([`../MVP-1/ProjectPlan/Database/Schema/SQL/MVP2-SCOPE.md`](../MVP-1/ProjectPlan/Database/Schema/SQL/MVP2-SCOPE.md)).
 >
 > **MVP-2 nodes in the diagram below: `Dashboard 9`, `Dashboard 9A`, `Dashboard 10`.** Every other node is

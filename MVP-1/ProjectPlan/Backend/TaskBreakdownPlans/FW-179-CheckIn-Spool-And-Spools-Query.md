@@ -52,9 +52,9 @@ From `[TB §7]` — verbatim:
 
 | Concern | Story |
 |---|---|
-| `SpoolCheckin` table + the `Spool.OrderNo` index | `FW-180`, DB |
+| `SpoolCheckin` table + the `SpoolProcessing.OrderNo` index | `FW-180`, DB |
 | DB5 / DB5A screens | `FW-178`, FE · `FW-124` deferred |
-| The `Spool` row this reads | `FW-202` — ⚠ **must land first** (§4) |
+| The `SpoolProcessing` row this reads | `FW-202` — ⚠ **must land first** (§4) |
 | `PLCTagService` | [`FW-151`](FW-151-PLCTagService.md) |
 | The rod-side twin | [`FW-157`](FW-157-CheckIn-Rod-And-CheckInService.md) |
 
@@ -76,9 +76,9 @@ From `[TB §7]` — verbatim:
 ⚠ **`404` only for an unknown alpha.** An unallocated spool is `200` with a null order.
 
 ⚠ Two shape traps from `[API §4.6b]`: `gaugeIn`/`widthIn` come from **the source FL1 run**,
-because `Spool.GaugeIn`/`WidthIn` are set at check-in and are **null for every row this
+because `SpoolProcessing.GaugeIn`/`WidthIn` are set at check-in and are **null for every row this
 returns**; and `sourceRodAlphas` is a **list** from `CoilTraceability`/`WeldEvent`, because
-`Spool` holds only two single-valued rod FKs — **`G42`**, which has no child table.
+`SpoolProcessing` holds only two single-valued rod FKs — **`G42`**, which has no child table.
 
 ### 2.2 FL2 tags only
 
@@ -145,7 +145,7 @@ Phase 8 ships for real.**
 6. Hybrid-origin hook (§3).
 7. `Operator+`; audit throughout.
 
-> ⚠ **`FW-202` must land before Phase 8 starts, not beside it** — it writes the `Spool` row
+> ⚠ **`FW-202` must land before Phase 8 starts, not beside it** — it writes the `SpoolProcessing` row
 > DB5 reads. `[TRP §3]`: *"In a five-day sprint that is a real sequencing constraint, not a
 > formality."*
 
@@ -161,7 +161,7 @@ The distinction is the story's own named trap, so it needs to be unambiguous in 
 
 | Condition | Response |
 |---|---|
-| Alpha not in `Spool` | **`404`** |
+| Alpha not in `SpoolProcessing` | **`404`** |
 | Alpha exists, **no order allocation** | **`200`**, `{ order: null, spools: [...] }` |
 | Alpha exists, allocated | **`200`**, `{ order: {...}, spools: [...] }` |
 
@@ -187,7 +187,7 @@ acceptance run, steps 8–9.
 | **Unknown alpha** | **`404`** |
 | **Unallocated spool** | **`200`** with `order: null` — *not* `404` |
 | Order schema unreachable | `500`, not `404` *(`P-48`)* |
-| `gaugeIn`/`widthIn` | From the **source FL1 run** — not from `Spool`, which is null here |
+| `gaugeIn`/`widthIn` | From the **source FL1 run** — not from `SpoolProcessing`, which is null here |
 | `sourceRodAlphas` | A **list**, from `CoilTraceability`/`WeldEvent` |
 | **FL2 tags only** | Diff the written set: `S1`/`S2`/`S3` + edgers at S2/S3. **No DB, no FM1** |
 | Fixture | **`PS-1100-FL2-002`** succeeds; **`PS-1100-FL2-001` is refused** (§2.3) |
@@ -198,7 +198,7 @@ acceptance run, steps 8–9.
 
 ## 7. Handoff
 
-`FW-180` (DB) supplies `SpoolCheckin` and the `Spool.OrderNo` index — *"a `WHERE OrderNo =` on
+`FW-180` (DB) supplies `SpoolCheckin` and the `SpoolProcessing.OrderNo` index — *"a `WHERE OrderNo =` on
 a `VARCHAR(50)` does not scan"*, and it also fixes DB5's scan, **which validates against
 nothing today**. `FW-178` (FE) is DB5. `FW-124`'s DB5A queue is deferred — *"DB5's Browse
 spool queue → greyed. The scan still validates — `GET /spools` ships in `FW-179`."*
@@ -214,7 +214,7 @@ spool queue → greyed. The scan still validates — `GET /spools` ships in `FW-
 | **`Q17`** *(blocker)* | — |
 | **`G40`** | The FL2 fixture — §2.3 |
 | **`G41`** | `CK_PSC_FM1NotBypassable` is line-blind; **stops being inert in this story** |
-| **`G42`** | `Spool` cannot hold multi-rod genealogy — `sourceRodAlphas` is a list against a schema holding one |
+| **`G42`** | `SpoolProcessing` cannot hold multi-rod genealogy — `sourceRodAlphas` is a list against a schema holding one |
 | **`OI-33`** | The cross-DB order columns are unmapped |
 | **`Q27`** | The availability rule (`RECEIVED` + `STAGED`) is a proposal |
 | **`OI-25`** | Two footage coordinate systems, unreconciled (`FW-180`'s blocker, inherited by the DTO) |

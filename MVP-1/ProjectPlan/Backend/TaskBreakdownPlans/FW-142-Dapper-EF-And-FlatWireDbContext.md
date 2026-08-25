@@ -39,7 +39,7 @@ From `[TB §7]` — verbatim, **including the reversed criteria**:
 > - [ ] A smoke insert→select round-trips through EF against every table
 > - [ ] **The three `PassSchedule*` tables are not mapped** — they are owned outside MVP-1
 >
-> **Rate-card basis:** context + mapping across 24 tables, priced as a non-trivial service (24 h, §2)
+> **Rate-card basis:** context + mapping across 24 tables, priced as a non-trivial service (24 h, §2). ⚠ **The table count in this derivation is stale — flagged, not substituted (23 Aug 2026).** The live figure is `[DBD §6.2]`. Replacing the count without re-deriving the hours would make the arithmetic lie, and per the standing convention an effort change lands in an **additive new sheet, never an in-place edit of a total**. **Owed: re-derive against `[DBD §6.2]` using `[CE §2]`'s rate card** — `[CE]`'s owner, not this document's.
 > **Dependencies:** FW-N04; converges with FW-006 / FW-007
 > **Blockers:** —
 
@@ -68,7 +68,7 @@ read path · `ROWVERSION` concurrency tokens · registration.
 `phase-01b` L47:
 
 > ⚠ Any "25 MVP-1 tables / 28 in the full design" split is stale — there is one number now,
-> and it is **28**, verified on a live deploy alongside **43 FKs · 47 index statements ·
+> and it is **33**, verified statically alongside **55 FKs · 69 index statements ·
 > 1 procedure · 1 trigger**.
 
 So **AC 2's "25" is 28**, and **AC 4 is reversed** — the three `PassSchedule*` tables are
@@ -112,7 +112,7 @@ statement for MVP-1 scope.)*
 | High-volume reads | **Dapper** | Gauge trace, shift summary, list grids, the staging-queue projection, and the cross-DB reads |
 
 **A short-lived memory cache for lookup tables** belongs to this story (`phase-01b` L97) —
-`Stand`, `Drawer`, `Edger`, `AlloyProperty`, `SpoolConfiguration`, `PayoffPosition`, the six
+`Stand`, `Drawer`, `Edger`, `Dancer`, `Spool`, `AlloyProperty`, `PayoffPosition`, the six
 reference tables `[SVC §3.2a]` lists as *"not aggregates … reference data"*. **Short-lived is
 the operative word**: `AlloyProperty` is edited by the alloy-lookup admin and
 `Drawer.LastGrindingFeet` moves with every die change, so a long TTL serves a stale
@@ -120,7 +120,7 @@ tolerance band into a check-in. Keep it in-process and measured in seconds.
 
 ### 3.1 Concurrency — six tokens, and three roots without one
 
-`ROWVERSION` optimistic tokens on **`PassSchedule`, `Rod`, `FlatWireRun`, `Spool`,
+`ROWVERSION` optimistic tokens on **`PassSchedule`, `Rod`, `FlatWireRun`, `SpoolProcessing`,
 `RodStaging`, `CoilOutput`** — six, counted from a live deploy 15 Aug 2026 — mapped as
 concurrency tokens so a mismatch surfaces as `CONCURRENCY_CONFLICT` → `409`.
 
@@ -166,7 +166,7 @@ concurrency tokens so a mismatch surfaces as `CONCURRENCY_CONFLICT` → `409`.
 
 > `P-##` is continuous across this folder; `P-01`–`P-12` precede this story.
 
-### `P-13` — map all 28 tables for reading; give `PassSchedule*` **no write path**
+### `P-13` — map all 33 tables for reading; give `PassSchedule*` **no write path**
 
 **Needs ratifying.** `D-31` and `[SVC §3.2a]` are both correct and pull in opposite
 directions: the tables are MVP-1 and carry enforced FKs, yet MVP-1 must never author a
@@ -175,7 +175,7 @@ schedule.
 **Resolution:** the three `PassSchedule*` tables are reachable **read-only**. Concretely —
 no `DbSet<PassSchedule>` on the context, and the read goes through **Dapper** as `phase-01b`
 L60 specifies, projecting into the immutable `PassScheduleSnapshot` value object. The other
-25 tables are mapped for EF writes as normal.
+Every table in `[DBD §6.2]` is mapped for EF writes as normal.
 
 Rationale: a mapped, tracked `DbSet` is a write path whether or not anyone means to use it,
 and *"MVP-1 reads schedules and never authors them"* is a rule better enforced by the
@@ -183,7 +183,7 @@ and *"MVP-1 reads schedules and never authors them"* is a rule better enforced b
 for `ITInhibit`'s missing operator clear path. The FK is a database constraint and needs no
 EF mapping to hold.
 
-**Read AC 2 as 28 tables and AC 4 as withdrawn**, with 3 of the 28 read-only.
+**Read AC 2 as 33 tables and AC 4 as withdrawn**, with 3 of the 33 read-only.
 
 ### `P-14` — interim stance on `D-30`
 
@@ -203,8 +203,8 @@ as a **manual** pass in the QA0 walkthrough; it was never an xUnit suite.
 
 | Check | Expected |
 |---|---|
-| Object baseline | Deployed `FlatWireDB` reports **28 tables · 43 FKs · 47 index statements · 1 procedure · 1 trigger** — `[DBD §6.2]` is the definition of record |
-| EF mapping | 25 tables mapped for writes; **no `DbSet<PassSchedule>`** *(`P-13`)* |
+| Object baseline | Deployed `FlatWireDB` reports **33 tables · 55 FKs · 69 index statements · 1 procedure · 1 trigger** — `[DBD §6.2]` is the definition of record |
+| EF mapping | every table in `[DBD §6.2]` mapped for writes; **no `DbSet<PassSchedule>`** *(`P-13`)* |
 | Smoke | Insert → select round-trips through EF against every mapped table |
 | Concurrency | Six `ROWVERSION` tokens map as concurrency tokens; a stale write surfaces `CONCURRENCY_CONFLICT`/`409` |
 | Dispatch | `SaveEntitiesAsync` dispatches domain events **after** `SaveChangesAsync`, never before |
@@ -234,5 +234,5 @@ as a **manual** pass in the QA0 walkthrough; it was never an xUnit suite.
 |---|---|---|
 | AC 2: *"all **25 MVP-1 tables** … 28 in the full design"* | **28**, one number | `D-31`; `phase-01b` L47 |
 | AC 4: *"The three `PassSchedule*` tables are not mapped — owned outside MVP-1"* | **They are MVP-1**, with enforced FKs. Read-only by `P-13`, not unmapped-by-scope | `D-31`; `[SVC §3.2a]` |
-| Rate-card basis: *"across 24 tables"* | 28 | `[DBD §6.2]` |
+| Rate-card basis: *"across 24 tables"* | the `[DBD §6.2]` figure | `[DBD §6.2]` |
 | `[SVC §3.3]` naming `sp_ShiftSummary` alongside `sp_GetGaugeTrace` | `sp_ShiftSummary` is **MVP-2's** — do not create, drop or grant | `phase-01b` L87 |

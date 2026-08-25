@@ -7,7 +7,7 @@
 ---
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-08-18 — **`D-32`**: `SpoolProcessing.Status=INFLAT` clarified as `FlatWireDB`-local; the shared `coils` row is not written *(previously 2026-08-02)*
 **Status:** Ready to build
 **Layer:** Full-stack vertical slice
 **Owner:** **FE + BE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
@@ -41,7 +41,7 @@
 - **Screens:** **Dashboard 5A (`dashboard_5a_spool_queue.html`, new 2 Aug 2026)**, Dashboard 5 (`dashboard_5_spool_checkin.html`), Dashboard 3 FL2 variant (`dashboard_3_active_run_fl2.html`). **Roll Adjust is no longer a screen** — see *Dialogs* below.
 - **DB5A — structure.** Header · scan panel · context bar · list · footer, on the DB2A layout contract (definite `height: 1024px`, the list the only flexing child, `min-height: 0` on both it and its table wrapper, sticky on `th` not `thead`). Component `dashboard-5a-spool-queue`, route `/flat-wire/line/FL2/spools`. **Two modes over one table and the column set never changes between them** — a table that gains and loses columns as you scan reads as two tables and costs the operator their place. The `Order` column therefore stays in both; alloy and temper get **no** columns because they are order-level and live in the context bar (DB2A's stated rule).
   - **The four scan outcomes are all one response, not extra requests:** resolved order · `404` unknown alpha (**field marked, list unchanged**) · `200` with a null order and a single row for an **unallocated** spool (a real case — planning remainders and supervisor-accepted partials) · `200` with `eligible:false` for a spool that cannot run, whose siblings still list because that is usually what the operator wanted.
-  - **Deliberately absent:** age (no `CreatedAt` on `Spool` — it is not queryable), location (`Spool.Location` has no writer and no scheme), and any filter/sort furniture (the list is already limited to runnable material and the scan is the real filter).
+  - **Deliberately absent:** age (no `CreatedAt` on `SpoolProcessing` — it is not queryable), location (`SpoolProcessing.Location` has no writer and no scheme), and any filter/sort furniture (the list is already limited to runnable material and the scan is the real filter).
 - **DB3 FL2 variant — structure (re-mocked 2 Aug 2026 to the FL1 monitor's IA).** Top to bottom:
   1. **Status-card strip**, three cards on a `1fr 1.35fr 1fr` grid:
      - *Machine* — run time, speed, coil footage, coil run time, lube temp.
@@ -73,19 +73,19 @@
 - **Navigation:** → Dashboard 3 (FL2 mode). From DB3 the only true navigation left is **Complete Coil** (Dashboard 7) — View Trends went with the DB14 descope on 4 Aug 2026. ~~(DB14) and **Complete Coil** (DB7); everything else is a dialog.
 
 ## Backend Implementation (.NET)
-- **APIs:** `CheckInController POST /checkin/spool`; `RunController GET /run/{runId}/gaugetrace` (historical FL1 readings + weld markers); **`SpoolController GET /spools[?spoolAlpha=]`** — one endpoint, two modes, identical response shape `{ order, spools[] }`. Without `spoolAlpha` it returns everything available for processing with a null order; with it, **the backend resolves the order** and returns it plus that order's spools in the same response. `404` only for an unknown alpha — **an unallocated spool is a `200` with a null order**, and conflating the two is the mistake to avoid. The DTO joins `CoilTraceability`/`WeldEvent` for source rods, the FL1 run for gauge/width, and the **shared order schema cross-database** for the order block. **Add an index on `Spool.OrderNo`** — unindexed today and this is a `WHERE OrderNo =` on a `VARCHAR(50)`. It also fixes DB5's scan, which validates against nothing today.
+- **APIs:** `CheckInController POST /checkin/spool`; `RunController GET /run/{runId}/gaugetrace` (historical FL1 readings + weld markers); **`SpoolController GET /spools[?spoolAlpha=]`** — one endpoint, two modes, identical response shape `{ order, spools[] }`. Without `spoolAlpha` it returns everything available for processing with a null order; with it, **the backend resolves the order** and returns it plus that order's spools in the same response. `404` only for an unknown alpha — **an unallocated spool is a `200` with a null order**, and conflating the two is the mistake to avoid. The DTO joins `CoilTraceability`/`WeldEvent` for source rods, the FL1 run for gauge/width, and the **shared order schema cross-database** for the order block. **Add an index on `SpoolProcessing.OrderNo`** — unindexed today and this is a `WHERE OrderNo =` on a `VARCHAR(50)`. It also fixes DB5's scan, which validates against nothing today.
 - **Request/Response:** `CheckInSpoolCommand` (spoolAlpha, measured gauge/width, weights, passScheduleId) → run response; gauge-trace DTO.
 - **Business services:** `CheckInService` (spool path, FL2 tags), `RunQueryService` (historical trace).
 - **Business rules:** FL2 tags = `S1`/`S2`/`S3` roll gaps and stand states + edgers at S2/S3 (no DB/FM1); no visual inspection; hybrid-origin validation (OQ-15).
 - **Authz:** Operator+.
 
 ## Database Changes
-- **Tables (write):** `SpoolCheckin` (LineId restricted FL2/FL3), `FlatWireRun` (FL2 run header), `Spool.Status=INFLAT`.
-- **Reads:** source FL1 run gauge trace + `WeldEvent` markers; `Spool.SourceRunId`/`ParentRodAlpha` for traceability.
+- **Tables (write):** `SpoolCheckin` (LineId restricted FL2/FL3), `FlatWireRun` (FL2 run header), `SpoolProcessing.Status=INFLAT` *(`FlatWireDB`-local; the shared `coils` row is not written — `D-32`)*.
+- **Reads:** source FL1 run gauge trace + `WeldEvent` markers; `SpoolProcessing.SourceRunId`/`ParentRodAlpha` for traceability.
 - **Reads added by the 2 Aug 2026 mockup — the run monitor now needs order data it did not before.** The Order Information grid wants customer, due date, gauge/width tolerance, setup width/gauge, finish, OD min–max, **coil min–max weight**, total spool weight and order weight. These live in the **shared order/scheduling schema**, not FlatWireDB, so this is a cross-database read on the same unenforced-link basis as the rod-alpha references (`Architecture/Architecture.md` §13.1 `D-04`). Confirm the field for the coil weight range before building — **OQ-18**.
-- The Spool Information grid reads only what `SpoolCheckin`/`Spool` already carry, plus live remaining weight off the hub.
+- The Spool Information grid reads only what `SpoolCheckin`/`SpoolProcessing` already carry, plus live remaining weight off the hub.
 - **Roll Adjust writes `RollOverride` (`OVR-####`) plus an `SpcCheckpoint` of type `RollAdjustTrigger`** — both **owned by Phase 6**; this phase consumes the endpoint, it does not build it. `RollAdjustTrigger` is absent from the API's four-value `CheckpointType` enum (REVIEW Tier 1 #2, corrected by master spec **FR-184**) — verify Phase 1C shipped the five-value enum before wiring this button.
-- **Relationships:** `Spool → FlatWireRun(SourceRunId)`; `Spool.ParentRodAlpha` is a **logical link to the rod's `coils` row**, not a FK to a local `Rod` table (G12 — foundations decision 3 drops that table; the DDL still creates it, and the divergence is unresolved). Treat it as a cross-DB reference like the other rod-alpha links until G12 closes.
+- **Relationships:** `Spool → FlatWireRun(SourceRunId)`; `SpoolProcessing.ParentRodAlpha` is a **logical link to the rod's `coils` row**, not a FK to a local `Rod` table (G12 — foundations decision 3 drops that table; the DDL still creates it, and the divergence is unresolved). Treat it as a cross-DB reference like the other rod-alpha links until G12 closes.
 
 ## Real-Time Functionality
 - FL2 standalone broadcasts **`null`** for live gauge/width (historical only); still emits `SpeedFPM`, `PayoffWeight`, `LineStatus`, `FootageCounter`, `ComponentStatus`. **This contract is unchanged.**
@@ -115,7 +115,7 @@
 
 > **⚠ The 118 h estimate predates Dashboard 5A** (added 2 Aug 2026) as well as the DB3-FL2 re-mock. DB5A is a new screen plus a new endpoint in a phase already scoped at 118 h across a 10-working-day window. **Re-estimate before committing W5–W6.** It is genuinely small — read-only, one endpoint, one table, no PLC and no state change — but it is not free.
 
-**OQ blockers:** OQ-76 (spool identifier — needs confirmation), OQ-15 (hybrid-origin FL2 validation — residual), OQ-17 (spool state machine — in progress; **now also gates DB5A**, since "available for processing" has no defined meaning without it), **OQ-18** (which order field carries the coil min–max weight range). **New for DB5A:** **OI-06** (two unmapped spool status vocabularies), **OI-02** (`SP-#####` vs `TS######`), and — the one that would invalidate the screen outright — **confirmation that `Spool.OrderNo` is populated from planning**. If allocation is not readable by the shopfloor system, FR-098 has nothing to resolve. **Stories:** FW-064, **FW-124**, FW-070 (FL2 roll adjust reused from Phase 6 — **now a dialog, not Dashboard 11**).
+**OQ blockers:** OQ-76 (spool identifier — needs confirmation), OQ-15 (hybrid-origin FL2 validation — residual), OQ-17 (spool state machine — in progress; **now also gates DB5A**, since "available for processing" has no defined meaning without it), **OQ-18** (which order field carries the coil min–max weight range). **New for DB5A:** **OI-06** (two unmapped spool status vocabularies), **OI-02** (`SP-#####` vs `TS######`), and — the one that would invalidate the screen outright — **confirmation that `SpoolProcessing.OrderNo` is populated from planning**. If allocation is not readable by the shopfloor system, FR-098 has nothing to resolve. **Stories:** FW-064, **FW-124**, FW-070 (FL2 roll adjust reused from Phase 6 — **now a dialog, not Dashboard 11**).
 
 ---
 

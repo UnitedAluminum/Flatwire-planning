@@ -1,7 +1,7 @@
 # Flat Wire Mill — Capacity & Effort Model
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 13, 2026 — §3's story-point cross-check marked **historical** (its denominator was retired when the backlog moved to hours) and its finding 1 recorded as **closed**; Related-Documents row re-pointed. *(Earlier same day: resolved-correction narrative removed to [`../../CHANGELOG.md`](../../../CHANGELOG.md).)* **No hours figure changed**
+**Last Updated:** August 25, 2026 — **new §3f — `FW-224`, additive and deliberately unsized** (blocked on `Q41`); `3,358 h` established as the one citable all-in figure; object count 34 → 33 *(previously August 18, 2026 — **new §3d: `FW-219`, the FL2/FL3 run-end write-back, +77 h all-in (56 h base / 40 h AI-assisted), additive.** MVP-1 becomes **3,263 h** and both scopes **3,631 h** — ⚠ **superseded the same day by §3e (rod ↔ order, +116 h): the live all-in is `3,358 h`, in §3e's roll-up row, which is the only site that may assert it**; §3, §3b and §3c are **not** re-derived. Phase 9's published 222 h is unchanged and understates by 77 h — quote `222 + 77`. *(Earlier same day: **new §3c: the `D-32` re-derivation.** The shared-schema migration is cancelled (`FW-001`, `FW-002`, and `FW-176`'s shared-`coils` columns), **−76 h base / −106 h all-in**: Phase 1C **221 → 138 h**, Phase 7 **205 → 182 h**, MVP-1 **3,292 → 3,186 h**, both scopes **3,660 → 3,554 h**. ⚠ **§3 and §3b are deliberately NOT re-derived and remain the base of record** — §3c is additive, per the pattern in `[DE]` and `[YCS]`. *(Previously August 13, 2026 — §3's story-point cross-check marked **historical** (its denominator was retired when the backlog moved to hours) and its finding 1 recorded as **closed**; Related-Documents row re-pointed. *(Earlier same day: resolved-correction narrative removed to [`../../CHANGELOG.md`](../../../CHANGELOG.md).)* **No hours figure changed then** — the first hours change since is §3c.)*)*)*
 **Document Type:** Capacity & Effort Model (per-phase owners, effort in hours, working-day capacity)
 **Status:** Published — **roster unfilled**; §1 must be completed by programme management
 **Estimating unit:** **hours**. Day figures are derived (**1 dev-day = 8 h**) and shown only as a reading aid.
@@ -41,13 +41,13 @@ Six streams, derived from the layers the phase files actually name.
 | **BE** | .NET | `ual-api` → new `FlatWire` microservice | **840** | 23.0% |
 | **QA** | Test / E2E / UAT | all phases + Phase 14 | **701** | 19.2% |
 | **RT** | Real-time / PLC | `FlatWireHub`, OPC ingest, `PLCTagService` | **408** | 11.1% |
-| **DB** | SQL Server | new `FlatWireDB` + the shared-schema FW-001 renames | **404** | 11.0% |
+| **DB** | SQL Server | new `FlatWireDB` ~~+ the shared-schema FW-001 renames~~ *(cancelled, `D-32` — see §3c)* | **404** | 11.0% |
 | **BA** | BA / Ops liaison | pass-schedule content, OQ closure, UAT coordination | **96** | 2.6% |
 | | | **Total** | **3,660** | 100% |
 
 Stream hours **include each stream's pro-rata share of contingency** (factor **1.146976** = 3,660 ÷ 3,191 base), so the column sums exactly to 3,660. §3 shows the same total with contingency broken out as its own column.
 
-**These are both scopes.** For MVP-1 only, scale to **3,292 h** — see §3b.
+**These are both scopes.** For MVP-1 only, scale to **3,292 h** — see §3b. ⚠ **After `D-32` (18 Aug 2026) the figures are 3,554 h both scopes / 3,186 h MVP-1 — see the additive §3c.** §3 and §3b are the base of record and are deliberately not re-derived.
 
 **FE is the binding constraint** — 35% of all hours, and 6.0–6.5 FTE in every peak week.
 
@@ -100,14 +100,14 @@ Two discrete line items that are **not** rate-card units:
 
 | Discrete item | Hours | Where |
 |---|---|---|
-| FW-001 shared-schema rename **impact audit** | **40 h** | Phase 1C |
+| ~~FW-001 shared-schema rename **impact audit**~~ — **CANCELLED, `D-32`, 18 Aug 2026** | ~~**40 h**~~ → 0 | ~~Phase 1C~~ |
 | Hub load test (N clients × 3 lines × cadence) | **16 h** | Phase 3 |
 
 ### Two costs the inventory does not capture
 
 Both are added as explicit lines, because omitting them is how the plan under-read its own size in the first place.
 
-1. **FW-001 shared-schema rename audit — 40 h, in Phase 1C.** The `Coil/Bundle…` slash-dual renames (`CoilNo`, `SlitWidth`, `CoilStatus`, `OutgoingCoilId`, …) land on the **shared** `coils`/scheduling schema, which the legacy `ual-dot-net` applications and existing reports also read. `phase-01c` itself flags *"high blast radius; front-load the impact audit."* The rename is 16 h; the SP/view/report impact audit across `united_db` and the legacy tier is a separate 40 h.
+1. ~~**FW-001 shared-schema rename audit — 40 h, in Phase 1C.**~~ ⚠ **CANCELLED — `D-32`, 18 Aug 2026: there is no shared-schema migration.** Retained because this list exists to record costs the plan had missed, and removing the entry silently would repeat that mistake. **One thing the audit would have produced is genuinely lost** — an inventory of every stored procedure, view and report reading these columns; **`OI-111`** asks for the one-column version of it. The original text: The `Coil/Bundle…` slash-dual renames (`CoilNo`, `SlitWidth`, `CoilStatus`, `OutgoingCoilId`, …) land on the **shared** `coils`/scheduling schema, which the legacy `ual-dot-net` applications and existing reports also read. `phase-01c` itself flags *"high blast radius; front-load the impact audit."* The rename is 16 h; the SP/view/report impact audit across `united_db` and the legacy tier is a separate 40 h.
 2. **Cross-DB check-in recovery (G2 / OI-39) — a 24–64 h reserve on Phase 4, not in the total.** Check-in spans `FlatWireDB` + shared `coils`/`wip_coil_orders` + the PLC and is **not one ACID transaction**. Neither candidate (saga/outbox with compensating PLC clears, or an `INFLAT` mirror in `FlatWireDB`) has been chosen. **Phase 4's estimate is provisional until OI-39 closes.**
 
 A third, smaller reserve: **OQ-10 / OI-45 (footage→weight) — 16–32 h on Phase 9.** The formula is settled but the *dimensional basis* (target vs measured-at-completion vs integrated over `RunReading`) is not, and the integration option is materially more work than the other two.
@@ -118,6 +118,8 @@ A third, smaller reserve: **OQ-10 / OI-45 (footage→weight) — 16–32 h on Ph
 
 All figures in **hours**. `Cont` = contingency. The `Days` column is derived (hours ÷ 8) and is a reading aid only.
 
+> ⚠ **After `D-32` (18 Aug 2026): 3,554 h both scopes / 3,186 h MVP-1 — see the additive §3c, which re-derives Phases 1C and 7 from reduced bases. This table is deliberately left on its published figures.**
+>
 > **This table is BOTH SCOPES combined.** For the MVP-1-only figure — **3,292 h / 9.4 FTE** — see **§3b**. Phase 2 is wholly MVP-2; phases 11 and 13 are split there; **Phase 9 is wholly MVP-1 and its row below is whole and correct**, so do not go looking for a missing carve.
 
 > **Rounding convention — every figure printed here is the figure used.** Each cell is a whole number of hours, and each row total is the sum of its own printed cells. There is no "figures may not sum due to rounding" caveat: **every row adds up exactly as shown, and so does every column.** Verify any row by hand.
@@ -145,6 +147,8 @@ All figures in **hours**. `Cont` = contingency. The `Days` column is derived (ho
 The `TOTAL` row is the **raw column sum**: 1,056 + 732 + 352 + 356 + 611 + 84 + 469 = **3,660**.
 
 **Roll-ups:** Phase 1 (1A+1B+1C) = **1,027 h** (128.4 d) · Phases 2–14 = **2,633 h** (329.1 d) · grand total = **3,660 h** (both scopes). **MVP-1 only: 3,292 h** — see §3b.
+
+> ⚠ **The `1,027 h` above is this model's ORIGINAL Phase-1 figure, and after 18 Aug 2026 it collides with a different one — do not treat the two as the same number.** `[TB]` restated Phase 1 to **1,110 h** on 14–15 Aug (1A 370 · 1B 519 · 1C 221), which this model deliberately does not carry (§8); `D-32` then cancelled `FW-001`/`FW-002`, taking 1C to 138 h and Phase 1 back to **1,027 h** — composed **1A 370 · 1B 519 · 1C 138**. Two derivations, one total. **Check the composition, never the total**, before concluding which basis a document is on. See §3c.
 **Largest phases:** 1B (442) · 1A (370) · 6 (298) · 14 (267) · 4 (255). **Smallest:** 10 (61) · 8 (118).
 **Reserves excluded from the total:** G2/OI-39 on Phase 4 (**24–64 h**) · OQ-10/OI-45 on Phase 9 (**16–32 h**, now understated — see §3b).
 
@@ -152,7 +156,7 @@ The `TOTAL` row is the **raw column sum**: 1,056 + 732 + 352 + 356 + 611 + 84 + 
 
 > **FE 60 h** — Dashboard 2 `dashboard_2_rod_checkin.html` as a 6-step tab wizard with tolerance-viz, OK/NG/NA machine inspection and supervisor override (36 h, above the 24 h base rate for the wizard's six steps) + Dashboard 2A pre-check-in (24 h). `payoff-option` cards and `confirm-bar` are already built in 1A/Phase 2.
 > **BE 62 h** — `POST /checkin/rod` as a complex command spanning two databases and the PLC (20 h) + `PayoffStagingController`'s 3 commands (18 h) and 2 queries (8 h) + `CheckInRod` service and validation rules (16 h).
-> **DB 28 h** — new `RodStaging` table (4 h) + repository/EF writes across `RodCheckin`, `FlatWireRun`, `SpcCheckpoint`, `SpcMeasurement`, `RodCheckout` (16 h) + the cross-DB `coils → INFLAT` write (8 h).
+> **DB 28 h** — new `RodStaging` table (4 h) + repository/EF writes across `RodCheckin`, `FlatWireRun`, `SpcCheckpoint`, `SpcMeasurement`, `RodCheckout` (16 h) + the cross-DB `coils → INFLAT` write (8 h). ⚠ **After `D-32` the last 8 h is a `FlatWireDB`-local `Rod.Status` write rather than a cross-database one** — this worked derivation is left at 28 h deliberately, because it is the *shape* being taught and Phase 4's published figure is unchanged.
 > **RT 28 h** — new `PayoffStateChanged` domain event, sent immediately and unbatched per §0.4 (8 h) + `LineStatus`/`ComponentStatus` broadcast on success (4 h) + PLC tag group push with compensating clear (16 h).
 > **BA 8 h** — closing OQ-3 (traveler field list), OI-64/51 (no-match path).
 > **QA** +20% of the 178 h dev base = 36 h · **Contingency** +15% of (178 + 8 + 36) = 33 h → **Total 255 h** (60 + 62 + 28 + 28 + 36 + 8 + 33), plus the 24–64 h G2 reserve.
@@ -163,7 +167,7 @@ The `TOTAL` row is the **raw column sum**: 1,056 + 732 + 352 + 356 + 611 + 84 + 
 
 The backlog sized the **45 shopfloor stories at 189 points**, split across three files (`05-SprintPlanAndBacklog.md` 35 / 147 · `YieldCostAndScrapJiraStories.md` 4 / 11 · `MVP-2/.../FlatWireJiraStories-MVP2.md` 6 / 31). Against 3,660 h that is **19.4 h/point** — about 2½ days per point, roughly double a conventional ~1 day (8 h) per point. The divergence exceeds the 25% investigation threshold, so it was investigated. Two causes, both real:
 
-1. **The backlog has no story for most of Phase 1.** Epic E01 "Foundation & Infrastructure" is 7 stories / 28 points, and **all seven are database stories** (FW-001 renames, FW-002 `INFLAT`, FW-003 machines, FW-004 alloys, FW-005/006/007 tables). There is **no story anywhere in the backlog** for scaffolding the `flat-wire-shopfloor` Angular library, for creating the `FlatWire` .NET solution and its 13 controllers, or for the OPC ingest and `PLCTagService`. Phase 1 is **1,027 h** against ~28 points of nominal coverage. **This is a backlog gap, not an estimating error** — and it is the single largest reason the window was believed to fit.
+1. **The backlog has no story for most of Phase 1.** Epic E01 "Foundation & Infrastructure" is 7 stories / 28 points, and **all seven are database stories** (~~FW-001 renames, FW-002 `INFLAT`~~ *(both cancelled, `D-32`)*, FW-003 machines, FW-004 alloys, FW-005/006/007 tables). There is **no story anywhere in the backlog** for scaffolding the `flat-wire-shopfloor` Angular library, for creating the `FlatWire` .NET solution and its 13 controllers, or for the OPC ingest and `PLCTagService`. Phase 1 is **1,027 h** against ~28 points of nominal coverage. **This is a backlog gap, not an estimating error** — and it is the single largest reason the window was believed to fit.
 2. **Excluding Phase 1, the ratio is 2,633 h / 161 points = 16.4 h/point.** For touch-screen shopfloor dashboards built to mockup fidelity, with a full vertical slice (UI + MediatR command + validation + DDL + hub event + tests) per phase, ~16 h/point is the more defensible figure. Phase 6 is the clearest illustration: 4 full dashboards + 2 dialogs + 6 endpoints + 5 write tables was sized at 19 points ≈ 152 h if a point is a day — i.e. under 30 h per dashboard *including* backend, database and test. The model prices it at 298 h.
 
 **The rate card in §2 is the single calibration knob.** If the team's measured throughput at the Phase-1 gate is better than these rates, rescale §2 and re-publish §3/§4 — see §6.
@@ -222,6 +226,8 @@ Both derivations, reproducible from §2:
 3,292 h  MVP-1
 ```
 
+> ⚠ **After `D-32` (18 Aug 2026) this becomes 3,186 h — see §3c**, which subtracts 106 h all-in (Phase 1C 221 → 138, Phase 7 205 → 182). Both phases sit wholly inside MVP-1, so the subtraction is valid whatever composition produced the 3,292 h. **This roll-up is deliberately left as published.**
+
 **3,292 h ÷ 352 h per person over 44 working days = 9.4 FTE sustained**, against **10.4** for both scopes on the corrected base.
 
 ### ⚠ The recovered ~1 FTE lands where there was already slack
@@ -250,6 +256,235 @@ The grid sums to **3,292** with no leakage.
 - **Phase 9's 222 h excludes its 16–32 h `OQ-10`/`OI-45` reserve**, and that reserve is now *understated*: it was scoped before DB7b's **physical scale weight** (`FR-346`) was in MVP-1, which adds a second weight-capture point to reconcile. Phase 9 also assumes the **skid table** and **lot number** source already exist; neither does (`REVIEW.md` #13).
 
 ---
+
+## 3c. `D-32` re-derivation — the cancelled shared-schema migration
+
+**Added 18 Aug 2026. This is an additive sheet: it changes no figure in §3, §3b or the rate card, and those remain the base of record.** It states the delta from decision **`D-32`** — *there is no shared-schema migration* — and the totals that follow from it. The pattern is the one `DevelopmentEffortModel.md` and `YieldCostAndScrapSheet.md` use, and it is used here for the same reason: §3's totals are quoted in roughly twenty other files, and editing them in place drifts all of them at once.
+
+### What was cancelled
+
+| Item | Base h | Phase | Note |
+|---|---|---|---|
+| `FW-001` shared-schema column renames + the **40 h impact audit** | **56** | 1C | 16 h rename + 40 h audit, the discrete item in §2's inventory |
+| `FW-002` `INFLAT` coil status | **4** | 1C | The **shared** half only — `INFLAT` survives as a `FlatWireDB`-local `Rod.Status` / `SpoolProcessing.Status` value |
+| `FW-176`'s shared `coils` carry-forward columns | **16** | 7 | ⚠ **The plan's *second* shared-schema change**, easily missed when reading `D-32` as being about `FW-001` alone. Nothing is lost: the delivered design is already local and has been in the DDL since 26 Jul 2026 |
+| | **76** | | **base hours removed** |
+
+### Re-derived phases — QA and contingency recomputed from the reduced base
+
+Same convention as §3b's carves: re-derive from the reduced base rather than scaling the published figure down.
+
+| Phase | Base | QA | Cont | **Total** | Published in §3 | Delta |
+|---|---|---|---|---|---|---|
+| **1C** | `100` *(was 160)* | `0.20 × 100 = 20` | `0.15 × 120 = 18` | **138 h** | 221 h | **−83** |
+| **7** | `132` *(was 148)* | `0.20 × 132 = 26` | `0.15 × 158 = 24` | **182 h** | 205 h | **−23** |
+| | | | | | | **−106 h all-in** |
+
+**Phase 14 is deliberately unchanged.** `FW-201` loses its renamed-column regression pass, but its hours are a **defect allowance** priced per stream, not per acceptance criterion — the same reasoning §2 applies to the QA uplift.
+
+### Resulting totals
+
+```
+3,660  both scopes, §3 (base of record, unchanged)
+ −106  D-32 — Phase 1C −83, Phase 7 −23
+─────
+3,554 h  both scopes after D-32       → 10.1 FTE sustained (was 10.4)
+
+3,292  MVP-1, §3b roll-up (base of record, unchanged)
+ −106  D-32 — both phases sit wholly inside MVP-1
+─────
+3,186 h  MVP-1 after D-32              → 9.1 FTE sustained (was 9.4)
+```
+
+**Phase 1 falls from 1,110 h to 1,027 h** (1A 370 · 1B 519 · 1C 138), or **10.7 FTE** against the 12-day window rather than 11.6.
+
+> ⚠ **Do not read 1,027 h / 10.7 FTE as a return to the pre-14-Aug basis.** §2–§5 carry a **1,027 h / 10.7 FTE** figure that is the *old* Phase-1 basis, composed differently — it predates the 1B restatements. The number above is the **post-`D-32`** figure and is composed **1A 370 · 1B 519 · 1C 138**. Two derivations that coincide on one total; **check the composition, never the total**, to tell which basis a document is on.
+
+> **The decision in §7 does not flip.** Removing 106 h moves the sustained MVP-1 requirement from 9.4 to 9.1 FTE against a roster that is not yet confirmed, and it removes **nothing** from the Phase-1 crunch that §4 predicts will fail — 1C was never the binding constraint there, 1A and 1B were. `D-32` retires a **risk** (the highest-blast-radius change in the plan) more than it releases capacity.
+
+---
+
+## 3d. `FW-219` — the FL2/FL3 run-end write-back, additive
+
+**Additive, like §3c. Nothing in §3, §3b or §3c is re-derived here** — those totals are quoted in roughly twenty
+files, which is exactly why `D-32` published §3c rather than editing §3, and the same discipline applies now.
+
+### What is being added, and why it is not already in the plan
+
+Until 18 Aug 2026 a completed FL2/FL3 coil was written **only** to `FlatWireDB`. Eight shared objects that
+packing, shipping, certification, cost and yield all read were never written, and **not one of them was named
+anywhere in the repository** — `wip_skids`, `wip_skid_coils`, `coil_slit_cuts`, `coil_gen_history` and `wip_log`
+had zero occurrences across every `.md`, `.sql`, `.py` and `.html`. This was an absence, not a deferral, so there
+is no line item anywhere to move: the hours are genuinely new. Story **`FW-219`**, requirements
+`FR-509`–`FR-518`, gap **`G44`**.
+
+### Rate-card derivation
+
+| Stream | Rate-card items | Hand-coded | `[DE §1]` factor | AI-assisted |
+|---|---|---|---|---|
+| **DB** | the procedure — 8 writes, one transaction, the retry contract, 43- and 44-column inserts | 32 | **0.75** | 24 |
+| **DB** | `CoilOutput.CoilNo` / `SharedSkidNo`, 2 indexes, schema-doc updates | 4 | 0.60 | 2 |
+| **BE** | `CoilCompletionService` call, primary-rod resolution, retry / compensation handling, cross-database grants | 20 | 0.70 | 14 |
+| | | **56 h** | | **40 h** |
+
+**The 0.75 is the one judgement call in this table and it is deliberate.** `[DE §1]`'s DB row is **0.60** for
+*"DDL, EF mapping, repositories — mechanical"*, and this is not that. It is a multi-database transactional
+procedure written against an undocumented legacy schema with two active triggers, no foreign keys, no check
+constraints and no defaults — `[DE §1]`'s *non-trivial business service* band (0.65–0.75) describes it, and it
+sits at the top of that band because the verification cost is human and irreducible.
+
+### All-in, on §2's uplifts
+
+```
+   56  base (hand-coded, both streams)
+  +11  QA  +20%
+  +10  contingency +18%
+─────
+   77 h all-in
+```
+
+### Where it lands
+
+```
+3,554  both scopes after D-32 (§3c, unchanged)
+  +77  FW-219 all-in
+─────
+3,631 h  both scopes including FW-219
+
+3,186  MVP-1 after D-32 (§3c, unchanged)
+  +77  FW-219 sits wholly inside MVP-1 (Phase 9)
+─────
+3,263 h  MVP-1 including FW-219
+```
+
+**Phase 9's published 222 h is unchanged and now understates by 77 h.** That is intentional and matches how
+`FW-202` is carried against Phase 8's 118 h: the additive figure is stated where it is derived, and the phase file
+keeps its own baseline so that every document quoting `222 h` stays internally consistent. Quote **`222 + 77`**,
+not a merged number.
+
+### Three things this section does not claim
+
+1. **It does not recover any of `D-32`'s 106 h.** The two are unrelated: `D-32` cancelled a *migration* of the
+   shared schema; `FW-219` *writes* the shared schema as it stands. Every one of its eight writes lands in a
+   column that already exists, which is why no part of `FW-001` comes back.
+2. **It does not include the trial's QA of the shared writes.** `[TRP]` carries `FW-219` at its **40 h
+   AI-assisted** figure inside the trial's development-only basis; the QA, BA and contingency streams above are
+   the MVP-1 view and must not be booked twice.
+3. **It does not price closing `Q34`–`Q36` or `OI-114`.** Those are IT conversations about which existing
+   procedures and reports read `coils.coil_status`, `transaction_name`, `stop_no` and `mfg_order_no` — the same
+   question `OI-111` asks. The 40 h impact audit that would have answered them was cancelled with `D-32` and is
+   **not** reinstated here. If the answers require changes to existing reports, that is new work again.
+
+---
+
+## 3e. Rod ↔ order allocation — additive
+
+**Additive, like §3c and §3d. Nothing in §3, §3b, §3c or §3d is re-derived here.** Those totals are quoted
+in roughly twenty files, which is why `D-32` published §3c rather than editing §3, and the same discipline
+applies again.
+
+### What is being added, and why it is not already in the plan
+
+**Nothing persisted the rod ↔ order pairing.** The client confirmed on 20 Aug 2026 that a rod may carry
+several orders, and `Q70` had settled the rod side on 30 Jul — but the relationship existed only implicitly
+in `united_db..planning_routings`, which `[INT §8]` records the flat wire side as **reading and never
+writing**. There is no line item anywhere to move: the hours are genuinely new, exactly as §3d found for the
+run-end write-back.
+
+Requirements `FR-541`–`FR-560` (`[REQ §5.28]`), rule codes `ORD003`–`ORD017`, stories
+**`FW-225`–`FW-230`**, design [`RodOrderAllocation.md`](../../../LatestDocument/RodOrderAllocation.md).
+
+### Rate-card derivation
+
+| Story | Stream | Rate-card items | Hand-coded | `[DE §1]` factor | AI-assisted |
+|---|---|---|---|---|---|
+| `FW-225` | **DB** | 2 tables, 7 FKs, 12 index statements, 3 schema-doc write-ups — **DDL already applied and live-verified**, so this is mapping and invariants | 12 | 0.60 | 7 |
+| `FW-225` | **BE** | domain model, superseding-not-updating, the 3 cross-row invariants | 16 | 0.70 | 11 |
+| `FW-226` | **BE** | the four-tier partition, O(1) positional validator, capped enumeration for tests | 14 | 0.70 | 10 |
+| `FW-226` | **FE** | the refusal messaging at two entry points | 6 | 0.65 | 4 |
+| `FW-227` | **BE** | the 5-state machine, two weight latches, the atomic close-and-open, 2 hub events | 16 | 0.70 | 11 |
+| `FW-227` | **FE** | the durable prompt and `Mark order complete` on DB3 | 10 | 0.65 | 7 |
+| `FW-228` | **BE** | the converter, 4 bases, per-row basis/factor persistence | 12 | 0.70 | 8 |
+| `FW-229` | **DB** | 2 views | 6 | 0.60 | 4 |
+| `FW-229` | **BE** | footage-share apportionment, status derivation, the two yield figures | 10 | 0.70 | 7 |
+| `FW-230` | **DB** | `ChildAlpha` + its unique index — **already applied** | 4 | 0.60 | 2 |
+| `FW-230` | **BE** | the cross-database mint, the ignore-list accumulation, both caller guards | 10 | 0.70 | 7 |
+| | | | **116 h** | | **78 h** |
+
+**Two judgement calls, both stated rather than buried.**
+
+**The DB rows use `[DE §1]`'s standard 0.60, not §3d's 0.75.** §3d argued upward because that procedure was
+eight writes in one transaction against a schema nobody had described. Here the DDL is **already written,
+deployed and verified on the shared instance** — 33 tables · 55 FKs · 69 index statements, from a live
+teardown-free deploy plus an idempotent re-run — so the remaining DB work is genuinely conventional and the
+standard factor applies.
+
+**`FW-227` is the only row I would defend upward if challenged.** The atomic close-and-open at a boundary is
+one transaction spanning two state transitions under a filtered unique index, and the prompt must be durable
+across reconnects. It is estimated at the standard 0.70; a case exists for 0.75 on the same reasoning §3d
+used, and it is left at 0.70 because the pattern is **already built once** — the spool-completion prompt — and
+this follows it rather than inventing it.
+
+### Effect on the totals
+
+| | Base | AI-assisted |
+|---|---|---|
+| MVP-1 before this sheet (`§3c`, after `D-32`) | 3,186 h | — |
+| §3d — `FW-219` | +56 h | +40 h |
+| **§3e — rod ↔ order** | **+116 h** | **+78 h** |
+| **MVP-1 all-in** | **3,358 h** | — |
+
+> ⚠ **`3,358 h` IS THE LIVE MVP-1 FIGURE, and this row is the only site that may assert it.**
+> Cite it as *"3,186 h base plus the additive sheets = **3,358 h** all-in (`[CE §3e]`)"* — do not
+> restate the bare number elsewhere, and **do not re-derive §3, §3b, §3c or §3d in place.** They are
+> the base of record and each later sheet **adds** to them; that is what keeps the arithmetic
+> auditable, and it is why several different totals legitimately appear in this document.
+>
+> **Reading the other figures you will meet:** **3,186 h** is the `D-32` base (§3c) and is still
+> correct *as a base*; **3,292 h** is pre-`D-32` and stale as a live figure; **3,263 h** was this
+> document's own header between §3d and §3e and is superseded by the row above; **3,727 h** predates
+> the 11 Aug MVP split and is audit trail only. The equivalent both-scopes figure is **3,631 h**
+> after §3d and rises with §3e on the same arithmetic.
+>
+> ⚠ **The backlog's headline of *114 live stories / 3,186 h* is the SCHEDULED baseline and is not
+> wrong.** `TaskBreakdown.md` holds **143** `FW-` ids because the additive and *Unscheduled* sets
+> (`FW-210`–`215`, `FW-217`–`223`, `FW-225`–`230`, `FW-N01`–`N06`) are deliberately outside that
+> baseline. Do not "reconcile" the two counts by renumbering anything.
+
+## 3f. FL2 pre-check-in (`FW-224`) — additive, NOT YET SIZED
+
+**The client reversed `FR-031` on 20 August 2026: FL2 gets pre-check-in.** Requirement text landed
+25 Aug 2026 as `[REQ]` §5.29, `FR-533`–`FR-540`, with cases `TC-776`–`TC-783`. **The story is
+`FW-224`, reserved and unsized.**
+
+⚠ **This sheet deliberately carries no hours.** Action **`A6`** of the
+[20 Aug ledger](../../../BaseDocuments/ClientCall_2026-08-20_SyncPlan.md) — *size `FW-224`+ across
+DB, BE, FE and test, additive to the baseline* — was **still unreported at the 24 Aug call**, and
+the sizing is **blocked on `Q41`** (`Critical`, open): what an FL2 pre-check-in actually *does*
+decides whether this is a screen change or a screen plus an endpoint plus a queue. Putting a number
+here before `Q41` closes would be a guess presented as an estimate.
+
+**What is already known, so the sizing is not from nothing:**
+
+| Element | State | Effect on the estimate |
+|---|---|---|
+| **Schema** | ✅ **Done** — `SpoolStaging` built 22 Aug 2026, in the runner, seeded | **0 h.** The 20 Aug ledger’s W4 is complete; do not re-price it |
+| **Requirement text** | ✅ **Done** 25 Aug 2026 — `§5.29`, eight requirements | **0 h** |
+| **Test cases** | ✅ **Written** 25 Aug 2026 — `TC-776`–`TC-783`, all `[PROPOSED]` and deliberately not automated | Automation still owed |
+| **Endpoint** | ❌ Owed — `POST /precheckin` must accept `lineId = FL2` and its `422` retire, in **five** places in `[API]` | BE |
+| **Screen** | ❌ Owed — the action on **Dashboard 5A**, not a new screen, and **not** DB2A | FE |
+| **WIP station** | ❌ Owed — `FL2PO` must be created; the script says it is *deliberately not created* | DB / deploy |
+| **Mockup** | ⚠ Comments corrected 25 Aug 2026; **the control itself is not built** | FE |
+
+**Effect on the totals: none yet.** MVP-1 all-in stays **3,358 h** (§3e) until `Q41` closes and
+`FW-224` is sized. **When it is, add a §3g — do not edit §3e or the row above.**
+
+
+⚠ **This does not move the 30 Sep conclusion, and it worsens it.** §3's headline finding is that the date is
+not achievable at any plausible team size and that the full descope ladder recovers only part of the gap.
+Adding 116 h to a plan already 3,186 h against that window does not change the conclusion; it removes
+another 14.5 dev-days of slack that were not there. **No total in §3, §3b, §3c or §3d has been edited.**
+
 
 ## 4. Capacity model
 
@@ -404,7 +639,7 @@ A separate scheduling consequence, independent of team size: **UAT cannot share 
 - **1B was restated a third time on 15 Aug 2026 — all automated backend tests withdrawn — and this model does not carry it either.** `FlatWire` ships with **no xUnit of any kind**: no unit, no validator, no stub-fixture/contract suite, no seeded-DB integration suite (`[TS §1.2]`). **1B 541 → 519 h.** Three consequences this model must eventually absorb, and all three are counter-intuitive: **(1)** the reduction is **itemised, not fractional** — `FW-138` 56→45 (tests out, but **fourteen → fifteen controllers** — `SpoolController`), `FW-147` 16→12, `FW-080` 32→28, while **`FW-207` (32 h) and `FW-150` (16 h) are unchanged** because they are priced from production artifacts with no test in the basis; a flat fraction applied to the base overstates the saving by ~70 % (the net is **−22 h**, not ~−44). **(2)** §2's **command and query endpoint rows fell 6→5 h and 4→3 h**, which is the change that actually reaches Phases 4–13 — 1B is priced at the controller rate, so the rate-card edit barely touches it. **(3)** ⚠ **The QA uplift is deliberately NOT recomputed**: 1B holds **78 h** against a mechanical `0.20 × 373 = 75`, because with no automated tests the manual-regression load across Phases 4–14 rises rather than falls. **Absorbing this at the next re-derivation must not quietly apply the 20 % to the reduced base** — that books the saving a second time on the one line that should grow.
 
 - **1B and 1C were restated on 15 Aug 2026 for decision `D-29` (tactical DDD), and this model still does not carry it.** `FW-207` (domain model, 32 h) and `FW-208` (domain events, 8 h) are new; `FW-141` 20 → 28 h and `FW-147` 12 → 16 h. **1B: BE 212 → 264, base 392, QA 78, cont. 71 → 469 → 541 h.** Separately `FW-007` 48 → 52 h for `G21`'s `RodStaging.Station` column and re-keyed index — **1C: DB 156 → 160 → 221 h**. **Phase 1 → 1,132 h.** `FW-209` (4 h FE, DB2A toggle) sits in Phase 4. As with the 14 Aug restatement, `[TB §7]`, the phase files and `[RM]` carry the corrected figures and **§2–§5 here deliberately do not** — absorb at the next re-derivation.
-- **1C is costed against 22 tables, and the build is 25.** A verified clean deploy of `FlatWire_DDL_RunAll.sql` produced **25 tables, 33 FKs, 1 procedure and 1 trigger** — the MVP-1 build, the three pass-schedule tables being owned elsewhere (28 in the full design). Each table beyond the 22 is **4 h** plus its share of QA and contingency (~5.5 h all-in), so 1C is **understated by roughly 17 h**.
+- **1C is costed against 22 tables, and the build is larger — the gap is wider than this line has ever said.** The table count is `[DBD §6.2]` (the "25 / 33 / 41" figures here are pre-`D-31`, and the "three pass-schedule tables owned elsewhere" position was retired by `D-31` on 15 Aug 2026 — they are MVP-1 and the runner builds them). Each table beyond the 22 is **4 h** plus its share of QA and contingency. ⚠ **The hour figure is deliberately not restated here.** This is an effort *derivation*, so substituting a new table count without re-deriving would make the arithmetic lie; and per the standing convention an effort change lands in an **additive new sheet, never an in-place edit of a total**. **Owed: re-derive against `[DBD §6.2]` using §2's rate card.**
 - Upstream stories (rod receiving, order planning, line scheduling — 14 stories, 42 points) are **out of scope here** and are staffed by their own teams. If those slip, Phase 4 has no material and no scheduled job.
 
 ---

@@ -1,8 +1,25 @@
 # Client Call 6 Aug 2026 — Action Items and Document Sync Plan
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 6, 2026
-**Status:** **Registers applied 6 Aug 2026.** The eight decisions are recorded against `Q73`, `Q31`–`Q73 item 6`, `OI-13`, `G22`, `G34`, `G35` and the generation spec's edger section. Artifact-level propagation (SRS, contracts, DDL, mockups, phase files) is sequenced in §5 and **not yet executed**.
+**Last Updated:** August 25, 2026 — **W3–W8 recorded as BLOCKED, not merely unexecuted**, and the *"`Q32`, renumbered `Q65`"* blocker mapping corrected — they are two different questions, one open and one decided 4 May 2026 *(previously August 6, 2026)*
+**Status:** **Registers applied 6 Aug 2026.** The eight decisions are recorded against `Q73`, `Q31`–`Q73 item 6`, `OI-13`, `G22`, `G34`, `G35` and the generation spec's edger section. Artifact-level propagation (SRS, contracts, DDL, mockups, phase files) is sequenced in §5 and **BLOCKED, not merely unexecuted** — re-checked 25 Aug 2026.
+
+> ⚠ **W3–W8 cannot be executed from our side: they need client answers that do not exist.** Verified
+> 25 Aug 2026 against the registers:
+>
+> | Blocker | State | Blocks |
+> |---|---|---|
+> | **`Q32`** — FM2 dancer modes: who selects between dancer and tension mode, and how does it reach the machine? | **`High`, OPEN**, Tim O. / Engineering | The **write half of W6**, and W5's dancer column |
+> | **`Q49`** — does multi-order-last hold when no weld is involved? (*this ledger's* `Q73 item 6`) | **`High`, OPEN**, Tim O. | Part of **W3**, and W5 / W6 |
+>
+> ⚠ **This ledger said the W6 blocker was “`Q32`, renumbered `Q65`”. That mapping is WRONG.** After the
+> three 12 Aug 2026 renumbering passes, `Q32` and `Q65` are **two different questions**: `Q32` is the
+> FM2 dancer question and is **open**, while `Q65` is *“Require SPC on resume” override authority and
+> die change flow* and was **decided on 4 May 2026**. Reading the note as written would make the
+> blocker look closed. **The live blocker is `Q32`.** Corrected 25 Aug 2026; this is the failure class
+> `CLAUDE.md` warns about — a pre-renumbering citation resolving to the wrong question.
+>
+> **W1 and W2 remain complete.** The read half of W6 was executed 12 Aug 2026. Nothing else has moved.
 **Source:** Client call 6 Aug 2026, 10:59 UTC, 39m 50s — Tim O'Brien, Bob Scott, Shannon Riotte (United Aluminum); Srikanth Prabhala, Yogender Punia, Shray Anand, Divesh Malhotra, Waseem Khan, Ritika Raheja, Jaspreet Singh, Vicky Arora (Nagarro). Transcript: [`Shopfloor _ Review Priorities _ Discuss Open Items _ Use Time For Demos (35).docx`](<Shopfloor _ Review Priorities _ Discuss Open Items _ Use Time For Demos (35).docx>) — Teams meeting recording transcript, filed in this folder alongside this document.
 **Registers touched:** `Q##` ([FlatWireOpenQuestions.md](../Analysis/FlatWireOpenQuestions.md), 95 → 99) · `OI-##` ([FlatWire_MasterSpecification.md](../LatestDocument/FlatWire_MasterSpecification.md) §11) · `G##` ([Development/GapsRegister.md](../MVP-1/ProjectPlan/Development/GapsRegister.md), G33 → G35) · `PSG-D`/`PSG-Q` ([PassScheduleGenerationSpec.md](../MVP-2/RequirementDocuments/PassScheduleGenerationSpec.md))
 
@@ -154,7 +171,7 @@ No open concerns from Jaspreet, Waseem or Divesh. Window most likely **06:30–0
 
 ---
 
-## 5. Propagation waves — not yet executed
+## 5. Propagation waves — blocked on client input (re-checked 25 Aug 2026)
 
 Everything below §5's first wave is **documented, not done**. Wave W1 is complete as of 6 Aug 2026.
 

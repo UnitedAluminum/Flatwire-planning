@@ -4,9 +4,16 @@
 -- Objects   : trg_CoilTraceability_NoOverlap (trigger),
 --             sp_GetGaugeTrace (read proc)
 --
+-- sp_IngestRodFromCoils is NOT here. It is a FlatWireDB object, but it
+-- lives with the other flat wire procedures in ../../Scripts/ --
+-- 30_FlatWireDB_Proc_sp_IngestRodFromCoils.sql -- because it reads
+-- proddb..coils and united_db..alloys and therefore cannot be verified
+-- by a FlatWireDB-only deploy. Deploy it in the same step as the
+-- united_db procedures. See ../../Scripts/README.md or [INT 7.9].
+--
 -- sp_ShiftSummary is NOT here -- it belongs to Dashboard 10, which
--- is MVP-2, and lives in MVP-2/DBChanges/Schema/SQL/
--- FlatWire_DDL_08b_Programmability.sql. This script must not drop,
+-- is MVP-2, and lives in this folder as
+-- FlatWire_DDL_09_Programmability_MVP2.sql. This script must not drop,
 -- create or grant on it; doing so from an MVP-1 deploy would delete
 -- an object this scope does not own.
 -- ============================================================
@@ -92,7 +99,7 @@ GO
 --
 -- Until 11 Aug 2026 this script DROPPED sp_ShiftSummary and then
 -- PRINTed "Created procedure: sp_ShiftSummary" without ever
--- creating it: the procedure moved to MVP-2's 08b with Dashboard 10
+-- creating it: the procedure moved to MVP-2's 09 with Dashboard 10
 -- but its drop, its PRINT and its GRANT were left behind. Three
 -- consequences, all now fixed by removing them --
 --   * the deploy log claimed an object that was never created;

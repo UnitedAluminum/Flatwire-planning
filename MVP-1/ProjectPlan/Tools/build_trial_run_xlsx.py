@@ -36,7 +36,9 @@ THREE DELIBERATE DEPARTURES FROM build_development_plan_xlsx.py
     2. EFFORT IS IN HOURS, NOT DAYS.
        That script presents days only, on the grounds that hours invite a rate conversation.
        TrialRunPlan.md is in hours and the audience is internal, so hours are the primary unit.
-       A Days column is derived at 8 h/day as a reading aid.
+       A Days column is derived at HOURS_PER_DAY as a reading aid. That constant is 6.5 since
+       25 Aug 2026, so a "day" in this workbook is a 6.5 h day and the column header says so.
+       Do not read these as 8 h days - the header is the only thing stopping that.
     3. AN ABBREVIATION GUARD TAKES THE LEAKAGE GUARD'S PLACE.
        No bare abbreviation may reach a cell - see LABELS and check_abbreviations below. The
        plan writes FE/BE/DB/RT/T1/1A/DB5/FL2 freely because it is read as prose; a filtered
@@ -96,10 +98,18 @@ TASKS = os.path.join(DEV, 'TaskBreakdown.md')
 CONTENT = os.path.join(HERE, 'TrialRunContent.md')
 DEFAULT_OUT = os.path.join(DEV, 'FlatWire_TrialRunPlan.xlsx')
 
-ISSUE_DATE = 'August 14, 2026'
-HOURS_PER_DAY = 8
-TOTAL_HOURS = 832          # the plan's own headline; every guard reconciles to it
-PLATFORM_HOURS = 462       # Phase 1A + 1B + 1C
+ISSUE_DATE = 'August 25, 2026'
+HOURS_PER_DAY = 6.5        # 8 -> 6.5 on 25 Aug 2026 with the three-resource re-baseline.
+                           # This is an AVAILABILITY figure, not a productivity one: each resource
+                           # commits 6.5 h of the working day to flat wire. The estimates stay
+                           # calendar-hour estimates and TOTAL_HOURS does not move - see the note
+                           # on the Days column below, and TrialRunPlan.md section 2.
+TOTAL_HOURS = 869          # the plan's own headline; every guard reconciles to it
+                           # 829 -> 869 on 18 Aug 2026: FW-219, the FL2/FL3 run-end write-back
+                           # into the shared schema (40 h, T3). See TrialRunPlan.md section 5.3.
+                           # 832 -> 829 on 18 Aug 2026: D-32 cancels the shared-schema
+                           # migration, so FW-002's 3 h leaves 1C's trial scope.
+PLATFORM_HOURS = 459       # Phase 1A + 1B + 1C  (462 -> 459 with the same change)
 DEFERRED_HOURS = 330
 
 GLOSSARY_SHEET = 'Read Me'
@@ -465,7 +475,7 @@ def parse_plan(path):
     p['capacity'] = {r[0]: r[1] for r in rows if r[0].strip()}
 
     # ---- the sprint calendar and the staffing options
-    _, rows = _rows_after(text, '### 2.1 Recommended shape', 'Sprint')
+    _, rows = _rows_after(text, '### 2.1', 'Sprint')
     # The final sprint is testing and sign-off, so it carries no development hours and its
     # capacity, planned and utilisation cells are dashes. Default them to 0 and render blank -
     # a deliberate dash is not a parse failure.
@@ -797,7 +807,7 @@ def build(out_path):
                  f'Where the {TOTAL_HOURS} hours of development effort sit, by block of work '
                  f'and by discipline. Development only — testing, business analysis and '
                  f'contingency are separate and are not included.', tab='2E7D32')
-    cols = [('Block of work', 74), ('Hours', 12), ('Days', 10), ('Share', 10)]
+    cols = [('Block of work', 74), ('Hours', 12), ('Days (6.5 h)', 13), ('Share', 10)]
     widths(ws, cols)
     rows = [[b['block'], b['hours'], days(b['hours']), b['share']] for b in plan['blocks']]
     rows.append(['Total', TOTAL_HOURS, days(TOTAL_HOURS), '100 %'])
@@ -807,7 +817,7 @@ def build(out_path):
                      'Reducing screen scope is the weakest lever available to this plan; '
                      'shortening the platform is the strongest.']) + 1
     r = section(ws, r, 'By discipline')
-    dcols = [('Discipline', 74), ('Hours', 12), ('Days', 10), ('Share', 10)]
+    dcols = [('Discipline', 74), ('Hours', 12), ('Days (6.5 h)', 13), ('Share', 10)]
     drows = [[DISCIPLINE.get(d['code'], d['name']), d['hours'], days(d['hours']), d['share']]
              for d in plan['disciplines']]
     drows.append(['Total', TOTAL_HOURS, days(TOTAL_HOURS), '100 %'])
@@ -821,7 +831,7 @@ def build(out_path):
                  'work or service work; this does. Every row is the sum of its own cells and '
                  'every column sums to its total.', tab='1565C0')
     cols = [('Phase', 46)] + [(DISCIPLINE[c], 22) for c in ('FE', 'BE', 'DB', 'RT')] \
-           + [('Total hours', 13), ('Days', 10), ('Sprint', 26)]
+           + [('Total hours', 13), ('Days (6.5 h)', 13), ('Sprint', 26)]
     widths(ws, cols)
     rows = []
     for row in plan['grid']:
@@ -897,7 +907,7 @@ def build(out_path):
                  f'phase.', tab='7B1FA2')
     cols = [('Story', 12), ('Work item', 40), ('What it delivers', 96),
             ('Technical name', 54), ('Phase or group', 34), ('Sprint', 22),
-            ('Hours', 10), ('Days', 9)]
+            ('Hours', 10), ('Days (6.5 h)', 13)]
     widths(ws, cols)
     order = {'T1': 0, 'T2': 1, 'T3': 2}
     items = sorted(plan['items'], key=lambda i: (order[i['sprint']], i['group'], i['story']))
@@ -914,7 +924,7 @@ def build(out_path):
     # ------------------------------------------------------- 6. Sprint Plan
     ws = wb.create_sheet('Sprint Plan')
     sheet_header(ws, 'Sprint Plan',
-                 'Four sprints from 17 August. The first is the platform; the last is testing '
+                 'Four blocks of work from 31 August. The first is the platform; the last is testing '
                  'and sign-off, which cannot share a sprint with development work at any team '
                  'size.', tab='EF6C00')
     cols = [('Sprint', 24), ('Dates', 24), ('Working days', 13), ('Team', 10),
@@ -946,7 +956,7 @@ def build(out_path):
                  'The same work grouped the way it is committed, sprint by sprint, with the '
                  'subtotal for each group. Every sprint reconciles to the Sprint Plan.',
                  tab='00838F')
-    cols = [('Group', 40), ('Story', 12), ('Work item', 44), ('Hours', 10), ('Days', 9)]
+    cols = [('Group', 40), ('Story', 12), ('Work item', 44), ('Hours', 10), ('Days (6.5 h)', 13)]
     widths(ws, cols)
     r = 4
     for code in ('T1', 'T2', 'T3'):
@@ -1001,7 +1011,7 @@ def build(out_path):
                  f'{DEFERRED_HOURS} hours deliberately outside the trial and why each is safe '
                  f'to defer. All of it remains in the wider delivery — none of it is cancelled.',
                  tab='546E7A')
-    cols = [('Deferred', 56), ('Hours', 10), ('Days', 9),
+    cols = [('Deferred', 56), ('Hours', 10), ('Days (6.5 h)', 13),
             ('Why it is safe to defer for a trial', 128)]
     widths(ws, cols)
     rows = [[d['item'], d['hours'], days(d['hours']), d['reason']] for d in plan['deferred']]
@@ -1043,9 +1053,13 @@ def build(out_path):
                 blockers=len(plan['blockers']))
 
 
-SPRINT_NAME = {'T1': 'Sprint 1 (17–28 August)', 'T2': 'Sprint 2 (31 August – 11 September)',
-               'T3': 'Sprint 3 (14–18 September)',
-               'T4': 'Sprint 4 (21–30 September)'}
+# Re-baselined 25 Aug 2026 with TrialRunPlan.md section 2.1. These strings are NOT read from the
+# plan - they are the row labels on the Sprint Allocation and Work Items sheets, so they have to
+# be moved by hand whenever the calendar in 2.1 moves.
+SPRINT_NAME = {'T1': 'Sprint 1 (31 August – 29 September)',
+               'T2': 'Sprint 2 (30 September – 20 October)',
+               'T3': 'Sprint 3 (21 October – 3 November)',
+               'T4': 'Sprint 4 (4–16 November)'}
 
 
 def main():

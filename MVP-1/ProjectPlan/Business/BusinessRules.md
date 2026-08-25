@@ -1,7 +1,7 @@
 # Flat Wire Mill — Business Rules and Domain Model
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — split out of `02-SRS.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** August 18, 2026 — **`D-32`: there is no shared-schema migration.** §3’s material-status vocabulary notes that `INFLAT` is `FlatWireDB`-local only; the 30 Jul timing decision stands, its target column does not *(previously August 13, 2026 — split out of `02-SRS.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
 **Document Type:** Domain model, identifier formats, status vocabularies, state machines
 **Status:** Baselined for build
 **Owner:** BA / Analysis stream
@@ -63,9 +63,37 @@ Component names carry **position only** — roll diameter is data, held in `Stan
 
 > **Open — spool numbering.** The schema says `SP-#####`; the delivered SRS narrative says `TS######` (TS000001–TS999999). One canonical format must be chosen across schema, label template and UI. **OI-02.**
 
+### 3.3a Rod ↔ order cardinality, and the sequence it forces
+
+**A rod may be split across several orders; an order may need several rods.** Confirmed by the client on 20 Aug 2026 — *"one A-rod could be on multiple orders as well"* — and for the rod side by `Q70` on 30 Jul. The full cardinality:
+
+```
+Rod    1 ──── many  Order          Q70, 30 Jul 2026
+Spool  1 ──── many  Rod            welded continuous feed at FL1
+Spool  1 ──── many  Order          derived from the rods on it
+FL2    output ── exactly one order at a time
+```
+
+**Orders are consumed one at a time to completion**, per rod payoff station — no interleaving, and no order left part-filled while another runs. Scoped to **FL1/FL3**, the rod-fed lines; FL2's one-order-at-a-time is a separate rule expressed through spool check-in.
+
+**A rod shared between two orders is processed once, continuously**, so it is the **last** rod of the outgoing order and the **first** of the incoming one. It cannot be shuffled into a middle position — which makes each order's rods a four-tier partition:
+
+| Tier | Contents | Order within the tier |
+|---|---|---|
+| 1 | the **pinned-first** rod, shared with the previous order | exactly one, or none |
+| 2 | **free full** rods | any sequence |
+| 3 | **free partial** rods — a partial is a back-to-stock (`Q73`) | any sequence |
+| 4 | the **pinned-last** rod, shared with the next order | exactly one, or none |
+
+So the legal sequence count is `|free full|! × |free partial|!`. **A rod may be pinned at both ends** — an order lying wholly inside one rod has that rod as its only member — so the first and last tiers are not necessarily different rods.
+
+> **`Q73`'s *"multi-order coils last"* and the *"last rod of the outgoing order"* rule are the same statement** read from the outgoing side. Reading `Q73` alone makes the pinned-**first** case look like a violation of it; it is not. ⚠ `Q73` item 6's **no-weld branch is still open** — tracked as **`Q49`** — and the stricter reading is what is built.
+
+**The rod stays mounted across the boundary.** It is checked in once, at mount; when the running order's allocated weight is reached the operator is notified, marks that order complete, and the next order begins **on the same mount** — no dismount, no second check-in. The split point within the rod is held in **pounds** and converted to feet at run time, because weight is conserved through drawing and rolling and footage is not.
+
 ### 3.4 Status vocabularies
 
-**Material status** — applies to `Rod.Status`, `Spool.Status`, `CoilOutput.Status`, `RodCheckout.NewRodStatus` and the shared `coils.coil_status`:
+**Material status** — applies to `Rod.Status`, `SpoolProcessing.Status`, `CoilOutput.Status`, `RodCheckout.NewRodStatus` and the shared `coils.coil_status`. ⚠ **Since `D-32` (18 Aug 2026) the shared column does not carry `INFLAT`** — `FW-002` is cancelled with the shared-schema migration, so that value exists only in the four `FlatWireDB`-local columns:
 
 `RECEIVED` · `STAGED` · `INFLAT` · `COMPLETE` · `HOLD` · `SCRAP` · `SUSPENDED` *(receiving only)*
 
@@ -120,7 +148,7 @@ stateDiagram-v2
     SCRAP --> [*]
 ```
 
-> **DECIDED (client, 30 Jul 2026) — `INFLAT` is set only at check-in.** ~~Whether pre-check-in itself sets `coils.coil_status = INFLAT` or leaves it `STAGED` is OI-01.~~ Pre-check-in does **not** commit the shared status, and there is **no intermediate status** for a rod that is welded but not yet checked in. `RECEIVED → STAGED` stands and the delivered SRS §4.2 `PCI` data note is superseded on this point; rod status `STAGED` is the real staging status rather than a vestigial one. **Residual:** whether the reqsum and `wip_coil_orders` insert from that same note stay at staging is unanswered (OI-01). ~~The interim design follows the delivered SRS and treats `RodStaging.Status` (bay occupancy) as orthogonal to `coils.coil_status`, which makes rod status `STAGED` effectively vestigial for FL1.
+> **DECIDED (client, 30 Jul 2026) — `INFLAT` is set only at check-in.** ⚠ **Overtaken by `D-32` (18 Aug 2026): `INFLAT` is set on `FlatWireDB`'s `Rod.Status`, and `coils.coil_status` is not written at all.** The 30 Jul answer still governs the **timing**; only the column changed. ~~Whether pre-check-in itself sets `coils.coil_status = INFLAT` or leaves it `STAGED` is OI-01.~~ Pre-check-in does **not** commit the shared status, and there is **no intermediate status** for a rod that is welded but not yet checked in. `RECEIVED → STAGED` stands and the delivered SRS §4.2 `PCI` data note is superseded on this point; rod status `STAGED` is the real staging status rather than a vestigial one. **Residual:** whether the reqsum and `wip_coil_orders` insert from that same note stay at staging is unanswered (OI-01). ~~The interim design follows the delivered SRS and treats `RodStaging.Status` (bay occupancy) as orthogonal to `coils.coil_status`, which makes rod status `STAGED` effectively vestigial for FL1.
 
 **Staging:**
 

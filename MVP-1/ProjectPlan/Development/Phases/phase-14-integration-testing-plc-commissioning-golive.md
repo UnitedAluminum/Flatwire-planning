@@ -6,7 +6,7 @@
 ---
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-07-30
+**Last Updated:** 2026-08-18 — **`D-32`**: the E2E INFLAT assertion retargeted to `Rod.Status`; `FW-201`’s renamed-column regression pass struck *(previously 2026-07-30)*
 **Status:** Ready to build
 **Layer:** Integration, QA & commissioning
 **Owner:** **QA + BA** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
@@ -22,7 +22,7 @@
 - **Exit conditions:** signed-off UAT at window close (Sep 30); on-line trial + production scheduled post-sign-off (Q4 2026, TBD).
 
 ## Scope
-- **E2E FL1 standalone (FW-120):** Rod received → planned → scheduled → check-in → active run → SPC → weld → complete → spool alpha → shift summary. Verify INFLAT set/cleared, PLC push logged (simulate/commissioning), weld traceability, SPC records.
+- **E2E FL1 standalone (FW-120):** Rod received → planned → scheduled → check-in → active run → SPC → weld → complete → spool alpha → shift summary. Verify **`Rod.Status`** `INFLAT` set/cleared *(`FlatWireDB`-local since `D-32`; `coils.coil_status` is never written)*, PLC push logged (simulate/commissioning), weld traceability, SPC records.
 - **E2E FL2 standalone (FW-121):** spool → FL2 check-in (historical profile) → roll adjust → coil completion → skid close.
 - **E2E FL3 hybrid (FW-122):** single acknowledgment → continuous run → no intermediate alpha → weld → coil; FL1/FL2 unavailable.
 - **PLC commissioning:** switch `SimulatePLCTagPush`→live; confirm OPC tag paths with Tim O./engineer; validate push/clear + live AGC feed.

@@ -1,9 +1,10 @@
 # Flat Wire Mill — Open Questions Register
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 12, 2026
+**Last Updated:** August 24, 2026 — **`Q87` added: the FL2 finished-coil label, and whether a coil built from two source rods prints one alpha or two.** Raised by us on the 24 Aug client call and deferred by UA the same day — *“we're going to have to figure out what the labeling is going to look like.”* It is the missing third member of the labelling set: **`Q44`** is the FL1 spool label, **`Q4`** is the skid, and the finished coil the customer receives had no owner. **`Q26`** also advanced without closing — the 1920×1080 requirement is now with Tim and Charles in writing. *(previously August 23, 2026 — **the `Spool` article registry is seeded at its real size: 45 rows, `SP-0001`…`SP-0045`** (44 active + `SP-0045` withdrawn), replacing four placeholder rows. **Four digits, not five, per `OQ-K`** — five would make a carrier number string-identical to a `SpoolProcessing.Alpha`. Seed-row total 210 → **251**; table/FK/index counts unchanged. `Q42` stays **open** on the format and on 30-vs-45. *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. Object counts…)*)*
+
 **Scope:** MVP-1
-**Open Questions:** 33 · **Shopfloor scope:** 28
+**Open Questions:** 57 · **Shopfloor scope:** 50
 **Status Legend:** `Open` — every question in this register is open
 **Recommendations:** every question carries one except `Q10` — **our proposed answer, not a decision**
 **Scope Legend:** `Shopfloor` — Flat Wire Mill shopfloor changes · `Other` — adjacent modules
@@ -18,9 +19,9 @@
 
 ## Shopfloor Scope — Filtered Index
 
-**28 of the 33 open questions relate to Flat Wire Mill shopfloor changes** — the operator execution screens (Dashboards 1–12+) plus the reference data, equipment limits and validation rules those screens consume. The remaining 5 belong to adjacent modules (planning, scheduling, certification) and are retained here marked `Scope = Other`.
+**50 of the 57 open questions relate to Flat Wire Mill shopfloor changes** — the operator execution screens (Dashboards 1–12+) plus the reference data, equipment limits and validation rules those screens consume. The remaining 7 belong to adjacent modules (planning, scheduling, certification) and are retained here marked `Scope = Other`.
 
-**This register holds open items only.** The 25 answered questions are in [FlatWireDecidedQuestions.md](FlatWireDecidedQuestions.md) with their decisions. **The two files share one numbering space** — open questions are **`Q1`–`Q33`**, decided questions **`Q61`–`Q85`**, and a `Q##` lives in exactly one of the two files, so an `OQ-##` reference from the phase files, [REVIEW.md](../MVP-1/ProjectPlan/Development/REVIEW.md) or the master specification resolves against whichever file holds that number. ⚠ **The open register was renumbered three times on 12 Aug 2026** — the last of them when 23 questions were withdrawn as ours to answer rather than the client's. **A `Q##` read in any document or commit written before that resolves against the maps in [CHANGELOG.md](../CHANGELOG.md)**, under this file's section, and the three maps must be read in order. Every inbound citation in the repository was rewritten in the same pass, so nothing outside `CHANGELOG.md` — which keeps its historical numbers by design — should still be on an older scheme.
+**This register holds open items only.** The answered questions are in [FlatWireDecidedQuestions.md](FlatWireDecidedQuestions.md) with their decisions. **The two files share one numbering space** — open questions are **`Q1`–`Q55`, `Q59` and `Q87`** (57 entries) and decided questions run **`Q56`–`Q86`** (30 entries, not contiguous — a question is numbered when raised and moves across when decided), and a `Q##` lives in exactly one of the two files, so an `OQ-##` reference from the phase files, [REVIEW.md](../MVP-1/ProjectPlan/Development/REVIEW.md) or the master specification resolves against whichever file holds that number. ⚠ **The open register was renumbered three times on 12 Aug 2026** — the last of them when 23 questions were withdrawn as ours to answer rather than the client's. **A `Q##` read in any document or commit written before that resolves against the maps in [CHANGELOG.md](../CHANGELOG.md)**, under this file's section, and the three maps must be read in order. Every inbound citation in the repository was rewritten in the same pass, so nothing outside `CHANGELOG.md` — which keeps its historical numbers by design — should still be on an older scheme.
 
 **Every question carries a `Recommendation:` at the foot of its body, with one deliberate exception.** That is **our proposed answer — it is not a decision and carries no client authority.** **`Q10` (footage-to-weight conversion factor) carries none, by decision.** The dimensional basis it turns on — nominal or measured gauge and width, and whether the round edge is corrected for — is a measurement question United Aluminum must answer from its own practice, and a proposed default risks being adopted as the basis rather than confirmed. Every derived weight in the system rests on it, so it goes to the client as an open question. The `Recommended answer` field is optional in the workbook generator for this reason. It exists so a review is a confirm-or-correct exercise rather than a blank page, and so the build has a defensible default to work to while an answer is outstanding. Where the body already recorded a proposal, leaning or option preference, the recommendation crystallises **that** rather than inventing a new one. **Confirming a recommendation closes the question** — move it to [FlatWireDecidedQuestions.md](FlatWireDecidedQuestions.md) with the confirmation date and who gave it. Nothing here should be cited as settled, and nothing should be implemented as irreversible on a recommendation alone.
 
@@ -28,7 +29,7 @@
 
 **Eight of these questions are partly answered, and the partial answer is in the body.** **Q1**, **Q12**, **Q13**, **Q17**, **Q18**, **Q22**, **Q23** and **Q24** each carry a decided portion — a basis, a shape, or some of their numbered items — with the rest still owed. They are `Open` because they are not closed; read them here, not in the decided file, and check the body before concluding nothing has been settled.
 
-**There are no numbering holes** — `Q1`–`Q33` here, `Q61`–`Q85` decided, each contiguous. Withdrawn questions are **not** lost and their numbers are **not** reused as pointers. Earlier withdrawals for being outside shopfloor scope are carried in the master specification as **`OI-88`** (pass schedule authoring), **`OI-81`** (web application), **`OI-69`** / **`OI-49`** / **`OI-85`** (rod receiving), **`OI-60`** (metallic yield per route), **`OI-77`** (edger blades and roll regrind), **`OI-82`** (throughput rates) and **`OI-83`** (scrap handling).
+**There are no numbering holes** — `Q1`–`Q47` here, `Q61`–`Q85` decided, each contiguous. ⚠ **There were, until 20 Aug 2026.** `Q37`–`Q40` were minted on 19 Aug 2026 in `G45`, `[INT §8.0]`, `[REQ §5.26]`, `FW-220`'s task plan and `CHANGELOG.md`, and **never added here** — so this paragraph asserted contiguity at `Q36` while five documents cited four questions that did not exist. They are registered in **`A14`** below and the omission is recorded as gap **`G46`**. If you are reading a document that cites a `Q##` above 36, check it resolves here before trusting it. Withdrawn questions are **not** lost and their numbers are **not** reused as pointers. Earlier withdrawals for being outside shopfloor scope are carried in the master specification as **`OI-88`** (pass schedule authoring), **`OI-81`** (web application), **`OI-69`** / **`OI-49`** / **`OI-85`** (rod receiving), **`OI-60`** (metallic yield per route), **`OI-77`** (edger blades and roll regrind), **`OI-82`** (throughput rates) and **`OI-83`** (scrap handling).
 
 **The 23 questions withdrawn on 12 Aug 2026 went for a different reason — they are ours to answer, not the client's** — and each has a named tracking home carrying the question, any decided portion and our recommendation:
 
@@ -60,13 +61,14 @@
 
 **Filter rule applied:** a question is `Shopfloor` if a shopfloor screen **reads it, validates against it, or writes it**. That keeps reference data and equipment limits in scope (**Q10** footage-to-weight, **Q22** dimensional tolerances, **Q26** panel resolution) and leaves FL3 scheduling representation (**Q2**), pre-scheduling validation (**Q16**) and certificate frequency (**Q8**) out, even where they touch flat wire.
 
-### Shopfloor — Open (28)
+### Shopfloor — Open (50)
 
 | Priority | Questions |
 |---|---|
-| `Critical` | **Q3** traveler fields per station · **Q10** footage-to-weight factor · **Q14** pass schedule selection at check-in · **Q15** FL3 hybrid schedule + FL2 validation |
-| `High` | **Q1** roll gap validation · **Q4** skid labeling rules · **Q5** cert traceability granularity · **Q6** weld footage attribution · **Q7** max weld joints per coil · **Q12** partial-rod re-check-in · **Q13** PLC tags on checkout · **Q17** spool state machine · **Q18** target spool weight source · **Q21** `FL{n}.LineState` vocabulary · **Q22** dimensional tolerance columns *(values owed)* · **Q23** failed-inspection row · **Q24** staging overrides · **Q25** rod scheduled on neither rod line · **Q26** shopfloor panel resolution · **Q27** speed pushed as target or limit · **Q28** edge type push + missing edger tags · **Q29** FM2 tag namespace on FL3 · **Q30** take-up load cells / completion weight · **Q31** no-weld wire-break disposition · **Q32** FM2 dancer modes · **Q33** OD→weight formula |
-| `Medium` | **Q19** TKUP-2 alert ladder · **Q20** supervisor mirroring |
+| `Critical` | **Q3** traveler fields per station · **Q10** footage-to-weight factor · **Q14** pass schedule selection at check-in · **Q15** FL3 hybrid schedule + FL2 validation · **Q41** what an FL2 pre-check-in does · **Q48** two orders with different pass schedules on one rod |
+| `High` | **Q1** roll gap validation · **Q4** skid labeling rules · **Q5** cert traceability granularity · **Q6** weld footage attribution · **Q7** max weld joints per coil · **Q12** partial-rod re-check-in · **Q13** PLC tags on checkout · **Q17** spool state machine · **Q18** target spool weight source · **Q21** `FL{n}.LineState` vocabulary · **Q22** dimensional tolerance columns *(values owed)* · **Q23** failed-inspection row · **Q24** staging overrides · **Q25** rod scheduled on neither rod line · **Q26** shopfloor panel resolution · **Q27** speed pushed as target or limit · **Q28** edge type push + missing edger tags · **Q29** FM2 tag namespace on FL3 · **Q30** take-up load cells / completion weight · **Q31** no-weld wire-break disposition · **Q32** FM2 dancer modes · **Q33** OD→weight formula · **Q34** flat wire completion transaction token · **Q35** `ONSKID` for a finished flat wire coil · **Q37** check-in transaction token · **Q38** `wip_log` status value · **Q39** stamping the rod's `coils` row · **Q40** delete-vs-orphan on reqsum reversal · **Q42** spool carrier format + registry · **Q43** orders per spool + order selection · **Q44** spool label media + fields · **Q45** lead alpha — fact or prediction · **Q49** multi-order-last without a weld · **Q50** overrun bound · **Q52** shared rod exhausts before the order is satisfied · **Q53** fulfilment basis and what the certificate states · **Q54** does the acknowledgement close the FL1 spool · **Q87** FL2 finished-coil label + one alpha or two |
+| `Low` | **Q55** carrier prefix versus material prefix |
+| `Medium` | **Q19** TKUP-2 alert ladder · **Q20** supervisor mirroring · **Q36** sample number / planned operations · **Q46** mandrel diameter at FL1 · **Q51** the unconsumed remainder on an early acknowledgement |
 
 ### MVP-1 scope note — pass schedules, die life, shift boundaries
 
@@ -78,9 +80,9 @@
 
 Two decided questions are only partly in MVP-1 and carry banners in [FlatWireDecidedQuestions.md](FlatWireDecidedQuestions.md): **Q62** (the Active Run Monitor alert is in; the change-log table and editing flow are not) and **Q83** (the bands are in; the per-tool mechanism is not).
 
-### Out of shopfloor scope (5)
+### Out of shopfloor scope (7)
 
-**Q2** FL3 scheduling representation · **Q8** C of C frequency · **Q9** twist and torsion · **Q11** yield loss factor · **Q16** pre-scheduling validation
+**Q2** FL3 scheduling representation · **Q8** C of C frequency · **Q9** twist and torsion · **Q11** yield loss factor · **Q16** pre-scheduling validation · **Q47** max coil weight — target or search · **Q59** third-party minter versus an FL1 segment alpha
 
 ---
 
@@ -121,6 +123,30 @@ Two decided questions are only partly in MVP-1 and carry banners in [FlatWireDec
 | 31 | Wire break where the **customer accepts no welds** — the disposition set, the supervisor gate and where the decision is persisted | `Shopfloor` | High | Tim O. / Shannon R. | Open | Principle Aug 6, 2026 |
 | 32 | **FM2 dancer modes** (dancer vs tension) — who selects, per dancer or per line, scheduled or machine-side, read or written | `Shopfloor` | High | Tim O. / Engineering | Open | |
 | 33 | OD/diameter → weight conversion formula for spool | `Shopfloor` | High | Tim O. | Open | |
+| 34 | **Transaction name for a flat wire coil completion** in the shared plant records, and whether any existing report filters on it | `Shopfloor` | High | Tim O. / IT | Open | |
+| 35 | Whether a finished flat wire coil carries the **existing on-skid status** or needs one of its own | `Shopfloor` | High | Tim O. / IT | Open | |
+| 36 | **Sample number and planned operations** for a flat wire output coil when they cannot be inherited from the rod | `Shopfloor` | Medium | Tim O. / Planning | Open | |
+| 37 | **Transaction token for a flat wire rod check-in** in the shared plant records | `Shopfloor` | High | Tim O. / IT | Open | |
+| 38 | **Transaction-log status value** for a rod on a flattening line — new value or reuse | `Shopfloor` | High | Tim O. / IT | Open | |
+| 39 | Is **stamping the rod's shared coil row** with a flattening station safe for existing consumers? | `Shopfloor` | High | Tim O. / IT | Open | |
+| 40 | On reversing the reqsum at pre-check-out, **delete the row or zero it**? | `Shopfloor` | High | Tim O. / IT | Open | |
+| 41 | **What does an FL2 pre-check-in do** — persist or validate, hold a station or release it, gate check-in or not | `Shopfloor` | Critical | Tim O. / Bob S. | Open | Aug 20, 2026 *(that it exists)* |
+| 42 | **Spool carrier identifier format**, and where the registry is mastered | `Shopfloor` | High | Tim O. / Bob S. | Open | Aug 20, 2026 *(static, stenciled, typed)* |
+| 43 | **How many orders per spool**, and does FL2 check-in choose the order or inherit it? | `Shopfloor` | High | Tim O. / Planning | Open | Aug 20, 2026 *(many)* |
+| 44 | **What the FL1 spool label prints**, and on what media | `Shopfloor` | High | Tim O. / Bob S. | Open | Aug 20, 2026 *(media)* |
+| 45 | Is **last on, first off** guaranteed — is the label's lead alpha a fact or a prediction? | `Shopfloor` | High | Tim O. / Engineering | Open | Aug 20, 2026 *(principle)* |
+| 46 | **Mandrel / core diameter at FL1** — selected per spool, fixed by the standard size, or read from the machine? | `Shopfloor` | Medium | Tim O. | Open | |
+| 47 | Is the **maximum output coil weight** the optimisation target, or the start of a downward search? | `Other` | Medium | Tim O. / Planning | Open | Aug 20, 2026 *(method)* |
+| 48 | **Can two orders on one rod have different pass schedules?** If so the boundary cannot be crossed mounted | `Shopfloor` | **Critical** | Tim O. / Planning | Open | |
+| 49 | Does **multi-order-last** hold when **no weld** is involved? `Q73` item 6's unresolved branch | `Shopfloor` | High | Srikanth / Tim O. | Open | |
+| 50 | **What overrun is acceptable** past the allocated weight — warn at what, escalate to whom? | `Shopfloor` | High | Tim O. / Shannon R. | Open | |
+| 51 | On an **early acknowledgement**, where does the unconsumed allocation go? | `Shopfloor` | Medium | Tim O. / Planning | Open | |
+| 52 | A **shared rod exhausts** before the outgoing order is satisfied — top up, or stay short? | `Shopfloor` | High | Tim O. / Planning | Open | |
+| 53 | Is fulfilment **consumed** or **produced** pounds — and which does the certificate state? | `Shopfloor` | High | Tim O. / Shannon R. | Open | |
+| 54 | Does the order acknowledgement also **close the FL1 spool**, or may a spool span the boundary? | `Shopfloor` | High | Tim O. / Bob S. | Open | |
+| 55 | Should the **spool carrier prefix** differ from the material one? `SP-0001` against `SP-00021` | `Shopfloor` | Low | Tim O. / Bob S. | Open | |
+| 59 | Can **another caller** of the shared alpha generator be issued an alpha an FL1 segment already holds? | `Other` | Medium | IT / Srikanth | Open | |
+| 87 | What does the **FL2 finished-coil label** carry, on what media — and does a two-rod coil print **one alpha or two**? | `Shopfloor` | High | Tim O. / Bob S. / Shannon R. | Open | |
 
 ---
 
@@ -178,6 +204,31 @@ Generic labels (e.g., "Incoming Bundle Information") are agreed in principle. Th
 Final output is 2 coreless oscillated coils per skid. Do skid labeling, alpha assignment, and packaging records follow **UA's existing coil packaging rules** unchanged, or are flat wire-specific adjustments required?
 
 **Recommendation:** follow the **existing coil packaging rules unchanged** — 2 coils per skid, same label fields, same alpha assignment — and treat any flat wire deviation as a change request with a stated reason. The output geometry and the handling are the same; a parallel rule set doubles the packaging logic for a difference nobody has named yet. Confirm with Shannon R. against one printed sample, and ask which existing line's convention is being inherited — the artifacts asserted a precedent without ever naming a definable one.
+
+Related: **`Q87`** (the finished-coil label itself — raised 24 Aug 2026, and Bob proposed carrying the coil's information **on the skid label**, which makes these two one decision rather than two).
+
+---
+
+**Q87** · `High` · Owner: Tim O. / Bob S. / Shannon R. · `Open`
+**What does the FL2 finished-coil label carry, on what media — and does a coil built from two source rods print one alpha or two?**
+
+Raised on the **24 Aug 2026** call against a worked example: an FL2 coil wound from two contributing lengths — 400 ft and 500 ft — producing one physical coil with **two source identities behind it**. The direct question was *“what should be the alpha, a single alpha, or we will show multiple alpha at the coil?”* **UA deferred it on the call** — Tim: *“we're going to have to figure out what the labeling is going to look like”*; Shannon: *“we'll work it out outside the meeting.”*
+
+Five constraints were stated while it was being deferred, and they narrow the answer:
+
+1. **Consistency with existing coils is wanted.** Shannon: *“let's make it as consistent with the coils as possible so customers understand it.”* Bob named the existing field set — *“most customers want the alloy, temper, gauge”* — with the coil identity added.
+2. **Traceability is wanted; both alphas on the customer face may not be.** Tim: *“I know we want to have the alphas for traceability purposes, but do we need to put both of them on the label?”*
+3. **The cut label is the wrong medium.** Cut labels print as a **sheet**, and a finished oscillate-wound coil needs one. Tim: *“we would end up printing an entire sheet of cut labels for one label”*; Bob: *“I don't want to waste seven of the labels just for that … we'll have to make a specific one for the spool.”*
+4. **The skid label is a candidate carrier.** Bob: *“the crate skid is going to happen at the same time, we might be able to accommodate the information needed on the coil label for the skid … the same way we do the skid label, the one that goes in the skid and on the skid.”* That makes this question and **`Q4`** answerable together, or not at all.
+5. **Something must sit under the stretch wrap.** Shannon: *“they're going to want something under the stretch wrap … customers take the stretch wrap off and store it.”* Tim observed the opposite at a customer — *“there was nothing on the material itself, it was on the cardboard that was around it”* — and Shannon's answer was that UA **markets** the inside label: *“we kind of tout having labels inside and customers like that.”*
+
+**Recommendation:** print **one coil alpha as the primary identity** — the coil is one saleable unit against one order, per the 20 Aug `D2` — and carry the contributing source alphas as **secondary traceability text**, not as co-equal identities. Use a **coil-specific label**, not a cut-label sheet, and place one **inside the wrap** and one on the skid, mirroring the existing skid-label practice Bob named. Answer this with **`Q4`** in one pass.
+
+**Why:** two co-equal alphas on the customer face invite the customer to treat one coil as two line items, which is a reconciliation problem at their receiving dock and ours. The genealogy is exactly what **`CoilTraceability`** exists to hold, and the certificate — not the label — is where provenance is stated, which is **`Q53`**. The medium is the part with a hard constraint behind it: a sheet-fed cut label wastes seven labels per coil, so a decision to reuse the existing stock is a decision to change the stock.
+
+**What is blocked meanwhile:** the FL2 coil-completion label print in [`OutputCoilCompletion.md`](../MVP-1/ProjectPlan/Business/Screens/OutputCoilCompletion.md), and any field on it that states a **weight**, which rests on **`Q10`** like every other derived weight in the build.
+
+Related: **`Q4`** (skid labelling — answer together, per constraint 4), **`Q44`** (the FL1 spool label — the same question one station upstream), **`Q53`** (what the certificate states), **`Q10`** (any printed weight), **`OI-98`** (the odd final coil), **`OI-99`** (lot number for a multi-rod coil), **`OI-121`** (weight per source alpha).
 
 ---
 
@@ -239,6 +290,8 @@ Note that the formula is not what is actually in doubt: the open part is the **d
 
 **No recommendation is offered on this question** — see the note above the filtered index.
 
+**Consequence added 22 Aug 2026.** [`RodOrderAllocation.md`](../LatestDocument/RodOrderAllocation.md) §4 makes this question's *shape* concrete without answering it: the converter takes a **`Basis`** — `Nominal` · `Measured` · `IntegratedRunReading` · `Override` — and **every consumption row persists the basis and the `lb/ft` factor it actually used**, so a later answer here cannot retro-change a historical record. The formula itself is **not** in doubt (`FR-137`, `[DBD §6.6]`); this question is the **dimensional basis** only, which is why the design can proceed without it and the certificate cannot.
+
 ---
 
 **Q11** · `High` · Owner: Tim O. / Margo · `Open`
@@ -264,7 +317,7 @@ Is there a per-pass scrap allowance (die entry crop, edge trim, end crop, weld s
 - **Multiple partial spool alphas per rod:** Yes, this functionality is needed. There is always potential for a rod to produce partial spool alphas across separate runs.
 - **Carry-forward recommendation:** Full answer deferred — Tim will confirm. The proposed design (persistent rod record with footage_run_to_date and remaining_weight_estimate, carry-forward re-check-in, source_rod_alpha foreign key on each partial spool) is documented and awaiting confirmation.
 
-**Recommendation:** build the **documented carry-forward design** — already delivered on 26 Jul 2026 as `Rod.FootageRunToDate`, `Rod.RemainingWeightEstimateLb` and `Spool.SourceRodAlpha` — and treat the **payoff scale as a separable question** (**`OI-56`** asks the same thing at the take-up). The design works from an estimated remaining weight; a scale only improves the estimate's accuracy. Do not hold the build for the scale answer.
+**Recommendation:** build the **documented carry-forward design** — already delivered on 26 Jul 2026 as `Rod.FootageRunToDate`, `Rod.RemainingWeightEstimateLb` and `SpoolProcessing.SourceRodAlpha` — and treat the **payoff scale as a separable question** (**`OI-56`** asks the same thing at the take-up). The design works from an estimated remaining weight; a scale only improves the estimate's accuracy. Do not hold the build for the scale answer.
 
 ---
 
@@ -326,7 +379,7 @@ Should the scheduling or planning system warn when a job is scheduled for FL1/FL
 
 **Spool status state machine — all valid transitions**
 
-> **Decided (August 2, 2026) — FL2 shows two statuses and runs one spool at a time.** Because **FL2 has no space to stage material**, a spool is either waiting for the line or on it; there is no third place for it to be. The operator-visible vocabulary at FL2 is therefore fixed at **`Ready for FL2`** (schema `RECEIVED`) and **`Checked in`** (schema `INFLAT`). **`STAGED` is never set at FL2** — staging is the FL1 concept (PCI002), and there is no "At TPO" status on the spool queue. Second half of the decision: **check-in is exclusive.** While any spool is checked in, **no spool offers a check-in action** — not the others and not the checked-in one — and the action returns only on checkout. Applied to [dashboard_5a_spool_queue.html](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_5a_spool_queue.html) and [SpoolQueue.md](../MVP-1/ProjectPlan/Business/Screens/SpoolQueue.md) §3.5 (rules SQ-7 to SQ-10). **Still open:** the stored status list and its transitions — this decision fixes what the FL2 operator sees, not what the database records, and the two rival vocabularies of **OI-06** are still unmapped. **Two consequences that need owners:** (1) exclusivity has **no backing constraint** — `dbo.Spool` has no filtered unique index on `Status` and carries **no `LineId` at all**, so "one spool checked in per line" cannot currently be expressed in the schema; `POST /checkin/spool` must reject the second check-in with a `409`. (2) A **quality-held spool now has no place on the FL2 queue** — it is neither ready nor checked in, so it simply is not listed. Raised to the client as SpoolQueue.md open item 6.
+> **Decided (August 2, 2026) — FL2 shows two statuses and runs one spool at a time.** Because **FL2 has no space to stage material**, a spool is either waiting for the line or on it; there is no third place for it to be. The operator-visible vocabulary at FL2 is therefore fixed at **`Ready for FL2`** (schema `RECEIVED`) and **`Checked in`** (schema `INFLAT`). **`STAGED` is never set at FL2** — staging is the FL1 concept (PCI002), and there is no "At TPO" status on the spool queue. Second half of the decision: **check-in is exclusive.** While any spool is checked in, **no spool offers a check-in action** — not the others and not the checked-in one — and the action returns only on checkout. Applied to [dashboard_5a_spool_queue.html](../MVP-1/ProjectPlan/Frontend/Mockups/dashboard_5a_spool_queue.html) and [SpoolQueue.md](../MVP-1/ProjectPlan/Business/Screens/SpoolQueue.md) §3.5 (rules SQ-7 to SQ-10). **Still open:** the stored status list and its transitions — this decision fixes what the FL2 operator sees, not what the database records, and the two rival vocabularies of **OI-06** are still unmapped. **Two consequences that need owners:** (1) exclusivity has **no backing constraint** — `dbo.SpoolProcessing` has no filtered unique index on `Status` and carries **no `LineId` at all**, so "one spool checked in per line" cannot currently be expressed in the schema; `POST /checkin/spool` must reject the second check-in with a `409`. (2) A **quality-held spool now has no place on the FL2 queue** — it is neither ready nor checked in, so it simply is not listed. Raised to the client as SpoolQueue.md open item 6.
 
 **Status (May 4, 2026):** Tim provided the following operational framework:
 - Spools shall have unique identifiers similar to furnace plates.
@@ -335,7 +388,7 @@ Should the scheduling or planning system warn when a job is scheduled for FL1/FL
 
 The full formal state machine (all valid statuses and the events that trigger each transition) is still to be defined. Without a defined state machine, the system cannot enforce valid status progressions (e.g., preventing a spool from being planned for two orders simultaneously, or a completed spool being re-opened for FL2 check-in).
 
-**Recommendation:** make the **stored** vocabulary the shared `coils` status set already in use (`RECEIVED` / `INFLAT` / `HOLD` / `COMPLETE` / `SCRAP`) and treat the Aug 2 two-status FL2 view as a **projection over it**, not a second vocabulary — that is what closes `OI-06` without inventing a third list. Then add the two things the Aug 2 decision left unbacked: a **`LineId` on `Spool`** and a **filtered unique index** enforcing one checked-in spool per line, so exclusivity is a constraint rather than only a `409`. For the quality-held spool with nowhere to appear, add a third **view** state `Held` — visible on the queue, with no check-in action.
+**Recommendation:** make the **stored** vocabulary the six-value set `SpoolProcessing.Status` already carries in `FlatWireDB` (`RECEIVED` / `STAGED` / `INFLAT` / `COMPLETE` / `HOLD` / `SCRAP`) and treat the Aug 2 two-status FL2 view as a **projection over it**, not a second vocabulary. ⚠ **Corrected 18 Aug 2026 — `D-32`.** This had said *"the shared `coils` status set already in use"*, which was never quite true and is now definitely not: `INFLAT` was only ever going to reach the shared vocabulary through `FW-002`, and that story is **cancelled with the shared-schema migration**. The recommendation is unchanged in substance — one vocabulary, not three — but its home is the **local** column, which is the only place the six values exist — that is what closes `OI-06` without inventing a third list. Then add the two things the Aug 2 decision left unbacked: a **`LineId` on `SpoolProcessing`** and a **filtered unique index** enforcing one checked-in spool per line, so exclusivity is a constraint rather than only a `409`. For the quality-held spool with nowhere to appear, add a third **view** state `Held` — visible on the queue, with no check-in action.
 
 ---
 
@@ -505,6 +558,8 @@ Every mockup is authored at **1280×1024**, `flat-wire-fit.js` measures against 
 
 Tim expects the new flat wire screens to use the **same monitors as the current ones — 1280×1024, which is what UA stocks** — but will **verify with Charles and Juan** before confirming. Our action from the call: **send Tim the required resolution (1920×1080) by e-mail**; if that is what the application needs, he will look at different screens.
 
+> **Progress (August 24, 2026) — the requirement is with Tim in writing, but UA has still not answered.** Tim, opening the 24 Aug call: *“Divesh, I believe it was you that had asked about the workstation resolution … you were looking for the **1920 by 1080**? … Okay, perfect. **I'll respond to this e-mail from Charles.**”* So the Nagarro-side action is **closed** — the number is on record and Charles has it. **The question is not**: what UA will actually stock is Charles's and Juan's answer, and it has not been given. Note that Tim's phrasing is *workstation* resolution, which may not be the same panel as the shopfloor HMI this question is about — worth confirming that one answer covers both.
+
 **Why this is `High` and time-critical:** 1920×1080 is a **1.5× width and 1.05× height** change, so it is a **re-layout of all 25+ screens, not a rescale** — the extra pixels are almost entirely horizontal. `flat-wire-fit.js` already degrades gracefully *downward* (it never scales above 1:1, and `data-fit="fill"` widens the design box to the window), so a wider panel is the cheap direction and the height barely moves. But the canvas is a **Phase 1 acceptance criterion** against a **14 Aug 2026 gate**, so an answer after Phase 1 closes is an answer that arrives too late to be free.
 
 **Do not re-author anything until this is answered.**
@@ -669,3 +724,378 @@ Related: **Q1** (roll gap validation — the other per-component setpoint), **Q2
 When a spool is measured by outer diameter at the takeup, how is the remaining weight calculated? The formula (using OD, ID, coil width, and alloy density) must be confirmed by Tim O. and documented before spool weight tracking and "assign as-is" stock handling logic can be implemented. Weight distribution is tracked via footage and revolutions per the Apr 28 planning decision, but the OD-based verification formula is still needed.
 
 **Recommendation:** derive it from **`Q10`'s single factor** rather than as an independent formula — annulus volume from OD, ID and coil width, times alloy density — so spool weight, coil weight and the printed label all trace to one number. Two independently confirmed formulas will disagree in the third decimal and nobody will know which is authoritative. `OI-56`'s accumulated scale-versus-calculated variances are the data that validates it.
+
+---
+
+#### A13. Shared-System Write-Back at Coil Completion
+
+*New 18 Aug 2026, with `FR-509`–`FR-518` and `[INT §8.1]`. All three are **IT** questions about the existing shared schema, not design choices — we have proposed a value for each and each is a one-line change if the answer differs, but all three must be confirmed **before the write-back runs outside DEV**.*
+
+**Q34** · `High` · Owner: Tim O. / IT · `Open`
+**The transaction token for a flat wire coil completion**
+Completing an FL2/FL3 coil writes a finished-goods coil row, a genealogy row and a WIP log row, and each of those carries an eight-character transaction name (`coils.transaction_name`, `coil_gen_history.in_xaction`, `wip_log.transaction_name`). What token should flat wire use, and does any existing stored procedure, view or report branch on that column in a way a new value would disturb?
+
+**Recommendation:** a **new token, `FWCOMPLT`** — eight characters exactly, which is the full width of all three columns, so it fits everywhere without truncation and the same value makes the transaction traceable end to end. A **new** token rather than a reused one because both reuse candidates are actively wrong: `CREATSKD` would make flat wire indistinguishable from slitter skid creation in the WIP log, and `STORCOIL` would trip the `transaction_name = 'STORCOIL'` branch in `coils_iud_tg` and produce a **second, duplicate** WIP log row on top of the one the procedure writes.
+
+**Why:** this is the one value in the write-back that is visible to every existing consumer of the WIP log, and the blast radius is unknown to us — the impact audit that would have found the answer was cancelled with `D-32`. It is the same class of question as **`OI-111`**, narrowed to a different column, and it is cheap to answer and expensive to get wrong.
+
+---
+
+**Q35** · `High` · Owner: Tim O. / IT · `Open`
+**Is `ONSKID` the right coil status for a finished flat wire coil?**
+The finished-goods row written at coil completion needs a value in `coils.coil_status`. Should flat wire reuse the existing `ONSKID`, or does finished flat wire need to be distinguishable from other material by status?
+
+**Recommendation:** **reuse `ONSKID`.** It is literally true — the coil is complete and on a skid — and it is exactly what `CreateSkid_MoveCutsOnSkid` writes in the same situation. A new value would be an addition to the **shared status vocabulary**, which is precisely the change `D-32` cancelled, so it should only be introduced if a named consumer requires it.
+
+**Why:** the question is not what the coil *is*, which is settled, but whether any availability check, report filter or scheduling screen needs to tell finished flat wire from finished rolled material. If one does, the answer is a report change rather than a new status value — and that is worth establishing before the first coil is written rather than after.
+
+---
+
+**Q36** · `Medium` · Owner: Tim O. / Planning · `Open`
+**Sample number and planned operations for a flat wire output coil**
+The order link written at coil completion carries `smp_no` and `planned_operations`. Where the source rod already has an order row these are copied from it, which is what the slitter path does. Where it does not, what should a flat wire output coil carry?
+
+**Recommendation:** **copy from the rod's row wherever one exists** — that is the established behaviour and needs no decision — and fall back to `smp_no = 888` with `planned_operations = 'P'`, matching the equivalent fallback in `CreateSkid_MoveCutsOnSkid`. Confirm the fallback rather than the copy: the copy is safe, the fallback is a guess.
+
+**Why:** the fallback only fires when a rod reaches coil completion without an order row, which should not happen if check-in did its job — so this is a question about what a **defensive** path should write, and the cost of being wrong is a misleading sample number on an edge case rather than a broken transaction. Ranked `Medium` for that reason.
+
+Related: **Q34**, **Q35**, **`OI-114`** (the cut-record sentinels — the same class of question, but there is no majority among the legacy writers to follow), **`OI-111`** (which consumers read `coils.coil_status`), **`OI-112`** (the unreleased WIP station).
+
+---
+
+#### A14. Shared-System Write-Back at Rod Check-in
+
+*Registered here 20 Aug 2026, and **they were minted on 19 Aug and never reached this register** — `G45`, `[INT §8.0]`, `[REQ §5.26]`, [`FW-220`'s plan](../MVP-1/ProjectPlan/Backend/TaskBreakdownPlans/FW-220-FlatWire-CheckInRod.md) and `CHANGELOG.md` all cite `Q37`–`Q40` against a register that declared itself contiguous at `Q36`. Recorded as gap **`G46`** so it is not repeated. Like `Q34`–`Q36` these are **IT** questions about the existing shared schema rather than design choices; each has a proposed value and each is a one-line change if the answer differs. All four block **reaching a shared environment**, not the build.*
+
+**Q37** · `High` · Owner: Tim O. / IT · `Open`
+**The transaction token for a flat wire rod check-in**
+Checking a rod in at FL1/FL3 writes nine shared objects, several of which carry an eight-character transaction name. What token should flat wire check-in use, and does any existing stored procedure, view or report branch on that column in a way a new value would disturb?
+
+**Recommendation:** a **new token, `FWCHKIN`** — the same reasoning as `Q34`'s `FWCOMPLT`. A new value rather than a reused one, so a flat wire check-in is distinguishable from a mill or slitter check-in in the WIP log, and so the transaction is traceable end to end under one name.
+
+**Why:** it is the value most visible to existing consumers of the WIP log, and the impact audit that would have identified them was cancelled with `D-32`. Cheap to answer, expensive to get wrong.
+
+---
+
+**Q38** · `High` · Owner: Tim O. / IT · `Open`
+**The `wip_log` status value for a rod on a flattening line**
+The transaction-log row written at check-in needs a value in `wip_log.coil_skid_status`. Does flat wire need one of its own, or does it reuse an existing value?
+
+**Recommendation:** **reuse `INROLL`.** A new status-shaped value in a shared vocabulary is exactly the change `D-32` cancelled, and `INFLAT` was considered here and rejected for that reason. `INROLL` is true of the material — it is on a mill being rolled — and every existing reader already handles it.
+
+**Why:** `INFLAT` exists only as a `FlatWireDB`-local value on `Rod.Status` / `SpoolProcessing.Status`, and letting it leak into a shared column would re-open the migration `D-32` closed. Confirm that no report needs to tell flattening from rolling in the log; if one does, that is a report change, not a new status.
+
+---
+
+**Q39** · `High` · Owner: Tim O. / IT · `Open`
+**Is stamping the rod's shared coil row with a flattening station safe for existing consumers?**
+Check-in stamps the rod's `proddb..coils` row with `wip_station`, `wip_badge_no`, `transaction_name` and `coil_rev_time` — restoring the upstream visibility lost when `D-32` cancelled `FW-002` — while deliberately **not** writing `coil_status`. Does any existing consumer read those four columns in a way a flattening-line value would disturb?
+
+**Recommendation:** **write all four.** They are how every other operation marks a coil as being worked, the values are ordinary, and leaving them blank is what created `OI-111`. Confirm rather than assume, because it is the one place flat wire becomes visible in the shared schema at all.
+
+**Why:** this is `OI-111` narrowed to four named columns. The alternative — a rod being processed with nothing in the shared record to say where — is the state that was found unacceptable on 18 Aug.
+
+---
+
+**Q40** · `High` · Owner: Tim O. / IT · `Open`
+**On reversing the reqsum at pre-check-out, delete the row or leave it?**
+Pre-check-out reverses the requirement summary written into `wip_coil_orders` at check-in. Should the reversal **delete** the row, or leave it in place with zeroed quantities?
+
+**Recommendation:** **leave it and zero it**, not delete. A deleted row destroys the evidence that the material was ever claimed against the order, and the reversal already refuses when footage is greater than zero — because a Mode B removal's reqsum records material the order genuinely received. Zeroing is reversible and auditable; deletion is neither.
+
+**Why:** the safe direction is the one that keeps the audit trail, and `RodCheckin.WipCoilOrdersWritten` already defaults to the safe direction so that a missing value never authorises a delete. Confirm whether any existing report counts rows rather than summing quantities — that is the one case where a zeroed row reads differently from an absent one.
+
+Related: **Q34**–**Q36** (the same class at the other end of the run), **`OI-115`** (the FL2 half of this write set, undefined and **blocking**), **`OI-116`** (`coil_mill_processing`), **`G45`**, **`G46`**.
+
+---
+
+#### A15. The Spool as a Physical Carrier, and the Multi-Rod Spool
+
+*New 20 Aug 2026, from the [client call of that date](../BaseDocuments/ClientCall_2026-08-20_SyncPlan.md). Seven questions arising from nine decisions — the spool carrier is now a confirmed physical article rather than an inference, a spool is confirmed to carry many rods and many orders, and FL2 is confirmed to want pre-check-in. **`Q41` is the only `Critical` one**, because a requirement asserted in a `CHECK` constraint has been reversed and its replacement shape is unknown.*
+
+**Q41** · `Critical` · Owner: Tim O. / Bob S. · `Open`
+**What does an FL2 pre-check-in actually do?**
+
+> **Decided (August 20, 2026) — FL2 gets pre-check-in.** Tim and Bob, having agreed it between themselves: *"We do want pre-check-in for FL2 … to validate the next spool and to eliminate the potential for downtime due to the fact that they grabbed the wrong spool and then would find out at check-in and then have to go and locate the correct one."* This **reverses `FR-031`** (*"the system shall not support pre-check-in on FL2 — a `lineId` of `FL2` is rejected"*), which is asserted in **eighteen documents** — sixteen of them citing `PCI002` across thirty citations, including a `CHECK` constraint in the DDL and a *"deliberately NOT created"* comment against the `FL2PO` WIP station, plus two that assert the exclusion without citing the rule at all.
+
+**What is not decided is its shape, and `PCI002`'s physical premise was never contradicted** — FL2 still has one traversing payoff and no floor space, and `RocCheckin.md` §4.3 states that spool visual inspection is **not required**. So Dashboard 2A cannot simply be pointed at FL2: its two defining mechanics, **two alternating payoff bays** and **inspection before unbanding**, do not exist there.
+
+1. Does the pre-check-in **persist a record**, or is it a read-only validation the operator performs and moves on from?
+2. Does it **claim a WIP station and hold it** until check-in, or claim and release within the transaction?
+3. Does it **gate** check-in, or stay **`Should`** as FL1's does — where scanning an unstaged rod straight at check-in remains a supported path?
+4. If it persists, does the record carry a **position** at all, given there is only one?
+
+**Recommendation:** **validate and release, with a persisted record and no bay.** Write a row so that the validation is auditable and the operator's time is not lost, claim the `FL2PO` station within the pre-check-in and release it on completion rather than holding it, carry **no** payoff position, and keep the function **`Should`** — check-in must remain reachable without it, exactly as at FL1. That satisfies Tim's stated purpose, which is validation, without inventing staging on a line that has nowhere to stage.
+
+**Why:** the answer decides whether this is a screen change or a schema change. `RodStaging` cannot host it — its columns are rod-shaped (oxidation / surface-defect / water-stain inspection, `IsWelded`, two-bay states, `PayoffPosition NOT NULL`, `CK_RodStaging_LineId IN ('FL1','FL3')`) — so a persisted answer adds a table and moves a published count (**`OI-118`**). The screen already exists as **Dashboard 5A**, which lists runnable spools and resolves the order from a scan; what it does not do is record anything, and its own rule SQ-12 says so.
+
+Related: **`OI-118`** (where the record lives), **`OI-26`** (whether FL3 shares FL1's VPS — the same question one line over), **`G21`** (`UX_RodStaging_Bay` scope, still blocking the Phase-4 schema freeze), `FR-031`, `FR-533`+, story `FW-224`.
+
+---
+
+**Q42** · `High` · Owner: Tim O. / Bob S. · `Open`
+**The spool carrier identifier format, and where the registry is mastered**
+
+> **Decided (August 20, 2026) — spool numbers are static, not dynamic.** Standardised like plate numbers, in the client's own comparison: *"I can't make up a plate number, but a skid number I can make it up."* **30 purchased**, with a decision on a further **15** being taken the same day; **all one standard size**; **all identical except for identity**; and **marked physically** — *"the plan is to mark the spools with whatever nomenclature we're going to use to identify them."* The dynamic-number option was raised twice more and rejected both times. **Entry is a text box validated against the registry, not a drop-down** — 30 to 45 rows is too long to scroll on a shopfloor panel.
+
+Still owed: the **format** of the stencil string, and where the registry lives.
+
+1. What is the nomenclature — `S1`…`S45`, `SP-01`, zero-padded, something else? (**A5** on the call.)
+2. Is it 30 or 45, once the purchase decision is made?
+3. Is the registry mastered in `FlatWireDB`, or does an existing shared table already carry the plate-like articles?
+
+**Recommendation:** a **`FlatWireDB` lookup named `Spool`**, with the client's stencil string as the natural key and a unique constraint on it, seeded from the physical inventory and soft-deletable like the other lookups. **Do not overload `SpoolProcessing.Alpha`** — that is the *material* identity (`SP-#####`, generated per spool of wire) and the carrier is a reusable physical article that outlives it; conflating them is the exact confusion `SpoolQueue.md` open item 1 was raised to prevent. Accept the stencil string as typed and case-insensitively, since an operator is reading paint off steel.
+
+**Why:** nothing in the schema was a spool carrier (**`OI-120`**) until `Spool` was built on 22 Aug 2026 — **which makes the format question live rather than academic: the table has a `SpoolNo` column waiting for a decided format.** *(The clause "and nothing seeds it" was true until 23 Aug 2026 — 45 provisional rows now exist; see the note below.)* `SpoolConfiguration` looks like the candidate and is not — it is a **size class** (min/max weight, core and outer diameter) and the client has just confirmed every spool is one size, so it would hold exactly one row while the carriers number 30 to 45.
+
+**Seeded, but still open (23 Aug 2026).** The registry now carries its **real size: 45 articles, `SP-0001`…`SP-0045`**, replacing four placeholder rows — 44 active plus `SP-0045` marked withdrawn so the `IsActive = 0` path stays covered. That settles **neither** half of this question: the **format** is provisional and the **count** (30 or 45) is still the client's, pending the purchase decision on the further fifteen.
+
+**Four digits, deliberately, and this is the part not to undo.** `OQ-K` instructs *"build to `SP-0001`…`SP-0045` meanwhile"*, because five digits would make a carrier number **string-identical** to a `SpoolProcessing.Alpha` (`SP-#####`) rather than merely similar — the seeded material alphas `SP-00031`/`SP-00032`/`SP-00033` all fall inside 1–45. That would re-create the conflation the `Spool` / `SpoolProcessing` split (**`Q60`**) exists to prevent, and break `SpoolQueue.md` item 1, closed 20 Aug 2026: *"any one identifier on the label — the spool number or any alpha — resolves the spool."* `OQ-K`'s `SC-0001` prefix would remove the ambiguity outright and remains the better long-term answer.
+
+**The format is built from one expression** in `FlatWire_SampleData_Lookup.sql`, not 45 literals, so answering this question is a one-line change. Deciding it is still cheap — do not treat the seeded rows as a commitment.
+
+Related: **`OI-120`** (no carrier entity exists), **`Q17`** (the spool state machine — a carrier returning to the pool is a state of the *carrier*, not of the material), **`Q46`**, `SpoolQueue.md` §7 item 1 (closed by this decision).
+
+---
+
+**Q43** · `High` · Owner: Tim O. / Planning · `Open`
+**How many orders may one spool carry, and does FL2 check-in choose the order or inherit it?**
+
+> **Decided (August 20, 2026) — a spool carries many rods and many orders.** Bob: *"We could technically have two separate orders that are made onto a spool coming off of FL1. When it gets checked into FL2, we're only going to make **one order at a time** out of FL2, but there could be two orders or more on the spool going into FL2."* Srikanth: *"Spool to A-rods is one to many. In turn, that one A-rod could be on multiple orders as well."*
+
+The open half is what check-in does with the set.
+
+1. Is there a **bound** on the number of orders on one spool, or is it whatever planning allocates?
+2. Does the FL2 operator **select** which order is being made, or is it derived from the lead alpha (**`Q45`**) or from planning?
+3. May a spool be checked in with **no** order — the planning remainder and accepted-partial cases that `SpoolQueue.md` rule SQ-6 already permits?
+
+**Recommendation:** **the set is planning's to allocate and check-in selects one from it.** `SpoolCheckin.OrderId` keeps its singular meaning — *the order being made now* — and is **relaxed to nullable** so that SQ-6's unallocated spool can actually be checked in, which the present `NOT NULL` forbids. Do not bound the count in the schema; validate that the selected order is a member of the spool's set, which is the check that matters. Default the selection to the lead alpha's order and let the operator change it, so the common case is one keypress.
+
+**Why:** `SpoolProcessing.OrderNo` is a scalar `VARCHAR(50) NULL` and `SpoolCheckin.OrderId` a scalar `VARCHAR(20) NOT NULL`, and the second contradicts a published rule of the queue screen already (**`OI-119`**). Deciding the selection mechanism now is what stops the association table being designed around a single order and rebuilt later.
+
+Related: **`OI-119`** (the two scalar columns), **`Q45`** (the lead alpha, if it is to drive the default), **`Q70`** (a rod may carry more than one order — decided 30 Jul; this is its spool-level consequence), **`G42`**.
+
+---
+
+**Q44** · `High` · Owner: Tim O. / Bob S. · `Open`
+**What does the FL1 spool label print, and on what media?**
+
+> **Decided (August 20, 2026) — the high-temp coil label, two per spool.** Spools pass through anneal, so no ordinary label survives. Bob: *"It'll be the **1½ by 3 inch label**, the ones that are output from the mills — you get **2 per label, one for each side of the spool**, slap it on."* Tim: *"My thought was the high-temp labels with the alphas on them, just like we do the cut labels now that are going to anneal."* And **any one identifier on the label resolves the spool** — Bob: *"Just like the furnace plate … they only have to scan one of the coil codes on a furnace plate to get it into anneal."*
+
+Still owed: **the field list**, and whether the durable option replaces or supplements this one.
+
+1. Exactly which fields print — the spool number and the alphas are confirmed; what about **weight per alpha**, the order or orders, gauge and width, the FL1 run?
+2. Does the **etched stainless-steel barcode plate** (Bob's investigation, **A4**) replace the label or sit alongside it?
+3. Is the label reprintable, and if a spool is re-labelled after anneal, what reconciles the two?
+
+**Recommendation:** print the **carrier number, every alpha on the spool with its weight, and the order(s)** — carrier number as the primary barcode and each alpha as a secondary, so that scanning any of them resolves the spool as the client described. Keep the pass schedule off it, per `Q84`. Treat the etched plate as a **supplement** carrying the carrier number only: it is permanent and the carrier is permanent, whereas the material and its alphas change every cycle, so etching those would be wrong within one run.
+
+**Why:** [`SpoolCompletionNotification.md`](../MVP-1/ProjectPlan/Business/Screens/SpoolCompletionNotification.md) refers to printing the labels **nine times and never states what is on them**. The media and layout are now confirmed and recorded there; the field list is the half that still needs an answer, and it depends on **`Q10`** for any printed weight.
+
+Related: **`Q45`** (the lead alpha on the label), **`Q10`** (any weight printed rests on it), **`Q4`** (skid labelling — the analogous open item at the finished-goods end), **`Q87`** (the FL2 finished-coil label — the same question one station downstream, raised 24 Aug), **`OI-121`** (weight per alpha), **`OI-115`** (which identifier reaches the shared WIP station).
+
+---
+
+**Q45** · `High` · Owner: Tim O. / Engineering · `Open`
+**Is *last on, first off* guaranteed, and is the label's lead alpha therefore a fact or a prediction?**
+
+> **Principle stated (August 20, 2026).** Bob: *"Whichever one is going to be the lead in printing the label should always be the one that is expected for check-in at the next operation."* Tim's basis: *"The last one on is going to be the first one off … say you have R1A and R2A on the spool and R2A came on last, then R2A would be the first one off on FL2 and R1A would be the last one off. We had discussed that the spool runs in reverse."*
+
+> **⚠ The apparent contradiction on the call is between two different claims, and both are true.** Yogender objected that FL1 is a continuous run and *"we can't identify that this is going to be the first one"*. Tim's statement is about **rod alphas** and is determined by the take-up; Yogender's is about the **FL2 output coils** cut from the spool, which genuinely cannot be sequenced in advance. Anyone reading the exchange as a disagreement will conclude the wrong thing.
+
+1. Does the **traversing take-up** guarantee reverse unwind, or can the spool be threaded from either end?
+2. Is the lead alpha therefore a **fact** the system can validate against, or a **prediction** it must be willing to be wrong about?
+3. If a non-lead alpha is scanned at FL2 check-in, is that an error, a warning, or normal?
+
+**Recommendation:** treat it as a **prediction and accept any alpha on the spool.** Print the expected lead prominently, and on a non-lead scan resolve the spool and proceed **without a warning** — the operator is holding the spool and the system is not. Ask engineering to confirm the unwind direction anyway, because if it is guaranteed the label becomes checkable and a genuinely mis-threaded spool becomes detectable, which is worth having.
+
+**Why:** the cost of the two errors is asymmetric. Treating a prediction as a fact stops a correct spool at check-in and puts the operator on the phone; treating a fact as a prediction loses a check nobody currently has. Until engineering answers, the permissive reading is the safe one.
+
+**Consequence added 22 Aug 2026 — this question has arithmetic behind it, not only a label.** [`RodOrderAllocation.md`](../LatestDocument/RodOrderAllocation.md) §2.5 shows that the unwind direction decides **which output coil the weld lands in**, and therefore that coil's `CoilTraceability` rows, its primary rod, and the parentage its certificate states. On the shipped example: **LIFO** gives coil 1 = 900 lb of one rod and coil 2 = 500 + 400 across the weld; **FIFO** gives coil 1 = 400 + 500 across the weld and coil 2 = 900. Same coils, same weights, **different genealogy**. ⚠ **The client's own planner cannot settle it — it consumes FIFO and names LIFO**, contradicting itself in one procedure. The design builds to **LIFO** meanwhile, because a spool unwinding last-on-first-off is geometry.
+
+Related: **`Q43`** (whether the lead alpha defaults the order selection), **`Q44`** (what the label prints), **`Q17`** (spool lifecycle), **`OI-121`**.
+
+---
+
+**Q46** · `Medium` · Owner: Tim O. · `Open`
+**Mandrel / core diameter at FL1 — selected, fixed, or read?**
+
+> **Context (August 20, 2026).** Confirmed on the same call that the carrier is captured at the **FL1 spool-completion transaction** and that the transaction cannot be created without it. Tim added a rider: *"Similar to kind of like when you're on a slitter and you have to select the mandrel size, almost like that. Like we need to know what spool is there. **We need to know what diameter mandrel is attached.**"*
+
+Nothing captures it. `SpoolConfiguration` carries `MinCoreDiameterIn` / `MaxCoreDiameterIn` as a **range on the size class**, which is not a selection, and no screen or table records a per-spool value.
+
+1. Is the mandrel **selected per spool** at the completion transaction, as on a slitter?
+2. Or is it **fixed** by the single standard spool size the client has just confirmed?
+3. Or is it **read from the machine** over the tag surface?
+
+**Recommendation:** **fixed by the standard size, and therefore not entered.** The client confirmed all spools are one size, and a value that can only take one value is a field the operator will get wrong sooner than the system will. Record it as a property of the `SpoolConfiguration` row rather than as an input, and revisit only if a second spool size is ever bought. If the client says it does vary, it belongs on the completion transaction beside the carrier — not on check-in, which is at the other end of the machine.
+
+**Why:** the slitter analogy is the client's, and on a slitter the mandrel genuinely varies. Here it may not, and the difference is a mandatory field on a hard-gated transaction. It also matters to **`Q33`**: an OD-to-weight calculation needs the core diameter, and taking it from a range rather than a value is how the third decimal place goes wrong.
+
+Related: **`Q33`** (OD → weight needs the core diameter), **`Q42`** (the carrier registry that would hold it), **`Q30`** (whether the completion weight is read or derived at all), `SpoolCompletionNotification.md`.
+
+---
+
+**Q47** · `Medium` · Owner: Tim O. / Planning · `Open` · `Scope = Other`
+**Is the maximum output coil weight the optimisation target, or the start of a downward search?**
+
+> **Decided (August 20, 2026) — plan to the maximum output coil weight and work backwards.** Two constraints in order, from Bob: *"You want to maximise your spools out of FL1 so you can maximise your anneal capacity. And then you always have to take into account the min and maxes for the output customer and make multiples of those backwards at the max shippable weight … make sure that you're not creating waste at the FL2 side."* Tim: *"It should be rounded to the nearest **output**. If the customer's min is 700 lb for the finished coil off of FL2, then putting 400 lb on a spool does nothing for us but create scrap."* On which value to divide by, within an 800–900 lb range: Srikanth *"start with the 900 and work backwards"*; Tim *"we should be optimising to the max weight."* The method as worked on the call: **planned weight ÷ max coil weight, floor, multiply back** — 44,000 ÷ 900 = 48.8 → 48 → **43,200 lb**, no overage and inside tolerance. Also agreed: the input is the **planner's planned weight**, not the order weight, with the existing over-order warning; and where the order quantity is below the spool size, the order quantity governs.
+
+The residual is narrow and was asked but not answered in the terms it was asked.
+
+1. Is the maximum simply the divisor, or should the algorithm **search downward** — 899, 898 — for the value that minimises scrap or over-shipment?
+2. If it searches, what is it minimising: scrap weight, over-shipment against the order, or the coil count?
+
+**Recommendation:** **use the maximum as the divisor; do not search.** Both client voices said *optimise to the max*, the floor already guarantees no overage, and the largest coils mean the fewest cuts and the fewest units to the customer — which is what Srikanth gave as the reason. A downward search buys a smaller remainder at the cost of an algorithm nobody can predict the output of at the planning desk. Present the remainder to the planner instead and let them place it.
+
+**Why:** Shray's question was specifically about searching downward, and the answer he received was about starting high — the two are compatible sentences that do not settle it. ⚠ **And record the arithmetic, not the audio:** the correct figure is **43,200 lb**; *"42,200"* and *"42,000"* were both said over the top of it on the recording, and either would plan 1,200 lb light.
+
+Related: **`Q18`** (the customer min/max is the basis, and its order field is still owed), **`PSG-D32`** (the planned output multiple per line — must not resolve to two values), **`Q10`** (every weight here rests on it), **`OI-60`** (metallic yield per route).
+
+---
+
+### Section A16 — Rod ↔ Order Allocation
+
+*Raised 22 Aug 2026 from [`RodOrderAllocation.md`](../LatestDocument/RodOrderAllocation.md), the design for the rod ↔ order many-to-many. Nothing in the repository persisted that pairing; it existed only implicitly in `united_db..planning_routings`.*
+
+---
+
+**Q48** · `Critical` · Owner: Tim O. / Planning · `Open`
+**Can planning put two orders with different pass schedules on one rod?**
+
+A rod split between two orders is processed **once, continuously** — checked in at mount and left on the payoff across the order boundary, with the operator marking order 1 complete and starting order 2 on the same mount. That is the client's rule 7.
+
+**The schema makes one consequence unavoidable.** `FlatWireRun.PassScheduleId` is a scalar `NOT NULL`, and check-in is the moment the pass schedule is acknowledged and the PLC tags are pushed. No second check-in means **no second tag push** — so both orders necessarily run under the *first* order's pass schedule.
+
+1. Can two orders sharing a rod ever differ in gauge, width or edge type — or does planning already guarantee they cannot?
+2. If they can, is the correct behaviour to **refuse the mounted handoff** and require checkout plus re-check-in, so the tags are re-pushed?
+
+**Recommendation:** **treat it as a refusal to cross mounted, not a refusal of the order.** Validate at the acknowledgement that the incoming order's schedule matches the running one; if it does not, tell the operator the rod must be checked out and re-checked-in. That keeps rule 7 true wherever it *can* be true and fails loudly where it cannot, rather than silently running an order on the wrong tags.
+
+**Why:** this is the one question that decides whether rule 7 is universal or conditional, and the failure mode is silent — material produced to the wrong gauge under a schedule nobody re-acknowledged. `Q70` confirms the two orders share an **alloy**, which is suggestive but not the same guarantee: alloy is not gauge, width or edge.
+
+Related: **`Q70`** (a rod may carry more than one order), **`Q73`** (the consumption sequence), **`Q14`** (pass schedule selection at check-in), `FR-137`.
+
+---
+
+**Q49** · `High` · Owner: Srikanth / Tim O. · `Open`
+**Does multi-order-last hold when no weld is involved?**
+
+`Q73` (6 Aug 2026) settled the consumption sequence as **full coils → partials → multi-order coils last**, and scoped the rule to the welded case. Its item 6 records that **the transcript supports two readings** and that the branch was never settled: Srikanth scoped it to welding (*"if welding is not involved… they can go in any which sequence, right? Because it's harmless"*), while Yogender argued the multi-order case differs regardless, because in a continuation one order must complete before the second starts.
+
+**Asked as one sentence:** *when no weld is involved, may an operator run a rod that carries two orders before the other rods of the first order?*
+
+**Recommendation:** **keep multi-order-last in both cases.** Build the stricter rule now and relax it only on an explicit answer.
+
+**Why:** the orders are consumed **sequentially from one continuous rod** whether or not a weld joins it to the next — which is Yogender's point, and it is about the material rather than the joint. Relaxing the rule later is a validation change; discovering it was needed costs an order boundary that cannot be honoured. ⚠ **`Q73`'s own entry is currently the only record that this branch is open** — it has no `OI-##` mirror — which is why it is minted here.
+
+Related: **`Q73`** (the three-tier rule), **`Q24`** (out-of-sequence override), gap **`G22`**.
+
+---
+
+**Q50** · `High` · Owner: Tim O. / Shannon R. · `Open`
+**What overrun past the allocated weight is acceptable, and who is told?**
+
+When the weight allocated to the running order is reached the system notifies the operator, but **does not close the order** — the operator marks it complete. The interval between those two moments is a real state, and the material keeps running through it, so the actual consumed weight **may exceed the allocation**.
+
+1. Is there a bound past which the operator is warned a second time, or a supervisor is alerted?
+2. Is there a bound past which the system should act — and if so, what action, given that stopping mid-rod scraps continuous material?
+
+**Recommendation:** **warn and escalate; never stop the line.** Make the threshold configurable, warn the operator at the allocation, escalate to a supervisor at a second configurable bound, and record the overrun on the consumption record either way. Do not add an automatic stop.
+
+**Why:** the overrun is attributed to the *next* order, so it is a planning variance rather than lost metal — while a mid-rod stop is unrecoverable scrap. No bound exists anywhere in the repository today; **`OI-103`** is the precedent for an unbounded machine-facing value, and the same reasoning applies.
+
+Related: **`OI-103`** (no bound on a roll-gap change), **`FR-153`** (the ±2 % weight tolerance).
+
+---
+
+**Q51** · `Medium` · Owner: Tim O. / Planning · `Open`
+**On an early acknowledgement, where does the unconsumed allocation go?**
+
+The operator may mark an order complete **before** the allocated weight is reached — the acknowledgement is authoritative, so this is permitted rather than blocked. The pairing then closes under its allocation.
+
+Does the shortfall roll forward to the next order on that rod, return to stock as available weight, or leave the order **short** and route to the planner?
+
+**Recommendation:** **leave the order short and surface it; do not silently reallocate.** Close the pairing with the variance recorded, derive the order's status as `Short`, and let planning decide — the same shape as the existing back-to-stock path.
+
+**Why:** an early acknowledgement is a judgement about the *material* (a defect, a break, a customer change) and the system cannot know which. Rolling the remainder forward automatically would silently change what the next order is made from, and the genealogy would record it without anybody having decided it.
+
+Related: **`Q52`** (the same question when the rod runs out instead), **`Q73`** (a partial is a back-to-stock).
+
+---
+
+**Q52** · `High` · Owner: Tim O. / Planning · `Open`
+**A shared rod exhausts before the outgoing order is satisfied — top up, or stay short?**
+
+A rod carrying the boundary between two orders is the **last** rod of the outgoing order and the **first** of the incoming one. If it runs out before the outgoing order's allocated weight is reached, that order is short and the incoming order has lost its planned first rod.
+
+1. May an **unplanned rod** be substituted in to finish the outgoing order?
+2. If so, does it need a supervisor authorisation, and what does the run book against?
+
+**Recommendation:** **allow a substitution behind a supervisor authorisation**, recorded as such on the allocation, reusing the existing credential columns rather than adding a new group.
+
+**Why:** the alternative is an order left short for a reason nobody chose, on a line that has material available. Substitution is already a real case elsewhere — **`Q25`** asks the adjacent question for material scheduled on no line at all — so the mechanism should be one mechanism.
+
+Related: **`Q25`** (unscheduled material), **`Q24`** (staging overrides and the credential columns), **`Q51`**.
+
+---
+
+**Q53** · `High` · Owner: Tim O. / Shannon R. · `Open`
+**Is fulfilment consumed or produced pounds — and which does the certificate state?**
+
+An order's progress can be measured on the **input** side (pounds of rod consumed against it) or the **output** side (pounds of finished coil produced for it). The two differ by yield, and both are computable from the design's records.
+
+1. Which number is the order's **fulfilment** — the one that decides `Complete` against `Short`?
+2. Which number does the **welding-wire certificate** state per alpha — and is it calculated or weighed?
+
+**Recommendation:** **fulfilment is produced pounds; the certificate states produced pounds.** Consumption drives the operator notification only. Publish the two yield figures separately and name them apart — *yield on metal run* (`produced / consumed`) and *yield on metal issued* (`produced / allocated`) — because they differ by the unconsumed remainder and neither is "the" yield.
+
+**Why:** what ships is what the customer is owed, so fulfilment must be the output side. ⚠ **The second half is the sharper question:** a *planned* allocation is not a *measured* weight, and the certificate states a weight a customer relies on — which is where **`Q10`**'s dimensional basis stops being a modelling concern.
+
+Related: **`Q10`** (footage-to-weight basis), **`Q5`** (certificate traceability granularity), **`OI-60`** / **`Q11`** (metallic yield), **`FR-332`**.
+
+---
+
+**Q54** · `High` · Owner: Tim O. / Bob S. · `Open`
+**Does the order acknowledgement also close the FL1 spool?**
+
+The client confirmed on 20 Aug that a spool coming off FL1 **may carry two orders**. So an order boundary can fall in the middle of a spool being wound.
+
+1. When the operator marks an order complete mid-spool, does the **spool** also complete — or does it carry on and legitimately hold both orders?
+2. If it carries on, the spool crosses the boundary and FL2 must cut there. **Where is that boundary recorded?**
+
+**Recommendation:** **let the spool carry on.** Forcing a spool completion at every order boundary would produce short spools for a planning reason rather than a physical one, and the client has already confirmed the two-order spool is legitimate. Record the boundary position on the spool's order association so FL2 can act on it.
+
+**Why:** the finite carrier pool makes the cost concrete — 30 today and 45 planned, so a boundary-forced part-full spool consumes one of a fixed set. But the recommendation creates an obligation: the spool→order association carries **no positional column today**, so the boundary would be lost at that hop (gap **`G48`**).
+
+Related: **`Q43`** (orders per spool), **`Q42`** (the carrier registry), gap **`G48`**, **`D5`** (the carrier is captured at the FL1 transaction).
+
+---
+
+**Q55** · `Low` · Owner: Tim O. / Bob S. · `Open`
+**Should the spool carrier prefix differ from the material prefix?**
+
+The 45 physical carriers are stencilled **`SP-0001`…`SP-0045`** (four digits). The material wound on them is **`SP-#####`** (five digits, e.g. `SP-00021`). One digit apart, on the same prefix, for the two objects the carrier registry exists to keep apart.
+
+**Recommendation:** **use a distinct prefix — `SC-0001`…`SC-0045`** — if the stencils are not yet painted. If they are, keep `SP-` and rely on the field label.
+
+**Why:** nothing can mis-resolve in the database — the two never share a column — so this is **not** a correctness issue, which is why it is `Low`. The exposure is a person reading one for the other on a screen, a log line or a label, and a distinct prefix removes it outright at no cost. The question is really *have the stencils been made yet*, which decides whether this is free.
+
+Related: **`Q42`** (carrier format and where the registry is mastered), action **`A5`** (the 30 → 45 decision).
+
+---
+
+---
+
+**Q59** · `Medium` · Owner: IT / Srikanth · `Open` · `Scope = Other`
+**Can another caller of the shared alpha generator be issued an alpha an FL1 spool segment already holds?**
+
+FL1 segment alphas are minted through `CommonDB.dbo.GenerateCoilAlpha` and stored **only in `FlatWireDB`**, which is not one of the twelve objects that function sweeps. Flat wire compensates by passing every prior segment alpha for the rod in the generator's ignore list — but **other callers pass their own list, not ours.** The scrap-weight path was confirmed on 22 Aug to call the same function (`Q56`), and roughly fourteen stored procedures and three application surfaces call it besides.
+
+So a scrap event, or any other alpha mint, on a rod that FL1 is **actively segmenting** can be handed a string a spool segment already holds. Nothing in the sweep prevents it, because the sweep cannot see `FlatWireDB`.
+
+**Recommendation:** **accept and monitor.** The window is narrow — it needs another mint against a rod mid-segmentation — and the collision is detectable where it is used, because the segment alpha carries a unique constraint in `FlatWireDB`. The alternative is to make segment alphas visible to the sweep, which means **writing them into the shared schema**: a new shared-schema writer, which is the class of change `D-32` exists to prevent and which **`OI-115`** is separately trying to bound.
+
+**Why this is `Medium` and not higher:** it is a real hole in a guarantee this design otherwise makes cleanly, but the cost of closing it exceeds the cost of the failure, and the failure is loud rather than silent.
+
+Related: **`Q56`** (the scrap path shares the namespace — decided), **`Q57`** (the one-namespace decision this bounds), **`OI-115`**, **`OI-125`**, `D-32`.

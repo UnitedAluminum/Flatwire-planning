@@ -1,7 +1,7 @@
 -- ============================================================
 -- Flat Wire Mill — Sample Data: Lookup / Reference Tables
 -- Run order : after DDL 06 (FKs), BEFORE FlatWire_SampleData_Schedule
--- Tables    : Stand, Drawer, Edger, SpoolConfiguration, AlloyProperty
+-- Tables    : Stand, Drawer, Edger, Dancer, AlloyProperty, Spool
 -- ============================================================
 -- These fixed IDENTITY values are the FK targets the schedule
 -- sample data (FlatWire_SampleData_Schedule.sql) references:
@@ -119,20 +119,6 @@ ELSE
     PRINT 'Dancer already seeded — skipped';
 GO
 
--- ============================================================
--- SpoolConfiguration  (intermediate TKUP-1 spool + finish coil)
--- ============================================================
-IF NOT EXISTS (SELECT 1 FROM [dbo].[SpoolConfiguration])
-BEGIN
-    INSERT INTO [dbo].[SpoolConfiguration]
-        ([Name], [MinWeightLb], [MaxWeightLb], [MinCoreDiameterIn], [MaxCoreDiameterIn], [MinOuterDiameterIn], [MaxOuterDiameterIn], [IsActive]) VALUES
-        ('TKUP-1 Intermediate Spool', 500.00, 3500.00, 8.0000, 12.0000, 24.0000, 40.0000, 1),
-        ('Coreless Finish Coil',      100.00, 1100.00, 8.0000, 16.0000, 20.0000, 36.0000, 1);
-    PRINT 'Seeded: SpoolConfiguration (2 rows)';
-END
-ELSE
-    PRINT 'SpoolConfiguration already seeded — skipped';
-GO
 
 -- ============================================================
 -- AlloyProperty  (authoritative alloy list for PassSchedule.Alloy)
@@ -160,4 +146,77 @@ BEGIN
 END
 ELSE
     PRINT 'AlloyProperty already seeded — skipped';
+GO
+
+-- NO SEED: PayoffPosition -- its three rows are pinned (non-IDENTITY) and
+-- seeded by FlatWire_DDL_01_Lookup.sql itself, because FK targets must exist
+-- before the DDL that references them runs. Deliberate, not an omission.
+
+-- ============================================================
+-- Spool -- PROVISIONAL FIXTURES
+-- ============================================================
+-- The carriers are physical articles, one per stencilled number, and all one
+-- size -- which is why SpoolConfiguration was merged into this table on
+-- 23 Aug 2026 rather than kept as a one-row parent. The limits below are
+-- therefore IDENTICAL on every row, by design and not by accident: that is
+-- the denormalisation the merge accepted. See 01_Lookup for the trade.
+--
+-- THE REGISTRY IS 45 ARTICLES, SP-0001 .. SP-0045 -- the fixed spool list the
+-- client confirmed and RodOrderAllocation_DesignPlan.md records. This replaced
+-- four placeholder rows (S01..S04) on 23 Aug 2026.
+--
+-- !! FOUR DIGITS, NOT FIVE, AND THAT IS THE WHOLE POINT. OQ-K:
+--    "Carriers are SP-0001..SP-0045 (four digits); material spools are
+--     SP-##### (five, e.g. SP-00021). One digit apart on the same prefix, for
+--     the two objects Spool exists to keep apart ... Build to SP-0001..SP-0045
+--     meanwhile."
+--    Five digits would not merely LOOK similar -- SP-00031 would be BOTH a
+--    Spool.SpoolNo and a SpoolProcessing.Alpha, since the seeded material
+--    alphas (SP-00031/32/33) all fall inside 1..45. That re-creates the exact
+--    conflation the Spool / SpoolProcessing split (Q60) exists to prevent, and
+--    breaks SpoolQueue.md item 1 (closed 20 Aug 2026): "any one identifier on
+--    the label -- the spool number or any alpha -- resolves the spool."
+--    Verification query for this lives in [DEP] step 3 / the plan: zero rows
+--    from  SELECT SpoolNo FROM Spool WHERE SpoolNo IN (SELECT Alpha FROM SpoolProcessing).
+--
+-- !! SpoolNo's FORMAT IS STILL NOT RATIFIED -- Q42 is open (format, and whether
+--    the count is 30 or 45). These rows are provisional. The format is built
+--    from ONE expression below precisely so that resolving Q42 is a one-line
+--    edit and not 45 -- treat them the way this file treats the OQ-83
+--    threshold: present, usable, and explicitly marked TBD.
+-- ============================================================
+IF NOT EXISTS (SELECT 1 FROM [dbo].[Spool])
+BEGIN
+    -- FORMAT IN ONE PLACE (Q42 open): change this expression, not 45 rows.
+    -- 'SP-' + 4-digit zero-padded ordinal -> SP-0001 .. SP-0045.
+    INSERT INTO [dbo].[Spool]
+        ([SpoolNo],[SizeClass],
+         [MinWeightLb],[MaxWeightLb],[MinCoreDiameterIn],[MaxCoreDiameterIn],
+         [MinOuterDiameterIn],[MaxOuterDiameterIn],[IsActive],[Notes])
+    SELECT
+        'SP-' + RIGHT('0000' + CAST(n.[n] AS VARCHAR(4)), 4),
+        'TKUP-1 Intermediate Spool',
+        -- Limits carried over verbatim from the former SpoolConfiguration Id 1
+        -- ('TKUP-1 Intermediate Spool'): 500-3500 lb, core 8-12", OD 24-40".
+        -- IDENTICAL on every row, by design: the SpoolConfiguration merge (Q86)
+        -- denormalised a one-row size class onto 45 articles. See 01_Lookup.
+        500.00, 3500.00, 8.0000, 12.0000, 24.0000, 40.0000,
+        CASE WHEN n.[n] = 45 THEN 0 ELSE 1 END,
+        CASE n.[n]
+             WHEN  2 THEN 'PROVISIONAL fixture -- carries SP-00031 in the demo dataset'
+             WHEN  3 THEN 'PROVISIONAL fixture -- carries SP-00032 in the demo dataset'
+             WHEN 45 THEN 'PROVISIONAL fixture -- withdrawn, damaged flange; exercises IsActive = 0'
+             ELSE 'PROVISIONAL fixture -- SpoolNo format open (Q42)' END
+    -- Inline numbers list rather than a recursive CTE or spt_values: portable to
+    -- SQL Server 2019 (no GENERATE_SERIES before 2022), and the 45 is countable
+    -- on the page.
+    FROM (VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),
+                 (11),(12),(13),(14),(15),(16),(17),(18),(19),(20),
+                 (21),(22),(23),(24),(25),(26),(27),(28),(29),(30),
+                 (31),(32),(33),(34),(35),(36),(37),(38),(39),(40),
+                 (41),(42),(43),(44),(45)) AS n([n]);
+    PRINT 'Seeded: Spool (45 PROVISIONAL rows, 44 active + 1 withdrawn -- Q42 open)';
+END
+ELSE
+    PRINT 'Spool already seeded -- skipped';
 GO

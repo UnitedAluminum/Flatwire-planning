@@ -48,14 +48,14 @@ Phase 2 is **wholly MVP-2**, and the roadmap described it as **"Not deferrable �
 
 - Rod check-in **acknowledges a pass schedule and pushes PLC tags from it**.
 - `FW-061` (rod check-in) and `FW-082` (PLC tag push) are both **Critical MVP-1** and both declared a dependency on `FW-010`.
-- The three `PassSchedule*` tables are in [`../DBChanges/`](../DBChanges/), and four MVP-1 tables carry a `PassScheduleId`.
+- **⚠ The three `PassSchedule*` tables are MVP-1, not MVP-2 — `D-31`, 15 Aug 2026.** MVP-1 *builds* them and never *authors* a schedule: no create, edit, approve or list, no endpoint, and nothing in MVP-1 populates them in production (`OI-110`). They live with the MVP-1 chain in — they are in [`../DBChanges/`](../../MVP-1/ProjectPlan/Database/Schema/SQL/), and four MVP-1 tables carry a `PassScheduleId`.
 
 **Resolved 11 Aug 2026 by separating authoring from reading.** Pass schedule generation and management are owned by a **separate track** — not deferred inside MVP-1, and not returning. MVP-1 **never creates, edits or approves** a schedule; it **reads** one at check-in to build the PLC push payload, and persists a snapshot of what it pushed.
 
 Three consequences, each recorded where it applies:
 
 1. **`phase-04` treats the schedule as an external interface**, not a Phase-2 deliverable. It carries a read contract: the six value groups from `[PLC §7.2]`, who owns them, what happens when the source is unavailable (check-in cannot proceed — no schedule, no push), and the snapshot rule.
-2. **`PassScheduleId` is a documented external reference** on `FlatWireRun`, `RodCheckin`, `SpoolCheckin` and `CoilOutput` — unenforced *by design*, the same class as `PlanId`, `CoilOrderPlanId` and `SkidId`. It is not a missing FK. `FlatWire_DDL_RunAll.sql` produces a complete MVP-1 database, and **MVP-2's `06b` is irrelevant to an MVP-1 build**.
+2. **`PassScheduleId` is a documented external reference** on `FlatWireRun`, `RodCheckin`, `SpoolCheckin` and `CoilOutput` — unenforced *by design*, the same class as `PlanId`, `CoilOrderPlanId` and `SkidId`. It is not a missing FK. `FlatWire_DDL_RunAll.sql` produces a complete MVP-1 database, and **there is no MVP-2 FK script at all** — the file once called `06b` was folded into MVP-1's `06` on 23 Aug 2026, and MVP-2 owns exactly one object, `sp_ShiftSummary`.
 3. **`PLCTagSpecification.md:42` already read this way** — it lists *"the pass schedule's contents and how it is authored or generated"* under **Not in scope**. The client-facing PLC spec was written on this assumption before the split made it explicit.
 
 **One item remains open** and is not dissolved by any of the above: `PassScheduleManagement.md` §3.3–§3.4 holds the **only Operations Manager role definition**, and MVP-1 enforces that role — `FR-212` restricts reverting a roll-gap override to it on **DB11 Roll Adjust**. See [`../README.md`](../README.md).

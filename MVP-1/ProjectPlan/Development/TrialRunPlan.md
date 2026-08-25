@@ -1,9 +1,9 @@
-# Flat Wire Mill — Six-Screen Trial Run Plan (30 Sep 2026)
+# Flat Wire Mill — Six-Screen Trial Run Plan (sign-off ~16 Nov 2026)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — **blocker 4 (`G6`) closed**: all six roles exist as JWT claims; its residual re-dated to the T1 QA0 walkthrough. Revision history in [`CHANGELOG.md`](../../../CHANGELOG.md)
+**Last Updated:** August 25, 2026 — **re-baselined at three resources × 6.5 h/day from 31 August: feature-complete Tue 3 Nov, sign-off ~Mon 16 Nov 2026.** §2 only — **no effort figure moved**, and 869 / 459 / 330 h and §4's allocation are untouched, which is why §3, §4 and §6 needed no edit. Two things invert: **the over-commitment is gone** (T1 was 102 % and T3 114 %; all three blocks now sit under capacity with 28 h of margin), and **no staffing option reaches 30 Sep** — even five resources land in early October. The 6.5 h is an **availability** figure, not the hands-on-keyboard reading in `[CE §4]`'s sensitivity table. ⚠ [`StaffedSprintPlans.md`](StaffedSprintPlans.md) and `[CE §4]` remain on the 8 h basis and now disagree with this document by design. *(previously August 22, 2026 — **§8’s count assertion is re-derived and now runnable** (32 · 50 · 57 · 2 · 1), with the `QUOTED_IDENTIFIER`/`Msg 1934` and false-`PRINT`-pass traps written down beside it *(previously August 18, 2026 — **`FW-219` enters the trial: the FL2/FL3 run-end write-back into the shared schema, 40 h AI-assisted / 56 h hand-coded, additive.** §5.3 is the reasoning; the short version is that `phase-05` routes the FL2 screen's *Complete Run* into `POST /coil/complete`, which wrote **only** `FlatWireDB`, so a completed trial coil was invisible to packing, shipping, cost and yield. **§4's "Phases 9–14 are wholly outside the trial" gains its first exception**, on the same reasoning §5.1 used for `FW-202`. New blocker **6** (`Q34`–`Q36`, which block a shared environment but not the build). **The published 832 / 462 / 409 h figures are unchanged and now understate by 40 h** — as with `FW-202`, the additive hours are stated here and not folded in. *(Earlier same day: **`D-32`: there is no shared-schema migration.** `FW-001` is **cancelled rather than deferred** — its −36 h stops being a debt owed to production — and `FW-002` (3 h) goes with it. ⚠ **The published 832 / 462 / 409 h figures are deliberately held**, so read them as 3 h conservative *(previously August 15, 2026 — **blocker 4 (`G6`) closed**: all six roles exist as JWT claims; its residual re-dated to the T1 QA0 walkthrough. Revision history in [`CHANGELOG.md`](../../../CHANGELOG.md))*)*))*
 **Document Type:** Scoped delivery plan for the client-requested trial run
-**Status:** Published — **three developers reach ~6 Oct on development alone; UAT still needs its own window.** §2.2 states what each staffing option lands
+**Status:** Published — **three resources at 6.5 h/day reach 3 Nov on development alone; UAT still needs its own window, to ~16 Nov.** §2.2 prices what more resources would buy
 **Owner:** Delivery lead / programme management
 **Audience:** Development leads, delivery lead, programme management, client stakeholders
 **Shortcode:** `[TRP]`
@@ -26,7 +26,7 @@
 > are separate streams and must not be booked against the capacity in §2.
 >
 > **⚠ The headline is not about the screens.** The six screens are **88 h** of Angular work. **Phase 1 — the
-> platform, not started, whose hard gate was 14 Aug and was not met — is 460 h, 56 % of the trial.** Cutting
+> platform, not started, whose hard gate was 14 Aug and was not met — is 459 h, 55 % of the trial.** Cutting
 > screens is the weakest lever available to this plan; shortening Phase 1 is the strongest. Both client removals
 > of 14 Aug together recovered **107 h**; one additional developer on Phase 1 for two weeks recovers more.
 
@@ -55,15 +55,16 @@ different places and each supplies its own material context.
 | Item | h | Why it is not optional |
 |---|---|---|
 | **Pause / Resume** dialogs | 20 | Both active-run screens carry a Pause button, and DB6 is reached through the pause dialog's *Manual SPC measurement* route. Without it two requested screens ship with a dead control. FR-260–266, TC-315…329 |
-| **FL1 run completion → `Spool`** (`FW-202`) | **67** | ⚠ **Inside screen #2's approved mockup, and the only thing that creates what DB5 checks in.** See §5.1 |
+| **FL1 run completion → `SpoolProcessing`** (`FW-202`) | **67** | ⚠ **Inside screen #2's approved mockup, and the only thing that creates what DB5 checks in.** See §5.1 |
 | **Minimal landing route** (`FW-204`) | 5 | Replaces DB1 as the entry point and the way back into a running line. **Retires when `FW-060` ships.** See §1.5 |
+| **FL2/FL3 run-end write-back** (`FW-219`) | **40** | ⚠ **The trial's FL2 run has nowhere to land.** `phase-05` routes *Complete Run* to `POST /coil/complete`, and until 18 Aug 2026 that endpoint wrote **only** `FlatWireDB` — so a completed trial coil is invisible to packing, shipping, cost and yield. Client-directed. See §5.3 | 
 | **Simulator console `DB-S1`** (`FW-214`) | 15 | ⚠ **Not a seventh screen and not a dashboard** — no `DB##` number, absent from the fifteen-dashboard inventory, the navigation map and the topbar tiles (`[SIM §9.1]`). It is the **engineer's half of the acceptance run**: UAT executes §8 in front of the client and step 7 times a **3 s stop against a 5 s dwell**, which is a button, not a saved HTTP request and a stopwatch. **Ships with unbacked controls greyed** — see §1.4 |
 
 ### 1.3 Total
 
 | Block | AI-assisted h | Share |
 |---|---|---|
-| **Phase 1 platform** (1A Angular · 1B Backend · 1C Database) | **462** | **56 %** |
+| **Phase 1 platform** (1A Angular · 1B Backend · 1C Database) | **459** | **55 %** |
 | Navigation, reconnect and the run index *(was Phase 3)* | 15 | 2 % |
 | Phase 4 — rod check-in *(no DB2A staging)* | 74 | 9 % |
 | Phase 5 — DB3 FL1 shell **+ the simulator console** | 89 | 11 % |
@@ -71,14 +72,15 @@ different places and each supplies its own material context.
 | Phase 7 — WIP rejection | 31 | 4 % |
 | **FL1 spool completion — Part B** (`FW-202`) | **67** | **8 %** |
 | Phase 8 — DB5 + DB3 FL2 | 38 | 5 % |
-| | **832 h** | |
+| **FL2/FL3 run-end write-back** (`FW-219`) | **40** | **5 %** |
+| | **869 h** | |
 
 | Stream | h | Share |
 |---|---|---|
-| **FE** Angular | 329 | 40 % |
-| **BE** .NET | 250 | 30 % |
-| **RT** real-time / PLC | 141 | 17 % |
-| **DB** SQL Server | 112 | 13 % |
+| **FE** Angular | 329 | 38 % |
+| **BE** .NET | 264 | 30 % |
+| **RT** real-time / PLC | 141 | 16 % |
+| **DB** SQL Server | 135 | 16 % |
 
 #### What the four streams are
 
@@ -89,7 +91,7 @@ The **delivery streams** of `[CE §1]`, which defines six — the two not costed
 |---|---|---|
 | **FE** | `ual-angular` → new library `flat-wire-shopfloor` (prefix `fw`) | Screens, dialogs, shared controls, SCSS against the existing token set |
 | **BE** | `ual-api` → new `FlatWire` microservice | Controllers, MediatR commands/queries, services, validation, auth |
-| **DB** | SQL Server → new `FlatWireDB` + the shared-schema `FW-001` renames | DDL, seed data, indexes, EF/Dapper mapping, repositories |
+| **DB** | SQL Server → new `FlatWireDB` ~~+ the shared-schema `FW-001` renames~~ *(cancelled 18 Aug 2026, `D-32`)* | DDL, seed data, indexes, EF/Dapper mapping, repositories |
 | **RT** | `FlatWireHub` · OPC ingest · `PLCTagService` | **Real-time and PLC integration** — see below |
 
 **`RT` is the one worth spelling out, because this plan leans on it and it is not simply "the SignalR bit".** It is
@@ -129,7 +131,7 @@ convention, and verifiable by hand. Derived from the `[SSP §5]` story hours all
 |---|---|---|---|---|---|---|
 | **1A** Angular foundation | **139** | — | — | 27 | **166** | T1 |
 | **1B** Backend foundation | — | **156** | — | **75** | **231** | T1 · T2 |
-| **1C** Database foundation | — | — | **65** | — | **65** | T1 |
+| **1C** Database foundation | — | — | **62** | — | **62** | T1 |
 | Navigation, reconnect, run index | 12 | — | 3 | — | **15** | T2 |
 | **4** Rod check-in | 24 | 24 | 15 | 11 | **74** | T2 |
 | **5** DB3 FL1 shell **+ console** | **76** | 8 | 5 | — | **89** | T2 |
@@ -137,7 +139,8 @@ convention, and verifiable by hand. Derived from the `[SSP §5]` story hours all
 | **7** WIP rejection | 13 | 8 | 5 | 5 | **31** | T3 |
 | **`FW-202`** FL1 spool completion | 20 | **29** | 5 | 13 | **67** | T3 |
 | **8** DB5 + DB3 FL2 | 15 | 12 | 8 | 3 | **38** | T3 |
-| | **329** | **250** | **112** | **141** | **832** | |
+| **`FW-219`** run-end write-back | — | **14** | **26** | — | **40** | T3 |
+| | **329** | **264** | **135** | **141** | **869** | |
 
 **Four things this grid shows that the phase totals hide:**
 
@@ -160,10 +163,10 @@ convention, and verifiable by hand. Derived from the `[SSP §5]` story hours all
 > because the deliverable is an Angular component; splitting it 9/9 would move Phase 5 to FE 52 · RT 9 and the
 > trial totals to FE 305 · RT 136. **Pick one reading and keep it** — the tables above use FE throughout.
 
-### 1.4 Phase 1 in detail — 462 h, 56 % of the trial
+### 1.4 Phase 1 in detail — 459 h, 55 % of the trial
 
 Phase 1 is the largest block in this plan by a wide margin, it has not started, and its hard gate was 14 Aug and
-was not met. It is broken out here at deliverable level because *"the platform is 462 h"* is not actionable and
+was not met. It is broken out here at deliverable level because *"the platform is 459 h"* is not actionable and
 *"the shared composite controls are 75 h of it"* is.
 
 **Three bases, and they must not be mixed.** Hand-coded is `[CE §3]`'s and is the **base of record**; AI-assisted
@@ -174,8 +177,10 @@ reductions**.
 |---|---|---|---|---|---|---|
 | **1A** Angular foundation | **370** | 166 | **166** | — | 166 | — |
 | **1B** Backend foundation | **519** | 268 | **231** | −37 | 178 | **53** |
-| **1C** Database foundation | **221** | 101 | **65** | −36 | 65 | — |
-| | **1,110 h** | **535 h** | **462 h** | **−73 h** | **409** | **53** |
+| **1C** Database foundation | **138** | 62 | **62** | — | 62 | — |
+| | **1,027 h** | **496 h** | **459 h** | **−37 h** | **406** | **53** |
+
+> ⚠ **Every 1C cell moved on 18 Aug 2026 and the reduction column emptied — `D-32`.** `FW-001` (36 AI-assisted) and `FW-002` (3) are **cancelled**, not deferred, so they leave the *AI-assisted full* column as well as trial scope: **101 → 62**, and 1C's **−36 trial reduction becomes zero** because there is nothing left to defer. Hand-coded **221 → 138** is re-read off `[TB]`'s Phase 1C reconciliation, as the note below requires. **1B's −37 is now the whole of Phase 1's reduction.**
 
 > **The hand-coded column is `[TB]`'s, not `[CE §3]`'s original**, and it moves whenever a story is repriced.
 > **Re-read it off `[TB]`'s `Phase 1X reconciliation` lines rather than transcribing it** — that is a build
@@ -186,7 +191,7 @@ reductions**.
 simulator** `FW-203` (6) and its **control surface** `FW-218` (11) — they are last because they are the only 1B
 work with nothing downstream waiting on it inside T1. **1A and 1C must
 finish inside T1** or the whole T2 chain slips: 1A gates every screen and 1C gates every write. The T1 column sums
-to **409 h**, which is §2.1's T1 figure — the two reconcile by construction, not by coincidence.
+to **406 h**, which is §2.1's T1 figure — the two reconcile by construction, not by coincidence.
 
 #### Phase 1 all-in, on the trial's own basis
 
@@ -198,17 +203,17 @@ with `[CE §2]`'s uplifts applied:
 |---|---|---|---|---|
 | **1A** | 166 | 33 | 30 | **229** |
 | **1B** | 231 | 46 | 42 | **319** |
-| **1C** | 65 | 13 | 12 | **90** |
-| **Phase 1** | **462** | **92** | **84** | **638** |
+| **1C** | 62 | 12 | 11 | **85** |
+| **Phase 1** | **459** | **91** | **83** | **633** |
 
 *Rounding is **half-up per cell** and the total row is **the sum of the printed cells**, both per `[CE §3]`. Deriving
-the total from 462 directly would give QA 92 / cont. 83 — a 637, one hour off. The cell-sum convention is kept anyway
+the total from 459 directly would give QA 92 / cont. 83 — a 634, one hour off. The cell-sum convention is kept anyway
 so that every row and column verifies by hand.*
 
-**Quote 462 h against a developer roster and 638 h against a budget — never the other way round.** The 638 h is
-offered because a foundation phase is normally read for budgeting, and because comparing 462 against the
-hand-coded 1,110 overstates the saving: the like-for-like comparison is **638 against 1,110**, a **43 % reduction**,
-not the 59 % the dev-only figures imply. `[DE §3]` makes the same caution about its own contingency line.
+**Quote 459 h against a developer roster and 633 h against a budget — never the other way round.** The 633 h is
+offered because a foundation phase is normally read for budgeting, and because comparing 459 against the
+hand-coded 1,027 overstates the saving: the like-for-like comparison is **633 against 1,027**, a **38 % reduction**,
+not the 55 % the dev-only figures imply. ⚠ **Both percentages fell on 18 Aug 2026 (from 43 % and 59 %) and that is not a worse result** — `D-32` cancelled `FW-001`/`FW-002` on **both** bases at once, so the hand-coded denominator shrank by more than the trial numerator did. The saving is smaller because the work is gone, not because the trial grew. `[DE §3]` makes the same caution about its own contingency line.
 
 #### 1A Angular foundation — 166 h (FE 139 · RT 27)
 
@@ -338,14 +343,14 @@ spine every later phase consumes (`[SP §6.3]`), and none of it compresses well 
 
 | Deliverable | Hand-coded | Story | Full | **Trial h** |
 |---|---|---|---|---|
-| ⚠ **Shared-schema renames + new columns** *(16 rename + **40 impact audit**)* | **56** | **`FW-001`** | 36 | **0** ⚠ |
-| `INFLAT` coil status | 4 | `FW-002` | 3 | 3 |
+| ⚠ **Shared-schema renames + new columns** — **CANCELLED, `D-32`** *(was 16 rename + 40 impact audit)* | 0 | **`FW-001`** | 0 | 0 |
+| **`INFLAT` coil status** — **CANCELLED, `D-32`** *(was 4 h)* | 0 | `FW-002` | 0 | 0 |
 | `FlatWireDB` creation, ordered DDL runner, indexes, grants | 12 | `FW-152` | 8 | 8 |
 | Lookup group tables + seed | 16 | `FW-005` | 10 | 10 |
 | `AlloyProperty` lookup + seed | 8 | `FW-004` | 5 | 5 |
 | Materials group tables | 12 | `FW-006` | 8 | 8 |
 | Runs and Quality/Output group tables | 52 | `FW-007` | 31 | 31 |
-| | **160** base → QA 32 → cont. 29 = **221** | | **101** | **65** |
+| | **100** base → QA 20 → cont. 18 = **138** | | **62** | **62** |
 
 > **`FW-007`'s 52 h includes** the `RodStaging.Station` column and the `UX_RodStaging_Bay` re-key from
 > `(LineId, PayoffPosition)` to `(Station, PayoffPosition)`, for **`G21`**. **The trial column is deliberately
@@ -353,11 +358,15 @@ spine every later phase consumes (`[SP §6.3]`), and none of it compresses well 
 > +4 h is real on the hand-coded basis and absent from trial scope. The table still deploys (§8) — only the
 > re-key does not.
 
-⚠ **`FW-001` is deferred and it is the largest single reduction in the trial (−36 h).** The `Coil/Bundle…`
+⚠ **`FW-001` is now CANCELLED, not deferred — `D-32`, 18 Aug 2026.** Its −36 h is still the largest single reduction in the trial, but it is no longer a debt: there will not be any shared-schema migration, in the trial or in production. **`FW-002` goes with it (−3 h from T1's DB line).**
+
+> ⚠ **The −3 h IS folded through, and it had to be.** §1.4's hand-coded column is **parsed from `[TB]`'s `Phase 1X reconciliation` lines by the workbook build**, so leaving 1C at 221 h against a backlog that now derives 138 h fails the build outright — that guard exists precisely to stop a transcribed baseline going stale. Folding one cell forces the rest, because §1.3, §2.1 and §2.2 reconcile *by construction*. **Everything moved together: 832 → 829 h · Phase 1 462 → 459 h · T1 409 → 406 h · DB 112 → 109 h · Phase 1 hand-coded 1,110 → 1,027 h · Phase 1 all-in 638 → 633 h.** Two second-order figures moved with them and are called out where they sit: the like-for-like reduction **43 % → 38 %**, and the 5→4 developer slack, which was **stale at 42 h** before this pass touched it.
+
+The original deferral reasoning, retained: The `Coil/Bundle…`
 slash-dual renames land on the **shared** `coils`/scheduling schema that the legacy `ual-dot-net` tier and existing
 reports read — `[CE §2]` prices the rename at 16 h and the **impact audit across `united_db` and the legacy tier at
 a separate 40 h**, and `phase-01c` flags *"high blast radius; front-load the impact audit."* **A trial does not need
-it; production does.** `FW-002` (`INFLAT`) stays, because check-in writes it.
+it; production does.** ~~`FW-002` (`INFLAT`) stays, because check-in writes it.~~ — **superseded: `FW-002` is cancelled too.** Check-in still writes `INFLAT`, but to **`FlatWireDB`'s `Rod.Status`**, whose CHECK constraint already carries the value; nothing is needed in the shared schema.
 
 > **⚠ `[CE §8]` records that 1C is understated, and `D-31` widened the gap.** It was costed against **22 tables**;
 > the build is now **28** (`D-31`, 15 Aug 2026, moved the three `PassSchedule*` tables into MVP-1 — §8's live
@@ -411,7 +420,7 @@ dialog, 13 h FE), `FW-166` (`POST /weldevent` + `WeldService`, 8 h BE) and the `
 (3 h DB, out of `FW-171`).
 
 > ⚠ **Those two DB reductions are write paths, not tables.** `FW-007`
-> in **1C** builds the whole Runs/Quality group, and §8 requires `FlatWire_DDL_RunAll.sql` to deploy **all 28
+> in **1C** builds the whole Runs/Quality group, and §8 requires `FlatWire_DDL_RunAll.sql` to deploy **all 32
 > tables, `RodStaging` and `WeldEvent` included** — *"do not remove them from the schema to match the trial's
 > scope."* Reading the 7 h as *"the tables leave"* would double-count against 1C, which is unreduced. **The
 > tables are created and go unwritten;** only the code that writes them is out.
@@ -443,82 +452,107 @@ dialog, 13 h FE), `FW-166` (`POST /weldevent` + `WeldService`, 8 h BE) and the `
 
 ## 2. The capacity position
 
-Working days **17 Aug → 30 Sep 2026: 32** — Labor Day (Mon 7 Sep) deducted and the final week is three days,
-counted on `[CE §4]`'s grid.
+Working days **31 Aug → 3 Nov 2026: 46** — Labor Day (Mon 7 Sep) deducted, counted on `[CE §4]`'s grid.
+
+> **⚠ Re-baselined 25 Aug 2026: three resources at 6.5 h/day, starting 31 August.** Both halves of that
+> changed at once, and the second is the one that moves the date. The **17–28 Aug** period went to requirements
+> work rather than build — the 24 Aug client call put it plainly, *"the full-fledged development will start from
+> the Monday"* — so the clock starts **Mon 31 Aug**. And the team's committed availability is **6.5 h/day per
+> resource**, not 8. See [`ClientCall_2026-08-24_SyncPlan.md`](../../../BaseDocuments/ClientCall_2026-08-24_SyncPlan.md) §3.4.
+>
+> **The 6.5 h is an availability figure, not a productivity figure**, and `[CE §4]` requires that reading be
+> stated: each resource commits 6.5 h of the working day to flat wire and the balance goes elsewhere. **The
+> estimates remain calendar-hour estimates and the 869 h does not move** — only the hours available per day do.
+> This is *not* the hands-on-keyboard reading in `[CE §4]`'s sensitivity table; that one would additionally
+> inflate the effort requirement, and nothing here claims it. Mixing the two, as that section warns, "either
+> double-counts overhead or hides it."
 
 | Measure | Value |
 |---|---|
-| Trial development effort | **832 h** |
-| 3 developers × 32 days × 8 h | **768 h** |
-| Utilisation, development alone | **108 %** — before one hour of QA |
-| Development days available if UAT gets 21–30 Sep | **24** = **576 h** |
-| **Shortfall against that** | **256 h** |
+| Trial development effort | **869 h** — unchanged |
+| 3 resources × 6.5 h | **19.5 h/day** |
+| Working days needed | **44.6** — 46 once each block rounds to a whole day |
+| Development window | **Mon 31 Aug → Tue 3 Nov 2026** = **897 h** |
+| Utilisation, development alone | **97 %** — before one hour of QA |
+| **Margin** | **28 h** |
 
 **UAT cannot share a sprint with feature work.** `[SP §1.4]` states it independently of team size, and
 `phase-14`'s own scope call is blunter: *"pull this into a dedicated post-feature-complete window regardless of
-team size."* So the 576 h figure, not the 768 h one, is the one that governs.
+team size."* So UAT gets its own block after 3 Nov (T4 below) rather than overlapping T3.
 
-> **What the two removals changed, and what they did not.** 107 h came out, and the position improved:
-> three developers now finish development around **2 Oct** rather than 7–9 Oct. **One additional developer no
-> longer closes the trial on paper** — 4 × 24 days = 768 h against **806**, which is **38 h short**, not the ten
-> hours this paragraph claimed at 778, and **47 h at 815**. **What did not change is the shape:** Phase 1 is still 56 % of the work,
-> UAT still cannot overlap feature work, and neither removal touched the platform.
+> **What the re-baseline changed, and what it did not.** **The over-commitment is gone and the date has moved
+> instead.** On the 8 h basis T1 planned 406 h against 400 h of capacity and T3 ran at 114 %, and §2.1 called T1
+> *"the sprint that cannot slip"*; on 6.5 h days across a longer calendar **every block now sits under
+> capacity**. That is the more honest failure mode and the easier one to manage — the plan is no longer
+> pretending the work fits a window it does not fit. **What did not change is the shape:** Phase 1 is still 56 %
+> of the work, the allocation in §4 is untouched, UAT still cannot overlap feature work, and **no effort figure
+> moved** — 869 h, 459 h of platform and 330 h deferred all stand exactly as before.
 
-### 2.1 Recommended shape — five for the platform, four for the screens
+### 2.1 The shape — three resources, three blocks of work
 
-Phase 1's three tracks genuinely parallelise, so it is a **headcount problem, not a sequencing one** — which makes
-it the one place extra people convert directly into calendar. Everything after it is a sequential chain where they
-do not.
+**T1, T2 and T3 are blocks of work, not two-week sprints.** They carry exactly the content §4 allocates to
+them; what the re-baseline changes is how long each one takes at 19.5 h/day. Nothing has been re-cut, which is
+why §3, §4 and §6 are untouched by this revision.
 
 | Sprint | Dates | Wk days | Team | Capacity | Planned | Util | Content |
 |---|---|---|---|---|---|---|---|
-| **T1** | Mon 17 – Fri 28 Aug | 10 | **5** | 400 h | **409 h** | **102 %** ⚠ | Phase 1A ∥ 1B ∥ 1C |
-| **T2** | Mon 31 Aug – Fri 11 Sep | 9 | **4** | 288 h | **280 h** | 97 % | Phase 1 close-out · navigation · 4 · 5 · 6 (start) |
-| **T3** | Mon 14 – Fri 18 Sep | 5 | **4** | 160 h | **143 h** | 89 % | 6 close · 7 · spool completion · 8 |
-| | **— feature complete Fri 18 Sep —** | **24** | | **848 h** | **832 h** | **98 %** | |
-| **T4** | Mon 21 – Wed 30 Sep | 8 | 3 + QA + BA | 192 h | **unsized** ⚠ | — | Regression · **de-stub pass** · defects · **UAT + sign-off** |
+| **T1** | Mon 31 Aug – Tue 29 Sep | 21 | **3** | 410 h | **406 h** | 99 % | Phase 1A ∥ 1B ∥ 1C |
+| **T2** | Wed 30 Sep – Tue 20 Oct | 15 | **3** | 292 h | **280 h** | 96 % | Phase 1 close-out · navigation · 4 · 5 · 6 (start) |
+| **T3** | Wed 21 Oct – Tue 3 Nov | 10 | **3** | 195 h | **183 h** | 94 % | 6 close · 7 · spool completion · 8 · **run-end write-back** |
+| | **— feature complete Tue 3 Nov —** | **46** | | **897 h** | **869 h** | **97 %** | |
+| **T4** | Wed 4 Nov – Mon 16 Nov | 9 | 3 + QA + BA | 176 h | **unsized** ⚠ | — | Regression · **de-stub pass** · defects · **UAT + sign-off** |
 
-**Five-person shape for T1: 2 FE · 1 BE · 1 BE/DB · 1 RT**, dropping to 2 FE · 1 BE · 1 RT/DB for T2–T3. FE is
-40 % of the work and is the binding constraint, as `[SP §3]` finds for the full plan.
+**Three-resource split: 1 FE · 1 BE/DB · 1 RT/FE**, per the 24 Aug call — two on the front end and Yogender on
+the back end once the team is complete. **FE is 40 % of the work and is the binding constraint**, as `[SP §3]`
+finds for the full plan, so the FE share is what to watch inside T1 rather than the block total.
 
-> ⚠ **T1 no longer fits, and it is the sprint that cannot slip.** The platform sprint plans **409 h
-> against 400 h of capacity — 9 h over**. T2, carrying the simulator control surface and the console, runs at
-> **97 %**. **1A and 1C must
-> finish inside T1** or the whole T2 chain moves (§1.4), so this is not absorbable by letting T1 run long.
-> Three ways out, in preference order: **(a)** start T1 one day early — 17 Aug is a Monday and the gate has
-> already slipped; **(b)** move `FW-149` (`IFlatWireClient`, 11 h) into T2's 1B close-out block, which is where
-> its consumers are and which has 34 h spare; **(c)** a sixth pair of hands for T1 only. **Do not solve it by
-> trimming `FW-133`** — all six screens depend on all six controls.
+> **T1 fits now, and that is the whole of the good news.** On the 8 h basis it planned **406 h against 400 h**
+> and §1.4's dependency chain made it the one block that could not be allowed to run long; at 19.5 h/day over
+> 21 working days it has **410 h of capacity for the same 406 h of work**. The three previously-recommended
+> ways out — starting a day early, moving `FW-149` into T2, a sixth pair of hands — are **no longer needed and
+> have been withdrawn**. **1A and 1C must still finish inside T1** or the whole T2 chain moves; that constraint
+> is structural and survives the re-baseline.
 
-**Margin: 16 h in total — none in T1, and it is thin everywhere.** ⚠ **T2 no longer covers `G2`'s reserve** even at its 24 h
-lower bound (§2.3), and **T1's 9 h overrun has first claim on what is left**. **There is no version of this
-plan where either reserve lands at its upper bound and the date holds** — that is a decision for programme
-management, not something the schedule absorbs.
+**Margin: 28 h in total, spread across all three blocks** — 4 h in T1, 12 h in T2, 12 h in T3. That is better
+than the 16 h this plan carried at 8 h/day *and* better distributed, since none of it used to sit in T1. It is
+still **less than either reserve at its upper bound** (§2.3), so the reserves remain a programme-management
+decision rather than something the schedule absorbs.
 
 ### 2.2 What each staffing option lands
 
 | Option | Feature complete | Sign-off | Note |
 |---|---|---|---|
-| **5 → 4 developers** (§2.1) | **Fri 18 Sep** | **Wed 30 Sep** | Meets the client's date with 42 h of slack, **none of it in T1** — see §2.1's three ways out. Requires two additional people for T1 and one for T2–T3 |
-| **4 developers throughout** | ~24–26 Sep | ~6–8 Oct | **64 h short of closing on paper** (768 h against 832). Viable only if both reserves are dropped *and* T1 starts early — it no longer closes on a single lever |
-| **3 developers** *(current baseline)* | **~6 Oct** | **~mid Oct** | 832 h ÷ 24 h/day = 34.7 working days from 17 Aug. Development overruns 30 Sep; **UAT then has nowhere to go.** Lands inside the planned Q4 2026 production window |
+| **3 resources** *(the baseline — §2.1)* | **Tue 3 Nov** | **~Mon 16 Nov** | 869 h ÷ 19.5 h/day = **44.6 working days** from 31 Aug, 46 once each block rounds. This is the staffed plan, not an option: it is what the team actually is |
+| **4 resources** | ~Fri 16 Oct | ~late Oct | 26.0 h/day → **34 working days**. Buys back roughly **two and a half weeks**. The fourth pair of hands is worth most in T1, where the three tracks genuinely parallelise |
+| **5 resources** | ~Wed 7 Oct | ~mid-Oct | 32.5 h/day → **27 working days**. Beyond T1 the chain is sequential, so the fifth resource returns much less than the fourth — see §3 |
 
-**Recommendation: one additional developer, and a second for T1 only — and T1 still needs one of §2.1's three
-ways out.** The two removals brought 30 Sep within reach of a small increment; the 15 Aug re-baseline consumed
-part of that reach, and the four-developer option no longer closes. At three developers the honest answer is a
-**mid-October sign-off**, and that remains a legitimate outcome to publish.
+**No staffing option reaches 30 September, and the three-resource row is not an option — it is the plan.**
+Even five resources from 31 Aug land feature-complete in the first week of October, with UAT after that. The
+honest published answer at three resources is **feature-complete 3 November and sign-off around 16 November**,
+inside the planned Q4 2026 production window. The 4- and 5-resource rows are priced here so that the cost of
+the date is visible — not because either is staffed.
 
-### 2.3 Reserves, excluded from the 832 h
+> **`FW-219`'s 40 h no longer threatens a date — superseded 25 Aug 2026.** Until this re-baseline this callout
+> recorded that the client-directed run-end write-back (§5.3) had consumed the five-to-four option's slack and
+> left it 21 h short, with T3 at **114 %** of capacity. **On 6.5 h days T3 sits at 94 %** and the 40 h is
+> absorbed. The scope itself is unchanged and remains non-optional.
+>
+> **One part of it survives and is not about capacity.** `FW-219` cannot start before `FW-066`, and `FW-202`
+> must land before Phase 8 begins — so **T3 carries two ordered dependencies**, and a longer block does not
+> loosen an ordering constraint. Sequence T3 from §3 rather than from its utilisation figure.
+
+### 2.3 Reserves, excluded from the 869 h
 
 | Reserve | h | Basis |
 |---|---|---|
 | `G2` / `OI-39` — cross-DB check-in recovery | **24–64** | `[CE §2]`. Phase 4's estimate is provisional until it closes |
 | `OQ-10` / `OI-45` — footage→weight dimensional basis | **16–32** | `[CE §2]` prices it on Phase 9, but `TC-167`/`TC-168` put the same calculation in the spool-completion path this trial builds. See §5.1 |
 
-Neither is a coding problem, so neither compresses under AI assistance. **T2's 25 h and T3's 17 h can absorb one
-of them at its lower bound, not both at their upper** — and **T1's 9 h overrun has first claim on that 25 h**
-unless §2.1's (a) or (b) is taken. That is still an improvement on every version of this plan before 14 Aug, and
-it is the whole of the margin.
+Neither is a coding problem, so neither compresses under AI assistance. **The 28 h of margin in §2.1 covers
+either reserve at its lower bound, and neither at its upper** — 24 h or 16 h fits; 64 h or 32 h does not. Both
+together do not fit at any bound. **Nothing has first claim on it any more**, which is new: the re-baseline
+removed T1's overrun, so the margin is genuinely uncommitted for the first time. If both reserves land, the
+date moves, and that is a programme-management decision rather than something the schedule absorbs.
 
 ---
 
@@ -564,14 +598,14 @@ allocated**, so this plan mints **`FW-202`**, **`FW-203`**, **`FW-204`** and **`
 > enters the MVP-1 baseline at all. **`FW-218` is not temporary**: it is the first three endpoints of `FW-215`
 > and survives into the simulator proper.
 
-### T1 — Phase 1 platform · 409 h
+### T1 — Phase 1 platform · 406 h
 
 | Stream | Stories | h |
 |---|---|---|
 | **FE** | `FW-N03` 15 · `FW-130` 10 · `FW-131` 7 · `FW-132` 12 · **`FW-133` 75** · `FW-134` 20 | **139** |
 | **BE** | `FW-N04` 11 · **`FW-138` 14** *(8 controllers @ 3 h, not 13 @ 4 h)* · `FW-139` 11 · `FW-140` 8 · `FW-141` 14 · `FW-142` 16 · `FW-143` 8 · `FW-144` 8 · `FW-145` 11 · `FW-146` 5 · `FW-147` 8 · `FW-148` 5 · **`FW-207` 21** · **`FW-208` 5** | **145** |
 | **RT** | `FW-135` 15 · `FW-136` 7 · `FW-137` 5 · `FW-080` 22 · `FW-149` 11 | **60** |
-| **DB** | `FW-002` 3 · `FW-152` 8 · `FW-005` 10 · `FW-004` 5 · `FW-006` 8 · `FW-007` 31 | **65** |
+| **DB** | `FW-152` 8 · `FW-005` 10 · `FW-004` 5 · `FW-006` 8 · `FW-007` 31 | **62** |
 
 `FW-133` (shared composite controls, 75 h) is the single largest story in the trial and **all six screens depend
 on it** — `pass-schedule-table`, `confirm-bar`, `gauge-trace-chart`, `tab-wizard`, `action-bar`,
@@ -583,11 +617,11 @@ on it** — `pass-schedule-table`, `confirm-bar`, `gauge-trace-chart`, `tab-wiza
 |---|---|---|
 | 1B close-out | `FW-150` 11 · `FW-151` 11 · **`FW-205` 14** *(`ITInhibitService`; needs `FW-151`)* · **`FW-203` 6** — OPC feed simulator, *in place of `FW-N05`* · **`FW-218` 11** — its control surface *(steer · stop edge · dropped readings · state read; §8 cannot be executed without it)* | 53 |
 | navigation | **`FW-204` 5** — minimal landing route · `FW-153` 7 *(reconnect + cached fallback)* · `FW-155` 3 *(run index)* | 15 |
-| **4** | `FW-061` 24 · `FW-157` 24 · `FW-159` 15 *(check-in write path + cross-DB `INFLAT`; **no `RodStaging`**)* · `FW-082` 11 | 74 |
+| **4** | `FW-061` 24 · `FW-157` 24 · `FW-159` 15 *(check-in write path + the `FlatWireDB`-local `INFLAT` write, `D-32`; **no `RodStaging`**)* · `FW-082` 11 | 74 |
 | **5** | `FW-062` 17 *(FL1 only)* · `FW-162` 13 · `FW-081` 18 · `FW-163` 13 · `FW-164` 8 · `FW-165` 5 · **`FW-214` 15** — simulator console `DB-S1`, *unbacked controls greyed* | 89 |
 | **6** *(start)* | `FW-065` 15 · `FW-071` 15 · `FW-168` 8 · `FW-170` 5 · `FW-171` 6 *(SPC + pause tables; **no `WeldEvent`**)* | 49 |
 
-### T3 — exceptions, completion, FL2 · 143 h
+### T3 — exceptions, completion, FL2 · 183 h
 
 | Phase | Stories | h |
 |---|---|---|
@@ -595,8 +629,9 @@ on it** — `pass-schedule-table`, `confirm-bar`, `gauge-trace-chart`, `tab-wiza
 | **7** | `FW-067` 13 · `FW-174` 8 · `FW-176` 5 · `FW-177` 5 | 31 |
 | **new** | **`FW-202` 67** — FL1 spool completion, Part B *(98 h hand-coded)* | **67** |
 | **8** | `FW-064` 10 · `FW-178` 5 · `FW-179` 12 · `FW-180` 8 · `FW-181` 3 | 38 |
+| **new** | **`FW-219` 40** — FL2/FL3 run-end shared write-back *(56 h hand-coded)* | **40** |
 
-**`FW-202` must land before Phase 8 starts, not beside it** — it writes the `Spool` row DB5 reads. In a five-day
+**`FW-202` must land before Phase 8 starts, not beside it** — it writes the `SpoolProcessing` row DB5 reads. In a five-day
 sprint that is a real sequencing constraint, not a formality.
 
 ### Deferred — still MVP-1, out of the trial · 330 h
@@ -605,7 +640,7 @@ sprint that is a real sequencing constraint, not a formality.
 |---|---|---|
 | **DB1** `FW-060` + `FW-154` | 42 | Client direction, 14 Aug 2026. See §1.5 for what goes with it |
 | **DB2A + weld** `FW-N01`, `FW-158`, `FW-160`, `FW-063`, `FW-166` + 2 tables | 70 | Client direction, 14 Aug 2026. See §1.5 |
-| **`FW-001`** shared-schema renames | 36 | Highest blast radius in the plan — the `Coil/Bundle…` renames land on the shared `coils`/scheduling schema that the legacy `ual-dot-net` tier and existing reports read. **A trial does not need it; production does.** Keep `FW-002` (`INFLAT`) |
+| **`FW-001`** shared-schema renames — **CANCELLED outright, `D-32`, 18 Aug 2026; no longer a descope decision** | 36 | Highest blast radius in the plan — the `Coil/Bundle…` renames land on the shared `coils`/scheduling schema that the legacy `ual-dot-net` tier and existing reports read. **A trial does not need it; production does.** Keep `FW-002` (`INFLAT`) |
 | **`FW-N05`** real OPC ingest | 22 | Factor **1.00** work — `[DE §1]` prices it as *"not verifiable without the hardware"*. Belongs in the October commissioning window; the trial runs on a simulated feed + `SimulatePLCTagPush` |
 | **`FW-N06`** alert rules engine | 28 | Its only consumer was DB1's alert bar |
 | **Spool completion Part A** (`FR-130`–`FR-136`) | 25 | Explicitly `Should` and *"advisory and non-blocking"*. **Part B is `Must` and stays** — see §5.1 |
@@ -614,8 +649,11 @@ sprint that is a real sequencing constraint, not a formality.
 | **`FW-072`** rod checkout · **`FW-173`** · **`FW-175`** | 39 | Resume ships with three of its four outcomes; *Check out rod* disabled |
 | **`FW-124`** DB5A spool queue · **`FW-N02`** | 19 | DB5's *Browse spool queue →* greyed. The scan still validates — `GET /spools` ships in `FW-179` |
 
-Phases **9–14** (coil completion, FL3 hybrid, reporting, yield/cost, admin, integration) are wholly outside the
-trial.
+Phases **9–14** (coil completion, FL3 hybrid, reporting, yield/cost, admin, integration) are outside the
+trial **with one exception, added 18 Aug 2026: `FW-219`, the run-end write-back**, which is Phase 9 work
+pulled in for exactly the reason `FW-202` was pulled in from Phase 8 (§5.1) — a requested screen routes
+into it. **The DB7/DB7b screens stay out**; only the server-side transaction behind *Complete Run* comes in.
+See §5.3.
 
 ---
 
@@ -644,7 +682,7 @@ machine-stop confirmation.
 1. **This is not adjacent scope — it is inside screen #2.** `spool_notification.js` is one of the seven
    run-event scripts and is loaded by the DB3 FL1 mockup the client explicitly asked for. Building `FW-062` to
    its approved mockup means building this.
-2. **It is the transaction that creates the `Spool` row DB5 checks in.** `phase-05` routes *Complete Run* to
+2. **It is the transaction that creates the `SpoolProcessing` row DB5 checks in.** `phase-05` routes *Complete Run* to
    `POST /coil/complete` — **Phase 9's FL2 output-coil endpoint** (`FW-185`: *"coil alpha, genealogy, skid"*).
    **No story writes the FL1 TKUP-1 spool.** Without Part B, **DB5 has nothing to check in and the FL1→FL2 trial
    cannot be demonstrated at all.**
@@ -663,7 +701,7 @@ gives:
 | **FE** | stop-confirmation dialog 12 · weight-basis/variance composite 20 | 32 | 0.62 | **20** |
 | **BE** | `SpoolCompletionService` state machine 24 · `CompleteSpool` endpoint 6 · `lb-per-ft` derivation 12 | 42 | 0.58–0.70 | **29** |
 | **RT** | 2 hub events @ 8 | 16 | 0.80 | **13** |
-| **DB** | `Spool` write path + index | 8 | 0.60 | **5** |
+| **DB** | `SpoolProcessing` write path + index | 8 | 0.60 | **5** |
 | | | **98 h** | | **67 h** |
 
 **Part B is 67 h, not 52.** Part A ≈ 25 h and is deferred (§4). All-in on `[CE §2]`'s uplifts the base becomes
@@ -684,6 +722,58 @@ table and the weld chain. The **64 h** figure was the *incremental* cost over a 
 staging controller to serve check-in's payoff read; with DB2A gone entirely that has nothing to serve, so the
 **full 18 h leaves and the removal is 70 h.** Both figures are correct against their own baseline, which is
 exactly the sort of thing that reads as a discrepancy later if it is not written down.
+
+---
+
+### 5.3 A completed trial coil was invisible to every downstream system
+
+**This is not an estimate correction — it is scope the plan did not have, and the trial surfaces it whether or not
+anyone planned for it.**
+
+`phase-05` routes the FL2 active-run screen's **Complete Run** control to `POST /coil/complete`. That endpoint has
+always written `CoilOutput`, `CoilTraceability` and the run header — all in `FlatWireDB` — and **nothing else**.
+So a coil completed during the acceptance run exists to the flat wire module and to no one else: there is no
+`coils` row, no order link, no genealogy, no cost record, no skid and no WIP log entry. Packing, shipping,
+certification, cost and yield all read those tables.
+
+**None of the seven shared objects was named anywhere in this repository before 18 Aug 2026** — `wip_skids`,
+`wip_skid_coils`, `coil_slit_cuts`, `coil_gen_history` and `wip_log` had **zero** occurrences across every `.md`,
+`.sql`, `.py` and `.html`. `wip_coil_orders` appeared only as a check-in write. This was not a deferred decision;
+it was an absence.
+
+**It closes `OI-104` as a side effect.** `CoilOutput.SkidId` has always been documented as pointing at "the
+existing skid table", which *no document named, no story created and nothing verified*. It is
+`united_db..wip_skids`, linked through `proddb..wip_skid_coils`, with numbers from `proddb..generate_new_skid_no` —
+which is what `FR-339` required all along, so **`FR-339` becomes testable for the first time** and its
+*"blocked on `G36`"* note is lifted.
+
+| | Rate-card items | Hand-coded | Factor | **AI-assisted** |
+|---|---|---|---|---|
+| **DB** | the procedure — 8 writes, one transaction, retry contract | 32 | 0.75 | **24** |
+| **DB** | `CoilOutput.CoilNo` / `SharedSkidNo`, 2 indexes, schema docs | 4 | 0.60 | **2** |
+| **BE** | `CoilCompletionService` call, primary-rod resolution, retry / compensation, grants | 20 | 0.70 | **14** |
+| | | **56 h** | | **40 h** |
+
+The **0.75** on the procedure is deliberate and is not the 0.60 mechanical-DDL factor: this is a multi-database
+transactional procedure against an undocumented legacy schema with active triggers, which `[DE §1]` prices as a
+*non-trivial business service*. All-in on `[CE §2]`'s uplifts the base becomes
+`56 → QA 11 → cont. 10 = **77 h**`, carried in an additive `[CE §3d]` and **not** folded into Phase 9's 222 h.
+Story `FW-219`, gap **`G44`**.
+
+> ⚠ **The procedure is drafted, and that is not the same as done.** Its nine steps, its 43- and 44-column lists
+> and every column name are verified against the scripted DDL — that verification is what the 0.75 buys. What
+> remains is the half AI does not help with: running it against a real `proddb` / `united_db` / `SlitterDB`,
+> confirming the trigger side effects fire as read, and closing `Q34`–`Q36` with IT.
+
+> ⚠ **This is Phase 9 work in a trial that excludes Phase 9, and the precedent is §5.1.** `FW-202` came in from
+> Phase 8 because a requested screen's approved mockup contained it. `FW-219` comes in from Phase 9 because a
+> requested screen's *Complete Run* button routes into it. **The DB7 and DB7b screens stay out** — only the
+> server-side transaction comes in. §4's *"Phases 9–14 are wholly outside the trial"* is amended accordingly.
+
+> ⚠ **What the trial will and will not prove.** It will prove the eight rows appear and that the skid rule holds.
+> It will **not** prove the three values are right: `Q34` (the transaction token), `Q35` (`coil_status = 'ONSKID'`)
+> and `Q36` (sample number / planned operations) are IT answers about *existing* consumers, and the impact audit
+> that would have found them was cancelled with `D-32`. A trial in DEV cannot substitute for that conversation.
 
 ---
 
@@ -721,6 +811,7 @@ blocker and went with the same removal. Both **remain open for MVP-1**; neither 
 | **3** | **`G2` / `OI-39` — cross-DB check-in recovery undecided.** Check-in spans `FlatWireDB` + `coils` + `wip_coil_orders` + the PLC and is **not one ACID transaction** — describe it as compensating writes, never "atomic rollback" (`G16`). Carries the 24–64 h reserve of §2.3 | Phase 4 is provisional until it closes | Before T2 |
 | **4** | ✅ ~~**`G6`** — roles not confirmed as existing JWT claims~~ **— closed 15 Aug 2026: all six exist on `ClaimTypes.Role`.** The DB2 supervisor overrides, the SPC skip, the WIP disposition and the spool weight-variance override are all reachable. ⚠ **Residual:** the claim **values** are coded rather than labelled and the mapping is unsupplied — those actions **build** but cannot be **verified** until it lands, and in the supervisor notification a wrong value fails **silent** | ~~Every role-gated action in the trial~~ → the T1 QA0 walkthrough only | ~~Before T1 closes (28 Aug)~~ → **before the T1 QA0 walkthrough** |
 | **5** | ⚠ **`G38` — the durable spool-completion prompt has a column and no owner.** `FR-144` makes `SpoolCompletionPromptDue` **server-owned state, persisted against the run and re-delivered on group re-join** — the one event in `[SIG §5.2]` that is **not fire-and-forget**. The five prompt columns landed on `FlatWireRun` on 15 Aug, and `phase-01b` acceptance criterion 4 now requires the behaviour **in 1B**. **No line item in §1.4's 1B table covers it**, and `FW-202` — which owns spool completion — is **T3**. `TC-173` is **P1** and is §8 step 7. With backend tests withdrawn the failure is silent: the event is typed, everything compiles, the durability simply never happens | The spool-completion step of the acceptance run; the platform sprint cannot exit | **Inside T1**, with `FW-080` |
+| **6** | ⚠ **`Q34` / `Q35` / `Q36` — three shared-schema values the run-end write-back cannot guess.** `FW-219` writes a finished coil into `proddb..coils`, `coil_gen_history` and `wip_log`, and each needs an eight-character transaction token (`Q34`, proposed `FWCOMPLT`), a coil status (`Q35`, proposed reusing `ONSKID`) and a sample number / planned-operations pair (`Q36`). All three are **IT questions about existing consumers** — which procedures, views and reports branch on those columns — and the impact audit that would have answered them was cancelled with `D-32`. **The build is not blocked**: each is a one-line change and the procedure isolates all three as named constants. **A shared environment is blocked.** `OI-114` (the cut-record sentinels) rides along and is genuinely unanswerable from the codebase — the five legacy non-slit writers disagree with each other | `FW-219` running anywhere but DEV; the §8 acceptance run if it is executed against a shared database | **Before the trial deploys outside DEV** — ask now, it is a short conversation |
 
 **Second tier — none stops the build:** `OQ-10`/`OI-45` (§5.1 — ⚠ **stops nothing in the *build* but does stop an *assertion***: `AlloyProperty.LbPerFtFactor` is seeded **NULL, "OQ-10 PENDING"**, so §8 step 7's calculated net weight is NULL and the ±2 % scale-vs-calculated variance cannot execute. Either seed a **clearly-marked provisional** factor or accept that assertion as untestable at trial) · `OQ-76` (which identifier DB5 scans) ·
 `OQ-15`/`OI-47` (hybrid-origin guard — ⚠ **undefined, not merely open.** `TC-118` is **P1** and its expected
@@ -808,9 +899,26 @@ trial does ship. **State the number at sign-off.**
 cd "c:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Schema\SQL"
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_99_Teardown.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_RunAll.sql
-# expect 28 tables · 43 FKs · 47 index statements · 1 procedure · 1 trigger
+# expect 33 tables · 55 FKs · 69 index statements · 1 procedure · 1 trigger  (static count 23 Aug 2026;
+#   the 22 Aug live-deploy figure of 34/57 predates the Q60 SpoolConfiguration merge -- re-deploy owed)
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_RunAll.sql   # idempotent re-run
 ```
+
+The line above is a comment, so it asserts nothing. Run this and read the numbers:
+
+```sql
+SELECT 'tables',   COUNT(*) FROM sys.tables            -- 32
+UNION ALL SELECT 'FKs',     COUNT(*) FROM sys.foreign_keys   -- 50
+UNION ALL SELECT 'indexes', COUNT(*) FROM sys.indexes        -- 57
+    WHERE object_id IN (SELECT object_id FROM sys.tables)
+      AND type <> 0 AND is_primary_key = 0 AND is_unique_constraint = 0
+UNION ALL SELECT 'procs',    COUNT(*) FROM sys.procedures    -- 1  (sp_GetGaugeTrace only;
+                                                             --     sp_IngestRodFromCoils ships in
+                                                             --     Database/Scripts/, not in RunAll)
+UNION ALL SELECT 'triggers', COUNT(*) FROM sys.triggers WHERE parent_class = 1;  -- 1
+```
+
+⚠ **Two traps when running DML against this schema by hand.** `sqlcmd` does not set `QUOTED_IDENTIFIER ON`, and several tables carry **filtered** indexes, so an `INSERT` fails with **`Msg 1934`** until you `SET QUOTED_IDENTIFIER ON`. And with `XACT_ABORT OFF` a failed `INSERT` **terminates only that statement** — a following `PRINT 'PASS'` still runs, so a hand-written check can report success while having inserted nothing. Assert with `COUNT(*)`, never by reaching a `PRINT`.
 
 **Then assert the two fixtures the acceptance run depends on** — both cheap, and both the kind of thing that
 fails at step 8 with an unhelpful message if it is wrong:
@@ -839,7 +947,7 @@ WHERE  p.LineId = 'FL2' AND p.RouteMode = 'Standalone'
 > same reason. The defect is the single narrow case above. **Do not add a trigger for it either** — this
 > section publishes *"1 trigger"* as a verified count.
 
-**The DDL builds all 28 tables** — including the three `PassSchedule*`, which joined MVP-1 on 15 Aug 2026 (`D-31`).
+**The DDL builds all 33 tables** — including the three `PassSchedule*`, which joined MVP-1 on 15 Aug 2026 (`D-31`).
 `RodStaging` and `WeldEvent` are created and simply go unwritten in the trial — do not remove them from the schema
 to match the trial's scope. ⚠ **The counts above are from a live deploy, not arithmetic**, and `sp_ShiftSummary`
 is deliberately **absent** (it is MVP-2's, for DB10). Any "25 tables / 33 FKs / 41 indexes" figure is pre-`D-31`.
@@ -863,7 +971,7 @@ are a system rather than six pages, and it is what UAT executes:
    `SCHEDULE_NOT_ACTIVE` → 422. The seed carries Active/Inactive/Draft variants of the same line and alloy so the
    status gate is testable; `[API §7.2]` has the full mapping. Then
    Acknowledge. Assert **records are written before the PLC push**, tags push **only** on acknowledgement,
-   `coils` → `INFLAT`, run `Running`, and the operator lands on **DB3**.
+   **`Rod.Status` → `INFLAT`** *(`FlatWireDB`-local since `D-32`; the shared `coils` row is not written)*, run `Running`, and the operator lands on **DB3**.
 3. **DB3 FL1** — live gauge/width streams with tolerance band. Force N consecutive out-of-spec readings
    (**`POST /sim/FL1/steer`**) → the auto-prompt SPC toast fires. Action bar has **exactly six buttons and no Roll Adjust** (`TC-135`, `FR-107`).
    **The weld-marker layer renders empty** — no welds are captured in the trial.
@@ -878,7 +986,7 @@ are a system rather than six pages, and it is what UAT executes:
    and only once (`TC-170`); a 3 s stop against a 5 s dwell raises **nothing** (`TC-171`); the weight is
    **latched at the PLC stop timestamp** (`TC-172`); **Escape and backdrop-click do not dismiss** (`TC-178`); the
    prompt **survives a browser refresh** (`TC-173`); Yes commits **before** it prints (`TC-175`). Result: a
-   `Spool` row with an `SP-#####` alpha, **one** source rod and its footage.
+   `SpoolProcessing` row with an `SP-#####` alpha, **one** source rod and its footage.
 8. **DB5** — scan that spool, against **`PS-1100-FL2-002`** (FL2, **Standalone**, Active). The
    source-traceability panel shows **a single rod and no weld row**; the **historical** profile renders against
    the spool's own **0.110″** arrival gauge **with an empty marker layer**; **no visual-inspection section**
@@ -897,7 +1005,7 @@ are a system rather than six pages, and it is what UAT executes:
 10. **Reconnect** — kill the hub mid-run: banner over cached last-known state, **never a blank screen**
     (`FR-119`/`NFR006`), backoff reconnect, group re-join, trace restored without a refresh.
 
-**UAT (T4, 21–30 Sep):** operators execute steps 1–10 on staging (`devual-uadev001` or equivalent) on touch
+**UAT (T4, 4–16 Nov):** operators execute steps 1–10 on staging (`devual-uadev001` or equivalent) on touch
 screens, against the §7 DoD bar. **Sign-off is the trial deliverable.** PLC commissioning
 ([`PLCCommissioning.md`](../Testing/PLCCommissioning.md) — `C1` tag paths, `C8` AGC latency, `C11` FM2 station
 names) and the on-mill trial follow in October, per `[SP §4.3]`.
@@ -905,6 +1013,23 @@ names) and the on-mill trial follow in October, per `[SP §4.3]`.
 ---
 
 ## 9. Assumptions and known risks
+
+> ⚠ **New 18 Aug 2026 — the trial writes into shared production tables for the first time.** Every earlier
+> trial write was either `FlatWireDB`-local or a check-in touch into a column the legacy system already
+> expects. `FW-219` (§5.3) creates a **finished-goods coil row, a skid and a WIP log entry** in `proddb`,
+> `united_db` and `SlitterDB`. Three consequences worth stating before the acceptance run is scheduled:
+>
+> 1. **Run it against DEV copies until `Q34`–`Q36` close** (blocker 6). Nothing about the *build* is
+>    blocked; what is blocked is writing a transaction token and a coil status that existing reports may
+>    read, without knowing which reports those are.
+> 2. **Two triggers fire side effects the trial did not previously exercise** — `coils_iud_tg` writes
+>    `coil_link_master_coil`, and `WIP_SKIDS_AFTER_UPD` resets `Certs_Documents.Processed` on **insert** as
+>    well as update. Both are correct and intended; neither is obvious from its name, and a reviewer seeing
+>    certification documents re-queue after a trial skid opens should know it was expected.
+> 3. **`OI-112` will bite on the second run of any line.** `FR-077` sets `wip_stations.coilno` at check-in
+>    and **nothing clears it**, against a UNIQUE index on that column. This is a pre-existing defect the
+>    write-back surfaced rather than caused, it is out of `FW-219`'s scope by design, and it is unspecified —
+>    so plan on clearing the column by hand between trial runs, or specify the release first.
 
 - **The `[DE §1]` retention factors are assumed, not measured**, and a factor error propagates to every figure
   here at once. The Aug-14 gate was the calibration point and was not met, so **this plan is uncalibrated** —
@@ -927,7 +1052,7 @@ names) and the on-mill trial follow in October, per `[SP §4.3]`.
   be staffed separately.
 - **BA does not compress at all.** The blockers in §6 close at the client's pace, and two of the four are
   client-owned.
-- **`FW-001` deferral is a debt, not a saving.** The renames must land before production and their 40 h impact
+- ~~**`FW-001` deferral is a debt, not a saving.**~~ **RETIRED 18 Aug 2026 — `D-32` cancels the migration outright, so the deferral is a saving after all** and the 40 h audit is not owed to production. ⚠ **One debt does survive in a smaller form: `OI-111`.** Nothing now marks flat-wire material in `coils.coil_status`, and the audit that would have found which reports depend on it is cancelled with the change. The original wording: The renames must land before production and their 40 h impact
   audit across `united_db` and the legacy tier is not in this plan.
 - **The trial proves the screens, not the machine.** Every line runs `SimulatePLCTagPush` and a simulated OPC
   feed. **Nothing in this plan verifies a single tag path against a controller** — that is `C1`/`C11` in October,
@@ -960,8 +1085,8 @@ names) and the on-mill trial follow in October, per `[SP §4.3]`.
   against the model* — **is not yet in `[COM]`**. Until it is, the assumption table is documentation nobody is
   required to read, and the divergence surfaces in October, in the window `[PLCC §4]` already calls *"the worst
   compression in the schedule."*
-- ⚠ **`Spool` cannot represent multi-rod genealogy, and that outlives the trial.** §1.5 records the single-rod
-  spool as a **scope** consequence of the weld removal. It is also a **schema** one: `Spool` carries
+- ⚠ **`SpoolProcessing` cannot represent multi-rod genealogy, and that outlives the trial.** §1.5 records the single-rod
+  spool as a **scope** consequence of the weld removal. It is also a **schema** one: `SpoolProcessing` carries
   `ParentRodAlpha` and `SourceRodAlpha` — two single-rod columns, the second documented as the *partial-run*
   source (`OQ-12`) — and `CoilTraceability` is **coil**-level, not spool-level. So when weld capture returns
   there is still nowhere to record *"this spool came from rods R00041 and R00042 at these footages."* **Raise it

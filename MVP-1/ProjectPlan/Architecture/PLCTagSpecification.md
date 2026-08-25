@@ -89,7 +89,7 @@ Two consequences worth stating plainly:
 | **Live gauge / width** | **Real-time** | **None — historical profile only** | **Real-time** |
 | **Payoff bays** | 2, with welding between rods | Spool payoff | 2, with welding between rods |
 | **Dancers** | 1, on FM1 | **2, inter-stand** — the pair with selectable modes | 3 — FM1's and both of FM2's |
-| **Pre-check-in staging** | Yes | **No — FL2 has no staging space** | Yes |
+| **Pre-check-in staging** | Yes | **FL2 has no staging space** — and it now has **pre-check-in** all the same, reversed by the client on 20 Aug 2026: a validation queue rather than a bay. **No tag is written at pre-check-in on any line** (§7.3), so this document is unaffected either way | Yes |
 | **Explicitly absent** | Edger, FM2 stands, final take-up | Die blocks, FM1, live measurement, staging | Intermediate take-up (bypassed, not removed) |
 | **Unresolved** | Whether a second take-up applies (§5.2.1) | Station names (`PLC-Q04`) · edger paths (`PLC-Q07`) · what clears the tags at end of spool (§13.2) | **The entire namespace** (`PLC-Q08`) |
 

@@ -150,8 +150,17 @@ transport failure; do **not** retry a rejected write.
 The **write surface** is not blocked. `[PLCC §4]` says build in Phase 1, exercise in Phase 4,
 and every later phase assumes the operations exist. Build all six.
 
-What **is** blocked is the **compensation design** — `G2`/`OI-39` has not decided between a
-saga/outbox and an `INFLAT` mirror, and it carries the 24–64 h Phase-4 reserve. So:
+What **is** blocked is the **compensation design** — ~~`G2`/`OI-39` has not decided between a
+saga/outbox and an `INFLAT` mirror~~, and it carries the 24–64 h Phase-4 reserve.
+
+> ⚠ **`D-32` (18 Aug 2026) removed one of the two options by removing the thing it was an option about.**
+> There is no shared-schema migration, so `INFLAT` is a **`FlatWireDB`-local** `Rod.Status` value and the
+> mirror is not an alternative — it is simply where the marker lives. **`OI-39` narrows to the saga/outbox
+> shape for the three surviving shared writes** (reqsum / `wip_coil_orders`, `actual_start_date`,
+> `wip_stations.coilno`), all into existing columns. **Nothing in this story changes**: the PLC compensation
+> was always this service's own scope, and the reserve stays until `OI-39` closes.
+
+So:
 
 - implement compensating clears for the **single-line PLC push**, which is this service's own
   scope and does not depend on the cross-DB answer;

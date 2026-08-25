@@ -1,7 +1,7 @@
 # Flat Wire Mill — API Contract
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — **`SpoolController` added to §3.1** (fourteen → **fifteen**: §3.2 assigned `GET /spools` to a controller in no list) and the **endpoint count corrected to 31 live rows, of which MVP-1 implements 24** — *"28 of the 30"* contradicted this file's own *"the pass schedule is read, never written"*, which removes six endpoints rather than one. `[PLC §351–356]` retargeted to `[PLC §7.2]` *(otherwise August 13, 2026 — split out of `04-APIContract.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
+**Last Updated:** August 25, 2026 — the five `lineId = FL2` → `422` sites marked withdrawn pending wave W5; `@expectedCoilNo` rename completed *(previously August 22, 2026 — **`POST /coil/complete`’s worked example was losing a foot** (`footageFrom: 1851` → `1850`): `CoilTraceability` ranges are **half-open `[From, To)`**, as the non-overlap trigger enforces, so the example a developer copies would have failed `TC-617` *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `ROD_UNAVAILABLE` and the staging/check-in availability tests move to local `Rod.Status`; the `coils.coil_status = INFLAT` side effect is struck from the check-in write list *(previously August 15, 2026 — **`SpoolController` added to §3.1** (fourteen → **fifteen**: §3.2 assigned `GET /spools` to a controller in no list) and the **endpoint count corrected to 31 live rows, of which MVP-1 implements 24** — *"28 of the 30"* contradicted this file's own *"the pass schedule is read, never written"*, which removes six endpoints rather than one. `[PLC §351–356]` retargeted to `[PLC §7.2]` *(otherwise August 13, 2026 — split out of `04-APIContract.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*))*
 **Document Type:** REST contract — conventions, enums, endpoints, traceability
 **Status:** Baselined for build — missing endpoint groups in §10
 **Owner:** Backend (.NET) stream
@@ -51,7 +51,7 @@ Every endpoint returns the standard UAL envelope.
 | `401` / `403` | Not authenticated / role not permitted (see §9.2) |
 | `404` | The named resource does not exist (rod alpha, schedule id, run id) |
 | `409` | **Conflict with current state** — line already has an active run, bay already occupied, rod already staged or checked in, payoff mismatch, optimistic-concurrency failure |
-| `422` | The request is well-formed but **violates a business rule** — inspection fail, `lineId = FL2` at a staging endpoint, `Draft` schedule at check-in, carry-forward not acknowledged, diameter outside tolerance, missing supervisor authorisation |
+| `422` | The request is well-formed but **violates a business rule** — inspection fail, ~~`lineId = FL2` at a staging endpoint~~ *(withdrawn, `FR-533`)*, `Draft` schedule at check-in, carry-forward not acknowledged, diameter outside tolerance, missing supervisor authorisation |
 | `500` | Server error **or PLC push failure**, with the transaction aborted and compensating writes issued |
 
 **The 409/422 split is load-bearing.** A `409` means "someone or something else got there first — re-read and retry"; a `422` means "this will never succeed as submitted".
@@ -97,11 +97,11 @@ Machine-readable codes accompany the human-readable `errors[]` where a client mu
 |---|---|---|---|
 | `ROD_NOT_FOUND` | 404 | Rod alpha not in `coils` | Show scan error, keep focus in the field |
 | `ROD_NOT_ALLOCATED` | 422 | No `planning_routings` allocation | Refuse; the rod cannot be staged |
-| `ROD_UNAVAILABLE` | 409 | `coils.coil_status` in `INFLAT`/`COMPLETE`/`HOLD`/`SCRAP`, or already staged | Refuse |
+| `ROD_UNAVAILABLE` | 409 | `coils.coil_status` in `COMPLETE`/`HOLD`/`SCRAP`, **or `Rod.Status = 'INFLAT'`** *(local since `D-32` — `INFLAT` is not a shared status value)*, or already staged | Refuse |
 | `ROD_WRONG_ORDER` | 409 | Rod belongs to a different order once one is established | Refuse — welding across orders breaks genealogy |
 | `BAY_OCCUPIED` | 409 | `UX_RodStaging_Bay` violated | Re-read bay state and re-render |
 | `ROD_ALREADY_STAGED` | 409 | `UX_RodStaging_RodActive` violated | Re-read |
-| `LINE_NOT_ELIGIBLE` | 422 | `lineId = FL2` at a staging endpoint | Hide the action on FL2 |
+| ~~`LINE_NOT_ELIGIBLE`~~ | ~~422~~ | ~~`lineId = FL2` at a staging endpoint~~ | ⚠ **Withdrawn in requirement text by `FR-533`** — FL2 gets a validation queue, so the action is **shown** on FL2, not hidden. Endpoint change owed (W5) |
 | `INSPECTION_FAILED` | 422 | Any inspection item `Fail` | Route to WIP Rejection — payload carries `{route:"wipRejection", rodAlpha}` |
 | `CARRY_FORWARD_REQUIRED` | 422 | `footageRunToDate > 0` without `acknowledgedCarryForward` | Show the carry-forward path only |
 | `DIAMETER_OUT_OF_TOLERANCE` | 422 | Measured diameter outside nominal ± tolerance | Block, show the valid range |
@@ -245,8 +245,8 @@ Roles use the matrix in `[SEC §8]`. "Any" means any authenticated role.
 | 14 | `GET /staging/queue?lineId=` | The Traveler Queue projection | Any | `PayoffStaging` | 4 | `FR-035`–`FR-038` |
 | 15 | `POST /checkin/rod` | FL1/FL3 rod check-in + PLC push | Operator | `CheckIn` | 4 | `FR-063`–`FR-084` |
 | 16 | `POST /checkin/spool` | FL2 spool check-in + FM2 PLC push | Operator | `CheckIn` | 8 | `FR-090`–`FR-096` |
-| 16a | `GET /spools[?spoolAlpha=]` | Spools available for FL2; with `spoolAlpha` the **backend resolves the order** and returns it with that order's spools, in one response | Any | `Spool` **(§3.1, added 15 Aug 2026)** | 8 | `FR-097`–`FR-099` |
-| 16b | **`POST /spool/complete`** | **Commit an FL1 spool**: writes the `Spool` row (`SP-#####` alpha, source rods, footage, latched weight) and closes the run. Answers the `SpoolCompletionPromptDue` prompt, **and** serves the manual complete-spool path | Operator | `Spool` | 5 *(rows written by `FW-202`)* | `FR-140`–`FR-155` |
+| 16a | `GET /spools[?spoolAlpha=]` | Spools available for FL2; with `spoolAlpha` the **backend resolves the order** and returns it with that order's spools, in one response | Any | `SpoolProcessing` **(§3.1, added 15 Aug 2026)** | 8 | `FR-097`–`FR-099` |
+| 16b | **`POST /spool/complete`** | **Commit an FL1 spool**: writes the `SpoolProcessing` row (`SP-#####` alpha, source rods, footage, latched weight) and closes the run. Answers the `SpoolCompletionPromptDue` prompt, **and** serves the manual complete-spool path | Operator | `SpoolProcessing` | 5 *(rows written by `FW-202`)* | `FR-140`–`FR-155` |
 | 17 | `GET /run/active?line=` | Active run for a line (DB3 load/resume) | Any | `Run` | 5 | `FR-100` |
 | 18 | `GET /run/{runId}/gaugetrace` | Historical/decimated trace + weld markers | Any | `Run` | 5 / 8 | `FR-093`, `FR-120` |
 | 18a | `GET /run/{runId}/weldevents` | Every weld recorded against one run — read-only | Any | `Run` | 4 *(rows written in 6)* | `PCI021` |
@@ -381,7 +381,7 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 
 **`state` is derived, not stored.** `Blocked` = `Status='Staged'` **and** any inspection column `Fail`. Adding a fourth stored `Status` value would fall outside the `UX_RodStaging_Bay` filtered index and free a bay that is still physically occupied.
 
-**Errors:** `422 LINE_NOT_ELIGIBLE` when `lineId = FL2`.
+**Errors:** ~~`422 LINE_NOT_ELIGIBLE` when `lineId = FL2`~~. ⚠ **The `lineId = FL2` refusal is WITHDRAWN in requirement text** (`FR-533`, `[REQ]` §5.29, client reversal 20 Aug 2026) **but is still specified here** — the contract change is wave W5 of the 20 Aug ledger and is not yet applied. Do not build the refusal; do not delete it from this contract without the W5 change.
 
 **Worked example**
 
@@ -450,7 +450,7 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 
 | Field | Type | Required | Validation |
 |---|---|---|---|
-| `lineId` | enum | ✓ | `FL1` \| `FL3` only — `FL2` → `422` |
+| `lineId` | enum | ✓ | `FL1` \| `FL3` today; **`FL2` is owed** (`FR-533`) — the `422` is withdrawn in requirement text, wave W5 not applied |
 | `payoffPosition` | int | ✓ | 1 or 2 only |
 | `rodAlpha` | string | ✓ | Must exist in `coils` |
 | `orderId` | string | ✓ | **Re-resolved server-side; a mismatch is rejected** |
@@ -473,16 +473,16 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 | Allocation | Rod has a `planning_routings` entry, which **yields the order** | `422 ROD_NOT_ALLOCATED` |
 | Order membership | Once an order is established the rod must belong to **that** order | `409 ROD_WRONG_ORDER` — welding across orders breaks genealogy. ⚠ **Knowingly wrong for a multi-order rod** — G22 |
 | Order's line | The resolved order is scheduled on **this** line | **Not a refusal and not an override** — the client switches station. A mismatched POST returns `409 WRONG_STATION` with `correctLineId`; the client switches and re-posts |
-| Availability | `coils.coil_status` not `INFLAT`/`COMPLETE`/`HOLD`/`SCRAP`, and no `Staged` row | `409 ROD_UNAVAILABLE` |
+| Availability | `coils.coil_status` not `COMPLETE`/`HOLD`/`SCRAP`, **`Rod.Status` not `INFLAT`** *(local since `D-32`)*, and no `Staged` row | `409 ROD_UNAVAILABLE` |
 | Planned sequence | The rod is the one planning expects next (lowest `plannedSeqno` still available) | **Not a refusal** — supervisor override |
 | Bay occupancy | `UX_RodStaging_Bay` / `UX_RodStaging_RodActive` | `409` **from the index, not a read-then-write race** |
-| Line | `lineId = FL2` | `422 LINE_NOT_ELIGIBLE` |
+| ~~Line~~ | ~~`lineId = FL2`~~ | ~~`422 LINE_NOT_ELIGIBLE`~~ — **withdrawn by `FR-533`**; W5 owed |
 | Inspection | Any item `Fail` | **`201 Created` with `state: "Blocked"`** and `{"route":"wipRejection","rodAlpha":"…"}` — the row is **committed before the inspection gate** (changed 31 Jul 2026), because the bundle is already on the bay and writing nothing reported an occupied position as free. Still a **hard block, no override** (`CHK010`) |
 | Carry-forward | `footageRunToDate > 0` without acknowledgement | `422 CARRY_FORWARD_REQUIRED` |
 | Diameter | Outside the min/max lookup band | `422 DIAMETER_OUT_OF_TOLERANCE` |
 | Rod | Not found in `coils` | `404 ROD_NOT_FOUND` |
 
-**Side effects — compensating writes, not one ACID transaction:** `RodStaging` insert with server-assigned `RodSeqno` and snapshotted `PlannedSeqno` · **`coils.coil_status` is not changed** — `INFLAT` is set at check-in (**Q68**, 30 Jul 2026), and whether the reqsum + `wip_coil_orders` insert stays here is the open half of that question (cross-database either way) · `PayoffStateChanged` broadcast. **No PLC write.**
+**Side effects — compensating writes, not one ACID transaction:** `RodStaging` insert with server-assigned `RodSeqno` and snapshotted `PlannedSeqno` · **`coils.coil_status` is not changed** — and since **`D-32`** (18 Aug 2026) it is not changed at check-in either: `FW-002` is cancelled, so `INFLAT` is written to **`FlatWireDB`'s `Rod.Status`** instead (the **Q68** timing answer stands, the column has changed). Whether the reqsum + `wip_coil_orders` insert stays here is still the open half of that question (cross-database either way) · `PayoffStateChanged` broadcast. **No PLC write.**
 
 > **Wrong station is corrected, not authorised (30 Jul 2026).** ~~Staging a rod whose order is booked on another line is a deviation requiring a supervisor override.~~ The system **selects the correct station**: the client reads `scheduledLineId` at the scan and switches to that line. `RodStaging.OffScheduleOverride`, `ScheduledLineId`, `CK_RodStaging_OffSched` and `CK_RodStaging_OffSchedLine` are **dropped**; the shared credential trio survives for the out-of-sequence override. **Open:** what happens to a part-completed wizard when the station switches mid-transaction, whether an FL3 tab exists on the FL1 panel at all (**OI-26**/**G21**), and what to do when the order is scheduled on **neither** rod line — there is no station to switch to (**Q25**, not covered on the call).
 
@@ -558,7 +558,7 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 **Side effects, in this mandatory order:**
 
 1. `FlatWireRun` created (`Status='Running'`, `StartedAt`), `RodCheckin`, `SpcCheckpoint(PreRun)` + `SpcMeasurement` rows, inspection result — **all in the local transaction**
-2. Shared schema: `coils.coil_status = INFLAT`, reqsum + `wip_coil_orders`, `actual_start_date` on `planning_routings` / `routings`, `wip_stations.coilno`
+2. Shared schema: ~~`coils.coil_status = INFLAT`~~ *(struck — `D-32`, 18 Aug 2026; written to local `Rod.Status` instead)*, reqsum + `wip_coil_orders`, `actual_start_date` on `planning_routings` / `routings`, `wip_stations.coilno` — **all three surviving writes land in columns that already exist, so no migration is required**
 3. **PLC:** `PushPassSchedule(scheduleId, lineId, payoffPosition)` — a single batch
 4. `RodStaging.Status → CheckedIn` with `CheckedInAt` and `RodCheckinId`
 5. Broadcast `LineStatus{Running}`, `PayoffStateChanged{Active}`, `ComponentStatus`
@@ -567,7 +567,7 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 
 **Errors:** `409 RUN_ALREADY_ACTIVE` · `409 PAYOFF_MISMATCH` against an existing staged row · `422 SCHEDULE_NOT_ACTIVE` when the schedule is `Draft` · `422 INSPECTION_FAILED` routed to DB8 · `500 PLC_PUSH_FAILED` with the check-in aborted · **`422 SCHEDULE_NO_MATCH` — behaviour undefined, OI-46.**
 
-**FL3:** one acknowledgement pushes **all FM1 and FM2 tags in a single batch**; `RouteMode` is `Hybrid`; **no `Spool` row is created**.
+**FL3:** one acknowledgement pushes **all FM1 and FM2 tags in a single batch**; `RouteMode` is `Hybrid`; **no `SpoolProcessing` row is created**.
 
 **Station selection applies here too (30 Jul 2026).** A rod scanned at check-in whose order is booked on the other rod line **switches the screen to that line** rather than being refused; a mismatched POST returns `409 WRONG_STATION` with `correctLineId`. Same rule as §4.5, same open questions.
 
@@ -628,11 +628,11 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 
 - **`order` is `null` in two different situations and both are `200`** — the unfiltered default view, and a scanned spool whose `OrderNo` is null. In the second case `spools` contains **just that spool**, so the client renders one shape either way.
 - **`404` only for an unknown `spoolAlpha`.** An unallocated spool is **not** an error — planning remainders and supervisor-accepted partial spools legitimately have no order, and the screen shows them differently from a bad scan.
-- **`gaugeIn`/`widthIn` must be read from the source FL1 run**, not from `Spool.GaugeIn`/`WidthIn`, which are documented *"set at FL2/FL3 check-in"* and are therefore **null for every row this endpoint returns**.
-- **`sourceRodAlphas` is a list and must come from `CoilTraceability`/`WeldEvent`.** `Spool` carries only two single-valued rod FKs (`ParentRodAlpha`, `SourceRodAlpha`); a spool with a mid-run weld has more than one source rod.
+- **`gaugeIn`/`widthIn` must be read from the source FL1 run**, not from `SpoolProcessing.GaugeIn`/`WidthIn`, which are documented *"set at FL2/FL3 check-in"* and are therefore **null for every row this endpoint returns**.
+- **`sourceRodAlphas` is a list and must come from `CoilTraceability`/`WeldEvent`.** `SpoolProcessing` carries only two single-valued rod FKs (`ParentRodAlpha`, `SourceRodAlpha`); a spool with a mid-run weld has more than one source rod.
 - **The `order` block is a cross-database read** — order attributes live in the shared order/scheduling schema, not `FlatWireDB`, on the same unenforced-link basis as rod alphas.
 - **`eligible` encodes an availability rule that is undefined (`Q17`).** The proposal is `RECEIVED` + `STAGED`, with `HOLD` returned but not eligible. **Do not hard-code this silently.**
-- **`Spool.OrderNo` needs an index.** It is unindexed today and the `spoolAlpha` mode is a `WHERE OrderNo = …` on a `VARCHAR(50)`.
+- **`SpoolProcessing.OrderNo` needs an index.** It is unindexed today and the `spoolAlpha` mode is a `WHERE OrderNo = …` on a `VARCHAR(50)`.
 
 No pagination — the list scrolls, consistent with every other list in the suite. **Blocks DB5A, and also serves DB5**, whose scan field currently validates against nothing because `POST /checkin/spool` was the only spool endpoint.
 
@@ -673,7 +673,7 @@ No pagination — the list scrolls, consistent with every other list in the suit
 
 ### 4.6c `POST /spool/complete`
 
-**Purpose:** commit an FL1 spool — write the `Spool` row and close the run. **Role:** Operator.
+**Purpose:** commit an FL1 spool — write the `SpoolProcessing` row and close the run. **Role:** Operator.
 **Added 15 Aug 2026.** `OI-32` recorded that the spool-completion **commit** had no endpoint; it was
 half-closed by naming `FW-202`'s `CompleteSpool` command without giving it a route, so the only published
 way to reach it was `POST /coil/complete` — which is **Phase 9's FL2 output coil** (`FW-185`), *"a
@@ -790,7 +790,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 > **`weldEvents[]` here is a trimmed marker list** feeding the gauge-trace chart — no quality, operator or weld type. Dashboard 2A needs those, which is why `§4.17a` exists as a separate run-scoped resource rather than this one being widened.
 >
-> **`gaugeTolerance` and `widthTolerance` are single-± fields**, and the 30 Jul client decision (`Q22`) replaced single-± tolerances with four min/max pairs. This response shape has not caught up — the same defect `GapAnalysis.md` **D1** records against `SpcMeasurement`.
+> **`gaugeTolerance` and `widthTolerance` are single-± fields**, and the 30 Jul client decision (`Q22`) replaced single-± tolerances with four min/max pairs. This response shape has not caught up — the same defect gap **`G51`** records against `SpcMeasurement`.
 
 ### 4.8 `POST /run/{runId}/pause` and `/resume`
 
@@ -1181,7 +1181,17 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 **Response:** `{ coilAlpha, skidId, skidStatus, footageTotal, netWeightLb, sourceTraceability[{rodAlpha, footageFrom, footageTo}], finalSpc{gaugeInSpec, widthInSpec} }`
 
-**Side effects:** `CoilOutput` written with the **pass-schedule ID, version and JSON configuration snapshot** · `CoilTraceability` rows, one per contributing rod, **non-overlapping** (enforced by trigger) · final SPC checkpoint · skid state transition.
+**Side effects:** `CoilOutput` written with the **pass-schedule ID, version and JSON configuration snapshot** · `CoilTraceability` rows, one per contributing rod, **non-overlapping** (enforced by trigger) · final SPC checkpoint · skid state transition
+
+**Side effects — the shared half, and it is a second transaction, not part of the first.** Since 18 Aug 2026 (`FR-509`–`FR-518`, `[INT §8.1]`) this endpoint also writes **eight shared objects** by calling `united_db.dbo.FlatWire_CompleteCoilOnSkid` once per coil: `proddb..coils` (the finished-goods row) · `proddb..wip_coil_orders` · `united_db..coil_gen_history` · `coil_cost` via `CoilCost_UpdateInsert` · `SlitterDB..coil_slit_cuts` (**one row — a flat wire coil is one cut**) · `united_db..wip_skids` · `proddb..wip_skid_coils` · `proddb..wip_log_view`. **Every one lands in a column that already exists, so `D-32` is untouched.**
+
+⚠ **The two halves are compensating writes, not one ACID transaction** — the same boundary `[ARC §10]` draws for check-in. The `FlatWireDB` writes commit first; the procedure is then called and is itself atomic. Three rules follow and the handler must implement all three:
+
+1. **Persist `CoilOutput.CoilNo` the moment the procedure returns.** It is the retry contract. A retry that does not pass it back through `@expectedCoilNo` **mints a second coil**, because the alpha generator returns the next free suffix each time.
+2. **Never swallow the procedure's error.** It rolls back its own half completely, so a throw means no shared row survives — but it also means the coil is complete locally and invisible upstream, which is an operator-visible condition, not a log line.
+3. **One call per coil, never batched.** `coils_iud_tg` is single-row only; a set-based insert silently skips the `coil_link_master_coil` row.
+
+The response is unchanged — `CoilNo` is **not** added to it. `coilAlpha` remains the customer-facing identifier and the shared alpha is an internal mapping (`FR-509`).
 
 **`netWeightLb` is derived from footage and cross-section, never from a scale during rolling.** The server computes `A(in²) × 12 × ρ` per foot with the round-edge correction; the operator may override with a scale reading, which lands in `NetWeightOverrideLb`, not `NetWeightLb`.
 
@@ -1215,7 +1225,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
     "netWeightLb": 885.0,
     "sourceTraceability": [
       { "rodAlpha": "R00040", "footageFrom": 0,    "footageTo": 1850 },
-      { "rodAlpha": "R00041", "footageFrom": 1851, "footageTo": 3840 }
+      { "rodAlpha": "R00041", "footageFrom": 1850, "footageTo": 3840 }
     ],
     "finalSpc": {
       "gaugeInSpec": true,
@@ -1355,6 +1365,61 @@ Every weld recorded against one run, oldest first. Backs the read-only **Welds t
 Returns `{ status, database: {reachable, latencyMs}, opc: {reachable, latencyMs}, version, environment }`. Used by the deployment smoke suite — `[DEP §5]`.
 
 ---
+
+---
+
+### 4.20 `GET /rod/{alpha}/orders`
+
+Returns the rod's **active allocation set** — the orders it may be consumed against, in planned sequence,
+with the weight allocated to each and the tier each rod occupies. This is what makes the sequence
+validation and the order-set membership check possible at both pre-check-in and check-in.
+
+```json
+{
+  "data": {
+    "rodAlpha": "R00001",
+    "netWeightLb": 4000.00,
+    "orders": [
+      { "orderNo": "417154", "relLetter": "B", "orderSeqNo": 1, "rodSeqNoInOrder": 3,
+        "allocatedWeightLb": 400.00, "rodWeightFrom": 3600.00, "rodWeightTo": 4000.00,
+        "pinRole": "PinnedLast", "rodKind": "Full", "source": "Planned" }
+    ]
+  },
+  "success": true, "errors": []
+}
+```
+
+**`GET /rod/{alpha}` returns the order set too**, not a single order — since `Q70` a rod may legitimately
+carry more than one. A consumer reading a scalar order from that response is reading a rod that happens to
+have one.
+
+| Code | When |
+|---|---|
+| `200` | rod found; `orders` may be empty where planning has not allocated |
+| `404` | no such rod |
+
+### 4.21 `POST /order/{orderNo}/complete`
+
+The operator's acknowledgement — **the only thing that closes an order** `[ORD007]`. Not a confirmation of
+a system decision: the system raises `OrderAllocationReached`, the operator decides.
+
+```json
+{ "consumptionId": "RC-0041", "operatorId": "jdoe", "relLetter": "B" }
+```
+
+**What it writes, in one transaction:** the acknowledgement stamps, the weight **latched a second time**,
+the overrun between the two latches, the closing footage, and the consumed weight with the conversion basis
+and factor it used. Then it opens the **next pairing on the same rod** and hands the station over — the two
+writes must be atomic, or the station exclusivity index rejects the handover.
+
+| Code | When |
+|---|---|
+| `200` | order closed; response carries the overrun and the next order, if any |
+| `409` | no open pairing at that station, or another order is already open |
+| `422` | the incoming order's pass schedule differs from the running one `[ORD015]` — the rod must be checked out and back in, because the tags cannot be re-pushed without a check-in |
+
+**Early acknowledgement is permitted** — before the threshold — and is recorded as such; the overrun is
+then negative. Where the unconsumed allocation goes is **`Q51`**.
 
 ---
 
@@ -1521,4 +1586,4 @@ A screen moves off the stub when: the real endpoint returns the contracted shape
 
 | ID | Finding | Resolution taken here |
 |---|---|---|
-| **PP-04** | **The hub event count is 10, not 9.** The master specification's status summary says "9 hub events"; its own event table and `Business/BusinessRules.md` §3 both enumerate ten. The "9" predates `PayoffStateChanged` | §5.2 documents **ten**. Correct the summary line |
+| **PP-04** | **The hub event count is 14 as of 22 Aug 2026** — it was 9, then 10, then 12, and the master specification's status summary was still saying 10 until it was corrected in the same pass. Originally:  **The hub event count is 10, not 9.** The master specification's status summary says "9 hub events"; its own event table and `Business/BusinessRules.md` §3 both enumerate ten. The "9" predates `PayoffStateChanged` | §5.2 documents **ten**. Correct the summary line |

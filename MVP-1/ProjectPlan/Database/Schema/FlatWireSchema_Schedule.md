@@ -1,13 +1,17 @@
 # Flat Wire Mill — Pass Schedule Tables
 
-> **⚠ MVP-2 — deferred scope.** This document is **not part of MVP-1 and not part of MVP-1 planning**. The tables it describes are built by the additive MVP-2 chain in [`SQL/`](SQL/), which requires the whole MVP-1 schema to be deployed first. See [`../../README.md`](../../README.md).
-
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 26, 2026
+**Last Updated:** August 23, 2026 — corrected up to the DDL; header fields standardised
 **Document Type:** Final Schema — Pass Schedule Tables
 **Source:** Derived from `FlatWireSchema_Mapping.md` recommendations
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `SQL/FlatWire_DDL_02_Schedule.sql`
+**Status:** Active — corrected up to the DDL, August 23, 2026
+**Scope:** **MVP-1** — `D-31`, 15 Aug 2026
+**Owner:** Architecture stream / DBA
+**Audience:** DBA, .NET developers, BA
+**Part of:** `ProjectPlan/Database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
+**Authority:** `SQL/FlatWire_DDL_02_Schedule.sql` **wins** on types, nullability and constraints. This document explains them; it does not define them, and it states no object counts — those are `[DBD §6.2]`. No shortcode is declared, deliberately: these are derived documents and must not be cited as authority.
 
 Pass schedules define the complete tooling configuration and dimensional targets for a flat wire production run. A schedule header (`PassSchedule`) specifies alloy, line, targets, and speed ranges. Its component rows (`PassScheduleComponent`) define each tool station in the pass sequence.
 
@@ -87,7 +91,7 @@ Per-component rows belonging to a pass schedule. Each row defines one tool stati
 | `FM2_S2` | Finishing mill | FM2 stand **S2 — 6-inch roller**; bypassable, edger position |
 | `FM2_S3` | Finishing mill | FM2 stand **S3 — 6-inch roller**; edger position, **final gauge control, not bypassable** |
 
-> **FM2 configuration `[CONFIRMED — Aug 4 2026]`:** FM2 has **three** stands — **S1 (8")**, **S2 (6")**, **S3 (6", final)** — with edgers at S2 and S3 only. The May-21-2026 note recorded here as *"three 6-inch stands"* was misread as a separate 8" roller plus three 6" stands; the 8" roller **is S1**, and `FM2_6inS3` never corresponded to real equipment. Rename: `FM2_8in`→`FM2_S1`, `FM2_6inS1`→`FM2_S2`, `FM2_6inS2`→`FM2_S3`, `FM2_6inS3` withdrawn. Roll diameter now lives in [`Stand.RollDiameterIn`](../../../MVP-1/ProjectPlan/Database/Schema/FlatWireSchema_Lookup.md#stand), not in the identifier.
+> **FM2 configuration `[CONFIRMED — Aug 4 2026]`:** FM2 has **three** stands — **S1 (8")**, **S2 (6")**, **S3 (6", final)** — with edgers at S2 and S3 only. The May-21-2026 note recorded here as *"three 6-inch stands"* was misread as a separate 8" roller plus three 6" stands; the 8" roller **is S1**, and `FM2_6inS3` never corresponded to real equipment. Rename: `FM2_8in`→`FM2_S1`, `FM2_6inS1`→`FM2_S2`, `FM2_6inS2`→`FM2_S3`, `FM2_6inS3` withdrawn. Roll diameter now lives in [`Stand.RollDiameterIn`](FlatWireSchema_Lookup.md#stand), not in the identifier.
 >
 > **This closes `OI-04`.** The rule *"`FM2_6inS2` must always be Active"* (DDL/API) and *"6" S3 is non-bypassable"* (SRS §2.7) were describing the **same physical stand** — now unambiguously **`FM2_S3`**.
 

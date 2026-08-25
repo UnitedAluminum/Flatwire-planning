@@ -231,7 +231,7 @@ is defined once, in the plan named here, with its rationale and fallback.
 | `P-10` | [FW-139](FW-139-MediatR-Registration-And-Pipeline-Behaviours.md) | `TransactionBehaviour` lands with `FW-142` | settled |
 | `P-11` | [FW-140](FW-140-DI-Registration-And-Stub-Swap.md) | Swap resolved at startup; the flag is `useMockData` | settled |
 | `P-12` | [FW-141](FW-141-Repository-Layer.md) | Build the seven; **no `PassScheduleRepository` or `RodRepository`** | settled |
-| `P-13` | [FW-142](FW-142-Dapper-EF-And-FlatWireDbContext.md) | Map 28 tables for reading; `PassSchedule*` gets **no write path** | ⚠ ratify |
+| `P-13` | [FW-142](FW-142-Dapper-EF-And-FlatWireDbContext.md) | Map 33 tables for reading; `PassSchedule*` gets **no write path** | ⚠ ratify |
 | `P-14` | [FW-142](FW-142-Dapper-EF-And-FlatWireDbContext.md) | Interim stance on `D-30` | settled |
 | `P-15` | [FW-143](FW-143-Serilog-And-Audit-Log.md) | **The audit log has no persistence target** — open finding | ⚠ open |
 | `P-16` | [FW-144](FW-144-Configuration-Binding.md) | Fail fast at boot; warn **once**, with a count | settled |

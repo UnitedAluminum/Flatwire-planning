@@ -1,7 +1,7 @@
 # Flat Wire Mill — Development Plan, client-facing content
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 13, 2026 — initial publication
+**Last Updated:** August 18, 2026 — `FW-001` and `FW-002` marked CANCELLED; `FW-159` retitled; ⚠ `FW-138`/`FW-147` reference titles corrected against the backlog — a **pre-existing** drift that was blocking the build *(previously August 13, 2026 — initial publication)*
 **Document Type:** Build input — the authored client prose for the development plan workbook
 **Status:** Active — edit here, never in the workbook
 
@@ -196,7 +196,7 @@ and column names, screen numbers, machine tag paths, and code formatting of any 
 **Audience:** Supervisor
 
 ## FW-138
-**Reference title:** Thirteen thin controllers over `UAController`
+**Reference title:** Fifteen thin controllers over `UAController`
 **Work item:** Service interface published early against sample data
 **Delivers:** Screen development starts immediately and in parallel, against the real service shape rather than a guess at it.
 **Audience:** Platform / foundation
@@ -250,7 +250,7 @@ and column names, screen numbers, machine tag paths, and code formatting of any 
 **Audience:** Line operator
 
 ## FW-147
-**Reference title:** FluentValidation and the canonical cross-layer enums
+**Reference title:** FluentValidation, value objects and the canonical cross-layer enums
 **Work item:** One definition per business value
 **Delivers:** A status or category means exactly the same thing on the screen, in the service and in the database — they cannot drift apart.
 **Audience:** Platform / foundation
@@ -293,14 +293,14 @@ and column names, screen numbers, machine tag paths, and code formatting of any 
 
 ## FW-001
 **Reference title:** Shared-schema column renames and new columns
-**Work item:** Existing scheduling system extended for flat wire
-**Delivers:** Flat wire fits alongside coil in the systems the plant already runs — receiving, planning, scheduling, reporting, yield and costing — without ambiguity, and nothing that reads them today breaks.
+**Work item:** CANCELLED — existing scheduling system extended for flat wire
+**Delivers:** CANCELLED August 18, 2026 at your direction — there will be no changes to the existing scheduling system's database. Flat wire is tracked entirely within the new flat wire module, and the systems the plant already runs are read and written exactly as they stand today. This removes the largest single risk in the plan.
 **Audience:** Platform / foundation
 
 ## FW-002
 **Reference title:** `INFLAT` coil status
-**Work item:** In-process status for flat wire material
-**Delivers:** Material actively on a flattening line is distinctly tracked and cannot be double-allocated.
+**Work item:** CANCELLED — in-process status for flat wire material
+**Delivers:** CANCELLED August 18, 2026, with the change above. Material actively on a flattening line is still distinctly tracked and still cannot be double-allocated — the status is simply held on the flat wire module's own rod and spool records rather than added to the existing scheduling system.
 **Audience:** Scheduling and planning
 
 ## FW-004
@@ -388,7 +388,7 @@ and column names, screen numbers, machine tag paths, and code formatting of any 
 **Audience:** Platform / foundation
 
 ## FW-159
-**Reference title:** `RodStaging`, the check-in write path and the cross-DB `INFLAT` write
+**Reference title:** `RodStaging`, the check-in write path and the `INFLAT` write
 **Work item:** Check-in records with bay rules enforced
 **Delivers:** One rod per bay and one bay per rod are guaranteed by the data, not by the screen.
 **Audience:** Platform / foundation
@@ -580,7 +580,7 @@ and column names, screen numbers, machine tag paths, and code formatting of any 
 **Audience:** Line operator (FL2)
 
 ## FW-180
-**Reference title:** `SpoolCheckin` table and the `Spool.OrderNo` index
+**Reference title:** `SpoolCheckin` table and the `SpoolProcessing.OrderNo` index
 **Work item:** Spool queue performance
 **Delivers:** The spool queue stays fast as the number of spools grows.
 **Audience:** IT and operations

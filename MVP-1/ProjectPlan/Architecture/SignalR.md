@@ -114,6 +114,8 @@ A strongly-typed `Hub<IFlatWireClient>` — **no magic-string method names.**
 | 10 | `PayoffStateChanged` | `{lineId, position, state, rodAlpha, rodSeqno, isWelded}` | **immediate, unbatched** | DB2A bay cards, DB1 "Payoff 2 not loaded" rule |
 | 11 | `SpoolCompletionPromptDue` | `{lineId, runId, spoolAlpha, plcStopTimestamp, latchedWeightLb, targetLb}` | **immediate, unbatched · server-owned, durable** | DB3 machine-stop confirmation |
 | 12 | `SpoolCompletionPromptResolved` | `{lineId, runId, answer, operatorId, timestamp}` | **immediate, unbatched** | DB3 — closes the prompt across all clients |
+| 13 | `OrderAllocationReached` | `{lineId, station, runId, rodAlpha, orderNo, consumptionId, crossedAt, latchedWeightLb, allocatedWeightLb}` | **immediate, unbatched · server-owned, durable** | DB3 — the order-complete prompt |
+| 14 | `OrderAllocationResolved` | `{lineId, station, runId, orderNo, consumptionId, acknowledgedBy, weightAtAckLb, overrunLb, timestamp}` | **immediate, unbatched** | DB3 — closes the prompt across all clients, and reveals the next order |
 
 `state` on `PayoffStateChanged` is `NotStaged` · `Staged` · `Active` · `Blocked`. It fires on **every** bay-occupancy change: pre-check-in, pre-check-out, mark-as-welded, and check-in consuming a staged row.
 
@@ -121,11 +123,40 @@ A strongly-typed `Hub<IFlatWireClient>` — **no magic-string method names.**
 
 **Events 11 and 12 were promoted into this contract on 14 Aug 2026** (gap **`G37`**, story **`FW-202`**) from §5.5, where they had sat marked *"not yet in the published contract"* while `FR-140`–`FR-149` specified them as `Must`. `answer` on `SpoolCompletionPromptResolved` is `Yes` · `No` · `AutoDismissed`.
 
-> **`SpoolCompletionPromptDue` is the only event in this contract that is not fire-and-forget.** `FR-144` requires the pending prompt to be **server-owned state, persisted against the run**, so it survives a browser refresh or a screen change and is **re-delivered on reconnect** (`TC-173`). Every other event here may be missed by a disconnected client and recovered from the next snapshot; this one may not — a stopped mill with an unanswered prompt is a spool nobody has committed. **Persist it, re-deliver it on group re-join, and do not treat it as telemetry.**
+> **`SpoolCompletionPromptDue` and `OrderAllocationReached` are the only events in this contract that are not fire-and-forget.** `FR-144` requires the pending prompt to be **server-owned state, persisted against the run**, so it survives a browser refresh or a screen change and is **re-delivered on reconnect** (`TC-173`). Every other event here may be missed by a disconnected client and recovered from the next snapshot; this one may not — a stopped mill with an unanswered prompt is a spool nobody has committed. **Persist it, re-deliver it on group re-join, and do not treat it as telemetry.**
 >
 > Two further constraints the transport must respect, both from `FR-141`–`FR-143`: the event is raised on the **`RUNNING → STOPPED` edge exactly once per stop**, so a duplicate delivery must be idempotent at the client; and the weight it carries is **latched at the PLC stop timestamp**, so a client must render `latchedWeightLb` and never substitute a fresher `PayoffWeight` tick.
 
-> **`PP-04` — the event count was 10, not 9, and is now 12.** The master specification's status summary says "30 REST endpoints + **9** hub events". The event table there, and the list in `Business/BusinessRules.md` §3, both enumerated **ten**; the "9" predated `PayoffStateChanged`, added with the pre-check-in feature on 29 Jul 2026. **With events 11 and 12 promoted on 14 Aug 2026 the published count is twelve.** Correct the summary line to twelve, not ten.
+> **`PP-04` — the count was 9, then 10, then 12, and is now 14. Two of the three places this item names no longer exist as described.**
+>
+> **The history.** The original *“9”* predated `PayoffStateChanged`, added with the pre-check-in feature on 29 Jul 2026, which made it **10**. Events 11 and 12 were promoted into this table on 14 Aug 2026, making it **12** — but **the master specification's status summary was never corrected**, and still read **10** on 22 Aug. Events 13 and 14 (the order-allocation prompt) make it **14**, and the summary was corrected to 14 in one step rather than through 12.
+>
+> ⚠ **This item said three places carry the number. Checked on 22 Aug 2026, only two do.**
+>
+> | Named here | Actually |
+> |---|---|
+> | this §5.2 table | ✅ carries it — **14 rows** |
+> | the master spec's status summary | ✅ carries it — corrected to **14** (and its endpoint count to 32) |
+> | *“the event table there”* (in the master spec) | ❌ **there is no event table in the master spec.** It references individual events inside requirement text — `FR-048`, `FR-053` and others — which do not restate a count and need no edit |
+> | *“the list in `Business/BusinessRules.md` §3”* | ❌ **that list is no longer there.** The document carries no event enumeration at all; it moved during the ProjectPlan restructure. Nothing in it states a count |
+>
+> **So the rule is now: change this table and the master spec's summary together.** Both were updated on 22 Aug 2026. Individual event *names* appear in roughly 25 files, but none of those states a total, so they are unaffected by a count change — which is the distinction this item was missing.
+
+> **Events 13 and 14 follow event 11's contract exactly, and for the same reason.** The order-allocation
+> prompt is **server-owned state persisted against the consumption record**, so it survives a browser
+> refresh and is re-delivered on group re-join. A stopped-and-forgotten prompt here is worse than the spool
+> case: the line is **still running**, and the material produced between the crossing and the operator's
+> acknowledgement is the **overrun** — recorded, attributed to the outgoing order, and reportable. Two
+> constraints the transport must respect:
+>
+> - The crossing is detected **server-side on the footage stream**, once per pairing. A duplicate delivery
+>   must be idempotent at the client, exactly as for event 11.
+> - `latchedWeightLb` is the weight **at the crossing instant**. A client must render it as latched and
+>   **never substitute a fresher `PayoffWeight` tick** — the same rule, and the same failure if ignored.
+>
+> ⚠ **`OrderAllocationResolved` does something event 12 does not:** it reveals the **next order** on the
+> same rod, because the acknowledgement is what starts it. The rod is not dismounted and nothing is
+> scanned, so this event is the only signal the screen gets that the boundary has been crossed.
 
 ### 5.3 The FL2 rule
 
@@ -148,7 +179,7 @@ Specified in [`SpoolCompletionNotification.md`](../Business/Screens/SpoolComplet
 
 **Part A is `Should` and explicitly *"advisory and non-blocking"***, so leaving its two events unpublished is a scope decision rather than an omission — it is deferred out of the trial run (`[TRP §4]`) and remains owned by `FW-N02`. **Part B was neither:** `FR-140`–`FR-149` are `Must` and `FR-144` is a durability requirement on the transport itself, which is why it could not stay in a section headed *"not yet in the published contract"*.
 
-> **`OI-32` is half-closed (14 Aug 2026).** It recorded that there is **no endpoint** for the spool-completion prompt or commit. The **commit** half is now `FW-202`'s `CompleteSpool` command, which writes the `Spool` row and closes the run — see `[TB]` `FW-202` and gap **`G37`**. The **prompt** half needs no endpoint by design: the prompt is raised by the server on the `RUNNING → STOPPED` edge and answered over the hub, so there is nothing for a client to poll. Restate `OI-32` accordingly rather than closing it outright — the Part A progress payload still has no published surface.
+> **`OI-32` is half-closed (14 Aug 2026).** It recorded that there is **no endpoint** for the spool-completion prompt or commit. The **commit** half is now `FW-202`'s `CompleteSpool` command, which writes the `SpoolProcessing` row and closes the run — see `[TB]` `FW-202` and gap **`G37`**. The **prompt** half needs no endpoint by design: the prompt is raised by the server on the `RUNNING → STOPPED` edge and answered over the hub, so there is nothing for a client to poll. Restate `OI-32` accordingly rather than closing it outright — the Part A progress payload still has no published surface.
 
 ### 5.6 Angular observable map
 

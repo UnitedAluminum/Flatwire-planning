@@ -2,11 +2,11 @@
 -- ⚠ MVP-2 SCOPE. NOT built by FlatWire_DDL_RunAll.sql -- that runner deliberately skips it.
 -- Co-located with the MVP-1 chain 15 Aug 2026 (was MVP-2/DBChanges/). See MVP2-SCOPE.md.
 -- Flat Wire Mill (MVP-2) — DDL 08b: MVP-2 programmability
--- Run order : 08b of 06 (MVP-2 chain)
+-- Run order : the whole MVP-2 chain -- this file is the only object in it
 -- Scope     : MVP-2 (deferred). NOT part of MVP-1.
 -- ============================================================
 -- Split out of FlatWire_DDL_08_Programmability.sql on 11 Aug 2026 when the schema was
--- divided by MVP scope. trg_CoilTraceability_NoOverlap (DM010, CoilTraceability) and sp_ShiftSummary (DB10). sp_GetGaugeTrace stays in MVP-1.
+-- divided by MVP scope. sp_ShiftSummary (DB10) and NOTHING ELSE. trg_CoilTraceability_NoOverlap and sp_GetGaugeTrace are BOTH MVP-1 and both live in 08_Programmability -- this file does not create, drop or grant on either.
 --
 -- PREREQUISITE: the whole MVP-1 chain must already be deployed
 -- (00_Database .. 08_Programmability under MVP-1/ProjectPlan/Database).
@@ -20,7 +20,7 @@ SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
 GO
 
-CREATE PROCEDURE [dbo].[sp_ShiftSummary]
+CREATE OR ALTER PROCEDURE [dbo].[sp_ShiftSummary]
     @LineId     VARCHAR(5),
     @ShiftStart DATETIMEOFFSET,
     @ShiftEnd   DATETIMEOFFSET

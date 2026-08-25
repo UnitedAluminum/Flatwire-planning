@@ -7,12 +7,12 @@
 ---
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-07-30
+**Last Updated:** 2026-08-18 — **`D-32`: no shared-schema migration.** The 16 h shared-`coils` column line is cancelled — the plan’s second shared-schema change; **205 → 182 h** *(previously 2026-07-30)*
 **Status:** Ready to build
 **Layer:** Full-stack vertical slice
 **Owner:** **FE + BE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
-**Effort:** **205 h** (25.6 d) — FE 64 · BE 40 · DB 28 · RT 16 · QA 30 · cont. 27 · **Window:** W5 (Sep 14–18, 5 working days)
-**Scope call:** **Not deferrable.** The DB line includes **16 h for new columns on the shared `coils` table** (`footage_run_to_date`, `remaining_weight_estimate`) plus `Spool.source_rod_alpha` — a second shared-schema change after FW-001, with its own audit need. The BE line includes 16 h for the durable pending-approval queue (G7).
+**Effort:** **182 h** (22.8 d) — FE 64 · BE 40 · DB 12 · RT 16 · QA 26 · cont. 24 · **Window:** W5 (Sep 14–18, 5 working days) — ⚠ **re-derived 18 Aug 2026 by `D-32`** *(previously **205 h** — DB 28 · QA 30 · cont. 27)*
+**Scope call:** **Not deferrable.** ⚠ **The DB line fell from 28 h to 12 h.** It had included **16 h for new columns on the shared `coils` table** (`footage_run_to_date`, `remaining_weight_estimate`) plus `Spool.source_rod_alpha` — **the plan's second shared-schema change after FW-001, and cancelled on the same ground by `D-32`.** Nothing is lost with it: the delivered design is already `FlatWireDB`-local (`Rod.FootageRunToDate`, `Rod.RemainingWeightEstimateLb`, `SpoolProcessing.SourceRodAlpha`) and has been in the DDL since 26 Jul 2026. **If the carry-forward write paths need time of their own, re-price them as a new line** rather than assuming they sat inside the removed 16 h. The BE line still includes 16 h for the durable pending-approval queue (G7). ⚠ **`[CE §3b]` still publishes 205 h and is deliberately not re-derived** — `[TB]`'s Phase 7 reconciliation is the derivation of record.
 
 *Formal off-ramps for suspect material and for rods removed before natural completion, including supervisor-approved partial runs.*
 
@@ -48,7 +48,7 @@
 - **Logging/authz:** operator flags, supervisor disposes; all audited.
 
 ## Database Changes
-- **Tables (write):** `WipRejection` (nullable `RunId`), `RodCheckout` (**Mode P**/A/B, `PartialSpoolAlpha`, dispositions — `CK_RodCheckout_ModeP` and `CK_RodCheckout_ModeB` now enforce the per-mode field rules in the database rather than in prose, closing REVIEW.md #20); `RodStaging.Status → 'Unstaged'` on Mode P; status transitions on the existing **`coils`** rod row / `Spool.Status` / `CoilOutput.Status`; carry-forward columns added to the existing **`coils`** rod row (`footage_run_to_date`, `remaining_weight_estimate`) + `source_rod_alpha` on `Spool` (**new columns — schema addition this phase**, per PartialRodReCheckin design).
+- **Tables (write):** `WipRejection` (nullable `RunId`), `RodCheckout` (**Mode P**/A/B, `PartialSpoolAlpha`, dispositions — `CK_RodCheckout_ModeP` and `CK_RodCheckout_ModeB` now enforce the per-mode field rules in the database rather than in prose, closing REVIEW.md #20); `RodStaging.Status → 'Unstaged'` on Mode P; status transitions on the existing **`coils`** rod row / `SpoolProcessing.Status` / `CoilOutput.Status`; carry-forward columns added to the existing **`coils`** rod row (`footage_run_to_date`, `remaining_weight_estimate`) + `source_rod_alpha` on `SpoolProcessing` (**new columns — schema addition this phase**, per PartialRodReCheckin design).
 - **Indexes:** `WipRejection(RunId)`, `RodCheckout(RunId)`.
 - **Relationships:** polymorphic `WipRejection.MaterialAlpha` (rod or spool, no FK), `RodCheckout.PartialSpoolAlpha` (no FK).
 

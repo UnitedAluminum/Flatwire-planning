@@ -1,7 +1,7 @@
 # Flat Wire Mill — Process Flows
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — split out of `02-SRS.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** August 18, 2026 — **`D-32`: there is no shared-schema migration.** The check-in sequence diagram drops `coils.coil_status = INFLAT` from the legacy write *(previously August 13, 2026 — split out of `02-SRS.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
 **Document Type:** End-to-end process flows — the normal path
 **Status:** Baselined for build
 **Owner:** BA / Analysis stream
@@ -100,7 +100,7 @@ sequenceDiagram
     NG->>API: POST /checkin/rod
     API->>SVC: CheckInRodCommand
     SVC->>DB: inspection result, PreRun SPC, FlatWireRun(Running), RodCheckin
-    SVC->>LEG: coils.coil_status = INFLAT, reqsum + wip_coil_orders, actual_start_date
+    SVC->>LEG: reqsum + wip_coil_orders, actual_start_date
     SVC->>PLC: PushPassSchedule(scheduleId, lineId, payoffPosition)
     PLC-->>SVC: all tags OK — any failure aborts, compensating clears run
     SVC->>DB: RodStaging.Status → CheckedIn when the rod was staged
@@ -113,6 +113,47 @@ sequenceDiagram
 **Gate conditions before Acknowledge enables:** rod alpha valid against `coils` · diameter within nominal ± lookup tolerance · all mandatory fields complete · rod available (not checked in elsewhere) · order Open and plan open · **all inspection items Pass** · pre-run SPC diameter entered and in spec · a pass schedule loaded and **explicitly confirmed**.
 
 ---
+
+### 4.4a The order boundary — a handoff inside one mount
+
+Where a rod carries the boundary between two orders, the boundary is crossed **without touching the rod**. This is the one flow in which an operator action closes one order and starts the next with no material movement at all.
+
+```
+   rod checked in once, at mount
+            │
+            ▼
+   [ order 1 in progress ]  ── consumption tracked against order 1
+            │
+            │  server sees the run's footage cross the allocated weight
+            ▼
+   [ allocation reached ]  ────▶ notification to the operator
+            │                        (durable; survives a refresh)
+            │  ⚠ THE LINE KEEPS RUNNING. Material produced here is
+            │     the overrun, and it is recorded, not discarded.
+            │
+            │  operator marks order 1 complete   ◀── the only thing
+            ▼                                        that closes it
+   [ order 2 in progress ]  ── same rod, same mount, same run
+            │
+            ▼
+   rod checked out when spent, or the next boundary
+```
+
+**Who or what triggers each step:**
+
+| Step | Trigger | What is written |
+|---|---|---|
+| Order 1 in progress | check-in acknowledged | the pairing opens; the station is claimed |
+| Allocation reached | **server-side**, on the footage stream — not a client check | the crossing instant and the weight **latched at that instant** |
+| Notification | the crossing | delivered durably, re-delivered on reconnect |
+| Order 1 complete | **the operator**, explicitly | the acknowledgement, the weight latched **again**, and the overrun between the two latches |
+| Order 2 in progress | that same acknowledgement | the next pairing opens on the same mount; the station is **handed over, not released** |
+
+**Three things this flow makes true, and each surprises somebody:**
+
+1. **One run spans both orders.** A run is one row per check-in event, and the rod is checked in once — so the boundary is crossed *inside* a run. Everything keyed on the run spans both orders (`OI-123`).
+2. **The PLC tags are pushed once.** Check-in is the push moment, and there is no second check-in — so both orders necessarily run under the first order's pass schedule. If the two orders' schedules differ, the mounted handoff must be **refused** and the rod checked out and back in (`FR-550`, **`Q48`**).
+3. **FL1 does not wait for FL2.** The FL1 queue moves to the next order on the acknowledgement, while FL2 is still cutting the previous order's spools. An order is *consumed* at FL1 and *produced* at FL2, and it is complete only when both are true.
 
 ### 4.5 During the run — the events that can interrupt it
 

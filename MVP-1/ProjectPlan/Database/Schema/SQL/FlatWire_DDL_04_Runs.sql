@@ -1,11 +1,11 @@
 -- ============================================================
 -- Flat Wire Mill — DDL Script 04: Run Tracking Tables
 -- Run order : 04 of 09
--- Tables    : FlatWireRunDetail, RodStaging, RodCheckin, SpoolCheckin,
+-- Tables    : FlatWireRunDetail, RodStaging, RodCheckin, SpoolCheckin, SpoolStaging,
 --             RunPauseEvent, WeldEvent, RollOverride, DieChangeEvent,
---             RunReading
--- Dependencies: 03_Materials (FlatWireRun, Rod, Spool), 02_Schedule (PassSchedule)
--- Note      : FlatWireRun itself is in 03_Materials so Spool can
+--             RunReading, RodOrderConsumption   (11)
+-- Dependencies: 03_Materials (FlatWireRun, Rod, SpoolProcessing), 02_Schedule (PassSchedule)
+-- Note      : FlatWireRun itself is in 03_Materials so SpoolProcessing can
 --             reference it as SourceRunId.
 -- ============================================================
 
@@ -268,6 +268,13 @@ BEGIN
         [OperatorId]              VARCHAR(50)   NOT NULL,
         [CheckedInAt]             DATETIMEOFFSET NOT NULL CONSTRAINT [DF_RodCheckin_CheckedInAt] DEFAULT (SYSDATETIMEOFFSET()),
         [PlcTagsPushed]           BIT           NOT NULL,   -- 1 = PLC tags written successfully
+        -- FW-220 / FW-221 (19 Aug 2026). Did united_db.dbo.FlatWire_CheckInRod CREATE the
+        -- proddb..wip_coil_orders row for this check-in, or find one already there?
+        -- FlatWire_ReverseReqsum must know: a row that predates flat wire is not ours to delete
+        -- at pre-check-out, and deleting it would remove an order claim we never made. The
+        -- procedure returns this as an OUTPUT parameter and the caller persists it here.
+        -- Defaults to 0 - the SAFE direction - so a missing value never authorises a delete.
+        [WipCoilOrdersWritten]    BIT           NOT NULL CONSTRAINT [DF_RodCheckin_WipCoilOrdersWritten] DEFAULT (0),
         [InspectionOxidation]     VARCHAR(10)   NOT NULL,   -- Pass | Fail
         [InspectionSurfaceDefects] VARCHAR(10)  NOT NULL,   -- Pass | Fail
         [InspectionWaterStains]   VARCHAR(10)   NOT NULL,   -- Pass | Fail
@@ -293,6 +300,40 @@ ELSE
 GO
 
 -- ------------------------------------------------------------
+-- RodCheckin.WipCoilOrdersWritten -- retro-fit for an EXISTING database.
+--
+-- ⚠ THE TABLE GUARD ABOVE IS `IF NOT EXISTS (... CREATE TABLE ...)`, SO A
+--   COLUMN ADDED TO THE CREATE TABLE BODY NEVER REACHES A DATABASE THAT
+--   ALREADY EXISTS. Tables and indexes are genuinely idempotent in this
+--   runner; COLUMNS ARE NOT, and that gap is silent -- the deploy prints
+--   "Table already exists" and moves on, and the missing column is only
+--   discovered when something reads it.
+--
+--   Found by deploying, 19 Aug 2026: WipCoilOrdersWritten was absent from a
+--   live FlatWireDB after a clean RunAll, while UX_FlatWireRun_ActiveLine
+--   (added the same day, in 07_Indexes, which guards per index) was present.
+--
+--   FlatWire_ReverseReqsum reads this column to decide whether check-in
+--   created the wip_coil_orders row it is being asked to delete. A missing
+--   column there is not cosmetic.
+--
+--   The established repo answer is teardown-and-redeploy, which is correct
+--   for a pre-production schema but leaves every intermediate database wrong.
+--   This guarded ALTER costs nothing and makes the runner's own promise --
+--   "every included script guards its objects" -- true for columns too.
+-- ------------------------------------------------------------
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[RodCheckin]') AND type = N'U')
+   AND NOT EXISTS (SELECT 1 FROM sys.columns
+                   WHERE object_id = OBJECT_ID(N'[dbo].[RodCheckin]') AND name = N'WipCoilOrdersWritten')
+BEGIN
+    ALTER TABLE [dbo].[RodCheckin]
+        ADD [WipCoilOrdersWritten] BIT NOT NULL
+            CONSTRAINT [DF_RodCheckin_WipCoilOrdersWritten] DEFAULT (0);
+    PRINT 'Added column: RodCheckin.WipCoilOrdersWritten';
+END
+GO
+
+-- ------------------------------------------------------------
 -- SpoolCheckin
 -- Captures every spool check-in event at FL2/FL3. Mirrors
 -- RodCheckin for the Hybrid route mode spool-feed workflow.
@@ -303,7 +344,7 @@ BEGIN
         [Id]               INT           NOT NULL IDENTITY(1,1),
         [RunId]            VARCHAR(20)   NOT NULL,           -- FK → FlatWireRun.RunId
         [LineId]           VARCHAR(5)    NOT NULL,           -- FL2 | FL3
-        [SpoolAlpha]       VARCHAR(20)   NOT NULL,           -- FK → Spool.Alpha
+        [SpoolAlpha]       VARCHAR(20)   NOT NULL,           -- FK → SpoolProcessing.Alpha
         [PayoffPosition]   INT           NOT NULL,           -- 1 or 2
         [GaugeIn]          DECIMAL(8,4)  NOT NULL,           -- operator-measured gauge (in)
         [WidthIn]          DECIMAL(8,4)  NOT NULL,           -- operator-measured width (in)
@@ -515,4 +556,245 @@ BEGIN
 END
 ELSE
     PRINT 'Table already exists: RunReading';
+GO
+
+-- ============================================================
+-- FL2 PRE-CHECK-IN QUEUE  (added 22 Aug 2026)
+--
+-- FL2 now HAS pre-check-in (client, 20 Aug 2026): "to validate the next
+-- spool and to eliminate the potential for downtime due to the fact
+-- that they grabbed the wrong spool and then would find out at check-in
+-- and then have to go and locate the correct one."
+--
+-- This REVERSES FR-031 ("shall not support pre-check-in on FL2"), a rule
+-- asserted across eighteen documents including CK_RodStaging_LineId
+-- below. The PHYSICAL premise of PCI002 is UNCHANGED -- FL2 still has
+-- one traversing payoff and no floor space. What was asked for is
+-- VALIDATION, not staging. A queued spool is validated, not staged.
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- SpoolStaging
+-- The FL2 pre-check-in queue: what the operator has already validated,
+-- in the order they intend to run it (client, 21 Aug 2026 -- drag and
+-- drop to reorder, top of queue checked in by default).
+--
+-- WHY NOT RodStaging. That table is rod-shaped throughout: oxidation /
+-- surface-defect / water-stain inspection columns that RocCheckin.md
+-- 4.3 says are NOT PERFORMED on a spool ("the material was inspected at
+-- FL1 before it was drawn and flattened"), plus IsWelded, UnstageKind,
+-- two alternating bay states and PayoffPosition NOT NULL. Widening
+-- CK_RodStaging_LineId to admit FL2 would add rows that cannot populate
+-- half the table.
+--
+-- ONE ROW PER SPOOL, not per rod alpha. FL2 mounts a spool on a single
+-- payoff, so one row is one physical fetch. A queue keyed on rod alphas
+-- would put two rows against one welded spool, and reordering them
+-- against each other is meaningless under last-on-first-off unwind.
+--
+-- NO PAYOFF POSITION -- FL2 has ONE payoff (client, 21 Aug 2026).
+-- NO INSPECTION COLUMNS -- already inspected as rod at FL1.
+-- NO STATION CLAIM -- the WIP station is claimed at CHECK-IN only
+--   (client, 21 Aug 2026), consistent with FL1, where staging has been
+--   barred from writing shared state since the 30 Jul "check-in only"
+--   decision. So this table is entirely FlatWireDB-local: nothing in
+--   CommonDB, proddb or united_db. That is what keeps the queue's
+--   length unbounded -- had pre-check-in claimed the station,
+--   WIPStations' UNIQUE index on CoilNo would permit exactly ONE
+--   queued spool, and a queue of one is not a queue.
+--
+-- QueuePosition IS DELIBERATELY NOT UNIQUE. Drag-and-drop reorder swaps
+-- positions, and a UNIQUE index rejects the transient duplicate
+-- mid-swap -- a trap that does not surface until the SECOND reorder.
+-- DECIMAL so a row can be inserted BETWEEN two others (position 1.5)
+-- with no renumber at all.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SpoolStaging]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[SpoolStaging] (
+        [Id]              INT           NOT NULL IDENTITY(1,1),
+        [SpoolAlpha]      VARCHAR(20)   NOT NULL,      -- FK -> SpoolProcessing.Alpha; the row's identity
+        [LineId]          VARCHAR(5)    NOT NULL,      -- FL2 (FL3 permitted should it ever queue)
+        [QueuePosition]   DECIMAL(9,3)  NOT NULL,      -- operator-ordered; lowest is checked in by default.
+                                                       -- NOT unique, and fractional on purpose -- see above.
+        [Status]          VARCHAR(20)   NOT NULL CONSTRAINT [DF_SpoolStaging_Status] DEFAULT ('Queued'),
+        [PreCheckedInBy]  VARCHAR(50)   NOT NULL,      -- who validated it -- the audit the queue exists to provide
+        [PreCheckedInAt]  DATETIMEOFFSET NOT NULL CONSTRAINT [DF_SpoolStaging_At] DEFAULT (SYSDATETIMEOFFSET()),
+        [RemovedAt]       DATETIMEOFFSET NULL,         -- set when checked in, or withdrawn from the queue
+        [RemovedReason]   VARCHAR(200)  NULL,
+        [RowVersion]      ROWVERSION    NOT NULL,      -- optimistic concurrency: two terminals may reorder at once
+
+        CONSTRAINT [PK_SpoolStaging]         PRIMARY KEY CLUSTERED ([Id] ASC),
+        -- FL2 only today. FL3 is permitted because it shares FM2, but it
+        -- creates no spool, so in practice it will not queue one.
+        CONSTRAINT [CK_SpoolStaging_LineId]  CHECK ([LineId] IN ('FL2','FL3')),
+        CONSTRAINT [CK_SpoolStaging_Status]  CHECK ([Status] IN ('Queued','CheckedIn','Withdrawn')),
+        CONSTRAINT [CK_SpoolStaging_Pos]     CHECK ([QueuePosition] > 0),
+        CONSTRAINT [CK_SpoolStaging_Removed] CHECK (([Status] = 'Queued' AND [RemovedAt] IS NULL)
+                                                 OR ([Status] <> 'Queued' AND [RemovedAt] IS NOT NULL))
+    );
+    PRINT 'Created table: SpoolStaging';
+END
+ELSE
+    PRINT 'Table already exists: SpoolStaging';
+GO
+
+-- ------------------------------------------------------------
+-- SpoolCheckin -- retro-fit corrections for an EXISTING database.
+-- Guarded ALTERs for the reason documented above RodCheckin's.
+-- ------------------------------------------------------------
+
+-- (1) OrderId -> NULLABLE.
+-- A spool may carry SEVERAL orders (client, 20 Aug 2026) and FL2 makes
+-- ONE at a time, so this column means "the order being made NOW",
+-- selected from the spool's SpoolOrder set. It must also be nullable
+-- because SpoolQueue.md rule SQ-6 states an UNALLOCATED spool "may
+-- still be checked in" -- a planning remainder or a supervisor-accepted
+-- partial legitimately has no order -- which the NOT NULL forbade.
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SpoolCheckin]') AND type = N'U')
+   AND EXISTS (SELECT 1 FROM sys.columns
+               WHERE object_id = OBJECT_ID(N'[dbo].[SpoolCheckin]') AND name = N'OrderId' AND is_nullable = 0)
+BEGIN
+    ALTER TABLE [dbo].[SpoolCheckin] ALTER COLUMN [OrderId] VARCHAR(20) NULL;
+    PRINT 'Altered column: SpoolCheckin.OrderId -> NULL (SQ-6, multi-order spool)';
+END
+GO
+
+-- (2) Where THIS run began consuming the spool, in SPOOL-LOCAL feet.
+-- Two FL2 runs (two orders) consume ONE spool from two DIFFERENT
+-- starting points, so the offset is PER CHECK-IN, not per spool.
+-- SpoolProcessing.RunStartFootageFt serves the rod->spool hop; this serves
+-- spool->coil. With only the former, run 2's genealogy composes from
+-- run 1's origin and every rod attribution in the second coil is wrong.
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SpoolCheckin]') AND type = N'U')
+   AND NOT EXISTS (SELECT 1 FROM sys.columns
+                   WHERE object_id = OBJECT_ID(N'[dbo].[SpoolCheckin]') AND name = N'SpoolStartFootageFt')
+BEGIN
+    ALTER TABLE [dbo].[SpoolCheckin] ADD [SpoolStartFootageFt] DECIMAL(10,2) NULL;
+    PRINT 'Added column: SpoolCheckin.SpoolStartFootageFt';
+END
+GO
+
+-- (3) PayoffPosition -- FL2 has ONE payoff (client, 21 Aug 2026).
+-- CK_SpoolCheckin_PayoffPos permitted (1,2), copied from RodCheckin,
+-- where the VPS genuinely has two bays. FL2's single traversing payoff
+-- is what SpoolQueue.md rules SQ-8..SQ-10 (exclusive check-in) and the
+-- filtered index UX_FlatWireRun_ActiveLine both rest on. The column is
+-- kept -- one reference in the repository -- and constrained to 1.
+IF EXISTS (SELECT * FROM sys.check_constraints WHERE name = N'CK_SpoolCheckin_PayoffPos')
+   AND EXISTS (SELECT 1 FROM sys.check_constraints
+               WHERE name = N'CK_SpoolCheckin_PayoffPos' AND definition LIKE '%(2)%')
+BEGIN
+    ALTER TABLE [dbo].[SpoolCheckin] DROP CONSTRAINT [CK_SpoolCheckin_PayoffPos];
+    ALTER TABLE [dbo].[SpoolCheckin]
+        ADD CONSTRAINT [CK_SpoolCheckin_PayoffPos] CHECK ([PayoffPosition] = 1);
+    PRINT 'Replaced constraint: CK_SpoolCheckin_PayoffPos -> = 1 (FL2 has one payoff)';
+END
+GO
+
+------------------------------------------------------------
+-- ROD <-> ORDER CONSUMPTION  (added 22 Aug 2026)
+-- What was actually consumed per (rod, order) pairing, and the handoff
+-- state machine that carries the order boundary.
+------------------------------------------------------------
+
+-- ------------------------------------------------------------
+-- RodOrderConsumption
+-- What was actually consumed against each (rod, order) pairing, and
+-- the handoff state machine that carries the order boundary.
+--
+-- ONE CHECK-IN, N CONSUMPTION ROWS -- and that cardinality IS the
+-- client's rule 7. A rod planned for two orders is checked in ONCE and
+-- stays on the payoff across the boundary: the operator marks order 1
+-- complete and starts order 2 on the same mount. No dismount, no
+-- remount, no second check-in -- so RodCheckin is the parent and this
+-- table is the child.
+--
+-- THE STATION IS THE EXCLUSIVITY KEY, NOT LineId. FL1 and FL3 share
+-- ONE physical VPS (STATION_BY_LINE maps both to FL1PO), so keying on
+-- LineId would admit (FL1,...) and (FL3,...) as distinct entries for
+-- what is one payoff. Exactly the correction G21 forced on RodStaging;
+-- LineId is retained for projection and reporting only.
+--
+-- TWO WEIGHT LATCHES, NOT ONE. LatchedWeightAtThresholdLb is captured
+-- at the crossing instant and never re-read;
+-- WeightAtAcknowledgementLb is captured when the operator confirms.
+-- The OVERRUN is the difference, and the client requires it be
+-- captured rather than discarded. Same rule as
+-- FlatWireRun.PromptLatchedWeightLb: the weight AT that instant, never
+-- a later drifted value.
+--
+-- THE ROW STATES ITS OWN CONVERSION. LbPerFtUsed + ConversionBasis +
+-- ConverterVersion are persisted per row so a change to the
+-- footage->weight formula NEVER retro-changes a historical record.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[RodOrderConsumption]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[RodOrderConsumption] (
+        [Id]                          INT            NOT NULL IDENTITY(1,1),
+        [ConsumptionId]               VARCHAR(20)    NOT NULL,   -- e.g. RC-0041; human key, as CheckoutId / RejectionId / CheckpointId
+        [RunId]                       VARCHAR(20)    NOT NULL,   -- FK -> FlatWireRun.RunId
+        [RodCheckinId]                INT            NOT NULL,   -- FK -> RodCheckin.Id; the mount this pairing runs on
+        [Station]                     VARCHAR(10)    NOT NULL,   -- e.g. FL1PO; the exclusivity key (G21)
+        [LineId]                      VARCHAR(5)     NOT NULL,   -- FL1|FL3; projection and reporting only
+        [RodAlpha]                    VARCHAR(20)    NOT NULL,   -- FK -> Rod.Alpha
+        [OrderNo]                     VARCHAR(50)    NOT NULL,   -- shared-schema order; NO FK by design
+        [RelLetter]                   VARCHAR(10)    NULL,
+        [AllocationId]                INT            NULL,       -- FK -> RodOrderAllocation.Id; NULL for a substitution made before the allocation row exists
+        [AllocatedWeightLbSnapshot]   DECIMAL(8,2)   NULL,       -- SNAPSHOT, not a join -- re-planning must not retro-change what the floor was told
+        [PlannedRodSeqNoSnapshot]     SMALLINT       NULL,       -- ditto; same pattern as RodStaging.PlannedSeqno
+        [ActualRodSeqNo]              SMALLINT       NOT NULL,   -- the position this rod actually took in this order
+        [State]                       VARCHAR(20)    NOT NULL,   -- Pending|InProgress|ThresholdReached|Closed|Voided
+        [StartFootageFt]              DECIMAL(10,2)  NOT NULL,   -- RUN-CUMULATIVE anchor, captured live from the counter
+        [EndFootageFt]                DECIMAL(10,2)  NULL,       -- run-cumulative at close
+        [ConsumedFootageFt]           AS ([EndFootageFt] - [StartFootageFt]) PERSISTED,  -- the only footage arithmetic in the table
+        [ThresholdFootageFt]          DECIMAL(10,2)  NULL,       -- computed ONCE at pairing start: remaining allocated weight -> feet at the running gauge, plus StartFootageFt
+        [ThresholdReachedAt]          DATETIMEOFFSET NULL,       -- the crossing instant
+        [LatchedWeightAtThresholdLb]  DECIMAL(8,2)   NULL,       -- latched AT the crossing; never a fresher tick
+        [NotificationRaisedAt]        DATETIMEOFFSET NULL,       -- when OrderAllocationReached went out
+        [AcknowledgedAt]              DATETIMEOFFSET NULL,       -- rule 9: the operator closes the order, not the system
+        [AcknowledgedBy]              VARCHAR(50)    NULL,
+        [WeightAtAcknowledgementLb]   DECIMAL(8,2)   NULL,       -- the SECOND latch
+        [OverrunWeightLb]             AS ([WeightAtAcknowledgementLb] - [LatchedWeightAtThresholdLb]) PERSISTED,  -- + = overrun, - = early ack
+        [VarianceVsAllocationLb]      AS ([WeightAtAcknowledgementLb] - [AllocatedWeightLbSnapshot]) PERSISTED,
+        [ConsumedWeightLb]            DECIMAL(8,2)   NULL,       -- written at close, NOT computed -- the basis may be integration over RunReading
+        [ConversionBasis]             VARCHAR(20)    NULL,       -- Nominal|Measured|IntegratedRunReading|Override (OI-45)
+        [LbPerFtUsed]                 DECIMAL(10,6)  NULL,       -- the factor actually applied; a historical row is never recomputed
+        [ConverterVersion]            VARCHAR(20)    NULL,       -- for a change of formula SHAPE rather than factor
+        [ClosureReason]               VARCHAR(25)    NULL,       -- Acknowledged|AcknowledgedEarly|RodExhausted|RodAbandoned|Superseded
+        [RodCheckoutId]               VARCHAR(20)    NULL,       -- FK -> RodCheckout.CheckoutId when closure is RodAbandoned (Mode B)
+        [ShortfallWeightLb]           DECIMAL(8,2)   NULL,       -- set when the pairing closed below allocation because material ran out
+        [OperatorId]                  VARCHAR(50)    NOT NULL,
+        [CreatedAt]                   DATETIMEOFFSET NOT NULL
+            CONSTRAINT [DF_RodOrderConsumption_CreatedAt] DEFAULT (SYSDATETIMEOFFSET()),
+        [ModifiedBy]                  VARCHAR(50)    NULL,
+        [ModifiedAt]                  DATETIMEOFFSET NULL,
+        [RowVersion]                  ROWVERSION     NOT NULL,   -- State and footage move live, as on FlatWireRun
+
+        CONSTRAINT [PK_RodOrderConsumption]         PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [UQ_RodOrderConsumption_CId]     UNIQUE ([ConsumptionId]),
+        -- One mount, one pairing per order.
+        CONSTRAINT [UQ_RodOrderConsumption_Pair]    UNIQUE ([RodCheckinId], [OrderNo], [RelLetter]),
+        CONSTRAINT [CK_RodOrderConsumption_State]   CHECK ([State] IN ('Pending','InProgress','ThresholdReached','Closed','Voided')),
+        CONSTRAINT [CK_RodOrderConsumption_LineId]  CHECK ([LineId] IN ('FL1','FL3')),
+        CONSTRAINT [CK_RodOrderConsumption_Closure] CHECK ([ClosureReason] IS NULL OR [ClosureReason] IN
+                                                     ('Acknowledged','AcknowledgedEarly','RodExhausted','RodAbandoned','Superseded')),
+        CONSTRAINT [CK_RodOrderConsumption_Footage] CHECK ([EndFootageFt] IS NULL OR [EndFootageFt] >= [StartFootageFt]),
+        CONSTRAINT [CK_RodOrderConsumption_Seq]     CHECK ([ActualRodSeqNo] >= 1),
+        -- The three acknowledgement stamps are all-or-nothing. Written with explicit
+        -- IS NULL pairs, because "A IS NOT NULL AND B IS NOT NULL" evaluates to UNKNOWN
+        -- when one side is NULL and a CHECK constraint ACCEPTS UNKNOWN -- the trap
+        -- CK_AlloyProperty_RodDiaTol was fixed for.
+        CONSTRAINT [CK_RodOrderConsumption_AckStamps] CHECK (
+              ([AcknowledgedAt] IS NULL     AND [AcknowledgedBy] IS NULL     AND [WeightAtAcknowledgementLb] IS NULL)
+           OR ([AcknowledgedAt] IS NOT NULL AND [AcknowledgedBy] IS NOT NULL AND [WeightAtAcknowledgementLb] IS NOT NULL)),
+        -- An abandoned pairing must name the checkout that abandoned it. Same per-mode
+        -- shape as CK_RodCheckout_ModeB.
+        CONSTRAINT [CK_RodOrderConsumption_Abandon]  CHECK (
+              [ClosureReason] <> 'RodAbandoned' OR [RodCheckoutId] IS NOT NULL)
+    );
+    PRINT 'Created table: RodOrderConsumption';
+END
+ELSE
+    PRINT 'Table already exists: RodOrderConsumption';
 GO

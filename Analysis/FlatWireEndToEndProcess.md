@@ -1,7 +1,7 @@
 # Flat Wire Mill — End-to-End Process
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** April 28, 2026
+**Last Updated:** August 18, 2026 — the `INFLAT` glossary entry notes it is `FlatWireDB`-local only after `D-32` *(previously April 28, 2026)*
 **Document Type:** Process Reference
 **Status:** Draft — Pending Tim O. / Bob S. review
 
@@ -493,7 +493,7 @@ Scrap can arise at any stage. Disposition depends on the scrap type and source.
 | **Flat wire** | The product — use this term consistently; do not use "strip" |
 | **Coreless oscillated coil** | Final output form — wound without a core mandrel |
 | **Pass Schedule** | Database record defining active components, die sizes, roll gaps, and targets for a given product route |
-| **INFLAT** | Coil/bundle status code for material currently being processed on a flattening line |
+| **INFLAT** | Status code for material currently being processed on a flattening line. ⚠ **Since `D-32` (18 Aug 2026) this lives on the flat wire module's own `Rod` / `SpoolProcessing` records only** — it was never added to the shared coil-status vocabulary, because the shared-schema migration was cancelled |
 | **R-series alpha** | Rod tracking number (R00001–R99999) used in place of a coil number for rod material |
 | **Hybrid / FL3** | Continuous operating mode where FL1 and FL2 run as one uninterrupted line |
 | **TKUP** | Traversing Take-up — the oscillating winding mechanism that builds the coreless coil |

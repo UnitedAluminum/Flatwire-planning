@@ -1,10 +1,16 @@
 # Flat Wire Mill — Run Tracking Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** July 31, 2026
+**Last Updated:** August 25, 2026 — `CK_RodStaging_LineId` explained as correctly unchanged by the FL2 reversal *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)*
 **Document Type:** Final Schema — Run Tracking Tables
-**Source:** the April gap analysis from `FlatWireTables.md`, absorbed into `FlatWireSchema_Mapping.md`'s appendix on 13 Aug 2026 when that file was deleted
+**Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `SQL/FlatWire_DDL_04_Runs.sql` (`FlatWireRun` itself is created in `DDL_03`)
+**Status:** Active — corrected up to the DDL, August 23, 2026
+**Scope:** MVP-1
+**Owner:** Architecture stream / DBA
+**Audience:** DBA, .NET developers, BA
+**Part of:** `ProjectPlan/Database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
+**Authority:** `SQL/FlatWire_DDL_04_Runs.sql` **wins** on types, nullability and constraints. This document explains them; it does not define them, and it states no object counts — those are `[DBD §6.2]`. No shortcode is declared, deliberately: these are derived documents and must not be cited as authority.
 
 Run tables capture the complete lifecycle of a flat wire production run — from initial check-in through all in-process events. `FlatWireRun` is the central header record; all event tables reference it by `RunId`.
 
@@ -159,7 +165,7 @@ Supersedes the retired `Rod.StagedPayoffPosition` / `Rod.IsWelded` columns.
 - `CK_RodStaging_Override` — the credential stamp is **all-or-nothing**: `OverrideBy`/`OverrideAt`/`OverrideReason` are all set exactly when `OutOfSequenceOverride = 1`. An override with no supervisor or no reason is unauditable, which defeats the point of permitting the deviation
 - `CK_RodStaging_OutOfSeq` — `ExpectedRodAlpha` present exactly when `OutOfSequenceOverride = 1`
 - `CK_RodStaging_OutOfSeqRod` — `ExpectedRodAlpha <> RodAlpha`; "out of sequence" means the rod staged is not the one expected
-- `CK_RodStaging_LineId` — `FL1` or `FL3` only (`PCI002`)
+- `CK_RodStaging_LineId` — `FL1` or `FL3` only. ⚠ **Unchanged by the 20 Aug 2026 FL2 reversal, and correctly so**: FL2 pre-check-in lives in `SpoolStaging`, because this table is rod-shaped (rod inspection columns, `IsWelded`, two bay states, `PayoffPosition NOT NULL`) and widening the CHECK would admit FL2 rows that cannot populate half of it
 - `CK_RodStaging_PayoffPos` — `1` or `2`
 - `CK_RodStaging_Welded` — `WeldedAt`/`WeldedBy` are both set exactly when `IsWelded = 1`. **Unchanged by the Aug 1 2026 quality decision:** a failed weld sets none of the three, so the all-or-nothing group still holds. Quality itself is **not** mirrored here — it lives on `WeldEvent`, and duplicating it would let the two disagree about one join
 - `CK_RodStaging_Unstaged` — `UnstagedAt`/`UnstagedBy`/`UnstageReasonCode`/`UnstageKind` are all set exactly when `Status = 'Unstaged'`
@@ -170,6 +176,52 @@ Supersedes the retired `Rod.StagedPayoffPosition` / `Rod.IsWelded` columns.
 - **`UX_RodStaging_RodActive`** — filtered UNIQUE on `(RodAlpha) WHERE Status = 'Staged'`: **one bay per rod**
 
 > The two filtered unique indexes are the reason this is a table rather than columns on `Rod`: they make the bay-occupancy invariant impossible to violate, including under concurrent staging from two clients. Note that any client writing to this table needs `QUOTED_IDENTIFIER ON` (a filtered-index requirement, same as the PERSISTED computed columns elsewhere in this schema).
+
+---
+
+## `SpoolStaging`
+
+**The FL2 pre-check-in queue.** The spool-side counterpart to `RodStaging`, and deliberately a
+separate table rather than a widening of it.
+
+> **Why not `RodStaging`?** That table is keyed on a **payoff bay** and carries rod inspection
+> columns and a shared-schema station claim. FL2 has **one** payoff, its material is inspected as
+> rod back at FL1, and this queue is unbounded rather than bay-limited. Recorded as `OI-118`.
+
+| Column | Data Type | Nullable | FK Reference | Description |
+|---|---|---|---|---|
+| `Id` | int | NOT NULL | - | Surrogate primary key, IDENTITY |
+| `SpoolAlpha` | varchar(20) | NOT NULL | `SpoolProcessing.Alpha` | The row's identity |
+| `LineId` | varchar(5) | NOT NULL | - | `FL2`; `FL3` permitted should it ever queue |
+| `QueuePosition` | decimal(9,3) | NOT NULL | - | Operator-ordered; lowest is checked in by default |
+| `Status` | varchar(20) | NOT NULL | - | Default `Queued` |
+| `PreCheckedInBy` | varchar(50) | NOT NULL | - | Who validated it - the audit the queue exists to provide |
+| `PreCheckedInAt` | datetimeoffset | NOT NULL | - | Default `SYSDATETIMEOFFSET()` |
+| `RemovedAt` | datetimeoffset | NULL | - | Set when checked in, or withdrawn |
+| `RemovedReason` | varchar(200) | NULL | - | Free text |
+| `RowVersion` | rowversion | NOT NULL | - | Optimistic concurrency: two terminals may reorder at once |
+
+**Allowed values - `Status`:** `Queued`, `CheckedIn`, `Withdrawn`
+
+**Constraints:**
+- `PK_SpoolStaging` - `Id`
+- `CK_SpoolStaging_LineId` - `FL2` or `FL3`
+- `CK_SpoolStaging_Status` - enumerating check
+- `CK_SpoolStaging_Pos` - `QueuePosition > 0`
+- `CK_SpoolStaging_Removed` - `RemovedAt` is set exactly when `Status <> 'Queued'`
+- `UX_SpoolStaging_LiveSpool` - filtered unique on `Status = 'Queued'`, **so a spool can re-enter
+  the queue after check-in** - which two orders on one spool requires
+
+> **`QueuePosition` is deliberately NOT unique, and it is `DECIMAL(9,3)` on purpose.** A
+> drag-and-drop swap creates a **transient duplicate** that a UNIQUE index rejects, and the failure
+> does not surface until the *second* reorder. The decimal lets a row be inserted **between** two
+> others without renumbering the queue.
+
+> **No station claim - entirely `FlatWireDB`-local.** That is what keeps the queue unbounded:
+> nothing here reserves a shared WIP station, so pre-check-in cannot exhaust one.
+
+> `FL3` is permitted because it shares FM2, but FL3 creates no spool, so in practice it will not
+> queue one.
 
 ---
 
@@ -217,7 +269,7 @@ Captures every spool check-in event at FL2 or FL3 with inspection results. Mirro
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `RunId` | varchar(20) | NOT NULL | `FlatWireRun.RunId` | FK to the run this spool check-in initiated |
 | `LineId` | varchar(5) | NOT NULL | — | Line where the spool was checked in: `FL2` or `FL3` |
-| `SpoolAlpha` | varchar(20) | NOT NULL | `Spool.Alpha` | FK to the spool being checked in |
+| `SpoolAlpha` | varchar(20) | NOT NULL | `SpoolProcessing.Alpha` | FK to the spool being checked in |
 | `PayoffPosition` | int | NOT NULL | — | Payoff position where the spool was loaded: `1` or `2` |
 | `GaugeIn` | decimal(8,4) | NOT NULL | — | Operator-measured spool wire gauge at check-in, in inches; validated against `PassSchedule.TargetGauge ± GaugeTolerance` |
 | `WidthIn` | decimal(8,4) | NOT NULL | — | Operator-measured spool wire width at check-in, in inches; validated against `PassSchedule.TargetWidth ± WidthTolerance` |
@@ -367,3 +419,80 @@ Sampled gauge/width/speed profile persisted per run. Live telemetry stays in-mem
 | `ReadingTs` | datetime2 | NOT NULL | — | UTC capture timestamp; defaults to `SYSUTCDATETIME()` |
 
 **Index:** `IX_RunReading_RunId_Footage (RunId, FootageFt)` — trace-query path.
+
+## `RodOrderConsumption`
+
+**The actual: what a check-in really consumed, per order.** `RodOrderAllocation` is the plan; this
+is the outcome. **One check-in, N consumption rows** - which *is* the client's rule 7.
+
+| Column | Data Type | Nullable | FK Reference | Description |
+|---|---|---|---|---|
+| `Id` | int | NOT NULL | - | Surrogate primary key, IDENTITY |
+| `ConsumptionId` | varchar(20) | NOT NULL | - | Human key, e.g. `RC-0041`, as `CheckoutId` / `RejectionId` |
+| `RunId` | varchar(20) | NOT NULL | `FlatWireRun.RunId` | The run |
+| `RodCheckinId` | int | NOT NULL | `RodCheckin.Id` | The mount this pairing runs on |
+| `Station` | varchar(10) | NOT NULL | - | e.g. `FL1PO`. **The exclusivity key** (`G21`) - not `LineId` |
+| `LineId` | varchar(5) | NOT NULL | - | `FL1` or `FL3`; projection and reporting only |
+| `RodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | The rod |
+| `OrderNo` | varchar(50) | NOT NULL | - | Shared-schema order. **No FK by design** |
+| `RelLetter` | varchar(10) | NULL | - | Release letter |
+| `AllocationId` | int | NULL | `RodOrderAllocation.Id` | NULL for a substitution made before the allocation row exists |
+| `AllocatedWeightLbSnapshot` | decimal(8,2) | NULL | - | **Snapshot, not a join** |
+| `PlannedRodSeqNoSnapshot` | smallint | NULL | - | Ditto; same pattern as `RodStaging.PlannedSeqno` |
+| `ActualRodSeqNo` | smallint | NOT NULL | - | The position this rod actually took in this order |
+| `State` | varchar(20) | NOT NULL | - | See vocabulary below |
+| `StartFootageFt` | decimal(10,2) | NOT NULL | - | **Run-cumulative** anchor, captured live from the counter |
+| `EndFootageFt` | decimal(10,2) | NULL | - | Run-cumulative at close |
+| `ConsumedFootageFt` | decimal | NOT NULL | - | **Computed, PERSISTED**: `EndFootageFt - StartFootageFt` |
+| `ThresholdFootageFt` | decimal(10,2) | NULL | - | Computed **once** at pairing start |
+| `ThresholdReachedAt` | datetimeoffset | NULL | - | The crossing instant |
+| `LatchedWeightAtThresholdLb` | decimal(8,2) | NULL | - | **First latch** - at the crossing, never a fresher tick |
+| `NotificationRaisedAt` | datetimeoffset | NULL | - | When `OrderAllocationReached` went out |
+| `AcknowledgedAt` / `AcknowledgedBy` | datetimeoffset / varchar(50) | NULL | - | Rule 9: **the operator closes the order, not the system** |
+| `WeightAtAcknowledgementLb` | decimal(8,2) | NULL | - | **Second latch** |
+| `OverrunWeightLb` | decimal | NULL | - | Computed, PERSISTED. `+` = overrun, `-` = early ack |
+| `VarianceVsAllocationLb` | decimal | NULL | - | Computed, PERSISTED, against the snapshot |
+| `ConsumedWeightLb` | decimal(8,2) | NULL | - | Written at close, **not computed** - the basis may be integration over `RunReading` |
+| `ConversionBasis` | varchar(20) | NULL | - | `Nominal`, `Measured`, `IntegratedRunReading`, `Override` (`OI-45`) |
+| `LbPerFtUsed` | decimal(10,6) | NULL | - | The factor **actually applied**; a historical row is never recomputed |
+| `ConverterVersion` | varchar(20) | NULL | - | For a change of formula **shape** rather than factor |
+| `ClosureReason` | varchar(25) | NULL | - | See vocabulary below |
+| `RodCheckoutId` | varchar(20) | NULL | `RodCheckout.CheckoutId` | Set **only** when closure is `RodAbandoned` (Mode B) |
+| `ShortfallWeightLb` | decimal(8,2) | NULL | - | Set when the pairing closed below allocation because material ran out |
+| `OperatorId` | varchar(50) | NOT NULL | - | Audit |
+| `CreatedAt` / `ModifiedBy` / `ModifiedAt` | - | mixed | - | Audit quad |
+| `RowVersion` | rowversion | NOT NULL | - | `State` and footage move live, as on `FlatWireRun` |
+
+**Allowed values - `State`:** `Pending`, `InProgress`, `ThresholdReached`, `Closed`, `Voided`
+**Allowed values - `ClosureReason`:** `Acknowledged`, `AcknowledgedEarly`, `RodExhausted`,
+`RodAbandoned`, `Superseded`
+
+**Constraints:**
+- `PK_RodOrderConsumption` - `Id`; `UQ_RodOrderConsumption_CId` - `ConsumptionId`
+- `UQ_RodOrderConsumption_Pair` - `(RodCheckinId, OrderNo, RelLetter)`: **one mount, one pairing per order**
+- `CK_RodOrderConsumption_State` / `_LineId` / `_Closure` - enumerating checks
+- `CK_RodOrderConsumption_Footage` - `EndFootageFt >= StartFootageFt`
+- `CK_RodOrderConsumption_Seq` - `ActualRodSeqNo >= 1`
+- `CK_RodOrderConsumption_AckStamps` - the three acknowledgement stamps are **all-or-nothing**
+- `CK_RodOrderConsumption_Abandon` - an abandoned pairing must name the checkout that abandoned it
+- `UX_RodOrderConsumption_Station`, `UX_RodOrderConsumption_ActualSeq` - filtered unique
+
+> **Two weight latches, and the overrun between them is captured rather than discarded.**
+> `LatchedWeightAtThresholdLb` is taken at the crossing; `WeightAtAcknowledgementLb` when the
+> operator acknowledges. `OverrunWeightLb` is the difference, and it is real production the
+> business needs attributed, not an error to be rounded away.
+
+> **The row states its own conversion.** `LbPerFtUsed`, `ConversionBasis` and `ConverterVersion`
+> are stored per row, so a later change of formula - or of the open dimensional basis, `Q10` -
+> never retro-changes a historical row.
+
+> **`CK_..._AckStamps` is written with explicit `IS NULL` pairs on purpose.**
+> `A IS NOT NULL AND B IS NOT NULL` evaluates to **UNKNOWN** when one side is NULL, and a CHECK
+> constraint **accepts** UNKNOWN - the trap `CK_AlloyProperty_RodDiaTol` was fixed for.
+
+> **Requirement source:** `ORD003`-`ORD017` in `[REQ]`. Consequence worth knowing: because the rod
+> stays mounted across an order boundary there is no second check-in and therefore **no second PLC
+> tag push**, so both orders necessarily run under the first order's pass schedule. Whether
+> planning can produce a differing-schedule case is `Q48`, `Critical`.
+
+---

@@ -1,10 +1,16 @@
 # Flat Wire Mill — Quality Control & Output Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 6, 2026
+**Last Updated:** August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*
 **Document Type:** Final Schema — Quality Control & Output Tables
-**Source:** the April gap analysis from `FlatWireTables.md`, absorbed into `FlatWireSchema_Mapping.md`'s appendix on 13 Aug 2026 when that file was deleted
+**Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `SQL/FlatWire_DDL_05_QualityOutput.sql`
+**Status:** Active — corrected up to the DDL, August 23, 2026
+**Scope:** MVP-1
+**Owner:** Architecture stream / DBA
+**Audience:** DBA, .NET developers, BA
+**Part of:** `ProjectPlan/Database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
+**Authority:** `SQL/FlatWire_DDL_05_QualityOutput.sql` **wins** on types, nullability and constraints. This document explains them; it does not define them, and it states no object counts — those are `[DBD §6.2]`. No shortcode is declared, deliberately: these are derived documents and must not be cited as authority.
 
 These tables capture SPC measurement sessions, material rejections, and the finished output coils produced by a run. Together they provide full quality traceability from raw rod through to the finished coil.
 
@@ -107,7 +113,9 @@ Output coil records generated at run completion. One row per finished coil produ
 | `FootageFt` | decimal(10,2) | NOT NULL | — | Total footage of wire on this coil in feet (standardized to `decimal(10,2)`) |
 | `PassScheduleId` | varchar(30) | NULL | `PassSchedule.ScheduleId` | Schedule effective at coil creation (OQ-64) |
 | `PassScheduleSnapshot` | nvarchar(max) | NULL | — | JSON snapshot of the schedule config at coil creation (NFR013) |
-| `SkidId` | varchar(20) | NULL | — | External skid reference (existing skid table; no local FK) |
+| `CoilNo` | varchar(9) | NULL | — | Shared-schema coil identity → `proddb..coils.coil_no`; minted by `CommonDB.dbo.GenerateCoilAlpha` off the source rod. Filtered-UNIQUE (`UX_CoilOutput_CoilNo`), which is what makes the run-end write-back's retry contract enforceable — `FR-509`, `[INT §8.1]` |
+| `SharedSkidNo` | varchar(9) | NULL | — | Legacy skid number → `united_db..wip_skids.skid_no`, allocated by `proddb..generate_new_skid_no` — `FR-514` |
+| `SkidId` | varchar(20) | NULL | — | External skid reference, no local FK. ⚠ **The skid table is `united_db..wip_skids` + `proddb..wip_skid_coils`** (`OI-104` closed 18 Aug 2026); `SharedSkidNo` holds the resolved legacy number |
 | `SkidStatus` | varchar(20) | NULL | — | Skid status: `Open`, `Closing`, `Staged`, `Closed` |
 | `StagingLocation` | varchar(20) | NULL | — | Packing staging bay (e.g. `A-3`, `A-4`, `A-5`) |
 | `Status` | varchar(20) | NOT NULL | — | Material status: `COMPLETE`, `HOLD`, or `SCRAP` |
@@ -135,14 +143,14 @@ Source traceability — maps footage ranges within an output coil back to the sp
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `CoilAlpha` | varchar(30) | NOT NULL | `CoilOutput.CoilAlpha` | FK to the output coil this traceability row belongs to |
 | `RodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | FK to the rod that produced material in this footage range |
-| `SpoolAlpha` | varchar(20) | NULL | `Spool.Alpha` | FK to the spool that fed this footage range. **NULL on a rod-fed run** (FL1 standalone, and FL3 when fed directly from rod) — there is no input spool to name |
+| `SpoolAlpha` | varchar(20) | NULL | `SpoolProcessing.Alpha` | FK to the spool that fed this footage range. **NULL on a rod-fed run** (FL1 standalone, and FL3 when fed directly from rod) — there is no input spool to name |
 | `FootageFrom` | int | NOT NULL | — | Start footage position (inclusive) in this coil that originated from `RodAlpha` |
 | `FootageTo` | int | NOT NULL | — | End footage position (inclusive) in this coil that originated from `RodAlpha` |
 
 **Constraints:**
 - `FootageFrom < FootageTo` (`CK_CoilTraceability_Range`)
 - **Enforced:** footage ranges within a coil must not overlap — trigger `trg_CoilTraceability_NoOverlap` (DDL_08, DM010)
-- `FK_CoilTraceability_Spool` constrains only the rows that name a spool; a NULL is not evaluated
+- `FK_CoilTraceability_SpoolProcessing` constrains only the rows that name a spool; a NULL is not evaluated
 - `IX_CoilTraceability_SpoolAlpha` is **filtered** on `SpoolAlpha IS NOT NULL`
 
 ### Why the spool lives here and not on `CoilOutput`
@@ -155,7 +163,7 @@ Added 6 Aug 2026. The relationship was missing outright: `CoilOutput` has no spo
 
 One spool routinely yields about two coils (client, 6 Aug 2026: FL1 spools ~1,800 lb against FL2 coils of 800/900 lb), so this is the ordinary case, not an edge case.
 
-> **Two residual gaps this does not close.** `Spool.ParentRodAlpha` is **singular**, so a spool welded from several rods still loses parents — that is `FR-172`'s multi-parent genealogy, a separate defect; rods-per-spool is derivable through `Spool.SourceRunId → WeldEvent` but without footage attribution. And **`OI-25`** stands: run events use cumulative **run** footage while these ranges are **coil-local**, so the spool attribution is only as trustworthy as a coil-start offset no artifact yet states.
+> **Two residual gaps this does not close.** `SpoolProcessing.ParentRodAlpha` is **singular**, so a spool welded from several rods still loses parents — that is `FR-172`'s multi-parent genealogy, a separate defect; rods-per-spool is derivable through `SpoolProcessing.SourceRunId → WeldEvent` but without footage attribution. And **`OI-25`** stands: run events use cumulative **run** footage while these ranges are **coil-local**, so the spool attribution is only as trustworthy as a coil-start offset no artifact yet states.
 
 ---
 

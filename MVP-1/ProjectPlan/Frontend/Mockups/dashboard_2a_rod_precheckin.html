@@ -3152,10 +3152,13 @@
 
   /* ══════════════════ Station toggle ══════════════════ */
   /* The WIP station code is NOT derived from the line. Only FL1PO is seeded — see
-     CommonDB_Insert_WIPStations_FlatWire.sql D2, which creates FL1PO and deliberately omits
-     FL2PO (PCI002). There is no FL3PO anywhere in the repo, yet RodStaging, the DDL and
-     /staging/** all scope staging to "FL1 and FL3". The working assumption here is that FL3
-     is FL1 running hybrid — same physical VPS, same station — so FL3 staging posts to
+     10_CommonDB_Insert_WIPStations_FlatWire.sql D2, which creates FL1PO and deliberately omits
+      FL2PO (PCI002). NOTE: FL2PO IS NOW OWED -- the 20 Aug 2026 client reversal (FR-533)
+      gives FL2 pre-check-in and FR-536 has it claim and release that station; the script
+      change is wave W5 and is NOT yet applied. There is no FL3PO anywhere in the repo, yet
+      RodStaging, the DDL and /staging/** all scope staging to "FL1 and FL3". The working
+      assumption here is that FL3 is FL1 running hybrid -- same physical VPS, same station
+      -- so FL3 staging posts to
      FL1PO. Pending business confirmation; see FlatWireOpenQuestions.md. Previously this
      wrote "FL3PO", a station that does not exist. */
   var STATION_BY_LINE = { FL1: "FL1PO", FL3: "FL1PO" };

@@ -6,7 +6,7 @@
 **Owner:** Jaspreet / Tim O.
 **Document Type:** Design rationale — **internal**. *Not* a client-facing requirement specification
 **Status:** Reference — rules consolidated into the owning requirement documents 11 Aug 2026; `Q12` remains open
-**Last Updated:** August 11, 2026
+**Last Updated:** August 25, 2026 — the `02-SRS.md` link label updated to `BusinessRequirements.md` `[REQ]` *(previously August 11, 2026)*
 
 ---
 
@@ -25,7 +25,7 @@
 > | The **carry-forward gate** at the staging scan, and the rule that no fresh-start path is offered | [`RodPreCheckin.md`](Screens/RodPreCheckin.md) §7 |
 > | **Why partial material takes its own identity**, linked back to the rod | [`RodCheckout.md`](Screens/RodCheckout.md) §7.2 |
 > | Mode B checkout, supervisor acceptance, and the resulting rod status | [`RodCheckout.md`](Screens/RodCheckout.md) §3, §7 |
-> | The **delivered requirement text** | `FR-043` in [`02-SRS.md`](BusinessRequirements.md), tested by `TC-050` / `TC-051` |
+> | The **delivered requirement text** | `FR-043` in [`BusinessRequirements.md`](BusinessRequirements.md) `[REQ]`, tested by `TC-050` / `TC-051` |
 >
 > ### Two reading traps
 >
@@ -42,7 +42,7 @@
 > |---|---|
 > | `footage_run_to_date` on the rod record | `Rod.FootageRunToDate` `DECIMAL(10,2)` |
 > | `remaining_weight_estimate` on the rod record | `Rod.RemainingWeightEstimateLb` `DECIMAL(8,2)` |
-> | `source_rod_alpha` FK on the spool | `Spool.SourceRodAlpha` → `Rod.Alpha`, with `IX_Spool_SourceRodAlpha` |
+> | `source_rod_alpha` FK on the spool | `SpoolProcessing.SourceRodAlpha` → `Rod.Alpha`, with `IX_SpoolProcessing_SourceRodAlpha` |
 >
 > The staging-side gate is `RodStaging.FootageRunToDateAtStaging` (`> 0` forces carry-forward, `PRC007`).
 > **Jaspreet's schema-impact item in *Open Items Before Development* below is therefore closed** — it is left

@@ -58,7 +58,7 @@ From `[TB §7]` — verbatim:
 | `PLCTagService` | [`FW-151`](FW-151-PLCTagService.md) |
 | The staging endpoints | `FW-158` — **deferred with DB2A** |
 | The DB2 wizard | `FW-061`, FE |
-| `RodCheckin` / cross-DB `INFLAT` write | `FW-159`, DB |
+| `RodCheckin` / `INFLAT` write *(`FlatWireDB`-local since `D-32`)* | `FW-159`, DB |
 
 ---
 
@@ -122,7 +122,7 @@ is `PassScheduleSnapshot` ([`FW-207 §3`](FW-207-Domain-Model.md)).
 | Draft or Inactive schedule | `SCHEDULE_NOT_ACTIVE` | **422** |
 | Line already has a `Running`/`Paused` run | `RUN_ALREADY_ACTIVE` | **409** |
 | `payoffPosition` ≠ the staged row's | `PAYOFF_MISMATCH` | **409** |
-| Rod ineligible (`coils.coil_status` in `INFLAT`/`COMPLETE`/`HOLD`/`SCRAP`) | `ROD_UNAVAILABLE` | **409** |
+| Rod ineligible (`coils.coil_status` in `COMPLETE`/`HOLD`/`SCRAP`, **or `Rod.Status = 'INFLAT'`** — local since `D-32`) | `ROD_UNAVAILABLE` | **409** |
 | Prior footage without acknowledgement | `CARRY_FORWARD_REQUIRED` | **422** |
 | PLC push failed | `PLC_PUSH_FAILED` | **500** |
 | No active schedule matches | `SCHEDULE_NO_MATCH` | **422** — ⚠ **path undefined, `OI-46`.** Interim: block and alert Operations |

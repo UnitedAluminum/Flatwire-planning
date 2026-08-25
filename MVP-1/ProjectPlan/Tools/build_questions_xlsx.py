@@ -303,10 +303,20 @@ LEAKS = [
     (r'`', 'code span'),
     (r'\bFL[123]\.\w', 'machine tag path'),
     (r'\bDashboard\s*\d', 'screen number'),
-    (r'\b(?:RodStaging|AlloyProperty|CoilTraceability|CoilOutput|FlatWireRun|PassSchedule'
+    # The nine tables added 20-23 Aug 2026 are included below. The retired SpoolCarrier and
+    # SpoolConfiguration are KEPT deliberately, on the same reasoning as the retired folder
+    # names above: a stale citation should trip the guard, not slip through.
+    # DELIBERATELY NOT LISTED: the bare words Spool, Stand, Drawer, Edger and Dancer. They are
+    # what operators call the physical articles, so they are ordinary client prose and would
+    # false-positive on every sentence mentioning a spool. Only the compound names are
+    # unambiguous -- which is why [DBD 6.2a] renamed the material record SpoolProcessing
+    # rather than leaving it Spool.
+    (r'(?:RodStaging|AlloyProperty|CoilTraceability|CoilOutput|FlatWireRun|PassSchedule'
      r'|SpoolCheckin|RodCheckin|RodCheckout|WipRejection|SpcCheckpoint|SpcMeasurement'
      r'|RunReading|WeldEvent|RollOverride|DieChangeEvent|RunPauseEvent|PayoffPosition'
-     r'|FlatwireQueue|planning_routings|wip_coil_orders|FlatWireDB|united_db|CommonDB)\b',
+     r'|FlatWireRunDetail|SpoolProcessing|SpoolStaging|SpoolOrder|SpoolTraceability'
+     r'|SpoolConfiguration|SpoolCarrier|RodOrderAllocation|RodOrderConsumption'
+     r'|FlatwireQueue|planning_routings|wip_coil_orders|FlatWireDB|united_db|CommonDB)',
      'table or column name'),
 ]
 

@@ -95,7 +95,7 @@ schedule) and the Phase 11 shift summary are the roadmap homes; see
 
 **Dependencies:** FW-004 *(alloy lookup — **MVP-1**, `phase-13` reference data)*
 
-> **The three `PassSchedule*` tables are MVP-2-owned** and live in [`../DBChanges/`](../DBChanges/), not in the MVP-1
+> **⚠ The three `PassSchedule*` tables are MVP-1, not MVP-2 — `D-31`, 15 Aug 2026.** MVP-1 *builds* them and never *authors* a schedule: no create, edit, approve or list, no endpoint, and nothing in MVP-1 populates them in production (`OI-110`). They live with the MVP-1 chain in they live in [`../DBChanges/`](../../MVP-1/ProjectPlan/Database/Schema/SQL/), not in the MVP-1
 > DDL runner. But **`FW-006` ("Create FlatWireDB — core entity tables") in MVP-1's Epic 1 also lists `PassSchedule`** —
 > so table ownership is stated two ways across the scope line. Raised 13 Aug 2026; `FW-006` is a **third** both-scopes
 > story alongside `FW-014` and `FW-N07`, and appears in no scope table.
@@ -258,4 +258,4 @@ schedule) and the Phase 11 shift summary are the roadmap homes; see
 | [`../RequirementDocuments/ShiftSummary.md`](../RequirementDocuments/ShiftSummary.md) | Owning specification for DB10 (`FW-069`) |
 | [`./ShopfloorPlan/phase-02-pass-schedule-management.md`](./ShopfloorPlan/phase-02-pass-schedule-management.md) | Phase 2, moved whole with its **231 h** |
 | [`./ShopfloorPlan/phase-11-mvp2-shift-summary.md`](./ShopfloorPlan/phase-11-mvp2-shift-summary.md) | The **71 h** Phase 11 carve that `FW-069` sits in |
-| [`../DBChanges/README.md`](../DBChanges/README.md) | The three MVP-2-owned `PassSchedule*` tables `FW-010` creates |
+| [`MVP-1/ProjectPlan/Database/Schema/SQL/README.md`](../../MVP-1/ProjectPlan/Database/Schema/SQL/README.md) | The `PassSchedule*` tables — **MVP-1 since `D-31`** — tables `FW-010` creates |

@@ -2,8 +2,8 @@
 
 **Project:** Flat Wire Mill Implementation
 **Applies to:** Flattening Line 1 (FL1) and Flattening Line 3 (FL3)
-**Version:** 2.5
-**Last Updated:** August 15, 2026
+**Version:** 2.6
+**Last Updated:** August 25, 2026 — the FL2 row reversed to **Yes** (`FR-533`); `FR-546`/`FR-547` cited on the two validation rules *(previously August 15, 2026)*
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** [Dashboard 2A — Rod Pre-Check-In](../../Frontend/Mockups/dashboard_2a_rod_precheckin.html)
 **Requirement source:** SRS §4.2 (`PCI001`–`PCI008`), §4.18 partial re-check-in (`PRC001`–`PRC019`), welding (`WLD003`, `WLD005`, `WLD006`, `WLD010`, `WLD011`), traveler (`TRV002`, `TRV004`, `TRV009`)
@@ -40,7 +40,7 @@ This document specifies the **Rod Pre-Check-in** function — the staging of the
 |---|---|---|
 | **FL1** | Yes | Draws from a dual-position payoff; continuous feed depends on staging |
 | **FL3** | Yes | Uses the same physical payoff as FL1 (see G21, Section 11) |
-| **FL2** | **No** | No staging space at the line. FL2 is check-in only (`PCI002`) |
+| **FL2** | **Yes, from 20 Aug 2026** | ⚠ **Client reversal.** Still **no staging space** — `PCI002`'s premise stands — so FL2 gets a **validation queue on Dashboard 5A**, not a bay, and **not this screen**: DB2A's two alternating bays and inspect-before-unbanding do not exist at FL2. Requirement text `FR-533`–`FR-540` (`[REQ]` §5.29), `[PROPOSED]` pending **`Q41`** |
 
 ## 1.4 Priority
 
@@ -110,6 +110,23 @@ Each payoff position presents exactly one of four states.
 **Recommended next action.** Where a position has an obvious next step it is shown as the emphasised action — *Pre-check-in a rod* on an empty position, *Proceed to check-in* on a staged one. **The running position emphasises nothing**: both of its actions are exceptional, and emphasising either would read as a recommendation to take it.
 
 **Blocked is a derived condition**, not a separate record state: a rod is blocked when it is staged and any inspection item has failed. The rod remains physically on the payoff and the position remains occupied — this is deliberate, because a bundle that fails inspection is already at the payoff and must not be reported as an empty position.
+
+## 4.1a Sequence validation — a rod's order set, and the order it may be run in `[PROPOSED]`
+
+A rod's order is **resolved from planning at the scan**, never typed. Since `Q70` (30 Jul 2026) that lookup returns **orders, plural** — a rod may legitimately carry more than one — so *"belongs to the established order"* means **membership in an ordered set**, not equality with one order.
+
+**Two validations apply here, and both also apply at check-in** (`Q73` item 7 — a rule enforced at one of two entry points is not enforced):
+
+| | Rule | On failure |
+|---|---|---|
+| **Order set** | the order this staging is being consumed for must be a member of the rod's **active** allocation set. A superseded allocation is not consumable — `FR-547`, tested by `TC-772` | refused — `[ORD008]`, `[ORD013]` |
+| **Tier order** | rods are presented **pinned-first → free full → free partial → pinned-last** — `FR-546`, applied at **both** gates with no override path, tested by `TC-771`. A rod from a later tier while an earlier tier still has rods available is out of sequence | **refused, not overridden** — `[ORD004]` |
+
+> ⚠ **The tier refusal is stricter than the `Q24` out-of-sequence override, deliberately.** `Q73`'s own consequence 1 states that staging a multi-order rod ahead of the order's other rods is *"refused, not overridden"* — because the boundary the shared rod carries has nowhere to run if it is consumed early. The `Q24` override remains available for a deviation from the **planned rod sequence within a tier**, which is a different thing.
+
+**What "pinned" means on this screen.** A rod shared with the previous order is **pinned first**; a rod shared with the next order is **pinned last**. A rod may be pinned at both ends, in which case it is the order's only rod. Free rods may be staged in any sequence within their tier.
+
+**Still open:** whether multi-order-last holds when **no weld** is involved is **`Q49`** — `Q73` item 6's unresolved branch. The stricter reading is built.
 
 ## 4.2 Capacity `[CONFIRMED — PCI010]`
 

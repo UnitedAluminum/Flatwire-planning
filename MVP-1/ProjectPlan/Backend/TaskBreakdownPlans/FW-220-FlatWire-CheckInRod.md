@@ -1,0 +1,210 @@
+# FW-220 — FL1/FL3 Check-In Write-Back into the Shared Schema
+
+**Project:** United Aluminum (UAL) — Flat Wire Mill Module
+**Last Updated:** August 19, 2026 — new. Closes **`OI-112`**; largely closes **`OI-111`**; raises **`OI-115`**, **`OI-116`** and **`Q37`**–**`Q40`**
+**Status:** **Ready to build — three procedures are drafted and structurally verified; four values need IT sign-off before a shared environment, and one deployment prerequisite is not yet met**
+**Stories:** `FW-220` (check-in write-back) · `FW-221` (station release + reqsum reversal) · `FW-222` (active-run index + `WipCoilOrdersWritten`) · **Phase:** 4 · **Sprint:** S2 · **Streams:** DB + BE
+**Hours:** **51 h AI-assisted / 69 h hand-coded** — DB only. **The BE half is already inside `FW-157`'s 36 h** and is not additive; see *Estimating* below
+**Requirements:** `FR-519`–`FR-528` (`[REQ §5.26]`) · **Specification:** `[INT §8.0]`
+**Artifacts:**
+- [`Database/Scripts/40_united_db_Proc_FlatWire_CheckInRod.sql`](../../Database/Scripts/40_united_db_Proc_FlatWire_CheckInRod.sql)
+- [`Database/Scripts/60_united_db_Proc_FlatWire_ReleaseStation.sql`](../../Database/Scripts/60_united_db_Proc_FlatWire_ReleaseStation.sql)
+- [`Database/Scripts/70_united_db_Proc_FlatWire_ReverseReqsum.sql`](../../Database/Scripts/70_united_db_Proc_FlatWire_ReverseReqsum.sql)
+- [`Database/Scripts/20_FlatWire_Grants.sql`](../../Database/Scripts/20_FlatWire_Grants.sql)
+- [`Database/Scripts/99_united_db_Proc_FlatWire_Teardown.sql`](../../Database/Scripts/99_united_db_Proc_FlatWire_Teardown.sql)
+
+**Gap:** `G45`
+**Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
+**Part of:** `ProjectPlan/Backend/TaskBreakdownPlans/` — index: [README.md](../../README.md)
+
+---
+
+## Why this story exists
+
+`FW-219` found that a completed flat wire coil was written only to `FlatWireDB`, so packing, shipping, certification, cost and yield could not see the finished goods at all. **This is the same absence at the other end of the run.**
+
+`POST /checkin/rod` is fully specified — `[API §4.6]`, `FR-072`–`FR-078`, `FW-157` — and `[INT §8]` names four shared touchpoints at check-in: the `wip_coil_orders` reqsum, `actual_start_date` on `planning_routings` and `routings`, and `wip_stations.coilno`. **There is no procedure, no script and no code for any of them.** `FR-077` has been unimplementable since it was written.
+
+**It closes `OI-112`.** `FR-077` *sets* the station's coil reference and no requirement anywhere clears it; `wip_stations_k1` is UNIQUE on `CoilNo`. `FW-219` correctly refused to bolt the release onto *coil* completion because it belongs to *run* completion — which was right, and left it owned by nobody. `FlatWire_ReleaseStation` owns it now.
+
+**It largely closes `OI-111`.** When `D-32` cancelled `FW-002`, nothing was left in the shared schema to show that a rod is on a flattening line. Stamping the rod's `proddb..coils` row with `wip_station = 'FL1'` says exactly that, in a column that already exists, without touching the status vocabulary (`D5`). The residual — an availability check keying on `coil_status` still cannot tell — is what `OI-111` keeps.
+
+**It implements `[ARC §10]`'s closing line**, which required pre-check-out to reverse the `wip_coil_orders` insert and which nothing implemented. That is `OI-01`'s surviving residual after `D-32`.
+
+> ⚠ **`D-32` is not weakened.** Every write lands in a column that **already exists** — no rename, no new column, no new status value. `D-32` cancelled the shared-schema *migration*; it never prohibited writing the shared schema as it stands, which `[INT §8]`'s opening sentence has always required. The one new status-shaped value considered — `'INFLAT'` in `wip_log.coil_skid_status` — was **rejected** for exactly that reason, and `'INROLL'` reused instead (`D4`).
+
+---
+
+## Reference context — do not restate
+
+- `[INT §8.0]` is the specification of record for the write set.
+- Each procedure's own header block carries its **table constraints (`C#`)** and **decisions (`D#`)**, with reasoning. **Read them before changing a line** — most of what looks arbitrary is load-bearing.
+- `50_united_db_Proc_FlatWire_CompleteCoilOnSkid.sql` is the sibling and the style precedent. Read it first.
+- `CommonDB.dbo.PreCheckIn_CopyPlanningData`, `PreCheckIn_Reqsum_Transaction`, `PreCheckIn_CopyOrdersData` and `PreCheckIn_PreCheckInCheckIn_Transaction` are the behavioural templates — **and their transaction handling is a defect, not a pattern.** See below.
+
+---
+
+## ⚠ The deployment prerequisite, and it is not met
+
+**The entire transaction model requires `FlatWireDB` to be on the same SQL Server instance as the shared databases.** Verified by query on 19 Aug 2026:
+
+| Instance | Databases |
+|---|---|
+| `(localdb)\MSSQLLocalDB` | `FlatWireDB` |
+| `DEVUAL-UADEV001\TEST1` | `united_db`, `proddb`, `CommonDB`, `SlitterDB`, `wiplogdb` — **no `FlatWire_*` procedure, no `FL1`/`FL2`/`FL3`/`FL1PO`/`FWPACK` station rows** |
+
+Two different instances. In that topology the procedures still run, but the caller **cannot** hold one transaction across both halves, and the design silently degrades to the two-transaction-with-compensation shape it exists to replace. Nothing errors; it just stops being atomic.
+
+**Deploy `FlatWireDB` to the shared instance first** — same `FlatWire_DDL_RunAll.sql`, different `-S` — and prove it with the co-location query in `20_FlatWire_Grants.sql`. The `(localdb)\MSSQLLocalDB` target in `CLAUDE.md`'s deploy snippet is a developer convenience and reads as though `FlatWireDB` is standalone.
+
+---
+
+## What to build
+
+### 1. `FlatWire_CheckInRod` (DB, 32 h → 24 h) — drafted
+
+Eleven steps in a fixed order, **inside the caller's transaction**, `SET XACT_ABORT ON`, `EventErrorLog` + `Logging_Information_In_Table` on both paths. The build work is deployment and verification, not authoring.
+
+| # | Object | DB | What is written |
+|---|---|---|---|
+| 3 | `routings` | `united_db` | Copied from `planning_routings` — all 94 columns, `machine_idx` overridden |
+| 4 | `mfg_sales_order_ref`, `routings_orders` | `united_db` | The order references |
+| 5 | `wip_coil_orders` | `proddb` | The reqsum entry |
+| 6 | `wip_orders` | via `del_or_upd_wip_orders` | Order material status |
+| 7–8 | `planning_routings`, `routings` | `united_db` | `actual_start_date`, `machine_idx`, `actual_weight_on` |
+| 9 | `WIPStations` | `CommonDB` | The station claim + the four weight columns |
+| 10 | `coils` rod row | `proddb` | `wip_station` / `wip_badge_no` / `transaction_name` / `coil_rev_time` — **`coil_status` untouched** |
+| 11 | `wip_log` | `wiplogdb` via `proddb..wip_log_view` | The WIP transaction, all 44 columns |
+
+### 2. `FlatWire_ReleaseStation` (DB, 6 h → 4 h) — drafted
+
+Returns one station to the idle sentinel at **run** completion. Transaction-agnostic, fully idempotent, refuses a late release of a station already re-claimed. Called from `FW-202` (FL1 spool completion), the `FW-185`/`FW-219` caller (FL2/FL3 run completion) and `FW-174` (checkout modes A and B).
+
+### 3. `FlatWire_ReverseReqsum` (DB, 10 h → 8 h) — drafted
+
+Undoes the shared half when a rod comes off without running — Mode P and Mode A. Deletes the reqsum row, resets both `actual_start_date` values to the `'1800-01-01'` sentinel, releases the station. **Refuses when footage > 0** — that is Mode B, and its reqsum is real.
+
+### 4. Schema — one index and one column (DB, 3 h → 2 h) — `FW-222`
+
+`FlatWire_DDL_07_Indexes.sql` gains **`UX_FlatWireRun_ActiveLine`**, a filtered unique index on `LineId` where `Status IN ('Running','Paused')`. `FlatWire_DDL_04_Runs.sql` gains **`RodCheckin.WipCoilOrdersWritten BIT NOT NULL DEFAULT 0`**.
+
+Object counts move **49 → 50 index statements**, verified by count; the table count stays 28. `[DBD §6.2]` is the definition of record and must move with it.
+
+### 5. Grants and teardown (DB, 4 h → 3 h)
+
+`20_FlatWire_Grants.sql` — `ua_user` needs a **user in all six databases**, because `[public]` membership is per-database and every flat wire procedure grants to `[public]`. `99_united_db_Proc_FlatWire_Teardown.sql` — four guarded `DROP PROCEDURE` statements, because `FlatWire_DDL_99_Teardown.sql` removes `FlatWireDB` and nothing else.
+
+### 6. `CheckInService` — **not additive**, see *Estimating*
+
+One `SqlConnection`, `BeginTransaction(ReadCommitted)`, `FlatWireDbContext.Database.UseTransaction(tx)`, EF writes first, the procedure **last**, `COMMIT`, then the PLC push.
+
+---
+
+## The six things most likely to be got wrong
+
+| # | Trap | What to do |
+|---|---|---|
+| 1 | **The reference implementation has no transaction at all.** `DBQueryHelper` opens a fresh `SqlConnection` per call, and `CommonDB.dbo.PreCheckIn_PreCheckInCheckIn_Transaction` — despite its name — contains only `SET XACT_ABORT ON`, no `BEGIN TRANSACTION`, no `TRY`/`CATCH`, across eleven tables | Copy the *shape*, not the transaction handling. One connection, one transaction, procedure called last |
+| 2 | **`FlatWire_CheckInRod` does not open a transaction and `FlatWire_CompleteCoilOnSkid` does.** A reader who knows one will look for the wrong thing in the other | The asymmetry is deliberate and both headers say so. Check-in is caller-owned because the caller is also writing `FlatWireDB`; completion owns its own because wrapping five legacy procedure calls would hold shared locks far too long and `generate_new_skid_no` has a side effect that should not roll back |
+| 3 | **The legacy op-letter functions do not match `'F'`.** `IsRollingOpLetter` returns 1 only for `'R'`; `IsSlittingOpLetter` and `IsOtherOpLetter` likewise. `PreCheckIn_CopyPlanningData`'s `machine_idx` CASE therefore falls to its ELSE branch for flat wire | `machine_idx` is a **parameter**, validated against `@lineId` (FL1→125, FL3→127). Do not add a fourth function to `CommonDB` — the mills and slitters load it too |
+| 4 | **`actual_start_date` is `'1800-01-01'`, not `NULL`.** Every legacy writer guards on the literal sentinel | Copy the predicate exactly. It is also what makes a **partial-rod re-check-in** a no-op rather than a false restart — correct behaviour that looks like a missing write |
+| 5 | **`wip_coil_orders` has a delete trigger that does more than archive.** `wip_coil_orders_d_tg` writes `wip_coil_orders_hist` **and** sets `united_db..reassign_order_info.status = 2`. It is also single-row-scalar, like `coils_iud_tg` | Delete one row per call, never batch. The archive is why the delete is auditable — and it closes a loop: `wip_coil_orders_hist` is the fourth fallback in check-in's own order cascade |
+| 6 | **All 44 `wip_log` columns are `NOT NULL` with no defaults**, and `wip_log_k0` is UNIQUE on `(wip_log_rev_time, seq_no)` at **second** granularity | Supply all 44. Use the spin loop from `coils_iud_tg`, **scoped to include `seq_no`** — the original omits it because it always writes 0 |
+
+---
+
+## The transaction contract — the one thing a reviewer must check
+
+```
+one SqlConnection, one SqlTransaction
+  EF   : Rod mirror upsert, FlatWireRun (Running), RodCheckin (PlcTagsPushed = 0),
+         SpcCheckpoint(PreRun) + SpcMeasurement, Rod.Status = 'INFLAT', RodStaging -> CheckedIn
+  Dapper: EXEC united_db.dbo.FlatWire_CheckInRod        <-- LAST
+COMMIT                                  <- everything above, or nothing
+──────────────── the only real boundary ────────────────
+PLCTagService.PushPassSchedule(...)
+  ok   -> UPDATE RodCheckin SET PlcTagsPushed = 1       (second small tx)
+  fail -> ClearPayoffTags, then: run -> Aborted, staged row -> Staged
+```
+
+**The database half of check-in IS one ACID transaction.** `[ARC §10]` is right that the whole operation is not — but the part that cannot be atomic is only the OPC write. Do not describe the database half as compensating writes; it is a transaction, and saying otherwise costs the reader the one guarantee they have. **The PLC half is still compensation and must never be called a rollback** (`G16`).
+
+**`G2` narrows again and does not close.** Check-in still spans two databases plus the PLC push. What changed is that the two-database part is now atomic, so the recovery design `OI-39` was blocked on reduces to the PLC clears plus one local status update.
+
+### Four points that will otherwise be got wrong in C#
+
+1. **`EnableRetryOnFailure` and user-initiated transactions are incompatible.** `FW-142` §4 step 5 specifies the retrying execution strategy; wrap every explicit-transaction block in `strategy.ExecuteAsync(...)` or EF throws at run time.
+2. **The `Rod` mirror must be ingested first — and `FW-223` owns that now.** `FK_RodCheckin_Rod` is an *enforced* FK to `Rod.Alpha`, and until 19 Aug 2026 **nothing populated `Rod` in production at all** (`OI-42`, now closed). Call `FlatWireDB.dbo.sp_IngestRodFromCoils` as the first statement in the transaction; see [`FW-223`](FW-223-Rod-Ingestion.md) and `[INT §7.9]`. A direct scan into Dashboard 2 is a supported path, so check-in cannot assume staging or `GET /rod/{alpha}` ran.
+3. **`RodStaging → CheckedIn` moves inside the transaction**, one step earlier than `[API §4.6]`'s side-effect list shows it, so the bay is never claimable twice. The compensation must revert it; `CK_RodStaging_CheckedIn` permits it because the group is all-or-nothing.
+4. **Use `SqlTransaction`, never `TransactionScope`** — the latter can escalate to MSDTC, which is exactly what this design avoids. Retry error 1205 at the service, not in the procedure.
+
+---
+
+## Isolation — measured, not assumed
+
+Measured on `DEVUAL-UADEV001\TEST1`, 19 Aug 2026. **The split is not uniform and not where the `WITH (NOLOCK)` hints in the legacy code would lead you to guess:**
+
+| Database | RCSI | `ALLOW_SNAPSHOT_ISOLATION` |
+|---|---|---|
+| `FlatWireDB`, `united_db`, `proddb`, `wiplogdb` | **ON** | ON |
+| `CommonDB` | **OFF** | ON |
+| `SlitterDB` | **OFF** | OFF |
+
+So a check-in transaction takes snapshot reads everywhere **except the `WIPStations` claim at step 9**, and coil completion takes them everywhere except `coil_slit_cuts`. Exactly one step at each end of the run can block or be blocked by a legacy reader, and both are single-row writes whose locks were already taken a step earlier under `UPDLOCK`. Re-measure per environment — it is a database setting, not a schema fact.
+
+---
+
+## Acceptance criteria
+
+- [ ] `FlatWireDB` deployed **on the shared instance**; the co-location query returns six rows
+- [ ] All four procedures deployed; `20_FlatWire_Grants.sql` run; `ua_user` resolves in all six databases
+- [ ] `FlatWire_CheckInRod` called outside a transaction throws `52001` and writes nothing
+- [ ] A forced failure inside the caller's transaction leaves **no** shared row and **no** `FlatWireDB` row — one rollback, both halves
+- [ ] A check-in with no `routings` row copies one from `planning_routings`; `actual_start_date` set on both, still `'1800-01-01'` nowhere
+- [ ] `WIPStations.CoilNo` holds the rod; `AccumlatedScrapWeight` is **negative** `(gross − net) × −1`
+- [ ] `FlatWire_ReleaseStation` returns `CoilNo` to the station's own name padded to 9; re-run is a no-op; a late release of a re-claimed station is refused
+- [ ] **Check in → release → check in another rod at the same station succeeds** — the failure mode `OI-112` predicted
+- [ ] Two concurrent check-ins on one line: one succeeds, the other fails on `UX_FlatWireRun_ActiveLine` → `409 RUN_ALREADY_ACTIVE`
+- [ ] `FlatWire_ReverseReqsum` with footage 0 removes the reqsum (present in `_hist`), resets both dates, releases the station; **with footage > 0 it is refused**
+- [ ] `coils.coil_status` is **unchanged** by every path; `Rod.Status = 'INFLAT'` in `FlatWireDB` only
+- [ ] Weights beyond the `smallint` bound are **refused**, not truncated
+- [ ] No DTC transaction is enlisted at any point
+- [ ] `[REQ §5.26]`, `[INT §8.0]` and `[TCS]` `TC-730`–`TC-748` all agree with what was built
+
+---
+
+## Out of scope — and one of them blocks
+
+**FL2 spool check-in (`OI-115`) — this is the one that blocks, not just needs sign-off.** `[API §4.6a]` says `POST /checkin/spool` has *"the same shape as §4.6"* and then lists **only `FlatWireDB` writes**. A spool has no `proddb..coils` row, so what FL2 owes to the reqsum, `actual_start_date` and the station claim is genuinely unspecified — and parking `SP-00021` in `WIPStations.CoilNo`, a column every legacy reader treats as a coil number with no FK to stop it, needs an explicit answer rather than an inference. `@lineId` refuses FL2 until it is answered.
+
+**`coil_mill_processing` (`OI-116`).** `PreCheckIn_CopyPlanningData` writes it, `coil_slitter_processing` and `slitter_head_setup` alongside. Whether flat wire owes the rolling-processing table a row is open and affects mill reporting. Copying it speculatively is the worse error — adding rows later is additive, removing wrong ones is not.
+
+**Multi-order rods (`G22` / `OQ-73`).** One order per call, matching `[API §4.6]`'s single `orderId` and `FlatWireRun.OrderId`. The legacy reqsum handles a set. The signature is shaped so the fix is additive — the two parameters become a TVP and three steps loop.
+
+---
+
+## Blockers
+
+**`Q37`** the eight-character transaction token (proposed `FWCHKIN`) · **`Q38`** the `wip_log.coil_skid_status` value (proposed: reuse `'INROLL'`) · **`Q39`** stamping the rod's `coils` row with `wip_station` (proposed: yes, `coil_status` untouched) · **`Q40`** deleting the `wip_coil_orders` row on reversal versus leaving an orphan.
+
+All four are **IT questions about existing consumers**, exactly like `Q34`–`Q36` at the other end of the run, and the impact audit that would have answered them was cancelled with `D-32`. **They do not block the build** — each is a named constant or a single flag in one place. **They block a shared environment.**
+
+**`OI-115`** blocks the FL2 half of the work, not the FL1/FL3 half.
+
+---
+
+## Estimating — and the netting that matters
+
+**DB work: 51 h AI-assisted / 69 h hand-coded, additive** to the 3,186 h baseline, like `FW-219` and `FW-202`. Derivation: check-in procedure 32→24 · release 6→4 · reversal 10→8 · schema 3→2 · grants and teardown 4→3, hand-coded figures in the rate-card ratio `FW-219` used.
+
+**BE work is NOT additive.** `FW-157` is already priced at 36 h for *"a complex command spanning two databases and the PLC"* — the shared half was always in that number, it simply had nothing to call. What changes is that the seam is now a Dapper call to a named procedure instead of an undesigned recovery mechanism.
+
+⚠ **Phase 4 already carries a 24–64 h reserve against `G2`/`OI-39`, and this work both consumes and retires part of it.** The recovery design is now decided for the database half — one transaction, no compensation — so the reserve's cross-database portion is spent. Its PLC portion stands. **Re-derive the reserve before S2 planning rather than after**, because Phase 4 is the only phase already flagged provisional and getting this netting wrong in either direction distorts it.
+
+---
+
+## Dependencies
+
+`FW-157` (`CheckInService` — calls this), `FW-159` (the `FlatWireDB` check-in writes), `FW-141` (repositories), `FW-142` (Dapper + context + the unit of work that owns the transaction), `FW-144` (configuration — extended with the cross-database grants), `FW-003` (the `machines` rows, `machine_idx` 125/126/127), and `10_CommonDB_Insert_WIPStations_FlatWire.sql` (the station rows, which must exist before step 9 can claim one).
+
+**Part of:** `ProjectPlan/Backend/TaskBreakdownPlans/` — index: [README.md](../../README.md)

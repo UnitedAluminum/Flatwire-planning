@@ -1,7 +1,7 @@
 # Flat Wire Mill — Client Questions Workbook Content
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 12, 2026
+**Last Updated:** August 25, 2026 — **ten missing entries authored** — `Q48`–`Q55`, `Q59`, `Q87`; without them the client questions workbook could not be rebuilt *(previously August 20, 2026 — client-facing prose added for **`Q37`–`Q47`**: the four shared-record sign-off values from the check-in write-back, and the seven questions from the 20 Aug client call on the spool carrier, the multi-order spool and FL2 pre-check-in. Workbook regenerated to **47 open questions**, leakage scan clean. *(previously August 18, 2026 — `Q68` amended — the status moves to the flat wire module’s own rod record, and the client is asked which reports filter on the coil status field *(previously August 12, 2026)*)*)*
 **Document Type:** Source content for a generated client deliverable — not a specification
 **Status:** Active
 
@@ -532,6 +532,372 @@ optional; everything else is required.
 **Why:** Two independently confirmed formulas will disagree in the third decimal and nobody will know which is authoritative. The accumulated scale-versus-calculated variances are the data that would validate this one.
 **Impact if unanswered:** Spool weight tracking and as-is stock handling cannot be implemented.
 
+## Q34
+
+**Register title:** Transaction name for a flat wire coil completion in the shared plant records, and whether any existing report filters on it
+**Area:** Shared plant records
+**Needs input from:** Tim O. / IT
+**What we need:** Confirmation of our reading
+**Answer together with:** Q35
+**Question:** Completing a flat wire coil now creates the same set of plant records any other finished coil has, and each of those records carries a short transaction name. What name should a flat wire coil completion use, and does any existing report, screen or process filter on that name in a way a new value would disturb?
+**Background:** Three of the records created at coil completion carry a transaction name, and all three use the same eight-character field. Reusing an existing name would make a flat wire completion indistinguishable from the skid creation the slitters do, which defeats the purpose of recording it. One other existing name would additionally cause a duplicate history entry to be written.
+**Recommended answer:** A new name reserved for flat wire, eight characters so it fits the field exactly, used consistently across all three records so that one completion is traceable end to end.
+**Why:** This is the one value in the new records that every existing consumer of the shop-floor history can see, and we cannot tell from the code which reports depend on that column — the impact review that would have told us was removed along with the shared-schema changes. It is a short conversation and an expensive thing to get wrong, because a wrong value does not raise an error: it writes a name an existing report may quietly filter out.
+**Impact if unanswered:** The work can be built and tested against development copies, but must not run against live plant data.
+
+---
+
+## Q35
+
+**Register title:** Whether a finished flat wire coil carries the existing on-skid status or needs one of its own
+**Area:** Shared plant records
+**Needs input from:** Tim O. / IT
+**What we need:** Confirmation of our reading
+**Answer together with:** Q34
+**Question:** The finished coil record created at completion needs a status value. Should a finished flat wire coil carry the existing status used for a coil that is complete and on a skid, or does finished flat wire need to be distinguishable from other finished material by its status?
+**Background:** The existing status is accurate — the coil is complete and it is on a skid — and it is exactly what the equivalent transaction writes for a slitter coil. A new value would be an addition to a status vocabulary that every system in the plant reads.
+**Recommended answer:** Reuse the existing status. Introduce a new value only if a named report or process actually requires flat wire to be told apart, in which case the right change is to that report rather than to the shared vocabulary.
+**Why:** The question is not what the coil is, which is settled, but whether anything downstream needs to distinguish it. If something does, we would rather find out now than after the first coil is written, because a status value is read far more widely than it is written.
+**Impact if unanswered:** As Q34 — buildable, but not against live plant data.
+
+---
+
+## Q36
+
+**Register title:** Sample number and planned operations for a flat wire output coil when they cannot be inherited from the rod
+**Area:** Shared plant records
+**Needs input from:** Tim O. / Planning
+**What we need:** Confirmation of our reading
+**Question:** The record linking a finished coil to its order carries a sample number and a planned-operations value. Where the source rod already has an order record these are copied from it. Where it does not, what should a flat wire output coil carry?
+**Background:** Copying from the rod is established behaviour and needs no decision. The fallback only applies when a rod reaches coil completion without an order record, which should not happen if check-in worked correctly — so this is a question about what a defensive path should write.
+**Recommended answer:** Copy from the rod wherever a record exists, and fall back to the same values the equivalent slitter transaction uses. Only the fallback needs confirming.
+**Why:** The cost of being wrong is a misleading sample number on an edge case rather than a broken transaction, which is why we have ranked this below the other two. But a defensive path that writes a plausible wrong value is harder to notice later than one that writes nothing.
+**Impact if unanswered:** Minor. A rod arriving at completion without an order record would be linked with an unconfirmed sample number.
+
+---
+
+## Q37
+
+**Register title:** Transaction token for a flat wire rod check-in in the shared plant records
+**Area:** Shared plant records
+**Needs input from:** Tim O. / IT
+**What we need:** Confirmation of our reading
+**Answer together with:** Q38, Q39, Q40
+**Question:** Checking a rod in at a flattening line now creates a set of records in the existing plant systems, several of which carry a short transaction name. What name should a flat wire rod check-in use, and does any existing report, screen or process filter on that name in a way a new value would disturb?
+**Background:** Nine plant records are written when a rod is checked in, and several of them carry the same eight-character transaction name field every other operation uses. Reusing an existing operation's name would make a flat wire check-in indistinguishable from that operation in the shop-floor history, which defeats the point of recording it at all.
+**Recommended answer:** A new name reserved for flat wire check-in, eight characters so it fits the field exactly, used consistently across every record written by the same check-in so one transaction is traceable from end to end.
+**Why:** This is the most widely visible of the new values — every existing consumer of the shop-floor history can see it — and we cannot tell from the code which reports depend on it, because the impact review that would have told us was removed along with the shared-schema changes. A wrong value does not raise an error: it writes a name an existing report may quietly filter out.
+**Impact if unanswered:** The work can be built and tested against development copies, but must not run against live plant data.
+
+---
+
+## Q38
+
+**Register title:** Transaction-log status value for a rod on a flattening line — new value or reuse
+**Area:** Shared plant records
+**Needs input from:** Tim O. / IT
+**What we need:** Confirmation of our reading
+**Answer together with:** Q37
+**Question:** The shop-floor history entry written when a rod is checked in needs a status value describing what is happening to the material. Does flat wire need a status of its own here, or should it reuse the value already used for material on a rolling mill?
+**Background:** A new status value would be an addition to a vocabulary every system in the plant reads, and adding to shared vocabularies is exactly the class of change that was cancelled when the shared-schema work was dropped. The existing rolling value is accurate — the material is on a mill being rolled. The flat wire module does keep a flattening status of its own internally, which nothing outside it sees.
+**Recommended answer:** Reuse the existing rolling status. Introduce a flat-wire-specific value only if a named report or process genuinely needs to tell flattening from rolling in the history, in which case the right change is to that report rather than to the shared vocabulary.
+**Why:** A status value is read far more widely than it is written, so the cost of a new one is spread across systems nobody is currently looking at. If something does need the distinction we would rather find out now than after the first rod runs.
+**Impact if unanswered:** As Q37 — buildable, but not against live plant data.
+
+---
+
+## Q39
+
+**Register title:** Is stamping the rod's shared coil row with a flattening station safe for existing consumers?
+**Area:** Shared plant records
+**Needs input from:** Tim O. / IT
+**What we need:** Confirmation of our reading
+**Answer together with:** Q37
+**Question:** When a rod is checked in we propose stamping its existing material record with the station it is being processed at, the operator badge, the transaction name and the time — the same marks every other operation leaves. Is that safe for the reports and screens that already read those fields?
+**Background:** With the shared-schema changes cancelled, nothing outside the flat wire module now marks a rod as being on a flattening line, so a rod can be in process with no sign of it anywhere else. Stamping these four fields restores that visibility using columns that already exist. We are deliberately **not** changing the material's status, which is the field read most widely of all.
+**Recommended answer:** Write all four. They are how every operation marks material as being worked, the values are ordinary ones, and leaving them blank is what created the visibility gap in the first place.
+**Why:** The alternative is a rod being processed with nothing in the plant record to say where it is, which was judged unacceptable when we found it. We are asking you to confirm rather than assume, because this is the one place flat wire becomes visible in the wider system at all.
+**Impact if unanswered:** As Q37 — buildable, but not against live plant data, and the visibility gap stays open until it runs.
+
+---
+
+## Q40
+
+**Register title:** On reversing the reqsum at pre-check-out, delete the row or zero it?
+**Area:** Shared plant records
+**Needs input from:** Tim O. / IT
+**What we need:** Decision
+**Answer together with:** Q37
+**Question:** Checking a rod in writes a requirement record against the order, showing the material the order has claimed. If the rod is then taken back off the line before anything has been made, that record has to be reversed. Should the reversal remove the record entirely, or leave it in place with its quantities set to zero?
+**Background:** The reversal already refuses to run once any material has been produced, because at that point the order genuinely did receive material. So this question is only about the case where the rod comes off having made nothing.
+**Options:** (1) Delete the record, leaving no trace of the claim. (2) Leave the record and set its quantities to zero.
+**Recommended answer:** Leave it and zero it. A deleted record destroys the evidence that the material was ever claimed against the order; a zeroed one is auditable and can be corrected. Please tell us if any existing report counts these records rather than summing their quantities — that is the one case where a zeroed record reads differently from an absent one.
+**Why:** Both directions are recoverable except one: you can always zero a record you decided to keep, and you cannot restore one you decided to delete. Where the two are otherwise equal we would rather keep the audit trail.
+**Impact if unanswered:** We will build the safer direction — zeroing — so that a missing answer never causes a deletion.
+
+---
+
+## Q41
+
+**Register title:** What does an FL2 pre-check-in do — persist or validate, hold a station or release it, gate check-in or not
+**Area:** Spool lifecycle
+**Needs input from:** Tim O. / Bob S.
+**What we need:** Decision
+**Question:** You have asked for pre-check-in at FL2, so the operator can validate the next spool rather than discover at check-in that they have fetched the wrong one. We need to know what that step should actually do. Does it record that the check was made, or is it a look-and-go validation? Does it reserve the line for that spool, or release it again immediately? And must it be completed before check-in, or does it stay optional as it is on the rod line?
+**Background:** FL2 has one payoff and no floor space, so there is nowhere to stage a spool — which is why pre-check-in was previously excluded there. Your reason for wanting it is validation rather than staging, and those are different things. Two of the things the rod line's pre-check-in does have no equivalent at FL2: it performs a visual inspection before unbanding, which is not done on a spool because the material was already inspected as rod, and it manages two alternating payoff positions, of which FL2 has one.
+**Already agreed:** FL2 does get pre-check-in, to validate the next spool and eliminate downtime spent locating the right material after finding out at check-in that the wrong spool was collected.
+**Options:** (1) Validate only — the screen checks the spool and records nothing. (2) Validate and record, releasing the line again immediately. (3) Validate and reserve the line until the spool is checked in. And separately, for any of the three: required before check-in, or optional.
+**Recommended answer:** Option 2, and keep the step optional. Recording it makes the check auditable and means the operator's effort is not lost if they are called away. Releasing rather than reserving reflects the single payoff — a reservation would block the line on a spool that has not arrived. Keeping it optional matters most: check-in must stay reachable without it, exactly as on the rod line, so a busy operator is never prevented from starting a run.
+**Why:** The answer decides whether this is a change to a screen you have already seen or a new record with new rules behind it, and that difference is material to both the estimate and the sprint it lands in. It also decides whether an operator can be blocked from starting a run, which is the kind of rule that is easy to agree in a meeting and expensive to live with on a shift.
+**Impact if unanswered:** The screen can be prepared but the step itself cannot be built, and it cannot be included in the sprint starting 24 August.
+
+---
+
+## Q42
+
+**Register title:** Spool carrier identifier format, and where the registry is mastered
+**Area:** Spool lifecycle
+**Needs input from:** Tim O. / Bob S.
+**What we need:** Values or data
+**Answer together with:** Q44
+**Question:** What will the numbers stencilled on the spools look like, and how many spools will there be in the end? The screens accept the number as typed and check it against a registered list, so we need that list.
+**Background:** You have confirmed the spools are reusable physical carriers identified much like furnace plates — thirty purchased, with a decision on a further fifteen pending, and all of one standard size. The number is typed and checked rather than chosen from a list, because thirty to forty-five entries is too long to scroll on a shop-floor panel.
+**Already agreed:** Spool numbers are static and stencilled on the spool, not generated per job. All spools are one standard size. The number is entered as text and validated, not selected from a drop-down.
+**Recommended answer:** Whatever nomenclature you decide to stencil, given to us as a plain list so we can load it. We will accept the number as typed and ignore capitalisation, since the operator is reading paint off steel. We hold the list inside the flat wire module rather than adding it to an existing plant table, so adding or retiring a spool is a data change and nothing more.
+**Why:** Until the list exists the number cannot be checked, and an unchecked number is worse than no number: a mistyped entry would be accepted and the material would be recorded against the wrong carrier, which then travels through the furnace and arrives at FL2 mislabelled.
+**Impact if unanswered:** We will build the validation against a placeholder list and swap it, but nothing can be tested end to end until the real numbers exist.
+
+---
+
+## Q43
+
+**Register title:** How many orders per spool, and does FL2 check-in choose the order or inherit it?
+**Area:** Spool lifecycle
+**Needs input from:** Tim O. / Planning
+**What we need:** Decision
+**Question:** A spool can carry more than one order. When it is checked in at FL2, does the operator choose which order is being made, or should the system determine it? And is there a practical limit to how many orders one spool can carry?
+**Background:** You confirmed that a spool coming off FL1 may carry two or more orders, while FL2 makes one order at a time. Separately, a spool with no order at all is a legitimate case — a planning remainder, or a part-run spool accepted back by a supervisor — and the spool queue screen already allows such a spool to be checked in.
+**Already agreed:** A spool may carry several source rods and several orders. FL2 makes one order at a time out of a spool.
+**Options:** (1) The operator selects the order at check-in from those on the spool. (2) The system derives it from the material expected off the spool first. (3) Planning nominates the order and the operator cannot change it.
+**Recommended answer:** Option 1, defaulted from option 2 — planning allocates the set of orders to the spool, the system offers the order of the material expected off first, and the operator can change it. That makes the common case a single keypress and still lets the operator correct it when the spool is threaded the other way round. We would not put a limit in the system on how many orders a spool may carry; the check that matters is that the order chosen is genuinely one of those on the spool.
+**Why:** Deciding this now rather than later is what stops the records being designed around a single order and rebuilt when the second one appears. It also settles whether a spool with no order can still be run, which the screens currently allow and the underlying records currently forbid — a contradiction we would rather resolve deliberately than discover on a shift.
+**Impact if unanswered:** Order allocation on a spool cannot be recorded, and the one documented case of a spool with no order cannot be checked in at all.
+
+---
+
+## Q44
+
+**Register title:** What the FL1 spool label prints, and on what media
+**Area:** Spool lifecycle
+**Needs input from:** Tim O. / Bob S.
+**What we need:** Decision
+**Answer together with:** Q42
+**Question:** Exactly what should print on the spool label, and will the etched steel plates you are investigating replace the label or sit alongside it?
+**Background:** The label itself is settled: the inch-and-a-half by three-inch high-temperature label already used on mill output, two to a label so one goes on each side of the spool, printed when the spool is completed, carrying the spool number and the material identities on it. Nothing else survives the anneal. What is not settled is the full list of what prints, and this document has referred to printing the labels throughout without ever stating it.
+**Already agreed:** The high-temperature label, two per spool, one per side. It carries the spool number and the material identities on the spool, and scanning any one of them at FL2 finds the spool — the same way scanning one identity on a furnace plate gets the plate into anneal.
+**Recommended answer:** Print the spool number, every material identity on the spool with the weight each contributed, and the order or orders. The spool number is the primary barcode and each material identity a secondary, so the operator can scan whichever is facing them. The pass schedule stays off the label, as agreed previously. If the etched plates prove workable, we would suggest they carry the spool number only and sit alongside the label rather than replacing it — the spool is permanent and so is the etching, whereas the material on it changes every cycle.
+**Why:** The weights are the part worth deciding deliberately: they are what the welding wire certificates are built from, and they depend on the footage-to-weight conversion still outstanding. Printing a number derived from an unconfirmed conversion is worse than not printing it, because a figure on a label is treated as measured.
+**Impact if unanswered:** The label prints the spool number and the identities only, and any weight has to be looked up on a screen instead.
+
+---
+
+## Q45
+
+**Register title:** Is last on, first off guaranteed — is the label's lead alpha a fact or a prediction?
+**Area:** Spool lifecycle
+**Needs input from:** Tim O. / Engineering
+**What we need:** Confirmation of our reading
+**Question:** Does a spool always unwind in the reverse of the order it was wound, so that the last material on is the first off? And should the system therefore treat the identity leading the label as the one it requires at the next check-in, or as an expectation it must be willing to be wrong about?
+**Background:** You told us the spool runs in reverse, and that the identity leading the label should be the one expected at the next operation. It was also pointed out that FL1 runs continuously, so the finished coils cut from a spool cannot be sequenced in advance. Both statements are correct and they are about different things — the first about the source material going onto the spool, the second about the coils coming off it — but they lead to different behaviour at check-in, which is why we are asking.
+**Already agreed:** The identity leading the printed label should be the one expected at the next check-in.
+**Options:** (1) The leading identity is required — scanning any other identity on the spool is refused. (2) It is expected — any identity on the spool is accepted, and the expected one is shown for information. (3) It is expected, and a mismatch warns without blocking.
+**Recommended answer:** Option 2. Show the expected identity prominently and accept any identity on the spool without a warning; the operator is holding the spool and the system is not. If engineering can confirm the unwind direction is genuinely guaranteed, please tell us — it would let the system catch a mis-threaded spool, which is a check we have no other way of making.
+**Why:** The two possible mistakes cost very different amounts. Treating an expectation as a rule stops a correct spool at check-in and puts the operator on the phone to a supervisor. Treating a rule as an expectation only loses a check nobody has today. Until the direction is confirmed, the permissive reading is the safe one.
+**Impact if unanswered:** We build the permissive behaviour, which is safe but leaves a mis-threaded spool undetected.
+
+---
+
+## Q46
+
+**Register title:** Mandrel / core diameter at FL1 — selected per spool, fixed by the standard size, or read from the machine?
+**Area:** Run start and machine setup
+**Needs input from:** Tim O.
+**What we need:** Confirmation of our reading
+**Question:** You mentioned that the system needs to know the diameter of the mandrel fitted, comparing it to selecting the mandrel size on a slitter. Does this vary from spool to spool, or is it fixed by the one standard spool size?
+**Background:** Nothing records this today. On a slitter the mandrel genuinely varies, which is why the operator selects it. Here you have also confirmed that every spool is the same standard size, which would make the diameter a fixed property rather than a choice.
+**Options:** (1) The operator selects it per spool when the spool is completed. (2) It is fixed by the standard spool size and recorded once, with no operator entry. (3) It is read from the machine.
+**Recommended answer:** Option 2, if the spools really are all one size. A box that can only ever hold one value is a box that will eventually be filled in wrongly, and the diameter belongs to the spool specification rather than to the shift. If it does vary, then option 1 — and it belongs on the spool completion step beside the spool number, not at check-in, which is at the other end of the machine.
+**Why:** It also feeds the outside-diameter to weight calculation. Taking the diameter from a permitted range rather than a single known value is how a calculated weight quietly drifts, and that weight ends up on a label and a certificate.
+**Impact if unanswered:** We record the diameter against the spool specification and do not ask the operator for it, which is reversible if you tell us it varies.
+
+---
+
+## Q47
+
+**Register title:** Is the maximum output coil weight the optimisation target, or the start of a downward search?
+**Area:** Planning and scheduling
+**Needs input from:** Tim O. / Planning
+**What we need:** Confirmation of our reading
+**Question:** When planning divides an order into finished coils, should it always divide by the customer's maximum coil weight, or should it try smaller weights downward from the maximum to find the one that leaves the least unusable material?
+**Background:** The method agreed is to take the planned weight, divide by the maximum finished coil weight, round down to a whole number of coils and multiply back — which stays inside the customer's tolerance and leaves no overage. On a 44,000 lb planned weight against a 900 lb maximum that gives 48 coils and 43,200 lb. The remaining question is narrower than the method: whether the maximum is simply the divisor, or the starting point of a search.
+**Already agreed:** Plan to the maximum finished coil weight and work backwards. Maximise the spool weight coming off FL1 to make best use of anneal capacity, then respect the customer's minimum and maximum at FL2 so that no unshippable remainder is created — a coil below the customer minimum is scrap, not a short coil. Where the order quantity is smaller than one spool, the order quantity governs. The calculation runs on the planner's planned weight rather than the order weight, with the existing over-order warning.
+**Options:** (1) Always divide by the maximum. (2) Search downward from the maximum for the weight that minimises leftover material. (3) Search downward for the weight that minimises over-shipment against the order.
+**Recommended answer:** Option 1. Rounding down already guarantees no overage, and the largest coils mean the fewest cuts for us and the fewest units for the customer, which is the reason you gave for starting at the maximum. Show the planner what is left over and let them place it, rather than having the system choose a slightly different coil weight on every order for reasons the planner cannot see.
+**Why:** Both of you said to optimise to the maximum, but the question actually asked was about searching downward from it, and those are compatible statements that do not settle it. A search is easy to build and hard to predict at the planning desk, which is the wrong trade for a number a planner has to defend to a customer.
+**Impact if unanswered:** Planning is built to divide by the maximum. Changing it later is a calculation change rather than a redesign, so this is the least costly of the open planning questions to defer.
+
+---
+
+## Q48
+
+**Register title:** Can two orders on one rod have different pass schedules? If so the boundary cannot be crossed mounted
+**Area:** Planning and scheduling
+**Needs input from:** Tim O. / Planning
+**What we need:** Decision
+**Question:** When planning puts two orders on a single rod, can those two orders call for different mill settings - a different gauge, width or edge - or will they always share the same settings?
+**Background:** A rod stays mounted across an order boundary, and the machine settings are sent to the line once, when the rod is checked in. If the second order needs different settings there is no moment at which to send them without stopping and re-checking-in, which means unloading a part-run rod.
+**Options:** (1) Two orders on one rod always share the same settings, and planning enforces it. (2) They may differ, and the operator must check the rod out and back in at the boundary. (3) They may differ and the system sends new settings mid-rod.
+**Recommended answer:** Option 1. Have planning refuse to pair orders with different settings on one rod.
+**Why:** Option 3 means changing the mill while material is in it, which nobody has proposed and which would leave a length of wire made to neither setting. Option 2 works but throws away the benefit of pairing orders on a rod in the first place. Option 1 costs planning a validation rule and costs the shopfloor nothing.
+**Impact if unanswered:** This is the most consequential unanswered question in the rod-to-order design. If different settings are possible, the mounted-across-the-boundary flow needs a stop-and-restart path built into it, and the estimate grows.
+
+---
+
+## Q49
+
+**Register title:** Does multi-order-last hold when no weld is involved? Q73 item 6's unresolved branch
+**Area:** Planning and scheduling
+**Needs input from:** Tim O.
+**What we need:** Confirmation of our reading
+**Question:** The rule that a rod shared between orders is run last in its order applies when that rod is welded to the next one. Does it still apply when there is no weld?
+**Background:** The reason given for running a shared rod last was to keep the weld at the end of the order rather than in the middle of it. Where no weld is involved that reason does not apply, so it is unclear whether the sequencing rule is still wanted.
+**Options:** (1) The rule applies to every shared rod. (2) It applies only to welded ones.
+**Recommended answer:** Option 1 - apply it to every shared rod.
+**Why:** A single rule the operator can predict is worth more than a narrower one that is technically minimal, and the cost of running a shared rod last when it did not strictly need to be is nil.
+**Impact if unanswered:** The sequence check refuses rods presented out of order. If the rule is narrower than we have built, it will refuse work the plant considers perfectly normal.
+
+---
+
+## Q50
+
+**Register title:** What overrun is acceptable past the allocated weight - warn at what, escalate to whom?
+**Area:** Weights and measurement
+**Needs input from:** Tim O. / Shannon R.
+**What we need:** Values or data
+**Question:** Material keeps being produced between the moment an order's allocated weight is reached and the moment the operator confirms it. How much overrun is acceptable before someone is told, and who is told?
+**Background:** The line is deliberately not stopped when the allocation is reached, so some overrun is unavoidable. In the worked examples the overrun on one order equals the shortfall on the next to the pound, so it is not waste - but it is unattributed until someone decides where it belongs.
+**Options:** (1) A fixed number of pounds. (2) A percentage of the allocation. (3) A percentage with a pounds floor for small orders.
+**Recommended answer:** Option 3, starting at 2% with a 25 lb floor, adjustable without a code change.
+**Why:** A flat percentage is unusable on a small order, where 2% may be a few pounds and would fire constantly; a flat pounds figure is meaningless on a 40,000 lb run. Making it configurable lets the first month of real running set it rather than this meeting.
+**Impact if unanswered:** We have built a warning and a supervisor escalation, but the threshold is a guess. Set too low it will cry wolf on every order; set too high it will never fire.
+
+---
+
+## Q51
+
+**Register title:** On an early acknowledgement, where does the unconsumed allocation go?
+**Area:** Planning and scheduling
+**Needs input from:** Tim O. / Planning
+**What we need:** Decision
+**Question:** An operator may mark an order complete before its allocated weight is reached, because they can see the material is finished. What happens to the pounds that were allocated and never run?
+**Background:** The system records the shortfall, so the number is not lost. What is undecided is whether those pounds return to the order to be made up later, move to the next order on the rod, or are written off as a short shipment.
+**Options:** (1) The order closes short and the remainder is written off. (2) The remainder returns to the order for a later rod. (3) The remainder moves to the next order on the rod.
+**Recommended answer:** Option 1, with the shortfall reported.
+**Why:** The operator acknowledged early because the material was genuinely done, which is a statement that the order is finished, not that it is owed more. Options 2 and 3 both re-plan on the operator's behalf from a single button press.
+**Impact if unanswered:** The order's material status is worked out from what was consumed. Without this rule an early acknowledgement leaves an order looking permanently part-filled, and planning cannot tell whether to schedule more material.
+
+---
+
+## Q52
+
+**Register title:** A shared rod exhausts before the outgoing order is satisfied - top up, or stay short?
+**Area:** Planning and scheduling
+**Needs input from:** Tim O. / Planning
+**What we need:** Decision
+**Question:** If a rod shared between two orders runs out before the first order has had its allocated weight, does the plant bring another rod in to top that order up, or does the order ship short?
+**Background:** The planned split assumes the rod yields its nominal weight. Real rods vary, and the rod weight itself is one of three figures currently in circulation, so a shortfall is likely rather than exceptional.
+**Options:** (1) Top up from another rod, with supervisor authorisation. (2) Ship short and let planning decide. (3) Top up only above a stated shortfall.
+**Recommended answer:** Option 1.
+**Why:** An unplanned substitution already needs a supervisor, so the mechanism exists; and shipping short without asking is the outcome least likely to be what the customer wanted.
+**Impact if unanswered:** This decides whether bringing in an unplanned rod is a normal path needing a supervisor authorisation, which we have built, or an exception that should not arise.
+
+---
+
+## Q53
+
+**Register title:** Is fulfilment consumed or produced pounds - and which does the certificate state?
+**Area:** Certification and traceability
+**Needs input from:** Tim O. / Shannon R.
+**What we need:** Decision
+**Question:** Is an order counted as fulfilled by the pounds of rod consumed against it, or by the pounds of finished wire produced from it - and which of the two does the customer certificate quote?
+**Background:** The two figures differ by process loss, so they are never equal. Consumption is what the plant controls and can measure at the payoff; production is what the customer receives.
+**Options:** (1) Consumed pounds throughout. (2) Produced pounds throughout. (3) Track both; fulfil on consumed, certify on produced.
+**Recommended answer:** Option 3.
+**Why:** They answer different questions and both are wanted: the plant needs consumption to know when a rod's allocation is spent, and the customer needs produced weight because that is what arrives. Tracking both costs one extra stored figure and removes the need to choose.
+**Impact if unanswered:** Every fulfilment figure, the completion notification and the certificate all read from the same basis. Choosing later means changing all three together.
+
+---
+
+## Q54
+
+**Register title:** Does the order acknowledgement also close the FL1 spool, or may a spool span the boundary?
+**Area:** Spool lifecycle
+**Needs input from:** Tim O. / Bob S.
+**What we need:** Decision
+**Question:** When the operator marks an order complete part-way through winding an FL1 spool, does that also close the spool, or may one spool carry material belonging to two orders?
+**Background:** A finished coil belongs to exactly one order. If a spool spans an order boundary, the finishing mill must cut at that boundary, and the worked examples show that turning a good 1,800 lb spool into two coils below the customer minimum. Closing the spool at the acknowledgement avoids that outright, at the cost of a lighter spool.
+**Options:** (1) The acknowledgement closes the spool. (2) A spool may span the boundary and the mill cuts at it. (3) It spans only if the material left exceeds one coil weight.
+**Recommended answer:** Option 1.
+**Why:** It removes the failure rather than managing it. A lighter spool costs a little anneal capacity; two sub-minimum coils cost the material and the order.
+**Impact if unanswered:** This is the strongest available fix for a known failure that otherwise makes unsellable coils from good material. Building it later means changing spool completion, the spool queue and the mill's cutting rules together.
+
+---
+
+## Q55
+
+**Register title:** Should the spool carrier prefix differ from the material one? SP-0001 against SP-00021
+**Area:** Spool lifecycle
+**Needs input from:** Tim O. / Bob S.
+**What we need:** Confirmation of our reading
+**Question:** The reusable stencilled spool and the batch of material wound onto it are two different things, and both get a number. Should they be told apart by their prefix, or is the context always enough?
+**Background:** The physical spool is stencilled once and used for years; the material on it changes every run. Today both read as SP- numbers of different lengths.
+**Options:** (1) Keep one prefix and rely on context. (2) Give the carrier its own prefix.
+**Recommended answer:** Option 2, with SC- for the carrier.
+**Why:** Two things sharing a prefix and differing only in how many digits follow is the kind of distinction that survives in a specification and not on a shop floor at shift change. This is the cheapest moment it will ever be to separate them.
+**Impact if unanswered:** A cosmetic choice with a long tail: the prefix is stencilled onto physical equipment and appears on labels, so changing it after the first batch is stencilled is not a software change.
+
+---
+
+## Q59
+
+**Register title:** Can another caller of the shared alpha generator be issued an alpha an FL1 segment already holds?
+**Area:** Shared plant records
+**Needs input from:** Tim O. / IT
+**What we need:** Confirmation of our reading
+**Question:** Flat wire takes its identifiers from the same shared generator the rest of the plant uses. Can any other caller be handed an identifier that a flat wire spool segment is already using?
+**Background:** The generator works out the next free number by scanning the tables it knows about. The flat wire database is not among them, so prior flat wire identifiers are passed in explicitly on every call. That works only for as long as every caller does it.
+**Options:** (1) Confirm no other caller can collide. (2) Add flat wire to the generator's own scan. (3) Reserve a number range for flat wire.
+**Recommended answer:** Option 3 if a range is available, otherwise option 2.
+**Why:** Both remove the dependency on every future caller remembering to pass prior identifiers in. A reserved range is the simpler of the two and needs no change to a shared piece of plumbing that four databases already depend on.
+**Impact if unanswered:** A duplicated identifier across two modules is the kind of defect found at certification rather than at build, and it cannot be put right once labels are printed.
+
+---
+
+## Q87
+
+**Register title:** What does the FL2 finished-coil label carry, on what media - and does a two-rod coil print one alpha or two?
+**Area:** Output and packaging
+**Needs input from:** Tim O. / Bob S. / Shannon R.
+**What we need:** Decision
+**Answer together with:** Q4
+**Question:** What is printed on the label of the finished coil the customer receives, on what media - and where a coil was wound from two source rods, does the label carry one identifier or both?
+**Background:** The label the plant uses today prints as a sheet, so a single coil would waste most of one. The skid label is a candidate carrier instead, and something has to sit under the stretch wrap. Traceability wants both source identifiers recorded, but that is not the same as printing both on the face the customer sees.
+**Already agreed:** Whatever is chosen must be consistent with the coil labels the plant already produces, and full traceability must be recorded even where it is not all printed on the customer-facing label.
+**Options:** (1) A coil label on new media. (2) Traceability on the skid label with a minimal coil label. (3) One identifier on the printed face, both recorded against the coil.
+**Recommended answer:** Option 3 for the identifiers, with the media decided together with Q4.
+**Why:** A customer reading two identifiers on one coil has to work out what that means; the certificate is the right place for the full genealogy, and the coil record already holds it. The media half genuinely depends on the skid decision and should not be settled separately.
+**Impact if unanswered:** Deferred on the 24 August call. Coil completion cannot be finished without it, and it is bound up with the skid labelling question - the same decision seen from the other end.
+
 ---
 
 # Part 2 — Decisions to Confirm
@@ -624,9 +990,9 @@ optional; everything else is required.
 **Area:** Rod staging and pre-check-in
 **Question:** Does pre-check-in commit the shared coil record to `INFLAT`, or does the status stay `STAGED` until check-in? And what reverses it?
 **Background:** Two of our source documents disagreed, and the answer decides how much has to be undone when a staged rod is removed before it is ever run.
-**Decision as recorded:** **`INFLAT` is set only when the rod is actually checked in at FL1.** Pre-check-in does **not** commit the shared coil status, and there is **no intermediate status** for a rod that has been welded but not yet checked in — you confirmed one is not needed. Rod status `STAGED` is the real staging status for FL1 rather than a leftover value.
+**Decision as recorded:** **`INFLAT` is set only when the rod is actually checked in at FL1.** Pre-check-in does **not** commit the status, and there is **no intermediate status** for a rod that has been welded but not yet checked in — you confirmed one is not needed. Rod status `STAGED` is the real staging status for FL1 rather than a leftover value. ⚠ **Amended August 18, 2026, following your direction that there will be no changes to the existing scheduling system's database.** The timing you confirmed is unchanged — the status still changes at check-in and not before — but it is now recorded on the **flat wire module's own rod record**, and the existing shared coil record is **not written at all**. Nothing about the operator's experience changes.
 **Still open:** ⚠ **A real residual, and not a small one.** The decision covers the **status** only. It does not cover the rest of the writes pre-check-in was specified to perform — the queue insert, the requirements summary and the work-in-progress order insert. If those stay at staging, the amount of work that has to be undone when a staged rod is removed is unchanged and only the status moved. If they move to check-in, removing a staged rod becomes a clean local delete. This is with you and IT.
-**Our recommendation:** Confirm the status decision as recorded, and please settle the residual in the same pass — it is the part that determines how much compensating work a removal has to do. Our position is that these writes should move to **check-in** alongside the status, so that pre-check-in has no effect outside the flat wire system at all.
+**Our recommendation:** Confirm the status decision as recorded, and please settle the residual in the same pass — it is the part that determines how much compensating work a removal has to do. Our position is that these writes should move to **check-in** alongside the status, so that pre-check-in has no effect outside the flat wire system at all. ⚠ **The August 18 direction has already taken the status half of that position further than we proposed** — the status now never leaves the flat wire system at any point. **One consequence needs your view, and it is the reason this question is still worth a minute of your time:** with nothing written to the shared coil record, **the existing scheduling and reporting screens no longer show that a rod is on a flattening line.** The work-in-progress station, the requirements-summary entry and the routing start date all still say the rod has started, so most consumers are covered — but any report that filters on the **coil status field itself** will show flat wire material as untouched. Please tell us whether any report or screen you rely on does that.
 
 ---
 

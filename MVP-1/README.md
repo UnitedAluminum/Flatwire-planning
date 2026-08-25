@@ -1,7 +1,7 @@
 # MVP-1 — Screens, Specifications and Client Deliverables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 13, 2026
+**Last Updated:** August 25, 2026 — client deliverables 4 → 5; `Screens/` 17 → 13; the `PLCTagSpecification.md` source path corrected; `D-31` contradiction removed; object count 34 → 33 *(previously August 13, 2026)*
 **Status:** Active scope — this is what is being built
 
 ---
@@ -23,14 +23,14 @@ MVP-1/
 > |---|---|
 > | `DevelopmentPlan/` | `ProjectPlan/` — roadmap, sprint plan, backlog, effort models, `REVIEW.md`, `Development/Phases/`, `Tools/` |
 > | `RequirementDocuments/` | `ProjectPlan/Business/Screens/` (13 specifications) · `Architecture/PLCTagSpecification.md` · `Business/Spool.md` + `PartialRodReCheckin.md` · `Tools/ClientQuestionsContent.md` |
-> | `Mockups/` | `ProjectPlan/Frontend/Mockups/` — 31 files, **flat and intact** |
-> | `DBChanges/` | `ProjectPlan/Database/` — `Schema/` (design + DDL), `Scripts/` (shared-DB work), `GapAnalysis.md` |
+> | `Mockups/` | `ProjectPlan/Frontend/Mockups/` — **32** files (18 HTML), **flat and intact** |
+> | `DBChanges/` | `ProjectPlan/Database/` — `DatabaseDesign.md` (`[DBD]`, the as-built model and the counted baseline), `Schema/` (design + DDL), `Scripts/` (cross-database work) |
 >
 > **Five documents were absorbed into the documents that own their subjects and deleted:** `APIContracts.md` → `Backend/APIs.md` · `FlatWireJiraStories.md` → `Development/TaskBreakdown.md` · `TechStackRecommendation.md` → `Architecture/Architecture.md` §14 · `FlatWireTables.md` → `Database/Schema/FlatWireSchema_Mapping.md`'s appendix · `FlatWire_ERDiagram_Documentation.md` → `Database/DatabaseDesign.md` §6.10/§6.11.
 >
 > **Two structural rules.** **(1) Section numbers are non-contiguous by design** — `BusinessRequirements.md` opens its requirements at §5, `DatabaseDesign.md` numbers the data model §6 — which is what keeps every `§n` citation resolving. **Never renumber a section to close a gap.** **(2) Documents are cited by shortcode**, declared in each header; [`ProjectPlan/README.md`](ProjectPlan/README.md) is the map.
 
-> **The schema builds from `ProjectPlan/Database/Schema/SQL/`** and produces a complete MVP-1 database: **25 tables · 33 FKs · 41 index statements · 1 procedure · 1 trigger**, verified by a clean deploy and idempotent re-run on 13 Aug 2026. The three pass-schedule tables sit in the **same folder** but are **not built by that runner** — see [`ProjectPlan/Database/Schema/SQL/README.md`](ProjectPlan/Database/Schema/SQL/README.md) — because **the pass schedule is owned outside MVP-1**; `PassScheduleId` is therefore a **documented external reference**, unenforced by design, in the same class as `PlanId`, `CoilOrderPlanId` and `SkidId`. **There is no second runner to chase.**
+> **The schema builds from `ProjectPlan/Database/Schema/SQL/`** and produces a complete MVP-1 database: **33 tables · 55 FKs · 69 index statements · 1 procedure · 1 trigger**, counted from the scripts and checked by [`ProjectPlan/Tools/verify_schema_counts.py`](ProjectPlan/Tools/verify_schema_counts.py). ⚠ **The three pass-schedule tables ARE built by that runner** — `D-31` (15 Aug 2026) moved them into MVP-1, and `PassScheduleId` is a **real, enforced FK** on all four tables, **not** an external reference. *(It was "unenforced by design" until 15 Aug 2026; that description is superseded.)* `PlanId`, `CoilOrderPlanId` and `SkidId` are unaffected and remain external references with no local parents. Only `sp_ShiftSummary` (`09_Programmability_MVP2`) stays MVP-2 — see [`ProjectPlan/Database/Schema/SQL/README.md`](ProjectPlan/Database/Schema/SQL/README.md). **What did not change: MVP-1 reads pass schedules and never authors them.** **There is no second runner to chase.**
 >
 > **`CoilOutput` and `CoilTraceability` are MVP-1, and so is everything that writes them.** The coil genealogy they carry is what the **welding-wire customer certificates** are produced from.
 
@@ -44,7 +44,7 @@ MVP-1/
 | The master specification and its `OI-##` register | `../LatestDocument/FlatWire_MasterSpecification.md` |
 | Requirement text — every `FR-###` | now **here**, `ProjectPlan/Business/BusinessRequirements.md` (moved 11 Aug 2026) |
 | Schema design, executable DDL, ER documentation | now **here**, `Database/` (moved and divided 11 Aug 2026) |
-| The question registers (**authoritative for decisions**) — **33 open, `Q1`–`Q33`**, and **25 decided, `Q61`–`Q85`**, in one contiguous numbering space across two files | `../Analysis/FlatWireOpenQuestions.md` · `../Analysis/FlatWireDecidedQuestions.md` |
+| The question registers (**authoritative for decisions**) — **56 open** (`Q1`–`Q56`) and **28 decided**, in one numbering space across two files — a question is numbered when raised and moves across when decided, so neither file's range is contiguous | `../Analysis/FlatWireOpenQuestions.md` · `../Analysis/FlatWireDecidedQuestions.md` |
 | API contracts, effort model, `REVIEW.md` | now **here**, `ProjectPlan/` |
 | Source business documents and the client-call propagation ledgers | `../BaseDocuments/` |
 
@@ -63,7 +63,7 @@ Static HTML prototypes — **open directly in a browser**, no build step. The ap
 
 ## `Business/Screens/`
 
-Seventeen files. **Fourteen are specifications; three are not** — and the three that are not are cited as though they were, which is the trap:
+**Thirteen files, and all thirteen are specifications.** *(Read "Seventeen … Fourteen are specifications; three are not" until 25 Aug 2026. The four non-specifications all left: `Spool.md` and `PartialRodReCheckin.md` to `Business/`, `PLCTagSpecification.md` to `Architecture/`, `ClientQuestionsContent.md` to `Tools/`.)* The trap that wording described is still worth knowing — and the three that are not are cited as though they were, which is the trap:
 
 - **`Spool.md`** is the **domain reference for what a spool is** (physical form, the 3,500 lb ceiling against the ~1,800 lb working target, material flow, lifecycle). *That* content is authoritative; its **screen** rules are not — those belong to `RocCheckin.md` §4.3, `SpoolQueue.md` and `OutputCoilCompletion.md` §4 — and its FM2 description is **superseded by `D-26`**.
 - **`PartialRodReCheckin.md`** is **internal design rationale** — nothing in it is citable as a requirement. Its rules live in `RodPreCheckin.md` §7 and `RodCheckout.md` §7.2; the requirement text is `FR-043`. Retained as the audit trail for the open **`Q12`**.
@@ -76,11 +76,11 @@ Seventeen files. **Fourteen are specifications; three are not** — and the thre
 
 ## `SRS/`
 
-**Four client deliverables. Three are generated from markdown in this repository and must never be edited directly** — the next render overwrites them.
+**Five client deliverables. Four are generated from markdown in this repository and must never be edited directly** — the next render overwrites them. *(Read "Four … Three" until 25 Aug 2026; `FlatWire_OrderAllocationExamples.xlsx` was uncounted.)* ⚠ **One of the four cannot currently be regenerated at all** — `FlatWire_OrderAllocationExamples.xlsx`, whose generator and content source were never committed.
 
 `Shopfloor_Flat_wireSRS.docx` — the delivered SRS, and the one file here that is **not** generated. It has **no pre-check-in content**, so it is *not* the requirement source for `PCI`/`PRC`/`CHK`/`WLD`/`TRV` IDs; those rules are `FR-###` in [`ProjectPlan/Business/BusinessRequirements.md`](ProjectPlan/Business/BusinessRequirements.md).
 
-`PLCTagSpecification.docx` — generated output. **The `.md` in `Business/Screens/` is the source** — edit it and re-render with [`ProjectPlan/Tools/build_docx.py`](ProjectPlan/Tools/build_docx.py).
+`PLCTagSpecification.docx` — generated output. **The `.md` in [`ProjectPlan/Architecture/`](ProjectPlan/Architecture/PLCTagSpecification.md) is the source** *(this said `Business/Screens/` until 25 Aug 2026; the file moved)* — edit it and re-render with [`ProjectPlan/Tools/build_docx.py`](ProjectPlan/Tools/build_docx.py).
 
 `FlatWire_ClientQuestions.xlsx` — generated output, the client questions workbook. Rendered by [`ProjectPlan/Tools/build_questions_xlsx.py`](ProjectPlan/Tools/build_questions_xlsx.py) from **two** sources: structure from the `Analysis/` question registers, prose from [`ClientQuestionsContent.md`](ProjectPlan/Tools/ClientQuestionsContent.md). Edit whichever of the two owns the field and re-run.
 

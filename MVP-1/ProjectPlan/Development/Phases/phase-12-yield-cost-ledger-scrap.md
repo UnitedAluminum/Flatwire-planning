@@ -6,7 +6,7 @@
 ---
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-08-13 — pointer added to the new phase sheet; **no scope or effort figure in this file changed**
+**Last Updated:** 2026-08-18 — **`D-32`**: the FW-001 renamed yield fields are struck; this phase reads the existing column names *(previously 2026-08-13 — pointer added to the new phase sheet; **no scope or effort figure in this file changed**)*
 **Status:** Ready to build — ⚠ but see the specification gap in the phase sheet below
 **Phase sheet:** [`YieldCostAndScrapSheet.md`](../YieldCostAndScrapSheet.md) — story-level effort on both delivery bases (hand-coded **177 h** / AI-assisted **126 h**), the descope-ladder role, and the blocker analysis. **Read it before scheduling this phase:** it records that `FW-101`, `FW-102` and `FW-110` carry **no `FR-` IDs and have no owning requirement document**, so this phase's 177 h was priced against four Jira cards.
 **Layer:** Full-stack vertical slice (back-office)
@@ -25,7 +25,7 @@
 ## UI / Backend / Database
 - **UI:** yield form ("Flat Wire" checkbox; field renames), cost ledger config, scrap module outlet (`Scrap Box`/`Scrap Skid`).
 - **Backend:** extend `CoilYield`, `CoilCosting`, scrap services; footage×area×density weight; per-rod yield attribution across weld points; cost standards/times (OI-68/OI-68).
-- **Database:** reads `CoilTraceability`/`WeldEvent`/`CoilOutput`; renamed yield fields (FW-001).
+- **Database:** reads `CoilTraceability`/`WeldEvent`/`CoilOutput`. ⚠ ~~renamed yield fields (FW-001)~~ — **struck 18 Aug 2026, `D-32`**: `FW-001` is cancelled, so the yield fields keep their **existing** names and this phase reads them unchanged.
 
 ## Real-Time / Testing / Deliverables
 - No real-time. Tests: multi-rod yield rows; weight formula; scrap outlet applies to Flat Wire/Conveyors/Inspection. Deliverables: footage-weight yield, weld-yield attribution, cost ledger config, scrap outlet.

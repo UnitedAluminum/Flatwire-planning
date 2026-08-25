@@ -1,7 +1,7 @@
 # Flat Wire Mill — Rollback Plan
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** August 18, 2026 — **`D-32`: there is no shared-schema migration.** **§6.3 cancelled** — the least-reversible element of the release no longer exists; `R1`, the FW-001 reverse row and `M3` amended *(previously August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
 **Document Type:** Rollback plan
 **Status:** Baselined — **rollback must be rehearsed before the first production deployment**
 **Owner:** Release manager / IT
@@ -78,9 +78,11 @@ Start-WebAppPool -Name "FlatWireAPI_<Env>"
 - [ ] Verifications V1–V6 (§4.2) pass against the restored or rebuilt schema.
 - [ ] **Loss assessment:** on a restore, everything written after the backup is lost — runs, check-ins, weld events, SPC checkpoints, coil outputs and traceability. **§6.4.**
 
-#### 6.2.5 FW-001 shared-schema renames — **see §6.3**
+#### 6.2.5 ~~FW-001 shared-schema renames~~ — **CANCELLED, `D-32`, 18 Aug 2026** *(§6.3 retained as the record)*
 
-### 6.3 Rolling back the FW-001 renames — the hard one
+### 6.3 Rolling back the FW-001 renames — ~~the hard one~~ **CANCELLED**
+
+> ⚠ **CANCELLED 18 Aug 2026 — decision `D-32`. There is no shared-schema migration, so there is nothing here to roll back.** This was the hardest element of the release to reverse and it no longer exists. The section is retained as the record of what was cancelled, and because `[INT]`, `[TB]` and `[DEP]` all pointed at it. **`R1`–`R2` and `M3` below are cancelled with it.** ⚠ **What is NOT cancelled:** the `machines` FL1/FL2/FL3 rows and the `CommonDB` WIP-station rows are still written to shared tables and still need a reversal plan — they are row inserts, not schema changes, and §6.2's other steps cover them.
 
 > **State this plainly: the shared-schema renames are the highest-risk and least-reversible element of this release.** Every other component is a file copy or a restore of a database this module owns. **This one changes a schema other modules depend on.**
 
@@ -95,7 +97,7 @@ Start-WebAppPool -Name "FlatWireAPI_<Env>"
 
 | # | Action | Command / method | Verification |
 |---|---|---|---|
-| **R1** | **Stop `FlatWire.API` first** — it writes `coils.coil_status = INFLAT` | `Stop-WebAppPool -Name "FlatWireAPI_<Env>"` | Pool stopped |
+| ~~**R1**~~ | ~~**Stop `FlatWire.API` first** — it writes `coils.coil_status = INFLAT`~~ — **cancelled, `D-32`: it does not.** In-process state is `FlatWireDB`-local | `Stop-WebAppPool -Name "FlatWireAPI_<Env>"` | Pool stopped |
 | **R2** | Quantify what will be orphaned | `SELECT COUNT(*) FROM coils WHERE [Coil/BundleStatus] = 'INFLAT';` and count non-null `OutgoingCoil/BundleWidth` and `IncomingWireDia` | Counts recorded in the log **before** anything is reversed |
 | **R3** | **Run the reverse script** | `sqlcmd -S "<server>" -E -C -i FW001_SharedSchema_Renames_REVERSE.sql` | Completes with no error |
 | **R4** | **Dependent-object recompilation check** | `EXEC sp_refreshsqlmodule` for every object from the §4.3 3a list; then re-run V8 | **V8 returns zero rows.** Any invalid object is an escalation, not a retry |
@@ -119,7 +121,7 @@ Start-WebAppPool -Name "FlatWireAPI_<Env>"
 | `FlatWire.API` | In-flight transactions at pool stop | **Any check-in mid-sequence**: `FlatWireDB` rows may exist without the shared-schema writes, or with tags pushed and no records, or the reverse |
 | `FlatWireDB` **restore** | Everything written since the backup | Runs, check-ins, staging rows, weld events, SPC checkpoints, roll overrides, die changes, WIP rejections, coil outputs and **traceability rows** |
 | `FlatWireDB` **teardown + rebuild** | **All data** | Only safe when there is none |
-| FW-001 reverse | `INFLAT` status values, and any data in the two new columns | **Every rod currently `INFLAT`** — it is physically on a line and the system will no longer say so |
+| ~~FW-001 reverse~~ — **cancelled, `D-32`** | ~~`INFLAT` status values, and any data in the two new columns~~ | ⚠ **This risk is retired but its shape is worth keeping:** after `D-32` **no** rod is ever `INFLAT` in the shared schema, so upstream never says so in the first place — that is **`OI-111`**, not a rollback risk. A `FlatWireDB` rollback still loses local `Rod.Status` |
 
 **The manual reconciliation list — walk it after any API or database rollback:**
 
@@ -127,7 +129,7 @@ Start-WebAppPool -Name "FlatWireAPI_<Env>"
 |---|---|---|---|
 | **M1** | **In-flight runs** | `SELECT RunId, LineId, Status, FootageFt FROM FlatWireRun WHERE Status IN ('Running','Paused')` | For each, establish physically what is on the line and correct the record or close the run |
 | **M2** | **Open MMS IDs** | `SELECT RunId, RodAlpha, MmsId FROM RodCheckin WHERE MmsStatus IN ('Open','Active')` | An MMS ID orphaned from its run blocks ITInhibit clearance — close or re-associate |
-| **M3** | **Rods stuck `INFLAT`** | `SELECT alpha FROM coils WHERE [coil_status] = 'INFLAT'` (or the pre-rename column name) | Compare against physically loaded rods; correct the status of any that are not on a line |
+| **M3** | **Rods stuck `INFLAT`** | ~~`SELECT alpha FROM coils WHERE [coil_status] = 'INFLAT'`~~ → **`SELECT RodAlpha FROM FlatWireDB.dbo.Rod WHERE [Status] = 'INFLAT'`** *(`D-32`: the shared column never carries `INFLAT`)* | Compare against physically loaded rods; correct the status of any that are not on a line |
 | **M4** | **Staged rods** | `SELECT LineId, PayoffPosition, RodAlpha FROM RodStaging WHERE Status = 'Staged'` | Confirm each is physically on its bay; un-stage the rest |
 | **M5** | **Unlabeled coils** | `SELECT CoilAlpha, Status, SkidId FROM CoilOutput WHERE SkidStatus IS NULL OR SkidStatus = 'Open'` | A physically produced coil with no record, or a record with no coil, must be resolved before shipping |
 | **M6** | **Open skids** | `SELECT SkidId, COUNT(*) FROM CoilOutput WHERE SkidId IS NOT NULL GROUP BY SkidId HAVING COUNT(*) <> 2` | Every skid holds exactly two coils — reconcile any that does not |
@@ -173,6 +175,6 @@ What happens next:
 Questions:  <release manager name / contact>
 ```
 
-Send to: all three line operators, the shift supervisor, packing, Maintenance, the Operations Manager, and the owners of any module affected by an FW-001 reversal.
+Send to: all three line operators, the shift supervisor, packing, Maintenance, the Operations Manager, and — ~~the owners of any module affected by an FW-001 reversal~~ **no longer applicable since `D-32`; notify instead** the owners of any module affected by a reversal of the `machines` / WIP-station **row** writes.
 
 ---

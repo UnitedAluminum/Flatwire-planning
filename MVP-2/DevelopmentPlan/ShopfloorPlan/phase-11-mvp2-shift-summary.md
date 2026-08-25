@@ -41,7 +41,7 @@
 ## Database Changes
 
 - **Reads:** `SpcCheckpoint`/`SpcMeasurement`, `RunPauseEvent`, `WeldEvent`, `CoilOutput`, `CoilTraceability`, `FlatWireRun`, `WipRejection` — **all MVP-1 tables.** DB10 writes nothing.
-- **Stored procs/views:** shift aggregation. `sp_ShiftSummary` is the one programmability object that moved to [`../../DBChanges/Schema/SQL/FlatWire_DDL_08b_Programmability.sql`](../../DBChanges/Schema/SQL/FlatWire_DDL_08b_Programmability.sql).
+- **Stored procs/views:** shift aggregation. `sp_ShiftSummary` is the one programmability object that moved to [`MVP-1/ProjectPlan/Database/Schema/SQL/FlatWire_DDL_09_Programmability_MVP2.sql`](../../../MVP-1/ProjectPlan/Database/Schema/SQL/FlatWire_DDL_09_Programmability_MVP2.sql).
 - **Indexes:** shift-window filters on timestamp + line.
 
 ## Real-Time Functionality

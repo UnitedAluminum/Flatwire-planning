@@ -20,7 +20,7 @@
 > [`phase-13-mvp2-die-management.md`](../../../../MVP-2/DevelopmentPlan/ShopfloorPlan/phase-13-mvp2-die-management.md):
 > the screen, the die lifecycle service and the die inventory status vocabulary.
 > **What stays MVP-1:** the alloy lookup admin and CRUD (`FW-004`), machine template tabs (`FW-003`), role
-> assignment, the `Stand`/`Drawer`/`Edger`/`SpoolConfiguration` lookups, and the **30 Jul alloy client answers
+> assignment, the `Stand`/`Drawer`/`Edger`/`Spool` lookups, and the **30 Jul alloy client answers
 > below — which block Phase 4**. The **`FW-N07` table half is also MVP-1**: MVP-1's die change (`FW-073`) rejects
 > a die not in inventory, so the 8 h costed for the missing die table stays here even though the screen does not.
 > **The 209 h figure above was not apportioned** and now overstates MVP-1. The ladder's rung-5 99 h is **not** the
@@ -35,7 +35,7 @@
 ## UI / Backend / Database
 - **UI:** alloy lookup admin grid; machine template tabs (Machines app, FW-003); role assignment. *(The **Die Management** screen is **MVP-2** — see [`phase-13-mvp2-die-management.md`](../../../../MVP-2/DevelopmentPlan/ShopfloorPlan/phase-13-mvp2-die-management.md).)*
 - **Backend:** alloy CRUD (audit-logged, restricted); machine config. *(The die lifecycle service is MVP-2.)*
-- **Database:** alloy lookup; `Stand`/`Drawer`/`Edger` lookups; `SpoolConfiguration`. *(The die inventory table — status `Active/Nearing/Overdue/Spare/Retired` — is **MVP-2**, and its 8 h went with it. `Drawer` is seeded in Phase 1 and is what MVP-1's die change validates against.)*
+- **Database:** alloy lookup; `Stand`/`Drawer`/`Edger` lookups; `Spool` (article, with its merged size limits) configuration`. *(The die inventory table — status `Active/Nearing/Overdue/Spare/Retired` — is **MVP-2**, and its 8 h went with it. `Drawer` is seeded in Phase 1 and is what MVP-1's die change validates against.)*
 
 ## Real-Time / Testing / Deliverables
 - Tests: alloy edit audit + restriction; **size-level** die validation against `Drawer` (an unrecognised size is refused). Deliverables: alloy admin, machine tabs, role config. *(The die-life banner, threshold/reset tests and the register-before-scan rule are **MVP-2** — MVP-1 has no per-tool registration to test.)*

@@ -1,95 +1,55 @@
 # Flat Wire Mill — Schema Mapping & Entity Relationships
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 6, 2026
-**Document Type:** Final Schema — Entity Relationships, FK Mapping & Enumeration Reference
-**Source:** the April gap analysis from `FlatWireTables.md`, absorbed into this document's appendix on 13 Aug 2026 when that file was deleted
+**Last Updated:** August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*
+**Document Type:** Legacy-to-new table mapping, the change-type inventory, and the collected enumeration reference. **Not** an ER diagram and **not** an FK list — both were deleted on 23 Aug 2026 in favour of `[DBD §7]`. The filename is kept because ~17 files cite it.
+**Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`)
+**Status:** Active — corrected up to the DDL, August 23, 2026
+**Scope:** MVP-1
+**Owner:** Architecture stream / DBA
+**Audience:** DBA, .NET developers, BA
+**Part of:** `ProjectPlan/Database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
+**Authority:** the DDL in `SQL/` wins on types, nullability and constraints, and the `CHECK` constraints win on every vocabulary listed here. No shortcode is declared, deliberately: this is a derived document and must not be cited as authority.
 
 ---
 
 ## Entity Relationship Diagram
 
-```
-AlloyProperty ──(1:many)──> PassSchedule   (PassSchedule.Alloy → AlloyProperty.Alloy)
-
-PassSchedule ──(1:many)──> PassScheduleComponent
-     │                           │
-     │                     Stand / Drawer / Edger (lookups)
-     ├──(1:many)──> PassScheduleChangeLog
-     ├──(0:many)──> CoilOutput (schedule effective at coil creation, OQ-64)
-     │
-     └──(1:many)──> FlatWireRun ──(1:many)──> FlatWireRunDetail
-                         │
-          ┌──────────────┼──────────────────────┬──────────────────────┐
-          │              │                      │                      │
-     RodCheckin    RunPauseEvent           WeldEvent            SpoolCheckin
-          │                                                            │
-      Rod (alpha)                                               Spool (alpha)
-
-     FlatWireRun ──(1:many)──> RollOverride
-     FlatWireRun ──(1:many)──> DieChangeEvent ──> RollOverride (LinkedOverrideId)
-     FlatWireRun ──(1:many)──> SpcCheckpoint ──(1:many)──> SpcMeasurement
-     FlatWireRun ──(1:many)──> WipRejection
-     FlatWireRun ──(1:many)──> RunReading (sampled gauge/width/speed profile)
-     FlatWireRun ──(1:many)──> CoilOutput ──(1:many)──> CoilTraceability ──┬──> Rod (alpha)
-                                                                           └──> Spool (alpha, NULL when rod-fed)
-     FlatWireRun ──(1:many)──> RodCheckout
-
-Spool ──> SpoolConfiguration
-Spool ──> Rod (ParentRodAlpha)
-Spool ──> Rod (SourceRodAlpha — partial-run source)
-Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
-```
-
----
+**Deleted 23 Aug 2026.** This was an ASCII diagram that had fallen six tables behind the schema,
+and it duplicated `[DBD §7]`, which carries the same model as eight mermaid diagrams generated
+from the DDL. **See `[DBD §7.1]`-`§7.7`.**
 
 ## Foreign Key Reference Table
 
-| Child Table | Child Column | Parent Table | Parent Column | Nullable | Notes |
-|---|---|---|---|---|---|
-| `PassSchedule` | `Alloy` | `AlloyProperty` | `Alloy` | NOT NULL | Authoritative alloy list |
-| `PassScheduleChangeLog` | `PassScheduleId` | `PassSchedule` | `ScheduleId` | NOT NULL | Override/edit/ack audit trail |
-| `PassScheduleComponent` | `PassScheduleId` | `PassSchedule` | `ScheduleId` | NOT NULL | Many components per schedule |
-| `PassScheduleComponent` | `StandId` | `Stand` | `Id` | NULL | FM-type components only |
-| `PassScheduleComponent` | `DrawerId` | `Drawer` | `Id` | NULL | DB-type components only |
-| `PassScheduleComponent` | `EdgerId` | `Edger` | `Id` | NULL | EdgeSet component only |
-| `FlatWireRun` | `PassScheduleId` | `PassSchedule` | `ScheduleId` | NOT NULL | Schedule governing this run |
-| `FlatWireRunDetail` | `RunId` | `FlatWireRun` | `RunId` | NOT NULL | Many detail rows per run |
-| `RodCheckin` | `RunId` | `FlatWireRun` | `RunId` | NOT NULL | Many check-ins per run |
-| `RodCheckin` | `RodAlpha` | `Rod` | `Alpha` | NOT NULL | Rod being checked in |
-| `RodCheckin` | `PassScheduleId` | `PassSchedule` | `ScheduleId` | NOT NULL | Schedule acknowledged at check-in |
-| `SpoolCheckin` | `RunId` | `FlatWireRun` | `RunId` | NOT NULL | Many check-ins per run |
-| `SpoolCheckin` | `SpoolAlpha` | `Spool` | `Alpha` | NOT NULL | Spool being checked in |
-| `SpoolCheckin` | `PassScheduleId` | `PassSchedule` | `ScheduleId` | NOT NULL | Schedule acknowledged at check-in |
-| `RunPauseEvent` | `RunId` | `FlatWireRun` | `RunId` | NOT NULL | Many pause events per run |
-| `WeldEvent` | `RunId` | `FlatWireRun` | `RunId` | NOT NULL | Many welds per run |
-| `WeldEvent` | `OutgoingRodAlpha` | `Rod` | `Alpha` | NOT NULL | Depleting (tail) rod |
-| `WeldEvent` | `IncomingRodAlpha` | `Rod` | `Alpha` | NOT NULL | Joining (lead) rod |
-| `RollOverride` | `RunId` | `FlatWireRun` | `RunId` | NOT NULL | Many overrides per run |
-| `RollOverride` | `RodAlpha` | `Rod` | `Alpha` | NOT NULL | Material in-process at override time |
-| `DieChangeEvent` | `RunId` | `FlatWireRun` | `RunId` | NOT NULL | Many die changes per run |
-| `DieChangeEvent` | `RodAlpha` | `Rod` | `Alpha` | NOT NULL | Material in-process at die change time |
-| `DieChangeEvent` | `LinkedOverrideId` | `RollOverride` | `OverrideId` | NULL | Auto-created override for the die size change |
-| `SpcCheckpoint` | `RunId` | `FlatWireRun` | `RunId` | NOT NULL | Many checkpoints per run |
-| `SpcMeasurement` | `CheckpointId` | `SpcCheckpoint` | `CheckpointId` | NOT NULL | Many measurements per checkpoint |
-| `WipRejection` | `RunId` | `FlatWireRun` | `RunId` | NULL | NULL for pre-run incoming rejections |
-| `CoilOutput` | `RunId` | `FlatWireRun` | `RunId` | NOT NULL | Many coils per run |
-| `CoilOutput` | `PassScheduleId` | `PassSchedule` | `ScheduleId` | NULL | Schedule effective at coil creation (OQ-64) |
-| `RunReading` | `RunId` | `FlatWireRun` | `RunId` | NOT NULL | Sampled gauge profile per run |
-| `CoilTraceability` | `CoilAlpha` | `CoilOutput` | `CoilAlpha` | NOT NULL | Many traceability rows per coil |
-| `CoilTraceability` | `RodAlpha` | `Rod` | `Alpha` | NOT NULL | Source rod for this footage range |
-| `CoilTraceability` | `SpoolAlpha` | `Spool` | `Alpha` | NULL | Source spool for this footage range; NULL on a rod-fed run |
-| `RodCheckout` | `RunId` | `FlatWireRun` | `RunId` | NULL | NULL for Mode A pre-run checkout |
-| `RodCheckout` | `RodAlpha` | `Rod` | `Alpha` | NOT NULL | Rod being checked out |
-| `Spool` | `SpoolTypeId` | `SpoolConfiguration` | `Id` | NOT NULL | Spool type / size classification |
-| `Spool` | `ParentRodAlpha` | `Rod` | `Alpha` | NULL | Rod that was drawn into this spool on FL1 |
-| `Spool` | `SourceRodAlpha` | `Rod` | `Alpha` | NULL | Partial-run source rod (Phase 7 / OQ-12) |
-| `Spool` | `SourceRunId` | `FlatWireRun` | `RunId` | NULL | FL1 run that produced this spool |
+**Deleted 23 Aug 2026, and worth knowing why, because the same table will be proposed again.**
 
-**`FlatWire_DDL_06_ForeignKeys.sql` creates 33 FKs — that is the MVP-1 build. 43 is the full design**, the other ten belonging to the MVP-2 `PassSchedule*` group and built by `MVP-1/ProjectPlan/Database/Schema/SQL`'s `06b`. *(Corrected 13 Aug 2026, `GapAnalysis.md` **E2**: "43 as built" was the full-design figure quoted against a script that builds 33, and the ten MVP-2 FKs are listed below **with no scope marker** — a reader implementing from this table will expect constraints that cannot exist in an MVP-1 database. An earlier "37" counted the rows in this table rather than the script.)* **Treat the script as authoritative.**
+A hand-maintained list of every foreign key is not worth keeping when the DDL is the authority,
+and this one proved it: it had been corrected three times and was **still** wrong on the day it
+was removed - **37 data rows against 57 constraints in the script** - with the prose immediately
+below it giving a fourth number (*"40 FKs and 06b adds 10, for 50"*). Its own correction note
+recorded that an earlier published figure of "37" had been arrived at by **counting the rows in
+this table rather than the script**, which is the failure mode in one sentence.
 
----
+**What replaces it:**
+
+- **The policy**, which is short and stable: every FK is created in `FlatWire_DDL_06_ForeignKeys.sql`
+  after all tables exist, in one script; **no delete cascades** are declared and every constraint is
+  `NO ACTION`; and the `OrderNo` columns on `SpoolOrder` / `RodOrderAllocation` /
+  `RodOrderConsumption` deliberately have **no** FK, because `D-32` means there is no shared-schema
+  migration to reference.
+- **The counted total and the per-parent breakdown:** `[DBD §6.2]` and `[DBD §7.8]`.
+- **The live answer**, which is always current:
+
+```sql
+SELECT  OBJECT_NAME(fk.parent_object_id)     AS ChildTable,
+        COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS ChildColumn,
+        OBJECT_NAME(fk.referenced_object_id) AS ParentTable,
+        fk.name                              AS ConstraintName
+FROM sys.foreign_keys fk
+JOIN sys.foreign_key_columns fkc ON fkc.constraint_object_id = fk.object_id
+ORDER BY ChildTable, ConstraintName;
+```
 
 ## Table Inventory
 
@@ -102,12 +62,12 @@ Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
 | `Drawer` | `Drawer` | `Diameter` → `DiameterIn`; `MinDiameterIn` / `MaxDiameterIn` / `IsActive` added; **`LastGrindingFeet` / `TotalFeetAllowed` added (Aug 6 2026)** — die life | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `Edger` | `Edger` | `EdgeType` / `IsActive` added; `Set` → `ToolingSetNo` | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `Stand` | `Stand` | `MinId` / `MaxId` → `MinGaugeIn` / `MaxGaugeIn`; `MinOD` / `MaxOd` → `MinWidthIn` / `MaxWidthIn`; `LineId` / `IsActive` added | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
-| `SpoolConfiguration` | `SpoolConfiguration` | Unit suffixes added to all dimension/weight columns; `MinId`/`MaxId` → `MinCoreDiameterIn`/`MaxCoreDiameterIn` | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
-| `Spool` | `Spool` | `Alpha` / `Status` / `GaugeIn` / `WidthIn` / weights / `Location` / timestamps / `SourceRunId` / `LineId` added; `ParentRod` → `ParentRodAlpha` | [FlatWireSchema_Materials.md](FlatWireSchema_Materials.md) |
+| `SpoolConfiguration` | ~~`SpoolConfiguration`~~ → **`Spool`** | Unit suffixes added to all dimension/weight columns; `MinId`/`MaxId` → `MinCoreDiameterIn`/`MaxCoreDiameterIn`. **Merged into `Spool` 23 Aug 2026 (`Q60`)** — the target table no longer exists; the six `Min/Max` columns and `Name` (as `SizeClass`) landed on the article | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `SpoolProcessing` | `SpoolProcessing` | `Alpha` / `Status` / `GaugeIn` / `WidthIn` / weights / `Location` / timestamps / `SourceRunId` / `LineId` added; `ParentRod` → `ParentRodAlpha` | [FlatWireSchema_Materials.md](FlatWireSchema_Materials.md) |
 
-### New Tables (18) — Net New
+### New Tables (24) — Net New
 
-*(Was "16" against a list of 16 and an arithmetic that used 15; `RodStaging` and `PayoffPosition` were added on 13 Aug 2026 — `GapAnalysis.md` **E2**.)*
+*(Corrected twice. The heading read "16" against a list of 16 with an arithmetic that used 15; a 13 Aug 2026 pass said `RodStaging` and `PayoffPosition` had been added and **they had not been** — both were still absent on 23 Aug, along with the six tables built 20–22 Aug. All eight were added on 23 Aug 2026, at which point the inventory sums to **7 + 24 + 3 = 34** and matches the DDL exactly. The audit that first found the drift, `GapAnalysis.md`, was retired the same day — see [`CHANGELOG.md`](../../../../CHANGELOG.md).)*
 
 | Table | Domain | Purpose | Schema File |
 |---|---|---|---|
@@ -129,6 +89,14 @@ Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
 | `Dancer` | Lookup | Tension-management rollers — one on FM1, two on FM2 (`D-28`) | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | **`RodStaging`** | Runs | **Pre-check-in / payoff staging** — the next rod registered against a VPS bay while the current coil still runs. Two **filtered unique** indexes enforce one rod per bay and one bay per rod. `Blocked` is a **derived** state (`Status='Staged'` + any inspection `Fail`), never a fourth `Status` value | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 | **`PayoffPosition`** | Lookup | **Material input/output positions with pinned Ids, not IDENTITY** — 1 `Payoff1`, 2 `Payoff2`, 3 `TraversingTakeup`. Seeded by the DDL itself, because the `FlatWireRunDetail` FK depends on the rows existing | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `PayoffPosition` | Lookup | Material input/output positions, with **pinned non-IDENTITY Ids** so FK targets exist before the DDL that references them runs | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `Spool` | Lookup | The **physical article** the wire is wound on, and, since the 23 Aug 2026 `SpoolConfiguration` merge (`Q60`), **its own size limits**. Stencil-keyed; format open (`Q42`) | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `RodStaging` | Runs | Pre-check-in payoff staging — the most heavily constrained table in the schema. `Blocked` is **derived**, not a fourth status | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
+| `SpoolStaging` | Runs | The **FL2 pre-check-in queue**. Deliberately not `RodStaging`: one payoff, no inspection columns, no station claim, and a fractional non-unique `QueuePosition` | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
+| `RodOrderConsumption` | Runs | What a check-in **actually** consumed, per order — one check-in, N rows. Two weight latches, and the overrun between them is captured | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
+| `SpoolTraceability` | Material | Which rod produced which feet of a **spool** — the spool-side half of the welding-wire genealogy (`FR-333`, `G42`) | [FlatWireSchema_Materials.md](FlatWireSchema_Materials.md) |
+| `SpoolOrder` | Material | The orders a spool is committed to. **Derived** from `RodOrderAllocation`, with the order boundary in pounds (`G48`) | [FlatWireSchema_Materials.md](FlatWireSchema_Materials.md) |
+| `RodOrderAllocation` | Material | The **plan**: which orders a rod is committed to, and in what sequence. Split point held in pounds, never feet | [FlatWireSchema_Materials.md](FlatWireSchema_Materials.md) |
 
 ### Production-Readiness Additions (3) — July 26, 2026
 
@@ -138,14 +106,19 @@ Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
 | `PassScheduleChangeLog` | Schedule | Override/edit/acknowledgment audit trail (OQ-62) | [FlatWireSchema_Schedule.md](../../../../MVP-1/ProjectPlan/Database/Schema/FlatWireSchema_Schedule.md) |
 | `RunReading` | Runs | Sampled gauge/width/speed profile per run (G3) | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 
-**Total: 28 tables in the full design — 25 of them MVP-1.** *(Corrected 13 Aug 2026, `GapAnalysis.md` **E2**: this line read "Total: 25" against an arithmetic of 7 + 16 + 3 = 26, with a "New Tables" heading saying 16 while the sum used 15 — and **`RodStaging` and `PayoffPosition` were missing from the inventory entirely**, though both are MVP-1 tables and `RodStaging` is the newest in the design. The MVP-1 build is `25 tables · 33 FKs · 41 index statements · 1 procedure · 1 trigger`; see `DatabaseDesign.md` §6.2, which is where the baseline is defined.)*
+**Table count: `[DBD §6.2]`.** That section is the only site in the repository that states it, and this document does not restate it. What this inventory adds, and `[DBD]` does not carry, is the per-table **change type** — `Renamed`, `Added`, and the date — which is what a legacy migration needs.
 
 ---
 
 ## Enumeration Reference
 
+> **Derived and non-authoritative.** Every vocabulary below is enforced by a `CHECK` constraint in
+> the DDL, and **the constraint wins**. This sheet is collected here because one place to read all
+> of them earns its keep; it is not a source. If it disagrees with the DDL, the DDL is right and
+> this is stale.
+
 ### Material Status Values
-*Used by:* `Rod.Status`, `Spool.Status`, `CoilOutput.Status`, `RodCheckout.NewRodStatus`, `WipRejection.NewMaterialStatus`
+*Used by:* `Rod.Status`, `SpoolProcessing.Status`, `CoilOutput.Status`, `RodCheckout.NewRodStatus`, `WipRejection.NewMaterialStatus`
 
 | Value | Applicable To | Meaning |
 |---|---|---|
@@ -242,12 +215,67 @@ Spool ──> FlatWireRun (SourceRunId — the FL1 run that produced this spool)
 
 ---
 
+### Staging Status Values
+
+| Value | Table | Meaning |
+|---|---|---|
+| `Staged` | `RodStaging` | On the payoff, awaiting check-in |
+| `CheckedIn` | `RodStaging` | Acknowledged on Dashboard 2; the run exists |
+| `Unstaged` | `RodStaging` | Released from the bay — see `UnstageKind` for why |
+| `Queued` | `SpoolStaging` | In the FL2 queue; the filtered unique index keys on this value |
+| `CheckedIn` | `SpoolStaging` | Taken into a run |
+| `Withdrawn` | `SpoolStaging` | Removed from the queue without running |
+
+> **`Blocked` is not in this list, and that is deliberate.** It is a **derived** bay state —
+> `Status='Staged'` plus any inspection column `='Fail'` — never a stored fourth value. Any code
+> branching on "staged" therefore also matches blocked *and* welded rods unless it says otherwise.
+
+### Unstage and Checkout Values
+
+| Column | Values |
+|---|---|
+| `RodStaging.UnstageKind` | `PreCheckOut`, `WipRejection` — NULL while `Status='Staged'`. The `WipRejectionId` link is present **exactly** when this is `WipRejection` |
+| `RodCheckout.Mode` | `ModeA` (post-acknowledgement, zero footage), `ModeB` (mid-run, footage produced — supervisor approval required), `ModeP` (pre-check-out, before the run) |
+
+### Rejection and Pause Values
+
+| Column | Values |
+|---|---|
+| `WipRejection.RejectionGroup` | the rejection taxonomy — enforced by `CHECK`; read the constraint |
+| `WipRejection.Disposition` | the disposition taxonomy — likewise |
+| `RunPauseEvent.Outcome` | the four resume outcomes. **Rod checkout is the fourth** — it is *not* a pause reason (closes `OI-14`, supersedes `FR-262`) |
+
+### Rod ↔ Order Values
+
+| Column | Values |
+|---|---|
+| `RodOrderAllocation.PinRole` | `Sole`, `PinnedFirst`, `Free`, `PinnedLast`, `PinnedBoth` — **stored, not derived**: the sequence validator reads it on every scan |
+| `RodOrderAllocation.RodKind` | `Full`, `Partial` (`Q73`'s tier-2 discriminator; `Partial` is a back-to-stock remainder) |
+| `RodOrderAllocation.Source` | `Planned`, `Derived`, `Substituted` |
+| `RodOrderConsumption.State` | `Pending`, `InProgress`, `ThresholdReached`, `Closed`, `Voided` |
+| `RodOrderConsumption.ClosureReason` | `Acknowledged`, `AcknowledgedEarly`, `RodExhausted`, `RodAbandoned`, `Superseded` |
+| `RodOrderConsumption.ConversionBasis` | `Nominal`, `Measured`, `IntegratedRunReading`, `Override` — the dimensional basis itself is open (`Q10`, `OI-45`) |
+| `SpoolOrder.Source` | `Derived` (union of the rods' orders, computed at spool creation), `Planned` (an explicit allocation superseding the derived row) |
+
+### Dancer Values
+
+`Dancer` carries a per-line position and a tension mode. **FM1 has one dancer; FM2 has two**, sitting
+**between** stands — between S1/S2 and between S2/S3 — rather than at them (`D-28`, 6 Aug 2026). The
+vocabularies are enforced by `CHECK` in `01_Lookup`; read the constraint rather than copying values here.
+
+### Shared-schema vocabularies
+
+`MmsStatus` and the skid status values are **shared-schema** vocabularies, not `FlatWireDB` ones —
+they belong to `united_db` / `proddb` and are constrained there. `[INT §8.0]` and `[INT §8.1]` are
+authoritative; this document deliberately does not restate them, because a local copy of a value
+another module owns is the drift this section's banner warns about.
+
 ## Appendix — the pre-existing tables this schema replaced
 
 > **Absorbed from `FlatWireSchema_Mapping.md` on 13 Aug 2026**, which was deleted in the same pass. It was the April
 > gap analysis — *what existed, what was missing, what to add* — and the "missing tables" half is now
 > superseded by the DDL. **This half is not**: it is the only surviving inventory of the legacy
-> `FlatLineProcessing` / `FlatLineSetup` / `Drawer` / `Edger` / `Stand` / `SpoolConfiguration` / `Spool`
+> `FlatLineProcessing` / `FlatLineSetup` / `Drawer` / `Edger` / `Stand` / `Spool` / `SpoolProcessing`
 > columns, and **`OI-31` / `G8` record that no legacy migration deliverable exists**. Deleting it would
 > have left that migration with nothing to migrate *from*.
 >
@@ -451,9 +479,12 @@ Represents rolling mill stands (FM1, FM2 variants).
 
 ---
 
-#### `SpoolConfiguration`
+#### ~~`SpoolConfiguration`~~ — merged into `Spool`, 23 Aug 2026 (`Q60`)
 
-Reference table for spool types with physical dimensional and weight constraints.
+Was a reference table for spool types with physical dimensional and weight constraints. It held one
+meaningful row against 30–45 articles, so its six `Min/Max` columns and its `Name` (as `SizeClass`)
+were folded into `Spool` itself. **The table no longer exists** — the mapping below is retained as the
+record of what was mapped, not as a live target.
 
 ##### Current columns
 | Column | Type | Notes |
@@ -485,7 +516,7 @@ Reference table for spool types with physical dimensional and weight constraints
 
 ---
 
-#### `Spool`
+#### `SpoolProcessing`
 
 Represents a physical spool of pre-processed flat wire (used at FL2 check-in).
 
@@ -493,7 +524,7 @@ Represents a physical spool of pre-processed flat wire (used at FL2 check-in).
 | Column | Type | Notes |
 |---|---|---|
 | `Id` | int PK | |
-| `SpoolTypeId` | int | FK to `SpoolConfiguration` |
+| ~~`SpoolTypeId`~~ | int | **Dropped 23 Aug 2026** — `SpoolConfiguration` merged into `Spool`; the article is reached via `SpoolId` |
 | `OrderNo` | varchar | |
 | `RelLetter` | varchar | Release letter |
 | `ParentRod` | varchar | The rod alpha that was drawn into this spool |
@@ -514,7 +545,7 @@ Represents a physical spool of pre-processed flat wire (used at FL2 check-in).
 |---|---|---|
 | `Id` | int PK | Keep |
 | `Alpha` | varchar(20) NOT NULL UNIQUE | **Add** — e.g. `SP-00021`; scanned at FL2 check-in |
-| `SpoolTypeId` | int | Keep (FK → `SpoolConfiguration`) |
+| ~~`SpoolTypeId`~~ | int | ~~Keep~~ — **dropped 23 Aug 2026** with the `SpoolConfiguration` merge (`Q60`) |
 | `OrderNo` | varchar(50) | Keep |
 | `RelLetter` | varchar(10) | Keep |
 | `ParentRodAlpha` | varchar(20) | **Rename** from `ParentRod` |

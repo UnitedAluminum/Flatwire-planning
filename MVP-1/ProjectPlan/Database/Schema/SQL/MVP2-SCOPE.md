@@ -6,13 +6,13 @@
 
 ---
 
-> **⚠ If you came here looking for `02_Schedule`, `FlatWire_SampleData_Schedule.sql`, `06b` or `07b` — they are in the MVP-1 runner now.** Nothing is missing and there is no second chain to hunt for. `FlatWire_DDL_RunAll.sql` builds a **complete 28-table `FlatWireDB`** on its own.
+> **⚠ If you came here looking for `02_Schedule` or `FlatWire_SampleData_Schedule.sql` — they are in the MVP-1 runner now. `06b` and `07b` no longer exist at all: they were folded into `06` and `07` on 23 Aug 2026.** Nothing is missing and there is no second chain to hunt for. `FlatWire_DDL_RunAll.sql` builds a **complete 32-table `FlatWireDB`** on its own.
 
 ## What is here — one object
 
 | Object | Backs | File |
 |---|---|---|
-| `sp_ShiftSummary` | **DB10** Supervisor Shift Summary — an MVP-2 screen | `FlatWire_DDL_08b_Programmability.sql` |
+| `sp_ShiftSummary` | **DB10** Supervisor Shift Summary — an MVP-2 screen | `FlatWire_DDL_09_Programmability_MVP2.sql` |
 
 That is the entire deferred database increment. `sp_GetGaugeTrace` and `trg_CoilTraceability_NoOverlap` are both **MVP-1**.
 
@@ -40,7 +40,7 @@ Which leaves the one thing `D-31` moved rather than removed: **nothing in MVP-1 
 ## Deploying
 
 ```powershell
-# MVP-1 — complete on its own. 28 tables, and it needs nothing from this folder.
+# MVP-1 — complete on its own. 33 tables, and it needs nothing from this folder.
 cd "c:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Schema\SQL"
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_RunAll.sql
 
@@ -53,7 +53,7 @@ SQLCMD mode is required (`:r` includes). In SSMS use **Query → SQLCMD Mode**.
 **Verified on a live deploy, 15 Aug 2026** — teardown → `RunAll` → idempotent re-run:
 
 ```
-28 tables · 43 foreign keys · 47 index statements · 1 procedure · 1 trigger
+33 tables · 55 foreign keys · 69 index statements · 1 procedure · 1 trigger
 ```
 
 `sp_ShiftSummary` is **absent** from that database, which is correct.
@@ -82,6 +82,5 @@ Recorded so that anyone reading an older copy, or a document that quotes one, kn
 | `FlatWire_DDL_99_Teardown.sql` | Drops the whole database — scope-agnostic |
 | **`FlatWire_DDL_02_Schedule.sql`, `FlatWire_SampleData_Schedule.sql`, `06b`, `07b`** | **Moved to MVP-1 on 15 Aug 2026 (`D-31`)** — in the runner, in numeric order |
 | `FlatWireSchema_Mapping.md` | Maps existing↔new tables across both scopes |
-| `SQL/FlatWire_ERDiagram_Documentation.md` | **One ER diagram covering all 28 tables.** Not divided — a half-ER is worse than none |
 | `FlatWireSchema_Lookup.md`, `_Materials.md`, `_Runs.md`, `_QualityOutput.md` | MVP-1 tables. `_QualityOutput.md` holds the full `CoilOutput` / `CoilTraceability` design |
-| `DBScripts/` | WIP station registration against the shared `CommonDB` |
+| [`../../Scripts/`](../../Scripts/) | The eight cross-database scripts — grants, the WIP-station/machines registration, the rod-ingestion procedure and the four `united_db` procedures. None is in any `:r` chain, by design; see that folder's `README.md` |

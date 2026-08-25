@@ -27,7 +27,7 @@ Only the **screen-mapped** sections divided. Everything cross-cutting stayed in 
 | `02-SRS.md` §5.0 | **Cross-cutting requirements that apply to every screen**, including these seven |
 | `02-SRS.md` §6–9 | Non-functional, UI, security/roles, external interfaces |
 | `02-SRS.md` §10 | **The traceability appendix — it still lists the deferred `FR-###` and now traces into this folder** |
-| `03-HLD-and-ERDiagram.md` | Architecture and the ER diagram — **one diagram covering all 28 tables**, not divided |
+| `03-HLD-and-ERDiagram.md` | Architecture and the ER diagram — **one diagram covering all 34 tables**, not divided |
 | `04-APIContract.md` §1–3 | Conventions, the response envelope, canonical enums, **and the 30-endpoint index which still lists all four deferred endpoints** |
 | `05-SprintPlanAndBacklog.md` | Capacity model, sprint calendar, phase table, dependency chain, descope ladder, risk register, **§11 the coverage matrix** |
 | `06-TestPlanAndTestCases.md` §1–4 | Test strategy, the `TC-###` scheme, environments, seed data, entry/exit gates |

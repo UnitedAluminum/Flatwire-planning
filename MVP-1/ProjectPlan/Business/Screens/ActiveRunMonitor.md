@@ -3,8 +3,8 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL2 / FL3
-**Version:** 1.2
-**Last Updated:** August 15, 2026
+**Version:** 1.3
+**Last Updated:** August 25, 2026 — `FR-551` and `FR-554` cited on the allocation notification and overrun text; worked examples cited *(previously August 15, 2026)*
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 3 — Active Run Monitor. The operator's continuously displayed screen during a production run.
 **Requirement source:** SRS run-monitoring and pause/resume rules; the four resume outcomes (OI-14); trace behaviour per line
@@ -101,6 +101,28 @@ A mid-run configuration change also raises a quality checkpoint, so the material
 ---
 
 # 3. Trace Display Rules
+
+## 2.6 The order allocation is reached — notification and completion `[PROPOSED]`
+
+Where the mounted rod carries an order boundary, this screen is where the operator is told the running order's allocated weight has been reached, and where the operator **closes it**.
+
+**The notification.** Raised **server-side** when the run's footage crosses the point at which the order's allocated weight is met — not by a client-side threshold check, and not by the operator noticing. It is **durable**: it survives a browser refresh and a screen change, and is re-delivered on reconnect, following the same contract as the spool-completion prompt `[SIG §5.2]`. The weight it shows is **latched at the crossing instant** and must be rendered as latched — never replaced with a fresher live figure.
+
+**The line keeps running.** Reaching the allocation does **not** stop the line, pause the run or close the order — `FR-554` says so explicitly for an overrun beyond the configured bound: warn the operator and escalate to a supervisor, but **never stop the line** (`[ORD011]`; the bound itself is open as `Q50`). Tested by `TC-774`. Material produced between the notification and the operator's acknowledgement is the **overrun**, it is attributed to this order, and it is recorded rather than discarded `FR-553`.
+
+**The completion action.** A **`Mark order complete`** control, and it is the **only** thing that closes the order `[ORD007]`, `FR-552`:
+
+| | |
+|---|---|
+| Available | once the allocation is reached — and **also before**, because an early acknowledgement is permitted (the operator may know the material is done) |
+| On confirm | the weight is latched **again**; the overrun is computed and stored; the order closes; the **next order begins on the same rod** |
+| Not available | while no order is in progress at this station |
+
+**What the operator sees while it is outstanding:** the order, its allocated weight, the weight consumed, the overrun so far, and that the next order is waiting. The notification itself is `FR-551` — **server-owned, durable and re-delivered on reconnect**, following the spool-completion pattern (`TC-773`). The rod is **not** dismounted and nothing is scanned.
+
+> **Two things this screen must not imply.** It must not suggest the line has stopped — it has not. And it must not present the acknowledgement as a confirmation of a system decision: the system raises a notification, the **operator decides** the order is complete, and the interval between those is a real state with real material in it.
+
+**Early acknowledgement** is permitted and recorded as such; where the unconsumed allocation then goes is **`Q51`**. The bound at which a large overrun escalates to a supervisor is **`Q50`** — the system warns and escalates but **never stops the line** `[ORD011]`.
 
 ## 3.1 Behaviour against tolerance `[CONFIRMED]`
 

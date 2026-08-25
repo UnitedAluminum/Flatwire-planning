@@ -6,8 +6,10 @@
 
 ---
 
+> **Worked numeric traces for the order dimension.** [`RodOrderAllocation_WorkedExamples.md`](../../../../LatestDocument/RodOrderAllocation_WorkedExamples.md) carries seven end-to-end traces covering {1 order, 1 rod} × {1 order, n rods} × {n orders, n rods}, welded and not, with every footage and weight reconciled. It is **rationale, not a requirement** — the requirements are `[REQ §5.28]`, `FR-541`–`FR-560`. Its client-facing twin is the `.html` of the same name. ⚠ Its §9 is gap **`G48`** made concrete and its §12 raised **`G52`** and **`OI-127`**; the 4,000 lb rod every count scales from is still open as `OI-97`.
+
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-07-30
+**Last Updated:** August 25, 2026 — worked examples cited; `CoilNo` rename completed *(previously 2026-07-30)*
 **Status:** Ready to build
 **Layer:** Full-stack vertical slice
 **Owner:** **FE + BE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
@@ -25,8 +27,8 @@
 > split: DB7 owns the scale override on weight, 1-of-2 vs 2-of-2 on the skid, and suspend on an out-of-spec
 > final SPC — decisions no headless service can make.
 >
-> **Four dependencies come with it and none is costed in the 222 h** — registered as gap **`G36`**:
-> **`OI-104`** `CoilOutput.SkidId` references a skid table nothing names, creates or verifies; **`OI-24`** and
+> **Four dependencies came with it and none is costed in the 222 h** — registered as gap **`G36`**; **`OI-104` closed 18 Aug 2026, so three remain**:
+> ~~**`OI-104`** `CoilOutput.SkidId` references a skid table nothing names, creates or verifies~~ — **closed: it is `united_db..wip_skids` + `proddb..wip_skid_coils`, written by `FW-219`, which is itself additive and uncosted here (gap `G44`)**; **`OI-24`** and
 > **`OI-99`** — `GET /coil/{alpha}/label` returns a `lotNumber` with no generator at all, and no rule for the
 > multi-rod case; **`OI-105`** `FR-346` adds a **physical scale weight at the packing station**, a third weight
 > figure after the calculated value and DB7's operator override, with no rule for which governs the coil record;
@@ -68,7 +70,9 @@
 - **Tables (write):** `CoilOutput` (alpha, weights, final gauge/width, `SkidId`, `SkidStatus`, `Status=COMPLETE`, in-spec flags), `CoilTraceability` (footage ranges → rod alphas), `FlatWireRun.Status=Complete`/`CompletedAt`.
 - **Reads:** `WeldEvent` (boundaries), alloy factor, `FlatWireRun` footage.
 - **Indexes:** `CoilTraceability(CoilAlpha)`, `CoilTraceability(RodAlpha)`.
-- **Relationships:** `CoilOutput 1→N CoilTraceability`; `CoilOutput.SkidId` → existing skid table (no DB FK).
+- **Relationships:** `CoilOutput 1→N CoilTraceability`; `CoilOutput.SharedSkidNo` → `united_db..wip_skids.skid_no` (no DB FK — cross-database).
+- **⚠ Shared-schema writes (new 18 Aug 2026, `FW-219`, not in the 222 h):** completion also writes **eight** shared objects through `united_db.dbo.FlatWire_CompleteCoilOnSkid` — `proddb..coils`, `proddb..wip_coil_orders`, `united_db..coil_gen_history`, `coil_cost`, `SlitterDB..coil_slit_cuts` (one row), `united_db..wip_skids`, `proddb..wip_skid_coils`, `proddb..wip_log_view`. Specified in `[INT §8.1]` / `FR-509`–`FR-518`. **`OI-104` is closed by it** — the skid table is `wip_skids` + `wip_skid_coils` — and `FR-339` becomes testable. Two new `CoilOutput` columns carry the shared identity: `CoilNo`, `SharedSkidNo`.
+- **Not this phase:** releasing `wip_stations.coilno` at run end (**`OI-112`**) belongs to run completion, and nothing specifies it yet.
 
 ## Real-Time Functionality
 - **Publisher:** `LineStatus` → IDLE on completion; skid closed → packing queue update.
@@ -113,3 +117,27 @@ Dashboard 7 + packing station; `CoilController` + completion/label services; tra
 **A coil finished outside the customer range must be flagged**, not silently completed: **supervisor override + production hold**, or an **offer to the customer under concession** before a remake is planned — offer first (**OQ-79**). On FL2 the alternative for leftover material is to run it to a finished stop and offer it, or scrap it.
 
 **Mid-run coil break:** the stop is removed and a **new stop starts from zero**; accumulated weight does not resume from the break point. Check this against `CoilOutput` accumulation and `CoilTraceability`'s coil-local footage before building — the two footage coordinate systems are still unreconciled (**OI-25**).
+
+---
+
+## Per-order attribution, and the `CoilNo` rename
+
+**Added 22 Aug 2026.** Story **`FW-229`**; `FR-560`; effort in `[CE §3e]`.
+
+**Produced weight is attributed per (order, rod) by footage share**, published as views —
+`vw_OrderFulfillment` and `vw_OrderRodAttribution` — rather than service methods, because the API, the
+reports and the certificate all need the same number. ⚠ **A multi-parent coil is rarely a 50/50 split:** the
+worked example is 500 lb / 400 lb, and counting parents instead of footage gets it wrong by 50 lb.
+
+**`CoilOutput.SharedCoilNo` is renamed `CoilNo`** (`Q58`), matching `coils.coil_no`, which it feeds. **A
+rename only** — `CoilAlpha` is retained, `D5`'s two-identity rule stands, the `CoilTraceability` FK does not
+move, and `CoilNo` stays nullable so coil creation is never coupled to a cross-database call. The index
+becomes `UX_CoilOutput_CoilNo` and `FlatWire_CompleteCoilOnSkid`'s parameter becomes `@expectedCoilNo`.
+
+**`ORD016` — a coil's parents must all come from one spool.** This is the client's own planner rule, and it
+means a single spool reference per coil is **correct by design**. ⚠ `CoilTraceability`'s header used to
+justify its row-level grain by *"a spool runs out mid-coil"* — **that cannot happen**, since welding is FL1
+and `Q17` made FL2 check-in exclusive. The grain is right for a different reason: many **rods**, one spool.
+Corrected in the DDL on 22 Aug.
+
+**Blocker:** **`Q53`** — is fulfilment consumed or produced pounds, and which does the certificate state?

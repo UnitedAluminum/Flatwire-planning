@@ -6,11 +6,16 @@
 --
 -- ⚠ IT USED TO BUILD THE PASS SCHEDULE. On 15 Aug 2026 decision D-31
 --   moved PassSchedule, PassScheduleComponent and PassScheduleChangeLog
---   -- with their seed, their 10 foreign keys (06b) and their 6 indexes
---   (07b) -- INTO MVP-1. FlatWire_DDL_RunAll.sql builds all of that now.
+--   -- with their seed, their 10 foreign keys and their 6 indexes --
+--   INTO MVP-1. FlatWire_DDL_RunAll.sql builds all of that now.
 --
---   If you are looking for 02_Schedule, SampleData_Schedule, 06b or 07b:
---   they are in the MVP-1 runner, in numeric order. Nothing is missing.
+--   If you are looking for 02_Schedule or SampleData_Schedule: they are in
+--   the MVP-1 runner, in numeric order. Nothing is missing.
+--
+--   If you are looking for 06b or 07b: they no longer exist. On 23 Aug 2026
+--   they were folded back into 06_ForeignKeys and 07_Indexes, which now hold
+--   all 55 FKs and all 69 index statements. The MVP-1 chain is 00..08 and
+--   this file is 09.
 --
 -- WHAT IS LEFT, AND WHY
 --
@@ -42,7 +47,7 @@ PRINT ' Flat Wire MVP-2 schema deployment - START';
 PRINT '======================================================';
 GO
 
-:r FlatWire_DDL_08b_Programmability.sql
+:r FlatWire_DDL_09_Programmability_MVP2.sql
 
 GO
 PRINT '======================================================';

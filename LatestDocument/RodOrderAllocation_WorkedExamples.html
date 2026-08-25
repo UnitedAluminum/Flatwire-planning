@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flat Wire — How Rods, Orders, Spools and Coils Fit Together</title>
+<style>
+  :root{
+    --bg:#ffffff; --panel:#f8fafc; --panel2:#f1f5f9;
+    --ink:#0f172a; --muted:#475569; --line:#cbd5e1; --line2:#e2e8f0;
+    --rod1:#1d4ed8; --rod2:#0f766e; --rod3:#9a3412; --rod4:#6d28d9;
+    --order1:#e2e8f0; --order2:#ede9fe;
+    --bad:#b91c1c; --good:#15803d; --warn:#a16207;
+    --radius:8px;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,"Cascadia Mono","Consolas","Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.6 var(--sans);
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:40px 28px 80px}
+
+  h1{font-size:30px; line-height:1.25; margin:0 0 6px; letter-spacing:-.01em}
+  h2{font-size:22px; line-height:1.3; margin:52px 0 10px; padding-bottom:8px; border-bottom:2px solid var(--line); letter-spacing:-.01em}
+  h3{font-size:17px; margin:26px 0 8px}
+  p{margin:0 0 14px}
+  ul,ol{margin:0 0 14px; padding-left:22px}
+  li{margin:0 0 7px}
+  strong{font-weight:650}
+  code,.mono{font-family:var(--mono); font-size:14px}
+
+  .sub{color:var(--muted); font-size:15px; margin:0 0 4px}
+  .rule{height:3px; background:var(--ink); width:64px; margin:22px 0 26px; border-radius:2px}
+
+  /* tags */
+  .tag{display:inline-block; font-size:14px; font-weight:650; letter-spacing:.02em;
+       padding:1px 8px; border-radius:4px; border:1px solid; white-space:nowrap; vertical-align:2%}
+  .t-c{color:#14532d; border-color:#86efac; background:#f0fdf4}
+  .t-p{color:#1e3a8a; border-color:#93c5fd; background:#eff6ff}
+  .t-i{color:#7c2d12; border-color:#fdba74; background:#fff7ed}
+
+  /* boxes */
+  .box{background:var(--panel); border:1px solid var(--line2); border-left:4px solid var(--line);
+       border-radius:var(--radius); padding:16px 18px; margin:18px 0}
+  .box p:last-child{margin-bottom:0}
+  .box.key{border-left-color:var(--rod1); background:#eff6ff; border-color:#bfdbfe}
+  .box.warn{border-left-color:var(--warn); background:#fffbeb; border-color:#fde68a}
+  .box.stop{border-left-color:var(--bad); background:#fef2f2; border-color:#fecaca}
+  .box h3{margin-top:0}
+
+  /* tables */
+  table{border-collapse:collapse; width:100%; margin:16px 0; font-size:15px}
+  th,td{border:1px solid var(--line2); padding:8px 11px; text-align:left; vertical-align:top}
+  th{background:var(--panel2); font-weight:650; font-size:14px; letter-spacing:.01em}
+  td.n,th.n{text-align:right; font-variant-numeric:tabular-nums}
+  tbody tr:nth-child(even){background:#fcfdfe}
+
+  /* scenario cards */
+  .card{border:1px solid var(--line); border-radius:12px; padding:24px 26px 20px; margin:26px 0;
+        background:var(--bg); break-inside:avoid; page-break-inside:avoid}
+  .card > h3:first-child{margin-top:0}
+  .card-hd{display:flex; flex-wrap:wrap; align-items:baseline; gap:12px; margin:0 0 4px}
+  .card-no{font:650 14px/1 var(--sans); letter-spacing:.08em; text-transform:uppercase;
+           color:#fff; background:var(--ink); padding:6px 10px; border-radius:5px}
+  .card-ti{font-size:20px; font-weight:650; letter-spacing:-.01em}
+  .card-sum{color:var(--muted); font-size:15px; margin:0 0 18px}
+
+  .fig{margin:18px 0 8px; overflow-x:auto}
+  .fig svg{display:block; width:100%; height:auto; min-width:640px}
+  .cap{font-size:14px; color:var(--muted); margin:2px 0 18px}
+
+  .takeaway{background:var(--panel); border-radius:var(--radius); padding:12px 16px; margin:16px 0 0;
+            font-size:15px; border:1px solid var(--line2)}
+  .takeaway b{display:block; font-size:14px; letter-spacing:.04em; text-transform:uppercase;
+              color:var(--muted); margin-bottom:4px}
+
+  /* legend */
+  .legend{display:flex; flex-wrap:wrap; gap:10px 22px; margin:14px 0 0; font-size:15px}
+  .legend span{display:flex; align-items:center; gap:7px}
+  .sw{width:20px; height:14px; border-radius:3px; display:inline-block}
+
+  .foot{margin-top:60px; padding-top:18px; border-top:1px solid var(--line);
+        font-size:14px; color:var(--muted)}
+
+  @media print{
+    body{font-size:12.5pt}
+    .wrap{max-width:none; padding:0}
+    h2{page-break-after:avoid}
+    .card,.box,table,.fig{page-break-inside:avoid}
+    .fig svg{min-width:0}
+    a{color:inherit; text-decoration:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="sub">United Aluminum &middot; Flat Wire Mill</p>
+<h1>How rods, orders, spools and coils fit together</h1>
+<p class="sub">Seven worked examples &middot; 24 August 2026 &middot; Prepared by Nagarro for review</p>
+<div class="rule"></div>
+
+<p>This page answers one question in seven pictures: <strong>when an order needs more than one rod, or a
+rod is shared between two orders, what comes off the line?</strong> Each example is followed from a rod
+arriving at the FL1 payoff through to a finished coil on a skid at FL2 &mdash; showing where spools are
+made, where coils are cut, and where the welds and the order boundaries land.</p>
+
+<p>The figures throughout come from <strong>your own planning workbook</strong>. Nothing here is new
+arithmetic; it is your model, drawn out.</p>
+
+<table>
+  <tr><th>Tag</th><th>Meaning</th></tr>
+  <tr><td><span class="tag t-c">CONFIRMED</span></td><td>Agreed with United Aluminum. Built as stated.</td></tr>
+  <tr><td><span class="tag t-p">PROPOSED</span></td><td>Our design recommendation, requiring your confirmation at review.</td></tr>
+  <tr><td><span class="tag t-i">CLIENT INPUT REQUIRED</span></td><td>We do not know this and will not assume it. Listed at the end.</td></tr>
+</table>
+
+
+<h2>How to read the diagrams</h2>
+
+<p>Every diagram shows the same material four times over, stacked, and <strong>lined up by
+weight</strong> &mdash; so a band twice as wide is twice as heavy. Read down a vertical slice to see
+which order, which rod, which spool and which coil a given pound of aluminium belongs to.</p>
+
+<table>
+  <tr><th style="width:150px">Row</th><th>What it shows</th></tr>
+  <tr><td><strong>ORDERS</strong></td><td>Which customer order this material is allocated to.</td></tr>
+  <tr><td><strong>RODS</strong></td><td>The source rods, in the sequence they are consumed. A <strong>&#9650;</strong> marks a weld.</td></tr>
+  <tr><td><strong>SPOOLS</strong></td><td>What FL1 winds &mdash; roughly 1,800&nbsp;lb each. A spool that spans a <strong>&#9650;</strong> carries two rods.</td></tr>
+  <tr><td><strong>COILS</strong></td><td>What FL2 cuts from each spool &mdash; 800&ndash;900&nbsp;lb each. Two coils go on a skid.</td></tr>
+</table>
+
+<div class="legend">
+  <span><i class="sw" style="background:var(--rod1)"></i> material from R00001</span>
+  <span><i class="sw" style="background:var(--rod2)"></i> material from R00002</span>
+  <span><i class="sw" style="background:var(--rod3)"></i> material from R00003</span>
+  <span><i class="sw" style="background:var(--order1);border:1px solid var(--line)"></i> order 00421</span>
+  <span><i class="sw" style="background:var(--order2);border:1px solid #c4b5fd"></i> order 00422</span>
+  <span><strong>&#9650;</strong> weld</span>
+  <span style="color:var(--bad)"><strong>&#10008;</strong> below the 800&nbsp;lb minimum &mdash; not shippable</span>
+</div>
+
+<p style="margin-top:16px"><strong>Colour follows the source rod all the way down.</strong> Where you
+see two colours inside one spool or one coil, that piece has two source rods and its certificate names
+both.</p>
+
+
+<h2>The figures every example uses</h2>
+
+<table>
+  <tr><th>Quantity</th><th class="n">Value</th><th>Where it comes from</th></tr>
+  <tr><td>Rod weight</td><td class="n">4,000 lb</td><td>Your planning workbook</td></tr>
+  <tr><td>Spool target</td><td class="n">1,800 lb</td><td>Sized so FL2 cuts <strong>two</strong> coils from one spool</td></tr>
+  <tr><td>Coil minimum &ndash; maximum</td><td class="n">800 &ndash; 900 lb</td><td>The customer weight range <span class="tag t-c">CONFIRMED</span></td></tr>
+  <tr><td>At FL1 gauge (0.110&Prime; &times; 0.625&Prime;)</td><td class="n">1,800 lb &asymp; 22,250 ft</td><td>Alloy 1100</td></tr>
+  <tr><td>At FL2 gauge (0.0160&Prime; &times; 0.625&Prime;)</td><td class="n">900 lb &asymp; 76,300 ft</td><td>Alloy 1100</td></tr>
+</table>
+
+<div class="box">
+<p><strong>Weight is the quantity that survives the mill; footage is not.</strong> The same 900&nbsp;lb
+is about 11,100&nbsp;ft as it leaves FL1 and about 76,300&nbsp;ft as it leaves FL2 &mdash; a sevenfold
+difference in cross-section. Every allocation and every split below is therefore held in
+<strong>pounds</strong>, and feet are worked out at the line, at the gauge actually running. This
+matches your own planner, which has no footage figure in it anywhere.</p>
+</div>
+
+
+<h2>Before the examples: two things that are easy to misread</h2>
+
+<h3>1. A weld joins two <em>rods</em>. An order boundary splits an <em>allocation</em>.</h3>
+
+<p>These are two different things and they move independently. A weld happens because a rod ran out; an
+order boundary happens because an allocation ran out. They can land in the same spool, in different
+spools, or on top of each other.</p>
+
+<p>One consequence is worth stating up front, because otherwise Example 2 looks like a gap: <strong>an
+order fed by a single rod has no weld inside it.</strong> There is no second rod to weld to. The only
+welds touching such an order are the ones joining it to the neighbouring orders' rods &mdash; and those
+belong to the pair of rods, not to either order.</p>
+
+<h3>2. &ldquo;Child coil&rdquo; means two different things</h3>
+
+<table>
+  <tr><th style="width:250px">When people say&hellip;</th><th>They may mean</th><th>Created by</th></tr>
+  <tr>
+    <td><strong>The coils cut from a spool</strong></td>
+    <td><span class="mono">00421-C05</span>, <span class="mono">-C06</span> &mdash; these are
+        <strong>siblings, not children</strong>. The number after <span class="mono">C</span> is a running
+        count <em>within the order</em>.</td>
+    <td>Ordinary coil completion at FL2</td>
+  </tr>
+  <tr>
+    <td><strong>A split coil</strong></td>
+    <td><span class="mono">00421-C05-A</span> &mdash; a coil <strong>interrupted part-way</strong> by a
+        change of product specification: a size or configuration change, an edge-type change, or a roll-gap
+        change to a new target.</td>
+    <td>A mid-run specification change only</td>
+  </tr>
+</table>
+
+<div class="box key">
+<p><strong>A weld does not create a split coil, and neither does an order boundary.</strong> A weld adds
+a <em>second source rod</em> to a coil's certificate. An order boundary forces a <em>cut between two
+coils</em>. Neither one changes the coil's identifier.</p>
+</div>
+
+<div class="box warn">
+<p><strong>And the coil number runs on across spools.</strong> Because <span class="mono">C##</span>
+counts within the <em>order</em>, an order of 40,000&nbsp;lb runs
+<span class="mono">C01</span>&hellip;<span class="mono">C45</span> unbroken across twenty-three spools.
+It does not restart at <span class="mono">C01</span> for each spool. It <em>does</em> restart when the
+next order begins. <span class="tag t-c">CONFIRMED</span></p>
+</div>
+
+
+<h2>Example 1 &mdash; One order, one rod, no weld</h2>
+
+<div class="card">
+  <div class="card-hd"><span class="card-no">Example 1</span>
+    <span class="card-ti">Order 00421 &middot; 4,000 lb &middot; rod R00001</span></div>
+  <p class="card-sum">The simplest case the mill ever sees. One rod covers the whole order, so nothing is
+  welded and nothing is shared.</p>
+
+  <div class="fig">
+  <svg viewBox="0 0 1000 268" role="img" aria-label="One order, one rod, three spools, four coils">
+    <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="14">
+      <!-- row labels -->
+      <text x="92" y="59"  text-anchor="end" fill="#475569" font-weight="650">ORDERS</text>
+      <text x="92" y="113" text-anchor="end" fill="#475569" font-weight="650">RODS</text>
+      <text x="92" y="167" text-anchor="end" fill="#475569" font-weight="650">SPOOLS</text>
+      <text x="92" y="216" text-anchor="end" fill="#475569" font-weight="650">COILS</text>
+
+      <!-- ORDER -->
+      <rect x="100" y="36" width="880" height="36" rx="4" fill="#e2e8f0" stroke="#94a3b8"/>
+      <text x="540" y="59" text-anchor="middle" fill="#0f172a" font-weight="650">Order 00421 &#8212; 4,000 lb allocated</text>
+
+      <!-- ROD -->
+      <rect x="100" y="90" width="880" height="36" rx="4" fill="#1d4ed8"/>
+      <text x="540" y="113" text-anchor="middle" fill="#ffffff" font-weight="650" font-family="ui-monospace,Consolas,monospace">R00001 &#8212; 4,000 lb</text>
+
+      <!-- SPOOLS -->
+      <rect x="101" y="144" width="394" height="36" rx="4" fill="#1d4ed8"/>
+      <text x="298" y="160" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">SP-00001</text>
+      <text x="298" y="175" text-anchor="middle" fill="#dbeafe">1,800 lb</text>
+      <rect x="497" y="144" width="394" height="36" rx="4" fill="#1d4ed8"/>
+      <text x="694" y="160" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">SP-00002</text>
+      <text x="694" y="175" text-anchor="middle" fill="#dbeafe">1,800 lb</text>
+      <rect x="893" y="144" width="86" height="36" rx="4" fill="#1d4ed8" stroke="#b91c1c" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="936" y="160" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">SP-3</text>
+      <text x="936" y="175" text-anchor="middle" fill="#ffffff">400 lb</text>
+
+      <!-- COILS -->
+      <rect x="102" y="198" width="194" height="30" rx="4" fill="#1d4ed8"/>
+      <rect x="300" y="198" width="194" height="30" rx="4" fill="#1d4ed8"/>
+      <rect x="498" y="198" width="194" height="30" rx="4" fill="#1d4ed8"/>
+      <rect x="696" y="198" width="194" height="30" rx="4" fill="#1d4ed8"/>
+      <rect x="893" y="198" width="86" height="30" rx="4" fill="#ffffff" stroke="#b91c1c" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="199" y="218" text-anchor="middle" fill="#ffffff">900 lb</text>
+      <text x="397" y="218" text-anchor="middle" fill="#ffffff">900 lb</text>
+      <text x="595" y="218" text-anchor="middle" fill="#ffffff">900 lb</text>
+      <text x="793" y="218" text-anchor="middle" fill="#ffffff">900 lb</text>
+      <text x="936" y="218" text-anchor="middle" fill="#b91c1c" font-weight="650">&#10008;</text>
+      <text x="199" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">FW-00421-C01</text>
+      <text x="397" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">-C02</text>
+      <text x="595" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">-C03</text>
+      <text x="793" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">-C04</text>
+      <text x="936" y="248" text-anchor="middle" fill="#b91c1c">no coil</text>
+    </g>
+  </svg>
+  </div>
+  <p class="cap">Two full spools become four good coils. The 400&nbsp;lb left on the third spool cannot.</p>
+
+  <h3>What happens</h3>
+  <ol>
+    <li>R00001 is checked in at the payoff. The operator acknowledges the pass schedule and the settings
+        are sent to the line.</li>
+    <li>FL1 winds <span class="mono">SP-00001</span> to 1,800&nbsp;lb. At 75&nbsp;%, 90&nbsp;% and
+        100&nbsp;% of target the operator gets a weight alert. When they stop the machine, the system asks
+        whether the stop was to remove the spool &mdash; and <strong>will not close the transaction until
+        the operator says which carrier the next spool goes on.</strong></li>
+    <li>The same again for <span class="mono">SP-00002</span>.</li>
+    <li>The rod runs out with only <strong>400&nbsp;lb</strong> on the third spool. It is closed short.</li>
+    <li>At FL2 each full spool is cut into two 900&nbsp;lb coils, and each pair goes on a skid.</li>
+  </ol>
+
+  <div class="box stop">
+  <p><strong>The 400&nbsp;lb tail is the point of this example.</strong> It is below the 800&nbsp;lb
+  customer minimum, so it makes <em>no shippable coil</em>. It is flagged for a supervisor &mdash; held,
+  or offered to the customer under concession. The rule agreed is <strong>offer first, remake
+  last</strong>, and the spool is run off either way, because FL2 has no spool stripper.</p>
+  <p style="margin-top:10px">This is simple arithmetic, not a fault: <strong>4,000&nbsp;lb does not
+  divide into 1,800&nbsp;lb spools.</strong> It is the structural reason the mill welds.</p>
+  </div>
+
+  <div class="takeaway"><b>What this means for you</b>
+  4,000&nbsp;lb consumed, 3,600&nbsp;lb shipped. Every unwelded rod leaves a tail like this, and the
+  tails add up: see Example 3.</div>
+</div>
+
+
+<h2>Example 2 &mdash; One order, one rod, welded</h2>
+
+<div class="card">
+  <div class="card-hd"><span class="card-no">Example 2</span>
+    <span class="card-ti">The case that closes rather than exists</span></div>
+  <p class="card-sum">A weld joins two rods. An order fed by one rod has no second rod &mdash; so there
+  is no weld inside it. Here is what the welds around it actually do.</p>
+
+  <div class="fig">
+  <svg viewBox="0 0 1000 190" role="img" aria-label="Boundary welds belong to the rod pair, not the order">
+    <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="14">
+      <text x="92" y="59"  text-anchor="end" fill="#475569" font-weight="650">ORDERS</text>
+      <text x="92" y="125" text-anchor="end" fill="#475569" font-weight="650">RODS</text>
+
+      <rect x="100" y="36" width="288" height="36" rx="4" fill="#f1f5f9" stroke="#cbd5e1"/>
+      <text x="244" y="59" text-anchor="middle" fill="#64748b">previous order</text>
+      <rect x="394" y="36" width="292" height="36" rx="4" fill="#e2e8f0" stroke="#0f172a" stroke-width="2"/>
+      <text x="540" y="59" text-anchor="middle" fill="#0f172a" font-weight="650">Order 00421</text>
+      <rect x="692" y="36" width="288" height="36" rx="4" fill="#f1f5f9" stroke="#cbd5e1"/>
+      <text x="836" y="59" text-anchor="middle" fill="#64748b">next order</text>
+
+      <rect x="100" y="102" width="288" height="36" rx="4" fill="#94a3b8"/>
+      <text x="244" y="125" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">R00000</text>
+      <rect x="394" y="102" width="292" height="36" rx="4" fill="#1d4ed8"/>
+      <text x="540" y="125" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">R00001</text>
+      <rect x="692" y="102" width="288" height="36" rx="4" fill="#94a3b8"/>
+      <text x="836" y="125" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">R00002</text>
+
+      <polygon points="391,96 383,84 399,84" fill="#0f172a"/>
+      <polygon points="689,96 681,84 697,84" fill="#0f172a"/>
+      <text x="391" y="164" text-anchor="middle" fill="#0f172a" font-weight="650">weld &#8212; belongs to the rod pair</text>
+      <text x="689" y="164" text-anchor="middle" fill="#0f172a" font-weight="650">weld &#8212; belongs to the rod pair</text>
+    </g>
+  </svg>
+  </div>
+  <p class="cap">The order sits between two welds and contains neither.</p>
+
+  <h3>Three things that look like an internal weld and are not</h3>
+  <table>
+    <tr><th style="width:250px">Looks like</th><th>What it actually is</th></tr>
+    <tr><td><strong>The weld coming in</strong></td>
+        <td>The previous order's rod joined to R00001. The spool spanning it carries two rods and two
+            orders &mdash; that is Example 6.</td></tr>
+    <tr><td><strong>The weld going out</strong></td>
+        <td>The same, at the other end.</td></tr>
+    <tr><td><strong>A coil break at FL2</strong></td>
+        <td><strong>Not a weld.</strong> The coil is removed and a new one starts <em>from zero</em>
+            &mdash; the weight does not carry on from the break. Leftover incoming material is welded to
+            the next coil back at FL1, or run off at FL2 and offered to the customer.</td></tr>
+  </table>
+
+  <h3>The one weld that can sit inside a single-rod order: a remake</h3>
+  <p>If a weld fails its quality check, the join did not hold. The incoming rod stays staged and
+  <em>un-welded</em>, the line cannot run through it, and the operator remakes the weld. Both attempts
+  are recorded &mdash; the failure is a real quality event and hiding it would defeat the record.</p>
+</div>
+
+
+<h2>Example 3 &mdash; One order, multiple rods, no weld</h2>
+
+<div class="card">
+  <div class="card-hd"><span class="card-no">Example 3</span>
+    <span class="card-ti">Order 00421 &middot; 8,000 lb &middot; rods R00001 + R00002</span></div>
+  <p class="card-sum">The order needs two rods, and the line is stopped between them: rod one runs out,
+  is checked out, rod two is checked in fresh. Nothing joins them.</p>
+
+  <div class="fig">
+  <svg viewBox="0 0 1000 268" role="img" aria-label="One order, two rods, line stopped between them, six spools">
+    <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="14">
+      <text x="92" y="59"  text-anchor="end" fill="#475569" font-weight="650">ORDERS</text>
+      <text x="92" y="113" text-anchor="end" fill="#475569" font-weight="650">RODS</text>
+      <text x="92" y="167" text-anchor="end" fill="#475569" font-weight="650">SPOOLS</text>
+      <text x="92" y="216" text-anchor="end" fill="#475569" font-weight="650">COILS</text>
+
+      <rect x="100" y="36" width="880" height="36" rx="4" fill="#e2e8f0" stroke="#94a3b8"/>
+      <text x="540" y="59" text-anchor="middle" fill="#0f172a" font-weight="650">Order 00421 &#8212; 8,000 lb allocated</text>
+
+      <rect x="100" y="90" width="437" height="36" rx="4" fill="#1d4ed8"/>
+      <text x="318" y="113" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">R00001 &#8212; 4,000 lb</text>
+      <rect x="543" y="90" width="437" height="36" rx="4" fill="#0f766e"/>
+      <text x="761" y="113" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">R00002 &#8212; 4,000 lb</text>
+      <text x="540" y="83" text-anchor="middle" fill="#b91c1c" font-weight="650" font-size="14">LINE STOP</text>
+
+      <rect x="101" y="144" width="196" height="36" rx="4" fill="#1d4ed8"/>
+      <text x="199" y="167" text-anchor="middle" fill="#ffffff">1,800 lb</text>
+      <rect x="299" y="144" width="196" height="36" rx="4" fill="#1d4ed8"/>
+      <text x="397" y="167" text-anchor="middle" fill="#ffffff">1,800 lb</text>
+      <rect x="497" y="144" width="42" height="36" rx="4" fill="#1d4ed8" stroke="#b91c1c" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="518" y="167" text-anchor="middle" fill="#ffffff">400</text>
+      <rect x="541" y="144" width="196" height="36" rx="4" fill="#0f766e"/>
+      <text x="639" y="167" text-anchor="middle" fill="#ffffff">1,800 lb</text>
+      <rect x="739" y="144" width="196" height="36" rx="4" fill="#0f766e"/>
+      <text x="837" y="167" text-anchor="middle" fill="#ffffff">1,800 lb</text>
+      <rect x="937" y="144" width="42" height="36" rx="4" fill="#0f766e" stroke="#b91c1c" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="958" y="167" text-anchor="middle" fill="#ffffff">400</text>
+
+      <rect x="102" y="198" width="95" height="30" rx="3" fill="#1d4ed8"/>
+      <rect x="201" y="198" width="95" height="30" rx="3" fill="#1d4ed8"/>
+      <rect x="300" y="198" width="95" height="30" rx="3" fill="#1d4ed8"/>
+      <rect x="399" y="198" width="95" height="30" rx="3" fill="#1d4ed8"/>
+      <rect x="497" y="198" width="42" height="30" rx="3" fill="#ffffff" stroke="#b91c1c" stroke-width="2" stroke-dasharray="4 3"/>
+      <rect x="542" y="198" width="95" height="30" rx="3" fill="#0f766e"/>
+      <rect x="641" y="198" width="95" height="30" rx="3" fill="#0f766e"/>
+      <rect x="740" y="198" width="95" height="30" rx="3" fill="#0f766e"/>
+      <rect x="839" y="198" width="95" height="30" rx="3" fill="#0f766e"/>
+      <rect x="937" y="198" width="42" height="30" rx="3" fill="#ffffff" stroke="#b91c1c" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="518" y="219" text-anchor="middle" fill="#b91c1c" font-weight="650">&#10008;</text>
+      <text x="958" y="219" text-anchor="middle" fill="#b91c1c" font-weight="650">&#10008;</text>
+      <text x="149" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">C01</text>
+      <text x="248" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">C02</text>
+      <text x="347" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">C03</text>
+      <text x="446" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">C04</text>
+      <text x="589" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">C05</text>
+      <text x="688" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">C06</text>
+      <text x="787" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">C07</text>
+      <text x="886" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">C08</text>
+    </g>
+  </svg>
+  </div>
+  <p class="cap">Two rods, two tails. No spool contains material from both rods.</p>
+
+  <h3>What happens</h3>
+  <ul>
+    <li><strong>Two separate check-ins.</strong> Each rod gets its own run record, so the two halves of
+        the order do not share a run.</li>
+    <li><strong>No spool spans a rod.</strong> Every spool has exactly one source rod, and every coil has
+        exactly one source rod. Certificates are single-parent throughout.</li>
+    <li><strong>Two tails, 800&nbsp;lb stranded.</strong> Each rod ends with 400&nbsp;lb that cannot make
+        a coil.</li>
+    <li><strong>The operator may run either rod first.</strong> The plan supplies a sequence, but within
+        an order the operator's preference is respected.</li>
+  </ul>
+
+  <div class="takeaway"><b>What this means for you</b>
+  The stranded weight scales with the rod count. Two rods strand 800&nbsp;lb; eleven rods would strand
+  4,400&nbsp;lb. Example 4 shows what welding recovers.</div>
+</div>
+
+
+<h2>Example 4 &mdash; One order, multiple rods, welded</h2>
+
+<div class="card">
+  <div class="card-hd"><span class="card-no">Example 4</span>
+    <span class="card-ti">Order 00421 &middot; 40,000 lb &middot; eleven rods, welded</span></div>
+  <p class="card-sum">This is normal production, and it is your own planner's shipped run:
+  <strong>11 rods &middot; 23 spools &middot; 45 coils &middot; 40,400&nbsp;lb &middot; 91.82&nbsp;%
+  metallic yield.</strong> Fourteen of the twenty-three spools hold one rod; <strong>nine span a
+  weld</strong> &mdash; the multi-rod spool is a normal minority, not an edge case.</p>
+
+  <div class="fig">
+  <svg viewBox="0 0 1000 280" role="img" aria-label="Welded run: spool three spans the weld and one coil has two parents">
+    <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="14">
+      <text x="92" y="59"  text-anchor="end" fill="#475569" font-weight="650">ORDERS</text>
+      <text x="92" y="113" text-anchor="end" fill="#475569" font-weight="650">RODS</text>
+      <text x="92" y="167" text-anchor="end" fill="#475569" font-weight="650">SPOOLS</text>
+      <text x="92" y="216" text-anchor="end" fill="#475569" font-weight="650">COILS</text>
+
+      <rect x="100" y="36" width="880" height="36" rx="4" fill="#e2e8f0" stroke="#94a3b8"/>
+      <text x="540" y="59" text-anchor="middle" fill="#0f172a" font-weight="650">Order 00421 &#8212; first 8,000 lb of 40,000 shown</text>
+
+      <rect x="100" y="90" width="438" height="36" rx="4" fill="#1d4ed8"/>
+      <text x="319" y="113" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">R00001</text>
+      <rect x="542" y="90" width="438" height="36" rx="4" fill="#0f766e"/>
+      <text x="761" y="113" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">R00002</text>
+      <polygon points="540,84 531,71 549,71" fill="#0f172a"/>
+      <text x="540" y="65" text-anchor="middle" fill="#0f172a" font-weight="650" font-size="14"> </text>
+
+      <rect x="101" y="144" width="196" height="36" rx="4" fill="#1d4ed8"/>
+      <text x="199" y="167" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">SP-00001</text>
+      <rect x="299" y="144" width="196" height="36" rx="4" fill="#1d4ed8"/>
+      <text x="397" y="167" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">SP-00002</text>
+      <!-- SP-00003 spans the weld -->
+      <rect x="497" y="144" width="42" height="36" fill="#1d4ed8"/>
+      <rect x="541" y="144" width="152" height="36" fill="#0f766e"/>
+      <rect x="497" y="144" width="196" height="36" rx="4" fill="none" stroke="#0f172a" stroke-width="2.5"/>
+      <text x="595" y="167" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">SP-00003</text>
+      <rect x="695" y="144" width="196" height="36" rx="4" fill="#0f766e"/>
+      <text x="793" y="167" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">SP-00004</text>
+      <rect x="893" y="144" width="86" height="36" rx="4" fill="#0f766e" opacity=".55"/>
+      <text x="936" y="167" text-anchor="middle" fill="#ffffff">&#8230;</text>
+
+      <rect x="102" y="198" width="95" height="30" rx="3" fill="#1d4ed8"/>
+      <rect x="201" y="198" width="95" height="30" rx="3" fill="#1d4ed8"/>
+      <rect x="300" y="198" width="95" height="30" rx="3" fill="#1d4ed8"/>
+      <rect x="399" y="198" width="95" height="30" rx="3" fill="#1d4ed8"/>
+      <!-- C06 spans the weld: blue 497-540, teal 540-594 -->
+      <rect x="498" y="198" width="42" height="30" fill="#1d4ed8"/>
+      <rect x="540" y="198" width="54" height="30" fill="#0f766e"/>
+      <rect x="498" y="198" width="96" height="30" rx="3" fill="none" stroke="#0f172a" stroke-width="2.5"/>
+      <rect x="597" y="198" width="95" height="30" rx="3" fill="#0f766e"/>
+      <rect x="696" y="198" width="95" height="30" rx="3" fill="#0f766e"/>
+      <rect x="795" y="198" width="95" height="30" rx="3" fill="#0f766e"/>
+      <text x="149" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">C01</text>
+      <text x="248" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">C02</text>
+      <text x="347" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">C03</text>
+      <text x="446" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">C04</text>
+      <text x="546" y="248" text-anchor="middle" fill="#0f172a" font-family="ui-monospace,Consolas,monospace" font-weight="650">C06</text>
+      <text x="644" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">C05</text>
+      <text x="743" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">C07</text>
+      <text x="842" y="248" text-anchor="middle" fill="#334155" font-family="ui-monospace,Consolas,monospace">C08</text>
+      <text x="595" y="270" text-anchor="middle" fill="#475569">&#8592; this spool unwinds from the right, so C05 comes off before C06</text>
+    </g>
+  </svg>
+  </div>
+  <p class="cap">One weld. One spool with two rods on it. One coil with two rods in it. Everything else
+  is single-parent.</p>
+
+  <h3>What the welded spool holds</h3>
+  <table>
+    <tr><th>Wound on</th><th>From rod</th><th>Alpha</th><th class="n">Weight</th><th>Weld</th></tr>
+    <tr><td>1st</td><td>R00001</td><td class="mono">R00001C</td><td class="n">400 lb</td><td>&mdash;</td></tr>
+    <tr><td>2nd</td><td>R00002</td><td class="mono">R00002A</td><td class="n">1,400 lb</td><td>&#9650; joined here</td></tr>
+    <tr><th colspan="3">Spool <span class="mono">SP-00003</span></th><th class="n">1,800 lb</th><th></th></tr>
+  </table>
+
+  <p>The spool's label prints <strong>the carrier number and every alpha on it</strong> &mdash;
+  <span class="mono">R00001C - R00002A</span>, which is exactly what your workbook's FL1 sheet already
+  shows. At FL2 the operator may scan <em>any one</em> of those identifiers to bring the spool onto the
+  line, the same way a furnace plate works today. <span class="tag t-c">CONFIRMED</span></p>
+
+  <h3>Which coil gets the weld</h3>
+  <p>A spool unwinds <strong>last on, first off</strong>. So the 1,400&nbsp;lb of R00002 that went on
+  second comes off first:</p>
+  <table>
+    <tr><th>Coil</th><th>Made of</th><th class="n">Weight</th><th>Certificate names</th></tr>
+    <tr><td class="mono">C05</td><td>R00002 only</td><td class="n">900 lb</td><td>one source rod</td></tr>
+    <tr><td class="mono">C06</td><td>500 lb R00002 <strong>+</strong> 400 lb R00001</td><td class="n">900 lb</td><td><strong>two source rods, with the weld position</strong></td></tr>
+  </table>
+
+  <div class="box warn">
+  <p><span class="tag t-i">CLIENT INPUT REQUIRED</span> &nbsp;<strong>Please confirm the number of alphas that should be displayed as the final output on the skid when the final coil is a combination of multiple rods.
+  </strong> Do we need to generate a new alpha representing both parent rods, similar to C06 in the example above, or should new alphas be created for each parent rod and both alphas be displayed on the label to facilitate easier backtracking, as shown in the example from the workbook you shared?.</p>
+  </div>
+
+  <div class="takeaway"><b>What this means for you</b>
+  Welding recovers what Example 3 strands: 40,400&nbsp;lb shipped out of 44,000&nbsp;lb of rod issued.
+  The whole structural cost is that <em>one</em> spool in three holds two rods, and <em>one</em> coil per
+  welded spool has two parents on its certificate.</div>
+</div>
+
+
+<h2>Example 5 &mdash; Multiple orders, multiple rods, no shared rod</h2>
+
+<div class="card">
+  <div class="card-hd"><span class="card-no">Example 5</span>
+    <span class="card-ti">Order 00421 (8,000 lb) then order 00422 (4,000 lb)</span></div>
+  <p class="card-sum">Two orders back to back, and the boundary happens to fall exactly where a rod ends.
+  This is the case everyone expects to be difficult, and it is the easy one.</p>
+
+  <div class="fig">
+  <svg viewBox="0 0 1000 210" role="img" aria-label="Two orders, three rods, boundary falls at a rod boundary">
+    <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="14">
+      <text x="92" y="59"  text-anchor="end" fill="#475569" font-weight="650">ORDERS</text>
+      <text x="92" y="113" text-anchor="end" fill="#475569" font-weight="650">RODS</text>
+      <text x="92" y="167" text-anchor="end" fill="#475569" font-weight="650">SPOOLS</text>
+
+      <rect x="100" y="36" width="585" height="36" rx="4" fill="#e2e8f0" stroke="#94a3b8"/>
+      <text x="392" y="59" text-anchor="middle" fill="#0f172a" font-weight="650">Order 00421 &#8212; 8,000 lb</text>
+      <rect x="689" y="36" width="291" height="36" rx="4" fill="#ede9fe" stroke="#8b5cf6"/>
+      <text x="834" y="59" text-anchor="middle" fill="#0f172a" font-weight="650">Order 00422 &#8212; 4,000 lb</text>
+
+      <rect x="100" y="90" width="290" height="36" rx="4" fill="#1d4ed8"/>
+      <text x="245" y="113" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">R00001</text>
+      <rect x="395" y="90" width="290" height="36" rx="4" fill="#0f766e"/>
+      <text x="540" y="113" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">R00002</text>
+      <rect x="689" y="90" width="291" height="36" rx="4" fill="#9a3412"/>
+      <text x="834" y="113" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">R00003</text>
+
+      <rect x="101" y="144" width="130" height="36" rx="3" fill="#1d4ed8"/><text x="166" y="167" text-anchor="middle" fill="#ffffff">1,800</text>
+      <rect x="233" y="144" width="130" height="36" rx="3" fill="#1d4ed8"/><text x="298" y="167" text-anchor="middle" fill="#ffffff">1,800</text>
+      <rect x="365" y="144" width="27" height="36" rx="3" fill="#1d4ed8" stroke="#b91c1c" stroke-width="2" stroke-dasharray="3 2"/>
+      <rect x="396" y="144" width="130" height="36" rx="3" fill="#0f766e"/><text x="461" y="167" text-anchor="middle" fill="#ffffff">1,800</text>
+      <rect x="528" y="144" width="130" height="36" rx="3" fill="#0f766e"/><text x="593" y="167" text-anchor="middle" fill="#ffffff">1,800</text>
+      <rect x="660" y="144" width="27" height="36" rx="3" fill="#0f766e" stroke="#b91c1c" stroke-width="2" stroke-dasharray="3 2"/>
+      <rect x="690" y="144" width="130" height="36" rx="3" fill="#9a3412"/><text x="755" y="167" text-anchor="middle" fill="#ffffff">1,800</text>
+      <rect x="822" y="144" width="130" height="36" rx="3" fill="#9a3412"/><text x="887" y="167" text-anchor="middle" fill="#ffffff">1,800</text>
+      <rect x="954" y="144" width="26" height="36" rx="3" fill="#9a3412" stroke="#b91c1c" stroke-width="2" stroke-dasharray="3 2"/>
+
+      <line x1="687" y1="28" x2="687" y2="192" stroke="#7c3aed" stroke-width="2.5" stroke-dasharray="7 5"/>
+      <text x="687" y="204" text-anchor="middle" fill="#7c3aed" font-weight="650">ORDER BOUNDARY &#8212; falls where a rod ends</text>
+      <text x="378" y="204" text-anchor="middle" fill="#b91c1c">dashed = 400 lb tail, no coil</text>
+    </g>
+  </svg>
+  </div>
+  <p class="cap">Three rods, three tails. The order boundary costs nothing because it lines up with a rod
+  change.</p>
+
+  <h3>What happens &mdash; mostly, nothing special</h3>
+  <ul>
+    <li><strong>The coil numbers restart.</strong> Order 00421 produces
+        <span class="mono">FW-00421-C01</span>&hellip;<span class="mono">-C08</span>; order 00422 starts
+        again at <span class="mono">FW-00422-C01</span>.</li>
+    <li><strong>The rod is checked out and the payoff released</strong> before the next order begins. The
+        second order gets a fresh check-in.</li>
+    <li><strong>The two orders may therefore have different gauge, width or edge.</strong> A fresh
+        check-in re-acknowledges the pass schedule and re-sends the settings to the line. This is
+        <em>only</em> true because the boundary lines up with a rod change &mdash; see Example 6.</li>
+    <li>Every spool belongs to exactly one order. Every coil belongs to exactly one order.</li>
+  </ul>
+
+  <div class="takeaway"><b>What this means for you</b>
+  Multiple orders cost nothing as long as each boundary lands on a rod change. All the machinery in
+  Example 6 exists for the one case where it does not.</div>
+</div>
+
+
+<h2>Example 6 &mdash; Multiple orders, multiple rods, and a rod shared across the boundary</h2>
+
+<div class="card">
+  <div class="card-hd"><span class="card-no">Example 6</span>
+    <span class="card-ti">Order 00421 (9,500 lb) and order 00422 (2,500 lb) sharing rod R00003</span></div>
+  <p class="card-sum">The full case. Three rods, welded continuously. R00003 is split: its first
+  1,500&nbsp;lb finishes order 00421 and the rest starts order 00422 &mdash; <strong>without the rod ever
+  leaving the payoff.</strong></p>
+
+  <div class="fig">
+  <svg viewBox="0 0 1000 226" role="img" aria-label="Order boundary falling inside a rod and inside a spool">
+    <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="14">
+      <text x="92" y="59"  text-anchor="end" fill="#475569" font-weight="650">ORDERS</text>
+      <text x="92" y="113" text-anchor="end" fill="#475569" font-weight="650">RODS</text>
+      <text x="92" y="167" text-anchor="end" fill="#475569" font-weight="650">SPOOLS</text>
+
+      <rect x="100" y="36" width="696" height="36" rx="4" fill="#e2e8f0" stroke="#94a3b8"/>
+      <text x="448" y="59" text-anchor="middle" fill="#0f172a" font-weight="650">Order 00421 &#8212; 9,500 lb</text>
+      <rect x="800" y="36" width="180" height="36" rx="4" fill="#ede9fe" stroke="#8b5cf6"/>
+      <text x="890" y="59" text-anchor="middle" fill="#0f172a" font-weight="650">Order 00422</text>
+
+      <rect x="100" y="90" width="290" height="36" rx="4" fill="#1d4ed8"/>
+      <text x="245" y="113" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">R00001</text>
+      <rect x="396" y="90" width="288" height="36" rx="4" fill="#0f766e"/>
+      <text x="540" y="113" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">R00002</text>
+      <rect x="690" y="90" width="290" height="36" rx="4" fill="#9a3412"/>
+      <text x="835" y="113" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">R00003 &#8212; shared by both orders</text>
+      <polygon points="393,84 385,72 401,72" fill="#0f172a"/>
+      <polygon points="687,84 679,72 695,72" fill="#0f172a"/>
+
+      <rect x="101" y="144" width="130" height="36" rx="3" fill="#1d4ed8"/><text x="166" y="167" text-anchor="middle" fill="#ffffff">1,800</text>
+      <rect x="233" y="144" width="130" height="36" rx="3" fill="#1d4ed8"/><text x="298" y="167" text-anchor="middle" fill="#ffffff">1,800</text>
+      <rect x="365" y="144" width="28" height="36" fill="#1d4ed8"/>
+      <rect x="393" y="144" width="102" height="36" fill="#0f766e"/>
+      <rect x="365" y="144" width="130" height="36" rx="3" fill="none" stroke="#0f172a" stroke-width="2.5"/>
+      <text x="430" y="167" text-anchor="middle" fill="#ffffff">1,800</text>
+      <rect x="497" y="144" width="130" height="36" rx="3" fill="#0f766e"/><text x="562" y="167" text-anchor="middle" fill="#ffffff">1,800</text>
+      <rect x="629" y="144" width="58" height="36" fill="#0f766e"/>
+      <rect x="687" y="144" width="72" height="36" fill="#9a3412"/>
+      <rect x="629" y="144" width="130" height="36" rx="3" fill="none" stroke="#0f172a" stroke-width="2.5"/>
+      <text x="694" y="167" text-anchor="middle" fill="#ffffff">1,800</text>
+      <rect x="761" y="144" width="130" height="36" rx="3" fill="#9a3412" stroke="#7c3aed" stroke-width="2.5"/>
+      <text x="826" y="167" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">SP-00006</text>
+      <rect x="893" y="144" width="87" height="36" rx="3" fill="#9a3412" stroke="#b91c1c" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="936" y="167" text-anchor="middle" fill="#ffffff">1,200</text>
+
+      <line x1="798" y1="28" x2="798" y2="192" stroke="#7c3aed" stroke-width="2.5" stroke-dasharray="7 5"/>
+      <text x="798" y="206" text-anchor="middle" fill="#7c3aed" font-weight="650">ORDER BOUNDARY</text>
+      <text x="798" y="222" text-anchor="middle" fill="#7c3aed">inside a rod &#8212; and inside a spool</text>
+    </g>
+  </svg>
+  </div>
+  <p class="cap">Two welds, and one order boundary that lines up with nothing.</p>
+
+  <h3>The handover, step by step &mdash; the rod never comes off</h3>
+  <ol>
+    <li>R00003 is checked in <strong>once</strong>, on order 00421.</li>
+    <li>The system tracks consumption against 00421's 1,500&nbsp;lb allocation and <strong>raises a
+        notification the moment it is reached</strong>. It records the weight at that exact instant.</li>
+    <li><strong>The line does not stop.</strong> The material keeps running while the operator finishes
+        what they are doing.</li>
+    <li>The operator marks order 00421 complete. The system records the weight <em>again</em>, at that
+        second moment. Order 00422 begins immediately, on the same rod, with no dismount and no second
+        check-in.</li>
+  </ol>
+
+  <table>
+    <tr><th>Order 00421 got</th><th class="n">1,512.64 lb</th><td>allocated 1,500 &mdash; <strong>12.64&nbsp;lb over</strong>, run between the notification and the confirmation</td></tr>
+    <tr><th>Order 00422 got</th><th class="n">2,487.36 lb</th><td>allocated 2,500 &mdash; <strong>12.64&nbsp;lb short</strong>, because the rod ran out first</td></tr>
+  </table>
+
+  <div class="box key">
+  <p><strong>The overrun on the first order is exactly the shortfall on the second.</strong> The rod is a
+  fixed quantity: every pound run past the notification is a pound the next order does not get. That is
+  why the system captures the weight twice &mdash; once when the target is reached, once when you
+  confirm &mdash; rather than discarding the difference.</p>
+  </div>
+
+  <h3>And then the spool that straddles the boundary</h3>
+
+  <div class="fig">
+  <svg viewBox="0 0 1000 250" role="img" aria-label="Spool SP-00006 cut at the order boundary yields two undersized coils">
+    <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="14">
+      <text x="92" y="59"  text-anchor="end" fill="#475569" font-weight="650">ORDERS</text>
+      <text x="92" y="113" text-anchor="end" fill="#475569" font-weight="650">SPOOL</text>
+      <text x="92" y="167" text-anchor="end" fill="#475569" font-weight="650">COILS</text>
+
+      <rect x="100" y="36" width="249" height="36" rx="4" fill="#e2e8f0" stroke="#94a3b8"/>
+      <text x="224" y="59" text-anchor="middle" fill="#0f172a" font-weight="650">00421 &#8212; 512.64 lb</text>
+      <rect x="351" y="36" width="629" height="36" rx="4" fill="#ede9fe" stroke="#8b5cf6"/>
+      <text x="665" y="59" text-anchor="middle" fill="#0f172a" font-weight="650">Order 00422 &#8212; 1,287.36 lb</text>
+
+      <rect x="100" y="90" width="880" height="36" rx="4" fill="#9a3412"/>
+      <text x="540" y="113" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">SP-00006 &#8212; 1,800 lb, all from R00003, no weld</text>
+
+      <rect x="101" y="144" width="247" height="36" rx="4" fill="#9a3412" stroke="#b91c1c" stroke-width="2.5" stroke-dasharray="5 3"/>
+      <text x="224" y="167" text-anchor="middle" fill="#ffffff" font-weight="650">512.64 lb &#10008;</text>
+      <rect x="352" y="144" width="186" height="36" rx="4" fill="#9a3412" stroke="#b91c1c" stroke-width="2.5" stroke-dasharray="5 3"/>
+      <text x="445" y="167" text-anchor="middle" fill="#ffffff" font-weight="650">387.36 lb &#10008;</text>
+      <rect x="542" y="144" width="437" height="36" rx="4" fill="#9a3412"/>
+      <text x="760" y="167" text-anchor="middle" fill="#ffffff" font-weight="650">900 lb &#10004;</text>
+
+      <text x="224" y="200" text-anchor="middle" fill="#b91c1c">under minimum</text>
+      <text x="445" y="200" text-anchor="middle" fill="#b91c1c">under minimum</text>
+      <text x="760" y="200" text-anchor="middle" fill="#15803d">good coil</text>
+
+      <line x1="349" y1="28" x2="349" y2="212" stroke="#7c3aed" stroke-width="2.5" stroke-dasharray="7 5"/>
+      <text x="349" y="228" text-anchor="middle" fill="#7c3aed" font-weight="650">the cut must fall here</text>
+
+      <line x1="980" y1="228" x2="700" y2="228" stroke="#475569" stroke-width="1.5" marker-end="url(#ar)"/>
+      <text x="840" y="244" text-anchor="middle" fill="#475569">unwinds this way</text>
+      <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+        <path d="M9,4.5 L0,0 L0,9 z" fill="#475569"/></marker></defs>
+    </g>
+  </svg>
+  </div>
+
+  <div class="box stop">
+  <h3 style="color:#b91c1c">A coil belongs to exactly one order &mdash; so this spool yields two coils
+  that cannot ship</h3>
+  <p>A finished coil carries one order number on its label and its certificate. So when a spool is wound
+  across an order boundary, <strong>FL2 has to cut at that boundary</strong>, whatever it does to the
+  coil weights. Here that leaves 387.36&nbsp;lb on one side and 512.64&nbsp;lb on the other &mdash; both below
+  the 800&nbsp;lb minimum, both unshippable, from a perfectly good 1,800&nbsp;lb spool.</p>
+  <p style="margin-top:10px"></p>
+  </div>
+
+  <div class="box warn">
+  <p><span class="tag t-i">CLIENT INPUT REQUIRED</span> &nbsp;<strong>Can two orders on one rod have
+  different gauge, width or edge?</strong> Because the rod is not dismounted at the boundary, there is no
+  second check-in &mdash; and the mill settings are sent to the line <em>at</em> check-in. So both orders
+  must run on the same pass schedule. If planning can put two differently-specified orders on one rod,
+  that boundary cannot be crossed with the rod mounted: the operator would have to check the rod out and
+  back in.</p>
+  </div>
+
+  <div class="takeaway"><b>What this means for you</b>
+  A rod shared between two orders works, and the operator never touches the payoff. The two costs are
+  the pound-for-pound overrun trade between the orders, and the spool that straddles the boundary. Both
+  are avoidable by where planning places the boundary.</div>
+</div>
+
+
+<h2>Example 7 &mdash; the same case, with the boundary on a coil cut</h2>
+
+<div class="card">
+  <div class="card-hd"><span class="card-no">Example 7</span>
+    <span class="card-ti">Order 00431 (9,900 lb) and order 00432 (2,100 lb), sharing rod R00003</span></div>
+  <p class="card-sum">Example 6 again &mdash; the same three rods, the same two welds, the same spools,
+  the same operator. <strong>The only thing that changes is where planning puts the order boundary</strong>,
+  and it turns 900&nbsp;lb of unshippable material into two coils.</p>
+
+  <div class="fig">
+  <svg viewBox="0 0 1000 250" role="img" aria-label="Shared spool split 900 pounds to each order, giving two good coils">
+    <g font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="14">
+      <text x="92" y="59"  text-anchor="end" fill="#475569" font-weight="650">ORDERS</text>
+      <text x="92" y="113" text-anchor="end" fill="#475569" font-weight="650">SPOOL</text>
+      <text x="92" y="167" text-anchor="end" fill="#475569" font-weight="650">COILS</text>
+
+      <rect x="100" y="36" width="438" height="36" rx="4" fill="#e2e8f0" stroke="#94a3b8"/>
+      <text x="319" y="59" text-anchor="middle" fill="#0f172a" font-weight="650">Order 00431 &#8212; 900 lb</text>
+      <rect x="542" y="36" width="438" height="36" rx="4" fill="#ede9fe" stroke="#8b5cf6"/>
+      <text x="761" y="59" text-anchor="middle" fill="#0f172a" font-weight="650">Order 00432 &#8212; 900 lb</text>
+
+      <rect x="100" y="90" width="880" height="36" rx="4" fill="#9a3412"/>
+      <text x="540" y="113" text-anchor="middle" fill="#ffffff" font-family="ui-monospace,Consolas,monospace">SP-00006 &#8212; 1,800 lb, all from R00003, no weld</text>
+
+      <rect x="101" y="144" width="437" height="36" rx="4" fill="#9a3412"/>
+      <text x="319" y="167" text-anchor="middle" fill="#ffffff" font-weight="650">900 lb &#10004;</text>
+      <rect x="542" y="144" width="437" height="36" rx="4" fill="#9a3412"/>
+      <text x="761" y="167" text-anchor="middle" fill="#ffffff" font-weight="650">900 lb &#10004;</text>
+      <text x="319" y="200" text-anchor="middle" fill="#15803d" font-weight="650">good coil &#8212; order 00431</text>
+      <text x="761" y="200" text-anchor="middle" fill="#15803d" font-weight="650">good coil &#8212; order 00432</text>
+
+      <line x1="540" y1="28" x2="540" y2="212" stroke="#7c3aed" stroke-width="2.5" stroke-dasharray="7 5"/>
+      <text x="540" y="228" text-anchor="middle" fill="#7c3aed" font-weight="650">the boundary and the coil cut are the same place</text>
+
+      <line x1="980" y1="244" x2="700" y2="244" stroke="#475569" stroke-width="1.5" marker-end="url(#ar7)"/>
+      <text x="840" y="244" text-anchor="middle" fill="#ffffff"> </text>
+      <defs><marker id="ar7" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+        <path d="M9,4.5 L0,0 L0,9 z" fill="#475569"/></marker></defs>
+    </g>
+  </svg>
+  </div>
+  <p class="cap">As planned: 900&nbsp;lb to each order, one full coil each, nothing wasted.</p>
+
+  <h3>The one number that changed</h3>
+  <table>
+    <tr><th></th><th>Example 6</th><th>Example 7</th></tr>
+    <tr><td>R00003's share of the <strong>first</strong> order</td><td class="n">1,500 lb</td><td class="n"><strong>1,900 lb</strong></td></tr>
+    <tr><td>R00003's share of the <strong>second</strong> order</td><td class="n">2,500 lb</td><td class="n"><strong>2,100 lb</strong></td></tr>
+    <tr><td>Where that puts the boundary inside SP-00006</td><td class="n">512.64 lb in</td><td class="n"><strong>900 lb in &mdash; exactly one coil</strong></td></tr>
+  </table>
+
+  <p>R00003 puts its first 1,000&nbsp;lb onto <span class="mono">SP-00005</span>, so a 1,900&nbsp;lb
+  allocation lands the boundary 900&nbsp;lb into the next spool. That is the whole trick, and it
+  generalises to one rule:</p>
+
+  <div class="box key">
+  <p><strong>Place an order boundary at a whole multiple of the coil weight, measured from the start of
+  the spool the boundary will fall in.</strong> Planning can work this out, because the spool fills are
+  known when the run is planned &mdash; it is the same inversion your own workbook already performs when
+  it sizes FL1 spools so that FL2 can always cut valid coils.</p>
+  </div>
+
+  <h3>What comes off the shared spool</h3>
+  <table>
+    <tr><th></th><th>Example 6 &mdash; boundary 512.64 lb in</th><th>Example 7 &mdash; boundary 912.64 lb in</th></tr>
+    <tr><td>Coils cut from the spool</td><td class="n">3</td><td class="n">2</td></tr>
+    <tr><td>Shippable</td><td class="n">1</td><td class="n"><strong>2</strong></td></tr>
+    <tr><td>Below the 800&nbsp;lb minimum</td><td class="n" style="color:#b91c1c"><strong>2</strong></td><td class="n" style="color:#15803d"><strong>0</strong></td></tr>
+    <tr><td><strong>Material at risk</strong></td><td class="n" style="color:#b91c1c"><strong>900 lb</strong></td><td class="n" style="color:#15803d"><strong>12.64 lb</strong></td></tr>
+  </table>
+
+  <p>Nothing physical changed. Same rods, same welds, same spools, same operator, same delay before the
+  operator confirms the order complete. <strong>The failure in Example 6 is about where the boundary was
+  placed, not about how the mill or the system works.</strong></p>
+
+  <div class="box warn">
+  <h3>Why 12.64&nbsp;lb and not zero &mdash; and a question that follows</h3>
+  <p>The split is 900&nbsp;/&nbsp;900 <em>as planned</em>. It cannot be 900&nbsp;/&nbsp;900
+  <em>as run</em>, because the material that keeps running between the notification and the operator's
+  confirmation has to belong to one order or the other. In Example 6 that was 12.64&nbsp;lb, and it is
+  the same here &mdash; so the actual split is <strong>912.64&nbsp;/&nbsp;887.36</strong>. The
+  887.36&nbsp;lb coil is comfortably inside the 800&ndash;900 range; the other is
+  <strong>12.64&nbsp;lb over the 900&nbsp;lb maximum</strong>.</p>
+  <p style="margin-top:10px"><span class="tag t-i">CLIENT INPUT REQUIRED</span> &nbsp;<strong>What should
+  FL2 do with that last 12.64&nbsp;lb?</strong> Three options, and we need your decision:</p>
+  <table style="margin-bottom:0">
+    <tr><th style="width:34%">Option</th><th>Consequence</th></tr>
+    <tr><td><strong>Cut at the order boundary</strong></td>
+        <td>A 912.64&nbsp;lb coil ships, slightly over your stated maximum. <em>Your own planning
+            workbook already does something similar</em> &mdash; it will exceed the maximum rather than
+            leave a tail too small to ship.</td></tr>
+    <tr><td><strong>Cut at 900&nbsp;lb</strong></td>
+        <td>12.64&nbsp;lb of the first order's material ends up inside the second order's coil. For a
+            welding-wire customer this is the one option we would advise against, because it makes the
+            certificate's order attribution wrong.</td></tr>
+    <tr><td><strong>Cut at 900&nbsp;lb and keep the remainder</strong> <span class="tag t-p">PROPOSED</span></td>
+        <td>Cleanest attribution and the smallest loss, at the cost of handling a small remnant. Our
+            recommendation below a threshold you set, with the first option above it.</td></tr>
+  </table>
+  </div>
+
+  <h3>How the two orders finish</h3>
+  <table>
+    <tr><th>Order</th><th class="n">Allocated</th><th class="n">Consumed</th><th class="n">Shipped</th><th>Result</th></tr>
+    <tr><td>00431</td><td class="n">9,900 lb</td><td class="n">9,912.64 lb</td><td class="n">9,912.64 lb</td>
+        <td style="color:#15803d"><strong>Complete &mdash; nothing stranded</strong></td></tr>
+    <tr><td>00432</td><td class="n">2,100 lb</td><td class="n">2,087.36 lb</td><td class="n">1,787.36 lb</td>
+        <td>Short by the 300&nbsp;lb tail on the last spool</td></tr>
+  </table>
+
+  <div class="takeaway"><b>What this means for you</b>
+  Order 00431 is the <strong>only order in all seven examples that finishes complete</strong> &mdash;
+  every pound consumed became shippable coil. The loss that remains is the 300&nbsp;lb tail at the
+  <em>end</em> of the queue, which is Example 1's problem and is fixed by welding the next order's rod
+  in, not by allocation. <strong>One caution:</strong> this only works if planning knows where the welds
+  will fall. If a rod arrives short or a weld has to be remade, the alignment drifts and Example 6's
+  outcome comes back &mdash; so it is a strong mitigation, not a guarantee.</div>
+</div>
+
+
+<h2>The seven examples side by side</h2>
+
+<table>
+  <tr>
+    <th>Example</th><th class="n">Welds</th><th class="n">Spools</th>
+    <th class="n">Rods on the busiest spool</th><th class="n">Orders on the busiest spool</th>
+    <th class="n">Coils</th><th class="n">Source rods on the busiest certificate</th>
+    <th class="n">Stranded</th>
+  </tr>
+  <tr><td><strong>1</strong> &mdash; 1 order, 1 rod, no weld</td>
+      <td class="n">0</td><td class="n">3</td><td class="n">1</td><td class="n">1</td><td class="n">4</td><td class="n">1</td><td class="n">400 lb</td></tr>
+  <tr><td><strong>2</strong> &mdash; 1 order, 1 rod, welded</td>
+      <td class="n" colspan="7" style="text-align:left;color:#475569">Cannot occur &mdash; a weld needs two rods. The welds either side belong to the neighbouring orders.</td></tr>
+  <tr><td><strong>3</strong> &mdash; 1 order, 2 rods, no weld</td>
+      <td class="n">0</td><td class="n">6</td><td class="n">1</td><td class="n">1</td><td class="n">8</td><td class="n">1</td><td class="n">800 lb</td></tr>
+  <tr><td><strong>4</strong> &mdash; 1 order, 11 rods, welded</td>
+      <td class="n">10</td><td class="n">23</td><td class="n"><strong>2</strong></td><td class="n">1</td><td class="n">45</td><td class="n"><strong>2</strong></td><td class="n">&asymp; 0</td></tr>
+  <tr><td><strong>5</strong> &mdash; 2 orders, 3 rods, no shared rod</td>
+      <td class="n">0</td><td class="n">9</td><td class="n">1</td><td class="n">1</td><td class="n">12</td><td class="n">1</td><td class="n">1,200 lb</td></tr>
+  <tr><td><strong>6</strong> &mdash; 2 orders, 3 rods, shared rod</td>
+      <td class="n">2</td><td class="n">7</td><td class="n"><strong>2</strong></td><td class="n"><strong>2</strong></td><td class="n">14</td><td class="n"><strong>2</strong></td><td class="n" style="color:#b91c1c"><strong>1,200 lb</strong></td></tr>
+  <tr><td><strong>7</strong> &mdash; the same, boundary on a coil cut</td>
+      <td class="n">2</td><td class="n">7</td><td class="n"><strong>2</strong></td><td class="n"><strong>2</strong></td><td class="n">13</td><td class="n"><strong>2</strong></td><td class="n" style="color:#15803d"><strong>300 lb</strong></td></tr>
+</table>
+
+<div class="box key">
+<p>Read down the three bold columns. <strong>Every value is 1 until a weld or a shared rod appears.</strong>
+Those two things are the only real complexity in the whole chain &mdash; a weld puts a second rod on a
+spool and a second parent on one certificate; a shared rod puts a second order on a spool. Everything
+else is repetition.</p>
+<p style="margin-bottom:0">Then read the last two rows against each other. <strong>Examples 6 and 7 match
+in every column except the coil count and the stranded weight</strong> &mdash; same welds, same spools,
+same certificates. The 900&nbsp;lb between them is one number in the plan.</p>
+</div>
+
+
+<h2>What we still need from you</h2>
+
+<p>Five open points, in the order they affect the build. Each one is marked in the examples above where
+it bites.</p>
+
+<table>
+  <tr><th style="width:34%">Question</th><th>Why it matters</th></tr>
+  <tr>
+    <td><strong>Can two orders on one rod have different gauge, width or edge?</strong>
+        <br><span class="tag t-i">CLIENT INPUT REQUIRED</span></td>
+    <td>The mill settings are sent at check-in, and a shared rod is checked in only once. If the answer
+        is yes, that boundary cannot be crossed with the rod mounted &mdash; the operator must check out
+        and back in, and the &ldquo;no dismount&rdquo; rule becomes conditional.
+        <em>Example 6.</em></td>
+  </tr>
+  <tr>
+    <td><strong>What should FL2 do when the boundary lands a few pounds past a coil cut?</strong>
+        <br><span class="tag t-p">PROPOSED</span> &mdash; keep the remainder below a threshold you set</td>
+    <td>Even with the boundary aligned, the material run between the notification and the operator's
+        confirmation pushes one coil about 13&nbsp;lb over the maximum. Ship it over, mis-attribute it to
+        the neighbouring order, or keep a remnant? <em>Example 7.</em></td>
+  </tr>
+  <tr>
+    <td><strong>What happens to an odd final coil?</strong>
+        <br><span class="tag t-i">CLIENT INPUT REQUIRED</span></td>
+    <td>A skid holds two coils. An order making an odd number leaves one skid with a single coil &mdash;
+        ship as a part skid, wait for a coil from another order, or close short? </td>
+  </tr>
+  <tr>
+    <td><strong>What is the maximum number of welds allowed in one coil?</strong>
+        <br><span class="tag t-i">CLIENT INPUT REQUIRED</span></td>
+    <td>Does the customer have a defined limit for this?</td>
+  </tr>
+</table>
+
+<h2>Assumptions behind every figure</h2>
+<ul>
+  <li>The weights and counts come from <strong>your own planning workbook</strong> &mdash; 4,000&nbsp;lb
+      rods, an 1,800&nbsp;lb spool target and an 800&ndash;900&nbsp;lb customer coil range, alloy 1100 at
+      0.110&Prime; &times; 0.625&Prime; leaving FL1 and 0.0160&Prime; &times; 0.625&Prime; leaving FL2.</li>
+  <li>Footages are rounded to the nearest 10&nbsp;ft and made to add up exactly within each spool and
+      coil. Weight is the quantity we hold; footage is worked out at the running gauge.</li>
+  <li>Welding is <strong>induction</strong> and happens on the FL1 side only. FL2 cuts and re-threads
+      rather than joining one spool to the next.</li>
+  <li>The 40,400&nbsp;lb in Example 4 against a 40,000&nbsp;lb order is your planner working as intended:
+      the final spool is raised rather than left as a 400&nbsp;lb tail that would make an unshippable
+      coil.</li>
+</ul>
+
+<p class="foot">
+Nagarro &middot; United Aluminum Flat Wire Mill &middot; 24 August 2026<br>
+This page is a working explanation prepared for review, not a specification. Where it and a signed
+specification differ, the specification governs.
+</p>
+
+</div>
+</body>
+</html>

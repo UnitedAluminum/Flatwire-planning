@@ -1,7 +1,7 @@
 # Flat Wire Mill — Sprint Plan
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — §9.2 DoD requires **`data-testid` on every element an automated test must reach**, the one E2E obligation that lands inside the trial window *(otherwise August 13, 2026 — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
+**Last Updated:** August 18, 2026 — **`D-32`: there is no shared-schema migration.** The `FW-001` cross-feature impact and **RISK-05** are retired and replaced by the narrower **`OI-111`** *(previously August 15, 2026 — §9.2 DoD requires **`data-testid` on every element an automated test must reach**, the one E2E obligation that lands inside the trial window *(otherwise August 13, 2026 — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*
 **Document Type:** Capacity position, delivery model, sprint calendar, dependencies, DoR/DoD
 **Status:** Published — **the plan does not fit the window; §1 requires a programme decision**
 **Owner:** Delivery lead / programme management
@@ -19,7 +19,7 @@
 
 | Measure | Value |
 |---|---|
-| Total effort — **MVP-1** | **3,292 hours** = 411.5 dev-days (at 1 dev-day = 8 h) |
+| Total effort — **MVP-1** | **3,186 hours** = 398.3 dev-days (at 1 dev-day = 8 h) *(re-baselined 18 Aug 2026, `D-32`; previously 3,292 h)* |
 | Working days available (Thu 30 Jul → 30 Sep) | **44** — of which **32 are post-gate** |
 | Capacity per full-time person over the window | **352 hours** |
 | **Sustained requirement** | **≈ 9.4 FTE** |
@@ -119,7 +119,7 @@ Derived from [`CapacityAndEffortModel.md`](CapacityAndEffortModel.md) §3b's MVP
 > S3's natural two-week boundary is **Fri 2 Oct**; it is cut at **Wed 30 Sep** because that is the published **M5** feature-complete and **QA5** UAT date. Running it to its natural end costs **two days** and drops the peak from **17.3 to 13.8 FTE** — the cheapest schedule relief available anywhere in the plan, and cheaper than any rung of the descope ladder.
 
 > ### The underlying finding is unchanged
-> `CapacityAndEffortModel.md`'s headline stands: **3,292 h against 44 working days needs ~9.4 people sustained**, and W7 — now inside S3 — needs **24.5 FTE against three days**. No sprint boundary makes that achievable. This document re-expresses the arithmetic; it does not solve it. See model §7 for the three options.
+> `CapacityAndEffortModel.md`'s headline stands: **3,186 h against 44 working days needs ~9.1 people sustained** *(`D-32`; previously 3,292 h / 9.4)*, and W7 — now inside S3 — needs **24.5 FTE against three days**. No sprint boundary makes that achievable. This document re-expresses the arithmetic; it does not solve it. See model §7 for the three options.
 
 #### Divergence from `05-SprintPlanAndBacklog.md` §4.2
 
@@ -268,7 +268,7 @@ Phase 14 ──> requires all critical-path phases
 - **Must be sequential:** 4→5→6→7, 8→9, 9→10, and 14 last. *(The old `2→4` edge is now an external dependency, not a phase edge.)* **Phase 6 no longer waits on Phase 13** — its die validation reads the `Drawer` catalogue seeded in Phase 1, not a die inventory (`REVIEW.md` #34 / `OI-41` closed).
 
 ### Cross-feature impacts / risks
-- **FW-001 column renames** touch the shared `coils`/scheduling schema well beyond flat wire — do early with full impact analysis (affects upstream receiving & planning + Phases 11, 12).
+- ~~**FW-001 column renames** touch the shared `coils`/scheduling schema well beyond flat wire — do early with full impact analysis (affects upstream receiving & planning + Phases 11, 12).~~ **RETIRED 18 Aug 2026, `D-32`: there is no shared-schema migration**, so this impact does not exist. What replaces it is narrower and is **`OI-111`** — nothing now marks a rod as being on a flattening line in the shared schema, so any report filtering `coils.coil_status` sees flat-wire material as untouched.
 - **The pass schedule is still the hardest upstream gate — it has simply moved outside MVP-1.** No check-in works without one, and MVP-1 cannot create one. If the owning track does not deliver readable schedules before Phase 4, check-in has nothing to acknowledge and no tags to push: there is **no default schedule and no partial push path**. The read contract, including the unavailability behaviour, is in `phase-04`.
 - **OQ-3 / OQ-14 / OQ-15** each block a specific screen build; the stub check-in deliberately routes around them (single-schedule assumption) — schedule a **de-stub pass** when these close.
 - **OQ-10 (footage→weight)** blocks upstream planning + Phases 9, 12.
@@ -322,7 +322,7 @@ A story is Done only when **all** hold:
 | **RISK-02** | Pass Schedule content still being authored by Operations; Phase 2 gates every check-in phase | High | Critical | Tim O. / Operations | Before W4 |
 | **RISK-03** | Footage→weight basis undefined; the ±2 % variance threshold is unreachable from target dimensions | Medium | High | Tim O. / Process Eng | Before W6 |
 | **RISK-04** | Cross-database check-in has no defined recovery path | High | Critical | Architecture / Jaspreet | Before W4 |
-| **RISK-05** | FW-001 renames break existing reports | Medium | High | DBA / IT | Before W0 completes |
+| ~~**RISK-05**~~ | ~~FW-001 renames break existing reports~~ — **RETIRED 18 Aug 2026, `D-32`.** Replaced by the narrower **`OI-111`**: no rename can break a report, but nothing marks flat-wire material in `coils.coil_status` either | — | — | DBA / IT | Before production |
 | **RISK-06** | Roles may not exist as JWT claims | Medium | High | Security / Login owner | Before W0 completes |
 | **RISK-07** | PLC commissioning slips past 30 Sep | Medium | High | Engineering / Tim O. | Go-live gate |
 | **RISK-08** | Real-time NFRs undefined — the QA2 load test cannot fail | High | High | Architecture / Engineering | Before QA2 (13 Sep) |

@@ -1,6 +1,6 @@
 /*==============================================================================================
   Project      : UAL Flat Wire Mill - Shopfloor
-  Script       : CommonDB_Insert_WIPStations_FlatWire.sql
+  Script       : 10_CommonDB_Insert_WIPStations_FlatWire.sql
   Target DBs   : united_db (dbo.machines)
                  CommonDB  (dbo.WIPStations, dbo.MachineStationsConfiguration)
   Last Updated : 2026-07-28
@@ -182,7 +182,8 @@
   D11. Machine capability values are PROVISIONAL. They are derived from this repo's own design
       data - Schema/SQL/FlatWire_SampleData_Lookup.sql: Stand gauge/width ranges (FM1
       0.0700-0.2000 in gauge, FM2 0.0700-0.1600, both 0.4000-0.9000 in width) and the TKUP-1
-      SpoolConfiguration row (max 3500 lb, max OD 40 in, core 8-12 in). FW-003 records the
+      Spool article rows (max 3500 lb, max OD 40 in, core 8-12 in) -- these limits were
+      SpoolConfiguration's until it merged into Spool on 23 Aug 2026 (Q60). FW-003 records the
       Naj/Bob/Tim standards spreadsheet as an unfinished external dependency, so these must be
       reviewed against it before production. Columns with no documented source are left NULL
       rather than guessed: cost_center_idx (needs Accounting), account_idx, ast_idx,

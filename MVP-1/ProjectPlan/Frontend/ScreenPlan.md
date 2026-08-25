@@ -1,7 +1,7 @@
 # Flat Wire Mill — Screen Plan
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — split out of `02-SRS.md`, `03-HLD-and-ERDiagram.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** August 25, 2026 — the dangling §9.4 pointer replaced by naming the two documents it meant *(previously August 13, 2026 — split out of `02-SRS.md`, `03-HLD-and-ERDiagram.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
 **Document Type:** Screen inventory, navigation map, shared chrome, mockup mapping
 **Status:** Baselined for build
 **Owner:** Frontend (Angular) stream
@@ -63,7 +63,7 @@ The 27 HTML files in [`../../MVP-1/ProjectPlan/Frontend/Mockups/`](Mockups/) are
 > It uses the shared chrome — topbar, fit script, `--color-*` tokens, `fw-modal.js` — because consistency is
 > free and divergence costs. That is not the same as being part of the suite.
 
-**Retired / superseded — do not re-adopt:** `dashboard_2_rod_checkin - Old.html` (grid + inline-SVG progress ring, 9-step footer counter) and the interim single-page rod-scan-row layout, 8-step counter, which held the `dashboard_2_rod_checkin.html` filename until 11 Aug 2026. Both are **retired** and both were **deleted from the repository 11 Aug 2026** (recoverable at `d79ce78`); the approved wizard took the plain filename the same day, so **that name no longer refers to a retired screen**; two implementation documents in this repository still point at them (see §9.4).
+**Retired / superseded — do not re-adopt:** `dashboard_2_rod_checkin - Old.html` (grid + inline-SVG progress ring, 9-step footer counter) and the interim single-page rod-scan-row layout, 8-step counter, which held the `dashboard_2_rod_checkin.html` filename until 11 Aug 2026. Both are **retired** and both were **deleted from the repository 11 Aug 2026** (recoverable at `d79ce78`); the approved wizard took the plain filename the same day, so **that name no longer refers to a retired screen**; the only documents that still name them are this file and the master specification's mockup inventory — **in both cases as retired/deleted records, which is correct**. *(This read "two implementation documents in this repository still point at them (see §9.4)" until 25 Aug 2026. **There is no §9.4 in this file** — its sections are §7, §7.1–§7.3 and Appendix B — so the two documents were never identified. They are named here instead of behind a pointer.)*
 
 ---
 

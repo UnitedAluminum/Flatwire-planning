@@ -414,11 +414,11 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         Pass Schedules
       </a>
-      <!-- DB5A. FL2's counterpart to DB2A: the FL1 operator has a staging queue,
-           the FL2 operator had no view of waiting material at all (PCI002 excludes
-           FL2 from staging). Reached the same way DB9A is. -->
-      <a class="btn-nav" href="dashboard_5a_spool_queue.html">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M3.6 8.5h16.8M3.6 15.5h16.8"/></svg>
+         <!-- DB5A. FL2's counterpart to DB2A: the FL1 operator has a staging queue,
+              the FL2 operator had no view of waiting material at all (FL2 has no
+              staging space, PCI002). Since the 20 Aug 2026 client reversal this screen
+              also carries FL2 pre-check-in as a VALIDATION QUEUE (FR-533) -- a queue,
+              not a bay. Reached the same way DB9A is. -->
         Spool Queue
       </a>
       <a class="btn-nav" href="../../../../MVP-2/Mockups/dashboard_oee.html">

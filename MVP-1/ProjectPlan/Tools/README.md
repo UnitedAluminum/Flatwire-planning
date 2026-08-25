@@ -1,14 +1,18 @@
 # Tools
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 14, 2026 — [`build_trial_run_xlsx.py`](build_trial_run_xlsx.py) and [`TrialRunContent.md`](TrialRunContent.md) added: the trial-run workbook, the first generator to write outside `MVP-1/SRS/` and the first with an **abbreviation** guard in place of a leakage guard *(otherwise August 13, 2026)*
+**Last Updated:** August 25, 2026 — the allocation-examples generator and its content file exist again; script count and `template.docx` recorded *(previously August 24, 2026 — [`build_allocation_examples_xlsx.py`](build_allocation_examples_xlsx.py) and [`AllocationExamplesContent.md`](AllocationExamplesContent.md) added: the rod-to-order worked-example workbook, the first generator whose figures are **computed rather than parsed**, and the first to **extend** the leakage list rather than copy it unchanged *(previously August 23, 2026 — [`verify_schema_counts.py`](verify_schema_counts.py) added: the second check that fails the build, and the reason the schema counts can no longer drift. `extract_vba.py` listed at last — it had been in the folder since 21 Aug and absent from this table)* *(previously August 14, 2026 — [`build_trial_run_xlsx.py`](build_trial_run_xlsx.py) and [`TrialRunContent.md`](TrialRunContent.md) added: the trial-run workbook, the first generator to write outside `MVP-1/SRS/` and the first with an **abbreviation** guard in place of a leakage guard *(otherwise August 13, 2026)*)*)*
 **Status:** Working scripts, committed so they stop being re-derived
 
 ---
 
-**Five scripts.** Four render a deliverable from markdown; one is a check that fails the build.
-All five take the same position — **the markdown is the source and the generated file is
-output** — so never edit a `.docx` or `.xlsx` in this repository.
+**Eight scripts** — and as of 25 Aug 2026 all eight are on disk and in git. Five render a deliverable from markdown, **two are checks that fail the
+build**, and one is an extraction utility. They take the same position — **the markdown is the
+source and the generated file is output** — so never edit a `.docx` or `.xlsx` in this repository.
+
+The two checkers exist for the same reason and are built the same way: a number that lives in a
+document drifts away from the thing it counts unless the measurement is **fatal**. One measures
+requirement coverage, the other measures the schema.
 
 | Script | Reads | Writes | Fails on |
 |---|---|---|---|
@@ -16,12 +20,42 @@ output** — so never edit a `.docx` or `.xlsx` in this repository.
 | [`build_questions_xlsx.py`](build_questions_xlsx.py) | both `Analysis/` question registers + `ClientQuestionsContent.md` | `MVP-1/SRS/FlatWire_ClientQuestions.xlsx` | coverage · drift · team names · leakage |
 | [`build_development_plan_xlsx.py`](build_development_plan_xlsx.py) | `Development/TaskBreakdown.md` + `Development/StaffedSprintPlans.md` + `DevelopmentPlanContent.md` | `MVP-1/SRS/FlatWire_DevelopmentPlan.xlsx` | coverage · drift · team names · leakage |
 | [`build_trial_run_xlsx.py`](build_trial_run_xlsx.py) | `Development/TrialRunPlan.md` + `Development/TaskBreakdown.md` + `TrialRunContent.md` | **`Development/FlatWire_TrialRunPlan.xlsx`** | reconciliation · coverage · title · drift · **abbreviation** |
-| [`build_coverage_matrix.py`](build_coverage_matrix.py) | `02-SRS.md` + `06-TestPlanAndTestCases.md` | nothing — reports | a requirement with no case and no §10.4 entry |
+| [`build_allocation_examples_xlsx.py`](build_allocation_examples_xlsx.py) | `LatestDocument/RodOrderAllocation.md` §0.1 and §7 + `Business/BusinessRequirements.md` §5.28 + `[DBD §6.6]` + `AllocationExamplesContent.md` | `MVP-1/SRS/FlatWire_OrderAllocationExamples.xlsx` | **arithmetic** · coverage · drift · team names · leakage |
+| [`build_coverage_matrix.py`](build_coverage_matrix.py) | `Business/BusinessRequirements.md` + `Testing/TestCases.md` + `Development/TaskBreakdown.md` | nothing — reports | a requirement with no case and no §10.4 entry |
+| [`verify_schema_counts.py`](verify_schema_counts.py) | the DDL in `Database/Schema/SQL/` + the six `FlatWireSchema_*.md` + `[DBD §6.2]` | nothing — reports | counts disagreeing with `[DBD §6.2]` · a table absent from its own script header or from every schema document · a table with neither seed rows nor a `NO SEED:` marker · an unreachable or unguarded script · `sp_ShiftSummary` in the MVP-1 chain |
+| `template.docx` | — | — | **Not a script.** The branding template [`build_docx.py`](build_docx.py) opens — header logo, confidentiality footer, page setup. Undocumented here until 25 Aug 2026 |
+| [`extract_vba.py`](extract_vba.py) | a `.docx` / `.xlsm` | extracted VBA | — |
 
-The three workbook builders share their helpers by **duplication, not import** — the style
+**`verify_schema_counts.py` parses each runner's `:r` list rather than hard-coding filenames.**
+That is what lets it survive a renumbering — and it simultaneously proves the runners complete,
+because a missing include is a missing file. It also **scopes the procedure count to the runner
+chain**: `sp_IngestRodFromCoils` is a `FlatWireDB` object that ships in `Database/Scripts/` and is
+in no runner, so a checker that globbed every `.sql` would report 2 procedures where the baseline
+says 1. Both are noted in its docstring as things not to "simplify" away.
+
+The four workbook builders — questions, development plan, trial run, allocation examples — share their helpers by **duplication, not import** — the style
 palette, `render()`, `_fold_blank_runs()` and the guard lists are copied. That is deliberate:
 each is a standalone deliverable generator that must keep building if another is edited, and a
 shared module would make a change to one workbook's guard silently change the others'.
+
+**Two things about [`build_allocation_examples_xlsx.py`](build_allocation_examples_xlsx.py) are
+new to this folder, and both are worth knowing before copying it as a template.**
+
+**It computes rather than parses.** The other four take every figure from a document. This one
+carries reference implementations of the footage-to-weight conversion, the four-tier rod
+sequence validator and the client's own spool planner, and *derives* every weight, length,
+count and percentage in the workbook. Its **arithmetic guard** then checks those
+implementations against figures the repository publishes independently — all twenty conversion
+cells in `[DBD §6.6]`, the three worked footage figures in the design document, and the client
+planner's own published totals of 23 spools, 45 stops, 40,400 lb and 91.82 %. That guard is
+the reason computing is safer here than transcribing: a formula error cannot survive it, and it
+found two real discrepancies on its first run.
+
+**It extends the leakage list instead of copying it.** The list the other builders share was
+written before `RodOrderAllocation` and `RodOrderConsumption` existed, so an unchanged copy
+reported *"clean"* on the two table names this workbook is most likely to leak. **If you copy a
+guard, check it still covers what you are building** — a guard that cannot fail is worse than
+no guard, because it certifies.
 
 > **⚠ Only the trial-run workbook writes outside `MVP-1/SRS/`, and that is the whole point.**
 > `MVP-1/SRS/` is where **leakage-guarded** client deliverables live. The trial-run workbook

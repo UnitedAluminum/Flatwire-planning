@@ -58,7 +58,7 @@ the four names predate `D-29` and the seven-root boundary table. Build to §2.
 | `IFlatWireRunRepository` | `FlatWireRun` | `RunAlpha` |
 | `IRodStagingRepository` | `RodStaging` | bay / `RodAlpha` |
 | `IWeldEventRepository` | `WeldEvent` | — *(its own root; welds are recorded at pre-check-in, **before a run exists**)* |
-| `ISpoolRepository` | `Spool` | `SpoolAlpha` |
+| `ISpoolRepository` | `SpoolProcessing` | `SpoolAlpha` |
 | `ICoilOutputRepository` | `CoilOutput` | `CoilAlpha` |
 | `IRodCheckoutRepository` | `RodCheckout` | — |
 | `IWipRejectionRepository` | `WipRejection` | — |
@@ -104,7 +104,7 @@ site."*
 > **repositories are keyed by the alpha value object** — `GetByAlpha(RunAlpha)`, not
 > `GetById(int)`.
 
-Same on `Spool` (`Alpha`) and `CoilOutput` (`CoilAlpha`).
+Same on `SpoolProcessing` (`Alpha`) and `CoilOutput` (`CoilAlpha`).
 
 > ⚠ **And the trap inside the trap:** `Entity.Equals()` and `IsTransient()` operate on `Id`,
 > so **equality is surrogate-based**. Two instances with the same alpha do **not** compare

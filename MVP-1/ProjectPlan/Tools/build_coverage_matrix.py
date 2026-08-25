@@ -33,7 +33,7 @@ SCOPE
     FR-111 is one, and counting it is how a false positive enters.
 
 KNOWN LIMITATION - DO NOT "FIX" BY GUESSING
-    05-SprintPlanAndBacklog.md section 11 ("every FR-### reaches a story") has the same
+    [TB] section 11 ("every FR-### reaches a story") has the same
     range granularity as the old 10.1, but unlike the test plan it holds no per-requirement
     data to check against: stories are assigned to ranges, never to single requirements.
     Making it per-requirement means authoring ~263 story assignments, which is an authoring
@@ -246,7 +246,7 @@ def main():
 
     print('Requirement coverage — MVP-1')
     print('=' * 60)
-    print('  %-42s %4d' % ('MVP-1 requirements (02-SRS.md rows)', total))
+    print('  %-42s %4d' % ('MVP-1 requirements ([REQ] rows)', total))
     print('  %-42s %4d' % ('withdrawn, not counted', len(withdrawn)))
     print('  %-42s %4d' % ('covered by a case (direct)', len(covered_direct)))
     print('  %-42s %4d' % ('covered via the NFR table (indirect)', len(covered_indirect)))
@@ -257,7 +257,7 @@ def main():
 
     advisory = backlog_advisory(read(BACKLOG))
     if advisory:
-        print('\n  advisory — 05-SprintPlanAndBacklog.md §11 assigns stories to '
+        print('\n  advisory — [TB] §11 assigns stories to '
               '%d range(s) and %d individual requirement(s).' % (advisory[1], advisory[0]))
         print('  Per-requirement story coverage cannot be checked while it is range-based; '
               'see the header note.')

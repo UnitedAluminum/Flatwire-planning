@@ -15,7 +15,7 @@
 > half is configuration and takes an afternoon. The audit half is a **compliance
 > obligation** — *"so a machine configuration can be reconstructed after the fact"* — and its
 > third acceptance criterion, *"queryable by run and by operator"*, **has no table to be
-> queried from.** None of the 28 tables in `FlatWireDB` is an audit log. That is `P-15` and
+> queried from.** None of the 33 tables in `FlatWireDB` is an audit log. That is `P-15` and
 > it needs a decision before the story can be finished, not while it is being closed.
 
 ---
@@ -121,7 +121,7 @@ Not everything here needs a new store:
 **This is an open finding, not a resolved decision. Raise it; do not absorb it.**
 
 AC 3 requires audit entries **queryable by run and by operator**. The verified
-`FlatWireDB` baseline is 28 tables (`[DBD §6.2]`) and **none of them is an audit log**.
+`FlatWireDB` baseline is 33 tables (`[DBD §6.2]`) and **none of them is an audit log**.
 Serilog's configured sinks are a rolling JSON file and Grafana Loki — neither is queryable
 by run in the sense a compliance reconstruction needs, and neither is inside the database
 whose backup and retention policy covers the traceability data.

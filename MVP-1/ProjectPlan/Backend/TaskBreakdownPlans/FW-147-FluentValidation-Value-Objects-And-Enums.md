@@ -72,7 +72,7 @@ this card's five criteria mentions them. Treat value objects as `FW-207`'s and t
 `phase-01b` L94 lists which is which:
 
 > A rule breakable by **state** belongs in the **aggregate** → `CheckRule` → `422`: bay
-> occupancy, rod eligibility (`coils.coil_status` not in `INFLAT`/`COMPLETE`/`HOLD`/`SCRAP`),
+> occupancy, rod eligibility (**`Rod.Status` not `INFLAT`** since `D-32`, and `coils.coil_status` not in `INFLAT`/`COMPLETE`/`HOLD`/`SCRAP`),
 > Mode B's supervisor stamp, **`FM2_S3` must be Active**, **FL3 ⇒ Hybrid**. A rule about the
 > **shape** of a request stays in **FluentValidation** → **`400`**: field presence, ranges,
 > enum membership.

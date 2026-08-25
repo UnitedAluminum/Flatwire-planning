@@ -5,12 +5,14 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 (spool at the intermediate take-up) · FL2 / FL3 (finished coil at the final take-up)
-**Version:** 2.2
-**Last Updated:** August 15, 2026
+**Version:** 2.3
+**Last Updated:** August 25, 2026 — worked examples cited *(previously August 20, 2026)*
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 3 — Active Run Monitor (all lines)
 
 ---
+
+> **Worked numeric traces for the order dimension.** [`RodOrderAllocation_WorkedExamples.md`](../../../../LatestDocument/RodOrderAllocation_WorkedExamples.md) carries seven end-to-end traces covering {1 order, 1 rod} × {1 order, n rods} × {n orders, n rods}, welded and not, with every footage and weight reconciled. It is **rationale, not a requirement** — the requirements are `[REQ §5.28]`, `FR-541`–`FR-560`. Its client-facing twin is the `.html` of the same name. ⚠ Its §9 is gap **`G48`** made concrete and its §12 raised **`G52`** and **`OI-127`**; the 4,000 lb rod every count scales from is still open as `OI-97`.
 
 ## Reading Convention
 
@@ -200,7 +202,7 @@ A physically stopped line is an extremely common condition on FL1 — die change
 | **S-8** | If the line resumes while the prompt is open, it auto-dismisses as *line resumed* and re-arms. |
 | **S-9** | The pending prompt is **server-owned state** — it survives a browser refresh and is re-delivered on reconnect. |
 | **S-10** | Escape and clicking outside do **not** dismiss it; the operator must answer. There is no close affordance on the question. |
-| **S-11** | Labels print **only after** the completion transaction commits — never on opening the prompt, and never on Yes alone if the transaction fails. |
+| **S-11** | Labels print **only after** the completion transaction commits — never on opening the prompt, and never on Yes alone if the transaction fails. Two print per spool, one per side (§4.8). |
 | **S-12** | Both outcomes are audited: prompt raised (stop timestamp, latched weight), the answer, the answering operator, and the answer timestamp. |
 | **S-13** | A **manual completion** entry point remains available whenever weight ≥ target **and the line is not running** — a spool cannot be removed from a turning take-up, so the same gatekeeper rule that blocks rod checkout applies. |
 | **S-14** | Dwell time and the arming threshold are configuration, not constants. |
@@ -234,9 +236,87 @@ A physically stopped line is an extremely common condition on FL1 — die change
 | The two choices | Full-width rows sized for gloved use, each with its **consequence spelled out** — Yes states what will be completed, at what weight, and that labels will print; No states that nothing is recorded and the spool can be completed later. Expected answer first |
 | Over target | An inline warning between question and choices, stating the overage and that it will be recorded |
 | Evidence footer | Machine state, dwell held, speed, stop timestamp, spool identity — provenance, not headline |
-| Completion step | Two columns — **weight verification** (calculated, scale, variance, tolerance state, basis choice, "will record") beside **the identity of what is being committed** (identity, footage, gauge, width, source rods, weld points) with the label set beneath. The supervisor override spans the full width below both. Actions last |
-| Result step | States the committed facts, the **weight basis** used, label print confirmation, and that the milestone ladder has re-armed for the next spool |
+| Completion step | Two columns — **weight verification** (calculated, scale, variance, tolerance state, basis choice, "will record") beside **the identity of what is being committed** (identity, footage, gauge, width, source rods and the weight each contributed, weld points) with the label set beneath. **The next spool carrier is captured here**, in the committing column, and the commit control is unavailable until it is valid (§4.7). The supervisor override spans the full width below both. Actions last |
+| Result step | States the committed facts, the **weight basis** used, label print confirmation, **the carrier the next spool will be wound onto**, and that the milestone ladder has re-armed |
 | Declined | The docked progress indicator shows *target reached* with a manual **Complete spool** action |
+
+---
+
+## 4.7 The next spool, and why the transaction cannot complete without it `[CONFIRMED — Aug 20, 2026]`
+
+**The completion transaction names the spool that goes on next.** This was settled on 20 August 2026,
+and it changes where the spool number is captured.
+
+**Why here and not at check-in.** Two reasons were given, and both are physical:
+
+| | |
+|---|---|
+| **One rod makes several spools** | A rod bundle yields roughly three spools at about 1,800 lb each, so a single check-in cannot name them all. *"It'll have to be on transaction, because multiple spools will come out of a bundle."* |
+| **Check-in is at the other end of the machine** | *"Check-in is going to happen at the payoff at the other side of the machine, whereas the spool is going to happen at the output side of the machine, which is where the operator station is."* At check-in the operator does not yet know which spool they will use — *"they may not know exactly what that spool number is"* — and by the time they are standing at the take-up, they do. |
+
+**And it is a hard gate, not a prompt that can be dismissed.** *"You cannot create a spool transaction
+without a spool to create that transaction."* Confirmed as a showstopper for the next spool starting:
+the completed spool is removed, the next carrier is fitted, the material is attached and threaded, and
+the run continues — and the system will not let the transaction close without knowing which carrier the
+next spool is being wound onto.
+
+> **⚠ This supersedes the earlier description.** Our May 2026 note had the spool number entered *"at
+> the start of the FL1 job"*. That is wrong in a way that matters: the job produces several spools, so
+> the capture recurs once per completion, not once per job.
+
+**How the number is entered.** As **typed text, validated against the registered carriers** — not
+chosen from a list. There are thirty carriers, possibly forty-five, and *"even if you take 30 or 45,
+it's a long list to select from the drop-down; scrolling and all is not easy."* An unrecognised number
+is refused with the field marked, exactly as at check-in.
+
+| ID | Rule |
+|---|---|
+| **S-26** | The completion step captures the **next spool carrier** as part of the same transaction. |
+| **S-27** | The carrier number is **entered as typed and validated against the registered list**. An unrecognised number is refused and the transaction does not commit. |
+| **S-28** | The transaction **cannot be committed without it.** This is a hard gate — there is no skip, and no deferred entry. |
+| **S-29** | A carrier that is **already carrying material** is refused, with the spool it is holding named. |
+| **S-30** | Declining the prompt (S-7) captures nothing, including no carrier. |
+| **S-31** | The carrier captured is audited with the completion — the number, the operator and the timestamp. |
+
+> `[CLIENT INPUT REQUIRED]` **The mandrel or core diameter.** Alongside the carrier you told us
+> *"we need to know what diameter mandrel is attached"*, comparing it to selecting the mandrel size on
+> a slitter. Nothing records this today. **Our reading is that it does not need to be entered** — you
+> have confirmed every spool is the same standard size, so the diameter is a property of that size
+> rather than a choice, and a field with only one possible value is one an operator will eventually get
+> wrong. If it does vary, it belongs here beside the carrier. Section 10, **Q46**.
+
+## 4.8 What the labels print `[CONFIRMED — media]` `[CLIENT INPUT REQUIRED — fields]`
+
+This document has referred to printing the labels throughout without ever saying what is on them or
+what they are printed on. Both were settled in part on 20 August 2026.
+
+**The media, confirmed.** A spool goes through the anneal furnace, so an ordinary label does not
+survive — *"we won't be able to put the label on them and scan"*. The agreed mechanism is the
+**1½ × 3 inch high-temperature coil label** already used on mill output, of which **two print per
+label, one for each side of the spool**: *"you get 2 per label, one for each side of the spool, slap it
+on."* These are the same labels already used for cut material going to anneal.
+
+**What it carries, confirmed in part.** *"We would want that label to print with the spool number, and
+maybe list out the alphas that are attached to it."*
+
+| Printed | Status |
+|---|---|
+| The **spool carrier number** | `[CONFIRMED]` |
+| **Every alpha on the spool** — a welded spool carries several | `[CONFIRMED]` |
+| The **weight contributed by each alpha** | `[PROPOSED]` — it is what the certificates are built from, and it depends on the conversion still owed (**Q33**, and the dimensional basis behind it) |
+| The **order or orders** | `[PROPOSED]` |
+| The pass schedule | **Not printed** — settled previously; it is logged for traceability instead |
+
+**Any one identifier on the label resolves the spool at FL2.** Not only the spool number: *"just like
+the furnace plate — they only have to scan one of the coil codes on a furnace plate to get it into
+anneal."* So the carrier number prints as the primary barcode and each alpha as a secondary, and the
+FL2 operator may scan whichever is facing them.
+
+> **A durable alternative is being investigated, and it does not change this.** Stainless-steel etched
+> barcode plates, tack-welded one to each side, *"supposedly can survive through anneals"*. Our reading
+> is that these would carry the **carrier number only** and sit alongside the label rather than
+> replacing it — the carrier is permanent and so is the etching, whereas the alphas change with every
+> cycle. Section 10, **Q44**.
 
 ---
 
@@ -347,6 +427,10 @@ The stop is **removed and a new stop starts from zero**. Weight does **not** res
 | D7 | **A short close is an unplanned stop** graded against the customer range; outside it, override and hold or offer under concession — offer first, remake last | Jul 30, 2026 |
 | D8 | **The spool always runs off** — FL2 has no spool stripper | Jul 30, 2026 |
 | D9 | **A mid-run coil break restarts the stop from zero**; the leftover is welded to the next coil on FL1, or run off and offered or scrapped on FL2 | Jul 30, 2026 |
+| D10 | **The completion transaction captures the next spool carrier, and cannot commit without it** — the operator is at the output side of the machine, where the spool is, and one rod makes several spools | Aug 20, 2026 |
+| D11 | **The carrier number is typed and validated, not selected from a list** — thirty to forty-five entries is too long to scroll | Aug 20, 2026 |
+| D12 | **Labels are the 1½ × 3 inch high-temperature coil label, two per spool, one per side** — nothing else survives the anneal | Aug 20, 2026 |
+| D13 | **The label carries the carrier number and every alpha on the spool, and any one of them resolves the spool at FL2** — the furnace-plate behaviour | Aug 20, 2026 |
 
 ---
 
@@ -374,6 +458,9 @@ The stop is **removed and a new stop starts from zero**. Weight does **not** res
 | **OI-75** | Medium | Does the stop prompt also surface to the supervisor, and how are multiple signed-in operator sessions arbitrated? | Prompt targeting |
 | **OI-56 / OI-38** | High | **Where the supervisor PIN is validated**; and whether a scale exists at the take-up at all | The override, and scale verification |
 | **OI-25** | High | The **offset between run-cumulative and coil-local footage** | The coil-break restart rule |
+| **Q44** | High | **The full field list for the spool label**, and whether the etched steel plate replaces the high-temperature label or supplements it | What §4.8 prints, and whether a second marking mechanism is needed |
+| **Q46** | Medium | **The mandrel / core diameter** — selected per spool at completion, fixed by the one standard spool size, or read from the machine | Whether §4.7 captures a second field |
+| **Q42** | High | **The stenciled carrier number format**, and whether the fleet is thirty or forty-five | The validation list §4.7 checks against |
 | — | Medium | **The 10-90 standard operating procedure document** | The short-close reason codes and escalation |
 
 > **Known gap in the deliverables.** There is no dedicated screen for the FL1 **spool completion** workflow itself — per-spool SPC gate, identity finalisation and label content. Part B's Yes path currently routes into a compact completion summary standing in for that screen. The real workflow needs its own specification and screen.
@@ -404,6 +491,8 @@ The stop is **removed and a new stop starts from zero**. Weight does **not** res
 | §4.4 | Rules S-1 to S-15 | ☐ | ☐ |
 | §4.5 | Rules S-16 to S-25, including that variance never blocks completion | ☐ | ☐ |
 | §4.6 | The dialog must not scroll; consequences stated on the controls | ☐ | ☐ |
+| §4.7 | The next spool carrier is captured at completion, typed and validated, and the transaction cannot commit without it (S-26 to S-31) | ☐ | ☐ |
+| §4.8 | Labels are the high-temperature coil label, two per spool; the carrier number and every alpha print, and any one resolves the spool | ☐ | ☐ |
 | §5 | Short close as an unplanned stop, graded by weight; offer before remake | ☐ | ☐ |
 | §5 | The spool always runs off | ☐ | ☐ |
 | §5.1 | Mid-run coil break restarts the stop from zero | ☐ | ☐ |
@@ -420,6 +509,9 @@ The stop is **removed and a new stop starts from zero**. Weight does **not** res
 | Q21 / OI-35 | Line-state vocabulary and dwell value | | ☐ |
 | OI-56 / OI-38 | Scale availability; PIN validation source | | ☐ |
 | OI-25 | Run-to-coil footage offset | | ☐ |
+| Q44 | The full spool-label field list; etched plate — replace or supplement? | | ☐ |
+| Q46 | Mandrel / core diameter — entered, fixed, or read? | | ☐ |
+| Q42 | The stenciled carrier format, and thirty or forty-five | | ☐ |
 | — | The 10-90 standard operating procedure | | ☐ |
 
 ## Part C — Approval

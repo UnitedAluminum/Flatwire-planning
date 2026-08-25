@@ -41,7 +41,7 @@ Project references: `API → Application, Domain, Infrastructure` · `Applicatio
 |---|---|---|
 | **API** | Controllers extending `UAController`, `FlatWireHub`, DI wiring, `Program.cs` | Business logic, EF queries, direct OPC calls |
 | **Application** | MediatR command/query handlers, FluentValidation validators, pipeline behaviours | EF `DbContext` types, HTTP types, SignalR types |
-| **Domain** | **Seven aggregate roots** — `FlatWireRun`, `RodStaging`, `WeldEvent`, `Spool`, `CoilOutput`, `RodCheckout`, `WipRejection` — plus value objects, invariant rules, domain events, repository **interfaces**, enums, `IFlatWireClient` | Persistence concerns, framework attributes |
+| **Domain** | **Seven aggregate roots** — `FlatWireRun`, `RodStaging`, `WeldEvent`, `SpoolProcessing`, `CoilOutput`, `RodCheckout`, `WipRejection` — plus value objects, invariant rules, domain events, repository **interfaces**, enums, `IFlatWireClient` | Persistence concerns, framework attributes |
 | **Infrastructure** | `FlatWireDbContext`, repositories, Dapper readers, `PLCTagService`, the OPC hosted service | Business rules |
 
 **Controllers are thin.** All logic routes through MediatR. Every controller and endpoint carries `[Authorize]`.
@@ -53,7 +53,7 @@ Project references: `API → Application, Domain, Infrastructure` · `Applicatio
 | **`FlatWireRun`** | `FlatWireRunDetail`, `RodCheckin`, `SpoolCheckin`, `RunPauseEvent`, `RollOverride`, `DieChangeEvent`, `SpcCheckpoint` + `SpcMeasurement` | Pause/resume state machine and its **four** resume outcomes; SPC mandated after a die change and after a roll adjust; roll-gap override requires authority, and **revert is Operations-Manager-only** (`FR-212`) |
 | **`RodStaging`** | bay state | **`G21` — one rod per *physical* station**, keyed on `Station` not `LineId`. `Blocked` is **derived** (`Staged` + any inspection `Fail`), never stored; `IsWelded` is a **flag on a `Staged` row**, not a status |
 | **`WeldEvent`** | — | **Its own root, not part of `FlatWireRun`** — welds are recorded at pre-check-in (DB2A *Mark as welded*) **before a run exists** |
-| **`Spool`** | completion state | Prompt raised **once** per `RUNNING → STOPPED` edge; weight **latched at the PLC stop timestamp** |
+| **`SpoolProcessing`** | completion state | Prompt raised **once** per `RUNNING → STOPPED` edge; weight **latched at the PLC stop timestamp** |
 | **`CoilOutput`** | `CoilTraceability` | **DM010 non-overlap is an aggregate invariant** — footage ranges may not overlap. `trg_CoilTraceability_NoOverlap` stays as belt-and-braces |
 | **`RodCheckout`** | — | Mode P / A / B; Mode B needs the supervisor stamp and PLC-locked footage > 0; Mode P must carry null footage |
 | **`WipRejection`** | — | Disposition lifecycle; **the only thing that clears a `Blocked` bay** — publishes a domain event rather than reaching into `RodStaging` |
@@ -63,9 +63,9 @@ Project references: `API → Application, Domain, Infrastructure` · `Applicatio
 - ⚠ **`RunReading`** — 10 Hz time series. Inside `FlatWireRun` it would materialise thousands of rows on every command. **Append-only write model**, read by Dapper via `sp_GetGaugeTrace`. **The most important exclusion in this design.**
 - **`Rod`** — a `FlatWireDB`-local mirror of `coils` (`D-04`); `coils` owns the lifecycle. Read model.
 - **`PassSchedule`** — **a read model, and MVP-1 now builds the table** (`D-31`, 15 Aug 2026): `02_Schedule` is in the MVP-1 runner and `PassScheduleId` carries a **real, enforced FK**. ⚠ *This row previously said "MVP-2-owned … not built by the MVP-1 runner … an opaque external reference" — all three clauses are superseded.* **Read-model status is unchanged and is the point**: MVP-1 reads schedules and never authors them, so there is no aggregate, no repository and no write path. The immutable **`PassScheduleSnapshot`** value object still applies — a certificate must stay reproducible after the owning system later edits the schedule.
-- **`Stand`, `Drawer`, `Edger`, `AlloyProperty`, `SpoolConfiguration`, `PayoffPosition`** — reference data.
+- **`Stand`, `Drawer`, `Edger`, `Dancer`, `Spool`, `AlloyProperty`, `PayoffPosition`** — reference data. *(`SpoolConfiguration` merged into `Spool`, 23 Aug 2026 — `Q60`)*
 
-⚠ **The surrogate is not the identity.** `FlatWireRun` carries both `[Id] INT IDENTITY` and `[RunId] VARCHAR(20)` — and it is `RunId` that every child table references. Same on `Spool` (`Alpha`) and `CoilOutput` (`CoilAlpha`). So **repositories are keyed by the alpha value object** — `GetByAlpha(RunAlpha)`, not `GetById(int)` — and the alphas of §3.2b are the aggregate identities. Note `Entity.Equals()` and `IsTransient()` operate on `Id`, so **equality is surrogate-based**: do not assume two instances with the same alpha compare equal before both are persisted.
+⚠ **The surrogate is not the identity.** `FlatWireRun` carries both `[Id] INT IDENTITY` and `[RunId] VARCHAR(20)` — and it is `RunId` that every child table references. Same on `SpoolProcessing` (`Alpha`) and `CoilOutput` (`CoilAlpha`). So **repositories are keyed by the alpha value object** — `GetByAlpha(RunAlpha)`, not `GetById(int)` — and the alphas of §3.2b are the aggregate identities. Note `Entity.Equals()` and `IsTransient()` operate on `Id`, so **equality is surrogate-based**: do not assume two instances with the same alpha compare equal before both are persisted.
 
 ### 3.2b Value objects
 
@@ -82,6 +82,47 @@ Project references: `API → Application, Domain, Infrastructure` · `Applicatio
 1. The aggregate raises `RunPaused`, `WeldRecorded`, `CoilCompleted`, `BayStateChanged`, `SpoolCompletionPromptRaised` via the inherited `AddDomainEvent`.
 2. `FlatWireDbContext.SaveChangesAsync` calls **`DispatchDomainEventsAsync` after commit** — the extension already exists in the template.
 3. A handler in Infrastructure/API translates to `IFlatWireClient`. **SignalR stays out of Application entirely** — the rule is satisfied rather than worked around.
+
+### 3.2d `IFootageWeightConverter` — one interface, one implementation, a selectable basis
+
+The line measures **feet**; planning allocates **pounds**. Exactly one component converts between them.
+
+```csharp
+public interface IFootageWeightConverter
+{
+    WeightLb  ToWeight (FootageFt ft,  ConversionContext ctx);
+    FootageFt ToFootage(WeightLb  lb,  ConversionContext ctx);   // computes the threshold
+    Factor    Describe (ConversionContext ctx);                  // basis + lb/ft + version, for persistence
+}
+```
+
+**The formula is not a variable.** `FR-137` and `[DBD §6.6]` specify it — `lb/ft = A × 12ρ`, with the
+round-edge correction `A = t·w − 0.2146·t²` and ρ read across from the shared alloy table — and `FR-332a`
+bans a wrong variant. **What is open is the dimensional *basis*** (`Q10` / `OI-45`), so that is what the
+configuration selects: `IntegratedRunReading` → `Measured` → `Nominal` (the FL2-standalone fallback, since
+FL2 broadcasts `null`) → `Override`.
+
+> **Why `Describe` exists.** Every consumption record persists **the basis and the factor it actually
+> used**. A later answer to `Q10` therefore cannot retro-change a historical record — which matters because
+> the certificate states a weight a customer relies on. This is the whole reason the converter is a service
+> and not an extension method.
+
+⚠ **Not a pluggable script.** The requirement is that the arithmetic not be inline; one interface achieves
+that. Registering two implementations would let two answers to `Q10` coexist, which is the failure this is
+built to prevent.
+
+### 3.2e Allocation and consumption — where the rules live
+
+| Service | Owns |
+|---|---|
+| `RodOrderAllocationService` | the pairing, its weight range, `PinRole`, and superseding on re-plan (never mutating) |
+| `RodOrderSequenceValidator` | the four-tier partition and the **O(1) positional** check. It must not enumerate — `\|freeFull\|! × \|freePartial\|!` explodes; enumeration exists only for display and tests, capped |
+| `RodOrderConsumptionService` | the state machine, the two weight latches, and the atomic close-and-open at a boundary |
+
+**Three invariants live here because SQL cannot express them:** a rod's active ranges tile the rod; a
+`PinnedBoth` row is its order's only row; an order with an allocation has at least one rod. All three are
+cross-row, and SQL Server has no exclusion constraint. *(A trigger is now viable for the first — both weight
+columns are `NOT NULL` — with `trg_CoilTraceability_NoOverlap` as precedent.)*
 
 ### 3.3 CQRS and data access
 
@@ -103,6 +144,6 @@ Two read procedures back the heaviest queries (§6.8): `sp_GetGaugeTrace` and `s
 | Response envelope | `UAController` standard `Data` / `Success` / `Errors` — see `[API §1]` |
 | Logging | **Serilog**, structured, with the correlation ID from the inbound header |
 | Error handling | Domain rule violation → `422`; concurrency / uniqueness → `409`; not found → `404`; PLC failure → `500` with the transaction aborted and compensating writes issued |
-| Concurrency | `ROWVERSION` tokens on **`PassSchedule`, `Rod`, `FlatWireRun`, `Spool`, `RodStaging`, `CoilOutput`** — **six**, counted from a live deploy 15 Aug 2026. ⚠ *`PassSchedule` was removed from this row earlier the same day on the grounds that "MVP-1 never builds it"; **decision `D-31` moved the schedule tables into MVP-1**, so it is back and the reason it left no longer holds. The other half of that correction — adding `RodStaging` — stands.* ⚠ **Open decision `D-30`:** under DDD the token belongs on the **aggregate root**, and three roots — **`WeldEvent`, `RodCheckout`, `WipRejection`** — have none, though all three are mutated after insert (a weld's `Pass`/`Fail`, a checkout's approval stamp, a rejection's disposition). Decide and record; do not leave it silent. *(Re-numbered 15 Aug 2026 from a bare `D1`, which collided with `[PLC]`'s retired `D1`–`D17` log; it is now in `[ARC §13.1]` with the other `D-##` decisions.)* |
+| Concurrency | `ROWVERSION` tokens on **`PassSchedule`, `Rod`, `FlatWireRun`, `SpoolProcessing`, `RodStaging`, `CoilOutput`** — **six**, counted from a live deploy 15 Aug 2026. ⚠ *`PassSchedule` was removed from this row earlier the same day on the grounds that "MVP-1 never builds it"; **decision `D-31` moved the schedule tables into MVP-1**, so it is back and the reason it left no longer holds. The other half of that correction — adding `RodStaging` — stands.* ⚠ **Open decision `D-30`:** under DDD the token belongs on the **aggregate root**, and three roots — **`WeldEvent`, `RodCheckout`, `WipRejection`** — have none, though all three are mutated after insert (a weld's `Pass`/`Fail`, a checkout's approval stamp, a rejection's disposition). Decide and record; do not leave it silent. *(Re-numbered 15 Aug 2026 from a bare `D1`, which collided with `[PLC]`'s retired `D1`–`D17` log; it is now in `[ARC §13.1]` with the other `D-##` decisions.)* |
 
 ---

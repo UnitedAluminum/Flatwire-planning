@@ -42,7 +42,7 @@
 ## Backend Implementation (.NET)
 - **APIs:** Reports via the existing `Reports` service extended with a Flattening Lines tab. *(`ShiftSummaryController GET /shiftsummary` is **MVP-2**.)*
 - **Business services:** report queries. *(`ShiftSummaryService` is MVP-2.)*
-- **Repository:** Dapper aggregations for the reports. *(`sp_ShiftSummary` is **MVP-2** — it lives in `MVP-1/ProjectPlan/Database/Schema/SQL/FlatWire_DDL_08b_Programmability.sql`, not in this scope's `08`.)*
+- **Repository:** Dapper aggregations for the reports. *(`sp_ShiftSummary` is **MVP-2** — it lives in `MVP-1/ProjectPlan/Database/Schema/SQL/FlatWire_DDL_09_Programmability_MVP2.sql`, not in this scope's `08`.)*
 - **Authz:** Supervisor+.
 
 ## Database Changes

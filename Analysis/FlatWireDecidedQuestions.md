@@ -1,10 +1,11 @@
 # Flat Wire Mill — Decided Questions and Answers
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 12, 2026
+**Last Updated:** August 23, 2026 — **`Q60` and `Q61`: `Spool`/`SpoolCarrier` swapped, then `SpoolConfiguration` merged into `Spool`.** The material table is `SpoolProcessing`; the article is `Spool` and now carries its own size limits. **The object baseline moves to 33 tables · 55 FKs** (`[DBD §6.2]`). ⚠ **A stale `Spool` reference is *silently wrong*, not obviously stale.** *(previously August 23, 2026 — **`Q60` added: `Spool` and `SpoolCarrier` are swapped.** The material table is now `SpoolProcessing` and `Spool` is the reusable stencilled article in `01_Lookup`; the naming convention that was missing is written down as `[DBD §6.2a]`. ⚠ **A swap makes a stale reference silently wrong rather than obviously stale** — read that entry before trusting any pre-23-Aug `Spool` citation. The Decision Index was also brought level with its own total, having been three rows behind since 22 Aug. *(previously August 22, 2026 — **`Q57` and `Q58` added: two questions raised and decided the same day**, from [`RodOrderAllocation.md`](../LatestDocument/RodOrderAllocation.md). Both are **alpha-identity** decisions and both were settled against the schema rather than by preference: `Q57` puts FL1 segment alphas and FL2 coil identities in **one namespace** because the generator cannot see `FlatWireDB` and a local counter would issue the same string twice; `Q58` **keeps `CoilAlpha`** and renames only `SharedCoilNo`, because making the shared identity the sole one would have coupled coil creation to a cross-database call. *(previously August 18, 2026 — `Q68` carries a supersession note — `D-32` (there is no shared-schema migration) keeps the 30 Jul timing answer and moves the status to the local rod record)*)*)*
+
 **Scope:** MVP-1
 **Status:** Closed decisions — reference record
-**Total Decisions:** 25 · **Decision window:** Apr 28 → Aug 11, 2026
+**Total Decisions:** 30 (**25 client-facing**, indexed below; 5 internal-design, body only) · **Decision window:** Apr 28 → Aug 23, 2026
 
 ---
 
@@ -71,6 +72,17 @@ The priority deadlines the e-mail set are **superseded** — it worked to a July
 | 85 | FM2 has three stands, `S1` = 8″ | `Shopfloor` | Critical | Tim O. | Aug 4, 2026 |
 
 **22 are `Shopfloor` scope; 3 are `Other`** (`Q80`, `Q66`, `Q67` — adjacent modules, retained because they were answered in the same client sessions).
+
+> ⚠ **This index is deliberately NOT the full list, and the arithmetic looks wrong until you know why.**
+> It carries the **client-facing** decisions only — 25 rows against a stated total of 30 — because
+> [`Tools/build_questions_xlsx.py`](../MVP-1/ProjectPlan/Tools/build_questions_xlsx.py) parses *this table*
+> to build the client questions workbook, and every row it finds must have client-facing prose in
+> `ClientQuestionsContent.md`. **Internal-design decisions cannot go in it**: `Q57`, `Q58`, `Q60` and
+> `Q86` are decisions about table and column *names*, so there is no way to state them in a client
+> cell without breaking that generator's leakage guard (no table name, path, or requirement id may
+> reach a client cell). `Q56` is a shared-schema verification, equally not a client question. **They
+> live in the body below and are absent here on purpose — do not "fix" the count by adding them.**
+> *(Added and reverted on 23 Aug 2026, which is how this note came to be written.)*
 
 ---
 
@@ -228,6 +240,8 @@ Product spec changes — a deliberate operator-driven reset to a new target, not
 
 **Asked:** Does pre-check-in commit the shared coil record to `INFLAT` (per SRS §4.2), or does the status stay `STAGED` until check-in (per the process walkthrough)? And what reverses it?
 
+> ⚠ **Overtaken in part by decision `D-32` (August 18, 2026): there is no shared-schema migration, so `INFLAT` never enters the shared coil-status vocabulary at all.** The July 30 answer still governs the **timing** — the status changes at check-in, not at pre-check-in, and there is no intermediate status for a welded-but-not-checked-in rod — but the status is now recorded on the flat wire module's **own** rod record and the shared coil record is not written. The decision text is retained unaltered below, as the audit trail of what was asked and answered.
+>
 > **Decision (July 30, 2026): `INFLAT` is set only when the rod is actually checked in at FL1.** Pre-check-in does **not** commit the shared coil status, and there is **no intermediate status** for a rod that has been welded but not yet checked in (Tim: not needed). The SRS §4.2 `PCI` data note is wrong wherever it is quoted, and [FlatWireProcessWalkthrough.md](FlatWireProcessWalkthrough.md) step 8 (`RECEIVED → STAGED`) is the winning source. Rod status `STAGED` is the real staging status for FL1, not a vestigial value. **Unblocks the Phase 4 staging build.**
 
 **Residual — still open, and it is not small.** The decision covers the **status column** only, not the rest of the SRS data note: whether pre-check-in still performs the `FlatwireQueue` insert, the reqsum and the `wip_coil_orders` insert. If those writes stay at staging, the compensating-write burden (**G2/G16**) is unchanged and only the status moved; if they move to check-in, pre-check-out becomes a pure `FlatWireDB` delete and **OI-01** closes completely. With Tim O. / IT — see the follow-up list in [ClientCall_2026-07-30_SyncPlan.md](../BaseDocuments/ClientCall_2026-07-30_SyncPlan.md) §6.
@@ -389,7 +403,7 @@ Full record in [ClientCall_2026-08-06_SyncPlan.md](../BaseDocuments/ClientCall_2
 
 **Decision (Aug 11, 2026): the identifier is the spool alpha — `SP-#####`.** Not the physical spool number and not a bundle ID. The physical spool number remains the plate on the equipment and may be displayed for confirmation, but it is not what the transaction is keyed on.
 
-**The linkage half follows from it, and the schema already implements it.** Two columns carry the chain, both FKs to `Spool.Alpha`:
+**The linkage half follows from it, and the schema already implements it.** Two columns carry the chain, both FKs to `SpoolProcessing.Alpha`:
 
 | Column | Nullability | Role |
 |---|---|---|
@@ -554,3 +568,181 @@ Three pieces of evidence fix the mapping:
 **Successor question: `PLC-Q04` / `PLC-Q04`** (open) — the PLC station rename departs from the controller's observed station names and needs the controls engineer's sign-off.
 
 Related: `D-26` (master spec §10.2), **OI-04**, **OI-36**, **PLC-Q04**, `PLC-Q04`, gap **G32**, commissioning test **C11**.
+
+---
+
+# Section 8 — Alpha Identity
+
+---
+
+**Q57** · `High` · Owner: Nagarro (internal design) · `Decided Aug 22, 2026`
+**Do FL1 segment alphas and FL2 coil identities share one namespace?**
+
+**Asked:** FL1 names each spool segment `R00001A`, `R00001B`, `R00001C` — the client's own grammar, adopted from their planner. FL2 mints a shared-schema coil identity through `CommonDB.dbo.GenerateCoilAlpha`, which produces `R00001A`, `R00001B`, `R00001C` off the same six-character root. **Two mechanisms, one string space.**
+
+> **Decision (August 22, 2026): one namespace — both are minted through `CommonDB.dbo.GenerateCoilAlpha`.** FL1 calls the same function for its segment alphas, passing **every alpha already recorded for that rod** in the genealogy child table via `@CoilNoToIgnore`.
+>
+> **The reason is that the alternative cannot be made safe.** `GenerateCoilAlpha` sweeps twelve objects across four databases for uniqueness, and **`FlatWireDB` is not one of them** — so a local per-rod counter at FL1 would hand `R00001A` to a spool segment while the generator later handed the same string to a finished coil. Nothing in the database would stop it: the two live in different databases with no shared constraint. **The collision is semantic**, and it lands on the genealogy and the welding-wire certificate, which read through both levels of the chain.
+>
+> **What this decides that had been deliberately left open.** The genealogy child table's alpha column was created **absent on purpose**, its comment recording that *"until cardinality is decided the column would be a guess."* The cardinality is **one alpha per segment**, so the column is owed — and it is **opaque**: never parsed and never rebuilt, because `R00001A` + `A` and `R00001` + the 27th letter both render `R00001AA`. There is deliberately **no stored letter index**, since the generator may skip a suffix already taken by a coil and an index would drift from the letter it claims to explain.
+
+**Two consequences worth stating.** FL1 spool completion becomes a **cross-database caller**, so it can no longer be tested on LocalDB, which has no `CommonDB`. And the ignore list must carry **every prior segment alpha for the rod**, not merely this transaction's — a second spool off the same rod would otherwise be handed the same alpha again.
+
+**Rejected:** giving FL1 segments a distinct suffix space, which would abandon the client's confirmed grammar; and adding `FlatWireDB` to the generator's sweep, which reaches five wrappers, roughly fourteen stored procedures and three application surfaces — the blast radius `D-32` exists to prevent.
+
+Related: **`Q56`** (whether a third path shares the namespace), **`D8`** (alphas are created on a transaction), **`D5`**.
+
+---
+
+**Q58** · `High` · Owner: Nagarro (internal design) · `Decided Aug 22, 2026`
+**Should the output coil have one identity or two?**
+
+**Asked:** `CoilOutput` carries two — a local customer-facing alpha `FW-#####-C##`, and the shared-schema identity written to `proddb..coils.coil_no`. An earlier draft proposed withdrawing the first, on the grounds that it is **not client-specified** (its requirement's source column reads *"Analysis"*, the shared-identity requirement is tagged `[PROPOSED]`, and every `FW-` string in the client's own documents is a story id) and that it carries **no information the shared identity lacks** — both being derived from the same rod.
+
+> **Decision (August 22, 2026): keep both. `CoilAlpha` is retained; only `SharedCoilNo` is renamed — to `CoilNo`, matching the column it feeds.** `D5`'s rule — *"two coil alphas, deliberately, and they are not interchangeable"* — **stands.**
+>
+> **Both observations behind the withdrawal still hold. What they do not survive is the consequence.** The shared identity is **nullable by design**: the value does not exist until the cross-database mint succeeds, which is why its index is *filtered* and why it is the **retry contract** that stops a retry minting a second coil. Making it the sole identity — and the genealogy table's foreign-key target — would have required it to be `NOT NULL`, meaning **a coil record could not be created until `CommonDB.dbo.GenerateCoilAlpha` returned.** Given that function's unresolved `coils` reference, that converts a reconciliation problem into a **coil-completion outage**.
+>
+> Keeping `CoilAlpha` as a locally-minted `NOT NULL` identity removes the coupling outright: flat wire completes the coil on its own data and reconciles afterwards, as it does today. **No foreign key moves, and no surrogate leaks into the genealogy** — which is better than the fallback originally proposed for this question.
+
+**One cost, recorded rather than absorbed.** `SharedCoilNo` was self-documenting about *which* identity it was; `CoilNo` beside `CoilAlpha` is not. The compensating argument is that `CoilNo` matches `coils.coil_no`. **The column's comment block is now the only thing that disambiguates the two** — keep it.
+
+**Scope of the change:** a rename only. The customer-facing alpha's requirements, the alpha-format table and the API payloads are all **untouched**.
+
+Related: **`Q57`**, **`D5`**, **`D8`**, `D-32`.
+
+---
+
+**Q56** · `High` · Owner: IT / Srikanth · `Decided Aug 22, 2026`
+**Does the scrap-weight alpha path mint from the same root namespace?**
+
+**Asked:** `Common.API` calls `CommonDB.dbo.Common_GenerateNewCoilAlphaForScrapWeight`, a scripted wrapper that `EXEC`s a `united_db` procedure which is **not scripted in `ual-database`** — so the repository could not say whether the scrap path draws alphas from the same six-character root namespace as `CommonDB.dbo.GenerateCoilAlpha`. It takes `@coil_no`, `@mfg_order_no` and `@seq_no`, so it was at least *shaped* like a coil-alpha minter.
+
+> **Decision (August 22, 2026): yes — verified on the live instance.** The procedure exists in `united_db` and its definition **calls `GenerateCoilAlpha`**. So the scrap path draws from the same root namespace **through the same uniqueness sweep**, and therefore cannot collide with anything already recorded in the shared schema.
+>
+> **This is the reassuring half of the answer.** Had it minted independently it would have been a fourth, unguarded writer into the rod-root namespace. It is not: it inherits the same discipline every other caller does.
+
+**The residual, and it is the part worth carrying forward.** Every caller passes **its own** ignore list. FL1 segment alphas live only in `FlatWireDB`, which the sweep does not cover, so the scrap path — like any other caller — can be issued an alpha that an FL1 spool segment already holds. **`Q57`'s one-namespace guarantee therefore bounds flat wire's own two paths and not third parties.** Tracked as **`Q59`**, with a recommendation to accept and monitor rather than add a shared-schema writer.
+
+**A second thing this settled on the way.** The same live check resolved **`OI-125`**: `CommonDB..coils` is a real `USER_TABLE`, and **`proddb..coils` is a synonym pointing at it** — so the generator's unqualified `FROM coils` sweeps the very table flat wire writes finished coils into. The deployment concern is discharged; what remains is that the table is unscripted in `ual-database`.
+
+Related: **`Q57`**, **`Q59`**, **`OI-125`**, **`OI-115`**, `D-32`.
+
+---
+
+**Q60** · `Medium` · Owner: Nagarro (internal design) · `Decided Aug 23, 2026`
+**Is `Spool` the right name for the material table?**
+
+**Asked:** `[Spool]` reads as a lookup table. Two reasons were offered and only one survives. The
+**misreading**: `Spool` is not in `01_Lookup` at all — it sits in `03_Materials` beside `Rod`, which
+is the same shape (a bare singular material noun), so it was internally consistent with `Rod` rather
+than with `Edger`. The **real defect**: half of `01_Lookup` is bare equipment nouns (`Stand`,
+`Drawer`, `Edger`, `Dancer`) and half carries a role suffix, so nothing in a name says which group a
+table is in — and separately, **the word "spool" named three different things**: the material
+(`Spool`), the reusable steel article (`SpoolCarrier`) and the size class (`SpoolConfiguration`). The
+DDL flagged that conflation risk in its own comment, pointing at `SpoolQueue.md` open item 1.
+
+> **Decision (August 23, 2026): swap the two names. `SpoolCarrier` → `Spool`; `Spool` →
+> `SpoolProcessing`.** Physically a spool **is** the reusable article — equipment, in the same sense
+> as a stand or an edger — so it belongs in `01_Lookup` beside them, and the material record takes the
+> `…Processing` suffix. `SpoolCarrier.CarrierNo` → `Spool.SpoolNo`, matching the "**Spool number**"
+> label `SpoolQueue.md` §4 already shows the operator, and `Spool.SpoolCarrierId` →
+> `SpoolProcessing.SpoolId`.
+>
+> The convention this implies is now written down as **`[DBD §6.2a]`**, which did not exist before —
+> its absence is why the question arose at all.
+
+**Rejected: `SpoolLot`.** It was the strongest disambiguator on semantics — "lot" says material
+quantity, unmistakably not equipment — and it is disqualified anyway, because **"lot" is a live
+contested term here**: `OI-24` (lot number has no column and no generator), `OI-99` (lot is undefined
+when a coil has more than one source rod, the normal case under welded feed), `OI-29` (no
+receiving-lot header), plus supplier heat/lot on the certificate chain. Also rejected: renaming the
+four bare lookup nouns instead, because they are **heterogeneous** — `Stand` is an equipment-position
+register, `Drawer` a die-*size* catalogue of 13 rows, `Edger` a tooling configuration — so no single
+suffix is correct for all four, and `Stand`/`Drawer` are common English words that make a mechanical
+rename unsafe.
+
+**Scope of the change: schema only.** The API surface (`GET /spools`, `POST /checkin/spool`,
+`POST /spool/complete`), the `SpoolController` / `ISpoolRepository` code identifiers, every screen
+label and the `SP-#####` alpha format are all **untouched** — the same boundary `Q58` set. The four
+child tables keep their `Spool…` prefix and the `SpoolAlpha` column keeps its name, because
+`SpoolAlpha` is **unambiguous by construction**: the article has no alpha, it has a `SpoolNo`.
+
+**The cost, recorded rather than absorbed.** A *swap* means a stale reference is **silently wrong**
+rather than obviously stale: a pre-23-Aug document saying `Spool.Alpha` means what is now
+`SpoolProcessing.Alpha`, and the table now called `Spool` has no `Alpha` at all. A fresh name would
+have failed loudly instead. Two mitigations: `[DBD §6.2a]` states the swap and its date explicitly,
+and the five child foreign keys named `FK_<child>_Spool` were renamed to `FK_<child>_SpoolProcessing`
+so no constraint name claims the wrong parent. `CHANGELOG.md` entries written before 23 Aug 2026 keep
+the old names by design.
+
+**Verified, not asserted.** Teardown → `RunAll` → `RunAll` → seed → `RunAll_MVP2` on LocalDB:
+**34 tables · 57 FKs · 69 index statements · 2 procedures · 1 trigger · 212 seed rows · 0 empty
+tables**, idempotent on re-run. Every figure is **identical to the pre-rename baseline**, which is
+what a pure rename must produce and is the evidence that it was one.
+
+Related: **`Q86`** (the `SpoolConfiguration` merge that followed), **`Q42`** (the `SpoolNo` format, still open), **`Q58`** (the rename-only precedent),
+**`OI-120`**, `[DBD §6.2a]`, `SpoolQueue.md` §7 item 1.
+
+---
+
+---
+
+**Q86** · `Medium` · Owner: Nagarro (internal design) · `Decided Aug 23, 2026`
+**Should `SpoolConfiguration` remain a table?**
+
+**Asked:** immediately after `Q60`, in the same pass. `SpoolConfiguration` was a **size class** — `Name` plus min/max
+weight, core diameter and outer diameter — referenced by two `SpoolTypeId` foreign keys. The client
+confirmed on 20 Aug 2026 that **every article is the same size**, so it held exactly **one** meaningful
+row while the articles number 30–45. A one-row parent carrying six constants is a join for no
+information.
+
+> **Decision (August 23, 2026): merge it into `Spool`.** The six dimensional columns and `Name` (as
+> **`SizeClass`**) move onto the article itself. `SpoolConfiguration` is dropped, along with
+> `FK_SpoolProcessing_SpoolConfiguration`, `FK_Spool_SpoolConfiguration` and both `SpoolTypeId`
+> columns. The three `CK_SpoolConfig_*` range checks are carried over as `CK_Spool_Weight` /
+> `_CoreDiam` / `_OuterDiam`.
+>
+> **New baseline: 33 tables · 55 FKs · 69 index statements · 1 procedure · 1 trigger · 210 seed rows**
+> *(seed rows became **251** on 23 Aug 2026 when the article registry was seeded at its real size —
+> 45 rows, `SP-0001`…`SP-0045` — replacing four placeholders; object counts unchanged)*
+> (`[DBD §6.2]`, and `[DEP §4.2]`'s gate moved to `V1`=33 / `V2`=55). **Index statements did not move**
+> — nothing was ever indexed on `SpoolTypeId`.
+
+**Two things it cost, recorded rather than absorbed.**
+
+**(1) It denormalises.** The same eight values now repeat on all 30–45 rows, and a second purchased
+size becomes a multi-row `UPDATE` where the old shape needed one `INSERT`. **The fifteen additional
+carriers are still under client decision**, so this is a live risk, not a theoretical one. It is worth
+it only while *"every article is one size"* holds — **if a second size is confirmed, revisit the
+merge.** `UQ_SpoolConfig_Name` could not survive and is deliberately not recreated: every article
+shares one `SizeClass`.
+
+**(2) It turned a guaranteed lookup into a conditional one.** `SpoolProcessing.SpoolTypeId` was
+`NOT NULL`, so check-in could always read the limits. The path is now
+`SpoolProcessing.SpoolId → Spool`, and **that link is nullable by design** — `Q42` is open and nothing
+seeds articles in production yet. Three options were weighed: making `SpoolId` `NOT NULL` was
+**rejected** because it would block FL1 spool completion until `Q42` lands; skipping validation when
+unassigned was **rejected** as a silent hole. **Adopted: a documented fallback of *any active `Spool`
+row's limits*** — well-defined precisely because all articles are one size, requiring no external
+constant. That fallback becomes ambiguous the moment a second size exists, which is the same trigger
+as (1).
+
+**The two-row trap, and it nearly cost real data.** `SpoolConfiguration` was seeded with **two** rows
+and only one was a spool: `TKUP-1 Intermediate Spool` (the article — merged) and **`Coreless Finish
+Coil`**, which is the FL2 **output** and is *coreless*, so it has no article to merge into. Nothing
+referenced it — every seeded `Spool` and `SpoolProcessing` row used `SpoolTypeId = 1` — so the merge
+was mechanically clean; but it carried the **only recorded dimensional bounds for a finished coil**
+(100–1100 lb, core 8–16″, OD 20–36″). Those are **re-homed as a comment on the `CoilOutput` block in
+`05_QualityOutput`**, deliberately *not* as columns or constraints: nothing validated against them
+before, and making them enforceable under cover of a schema tidy-up would be new behaviour. Read with
+**`OI-66`** (the OD → weight conversion).
+
+**Verified, not asserted.** Teardown → `RunAll` → `RunAll` → seed → `RunAll_MVP2` on LocalDB:
+**33 tables · 55 FKs · 2 procedures · 1 trigger · 210 seed rows · 0 empty tables** *(seed rows now **251** — see the note above)*, idempotent on
+re-run, and `[DEP §4.2]`'s gate passes as rewritten.
+
+Related: **`Q60`** (the swap this followed), **`Q42`** (the `SpoolNo` format — still open, and the
+reason `SpoolId` is nullable), **`OI-66`**, **`OI-120`**, `[DBD §6.2]`, `[DBD §6.2a]`.
+
+---

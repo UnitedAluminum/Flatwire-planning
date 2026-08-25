@@ -1,7 +1,7 @@
 # Flat Wire Mill — Staffed Development Sprint Plan (3 Developers)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 14, 2026 — Related Documents now points at [`TrialRunPlan.md`](TrialRunPlan.md) `[TRP]`, the client-requested six-screen trial subset. **No figure in this document changed** *(otherwise August 13, 2026 — re-baselined at three developers, yield/cost/scrap out of plan)*
+**Last Updated:** August 18, 2026 — **`D-32`: there is no shared-schema migration.** `FW-001` (36 h) and `FW-002` (3 h) struck from the S2 story list; `FW-159`’s `INFLAT` write is `FlatWireDB`-local *(previously August 14, 2026 — Related Documents now points at [`TrialRunPlan.md`](TrialRunPlan.md) `[TRP]`, the client-requested six-screen trial subset. **No figure in this document changed** *(otherwise August 13, 2026 — re-baselined at three developers, yield/cost/scrap out of plan)*)*
 **Document Type:** Sprint plan at a fixed team of three, with story allocation
 **Status:** Published — **does not land on 30 Sep 2026.** The date below is what three developers actually deliver
 **Owner:** Development leads / delivery lead
@@ -171,8 +171,8 @@ in parallel within a sprint.
 | `FW-151` | `PLCTagService` skeleton and `SimulatePLCTagPush` | 1B | RT | 11 | S2 |
 | `FW-143` | Serilog structured logging and the audit log | 1B | BE | 8 | S2 |
 | `FW-148` | Health checks | 1B | BE | 5 | S2 |
-| `FW-001` | Shared-schema column renames and new columns | 1C | DB | 36 | S2 |
-| `FW-002` | `INFLAT` coil status | 1C | DB | 3 | S2 |
+| `FW-001` | Shared-schema column renames and new columns — **CANCELLED 18 Aug 2026, `D-32`** | 1C | DB | 0 | S2 |
+| `FW-002` | `INFLAT` coil status — **CANCELLED 18 Aug 2026, `D-32`** *(`INFLAT` survives as a `FlatWireDB`-local `Rod.Status` value)* | 1C | DB | 0 | S2 |
 | `FW-152` | `FlatWireDB` creation, ordered DDL runner, indexes and grants | 1C | DB | 8 | S2 |
 | `FW-005` | Lookup group tables and seed | 1C | DB | 10 | S2 |
 | `FW-004` | `AlloyProperty` lookup and seed | 1C | DB | 5 | S2 |
@@ -185,7 +185,7 @@ in parallel within a sprint.
 | `FW-N06` | Alert rules engine and the `AlertRaised`/`AlertCleared` lifecycle | 3 | RT | 28 | S3 |
 | `FW-061` | Dashboard 2 — Rod Check-in six-step wizard (FL1/FL3) | 4 | FE | 24 | S3 |
 | `FW-157` | `POST /checkin/rod` and `CheckInService` | 4 | BE | 24 | S3 |
-| `FW-159` | `RodStaging`, the check-in write path and the cross-DB `INFLAT` write | 4 | DB | 19 | S3 |
+| `FW-159` | `RodStaging`, the check-in write path and the `INFLAT` write | 4 | DB | 19 | S3 |
 | `FW-082` | PLC tag group push on check-in acknowledgement | 4 | RT | 11 | S3 |
 | `FW-N01` | Dashboard 2A — Rod Pre-Check-in station | 4 | FE | 16 | S3 |
 | `FW-158` | `PayoffStagingController` — staging commands and queries | 4 | BE | 18 | S3 |
@@ -219,7 +219,7 @@ in parallel within a sprint.
 | `FW-064` | Dashboard 5 — FL2 Spool Check-in | 8 | FE | 10 | S5 |
 | `FW-178` | Dashboard 3 FL2 variant configuration | 8 | FE | 5 | S5 |
 | `FW-179` | `POST /checkin/spool` and `GET /spools` | 8 | BE | 12 | S5 |
-| `FW-180` | `SpoolCheckin` table and the `Spool.OrderNo` index | 8 | DB | 8 | S5 |
+| `FW-180` | `SpoolCheckin` table and the `SpoolProcessing.OrderNo` index | 8 | DB | 8 | S5 |
 | `FW-181` | FL2 null-gauge contract and the Live/Profile binding | 8 | RT | 3 | S5 |
 | `FW-N02` | Spool completion weight milestones and machine-stop confirmation | 8 | RT | 3 | S5 |
 | `FW-183` | `source-traceability-table` and `skid-tracker` | 9 | FE | 26 | S5 |

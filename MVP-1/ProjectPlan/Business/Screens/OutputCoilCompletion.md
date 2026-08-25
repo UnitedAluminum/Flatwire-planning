@@ -3,13 +3,15 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL2 / FL3 (finished goods). FL1 produces an intermediate spool, not a finished coil.
-**Version:** 1.4
-**Last Updated:** August 15, 2026
+**Version:** 1.5
+**Last Updated:** August 25, 2026 — worked examples cited *(previously August 15, 2026)*
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 7 — Output Coil Completion & Label · **Dashboard 7b — Packing Station**
 **Requirement source:** SRS output and packing rules; coil alpha format `FW-#####-C##`; the May 21 2026 target-value display correction
 
 ---
+
+> **Worked numeric traces for the order dimension.** [`RodOrderAllocation_WorkedExamples.md`](../../../../LatestDocument/RodOrderAllocation_WorkedExamples.md) carries seven end-to-end traces covering {1 order, 1 rod} × {1 order, n rods} × {n orders, n rods}, welded and not, with every footage and weight reconciled. It is **rationale, not a requirement** — the requirements are `[REQ §5.28]`, `FR-541`–`FR-560`. Its client-facing twin is the `.html` of the same name. ⚠ Its §9 is gap **`G48`** made concrete and its §12 raised **`G52`** and **`OI-127`**; the 4,000 lb rod every count scales from is still open as `OI-97`.
 
 ## Reading Convention
 
@@ -257,7 +259,7 @@ A **skids-this-shift** table lists skid, line, coils, weight, closed time, stagi
 | **OI-105** | **High** | **Which weight is authoritative on the coil record** (§8.2). Three figures now exist — calculated, the Dashboard 7 operator override, and the packing-station scale reading. Does the scale replace the record, sit alongside it, or block skid closure beyond a variance threshold? The label is printed before the station sees the coil, so a rule that changes the weight afterwards forces a reprint | Packing station confirmation, the label's accuracy, and the yield figures downstream. Cannot be judged until **OI-45** fixes the basis |
 | **OI-24** | **High** | **Lot number has no column and no generator at all**, before the multi-rod question is even reached. `GET /coil/{alpha}/label` returns it and §7.1 prints it | The label cannot be rendered |
 | **OI-99** | High | **Lot number when a coil has multiple source rods** — both, dominant, or composite? | Certification content, and the label physically applied at §8.4 |
-| **OI-104** | **High** | **The skid table `CoilOutput.SkidId` points at has never been located.** Described everywhere as "the existing skid table", but nothing names, creates or verifies it | Skid closure and the skid label at §8.3. `phase-09`'s estimate assumes it already exists |
+| ~~**OI-104**~~ | ✅ **Closed** | **ANSWERED — 18 Aug 2026. The skid record lives in the existing shop-floor skid register, and flat wire uses it unchanged.** Skid numbers are allocated by the same rule as every other skid on the floor — order number, release letter and a two-digit sequence — so a flat wire skid is indistinguishable in form from a slitter skid, which is what §6.2 always assumed. **No new table is built.** See §11 | Skid closure and the skid label at §8.3 are unblocked, and the *skid numbering follows existing rules* requirement becomes verifiable for the first time |
 | **OI-106** | **Medium** | **Staging locations are undefined** (§8.3). Closing a skid must assign one, but no valid list, no capacity and no selection rule exists in any source document | Skid closure; without it the field is free text and the record is unusable |
 | **OI-98** | Medium | **The odd final coil** — part skid, held for another order, or closed short? | Skid closure and the packing queue — and specifically what *Close Skid* does at §8.3 |
 | **Q76 / OI-02** | Medium | **Spool identifier and format** | The FL2 branch of the traceability chain |
@@ -295,6 +297,64 @@ A **skids-this-shift** table lists skid, line, coils, weight, closed time, stagi
 
 ---
 
+# 13. What the Shared System Records When a Coil Is Completed
+
+*New 18 Aug 2026, at client request. Nothing in this section changes a rule confirmed earlier in this document — it states what happens **behind** the screens in §3 to §8, which had not been written down.*
+
+## 13.1 Why this section exists
+
+Confirming a coil on the take-up screen and packing it two to a skid are operator actions on flat wire screens. But the coil then has to exist to **every other system in the plant**: packing needs to find it, shipping needs to ship it, certification needs its genealogy, and cost and yield reporting need its weight against its order.
+
+Until now the flat wire module recorded a completed coil in its **own** records only. This section confirms that completing a coil also creates the same set of records any other finished coil at United Aluminum has, so that no existing process has to be changed to accommodate flat wire.
+
+## 13.2 What is created `[PROPOSED]`
+
+On **Confirm & Move to Packing**, the system creates:
+
+| Record | What it is for |
+|---|---|
+| A **finished coil record** in the shop-floor coil register | The coil exists to every system that looks up a coil, with its final gauge, width, weights, outside and inside diameter |
+| A **link to the order** it fulfils | Planning and shipping can see the coil against its release |
+| A **genealogy record** back to the source rod | The certification chain runs from the finished coil to the rod, and from the rod to its heat |
+| A **cost record** | The coil appears in cost and yield reporting |
+| A **shop-floor material record** | Packing and shipping resolve the skid to the coils on it |
+| A **skid record**, opened by the first coil and closed by the second | Exactly as §6.1 describes, in the existing shop-floor skid register |
+| A **shop-floor transaction record** | The coil's completion appears in the WIP history alongside every other transaction |
+
+**All of this happens automatically and the operator sees none of it.** It either all succeeds or none of it does; if it fails, the operator is told and can retry, rather than the coil being quietly complete on one system and absent from the others.
+
+## 13.3 Two identities for one coil `[PROPOSED]`
+
+**This is the one item in this section we would ask you to confirm explicitly.**
+
+The coil alpha in §3.1 — the `FW-#####-C##` form — is the coil's **customer-facing** identifier. It is what §7.1 prints on the label and what appears on the certificate. That does not change.
+
+The existing shop-floor coil register, however, uses a **nine-character** identifier for every coil in the plant, and the flat wire alpha is twelve characters. Rather than alter a register that every system in the plant reads, flat wire coils are given a **second, internal identifier in the existing plant format**, derived from the source rod's own identifier in the established way — so the finished coils appear as **children of the rod they came from**, which is exactly how every other coil at United Aluminum appears.
+
+**What this means in practice.** Two identifiers refer to one coil: the printed one your customer sees, and the plant one existing reports and screens will show. They are linked, and either resolves to the other. **Where a report or a screen shows the plant identifier rather than the printed one, that is expected** — and it is worth knowing before someone reports it as a defect.
+
+## 13.4 One limitation we want on the record `[CLIENT INPUT REQUIRED]`
+
+The existing plant genealogy record holds **one parent coil per coil**. A flat wire coil made under continuous welded feed normally has **several** source rods — that is what the welding is for.
+
+So the plant genealogy records the **primary** source rod: the one that contributed the coil's first footage. The **full** multi-rod chain, with the footage range each rod contributed, is held in the flat wire records and is what §4 describes and what the welding-wire certificate is built from.
+
+**The certificates are safe.** But the two records deliberately disagree about a welded coil's parentage, and **anyone reading the plant genealogy alone will see one rod and may take it for the whole story.** We would like to know whether any existing report or process reads that chain for flat wire material, because if one does, it needs to be pointed at the fuller record instead.
+
+## 13.5 What we still need before this runs on live data
+
+Three values in the records above have no flat wire precedent, and each is a question about **existing** systems rather than a design choice. We have proposed an answer to each, and each is a single-line change if the answer differs — but all three should be confirmed by IT before flat wire writes to a live plant database.
+
+| | What we need to know | What we propose |
+|---|---|---|
+| 1 | The **transaction name** a flat wire coil completion should carry in the WIP history, and whether any existing report or process filters on that name | A **new** name reserved for flat wire, so flat wire completions are distinguishable from slitter skid creation in the WIP history |
+| 2 | Whether a finished flat wire coil should carry the **existing on-skid status**, or needs a status of its own | Reuse the existing status. It is accurate, and a new status value would change a vocabulary every system reads |
+| 3 | What **sample number** and **planned operations** a flat wire output coil should carry when they cannot be inherited from the rod | Copy from the rod wherever possible; only the fallback needs an answer |
+
+**Related to the question in §13.4 and to the same underlying point:** with no change to the shared plant schema, flat wire material in process is no longer distinguishable there by status. Which existing reports and screens need to see that a rod is on a flattening line is an open question in its own right, and it is the same conversation as the three above.
+
+---
+
 # Client Sign-off
 
 ## Part A — Rules for confirmation
@@ -323,7 +383,7 @@ A **skids-this-shift** table lists skid, line, coils, weight, closed time, stagi
 |---|---|---|:--:|
 | OI-45 | Dimensional basis for net weight, and its three sub-items | | ☐ |
 | OI-105 (§8.2) | **Which of the three weights is authoritative** on the coil record, and whether a variance blocks skid closure | | ☐ |
-| OI-104 | **Where the skid record lives** — an existing table in `united_db`/planning, or one that must be built | | ☐ |
+| ~~OI-104~~ | ✅ **Answered 18 Aug 2026** — the existing shop-floor skid register, used unchanged, with skid numbers allocated by the existing rule. **No signature required**; retained so a reader who met the question elsewhere finds its answer | — | ☑ |
 | OI-24 | **What generates the lot number**, before the multi-rod rule of OI-99 applies | | ☐ |
 | OI-99 | Lot number rule for multi-rod coils | | ☐ |
 | OI-106 (§8.3) | **The valid staging locations**, their capacity, and how one is chosen | | ☐ |
@@ -340,4 +400,3 @@ A **skids-this-shift** table lists skid, line, coils, weight, closed time, stagi
 | **Quality** | | | |
 | **Sales / Certification** | | | |
 | **Packing / Shipping** *(new at v1.1 — §8)* | | | |
-| 1.3 | Aug 12, 2026 | **Question references realigned — no requirement changed.** The open-questions register was renumbered and 23 questions were withdrawn to named tracking homes in the master specification, the gap register and the PLC tag specification. Every question reference in this document was re-resolved **by subject** and rewritten to the current id; where the question it cited was withdrawn, the reference now names the tracking home. No rule, figure, screen behaviour or open item was added, removed or altered. |
