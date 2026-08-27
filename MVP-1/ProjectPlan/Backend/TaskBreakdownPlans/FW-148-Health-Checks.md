@@ -1,9 +1,9 @@
 # FW-148 · Health checks
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 27, 2026 — **re-reviewed before execution: four build-order corrections, three of them to the same day's earlier review.** ⚠ **The one that would have cost real time: §3 step 2's "registration-ordering trap" does not exist.** `CustomDbContext.ResolveConnectionString` reads **`IConfiguration` directly** and never touches the `SqlSetting` options object (consumed only by `ContextRepository`, on the Dapper path), so `AddCustomHealthChecks` at `Program.cs:142` versus `Configure<SqlSetting>` at 146 is **irrelevant** — the `IConfiguration` the check needs is already the parameter it receives and ignores. No deferral, no factory overload needed. The **real** consequence, now stated instead: an eager resolve moves a missing-key failure from *first query* to **boot**, which is a choice to make rather than a trap to avoid. **(2) `Polly` needs no reference** — it is in `FlatWire.Api.deps.json` at 8.4.2, transitively from `UA.Framework.API`, as is `UA.Framework.RestClient` 1.0.0 from `FlatWire.Application`; the earlier *"neither package is referenced"* was true of **direct** references only and told the developer to add one they already have. **Only `AspNetCore.HealthChecks.SqlServer` is genuinely absent — and adding it is not free:** its nuspec requires **`Microsoft.Data.SqlClient >= 5.2.0`** while this service resolves **5.1.5** from EF Core 8.0.8, and because that package is unpinned in `Directory.Packages.props` with transitive pinning **off**, it floats **silently up to 5.2.0** — the provider every EF query and every Dapper call goes through. §3 step 1 now puts that as an explicit A/B choice and **recommends a ~20-line hand-written `IHealthCheck` running `SELECT 1`** on the existing driver, per `[ARC §14]`; the package's `connectionStringFactory` overload was verified to exist in 8.0.2 either way. **(3) `version` must have the `+<sha>` cut off** — the built `Api.AssemblyInfo.cs` carries `AssemblyInformationalVersionAttribute("1.0.0+364d0572…")` because the .NET 8 SDK appends the source revision, so *"emit the informational version"* would have produced `"version": "1.0.0+364d0572…"` and **failed `[API §4.19]`'s `"1.0.0"` at QA0**; no `<Version>` property is needed, only the cut. **(4) `[TRP §6]` → `[TRP §1.4]`** on `P-85` and on §1's hours note — both cited lines sit under §1.4's *1B Backend foundation*; §6 is *Blockers*, which is the correct home for the `G10` citation and stays. Also added: §2.5 now states **what a 200 from `OPCConnection`'s `/liveness` does not prove** — that service registers exactly one `AddCheck("self", …Healthy())`, so the probe establishes the web application is serving and says **nothing about OPC-server or PLC connectivity**, which is `C1`/`C11`'s business. Earlier the same day: **reviewed against the built service; five factual corrections, `P-20` restated and `P-85`–`P-87` minted.** ⚠ **The correction that changes what this story is: the route disagreement `P-20` was minted to settle does not exist.** `[API §1]` declares the REST base URL **`/api/v1/flatwire`** and every row of `[API §3.2]` is written base-relative to it — `GET /lines/status` is built as `Routes.Base + "lines/status"` in code today — so **row 30's `/health` and `[DEP]`'s `/api/v1/flatwire/health` are the same string in two notations**, and there was never a second path to map. `P-20` is restated to record that; **the "map it at both paths" resolution is withdrawn**, and the *real* undecided question — `UseHealthChecks` terminal middleware versus `MapHealthChecks`, and where — is now **`P-85`**, aligned to `[TRP §1.4]`, which already says `MapHealthChecks`. Four more: **(2) the hub metrics are not this story's** — `[MON §7.1]` gives *Hub connection count* and *Broadcast cadence* their own rows sourced from **`FlatWireHub`** and *"Hub instrumentation"*, not from `/health`, and §2.1's five-member shape has no room for them; the plan contradicted itself and the belief had propagated into **`FW-080` and `FW-150`, both corrected at source the same day** (`P-86`). **(3) The OPC probe cannot call `OPCConnection`'s API** — all three of its routes are `[HttpPost]` behind `AddCustomMvc`'s global `AuthorizeFilter` and a health check carries no token; the token-free target is that service's own **`/liveness`**, mapped before its `UseAuthentication()`. **(4) `CoilCheckin`'s route is `/liveness`, not `/liveliness`** — `GlobalConstants.MiscConstants.Liveliness` is a constant *name* whose *value* is `/liveness`; probing the name 404s. **(5) `AspNetCore.HealthChecks.SqlServer` is versioned in `Directory.Packages.props` but not referenced by `FlatWire.API.csproj`** — a `PackageVersion` entry is not a reference — while the project *does* reference `AspNetCore.HealthChecks.UI.Client`, the one shape §2.1 rejects. *(This clause also said `Polly` was unreferenced; corrected in the re-review above — it is available transitively.)* Also: `AddCustomHealthChecks` **already exists** with an unused `configuration` parameter — reuse `CustomDbContext.ResolveConnectionString`, and see the re-review above for why the `142`-versus-`146` ordering it also flagged turned out not to matter; §5 gains the **QA0 gate**, which is this story's earliest verification and was omitted; and **`P-87`** records that `SimulatePLCTagPush = true` in *every* environment until commissioning makes `[DEP]`'s S1 gate and `[MON]`'s 2-minute alert **inert** if `opc.reachable` is keyed off that flag. *(previously August 15, 2026 — first issue)*
+**Last Updated:** August 27, 2026 — ✅ **BUILT, MEASURED AND REVIEWED.** `GET /api/v1/flatwire/health` is live in `ual-api`. **The review found three things and all three are fixed:** ⚠ **(a) `MapHealthChecks` answered every verb** — `POST` and `DELETE` returned the health body with `200` against `[API §3.2]` row 30's `GET`; `HttpMethodMetadata` now pins it and non-GET is **`405`**. **(b) Two robustness gaps that would have bypassed `P-87`** — an exception escaping `CheckHealthAsync` becomes the *registration's* `failureStatus` (`Unhealthy` → 503), so `TaskCanceledException` is widened to `OperationCanceledException`, `InvalidOperationException` is caught, and `TryBuildProbeUri`'s `new Uri(…)` — which runs **outside** every catch — is guarded. **(c) This story's own edit to `Program.cs` invalidated five line-number citations it had just written** (`142`→`143`, `146`→`147`, `158`, `170`, `353`→`354`); `Program.cs` is now cited **by symbol name, never by line**, in both the code and §1.1/§3. Details in §5.1 and the §7 callout. `GET /api/v1/flatwire/health` is live in `ual-api`: `MapHealthChecks` + `.AllowAnonymous()` (`P-85`), two hand-written checks (`DatabaseHealthCheck`, `OpcHealthCheck`), a custom `FlatWireHealthResponseWriter` emitting exactly `[API §4.19]`'s five members, and `AddCustomHealthChecks`'s formerly-unused `IConfiguration` parameter now doing the work. **All three acceptance criteria measured on the running service** — §5.1. **No package was added and `Microsoft.Data.SqlClient` stays at 5.1.5** (§3 step 1 option A); `AspNetCore.HealthChecks.UI.Client` was **removed** as unused. `version` reads **`"1.0.0"`**, the SDK's `+<sha>` cut as §3 step 4 requires. `P-88` minted: the connection string is resolved **per probe, not at registration** — eager resolution would let a bad key stop the boot, and then the one endpoint whose job is to report a failing dependency could not run. ⛔ **And it immediately found a real defect — gap `G57`, now ✅ FIXED and verified (§5.1 run 4).** `appsettings.json` sets `SqlSetting:DSN` to **`"DEV00164-001"`**, a *server* name, where the setting names the *configuration section holding the connection string*; every sibling service sets `"UA_Database_UnitedDB"`. Nothing resolves — and because `AddCustomDbContext` defers resolution into its `AddDbContext` lambda, **the service boots clean and fails on the first query instead**. As committed the endpoint returns `database.reachable: false` naming the missing key. **Fixed the same day: `SqlSetting:DSN` → `"UA_Connection_String_dev00164001"`, verified on the committed file at `reachable: true, latencyMs: 33`.** The code was correct and the configuration wrong. ⚠ **The residual stays with `FW-144`** — the value is fixed, the mechanism that let a wrong value boot clean is not, so the next one will also start silently. **`P-85` and `P-87` are implemented and still want a signature** — building to a recommendation is not ratifying it. Earlier the same day: **re-reviewed before execution: four build-order corrections, three of them to the same day's earlier review.** ⚠ **The one that would have cost real time: §3 step 2's "registration-ordering trap" does not exist.** `CustomDbContext.ResolveConnectionString` reads **`IConfiguration` directly** and never touches the `SqlSetting` options object (consumed only by `ContextRepository`, on the Dapper path), so `AddCustomHealthChecks` at `Program.cs:142` versus `Configure<SqlSetting>` at 146 is **irrelevant** — the `IConfiguration` the check needs is already the parameter it receives and ignores. No deferral, no factory overload needed. The **real** consequence, now stated instead: an eager resolve moves a missing-key failure from *first query* to **boot**, which is a choice to make rather than a trap to avoid. **(2) `Polly` needs no reference** — it is in `FlatWire.Api.deps.json` at 8.4.2, transitively from `UA.Framework.API`, as is `UA.Framework.RestClient` 1.0.0 from `FlatWire.Application`; the earlier *"neither package is referenced"* was true of **direct** references only and told the developer to add one they already have. **Only `AspNetCore.HealthChecks.SqlServer` is genuinely absent — and adding it is not free:** its nuspec requires **`Microsoft.Data.SqlClient >= 5.2.0`** while this service resolves **5.1.5** from EF Core 8.0.8, and because that package is unpinned in `Directory.Packages.props` with transitive pinning **off**, it floats **silently up to 5.2.0** — the provider every EF query and every Dapper call goes through. §3 step 1 now puts that as an explicit A/B choice and **recommends a ~20-line hand-written `IHealthCheck` running `SELECT 1`** on the existing driver, per `[ARC §14]`; the package's `connectionStringFactory` overload was verified to exist in 8.0.2 either way. **(3) `version` must have the `+<sha>` cut off** — the built `Api.AssemblyInfo.cs` carries `AssemblyInformationalVersionAttribute("1.0.0+364d0572…")` because the .NET 8 SDK appends the source revision, so *"emit the informational version"* would have produced `"version": "1.0.0+364d0572…"` and **failed `[API §4.19]`'s `"1.0.0"` at QA0**; no `<Version>` property is needed, only the cut. **(4) `[TRP §6]` → `[TRP §1.4]`** on `P-85` and on §1's hours note — both cited lines sit under §1.4's *1B Backend foundation*; §6 is *Blockers*, which is the correct home for the `G10` citation and stays. Also added: §2.5 now states **what a 200 from `OPCConnection`'s `/liveness` does not prove** — that service registers exactly one `AddCheck("self", …Healthy())`, so the probe establishes the web application is serving and says **nothing about OPC-server or PLC connectivity**, which is `C1`/`C11`'s business. Earlier the same day: **reviewed against the built service; five factual corrections, `P-20` restated and `P-85`–`P-87` minted.** ⚠ **The correction that changes what this story is: the route disagreement `P-20` was minted to settle does not exist.** `[API §1]` declares the REST base URL **`/api/v1/flatwire`** and every row of `[API §3.2]` is written base-relative to it — `GET /lines/status` is built as `Routes.Base + "lines/status"` in code today — so **row 30's `/health` and `[DEP]`'s `/api/v1/flatwire/health` are the same string in two notations**, and there was never a second path to map. `P-20` is restated to record that; **the "map it at both paths" resolution is withdrawn**, and the *real* undecided question — `UseHealthChecks` terminal middleware versus `MapHealthChecks`, and where — is now **`P-85`**, aligned to `[TRP §1.4]`, which already says `MapHealthChecks`. Four more: **(2) the hub metrics are not this story's** — `[MON §7.1]` gives *Hub connection count* and *Broadcast cadence* their own rows sourced from **`FlatWireHub`** and *"Hub instrumentation"*, not from `/health`, and §2.1's five-member shape has no room for them; the plan contradicted itself and the belief had propagated into **`FW-080` and `FW-150`, both corrected at source the same day** (`P-86`). **(3) The OPC probe cannot call `OPCConnection`'s API** — all three of its routes are `[HttpPost]` behind `AddCustomMvc`'s global `AuthorizeFilter` and a health check carries no token; the token-free target is that service's own **`/liveness`**, mapped before its `UseAuthentication()`. **(4) `CoilCheckin`'s route is `/liveness`, not `/liveliness`** — `GlobalConstants.MiscConstants.Liveliness` is a constant *name* whose *value* is `/liveness`; probing the name 404s. **(5) `AspNetCore.HealthChecks.SqlServer` is versioned in `Directory.Packages.props` but not referenced by `FlatWire.API.csproj`** — a `PackageVersion` entry is not a reference — while the project *does* reference `AspNetCore.HealthChecks.UI.Client`, the one shape §2.1 rejects. *(This clause also said `Polly` was unreferenced; corrected in the re-review above — it is available transitively.)* Also: `AddCustomHealthChecks` **already exists** with an unused `configuration` parameter — reuse `CustomDbContext.ResolveConnectionString`, and see the re-review above for why the `142`-versus-`146` ordering it also flagged turned out not to matter; §5 gains the **QA0 gate**, which is this story's earliest verification and was omitted; and **`P-87`** records that `SimulatePLCTagPush = true` in *every* environment until commissioning makes `[DEP]`'s S1 gate and `[MON]`'s 2-minute alert **inert** if `opc.reachable` is keyed off that flag. *(previously August 15, 2026 — first issue)*
 **Document Type:** Implementation plan for a single backlog story
-**Status:** ✅ **Re-reviewed before execution, 27 Aug 2026 — buildable as written.** Every §3 instruction has been checked against the built service and the restored packages. **Two decisions still need ratifying (§4): `P-85`** (the mapping mechanism) and **`P-87`** (whether `opc.reachable` tells the truth before commissioning). **One choice belongs to the developer and is deliberately left open: §3 step 1's A/B** — a hand-written `IHealthCheck` (recommended) versus `AspNetCore.HealthChecks.SqlServer`, which bumps `Microsoft.Data.SqlClient` service-wide. The route is settled and is no longer a decision
+**Status:** ✅ **BUILT AND REVIEWED — 27 Aug 2026.** Live in `ual-api`; all three acceptance criteria measured (§5.1), the verb surface pinned to `GET`, two `P-87` bypass paths closed, solution builds with **0 errors and no analyzer warning from any new file**. Two decisions are **implemented but still unratified — `P-85`** (the mapping mechanism) and **`P-87`** (whether `opc.reachable` tells the truth before commissioning); both are recorded in code at the line that implements them. One new gap: **`G57`**. *Earlier the same day: re-reviewed before execution — buildable as written.* Every §3 instruction has been checked against the built service and the restored packages. **Two decisions still need ratifying (§4): `P-85`** (the mapping mechanism) and **`P-87`** (whether `opc.reachable` tells the truth before commissioning). **One choice belongs to the developer and is deliberately left open: §3 step 1's A/B** — a hand-written `IHealthCheck` (recommended) versus `AspNetCore.HealthChecks.SqlServer`, which bumps `Microsoft.Data.SqlClient` service-wide. The route is settled and is no longer a decision
 **Owner:** Backend (.NET) stream
 **Audience:** The .NET developer building `FW-148`
 **Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
@@ -57,9 +57,9 @@ From `[TB §7]` — verbatim:
 | Artifact | State |
 |---|---|
 | `FlatWire.API/Extensions/HealthCheck.cs` | **Exists.** `AddCustomHealthChecks(IServiceCollection, IConfiguration)` registering **`AddCheck("self", …Healthy())`** and nothing else. Its `configuration` parameter is **unused** — this story is what uses it |
-| `Program.cs:142` | `builder.Services.AddCustomHealthChecks(builder.Configuration)` is already called |
+| `Program.cs` | `builder.Services.AddCustomHealthChecks(builder.Configuration)` is already called — **above** `Configure<SqlSetting>` |
 | The route | **Not mapped.** `Program.cs`'s header comment says so explicitly: *"The health-check endpoint, which FW-148 owns … the route is not mapped in this story"* |
-| `Program.cs:353` | `app.UsePathBase(pathBase)` — `PATH_BASE` is `/API.FlatWire` in `appsettings.json` and is **not** overridden in Development |
+| `Program.cs` | `app.UsePathBase(pathBase)` heads the request pipeline — `PATH_BASE` is `/API.FlatWire` in `appsettings.json` and is **not** overridden in Development |
 
 ---
 
@@ -185,7 +185,7 @@ check as PLC connectivity, and see `P-87`.
 
 ## 3. Build order
 
-1. **Decide the database check's dependency before writing anything** — this is the only step
+1. ✅ **DONE — option A taken.** **Decide the database check's dependency before writing anything** — this is the only step
    that changes the service's package closure, and it is a real choice, not a formality.
 
    **`Polly` and `UA.Framework.RestClient` need nothing.** Both are already in
@@ -219,14 +219,14 @@ check as PLC connectivity, and see `P-87`.
    from the `CoilCheckin` template. §2.1 rejects that writer, so once this story lands the reference is
    **unused** — remove it or record why it stays.
 
-2. **Database check**, named **`database`**, resolving the connection string with
+2. ✅ **DONE** — `Infrastructure/HealthChecks/DatabaseHealthCheck.cs`. **Database check**, named **`database`**, resolving the connection string with
    **`CustomDbContext.ResolveConnectionString(configuration)`** — `private static` today, so widen it to
    `internal static` rather than writing the double indirection a second time
    (`SqlSetting:DSN` names the section holding the string; `{catalog}` inside it is replaced by
    `SqlSetting:CATALOG` = `FlatWireDB`).
 
    ✅ **There is no registration-ordering problem, and an earlier draft of this plan said there was.**
-   `AddCustomHealthChecks` runs at `Program.cs:142` and `Configure<SqlSetting>` at **146**, but
+   `AddCustomHealthChecks` runs **above** `Configure<SqlSetting>` in `Program.cs`, but
    `ResolveConnectionString` reads **`IConfiguration` directly** and never touches the `SqlSetting`
    options object — which is consumed only by `ContextRepository` on the Dapper path. The
    `IConfiguration` this check needs is **already the parameter `AddCustomHealthChecks` receives and
@@ -241,12 +241,12 @@ check as PLC connectivity, and see `P-87`.
    (verified in the shipped assembly's metadata), as does a hand-written check that resolves inside
    `CheckHealthAsync`.
 
-3. **OPC check**, named **`opc`** — a `GET` on `API.OPCConnection`'s **`/liveness`** (§2.5),
+3. ✅ **DONE** — `Infrastructure/HealthChecks/OpcHealthCheck.cs`; `P-87` implemented, and **measured in both flag states** (§5.1). **OPC check**, named **`opc`** — a `GET` on `API.OPCConnection`'s **`/liveness`** (§2.5),
    with **Polly** on the outbound call (`phase-01b` L97). Under `SimulatePLCTagPush = true` it
    reports **simulated-healthy**, which is AC 2 — **and read `P-87` before implementing that
    branch**, because the flag is `true` in production too until commissioning.
 
-4. **Custom `ResponseWriter`** emitting §2.1's shape. Most of it is free:
+4. ✅ **DONE** — `Infrastructure/HealthChecks/FlatWireHealthResponseWriter.cs`. **Custom `ResponseWriter`** emitting §2.1's shape. Most of it is free:
 
    | Member | Source |
    |---|---|
@@ -260,15 +260,15 @@ check as PLC connectivity, and see `P-87`.
    exactly. The inherited **`"self"` entry is a third entry**: harmless (always `Healthy`, and
    the writer ignores it), but it does contribute to the aggregate `status`.
 
-5. **Non-200 when unhealthy**, naming the failing check (AC 3).
+5. ✅ **DONE** — `503` measured, `database` named. **Non-200 when unhealthy**, naming the failing check (AC 3).
    ⚠ `HealthCheckOptions.ResultStatusCodes` maps **`Degraded` → 200** by default. A dependency
    reported as `Degraded` therefore satisfies AC 3's *"non-200"* not at all. **Return
    `Unhealthy`, not `Degraded`, for a genuinely unreachable dependency** — or override
    `ResultStatusCodes`, and say which in the PR.
 
-6. **Map the route** — `P-85`.
+6. ✅ **DONE** — `MapCustomHealthChecks()` in `Extensions/HealthCheck.cs`, called from `Program.cs` beside `MapControllers()`. **Map the route** — `P-85`.
 
-7. **Confirm anonymity** — probe with no `Authorization` header (§5).
+7. ✅ **DONE** — `/health` answers with no header while `/lines/status` returns `401` (§5.1). **Confirm anonymity** — probe with no `Authorization` header (§5).
 
 ---
 
@@ -367,6 +367,26 @@ way, the alternative is to key the field off the flag and **strike the `opc.reac
 `[DEP §5]` S1 and the `[MON]` alert until commissioning**, so that nothing claims to be gating
 when it is not. Do not leave it undecided and build the first branch by default.
 
+### `P-88` — the connection string is resolved per probe, not at registration
+
+**Settled in the build.** §3 step 2 left this open: resolving eagerly inside
+`AddCustomHealthChecks` would move a missing-key failure from *first query* to *boot*, which is
+`FW-144` `P-16`'s direction of travel.
+
+**It is resolved per probe, inside `CheckHealthAsync`.** The argument that decides it is specific
+to *this* endpoint: eager resolution lets a bad `SqlSetting:DSN` stop the service booting, **and
+then the one endpoint whose whole purpose is to make a failing dependency visible cannot run to
+report it.** Resolved per probe, the same condition is `database.reachable: false` with the missing
+key named in the log — which is exactly what `[DEP §5]` S1 and `[MON §7.1]` read.
+
+**`G57` is that case, and it was found this way** (§5.1). Had the resolve been eager, `FW-148` would
+have presented as *"the service no longer starts"* rather than as a health report naming the key.
+
+This is **not** an argument against boot-time validation of the connection string — `G57` recommends
+it — only against a **health check** being the thing that performs it. If `FW-144` extends `P-16` to
+cover the connection string, this check keeps working unchanged and simply stops being the first to
+notice.
+
 ---
 
 ## 5. Verification
@@ -405,6 +425,98 @@ in §7 rather than patched from here.
 
 ---
 
+### 5.1 Measured, 27 Aug 2026
+
+Kestrel, `ASPNETCORE_ENVIRONMENT=Development`, **no `Authorization` header on any probe**. Three
+runs, because two of the three interesting states are configuration states rather than code paths.
+
+**Run 1 — as committed.**
+
+```
+HTTP/1.1 503 Service Unavailable
+X-Correlation-ID: b5f10fea-6281-4f7d-a014-2c467fbba8c0
+{"status":"Unhealthy","database":{"reachable":false,"latencyMs":0},
+ "opc":{"reachable":false,"latencyMs":2224},"version":"1.0.0","environment":"Development"}
+```
+
+**Run 2 — `SqlSetting__DSN=UA_Connection_String_dev00164001` supplied at run time** (`G57`).
+
+```
+HTTP/1.1 200 OK
+{"status":"Degraded","database":{"reachable":true,"latencyMs":19},
+ "opc":{"reachable":false,"latencyMs":2246},"version":"1.0.0","environment":"Development"}
+```
+
+**Run 3 — same, plus `FlatWireOpc__SimulatePLCTagPush=false`** (post-commissioning behaviour).
+
+```
+HTTP/1.1 503 Service Unavailable
+{"status":"Unhealthy","database":{"reachable":true,"latencyMs":15},
+ "opc":{"reachable":false,"latencyMs":2222},"version":"1.0.0","environment":"Development"}
+```
+
+**Run 4 — `G57` fixed in `appsettings.json`, NO environment override.** This is the one that
+matters, because runs 2 and 3 proved the code against a value supplied at the command line; this
+proves the **committed** configuration.
+
+```
+HTTP/1.1 200 OK
+{"status":"Degraded","database":{"reachable":true,"latencyMs":33},
+ "opc":{"reachable":false,"latencyMs":2235},"version":"1.0.0","environment":"Development"}
+```
+
+`SqlSetting:DSN` is now `"UA_Connection_String_dev00164001"`; the log carries **zero**
+*"could not resolve"* entries.
+
+| Claim | Evidence |
+|---|---|
+| **AC 1** — checks covering DB and OPC | Both members present in all three runs, named `database` and `opc`. `database.latencyMs: 19` is a real round trip to `FlatWireDB` on `dev00164-001`; `opc.latencyMs: 2246` is a real outbound attempt to `http://uanet02/API.OPCConnection/liveness` (1 s timeout × 2 attempts + 200 ms Polly delay) |
+| **AC 2** — green in Development | **Run 2: `200`.** The shared OPC server is not reachable from a developer machine, and that is precisely the case `P-87` maps to `Degraded` → 200 rather than `Unhealthy` → 503 |
+| **AC 3** — non-200 naming the failing check | **Runs 1 and 3: `503`**, with the failing dependency identified by its own member (`database` in run 1, `opc` in run 3) |
+| **Anonymous** | Every probe above carried **no `Authorization` header**. Contrast, same instance, same absent header: `GET /api/v1/flatwire/lines/status` → **`401`**, `GET /api/v1/flatwire/health` → **`503`**. The health endpoint is reached; the others are not. `TC-655`'s exception holds |
+| **Shape** | **Exactly five members**, in `[API §4.19]`'s order, camel-cased like every other FlatWire response. No hub member (`P-86`), no `UIResponseWriter` envelope |
+| **`version`** | **`"1.0.0"`** — the assembly carries `1.0.0+364d0572c6f823359a8fa9c96bc339b1e28ea3e6`, so this is the §3 step 4 cut working. Emitted raw it would have failed the QA0 shape check |
+| **Route** (`P-20`) | One path, `/api/v1/flatwire/health`, built from `Constants.Routes.Base` so it cannot drift from the fourteen controllers |
+| **`P-85`'s position claim** | **`X-Correlation-ID` is on the response** and both checks' log lines carry that same id — so the probe really does run inside `CorrelationIdMiddleware` and `UseSerilogRequestLogging`, which is the reason `MapHealthChecks` was chosen over `CoilCheckin`'s terminal-middleware position |
+| **`P-87` in both directions** | Run 2 (`simulate=true`) → `Degraded`/**200**; run 3 (`simulate=false`) → `Unhealthy`/**503**. `opc.reachable` is **`false` in both** — the field never lies, only the severity moves. This is the whole point: `[DEP §5]` S1 and `[MON §7.1]` read the field, not the status |
+| **Verb** | `GET` → **`200`**; `POST` / `PUT` / `DELETE` → **`405`**. ⚠ **Not free** — `MapHealthChecks` answers *every* verb by default, and it did (all three returned the health body with `200`) until `HttpMethodMetadata` was attached. `[API §3.2]` row 30 specifies `GET /health`; there is no `MapGetHealthChecks` |
+| **Probe cost** | First probe after boot: `database.latencyMs` **1183** — connection-pool and handshake warm-up. Subsequent probes **16–102 ms**. Worth knowing before anyone reads a cold spike as a fault; `[MON §7.1]` alerts on reachability, not on latency |
+| **Build** | `dotnet build FlatWire.sln` — **0 errors**, and **no analyzer warning from any of the four new/changed files** (one `S6667` was raised and fixed). The remaining warnings are all pre-existing |
+
+⚠ **Two things this run establishes that the plan could not.**
+
+**(1) `G57` — the committed configuration could not reach the database, and nothing said so at
+boot. ✅ Fixed the same day** — `SqlSetting:DSN` is now `"UA_Connection_String_dev00164001"` and run
+4 above verifies it against the committed file. What follows is what was wrong, and why the
+**residual** is `FW-144`'s rather than closed.
+`SqlSetting:DSN` is `"DEV00164-001"`, a **server** name, where the setting names the **configuration
+section holding the connection string**; `ResolveConnectionString` looks up
+`DEV00164-001:ConnectionString`, which exists nowhere. **Every sibling sets
+`"UA_Database_UnitedDB"`** — CoilCheckin, Planning and OPCConnection all do. Because
+`AddCustomDbContext` defers resolution into its `AddDbContext` lambda, **the service starts
+normally** and the failure lands on the first query, so every repository, every Dapper call and the
+whole check-in transaction fail at run time on a service that booted without a warning. Run 1 versus
+run 2 was the proof that the **code** was right and the **configuration** wrong; run 4 is the proof
+of the fix.
+
+⚠ **The residual is not fixed and is the part worth remembering.** The value is corrected; **the
+mechanism that let a wrong value boot clean is not.** `AddCustomDbContext` still resolves inside its
+`AddDbContext(options => …)` lambda and `FW-144`'s `ValidateOnStart` still covers only the OPC and
+SignalR groups, so **the next wrong connection string will also start silently and fail on the first
+query.** That belongs to `FW-144` (`P-16`), not here — and note `P-88` deliberately does *not* close
+it from this side: a health check that cannot start cannot report. Also note the corrected value is
+**per environment** — the variable name encodes the server, so every
+`appsettings.{Environment}.json` needs its own, and the siblings' `"UA_Database_UnitedDB"` is not it
+(that variable does not exist on these machines).
+
+**(2) `[DEP §4.4]`'s publish command names a file that does not exist.** It runs
+`dotnet publish "…\FlatWire.API\FlatWire.API.csproj"`. The project file is **`Api.csproj`** —
+`AssemblyName` is `FlatWire.$(MSBuildProjectName)`, which is what makes the *assembly*
+`FlatWire.Api`. The command fails as written. Owed to `[DEP]`, alongside the missing
+`/API.FlatWire` prefix already recorded in §7.
+
+---
+
 ## 6. Handoff
 
 `[DEP]` gates deployment on this and `[RB]` gates both rollback paths on it. `[MON]` alerts on
@@ -420,14 +532,23 @@ one-line `LevelFor` branch in `P-85`, which is `FW-143`'s file.
 
 | Item | Effect here |
 |---|---|
-| **`P-85`** | The mapping mechanism and position — **needs ratifying** |
-| **`P-87`** | What `opc.reachable` means before commissioning — **needs ratifying**, and until it is, `[DEP §5]` S1 and `[MON §7.1]`'s alert may both be inert |
+| **`P-85`** | The mapping mechanism and position — **implemented, still needs ratifying.** Building to a recommendation is not ratifying it; the code states the choice at `MapCustomHealthChecks` |
+| **`P-87`** | What `opc.reachable` means before commissioning — **implemented and measured in both flag states** (§5.1), still needs ratifying. As built the field always tells the truth and only the severity moves, so `[DEP §5]` S1 and `[MON §7.1]` are **not** inert — which is the half of this decision Operations may want to overturn |
 | **`[DEP]` / `[SUP]` probe URLs** | Both omit the `/API.FlatWire` application path, so the commands **do not run as written** (§5). Service-wide, not health-specific — owed to `[DEP]` as a notation note, not patched from this story |
+| **`[DEP §4.4]`'s publish command** | Names `FlatWire.API\FlatWire.API.csproj`; the file is **`Api.csproj`**, so the command fails as written (§5.1). Owed to `[DEP]` |
+| ~~**`G57`**~~ | ✅ **Fixed 27 Aug 2026** — `SqlSetting:DSN` → `"UA_Connection_String_dev00164001"`, verified on the committed file (§5.1 run 4). ⚠ **Residual open with `FW-144`:** nothing validates the connection string at boot, so the *next* wrong value also boots clean; and the corrected value is **per environment**, so each `appsettings.{Environment}.json` needs its own |
 | **`TC-700`** | Cited by `[DEP §5]` S1; the `700–714` block is declared in `[TS §1.3]` but no case is written. Owed by `[TCS]` |
 | **`G10`** | IIS WebSockets must be enabled — a deployment prerequisite this endpoint cannot detect, and `[TRP §6]` dates the pre-check to **before T2** |
-| **§3 step 1's A/B** | **The developer's call, deliberately left open.** Taking `AspNetCore.HealthChecks.SqlServer` bumps **`Microsoft.Data.SqlClient` 5.1.5 → 5.2.0 for the whole service** — unpinned, transitive pinning off, so it floats up with no warning. **A** (hand-written `IHealthCheck`) is recommended; **B** is fine if the bump is wanted, but say so in the PR |
-| **`AspNetCore.HealthChecks.UI.Client`** | Referenced by `FlatWire.API.csproj` and **unused** once §2.1's writer lands. Remove it or record why it stays |
+| ~~**§3 step 1's A/B**~~ | ✅ **Resolved 27 Aug 2026 — option A built.** No package added; `Microsoft.Data.SqlClient` stays at **5.1.5**. *(Original text:)* **The developer's call, deliberately left open.** Taking `AspNetCore.HealthChecks.SqlServer` bumps **`Microsoft.Data.SqlClient` 5.1.5 → 5.2.0 for the whole service** — unpinned, transitive pinning off, so it floats up with no warning. **A** (hand-written `IHealthCheck`) is recommended; **B** is fine if the bump is wanted, but say so in the PR |
+| ~~**`AspNetCore.HealthChecks.UI.Client`**~~ | ✅ **Removed 27 Aug 2026.** It was referenced and entirely unused — no `using HealthChecks.UI.Client` and no `UIResponseWriter` anywhere in FlatWire |
 | **QA0 has already passed** | `[TS §4.2]` dates the Phase-1 hard gate **14 Aug 2026** and names *"`/health` … full documented shape"* in its 1B component. That date is behind us and this endpoint is unbuilt, so §5's QA0 row is an **obligation still owed**, not a future gate. Not this story's to reschedule — flagged so it is not read as satisfied |
+
+> ⚠ **`Program.cs` is cited by symbol name here, never by line number — deliberately.** The first
+> draft of §1.1 and §3 step 2 cited `Program.cs:142`, `146`, `158`, `170` and `353`, and **this
+> story's own three-line edit to that file's header comment shifted every one of them by one the same
+> day.** Nothing outside the file cites its line numbers, so names are strictly better. *(Contrast
+> `phase-01b`, whose L-numbers **are** cited from ~20 places and are therefore kept stable by
+> replacing a line with exactly one line — a different rule for a different reason.)*
 
 ### Struck on 27 Aug 2026
 
@@ -437,4 +558,4 @@ one-line `LevelFor` branch in `P-85`, which is `FW-143`'s file.
 | ~~**`G9` / `OI-34`** — no threshold for broadcast-cadence deviation~~ | Real, but **not this story's**: cadence deviation is `FW-150`'s instrument (`P-86`). `G9` still blocks it there, and `Orchestration.md`'s `G9` row is corrected to drop `FW-148` |
 | ~~*"No stale citations found in this story's card"*~~ | Four were found on review — `/liveliness` for `/liveness`, the hub metrics, the OPC probe target, and *"already in `Directory.Packages.props`"* read as *"already referenced"* |
 | ~~*"Add the two package references — neither is referenced"*~~ | Struck by the **same day's re-review**: `Polly` is already in the dependency closure transitively, so only one package is at issue — §3 step 1. The claim was read off the csproj, which shows **direct** references only |
-| ~~The `Program.cs:142`-versus-`146` ordering trap~~ | Struck by the same re-review: `ResolveConnectionString` reads `IConfiguration`, not `IOptions<SqlSetting>`, so there is nothing to defer — §3 step 2 |
+| ~~The `AddCustomHealthChecks`-versus-`Configure<SqlSetting>` ordering trap~~ | Struck by the same re-review: `ResolveConnectionString` reads `IConfiguration`, not `IOptions<SqlSetting>`, so there is nothing to defer — §3 step 2 |

@@ -1,7 +1,7 @@
 # Flat Wire Mill — Backend Services
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — §3.4's open decision **`D1` re-numbered `D-30`** (it collided with `[PLC]`'s retired `D1`–`D17` log) and promoted into `[ARC §13.1]`; `[PLC §620]` retargeted to `[PLC §11.2]` *(otherwise August 13, 2026 — split out of `03-HLD-and-ERDiagram.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
+**Last Updated:** August 27, 2026 — ⚠ **§3.2a places the five tables deployed 22 Aug 2026, which it had never claimed** *(raised by the `FW-207` review)*. The boundary table predates the multi-rod/multi-order spool work and the rod↔order allocation work, so **`FW-207` — the story that builds the invariants — was modelling a 28-table schema against a 33-table database**, and one of the five carries an invariant assigned to it by name. **The three spool children go inside `SpoolProcessing`**, and ⛔ **`SpoolTraceability`'s non-overlap invariant is the aggregate's ONLY defence** — its footage bounds are nullable because the genealogy is weight-primary, so a non-overlap trigger joining on `NULL` **passes silently**, which is why 22 Aug added none. ⚠ **`RodOrderAllocation`/`RodOrderConsumption` are *proposed* outside the seven and await THIS section's signature**, since it is the boundary table of record (`P-91`). Earlier: August 15, 2026 — §3.4's open decision **`D1` re-numbered `D-30`** (it collided with `[PLC]`'s retired `D1`–`D17` log) and promoted into `[ARC §13.1]`; `[PLC §620]` retargeted to `[PLC §11.2]` *(otherwise August 13, 2026 — split out of `03-HLD-and-ERDiagram.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
 **Document Type:** Solution structure, CQRS, validation and error handling
 **Status:** Baselined for build
 **Owner:** Backend (.NET) stream
@@ -53,7 +53,7 @@ Project references: `API → Application, Domain, Infrastructure` · `Applicatio
 | **`FlatWireRun`** | `FlatWireRunDetail`, `RodCheckin`, `SpoolCheckin`, `RunPauseEvent`, `RollOverride`, `DieChangeEvent`, `SpcCheckpoint` + `SpcMeasurement` | Pause/resume state machine and its **four** resume outcomes; SPC mandated after a die change and after a roll adjust; roll-gap override requires authority, and **revert is Operations-Manager-only** (`FR-212`) |
 | **`RodStaging`** | bay state | **`G21` — one rod per *physical* station**, keyed on `Station` not `LineId`. `Blocked` is **derived** (`Staged` + any inspection `Fail`), never stored; `IsWelded` is a **flag on a `Staged` row**, not a status |
 | **`WeldEvent`** | — | **Its own root, not part of `FlatWireRun`** — welds are recorded at pre-check-in (DB2A *Mark as welded*) **before a run exists** |
-| **`SpoolProcessing`** | completion state | Prompt raised **once** per `RUNNING → STOPPED` edge; weight **latched at the PLC stop timestamp** |
+| **`SpoolProcessing`** | completion state, **`SpoolTraceability`**, **`SpoolOrder`**, **`SpoolStaging`** *(added 27 Aug 2026 — see the callout below)* | Prompt raised **once** per `RUNNING → STOPPED` edge; weight **latched at the PLC stop timestamp**. ⛔ **`SpoolTraceability` segments may not overlap and the aggregate is the ONLY defence** — footage is nullable because the genealogy is weight-primary, so a non-overlap trigger joining on `NULL` **passes silently**. That is why the 22 Aug work deliberately added no trigger. `G42` |
 | **`CoilOutput`** | `CoilTraceability` | **DM010 non-overlap is an aggregate invariant** — footage ranges may not overlap. `trg_CoilTraceability_NoOverlap` stays as belt-and-braces |
 | **`RodCheckout`** | — | Mode P / A / B; Mode B needs the supervisor stamp and PLC-locked footage > 0; Mode P must carry null footage |
 | **`WipRejection`** | — | Disposition lifecycle; **the only thing that clears a `Blocked` bay** — publishes a domain event rather than reaching into `RodStaging` |
@@ -64,6 +64,25 @@ Project references: `API → Application, Domain, Infrastructure` · `Applicatio
 - **`Rod`** — a `FlatWireDB`-local mirror of `coils` (`D-04`); `coils` owns the lifecycle. Read model.
 - **`PassSchedule`** — **a read model, and MVP-1 now builds the table** (`D-31`, 15 Aug 2026): `02_Schedule` is in the MVP-1 runner and `PassScheduleId` carries a **real, enforced FK**. ⚠ *This row previously said "MVP-2-owned … not built by the MVP-1 runner … an opaque external reference" — all three clauses are superseded.* **Read-model status is unchanged and is the point**: MVP-1 reads schedules and never authors them, so there is no aggregate, no repository and no write path. The immutable **`PassScheduleSnapshot`** value object still applies — a certificate must stay reproducible after the owning system later edits the schedule.
 - **`Stand`, `Drawer`, `Edger`, `Dancer`, `Spool`, `AlloyProperty`, `PayoffPosition`** — reference data. *(`SpoolConfiguration` merged into `Spool`, 23 Aug 2026 — `Q60`)*
+
+> ### ⚠ The five tables added 22 Aug 2026 — placed 27 Aug 2026
+>
+> **This table was written on 15 Aug 2026 and did not place the multi-rod/multi-order spool work or
+> the rod↔order allocation work.** Five tables were deployed on 22 Aug and belonged to no aggregate
+> here, which left `FW-207` — the story that builds the invariants — modelling a 28-table schema
+> against a 33-table database. Placement, with `FW-207 §2.1a` carrying the reasoning:
+>
+> | Table | Placement |
+> |---|---|
+> | **`SpoolTraceability`** | child of `SpoolProcessing` — `FK_SpoolTraceability_SpoolProcessing`. Its `Rod`/`WeldEvent` FKs are cross-aggregate references **by alpha, not navigations** |
+> | **`SpoolOrder`** | child of `SpoolProcessing` — `FK_SpoolOrder_SpoolProcessing` |
+> | **`SpoolStaging`** | child of `SpoolProcessing` — `FK_SpoolStaging_SpoolProcessing`. ⚠ **Not a second `RodStaging`**: `RodStaging` is a root only because its parent `Rod` is a read model with no aggregate to belong to |
+> | **`RodOrderAllocation`** | ⚠ **proposed outside the seven** — parents are `Rod` and itself; §3.2e already gives it its own service and three cross-row invariants |
+> | **`RodOrderConsumption`** | ⚠ **proposed outside the seven** — **five** parents spanning three aggregates (`FlatWireRun`, `RodCheckin`, `Rod`, `RodOrderAllocation`, `RodCheckout`), so folding it into any one would put a foreign root inside a boundary |
+>
+> **The three spool children are settled and buildable.** ⚠ **The last two are `FW-207`'s `P-91`
+> recommendation awaiting ratification *here*, because this section is the boundary table of record
+> and a plan document cannot promote itself over it.** Until it is ratified they are not built.
 
 ⚠ **The surrogate is not the identity.** `FlatWireRun` carries both `[Id] INT IDENTITY` and `[RunId] VARCHAR(20)` — and it is `RunId` that every child table references. Same on `SpoolProcessing` (`Alpha`) and `CoilOutput` (`CoilAlpha`). So **repositories are keyed by the alpha value object** — `GetByAlpha(RunAlpha)`, not `GetById(int)` — and the alphas of §3.2b are the aggregate identities. Note `Entity.Equals()` and `IsTransient()` operate on `Id`, so **equality is surrogate-based**: do not assume two instances with the same alpha compare equal before both are persisted.
 

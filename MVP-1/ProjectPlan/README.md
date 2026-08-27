@@ -76,6 +76,7 @@ Every document declares its own **shortcode** in its header; citations use `[COD
 
 | Column design | [Database/Schema/](Database/Schema/) | **Six** per-domain documents — Lookup, Schedule, Materials, Runs, QualityOutput, Mapping — each paired with the DDL file it names *(this said "Five" until 25 Aug 2026 while § the `Database/` narrative said six)* |
 | **Executable truth** | [Database/Schema/SQL/](Database/Schema/SQL/) | **Authoritative for types, nullability and constraints. Never regenerate it from the markdown** |
+| Sequencing | [Database/TaskBreakdownPlans/](Database/TaskBreakdownPlans/) | **Not a fourth tier — the DB stream's execution index.** [Orchestration.md](Database/TaskBreakdownPlans/Orchestration.md): what can start, in what order, what is stopping it. ✅ **Phase 1C is built**, so its §3 is not a construction path but **`[DEP §4.2]`'s ten-step deploy chain and the sign-off gate at step 2 that has never been passed.** ⚠ **The folder holds no per-story plans** — rows name owning artifacts, and **the DDL wins**. **States no object count, deliberately** |
 
 **The MVP-1 build is `33 tables · 55 FKs · 69 index statements · 1 procedure · 1 trigger`** — counted from `Database/Schema/SQL/` and checked by [`Tools/verify_schema_counts.py`](Tools/verify_schema_counts.py). **The design and the build are the same 33 tables:** `D-31` (15 Aug 2026) moved the three `PassSchedule*` tables **into** MVP-1, so they **are** built by `FlatWire_DDL_RunAll.sql` and their four FKs **are** enforced. Only `sp_ShiftSummary` (`09_Programmability_MVP2`) stays MVP-2. ⚠ **MVP-1 reads pass schedules and never authors them** — owning the table is not owning the data. Defined once in `[DBD §6.2]` — every other mention is a citation.
 
@@ -89,6 +90,7 @@ Every document declares its own **shortcode** in its header; citations use `[COD
 | [ScreenPlan.md](Frontend/ScreenPlan.md) | `[SCR]` | Screen inventory, navigation map, shared chrome, mockup → component mapping |
 | [Components.md](Frontend/Components.md) | `[CMP]` | Library structure, routing, state, charts, the design-token system |
 | [ValidationRules.md](Frontend/ValidationRules.md) | `[VAL]` | Shopfloor input constraints — 48 px targets, the 14 px floor, no hover |
+| [Frontend/TaskBreakdownPlans/](Frontend/TaskBreakdownPlans/) | — | **The FE stream's execution index**, on the Backend folder's axis — dependency wave, not sprint. [Orchestration.md](Frontend/TaskBreakdownPlans/Orchestration.md): dependency graph, three waves, a **160 h critical path** of which **`FW-133` is 120 h**, the blocker calendar, and `phase-01a`'s five exit criteria mapped to owners. ⛔ **Nothing in this stream is built** — `flat-wire-shopfloor` exists in no Angular checkout (verified 27 Aug 2026 across three). ⚠ **The folder holds no per-story plans** — rows name owning specifications, and **the specification wins**; §4 is a decision *index* and **mints no `P-##`** |
 
 ### `Business/Screens/` · `Frontend/Mockups/` · `Database/Schema/` — absorbed 13 Aug 2026
 
