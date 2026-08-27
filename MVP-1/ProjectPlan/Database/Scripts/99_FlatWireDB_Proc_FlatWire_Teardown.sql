@@ -1,24 +1,43 @@
 /*==============================================================================================
   Project      : UAL Flat Wire Mill - Shopfloor
-  Script       : 99_united_db_Proc_FlatWire_Teardown.sql
-  Target DB    : united_db
-  Last Updated : 2026-08-19
+  Script       : 99_FlatWireDB_Proc_FlatWire_Teardown.sql
+  Target DB    : FlatWireDB   (the four procedures MOVED here from united_db
+                               on 26 Aug 2026, change [H]; this teardown moved with them)
+  Last Updated : 2026-08-26
   Status       : Draft
   Story        : FW-220 / FW-221
   Companion to : FlatWire_DDL_99_Teardown.sql (which tears down FlatWireDB and NOTHING ELSE)
 
   PURPOSE
   -------
-  Drops the four flat wire procedures that live in united_db.
+  Drops the four flat wire procedures. They lived in united_db until 26 Aug 2026; change [H]
+  moved them into FlatWireDB.
 
-  *** IT DOES NOT DROP sp_IngestRodFromCoils. *** That one lives in FlatWireDB, so it goes with
-  the database when FlatWire_DDL_99_Teardown.sql runs. Two teardowns, split by which database
-  owns the object - not an omission.
+  *** READ THIS BEFORE ASSUMING THE FILE IS NOW REDUNDANT. ***
 
-  FlatWire_DDL_99_Teardown.sql removes FlatWireDB, and until now that was the whole teardown
-  story - which left the shared-schema procedures behind on every environment they had ever been
-  deployed to. A developer tearing down and redeploying got a clean FlatWireDB and stale
-  procedures, which is the worst of the two states because it looks clean.
+  [H] INVERTED THIS SCRIPT'S ORIGINAL REASON FOR EXISTING, and the old text is worth stating so
+  the change is legible. It used to read:
+
+      "IT DOES NOT DROP sp_IngestRodFromCoils. That one lives in FlatWireDB, so it goes with
+       the database when FlatWire_DDL_99_Teardown.sql runs. Two teardowns, split by which
+       database owns the object - not an omission. [...] until now FlatWire_DDL_99_Teardown.sql
+       was the whole teardown story - which left the shared-schema procedures behind on every
+       environment they had ever been deployed to. A developer tearing down and redeploying got
+       a clean FlatWireDB and stale procedures, which is the worst of the two states because it
+       looks clean."
+
+  ALL FIVE PROCEDURES NOW LIVE IN FlatWireDB. So:
+
+    - the "split by owning database" is gone - there is one owning database;
+    - the stale-procedure hazard is gone - DROP DATABASE takes all five with it;
+    - in the FULL teardown path this script is therefore a NO-OP by the time
+      FlatWire_DDL_99_Teardown.sql has run, and running it first is merely tidy.
+
+  *** IT IS STILL REQUIRED, for the one path that is not a full teardown. ***
+
+  Reverting change [H] itself, or backing out a bad procedure deploy, means dropping the four
+  procedures WITHOUT dropping FlatWireDB - which holds the run data and must survive. There is
+  no other way to do that, and the [H] abort path depends on this file existing.
 
   *** THIS DROPS CODE, NOT DATA. ***
 
@@ -52,7 +71,7 @@
   prints and moves on.
 ==============================================================================================*/
 
-USE [united_db];
+USE [FlatWireDB];
 GO
 
 SET NOCOUNT ON;

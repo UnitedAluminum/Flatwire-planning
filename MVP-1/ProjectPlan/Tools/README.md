@@ -1,7 +1,7 @@
 # Tools
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 25, 2026 — the allocation-examples generator and its content file exist again; script count and `template.docx` recorded *(previously August 24, 2026 — [`build_allocation_examples_xlsx.py`](build_allocation_examples_xlsx.py) and [`AllocationExamplesContent.md`](AllocationExamplesContent.md) added: the rod-to-order worked-example workbook, the first generator whose figures are **computed rather than parsed**, and the first to **extend** the leakage list rather than copy it unchanged *(previously August 23, 2026 — [`verify_schema_counts.py`](verify_schema_counts.py) added: the second check that fails the build, and the reason the schema counts can no longer drift. `extract_vba.py` listed at last — it had been in the folder since 21 Aug and absent from this table)* *(previously August 14, 2026 — [`build_trial_run_xlsx.py`](build_trial_run_xlsx.py) and [`TrialRunContent.md`](TrialRunContent.md) added: the trial-run workbook, the first generator to write outside `MVP-1/SRS/` and the first with an **abbreviation** guard in place of a leakage guard *(otherwise August 13, 2026)*)*)*
+**Last Updated:** August 26, 2026 — **`verify_schema_counts.py` gains `C6`**, which checks baseline counts restated in *prose* rather than only the numbers `C1` pins: fatal in the sites permitted to state the figures, advisory elsewhere. Documented below with the three restrictions its mutation tests forced *(previously August 25, 2026 — the allocation-examples generator and its content file exist again; script count and `template.docx` recorded *(previously August 24, 2026 — [`build_allocation_examples_xlsx.py`](build_allocation_examples_xlsx.py) and [`AllocationExamplesContent.md`](AllocationExamplesContent.md) added: the rod-to-order worked-example workbook, the first generator whose figures are **computed rather than parsed**, and the first to **extend** the leakage list rather than copy it unchanged *(previously August 23, 2026 — [`verify_schema_counts.py`](verify_schema_counts.py) added: the second check that fails the build, and the reason the schema counts can no longer drift. `extract_vba.py` listed at last — it had been in the folder since 21 Aug and absent from this table)* *(previously August 14, 2026 — [`build_trial_run_xlsx.py`](build_trial_run_xlsx.py) and [`TrialRunContent.md`](TrialRunContent.md) added: the trial-run workbook, the first generator to write outside `MVP-1/SRS/` and the first with an **abbreviation** guard in place of a leakage guard *(otherwise August 13, 2026)*)*)*)*
 **Status:** Working scripts, committed so they stop being re-derived
 
 ---
@@ -22,9 +22,30 @@ requirement coverage, the other measures the schema.
 | [`build_trial_run_xlsx.py`](build_trial_run_xlsx.py) | `Development/TrialRunPlan.md` + `Development/TaskBreakdown.md` + `TrialRunContent.md` | **`Development/FlatWire_TrialRunPlan.xlsx`** | reconciliation · coverage · title · drift · **abbreviation** |
 | [`build_allocation_examples_xlsx.py`](build_allocation_examples_xlsx.py) | `LatestDocument/RodOrderAllocation.md` §0.1 and §7 + `Business/BusinessRequirements.md` §5.28 + `[DBD §6.6]` + `AllocationExamplesContent.md` | `MVP-1/SRS/FlatWire_OrderAllocationExamples.xlsx` | **arithmetic** · coverage · drift · team names · leakage |
 | [`build_coverage_matrix.py`](build_coverage_matrix.py) | `Business/BusinessRequirements.md` + `Testing/TestCases.md` + `Development/TaskBreakdown.md` | nothing — reports | a requirement with no case and no §10.4 entry |
-| [`verify_schema_counts.py`](verify_schema_counts.py) | the DDL in `Database/Schema/SQL/` + the six `FlatWireSchema_*.md` + `[DBD §6.2]` | nothing — reports | counts disagreeing with `[DBD §6.2]` · a table absent from its own script header or from every schema document · a table with neither seed rows nor a `NO SEED:` marker · an unreachable or unguarded script · `sp_ShiftSummary` in the MVP-1 chain |
+| [`verify_schema_counts.py`](verify_schema_counts.py) | the DDL in `Database/Schema/SQL/` + the six `FlatWireSchema_*.md` + `[DBD §6.2]` + `[DEP §4.2]`'s gate + **every `.md`/`.sql` in the repository** (`C6`) | nothing — reports | counts disagreeing with `[DBD §6.2]` · a table absent from its own script header or from every schema document · a table with neither seed rows nor a `NO SEED:` marker · an unreachable or unguarded script · `sp_ShiftSummary` in the MVP-1 chain · a seeded FK whose parent is seeded later · **`C6`: a baseline count restated in PROSE that disagrees with the DDL** |
 | `template.docx` | — | — | **Not a script.** The branding template [`build_docx.py`](build_docx.py) opens — header logo, confidentiality footer, page setup. Undocumented here until 25 Aug 2026 |
 | [`extract_vba.py`](extract_vba.py) | a `.docx` / `.xlsm` | extracted VBA | — |
+
+**`C6` is two-tier, and the tiers are not a hedge.** `C1` pins the *numbers* in `[DBD §6.2]` and
+`[DEP §4.2]`'s gate; `C6` catches the same figure restated in a **sentence**, which is how
+`phase-01c` came to publish, until 26 Aug 2026, `34 tables · 57 FKs · 69 index statements` in three
+places while its own body said 33. It is **fatal** for the closed set of sites `[DBD §6.2]` permits to restate the
+figures — `[DBD]` itself, `[DEP]`, `phase-01c`, the two runner banners, the `06`/`07` script headers
+and `MVP2-SCOPE.md` — because a wrong number in one of those rejects a correct deployment or fails a
+correct story, which has happened five times. It is **advisory** everywhere else, because most
+survivors are legitimate dated audit trail that must not be swept: `[DBD §6.2]` states the exemption
+outright, *"statements dated before 23 Aug 2026 are audit trail and keep their numbers by design."*
+
+**Three deliberate restrictions in `C6`, each the result of a mutation test — do not "simplify" them.**
+**(1)** A claim is only judged in two shapes: a **baseline tuple** (a table count of 15+ with an FK,
+index, procedure or trigger count within 160 characters) or an explicit **claim to completeness**
+(*"all 55 FKs"*, *"complete 33-table"*). A first attempt that flagged every integer beside the word
+"table" produced 24 findings, all 24 wrong — subset counts such as *"their 10 foreign keys"* and
+rate-card sums such as *"3 tables @ 4 h"*. In a permitted site a **bare** table count is judged too,
+since those files exist to state the baseline. **(2)** The audit-trail marker must sit on the claim's
+**own line**. A neighbourhood window was tried and rejected: an explanatory note on the next line
+disarmed the check for a live claim. **(3)** The date pattern requires a real date, not four digits
+— *"SQL Server 2019"* is a product version, and a bare `\d{4}` let it exempt the live claim beside it.
 
 **`verify_schema_counts.py` parses each runner's `:r` list rather than hard-coding filenames.**
 That is what lets it survive a renumbering — and it simultaneously proves the runners complete,

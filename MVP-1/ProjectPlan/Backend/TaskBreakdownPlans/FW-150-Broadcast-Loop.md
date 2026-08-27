@@ -168,7 +168,13 @@ validated. Record what was achieved; do not invent a target.
 
 `FW-080` hosts the hub this sends through. `FW-205` sets the interlock this honours.
 `FW-N05` replaces `FW-203` behind the channel with no change here — that is `P-31`'s test.
-`FW-148` instruments broadcast-cadence deviation off this loop.
+⚠ **Broadcast-cadence deviation is instrumented HERE, not by `FW-148`** — corrected
+27 Aug 2026 (`P-86`). `[MON §7.1]` sources it from *"Hub instrumentation"* in its own row,
+separate from the `/health` row, and `[API §4.19]`'s health body has **five members and no
+hub member**. `G9` still leaves it with no threshold to alert against: instrument the metric,
+do not invent the alarm level. *(This line read "`FW-148` instruments broadcast-cadence
+deviation off this loop"; that claim originated in
+[`FW-148`](FW-148-Health-Checks.md) and is withdrawn there.)*
 
 ---
 

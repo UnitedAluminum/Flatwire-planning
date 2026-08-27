@@ -1,7 +1,7 @@
 # Flat Wire Mill — API Contract
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 25, 2026 — the five `lineId = FL2` → `422` sites marked withdrawn pending wave W5; `@expectedCoilNo` rename completed *(previously August 22, 2026 — **`POST /coil/complete`’s worked example was losing a foot** (`footageFrom: 1851` → `1850`): `CoilTraceability` ranges are **half-open `[From, To)`**, as the non-overlap trigger enforces, so the example a developer copies would have failed `TC-617` *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `ROD_UNAVAILABLE` and the staging/check-in availability tests move to local `Rod.Status`; the `coils.coil_status = INFLAT` side effect is struck from the check-in write list *(previously August 15, 2026 — **`SpoolController` added to §3.1** (fourteen → **fifteen**: §3.2 assigned `GET /spools` to a controller in no list) and the **endpoint count corrected to 31 live rows, of which MVP-1 implements 24** — *"28 of the 30"* contradicted this file's own *"the pass schedule is read, never written"*, which removes six endpoints rather than one. `[PLC §351–356]` retargeted to `[PLC §7.2]` *(otherwise August 13, 2026 — split out of `04-APIContract.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*))*
+**Last Updated:** August 25, 2026 — **`P-56`: the envelope is `ActionResultBase<T>` EXTENDED, not replaced** (§1.2 gains `errorCode`/`errorDescription`); §1.8 flagged as owing a `400` code and `WRONG_STATION`. Earlier the same day: **`P-53`: `RodReceivingController` withdrawn (§3.1), fifteen controllers → fourteen.** `/rod/**` is not this service's: #8, #9 and §4.20 are **specified and unhosted**, re-homing owed as `P-54`; §3.2 also flagged as two rows short of the contract (§4.20/§4.21 unindexed — the surface is 34/27, not 32/25). Earlier the same day: the five `lineId = FL2` → `422` sites marked withdrawn pending wave W5; `@expectedCoilNo` rename completed *(previously August 22, 2026 — **`POST /coil/complete`’s worked example was losing a foot** (`footageFrom: 1851` → `1850`): `CoilTraceability` ranges are **half-open `[From, To)`**, as the non-overlap trigger enforces, so the example a developer copies would have failed `TC-617` *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `ROD_UNAVAILABLE` and the staging/check-in availability tests move to local `Rod.Status`; the `coils.coil_status = INFLAT` side effect is struck from the check-in write list *(previously August 15, 2026 — **`SpoolController` added to §3.1** (fourteen → **fifteen**: §3.2 assigned `GET /spools` to a controller in no list) and the **endpoint count corrected to 31 live rows, of which MVP-1 implements 24** — *"28 of the 30"* contradicted this file's own *"the pass schedule is read, never written"*, which removes six endpoints rather than one. `[PLC §351–356]` retargeted to `[PLC §7.2]` *(otherwise August 13, 2026 — split out of `04-APIContract.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*))*
 **Document Type:** REST contract — conventions, enums, endpoints, traceability
 **Status:** Baselined for build — missing endpoint groups in §10
 **Owner:** Backend (.NET) stream
@@ -41,6 +41,24 @@ Every endpoint returns the standard UAL envelope.
 ```
 
 `data` is `null` on any non-success. `errors` is always an array, never a bare string.
+
+> **The envelope is `ActionResultBase<T>` extended, not replaced — `P-56`, 25 Aug 2026.** The
+> repository C# standard requires the response wrapped in the framework type; that type has
+> `Data` and `Success` but **no `errors` array**, and its `ErrorCode` is an `int`. `FlatWire`
+> therefore *derives*: `FlatWireResult<T> : ActionResultBase<T>` adds `errors[]` and the routing
+> `errorContext`. **Two inherited properties appear on the wire alongside them** — `errorCode`,
+> an **`int` carrying the HTTP status** (the meaning the framework's own exception filter assigns
+> it), and `errorDescription`, a **`string` carrying the `[API §1.8]` machine code**. Adding
+> response fields is non-breaking under §8. Every field has exactly one job:
+>
+> | Field | Type | Carries |
+> |---|---|---|
+> | `data` | `T` | the payload, `null` on any non-success |
+> | `success` | `bool` | |
+> | `errorCode` | **int** | the HTTP status |
+> | `errorDescription` | **string** | the `[API §1.8]` machine code — `BAY_OCCUPIED` |
+> | `errors` | array | the human-readable messages |
+> | `errorContext` | object | the routing payload, typed — `{route, rodAlpha}` or `{correctLineId}` |
 
 ### 1.3 Status-code usage
 
@@ -113,6 +131,14 @@ Machine-readable codes accompany the human-readable `errors[]` where a client mu
 | `LINE_STILL_RUNNING` | 422 | `FL{n}.LineState` reports Running at a checkout | Show "Stop the line before checking out the rod" |
 | `PLC_PUSH_FAILED` | 500 | One or more tag writes failed; compensating clears issued | Show the abort, offer retry |
 | `CONCURRENCY_CONFLICT` | 409 | `ROWVERSION` mismatch | Re-read and re-present |
+
+> ⚠ **The catalogue has no code for a `400` at all**, though §1.3 defines 400 as *"request failed
+> shape or field-level validation"* and every request validator returns one. `FlatWire` emits
+> **`VALIDATION_FAILED`** meanwhile, recorded here rather than invented per endpoint. **Raised
+> 25 Aug 2026 — this document owes the catalogue entry.**
+>
+> ⚠ **`WRONG_STATION` (409) is specified at §4.5 and §4.6 and is likewise absent here**, though a
+> client branches on it and it carries `correctLineId`. Same owner, same date.
 
 ---
 
@@ -189,7 +215,6 @@ Two further corrections this document also carries:
 |---|---|
 | `LinesController` | `/lines/status` |
 | `PassScheduleController` | `/passschedule/**` |
-| `RodReceivingController` | `/rod/**` |
 | `PayoffStagingController` | `/payoff/status`, `/staging/**` |
 | `CheckInController` | `/checkin/**` |
 | `RunController` | `/run/**` |
@@ -207,7 +232,33 @@ Two further corrections this document also carries:
 > row 16a assigned `GET /spools` to a `Spool` controller that appeared in no list, so an MVP-1 endpoint
 > (`FR-097`–`FR-099`, DB5/DB5A, Phase 8) had **no host**. It does not fit `/checkin/**`, and `[TRP §1.4]`
 > independently counts `Spool` among the trial's controllers. **§3.1 was the side that was wrong.**
-> `phase-01b`, its acceptance criterion 2 and `FW-138` (now 15 controllers) carry the corrected count.
+> `phase-01b`, its acceptance criterion 2 and `FW-138` (then 15 controllers) carry that corrected count.
+
+> ### ⚠ Fifteen → **fourteen**: `RodReceivingController` is withdrawn, 25 Aug 2026
+>
+> **Rod receiving is not shopfloor**, so the `FlatWire` service hosts no `/rod/**` surface at
+> all. Recorded as decision `P-53` in
+> [`FW-138`](TaskBreakdownPlans/FW-138-Fifteen-Thin-Controllers.md) §5, which carries the
+> reasoning, the cost and the fallback.
+>
+> **Three endpoints lose their host, and only one of them was ever this service's business.**
+> **#9 `POST /rod`** was always upstream — role `Receiving`, phase `upstream`, no §4 shape, no
+> requirement served, and `FW-020`–`FW-022` were deleted from the backlog on 13 Aug 2026 as
+> another team's work. **#8 `GET /rod/{alpha}` and §4.20 `GET /rod/{alpha}/orders` are a
+> different matter: they remain specified in §4 and are now specified with no host** — the
+> same state `POST /order/{orderNo}/complete` has been in since 22 Aug.
+>
+> **What that costs, stated here so it is not discovered downstream.** §4.3 is *"validate a
+> scanned rod and return everything staging and check-in need in one round trip"*, so
+> `FR-042`, `FR-064`, `FR-043`'s carry-forward gate and `Q24`'s station switching have **no
+> endpoint** until it is re-homed. `CoilCheckin`'s existing `getCheckinCoilInfo` /
+> `getCoilStatus` cover the shared-schema fields only; `footageRunToDate`,
+> `remainingWeightEstimateLb`, `stagedPayoffPosition` and `isWelded` read `FlatWireDB` and the
+> `RodStaging` projection, which no service outside `FlatWire` can query. **Re-homing is this
+> document's call** — `FW-138`'s `P-54` sets out three options. **DB2, a trial screen, scans a
+> rod**, so it is wanted before T1.
+>
+> **The rows stay in §3.2** — deferred is not missing, and unhosted is not deleted.
 
 ### 3.2 Endpoint index — 32 endpoints, of which MVP-1 implements 25
 
@@ -220,6 +271,14 @@ Roles use the matrix in `[SEC §8]`. "Any" means any authenticated role.
 >
 > **16b `POST /spool/complete` was added 15 Aug 2026** — the spool-completion commit had no route at all
 > (`OI-32`), which is why `[TRP §1.4]` had it running through `CoilController`.
+>
+> ⚠ **Two rows in this table now have no host, and the table is itself two rows short.**
+> **#8** and **#9** lost `RodReceivingController` on 25 Aug 2026 (`P-53`, §3.1) and are marked
+> accordingly — they are **specified and unhosted**, not withdrawn. Separately, **`§4.20` and
+> `§4.21` have no rows here at all**: both were added on 22 Aug 2026 by the rod ↔ order
+> allocation work and are named at `phase-04` L162, so the contract surface is really **34
+> live rows, of which MVP-1 implements 27**. Indexing them is owed; the 32/25 figures below
+> are this table's own count, not the contract's.
 >
 > ⚠ **The old "30 endpoints / MVP-1 implements 28 of the 30" was wrong in both halves.** It counted the
 > retired row, missed 16a and 18a, and — the substantive error — deducted only `POST /passschedule/generate`
@@ -236,8 +295,8 @@ Roles use the matrix in `[SEC §8]`. "Any" means any authenticated role.
 | 5 | `PUT /passschedule/{id}` | Replace editable fields | OpsMgr, Eng | `PassSchedule` | 2 | `FR-364`, `FR-372` |
 | 6 | `PATCH /passschedule/{id}/status` | `Draft→Active`, `Active→Inactive`, `Inactive→Active` | OpsMgr, Eng | `PassSchedule` | 2 | `FR-410` |
 | 7 | `POST /passschedule/generate` | Run the generator; returns a **draft, unpersisted** | OpsMgr, Eng | `PassSchedule` | 2 | `FR-380`–`FR-391` |
-| 8 | `GET /rod/{alpha}` | Validate + return rod details at scan | Any | `RodReceiving` | 4 (upstream data) | `FR-042`, `FR-064` |
-| 9 | `POST /rod` | Receive a rod, generate an R-series alpha | Receiving | `RodReceiving` | upstream | — |
+| 8 | `GET /rod/{alpha}` | Validate + return rod details at scan | Any | ⚠ **none** — `RodReceiving` withdrawn 25 Aug 2026 (`P-53`); **re-homing owed** (`P-54`) | 4 (upstream data) | `FR-042`, `FR-064` |
+| 9 | `POST /rod` | Receive a rod, generate an R-series alpha | Receiving | ⚠ **none** — upstream service, not `FlatWire` (`P-53`) | upstream | — |
 | 10 | `GET /payoff/status?lineId=` | Both payoff bays on one line — the DB2A primary read | Any | `PayoffStaging` | 4 | `FR-032`–`FR-034` |
 | 11 | `POST /staging/rod` | Pre-check-in: stage a rod at a bay | Operator (+Supervisor for the out-of-sequence override) | `PayoffStaging` | 4 | `FR-039`–`FR-049` |
 | 12 | `POST /staging/rod/unstage` | Pre-check-out — writes `RodCheckout` Mode P | Operator; **+Supervisor when the rod is welded** | `PayoffStaging` | 4 / 7 | `FR-052`–`FR-054` |
@@ -329,6 +388,14 @@ MVP-1 is a **consumer**. Rod check-in reads a schedule's contents to build the P
 4. ⚠ **Nothing in MVP-1 populates these tables in production.** MVP-1 owns the tables and **reads** them; it has no authoring surface at all — no create, edit, approve or list, and DB9/DB9A are MVP-2. The seed covers development and the trial. **Who writes production schedules is `OI-110`**, and it is the residual risk `D-31` moved rather than removed.
 
 ### 4.3 `GET /rod/{alpha}`
+
+> ⚠ **This endpoint has no host as of 25 Aug 2026.** `RodReceivingController` is withdrawn —
+> rod receiving is not shopfloor (`P-53`, §3.1). **The requirement is unchanged and the shape
+> below stands**; what is missing is the controller that serves it. Re-homing is owed —
+> [`FW-138`](TaskBreakdownPlans/FW-138-Fifteen-Thin-Controllers.md) `P-54` sets out three
+> options, and until one is chosen `FR-042`, `FR-064`, `FR-043`'s carry-forward gate and
+> `Q24`'s station switching have nothing to call. **Do not build it into `FlatWire` on the
+> strength of this section.**
 
 **Purpose:** validate a scanned rod and return everything staging and check-in need in one round trip.
 **Role:** any. **Idempotent.**
@@ -1369,6 +1436,11 @@ Returns `{ status, database: {reachable, latencyMs}, opc: {reachable, latencyMs}
 ---
 
 ### 4.20 `GET /rod/{alpha}/orders`
+
+> ⚠ **No host, and never indexed.** Two separate gaps meet on this endpoint: it was added on
+> 22 Aug 2026 and **§3.2's endpoint index carries no row for it** (nor for §4.21), and its
+> `/rod/**` prefix was withdrawn from the service on 25 Aug (`P-53`, §3.1). It is owed a
+> controller *and* an index row. See `P-54`.
 
 Returns the rod's **active allocation set** — the orders it may be consumed against, in planned sequence,
 with the weight allocated to each and the tier each rod occupies. This is what makes the sequence

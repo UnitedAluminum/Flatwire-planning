@@ -11,7 +11,7 @@
 --   data deploy independently -- see the note where it used to be.
 --
 -- ⚠ 06b AND 07b NO LONGER EXIST (23 Aug 2026). They were folded back into
---   06_ForeignKeys and 07_Indexes, which now carry all 55 FKs and all 69
+--   06_ForeignKeys and 07_Indexes, which now carry all 55 FKs and all 70
 --   index statements respectively. The MVP-1 chain is a contiguous 00..08.
 --
 -- ⚠ ONE FILE IN THIS FOLDER IS MVP-2 AND IS DELIBERATELY NOT RUN HERE:

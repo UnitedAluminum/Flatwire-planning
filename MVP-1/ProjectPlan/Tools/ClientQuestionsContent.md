@@ -904,6 +904,29 @@ optional; everything else is required.
 
 ---
 
+## Q88
+
+**Register title:** Two identities on a welded coil — the form they take
+**Area:** Output and packaging
+**Question:** A coil cut across a weld comes from two rods, and you asked for two identities to be kept rather than one. Your planning sheet writes those as the segment name with a letter added — R00002AA and R00001CA. Do you need that exact form, or two identities generated the normal way?
+**Background:** The form in the sheet cannot be used as a stored identifier. The letter it adds says which cut of the spool a piece came from, not which coil came from that rod, so every piece in one cut gets the same letter — which is why your own run contains R00004AB with no R00004AA. The same string can also mean two different things, and past twenty-six pieces off one rod it repeats outright. Generated identities avoid all three, and they are checked for uniqueness against every coil in the plant, which a locally built string is not.
+**Decision as recorded:** Two identities, generated the same way every other coil identity in the plant is generated — one rooted on each contributing rod. The label and the certificate show both, joined the way your sheet joins identities. **The strings will not match the ones in your sheet**, and that is the visible consequence of this decision.
+**Our recommendation:** Confirm as recorded. If the exact strings from the sheet matter for continuity with something we have not seen, tell us — it is the one part of this we would revisit.
+
+---
+
+## Q89
+
+**Register title:** Each rod's share of a welded coil as its own coil record
+**Area:** Output and packaging
+**Question:** For a coil made from two rods, should each rod's share appear as its own coil record in the wider plant systems, each carrying only its own weight?
+**Background:** Roughly nine of the twenty-three spools on your own planning run carry a weld, so this is the normal case rather than an edge one. Recording each rod separately means cost, yield and the coil family tree all see the true split. The alternative credits the whole coil to one rod — on a 900 lb coil that means crediting 900 lb to a rod that supplied 500.
+**Decision as recorded:** One record per contributing rod, each carrying its own weight — 500 lb against one rod and 400 lb against the other for a 900 lb coil, so the two add to the coil's weight and nothing is counted twice. Every rod is named on the certificate either way; this decides what the plant's own coil records show.
+**Still open:** Two consequences need your sign-off. This changes how a skid counts its two coils, because a coil now has more than one record — the rule stays two coils per skid, counted as physical coils. And it is bound up with **Q87**, the label question deferred on the 24 August call.
+**Our recommendation:** Confirm as recorded. It is the only option where cost and yield see the real numbers, and it removes a known mismatch between the coil family tree and the certificate. It costs more to build, which is why we are asking rather than assuming.
+
+---
+
 ## Q61
 
 **Register title:** Mid-run pass schedule change — alpha handling

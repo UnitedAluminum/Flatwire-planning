@@ -1,11 +1,11 @@
 # Flat Wire Mill — Decided Questions and Answers
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 23, 2026 — **`Q60` and `Q61`: `Spool`/`SpoolCarrier` swapped, then `SpoolConfiguration` merged into `Spool`.** The material table is `SpoolProcessing`; the article is `Spool` and now carries its own size limits. **The object baseline moves to 33 tables · 55 FKs** (`[DBD §6.2]`). ⚠ **A stale `Spool` reference is *silently wrong*, not obviously stale.** *(previously August 23, 2026 — **`Q60` added: `Spool` and `SpoolCarrier` are swapped.** The material table is now `SpoolProcessing` and `Spool` is the reusable stencilled article in `01_Lookup`; the naming convention that was missing is written down as `[DBD §6.2a]`. ⚠ **A swap makes a stale reference silently wrong rather than obviously stale** — read that entry before trusting any pre-23-Aug `Spool` citation. The Decision Index was also brought level with its own total, having been three rows behind since 22 Aug. *(previously August 22, 2026 — **`Q57` and `Q58` added: two questions raised and decided the same day**, from [`RodOrderAllocation.md`](../LatestDocument/RodOrderAllocation.md). Both are **alpha-identity** decisions and both were settled against the schema rather than by preference: `Q57` puts FL1 segment alphas and FL2 coil identities in **one namespace** because the generator cannot see `FlatWireDB` and a local counter would issue the same string twice; `Q58` **keeps `CoilAlpha`** and renames only `SharedCoilNo`, because making the shared identity the sole one would have coupled coil creation to a cross-database call. *(previously August 18, 2026 — `Q68` carries a supersession note — `D-32` (there is no shared-schema migration) keeps the 30 Jul timing answer and moves the status to the local rod record)*)*)*
+**Last Updated:** August 26, 2026 — ⚠ **`GenerateCoilAlpha`'s six-character root is the exclusion sweep's `LIKE` filter, NOT the string the suffix is appended to.** A seven-character input returns a **child** (`R00002A` → `R00002AA`), verified on the live instance; the recorded reason for rejecting segment-rooted alphas — *"returns a sibling of the segment"* — was **false**. The verdict is unchanged and now rests on **collision**: `R00002AA` is also suffix 27 of the rod-rooted sequence. Ceiling corrected **26 → 702** — `Q89`'s dangling `Q93` citation repointed to `OI-135`, since `Q93` was withdrawn the same day. *(previously August 23, 2026 — **`Q60` and `Q61`: `Spool`/`SpoolCarrier` swapped, then `SpoolConfiguration` merged into `Spool`.** The material table is `SpoolProcessing`; the article is `Spool` and now carries its own size limits. **The object baseline moves to 33 tables · 55 FKs** (`[DBD §6.2]`). ⚠ **A stale `Spool` reference is *silently wrong*, not obviously stale.** *(previously August 23, 2026 — **`Q60` added: `Spool` and `SpoolCarrier` are swapped.** The material table is now `SpoolProcessing` and `Spool` is the reusable stencilled article in `01_Lookup`; the naming convention that was missing is written down as `[DBD §6.2a]`. ⚠ **A swap makes a stale reference silently wrong rather than obviously stale** — read that entry before trusting any pre-23-Aug `Spool` citation. The Decision Index was also brought level with its own total, having been three rows behind since 22 Aug. *(previously August 22, 2026 — **`Q57` and `Q58` added: two questions raised and decided the same day**, from [`RodOrderAllocation.md`](../LatestDocument/RodOrderAllocation.md). Both are **alpha-identity** decisions and both were settled against the schema rather than by preference: `Q57` puts FL1 segment alphas and FL2 coil identities in **one namespace** because the generator cannot see `FlatWireDB` and a local counter would issue the same string twice; `Q58` **keeps `CoilAlpha`** and renames only `SharedCoilNo`, because making the shared identity the sole one would have coupled coil creation to a cross-database call. *(previously August 18, 2026 — `Q68` carries a supersession note — `D-32` (there is no shared-schema migration) keeps the 30 Jul timing answer and moves the status to the local rod record)*)*)*)*
 
 **Scope:** MVP-1
 **Status:** Closed decisions — reference record
-**Total Decisions:** 30 (**25 client-facing**, indexed below; 5 internal-design, body only) · **Decision window:** Apr 28 → Aug 23, 2026
+**Total Decisions:** 32 (**25 client-facing**, indexed below; 7 internal-design, body only) · **Decision window:** Apr 28 → Aug 26, 2026
 
 ---
 
@@ -70,6 +70,8 @@ The priority deadlines the e-mail set are **superseded** — it worked to a July
 | 83 | Die life tracking **⚠ bands in scope; per-tool mechanism is not** | `Shopfloor` | Medium | Tim O. / Maintenance | May 4, 2026 |
 | 84 | `ITInhibit` is line-scoped | `Shopfloor` | High | Tim O. / Engineering | Aug 4, 2026 |
 | 85 | FM2 has three stands, `S1` = 8″ | `Shopfloor` | Critical | Tim O. | Aug 4, 2026 |
+| 88 | Two identities on a welded coil — the form they take | `Shopfloor` | High | Nagarro (internal design) | Aug 26, 2026 |
+| 89 | Each rod's share of a welded coil as its own coil record | `Shopfloor` | High | IT / Quality | Aug 26, 2026 |
 
 **22 are `Shopfloor` scope; 3 are `Other`** (`Q80`, `Q66`, `Q67` — adjacent modules, retained because they were answered in the same client sessions).
 
@@ -676,9 +678,11 @@ and the five child foreign keys named `FK_<child>_Spool` were renamed to `FK_<ch
 so no constraint name claims the wrong parent. `CHANGELOG.md` entries written before 23 Aug 2026 keep
 the old names by design.
 
-**Verified, not asserted.** Teardown → `RunAll` → `RunAll` → seed → `RunAll_MVP2` on LocalDB:
-**34 tables · 57 FKs · 69 index statements · 2 procedures · 1 trigger · 212 seed rows · 0 empty
-tables**, idempotent on re-run. Every figure is **identical to the pre-rename baseline**, which is
+**Verified, not asserted — measured 23 Aug 2026, and superseded since.** Teardown → `RunAll` →
+`RunAll` → seed → `RunAll_MVP2` on LocalDB:
+**34 tables · 57 FKs · 69 index statements · 2 procedures · 1 trigger · 212 seed rows · 0 empty tables as measured on 23 Aug 2026, all since superseded**, idempotent on re-run. *(The chain includes `RunAll_MVP2`, which is why the procedure
+count is 2 where the MVP-1 baseline is 1. The `SpoolConfiguration` merge later that day and `Q89`'s
+index on 26 Aug have moved the first three figures — `[DBD §6.2]` is the live baseline.)* Every figure is **identical to the pre-rename baseline**, which is
 what a pure rename must produce and is the evidence that it was one.
 
 Related: **`Q86`** (the `SpoolConfiguration` merge that followed), **`Q42`** (the `SpoolNo` format, still open), **`Q58`** (the rename-only precedent),
@@ -703,7 +707,7 @@ information.
 > columns. The three `CK_SpoolConfig_*` range checks are carried over as `CK_Spool_Weight` /
 > `_CoreDiam` / `_OuterDiam`.
 >
-> **New baseline: 33 tables · 55 FKs · 69 index statements · 1 procedure · 1 trigger · 210 seed rows**
+> **New baseline as at 23 Aug 2026: 33 tables · 55 FKs · 69 index statements · 1 procedure · 1 trigger · 210 seed rows** — the index count became **70** with `Q89` on 26 Aug 2026; `[DBD §6.2]` is the live baseline
 > *(seed rows became **251** on 23 Aug 2026 when the article registry was seeded at its real size —
 > 45 rows, `SP-0001`…`SP-0045` — replacing four placeholders; object counts unchanged)*
 > (`[DBD §6.2]`, and `[DEP §4.2]`'s gate moved to `V1`=33 / `V2`=55). **Index statements did not move**
@@ -738,11 +742,90 @@ was mechanically clean; but it carried the **only recorded dimensional bounds fo
 before, and making them enforceable under cover of a schema tidy-up would be new behaviour. Read with
 **`OI-66`** (the OD → weight conversion).
 
-**Verified, not asserted.** Teardown → `RunAll` → `RunAll` → seed → `RunAll_MVP2` on LocalDB:
-**33 tables · 55 FKs · 2 procedures · 1 trigger · 210 seed rows · 0 empty tables** *(seed rows now **251** — see the note above)*, idempotent on
+**Verified, not asserted — measured 23 Aug 2026.** Teardown → `RunAll` → `RunAll` → seed →
+`RunAll_MVP2` on LocalDB:
+**33 tables · 55 FKs · 2 procedures · 1 trigger · 210 seed rows · 0 empty tables, measured 23 Aug 2026** *(the chain
+includes `RunAll_MVP2`, hence 2 procedures against an MVP-1 baseline of 1)* *(seed rows now **251** — see the note above)*, idempotent on
 re-run, and `[DEP §4.2]`'s gate passes as rewritten.
 
 Related: **`Q60`** (the swap this followed), **`Q42`** (the `SpoolNo` format — still open, and the
 reason `SpoolId` is nullable), **`OI-66`**, **`OI-120`**, `[DBD §6.2]`, `[DBD §6.2a]`.
+
+---
+
+**Q88** · `High` · Owner: Nagarro (internal design) · `Decided Aug 26, 2026`
+**Does a welded coil carry the client's derivational alpha form, or two alphas per se?**
+
+**Asked:** the client stated that the welded coil in the shipped run does **not** get a single alpha — *"two alpha will be maintained from `R00002A` and `R00001C`"*. Their own planner names such a stop `R00002AA - R00001CA`, appending a per-spool stop letter to each segment alpha. So the question was whether *"two alphas"* means their derivational strings, or two alphas by any construction.
+
+> **Decision (August 26, 2026): two alphas *per se*. The client's `segmentAlpha + AlphaLetter(stopIndex)` scheme is not adopted in any capacity — not stored, and not rendered.**
+>
+> **Every flat wire alpha, at every hop, comes from `CommonDB.dbo.GenerateCoilAlpha` and nothing else.** No local counter, no derivational suffix, no letter appended to a parent string — not in the database, not in a service, not in a label renderer, not in a report. `AlphaLetter`, `stopAlphaCounter` and `alphaIndex` are **analysis artifacts**; nothing implements them.
+
+**Four objections to the derivational form, the first three from the client's own analysis.** *(1)* The stop letter indexes *"which stop of this spool"*, not *"which coil from this alpha"* — every part in one stop shares it. *(2)* It is **ambiguous by construction**: `R00001A`+`A` and `R00001`+letter 27 both render `R00001AA`, so the string does not decompose. *(3)* That becomes a real **duplicate** past 26 segments. *(4)* A locally-minted string is **invisible to the generator's sweep**, so nothing stops a finished coil taking it.
+
+⚠ **The shipped run's `R00004AB` with no `R00004AA` is EVIDENCE of the mechanism, not a defect** — the source calls it *"correct behaviour, not a defect"*, because `R00004A`'s material appears only in its spool's second stop. Do not cite it as a defect.
+
+**One consequence, stated because it will look like a divergence.** The delivered strings match neither the client's sentence nor their workbook: their sheet shows `R00002AA - R00001CA` and ours shows two rod-rooted generator mints. **The rendered label is a JOIN of generated alphas, never a construction** — a renderer that builds a suffix reintroduces the rejected scheme by the back door.
+
+**Rejected:** carrying the literal form as a display string alongside the stored alphas. It would require a second alpha mechanism to exist somewhere, which is exactly what the single-source rule forbids.
+
+> ### ⚠ NARROWED 26 August 2026 — read this before citing `Q88` against the client's *shape*
+>
+> **The decision above stands as written, and its disposition does not change.** What changed is that
+> two of its four objections stopped applying, because the shape is now **generated** rather than built.
+>
+> **Still rejected — BUILDING the string locally.** A locally assembled alpha is invisible to
+> `GenerateCoilAlpha`'s sweep, so nothing stops a finished coil taking it. That was objection (4), the
+> decisive one, and it is untouched. `AlphaLetter`, `stopAlphaCounter` and `alphaIndex` remain
+> analysis artifacts that **nothing implements**.
+>
+> **Now adopted — GENERATING the same shape.** `GenerateCoilAlpha('R00002A','')` returns
+> **`R00002AA`**: the client's own form, emitted by the single-source generator, therefore swept and
+> unique. Objections (1) and (4) fall to that — the generator numbers per **segment** and will not
+> reissue, and the result is in the sweep by construction.
+>
+> **Objections (2) and (3) were never objections to the form.** *Nineteen characters* and
+> *"`CoilAlpha` is a unique scalar"* are objections to storing the **compound** string, which nothing
+> proposes: the compound stays a **render of two generated alphas**.
+>
+> ✅ **So the delivered strings now MATCH the client's sheet** — `R00002AA - R00001CA` — where the
+> original decision recorded that they would not. That reverses this entry's *"one consequence, stated
+> because it will look like a divergence"* paragraph, which readers should treat as superseded.
+>
+> Authority for the design is `[RodOrderAllocation.md §2.8]`; this note records only why `Q88` does not
+> contradict it. See **`OI-138`** — the registration writer it depends on is **not built**.
+
+Related: **`Q89`** (whether every alpha reaches the shared schema — decided the same day), **`Q57`** (one namespace, one generator), **`Q87`** (what the finished coil's label prints — still open), `D5`.
+
+---
+
+**Q89** · `High` · Owner: IT / Quality · `Decided Aug 26, 2026`
+**Must every part alpha exist in the shared schema (`proddb..coils`), or only the lead?**
+
+**Asked:** with `Q88` deciding that a welded coil carries one alpha per source rod, the question was where those alphas live. Two readings: **`R1`** — the shared schema keeps one `coils` row keyed on the lead part, the others staying local to `FlatWireDB`; or **`R2`** — every part alpha is its own `coils` row, weights split.
+
+> **Decision (August 26, 2026): `R2` — every part alpha gets its own `proddb..coils` row.** Weights are split from `CoilTraceability.SegmentWeightLb`, and `coil_gen_history` gains **one correctly-parented row per alpha**.
+>
+> ⚠ **AMENDED the same day: one alpha per source SEGMENT, not per source ROD.** The cardinality is
+> unchanged in every case the design admits — a coil part *has* one segment and one rod — but the
+> **mint root** moved: a part is minted off `SourceSegmentAlpha`, falling back to the rod only where
+> that is `NULL`. ⚠ **`coil_gen_history` still records the ROD as parent**, because it and
+> `coil_link_master_coil` group on `SUBSTRING(coil_no,1,6)`, which is the rod either way. So
+> `OI-113` closes exactly as described below. ⛔ **What did change is every coil alpha's SHAPE**, single-rod
+> coils included: `R00001D` became `R00001AA`. See `[RodOrderAllocation.md §2.8]` and **`OI-139`**, which
+> asks whether FL2-standalone has any root at all.
+
+**Two open items close with it.** **`OI-113`** — the shared genealogy holding one parent per coil — closes because each part alpha is its own `child_coil_no`, so `ins_coil_gen_history`'s per-child guard permits one row each and the shared tree stops disagreeing with `CoilTraceability`. ⚠ **Conditional: each alpha must carry its OWN parent rod.** One shared primary rod for all N would say *"this rod produced N coils"*, which is not multi-rod genealogy. **`OI-128`** closes because every alpha now sits in the shared schema and is therefore swept by the generator, so a third-party minter can no longer reissue one.
+
+**`D6`'s *"real loss of fidelity"* is repaired.** Cost and yield see per-rod weights, which is what **`Q6`** already recommends: *"footage-based split at the weld point, not dominant-rod attribution … dominant-rod attribution makes a certificate assert that material came from a rod it did not."* The weights already existed — `SegmentWeightLb`, whose DDL comment attributes it to the client asking *"how many pounds for each alpha"* on 20 Aug 2026.
+
+**⚠ Two arguments made against `R2` before this decision were wrong, and are recorded so they are not made again.** *(1)* *"`ins_coil_gen_history`'s guard forbids it"* — the guard is `WHERE child_coil_no = @ChildCoil`, **per child**; N distinct children pass N independent tests. It only ever blocked one child with many parents. *(2)* *"`proddb..coils` cannot take a multi-row insert"* — `C4` forbids a **set-based** insert because `coils_iud_tg` gates on `@ins_count = 1`, but an `AFTER` trigger fires **once per statement**, so N single-row inserts fire it N times correctly. `D2`'s *"Forced by C4"* is an inference beyond what the trigger requires.
+
+**What it costs, accepted rather than hidden.** §1.4's *"strictly additive"* framing is withdrawn and **Phase 9's shared write-back reopens**: `FR-512` is **deleted** — its primary-rod clause exists solely to collapse N→1 — and `FR-509`–`FR-518` are re-specified, with `FR-518`'s *"shall not create a second coil"* colliding head-on. **`FR-335` and four `[CONFIRMED]` sections of `OutputCoilCompletion.md` need client re-sign-off.** The retry contract widens from `@expectedCoilNo CHAR(9)` to a set, carried by a new `CoilTraceability.SharedWrittenAt` column — **one column, not a new table**, because `ChildAlpha` already stores the N alphas.
+
+**Two resolutions that made it tractable.** The skid guards are driven off **`@skidAssignment`** — the operator's *1 of 2 / 2 of 2* declaration — rather than row counts, which `D11` already does for `IsComplete`; this is safe because `C12` states *"all integrity is in triggers and procedures"* and both skid tables carry no PK, FK or CHECK. That also **sidesteps `OI-114`**, whose `skid_coil_seq_no` column is `int NULL`, unconstrained, and written `NULL` by one of the writers `OI-114` names.
+
+Related: **`Q88`** (two alphas per se — decided the same day), **`Q87`** (whether the label prints one alpha or two — **still open, and the same question one layer up**), **`Q6`** (footage-based split), **`OI-135`** (the **702**-suffix budget now divides by N — raised as `Q93` and withdrawn to the `OI` register the same day, so cite `OI-135`), **`OI-113`**, **`OI-128`**, **`OI-114`**, `D6`, `D11`, `C12`.
 
 ---

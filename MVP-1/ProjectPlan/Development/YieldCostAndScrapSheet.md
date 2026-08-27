@@ -165,7 +165,7 @@ column is additive with no double-counting.
 > rung 4 carries the 20 FE for the form), which is the correct basis for the *effort* either way — both rungs are in the
 > same phase, so the total is unaffected. It is the **descope decision** that breaks. Resolve before the W6 call: either
 > move those two criteria to a rung-4 story or restate rung 3 as including the form. Raised 13 Aug 2026 — see
-> [`YieldCostAndScrapJiraStories.md`](./YieldCostAndScrapStories.md) `FW-101`.
+> [`TaskBreakdown.md`](TaskBreakdown.md) §7 · S3 · Phase 12, `FW-101`.
 
 **Rung 3 is the one to argue about.** It is the only `High`-priority story in the ladder's first five rungs, and the
 consequence — yield not attributed per source rod — lands on the **welding-wire customer certificates**, which are an

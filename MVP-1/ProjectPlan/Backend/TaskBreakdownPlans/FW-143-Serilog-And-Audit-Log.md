@@ -1,9 +1,9 @@
 # FW-143 · Serilog structured logging and the audit log
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — `G2`/`OI-39` dated to before T2 (`[TRP §6]` blocker 3) *(first issue, same day)*
+**Last Updated:** August 27, 2026 — ✅ **BUILT** (§6), and `P-73` minted: the *"controllers log nothing"* item is closed by ONE `UseSerilogRequestLogging` registration rather than fourteen edits. **The 25 Aug Console-sink finding is closed** - `appsettings.Development.json` had no `Serilog` section at all. ⚠ **`P-15` is unchanged and still open.** Earlier the same day: corrected against the built code and the current registers: **`P-15`'s "29th table" is stale** (the baseline is 33, so a new table is the **34th** — it survived both count sweeps because no sweep greps an ordinal), the **log path in §2 contradicted §8 of this same document** (`E:\Instance\…` against the delivered `C:\inetpub\…`), the `[SVC §3.4a]` banner claimed four divergences none of which is this story's, the `P-##` preamble was eleven stories behind, §6 asserted a Console sink §8 says does not exist, and the *"worth registering as a gap"* action had sat undone for twelve days. Earlier: August 15, 2026 — `G2`/`OI-39` dated to before T2 (`[TRP §6]` blocker 3) *(first issue, same day)*
 **Document Type:** Implementation plan for a single backlog story
-**Status:** Ready to build — **the audit half has no persistence target (§5, `P-15`)**
+**Status:** ✅ **BUILT 27 Aug 2026** (§6) — Serilog, correlation, request logging and `IAuditLog` all land. ⚠ **The audit half still has no persistence target (§5, `P-15`)**, so AC 3 is structurally met and materially not
 **Owner:** Backend (.NET) stream
 **Audience:** The .NET developer building `FW-143`
 **Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
@@ -19,6 +19,18 @@
 > it needs a decision before the story can be finished, not while it is being closed.
 
 ---
+> ### ⚠ Coding standard — read `[SVC §3.4a]` before writing code
+>
+> The repository C# standard binds every `.cs` file here, and `[SVC §3.4a]` records **four standing
+> divergences** so they are not re-litigated in review. ⚠ **None of the four is this story's** — they
+> are `FW-138`'s and `FW-N04`'s (the `FlatWireResult<T>` envelope `P-56`, the explicit per-action
+> routes `P-04`, the retained `#region` blocks, and the fourteen canonical enums `P-58`). Read them,
+> do not re-argue them, and do not expect to implement them here. **What this story owns is its own
+> item:**
+>
+> ⚠ **The controllers log NOTHING today** — the standard's *"are failures always observable?"* is
+> unmet, and that includes the `422`s and the `201`/`Blocked` path. This story owns closing it.
+
 
 ## 1. The story
 
@@ -57,7 +69,7 @@ From `[TB §7]` — verbatim:
 |---|---|
 | Host wiring | `builder.Host.UseSerilog(...)` — **`CoilCheckin` does not have this**; `UATemplate` does and `FW-N04` step 6 kept it |
 | Configuration | Inherited UAL shape: `MinimumLevel` + overrides, `File` sink (compact JSON, daily rolling, `retainedFileCountLimit` 100), `GrafanaLoki` sink, enrichers `FromLogContext` · `WithMachineName` · `WithThreadId` · `WithProcessId` |
-| Paths | `E:\Instance\Logs\FlatWire\log-.json`; Loki label `app` = `FlatWire.API` — `FW-N04` step 7 |
+| Paths | **`C:\inetpub\UAL\Logs\FlatWire\log-.json`**; Loki label `app` = `FlatWire.API` — `FW-N04` step 7. ⚠ *This row said `E:\Instance\Logs\FlatWire\` until 27 Aug 2026, contradicting §8 of this same document. Read off the delivered `appsettings.json`; the folder is **admin-only and absent on a developer machine**, which is exactly why §8's Console-sink finding exists* |
 | Correlation | **`X-Correlation-Id` echoed back on every response and stamped on every log line** (`[API §1.4]`, `phase-01b` L88). The inherited `CorrelationIdMiddleware` takes the header name and the log-property name as constructor arguments |
 | Enrichment | `.Enrich.WithProperty(ApplicationContext, ScopeName)` and `.Enrich.FromLogContext()`, as `UATemplate` does |
 
@@ -102,19 +114,21 @@ Not everything here needs a new store:
 
 ## 4. Build order
 
-1. Confirm `UseSerilog` from `FW-N04`; add enrichers and the sink configuration.
-2. Verify the correlation id round-trips: inbound header → log property → response header.
-3. **Settle `P-15`** before writing the audit sink.
-4. Write the audit writer behind an interface — `IAuditLog` — so the destination in `P-15`
-   can change without touching call sites.
-5. Wire the three PLC sinks and the override sink, **before-the-push** per `FR-072`.
-6. Prove the query path for whichever destination `P-15` chooses.
+1. ✅ Confirm `UseSerilog` from `FW-N04`; add enrichers and the sink configuration. **The missing piece was a Console sink for Development** (§8) - `appsettings.Development.json` had no `Serilog` section, so one was created with all three sinks.
+2. ✅ Verify the correlation id round-trips: inbound header → log property → response header. **Measured end to end.**
+3. ⚠ **Settle `P-15`** before writing the audit *destination*. **STILL OPEN** - step 4 was built behind the interface precisely so this did not block the story.
+4. ✅ Write the audit writer behind an interface — `IAuditLog` — so the destination in `P-15`
+   can change without touching call sites. **`SerilogAuditLog` is the interim; the class name says so.**
+5. ✅ Wire the three PLC sinks and the override sink, **before-the-push** per `FR-072`. ⚠ **The methods exist and have no callers yet** - `FW-151` calls them from `PLCTagService`, which is this story's §1.2 out-of-scope row.
+6. ⛔ Prove the query path for whichever destination `P-15` chooses. **BLOCKED on step 3.**
 
 ---
 
 ## 5. Decisions this plan makes
 
-> `P-##` is continuous across this folder; `P-01`–`P-14` precede this story.
+> `P-##` is continuous across this folder; `P-01`–`P-14` precede this story, and the register now
+> runs to `P-73`. New decisions mint at `P-74`+. The register of record is
+> [`Orchestration.md`](Orchestration.md).
 
 ### `P-15` — the audit log needs a persistence target, and none exists
 
@@ -130,7 +144,7 @@ Three options, with the recommendation first:
 
 | Option | Cost | Consequence |
 |---|---|---|
-| **A new `PlcTagAudit` table in `FlatWireDB`** *(recommended)* | A 1C schema change — **it would be the 29th table** | Queryable by run and operator as written; inside the same backup and retention envelope as the traceability it supports. Changes the object baseline, so `[DBD §6.2]` and every count citing it move together |
+| **A new `PlcTagAudit` table in `FlatWireDB`** *(recommended)* | A 1C schema change — **it would be the 34th table** *(`[DBD §6.2]`; this row said "the 29th" until 27 Aug 2026)* | Queryable by run and operator as written; inside the same backup and retention envelope as the traceability it supports. Changes the object baseline, so `[DBD §6.2]` and the three sites permitted to restate it move together |
 | Loki + a saved query | none | Satisfies "logged", not "queryable by run". Retention is the log platform's, not the database's — a weak basis for *"reconstructed after the fact"* |
 | Reuse `PassScheduleChangeLog` | none | Wrong grain. It is the schedule's change history, not a record of what was pushed to a controller, and MVP-1 does not author schedules |
 
@@ -139,7 +153,36 @@ story — `FW-N04` and this plan both hold that the DDL is 1C's. Until it is dec
 behind `IAuditLog` (step 4) so the choice is one implementation, not a refactor.
 
 ⚠ This is the same defect class as `G34` (wire break — *"a decided flow with **no
-persistence target**"*). Worth registering as a gap on the same basis.
+persistence target**"*).
+
+### `P-73` — close *"the controllers log nothing"* with request logging, not per-action logging
+
+**Built 27 Aug 2026.** The banner item — *"the controllers log NOTHING today … that includes the
+`422`s and the `201`/`Blocked` path"* — is closed by **one** `UseSerilogRequestLogging` registration
+rather than by adding logging to fourteen controllers.
+
+**Why:** fourteen controllers is fourteen places to forget, and it would not cover endpoints not yet
+written. One request-completed event per request covers all 22 endpoints now and every future one
+automatically, and it is the only way the `401`s are observable at all — those never reach a
+controller.
+
+⚠ **No sibling service in `ual-api` uses `UseSerilogRequestLogging`, so this is a divergence.**
+`Serilog.AspNetCore` is already a `PackageReference`, so nothing new is taken on.
+
+**Two details that are load-bearing:**
+
+- **It registers AFTER `CorrelationIdMiddleware`.** Reversed, the request-completed event is the one
+  line in the log that cannot be tied to its own request.
+- **4xx logs at `Warning`, 5xx and unhandled exceptions at `Error`.** Left at `Information` a wall
+  of failed validation reads as normal traffic; raised to `Error` a client mistake pages someone.
+
+⚠ **The gap was NOT registered, and that is now a decision rather than an oversight.** This plan
+said *"worth registering as a gap on the same basis"* and nothing was done for twelve days.
+**`P-15` is the tracking home** — it is carried as `⚠ open` in
+[`Orchestration.md`](Orchestration.md)'s register, one of only two entries there that are not
+`settled`, so the finding is tracked and a second home would split it. **If it is promoted to the
+gaps register it mints at `G55`** (`G54` is the highest as of 27 Aug 2026). Promote it if 1C needs
+it on their board; do not create both.
 
 ---
 
@@ -147,9 +190,33 @@ persistence target**"*). Worth registering as a gap on the same basis.
 
 **No automated tests** — `[TS §1.2]`. Verified in the QA0 manual walkthrough.
 
+> ### ✅ Executed 27 Aug 2026 — results
+>
+> Built on `ual-api` branch `feature/flat-wire`. **0 errors; no warning in any file this story
+> touched** (13 remain solution-wide, all pre-existing).
+>
+> **Steps 1, 2, 4 and 5 are done. Step 3 (`P-15`) is NOT settled and step 6 stays blocked on it.**
+>
+> | Check | Result |
+> |---|---|
+> | **Console sink** — §8's finding, open since 25 Aug | ✅ **Closed.** `appsettings.Development.json` had no `Serilog` section at all, so one was created carrying all three sinks. The service now logs where a developer can see it |
+> | **Correlation round-trip** | ✅ An inbound `X-Correlation-Id: SMOKE-CORR-12345` came back on the response **and** appeared on that request's log line. Requests without one get a generated GUID |
+> | **Controllers log nothing** — the banner's item | ✅ **Closed for all 22 endpoints at once** by `UseSerilogRequestLogging` (`P-73`), not by editing fourteen controllers. Measured: `GET /run/active responded 401 in 2.1595 ms` at `[WRN]` |
+> | 4xx is findable but not an incident | ✅ 401 and 404 both logged at **`[WRN]`**; 5xx and unhandled exceptions at `[ERR]` |
+> | **`FR-072`** — record written *before* the push | ✅ Every sink is an `Attempted` record then an outcome record. Verified against a forced failure |
+> | **`G2`** — compensating clear, not rollback | ✅ A failed push leaves **three** records — attempt, `Failed`, then the compensating `PlcTagsCleared` |
+> | **AC 3** — queryable by run and by operator | ⚠ **Structurally satisfied, materially NOT.** `RunAlpha` and `OperatorId` are captured as **structured Serilog properties**, filterable in-process — a filter on `RunAlpha=RUN-0042` returned 4 records and `OperatorId=op.jsmith` returned 2. **But the destination is a rolling file and Loki**, neither inside `FlatWireDB`'s backup and retention envelope. **`P-15` is unchanged and still open** |
+> | Unattributed record | ✅ Logs a **`[WRN]`** naming AC 3 and still writes the record as `(unknown)` — losing the record would be worse than an unattributed one |
+>
+> **What is deliberately not built:** the `PlcTagAudit` table. It is 1C's (`P-15`), and creating it
+> here would be this story writing DDL that `FW-N04` and this plan both place with 1C.
+>
+> **`IAuditLog` has no callers yet** — `FW-151` wires `PLCTagService` to it, and the four sink
+> methods exist so that story has something to call. That is the intended state, not an omission.
+
 | AC | How it is checked |
 |---|---|
-| Serilog wired | Console and file sinks produce structured JSON; the Loki labels are right |
+| Serilog wired | File and Loki sinks produce structured JSON; the Loki labels are right. ⚠ **This row said *"Console and file"* until 27 Aug 2026 and there is no Console sink** — see §8. Adding one to `appsettings.Development.json` is part of this story, so check for it rather than assuming it; on a developer machine it is the **only** sink that will be visible |
 | Correlation | One request end-to-end: the inbound `X-Correlation-Id` appears on **every** log line for that request and on the response |
 | Audit entries | A simulated PLC push (`SimulatePLCTagPush = true`) writes tag, value, operator and result — **and writes them before the push**, provable by forcing a failure and finding the record |
 | Queryable by run and operator | **Blocked on `P-15`** |
@@ -172,7 +239,22 @@ the tag map. `[MON]` consumes the output.
 | Item | Effect here |
 |---|---|
 | **`P-15`** | AC 3 cannot be met. The one thing to settle before closing the story |
+| **No Console sink is configured** *(new, 25 Aug 2026)* | ⚠ **What `FW-N04` delivered logs nowhere a developer can see.** *(§6's check used to assert *"Console and file sinks"* as though the Console one existed; corrected 27 Aug 2026 to say it must be added.)* `appsettings.json` declares **two** sinks and neither is visible on a developer machine: a **File** sink at `C:\inetpub\UAL\Logs\FlatWire\` (admin-only, and the folder does not exist locally) and **GrafanaLoki** at a dev server. The service therefore logs **nowhere visible** in development, which is not a cosmetic problem: it made `FW-139`'s log-based acceptance criteria unperformable, and they could only be evidenced by injecting `Serilog__WriteTo__2__Name=Console` at run time (`FW-139 §6.1`). **`Serilog.Sinks.Console` is already a `PackageReference` and its assembly is already in `bin`** — the fix is a Console sink in `appsettings.Development.json`, and nothing more. ⚠ **Re-checked 27 Aug 2026 and still unfixed:** `appsettings.Development.json` has **no `Serilog` section at all**, so there is nothing to merge a sink into — the section has to be created. `appsettings.json` still declares exactly the two sinks named above |
 | **`G2` / `OI-39`** | Check-in is not one ACID transaction — Critical, and **`[TRP §6]` blocker 3 dates it *before T2***. The audit trail is what makes a compensating recovery reconstructable, so this story is part of `G2`'s mitigation |
 | **`G33` / `PLC-Q05`** | The measure segment of all 41 tag paths is ours. **A wrong path fails silently — the write reports success while the line keeps its previous settings.** The audit record will faithfully record a successful write that did nothing; do not read a green audit trail as proof the line was configured |
 
-No stale citations found in this story's card.
+**The story card itself carries no stale citation** — its four `[TB §7]` lines all still resolve.
+**This document did**, and the five are corrected in place rather than left to be re-found:
+
+| Stale | Correct | Where |
+|---|---|---|
+| `P-15`: a new audit table *"would be the **29th**"* | **the 34th** (`[DBD §6.2]`) | §5 |
+| Log path `E:\Instance\Logs\FlatWire\log-.json` | **`C:\inetpub\UAL\Logs\FlatWire\log-.json`** — and §8 already said so | §2 |
+| *"`[SVC §3.4a]` records the four standing divergences … **what this story owns**"* | **none of the four is this story's**; they are `FW-138`'s and `FW-N04`'s | banner |
+| *"`P-01`–`P-14` precede this story"* | true, but the register runs to **`P-72`**; mint at `P-73`+ | §5 |
+| §6: *"**Console** and file sinks produce structured JSON"* | **there is no Console sink** — §8's finding, still open | §6 |
+
+⚠ **Why the "29th" survived two count sweeps**, and it is the same failure that left `FW-142`
+carrying a `28`: both sweeps grep for the *figures* (`"28 tables"`, `"34 tables"`, `"57 FK"`) and an
+**ordinal is not a figure**. A count can hide in prose as *"the 29th"*, *"one more than"* or *"the
+last of the"* and pass every gate. When the baseline next moves, grep the ordinals too.

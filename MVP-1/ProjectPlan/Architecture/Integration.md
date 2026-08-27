@@ -116,7 +116,7 @@ Script constraints worth knowing before running it: `machines.machine_idx` is **
 
 ## 8.0 Check-in write-back — FL1/FL3 rod check-in
 
-**§8's table names four shared touchpoints at check-in and until 19 Aug 2026 there was no procedure, script or code for any of them** — `FR-077` had been unimplementable since it was written. This section is the opening bracket of the run; §8.1 is the closing one. Story **`FW-220`**, requirements **`FR-519`–`FR-528`**, procedures **`united_db.dbo.FlatWire_CheckInRod`**, **`FlatWire_ReleaseStation`** and **`FlatWire_ReverseReqsum`** ([`Database/Scripts/`](../Database/Scripts/)).
+**§8's table names four shared touchpoints at check-in and until 19 Aug 2026 there was no procedure, script or code for any of them** — `FR-077` had been unimplementable since it was written. This section is the opening bracket of the run; §8.1 is the closing one. Story **`FW-220`**, requirements **`FR-519`–`FR-528`**, procedures **`FlatWireDB.dbo.FlatWire_CheckInRod`**, **`FlatWire_ReleaseStation`** and **`FlatWire_ReverseReqsum`** ([`Database/Scripts/`](../Database/Scripts/)). ⚠ **Change `[H]` (26 Aug 2026) moved the procedure into `FlatWireDB`. The transaction model is UNCHANGED** — same instance, one `SqlConnection` and one `SqlTransaction` under the **local** transaction manager, no MSDTC. Only the procedure's home moved; every shared table it reads and writes stayed exactly where it was.
 
 > ⚠ **`D-32` still holds and this section does not weaken it.** Every write below lands in a column that **already exists**. No column is renamed, no column is added, no status vocabulary gains a value — the one new status-shaped value considered, `INFLAT` in `wip_log.coil_skid_status`, was **rejected** for exactly that reason and `INROLL` reused instead.
 
@@ -185,9 +185,9 @@ segment and to a finished coil.
 
 | | |
 |---|---|
-| Direction | **Read** (a scalar function call). No shared table is written |
+| Direction | ⛔ **Read AND WRITE since `[N]` (26 Aug 2026).** *Was: "**Read** (a scalar function call). No shared table is written."* The mint is still a read, but **`FW-231` now writes one `proddb..coils` row per segment alpha** — that registration is what lets the ignore list go. ⚠ **The writer does not exist yet: `OI-138` / `G54`** |
 | Transaction | Same instance, **local transaction manager, no MSDTC** — the §8.0 pattern |
-| Ignore list | **Every** alpha already recorded for that rod in `SpoolTraceability`, not just this transaction's. The sweep covers the shared schema and finds those unaided; `FlatWireDB` is outside it. Cap `VARCHAR(500)` |
+| ⛔ ~~Ignore list~~ | **WITHDRAWN — every mint passes `''`.** *Superseded: "**Every** alpha already recorded for that rod in `SpoolTraceability`, not just this transaction's."* Registration replaces exclusion, and with it `F11`'s 500-character cap stops applying to flat wire |
 | Guards to replicate | the `' '` blank return, and the `UPDLOCK, HOLDLOCK` re-check — both already in `FlatWire_CompleteCoilOnSkid` |
 
 > ⚠ **FL1 spool completion can no longer be tested on LocalDB.** LocalDB has no `CommonDB`, so the mint
@@ -198,12 +198,22 @@ segment and to a finished coil.
 > `united_db`, `SlitterDB`, `wiplogdb` and, through a synonym, `CommonDB..coils`, which **is** the table
 > `FlatWire_CompleteCoilOnSkid` writes finished coils into (verified 22 Aug, `OI-125`). It takes **no locks**,
 > and that is structural: locking four databases from a scalar function would need a distributed
-> transaction. **It does not cover `FlatWireDB`**, which is why the ignore list is load-bearing — and why a
-> *third-party* caller can still be issued an alpha an FL1 segment holds (**`Q59`**, accepted and monitored).
+> transaction. **It does not cover `FlatWireDB`.**
+>
+> ⚠ **What follows from that changed on 26 Aug 2026.** This paragraph used to end: *"which is why the
+> ignore list is load-bearing — and why a third-party caller can still be issued an alpha an FL1 segment
+> holds (`Q59`, accepted and monitored)."*
+>
+> **`[N]` fixes the cause instead of compensating for it.** Registering every segment alpha in
+> `proddb..coils` puts them **inside** the sweep, so the ignore list is unnecessary **and** the
+> third-party exposure dissolves — `Q59` is resolved by construction rather than accepted. ⛔ **Both
+> depend on `FW-231`, which is not built** (`OI-138` / `G54`): until it ships the sweep still cannot see
+> FL1 segment alphas, so the exposure stands *and* a blank-list mint reissues `R00001A` on every spool.
+> **The two must ship together with `FW-230`.**
 
 ## 8.1 Run-end write-back — FL2/FL3 coil completion
 
-**Every touchpoint in §8 above is a check-in-time or one-time-seed write. This section is the other end of the run**, and until 18 Aug 2026 it did not exist: a completed flat wire coil was written only to `FlatWireDB`, so packing, shipping, certification, cost and yield could not see the finished goods at all. Story **`FW-219`**, requirements **`FR-509`–`FR-518`**, procedure **`united_db.dbo.FlatWire_CompleteCoilOnSkid`** ([`Database/Scripts/50_united_db_Proc_FlatWire_CompleteCoilOnSkid.sql`](../Database/Scripts/50_united_db_Proc_FlatWire_CompleteCoilOnSkid.sql)).
+**Every touchpoint in §8 above is a check-in-time or one-time-seed write. This section is the other end of the run**, and until 18 Aug 2026 it did not exist: a completed flat wire coil was written only to `FlatWireDB`, so packing, shipping, certification, cost and yield could not see the finished goods at all. Story **`FW-219`**, requirements **`FR-509`–`FR-518`**, procedure **`FlatWireDB.dbo.FlatWire_CompleteCoilOnSkid`** ([`Database/Scripts/50_FlatWireDB_Proc_FlatWire_CompleteCoilOnSkid.sql`](../Database/Scripts/50_FlatWireDB_Proc_FlatWire_CompleteCoilOnSkid.sql)). ⚠ **Change `[H]` (26 Aug 2026) moved the procedure into `FlatWireDB`. The transaction model is UNCHANGED** — same instance, one `SqlConnection` and one `SqlTransaction` under the **local** transaction manager, no MSDTC. Only the procedure's home moved; every shared table it reads and writes stayed exactly where it was.
 
 > ⚠ **`D-32` still holds and this section does not weaken it.** Every write below lands in a column that **already exists**. No column is renamed, no column is added, no status vocabulary gains a value. `D-32` cancelled the shared-schema *migration*; it never prohibited writing the shared schema as it stands, which is what §8's opening sentence has always required.
 

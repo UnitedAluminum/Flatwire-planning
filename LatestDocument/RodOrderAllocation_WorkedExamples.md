@@ -85,7 +85,7 @@ writes, atomically:
 |---|---|
 | `SpoolProcessing` | `Alpha` = `SP-#####` — the **material** identity |
 | `SpoolTraceability` | **one row per segment**: `SpoolAlpha`, `RodAlpha`, `SeqNo` (order material went *on*, 1 = first), `SegmentWeightLb`, `FootageFrom`/`To` (spool-local, half-open), `WeldEventId` (NULL on the first segment), and `ChildAlpha` |
-| `ChildAlpha` | minted by `CommonDB.dbo.GenerateCoilAlpha(rodAlpha, @ignoreList)`, the ignore list carrying **every** segment alpha already recorded for that rod in `SpoolTraceability` — `FlatWireDB` is outside the function's sweep |
+| `ChildAlpha` | ⛔ **now `CommonDB.dbo.GenerateCoilAlpha(rodAlpha, '')`** — a **blank** list; registration in `proddb..coils` replaces exclusion (`[N]`, 26 Aug 2026), and **`OI-138` is that the writer does not exist yet**. *Superseded:* minted by `CommonDB.dbo.GenerateCoilAlpha(rodAlpha, @ignoreList)`, the ignore list carrying **every** segment alpha already recorded for that rod in `SpoolTraceability` — `FlatWireDB` is outside the function's sweep |
 | `SpoolOrder` | one row per order the spool carries, `Source='Derived'` |
 | **The next carrier** | `S-26`–`S-31`. Typed and validated against the registered `Spool` articles (`SP-0001`…`SP-0045`). **A hard gate — the transaction cannot commit without it** |
 
@@ -103,7 +103,8 @@ Each stop completes as one `CoilOutput`:
 | Column | Value |
 |---|---|
 | `CoilAlpha` | `FW-#####-C##` — **local, `NOT NULL`, customer-facing.** `#####` is the **order**; `C##` is the coil sequence **within that order** |
-| `CoilNo` | `GenerateCoilAlpha(primaryRod, @ignoreList)` → `VARCHAR(9)` — the **shared-schema face**, `NULL` until the cross-database mint returns |
+| `CoilNo` | ⛔ **now `CommonDB.dbo.GenerateCoilAlpha(leadSegmentAlpha, '')`** — rooted on the **segment**, blank list; rod fallback where `SourceSegmentAlpha IS NULL` (`[N]`). *Was `(leadRod, @ignoreList)`.* → `VARCHAR(9)` — the **lead** part's alpha and the coil's one scalar shared face, `NULL` until the cross-database mint returns |
+| ⚠ **`ChildAlpha`** *(new, 26 Aug 2026)* | **One alpha per source SEGMENT** *(amended the same day — was "per source rod"; the cardinality is identical, the mint root is not)*, on each `CoilTraceability` row — `CommonDB.dbo.GenerateCoilAlpha(thatRod, @ignoreList)`. ⚠ **Every one is written to `proddb..coils`** with its own weight from `SegmentWeightLb` (`Q88`, `Q89`). A single-rod coil has exactly one, equal to `CoilNo` |
 | `OrderId` | scalar `NOT NULL` — **one coil, one order** |
 | `CoilTraceability` | one row per (rod, spool, **coil-local** half-open footage range) |
 
@@ -132,10 +133,15 @@ whole chain.
 | Reading | What it actually is | Created by |
 |---|---|---|
 | **The coils cut from a spool** | `FW-00421-C05`, `-C06` — a **sequence within the order**. Siblings, not children | Ordinary FL2 stop completion |
-| **A child in the *legacy* tree** | `CoilNo` `R00002D` shares the six-character root `R00002`, so `coil_link_master_coil` groups it under master `R00002`. The output coils are children **of the rod** | `GenerateCoilAlpha`'s root grouping — a consequence of `R#####` being exactly six characters |
+| **A child in the *legacy* tree** | `CoilNo` `R00002AA` shares the six-character root `R00002`, so `coil_link_master_coil` groups it under master `R00002`. The output coils are children **of the rod** | `GenerateCoilAlpha`'s root grouping — a consequence of `R#####` being exactly six characters |
 | **The mid-run child alpha** `…-C05-A` | A coil **split by a product-spec change** part-way through | `OQ-61` cases 2, 3 and 5 only — size/product-config change, edge-type change, roll-gap change to a new target |
 
-> **Stated outright: a weld does not mint a child alpha, and neither does an order boundary.**
+> **Stated outright: a weld does not mint a MID-RUN `-A` child alpha, and neither does an order
+> boundary.** ⚠ **Read "child alpha" strictly as the `…-C05-A` suffix in the third row of the table
+> above** — since 26 Aug 2026 a weld *does* mint an extra **part alpha** on `CoilTraceability`
+> (`Q88`), and that alpha *does* get its own `proddb..coils` row (`Q89`). Those are the second reading
+> in the table, not the third. **The two mechanisms are unrelated and the wording below is about the
+> third.**
 > Only `OQ-61` mints `-A`. A weld adds a **row to `CoilTraceability`**; an order boundary forces a
 > **cut between two coils**. Neither touches the identifier.
 
@@ -352,8 +358,15 @@ nothing joins the rods, **no spool spans a rod**:
 ### FL2 output
 
 Four full spools → **eight coils** of 900 lb, `FW-00421-C01` … `-C08`, running unbroken across the
-spools because `C##` is per **order**. `CoilNo` values: `R00001D`–`R00001G` from rod 1's spools,
-`R00002D`–`R00002G` from rod 2's. Every coil has exactly **one** `CoilTraceability` row. Four skids.
+spools because `C##` is per **order**. Every coil has exactly **one** `CoilTraceability` row. Four skids.
+
+⚠ **`CoilNo` values are no longer a flat run off the rod.** *Superseded:* *"`R00001D`–`R00001G` from
+rod 1's spools, `R00002D`–`R00002G` from rod 2's."* Under segment-rooting each coil is minted off **its
+own spool's segment**, so a full spool's two coils take the first two letters off *that segment*:
+segment `R00001A` yields `R00001AA` and `R00001AB`, segment `R00001B` yields `R00001BA` and `R00001BB`,
+and so on. **The shape, not the specific letters, is the thing to carry away** — which spool holds
+which segment is not stated in this example, and the letters must be read off the segment rather than
+copied from here.
 
 ### Fulfilment
 
@@ -420,10 +433,27 @@ next. Anything ordering by letter is wrong.
 
 The spool unwinds **last-on-first-off**, so `R00002A` comes off first.
 
-| Coil | `CoilAlpha` | primary | `CoilNo` | composition | `CoilTraceability` |
+| Coil | `CoilAlpha` | lead | part alphas — **each written to `proddb..coils`** | composition | rows |
 |---|---|---|---|---|---:|
-| 1 | `FW-00421-C05` | R00002 | `…('R00002','R00002A,R00002B,R00002C')` → **`R00002D`** | 900 lb, all `R00002A` | **1 row** |
-| 2 | `FW-00421-C06` | R00002 | same call; `R00002D` now swept → **`R00002E`** | 500 lb `R00002A` + **400 lb `R00001C`** | **2 rows** |
+| 1 | `FW-00421-C05` | `R00002A` | **one.** `GenerateCoilAlpha('R00002A','')` → **`R00002AA`** | 900 lb, all `R00002A` | **1 row** |
+| 2 | `FW-00421-C06` | `R00002A` | ⚠ **two, rooted on two different segments.** `GenerateCoilAlpha('R00002A','')` → **`R00002AB`** *(the lead — `R00002AA` is registered, so the sweep moves on)*, **and** `GenerateCoilAlpha('R00001C','')` → **`R00001CA`** | 500 lb `R00002A` + **400 lb `R00001C`** | **2 rows** |
+
+✅ **Both letters are now stated, and the cross-document warning that stood here is WITHDRAWN.**
+*Superseded:* *"The `R00001`-rooted letter is deliberately not stated. Across this document's single
+40,000 lb run, `R00001` has already spent letters on three segments and on the coils of spools 1 and 2
+— so it is **not** the `F` that §2.8's standalone trace would give. Recompute from the ignore list;
+never copy a letter between documents."*
+
+**Segment-rooting made the answer local, which is the point.** Under rod-rooting the letter genuinely
+depended on everything else that rod had produced, so the two documents had to disagree. Rooted on the
+**segment**, `R00001CA` is the *first* child of segment `R00001C` — and `R00001C` is a 400 lb segment
+feeding exactly this one coil, so nothing else competes for it. **The same value is correct in both
+documents**, and `R00002AB` likewise follows only from `R00002AA` being registered.
+
+⚠ **The general rule still holds** — state the call, and never copy a letter between documents *on the
+assumption* that it transfers. It transfers here because the root is local, not because letters travel.
+
+✅ **Coil 1 is unaffected** — one source rod, one part alpha equal to its `CoilNo`, one shared row.
 
 Coil 2's rows — the point of the whole design:
 
@@ -433,7 +463,9 @@ Coil 2's rows — the point of the whole design:
 | R00001 | `SP-00003` | 42,400 → 76,300 | 400.00 |
 
 Half-open, contiguous, covering the coil exactly (`TC-617`, `trg_CoilTraceability_NoOverlap`). The
-compound display `R00002E ← R00002A + R00001C` **renders from these rows; nothing compound is stored.**
+compound display **`R00002AB - R00001CA`** *(was `R00002E ← R00002A + R00001C`)* **renders from these rows;
+nothing compound is stored** — and it is now the client workbook's own form, generated rather than built
+(`Q88`, narrowed).
 The certificate reads both parents — and both supplier heats — from here.
 
 `C05`/`C06` and not `C01`/`C02`: `SP-00001` took `C01`/`C02` and `SP-00002` took `C03`/`C04`. The

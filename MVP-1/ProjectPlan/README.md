@@ -118,7 +118,6 @@ These three were sibling folders of `ProjectPlan/` until the consolidation. They
 | [CapacityAndEffortModel.md](Development/CapacityAndEffortModel.md) | `[CE]` | **The hours model of record** — rate card, per-phase effort, MVP-1 apportionment, capacity grid |
 | [DevelopmentEffortModel.md](Development/DevelopmentEffortModel.md) | `[DE]` | The same work on an **AI-assisted** basis. Factors `[CE]`'s columns; corrects nothing in it |
 | [YieldCostAndScrapSheet.md](Development/YieldCostAndScrapSheet.md) | `[YCS]` | Phase 12's figures — the only home for them |
-| [YieldCostAndScrapStories.md](Development/YieldCostAndScrapStories.md) | `[YCB]` | Phase-12 story pointer and its specification-gap finding |
 | [REVIEW.md](Development/REVIEW.md) | `[REV]` | The audit of known contradictions. **Read before trusting any single document** |
 | [Phases/](Development/Phases/) | — | The **15 phase specifications** — the join point between the layer documents |
 

@@ -225,11 +225,17 @@ GO
 --
 -- The cardinality is decided (22 Aug 2026, Q57): FL1 segment alphas and
 -- FL2 coil identities share ONE namespace, minted through
--- CommonDB.dbo.GenerateCoilAlpha with every prior segment alpha for the
--- rod passed in @CoilNoToIgnore -- read from this table, because
--- FlatWireDB is outside that function's sweep. So the planner naming a
--- segment (R00001C) rather than the spool (SP-00021) is exactly what
--- ChildAlpha records: one alpha per segment.
+-- CommonDB.dbo.GenerateCoilAlpha. So the planner naming a segment
+-- (R00001C) rather than the spool (SP-00021) is exactly what ChildAlpha
+-- records: one alpha per segment.
+--
+-- *** HOW the namespace is kept separate changed on 26 Aug 2026 ([N]). ***
+-- This read "... with every prior segment alpha for the rod passed in
+-- @CoilNoToIgnore -- read from this table, because FlatWireDB is outside
+-- that function's sweep." The list is GONE: every alpha is registered in
+-- proddb..coils, so the sweep finds prior segments unaided. Registration
+-- fixes the cause instead of compensating for it -- but the writer does
+-- not exist yet, OI-138 / G54.
 --
 -- BusinessRules.md 3.3's two-way SP-#####/TS###### conflict is still
 -- four-way and still open; that is a FORMAT question, not the
@@ -456,14 +462,30 @@ GO
 -- against one per spool, so it can never be SpoolProcessing.Alpha and the two must
 -- not be conflated. SpoolProcessing.Alpha stays the spool MATERIAL identity.
 --
--- MINTED BY CommonDB.dbo.GenerateCoilAlpha(rodAlpha, @ignoreList), NOT by
--- a local per-rod counter. FL1 segment alphas and FL2 coil identities are
--- the same strings off the same six-character root, and that function
--- cannot see FlatWireDB -- so a local counter would hand the same
--- R00001A to a spool segment and to a finished coil. @ignoreList carries
--- EVERY alpha already recorded for this rod HERE, not just this
--- transaction's: the sweep covers the shared schema and finds those
--- unaided, but FlatWireDB is outside it. Cap 500 chars.
+-- MINTED BY CommonDB.dbo.GenerateCoilAlpha(rodAlpha, ''), NOT by a local
+-- per-rod counter. A BLANK ignore list -- see the precondition below.
+--
+-- *** THE @ignoreList ARGUMENT WENT ON 26 AUG 2026 (change [N]). *** It read:
+-- "@ignoreList carries EVERY alpha already recorded for this rod HERE, not
+--  just this transaction's: the sweep covers the shared schema and finds
+--  those unaided, but FlatWireDB is outside it. Cap 500 chars."
+-- That was correct while segment alphas stayed FlatWireDB-local.
+--
+-- PRECONDITION: EVERY SEGMENT ALPHA IS REGISTERED IN proddb..coils. That is
+-- what lets the list go -- the sweep then finds prior segments the same way
+-- it finds prior coils, and F11's 500-char cap stops applying to flat wire.
+-- *** NOTHING WRITES IT YET. WITHOUT THAT WRITER A BLANK LIST REISSUES
+--     R00001A ON EVERY SPOOL. See OI-138 / G54 / FW-231. ***
+--
+-- WHY A LOCAL COUNTER IS STILL WRONG (unchanged, and the reason is the same):
+-- FL1 segment alphas and FL2 coil identities are drawn from ONE namespace off
+-- the same six-character root, so a local counter would hand the same R00001A
+-- to a spool segment and to a finished coil.
+--
+-- COIL PARTS DO NOT ROOT HERE. They root on the SEGMENT alpha this column
+-- holds -- GenerateCoilAlpha('R00001A','') -> R00001AA -- so a segment takes a
+-- single trailing letter and a coil off it takes a double. Rod-fed coils (no
+-- segment) fall back to the rod. See RodOrderAllocation.md 2.5 and 2.8.
 --
 -- LIMIT OF THE GUARANTEE, Q59: other callers of GenerateCoilAlpha pass
 -- their own ignore list, not ours. The scrap-weight path was confirmed on

@@ -141,9 +141,37 @@ Two read procedures back the heaviest queries (§6.8): `sp_GetGaugeTrace` and `s
 |---|---|
 | Request validation | **FluentValidation** per command, invoked by a MediatR pipeline behaviour — **shape, type and range only**. Field presence, enum membership, `lineId = FL2` rejected at `/staging/rod`. → **`400`** |
 | **Domain invariants** | **Enforced in the aggregate** via `CheckRule(IBusinessRule)` → `BusinessRuleValidationException` → **`422`**, with the concrete rules in `Application/BusinessRules/` and the reusable specifications in `Domain/Rules/`. `FM2_S3` must be `Active`; FL3 requires `RouteMode = Hybrid`; bay occupancy (`G21`); rod eligibility; Mode B requires the supervisor stamp |
-| Response envelope | `UAController` standard `Data` / `Success` / `Errors` — see `[API §1]` |
+| Response envelope | `FlatWireResult<T> : ActionResultBase<T>` — the `UAController` standard `Data` / `Success` extended with the `Errors` array and the string code `[API §1.2]` and `§1.8` require. ⚠ **This row described `Errors` as already part of the framework standard; `ActionResultBase<T>` has none.** Decision `P-56` (`FW-138` §5) makes the sentence true by deriving rather than replacing — see §3.4a |
 | Logging | **Serilog**, structured, with the correlation ID from the inbound header |
 | Error handling | Domain rule violation → `422`; concurrency / uniqueness → `409`; not found → `404`; PLC failure → `500` with the transaction aborted and compensating writes issued |
-| Concurrency | `ROWVERSION` tokens on **`PassSchedule`, `Rod`, `FlatWireRun`, `SpoolProcessing`, `RodStaging`, `CoilOutput`** — **six**, counted from a live deploy 15 Aug 2026. ⚠ *`PassSchedule` was removed from this row earlier the same day on the grounds that "MVP-1 never builds it"; **decision `D-31` moved the schedule tables into MVP-1**, so it is back and the reason it left no longer holds. The other half of that correction — adding `RodStaging` — stands.* ⚠ **Open decision `D-30`:** under DDD the token belongs on the **aggregate root**, and three roots — **`WeldEvent`, `RodCheckout`, `WipRejection`** — have none, though all three are mutated after insert (a weld's `Pass`/`Fail`, a checkout's approval stamp, a rejection's disposition). Decide and record; do not leave it silent. *(Re-numbered 15 Aug 2026 from a bare `D1`, which collided with `[PLC]`'s retired `D1`–`D17` log; it is now in `[ARC §13.1]` with the other `D-##` decisions.)* |
+| Concurrency | `ROWVERSION` tokens on **`PassSchedule`, `Rod`, `FlatWireRun`, `SpoolProcessing`, `RodStaging`, `CoilOutput`** — **six**, counted from a live deploy 15 Aug 2026. ⚠ **The DDL now has eight, and this row is the list of record, so the difference is unresolved rather than merely unrecorded (raised by `FW-141`, 26 Aug 2026).** The two not named here are **`SpoolStaging`** and **`RodOrderConsumption`**, the latter created by the 22 Aug rod-order allocation work. Decide whether each is deliberate before the Phase-4 schema freeze; `FW-141`'s repositories implement the update paths that depend on the answer. ⚠ *`PassSchedule` was removed from this row earlier the same day on the grounds that "MVP-1 never builds it"; **decision `D-31` moved the schedule tables into MVP-1**, so it is back and the reason it left no longer holds. The other half of that correction — adding `RodStaging` — stands.* ⚠ **Open decision `D-30`:** under DDD the token belongs on the **aggregate root**, and three roots — **`WeldEvent`, `RodCheckout`, `WipRejection`** — have none, though all three are mutated after insert (a weld's `Pass`/`Fail`, a checkout's approval stamp, a rejection's disposition). Decide and record; do not leave it silent. *(Re-numbered 15 Aug 2026 from a bare `D1`, which collided with `[PLC]`'s retired `D1`–`D17` log; it is now in `[ARC §13.1]` with the other `D-##` decisions.)* |
+
+
+### 3.4a Coding standards, and the four standing divergences
+
+**The standard is [`ual-api/.claude/instructions/csharp.instructions.md`](../../../../ual-api/.claude/instructions/csharp.instructions.md), enforced by [`csharp-extensive-code-review.md`](../../../../ual-api/.claude/commands/csharp-extensive-code-review.md).** It binds every `.cs` file in `FlatWire`. This section exists so a reviewer does not re-litigate four decisions that were taken deliberately — **each is a divergence from a checklist line, and each has a reason that outranks it.**
+
+| # | The checklist says | `FlatWire` does | Why it wins |
+|---|---|---|---|
+| 1 | *"Response wrapped in `ActionResultBase<T>`, returned as `Ok(...)`"* | `FlatWireResult<T> : ActionResultBase<T>`, returned with a **real HTTP status** | The wrap is honoured by derivation. `Ok(...)` on failure is not: the same standard's API-semantics section flags *"200 for a conflict (409)"*, and `[API §1.3]`'s 409/422 split is load-bearing. `P-56` |
+| 2 | *"route is `api/v1/[controller]`"* | class-level `api/v1/flatwire` + **explicit per-action routes** | The `[controller]` token cannot express `PayoffStagingController`'s two unrelated prefixes — `/payoff/status` and `/staging/**`. `P-04` |
+| 3 | *"Are `#region` blocks adding noise?"* | regions **kept** | The same standard's *"convention consistency"* rule outranks it: every one of the ~25 sibling services in `ual-api` uses them, and a service that alone drops them is the inconsistency |
+| 4 | *"primitives where an enum would prevent bugs"* | **fourteen** enums; endpoint-local vocabularies stay `string` constants | `[API §2]` names fourteen and no more. A fifteenth invented here would have no TypeScript union and no DB `CHECK` to mirror against, which is the drift the three-way mirror exists to prevent. `P-58` |
+
+**Where validation lives, and it is not a preference.** `[SVC §3.4]`'s taxonomy governs, with one refinement found while building:
+
+| Rule kind | Home | Status |
+|---|---|---|
+| Presence, range, **enum membership** | `FlatWire.Application/Validators/` — FluentValidation, auto-validated at model binding | **400** |
+| Conditional-required **where `[API §4]` names a status** | the action | **as `[API §4]` states** — usually `422` |
+| State and business rules | the action now; the aggregate from Phase 3 (`FW-207`) | 404 / 409 / 422 |
+
+⚠ **The refinement matters.** A general *"conditional-required is shape, therefore 400"* would have moved `weldQualityFailReason`, the die-size match, `existingSkidId` and three others from **422 to 400** — a status change for an existing condition, which `[API §8]` classes as **breaking**. The contract's specific status beats the general taxonomy.
+
+**Three mechanical rules that are easy to lose:**
+
+- **`JsonStringEnumConverter` is registered in `Program.cs`.** Without it the fourteen enums serialise as integers and the C# enum, the TypeScript union and the DB `CHECK` disagree silently.
+- **Request DTOs carry *nullable* enums.** A non-nullable enum binds a missing field to `default` — `LineId.FL1` — instead of failing. Nullable plus a `NotNull` rule fails fast at the boundary.
+- **`InvalidModelStateResponseFactory` is set on `AddControllers()`, not via `services.Configure<ApiBehaviorOptions>`** — the latter does not bind, and a 400 then returns `ValidationProblemDetails` instead of the envelope. Measured 25 Aug 2026.
 
 ---

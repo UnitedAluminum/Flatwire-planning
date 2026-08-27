@@ -1,7 +1,7 @@
 # FW-207 · Domain model — aggregates, value objects and invariants
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — `G41` and `G42` recorded — `G41`'s stated resolution names this story's `IBusinessRule` set *(first issue, same day)*
+**Last Updated:** August 26, 2026 — ⚠ **`FW-141`'s `P-66` folds this story's *structural* half forward**: the seven roots' `Entity`-derived declarations and the six alphas are authored by `FW-141`, because its repository signatures name them and it could not otherwise be scheduled. **The behavioural scope here is unchanged** — see §2.0a. Earlier: August 15, 2026 — `G41` and `G42` recorded — `G41`'s stated resolution names this story's `IBusinessRule` set *(first issue, same day)*
 **Document Type:** Implementation plan for a single backlog story
 **Status:** Ready to build — **two criteria are closed by design and unverifiable; do not delete them**
 **Owner:** Backend (.NET) stream
@@ -23,6 +23,15 @@
 > Those two facts coexist and the gap between them is a real bug waiting to be written.
 
 ---
+> ### ⚠ Coding standard — read `[SVC §3.4a]` before writing code
+>
+> The repository C# standard binds every `.cs` file here, and `[SVC §3.4a]` records the **four
+> standing divergences** so they are not re-litigated in review. What this story owns:
+>
+> **The two rules `FW-147`'s card samples belong HERE, not in a validator** — `FM2_S3` must be
+> Active, FL3 requires `RouteMode = Hybrid` (`P-19`). Both are breakable by **state**, so both are
+> `IBusinessRule` returning `422`. The validators built on 25 Aug 2026 deliberately exclude them.
+
 
 ## 1. The story
 
@@ -54,6 +63,39 @@ From `[TB §7]` — verbatim:
 
 ⚠ **`D1` was renumbered `D-30` on 15 Aug 2026** — it collided with `[PLC]`'s retired
 `D1`–`D17` log — and promoted into `[ARC §13.1]`. Same decision.
+
+### 2.0a ⚠ `FW-141` now authors the structural half — `P-66`, 26 Aug 2026
+
+**Two of the criteria above are delivered by `FW-141` rather than here.** Its repository signatures
+name the roots and the alphas — `GenericRepository<T, TContext>` is constrained `where T : Entity`,
+and every `GetByAlphaAsync` is typed to an alpha — so it could not be scheduled while waiting on
+this story, and both are wave-1.
+
+| Delivered by `FW-141` | Still delivered here |
+|---|---|
+| The **seven roots** as `Entity`-derived classes with their persisted properties | All aggregate **behaviour**, and every invariant as `IBusinessRule` → `CheckRule` → **`422`** |
+| The **six alphas** with validating constructors | The **seven dimensioned quantities** and **`PassScheduleSnapshot`** |
+| | **Domain events** via the inherited `AddDomainEvent`, and `FW-147`'s `P-19` handover |
+
+**Neither unverifiable criterion is weakened, and `P-23` still stands.** `RodAlpha("ROD-00041")`
+must throw — that travels with the alphas and still closes `G14`'s format half. The **`G21`** bay
+rule stays here, because it is an invariant rather than a signature, and it must still reject a
+second rod on the same physical station **with the DB index absent**.
+
+⚠ **The CHILD entities are yours, and `FW-141` did not create them.** §2's boundary table is the
+record: `FlatWireRun` contains `FlatWireRunDetail`, `RodCheckin`, `SpoolCheckin`, `RunPauseEvent`,
+`RollOverride`, `DieChangeEvent`, `SpcCheckpoint` + `SpcMeasurement`, and `CoilOutput` contains
+`CoilTraceability`. `P-66`'s seam test admits a type to `FW-141` only if a repository signature
+names it, and **none of these is named by one** — so the roots arrive with their own columns and
+**no navigation collections at all**. Declaring the children and wiring the navigations is this
+story's, and it is what makes DM010 non-overlap and the pause/resume sequence enforceable at all.
+
+⚠ **What arrives from `FW-141` is a structural root, not a finished aggregate**: properties, the
+alpha and the surrogate, with no behaviour and no enforcement. **Step 3 below now adds behaviour to
+existing classes rather than creating them.** Do not re-declare a root that already exists.
+
+⚠ **No hour cell is restated.** The 32 h here and `FW-141`'s 28 h are both quoted by `[CE]`,
+`[DE]`, `[SSP]`, `[TRP]` and `[TB §7]`; the transfer is owed to the re-baseline.
 
 ---
 
@@ -103,6 +145,11 @@ behave as the domain reads.
 
 ## 3. Value objects
 
+> ⚠ **The six alphas are authored by `FW-141` (`P-66`, §2.0a).** This section stays because it is
+> where their formats and their reason for existing are recorded, and because the seven dimensioned
+> quantities below **are** this story's. Read it as the specification; the declarations land next
+> door.
+
 **Six alphas**, each with a validating constructor — `[BR §3]` owns the formats:
 
 `RodAlpha` `R#####` · `SpoolAlpha` `SP-#####` · `RunAlpha` `RUN-####` ·
@@ -136,9 +183,11 @@ system later edits the schedule (`[PLC §11.2]`, `Q64`).
    `BusinessRuleValidationException` from the framework in preference to `CoilCheckin`'s
    local duplicates — `CoilCheckin` copies files that ship identically in
    `UA.Framework.Domain`, and the framework version is the one to take.
-2. **The thirteen value objects** first — the aggregates are typed against them.
-3. **The seven roots** in `FlatWire.Domain/AggregatesModel/`, with behaviour on the
-   aggregate, not on a service.
+2. **The seven dimensioned quantities** — the aggregates are typed against them. *(The six
+   alphas are `FW-141`'s under `P-66`; if they are not there yet, that story has not run.)*
+3. **Behaviour on the seven roots** in `FlatWire.Domain/AggregatesModel/`, on the aggregate rather
+   than on a service. ⚠ **The classes already exist** — `FW-141` declared them structurally
+   (§2.0a); add behaviour to them, do not re-declare them.
 4. **Invariants as `IBusinessRule`** in `Domain/Rules/` (reusable specifications) and
    `Application/BusinessRules/` (concrete rules) — `[SVC §3.4]`.
 5. **Take the two rules `FW-147` hands over** —

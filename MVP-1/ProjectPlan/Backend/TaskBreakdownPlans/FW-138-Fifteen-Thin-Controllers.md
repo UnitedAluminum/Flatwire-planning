@@ -1,9 +1,11 @@
 # FW-138 · Fifteen thin controllers over `UAController`
 
+*Fourteen as built — `RodReceivingController` is withdrawn by `P-53` (25 Aug 2026). This heading keeps the backlog story's name, which is frozen until `[TB §7]` is corrected.*
+
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — FL2 fixture corrected to `PS-1100-FL2-002` (`G40`); §3.0a trial subset, §6.1 QA0 checklist and the four cross-cutting conventions added; `G6` answered (no effect — the 24 actions carry bare `[Authorize]`) *(first issue, same day)*
+**Last Updated:** August 25, 2026 — ✅ **BUILT.** 22 endpoints across 12 controllers in `ual-api`, `FlatWireResult<T>` per `P-06`, fixtures per controller per `P-08`, contracts in `FlatWire.Domain/Models/{Area}/` per `P-52`; §6.2 carries the measured verification (**61/61** cases, 22/22 `401`) and §5 a new decision **`P-55`** — `app.UseAuthorization()` is required under `MapControllers`, and without it every endpoint returned 500 instead of 401. Earlier the same day: **`P-53`: the FlatWire service hosts no `/rod/**` surface.** `RodReceivingController` and all three of its endpoints are withdrawn — rod receiving is not shopfloor — taking this story to **22 endpoints across 12 controllers**. `P-52` (response/request type home) and `P-54` (`/rod/**` re-homing, escalated) minted; the withdrawn `LINE_NOT_ELIGIBLE` failing case removed (`FR-533`); `G21`'s station keying added as step 5(d); new §8.2 for pending contract changes *(previously August 15, 2026 — FL2 fixture corrected to `PS-1100-FL2-002` (`G40`); §3.0a trial subset, §6.1 QA0 checklist and the four cross-cutting conventions added; `G6` answered (no effect — the 24 actions carry bare `[Authorize]`) *(first issue, same day)*)*
 **Document Type:** Implementation plan for a single backlog story
-**Status:** Ready to build — **one contract conflict must be settled first (§5, `P-06`)**
+**Status:** ✅ **BUILT and brought to the C# standard, 25 Aug 2026** — 22 endpoints across 12 controllers, verified on the running service (§6.2). `P-06` was **ratified in the build** as `FlatWireResult<T>`; `P-53` is applied end to end; `/order/**` remains `[API]`'s and blocks nothing that was built
 **Owner:** Backend (.NET) stream
 **Audience:** The .NET developer building `FW-138`
 **Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
@@ -21,9 +23,11 @@
 > `CoilCheckin` — the binding template — returns **HTTP 200 on failure**, which contradicts
 > `[API §1.3]` outright. That is decision `P-06` and it is a prerequisite, not a detail.
 >
-> **Second, the story is smaller than its title.** `FW-N04` already delivered the fifteen
-> shells. What is left is **24 stub endpoints across 13 controllers** — the other two
-> controllers get no actions at all.
+> **Second, the story is smaller than its title, and smaller again since 25 Aug.** `FW-N04`
+> already delivered the fifteen shells — and one of them, `RodReceivingController`, is
+> **withdrawn by `P-53`**: rod receiving is not shopfloor, so this service hosts no `/rod/**`
+> surface. What is left is **22 stub endpoints across 12 controllers**, from fourteen
+> classes — the other two get no actions at all.
 >
 > This is the build order. It is derived from the specifications and **loses to every one
 > of them.**
@@ -42,7 +46,7 @@ From `[TB §7]` — reproduced verbatim:
 > **So that** the Angular library can build against the real service before any handler exists.
 >
 > **Acceptance Criteria:**
-> - [ ] All **fifteen** exist and extend `UAController`: `LinesController`, `PassScheduleController`, `RodReceivingController`, **`PayoffStagingController`**, `CheckInController`, `RunController`, `SpcController`, `WeldEventController`, `RollAdjustController`, `DieChangeController`, `CheckOutController`, `WipRejectionController`, **`SpoolController`**, `CoilController`, `ShiftSummaryController`
+> - [ ] All **fourteen** exist and extend `UAController`: `LinesController`, `PassScheduleController`, **`PayoffStagingController`**, `CheckInController`, `RunController`, `SpcController`, `WeldEventController`, `RollAdjustController`, `DieChangeController`, `CheckOutController`, `WipRejectionController`, **`SpoolController`**, `CoilController`, `ShiftSummaryController`. ⚠ **`RodReceivingController` was the fifteenth and is withdrawn** (`P-53`, 25 Aug 2026) — `FW-N04` built it and the class has since been **deleted**
 > - [ ] **`SpoolController` covers `GET /spools`** — endpoint 16a, `FR-097`–`FR-099`, DB5/DB5A
 > - [ ] **`PayoffStagingController` covers `/payoff/status` and `/staging/**`** — endpoints 10, 11, 12 and 14. ⚠ Endpoint 13 (`POST /staging/rod/mark-welded`) was **retired 1 Aug 2026** in favour of `POST /weldevent` as the single weld write — **do not scaffold it**
 > - [ ] ⚠ **`POST /staging/rod` returns `201 Created` with `state:"Blocked"` on inspection failure** — the row is committed **before** the inspection gate, and it is still a hard block with no override. `Blocked` is a **derived** bay state, never a stored `Status`, and `POST /wipreject` is the only thing that clears it (**G21**)
@@ -57,23 +61,38 @@ From `[TB §7]` — reproduced verbatim:
 
 ### 1.1 What is already done
 
-**`FW-N04` delivered the fifteen controller shells** — class, `[ApiController]`, `[Authorize]`,
-class-level `[Route("api/v1/flatwire")]`, `IMediator` constructor injection, no actions.
-See [`FW-N04`](FW-N04-FlatWire-Solution-Skeleton.md) step 8 and decision `P-04`.
+**`FW-N04` was built on 25 Aug 2026 and delivered the fifteen controller shells** — class,
+`[ApiController]`, `[Authorize]`, class-level `[Route("api/v1/flatwire")]`, `IMediator`
+constructor injection, no actions. All fifteen are present under
+`FlatWire.API/Controllers/{Area}/`. See [`FW-N04`](FW-N04-FlatWire-Solution-Skeleton.md)
+step 8 and decision `P-04`.
 
-**Acceptance criterion 1 is therefore already satisfied** when this story starts. Confirm it
-rather than rebuild it.
+**They also boot, and that was not free.** `AddCustomMvc()` calls `AddControllersAsServices()`,
+so every controller is a DI service that `Build()` validates under Development — and fifteen
+`IMediator` constructors against no `IMediator` registration is a startup failure, not a
+latent one. `FW-N04`'s **`P-51`** adds the one line that fixes it
+(`AddScoped<IMediator, Mediator>()`). **Step 7's Swagger check depends on it**; if the service
+will not start, confirm `P-51` landed before looking anywhere else.
+
+**Fourteen of the fifteen stand.** `RodReceivingController` is **withdrawn by `P-53`** — rod
+receiving is not shopfloor — and its class was **deleted from `ual-api` on 25 Aug 2026**, after
+which the solution rebuilt clean. Fourteen controller folders remain under
+`FlatWire.API/Controllers/`, matching `[API §3.1]`.
+
+**Acceptance criterion 1 is therefore already satisfied** when this story starts — read against
+fourteen, not fifteen. Confirm it rather than rebuild it.
 
 ### 1.2 In scope
 
 | # | Deliverable |
 |---|---|
 | 1 | **The response envelope** — the contracted `{data, success, errors[]}` shape with a string error code, which the framework does not supply (`P-06`) |
-| 2 | **24 stub endpoints across 13 controllers** — §3 is the allocation |
+| 2 | **22 stub endpoints across 12 controllers** — §3 is the allocation |
 | 3 | Canonical fixture data behind them, mirroring the DB seed |
 | 4 | **At least one failing case per endpoint**, returning the contracted status code and machine-readable code |
-| 5 | The three special-case behaviours of §4 step 5 — `201`/`Blocked`, FL2 `null` gauge/width, `Draft` schedule → `422` |
+| 5 | The four special-case behaviours of §4 step 5 — `201`/`Blocked`, FL2 `null` gauge/width, `Draft` schedule → `422`, station-keyed bay occupancy |
 | 6 | `[ProducesResponseType]` on every action, so Swagger publishes the contract |
+| 7 | **The request and response types themselves** — `FlatWire.Domain/Models/{Area}/`, one pair per endpoint (`P-52`). The acceptance criterion *"schema-valid fixtures per `[API §4]` shapes"* cannot be met without them |
 
 ### 1.3 Out of scope — and who owns each
 
@@ -88,11 +107,23 @@ rather than rebuild it.
 | `GET /health` — endpoint 30, which has **no controller** | [`FW-148`](FW-148-Health-Checks.md) |
 | The mock SignalR stream — `[API §7.2]`'s fifth obligation (§2.3) | [`FW-080`](FW-080-FlatWireHub.md) |
 | The de-stub pass that removes what the stubs assume | `FW-N12` / `[API §7.3]` |
+| Re-homing or re-specifying `[API §4.3]` / `§4.20` once `/rod/**` leaves | `[API]` / architecture — `P-54`, §8 |
+
+> ⚠ **The response and request types are authored here and *inherited* downstream.**
+> `FW-157`'s `CheckInRodResponse`, `FW-164`'s active-run DTO and `FW-179`'s spool DTO are the
+> **same types**, not new ones — those stories put handlers behind shapes this story already
+> published to 1A. A second definition in `Application` is how one endpoint ends up with two
+> shapes. `P-52` fixes the home.
 
 > **No hour cell has been restated.** `FW-N04` pulled the fifteen shells forward out of this
 > story's 45 h; the note in [`FW-N04 §1.2`](FW-N04-FlatWire-Solution-Skeleton.md) explains
 > why re-deriving in place would desynchronise `[CE]`, `[DE]`, `[SSP]`, `[TRP]` and
 > `[TB §7]`'s reconciliation. Re-baselining is a separate, additive exercise.
+>
+> **Two figures are now owed to that exercise, and neither is applied here.** `P-53` takes the
+> rate-card basis from 15 × 3 h to **14 × 3 h = 42 h**, and `[TRP §1.4]`'s trial figure from
+> eight controllers to **seven**. An `/order/**` controller, if `[API]` mints it, is **+3 h**
+> against the fifteen-controller basis (`P-50`).
 
 ---
 
@@ -116,9 +147,23 @@ rather than rebuild it.
 
 One of those 25 — `GET /health`, #30 — **has no controller** and belongs to `FW-148`.
 
-> **So this story delivers 24 endpoints, not 25 and not 32.** The remaining seven are
-> scaffolded as controllers with no actions. That arithmetic appears in no specification and
-> is derived here; §3 shows the working.
+⚠ **The index is two rows short of the contract.** `[API §4.20]` `GET /rod/{alpha}/orders` and
+`[API §4.21]` `POST /order/{orderNo}/complete` were added on 22 Aug 2026 by the rod ↔ order
+allocation work (`[REQ §5.28]`, `FR-541`–`FR-560`, `ORD003`–`ORD017`) and are named at
+`phase-04` L162, but **§3.2's endpoint index carries neither row**. Counting them, the surface
+is **34 live rows, of which MVP-1 implements 27.**
+
+> **So this story delivers 22 — not 24, not 27 and not 34.** That arithmetic appears in no
+> specification and is derived here; the subtraction is the whole of §3:
+>
+> | | |
+> |---|---|
+> | MVP-1 endpoints, counting the two unindexed rows | **27** |
+> | − `GET /health` (#30) — no controller, `FW-148` | 26 |
+> | − the three `/rod/**` (#8, #9, §4.20) — **`P-53`**, not this service | 23 |
+> | − `POST /order/{orderNo}/complete` (§4.21) — no host in `[API §3.1]`, **`P-50`** | **22** |
+>
+> The seven MVP-2 endpoints are scaffolded as controllers with no actions (§3.1).
 
 ⚠ **`[API]`'s own front matter says "31 live rows, of which MVP-1 implements 24."** It is
 stale by one — `16b POST /spool/complete` was added the same day and §3.2's heading, its
@@ -145,15 +190,13 @@ this layer explicitly. The backend stub is this story; the Angular mock is `FW-1
 
 ---
 
-## 3. Endpoint allocation — the 24, by controller
+## 3. Endpoint allocation — the 22, by controller
 
 From `[API §3.2]`. **Route column is the suffix after the class-level `api/v1/flatwire`.**
 
 | Controller | # | Method + route | Shape in | Phase |
 |---|---|---|---|---|
 | `Lines` | 1 | `GET /lines/status` | `[API §4.1]` | 3 |
-| `RodReceiving` | 8 | `GET /rod/{alpha}` | `[API §4.3]` | 4 |
-| | 9 | `POST /rod` | — | upstream |
 | `PayoffStaging` | 10 | `GET /payoff/status?lineId=` | `[API §4.4]` | 4 |
 | | 11 | `POST /staging/rod` | `[API §4.5]` | 4 |
 | | 12 | `POST /staging/rod/unstage` | `[API §4.5a]` | 4 / 7 |
@@ -176,25 +219,48 @@ From `[API §3.2]`. **Route column is the suffix after the class-level `api/v1/f
 | `Coil` | 27 | `POST /coil/complete` | `[API §4.15]` | 9 |
 | | 28 | `GET /coil/{alpha}/label` | `[API §4.16]` | 9 |
 
-**24 endpoints, 13 controllers.**
+**22 endpoints, 12 controllers**, from fourteen scaffolded classes.
 
-### 3.0a ⚠ The trial needs eight controllers, not fifteen
+> ⚠ **`RodReceiving` is absent, and its absence *is* the decision — `P-53`.** #8
+> `GET /rod/{alpha}`, #9 `POST /rod` and §4.20 `GET /rod/{alpha}/orders` all leave with it:
+> rod receiving is not shopfloor. **Two of the three are load-bearing elsewhere and now have
+> no source** — `P-53` lists what breaks and §8 carries the escalation. Do not quietly re-add
+> one to make a screen work.
+
+> ⚠ **`POST /order/{orderNo}/complete` (`[API §4.21]`) is absent for a different reason: it
+> has nowhere to go.** `[API §3.1]`'s controller list has no `/order/**` owner and §3.2's
+> index has no row, so the specification disagrees with itself. **`FW-N04`'s `P-50` built the
+> fifteen and stopped**, recommending `OrderController` as a sixteenth — a recommendation that
+> only hardens now that `/rod/**` is gone, since there is no rod controller left to fold it
+> into. It is **+3 h** and `[API]`'s call, not this plan's. The handler is `FW-227` (S2).
+
+### 3.0a ⚠ The trial needs seven controllers, not fourteen
 
 `[TRP §1.4]` scopes this story to **14 h / eight controllers** for the 30 Sep trial, against
-the 45 h / fifteen above. **Build the full fifteen if you are building MVP-1; build these
-eight if you are building the trial** — and know which you are doing before you start.
+the 45 h / fifteen above. **Both of those figures now count `RodReceiving`, which `P-53`
+withdrew** — the trial's eight are **seven**. `[TRP]`'s cell is flagged, not restated (§1.3).
+**Build the full fourteen if you are building MVP-1; build these seven if you are building the
+trial** — and know which you are doing before you start.
 
 | In trial scope | Out of trial scope |
 |---|---|
-| `Lines` · `RodReceiving` · `CheckIn` · `Run` · `Spc` · `WipRejection` · `Spool` · `Coil` | `PassSchedule` · `PayoffStaging` · `WeldEvent` · `DieChange` · `RollAdjust` |
+| `Lines` · `CheckIn` · `Run` · `Spc` · `WipRejection` · `Spool` · `Coil` | `PassSchedule` · `PayoffStaging` · `WeldEvent` · `DieChange` · `RollAdjust` · ~~`RodReceiving`~~ *(withdrawn from the service, `P-53`)* |
 
-⚠ **Two of the eight carry no in-scope endpoint, and that is deliberate.** `LinesController`
+⚠ **Two of the seven carry no in-scope endpoint, and that is deliberate.** `LinesController`
 hosts only `/lines/status`, which **left with DB1** on 14 Aug — the trial's landing route is
 `GET /run/active?line=` instead; and `CoilController` hosts `/coil/**`, which is Phase 9.
-**Only six controllers serve a trial screen.** The two are kept as empty scaffolds on
+**Only five controllers serve a trial screen.** The two are kept as empty scaffolds on
 purpose — DB1 returns after the trial, Phase 9 is next, and a scaffold is where the de-stub
-pass hangs its fixtures. *`[TRP §1.4]`: do not "correct" the eight to six without re-running
-the workbook guards.*
+pass hangs its fixtures. *`[TRP §1.4]`: do not "correct" the count without re-running the
+workbook guards.*
+
+> ⚠ **`P-53` reaches the trial's opening screen, and this is the sharpest consequence of it.**
+> **DB2 rod check-in scans a rod**, and the scan was served by `GET /rod/{alpha}` — the
+> endpoint that *"returns everything staging and check-in need in one round trip"*
+> (`[API §4.3]`, `FR-042`, `FR-064`). With `/rod/**` withdrawn the trial has no scan
+> validation, no carry-forward gate (`FR-043` needs `footageRunToDate`) and no station
+> switching (`Q24` needs `scheduledLineId`). **`[TRP]` must be told before T1 is scheduled**;
+> the replacement is `[API]`'s to specify (§8, `P-54`).
 
 ⚠ **`GET /health` is not the ninth controller** — it is `MapHealthChecks` middleware and
 appears in no controller list ([`FW-148`](FW-148-Health-Checks.md)).
@@ -210,13 +276,19 @@ Both classes exist so the contract surface is complete and the Angular client ha
 base URL set. **Leave them action-less** — an endpoint that returns a stub the client then
 builds against is worse than one that visibly does not exist.
 
-### 3.2 Two rows that must not be built
+### 3.2 Rows that must not be built here — four reasons, not one
 
-- **#13 `POST /staging/rod/mark-welded`** — retired 1 Aug 2026. `POST /weldevent` is the
+- **#13 `POST /staging/rod/mark-welded`** — **retired.** 1 Aug 2026. `POST /weldevent` is the
   single weld write and sets `RodStaging.IsWelded`/`WeldedAt`/`WeldedBy` in the same
   transaction, **on `WeldQuality = 'Pass'` only**.
-- **#30 `GET /health`** — `FW-148`, registered in `Program.cs`, and the one **anonymous**
-  route in the service.
+- **#30 `GET /health`** — **elsewhere in this service.** `FW-148`, registered in `Program.cs`,
+  and the one **anonymous** route in the service.
+- **#8 `GET /rod/{alpha}` · #9 `POST /rod` · §4.20 `GET /rod/{alpha}/orders`** — **not this
+  service at all** (`P-53`). #9 was always upstream — role `Receiving`, phase `upstream`, no
+  `[API §4]` shape, and `FW-020`–`FW-022` were deleted from this backlog on 13 Aug 2026 as
+  another team's work. The other two are **specified and now unhosted**, which is `P-54`.
+- **§4.21 `POST /order/{orderNo}/complete`** — **specified with no host.** `[API §3.1]` has no
+  `/order/**` owner; `P-50` recommends `OrderController`, and it is `[API]`'s call.
 
 ---
 
@@ -228,10 +300,14 @@ This is a prerequisite. See §5.
 
 ### Step 2 — confirm the shells
 
-`FW-N04` step 8 delivered all fifteen. Verify names and route prefixes against `[API §3.1]`
-before adding actions; do not re-create them.
+`FW-N04` step 8 delivered all fifteen, built 25 Aug 2026. Verify names and route prefixes
+against `[API §3.1]` before adding actions; do not re-create them.
 
-### Step 3 — the 24 action signatures
+⚠ **Expect fourteen, not fifteen.** `RodReceivingController` was withdrawn by `P-53` and its
+class **deleted on 25 Aug 2026**; `[API §3.1]` lists the fourteen that remain. If you are
+working from a checkout that still has it, you are behind that change.
+
+### Step 3 — the 22 action signatures
 
 One method per §3 row. Controllers stay **thin** (`[SVC §3.2]`): the action builds the
 envelope and returns it. No business logic, no EF queries, no direct OPC calls.
@@ -298,7 +374,7 @@ Mirror the DB seed. `[API §7.2]`: `R00041`–`R00043`, `SP-00021`, `PS-1100-FL1
 
 Keep fixtures in one place per controller so the de-stub pass has a single seam to delete.
 
-### Step 5 — the three behaviours a naive stub gets wrong
+### Step 5 — the four behaviours a naive stub gets wrong
 
 **(a) `POST /staging/rod` returns `201 Created` with `state:"Blocked"` on inspection
 failure.** Not `422`. The row is committed *before* the inspection gate, because writing
@@ -316,6 +392,15 @@ and not an omitted field. FL2's trace is historical/profile.
 
 **(c) A `Draft` or `Inactive` schedule is refused** with `SCHEDULE_NOT_ACTIVE` → `422`.
 
+**(d) Bay occupancy is keyed on the physical station, not the line.** `G21` resolved 15 Aug
+2026 as **one physical station**: `RodStaging` carries a persisted `[Station]` column and
+`UX_RodStaging_Bay` is keyed **`([Station],[PayoffPosition]) WHERE [Status]='Staged'`** — not
+`(LineId, PayoffPosition)`. **FL1 and FL3 share `FL1PO`; only `FL1PO` is seeded and the
+absence of `FL3PO` is deliberate.** `phase-01b` L93: *"Build the `PayoffStaging` surface to
+that."* So a rod staged on FL1 position 1 makes **FL3 position 1 occupied too**, and a stub
+keyed on the line reports a physically occupied bay as free — the exact defect the re-keyed
+index exists to prevent. §6 has the fixture that proves it.
+
 ### Step 6 — one failing case per endpoint
 
 `[API §7.2]` requires at least one, and `[API §1.8]`'s catalogue supplies the code. The
@@ -326,30 +411,48 @@ Representative pairings from `[API §1.8]`:
 
 | Endpoint | Failing case | Code | HTTP |
 |---|---|---|---|
-| `GET /rod/{alpha}` | unknown alpha | `ROD_NOT_FOUND` | 404 |
-| `POST /staging/rod` | bay occupied | `BAY_OCCUPIED` | 409 |
-| `POST /staging/rod` | `lineId = FL2` | `LINE_NOT_ELIGIBLE` | 422 |
+| `POST /staging/rod` | bay occupied — **including the same station on the other line** | `BAY_OCCUPIED` | 409 |
+| `POST /staging/rod` | no `planning_routings` allocation | `ROD_NOT_ALLOCATED` | 422 |
+| `POST /staging/rod` | order booked on the other rod line | `WRONG_STATION` | 409 + `correctLineId` |
 | `POST /staging/rod` | inspection fail | `INSPECTION_FAILED` | **201 + `Blocked`** (§4 step 5a) |
 | `POST /checkin/rod` | `Draft` schedule | `SCHEDULE_NOT_ACTIVE` | 422 |
 | `POST /checkin/rod` | run already active | `RUN_ALREADY_ACTIVE` | 409 |
 | `POST /checkout` | line still running | `LINE_STILL_RUNNING` | 422 |
 | any write | `ROWVERSION` mismatch | `CONCURRENCY_CONFLICT` | 409 |
 
-`INSPECTION_FAILED` carries `{route:"wipRejection", rodAlpha}` so the client can route.
+`INSPECTION_FAILED` carries `{route:"wipRejection", rodAlpha}` so the client can route, and
+`WRONG_STATION` carries `correctLineId` — the client **switches station and re-posts**; it is
+not a refusal and not an override (`Q24`, 30 Jul 2026).
+
+> ⚠ **`ROD_NOT_FOUND` is no longer this story's to demonstrate.** It was `GET /rod/{alpha}`'s
+> failing case, and that endpoint left with `P-53`.
+
+> ⚠ **Do not build a `lineId = FL2` → `422 LINE_NOT_ELIGIBLE` refusal.** It is **withdrawn in
+> requirement text** by `FR-533` (`[REQ §5.29]`, client reversal 20 Aug 2026 — FL2 gets a
+> validation queue, so the action is *shown* on FL2), and struck at `[API §1.3]`, `§1.8`,
+> `§4.4` and `§4.5`, where the contract says in terms: *"Do not build the refusal; do not
+> delete it from this contract without the W5 change."* Until wave W5 lands, `lineId` admits
+> `FL1`/`FL3`, so **an FL2 value fails enum binding → `400`** — never a business-rule `422`.
+> That is also the forward-compatible shape: W5 widens the enum, which `[API §8]` calls
+> non-breaking, whereas retiring a `422` for an existing condition would be breaking.
 
 ### Step 7 — Swagger and the walkthrough pack
 
-Boot with `ASPNETCORE_ENVIRONMENT=Development` and confirm Swagger lists 24 operations
-across 13 controllers, with `PassSchedule` and `ShiftSummary` present and empty. This is the
-artefact the QA0 manual contract walkthrough is run against, so it is the deliverable, not a
-side effect.
+Boot with `ASPNETCORE_ENVIRONMENT=Development` and confirm Swagger lists **22 operations
+across 12 controllers**, with `PassSchedule` and `ShiftSummary` present and empty and
+**`RodReceiving` absent**. This is the artefact the QA0 manual contract walkthrough is run
+against, so it is the deliverable, not a side effect.
+
+> If the service does not start at all, the cause is almost certainly `FW-N04`'s **`P-51`** —
+> see §1.1.
 
 ---
 
 ## 5. Decisions this plan makes
 
 > The `P-##` series is **continuous across this folder**, so a number means one thing
-> repository-wide. `P-01`–`P-05` are in [`FW-N04`](FW-N04-FlatWire-Solution-Skeleton.md) §5.
+> repository-wide. `P-01`–`P-05`, `P-50` and `P-51` are in
+> [`FW-N04`](FW-N04-FlatWire-Solution-Skeleton.md) §5; new decisions mint at `P-56`+.
 
 ### `P-06` — build the response envelope; the framework does not supply it
 
@@ -409,6 +512,215 @@ scope MVP-1 does not own.
 One seam per controller for the de-stub pass (`[API §7.3]`, `FW-N12`). A single shared
 fixture class becomes a file every screen's removal has to touch.
 
+### `P-52` — the request and response types live in `FlatWire.Domain/Models/{Area}/`
+
+**Settled — minted 25 Aug 2026. Template-backed, not a divergence.**
+
+Acceptance criterion 6 requires *"schema-valid fixtures per `[API §4]` shapes"*, and step 3's
+signature returns `FlatWireResult<LinesStatusResponse>` — but **no specification says where
+`LinesStatusResponse` lives, or who writes it.** Twenty-two endpoints need roughly forty types
+and they are the largest unnamed item in this story.
+
+`CoilCheckin` settles the location, verified on disk:
+
+| Kind | Home | Example |
+|---|---|---|
+| Wire shapes — what an endpoint returns | **`{Domain}.Domain/Models/`** | `CheckinCoilInfo`, `AttachedCoilOrders` |
+| Row models — what a query reads | `{Domain}.Domain/DBModels/` | `Coils`, `Machine` |
+| The request itself | `{Domain}.Application/Commands\|Queries/{Area}/` as the MediatR record, handler nested inside | `GetCheckinCoilInfoQuery` |
+
+**So: `FlatWire.Domain/Models/{Area}/`, one `{Verb}{Noun}Response` per endpoint plus a
+`{Verb}{Noun}Request` where the body is not the MediatR record itself.** Field names match
+`[API §4]` exactly, including `[API §1.7]`'s unit suffixes. This also puts them beside
+`FlatWireResult<T>`, which `P-06` places in `FlatWire.Domain` — one project, one contract.
+
+**Why it matters beyond tidiness.** These types are published to 1A the moment the stubs land
+(§7), so `FW-157`, `FW-164` and `FW-179` **bind to them rather than authoring their own**. A
+second definition in `Application` is how one endpoint acquires two shapes, which `[API §8]`
+would classify as a breaking change discovered late.
+
+### `P-53` — the FlatWire service hosts no `/rod/**` surface
+
+**Needs ratifying. Direction of 25 Aug 2026: rod receiving is not shopfloor.** It is the
+widest-reaching decision in this plan after `P-06`, and unlike `P-06` it contradicts four
+documents of record rather than a framework type.
+
+`RodReceivingController` is withdrawn, and **all three** of its endpoints go with it:
+
+| # | Endpoint | Was |
+|---|---|---|
+| 8 | `GET /rod/{alpha}` | `[API §4.3]`, Phase 4 — the scan validation behind DB2A and DB2 |
+| 9 | `POST /rod` | upstream already: role `Receiving`, no `[API §4]` shape, serves no `FR-` |
+| — | `GET /rod/{alpha}/orders` | `[API §4.20]`, added 22 Aug 2026, never indexed in §3.2 |
+
+**#9 is uncontroversial** — `FW-020`–`FW-022` were deleted from this backlog on 13 Aug 2026 as
+another team's work, and `FW-223` records that what actually populates `FlatWireDB.Rod` in
+production is a stored procedure, not this endpoint.
+
+> ### ⚠ The other two are load-bearing, and nothing replaces them yet
+>
+> `[API §4.3]` is specified as *"validate a scanned rod and return everything staging and
+> check-in need in one round trip."* Four dependencies read it and now have no source:
+>
+> | Behaviour | Field it needs |
+> |---|---|
+> | Carry-forward gate — `FR-043` | `footageRunToDate` |
+> | Station switching with no override — `Q24` | `scheduledLineId` |
+> | Bay and weld state at the scan | `stagedPayoffPosition`, `isWelded` — projected from `RodStaging` |
+> | Sequence validation — `FR-541`–`FR-560`, `ORD003`–`ORD017`, `FW-226` | the order set from `[API §4.20]` |
+>
+> **The nearest existing substitute covers half of it.** `CoilCheckin` already exposes
+> `api/v1/CoilCheckin/getCheckinCoilInfo` and `getCoilStatus`, which serve the *shared-schema*
+> fields — alpha, alloy, temper, diameter, weights, status, location, received-at. **They
+> cannot serve the four above**: those read `FlatWireDB.Rod` and the `RodStaging` projection,
+> which no service outside FlatWire can query. `FR-042` and `FR-064` are unservable until
+> `[API]` says by what. **Do not invent a shape** — `P-54`.
+
+**What this changes here:** 24 → **22 endpoints**, 13 → **12 controllers with actions**, from
+**fourteen** scaffolded classes. Rate-card basis 15 × 3 h → **14 × 3 h = 42 h**, owed to the
+re-baseline and not restated in place (§1.3). `[TRP §1.4]`'s trial drops from eight
+controllers to seven, of which **five** serve a screen — and **DB2, the trial's opening
+screen, is one of the losers** (§3.0a).
+
+**What it contradicted — all five applied 25 Aug 2026.** Every one of these named the
+controller; none does now, so the repository no longer disagrees with itself:
+
+| Document | Then | Now |
+|---|---|---|
+| `[API §3.1]` | fifteen controllers, `RodReceivingController` among them | ✅ **fourteen**, with a callout carrying `P-53`'s reasoning and cost |
+| `[API §3.2]` | rows 8 and 9 name `RodReceiving` as their host | ✅ both marked **specified and unhosted**; §4.3 and §4.20 carry banners. Rows kept — *deferred is not missing, unhosted is not deleted* |
+| `[TB §7]` `FW-138` | AC 1 lists all fifteen; rate card 15 × 3 h | ✅ AC 1 → fourteen. ⚠ **The hours cell is deliberately unchanged** — 42 h is owed to the re-baseline |
+| `phase-01b` L82 | *"**Fifteen**, per `[API §3.1]`"* | ✅ **fourteen**, and exit criterion 2 with it; the row now also states this layer builds **22 of 25** |
+| `FW-N04` step 8 | the fifteen-shell table, built 25 Aug | ✅ row 3 marked withdrawn — **kept as built**, since that is what the story delivered |
+| `[TRP §1.4]` | eight trial controllers | ✅ **seven, five serving a screen**, parentheticals only so the workbook guards still pass |
+
+**What is still owed is the re-homing, not the withdrawal** — `P-54`.
+
+**The class is gone.** `FlatWire.API/Controllers/RodReceiving/RodReceivingController.cs` was
+**deleted on 25 Aug 2026** on the direction that produced this decision, after the five
+documents above were corrected and after confirming nothing referenced it. The solution
+**rebuilt clean** — 0 errors, 13 pre-existing warnings, none related — and fourteen controller
+folders remain. It is tracked, so `git restore` from commit `824f3231` on `feature/flat-wire`
+brings it back if the decision reverses.
+
+⚠ **This decision is still marked *needs ratifying*, and that is not a contradiction.** The
+*direction* is settled and has been applied end to end; what is outstanding is **formal
+sign-off from whoever owns the `/rod/**` re-homing**, because the endpoints `P-54` covers are
+still specified with no host. Do not read the deletion as closing `P-54`.
+
+**If ratification fails**, restore #8 and §4.20 to §3 (`RodReceiving`, 24 endpoints, 13
+controllers) and leave #9 out under the `P-07` reasoning. Nothing else in this document
+changes.
+
+### `P-54` — `[API §4.3]` and `§4.20` are re-homed or re-specified by `[API]`, not by this plan
+
+**Open — escalated 25 Aug 2026.** `P-53` removes the host; it does not remove the requirement.
+Both endpoints remain specified in the contract of record and are now **specified with no
+host**, exactly as `POST /order/{orderNo}/complete` has been since 22 Aug.
+
+Three ways out, and choosing between them is a contract and architecture call, not a build
+decision:
+
+1. **Re-home the two reads** onto `PayoffStagingController` — they feed staging and check-in,
+   and that controller already carries two unrelated prefixes, so a third is no new pattern.
+2. **Split by source** — the shared-schema fields come from `CoilCheckin`'s existing
+   `getCheckinCoilInfo`, and FlatWire exposes only the four local fields it alone can serve.
+   Two round trips at the scan instead of the one `[API §4.3]` was written to guarantee.
+3. **Re-specify the screens** so DB2/DB2A do not need a rod lookup — the largest change, and
+   the only one that touches requirements rather than plumbing.
+
+**Until it closes, `FR-042`, `FR-064`, `FR-043`'s gate and `Q24`'s station switching have no
+endpoint.** Recorded in §8; **do not invent a shape to unblock a screen** — that is how a stub
+becomes a contract nobody agreed to.
+
+### `P-55` — `app.UseAuthorization()` is required here, and `FW-N04` step 6 rule 2 is wrong
+
+**Settled — minted 25 Aug 2026 while building, and it is the one thing the plans had wrong.**
+
+`app.UseAuthorization();` goes in `Program.cs` **between `UseRouting()` and `MapControllers()`**.
+
+`FW-N04` step 6 rule 2 says the opposite, in terms: *"No `app.UseAuthorization()`. `CoilCheckin`
+has none — authorization is enforced by the global `AuthorizeFilter` that `AddCustomMvc()` adds.
+Do not add it 'for completeness'; it changes behaviour."*
+
+**That is true of `CoilCheckin` and false here, and the difference is the routing model.**
+`AddCustomMvc()` sets `options.EnableEndpointRouting = false`, and `CoilCheckin` terminates in
+`UseMvc`, where the global filter alone suffices. **`FW-N04`'s `Program.cs` terminates in
+`MapControllers()`** — endpoint routing — and ASP.NET then *requires* the authorization
+middleware to run between `UseRouting` and the endpoint. Measured on the running service:
+
+```
+500 System.InvalidOperationException: Endpoint FlatWire.Api.Controllers.Lines.LinesController
+    .GetLinesStatusAsync (FlatWire.Api) contains authorization metadata, but a middleware was
+    not found that supports authorization.
+```
+
+**All 22 endpoints returned 500 to an unauthenticated request, where the contract requires 401**
+(`[API 1.3]`, `TC-655`, and this story's own acceptance criterion). After the one line, 22 of 22
+return `401`. Verified by probing every operation in the published Swagger document.
+
+**Why it survived `FW-N04`:** that story ships **no actions**, so no endpoint carried
+authorization metadata and nothing tripped the check. It is the *first action* that fails, which
+is exactly this story. Nothing was wrong with the skeleton as delivered — the rule was wrong about
+what the skeleton would need next.
+
+**`FW-N04` step 6 rule 2 is corrected** rather than deleted: the CoilCheckin observation is
+accurate and worth keeping, with the `UseMvc`-versus-`MapControllers` condition attached.
+
+### `P-56` — the envelope derives from `ActionResultBase<T>`; supersedes `P-06`
+
+**Settled — 25 Aug 2026, on the repository C# standard.**
+
+`P-06` defined a standalone envelope because no framework type produces `[API §1.2]`'s shape. The
+observation stands; the conclusion is reversed. The standard's controller checklist requires the
+response wrapped in `ActionResultBase<T>`, so **`FlatWireResult<T>` now derives from it** — and
+doing so makes `[SVC §3.4]` correct for the first time, because that section already described the
+envelope as *"`UAController` standard `Data` / `Success` / `Errors`"* and the framework type has no
+`Errors` at all.
+
+| Field | Source | Carries |
+|---|---|---|
+| `Data`, `Success` | inherited | as contracted |
+| `ErrorCode` (**int**) | inherited | the **HTTP status** — the meaning `HttpGlobalExceptionFilter` itself assigns it |
+| `ErrorDescription` (**string**) | inherited | the **`[API §1.8]` machine code** |
+| `Errors` (`string[]`) | added | the human-readable messages |
+| `ErrorContext` | added, **typed** | `InspectionFailedContext` / `WrongStationContext` |
+
+**Real status codes are kept.** The checklist's *"returned as `Ok(...)`"* describes the happy path;
+the same standard flags *"200 for a conflict (409)"*, and `[API §1.3]`'s split is load-bearing.
+**`FW-146` inherits this type** and must not define a second envelope.
+
+⚠ **The machine code moved from `errorCode` to `errorDescription`.** Any client — or probe — reading
+`errorCode` as a string now reads an int.
+
+### `P-57` — shape validation is FluentValidation's; the contract's named statuses stay in the action
+
+**Settled — 25 Aug 2026.** `[SVC §3.4]`'s taxonomy governs: shape → `400`, state → `422`. One
+refinement, found while building: **where `[API §4]` names a status for a conditional-required
+rule, that status wins.** Moving `weldQualityFailReason`, the die-size match, `existingSkidId` and
+three others from their specified `422` to a general `400` would be a status change for an existing
+condition — **breaking**, under `[API §8]`.
+
+Validators live in `FlatWire.Application/Validators/`, auto-validated at model binding, with the
+model-state result rebuilt as the envelope. ⚠ **That factory must hang off `AddControllers()`** —
+`services.Configure<ApiBehaviorOptions>` does not bind, and a 400 then returns
+`ValidationProblemDetails` instead. Measured.
+
+### `P-58` — fourteen canonical enums, and endpoint vocabularies stay strings
+
+**Settled — 25 Aug 2026.** `[API §2]`'s fourteen become C# enums in `FlatWire.Domain/Enums/`, one
+file, in the specification's own order so `TC-020`'s three-way diff is a side-by-side read. The
+endpoint-local vocabularies — reason codes, `weldType`, `skidAssignment`, `diePosition` — become
+**string constants**, because a fifteenth enum would have no TypeScript union and no DB `CHECK` to
+mirror against.
+
+⚠ **Two mechanics that fail silently.** `JsonStringEnumConverter` is registered in `Program.cs`,
+without which `"FL1"` serialises as `0`; and **request DTOs carry nullable enums**, without which a
+missing `lineId` binds to `LineId.FL1` rather than failing.
+
+⚠ **`PayoffPosition` stays an `int` on the wire.** `[API §4.5]` sends `"payoffPosition": 2`; the
+enum names the meanings behind it and does not replace it.
+
 ---
 
 ## 6. Verification
@@ -428,9 +740,16 @@ criterion at all.
 `phase-01b` L124 and `[TRP §7]` both say the same thing in different words: it *"has to be
 staffed inside the window rather than assumed."*
 
-> **Reviewer: `TBD` — assign before the window opens.** A layer with no automated tests and
-> no named reviewer has **no verification at all**, and `phase-01b` exit criterion 6 cannot
-> be signed.
+> **Reviewer: `TBD` — and the window has already opened.** A layer with no automated tests
+> and no named reviewer has **no verification at all**, and `phase-01b` exit criterion 6
+> cannot be signed.
+>
+> ⚠ **The gate date no longer works and this is not a wording problem.** `[TS §4.2]` dates
+> QA0 **14 Aug 2026** — three days *before* the 17 Aug development window opens, and three
+> weeks before this story can run: `FW-N04` was built 25 Aug and `S1` starts 24 Aug. So the
+> instruction *"assign before the window opens"* has expired with nobody assigned. **Either
+> re-point 1B's contribution at `[TRP §7]`'s trial gate or have `[TS]` re-date QA0** — the
+> choice is `[TS]`/`[RM]`'s, but it cannot stay as it is.
 
 | # | Item | Owning plan |
 |---|---|---|
@@ -450,20 +769,50 @@ Mapped to the acceptance criteria:
 
 | AC | How it is checked |
 |---|---|
-| Fifteen controllers extending `UAController` | Reflection over the assembly; names match `[API §3.1]` — **satisfied by `FW-N04`**, confirm only |
+| **Fourteen** controllers extending `UAController` | Reflection over the assembly; names match `[API §3.1]`, which no longer lists `RodReceiving` (`P-53`) — `FW-N04` already satisfies it; confirm only |
 | `SpoolController` covers `GET /spools` | Swagger lists 16a **and** 16b under `Spool` |
 | `PayoffStagingController` covers 10, 11, 12, 14 | Swagger lists four operations; **`mark-welded` appears nowhere** |
 | `201`/`Blocked` on inspection failure | Post a failing inspection — expect `201`, `state:"Blocked"`, and the bay reported occupied on the next `GET /payoff/status` |
+| **Station-keyed bay occupancy** (`G21`, step 5d) | Stage a rod on **FL1 position 1**, then post the same position on **FL3** — expect `409 BAY_OCCUPIED`, because both resolve to `FL1PO`. A stub keyed on `(LineId, PayoffPosition)` returns `201` here, which is the defect |
 | The envelope | Every response, success and failure, carries `success`; failures carry `errors[]` and a string code; `data` is `null` on failure |
-| `[Authorize]` everywhere | An unauthenticated call to each of the 24 returns `401`. `TC-655` covers this, excepting the anonymous `/health` |
+| `[Authorize]` everywhere | An unauthenticated call to each of the 22 returns `401`. `TC-655` covers this, excepting the anonymous `/health` |
 | Schema-valid fixtures per `[API §4]` | Walkthrough compares each response against its §4 shape |
 
 Plus the four `[API §7.2]` obligations this story owns (§2.3), and:
 
-- Swagger shows **24 operations across 13 controllers**; `PassSchedule` and `ShiftSummary`
-  are present and empty.
+- Swagger shows **22 operations across 12 controllers**; `PassSchedule` and `ShiftSummary`
+  are present and empty; **`RodReceiving` appears nowhere** (`P-53`).
 - FL2 responses carry `null` gauge and width — not `0`, not omitted.
 - `PS-1100-FL1-003` is refused with `SCHEDULE_NOT_ACTIVE`/`422`; `PS-1100-FL1-001` succeeds.
+
+### 6.2 What the build actually verified — 25 Aug 2026
+
+The walkthrough of §6.1 still needs its named reviewer. **These are the mechanical checks, run
+against the service on `http://localhost:5261`** with `ASPNETCORE_ENVIRONMENT=Development`:
+
+| Check | Result |
+|---|---|
+| Solution builds | **0 errors**, 8 warnings — all pre-existing (`NU1506` duplicate `PackageVersion`, the analyzer-version notice) |
+| Swagger operation count | **22 operations across 12 controllers** |
+| `PassSchedule` / `ShiftSummary` | Present, **0 operations each** |
+| `RodReceiving` | **Absent** — no `/rod/{alpha}`, no tag (`P-53`) |
+| `[Authorize]` everywhere | **22 of 22 return `401`** unauthenticated — the `TC-655` shape. ⚠ This failed first time: see `P-55` |
+| Envelope | `data` · `success` · `errors` · `errorCode` · `errorContext`, camelCase, `errors` always an array, `data` null on every failure |
+| Happy paths + failing cases | **61 of 61** request cases returned the contracted status *and* the contracted `[API §1.8]` code. *(56 at first build; **five were added by the FR-conformance pass** below)* |
+| **FR conformance** *(added 25 Aug 2026)* | A re-review against `[REQ]` found five requirements the build did not enforce, all now covered: **`FR-068`** — a failed check-in visual inspection is a **hard block** routing to WIP, which the check-in path did not implement at all; **`FR-063`/`FR-065`** — measured diameter mandatory and inside the `Drawer` lookup range; **`FR-090`** — measured gauge *and* width mandatory at FL2 check-in; **`FR-291`** — a rejection captures the stage it occurred at; **`FR-312`/`FR-322`** — a reason in every mode and a rod disposition, which drives the material status transition |
+| **(a)** `201`/`Blocked` | `201`, `state: "Blocked"`, `errorCode: INSPECTION_FAILED`, `errorContext: {route:"wipRejection", rodAlpha}` |
+| **(b)** FL2 `null` gauge/width | FL1 `0.110`/`0.625`; **FL2 `null`/`null`** — not `0`, not omitted |
+| **(c)** `Draft`/`Inactive` refused | `PS-1100-FL1-003` and `-002` both `422 SCHEDULE_NOT_ACTIVE`; `PS-1100-FL2-001` too, since `G40` demoted it |
+| **(d)** Station-keyed occupancy | Staging FL3 position 1 returns `409 BAY_OCCUPIED` — *"Station FL1PO position 1 already holds R00041. FL1 and FL3 share this station."* |
+
+**camelCase came free and is worth knowing why**: `AddCustomMvc()` adds no Newtonsoft, so
+`System.Text.Json`'s defaults apply. If a later story adds `AddNewtonsoftJson()`, every property
+name on the wire changes and every 1A screen breaks.
+
+⚠ **No automated tests were added** — `[TS §1.2]` withdrew the backend suite, and this story does
+not reverse that. The script that produced the 61 cases is a throwaway probe in the session
+scratchpad, not a committed asset; **re-running it is a manual step**, which is precisely why §6.1's
+walkthrough still needs an owner.
 
 ---
 
@@ -477,6 +826,11 @@ natural next two; `FW-146` inherits `P-06`.
 `OI-46`, `OI-47` and `OI-48` by assuming a single active schedule. **That assumption will not
 remove itself** — name a signer-off per screen.
 
+⚠ **Three fixture sets are already scheduled to change — §8.2.** Because the fixtures are a
+published interface, the de-stub pass must re-verify each one rather than assume it still
+matches. `P-08`'s per-controller seam is what keeps that cheap: one file per controller, not a
+shared class every screen's removal has to touch.
+
 ---
 
 ## 8. Open items and traps
@@ -484,9 +838,13 @@ remove itself** — name a signer-off per screen.
 | Item | Effect here |
 |---|---|
 | **`P-06`** | Blocks step 3. The envelope is undefined until it is settled |
-| **`G6` / `OI-37`** | ✅ **Answered 15 Aug 2026** — the six roles exist on `ClaimTypes.Role`. Never a constraint here: this story's 24 actions carry **bare `[Authorize]`**, which is unaffected either way. Policies arrive in `FW-145` |
+| **`P-53`** | Blocks nothing in the build — **fourteen shells already exist and one simply gets no actions** — but it must be ratified before `RodReceivingController.cs` is deleted, and before 1A freezes a base-URL set that still contains `/rod/**` |
+| **`/rod/**` has no host** | ⚠ **Raised 25 Aug 2026 — the consequence of `P-53`, and the largest open item here.** `[API §4.3]` and `§4.20` remain specified and are now unhosted. `FR-042`, `FR-064`, `FR-043`'s carry-forward gate and `Q24`'s station switching have **no endpoint**; `CoilCheckin`'s `getCheckinCoilInfo` covers only the shared-schema half. Owner `[API]` / architecture; three options in `P-54`. **Do not invent a shape** |
+| **`/order/**` has no controller** | ⚠ `[API §4.21]` specifies `POST /order/{orderNo}/complete`; `[API §3.1]`'s controller table has no owner and `§3.2`'s index has no row. **Blocks one action, not the story** — `P-50` builds the fifteen and stops, and recommends `OrderController` as a sixteenth (**+3 h**). Settle it before 1A freezes its base-URL set. Handler is `FW-227` |
+| **`WRONG_STATION` is not in the catalogue** | ⚠ Raised 25 Aug 2026. `[API §4.5]` and `§4.6` both specify `409 WRONG_STATION` with `correctLineId`, and the client **branches on it** — it switches station and re-posts. But `[API §1.8]`'s error-code catalogue does not list it, and that catalogue is what 1A codes its branches from. Owner `[API]` |
+| **`G6` / `OI-37`** | ✅ **Answered 15 Aug 2026** — the six roles exist on `ClaimTypes.Role`. Never a constraint here: this story's actions carry **bare `[Authorize]`**, which is unaffected either way. Policies arrive in `FW-145` |
 | **`OI-32`** | **Six specified behaviours have no endpoint at all** — roll-override revert (`FR-212`, decided), supervisor disposition of a pending Mode B checkout (`FR-325`/`FR-326`, decided), alloy-lookup CRUD, die-inventory CRUD, SPC-HOLD QA release, spool-completion prompt. `phase-01b` L188: **"Criterion 2 cannot cover an endpoint that does not exist."** Four are MVP-1. Do not invent shapes |
-| **`OI-33`** | `planning_routings` columns unmapped — affects the `order` block on `GET /staging/queue` and `GET /rod/{alpha}`. Stub it; flag it |
+| **`OI-33`** | `planning_routings` columns unmapped — affects the `order` block on `GET /staging/queue`. *(It also affected `GET /rod/{alpha}`, which left with `P-53`.)* Stub it; flag it |
 | **`G14`** | Footage is `DECIMAL(10,2)` on run tables but `INT` on event tables. **A fractional footage does not round-trip through an event endpoint** — do not let a fixture imply it does |
 | **`OI-21`** | Two rejection-ID formats (`REJ-####` vs `REJ-2026-0418`). Pick one for the fixture and record which |
 | **Renames pending** | `[PLCC §6.3]` records `LineState` → `LineOperatingState` and `LineStatus` → `LineStateChanged`. **Build to `[API]`/`[SIG]`**; apply the rename in one pass across all three when arbitrated |
@@ -499,6 +857,27 @@ remove itself** — name a signer-off per screen.
 | **`[API §4.6a]`'s `POST /checkin/spool` worked example** — `passScheduleId: "PS-1100-FL2-001"` in **both** the request and the `"success": true` response | **`PS-1100-FL2-002`**. As written the example shows a check-in the contract must refuse **twice**: `Inactive` → `SCHEDULE_NOT_ACTIVE`/`422`, and `Hybrid` against a Standalone-origin spool → `FR-091` | **`G40`** |
 | Seed file's own §8 banner comment: *"`PS-1100-FL2-001` · Hybrid · **Active**"* | The row beneath it says **`Inactive`** | `FlatWire_SampleData_Schedule.sql` |
 | `[API]` front matter: *"31 live rows, of which MVP-1 implements 24"* | **32 live, MVP-1 implements 25** | `[API §3.2]` heading and note; `phase-01b` L82 |
-| `[SSP]`: *"Thirteen thin controllers"* at 35 h | **Fifteen**, 45 h | `[API §3.1]`, resolved 15 Aug 2026 |
-| `[TB §7]` rate-card line: *"14 controllers @ 4 h = 56 h … → 42 h"* | Header says **45 h** (15 × 3 h) | The 45 h header is the later figure; the basis line was not restated |
+| `[SSP]`: *"Thirteen thin controllers"* at 35 h | **Fifteen**, 45 h as of 15 Aug — and **fourteen, 42 h** after `P-53`. Two corrections behind, not one | `[API §3.1]`; `P-53` |
+| `[TB §7]` rate-card line: *"14 controllers @ 4 h = 56 h … → 42 h"* | Header says **45 h** (15 × 3 h). ⚠ The **42 h** here is a coincidence — it is the withdrawn-test figure, *not* `P-53`'s 14 × 3 h. Do not read the basis line as though it already accounted for the withdrawal | The 45 h header is the later figure; the basis line was not restated |
+| **Anything naming `RodReceivingController`** — `[API §3.1]`, `[API §3.2]` rows 8–9, `[TB §7]` AC 1, `phase-01b` L82, `FW-N04` step 8 | **Withdrawn from this service** by `P-53`. Each is listed with its owner in that decision; none is this plan's to edit | `P-53`, 25 Aug 2026 |
 | Anything routing spool completion through `CoilController` | **`SpoolController`**, endpoint 16b | `[API §3.2]`, added 15 Aug 2026 |
+
+### 8.2 Pending contract changes — do not bake these in
+
+**These are not stale text; they are changes the contract owes.** The fixtures behind them are
+correct against `[API]` today and are scheduled to move. Because §7 makes a fixture a published
+interface the moment it lands, each one needs re-verifying at the de-stub pass rather than
+assuming it still matches.
+
+| Owed | What moves | Fixtures affected |
+|---|---|---|
+| **Wave W5** of the [20 Aug client call](../../../../BaseDocuments/ClientCall_2026-08-20_SyncPlan.md) — status **PARTIAL**: the five `lineId = FL2` → `422` sites are *marked* withdrawn but the endpoint change itself is owed, and `FL2PO` is still not created | `GET /spools` returns an order **set**, not one order · `POST /checkin/spool` **selects one order from the set** · `POST /staging/rod` admits `lineId = FL2` · `FL2PO` created, which interacts with `G21`'s station keying and `OI-26` | `Spool` · `CheckIn` · `PayoffStaging` |
+| **`FR-533`–`FR-540`** — FL2 pre-check-in, `[REQ §5.29]`, client 20 Aug 2026. The **schema half is already built** (`SpoolStaging`, 22 Aug); the endpoint, the screen and story **`FW-224`** are owed, and `FW-224` is *reserved and unsized pending `Q41`* | A further endpoint appears — an FL2 pre-check-in POST, with **no payoff position** (`FR-535`), no inspection section (`FR-538`), and claim-and-release of the station inside its own transaction (`FR-536`) | **None yet — do not scaffold it.** `P-07`'s reasoning applies: a stub the client codes against is worse than a route that visibly does not exist |
+| **`/rod/**` re-homing** — `P-53` removed the host, `P-54` is the escalation | `[API §4.3]` and `§4.20` are re-homed, split by source, or the screens are re-specified | The four fields no other service can serve; `CoilCheckin`'s `getCheckinCoilInfo` is the named candidate for the shared-schema half |
+
+⚠ **One conflict inside the contract is worth knowing even though both endpoints have left this
+service:** `[API §4.3]`'s worked example returns a **scalar** `orderId`, while `[API §4.20]`
+states that since `Q70` a rod carries an order **set** and *"a consumer reading a scalar order
+from that response is reading a rod that happens to have one."* Whoever re-homes them inherits
+that disagreement — it is `[API]`'s to settle, and it should be settled in the same pass as
+`P-54` rather than after.

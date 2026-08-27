@@ -113,11 +113,43 @@ GO
 -- would mean rewriting the run/pause fixtures, so it is left alone -- add a
 -- spool-fed coil here when RUN-0004 gains a completed output.
 -- ============================================================
+-- ChildAlpha / SegmentWeightLb / SharedWrittenAt seeded 26 Aug 2026 (Q88, Q89).
+--
+-- FW-00421-C01 ALREADY EXERCISED THE MULTI-ROD CASE -- two parents, R00041 and
+-- R00042 -- so it is the natural fixture for N identities and needed no new row.
+-- It now carries ONE ChildAlpha per parent, each with its own weight, and the
+-- two weights SUM to the coil's NetWeightLb of 289.80 (144.90 + 144.90). That
+-- sum is ORD023 / TC-792, and nothing else in the schema checks it.
+--
+-- SharedWrittenAt is stamped on all three rows so the fixture represents a
+-- COMPLETED coil (ORD024 / I8). A partial-retry fixture -- some rows stamped,
+-- some NULL -- is deliberately NOT seeded here: TC-797 creates that state by
+-- interrupting the procedure, which is the only way it legitimately arises.
+--
+-- SourceSegmentAlpha is NULL on every row and that is CORRECT, not a gap: all
+-- three coils come from ROD-FED runs (RUN-0001 FL1 Standalone, RUN-0002 FL3
+-- direct from rod R00045), so there is no spool segment to name. Same reason
+-- SpoolAlpha is NULL. The spool-fed case is still unexercised -- see the
+-- KNOWN FIXTURE LIMITATION note above.
 IF NOT EXISTS (SELECT 1 FROM [dbo].[CoilTraceability])
 INSERT INTO [dbo].[CoilTraceability]
-    ([CoilAlpha],[RodAlpha],[SpoolAlpha],[FootageFrom],[FootageTo])
+    ([CoilAlpha],[RodAlpha],[SpoolAlpha],[FootageFrom],[FootageTo],[ChildAlpha],[SegmentWeightLb],[SharedWrittenAt])
 VALUES
-    ('FW-00421-C01','R00041',NULL,   0,2100),
-    ('FW-00421-C01','R00042',NULL,2100,4200),
-    ('FW-00600-C01','R00045',NULL,   0,3800);
+    ('FW-00421-C01','R00041',NULL,   0,2100,'R00041A',144.90,'2026-07-20 09:45:00 -05:00'),
+    ('FW-00421-C01','R00042',NULL,2100,4200,'R00042A',144.90,'2026-07-20 09:45:00 -05:00'),
+    ('FW-00600-C01','R00045',NULL,   0,3800,'R00045A',253.50,'2026-07-20 12:30:00 -05:00');
+GO
+
+-- CoilOutput.CoilNo -- the LEAD part's identity, so I2 / TC-787 has a fixture.
+-- It was NULL on both seeded coils, which left the invariant untestable.
+--
+-- The lead is MIN(FootageFrom): R00041A for FW-00421-C01 (footage 0) and
+-- R00045A for FW-00600-C01 (its only row). NOTE the single-rod coil's CoilNo
+-- EQUALS its one ChildAlpha -- that is FR-566 / TC-785, the regression that
+-- matters most, and the fixture now shows it.
+IF EXISTS (SELECT 1 FROM [dbo].[CoilOutput] WHERE [CoilAlpha] = 'FW-00421-C01' AND [CoilNo] IS NULL)
+    UPDATE [dbo].[CoilOutput] SET [CoilNo] = 'R00041A' WHERE [CoilAlpha] = 'FW-00421-C01';
+GO
+IF EXISTS (SELECT 1 FROM [dbo].[CoilOutput] WHERE [CoilAlpha] = 'FW-00600-C01' AND [CoilNo] IS NULL)
+    UPDATE [dbo].[CoilOutput] SET [CoilNo] = 'R00045A' WHERE [CoilAlpha] = 'FW-00600-C01';
 GO

@@ -23,16 +23,24 @@
 --
 --   20  grants                (idempotent; run once per environment)
 --   30  sp_IngestRodFromCoils (FlatWireDB)
---   40  FlatWire_CheckInRod         (united_db)
---   50  FlatWire_CompleteCoilOnSkid (united_db)
---   60  FlatWire_ReleaseStation     (united_db)
---   70  FlatWire_ReverseReqsum      (united_db)
+--   40  FlatWire_CheckInRod         (FlatWireDB)
+--   50  FlatWire_CompleteCoilOnSkid (FlatWireDB)
+--   60  FlatWire_ReleaseStation     (FlatWireDB)
+--   70  FlatWire_ReverseReqsum      (FlatWireDB)
+--
+--   ⚠ 40-70 MOVED from united_db to FlatWireDB on 26 Aug 2026 (change [H]).
+--     All FIVE procedures now live in ONE database. The tables they read and
+--     write did NOT move -- united_db, proddb, CommonDB, SlitterDB and
+--     wiplogdb are unchanged, and so is the transaction model: one instance,
+--     one local transaction manager, no MSDTC.
 --
 -- ⚠ THE ORDER OF 30..70 AMONG THEMSELVES IS ARBITRARY. CREATE PROCEDURE
 --   uses DEFERRED NAME RESOLUTION, so these five have no compile-time
 --   dependency on one another and none references another's body. The
 --   numbers group them by owning database; they do not encode a chain.
 --   Do not invent a dependency from the numbering.
+--   ⚠ Since [H] all five share ONE owning database, so the numbering no
+--     longer groups by database either. It is ordering only.
 --
 -- ⚠ TWO OF THESE CARRY OPEN SIGN-OFF ITEMS AND ONE IS DESTRUCTIVE:
 --     40  Q37-Q39  transaction_name, coil_skid_status, the coils rod stamp
@@ -61,7 +69,7 @@
 -- directory. Idempotent: 20 is guarded and 30-70 are all CREATE OR ALTER.
 --
 -- The full cross-folder deploy sequence has ONE home: [DEP 4.2].
--- Teardown: 99_united_db_Proc_FlatWire_Teardown.sql (code), then
+-- Teardown: 99_FlatWireDB_Proc_FlatWire_Teardown.sql (code), then
 -- ../Schema/SQL/FlatWire_DDL_99_Teardown.sql (the database). Neither undoes
 -- 10's shared rows -- by design.
 -- ============================================================
@@ -77,10 +85,10 @@ GO
 
 :r 20_FlatWire_Grants.sql
 :r 30_FlatWireDB_Proc_sp_IngestRodFromCoils.sql
-:r 40_united_db_Proc_FlatWire_CheckInRod.sql
-:r 50_united_db_Proc_FlatWire_CompleteCoilOnSkid.sql
-:r 60_united_db_Proc_FlatWire_ReleaseStation.sql
-:r 70_united_db_Proc_FlatWire_ReverseReqsum.sql
+:r 40_FlatWireDB_Proc_FlatWire_CheckInRod.sql
+:r 50_FlatWireDB_Proc_FlatWire_CompleteCoilOnSkid.sql
+:r 60_FlatWireDB_Proc_FlatWire_ReleaseStation.sql
+:r 70_FlatWireDB_Proc_FlatWire_ReverseReqsum.sql
 
 GO
 PRINT '======================================================';

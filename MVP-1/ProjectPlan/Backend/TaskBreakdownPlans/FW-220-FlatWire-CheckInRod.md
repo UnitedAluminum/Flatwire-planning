@@ -1,7 +1,7 @@
 # FW-220 — FL1/FL3 Check-In Write-Back into the Shared Schema
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 19, 2026 — new. Closes **`OI-112`**; largely closes **`OI-111`**; raises **`OI-115`**, **`OI-116`** and **`Q37`**–**`Q40`**
+**Last Updated:** August 25, 2026 — flagged that `GET /rod/{alpha}` left the service (`FW-138` `P-53`), which strengthens rather than weakens the no-assumed-lookup rule *(previously August 19, 2026 — new. Closes **`OI-112`**; largely closes **`OI-111`**; raises **`OI-115`**, **`OI-116`** and **`Q37`**–**`Q40`**)*
 **Status:** **Ready to build — three procedures are drafted and structurally verified; four values need IT sign-off before a shared environment, and one deployment prerequisite is not yet met**
 **Stories:** `FW-220` (check-in write-back) · `FW-221` (station release + reqsum reversal) · `FW-222` (active-run index + `WipCoilOrdersWritten`) · **Phase:** 4 · **Sprint:** S2 · **Streams:** DB + BE
 **Hours:** **51 h AI-assisted / 69 h hand-coded** — DB only. **The BE half is already inside `FW-157`'s 36 h** and is not additive; see *Estimating* below
@@ -134,7 +134,7 @@ PLCTagService.PushPassSchedule(...)
 ### Four points that will otherwise be got wrong in C#
 
 1. **`EnableRetryOnFailure` and user-initiated transactions are incompatible.** `FW-142` §4 step 5 specifies the retrying execution strategy; wrap every explicit-transaction block in `strategy.ExecuteAsync(...)` or EF throws at run time.
-2. **The `Rod` mirror must be ingested first — and `FW-223` owns that now.** `FK_RodCheckin_Rod` is an *enforced* FK to `Rod.Alpha`, and until 19 Aug 2026 **nothing populated `Rod` in production at all** (`OI-42`, now closed). Call `FlatWireDB.dbo.sp_IngestRodFromCoils` as the first statement in the transaction; see [`FW-223`](FW-223-Rod-Ingestion.md) and `[INT §7.9]`. A direct scan into Dashboard 2 is a supported path, so check-in cannot assume staging or `GET /rod/{alpha}` ran.
+2. **The `Rod` mirror must be ingested first — and `FW-223` owns that now.** `FK_RodCheckin_Rod` is an *enforced* FK to `Rod.Alpha`, and until 19 Aug 2026 **nothing populated `Rod` in production at all** (`OI-42`, now closed). Call `FlatWireDB.dbo.sp_IngestRodFromCoils` as the first statement in the transaction; see [`FW-223`](FW-223-Rod-Ingestion.md) and `[INT §7.9]`. A direct scan into Dashboard 2 is a supported path, so check-in cannot assume staging or a rod lookup ran. ⚠ **`GET /rod/{alpha}` itself left the service on 25 Aug 2026** — `FW-138`'s `P-53`; the point stands and gets stronger, since there is now no lookup to assume.
 3. **`RodStaging → CheckedIn` moves inside the transaction**, one step earlier than `[API §4.6]`'s side-effect list shows it, so the bay is never claimable twice. The compensation must revert it; `CK_RodStaging_CheckedIn` permits it because the group is all-or-nothing.
 4. **Use `SqlTransaction`, never `TransactionScope`** — the latter can escalate to MSDTC, which is exactly what this design avoids. Retry error 1205 at the service, not in the procedure.
 

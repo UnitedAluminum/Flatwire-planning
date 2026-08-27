@@ -1,7 +1,7 @@
 # Rod ↔ Order Many-to-Many — Design Plan
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 22, 2026
+**Last Updated:** August 26, 2026 — ⚠ **`GenerateCoilAlpha`'s six-character root is the exclusion sweep's `LIKE` filter, NOT the string the suffix is appended to.** A seven-character input returns a **child** (`R00002A` → `R00002AA`), verified on the live instance; the recorded reason for rejecting segment-rooted alphas — *"returns a sibling of the segment"* — was **false**. The verdict is unchanged and now rests on **collision**: `R00002AA` is also suffix 27 of the rod-rooted sequence. Ceiling corrected **26 → 702** — the mirrored paragraph corrected; `F13` in `[RodOrderAllocation.md §9.1]` carries the measured values. *(previously August 22, 2026)*
 **Status:** Proposed — design plan, **not a requirements source and not citable as a requirement**
 **Document Type:** Design plan for the rod ↔ order deliverable it specifies
 **Sources:** client rules confirmed 22 Aug 2026 · [`FL Alphas Plus.xlsm`](../BaseDocuments/FL%20Alphas%20Plus.xlsm) and its [analysis](../BaseDocuments/FL%20Alphas%20Plus%20-%20Analysis.md) · [`ClientCall_2026-08-20_SyncPlan.md`](../BaseDocuments/ClientCall_2026-08-20_SyncPlan.md) (`D2`, `D5`–`D9`) · `Q70` (30 Jul) · `Q73` (6 Aug) · `CommonDB.dbo.GenerateCoilAlpha` (read from `ual-database`)
@@ -163,10 +163,25 @@ From `ual-database/Databases/CommonDB/Functions/GenerateCoilAlpha.sql`. It matte
 `FlatWire_CompleteCoilOnSkid` calls it to mint `CoilOutput.CoilNo`, and because it mints from
 the same namespace the FL1 segment alpha uses.
 
+> ⛔ **SUPERSEDED 26 Aug 2026 by `[N]` — root on the PARENT, pass a BLANK ignore list, register every
+> alpha in `proddb..coils`.** FL1 segments root on the **rod** (one trailing letter); FL2 coil parts root
+> on the **source segment** (two — `R00001A` → `R00001AA`), rod only where `SourceSegmentAlpha IS NULL`.
+> **There is no ignore list anywhere** — registration makes the generator's own sweep find every sibling.
+> Authority: [`RodOrderAllocation.md`](RodOrderAllocation.md) §2.4/§2.8. ⚠ **Precondition unbuilt —
+> `OI-138`/`G54`: nothing writes an FL1 segment alpha yet, so the FL1 rows are design, not behaviour.**
+
 **What it is.** A **scalar UDF**: `(@CoilNo VARCHAR(9), @CoilNoToIgnore VARCHAR(500)) RETURNS VARCHAR(9)`.
-Blank input returns **`' '`** — a single space, not `NULL`. It roots on
-`SUBSTRING(LTRIM(RTRIM(@CoilNo)), 1, 6)` and walks `A`…`Z`, `AA`…`AZ`, `BA`… for the first unused
-suffix.
+Blank input returns **`' '`** — a single space, not `NULL`. It walks `A`…`Z`, then `AA`…`ZZ` — **702
+suffixes** (`F4`) — for the first unused suffix.
+
+> ⚠ **Corrected 26 Aug 2026: the six-character root is the sweep FILTER, not the append stem.** This
+> read *"it roots on `SUBSTRING(LTRIM(RTRIM(@CoilNo)), 1, 6)` and walks `A`…`Z`, `AA`…`AZ`, `BA`…"*,
+> which reads as though the suffix is appended to the root. `@rootCoilNo` is used **only** in the 14
+> sweep selects' `LIKE @rootCoilNo + '%'`; the stem is `@CoilNo` **verbatim**
+> (`SET @CoilAlpha = LTRIM(RTRIM(@CoilNo)) + CHAR(@AlphaTobeAdded)`). The sole exception is the
+> `LEN = 9` branch (`F7`), which is the only case returning a sibling. **`[RodOrderAllocation.md §9.1]`
+> `F13` carries the measured values** — notably `GenerateCoilAlpha('R00002A','')` → `R00002AA`, a
+> **child**. A reader trusting the old sentence predicts the wrong return value.
 
 **The six-character root is why the rod becomes the legacy master coil.** A rod alpha `R#####` is
 *exactly* six characters, so `GenerateCoilAlpha('R00421','')` roots on `R00421` and returns
@@ -421,6 +436,11 @@ be replaced, not annotated** — it is the only place the reasoning lives:
 -- against one per spool, so it can never be SpoolProcessing.Alpha and the two must
 -- not be conflated. SpoolProcessing.Alpha stays the spool MATERIAL identity.
 --
+-- *** SUPERSEDED 26 Aug 2026 ([N]): roots on the PARENT with a BLANK list.
+-- Segments root on the rod, coil parts on SourceSegmentAlpha. No ignore
+-- list anywhere -- every alpha is registered in proddb..coils and the
+-- sweep finds siblings unaided. See RodOrderAllocation.md 2.4/2.8. The
+-- superseded text follows. ***
 -- MINTED BY CommonDB.dbo.GenerateCoilAlpha(rodAlpha, @ignoreList), NOT by
 -- a local per-rod counter. FL1 segment alphas and FL2 shared coil alphas
 -- are the same strings off the same six-character root, and that function
@@ -459,7 +479,7 @@ The column is `VARCHAR(20)` with `UNIQUE`. Applying this is W4's.
 
 | | Consequence |
 |---|---|
-| 1 | **The ignore list is every prior segment alpha for that rod**, read from `SpoolTraceability` — not just this transaction's. `FlatWireDB` is outside the sweep, so a second spool off the same rod would otherwise be handed the same alpha (§2.7 Scenario A). `GetCoilAlpha` builds its used-list this way (F10); stay inside `VARCHAR(500)` (F11) |
+| 1 | ⛔ **WITHDRAWN 26 Aug 2026 — there is no ignore list.** Every mint passes `''`; registration in `proddb..coils` replaces exclusion (`[N]`). *Superseded:* **The ignore list is every prior segment alpha for that rod**, read from `SpoolTraceability` — not just this transaction's. `FlatWireDB` is outside the sweep, so a second spool off the same rod would otherwise be handed the same alpha (§2.7 Scenario A). `GetCoilAlpha` builds its used-list this way (F10); stay inside `VARCHAR(500)` (F11) |
 | 2 | **Replicate the caller's two guards** — the `' '` blank return (`THROW 51010`) and the `UPDLOCK, HOLDLOCK` re-check (`THROW 51011`) |
 | 3 | **FL1 spool completion becomes a cross-database caller.** Same instance, local transaction manager, no MSDTC — but **it can no longer be tested on LocalDB**, which has no `CommonDB`. `CLAUDE.md` carries that warning for check-in; it now applies here |
 | 4 | **F1 escalates** — the unresolved `coils` reference now gates FL1 as well as Phase 9 |
@@ -534,7 +554,7 @@ carries **two** identities and **N** traceability rows:
 | What | Value |
 |---|---|
 | Local, customer-facing | `FW-#####-C##` → `CoilOutput.CoilAlpha` |
-| Shared-schema | `GenerateCoilAlpha(primaryRod, @ignoreList)` → `VARCHAR(9)` → **`CoilOutput.CoilNo`** |
+| Shared-schema | ⛔ **now `GenerateCoilAlpha(leadSegmentAlpha, '')`** — rooted on the segment, blank list (`[N]`, 26 Aug 2026); rod fallback where `SourceSegmentAlpha IS NULL`. *(Was `GenerateCoilAlpha(primaryRod, @ignoreList)`.)* → `VARCHAR(9)` → **`CoilOutput.CoilNo`** |
 | Every parent | one `CoilTraceability` row per (rod, spool, footage range) |
 
 **Primary rod = the rod of the first segment consumed into that coil**, `MIN(FootageFrom)` over its
@@ -673,8 +693,21 @@ FL2, LIFO:
 
 | Coil | `CoilAlpha` | Primary | `CoilNo` | Composition | `CoilTraceability` |
 |---|---|---|---|---|---|
-| 1 | `FW-00003-C01` | `R00002` | `GenerateCoilAlpha('R00002','R00002A,R00002B,R00002C')` → **`R00002D`** | 900 lb, all `R00002A` | **1 row** |
-| 2 | `FW-00003-C02` | `R00002` | same call; `R00002D` now found by the sweep → **`R00002E`** | 500 lb `R00002A` + **400 lb `R00001C`** | **2 rows** |
+| 1 | `FW-00003-C01` | `R00002A` | `GenerateCoilAlpha('R00002A','')` → **`R00002AA`** | 900 lb, all `R00002A` | **1 row** |
+| 2 | `FW-00003-C02` | `R00002A` | ⚠ **two parts, rooted on two different segments.** `GenerateCoilAlpha('R00002A','')` → **`R00002AB`** *(lead — `R00002AA` is registered)*, **and** `GenerateCoilAlpha('R00001C','')` → **`R00001CA`** | 500 lb `R00002A` + **400 lb `R00001C`** | **2 rows** |
+
+> ⚠ **Rewritten 26 Aug 2026 (`[N]`).** *Superseded:* coil 1 `GenerateCoilAlpha('R00002','R00002A,R00002B,R00002C')` → `R00002D`; coil 2 *"same call; `R00002D` now found by the sweep"* → `R00002E`. Both were **rod**-rooted with an accumulating ignore list. Coils now root on their **source segment** with a blank list, so they take a **double** trailing letter and the second part's letter is determinate rather than dependent on everything else that rod produced. The **Primary** column is now the lead **segment**, not the rod.
+
+> ⛔ **SUPERSEDED 26 Aug 2026 — this table shows ONE shared identity per coil, and that is no longer
+> the design.** A welded coil now carries **one alpha per source rod** (`Q88`), and **every one of them
+> is written to `proddb..coils`** with its own weight from `SegmentWeightLb` (`Q89`). So coil 2 above
+> has **two** shared records, not one, and `coil_gen_history` gains **one correctly-parented row each**
+> — which is what **closes `OI-113`**.
+>
+> **This document is the historical plan and is deliberately not rewritten.** The current design is
+> [`RodOrderAllocation.md`](RodOrderAllocation.md) §2.5 / §2.8 and the ledger
+> [`WeldedCoilAlpha_2026-08-26_SyncPlan.md`](WeldedCoilAlpha_2026-08-26_SyncPlan.md) §1.3 / §1.9.
+> **Cite this file for *why* a decision was taken, never for what the design is.**
 
 Coil 2's two rows are the point of the design:
 

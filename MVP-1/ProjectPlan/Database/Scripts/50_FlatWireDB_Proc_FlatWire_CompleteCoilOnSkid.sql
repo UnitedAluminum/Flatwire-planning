@@ -1,15 +1,18 @@
 /*==============================================================================================
   Project      : UAL Flat Wire Mill - Shopfloor
-  Script       : 50_united_db_Proc_FlatWire_CompleteCoilOnSkid.sql
-  Object       : united_db.dbo.FlatWire_CompleteCoilOnSkid
-  Target DBs   : united_db  (procedure home; dbo.wip_skids, dbo.coil_gen_history)
+  Script       : 50_FlatWireDB_Proc_FlatWire_CompleteCoilOnSkid.sql
+  Object       : FlatWireDB.dbo.FlatWire_CompleteCoilOnSkid
+  Target DBs   : FlatWireDB (procedure home - MOVED from united_db 26 Aug 2026, change [H];
+                             the procedure is the ONLY thing that moved - every table below is
+                             read and written exactly where it always was)
+                 united_db  (dbo.wip_skids, dbo.coil_gen_history)
                  proddb     (dbo.coils, dbo.wip_coil_orders, dbo.wip_skid_coils, dbo.wip_log_view)
                  SlitterDB  (dbo.coil_slit_cuts)
                  CommonDB   (GenerateCoilAlpha, ins_coil_gen_history, CoilCost_UpdateInsert,
                              Common_CopyPeriodicityCoilConditionFromParentCoil,
                              upd_or_ins_wip_orders, Logging_Information_In_Table)
                  wiplogdb   (dbo.wip_log, reached through proddb..wip_log_view)
-  Last Updated : 2026-08-18
+  Last Updated : 2026-08-26
   Status       : Draft - transaction_name, coil_status, smp_no and the coil_slit_cuts sentinels
                  pending sign-off (see DECISIONS D3, D4, D8, D9 and Q34-Q36)
   Story        : FW-219 (FL2/FL3 run-end write-back into the shared schema)
@@ -27,17 +30,23 @@
 
   It performs, in this order and for the reasons given in DECISIONS:
 
-      1.  mint the shared 9-char coil alpha           CommonDB.dbo.GenerateCoilAlpha
-      2.  proddb..coils                               <- the finished-goods row      (D3, D4)
-      3.  proddb..wip_coil_orders                     <- the order link              (D8)
-      4.  united_db..coil_gen_history                 <- genealogy, one parent       (D6)
-      5.  coil_cost (via CoilCost_UpdateInsert)       <- cost record                 (D7)
-      6.  wip_orders (via upd_or_ins_wip_orders)      <- order material status
-      7.  SlitterDB..coil_slit_cuts                   <- exactly one cut row         (D9)
-      8.  united_db..wip_skids                        <- open or update the skid     (D10, D11)
-      9.  proddb..wip_skid_coils                      <- link coil to skid
-      10. proddb..wip_log_view -> wiplogdb..wip_log    <- the WIP transaction         (D12)
-      11. the hold path, when the final SPC failed                                   (D13)
+      *** N = the number of source rods this coil was cut from. A single-rod coil has N = 1 and
+          behaves exactly as it always did; a coil cut across a weld has N > 1 (Q88, Q89). ***
+
+      1.  mint one alpha PER PART                     CommonDB.dbo.GenerateCoilAlpha, rooted on
+                                                      that part's SEGMENT, blank ignore list  [N]
+      2.  proddb..coils                        x N    <- one finished-goods row per part (D3, D4)
+      3.  proddb..wip_coil_orders              x N    <- order link, planned weight SPLIT   (D8)
+      4.  united_db..coil_gen_history          x N    <- one row per part, EACH NAMING ITS OWN
+                                                         PARENT ROD - this closes OI-113  (D6)
+      5.  coil_cost (via CoilCost_UpdateInsert) x N   <- this part's share, not the total (D7)
+      6.  wip_orders (via upd_or_ins_wip_orders) x 1  <- order material status: per ORDER
+      7.  SlitterDB..coil_slit_cuts            x N    <- one cut row per part            (D9)
+      8.  united_db..wip_skids                 x 1    <- ONCE PER PHYSICAL COIL: the weights
+                                                         accumulate once, never N times (D10, D11, C9)
+      9.  proddb..wip_skid_coils               x N    <- all N link to the skid
+      10. proddb..wip_log_view -> wiplogdb..wip_log x N <- one log row per part          (D12)
+      11. the hold path, when the final SPC failed                                       (D13)
 
   WHAT THIS PROCEDURE DELIBERATELY DOES NOT DO
   --------------------------------------------
@@ -189,9 +198,39 @@
         CoilOutput.CoilAlpha    'FW-00421-C01'  customer-facing, on the label, FlatWireDB
         CoilOutput.CoilNo 'R00421A'       shared schema, char(9), THIS procedure
       The shared alpha is minted by CommonDB.dbo.GenerateCoilAlpha(rodAlpha, ''), which appends
-      'A'..'Z' to the six-character root and sweeps 14 selects over 12 objects for uniqueness (coils,
+      'A'..'Z' and then 'AA'..'ZZ' -- 702 suffixes -- and sweeps 14 selects over 12 objects
+      for uniqueness (coils,
       wip_log_view, mfg_sales_order_ref, coil_mill_processing, coil_slitter_processing, the
       planning_* mirrors, Slitting_UnPlannedCoils, CRM_Coils_Weight_Info and more).
+      *** IT DOES NOT APPEND TO THE SIX-CHARACTER ROOT. *** This comment said it did until
+      26 Aug 2026. The root, SUBSTRING(LTRIM(RTRIM(@CoilNo)),1,6), is the LIKE filter for the
+      14-select sweep ONLY. The stem the letter is appended to is @CoilNo VERBATIM:
+          SET @CoilAlpha = LTRIM(RTRIM(@CoilNo)) + CHAR(@AlphaTobeAdded)
+      Here the two coincide, because a rod alpha R##### is exactly six characters -- which is
+      why the R00421A above is still correct. They STOP coinciding the moment anything passes
+      a longer string: GenerateCoilAlpha('R00421A','') returns R00421AA, a CHILD, not a sibling.
+      Measured on the live instance; see [RodOrderAllocation.md 9.1] F13.
+
+      *** AND SINCE 26 AUG 2026 THE DESIGN DOES EXACTLY THAT (change [N]). ***
+      This block ended "do not pass a segment alpha here on the strength of the old sentence."
+      That instruction is WITHDRAWN -- it was written hours before the design adopted
+      segment-rooting, and it now forbids the intended behaviour. A coil part is minted off
+      SourceSegmentAlpha:
+          GenerateCoilAlpha(SourceSegmentAlpha, '')   -> R00421AA   (two trailing letters)
+      falling back to the ROD only where SourceSegmentAlpha IS NULL -- FL1-standalone and
+      FL3-from-rod. One trailing letter means a spool segment; two means a coil off it.
+
+      THE BLANK SECOND ARGUMENT BELOW IS CORRECT AND ALWAYS WAS (OI-136). Every alpha flat
+      wire mints is registered in proddb..coils, so the 14-select sweep finds every sibling
+      unaided and no caller passes a list. *** Conditional on OI-138: nothing writes an FL1
+      segment alpha yet, so that is true by design and not yet true in fact. ***
+
+      NEVER RE-MINT ON RETRY. Reuse the stored ChildAlpha while SharedWrittenAt IS NULL. With
+      a blank list this is a CORRECTNESS rule, not an optimisation: if an earlier part
+      committed between attempts the sweep now sees it, so a re-mint returns a DIFFERENT
+      letter and orphans the stored one -- and nothing detects that. The @expectedCoilNo
+      branch below is what implements it.
+
       Three things fall out and all three are wanted:
         - it FITS char(9), which 'FW-#####-C##' does not (C1);
         - the output coils become CHILDREN OF THE ROD in the legacy tree, so coil_link_master_coil
@@ -203,8 +242,19 @@
   D6. coil_gen_history records the PRIMARY parent rod ONLY, and this is a real loss of fidelity.
       A welded flat wire coil has MANY source rods - that is the point of induction welding - but
       ins_coil_gen_history is guarded by IF NOT EXISTS (... WHERE child_coil_no = @ChildCoil): one
-      row, one parent. The primary parent is the rod with the lowest CoilTraceability.FootageFrom,
-      resolved by the caller and passed as @primaryRodAlpha.
+      row, one parent.
+
+      *** D6 IS SUPERSEDED FOR THIS HOP BY Q89 (26 Aug 2026). *** The "real loss of fidelity" is
+      REPAIRED, not accepted: this procedure now writes ONE coil_gen_history row PER PART, each
+      naming its OWN parent rod, which is what closes OI-113. The guard quoted above is per
+      CHILD, so N distinct children pass N independent tests - it only ever forbade one child
+      with many parents, which is not what a multi-rod coil needs.
+
+      D6 still describes the SPOOL hop, where the shared schema takes one face (OI-115).
+
+      The LEAD part is still the row with the lowest CoilTraceability.FootageFrom. What the caller
+      passes is no longer that rod but its SEGMENT - @leadSegmentAlpha - because the alpha is
+      minted off the segment (change [N]). The rod is read from CoilTraceability, not passed.
       *** FlatWireDB.CoilTraceability REMAINS THE AUTHORITATIVE MULTI-ROD GENEALOGY *** and is what
       the welding-wire customer certificates are built from. Anyone reading the shared tree alone
       will see one rod and believe it is the whole story. Tracked as OI-113. Do not "fix" this by
@@ -291,7 +341,7 @@
       AND a silent-truncation bug. One coil and one cut need neither.
 ==============================================================================================*/
 
-USE [united_db];
+USE [FlatWireDB];
 GO
 
 SET ANSI_NULLS ON;
@@ -304,7 +354,11 @@ CREATE OR ALTER PROCEDURE [dbo].[FlatWire_CompleteCoilOnSkid]
       @coilAlpha             VARCHAR(30)                    -- FlatWireDB CoilOutput.CoilAlpha, e.g. FW-00421-C01
     , @runId                 VARCHAR(20)                    -- FlatWireDB FlatWireRun.RunId, e.g. RUN-0042
     , @lineId                VARCHAR(5)                     -- FL2 | FL3            (D1)
-    , @primaryRodAlpha       VARCHAR(9)                     -- lowest CoilTraceability.FootageFrom  (D6)
+    , @leadSegmentAlpha      VARCHAR(20)                    -- the LEAD part's source segment: the SourceSegmentAlpha of the
+                                                            -- CoilTraceability row with the lowest FootageFrom. Rooted on
+                                                            -- HERE, not on a rod (change [N], 26 Aug 2026). Pass the ROD
+                                                            -- alpha instead when that row has no segment - FL1-standalone
+                                                            -- and FL3-from-rod. Was @primaryRodAlpha VARCHAR(9) (D6).
     , @orderNo               INT
     , @relLetter             CHAR(1)
     , @netWeightLb           INT                            -- the GOVERNING weight; OI-105 decides which of three
@@ -325,8 +379,16 @@ CREATE OR ALTER PROCEDURE [dbo].[FlatWire_CompleteCoilOnSkid]
     , @stopNo                SMALLINT     = 1               -- coil_slit_cuts sentinel, OI-114 (D9)
     , @mfgOrderNo            INT          = 99999           -- coil_slit_cuts sentinel, OI-114 (D9)
     , @fallbackSmpNo         SMALLINT     = 888             -- only when the rod has no order row (D8, Q36)
-    , @expectedCoilNo  CHAR(9)      = ''              -- retry contract; see IDEMPOTENCY
-    , @sharedCoilNo          CHAR(9)      = NULL OUTPUT     -- the minted shared alpha        (D5)
+                                                            -- *** @expectedCoilNo IS GONE (change [S]). *** It was CHAR(9)
+                                                            -- and a coil now has N alphas, so one scalar cannot carry the
+                                                            -- contract. It is NOT replaced by a table-valued parameter:
+                                                            -- since [H] this procedure lives in FlatWireDB, so it reads
+                                                            -- dbo.CoilTraceability directly and the retry contract is
+                                                            -- simply 'the rows where SharedWrittenAt IS NULL'. A TVP would
+                                                            -- need CREATE TYPE - a new schema object - for nothing.
+    , @sharedCoilNo          CHAR(9)      = NULL OUTPUT     -- the LEAD part's alpha          (D5). Still scalar, still the
+                                                            -- coil's one shared face. The other N-1 come back in the
+                                                            -- result set this procedure SELECTs before returning.
     , @skidNo                CHAR(9)      = NULL OUTPUT     -- the skid it landed on          (D10)
     , @skidIsComplete        BIT          = NULL OUTPUT
 AS
@@ -357,19 +419,74 @@ BEGIN
           , @attempts         INT         = 0
           , @errMessage       NVARCHAR(MAX)
           , @errNo            INT
+          , @partCount        INT         = 0
+          , @partsToWrite     INT         = 0
+          , @partId           INT
+          , @partRod          CHAR(9)
+          , @partSegment      VARCHAR(20)
+          , @partAlpha        CHAR(9)
+          , @partWeightLb     INT
+          , @partMintRoot     VARCHAR(20)
           , @errSev           INT
           , @errState         INT
           , @spObjectName     SYSNAME;
 
+        /*--------------------------------------------------------------------------------------
+          THE PARTS OF THIS COIL.  (change [S], Q89)
+          One row per (coil x source rod). A single-rod coil has exactly one and behaves as it
+          always did; a coil cut across a weld has N, each with its OWN shared identity, its OWN
+          parent rod and its OWN share of the weight.
+
+          READ LOCALLY, and that is only possible since [H] moved this procedure into FlatWireDB.
+          The FlatWireDB writes are committed before this procedure is called - see THE
+          TRANSACTION BOUNDARY - so these rows exist and are stable.
+        --------------------------------------------------------------------------------------*/
+        DECLARE @parts TABLE
+        (
+              [Id]            INT           NOT NULL PRIMARY KEY
+            , [RodAlpha]      CHAR(9)       NOT NULL
+            , [SegmentAlpha]  VARCHAR(20)   NULL          -- NULL on a rod-fed coil: root on the rod
+            , [ChildAlpha]    CHAR(9)       NULL          -- minted below, or already minted by a failed attempt
+            , [WeightLb]      INT           NOT NULL      -- this part's SHARE, never the coil's total
+            , [AlreadyWritten] BIT          NOT NULL
+            , [IsLead]        BIT           NOT NULL
+        );
+
+        INSERT INTO @parts ([Id], [RodAlpha], [SegmentAlpha], [ChildAlpha], [WeightLb], [AlreadyWritten], [IsLead])
+        SELECT    ct.[Id]
+                , LEFT(ct.[RodAlpha], 9)
+                , ct.[SourceSegmentAlpha]
+                , ct.[ChildAlpha]
+                  -- The part's own weight. ORD023: these must SUM to @netWeightLb, and nothing
+                  -- else checks it - wip_skids' smallint guard validates per CALL, so it would
+                  -- accept N x the coil weight without complaint.
+                , CAST(ROUND(ISNULL(ct.[SegmentWeightLb], 0), 0) AS INT)
+                , CASE WHEN ct.[SharedWrittenAt] IS NULL THEN 0 ELSE 1 END
+                , CASE WHEN ct.[FootageFrom] = MIN(ct.[FootageFrom]) OVER () THEN 1 ELSE 0 END
+        FROM      [dbo].[CoilTraceability] AS ct
+        WHERE     ct.[CoilAlpha] = @coilAlpha;
+
+        SELECT @partCount    = COUNT(*)
+             , @partsToWrite = SUM(CASE WHEN [AlreadyWritten] = 0 THEN 1 ELSE 0 END)
+        FROM   @parts;
+
+        IF @partCount = 0
+            THROW 51019, 'FlatWire_CompleteCoilOnSkid: no CoilTraceability rows for @coilAlpha - the FlatWireDB writes have not committed, or the alpha is wrong.', 1;
+
+        -- ORD023, and it is the only detector. A part weight that repeats the coil total instead
+        -- of splitting it double-counts on the skid and in cost, and no shared-schema guard sees it.
+        IF (SELECT SUM([WeightLb]) FROM @parts) <> @netWeightLb
+            THROW 51020, 'FlatWire_CompleteCoilOnSkid: the part weights do not sum to @netWeightLb - a split was repeated, not apportioned (ORD023).', 1;
+
     SELECT @userId = userid
-    FROM   [dbo].[users] WITH (NOLOCK)
+    FROM   [united_db].[dbo].[users] WITH (NOLOCK)
     WHERE  BadgeNo = @badgeNo;
 
     SET @logInfo = 'EXEC FlatWire_CompleteCoilOnSkid '
                  + ISNULL(@coilAlpha, 'NULL')            + ', '
                  + ISNULL(@runId, 'NULL')                + ', '
                  + ISNULL(@lineId, 'NULL')               + ', '
-                 + ISNULL(@primaryRodAlpha, 'NULL')      + ', '
+                 + ISNULL(@leadSegmentAlpha, 'NULL')     + ', '
                  + ISNULL(CAST(@orderNo AS VARCHAR(10)), 'NULL')
                  + ISNULL(@relLetter, ' ')               + ', '
                  + ISNULL(@skidAssignment, 'NULL')       + ', skid='
@@ -379,7 +496,7 @@ BEGIN
                  + CASE WHEN @isSuspended  = 1 THEN ', SUSPENDED'  ELSE '' END
                  + CASE WHEN @isCoilBreak  = 1 THEN ', COILBREAK'  ELSE '' END;
 
-    EXEC [dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+    EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
                                             , @sp_name             = 'FlatWire_CompleteCoilOnSkid'
                                             , @table_name          = 'Entered into sp'
                                             , @log_info            = @logInfo
@@ -393,7 +510,7 @@ BEGIN
         --------------------------------------------------------------------------------------*/
         SET @lineId          = LTRIM(RTRIM(ISNULL(@lineId, '')));
         SET @skidAssignment  = LTRIM(RTRIM(ISNULL(@skidAssignment, '')));
-        SET @primaryRodAlpha = LTRIM(RTRIM(ISNULL(@primaryRodAlpha, '')));
+        SET @leadSegmentAlpha = LTRIM(RTRIM(ISNULL(@leadSegmentAlpha, '')));
         SET @existingSkidNo  = LTRIM(RTRIM(ISNULL(@existingSkidNo, '')));
         SET @wipStation      = LTRIM(RTRIM(ISNULL(@wipStation, 'FWPACK')));
 
@@ -406,8 +523,8 @@ BEGIN
         IF @skidAssignment = 'Coil2Of2' AND @existingSkidNo = ''
             THROW 51003, 'FlatWire_CompleteCoilOnSkid: Coil2Of2 requires @existingSkidNo - it closes an open skid.', 1;
 
-        IF @primaryRodAlpha = ''
-            THROW 51004, 'FlatWire_CompleteCoilOnSkid: @primaryRodAlpha is required - it is the genealogy parent and the alpha root (D5, D6).', 1;
+        IF @leadSegmentAlpha = ''
+            THROW 51004, 'FlatWire_CompleteCoilOnSkid: @leadSegmentAlpha is required - it is the mint root for the alpha root (D5, D6).', 1;
 
         IF ISNULL(@footageFt, 0) <= 0
             THROW 51005, 'FlatWire_CompleteCoilOnSkid: @footageFt must be greater than zero (CK_CoilOutput_Footage).', 1;
@@ -422,32 +539,42 @@ BEGIN
         IF @isCoilBreak = 1 AND LTRIM(RTRIM(ISNULL(@coilBreakReason, ''))) = ''
             THROW 51008, 'FlatWire_CompleteCoilOnSkid: @coilBreakReason is required when @isCoilBreak = 1 (D6).', 1;
 
-        -- The rod must exist in the shared coils table: step 3 copies its attributes forward.
-        IF NOT EXISTS (SELECT 1 FROM [proddb].[dbo].[coils] WITH (NOLOCK) WHERE coil_no = @primaryRodAlpha)
-            THROW 51009, 'FlatWire_CompleteCoilOnSkid: the primary rod has no proddb..coils row, so its attributes cannot be carried to the output coil.', 1;
+        -- EVERY PART's rod must exist in the shared coils table, not just the lead's: each
+        -- iteration of the 4-7 loop copies attributes forward from ITS OWN rod (change [S]).
+        IF EXISTS (SELECT 1 FROM @parts AS pt
+                   WHERE NOT EXISTS (SELECT 1 FROM [proddb].[dbo].[coils] WITH (NOLOCK)
+                                     WHERE coil_no = pt.[RodAlpha]))
+            THROW 51009, 'FlatWire_CompleteCoilOnSkid: a source rod of this coil has no proddb..coils row, so its attributes cannot be carried to the output coil.', 1;
 
         /*--------------------------------------------------------------------------------------
           2. The retry short-circuit. See IDEMPOTENCY - this is the whole contract.
         --------------------------------------------------------------------------------------*/
-        SET @expectedCoilNo = LTRIM(RTRIM(ISNULL(@expectedCoilNo, '')));
+        /*  *** THE CONTRACT IS NOW THE SET, NOT A SCALAR (change [S]). ***
+            It was: @expectedCoilNo CHAR(9), and 'if that one alpha is in coils, return'. With N
+            alphas per coil that short-circuits on part 1 and returns 0 - SUCCESS - while parts
+            2..N sit committed in five shared tables, referenced by nothing here and unreported.
+            ORD024 / TC-797.
 
-        IF @expectedCoilNo <> ''
-           AND EXISTS (SELECT 1 FROM [proddb].[dbo].[coils] WITH (NOLOCK) WHERE coil_no = @expectedCoilNo)
+            Now: every part carries its own SharedWrittenAt. A retry writes only the parts that
+            have none, and reports ALL of them. The full short-circuit is the case where every
+            part is already written.                                                          */
+        IF @partsToWrite = 0
         BEGIN
-            SET @sharedCoilNo = @expectedCoilNo;
+            SELECT @sharedCoilNo = [ChildAlpha] FROM @parts WHERE [IsLead] = 1;
 
             SELECT @skidNo = wsc.skid_no
             FROM   [proddb].[dbo].[wip_skid_coils] AS wsc WITH (NOLOCK)
-            WHERE  wsc.coil_no = @expectedCoilNo;
+            WHERE  wsc.coil_no = @sharedCoilNo;
 
             SELECT @skidIsComplete = ws.IsComplete
-            FROM   [dbo].[wip_skids] AS ws WITH (NOLOCK)
+            FROM   [united_db].[dbo].[wip_skids] AS ws WITH (NOLOCK)
             WHERE  ws.skid_no = @skidNo;
 
-            PRINT 'FlatWire_CompleteCoilOnSkid: ' + @expectedCoilNo
-                + ' already exists in proddb..coils - nothing written (idempotent retry).';
+            PRINT 'FlatWire_CompleteCoilOnSkid: all ' + CAST(@partCount AS VARCHAR(10))
+                + ' part(s) of ' + @coilAlpha
+                + ' are already in proddb..coils - nothing written (idempotent retry).';
 
-            EXEC [dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+            EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
                                                     , @sp_name             = 'FlatWire_CompleteCoilOnSkid'
                                                     , @table_name          = 'Idempotent retry - no write'
                                                     , @log_info            = @logInfo
@@ -463,19 +590,87 @@ BEGIN
              GenerateCoilAlpha sweeps 14 selects over 12 objects but takes no locks, so the uniqueness
              re-check below is inside the transaction and under a held key lock.
         --------------------------------------------------------------------------------------*/
-        IF @expectedCoilNo <> ''
-            SET @sharedCoilNo = @expectedCoilNo;      -- minted by an earlier attempt that did not commit
-        ELSE
-            SET @sharedCoilNo = [CommonDB].[dbo].[GenerateCoilAlpha](@primaryRodAlpha, '');
+        /*  ONE MINT PER PART, rooted on that part's SEGMENT (change [N]).
 
-        SET @sharedCoilNo = LTRIM(RTRIM(ISNULL(@sharedCoilNo, '')));
+            *** NEVER RE-MINT A PART THAT ALREADY HAS A ChildAlpha. *** Under a blank ignore list
+            this is a CORRECTNESS rule, not an optimisation: if an earlier part committed between
+            attempts the sweep now sees it, so re-minting returns a DIFFERENT letter and orphans
+            the stored one - and no guard detects that.                                        */
+        DECLARE mint_cur CURSOR LOCAL FAST_FORWARD FOR
+            SELECT [Id], [RodAlpha], [SegmentAlpha] FROM @parts
+            WHERE  [AlreadyWritten] = 0 AND [ChildAlpha] IS NULL;
 
-        IF @sharedCoilNo = ''
-            THROW 51010, 'FlatWire_CompleteCoilOnSkid: GenerateCoilAlpha returned no alpha for the primary rod.', 1;
+        OPEN mint_cur;
+        FETCH NEXT FROM mint_cur INTO @partId, @partRod, @partSegment;
 
-        IF EXISTS (SELECT 1 FROM [proddb].[dbo].[coils] WITH (UPDLOCK, HOLDLOCK) WHERE coil_no = @sharedCoilNo)
-            THROW 51011, 'FlatWire_CompleteCoilOnSkid: the generated shared coil alpha is already taken. Retry.', 1;
+        WHILE @@FETCH_STATUS = 0
+        BEGIN
+            -- Root on the segment; fall back to the ROD only where there is no segment, i.e.
+            -- FL1-standalone and FL3-from-rod. OI-139 asks whether FL2-standalone can reach here
+            -- with neither - if it can, this fallback is not enough.
+            SET @partMintRoot = ISNULL(@partSegment, @partRod);
 
+            -- Blank ignore list. Registration in proddb..coils replaces exclusion (OI-136), and
+            -- OI-138 is that the FL1 writer making that true does not exist yet.
+            SET @partAlpha = LTRIM(RTRIM(ISNULL([CommonDB].[dbo].[GenerateCoilAlpha](@partMintRoot, ''), '')));
+
+            IF @partAlpha = ''
+            BEGIN
+                CLOSE mint_cur; DEALLOCATE mint_cur;
+                THROW 51010, 'FlatWire_CompleteCoilOnSkid: GenerateCoilAlpha returned no alpha for a coil part.', 1;
+            END
+
+            -- The function takes no locks over twelve objects in four databases, so this re-check
+            -- inside the transaction under a held key lock is the authoritative uniqueness gate.
+            IF EXISTS (SELECT 1 FROM [proddb].[dbo].[coils] WITH (UPDLOCK, HOLDLOCK) WHERE coil_no = @partAlpha)
+            BEGIN
+                CLOSE mint_cur; DEALLOCATE mint_cur;
+                THROW 51011, 'FlatWire_CompleteCoilOnSkid: the generated shared coil alpha is already taken. Retry.', 1;
+            END
+
+            -- Two parts of ONE coil rooted on the SAME segment would both get this answer, because
+            -- neither is committed yet and the sweep only sees committed rows. OI-137 / ORD025.
+            IF EXISTS (SELECT 1 FROM @parts WHERE [ChildAlpha] = @partAlpha)
+            BEGIN
+                CLOSE mint_cur; DEALLOCATE mint_cur;
+                THROW 51021, 'FlatWire_CompleteCoilOnSkid: two parts of this coil were minted the same alpha - they share a source segment (OI-137).', 1;
+            END
+
+            UPDATE @parts SET [ChildAlpha] = @partAlpha WHERE [Id] = @partId;
+
+            FETCH NEXT FROM mint_cur INTO @partId, @partRod, @partSegment;
+        END
+
+        CLOSE mint_cur;
+        DEALLOCATE mint_cur;
+
+        SELECT @sharedCoilNo = [ChildAlpha] FROM @parts WHERE [IsLead] = 1;
+
+        IF @sharedCoilNo IS NULL OR LTRIM(RTRIM(@sharedCoilNo)) = ''
+            THROW 51022, 'FlatWire_CompleteCoilOnSkid: the lead part has no alpha - CoilTraceability.FootageFrom did not resolve a lead row.', 1;
+
+        /*--------------------------------------------------------------------------------------
+          4-7. PER PART, ONCE EACH.  (change [S], Q89)
+
+          A single-rod coil runs this once and is byte-for-byte what it always was. A coil cut
+          across a weld runs it N times, once per source rod, each iteration writing that part's
+          own alpha, its own parent rod and its own share of the weight.
+
+          *** N SINGLE-ROW INSERTS, NEVER ONE SET-BASED INSERT. *** C4: coils_iud_tg gates on
+          @ins_count = 1. An AFTER trigger fires once per STATEMENT, so a loop of N single-row
+          inserts fires it N times correctly, while one N-row insert trips the guard and silently
+          skips coil_link_master_coil. The loop is the requirement, not a style choice.
+        --------------------------------------------------------------------------------------*/
+        DECLARE part_cur CURSOR LOCAL FAST_FORWARD FOR
+            SELECT [Id], [RodAlpha], [ChildAlpha], [WeightLb] FROM @parts
+            WHERE  [AlreadyWritten] = 0
+            ORDER BY [Id];
+
+        OPEN part_cur;
+        FETCH NEXT FROM part_cur INTO @partId, @partRod, @partAlpha, @partWeightLb;
+
+        WHILE @@FETCH_STATUS = 0
+        BEGIN
         /*--------------------------------------------------------------------------------------
           4. proddb..coils - the finished-goods row.  (C1-C4, D3, D4)
              Explicit 43-column list, SELECT-from-rod so the inherited attributes travel, with the
@@ -530,7 +725,7 @@ BEGIN
                 , coil_max_pct_reduction
                 , reduction_hist_status_code
                 , coil_rev_time )
-        SELECT    @sharedCoilNo                                  -- coil_no            (D5)
+        SELECT    @partAlpha                                  -- coil_no            (D5)
                 , rod.vendor_no
                 , rod.inventory_type
                 , @CoilStatus                                    -- coil_status        (D3)
@@ -574,33 +769,37 @@ BEGIN
                 , rod.reduction_hist_status_code
                 , GETDATE()
         FROM      [proddb].[dbo].[coils] AS rod WITH (NOLOCK)
-        WHERE     rod.coil_no = @primaryRodAlpha;
+        WHERE     rod.coil_no = @partRod;
 
         IF @@ROWCOUNT <> 1
-            THROW 51012, 'FlatWire_CompleteCoilOnSkid: expected exactly one proddb..coils row to be inserted (C4 - the trigger is single-row only).', 1;
+            THROW 51012, 'FlatWire_CompleteCoilOnSkid: expected exactly one proddb..coils row per part (C4 - the trigger is single-row only, which is why this is a LOOP and not one set-based insert).', 1;
 
         /*--------------------------------------------------------------------------------------
           5. proddb..wip_coil_orders - the order link.  (C11, D8)
         --------------------------------------------------------------------------------------*/
         IF EXISTS (SELECT 1
                    FROM   [proddb].[dbo].[wip_coil_orders] WITH (NOLOCK)
-                   WHERE  coil_no    = @primaryRodAlpha
+                   WHERE  coil_no    = @partRod
                      AND  order_no   = @orderNo
                      AND  ISNULL(rel_letter, '') = ISNULL(@relLetter, ''))
             SET @rodOrderRowFound = 1;
+        ELSE
+            SET @rodOrderRowFound = 0;
 
         IF @rodOrderRowFound = 1
         BEGIN
             INSERT INTO [proddb].[dbo].[wip_coil_orders]
                     ( coil_no, order_no, rel_letter, coil_planned_wgt, smp_no, planned_operations )
-            SELECT    @sharedCoilNo
+            SELECT    @partAlpha
                     , @orderNo
                     , @relLetter
-                    , wco.coil_planned_wgt
+                      -- SPLIT, not copied: N copies of the full planned weight would
+                      -- over-count the order N-fold. Apportioned by this part's share.
+                    , CAST(ROUND(ISNULL(wco.coil_planned_wgt,0) * (@partWeightLb * 1.0 / NULLIF(@netWeightLb,0)), 0) AS INT)
                     , wco.smp_no
                     , wco.planned_operations
             FROM      [proddb].[dbo].[wip_coil_orders] AS wco WITH (NOLOCK)
-            WHERE     wco.coil_no  = @primaryRodAlpha
+            WHERE     wco.coil_no  = @partRod
               AND     wco.order_no = @orderNo
               AND     ISNULL(wco.rel_letter, '') = ISNULL(@relLetter, '');
         END
@@ -610,31 +809,34 @@ BEGIN
             -- what smp_no / planned_operations a flat wire output coil should really carry.
             INSERT INTO [proddb].[dbo].[wip_coil_orders]
                     ( coil_no, order_no, rel_letter, coil_planned_wgt, smp_no, planned_operations )
-            VALUES  ( @sharedCoilNo, @orderNo, @relLetter, 0, @fallbackSmpNo, 'P' );
+            VALUES  ( @partAlpha, @orderNo, @relLetter, 0, @fallbackSmpNo, 'P' );
         END
 
         /*--------------------------------------------------------------------------------------
           6. united_db..coil_gen_history - genealogy.  (C5, D6)
-             ONE PARENT ONLY. CoilTraceability in FlatWireDB is the authoritative multi-rod chain.
+             ONE ROW PER PART, EACH NAMING ITS OWN PARENT ROD. That is what closes OI-113: the
+             helper's guard is per CHILD (WHERE child_coil_no = @ChildCoil), so N distinct
+             children pass N independent tests. If all N named one rod the tree would say 'this
+             rod produced N coils', which is not multi-rod genealogy and would NOT close OI-113.
         --------------------------------------------------------------------------------------*/
-        EXEC [CommonDB].[dbo].[ins_coil_gen_history] @ParentCoilNo   = @primaryRodAlpha
-                                                   , @ChildCoil      = @sharedCoilNo
+        EXEC [CommonDB].[dbo].[ins_coil_gen_history] @ParentCoilNo   = @partRod
+                                                   , @ChildCoil      = @partAlpha
                                                    , @action         = @TransactionName
                                                    , @MfgOrderNo     = NULL
                                                    , @SeqNo          = NULL
                                                    , @HomeMfgOrderNo = NULL
                                                    , @OpLetter       = @OpLetter;
 
-        IF NOT EXISTS (SELECT 1 FROM [dbo].[coil_gen_history] WITH (NOLOCK) WHERE child_coil_no = @sharedCoilNo)
+        IF NOT EXISTS (SELECT 1 FROM [united_db].[dbo].[coil_gen_history] WITH (NOLOCK) WHERE child_coil_no = @partAlpha)
             THROW 51013, 'FlatWire_CompleteCoilOnSkid: ins_coil_gen_history wrote no row for the new coil.', 1;
 
         -- The helper has no parameters for the break columns, so apply them here (D6).
         IF @isCoilBreak = 1
         BEGIN
-            UPDATE  [dbo].[coil_gen_history] WITH (ROWLOCK)
+            UPDATE  [united_db].[dbo].[coil_gen_history] WITH (ROWLOCK)
             SET     coil_break        = 1
                   , Coil_Break_Reason = LEFT(@coilBreakReason, 255)
-            WHERE   child_coil_no = @sharedCoilNo;
+            WHERE   child_coil_no = @partAlpha;
         END
 
         /*--------------------------------------------------------------------------------------
@@ -642,15 +844,31 @@ BEGIN
              Skipping CoilCost_UpdateInsert is the easiest mistake here, and the coil then silently
              disappears from cost and yield. It is not optional.
         --------------------------------------------------------------------------------------*/
-        EXEC [CommonDB].[dbo].[CoilCost_UpdateInsert] @parentCoilNo    = @primaryRodAlpha
-                                                    , @childCoilNo     = @sharedCoilNo
-                                                    , @childCoilWeight = @netWeightLb
+        EXEC [CommonDB].[dbo].[CoilCost_UpdateInsert] @parentCoilNo    = @partRod
+                                                    , @childCoilNo     = @partAlpha
+                                                    , @childCoilWeight = @partWeightLb
                                                     , @mfgOrderNo      = NULL
                                                     , @seqNo           = NULL
                                                     , @opLetter        = @OpLetter;
 
-        EXEC [CommonDB].[dbo].[Common_CopyPeriodicityCoilConditionFromParentCoil] @primaryRodAlpha
-                                                                               , @sharedCoilNo;
+        EXEC [CommonDB].[dbo].[Common_CopyPeriodicityCoilConditionFromParentCoil] @partRod
+                                                                               , @partAlpha;
+
+            -- This part is now in the shared schema. Stamp it so a retry skips it (ORD024).
+            UPDATE [dbo].[CoilTraceability]
+               SET [SharedWrittenAt] = SYSDATETIMEOFFSET()
+             WHERE [Id] = @partId;
+
+            FETCH NEXT FROM part_cur INTO @partId, @partRod, @partAlpha, @partWeightLb;
+        END
+
+        CLOSE part_cur;
+        DEALLOCATE part_cur;
+
+        /*--------------------------------------------------------------------------------------
+          7b. The order's material status - ONCE PER COIL, not per part.
+              It is a statement about the ORDER, and the order does not change per part.
+        --------------------------------------------------------------------------------------*/
 
         EXEC [CommonDB].[dbo].[upd_or_ins_wip_orders] @order_no   = @orderNo
                                                     , @rel_letter = @relLetter;
@@ -664,14 +882,23 @@ BEGIN
         BEGIN
             SET @skidNo = @existingSkidNo;
 
-            IF NOT EXISTS (SELECT 1 FROM [dbo].[wip_skids] WITH (UPDLOCK, HOLDLOCK) WHERE skid_no = @skidNo)
+            IF NOT EXISTS (SELECT 1 FROM [united_db].[dbo].[wip_skids] WITH (UPDLOCK, HOLDLOCK) WHERE skid_no = @skidNo)
                 THROW 51014, 'FlatWire_CompleteCoilOnSkid: @existingSkidNo does not exist in wip_skids.', 1;
 
-            IF EXISTS (SELECT 1 FROM [dbo].[wip_skids] WITH (NOLOCK) WHERE skid_no = @skidNo AND IsComplete = 1)
+            IF EXISTS (SELECT 1 FROM [united_db].[dbo].[wip_skids] WITH (NOLOCK) WHERE skid_no = @skidNo AND IsComplete = 1)
                 THROW 51015, 'FlatWire_CompleteCoilOnSkid: @existingSkidNo is already complete - a skid holds exactly two coils (FR-335).', 1;
 
-            IF (SELECT COUNT(*) FROM [proddb].[dbo].[wip_skid_coils] WITH (NOLOCK) WHERE skid_no = @skidNo) >= 2
-                THROW 51016, 'FlatWire_CompleteCoilOnSkid: @existingSkidNo already carries two coils (FR-335).', 1;
+            /*  *** GUARD 51016 WITHDRAWN (change [S]). ***  It read:
+                    IF (SELECT COUNT(*) FROM proddb..wip_skid_coils WHERE skid_no = @skidNo) >= 2
+                        THROW 51016 '... already carries two coils (FR-335)'
+                It counts ROWS, and a coil cut across a weld now links N rows. Two physical coils
+                of two parts each is 4 rows, so this refused a legal skid.
+
+                It is not replaced by a smarter count: 51015 immediately above is already
+                physical-coil-grained - it refuses Coil2Of2 on a skid that is IsComplete - and
+                IsComplete is driven SOLELY by @skidAssignment (D11). The operator's own
+                1-of-2 / 2-of-2 declaration is the authority, which is what C12 means by
+                'all integrity is in triggers and procedures'.                                */
         END
         ELSE
         BEGIN
@@ -690,7 +917,7 @@ BEGIN
 
                 SELECT TOP (1) @skidNo = LTRIM(RTRIM(skid_no)) FROM @generated;
 
-                IF EXISTS (SELECT 1 FROM [dbo].[wip_skids] WITH (UPDLOCK, HOLDLOCK) WHERE skid_no = @skidNo)
+                IF EXISTS (SELECT 1 FROM [united_db].[dbo].[wip_skids] WITH (UPDLOCK, HOLDLOCK) WHERE skid_no = @skidNo)
                     SET @skidNo = '';                       -- taken between generation and here; go round again
             END
 
@@ -700,7 +927,7 @@ BEGIN
             -- Skeleton row, matching CreateSkid_MoveCutsOnSkid's 26 columns. Weights and material
             -- attributes are set in the update at step 9, once the coil is known.
             -- C8: this INSERT fires WIP_SKIDS_AFTER_UPD and resets Certs_Documents.Processed.
-            INSERT INTO [dbo].[wip_skids]
+            INSERT INTO [united_db].[dbo].[wip_skids]
                     ( order_no
                     , rel_letter
                     , skid_no
@@ -756,26 +983,58 @@ BEGIN
         END
 
         /*--------------------------------------------------------------------------------------
+          9. SlitterDB..coil_slit_cuts - ONE ROW PER PART (change [S]).
+             Was 'exactly one row'. A coil cut across a weld has N shared identities and each
+             needs its own cut row, or the packing chain sees only the lead.
+             skid_coil_seq_no is the SAME for all N: it identifies the physical coil's SLOT on
+             the skid, not the row - which is what makes
+             ConveyorInterface_MoveCutsBackToLiftTable's ORDER BY skid_coil_seq_no DESC group
+             by coil rather than by part.
+        --------------------------------------------------------------------------------------*/
+        DECLARE cut_cur CURSOR LOCAL FAST_FORWARD FOR
+            SELECT [ChildAlpha] FROM @parts WHERE [AlreadyWritten] = 0 ORDER BY [Id];
+        OPEN cut_cur;
+        FETCH NEXT FROM cut_cur INTO @partAlpha;
+        WHILE @@FETCH_STATUS = 0
+        BEGIN
+        /*--------------------------------------------------------------------------------------
           9. SlitterDB..coil_slit_cuts - exactly one row.  (C6, D9)
              skid_coil_seq_no is DERIVED, not hard-coded 1 as every legacy template does: two coils
              share a skid and need 1 and 2.
         --------------------------------------------------------------------------------------*/
-        SELECT  @skidCoilSeqNo = ISNULL(MAX(ISNULL(csc.skid_coil_seq_no, 0)), 0) + 1
-        FROM    [SlitterDB].[dbo].[coil_slit_cuts] AS csc WITH (UPDLOCK, HOLDLOCK)
-        WHERE   LTRIM(RTRIM(ISNULL(csc.skid_no, ''))) = @skidNo
-          AND   ISNULL(csc.plate_no, '') = '';
+        /*  *** SET FROM @skidAssignment, NOT DERIVED (change [S]). ***
+            It was MAX(skid_coil_seq_no)+1 over the skid under UPDLOCK, with a >2 guard. That
+            derives a PHYSICAL-COIL slot from a ROW count, so N parts of one coil consumed N
+            slots and the second physical coil was refused.
 
-        IF @skidCoilSeqNo > 2
-            THROW 51018, 'FlatWire_CompleteCoilOnSkid: the skid already carries two coils - exactly two per skid (FR-335).', 1;
+            1 for Coil1Of2, 2 for Coil2Of2, so all N parts of one physical coil SHARE its slot -
+            which is what ConveyorInterface_MoveCutsBackToLiftTable's ORDER BY
+            skid_coil_seq_no DESC needs in order to group by coil.
+
+            It also sidesteps OI-114: deriving MAX+1 over a column that is int NULL, carries no
+            uniqueness constraint, is written NULL by one of the legacy writers OI-114 names and
+            cleared to NULL by two more, was always fragile.                                  */
+        SET @skidCoilSeqNo = CASE WHEN @skidAssignment = 'Coil2Of2' THEN 2 ELSE 1 END;
+
+        -- Superseded derivation, kept so the change is legible:
+        -- SELECT  @skidCoilSeqNo = ISNULL(MAX(ISNULL(csc.skid_coil_seq_no, 0)), 0) + 1
+        -- FROM    [SlitterDB].[dbo].[coil_slit_cuts] AS csc WITH (UPDLOCK, HOLDLOCK)
+        -- WHERE   LTRIM(RTRIM(ISNULL(csc.skid_no, ''))) = @skidNo
+        --   AND   ISNULL(csc.plate_no, '') = '';
+
+        -- *** GUARD 51018 WITHDRAWN with the derivation above (change [S]). *** Superseded:
+        -- IF @skidCoilSeqNo > 2
+        --     THROW 51018, '... the skid already carries two coils - exactly two per skid (FR-335).', 1;
 
         -- incoming_coil_no from the genealogy parent, following
         -- ConveyorInterface_PrepareDataForCreateSkid, so this row agrees with step 6.
         SELECT TOP (1) @genealogyParent = cgh.parent_coil_no
-        FROM   [dbo].[coil_gen_history] AS cgh WITH (NOLOCK)
-        WHERE  cgh.child_coil_no = @sharedCoilNo
+        FROM   [united_db].[dbo].[coil_gen_history] AS cgh WITH (NOLOCK)
+        WHERE  cgh.child_coil_no = @partAlpha
         ORDER BY cgh.Coil_gen_idx DESC;
 
-        SET @genealogyParent = ISNULL(@genealogyParent, @primaryRodAlpha);
+        -- Falls back to the LEAD part's rod, which is the parent step 6 wrote for the lead alpha.
+        SELECT @genealogyParent = ISNULL(@genealogyParent, (SELECT [RodAlpha] FROM @parts WHERE [IsLead] = 1));
 
         INSERT INTO [SlitterDB].[dbo].[coil_slit_cuts]
                 ( incoming_coil_no
@@ -810,7 +1069,7 @@ BEGIN
                 , cutMovementCount
                 , under_review )
         VALUES  ( @genealogyParent                          -- incoming_coil_no  varchar(9)
-                , @sharedCoilNo                             -- coil_no           varchar(9)
+                , @partAlpha                             -- coil_no           varchar(9)
                 , @mfgOrderNo                               -- OI-114 sentinel   (D9)
                 , 0                                         -- seq_no
                 , @stopNo                                   -- OI-114 sentinel   (D9)
@@ -822,7 +1081,7 @@ BEGIN
                 , @netWeightLb                              -- scrap_wgt: the per-cut weight, per every template
                 , @finalWidthIn                             -- setup_width  decimal(9,6)
                 , @skidNo                                   -- C6: char(10) here, char(9) everywhere else
-                , @sharedCoilNo                             -- skid_coil_no char(9)
+                , @partAlpha                             -- skid_coil_no char(9)
                 , 1                                         -- skid_cut_no
                 , @skidCoilSeqNo                            -- DERIVED, 1 or 2  (D9)
                 , NULL                                      -- wip_rej_no
@@ -844,7 +1103,7 @@ BEGIN
         /*--------------------------------------------------------------------------------------
           10. Bring the skid up to date.  (C9, D11, D13)
         --------------------------------------------------------------------------------------*/
-        IF (SELECT ISNULL(skid_net_wgt, 0) FROM [dbo].[wip_skids] WITH (NOLOCK) WHERE skid_no = @skidNo)
+        IF (SELECT ISNULL(skid_net_wgt, 0) FROM [united_db].[dbo].[wip_skids] WITH (NOLOCK) WHERE skid_no = @skidNo)
            + @netWeightLb > @SmallIntMax
             THROW 51019, 'FlatWire_CompleteCoilOnSkid: skid net weight would exceed the smallint bound on wip_skids (C9).', 1;
 
@@ -861,21 +1120,38 @@ BEGIN
               , skid_width     = ISNULL(c.coil_width, 0)
               , pallet_wgt     = CASE WHEN ISNULL(ws.pallet_wgt, 0) = 0 THEN ISNULL(@palletWeightLb, 0) ELSE ws.pallet_wgt END
               , IsComplete     = @skidIsComplete            -- D11: driven only by @skidAssignment; OI-98 is open
-        FROM    [dbo].[wip_skids] AS ws
+        FROM    [united_db].[dbo].[wip_skids] AS ws
                 CROSS APPLY ( SELECT TOP (1) coil_alloy, coil_temper, coil_gauge, coil_width
                               FROM   [proddb].[dbo].[coils] WITH (NOLOCK)
-                              WHERE  coil_no = @sharedCoilNo ) AS c
+                              WHERE  coil_no = @partAlpha ) AS c
         WHERE   ws.skid_no = @skidNo;
 
+            FETCH NEXT FROM cut_cur INTO @partAlpha;
+        END
+        CLOSE cut_cur;
+        DEALLOCATE cut_cur;
+
+        /*--------------------------------------------------------------------------------------
+          11-12. PER PART (change [S]): link every part to the skid, and log every part.
+                 ALL N link - the row-counting guard that made that impossible is withdrawn in
+                 section 8. @logSeqNo increments across this whole loop, which is exactly why it
+                 had to stop spinning the clock a second at a time.
+        --------------------------------------------------------------------------------------*/
+        DECLARE link_cur CURSOR LOCAL FAST_FORWARD FOR
+            SELECT [ChildAlpha] FROM @parts WHERE [AlreadyWritten] = 0 ORDER BY [Id];
+        OPEN link_cur;
+        FETCH NEXT FROM link_cur INTO @partAlpha;
+        WHILE @@FETCH_STATUS = 0
+        BEGIN
         /*--------------------------------------------------------------------------------------
           11. proddb..wip_skid_coils - link the coil to the skid.
         --------------------------------------------------------------------------------------*/
         IF NOT EXISTS (SELECT 1
                        FROM   [proddb].[dbo].[wip_skid_coils] WITH (NOLOCK)
-                       WHERE  skid_no = @skidNo AND coil_no = @sharedCoilNo)
+                       WHERE  skid_no = @skidNo AND coil_no = @partAlpha)
         BEGIN
             INSERT INTO [proddb].[dbo].[wip_skid_coils] ( skid_no, coil_no )
-            VALUES ( @skidNo, @sharedCoilNo );
+            VALUES ( @skidNo, @partAlpha );
         END
 
         /*--------------------------------------------------------------------------------------
@@ -886,10 +1162,25 @@ BEGIN
         --------------------------------------------------------------------------------------*/
         SET @logTime = CONVERT(CHAR(9), GETDATE(), 1) + CONVERT(CHAR(8), GETDATE(), 108);
 
+        /*  *** INCREMENT seq_no, DO NOT SPIN THE CLOCK (change [S]). ***
+            The key is UNIQUE on (wip_log_rev_time, seq_no) at SECOND granularity, and @logSeqNo
+            was initialised 0 and never incremented - so the only way past a collision was to
+            push the timestamp a second into the future. With N parts logged per completion that
+            walked the clock N seconds forward and made the log say the coil finished later than
+            it did. Increment the seq_no instead: it is what the key is for.                  */
         WHILE EXISTS (SELECT 1
                       FROM   [proddb].[dbo].[wip_log_view] WITH (NOLOCK)
                       WHERE  wip_log_rev_time = @logTime AND seq_no = @logSeqNo)
-            SET @logTime = DATEADD(SECOND, 1, @logTime);
+        BEGIN
+            SET @logSeqNo = @logSeqNo + 1;
+
+            -- Only if seq_no itself is exhausted for this second do we move the clock.
+            IF @logSeqNo > 32000
+            BEGIN
+                SET @logTime  = DATEADD(SECOND, 1, @logTime);
+                SET @logSeqNo = 0;
+            END
+        END
 
         INSERT INTO [proddb].[dbo].[wip_log_view]
                 ( wip_log_rev_time
@@ -940,7 +1231,7 @@ BEGIN
                 , @logSeqNo
                 , @orderNo
                 , @relLetter
-                , @sharedCoilNo
+                , @partAlpha
                 , @skidNo
                 , '  '                                      -- plate_no char(2): flat wire has no plates
                 , 0                                         -- wip_rej_no
@@ -985,7 +1276,15 @@ BEGIN
                          ON wco.coil_no  = c.coil_no
                         AND wco.order_no = @orderNo
                         AND ISNULL(wco.rel_letter, '') = ISNULL(@relLetter, '')
-        WHERE     c.coil_no = @sharedCoilNo;
+        WHERE     c.coil_no = @partAlpha;
+
+            FETCH NEXT FROM link_cur INTO @partAlpha;
+        END
+        CLOSE link_cur;
+        DEALLOCATE link_cur;
+
+        -- Restore the scalar OUTPUT: it is the LEAD part's alpha (D5).
+        SELECT @sharedCoilNo = [ChildAlpha] FROM @parts WHERE [IsLead] = 1;
 
         /*--------------------------------------------------------------------------------------
           13. The hold path.  (D13)
@@ -996,10 +1295,18 @@ BEGIN
         BEGIN
             SET @logTime = CONVERT(CHAR(9), GETDATE(), 1) + CONVERT(CHAR(8), GETDATE(), 108);
 
+            -- Same rule as the main log write above: increment seq_no, not the clock.
             WHILE EXISTS (SELECT 1
                           FROM   [proddb].[dbo].[wip_log_view] WITH (NOLOCK)
                           WHERE  wip_log_rev_time = @logTime AND seq_no = @logSeqNo)
-                SET @logTime = DATEADD(SECOND, 1, @logTime);
+            BEGIN
+                SET @logSeqNo = @logSeqNo + 1;
+                IF @logSeqNo > 32000
+                BEGIN
+                    SET @logTime  = DATEADD(SECOND, 1, @logTime);
+                    SET @logSeqNo = 0;
+                END
+            END
 
             INSERT INTO [proddb].[dbo].[wip_log_view]
                     ( wip_log_rev_time, seq_no, order_no, rel_letter, coil_no, skid_no, plate_no
@@ -1063,12 +1370,13 @@ BEGIN
         COMMIT TRANSACTION;
 
         SET @logInfo = 'FlatWire_CompleteCoilOnSkid committed: ' + @coilAlpha
-                     + ' -> shared ' + @sharedCoilNo
+                     + ' -> ' + CAST(@partsToWrite AS VARCHAR(10)) + ' of '
+                     + CAST(@partCount AS VARCHAR(10)) + ' part(s) written, lead ' + @sharedCoilNo
                      + ' on skid ' + @skidNo
                      + ', seq ' + CAST(@skidCoilSeqNo AS VARCHAR(3))
                      + ', IsComplete ' + CAST(@skidIsComplete AS VARCHAR(1));
 
-        EXEC [dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+        EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
                                                 , @sp_name             = 'FlatWire_CompleteCoilOnSkid'
                                                 , @table_name          = 'Committed'
                                                 , @log_info            = @logInfo
@@ -1076,6 +1384,28 @@ BEGIN
                                                 , @user_id             = @userId;
 
         PRINT @logInfo;
+
+        /*--------------------------------------------------------------------------------------
+          THE PART SET, RETURNED.  (change [S], ORD024)
+          The three OUTPUT parameters are DELIBERATELY still scalar: @skidNo and @skidIsComplete
+          are properties of the PHYSICAL COIL and its skid, of which there is exactly one however
+          many parts it has, and @sharedCoilNo is the lead. Only the ALPHA is N, so the N come
+          back as a result set rather than by widening what was already right.
+
+          The caller must read this and reconcile it against FlatWireDB - a retry that wrote only
+          some parts still returns 0, and this is the only place that says which.
+        --------------------------------------------------------------------------------------*/
+        SELECT    [Id]                AS TraceabilityId
+                , [RodAlpha]          AS SourceRodAlpha
+                , [SegmentAlpha]      AS SourceSegmentAlpha
+                , [ChildAlpha]        AS SharedCoilNo
+                , [WeightLb]          AS PartWeightLb
+                , [IsLead]            AS IsLeadPart
+                , CASE WHEN [AlreadyWritten] = 1 THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END
+                                      AS WasAlreadyWritten
+        FROM      @parts
+        ORDER BY  [Id];
+
         RETURN 0;
     END TRY
     BEGIN CATCH
@@ -1089,13 +1419,13 @@ BEGIN
                , @errMessage   = 'FlatWire_CompleteCoilOnSkid rolled back for ' + ISNULL(@coilAlpha, 'NULL')
                                + ' (run ' + ISNULL(@runId, 'NULL') + '). Error: ' + ERROR_MESSAGE();
 
-        INSERT INTO [dbo].[EventErrorLog]
+        INSERT INTO [united_db].[dbo].[EventErrorLog]
                 ( [ObjectName], [ErrNumber], [ErrSeverity], [ErrState]
                 , [EventDescription], [StartTime], [UserName] )
         VALUES  ( @spObjectName, @errNo, @errSev, @errState
                 , @errMessage, GETDATE(), SUSER_NAME() );
 
-        EXEC [dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+        EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
                                                 , @sp_name             = 'FlatWire_CompleteCoilOnSkid'
                                                 , @table_name          = 'Rolled back'
                                                 , @log_info            = @logInfo

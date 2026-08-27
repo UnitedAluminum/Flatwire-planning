@@ -2,7 +2,7 @@
   Project      : UAL Flat Wire Mill - Shopfloor
   Script       : 20_FlatWire_Grants.sql
   Target DBs   : united_db, proddb, CommonDB, SlitterDB, wiplogdb, FlatWireDB
-  Last Updated : 2026-08-19
+  Last Updated : 2026-08-26
   Status       : Draft - run once per environment. Step 3 of 10 ([DEP 4.2]): after the schema and
                  the WIP-station rows, before the procedures are first EXECUTED.
                  (Section 1 below says "run this FIRST" -- that refers to the CO-LOCATION CHECK,
@@ -60,7 +60,8 @@
 
           [DEP 4.2]  --  MVP-1/ProjectPlan/Operations/Deployment.md, section 4.2
 
-      A four-step copy used to live at this spot. It omitted all four united_db procedures, the
+      A four-step copy used to live at this spot. It omitted all four FlatWire_* procedures (in
+      united_db until [H], now FlatWireDB), the
       seed step and the verification gate, so it drifted -- which is exactly the argument for one
       home. See also ./README.md for this folder's manifest and sign-off state.
 
@@ -108,12 +109,26 @@ DECLARE @targets TABLE
 );
 
 INSERT INTO @targets ([name], [needExec], [note])
-VALUES ( N'united_db' , 1, 'procedure home; routings, planning_routings, the order reference tables, the audit tables' )
+     -- [H] 26 Aug 2026: united_db is NO LONGER the procedure home - the four FlatWire_*
+     -- procedures moved to FlatWireDB. needExec stays 1 DELIBERATELY, and this is the one
+     -- entry where the flag now over-grants:
+     --   * Nothing in the four procedures executes a united_db procedure any more. Measured
+     --     over every EXEC in 40/50/60/70/99: 19 calls to CommonDB, 1 to proddb
+     --     (generate_new_skid_no), 1 local (FlatWire_ReleaseStation). united_db gets ZERO.
+     --   * Its tables are still read and written - routings, planning_routings, users,
+     --     wip_skids, coil_gen_history, EventErrorLog and the order reference tables - but
+     --     that is db_datareader / db_datawriter above, which every target gets regardless
+     --     of this flag. Table DML does NOT depend on needExec.
+     -- Left at 1 because the comment below the loop states the grant is deliberately
+     -- "every helper the flat wire procedures call, NOW AND IN FUTURE", and because
+     -- narrowing a live permission on a SHARED database is an IT decision, not a
+     -- refactor. *** Flagged for IT: this may be set to 0 with no loss. ***
+VALUES ( N'united_db' , 1, 'tables only since [H]: routings, planning_routings, the order reference tables, the audit tables. NOT the procedure home' )
      , ( N'proddb'    , 1, 'coils, wip_coil_orders, wip_skid_coils, wip_log_view. DELETE is used here and only here (Q40)' )
      , ( N'CommonDB'  , 1, 'WIPStations, and the helper procedures both ends of the run call' )
      , ( N'SlitterDB' , 1, 'coil_slit_cuts, at coil completion only - flat wire does not slit' )
      , ( N'wiplogdb'  , 0, 'reached only through proddb..wip_log_view, but permissions check the BASE table' )
-     , ( N'FlatWireDB', 1, 'already handled by FlatWire_DDL_00_Database.sql; re-asserted so one script shows the whole surface' );
+     , ( N'FlatWireDB', 1, 'THE PROCEDURE HOME since [H] 26 Aug 2026 - the four FlatWire_* procedures plus sp_IngestRodFromCoils. EXECUTE re-asserted here so one script shows the whole surface' );
 
 DECLARE @missing NVARCHAR(1000) = N'';
 
@@ -261,6 +276,9 @@ GO
      BEGIN TRAN;
        SELECT TOP 1 * FROM FlatWireDB.dbo.Rod;
        SELECT TOP 1 * FROM proddb.dbo.coils;
-       SELECT is_local FROM sys.dm_tran_current_transaction;    -- expect 1
+       -- Corrected 26 Aug 2026: is_local is NOT a column of sys.dm_tran_current_transaction;
+       -- it lives on sys.dm_tran_session_transactions. The old line failed with Msg 207.
+       SELECT is_local, is_enlisted FROM sys.dm_tran_session_transactions
+        WHERE session_id = @@SPID;                              -- expect is_local 1, is_enlisted 0
      ROLLBACK;
 ==============================================================================================*/

@@ -1,9 +1,9 @@
 # FW-146 · Global exception middleware and the response envelope
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — §2.4 added (what `HttpGlobalExceptionFilter` actually emits); **`P-18` settled — forced, not chosen — and its "survivable fallback" withdrawn**; §7 restructured into open / closed / stale, closing four of five *(earlier same day: §2.1's code-is-a-label rule; `P-18`'s overload correction; `G2`/`OI-39` dated to before T2)*
+**Last Updated:** August 27, 2026 — ✅ **BUILT.** `ExceptionHandlingMiddleware` in `FlatWire.API/Infrastructure/Middlewares/`, the filter removed in `Program.cs`, §6.2 carries the measured verification and **`P-78`–`P-82`** are minted. ⚠ **`P-78` is the one to read: §4's `services.Configure<MvcOptions>(o => o.Filters.RemoveType<HttpGlobalExceptionFilter>())` DOES NOT COMPILE** — `FilterCollection` has no `RemoveType<T>`; that extension exists only for `IList<IApplicationModelConvention>`. The filter is registered as `Filters.Add(typeof(…))`, so the match is on `TypeFilterAttribute.ImplementationType`, and because removing **nothing** fails silently the block now **throws at boot** if it matched nothing. Also: **`P-80`** — `Response.Clear()` drops the `X-Correlation-Id` the outer middleware set, so `[API §1.4]` was violated on every mapped failure until it was captured and re-applied (**found by measurement, not review**); **`P-79`** — a generic `500` had **no `[API §1.8]` code at all**, a *third* gap of the `VALIDATION_FAILED` kind, now `INTERNAL_ERROR`; **`P-81`** — the two `P-60` gates now share one `Envelope.Body` factory, so they agree **by construction** rather than by inspection; **`P-82`** — a **fourth** uniqueness row, `UX_FlatWireRun_ActiveLine` → `RUN_ALREADY_ACTIVE`, beyond §3 step 6's three. Earlier the same day: **new §5.1 — none of the four *(throws)* rows is reachable from an endpoint yet, and one substitute is.** The story stays **unblocked and buildable**: every §3 mapping is decidable from code that already exists. But §5 implied its own table could be walked and it cannot — **only `GET /lines/status` dispatches through MediatR** (`P-65`) and it is parameterless, so `ValidatorBehavior` never fires for a request; and **all twelve real services throw `NotImplementedException`** (`P-64`), so no endpoint reaches `FlatWireDB`. **All four §2.4 removal checks sit on those two paths.** The substitute: flip **`useMockData: false`** in `appsettings.Development.json` and call any endpoint — `NotImplementedException` is §2.5 arm 4, and the filter's `500` and the middleware's `500` carry **different bodies**, so one call proves both the removal and that the middleware is reached. The `409` constraint-name rows and the `P-60` comparison are **handed forward** (§6). ⚠ The **`403`** row is **unrunnable, not merely unrun** — there is no policy-gated endpoint, so §2.6 is a **design constraint, not a test**. *Earlier the same day —* **reviewed against the built service; three stale facts corrected and §2/§3 restructured so the story can be built from this document.** ⚠ **§4's *"there is no `app.UseAuthorization()`"* is retired** — `P-55` added the line on 25 Aug and it is in the built `Program.cs` today; the **conclusion** holds (neither `401` nor `403` reaches this middleware) but the **mechanism** was wrong, and a `403` carries an **empty body**, not the envelope (flagged by `FW-145` §8; fixed here). **`P-06` is closed** — `FW-138` is BUILT, `FlatWireResult<T>` is on the wire, and §1.1 was still describing the superseded field shape; **§7.1 is now empty and this story is unblocked.** **§2.1's catalogue corrected** — `LINE_NOT_ELIGIBLE` is **withdrawn** (`FR-533`), `WRONG_STATION` and `VALIDATION_FAILED` added; it is **17 catalogued + 2 owed**, not 18. **§2 is split into what throws and what the action returns** — `P-57` keeps state rules in the action, so most of the old mapping table never reaches this middleware — **new §2.5** names the four exception sources that actually do, and **§3 is rewritten** with the registration point, the `CustomException` unwrap and the constraint-name mapping. Earlier: the **two validation routes** recorded (`FW-139` `P-60`): model binding produces the envelope directly, `ValidatorBehavior` throws `CustomException` for this middleware to map - same `400`, two paths; the dead-middleware argument restated at **22** endpoints (`FW-138` `P-53`) *(previously August 15, 2026 — §2.4 added (what `HttpGlobalExceptionFilter` actually emits); **`P-18` settled — forced, not chosen — and its "survivable fallback" withdrawn**; §7 restructured into open / closed / stale, closing four of five *(earlier same day: §2.1's code-is-a-label rule; `P-18`'s overload correction; `G2`/`OI-39` dated to before T2)*)*
 **Document Type:** Implementation plan for a single backlog story
-**Status:** Ready to build — **`P-18` settled; four of five open items closed (§7.2). `P-06` remains, and is `FW-138`'s**
+**Status:** ✅ **BUILT — 27 Aug 2026.** `ExceptionHandlingMiddleware` is live in `ual-api`, `HttpGlobalExceptionFilter` is removed and the removal is asserted at boot; §6.2 carries the measured verification (before/after on the one runnable path, 22/22 `401` intact, both inspection rows holding at once). **Five decisions minted, `P-78`–`P-82`** — the biggest is `P-78`: **§4's `RemoveType` sketch does not compile.** Two verification rows are handed forward, not passed (§6)
 **Owner:** Backend (.NET) stream
 **Audience:** The .NET developer building `FW-146`
 **Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
@@ -26,6 +26,24 @@
 > `500`. §2.4 and `P-18`.
 
 ---
+> ### ⚠ Coding standard — read `[SVC §3.4a]` before writing code
+>
+> The repository C# standard binds every `.cs` file here, and `[SVC §3.4a]` records the **four
+> standing divergences** so they are not re-litigated in review. **Divergence 1 is this story's**:
+> the checklist says *"returned as `Ok(...)`"* and this middleware returns a **real HTTP status**,
+> because `[API §1.3]`'s 409/422 split is load-bearing and the same standard independently flags
+> *"200 for a conflict"*. Do not let a reviewer talk it back to `Ok(...)`. Also this story's:
+>
+> ⚠ **Two validation gates reach this middleware differently - `P-60`.** Model binding produces the
+> envelope directly through `InvalidModelStateResponseFactory`; `ValidatorBehavior` throws
+> `CustomException` wrapping a `ValidationException` for this middleware to map. **Same `400`, two
+> routes**, and both exist until `FW-N12` retires the first.
+>
+> **The envelope is `FlatWireResult<T> : ActionResultBase<T>` — decision `P-56`, which SUPERSEDES
+> `P-06`.** It is built and on the wire. `FW-146` wires the middleware onto **that** type: do not
+> define a second envelope, and do not re-map the `201`/`Blocked` response. ⚠ The machine code is
+> `ErrorDescription`; `ErrorCode` is the **int HTTP status**.
+
 
 ## 1. The story
 
@@ -47,51 +65,103 @@ From `[TB §7]` — verbatim:
 > **Dependencies:** FW-N04
 > **Blockers:** —
 
-### 1.1 ⚠ The envelope is not yours to define
+### 1.1 ⚠ The envelope is not yours to define — and it already exists
 
-[`FW-138`](FW-138-Fifteen-Thin-Controllers.md) `P-06` establishes `FlatWireResult<T>`
-(`Data` · `Success` · `Errors` `string[]` · `ErrorCode` `string`) because **no framework type
-produces `[API §1.2]`'s shape** — `ActionResultBase<T>` has no `errors` array and an `int`
-code, and `UAController.Error(...)` returns `{ErrorMessage, RequestUri}`.
+**✅ Delivered. `P-06` is closed, superseded by `P-56`** ([`FW-138`](FW-138-Fifteen-Thin-Controllers.md)
+§5, 25 Aug 2026). `P-06`'s *observation* stands — no framework type produces `[API §1.2]`'s shape,
+because `ActionResultBase<T>` has no `errors` array and `UAController.Error(...)` returns
+`{ErrorMessage, RequestUri}` — but its *conclusion* is reversed: the repository C# standard requires
+the response wrapped in `ActionResultBase<T>`, so the envelope **derives** rather than replaces.
+`FlatWireResult<T> : ActionResultBase<T>` is built, on the wire and verified across 22 endpoints.
 
-**This story wires the middleware onto that type. It must not redefine it.** The AC's
-`{Data, Success, Errors}` is satisfied by `P-06`, not by a second envelope.
+| Field | Source | Carries |
+|---|---|---|
+| `data` | inherited | the payload; `null` on any non-success |
+| `success` | inherited | |
+| `errorCode` (**int**) | inherited | ⚠ the **HTTP status** — the meaning the framework's own filter assigns it |
+| `errorDescription` (**string**) | inherited | ⚠ the **`[API §1.8]` machine code** — `BAY_OCCUPIED` |
+| `errors` (`string[]`) | added | the human-readable messages; always an array |
+| `errorContext` | added, **typed** | the routing payload — `InspectionFailedContext` / `WrongStationContext` |
 
-⚠ **This story is blocked on the *artifact*, not on the *answer*** — it needs the type to
-exist, not the ratification to have happened. Both stories are wave 1, so if `FW-138` lands
-first there is no wait. `P-06` remains the one open item here (§7.1).
+⚠ **The machine code is `errorDescription`, not `errorCode`.** An earlier draft of this section
+listed the fields as *"`Errors` `string[]` · `ErrorCode` `string`"*, which was `P-06`'s shape and is
+not what shipped. A middleware that writes the catalogue code into `errorCode` puts a string where
+1A reads an int.
+
+**This story wires the middleware onto that type. It must not redefine it, and it must not write a
+third serialiser** — §3 step 4 names the two that exist. The AC's `{Data, Success, Errors}` is
+satisfied by `P-56`, not by a second envelope.
 
 ---
 
 ## 2. The mapping
 
-`[API §1.3]` and `phase-01b` L92:
+`[API §1.3]` and `phase-01b` L92 define the **contract**. This is the status every failure kind
+carries, whatever produces it:
 
-| Exception / condition | HTTP | Note |
+| Condition | HTTP | Note |
 |---|---|---|
-| FluentValidation failure (via `ValidatorBehavior`) | **400** | Shape, type and range only |
-| Not authenticated / not permitted | **401** / **403** | Handled by the auth layer, not here |
+| Shape, type, range or enum-membership failure | **400** | `VALIDATION_FAILED` |
+| Not authenticated / not permitted | **401** / **403** | The auth layer's, not this middleware's — §2.6 |
 | Resource not found | **404** | Rod alpha, schedule id, run id |
 | `ROWVERSION` mismatch, uniqueness violation, state conflict | **409** | *"someone got there first — re-read and retry"* |
-| `BusinessRuleValidationException` | **422** | *"this will never succeed as submitted"* |
+| Business-rule violation | **422** | *"this will never succeed as submitted"* |
 | PLC push failure, unhandled | **500** | Transaction aborted, compensating writes issued |
 
 **The `409`/`422` split is load-bearing** (`[API §1.3]`). It is the difference between a
 client that retries and a client that stops, and it is the most likely thing to be collapsed
 by a middleware written from habit.
 
-### 2.1 The 18-code catalogue travels with the status
+### 2.0 ⚠ This is a **contract** table, not a **type** table
 
-`[API §1.8]` — emit the machine-readable code **alongside** the human-readable `errors[]`,
-so a client can branch on the reason: `ROD_NOT_FOUND`, `ROD_NOT_ALLOCATED`,
-`ROD_UNAVAILABLE`, `ROD_WRONG_ORDER`, `BAY_OCCUPIED`, `ROD_ALREADY_STAGED`,
-`LINE_NOT_ELIGIBLE`, `INSPECTION_FAILED`, `CARRY_FORWARD_REQUIRED`,
-`DIAMETER_OUT_OF_TOLERANCE`, `SUPERVISOR_AUTH_REQUIRED`, `SCHEDULE_NOT_ACTIVE`,
-`SCHEDULE_NO_MATCH`, `RUN_ALREADY_ACTIVE`, `PAYOFF_MISMATCH`, `LINE_STILL_RUNNING`,
-`PLC_PUSH_FAILED`, `CONCURRENCY_CONFLICT`.
+> **Read it as a list of exceptions to catch and you will build the wrong story.** Most of these
+> statuses never arrive as an exception at all.
+>
+> **`P-57` and `[SVC §3.4a]` put state and business rules *in the action*, returning
+> `Envelope.Failure(...)`.** Only shape rules go through FluentValidation. So a `404`, a `409` and
+> a `422` are, in the built service, **`return` statements** — `FlatWireResult<T>.Fail(...)` with
+> the status and the catalogue code already set. The middleware must **not** touch them; they are
+> already the contracted shape and are already carrying the right status.
+>
+> **The proof is `INSPECTION_FAILED`, and it is now in the code.** Both of its paths *return*:
+> `422` from `CheckInService` and `201` + `state:"Blocked"` from `PayoffStagingService` (§2.2),
+> each building the envelope directly with the same code and the same `InspectionFailedContext`.
+> **Neither throws.** §2.2 states the "leave it alone" rule for one endpoint; it generalises to
+> most of the table above.
+>
+> **What actually reaches this middleware is a short, closed list — §2.5.** Build to that list.
+> A `catch (BusinessRuleValidationException)` arm **does not compile** — no such type exists in the
+> solution — and defining one to make it compile buys an arm that never fires.
+
+### 2.1 The code catalogue travels with the status
+
+`[API §1.8]` — emit the machine-readable code **alongside** the human-readable `errors[]`, so a
+client can branch on the reason. **Seventeen are catalogued and two more are built and owed**;
+all nineteen are constants in `FlatWire.Domain/Constants/ErrorCodes.cs`, never literals:
+
+`ROD_NOT_FOUND`, `ROD_NOT_ALLOCATED`, `ROD_UNAVAILABLE`, `ROD_WRONG_ORDER`, `BAY_OCCUPIED`,
+`ROD_ALREADY_STAGED`, `INSPECTION_FAILED`, `CARRY_FORWARD_REQUIRED`, `DIAMETER_OUT_OF_TOLERANCE`,
+`SUPERVISOR_AUTH_REQUIRED`, `SCHEDULE_NOT_ACTIVE`, `SCHEDULE_NO_MATCH`, `RUN_ALREADY_ACTIVE`,
+`PAYOFF_MISMATCH`, `LINE_STILL_RUNNING`, `PLC_PUSH_FAILED`, `CONCURRENCY_CONFLICT`.
+
+**Two are emitted by the service and absent from `[API §1.8]`** — flagged there by `FW-138` on
+25 Aug 2026, owed by the contract, and **not this plan's to invent differently**:
+
+| Code | HTTP | Why it exists |
+|---|---|---|
+| **`VALIDATION_FAILED`** | 400 | §1.8 catalogues **no code for a `400` at all**, though §1.3 defines one and every request validator returns it. ⚠ **This is the code this middleware writes on the `CustomException` path** (§3 step 5) — it must match `Envelope.FromModelState` exactly, or `P-60`'s two gates disagree |
+| **`WRONG_STATION`** | 409 | Specified at `[API §4.5]`/`§4.6`, carries `correctLineId`. Not a refusal and not an override (`Q24`) |
+
+⚠ **`LINE_NOT_ELIGIBLE` is withdrawn — do not map it.** The `lineId = FL2` refusal was reversed in
+requirement text by **`FR-533`** (client reversal, 20 Aug 2026) and is struck at `[API §1.3]`,
+`§1.8`, `§4.4` and `§4.5`. It is **deliberately absent** from `ErrorCodes.cs`, with a comment
+saying so. Until wave `W5` widens the enum, an `FL2` value fails enum validation and returns
+**`400`**, never a business-rule `422` — which is also the forward-compatible shape, since `[API §8]`
+classes widening an enum as non-breaking and retiring a `422` as breaking.
 
 `INSPECTION_FAILED` additionally carries `{route:"wipRejection", rodAlpha}` — a payload, not
-just a code.
+just a code. It is a **typed** `InspectionFailedContext` on `FlatWireResult<T>.ErrorContext`, so any
+exception this middleware maps to a code with a payload must carry that payload through (§3 step 5).
 
 > ### ⚠ The code is a **label**, never a selector
 >
@@ -104,11 +174,13 @@ just a code.
 >
 > | Endpoint | Status | Source |
 > |---|---|---|
-> | `POST /checkin/rod` | **`422`** — throws; the middleware maps the **type** | `[API §4.6]` |
-> | `POST /staging/rod` | **`201 Created`** + `state:"Blocked"` — **throws nothing**; the action returns it (§2.2) | `[API §4.5]` |
+> | `POST /checkin/rod` | **`422`** — the action **returns** it; nothing is committed, so it is a plain refusal | `[API §4.6]` |
+> | `POST /staging/rod` | **`201 Created`** + `state:"Blocked"` — the action returns it; the row **was** committed (§2.2) | `[API §4.5]` |
 >
-> Derived from the type, the two never collide: one path throws and one does not. Derived
-> from the code, one of them is always wrong.
+> ⚠ **As built, *neither* path throws** — both construct the envelope in the service and return it,
+> with the same code and the same `InspectionFailedContext`. The status is decided by the action
+> that knows whether a row was committed. **Both are outside this middleware entirely**, and that
+> is what makes them safe. Derived from the code, one of them would always be wrong.
 >
 > ⚠ **`[API §1.8]`'s row states `INSPECTION_FAILED | 422` unqualified**, which is wrong at
 > `/staging/rod`. Raise it with the contract owner; **do not edit the catalogue from here**
@@ -147,10 +219,11 @@ Read from `UA.Framework.API/Infrastructure/Filters/HttpGlobalExceptionFilter.cs`
 
 **Four consequences, and the first is fatal to the contract:**
 
-1. ⚠ **Every non-validation exception becomes `500`.** `BusinessRuleValidationException` →
-   `500` not `422`. A `ROWVERSION` conflict → `500` not `409`. Not-found → `500` not `404`.
-   **The 409/422 split `[API §1.3]` calls load-bearing does not survive at all** — §2's whole
-   mapping table becomes unreachable.
+1. ⚠ **Every non-validation exception becomes `500`.** A `DbUpdateConcurrencyException` → `500`
+   not `409`. A uniqueness violation → `500` not `409` + `BAY_OCCUPIED`. Any domain exception a
+   later story adds → `500`, whatever it means. **The 409/422 split `[API §1.3]` calls
+   load-bearing does not survive at all** for anything that throws — §2.5's whole list collapses
+   to one status.
 2. **Validation returns `problem+json`, not the envelope** — no `success`, no `errors[]`, a
    different content type.
 3. ⚠ **The validation failures are discarded.** It reads only `context.Exception.Message`,
@@ -164,20 +237,120 @@ Read from `UA.Framework.API/Infrastructure/Filters/HttpGlobalExceptionFilter.cs`
 > **And `ExceptionHandled = true` is set on every path**, so with the filter present the
 > middleware is never reached for anything thrown inside MVC.
 
+⚠ **One precision worth carrying:** the filter's test is
+`context.Exception.GetType() == typeof(CustomException)` — **exact type equality**, not `is`. Any
+*subclass* of `CustomException` falls into the `500` branch. Do not reproduce that test.
+
+### 2.5 What actually throws — the closed list this middleware is built to
+
+Read off the built service, 27 Aug 2026. §2.0 explains why the list is this short: everything else
+is a `return`. **These four are the story.**
+
+| # | What arrives | Map to | Notes |
+|---|---|---|---|
+| 1 | **`CustomException`** from `ValidatorBehavior` | **400** + `VALIDATION_FAILED` | The `P-60` second gate. ⚠ **Unwrap it** — step 5 |
+| 2 | **`DbUpdateConcurrencyException`** | **409** + `CONCURRENCY_CONFLICT` | Four aggregates carry `IsConcurrencyToken()`: `FlatWireRun`, `RodStaging`, `CoilOutput`, `SpoolProcessing`. Nothing catches it today |
+| 3 | **`DbUpdateException`** wrapping `SqlException` **2601 / 2627** | **409** + the code **for that constraint** | ⚠ **Not one generic 409** — step 6 |
+| 4 | **anything else** | **500**, no detail on the wire | Includes `PLC_PUSH_FAILED` (§2.3) and the alpha value objects' `ArgumentException` (below) |
+
+> ⚠ **The alpha value objects throw `ArgumentException`.** `RodAlpha`, `SpoolAlpha` and their
+> siblings reject a malformed value in the constructor — that is `G14`'s format half, closed by
+> construction. It is the right design, and it means **a malformed alpha that reaches a constructor
+> becomes a `500`**, not the `400` the contract wants. That is acceptable **only** because
+> FluentValidation rejects the shape first (`P-57`), so the constructor is unreachable from a
+> request. **Do not add an `ArgumentException → 400` arm to make it safe** — that would mask a
+> validator gap as a well-formed client error. If one is ever observed in the log, the missing
+> validator is the defect.
+
+### 2.6 `401` and `403` never reach this middleware, and a `403` has no envelope
+
+The authorization middleware **short-circuits before the action runs**, so nothing is thrown and
+this middleware is not entered. `[API §1.3]` lists both codes; `[SEC §8]` and
+[`FW-145`](FW-145-JWT-And-Role-Policies.md) own them.
+
+⚠ **A `403` therefore carries an empty body — not `{data, success, errors}`.** This is expected
+behaviour, not a gap in the envelope contract, and it is worth writing into the QA0 script
+explicitly: **a walkthrough that asserts an error envelope on a `403` fails a passing system**
+(`FW-145` §6.1).
+
 ---
 
 ## 3. Build order
 
-1. **Confirm `P-06`** and the `FlatWireResult<T>` type.
+1. **Observe the current behaviour first.** The filter is live in the running service today
+   (§5) — ⚠ **but §5's four checks cannot be walked**, before or after: all four sit on paths no
+   request reaches yet (§5.1). **Use §5.1's `useMockData: false` route instead**, which *is*
+   runnable now and gives the same before/after pair — the filter's `500` body before, the
+   middleware's `500` body after. Run it **before** changing anything, so the "after" means
+   something.
+
 2. **Remove `HttpGlobalExceptionFilter` after `AddCustomMvc()`** — `P-18`. Do this *before*
    writing the middleware, or it will appear to work while the filter is answering.
-3. **Map the exception types** per §2, each with its catalogue code.
-4. **Preserve the correlation id** — `[API §1.4]` requires `X-Correlation-Id` echoed on
-   *every* response, and error paths are where it matters most.
-5. **Log at the boundary** with the correlation id, via `FW-143`'s Serilog wiring.
-6. **Verify the `201`/`Blocked` path is untouched** (§2.2).
-7. **Do not leak internals** — `ErrorDescription = ex.Message` is `CoilCheckin`'s habit and
-   puts exception text on the wire.
+
+3. **Register the middleware in the right place.** `Program.cs` is concrete now, and the position
+   is decidable rather than a matter of taste. Four things sit before `UseRouting()`: `UseCors`,
+   `CorrelationIdMiddleware`, `UseSerilogRequestLogging` (`FW-143` `P-73`) and `UseAuthentication`.
+   **Register immediately after `UseSerilogRequestLogging` and before `UseAuthentication`.**
+
+   | Must sit **inside** | Why |
+   |---|---|
+   | `CorrelationIdMiddleware` | So the id is on the `LogContext` when step 7 logs. *(The response **header** is safe either way — that middleware appends it **before** calling `next`, so it survives an exception passing through.)* |
+   | `UseSerilogRequestLogging` | ⚠ **Outside it, every mapped `422`/`409` reaches Serilog as an exception**, and `FW-143`'s `LevelFor` branches on `exception != null` → logged at **Error**, and logged twice. `FW-143` chose **Warning** for 4xx deliberately; the wrong side of one registration undoes that. |
+
+   It still sits **before `UseRouting()`**, so it covers MVC exceptions *and* everything thrown
+   outside the pipeline — which is what `[API §1.2]`'s envelope has to cover.
+
+4. **Reuse the two writers that exist. Do not add a third.** `FlatWireResult<T>.Fail(status, code,
+   message, context)` builds the body and `Envelope.Failure<T>(...)` wraps it with a real status
+   (`FlatWire.API/Extensions/Envelope.cs`, `internal static`). The middleware writes to
+   `HttpResponse` directly rather than returning an `IActionResult`, so it serialises
+   `FlatWireResult<object>.Fail(...)` itself — **with the same `JsonSerializerOptions` MVC uses**,
+   camelCase and `JsonStringEnumConverter` (`P-58`), or the one error shape in the service is the
+   one nobody can parse.
+
+5. **Map `CustomException` — and unwrap it.** This is the step §2.4 diagnoses and the framework
+   filter gets wrong. `ValidatorBehavior` throws
+   `new CustomException($"Command Validation Errors for type {name}", new ValidationException("Validation exception", failures))`.
+   The outer `Message` is a fixed string with no client value; **the failures are in the inner
+   `FluentValidation.ValidationException.Errors`**. Unwrap it, project one message per
+   `ValidationFailure` into `errors[]`, and emit **`400` + `VALIDATION_FAILED`**.
+
+   ⚠ **`P-60`: both gates must agree.** Model binding already produces this shape through
+   `Envelope.FromModelState`. The same invalid payload must return the same status, the same code
+   and the same per-field messages whichever gate catches it — that is `FW-139`'s acceptance
+   criterion, and it is checked by comparing the two responses, not by reading the code.
+
+6. **Map the database exceptions, by constraint name.** `DbUpdateConcurrencyException` →
+   **`409` + `CONCURRENCY_CONFLICT`**. A `DbUpdateException` wrapping `SqlException` **2601/2627**
+   is a uniqueness violation, and **which code it carries depends on which index fired**:
+
+   | Index | Code |
+   |---|---|
+   | `UX_RodStaging_Bay` | `BAY_OCCUPIED` |
+   | `UX_RodStaging_RodActive` | `ROD_ALREADY_STAGED` |
+   | anything else | `409` + `CONCURRENCY_CONFLICT`, and log the constraint name |
+
+   ⚠ **Collapsing these to one generic `409` loses the client's branch.** `[API §1.8]` gives the
+   two a different client action — re-read bay state versus re-read the rod — and the constraint
+   name in `SqlException.Message` is the only thing that distinguishes them at this layer.
+
+7. **Log at the boundary** with the correlation id, via `FW-143`'s Serilog wiring. The exception and
+   its stack go to the **log**, never to the response.
+
+8. **Verify the `201`/`Blocked` path is untouched** (§2.2), and more generally that no `return`ed
+   failure is re-mapped (§2.0).
+
+9. **Do not leak internals** — `ErrorDescription = ex.Message` is `CoilCheckin`'s habit and puts
+   exception text on the wire. ⚠ `errorDescription` is the **catalogue code**; the framework filter
+   writing `Convert.ToString(exception)` into that field in Development is precisely the defect
+   §2.4 point 4 records.
+
+**Not in this story, and each has an owner.** No domain exception type is defined here —
+`BusinessRuleValidationException` and its siblings do not exist and `P-57` means they are not
+needed (§2.0); if `FW-207`'s aggregate later throws, the arm is added then, to §2.5's list.
+`OI-46`'s *"alert Operations"* side effect is [`FW-157`](FW-157-CheckIn-Rod-And-CheckInService.md)'s
+(§7.2). `G2`'s compensation design is `FW-151`'s and `FW-157`'s; this story only words the `500`
+correctly (§2.3).
 
 ---
 
@@ -191,11 +364,12 @@ Read from `UA.Framework.API/Infrastructure/Filters/HttpGlobalExceptionFilter.cs`
 a global handler. **Two handlers for one exception is the defect.**
 
 > ✅ **This was marked *"needs ratifying"* and is now settled, because reading the filter
-> removed the choice.** §2.4: it collapses **every non-validation exception to `500`**, so
-> `BusinessRuleValidationException` returns `500` instead of `422` and a `ROWVERSION`
-> conflict returns `500` instead of `409` — **`[API §1.3]`'s load-bearing 409/422 split does
-> not survive in any form**. It also emits `problem+json` for validation, **discards the
-> validation failures entirely**, and leaks the stack in Development.
+> removed the choice.** §2.4: it collapses **every non-validation exception to `500`**, so a
+> `ROWVERSION` conflict returns `500` instead of `409` and a uniqueness violation returns `500`
+> instead of `409` + the code that tells the client which row to re-read — **`[API §1.3]`'s
+> load-bearing 409/422 split does not survive in any form** for anything that throws. It also
+> emits `problem+json` for validation, **discards the validation failures entirely**, and leaks
+> the stack in Development.
 >
 > **There is nothing left to ratify: keeping it fails `[API §1.2]`, `[API §1.3]`,
 > `[API §1.8]` and `phase-01b` exit criterion 2 simultaneously.** Removal is the only build
@@ -208,8 +382,8 @@ cannot branch on a contract that holds only for some failures.
 ⚠ **And the filter is *inner* to the middleware, which decides the answer.** If it stays, it
 handles every MVC exception first and the middleware **never sees them** — so "leave the
 filter in place" does not produce two handlers competing, it produces **middleware that is
-dead code for all 24 endpoints**. That is worse than the problem this decision exists to
-avoid.
+dead code for all 22 endpoints**. That is worse than the problem this decision exists to
+avoid. *(24 until `FW-138`'s `P-53`, 25 Aug 2026 — the count does not change the argument.)*
 
 **Resolution: call `AddCustomMvc()` as `[ARC §2.2]` binds, then remove just the exception
 filter, and let the middleware be the single mapper.**
@@ -225,10 +399,11 @@ Middleware sits **before `UseRouting()`**, so it sees MVC exceptions *and* every
 outside the pipeline — which is what `[API §1.2]`'s envelope has to cover.
 
 **Why not simply skip `AddCustomMvc()`.** It also supplies the global
-`AuthorizeFilter(RequireAuthenticatedUser())` — **the thing that actually enforces
-`[Authorize]`, since this pipeline has no `app.UseAuthorization()`** (`FW-N04` step 6) — plus
-the `CorsPolicy` and `AddControllersAsServices()`. Forfeiting all of that to avoid one filter
-is the wrong trade.
+`AuthorizeFilter(RequireAuthenticatedUser())` — **which is what makes every endpoint authorized by
+default**, so an action that forgets `[Authorize]` is still closed — plus the `CorsPolicy` and
+`AddControllersAsServices()` (which `P-51` depends on). Forfeiting all of that to avoid one filter
+is the wrong trade. *(The filter is not the only enforcement: `app.UseAuthorization()` is also
+required under endpoint routing — `P-55`, and the correction below.)*
 
 ⚠ **Correction — an earlier draft of this plan called *"keep the filter, scope the middleware
 to what escapes MVC"* a worse-but-survivable fallback. It is not survivable.** §2.4 shows
@@ -245,9 +420,109 @@ carry no such contract, so the filter costs them nothing. **The divergence is in
 requirement, not in the taste** — and it must still be visible in `Program.cs` with a comment
 pointing here, because §5 has to assert the removal: a missed one fails silently.
 
-Related and already settled by `FW-N04` step 6: **there is no `app.UseAuthorization()`** in
-this pipeline, so `401`/`403` come from the global `AuthorizeFilter` and never reach this
-middleware. That is expected, not a gap.
+⚠ **Correction — `app.UseAuthorization()` *is* in this pipeline.** This paragraph read *"there is
+no `app.UseAuthorization()`, so `401`/`403` come from the global `AuthorizeFilter`"*, citing
+`FW-N04` step 6 rule 2. **`P-55` retired that rule on 25 Aug 2026** and the line is in the built
+`Program.cs` today: this service terminates in `MapControllers` — endpoint routing — where ASP.NET
+**requires** the authorization middleware between `UseRouting()` and the endpoint. Without it all
+22 endpoints returned `500`, not `401`. *(The rule was true of `CoilCheckin`, which sets
+`EnableEndpointRouting = false` and terminates in `UseMvc`.)*
+
+**The conclusion is unchanged: neither `401` nor `403` reaches this middleware** — the
+authorization middleware short-circuits before the action runs and throws nothing. But the
+mechanism is that middleware, not the filter, and the consequence for the QA0 script is in §2.6:
+**a `403` has an empty body.** Raised by [`FW-145`](FW-145-JWT-And-Role-Policies.md) §8 on
+27 Aug 2026 and fixed here.
+
+---
+
+### `P-78` — there is no `Filters.RemoveType<T>()`, and removing nothing must be fatal
+
+**Settled in the build — 27 Aug 2026.** ⚠ **The code sketch above does not compile.**
+
+```csharp
+services.Configure<MvcOptions>(o => o.Filters.RemoveType<HttpGlobalExceptionFilter>());
+//                                             ^ CS1929
+```
+
+`RemoveType<T>` is `ApplicationModelConventionExtensions.RemoveType<T>(IList<IApplicationModelConvention>)`
+— it applies to **conventions**, not filters. `MvcOptions.Filters` is a `FilterCollection`, which has
+no such method. The sketch reads plausibly because the name is right for the job and the receiver is
+wrong, which is how it survived review twice.
+
+`AddCustomMvc()` registers the filter as **`options.Filters.Add(typeof(HttpGlobalExceptionFilter))`**,
+and the framework wraps a bare `Type` in a **`TypeFilterAttribute`**. So the match is on
+`TypeFilterAttribute.ImplementationType`, iterating backwards and removing by index.
+
+⚠ **And the removal must be fatal if it matches nothing.** §4 already says *"a missed one fails
+silently"*; a `RemoveAt` loop that matches zero rows is exactly that failure with no symptom — the
+service boots, every endpoint answers, and the middleware is dead code for all 22 of them. The
+registration therefore **throws `InvalidOperationException` at boot** when it removed nothing, naming
+both explanations (the framework stopped adding it, or it now registers in a different shape).
+
+**Rejected:** `Filters.Clear()` — it would take the global `AuthorizeFilter` with it, and `P-55`
+plus the 22 `401`s depend on that one staying.
+
+### `P-79` — a generic `500` needs a code, and `[API §1.8]` has none — `INTERNAL_ERROR`
+
+**Settled in the build — 27 Aug 2026.** `FlatWireResult<T>.Fail` requires a machine code, and §2.5
+arm 4 (*anything else → `500`*) names none. The catalogue's **only** `500` is `PLC_PUSH_FAILED`,
+whose client action is *"show the abort, offer retry"* — **actively wrong for an unrelated server
+fault**, since a client branching on it would offer a retry for a defect.
+
+`ErrorCodes.InternalError = "INTERNAL_ERROR"` is added, carrying the same *"absent from `[API §1.8]`
+— raised"* flag that `VALIDATION_FAILED` and `WRONG_STATION` already carry. **This is a third gap of
+the same kind**, and it is the contract owner's to close: `§1.8` now owes three entries, not two.
+Leaving the field blank was the alternative and is worse — `errorDescription` is what a client
+branches on, and an empty one on a failure is indistinguishable from a client-side parse bug.
+
+### `P-80` — `Response.Clear()` drops the correlation id, and `[API §1.4]` requires it
+
+**Settled in the build — 27 Aug 2026, and found by measurement rather than review.**
+
+`CorrelationIdMiddleware` appends `X-Correlation-Id` **before** calling `next`, which §3 step 3 cites
+as the reason the header is safe either way. **It is safe against the exception; it is not safe
+against the handler.** `HttpResponse.Clear()` resets status, headers *and* body — so the first build
+of this middleware returned every mapped failure **with no correlation header**, while every success
+carried one. That is the worst possible shape: the header goes missing exactly on the responses
+someone is trying to trace.
+
+The value is captured before the clear and re-applied after, keyed on
+`GlobalConstants.Configuration.CorrelationIdHeaderName` — the same constant `Program.cs` passes to
+that middleware, so the two cannot drift.
+
+**Why still `Clear()`.** Not clearing would leave headers set by an inner component that then threw —
+a `Location` from a half-built `201`, a stale `Content-Length` — on a response that is now a `409`.
+Clearing and restoring the one contract header is the narrower guarantee.
+
+### `P-81` — the two `P-60` gates share one factory, so they agree by construction
+
+**Settled in the build — 27 Aug 2026.** §3 step 5 requires the middleware's `400` to be
+byte-identical to model binding's, and §5 checks it **by comparing two responses**. That check
+passes on the day it is run and says nothing about the day after: two hand-built object initialisers
+in two files drift the first time either is edited, and nothing fails when they do.
+
+`Envelope.Body(statusCode, errorCode, messages, context)` is extracted as the single failure-body
+factory. `Envelope.FromModelState` now calls it and so does the middleware, so **the two gates cannot
+disagree about shape** — only about the values they pass, which is what the comparison should be
+testing. This adds no writer: it removes one.
+
+### `P-82` — a fourth uniqueness row, `UX_FlatWireRun_ActiveLine` → `RUN_ALREADY_ACTIVE`
+
+**Settled in the build — 27 Aug 2026. ⚠ This goes beyond §3 step 6's three-row table**, and is
+recorded rather than done quietly.
+
+Step 6 maps `UX_RodStaging_Bay` and `UX_RodStaging_RodActive` and sends everything else to
+`CONCURRENCY_CONFLICT`. But `FlatWire_DDL_07_Indexes.sql` also carries
+**`UX_FlatWireRun_ActiveLine`**, and `[API §1.8]` gives that condition its own code with its own
+client action: **`RUN_ALREADY_ACTIVE` — "Refuse"**, not *"re-read and retry"*. Under the default the
+operator would be told to retry something that cannot succeed while that run is open — the same
+class of mistake as collapsing `BAY_OCCUPIED` into a generic `409`, which is the mistake step 6
+exists to prevent.
+
+The other unique indexes (`UX_SpoolStaging_LiveSpool`, `UX_CoilOutput_CoilNo`,
+`UX_RodOrderAllocation_*`, …) have **no catalogue code**, so they correctly take the default. **The
+rule is not "map every index" — it is "map every index `[API §1.8]` gives a distinct client action".**
 
 ---
 
@@ -256,14 +531,39 @@ middleware. That is expected, not a gap.
 **No automated tests** — `[TS §1.2]`, 15 Aug 2026, which strikes AC 3 as written. Each status
 path is walked manually in the QA0 contract walkthrough.
 
+> ### ⚠ Walk these **before** the change as well as after
+>
+> **The filter is answering in the running service today.** There is no
+> `Filters.RemoveType<HttpGlobalExceptionFilter>()` and no exception middleware in the built
+> `Program.cs`, while 22 endpoints ship. So every expectation in the second table below is
+> **wrong in the running service right now, in the way §2.4 predicts.**
+>
+> ⚠ **Which does not make them walkable.** All four sit on paths no request reaches (§5.1), so the
+> before/after pair they were written to give has to come from §5.1's `useMockData: false` route
+> instead — the one path that is runnable today.
+>
+> ⚠ **Most rows in the first table pass already** — they are `return`ed by the action (§2.0) and
+> the filter never sees them. **That is not evidence the middleware works.** Only the rows marked
+> **(throws)** exercise it.
+>
+> ### ⚠ And none of the four **(throws)** rows is reachable through an endpoint today — §5.1
+>
+> Read off the built service, 27 Aug 2026. **The middleware can be written in full; what cannot yet
+> be done is prove it from an HTTP request.** §5.1 has the reasons, the one path that *does* work,
+> and what it proves.
+
 | Path | Expected |
 |---|---|
-| Validation failure | `400`, `success:false`, `errors[]` populated, `data:null` |
+| Validation failure — model binding gate | `400` + `VALIDATION_FAILED`, `success:false`, `errors[]` populated, `data:null` |
+| Validation failure — `ValidatorBehavior` gate **(throws)** | ⚠ **Byte-identical to the row above** — `P-60`. Compare the two responses; do not read the code. ⛔ **Not reachable from an endpoint yet** — §5.1 |
 | Unknown rod alpha | `404` + `ROD_NOT_FOUND` |
 | Occupied bay | `409` + `BAY_OCCUPIED` |
 | `Draft` schedule at check-in | `422` + `SCHEDULE_NOT_ACTIVE` |
-| Stale `ROWVERSION` | `409` + `CONCURRENCY_CONFLICT` |
+| Stale `ROWVERSION` **(throws)** | `409` + `CONCURRENCY_CONFLICT` — a `DbUpdateConcurrencyException` from one of the four `IsConcurrencyToken()` aggregates. ⛔ **Not reachable yet** — §5.1 |
+| Duplicate bay insert **(throws)** | `409` + **`BAY_OCCUPIED`**, resolved from `UX_RodStaging_Bay` — ⚠ **not** a generic `CONCURRENCY_CONFLICT` (§3 step 6). ⛔ **Not reachable yet** — §5.1 |
+| Duplicate active rod **(throws)** | `409` + **`ROD_ALREADY_STAGED`**, from `UX_RodStaging_RodActive` — run it **with** the row above; passing either alone is consistent with one generic 409. ⛔ **Not reachable yet** — §5.1 |
 | PLC push failure | `500` + `PLC_PUSH_FAILED` |
+| **`403` on a policy-gated endpoint** | ⚠ **Empty body — no envelope** (§2.6). A script asserting `errors[]` here fails a passing system. ⛔ **Unrunnable — there is no policy-gated endpoint.** `FW-145` step 5 is not built and that story carries its own blocker, so **nothing in this service can return a `403`**: no token gives `401`, a valid token passes. **Treat §2.6 as a design constraint rather than a test** — §5.1 |
 | **Failed staging inspection** | **`201`**, `state:"Blocked"` — **not** `422`. The regression check for this story |
 | **Failed inspection at check-in** | **`422` + `INSPECTION_FAILED`** — the *same code* as the row above at a **different status**. Both must hold at once (§2.1) |
 | **One handler only** | `HttpGlobalExceptionFilter` is **absent from `MvcOptions.Filters`** at runtime, and every failure — MVC and non-MVC — returns the identical shape *(`P-18`)* |
@@ -274,17 +574,119 @@ consistent with a code→status lookup, which is the implementation §2.1 forbid
 
 **Four checks that exist because of §2.4.** Each expected value is precisely what the
 framework filter returns if the removal was missed, so each is a positive test that it was
-not:
+not — ⛔ **and all four sit on the two unreachable paths (§5.1), so today none of them can be run.**
+§5.1's `NotImplementedException` route is the substitute, and until the de-stub it is the **only**
+positive evidence that the removal took:
 
 | Check | Expected — and what a missed removal gives instead |
 |---|---|
-| `BusinessRuleValidationException` | **`422`** — the filter gives **`500`** |
-| Stale `ROWVERSION` | **`409`** — the filter gives **`500`** |
+| Stale `ROWVERSION` — `DbUpdateConcurrencyException` | **`409`** + `CONCURRENCY_CONFLICT` — the filter gives **`500`** |
+| Duplicate bay insert — `SqlException` 2601/2627 | **`409`** + `BAY_OCCUPIED` — the filter gives **`500`** |
 | Validation failure, content type | the **envelope** as `application/json` — the filter gives **`ValidationProblemDetails`** as `application/problem+json` |
 | Validation failure, field detail | `errors[]` naming **the fields that failed** — the filter gives the single fixed string `"Command Validation Errors for type …"` |
 
 ⚠ **Run at least one in `Development`**, where the filter additionally writes the full
 exception and stack into `ErrorDescription` — the fastest way to see it is still answering.
+
+### 5.1 ⚠ Nothing that throws is reachable from an endpoint yet — and one thing is
+
+**This does not block building the story.** Every mapping in §3 is decidable from code that already
+exists; what is missing is a *request* that reaches each arm. Read off the built service on
+27 Aug 2026 — and **the cause is the de-stub, not `FW-145`**:
+
+| §2.5 arm | Why no request reaches it |
+|---|---|
+| 1 · `CustomException` from `ValidatorBehavior` | **Only one action dispatches through MediatR** — `GET /lines/status` → `GetLinesStatusQuery`. The other 21 inject their `I{Area}Service` directly (`FW-140` `P-65`), so the behaviour pipeline is never entered — and that one query is **parameterless with no validator**, so it cannot fail. The pipeline *is* exercised at boot: `Program.cs`'s Development probe sends an empty `StageRodCommand` and requires the rejection (`P-59`). But that is not an HTTP path and produces no response to inspect |
+| 2 · `DbUpdateConcurrencyException` | **No endpoint reaches `FlatWireDB`.** All twelve real services throw `NotImplementedException` (`P-64`) and the stubs never open a context |
+| 3 · `DbUpdateException` / `SqlException` 2601 · 2627 | As above — both unique indexes exist in the schema, and nothing inserts against them |
+| 4 · **anything else → `500`** | ✅ **Reachable today.** See below |
+
+> ### ✅ The one runnable proof — and it proves both halves at once
+>
+> Set **`useMockData: false`** in `appsettings.Development.json` (it ships `true`; the
+> non-Development `appsettings.json` already ships `false`) and call **any** endpoint. Every real
+> service throws `NotImplementedException`, which is §2.5 arm 4 — *anything else* → **`500`**.
+>
+> **Both handlers return `500` and their bodies differ**, so one call distinguishes them:
+>
+> | If | The body |
+> |---|---|
+> | The filter is still registered | `ErrorDescription = "An error occurred. Please try again."` — and in **Development**, `Convert.ToString(exception)`: the **full exception and stack** (§2.4 point 4) |
+> | `P-18`'s removal took and the middleware is reached | `FlatWireResult<object>` — `success:false`, `data:null`, **no exception text at any level** (§3 steps 7 and 9) |
+>
+> **Stay in `Development` for it.** The stack leak is the unmistakable tell and the boot probes stay
+> armed. **Restore the flag afterwards** — `useMockData: true` is the Development default and
+> `FW-138`'s 61 fixture cases depend on it.
+
+**What still waits for the de-stub.** The two `409` arms — the `CONCURRENCY_CONFLICT` map and, more
+importantly, §3 step 6's **constraint-name** resolution to `BAY_OCCUPIED` versus `ROD_ALREADY_STAGED`
+— are the part of this story with no proof until a real write path exists
+([`FW-157`](FW-157-CheckIn-Rod-And-CheckInService.md), [`FW-179`](FW-179-CheckIn-Spool-And-Spools-Query.md)).
+**Write them now** — the index names are fixed in the schema and the mapping is the whole point of
+step 6 — **and hand the two rows forward** to the first story that lands a real insert rather than
+recording them as passed. The `P-60` byte-identical comparison lands with the first controller to
+dispatch through MediatR.
+
+### 5.2 ✅ What the build actually verified — 27 Aug 2026
+
+Run against `http://localhost:5261` with `ASPNETCORE_ENVIRONMENT=Development`. **The walkthrough of
+§6.1 still needs its named reviewer**; these are the mechanical checks.
+
+**The before/after pair (§5.1's runnable proof, `useMockData=false`).** One call to any endpoint;
+every real service throws `NotImplementedException`, which is §2.5 arm 4.
+
+| | Body |
+|---|---|
+| **Before** — filter answering | **2,972 bytes.** `errorDescription` = the full `NotImplementedException` **and its stack**, four frames of `C:\UAL\…\*.cs:line NN` on the wire (§2.4 point 4) |
+| **After** — middleware answering | **173 bytes.** `{"errors":["An unexpected error occurred. The transaction was aborted."],"errorContext":null,"data":null,"success":false,"errorCode":500,"errorDescription":"INTERNAL_ERROR"}` |
+
+**Both halves proved at once**, as §5.1 said they would be: the shape changed, so `P-18`'s removal
+took *and* the middleware is reached rather than dead.
+
+| Check | Result |
+|---|---|
+| Solution builds | **0 errors** — pre-existing warnings only |
+| Filter removed | ✅ — and the removal **asserts at boot** (`P-78`); the service starts, so it matched |
+| Middleware reached | ✅ — the `500` body is `FlatWireResult<object>`, not `ActionResultBase<object>` |
+| No leakage | ✅ **no exception text or stack in any response body**, scanned across every captured response |
+| `problem+json` | ✅ **zero occurrences** anywhere in the service or its log |
+| `X-Correlation-Id` | ✅ echoed on **every** response, success and failure — ⚠ **this failed first time: see `P-80`** |
+| Correlation in the log | ✅ `fw146-proof-001` stamped on the middleware's own line *and* on Serilog's request-completed line — confirming §3 step 3's *inside `CorrelationIdMiddleware`* ordering |
+| Log levels | ✅ `500` → `[ERR]` from the middleware **and** `[ERR]` from `UseSerilogRequestLogging`, **not doubled at Error for a 4xx** — the §3 step 3 *inside `UseSerilogRequestLogging`* ordering holds |
+| `[Authorize]` unaffected | ✅ **22 of 22** endpoints still `401` unauthenticated — `TC-655`'s shape, unchanged by the filter removal |
+| `403` | ⛔ **unrunnable** — no policy-gated endpoint exists (§5.1). The `401` body **is** empty, as §2.6 predicts of a short-circuit |
+
+**The returned failures, which the middleware must leave alone (§2.0, §2.2)** — all measured on
+`useMockData=true`:
+
+| Path | Result |
+|---|---|
+| **`201`/`Blocked`** — failed staging inspection | ✅ **`201`**, `success:true`, `errorDescription: INSPECTION_FAILED`, `errorContext: {route:"wipRejection", rodAlpha:"R00043"}`, `data.state: "Blocked"` |
+| **`422` `INSPECTION_FAILED`** at check-in | ✅ **`422`**, same code, same `errorContext`, `data:null` |
+| ⚠ **the two above, run together** | ✅ **Both hold at once** — the same code at two statuses. This is the §2.1 check that a code→status lookup cannot pass |
+| `404` `ROD_NOT_FOUND` · `409` `BAY_OCCUPIED` · `409` `WRONG_STATION` · `422` `SCHEDULE_NOT_ACTIVE` | ✅ all four, unchanged shape |
+| `400` model-binding gate | ✅ per-field messages, `VALIDATION_FAILED` — **regression check for `P-81`'s refactor of `Envelope.FromModelState`**; the wire shape is unchanged |
+| `200` happy path | ✅ `errors: []` present on success, as `[API §4.6b]` shows it |
+
+⚠ **Two rows are handed forward, not passed** — §6. Neither is a defect and neither was skipped:
+they are **unreachable on today's surface** (§5.1), and recording them as passed would be the false
+claim §5.1 exists to prevent.
+
+| Handed forward | Why | To |
+|---|---|---|
+| `409` **constraint-name** resolution — `BAY_OCCUPIED` vs `ROD_ALREADY_STAGED` vs `RUN_ALREADY_ACTIVE` (`P-82`) | No endpoint reaches `FlatWireDB`; both indexes exist and nothing inserts against them. **Written and unexercised** | [`FW-157`](FW-157-CheckIn-Rod-And-CheckInService.md) / [`FW-179`](FW-179-CheckIn-Spool-And-Spools-Query.md) — first real insert |
+| `P-60` **byte-identical** comparison, and with it the middleware's `400` arm and its **Warning** level | Only `GET /lines/status` dispatches through MediatR and it is parameterless, so `ValidatorBehavior` cannot fail for a request. The arm is exercised at **boot** by `P-59`'s probe, which produces no HTTP response to compare | First controller to dispatch a **command** through MediatR |
+
+> ### ⚠ One thing found while measuring, and it is not this story's
+>
+> **A 128-bit `UA_JWT_Secret_*` silently fails all authentication.** The dev secret documented in the
+> ecosystem `CLAUDE.md` — `1234567890123456`, 16 bytes — makes **every** request `401` with
+> `WWW-Authenticate: error_description="The signature key was not found"`, which reads as a bad
+> token rather than a bad configuration and costs an hour to diagnose. The current
+> `Microsoft.IdentityModel` requires **≥ 256 bits** for `HS256`; a 32-byte secret authenticates
+> normally. Nothing in `FlatWire` is wrong — `AddCustomAuthentication` is inherited — but
+> [`FW-145`](FW-145-JWT-And-Role-Policies.md) §3.1 is where a developer will look, and it does not
+> say so.
 
 ---
 
@@ -293,6 +695,13 @@ exception and stack into `ErrorDescription` — the fastest way to see it is sti
 Every controller and handler depends on this being consistent. `FW-138`'s per-action failure
 returns and this middleware must produce the identical shape — a client that sees two shapes
 has no contract.
+
+**Two verification rows leave this story unproven and must be picked up, not assumed** (§5.1): the
+**`409` constraint-name** rows go to the first story that lands a real database insert
+([`FW-157`](FW-157-CheckIn-Rod-And-CheckInService.md) / [`FW-179`](FW-179-CheckIn-Spool-And-Spools-Query.md)),
+and the **`P-60` byte-identical validation comparison** to the first controller that dispatches
+through MediatR. The **`403`** row is [`FW-145`](FW-145-JWT-And-Role-Policies.md)'s and is not this
+story's to close.
 
 ---
 
@@ -304,16 +713,18 @@ has no contract.
 > lives on elsewhere · **(c) reclassified** — it was never an open question, but a stale
 > citation or a dependency.
 
-### 7.1 Open — one, and it is not this story's to settle
+### 7.1 Open — none
 
-| Item | Effect here |
-|---|---|
-| **`P-06`** | The envelope **type**, owned by [`FW-138`](FW-138-Fifteen-Thin-Controllers.md) §5 and marked *needs ratifying* there. ⚠ **This story is blocked on the *artifact*, not on the *answer*** — both are wave 1, so if `FW-138` lands first there is no wait. **Evidence that should make ratification a formality, from §2.4:** the framework's own filter sets `ActionResultBase<T>.ErrorCode = (int)HttpStatusCode.InternalServerError` — so `ErrorCode` means *"HTTP status as an integer"*, **incompatible with `[API §1.8]`'s 18 string codes in meaning, not merely in type** |
+✅ **This story is unblocked.** `P-06`, the last item here, closed on 25 Aug 2026 (§7.2). Two
+items sit *outside* this story and are listed under their owners rather than here: `[API §1.8]`'s
+missing `400` code and its unqualified `INSPECTION_FAILED` row (§7.3, the contract owner's), and
+`OI-46` and `G2` (§7.2, `FW-157`'s and `FW-151`'s).
 
-### 7.2 Closed 15 Aug 2026 — four
+### 7.2 Closed — five
 
 | Item | Route | Why it closed | Residual, and who holds it |
 |---|---|---|---|
+| **`P-06`** | **a** | ✅ **Closed 25 Aug 2026, superseded by `P-56`.** `FW-138` is BUILT and `FlatWireResult<T> : ActionResultBase<T>` is on the wire across 22 endpoints, so this story inherits a **delivered type**, not a proposal. The evidence this section had been collecting is what decided it: the framework's own filter sets `ErrorCode = (int)HttpStatusCode.InternalServerError`, so `ErrorCode` means *"HTTP status as an integer"* — and `P-56` accepts that meaning rather than fighting it, moving the machine code to `ErrorDescription` | None here. ⚠ The **field shape changed** with the supersession — §1.1 |
 | **`P-18`** | **a** | ✅ **Forced, not chosen.** §2.4 shows the filter collapses every non-validation exception to `500` and destroys the 409/422 split, so **removal is the only build that meets the contract** — nothing remains to ratify | None. Recorded in §4, asserted in §5 |
 | **`INSPECTION_FAILED` two statuses** | **a + c** | ✅ **Design settled** by §2.1's rule — status comes from the exception type or the action, never from the code, so the two paths never collide | `[API §1.8]`'s **unqualified `422`** is a **spec defect**, not an open question → §7.3, for the contract owner |
 | **`OI-46`** | **b** | ✅ **This story's obligation is complete**: emit `SCHEDULE_NO_MATCH` + `422` + `errors[]`. The *"block and alert Operations"* half is a **side effect**, and exception middleware must not carry business behaviour on an already-failing path | `OI-46` stays open. [`FW-157`](FW-157-CheckIn-Rod-And-CheckInService.md) owns the behaviour, via `FW-208` → `AlertRaised`. Must close before the de-stub pass (`[API §7.3]`) |
@@ -325,6 +736,10 @@ has no contract.
 |---|---|---|
 | AC 3: *"Tests assert each status path"* | Withdrawn 15 Aug 2026; manual walkthrough instead | `[TS §1.2]` |
 | Reading AC 2's `{Data, Success, Errors}` as *"use `ActionResultBase<T>`"* | No framework type carries an `errors` array, and `ErrorCode` is an `int` the framework itself uses to mean *HTTP status* (§2.4) | `FW-138` `P-06` |
-| **`[API §1.8]`: `INSPECTION_FAILED \| 422`**, unqualified | **`422` at `POST /checkin/rod`; `201` + `state:"Blocked"` at `POST /staging/rod`.** The catalogue's HTTP column cannot be endpoint-agnostic for this code | `[API §4.5]`, `[API §4.6]` — **raise with the contract owner** |
+| **`[API §1.8]`: `INSPECTION_FAILED \| 422`**, unqualified | **`422` at `POST /checkin/rod`; `201` + `state:"Blocked"` at `POST /staging/rod`.** The catalogue's HTTP column cannot be endpoint-agnostic for this code. ⚠ **Still unqualified as of 27 Aug 2026** — and note the asymmetry: `FW-138` got **its** two §1.8 findings (`VALIDATION_FAILED`, `WRONG_STATION`) written into that section as callouts on 25 Aug, while this one was never carried across. **Raise it the same way** | `[API §4.5]`, `[API §4.6]` — **the contract owner's** |
 | **This plan's own `P-18`**, before 15 Aug 2026: *"not calling `AddCustomMvc()`'s filter-adding overload"* | ⚠ **No such overload exists.** `AddCustomMvc()` **and** `AddCustomMvcWithoutAuthentication()` both `Filters.Add(typeof(HttpGlobalExceptionFilter))`; only the `AuthorizeFilter` differs. The filter is **removed after registration**, not avoided at it | `UA.Framework.API/Extensions/ServiceCollectionExtensions.cs` |
 | **This plan's own `P-18` fallback**, before 15 Aug 2026: *"keep the filter … worse, survivable"* | ⚠ **Not survivable** — it forfeits the status contract entirely (§2.4). **There is no fallback** | `UA.Framework.API/Infrastructure/Filters/HttpGlobalExceptionFilter.cs` |
+| **This plan's own §4**, before 27 Aug 2026: *"there is no `app.UseAuthorization()` in this pipeline, so `401`/`403` come from the global `AuthorizeFilter`"* | ⚠ **Retired by `P-55`, 25 Aug 2026** — the line is in the built `Program.cs`, and without it all 22 endpoints returned `500` rather than `401`. The **conclusion** stands; the mechanism was wrong, and a `403` has an **empty body** (§2.6) | `P-55`; the built `Program.cs`; raised by `FW-145` §8 |
+| **This plan's own §1.1**, before 27 Aug 2026: the envelope as *"`Errors` `string[]` · `ErrorCode` `string`"* | ⚠ **`P-06`'s shape, not what shipped.** `errorCode` is an **int** (the HTTP status) and the machine code is **`errorDescription`** — `P-56` | `FlatWire.Domain/Models/FlatWireResult.cs` |
+| **This plan's own §2.1**, before 27 Aug 2026: *"the 18-code catalogue"*, listing **`LINE_NOT_ELIGIBLE`** | ⚠ **Withdrawn by `FR-533`** (20 Aug 2026) and deliberately absent from `ErrorCodes.cs`. The live set is **17 catalogued + `VALIDATION_FAILED` and `WRONG_STATION` owed** | `[API §1.8]`; `FR-533`; `FW-138` §8.2 |
+| **This plan's own §2**, before 27 Aug 2026: read as a list of **exception types** to catch | ⚠ **It is the contract's status table.** `P-57` keeps state rules in the action, so `404`/`409`/`422` are `return`s, not throws — **`BusinessRuleValidationException` does not exist and is not needed** (§2.0, §2.5) | `[SVC §3.4a]`; the built services |

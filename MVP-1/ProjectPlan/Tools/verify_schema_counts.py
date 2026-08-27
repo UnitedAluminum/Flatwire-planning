@@ -36,6 +36,19 @@ WHAT IT CHECKS
     C4  Reachability and guards: every object-creating file is included by some runner
         (the teardown excepted, deliberately), and every CREATE is guarded so the runners
         stay idempotent.
+    C6  Count claims in prose: any file that states a table/FK/index/procedure/trigger count
+        disagreeing with the DDL. FATAL for the closed set of sites [DBD 6.2] permits to
+        restate the figures (its own definition, [DEP 4.2]'s gate, phase-01c, the runner
+        banners, the 06/07 script headers, MVP2-SCOPE.md), because a wrong number in one of
+        those rejects a correct deployment or fails a correct story -- which has happened
+        five times. ADVISORY everywhere else, because most survivors are legitimate dated
+        audit trail that must NOT be swept: [DBD 6.2] states the exemption outright,
+        "statements dated before 23 Aug 2026 are audit trail and keep their numbers by
+        design." A claim sitting beside a history marker ("previously", "superseded",
+        "until", "stale", "was") is exempt in both tiers. C1 already pins [DBD 6.2] and
+        [DEP 4.2]'s numeric gate; C6 is what catches the same figure restated in a
+        SENTENCE, which is how phase-01c came to publish 34/57/69 in three places while
+        its own body said 33.
     C5  Seed FK ordering: a nullable FK whose parent is seeded LATER in the seed chain
         must be NULL at INSERT and populated by a later UPDATE. Three such columns exist
         and one of them was seeded with a live value when this check was written -- a
@@ -71,6 +84,11 @@ DBD = os.path.join(ROOT, 'MVP-1', 'ProjectPlan', 'Database', 'DatabaseDesign.md'
 PHASE1C = os.path.join(ROOT, 'MVP-1', 'ProjectPlan', 'Development', 'Phases',
                        'phase-01c-database-foundation.md')
 MAPPING = os.path.join(SCHEMA_DIR, 'FlatWireSchema_Mapping.md')
+# [DEP]'s deployment gate. Added to C1 on 26 Aug 2026 after Q89's index took the count
+# 69 -> 70 and left V3 asserting 69 -- the FIFTH time that gate would have rejected a
+# correct deployment, and the first caused by a change made in this repository. The
+# docstring above already cited three of the four earlier ones; nothing was checking it.
+DEP = os.path.join(ROOT, 'MVP-1', 'ProjectPlan', 'Operations', 'Deployment.md')
 
 MVP1_RUNNER = 'FlatWire_DDL_RunAll.sql'
 MVP2_RUNNER = 'FlatWire_DDL_RunAll_MVP2.sql'
@@ -265,6 +283,202 @@ def seed_fk_order(seeds, fks):
     return findings
 
 
+# Sites [DBD 6.2] permits to restate the figures, plus the script headers that carry them.
+# A wrong number in one of these rejects a deployment or fails a story, so C6 is fatal here.
+C6_FATAL = (
+    os.path.join('MVP-1', 'ProjectPlan', 'Database', 'DatabaseDesign.md'),
+    os.path.join('MVP-1', 'ProjectPlan', 'Operations', 'Deployment.md'),
+    os.path.join('MVP-1', 'ProjectPlan', 'Development', 'Phases',
+                 'phase-01c-database-foundation.md'),
+    os.path.join('MVP-1', 'ProjectPlan', 'Database', 'Schema', 'SQL',
+                 'FlatWire_DDL_RunAll.sql'),
+    os.path.join('MVP-1', 'ProjectPlan', 'Database', 'Schema', 'SQL',
+                 'FlatWire_DDL_RunAll_MVP2.sql'),
+    os.path.join('MVP-1', 'ProjectPlan', 'Database', 'Schema', 'SQL',
+                 'FlatWire_DDL_06_ForeignKeys.sql'),
+    os.path.join('MVP-1', 'ProjectPlan', 'Database', 'Schema', 'SQL',
+                 'FlatWire_DDL_07_Indexes.sql'),
+    os.path.join('MVP-1', 'ProjectPlan', 'Database', 'Schema', 'SQL', 'MVP2-SCOPE.md'),
+)
+
+# Not scanned. CHANGELOG entries keep their original numbers by design; BaseDocuments/ is
+# read-only business input; and this script's own docstring recites every wrong count there
+# has ever been, which is the whole point of it.
+C6_SKIP_DIRS = ('.git', 'node_modules', 'BaseDocuments')
+C6_SKIP_FILES = ('CHANGELOG.md', 'verify_schema_counts.py')
+
+# Propagation ledgers are records of drift found on a given date -- they QUOTE the wrong
+# figures other files carried, by design, and correcting them would destroy the evidence.
+C6_SKIP_SUFFIXES = ('_SyncPlan.md',)
+
+# The exemption [DBD 6.2] actually states: "statements dated before 23 Aug 2026 are audit
+# trail and keep their numbers by design." A date in the sentence IS the marker, so a year
+# beside the claim exempts it -- which is why "Counted from the scripts 23 Aug 2026: ..."
+# is left alone while an undated "Deployed FlatWireDB reports ..." is not.
+# A DATE, not merely a four-digit number: "SQL Server 2019" is a product version and must
+# not exempt the live claim sitting beside it, which is exactly what a bare \d{4} did.
+_C6_MONTH = (r'(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*')
+RE_C6_DATED = re.compile(r'%s\.? ?[0-9]{1,2}(?:st|nd|rd|th)?,? ?20[0-9]{2}'
+                         r'|[0-9]{1,2}(?:st|nd|rd|th)? %s,? ?20[0-9]{2}'
+                         r'|20[0-9]{2}-[0-9]{2}-[0-9]{2}' % (_C6_MONTH, _C6_MONTH))
+
+# A claim sitting beside one of these is history, not an assertion.
+C6_HISTORY = ('previously', 'superseded', 'stale', 'until ', 'predates', 'pre-merge',
+              'no longer', 'retired', 'audit trail', 'not restated', 'was ', 'were ',
+              'asserted', 'published', 'said ', 'formerly', 'corrected', 'this line',
+              'this row', 'this clause', 'this section', 'would have', 'rejects',
+              'never held', 'moved to', 'moved the', 'history', 'earlier', 'old ',
+              'then ', 'briefly', 'wrong', 'defect', 'drift', 'withdrawn', 'struck',
+              'previous', 'for reference', 'pre-', 'any "', 'used to')
+
+# The claim must actually be ABOUT the FlatWireDB object set. Without this, a rate-card
+# line such as "3 tables @ 4 h = 12 h" reads as a table-count claim.
+C6_CONTEXT = ('flatwiredb', 'fk', 'foreign key', 'index', 'baseline', 'dbd', 'runall',
+              'teardown', 'deploy', 'schema', 'procedure', 'trigger', 'runner', 'count',
+              'seed', 'ddl')
+
+# What a BASELINE claim looks like, as against a legitimate subset count.
+#
+# This distinction is the whole difficulty of the check. "their 10 foreign keys and their 6
+# indexes" (the PassSchedule subset), "7 FKs in 06 and 11 index statements" (the rod-order
+# pair) and "3 tables @ 4 h" (a rate-card sum) are all correct and must not be flagged. The
+# defect class that has rejected a correct deployment five times is the WHOLE-SET figure,
+# and it always appears in one of two shapes:
+#
+#   TUPLE      "34 tables . 57 FKs . 69 index statements"  -- a table count >= MIN_WHOLE
+#              paired with an FK or index count nearby. Subsets are small; the schema is not.
+#   TOTALISER  "all 55 FKs", "ALL 69 index statements", "complete 32-table FlatWireDB"
+#              -- an explicit claim to completeness, whatever the number.
+#
+# Anything else is left alone. A checker that flagged every integer next to the word "table"
+# produced 24 findings, 24 of them wrong, which is how a guard gets switched off.
+C6_MIN_WHOLE = 15
+
+RE_C6_TABLES = re.compile(r'(\d+)[ -]tables?\b', re.I)
+RE_C6_FKS = re.compile(r'(\d+) (?:FKs|FK constraints|foreign[- ]keys?|'
+                       r'foreign key constraints)', re.I)
+RE_C6_IDX = re.compile(r'(\d+) index(?: statement)?e?s?\b', re.I)
+RE_C6_PROCS = re.compile(r'(\d+) (?:stored )?procedures?\b', re.I)
+RE_C6_TRIGS = re.compile(r'(\d+) triggers?\b', re.I)
+
+RE_C6_TOTAL = (
+    (re.compile(r'\ball (\d+) (?:FKs|FK constraints|foreign[- ]keys?)', re.I), 'fks'),
+    (re.compile(r'\ball (\d+) index(?: statement)?e?s?\b', re.I), 'indexes'),
+    (re.compile(r'\bcomplete (\d+)[- ]table\b', re.I), 'tables'),
+    (re.compile(r'\ball (\d+) tables?\b', re.I), 'tables'),
+)
+
+C6_NEAR = 160          # how far from the table count a tuple member may sit
+
+
+def count_claims(got):
+    """C6. Baseline count claims in prose that disagree with the DDL.
+
+    Returns (fatal, advisory). Fatal covers only the closed set of sites permitted to
+    restate the figures; everything else is reported for triage, because sweeping a dated
+    statement would destroy the history the audit-trail exemption exists to protect.
+    """
+    actual = {'tables': len(got['tables']), 'fks': len(got['fks']),
+              'indexes': len(got['indexes']), 'procs': len(got['procs']),
+              'triggers': len(got['triggers'])}
+    fatal, advisory = [], []
+
+    def emit(bucket, rel, lineno, claimed, kind, shape):
+        bucket.append('C6: %s:%d claims %s %s (%s); the DDL creates %d -- restate it, or '
+                      'mark it as dated audit trail'
+                      % (rel, lineno, claimed, kind, shape, actual[kind]))
+
+    for dirpath, dirnames, filenames in os.walk(ROOT):
+        dirnames[:] = [d for d in dirnames if d not in C6_SKIP_DIRS]
+        for fn in sorted(filenames):
+            if not fn.endswith(('.md', '.sql')) or fn in C6_SKIP_FILES:
+                continue
+            if fn.endswith(C6_SKIP_SUFFIXES):
+                continue
+            full = os.path.join(dirpath, fn)
+            rel = os.path.relpath(full, ROOT)
+            try:
+                body = read(full)
+            except (OSError, UnicodeDecodeError):
+                continue
+            is_fatal = rel in C6_FATAL
+            bucket = fatal if is_fatal else advisory
+
+            lines = body.split('\n')
+            for lineno, line in enumerate(lines, 1):
+                low = line.lower()
+                # Markdown wraps a sentence across lines, so the date or the "previously"
+                # qualifying a claim is routinely on the line ABOVE it -- a single-line
+                # window reported five such claims as live. The sentence is the
+                # neighbourhood, so the window is the neighbourhood.
+                i = lineno - 1
+                near = ' '.join(lines[max(0, i - 2):i + 3]).lower()
+
+                def exempt(at):
+                    """Is the claim at this offset dated audit trail?
+
+                    The window is the claim's OWN LINE, in both tiers. A neighbourhood
+                    window was tried and rejected: mutation tests showed an explanatory
+                    note on the next line disarming the check for a live claim in a
+                    permitted site, and a date elsewhere in a table disarming it for a
+                    live claim in the advisory tier. Both are the failure this check
+                    exists to prevent, so the marker has to sit with the claim it
+                    qualifies -- which is also the only place a reader would look for it.
+                    """
+                    w = low[max(0, at - 300):at + 300]
+                    return (any(h in w for h in C6_HISTORY)
+                            or RE_C6_DATED.search(w) is not None)
+
+                def in_context(at):
+                    w = low[max(0, at - 260):at + 260] + ' ' + near
+                    return any(c in w for c in C6_CONTEXT)
+
+                # ---- shape 1: the baseline tuple, anchored on a whole-schema table count
+                for mt in RE_C6_TABLES.finditer(line):
+                    if int(mt.group(1)) < C6_MIN_WHOLE:
+                        continue                       # a subset, not the schema
+                    if line[mt.end():mt.end() + 4].lstrip().startswith('@'):
+                        continue                       # rate-card sum
+                    lo, hi = max(0, mt.start() - C6_NEAR), mt.end() + C6_NEAR
+                    # NOT named `near` -- that is the multi-line exemption neighbourhood
+                    # the closures above read, and rebinding it here shadowed them, so
+                    # every claim looked undated no matter what the line above said.
+                    tuple_span = line[lo:hi]
+                    partners = []
+                    for rx, kind in ((RE_C6_FKS, 'fks'), (RE_C6_IDX, 'indexes'),
+                                     (RE_C6_PROCS, 'procs'), (RE_C6_TRIGS, 'triggers')):
+                        mm = rx.search(tuple_span)
+                        if mm:
+                            partners.append((kind, int(mm.group(1)), lo + mm.start()))
+                    if not partners and not is_fatal:
+                        # A bare table count in ordinary prose is too ambiguous to judge --
+                        # it is as likely to be a subset, a rate-card sum or a sentence
+                        # about something else. In a PERMITTED site it is not ambiguous at
+                        # all: those files exist to state the baseline, so "Result: 33
+                        # tables" in the runner banner is a baseline claim with or without
+                        # a partner figure beside it. A mutation test walked 33 -> 34
+                        # straight past the tuple rule for exactly this reason.
+                        continue
+                    if exempt(mt.start()) or not in_context(mt.start()):
+                        continue
+                    shape = 'baseline tuple' if partners else 'baseline, permitted site'
+                    if int(mt.group(1)) != actual['tables']:
+                        emit(bucket, rel, lineno, mt.group(1), 'tables', shape)
+                    for kind, val, at in partners:
+                        if val != actual[kind]:
+                            emit(bucket, rel, lineno, val, kind, 'baseline tuple')
+
+                # ---- shape 2: an explicit claim to completeness
+                for rx, kind in RE_C6_TOTAL:
+                    for m in rx.finditer(line):
+                        if int(m.group(1)) == actual[kind]:
+                            continue
+                        if exempt(m.start()) or not in_context(m.start()):
+                            continue
+                        emit(bucket, rel, lineno, m.group(1), kind, 'stated as complete')
+    return fatal, advisory
+
+
 def main():
     emit = '--emit' in sys.argv
     fail = []
@@ -294,6 +508,26 @@ def main():
             if want != have:
                 fail.append('C1: [DBD 6.2] row "%s" says %d tables; %s creates %d'
                             % (label, want, f, have))
+
+    # [DEP]'s V1/V2/V3 deploy gate must agree with the DDL. Both the SQL comment
+    # ("-- Expected: N") and the checklist line ("- [ ] V1 returns **N**") are parsed,
+    # because they have disagreed with each other before now.
+    dep = read(DEP)
+    for tag, want, what in (('V1', len(tables), 'tables'),
+                            ('V2', len(got['fks']), 'FKs'),
+                            ('V3', len(got['indexes']), 'index statements')):
+        box = re.search(r'-\s*\[\s*\]\s*%s returns\s*\*\*(\d+)\*\*' % tag, dep)
+        if not box:
+            fail.append('C1: [DEP] has no "%s returns **N**" checklist line' % tag)
+        elif int(box.group(1)) != want:
+            fail.append('C1: [DEP] %s checklist expects %s %s; the DDL creates %d -- this gate '
+                        'REJECTS a correct deployment' % (tag, box.group(1), what, want))
+        blk = re.search(r'--\s*%s\..*?--\s*Expected:\s*(\d+)' % tag, dep, re.S)
+        if not blk:
+            fail.append('C1: [DEP] has no "-- Expected: N" for %s' % tag)
+        elif int(blk.group(1)) != want:
+            fail.append('C1: [DEP] %s SQL comment expects %s %s; the DDL creates %d'
+                        % (tag, blk.group(1), what, want))
 
     dupes = sorted({n for n in tables if tables.count(n) > 1})
     if dupes:
@@ -421,6 +655,15 @@ def main():
     fail.extend(c5)
     print('   %d FK constraints examined against the seed order; %d finding(s)'
           % (len(fks), len(c5)))
+
+    # ---- C6
+    print('== C6  count claims in prose ==')
+    c6_fatal, c6_advisory = count_claims(got)
+    fail.extend(c6_fatal)
+    print('   %d disagreeing claim(s) in permitted sites, %d advisory elsewhere'
+          % (len(c6_fatal), len(c6_advisory)))
+    for line in c6_advisory:
+        print('   ~ %s' % line)
 
     if emit:
         print()

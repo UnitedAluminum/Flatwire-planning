@@ -3,7 +3,7 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL2 / FL3 (finished goods). FL1 produces an intermediate spool, not a finished coil.
-**Version:** 1.5
+**Version:** 1.6
 **Last Updated:** August 25, 2026 — worked examples cited *(previously August 15, 2026)*
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 7 — Output Coil Completion & Label · **Dashboard 7b — Packing Station**
@@ -108,6 +108,28 @@ SOURCE TRACEABILITY
 └──────────────┴────────────────┴───────────────────────────┘
 ```
 
+> ⚠ **Client decision of 26 August 2026 — a coil made from two rods now keeps TWO identities, one per
+> rod.** Previously such a coil carried a single identity taken from the rod that contributed the most
+> footage. Each identity now carries **only that rod's share of the weight**, and both are written to the
+> coil records your other systems read — so the two add up to the coil's weight and nothing is counted
+> twice. The screen therefore shows an identity against **each** row of the chain:
+>
+> ```
+> SOURCE TRACEABILITY
+> ┌──────────────┬───────────────┬────────────────┬──────────┐
+> │ Rod          │ Identity      │ Footage range  │ Weight   │
+> ├──────────────┼───────────────┼────────────────┼──────────┤
+> │ <rod>        │ <identity>    │ 0 – <weld>     │ <lb>     │
+> │ <rod>        │ <identity>    │ <weld> – <end> │ <lb>     │
+> └──────────────┴───────────────┴────────────────┴──────────┘
+> ```
+>
+> **A coil from a single rod is unaffected** — one identity, one row, exactly as before. Fourteen of the
+> twenty-three spools in the trial run are single-rod, so this is the common case.
+>
+> ⚠ **This section is marked `[CONFIRMED]` and the change alters what it confirms, so it needs
+> re-signing.** See §9.
+
 Each row is bounded by a weld. The chain therefore states, for any point in the finished coil, which source rod is at that point — which is exactly what a welding-wire customer certificate requires.
 
 ## 4.2 What is recorded
@@ -172,6 +194,7 @@ The skid carries its own identifier, and both coil alphas are linked to it, so t
 | Footage | From the footage counter |
 | Lot number | Linked to the source rod lot |
 | Source rod alphas | Every rod in the traceability chain |
+| **Coil identities** | ⚠ **New, 26 Aug 2026.** **One per source rod**, each carrying only that rod's share of the weight. A single-rod coil has one, as before. The label and the certificate show **all** of them, joined in unwind order — ⛔ **and how they should read on a printed label is still open; see §9** |
 
 ## 7.2 Width is the flat wire width
 
@@ -201,7 +224,13 @@ The operator confirms physical receipt and **captures a scale weight**. The scre
 
 > `[CLIENT INPUT REQUIRED]` **(OI-105) Which weight is authoritative on the coil record is undecided, and this is a new question rather than a restatement.** The coil already carries a weight from §3.3 — calculated from footage and density, which the Dashboard 7 operator may override with a scale reading. The packing station now produces a **third** figure. Three rules are possible and they are not equivalent: the scale weight replaces the record; the scale weight is recorded alongside and the calculated figure remains authoritative; or a variance beyond a threshold blocks the skid from closing. The label has already been printed by this point under §7, so a rule that changes the weight after printing forces a reprint. **This compounds `OQ-10` / `OI-45`**, the unsettled dimensional basis for the footage→weight conversion — the variance cannot be judged until the basis is fixed.
 
-## 8.3 The skid, its slots, and closing it `[CONFIRMED — the rule]`
+## 8.3 The skid, its slots, and closing it `[CONFIRMED — the rule, but the COUNTING BASIS needs re-signing]`
+
+> ⚠ **26 Aug 2026.** The rule *"exactly two coils per skid"* is unchanged in intent, but a coil from two
+> rods now produces **two** entries in the plant coil register — so *what gets counted* had to change
+> from register entries to **physical coils**. The operator's own **1 of 2 / 2 of 2** declaration is what
+> closes the skid, which is how it already worked. **Please re-confirm this section on that basis**; see
+> §10.
 
 A **skid slot layout** shows both slots with their alphas and individual weights, and the combined net weight. The two-coil rule is §6.1 and is not restated here.
 
@@ -248,6 +277,7 @@ A **skids-this-shift** table lists skid, line, coils, weight, closed time, stagi
 | D4 | Net weight is **calculated** from footage and cross-section using the alloy density held as reference data, **never read from a scale during rolling**; the operator may override with a scale reading | Apr 2026 |
 | D5 | The coil alpha is **system-generated** as `FW-#####-C##`; a mid-run break takes a child suffix | Apr 2026 |
 | D6 | The traceability chain records **footage ranges per source rod**, bounded by welds | Apr 2026 |
+| **D6a** | ⚠ **Amends `D6`, 26 Aug 2026.** `D6` also said the shared coil records keep **one** identity for the coil, taken from the dominant rod. **They now keep one per source rod**, each with its own share of the weight, so cost and yield see the real split rather than attributing everything to one rod | **26 Aug 2026** |
 
 ---
 
@@ -258,6 +288,8 @@ A **skids-this-shift** table lists skid, line, coils, weight, closed time, stagi
 | **OI-45** | High | **The dimensional basis for net weight** — target, measured at completion, or integrated across the run; plus the round-edge coefficient, density sign-off and tail-loss treatment (§3.3) | Every net weight, label, yield figure and the ±2 % scale variance rule |
 | **OI-105** | **High** | **Which weight is authoritative on the coil record** (§8.2). Three figures now exist — calculated, the Dashboard 7 operator override, and the packing-station scale reading. Does the scale replace the record, sit alongside it, or block skid closure beyond a variance threshold? The label is printed before the station sees the coil, so a rule that changes the weight afterwards forces a reprint | Packing station confirmation, the label's accuracy, and the yield figures downstream. Cannot be judged until **OI-45** fixes the basis |
 | **OI-24** | **High** | **Lot number has no column and no generator at all**, before the multi-rod question is even reached. `GET /coil/{alpha}/label` returns it and §7.1 prints it | The label cannot be rendered |
+| ⛔ **New — 26 Aug 2026** | **High** | **How should a multi-rod coil's identifiers READ on the printed label and the certificate?** Your 26 August decision gives such a coil one identifier per source rod, and the design shows all of them joined in unwind order. **But nothing yet says whether the label prints one, both, or a combined form** — and the label is what your customer receives. *(Tracked internally as the label-rendering gap.)* | The coil label and the welding-wire certificate. **It cannot be built until this is answered** |
+| ⛔ **New — 26 Aug 2026** | **High** | **The two-coils-per-skid rule now needs restating in terms of PHYSICAL coils.** §8.3 confirms *exactly two coils per skid*. A coil from two rods produces **two** entries in the plant coil register, so a rule counting register entries would refuse a perfectly legal second coil. We read your intent as **two physical coils**, and have built it that way — **please confirm.** | §8.3, and the skid-closing rule the packing line depends on |
 | **OI-99** | High | **Lot number when a coil has multiple source rods** — both, dominant, or composite? | Certification content, and the label physically applied at §8.4 |
 | ~~**OI-104**~~ | ✅ **Closed** | **ANSWERED — 18 Aug 2026. The skid record lives in the existing shop-floor skid register, and flat wire uses it unchanged.** Skid numbers are allocated by the same rule as every other skid on the floor — order number, release letter and a two-digit sequence — so a flat wire skid is indistinguishable in form from a slitter skid, which is what §6.2 always assumed. **No new table is built.** See §11 | Skid closure and the skid label at §8.3 are unblocked, and the *skid numbering follows existing rules* requirement becomes verifiable for the first time |
 | **OI-106** | **Medium** | **Staging locations are undefined** (§8.3). Closing a skid must assign one, but no valid list, no capacity and no selection rule exists in any source document | Skid closure; without it the field is free text and the record is unusable |
@@ -323,9 +355,15 @@ On **Confirm & Move to Packing**, the system creates:
 
 **All of this happens automatically and the operator sees none of it.** It either all succeeds or none of it does; if it fails, the operator is told and can retry, rather than the coil being quietly complete on one system and absent from the others.
 
-## 13.3 Two identities for one coil `[PROPOSED]`
+## 13.3 Two kinds of identity for one coil `[PROPOSED]`
 
 **This is the one item in this section we would ask you to confirm explicitly.**
+
+> ⚠ **Retitled 26 Aug 2026, because "two identities" is now ambiguous.** This section is about two
+> **kinds** of identifier — the printed one and the plant one. Separately, and since your 26 August
+> decision, a coil made from two rods carries **two plant identifiers**, one per rod (§4.1). So a
+> two-rod coil has one printed identifier and two plant ones. The distinction this section asks you to
+> confirm is unchanged.
 
 The coil alpha in §3.1 — the `FW-#####-C##` form — is the coil's **customer-facing** identifier. It is what §7.1 prints on the label and what appears on the certificate. That does not change.
 

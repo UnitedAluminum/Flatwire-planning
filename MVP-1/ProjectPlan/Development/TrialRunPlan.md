@@ -1,7 +1,7 @@
 # Flat Wire Mill — Six-Screen Trial Run Plan (sign-off ~16 Nov 2026)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 25, 2026 — **re-baselined at three resources × 6.5 h/day from 31 August: feature-complete Tue 3 Nov, sign-off ~Mon 16 Nov 2026.** §2 only — **no effort figure moved**, and 869 / 459 / 330 h and §4's allocation are untouched, which is why §3, §4 and §6 needed no edit. Two things invert: **the over-commitment is gone** (T1 was 102 % and T3 114 %; all three blocks now sit under capacity with 28 h of margin), and **no staffing option reaches 30 Sep** — even five resources land in early October. The 6.5 h is an **availability** figure, not the hands-on-keyboard reading in `[CE §4]`'s sensitivity table. ⚠ [`StaffedSprintPlans.md`](StaffedSprintPlans.md) and `[CE §4]` remain on the 8 h basis and now disagree with this document by design. *(previously August 22, 2026 — **§8’s count assertion is re-derived and now runnable** (32 · 50 · 57 · 2 · 1), with the `QUOTED_IDENTIFIER`/`Msg 1934` and false-`PRINT`-pass traps written down beside it *(previously August 18, 2026 — **`FW-219` enters the trial: the FL2/FL3 run-end write-back into the shared schema, 40 h AI-assisted / 56 h hand-coded, additive.** §5.3 is the reasoning; the short version is that `phase-05` routes the FL2 screen's *Complete Run* into `POST /coil/complete`, which wrote **only** `FlatWireDB`, so a completed trial coil was invisible to packing, shipping, cost and yield. **§4's "Phases 9–14 are wholly outside the trial" gains its first exception**, on the same reasoning §5.1 used for `FW-202`. New blocker **6** (`Q34`–`Q36`, which block a shared environment but not the build). **The published 832 / 462 / 409 h figures are unchanged and now understate by 40 h** — as with `FW-202`, the additive hours are stated here and not folded in. *(Earlier same day: **`D-32`: there is no shared-schema migration.** `FW-001` is **cancelled rather than deferred** — its −36 h stops being a debt owed to production — and `FW-002` (3 h) goes with it. ⚠ **The published 832 / 462 / 409 h figures are deliberately held**, so read them as 3 h conservative *(previously August 15, 2026 — **blocker 4 (`G6`) closed**: all six roles exist as JWT claims; its residual re-dated to the T1 QA0 walkthrough. Revision history in [`CHANGELOG.md`](../../../CHANGELOG.md))*)*))*
+**Last Updated:** August 25, 2026 — **§1.4's controller counts 15 → 14 and 8 → 7** (`FW-138` `P-53`, no `/rod/**` surface); hours cells untouched so the workbook guards still pass, and ⚠ **DB2's rod scan has no endpoint** until `P-54` closes. Earlier the same day: **re-baselined at three resources × 6.5 h/day from 31 August: feature-complete Tue 3 Nov, sign-off ~Mon 16 Nov 2026.** §2 only — **no effort figure moved**, and 869 / 459 / 330 h and §4's allocation are untouched, which is why §3, §4 and §6 needed no edit. Two things invert: **the over-commitment is gone** (T1 was 102 % and T3 114 %; all three blocks now sit under capacity with 28 h of margin), and **no staffing option reaches 30 Sep** — even five resources land in early October. The 6.5 h is an **availability** figure, not the hands-on-keyboard reading in `[CE §4]`'s sensitivity table. ⚠ [`StaffedSprintPlans.md`](StaffedSprintPlans.md) and `[CE §4]` remain on the 8 h basis and now disagree with this document by design. *(previously August 22, 2026 — **§8’s count assertion is re-derived and now runnable** (32 · 50 · 57 · 2 · 1), with the `QUOTED_IDENTIFIER`/`Msg 1934` and false-`PRINT`-pass traps written down beside it *(previously August 18, 2026 — **`FW-219` enters the trial: the FL2/FL3 run-end write-back into the shared schema, 40 h AI-assisted / 56 h hand-coded, additive.** §5.3 is the reasoning; the short version is that `phase-05` routes the FL2 screen's *Complete Run* into `POST /coil/complete`, which wrote **only** `FlatWireDB`, so a completed trial coil was invisible to packing, shipping, cost and yield. **§4's "Phases 9–14 are wholly outside the trial" gains its first exception**, on the same reasoning §5.1 used for `FW-202`. New blocker **6** (`Q34`–`Q36`, which block a shared environment but not the build). **The published 832 / 462 / 409 h figures are unchanged and now understate by 40 h** — as with `FW-202`, the additive hours are stated here and not folded in. *(Earlier same day: **`D-32`: there is no shared-schema migration.** `FW-001` is **cancelled rather than deferred** — its −36 h stops being a debt owed to production — and `FW-002` (3 h) goes with it. ⚠ **The published 832 / 462 / 409 h figures are deliberately held**, so read them as 3 h conservative *(previously August 15, 2026 — **blocker 4 (`G6`) closed**: all six roles exist as JWT claims; its residual re-dated to the T1 QA0 walkthrough. Revision history in [`CHANGELOG.md`](../../../CHANGELOG.md))*)*))*
 **Document Type:** Scoped delivery plan for the client-requested trial run
 **Status:** Published — **three resources at 6.5 h/day reach 3 Nov on development alone; UAT still needs its own window, to ~16 Nov.** §2.2 prices what more resources would buy
 **Owner:** Delivery lead / programme management
@@ -244,7 +244,7 @@ schedule insurance in the plan — without it the whole FE stream queues behind 
 | Deliverable | Hand-coded | Story | Full | **Trial h** |
 |---|---|---|---|---|
 | `FlatWire` solution + four-project Clean Architecture skeleton | 16 | `FW-N04` | 11 | 11 |
-| **Thin controllers over `UAController`** @ 3 h | **45** *(15)* | **`FW-138`** | 27 | **14** *(8)* |
+| **Thin controllers over `UAController`** @ 3 h | **45** *(14)* | **`FW-138`** | 27 | **14** *(7)* |
 | MediatR registration and pipeline behaviours | 16 | `FW-139` | 11 | 11 |
 | DI registration and the stub/real service swap | 12 | `FW-140` | 8 | 8 |
 | Repository layer | 28 | `FW-141` | 14 | 14 |
@@ -267,6 +267,16 @@ schedule insurance in the plan — without it the whole FE stream queues behind 
 | | **373** base → QA 78 → cont. 68 = **519** | | **268** | **231** |
 
 **Two trial reductions, both deliberate:**
+
+> ⚠ **The controller counts above are 14 and 7, not 15 and 8 — `P-53`, 25 Aug 2026.**
+> `RodReceivingController` is withdrawn from the service: rod receiving is not shopfloor. **The
+> hours cells are deliberately unchanged** (45 and 14) — the rate-card basis becomes 14 × 3 h
+> = **42 h** full and seven controllers trial, and both are **owed to the next re-baseline**
+> rather than restated here, so `build_trial_run_xlsx.py` still reads the same figures.
+> ⚠ **Of the trial's seven, only five serve a screen** — and the loss reaches T1: **DB2 rod
+> check-in scans a rod**, which `[API §4.3]` served, so the trial has no scan validation, no
+> carry-forward gate and no station switching until `[API]` re-homes it
+> ([`FW-138`](../Backend/TaskBreakdownPlans/FW-138-Fifteen-Thin-Controllers.md) `P-54`).
 
 - **`FW-138` 27 h → 14 h, and its baseline moved twice.** `[API §3.1]` now lists **fifteen** controllers, not
   thirteen — `PayoffStagingController` was never counted and **`SpoolController` was added 15 Aug 2026** — and the
@@ -369,9 +379,11 @@ a separate 40 h**, and `phase-01c` flags *"high blast radius; front-load the imp
 it; production does.** ~~`FW-002` (`INFLAT`) stays, because check-in writes it.~~ — **superseded: `FW-002` is cancelled too.** Check-in still writes `INFLAT`, but to **`FlatWireDB`'s `Rod.Status`**, whose CHECK constraint already carries the value; nothing is needed in the shared schema.
 
 > **⚠ `[CE §8]` records that 1C is understated, and `D-31` widened the gap.** It was costed against **22 tables**;
-> the build is now **28** (`D-31`, 15 Aug 2026, moved the three `PassSchedule*` tables into MVP-1 — §8's live
-> deploy confirms 28). Each extra table is 4 h plus its QA and contingency share (~5.5 h all-in), so the
-> understatement is **~33 h all-in on the hand-coded basis, not ~17**. It is inherited here and **not** corrected
+> the build is larger — `[DBD §6.2]` counts it. ⚠ **This derivation's basis is stale and is flagged, not
+> substituted (26 Aug 2026):** it read *"the build is now **28**"*, true only between `D-31` (15 Aug 2026,
+> which moved the three `PassSchedule*` tables into MVP-1) and the 20 Aug spool work — §8's live
+> deploy confirmed 28 at the time. Each extra table is 4 h plus its QA and contingency share (~5.5 h all-in), so the
+> understatement was **~33 h all-in on the hand-coded basis** against a build of 28, and is larger now. `[CE §8]` publishes no total at all. It is inherited here and **not** corrected
 > in the 65 h above, because correcting it in place would drift `[CE §3b]`. Treat 1C as **65 h + ~21 h of known
 > understatement on the trial's AI-assisted basis.**
 
@@ -899,8 +911,10 @@ trial does ship. **State the number at sign-off.**
 cd "c:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Schema\SQL"
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_99_Teardown.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_RunAll.sql
-# expect 33 tables · 55 FKs · 69 index statements · 1 procedure · 1 trigger  (static count 23 Aug 2026;
-#   the 22 Aug live-deploy figure of 34/57 predates the Q60 SpoolConfiguration merge -- re-deploy owed)
+# expect 33 tables · 55 FKs · 70 index statements · 1 procedure · 1 trigger  (static count 26 Aug 2026;
+#   69 index statements until Q89 added UX_CoilTraceability_ChildAlpha on 26 Aug 2026. The
+#   22 Aug live-deploy figure of 34/57 predates the Q60 SpoolConfiguration merge -- re-deploy
+#   owed. [DBD 6.2] is the defining site; verify with Tools/verify_schema_counts.py)
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_RunAll.sql   # idempotent re-run
 ```
 

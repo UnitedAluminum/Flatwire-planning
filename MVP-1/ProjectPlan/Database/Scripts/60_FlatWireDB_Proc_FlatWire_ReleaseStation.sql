@@ -1,10 +1,13 @@
 /*==============================================================================================
   Project      : UAL Flat Wire Mill - Shopfloor
-  Script       : 60_united_db_Proc_FlatWire_ReleaseStation.sql
-  Object       : united_db.dbo.FlatWire_ReleaseStation
-  Target DBs   : united_db  (procedure home; dbo.users, dbo.EventErrorLog)
+  Script       : 60_FlatWireDB_Proc_FlatWire_ReleaseStation.sql
+  Object       : FlatWireDB.dbo.FlatWire_ReleaseStation
+  Target DBs   : FlatWireDB (procedure home - MOVED from united_db 26 Aug 2026, change [H];
+                             the procedure is the ONLY thing that moved - every table below is
+                             read and written exactly where it always was)
+                 united_db  (dbo.users, dbo.EventErrorLog)
                  CommonDB   (dbo.WIPStations, Logging_Information_In_Table)
-  Last Updated : 2026-08-19
+  Last Updated : 2026-08-26
   Status       : Draft - ready to deploy to DEV. No open sign-off items: this procedure
                  introduces no new value into the shared vocabulary.
   Story        : FW-221 (station release and reqsum reversal)
@@ -106,7 +109,7 @@
       one either.
 ==============================================================================================*/
 
-USE [united_db];
+USE [FlatWireDB];
 GO
 
 SET ANSI_NULLS ON;
@@ -139,7 +142,7 @@ BEGIN
     SET @wasReleased = 0;
 
     SELECT @userId = userid
-    FROM   [dbo].[users] WITH (NOLOCK)
+    FROM   [united_db].[dbo].[users] WITH (NOLOCK)
     WHERE  BadgeNo = @badgeNo;
 
     BEGIN TRY
@@ -208,7 +211,7 @@ BEGIN
                      + ' released from ' + @currentCoil
                      + ' back to idle sentinel ' + LTRIM(RTRIM(@idleSentinel));
 
-        EXEC [dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+        EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
                                                 , @sp_name             = 'FlatWire_ReleaseStation'
                                                 , @table_name          = 'CommonDB..WIPStations'
                                                 , @log_info            = @logInfo
@@ -232,7 +235,7 @@ BEGIN
                , @errMessage   = 'FlatWire_ReleaseStation failed for station ' + ISNULL(@station, 'NULL')
                                + '. Error: ' + ERROR_MESSAGE();
 
-        INSERT INTO [dbo].[EventErrorLog]
+        INSERT INTO [united_db].[dbo].[EventErrorLog]
                 ( [ObjectName], [ErrNumber], [ErrSeverity], [ErrState]
                 , [EventDescription], [StartTime], [UserName] )
         VALUES  ( @spObjectName, @errNo, @errSev, @errState
@@ -255,7 +258,7 @@ GO
   SELECT WIPStation, CoilNo, CoilCheckinNetWeight, AccumlatedScrapWeight
   FROM   CommonDB..WIPStations WHERE LTRIM(RTRIM(WIPStation)) = 'FL1';
 
-  EXEC united_db.dbo.FlatWire_ReleaseStation
+  EXEC FlatWireDB.dbo.FlatWire_ReleaseStation
          @station = 'FL1', @expectedCoilNo = 'R00041', @badgeNo = 1234,
          @wasReleased = @wasReleased OUTPUT, @releasedCoilNo = @released OUTPUT;
   SELECT @wasReleased AS wasReleased, @released AS releasedCoilNo;   -- 1, R00041
@@ -266,12 +269,12 @@ GO
   FROM   CommonDB..WIPStations WHERE LTRIM(RTRIM(WIPStation)) = 'FL1';
 
   -- Idempotent: a second call writes nothing and returns wasReleased = 0.
-  EXEC united_db.dbo.FlatWire_ReleaseStation @station = 'FL1', @badgeNo = 1234,
+  EXEC FlatWireDB.dbo.FlatWire_ReleaseStation @station = 'FL1', @badgeNo = 1234,
        @wasReleased = @wasReleased OUTPUT;
   SELECT @wasReleased AS secondCall;                                  -- 0
 
   -- Late release: claim the station with another rod, then retry the old release. Expect 53003.
-  -- EXEC united_db.dbo.FlatWire_ReleaseStation @station='FL1', @expectedCoilNo='R00041', @badgeNo=1234;
+  -- EXEC FlatWireDB.dbo.FlatWire_ReleaseStation @station='FL1', @expectedCoilNo='R00041', @badgeNo=1234;
 
   -- The sentinel convention holds across the whole registry - every idle row should satisfy this.
   SELECT WIPStation, CoilNo

@@ -1,7 +1,7 @@
 # FW-219 — FL2/FL3 Run-End Write-Back into the Shared Schema
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 18, 2026 — new. Closes **`OI-104`**; raises **`OI-112`**, **`OI-113`**, **`OI-114`** and **`Q34`**–**`Q36`**
+**Last Updated:** August 26, 2026 — ⛔ **REWRITTEN BY CHANGES `[H]`, `[S]` and `[N]`: the procedure now lives in `FlatWireDB`, writes **N** shared identities per coil rather than one, and mints them off the **source segment** with a **blank** ignore list. `OI-113` is CLOSED; `@primaryRodAlpha` and `@expectedCoilNo` are both gone.** *(Previously August 18, 2026 — new.)* Closed `OI-104`; raised Closes **`OI-104`**; raises **`OI-112`**, **`OI-113`**, **`OI-114`** and **`Q34`**–**`Q36`**
 **Status:** **Ready to build — the procedure is drafted and structurally verified; three values need IT sign-off before a shared environment**
 **Story:** `FW-219` · **Phase:** 9 · **Sprint:** S3 · **Streams:** DB + BE
 **Hours:** **40 h AI-assisted / 56 h hand-coded**; 77 h all-in (`[CE §3d]`). **Additive to the 3,186 h baseline**, like `FW-202`
@@ -70,19 +70,26 @@ Each was found by reading the scripted DDL, and each fails at run time or, worse
 The shared writes are **not** in the same transaction as the `FlatWireDB` writes. They cannot be: different database, and `[ARC §10]` already draws this boundary for check-in as compensating writes.
 
 - **Procedure throws** → its whole half rolls back, no shared row survives, caller marks the run for retry.
-- **Procedure commits, caller then fails** → shared rows are already committed. The caller stores `CoilNo`; a retry passes it back through `@expectedCoilNo` and the procedure is a **no-op**.
+- **Procedure commits, caller then fails** → shared rows are already committed. ⛔ **The contract is no longer a scalar (change `[S]`).** *Superseded: "The caller stores `CoilNo`; a retry passes it back through `@expectedCoilNo` and the procedure is a **no-op**.
 
-⚠ **A retry that does not pass it back mints a second coil**, because `GenerateCoilAlpha` returns the next free suffix each time and there is no shared column holding `FW-#####-C##` for the procedure to detect the duplicate by. `UX_CoilOutput_CoilNo` is what turns this from a convention into a constraint.
+⛔ **`@expectedCoilNo` NO LONGER EXISTS, and it is not replaced by a table-valued parameter.** Since `[H]` the procedure lives in `FlatWireDB`, so it reads `dbo.CoilTraceability` directly and **the retry contract is the rows where `SharedWrittenAt IS NULL`**. The caller passes nothing back and stores nothing.
+
+⚠ **The old warning understated the risk, and the risk has changed shape.** It read: *"A retry that does not pass it back mints a second coil, because `GenerateCoilAlpha` returns the next free suffix each time."* With **N** parts, a scalar contract short-circuits on part 1 and returns **0 — success** — while parts 2..N sit committed in five shared tables, referenced by nothing and unreported. That is `ORD024` / `TC-797`.
+
+⛔ **And never re-mint a part that already has a `ChildAlpha`.** Under a blank ignore list this is a **correctness** rule, not an optimisation: if an earlier part committed between attempts the sweep now sees it, so a re-mint returns a **different letter** and orphans the stored one — a valid-but-orphaned alpha that no guard detects.
 
 ---
 
 ## Acceptance criteria
 
-- [ ] Procedure deployed; a completed coil produces a row in **all nine** verifiable objects — the eight written plus `coil_link_master_coil` from the trigger
+- [ ] ⚠ **Per PART, not per coil.** A single-rod coil produces a row in **all nine** verifiable objects; a coil cut across a weld produces **N** rows in each of the per-part objects and exactly **one** `wip_skids` weight accumulation. Nine objects — the eight written plus `coil_link_master_coil` from the trigger
 - [ ] `coil_link_master_coil.master_coil_no` is the **rod root** (`R00421` for `R00421A`), proving both the single-row trigger path and that the 6-character root is meaningful
 - [ ] `Coil1Of2` opens a skid `IsComplete = 0`; `Coil2Of2` closes it `IsComplete = 1`; a third coil is refused (`FR-335`)
-- [ ] The two cut rows on one skid carry `skid_coil_seq_no` **1 and 2** — every legacy template hard-codes 1
-- [ ] Retry with `@expectedCoilNo` writes nothing and returns the original skid state
+- [ ] `skid_coil_seq_no` is **1 or 2 from `@skidAssignment`**, and **all N parts of one physical coil share its value** — it identifies the coil's slot, not the row. *(It was derived as `MAX+1` over the skid; that counted rows and so refused a legal second coil once a coil had N parts.)*
+- [ ] ⛔ **The part weights SUM to the coil's net weight** (`ORD023`). `THROW 51020` is the only detector — `wip_skids`' `smallint` guard validates per *call*, so it would accept N × the coil weight without complaint
+- [ ] **`coil_gen_history` has N rows, each naming a DIFFERENT parent rod.** If they share one parent, `OI-113` has not closed
+- [ ] Part alphas are **segment-rooted**: one trailing letter is a spool segment, **two** is a coil off that segment (`R00001A` → `R00001AA`)
+- [ ] **Retry writes only the parts whose `SharedWrittenAt` is `NULL`, reports ALL of them, and returns the original skid state.** A retry where every part is already written writes nothing
 - [ ] A forced failure mid-procedure leaves **no** shared row, and the error reaches the operator
 - [ ] Out-of-spec final SPC gives `skid_status = 'HOLDP'` plus a `SKIDHOLD`/`PRHOLD` `wip_log` row (`FR-517`)
 - [ ] A mid-run break sets `coil_gen_history.coil_break` and `Coil_Break_Reason`
@@ -95,7 +102,7 @@ The shared writes are **not** in the same transaction as the `FlatWireDB` writes
 
 **Releasing `wip_stations.coilno` (`OI-112`).** `FR-077` **sets** the station's coil reference at check-in and **no requirement anywhere clears it**; `POST /checkout` lists no `wip_stations` side effect. `wip_stations_k1` is a **UNIQUE** index on `CoilNo`, so **the second coil at a station collides and the line becomes unusable until the column is cleared by hand.** The release pattern already exists — the legacy checkout parks the station's own name in the column as an idle sentinel, quoted verbatim in `10_CommonDB_Insert_WIPStations_FlatWire.sql` from `SlitterInterface_CheckoutCoil`. This belongs to **run** completion, not coil completion; do not bolt it on here, but do not let it be forgotten either.
 
-**`OI-113` — the shared genealogy holds one parent.** A welded coil has many source rods, but `ins_coil_gen_history` is guarded on `child_coil_no` and its readers assume one row per child. `FR-512` records the primary rod; `CoilTraceability` stays authoritative and is what the welding-wire certificates are built from. **The two records now disagree by design**, and that must be stated wherever the shared tree is consumed. Do not resolve it by inserting several rows.
+✅ **`OI-113` — CLOSED 26 Aug 2026 by `Q89`.** *Superseded: "the shared genealogy holds one parent … do not resolve it by inserting several rows."* **Inserting several rows is now exactly the design.** The guard that looked like a prohibition is `IF NOT EXISTS (… WHERE child_coil_no = @ChildCoil)` — **per child** — so N distinct children pass N independent tests and each gets one correctly-parented row. It only ever forbade *one child with many parents*, which is not what a multi-rod coil needs. ⚠ **Conditional, and the condition is the whole point: each part must carry its OWN parent rod.** One shared primary rod for all N would assert *"this rod produced N coils"* — not multi-rod genealogy, and `OI-113` would not have closed.
 
 ---
 

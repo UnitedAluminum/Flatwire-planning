@@ -1,7 +1,7 @@
 # FW-223 — Rod Ingestion: populating the FlatWire tables
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 19, 2026 — new. **Closes `OI-42`**; raises **`OI-117`**
+**Last Updated:** August 25, 2026 — flagged that `GET /rod/{alpha}` left the service (`FW-138` `P-53`): **`FR-530` stands as a rule** but its acceptance criterion cannot be exercised here until `P-54` closes *(previously August 19, 2026 — new. **Closes `OI-42`**; raises **`OI-117`**)*
 **Status:** **Ready to build — the procedure is written and parses clean; no sign-off items, one deployment prerequisite shared with `FW-220`**
 **Story:** `FW-223` · **Phase:** 4 · **Sprint:** S2 · **Streams:** DB + BE
 **Hours:** **14 h** (DB 10 · BE 4). **Additive** to the 3,186 h baseline, like `FW-202`, `FW-219` and `FW-220`–`FW-222`
@@ -55,6 +55,8 @@ First statement inside the existing transaction, **before any other `FlatWireDB`
 | `POST /checkin/rod` | `FW-157` / `FW-159` | `FK_RodCheckin_Rod` is enforced, and a direct scan into Dashboard 2 is a supported path — check-in cannot assume staging ran |
 
 **Not `GET /rod/{alpha}`.** It is documented `Idempotent` and any authenticated role may call it, so a supervisor scanning a rod merely to look at it must not create records (`FR-530`).
+
+> ⚠ **That endpoint has left this service — `FW-138`'s `P-53`, 25 Aug 2026.** Rod receiving is not shopfloor, so `RodReceivingController` and all three `/rod/**` endpoints are withdrawn, and their re-homing is `[API]`'s (`P-54`). **`FR-530` is unaffected as a rule** — the ingestion procedure must not fire on a read, wherever that read ends up living — but the acceptance criterion below **cannot be exercised against this service** until `P-54` closes.
 
 ### 3. Sample data out of the schema runner (DB, 2 h) — done
 

@@ -726,12 +726,12 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 | **FR-332a** | The mockup's `14,200 ft × 0.069 lb/ft` **shall not be implemented.** For 1100 at 0.110″ × 0.625″ the correct factor is **0.0809** (square edge) or **0.0778** (round edge); back-solving 0.069 implies ρ = 0.0836 lb/in³, which is not aluminium. `spool_notification.js` is the correct reference — its `24,900 ft × 0.0809 = 2,014 lb` checks out exactly. | Must | Master spec §4.16 |
 | **FR-333** | A **Source Traceability** table shall list one row per contributing rod with footage-from / footage-to, the weld rows between them with quality result, the derived weight per rod, and the chain summary `rod → spool → coil`. | Must | `WLD008`, `WLD009` |
 | **FR-334** | A **Final SPC** panel shall show gauge and width against target ± tolerance with in-spec badges and tolerance tracks; out of spec shall make Submit·suspend the primary path. | Must | `SPC010` |
-| **FR-335** | **Skid tracking** shall enforce exactly **two coreless coils per skid**: the first coil opens the skid and links the alpha; the second closes it, prints the skid label and moves the skid to the packing queue. | Must | `PKG003` |
+| **FR-335** | **Skid tracking** shall enforce exactly **two coreless coils per skid**: the first coil opens the skid and links the alpha; the second closes it, prints the skid label and moves the skid to the packing queue. | Must | `PKG003` ⚠ **COUNTING BASIS AMENDED 26 Aug 2026 — `FR-570`, and this needs CLIENT RE-SIGN-OFF.** *"Exactly two coreless coils per skid"* still holds, but a multi-rod coil now writes **several shared coil records** (`FR-561`), so the rule must count **physical coils**, not records. ⚠ **This requirement is `[CONFIRMED]` with source `PKG003`; the amendment is `[PROPOSED]` until re-signed** |
 | **FR-336** | A **coil label preview** shall be shown before printing. The printed label shall include alpha, alloy, temper, gauge/diameter, width, gross weight, net weight, footage, lot number and **all contributing source rod alphas**. ⚠ **Open — `Q87`:** the client has not said what the **finished coil the customer receives** is labelled with, on what media, or whether a coil wound from **two source rods prints one alpha or two**. Deferred on the 24 Aug 2026 call. **`Q4` (skid labelling) and `Q87` are one decision, not two** — the cut label prints as a sheet, so the skid label is a candidate carrier. Related: **`OI-99`** (lot number for a multi-rod coil). | Must | `PR004`, `PR006`; **`Q87`** |
 | **FR-337** | At transaction finalisation the system shall **validate package OD, width and weight against the customer order constraints** and shall not complete the transaction if any limit is exceeded. | Must | `PKG001` |
 | **FR-338** | The system shall write the **pass schedule ID, version and effective configuration snapshot** to the output coil record at coil creation, for technical traceability and quality audits — and shall **not** print that data on the customer label. | Must | `PSM024`, OQ-64 |
 | **[NFR]** | **`NFR013` — record retention.** The pass-schedule configuration snapshot on the coil record, and the historical `R#####` rod series in `coils`, are **retained permanently** so a certificate remains reproducible after the schedule is later edited. Verification: `[NFR §6]`. | Must | `NFR013` |
-| **FR-339** | Skid numbering and logic shall follow the existing skid rules, supporting reuse and continuity with existing skid systems. | Must | `PKG002` |
+| **FR-339** | Skid numbering and logic shall follow the existing skid rules, supporting reuse and continuity with existing skid systems. | Must | `PKG002` ⚠ **AMENDED — `FR-570`.** Skid numbering is unchanged; what changes is that the *coils per skid* it continues is counted in **physical** coils |
 | **FR-340** | FL1 and FL2 shall each be equipped with **two label printers — a standard Sato and a high-temperature (furnace-compatible)** unit. The FL1 payoff printer is **deferred for Day 1**. | Should | `PR001`–`PR003` |
 
 **Open:** `lotNumber` is returned by the label endpoint and printed, but has **no column and no generator** — **OI-24**. Weld footage and coil footage are in **two different coordinate systems** with no stated offset, so any run producing more than one coil will build wrong traceability rows — **OI-25**. Coreless coil OD/ID limits are pending — **OI-65**.
@@ -832,16 +832,16 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 
 | ID | Requirement | Priority | Source |
 |---|---|---|---|
-| **FR-509** | On coil completion the system shall mint a **shared coil identity** for the output coil using the existing coil-alpha generator against the source rod's alpha, and shall persist it on the coil record. The customer-facing alpha `FW-#####-C##` shall **not** be written to the shared schema: the shared coil key is nine characters and the flat wire alpha is twelve. | Must | `[PROPOSED]` |
-| **FR-510** | The system shall create a **finished-goods coil row** in the shared coil master, carrying the flattened gauge, width, weights, OD and ID, with one cut, marked finished-to-spec and stamped with the flat wire completion transaction and the flattening operation letter. Rod-level attributes shall be inherited from the source rod's row. | Must | `[PROPOSED]` |
-| **FR-511** | The system shall create the **order link** for the output coil, carrying the planned weight, sample number and planned operations from the source rod's order row where one exists. | Must | `[PROPOSED]` |
-| **FR-512** | The system shall record **coil genealogy** linking the output coil to its source rod, and shall mark a coil created by a mid-run break as such together with its reason. Where a coil has **several** source rods, the shared genealogy shall record the **primary** rod — the one contributing the earliest footage — and the flat wire traceability record shall remain the authoritative multi-rod chain. | Must | `[PROPOSED]` |
-| **FR-513** | The system shall create a **cost record** for the output coil proportional to its net weight, so that the coil is visible to cost and yield reporting. | Must | `[PROPOSED]` |
-| **FR-514** | The system shall create **exactly one cut record** for the output coil. A coreless flat wire coil is a single unit and is never slit, but the packing and shipping chain resolves a skid to its coils through this record. | Must | `[PROPOSED]` |
-| **FR-515** | The system shall **open a skid** for the first coil and **close it on the second**, numbering it by the **existing skid rules** (`FR-339`), and shall link each coil to the skid. It shall refuse to place a third coil on a skid, and shall not close a skid on its own initiative — closure follows the operator's *1 of 2 / 2 of 2* declaration on DB7. | Must | `FR-335`, `FR-339` |
-| **FR-516** | The system shall write a **WIP transaction record** for the completion, naming the coil, the skid, the packing station, the operator badge and the completion weights. | Must | `[PROPOSED]` |
+| **FR-509** | On coil completion the system shall mint a **shared coil identity** for the output coil using the existing coil-alpha generator against the source rod's alpha, and shall persist it on the coil record. The customer-facing alpha `FW-#####-C##` shall **not** be written to the shared schema: the shared coil key is nine characters and the flat wire alpha is twelve. | Must | `[PROPOSED]` ⚠ **AMENDED 26 Aug 2026 (`Q88`/`Q89`, §5.30).** *"A shared coil identity"* is now **one per source rod** — see **`FR-561`**. The generator call and the `char(9)` reasoning are unchanged |
+| **FR-510** | The system shall create a **finished-goods coil row** in the shared coil master, carrying the flattened gauge, width, weights, OD and ID, with one cut, marked finished-to-spec and stamped with the flat wire completion transaction and the flattening operation letter. Rod-level attributes shall be inherited from the source rod's row. | Must | `[PROPOSED]` ⚠ **AMENDED — `FR-562`.** *"A finished-goods coil row"* becomes **one row per source rod**, each carrying **that part's** apportioned weight (`FR-567`), not the coil's full weight. *"With one cut"* stays true **per record** |
+| **FR-511** | The system shall create the **order link** for the output coil, carrying the planned weight, sample number and planned operations from the source rod's order row where one exists. | Must | `[PROPOSED]` ⚠ **AMENDED — `FR-562`.** The order link is created **per shared coil record**, and its planned weight is **apportioned**, not copied wholesale to each |
+| ⛔ ~~**FR-512**~~ | **DELETED 26 Aug 2026 (`Q89`).** Its *"the shared genealogy shall record the **primary** rod"* clause existed **solely to collapse N identities into one**, and `FR-568` removes the reason for it: each part's genealogy now names **its own** source rod, so the shared tree and the flat wire traceability record **stop disagreeing** and **`OI-113` closes**. ⚠ **The mid-run-break half of this requirement is NOT deleted** — it moves intact to `FR-568`'s scope and must be applied to **every** part, not only the one a scalar happens to hold. *Superseded text:* The system shall record **coil genealogy** linking the output coil to its source rod, and shall mark a coil created by a mid-run break as such together with its reason. Where a coil has **several** source rods, the shared genealogy shall record the **primary** rod — the one contributing the earliest footage — and the flat wire traceability record shall remain the authoritative multi-rod chain. | Must | `[PROPOSED]` |
+| **FR-513** | The system shall create a **cost record** for the output coil proportional to its net weight, so that the coil is visible to cost and yield reporting. | Must | `[PROPOSED]` ⚠ **AMENDED — `FR-562`/`FR-567`.** A cost record **per shared coil record**, proportional to **that part's** weight. ✅ **This is the change that repairs `D6`'s stated *"real loss of fidelity"*** — cost and yield now see per-rod weights |
+| **FR-514** | The system shall create **exactly one cut record** for the output coil. A coreless flat wire coil is a single unit and is never slit, but the packing and shipping chain resolves a skid to its coils through this record. | Must | `[PROPOSED]` ⚠ **AMENDED — `FR-562`.** *"Exactly one cut record"* holds **per shared coil record**, so a multi-rod coil produces one per part. The reason is unchanged: packing resolves a skid to its coils through this record, so a part with no record is invisible to packing |
+| **FR-515** | The system shall **open a skid** for the first coil and **close it on the second**, numbering it by the **existing skid rules** (`FR-339`), and shall link each coil to the skid. It shall refuse to place a third coil on a skid, and shall not close a skid on its own initiative — closure follows the operator's *1 of 2 / 2 of 2* declaration on DB7. | Must | `FR-335`, `FR-339` ⚠ **AMENDED — `FR-570`.** *"Refuse to place a third coil on a skid"* counts **physical** coils. ⚠ **Under the pre-`Q89` design a single welded coil would have written two skid links and tripped this refusal on its own second record** — which is why the counting basis had to move. The *1 of 2 / 2 of 2* operator declaration is now the authority, not a row count |
+| **FR-516** | The system shall write a **WIP transaction record** for the completion, naming the coil, the skid, the packing station, the operator badge and the completion weights. | Must | `[PROPOSED]` ⚠ **AMENDED — `FR-562`.** One WIP transaction **per shared coil record** |
 | **FR-517** | Where the final quality check is out of spec and the operator suspends the material, the system shall place the **skid on hold** and record a hold transaction, using the shared system's existing hold vocabulary rather than a flat-wire-specific status. | Must | `[PROPOSED]` |
-| **FR-518** | `FR-509`–`FR-517` shall succeed or fail **together**: a failure shall leave no partial record in the shared schema, and the failure shall be surfaced for operator retry rather than absorbed. Because the shared writes are **not** in the same transaction as the flat wire records, a retry shall reuse the shared coil identity from `FR-509` and shall not create a second coil. | Must | `[PROPOSED]` |
+| **FR-518** | `FR-509`–`FR-517` shall succeed or fail **together**: a failure shall leave no partial record in the shared schema, and the failure shall be surfaced for operator retry rather than absorbed. Because the shared writes are **not** in the same transaction as the flat wire records, a retry shall reuse the shared coil identity from `FR-509` and shall not create a second coil. | Must | `[PROPOSED]` ⚠ **AMENDED — superseded in part by `FR-569`.** *"A retry shall reuse the shared coil identity … and shall not create a second coil"* was written for a single identity and **collides head-on with `FR-561`**, which creates one per source rod by design. **The all-or-nothing requirement stands**; the retry contract becomes the **set** of identities already written |
 
 **What this section deliberately excludes.** Releasing the WIP station's coil reference at run end is **not** covered: `FR-077` *sets* it at check-in and no requirement clears it, the shared station registry is uniquely indexed on that column, and the release belongs to *run* completion rather than *coil* completion. Registered as **`OI-112`** and it is a defect in `FR-077`'s neighbourhood, not a gap in this section.
 
@@ -927,6 +927,11 @@ All ten are `[PROPOSED]` and derived — there is no `.docx` source requirement 
 | **FR-558** | An output coil's contributing parents shall all come from **one spool**. `[ORD016]` | Must | `[PROPOSED]`; the client's own planner rule |
 | **FR-559** | Segment weights shall reconcile to the spool weight at **spool completion**, and to the rod's net weight at **rod checkout**, within the tolerance of `FR-153`. The check shall be applied at those closing transactions and not continuously, because the sums legitimately do not balance mid-rod. `[ORD017]` | Must | `[PROPOSED]` |
 | **FR-560** | Produced weight shall be attributed to an order **per rod** by the footage share each parent contributed to each finished coil, and an order's status shall be derived as **not started · in progress · pending operator confirmation · complete · short**. | Must | `[PROPOSED]`; **`Q53`** |
+| **FR-561a** | Every `CoilTraceability` row of a completed coil shall carry a part identity. `[ORD018]` | Must | `[PROPOSED]` — §5.30 |
+| **FR-561b** | Exactly one part per coil shall be the **lead** — the earliest footage — and the coil's scalar shared reference shall equal it. `[ORD019]` | Must | `[PROPOSED]` — §5.30 |
+| **FR-561c** | A part identity's six-character root shall equal its own row's rod alpha. `[ORD020]` | Must | `[PROPOSED]` — §5.30 |
+| **FR-561d** | No identity shall appear in both the spool-segment and coil-part records. ⚠ **Not expressible as a database constraint** across two tables; it rests on the shared exclusion list (`FR-564`) and is asserted by test. `[ORD021]` | Must | `[PROPOSED]` — §5.30 |
+| **FR-561e** | Where a coil part names a source **segment**, that segment shall exist and belong to the same rod. ⚠ **No foreign key can enforce this** — the parent index is filtered — so the domain model and a test are the only guards. `[ORD022]` | Must | `[PROPOSED]` — §5.30 |
 
 **Where the footage-to-weight conversion lives.** One interface, one implementation, and a **selectable basis** — integrated over the run's readings, measured, nominal, or an explicit override. Each consumption record persists **the basis and the factor it actually used**, so a later answer to `Q10` cannot retro-change a historical record. The formula itself is `FR-137`; `FR-332a` bans the incorrect variant.
 
@@ -995,6 +1000,43 @@ are pushed at check-in on acknowledgement, and nothing about this changes that.
 (Dashboard 5A gains the action), the mockups, and story **`FW-224`**, which is reserved and unsized
 pending `Q41`. Tracked as waves W5–W7 of
 [`ClientCall_2026-08-20_SyncPlan.md`](../../../BaseDocuments/ClientCall_2026-08-20_SyncPlan.md).
+
+---
+
+### 5.30 Welded-Coil Part Alphas and the Shared Coil Master
+
+**Actors:** FL2 / FL3 operator (via coil completion); the shared-schema consumers of `coils`,
+`coil_gen_history`, `coil_cost` and the packing chain.
+**Source:** client direction, 26 Aug 2026 — decided as `Q88` and `Q89`.
+**Every requirement in this section is `[PROPOSED]`.** None has been client-reviewed as text, though
+the two decisions behind them are client-directed.
+
+> ⚠ **This section supersedes part of §5.25.** `FR-512` is **deleted** and `FR-509`, `FR-510`,
+> `FR-511`, `FR-513`, `FR-514`, `FR-516` and `FR-518` are re-specified per-record. `FR-512`'s
+> primary-rod clause existed solely to collapse N identities into one, and `FR-568` below removes the
+> reason for it.
+
+| ID | Requirement | Priority | Source |
+|---|---|---|---|
+| **FR-561** | Where an output coil is produced from **more than one source rod**, the system shall mint **one shared coil identity per source rod**, each generated against **that rod's** alpha. `[ORD018]` | Must | `[PROPOSED]` — `Q88` |
+| **FR-562** | The system shall write **every** part identity to the shared coil master, each carrying that part's own weight. One of them — the **lead**, the rod contributing the earliest footage — shall additionally be retained on the coil record as the coil's single scalar shared reference. | Must | `[PROPOSED]` — `Q89` |
+| **FR-563** | The coil label and the welding-wire certificate shall render **every** part identity, in unwind order, joined by a separator reserved for identities. **Nothing compound shall be stored** — the rendered string shall be assembled from the stored parts at display time. `[ORD019]` | Must | `[PROPOSED]` — `Q88` |
+| **FR-564** | Each mint shall exclude **every identity already recorded locally for that rod**, across both the spool-segment and coil-part records, whether or not it also reached the shared schema. | Must | `[PROPOSED]` |
+| **FR-565** | A part identity shall be treated as **opaque**: never parsed, never rebuilt, and never used for ordering. Ordering shall come from the footage range. `[ORD020]` | Must | `[PROPOSED]` |
+| **FR-566** | An output coil produced from a **single** source rod shall have **exactly one** part identity, equal to its scalar shared reference, and shall write **exactly one** shared coil record — unchanged from the behaviour before `FR-561`. | Must | `[PROPOSED]` |
+| **FR-567** | Part weights shall be **apportioned, never repeated**: the sum of a coil's part weights shall equal that coil's net weight, and skid weight totals shall accumulate **once per physical coil**. `[ORD023]` | Must | `[PROPOSED]` — `Q89` |
+| **FR-568** | Each part's genealogy record shall name **its own** source rod. ⚠ **A shared primary rod across all parts is not acceptable** — it would assert that one rod produced several coils rather than that several rods produced one. | Must | `[PROPOSED]` — `Q89`; **the condition on which `OI-113` closes** |
+| **FR-569** | The retry contract shall be the **set** of part identities already written, recorded per part as it commits. A retry shall write only the parts not yet recorded, and shall report **all** of them. `[ORD024]` | Must | `[PROPOSED]` — supersedes `FR-518`'s single-identity contract |
+| **FR-570** | The two-coils-per-skid rule shall be expressed and enforced in terms of **physical coils**, not shared coil records. ⚠ **`FR-335` is `[CONFIRMED]` and this changes its counting basis — it requires client re-sign-off**, together with `FR-339`, `FR-515` and `OutputCoilCompletion.md` §6.1 / §6.2 / §7.1 / §8.3. | Must | `[PROPOSED]`; amends **`FR-335`** `[CONFIRMED]`, `PKG003` |
+
+**What this does not change.** The customer-facing alpha `FW-#####-C##`, the half-open footage
+semantics of the traceability rows, the one-spool-per-coil rule (`FR-558` / `ORD016`), and the
+reconciliation points for segment weights (`FR-559`) are all untouched.
+
+⚠ **Two open items ride on this section.** **`G53`** — nothing yet specifies *what* the label and
+certificate print for a multi-rod coil, which `FR-563` requires; and **`Q87`**, deferred on the 24 Aug
+call, asks whether a two-rod coil prints one identity or two. **`FR-563` cannot be built until `Q87`
+is answered.**
 
 ---
 
@@ -1089,7 +1131,8 @@ Not every non-functional obligation carries an `NFR###` ID in the source. These 
 | 5.25 | FR-509 – FR-518 | 10 | *(none — client-directed)* | none — server-side | **`FW-219`** |
 | 5.26 | FR-519 – FR-528 | 10 | *(none — derived)* | none — server-side | **`FW-220`**, `FW-221`, `FW-222` |
 | 5.27 | FR-529 – FR-532 | 4 | *(none — derived)* | none — server-side | **`FW-223`** |
-| | **Total** | **380** | | | |
+| 5.30 | FR-561 – FR-570, FR-561a–e | 15 | *(none — client-directed via `Q88`/`Q89`)* | none — server-side; label/cert blocked on `Q87` | **`FW-231`** |
+| | **Total** | **395** | | | |
 
 ### 10.2 Dashboard → phase
 

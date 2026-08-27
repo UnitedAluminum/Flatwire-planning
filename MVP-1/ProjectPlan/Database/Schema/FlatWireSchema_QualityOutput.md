@@ -146,12 +146,18 @@ Source traceability — maps footage ranges within an output coil back to the sp
 | `SpoolAlpha` | varchar(20) | NULL | `SpoolProcessing.Alpha` | FK to the spool that fed this footage range. **NULL on a rod-fed run** (FL1 standalone, and FL3 when fed directly from rod) — there is no input spool to name |
 | `FootageFrom` | int | NOT NULL | — | Start footage position (inclusive) in this coil that originated from `RodAlpha` |
 | `FootageTo` | int | NOT NULL | — | End footage position (inclusive) in this coil that originated from `RodAlpha` |
+| `ChildAlpha` | varchar(20) | NULL | — | ⚠ **New 26 Aug 2026 (`Q88`, `Q89`).** **One shared identity per (coil × source rod)**, minted by `CommonDB.dbo.GenerateCoilAlpha` rooted on **this row's** rod. **Every one is written to `proddb..coils`**, each carrying only its own `SegmentWeightLb`. Filtered-UNIQUE (`UX_CoilTraceability_ChildAlpha`). **Opaque** — never parsed, never ordered by |
+| `SourceSegmentAlpha` | varchar(20) | NULL | ⛔ **none possible** | ⚠ **New 26 Aug 2026.** Which **segment** of that rod the part came from. ⛔ **Not an FK and cannot be one** — the parent index `UX_SpoolTraceability_ChildAlpha` is **filtered**, and SQL Server will not point a foreign key at a filtered index. Guarded by the domain model and `TC-794` only. NULL on a rod-fed coil |
+| `SharedWrittenAt` | datetimeoffset | NULL | — | ⚠ **New 26 Aug 2026.** The **retry contract**: NULL until this part's `proddb..coils` row commits. A retry writes only the parts still NULL and reports all of them. **A column, not a new table** — `ChildAlpha` already stores the N identities; the old scalar contract simply could not say *which* committed |
 
 **Constraints:**
 - `FootageFrom < FootageTo` (`CK_CoilTraceability_Range`)
 - **Enforced:** footage ranges within a coil must not overlap — trigger `trg_CoilTraceability_NoOverlap` (DDL_08, DM010)
 - `FK_CoilTraceability_SpoolProcessing` constrains only the rows that name a spool; a NULL is not evaluated
 - `IX_CoilTraceability_SpoolAlpha` is **filtered** on `SpoolAlpha IS NOT NULL`
+- `UX_CoilTraceability_ChildAlpha` is **filtered** on `ChildAlpha IS NOT NULL` — the value does not exist until the cross-database mint returns
+- ⚠ **`ORD021` cannot be enforced here.** No identity may appear in both `SpoolTraceability.ChildAlpha` and this table's `ChildAlpha` for one rod — that spans **two tables**, so no index expresses it. It rests on the shared exclusion list and is asserted by `TC-788`
+- ⚠ **`ORD023` cannot be enforced here either.** A coil's part weights must sum to `CoilOutput.NetWeightLb`; a `CHECK` cannot span rows. `TC-792` is the only detector, and the `smallint` guard on `wip_skids` **validates per call** so it will not catch a double-count
 
 ### Why the spool lives here and not on `CoilOutput`
 

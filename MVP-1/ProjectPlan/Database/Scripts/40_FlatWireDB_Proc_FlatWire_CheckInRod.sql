@@ -1,8 +1,11 @@
 /*==============================================================================================
   Project      : UAL Flat Wire Mill - Shopfloor
-  Script       : 40_united_db_Proc_FlatWire_CheckInRod.sql
-  Object       : united_db.dbo.FlatWire_CheckInRod
-  Target DBs   : united_db  (procedure home; dbo.routings, dbo.planning_routings,
+  Script       : 40_FlatWireDB_Proc_FlatWire_CheckInRod.sql
+  Object       : FlatWireDB.dbo.FlatWire_CheckInRod
+  Target DBs   : FlatWireDB (procedure home - MOVED from united_db 26 Aug 2026, change [H];
+                             the procedure is the ONLY thing that moved - every table below is
+                             read and written exactly where it always was)
+                 united_db  (dbo.routings, dbo.planning_routings,
                              dbo.mfg_sales_order_ref, dbo.planning_mfg_sales_order_ref,
                              dbo.routings_orders, dbo.order_remaining_operations, dbo.users)
                  proddb     (dbo.coils, dbo.wip_coil_orders, dbo.wip_coil_orders_hist,
@@ -10,7 +13,7 @@
                  CommonDB   (dbo.WIPStations, del_or_upd_wip_orders,
                              Logging_Information_In_Table)
                  wiplogdb   (dbo.wip_log, reached through proddb..wip_log_view)
-  Last Updated : 2026-08-19
+  Last Updated : 2026-08-26
   Status       : Draft - transaction_name, coil_skid_status and the coils rod-row stamp
                  pending sign-off (see DECISIONS D3, D4, D5 and Q37-Q39)
   Story        : FW-220 (the shared half of FL1/FL3 rod check-in)
@@ -92,7 +95,7 @@
         EF Core : Rod mirror upsert, FlatWireRun (Running), RodCheckin (PlcTagsPushed = 0),
                   SpcCheckpoint(PreRun) + SpcMeasurement, Rod.Status = 'INFLAT',
                   RodStaging -> CheckedIn
-        Dapper  : EXEC united_db.dbo.FlatWire_CheckInRod   <-- THIS, called LAST
+        Dapper  : EXEC FlatWireDB.dbo.FlatWire_CheckInRod   <-- THIS, called LAST
       COMMIT                        <- everything above, or nothing
       ---------------- the only real boundary ----------------
       PLCTagService.PushPassSchedule(...)
@@ -355,7 +358,7 @@
       52020 - 52029 state conflict                 -> 409
 ==============================================================================================*/
 
-USE [united_db];
+USE [FlatWireDB];
 GO
 
 SET ANSI_NULLS ON;
@@ -420,7 +423,7 @@ BEGIN
     SET @wipCoilOrdersWritten = 0;
 
     SELECT @userId = userid
-    FROM   [dbo].[users] WITH (NOLOCK)
+    FROM   [united_db].[dbo].[users] WITH (NOLOCK)
     WHERE  BadgeNo = @badgeNo;
 
     SET @logInfo = 'EXEC FlatWire_CheckInRod '
@@ -435,7 +438,7 @@ BEGIN
                  + ISNULL(CAST(@seqNo AS VARCHAR(6)), 'NULL')       + ', net='
                  + ISNULL(CAST(@netWeightLb AS VARCHAR(10)), 'NULL');
 
-    EXEC [dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+    EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
                                             , @sp_name             = 'FlatWire_CheckInRod'
                                             , @table_name          = 'Entered into sp'
                                             , @log_info            = @logInfo
@@ -507,9 +510,9 @@ BEGIN
             THROW 52015, 'FlatWire_CheckInRod: the WIP station does not exist. Run 10_CommonDB_Insert_WIPStations_FlatWire.sql before this procedure.', 1;
 
         -- The planning step must exist somewhere, or there is nothing to copy and nothing to start.
-        IF NOT EXISTS (SELECT 1 FROM [dbo].[planning_routings] WITH (NOLOCK)
+        IF NOT EXISTS (SELECT 1 FROM [united_db].[dbo].[planning_routings] WITH (NOLOCK)
                        WHERE coil_no = @rodAlpha AND mfg_order_no = @mfgOrderNo AND seq_no = @seqNo)
-           AND NOT EXISTS (SELECT 1 FROM [dbo].[routings] WITH (NOLOCK)
+           AND NOT EXISTS (SELECT 1 FROM [united_db].[dbo].[routings] WITH (NOLOCK)
                            WHERE coil_no = @rodAlpha AND mfg_order_no = @mfgOrderNo AND seq_no = @seqNo)
             THROW 52016, 'FlatWire_CheckInRod: no planning_routings or routings row for this rod, order and sequence. The step must be planned before it can be started.', 1;
 
@@ -520,7 +523,7 @@ BEGIN
         IF EXISTS (SELECT 1 FROM [CommonDB].[dbo].[WIPStations] WITH (NOLOCK)
                    WHERE LTRIM(RTRIM(WIPStation)) = @station
                      AND LTRIM(RTRIM(ISNULL(CoilNo, ''))) = @rodAlpha)
-           AND EXISTS (SELECT 1 FROM [dbo].[routings] WITH (NOLOCK)
+           AND EXISTS (SELECT 1 FROM [united_db].[dbo].[routings] WITH (NOLOCK)
                        WHERE coil_no = @rodAlpha
                          AND mfg_order_no = @mfgOrderNo
                          AND seq_no = @seqNo
@@ -531,7 +534,7 @@ BEGIN
             PRINT 'FlatWire_CheckInRod: ' + @rodAlpha
                 + ' is already checked in at ' + @station + ' - nothing written (idempotent retry).';
 
-            EXEC [dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+            EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
                                                     , @sp_name             = 'FlatWire_CheckInRod'
                                                     , @table_name          = 'Idempotent retry - no write'
                                                     , @log_info            = @logInfo
@@ -566,10 +569,10 @@ BEGIN
              Only when the shopfloor row does not already exist - a re-check-in must not duplicate
              the step.
         --------------------------------------------------------------------------------------*/
-        IF NOT EXISTS (SELECT 1 FROM [dbo].[routings] WITH (UPDLOCK, HOLDLOCK)
+        IF NOT EXISTS (SELECT 1 FROM [united_db].[dbo].[routings] WITH (UPDLOCK, HOLDLOCK)
                        WHERE coil_no = @rodAlpha AND mfg_order_no = @mfgOrderNo AND seq_no = @seqNo)
         BEGIN
-            INSERT INTO [dbo].[routings]
+            INSERT INTO [united_db].[dbo].[routings]
                     ( mfg_order_no,          coil_no,               seq_no
                     , op_letter,             machine_idx,           machine_group
                     , item_template_idx,     item_version,          nominal_gauge
@@ -708,7 +711,7 @@ BEGIN
                           ELSE pr.schedule_end_date
                       END
                     , pr.cooling_room                                  -- cooling_room
-            FROM      [dbo].[planning_routings] AS pr WITH (NOLOCK)
+            FROM      [united_db].[dbo].[planning_routings] AS pr WITH (NOLOCK)
             WHERE     pr.coil_no      = @rodAlpha
               AND     pr.mfg_order_no = @mfgOrderNo
               AND     pr.seq_no       = @seqNo;
@@ -722,7 +725,7 @@ BEGIN
                          + ' mfgOrder ' + CAST(@mfgOrderNo AS VARCHAR(10))
                          + ' seq ' + CAST(@seqNo AS VARCHAR(6))
                          + ' machine_idx ' + CAST(@machineIdx AS VARCHAR(6));
-            EXEC [dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+            EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
                                                     , @sp_name             = 'FlatWire_CheckInRod'
                                                     , @table_name          = 'routings'
                                                     , @log_info            = @logInfo
@@ -733,7 +736,7 @@ BEGIN
         -- back_to_stock drives the planned-operations suffix at step 5; read it once, here,
         -- from the row that now certainly exists.
         SELECT @backToStock = ISNULL(back_to_stock, 0)
-        FROM   [dbo].[routings] WITH (NOLOCK)
+        FROM   [united_db].[dbo].[routings] WITH (NOLOCK)
         WHERE  coil_no = @rodAlpha AND mfg_order_no = @mfgOrderNo AND seq_no = @seqNo;
 
         /*--------------------------------------------------------------------------------------
@@ -741,14 +744,14 @@ BEGIN
              mfg_sales_order_ref is copied from its planning mirror; routings_orders links the
              order to this routing step. Both are guarded, so a re-check-in is a no-op.
         --------------------------------------------------------------------------------------*/
-        IF NOT EXISTS (SELECT 1 FROM [dbo].[mfg_sales_order_ref] WITH (UPDLOCK, HOLDLOCK)
+        IF NOT EXISTS (SELECT 1 FROM [united_db].[dbo].[mfg_sales_order_ref] WITH (UPDLOCK, HOLDLOCK)
                        WHERE coil_no = @rodAlpha AND mfg_order_no = @mfgOrderNo
                          AND order_no = @orderNo
                          AND ISNULL(rel_letter, '') = ISNULL(@relLetter, ''))
         BEGIN
-            INSERT INTO [dbo].[mfg_sales_order_ref]
+            INSERT INTO [united_db].[dbo].[mfg_sales_order_ref]
                     ( mfg_order_no, order_no, rel_letter, item_template_idx, coil_no
-                    , reqsum_coil_no, item_version, mfg_order_status, issued_weight, weight_produced )
+                    , reqsum_coil_no, item_version, mfg_order_status, issued_weight )
             SELECT    pmsor.mfg_order_no
                     , pmsor.order_no
                     , pmsor.rel_letter
@@ -758,24 +761,23 @@ BEGIN
                     , pmsor.item_version
                     , pmsor.mfg_order_status
                     , pmsor.issued_weight
-                    , pmsor.weight_produced
-            FROM      [dbo].[planning_mfg_sales_order_ref] AS pmsor WITH (NOLOCK)
+            FROM      [united_db].[dbo].[planning_mfg_sales_order_ref] AS pmsor WITH (NOLOCK)
             WHERE     pmsor.coil_no      = @rodAlpha
               AND     pmsor.mfg_order_no = @mfgOrderNo
               AND     pmsor.order_no     = @orderNo
               AND     ISNULL(pmsor.rel_letter, '') = ISNULL(@relLetter, '');
         END
 
-        IF NOT EXISTS (SELECT 1 FROM [dbo].[routings_orders] WITH (UPDLOCK, HOLDLOCK)
+        IF NOT EXISTS (SELECT 1 FROM [united_db].[dbo].[routings_orders] WITH (UPDLOCK, HOLDLOCK)
                        WHERE mfg_order_no = @mfgOrderNo AND coil_no = @rodAlpha
                          AND seq_no = @seqNo AND order_no = @orderNo
                          AND ISNULL(rel_letter, '') = ISNULL(@relLetter, ''))
         BEGIN
             -- routings_orders_idx is not an IDENTITY; the legacy proc allocates MAX+1 the same way.
             SELECT @maxRoutingsOrderIdx = ISNULL(MAX(routings_orders_idx), 0) + 1
-            FROM   [dbo].[routings_orders] WITH (UPDLOCK, HOLDLOCK);
+            FROM   [united_db].[dbo].[routings_orders] WITH (UPDLOCK, HOLDLOCK);
 
-            INSERT INTO [dbo].[routings_orders]
+            INSERT INTO [united_db].[dbo].[routings_orders]
                     ( routings_orders_idx, mfg_order_no, coil_no, seq_no, order_no, rel_letter
                     , created_by, created_on, updated_by, update_on )
             VALUES  ( @maxRoutingsOrderIdx, @mfgOrderNo, @rodAlpha, @seqNo, @orderNo, @relLetter
@@ -788,7 +790,7 @@ BEGIN
              they encode what still has to happen to the material and downstream reads them.
         --------------------------------------------------------------------------------------*/
         SELECT @remainingOps = remaining_operations
-        FROM   [dbo].[order_remaining_operations] WITH (NOLOCK)
+        FROM   [united_db].[dbo].[order_remaining_operations] WITH (NOLOCK)
         WHERE  coil_no = @rodAlpha AND order_no = @orderNo AND release = @relLetter;
 
         SET @remainingOps = LTRIM(RTRIM(ISNULL(@remainingOps, '')));
@@ -807,13 +809,13 @@ BEGIN
 
         -- The issued weight cascade (D13). Four sources, in the legacy order.
         SELECT TOP (1) @issuedWeight = issued_weight
-        FROM   [dbo].[planning_mfg_sales_order_ref] WITH (NOLOCK)
+        FROM   [united_db].[dbo].[planning_mfg_sales_order_ref] WITH (NOLOCK)
         WHERE  mfg_order_no = @mfgOrderNo AND coil_no = @rodAlpha
           AND  order_no = @orderNo AND ISNULL(rel_letter, '') = ISNULL(@relLetter, '');
 
         IF @issuedWeight IS NULL
             SELECT TOP (1) @issuedWeight = issued_weight
-            FROM   [dbo].[mfg_sales_order_ref] WITH (NOLOCK)
+            FROM   [united_db].[dbo].[mfg_sales_order_ref] WITH (NOLOCK)
             WHERE  mfg_order_no = @mfgOrderNo AND coil_no = @rodAlpha
               AND  order_no = @orderNo AND ISNULL(rel_letter, '') = ISNULL(@relLetter, '');
 
@@ -854,7 +856,7 @@ BEGIN
              The '1800-01-01' guard means a partial-rod re-check-in is a NO-OP here, not a false
              restart. That is correct - see C7.
         --------------------------------------------------------------------------------------*/
-        UPDATE  [dbo].[planning_routings] WITH (ROWLOCK)
+        UPDATE  [united_db].[dbo].[planning_routings] WITH (ROWLOCK)
         SET     actual_start_date = GETDATE()
         WHERE   LTRIM(RTRIM(coil_no)) = @rodAlpha
           AND   mfg_order_no = @mfgOrderNo
@@ -866,7 +868,7 @@ BEGIN
              actual_weight_on is the CHECK-IN gross weight, matching
              PreCheckIn_PreCheckInCheckIn_Transaction.
         --------------------------------------------------------------------------------------*/
-        UPDATE  [dbo].[routings] WITH (ROWLOCK)
+        UPDATE  [united_db].[dbo].[routings] WITH (ROWLOCK)
         SET     actual_start_date = GETDATE()
               , machine_idx       = @machineIdx
               , actual_weight_on  = @grossWeightLb
@@ -1000,7 +1002,7 @@ BEGIN
                      + ', reqsumWritten ' + CAST(@wipCoilOrdersWritten AS VARCHAR(1))
                      + ' (caller still to commit)';
 
-        EXEC [dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+        EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
                                                 , @sp_name             = 'FlatWire_CheckInRod'
                                                 , @table_name          = 'Applied - caller to commit'
                                                 , @log_info            = @logInfo
@@ -1026,13 +1028,13 @@ BEGIN
                , @errMessage   = 'FlatWire_CheckInRod failed for ' + ISNULL(@rodAlpha, 'NULL')
                                + ' (run ' + ISNULL(@runId, 'NULL') + '). Error: ' + ERROR_MESSAGE();
 
-        INSERT INTO [dbo].[EventErrorLog]
+        INSERT INTO [united_db].[dbo].[EventErrorLog]
                 ( [ObjectName], [ErrNumber], [ErrSeverity], [ErrState]
                 , [EventDescription], [StartTime], [UserName] )
         VALUES  ( @spObjectName, @errNo, @errSev, @errState
                 , @errMessage, GETDATE(), SUSER_NAME() );
 
-        EXEC [dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+        EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
                                                 , @sp_name             = 'FlatWire_CheckInRod'
                                                 , @table_name          = 'Failed - caller transaction doomed'
                                                 , @log_info            = @logInfo
@@ -1085,6 +1087,6 @@ GO
   -- nothing above changes and no duplicate wip_log row appears.
   --
   -- Station release, once the run is over:
-  --   EXEC united_db.dbo.FlatWire_ReleaseStation @station = 'FL1', @expectedCoilNo = 'R00041', @badgeNo = 1234;
+  --   EXEC FlatWireDB.dbo.FlatWire_ReleaseStation @station = 'FL1', @expectedCoilNo = 'R00041', @badgeNo = 1234;
   -- CoilNo must return to the station''s own name, padded to 9 (C1).
 ==============================================================================================*/

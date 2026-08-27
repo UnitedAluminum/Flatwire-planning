@@ -233,9 +233,16 @@ Pre-drawn wire spool tracking. Spools are produced on FL1 in Hybrid route mode a
 
 > **`ChildAlpha` and one namespace (`Q57`, 22 Aug 2026).** FL1 segment alphas and FL2 coil
 > identities are the same strings off the same six-character root, minted through
-> `CommonDB.dbo.GenerateCoilAlpha` with every prior segment alpha for the rod passed in
-> `@CoilNoToIgnore` - read from **this table**, because `FlatWireDB` is outside that function's
-> sweep. A local counter would hand the same string to a spool segment and to a finished coil.
+> `CommonDB.dbo.GenerateCoilAlpha`. A local counter would hand the same string to a spool segment
+> and to a finished coil.
+>
+> ⚠ **How the namespace is kept separate changed on 26 Aug 2026 (`[N]`).** This read *"… with every
+> prior segment alpha for the rod passed in `@CoilNoToIgnore` — read from **this table**, because
+> `FlatWireDB` is outside that function's sweep."* **The ignore list is gone.** Every alpha is
+> registered in `proddb..coils`, so the sweep finds prior segments unaided — the cause is fixed rather
+> than compensated for. ⛔ **The writer does not exist yet: `OI-138` / `G54`.** Coil parts also no
+> longer root here: they root on the **segment** this column holds, taking a **double** trailing letter
+> where a segment takes a single.
 
 > **`SeqNo` and last-on-first-off.** Under LOFO, `MAX(SeqNo)` is the lead alpha at FL2 - but
 > `Q45` (unwind direction) is open, so **derive that in a query, never as a constraint.**

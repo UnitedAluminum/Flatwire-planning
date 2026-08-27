@@ -1,7 +1,7 @@
 # Flat Wire Mill — Deployment
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 23, 2026 — **§“Verification” corrected for the third time: as written it again rejected a correct deployment.** `V1`/`V2`/`V3` asserted **32 / 50 / 57** — the 32 predated the 22 Aug rod ↔ order pair and the 50/57 were never re-derived after `D-31`. Now **34 / 57 / 69**, counted from the DDL, with `[DBD §6.2]` named as the defining site *(previously August 22, 2026 — `V1`/`V2`/`V3` asserted 25/33/41 in SQL comments and 27/41/46 in the checklist beneath, and `V4` required the MVP-2 `sp_ShiftSummary`)* *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** **Deployment step 2 is cancelled** and §4.3 retained as the record; the 1→3→4→5 order no longer depends on the renames; `V7`/`V8`/`V9` dropped, `V10` kept *(previously August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)
+**Last Updated:** August 26, 2026 — **this header contradicted §4.2's own gate and is now level with it.** It published `34 / 57 / 69` for `V1`/`V2`/`V3` while the body asserted **33 / 55 / 70** — the figures the DDL actually produces, and the ones [`Tools/verify_schema_counts.py`](../Tools/verify_schema_counts.py) checks this file against. `[DBD §6.2]` remains the defining site; a header restating a count is how the gate drifted from the body in the first place, so it now points rather than repeats *(previously August 23, 2026 — **§“Verification” corrected for the third time: as written it again rejected a correct deployment.** `V1`/`V2`/`V3` asserted **32 / 50 / 57** — the 32 predated the 22 Aug rod ↔ order pair and the 50/57 were never re-derived after `D-31`. Corrected then to 34 / 57 / 69, counted from the DDL, with `[DBD §6.2]` named as the defining site)* *(previously August 22, 2026 — `V1`/`V2`/`V3` asserted 25/33/41 in SQL comments and 27/41/46 in the checklist beneath, and `V4` required the MVP-2 `sp_ShiftSummary`)* *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** **Deployment step 2 is cancelled** and §4.3 retained as the record; the 1→3→4→5 order no longer depends on the renames; `V7`/`V8`/`V9` dropped, `V10` kept *(previously August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)
 **Document Type:** Release overview, environments, pre-deployment, sequence, smoke suite
 **Status:** Baselined
 **Owner:** Release manager / IT
@@ -56,7 +56,7 @@
 
 | Environment | Host | Database server | App pool | Static site | Use |
 |---|---|---|---|---|---|
-| **test1** | `devual-uadev001` | *fill at first deploy* | `FlatWireAPI_Test1` | shop-floor bundle | Developer testing |
+| **test1** | `devual-uadev001` | `DEV00164-001` *(verified 26 Aug 2026)* | `FlatWireAPI_Test1` | shop-floor bundle | Developer testing |
 | **test2** | `devual-uadev002` | *fill* | `FlatWireAPI_Test2` | shop-floor bundle | Developer testing |
 | **dev1 / dev2** | — | *fill* | `FlatWireAPI_Dev1/2` | shop-floor bundle | Integration testing |
 | **staging** | `uanet-staging` *(UAT may run on `devual-uadev001` if staging is unavailable)* | *fill* | `FlatWireAPI_Staging` | shop-floor bundle | Pre-production, UAT |
@@ -195,7 +195,7 @@ Steps 3–8 can be run together with `Scripts/FlatWire_Scripts_RunAll.sql`, **wh
 on purpose.** See [`Database/Scripts/README.md`](../Database/Scripts/README.md) for each script's
 sign-off state and whether it is reversible.
 
-**Teardown reverses, code before data:** `Scripts/99_united_db_Proc_FlatWire_Teardown.sql` (drops
+**Teardown reverses, code before data:** `Scripts/99_FlatWireDB_Proc_FlatWire_Teardown.sql` (drops
 the four `united_db` procedures — **code, not data**), then
 `Schema/SQL/FlatWire_DDL_99_Teardown.sql` (drops `FlatWireDB`, and `sp_IngestRodFromCoils` goes
 with it). ⚠ **Neither undoes step 2's shared rows.** Nothing does — remove them deliberately and by
@@ -244,9 +244,13 @@ SELECT COUNT(*) AS TableCount FROM sys.tables WHERE is_ms_shipped = 0;
 SELECT COUNT(*) AS FkCount FROM sys.foreign_keys;
 -- Expected: 55
 
--- V3. Index count -- 69 created by script 07 (07b was folded into it).
+-- V3. Index count -- 70 created by script 07 (07b was folded into it).
+--     WAS 69 until 26 Aug 2026: Q89 added UX_CoilTraceability_ChildAlpha, a
+--     FILTERED unique index on the per-source-rod shared identity. It is
+--     filtered because the identity does not exist until the cross-database
+--     mint returns, so the column is NULL until then.
 --     UNCHANGED by the 23 Aug merge: nothing was ever indexed on SpoolTypeId.
---     The 63 in script 07 are 53 CREATE NONCLUSTERED plus 10 CREATE UNIQUE
+--     The 64 in script 07 are 53 CREATE NONCLUSTERED plus 11 CREATE UNIQUE
 --     NONCLUSTERED. See [DBD 6.8] PP-01 for why a deployed database reports
 --     more indexes than the scripts create.
 --     NOTE: PRIMARY KEY and UNIQUE CONSTRAINT backing indexes are excluded below,
@@ -254,16 +258,28 @@ SELECT COUNT(*) AS FkCount FROM sys.foreign_keys;
 SELECT COUNT(*) AS IdxCount FROM sys.indexes
  WHERE object_id IN (SELECT object_id FROM sys.tables)
    AND type <> 0 AND is_primary_key = 0 AND is_unique_constraint = 0;
--- Expected: 69
+-- Expected: 70
 
--- V4. Programmability. TWO of these come from FlatWire_DDL_RunAll.sql; the third,
---     sp_IngestRodFromCoils, ships separately in Database/Scripts/ because it reads
---     proddb + united_db -- so it is present only AFTER step 4 of the grants sequence.
---     sp_ShiftSummary is MVP-2 (08b, for DB10) and must NOT be here on an MVP-1
+-- V4. Programmability. SEVEN objects, and since change [H] (26 Aug 2026) ALL SEVEN
+--     are in FlatWireDB -- so this is a SINGLE-DATABASE query where it used to span two.
+--     TWO come from FlatWire_DDL_RunAll.sql (the trigger and sp_GetGaugeTrace).
+--     FIVE ship in Database/Scripts/ and are present only AFTER the grants sequence:
+--       sp_IngestRodFromCoils            (30_) -- reads proddb + united_db
+--       FlatWire_CheckInRod              (40_) -- MOVED from united_db by [H]
+--       FlatWire_CompleteCoilOnSkid      (50_) -- MOVED from united_db by [H]
+--       FlatWire_ReleaseStation          (60_) -- MOVED from united_db by [H]
+--       FlatWire_ReverseReqsum           (70_) -- MOVED from united_db by [H]
+--     ⚠ The four MOVED procedures still READ AND WRITE united_db, proddb, CommonDB,
+--       SlitterDB and wiplogdb exactly as before. Only the procedure home moved, and
+--       the transaction model is UNCHANGED -- one instance, one local transaction
+--       manager, no MSDTC. Do not read this simplification as a scope change.
+--     sp_ShiftSummary is MVP-2 (09_, for DB10) and must NOT be here on an MVP-1
 --     deploy -- asking for it is what failed a correct deployment before.
 SELECT name, type_desc FROM sys.objects
- WHERE name IN ('trg_CoilTraceability_NoOverlap','sp_GetGaugeTrace','sp_IngestRodFromCoils');
--- Expected: 2 rows after RunAll; 3 once Database/Scripts/ has been applied
+ WHERE name IN ('trg_CoilTraceability_NoOverlap','sp_GetGaugeTrace','sp_IngestRodFromCoils'
+              , 'FlatWire_CheckInRod','FlatWire_CompleteCoilOnSkid'
+              , 'FlatWire_ReleaseStation','FlatWire_ReverseReqsum');
+-- Expected: 2 rows after RunAll; 7 once Database/Scripts/ has been applied
 
 -- V5. Business invariant — at most one Active PassSchedule per line + alloy.
 SELECT LineId, Alloy, COUNT(*) FROM dbo.PassSchedule
@@ -280,14 +296,26 @@ SELECT a.CoilAlpha FROM dbo.CoilTraceability a
 
 - [ ] V1 returns **33**
 - [ ] V2 returns **55**
-- [ ] V3 returns **69**
-- [ ] V4 returns **2 rows** after `RunAll` (**3** once `Database/Scripts/` is applied)
+- [ ] V3 returns **70**
+- [ ] V4 returns **2 rows** after `RunAll` (**7** once `Database/Scripts/` is applied — was 3 before `[H]`)
 - [ ] V5 returns **zero rows**
 - [ ] V6 returns **zero rows**
 - [ ] `ua_user` exists with `db_datareader`, `db_datawriter` and `GRANT EXECUTE ON SCHEMA::dbo`
-- [ ] On a seeded environment, the fixture alphas resolve: `R00041`–`R00043`, `SP-00021`, `PS-1100-FL1-003`, `RUN-0042`, `RUN-0043`
+- [ ] On a seeded environment, the fixture alphas resolve: `R00041`–`R00043`, `SP-00031`–`SP-00033`, `PS-1100-FL1-003`, `RUN-0001`–`RUN-0005` *(corrected 26 Aug 2026: the checklist had named `SP-00021`, `RUN-0042` and `RUN-0043`, which the seeds have never created)*
 
 > **If V1 returns anything other than 33**, the wrong script set ran or a script failed silently. **Stop.**
+>
+> ⚠ **`V3` moved to 70 on 26 Aug 2026 — the FIFTH correction to this gate, and the first caused by
+> a change made in this repository rather than by a stale figure.** `Q89` added
+> `UX_CoilTraceability_ChildAlpha`. **The gate was left asserting 69 for the length of that edit, which
+> would have rejected a correct deployment** — the same failure mode as the four before it. ⚠ **The
+> guard that exists to catch exactly this, `Tools/verify_schema_counts.py`, did not cover this file** —
+> its `C1` reads `[DBD §6.2]` and never looked here, even though its own docstring cites this gate
+> failing three times. **`C1` now checks `V1`/`V2`/`V3` too**, so a sixth is a build failure rather than
+> a deploy-day surprise.
+>
+> ⚠ **`V4` moved to 7 on 26 Aug 2026** — change `[H]` moved the four `FlatWire_*` procedures from
+> `united_db` into `FlatWireDB`, so all seven programmability objects are now in one database.
 >
 > ⚠ **`V1`/`V2` moved to 33 / 55 on 23 Aug 2026 — the fourth correction to this gate.** `SpoolConfiguration` was merged into `Spool` (`Q60`), removing one table and two foreign keys; `V3` is unchanged at 69 because nothing was indexed on `SpoolTypeId`. **A deployment of the current scripts returns 33 / 55 / 69, and the previous 34 / 57 / 69 would now reject it** — which is the exact failure mode this block has had three times before.
 >

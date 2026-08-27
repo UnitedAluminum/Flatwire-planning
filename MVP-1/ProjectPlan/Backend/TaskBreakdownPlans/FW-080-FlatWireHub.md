@@ -221,8 +221,14 @@ with real ingest through `IReadingSource`, with
 [`FW-203`](FW-203-OPC-Feed-Simulator.md) standing in for the trial.
 [`FW-208`](FW-208-Domain-Events-Post-Commit-Dispatch.md) translates domain events onto this
 interface — **and that is what keeps SignalR out of `FlatWire.Application`**
-(`[SVC §3.2c]`). [`FW-148`](FW-148-Health-Checks.md) adds hub connection count and
-broadcast-cadence deviation to the health surface.
+(`[SVC §3.2c]`). ⚠ **Hub connection count is this story's instrument, not `FW-148`'s** —
+corrected 27 Aug 2026 (`P-86`). `[MON §7.1]` gives it its own row sourced from
+**`FlatWireHub`**, separate from the `/health` row, and `[API §4.19]`'s body has **five
+members and no hub member**, so it cannot be published through the health endpoint without
+changing that contract. *(This paragraph read "`FW-148` adds hub connection count and
+broadcast-cadence deviation to the health surface"; that claim originated in
+[`FW-148`](FW-148-Health-Checks.md) and is withdrawn there. Cadence deviation is
+[`FW-150`](FW-150-Broadcast-Loop.md)'s.)*
 
 ---
 

@@ -9,7 +9,8 @@
 -- constraints (indexed), so only child FK columns and hot
 -- filter columns are added here.
 --
--- Creates ALL 69 index statements. There is no second index script.
+-- Creates ALL 70 index statements. There is no second index script.
+-- 70, not 69, since 26 Aug 2026: Q89 added UX_CoilTraceability_ChildAlpha.
 --
 -- ⚠ 07b WAS FOLDED BACK INTO THIS FILE. It was split out on 11 Aug
 --   2026 when the schema was divided by MVP scope, returned to MVP-1
@@ -206,6 +207,27 @@ GO
 -- enforceable rather than merely documented -- a second call for the same coil is refused here.
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_CoilOutput_CoilNo' AND object_id = OBJECT_ID(N'dbo.CoilOutput'))
     CREATE UNIQUE NONCLUSTERED INDEX [UX_CoilOutput_CoilNo] ON [dbo].[CoilOutput] ([CoilNo]) WHERE [CoilNo] IS NOT NULL;
+GO
+
+-- UX_CoilTraceability_ChildAlpha -- one row per shared coil identity, and since
+-- Q89 there is one identity per (coil x source rod), so a welded coil has N.
+--
+-- FILTERED because ChildAlpha is nullable by design: the value does not exist
+-- until the cross-database mint returns, the same reason UX_CoilOutput_CoilNo
+-- above is filtered. A filtered UNIQUE admits many NULLs and exactly one of
+-- each non-NULL value (TC-789).
+--
+-- IT CANNOT ENFORCE ORD021. That rule -- no string in both
+-- SpoolTraceability.ChildAlpha and CoilTraceability.ChildAlpha for one rod --
+-- spans two tables and no index can express it. It rests on the shared ignore
+-- list and is asserted by TC-788.
+--
+-- AND IT IS WHY SourceSegmentAlpha CANNOT BE AN FK: a foreign key cannot point
+-- at a FILTERED unique index, so the sibling column in 05_QualityOutput is
+-- guarded by the domain model and TC-794 instead. That is a SQL Server
+-- limitation, not a design choice -- do not "fix" it by adding a constraint.
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_CoilTraceability_ChildAlpha' AND object_id = OBJECT_ID(N'dbo.CoilTraceability'))
+    CREATE UNIQUE NONCLUSTERED INDEX [UX_CoilTraceability_ChildAlpha] ON [dbo].[CoilTraceability] ([ChildAlpha]) WHERE [ChildAlpha] IS NOT NULL;
 GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_CoilOutput_SharedSkidNo' AND object_id = OBJECT_ID(N'dbo.CoilOutput'))
     CREATE NONCLUSTERED INDEX [IX_CoilOutput_SharedSkidNo] ON [dbo].[CoilOutput] ([SharedSkidNo]) WHERE [SharedSkidNo] IS NOT NULL;

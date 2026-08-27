@@ -197,9 +197,11 @@ data: Total |  |  | 1,800 lb |  | The spool carries two rods. Its face at the fi
 blank:
 section: What the finishing line makes from it, unwinding last on first off
 header: Coil | Identity | Weight | Length | From rod | Length within the coil | Share | Weight from that rod | Notes
-data: Coil 1 | R00002D | 900 lb | 76,531 ft | R00002 | 0 to 76,531 ft | 100.0 % | 900 lb | One parent - this coil is entirely the incoming rod.
-data: Coil 2 | R00002E | 900 lb | 76,531 ft | R00002 | 0 to 42,517 ft | 55.6 % | 500 lb | The weld falls inside this coil, so it has two parents and its certificate names both.
-data:  |  |  |  | R00001 | 42,517 to 76,531 ft | 44.4 % | 400 lb | The weld falls inside this coil, so it has two parents and its certificate names both.
+data: Coil 1 | R00002AA | 900 lb | 76,531 ft | R00002 | 0 to 76,531 ft | 100.0 % | 900 lb | One rod, so one identity. The identity is built from the part of the rod this coil was cut from, R00002A, which is why it carries two letters where a spool part carries one.
+data: Coil 2 | R00002AB | 900 lb | 76,531 ft | R00002 | 0 to 42,517 ft | 55.6 % | 500 lb | The weld falls inside this coil, so it comes from two rods and carries an identity for each. This one covers the 500 lb from R00002 and is built from the same rod part as coil 1, R00002A, taking the next free letter.
+data:  | R00001CA |  |  | R00001 | 42,517 to 76,531 ft | 44.4 % | 400 lb | And this one covers the 400 lb from R00001. It is built from that rod's part R00001C, and it is the first coil off that part, so it takes the first letter. This is the same pairing your own planning sheet writes as R00002AA - R00001CA. Both identities go into the coil records your other systems read, each carrying only its own weight, so the two add up to the coil's 900 lb and nothing is counted twice.
+blank:
+note: A coil made from one rod has one identity; a coil made from two has two. The certificate names every rod that contributed and how much came from each, which is what welding wire has to be able to show.
 
 ---
 

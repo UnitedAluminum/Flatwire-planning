@@ -1,12 +1,15 @@
 /*==============================================================================================
   Project      : UAL Flat Wire Mill - Shopfloor
-  Script       : 70_united_db_Proc_FlatWire_ReverseReqsum.sql
-  Object       : united_db.dbo.FlatWire_ReverseReqsum
-  Target DBs   : united_db  (procedure home; dbo.routings, dbo.planning_routings, dbo.users,
+  Script       : 70_FlatWireDB_Proc_FlatWire_ReverseReqsum.sql
+  Object       : FlatWireDB.dbo.FlatWire_ReverseReqsum
+  Target DBs   : FlatWireDB (procedure home - MOVED from united_db 26 Aug 2026, change [H];
+                             the procedure is the ONLY thing that moved - every table below is
+                             read and written exactly where it always was)
+                 united_db  (dbo.routings, dbo.planning_routings, dbo.users,
                              dbo.EventErrorLog, dbo.reassign_order_info - via trigger)
                  proddb     (dbo.wip_coil_orders, dbo.wip_coil_orders_hist - via trigger)
                  CommonDB   (del_or_upd_wip_orders, Logging_Information_In_Table)
-  Last Updated : 2026-08-19
+  Last Updated : 2026-08-26
   Status       : Draft - the DELETE needs sign-off before a shared environment (Q40).
                  Everything else is a reset to a value the column already held.
   Story        : FW-221 (station release and reqsum reversal)
@@ -150,7 +153,7 @@
       54020 - 54029 state conflict                  -> 409
 ==============================================================================================*/
 
-USE [united_db];
+USE [FlatWireDB];
 GO
 
 SET ANSI_NULLS ON;
@@ -199,7 +202,7 @@ BEGIN
     SET @stationReleased      = 0;
 
     SELECT @userId = userid
-    FROM   [dbo].[users] WITH (NOLOCK)
+    FROM   [united_db].[dbo].[users] WITH (NOLOCK)
     WHERE  BadgeNo = @badgeNo;
 
     SET @logInfo = 'EXEC FlatWire_ReverseReqsum '
@@ -212,7 +215,7 @@ BEGIN
                  + ISNULL(@checkoutMode, 'NULL')         + ', footage='
                  + ISNULL(CAST(@footageAtCheckout AS VARCHAR(10)), 'NULL');
 
-    EXEC [dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+    EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
                                             , @sp_name             = 'FlatWire_ReverseReqsum'
                                             , @table_name          = 'Entered into sp'
                                             , @log_info            = @logInfo
@@ -288,7 +291,7 @@ BEGIN
              that machine, and the weight recorded is what was physically on the payoff. Only the
              start claim is untrue.
         --------------------------------------------------------------------------------------*/
-        UPDATE  [dbo].[routings] WITH (ROWLOCK)
+        UPDATE  [united_db].[dbo].[routings] WITH (ROWLOCK)
         SET     actual_start_date = @UnsetDate
         WHERE   LTRIM(RTRIM(coil_no)) = @rodAlpha
           AND   mfg_order_no = @mfgOrderNo
@@ -301,7 +304,7 @@ BEGIN
         /*--------------------------------------------------------------------------------------
           5. planning_routings.actual_start_date -> the sentinel.  (C3)
         --------------------------------------------------------------------------------------*/
-        UPDATE  [dbo].[planning_routings] WITH (ROWLOCK)
+        UPDATE  [united_db].[dbo].[planning_routings] WITH (ROWLOCK)
         SET     actual_start_date = @UnsetDate
         WHERE   LTRIM(RTRIM(coil_no)) = @rodAlpha
           AND   mfg_order_no = @mfgOrderNo
@@ -331,7 +334,7 @@ BEGIN
                      + ', stationReleased ' + CAST(@stationReleased AS VARCHAR(1))
                      + ' (caller still to commit)';
 
-        EXEC [dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+        EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
                                                 , @sp_name             = 'FlatWire_ReverseReqsum'
                                                 , @table_name          = 'Applied - caller to commit'
                                                 , @log_info            = @logInfo
@@ -354,13 +357,13 @@ BEGIN
                                + ' (order ' + ISNULL(CAST(@orderNo AS VARCHAR(10)), 'NULL') + '). Error: '
                                + ERROR_MESSAGE();
 
-        INSERT INTO [dbo].[EventErrorLog]
+        INSERT INTO [united_db].[dbo].[EventErrorLog]
                 ( [ObjectName], [ErrNumber], [ErrSeverity], [ErrState]
                 , [EventDescription], [StartTime], [UserName] )
         VALUES  ( @spObjectName, @errNo, @errSev, @errState
                 , @errMessage, GETDATE(), SUSER_NAME() );
 
-        EXEC [dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+        EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
                                                 , @sp_name             = 'FlatWire_ReverseReqsum'
                                                 , @table_name          = 'Failed - caller transaction doomed'
                                                 , @log_info            = @logInfo
@@ -384,7 +387,7 @@ GO
 
   -- Check in, then reverse, inside one transaction.
   BEGIN TRAN;
-    EXEC united_db.dbo.FlatWire_ReverseReqsum
+    EXEC FlatWireDB.dbo.FlatWire_ReverseReqsum
            @rodAlpha = @rod, @orderNo = @order, @relLetter = @rel,
            @mfgOrderNo = @mfgOrder, @seqNo = @seq, @station = @station, @badgeNo = 1234,
            @footageAtCheckout = 0, @wipCoilOrdersWasWritten = 1, @checkoutMode = 'ModeA',
@@ -412,7 +415,7 @@ GO
   SELECT WIPStation, CoilNo FROM CommonDB..WIPStations WHERE LTRIM(RTRIM(WIPStation)) = @station;
 
   -- Mode B must be REFUSED. Expect 54020.
-  -- EXEC united_db.dbo.FlatWire_ReverseReqsum @rodAlpha=@rod, @orderNo=@order, @relLetter=@rel,
+  -- EXEC FlatWireDB.dbo.FlatWire_ReverseReqsum @rodAlpha=@rod, @orderNo=@order, @relLetter=@rel,
   --      @mfgOrderNo=@mfgOrder, @seqNo=@seq, @station=@station, @badgeNo=1234,
   --      @footageAtCheckout = 4200, @wipCoilOrdersWasWritten = 1, @checkoutMode = 'ModeB';
 

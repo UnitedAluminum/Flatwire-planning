@@ -466,3 +466,140 @@ BEGIN
     PRINT 'Added column: CoilTraceability.SeqNo';
 END
 GO
+
+-- ------------------------------------------------------------
+-- CoilTraceability -- N SHARED IDENTITIES PER COIL, one per source rod.
+-- Added 26 Aug 2026 (Q88, Q89). Three columns, no new index beyond the
+-- filtered UNIQUE in 07_Indexes.
+--
+-- WHY: a coil cut across a weld comes from two rods. The client asked for
+-- two alphas to be maintained (Q88) and for EVERY one of them to reach
+-- proddb..coils (Q89). This row is already the (coil x source rod)
+-- intersection, so it is where those identities belong -- exactly as
+-- SpoolTraceability.ChildAlpha is the (rod x spool) intersection one hop up.
+-- ------------------------------------------------------------
+
+-- ChildAlpha -- ONE SHARED IDENTITY PER (COIL x SOURCE ROD).
+--
+-- MINTED BY CommonDB.dbo.GenerateCoilAlpha(SourceSegmentAlpha, ''), rooted on
+-- THIS ROW's SOURCE SEGMENT, with a BLANK ignore list. Where
+-- SourceSegmentAlpha IS NULL -- FL1-standalone and FL3-from-rod, which have no
+-- segment -- it falls back to RodAlpha. One trailing letter means a spool
+-- segment; TWO means a coil off that segment.
+--
+-- *** THE REASON RECORDED HERE UNTIL 26 AUG 2026 WAS FALSE. *** It read: "the
+-- function roots on the first six characters, so passing a seven-character
+-- segment alpha returns a SIBLING of that segment, not a child of it."
+-- Measured against the live function, a seven-character input returns a CHILD:
+--     GenerateCoilAlpha('R00002A','')    -> R00002AA
+--     GenerateCoilAlpha('R00002AAA','')  -> R00002B    (the LEN=9 branch, the
+--                                                       ONLY sibling case)
+-- The six-character root is the LIKE filter for the exclusion sweep only. The
+-- stem the letter is appended to is @CoilNo VERBATIM:
+--     SET @CoilAlpha = LTRIM(RTRIM(@CoilNo)) + CHAR(@AlphaTobeAdded)
+--
+-- *** AND ON 26 AUG 2026 THE VERDICT MOVED TOO (change [N]). ***
+-- This block then read: "Do not root on the segment because THE TWO SCHEMES
+-- COLLIDE ... R00002AA is ALSO what the rod-rooted sequence returns at suffix
+-- 27 ... Depth WRAPS. R00002AAA is nine characters, so its next generation is
+-- R00002B - a SIBLING of the seven-character segment."
+--
+-- SEGMENT-ROOTING IS NOW THE DESIGN. Both objections survive as BOUNDS, not
+-- prohibitions, and that is the whole difference:
+--   * the suffix-27 collision needs a rod past 26 SEGMENTS - 46,800 lb against
+--     the 4,000-8,840 in play (OI-97) - and even then nothing is reissued,
+--     because every alpha is REGISTERED and the sweep finds a free string.
+--     Only the one-letter/two-letter shape stops being readable.
+--   * the depth-3 wrap applies to CHAINED rooting (coil on coil). Every coil
+--     off one spool roots on the SAME segment, so the string grows exactly one
+--     letter and stops. Fixed rooting was never what the wrap threatened.
+--
+-- WHY IT WON: the shape IS the client's own form, so generating it reproduces
+-- their sheet with one generator and one namespace (Q88, narrowed).
+-- Authority: RodOrderAllocation.md 2.4 / 2.8.
+--
+-- EVERY ONE IS WRITTEN TO proddb..coils, each carrying only its own
+-- SegmentWeightLb (Q89, FR-562, FR-567). The weights are a SPLIT, not a
+-- repeat: they must sum to CoilOutput.NetWeightLb, and nothing else checks
+-- that -- wip_skids' smallint guard validates per CALL, so it would accept
+-- N x the coil weight without complaint. ORD023 / TC-792 is the only detector.
+--
+-- EACH ALPHA CARRIES ITS OWN PARENT ROD into coil_gen_history. That is what
+-- closes OI-113: the helper's guard is IF NOT EXISTS (... WHERE child_coil_no
+-- = @ChildCoil) -- per CHILD -- so N distinct children pass N independent
+-- tests and each gets one correctly-parented row. If all N were written under
+-- one primary rod the tree would say "this rod produced N coils", which is not
+-- multi-rod genealogy and would NOT close OI-113. TC-795 asserts N different
+-- parents.
+--
+-- *** THERE IS NO IGNORE LIST. EVERY MINT PASSES ''. *** Registration in
+-- proddb..coils replaces exclusion: the sweep finds every sibling unaided, and
+-- F11's 500-char cap stops applying to flat wire. Conditional on OI-138 --
+-- nothing writes an FL1 segment alpha yet, so that is true by design and not
+-- yet in fact. NEVER RE-MINT ON RETRY: reuse the stored ChildAlpha while
+-- SharedWrittenAt IS NULL, or a re-mint returns a different letter and orphans
+-- the stored one. Superseded text follows.
+--
+-- THE IGNORE LIST IS EVERY FlatWireDB-LOCAL ALPHA FOR THAT ROD -- both
+-- SpoolTraceability.ChildAlpha and CoilTraceability.ChildAlpha, whether or not
+-- it also reached the shared schema. Duplicates in an exclusion list are
+-- harmless; a missing one reissues an alpha. Cap 500 chars (F11).
+--
+-- OPAQUE. Never parse it, never rebuild it, never order by it -- SeqNo and the
+-- footage range carry the ordering. The letters are mint-order artifacts, and
+-- since Q89 the 702-suffix-per-rod budget (A..Z then AA..ZZ - see OI-135) is
+-- drawn on once per source rod per coil, so it is no longer independent of N.
+--
+-- SINGLE-ROD COILS ARE UNCHANGED: exactly one ChildAlpha, equal to
+-- CoilOutput.CoilNo, and one proddb..coils row (FR-566, TC-785). Fourteen of
+-- the shipped run's twenty-three spools are single-rod.
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[CoilTraceability]') AND type = N'U')
+   AND NOT EXISTS (SELECT 1 FROM sys.columns
+                   WHERE object_id = OBJECT_ID(N'[dbo].[CoilTraceability]') AND name = N'ChildAlpha')
+BEGIN
+    ALTER TABLE [dbo].[CoilTraceability] ADD [ChildAlpha] VARCHAR(20) NULL;
+    PRINT 'Added column: CoilTraceability.ChildAlpha';
+END
+GO
+
+-- SourceSegmentAlpha -- which SEGMENT of that rod this coil part came from.
+-- (RodAlpha, SpoolAlpha) implies it in every case the design admits, but only
+-- because nothing yet forbids one rod contributing two segments to one spool.
+--
+-- NOT AN FK, AND CANNOT BE ONE: its parent index
+-- UX_SpoolTraceability_ChildAlpha is FILTERED, and SQL Server will not point a
+-- foreign key at a filtered index. Enforced in the domain model (FW-207) and by
+-- TC-794 -- ORD022. This is the ONLY guard.
+--
+-- NULL on a rod-fed coil: FL1 standalone, and FL3 fed directly from rod, have
+-- no segment to name -- the same reason CoilTraceability.SpoolAlpha is nullable.
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[CoilTraceability]') AND type = N'U')
+   AND NOT EXISTS (SELECT 1 FROM sys.columns
+                   WHERE object_id = OBJECT_ID(N'[dbo].[CoilTraceability]') AND name = N'SourceSegmentAlpha')
+BEGIN
+    ALTER TABLE [dbo].[CoilTraceability] ADD [SourceSegmentAlpha] VARCHAR(20) NULL;
+    PRINT 'Added column: CoilTraceability.SourceSegmentAlpha';
+END
+GO
+
+-- SharedWrittenAt -- THE RETRY CONTRACT under Q89. NULL until this part's
+-- proddb..coils row commits; stamped when FlatWire_CompleteCoilOnSkid returns.
+-- A retry passes back every non-NULL ChildAlpha and the procedure skips those.
+--
+-- WHY A COLUMN AND NOT A NEW TABLE: ChildAlpha above already holds the N
+-- identities. The only thing the old scalar contract -- @expectedCoilNo CHAR(9)
+-- plus a single CoilOutput.CoilNo -- could not express is WHICH of them
+-- committed. That is the only thing this adds.
+--
+-- WITHOUT IT THE FAILURE IS SILENT: a retry passing alpha #1 short-circuits and
+-- returns 0 (success) while #2..N sit committed in coils, coil_cost,
+-- coil_gen_history, coil_slit_cuts and wip_skid_coils -- referenced by nothing
+-- here and unreported to the caller. ORD024 / TC-797.
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[CoilTraceability]') AND type = N'U')
+   AND NOT EXISTS (SELECT 1 FROM sys.columns
+                   WHERE object_id = OBJECT_ID(N'[dbo].[CoilTraceability]') AND name = N'SharedWrittenAt')
+BEGIN
+    ALTER TABLE [dbo].[CoilTraceability] ADD [SharedWrittenAt] DATETIMEOFFSET NULL;
+    PRINT 'Added column: CoilTraceability.SharedWrittenAt';
+END
+GO

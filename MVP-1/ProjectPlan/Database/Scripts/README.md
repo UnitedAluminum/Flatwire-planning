@@ -1,7 +1,7 @@
 # FlatWire cross-database scripts — folder manifest
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 23, 2026 — first issue. Eight scripts had accumulated here with no manifest, and the deploy order existed only as prose inside two of them, which disagreed.
+**Last Updated:** August 26, 2026 — first issue. Eight scripts had accumulated here with no manifest, and the deploy order existed only as prose inside two of them, which disagreed.
 **Status:** Active — the manifest and sign-off ledger for this folder
 
 Everything here **crosses databases**. That is the whole hazard of the folder: a missing grant
@@ -30,17 +30,17 @@ do not impose an order that exists.
 | **10** | `10_CommonDB_Insert_WIPStations_FlatWire.sql` | Reference data | `united_db` (`machines`), `CommonDB` (`WIPStations`, `MachineStationsConfiguration`) | **Rows, not objects** — FL1/FL2/FL3 machines, the WIP stations and their bindings | `FW-003` | ⚠ **Draft — `machine_type`, the station set and `StationType` pending sign-off** | ⚠ **NO — no reverse script exists.** Writes rows into **shared** tables other modules read |
 | **20** | `20_FlatWire_Grants.sql` | Infrastructure | `united_db`, `proddb`, `CommonDB`, `SlitterDB`, `wiplogdb`, `FlatWireDB` | **No objects** — `ua_user` in six databases, role membership, `GRANT EXECUTE`, and `DELETE` on `proddb..wip_coil_orders` | `FW-220` / `FW-221` | Draft — run **once per environment** | Yes — revoke |
 | **30** | `30_FlatWireDB_Proc_sp_IngestRodFromCoils.sql` | Procedure (inbound) | `FlatWireDB` (home), reads `proddb..coils` + `united_db..alloys` | `FlatWireDB.dbo.sp_IngestRodFromCoils` | `FW-223` | **Ready to build — no open items** | Yes — goes with the database, via `FlatWire_DDL_99_Teardown.sql` |
-| **40** | `40_united_db_Proc_FlatWire_CheckInRod.sql` | Procedure (outbound) | `united_db` (home), `proddb`, `CommonDB`, `wiplogdb` | `united_db.dbo.FlatWire_CheckInRod` | `FW-220` | ⚠ Draft — `transaction_name`, `coil_skid_status` and the `coils` rod-row stamp pending (`Q37`–`Q39`) | Yes — code only, via `99` |
-| **50** | `50_united_db_Proc_FlatWire_CompleteCoilOnSkid.sql` | Procedure (outbound) | `united_db` (home), `proddb`, `SlitterDB`, `CommonDB`, `wiplogdb` | `united_db.dbo.FlatWire_CompleteCoilOnSkid` | `FW-219` | ⚠ Draft — `transaction_name`, `coil_status`, `smp_no` and the `coil_slit_cuts` sentinels pending (`Q34`–`Q36`) | Yes — code only, via `99` |
-| **60** | `60_united_db_Proc_FlatWire_ReleaseStation.sql` | Procedure (outbound) | `united_db` (home), `CommonDB` | `united_db.dbo.FlatWire_ReleaseStation` | `FW-221` | **No open items** — introduces no new value into the shared vocabulary | Yes — code only, via `99` |
-| **70** | `70_united_db_Proc_FlatWire_ReverseReqsum.sql` | Procedure (outbound) | `united_db` (home), `proddb`, `CommonDB` | `united_db.dbo.FlatWire_ReverseReqsum` | `FW-221` | ⚠ **Draft — the `proddb..wip_coil_orders` DELETE needs sign-off before any shared environment (`Q40`)** | Yes — code only, via `99` |
-| **99** | `99_united_db_Proc_FlatWire_Teardown.sql` | Teardown | `united_db` | Drops the four `united_db` procedures | `FW-220` / `FW-221` | Draft | n/a — **drops code, not data** |
+| **40** | `40_FlatWireDB_Proc_FlatWire_CheckInRod.sql` | Procedure (outbound) | **`FlatWireDB` (home)**, `united_db`, `proddb`, `CommonDB`, `wiplogdb` | `FlatWireDB.dbo.FlatWire_CheckInRod` | `FW-220` | ⚠ Draft — `transaction_name`, `coil_skid_status` and the `coils` rod-row stamp pending (`Q37`–`Q39`) | Yes — code only, via `99` |
+| **50** | `50_FlatWireDB_Proc_FlatWire_CompleteCoilOnSkid.sql` | Procedure (outbound) | **`FlatWireDB` (home)**, `united_db`, `proddb`, `SlitterDB`, `CommonDB`, `wiplogdb` | `FlatWireDB.dbo.FlatWire_CompleteCoilOnSkid` | `FW-219` | ⚠ Draft — `transaction_name`, `coil_status`, `smp_no` and the `coil_slit_cuts` sentinels pending (`Q34`–`Q36`) | Yes — code only, via `99` |
+| **60** | `60_FlatWireDB_Proc_FlatWire_ReleaseStation.sql` | Procedure (outbound) | **`FlatWireDB` (home)**, `united_db`, `CommonDB` | `FlatWireDB.dbo.FlatWire_ReleaseStation` | `FW-221` | **No open items** — introduces no new value into the shared vocabulary | Yes — code only, via `99` |
+| **70** | `70_FlatWireDB_Proc_FlatWire_ReverseReqsum.sql` | Procedure (outbound) | **`FlatWireDB` (home)**, `united_db`, `proddb`, `CommonDB` | `FlatWireDB.dbo.FlatWire_ReverseReqsum` | `FW-221` | ⚠ **Draft — the `proddb..wip_coil_orders` DELETE needs sign-off before any shared environment (`Q40`)** | Yes — code only, via `99` |
+| **99** | `99_FlatWireDB_Proc_FlatWire_Teardown.sql` | Teardown | `FlatWireDB` | Drops the four `FlatWireDB` procedures | `FW-220` / `FW-221` | Draft | n/a — **drops code, not data** |
 
 ## What is NOT reversible, and why it matters
 
 **Two teardowns exist, split by which database owns the object, and neither undoes shared data.**
 
-- `99_united_db_Proc_FlatWire_Teardown.sql` drops the four `united_db` procedures. It
+- `99_FlatWireDB_Proc_FlatWire_Teardown.sql` drops the four `FlatWireDB` procedures. It
   **deliberately does not drop `sp_IngestRodFromCoils`** — that one lives in `FlatWireDB` and goes
   with the database.
 - `../Schema/SQL/FlatWire_DDL_99_Teardown.sql` drops `FlatWireDB` entirely.

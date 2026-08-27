@@ -5,7 +5,7 @@
   Target DBs   : FlatWireDB  (procedure home; dbo.Rod)
                  proddb      (dbo.coils            - READ ONLY)
                  united_db   (dbo.alloys           - READ ONLY)
-  Last Updated : 2026-08-19
+  Last Updated : 2026-08-26
   Status       : Ready to build - no sign-off items. Shares FW-220's deployment prerequisite.
   Story        : FW-223 (rod ingestion - populating the FlatWire tables)
   Specification: MVP-1/ProjectPlan/Architecture/Integration.md Sec 7.9
@@ -21,11 +21,11 @@
   It is the INBOUND bracket of the run. The three united_db procedures in this folder are the
   outbound ones:
 
-      FlatWireDB_Proc_sp_IngestRodFromCoils   <- THIS: coils -> Rod, at first use
-      united_db_Proc_FlatWire_CheckInRod         Rod on the line -> the shared schema
-      united_db_Proc_FlatWire_ReverseReqsum      undoes the above when the rod never ran
-      united_db_Proc_FlatWire_CompleteCoilOnSkid finished coil -> the shared schema
-      united_db_Proc_FlatWire_ReleaseStation     the station, at run end
+      FlatWireDB.dbo.sp_IngestRodFromCoils    <- THIS: coils -> Rod, at first use
+      FlatWireDB.dbo.FlatWire_CheckInRod         Rod on the line -> the shared schema
+      FlatWireDB.dbo.FlatWire_ReverseReqsum      undoes the above when the rod never ran
+      FlatWireDB.dbo.FlatWire_CompleteCoilOnSkid finished coil -> the shared schema
+      FlatWireDB.dbo.FlatWire_ReleaseStation     the station, at run end
 
   WHY IT EXISTS
   -------------
@@ -85,7 +85,7 @@
 
   THE TRANSACTION BOUNDARY
   ------------------------
-  *** THE CALLER OWNS THE TRANSACTION. *** Same contract as united_db.dbo.FlatWire_CheckInRod,
+  *** THE CALLER OWNS THE TRANSACTION. *** Same contract as FlatWireDB.dbo.FlatWire_CheckInRod,
   and for the same reason: this runs inside the one transaction that also writes FlatWireRun and
   RodCheckin, and calls FlatWire_CheckInRod at the end of it. Asserted (55001) rather than
   assumed, because a caller that forgets leaves a mirror row with no run attached to it.

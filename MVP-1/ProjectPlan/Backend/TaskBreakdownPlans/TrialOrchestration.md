@@ -1,7 +1,7 @@
 # Six-Screen Trial Run — Execution Orchestration (30 Sep 2026)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — `G6` closed in §4; its verification residual added as a separate row *(first issue, same day)*
+**Last Updated:** August 25, 2026 — **trial controllers 8 → 7, five of which serve a screen** (`FW-138` `P-53`), with a warning that DB2's rod scan has no endpoint until `P-54` closes *(previously August 15, 2026 — `G6` closed in §4; its verification residual added as a separate row *(first issue, same day)*)*
 **Document Type:** Execution index and story map for the 30 Sep trial run
 **Status:** Active — **the trial-scope companion to [Orchestration.md](Orchestration.md)**
 **Owner:** Delivery lead, across all four streams
@@ -90,7 +90,7 @@ template** to work from anyway.
 | Stream | Stories | h |
 |---|---|---|
 | **FE** | `FW-N03` · `FW-130` · `FW-131` · `FW-132` · **`FW-133` 75** · `FW-134` | 139 |
-| **BE** | [FW-N04](FW-N04-FlatWire-Solution-Skeleton.md) · [FW-138](FW-138-Fifteen-Thin-Controllers.md) *(8 controllers)* · [FW-139](FW-139-MediatR-Registration-And-Pipeline-Behaviours.md) · [FW-140](FW-140-DI-Registration-And-Stub-Swap.md) · [FW-141](FW-141-Repository-Layer.md) · [FW-142](FW-142-Dapper-EF-And-FlatWireDbContext.md) · [FW-143](FW-143-Serilog-And-Audit-Log.md) · [FW-144](FW-144-Configuration-Binding.md) · [FW-145](FW-145-JWT-And-Role-Policies.md) · [FW-146](FW-146-Exception-Middleware-And-Envelope.md) · [FW-147](FW-147-FluentValidation-Value-Objects-And-Enums.md) · [FW-148](FW-148-Health-Checks.md) · [FW-207](FW-207-Domain-Model.md) · [FW-208](FW-208-Domain-Events-Post-Commit-Dispatch.md) | 145 |
+| **BE** | [FW-N04](FW-N04-FlatWire-Solution-Skeleton.md) · [FW-138](FW-138-Fifteen-Thin-Controllers.md) *(7 controllers, `P-53`)* · [FW-139](FW-139-MediatR-Registration-And-Pipeline-Behaviours.md) · [FW-140](FW-140-DI-Registration-And-Stub-Swap.md) · [FW-141](FW-141-Repository-Layer.md) · [FW-142](FW-142-Dapper-EF-And-FlatWireDbContext.md) · [FW-143](FW-143-Serilog-And-Audit-Log.md) · [FW-144](FW-144-Configuration-Binding.md) · [FW-145](FW-145-JWT-And-Role-Policies.md) · [FW-146](FW-146-Exception-Middleware-And-Envelope.md) · [FW-147](FW-147-FluentValidation-Value-Objects-And-Enums.md) · [FW-148](FW-148-Health-Checks.md) · [FW-207](FW-207-Domain-Model.md) · [FW-208](FW-208-Domain-Events-Post-Commit-Dispatch.md) | 145 |
 | **RT** | `FW-135` · `FW-136` · `FW-137` *(Angular)* · [FW-080](FW-080-FlatWireHub.md) · [FW-149](FW-149-IFlatWireClient.md) | 60 |
 | **DB** | ~~`FW-002`~~ *(cancelled, `D-32`)* · `FW-152` · `FW-005` · `FW-004` · `FW-006` · **`FW-007` 31** | 65 *(62 after `D-32`; published figure held — see `[TRP §2.1]`)* |
 
@@ -129,13 +129,20 @@ Not reduced quality — **reduced surface**. Each has a plan section saying so.
 
 | | Trial | MVP-1 | Where |
 |---|---|---|---|
-| Controllers | **8**, of which only **6** serve a screen | 15 | [FW-138 §3.0a](FW-138-Fifteen-Thin-Controllers.md) |
+| Controllers | **7**, of which only **5** serve a screen | 14 | [FW-138 §3.0a](FW-138-Fifteen-Thin-Controllers.md) |
 | OPC ingest | [FW-203](FW-203-OPC-Feed-Simulator.md) simulator | [FW-N05](FW-N05-OPC-Ingest-And-Bounded-Channel.md) real | [FW-N05 §1.1](FW-N05-OPC-Ingest-And-Bounded-Channel.md) |
 | Check-in | **no `RodStaging`** | staged-row consumption | [FW-157 §2.3](FW-157-CheckIn-Rod-And-CheckInService.md) |
 | Resume | 3 of 4 outcomes; *Check out rod* disabled | four | [FW-170 §2.2](FW-170-Pause-Resume-And-RunControlService.md) |
 | Weld markers | layer built, **renders empty** | populated | [FW-172 §1.1](FW-172-Run-Event-Markers.md) |
 | Supervisor notify | **transient** — `FW-175` deferred | durable queue | [FW-177 §3](FW-177-Exception-Broadcasts.md) |
 | Broadcast loop · `PLCTagService` | **unreduced, deliberately** | same | [FW-150 §`P-31`](FW-150-Broadcast-Loop.md) |
+
+> ⚠ **`P-53` reaches the trial's opening screen — 25 Aug 2026.** `RodReceivingController` and
+> all three `/rod/**` endpoints leave the service, and **DB2 rod check-in scans a rod**: the
+> scan was served by `GET /rod/{alpha}`, *"everything staging and check-in need in one round
+> trip"* (`[API §4.3]`). The trial therefore has no scan validation, no carry-forward gate
+> (`FR-043` needs `footageRunToDate`) and no station switching (`Q24` needs `scheduledLineId`)
+> until `[API]` re-homes them — `FW-138`'s `P-54`. **Settle it before T1 is scheduled.**
 
 > **`FW-150` and `FW-151` are not reduced** precisely so the real ingest drops in behind them
 > unchanged. **If either can tell the feed is simulated, the substitution has failed.**

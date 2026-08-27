@@ -6,7 +6,7 @@
 
 ---
 
-> **⚠ If you came here looking for `02_Schedule` or `FlatWire_SampleData_Schedule.sql` — they are in the MVP-1 runner now. `06b` and `07b` no longer exist at all: they were folded into `06` and `07` on 23 Aug 2026.** Nothing is missing and there is no second chain to hunt for. `FlatWire_DDL_RunAll.sql` builds a **complete 32-table `FlatWireDB`** on its own.
+> **⚠ If you came here looking for `02_Schedule` or `FlatWire_SampleData_Schedule.sql` — they are in the MVP-1 runner now. `06b` and `07b` no longer exist at all: they were folded into `06` and `07` on 23 Aug 2026.** Nothing is missing and there is no second chain to hunt for. `FlatWire_DDL_RunAll.sql` builds a **complete 33-table `FlatWireDB`** on its own.
 
 ## What is here — one object
 
@@ -50,11 +50,15 @@ sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_RunAll_MVP2.sql
 
 SQLCMD mode is required (`:r` includes). In SSMS use **Query → SQLCMD Mode**.
 
-**Verified on a live deploy, 15 Aug 2026** — teardown → `RunAll` → idempotent re-run:
+**The MVP-1 runner builds the whole database on its own** — teardown → `RunAll` → idempotent
+re-run, verified on a live deploy. ⚠ **The object counts are not restated here.** `[DBD §6.2]` is
+the defining site; check against it, or run
+[`Tools/verify_schema_counts.py`](../../../Tools/verify_schema_counts.py).
 
-```
-33 tables · 55 foreign keys · 69 index statements · 1 procedure · 1 trigger
-```
+*This block published `33 tables · 55 foreign keys · 69 index statements · 1 procedure · 1 trigger`
+against a "verified 15 Aug 2026" date until 26 Aug 2026 — a combination that never existed on any
+date: 33 arrived with `Q60`'s `SpoolConfiguration` merge on 23 Aug and the index count moved to 70
+with `Q89` on 26 Aug, while the 15 Aug build had neither.*
 
 `sp_ShiftSummary` is **absent** from that database, which is correct.
 

@@ -415,7 +415,7 @@ Requirements `FR-541`–`FR-560` (`[REQ §5.28]`), rule codes `ORD003`–`ORD017
 
 **The DB rows use `[DE §1]`'s standard 0.60, not §3d's 0.75.** §3d argued upward because that procedure was
 eight writes in one transaction against a schema nobody had described. Here the DDL is **already written,
-deployed and verified on the shared instance** — 33 tables · 55 FKs · 69 index statements, from a live
+deployed and verified on the shared instance** — 33 tables · 55 FKs · 70 index statements, from a live
 teardown-free deploy plus an idempotent re-run — so the remaining DB work is genuinely conventional and the
 standard factor applies.
 
@@ -485,6 +485,45 @@ not achievable at any plausible team size and that the full descope ladder recov
 Adding 116 h to a plan already 3,186 h against that window does not change the conclusion; it removes
 another 14.5 dev-days of slack that were not there. **No total in §3, §3b, §3c or §3d has been edited.**
 
+
+---
+
+## 3g. `FW-231` — register every flat wire alpha in the shared coil master, additive
+
+**Change `[N]` (26 Aug 2026) makes every alpha mint pass a blank ignore list**, relying on
+`CommonDB.dbo.GenerateCoilAlpha`'s own sweep to find prior siblings. That works only for alphas that
+reach the shared schema — and **nothing writes an FL1 segment alpha there.** `FW-231` is that writer.
+Registers **`OI-138`** and **`G54`**; design of record `[RodOrderAllocation.md §2.4/§2.8]`.
+
+⚠ **ADDITIVE. Nothing below re-derives a published total** — `[CE §3]`'s **3,186 h MVP-1** and the
+`§3b` apportionment are untouched, and `§3c`–`§3f` are untouched. Read this sheet **with** them.
+
+| Stream | Hours | What |
+|---|---:|---|
+| DB | **12** | The writer itself, at spool completion. One `proddb..coils` row per segment alpha, minted and inserted in one transaction with the `THROW 51011` re-check under `UPDLOCK, HOLDLOCK` — the pattern `FlatWire_CompleteCoilOnSkid` already uses |
+| BE | **6** | Wire it into `POST /spool/complete`, and surface the failure: a leaked name is worse than a refused spool |
+| | **18 h** | **Total, additive to 3,186 h → 3,204 h MVP-1** *(stated here only; `[CE §3]` is not edited)* |
+
+**Why 12 h on the database side and not 4.** The insert is trivial; **the three decisions around it
+are not**, and each is a way to get it wrong quietly:
+
+1. ⚠ **`coil_status`.** `D-32` bars a **new** shared value — `INFLAT` is `FlatWireDB`-local by
+   decision — so the segment row must take an **existing** one, and the output coil's own status is
+   *still open* as `Q35`. Choosing badly puts flat wire segments into some other module's report.
+2. ⛔ **Tonnage multiplication — the one that would reach the client.** Rod, segments and coils all
+   group flat under the six-character root through `coil_link_master_coil`. A report that sums a
+   rod's children would count **one rod's 4,000 lb three times**. Finding which reports do that is
+   most of the 12 h, and it is investigation, not coding.
+3. **Atomicity.** Mint then insert, in one transaction, or a crash leaks an alpha that the sweep will
+   never reissue and nothing owns.
+
+⛔ **This is not optional and it is not deferrable.** It **gates `FW-230`**, and through it every FL1
+alpha in the design of record. Built alone, `FW-230` reissues `R00001A` on every spool.
+
+⚠ **Not sized here: `OI-139`.** If an FL2-standalone spool can arrive with **no** segment at all, its
+coils have neither a segment nor a rod to root on, and that is a design gap rather than an estimating
+one. Sizing it before that is answered would be a guess presented as an estimate — the same reason
+`§3f` carries no hours.
 
 ## 4. Capacity model
 
