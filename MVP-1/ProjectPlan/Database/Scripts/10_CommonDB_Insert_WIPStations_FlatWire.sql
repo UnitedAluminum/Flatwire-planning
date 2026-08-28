@@ -792,7 +792,7 @@ GO
      FL3 clients with them. Because Id is an IDENTITY, the numbers differ per environment.
 
   4. LinkURL is seeded '' to match every existing row. If the flat wire shopfloor screens are
-     meant to be reachable from the shared machine-config launcher, the flat-wire-shopfloor route
+     meant to be reachable from the shared machine-config launcher, the flat-wire route
      goes here once the Angular library has one.
 
   5. CommonMenuOptions / CommonButtons hold the shared hamburger-menu items, keyed by

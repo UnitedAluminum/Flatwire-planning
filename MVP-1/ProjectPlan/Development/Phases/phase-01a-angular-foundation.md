@@ -7,7 +7,7 @@
 ---
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-08-15 — **`G6`/`OI-37` provisioning question closed**: the six roles exist as JWT claims on `ClaimTypes.Role`; the entry's *verification* half survives against the unmapped claim values
+**Last Updated:** 2026-08-28 — **the scaffold command gained `--standalone=false`** (the setup table's *Project architecture* row): without it the Angular 20 library schematic emits a standalone entry point, and every component in `ual-angular` is explicitly `standalone: false`. Earlier the same day the library was renamed **`flat-wire-shopfloor` → `flat-wire`** across this file (objective, setup table, exit criterion 1) with the repository-wide sweep. *(previously 2026-08-15 — **`G6`/`OI-37` provisioning question closed**: the six roles exist as JWT claims on `ClaimTypes.Role`; the entry's *verification* half survives against the unmapped claim values)*
 **Status:** **Ready to build — but the 14 Aug gate was not met**
 **Layer:** Angular frontend (`ual-angular`)
 **Owner:** **FE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
@@ -19,7 +19,7 @@
 > **`[RM]` records that 30 Sep is now a trial-run date, not an MVP-1 feature-complete date.** `[TRP]` carries 1A at **139 h of pure FE** and requires it to finish inside T1 — it gates every screen.
 
 ## Objective
-Stand up a reusable, authenticated, routable `flat-wire-shopfloor` Angular library so every later
+Stand up a reusable, authenticated, routable `flat-wire` Angular library so every later
 workflow phase is pure feature work with no further infrastructure lift — talking to the backend via
 a DI-swappable **real/mock** client and a purpose-built SignalR service.
 
@@ -32,8 +32,8 @@ a DI-swappable **real/mock** client and a purpose-built SignalR service.
 
 | Setup activity | Concrete deliverable |
 |---|---|
-| **Project architecture** | New library `flat-wire-shopfloor` (prefix `fw`) via `ng generate library flat-wire-shopfloor --prefix=fw` → `projects/flat-wire-shopfloor/`; registered in `angular.json` + `tsconfig` paths; added to the `build:shop-floor` npm chain (build-ordering only — **no** UI reuse from other libraries in the chain, per `[ARC §2.2]`) |
-| **Folder structure** | `src/lib/{components,components/shared,services,models,guards,styles}` + `flat-wire-shopfloor.module.ts`, `flat-wire-shopfloor-routing.ts`, `public-api.ts` (standard Angular-library layout — **not** copied from any existing feature library) |
+| **Project architecture** | New library `flat-wire` (prefix `fw`) via `ng generate library flat-wire --prefix=fw --standalone=false` → `projects/flat-wire/` — ⚠ **`--standalone=false` is required, not stylistic**: every component in `ual-angular` is explicitly `standalone: false`, and the flag is what makes the schematic emit the NgModule instead of a standalone entry point; registered in `angular.json` + `tsconfig` paths; added to the `build:shop-floor` npm chain (build-ordering only — **no** UI reuse from other libraries in the chain, per `[ARC §2.2]`) |
+| **Folder structure** | `src/lib/{components,components/shared,services,models,guards,styles}` + `flat-wire.module.ts`, `flat-wire-routing.ts`, `public-api.ts` (standard Angular-library layout — **not** copied from any existing feature library) |
 | **Shared services (consume only)** | `api-gateway.service`, `app-config.service`, `login.service` + `login-api.service`, `token-interceptor.service`, `correlation-id-interceptor` + `correlation-id.service`, `error-handler.service` + `global-error-handler-api.service`, `ui-log.service`, `notification.service`, `subscription.service`, `print-export.service`, `util.service`. **Do not rebuild these; do not copy any feature-library UI.** |
 | **Routing** | Lazy-loaded `FLAT_WIRE_ROUTES` under `/flat-wire`; per-line routes e.g. `/flat-wire/line/:lineId/checkin/rod`, `/flat-wire/line/FL2/checkin/spool`, `/flat-wire/line/:lineId/run/active` |
 | **Layout** | Shell layout component: header (line context + operator + clock), sidebar nav to all dashboards, `alert-banner` slot; fixed **1280×1024** shopfloor canvas |
@@ -66,7 +66,7 @@ a DI-swappable **real/mock** client and a purpose-built SignalR service.
 - OnPush + outside-NgZone verified: streaming a mock trace does not trigger a change-detection storm.
 
 ## Acceptance criteria (exit)
-1. `flat-wire-shopfloor` builds, lints, and is reachable at `/flat-wire` behind `FlatWireAuthGuard`.
+1. `flat-wire` builds, lints, and is reachable at `/flat-wire` behind `FlatWireAuthGuard`.
 2. Shell layout renders on the 1280×1024 canvas in both light and dark; all `--color-*` tokens resolve (no `--fw-*` anywhere).
 3. DI swaps real↔mock API by `useMockData`; mock returns the seed fixtures via the `{success,data,errors}` envelope.
 4. `MockSignalRService` drives a `gauge-trace-chart` live (rAF-throttled, OnPush) with reconnect + group re-join simulated.

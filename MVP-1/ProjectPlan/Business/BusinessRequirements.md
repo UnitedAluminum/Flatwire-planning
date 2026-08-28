@@ -90,7 +90,7 @@ flowchart LR
     SCH["Scheduling<br/>order → line booking, op letter F"]
   end
   subgraph FW["Flat Wire Mill module — this SRS"]
-    UI["flat-wire-shopfloor<br/>Angular library"]
+    UI["flat-wire<br/>Angular library"]
     API["FlatWire.API<br/>.NET 8 microservice"]
     DB[("FlatWireDB<br/>33 tables")]
   end

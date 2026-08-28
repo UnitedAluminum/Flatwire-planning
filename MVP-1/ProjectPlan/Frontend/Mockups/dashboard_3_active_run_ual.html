@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<title>Dashboard 3 — Active Run Monitor · FL1 (UAL app styling)</title>
+
+<!--
+  ═══════════════════════════════════════════════════════════════════════════════
+  COMPARISON BUILD — this screen is dashboard_3_active_run.html rendered in the
+  HOST APPLICATION's CSS instead of the flat wire design-token system.
+
+  Same screen, same content, same behaviour. What changes is the styling
+  vocabulary and the canvas:
+
+    ORIGINAL                              THIS BUILD
+    flat-wire-shopfloor.styles.css        ual-app.styles.css
+    29,568 bytes · 84 classes             318,369 bytes · 1,559 classes
+    31 --color-* semantic tokens          0 custom properties (Bootstrap --bs-* only)
+    automatic dark mode via              attribute dark mode via
+      @media (prefers-color-scheme)        [data-bs-theme="dark"]
+    1280 × 1024  (5:4)                    1920 × 1080  (16:9)
+
+  ual-app.styles.css is generated, not hand-written:
+    cd c:\UAL\Second-Branch\ual-angular
+    npx sass --no-source-map --load-path=node_modules src/styles/styles.scss \
+      ../../Flatwire-planning/MVP-1/ProjectPlan/Frontend/Mockups/ual-app.styles.css
+  It is the real thing — Bootstrap 5.3.8, _colors.scss, _dynamic-classes.scss and
+  the app's 653 lines of global overrides.
+
+  THREE THINGS THE APP'S CSS CANNOT DO ON ITS OWN, all visible here:
+
+  1. It sets  body { font-family: Verdana !important; font-size: 12px !important }
+     and  html, body { text-align: center }.  12px is BELOW the 14px shopfloor
+     legibility floor, so §"containment" below re-declares all three for this
+     screen's subtree. A direct declaration beats an inherited !important.
+
+  2. It has NO prefers-color-scheme support. Dark mode here is an ADDITION —
+     see the theme script at the foot of the file.
+
+  3. It has no monospace in its visual language, so the numeric read-outs fall
+     back to Bootstrap's compiled-in mono stack via --font-mono.
+
+  flat-wire-fit.js is deliberately NOT loaded: it hard-codes DESIGN_W = 1280 /
+  MIN_H = 1024 and would letterbox this 1920 × 1080 page incorrectly. The app has
+  no equivalent, and no story owns building one.
+  ═══════════════════════════════════════════════════════════════════════════════
+-->
+
+<!-- Load order mirrors angular.json: FontAwesome, then the app bundle. -->
+<link rel="stylesheet" href="fontawesome.app.css">
+<link rel="stylesheet" href="ual-app.styles.css">
+<!-- Tokens + .gb-* chrome the seven shared dialog scripts need. See the file header. -->
+<link rel="stylesheet" href="fw-app-compat.css">
+
+<style>
+  /* ─────────────────────────────────────────────────────────────────────────
+     1. CONTAINMENT — mandatory, not cosmetic.
+     The app bundle sets Verdana / 12px / centre on body with !important. A
+     *direct* declaration on this subtree beats an *inherited* !important, which
+     is exactly the technique FW-130 step 3 specifies for the real Angular shell.
+     ───────────────────────────────────────────────────────────────────────── */
+  html, body {
+    height: 1080px;
+    width: 1920px;
+    margin: 0;
+    overflow: hidden;
+    text-align: left;                       /* app sets center */
+    background: var(--bs-body-bg);
+  }
+  .fw-screen,
+  .fw-screen input,
+  .fw-screen select,
+  .fw-screen textarea,
+  .fw-screen button,
+  .fw-screen option,
+  .fw-screen table {
+    font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+    font-size: 14px;                        /* the shopfloor floor; app says 12px */
+    text-align: left;
+  }
+  .fw-screen { color: var(--bs-body-color); }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     2. The fixed shopfloor canvas. Bootstrap has no concept of a fixed page
+        budget, so this is unavoidable custom CSS.
+        1080 = 54 topbar (injected) + 20 padding + 20 gaps + 72 header
+               + 810 main + 104 actions
+        Within main, the trace column needs 2 x (39 header + 320 chart + 28 footer)
+        + 10 gap = 784, so it fits 810 with slack rather than fighting for it.
+     ───────────────────────────────────────────────────────────────────────── */
+  .dashboard { display: flex; flex-direction: column; height: 1080px; overflow: hidden; }
+  .fw-screen { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 8px 12px 12px; gap: 10px; }
+  .fw-header  { height: 72px;  flex: 0 0 auto; }
+  .fw-main    { flex: 1 1 auto; min-height: 0; }
+  .fw-actions { height: 104px; flex: 0 0 auto; }
+  .fw-col { display: flex; flex-direction: column; gap: 10px; min-height: 0; height: 100%; }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     3. Chart plumbing — an SVG needs an explicit box to fill. Also unavoidable.
+     ───────────────────────────────────────────────────────────────────────── */
+  /* ⚠ Pinned, not flexible, and that is the point: preserveAspectRatio="none"
+     scales the SVG's own font-size along with the box, so a viewBox that does not
+     match the rendered pixel box renders the axis labels BELOW the 14px floor.
+     1232 = 1896 inner − col-8 padding 16 − card-body p-2 16.  k = 1.0 on both axes. */
+  .fw-chart { position: relative; flex: 0 0 auto; height: 320px; }
+  .fw-chart svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .fw-axis { font-size: 14px; fill: var(--bs-secondary-color); }
+  .fw-grid { stroke: var(--bs-border-color); stroke-width: 1; }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     4. The pulsing run-state dot. @keyframes has no Bootstrap equivalent.
+     ───────────────────────────────────────────────────────────────────────── */
+  .fw-dot { width: 9px; height: 9px; border-radius: 50%; background: currentColor; display: inline-block; animation: fwPulse 2s ease-in-out infinite; }
+  @keyframes fwPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  /* Scoped niceties that keep the 1080 budget. */
+  .fw-kv { margin: 0; }
+  .fw-kv td { padding: 3px 6px; border: 0; vertical-align: middle; }
+  .fw-kv td:first-child { color: var(--bs-secondary-color); white-space: nowrap; }
+  .fw-kv td:last-child  { text-align: right; font-weight: 700; white-space: nowrap; }
+  .fw-num { font-family: var(--font-mono); }
+  .fw-scroll { overflow: auto; min-height: 0; }
+  .fw-cardhead { padding: 5px 10px; }
+  .fw-tight .accordion-button { padding: 6px 10px; font-size: 14px; font-weight: 700; }
+  .fw-tight .accordion-body { padding: 6px; }
+  /* The app's global rule `table tbody tr td { border: 1px solid $disable-grey }`
+     fights Bootstrap's borderless tables — re-assert for our key/value grids. */
+  .fw-kv tbody tr td { border: 0 !important; }
+
+  /* ⚠ Bootstrap's .badge is --bs-badge-font-size: 0.75em → 10.5px in a 14px subtree,
+     which is below the shopfloor floor. One rule beats tagging 13 badges by hand. */
+  .fw-screen .badge { font-size: 14px; }
+  .fw-screen small, .fw-screen .small { font-size: 14px; }
+
+  /* ⚠ The app forces EVERY button to #343a40 / #fff / #0ff icon on hover, with
+     !important (ual-app.styles.css: .btn:not(:disabled):hover). That is authentic and
+     is left in place for the neutral buttons — but it strips Complete Run of its green
+     and turns its tick cyan, so the two CTAs get their own hue back. This is the ONE
+     place this build deviates from the app's CSS, and it is deliberate. */
+  .fw-screen .btn-success:not(:disabled):hover,
+  .fw-screen .btn-success:not(:disabled):focus-visible {
+    color: #fff !important;
+    background-color: var(--bs-success) !important;
+    border-color: var(--bs-success) !important;
+    filter: brightness(0.88);
+  }
+  .fw-screen .btn-success:not(:disabled):hover i { color: #fff !important; }
+  body.fw-charts-collapsed .fw-tracecol { display: none !important; }
+</style>
+</head>
+
+<body>
+
+<div class="dashboard">
+<div class="fw-screen">
+
+  <!-- ═══ RUN HEADER ═══ 72px -->
+  <div class="card border-0 shadow-sm fw-header header">
+    <div class="card-body d-flex align-items-center gap-3 py-2 px-3 bg-semi-dark-blue text-white rounded">
+      <span class="badge text-bg-success fs-6 d-flex align-items-center gap-2 py-2">
+        <span class="fw-dot"></span> FL1 RUNNING
+      </span>
+      <span class="fs-5 fw-bold">Active Run Monitor</span>
+      <span class="vr mx-1 opacity-50"></span>
+      <span class="fs-15">Order <strong class="fw-num">FW-00421</strong></span>
+      <span class="fs-15">Alpha <strong class="fw-num">R00042</strong></span>
+      <span class="fs-15">Alloy <strong>1100</strong></span>
+      <span class="vr mx-1 opacity-50"></span>
+      <span class="fs-15">Target <strong class="fw-num">0.110&Prime; &times; 0.625&Prime;</strong></span>
+      <span class="pause-timer-badge" id="pause-timer-badge">
+        <i class="fa-solid fa-pause"></i>
+        Paused &nbsp;<span class="fw-num" id="pause-elapsed">00:00</span>
+      </span>
+      <span class="ms-auto"></span>
+      <div class="header-meta"></div>
+    </div>
+  </div>
+
+  <!-- ═══ MAIN — traces left (col-8), state rail right (col-4) ═══ 800px -->
+  <div class="row g-3 fw-main">
+
+    <!-- ── TRACES ───────────────────────────────────────────────────────── -->
+    <div class="col-8 fw-col fw-tracecol">
+
+      <!-- Gauge -->
+      <div class="card border-0 shadow-sm fw-col">
+        <div class="card-header bg-semi-dark-blue text-white border-0 d-flex align-items-center fw-cardhead">
+          <span class="badge bg-secondary me-2 p-2"><i class="fa-solid fa-ruler-vertical text-warning fa-2x"></i></span>
+          <span class="fw-bold fs-5">Gauge</span>
+          <span class="ms-2 fs-14 opacity-75">Target 0.110&Prime; &plusmn; 0.002&Prime;</span>
+          <span class="ms-auto d-flex align-items-center gap-2">
+            <span class="fs-5 fw-bold fw-num" id="gauge-value">0.110&Prime;</span>
+            <span class="badge text-bg-success" id="gauge-status">
+              <i class="fa-solid fa-circle-check"></i> In spec
+            </span>
+            <button class="btn btn-sm btn-outline-light" onclick="toggleTraceMax(this)"
+                    title="Maximize" aria-label="Maximize graph">
+              <i class="fa-solid fa-expand"></i>
+            </button>
+          </span>
+        </div>
+        <div class="card-body p-2 fw-chart">
+          <svg viewBox="0 0 1232 320" preserveAspectRatio="none" aria-label="Gauge trace">
+            <line class="fw-grid" x1="70" y1="40"  x2="1217" y2="40"/>
+            <line class="fw-grid" x1="70" y1="95"  x2="1217" y2="95"/>
+            <line class="fw-grid" x1="70" y1="150" x2="1217" y2="150"/>
+            <line class="fw-grid" x1="70" y1="205" x2="1217" y2="205"/>
+            <line class="fw-grid" x1="70" y1="260" x2="1217" y2="260"/>
+
+            <!-- tolerance band: ±0.002 of a 0.012 range = ±16.7% → ±43px of the 260px plot -->
+            <rect x="70" y="113" width="1147" height="74" fill="var(--bs-success)" fill-opacity="0.12"/>
+            <line x1="70" y1="150" x2="1217" y2="150" stroke="var(--bs-success)" stroke-width="1" stroke-dasharray="5 5" opacity="0.75"/>
+
+            <!-- weld marker: rod-to-rod join partway through the window -->
+            <line x1="678" y1="30" x2="678" y2="275" stroke="var(--bs-warning)" stroke-width="1" stroke-dasharray="4 4" opacity="0.9"/>
+            <rect x="600" y="22" width="156" height="24" fill="var(--bs-warning-bg-subtle)" rx="4"/>
+            <text x="678" y="39" text-anchor="middle" fill="var(--bs-warning-text-emphasis)" font-size="14" font-weight="600">R00041 &rarr; R00042</text>
+
+            <path id="gauge-path" d="" stroke="var(--bs-primary)" stroke-width="2" fill="none" stroke-linejoin="round"/>
+            <circle id="gauge-dot" cx="1217" cy="150" r="4" fill="var(--bs-primary)">
+              <animate attributeName="r" values="4;7;4" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+
+            <text class="fw-axis" x="62" y="45"  text-anchor="end">0.116</text>
+            <text class="fw-axis" x="62" y="100" text-anchor="end">0.113</text>
+            <text class="fw-axis" x="62" y="155" text-anchor="end">0.110</text>
+            <text class="fw-axis" x="62" y="210" text-anchor="end">0.107</text>
+            <text class="fw-axis" x="62" y="265" text-anchor="end">0.104</text>
+
+            <text class="fw-axis" x="70"   y="298">-5m</text>
+            <text class="fw-axis" x="299"  y="298" text-anchor="middle">-4m</text>
+            <text class="fw-axis" x="529"  y="298" text-anchor="middle">-3m</text>
+            <text class="fw-axis" x="758"  y="298" text-anchor="middle">-2m</text>
+            <text class="fw-axis" x="988"  y="298" text-anchor="middle">-1m</text>
+            <text class="fw-axis" x="1217" y="298" text-anchor="end" font-weight="600">now</text>
+          </svg>
+        </div>
+        <div class="card-footer bg-body-tertiary d-flex align-items-center gap-4 fs-14 py-1">
+          <span>Min <strong class="fw-num" id="gauge-min">0.108&Prime;</strong></span>
+          <span>Max <strong class="fw-num" id="gauge-max">0.112&Prime;</strong></span>
+          <span>Avg <strong class="fw-num" id="gauge-avg">0.110&Prime;</strong></span>
+          <span class="ms-auto">Deviation <strong class="fw-num text-success" id="gauge-dev">0.000&Prime;</strong></span>
+        </div>
+      </div>
+
+      <!-- Width -->
+      <div class="card border-0 shadow-sm fw-col">
+        <div class="card-header bg-semi-dark-blue text-white border-0 d-flex align-items-center fw-cardhead">
+          <span class="badge bg-secondary me-2 p-2"><i class="fa-solid fa-ruler-horizontal text-warning fa-2x"></i></span>
+          <span class="fw-bold fs-5">Width</span>
+          <span class="ms-2 fs-14 opacity-75">Target 0.625&Prime; &plusmn; 0.005&Prime;</span>
+          <span class="ms-auto d-flex align-items-center gap-2">
+            <span class="fs-5 fw-bold fw-num" id="width-value">0.625&Prime;</span>
+            <span class="badge text-bg-success" id="width-status">
+              <i class="fa-solid fa-circle-check"></i> In spec
+            </span>
+            <button class="btn btn-sm btn-outline-light" onclick="toggleTraceMax(this)"
+                    title="Maximize" aria-label="Maximize graph">
+              <i class="fa-solid fa-expand"></i>
+            </button>
+          </span>
+        </div>
+        <div class="card-body p-2 fw-chart">
+          <svg viewBox="0 0 1232 320" preserveAspectRatio="none" aria-label="Width trace">
+            <line class="fw-grid" x1="70" y1="40"  x2="1217" y2="40"/>
+            <line class="fw-grid" x1="70" y1="95"  x2="1217" y2="95"/>
+            <line class="fw-grid" x1="70" y1="150" x2="1217" y2="150"/>
+            <line class="fw-grid" x1="70" y1="205" x2="1217" y2="205"/>
+            <line class="fw-grid" x1="70" y1="260" x2="1217" y2="260"/>
+
+            <rect x="70" y="113" width="1147" height="74" fill="var(--bs-success)" fill-opacity="0.12"/>
+            <line x1="70" y1="150" x2="1217" y2="150" stroke="var(--bs-success)" stroke-width="1" stroke-dasharray="5 5" opacity="0.75"/>
+
+            <path id="width-path" d="" stroke="var(--bs-primary)" stroke-width="2" fill="none" stroke-linejoin="round"/>
+            <circle id="width-dot" cx="1217" cy="150" r="4" fill="var(--bs-primary)">
+              <animate attributeName="r" values="4;7;4" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+
+            <text class="fw-axis" x="62" y="45"  text-anchor="end">0.640</text>
+            <text class="fw-axis" x="62" y="100" text-anchor="end">0.633</text>
+            <text class="fw-axis" x="62" y="155" text-anchor="end">0.625</text>
+            <text class="fw-axis" x="62" y="210" text-anchor="end">0.618</text>
+            <text class="fw-axis" x="62" y="265" text-anchor="end">0.610</text>
+
+            <text class="fw-axis" x="70"   y="298">-5m</text>
+            <text class="fw-axis" x="299"  y="298" text-anchor="middle">-4m</text>
+            <text class="fw-axis" x="529"  y="298" text-anchor="middle">-3m</text>
+            <text class="fw-axis" x="758"  y="298" text-anchor="middle">-2m</text>
+            <text class="fw-axis" x="988"  y="298" text-anchor="middle">-1m</text>
+            <text class="fw-axis" x="1217" y="298" text-anchor="end" font-weight="600">now</text>
+          </svg>
+        </div>
+        <div class="card-footer bg-body-tertiary d-flex align-items-center gap-4 fs-14 py-1">
+          <span>Min <strong class="fw-num" id="width-min">0.620&Prime;</strong></span>
+          <span>Max <strong class="fw-num" id="width-max">0.630&Prime;</strong></span>
+          <span>Avg <strong class="fw-num" id="width-avg">0.625&Prime;</strong></span>
+          <span class="ms-auto">Deviation <strong class="fw-num text-success" id="width-dev">+0.001&Prime;</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STATE RAIL ───────────────────────────────────────────────────── -->
+    <div class="col-4 fw-col">
+
+      <!-- Machine -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-semi-dark-blue text-white border-0 d-flex align-items-center fw-cardhead">
+          <span class="badge bg-secondary me-2 p-2"><i class="fa-solid fa-industry text-warning fa-2x"></i></span>
+          <span class="fw-bold fs-5">Machine</span>
+          <span class="badge text-bg-success ms-auto">FL1 Running</span>
+        </div>
+        <div class="card-body p-2">
+          <table class="table table-sm table-borderless fw-kv fs-15">
+            <tbody>
+              <tr><td>Run time</td><td><span class="fw-num" id="run-time">02:14:37</span></td></tr>
+              <tr><td>Speed</td><td><span class="fw-num" id="speed-val">1,620</span> <span class="fw-normal opacity-75">FPM</span></td></tr>
+              <tr><td>Footage</td><td><span class="fw-num" id="footage-val">42,795</span> <span class="fw-normal opacity-75">ft</span></td></tr>
+              <tr><td>Spool <span class="fw-num">SP-00031</span></td>
+                  <td><span class="fw-num" id="fw-spool-lb">1,460</span> <span class="fw-normal opacity-75">/ <span class="fw-num" id="fw-spool-target">2,000</span> lb</span></td></tr>
+              <tr><td>Lube temp</td><td><span class="fw-num">72</span> <span class="fw-normal opacity-75">&deg;F</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Payoffs -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-semi-dark-blue text-white border-0 d-flex align-items-center fw-cardhead">
+          <span class="badge bg-secondary me-2 p-2"><i class="fa-solid fa-arrows-spin text-warning fa-2x"></i></span>
+          <span class="fw-bold fs-5">Payoffs</span>
+        </div>
+        <div class="card-body p-2 d-flex flex-column gap-2">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="badge text-bg-primary">P1</span>
+              <span class="fw-bold fw-num">R00042</span>
+              <span class="badge text-bg-success ms-auto">Running</span>
+            </div>
+            <div class="progress" style="height:18px" role="progressbar" aria-label="Payoff 1 consumption"
+                 aria-valuenow="62" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar bg-success" id="payoff1-bar" style="width:62%"></div>
+            </div>
+            <div class="fs-14 opacity-75 mt-1">
+              <span class="fw-num" id="payoff1-pct">62%</span> &middot;
+              <span class="fw-num" id="payoff1-weight">3,230 lb</span> of 8,500 lb
+            </div>
+          </div>
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="badge text-bg-secondary">P2</span>
+              <span class="fw-bold fw-num">R00043</span>
+              <span class="badge text-bg-secondary ms-auto">Ready</span>
+            </div>
+            <div class="progress" style="height:18px" role="progressbar" aria-label="Payoff 2 consumption"
+                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar bg-secondary" style="width:0%"></div>
+            </div>
+            <div class="fs-14 opacity-75 mt-1">Staged &middot; <span class="fw-num">8,480 lb</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Components -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-semi-dark-blue text-white border-0 d-flex align-items-center fw-cardhead">
+          <span class="badge bg-secondary me-2 p-2"><i class="fa-solid fa-gears text-warning fa-2x"></i></span>
+          <span class="fw-bold fs-5">Components</span>
+          <span class="ms-auto fs-14 fw-num opacity-75">PS-1100-FL1-003</span>
+        </div>
+        <div class="card-body p-2">
+          <table class="table table-sm table-borderless fw-kv fs-15">
+            <tbody>
+              <tr><td><i class="fa-solid fa-circle text-success me-2 fs-14"></i>DB1</td><td class="fw-num">Die 0.340&Prime;</td></tr>
+              <tr><td><i class="fa-solid fa-circle text-success me-2 fs-14"></i>DB2</td><td class="fw-num">Die 0.310&Prime;</td></tr>
+              <tr><td><i class="fa-solid fa-circle text-success me-2 fs-14"></i>FM1</td><td class="fw-num">Gap 0.112&Prime; &middot; W 0.630&Prime;</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Rod / Order information — Bootstrap accordion replaces the bespoke toggle -->
+      <div class="accordion accordion-flush fw-tight fw-scroll border rounded" id="fw-info">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" onclick="fwAcc(this,'fw-rod')"
+                    aria-expanded="false" aria-controls="fw-rod">
+              <i class="fa-solid fa-barcode me-2 text-secondary"></i> Rod Information
+            </button>
+          </h2>
+          <div class="accordion-collapse collapse" id="fw-rod">
+            <div class="accordion-body">
+              <table class="table table-sm table-bordered table-striped table-hover mb-0 fs-14">
+                <thead class="table-dark">
+                  <tr><th>Rod No</th><th>Vendor</th><th>Alloy</th><th>Temper</th><th>Gauge</th><th>Weight</th><th>Next Op</th><th>Temp</th></tr>
+                </thead>
+                <tbody>
+                  <tr class="table-info">
+                    <td class="fw-num">R00042</td><td>Southwire</td><td>1100</td><td>F</td>
+                    <td class="fw-num">0.375&Prime;</td><td class="fw-num">8,500 lb</td><td>FM1 Mill</td><td class="fw-num">72&deg;F</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" onclick="fwAcc(this,'fw-order')"
+                    aria-expanded="false" aria-controls="fw-order">
+              <i class="fa-solid fa-file-lines me-2 text-secondary"></i> Order Information
+            </button>
+          </h2>
+          <div class="accordion-collapse collapse" id="fw-order">
+            <div class="accordion-body">
+              <table class="table table-sm table-bordered table-striped table-hover mb-0 fs-14">
+                <thead class="table-dark">
+                  <tr><th>Order No</th><th>Customer</th><th>Due</th><th>Gauge Tol</th><th>Width Tol</th>
+                      <th>Setup W</th><th>Setup G</th><th>Finish</th><th>OD Min&ndash;Max</th>
+                      <th>Max Spool</th><th>Total Spool</th><th>Order Wgt</th></tr>
+                </thead>
+                <tbody>
+                  <tr class="table-info">
+                    <td class="fw-num">FW-00421</td><td>Daddario</td><td class="fw-num">07/21/2026</td>
+                    <td class="fw-num">&plusmn;0.002&Prime;</td><td class="fw-num">&plusmn;0.005&Prime;</td>
+                    <td class="fw-num">0.630&Prime;</td><td class="fw-num">0.110&Prime;</td><td>UU</td>
+                    <td class="fw-num">34.0&Prime;&ndash;38.0&Prime;</td><td class="fw-num">2,000 lb</td>
+                    <td class="fw-num">6,633 lb</td><td class="fw-num">6,000 lb</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ ACTIONS ═══ 104px -->
+  <div class="card border-0 shadow-sm fw-actions">
+    <div class="card-body d-flex align-items-center gap-3 py-2 px-3">
+
+      <div class="d-flex flex-column gap-1">
+        <span class="fs-14 opacity-75 fw-bold text-uppercase">Run events</span>
+        <div class="d-flex gap-2">
+          <button class="btn extra-big bg-dark-subtle fw-bold" id="btn-spc-active-run"
+                  onclick="openSpcCheckpoint(fwRunCtx())">
+            <i class="fa-solid fa-clipboard-check fa-xl text-primary me-2"></i>SPC Checkpoint
+          </button>
+          <button class="btn extra-big bg-dark-subtle fw-bold" id="btn-wip-reject-active-run"
+                  onclick="openWipRejection(fwWipCtx())">
+            <i class="fa-solid fa-triangle-exclamation fa-xl text-warning me-2"></i>WIP Reject
+          </button>
+        </div>
+      </div>
+
+      <span class="vr mx-2"></span>
+
+      <div class="d-flex flex-column gap-1">
+        <span class="fs-14 opacity-75 fw-bold text-uppercase">Go to</span>
+        <div class="d-flex gap-2">
+          <button class="btn extra-big bg-dark-subtle fw-bold" id="btn-die-change-active-run"
+                  onclick="openDieChange(fwRunCtx())">
+            <i class="fa-solid fa-gear fa-xl text-secondary me-2"></i>Die Change
+          </button>
+        </div>
+      </div>
+
+      <span class="ms-auto"></span>
+
+      <div class="d-flex flex-column gap-1">
+        <span class="fs-14 opacity-75 fw-bold text-uppercase">Run control</span>
+        <div class="d-flex gap-2">
+          <button class="btn extra-big bg-dark-subtle fw-bold" id="pause-btn" onclick="openPauseDialog()">
+            <i class="fa-solid fa-pause fa-xl text-dark me-2"></i>Pause run
+          </button>
+          <!-- Checkout needs the line stopped, so pause_run.js enables it on pause. -->
+          <button class="btn extra-big bg-dark-subtle fw-bold" id="checkout-btn" disabled
+                  onclick="openRodCheckout(fwCheckoutCtx())"
+                  title="Pause the run first — checking out a rod needs the line stopped">
+            <i class="fa-solid fa-arrow-up-right-from-square fa-xl text-secondary me-2"></i>Checkout
+          </button>
+          <button class="btn extra-big btn-success fw-bold" id="btn-complete-run-active-run"
+                  onclick="openCompleteConfirm()">
+            <i class="fa-solid fa-check fa-xl me-2"></i>Complete Run
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /.fw-screen -->
+</div><!-- /.dashboard -->
+
+<script>
+/* ── Accordion: Bootstrap markup without Bootstrap's JS bundle ─────────────── */
+function fwAcc(btn, id) {
+  var body = document.getElementById(id);
+  if (!body) return;
+  var open = body.classList.toggle("show");
+  btn.classList.toggle("collapsed", !open);
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+/* ── Maximize a trace card ─────────────────────────────────────────────────── */
+function toggleTraceMax(btn) {
+  var card = btn.closest(".card");
+  if (!card) return;
+  var on = card.classList.toggle("fw-maxed");
+  document.body.classList.toggle("fw-has-maxed", on);
+  var icon = btn.querySelector("i");
+  if (icon) icon.className = on ? "fa-solid fa-compress" : "fa-solid fa-expand";
+  btn.title = on ? "Restore" : "Maximize";
+}
+function restoreTraceMax() {
+  var card = document.querySelector(".card.fw-maxed");
+  if (!card) return;
+  var btn = card.querySelector(".btn-outline-light");
+  if (btn) toggleTraceMax(btn);
+}
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape") restoreTraceMax();
+});
+</script>
+<style>
+  /* Maximized trace — no Bootstrap equivalent for "fill the viewport". */
+  .card.fw-maxed { position: fixed; inset: 40px; z-index: 9990; animation: panelIn 0.22s cubic-bezier(0.4,0,0.2,1); }
+  body.fw-has-maxed::after { content: ""; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 9989; }
+</style>
+
+<script>
+/* ══ Live run context handed to every run-event dialog ══════════════════════
+   Read from the DOM at click time, not captured at load, so a dialog opened at
+   14,000 ft reports the footage on screen.
+
+   ⚠ In the original this was BROKEN: it read #footage-val, which that markup
+   does not contain, so every dialog silently received a hard-coded "12,450 ft".
+   This build carries the id, so the read works.                             */
+function fwRunCtx() {
+  var badge = document.querySelector(".badge.text-bg-success");
+  var m = badge && badge.textContent.match(/FL\d+/);
+  var f = document.getElementById("footage-val");
+  return {
+    line: m ? m[0] : "FL1",
+    orderNo: "FW-00421",
+    alpha: "R00042",
+    runId: "RUN-0118",
+    footage: (f ? f.textContent.trim() : "42,795") + " ft",
+    outputCoil: "FW-00421-C01",
+    operator: "Dave M."
+  };
+}
+
+/* Rod checkout is only reachable while paused, so it reports the footage frozen
+   at that pause — not the live counter. Mode B: the run produced material. */
+function fwCheckoutCtx() {
+  var c = fwRunCtx();
+  return {
+    mode: "b", line: c.line, orderNo: c.orderNo, rodAlpha: c.alpha, payoff: 2, runId: c.runId,
+    footage: (typeof window.fwPauseFootage === "function" && window.fwPauseFootage()) || c.footage,
+    passSchedule: "PS-1100-FL1-003", operator: c.operator
+  };
+}
+
+/* WIP rejection wants the same run described as material rather than as a line. */
+function fwWipCtx() {
+  var c = fwRunCtx();
+  return {
+    materialAlpha: c.alpha, orderNo: c.orderNo, stage: c.line + " · active run",
+    footagePosition: c.footage, runId: c.runId, operator: c.operator, trigger: "mid-run"
+  };
+}
+</script>
+
+<script>
+/* ══ Live simulation ═══════════════════════════════════════════════════════
+   ⚠ The plot geometry is declared ONCE here and the SVG markup above matches it.
+   In the original the same numbers existed in three places — SVG coordinates,
+   JS constants and axis-label text — so any change had to be made three times. */
+(function () {
+  var PLOT = { x0: 70, x1: 1217, y0: 40, y1: 260, n: 100 };
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+  var runStartMs = Date.now() - (2 * 60 * 60 * 1000 + 14 * 60 * 1000 + 37 * 1000);
+  var baseFootage = 42795;
+
+  var gauge = { target: 0.110, yMin: 0.104, yMax: 0.116, tolerance: 0.002, data: [] };
+  var width = { target: 0.625, yMin: 0.610, yMax: 0.640, tolerance: 0.005, data: [] };
+
+  function genInitialTrace(cfg) {
+    var data = [], val = cfg.target;
+    for (var i = 0; i < PLOT.n; i++) {
+      val += (Math.random() - 0.5) * cfg.tolerance * 0.3;
+      val += (cfg.target - val) * 0.08;
+      data.push(val);
+    }
+    return data;
+  }
+  function yMap(val, cfg) {
+    var frac = (cfg.yMax - val) / (cfg.yMax - cfg.yMin);
+    return PLOT.y0 + frac * (PLOT.y1 - PLOT.y0);
+  }
+  function buildPath(cfg) {
+    var step = (PLOT.x1 - PLOT.x0) / (PLOT.n - 1), parts = [];
+    for (var i = 0; i < cfg.data.length; i++) {
+      parts.push((i === 0 ? "M" : "L") + (PLOT.x0 + i * step).toFixed(1) + "," + yMap(cfg.data[i], cfg).toFixed(1));
+    }
+    return parts.join(" ");
+  }
+  function computeStats(cfg) {
+    var min = Infinity, max = -Infinity, sum = 0;
+    for (var i = 0; i < cfg.data.length; i++) {
+      if (cfg.data[i] < min) min = cfg.data[i];
+      if (cfg.data[i] > max) max = cfg.data[i];
+      sum += cfg.data[i];
+    }
+    return { min: min, max: max, avg: sum / cfg.data.length, cur: cfg.data[cfg.data.length - 1] };
+  }
+  function fmt(v) { return v.toFixed(3) + '\u2033'; }
+
+  /* One renderer for both traces — the original had two near-identical copies. */
+  function render(key, cfg) {
+    var el = function (s) { return document.getElementById(key + "-" + s); };
+    var pathEl = el("path"), dotEl = el("dot"), valEl = el("value"), statusEl = el("status");
+    if (!pathEl) return;
+
+    pathEl.setAttribute("d", buildPath(cfg));
+    dotEl.setAttribute("cy", yMap(cfg.data[cfg.data.length - 1], cfg).toFixed(1));
+
+    var stats = computeStats(cfg);
+    valEl.textContent = fmt(stats.cur);
+
+    var dev = stats.cur - cfg.target;
+    var inSpec = Math.abs(dev) <= cfg.tolerance;
+
+    statusEl.className = "badge " + (inSpec ? "text-bg-success" : "text-bg-danger");
+    statusEl.innerHTML = '<i class="fa-solid ' + (inSpec ? "fa-circle-check" : "fa-circle-exclamation") +
+                         '"></i> ' + (inSpec ? "In spec" : "Out of spec");
+    valEl.classList.toggle("text-danger", !inSpec);
+
+    el("min").textContent = fmt(stats.min);
+    el("max").textContent = fmt(stats.max);
+    el("avg").textContent = fmt(stats.avg);
+    var devEl = el("dev");
+    devEl.textContent = (dev >= 0 ? "+" : "") + dev.toFixed(3) + '\u2033';
+    devEl.classList.toggle("text-success", inSpec);
+    devEl.classList.toggle("text-danger", !inSpec);
+  }
+
+  function tick(cfg) {
+    cfg.data.shift();
+    var last = cfg.data[cfg.data.length - 1];
+    cfg.data.push(last + (Math.random() - 0.5) * cfg.tolerance * 0.3 + (cfg.target - last) * 0.06);
+  }
+  function fmtNum(n) { return n.toLocaleString("en-US"); }
+
+  /* ⚠ In the original these three targeted 8 ids that did not exist, so they were
+     silent no-ops. This build carries the ids, so the read-outs are live. */
+  function updateRunTime() {
+    var el = document.getElementById("run-time");
+    if (!el) return;
+    var s = Math.floor((Date.now() - runStartMs) / 1000);
+    el.textContent = pad(Math.floor(s / 3600)) + ":" + pad(Math.floor((s % 3600) / 60)) + ":" + pad(s % 60);
+  }
+  function updateMachineStatus() {
+    var speedEl = document.getElementById("speed-val");
+    if (speedEl) speedEl.textContent = fmtNum(1620 + Math.floor((Math.random() - 0.5) * 14));
+
+    var elapsedMin = (Date.now() - runStartMs) / 60000;
+    var footage = Math.round(baseFootage + Math.max(0, elapsedMin - 134.6) * 1620);
+    var footEl = document.getElementById("footage-val");
+    if (footEl) footEl.textContent = fmtNum(footage);
+
+    var pct = Math.max(0, Math.min(100, 62 - (elapsedMin - 134.6) * 0.05));
+    var consumed = Math.round(8500 * pct / 100);
+    var bar = document.getElementById("payoff1-bar");
+    if (bar) {
+      bar.style.width = pct + "%";
+      bar.className = "progress-bar " + (pct > 25 ? "bg-success" : pct > 10 ? "bg-warning" : "bg-danger");
+      bar.parentElement.setAttribute("aria-valuenow", pct.toFixed(0));
+    }
+    var pp = document.getElementById("payoff1-pct");
+    if (pp) pp.textContent = pct.toFixed(0) + "%";
+    var pw = document.getElementById("payoff1-weight");
+    if (pw) pw.textContent = fmtNum(consumed) + " lb";
+  }
+
+  gauge.data = genInitialTrace(gauge);
+  width.data = genInitialTrace(width);
+  render("gauge", gauge);
+  render("width", width);
+  updateRunTime();
+  updateMachineStatus();
+
+  setInterval(updateRunTime, 1000);
+  setInterval(function () { tick(gauge); tick(width); render("gauge", gauge); render("width", width); }, 2000);
+  setInterval(updateMachineStatus, 3000);
+})();
+</script>
+
+<!-- Run-event dialogs. fw-modal.js carries the shared open/close/ESC/focus-trap
+     plumbing and must load first. All seven are consumed UNMODIFIED — the token
+     shim in fw-app-compat.css is what lets them render in the app's palette. -->
+<script src="fw-modal.js"></script>
+<script src="die_change.js"></script>
+<script src="spc_checkpoint.js"></script>
+<script src="wip_rejection.js"></script>
+<script src="rod_checkout.js"></script>
+<script src="pause_run.js"></script>
+
+<!-- Spool completion alert — 75/90/100% of the order's Max Wgt of Spool at TKUP-1. -->
+<script>
+  var FW_SPOOL_CONFIG = {
+    label: 'Spool', takeup: 'TKUP-1',
+    targetLb: 2000, startLb: 1460,
+    gaugeIn: 0.110, widthIn: 0.625, densityLbIn3: 0.098,
+    speedFpm: 1620, spoolAlpha: 'SP-00031', demo: true,
+    line: 'FL1', stopDwellSec: 5, spoolTareLb: 120,
+    sourceRods: 'R00041, R00042', weldFt: 8120,
+    printer: 'FL1-LBL-01', labelCopies: 2,
+    scaleTolerancePct: 2
+  };
+</script>
+<script src="spool_notification.js"></script>
+
+<script src="flat-wire-topbar.js"></script>
+<!-- flat-wire-fit.js deliberately omitted — see the header comment. -->
+
+<!-- ═══ COMPLETE RUN — confirmation (irreversible) ═══
+     Kept on the shared .gb-modal chrome so it matches the other six dialogs.
+     Its buttons carry Bootstrap classes, so they adopt the app's controls. -->
+<div class="gb-modal-overlay" id="complete-confirm">
+  <div class="gb-modal" style="width:480px;" role="dialog" aria-modal="true" aria-labelledby="cc-title">
+    <div class="gb-modal-head">
+      <div>
+        <div class="gb-modal-title" id="cc-title">Complete this run?</div>
+        <div class="gb-modal-sub">Order FW-00421 &middot; Alpha R00042 &mdash; this finalizes the run and cannot be undone.</div>
+      </div>
+      <button class="gb-modal-close" id="cc-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="gb-modal-body d-flex gap-2 justify-content-end">
+      <button class="btn bg-dark-subtle fw-bold" id="cc-cancel" type="button">Cancel</button>
+      <button class="btn btn-success fw-bold" id="cc-confirm" type="button">
+        <i class="fa-solid fa-check me-2"></i>Complete Run
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var overlay = document.getElementById("complete-confirm");
+  window.openCompleteConfirm = function () { if (overlay) overlay.classList.add("open"); };
+  function close() { if (overlay) overlay.classList.remove("open"); }
+  ["cc-cancel", "cc-close"].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener("click", close);
+  });
+  var confirmBtn = document.getElementById("cc-confirm");
+  if (confirmBtn) confirmBtn.addEventListener("click", function () {
+    close();
+    window.location.href = "dashboard_7_coil_completion.html";
+  });
+  if (overlay) overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && overlay && overlay.classList.contains("open")) close();
+  });
+})();
+</script>
+
+<script>
+/* ══ Dark mode — an ADDITION, not something the app's CSS provides ══════════
+   The app bundle has zero prefers-color-scheme rules. Bootstrap 5.3 ships a
+   dark theme but gates it behind [data-bs-theme="dark"], so it never engages
+   from the OS preference on its own. These few lines bridge that, and their
+   existence is one of the three findings this comparison is meant to surface. */
+(function () {
+  var mq = window.matchMedia("(prefers-color-scheme: dark)");
+  function apply() {
+    document.documentElement.setAttribute("data-bs-theme", mq.matches ? "dark" : "light");
+  }
+  apply();
+  mq.addEventListener ? mq.addEventListener("change", apply) : mq.addListener(apply);
+})();
+</script>
+
+</body>
+</html>

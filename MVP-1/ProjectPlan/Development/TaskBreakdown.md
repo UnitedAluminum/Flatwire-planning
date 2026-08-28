@@ -70,11 +70,11 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **Hours:** 24 h FE · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1A · **Stream:** FE
 
 **As a** developer,
-**I want** a `flat-wire-shopfloor` Angular library scaffolded, routed and configured,
+**I want** a `flat-wire` Angular library scaffolded, routed and configured,
 **So that** every later phase is pure feature work with no infrastructure lift.
 
 **Acceptance Criteria:**
-- [ ] Library generated via `ng generate library flat-wire-shopfloor --prefix=fw` → `projects/flat-wire-shopfloor/`; registered in `angular.json` and `tsconfig` paths
+- [ ] Library generated via `ng generate library flat-wire --prefix=fw --standalone=false` → `projects/flat-wire/`; registered in `angular.json` and `tsconfig` paths
 - [ ] Added to the `build:shop-floor` npm chain **for build ordering only** — no UI reuse from any library in that chain (Foundations §0.2)
 - [ ] Folder structure `src/lib/{components,components/shared,services,models,guards,styles}` + module, routing and `public-api.ts` — standard Angular-library layout, **not** copied from any existing feature library
 - [ ] Lazy-loaded `FLAT_WIRE_ROUTES` under `/flat-wire` with per-line routes (`/flat-wire/line/:lineId/checkin/rod`, `/flat-wire/line/FL2/checkin/spool`, `/flat-wire/line/:lineId/run/active`)

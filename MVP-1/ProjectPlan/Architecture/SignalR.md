@@ -1,7 +1,7 @@
 # Flat Wire Mill — Real-Time Architecture and the FlatWireHub Contract
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 14, 2026 — **`SpoolCompletionPromptDue` and `SpoolCompletionPromptResolved` promoted into the published contract** as events 11 and 12 (§5.2); §5.5 split so it now holds only the two unpublished Part A events; `PP-04`'s count restated 10 → 12; `OI-32` half-closed. Gap **`G37`** *(otherwise August 13, 2026)* — split out of `03-HLD-and-ERDiagram.md`, `02-SRS.md`, `04-APIContract.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** August 28, 2026 — ⛔ **§5.4 named the six run-event markers and gave NO payload fields, so six of the twenty payloads on `IFlatWireClient` were frozen on a task plan's authority rather than this document's.** Raised by `FW-149`'s pre-execution re-review as decision **`P-117`** and **published here `[PROPOSED]`**, the same device `[PLC §5.2]` uses for a tag path nobody has read off a controller: a **shared base** (`lineId` · `runId` · **`footagePosition`** · `timestamp`) plus one to three fields per marker. **`footagePosition` is the load-bearing one** — DB3 overlays markers on a footage-indexed trace, so a marker without it cannot be drawn. The shapes are `FW-080`'s, built because the hub does not compile without them; **they are offered to ratify or correct, not to redesign**, and they were **verified field for field against the built code on publication — all six agree**. Also recorded: **cadence is immediate/unbatched for all six** (`[SIG §4.2]`'s rare-event path) and **none of the six is durable** — a client that misses one recovers it from the trace query, which is why only events 11 and 13 are server-owned. ⚠ **This closes the last of the twenty payloads that had no specification**; `FW-149`'s contract diff now covers 20 of 20 on the server side. *(previously August 27, 2026)* ⛔ **the contract carries fourteen events and two places in this file still said otherwise, one of them a build input.** §5.6's Angular observable map listed **twelve**, missing `orderAllocationReached$` and `orderAllocationResolved$`, which never arrived when events 13 and 14 entered §5.2 on 22 Aug — **`FW-135`'s criterion is "typed Observables per event", so a client built to that map ships 12 of 14 streams**, and the two missing ones are the only signal DB3 gets that an order boundary was crossed on a rod that is still running. §9.3 read **"Ten"**, three counts behind. ⚠ **`PP-04` audited two other documents and missed both of these, inside its own file** — its rule is now four sites, and it gains the distinction it was missing: **a document that enumerates the events carries the count even without printing a number.** Three sites outside this file are recorded as stale (`phase-01a` at twelve, `[TB §7]`'s `FW-136` at nine, `FW-080` claiming to match it). Also: §4.2's rare-event node gained the four prompt events, §4.1 records that **`@microsoft/signalr` 9.0.6 is already a dependency while the MessagePack protocol package is not**, and §4.5/§5.7 now separate the **undefined NFR targets** from the **specified broadcast cadence**, naming `PLC-Q11` and `C8` as where the open figures are being asked. *(previously August 14, 2026 — **`SpoolCompletionPromptDue` and `SpoolCompletionPromptResolved` promoted into the published contract** as events 11 and 12 (§5.2); §5.5 split so it now holds only the two unpublished Part A events; `PP-04`'s count restated 10 → 12; `OI-32` half-closed. Gap **`G37`** *(otherwise August 13, 2026)* — split out of `03-HLD-and-ERDiagram.md`, `02-SRS.md`, `04-APIContract.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
 **Document Type:** Real-time design and the hub contract
 **Status:** Baselined for build
 **Owner:** Architecture / Real-time stream
@@ -20,7 +20,7 @@ Purpose-built for high-frequency AGC telemetry. Design goals: **low latency, min
 ### 4.1 Transport and protocol
 
 - **WebSockets-first** (`SkipNegotiation` where the topology allows); SSE and long-poll only as a last-resort fallback. **IIS WebSockets must be enabled on the deployment target** — see `[DEP §4.4]`.
-- **MessagePack** hub protocol on both ends — `AddSignalR().AddMessagePackProtocol()` server-side, `@microsoft/signalr-protocol-msgpack` client-side. Binary, compact, fast for dense numeric telemetry. *(Treat as **measure-first**: batching and decimation are the real win, and MessagePack is a new client dependency the repository does not otherwise use — gap **G10**.)*
+- **MessagePack** hub protocol on both ends — `AddSignalR().AddMessagePackProtocol()` server-side, `@microsoft/signalr-protocol-msgpack` client-side. Binary, compact, fast for dense numeric telemetry. *(Treat as **measure-first**: batching and decimation are the real win, and MessagePack is a new client dependency the repository does not otherwise use — gap **G10**.)* ⚠ **Measured in `Second-Branch/ual-angular` on 27 Aug 2026:** `@microsoft/signalr` **9.0.6 is already a dependency**, and `@microsoft/signalr-protocol-msgpack` is **absent** — so the transport is available today and only the protocol package has to be added.
 - **Strongly-typed hub:** `FlatWireHub : Hub<IFlatWireClient>` — a compile-time contract, no magic-string method names.
 
 ### 4.2 Ingest → broadcast pipeline (backpressure-safe)
@@ -34,7 +34,7 @@ flowchart LR
   G1["Group FL1Data"]
   G2["Group FL2Data"]
   G3["Group FL3Data"]
-  RARE["Rare domain events<br/>LineStatus · AlertRaised/Cleared ·<br/>PayoffStateChanged · markers"]
+  RARE["Rare domain events<br/>LineStatus · AlertRaised/Cleared ·<br/>PayoffStateChanged · SpoolCompletionPrompt* ·<br/>OrderAllocation* · markers"]
 
   OPCT --> HS --> CH --> LOOP
   LOOP -->|batched arrays| G1 & G2 & G3
@@ -68,13 +68,15 @@ Known targets: **1-second default push interval, configurable to 5/10/30 s, with
 
 **Undefined:** AGC sample rate, concurrent client count, latency budget, `RunReading` retention. A hub load test is scheduled at QA2 **with no pass criteria** — gap **G9** / **OI-34**. **If the load test fails, the real-time rework is not in the effort model.**
 
+> ⚠ **Undefined here does not mean unasked, and the distinction matters to the client build.** The **AGC publish rate at source** is asked of the controls engineer as **`PLC-Q11`**, and the **end-to-end latency figure** `G9` needs is produced by commissioning test **`C8`** (*"AGC feed reaches the screen"*). What is genuinely undefined is the **target**, not the broadcast cadence — §4.2 fixes that at **~100 ms / 10 Hz**, which is what `MockSignalRService` emits at and what §5.2 rows 1–2 publish. **A mock has a rate to match; it has no NFR to be validated against.**
+
 ---
 
 ---
 
 ### 9.3 Real-time interface — `FlatWireHub`
 
-Ten server→client events plus six run event markers, on per-line groups `FL1Data` / `FL2Data` / `FL3Data`. Full payloads, cadences and consumers in `[SIG §5]`. The requirement-level constraints are `NFR005`, `NFR006`, `NFR007` in §6.1, and `FR-120` (FL2 broadcasts `null` live gauge and width).
+**Fourteen** server→client events plus **six** run event markers, on per-line groups `FL1Data` / `FL2Data` / `FL3Data`. Full payloads, cadences and consumers in `[SIG §5]`. *(This read "Ten" until 27 Aug 2026 — it was the count before events 11 and 12 were promoted on 14 Aug and events 13 and 14 added on 22 Aug. It is the third site `PP-04` should have been tracking, and the only one inside this document.)* The requirement-level constraints are `NFR005`, `NFR006`, `NFR007` in §6.1, and `FR-120` (FL2 broadcasts `null` live gauge and width).
 
 ---
 
@@ -137,10 +139,14 @@ A strongly-typed `Hub<IFlatWireClient>` — **no magic-string method names.**
 > |---|---|
 > | this §5.2 table | ✅ carries it — **14 rows** |
 > | the master spec's status summary | ✅ carries it — corrected to **14** (and its endpoint count to 32) |
+> | ⛔ **§9.3 of this document — not named, and it carried the number** | Found 27 Aug 2026 reading **"Ten server→client events"**, three counts behind. **`PP-04` audited two other documents and never checked its own**, which is how a contradiction survived inside one file. Corrected, and the rule below is restated to include it |
+> | ⛔ **§5.6's observable map — not named, and it enumerated the events** | Found the same day with **twelve** entries. A count is not the only way a document carries the number; **an enumeration carries it too**, and this one is what `FW-135` is built from |
 > | *“the event table there”* (in the master spec) | ❌ **there is no event table in the master spec.** It references individual events inside requirement text — `FR-048`, `FR-053` and others — which do not restate a count and need no edit |
 > | *“the list in `Business/BusinessRules.md` §3”* | ❌ **that list is no longer there.** The document carries no event enumeration at all; it moved during the ProjectPlan restructure. Nothing in it states a count |
 >
-> **So the rule is now: change this table and the master spec's summary together.** Both were updated on 22 Aug 2026. Individual event *names* appear in roughly 25 files, but none of those states a total, so they are unaffected by a count change — which is the distinction this item was missing.
+> **So the rule is now: change four things together — this table, §9.3, §5.6's observable map, and the master spec's summary.** *(It said two until 27 Aug 2026; the two it missed were both in this file.)* Individual event *names* appear in roughly 25 files, but none of those states a total, so they are unaffected by a count change — which is the distinction this item was missing. ⚠ **The distinction it was *also* missing:** a document that **enumerates** the events carries the count whether or not it prints a number, which is why §5.6 belongs on this list and why it went stale silently.
+>
+> ⚠ **Three sites outside this document are stale at the old counts and are not this file's to fix** *(recorded 27 Aug 2026)*: `phase-01a` states *"the full published set — **twelve** events"*; `[TB §7]`'s **`FW-136`** acceptance criteria enumerate **nine**; and `[TB §7]`'s **`FW-080`** claims to match `FW-136`'s set *"exactly"*, which is now true of neither. **A client or hub built to those three ships 9–12 of 14 streams.**
 
 > **Events 13 and 14 follow event 11's contract exactly, and for the same reason.** The order-allocation
 > prompt is **server-owned state persisted against the consumption record**, so it survives a browser
@@ -165,6 +171,30 @@ A strongly-typed `Hub<IFlatWireClient>` — **no magic-string method names.**
 ### 5.4 Run event markers
 
 Also broadcast, consumed by DB3 traces: `WeldJoinEvent` · `DieChangeEvent` · `PauseEvent` · `SPCCheckpoint` · `AlertEvent` · `RodCheckoutEvent`.
+
+> ⚠ **This section named the six markers and gave no payload fields until 28 Aug 2026** — raised by `FW-149`'s pre-execution re-review as decision **`P-117`**. The shapes below were built by `FW-080` because the hub does not compile without them, so **six of the twenty payloads on `IFlatWireClient` were frozen on a task plan's authority rather than this document's.** They are published here **`[PROPOSED]`** so the position is visible and correctable — the same device `[PLC §5.2]` uses for a tag path nobody has read off a controller. **Ratify or correct; do not redesign from scratch** — they are what the built hub sends today.
+
+**All six share one base — `[PROPOSED]`:**
+
+| Field | Why it is on every marker |
+|---|---|
+| `lineId` | group routing and the per-line trace |
+| `runId` | the run the marker belongs to |
+| **`footagePosition`** | ⚠ **load-bearing: DB3 overlays markers on a footage-indexed trace, so a marker without it cannot be drawn** |
+| `timestamp` | server-stamped at API receipt (`FR-174`), never from the client clock |
+
+**Plus, per marker — `[PROPOSED]`:**
+
+| Marker | Additional payload | Note |
+|---|---|---|
+| `WeldJoinEvent` | `weldEventId`, `qualityPassed` | ⚠ The **method name** keeps `WeldJoinEvent` while the aggregate, table, endpoint and story all say `WeldEvent` — that is `[SIG §5.4]`'s decision, not drift. `qualityPassed` is what gates `WLD010` |
+| `DieChangeEvent` | `newDieSizeIn` | Nullable — a die change recorded without a size is still a trace marker |
+| `PauseEvent` | `reasonCode`, `reasonCategory`, `isResume` | ⚠ **Code + category, never a label** — the rule `pause_run.js` already follows, so `Other` keeps its code and the prose goes to notes. `isResume` is what lets one marker type carry both edges of a pause |
+| `SPCCheckpoint` | `checkpointType`, `inSpec` | `checkpointType` is the five-value canonical enum (`RollAdjustTrigger` included) |
+| `AlertEvent` | `alertType`, `severity` | Distinct from events 8/9: those drive the DB1 alert bar, this one draws on the DB3 trace |
+| `RodCheckoutEvent` | `checkoutId`, `mode` | `mode` is `A`/`B`/`P`; a Mode P checkout is a release before check-in |
+
+> **Cadence for all six: immediate, unbatched.** A marker is a domain event, not a sampled reading, and `[SIG §4.2]` puts it on the rare-event path. **None of the six is durable** — a client that misses one recovers it from the trace query on reconnect, which is the whole reason only events 11 and 13 are server-owned.
 
 ### 5.5 Events the spool-completion feature adds
 
@@ -196,16 +226,20 @@ alertRaised$(lineId): Observable<AlertRaisedEvent>
 alertCleared$(lineId): Observable<AlertClearedEvent>
 spoolCompletionPromptDue$(lineId): Observable<SpoolCompletionPromptDueEvent>
 spoolCompletionPromptResolved$(lineId): Observable<SpoolCompletionPromptResolvedEvent>
+orderAllocationReached$(lineId): Observable<OrderAllocationReachedEvent>
+orderAllocationResolved$(lineId): Observable<OrderAllocationResolvedEvent>
 ```
+
+**Fourteen observables, one per §5.2 event.** ⚠ **This map listed twelve until 27 Aug 2026** — `orderAllocationReached$` and `orderAllocationResolved$` were missing, having never been added when events 13 and 14 entered §5.2 on 22 Aug 2026. That is a build defect and not a documentation one: `FW-135`'s acceptance criterion is *"typed Observables per event"*, so a client built to this map would have shipped **12 of 14 streams**, and the two missing ones are the order-allocation prompt — the only signal DB3 gets that an order boundary has been crossed on a rod that is **still running**.
 
 Callbacks run **outside the Angular zone**; batches land in a ring buffer and render on a `requestAnimationFrame` throttle — `[SIG §4.4]`.
 
-> **`spoolCompletionPromptDue$` is the one stream a component must not merely subscribe to.** Because the prompt is durable server state (`FR-144`), a client joining or re-joining a line group **receives any outstanding prompt on join**, not only on the original edge. Subscribe before joining the group, and make the handler idempotent — re-delivery is the specified behaviour, not a fault.
+> **`spoolCompletionPromptDue$` and `orderAllocationReached$` are the two streams a component must not merely subscribe to.** Both are durable server state (`FR-144` for the first, the consumption record for the second), so a client joining or re-joining a line group **receives any outstanding prompt on join**, not only on the original edge. Subscribe **before** joining the group, and make both handlers **idempotent** — re-delivery is the specified behaviour, not a fault. Both carry a **latched** weight: render `latchedWeightLb` and never substitute a fresher `payoffWeight$` tick.
 
 ### 5.7 Non-functional position
 
 **Known:** default push interval **1 second**, configurable to 5/10/30 s, **with no polling** (`NFR005`); **two simultaneous dashboard instances** (`NFR007`); reconnect over cached state (`NFR006`).
 
-**Undefined:** AGC sample rate, concurrent client count, latency budget, `RunReading` retention. **A hub load test is scheduled at QA2 with no pass criteria** — gap **G9** / **OI-34**.
+**Undefined:** AGC sample rate, concurrent client count, latency budget, `RunReading` retention. **A hub load test is scheduled at QA2 with no pass criteria** — gap **G9** / **OI-34**. ⚠ **The broadcast cadence is not among the undefined** — §4.2 fixes it at ~100 ms / 10 Hz; see the note at §4.5.
 
 ---

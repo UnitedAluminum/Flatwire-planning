@@ -39,7 +39,7 @@
 
 | In scope | Stream | Surface |
 |---|---|---|
-| **FE** | Angular | `ual-angular` → new library `flat-wire-shopfloor` (prefix `fw`) |
+| **FE** | Angular | `ual-angular` → new library `flat-wire` (prefix `fw`) |
 | **BE** | .NET | `ual-api` → new `FlatWire` microservice |
 | **DB** | SQL Server | new `FlatWireDB` ~~+ the shared-schema FW-001 renames~~ *(cancelled 18 Aug 2026, `D-32` — see `[CE §3c]`)* |
 | **RT** | Real-time / PLC | `FlatWireHub`, OPC ingest, `PLCTagService` |

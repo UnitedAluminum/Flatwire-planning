@@ -1,9 +1,9 @@
 # FW-150 · Cadence-driven broadcast loop
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — first issue
+**Last Updated:** August 29, 2026 — ✅ **EXECUTED AND VERIFIED — 15 of 15 harness assertions, and the harness caught a real defect review had not.** Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
-**Status:** Ready to build — **unreduced for the trial, deliberately**
+**Status:** ✅ **Built** — unreduced for the trial, deliberately. One loose end: `FW-208`'s run-lifecycle invalidation is not wired (§2.4)
 **Owner:** Real-time (RT) stream
 **Audience:** The developer building `FW-150`
 **Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
@@ -59,19 +59,79 @@ From `[TB §7]` — verbatim:
 
 ---
 
-## 2. The four traffic classes
+## 2. What is on the channel, and what comes off it
 
-`[SIG §4.2]` and `phase-01b` L107. **Getting a channel into the wrong class is the defect
-this story ships or avoids.**
+### 2.0 The item is a per-line snapshot, and the drain IS the decimation
+
+[`FW-N05`](FW-N05-OPC-Ingest-And-Bounded-Channel.md) is built, so this is settled rather than
+assumed: the channel carries **`Reading`** — **one snapshot per line per OPC tick**, every field
+nullable, no `RunId`. `IReadingChannel` exposes the `Reader`, the `Capacity` and the `Written`
+count.
+
+**Each tick: drain everything available, group by `Reading.Line`, and send per line group.**
+That is the whole loop, and it needs no decimator:
+
+| Channel | Built signature | Treatment |
+|---|---|---|
+| `GaugeReading` · `WidthReading` | **`(GaugeReadingEvent[])`** · **`(WidthReadingEvent[])`** | **Array — every sample drained this tick**, in order. This is the batching, and it is what preserves trace resolution |
+| `SpeedFPM` · `PayoffWeight` · `FootageCounter` | **single payload** — `(SpeedFpmEvent)` etc. | **Newest snapshot wins.** This is the decimation, and taking the last drained snapshot per line *is* the implementation |
+| `ComponentStatus` · `LineStatus` | single payload | **On change only** — compare against the last sent value per line. ⚠ `ComponentStatusEvent.IsActive` is a non-nullable `bool`, so **a null reading is not a change to `false`** — skip it, or a component not read this tick is broadcast as **bypassed** |
+| Everything else | single payload | Immediate and unbatched (§2.1) |
+
+> ⛔ **An empty tick sends nothing.** At `NFR005`'s **1 s** publish interval against this loop's
+> **100 ms** cadence, **a line produces a snapshot on one tick in ten** — so most ticks drain
+> nothing at all. Sending empty arrays, or repeating the last value to "keep the client warm", is
+> 10 Hz × 3 groups × 7 channels of traffic carrying no information, and it would be the entire cost
+> of this loop. **No snapshot, no send.**
+
+> ⛔ **Null means NO SAMPLE, and the boundary is one-way.** Every field on `Reading` is nullable;
+> **`SpeedFpmEvent.Value`, `FootageCounterEvent.Footage`, `PayoffWeightEvent.WeightLb` and
+> `.PercentRemaining` are not.** So a null is **not sent as 0** — 0 asserts a stopped line, a run
+> at footage zero or an empty bay, each a claim about the machine. **Skip the channel for that
+> tick.** Only `GaugeReadingEvent.Value` and `WidthReadingEvent.Value` are nullable, which is
+> `FR-120`'s doing and no licence to send nulls at cadence (§2.1).
+
+> ⚠ **`GaugeReadingEvent.FootagePosition` is non-nullable, so a gauge sample needs a footage
+> position.** A snapshot carrying gauge but no footage yields an unplottable sample — the trace is
+> drawn against footage — so **emit gauge and width only when the snapshot also carries footage.**
+
+> ⚠ **`ComponentStatusEvent` has NO `IsFaulted` field, so the snapshot's fault bit has no channel on
+> this loop.** `Reading.ComponentStates[].IsFaulted` is ingested (`[PLC]` names its consumer as *"the
+> line status board's Critical component-fault alert"*) and its event is **`AlertRaised`**, which is
+> [`FW-177`](FW-177-Exception-Broadcasts.md)'s. **Do not add it to `ComponentStatus`** — that would
+> widen a published payload to avoid a handoff. ⚠ Today nothing turns the bit into an alert; §6.
+
+**Send through `IFlatWireBroadcaster.Line(LineId)`**, which `FW-080` built as
+`FlatWireBroadcaster` — it returns the typed `IFlatWireClient` for that line's group, so the group
+name never appears in this loop.
+
+⚠ **Lifetimes, because this loop is a singleton and `FW-N05` already met the trap.**
+`IFlatWireBroadcaster` is registered **`AddSingleton`**, so **sending needs no scope**. The
+`RunReading` write does — `FlatWireDbContext` is scoped. **So open one scope per tick only when
+there is something to persist**, never to send, and never one per row.
+
+### 2.0a This loop owns the DRAINED count
+
+`DropOldest` reports nothing: `TryWrite` returns `true` whether or not it dropped a snapshot, and
+`System.Threading.Channels` offers no drop callback. **So `IReadingChannel.Written` minus the count
+drained here IS the resolution loss** — the acceptance criterion's *"degrades resolution"* is
+unobservable without both halves. One counter, incremented as snapshots come off the channel; no
+instrumentation framework, and it is the same number `[MON §7.1]`'s hub instrumentation row wants
+(§6).
+
+### 2.1 The four traffic classes
+
+`[SIG §4.2]` and `phase-01b` L107. **Getting a channel into the wrong class is the defect this
+story ships or avoids.**
 
 | Class | Traffic | Treatment |
 |---|---|---|
-| **Batched** | gauge, width, speed, payoff weight, footage | Arrays per line group at the cadence; hot numeric channels **decimated** to it |
+| **Batched** | gauge, width, speed, payoff weight, footage | Per line group at the cadence — **arrays for gauge and width, newest-wins for the other three** (§2.0) |
 | **On change only** | `ComponentStatus`, `LineStatus` | Sent when the value changes, not every tick |
 | **Immediate, unbatched** | rare domain events — weld, die change, pause, SPC, alert, checkout | Sent as they happen; **must not enter the 10 Hz batch** |
 | **Immediate — and easy to get wrong** | **`PayoffStateChanged`** | ⚠ **Never in the batch.** It is a state transition, not a sample |
 
-### 2.1 FL2 — suppress two channels, not the line
+### 2.2 FL2 — suppress two channels, not the line, and it needs no branch
 
 `FR-120` makes FL2's **live gauge and width `null`**; the historical profile is a REST query.
 `[SIG §5.3]` suppresses **only** the batched gauge and width channels.
@@ -85,7 +145,22 @@ this story ships or avoids.**
 and `[SIG §5.3]` both say so, and `G40` records this as one of the assertions that rested on
 the earlier error. An FL3 hybrid run drives FM2 and is **not** suppressed.
 
-### 2.2 The `ITInhibit` gate sits inside this loop
+✅ **Reconciled 28 Aug 2026 — and the outcome is that this loop writes no FL2 code at all.**
+`[SIG §5.3]` says the two channels are suppressed *"entirely"*; [`FW-181`](FW-181-FL2-Null-Gauge-Contract.md)
+says the contract is *"`null`, not absent"*. **Both hold, at different layers:**
+
+| Layer | What happens |
+|---|---|
+| Ingest | **`[PLC §5.2.2]` publishes no `AGC` row for FL2**, so `FW-N05` never produces an FL2 gauge or width sample. Assumption `A3`: *"FL2 has no live measurement"* |
+| This loop | **No sample, no send** (§2.0) — which is `[SIG §5.3]`'s *"entirely"*, reached without an `if` |
+| Client | The field is therefore **`null`**, and `FW-181` requires the explicit empty state — *"No live gauge on FL2 · see Profile"* — and **never a flat line at target** |
+
+⛔ **So do not write `if (line == FL2)` anywhere in this loop, and do not emit null-valued gauge
+events at 10 Hz to "honour `FR-120`".** The first duplicates a rule the tag map already enforces
+and would silence FL3's hybrid gauge the day someone copies it; the second is 20 payloads a second
+carrying nothing, against a specification that says *"entirely"*.
+
+### 2.3 The `ITInhibit` gate sits inside this loop
 
 `phase-01b` L112: *"While set, no rolling data is recorded without an active coil — so the
 interlock gates the broadcast loop's `RunReading` persistence."*
@@ -94,27 +169,153 @@ interlock gates the broadcast loop's `RunReading` persistence."*
 write, not around the send. An operator watching a blocked line still sees telemetry; the
 system simply does not record it as run data.
 
+⚠ **No service exposes the interlock state yet** — `FW-205` is unbuilt and there is no
+`ITInhibitService` in the solution. The gate is one `if` against `FW-205`'s interface with a
+*not inhibited* default, so this loop can be built and demonstrated first. **Do not build a local
+interlock** — the conditions are watchdogs over the footage tag and they belong to that story.
+
+
+### 2.4 Three values this loop must supply that are NOT on the snapshot
+
+`Reading` deliberately carries no `RunId` — the ingest reads a **line**, not a run — and two
+further values are the loop's to derive. **All three are per-run or per-rod constants, so all
+three are resolved once and cached. None is a per-tick database read** (`P-125`).
+
+| Value | Source | Cache scope |
+|---|---|---|
+| **`RunReading.RunId`** | The line's active run | Per line, for the run's life. Re-resolve on a `LineStatus` change, not on a tick |
+| **`RunReading.InSpec`** | `PassSchedule.TargetGauge` ± `GaugeTolerance` — both `NOT NULL` with `CHECK > 0` | Per run. The band cannot change mid-run without a new schedule |
+| **`PayoffWeightEvent.PercentRemaining`** | `WeightLb` against the staged rod's weight (`RodStaging.GrossWeightLb` / `NetWeightLb`, as `[API §4.4]`'s bays query returns them) | Per staged rod. Re-resolve on `PayoffStateChanged`, which is exactly when the denominator changes |
+
+⛔ **`InSpec` is `BIT NOT NULL DEFAULT (1)` and this loop is `RunReading`'s only writer.** A row
+inserted without computing it **claims in-spec** — the default is not neutral, it is an assertion,
+and it is the assertion a gauge-trace report and DB3's out-of-spec prompt both read. Compute it
+from the cached band; if the band cannot be resolved, **do not write the row** rather than write a
+`1`.
+
+⚠ **`PercentRemaining` is non-nullable, so it cannot be skipped while `WeightLb` is sent.** If the
+denominator is unresolved, skip the whole `PayoffWeight` payload for that bay this tick — which is
+also what `[API §4.1]` means by *"`null` on a bay that is not drawing"* (§7).
+
+
+### 2.5 ⛔ `RunReading` has NO aggregate repository, and that is deliberate
+
+`P-12` — recorded on the built `IContextRepository`: *"`RunReading`, `Rod` and `PassSchedule` get no
+aggregate repository … `RunReading` because **a 10 Hz time series inside `FlatWireRun` would
+materialise thousands of rows on every command**."*
+
+**So this loop inserts directly and never through the run aggregate.** Two rules follow, and the
+first is the single most expensive mistake available in this story:
+
+- ⛔ **`RunReading` must never become an EF navigation collection on `FlatWireRun`.** Add one and
+  every check-in, pause, resume and checkout command loads the whole series to save one row.
+  `P-12` exists to prevent exactly that, and it is not visible from this card's own text.
+- **Insert on `IContextRepository`, beside the other non-aggregate reads**, or by a direct Dapper
+  insert — `phase-01b` L84 already puts Dapper on the high-volume path. **One row per drained
+  snapshot, batched into the tick's single insert**, not a round trip per row.
+
+⚠ **None of it exists yet.** There is **no `RunReading` entity, no EF configuration and no write
+path** in the built solution — only the table, and the three mentions of it in
+`IContextRepository`'s absence note. **This story builds them**, which is not obvious from a card
+that describes persistence as a gate.
+
+⚠ **`InSpec` is a GAUGE verdict only** (the DDL comment: *"within gauge tolerance at capture"*).
+`PassSchedule` carries `WidthTolerance` too and no column records a width verdict — do not widen the
+meaning to cover both.
+
+
+### 2.6 ⛔ There is a THIRD cadence, it is measured in FEET, and it is a `Must`
+
+**`FR-018`** *(`Must`, verified by `TC-601`–`TC-603`, targets `NFR003` / `NFR004`)*:
+
+> *"The system shall make the **data-recording frequency** configurable by Engineering/IT without a
+> code change, defaulting to **4 ft per data point for finished product and 20 ft for intermediate
+> product**. Applied rule: a subsequent rolling operation exists → 20 ft; none → 4 ft; **FL2 always
+> 4 ft**; **FL3 hybrid — both FL1 and FL2 at 4 ft**."*
+
+**`TC-601`'s method is the giveaway: *"Set a non-default cadence in configuration; run; **count
+`RunReading` rows against footage**."*** This loop is `RunReading`'s only writer, so the recording
+frequency is enforced **here** or nowhere.
+
+| Cadence | Unit | Governs | Whose |
+|---|---|---|---|
+| OPC publish interval | **1 s** (`NFR005`) | how often a tag is read | [`FW-N05`](FW-N05-OPC-Ingest-And-Bounded-Channel.md) |
+| Drain / broadcast cadence | **100 ms** (`DrainCadenceMs`) | how often we **send** | this loop |
+| **Data-recording frequency** | **4 ft / 20 ft** (`FR-018`) | how often we **persist** | **this loop** |
+
+⛔ **So the write is gated on FOOTAGE, not on the tick.** One comparison per drained snapshot:
+*has the material advanced at least N ft since the last recorded point on this line?* If not, the
+snapshot is **broadcast and not recorded** — which is also why `RunReading` carries `FootageFt` and
+why `TC-601` counts rows against it.
+
+⚠ **The row rate is therefore speed-dependent, not tick-dependent** — `rows/s = (FPM ÷ 60) ÷
+spacing_ft`. At 300 FPM and 4 ft that is **~1.25 rows a second per line**; at 20 ft, ~0.25. *(This
+section replaces the earlier "one row per drained snapshot … ~2 a second, ~170 k a day", which
+assumed the tick governed the write. It does not.)*
+
+⚠ **The configuration key does not exist.** Neither `FlatWireOpcOptions` nor
+`FlatWireSignalROptions` carries a footage spacing, and `FR-018` requires it to be changeable
+**without a code change** — so add it beside the other cadences, defaulting to **4**.
+
+> ⚠ **Ownership, stated plainly because it looks like scope creep and is not.** `[TB §11]`'s
+> coverage matrix bulk-maps **`FR-001`–`FR-022` to `FW-N11`**, which is *"Operator session"* — **still
+> uncosted**, and whose `ITInhibit` half already left to become `FW-205`. **`FR-018` has nothing to do
+> with an operator session**, and **no task-breakdown plan in this folder mentions it.** So in
+> practice it is unowned, while the only component that can honour it is this loop.
+>
+> **The split that costs least: this loop owns the GATE, `FW-N11` owns the NUMBER and the ROUTE
+> RULE.** Build the comparison and one configured default here; the 4-vs-20 ft decision needs the
+> route (*"a subsequent rolling operation exists"*), which is per-run context and joins `P-125`'s
+> cache. **Build the gate now or `FW-N11` reaches back into a Phase-1B loop in Phase 4.**
+
 ---
 
 ## 3. Build order
 
-1. A drain loop on a **fixed** cadence from configuration (default ~100 ms), reading
-   [`FW-N05`](FW-N05-OPC-Ingest-And-Bounded-Channel.md)'s bounded channel.
-2. Group the drained readings **per line group** (`FL1Data` / `FL2Data` / `FL3Data`) and send
-   **arrays**, typed on [`FW-149`](FW-149-IFlatWireClient.md)'s `IFlatWireClient`.
-3. Decimate hot numeric channels to the cadence.
-4. `ComponentStatus` / `LineStatus` — track last value, send on change.
+1. A drain loop on a **fixed** cadence from `FlatWireSignalROptions.DrainCadenceMs` (default
+   **100 ms**, validated positive at boot by [`FW-144`](FW-144-Configuration-Binding.md)), reading
+   [`FW-N05`](FW-N05-OPC-Ingest-And-Bounded-Channel.md)'s built `IReadingChannel`.
+   ⚠ **Never derive it from `PublishIntervalMs`** — they are unrelated numbers on opposite sides of
+   the channel.
+2. **Drain everything available with `TryRead`, count it, and group by `Reading.Line`.** An empty
+   tick **sends nothing** (§2.0). The drained count is this loop's half of the resolution-loss
+   metric (§2.0a).
+3. Per line: **arrays for gauge and width** (every sample, footage-positioned), **newest snapshot
+   for speed, payoff weight and footage**. That is batching and decimation both — there is no
+   separate decimator, no lock and no last-value cache for the hot channels (`P-124`).
+4. `ComponentStatus` / `LineStatus` — hold the last **sent** value per line and send **on change**.
+   This is the only last-value state in the loop, and it is a comparison, not a cache of samples.
 5. **Route `PayoffStateChanged` and the rare domain events around the batch entirely.**
-6. FL2 standalone — suppress batched gauge/width, broadcast `null` live values (§2.1).
-7. The `RunReading` persistence gate (§2.2).
-8. `RunReading.ReadingTs` is **UTC `DATETIME2`** — the one deliberate exception to
-   `DATETIMEOFFSET` throughout, because it is a high-volume time series (`[API §1.6]`).
+6. ~~FL2 standalone — suppress batched gauge/width, broadcast `null` live values~~ **Nothing to
+   build (§2.2).** `[SIG §5.3]` suppresses the two channels *"entirely"* and FL2 publishes no `AGC`
+   path, so step 2's *"no sample, no send"* already is the suppression. **Do not add an FL2 branch.**
+7. Resolve and cache the three derived values — `RunId`, the gauge band for `InSpec`, and each
+   staged rod's weight for `PercentRemaining` (§2.4, `P-125`).
+8. The `RunReading` persistence gate (§2.3) — **immediately before the write, never around the
+   send** — then **one row per drained snapshot**, not one per tick, **inserted directly and never
+   through `FlatWireRun`** (§2.5, `P-12`). ⚠ **`ITInhibitService` does not exist yet** — `FW-205` is
+   unbuilt — so the gate is one `if` against its interface, defaulting to *not inhibited*. Do not
+   invent a local interlock to fill the gap.
+   ⛔ **And the write is gated on FOOTAGE, not on the tick** (§2.6) — `FR-018` is a `Must`:
+   **one data point per 4 ft**, configurable without a code change, verified by `TC-601` **counting
+   `RunReading` rows against footage**. One comparison per drained snapshot against the last
+   recorded footage on that line. **A snapshot inside the spacing is broadcast and not recorded.**
+   ⚠ **The row rate is speed-dependent, not tick-dependent:** `(FPM ÷ 60) ÷ spacing_ft` — ~1.25 rows
+   a second per line at 300 FPM and 4 ft. `G9` still leaves long-term retention open, but the series
+   is thinned **at write time by requirement**, so that question is smaller than it looks.
+9. `RunReading.ReadingTs` is **UTC `DATETIME2`** — the one deliberate exception to
+   `DATETIMEOFFSET` throughout, because it is a high-volume time series (`[API §1.6]`). `Reading.ReadAt`
+   is a `DateTimeOffset` stamped at ingest, so this is a conversion here and never a re-stamp.
 
 ---
 
 ## 4. Decisions this plan makes
 
-> `P-##` is continuous across this folder; `P-01`–`P-29` precede this story.
+> `P-##` is continuous across this folder. This story owns **`P-30`**, **`P-31`** and
+> **`P-124`**–**`P-126`**; new decisions elsewhere mint at **`P-127`+**. **`P-126` was minted by
+> executing it** — the harness found a defect three review passes had missed. *(`P-118`–`P-123` are
+> [`FW-N05`](FW-N05-OPC-Ingest-And-Bounded-Channel.md)'s, three of them minted by building it —
+> which is where this loop's channel semantics come from.)*
 
 ### `P-30` — fixed cadence, not adaptive, and the ratio is provisional
 
@@ -122,9 +323,14 @@ system simply does not record it as run data.
 ratio cannot be validated** and the QA2 load test **cannot fail**.
 
 **Build a fixed, configured cadence — do not build an adaptive one.** An adaptive loop tunes
-itself against a target nobody has specified, is untestable for the same reason, and makes
-the cadence assertions in `TC-601`–`TC-613` non-deterministic. A fixed 100 ms default with
-the value in configuration is revisable the moment `G9` closes.
+itself against a target nobody has specified and is untestable for the same reason. A fixed 100 ms
+default with the value in configuration is revisable the moment `G9` closes.
+
+⚠ **Corrected 29 Aug 2026 — this decision cited `TC-601`–`TC-613` as *"the cadence assertions"* and
+they are not.** `TC-601`–`TC-603` assert the **footage** recording frequency (§2.6) and an adaptive
+*broadcast* cadence would not disturb them; `TC-613` is the PLC audit and belongs to `FW-151`. The
+conclusion stands on its own reasoning — **the citation was doing no work and was wrong.** The map
+is in §5.
 
 **Record the achieved cadence at QA0 as an observation**, so `G9` can be closed against a
 measurement rather than an estimate.
@@ -139,25 +345,136 @@ So this story is built **once**, to the full contract, and the only trial-vs-pro
 difference is which side publishes to the channel. **Do not add a simulator-aware branch** —
 if the loop can tell the difference, `FW-203`'s substitution has failed.
 
+### `P-124` — the drain IS the batching and the decimation; build neither separately
+
+The built contract settles what looked like three mechanisms into one. `Reading` is a **per-line
+snapshot** and the hub takes **arrays for gauge and width, single payloads for speed, payoff weight
+and footage**. So:
+
+- **Batching** = the samples drained this tick, in one array. Nothing accumulates between ticks.
+- **Decimation** = the **last** drained snapshot per line, for the three scalar channels. Taking
+  `[^1]` of the tick's snapshots *is* the decimation.
+- **Coalescing** already happened, upstream, in the channel — `DropOldest` over snapshots
+  (`P-119`). This loop must not re-implement it.
+
+**So there is no decimator class, no accumulator, no timer per channel and no lock.** One `TryRead`
+drain, one grouping by line, and at most a handful of sends per group — **five channels, but payoff
+weight is per position and component status per component**, so the worst case is nearer fourteen
+than seven. And **nothing at all on an empty tick**, which at today's publish interval is most of
+them.
+
+⚠ **The one piece of state that is legitimate** is the last **sent** value for `ComponentStatus`
+and `LineStatus`, because "on change only" cannot be evaluated without it. It is a comparison
+against the last *sent* value, not a buffer of samples — one small entry per line, not per tag.
+
+⚠ **This does not make the cadence adaptive** (`P-30`). A fixed cadence that sends only what
+arrived is not the same thing as a loop that tunes its own rate against an unspecified target.
+
+### `P-125` — the three derived values are resolved once and cached, never per tick
+
+`RunId`, the gauge tolerance band behind `InSpec`, and each staged rod's weight behind
+`PercentRemaining` are **not on the snapshot** and are all **per-run or per-rod constants** (§2.4).
+Built naively, each becomes a database read **inside a 10 Hz loop** — three queries a tick per
+line, ~90 a second across two lines, for values that change when a run starts or a bay changes
+hands.
+
+**So resolve each on the event that changes it and hold it** — but ⛔ **not on `LineStatus`, which
+was this decision's first answer and is unsound.** `LineStatusEvent.Status` is a `LineState`, and
+`ITagPathResolver.TryMapLineState` **returns `false` until commissioning test `C2`** because
+`LineStateMap` is empty by design until then. **So `LineStatus` may never fire, and a cache
+invalidated by it would never invalidate** — readings would keep being attributed to a finished run.
+
+| Value | Invalidate on |
+|---|---|
+| `RunId`, and the band that follows from it | **The run's own lifecycle domain events**, dispatched post-commit by [`FW-208`](FW-208-Domain-Events-Post-Commit-Dispatch.md). They fire from the check-in and checkout commands, so they exist today and do not wait on `C2` |
+| The staged rod's weight | **`PayoffStateChanged`** — a domain event from the staging flow, not telemetry, and `[SIG §5.2]` fires it on every bay-occupancy change. Exactly when the denominator changes |
+| **The recording spacing** — 4 ft or 20 ft by route (§2.6) | **The same run lifecycle events.** *"A subsequent rolling operation exists"* is a property of the run's route, so it is resolved once with `RunId` and the band |
+
+⚠ **And `LineStatus` is a COMPOSED event, not a telemetry passthrough.** Besides `Status` it carries
+`OrderId` and `Alpha`, neither of which is on the snapshot — they come from the run. So the same
+per-run cache serves it, and **the channel is dark until `C2` supplies the vocabulary**: build it,
+send nothing while `TryMapLineState` returns `false`, and **do not treat that as an error** (the
+resolver's own contract says so). ⚠ **DB1's header badge and `FW-202`'s `RUNNING → STOPPED` edge both
+sit behind that**, which is `PLC-Q01`'s cost and not this loop's to solve.
+
+⛔ **And `InSpec` must actually be computed, because its default is an assertion.**
+`BIT NOT NULL DEFAULT (1)` means a row written without it **claims in-spec**, and this loop is
+`RunReading`'s only writer — so an omission does not read as missing data, it reads as *"every
+reading of this run was within tolerance"*, in the table a gauge-trace report and DB3's
+out-of-spec prompt are built on. ✅ **The band is always resolvable for a real run** —
+`FlatWireRun.PassScheduleId` is `VARCHAR(30) NOT NULL` behind an enforced, trusted FK (`D-31`) — so
+an unresolvable band means a **transient failure**, not a normal state. **In that case skip the row
+and log once, rather than write a `1`**: a gap in the series is visible, a fabricated verdict is not.
+
+### `P-126` — a derived-value lookup may never block a send
+
+**Found by executing it, not by reading it.** `SendPayoffsAsync` resolves the `PercentRemaining`
+denominator with a database read; its exception escaped through `SendLineAsync` and took the whole
+tick, so **`ComponentStatus` and `LineStatus` were never sent**. The harness saw it as *"component
+status sent once on first sight: sends=0"*.
+
+**In production the trigger is any transient database blip** — and the cost is that the component
+panel and the line status badge go stale because a *weight percentage* could not be looked up. The
+loop's own rule already said what to do: *a dropped frame of telemetry must never cost the operator
+the screen.* The send path had not been held to it.
+
+**So every derived-value resolution catches, logs once per line, and returns null**, and every
+caller already treats null as *skip this one payload*:
+
+- `PercentRemaining` unresolved → that bay's `PayoffWeight` is skipped; the other channels send.
+- `RunId` unresolved → `LineStatus` still sends, with a null `OrderId`. **Status is the half DB1's
+  badge cannot do without.**
+- `InSpec`'s band unresolved → the `RunReading` row is skipped (`P-125`), which is a different
+  decision and stays as it was: a gap in the series is visible, a fabricated verdict is not.
+
+⛔ **And the failure is NOT cached.** Caching the null would turn one blip into a permanent
+degradation for the life of the process — the cache exists to avoid a query per tick, not to
+remember failures.
+
+⚠ **Persistence failures are throttled the same way but counted, not per-line**: first at `Error`,
+then silent, then a recovery line naming the number of failed ticks. At 10 Hz an unthrottled outage
+is ~864,000 lines a day — which buries the line that matters and is its own incident.
+
 ---
 
 ## 5. Verification
 
-**No automated tests** — `[TS §1.2]`. Verified by observation in the QA0 walkthrough; `[NFR]`
-`TC-601`–`TC-613` cover cadence, reconnect, group isolation and the PLC audit.
+**No automated tests** — `[TS §1.2]`. Verified 29 Aug 2026 by a **scratchpad harness over the built
+assemblies** (15 of 15) and by **booting the API**; results below are measured.
 
-| Check | Expected |
+| Check | Result |
 |---|---|
-| Cadence | Batches at ~100 ms; value changes from configuration with no rebuild |
-| Batched arrays per group | A client in `FL1Data` receives FL1 arrays only |
-| Decimation | Hot channels reduced to cadence, not sent per reading |
-| On-change only | `ComponentStatus` / `LineStatus` do not repeat on an unchanged tick |
-| **`PayoffStateChanged`** | Delivered **immediately**; **never** inside a batch |
-| Rare domain events | Immediate and unbatched |
-| **FL2** | Batched gauge/width suppressed, live values **`null`** — **and speed, footage, component and line status still arriving** |
-| FL3 hybrid | **Not** suppressed |
-| `ITInhibit` gate | With the interlock set, telemetry still broadcasts and **`RunReading` rows stop** |
-| `ReadingTs` | UTC `DATETIME2` |
+| **Payload shape** | ✅ **Gauge and width arrive as ARRAYS, speed / payoff / footage as single payloads.** One batch of three samples from a three-snapshot tick |
+| **Decimation** | ✅ The three scalars carry the tick's **newest** value — speed `302`, footage `102` from samples 300–302 / 100–102 |
+| **An empty tick sends nothing** | ✅ **Measured twice.** The harness saw no client even requested; **the real API ran ~90 ticks in 9 s with zero log lines and zero work** |
+| **A null is skipped, not zeroed** | ✅ A null speed produced no send — no `0` appeared |
+| **On change only** | ✅ Sent once on first sight, **not repeated** on an identical tick, sent again when `IsActive` flipped |
+| **FL2 needs no branch** | ✅ FL2 sent **no gauge or width** while speed and footage flowed — structurally absent, not suppressed, with no `if` in the file |
+| **`LineStatus` is silent before `C2`** | ✅ `TryMapLineState` returned `false` and nothing was sent — logged as normal, not as an error |
+| **`PayoffWeight` skipped without a denominator** | ✅ No staged rod weight → no payload, because `PercentRemaining` is non-nullable |
+| **The loop cannot take the API down** | ✅ Sends continued through a persistence path that threw **every tick**; health `200`, host alive |
+| **Cadence and spacing are configuration** | ✅ Boot logged *"started at 100 ms; recording one point per 4 ft (FR-018)"* — the harness ran the same code at 50 ms |
+| **Resolution loss is observable** | ✅ Shutdown logged *"drained 7 of 7 snapshots"* — `written − drained` is the loss |
+| **`RunReading` is not an aggregate child** | ✅ **The table is not in the EF model at all** — no entity exists to hang a navigation off (`P-12`) |
+
+⛔ **The harness caught a defect three review passes had not: a failed lookup blocked the sends.**
+`SendPayoffsAsync` resolves the `PercentRemaining` denominator, and its exception escaped through
+`SendLineAsync` and took the whole tick with it — so **`ComponentStatus` and `LineStatus` were never
+sent**. In production the trigger is any transient database blip: the component panel and the line
+badge would go stale because a *weight percentage* could not be looked up. **Fixed** — a resolution
+failure is caught, logged once per line, **not cached** (caching the null would make one blip
+permanent), and the channels that follow it still send.
+
+⚠ **Persistence failures are throttled**: first failure at `Error`, then silent, then a recovery
+line. At 10 Hz an unthrottled outage is ~864,000 log lines a day, which is its own outage.
+
+⚠ **`TC-601`–`TC-603` are NOT yet verified end to end** — counting `RunReading` rows against footage
+needs a publisher, and `FW-203` does not exist while `FW-N05`'s real ingest is blocked on
+`G59`/`G60`. **The gate is built and unit-verified by inspection; the row count is a QA0 item.**
+
+⚠ **The harness is scratchpad-only and deliberately not in the repository** — `[TS §1.2]` withdraws
+automated backend tests. It is reproducible from this card: write snapshots into a `ReadingChannel`,
+start the loop over a recording `IFlatWireClient`, and assert the twelve rows above.
 
 ⚠ **`TC-620`–`TC-623` are untestable** (`G9`/`OI-34`) — the decimation ratio cannot be
 validated. Record what was achieved; do not invent a target.
@@ -167,7 +484,14 @@ validated. Record what was achieved; do not invent a target.
 ## 6. Handoff
 
 `FW-080` hosts the hub this sends through. `FW-205` sets the interlock this honours.
-`FW-N05` replaces `FW-203` behind the channel with no change here — that is `P-31`'s test.
+⚠ **`FW-177` owns the component-fault alert this loop cannot carry.** The snapshot's `IsFaulted` bit
+has no field on `ComponentStatusEvent`; its event is `AlertRaised`. **Nothing wires it today** — the
+bit is ingested and read by no one, which is `G31`'s shape reappearing one layer up.
+
+✅ **`FW-N05`'s channel is BUILT** — `IReadingChannel`, `ReadingChannel` and `Reading` are live, so
+this loop has a real type to drain rather than a description. `FW-N05` replaces `FW-203` behind it
+with no change here — that is `P-31`'s test, and it is now testable. ⚠ **This loop owes that story
+the drained count** (§2.0a).
 ⚠ **Broadcast-cadence deviation is instrumented HERE, not by `FW-148`** — corrected
 27 Aug 2026 (`P-86`). `[MON §7.1]` sources it from *"Hub instrumentation"* in its own row,
 separate from the `/health` row, and `[API §4.19]`'s health body has **five members and no
@@ -186,5 +510,11 @@ deviation off this loop"; that claim originated in
 | **`G3`** | `RunReading` is the store this loop persists to |
 | **`G10`** | If IIS WebSockets is absent the transport silently falls back to long-poll and **the cadence assertions change character** — `[TRP §6]` calls this a provisioning task, to pre-check **before T2** |
 | **Pending renames** | `LineStatus` → `LineStateChanged` (`[PLCC §6.3]`). **Build to `[API]`/`[SIG]`**; rename in one pass |
+| ⚠ **`[API §4.1]` vs the built `PayoffWeightEvent`** *(raised 28 Aug 2026)* | `[API §4.1]` says `weightLb` / `percentRemaining` *"come from the live `PayoffWeight` feed and are **`null`** on a bay that is not drawing"*, but both are **non-nullable `decimal`** on the built payload. **No contract change is needed** — the hub sends no payload for a bay that is not drawing, and absence is how the null reaches the client. Recorded so nobody makes the fields nullable to close a gap that is not one |
+| ⚠ **`FW-181` vs `[SIG §5.3]`** | *"`null`, not absent"* against *"suppressed entirely"*. **Reconciled in §2.2 at no cost** — absence at the transport is what makes the client's field `null`. Neither document needs editing |
+| **`G9` — the drained/written pair has no threshold either** | The metric is buildable now (§2.0a); the **alarm level** is not. `[MON §7.1]` wants cadence deviation; `G9` supplies no target. **Instrument it, do not invent the alarm** |
 
-No stale citations in this card.
+**Citations corrected 28 Aug 2026:** the traffic table's *"arrays per line group"* for all five
+batched channels (only gauge and width are arrays), and build step 6's *"broadcast `null` live
+values"* on FL2 (`[SIG §5.3]` says *"entirely"*). Both were checked against the built
+`IFlatWireClient` rather than against the specifications alone.

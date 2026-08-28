@@ -37,7 +37,7 @@ Six streams, derived from the layers the phase files actually name.
 
 | Code | Stream | Repo / surface | Hours | Share |
 |---|---|---|---|---|
-| **FE** | Angular | `ual-angular` → new library `flat-wire-shopfloor` (prefix `fw`) | **1,211** | 33.1% |
+| **FE** | Angular | `ual-angular` → new library `flat-wire` (prefix `fw`) | **1,211** | 33.1% |
 | **BE** | .NET | `ual-api` → new `FlatWire` microservice | **840** | 23.0% |
 | **QA** | Test / E2E / UAT | all phases + Phase 14 | **701** | 19.2% |
 | **RT** | Real-time / PLC | `FlatWireHub`, OPC ingest, `PLCTagService` | **408** | 11.1% |
@@ -167,7 +167,7 @@ The `TOTAL` row is the **raw column sum**: 1,056 + 732 + 352 + 356 + 611 + 84 + 
 
 The backlog sized the **45 shopfloor stories at 189 points**, split across three files (`05-SprintPlanAndBacklog.md` 35 / 147 · `YieldCostAndScrapJiraStories.md` 4 / 11 · `MVP-2/.../FlatWireJiraStories-MVP2.md` 6 / 31). Against 3,660 h that is **19.4 h/point** — about 2½ days per point, roughly double a conventional ~1 day (8 h) per point. The divergence exceeds the 25% investigation threshold, so it was investigated. Two causes, both real:
 
-1. **The backlog has no story for most of Phase 1.** Epic E01 "Foundation & Infrastructure" is 7 stories / 28 points, and **all seven are database stories** (~~FW-001 renames, FW-002 `INFLAT`~~ *(both cancelled, `D-32`)*, FW-003 machines, FW-004 alloys, FW-005/006/007 tables). There is **no story anywhere in the backlog** for scaffolding the `flat-wire-shopfloor` Angular library, for creating the `FlatWire` .NET solution and its 13 controllers, or for the OPC ingest and `PLCTagService`. Phase 1 is **1,027 h** against ~28 points of nominal coverage. **This is a backlog gap, not an estimating error** — and it is the single largest reason the window was believed to fit.
+1. **The backlog has no story for most of Phase 1.** Epic E01 "Foundation & Infrastructure" is 7 stories / 28 points, and **all seven are database stories** (~~FW-001 renames, FW-002 `INFLAT`~~ *(both cancelled, `D-32`)*, FW-003 machines, FW-004 alloys, FW-005/006/007 tables). There is **no story anywhere in the backlog** for scaffolding the `flat-wire` Angular library, for creating the `FlatWire` .NET solution and its 13 controllers, or for the OPC ingest and `PLCTagService`. Phase 1 is **1,027 h** against ~28 points of nominal coverage. **This is a backlog gap, not an estimating error** — and it is the single largest reason the window was believed to fit.
 2. **Excluding Phase 1, the ratio is 2,633 h / 161 points = 16.4 h/point.** For touch-screen shopfloor dashboards built to mockup fidelity, with a full vertical slice (UI + MediatR command + validation + DDL + hub event + tests) per phase, ~16 h/point is the more defensible figure. Phase 6 is the clearest illustration: 4 full dashboards + 2 dialogs + 6 endpoints + 5 write tables was sized at 19 points ≈ 152 h if a point is a day — i.e. under 30 h per dashboard *including* backend, database and test. The model prices it at 298 h.
 
 **The rate card in §2 is the single calibration knob.** If the team's measured throughput at the Phase-1 gate is better than these rates, rescale §2 and re-publish §3/§4 — see §6.

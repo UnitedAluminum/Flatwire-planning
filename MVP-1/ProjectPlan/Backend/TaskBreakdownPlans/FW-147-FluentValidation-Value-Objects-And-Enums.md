@@ -403,7 +403,7 @@ count), and the TypeScript leg searched for across three `ual-angular` checkouts
 |---|---|
 | **C#** | ✅ `FlatWire.Domain/Enums/CanonicalEnums.cs` — **14** enums, in `[API §2]`'s order, one file |
 | **DB `CHECK`** | ✅ present for **12** of the 14, across 24 constraints — `LineId` alone is mirrored by 10 |
-| **TypeScript** | ❌ **does not exist.** No `flat-wire-shopfloor` library in `ual-angular`, `Second-Branch/ual-angular` or `ual-angular-latest`, and no `.ts` file anywhere defines `FM2_S1`, `RollAdjustTrigger`, `TraversingTakeup` or `ComponentState`. `FW-132` is unbuilt — gap **`G56`** |
+| **TypeScript** | ❌ **does not exist.** No `flat-wire` library in `ual-angular`, `Second-Branch/ual-angular` or `ual-angular-latest`, and no `.ts` file anywhere defines `FM2_S1`, `RollAdjustTrigger`, `TraversingTakeup` or `ComponentState`. `FW-132` is unbuilt — gap **`G56`** |
 
 **C# ↔ DDL, per enum** — set equality on member names, `PayoffPosition` also on pinned ids:
 

@@ -21,7 +21,7 @@
 | ~~2~~ | ~~**FW-001 shared-schema renames**~~ — **CANCELLED 18 Aug 2026, `D-32`. There is no shared-schema migration, so this component does not exist and step 2 is not deployed.** ⚠ **Step 4's `machines` rows (FL1/FL2/FL3, `FW-003`) and the `CommonDB` WIP-station registration are NOT cancelled** — they insert rows into existing tables and are still required | — | — |
 | 3 | **`FlatWire.API`** | `dotnet publish` output | IIS application pool |
 | 4 | **`OPCConnection` configuration** | `appsettings.{Environment}.json` tag-path map | IIS (existing service) |
-| 5 | **`flat-wire-shopfloor`** | `ng build` static output, inside the shop-floor bundle | IIS static site |
+| 5 | **`flat-wire`** | `ng build` static output, inside the shop-floor bundle | IIS static site |
 
 ### 1.2 Deployment order — and why
 
@@ -483,7 +483,7 @@ V12 — tag push, on a stopped line only
 
 > **Never verify a tag push on a running line.** The push configures the machine.
 
-### 4.6 Step 6 — Angular `flat-wire-shopfloor`
+### 4.6 Step 6 — Angular `flat-wire`
 
 ```powershell
 cd "c:\UAL\ual-angular"

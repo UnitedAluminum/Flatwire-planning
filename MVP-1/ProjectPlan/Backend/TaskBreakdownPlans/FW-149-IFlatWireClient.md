@@ -1,9 +1,9 @@
 # FW-149 · `IFlatWireClient` typed event contract
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — first issue
+**Last Updated:** August 28, 2026 — ✅ **EXECUTED. The contract diff now covers 20 of 20 on the server side, and every step of §3 is closed or handed forward.** ⛔ **`P-117` is discharged, not merely raised: `[SIG §5.4]`'s six marker payloads are now PUBLISHED `[PROPOSED]`** — a shared `lineId · runId · footagePosition · timestamp` base plus one to three fields each — and **verified field for field against the built code on publication: all six agree.** That was the last of the twenty payloads with no specification, so the fourteen events (already 14/14) plus the six markers make the server leg **complete**. ⛔ **Step 3 found the thing it exists to find: `SpoolCompletionPromptDueEvent` cannot be fully reconstructed on re-delivery, and the built nullability already carries that correctly.** Four of its six fields come from `FlatWireRun`'s persisted prompt columns; **`SpoolAlpha` is one join** off `SpoolCheckin` (null on FL1, which has no such row); and **`TargetLb` has NO persisted source anywhere in the schema** — `SpoolCheckin`/`SpoolProcessing` carry the *incoming* spool's gross+net, and `Spool` the article carries a size-class *acceptance band*, neither of which is a run target. The notion belongs to `[SIG §5.5]`'s **Part A** progress payload, which is `Should`, *"advisory and non-blocking"* and **deliberately unpublished** — so a live broadcast can fill it and a re-delivery cannot. **Documented on the member, with both wrong fixes named**: do not make it non-nullable (`TC-173` is what fails), and do not add a target column, which would decide Part A's design from inside a transport payload. ✅ **`OrderAllocationReachedEvent` is the opposite case — 9/9 reconstructible from a single `RodOrderConsumption` row**: `crossedAt ← ThresholdReachedAt`, `latchedWeightLb ← LatchedWeightAtThresholdLb`, `allocatedWeightLb ← AllocatedWeightLbSnapshot`. ✅ **Step 4 done: `P-115` is recorded where `FW-132` will read it** — on the `PayoffPosition` enum itself, since that is what the TypeScript union is written from, naming both representations, the non-nullable hub member against the nullable REST field, the two things not to "harmonise", and `G55` as adjacent-not-this. ✅ **Step 5: 20 members, 21 payload types, the 21st still not an event.** ⚠ **The replay chain is wired end to end** — hub → `IMediator` → `GetOutstandingPromptsQuery` → `IRunService` — and `RunService` returns an **empty** response by design today: the spool half needs the query and `RodOrderConsumption` has no entity until `FW-225` / Phase 4. **Clean rebuild: 0 errors, no new analyzer warning** (13 warnings, 5 code warnings, all pre-existing). **No payload field changed** — the edits are documentation, so there is no runtime cost and nothing for 1A to re-consume. *(earlier the same day)* ⚠ **RE-REVIEWED BEFORE EXECUTION: five corrections, and the biggest is good news — the server leg of `P-116`'s diff has been RUN and it PASSES.** ✅ **All fourteen `[SIG §5.2]` payloads match the built `HubContracts.cs` field for field — zero differences** — and they match on **types and nullability** too, which is what actually bites at `P-33`'s freeze: `GaugeReadingEvent.Value` and `WidthReadingEvent.Value` are **`decimal?`** with `FR-120` documented on them, so FL2's null-gauge contract is representable and a `0` cannot be mistaken for a missing reading; all **fifteen** timestamps are `DateTimeOffset` per `phase-01b` L97; and every dimensioned value is `decimal`, not `double`. So §3 step 2 is **done for 14 of 20**, and `P-116`'s server leg is banked exactly as `P-84` banked `TC-020`'s C#↔DDL leg rather than left as a to-do. ⛔ **And that is 14 of 20 because `[SIG §5.4]` specifies NO payload fields for the six markers** — it names them and stops. Their shapes are `FW-080`'s build-time invention (a uniform `LineId · RunId · FootagePosition · Timestamp` base plus one to three marker-specific fields), so **`P-33` is about to freeze an unreviewed surface**; **`P-117`** offers the built shapes as the proposal and hands `[SIG §5.4]` six field lists to ratify. ⛔ **`P-101` says `IFlatWireBroadcaster` has TWO members and the build has ONE** — the built file explains why one suffices (inside a `Hub<IFlatWireClient>`, `Clients.Caller` is *already* typed as `IFlatWireClient`, so the hub answers its own caller with no broadcaster), so `P-101`'s *"`Connection(connectionId)` as well as `Line(lineId)`"* is contradicted by its own build and `FW-208`'s developer will hunt for a member that does not exist. §6 already said one; the handback is new. ⚠ **`PP-04`'s owner was wrong in §7**: the *rule* was restated in `[SIG]`'s §5.2 callout, but the **register row is `[API §10.3]`'s** — both need the fifth-site widening, and §7 now names which. ⚠ Two smaller ones: `OutstandingPromptsResponse.OrderPrompts` is a **list** where `SpoolPrompt` is singular (a rod can cross more than one order boundary unacknowledged), and `[API §4.5]`'s `payoffPosition` is a **nullable** int while the hub's is a non-nullable enum — both correct, both worth a client-side line. ✅ **`FW-208` step 8 is fully unblocked, not just at the interface**: `FlatWireBroadcaster` is implemented in `FlatWire.API/Hubs/` and registered at `Program.cs:244`. *(earlier the same day)* **Reviewed against the built `ual-api` and the 22–27 Aug `[SIG]` reissues; `P-32` restated and `P-113`–`P-116` minted.** ⛔ **The count in this plan was wrong in five places, and the line it cited as authority is wrong too.** The contract carries **fourteen events + six markers = twenty**, not twelve + six: events 13 and 14 (`OrderAllocationReached` / `OrderAllocationResolved`) entered `[SIG §5.2]` on **22 Aug 2026**. `phase-01b` **exit criterion 4 still said twelve** — this plan's stated authority for building twelve — and is **corrected in this pass**; `Orchestration.md`'s mirror of that criterion was already right. Per `PP-04`'s own restated rule — *"a document that enumerates the events carries the count even without printing a number"* — **this plan is a fifth PP-04 site, and the one nearest the build** (`P-113`). ⛔ **And the story is largely already delivered:** `FW-080`'s 28 Aug build shipped `IFlatWireClient` with **20 members** *and* all **20 payload types** in `Models/RealTime/HubContracts.cs`, so §1.2's split — *"`FW-080` gives the interface, this story gives the payload types"* — is superseded and build steps 1–4 are done (`P-114`). What genuinely remains is the **shape review**, the **`[API §8]` freeze**, one **open question `FW-080` handed here**, and one **diff that cannot be run**. ⛔ **`P-102` handed this story `PayoffPosition` and the plan did not carry it:** the hub sends `"Payoff2"` (a string, both protocols) where `[API §4.5]` contracts `"payoffPosition": 2` as an **int**. **`P-115` answers it: change nothing on either surface** — `P-58` already put the fourteen canonical enums on the wire as strings, unifying REST would break 32 published endpoints, and the TypeScript union is identical either way; the one real hazard is a client comparing the two raw, which is one line in `FW-132`. ⛔ **AC 3's counterparty is documented at nine and does not exist.** `[TB §7]`'s `FW-136` card enumerates **nine** events and **no markers**, and the `flat-wire` Angular library — which **does** now exist in `Second-Branch/ual-angular`, contradicting `G56`'s stated evidence — is a **scaffold**: a placeholder component, a module, a routing module and a guard, with **no event name, no typed set and no mock service anywhere in `ual-angular`**. So `P-32`'s *"manual diff at QA0 with a named owner"* has nothing to diff against; it is **signed off per leg and owed to `FW-136`**, exactly as `P-84` did for `TC-020`'s TypeScript leg (`P-116`). Also: **two events are durable, not one** (`SpoolCompletionPromptDue` **and** `OrderAllocationReached` — `[SIG §5.2]`, `P-100`); §6's handoff is imprecise in a way that costs a build cycle — an Infrastructure handler **cannot** name `IHubContext<FlatWireHub, IFlatWireClient>` and injects **`IFlatWireBroadcaster`** (`P-101`), and **`FW-208` step 8 is now unblocked**; `[API §10.3]`'s `PP-04` reads **14**, not the "ten" cited here; and the **16 h is overstated** for the work that remains — flagged, not restated. *(previously August 15, 2026 — first issue)*
 **Document Type:** Implementation plan for a single backlog story
-**Status:** Ready to build — **the interface is minted by `FW-080`; this story completes it**
+**Status:** ✅ **EXECUTED 28 Aug 2026 — the server leg of the contract diff is COMPLETE at 20 of 20** (§5.1): 14/14 events against `[SIG §5.2]`, and the six markers against `[SIG §5.4]`, which `P-117` caused to be published. `P-115` is recorded in code and step 3's re-delivery limits are documented. ⛔ **AC 3 still cannot close here** — `P-116`'s **client leg is owed to `FW-136`**, which does not exist
 **Owner:** Real-time (RT) stream
 **Audience:** The developer building `FW-149`
 **Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
@@ -11,16 +11,22 @@
 
 ---
 
-> **Why this document exists.** Three things that are decided and look like mistakes.
+> **Why this document exists.** Four things that are decided and look like mistakes.
 >
 > **The interface lives in `FlatWire.Domain`**, not in the API project with the hub. All of
 > `[ARC §1.2]`, `[SVC §3.2]` and `phase-01b` L104 agree, and it is what keeps SignalR out of
-> the Application layer.
+> the Application layer. ⚠ **That is necessary and not sufficient** — see §6 and `P-101`.
+>
 > **`WeldJoinEvent` is deliberately inconsistent with everything else.** The aggregate, the
 > table, the endpoint and the story all say **`WeldEvent`**; the SignalR method keeps
 > `WeldJoinEvent`. That is a decision, not drift.
-> **And the event count is a trap** — the figure "9" is still in circulation, `[API §10.3]`
-> counts ten, and this interface carries **twelve plus six markers**.
+>
+> **The event count is a trap, and this document fell into it.** "9" is still in circulation,
+> `[API §10.3]` once counted ten, this plan said twelve — the contract carries **fourteen
+> events plus six markers**. §1.1 is the whole of it.
+>
+> **And the interface is already built.** `FW-080` shipped all twenty members and all twenty
+> payload types on 28 Aug 2026. Read §1.2 before opening an editor.
 
 ---
 
@@ -45,55 +51,107 @@ From `[TB §7]` — verbatim:
 > **Dependencies:** FW-080
 > **Blockers:** —
 
-### 1.1 ⚠ The card's list is short by three
+⚠ **Three of the four acceptance criteria are superseded or unrunnable as written**, and §1.1,
+§1.2 and `P-116` say how. AC 4 — the naming rule — stands exactly as written and is satisfied.
 
-The card names **ten** events and **five** markers. `phase-01b` L104 and `[SIG §5.2]`/`[SIG §5.4]`
-carry **twelve** and **six**:
+### 1.1 ⛔ The card's list is short by **five**, and so was this plan
 
-| Missing from the card | Where |
+The card names **ten** events and **five** markers. `[SIG §5.2]`/`[SIG §5.4]` carry
+**fourteen** and **six** — and the earlier issue of this plan said twelve and six, which was
+right on 15 Aug and wrong from 22 Aug.
+
+| Missing from the card | Where | Added |
+|---|---|---|
+| **`SpoolCompletionPromptDue`** | `[SIG §5.2]` event 11 — **durable** (§2.1) | 14 Aug 2026 |
+| **`SpoolCompletionPromptResolved`** | `[SIG §5.2]` event 12 | 14 Aug 2026 |
+| **`AlertEvent`** | `[SIG §5.4]` — the sixth run-event marker | — |
+| ⛔ **`OrderAllocationReached`** | `[SIG §5.2]` event 13 — **durable**, and the second one | **22 Aug 2026** |
+| ⛔ **`OrderAllocationResolved`** | `[SIG §5.2]` event 14 | **22 Aug 2026** |
+
+**Build fourteen and six — twenty members.** ⚠ **Do not take the count from `phase-01b` exit
+criterion 4**, which this plan previously cited: it read *"all twelve events and six markers"*
+until **corrected in this pass**, while `Orchestration.md`'s mirror of the same criterion had
+already been fixed. **`[SIG §5.2]` is the authority** (`P-113`).
+
+> ⚠ **This document is a `PP-04` site and did not know it.** `PP-04`'s rule was restated on
+> 27 Aug 2026 with the distinction it had been missing: **a document that enumerates the events
+> carries the count even without printing a number.** That is how `[SIG §5.6]`'s observable map
+> was found sitting at twelve — the map `FW-135` is built from. **This plan enumerates the events
+> in §2 and stated the count in five places**, which makes it a fifth site and the one closest to
+> the interface. `PP-04`'s four named sites are `[SIG §5.2]`, `[SIG §9.3]`, `[SIG §5.6]` and the
+> master spec summary; **all four now read 14.**
+
+### 1.2 ⛔ What `FW-080` already delivered — the split is superseded
+
+The earlier issue divided the work as *"`FW-080` mints the interface, this story defines the
+payload types."* **`FW-080`'s 28 Aug build delivered both.**
+
+| Delivered by `FW-080` | Where |
 |---|---|
-| **`SpoolCompletionPromptDue`** | `[SIG §5.2]` — and it is the **durable** one (§2.1) |
-| **`SpoolCompletionPromptResolved`** | `[SIG §5.2]` |
-| **`AlertEvent`** | `[SIG §5.4]` — the sixth run-event marker |
+| `IFlatWireClient` with **all 20 members** | `FlatWire.Domain/IFlatWireClient.cs` |
+| **All 20 payload types** | `FlatWire.Domain/Models/RealTime/HubContracts.cs` |
+| Enum-typed fields on the payloads — `LineId`, `PayoffPosition`, `ComponentName`, `LineState`, `AlertSeverity` | same |
+| Both protocols aligned on **string** enums (`P-102`) | `FlatWire.API/Program.cs` |
 
-**Build twelve and six.** `phase-01b` **exit criterion 4** requires *"all twelve events and
-six markers typed on `IFlatWireClient`"*.
+**So this story is what is left** (`P-114`):
 
-### 1.2 The split with `FW-080`
-
-[`FW-080`](FW-080-FlatWireHub.md) `P-22` mints the interface in its first commit, because
-`Hub<IFlatWireClient>` does not compile without it and this story lists `FW-080` as its
-dependency — read literally, neither could start.
-
-| `FW-080` | **This story** |
+| Still this story's | Status |
 |---|---|
-| The interface exists, with all eighteen members | The **payload types** for each |
-| | The **`FW-136` match** — the client-side typed set |
-| | The shape review and the `[API §8]` breaking-change discipline |
+| The **shape review** against `[SIG §5.2]` payload by payload | ✅ **done, 20/20** (§5.1) |
+| The **`[API §8]` freeze** — shapes are frozen once 1A builds against them (`P-33`) | ✅ **safe to freeze** — all twenty are now specified and reviewed (`P-117` discharged) |
+| **`PayoffPosition` vs `[API §4.5]`** — the question `P-102` handed here | ✅ answered **and recorded in code** on the enum, `P-115` |
+| The **`FW-136` diff** (AC 3) | ⛔ **no counterparty** — `P-116` |
+
+⚠ **`OutstandingPromptsResponse` is a 21st type in `HubContracts.cs` and is NOT an event.** It is
+the reply to `JoinLineGroup`'s replay-on-join (`P-100`), read through `IMediator` off the line's
+active run, with `IsEmpty` as the fast path for an idle line. A count check that greps payload types
+finds 21; do not conclude there is a 21st event.
+
+⚠ **Its two members are deliberately asymmetric:** `SpoolPrompt` is a single nullable event,
+`OrderPrompts` is a **list** — a rod can cross more than one order boundary before anyone
+acknowledges the first, and each crossing is its own durable prompt. **A client that renders one
+order prompt drops the rest**, silently, on the line that is still running.
 
 ---
 
-## 2. The eighteen members
+## 2. The twenty members
 
-**Twelve events** (`[SIG §5.2]`):
+**Fourteen events** (`[SIG §5.2]`):
 
-`GaugeReading(GaugeReading[])` · `WidthReading(WidthReading[])` · `SpeedFPM` ·
+`GaugeReading(GaugeReadingEvent[])` · `WidthReading(WidthReadingEvent[])` · `SpeedFPM` ·
 `PayoffWeight` · `FootageCounter` · `ComponentStatus` · `LineStatus` · `AlertRaised` ·
 `AlertCleared` · `PayoffStateChanged` · **`SpoolCompletionPromptDue`** ·
-**`SpoolCompletionPromptResolved`**
+**`SpoolCompletionPromptResolved`** · **`OrderAllocationReached`** ·
+**`OrderAllocationResolved`**
 
 **Six run-event markers** (`[SIG §5.4]`):
 
 `WeldJoinEvent` · `DieChangeEvent` · `PauseEvent` · `SPCCheckpoint` · **`AlertEvent`** ·
 `RodCheckoutEvent`
 
-### 2.1 One of the twelve is not fire-and-forget
+### 2.1 ⛔ **Two** of the fourteen are not fire-and-forget
 
-**`SpoolCompletionPromptDue`** is server-owned persisted state, re-delivered on group
-re-join, raised once per `RUNNING → STOPPED` edge, weight latched at the PLC stop timestamp,
-persisted to `FlatWireRun`'s five prompt columns (`G38`). **Do not type it as telemetry** —
-its payload has to carry what a re-delivery needs, not what a tick needs. Behaviour is
-[`FW-080 §3.3`](FW-080-FlatWireHub.md).
+`[SIG §5.2]` is explicit: **`SpoolCompletionPromptDue` and `OrderAllocationReached` are the only
+events in this contract that are not fire-and-forget.** The earlier issue named one. Both are
+**server-owned persisted state, re-delivered on group re-join**, and both must be typed for a
+**re-delivery**, not for a tick.
+
+| | `SpoolCompletionPromptDue` | `OrderAllocationReached` |
+|---|---|---|
+| Raised on | the `RUNNING → STOPPED` edge, **once per stop** | the allocation crossing, **once per pairing**, detected server-side on the footage stream |
+| Latched value | weight at the **PLC stop timestamp** | `latchedWeightLb` at the **crossing instant** |
+| Persisted to | `FlatWireRun`'s five prompt columns (`G38`, closed) | the **`RodOrderConsumption`** record |
+| Re-delivered from | `PromptDueAt IS NOT NULL AND PromptResolvedAt IS NULL` | `State = 'ThresholdReached' AND AcknowledgedAt IS NULL` |
+| The line is | **stopped** | **still running** — the material produced until the acknowledgement is the recorded **overrun** |
+
+Two rules carry across both, and a client that ignores either is wrong in a way nothing fails on:
+**a duplicate delivery must be idempotent**, and the latched weight must be **rendered as latched
+and never replaced by a fresher `PayoffWeight` tick**.
+
+⚠ **`OrderAllocationResolved` does something `SpoolCompletionPromptResolved` does not:** it
+**reveals the next order** on the same rod, because the acknowledgement is what starts it. Nothing
+is scanned and the rod is not dismounted, so it is the **only** signal the screen gets. Behaviour
+is [`FW-080 §3.3`](FW-080-FlatWireHub.md); re-delivery is `P-100`.
 
 ### 2.2 The naming rule, stated once
 
@@ -101,42 +159,58 @@ The domain aggregate, the table, the endpoint and the story all say **`WeldEvent
 **SignalR method name** is `WeldJoinEvent`, per `[SIG §5.4]`, and that is the only place the
 older name survives. Source documents drift between the two; this is the resolution.
 
+### 2.3 ⛔ `PayoffPosition` — the question `FW-080` handed here
+
+`P-102` aligned **both** hub protocols on string enums, and flagged one consequence as *"an open
+question for `FW-149`, not settled here"*: the hub sends `"Payoff2"` where `[API §4.5]` contracts
+`"payoffPosition": 2` as an **int** on REST. It rides on `PayoffWeightEvent.Position` and
+`PayoffStateChangedEvent.Position` in the built payloads, and `AlertSeverity`,
+`CheckpointType`, `ComponentName`, `LineState` and `CheckoutMode` sit in the same position.
+
+**Answered by `P-115`: change nothing on either surface, and write the difference down.** This
+is the shape-review moment `P-33` freezes, so it is settled here rather than left to be
+discovered by `FW-132`.
+
 ---
 
 ## 3. Build order
 
-1. Confirm the interface exists in `FlatWire.Domain` from `FW-080`; **do not move it** to the
-   API project to sit beside the hub.
-2. Define the payload type per member — `GaugeReading`, `WidthReading` and the rest — as
-   plain records in `FlatWire.Domain`.
-3. **Array-typed where batched**: `GaugeReading(GaugeReading[])` and
-   `WidthReading(WidthReading[])` take arrays because [`FW-150`](FW-150-Broadcast-Loop.md)
-   sends batches; the immediate events take single payloads.
-4. `SpoolCompletionPromptDue`'s payload per §2.1.
-5. **Diff against `FW-136`** member by member (`P-32`).
-6. Add **no** member that `[SIG §5.2]`/`[SIG §5.4]` does not list.
+⚠ **Steps 1–4 of the earlier issue are done** — `FW-080` shipped the members and the payload
+types (§1.2). What remains:
+
+1. **Confirm, do not rebuild.** `IFlatWireClient` is in `FlatWire.Domain` with 20 members and
+   `HubContracts.cs` carries 20 payload types. **Do not move the interface** to the API project to
+   sit beside the hub, and do not re-declare the payloads.
+2. ✅ **DONE for the fourteen events — run on the re-review, 14/14, zero differences** (§5.1),
+   including types and nullability. ⛔ **The six markers cannot be reviewed this way**: `[SIG §5.4]`
+   publishes no fields for them (`P-117`).
+3. ✅ **DONE — and it found something.** `OrderAllocationReachedEvent` is **9/9 reconstructible
+   from one `RodOrderConsumption` row**. `SpoolCompletionPromptDueEvent` is **4 of 6**:
+   `SpoolAlpha` is one join off `SpoolCheckin`, and **`TargetLb` has no persisted source at all**
+   — the built nullability already carries that, and it is now documented on the member with both
+   wrong "fixes" named (§5.1).
+4. ✅ **DONE** — recorded on the **`PayoffPosition` enum itself**, which is what the TypeScript
+   union is written from: both representations, the non-nullable hub member against the nullable
+   REST field, the two things not to "harmonise", and `G55` as adjacent-not-this.
+5. ✅ **DONE — 20 members, 21 payload types, the 21st still not an event** (§1.2). Nothing added.
+6. ➡ **HANDED FORWARD** per `P-116` — the client leg is `FW-136`'s and is not booked as a QA0 gate
+   that cannot run. ⚠ **`FW-136`'s card must be corrected off nine first** (§7).
 
 ---
 
 ## 4. Decisions this plan makes
 
-> `P-##` is continuous across this folder; `P-01`–`P-31` precede this story.
+> `P-##` is continuous across this folder; new decisions mint at **`P-118`+**.
 
-### `P-32` — the `FW-136` match is a manual diff with a named owner
+### `P-32` — the `FW-136` match is a manual diff with a named owner — **superseded by `P-116`**
 
-AC 3 requires this set to match `FW-136`'s client-side typed set **exactly**, and with
-backend tests withdrawn (`[TS §1.2]`) nothing mechanical checks it. It is the same shape of
-problem as `TC-020`'s enum mirror, which `phase-01b` resolves as *"a manual three-way diff
-… It needs an owner named; it is not a green build."*
+AC 3 requires this set to match `FW-136`'s client-side typed set **exactly**, and with backend
+tests withdrawn (`[TS §1.2]`) nothing mechanical checks it. The consequence of skipping it is
+specific and quiet: **a mismatch compiles on both sides** — the server sends an event the client
+has no handler for, and nothing fails.
 
-**Treat this the same way:** a member-by-member diff of `IFlatWireClient` against `FW-136`,
-run at QA0, with a named owner. Add it to [`FW-138`](FW-138-Fifteen-Thin-Controllers.md)'s
-QA0 checklist.
-
-The consequence of skipping it is specific and quiet: **a mismatch compiles on both sides**
-— the server sends an event the client has no handler for, and nothing fails. That is the
-failure `phase-01b` describes for `G38` too: *"the event is typed, everything compiles, the
-durability simply never happens."*
+**That reasoning stands. The scheduling does not** — `P-116` records why the diff cannot be a QA0
+gate today.
 
 ### `P-33` — the interface is a published contract from `FW-080`'s first commit
 
@@ -144,8 +218,122 @@ durability simply never happens."*
 change, *"because the typed client interface is a compile-time contract on both ends."*
 Adding an event is non-breaking; changing a payload is not.
 
-So the payload types defined here are **frozen once 1A builds against them**. Get the shapes
-right before `FW-136` consumes them, not after.
+So the payload types are **frozen once 1A builds against them**. Get the shapes right before
+`FW-136` consumes them, not after. ⚠ **That window is open right now and will not reopen** — the
+payloads exist and nothing in `ual-angular` consumes them yet, which is exactly why §3 step 2 is
+this story's real work.
+
+### `P-113` — the count is **fourteen + six = twenty**, `[SIG §5.2]` is the authority, and this document is a `PP-04` site
+
+The earlier issue said twelve and six in five places and cited **`phase-01b` exit criterion 4**
+as its authority — a line that itself read *"all twelve events and six markers"* until corrected
+in this pass. **Never take the count from an exit criterion**: `[SIG §5.2]` is where events are
+added, and events 13/14 arrived there on 22 Aug 2026.
+
+**And this plan is bound by `PP-04`.** Its restated rule — *"a document that enumerates the events
+carries the count even without printing a number"* — makes any document listing the members a
+site, which is how `[SIG §5.6]`'s twelve-entry observable map was caught. **This plan enumerates
+in §2.** ⚠ `PP-04` names four sites and this is a fifth; the register entry is `[SIG]`'s to widen,
+and §7 hands it back rather than editing another document's rule.
+
+### `P-114` — the story is the review and the freeze, not the construction
+
+`FW-080` delivered **both** halves of the earlier split: the interface **and** the payload types.
+So AC 1 and AC 2 are already satisfied — at twenty members rather than the card's fifteen — and
+this story's value is entirely in **§3 step 2's shape review**, the `P-33` freeze, and the two
+owed items.
+
+⚠ **Say so rather than re-deriving it.** A developer opening this card and finding the work done
+has two failure modes, and both cost more than the review: re-declaring the payloads in the API
+project beside the hub (which `[SVC §3.2]` forbids), or marking the story complete without the
+review — after which `P-33` freezes shapes nobody checked.
+
+⚠ **The 16 h is overstated for what remains** (*"2 × hub event group @ 8 h"* priced the
+construction). Against that, two events arrived after the estimate and the diff is owed rather
+than done. **Flagged, not restated** — the figure is `[CE]`'s and `[TB]`'s and propagates widely;
+marked `16 *(overstated)*` in the index, the notation `FW-138` and `FW-140` already use.
+
+### `P-115` — `PayoffPosition` stays a string on the hub and an int on REST; neither surface changes
+
+⛔ **The cheapest correct answer, and it is "change nothing":**
+
+- **`P-58` already decided the direction** — *"the fourteen canonical enums go onto the wire as
+  STRINGS"*, so the C# enum, the TypeScript union and the DB `CHECK` read alike. `P-102` applied
+  it to both hub protocols after finding they disagreed.
+- **Unifying REST would be a breaking change to a published contract.** `[API §4.5]` contracts
+  `"payoffPosition": 2`, and `[API §8]` makes a payload change breaking. Thirty-two endpoints are
+  published; the hub is not the surface to reform them from.
+- **A conversion layer buys nothing.** The TypeScript union is `'Payoff1' | 'Payoff2' |
+  'TraversingTakeup'` either way, and the enum's numeric values (`1`, `2`, `3`) are already the
+  REST values, so a client that needs both has a three-entry map and no runtime cost.
+
+⚠ **The one real hazard, and it is worth one line in `FW-132`:** a client must not compare a hub
+`"Payoff2"` with a REST `2` **raw**. ⚠ **A second, smaller asymmetry that is also correct:**
+`[API §4.5]` sends `"payoffPosition": null` on records where the bay is unknown, while the hub's
+`Position` is a **non-nullable** enum — because a telemetry tick always has a bay. Do not
+"harmonise" that by making the hub member nullable. Two surfaces, each internally consistent, and the seam is at
+the client model — where `FW-132` is already normalising. ⚠ **`G55` is adjacent and not this**:
+that gap is FL2's spool check-in being pinned to payoff `1` while the enum and the lookup both say
+`3` — a disagreement about **meaning**, which no representation choice fixes.
+
+### `P-116` — the `FW-136` diff is signed off **per leg**, and its counterparty does not exist
+
+⛔ **AC 3 cannot close in this story, and the reason is not that the work was skipped.**
+
+- **`[TB §7]`'s `FW-136` card enumerates nine events and no markers** — six in AC 1, three in
+  AC 2. `[SIG]` recorded it as stale on 27 Aug 2026 and explicitly *not its file's to fix*. **A
+  diff run against that card would report eleven mismatches**, and the dangerous "resolution" is
+  to trim the server to match.
+- **Nothing in `ual-angular` defines the set.** The `flat-wire` library **does** exist in
+  `Second-Branch/ual-angular` — four exports: a placeholder component, the module, the routing
+  module and an auth guard (`FW-N03`'s scaffold) — and **no `.ts` file anywhere in that checkout
+  names a single event or marker**, nor is there a `MockSignalRService`. ⚠ **This corrects `G56`'s
+  stated evidence, not its conclusion** (§7).
+
+**So: sign the diff off per leg**, exactly as `P-84` did for `TC-020`. ✅ **The server leg has been
+run and it passes** — fourteen payloads against `[SIG §5.2]`, field for field, plus types and
+nullability (§5.1) — so it is **banked, not owed**. ⚠ **It covers 14 of 20**: the six markers have
+no published fields to diff against (`P-117`). The **client leg is owed to `FW-136`** and closes
+there. ⚠ **Do not book it on `FW-138`'s QA0 checklist as a single
+verdict**, which is what `P-32` said: as one verdict it stays unrunnable indefinitely and a real
+twenty-member server-side agreement goes unrecorded. **And `FW-136`'s own card must be corrected
+before its developer builds to nine** — handed to `[TB]` in §7.
+
+
+### `P-117` — the six marker payloads are unspecified; the built shapes are the proposal
+
+⛔ **Found on the pre-execution re-review, and it bounds §3 step 2.** `[SIG §5.4]` is one
+sentence: it **names** the six markers and says they are *"consumed by DB3 traces"*. **It gives no
+payload fields at all.** So the review that step 2 mandates can be run against `[SIG §5.2]` for the
+fourteen events — and **has been, and passes** (§5.1) — while **six of twenty payloads have nothing
+to be reviewed against**, and `P-33` is about to freeze them as a compile-time contract on both
+ends.
+
+**The built shapes are coherent and are offered as the specification**, not re-derived:
+
+| Marker | Beyond the common base |
+|---|---|
+| `WeldJoinMarker` | `WeldEventId`, `QualityPassed` |
+| `DieChangeMarker` | `NewDieSizeIn` |
+| `PauseMarker` | `ReasonCode`, `ReasonCategory`, `IsResume` |
+| `SpcCheckpointMarker` | `CheckpointType`, `InSpec` |
+| `AlertMarker` | `AlertType`, `Severity` |
+| `RodCheckoutMarker` | `CheckoutId`, `Mode` |
+
+**All six share `LineId · RunId · FootagePosition · Timestamp`**, and that base is the right one:
+DB3 overlays markers on a **footage-indexed** trace, so a marker without `FootagePosition` cannot be
+drawn. ⚠ `PauseMarker` carrying **`ReasonCode` + `ReasonCategory` rather than a label** matches
+`pause_run.js`'s payload rule exactly, and `IsResume` is what lets one marker type carry both edges.
+
+**So: ratify, do not redesign.** ~~Hand `[SIG §5.4]` these six field lists (§7)~~
+
+> ✅ **DISCHARGED 28 Aug 2026 — `[SIG §5.4]` now publishes all six, `[PROPOSED]`, and they were
+> verified field for field against the built code on publication: all six agree.** The section also
+> gained two facts it had never stated: **cadence is immediate/unbatched for all six**
+> (`[SIG §4.2]`'s rare-event path), and **none of the six is durable** — a client that misses one
+> recovers it from the trace query, which is precisely why only events 11 and 13 are server-owned.
+> **So `P-116`'s server leg is now 20 of 20, not 14 of 20.** What remains is ratification: they are
+> our shapes, published so they can be corrected, on exactly the footing `[PLC §5.2]` uses.
 
 ---
 
@@ -155,21 +343,113 @@ right before `FW-136` consumes them, not after.
 
 | Check | Expected |
 |---|---|
-| Location | `IFlatWireClient` in **`FlatWire.Domain`** |
-| Count | **Twelve events + six markers** — not nine, not ten, not the card's fifteen |
-| `SpoolCompletionPromptDue` | Payload carries what a **re-delivery** needs (`G38`, `TC-173`) |
-| Batched members | `GaugeReading` / `WidthReading` take **arrays** |
+| Location | `IFlatWireClient` in **`FlatWire.Domain`** — not moved beside the hub |
+| Count | **Fourteen events + six markers = twenty** — not nine, not ten, not twelve, not the card's fifteen |
+| The 21st type | `OutstandingPromptsResponse` is present and is **not** an event (`P-100`) |
+| **Both durable payloads** | ✅ Checked against the DDL (§5.1a): `OrderAllocationReached` is **9/9 from one row**; `SpoolCompletionPromptDue` is **4 of 6** — `spoolAlpha` one join, **`targetLb` unsourceable and correctly nullable**. ⚠ Do not make `targetLb` non-null and do not add a target column |
+| Batched members | `GaugeReading` / `WidthReading` take **arrays**; every other event takes a single payload |
 | Naming | `WeldJoinEvent` **only** as the SignalR method; everything else says `WeldEvent` |
-| **`FW-136` diff** | Member-by-member, signed off by a named owner *(`P-32`)* |
+| Payload shapes | ✅ **20/20 — 14 events against `[SIG §5.2]` and 6 markers against `[SIG §5.4]`**, plus types, nullability and the shared marker base (§5.1). `P-117` caused §5.4 to publish the six |
+| `PayoffPosition` | Hub string, REST int, **documented** — and the caution recorded for `FW-132` (`P-115`) |
+| **`FW-136` diff** | ✅ **Server leg RUN AND PASSED, 20 of 20** (§5.1); ⛔ **client leg owed to `FW-136`** — per leg, never one verdict (`P-116`) |
 | No magic strings | The hub sends only through this interface |
+
+### 5.1 The server leg, measured — 28 Aug 2026
+
+**Run mechanically over `[SIG §5.2]`'s and `[SIG §5.4]`'s payload field lists against
+`FlatWire.Domain/Models/RealTime/HubContracts.cs`.** ✅ **20 of 20.**
+
+| | Result |
+|---|---|
+| Field names, 14 events | ✅ **14/14, zero differences** — no spec-only field, no built-only field |
+| Field names, 6 markers | ✅ **6/6** against `[SIG §5.4]`, once `P-117` caused it to publish them — verified on publication, so the specification and the build agree by construction rather than by luck |
+| **Nullability where it is load-bearing** | ✅ `GaugeReadingEvent.Value` and `WidthReadingEvent.Value` are **`decimal?`**, with `FR-120` on the member — **FL2 broadcasts null and a `0` cannot pass for a missing reading** |
+| Timestamps | ✅ **all fifteen `DateTimeOffset`**, matching `phase-01b` L97's convention (`RunReading.ReadingTs` is the one UTC `DATETIME2` exception and is not on this surface) |
+| Dimensioned values | ✅ **`decimal` throughout, never `double`/`float`** — gauge, width, weight, footage |
+| Marker base | ✅ all six carry `LineId · RunId · FootagePosition · Timestamp` — asserted, not assumed |
+
+⚠ **This is `P-116`'s server leg and it is banked**, the same way `P-84` banked `TC-020`'s C# ↔ DDL
+leg. It says nothing about the client leg, which has no counterparty.
+
+#### 5.1a ⛔ Re-delivery: what the two durable events can actually be rebuilt from
+
+Step 3, checked against the DDL rather than against the plan. **This is the check that found
+something**, and the answer is *document it*, not *change it*.
+
+**`OrderAllocationReachedEvent` — 9/9 from a single `RodOrderConsumption` row.** Nothing derived,
+nothing joined:
+
+`lineId ← LineId` · `station ← Station` · `runId ← RunId` · `rodAlpha ← RodAlpha` ·
+`orderNo ← OrderNo` · `consumptionId ← ConsumptionId` · `crossedAt ← ThresholdReachedAt` ·
+`latchedWeightLb ← LatchedWeightAtThresholdLb` · `allocatedWeightLb ← AllocatedWeightLbSnapshot`
+
+**`SpoolCompletionPromptDueEvent` — 4 of 6, and the payload's own remark says "persisted against
+the run", which is true of the prompt but not of the whole payload:**
+
+| Field | Source on re-delivery |
+|---|---|
+| `lineId`, `runId` | `FlatWireRun` |
+| `plcStopTimestamp` | `FlatWireRun.PromptPlcStopTs` |
+| `latchedWeightLb` | `FlatWireRun.PromptLatchedWeightLb` |
+| `spoolAlpha` | ⚠ **one join** — `SpoolCheckin.SpoolAlpha` on `RunId`. Nullable because an FL1 run has no `SpoolCheckin` row |
+| **`targetLb`** | ⛔ **nothing. No column in the schema holds it** |
+
+**On `targetLb`, because the temptation is to "fix" it two different wrong ways.**
+`SpoolCheckin` and `SpoolProcessing` carry `GrossWeightLb`/`NetWeightLb` — the **incoming** spool's
+actuals. `Spool` (the article lookup) carries `MinWeightLb`/`MaxWeightLb` — the size class's
+**acceptable loaded band**, not a run target. The notion belongs to `[SIG §5.5]`'s **Part A**
+progress payload (*"actual weight, target, percent, remaining, rate, ETA"*), which is `Should`,
+explicitly *"advisory and non-blocking"*, and **deliberately not in the published contract**. So a
+live broadcast can populate it from whatever Part A evaluates progress against, and **a re-delivery
+after a browser refresh cannot.**
+
+⚠ **The build already handles this correctly** — `TargetLb` is `decimal?` — and both wrong fixes are
+now named on the member: **do not make it non-nullable** (a re-delivery then cannot be constructed
+at all, and `TC-173` is the test that fails), and **do not add a target column**, which would settle
+Part A's design from inside a transport payload. A client renders the prompt without a percentage;
+the latched weight is what the operator answers on.
+
+> ⚠ **And the replay path is wired but deliberately empty today.** `JoinLineGroup` →
+> `ReplayOutstandingPromptsAsync` → `IMediator` → `GetOutstandingPromptsQuery` → `IRunService`
+> exists end to end, and `RunService.GetOutstandingPromptsAsync` returns an **empty**
+> `OutstandingPromptsResponse` on purpose: the spool half needs the query written, and
+> `RodOrderConsumption` has **no entity until `FW-225`/Phase 4**. So the shapes above are what a
+> re-delivery *will* be able to rebuild, not what it rebuilds today.
+
+### 5.2 What is already verified by `FW-080`'s build — 28 Aug 2026
+
+Not re-verified here, and not assumed either: these were **measured on the running hub** by
+`FW-080` and are listed so this story's review does not repeat them.
+
+- `/hubs/flatwire` live as `Hub<IFlatWireClient>` with **20 members**, `[Authorize]` +
+  `?access_token=`, MessagePack behind `EnableMessagePack`, and line groups — **14/14 acceptance
+  checks on a live client**.
+- **Both protocols accept `"FL1"`** (`P-102`) — the defect being that MessagePack took `"FL1"` and
+  rejected `0` while JSON did the reverse, so `P-21`'s measure-first switch was not transparent.
+  ⚠ **This is what makes §2.3's question a real one rather than a theoretical one.**
+- `P-100`'s **replay on join** — the two durable prompts re-delivered **to the caller only**, by
+  query, not from a per-connection cache.
+
+> ⚠ **What none of that establishes:** no client consumes these types. The `P-33` freeze has not
+> bitten yet, which is the only reason §3 step 2's review is still cheap.
 
 ---
 
 ## 6. Handoff
 
-`FW-080` hosts it; `FW-150` sends through it; `FW-208` translates domain events onto it,
-which is what keeps SignalR out of `FlatWire.Application` (`[SVC §3.2c]`). `FW-136` is the
-client-side twin.
+`FW-080` hosts it. `FW-150` sends through it. `FW-136` is the client-side twin and **does not
+exist yet** (`P-116`).
+
+⛔ **`FW-208` — read this before writing a broadcast handler.** Step 8 (the eight broadcast
+handlers) was blocked on this interface and **`FW-080`'s build unblocks it**; `FW-208`'s own header
+still says otherwise. But *"`FW-208` translates domain events onto `IFlatWireClient`"* — what the
+earlier issue said — is imprecise in a way that costs a build cycle: those handlers live in
+**`FlatWire.Infrastructure`** (`P-35`), which can name `IFlatWireClient` (it is in Domain) but
+**cannot name `IHubContext<FlatWireHub, IFlatWireClient>`** — `FlatWireHub` is `FlatWire.API`'s and
+`IHubContext<>` is in the ASP.NET Core shared framework, which a class library does not carry. So a
+handler injects **`IFlatWireBroadcaster`** (`P-101`) — one member, `Line(LineId)`, returning
+`IFlatWireClient` — implemented in `FlatWire.API` over the real hub context. **Landing this
+interface in Domain is necessary and not sufficient**, and that is the whole of `P-101`.
 
 ---
 
@@ -177,10 +457,21 @@ client-side twin.
 
 | Item | Effect here |
 |---|---|
-| **Pending renames** | `[PLCC §6.3]` records `LineStatus` → **`LineStateChanged`**. **Build to `[API]`/`[SIG]`**; rename across all three in one pass when arbitrated |
-| **`[API §8]`** | A payload change is breaking — `P-33` |
+| ⛔ **`FW-136`'s card enumerates nine** *(handed to `[TB]`)* | AC 3's counterparty is eleven members short and **its developer will build to it**. `[SIG]` recorded it 27 Aug as stale and not its file's to fix; **`[TB §7]` owns the correction**, and `FW-080`'s card claiming to *"match `FW-136` exactly"* goes with it |
+| ⛔ **`phase-01a` states *"twelve events"*** *(handed to the FE stream)* | Two sites, and `[SIG]` names it stale. **`phase-01b` exit criterion 4 is corrected in this pass**; `phase-01a` is another stream's phase file and is flagged rather than edited |
+| ⚠ **`PP-04` names four sites and there is a fifth** *(handed to **`[API]`** and `[SIG]`)* | Any document that **enumerates** the events carries the count — including this one, `phase-01b` L104 and any future task plan. The rule already says so; its site list does not. ⚠ **Two homes, and §7 had the owner wrong:** the **register row is `[API §10.3]`'s** (*Raised by this document*), while the restated **rule** is the callout under `[SIG §5.2]`. Widening one and not the other leaves the register disagreeing with its own rule |
+| ⚠ **`G56`'s stated evidence is stale; its conclusion is not** | It reads *"no `flat-wire` library is present in any `ual-angular` checkout (three were searched)"*. **One is present now** — `Second-Branch/ual-angular/projects/flat-wire`, a four-export scaffold. **No `.ts` defines any event, marker or enum member**, so `TC-020`'s TS leg is still missing and `G56` still holds. ⚠ **A re-check that finds the library could wrongly close it** |
+| ⛔ **`P-101` says `IFlatWireBroadcaster` has TWO members; the build has ONE** *(handed to `FW-080`)* | `P-101` reads *"Two members, because `P-100`'s caller-only re-delivery needs `Connection(connectionId)` as well as `Line(lineId)`"* — and the built file carries **one**, with the reason: inside a `Hub<IFlatWireClient>`, **`Clients.Caller` is already typed as `IFlatWireClient`**, so the hub answers its own caller with no broadcaster at all. **The build is right and the decision row is stale.** ⚠ `FW-208`'s developer reads `P-101` and will hunt for a member that does not exist |
+| ✅ ~~**`[SIG §5.4]` publishes no marker payloads**~~ **DISCHARGED 28 Aug 2026** | §5.4 now publishes all six `[PROPOSED]`, verified against the built code on publication — all six agree — plus the cadence and the not-durable rule it had never stated. **`P-116`'s server leg is now 20 of 20.** ⚠ **What remains is ratification, not supply**: they are our shapes, on `[PLC §5.2]`'s footing |
+| **Pending rename** | `[PLCC §6.3]` records `LineStatus` → **`LineStateChanged`** and `LineState` → `LineOperatingState`. **Build to `[API]`/`[SIG]`** — the built interface says `LineStatus` — and rename across all three in one pass when arbitrated. ⚠ `[PLCC]`'s row cites `04-APIContract.md:740`, a file **absorbed into `[API]` on 13 Aug 2026**; that pointer needs re-basing |
+| **`[API §8]`** | A payload change is breaking — `P-33`, and the freeze window is open now |
+| **Hours** | 16 h priced the construction, which `FW-080` delivered. **Overstated for what remains** — flagged, not restated (`P-114`) |
 
 | Stale | Correct | Source |
 |---|---|---|
-| AC 1–2 list **ten** events and **five** markers | **Twelve and six** — the card omits `SpoolCompletionPromptDue`, `SpoolCompletionPromptResolved` and `AlertEvent` | `phase-01b` L104 and **exit criterion 4**; `[SIG §5.2]`, `[SIG §5.4]` |
-| *"9 hub events"*, wherever it appears | **Ten** by `[API §10.3]`'s count; **twelve** on this interface. The "9" predates `PayoffStateChanged` | `[API §10.3]` `PP-04` |
+| AC 1–2 list **ten** events and **five** markers | **Fourteen and six** — the card omits `SpoolCompletionPromptDue`, `SpoolCompletionPromptResolved`, `AlertEvent`, `OrderAllocationReached` and `OrderAllocationResolved` | `[SIG §5.2]`, `[SIG §5.4]` |
+| This plan's own **twelve + six / "eighteen members"** | **Fourteen + six = twenty** — events 13/14 entered `[SIG §5.2]` on 22 Aug 2026 | `P-113` |
+| *"`[API §10.3]` counts ten"* | `PP-04` there now reads **14**, and the master spec's status summary reads **14** | `[API §10.3]` `PP-04` |
+| *"9 hub events"*, wherever it appears | The "9" predates `PayoffStateChanged` (29 Jul 2026). The sequence was 9 → 10 → 12 → **14** | `[SIG]` `PP-04` |
+| *"One of the twelve is not fire-and-forget"* | **Two** — `SpoolCompletionPromptDue` and `OrderAllocationReached` | `[SIG §5.2]`, `P-100` |
+| §1.2's split — *"`FW-080` mints it, this story defines the payloads"* | `FW-080` delivered **both** on 28 Aug 2026 | `P-114` |

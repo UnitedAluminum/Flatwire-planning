@@ -1,9 +1,9 @@
 # FW-218 · Trial control surface for the feed generator — steer, stop, drop, read
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — first issue
+**Last Updated:** August 29, 2026 — ✅ **BUILT and `P-38` VERIFIED BOTH WAYS: 404 with simulation off, 401 with it on.** `P-136` minted. ⛔ **`FW-145` is NOT built, so no role claim is issued and these routes DENY today** — fail-closed, and the right direction: a bare `[Authorize]` would ship *“any authenticated operator may drive the control plane”*, the one thing `[SIM §8.4]` forbids. **`FW-145` is a hard dependency for the acceptance run.** ⚠ Built as a **minimal-API group, not a controller**, so `P-38`'s *“not registered at all”* is literal rather than conventional. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
-**Status:** Ready to build — **trial scope, additive to `[CE §3b]`**
+**Status:** ✅ **Built — four endpoints at `/sim`, 0 errors and no new analyzer warning.** Measured: simulation **off** → `/sim/state`, `/sim/{line}/steer`, `/sim/{line}/fault` all **404** and the real ingest registers instead; simulation **on** → `/sim/state` **401** and a `GET` on the steer route **405**, so the routes exist and are auth-gated. ⚠ **The functional rows of §5 need `FW-145`** — without a role claim nothing can call them
 **Owner:** Backend (.NET) stream
 **Audience:** The .NET developer building `FW-218`
 **Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
@@ -137,6 +137,31 @@ exists.
 
 Verify by the negative: with simulation off, all four return **`404`**, and Swagger lists
 none of them.
+
+### `P-136` — a minimal-API group, and a role layer that fails closed
+
+**Two implementation choices `P-38` implies but does not state.**
+
+**(1) A minimal-API group rather than a controller, so *"not registered"* is literal.** An
+attribute-routed controller is discovered by the MVC application model; suppressing it means
+removing it with a convention, so the route exists and is then un-mapped. That is a weaker
+claim than never mapping it, and `P-38`'s whole argument is that the two look equivalent in
+review and are not. The group is mapped inside the same `if` that chooses the publisher, so
+**the control plane and the thing it controls can never disagree about whether the feed is
+synthetic.**
+
+**(2) The role requirement denies until `FW-145` lands, and that is the right failure.**
+`[SIM §8.4]` says Engineer or Admin, never Operator — but **`FW-145` is unbuilt, no role claim
+is issued, and `RequireAuthorization(Roles = "Engineer,Admin")` therefore denies everyone.**
+
+**The alternative was a bare `[Authorize]`**, which would have let the trial run today — and
+would have shipped *"any authenticated operator may drive the control plane"*, which is
+precisely what `[SIM §8.4]` forbids. **A control surface that is too permissive is invisible;
+one that is too strict announces itself on the first call.** So `FW-145` is a hard dependency
+for the acceptance run, and that is now recorded rather than discovered on the day.
+
+⚠ **`P-38`'s absolute is unaffected either way** — it is the 404 that matters, and it is
+verified. The role layer is defence in depth, exactly as the card frames it.
 
 ### `P-39` — this is an increment of `FW-215`, so build it as a subset, not a variant
 

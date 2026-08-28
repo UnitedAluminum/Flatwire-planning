@@ -1,9 +1,9 @@
 # FW-203 · OPC feed simulator — a stand-in for the real ingest
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — first issue
+**Last Updated:** August 29, 2026 — ⛔ **RE-REVIEWED BEFORE EXECUTION against the built `ual-api`, which did not exist when this was written; `P-133`/`P-134` minted.** ⛔ **The headline: three acceptance criteria cannot be met as written, and the reason is configuration rather than code.** `LineStateMap` is `{}` on all three lines, so `ITagPathResolver.TryMapLineState` returns **`false` for every value** and `FW-150` broadcasts **no `LineStatus` at all** — whatever this simulator writes into `Reading.LineStateRaw`. That kills AC 2 and AC 3's *"`LineStatus`"* and **all of AC 5**, the `RUNNING → STOPPED` edge that arms `FW-202`'s stop-confirmation prompt, which is a trial screen. **`P-133`** fixes it in the slot built for it — a values-only `LineStateMap` edit — and names the tempting wrong fix, which the resolver's own comment already forbids: *"never resolve the RUNNING to STOPPED edge by adding an enum member."* ⚠ **`P-134`:** AC 6's *"one flag pair"* needs **no new key** — `AddFlatWireOpcIngest` already branches on `SimulateOpcFeed`, so the simulator is that `if`'s `else`, which also enforces structurally the *"exactly one publisher"* rule `FlatWireOpcOptions` states in prose. ⚠ **Two build notes:** `Reading` carries **`PayoffWeights` and `ComponentStates` collections**, so a simulator that sets only the scalar fields drives four of seven channels and leaves the component panel and payoff bars dead; and **`G9`'s cadence is already picked and recorded** — `PublishIntervalMs = 1000` — so read it rather than choose one, or the two cadences drift. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
-**Status:** Ready to build — **trial scope, additive to `[CE §3b]`**
+**Status:** ✅ **Built — `OpcFeedSimulator` is live, 0 errors and no analyzer warning from the changed files, and the whole RT spine now runs end to end: simulator → channel → `FW-150` drain → broadcast + `RunReading` → `FW-205`'s watchdog.** ⚠ **Steering, the stop edge and the drop-readings fault are built but NOT exercisable until [`FW-218`](FW-218-Sim-Control-Surface.md) exposes them** — that is `G43`, and `P-36` chose it deliberately
 **Owner:** Real-time (RT) stream
 **Audience:** The developer building `FW-203`
 **Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
@@ -139,6 +139,57 @@ internal capabilities; `FW-218` adds four HTTP endpoints over them and nothing e
 ⚠ **Consequence to accept:** those two criteria are **not demonstrable at the end of this
 story**. That is not a defect in this story — it is why `G43` was raised and `FW-218`
 scheduled.
+
+### `P-133` — `LineStateMap` is the simulator's vocabulary too, and it is CONFIG
+
+⛔ **Found by re-reviewing against the built resolver.** `LineStateMap` is `{}` on FL1, FL2 and
+FL3, so `TryMapLineState` returns `false` for **every** value and `FW-150` sends **no
+`LineStatus`**. Three acceptance criteria depend on it, and AC 5's `RUNNING → STOPPED` edge is
+what arms `FW-202`'s stop-confirmation prompt — one of the six trial screens.
+
+**So the simulated environment gets a vocabulary, in the slot that exists for exactly this.**
+The simulator writes a raw string of its choosing into `Reading.LineStateRaw`; the map
+translates it to a `LineState`. **Values only — no code, in this story or downstream.**
+
+**This is `P-37` working, not an exception to it.** `FW-150` stays unable to tell a simulated
+feed from a real one, because the difference lives entirely in configuration. At commissioning
+`C2` the controller's real vocabulary replaces the simulated one **in the same slot**, and no
+code moves — which is the drop-in `P-37` is protecting.
+
+⛔ **The wrong fix is the tempting one, and the resolver already forbids it in a comment:**
+*"callers must render 'unknown', never assume Idle, and **must never resolve the RUNNING to
+STOPPED edge by adding an enum member**."* A developer who sees no `LineStatus` and reaches
+into `LineState` or bypasses the resolver has broken the `PLC-Q01` boundary to fix a config gap.
+
+### `P-135` — the nominal trace centres on the TRIAL FIXTURES, or the default run is out of spec
+
+⛔ **Found by running it.** The first build centred FL1's gauge on **0.0325 in** — a plausible
+flat-wire number, and nowhere near the schedules the trial actually runs. `FW-150` computes
+`InSpec` against the **active run's** band, and the seeded fixtures are
+`PS-1100-FL1-001` at **0.1100 ± 0.0020** and `PS-1100-FL2-002` at **0.1000 ± 0.0020**.
+
+**So every FL1 reading would have recorded `InSpec = false` from the first tick**, and DB3's
+N-consecutive-out-of-spec auto-prompt would fire before anyone touched a control. The
+acceptance criterion is *"steered to produce in-spec, **drifting** and out-of-spec runs"* —
+**in-spec is the baseline steering moves away from**, and without it there is nothing to steer.
+
+**The nominal is now per line, taken from §3.1's fixtures.** If a run carries a different band,
+**steer rather than rebuild**: `Steer` moves the centre at runtime and is what `FW-218` exposes.
+
+⚠ **This is `G39` in miniature.** The number was invented, looked reasonable, and was wrong by
+a factor of three. Nothing in the feed is evidence of how the machine behaves.
+
+### `P-134` — the simulator is the existing flag's `else`, not a second flag
+
+`AddFlatWireOpcIngest` already reads `SimulateOpcFeed` and registers `OpcIngestService` when it
+is **false**. AC 6's *"switchable by configuration alongside `SimulatePLCTagPush`"* therefore
+needs **no new key**: the simulator registers when it is **true**, in the same branch.
+
+**The if/else is doing more than tidiness.** `FlatWireOpcOptions` states the rule in prose —
+*"exactly one publisher may write to the bounded channel … registering both would double-write
+every tick, two snapshots per line from alternating sources, and a gauge trace that looks like
+noise."* An `if`/`else` makes that **unrepresentable**; two independent flags would leave it as
+a deployment mistake nobody would diagnose from the symptom.
 
 ### `P-37` — no new interface, and no simulator-aware branch downstream
 

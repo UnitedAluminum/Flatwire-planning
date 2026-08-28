@@ -1,0 +1,203 @@
+# FW-135 · `flat-wire-signalr.service.ts` — the SignalR client
+
+**Project:** United Aluminum (UAL) — Flat Wire Mill Module
+**Last Updated:** August 28, 2026 — ✅ **`FW-N03` landed 28 Aug 2026, so this story is unblocked**; ⛔ its §6.4 records that **`npm start` cannot run in this checkout** (`flexmonster` missing, [`P1A §6.15`](Phase-01A-ImplementationPlan.md)), so the browser-side half of this plan's verification is deferred. Earlier the same day: **refreshed against the measured repository.** Re-measured and unchanged: `@microsoft/signalr` **9.0.6** present, **`@microsoft/signalr-protocol-msgpack` still absent** (`G10`). Restored the card's **Rate-card basis** line. ⚠ The `[TCS]` suite holds **405 defined cases**, not 799. Earlier the same day: gained a **Depends on / Unblocks** header line, and a **Test cases** row in Verification. Written 27 Aug 2026 as one of the nine plans `Phase-01A-ImplementationPlan.md` was divided into
+**Document Type:** Implementation plan for a single backlog story
+**Status:** ✅ **Buildable now — `FW-N03` landed 28 Aug 2026** (wave 1); `flatWireHubUrl` is live in both config files. ⚠ One package must still be added (`G10`)
+**Owner:** Frontend (Angular) stream — ⚠ **`RT` stream label, `ual-angular` code**
+**Audience:** The Angular developer building `FW-135`
+**Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
+**Depends on:** [`FW-N03`](FW-N03-Angular-Library-Scaffold.md)
+**Unblocks:** [`FW-136`](FW-136-MockSignalRService.md) · [`FW-137`](FW-137-PWA-Cache-And-Reconnect-Banner.md) · and `FW-081`'s live wiring in Phase 5
+**Part of:** `ProjectPlan/Frontend/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md) · shared context: [Phase-01A-ImplementationPlan.md](Phase-01A-ImplementationPlan.md)
+
+---
+
+> **Read [`[P1A §2]`](Phase-01A-ImplementationPlan.md) first**, and `[SIG §4]`/`§5` for the contract
+> this implements. This story carries the `RT` stream label; the label says **when** the work happens,
+> not which repository it lands in — this is Angular code.
+>
+> ⛔ **Fourteen observables, not twelve.** `[SIG §5.6]`'s map listed twelve until 27 Aug 2026, missing
+> the two order-allocation streams. `phase-01a` and `[TB §7]`'s `FW-136` are **still** stale at twelve
+> and nine — `[P1A §6.12]`.
+>
+> This plan is derived from the specifications and **loses to every one of them.**
+
+---
+
+## 1. The story
+
+From `[TB §7]`:
+
+> ###### FW-135 · SignalR client service
+> **Hours:** 24 h RT · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1A · **Stream:** RT
+>
+> **As an** operator,
+> **I want** a purpose-built SignalR client that survives reconnects and never storms change detection,
+> **So that** live traces render at 60 fps without freezing the panel.
+>
+> **Acceptance Criteria:**
+> - [ ] `flat-wire-signalr.service.ts` using `@microsoft/signalr` + `@microsoft/signalr-protocol-msgpack` (**MessagePack**)
+> - [ ] Auto-reconnect with **exponential backoff** and **line-group re-join on reconnect**; JWT via `?access_token=`
+> - [ ] Callbacks run **outside NgZone** into a **ring buffer**; render throttled by `requestAnimationFrame` (~60 fps); fixed window of the last ~500 points
+> - [ ] Typed Observables per event
+> - [ ] **New service — deliberately not derived from `supervisor-monitor-hub`, `CoilDataHub` or `OPCManagerHub`**
+> - [ ] Verified: streaming a mock trace triggers no change-detection storm under OnPush
+>
+> **Rate-card basis:** real-time client, priced against `[SIG]`'s stated design (24 h)
+> **Dependencies:** FW-N03
+> **Blockers:** **G10**
+
+⚠ **"Typed Observables per event" is now fourteen**, and that criterion is why the stale map mattered:
+a client built to it before 27 Aug would have shipped **12 of 14 streams**.
+
+---
+
+## 2. Build order
+
+### Step 1 — the packages
+
+✅ **`@microsoft/signalr` 9.0.6 is already in `package.json`.**
+⛔ **`@microsoft/signalr-protocol-msgpack` is absent** — this is gap **`G10`**, and `[SIG §4.1]`
+treats MessagePack as **measure-first**: *"batching and decimation are the real win."*
+
+**Two provisioning facts to settle before T2, neither of them code:**
+
+| | |
+|---|---|
+| the protocol package | must be added to `package.json` — a dependency decision, not a build step |
+| **IIS WebSockets on the target** | must be enabled, or the transport **silently falls back to long-poll** (`[DEP §4.4]`) |
+
+### Step 2 — the connection
+
+```typescript
+new signalR.HubConnectionBuilder()
+  .withUrl(`${base}/hubs/flatwire?access_token=${token}`)
+  .withHubProtocol(new MessagePackHubProtocol())
+  .withAutomaticReconnect(/* exponential backoff */)
+  .build();
+```
+
+| Requirement | Detail |
+|---|---|
+| Transport | **WebSockets-first**, `SkipNegotiation` where the topology allows; SSE and long-poll last resort |
+| Auth | JWT via the **`?access_token=` query parameter** — hub methods carry `[Authorize]` |
+| Reconnect | **exponential backoff** + **line-group re-join** — `JoinLineGroup({lineId})` again on every reconnect |
+| Groups | `FL1Data` / `FL2Data` / `FL3Data`; `LeaveLineGroup` on teardown |
+
+### Step 3 — the rendering discipline, which is the point of the story
+
+- Callbacks run **outside the Angular zone** (`NgZone.runOutsideAngular`).
+- Incoming batches land in a **ring buffer**, not in a component field.
+- Render on a **`requestAnimationFrame` throttle** coalesced to ~60 fps, re-entering the zone **once per frame**.
+- Trace consumers keep a **fixed window of ~500 points** to bound DOM and GPU work.
+- `ChangeDetectionStrategy.OnPush` everywhere.
+
+**The cadence to expect is specified:** batched **~10 Hz** (`[SIG §4.2]` *"fixed cadence ~100 ms /
+10 Hz"*, `[SIG §5.2]` rows 1–2). ⚠ **What `G9` leaves undefined is the *target*, not the cadence** —
+the AGC publish rate at source is asked as `PLC-Q11` and the end-to-end latency figure comes from
+commissioning test `C8`. So you have a rate to build against and no NFR to be validated against.
+
+### Step 4 — the fourteen typed observables
+
+Name them **exactly** as `[SIG §5.6]`, matching 1B's `IFlatWireClient` name for name:
+
+```typescript
+gaugeReading$(lineId): Observable<GaugeReadingEvent[]>
+widthReading$(lineId): Observable<WidthReadingEvent[]>
+speedFpm$(lineId): Observable<SpeedFpmEvent>
+payoffWeight$(lineId): Observable<PayoffWeightEvent>
+payoffStateChanged$(lineId): Observable<PayoffStateChangedEvent>
+footageCounter$(lineId): Observable<FootageCounterEvent>
+componentStatus$(lineId): Observable<ComponentStatusEvent>
+lineStatus$(lineId): Observable<LineStatusEvent>
+alertRaised$(lineId): Observable<AlertRaisedEvent>
+alertCleared$(lineId): Observable<AlertClearedEvent>
+spoolCompletionPromptDue$(lineId): Observable<SpoolCompletionPromptDueEvent>
+spoolCompletionPromptResolved$(lineId): Observable<SpoolCompletionPromptResolvedEvent>
+orderAllocationReached$(lineId): Observable<OrderAllocationReachedEvent>       // event 13
+orderAllocationResolved$(lineId): Observable<OrderAllocationResolvedEvent>     // event 14
+```
+
+Plus the **six run-event markers** consumed by DB3 traces: `WeldJoinEvent` · `DieChangeEvent` ·
+`PauseEvent` · `SPCCheckpoint` · `AlertEvent` · `RodCheckoutEvent` (`[SIG §5.4]`).
+
+### Step 5 — ⚠ the two streams that are not fire-and-forget
+
+**`spoolCompletionPromptDue$` and `orderAllocationReached$` are durable server state.** Every other
+event may be missed by a disconnected client and recovered from the next snapshot; these may not.
+
+| Rule | Why |
+|---|---|
+| **Subscribe *before* joining the group** | an outstanding prompt is re-delivered **on join**, not only on the original edge (`FR-144`, `TC-173`) |
+| **Make both handlers idempotent** | each is raised once per edge, so **duplicate delivery is specified behaviour, not a fault** |
+| **Render `latchedWeightLb`; never substitute a fresher `payoffWeight$` tick** | the weight is latched at the PLC stop timestamp / the crossing instant |
+
+⚠ **`orderAllocationResolved$` does something its spool-side counterpart does not:** it **reveals the
+next order** on the same rod. The rod is not dismounted and nothing is scanned, so **this event is the
+only signal the screen gets that the boundary was crossed** — and the material produced between the
+crossing and the acknowledgement is the **overrun**, recorded and reportable.
+
+### Step 6 — ⚠ the FL2 rule
+
+**FL2 standalone suppresses the batched gauge and width channels entirely.** A client subscribed to
+`FL2Data` **must not wait for `GaugeReading`** — it will never arrive, and **treating its absence as a
+fault is a defect** (`[SIG §5.3]`, `FR-120`). Status and marker events still flow.
+
+### Step 7 — ⛔ what this service is not derived from
+
+**A new service, deliberately.** `[ARC §2.2]` rules out `CoilDataHub`, `OPCManagerHub` and
+`supervisor-monitor-hub`. The concrete reason, from reading the two live examples
+(`projects/scheduling/src/lib/services/hub/hub.service.ts` and `furnace-scheduling`'s equivalent):
+
+| They do | `[SIG §4]` requires |
+|---|---|
+| `.build()` with **no hub protocol** | MessagePack |
+| **no reconnect configuration** | exponential backoff + group re-join |
+| `.start().then(...)` into `.on(...)` **inside the Angular zone** | callbacks **outside** the zone |
+| **one connection per request**, stopped on the first message | a long-lived connection with per-line groups |
+
+**Every one of those choices is the opposite of what this story needs.** That is why the rule exists,
+and it is checkable rather than aspirational.
+
+---
+
+## 3. Verification
+
+```bash
+npm run build:base && ng build flat-wire
+ng lint flat-wire
+npm run test:flat-wire
+npm start      # with FW-136's mock stream once it exists
+```
+
+| AC | Proof |
+|---|---|
+| 1 · the two packages | ⛔ **the protocol package must be added first** (`G10`) |
+| 2 · backoff + group re-join + `?access_token=` | kill the hub, restore it, confirm re-join **and** re-delivery of an outstanding prompt |
+| 3 · outside NgZone → ring buffer → rAF, ~500-point window | Angular DevTools shows **no change-detection storm** under a ~10 Hz stream |
+| 4 · **fourteen** typed observables | all fourteen present and named per `[SIG §5.6]` |
+| 5 · not derived from the existing hubs | ⚠ reviewable only by reading the diff — **reviewer: TBD**. §2 step 7 lists the four concrete differences, so the review is checkable rather than a matter of taste |
+| 6 · no storm under OnPush | as AC 3 |
+
+**Test cases:** ⛔ **None.** Phase 1A has **no test cases in `[TCS]`** — measured 28 Aug 2026 against its **405 defined cases** (the ids run to `TC-799`, but 47 are cited and never defined), nothing covers the Angular library, the shell, the canvas, the guards or the mock hub. This story's verification is this plan plus Jest, and nothing else. → `[TCS]`, `[P1A §6.13]`
+
+---
+
+## 4. Blockers and open items
+
+| Item | Effect |
+|---|---|
+| ⛔ **`G10`** — the MessagePack package is absent; IIS WebSockets must be enabled | **provisioning, before T2.** Without WebSockets the transport degrades **silently** |
+| ⚠ **`G9` / `OI-34`** | no NFR target to validate against — **but the cadence is specified**; blocks validation, not build |
+| ⚠ **`[P1A §6.12]`** | `phase-01a` (twelve) and `[TB §7]`'s `FW-136` (nine) / `FW-080` are stale on the event count |
+
+---
+
+## 5. Handoff
+
+**This story unblocks `FW-136` and `FW-137`.** Hand on:
+
+1. **The observable surface is fourteen** — and `FW-136`'s own acceptance criteria in `[TB §7]` list nine. Build to this file, not to that card.
+2. **The ring buffer and the rAF throttle are this service's**, not each screen's. A screen subscribes; it does not throttle.
+3. **The two durable streams** — subscribe before joining, stay idempotent, render the latched weight.

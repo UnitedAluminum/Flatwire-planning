@@ -165,7 +165,9 @@ consumer and was descoped; DB3 is now named explicitly so the event is not left 
 one"* — and grouping the two exception broadcasts keeps one story owning the supervisor path.
 
 **Together the two stories cover all six.** Neither alone does, and that is worth stating
-because `phase-01b`'s **exit criterion 4** counts *"twelve events and six markers"*.
+because `phase-01b`'s **exit criterion 4** counts the **six markers** as one obligation.
+⚠ *That criterion said "twelve events and six markers" until 28 Aug 2026 and now reads
+**fourteen**; the events half never bore on this story, and the **six markers are unchanged**.*
 
 ---
 

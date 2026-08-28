@@ -272,7 +272,7 @@ Twenty-five design, equipment and business decisions are closed and recorded in 
 
 | ID | Decision |
 |---|---|
-| **D-01** | The UI is a brand-new standalone Angular library `flat-wire-shopfloor` |
+| **D-01** | The UI is a brand-new standalone Angular library `flat-wire` |
 | **D-02** | The tables live in a **new `FlatWireDB`**, not `united_db` |
 | **D-03 / D-04** | The schema is **33 tables**, and **`Rod` is retained** as a local master with enforced rod-alpha FKs — superseding the earlier "drop `Rod`, 21–22 tables" position |
 | **D-05 / D-06** | The real-time layer is purpose-built inside `FlatWire.API`; **`SlitterInterface` is explicitly not a reference**, and there is **no** frontend template at all |

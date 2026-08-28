@@ -1,28 +1,39 @@
 # Phase 1A — Execution Orchestration (Frontend)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 27, 2026 — **first issue.** The FE stream had a layer spec, a screen inventory, a component catalogue and 49 backlog rows, and **nothing that said what can start, in what order, and what is stopping it**. This is the FE counterpart to [`Backend/TaskBreakdownPlans/Orchestration.md`](../../Backend/TaskBreakdownPlans/Orchestration.md), on the same axis — dependency wave, not sprint. ⛔ **Its headline is a measurement, not a plan: nothing in this stream is built.** `flat-wire-shopfloor` exists in **no** Angular checkout — verified 27 Aug 2026 against `c:\UAL\ual-angular`, `c:\UAL\Second-Branch\ual-angular` and `c:\UAL\ual-angular-latest`, none of which has the library under `projects/` — so **wave 0 has not started** and the 160 h critical path is still its full length. ⛔ **Three seed fixtures the mock service is told to mirror do not exist** (§8.1 finding 1): `[CMP §5.3]` and `phase-01a`'s *Dependencies* both name `SP-00021`, `RUN-0042` and `RUN-0043`; measured against `FlatWire_SampleData_*.sql`, the seeds create `SP-00031`–`SP-00033` and `RUN-0001`–`RUN-0005`, and `SP-00021` occurs only inside a comment. ⚠ **`[SCR §7.1]`'s "27 HTML files" is stale** — the folder holds **18**, 23 across both scopes (§8.1 finding 2). ⚠ **`FW-061`, Critical MVP-1, depends on `FW-010`, which is wholly MVP-2** (§8.1 finding 4), and **DB2's rod scan has no endpoint** since `P-53` withdrew `RodReceivingController` (§8.1 finding 5).
+**Last Updated:** August 28, 2026 — ⚠ **The Mockups folder is 38 files / 19 HTML** — `dashboard_3_active_run_ual.html`, a **styling comparison build** (DB3 in the host app’s CSS at 1920×1080) plus five generated assets. The folder is still **flat**. Counts and the "composed for 5:4" statements updated — **18 of 19**, not all 19. Earlier: August 28, 2026 — ✅ **`FW-N03` is built (28 Aug 2026), so wave 1 is open** — §1.1's root row is updated and the 160 h critical path now has its first 24 h done. ⛔ **The standing state changed: the stream is no longer entirely unbuilt.** ⚠ New blocker for everything downstream, recorded at [`P1A §6.15`](Phase-01A-ImplementationPlan.md): **the host application cannot be built in this checkout** (`flexmonster` missing), so `npm start` is unavailable and every 1A story's browser-side verification is deferred. Earlier the same day: **refreshed against the owning documents.** ⚠ **§4's `G23` row was contradicting §6's** — it said `[GAP] G23` *and* `[VAL §7.5]` both still read 1280×1024, but **`[VAL §7.5]`, the row every other document derives from, was corrected to 1920×1080 on 27 Aug 2026**; only the register row is stale. ✅ **`Q26` advanced on 24 Aug 2026** — the 1920×1080 requirement is with Tim and Charles **in writing**, so the Nagarro-side action is closed and only UA's answer is outstanding; §5 now also carries `Q26`'s own warning that Tim's phrasing was ***workstation*** resolution, **which may not be the shopfloor HMI panel** and is a different dpi class — the axis `F-14`'s 14 px floor rests on. Earlier the same day: **the nested change-log chain was removed from this header**: four *"previously"* levels restating what `CHANGELOG.md` already carries in this document's six dated rows. ⛔ The standing state of the stream, unchanged by the refresh: **nothing in it is built** — `flat-wire` exists in no Angular checkout, so **wave 0 has not started** and the 160 h critical path is still its full length. §1.1/§1.2's nine rows name their own per-story plan; **Phases 3–14's thirty-eight FE stories still have none.** **History lives in [`CHANGELOG.md`](../../../../CHANGELOG.md), not here.**
 **Document Type:** Execution index and dependency graph for the Phase-1A implementation and the FE stream downstream of it
 **Status:** Active — **the entry point for this folder**
 **Owner:** Frontend (Angular)
 **Audience:** The delivery lead sequencing the FE stream, and any developer picking up a screen
 **Shortcode:** — *(orchestration, derived from the specifications and the backlog; **not citable as a requirement**)*
-**Part of:** `ProjectPlan/Frontend/TaskBreakdownPlans/` — folder index: this file
+**Part of:** `ProjectPlan/Frontend/TaskBreakdownPlans/` — folder index: this file · shared context: [`Phase-01A-ImplementationPlan.md`](Phase-01A-ImplementationPlan.md) · **nine per-story plans, named in §1**
 
 ---
 
-> ### ⚠ This folder holds no per-story plans. Read this before looking for one.
+> ### ✅ This folder now holds nine per-story plans — one per Phase-1A story
 >
-> The Backend sibling indexes **35 plans** — one file per story, each saying *how* to build it.
-> **There is no FE equivalent, and every row below therefore names its owning specification
-> instead of a plan.** That is not an oversight and it is not new: it is the convention
-> [`TrialOrchestration.md §1`](../../Backend/TaskBreakdownPlans/TrialOrchestration.md) already
-> uses — *"FE and DB rows name the owning document instead of a plan"* — because that folder is
-> Backend-scoped. This file makes the same map on the FE stream's own axis.
+> The Backend sibling indexes **35 plans**, one file per story, each saying *how* to build it.
+> **The FE stream has its first nine, written 27 Aug 2026**, and §1.1/§1.2's rows name them as
+> `plan` beside their owning specification. Until that day every row named only its specification,
+> which was the convention
+> [`TrialOrchestration.md §1`](../../Backend/TaskBreakdownPlans/TrialOrchestration.md) uses —
+> *"FE and DB rows name the owning document instead of a plan"* — because that folder is
+> Backend-scoped.
 >
-> **When a per-story FE plan is written it lands here and its row starts naming it.** Until
-> then, the owning document is the build order, and where this file and an owning document
-> disagree, **the owning document wins**.
+> **The shared context sits in one file, not in nine.**
+> [`Phase-01A-ImplementationPlan.md`](Phase-01A-ImplementationPlan.md) keeps the measured checkout,
+> the eleven integration points every new library must touch, the `F-01`–`F-15` decision series and
+> the twelve findings. **Nothing was copied into the nine.** ⛔ Two of its findings change rows here:
+> the client has **no role source at all**, so `FlatWireRoleGuard` cannot be built rather than merely
+> not verified (§5's `G6` row); and the hub contract carries **fourteen** events where `[TB §7]`'s
+> `FW-136` card enumerates nine.
+>
+> **A plan loses to every specification, exactly as this file does** — where a plan and an owning
+> document disagree, **the owning document wins**.
+>
+> ⚠ **Phases 3–14's FE stories still have no plans.** §1.4's thirty-eight rows name their owning
+> specification, and that is the state of the stream, not an omission in this file.
 
 ---
 
@@ -52,17 +63,26 @@ Phases 3–14** (§1.4). Hours are `[TB §7]`'s, **quoted not restated**.
 > later phases and are ordered by sprint in
 > [TrialOrchestration.md](../../Backend/TaskBreakdownPlans/TrialOrchestration.md) and `[TB §7.2]`,
 > not by wave here.
+>
+> **`plan` in the *Owning document* column is that story's own implementation plan** — nine of them,
+> written 27 Aug 2026, each carrying its verbatim `[TB §7]` card, its build order, its verification and
+> its blockers. Each sits **beside** the owning specification and **loses to it**, so a row naming both
+> still resolves to the specification on any disagreement.
+>
+> **The shared context is not in the nine.** The measured checkout, the eleven integration points, the
+> `F-##` decisions and the findings live once, in
+> [`Phase-01A-ImplementationPlan.md`](Phase-01A-ImplementationPlan.md) — §2, §2.1, §4 and §6.
 
 ### 1.1 Phase 1A — FE 224 h
 
 | Story | Subject | h | Wave | Owning document | Status |
 |---|---|---|---|---|---|
-| `FW-N03` | Angular library scaffold, routing, configuration | 24 | **0** | [`[CMP §5.1]`](../Components.md) · [`phase-01a`](../../Development/Phases/phase-01a-angular-foundation.md) | ⛔ **Not started — the library exists in no checkout.** The single root; nothing else starts |
-| `FW-130` | Shell layout and the 1280×1024 canvas | 16 | 1 | [`[CMP §7.4]`](../Components.md) · [`[VAL §7.5]`](../ValidationRules.md) | ⛔ Not started · ⚠ **`G23`** — the canvas is an unconfirmed acceptance criterion |
-| `FW-131` | Route guards, interceptors, error envelope | 12 | 1 | [`[SEC §8]`](../../Architecture/Security.md) · [`[API §1.2]`](../../Backend/APIs.md) | ⛔ Not started · ⚠ **`G6` residual** — builds, cannot be verified (§5) |
-| `FW-132` | DI-swappable API client and domain models | 20 | 1 | [`[CMP §5.3]`](../Components.md) · [`[API §7]`](../../Backend/APIs.md) | ⛔ Not started · ⛔ **its fixture list names three alphas the seeds never create** (§8.1) · ⚠ `G14` · **owes `TC-020`'s third leg** (`G56`, `P-84`) |
-| **`FW-133`** | **Shared composite controls** | **120** | 2 | [`[CMP §7.6]`](../Components.md) · [`../Mockups/`](../Mockups/) | ⛔ Not started · 🔴 **the critical path** — 45 % of the layer, every screen depends on it, `[TRP]`: *"not trimmable"* |
-| `FW-134` | Shared primitive controls and `alert-banner` | 32 | 2 | [`[CMP §7.6]`](../Components.md) | ⛔ Not started |
+| `FW-N03` | Angular library scaffold, routing, configuration | 24 | **0** | [`[CMP §5.1]`](../Components.md) · [`phase-01a`](../../Development/Phases/phase-01a-angular-foundation.md) · [`plan`](FW-N03-Angular-Library-Scaffold.md) | ✅ **BUILT 28 Aug 2026** — builds, lints, 3 tests at 100 %, all eleven integration points verified ([`plan §6`](FW-N03-Angular-Library-Scaffold.md)). **Wave 1 is open** |
+| `FW-130` | Shell layout and the **1920×1080** canvas | 16 | 1 | [`[VAL §7.5]`](../ValidationRules.md) · [`[CMP §7.4]`](../Components.md) · [`plan`](FW-130-Shell-Layout-And-Canvas.md) | ⛔ Not started · ✅ **`G23` decided 27 Aug 2026 — 1920×1080** ([`P1A`](Phase-01A-ImplementationPlan.md) `F-14`), and **in the expensive direction**: +50 % width against +5 % height, 5:4 → 16:9, so **re-composition, not rescaling** |
+| `FW-131` | Route guards, interceptors, error envelope | 12 | 1 | [`[SEC §8]`](../../Architecture/Security.md) · [`[API §1.2]`](../../Backend/APIs.md) · [`plan`](FW-131-Guards-Interceptors-And-Envelope.md) | ⛔ Not started · ⛔ **`G6` is worse than filed** — the client has **no role source at all**, so the role guard cannot be **built** (§5) |
+| `FW-132` | DI-swappable API client and domain models | 20 | 1 | [`[CMP §5.3]`](../Components.md) · [`[API §7]`](../../Backend/APIs.md) · [`plan`](FW-132-API-Client-And-Domain-Models.md) | ⛔ Not started · ⛔ **its fixture list names three alphas the seeds never create** (§8.1) · ⚠ `G14` · **owes `TC-020`'s third leg** (`G56`, `P-84`) |
+| **`FW-133`** | **Shared composite controls** | **120** | 2 | [`[CMP §7.6]`](../Components.md) · [`../Mockups/`](../Mockups/) · [`plan`](FW-133-Shared-Composite-Controls.md) | ⛔ Not started · 🔴 **the critical path** — 45 % of the layer, every screen depends on it, `[TRP]`: *"not trimmable"* |
+| `FW-134` | Shared primitive controls and `alert-banner` | 32 | 2 | [`[CMP §7.6]`](../Components.md) · [`plan`](FW-134-Shared-Primitive-Controls.md) | ⛔ Not started |
 
 ### 1.2 Phase 1A — RT 44 h, and all of it is Angular
 
@@ -73,9 +93,9 @@ why the Backend folder deliberately does not plan them.
 
 | Story | Subject | h | Wave | Owning document | Status |
 |---|---|---|---|---|---|
-| `FW-135` | `flat-wire-signalr.service.ts` — MessagePack, NgZone, ring buffer | 24 | 1 | [`[SIG §4]`](../../Architecture/SignalR.md) | ⛔ Not started · ⚠ **`G10`** — MessagePack is a new client dependency and `[SIG]` treats it as measure-first |
-| `FW-136` | `MockSignalRService` and the typed event set | 12 | 2 | [`[SIG §5.2]`](../../Architecture/SignalR.md) | ⛔ Not started · **twelve events + six markers**, matching `IFlatWireClient` name for name |
-| `FW-137` | PWA cache sync and the reconnect banner | 8 | 2 | [`[SIG §4]`](../../Architecture/SignalR.md) | ⛔ Not started |
+| `FW-135` | `flat-wire-signalr.service.ts` — MessagePack, NgZone, ring buffer | 24 | 1 | [`[SIG §4]`](../../Architecture/SignalR.md) · [`plan`](FW-135-SignalR-Client-Service.md) | ⛔ Not started · ⚠ **`G10`** — MessagePack is a new client dependency and `[SIG]` treats it as measure-first |
+| `FW-136` | `MockSignalRService` and the typed event set | 12 | 2 | [`[SIG §5.2]`](../../Architecture/SignalR.md) · [`plan`](FW-136-MockSignalRService.md) | ⛔ Not started · **fourteen events + six markers**, matching `IFlatWireClient` name for name · ⚠ **this row said twelve until 27 Aug 2026**, and `[TB §7]`'s own acceptance criteria for this story enumerate **nine** ([`P1A §6.12`](Phase-01A-ImplementationPlan.md)) |
+| `FW-137` | PWA cache sync and the reconnect banner | 8 | 2 | [`[SIG §4]`](../../Architecture/SignalR.md) · [`plan`](FW-137-PWA-Cache-And-Reconnect-Banner.md) | ⛔ Not started |
 
 ### 1.3 Trial scope — additive to `[CE §3b]`, offsets nothing
 
@@ -167,8 +187,9 @@ FW-N03 (24) → FW-130 (16) → FW-133 (120)
 consequences, and the second is the one that decides staffing:
 
 1. **Nothing on this path is blocked.** Unlike 1B, where the path's second node spent a fortnight
-   waiting on `G6`, every 1A node is buildable today. `G23` shadows `FW-130` but does not stop
-   it — see §5, where it is filed as *rework risk*, not a blocker.
+   waiting on `G6`, every 1A node is buildable today. `G23` shadowed `FW-130` and never stopped
+   it; it is now **decided at 1920×1080** ([`P1A`](Phase-01A-ImplementationPlan.md) `F-14`), which removes the shadow and
+   **adds composition work instead** — see §4.
 2. **`FW-133` is not trimmable, but it is divisible — and those are different claims.**
    `[TRP §1.4]` says *"It is not trimmable"*, meaning **no control can be cut**; it does not say
    one developer must build all six. `pass-schedule-table`, `confirm-bar`, `gauge-trace-chart`,
@@ -198,7 +219,7 @@ that own them**, and this table is the index.
 
 | Decision | Blocks | Where it is decided |
 |---|---|---|
-| **`G23`** 🔴 | `FW-130` → **every screen** | **Nobody has confirmed the 1280×1024 canvas.** 1920×1080 is *"a re-layout of every screen, not a rescale"*, and it **gets more expensive every sprint**. `[GAP]` `G23` · `[VAL §7.5]` · `[TRP §6]` dates it **before T1 closes** |
+| **`G23`** ✅ | `FW-130` → **every screen** | ✅ **Decided 27 Aug 2026: the canvas is 1920×1080** ([`P1A`](Phase-01A-ImplementationPlan.md) `F-14`). The gap's own impact line priced this as *"a re-layout of every screen, not a rescale"*, and that price is **accepted, not argued with**: +50 % width against +5 % height and a 5:4 → 16:9 shape change. ⚠ **The mockups keep authority over content and lose it over composition** (`F-15`), and composition at the new canvas is **not in `[TB §7]`'s hours**. ⚠ **Still open underneath it:** the **panel diagonal** is recorded nowhere, and the 14 px floor is a dpi rule — [`P1A`](Phase-01A-ImplementationPlan.md) §6.10. ⚠ **`[GAP]` `G23` still says 1280×1024 and is still `Open`** — but **`[VAL §7.5]`, the row every other document derives from, was corrected to 1920×1080 on 27 Aug 2026** *(this cell said both were stale until 28 Aug 2026, contradicting §6's own exit-criterion row)* |
 | **`D-06`** | `FW-133`, `FW-134`, every screen | **There is no Angular structural or UI template.** `checkin-precheckin`, `shop-floor*`, `common-grid`, `wip-rejection` and `slitter-*` are **not** to be copied; the only reuse is `shared`'s foundational services, and joining `build:shop-floor` is **build ordering only**. `[ARC §2.2]` calls these *"the rules most likely to be broken by a developer working from habit"* — **settled, and the one most likely to be broken anyway** |
 | **`D-08`** | `FW-061` | **Dashboard 2 is the six-step tab wizard**, `dashboard_2_rod_checkin.html`. The grid + progress-ring `- Old.html` is retired and was deleted 11 Aug 2026 — **the plain filename no longer refers to a retired screen**. `[ARC §13.1]` `D-08` |
 | **`G18`** | — | ⚠ **A trap, not a gate.** The `--fw-*` prefix is **retired and there is nothing to migrate** — no mockup and no stylesheet uses it. Consume `--color-*` as-is. If it resurfaces from an older commit it is wrong. `[CMP §7.4]` |
@@ -212,8 +233,8 @@ that own them**, and this table is the index.
 
 | By | Blocker | Stops | Owning document |
 |---|---|---|---|
-| **Before T1 closes** | 🔴 **`G23`** — the 1280×1024 canvas is unconfirmed | ⚠ **Rework risk, not a build stop.** Every mockup is authored to it and every screen inherits it; 1920×1080 is a re-layout of all of them. **The cost rises every sprint** | [`[GAP]` `G23`](../../Development/GapsRegister.md) · `[TRP §6]` |
-| **Before QA0** *(not before the build)* | **`G6` residual** — the six role claim **values** are coded, not `[SEC §8]`'s labels | ⚠ **Verification, not construction.** `FlatWireRoleGuard` builds against a constants class; the matrix walk cannot pass until the mapping lands. **Bind to one constants class, as `FW-145` does server-side** | `[SEC §8]` · [`FW-145 §5`](../../Backend/TaskBreakdownPlans/FW-145-JWT-And-Role-Policies.md) |
+| ~~Before T1 closes~~ — **answered 27 Aug 2026** | ✅ **`G23` — the canvas is 1920×1080** | ⚠ **The rework is now scheduled rather than risked.** The register's mitigation half-holds: `data-fit="fill"` already widens to the window, so width is the cheap direction and the height barely moves — but **no script re-composes a screen**, and 18 mockups are laid out for 5:4. **Two follow-ups, neither of them a build stop:** close `G23` in the register, and **get the panel diagonal** — the 14 px floor survives on the assumption that the panel is physically larger, not denser. ✅ **The resolution half of the ask is closed on our side** (`Q26`, 24 Aug 2026): the 1920×1080 requirement is with Tim and Charles **in writing**, so what remains is UA's answer, not our action. ⚠ **And `Q26` records an ambiguity that lands squarely on the dpi assumption** — Tim's phrasing was *workstation* resolution, which may not be the shopfloor HMI panel this question is about. **A workstation monitor and an HMI panel are different dpi classes**, so one answer may not cover both, and it is the panel's number `F-14` needs | [`[GAP]` `G23`](../../Development/GapsRegister.md) · [`Q26`](../../../../Analysis/FlatWireOpenQuestions.md) · `[VAL §7.5]` · [`P1A §6.10`](Phase-01A-ImplementationPlan.md) |
+| **Before `FW-131`'s role half** *(was: before QA0)* | ⛔ **`G6` — and it is worse than this row said.** The residual was filed as *coded claim values*; measured 27 Aug 2026, **the client has no role source at all** — no role field on `LoginStatusDetails`, no role vocabulary in `shared.constants.ts`, no JWT decoder in the repository | ⛔ **Construction, not verification.** `FlatWireRoleGuard` **cannot be built** until a source is chosen; `FlatWireAuthGuard` is unaffected and builds today. Three options and a recommendation in [`P1A`](Phase-01A-ImplementationPlan.md) `F-12`; either way bind to one constants class, as `FW-145` does server-side | `[SEC §8]` · [`FW-145 §5`](../../Backend/TaskBreakdownPlans/FW-145-JWT-And-Role-Policies.md) · [`P1A §6.1`](Phase-01A-ImplementationPlan.md) |
 | **Before T2** | **`G10`** — IIS WebSockets on the target, and MessagePack as a new client dependency | Transport **silently** falls back to long-poll. **A provisioning task, not a build one**; `[SIG]` treats the package as measure-first | [`FW-080`](../../Backend/TaskBreakdownPlans/FW-080-FlatWireHub.md) · `[DEP §4.4]` |
 | **Before Phase 4** | **`G14`** — 3- vs 4-item inspection · `R#####` vs `ROD-#####` · `FootageFt` INT vs DECIMAL | ⚠ **`FW-132` bakes whichever it picks into the models every screen binds to.** The alpha-format half is ✅ **closed and verified** server-side — `Program.cs` requires `RodAlpha("ROD-00041")` to throw at boot — so **`R#####` is settled**; the inspection-count and footage-type halves are not | [`[GAP]` `G14`](../../Development/GapsRegister.md) |
 | **Before Phase 4** | **`OI-109`** return-to-DB2A pending client confirmation · **`Q3`** · **`Q14`** · ⛔ **`Q22`** | `FW-061`. **`Q22` is the hard one** — the four tolerance values are **owed by e-mail and nothing is seeded**, so `CHK007` cannot be exercised at either station | [`RocCheckin.md`](../../Business/Screens/RocCheckin.md) |
@@ -221,7 +242,7 @@ that own them**, and this table is the index.
 | **Before Phase 9** | ⛔ **`Q10` / `OI-45`** — the footage→weight **dimensional basis** | `FW-066`, `FW-183`, `FW-100` and `FW-202`. ⚠ **The one open question deliberately carrying no recommendation** — UA must answer it from its own practice — and the most widely depended-on number in the build. `[CE §2]` holds a **16–32 h reserve** against it | [`FlatWireOpenQuestions.md`](../../../../Analysis/FlatWireOpenQuestions.md) `Q10` |
 | **Before Phase 9** | **`OI-104`** no skid table · **`OI-105`** three weight figures with no precedence rule · **`OI-106`** no staging locations | `FW-182` (DB7b Packing). **All three are `G36`** — returning Phase 9 to MVP-1 imported three uncosted dependencies, every one of them on the packing side | [`OutputCoilCompletion.md`](../../Business/Screens/OutputCoilCompletion.md) |
 | **Before Phase 11** | **`OI-101`** — shift boundaries are undefined | ⚠ Blocks **every shift-scoped figure**, including `FW-090`'s reporting views. *(DB10 itself is MVP-2.)* | master spec §11 |
-| No date | **`G9` / `OI-34`** — real-time NFRs undefined | **Blocks validation, not build** — `MockSignalRService` has no target cadence to match and there is no client-count budget | `[SIG]` · [`FW-150`](../../Backend/TaskBreakdownPlans/FW-150-Broadcast-Loop.md) |
+| No date | **`G9` / `OI-34`** — real-time NFRs undefined | **Blocks validation, not build.** ⚠ **Not the cadence** — `[SIG §4.2]`/`§5.2` specify batched **~10 Hz**, which is what `MockSignalRService` emits at. What `G9` leaves open is the **AGC publish rate at source** (`PLC-Q11`), the **client count** and the **latency budget** *(corrected 27 Aug 2026 — this row said the mock "has no target cadence to match")* | `[SIG]` · [`FW-150`](../../Backend/TaskBreakdownPlans/FW-150-Broadcast-Loop.md) |
 | No date | **`G27`** / **`G28`** — the weld screen's rod queue and traceability chain lost their host; **FL2 may have no way to record a weld at all** | `FW-063`. DB4 was retired 1 Aug 2026 into DB2A's *Mark as welded* dialog, and **two things did not move with it** | [`WeldEvent.md`](../../Business/Screens/WeldEvent.md) |
 
 ---
@@ -232,8 +253,8 @@ that own them**, and this table is the index.
 
 | # | Criterion | Owner |
 |---|---|---|
-| 1 | `flat-wire-shopfloor` builds, lints, reachable at `/flat-wire` behind `FlatWireAuthGuard` | `FW-N03` · `FW-131` — [`[CMP §5.1]`](../Components.md), [`[CMP §5.2]`](../Components.md) |
-| 2 | Shell renders on the 1280×1024 canvas in light **and** dark; **all `--color-*` tokens resolve, no `--fw-*` anywhere** | `FW-130` — [`[CMP §7.4]`](../Components.md) · ⚠ gated by **`G23`** |
+| 1 | `flat-wire` builds, lints, reachable at `/flat-wire` behind `FlatWireAuthGuard` | `FW-N03` · `FW-131` — [`[CMP §5.1]`](../Components.md), [`[CMP §5.2]`](../Components.md) |
+| 2 | Shell renders on the **1920×1080** canvas in light **and** dark; **all `--color-*` tokens resolve, no `--fw-*` anywhere** | **canvas:** [`[VAL §7.5]`](../ValidationRules.md) ✅ corrected 27 Aug 2026 · **tokens:** [`[CMP §7.4]`](../Components.md) · `FW-130` · ⚠ `phase-01a`'s own wording still says 1280×1024 *(the canvas half of this row cited `[CMP §7.4]`, which owns tokens and has never defined the canvas)* |
 | 3 | DI swaps real↔mock by `useMockData`; **mock returns the seed fixtures** through the `{success,data,errors}` envelope | `FW-132` — [`[API §7.1]`](../../Backend/APIs.md) · ⛔ **cannot be met as written**: three of the named fixtures do not exist (§8.1) |
 | 4 | `MockSignalRService` drives a `gauge-trace-chart` live — rAF-throttled, OnPush, reconnect + group re-join simulated | `FW-133` · `FW-135` · `FW-136` — [`[SIG §5.6]`](../../Architecture/SignalR.md) |
 | 5 | Jest smoke suite green | `FW-N03`…`FW-137` — ⚠ **it exercises the mock path only** (§8.1 finding 6) |
@@ -291,12 +312,14 @@ All six are other documents' to correct, so they are recorded here rather than e
    is load-bearing: `[CMP §5.3]` warns *"Older implementation documents use inconsistent
    fixtures — do not follow them"* while carrying three wrong alphas itself. **Exit criterion 3
    cannot be met as written.**
-2. **`[SCR §7.1]`'s "27 HTML files" is stale — the folder holds 18.** Twenty-three across both
-   scopes (18 here + 5 in `MVP-2/Mockups/`). §7.3's *"25 of 27 screens include it"* and
+2. **`[SCR §7.1]`'s "27 HTML files" is stale — the folder holds 19.** Twenty-four across both
+   scopes (19 here + 5 in `MVP-2/Mockups/`). §7.3's *"25 of 27 screens include it"* and
    *"26 of 27 files use `data-fit=fill`"* rest on the same figure. ⚠ **The named exceptions are
-   right and only the denominators are wrong** — measured today, **16 of 18** include
+   right and only the denominators are wrong** — measured 28 Aug 2026, **17 of 19** include
    `flat-wire-topbar.js` (all but `coil-spinner.html` and `dashboard_2_rod_checkin.html`, which
-   inlines its own app bar) and **17 of 18** use `data-fit="fill"` (all but `coil-spinner.html`).
+   inlines its own app bar) and **17 of 19** use `data-fit="fill"`. ⚠ **The two figures no longer
+   move together**: `dashboard_3_active_run_ual.html` loads the topbar but **deliberately omits
+   `flat-wire-fit.js`**, whose hard-coded `DESIGN_W = 1280` would letterbox its 1920×1080 canvas.
    So *"clone Dashboard 12's skeleton, not Dashboard 2's"* still holds exactly as written.
 3. **A fourth RT-labelled story is Angular, and `TrialOrchestration §1.2` names only three.**
    `FW-081`'s **RT 24 h** is *"RT live wiring across 6 event streams"* — ring buffer,

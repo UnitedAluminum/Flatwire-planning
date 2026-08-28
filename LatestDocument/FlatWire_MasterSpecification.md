@@ -88,7 +88,7 @@ Two things make this module different from every other UAL shopfloor module:
 | Schema | Designed, scripted, and validated on SQL Server 2019 — 33 tables, 55 FK constraints, 70 index statements, one trigger, one read proc, idempotent build+seed. `[DBD §6.2]` is the defining site |
 | API | Contract published for 32 REST endpoints + **14** hub events; four Tier-1 correctness bugs identified and corrected in §6 of this document |
 | UI | 27 static HTML mockups delivered and approved as the visual baseline; no Angular code written |
-| Code | **None.** `ual-angular` library `flat-wire-shopfloor` and `ual-api` domain `FlatWire` are both un-started |
+| Code | **None.** `ual-angular` library `flat-wire` and `ual-api` domain `FlatWire` are both un-started |
 | Decisions | 74 tracked questions; 21 Decided, 8 In Progress, 45 Open — 6 of the Open ones are Critical |
 | Schedule | Phase 1 (platform) due **14 Aug 2026**; feature work **17 Aug → 30 Sep 2026**; UAT 28–30 Sep; on-line trial early Oct 2026 (TBD); production Q4 2026 (TBD) |
 | Effort | **MVP-1 398.3 dev-days (3,186 h)** vs **44 working days** available (32 post-gate) → **9.1 FTE sustained**, 24.5 in W7. *(Re-baselined 18 Aug 2026 by `D-32`; previously 411.5 d / 3,292 h / 9.4 FTE — derivation in `[CE §3c]`.)* *(Both scopes 457.5 d / 3,660 h → 10.4 FTE; the 3,727 h figure quoted before 11 Aug 2026 was a stale TOTAL row.)* See `MVP-1/ProjectPlan/Development/CapacityAndEffortModel.md` §3b |
@@ -2770,14 +2770,14 @@ The physical line layout is illustrated in [`../MVP-1/ProjectPlan/Frontend/Mocku
 
 | Layer | Repository | Location | Status |
 |---|---|---|---|
-| Frontend | `c:\UAL\ual-angular` | **new library `flat-wire-shopfloor`**, prefix `fw`, at `projects/flat-wire-shopfloor/` | Not started |
+| Frontend | `c:\UAL\ual-angular` | **new library `flat-wire`**, prefix `fw`, at `projects/flat-wire/` | Not started |
 | Backend | `c:\UAL\ual-api` | **new domain `API/Domain/FlatWire/`**, 4 projects + `FlatWire.sln` | Not started |
 | Database | `ual-database` | **new `FlatWireDB`** — and nothing else; `D-32` cancels the FW-001/FW-002 shared-schema migration, so the existing scheduling schema is used **as it stands** | DDL written and validated; not deployed |
 | Planning artifacts | `c:\UAL\Flatwire-planning` | this repository — requirements, schema, mockups, roadmap | Complete |
 
 `MVP-1/ProjectPlan/Flat Wire.code-workspace` opens this folder alongside both code repositories.
 
-**Angular library scaffold:** `ng generate library flat-wire-shopfloor --prefix=fw`, registered in `angular.json` and `tsconfig` paths, added to the `build:shop-floor` npm chain. Folder layout `src/lib/{components, components/shared, services, models, guards, styles}` plus `flat-wire-shopfloor.module.ts`, `flat-wire-shopfloor-routing.ts`, `public-api.ts` — the **standard Angular library layout, not copied from any existing feature library**.
+**Angular library scaffold:** `ng generate library flat-wire --prefix=fw --standalone=false`, registered in `angular.json` and `tsconfig` paths, added to the `build:shop-floor` npm chain. Folder layout `src/lib/{components, components/shared, services, models, guards, styles}` plus `flat-wire.module.ts`, `flat-wire-routing.ts`, `public-api.ts` — the **standard Angular library layout, not copied from any existing feature library**.
 
 **Routing:** lazily-loaded `FLAT_WIRE_ROUTES` under `/flat-wire`, with per-line routes such as `/flat-wire/line/:lineId/checkin/rod`, `/flat-wire/line/FL2/checkin/spool`, `/flat-wire/line/:lineId/run/active`.
 
@@ -2799,13 +2799,13 @@ The physical line layout is illustrated in [`../MVP-1/ProjectPlan/Frontend/Mocku
 
 **`API/Domain/SlitterInterface` is explicitly NOT a reference — neither for UI/structure nor for the real-time / `CoilDataHub` pattern.**
 
-**Frontend — what NOT to copy.** There is **no Angular structural, UI or CSS template**. `flat-wire-shopfloor` is all-new screens and controls built from `MVP-1/ProjectPlan/Frontend/Mockups/`. The following are **not** references: `checkin-precheckin`, `shop-floor` / `shop-floor-common`, `statistical-process-control`, `wip-rejection`, `slitter-*`, `coil-receiving`, `common-grid` / `multi-grid-layout`, `opc`, `label-printing`, `print-traveler`.
+**Frontend — what NOT to copy.** There is **no Angular structural, UI or CSS template**. `flat-wire` is all-new screens and controls built from `MVP-1/ProjectPlan/Frontend/Mockups/`. The following are **not** references: `checkin-precheckin`, `shop-floor` / `shop-floor-common`, `statistical-process-control`, `wip-rejection`, `slitter-*`, `coil-receiving`, `common-grid` / `multi-grid-layout`, `opc`, `label-printing`, `print-traveler`.
 
 **The only frontend reuse** is the foundational, app-wide **`shared` services**, consumed so the library plugs into the existing app shell rather than re-inventing plumbing: `api-gateway.service` · `app-config.service` · `login.service` + `login-api.service` · `token-interceptor.service` · `correlation-id-interceptor.service` + `correlation-id.service` · `error-handler.service` + `global-error-handler-api.service` · `ui-log.service` · `notification.service` · `subscription.service` · `print-export.service` · `util.service`. **Do not rebuild these, and do not add new interceptors.**
 
 The Flat Wire real-time client is purpose-built; existing SignalR hub clients such as `supervisor-monitor-hub.service.ts` are **not** copied.
 
-**`flat-wire-shopfloor` joins the `build:shop-floor` npm chain for build ordering only.** That is a build-sequencing concern and implies **no** UI or code reuse from the other libraries in the chain.
+**`flat-wire` joins the `build:shop-floor` npm chain for build ordering only.** That is a build-sequencing concern and implies **no** UI or code reuse from the other libraries in the chain.
 
 > **The two check-in implementation documents that contradicted these rules were deleted on 13 Aug 2026** (recoverable at `1964086`). Recorded here because the instructions survive in git history and in any April copy: `CheckinImplementationPlan.md` and `CheckinImplementationPrompt.md` told developers to "copy patterns from `checkin-precheckin`", to port the **retired** interim DB2 layout (which held the `dashboard_2_rod_checkin.html` filename until 11 Aug 2026, when the approved wizard took it), and to build a `--fw-*` token system. **All three instructions are wrong**, and they cited story IDs (`FW-S3-009`, `FW-S1-001`) that do not exist in the backlog — the real ones are FW-061 and FW-082. The two things worth having from them were rehomed rather than lost: the **stub-first delivery contract** is `Architecture/Architecture.md` §2.2 §0.5, and the canonical **fixture set** is the DB seed in `MVP-1/ProjectPlan/Database/Schema/SQL/`.
 
@@ -3125,7 +3125,7 @@ Every decision that is closed. **Do not re-open these.** Where a decision replac
 
 | ID | Decision | Date | Consequence | Supersedes |
 |---|---|---|---|---|
-| **D-01** | The Flat Wire UI is a **brand-new, standalone Angular library** `flat-wire-shopfloor`, not folded into an existing library | 26 Jul 2026 | New library scaffold; joins `build:shop-floor` for ordering only | — |
+| **D-01** | The Flat Wire UI is a **brand-new, standalone Angular library** `flat-wire`, not folded into an existing library | 26 Jul 2026 | New library scaffold; joins `build:shop-floor` for ordering only | — |
 | **D-02** | The flat-wire tables live in a **new `FlatWireDB`** database, not `united_db`. ⚠ **Strengthened by `D-32` (18 Aug 2026):** the FW-001 column renames are cancelled, so **nothing** alters the existing shared scheduling schema — it is read and written as it stands | 26 Jul 2026 | `FlatWire_DDL_00_Database.sql` creates the database; cross-DB reads for planning/scheduling data | Any DDL header reading `USE [united_db]` |
 | **D-03** | The schema is **33 tables** (34 until the 23 Aug 2026 `SpoolConfiguration` merge, `Q60`) | 22 Aug 2026 (as-built) | The count in the DDL and the ER document | 20 (`FlatWireJiraStories`) → 22 (original ERD, `FlatWireTables`, SRS `DM001`) → 21 (roadmap index, after the `Rod` drop) → 22 (`phase-01c`, + `RunReading`) → 25 (`Schema_Mapping`, CLAUDE.md, + `AlloyProperty`/`ChangeLog`/`RunReading`) → **27** (+ `PayoffPosition`, `RodStaging`) → **28** (+ `Dancer`, 13 Aug 2026) → **32** (+ `Spool`, `SpoolTraceability`, `SpoolOrder`, `SpoolStaging` — the multi-rod / multi-order spool and the FL2 pre-check-in queue, 22 Aug 2026) |
 | **D-04** | **`Rod` is retained** as a `FlatWireDB`-local master mirroring the shared `coils` record, with **enforced** rod-alpha FKs | Jul 2026 ("Hybrid foundation") | 28 tables; referential integrity for all rod references in-database | **Supersedes** `Architecture/Architecture.md` §13.1 `D-04` and `phase-01c`, which dropped `Rod` and made every rod-alpha reference an unenforced cross-DB link (21–22 tables) |
@@ -3653,7 +3653,7 @@ Text was extracted from the `.docx` zip containers (`python-docx`) and the workb
 | Path | Why it matters |
 |---|---|
 | `c:\UAL\CLAUDE.md` | Parent ecosystem conventions — build/test commands, Angular/.NET/SQL patterns, environment variables, connection strings |
-| `c:\UAL\ual-angular` | Where `flat-wire-shopfloor` will be created; source of the `shared` services to consume |
+| `c:\UAL\ual-angular` | Where `flat-wire` will be created; source of the `shared` services to consume |
 | `c:\UAL\ual-api` | Where `API/Domain/FlatWire/` will be created; source of the `CoilCheckin` template, `OPCConnection` and `UAController` |
 | `ual-database` | Home of the shared `coils`, `planning_routings`, `routings`, `wip_coil_orders`, `machines`, `wip_stations`, `Lots` and skid tables — and of the column mapping still missing for OI-33 |
 

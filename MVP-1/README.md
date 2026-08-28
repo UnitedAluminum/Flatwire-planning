@@ -1,7 +1,7 @@
 # MVP-1 — Screens, Specifications and Client Deliverables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 25, 2026 — client deliverables 4 → 5; `Screens/` 17 → 13; the `PLCTagSpecification.md` source path corrected; `D-31` contradiction removed; object count 34 → 33 *(previously August 13, 2026)*
+**Last Updated:** August 28, 2026 — ⚠ **The Mockups folder is 38 files / 19 HTML** — `dashboard_3_active_run_ual.html`, a **styling comparison build** (DB3 in the host app’s CSS at 1920×1080) plus five generated assets. The folder is still **flat**. Counts and the "composed for 5:4" statements updated — **18 of 19**, not all 19. Earlier: August 25, 2026 — client deliverables 4 → 5; `Screens/` 17 → 13; the `PLCTagSpecification.md` source path corrected; `D-31` contradiction removed; object count 34 → 33 *(previously August 13, 2026)*
 **Status:** Active scope — this is what is being built
 
 ---
@@ -23,7 +23,7 @@ MVP-1/
 > |---|---|
 > | `DevelopmentPlan/` | `ProjectPlan/` — roadmap, sprint plan, backlog, effort models, `REVIEW.md`, `Development/Phases/`, `Tools/` |
 > | `RequirementDocuments/` | `ProjectPlan/Business/Screens/` (13 specifications) · `Architecture/PLCTagSpecification.md` · `Business/Spool.md` + `PartialRodReCheckin.md` · `Tools/ClientQuestionsContent.md` |
-> | `Mockups/` | `ProjectPlan/Frontend/Mockups/` — **32** files (18 HTML), **flat and intact** |
+> | `Mockups/` | `ProjectPlan/Frontend/Mockups/` — **38** files (19 HTML), **flat and intact** |
 > | `DBChanges/` | `ProjectPlan/Database/` — `DatabaseDesign.md` (`[DBD]`, the as-built model and the counted baseline), `Schema/` (design + DDL), `Scripts/` (cross-database work) |
 >
 > **Five documents were absorbed into the documents that own their subjects and deleted:** `APIContracts.md` → `Backend/APIs.md` · `FlatWireJiraStories.md` → `Development/TaskBreakdown.md` · `TechStackRecommendation.md` → `Architecture/Architecture.md` §14 · `FlatWireTables.md` → `Database/Schema/FlatWireSchema_Mapping.md`'s appendix · `FlatWire_ERDiagram_Documentation.md` → `Database/DatabaseDesign.md` §6.10/§6.11.

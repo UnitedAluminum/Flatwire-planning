@@ -89,7 +89,7 @@ The **delivery streams** of `[CE §1]`, which defines six — the two not costed
 
 | Stream | Surface | What it owns |
 |---|---|---|
-| **FE** | `ual-angular` → new library `flat-wire-shopfloor` (prefix `fw`) | Screens, dialogs, shared controls, SCSS against the existing token set |
+| **FE** | `ual-angular` → new library `flat-wire` (prefix `fw`) | Screens, dialogs, shared controls, SCSS against the existing token set |
 | **BE** | `ual-api` → new `FlatWire` microservice | Controllers, MediatR commands/queries, services, validation, auth |
 | **DB** | SQL Server → new `FlatWireDB` ~~+ the shared-schema `FW-001` renames~~ *(cancelled 18 Aug 2026, `D-32`)* | DDL, seed data, indexes, EF/Dapper mapping, repositories |
 | **RT** | `FlatWireHub` · OPC ingest · `PLCTagService` | **Real-time and PLC integration** — see below |
@@ -869,7 +869,7 @@ and stays open for MVP-1.
   overlay, no backdrop, no focus trap.
 - **Reference-code rules (`[ARC §2.2]`), binding.** Backend template is `API/Domain/CoilCheckin`;
   **`SlitterInterface` is explicitly not a reference**. There is **no** Angular structural template —
-  `flat-wire-shopfloor` is all-new from the mockups, and `checkin-precheckin`, `shop-floor*`, `common-grid`,
+  `flat-wire` is all-new from the mockups, and `checkin-precheckin`, `shop-floor*`, `common-grid`,
   `wip-rejection`, `slitter-*` are not to be copied. Only the foundational `shared` services are reused.
 - **DoD bar is unchanged in every respect but one** (`[SP §9.2]`): Jest 95 % coverage, UI conformance at
   1280×1024 at 1:1, **no text below 14 px**, tap targets ≥ 48 px, no hover-dependent action, no new `--fw-*`

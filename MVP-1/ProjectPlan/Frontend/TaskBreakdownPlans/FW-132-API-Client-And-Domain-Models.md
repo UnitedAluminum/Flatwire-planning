@@ -1,0 +1,201 @@
+# FW-132 · DI-swappable API client and domain models
+
+**Project:** United Aluminum (UAL) — Flat Wire Mill Module
+**Last Updated:** August 28, 2026 — ✅ **`FW-N03` landed 28 Aug 2026, so this story is unblocked**; ⛔ its §6.4 records that **`npm start` cannot run in this checkout** (`flexmonster` missing, [`P1A §6.15`](Phase-01A-ImplementationPlan.md)), so the browser-side half of this plan's verification is deferred. Earlier the same day: **refreshed against the measured repository.** ⚠ **MVP-1 implements 27 endpoints, not 25** — `[API §3.2]`'s heading says 25 while that document's own header records the index as **two rows short** (`§4.20`/`§4.21`, unindexed since 22 Aug), making the surface **34/27**. ✅ Both missing rows are GET/POST, so `F-05`'s conclusion is **firmer, not weaker**. Restored the card's **Rate-card basis** line. Earlier the same day: gained a **Depends on / Unblocks** header line, and a **Test cases** row in Verification. Written 27 Aug 2026 as one of the nine plans `Phase-01A-ImplementationPlan.md` was divided into
+**Document Type:** Implementation plan for a single backlog story
+**Status:** ✅ **Buildable now — `FW-N03` landed 28 Aug 2026** (wave 1). `services/` and `models/` exist empty and `useMockData` is live in both config files. ⚠ Two model decisions are unresolved (`G14`)
+**Owner:** Frontend (Angular) stream
+**Audience:** The Angular developer building `FW-132`
+**Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
+**Depends on:** [`FW-N03`](FW-N03-Angular-Library-Scaffold.md) · converges with `FW-147` (backend enums) and `FW-007` (DB `CHECK`s)
+**Unblocks:** every screen story from Phase 3 on — they bind to these models and enums
+**Part of:** `ProjectPlan/Frontend/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md) · shared context: [Phase-01A-ImplementationPlan.md](Phase-01A-ImplementationPlan.md)
+
+---
+
+> **Read [`[P1A §2]`](Phase-01A-ImplementationPlan.md) first.** Decisions: **`F-02`** (`useMockData`
+> is a config key), **`F-05`** (`get`/`post` covers all of MVP-1), **`F-09`** (⚠ the route base and
+> machine context, raised).
+>
+> ⚠ **This story bakes two undecided things into the models every screen binds to** — `G14`'s
+> inspection count and footage type. See §4.
+>
+> This plan is derived from the specifications and **loses to every one of them.**
+
+---
+
+## 1. The story
+
+From `[TB §7]`:
+
+> ###### FW-132 · DI-swappable API client and domain models
+> **Hours:** 20 h FE · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1A · **Stream:** FE
+>
+> **As a** developer,
+> **I want** one API interface with real and mock implementations swapped by DI,
+> **So that** the whole UI can be built and demoed before the backend is populated.
+>
+> **Acceptance Criteria:**
+> - [ ] `flat-wire-api.interface.ts` with `flat-wire-api-real.service.ts` (over `shared` `api-gateway.service`) and `flat-wire-api-mock.service.ts`
+> - [ ] DI swap driven by the `useMockData` environment flag; mock returns the 1C seed fixtures through the `{success,data,errors}` envelope
+> - [ ] Models authored: `rod`, `spool`, `pass-schedule`, `active-run`, `checkin`, `weld-event`, `spc-checkpoint`, `signalr-events`
+> - [ ] `line-context.service` and `run-state.service` via RxJS `BehaviorSubject`s — **no NgRx**
+> - [ ] **Canonical enums defined once:** `State = 'Active' | 'Bypass' | 'Skip'` and `EdgeType = 'Round' | 'Square'` with display labels in a pipe
+>
+> **Rate-card basis:** API client + two implementations + 8 models, priced as a shared composite (20 h)
+> **Dependencies:** FW-N03; converges with FW-147 (backend enums) and FW-007 (DB `CHECK`s)
+> **Blockers:** **G14**
+
+---
+
+## 2. Build order
+
+### Step 1 — the interface and the two implementations
+
+```
+services/flat-wire-api.interface.ts
+services/flat-wire-api-real.service.ts     over shared's ApiGatewayService
+services/flat-wire-api-mock.service.ts     the fixture set of step 3
+```
+
+**DI swap on `useMockData`**, read via `AppConfigService.getEndpoint()` — **not** from an
+`environment.*.ts` constant, which does not exist here (`F-02`). Provide it in `FlatWireModule`:
+
+```typescript
+{ provide: FLAT_WIRE_API,
+  useFactory: () => inject(AppConfigService).getEndpoint().useMockData
+    ? new FlatWireApiMockService() : new FlatWireApiRealService() }
+```
+
+✅ **`ApiGatewayService` exposes only `get` and `post`, and that is sufficient** (`F-05`): the
+contract's single `PUT` and single `PATCH` are `PUT /passschedule/{id}` and
+`PATCH /passschedule/{id}/status`, **both Phase 2, both MVP-2**. All **27** MVP-1 endpoints are GET or
+POST. **If that ever changes, raise it — do not reach past `ApiGatewayService` to a bare `HttpClient`.**
+
+⚠ **27, not 25** *(corrected 28 Aug 2026)*. `[API §3.2]`'s heading still reads *"32 endpoints, of which
+MVP-1 implements 25"*, but that document's own header records the index as **two rows short** — `§4.20`
+and `§4.21` were added 22 Aug 2026 and never indexed — so **the surface is 34/27** (`P-53`, `P-54`).
+✅ **Both unindexed rows are GET/POST** — `GET /rod/{alpha}/orders` and `POST /order/{orderNo}/complete`
+— so this step's conclusion is **strengthened, not weakened**: the two endpoints `[API §3.2]` forgot are
+exactly the shape `ApiGatewayService` already serves. ⛔ **But `§4.20` is one of the three endpoints
+`P-53` left unhosted**, so do not treat it as callable — see `[Orchestration §8.1]` finding 5.
+
+### Step 2 — the envelope
+
+Consume **`FlatWireResponse<T>`** from [`FW-131`](FW-131-Guards-Interceptors-And-Envelope.md) (`F-04`).
+Do not define a second envelope type, and do not reuse `shared`'s `HTTPResponse<T>`, which has no
+`errors[]`.
+
+### Step 3 — the fixtures, measured
+
+⚠ **`[CMP §5.3]` and `phase-01a` named three alphas no seed creates.** `[CMP]` was corrected on
+27 Aug 2026; **`phase-01a` was not.** Measured against
+`Database/Schema/SQL/FlatWire_SampleData_*.sql`:
+
+| Use | Fixture | |
+|---|---|---|
+| Rods | **`R00041`–`R00048`** | |
+| Spools | **`SP-00031`–`SP-00033`** | ⚠ **not `SP-00021`** — occurs only inside a comment |
+| Runs | **`RUN-0001`–`RUN-0005`** | ⚠ **not `RUN-0042` / `RUN-0043`** |
+| FL1 happy path | **`PS-1100-FL1-001`** (`Active`) | |
+| FL1 negative | `PS-1100-FL1-003` (**`Draft`**) | ⚠ must be **refused** — `SCHEDULE_NOT_ACTIVE` → **422** |
+| FL2 happy path | **`PS-1100-FL2-001`** (`Active`) | |
+| FL3 hybrid | `PS-1100-FL3-001` (`Active`) | |
+
+**What a stub must return** (`[API §7.2]`):
+
+- the **exact envelope**, including `success` and `errors`, so error-path UI is exercised;
+- **at least one failing case per endpoint** — an inspection fail, an occupied bay, a `Draft` schedule;
+- ⚠ **`null` live gauge and width for FL2** — its absence is specified behaviour (`FR-120`, `[SIG §5.3]`), and treating it as a fault is a defect.
+
+⚠ **The stub bakes in an assumption deliberately** — a single active schedule, routing around `OI-46`,
+`OI-47` and `OI-48`. `[API §7.3]` requires an explicit **de-stub pass** later: *"it will not remove
+itself."*
+
+### Step 4 — the eight models
+
+`rod` · `spool` · `pass-schedule` · `active-run` · `checkin` · `weld-event` · `spc-checkpoint` ·
+`signalr-events`.
+
+⚠ **`signalr-events.model.ts` must carry all fourteen event types**, not twelve — `[SIG §5.6]`'s
+observable map was corrected on 27 Aug 2026 and `[SIG §5.2]` has fourteen rows. See
+[`FW-135`](FW-135-SignalR-Client-Service.md) and `[P1A §6.12]`.
+
+### Step 5 — the canonical enums, defined once
+
+**This story owes the TypeScript leg of all fourteen** `[API §2]` enums — `G56`, and it is `TC-020`'s
+third leg (a **manual** three-way diff with a named owner, since `[TS §1.2]` withdrew the automated
+check).
+
+| Rule | Why |
+|---|---|
+| `State = 'Active' \| 'Bypass' \| 'Skip'` | **never a boolean `IsActive`** — a bool cannot express Bypass versus Skip |
+| `EdgeType = 'Round' \| 'Square'`, displayed *"Round Edge"* / *"Flat Edge"* | through **one** pipe: *"no other translation exists anywhere in the system"* (`[API §2.1]`) |
+| ⛔ **`Bevel edge` must not be offered or accepted** | a live fourth vocabulary with no domain value behind it — `OI-05` |
+| **`LineId` is never narrowed** | line eligibility is a per-endpoint *shape* rule, so no screen gets an FL2 refusal free from enum membership — `P-58` / `P-83` |
+
+✅ The DB mirror **is** 1C: `CK_PSC_State` and `CK_PSC_EdgeType` live in `FlatWire_DDL_02_Schedule.sql`,
+which `D-31` moved into the MVP-1 runner — so the three-way agreement is 1A ↔ 1B ↔ 1C against one
+database.
+
+### Step 6 — the two state services
+
+`line-context.service` (which line is in scope) and `run-state.service` (active alpha, footage, payoff)
+over RxJS `BehaviorSubject`s. **No NgRx** — it is not in `package.json` and not used anywhere.
+
+⚠ **`line-context.service` is where `F-09` lands if its recommendation is taken.** `shared`'s
+`AuthenticationGuard` stores `CURRENT_MACHINE` only when the path contains the literal `shop-floor`
+**and** its last segment is a positive number; `[CMP §5.2]`'s `:lineId` (`FL1`/`FL2`/`FL3`) satisfies
+neither, and `shared.service.ts` reads that key in two places while
+`LoginService.monitorUsers(machineConfigurationId)` drives the topbar's multi-operator chips. **If
+this service is to resolve `:lineId` → machine id and set `CURRENT_MACHINE`, decide before you write
+it** — retrofitting it later means touching every screen that reads line context.
+
+---
+
+## 3. Verification
+
+```bash
+npm run build:base && ng build flat-wire
+ng lint flat-wire
+npm run test:flat-wire      # 95 % — see below
+npm start                   # mock path; then a built environment for the real path
+```
+
+| AC | Proof |
+|---|---|
+| 1 · interface + two implementations | both provided; the real one goes through `ApiGatewayService`, never a bare `HttpClient` |
+| 2 · DI swap + seed fixtures through the envelope | `ng serve` returns the step-3 alphas; a built environment hits the real base URL |
+| 3 · eight models | present, and `signalr-events` carries **fourteen** event types |
+| 4 · `line-context` / `run-state` | state transitions unit-tested; no NgRx |
+| 5 · canonical enums once | the **manual** `TC-020` diff across 14 enums, 1A ↔ 1B ↔ 1C, with a named owner |
+
+**Test cases:** **`TC-020`** — the enum mirror, C# ↔ TypeScript ↔ DB `CHECK`, **P1**. ⚠ It is a **manual** three-way diff across 14 enums with a named owner, not a green build: `[TS §1.2]` withdrew the automated check
+
+⚠ **The 95 % gate reaches this story hardest after `FW-133`.** `collectCoverageFrom` globs
+`*.service.ts` **and `*.model.ts`**, so `flat-wire-api-mock.service.ts` and all eight models are
+inside it (`F-08`). ⚠ **`flat-wire-api-real.service.ts` appears in no acceptance criterion anywhere** —
+`[P1A §6.6]`; the first thing that exercises it end to end is a **backend** checklist with no named FE
+reviewer.
+
+---
+
+## 4. Blockers and open items
+
+| Item | Effect |
+|---|---|
+| ⚠ **`G14`** — 3- vs 4-item inspection · `FootageFt` INT vs DECIMAL | **this story bakes whichever it picks into the models every screen binds to.** The alpha-format half is ✅ settled (`R#####`; the backend throws on `ROD-00041` at boot) |
+| ⚠ **`F-09`** — machine context | decide before step 6 |
+| ⚠ `G56` / `TC-020` | the enum diff needs a named owner |
+| ⚠ `OI-46` / `OI-47` / `OI-48` | the stub routes around them; a de-stub pass is owed |
+| ⚠ `OI-05` | `Bevel edge` must not be accepted |
+
+---
+
+## 5. Handoff
+
+**Every screen story from Phase 3 on consumes this story's models and enums**, so two things matter
+more than the code:
+
+1. **Publish the enums and `FlatWireResponse<T>` in `public-api.ts`** — they are the join between this library and every screen.
+2. **Record which way you resolved `G14`**, in this file, on the day you decide it. A model type chosen silently is the hardest kind of decision to reverse.

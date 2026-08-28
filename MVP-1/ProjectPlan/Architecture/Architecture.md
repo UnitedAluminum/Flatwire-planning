@@ -32,7 +32,7 @@ flowchart TB
   end
   subgraph ANG["ual-angular"]
     SHELL["App shell + shared services"]
-    LIB["flat-wire-shopfloor<br/>NEW library, prefix fw"]
+    LIB["flat-wire<br/>NEW library, prefix fw"]
   end
   subgraph API["ual-api"]
     FW["FlatWire.API<br/>NEW microservice<br/>+ FlatWireHub"]
@@ -71,7 +71,7 @@ Three facts this diagram encodes that are easy to get wrong:
 
 | Component | Repository | Responsibility |
 |---|---|---|
-| `flat-wire-shopfloor` | `c:\UAL\ual-angular` | All 22 screens, all `fw`-prefixed controls, the SignalR client, line/run state |
+| `flat-wire` | `c:\UAL\ual-angular` | All 22 screens, all `fw`-prefixed controls, the SignalR client, line/run state |
 | `FlatWire.API` | `c:\UAL\ual-api` | Thin controllers over MediatR; `FlatWireHub`; OPC ingest hosted service; `PLCTagService` |
 | `FlatWire.Application` | `c:\UAL\ual-api` | Commands, queries, validators, pipeline behaviours |
 | `FlatWire.Domain` | `c:\UAL\ual-api` | **Seven aggregate roots** (`D-29`), value objects, invariant rules, domain events, repository **interfaces**, enums, param models, `IFlatWireClient`. Bases inherited from `UA.Framework.Domain` — **do not write new ones** |
@@ -88,7 +88,7 @@ Three facts this diagram encodes that are easy to get wrong:
 
 | Layer | Repository | Location | Status |
 |---|---|---|---|
-| Frontend | `c:\UAL\ual-angular` | **New library `flat-wire-shopfloor`**, prefix `fw`, at `projects/flat-wire-shopfloor/` | Not started |
+| Frontend | `c:\UAL\ual-angular` | **New library `flat-wire`**, prefix `fw`, at `projects/flat-wire/` | Not started |
 | Backend | `c:\UAL\ual-api` | **New domain `API/Domain/FlatWire/`**, 4 projects + `FlatWire.sln` | Not started |
 | Database | `ual-database` | **New `FlatWireDB`** — and **nothing else**. `D-32` (18 Aug 2026) cancels the FW-001/FW-002 shared-schema migration, so the existing scheduling schema is **read and written as it stands, never altered** | DDL written and validated; **not deployed** |
 | Planning artifacts | `c:\UAL\Flatwire-planning` | This repository | Complete |
@@ -111,7 +111,7 @@ These are the rules most likely to be broken by a developer working from habit o
 
 > **`API/Domain/SlitterInterface` is explicitly NOT a reference** — neither for UI/structure nor for the real-time / `CoilDataHub` pattern.
 
-**Frontend — what NOT to copy.** There is **no Angular structural, UI or CSS template.** `flat-wire-shopfloor` is all-new screens and controls built from `MVP-1/ProjectPlan/Frontend/Mockups/`. The following are **not** references: `checkin-precheckin`, `shop-floor` / `shop-floor-common`, `statistical-process-control`, `wip-rejection`, `slitter-*`, `coil-receiving`, `common-grid` / `multi-grid-layout`, `opc`, `label-printing`, `print-traveler`.
+**Frontend — what NOT to copy.** There is **no Angular structural, UI or CSS template.** `flat-wire` is all-new screens and controls built from `MVP-1/ProjectPlan/Frontend/Mockups/`. The following are **not** references: `checkin-precheckin`, `shop-floor` / `shop-floor-common`, `statistical-process-control`, `wip-rejection`, `slitter-*`, `coil-receiving`, `common-grid` / `multi-grid-layout`, `opc`, `label-printing`, `print-traveler`.
 
 **The only frontend reuse** is the foundational, app-wide `shared` services, consumed so the library plugs into the existing app shell rather than re-inventing plumbing:
 
@@ -119,7 +119,7 @@ These are the rules most likely to be broken by a developer working from habit o
 
 **Do not rebuild these, and do not add new interceptors.** The Flat Wire real-time client is purpose-built; existing SignalR hub clients such as `supervisor-monitor-hub.service.ts` are **not** copied.
 
-> **`flat-wire-shopfloor` joins the `build:shop-floor` npm chain for build ordering only.** That is a build-sequencing concern and implies **no** UI or code reuse from the other libraries in the chain.
+> **`flat-wire` joins the `build:shop-floor` npm chain for build ordering only.** That is a build-sequencing concern and implies **no** UI or code reuse from the other libraries in the chain.
 
 > **The two documents that contradicted these rules were deleted on 13 Aug 2026** (recoverable at `1964086`) — recorded because the instructions survive in git history. `CheckinImplementationPlan.md` and `CheckinImplementationPrompt.md` told developers to "copy patterns from `checkin-precheckin`", to port the **retired** interim DB2 layout (which held the `dashboard_2_rod_checkin.html` filename until 11 Aug 2026, when the approved wizard took it), and to build a `--fw-*` token system. **All three instructions are wrong**, and they cited story IDs (`FW-S3-009`, `FW-S1-001`) that do not exist — the real ones are FW-061 and FW-082. What was worth keeping was rehomed: the stub-first delivery contract is `Architecture/Architecture.md` §2.2 §0.5, and the canonical fixture set is the DB seed.
 
@@ -249,7 +249,7 @@ The same reasoning applies to **pre-check-in** (writes `RodStaging` + `coils` + 
 
 | ID | Decision | Rationale | Consequence |
 |---|---|---|---|
-| **D-01** | The UI is a brand-new standalone Angular library `flat-wire-shopfloor` | The screen set has no analogue in the existing libraries; folding it in would couple it to a release train it does not share | New scaffold; joins `build:shop-floor` for ordering only |
+| **D-01** | The UI is a brand-new standalone Angular library `flat-wire` | The screen set has no analogue in the existing libraries; folding it in would couple it to a release train it does not share | New scaffold; joins `build:shop-floor` for ordering only |
 | **D-02** | Tables live in a **new `FlatWireDB`**, not `united_db` | Isolates a new domain from the shared schema's release risk; traceability joins stay in-engine | Cross-DB reads for planning/scheduling data; §10 exists because of this |
 | **D-03** | The schema is **33 tables** — 34 until the 23 Aug 2026 `SpoolConfiguration` merge (`Q60`) | The as-built count | See §6.2 for the full supersession history |
 | **D-04** | **`Rod` is retained** as a local master with enforced rod-alpha FKs | Referential integrity for the genealogy chain that `NFR012` makes contractual | **Reverses** `Architecture/Architecture.md` §13.1 `D-04` / `phase-01c`. Leaves **OI-42** (sync with `coils`) open |
