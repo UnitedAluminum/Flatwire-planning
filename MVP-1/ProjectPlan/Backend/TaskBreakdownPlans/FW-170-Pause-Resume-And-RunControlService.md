@@ -1,7 +1,7 @@
 # FW-170 · `POST /run/{id}/pause` and `/resume`, and `RunControlService`
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — first issue
+**Last Updated:** August 15, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
 **Status:** Ready to build — **four resume outcomes, not three**
 **Owner:** Backend (.NET) stream

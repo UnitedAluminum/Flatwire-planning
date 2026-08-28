@@ -1,7 +1,7 @@
 # FW-177 · Exception broadcasts and the supervisor notification
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — `G6` answered: role targeting unblocked; §3.1 rewritten around the **silent** failure mode of a wrong group name *(first issue, same day)*
+**Last Updated:** August 15, 2026 — `G6` answered: role targeting unblocked; §3.1 rewritten around the **silent** failure mode of a wrong group name. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
 **Status:** ⚠ **Its durable backing (`FW-175`) is deferred from the trial**
 **Owner:** Real-time (RT) stream

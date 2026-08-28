@@ -1,7 +1,7 @@
 # FW-223 — Rod Ingestion: populating the FlatWire tables
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 25, 2026 — flagged that `GET /rod/{alpha}` left the service (`FW-138` `P-53`): **`FR-530` stands as a rule** but its acceptance criterion cannot be exercised here until `P-54` closes *(previously August 19, 2026 — new. **Closes `OI-42`**; raises **`OI-117`**)*
+**Last Updated:** August 25, 2026 — flagged that `GET /rod/{alpha}` left the service (`FW-138` `P-53`): **`FR-530` stands as a rule** but its acceptance criterion cannot be exercised here until `P-54` closes. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Status:** **Ready to build — the procedure is written and parses clean; no sign-off items, one deployment prerequisite shared with `FW-220`**
 **Story:** `FW-223` · **Phase:** 4 · **Sprint:** S2 · **Streams:** DB + BE
 **Hours:** **14 h** (DB 10 · BE 4). **Additive** to the 3,186 h baseline, like `FW-202`, `FW-219` and `FW-220`–`FW-222`

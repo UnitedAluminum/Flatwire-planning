@@ -1,7 +1,7 @@
 # FW-181 · FL2 null-gauge contract and the Live/Profile binding
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — first issue
+**Last Updated:** August 15, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
 **Status:** Ready to build — ⚠ **`[TRP §7]`: "the single most likely thing to ship wrong"**
 **Owner:** Real-time (RT) stream

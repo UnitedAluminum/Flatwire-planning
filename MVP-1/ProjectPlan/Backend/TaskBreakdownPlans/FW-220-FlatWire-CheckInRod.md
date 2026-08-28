@@ -1,7 +1,7 @@
 # FW-220 — FL1/FL3 Check-In Write-Back into the Shared Schema
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 25, 2026 — flagged that `GET /rod/{alpha}` left the service (`FW-138` `P-53`), which strengthens rather than weakens the no-assumed-lookup rule *(previously August 19, 2026 — new. Closes **`OI-112`**; largely closes **`OI-111`**; raises **`OI-115`**, **`OI-116`** and **`Q37`**–**`Q40`**)*
+**Last Updated:** August 25, 2026 — flagged that `GET /rod/{alpha}` left the service (`FW-138` `P-53`), which strengthens rather than weakens the no-assumed-lookup rule. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Status:** **Ready to build — three procedures are drafted and structurally verified; four values need IT sign-off before a shared environment, and one deployment prerequisite is not yet met**
 **Stories:** `FW-220` (check-in write-back) · `FW-221` (station release + reqsum reversal) · `FW-222` (active-run index + `WipCoilOrdersWritten`) · **Phase:** 4 · **Sprint:** S2 · **Streams:** DB + BE
 **Hours:** **51 h AI-assisted / 69 h hand-coded** — DB only. **The BE half is already inside `FW-157`'s 36 h** and is not additive; see *Estimating* below

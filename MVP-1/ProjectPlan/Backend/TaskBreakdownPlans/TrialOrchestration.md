@@ -1,7 +1,7 @@
 # Six-Screen Trial Run — Execution Orchestration (30 Sep 2026)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 25, 2026 — **trial controllers 8 → 7, five of which serve a screen** (`FW-138` `P-53`), with a warning that DB2's rod scan has no endpoint until `P-54` closes *(previously August 15, 2026 — `G6` closed in §4; its verification residual added as a separate row *(first issue, same day)*)*
+**Last Updated:** August 25, 2026 — **trial controllers 8 → 7, five of which serve a screen** (`FW-138` `P-53`), with a warning that DB2's rod scan has no endpoint until `P-54` closes. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Execution index and story map for the 30 Sep trial run
 **Status:** Active — **the trial-scope companion to [Orchestration.md](Orchestration.md)**
 **Owner:** Delivery lead, across all four streams

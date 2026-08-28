@@ -1,7 +1,7 @@
 # FW-219 — FL2/FL3 Run-End Write-Back into the Shared Schema
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 26, 2026 — ⛔ **REWRITTEN BY CHANGES `[H]`, `[S]` and `[N]`: the procedure now lives in `FlatWireDB`, writes **N** shared identities per coil rather than one, and mints them off the **source segment** with a **blank** ignore list. `OI-113` is CLOSED; `@primaryRodAlpha` and `@expectedCoilNo` are both gone.** *(Previously August 18, 2026 — new.)* Closed `OI-104`; raised Closes **`OI-104`**; raises **`OI-112`**, **`OI-113`**, **`OI-114`** and **`Q34`**–**`Q36`**
+**Last Updated:** August 26, 2026 — ⛔ **REWRITTEN BY CHANGES `[H]`, `[S]` and `[N]`: the procedure now lives in `FlatWireDB`, writes **N** shared identities per coil rather than one, and mints them off the **source segment** with a **blank** ignore list. `OI-113` is CLOSED; `@primaryRodAlpha` and `@expectedCoilNo` are both gone.** Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Status:** **Ready to build — the procedure is drafted and structurally verified; three values need IT sign-off before a shared environment**
 **Story:** `FW-219` · **Phase:** 9 · **Sprint:** S3 · **Streams:** DB + BE
 **Hours:** **40 h AI-assisted / 56 h hand-coded**; 77 h all-in (`[CE §3d]`). **Additive to the 3,186 h baseline**, like `FW-202`

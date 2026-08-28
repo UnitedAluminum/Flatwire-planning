@@ -1,7 +1,7 @@
 # FW-142 · Dapper/EF data access and `FlatWireDbContext`
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 27, 2026 — **BUILT** (§6 carries the results), and `P-70` minted: sixteen columns are added by `ALTER TABLE` rather than in the `CREATE TABLE` body, which had cost `FW-141` seven properties on two roots. Earlier the same day: corrected against the 27 Aug DDL and the code `FW-141` landed: the residual `28`s removed, the misattributed `phase-01b` L47 quote replaced, `P-69` minting the eight `ROWVERSION` tokens, the `FW-220` transaction seam recorded, `OI-42` struck as closed. Earlier: August 25, 2026 — `TransactionBehaviour` (`FW-139` `P-10`) recorded as landing with this story - it cannot be inherited, because the framework copies take the concrete context. Earlier: August 15, 2026 — short-lived lookup-table cache assigned to this story (`phase-01b` L97) *(first issue, same day)*
+**Last Updated:** August 27, 2026 — **BUILT** (§6 carries the results), and `P-70` minted: sixteen columns are added by `ALTER TABLE` rather than in the `CREATE TABLE` body, which had cost `FW-141` seven properties on two roots. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
 **Status:** ✅ **BUILT 27 Aug 2026** (§6) — two of the four acceptance criteria were reversed by `D-31` (§2.1); `FW-141` had already landed part of §4 (§7)
 **Owner:** Backend (.NET) stream

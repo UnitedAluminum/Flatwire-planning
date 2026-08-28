@@ -1,7 +1,7 @@
 # FW-164 · `GET /run/active`, `GET /run/{runId}/gaugetrace` and `RunQueryService`
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — first issue
+**Last Updated:** August 15, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
 **Status:** Ready to build — **the Order block is a cross-database read on unmapped columns**
 **Owner:** Backend (.NET) stream

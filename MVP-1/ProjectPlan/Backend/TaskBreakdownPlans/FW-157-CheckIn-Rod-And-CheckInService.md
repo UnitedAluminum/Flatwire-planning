@@ -1,7 +1,7 @@
 # FW-157 · `POST /checkin/rod` and `CheckInService`
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — first issue
+**Last Updated:** August 15, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
 **Status:** ⚠ **Provisional until `G2`/`OI-39` closes** — the recovery design is what the 24–64 h reserve is for
 **Owner:** Backend (.NET) stream

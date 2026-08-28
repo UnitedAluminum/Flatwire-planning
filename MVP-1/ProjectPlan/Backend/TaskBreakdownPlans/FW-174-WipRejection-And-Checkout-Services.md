@@ -1,7 +1,7 @@
 # FW-174 · `POST /wipreject`, `POST /checkout` and their services
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — first issue
+**Last Updated:** August 15, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
 **Status:** Ready to build — **AC 4 is a behaviour change, not a new feature**
 **Owner:** Backend (.NET) stream
