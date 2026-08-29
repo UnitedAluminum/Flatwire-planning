@@ -113,7 +113,13 @@ def load_tasks():
 
 
 def load_phases():
-    """phase key ('1A', '4') -> {'title':..., 'path':...} from the phase files."""
+    """phase key ('1A', '4') -> {'title':..., 'paths':[...]}.
+
+    A phase can own MORE THAN ONE file. Phases 11 and 13 were carved by scope, so each
+    has an MVP-1 document and an MVP-2 one; the re-tree brought both into this folder
+    because MVP is a field, not a path. Keying on the first file found silently hid the
+    other, so every path is kept and the caller links them all.
+    """
     out = {}
     d = os.path.join(ROOT, PHASE_DIR)
     if not os.path.isdir(d):
@@ -121,11 +127,22 @@ def load_phases():
     for fn in sorted(os.listdir(d)):
         if not fn.endswith('.md'):
             continue
-        head = read(PHASE_DIR + '/' + fn).split('\n', 1)[0]
-        m = re.match(r'^#\s*PHASE\s+([0-9]+[A-Ca-c]?)\s*[-—]+\s*(.*)$', head.strip())
-        if m:
-            out[m.group(1).upper()] = {'title': m.group(2).strip(),
-                                       'path': PHASE_DIR + '/' + fn}
+        rel = PHASE_DIR + '/' + fn
+        head = read(rel).split('\n', 1)[0]
+        # "# PHASE 11 — ..." and "# PHASE 11 (MVP-2 part) — ..." are the same phase.
+        # The scope qualifier is a field, not a separate phase, so it is parsed off.
+        m = re.match(r'^#\s*PHASE\s+([0-9]+[A-Ca-c]?)\s*(?:\([^)]*\))?\s*[-—]+\s*(.*)$',
+                     head.strip())
+        if not m:
+            continue
+        key = m.group(1).upper()
+        entry = out.setdefault(key, {'title': m.group(2).strip(), 'paths': []})
+        entry['paths'].append(rel)
+        # Prefer the MVP-1 document's title when a phase owns both.
+        if 'mvp2' not in fn:
+            entry['title'] = m.group(2).strip()
+    for e in out.values():
+        e['path'] = e['paths'][0]
     return out
 
 
