@@ -4057,39 +4057,40 @@ Every row is the sum of its own printed cells, and every column sums as shown. T
 
 ### 7.4 Blockers
 
-Sourced from each phase file's `OQ blockers:` trailer and the gaps register in [`Development/GapsRegister.md`](GapsRegister.md).
+> **⚙ This section is now generated. It lives in [`STATUS.md`](../../../STATUS.md).**
+>
+> Blockers used to be written down in **six** places — a story card's `**Blockers:**` line, a
+> phase file's `**OQ blockers:**` trailer, the three tables that stood here, the gaps register,
+> each task plan's *open items* table, and each `Orchestration.md` blocker calendar. Six copies
+> of one fact drift, and this section is where that was proved: it carried **`G21` as blocking
+> five stories for two weeks after the gap was fixed on 15 Aug 2026**, three of those rows
+> claiming it *"blocks the Phase-4 schema freeze"*.
+>
+> A task now names its blockers **once**, in its own front-matter, as register ids:
+>
+> ```yaml
+> blocked_by: [G2, OI-39]
+> ```
+>
+> and [`tools/build_status.py`](../../../tools/build_status.py) renders two views from that —
+> a cross-phase **⛔ Stopping work right now** table ordered by how many tasks each item blocks,
+> and an **Open items owned by this phase** table inside every phase section. The text and
+> owner of each item are read from the registers themselves —
+> [`GapsRegister.md`](GapsRegister.md) for `G##`, the master specification §11 for `OI-##`,
+> the open-questions register for `Q##` and the PLC tag specification for `PLC-Q##` — so this
+> document never holds a second copy of a gap's wording.
+> [`tools/check_docs.py`](../../../tools/check_docs.py) fails the build when a task cites a
+> register id that does not exist, and flags one that is still cited after the item closed —
+> which is exactly the `G21` failure, caught mechanically instead of two weeks late.
+>
+> **Where the old content went.** Nothing was discarded: every blocker listed here was already
+> a `**Blockers:**` line on the owning story card, and `tools/init_tasks.py` lifted those lines
+> verbatim into the task files on 29 Aug 2026. The two tables that were *not* pure repetition
+> are preserved below, because they record judgements rather than state.
 
-#### 6.1 The ones that stop work
+#### 7.4.1 Decided, but the decision has nowhere to land
 
-| Blocker | Blocks | Why it matters |
-|---|---|---|
-| ⛔ **OQ-22** *(alloy tolerance values owed by client e-mail)* | `FW-004`, `FW-061`, `FW-194`, `FW-199` | `CHK007` cannot fire at **either** station. Nothing is seeded; the Dashboard 2A mock map must not be substituted. **Blocks Phase 4 and Phase 13** |
-| ⚠ **G21** *(bay uniqueness scope across FL1/FL3)* | `FW-159`, `FW-N01`, `FW-158` | **Blocks the Phase-4 schema freeze.** `UX_RodStaging_Bay` does not enforce one-rod-per-bay across the two lines |
-| ⚠ **OQ-10 / OI-45** *(footage→weight dimensional basis)* | `FW-066`, `FW-185`, `FW-100`, `FW-188` | **Critical**, and the most widely depended-on number in the build. Carries the 16–32 h Phase-9 reserve. **Deliberately carries no recommendation — United Aluminum must answer it from its own practice** |
-| ⚠ **G2 / OI-39** *(cross-DB check-in recovery undecided)* | `FW-157`, `FW-082` | Check-in spans `FlatWireDB` + `coils` + `wip_coil_orders` + the PLC and **is not one ACID transaction**. Carries the 24–64 h Phase-4 reserve |
-| ⚠ **G9 / OI-34** *(NFRs do not exist)* | `FW-156`, `FW-080`, `FW-165` | The 16 h hub load test **has no pass criteria**. Any resulting real-time rework is **not** in the 3,292 h |
-| **OQ-3**, **OQ-14** *(traveler fields, no-match path)* | `FW-061`, `FW-161` | Both **Critical**; gate the wizard's final field list |
-| **OQ-17** *(spool state machine)* | `FW-124`, `FW-179` | *"Available for processing"* has no defined meaning without it |
-| ⚠ **`SpoolProcessing.OrderNo` populated from planning?** | `FW-124` | If allocation is not readable by the shopfloor system, **`FR-098` has nothing to resolve and DB5A is invalid** |
-| **`PLC-Q04`, `PLC-Q05`** *(station names, measure segment)* | `FW-N05`, `FW-082`, `FW-200` | `PLC-Q05` risks **all 41 tag paths**. Three `PLC-Q` items are `Critical` |
-| **OI-101** *(shift boundaries undefined)* | `FW-090`, `FW-193` | Blocks every shift-scoped figure in reporting |
-| ⚠ **Exit criterion 6 has no named reviewer** | Phase 1B sign-off | With **no automated backend tests** (`[TS §1.2]`), the QA0 walkthrough is the entire verification of the backend layer. `phase-01b` L124: *"needs a named reviewer and a slot in the 12-day window **or the Phase-1 gate has no 1B criterion at all**."* The checklist is `FW-138` §6.1; **`reviewer: TBD`**. ⚠ **Not a story** — QA hours are phase-level (§7.1), so what is missing is a name and a slot, not effort |
-| ⛔ **`build_development_plan_xlsx.py` drops every multi-stream story** | the client-facing `FlatWire_DevelopmentPlan.xlsx` | **Eleven stories are missing from a client deliverable today** — `FW-202`, `FW-219`, `FW-220`, `FW-223` and the whole `FW-225`–`FW-231` set — and because they never parse, they are **absent from the *"excluded from plan"* line too**. The stream regex cannot read `N h (XX a · YY b)`, and the miss is a silent `continue`. Owned by **`FW-250`**. ⚠ **Do not regenerate and share that workbook until it is fixed** |
-| ⚠ **G35** *(FM2's two dancers are unmodelled)* | `FW-171`, `FW-N05`, `FW-082` | **Blocked on `Q32`**, which decides everything downstream: **scheduled** ⇒ a `PassScheduleComponent` row, a DDL column and a place in the acknowledgement push (**one table added to `[DBD §6.2]`'s baseline**); **machine-side** ⇒ a read subscription and nothing in the schema moves. ⚠ **No hours are derivable until it is answered**, which is why no story is minted. `PSM012` and master spec §3.4 both assert *"tension is derived from speed, never entered manually"* — **false in tension mode** |
-
-> ⚠ **`G21`'s rows in this file are STALE and are a correction owed, not a live blocker.** The gap was
-> **fixed on 15 Aug 2026** — the re-keyed filtered index `UX_RodStaging_Bay ([Station],[PayoffPosition])
-> `WHERE [Status]='Staged'` is verified on a live deploy, and an FL3 rod at `FL1PO` position 1 is
-> rejected. **Five sites still carry it as blocking**: the row above, and the `Blockers:` lines of
-> `FW-007`, `FW-159`, `FW-176` and `FW-N01` — three of them saying it *"blocks the Phase-4 schema
-> freeze"*. `CLAUDE.md` carries it too. Recorded rather than swept here because the correction spans
-> five cards and a repository guide (`Database/tasks/Orchestration.md` §8.1 finding 1).
-> ⚠ **One residual is genuine and must not be lost in the correction:** the *domain* rule must reject a
-> second rod **with the DB index absent**, which no deployed environment can show — so the index is the
-> demonstrated defence and the aggregate rule the designed one. **Do not cite `G21` as proof of
-> defence-in-depth.**
-
-#### 6.2 Decided, but the decision has nowhere to land
+Kept by hand: these are **design gaps**, not task state, so no generator can derive them.
 
 | Gap | Story | State |
 |---|---|---|
@@ -4099,16 +4100,13 @@ Sourced from each phase file's `OQ blockers:` trailer and the gaps register in [
 | **G24** | `FW-176`, `FW-072` | Approval columns now exist; the **PIN validation source** is still `OI-38` |
 | **G26** | `FW-N01` → `FW-166` | The weld write straddles Phase 4's screen and Phase 6's endpoint. Phase 4 **ships against a stub** |
 
-#### 6.3 Gaps this rewrite closes
+#### 7.4.2 Gaps this backlog closes
 
 | Gap | How |
 |---|---|
-| **G4** *(story→phase coverage not provable)* | Every story here names its phase and sprint; [§4.1](#41-by-phase) proves the count |
-| **G1** *(no capacity/effort model)* | Resolved by `CapacityAndEffortModel.md`; this document now **consumes** it per story rather than restating a separate estimate |
-| **Phase 1 backlog gap** *(1,027 h against ~28 points)* | **33 stories now cover S0**, including `FW-N03` (Angular scaffold), `FW-N04` (.NET solution + 13 controllers) and `FW-N05` (OPC ingest + hosted service) — the three the capacity model named as having no story anywhere |
-
----
-
+| **G4** *(story→phase coverage not provable)* | Every story names its phase, and [`tools/check_docs.py`](../../../tools/check_docs.py) rule 5 now **fails the build** if a task names a phase with no phase file, or if a task file is missing from `STATUS.md` |
+| **G1** *(no capacity/effort model)* | Resolved by [`CapacityAndEffortModel.md`](CapacityAndEffortModel.md); this document **consumes** it per story rather than restating a separate estimate |
+| **Phase 1 backlog gap** *(1,027 h against ~28 points)* | **33 stories now cover S0**, including `FW-N03` (Angular scaffold), `FW-N04` (.NET solution + 13 controllers) and `FW-N05` (OPC ingest + host) |
 
 ### 7.5 Out of shopfloor scope — 14 upstream stories, and the ~~definition-of-done note on FW-001~~ **cancellation of FW-001**
 
