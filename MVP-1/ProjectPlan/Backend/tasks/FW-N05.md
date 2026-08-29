@@ -1,3 +1,25 @@
+---
+id: FW-N05
+legacy_id:
+title: OPC ingest hosted service and bounded channel
+status: not-started
+status_confirmed: false
+status_note: "⚠ **Deferred for the trial, not cancelled** — `FW-203` stands in until commissioning"
+owner:
+jira:
+mvp: 1
+phase: "1B"
+stream: RT
+streams: [RT]
+priority: critical
+hours: 32
+sprint: S0
+depends_on: [FW-144, FW-080]
+blocked_by: [G29, G32, G33, PLC-Q05]
+has_plan: true
+started:
+completed:
+---
 # FW-N05 · OPC ingest hosted service and bounded channel
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module

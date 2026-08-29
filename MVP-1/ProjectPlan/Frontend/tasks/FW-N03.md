@@ -1,3 +1,25 @@
+---
+id: FW-N03
+legacy_id:
+title: Angular library scaffold, routing and configuration
+status: done
+status_confirmed: false
+status_note: "✅ **BUILT 28 Aug 2026 — wave 0 is complete.** `projects/flat-wire/` exists, builds, lints and tests at 100 %; all eleven integration points verified. **§6 is the execution record.** ⚠ One acceptance criterion is proved by compilation rather than in a browser, because the host app cannot be built in this checkout — `flexmonster` is missing (§6.4)"
+owner:
+jira:
+mvp: 1
+phase: "1A"
+stream: FE
+streams: [FE]
+priority: critical
+hours: 24
+sprint: S0
+depends_on: []
+blocked_by: []
+has_plan: true
+started:
+completed:
+---
 # FW-N03 · `flat-wire` Angular library scaffold, routing and configuration
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module

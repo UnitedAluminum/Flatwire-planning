@@ -1,3 +1,25 @@
+---
+id: FW-N06
+legacy_id:
+title: Alert rules engine and the AlertRaised/AlertCleared lifecycle
+status: not-started
+status_confirmed: false
+status_note: "⚠ **Four of five rules buildable; rule 5 cannot be evaluated until Phase 4.** `OI-28` open"
+owner:
+jira:
+mvp: 1
+phase: "3"
+stream: RT
+streams: [RT]
+priority: high
+hours: 40
+sprint: S1
+depends_on: [FW-149, FW-150]
+blocked_by: [OI-28]
+has_plan: true
+started:
+completed:
+---
 # FW-N06 · Alert rules engine and the `AlertRaised`/`AlertCleared` lifecycle
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module

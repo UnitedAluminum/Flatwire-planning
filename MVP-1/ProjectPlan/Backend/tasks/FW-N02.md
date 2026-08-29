@@ -1,3 +1,25 @@
+---
+id: FW-N02
+legacy_id:
+title: Spool completion weight milestones and machine-stop confirmation
+status: blocked
+status_confirmed: false
+status_note: "⚠ **Part A only.** Part B moved to [`FW-202`](FW-202.md) — ⛔ **the card's ACs still describe both**"
+owner:
+jira:
+mvp: 1
+phase: "8"
+stream: RT
+streams: [RT]
+priority: medium
+hours: 8
+sprint: S3
+depends_on: [FW-150]
+blocked_by: [OQ-18, OQ-79]
+has_plan: true
+started:
+completed:
+---
 # FW-N02 · Spool completion weight milestones and machine-stop confirmation
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module

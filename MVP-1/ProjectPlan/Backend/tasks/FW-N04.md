@@ -1,3 +1,25 @@
+---
+id: FW-N04
+legacy_id:
+title: FlatWire solution and four-project Clean Architecture skeleton
+status: done
+status_confirmed: false
+status_note: "**Built and verified 25 Aug 2026** — `ual-api` branch `feature/flat-wire`, 46 files under `API/Domain/FlatWire/`. All four acceptance criteria pass (§6)"
+owner:
+jira:
+mvp: 1
+phase: "1B"
+stream: BE
+streams: [BE]
+priority: critical
+hours: 16
+sprint: S0
+depends_on: []
+blocked_by: []
+has_plan: true
+started:
+completed:
+---
 # FW-N04 · `FlatWire` solution and four-project Clean Architecture skeleton
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
