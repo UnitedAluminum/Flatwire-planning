@@ -189,7 +189,12 @@ def header_tables(f):
     s = read(os.path.join(SQL_DIR, f))
     cut = s.find('USE [')
     head = s[:cut] if cut > 0 else s[:2000]
-    m = re.search(r'--\s*Tables\s*:\s*(.*?)(?:\n--\s*(?:Dependencies|Note|=)|\n\n)', head, re.S)
+    # Two labels are in use and both are declarations: most scripts head the list
+    # `-- Tables   :`, while 02_Schedule (issued for client review) heads it
+    # `-- Creates  :`. Accepting only one reported a missing block on a file that
+    # has one - a checker defect, not a script defect.
+    m = re.search(r'--\s*(?:Tables|Creates)\s*:\s*(.*?)'
+                  r'(?:\n--\s*(?:Dependencies|Note|File encoding|=)|\n\n)', head, re.S)
     if not m:
         return None
     return set(re.findall(r'\w+', m.group(1))) - HEADER_NOISE
@@ -569,7 +574,7 @@ def main():
             continue
         named = header_tables(f)
         if named is None:
-            fail.append('C2: %s creates tables but has no "Tables :" header block' % f)
+            fail.append('C2: %s creates tables but has no "Tables :" / "Creates :" header block' % f)
             continue
         missing = [t for t in RE_TABLE.findall(read(os.path.join(SQL_DIR, f)))
                    if t not in named]
