@@ -1,12 +1,12 @@
 # FW-157 · `POST /checkin/rod` and `CheckInService`
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Last Updated:** August 29, 2026 — ⚠ **Re-reviewed against the BUILT code: this is a DE-STUB.** The controller, the contracts, `FlatWireRun.AcknowledgePassSchedule`, `RodStaging.ConsumeAtCheckIn` and the seven error codes all exist; the service body does not. ⛔ **Three corrections:** the built PLC call takes the values **from this caller** (`P-112`), `RunStarted` **must be raised here** (`P-141`) or `FW-239`'s cache invalidation stays inert, and `CheckInService.cs`'s `CheckInSpoolAsync` throw **mis-attributes itself to `FW-157`** — it is `FW-179`'s. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
-**Status:** ⚠ **Provisional until `G2`/`OI-39` closes** — the recovery design is what the 24–64 h reserve is for
+**Status:** ⚠ **A de-stub, and still provisional until `G2`/`OI-39` closes** — the recovery design is what the 24–64 h reserve is for
 **Owner:** Backend (.NET) stream
 **Audience:** The .NET developer building `FW-157`
-**Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
+**Shortcode:** — *(implementation plan, derived from the specifications and the built code; **not citable as a requirement**)*
 **Part of:** `ProjectPlan/Backend/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md)
 
 ---
@@ -56,9 +56,32 @@ From `[TB §7]` — verbatim:
 |---|---|
 | The PLC push itself | [`FW-082`](FW-082-PLC-Tag-Push-On-Acknowledgement.md) — *this story calls it* |
 | `PLCTagService` | [`FW-151`](FW-151-PLCTagService.md) |
-| The staging endpoints | `FW-158` — **deferred with DB2A** |
+| The staging endpoints | [`FW-158`](FW-158-PayoffStaging-Commands-And-Queries.md) — ✅ **all four routes exist**; still **deferred with DB2A** in the trial |
 | The DB2 wizard | `FW-061`, FE |
-| `RodCheckin` / `INFLAT` write *(`FlatWireDB`-local since `D-32`)* | `FW-159`, DB |
+| `RodCheckin` / `INFLAT` write *(`FlatWireDB`-local since `D-32`)* | [`FW-159`](../../Database/TaskBreakdownPlans/FW-159-RodStaging-And-Check-In-Write-Path.md), DB — ✅ **schema built** |
+
+### 1.2 What already exists
+
+Read off the built code on 29 Aug 2026. **This story is a de-stub, not a build.**
+
+| Thing | Where | State |
+|---|---|---|
+| `CheckInController` — endpoint **15** | `FlatWire.API/Controllers/CheckIn/` | ✅ Built (`FW-138`) |
+| `CheckInRodRequest` / `CheckInRodResponse` | `FlatWire.Domain/Models/CheckIn/` | ✅ Built — every field the card names, plus `AcknowledgedCarryForward` |
+| `ICheckInService` + `StubCheckInService` + named-throw shell | `FlatWire.Domain/Services/`, `…/Infrastructure/Services/` | ✅ Built (`FW-140`, `P-64`) |
+| **`FlatWireRun.AcknowledgePassSchedule(PassScheduleSnapshot, ScheduleStatus)`** | `FlatWire.Domain/AggregatesModel/FlatWireRun.cs:280` | ✅ Built (`FW-207`) — §2.4's snapshot is a value object, not a plan |
+| `ScheduleMustBeActiveRule` · `FinalStandMustBeActiveRule` · `Fl3RequiresHybridRouteRule` · `Fm1ScopedToRodFedLinesRule` | `FlatWire.Domain/Rules/PassScheduleRules.cs` | ✅ Built — the `422` state rules of build step 2 |
+| **`RodStaging.ConsumeAtCheckIn(rodCheckinId, checkedInAt, checkedInBy)`** | `…/AggregatesModel/RodStaging.cs:297` | ✅ Built — AC 5's consumption, raising `BayStateChanged` |
+| All seven error codes of §3 | `FlatWire.Domain/Constants/` | ✅ Built — `SCHEDULE_NOT_ACTIVE`, `RUN_ALREADY_ACTIVE`, `PAYOFF_MISMATCH`, `ROD_UNAVAILABLE`, `CARRY_FORWARD_REQUIRED`, `PLC_PUSH_FAILED`, `SCHEDULE_NO_MATCH` |
+| `UX_FlatWireRun_ActiveLine` | `04_Runs` | ✅ Built ([`FW-222`](../../Database/TaskBreakdownPlans/FW-222-Single-Active-Run-Index.md)) — **`RUN_ALREADY_ACTIVE` is enforced by the database**, so the service check is a friendly `409`, not the guarantee |
+| `IPLCTagService.PushPassScheduleAsync` | `FlatWire.Domain/Services/IPLCTagService.cs` | ✅ Built ([`FW-151`](FW-151-PLCTagService.md)) — ⛔ **takes the values from this caller** (§2.1) |
+| **`RunStarted` domain event** | — | ⛔ **Does not exist.** [`FW-239`](FW-239-Run-Lifecycle-Cache-Invalidation.md) declares it; **this story raises it** (`P-141`) |
+| **The service body** | — | ⛔ **Absent.** This is the deliverable |
+
+⛔ **`CheckInService.cs`'s `CheckInSpoolAsync` throw says *"it is `FW-157`'s"*. It is
+[`FW-179`](FW-179-CheckIn-Spool-And-Spools-Query.md)'s** — the same mis-attribution class as
+`LineStatusService.cs:13`. **Correct the comment when you de-stub the file; do not implement the
+spool path here.**
 
 ---
 
@@ -78,6 +101,20 @@ From `[TB §7]` — verbatim:
 **The audit entry precedes the push** so a failed push leaves an **incomplete-push marker**
 ([`FW-151 §2.2`](FW-151-PLCTagService.md)). Reversing 4 and 5 loses the only evidence that a
 configuration was attempted.
+
+⛔ **Step 5's built signature is not the card's, and the difference is load-bearing.** The
+service exposes `PushPassScheduleAsync(PassSchedulePushRequest, ct)` where the request is
+`Context(LineId, OperatorId, RunAlpha)` + `ScheduleId` + `PayoffPosition` + **`IReadOnlyList<PlcTagValue> Values`**.
+`PushPassSchedule` **cannot read a schedule** — MVP-1 authors none and has no
+`PassScheduleRepository` (`P-112`, `P-13`) — so `scheduleId` is **audit identity** and
+[`FW-082`](FW-082-PLC-Tag-Push-On-Acknowledgement.md) resolves `[PLC §7.2]`'s six groups into the
+`Values` list. The operator and run context are **required** by the audit record (`P-106`), so
+neither is optional here.
+
+⚠ **Step 3 must also raise `RunStarted`.** [`FW-239`](FW-239-Run-Lifecycle-Cache-Invalidation.md)
+declares the event and handles it; **nothing raises it today**, so `FW-150`'s per-run cache is
+never invalidated at check-in and its handler ships correctly wired and inert (`P-141`).
+`RunEnded` is `FW-219`'s.
 
 ### 2.2 Compensating writes — and the banned word
 
@@ -103,6 +140,14 @@ accordingly.
 
 **Build the staged-row path for MVP-1; expect it dark in the trial.** Do not delete it, and
 do not let its absence turn into an assumption that check-in never has a predecessor row.
+
+⚠ **`G21` resolved 15 Aug 2026 and it changes the match key.** The bay is the physical
+**`Station`** (`FL1PO`, **shared by FL1 and FL3**), not `(LineId, PayoffPosition)` — so resolve
+the staged row by station and position, and consume it through the built
+`RodStaging.ConsumeAtCheckIn`, which raises `BayStateChanged`. ⚠ That event is also the eviction
+trigger [`FW-239`](FW-239-Run-Lifecycle-Cache-Invalidation.md) needs for `FW-150`'s
+`stagedWeights` cache (**`G62`**) — consuming a staged row without raising it leaves
+`PercentRemaining` computed against the previous rod.
 
 ### 2.4 The snapshot rule survives `D-31`
 
@@ -134,14 +179,20 @@ is `PassScheduleSnapshot` ([`FW-207 §3`](FW-207-Domain-Model.md)).
 
 ## 4. Build order
 
-1. `CheckInRodCommand` / `CheckInRodResponse` in `FlatWire.Application/Commands/CheckIn/`,
-   handler nested ([`FW-139 §2.2`](FW-139-MediatR-Registration-And-Pipeline-Behaviours.md)).
+1. `CheckInRodCommand` handler in `FlatWire.Application/Commands/CheckIn/`, nested
+   ([`FW-139 §2.2`](FW-139-MediatR-Registration-And-Pipeline-Behaviours.md)). ⚠ **The request and
+   response types already exist** in `FlatWire.Domain/Models/CheckIn/` and the controller already
+   forwards to `ICheckInService` (`P-65`) — **do not re-declare either**; the dependency moves to
+   the handler and the interface does not change.
 2. **Shape validation** in FluentValidation → `400`
    ([`FW-147`](FW-147-FluentValidation-Value-Objects-And-Enums.md)); **state rules in the
-   aggregate** → `422` ([`FW-207`](FW-207-Domain-Model.md)). The split is the point.
-3. `CheckInService` orchestrating §2.1's five steps in order.
+   aggregate** → `422` ([`FW-207`](FW-207-Domain-Model.md)). The split is the point, and the four
+   pass-schedule rules are **already written** (§1.2).
+3. `CheckInService` orchestrating §2.1's five steps in order, raising `RunStarted` with the run
+   record.
 4. Persist `PassScheduleSnapshot` (§2.4).
-5. Call [`FW-082`](FW-082-PLC-Tag-Push-On-Acknowledgement.md)'s push **last**.
+5. Call [`FW-082`](FW-082-PLC-Tag-Push-On-Acknowledgement.md)'s push **last**, supplying the
+   `Values` list and the `PlcWriteContext` (§2.1).
 6. Compensation path + the saga-boundary comment — the boundary itself is documented in
    `PLCTagService` ([`FW-151`](FW-151-PLCTagService.md) AC 4).
 7. Staged-row consumption (§2.3), behind MVP-1 scope.
@@ -151,7 +202,9 @@ is `PassScheduleSnapshot` ([`FW-207 §3`](FW-207-Domain-Model.md)).
 
 ## 5. Decisions this plan makes
 
-> `P-##` is continuous across this folder; `P-01`–`P-39` precede this story.
+> `P-##` is continuous across the repository; `P-01`–`P-39` preceded `P-40` when it was minted on
+> 15 Aug 2026, and `P-253` is the high-water mark today. **`P-40` still stands** — the 29 Aug
+> re-review against the built code changed its inputs, not its conclusion.
 
 ### `P-40` — build the ordered path now; leave the recovery *strategy* behind `G2`
 
@@ -178,10 +231,13 @@ acceptance run.
 
 | Check | Expected |
 |---|---|
+| **De-stub only** | The controller, contracts and error codes are not re-created; `git diff` adds a handler and a service body, and **removes the `NotImplementedException`** |
 | **Ordering** | Force a PLC failure → **all four records exist**, the audit entry marks the push incomplete, and the run is **not** left plainly `Running` |
 | `grep -ri rollback` | **Zero hits** in this service |
-| Draft schedule | `PS-1100-FL1-003` → `422` `SCHEDULE_NOT_ACTIVE` |
-| Second run on a line | `409` `RUN_ALREADY_ACTIVE` |
+| Draft schedule | `PS-1100-FL1-003` → `422` `SCHEDULE_NOT_ACTIVE` — the fixture is in `Constants` |
+| Second run on a line | `409` `RUN_ALREADY_ACTIVE` — and **the index refuses it even if the service check is bypassed** |
+| **`RunStarted` raised** | `FW-239`'s handler fires at check-in; `FW-150`'s per-run cache is invalidated (`P-141`) |
+| **Attribution** | `CheckInService.cs`'s spool throw no longer claims to be `FW-157`'s (§1.2) |
 | Snapshot | Schedule id, version and effective configuration persisted — and still readable after the source schedule is edited |
 | Payoff mismatch | `409` — **MVP-1 only** (§2.3) |
 | Audit | Tag, value, operator, result on every write |
@@ -207,3 +263,6 @@ with DB2A.
 | **`OI-33`** | `planning_routings` columns unmapped, and this command reads them |
 | **`G17`** | Cross-DB logical FKs, unenforced by design |
 | **`FR-077`** | Check-in **writes** `actual_start_date` back to `planning_routings` **and** `routings` — a cross-database write, not just a read |
+| **`G58`** ⚠ *(new here, 29 Aug 2026)* | **`OPCConnection` reports no write failure** — `200` regardless of outcome. So step 5 cannot detect a failed push from the transport; it detects it from `FW-151`'s confirm read. Owned by `FW-236`, due **before the Phase-4 push is built** |
+| **`G62`** | `FW-150`'s `stagedWeights` has no eviction path; the staged-row consumption is one of its triggers (§2.3) |
+| **`P-141`** | `RunStarted` is declared by `FW-239` and **raised here** — its handler is inert until this story ships |

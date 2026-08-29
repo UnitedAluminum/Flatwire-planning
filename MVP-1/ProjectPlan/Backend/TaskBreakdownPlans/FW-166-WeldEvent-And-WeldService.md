@@ -1,0 +1,228 @@
+# FW-166 · `POST /weldevent` and `WeldService`
+
+**Project:** United Aluminum (UAL) — Flat Wire Mill Module
+**Last Updated:** August 29, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Document Type:** Implementation plan for a single backlog story
+**Status:** ⚠ **A de-stub.** The controller and service interface exist; ⛔ `G26` and `OI-59`/`Q6` are open
+**Owner:** Backend (.NET) stream
+**Audience:** The developer building `FW-166`
+**Shortcode:** — *(implementation plan, derived from the specifications and the built code; **not citable as a requirement**)*
+**Part of:** `ProjectPlan/Backend/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md)
+
+---
+
+> **Why this document exists.** Twelve hours, and **four details decide whether it is right.**
+>
+> **⛔ The `RodStaging` write is conditional on quality, and the Fail path is the one to get
+> right.** A **Pass** sets `IsWelded`/`WeldedAt`/`WeldedBy` in the same transaction; a **Fail**
+> writes the `WeldEvent` row and **leaves the rod staged and un-welded**, so the operator can
+> remake the weld.
+> **⛔ There is no uniqueness constraint on the rod pair, and none should exist** — a
+> fail-then-remake legitimately writes several rows. **Do not add one.**
+> **Quality is not mirrored onto `RodStaging`** — one join, one quality answer.
+> **This is the single weld write.** `POST /staging/rod/mark-welded` was retired 1 Aug 2026 —
+> ⚠ **and `FW-158`'s card still asks for `MarkStagedRodWeldedCommand`** (`P-185`), which is a
+> contradiction this story has to resolve rather than inherit.
+
+---
+
+## 1. The story
+
+From `[TB §7]` — verbatim:
+
+> ###### FW-166 · `POST /weldevent` and `WeldService`
+> **Hours:** 12 h BE · **Priority:** High · **Sprint:** S2 · **Phase:** 6 · **Stream:** BE
+>
+> **As a** developer,
+> **I want** one endpoint that writes every weld,
+> **So that** both weld entry points compose the same row.
+>
+> **Acceptance Criteria:**
+> - [ ] `WeldEventController POST /weldevent`; `RecordWeldEvent` handler; `WeldService` advances the active-rod pointer and clears weld-pending
+> - [ ] **This is the single weld write** — `POST /staging/rod/mark-welded` was retired 1 Aug 2026
+> - [ ] **The `RodStaging` write is conditional on quality:** a **Pass** sets `IsWelded` / `WeldedAt` / `WeldedBy` in the same transaction; a **Fail** writes the `WeldEvent` row and **leaves the rod staged and un-welded** so the operator remakes the weld
+> - [ ] **Broadcast `PayoffStateChanged` on Pass only**
+> - [ ] Quality is **not** mirrored onto `RodStaging` — one join, one quality answer
+> - [ ] **No uniqueness constraint on the rod pair, and none should exist** — a fail-then-remake legitimately writes several rows
+> - [ ] `GET /run/{runId}/weldevents` returns every weld against the active run
+>
+> **Rate-card basis:** command endpoint 6 h + `WeldService` 6 h = 12 h (§2)
+> **Dependencies:** FW-139, FW-171
+> **Blockers:** **G26** · **OI-59 / Q6** *(footage attribution across the two boundaries)*
+
+### 1.1 Out of scope
+
+| Concern | Story |
+|---|---|
+| The `WeldEvent` table | [`FW-171`](../../Database/TaskBreakdownPlans/FW-171-Five-In-Run-Event-Tables.md) — ✅ built |
+| The `PayoffStateChanged` broadcast itself | `FW-160` — ⚠ **this story supplies the Pass-only trigger** |
+| The staging commands | [`FW-158`](FW-158-PayoffStaging-Commands-And-Queries.md) — ⚠ **and `P-185`'s contradiction** |
+| The weld marker on the trace | [`FW-172`](FW-172-Run-Event-Markers.md) |
+| Weld traceability in yield | `FW-101`, Phase 12 — **outside this planning pass** |
+| The DB2A *Mark as welded* dialog | `WeldEvent.md` — DB4 was retired 1 Aug 2026 |
+
+### 1.2 What already exists
+
+Read off the built code on 29 Aug 2026.
+
+| Thing | Where | State |
+|---|---|---|
+| `WeldEventController` | `FlatWire.API/Controllers/WeldEvent/` | ✅ **Built** |
+| `IWeldEventService` + `StubWeldEventService` + named-throw shell | `FlatWire.Domain/Services/`, `FlatWire.Infrastructure/Services/` | ✅ Built (`FW-140`, `P-64`) |
+| `WeldEvent` aggregate | `FlatWire.Domain/AggregatesModel/WeldEvent.cs` | ✅ Built (`FW-207`) — one of the seven roots |
+| `WeldEvent` table | `04_Runs.sql` | ✅ Built (`FW-171`) — ⛔ **no `ROWVERSION`** (`D-30`, [`FW-243`](FW-243-D30-Rowversion.md)) |
+| **`WeldRecorded` domain event** | `FlatWire.Domain/Events/RunEvents.cs:103` | ✅ Built — ⚠ **`FW-208` had to ADD `LineId` to it** (`P-139`), because without it the weld was **unbroadcastable** |
+| `WeldRecordedBroadcastHandler` | `FlatWire.Infrastructure/EventHandlers/` | ✅ **Built by `FW-208` step 8** |
+| `WeldMarkHandler` | same folder | ✅ Built — the **in-transaction** lane |
+| `WLD010` | verified by `FW-208`'s harness | ✅ Built |
+| **The handler and service body** | — | ⛔ **Absent.** This is the deliverable |
+
+⚠ **Two handlers already exist for this event** — an in-transaction one and a post-commit
+broadcast one (`P-98`'s split pattern). **Read both before adding anything.**
+
+---
+
+## 2. The four details
+
+### 2.1 ⛔ The Fail path is the story
+
+A **Pass** and a **Fail** both write a `WeldEvent` row. They differ in what else happens:
+
+| | `RodStaging` | Broadcast |
+|---|---|---|
+| **Pass** | `IsWelded`, `WeldedAt`, `WeldedBy` set **in the same transaction** | `PayoffStateChanged` |
+| **Fail** | ⛔ **Untouched** — the rod stays `Staged` and un-welded | ⛔ **Nothing** |
+
+The reason is operational: **the operator remakes the weld.** A Fail that flipped `IsWelded`
+would leave a rod marked welded with a bad weld, and a Fail that suppressed the `WeldEvent` row
+would lose the evidence that a weld was attempted.
+
+⚠ **`FW-160` AC 2 states the broadcast half independently** — *"a failed weld changes no bay
+state and broadcasts nothing"* — so **two stories assert the same rule** and they must not
+drift.
+
+### 2.2 ⛔ No uniqueness on the rod pair — and the temptation is real
+
+*"A fail-then-remake legitimately writes several rows."* So `(rodA, rodB)` is **not** unique, and
+neither is any narrower key over the pair.
+
+⛔ **This is the opposite of every other constraint in this phase.** `UX_RodStaging_Bay`,
+`UX_FlatWireRun_ActiveLine` and `UX_RodOrderConsumption_Station` all exist precisely to make a
+duplicate impossible — so a developer working through Phase 4/6 has just been trained to add
+one here. **The card says none should exist**, and the plan says why: **multiple attempts are
+the expected case, not the anomaly.**
+
+⚠ **The *latest* weld for a pair is a query, not a constraint.**
+
+### 2.3 Quality lives in one place
+
+*"Quality is **not** mirrored onto `RodStaging` — one join, one quality answer."*
+
+`RodStaging.IsWelded` records **that a weld succeeded**, not **how it scored**. The quality
+result stays on `WeldEvent`.
+
+⚠ **The mirror is tempting because `IsWelded` is already there** and a `WeldQuality` column
+beside it would save a join on DB2A. ⛔ **It would also create two answers that can disagree**,
+and `P-184` already records that `IsWelded` is a **flag on a `Staged` row**, not a status — so
+the row's meaning is already subtle enough.
+
+### 2.4 The `FW-158` contradiction has to be resolved, not inherited
+
+AC 2 says this is **the single weld write** and that `POST /staging/rod/mark-welded` was retired
+1 Aug 2026. ⚠ **But `FW-158`'s AC 2 still requires `MarkStagedRodWeldedCommand`** while its own
+AC 7 retires the endpoint — recorded as `P-185`.
+
+**The resolution belongs here**, because this is the surviving write path:
+
+- If the staging-side command survives, it is **invoked from this handler**, not from a route.
+- If it does not, `FW-158`'s AC 2 is struck.
+
+⛔ **Building both would produce two weld write paths**, which is exactly what AC 2 forbids.
+
+---
+
+## 3. Build order
+
+1. ⛔ **Resolve `P-185`** with [`FW-158`](FW-158-PayoffStaging-Commands-And-Queries.md) (§2.4)
+   before writing the handler.
+2. ⛔ **Read the two existing handlers** — `WeldMarkHandler` (in-transaction) and
+   `WeldRecordedBroadcastHandler` (post-commit). Much of the eventing is done.
+3. `RecordWeldEvent` handler on the built `WeldEventController`.
+4. `WeldService`: advance the **active-rod pointer**, clear **weld-pending**.
+5. **The conditional `RodStaging` write** (§2.1) — Pass in the **same transaction**; Fail
+   untouched.
+6. **Raise `WeldRecorded` on Pass only**, so `FW-160`'s broadcast follows (§2.1).
+   ⚠ **`WeldRecorded` carries `LineId`** because `IFlatWireBroadcaster.Line(LineId)` is the only
+   way to address a group (`P-139`) — populate it.
+7. ⛔ **Add no uniqueness constraint** (§2.2).
+8. `GET /run/{runId}/weldevents` — every weld against the active run, **including failures**.
+9. ⚠ **Footage attribution across the two boundaries is `OI-59`/`Q6` and is open** — record what
+   the implementation assumes rather than deciding it silently.
+
+---
+
+## 4. Decisions this plan makes
+
+> `P-##` is continuous across the repository; `P-01`–`P-208` precede this story.
+
+### `P-209` — the weld's quality never leaves `WeldEvent`
+
+§2.3. Two answers that can disagree is worse than a join, and `RodStaging`'s row meaning is
+already subtle (`P-184`).
+
+**Fallback:** if DB2A genuinely needs quality without a join, expose it on the **query DTO**, not
+as a column.
+
+### `P-210` — `WeldRecorded` is raised on Pass only, and the Fail path raises nothing
+
+§2.1. The alternative — always raise, and let the handler decide — puts the Pass/Fail rule in a
+broadcast handler where `FW-160` would also have to know it. **Two places, one rule, guaranteed
+drift.**
+
+⚠ **`FW-160` AC 2 must then be read as a consequence, not a second implementation.**
+
+### `P-211` — the multiple-attempt case is the expected case, and the constraint is deliberately absent
+
+§2.2. Recorded because Phase 4/6 is otherwise full of filtered unique indexes, and the absence
+here looks like an oversight rather than a decision.
+
+---
+
+## 5. Verification
+
+**No automated tests** — `[TS §1.2]`. Verified in the QA0 walkthrough.
+
+| Check | Expected |
+|---|---|
+| **De-stub only** | The controller is not re-created; `git diff` adds a handler and a service body |
+| **Pass** | `WeldEvent` written **and** `RodStaging.IsWelded`/`WeldedAt`/`WeldedBy` set — **one transaction** |
+| **⛔ Fail** | `WeldEvent` written; `RodStaging` **untouched**; the rod is still `Staged` and un-welded |
+| **Broadcast on Pass only** | A Fail broadcasts **nothing** (`P-210`) |
+| **Remake** | Fail then Pass on the same pair: **both rows persist**, and no constraint rejects the second (`P-211`) |
+| **No mirror** | ⛔ No quality column on `RodStaging`; `grep` confirms (`P-209`) |
+| Query | `GET /run/{runId}/weldevents` returns **failures as well as passes** |
+| `LineId` populated | `WeldRecorded.LineId` is set — without it the weld is unbroadcastable (`P-139`) |
+| **One write path** | ⛔ No second weld write exists; `P-185` resolved (§2.4) |
+| Concurrency | ⚠ `WeldEvent` has **no `ROWVERSION`** — [`FW-243`](FW-243-D30-Rowversion.md)'s `D-30` |
+
+---
+
+## 6. Handoff
+
+[`FW-172`](FW-172-Run-Event-Markers.md) puts the weld marker on the trace. `FW-160` broadcasts
+`PayoffStateChanged` from the Pass. [`FW-158`](FW-158-PayoffStaging-Commands-And-Queries.md)
+must have `P-185` resolved against this story. `FW-101` (Phase 12, **outside this pass**)
+attributes weld traceability in yield and depends on `OI-59`/`Q6`'s footage answer.
+
+---
+
+## 7. Open items
+
+| Item | Effect here |
+|---|---|
+| ⛔ **`G26`** | Listed blocker on the card |
+| ⛔ **`OI-59` / `Q6`** | **Footage attribution across the two boundaries** — record the assumption, do not decide it silently |
+| ⛔ **`P-185`** | `FW-158`'s card requires `MarkStagedRodWeldedCommand` while retiring its endpoint. **Resolve here** |
+| **`D-30`** | `WeldEvent` is one of the three roots with no `ROWVERSION` |
+| **`P-139`** | `WeldRecorded` gained `LineId` because the weld was otherwise unbroadcastable |
+| **`G42`** | Multi-rod spool genealogy rests on the weld chain — ✅ its invariant is built |

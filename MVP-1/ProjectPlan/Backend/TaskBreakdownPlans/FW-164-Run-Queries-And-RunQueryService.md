@@ -1,12 +1,12 @@
 # FW-164 · `GET /run/active`, `GET /run/{runId}/gaugetrace` and `RunQueryService`
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Last Updated:** August 29, 2026 — ⚠ **Re-reviewed against the BUILT code: this is a DE-STUB.** ⛔ **The finding that changes the story: the Order Information block is in NEITHER `[API §4.7a]` NOR the built `ActiveRunResponse`.** §2.1 said the contract *"specifies the combined shape"* — it does not; the `200` shape stops at `orderId` and `alloy`, so **AC 3 needs a contract addition before it can be served** (`P-254`). ✅ `RouteMode` **is** on the DTO already (`FW-181` `P-49`), the empty response is a contracted **`204`**, and `sp_GetGaugeTrace` is built. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
-**Status:** Ready to build — **the Order block is a cross-database read on unmapped columns**
+**Status:** ⚠ **A de-stub — and AC 3's order block is uncontracted as well as unmapped**
 **Owner:** Backend (.NET) stream
 **Audience:** The .NET developer building `FW-164`
-**Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
+**Shortcode:** — *(implementation plan, derived from the specifications and the built code; **not citable as a requirement**)*
 **Part of:** `ProjectPlan/Backend/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md)
 
 ---
@@ -52,10 +52,27 @@ From `[TB §7]` — verbatim:
 
 | Concern | Story |
 |---|---|
-| `sp_GetGaugeTrace` itself | `FW-165`, DB |
-| The DB3 screen | `FW-062`, `FW-163`, FE |
+| `sp_GetGaugeTrace` itself | [`FW-165`](../../Database/TaskBreakdownPlans/FW-165-sp-GetGaugeTrace.md), DB — ✅ **built** |
+| The DB3 screen | [`FW-081`](FW-081-Gauge-Trace-Live-Streaming.md), `FW-062`, `FW-163`, FE |
 | Live telemetry | [`FW-150`](FW-150-Broadcast-Loop.md) — **this is the historical/REST half** |
-| Weld **writes** | `FW-166` — deferred with DB2A |
+| Weld **writes** | [`FW-166`](FW-166-WeldEvent-And-WeldService.md) — deferred with DB2A |
+| `GET /run/{runId}/weldevents` | [`FW-166`](FW-166-WeldEvent-And-WeldService.md) — ⚠ **it is a third method on the same `IRunService`**; do not de-stub it here |
+
+### 1.2 What already exists
+
+Read off the built code on 29 Aug 2026. **This story is a de-stub, not a build.**
+
+| Thing | State |
+|---|---|
+| `RunController` endpoints **17** / **18** | ✅ Built (`FW-138`) |
+| `IRunService` + `StubRunService` + named-throw shell | ✅ Built (`FW-140`, `P-64`) |
+| `ActiveRunResponse` · `GaugeTraceResponse` · `RunPayoff` · `WeldMarker` · `ComponentStateItem` | ✅ Built, `FlatWire.Domain/Models/Run/RunContracts.cs` |
+| **`ActiveRunResponse.RouteMode`** | ✅ Built — [`FW-181`](FW-181-FL2-Null-Gauge-Contract.md) `P-49`'s server half is **already in the contract**; this story only has to populate it |
+| **`204 No Content` for no active run** | ✅ Contracted and documented on the type — *"the normal idle state, not an error"* |
+| `sp_GetGaugeTrace` | ✅ Built ([`FW-165`](../../Database/TaskBreakdownPlans/FW-165-sp-GetGaugeTrace.md)) — ⛔ `G9` leaves its decimation parameter untunable |
+| `RunReading` | ✅ Table built (`G3`'s table half) and written by **raw SQL, absent from the EF model** (`P-12`) — as §2.2 says, there is no repository to reach for |
+| **The Order Information block** | ⛔ **Absent from the contract and the DTO** — §2.1, `P-254` |
+| **The two service bodies** | ⛔ **Absent.** This is the deliverable |
 
 ---
 
@@ -66,7 +83,16 @@ From `[TB §7]` — verbatim:
 Returns payoffs, weld events, components **and the Order Information block**.
 
 > **One round trip, deliberately.** The alternative — a second call for the order — doubles
-> latency on the screen an operator opens first. `[API §4.7a]` specifies the combined shape.
+> latency on the screen an operator opens first.
+
+⛔ **`[API §4.7a]` does NOT specify the combined shape — corrected 29 Aug 2026.** Its `200`
+response is `{ runId, lineId, orderId, alloy, passScheduleId, targetGauge, gaugeTolerance,
+targetWidth, widthTolerance, routeMode, status, startedAt, pausedAt, footageFt, payoffs[],
+weldEvents[], components[] }`, and the built `ActiveRunResponse` matches it exactly. **Customer,
+due date, finish, OD min–max, setup width/gauge and weights appear in neither.** So AC 3 is not
+"join a view and fill fields that exist" — **the fields do not exist yet**, and adding them is a
+contract change (`P-254`). *(The earlier text asserted the opposite and would have sent a
+developer looking for a shape that was never written.)*
 
 ⚠ **The order block is a cross-database read** on the same unenforced-link basis as rod
 alphas, and **`OI-33` leaves `planning_routings`' columns unmapped**. Follow `[DBD §6.6]`'s
@@ -109,10 +135,13 @@ through [`FW-144`](FW-144-Configuration-Binding.md).
 
 ## 3. Build order
 
-1. `RunController` actions on [`FW-138`](FW-138-Fifteen-Thin-Controllers.md)'s shell —
-   endpoints **17** and **18** of `[API §3.2]`.
-2. `RunQueryService`, Dapper paging over `sp_GetGaugeTrace`.
-3. The active-run DTO per `[API §4.7a]`, including the cross-DB order block (§2.1).
+1. ⚠ **The two `RunController` actions already exist** on
+   [`FW-138`](FW-138-Fifteen-Thin-Controllers.md)'s shell — endpoints **17** and **18** of
+   `[API §3.2]`. De-stub `GetActiveRunAsync` and `GetGaugeTraceAsync`; **leave
+   `GetRunWeldEventsAsync` throwing** — it is `FW-166`'s.
+2. `RunQueryService`, Dapper paging over the **built** `sp_GetGaugeTrace`.
+3. Populate the built active-run DTO — including **`routeMode`** — and widen it for the order
+   block per `P-254` (§2.1).
 4. Weld markers from `WeldEvent`.
 5. Thresholds from configuration (§2.4).
 6. **Any authenticated role may read** — bare `[Authorize]`, no policy.
@@ -123,7 +152,8 @@ through [`FW-144`](FW-144-Configuration-Binding.md).
 
 ## 4. Decisions this plan makes
 
-> `P-##` is continuous across this folder; `P-01`–`P-41` precede this story.
+> `P-##` is continuous across the repository; `P-01`–`P-41` preceded `P-42` when it was minted on
+> 15 Aug 2026. **`P-254` is added by the 29 Aug re-review**; `P-253` was the high-water mark.
 
 ### `P-42` — read the order block through a view, and let the DTO carry nulls
 
@@ -140,6 +170,22 @@ fail the request — and `Q18` (which order field carries coil min–max weight)
 independent unknown in the same block. **`[TRP §6]` lists `Q18` as second-tier: it stops no
 build.**
 
+### `P-254` — the order block is a **contract addition**, made once and made nullable
+
+`P-42` assumed the response shape existed and only its mapping was unknown. It does not (§2.1).
+
+**So: widen `[API §4.7a]`'s `200` shape and `ActiveRunResponse` with the order fields, in one
+pass, all nullable** — non-breaking under `[API §8]` (adding a response field), mirrored in the
+TypeScript contract when `FW-132` authors it, and **served from the same view `P-42` establishes**.
+
+⛔ **Do not serve the block by widening `orderId` into a nested object the contract does not
+describe, and do not add a second call.** The first makes the built DTO and the published
+contract disagree — the exact drift `[API §7]`'s stub-first rule exists to prevent; the second
+undoes the one-round-trip decision AC 3 was written for.
+
+⚠ **The trial can ship without the widening** — every field is nullable and the screen degrades to
+*not available* — so this is a contract task to schedule, **not a blocker on the de-stub**.
+
 ---
 
 ## 5. Verification
@@ -148,8 +194,10 @@ build.**
 
 | Check | Expected |
 |---|---|
-| `GET /run/active?line=` | Active-run DTO with payoffs, weld events, components **and** the order block in **one** round trip |
-| No active run | Contracted empty response — not a `404`, and not an error |
+| **De-stub only** | The controller and contracts are not re-created; `git diff` adds a service body and **removes the two `NotImplementedException`s** |
+| `GET /run/active?line=` | Active-run DTO with payoffs, weld events, components **and** the order block in **one** round trip — ⚠ **the order fields exist only once `P-254`'s widening lands** |
+| No active run | **`204 No Content`** — the contracted idle state; not a `404`, not an error, not an empty `200` |
+| **`routeMode` populated** | Present and correct on FL3 hybrid runs — the field is already on the DTO; an unpopulated one is worse than an absent one *(`FW-181` `P-49`)* |
 | `gaugetrace` paging | `from` / `to` / `resolution` honoured; Dapper, via `sp_GetGaugeTrace` |
 | Weld markers | Sourced from `WeldEvent`; **empty array is legitimate** in trial scope, where no weld is captured |
 | **FL2** | Profile served from the incoming spool's FL1 history; **static** |
@@ -177,6 +225,8 @@ landing route that calls `GET /run/active`.
 |---|---|
 | **`Q18`** *(blocker)* | Which order field carries coil min–max weight. Second-tier — **stops no build** |
 | **`OI-33`** | `planning_routings` columns unmapped — `P-42` |
+| ⛔ **Order block uncontracted** *(new 29 Aug 2026)* | `[API §4.7a]`'s `200` shape carries no order fields, and neither does the built DTO — `P-254` |
+| **`G51`** *(new here)* | `gaugeTolerance` / `widthTolerance` are **single-±** on this response while `Q22` decided **min/max pairs** — `[API §4.7a]`'s own note flags it, and [`FW-245`](../../Database/TaskBreakdownPlans/FW-245-SpcMeasurement-InSpec-Asymmetric-Band.md) fixes the sibling column. **This DTO has the same defect and no owner** |
 | **`G17`** | Cross-DB logical FKs, unenforced by design |
-| **`G3`** | `RunReading` is the store this reads |
+| **`G3`** | `RunReading` is the store this reads — ✅ **table half closed 26 Aug 2026** |
 | **`G14`** | Footage is `DECIMAL(10,2)` on `RunReading` but `INT` on event tables — **a fractional footage does not round-trip through an event endpoint** |

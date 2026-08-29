@@ -6,7 +6,7 @@
 **Story:** `FW-219` · **Phase:** 9 · **Sprint:** S3 · **Streams:** DB + BE
 **Hours:** **40 h AI-assisted / 56 h hand-coded**; 77 h all-in (`[CE §3d]`). **Additive to the 3,186 h baseline**, like `FW-202`
 **Requirements:** `FR-509`–`FR-518` (`[REQ §5.25]`) · **Specification:** `[INT §8.1]`
-**Artifact:** [`Database/Scripts/50_united_db_Proc_FlatWire_CompleteCoilOnSkid.sql`](../../Database/Scripts/50_united_db_Proc_FlatWire_CompleteCoilOnSkid.sql)
+**Artifact:** [`Database/Scripts/50_FlatWireDB_Proc_FlatWire_CompleteCoilOnSkid.sql`](../../Database/Scripts/50_FlatWireDB_Proc_FlatWire_CompleteCoilOnSkid.sql)
 **Gap:** `G44`
 
 ---

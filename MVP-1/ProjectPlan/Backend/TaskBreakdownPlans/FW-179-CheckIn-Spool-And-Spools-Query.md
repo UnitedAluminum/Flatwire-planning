@@ -1,12 +1,12 @@
 # FW-179 · `POST /checkin/spool` and `GET /spools`
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Last Updated:** August 29, 2026 — ⚠ **Re-reviewed against the BUILT code: this is a DE-STUB.** ✅ **`G41` is mitigated in the domain** — `Fm1ScopedToRodFedLinesRule` refuses an FL2 schedule with `FM1` Active *and* an FL1/FL3 one without it, so component state is already read before anything is written; the DDL constraint stays line-blind. ✅ The `[API §4.6a]` fixture error is now flagged in the controller's own remarks too. ⛔ **Two ownership defects in the built code:** `CheckInService.CheckInSpoolAsync` attributes itself to **`FW-157`** (it is this story's), and `SpoolService.CompleteSpoolAsync` attributes itself to **this story** (`POST /spool/complete`, endpoint 16b, is [`FW-202`](FW-202-FL1-Spool-Completion.md)'s). Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
-**Status:** Ready to build — ⚠ **`[API §4.6a]`'s worked example uses the wrong fixture (§2.3)**
+**Status:** ⚠ **A de-stub** — and ⚠ **`[API §4.6a]`'s worked example uses the wrong fixture (§2.3)**
 **Owner:** Backend (.NET) stream
 **Audience:** The .NET developer building `FW-179`
-**Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
+**Shortcode:** — *(implementation plan, derived from the specifications and the built code; **not citable as a requirement**)*
 **Part of:** `ProjectPlan/Backend/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md)
 
 ---
@@ -52,11 +52,34 @@ From `[TB §7]` — verbatim:
 
 | Concern | Story |
 |---|---|
-| `SpoolCheckin` table + the `SpoolProcessing.OrderNo` index | `FW-180`, DB |
+| `SpoolCheckin` table + the `SpoolProcessing.OrderNo` index | [`FW-180`](../../Database/TaskBreakdownPlans/FW-180-SpoolCheckin-Table-And-Index.md), DB — ✅ **built** |
 | DB5 / DB5A screens | `FW-178`, FE · `FW-124` deferred |
-| The `SpoolProcessing` row this reads | `FW-202` — ⚠ **must land first** (§4) |
-| `PLCTagService` | [`FW-151`](FW-151-PLCTagService.md) |
+| The `SpoolProcessing` row this reads | [`FW-202`](FW-202-FL1-Spool-Completion.md) — ⚠ **must land first** (§4) |
+| **`POST /spool/complete`** — endpoint **16b** | [`FW-202`](FW-202-FL1-Spool-Completion.md) — ⛔ **not this story, despite what the built shell says** (§1.2) |
+| `PLCTagService` | [`FW-151`](FW-151-PLCTagService.md) — ✅ **built** |
 | The rod-side twin | [`FW-157`](FW-157-CheckIn-Rod-And-CheckInService.md) |
+
+### 1.2 What already exists
+
+Read off the built code on 29 Aug 2026. **This story is a de-stub, not a build.**
+
+| Thing | State |
+|---|---|
+| `SpoolController` (**16a**) + `CheckInController` (**16**) | ✅ Built (`FW-138`) |
+| `ISpoolService` / `ICheckInService` + stubs + named-throw shells | ✅ Built (`FW-140`, `P-64`) |
+| `CheckInSpoolRequest` / `…Response`, `SpoolsResponse` | ✅ Built |
+| `SpoolProcessing` aggregate + **`SpoolSegmentsMustNotOverlapRule`** | ✅ Built and **invoked** (`SpoolProcessing.cs:188`) — `G42`'s invariant |
+| **`Fm1ScopedToRodFedLinesRule`** | ✅ Built — §2.2's `G41` exposure is **already handled in the aggregate** |
+| `Fl3RequiresHybridRouteRule` · `ScheduleMustBeActiveRule` · `FinalStandMustBeActiveRule` | ✅ Built — the route-mode and stand rules of check-in |
+| `SpoolCheckin` table + `OrderNo` index | ✅ Built ([`FW-180`](../../Database/TaskBreakdownPlans/FW-180-SpoolCheckin-Table-And-Index.md)) |
+| The seeded fixtures `PS-1100-FL2-002` (Active) and `PS-1100-FL2-001` (Inactive, Hybrid) | ✅ In `Constants` — §2.3's happy path is already the one the code names |
+| **The two service bodies** | ⛔ **Absent.** This is the deliverable |
+
+⛔ **Two throw messages name the wrong owner.** `CheckInService.CheckInSpoolAsync` says *"it is
+`FW-157`'s"* — it is **this story's**; and `SpoolService.CompleteSpoolAsync` says *"it is
+`FW-179`'s"* — it is **[`FW-202`](FW-202-FL1-Spool-Completion.md)'s**, endpoint 16b. Same defect
+class as `LineStatusService.cs:13`. **Correct both comments; de-stub only `GetSpoolsAsync` and
+`CheckInSpoolAsync`, and leave `CompleteSpoolAsync` throwing.**
 
 ---
 
@@ -95,6 +118,14 @@ only**. **No DB or FM1 tags.**
 row is pass-through; **it stops being inert the moment anything reads component state to
 decide what to write**, which is this story. See [`FW-207`](FW-207-Domain-Model.md).
 
+✅ **The domain already answers it — verified 29 Aug 2026.** `Fm1ScopedToRodFedLinesRule` is built
+and reads both directions: on **FL2** an Active `FM1` is refused (*"`[PLC]`'s FL2 tag map has no
+`FM1` entry to receive it"*), on **FL1/FL3** a bypassed one is refused. It fails as
+`SCHEDULE_NO_MATCH`. ⛔ **So the aggregate and the DDL constraint now disagree by design** — a
+schedule that satisfies `CK_PSC_FM1NotBypassable` on FL2 is rejected at check-in. **Do not
+"reconcile" them by relaxing the rule**; the constraint is the stale half, and `G41` is still the
+gap that fixes it.
+
 ### 2.3 ⚠ The contract's own worked example is wrong
 
 `[API §4.6a]` shows `POST /checkin/spool` with `"passScheduleId": "PS-1100-FL2-001"` in the
@@ -111,6 +142,11 @@ request **and** in a `"success": true` response.
 15 Aug 2026, `-001` demoted to `Inactive` because
 `UX_PassSchedule_OneActivePerLineAlloy` permits one Active per line + alloy.
 **Build to `PS-1100-FL2-002`; do not copy the example.**
+
+✅ **The built code agrees**: both fixtures are named in `Constants` (`PassScheduleFl2Active`,
+`PassScheduleFl2Hybrid`) and `CheckInController`'s own remarks carry the same warning. ⚠ **`[API
+§4.6a]` itself is still uncorrected** — the contract of record is the document that needs the
+edit, and this plan is not it.
 
 ---
 
@@ -133,9 +169,11 @@ Phase 8 ships for real.**
 
 ## 4. Build order
 
-1. `SpoolController GET /spools` — endpoint **16a** — on
-   [`FW-138`](FW-138-Fifteen-Thin-Controllers.md)'s shell. One shape, two modes (§2.1).
-2. `CheckInController POST /checkin/spool` — endpoint **16**.
+1. ⚠ **Both routes already exist** on [`FW-138`](FW-138-Fifteen-Thin-Controllers.md)'s shell —
+   `GET /spools` (**16a**) and `POST /checkin/spool` (**16**). De-stub `GetSpoolsAsync`, keeping
+   one shape and two modes (§2.1).
+2. De-stub `CheckInSpoolAsync` — ⛔ **on `ICheckInService`, and fix its `FW-157` attribution**
+   (§1.2).
 3. `CheckInSpoolCommand`, handler nested.
 4. DTO joins: `CoilTraceability`/`WeldEvent` → source rods · the FL1 run → gauge/width ·
    **cross-database** → the order block *(the same unenforced-link basis as
@@ -153,7 +191,8 @@ Phase 8 ships for real.**
 
 ## 5. Decisions this plan makes
 
-> `P-##` is continuous across this folder; `P-01`–`P-47` precede this story.
+> `P-##` is continuous across the repository; `P-01`–`P-47` preceded `P-48` when it was minted on
+> 15 Aug 2026, and `P-253` is the high-water mark today.
 
 ### `P-48` — `404` means the alpha does not exist, and nothing else
 
@@ -183,6 +222,7 @@ acceptance run, steps 8–9.
 
 | Check | Expected |
 |---|---|
+| **De-stub only** | `git diff` adds two service bodies; `CompleteSpoolAsync` **still throws** and its comment names `FW-202` (§1.2) |
 | Two modes, one shape | Both return `{ order, spools[] }` |
 | **Unknown alpha** | **`404`** |
 | **Unallocated spool** | **`200`** with `order: null` — *not* `404` |
@@ -213,8 +253,9 @@ spool queue → greyed. The scan still validates — `GET /spools` ships in `FW-
 | **`Q15` / `OI-47`** *(blocker)* | The hybrid-origin guard is **undefined**; `TC-118` is P1 and *"gate fails until specified"*. **Before Phase 8 ships** |
 | **`Q17`** *(blocker)* | — |
 | **`G40`** | The FL2 fixture — §2.3 |
-| **`G41`** | `CK_PSC_FM1NotBypassable` is line-blind; **stops being inert in this story** |
-| **`G42`** | `SpoolProcessing` cannot hold multi-rod genealogy — `sourceRodAlphas` is a list against a schema holding one |
+| **`G41`** | `CK_PSC_FM1NotBypassable` is line-blind — ✅ **the domain rule now covers it**, so the constraint and the aggregate disagree until the gap closes (§2.2) |
+| **`G42`** | `SpoolProcessing` cannot hold multi-rod genealogy — `sourceRodAlphas` is a list against a schema holding one. ✅ **Its non-overlap invariant is built and invoked** |
+| ⛔ **Two mis-attributed shells** *(new 29 Aug 2026)* | `CheckInSpoolAsync` claims to be `FW-157`'s; `CompleteSpoolAsync` claims to be this story's and is `FW-202`'s (§1.2) |
 | **`OI-33`** | The cross-DB order columns are unmapped |
 | **`Q27`** | The availability rule (`RECEIVED` + `STAGED`) is a proposal |
 | **`OI-25`** | Two footage coordinate systems, unreconciled (`FW-180`'s blocker, inherited by the DTO) |

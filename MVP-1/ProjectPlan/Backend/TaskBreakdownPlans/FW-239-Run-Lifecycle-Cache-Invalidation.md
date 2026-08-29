@@ -1,0 +1,244 @@
+# FW-239 · Wire run-lifecycle invalidation into `FW-150`'s per-run cache
+
+**Project:** United Aluminum (UAL) — Flat Wire Mill Module
+**Last Updated:** August 29, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Document Type:** Implementation plan for a single backlog story
+**Status:** **Buildable — but the card names two things that do not exist.** See §2.1 and §2.2
+**Owner:** Backend (.NET) / real-time stream
+**Audience:** The developer building `FW-239`
+**Shortcode:** — *(implementation plan, derived from the specifications and the built code; **not citable as a requirement**)*
+**Part of:** `ProjectPlan/Backend/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md)
+
+---
+
+> **Why this document exists.** Four hours, and **three details decide whether it is right —
+> two of which are that the acceptance criteria name things the codebase does not have.**
+>
+> **There is no run-lifecycle domain event.** AC 1 says invalidate on "the run's lifecycle
+> domain events, dispatched by `FW-208`". `RunEvents.cs` holds seven records and **none of
+> them is a run start or a run end.** This story mints them, or it has nothing to subscribe to.
+> **`PayoffStateChanged` is a hub member, not a domain event.** AC 2 names it; the domain
+> event behind it is **`BayStateChanged`**. Subscribing to the hub member is not possible.
+> **A defect found while planning: `stagedWeights` is never evicted at all.**
+> `InvalidateRun` clears three dictionaries and **not that one**, so a new rod in the same bay
+> inherits the previous rod's `PercentRemaining` denominator. AC 2 is not a wiring job — it is
+> a bug fix.
+
+---
+
+## 1. The story
+
+From `[TB §7]` — verbatim:
+
+> ###### FW-239 · Wire run-lifecycle invalidation into `FW-150`'s per-run cache
+> **Hours:** 4 h RT · **Priority:** High · **Sprint:** S1 · **Phase:** 1B · **Stream:** RT
+>
+> > `FW-150` shipped 29 Aug 2026 with **one loose end, named on the build**: `FW-208`'s run-lifecycle
+> > invalidation is not wired. `P-125` caches `RunId`, `InSpec`'s band, `PercentRemaining`'s
+> > denominator and the `FR-018` recording spacing **once per run**, because built naively each is a
+> > database read inside a 10 Hz loop. It also **corrected itself before execution**: invalidating on
+> > `LineStatus` would never fire, since `TryMapLineState` returns `false` until commissioning test
+> > `C2`.
+> >
+> > ⛔ **Left unwired, readings are attributed to a finished run** — the gauge trace and `RunReading`
+> > keep writing against the previous `RunId` after a run ends.
+>
+> **Acceptance Criteria:**
+> - [ ] The per-run cache invalidates on the run's **lifecycle domain events**, dispatched by `FW-208`, not on `LineStatus`
+> - [ ] `PayoffStateChanged` invalidates the per-rod half (`PercentRemaining`'s denominator)
+> - [ ] A run ending and a new run starting on the same line is demonstrated: the first reading after the boundary carries the **new** `RunId` and the **new** band
+> - [ ] ⚠ **`RunReading` stays out of the EF model** (`P-12`, `P-125`) — the loop inserts by raw SQL and must never gain a navigation collection
+> - [ ] The invalidation runs on the broadcaster's singleton lifetime without opening a scope on the hot path (`P-131`'s rule)
+>
+> **Rate-card basis (§2):** below the smallest service band — an event subscription and a cache eviction on an existing structure, no new contract = **4 h**
+> **Dependencies:** FW-150, FW-208
+> **Blockers:** —
+
+### 1.1 Out of scope
+
+| Concern | Story |
+|---|---|
+| The broadcast loop itself, and the cache structure | [`FW-150`](FW-150-Broadcast-Loop.md) — built 29 Aug 2026 |
+| The post-commit dispatch machinery and the two lanes | [`FW-208`](FW-208-Domain-Events-Post-Commit-Dispatch.md) — built |
+| `PayoffStateChanged` as a **broadcast** | `FW-160`, Phase 4 |
+| The run start itself — check-in creating `FlatWireRun` | [`FW-157`](FW-157-CheckIn-Rod-And-CheckInService.md) |
+| The run end — FL2/FL3 run-end write-back | [`FW-219`](FW-219-FlatWire-CompleteCoilOnSkid.md) |
+| `LineStatus` transitions | [`FW-172`](FW-172-Run-Event-Markers.md) — and **not** the invalidation trigger (`P-125`) |
+
+### 1.2 What already exists
+
+Read off the built code, not the plans.
+
+| Thing | Where | State |
+|---|---|---|
+| The per-run cache | `BroadcastLoopService.cs:145` `runs`, `:161` `stagedWeights`, plus `lastRecordedFootage`, `bandWarned` | ✅ Built |
+| `ResolveRunAsync` | `BroadcastLoopService.cs:818` | ✅ Built — reads `ActiveRunSql` through a scope, caches the result, **caches `null` deliberately not** on failure |
+| **`InvalidateRun`** | `BroadcastLoopService.cs:877` | ✅ **The seam exists — and it is `private`.** Clears `runs`, `lastRecordedFootage`, `bandWarned` |
+| Its only caller | `BroadcastLoopService.cs:658` — the footage-counter-went-backwards path | ⚠ **The only thing that evicts anything today** |
+| Post-commit lane + `PostCommit<T>` wrapper | `FlatWire.Domain/Events/DispatchLanes.cs` | ✅ Built |
+| Seven broadcast/in-transaction handlers | `FlatWire.Infrastructure/EventHandlers/` | ✅ Built — the shape to copy is `RunPausedBroadcastHandler.cs` |
+| Domain events | `FlatWire.Domain/Events/RunEvents.cs` — `RunPaused`, `RunResumed`, `WeldRecorded`, `CoilCompleted`, `BayStateChanged`, `BayReleaseRequested`, `SpoolCompletionPromptRaised` | ⛔ **Seven, and no run start or run end** |
+| `RunStarted` / `RunEnded` | — | ⛔ **Do not exist.** `RunStartedAt` is a DTO property on `LinesContracts.cs:58`, not an event |
+| `PayoffStateChanged` | `FlatWire.Domain/IFlatWireClient.cs` | ⚠ **A hub member.** The domain event is `BayStateChanged` (`RunEvents.cs:165`) |
+
+**Nothing in this card is cancelled by `D-31`/`D-32`.**
+
+---
+
+## 2. The three details
+
+### 2.1 AC 1 names an event set that does not exist
+
+`RunEvents.cs` carries seven records and **not one of them marks a run beginning or
+ending.** So "invalidates on the run's lifecycle domain events" has nothing to bind to,
+and the story cannot be a pure subscription.
+
+**Mint the two events here**, in `RunEvents.cs`, beside the seven:
+
+- **`RunStarted(LineId Line, RunId RunId)`** — raised by `FlatWireRun` when check-in
+  creates the run.
+- **`RunEnded(LineId Line, RunId RunId)`** — raised when the run reaches a terminal status.
+
+⚠ **Raising them is not this story's** — `FW-157` owns the check-in that starts a run and
+`FW-219` the run-end write-back. **This story declares the events and the handler; those
+two stories raise them.** Until they do, the handler is correctly wired and correctly
+inert — the same state `FW-205` shipped in, and it must be recorded the same way.
+
+> ⚠ **Do not substitute `CoilCompleted`.** A coil completing is not a run ending — a run
+> produces several coils (`FW-#####-C##`), so invalidating on it would drop the cache
+> mid-run and re-query on every coil boundary.
+
+### 2.2 AC 2 names a hub member, not an event
+
+`PayoffStateChanged` is a member of `IFlatWireClient` — an outbound broadcast. A MediatR
+handler cannot subscribe to it. The domain event that precedes it is **`BayStateChanged`**
+(`RunEvents.cs:165`), which `FW-208` already dispatches and which
+`BayStateChangedBroadcastHandler` already handles.
+
+**Subscribe to `BayStateChanged`.** Read AC 2 as naming the *moment*, not the type.
+
+### 2.3 The defect: `stagedWeights` has no eviction at all
+
+`InvalidateRun` (`:877`) clears `runs`, `lastRecordedFootage` and `bandWarned`. It does
+**not** clear `stagedWeights`, which is keyed `(LineId, PayoffPosition)` and written at
+`:933`.
+
+The comment at `:890` already states the intent — *"Cached per bay for the life of the
+staged rod. Its true invalidation is…"* — and the wiring was never done. So today, when a
+bay is unstaged and a new rod staged in it, **`PercentRemaining` is computed against the
+previous rod's net weight** and stays wrong for the life of the process.
+
+This is why AC 2 is a bug fix, not a wiring job. **The eviction is per bay, not per line**
+— clearing the whole line's staged weights on one bay's change would re-query the other
+bay needlessly on FL1/FL3, which have two.
+
+---
+
+## 3. Build order
+
+1. **`FlatWire.Domain/Events/RunEvents.cs`** — add `RunStarted` and `RunEnded` beside the
+   seven (§2.1). Follow the existing records' shape: `sealed record`, `LineId` first.
+2. **`BroadcastLoopService`** — expose the seam. `InvalidateRun` becomes callable from
+   outside the hosted service **without** making the service itself injectable:
+   add `IRunCacheInvalidator` to `FlatWire.Domain/Services/`, with
+   `void InvalidateRun(LineId line)` and `void InvalidateBay(LineId line, PayoffPosition position)`.
+3. **Implement it on `BroadcastLoopService`** and register the **same instance** for both
+   `IHostedService` and `IRunCacheInvalidator` — a singleton registered twice is two
+   objects and the second one's cache is the one nothing reads. Register the concrete type
+   as a singleton, then resolve it for both.
+4. **Add the `stagedWeights` eviction** (§2.3) — `InvalidateBay` removes the one
+   `(Line, Position)` key; `InvalidateRun` keeps clearing its three and **does not** touch
+   `stagedWeights`, because a run change does not restage a bay.
+5. **Two handlers** in `FlatWire.Infrastructure/EventHandlers/`, copying
+   `RunPausedBroadcastHandler`'s shape:
+   `RunLifecycleCacheInvalidationHandler` on `PostCommit<RunStarted>` and
+   `PostCommit<RunEnded>`; `BayStateCacheInvalidationHandler` on
+   `PostCommit<BayStateChanged>`. They inject `IRunCacheInvalidator` — **never
+   `BroadcastLoopService`** and never `IHubContext<>` (`P-101`).
+6. **No scope on the hot path** (`P-131`): the invalidator is a singleton, the handler
+   already runs in the dispatcher's scope, and the eviction is a dictionary `Remove`.
+   Nothing here resolves a scoped service.
+
+> ⛔ **`RunReading` stays out of the EF model** (`P-12`, `P-125`). Nothing in this story
+> adds an entity, a configuration or a navigation collection. The loop's raw-SQL insert is
+> untouched.
+
+---
+
+## 4. Decisions this plan makes
+
+> `P-##` is continuous across this folder; `P-01`–`P-140` precede this story.
+
+### `P-141` — the two run-lifecycle events are minted here and raised elsewhere
+
+AC 1's event set does not exist (§2.1). **Declare `RunStarted` and `RunEnded` in this
+story; leave the raising to `FW-157` and `FW-219`.**
+
+Reasons: the events are this story's *contract*, and a contract declared by its consumer is
+the pattern `FW-080` already used for `IFlatWireClient` (`P-22`) — the interface landed with
+the hub though it was `FW-149`'s. Splitting the other way, having `FW-157` mint an event
+nothing consumes, produces a silent no-op that no test can see — the exact defect class
+`FW-208` found three times on its 27 Aug execution.
+
+**Fallback if ratification prefers otherwise:** `FW-157` and `FW-219` mint their own events
+and this story ships only the handler skeleton. Cost is one round trip and a dangling
+handler in the meantime; correctness is unaffected.
+
+⚠ **The handler is inert until those two stories raise the events.** Record it that way on
+the build — *"correctly wired and correctly inert"* — as `FW-205` did for its interlock.
+
+### `P-142` — `BayStateChanged` is the subscription; AC 2's `PayoffStateChanged` names the moment
+
+A hub member is not subscribable (§2.2). This is a reading of the card, not a change to it,
+so **no requirement moves**. Recorded because a developer checking AC 2 literally will look
+for a type that is not there.
+
+### `P-143` — the invalidator is an interface on the singleton, not the hosted service injected
+
+Injecting `BroadcastLoopService` into a handler would work and is wrong twice: it puts a
+hosted service's whole surface in reach of an event handler, and it invites the
+double-registration bug in step 3, where `AddHostedService<T>` and `AddSingleton<T>` yield
+**two instances** and the handler evicts from a cache the loop never reads.
+
+**One concrete singleton, resolved for both roles.** The interface keeps `FlatWire.Domain`
+free of the implementation, consistent with `P-02`'s `Infrastructure → Domain` direction.
+
+---
+
+## 5. Verification
+
+**No automated tests** — `[TS §1.2]`. Verified in the QA0 walkthrough, and by the
+`FW-150`/`FW-208` harness pattern where a live `FlatWireDB` is available.
+
+| Check | Expected |
+|---|---|
+| Single instance | The object handling `IHostedService` and the one behind `IRunCacheInvalidator` are **reference-equal**. Assert at boot |
+| Run boundary | End a run, start a new one on the same line: the **first** reading after the boundary carries the new `RunId` **and** the new gauge band |
+| No stale attribution | After a run ends, no `RunReading` row is written against the old `RunId` |
+| **Bay restage** | Unstage a bay, stage a different rod: `PercentRemaining` uses the **new** rod's net weight. ⛔ **This fails today** (§2.3) |
+| Bay scope | Invalidating bay 1 on FL1 leaves bay 2's cached weight intact — no needless re-query |
+| Run change ≠ bay change | `InvalidateRun` does **not** clear `stagedWeights`; a run boundary does not restage a bay |
+| No scope on the hot path | The handler resolves nothing scoped; host boots under Development scope validation (`P-131`) |
+| `RunReading` | Still absent from the EF model; still inserted by raw SQL (`P-12`) |
+| Inert until raised | With `FW-157`/`FW-219` unbuilt, the handler is registered, reachable and never invoked — and the build record says so |
+
+---
+
+## 6. Handoff
+
+[`FW-157`](FW-157-CheckIn-Rod-And-CheckInService.md) raises `RunStarted` when check-in
+creates the run. [`FW-219`](FW-219-FlatWire-CompleteCoilOnSkid.md) raises `RunEnded` at the
+run-end write-back. `FW-160` (Phase 4) broadcasts `PayoffStateChanged` from the same
+`BayStateChanged` this story subscribes to — **two consumers of one event, not two events.**
+
+---
+
+## 7. Open items
+
+| Item | Effect here |
+|---|---|
+| **`P-125`** | `FW-150`'s cache decision. This story is its named loose end; closing it discharges `P-125`'s last clause |
+| **`P-12`** | `RunReading` has no aggregate repository **by design** and must never gain a navigation collection |
+| **`P-131`** | No scoped service may be injected into the singleton path. The invalidator is a dictionary operation for this reason |
+| **`G62`** | ➕ **Raised by this plan.** `stagedWeights` has never had an eviction path, so `PercentRemaining` is computed against a stale rod after any restage. Present in the built `FW-150` and fixed here — recorded because the window between `FW-150`'s build and this story's is a live defect |
+| **`C2`** | `TryMapLineState` returns `false` until this commissioning test, which is why `LineStatus` is not the trigger (`P-125`) |

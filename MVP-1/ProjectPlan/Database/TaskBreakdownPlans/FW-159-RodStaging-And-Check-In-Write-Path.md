@@ -1,0 +1,216 @@
+# FW-159 · `RodStaging`, the check-in write path and the `INFLAT` write
+
+**Project:** United Aluminum (UAL) — Flat Wire Mill Module
+**Last Updated:** August 29, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Document Type:** Implementation plan for a single backlog story — **build-state record**
+**Status:** ✅ **Schema BUILT.** ⚠ The write path is owed, and **the card's blocker is stale** (§2.1)
+**Owner:** Database (SQL Server) stream
+**Audience:** Anyone picking up `FW-159` and expecting to write the table
+**Shortcode:** — *(implementation plan, derived from the DDL; **not citable as a requirement**)*
+**Part of:** `ProjectPlan/Database/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md)
+
+---
+
+> **Why this document exists.** Twenty-eight hours on the card, and **four details decide what
+> is actually left.**
+>
+> **⛔ The card's blocker is stale, and it is one of the four `[TB §7]` cards the DB index
+> already names.** It says `G21` *"blocks the schema freeze for this phase"*. **`G21` was fixed
+> on 15 Aug 2026** — FL1 and FL3 **share** `FL1PO`, client-confirmed under `Q71`.
+> **The table, both filtered unique indexes and every listed index are deployed.**
+> **The `INFLAT` write moved and did not vanish.** `D-32` cancelled `FW-002`, so it is a
+> **`FlatWireDB`-local** write to `Rod.Status`, at **check-in only, never at staging** — and the
+> **8 h is deliberately held**, because only the target moved.
+> **`FL1PO`'s seeding sits behind deploy step 2**, which has never run — so AC 7 is gated by an
+> approval, not by code.
+
+---
+
+## 1. The story
+
+From `[TB §7]` — verbatim:
+
+> ###### FW-159 · `RodStaging`, the check-in write path and the `INFLAT` write
+> **Hours:** 28 h DB · **Priority:** Critical · **Sprint:** S2 · **Phase:** 4 · **Stream:** DB
+>
+> **As a** developer,
+> **I want** every check-in write persisted with bay uniqueness enforced in the database,
+> **So that** application code cannot violate one-rod-per-bay.
+>
+> **Acceptance Criteria:**
+> - [ ] `RodStaging` table live with the 3-item inspection, `RodSeqno`, `IsWelded`, carry-forward evidence (`FootageRunToDateAtStaging`) and release audit (`UnstageKind`, `WipRejectionId`)
+> - [ ] Repository/EF writes across `RodCheckin`, `FlatWireRun`, `SpcCheckpoint`, `SpcMeasurement`, `RodCheckout`
+> - [ ] ~~**Cross-database write setting the `coils` rod row to `INFLAT`**~~ → **`FlatWireDB`-local write setting `Rod.Status = 'INFLAT'`** — at check-in only, never at staging. ⚠ **Changed by `D-32` (18 Aug 2026):** `FW-002` is cancelled, so `INFLAT` is not a shared status value and this stops being a cross-database write at all. **The 8 h is deliberately held** — the write still has to be made, ordered and compensated; only its target moved
+> - [ ] Indexes: `RodCheckin(RunId)`, `RodCheckin(RodAlpha)`, **`RodCheckin(LineId, PayoffPosition)`** *(was missing)*, `RodStaging(LineId, Status)`, `RodStaging(RodAlpha)`
+> - [ ] **Filtered unique indexes `UX_RodStaging_Bay` and `UX_RodStaging_RodActive`** enforce one rod per bay and one bay per rod
+> - [ ] `PayoffPosition` lookup has its 3 pinned rows and `FlatWireRunDetail.PayoffPositionId` now has an enforced FK parent
+> - [ ] **`FL1PO` WIP station seeded** by `10_CommonDB_Insert_WIPStations_FlatWire.sql`, sharing FL1's `MachineIdx` — the legacy `ZR23`/`ZR23PO` pattern. **`FL2PO` stays absent** per `PCI002`
+>
+> **Rate-card basis:** `RodStaging` table 4 h + repository/EF writes across five tables 16 h + ~~cross-DB~~ **local** `Rod.Status → INFLAT` write 8 h = 28 h (§3 worked derivation) *(target changed by `D-32`; the 8 h is unchanged and Phase 4's published figure is unaffected)*
+> **Dependencies:** FW-007
+> **Blockers:** ⚠ **G21 — `UX_RodStaging_Bay` does not enforce one-rod-per-bay across FL1/FL3, and the uniqueness scope is unresolved. This blocks the schema freeze for this phase** · **G2 / G17**
+
+### 1.1 Out of scope
+
+| Concern | Owner |
+|---|---|
+| The staging **commands** that write the table | [`FW-158`](../../Backend/TaskBreakdownPlans/FW-158-PayoffStaging-Commands-And-Queries.md) |
+| The check-in that sets `Rod.Status = 'INFLAT'` | [`FW-157`](../../Backend/TaskBreakdownPlans/FW-157-CheckIn-Rod-And-CheckInService.md) |
+| The shared-schema write-back | [`FW-220`](../../Backend/TaskBreakdownPlans/FW-220-FlatWire-CheckInRod.md) — `40_`, Draft |
+| Seeding `FL1PO` | [`FW-241`](FW-241-Deploy-Step-2-And-Reverse-Script.md) — ⛔ **deploy step 2, never run** |
+| The repositories themselves | `FW-141` — built |
+
+### 1.2 What already exists
+
+⛔ **Every schema object on this card is deployed.** Verified in the DDL on 29 Aug 2026.
+
+| Object | Where | State |
+|---|---|---|
+| **`RodStaging`** | [`FlatWire_DDL_04_Runs.sql`](../Schema/SQL/FlatWire_DDL_04_Runs.sql) **`:74`** | ✅ **Built** |
+| **`UX_RodStaging_Bay`** | [`FlatWire_DDL_07_Indexes.sql`](../Schema/SQL/FlatWire_DDL_07_Indexes.sql) **`:102`–`:103`** — filtered UNIQUE | ✅ **Built** |
+| `UX_RodStaging_RodActive` | same file | ✅ Built |
+| The listed indexes | `RodCheckin(RunId)`, `(RodAlpha)`, `(LineId, PayoffPosition)`, `RodStaging(LineId, Status)`, `(RodAlpha)` | ✅ Built |
+| `PayoffPosition` lookup + 3 pinned rows | [`FlatWire_DDL_01_Lookup.sql`](../Schema/SQL/FlatWire_DDL_01_Lookup.sql) `:257`–`:285` | ✅ Built — row `3` is `TraversingTakeup (FL2)` |
+| `RodStaging` aggregate | `FlatWire.Domain/AggregatesModel/RodStaging.cs` | ✅ Built (`FW-207`) |
+| Repositories | `FW-141` — seven, all registered | ✅ Built |
+| **The staging write path** | — | ⛔ **`FW-158`'s commands do not exist** |
+| **The `Rod.Status = 'INFLAT'` write** | — | ⛔ **`FW-157` is unbuilt** |
+| **`FL1PO` seeded** | `10_CommonDB_Insert_WIPStations_FlatWire.sql` | ⛔ **Draft, never run** — deploy step 2 |
+
+---
+
+## 2. The four details
+
+### 2.1 ⛔ The blocker is stale — `G21` was fixed on 15 Aug 2026
+
+The card reads *"`UX_RodStaging_Bay` does not enforce one-rod-per-bay across FL1/FL3, and the
+uniqueness scope is unresolved. **This blocks the schema freeze for this phase**."*
+
+**That is no longer true.** The resolution: **FL1 and FL3 share one physical payoff**,
+`STATION_BY_LINE = {FL1:"FL1PO", FL3:"FL1PO"}`, **client-confirmed under `Q71`** (rods are never
+stacked; two maximum, one per payoff). `RodStaging.Station` carries that value and
+`UX_RodStaging_Bay` is **keyed on it**, so one-rod-per-bay across FL1/FL3 **is** enforced.
+
+⚠ **This is one of the four `[TB §7]` cards the DB Orchestration §8.1 finding 1 names as still
+carrying `G21`** — along with `CLAUDE.md`. **Do not treat the card as evidence the gap is open.**
+
+⛔ **And do not "fix" it by seeding `FL3PO`.** `10_`'s own comment block warns that doing so
+would let two rods occupy one physical bay **with every constraint satisfied** — the defect
+`G21` recorded.
+
+### 2.2 The `INFLAT` write moved; the hours did not
+
+`D-32` cancelled `FW-002`, so `INFLAT` is **not a shared status value**. The write is now
+`FlatWireDB`-local, to `Rod.Status`, **at check-in only, never at staging**.
+
+⚠ **The 8 h is deliberately held** — the write still has to be made, ordered and compensated;
+only its target moved, and Phase 4's published figure is unaffected.
+
+⛔ **`INFLAT` survives in exactly three places**: `Rod.Status`, `SpoolProcessing.Status` and
+`RodCheckout.NewRodStatus` — all `CHECK` constraints in `FlatWireDB`. **Anything describing it
+as a shared `coils` status is stale**, and `FR-077`'s `coils.coil_status` write is **struck**.
+
+⚠ **New consequence, `OI-111`:** nothing now marks a rod as being on a flattening line in the
+shared schema, **and the audit that would have found which reports care is cancelled too.**
+
+### 2.3 AC 7 is gated by an approval, not by code
+
+*"`FL1PO` WIP station seeded"* is `10_CommonDB_Insert_WIPStations_FlatWire.sql`'s job — **deploy
+step 2, the chain's only irreversible step, and the one that has never run.**
+
+⚠ **`FL2PO` stays absent per `PCI002`**, and **`FL3PO` stays absent per `G21`** — so a
+four-station set (FL1, FL2, FL3, FWPACK) yields **one** payoff station, which looks like an
+omission twice over and is correct both times.
+
+**[`FW-241`](FW-241-Deploy-Step-2-And-Reverse-Script.md) owns that gate.**
+
+### 2.4 What is genuinely left is not DB work
+
+Of the 28 h, the **table 4 h** is spent. The **repository/EF writes 16 h** are largely
+`FW-141`/`FW-207`'s delivered work plus `FW-158`'s commands, and the **`INFLAT` 8 h** is
+`FW-157`'s check-in path.
+
+⚠ **So this card's remaining hours sit in Backend stories, not in the DB stream.** That is worth
+saying plainly: a DB developer picking up `FW-159` will find nothing to build.
+
+---
+
+## 3. Build order
+
+**Nothing to build in the DB stream.** The remaining work:
+
+1. ⛔ **Strike the stale `G21` blocker** on the `[TB §7]` card (§2.1) — it is one of four, and
+   `[GAP]`'s `G21` row already records the fix.
+2. Confirm the schema against §1.2 — **do not re-create anything.**
+3. The write path lands with
+   [`FW-158`](../../Backend/TaskBreakdownPlans/FW-158-PayoffStaging-Commands-And-Queries.md)
+   (staging) and
+   [`FW-157`](../../Backend/TaskBreakdownPlans/FW-157-CheckIn-Rod-And-CheckInService.md)
+   (check-in + `INFLAT`).
+4. AC 7 lands with [`FW-241`](FW-241-Deploy-Step-2-And-Reverse-Script.md)'s sign-off (§2.3).
+5. ⚠ **`G14`'s check-in half still blocks Phase 4** and is not this story's: the DDL builds four
+   inspection columns `NOT NULL` plus `SpcM1In`/`SpcM2In` while `POST /checkin/rod` supplies
+   none, so **every check-in insert fails as specified** (`REVIEW.md` Tier 1 #5).
+
+---
+
+## 4. Decisions this plan makes
+
+> The `P-##` series belongs to [`Backend/TaskBreakdownPlans/`](../../Backend/TaskBreakdownPlans/)
+> and is continuous across the repository; `P-01`–`P-193` precede this story.
+
+### `P-194` — the card's `G21` blocker is struck, and `FL3PO` stays absent
+
+§2.1. `G21` was fixed on 15 Aug 2026 and the fix **is** the absent station. Leaving the blocker
+on the card keeps a closed gap blocking a schema freeze; "fixing" the absence re-opens it.
+
+⚠ **Both errors are available and they point opposite ways** — which is why this is recorded
+rather than left to the reader.
+
+### `P-195` — this story's residual hours are Backend's, and the card should say so
+
+§2.4. The table is built; the writes belong to `FW-157`/`FW-158`. **A DB developer assigned
+`FW-159` has nothing to do**, and discovering that during `S2` costs a day.
+
+⚠ **No hours are re-derived here** — `[CE]`/`FW-249` own any re-derivation. This records where
+the work sits, not what it costs.
+
+---
+
+## 5. Verification
+
+| Check | Expected |
+|---|---|
+| Table | `RodStaging` exists with the 3-item inspection, `RodSeqno`, `IsWelded`, `FootageRunToDateAtStaging`, `UnstageKind`, `WipRejectionId` |
+| **Bay uniqueness** | `UX_RodStaging_Bay` rejects a second rod on `FL1PO` **across FL1 and FL3** (§2.1) |
+| Rod uniqueness | `UX_RodStaging_RodActive` rejects one rod in two bays |
+| Indexes | All five listed indexes present |
+| Lookup | `PayoffPosition` has its 3 pinned rows; `FlatWireRunDetail.PayoffPositionId` has an enforced FK |
+| **`FL3PO` absent** | ⛔ **Still absent, deliberately** (`P-194`) |
+| `INFLAT` | Only in `Rod.Status`, `SpoolProcessing.Status`, `RodCheckout.NewRodStatus` `CHECK`s — **never shared** (§2.2) |
+| **⛔ AC 7** | **Owed** — `FL1PO` unseeded until deploy step 2 passes sign-off (`FW-241`) |
+| **⛔ Write path** | **Owed** — `FW-157`/`FW-158` |
+| Card corrected | The stale `G21` blocker struck (`P-194`) |
+
+---
+
+## 6. Handoff
+
+[`FW-158`](../../Backend/TaskBreakdownPlans/FW-158-PayoffStaging-Commands-And-Queries.md) writes
+the staging rows and **must not scope the bay conflict by line** (`P-183`).
+[`FW-157`](../../Backend/TaskBreakdownPlans/FW-157-CheckIn-Rod-And-CheckInService.md) makes the
+local `INFLAT` write and carries `G14`'s blocking check-in half.
+[`FW-241`](FW-241-Deploy-Step-2-And-Reverse-Script.md) seeds `FL1PO`.
+
+---
+
+## 7. Open items
+
+| Item | Effect here |
+|---|---|
+| ⛔ **The card's `G21` blocker** | **Stale.** Fixed 15 Aug 2026; one of four cards still carrying it (`P-194`) |
+| ⛔ **Deploy step 2** | AC 7 gated by an **approval**, not code |
+| **`G14`** | Its check-in half still blocks Phase 4 — `FW-157`'s, not this story's |
+| **`G2` / `G17`** | Listed blockers. ⚠ `G2` **narrowed twice** and no longer blocks a build (`P-27`) |
+| **`OI-111`** | ➕ `D-32`'s residue — nothing marks a rod as on a flattening line in the shared schema |
+| **`PCI002`** | `FL2PO` stays absent — a second correct absence (§2.3) |

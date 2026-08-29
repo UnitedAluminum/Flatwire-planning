@@ -1,12 +1,12 @@
 # FW-168 · `POST /spc` and `SpcService`
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Last Updated:** August 29, 2026 — ⚠ **Re-reviewed against the BUILT code: this is a DE-STUB.** ✅ **`RollAdjustTrigger` is present in both built layers** — the C# enum has five members and `CK_SpcCheckpoint_Type` five values; the TypeScript union **does not exist yet** (the `flat-wire` library is still a placeholder), so the three-layer check is *pending*, not failing. ⛔ **Two defects found in the built code:** `SpcMeasurementConfiguration` maps `Deviation` and `InSpec` as **ordinary writable columns while the DDL declares both `AS (…) PERSISTED`** — the first real insert fails at the database; and `SpcMeasurementInput` **takes `TargetValue` and `ToleranceValue` from the client**, which is the verdict this story exists to keep server-side (`P-255`). Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
-**Status:** Ready to build — **`RollAdjustTrigger` must exist in all three layers before S2**
+**Status:** ⛔ **A de-stub with a blocking mapping defect** — the write cannot succeed until §2.3 is fixed
 **Owner:** Backend (.NET) stream
 **Audience:** The .NET developer building `FW-168`
-**Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
+**Shortcode:** — *(implementation plan, derived from the specifications and the built code; **not citable as a requirement**)*
 **Part of:** `ProjectPlan/Backend/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md)
 
 ---
@@ -48,12 +48,35 @@ From `[TB §7]` — verbatim:
 
 | Concern | Story |
 |---|---|
-| The `CheckpointType` enum itself | [`FW-147`](FW-147-FluentValidation-Value-Objects-And-Enums.md) |
-| The five in-run event tables | `FW-171`, DB |
+| The `CheckpointType` enum itself | [`FW-147`](FW-147-FluentValidation-Value-Objects-And-Enums.md) — ✅ **built with five members** |
+| The five in-run event tables | [`FW-171`](../../Database/TaskBreakdownPlans/FW-171-Five-In-Run-Event-Tables.md), DB — ✅ **built** |
+| The `InSpec` expression itself | [`FW-245`](../../Database/TaskBreakdownPlans/FW-245-SpcMeasurement-InSpec-Asymmetric-Band.md), DB — `G51`; **it depends on this story** |
 | The DB6 dialog | `FW-071`, FE |
-| The die change that raises a checkpoint | `FW-073` — **deferred from the trial** |
-| The roll override that writes `RollAdjustTrigger` | `FW-169` — **deferred from the trial** |
+| The die change that raises a checkpoint | [`FW-167`](FW-167-DieChange-And-DieChangeService.md) / `FW-073` — **deferred from the trial** |
+| The roll override that writes `RollAdjustTrigger` | [`FW-169`](FW-169-RollOverride-And-RollOverrideService.md) — **deferred from the trial** |
 | The SPC-HOLD **QA release** | ⚠ **No endpoint exists** — `OI-32` |
+
+### 1.2 What already exists
+
+Read off the built code on 29 Aug 2026. **This story is a de-stub, not a build.**
+
+| Thing | State |
+|---|---|
+| `SpcController` — endpoint **21** | ✅ Built (`FW-138`) |
+| `ISpcService` + `StubSpcService` + named-throw shell | ✅ Built (`FW-140`, `P-64`) |
+| `SpcCheckpointRequest` / `SpcMeasurementInput` / `…Response` | ✅ Built — ⛔ **the input carries `TargetValue` and `ToleranceValue`** (§2.3) |
+| `SpcCheckpoint` + `SpcMeasurement` entities, inside the `FlatWireRun` aggregate | ✅ Built (`FW-207`) — `AddMeasurement` derives `AllInSpec`, and **it stays `null` while any measurement is unjudged** |
+| `FlatWireRun.RecordSpcCheckpoint` · `EnsureMandatedSpcCheckpointsSatisfied` | ✅ Built — §2.1's invariant has a home |
+| `CheckpointType` — **five** members | ✅ Built, and `CK_SpcCheckpoint_Type` carries the same five |
+| **The TypeScript union** | ⛔ **Not authored** — `projects/flat-wire` is a placeholder library (`FW-132`) |
+| **`SpcMeasurementConfiguration`'s computed columns** | ⛔ **Mis-mapped** (§2.3) |
+| **The service body** | ⛔ **Absent.** This is the deliverable |
+
+⚠ **`SpcCheckpointResponse.AllInSpec` and `SpcMeasurementResult.InSpec` are non-nullable `bool`**
+while the entities are `bool?`. **An unjudged measurement therefore serialises as `false` — "out
+of spec" — which is exactly the meaning the aggregate refuses to give it.** `P-43`'s *fail the
+checkpoint with a clear reason* is what keeps that case off the wire; do not "fix" it by
+defaulting to `true`.
 
 ---
 
@@ -68,6 +91,12 @@ From `[TB §7]` — verbatim:
 > C# enum ([`FW-147`](FW-147-FluentValidation-Value-Objects-And-Enums.md)), the TypeScript
 > union (`FW-132`) and the DB `CHECK` (`FW-007`). *"A change to any one is a change to all
 > three."*
+>
+> ✅ **Two of the three were verified on 29 Aug 2026** — `CheckpointType` has five members and
+> `CK_SpcCheckpoint_Type` lists the same five, `RollAdjustTrigger` included. ⚠ **The third does
+> not exist yet**: `projects/flat-wire` is a placeholder library with no contract types, so the
+> mirror is **owed by `FW-132`, not broken by it.** The failure mode the card warns about — a
+> four-value layer meeting a five-value one — is now only reachable from the TypeScript side.
 
 ⚠ **`PostDb1` must not be accepted.** The decision was applied to the UI and never to the data
 model, so the enum and the `CHECK` do not carry it — `OI-10`, one of the **three rejection
@@ -101,18 +130,50 @@ of which a headless service can decide."*
 *"endpoint missing — `OI-32`"*, and it is **MVP-1**. This story can set the hold and there is
 no supported path out of it. Flag it; do not invent one.
 
+### 2.3 ⛔ There are three places a verdict could be computed, and only one may win
+
+Read the built code before writing a line of `SpcService`:
+
+| Site | What it does today |
+|---|---|
+| **The client** | `SpcMeasurementInput` carries **`TargetValue` and `ToleranceValue`** on the request |
+| **The database** | `SpcMeasurement.InSpec` is `AS (CASE WHEN ABS(Actual − Target) <= Tolerance …) **PERSISTED**` — the verdict is **written to disk** from the row's own tolerance |
+| **The aggregate** | `SpcCheckpoint.AddMeasurement` derives `AllInSpec`, and only from measurements already judged |
+
+⛔ **So the card's "so that" is currently false by construction.** A client that posts a generous
+`ToleranceValue` gets an in-spec verdict *persisted* — no service code required. **The service
+must overwrite `TargetValue` and `ToleranceValue` from `AlloyProperty` and ignore the request's
+values** (`P-43`, `P-255`); the request fields stay on the contract because DB6 shows the operator
+the band it is measuring against, **not** because they are inputs.
+
+⛔ **And the first real insert will fail.** `SpcMeasurementConfiguration` maps `Deviation` and
+`InSpec` as **ordinary writable properties** while the DDL declares both computed and `PERSISTED`,
+so EF includes them in the `INSERT` and SQL Server rejects it — *"the column cannot be modified
+because it is either a computed column or is the result of a UNION operator."* **The stub path
+never hit this because it never wrote a row.** Fix it in the configuration
+(`ValueGeneratedOnAddOrUpdate`, or map them as computed), **not by dropping the columns from the
+entity** — [`FW-245`](../../Database/TaskBreakdownPlans/FW-245-SpcMeasurement-InSpec-Asymmetric-Band.md)
+still needs them and reads them back.
+
+⚠ **`G51`: the persisted expression is symmetric and `Q22`'s bands are min/max pairs**, so an
+asymmetric band yields a **stored** wrong verdict. `FW-245` fixes the column and **depends on this
+story** — align on one band shape before either ships.
+
 ---
 
 ## 3. Build order
 
-1. `SpcController POST /spc` on [`FW-138`](FW-138-Fifteen-Thin-Controllers.md)'s shell —
-   endpoint **21**.
+0. ⛔ **Fix the computed-column mapping first** (§2.3) — nothing below can be demonstrated until an
+   insert succeeds.
+1. ⚠ **`SpcController POST /spc` already exists** on
+   [`FW-138`](FW-138-Fifteen-Thin-Controllers.md)'s shell — endpoint **21**. De-stub it.
 2. `SubmitSpcCheckpoint` command, handler nested
    ([`FW-139 §2.2`](FW-139-MediatR-Registration-And-Pipeline-Behaviours.md)).
 3. **Shape** validation in FluentValidation → `400`; **state** rules in the `FlatWireRun`
    aggregate → `422` ([`FW-147 §2`](FW-147-FluentValidation-Value-Objects-And-Enums.md)).
    Enum membership — including rejecting `PostDb1` — is shape.
-4. `SpcService`: compute in/out of spec **server-side**, accept measurements per type.
+4. `SpcService`: **overwrite target and tolerance from `AlloyProperty`** and let the persisted
+   column carry the verdict (`P-255`); accept measurements per type.
 5. Write `SpcCheckpoint` + `SpcMeasurement` through the aggregate (§2.1).
 6. Auto-link to the die change when raised from one (`OI-18`).
 7. `SPC-HOLD` on suspend.
@@ -122,7 +183,8 @@ no supported path out of it. Flag it; do not invent one.
 
 ## 4. Decisions this plan makes
 
-> `P-##` is continuous across this folder; `P-01`–`P-42` precede this story.
+> `P-##` is continuous across the repository; `P-01`–`P-42` preceded `P-43` when it was minted on
+> 15 Aug 2026. **`P-255` is added by the 29 Aug re-review**; `P-253` was the high-water mark.
 
 ### `P-43` — the tolerance band is data, and it is unseeded
 
@@ -139,6 +201,23 @@ The same reasoning already applies one table over: `AlloyProperty.LbPerFtFactor`
 **NULL, "OQ-10 PENDING"**, and `[TRP §9]` accepts the resulting assertion as untestable at
 trial rather than seeding a guess. **Follow that precedent.**
 
+### `P-255` — the band is server-supplied, and the verdict has exactly one site
+
+§2.3. Three places can compute in/out of spec today, and the client is one of them.
+
+**So: `SpcService` sets `TargetValue` and `ToleranceValue` on every measurement from
+`AlloyProperty`, discards whatever the request carried, and lets the persisted column be the
+single stored verdict** — with the aggregate's `AllInSpec` derived from it rather than from a
+second calculation in the service.
+
+Reasons: a second C# calculation is a second answer that can disagree with the column, and the
+column is what SPC reporting reads back; the request's tolerance fields are a **display** contract
+for DB6, so silently trusting them turns a display value into an authority; and `FW-245` is about
+to change the expression, so the fewer places that encode the band, the smaller that change is.
+
+⚠ **This makes the EF mapping fix (§2.3) a prerequisite, not a tidy-up** — the column can only be
+the verdict if EF stops trying to write it.
+
 ---
 
 ## 5. Verification
@@ -147,7 +226,9 @@ trial rather than seeding a guess. **Follow that precedent.**
 
 | Check | Expected |
 |---|---|
-| **Verdict is server-side** | A client-supplied pass/fail is ignored; the response carries the server's |
+| **De-stub only** | The controller and contracts are not re-created; `git diff` adds a service body and **removes the `NotImplementedException`** |
+| **The write actually lands** | ⛔ **Post one checkpoint against the real database** — with the computed columns mis-mapped this fails before any rule is exercised (§2.3) |
+| **Verdict is server-side** | A client-supplied pass/fail **or tolerance** is ignored; the persisted verdict is computed from `AlloyProperty`'s band *(`P-255`)* |
 | **Five checkpoint types** | All five accepted — **including `RollAdjustTrigger`** |
 | `PostDb1` | **Rejected** (`OI-10`) |
 | Writes | `SpcCheckpoint` + `SpcMeasurement`, through the `FlatWireRun` aggregate |
@@ -156,8 +237,10 @@ trial rather than seeding a guess. **Follow that precedent.**
 | Tolerance band | From `AlloyProperty`; **null band fails the checkpoint** *(`P-43`)* |
 | Authorization | `Operator`, `QA` |
 
-**Three-layer check:** `CheckpointType` has five members in the C# enum, the TS union and the
-DB `CHECK` — part of `TC-020`'s manual diff, which needs a named owner.
+**Three-layer check:** `CheckpointType` has five members in the C# enum ✅, the DB `CHECK` ✅ and
+the TS union ⛔ **(not authored — `FW-132`)** — part of `TC-020`'s manual diff, which needs a named
+owner. ⚠ **The XML doc on `SpcCheckpoint.CheckpointType` says *"which of the four moments this
+is"*.** It is five; correct the comment while you are in the file.
 
 ---
 
@@ -178,3 +261,6 @@ unused and must exist anyway. A die change's mandated checkpoint is `FW-073`, al
 | **`OI-18`** | An SPC checkpoint **cannot join to its trigger** — the auto-link is required and the mechanism is open |
 | **`OI-32`** | **QA SPC-HOLD release has no endpoint** and is MVP-1. This story can set a hold with no supported way out |
 | **`FR-189`** | The release requirement behind `OI-32` |
+| ⛔ **Computed-column mapping** *(new 29 Aug 2026)* | `Deviation` / `InSpec` are mapped writable against `PERSISTED` computed columns — **the first real insert fails** (§2.3). Blocking |
+| **`G51`** | The persisted expression is **symmetric**; `Q22`'s bands are min/max pairs. [`FW-245`](../../Database/TaskBreakdownPlans/FW-245-SpcMeasurement-InSpec-Asymmetric-Band.md) owns the fix and **depends on this story** |
+| **`FW-132`** | The TypeScript `CheckpointType` union does not exist yet — the third layer of `TC-020`'s diff |

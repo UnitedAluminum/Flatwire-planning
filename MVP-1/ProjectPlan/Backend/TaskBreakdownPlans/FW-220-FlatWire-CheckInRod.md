@@ -7,11 +7,11 @@
 **Hours:** **51 h AI-assisted / 69 h hand-coded** — DB only. **The BE half is already inside `FW-157`'s 36 h** and is not additive; see *Estimating* below
 **Requirements:** `FR-519`–`FR-528` (`[REQ §5.26]`) · **Specification:** `[INT §8.0]`
 **Artifacts:**
-- [`Database/Scripts/40_united_db_Proc_FlatWire_CheckInRod.sql`](../../Database/Scripts/40_united_db_Proc_FlatWire_CheckInRod.sql)
-- [`Database/Scripts/60_united_db_Proc_FlatWire_ReleaseStation.sql`](../../Database/Scripts/60_united_db_Proc_FlatWire_ReleaseStation.sql)
-- [`Database/Scripts/70_united_db_Proc_FlatWire_ReverseReqsum.sql`](../../Database/Scripts/70_united_db_Proc_FlatWire_ReverseReqsum.sql)
+- [`Database/Scripts/40_FlatWireDB_Proc_FlatWire_CheckInRod.sql`](../../Database/Scripts/40_FlatWireDB_Proc_FlatWire_CheckInRod.sql)
+- [`Database/Scripts/60_FlatWireDB_Proc_FlatWire_ReleaseStation.sql`](../../Database/Scripts/60_FlatWireDB_Proc_FlatWire_ReleaseStation.sql)
+- [`Database/Scripts/70_FlatWireDB_Proc_FlatWire_ReverseReqsum.sql`](../../Database/Scripts/70_FlatWireDB_Proc_FlatWire_ReverseReqsum.sql)
 - [`Database/Scripts/20_FlatWire_Grants.sql`](../../Database/Scripts/20_FlatWire_Grants.sql)
-- [`Database/Scripts/99_united_db_Proc_FlatWire_Teardown.sql`](../../Database/Scripts/99_united_db_Proc_FlatWire_Teardown.sql)
+- [`Database/Scripts/99_FlatWireDB_Proc_FlatWire_Teardown.sql`](../../Database/Scripts/99_FlatWireDB_Proc_FlatWire_Teardown.sql)
 
 **Gap:** `G45`
 **Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
@@ -39,7 +39,7 @@
 
 - `[INT §8.0]` is the specification of record for the write set.
 - Each procedure's own header block carries its **table constraints (`C#`)** and **decisions (`D#`)**, with reasoning. **Read them before changing a line** — most of what looks arbitrary is load-bearing.
-- `50_united_db_Proc_FlatWire_CompleteCoilOnSkid.sql` is the sibling and the style precedent. Read it first.
+- `50_FlatWireDB_Proc_FlatWire_CompleteCoilOnSkid.sql` is the sibling and the style precedent. Read it first.
 - `CommonDB.dbo.PreCheckIn_CopyPlanningData`, `PreCheckIn_Reqsum_Transaction`, `PreCheckIn_CopyOrdersData` and `PreCheckIn_PreCheckInCheckIn_Transaction` are the behavioural templates — **and their transaction handling is a defect, not a pattern.** See below.
 
 ---
@@ -92,7 +92,7 @@ Object counts move **49 → 50 index statements**, verified by count; the table 
 
 ### 5. Grants and teardown (DB, 4 h → 3 h)
 
-`20_FlatWire_Grants.sql` — `ua_user` needs a **user in all six databases**, because `[public]` membership is per-database and every flat wire procedure grants to `[public]`. `99_united_db_Proc_FlatWire_Teardown.sql` — four guarded `DROP PROCEDURE` statements, because `FlatWire_DDL_99_Teardown.sql` removes `FlatWireDB` and nothing else.
+`20_FlatWire_Grants.sql` — `ua_user` needs a **user in all six databases**, because `[public]` membership is per-database and every flat wire procedure grants to `[public]`. `99_FlatWireDB_Proc_FlatWire_Teardown.sql` — four guarded `DROP PROCEDURE` statements, because `FlatWire_DDL_99_Teardown.sql` removes `FlatWireDB` and nothing else.
 
 ### 6. `CheckInService` — **not additive**, see *Estimating*
 

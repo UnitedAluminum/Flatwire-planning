@@ -1,7 +1,7 @@
 # Phase 1B — Execution Orchestration
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 29, 2026 — ⛔ **`FW-205` RE-REVIEWED before execution: `P-130`/`P-131` registered and `P-128`/`P-129` CORRECTED, both of which would have shipped a defect.** **`P-128`** called a footage *decrease* invalid where the built loop calls it *"a new run or a counter reset"* — **it would have set `ITInhibit` on every new run**; corrected to negative-only. **`P-129`** put the evaluation on the drain callback, which **cannot detect an absence** — and `TickAsync` returns early on an empty tick anyway; split into stamp-on-drain, evaluate-on-timer. **`P-131`** is a boot failure: `IPLCTagService` is `AddScoped` and a hosted service that injects it throws in Development and **captures silently in Production**. **`P-130`** stops condition 5 counting `RunReading` rows, which are footage-gated and stop legitimately on a pause. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Last Updated:** August 29, 2026 — ➕ **RE-REVIEW OF THE TEN PHASE-4–8 PLANS AGAINST THE BUILT CODE. `P-254`–`P-257` minted; mint pointer `P-258`+.** ⚠ **All ten are DE-STUBS** — controllers, contracts, aggregates, rules and error codes exist; the service bodies do not. ⛔ **Three plans contained a statement that was wrong against the code:** `FW-174`'s *"`G24`: no approval columns"* (they exist, with three constraints), `FW-181`'s *"`null`, not omission"* (the wire carries **nothing**, and no FL2 branch may exist), and `FW-164`'s *"`[API §4.7a]` specifies the combined shape"* (**the order block is in neither the contract nor the DTO**). ⛔ **Four defects found in the built code:** `SpcMeasurement`'s `Deviation`/`InSpec` are mapped writable against `PERSISTED` computed columns — **the first real SPC insert fails**; `SpcMeasurementInput` takes the **tolerance from the client**; and two shells name the wrong owner (`CheckInSpoolAsync` → `FW-157`, `CompleteSpoolAsync` → `FW-179`). ⛔ **Three obligations no card carried:** `FW-157` must raise **`RunStarted`**, `FW-172`/`FW-177` must declare **four missing domain events**, and `FW-177` must build the **`Supervisors` group** — unpriced. ✅ **Closed by the code:** `G24`, `G21`, `G41`'s domain half, `P-41` (via `P-111`), `P-49`, and the four-value resume `CHECK`. ⚠ **No hour figure was restated.** *(previously: ➕ **PLAN AUTHORING COMPLETE — BATCHES 1–6. Phases 1B → 9 are fully planned: 45 new plans, `P-141`–`P-253` minted.** This folder holds **64 plans** (was 32 indexed against 35 on disk); the DB folder holds **16** and its *"no per-story plans"* banner is retired. New §1.4a, §1.6–§1.11. ⚠ **Phases 10–14 and the unscheduled simulator set remain deliberately unplanned** — §8.3 records that its completeness claim was not true, and the 72-story reconciliation is what established it. ⛔ **The pass’s structural finding: most pending Phase-4–9 work is a DE-STUB, not a build.** `FW-138` shipped 14 controllers and `FW-140` twelve named-throw shells, so `PayoffStagingController`’s four routes, `GetLinesStatusQuery` and `BayStateChangedBroadcastHandler` all already exist. ⛔ **Two live defects found by running the code and the tools:** **`G62`** (`FW-150`’s `stagedWeights` has never had an eviction path) and **`G63`** (`verify_schema_counts.py` **fails today** on `C2`, and both files’ *"all six checks pass"* has been stale since 27 Aug). ⛔ **Six cards contradict themselves or their own scope** — `FW-158` (AC 2 wants a command AC 7 retires), `FW-N02` (four of five ACs are `FW-202`’s), `FW-230` (its first AC is withdrawn text still on the card), `FW-239` (names two things that do not exist), `FW-187` (lists no blockers; both ACs have one) and `FW-154` (the built code attributes itself to the wrong story). ⚠ **`P-183`, `P-184` and `P-189` are one defect class from three angles** — `Blocked` is derived, `IsWelded` is a flag, FL1/FL3 share one bay. **Mint pointer `P-254`+.** ⚠ **No hour figure, object count or published total was restated.** *(previously: ➕ **PLAN AUTHORING BATCH 2: ten more plans, new §1.7, and `P-169`–`P-197` minted.** [`FW-154`](FW-154-Lines-Status-And-LineStatusService.md), [`FW-N06`](FW-N06-Alert-Rules-Engine.md), [`FW-158`](FW-158-PayoffStaging-Commands-And-Queries.md), [`FW-160`](FW-160-PayoffStateChanged-Broadcasts.md), [`FW-206`](FW-206-ITInhibit-Conditions-1-2.md), [`FW-232`](FW-232-OrderController-Shell.md), [`FW-233`](FW-233-Rod-Surface-Host.md), [`FW-237`](FW-237-Service-Identity-For-Unattended-Writes.md), [`FW-240`](FW-240-RodOrder-Domain-Entities.md) and [`FW-243`](FW-243-D30-Rowversion.md) cover Phases 3–4; the folder holds **47 plans**. ⚠ **Most are DE-STUBS, not builds** — `FW-138` shipped 14 controllers and `FW-140` twelve named-throw shells, so the plumbing exists and the method bodies do not; `FW-154` is furthest along, its query and handler already built. ⛔ **Four defects found by reading the code:** `LineStatusService.cs:13` says *"Owned by FW-164"* while its throw says `FW-154` (**`FW-154` is right**); `FW-158`’s card requires `MarkStagedRodWeldedCommand` in AC 2 and **retires its endpoint in AC 7**; `FW-160`’s handler **was already built by `FW-208` step 8**, so the card overstates its scope; and `FW-240`’s entity names appear in `HubContracts.cs`, which makes a grep look like they exist. ⚠ **`P-183`, `P-184` and `P-189` are one defect class from three angles** — `Blocked` is derived, `IsWelded` is a flag, and FL1/FL3 share one bay. *(previously: ➕ **PLAN AUTHORING BATCH 1: two new plans, three orphans indexed, and the DB stream gains per-story plans.** [`FW-234`](FW-234-Audit-Log-Persistence-Target.md) and [`FW-239`](FW-239-Run-Lifecycle-Cache-Invalidation.md) are written (§1.6), so the folder holds **37 plans**, not 32. ⛔ **The "32" was wrong against 35 files on disk**: [`FW-219`](FW-219-FlatWire-CompleteCoilOnSkid.md), [`FW-220`](FW-220-FlatWire-CheckInRod.md) and [`FW-223`](FW-223-Rod-Ingestion.md) existed and appeared in **no section of this file** — now **§1.4a**, and §9 states the rule that would have caught it. ➕ **`Database/TaskBreakdownPlans/` now holds seven per-story plans** (`FW-241`, `244`, `245`, `246`, `248`, `249`, `250`) and its *"holds no per-story plans"* banner is retired; they stay **out of this file** per §8. ⛔ **Two defects the planning pass found by reading the CODE and running the TOOLS, not the plans:** **`G62`** — `FW-150`'s `stagedWeights` cache has **never had an eviction path**, so `PercentRemaining` is computed against the previous rod after any bay restage; and **`G63`** — **`verify_schema_counts.py` FAILS today** on `C2`, because `FlatWire_DDL_02_Schedule.sql`'s 27 Aug client-review reissue renamed its header key `Tables :` → `Creates :`. ⚠ **Both Orchestration files claim all six checks pass; that claim has been stale since 27 Aug.** ⚠ **`FW-239`'s card names two things that do not exist** — there is no run-lifecycle domain event and `PayoffStateChanged` is a hub member (`P-141`, `P-142`). **`P-141`–`P-147` minted here; `P-148`–`P-168` by the DB plans. Mint pointer `P-169`+.** *(previously: ➕ **NEW §1.5 PENDING REGISTER, and nine ids minted `FW-232`–`FW-240`.** This file indexed only work that already had an id; §8.1–§8.3's recorded-but-unfixed findings included **real deliverables no story owned** — `/order/**` and `/rod/**` with no host, `P-15`'s audit log with no persistence target, `CoilCompleted` with no hub member, `G58`/`G59`/`G60`. §1.5 tables all four categories; cards are in `[TB §7]` and hours are **quoted, not restated**, and are **additive to `[CE §3b]`**. ⚠ **`FW-232` and `FW-233` price a SHELL, not an endpoint** — their handlers are `FW-227` and `FW-226`, already costed; the first draft double-counted both and was corrected before it shipped. ✅ **Two things checked against the CODE rather than the plans:** `G42`'s non-overlap invariant **is built and invoked** (`SpoolSegmentsMustNotOverlapRule`, `SpoolProcessing.cs:188`), so no story was minted for it; and `P-91`'s two rod-order entities are genuinely **absent**, so `FW-240` was. ⚠ **§1.1's `FW-144` row was STALE** — it read *"Ready"* against a plan header saying **BUILT 27 Aug 2026**; corrected. ⛔ **Exit criterion 6's missing reviewer is now a dated §5 row** and is deliberately **not** a story: QA is phase-level (`[TB §7.1]`), so a 0 h card would misprice it. The DB stream's nine (`FW-241`–`FW-249`) are **pointed at, not tabled** — §8 says this folder does not cover it. *(previously: ✅ **`FW-208` STEP 8 BUILT: five broadcast handlers, harness 54/54, `P-137`–`P-139` minted, new `OI-140`** — `CoilCompleted` has no hub member to send it on, the post-commit replay was unguarded, and three domain events could not fill their own payloads. **Mint pointer moved to `P-140`+.** ⚠ This file's own *“eight broadcast handlers”* phrasing is a miscount of eight **handlers** and is corrected on the `FW-208` row. **Also, August 29, 2026 — ⛔ `FW-205` RE-REVIEWED before execution: `P-130`/`P-131` registered and `P-128`/`P-129` CORRECTED, both of which would have shipped a defect.** **`P-128`** called a footage *decrease* invalid where the built loop calls it *"a new run or a counter reset"* — **it would have set `ITInhibit` on every new run**; corrected to negative-only. **`P-129`** put the evaluation on the drain callback, which **cannot detect an absence** — and `TickAsync` returns early on an empty tick anyway; split into stamp-on-drain, evaluate-on-timer. **`P-131`** is a boot failure: `IPLCTagService` is `AddScoped` and a hosted service that injects it throws in Development and **captures silently in Production**. **`P-130`** stops condition 5 counting `RunReading` rows, which are footage-gated and stop legitimately on a pause.)*)*)*)*)* Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Execution index and dependency graph for the Phase-1B implementation plans
 **Status:** Active — **the entry point for this folder**
 **Owner:** Backend (.NET) + Real-time streams
@@ -31,8 +31,21 @@
 
 ## 1. Status board
 
-**32 plans.** `phase-01b`'s twenty stories (§1.1–§1.2) · two trial-scope (§1.3) · **ten
-trial-path stories from Phases 4–8 (§1.4)**. Hours are `[TB §7]`'s, quoted not restated.
+**37 plans**, and §1.5's **pending register** for everything that still has none. `phase-01b`'s twenty
+stories (§1.1–§1.2) · two trial-scope (§1.3) · **ten
+trial-path stories from Phases 4–8 (§1.4)** · **three shared-schema plans that this file had never
+indexed (§1.4a)** · **two additive Phase-1B plans (§1.6)**. Hours are `[TB §7]`'s, quoted not restated.
+
+> ⚠ **The count read "32 plans" against 35 files on disk until 29 Aug 2026.**
+> [`FW-219`](FW-219-FlatWire-CompleteCoilOnSkid.md), [`FW-220`](FW-220-FlatWire-CheckInRod.md) and
+> [`FW-223`](FW-223-Rod-Ingestion.md) existed as plans and appeared in **no section of this file** —
+> a one-way index failure, and the reason §9's *"a plan file and its index row land in the same
+> pass"* rule is now stated. They are §1.4a.
+>
+> ➕ **The DB stream now has per-story plans too — seven, as of 29 Aug 2026.** That folder's
+> *"holds no per-story plans"* banner is retired. They are **not** tabled here (§8 still applies);
+> their register is
+> [`Database/TaskBreakdownPlans/Orchestration.md`](../../Database/TaskBreakdownPlans/Orchestration.md) §1.3.
 
 > **§1.1–§1.3 are Phase 1B and are what §2–§6 sequence.** §1.4's ten sit **downstream of the
 > phase** and are sequenced by sprint in
@@ -49,13 +62,13 @@ trial-path stories from Phases 4–8 (§1.4)**. Hours are `[TB §7]`'s, quoted n
 | [FW-141](FW-141-Repository-Layer.md) | Seven repositories | 28 *(gained `FW-207` scope)* | 1 | ✅ **BUILT 27 Aug 2026** — 6 alphas · 7 structural roots · 7 interfaces · **7 `sealed` repositories, all registered** · `ContextRepository` with `sp_GetGaugeTrace` · `G14` **verified at startup** · **13/13 accessors verified on the live DB** · `P-71` minted. ⚠ **Step 6 still waits on `OI-33`** |
 | [FW-142](FW-142-Dapper-EF-And-FlatWireDbContext.md) | `FlatWireDbContext` + Dapper | 24 | 1 | ✅ **Built 27 Aug 2026** — 7 roots mapped, model validated, insert→select→rollback proven on the live DB · `P-13` holds (**no `DbSet<PassSchedule>`**) · `P-69`, **`P-70`** minted · **unblocks `FW-141` steps 2–3 and `FW-139`'s `P-10`**. ⛔ `SpoolProcessing` untestable — **deployed DB predates `Q60`**; teardown owed |
 | [FW-143](FW-143-Serilog-And-Audit-Log.md) | Serilog + audit log | 12 | 1 | ✅ **Built 27 Aug 2026** — Serilog + Console sink, correlation verified end to end, `UseSerilogRequestLogging` (`P-73`) closes *"controllers log nothing"*, `IAuditLog` + `SerilogAuditLog`. ⚠ **`P-15` still open** — AC 3 met structurally, not materially |
-| [FW-144](FW-144-Configuration-Binding.md) | Configuration binding | 12 | 1 | Ready — map *contents* blocked, shape is not |
+| [FW-144](FW-144-Configuration-Binding.md) | Configuration binding | 12 | 1 | ✅ **Built 27 Aug 2026** — bound map measures **72 paths** (FL1 17 · FL2 22 · FL3 33), settling the stale-`41` figure as a runtime fact; four boot assertions close §5's verification gap; `ITagPathResolver` seam built so an `OI-A` move is one class. `P-74` minted. ⚠ **Map *contents* still blocked on `PLC-Q05`/`G33`, shape is not.** ⚠ `OI-A` was answered by contradicting **both** candidates — no UAL service keeps tag paths in `appsettings`; `OPCConnection` answers from `CommonDB` *(this row read "Ready" until 29 Aug 2026)* |
 | [FW-145](FW-145-JWT-And-Role-Policies.md) | JWT + role policies | 16 | 1 | ⚠ **Unblocked 15 Aug** — `G6` answered; six claim *values* still unmapped. **Reviewed 27 Aug** — `P-75`/`P-77` minted, `P-76` open; `AC 4` is **not executable** on the MVP-1 surface (§6.1) |
 | [FW-146](FW-146-Exception-Middleware-And-Envelope.md) | Exception middleware | 8 | 1 | ✅ **BUILT 27 Aug 2026** — `ExceptionHandlingMiddleware` live, filter removed and the removal **asserted at boot**; stack-on-the-wire 2,972 B → 173 B; 22/22 `401` intact; both inspection rows hold at once. `P-78`–`P-82` minted. ⚠ **`P-78`: §4's `RemoveType` sketch does not compile.** Two rows handed forward (§6) |
 | [FW-147](FW-147-FluentValidation-Value-Objects-And-Enums.md) | Validation + 14 enums | 12 | 1 | ✅ **EXECUTED 27 Aug** — built 25 Aug with `FW-138` (14 enums + **14** validators, not 13); **`TC-020` run**: 12/14 pass C# ↔ DDL, zero mismatches (§6.1). ⚠ **Two-way only — no TS leg** (`FW-132` unbuilt) and `LineState`/`AlertSeverity` have no DB leg: **`G56`**, signed off per leg (`P-84`). Defect found: **`G55`**. `P-19` handoff already in `FW-207` |
 | [FW-148](FW-148-Health-Checks.md) | Health checks | 8 | 1 | ✅ **BUILT 27 Aug 2026** — live at `/api/v1/flatwire/health`, all three ACs measured (§5.1), `0` errors and no new analyzer warning. Option A built, so **no package added**; `version` cut to `"1.0.0"`. **`P-88`** minted; ⛔ **`G57`** raised **and fixed** — the committed `SqlSetting:DSN` was a server name and could not resolve **while the service booted anyway**; now `"UA_Connection_String_dev00164001"`, verified. Residual with `FW-144`. ⚠ `P-85`/`P-87` implemented, **still unratified**. Same day, earlier: **`P-20` restated, `P-85`–`P-87` minted.** ⚠ **The route disagreement does not exist**: `[API §3.2]` is written base-relative to `[API §1]`'s `/api/v1/flatwire`, so row 30 and `[DEP]` are one string in two notations. Also: the hub metrics are **not** this story's (`P-86`), and `OPCConnection` has no anonymous API endpoint to probe. ⚠ `P-85` and `P-87` ratify |
 | [FW-207](FW-207-Domain-Model.md) | Domain model (`D-29`) | 32 | 1 | ✅ **BUILT 27 Aug 2026** — 15 new files, 17 amended, **0 errors, no new warning**. 7 quantities + `PassScheduleSnapshot` · **13 entity types** + 13 EF configurations · **20 invariants** · 6 domain events · `IAggregateRoot` on all seven roots · **`FW-146`'s owed fifth arm** (`P-89`). **Verified by harness, not walkthrough** (§6.1): model validates at 20 types, **352 columns** checked on live `FlatWireDB`, every invariant demonstrated at the right `409`/`422`, live round-trip rolled back, API still boots (`/health` 200, `/lines/status` 401). ⛔ **Defect found and fixed: EF was mapping the new derived properties as columns and `RodAlpha` as an entity type** — green build, broken model; 15 `Ignore` calls. ⚠ **`P-91`'s two rod-order entities NOT built** — need `[SVC §3.2a]`'s signature. Same day, earlier: ⚠ **reviewed; `P-89`–`P-93` minted.** ⛔ **The blanket `422` is withdrawn** (`P-90`): bay occupancy is **`409`** per `[API §1.3]`/`§1.8` and the built code, and its *"breakable by state"* justification argued for the opposite code. ⛔ **The `422` path has no arm** — an aggregate throw returns `500` until `FW-146` adds the fifth (`P-89`). **Five 22-Aug tables placed** (`P-91`, `[SVC]` corrected at source; two await its signature). `G14`'s format half now **verified**, `OI-42` struck, `G42` rewritten. Structural half already built by `FW-141` (`P-66`); `D-30` still open on 3 of 7 roots |
-| [FW-208](FW-208-Domain-Events-Post-Commit-Dispatch.md) | Domain-event dispatch | 8 | 3 | ⚠ **`P-35`'s stated injection needs a one-line correction — see `P-101`** (28 Aug 2026): a handler in `FlatWire.Infrastructure` can name neither `FlatWireHub` nor `IHubContext<>`; it injects `IFlatWireBroadcaster`. ✅ **BUILT 27 Aug 2026 (steps 1-7, 9, 10)** - 3 new files, 8 amended, **0 errors, no new warning**. Two lane wrappers, capture-then-replay hooked into `CommitTransactionAsync`, `SaveEntitiesAsync` routed through it, and the two in-transaction handlers. **Verified by harness on live `FlatWireDB`**: lane routing (raw event reaches neither lane), both lanes dispatching in-transaction-then-broadcast, the bay actually released inside the rejection's transaction, a rollback broadcasting nothing, `WLD010`. `FW-207` still 137/137; API boots. ⛔ **Step 8 blocked** - `IFlatWireClient` does not exist (`FW-080`). ⛔ **Three defects found on execution**: `INotificationHandler<>` was never registered (a third silent no-op), the in-transaction lane could not see a sibling aggregate's identity so **`P-94`'s order is revised to save-drain-save-commit**, and `BayStateChanged` had to be split (**`P-98`**) |
+| [FW-208](FW-208-Domain-Events-Post-Commit-Dispatch.md) | Domain-event dispatch | 8 | 3 | ⚠ **`P-35`'s stated injection needs a one-line correction — see `P-101`** (28 Aug 2026): a handler in `FlatWire.Infrastructure` can name neither `FlatWireHub` nor `IHubContext<>`; it injects `IFlatWireBroadcaster`. ✅ **BUILT 27 Aug 2026 (steps 1-7, 9, 10)** - 3 new files, 8 amended, **0 errors, no new warning**. Two lane wrappers, capture-then-replay hooked into `CommitTransactionAsync`, `SaveEntitiesAsync` routed through it, and the two in-transaction handlers. **Verified by harness on live `FlatWireDB`**: lane routing (raw event reaches neither lane), both lanes dispatching in-transaction-then-broadcast, the bay actually released inside the rejection's transaction, a rollback broadcasting nothing, `WLD010`. `FW-207` still 137/137; API boots. ✅ **STEP 8 BUILT 29 Aug 2026** - five broadcast handlers in `FlatWire.Infrastructure/EventHandlers/`, injecting **`IFlatWireBroadcaster`** (`P-101`), **5 new files, 5 amended, 0 errors, 13 warnings = the pre-existing baseline**, **harness 54/54** including live-`FlatWireDB` commit-boundary runs (order, rollback-broadcasts-nothing, and a throwing broadcast NOT failing the committed command). ⛔ **`CoilCompleted` is unbroadcastable** - `[SIG §5.2]` has no coil-completion member and adding one is breaking under `[API §8]`: **`P-137`**, new **`OI-140`**. ⚠ **The *“eight broadcast handlers”* figure in this row's neighbours is a miscount of eight *handlers*** - six post-commit plus two in-transaction, with the two both-lane events counted once each. **Seven exist; five broadcast.** ⚠ Two more defects step 8 found: the post-commit replay was **unguarded**, so the first throwing broadcast would have turned a committed command into a `500` (**`P-138`**), and three events could not fill their own payloads (**`P-139`** - `WeldRecorded` had no `LineId`, so it was unbroadcastable). ⛔ **Three defects found on the 27 Aug execution**: `INotificationHandler<>` was never registered (a third silent no-op), the in-transaction lane could not see a sibling aggregate's identity so **`P-94`'s order is revised to save-drain-save-commit**, and `BayStateChanged` had to be split (**`P-98`**) |
 
 ### 1.2 Real-time stream — 124 h
 
@@ -83,16 +96,220 @@ in [TrialOrchestration.md](TrialOrchestration.md).
 
 | Plan | Story | h | Stream | Phase | Status |
 |---|---|---|---|---|---|
-| [FW-157](FW-157-CheckIn-Rod-And-CheckInService.md) | `POST /checkin/rod` + `CheckInService` | 36 | BE | 4 | ⚠ **Provisional until `G2` closes**; trial runs it **without `RodStaging`** |
-| [FW-082](FW-082-PLC-Tag-Push-On-Acknowledgement.md) | PLC tag group push on acknowledgement | 16 | RT | 4 | ⚠ Four blockers · `G29` leaves a payload value with nowhere to write |
-| [FW-164](FW-164-Run-Queries-And-RunQueryService.md) | `GET /run/active` + `gaugetrace` | 12 | BE | 5 | ⚠ **The trial's landing route** since DB1 left scope |
-| [FW-168](FW-168-Spc-And-SpcService.md) | `POST /spc` + `SpcService` | 12 | BE | 6 | ⚠ Tolerance band unseeded (`Q22`) |
-| [FW-170](FW-170-Pause-Resume-And-RunControlService.md) | pause / resume + `RunControlService` | 8 | BE | 6 | Ready — four resume outcomes |
-| [FW-172](FW-172-Run-Event-Markers.md) | Run-event markers + `LineStatus` | 20 | RT | 6 | Ready — four of six markers (`P-45`) |
-| [FW-174](FW-174-WipRejection-And-Checkout-Services.md) | `POST /wipreject` + `POST /checkout` | 24 | BE | 7 | ⚠ **`G24`: Mode B's constraint has no columns yet** |
-| [FW-177](FW-177-Exception-Broadcasts.md) | Exception broadcasts + supervisor notify | 16 | RT | 7 | ⚠ `FW-175` deferred — notification is transient |
-| [FW-179](FW-179-CheckIn-Spool-And-Spools-Query.md) | `POST /checkin/spool` + `GET /spools` | 18 | BE | 8 | ⚠ **`[API §4.6a]`'s worked example is stale** |
-| [FW-181](FW-181-FL2-Null-Gauge-Contract.md) | FL2 null-gauge contract | 4 | RT | 8 | ⚠ *"the single most likely thing to ship wrong"* |
+| [FW-157](FW-157-CheckIn-Rod-And-CheckInService.md) | `POST /checkin/rod` + `CheckInService` | 36 | BE | 4 | ⚠ **A de-stub, provisional until `G2` closes**; trial runs it **without `RodStaging`**. ⛔ Must raise **`RunStarted`** (`P-141`) or `FW-239` stays inert; the PLC call takes **its values from `FW-082`** (`P-112`); `CheckInService.cs`'s spool throw is **mis-attributed to this story** |
+| [FW-082](FW-082-PLC-Tag-Push-On-Acknowledgement.md) | PLC tag group push on acknowledgement | 16 | RT | 4 | ⚠ **Five blockers** · `G29` leaves a payload value with nowhere to write · ⛔ **`G58`: the transport reports no write failure**, so AC 4's failure path has no trigger. ✅ `P-41` is **implemented by `P-111`**; the re-clear is `P-110`'s flags-only shape |
+| [FW-164](FW-164-Run-Queries-And-RunQueryService.md) | `GET /run/active` + `gaugetrace` | 12 | BE | 5 | ⚠ **The trial's landing route** since DB1 left scope. ⛔ **The Order block is in neither `[API §4.7a]` nor the built DTO** — `P-254` makes it a contract addition. ✅ `routeMode` and the `204` are already contracted |
+| [FW-168](FW-168-Spc-And-SpcService.md) | `POST /spc` + `SpcService` | 12 | BE | 6 | ⛔ **Blocking: `Deviation`/`InSpec` are mapped writable against `PERSISTED` computed columns — the first real insert fails.** The request also carries the **tolerance**, so the verdict is client-driven until `P-255`. ✅ Five checkpoint types in both built layers; TS not authored |
+| [FW-170](FW-170-Pause-Resume-And-RunControlService.md) | pause / resume + `RunControlService` | 8 | BE | 6 | ✅ **Further along than the card says** — the aggregate raises `RunPaused`/`RunResumed`, both handlers are built, and `CK_RunPauseEvent_Outcome` **carries four**. ⚠ `Outcome` is a **string**, and `[API §4.8]` still lists a `RodCheckout` pause category |
+| [FW-172](FW-172-Run-Event-Markers.md) | Run-event markers + `LineStatus` | 20 | RT | 6 | Four of six markers (`P-45`) — ✅ two already have handlers. ⛔ **`SpcCheckpointRecorded` and `DieChangeRecorded` do not exist**; ⛔ **`LineStatus` is dark until `C2`**, so `P-256` moves AC 2 onto the pause/resume events |
+| [FW-174](FW-174-WipRejection-And-Checkout-Services.md) | `POST /wipreject` + `POST /checkout` | 24 | BE | 7 | ✅ **`G24` is answered in the DDL** — approval columns and three constraints exist; the register row is stale. ⛔ **The release event is `BayReleaseRequested`, not `BayStateChanged`**, and both handlers are already built |
+| [FW-177](FW-177-Exception-Broadcasts.md) | Exception broadcasts + supervisor notify | 16 | RT | 7 | ⚠ `FW-175` deferred — notification is transient. ⛔ **No `Supervisors` group and no way to address one** (`P-257`, unpriced); ⛔ neither `AlertRaised` nor a checkout event exists as a domain event |
+| [FW-179](FW-179-CheckIn-Spool-And-Spools-Query.md) | `POST /checkin/spool` + `GET /spools` | 18 | BE | 8 | ⚠ **`[API §4.6a]`'s worked example is stale**. ✅ `G41` is **mitigated in the domain** by `Fm1ScopedToRodFedLinesRule`. ⛔ **Two shells name the wrong owner** — `CheckInSpoolAsync` says `FW-157`, `CompleteSpoolAsync` says `FW-179` and is `FW-202`'s |
+| [FW-181](FW-181-FL2-Null-Gauge-Contract.md) | FL2 null-gauge contract | 4 | RT | 8 | ⚠ *"the single most likely thing to ship wrong"* — ⛔ **and the plan itself had it wrong**: the wire carries **nothing**, not a null, and **no FL2 branch may exist**. ✅ `P-49` is built on the DTO. ⛔ AC 1's FL2 `PayoffWeight` has **no denominator and no owner** |
+
+### 1.4a Shared-schema write-back plans — indexed here for the first time
+
+> ⚠ **New section 29 Aug 2026, and it adds no plan file.** These three plans have existed on
+> disk and appeared in **no section of this file**, which is why §1 read *"32 plans"* against 35.
+> A plan nothing indexes is a plan nobody finds — §9's rule now says so explicitly.
+>
+> They are **DB + BE** stories whose DB half is `[DEP §4.2]`'s deploy chain, so they sit across
+> the boundary §8 draws. They are indexed here because **the plan file lives here**.
+
+| Plan | Story | h | Stream | Phase | Status |
+|---|---|---|---|---|---|
+| [FW-220](FW-220-FlatWire-CheckInRod.md) | FL1/FL3 check-in write-back into the shared schema | 32 *(DB 24 · BE 8)* | DB+BE | 4 | ⛔ **Blocked on an approval, not on code** — names `10_CommonDB_Insert_WIPStations_FlatWire.sql`, whose sign-off gate has never been passed (`FW-241`). ⚠ `Q37`–`Q39` before it runs outside DEV |
+| [FW-221 *(no plan)*](Orchestration.md) | Station release and reqsum reversal | 9 | DB | 4 | ⚠ **DB-stream story, no plan file** — `60_` has no open items; ⛔ `70_ReverseReqsum` is **safe to create and unsafe to call** (`Q40`) |
+| [FW-223](FW-223-Rod-Ingestion.md) | Rod ingestion — populating the FlatWire tables | 14 *(DB 10 · BE 4)* | DB+BE | 4 | **`30_…sp_IngestRodFromCoils` is Ready — no open items.** Downstream of step 2 |
+| [FW-219](FW-219-FlatWire-CompleteCoilOnSkid.md) | FL2/FL3 run-end write-back into the shared schema | 40 *(DB 26 · BE 14)* | DB+BE | 9 | ⚠ `Q34`–`Q36` before it runs outside DEV. `OI-114`'s cut-record sentinels are **parameterised**, so a wrong answer is a one-line change |
+
+### 1.5 Pending register — work with no plan, and nine newly minted ids
+
+> **New 29 Aug 2026.** §1.1–§1.4 index work that **has** an id. This indexes what did not — and
+> **silence is not coverage** is the same rule §8 already applies to scope. Three of the four
+> tables below existed only as prose scattered across §8.1–§8.3; the fourth is new work.
+
+**Table A — a plan exists, the build does not.**
+
+| Story | h | What is stopping it |
+|---|---|---|
+| [FW-145](FW-145-JWT-And-Role-Policies.md) | 16 | ⚠ **The only unbuilt Phase-1B story.** Plan is *Buildable — one fact outstanding*; the six role claim **values** gate verification, not construction (§5). ⛔ **`P-136` makes it a hard dependency for the trial acceptance run** — `FW-218`'s `/sim` routes issue no role claim and therefore **deny everyone today** |
+| [FW-157](FW-157-CheckIn-Rod-And-CheckInService.md) | 36 | `G2` — provisional; the trial runs it without `RodStaging` |
+| [FW-082](FW-082-PLC-Tag-Push-On-Acknowledgement.md) | 16 | Four blockers; `G29` leaves a payload value with nowhere to write |
+| [FW-164](FW-164-Run-Queries-And-RunQueryService.md) | 12 | The trial's landing route since DB1 left scope |
+| [FW-168](FW-168-Spc-And-SpcService.md) | 12 | `Q22` — the tolerance band is unseeded |
+| [FW-170](FW-170-Pause-Resume-And-RunControlService.md) | 8 | Ready |
+| [FW-172](FW-172-Run-Event-Markers.md) | 20 | Ready — four of six markers (`P-45`) |
+| [FW-174](FW-174-WipRejection-And-Checkout-Services.md) | 24 | `G24` — Mode B's constraint has no columns |
+| [FW-177](FW-177-Exception-Broadcasts.md) | 16 | `FW-175` deferred — notification is transient |
+| [FW-179](FW-179-CheckIn-Spool-And-Spools-Query.md) | 18 | `[API §4.6a]`'s worked example is stale (§8.2) |
+| [FW-181](FW-181-FL2-Null-Gauge-Contract.md) | 4 | *"the single most likely thing to ship wrong"* |
+
+> The ten below `FW-145` are §1.4's, sequenced by sprint in
+> [TrialOrchestration.md](TrialOrchestration.md), not by wave here. They are repeated in this one
+> table so *"what is unbuilt"* has a single answer.
+
+**Table B — an id exists, a plan does not.** The work owed is **a plan file**, not a new id.
+
+| Story | Phase | Subject | |
+|---|---|---|---|
+| `FW-185` | 9 | `POST /coil/complete`, `GET /coil/{alpha}/label` | ⚠ **Phase 9 is *wholly MVP-1*** |
+| `FW-187` | 9 | Completion broadcasts | ⚠ **in scope, unplanned** |
+| `FW-190` | 10 | Hybrid single-batch PLC push and `RouteMode` | overlaps [`FW-181`](FW-181-FL2-Null-Gauge-Contract.md) `P-49` |
+| `FW-192` | 10 | Continuous end-to-end trace on FL3 | |
+| `FW-090` | 11 | Flattening Lines report tab and reporting | ⚠ `OI-101` — shift boundaries undefined |
+| `FW-101` | 12 | Weld traceability attribution in yield | |
+| `FW-196` | 13 | Alloy CRUD, machine config, role config | |
+| `FW-198` | 13 | Reference-data change broadcast | |
+| `FW-200` | 14 | PLC commissioning support | ⚠ already cited by [`FW-082`](FW-082-PLC-Tag-Push-On-Acknowledgement.md) |
+| **[`FW-206`](FW-206-ITInhibit-Conditions-1-2.md)** | 4 | `ITInhibit` conditions 1–2 | ⚠ **`P-132`: `FW-206` must not re-derive `FW-205`'s arming rule** or the two double-block the same tag |
+| `FW-211` | — | The `IReadingSource` seam | 1B owns it; unscheduled and additive |
+| `FW-210` `FW-212` `FW-213` `FW-215` `FW-217` | — | Simulator set | unscheduled, additive |
+| `FW-N08` `FW-N10` `FW-N11` `FW-N12` | — | Wire break · stop popup · operator session · de-stub | **Uncosted** (`[TB §7]` B.4). `FW-N08` is blocked on `G34`; `FW-N11` owns `FR-018`'s number and route rule, `FW-150` owning only the gate |
+
+> ⚠ **`FW-185` and `FW-187` are the ones to watch** — Phase 9 is **wholly MVP-1** (`CoilOutput` and
+> `CoilTraceability` returned on 11 Aug 2026 because the coil genealogy behind the **welding-wire
+> customer certificates** is an MVP-1 obligation), so they are not deferred, only unplanned. They
+> sit outside the trial, which is why they have not been reached.
+
+**Table C — nine ids minted 29 Aug 2026.** Cards, hours bases and acceptance criteria are in
+`[TB §7]` under *Additive — pending-work stories*; hours here are **quoted, not restated**.
+
+| Story | Subject | Stream · Phase | h | Closes |
+|---|---|---|---|---|
+| **[`FW-232`](FW-232-OrderController-Shell.md)** | `OrderController` — a host for `POST /order/{orderNo}/complete` | BE · 4 | 3 | §8.1 finding 5, `P-50` |
+| **[`FW-233`](FW-233-Rod-Surface-Host.md)** | A host for the `/rod/**` surface | BE · 4 | 6 | §8.1 finding 4, `P-53`/`P-54` |
+| **[`FW-234`](FW-234-Audit-Log-Persistence-Target.md)** | Audit-log persistence target | BE + DB · 1B/1C | 12 | **`P-15`** — the register's first `open` row · ✅ **PLANNED 29 Aug 2026** (§1.6) |
+| `FW-235` | `CoilCompleted` broadcast member | RT + FE · 9 | 12 | `OI-140`, `P-137` |
+| `FW-236` | Per-tag write status from `OPCConnection` | BE · 14 | 16 | `G58`, `FR-074` |
+| **[`FW-237`](FW-237-Service-Identity-For-Unattended-Writes.md)** | Service identity for unattended PLC writes | BE · 4 | 12 | `G59` **identity half**, `P-127` |
+| `FW-238` | Register flat wire with `OPCConnection` | BE + DB · 14 | 12 | `G60`, `P-120` |
+| **[`FW-239`](FW-239-Run-Lifecycle-Cache-Invalidation.md)** | Run-lifecycle invalidation into `FW-150`'s cache | RT · 1B | 4 | `P-125` — `FW-150`'s one loose end · ✅ **PLANNED 29 Aug 2026** (§1.6) |
+| **[`FW-240`](FW-240-RodOrder-Domain-Entities.md)** | `RodOrderAllocation` / `RodOrderConsumption` entities | BE · 4 | 8 | `P-91` second half |
+
+> ⚠ **Two of these price a shell and not an endpoint, deliberately.** `FW-232`'s handler is
+> **`FW-227`** and `FW-233`'s order set is **`FW-226`'s** — both already costed in the baseline.
+> Re-costing the bodies here would double-count two stories. *(The first draft of this register did
+> exactly that, at 8 h and 16 h; corrected before it shipped.)*
+>
+> ⚠ **All nine are additive to `[CE §3b]`** — the treatment `FW-202`/`203`/`204`/`218`/`219`
+> already have. **They offset nothing and are in no published total.**
+
+**Table D — registered, and deliberately given no id.**
+
+| Item | Why no story |
+|---|---|
+| ⛔ **Exit criterion 6 has no named reviewer** | QA hours are **phase-level, never per story** (`[TB §7.1]`), so the walkthrough's effort is already inside Phase 1B's +20% uplift. What is missing is **a name and a slot**, not effort — and the only 0 h cards in `[TB §7]` are the *cancelled* `FW-001`/`FW-002`. Tracked in §5 and §6 |
+| ⚠ **`G42`'s non-overlap invariant** | ✅ **Already built** — `SpoolSegmentsMustNotOverlapRule` in `FlatWire.Domain/Rules/TraceabilityRules.cs`, **invoked** at `SpoolProcessing.cs:188`. Verified 29 Aug 2026. `P-91`'s *"the aggregate is the ONLY defence"* is satisfied; the gap row is what needed updating |
+| ⚠ **`FW-144`'s status** | ✅ **Built 27 Aug 2026** — §1.1's row said *"Ready"* until this pass. Corrected there |
+
+### 1.6 Additive Phase-1B plans — written 29 Aug 2026
+
+> Both are `[TB §7]`'s *Additive — pending-work stories* set, so they are **additive to
+> `[CE §3b]` and in no published total**. They are Phase 1B, which is why they are here and not
+> in §1.4.
+
+| Plan | Story | h | Wave | Status |
+|---|---|---|---|---|
+| [FW-234](FW-234-Audit-Log-Persistence-Target.md) | Audit-log persistence target | 12 *(BE 8 · DB 4)* | 5 | **Ready to build** — `SerilogAuditLog`'s own class comment specifies the swap, so the BE half is one class and one registration. ⛔ **The `IAuditLog` signatures must not change** — `P-144` keeps the correlation id off `AuditEntry` for that reason. `P-146`: the audit table takes **no FK to the run**, the only place that exception is right. `P-147` guards the write so a failing audit never fails a command. ✅ **Closes `P-15`** |
+| [FW-239](FW-239-Run-Lifecycle-Cache-Invalidation.md) | Run-lifecycle invalidation into `FW-150`'s cache | 4 | 5 | ⚠ **The card names two things that do not exist.** ⛔ **There is no run-lifecycle domain event** — `RunEvents.cs` holds seven records and no run start or end, so `P-141` mints `RunStarted`/`RunEnded` here and leaves the *raising* to `FW-157`/`FW-219`; the handler ships **correctly wired and correctly inert**. ⚠ AC 2's `PayoffStateChanged` is a **hub member**, not an event — subscribe to `BayStateChanged` (`P-142`). ⛔ **`G62` raised: `stagedWeights` has never had an eviction path**, so `PercentRemaining` is computed against the previous rod after any restage — AC 2 is a **bug fix**, not a wiring job |
+
+### 1.7 Phase 3–4 plans — written 29 Aug 2026 (batch 2)
+
+> Downstream of Phase 1B, so they are **not** in §2's graph, §3's critical path or §6's exit
+> criteria. ⚠ **Most are de-stubs, not builds** — `FW-138` shipped 14 controllers and `FW-140`
+> twelve service interfaces with named-throw shells (`P-64`), so the plumbing exists and the
+> method bodies do not.
+
+| Plan | Story | h | Phase | Status |
+|---|---|---|---|---|
+| [FW-154](FW-154-Lines-Status-And-LineStatusService.md) | `GET /lines/status` + `LineStatusService` | 16 | 3 | ⚠ **Further along than the card says — a de-stub.** `GetLinesStatusQuery` and its handler are built (`P-61`) and **already replaced `LinesFixtures.Status()`**; one method body remains. ⛔ **The built code contradicts itself about the owner** — `LineStatusService.cs:13` says *"Owned by FW-164"*, the throw at `:30` says `FW-154`; **`FW-154` is right**. `P-181`: the snapshot must agree with the stream **including about ignorance** (`LineStatus` is dark until `C2`). `P-182`: **FL2 has no bays — not applicable ≠ unoccupied** |
+| [FW-N06](FW-N06-Alert-Rules-Engine.md) | Alert rules engine + `AlertRaised`/`AlertCleared` | 40 | 3 | ⚠ **Phase 4 back-feeds Phase 3** — rule 5 reads `RodStaging`, so the phase's largest story cannot finish inside it; `P-188` ships **four of five**. ⛔ **`P-189`: zero pounds is not an empty bay** — `PayoffWeight` cannot distinguish an unloaded payoff from a sensor reading zero, and a "staged" predicate that omits **welded and blocked** rows fires on a loaded bay. `P-190`: this engine **never writes a PLC tag** — it is not the interlock. ⚠ AC 5 asks for unit tests against `[TS §1.2]`'s *no automated backend tests* |
+| [FW-158](FW-158-PayoffStaging-Commands-And-Queries.md) | `PayoffStagingController` staging commands + queries | 26 | 4 | ⚠ **A de-stub — all four routes are built.** ⛔ **Two acceptance criteria are stale on the card**: the FL2 `422` is **withdrawn** (`FR-533`, and ledger wave **W5 is unapplied**), and `POST /staging/rod/mark-welded` **is not built** — yet AC 2 still requires `MarkStagedRodWeldedCommand` (`P-185`). `P-183`: **the bay conflict is never scoped by line** — FL1/FL3 share `FL1PO`. `P-184`: **`Blocked` is derived and `IsWelded` is a flag**, so every "staged" predicate must state its intent |
+| [FW-160](FW-160-PayoffStateChanged-Broadcasts.md) | `PayoffStateChanged` + check-in broadcasts | 12 | 4 | ⛔ **Read `BayStateChangedBroadcastHandler` before building — `FW-208` step 8 already delivered it**, translation rules and all (`P-139`). `P-187`: **extend, never replace** — a second handler broadcasts twice, invisibly. `P-186`: the broadcast is raised **after the PLC push**, not on the aggregate's commit, or AC 5 is unsatisfiable because the post-commit lane has already fired |
+| [FW-206](FW-206-ITInhibit-Conditions-1-2.md) | `ITInhibit` conditions 1–2 | 8 | 4 | ⛔ **Blocked on `PLC-Q12`** — and the load-bearing half is *"is the material-tracking identifier the run?"*, not its format. ⛔ **`P-132`: must not re-derive `FW-205`'s arming rule** — two evaluations **double-block the same tag** and the second block is invisible. `P-179`: condition 1 ships without condition 2. `P-180`: **condition 1's source is per line** — FL2 checks in a spool, not a rod |
+| [FW-232](FW-232-OrderController-Shell.md) | `OrderController` shell | 3 | 4 | ⚠ **Blocked on `[API §3.1]` minting the controller, not on code.** ⛔ **Must not price the endpoint body** — the handler is `FW-227`, already costed. `P-169`: the action ships **throwing, named for `FW-227`**, so a shell cannot be mistaken for a working endpoint. Deadline is **1A's base-URL freeze** |
+| [FW-233](FW-233-Rod-Surface-Host.md) | A host for the `/rod/**` surface | 6 | 4 | ⛔ **Blocked on `P-54`, which is `open` — and the story may close with NO BUILD** (AC 5). `P-170`: if it folds, it folds into **`PayoffStaging`, not `CheckIn`** — these are pre-check-in reads. `P-171`: whatever serves `Q24` **must not imply a third payoff bay** (`G21`). ⚠ `CoilCheckin` is not the fallback it looks like, and `OI-111` made it answer **less** |
+| [FW-237](FW-237-Service-Identity-For-Unattended-Writes.md) | Service identity for unattended PLC writes | 12 | 4 | ⚠ **`G59`'s identity half only** (`P-127`) — the token half stays with commissioning. The sentinel `SystemOperatorId = "SYSTEM.ITINHIBIT"` is live at `FlatWireOpcOptions.cs:112`. `P-176`: **a reserved non-person, never a badge** — `CoolingChamber`'s route is a precedent for *how*, not for *whose name*. `P-178`: **`FW-234` sequences first**, or AC 3 is a grep against a log file |
+| [FW-240](FW-240-RodOrder-Domain-Entities.md) | `RodOrderAllocation` / `RodOrderConsumption` entities | 8 | 4 | ⛔ **Blocked on `[SVC §3.2a]`'s signature** — `P-91`'s second half. ⚠ **The names appear in `HubContracts.cs` and `RunService.cs`, which makes a grep look like the entities exist** — they are payload shapes. `P-173`: build from the **live column list**, never `CREATE TABLE` (`P-70`'s nine `ALTER`-added columns). `P-172`: **map the `ROWVERSION` in the same commit** — an unmapped token guards nothing, silently |
+| [FW-243](FW-243-D30-Rowversion.md) | `D-30` — `ROWVERSION` on three roots | 6 *(DB 4 · BE 2)* | 4 | 🔴 **Blocked on `D-30`, and it may close at 0 h.** Planned here rather than in the DB folder because **`D-30` is a domain decision with a DB tail**. `P-174`: the decision turns on **concurrent** mutability, not mutability — the card's framing invites a yes on the weaker argument. `P-175`: **AC 4 is the acceptance, not AC 3** — a green mapping proves nothing about a column that may not exist |
+
+### 1.9 Phases 5–6 — written 29 Aug 2026 (batch 4)
+
+> ⚠ **Three of the five are de-stubs** — `WeldEventController`, `DieChangeController` and
+> `RollAdjustController` are built, with `FW-140`'s named-throw shells behind them.
+> ⛔ **`FW-202` is the largest story in this pass at 98 h, and its DB 8 h is ALREADY SPENT** —
+> `G38`'s five `FlatWireRun` prompt columns landed 15 Aug 2026 and **are** its *"server-owned
+> state, persisted against the run"*.
+
+| Plan | Story | h | Phase | Status |
+|---|---|---|---|---|
+| [FW-081](FW-081-Gauge-Trace-Live-Streaming.md) | `gauge-trace-chart` live streaming + runtime source toggle | 28 *(RT 24 · FE 4)* | 5 | ⛔ **`isLive` must switch AFTER MOUNT** — Phase 8's FL2 Live/Profile control needs it and **a hybrid FL3 run shows both at once**; a mount-time flag loses the ring buffer and re-triggers replay-on-join. `P-218`: Live-versus-Profile is decided by **route mode, never by data arriving**. `P-219`: the ~500-point window is a **distance** (2,000 ft at 4 ft spacing), not a duration. `P-220`: **two of the six marker streams have no producer** — recorded, not stubbed |
+| [FW-202](FW-202-FL1-Spool-Completion.md) | FL1 spool completion — stop confirmation, weight basis, `SpoolProcessing` write | 98 *(FE 32 · BE 42 · RT 16 · DB 8)* | 5/8 | ⛔ **Blocked on `Q10`** — `FR-137` unimplementable, and `[CE §2]`'s **16–32 h reserve** applies. ⛔ **Nothing else in the plan creates the `SpoolProcessing` row** (`G37`). ⛔ **The DB 8 h is `G38`'s columns — do not allocate twice.** `P-221`: the prompt ladder's state lives on those columns, **never in memory** — the prompt is durable, so a spurious one is replayed on join. `P-222`: **`OI-25`'s two footage coordinate systems** make the footage subtraction unsafe. `P-223`: the `RUNNING→STOPPED` edge is **dark until `C2`**; speed ≈ 0 is corroboration and **must not be promoted**. `P-224`: ⛔ **variance beyond ±2 % NEVER disables commit** |
+| [FW-166](FW-166-WeldEvent-And-WeldService.md) | `POST /weldevent` + `WeldService` | 12 | 6 | ⛔ **The Fail path is the story**: a Pass sets `IsWelded` in the same transaction, a **Fail writes the row and leaves the rod staged and un-welded**. `P-211`: ⛔ **no uniqueness on the rod pair, and none should exist** — fail-then-remake is the expected case, and Phase 4/6 has otherwise trained you to add one. `P-209`: quality never leaves `WeldEvent`. `P-210`: raise on **Pass only**. ⚠ **Resolve `P-185`** — `FW-158`'s card still wants `MarkStagedRodWeldedCommand` |
+| [FW-167](FW-167-DieChange-And-DieChangeService.md) | `POST /diechange` + `DieChangeService` | 12 | 6 | `P-215`: **the SPC gate is an aggregate state rule** — the story's own justification is that the endpoint must not be bypassable, so the dialog chain is a convenience, not the gate. ⛔ **`D4` is size-level**: the die master table is MVP-2 for good, so **two dies of one diameter share a counter**. `P-216`: it auto-creates an override, so **`OI-103`'s unbounded write reaches it with no human between the die size and the gap** |
+| [FW-169](FW-169-RollOverride-And-RollOverrideService.md) | `POST /rolloverride` + `RollOverrideService` | 12 | 6 | ⛔ **`OI-103`: no bound on a roll-gap change, written straight to the machine.** ⛔ **`FR-212`'s revert is specified, role-gated and UNRECORDABLE** — `G49` B4 leaves no revert columns, so a reverted override reads as still in force; `P-213` ships the forward path and records the gap. `P-212`: **`plcTagWritten` must mean written *and confirmed by read-back*** (`G58`). ⚠ The schedule-level log is correctly absent — MVP-1 never authors a schedule |
+
+### 1.10 Phases 7–8 — written 29 Aug 2026 (batch 5)
+
+> ⛔ **`FW-230` and `FW-231` ship TOGETHER or neither.** `FW-230` built alone **reissues
+> `R00001A` on every spool** — the 26 Aug scheme passes a blank ignore list and relies on
+> `GenerateCoilAlpha`'s own sweep, which only sees alphas that reach the shared schema.
+
+| Plan | Story | h | Phase | Status |
+|---|---|---|---|---|
+| [FW-175](FW-175-Durable-Supervisor-Queue.md) | Durable supervisor pending-approval queue | 16 | 7 | ⚠ **This story IS `G7`'s fix** — and it is **deferred from the trial**, so the trial demonstrates the failure mode it removes; `§2.1` says record that as a known limitation. `P-233`: durability is **persistence + `FW-080`'s replay-on-join**, following `G38` — ⛔ **no broker, no outbox, no poller**. `P-234`: the queue row carries **its own token** regardless of `D-30` — and this story is the **strongest evidence** `WipRejection` is concurrently mutable (`P-174`). `P-235`: the queue **points at** the disposition, never replaces it |
+| [FW-231](FW-231-Register-Alphas-In-Coil-Master.md) | Register every flat wire alpha in the shared coil master | 18 *(DB 12 · BE 6)* | 8 | ⛔ **`OI-138` / `G54` — it gates the whole 26 Aug alpha scheme.** `P-228`: **the tonnage audit is a PRECONDITION** — rod, segments and coils group flat under the six-character root, so a report summing children **triple-counts one rod's weight**, silently; and ⛔ **`D-32` cancelled the audit that would have found which reports care.** `P-230`: `coil_status` comes from the **existing** vocabulary. ⚠ **Cannot be tested on LocalDB** |
+| [FW-230](FW-230-FL1-Segment-Alpha.md) | FL1 segment alpha — one namespace | 14 *(DB 4 · BE 10)* | 8 | ⛔ **Its first acceptance criterion is WITHDRAWN, and the struck text is still on the card** — `P-231`: building the ignore list reintroduces `F10`/`F11`'s caps that change `[N]` retired. ⛔ **Alone it is a silent duplicate-name generator** (`P-229`). `P-232`: `ChildAlpha` is **opaque** — never parsed, no stored letter index. ⛔ **Cite `PlanningDB.dbo.GetCoilAlpha`, do not call it** — a divergent copy |
+| [FW-N02](FW-N02-Spool-Weight-Milestones.md) | Spool completion weight milestones | 4 | 8 | ⛔ **Part A only — and FOUR of the card's five ACs are `FW-202`'s Part B.** `P-236`: **the dated banner wins over the AC list**, or 98 h is built twice. `P-237`: model it on **`FW-N06`**, not on `FW-202`'s prompt — that one is blocking, edge-triggered, dwelled and suppressible, all wrong for an advisory ladder. `P-238`: **`targetLb` has no persisted source**, and `FW-149` already recorded that the notion belongs to **this** story |
+
+### 1.11 Phase 9 — wholly MVP-1 — written 29 Aug 2026 (batch 6)
+
+> ⛔ **Phase 9 is MVP-1 because of the welding-wire customer certificates** (`NFR012`).
+> `CoilOutput` and `CoilTraceability` returned on 11 Aug 2026, and the phase came back **whole**
+> — tables **and** their writer — because returning the tables alone had left the DM010
+> non-overlap trigger guarding rows nothing inserted.
+>
+> ⛔ **Three broadcasts fire on one completion** — `LineStatus`, the packing update and
+> `CoilCompleted` — and **no single story sees that**. `P-246` makes the moment a joint design
+> across `FW-187` and `FW-235`.
+
+| Plan | Story | h | Phase | Status |
+|---|---|---|---|---|
+| [FW-185](FW-185-Coil-Complete-And-Label.md) | `POST /coil/complete`, `GET /coil/{alpha}/label` | 26 | 9 | ⛔ **Blocked on `Q10` (Critical) and `OI-104`** — the weight is unknown and **`SkidId` has no target table**, so `P-242`'s 2-per-skid rule is a **derived count**, not a constraint. `P-243`: build the **pass-schedule snapshot** even though MVP-1 cannot invalidate the reference — the certificate outlives MVP-1. `P-244`: an unresolvable weight is **never written or printed as `0`**. ⚠ **Sequence `FW-245` first**, or `finalSpc` inherits `G51`'s wrong verdict |
+| [FW-187](FW-187-Completion-Broadcasts.md) | Completion broadcasts | 8 | 9 | ⚠ **The card lists no blockers and BOTH acceptance criteria have one.** ⛔ AC 1's `LineStatus` → IDLE is dark until **`C2`** — though `P-247` finds this story *can* assert it, because completion is a fact the service knows rather than a machine word it reads; that makes **three** `LineStatus` sources to reconcile, where `P-181` had two. ⛔ AC 2's *"skid closed"* is a **derived count, not a state** (`P-248`) |
+| [FW-229](FW-229-Fulfilment-Rollup-And-Order-Status.md) | Fulfilment rollup and order status | 16 *(DB 6 · BE 10)* | 9 | ⛔ **Blocked on `Q53`, which decides what the CERTIFICATE states.** ⛔ **Published as VIEWS, not service methods** — one number for the API, the reports and the certificate. `P-250`: **apportion by footage share, never by parent count** — *"a two-parent coil is rarely 50/50"*, and the equal-split fallback is exactly what the criterion forbids. `P-249`: ⛔ **no `ISNULL(weight, 0)`** — on a customer document, *"produced nothing"* and *"cannot yet compute"* are different statements |
+| [FW-235](FW-235-CoilCompleted-Broadcast-Member.md) | `CoilCompleted` broadcast member | 12 *(RT 8 · FE 4)* | 9 | ⛔ **Blocked on `OI-140`, and it may correctly close at 0 h** — **the screens do not go dark today**; DB7 completes through request/response, so what is missing is the broadcast to *other* clients, and that is a workflow question. ⛔ **Breaking under `[API §8]`, so ONE pass** across five artifacts (`P-22`). `P-245`: ⛔ **two of the five named payload fields have no source** — weight (`Q10`) and skid position (`G49` B1) |
+
+### 1.8 The Phase-4 rod ↔ order quintet — written 29 Aug 2026 (batch 3)
+
+> ⚠ **These four use the compact `FW-225`–`FW-231` card variant** — no `As a / I want / So
+> that`, no `Acceptance Criteria:` header, and **no `Rate-card basis:` or `Dependencies:` line**.
+> `FW-228` has **no `Blockers:` line either**, which its plan argues is itself a defect.
+> ⚠ **Their hours use the parenthesised multi-stream form**, which is exactly what
+> [`FW-250`](../../Database/TaskBreakdownPlans/FW-250-Development-Plan-Xlsx-Multi-Stream.md)
+> found the `.xlsx` generator silently dropping.
+>
+> ⛔ **`Q48` gates three of the four.** It asks whether two orders on one rod can have different
+> pass schedules, and the *yes* answer makes the mounted handoff **conditional** — a second path
+> reaching `FW-082`'s tag push and `[PLC]`'s acknowledgement contract, not a branch.
+
+| Plan | Story | h | Phase | Status |
+|---|---|---|---|---|
+| [FW-225](FW-225-Rod-Order-Allocation-Schema-And-Domain.md) | Rod ↔ order allocation — schema and domain model | 28 *(DB 12 · BE 16)* | 4 | ⛔ **Blocked on `Q48`.** ✅ **The DB half is BUILT** — `RodOrderAllocation` `03_Materials.sql:412`, `RodOrderConsumption` `04_Runs.sql:733`, so the 12 DB hours are the **mapping**. The story's real content is **three invariants SQL cannot express** (`P-198`): a rod's ranges **tile** it, a `PinnedBoth` row is its order's only row, an order has ≥ 1 rod. ⚠ **Check the footage bounds' nullability first** — `G42`'s lesson is that a trigger joining on `NULL` passes silently. ⛔ **`UX_RodOrderConsumption_Station` is keyed on `Station`, not `LineId`** — `G21` on a third table |
+| [FW-226](FW-226-Sequence-Validation-Four-Tier.md) | Sequence validation — the four-tier partition | 20 *(BE 14 · FE 6)* | 4 | ⛔ **Blocked on `Q49` and `G52`.** **`G52` is the sharp one: `PinRole='Sole'` passes the `CHECK` and matches NO tier**, so `minTier` is undefined and **both plausible defaults are wrong** — legal everywhere, or refused everywhere, neither announcing itself. `P-200`: the tier function must be **total and fail loudly**. `P-201`: **one shared rule at both entry points** (`Q73` item 7). `P-202`: enumeration is **unreachable from a request path** — `\|freeFull\|! × \|freePartial\|!` |
+| [FW-227](FW-227-Order-Boundary-Handoff.md) | The order-boundary handoff and its notification | 26 *(BE 16 · FE 10)* | 4 | ⛔ **Blocked on `Q48`, `Q50`, `Q51`.** `P-203`: **the close-and-open is ONE transaction** — `UX_RodOrderConsumption_Station` covers both states, so the two-step orderings either get rejected or **open a window in which footage belongs to nothing**, and the second one succeeds. `P-204`: *"once per pairing"* is **persisted state**, not an in-memory flag — the events are durable, so a spurious one outlives the mistake. `P-205`: **no field ships without a persisted source** — event 11's `targetLb` is the counter-example |
+| [FW-228](FW-228-Footage-To-Weight-Converter.md) | Footage-to-weight converter | 12 | 4 | ⚠ **Buildable, and it CANNOT produce a number today** — `Q10` is unanswered and `LbPerFtFactor` is seeded `NULL`, marked *"OQ-10 PENDING"*. `P-206`: an unresolvable factor returns **unknown, never a default** — the same rule as `P-125`/`P-149` on two other columns. `P-207`: **verify the formula without seeding a factor**. `P-208`: the **version** is what stops a later `Q10` answer silently rewriting history. ⛔ **`FR-332a`: the mockup's `0.069 lb/ft` is wrong and already on screen** |
+| ⛔ **`FW-232`–`FW-250` are invisible to a client deliverable** | Five of the nine above (`FW-234`, `FW-235`, `FW-238`, `FW-243`, `FW-247`) use the repository's **parenthesised multi-stream hours form**, which `build_development_plan_xlsx.py` **cannot parse and silently skips**. ⚠ **Not a defect in these cards** — eleven pre-existing stories including `FW-219` and all of `FW-225`–`FW-231` are dropped the same way. Owned by **`FW-250`** |
+
+**The DB stream's ten are `FW-241`–`FW-250`** — deploy step 2's reverse script and sign-off, the
+`ual-database` move, `D-30`, `G49`, `G51`, the `G50`/`G52`/`G41`/`G55` repairs, `G8`'s migration,
+the count-guard blind spot, the DB-stream re-derivation, and ⛔ **`FW-250`, minted when this
+register's own verification run found that `build_development_plan_xlsx.py` silently drops every
+multi-stream story — eleven of them are missing from a client deliverable today**. ⚠ **They are not tabled here** — §8
+says this folder does not cover the DB stream, and a pointer keeps that true. Their register is
+[`Database/TaskBreakdownPlans/Orchestration.md`](../../Database/TaskBreakdownPlans/Orchestration.md)
+§1.3.
 
 ---
 
@@ -261,16 +478,16 @@ is defined once, in the plan named here, with its rationale and fallback.
 | `P-37` | [FW-203](FW-203-OPC-Feed-Simulator.md) | No new interface, and no simulator-aware branch downstream | settled |
 | `P-38` | [FW-218](FW-218-Sim-Control-Surface.md) | Conditional route registration, not a policy guard | settled |
 | `P-39` | [FW-218](FW-218-Sim-Control-Surface.md) | An increment of `FW-215` — a subset, not a variant | settled |
-| `P-40` | [FW-157](FW-157-CheckIn-Rod-And-CheckInService.md) | Ordered path now; recovery **strategy** behind `G2` | settled |
-| `P-41` | [FW-082](FW-082-PLC-Tag-Push-On-Acknowledgement.md) | Push edge type with its path unresolved, and **fail loudly** | settled |
-| `P-42` | [FW-164](FW-164-Run-Queries-And-RunQueryService.md) | Read the order block through a view; the DTO carries nulls | settled |
-| `P-43` | [FW-168](FW-168-Spc-And-SpcService.md) | The tolerance band is data, and it is **unseeded** | settled |
-| `P-44` | [FW-170](FW-170-Pause-Resume-And-RunControlService.md) | Four resume outcomes; the greyed one still exists | settled |
+| `P-40` | [FW-157](FW-157-CheckIn-Rod-And-CheckInService.md) | Ordered path now; recovery **strategy** behind `G2` | settled — re-confirmed 29 Aug against the built code |
+| `P-41` | [FW-082](FW-082-PLC-Tag-Push-On-Acknowledgement.md) | Push edge type with its path unresolved, and **fail loudly** | settled — ✅ **implemented by `P-111`**, which fails the push with zero tags written |
+| `P-42` | [FW-164](FW-164-Run-Queries-And-RunQueryService.md) | Read the order block through a view; the DTO carries nulls | settled — ⚠ **extended by `P-254`**: the fields it makes nullable do not exist yet |
+| `P-43` | [FW-168](FW-168-Spc-And-SpcService.md) | The tolerance band is data, and it is **unseeded** | settled — ⚠ **extended by `P-255`**: the request carries a tolerance the service must discard |
+| `P-44` | [FW-170](FW-170-Pause-Resume-And-RunControlService.md) | Four resume outcomes; the greyed one still exists | settled — ✅ **the `CHECK` carries four**; ⚠ there is **no enum**, so membership is FluentValidation's |
 | `P-45` | [FW-172](FW-172-Run-Event-Markers.md) | This story owns four markers; the other two are `FW-177`'s | settled |
 | `P-46` | [FW-174](FW-174-WipRejection-And-Checkout-Services.md) | Persist PENDING DISPOSITION here; the queue is `FW-175`'s | settled |
-| `P-47` | [FW-177](FW-177-Exception-Broadcasts.md) | Broadcast to a group, not to a connection | settled |
+| `P-47` | [FW-177](FW-177-Exception-Broadcasts.md) | Broadcast to a group, not to a connection | settled — ⛔ **the group does not exist**; `P-257` is what it costs |
 | `P-48` | [FW-179](FW-179-CheckIn-Spool-And-Spools-Query.md) | `404` means the alpha does not exist, and nothing else | settled |
-| `P-49` | [FW-181](FW-181-FL2-Null-Gauge-Contract.md) | The client binds to **route mode**; the server must publish it | settled |
+| `P-49` | [FW-181](FW-181-FL2-Null-Gauge-Contract.md) | The client binds to **route mode**; the server must publish it | settled — ✅ **built**: `ActiveRunResponse.RouteMode`, pending population and the TS mirror |
 | `P-50` | [FW-N04](FW-N04-FlatWire-Solution-Skeleton.md) | Fifteen controller shells, not sixteen — `/order/**` is raised, not invented | settled |
 | `P-51` | [FW-N04](FW-N04-FlatWire-Solution-Skeleton.md) | Register `IMediator` in `Program.cs`; handlers stay with `FW-139` | settled |
 | `P-52` | [FW-138](FW-138-Fifteen-Thin-Controllers.md) | Request/response types live in `FlatWire.Domain/Models/{Area}/`, authored by `FW-138` and **inherited** by the handler stories | settled |
@@ -358,17 +575,73 @@ is defined once, in the plan named here, with its rationale and fallback.
 | **`P-133`** 🔴 | [FW-203](FW-203-OPC-Feed-Simulator.md) → `PLC-Q01` | ⛔ **`LineStateMap` is `{}` on all three lines, so `TryMapLineState` returns FALSE for every value and `FW-150` broadcasts NO `LineStatus` at all.** Three of `FW-203`'s acceptance criteria depend on it, including the `RUNNING → STOPPED` edge that arms `FW-202`'s stop-confirmation prompt — a trial screen. ✅ **Fixed in the slot built for it: a values-only `LineStateMap` edit** giving the simulated environment a vocabulary (`RUN`→`Running`, `STOP`→`Idle`). **This is `P-37` working, not an exception to it** — `FW-150` still cannot tell a simulated feed from a real one, because the whole difference is configuration, and at `C2` the controller's real vocabulary replaces these entries in the same slot with no code moving. ⛔ **The tempting wrong fix is already forbidden by the resolver's own comment**: *“callers render unknown, and never resolve the RUNNING to STOPPED edge by adding an enum member”* | settled |
 | **`P-134`** | [FW-203](FW-203-OPC-Feed-Simulator.md) | **The simulator is the existing flag's `else`, not a second flag.** `AddFlatWireOpcIngest` already branches on `SimulateOpcFeed`, so AC 6's *“one flag pair”* needs no new key. ⚠ **The if/else is doing more than tidiness:** `FlatWireOpcOptions` states in prose that *“exactly one publisher may write to the bounded channel … registering both would double-write every tick, two snapshots per line from alternating sources, and a gauge trace that looks like noise”* — a branch makes that **unrepresentable**, where two independent flags would leave it as a deployment mistake nobody would diagnose from the symptom | settled |
 | **`P-135`** 🔴 | [FW-203](FW-203-OPC-Feed-Simulator.md) → `G39` | ⛔ **The nominal trace must centre on the TRIAL FIXTURES — found by running it.** The first build centred FL1 on **0.0325 in**, a plausible number nowhere near the seeded schedules: `PS-1100-FL1-001` is **0.1100 ± 0.0020** and `PS-1100-FL2-002` is **0.1000 ± 0.0020**. `FW-150` computes `InSpec` against the active RUN's band, so **every FL1 reading would have recorded out of spec from the first tick** and DB3's N-consecutive auto-prompt would fire before anyone touched a control — leaving the criterion *“steered to produce in-spec, drifting and out-of-spec”* with **no in-spec baseline to steer away from**. Now per line, from §3.1's fixtures; a run with a different band is **steered, not rebuilt**. ⚠ **`G39` in miniature**: the number was invented, looked reasonable, and was wrong by a factor of three | settled |
+| **`P-137`** 🔴 | [FW-208](FW-208-Domain-Events-Post-Commit-Dispatch.md) → `[SIG §5.2]`, `OI-140` | ⛔ **`CoilCompleted` gets NO broadcast handler, because `IFlatWireClient` has no member to send it on — found by writing the handlers.** `P-96` assigned the event a lane and a handler description; the lane table was written against the **events** and never checked against the **interface**. `[SIG §5.2]`'s fourteen events and `[SIG §5.4]`'s six markers were counted member by member and nothing carries a completed output coil. **All three alternatives lose:** adding a member is a BREAKING change (`[API §8]`) that would have to move `[SIG]`, `IFlatWireClient`, the Angular mirror `[SIG §5.6]` and the not-yet-existing `FW-136` in one pass, and `P-22` mints the interface **whole** precisely so it is not widened later; sending it on a neighbouring member would deliver a coil completion to a `RodCheckoutEvent` subscriber; deleting the event hides the gap. **So the event is raised, dispatched, and deliberately reaches no handler** — recorded as **`OI-140`**. ⚠ The screens do not go dark: DB7 completes the coil through its own request/response, so the operator who did it sees the result; what is missing is the broadcast to the **other** clients on the line, and whether that is wanted is the client's call. ⚠ **This is also the source of the *"eight broadcast handlers"* figure** carried by `FW-080`, `FW-149` and this file: `P-96`'s six events with two on both lanes make eight **handlers** — six post-commit, two in-transaction — not eight broadcasts. **Seven exist; the eighth is this one** | settled — **`OI-140` open with the client** |
+| **`P-138`** 🔴 | [FW-208](FW-208-Domain-Events-Post-Commit-Dispatch.md) → `FW-142` | ⛔ **The post-commit replay was UNGUARDED, and the rule saying it must not be was written down pointing at an enforcement that did not exist.** `DispatchLanes.cs` says *"A failure here must not fail the request … See the exception handling in `FlatWireDbContext.CommitTransactionAsync`"* — and `CommitTransactionAsync` ended with a bare `await this.mediator.PublishDeferredAsync(deferred)` outside the `try`. The placement is **right** about `P-94` property (4) (a throw must not reach a `catch` that rolls back an already-committed transaction) and leaves the throw propagating to the caller. **The consequence is the worst pairing available: the transaction has committed, the material is on the floor, the rows are written — and the request returns `500`**, so a retry re-runs a command whose effect already happened. Invisible until now because **with no broadcast handler written, nothing could throw**. The guard is `PublishDeferredSafelyAsync`, and **both** entry points route through it. ⚠ **Caught at the context, not in each handler** — the same reasoning as `P-34`: a rule at the one shared choke point holds for handlers nobody has written yet. ⚠ It required `ILogger<FlatWireDbContext>` on the constructor, with `NullLogger` at design time. ⚠ One event's failure abandons the rest of that commit's batch, accepted because every broadcast in one commit addresses one line | settled |
+| **`P-139`** | [FW-208](FW-208-Domain-Events-Post-Commit-Dispatch.md) → `FW-207` | **An event carries the facts ITS payload needs, and the handler translates the vocabulary.** Three of the five broadcast handlers could not fill their payload from the event they were given, and a post-commit handler must not touch a tracked entity (`P-94` property 3) — so the aggregate carries the value. **`WeldRecorded` gained `LineId`**, and that one was a hard blocker rather than a thinness: `IFlatWireBroadcaster.Line(LineId)` is the only way to address a group, so the weld was **unbroadcastable** (`WeldEvent` had carried `LineId` since `FW-207`; only the event was missing it). **`RunResumed` gained `FootageAtResume`** because `PauseMarker.FootagePosition` is non-nullable — sourced from the open `RunPauseEvent.FootageAtPause`, since the line stood still. **`BayStateChanged` gained `RodSeqno`, `IsWelded` and `IsBlocked`**, the last because `Blocked` is DERIVED (`G21`) and cannot be recovered from the other values. ⚠ **The bay-state vocabulary is translated in the HANDLER**: the domain says `Staged`/`Welded`/`CheckedIn`/`Unstaged` and `[SIG §5.2]` publishes `NotStaged`/`Staged`/`Active`/`Blocked` — different lists. `Blocked` is tested first (it is layered on `Staged` and must win), `Welded` maps to `Staged` with the flag carried separately, and **a word outside the four broadcasts nothing and logs at error level** rather than being passed to a client that has no rendering for it. ⚠ `RodSeqno` 0 publishes as `null` — `Stage` assigns no seqno. ⚠ A null `LatchedWeightLb` is sent as `0` with a warning, because the published payload is non-nullable and the prompt is the operator's only cue that the line stopped | settled |
 | **`P-136`** 🔴 | [FW-218](FW-218-Sim-Control-Surface.md) → `FW-145` | **Two choices `P-38` implies but does not state.** **(1) A minimal-API GROUP, not a controller**, so *“not registered at all”* is literal: an attribute-routed controller is discovered by the MVC application model and would have to be REMOVED by a convention — the route exists and is then un-mapped, which is the weaker claim `P-38` exists to reject. Mapped inside the same `if` that chooses the publisher, so **the control plane and the thing it controls can never disagree about whether the feed is synthetic**. **(2) The role layer FAILS CLOSED.** `[SIM §8.4]` says Engineer or Admin, never Operator — but **`FW-145` is unbuilt and issues no role claim, so these routes deny everyone today**. The alternative, a bare `[Authorize]`, would have let the trial run now and shipped *“any authenticated operator may drive the control plane”*. ⚠ **A control surface that is too permissive is invisible; one that is too strict announces itself on the first call** — so `FW-145` is a hard dependency for the acceptance run, recorded rather than discovered on the day. `P-38`'s absolute is unaffected: the 404 is what matters and it is verified | settled — **`FW-145` owed before the acceptance run** |
+| **`P-141`** | [FW-239](FW-239-Run-Lifecycle-Cache-Invalidation.md) → `FW-157`, `FW-219` | **The two run-lifecycle events are minted by their CONSUMER and raised elsewhere.** `RunEvents.cs` holds seven records and **none marks a run starting or ending**, so AC 1's *"the run's lifecycle domain events"* has nothing to bind to. `FW-239` declares `RunStarted`/`RunEnded`; `FW-157` and `FW-219` raise them. The precedent is `P-22` — `IFlatWireClient` landed with `FW-080` though it was `FW-149`'s. ⚠ **The handler is inert until they do**, and the build record must say so, as `FW-205`'s did. ⛔ **Do not substitute `CoilCompleted`** — a run produces several coils, so it would drop the cache mid-run | settled |
+| **`P-142`** | [FW-239](FW-239-Run-Lifecycle-Cache-Invalidation.md) | **AC 2's `PayoffStateChanged` names the moment, not the type.** It is a member of `IFlatWireClient` — an outbound broadcast — and a MediatR handler cannot subscribe to one. The domain event is **`BayStateChanged`**, which `FW-208` already dispatches. A reading of the card, so no requirement moves | settled |
+| **`P-143`** | [FW-239](FW-239-Run-Lifecycle-Cache-Invalidation.md) | **`IRunCacheInvalidator` on the singleton, not the hosted service injected.** ⚠ **`AddHostedService<T>` plus `AddSingleton<T>` yields TWO instances**, and the handler would evict from a cache the loop never reads. Register the concrete type once and resolve it for both roles | settled |
+| **`P-144`** | [FW-234](FW-234-Audit-Log-Persistence-Target.md) | **The correlation id is resolved inside the implementation and never added to `AuditEntry`.** AC 1 requires the column; adding the field would change the record type and reach all four call sites — breaking the one promise `SerilogAuditLog`'s class comment makes about this story (*"No call site changes"*) | settled |
+| **`P-145`** | [FW-234](FW-234-Audit-Log-Persistence-Target.md) | **Both legs, not a swap** — a composite fanning out to Serilog **and** the table. A trail that leaves the log loses the ability to read an audit record beside the request that produced it, which is how `FW-151`'s harness found `P-112` | settled |
+| **`P-146`** | [FW-234](FW-234-Audit-Log-Persistence-Target.md) | **The audit table takes NO FK to the run** — indexed on `RunAlpha`, not constrained. An audit row must outlive its subject, and `G17` already makes run alphas logical references. ⚠ **A deliberate exception to the enforced-FK stance** (`D-04`, `D-31`) and the only table where it is correct | settled |
+| **`P-147`** | [FW-234](FW-234-Audit-Log-Persistence-Target.md) | **The persistence leg is guarded; a failing audit write never fails a command.** `P-138`'s rule. `FR-072` writes the record **before** the push precisely so a failed push leaves evidence — an audit path that can propagate an exception is **less** reliable than the Serilog version it replaces | settled |
+
+> ⚠ **`P-148`–`P-168` are minted by the DB stream's plans** and are listed in
+> [`Database/TaskBreakdownPlans/Orchestration.md`](../../Database/TaskBreakdownPlans/Orchestration.md) §4.
+> The series is **continuous across the repository**, not across this folder alone — that file
+> mints no `P-##` itself, but the **plans in it do**.
+
+**`P-169`–`P-197` — minted by batch 2, 29 Aug 2026.** Grouped by plan; each is defined once, there.
+
+| Range | Plan | Subject |
+|---|---|---|
+| `P-169` | [FW-232](FW-232-OrderController-Shell.md) | The action ships **throwing, named for `FW-227`** — an empty success would let 1A build against a lie |
+| `P-170`–`P-171` | [FW-233](FW-233-Rod-Surface-Host.md) | If it folds, it folds into **`PayoffStaging`, not `CheckIn`** · whatever serves `Q24` **must not imply a third payoff bay** |
+| `P-172`–`P-173` | [FW-240](FW-240-RodOrder-Domain-Entities.md) | The `ROWVERSION` is mapped **in the same commit as the entity** · the entity is built from the **live column list**, never the DDL file |
+| `P-174`–`P-175` | [FW-243](FW-243-D30-Rowversion.md) | `D-30` turns on **concurrent** mutability, not mutability · **AC 4 is the acceptance, AC 3 is not** |
+| `P-176`–`P-178` | [FW-237](FW-237-Service-Identity-For-Unattended-Writes.md) | A **reserved non-person**, not a badge · **one source**, never a constant per call site · **`FW-234` sequences first** |
+| `P-179`–`P-180` | [FW-206](FW-206-ITInhibit-Conditions-1-2.md) | Condition 1 ships without condition 2 · condition 1's source is **per line** — FL2 checks in a spool |
+| `P-181`–`P-182` | [FW-154](FW-154-Lines-Status-And-LineStatusService.md) | The snapshot and the stream must agree **including about ignorance** · **FL2 has no bays**, which is not the same as empty bays |
+| `P-183`–`P-185` | [FW-158](FW-158-PayoffStaging-Commands-And-Queries.md) | The bay conflict is **never line-scoped** · no branch says "staged" without saying what it means about **welded and blocked** · `MarkStagedRodWeldedCommand`'s fate is decided **before** the story starts |
+| `P-186`–`P-187` | [FW-160](FW-160-PayoffStateChanged-Broadcasts.md) | The broadcast is raised **after the PLC push**, not on the aggregate's commit · the existing handler is **extended, never replaced** |
+| `P-188`–`P-190` | [FW-N06](FW-N06-Alert-Rules-Engine.md) | **Four rules ship in Phase 3**, rule 5 with its producer · occupancy is read from `RodStaging` and the predicate **names welded and blocked** · the alert engine **never writes a PLC tag** |
+| `P-191`–`P-197` | DB records | Index/procedure stories close on a **captured plan or a concurrency demonstration**, never the DDL alone (`P-191`) · see the DB index §4 |
+
+> ⚠ **`P-183`, `P-184` and `P-189` are the three to read before any bay or staging code.** They
+> are the same defect class seen from three angles: **`Blocked` is derived, `IsWelded` is a flag,
+> and FL1/FL3 share one physical bay** — so a predicate that looks obviously correct is wrong in
+> a way no compiler and no membership diff can see.
+
+**`P-254`–`P-257` — minted by the 29 Aug 2026 re-review of the ten Phase-4–8 plans against the
+built code.** Each is defined once, in its own plan.
+
+| Id | Plan | Subject |
+|---|---|---|
+| `P-254` | [FW-164](FW-164-Run-Queries-And-RunQueryService.md) | The Order block is a **contract addition**, made once and all-nullable — `[API §4.7a]` never specified it, and neither does the built DTO |
+| `P-255` | [FW-168](FW-168-Spc-And-SpcService.md) | **The band is server-supplied and the verdict has one site** — the request's tolerance is display, not input, and EF must stop writing the computed columns |
+| `P-256` | [FW-172](FW-172-Run-Event-Markers.md) | **`LineStatus` RUNNING ↔ PAUSED rides the pause/resume domain events**, not the telemetry loop, whose channel is dark until `C2`. `FW-177`'s `→ IDLE` inherits it |
+| `P-257` | [FW-177](FW-177-Exception-Broadcasts.md) | The **`Supervisors` group is this story's to build** — hub join on connect plus one broadcaster member, name built server-side. **Unpriced in its 16 h** |
+
+> ⚠ **The re-review's structural finding: five of the ten plans described work that is already
+> built, and three contained a statement that was wrong against the code.** `FW-174`'s missing
+> `G24` columns exist; `FW-181`'s *"`null`, not omission"* would have shipped null-valued events
+> the loop forbids; `FW-164`'s *"`[API §4.7a]` specifies the combined shape"* described a shape
+> that was never written. **Read a plan's *What already exists* table before its build order.**
+
+**New decisions are minted at `P-258`+.**
+
 > **`settled` means decided and recorded, not ratified by a third party** — it means the plan
 > made the call, gave its reasoning, and nothing blocks building to it. **New decisions are
-> minted at `P-137`+**, and the series stays continuous across the folder. *(`P-99`–`P-102`
+> minted at `P-169`+**, and the series stays continuous across the folder. *(`P-99`–`P-102`
 > were taken by `FW-080`'s 28 Aug refresh, re-reviews and build; `P-103`–`P-107` by `FW-151`'s
 > 28 Aug review against the built `ual-api`, **`P-108`** by its pre-execution re-review, and
 > **`P-109`–`P-112`** by its build, and **`P-113`–`P-117`** by `FW-149`'s 28 Aug review and its pre-execution re-review;
 > **`P-118`–`P-123`** by `FW-N05`, **`P-124`–`P-126`** by `FW-150`, and **`P-127`–`P-132`** by `FW-205`'s
 > 29 Aug review, its pre-execution re-review — which **corrected `P-128` and `P-129`**, both of
 > which would have shipped a defect — and its build, which minted **`P-132`**; **`P-133`–`P-135`** by
-> `FW-203`'s pre-execution re-review and build, and **`P-136`** by `FW-218`'s.)*
+> `FW-203`'s pre-execution re-review and build, **`P-136`** by `FW-218`'s, and
+> **`P-137`–`P-139`** by `FW-208`'s step-8 build on 29 Aug 2026.)*
 >
 > ⚠ **`P-105` is the one to read before any PLC write is coded**, and it is the only row in this
 > register whose evidence is a defect in **another service**: `OPCConnection` reports no write
@@ -394,14 +667,15 @@ is defined once, in the plan named here, with its rationale and fallback.
 | **Before QA0** *(not before the build)* | **`G6` residual** — the six role claim **values**, which are coded rather than `[SEC §8]`'s labels | ⚠ **Verification, not construction.** The build proceeds against `FlatWireRoles`' six constants; §6's matrix walk cannot pass until the mapping lands. **Fails closed in `FW-145` and *silent* in `FW-177`** | [FW-145 §5](FW-145-JWT-And-Role-Policies.md) · [FW-177 §3.1](FW-177-Exception-Broadcasts.md) |
 | **Before T2** | **`G10`** — IIS WebSockets on the target | Transport **silently** falls back to long-poll; cadence assertions change character. **A provisioning task, not a build one** | [FW-080](FW-080-FlatWireHub.md) |
 | **Before T2** | **`G2` / `OI-39`** — cross-DB check-in recovery | ⚠ **Narrowed twice and no longer blocks a build** (28 Aug review, `P-27`): `D-32` removed the mirror option, `[ARC §10]`/`FR-526` removed the cross-database half, and the compensation this service owns is **three specified steps**. Carries the **24–64 h** reserve, which `[ARC §10]` asks to be **re-derived before S2** — its cross-database portion is spent. Phase 4 stays provisional until it closes formally. ⚠ **`G30` is now the only open input** | [FW-151](FW-151-PLCTagService.md) · [FW-146](FW-146-Exception-Middleware-And-Envelope.md) · [FW-143](FW-143-Serilog-And-Audit-Log.md) |
-| **Before the Phase-4 push is built** | ⛔ **`G58`** — `OPCConnection` reports no write failure | **`FR-074` is unimplementable from the response.** `200` regardless of outcome, `IsGood` never set, `OPCUAManager.cs:362` verifies by reference equality and swallows the result. `P-105`'s confirm read is the workaround; per-tag status is the fix and belongs to that service | [FW-151](FW-151-PLCTagService.md) · [FW-082](FW-082-PLC-Tag-Push-On-Acknowledgement.md) |
-| **Before Phase 14 opens** | ⛔ **`G60`** — nothing registers flat wire with `OPCConnection` | **No `OPCModules` member and no `CommonDB` OPC registration** (`OPCModules`/`OPCServers`/`OPCTags`/`OPCTagApplicationMapping`), so `GetOPCInfo` cannot succeed and `WriteTag` cannot be called. **Not a build blocker** — simulate short-circuits before the resolve — but the resolve-and-write path is then **dead code until the 40 h commissioning window**, where `G33` and `G32` also have to be settled. ⚠ Decide `OI-A` first or the tag rows get written twice | [FW-151](FW-151-PLCTagService.md) · `FW-003` *(the `machines` rows it would key on)* |
-| **Before `FW-205` is built** *(the audit half — see `P-127`)* | ⛔ **`G59`** — no service identity for a background PLC write | ⛔ **It is TWO gates, not one (`P-127`).** The **`OperatorId`** half is due now: the `Attempted` audit record is written **before** the simulate branch and `AuditEntry.OperatorId` is required, so the first set cannot be written without an answer. The **token** half is due at commissioning: simulate returns before `GetOPCInfo`, so nothing reaches the network today. ⚠ **And the failure is not `400`/`401`** — `RestClient` dereferences the null `HttpContext` and returns `"Object reference not set to an instance of an object."` **in-band, before the network** (confirmed by `FW-151`'s harness, scenario 9). `CoolingChamber` logs in by badge number; **nothing owns that decision for FlatWire** | [FW-151](FW-151-PLCTagService.md) · [FW-205](FW-205-ITInhibitService.md) · [FW-N05](FW-N05-OPC-Ingest-And-Bounded-Channel.md) |
-| **Before the Phase-4 schema freeze** | **`D-30`** — `ROWVERSION` absent on `WeldEvent`, `RodCheckout`, `WipRejection` | 3 of the 7 aggregate roots, all mutated after insert | [FW-207](FW-207-Domain-Model.md) · [FW-142](FW-142-Dapper-EF-And-FlatWireDbContext.md) · [FW-141](FW-141-Repository-Layer.md) |
+| **Before the Phase-4 push is built** *(owner: **`FW-236`**)* | ⛔ **`G58`** — `OPCConnection` reports no write failure | **`FR-074` is unimplementable from the response.** `200` regardless of outcome, `IsGood` never set, `OPCUAManager.cs:362` verifies by reference equality and swallows the result. `P-105`'s confirm read is the workaround; per-tag status is the fix and belongs to that service | [FW-151](FW-151-PLCTagService.md) · [FW-082](FW-082-PLC-Tag-Push-On-Acknowledgement.md) |
+| **Before Phase 14 opens** *(owner: **`FW-238`**)* | ⛔ **`G60`** — nothing registers flat wire with `OPCConnection` | **No `OPCModules` member and no `CommonDB` OPC registration** (`OPCModules`/`OPCServers`/`OPCTags`/`OPCTagApplicationMapping`), so `GetOPCInfo` cannot succeed and `WriteTag` cannot be called. **Not a build blocker** — simulate short-circuits before the resolve — but the resolve-and-write path is then **dead code until the 40 h commissioning window**, where `G33` and `G32` also have to be settled. ⚠ Decide `OI-A` first or the tag rows get written twice | [FW-151](FW-151-PLCTagService.md) · `FW-003` *(the `machines` rows it would key on)* |
+| **Before `FW-205` is built** *(the audit half — see `P-127`; owner: **`FW-237`**)* | ⛔ **`G59`** — no service identity for a background PLC write | ⛔ **It is TWO gates, not one (`P-127`).** The **`OperatorId`** half is due now: the `Attempted` audit record is written **before** the simulate branch and `AuditEntry.OperatorId` is required, so the first set cannot be written without an answer. The **token** half is due at commissioning: simulate returns before `GetOPCInfo`, so nothing reaches the network today. ⚠ **And the failure is not `400`/`401`** — `RestClient` dereferences the null `HttpContext` and returns `"Object reference not set to an instance of an object."` **in-band, before the network** (confirmed by `FW-151`'s harness, scenario 9). `CoolingChamber` logs in by badge number; **nothing owns that decision for FlatWire** | [FW-151](FW-151-PLCTagService.md) · [FW-205](FW-205-ITInhibitService.md) · [FW-N05](FW-N05-OPC-Ingest-And-Bounded-Channel.md) |
+| **Before the Phase-4 schema freeze** *(owner: **`FW-243`**)* | **`D-30`** — `ROWVERSION` absent on `WeldEvent`, `RodCheckout`, `WipRejection` | 3 of the 7 aggregate roots, all mutated after insert | [FW-207](FW-207-Domain-Model.md) · [FW-142](FW-142-Dapper-EF-And-FlatWireDbContext.md) · [FW-141](FW-141-Repository-Layer.md) |
 | **Before Phase 8 ships** | **`OI-47`** — hybrid-origin guard is *undefined*, not merely open | `TC-118` is P1 and reads *"gate fails until specified"* | [FW-138](FW-138-Fifteen-Thin-Controllers.md) *(de-stub)* |
 | No date | **`G9` / `OI-34`** — real-time NFRs undefined | **Blocks validation, not build** — the channel cannot be sized and the load test cannot fail | [FW-N05](FW-N05-OPC-Ingest-And-Bounded-Channel.md) · [FW-150](FW-150-Broadcast-Loop.md) · [FW-080](FW-080-FlatWireHub.md) *(`FW-148` removed 27 Aug 2026 — cadence deviation is `FW-150`'s instrument, not the health surface's; `P-86`)* |
 | No date | **`G33` / `PLC-Q05`** — **every** measure segment is ours | ⚠ **A wrong path fails silently** — the write reports success while the line keeps its previous settings. *(The **`41`** figure is stale — it was FL1 15 · FL2 14 · FL3 23 on 4 Aug 2026, before `[PLC]` v1.1's dancer rows; `FW-144` measured **72** bound paths. Re-baselining is `[GAP]`'s, not a leaf plan's — 28 Aug review.)* ⚠ `P-105`'s confirm read narrows this and does not close it | [FW-151](FW-151-PLCTagService.md) · [FW-144](FW-144-Configuration-Binding.md) · [FW-143](FW-143-Serilog-And-Audit-Log.md) |
-| No date | **`P-15`** — the audit log has no persistence target | AC 3 of `FW-143` cannot be met; would be a 29th table via 1C | [FW-143](FW-143-Serilog-And-Audit-Log.md) |
+| No date | **`P-15`** — the audit log has no persistence target | AC 3 of `FW-143` cannot be met. ✅ **Owned by `FW-234`, and now PLANNED** (§1.6, 29 Aug 2026) — the BE half is one class and one registration, because `SerilogAuditLog`'s class comment specifies the swap. ⚠ **"a 29th table" is stale** — the build is at `[DBD §6.2]`'s baseline and this would be one more; **that file states the count, not this one** | [FW-143](FW-143-Serilog-And-Audit-Log.md) · [FW-234](FW-234-Audit-Log-Persistence-Target.md) |
+| **Before the Phase-1 gate** | ⛔ **Exit criterion 6 has no named reviewer** | With **no automated backend tests** (`[TS §1.2]`) the QA0 walkthrough is the **entire** verification of this layer, and `phase-01b` L124 says without a reviewer and a slot *"the Phase-1 gate has no 1B criterion at all"*. ⚠ **Deliberately not a story** — QA is phase-level (`[TB §7.1]`), so what is missing is a name and a slot, not effort (§1.5 Table D) | [FW-138 §6.1](FW-138-Fifteen-Thin-Controllers.md) · §6 |
 
 ✅ **`G38` closed 15 Aug 2026** — `FlatWireRun`'s five prompt columns landed, so exit
 criterion 4's durability half is buildable. ⚠ **It carries 0 h anywhere** — see §8.
@@ -421,7 +695,8 @@ criterion 4's durability half is buildable. ⚠ **It carries 0 h anywhere** — 
 | 5 | **`ITInhibitService`** — conditions 3–5, line-scoped, **no operator clear path** | [FW-205](FW-205-ITInhibitService.md) |
 | 6 | `/health` green + **QA0 walkthrough signed off by a named reviewer** | [FW-148](FW-148-Health-Checks.md) · [FW-138 §6.1](FW-138-Fifteen-Thin-Controllers.md) |
 
-> 🔴 **Criterion 6 has no reviewer.** `phase-01b` L124: *"needs a named reviewer and a slot in
+> 🔴 **Criterion 6 has no reviewer** — now carried in §5's calendar with a date, and in §1.5
+> Table D with the reason it is not a story. `phase-01b` L124: *"needs a named reviewer and a slot in
 > the 12-day window **or the Phase-1 gate has no 1B criterion at all**."* With **no automated
 > backend tests** (`[TS §1.2]`), the walkthrough is the entire verification of this layer.
 > The checklist is [FW-138 §6.1](FW-138-Fifteen-Thin-Controllers.md); **`reviewer: TBD`.**
@@ -479,12 +754,16 @@ rather than edited:
 2. **`[TRP §1.4]`'s 1B Full column sums to 260 against a stated 268** — 8 h unaccounted, not
    fixable without knowing the intended row. *(The Trial column reconciles exactly to 231.)*
 3. **`G38`'s durability carries 0 h anywhere**, while exit criterion 4 requires it.
-4. **`/rod/**` has no host** — `P-53` withdrew `RodReceivingController`, but `[API §4.3]` and
+4. ✅ **Now owned by `FW-233`** (BE 6 h — shell and route wiring; `[API §4.20]`'s order set stays
+   `FW-226`'s). The finding stands and the decision is still `[API]`'s.
+   **`/rod/**` has no host** — `P-53` withdrew `RodReceivingController`, but `[API §4.3]` and
    `§4.20` remain specified. `FR-042`, `FR-064`, `FR-043`'s carry-forward gate and `Q24`'s
    station switching now have **no endpoint**, and `CoilCheckin`'s `getCheckinCoilInfo` covers
    only the shared-schema half. Three options in `P-54`; **`[API]`'s call, and it also reaches
    `[TRP]`**, whose DB2 is a trial screen that scans a rod.
-5. **`/order/**` has no controller** — `[API §4.21]` specifies `POST /order/{orderNo}/complete`
+5. ✅ **Now owned by `FW-232`** (BE 3 h — the shell only; the handler is **`FW-227`** and is already
+   costed, so this story must not price the endpoint body).
+   **`/order/**` has no controller** — `[API §4.21]` specifies `POST /order/{orderNo}/complete`
    and `[API §3.1]` has no owner. `P-50` builds the fifteen and stops; the recommendation is an
    `OrderController` sixteenth at **+3 h**, and it hardens now that there is no rod controller
    to fold it into.
@@ -504,8 +783,17 @@ happy path. Still stale:
 
 ### 8.3 The nine backend stories with no plan and no other home
 
+⚠ **This section's claim that *"every other BE/RT story is either planned here or named above"*
+was NOT true, and the plan-authoring pass of 29 Aug 2026 is what established it.** Reconciling
+`[TB §7]`'s 163 story cards against the plan files gave **72 unbuilt BE/DB/RT stories with no
+plan file** — the nine below plus roughly sixty this section never named. **Phases 1B → 9 are
+now being planned in six batches** (Batch 1 delivered `FW-234`, `FW-239` and the DB stream's
+seven); **Phases 10–14 and the unscheduled simulator set remain deliberately unplanned.**
+
 Every other BE/RT story in `[TB §7]` is either planned here or named above. **These nine are
-not**, and two of them are in-scope MVP-1 work rather than deferred scope:
+not**, and two of them are in-scope MVP-1 work rather than deferred scope. ⚠ **The work owed on
+each is a PLAN FILE, not a new id** — they are re-tabled with the rest of the unplanned set in
+§1.5 Table B:
 
 | Story | Phase | Subject | |
 |---|---|---|---|
@@ -532,6 +820,8 @@ only unplanned. They sit outside the trial, which is why they have not been reac
   content, so nothing else drifts.
 - **A decision is ratified → strike it from §4** and note the outcome in the owning plan's §5.
 - **A blocker closes → strike it from §5** and update the owning plan's open-items table.
+- **A pending item gains an id → add it to §1.5 and give it a `[TB §7]` card in the same pass.**
+  A row here with no card has no hours to quote, and §1.5 quotes rather than states them.
 - **Never add build detail here.** It belongs in the plan; two homes is how the six PLC tag
   copies happened.
 - **Never restate an hour figure.** §1 quotes `[TB §7]`; §3's 134 h is derived for sequencing

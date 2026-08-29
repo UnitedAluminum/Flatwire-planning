@@ -1,0 +1,225 @@
+# FW-226 · Sequence validation — the four-tier partition
+
+**Project:** United Aluminum (UAL) — Flat Wire Mill Module
+**Last Updated:** August 29, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Document Type:** Implementation plan for a single backlog story
+**Status:** ⛔ **Blocked on `Q49` and `G52`** — and `G52` means one `PinRole` value matches **no tier**
+**Owner:** Backend (.NET) stream *(with an FE half)*
+**Audience:** The developer building `FW-226`
+**Shortcode:** — *(implementation plan, derived from `[REQ §5.28]`, the DDL and the built code; **not citable as a requirement**)*
+**Part of:** `ProjectPlan/Backend/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md)
+
+---
+
+> **Why this document exists.** Twenty hours, and **four details decide whether it is right.**
+>
+> **⛔ O(1) positional check, never enumeration.** `|freeFull|! × |freePartial|!` explodes.
+> Enumeration exists **for display and tests only, capped at 7 free rods** — and the cap is the
+> tell that someone will otherwise reach for it in the hot path.
+> **⛔ `G52`: `PinRole='Sole'` passes the `CHECK` and matches none of the four tiers**, so
+> `minTier` is **undefined** over a `Sole` row while `FR-546` requires an out-of-tier rod to be
+> refused. **The validator has a hole in its own vocabulary.**
+> **Enforced at BOTH entry points.** `Q73` item 7 is explicit: *a rule enforced at one of two
+> entry points is not enforced.* Pre-check-in **and** check-in.
+> **`PinnedBoth` means first and last are the SAME row.** Do not assume they differ — that
+> assumption is a null-reference or a double-count depending on which way it fails.
+
+---
+
+## 1. The story
+
+From `[TB §7]` — verbatim. ⚠ **Compact `FW-225`–`FW-231` card variant** — no `Acceptance
+Criteria:` header, no `Rate-card basis:` or `Dependencies:` line.
+
+> ###### FW-226 · Sequence validation — the four-tier partition
+> **Hours:** 20 h (BE 14 · FE 6) · **Priority:** Critical · **Sprint:** S2 · **Phase:** 4 · **Stream:** BE + FE
+>
+> > Rule 5 and **`Q73`** combined: **pinned-first → free full → free partial → pinned-last**. Applied at
+> > **both** pre-check-in and check-in (`Q73` item 7 — a rule enforced at one of two entry points is not
+> > enforced).
+>
+> - [ ] **O(1) positional check, never enumeration** — `|freeFull|! × |freePartial|!` explodes. Enumeration exists for display and tests only, capped at 7 free rods
+> - [ ] A rod may be **`PinnedBoth`** — the order lies wholly inside it, so first and last are the same row. Do not assume they differ
+> - [ ] Out-of-tier is a **refusal**, not the `Q24` supervisor override — `Q73` consequence 1
+> - [ ] Acceptance: for O1 = {R1A, R1B, R1C} exactly **2** legal sequences; for O2 = {R1C, R1D} exactly **1**
+>
+> **Blockers:** **`Q49`** (does multi-order-last hold with no weld? Build the stricter reading)
+
+### 1.1 Out of scope
+
+| Concern | Story |
+|---|---|
+| The allocation tables and their invariants | [`FW-225`](FW-225-Rod-Order-Allocation-Schema-And-Domain.md) — **predecessor** |
+| The entity types | [`FW-240`](FW-240-RodOrder-Domain-Entities.md) |
+| `PinRole='Sole'`'s tier decision | ⛔ [`FW-246`](../../Database/TaskBreakdownPlans/FW-246-Constraint-And-RI-Repairs.md) — `G52`. ⚠ **May cost no DDL** (`P-165`) |
+| The order-boundary handoff | [`FW-227`](FW-227-Order-Boundary-Handoff.md) |
+| The pre-check-in screen | `RodPreCheckin.md` (DB2A) · the staging commands are [`FW-158`](FW-158-PayoffStaging-Commands-And-Queries.md)'s |
+| The check-in endpoint | [`FW-157`](FW-157-CheckIn-Rod-And-CheckInService.md) |
+| `Q24`'s supervisor override | ⛔ **Explicitly not this** — out-of-tier is a refusal (§2.3) |
+
+### 1.2 What already exists
+
+Verified on 29 Aug 2026.
+
+| Thing | Where | State |
+|---|---|---|
+| `RodOrderAllocation` + `RodOrderConsumption` | `03_Materials.sql:412`, `04_Runs.sql:733` | ✅ Built |
+| `PinRole` column + its `CHECK` | `RodOrderAllocation` | ✅ Built — ⛔ **admits `Sole`, which matches no tier** (`G52`) |
+| Requirements | `[REQ §5.28]` `FR-541`–`FR-560` / `ORD003`–`ORD017`; `FR-546` is the refusal | ✅ Citable |
+| The four-tier partition | `RodOrderAllocation.md` §3 | ⚠ **Rationale — not citable as a requirement** |
+| Entity types | — | ⛔ Absent (`FW-240`, blocked on `[SVC §3.2a]`) |
+| **The validator** | — | ⛔ **Absent.** This story |
+| Pre-check-in entry point | `PayoffStagingController` routes ✅ built; commands ⛔ absent (`FW-158`) | ⚠ **One of the two enforcement points** |
+| Check-in entry point | `CheckInController` ✅ built; `CheckInService` shell throws | ⚠ **The other** |
+
+---
+
+## 2. The four details
+
+### 2.1 O(1), and the enumeration cap is a warning label
+
+The four tiers are **pinned-first → free full → free partial → pinned-last**. Validating a
+proposed position means checking **which tier it falls in and whether that tier is legal at that
+index** — a positional comparison, not a search.
+
+⛔ **Enumerating legal sequences is `|freeFull|! × |freePartial|!`.** At 7 free rods split 4/3
+that is already 144, and it grows factorially in **two** independent terms.
+
+⚠ **The cap of 7 exists because enumeration has two legitimate uses** — rendering the operator's
+choices, and the acceptance test in the card's last bullet. **Both are bounded and offline.**
+⛔ **Neither is the check-in path.**
+
+### 2.2 ⛔ `G52` — the validator's vocabulary has a hole
+
+`PinRole='Sole'` **passes the `CHECK`** and **matches none of the four tiers**. So `minTier` is
+**undefined** over a `Sole` row, while `FR-546` requires an out-of-tier rod to be **refused**.
+
+⚠ **The failure mode depends entirely on how the undefined case is written**, and both readings
+are plausible:
+
+| If `minTier` defaults to… | Consequence |
+|---|---|
+| the **lowest** tier | A `Sole` rod is legal **everywhere** — the rule silently does not apply to it |
+| the **highest** tier, or throws | A `Sole` rod is refused **everywhere** — a legitimate allocation cannot be checked in |
+
+⛔ **Neither is right, and neither announces itself.** `G52`'s resolution is
+[`FW-246`](../../Database/TaskBreakdownPlans/FW-246-Constraint-And-RI-Repairs.md)'s, and its
+`P-165` records that the likely deliverable is a **decision, not DDL** — `Sole` almost certainly
+means *the only rod for its order*, which is a real thing that needs a tier.
+
+**Do not build the validator until `Sole` has a tier or has left the `CHECK`.**
+
+⚠ **`PinnedBoth` is fine and is not the same problem** — it is explicitly a member of both sets.
+
+### 2.3 Refusal, not override — and that is a `Q73` consequence
+
+Out-of-tier is a **refusal**. It is **not** routed to `Q24`'s supervisor override.
+
+⚠ **This will be questioned in review**, because most check-in rejections in this system have an
+override path. `Q73` consequence 1 settles it: the tier order encodes **material reality** —
+which rod physically feeds which order in which order — and a supervisor cannot override the
+sequence in which rods sit on a payoff.
+
+### 2.4 Both entry points, or it is not enforced
+
+`Q73` item 7, quoted on the card: *a rule enforced at one of two entry points is not enforced.*
+Pre-check-in (DB2A staging) **and** check-in.
+
+⛔ **So the validator must be a shared domain rule, not two implementations.** Two copies drift,
+and the drift is invisible: staging accepts what check-in later refuses, and the operator is
+told at the worst moment.
+
+⚠ **Both callers are unbuilt** — [`FW-158`](FW-158-PayoffStaging-Commands-And-Queries.md)'s
+commands and [`FW-157`](FW-157-CheckIn-Rod-And-CheckInService.md)'s service. **The rule ships
+with both call sites or it ships enforced at neither.**
+
+---
+
+## 3. Build order
+
+1. ⛔ **Resolve `G52`** — `Sole` joins a tier or leaves the `CHECK` (§2.2). **The validator
+   cannot be written over an undefined vocabulary.**
+2. ⛔ **Resolve `Q49`** — does multi-order-last hold with no weld? **Build the stricter
+   reading**, per the card.
+3. ⛔ **`FW-225` and `FW-240` first** — the invariants and the entity types.
+4. The tier function: `PinRole` + position → tier, **total over every `PinRole` value**
+   (§2.2).
+5. The **O(1) positional check** (§2.1) — one shared `IBusinessRule` (§2.4).
+6. **Wire both entry points** — `FW-158`'s staging command and `FW-157`'s check-in.
+7. Enumeration **for display and tests only**, capped at 7, and **not reachable from a
+   request path** (§2.1).
+8. Out-of-tier → **refusal**, `FR-546`, ⛔ **no override route** (§2.3).
+9. The card's acceptance: O1 = {R1A, R1B, R1C} → exactly **2**; O2 = {R1C, R1D} → exactly **1**.
+
+---
+
+## 4. Decisions this plan makes
+
+> `P-##` is continuous across the repository; `P-01`–`P-199` precede this story.
+
+### `P-200` — the tier function must be total, and `Sole` is why
+
+§2.2. A partial function over `PinRole` produces a silent default at exactly the value `G52`
+identified. **Write it as an exhaustive switch that fails loudly on an unhandled value**, so a
+future `PinRole` addition breaks the build rather than quietly acquiring a tier.
+
+⚠ **This is `P-139`'s pattern** — a word outside the known set logs at error level rather than
+being passed on.
+
+### `P-201` — one shared rule, invoked at both entry points
+
+§2.4, applying `Q73` item 7. Two implementations drift, and the drift surfaces as staging
+accepting what check-in refuses.
+
+**Fallback:** none. The card's own framing forecloses it.
+
+### `P-202` — enumeration is unreachable from a request path
+
+§2.1. The cap of 7 protects the display and test uses; it does **not** make enumeration safe on
+check-in, where the rod count is not bounded by the same thing. **Put it behind a separate,
+clearly-named entry point** so a handler cannot call it by accident.
+
+---
+
+## 5. Verification
+
+**No automated tests for the service layer** — `[TS §1.2]`. ⚠ The card's acceptance bullet is a
+concrete case and should be run by hand at QA0.
+
+| Check | Expected |
+|---|---|
+| **`Sole` has a tier** | ⛔ Established before the validator is written (`G52`, §2.2) |
+| **Total function** | Every `PinRole` value maps to a tier or **fails loudly**; no silent default (`P-200`) |
+| **O(1)** | The check-in path performs **no enumeration** — verify by rod count scaling, not by reading (`P-202`) |
+| **`PinnedBoth`** | First and last resolve to the **same row** without a null or a double-count |
+| **Both entry points** | The same rule object is invoked from staging **and** check-in (`P-201`) |
+| **Drift test** | A sequence refused at check-in is refused at staging — **and vice versa** |
+| **Refusal, not override** | Out-of-tier returns a refusal; ⛔ **no supervisor override path exists** (§2.3) |
+| **O1** | {R1A, R1B, R1C} → exactly **2** legal sequences |
+| **O2** | {R1C, R1D} → exactly **1** |
+| `Q49` | The **stricter** reading is what shipped |
+
+---
+
+## 6. Handoff
+
+[`FW-227`](FW-227-Order-Boundary-Handoff.md) runs the boundary this validation orders, and is
+gated by the same `Q48` as [`FW-225`](FW-225-Rod-Order-Allocation-Schema-And-Domain.md).
+[`FW-158`](FW-158-PayoffStaging-Commands-And-Queries.md) and
+[`FW-157`](FW-157-CheckIn-Rod-And-CheckInService.md) are the two call sites and must land with
+this rule wired to both. [`FW-233`](FW-233-Rod-Surface-Host.md) hosts `[API §4.20]`'s order set,
+which is this story's — ⛔ **and `P-54` is still `open`**.
+
+---
+
+## 7. Open items
+
+| Item | Effect here |
+|---|---|
+| ⛔ **`G52`** | `Sole` matches no tier, so `minTier` is undefined. **Blocks the validator** (`P-200`) |
+| ⛔ **`Q49`** | Multi-order-last with no weld. **Build the stricter reading** |
+| ⛔ **`Q48`** | `FW-225`/`FW-227`'s blocker — universal versus conditional handoff |
+| **`Q73` item 7** | Both entry points, or not enforced (`P-201`) |
+| **`Q73` consequence 1** | Out-of-tier is a **refusal**, not a `Q24` override |
+| **`FR-546`** | The refusal requirement, in `[REQ §5.28]` |
+| **`P-54`** | ⛔ `open` — `[API §4.20]`'s order set has no host |

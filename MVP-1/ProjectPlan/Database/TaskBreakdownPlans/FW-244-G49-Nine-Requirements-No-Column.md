@@ -1,0 +1,247 @@
+# FW-244 · `G49` — nine decided requirements with no column
+
+**Project:** United Aluminum (UAL) — Flat Wire Mill Module
+**Last Updated:** August 29, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Document Type:** Implementation plan for a single backlog story
+**Status:** **Ready to build** — and it is **eight**, not nine: **B7 is largely already built** (§2.2)
+**Owner:** Database (SQL Server) stream
+**Audience:** The developer building `FW-244`
+**Shortcode:** — *(implementation plan, derived from the DDL, `[GAP]` and the owning screen specs; **not citable as a requirement**)*
+**Part of:** `ProjectPlan/Database/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md)
+
+---
+
+> **Why this document exists.** Eight hours, and **four details decide whether it is right.**
+>
+> **The nine rows are not in the register.** `[GAP] G49` says *"take the nine-row table from
+> `GapAnalysis.md` at commit `ebd0834`"* — a retired document. **§2.1 carries them**, so this
+> plan is the working copy and nobody has to go to git history to start.
+> **B7 is largely already built.** `G38` landed five prompt columns on `FlatWireRun` on
+> 15 Aug 2026, after the audit was written. **Two columns remain, not a screen's worth.**
+> **B7's text is a `Q60` trap.** It says *"`Spool` carries `ReceivedAt` and `StagedAt`"* — and
+> those columns are on **`SpoolProcessing`** today. A pre-23-Aug `Spool` reference is
+> **silently wrong**, not obviously stale.
+> **The failure mode is silence.** The UI displays the value and simply never persists it —
+> which is why this was raised as **one** gap and must be built as **one** delta.
+
+---
+
+## 1. The story
+
+From `[TB §7]` — verbatim:
+
+> ###### FW-244 · `G49` — nine decided requirements with no column
+> **Hours:** 8 h DB · **Priority:** High · **Sprint:** S1 · **Phase:** 1C · **Stream:** DB
+>
+> > Nine requirements that **survived client review and are stated in an owning specification** have
+> > nowhere in the schema to store their result. Carried over from the retired `GapAnalysis.md`
+> > (findings **B1**–**B9**); the affected screens are **`OutputCoilCompletion`** (DB7/DB7b),
+> > **`RollAdjust`** (DB11), **`WipRejection`** (DB8) and **`SpoolCompletionNotification`**.
+> >
+> > ⚠ **Raised as ONE gap on purpose, and it must be built as one delta.** Nine separate rows would
+> > be triaged independently and half-forgotten; they share a cause — requirements written against
+> > screens rather than against tables — and a remedy.
+>
+> **Acceptance Criteria:**
+> - [ ] All nine enumerated from `[GAP] G49` with their owning requirement id and screen, **before** any DDL is written
+> - [ ] One schema delta covering all nine, in the right numbered files, **FKs in `06` and indexes in `07`**, idempotent under `RunAll`
+> - [ ] Each column reaches its owning specification's requirement — the acceptance is *"the requirement can now be stored"*, not *"a column exists"*
+> - [ ] `Schema/FlatWireSchema_*.md` updated to match the DDL, with **the DDL winning** on types and nullability
+> - [ ] ⚠ **`[DBD §6.2]`'s baseline moves and that file states it** — this card states no count; `verify_schema_counts.py` re-runs green
+> - [ ] The four owning screen specifications record that their requirements now have a persistence target
+>
+> **Rate-card basis (§2):** priced as two table units @ 4 h — nine columns across four existing tables plus their indexes and document sync = **8 h**
+> **Dependencies:** FW-007, FW-006
+> **Blockers:** —
+
+### 1.1 Out of scope
+
+| Concern | Owner |
+|---|---|
+| The endpoints and services that would write these columns | Phase 6/7/9 stories — this is **the persistence target only** |
+| `FR-212`'s revert **endpoint** | `OI-32` — B4's column half is here, the endpoint half is not |
+| `Q18`'s customer weight range | Open — B8's reason code and override evidence are **independent of it** |
+| Constraint and RI repairs | [`FW-246`](FW-246-Constraint-And-RI-Repairs.md) — **same numbered files, same sprint** (§2.4) |
+| `SpcMeasurement.InSpec` | [`FW-245`](FW-245-SpcMeasurement-InSpec-Asymmetric-Band.md) — also `05_QualityOutput` |
+| The prompt state machine's behaviour | `FW-202` / `SpoolCompletionNotification` — ⚠ its DB 8 h **is `G38`'s columns**, already allocated |
+
+### 1.2 What already exists
+
+| Thing | State |
+|---|---|
+| `GapAnalysis.md` | ⛔ **Retired 23 Aug 2026.** The nine rows survive **only** at commit `ebd0834`. §2.1 carries them |
+| **`G38`'s five prompt columns** | ✅ **Built 15 Aug 2026** — `FlatWireRun.PromptDueAt`, `PromptPlcStopTs`, `PromptLatchedWeightLb`, `PromptResolvedAt`, `PromptAnswer` + `CK_FlatWireRun_PromptAnswer`, at `03_Materials.sql:100`–`:104`, `:117`. **This satisfies most of B7** (§2.2) |
+| `SpoolProcessing` | ✅ Built — `ReceivedAt` `:150`, `StagedAt` `:151`. ⛔ **No `CompletedAt`** |
+| `CoilOutput` | ✅ Built — `SkidId`, `SkidStatus`, `StagingLocation`, `NetWeightOverrideLb`, `ScaleWeightLb`, `GaugeInSpec`, `WidthInSpec` |
+| `RollOverride`, `WipRejection`, `SpcCheckpoint` | ✅ Built — the tables exist; the columns below do not |
+| `SpcCheckpoint.CheckpointType` | ✅ Carries `RollAdjustTrigger` — **B6 needs the link, not the value** |
+
+---
+
+## 2. The four details
+
+### 2.1 The nine, recovered — this plan is the working copy
+
+`[GAP] G49` points at a retired document. Recovered from `ebd0834`:
+
+| # | Requirement | What is missing | Table |
+|---|---|---|---|
+| **B1** | `FR-345` *"assigned skid **and slot**"*; `FR-347` both slots with alphas and weights | **No slot / position-on-skid column** — 1-of-2 vs 2-of-2 is unrecordable | `CoilOutput` |
+| **B2** | `FR-351` *"mark both coil labels confirmed"*; `OutputCoilCompletion` §7.3 *"a reprint **is recorded**"* | No `LabelPrintedAt`, **no confirmation flag, no reprint audit** | `CoilOutput` |
+| **B3** | `S-18`–`S-24` — an overridden completion is *"marked on the record — flag, authorising supervisor, reason, both weights and the variance"* | The three figures are representable; **no `WeightBasis`** (calculated vs scale) and **no approval stamp**. `S-19` makes the basis govern the record, the label and everything downstream | `CoilOutput` |
+| **B4** | `FR-212` / `RollAdjust` §8 — applying is an operator action, **reverting is Operations Manager only** | **No revert columns.** A reverted override is **indistinguishable from one still in force** | `RollOverride` |
+| **B5** | `WipRejection` §6 audit — *"**triggering event**: the checkpoint, pause or inspection that led here"* | No `SpcCheckpointId`, no `RunPauseEventId`, no trigger-source column; no measurement name or signed deviation | `WipRejection` |
+| **B6** | `RollAdjust` §7.1 — readings written as a `RollAdjustTrigger` checkpoint | **No link in either direction** between `RollOverride` and the checkpoint it produced | `RollOverride` / `SpcCheckpoint` |
+| **B7** | `SpoolCompletionNotification` §4.3 state machine; `S-12` *"both outcomes are audited"* | ⚠ **Largely built — see §2.2.** Residue: the **answering operator**, and `SpoolProcessing.CompletedAt` | `FlatWireRun` / `SpoolProcessing` |
+| **B8** | §5 short close — unplanned-stop reason code, grading against the customer min–max, supervisor override + production hold | **No columns.** ⚠ `Q18` is open but **the reason code and override evidence are independent of it** | `CoilOutput` |
+| **B9** | `WipRejection` §3.1 — a `[CONFIRMED]` vocabulary of 17 reasons across 5 groups | `RejectionGroup` has a `CHECK`; **`RejectionReason` is unconstrained `varchar(50)`**, unlike `RollOverride.ReasonCode` and `DieChangeEvent.ReasonCode` | `WipRejection` |
+
+⚠ **B4 is the one to build first.** It is the only row where the *absence* actively
+misinforms: a reverted roll override reads as still in force, on a screen whose values are
+written straight to the machine.
+
+### 2.2 B7 is largely built, and the audit predates the fix
+
+`GapAnalysis.md` recorded B7 as *"**Nothing.**"* — and then **`G38` landed on 15 Aug 2026**,
+adding exactly the prompt audit B7 asked for: the stop timestamp (`PromptPlcStopTs`), the
+latched weight (`PromptLatchedWeightLb`), the answer (`PromptAnswer`, `CHECK`-constrained),
+and the answer timestamp (`PromptResolvedAt`). `S-9`'s *"server-owned state that survives a
+refresh"* is satisfied by `PromptDueAt`.
+
+**What is actually left of B7 is two columns:**
+- **the answering operator** — `S-12` says *"the answering operator"* and no column holds it;
+- **`SpoolProcessing.CompletedAt`** — the table has `ReceivedAt` and `StagedAt` only.
+
+> ⛔ **Do not re-add the five.** The DB Orchestration already warns that `FW-202`'s DB 8 h **is**
+> `G38`'s columns and that a second allocation must not be made. The same trap applies here.
+
+### 2.3 B7's wording is a `Q60` trap
+
+The recovered text reads *"`Spool` carries `ReceivedAt` and `StagedAt` only"*. On
+**23 Aug 2026** `Spool` and `SpoolCarrier` were swapped: the material record is now
+**`SpoolProcessing`**, and the table now called `Spool` is the reusable stencilled article
+with **no alpha and no `ReceivedAt`**.
+
+So B7 means **`SpoolProcessing`**. ⚠ **A pre-23-Aug `Spool` reference is silently wrong rather
+than obviously stale** — adding `CompletedAt` to the article registry would compile, deploy,
+and be meaningless. `[DBD §6.2a]` is the naming convention that settles it.
+
+⚠ **Re-read all nine for this trap**, not only B7 — the audit is from before the swap.
+
+### 2.4 One delta, and it collides with two siblings
+
+AC 2 requires **one** schema delta. Three `S1` stories edit the same numbered files:
+
+| Story | Files |
+|---|---|
+| **`FW-244`** (this) | `03_Materials`, `04_Runs`, `05_QualityOutput`, `06`, `07` |
+| [`FW-245`](FW-245-SpcMeasurement-InSpec-Asymmetric-Band.md) | `05_QualityOutput` |
+| [`FW-246`](FW-246-Constraint-And-RI-Repairs.md) | `03_Materials`, `04_Runs`, `06`, `07` |
+
+**Sequence them, do not parallelise.** Three developers editing `05_QualityOutput.sql` in one
+sprint is three merge conflicts and one lost constraint. ⚠ **`FW-248` should land first** so the
+count guard can see a stale restatement before three stories move the baseline.
+
+---
+
+## 3. Build order
+
+1. **Confirm the nine against today's schema** — §2.1's table is recovered from a **pre-`Q60`,
+   pre-`G38`** audit. B7 is already reduced (§2.2); **check the other eight the same way**
+   before writing DDL. AC 1 requires this enumeration *before* any DDL.
+2. **B4 first** (`RollOverride`) — `IsReverted`, `RevertedBy`, `RevertedAt`, `RevertReason`.
+   ⚠ `FR-212` restricts reverting to **Operations Manager**; the column records who, the
+   endpoint enforces the role (`OI-32`, not here).
+3. **B6** — a link between `RollOverride` and its `SpcCheckpoint`. **One direction only:**
+   `RollOverride.SpcCheckpointId`, FK in `06`. Two-way is two things to keep consistent.
+4. **B5** (`WipRejection`) — `SpcCheckpointId`, `RunPauseEventId`, a trigger-source
+   discriminator, the measurement name and signed deviation. ⚠ Both FKs **nullable**: a
+   rejection may arrive from an inspection with neither.
+5. **B9** — a `CHECK` on `RejectionReason` for the 17 `[CONFIRMED]` reasons, matching
+   `RollOverride.ReasonCode`'s pattern. ⚠ **`FW-246` also edits `WipRejection`'s constraints** —
+   coordinate (§2.4).
+6. **B1, B2, B3, B8** (`CoilOutput`) — slot/position; `LabelPrintedAt` + confirmation +
+   reprint audit; `WeightBasis` + approval stamp; short-close reason code + override evidence.
+   ⚠ **`WeightBasis` governs the label and everything downstream** (`S-19`) — it is not
+   decoration.
+7. **B7's residue** (§2.2) — `FlatWireRun.PromptAnsweredBy` and `SpoolProcessing.CompletedAt`.
+   ⛔ **Nothing else.**
+8. **FKs in `06`, indexes in `07`**, every change guarded so `RunAll` stays idempotent.
+9. **Sync `Schema/FlatWireSchema_*.md`** — **the DDL wins**.
+10. **Update `[DBD §6.2]`** — the only site that states the baseline — and re-run
+    `verify_schema_counts.py`.
+11. **Record in the four owning specifications** that their requirements now have a
+    persistence target (AC 6).
+
+---
+
+## 4. Decisions this plan makes
+
+> The `P-##` series belongs to [`Backend/TaskBreakdownPlans/`](../../Backend/TaskBreakdownPlans/)
+> and is continuous across the repository; `P-01`–`P-159` precede this story.
+
+### `P-160` — B7 is reduced to two columns, and the five are not re-added
+
+§2.2. `G38` satisfied most of B7 after the audit was written. **Re-adding them would duplicate
+`G38` and collide with the `FW-202` allocation the DB Orchestration already warns about.**
+
+⚠ **This is a reduction in scope against the card**, recorded so it is not read as an omission.
+The 8 h stands: the eight remaining rows absorb it.
+
+### `P-161` — the `RollOverride` ↔ checkpoint link is one-directional
+
+§3 step 3. `RollOverride.SpcCheckpointId` only. A back-pointer on `SpcCheckpoint` would be a
+second thing to keep consistent with no reader that needs it, and B6 asks for *"a link"*, not
+two.
+
+### `P-162` — the nine are re-verified against today's schema before any DDL
+
+§2.1/§2.3. The audit predates both `Q60` and `G38`. **Verifying first is AC 1**, and B7 is the
+proof it is not a formality — one of nine was already three-fifths built.
+
+---
+
+## 5. Verification
+
+**No automated tests** — `[TS §1.2]`. Verified by SQL assertion and specification walk.
+
+| Check | Expected |
+|---|---|
+| **Enumeration first** | All nine listed with requirement id and screen **before** DDL (AC 1). §2.1 is that list |
+| **B4 is visible** | A reverted roll override is **distinguishable** from one in force. ⛔ It is not today |
+| B1 | 1-of-2 vs 2-of-2 on a skid is recordable |
+| B2 | A reprint is recorded, so two labels bearing one alpha can be explained |
+| B3 | `WeightBasis` present and governing; the approval stamp records the authorising supervisor |
+| B5 | A rejection names its triggering checkpoint or pause; both FKs nullable |
+| B6 | Every `RollAdjustTrigger` checkpoint is reachable from its override — **one direction** (`P-161`) |
+| **B7 residue only** | `PromptAnsweredBy` and `SpoolProcessing.CompletedAt` added. ⛔ **`G38`'s five untouched** (`P-160`) |
+| **`Q60` trap** | `CompletedAt` lands on **`SpoolProcessing`**, not on the `Spool` article (§2.3) |
+| B8 | Reason code and override evidence stored **without** `Q18` |
+| B9 | `RejectionReason` `CHECK`-constrained to the 17; an 18th is rejected |
+| Idempotency | `RunAll` re-runs clean; chain contiguous `00`–`08` |
+| Baseline | `[DBD §6.2]` updated **there**; `verify_schema_counts.py` green. ⚠ **This plan states no count** |
+| Specs updated | All four owning specifications record the persistence target (AC 6) |
+
+---
+
+## 6. Handoff
+
+The endpoints that write these columns are Phase 6/7/9 stories — **this story delivers the
+target, not the writer**, and each column is inert until its story lands. `OI-32` owns
+`FR-212`'s revert endpoint; B4's columns wait for it.
+[`FW-245`](FW-245-SpcMeasurement-InSpec-Asymmetric-Band.md) and
+[`FW-246`](FW-246-Constraint-And-RI-Repairs.md) edit the same files — **sequence, do not
+parallelise** (§2.4). [`FW-248`](FW-248-Harden-Count-Guard-C6.md) should land first.
+
+---
+
+## 7. Open items
+
+| Item | Effect here |
+|---|---|
+| **`G49`** | ✅ **This story closes it** — as **eight** rows, with B7 reduced (`P-160`) |
+| **`OI-32`** | `FR-212`'s revert endpoint. B4's **columns** are here; the endpoint is not |
+| **`Q18`** | The customer weight range. ⚠ **B8 does not wait on it** — reason code and override evidence are independent |
+| **`G38`** | ✅ Landed 15 Aug 2026 and is why B7 shrank. ⚠ Its five columns are also `FW-202`'s DB allocation — **do not allocate twice** |
+| **`Q60`** | The `Spool`/`SpoolProcessing` swap. Every pre-23-Aug reference in the recovered audit is **silently wrong** (§2.3) |
+| **`ebd0834`** | The only surviving copy of the nine-row table. §2.1 is this plan's working copy |

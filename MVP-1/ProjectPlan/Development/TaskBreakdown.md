@@ -3429,8 +3429,566 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
+#### Additive — pending-work stories, minted 29 Aug 2026 (`FW-232`–`FW-250`)
+
+> **New 29 Aug 2026.** Nineteen stories for work that had **no id, no plan and no hours line**,
+> drawn from the two orchestration files' own recorded-but-unfixed findings
+> ([`Backend/TaskBreakdownPlans/Orchestration.md`](../Backend/TaskBreakdownPlans/Orchestration.md)
+> §8.1–§8.3 and [`Database/TaskBreakdownPlans/Orchestration.md`](../Database/TaskBreakdownPlans/Orchestration.md)
+> §3 and §8.1), plus the `P-##` register and `[GAP]`. Each names the gap or finding it closes.
+>
+> ⚠ **Hours are additive to `[CE §3b]`** — the same treatment as `FW-202`, `FW-203`, `FW-204`,
+> `FW-218` and `FW-219`. **They offset nothing, they are in no phase reconciliation above, and
+> they are not folded into the 114-story / 3,186 h baseline.** A combined figure is `FW-249`'s
+> job, in an additive sheet.
+>
+> ⚠ **Two cards deliberately price a shell and not an endpoint** — `FW-232` (handler is `FW-227`)
+> and `FW-233` (order set is `FW-226`'s). Re-costing the endpoint bodies here would double-count
+> two stories that are already in the baseline.
+>
+> **Sprint placement** is stated per card. `FW-241`–`FW-250` are 1C-residual and sit in the
+> current sprint; Phase-4 work is `S2`; Phases 9/13/14 are `S3`.
+
+---
+
+###### FW-232 · `OrderController` — a host for `POST /order/{orderNo}/complete`
+**Hours:** 3 h BE · **Priority:** High · **Sprint:** S2 · **Phase:** 4 · **Stream:** BE
+
+> `[API §4.21]` specifies `POST /order/{orderNo}/complete` and **`[API §3.1]`'s controller table
+> has no `/order/**` owner** — it has had none since the endpoint was added on 22 Aug 2026 with the
+> rod ↔ order allocation design. `P-50` built fifteen shells and **stopped deliberately**, raising
+> the sixteenth rather than inventing it. This is that sixteenth.
+>
+> ⚠ **Shell, route and `[Authorize]` only. The handler is `FW-227` and is already costed** — its
+> state machine, hub events 13/14 and two weight latches stay there. Building the body here would
+> price one endpoint twice.
+
+**Acceptance Criteria:**
+- [ ] `OrderController : UAController` at the `/api/v1/flatwire` base, with the class-level base route and an explicit per-action route (`P-04`)
+- [ ] `POST /order/{orderNo}/complete` routed and returning `FlatWireResult<T>` (`P-56`), **delegating to `FW-227`'s handler** — no logic in the controller (`[SVC §3.2]`)
+- [ ] `[Authorize]` inherited from the global filter; the endpoint answers `401` unauthenticated like the other 22 (`FW-138` §6.2)
+- [ ] ⚠ **`[API §3.1]` and `[API §3.2]` gain the controller and the endpoint row** — the count moves 22 → 23 and `[API]` is the file that says so, not this card
+- [ ] Settled **before Phase 1A freezes its base-URL set**, which is what makes this High rather than Medium
+
+**Rate-card basis:** **3 h**, quoted from [`FW-138`](../Backend/TaskBreakdownPlans/FW-138-Fifteen-Thin-Controllers.md) §8 and `P-50` — *"recommends `OrderController` as a sixteenth (**+3 h**)"*. ⚠ **Not a `[CE §2]` rate-card unit**: the card has no controller-shell row, and the command endpoint's 5 h is `FW-227`'s, not this story's
+**Dependencies:** FW-138, FW-N04, **FW-227** *(handler)*
+**Blockers:** ⚠ **`[API]` must mint the controller** in `[API §3.1]`. `P-50` is explicit that inventing it in a plan is what this story exists to avoid
+
+---
+
+###### FW-233 · A host for the `/rod/**` surface
+**Hours:** 6 h BE · **Priority:** High · **Sprint:** S2 · **Phase:** 4 · **Stream:** BE
+
+> `P-53` withdrew `RodReceivingController` on 25 Aug 2026 — *"the service hosts no `/rod/**`
+> surface"*, rod receiving not being shopfloor — and the withdrawal was right. What it left behind
+> is not: **`[API §4.3]` and `[API §4.20]` remain specified with nowhere to go**, so `FR-042`,
+> `FR-064`, `FR-043`'s carry-forward gate and `Q24`'s station switching have **no endpoint**, and
+> `CoilCheckin`'s `getCheckinCoilInfo` covers only the shared-schema half. `[TRP]`'s DB2 is a trial
+> screen that **scans a rod**.
+>
+> ⚠ **Shell and route wiring only.** `[API §4.20]`'s order set is `FW-226`'s and the check-in reads
+> are their owning stories'. `P-54` names three options and the choice — **re-home or re-specify**
+> — is `[API]`'s, not a plan's.
+
+**Acceptance Criteria:**
+- [ ] `[API]` records the `P-54` outcome first: re-home to a controller, fold into an existing one, or re-specify the two sections away
+- [ ] If re-homed: a controller shell + routes for `[API §4.3]` and `[API §4.20]`, `FlatWireResult<T>`, `[Authorize]`, `401` unauthenticated — **no handler bodies**
+- [ ] `FR-042`, `FR-064`, `FR-043`'s carry-forward gate and `Q24`'s station switching each name a reachable endpoint, or `[API]` records why they do not need one
+- [ ] `[API §3.1]`/`§3.2` updated to match, and the endpoint count restated **there**
+- [ ] ⚠ If `[API]` re-specifies instead, this story closes as a **specification change with no build** and its hours are released
+
+**Rate-card basis:** 1 controller shell **3 h** (`FW-138` §8 basis, as `FW-232`) + route wiring for 3 endpoints ≈ **3 h** = **6 h**. ⚠ **No `[CE §2]` endpoint unit is priced here** — the bodies belong to `FW-226` and the check-in stories
+**Dependencies:** FW-138, FW-N04, **FW-226** *(order set)*
+**Blockers:** ⛔ **`P-54` is `open`** and this is blocked on `[API]`, not on code. It also reaches `[TRP]` — DB2 scans a rod
+
+---
+
+###### FW-234 · Audit-log persistence target
+**Hours:** 12 h (BE 8 · DB 4) · **Priority:** High · **Sprint:** S1 · **Phase:** 1B/1C · **Stream:** BE + DB
+
+> `FW-143` shipped `IAuditLog` + `SerilogAuditLog` and **AC 3 was met structurally, not
+> materially** (`P-15`, the register's first `open` finding): the audit record goes to a Serilog
+> sink that **nothing can query**. `[PLC §11]` expects a reviewer to read the PLC write trail,
+> `FR-075` requires the operator on every write, and `FW-151`'s built `AuditEntry` already keys on
+> **`RunAlpha` + `OperatorId`** — two query keys with no queryable store behind them. `P-112` had
+> to smuggle a confirmation marker into the value *string* because the type has nowhere else to
+> put it.
+
+**Acceptance Criteria:**
+- [ ] One table in `FlatWireDB` holding `AuditEntry` — at minimum `RunAlpha`, `OperatorId`, action, target, value, outcome, timestamp, correlation id — with indexes on the two documented query keys
+- [ ] Added to the numbered DDL chain, **FKs in `06`, indexes in `07`**, and into `FlatWire_DDL_RunAll.sql` in numeric order
+- [ ] ⚠ **`[DBD §6.2]`'s counted baseline moves** — that file states it and `verify_schema_counts.py` re-runs green; **this card states no count**
+- [ ] `SerilogAuditLog` gains a persisting sibling (or a second sink) behind the **unchanged `IAuditLog` interface**, so no caller changes
+- [ ] A query path exists for `[PLC §11.3]`'s reviewer — retrieval by `RunAlpha` and by `OperatorId`, through MediatR per `[SVC §3.2]`
+- [ ] `FW-143` AC 3 re-run and signed off **materially**: write a PLC audit record, read it back
+- [ ] ⚠ A write failure in the audit path **must not fail the command** — the same rule as `P-138`'s guarded replay
+
+**Rate-card basis (§2):** 1 table @ 4 h (DB 4) · persisting `IAuditLog` implementation + query handler, priced as a small business service @ 8 h (BE 8) = **12 h**
+**Dependencies:** FW-143, FW-142, FW-151, FW-007
+**Blockers:** — *(`P-15` is the finding this closes, not a blocker on it)*
+
+---
+
+###### FW-235 · `CoilCompleted` broadcast member
+**Hours:** 12 h (RT 8 · FE 4) · **Priority:** Medium · **Sprint:** S3 · **Phase:** 9 · **Stream:** RT + FE
+
+> Found by writing `FW-208`'s handlers on 29 Aug 2026 (`P-137`): **`CoilCompleted` is raised,
+> dispatched, and deliberately reaches no handler**, because `IFlatWireClient` has no member to
+> send it on. `[SIG §5.2]`'s fourteen events and `[SIG §5.4]`'s six markers were counted member by
+> member and **nothing carries a completed output coil**. All three alternatives lose: a
+> neighbouring member would deliver a coil completion to a `RodCheckoutEvent` subscriber, and
+> deleting the event hides the gap.
+>
+> ⚠ **The screens do not go dark today** — DB7 completes the coil through its own request/response,
+> so the operator who did it sees the result. What is missing is the broadcast to the **other**
+> clients on the line, **and whether that is wanted is the client's call** (`OI-140`).
+
+**Acceptance Criteria:**
+- [ ] `OI-140` answered by the client **first** — is a coil completion wanted on the other clients on the line?
+- [ ] If yes: `[SIG §5.2]` gains the event, `IFlatWireClient` the member, `Models/RealTime/HubContracts.cs` the payload, `[SIG §5.6]` the Angular mirror and `FW-136` the client leg — ⚠ **in ONE pass**, because `P-22` mints the interface whole precisely so it is not widened piecemeal
+- [ ] ⚠ **This is a BREAKING change under `[API §8]`** and must be recorded as one
+- [ ] `FW-208`'s step-8 handler set goes from five broadcasts to six; the *"eight handlers"* figure is unchanged (six post-commit + two in-transaction)
+- [ ] Payload carries what DB7's other viewers need — at least `lineId`, `runId`, coil alpha, weight and skid position — and follows `[SIG §5.4]`'s shared-base convention where it applies
+- [ ] If the client says no: the event stays handler-less **by decision**, `P-137` is restated as settled, and this story closes at 0 h
+
+**Rate-card basis (§2):** 1 new hub event (typed contract + publisher + subscriber) @ 8 h (RT 8) · Angular mirror + `FW-136` leg @ 4 h (FE 4) = **12 h**
+**Dependencies:** FW-208, FW-080, FW-149, FW-136, FW-185
+**Blockers:** ⛔ **`OI-140`** — open with the client. ⚠ `FW-136` does not exist as built code (`P-116`), so the client leg lands with it
+
+---
+
+###### FW-236 · Per-tag write status from `OPCConnection`
+**Hours:** 16 h BE · **Priority:** Critical · **Sprint:** S3 · **Phase:** 14 · **Stream:** BE
+
+> ⛔ **`FR-074` — *"raise an exception when any individual tag write fails"* — is unimplementable
+> from `OPCConnection`'s response, and that is a defect in another service** (`G58`). `WriteTag`
+> returns **`200` with the tag list whatever happened**; `OPCTag.IsGood` is set by neither write
+> path; `OPCUAManager.WriteTag` catches **every** exception — including its own *"Cannot write to
+> tag"* — at `LogInformation`; and its verification at `OPCUAManager.cs:362` compares two freshly
+> boxed `object`s with `==`, **reference equality, false for every numeric tag**, so the check
+> always fails and is always swallowed. `OPCDAManager` verifies correctly but only logs a warning,
+> **so the two managers disagree about what a `200` means** and `ConnectionType` decides which the
+> caller gets.
+>
+> ⚠ `P-105`'s confirm read is the **workaround** and narrows the common case; per-tag status is the
+> fix. ⚠ **This service sits on four other consumers' paths** — the change is theirs to accept.
+
+**Acceptance Criteria:**
+- [ ] `WriteTag`'s response carries a **per-tag outcome**, not a bare tag echo — at minimum written / refused / faulted, with a reason
+- [ ] `OPCTag.IsGood` is set by **both** managers, or the field is removed and replaced by the per-tag outcome
+- [ ] ⛔ `OPCUAManager.cs:362`'s reference-equality verification is corrected to `.Equals` (as `OPCDAManager` already does), and the result **is no longer swallowed**
+- [ ] Exceptions in the write path stop being logged at `LogInformation` and surface to the caller
+- [ ] ⚠ **The four existing consumers are identified and regression-tested** before the shape changes — this is the acceptance gate, not an afterthought
+- [ ] `FW-151`'s `PLCTagService` consumes the per-tag outcome and `FR-074` becomes implementable; `P-105`'s confirm read may then be reduced to a commissioning check
+- [ ] ⚠ **`G33` is NOT closed by this** — a wrong tag path can read back consistently wrong (`[PLC §10.3]`)
+
+**Rate-card basis (§2):** non-trivial change to an existing integration service, at the upper half of the 12–24 h band because it is cross-consumer and needs regression on four callers = **16 h**
+**Dependencies:** FW-151
+**Blockers:** ⚠ **Owned by `OPCConnection`, not by FlatWire.** Needs that service's owner to accept a response-shape change
+
+---
+
+###### FW-237 · Service identity for unattended PLC writes
+**Hours:** 12 h BE · **Priority:** Critical · **Sprint:** S2 · **Phase:** 4 · **Stream:** BE
+
+> `G59`'s **identity half**, which `P-127` split out precisely because reading the gap as one item
+> gets the near half missed. The `Attempted` audit record is written **before** the simulate branch
+> (`[PLC §11.1]` audits simulated writes) and `AuditEntry.OperatorId` is **required**, so the first
+> tag set cannot be written without an answer — **in every environment, today**. `FW-205` shipped a
+> named sentinel (`SystemOperatorId`) and **documented it as a sentinel** rather than pretending it
+> was a decision.
+>
+> ⚠ **`CoolingChamber` logs in by badge number; nothing owns that decision for FlatWire.** The
+> token half stays with commissioning: `PLCTagService`'s simulate branch returns before
+> `GetOPCInfo`, so nothing reaches the network until `SimulatePLCTagPush` goes false.
+
+**Acceptance Criteria:**
+- [ ] A named service identity exists for writes no operator initiated — the watchdog's `SetITInhibit`, hold/idle-and-restore, and any future hosted-service write
+- [ ] The sentinel `SystemOperatorId` in `FW-205` is **replaced**, and the code that documented it as a sentinel is updated so the trail no longer carries a placeholder
+- [ ] The audit trail attributes those writes to that identity and a reviewer can tell them from an operator's (`[PLC §11.3]`, the same reasoning as `P-110`'s `Compensate:` label)
+- [ ] ⚠ **The token half is explicitly out of scope and stays with `G59`/commissioning** — `RestClient` reads its bearer from `HttpContext`, and a hosted service has none (`P-120`)
+- [ ] The failure mode is documented: with no identity the call fails **before the network**, in-band, as `"Object reference not set to an instance of an object."` — a message naming neither the identity nor the caller
+
+**Rate-card basis (§2):** non-trivial business/integration service at the low end of the 12–24 h band — a service credential, its issuance and its wiring through `IAuditLog` and `PLCTagService` = **12 h**
+**Dependencies:** FW-143, FW-151, FW-205, FW-234
+**Blockers:** ⚠ Needs a decision from whoever owns service credentials in the UAL estate — `Login`'s badge-number route is the precedent, not a specification
+
+---
+
+###### FW-238 · Register flat wire with `OPCConnection`
+**Hours:** 12 h (BE 4 · DB 8) · **Priority:** Critical · **Sprint:** S3 · **Phase:** 14 · **Stream:** BE + DB
+
+> ⛔ **`G60` — nothing registers flat wire with `OPCConnection`, so `GetOPCInfo` cannot succeed and
+> no tag can ever be written.** Two halves are missing: `UAL.Constants.GlobalConstants.OPCModules`
+> has five members and **no flat wire one**, while `GetConfigurationsQueryValidator` requires one;
+> and `CommonDB` has no flat wire rows in `OPCModules` / `OPCServers` / `OPCTags` /
+> `OPCTagApplicationMapping`. `MachineId`, `OPCServers`, `ConnectionType` and `IsReadonly` are
+> `CommonDB` state and **cannot be hand-built** (`P-104`).
+>
+> ⚠ **Not a build blocker today** — simulate short-circuits before the resolve, and `FW-N05` and
+> `FW-151` both reproduce `G60` by name at boot and stay up. But the resolve-and-write path is
+> **dead code until this lands**.
+
+**Acceptance Criteria:**
+- [ ] A flat wire member added to `UAL.Constants.GlobalConstants.OPCModules`, and `GetConfigurationsQueryValidator` accepts it
+- [ ] `CommonDB` rows for FL1/FL2/FL3 in `OPCModules`, `OPCServers`, `OPCTags` and `OPCTagApplicationMapping`, as a **numbered, reversible script** in `Database/Scripts/`
+- [ ] ⚠ **Decide `OI-A` first** — whether tag paths live in `appsettings` or in `CommonDB`'s `OPCTags` — **or the tag rows get written twice**. `FW-144` built to the written specification behind `ITagPathResolver` precisely so this is one class to swap
+- [ ] Sequenced with `FW-241`: both write shared reference data, and the `machines` rows `FW-003` creates are what an OPC registration keys on
+- [ ] `GetOPCInfo` returns a usable `OPCInfo` for each line, verified against the real service — this is what retires `G60` in `FW-151`'s and `FW-N05`'s boot logs
+- [ ] ⚠ `G33` and `G32` still have to be settled in the same commissioning window; this story does not close them
+
+**Rate-card basis (§2):** constants + validator change (BE 4) · four-table shared registration script with a reverse script, priced as a stored-proc-class deliverable @ 8 h (DB 8) = **12 h**
+**Dependencies:** FW-003, FW-144, FW-151, FW-241
+**Blockers:** ⛔ **`OI-A`** *(tag paths in `appsettings` vs `CommonDB` — decide before writing rows)* · shared reference-data sign-off, as for `FW-241`
+
+---
+
+###### FW-239 · Wire run-lifecycle invalidation into `FW-150`'s per-run cache
+**Hours:** 4 h RT · **Priority:** High · **Sprint:** S1 · **Phase:** 1B · **Stream:** RT
+
+> `FW-150` shipped 29 Aug 2026 with **one loose end, named on the build**: `FW-208`'s run-lifecycle
+> invalidation is not wired. `P-125` caches `RunId`, `InSpec`'s band, `PercentRemaining`'s
+> denominator and the `FR-018` recording spacing **once per run**, because built naively each is a
+> database read inside a 10 Hz loop. It also **corrected itself before execution**: invalidating on
+> `LineStatus` would never fire, since `TryMapLineState` returns `false` until commissioning test
+> `C2`.
+>
+> ⛔ **Left unwired, readings are attributed to a finished run** — the gauge trace and `RunReading`
+> keep writing against the previous `RunId` after a run ends.
+
+**Acceptance Criteria:**
+- [ ] The per-run cache invalidates on the run's **lifecycle domain events**, dispatched by `FW-208`, not on `LineStatus`
+- [ ] `PayoffStateChanged` invalidates the per-rod half (`PercentRemaining`'s denominator)
+- [ ] A run ending and a new run starting on the same line is demonstrated: the first reading after the boundary carries the **new** `RunId` and the **new** band
+- [ ] ⚠ **`RunReading` stays out of the EF model** (`P-12`, `P-125`) — the loop inserts by raw SQL and must never gain a navigation collection
+- [ ] The invalidation runs on the broadcaster's singleton lifetime without opening a scope on the hot path (`P-131`'s rule)
+
+**Rate-card basis (§2):** below the smallest service band — an event subscription and a cache eviction on an existing structure, no new contract = **4 h**
+**Dependencies:** FW-150, FW-208
+**Blockers:** —
+
+---
+
+###### FW-240 · `RodOrderAllocation` / `RodOrderConsumption` domain entities
+**Hours:** 8 h BE · **Priority:** High · **Sprint:** S2 · **Phase:** 4 · **Stream:** BE
+
+> `P-91`'s second half. `FW-207` placed the five tables deployed 22 Aug 2026 that no aggregate map
+> had claimed, and **deliberately did not build these two**, because they sit **outside the seven
+> roots** and `RodOrderConsumption` has **five parents spanning three aggregates** — a boundary
+> call that is `[SVC §3.2a]`'s to sign, not a plan's.
+>
+> Verified absent from the built code on 29 Aug 2026: neither name appears in
+> `FlatWire.Domain/AggregatesModel/` nor in `FlatWire.Infrastructure/EntityConfigurations/`.
+
+**Acceptance Criteria:**
+- [ ] `[SVC §3.2a]` signs the boundary first — which aggregate owns each, or whether they are read models
+- [ ] Entity types + EF configurations for both, mapped against live `FlatWireDB` and verified **by column count**, not by inspection (`P-70`'s lesson: nine `ALTER`-added columns are invisible to a `CREATE TABLE` read)
+- [ ] ⚠ **`RodOrderConsumption` carries a `ROWVERSION` that must be mapped as the entity lands** (`P-69` — one of the two tokens `[SVC §3.4]` does not list)
+- [ ] The model still validates and `FW-207`'s harness stays green at its current count
+- [ ] `FR-541`–`FR-560` / `ORD003`–`ORD017` reach a mapped type, and `FW-225`/`FW-226`/`FW-227` can bind to them
+
+**Rate-card basis (§2):** 2 tables @ 4 h — the DDL exists, so this is the EF mapping and boundary half of the unit = **8 h**
+**Dependencies:** FW-207, FW-142, FW-225
+**Blockers:** ⛔ **`[SVC §3.2a]`'s signature** — `P-91` is `⚠ ratify` and this is the half it gates
+
+---
+
+###### FW-241 · Deploy step 2 — finalise the shared-schema insert, author its reverse script, run it under sign-off
+**Hours:** 8 h DB · **Priority:** Critical · **Sprint:** S1 · **Phase:** 1C · **Stream:** DB
+
+> ⛔ **`[DEP §4.2]` step 2 is the only irreversible step in the ten-step deploy chain, and it is the
+> one that has never run.** `10_CommonDB_Insert_WIPStations_FlatWire.sql` writes
+> `united_db..machines` and `CommonDB..WIPStations` / `MachineStationsConfiguration`; it is
+> **Draft**, `machine_type`, the station set and `StationType` are all pending, **no reverse script
+> exists**, and the `Scripts/` runner **deliberately skips it**. So FL1/FL2/FL3 exist in neither
+> shared table.
+>
+> ⚠ **`FW-220` names this script as a dependency**, which means the FL1/FL3 check-in write-back —
+> and with it `FW-221`, `FW-223` and `FW-003` — is waiting on **an approval, not on code**. The
+> code half of this story is the reverse script that does not exist.
+
+**Acceptance Criteria:**
+- [ ] `machine_type`, the station set and `StationType` decided and recorded in `[DEP §4.2]` step 2, which is the record
+- [ ] ⛔ **A reverse script authored, numbered and tested** — teardown of the `machines`, `WIPStations` and `MachineStationsConfiguration` rows, so the step stops being one-way
+- [ ] ⚠ **`G21`'s absent `FL3PO` station is deliberate and must stay absent** — FL1 and FL3 share one physical payoff, `STATION_BY_LINE = {FL1:"FL1PO", FL3:"FL1PO"}`, client-confirmed (`Q71`). Adding it would break the bay-uniqueness fix
+- [ ] Run **by hand, after sign-off**, on each environment; the `Scripts/` runner continues to skip it and `Scripts/README.md` continues to say so
+- [ ] `FW-003`'s `machines` rows and this script agree on one set of values, since an OPC registration (`FW-238`) keys on them
+- [ ] Sign-off state recorded in `[DEP §4.2]` and in `Scripts/README.md`'s manifest
+
+**Rate-card basis (§2):** reverse script authored and tested, priced at the stored-proc / script unit @ 8 h. **The approval itself carries no hours** = **8 h**
+**Dependencies:** FW-152, FW-003
+**Blockers:** 🔴 **Shared reference-data sign-off** — not a register id and not a gap, an **approval**, owned by whoever signs off shared reference data
+
+---
+
+###### FW-242 · Move `FlatWireDB` into the `ual-database` repository
+**Hours:** 16 h DB · **Priority:** High · **Sprint:** S3 · **Phase:** 14 · **Stream:** DB
+
+> Checked 27 Aug 2026 and again 29 Aug: `Second-Branch/ual-database/Databases/` holds **twenty
+> databases** — `CommonDB`, `PlanningDB`, `SchedulingDB`, `SlitterDB`, `proddb` and the rest — and
+> **no `FlatWireDB`, and no file matching `*flatwire*` anywhere in that repository.**
+>
+> ⛔ **The deployable source of truth for a production database therefore lives only in a
+> *planning* repo**, which is why `[DEP §4.2]`'s command has to `cd` into `Flatwire-planning`.
+> **No document owns the move**, and it has to happen before go-live.
+
+**Acceptance Criteria:**
+- [ ] A `FlatWireDB` folder in `ual-database/Databases/`, following the convention the other twenty use
+- [ ] The whole `00`–`08` chain, `FlatWire_DDL_RunAll.sql`, `99` teardown, the five seeds, the eight `Scripts/` files and `09_Programmability_MVP2` moved or mirrored, **with the numeric order and the `:r` chain intact**
+- [ ] ⚠ **One source of truth, not two** — the planning repo either keeps the design documents and drops the executable DDL, or the two are linked with the direction of authority written down. Two copies of a schema is the failure mode this repository already documents six times over for PLC tags
+- [ ] `[DEP §4.2]`'s deploy commands retargeted and re-run end to end on a clean instance
+- [ ] `verify_schema_counts.py` runs against the new location and passes all six checks
+- [ ] `[DBD]`, `Schema/SQL/README.md`, `Scripts/README.md` and `CLAUDE.md` updated to name the new home
+
+**Rate-card basis (§2):** not a rate-card unit — a repository migration of 40+ files with a re-verified deploy, priced as two stored-proc-class deliverables = **16 h**
+**Dependencies:** FW-152, FW-241
+**Blockers:** ⚠ Needs the `ual-database` repository owner's agreement on folder convention and branch strategy
+
+---
+
+###### FW-243 · `D-30` — `ROWVERSION` on `WeldEvent`, `RodCheckout`, `WipRejection`
+**Hours:** 6 h (DB 4 · BE 2) · **Priority:** High · **Sprint:** S2 · **Phase:** 4 · **Stream:** DB + BE
+
+> ⚠ **`D-30` is open and gates the Phase-4 schema freeze.** `ROWVERSION` is absent on three of the
+> **seven aggregate roots**, and all three are **mutated after insert** — a weld is quality-stamped,
+> a checkout is completed, a rejection is dispositioned. `P-14` and `P-24` are explicitly *interim*
+> stances, and `P-69` maps all eight tokens that **do** exist while saying in terms that it does
+> **not** decide whether these three should.
+>
+> ⚠ Without them `DbUpdateConcurrencyException` never fires on those three, so `FW-146`'s `409` arm
+> guards nothing there — a lost update is silent.
+
+**Acceptance Criteria:**
+- [ ] `[SVC §3.4]` decides — **the decision is the gate, not the DDL**
+- [ ] If yes: `ROWVERSION` added to the three tables by `ALTER` in the Runs / Quality-Output DDL, guarded so `RunAll` stays idempotent
+- [ ] Mapped as concurrency tokens in their EF configurations, taking `P-69`'s mapped count from eight to eleven
+- [ ] A concurrent-update test on each of the three returns `409` through `FW-146`'s third arm, not a silent overwrite
+- [ ] ⚠ **`P-70`'s rule applies** — the columns are `ALTER`-added, so anything reading `CREATE TABLE` alone will miss them
+- [ ] If no: `[SVC §3.4]` records why, `P-14`/`P-24` are restated as settled, and the story closes at 0 h
+
+**Rate-card basis (§2):** 3 `ALTER`-added columns with guards, below one table unit (DB 4) · 3 EF concurrency-token mappings and the test (BE 2) = **6 h**
+**Dependencies:** FW-007, FW-142, FW-207
+**Blockers:** 🔴 **`D-30`** — `[SVC §3.4]`'s call, **before the Phase-4 schema freeze**
+
+---
+
+###### FW-244 · `G49` — nine decided requirements with no column
+**Hours:** 8 h DB · **Priority:** High · **Sprint:** S1 · **Phase:** 1C · **Stream:** DB
+
+> Nine requirements that **survived client review and are stated in an owning specification** have
+> nowhere in the schema to store their result. Carried over from the retired `GapAnalysis.md`
+> (findings **B1**–**B9**); the affected screens are **`OutputCoilCompletion`** (DB7/DB7b),
+> **`RollAdjust`** (DB11), **`WipRejection`** (DB8) and **`SpoolCompletionNotification`**.
+>
+> ⚠ **Raised as ONE gap on purpose, and it must be built as one delta.** Nine separate rows would
+> be triaged independently and half-forgotten; they share a cause — requirements written against
+> screens rather than against tables — and a remedy.
+
+**Acceptance Criteria:**
+- [ ] All nine enumerated from `[GAP] G49` with their owning requirement id and screen, **before** any DDL is written
+- [ ] One schema delta covering all nine, in the right numbered files, **FKs in `06` and indexes in `07`**, idempotent under `RunAll`
+- [ ] Each column reaches its owning specification's requirement — the acceptance is *"the requirement can now be stored"*, not *"a column exists"*
+- [ ] `Schema/FlatWireSchema_*.md` updated to match the DDL, with **the DDL winning** on types and nullability
+- [ ] ⚠ **`[DBD §6.2]`'s baseline moves and that file states it** — this card states no count; `verify_schema_counts.py` re-runs green
+- [ ] The four owning screen specifications record that their requirements now have a persistence target
+
+**Rate-card basis (§2):** priced as two table units @ 4 h — nine columns across four existing tables plus their indexes and document sync = **8 h**
+**Dependencies:** FW-007, FW-006
+**Blockers:** —
+
+---
+
+###### FW-245 · `G51` — `SpcMeasurement.InSpec` stores a wrong verdict for an asymmetric band
+**Hours:** 6 h DB · **Priority:** High · **Sprint:** S1 · **Phase:** 1C · **Stream:** DB
+
+> The column is `AS (CASE WHEN ABS([ActualValue] - [TargetValue]) <= [ToleranceValue] … END)
+> **PERSISTED**` — a **single symmetric** tolerance — while `AlloyProperty` has carried **min/max
+> pairs** for gauge, width and diameter since 1 Aug 2026 (`Q22`).
+>
+> ⛔ **An asymmetric band is collapsed to one number and the verdict is *written*, not merely
+> computed.** A measurement inside an asymmetric band can be persisted as out-of-spec, or outside
+> it as in-spec, and because the column is `PERSISTED` the wrong verdict is **stored and read back**
+> by SPC reporting. `P-125` independently flags the sibling hazard: `BIT NOT NULL DEFAULT (1)`
+> means an omitted value **claims in-spec**.
+
+**Acceptance Criteria:**
+- [ ] The computed expression evaluates against the **min/max pair**, not a single symmetric tolerance, falling back to the symmetric form only where no pair exists
+- [ ] ⛔ **Existing rows re-evaluated**, not just the expression changed — a `PERSISTED` column means the wrong answers are already on disk
+- [ ] Where the band cannot be resolved the row is **not** silently marked in-spec — `P-125`'s rule for `RunReading` applies here for the same reason
+- [ ] `TC-020`-style verification that the C# tolerance logic, the DDL expression and `AlloyProperty`'s seeded pairs agree
+- [ ] ⚠ **`Q22` is still open** — the four min/max pairs are owed by e-mail and `AlloyProperty` is **deliberately unseeded**, so this ships correct-and-unexercised until they land. **Do not seed placeholder pairs to make a test pass**
+
+**Rate-card basis (§2):** one computed-column redefinition with a data re-evaluation pass and its verification, between one and two table units = **6 h**
+**Dependencies:** FW-004, FW-007, FW-168
+**Blockers:** ⚠ **`Q22`** — the tolerance pairs are owed by the client; the fix is buildable without them, the demonstration is not
+
+---
+
+###### FW-246 · `G50` / `G52` / `G41` / `G55` — constraint and referential-integrity repairs
+**Hours:** 12 h DB · **Priority:** High · **Sprint:** S1 · **Phase:** 1C/4 · **Stream:** DB
+
+> Four gaps, grouped because each is a `CHECK` or an FK on the same schema and they would otherwise
+> be triaged one at a time:
+>
+> - **`G50`** — three referential-integrity holes: `AlloyProperty` is **orphaned on the material side** (`Rod.Alloy` and `FlatWireRun.Alloy` are free `varchar` with no FK, so a typo on a rod is unconstrained); the payoff position is modelled **two ways**, some tables FK'd and some carrying a bare integer; `PassScheduleComponent.ComponentName` is an **enumerating `CHECK` rather than a reference**.
+> - **`G52`** — `PinRole='Sole'` **passes the `CHECK` and matches none of the sequence validator's four tiers**, so `minTier` is undefined over a `Sole` row while `FR-546` requires an out-of-tier rod to be refused. ⚠ `PinnedBoth` is fine — it is explicitly a member of both sets.
+> - **`G41`** — `CK_PSC_FM1NotBypassable` is **line-blind**, so **a correct FL2 pass schedule cannot be authored**: an FL2-standalone run is fed an already-flattened spool and FL1's 12″ mill is not in its material path, yet every FL2 schedule must mark `FM1` Active.
+> - **`G55`** — `CK_SpoolCheckin_PayoffPos` pins FL2's spool to payoff **`1`** while `CanonicalEnums.cs` and the seeded `PayoffPosition` row both make it **`3` (`TraversingTakeup`)**. ⚠ **On a column with no FK, so `TC-020`'s membership diff passes** — the disagreement is about *meaning*.
+
+**Acceptance Criteria:**
+- [ ] `G41`: the constraint becomes line-aware so an FL2 schedule can be authored. ⚠ **Do not generalise into *"a component's `Stand.LineId` must equal its schedule's `LineId`"*** — `[GAP]` forbids it explicitly
+- [ ] `G55`: FL2's payoff settled at one value across the `CHECK`, `CanonicalEnums.cs` and the `PayoffPosition` seed — *"FL2 has ONE payoff"* is true and is **not** the same claim as *which one*
+- [ ] `G52`: `Sole` either joins a tier in `RodOrderAllocation.md` §3's partition or leaves the `CHECK`; `FR-546`'s refusal is demonstrable at both stations
+- [ ] `G50`: the three holes closed — alloy FK'd on the material side, payoff position modelled one way, `ComponentName` referencing the vocabulary
+- [ ] Each change guarded so `RunAll` stays idempotent, with FKs in `06` and indexes in `07`
+- [ ] `Schema/FlatWireSchema_*.md` and `CanonicalEnums.cs` re-synced, and `TC-020` re-run **per leg** (`P-84`)
+
+**Rate-card basis (§2):** four constraint/FK repairs across six tables with re-seeding and enum re-sync, priced as three table units = **12 h**
+**Dependencies:** FW-005, FW-006, FW-007, FW-147, FW-225
+**Blockers:** ⚠ `G55` needs the client's FL2 payoff answer, or an internal decision recorded as one
+
+---
+
+###### FW-247 · `G8` — legacy `FlatLineSetup` / `FlatLineProcessing` data migration
+**Hours:** 32 h (DB 24 · BA 8) · **Priority:** Medium · **Sprint:** S3 · **Phase:** 13/14 · **Stream:** DB + BA
+
+> There is **no data-migration deliverable** for the legacy `FlatLineSetup` / `FlatLineProcessing`
+> tables, so legacy data is stranded on drop.
+>
+> ⚠ **The destination is no longer the blocker** — `D-31` made `PassScheduleComponent` an MVP-1
+> target on 15 Aug 2026, so there is somewhere for the setup data to land. **The missing migration
+> is.**
+
+**Acceptance Criteria:**
+- [ ] A column-level mapping from both legacy tables to their `FlatWireDB` destinations, authored as a document before any script
+- [ ] A migration script, numbered and **reversible**, in `Database/Scripts/`
+- [ ] A validation pass — row counts, spot reconciliation, and a named list of rows that **cannot** be mapped, with the reason
+- [ ] **Drop criteria** stated: what must be true before the legacy tables are retired, and who signs it
+- [ ] ⚠ **MVP-1 reads pass schedules and never authors them** (`OI-110`, `P-13`) — migrating setup data into `PassScheduleComponent` does not create a write path, and this story must not add one
+- [ ] Run on a copy first; the production run is gated behind the same sign-off class as `FW-241`
+
+**Rate-card basis (§2):** mapping + migration + validation + drop-criteria, three script-class deliverables @ 8 h (DB 24) · the legacy-schema analysis that has to precede them (BA 8) = **32 h**
+**Dependencies:** FW-005, FW-006, FW-152
+**Blockers:** ⚠ Needs access to the legacy `FlatLineSetup` / `FlatLineProcessing` data and an owner for the drop decision
+
+---
+
+###### FW-248 · Harden `verify_schema_counts.py`'s `C6`, and repair the two count sites it cannot see
+**Hours:** 8 h DB · **Priority:** High · **Sprint:** S1 · **Phase:** 1C · **Stream:** DB
+
+> ⛔ **The schema-count guard has a blind spot, and it is the exact class of drift the guard exists
+> to stop.** `[DBD §6.2]` — **the document that defines the baseline** — contradicts itself: it
+> states the current index figure after `Q89` added `UX_CoilTraceability_ChildAlpha` on 26 Aug 2026,
+> while an earlier paragraph **in the same file** still carries the previous one. And
+> `ProjectPlan/README.md` restates the baseline at all, which it **is not one of the three permitted
+> sites** to do, and restates it stale.
+>
+> ⛔ **`C6` reported zero disagreeing claims in permitted sites and zero advisory elsewhere on the
+> same run.** That matters because `C6` exists precisely so *"the number in the document cannot
+> drift away from the scripts again"* — and `[DEP §4.2]`'s gate has already rejected a correct
+> deployment **five times** on exactly this.
+
+**Acceptance Criteria:**
+- [ ] `C6` scans **every** count-shaped claim in `[DBD §6.2]`'s own file, not only the defining sentence — the self-contradiction is caught
+- [ ] `C6` flags a restatement in **any non-permitted site** as advisory, `ProjectPlan/README.md` included; the three permitted sites stay permitted
+- [ ] Both live contradictions repaired: `[DBD §6.2]`'s stale paragraph, and `README.md`'s restatement **removed rather than corrected** — it is not permitted to carry one
+- [ ] A regression fixture: a file with a deliberately stale count is detected by `C6`
+- [ ] ⚠ **This story states no count itself**, and neither does its test fixture's documentation. `[DBD §6.2]` is the only site that defines the baseline
+- [ ] All six checks green on a clean run afterwards
+
+**Rate-card basis (§2):** not a rate-card unit — a tooling change with a regression fixture plus two document repairs, priced at one script-class deliverable = **8 h**
+**Dependencies:** FW-152
+**Blockers:** —
+
+---
+
+###### FW-249 · Re-derive the DB-stream total on the current basis
+**Hours:** 8 h BA · **Priority:** Medium · **Sprint:** S1 · **Phase:** — · **Stream:** BA
+
+> **No current DB-stream total is published anywhere.** `[TB §7.3]`'s DB column is on the
+> **pre-`D-32`** Phase-1C basis, and its 119-story scope **excludes `FW-219`–`FW-231` entirely** —
+> its Phase-4 DB cell is `FW-159` alone, so `FW-220` (DB 24), `FW-221` (9), `FW-222` (2), `FW-223`
+> (DB 10) and `FW-225` (DB 12) are in none of it. `[CE §8]` separately records that 1C was costed
+> against 22 tables and the build is larger.
+>
+> ⚠ **`[CE]` owns the figure, and this is why the total was not re-derived in the orchestration
+> files:** effort figures propagate to roughly twenty files, and `[CE §8]` is explicit that
+> substituting a number into a derivation without re-deriving it *"makes the arithmetic lie"*.
+
+**Acceptance Criteria:**
+- [ ] A DB-stream total derived from the **current** story set — post-`D-32` 1C, the 33-table build, and `FW-219`–`FW-231` included
+- [ ] ⛔ **Published in an ADDITIVE new sheet or section**, never by substituting into `[CE §3]`, `§3b`, `§3c` or `[TB §7.3]`'s existing arithmetic
+- [ ] The `FW-232`–`FW-249` additive set is shown **separately** and is not folded into the MVP-1 baseline
+- [ ] Every figure it supersedes is named, with the section that carries it, so a reader knows which of `[CE §3]`'s three 1C figures to cite
+- [ ] ⚠ **`[CE §8]`'s known 1C understatement is carried forward, not silently absorbed**
+- [ ] The 114-story / 3,186 h baseline is **unchanged** by this exercise, or the change is called out as a re-baseline in its own right
+
+**Rate-card basis (§2):** not a rate-card unit — an estimation pass across `[TB §7]`'s DB cells and `[CE]`'s three 1C bases, priced at one BA deliverable = **8 h**
+**Dependencies:** — *(reads `[TB §7]` and `[CE]`; blocks no build)*
+**Blockers:** —
+
+---
+
+###### FW-250 · `build_development_plan_xlsx.py` silently drops every multi-stream story
+**Hours:** 6 h DB · **Priority:** High · **Sprint:** S1 · **Phase:** — · **Stream:** DB
+
+> ⛔ **Found on 29 Aug 2026 by running the generator, not by reading it.** The work-item parser
+> reads a story's streams with `re.finditer(r'(\d+)\s*h\s*([A-Z]{2})', hrs)` — `<digits> h <two
+> capitals>` — which matches `3 h BE` and **cannot match the parenthesised multi-stream form**
+> `40 h (DB 26 · BE 14)`, because the character after `h ` is `(`. When nothing matches, the code
+> does `if not streams: continue` — **a silent skip, with no warning and no error.**
+>
+> ⛔ **Eleven stories are missing from the client-facing `FlatWire_DevelopmentPlan.xlsx` today**, and
+> the list is not marginal: **`FW-202`** (FL1 spool completion, 98 h — written in a third format,
+> `98 h — FE 32 · BE 42 · DB 8 · RT 16`), **`FW-219`** (the FL2/FL3 run-end shared write-back, 40 h),
+> **`FW-220`**, **`FW-223`**, and the **whole `FW-225`–`FW-231` rod ↔ order allocation set**. They
+> are absent from the work-item sheet, from every effort roll-up, and — because they were never
+> parsed — **from the *"excluded from plan"* line that is supposed to name what was left out.**
+>
+> ⚠ **The parenthesised form is the repository's convention, not an error** — it is what
+> `[TB §7.1]`'s own multi-stream cards use, so this is a defect in the reader. ⚠ **The `FW-232`–
+> `FW-249` set inherits it**: five of those cards (`FW-234`, `FW-235`, `FW-238`, `FW-243`,
+> `FW-247`) are dropped the same way, which is how the defect surfaced.
+>
+> ⚠ **`BA`-only stories are a DIFFERENT case and must stay excluded** — the parser's docstring is
+> explicit that QA- and BA-only stories *"are not development work and are excluded here rather
+> than silently absorbed"*. `FW-249` (8 h BA) is correctly out. **Do not fix this by widening
+> `DISCIPLINE`.**
+
+**Acceptance Criteria:**
+- [ ] The stream parser reads all three hours formats in use: `N h XX`, `N h (XX a · YY b)` and `N h — XX a · YY b · …` (`FW-202`'s)
+- [ ] ⛔ **A card whose hours parse to no development stream FAILS the build**, or is named in a warning — never `continue`d silently. The silent skip is the defect; a wider regex alone would leave the next format to fail the same way
+- [ ] `BA`- and `QA`-only stories stay excluded **by a deliberate branch that says so**, distinguishable in the output from a parse failure
+- [ ] The eleven pre-existing stories appear in the work items sheet and in the effort roll-ups, and the *"excluded from plan"* line becomes trustworthy
+- [ ] ⚠ **The deliverable's effort totals will move when this lands** — roughly 250 h of already-baselined work becomes visible. **That is a correction, not new scope**, and the regenerated `.xlsx` must be reviewed before it is shared
+- [ ] `build_trial_run_xlsx.py` and `build_coverage_matrix.py` checked for the same pattern — all three parse `[TB §7]`
+
+**Rate-card basis (§2):** not a rate-card unit — a parser fix plus a fail-loudly guard and a regression check across three generators, below one script-class deliverable = **6 h**
+**Dependencies:** —
+**Blockers:** — *(the fix is unblocked; only the regenerated deliverable needs a reviewer)*
+
+---
+
+> **Additive-set reconciliation** — BE `3+6+8+16+12+4+8+2 = 59` · RT `8+4 = 12` · DB
+> `4+8+8+16+4+8+6+12+24+8+6 = 104` · FE 4 · BA 16 = **195 h dev** across **nineteen**
+> stories. *(`FW-250` was minted on 29 Aug 2026 during this set's own verification run, which
+> is how its subject was found — 187 h / 18 stories until then.)*
+>
+> ⚠ **No QA uplift and no contingency are applied here** — both are phase-level (§7.1) and these
+> eighteen stories span seven phases. ⚠ **This total enters no published figure**; `FW-249` is the
+> story that decides how, and where, a combined number is stated.
+
+---
+
 
 ### 7.3 Roll-up
+
+> ⚠ **The `FW-232`–`FW-250` additive set is deliberately NOT in this roll-up.** Those nineteen
+> stories carry **195 h dev** and are additive to `[CE §3b]`, exactly as `FW-202`, `FW-203`, `FW-204`,
+> `FW-218` and `FW-219` are. They span seven phases, so folding them into a per-phase column would
+> silently re-baseline six of them. **The 114-story / 3,186 h baseline below is unchanged.**
+> Re-deriving a combined figure is **`FW-249`'s**, in an additive sheet — `[CE §8]` is explicit that
+> substituting a number into a derivation without re-deriving it *"makes the arithmetic lie"*.
 
 #### 4.1 By phase
 
@@ -3515,6 +4073,21 @@ Sourced from each phase file's `OQ blockers:` trailer and the gaps register in [
 | ⚠ **`SpoolProcessing.OrderNo` populated from planning?** | `FW-124` | If allocation is not readable by the shopfloor system, **`FR-098` has nothing to resolve and DB5A is invalid** |
 | **`PLC-Q04`, `PLC-Q05`** *(station names, measure segment)* | `FW-N05`, `FW-082`, `FW-200` | `PLC-Q05` risks **all 41 tag paths**. Three `PLC-Q` items are `Critical` |
 | **OI-101** *(shift boundaries undefined)* | `FW-090`, `FW-193` | Blocks every shift-scoped figure in reporting |
+| ⚠ **Exit criterion 6 has no named reviewer** | Phase 1B sign-off | With **no automated backend tests** (`[TS §1.2]`), the QA0 walkthrough is the entire verification of the backend layer. `phase-01b` L124: *"needs a named reviewer and a slot in the 12-day window **or the Phase-1 gate has no 1B criterion at all**."* The checklist is `FW-138` §6.1; **`reviewer: TBD`**. ⚠ **Not a story** — QA hours are phase-level (§7.1), so what is missing is a name and a slot, not effort |
+| ⛔ **`build_development_plan_xlsx.py` drops every multi-stream story** | the client-facing `FlatWire_DevelopmentPlan.xlsx` | **Eleven stories are missing from a client deliverable today** — `FW-202`, `FW-219`, `FW-220`, `FW-223` and the whole `FW-225`–`FW-231` set — and because they never parse, they are **absent from the *"excluded from plan"* line too**. The stream regex cannot read `N h (XX a · YY b)`, and the miss is a silent `continue`. Owned by **`FW-250`**. ⚠ **Do not regenerate and share that workbook until it is fixed** |
+| ⚠ **G35** *(FM2's two dancers are unmodelled)* | `FW-171`, `FW-N05`, `FW-082` | **Blocked on `Q32`**, which decides everything downstream: **scheduled** ⇒ a `PassScheduleComponent` row, a DDL column and a place in the acknowledgement push (**one table added to `[DBD §6.2]`'s baseline**); **machine-side** ⇒ a read subscription and nothing in the schema moves. ⚠ **No hours are derivable until it is answered**, which is why no story is minted. `PSM012` and master spec §3.4 both assert *"tension is derived from speed, never entered manually"* — **false in tension mode** |
+
+> ⚠ **`G21`'s rows in this file are STALE and are a correction owed, not a live blocker.** The gap was
+> **fixed on 15 Aug 2026** — the re-keyed filtered index `UX_RodStaging_Bay ([Station],[PayoffPosition])
+> `WHERE [Status]='Staged'` is verified on a live deploy, and an FL3 rod at `FL1PO` position 1 is
+> rejected. **Five sites still carry it as blocking**: the row above, and the `Blockers:` lines of
+> `FW-007`, `FW-159`, `FW-176` and `FW-N01` — three of them saying it *"blocks the Phase-4 schema
+> freeze"*. `CLAUDE.md` carries it too. Recorded rather than swept here because the correction spans
+> five cards and a repository guide (`Database/TaskBreakdownPlans/Orchestration.md` §8.1 finding 1).
+> ⚠ **One residual is genuine and must not be lost in the correction:** the *domain* rule must reject a
+> second rod **with the DB index absent**, which no deployed environment can show — so the index is the
+> demonstrated defence and the aggregate rule the designed one. **Do not cite `G21` as proof of
+> defence-in-depth.**
 
 #### 6.2 Decided, but the decision has nowhere to land
 
@@ -3796,6 +4369,34 @@ All above the previous high-water mark `FW-124`, so nothing collides with upstre
 | `FW-010`–`FW-013`, `FW-068`, `FW-069` | **MVP-2** — [`FlatWireJiraStories-MVP2.md`](../../../MVP-2/DevelopmentPlan/FlatWireJiraStories-MVP2.md). `FW-010` is a live dependency of `FW-061` and `FW-082` |
 | `FW-020`–`FW-022`, `FW-030`, `FW-031`, `FW-040`–`FW-043`, `FW-050`–`FW-053`, `FW-055` | **Upstream, deleted** — rod receiving, orders, planning and line scheduling, built by other teams. Recoverable at commit `1964086`. `FW-020` is a live dependency of `FW-061` |
 | `FW-S1-###`, `FW-S3-###` | **Never existed.** These sprint-style ids appear in `CheckinImplementationPlan.md` and `CheckinImplementationPrompt.md` and resolve to nothing. Treat any such citation as pointing at the phase, not a story |
+
+---
+
+#### B.6 Minted ids — `FW-232`–`FW-250` (19, contiguous)
+
+**Minted 29 Aug 2026** for pending work that had **no id, no plan and no hours line**, from the two
+orchestration files' recorded-but-unfixed findings, the `P-##` register and `[GAP]`. Cards are in
+§7.2 under *Additive — pending-work stories*. **Next free id: `FW-251`.**
+
+| Range | Stream | Subject |
+|---|---|---|
+| `FW-232`–`FW-233` | BE | Hosts for the two specified-but-unhosted endpoint groups — `/order/**` and `/rod/**` |
+| `FW-234`, `FW-237` | BE + DB | Audit-log persistence (`P-15`) and the service identity its unattended writes need (`G59`) |
+| `FW-235`, `FW-239` | RT + FE | `CoilCompleted`'s missing hub member (`OI-140`) and `FW-150`'s unwired cache invalidation |
+| `FW-236`, `FW-238` | BE + DB | The two `OPCConnection` defects — no per-tag write status (`G58`), no flat wire registration (`G60`) |
+| `FW-240` | BE | `P-91`'s two rod-order entities, pending `[SVC §3.2a]` |
+| `FW-241`–`FW-242` | DB | Deploy step 2's reverse script and sign-off, and moving `FlatWireDB` into `ual-database` |
+| `FW-243`–`FW-246` | DB | The schema deltas and constraint repairs — `D-30`, `G49`, `G51`, and `G50`/`G52`/`G41`/`G55` |
+| `FW-247`–`FW-249` | DB + BA | `G8`'s migration, the count guard's blind spot, and the DB-stream re-derivation |
+| `FW-250` | DB | ⛔ **The development-plan generator silently drops every multi-stream story** — found by running it during this set's verification |
+
+⚠ **Hours are additive to `[CE §3b]` and are in no phase reconciliation and no roll-up column.**
+
+⚠ **This block does not follow `B.3` contiguously, and that hole is pre-existing.** `B.3` stops at
+`FW-201`; **`FW-202`–`FW-231` have no appendix block at all** and are recorded only in this file's
+header change entries. That set is also **not contiguous** — `FW-209` was already taken and `FW-216`
+is deliberately skipped. Closing that hole is not this pass's, and is noted so `B.6` is not misread
+as following `B.3`.
 
 ---
 

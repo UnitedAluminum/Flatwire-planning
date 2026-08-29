@@ -1,9 +1,9 @@
 # FW-208 · Domain events and post-commit dispatch
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 27, 2026 — ✅ **EXECUTED (steps 1–7, 9, 10): the dispatch mechanism is built and the defect is fixed — domain events now reach handlers.** 3 new files, 8 amended, **0 errors, no new analyzer warning**. Verified by harness on live `FlatWireDB`: lane routing with the raw event reaching **neither** lane, both lanes dispatching in-transaction-then-broadcast, the bay **actually released** inside the rejection's transaction, a failed commit **broadcasting nothing**, and `WLD010`. `FW-207`'s 137 checks still pass; the API still boots. ⛔ **Step 8 stays blocked** — `IFlatWireClient` does not exist (`FW-080`). ⛔ **Three defects only execution could find.** **(1)** `INotificationHandler<>` was **never registered** by the Scrutor scan and Infrastructure's assembly was not scanned — a handler would compile, look registered and never resolve, making `Publish` a silent no-op; **the third such trap in this one story**. **(2)** The in-transaction lane could not see a sibling aggregate's identity: `CK_RodStaging_RejectLink` needs `WipRejectionId`, and at drain time the rejection is `Added` with `Id = 0` — so **`P-94`'s order is revised to save → drain → save → commit** (two saves, one transaction). **(3)** `BayStateChanged` **had to be split** — a notification four other call sites raise cannot carry a rejection link, so the release was unwritable: **`P-98`**, `BayReleaseRequested`. Two events also gained `OperatorId`, and `ConsumeAtCheckIn` a `checkedInBy`. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Last Updated:** August 29, 2026 — ✅ **STEP 8 EXECUTED: the story is COMPLETE except for one event that has nowhere to go.** Five broadcast handlers built in `FlatWire.Infrastructure`, injecting **`IFlatWireBroadcaster`** (`P-101`) — `FW-080` landed `IFlatWireClient` in `FlatWire.Domain` on 28 Aug and unblocked it. **5 new files, 5 amended, 0 errors, 13 solution-wide warnings — identical to the pre-existing baseline.** Verified by harness: **54/54**, including live-`FlatWireDB` commit-boundary runs. ⛔ **`CoilCompleted` is UNBROADCASTABLE** — `[SIG §5.2]`'s fourteen events carry no coil-completion member and inventing one is breaking under `[API §8]`; `P-137`, new `OI-140`. ⚠ **Three defects step 8 found:** the post-commit replay was **unguarded**, so the first throwing broadcast would have turned a committed command into a `500` (`P-138`); three events could not fill their own payloads and gained fields (`P-139`); and the *“eight broadcast handlers”* figure carried by `FW-080` / `FW-149` / `Orchestration.md` is a **miscount of eight *handlers*** — seven exist, five of them broadcast. **Previously, August 27, 2026 — ✅ EXECUTED (steps 1–7, 9, 10): the dispatch mechanism is built and the defect is fixed — domain events now reach handlers.** 3 new files, 8 amended, **0 errors, no new analyzer warning**. Verified by harness on live `FlatWireDB`: lane routing with the raw event reaching **neither** lane, both lanes dispatching in-transaction-then-broadcast, the bay **actually released** inside the rejection's transaction, a failed commit **broadcasting nothing**, and `WLD010`. `FW-207`'s 137 checks still pass; the API still boots. ⛔ **Step 8 stays blocked** — `IFlatWireClient` does not exist (`FW-080`). ⛔ **Three defects only execution could find.** **(1)** `INotificationHandler<>` was **never registered** by the Scrutor scan and Infrastructure's assembly was not scanned — a handler would compile, look registered and never resolve, making `Publish` a silent no-op; **the third such trap in this one story**. **(2)** The in-transaction lane could not see a sibling aggregate's identity: `CK_RodStaging_RejectLink` needs `WipRejectionId`, and at drain time the rejection is `Added` with `Id = 0` — so **`P-94`'s order is revised to save → drain → save → commit** (two saves, one transaction). **(3)** `BayStateChanged` **had to be split** — a notification four other call sites raise cannot carry a rejection link, so the release was unwritable: **`P-98`**, `BayReleaseRequested`. Two events also gained `OperatorId`, and `ConsumeAtCheckIn` a `checkedInBy`. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
-**Status:** ✅ **BUILT — 27 Aug 2026, steps 1–7, 9 and 10.** The dispatch mechanism is in `ual-api`: the two lane wrappers, capture-then-replay hooked into `CommitTransactionAsync`, `SaveEntitiesAsync` routed through the same hook, and the two in-transaction handlers. **3 new files, 8 amended, 0 errors, no new analyzer warning.** Verified by harness against live `FlatWireDB` — lane routing, both lanes dispatching in the right order, the bay actually released inside the rejection's transaction, a rollback broadcasting nothing, and `WLD010`. `FW-207`'s 137 checks still pass. ⛔ **Step 8 — the BROADCAST handlers — remains blocked**: `IFlatWireClient` still does not exist (`FW-080`, `P-22`). ⚠ **Three defects found on execution**: `INotificationHandler<>` was never registered, the in-transaction lane could not see a sibling's identity (`P-94`'s order revised), and `BayStateChanged` had to be split (`P-98`).
+**Status:** ✅ **BUILT — steps 1–10; 27 Aug 2026 (the mechanism) and 29 Aug 2026 (step 8, the broadcast handlers).** The only thing outstanding is `CoilCompleted`, which has no hub member to send on — a contract gap (`P-137`, `OI-140`), not unfinished wiring. **Previously — BUILT 27 Aug 2026, steps 1–7, 9 and 10.** The dispatch mechanism is in `ual-api`: the two lane wrappers, capture-then-replay hooked into `CommitTransactionAsync`, `SaveEntitiesAsync` routed through the same hook, and the two in-transaction handlers. **3 new files, 8 amended, 0 errors, no new analyzer warning.** Verified by harness against live `FlatWireDB` — lane routing, both lanes dispatching in the right order, the bay actually released inside the rejection's transaction, a rollback broadcasting nothing, and `WLD010`. `FW-207`'s 137 checks still pass. ✅ **Step 8 is built too, 29 Aug 2026** — see §5.2. ⚠ **Three defects found on the 27 Aug execution**: `INotificationHandler<>` was never registered, the in-transaction lane could not see a sibling's identity (`P-94`'s order revised), and `BayStateChanged` had to be split (`P-98`).
 **Owner:** Backend (.NET) stream
 **Audience:** The .NET developer building `FW-208`
 **Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
@@ -86,10 +86,17 @@ From `[TB §7]` — verbatim:
 > added `RunResumed`, because a resume is a broadcast-worthy state change and the four resume
 > outcomes are recorded on it.
 >
-> **AC 3 is not buildable yet.** `IFlatWireClient` and `FlatWireHub` **exist in no `ual-api`
-> checkout**. `FW-080` mints the interface (`P-22`) in wave 2; this story is wave 3.
+> **AC 3 is met for five of the six events, and the sixth has nowhere to go.** `FW-080` shipped
+> `IFlatWireClient` and `FlatWireHub` on 28 Aug 2026, so the handlers were built on 29 Aug. ⛔ **But
+> `CoilCompleted` has no member on that interface** — the AC cannot be met for it without a breaking
+> contract change (`P-137`, `OI-140`). ⚠ And the handlers inject **`IFlatWireBroadcaster`**, not
+> `IHubContext<>`: `FlatWire.Infrastructure` can name neither `FlatWireHub` nor `IHubContext<>`
+> (`P-101`).
 >
-> **AC 5 is delivered on the raising side and outstanding on the receiving side.** `WipRejection`
+> **AC 5 is now delivered on both sides.** `BayReleaseHandler` releases the bay in-transaction and
+> `BayStateChangedBroadcastHandler` sends `PayoffStateChanged` after the commit, with no direct call
+> into `RodStaging` from the rejection — verified on live `FlatWireDB` (§5.2). *Previously:*
+> `WipRejection`
 > already publishes rather than reaching — `FW-207` built `WipRejection.ReleaseBay(...)`, which
 > raises `BayStateChanged` and touches no `RodStaging`. **What is missing is the handler**, and it
 > is two handlers, not one — `P-96`.
@@ -113,7 +120,7 @@ From `[TB §7]` — verbatim:
 |---|---|---|
 | 1 | The **aggregate** raises the event via the inherited `AddDomainEvent` | In `FlatWire.Domain`. **Do not raise from a handler** — the aggregate knows the state changed; the handler only asked. ✅ **Built by `FW-207`** |
 | 2 | **`FlatWireDbContext` dispatches** | ⚠ **On TWO lanes, not one** — see §2.0. In-transaction handlers run **before** the save so they enlist in it; broadcasts run **after the commit succeeds**. The card's *"after commit, never before"* is right about broadcasts and wrong as a blanket rule (`P-94`) |
-| 3 | A handler in **Infrastructure/API** translates to `IFlatWireClient` | **Not in Application** — that is the whole point (`P-35`). ⛔ Blocked: the interface does not exist yet |
+| 3 | A handler in **Infrastructure/API** translates to `IFlatWireClient` | **Not in Application** — that is the whole point (`P-35`). ✅ **Built 29 Aug 2026**, in `FlatWire.Infrastructure/EventHandlers/`. ⚠ The handler names `IFlatWireClient` but **injects `IFlatWireBroadcaster`** (`P-101`) — Infrastructure cannot name a SignalR type. ⛔ Except `CoilCompleted`, which the interface cannot carry (`P-137`) |
 
 ### 2.0 ⚠ Two lanes, and why one is not enough — `P-94`
 
@@ -242,10 +249,11 @@ delivered by `FW-207`**, six events in `Domain/Events/RunEvents.cs`, raised via 
 7. **Write the in-transaction handlers** — buildable **now**, and they are the half that must not be
    lost: `BayStateChanged` → `RodStaging.Unstage(...)`, and `WeldRecorded` → mark the incoming rod
    welded, ⚠ only when `QualityPassed` (`WLD010`). Neither touches SignalR, so neither is blocked.
-8. ⛔ **Write the broadcast handlers in Infrastructure** (`P-35`), one per post-commit-lane event.
-   **Blocked**: `IFlatWireClient` does not exist — `FW-080` mints it (`P-22`), and `P-35` holds only
-   if it lands in `FlatWire.Domain`. Steps 1–7 are the deliverable until then, and they are the
-   substance of the story.
+8. ✅ **Write the broadcast handlers in Infrastructure** (`P-35`), one per post-commit-lane event.
+   **Done 29 Aug 2026** — `FW-080` landed `IFlatWireClient` in `FlatWire.Domain`, so `P-35` holds as
+   written. ⚠ **But they inject `IFlatWireBroadcaster`, not `IHubContext<>`** — see the correction
+   under `P-35`. **Five handlers, not six**: `CoilCompleted` has no member on the interface to send
+   on (`P-137`).
 9. **Verify the layering by reference, not by intention** — `P-34`. ✅ Already true today:
    `Application.csproj` references only `Domain.csproj` and carries no SignalR package.
 10. **Prove something actually fired** — the harness route of §5, because no endpoint reaches an
@@ -255,9 +263,11 @@ delivered by `FW-207`**, six events in `Domain/Events/RunEvents.cs`, raised via 
 
 ## 4. Decisions this plan makes
 
-> `P-##` is continuous across this folder. This story owns **`P-34`**, **`P-35`** and
-> **`P-94`**–**`P-98`**; `P-01`–`P-33` precede it and `P-36`–`P-93` were minted after it by other
-> plans in the folder. New decisions mint at **`P-99`+**.
+> `P-##` is continuous across this folder. This story owns **`P-34`**, **`P-35`**,
+> **`P-94`**–**`P-98`** and **`P-137`**–**`P-139`**; `P-01`–`P-33` precede it and everything between
+> was minted by other plans in the folder. ⚠ **The folder now runs to `P-139`** — the *"mint at
+> `P-99`+"* note this row used to carry was true on 27 Aug and was overtaken within a day. New
+> decisions mint at **`P-140`+**.
 
 ### `P-34` — prove the SignalR-free Application layer by project reference
 
@@ -284,12 +294,25 @@ project is already the composition root and adding runtime behaviour there blurs
 Infrastructure may hold no business rules (`[SVC §3.2]`) — a translation from a domain event
 to a hub call is not one.
 
-⚠ **Confirmed viable on 27 Aug 2026, and one condition makes it so.** Infrastructure can hold a
-broadcast handler **only because `IFlatWireClient` lives in `FlatWire.Domain`** — `[SVC §3.2]`'s
-layer table puts it there, beside the repository interfaces. The handler depends on the interface;
-DI supplies the API-side `IHubContext<FlatWireHub, IFlatWireClient>` implementation. **If `FW-080`
-lands the interface in the API project instead, `P-35` becomes unbuildable** and the handlers move to
-API — so check where it lands before writing them.
+⚠ **Confirmed viable on 27 Aug 2026, and CONFIRMED BUILT on 29 Aug 2026.** `FW-080` landed
+`IFlatWireClient` in `FlatWire.Domain` — `[SVC §3.2]`'s layer table puts it there, beside the
+repository interfaces — so the placement in this decision stands exactly as written and the five
+broadcast handlers are in `FlatWire.Infrastructure/EventHandlers/`.
+
+⛔ **The INJECTION named in the sentence below was wrong, and the correction is `P-101`'s.** This
+decision used to read *"DI supplies the API-side `IHubContext<FlatWireHub, IFlatWireClient>`
+implementation"*. **`FlatWire.Infrastructure` can name neither type**, for two independent reasons:
+`FlatWireHub` is `FlatWire.API`'s and the project reference runs API → Infrastructure, not the
+reverse; and `IHubContext<>` is in the ASP.NET Core **shared framework**, which a
+`Microsoft.NET.Sdk` class library does not carry and no `PackageReference` supplies. So *"check
+where `FW-080` lands the interface"* was **necessary and not sufficient** — landing it in `Domain`
+is required and still leaves the handler with nothing to inject.
+
+**The handlers inject `IFlatWireBroadcaster`** — `FlatWire.Domain/Services/`, one member,
+`IFlatWireClient Line(LineId)`, implemented in `FlatWire.API` over the real hub context. ⚠ **It has
+ONE member, not the two `P-101`'s row still claims**: inside a `Hub<IFlatWireClient>`,
+`Clients.Caller` is already typed as `IFlatWireClient`, so the hub answers its own caller with no
+broadcaster at all. There is no `Connection(connectionId)` to look for.
 
 ⚠ **The in-transaction handlers are the same decision for a different reason.** A state handler needs
 a repository (`IRodStagingRepository`), which is Infrastructure's; putting it in API would make the
@@ -430,6 +453,107 @@ enqueue its `IFlatWireClient` call into a scoped queue flushed after commit. Few
 gets a pre-commit broadcast and no compile error. That is exactly the class of failure `P-34` and
 `P-90` were written to avoid.
 
+### `P-137` — `CoilCompleted` gets NO handler, because there is nothing to send it on
+
+⛔ **Found on execution, 29 Aug 2026, and it is a CONTRACT gap rather than a missing handler.**
+`P-96`'s table assigns `CoilCompleted` to the post-commit lane with the note *"broadcast; the coil
+row is already written by its own aggregate."* **There is no member on `IFlatWireClient` to
+broadcast it with.** `[SIG §5.2]`'s fourteen events and `[SIG §5.4]`'s six markers were counted
+member by member: nothing carries a completed output coil. The nearest neighbours are all something
+else — `SpoolCompletionPromptDue` is the *spool* prompt, and `RodCheckoutEvent` is a rod leaving.
+
+**So the event is raised, dispatched, and reaches no handler — deliberately.** Three alternatives
+were considered and all lose:
+
+| Option | Why not |
+|---|---|
+| Add a `CoilCompleted` member to `IFlatWireClient` | **A hub payload change is a BREAKING change** (`[API §8]`), and `P-22` mints the interface **whole** precisely so it is not widened later. It would have to move `[SIG §5.2]`, the interface, the Angular mirror `[SIG §5.6]` and `FW-136` in one pass — and `FW-136` does not exist yet (`P-116`) |
+| Send it on a neighbouring member | A client subscribed to `RodCheckoutEvent` would receive a coil completion. That is worse than silence |
+| Delete the event from `FW-207` | The event is **correct**; what is missing is the transport. Deleting it would hide the gap and lose the raise site |
+
+**Recorded as `OI-140`.** ⚠ **The screens do not go dark:** DB7 completes the coil through its own
+request/response, so the operator who completed it sees the result. What is missing is the
+**broadcast to the other clients on the line** — and whether that is wanted is the client's call.
+
+⚠ **This is also where the *"eight broadcast handlers"* figure comes from, and why it is wrong.**
+`P-96`'s six events, two of them on both lanes, make **eight handler classes** — six post-commit and
+two in-transaction. `FW-080`, `FW-149` and `Orchestration.md` all render that as *"eight
+**broadcast** handlers"*, which counts the two in-transaction ones twice over. **Seven handlers
+exist: five broadcast and two in-transaction. The eighth is `CoilCompleted`'s, and it is blocked
+here.**
+
+### `P-138` — the post-commit replay is guarded at the CONTEXT, not in each handler
+
+⛔ **A live defect, found by writing the first handler that could throw.** `DispatchLanes.cs` states
+the rule in terms — *"A failure here must not fail the request … See the exception handling in
+`FlatWireDbContext.CommitTransactionAsync`"* — **and there was no exception handling there.**
+`CommitTransactionAsync` ended with a bare `await this.mediator.PublishDeferredAsync(deferred)`
+outside the `try`. That placement is right about `P-94` property (4) — a throw must not reach a
+`catch` that rolls back an already-committed transaction — and it leaves the throw propagating to the
+caller.
+
+**The consequence is the worst pairing available:** the transaction has committed, the material is on
+the floor, the rows are written — and the request returns `500`. A retry then re-runs a command whose
+effect already happened. Nothing had surfaced it, because **with no broadcast handler written,
+nothing could throw.**
+
+**The guard is `FlatWireDbContext.PublishDeferredSafelyAsync`** — catch, log at error level, return —
+and both entry points (`CommitTransactionAsync` and `SaveEntitiesAsync`) route through it.
+
+⚠ **Why there and not in each handler:** the same reasoning as `P-34` proving the SignalR-free layer
+by project reference. A rule enforced at the one shared choke point holds for handlers nobody has
+written yet; a rule enforced by convention in each handler holds until someone forgets.
+
+⚠ **It required a logger on the context**, so `FlatWireDbContext`'s constructor gained
+`ILogger<FlatWireDbContext>` and `FlatWireDbContextDesignFactory` passes `NullLogger` — design-time
+tooling never commits, so the lane never runs there. ⚠ **The failure is logged, never swallowed
+silently**: a hub that has stopped delivering is an operational fault, and `[MON §7.1]` alerts on hub
+health separately.
+
+⚠ **One event's failure abandons the rest of that commit's batch**, because `PublishDeferredAsync`
+publishes in a loop. Accepted rather than overlooked: every broadcast in one commit addresses one
+line, so if the hub is down for one it is down for all of them.
+
+### `P-139` — an event carries the facts ITS payload needs, and the handler translates the vocabulary
+
+Three of the five broadcast handlers could not fill their payload from the event they were given, and
+the fix is the same each time: **the aggregate carries the value, because a post-commit handler must
+not touch a tracked entity** (`P-94` property 3). These are `FW-207`'s files, edited here for the
+reason `FW-207` itself gives — *the consumer is what proves the surface incomplete*.
+
+| Event | Gained | Because |
+|---|---|---|
+| `WeldRecorded` | **`LineId Line`** | ⛔ **A hard blocker, not a nicety.** `IFlatWireBroadcaster.Line(LineId)` is the only way to address a group, so without it the weld could not be broadcast **at all**. `WeldEvent` has carried `LineId` since `FW-207`; only the event was missing it |
+| `RunResumed` | **`int FootageAtResume`** | `PauseMarker.FootagePosition` is **non-nullable**, so a resume with no footage cannot be plotted. Sourced from the open `RunPauseEvent.FootageAtPause` — the line stood still, so the resume plots where the pause did |
+| `BayStateChanged` | **`RodSeqno`, `IsWelded`, `IsBlocked`** | `PayoffStateChangedEvent` publishes all three. ⚠ `IsBlocked` is **derived** (`G21`) and cannot be recovered from the other values, so the aggregate evaluates it at raise time |
+
+⚠ **The bay-state VOCABULARY is translated in the handler, not by the aggregate.** The event carries
+the domain words — `Staged` | `Welded` | `CheckedIn` | `Unstaged` — and `[SIG §5.2]` publishes
+`NotStaged` | `Staged` | `Active` | `Blocked`. They are **different lists**, and mapping between them
+is what makes these *translation* handlers rather than passthroughs:
+
+| Domain | Published | Note |
+|---|---|---|
+| `Staged` + a failed inspection | **`Blocked`** | Tested FIRST — `Blocked` is layered on `Staged` and has to win over it |
+| `Staged` | `Staged` | |
+| `Welded` | **`Staged`** | ⚠ `IsWelded` is a FLAG on a `Staged` row; the rod still occupies its bay. The payload carries it separately |
+| `CheckedIn` | **`Active`** | Check-in consumes the staged row and the rod runs |
+| `Unstaged` | **`NotStaged`** | Pre-check-out, or a WIP-rejection release — `FR-053` |
+| anything else | **nothing is sent** | A word outside the four is a code defect. It is logged at error level rather than passed through, because the client's `payoff-option` control has no rendering for it |
+
+⚠ **`RodSeqno` 0 publishes as `null`, not as sequence zero** — `RodStaging.Stage` assigns no seqno,
+so a freshly staged bay legitimately has none, and the payload is `short?` for that reason.
+
+⚠ **Two prompt payload fields are deliberately left null on the live broadcast**, and neither is a
+gap to close here: `SpoolAlpha` is a `SpoolCheckin` join the raising aggregate does not have (and is
+null on FL1 anyway), and **no column in the schema holds `TargetLb`** — `FW-149` checked it field by
+field, and the notion belongs to `[SIG §5.5]`'s advisory Part A payload. ⚠ **`LatchedWeightLb` is
+`decimal?` on both the event and the column but NON-nullable on the payload**, so a missing weight is
+sent as `0` **with a warning logged**. The prompt is sent rather than suppressed on purpose: it is the
+operator's only cue that the line stopped, it is durable, and a client re-joining receives it from the
+persisted columns regardless — suppressing the live send would only make the live and replay paths
+disagree.
+
 ### `P-96` — every event is assigned a lane, and `BayStateChanged` gets both
 
 An event with no lane either broadcasts a lie or never lands, so the assignment is written down here
@@ -506,9 +630,9 @@ bay with no rejection at all, and its `BayStateChanged` is the only event raised
 | **In-transaction lane** | A state handler's write and the command's own write are in **one** transaction: force a failure *after* the handler and confirm **both** roll back |
 | **Post-commit lane** | Force a `SaveChangesAsync`/`CommitAsync` failure — **no broadcast is sent**. ⚠ And the converse, which is the trap: on success **a broadcast IS sent**. The clear-before-publish behaviour means a wrong implementation sends nothing on either path and looks like it passed (`P-94`) |
 | **Retry safety** | `TransactionBehaviour` runs inside an execution strategy. Force a transient fault so the body re-executes, and confirm **one** broadcast, not two (`P-94`) |
-| Handlers translate to `IFlatWireClient` | One handler per broadcast-lane event; no magic-string sends. ⛔ Blocked until `FW-080` mints the interface |
+| Handlers translate to `IFlatWireClient` | ✅ **Five built, one per broadcast-lane event that has a member**, no magic-string sends — `Hub<IFlatWireClient>` makes the contract compile-time. ⛔ **`CoilCompleted` has no member and therefore no handler** (`P-137`) |
 | **No SignalR in Application** | `grep` returns zero **and** the `.csproj` cannot reference it *(`P-34`)*. ✅ True as of 27 Aug 2026: `Application.csproj` references only `Domain.csproj` and carries no SignalR package |
-| `WipRejection` clears via event | ✅ raising side built (`FW-207`). Outstanding: the bay clears **in the transaction** and `PayoffStateChanged` broadcasts **after** it, with **no direct call** into `RodStaging` from the rejection |
+| `WipRejection` clears via event | ✅ **Both sides built and verified on live `FlatWireDB`** — the bay clears **in the transaction** and `PayoffStateChanged` broadcasts **after** it, asserted on sequence; no direct call into `RodStaging` from the rejection |
 | `PayoffStateChanged` timing | Immediate, **never** inside the ~100 ms batch |
 | Every event has a lane | The six-row table in `P-96` is complete, and adding a seventh event forces a choice rather than defaulting |
 
@@ -578,10 +702,78 @@ story.
 
 ---
 
+### 5.2 ✅ Executed 29 Aug 2026 — step 8, the broadcast handlers
+
+**Built on `ual-api` branch `feature/UADEV-23146`: 5 new files, 5 amended, 0 errors, and 13
+solution-wide analyzer warnings — the same 13 the 27 Aug pass recorded, all pre-existing.**
+
+| New file — all in `FlatWire.Infrastructure/EventHandlers/` | Sends |
+|---|---|
+| `BayStateChangedBroadcastHandler` | `PayoffStateChanged` — immediate, **never** in the ~100 ms batch |
+| `WeldRecordedBroadcastHandler` | `WeldJoinEvent` |
+| `RunPausedBroadcastHandler` | `PauseEvent` · `IsResume = false` |
+| `RunResumedBroadcastHandler` | `PauseEvent` · `IsResume = true` |
+| `SpoolCompletionPromptBroadcastHandler` | `SpoolCompletionPromptDue` |
+
+**Amended:** `Events/RunEvents.cs` and its three raise sites (`WeldEvent.Announce`,
+`FlatWireRun.Resume`, `RodStaging`'s four `BayStateChanged` raises) for `P-139`, and
+`Context/FlatWireDbContext.cs` for `P-138`.
+
+⛔ **No handler for `CoilCompleted`** — `P-137`. It is the one acceptance the story cannot meet, and
+the reason is a missing member on `IFlatWireClient`, not missing wiring.
+
+**Verified by harness — 54 checks, all passing.** Sections A and B run in-process; section C runs
+against **live `FlatWireDB`** on `DEVUAL-UADEV001\TEST1` and **writes nothing** (the staged entity is
+tracked `Unchanged`, so the real transaction commits an empty change set while the drain still finds
+its domain event).
+
+| Group | What was proved |
+|---|---|
+| **A — registration** | All five broadcast handlers resolve through **the real path** — `AddCommonApplication` with the Infrastructure assembly, the same call `Program.cs` makes. ⚠ This is the check that catches `P-95`'s third silent no-op: an unregistered notification handler compiles, looks registered, and makes `Publish` a no-op |
+| **A — lane routing** | `PostCommit<T>` reaches only the broadcast handler and `InTransaction<T>` only the state handler; the **raw event reaches neither**, and neither `InTransaction<RunPaused>` nor `PostCommit<BayReleaseRequested>` resolves to anything |
+| **B — vocabulary** | All five rows of `P-139`'s translation table: `Staged`→`Staged`, `Welded`→`Staged` with `IsWelded` carried separately, `CheckedIn`→`Active`, `Unstaged`→`NotStaged`, and **`Staged` + a failed inspection → `Blocked`**, which must beat the `Staged` it is layered on |
+| **B — unknown state** | A word outside the four **broadcasts nothing** and logs at error level |
+| **B — `WLD010` asymmetry** | A **failed** weld still broadcasts its marker carrying `QualityPassed = false`, while `WeldMarkHandler` on the other lane does **not** mark the rod. That divergence is the rule, not an oversight |
+| **B — seqno** | `RodSeqno` 0 publishes as `null`; 3 publishes as 3 |
+| **B — pause / resume** | The pause marker carries the **code**, never a label; the resume carries `IsResume`, the **pause's** footage, and no reason of its own |
+| **B — prompt** | A null latched weight still delivers the prompt, as `0`, with a warning; a real weight passes through unchanged; `SpoolAlpha` and `TargetLb` are null |
+| **C — dispatch happens** | `CommitTransactionAsync` against the live database ran both lanes |
+| **C — order** | `intx:BayStateChanged` **before** `send:PayoffStateChanged`, asserted on sequence rather than on counts |
+| **C — rollback** | A failing in-transaction handler fails the command **and broadcasts nothing** |
+| **C — `P-138`** | ⛔ **A throwing broadcast does NOT fail the committed command**, the error is logged, and the in-transaction lane's work stands |
+
+> ### ⛔ Three things step 8 found that the plan did not predict
+>
+> **(1) One event has nowhere to go.** `P-96` assigned `CoilCompleted` a lane and a handler
+> description; `IFlatWireClient` has no member for it. The lane table was written against the events,
+> and nobody checked it against the interface. `P-137`.
+>
+> **(2) The post-commit replay was unguarded**, so the first broadcast handler that threw would have
+> turned a committed command into a `500`. The rule was written down in `DispatchLanes.cs` and
+> pointed at an enforcement that did not exist — invisible until something could actually throw.
+> `P-138`.
+>
+> **(3) Three events could not fill their own payloads**, and one of the three —
+> `WeldRecorded` without a `LineId` — was unbroadcastable rather than merely thin: there was no group
+> to address. `P-139`.
+
+---
+
 ## 6. Handoff
 
 This is what lets every later phase's command handlers have side effects without a hub
 reference — Phases 4 through 9 all rely on it. `FW-150` delivers what these handlers send.
+
+⚠ **What a later story must know, now that the handlers exist:**
+
+- **Adding a seventh domain event forces two choices, not one** — a lane (`P-96`) *and* a member on
+  `IFlatWireClient` to send it on. `CoilCompleted` proves the second is not automatic (`P-137`).
+- **Do not add a `try`/`catch` to a broadcast handler for the purpose of protecting the request.**
+  The context already guarantees it (`P-138`); a handler catching for its own reasons is fine.
+- **`FW-202`** owns the `RUNNING → STOPPED` edge that calls `RaiseCompletionPrompt`, and it is the
+  story that can supply `SpoolAlpha` on the live prompt broadcast.
+- **`FW-150`'s `InvalidateRun` seam is still unwired**, and step 8 did not close it: it waits on a
+  run-lifecycle event that `FW-207` does not raise.
 
 ---
 
@@ -589,15 +781,21 @@ reference — Phases 4 through 9 all rely on it. `FW-150` delivers what these ha
 
 | Item | Effect here |
 |---|---|
-| ⛔ **Nothing dispatches** *(new, 27 Aug 2026)* | `SaveEntitiesAsync` is the only dispatching method and **has no caller**; `TransactionBehaviour` commits through `CommitTransactionAsync` → the un-overridden `SaveChangesAsync`. **Every event `FW-207` raises is dropped.** `P-95` — and it is this story's first task, before any handler |
-| **`IFlatWireClient` / `FlatWireHub` do not exist** *(new, 27 Aug 2026)* | Verified absent from `ual-api`. `FW-080` mints the interface (`P-22`, wave 2); this story is wave 3. **AC 3 and build step 7 are blocked**; steps 1a–6 are not, and they are the substance |
+| ⛔ **`CoilCompleted` has no transport** *(new, 29 Aug 2026)* | `[SIG §5.2]`'s fourteen events and `[SIG §5.4]`'s six markers carry **no coil-completion member**, so the one post-commit event without a handler is blocked on the contract rather than on wiring. Adding a member is breaking (`[API §8]`) and needs `[SIG]`, `IFlatWireClient`, `[SIG §5.6]` and `FW-136` moved in one pass. **`P-137`, `OI-140`** |
+| ⚠ **The four resume outcomes are not transported** *(new, 29 Aug 2026)* | `RunResumed.Outcome` is one of four — Rod Checkout being the fourth (`OI-14`, superseding `FR-262`) — and **`PauseMarker` has no field for it**. The outcome is recorded on the run and read back through the run queries; it is not on the DB3 trace. Same class as `OI-140` and the same cost to fix; **do not invent a field in the handler** |
+| ⚠ **`SpoolAlpha` and `TargetLb` broadcast as null** *(new, 29 Aug 2026)* | Both are nullable by design. `SpoolAlpha` is a `SpoolCheckin` join the raising aggregate does not hold — **`FW-202`, which will own the `RUNNING → STOPPED` edge, is where it can be supplied**. `TargetLb` has **no column at all** (`FW-149` checked field by field) and belongs to `[SIG §5.5]`'s advisory Part A |
+| ⚠ **A null `LatchedWeightLb` is sent as `0`** *(new, 29 Aug 2026)* | The event and the column are `decimal?`; the published payload is not. The prompt is delivered anyway with a warning logged, because it is the operator's only cue that the line stopped and it is durable regardless. ⚠ Making the payload nullable is the clean fix and it is **breaking** |
+| ⚠ **`RodStaging.Stage` assigns no `RodSeqno`** *(new, 29 Aug 2026)* | The column is `IsRequired`, and `Stage` leaves it 0 — so a freshly staged bay publishes `rodSeqno: null`. That is handled here (0 → null) but the **origin** is `FW-207`/the staging service, not this story |
+| ⛔ **`FW-150`'s run-lifecycle invalidation is still not wired** | `BroadcastLoopService.InvalidateRun` is private and documents itself as *"the seam `FW-208`'s run lifecycle handlers call"*. **No such handler exists**, because `FW-207` raises no run-start/run-end event — `P-125`'s per-run cache is invalidated by a footage-spacing fallback instead. Named as `FW-150`'s one loose end and **not closed by step 8** |
+| ~~⛔ **Nothing dispatches**~~ ✅ *(closed 27 Aug 2026)* | `SaveEntitiesAsync` is the only dispatching method and **has no caller**; `TransactionBehaviour` commits through `CommitTransactionAsync` → the un-overridden `SaveChangesAsync`. **Every event `FW-207` raises is dropped.** `P-95` — and it is this story's first task, before any handler |
+| ~~**`IFlatWireClient` / `FlatWireHub` do not exist**~~ ✅ *(closed 28 Aug 2026)* | **`FW-080` shipped both**, and it landed `IFlatWireClient` in `FlatWire.Domain` as `[SVC §3.2]`'s layer table requires — so `P-35` holds and step 8 was built on 29 Aug. ⚠ The row also mis-numbered the step: the broadcast handlers are step **8**, not step 7 |
 | ~~**`G38`**~~ ✅ | **Closed by `FW-207`.** `FlatWireRun` carries the five prompt columns and `RaiseCompletionPrompt`/`ResolveCompletionPrompt` persist against them, verified on the live schema — so `SpoolCompletionPromptRaised` is **already durable** and a missed broadcast is recovered by a refresh. *(This row read "persisted … never held in memory" as an obligation; it is now a fact.)* |
 | **`G21`** | `Blocked` is **derived**, never stored — so the state handler calls `RodStaging.Unstage(...)` rather than clearing a flag. ⚠ *This row said the handler "recomputes it"; it does not recompute anything* — `IsBlocked` simply stops being true once the row is no longer `Staged` |
 | **`D-30`** | `WipRejection` is one of the three roots without a `ROWVERSION` token, and it is mutated after insert. ⚠ Sharper here than elsewhere: the in-transaction state handler mutates `RodStaging`, which **does** have a token, from an event raised by an aggregate that does **not** — so a lost update on the rejection is invisible while the bay release is protected |
-| **`P-35` depends on where `FW-080` puts the interface** | Handlers can live in Infrastructure **only if `IFlatWireClient` lands in `FlatWire.Domain`** as `[SVC §3.2]`'s layer table says. If it lands in the API project, the handlers move there |
+| ~~**`P-35` depends on where `FW-080` puts the interface**~~ ✅ *(closed 28 Aug 2026)* | It landed in `FlatWire.Domain`, so the handlers are in Infrastructure as written. ⚠ **But that was necessary and not sufficient** — the injection named in `P-35` was `IHubContext<FlatWireHub, IFlatWireClient>`, which Infrastructure can never name; the handlers inject **`IFlatWireBroadcaster`** (`P-101`). `P-35`'s text is corrected in §4 |
 | ⛔ **`Publish` invokes EVERY handler** *(new, 27 Aug 2026)* | MediatR **12.4.1** offers no per-call handler selection, so two handlers on one raw event cannot be separated at publish time — the broadcast would fire pre-commit. `P-96`'s original *"key it off the handler's marker interface"* was **not implementable** and is corrected; `P-97` puts the lane in the notification **type** instead |
 | ⚠ **`SaveEntitiesAsync` is an `IUnitOfWork` obligation** *(new, 27 Aug 2026)* | It cannot be deleted — `UA.Framework.Domain.Uow.IUnitOfWork` declares it and `FlatWireDbContext` implements it. It has no caller only because `TransactionBehaviour` drives the transaction API. **Route it through the same hook** rather than leaving two dispatching methods that can diverge (`P-95`) |
-| ⚠ **`PayoffStateChanged` is named but does not exist** | The broadcast §2.2 describes is an `IFlatWireClient` member, and that interface is unbuilt. Confirm the member name against `FW-149` before writing the handler rather than inventing it here |
+| ~~⚠ **`PayoffStateChanged` is named but does not exist**~~ ✅ *(closed 29 Aug 2026)* | It is event 10 on the built `IFlatWireClient`, confirmed against `[SIG §5.2]` rather than assumed. `SpoolCompletionPromptRaised` likewise broadcasts as **`SpoolCompletionPromptDue`** — the event and the hub member are deliberately not the same name |
 | ⚠ **`BayStateChanged` is raised in five places** *(new, 27 Aug 2026)* | Four in `RodStaging` (`Stage`, `MarkWelded`, `ConsumeAtCheckIn`, `Unstage`) and one in `WipRejection.ReleaseBay`. The rejection chain therefore raises it **twice** — once by the rejection, once by the `Unstage` its own handler calls — and the second is **dropped silently** because the drain has already run. Correct today by luck, not design; `P-94` property (5) settles the policy. **An in-transaction handler should subscribe to the event it already has rather than raise a new one** |
 
 | Stale | Correct | Source |

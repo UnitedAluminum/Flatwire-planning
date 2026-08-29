@@ -1,12 +1,12 @@
 # FW-181 · FL2 null-gauge contract and the Live/Profile binding
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Last Updated:** August 29, 2026 — ⛔ **Re-reviewed against the BUILT loop, and §2.1 and build steps 1–2 were WRONG.** `FW-150` shipped 29 Aug with **no FL2 branch, and none is permitted**: `[PLC §5.2.2]` publishes no `AGC` row for FL2, so no sample is ever produced and *"no sample, no send"* **is** `[SIG §5.3]`'s suppression *"entirely"*. **Nothing emits a null-valued gauge event, and this plan must not ask for one** — absence at the transport is what makes the client's field `null` (`FW-150` §2.2). ✅ **`P-49` is already built**: `ActiveRunResponse.RouteMode` exists and carries the rule in its own doc comment. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
-**Status:** Ready to build — ⚠ **`[TRP §7]`: "the single most likely thing to ship wrong"**
+**Status:** ⚠ **Mostly a verification story now** — ⚠ **`[TRP §7]`: "the single most likely thing to ship wrong"**
 **Owner:** Real-time (RT) stream
 **Audience:** The developer building `FW-181`
-**Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
+**Shortcode:** — *(implementation plan, derived from the specifications and the built code; **not citable as a requirement**)*
 **Part of:** `ProjectPlan/Backend/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md)
 
 ---
@@ -72,31 +72,56 @@ contract exists to enable — not because this story builds them.
 
 ---
 
-## 2. The contract — `null`, not absent
+## 2. The contract — the client's field is `null`, and the wire is silent
 
 `FR-120` and `[SIG §5.3]`:
 
 | Channel | FL2 standalone |
 |---|---|
-| Live **gauge** | **`null`** |
-| Live **width** | **`null`** |
-| `SpeedFPM` · `PayoffWeight` · `LineStatus` · `FootageCounter` · `ComponentStatus` | ✅ **still emitted** |
+| Live **gauge** | **Not sent** — the client's field is `null` (§2.1) |
+| Live **width** | **Not sent** — same |
+| `SpeedFPM` · `LineStatus` · `FootageCounter` · `ComponentStatus` | ✅ **still emitted** |
+| `PayoffWeight` | ⚠ **Not sent on FL2** — `RodStaging` is FL1/FL3 only, and FL2 feeds from a spool. Expected, not a fault |
 
 > **`[SIG §5.3]` suppresses only the two batched channels.** The line keeps ticking — which is
 > what `[TRP §8]` step 9 depends on when it requires Profile to stay static *"across several
 > live ticks"*. **There have to be ticks.**
+
+⛔ **AC 1 lists `PayoffWeight` among the channels that keep flowing on FL2, and the built loop
+cannot send it** — its denominator is the staged rod's net weight from `RodStaging`, which is
+**FL1/FL3 only**; FL2 feeds from a spool, whose weight lives on `SpoolCheckin` /
+`SpoolProcessing`. `FW-150` records this as *"a real gap rather than a bug here"* and logs it once
+per bay. **Do not close it by inventing a denominator**; the honest reading of AC 1 is *the line
+keeps ticking*, and speed, footage, component and line status are what prove it.
 
 ⚠ **The rule is conditioned on FL2 *in standalone mode*, not on FL2 as a line.** `FR-120` and
 `[SIG §5.3]` both say so, and **`G40` records this as one of the assertions that rested on the
 earlier fixture error.** An **FL3 hybrid** run drives FM2 and is **not** suppressed — which is
 AC 5's whole point.
 
-### 2.1 Why `null` and not omission
+### 2.1 ⛔ `null` is what the CLIENT sees; the wire carries nothing at all
 
-An omitted field and a null field look the same to a careless client and are not the same
-statement. **`null` says "there is no live gauge here"**; omission says "no reading this
-tick", which a chart may reasonably interpolate across. The contract requires the former, and
-it is what lets the client render an explicit empty state rather than a gap.
+**Corrected 29 Aug 2026 against the built loop.** The earlier text here read *"`null`, not
+omission"* and told the developer to make the two channels carry a null value. **Executed
+literally that ships 20 payloads a second carrying nothing**, against a specification that says
+the channels are suppressed *"entirely"* — and `FW-150` explicitly forbids it.
+
+`FW-150` §2.2 reconciles the two readings, and they hold at different layers:
+
+| Layer | What happens on FL2 standalone |
+|---|---|
+| **Ingest** | `[PLC §5.2.2]` publishes **no `AGC` row**, so `FW-N05` never produces an FL2 gauge or width sample |
+| **The loop** | **No sample, no send** — which *is* `[SIG §5.3]`'s *"entirely"*, reached **without an `if`** |
+| **The client** | The field is therefore **`null`**, and `FR-120`'s empty state renders |
+
+⛔ **So do not write `if (line == FL2)` anywhere, and do not emit null-valued gauge events.** The
+first duplicates a rule the tag map already enforces **and would silence FL3's hybrid gauge the
+day someone copies it** — which is AC 5's whole point. The second is traffic that says nothing.
+
+⚠ **The client rule is unchanged and is what actually matters:** a subscriber to `FL2Data`
+**must not wait for `GaugeReading`** — *"it will never arrive, and treating its absence as a
+fault is a defect"* (`[SIG §5.3]`) — and it must render the empty state, **never a flat line at
+target**.
 
 ---
 
@@ -121,22 +146,37 @@ Not this story's code. Stated because this contract is worthless if misread.
 
 ## 4. Build order
 
-1. Confirm [`FW-150`](FW-150-Broadcast-Loop.md)'s suppression is **mode-conditioned**, not
-   line-conditioned (§2) — that is where the rule lives; this story verifies and binds it.
-2. Ensure the two channels carry **`null`**, not omission (§2.1).
+1. ⛔ **Confirm there is no FL2 branch in [`FW-150`](FW-150-Broadcast-Loop.md) and add none**
+   (§2.1) — `grep -n "FL2" BroadcastLoopService.cs` should find only the explanatory comments.
+   The rule lives at **ingest**, in the tag map.
+2. Confirm the two channels are **not sent at all** on FL2, and that nothing sends `0` in their
+   place — *"a null is skipped, never sent as `0` or `false`"* (`P-124`).
 3. Confirm the other five still flow on FL2 — the check that catches a wholesale suppression.
-4. Expose **line mode** on the active-run DTO
-   ([`FW-164`](FW-164-Run-Queries-And-RunQueryService.md)) so the client binds toggle
-   availability to it rather than to `lineId` (`P-49`).
+   ⚠ **`PayoffWeight` is the exception**: `RodStaging` is FL1/FL3 only, so FL2 legitimately sends
+   none and says so once per bay.
+4. ✅ **`RouteMode` is already on the active-run DTO**
+   ([`FW-164`](FW-164-Run-Queries-And-RunQueryService.md)) — **verify it is populated**, and that
+   `FW-164`'s de-stub fills it (`P-49`).
 5. Confirm Profile's source is the **REST** `gaugetrace` read, not the hub.
+6. ⚠ **Check the simulator drives FL2** ([`FW-203`](FW-203-OPC-Feed-Simulator.md)) — speed and
+   footage with no gauge is exactly the state step 9 needs, and a simulator that drives FL1 only
+   leaves both FL2 screens dead.
 
 ---
 
 ## 5. Decisions this plan makes
 
-> `P-##` is continuous across this folder; `P-01`–`P-48` precede this story.
+> `P-##` is continuous across the repository; `P-01`–`P-48` preceded `P-49` when it was minted on
+> 15 Aug 2026, and `P-253` is the high-water mark today.
 
 ### `P-49` — the client binds to **route mode**, and the server must therefore publish it
+
+> ✅ **Built 29 Aug 2026.** `ActiveRunResponse.RouteMode` exists, is nullable, and its own doc
+> comment states this decision: *"the client binds the null-gauge rule to ROUTE MODE, not to the
+> line."* What remains is **populating** it ([`FW-164`](FW-164-Run-Queries-And-RunQueryService.md))
+> and mirroring it in TypeScript when `FW-132` authors the contract types — the `flat-wire`
+> library is still a placeholder. ⚠ **An unpopulated `routeMode` is worse than an absent one**: the
+> client falls back to `lineId` and is wrong on FL3.
 
 AC 5 requires toggle availability to bind to **line mode**, not `lineId`. FL2 *standalone* has
 no live gauge; **FL2 running as part of an FL3 hybrid does.** A client keying on
@@ -162,11 +202,12 @@ derive it from `lineId`.**
 
 | Check | Expected |
 |---|---|
-| **FL2 live gauge/width** | **`null`** — not `0`, not omitted, not a value |
-| **The other five** | `SpeedFPM`, `PayoffWeight`, `LineStatus`, `FootageCounter`, `ComponentStatus` **still arriving** |
-| **FL3 hybrid** | **Not** suppressed — live gauge flows |
-| Mode, not line | Suppression keys on **route mode**; an FL2 run inside a hybrid is unsuppressed |
-| Route mode published | Present on the active-run DTO *(`P-49`)* |
+| **FL2 live gauge/width** | **No `GaugeReading` or `WidthReading` payload arrives at all** — and **never a `0`**. The client's field is `null` **by absence** (§2.1) |
+| **The other five** | `SpeedFPM`, `LineStatus`, `FootageCounter`, `ComponentStatus` **still arriving** — ⚠ `PayoffWeight` is legitimately absent on FL2 (`RodStaging` is FL1/FL3 only) |
+| **No FL2 branch** | `grep` the loop: **no `if (line == FL2)`** anywhere *(`FW-150` §2.2)* |
+| **FL3 hybrid** | **Not** suppressed — live gauge flows, because the tag map publishes an `AGC` row there |
+| Mode, not line | The absence follows **route mode** through the tag map; an FL2 run inside a hybrid is unsuppressed |
+| Route mode published | Present **and populated** on the active-run DTO *(`P-49`)* |
 | Profile source | The **REST** `gaugetrace` read |
 | **Step 9** | Profile **static across several live ticks** — which needs FL2 ticking |
 
@@ -188,7 +229,9 @@ drive FL2** or both FL2 trial screens are dead.
 
 | Item | Effect here |
 |---|---|
-| **`P-49`** | Publishing route mode is a contract addition needing the three-layer mirror |
+| **`P-49`** | ✅ **The server half is built** — `ActiveRunResponse.RouteMode`. Outstanding: population (`FW-164`) and the TypeScript mirror (`FW-132`, whose library is still a placeholder) |
+| ⛔ **`null` vs absent** *(corrected 29 Aug 2026)* | The wire carries **nothing**; the client's field is null by absence. `FW-150` §2.2 holds both readings and **needs no edit** |
 | **`G40`** | Recorded that `FR-120`'s condition is **standalone mode**, not the line — one of the assertions that rested on the earlier fixture error |
+| ⛔ **FL2 `PayoffWeight`** *(new 29 Aug 2026)* | AC 1 promises it; the built loop cannot resolve its denominator on FL2 (§2). **Unowned** — the spool-side denominator belongs with `SpoolCheckin`/`SpoolProcessing` |
 | **`G9` / `OI-34`** | No cadence target, so *"across several live ticks"* has no defined interval |
 | **Pending renames** | `LineStatus` → `LineStateChanged` (`[PLCC §6.3]`). **Build to `[API]`/`[SIG]`** |

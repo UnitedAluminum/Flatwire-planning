@@ -1,12 +1,12 @@
 # FW-082 · PLC tag group push on check-in acknowledgement
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Last Updated:** August 29, 2026 — ⚠ **Re-reviewed against the BUILT `PLCTagService` (`FW-151`, 28 Aug).** ⛔ **Three corrections:** the push takes its **values from this story** (`P-112`) because `PushPassSchedule` cannot read a schedule; the compensating clear writes **flags `false` and leaves analogue setpoints alone** (`P-110`), and **an unresolved path now fails with zero tags written** (`P-111`), which is `P-41` implemented. ⛔ **New blocker `G58`: `OPCConnection` reports no write failure at all**, so the failure path of AC 4 cannot be triggered from the transport. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
-**Status:** ⚠ **Four blockers, and one dependency reaches into MVP-2**
+**Status:** ⚠ **Five blockers, and one dependency reaches into MVP-2**
 **Owner:** Real-time (RT) stream
 **Audience:** The developer building `FW-082`
-**Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
+**Shortcode:** — *(implementation plan, derived from the specifications and the built code; **not citable as a requirement**)*
 **Part of:** `ProjectPlan/Backend/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md)
 
 ---
@@ -74,8 +74,30 @@ not a code dependency.**
 | `PLCTagService` and its six operations | [`FW-151`](FW-151-PLCTagService.md) — *"this is the service; `FW-082` is its use at check-in"* |
 | The check-in orchestration that calls this | [`FW-157`](FW-157-CheckIn-Rod-And-CheckInService.md) |
 | The tag-path map | `[PLC]` owns it; [`FW-144`](FW-144-Configuration-Binding.md) binds it |
-| The FL2 push | `FW-179`, Phase 8 — **FL2 tags only** |
+| The FL2 push | [`FW-179`](FW-179-CheckIn-Spool-And-Spools-Query.md), Phase 8 — **FL2 tags only** |
 | Commissioning | `FW-200` |
+
+### 1.3 What already exists — and what it changes
+
+Read off the built code on 29 Aug 2026. [`FW-151`](FW-151-PLCTagService.md) shipped and was
+harness-verified on 28 Aug, so **this story composes a built service; it writes no transport.**
+
+| Thing | State |
+|---|---|
+| `IPLCTagService` + `PLCTagService`, six operations | ✅ Built — one transport, one mode, resolve-all-then-one-`WriteTag`-POST |
+| `SimulatePLCTagPush` | ✅ Built — a simulated write returns `PlcTagConfirmation.Simulated` and logs the write it would have made |
+| `ITagPathResolver` + the `[PLC]`-bound path table | ✅ Built ([`FW-144`](FW-144-Configuration-Binding.md)) |
+| `PlcWriteResult { Success, Simulated, Tags[], FailureReason, Compensated }` | ✅ Built — **the compensation flag is on the result**, so this story reads it rather than tracking its own |
+| **The six-group projection** | ⛔ **Absent. This is the deliverable** |
+
+⛔ **The built signature is `PushPassScheduleAsync(PassSchedulePushRequest, ct)`, and the payload
+is the CALLER's.** `PassSchedulePushRequest` is `PlcWriteContext(LineId, OperatorId, RunAlpha)` +
+`ScheduleId` + `PayoffPosition` + **`IReadOnlyList<PlcTagValue> Values`**. The service **cannot
+read a schedule** — MVP-1 authors none and has no `PassScheduleRepository` (`P-112`, `P-13`) — so
+`scheduleId` is audit identity and **this story resolves `[PLC §7.2]`'s six groups into the
+`Values` list**. `[PLCC §1]`'s three parameter names are kept because `phase-04`, `FW-157` and
+this card cite them. **The operator is required, not optional**: `FR-075` and the built
+`AuditEntry` both demand it (`P-106`).
 
 ---
 
@@ -116,15 +138,29 @@ Two halves, and the second is the one that gets forgotten:
 2. **No `LineStatus` broadcast.** A broadcast after a failed push tells every connected
    screen the line is configured. `PLC_PUSH_FAILED` → `500`.
 
+⚠ **The built compensation is narrower than "re-clear what landed", deliberately** — and
+[`FW-151`](FW-151-PLCTagService.md) already implements it, so **do not write a second one here**:
+
+| Decision | What the built service already does |
+|---|---|
+| `P-110` | The re-clear writes **flags `false` and leaves analogue setpoints alone** — `[PLC]` publishes no default table, and **writing `0` to a roll gap is a physical command to close the rolls**. It re-clears **everything sent**, because `G58` means we cannot know what landed, and it carries its own audit label so a reviewer can tell it from an operator's checkout clear |
+| `P-111` | **Every path is resolved before anything is written**, so an unconfigured path fails the push with **zero tags written and nothing to compensate** — a named failure result, not an opaque `500` |
+
+⛔ **`G58` is why "force a push failure" is harder than it reads.** `OPCConnection` returns `200`
+regardless of outcome and never sets `IsGood`, so **the transport cannot tell you a write
+failed**. What `FW-151` detects is a `Value = null` **confirm read** (`Unconfirmed`) or an in-band
+`Result.Fail`; an unverified value is audited as `0.0325 (unconfirmed)` rather than as a success
+(`P-112`). Per-tag status is `FW-236`'s, **due before this push is built**.
+
 ---
 
 ## 3. Build order
 
-1. Implement over [`FW-151`](FW-151-PLCTagService.md)'s `PushPassSchedule` — **this story adds
-   no new tag operation**, it composes one.
-2. Read the schedule locally (`D-31`) and project the six groups; persist the
-   `PassScheduleSnapshot` — [`FW-157 §2.4`](FW-157-CheckIn-Rod-And-CheckInService.md) owns the
-   write.
+1. Implement over [`FW-151`](FW-151-PLCTagService.md)'s **built** `PushPassScheduleAsync` —
+   **this story adds no new tag operation**, it composes one, and it writes no HTTP call.
+2. Read the schedule locally (`D-31`), project the six groups into `PlcTagValue`s and pass them
+   as `Values` (§1.3); persist the `PassScheduleSnapshot` —
+   [`FW-157 §2.4`](FW-157-CheckIn-Rod-And-CheckInService.md) owns the write.
 3. Batch-write to the selected payoff position.
 4. Audit **before** the push (`FR-072`), every write and clear (`FR-075`).
 5. Failure path per §2.2 — re-clears, no broadcast.
@@ -135,9 +171,15 @@ Two halves, and the second is the one that gets forgotten:
 
 ## 4. Decisions this plan makes
 
-> `P-##` is continuous across this folder; `P-01`–`P-40` precede this story.
+> `P-##` is continuous across the repository; `P-01`–`P-40` preceded `P-41` when it was minted on
+> 15 Aug 2026, and `P-253` is the high-water mark today.
 
 ### `P-41` — push the edge-type group with its path unresolved, and fail loudly
+
+> ✅ **Implemented 28 Aug 2026 by `P-111`** — `PLCTagService` resolves **every** path before it
+> writes anything, so an unconfigured edger path fails the push with **zero tags written**, as a
+> named failure result. `P-41` is no longer a rule this story has to enforce; it is a rule this
+> story must not *undo* by catching that failure and pushing the other five groups anyway.
 
 `G29` leaves group 4 with no destination on any line. Three options, and the middle one is
 the trap:
@@ -170,10 +212,12 @@ write it would have made and cannot tell that the path is fictional. **The first
 | Six groups, nothing else | Diff the written tag set against `[PLC §7.2]` — **no extra tag** |
 | One batch | A single batch write to the selected payoff position |
 | **Trigger** | Generating, applying or pre-checking-in a schedule writes **nothing** |
-| **Failure** | Force a push failure → compensating re-clears issued **and no `LineStatus` broadcast**; `PLC_PUSH_FAILED`/`500` |
-| Audit | Every write and clear, before the push |
-| Simulate | Logs the write it would have made; on by default |
-| Edge type | Present in the payload; unresolved path **fails the push** *(`P-41`)* |
+| **Failure** | Force a push failure → compensating re-clears issued **and no `LineStatus` broadcast**; `PLC_PUSH_FAILED`/`500`. ⚠ **It cannot be forced from the transport (`G58`)** — force it at the confirm read, or by an unconfigured path |
+| **Re-clear shape** | Flags written `false`; **no analogue setpoint written back** *(`P-110`)* — a `0` roll gap is a command to close the rolls |
+| Audit | Every write and clear, before the push; the operator is on every record *(`P-106`)*, and an unverified value reads `… (unconfirmed)` *(`P-112`)* |
+| Simulate | Logs the write it would have made; on by default; outcome `Simulated` |
+| Edge type | Present in the payload; unresolved path **fails the push with zero tags written** *(`P-41`, `P-111`)* |
+| Config present | `FlatWireOpc:OpcModuleId` and `Lines:FL{n}:MachineId` are **0 by default** (`G60`) — a push against the defaults fails by name rather than reaching a sibling service |
 
 ---
 
@@ -193,5 +237,7 @@ invariant. Phase 10 adds the FL3 single-batch push. `FW-200` is commissioning.
 | **`G29`** *(blocker)* | **No edger tag path on any line**, yet edge type is group 4 — `P-41` |
 | **`G30`** *(blocker)* | FM2's controller namespace on FL3 — one failure domain or two, which changes what a re-clear covers. **Settle before `G2`** |
 | **`PLC-Q04`** *(blocker)* | FM2 station names (`FL2.FM2.S1/S2/S3`) pending sign-off |
-| **`PLC-Q05` / `G33`** *(blocker)* | **A wrong path fails silently.** The audit will record success |
+| **`PLC-Q05` / `G33`** *(blocker)* | **A wrong path fails silently.** The audit will record success — mitigated only to the extent that `FW-151`'s confirm read marks it `(unconfirmed)` |
+| **`G58`** *(blocker — new here, 29 Aug 2026)* | ⛔ **`OPCConnection` reports no write failure**: `200` regardless, `IsGood` never set, the result swallowed at `OPCUAManager.cs:362`. **`FR-074` is unimplementable from the response**, and AC 4's failure path has no transport trigger. Owned by **`FW-236`**, due **before this push is built** |
+| **`G60`** | `OpcModuleId` / `MachineId` default to 0, so the resolve-and-write path is **unexercised against `OPCConnection` itself** until they are configured |
 | **`OI-110`** | Nothing in MVP-1 populates the schedule tables in production (§1.1) |

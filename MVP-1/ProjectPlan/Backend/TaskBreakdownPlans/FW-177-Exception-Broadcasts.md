@@ -1,12 +1,12 @@
 # FW-177 · Exception broadcasts and the supervisor notification
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — `G6` answered: role targeting unblocked; §3.1 rewritten around the **silent** failure mode of a wrong group name. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Last Updated:** August 29, 2026 — ⚠ **Re-reviewed against the BUILT code, and `P-47` costs more than it looked.** ⛔ **There is no `Supervisors` group and no way to address one**: `FlatWireHub` joins **line groups only** and `IFlatWireBroadcaster` exposes **only `Line(LineId)`**, so the group has to be built here — hub join plus a broadcaster member (`P-257`). ⛔ **Neither `AlertRaised` nor a rod-checkout domain event exists**, so this story declares them and `FW-174` raises them (`P-141`'s pattern). ✅ `LineState.Idle` exists, and AC 4's source is [`FW-172`](FW-172-Run-Event-Markers.md) `P-256`, not the telemetry loop. ⚠ `[SIG §5.2]` publishes **fourteen** events, not twelve. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
-**Status:** ⚠ **Its durable backing (`FW-175`) is deferred from the trial**
+**Status:** ⚠ **Its durable backing (`FW-175`) is deferred from the trial — and its target group does not exist yet**
 **Owner:** Real-time (RT) stream
 **Audience:** The developer building `FW-177`
-**Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
+**Shortcode:** — *(implementation plan, derived from the specifications and the built code; **not citable as a requirement**)*
 **Part of:** `ProjectPlan/Backend/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md)
 
 ---
@@ -58,14 +58,34 @@ Per [`FW-172 §4`](FW-172-Run-Event-Markers.md) `P-45` — the split is stated i
 
 **Together: all six of `[SIG §5.4]`.** Neither story alone covers them.
 
-Plus two of `[SIG §5.2]`'s twelve events: **`AlertRaised`** and `LineStatus`.
+Plus two of `[SIG §5.2]`'s **fourteen** events: **`AlertRaised`** and `LineStatus`. *(Twelve until
+28 Aug 2026; the built `IFlatWireClient` carries fourteen — the two order-allocation members were
+added with the rod ↔ order work.)*
+
+### 1.1a What already exists
+
+Read off the built code on 29 Aug 2026.
+
+| Thing | State |
+|---|---|
+| `AlertRaised` · `AlertCleared` · `AlertEvent` · `RodCheckoutEvent` · `LineStatus` on `IFlatWireClient` | ✅ Built ([`FW-149`](FW-149-IFlatWireClient.md)) |
+| `LineState.Idle` | ✅ Built — AC 4 has a value to send |
+| Post-commit dispatch and the two-lane pattern | ✅ Built ([`FW-208`](FW-208-Domain-Events-Post-Commit-Dispatch.md)) |
+| **An `AlertRaised` domain event** | ⛔ **Does not exist** — `RunEvents.cs` holds seven records and none is an alert |
+| **A rod-checkout domain event** | ⛔ **Does not exist** |
+| **A `Supervisors` group** | ⛔ **Does not exist** — §3.1a |
+| **The translation handlers** | ⛔ **Absent.** This is the deliverable |
+
+⚠ **Declare the two events here and let [`FW-174`](FW-174-WipRejection-And-Checkout-Services.md)
+raise them** — the `P-141` precedent (`FW-239` declared `RunStarted`, `FW-157` raises it). The
+handlers ship **wired and inert**, and the build record must say so.
 
 ### 1.2 Out of scope
 
 | Concern | Story |
 |---|---|
 | The rejections and checkouts being broadcast | [`FW-174`](FW-174-WipRejection-And-Checkout-Services.md) |
-| The durable queue behind AC 3 | `FW-175` — ⚠ **deferred from the trial** |
+| The durable queue behind AC 3 | [`FW-175`](FW-175-Durable-Supervisor-Queue.md) — ⚠ **deferred from the trial** |
 | The typed contract | [`FW-149`](FW-149-IFlatWireClient.md) |
 | Dashboard 1 | `FW-060` — ⚠ **left trial scope on 14 Aug** |
 | `AlertCleared` and the alert lifecycle | `FW-N06` — deferred; *"its only consumer was DB1's alert bar"* |
@@ -137,25 +157,51 @@ notify nobody.
 > is raised anywhere, and the pending disposition simply never reaches a supervisor. §6 must
 > therefore assert a **received** notification, not a dispatched one.
 
+### 3.1a ⛔ The group does not exist, and neither does a way to address it
+
+`FlatWireHub` joins **line groups only** — `JoinLineGroup(LineId)` builds the name server-side from
+an enum — and `IFlatWireBroadcaster`'s entire surface is **`IFlatWireClient Line(LineId)`**. There
+is no `Supervisors` group, no join for it, and **no method that could send to one**.
+
+So `P-47` is not free: it is a **two-file change** —
+
+1. **`FlatWireHub.OnConnectedAsync`** adds the connection to `Supervisors` when the principal holds
+   the role, reading the value from `FlatWireRoles.Supervisor` (§3.1).
+2. **`IFlatWireBroadcaster`** gains a second addressing method beside `Line(LineId)`, implemented
+   in `FlatWireBroadcaster` over `Clients.Group(...)`.
+
+⛔ **Build the group name in the hub, never from a caller-supplied string** — the rule
+`JoinLineGroup` already states: *"passing a caller-supplied string to `Groups.AddToGroupAsync` lets
+a client join any group it can spell."* A supervisor group a client can join by spelling it is not
+a supervisor group.
+
+⚠ **Join on connect, not on a client call.** A `JoinSupervisorGroup` message would let the client
+decide, and the client is exactly what the role claim exists to stop trusting.
+
 ---
 
 ## 4. Build order
 
-1. Confirm `AlertRaised`, `RodCheckoutEvent`, `AlertEvent` and `LineStatus` are typed on
-   `IFlatWireClient` ([`FW-149`](FW-149-IFlatWireClient.md)).
-2. Translation handlers in **Infrastructure**
+1. ✅ **All four are already typed on `IFlatWireClient`** ([`FW-149`](FW-149-IFlatWireClient.md)) —
+   confirm, do not add.
+2. **Declare the two missing domain events** (§1.1a), each carrying `LineId`, and write their
+   translation handlers in **Infrastructure**
    ([`FW-208`](FW-208-Domain-Events-Post-Commit-Dispatch.md) `P-35`), fired **after commit**.
-3. `AlertRaised` on a WIP hold; `RodCheckoutEvent` on checkout.
-4. `LineStatus → IDLE` on checkout — on-change only.
-5. Supervisor-targeted notification, reading the role from `FlatWireRoles.Supervisor` (§3.1)
-   — never a literal.
+3. `AlertRaised` on a WIP hold; `RodCheckoutEvent` on checkout — raised by
+   [`FW-174`](FW-174-WipRejection-And-Checkout-Services.md), inert until it ships.
+4. `LineStatus → IDLE` on checkout — on-change only, **from the checkout event, not from the
+   telemetry loop** ([`FW-172`](FW-172-Run-Event-Markers.md) `P-256`; the loop's channel is dark
+   until `C2`).
+5. **Build the `Supervisors` group and its broadcaster member** (§3.1a), reading the role from
+   `FlatWireRoles.Supervisor` (§3.1) — never a literal.
 6. **Immediate, unbatched** throughout.
 
 ---
 
 ## 5. Decisions this plan makes
 
-> `P-##` is continuous across this folder; `P-01`–`P-46` precede this story.
+> `P-##` is continuous across the repository; `P-01`–`P-46` preceded `P-47` when it was minted on
+> 15 Aug 2026. **`P-257` is added by the 29 Aug re-review**; `P-253` was the high-water mark.
 
 ### `P-47` — broadcast to a group, not to a connection
 
@@ -174,6 +220,24 @@ multi-instance.
 connected to *no* terminal receives nothing, which is exactly the gap the durable queue
 closes.
 
+### `P-257` — the supervisor group is this story's to build, and it is addressed through the broadcaster
+
+`P-47` chose a group; the built code has **none, and no way to reach one** (§3.1a).
+
+**So: `FlatWireHub` joins `Supervisors` on connect from the role claim, and
+`IFlatWireBroadcaster` gains one addressing method beside `Line(LineId)`.** Handlers keep
+injecting the broadcaster, so this story adds **no** `IHubContext` dependency to Infrastructure —
+which it could not have anyway: that project can name neither `FlatWireHub` nor `IHubContext<>`
+(`P-101`).
+
+⛔ **Do not reach for `Clients.User(...)` as a shortcut.** It binds to the JWT's user identifier
+rather than the role, so it notifies *one named person* rather than *whoever is on shift* — and it
+would still leave `P-47`'s multi-terminal case unsolved.
+
+⚠ **This is real work the 16 h did not price**, and it is the story's silent failure mode: an
+un-joined group and a mistyped group name look identical from the sender — **nothing happens and
+nothing is logged**. §6's *received, not dispatched* check is what catches both.
+
 ---
 
 ## 6. Verification
@@ -184,7 +248,8 @@ closes.
 |---|---|
 | `AlertRaised` | Broadcast on a WIP hold — **even with DB1 out of trial scope** |
 | **`RodCheckoutEvent`** | Renders on the **DB3** traces as a run event |
-| `LineStatus → IDLE` | On checkout, on-change only |
+| `LineStatus → IDLE` | On checkout, on-change only — **and it arrives with `LineStateMap` unconfigured** *(`P-256`)* |
+| **Group joined** | A supervisor's connection is in `Supervisors` **before** any send — inspect the join, not the send *(`P-257`)* |
 | Supervisor notification | **Arrives at every connected supervisor terminal** *(`P-47`)* — observed at the terminal, never inferred from a log line at the sender. ⚠ **This is the only check that catches a wrong role value** (§3.1): an empty `Supervisors` group raises no error anywhere |
 | **After commit** | Force a save failure → **no broadcast** |
 | Unbatched | None of these appears inside a batched payload |
@@ -200,9 +265,11 @@ trial scope. Record that it is not yet guaranteed.
 
 ## 7. Handoff
 
-[`FW-172`](FW-172-Run-Event-Markers.md) covers the other four markers. `FW-175` makes this
-durable when scheduled. `FW-060`/`FW-154` bring DB1 back after the trial, restoring
-`AlertRaised`'s consumer. `FW-N06`'s rules engine adds `AlertCleared` and the lifecycle.
+[`FW-172`](FW-172-Run-Event-Markers.md) covers the other four markers **and owns `P-256`, the
+`LineStatus` source this story reuses**. [`FW-175`](FW-175-Durable-Supervisor-Queue.md) makes this
+durable when scheduled. `FW-060` / [`FW-154`](FW-154-Lines-Status-And-LineStatusService.md) bring
+DB1 back after the trial, restoring `AlertRaised`'s consumer.
+[`FW-N06`](FW-N06-Alert-Rules-Engine.md)'s rules engine adds `AlertCleared` and the lifecycle.
 
 ---
 
@@ -213,5 +280,8 @@ durable when scheduled. `FW-060`/`FW-154` bring DB1 back after the trial, restor
 | **`G7`** *(blocker)* | — |
 | **`G6` / `OI-37`** | ✅ **Answered 15 Aug 2026** — the six roles exist on `ClaimTypes.Role`, so the target group is real. ⚠ **Residual: the claim values are coded and unmapped**, and here a wrong value **fails silent** rather than closed (§3.1) |
 | **`OI-32`** | **No endpoint for supervisor disposition of a pending Mode B** — a decided requirement with no surface. This story announces a state nobody can act on through the API |
-| **`FW-175` deferred** | The notification is transient in the trial (§3) |
+| **`FW-175` deferred** | The notification is transient in the trial (§3) — [`FW-175`](FW-175-Durable-Supervisor-Queue.md) is planned and still out of trial scope |
 | **Pending renames** | `LineStatus` → `LineStateChanged` (`[PLCC §6.3]`). **Build to `[API]`/`[SIG]`** |
+| ⛔ **Two events missing** *(new 29 Aug 2026)* | No `AlertRaised` and no rod-checkout domain event; declared here, raised by `FW-174` (§1.1a) |
+| ⛔ **No `Supervisors` group** *(new here)* | The hub joins line groups only and the broadcaster addresses lines only — `P-257`. **Unpriced in the 16 h** |
+| **`C2` / `PLC-Q01`** | `LineStatus` from the telemetry loop is dark until commissioning, which is why AC 4 rides the checkout event |

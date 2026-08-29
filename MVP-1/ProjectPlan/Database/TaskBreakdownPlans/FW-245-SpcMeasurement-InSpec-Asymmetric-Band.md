@@ -1,0 +1,251 @@
+# FW-245 · `G51` — `SpcMeasurement.InSpec` stores a wrong verdict for an asymmetric band
+
+**Project:** United Aluminum (UAL) — Flat Wire Mill Module
+**Last Updated:** August 29, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Document Type:** Implementation plan for a single backlog story
+**Status:** **Buildable — and it cannot be demonstrated.** `Q22` owes the pairs; the fix does not wait on them
+**Owner:** Database (SQL Server) stream
+**Audience:** The developer building `FW-245`
+**Shortcode:** — *(implementation plan, derived from the DDL and the specifications; **not citable as a requirement**)*
+**Part of:** `ProjectPlan/Database/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md)
+
+---
+
+> **Why this document exists.** Six hours, and **four details decide whether it is right.**
+>
+> **The wrong answer is already on disk.** `InSpec` is `PERSISTED`, so changing the
+> expression fixes tomorrow's rows and leaves today's. **Re-evaluation is the story**, not
+> the expression.
+> **The column cannot see the pairs.** `SpcMeasurement` holds one `ToleranceValue`; the
+> min/max pairs live on `AlloyProperty`, which the row has **no path to**. A computed column
+> cannot join — so the fix is not a smarter `CASE` (§2.2).
+> **`Q22` is open and you must not seed around it.** The pairs are owed by e-mail and
+> `AlloyProperty` is **deliberately unseeded**. This ships correct-and-unexercised.
+> **Unresolvable must not mean in-spec.** `P-125`'s rule: `BIT NOT NULL DEFAULT (1)` lets an
+> omitted value **claim** in-spec. The same hazard, on the column that reports quality.
+
+---
+
+## 1. The story
+
+From `[TB §7]` — verbatim:
+
+> ###### FW-245 · `G51` — `SpcMeasurement.InSpec` stores a wrong verdict for an asymmetric band
+> **Hours:** 6 h DB · **Priority:** High · **Sprint:** S1 · **Phase:** 1C · **Stream:** DB
+>
+> > The column is `AS (CASE WHEN ABS([ActualValue] - [TargetValue]) <= [ToleranceValue] … END)
+> > **PERSISTED**` — a **single symmetric** tolerance — while `AlloyProperty` has carried **min/max
+> > pairs** for gauge, width and diameter since 1 Aug 2026 (`Q22`).
+> >
+> > ⛔ **An asymmetric band is collapsed to one number and the verdict is *written*, not merely
+> > computed.** A measurement inside an asymmetric band can be persisted as out-of-spec, or outside
+> > it as in-spec, and because the column is `PERSISTED` the wrong verdict is **stored and read back**
+> > by SPC reporting. `P-125` independently flags the sibling hazard: `BIT NOT NULL DEFAULT (1)`
+> > means an omitted value **claims in-spec**.
+>
+> **Acceptance Criteria:**
+> - [ ] The computed expression evaluates against the **min/max pair**, not a single symmetric tolerance, falling back to the symmetric form only where no pair exists
+> - [ ] ⛔ **Existing rows re-evaluated**, not just the expression changed — a `PERSISTED` column means the wrong answers are already on disk
+> - [ ] Where the band cannot be resolved the row is **not** silently marked in-spec — `P-125`'s rule for `RunReading` applies here for the same reason
+> - [ ] `TC-020`-style verification that the C# tolerance logic, the DDL expression and `AlloyProperty`'s seeded pairs agree
+> - [ ] ⚠ **`Q22` is still open** — the four min/max pairs are owed by e-mail and `AlloyProperty` is **deliberately unseeded**, so this ships correct-and-unexercised until they land. **Do not seed placeholder pairs to make a test pass**
+>
+> **Rate-card basis (§2):** one computed-column redefinition with a data re-evaluation pass and its verification, between one and two table units = **6 h**
+> **Dependencies:** FW-004, FW-007, FW-168
+> **Blockers:** ⚠ **`Q22`** — the tolerance pairs are owed by the client; the fix is buildable without them, the demonstration is not
+
+### 1.1 Out of scope
+
+| Concern | Owner |
+|---|---|
+| Seeding the four min/max pairs | ⛔ **`Q22`** — client-owed, deliberately unseeded |
+| `POST /spc` and the C# tolerance logic | [`FW-168`](../../Backend/TaskBreakdownPlans/FW-168-Spc-And-SpcService.md) |
+| `AllInSpec` on `SpcCheckpoint` | Roll-up of this column; corrected **by** this fix, not **in** it |
+| `AlloyProperty`'s columns | `FW-004` — built |
+| The SPC checkpoint screen | `SpcCheckpoint.md` (DB6) |
+
+### 1.2 What already exists
+
+Read off the DDL — **the DDL wins** on types, nullability and constraints.
+
+| Object | Where | State |
+|---|---|---|
+| `SpcMeasurement` | [`FlatWire_DDL_05_QualityOutput.sql`](../Schema/SQL/FlatWire_DDL_05_QualityOutput.sql) `:55` | ✅ Built |
+| **The defect** | same file **`:63`** — `[InSpec] AS (CASE WHEN ABS([ActualValue] - [TargetValue]) <= [ToleranceValue] THEN CONVERT(BIT,1) ELSE CONVERT(BIT,0) END) PERSISTED` | ⛔ **Symmetric, and `PERSISTED`** |
+| `Deviation` | same file `:62` — `AS ([ActualValue] - [TargetValue]) PERSISTED` | ✅ Correct — **signed**, and it already carries the direction the verdict needs |
+| `ToleranceValue` | same file `:60` — `DECIMAL(8,4) NOT NULL`, `CK_SpcMeasurement_TolPos` `>= 0` | ✅ Built — **one number per row** |
+| `AllInSpec` | same file `:33` on `SpcCheckpoint` — `BIT NULL`, *"NULL=not yet evaluated"* | ✅ Built — and **nullable, which is the right pattern** (§2.3) |
+| `AlloyProperty` min/max pairs | `01_Lookup` | ✅ Columns built · ⛔ **seeded `NULL`** (`Q22`) |
+| A path from `SpcMeasurement` to `AlloyProperty` | — | ⛔ **Does not exist** (§2.2) |
+
+⚠ **`SpcCheckpoint.AllInSpec` is `BIT NULL` and `SpcMeasurement.InSpec` is not.** The
+schema already knows the right pattern one table up. That inconsistency is the fix.
+
+---
+
+## 2. The four details
+
+### 2.1 `PERSISTED` is what makes this a data story
+
+A non-persisted computed column is evaluated on read, so correcting the expression corrects
+every past row for free. **`PERSISTED` materialises the verdict at write time.** Every
+`SpcMeasurement` row already on disk carries a verdict computed by the symmetric rule, and
+SQL Server will **not** recompute them because the expression changed.
+
+⚠ **Dropping and re-adding the computed column does recompute** — that is the mechanism —
+but it rewrites the table, so it must sit inside the idempotent guard pattern the chain uses
+and be verified by row count before and after. **The re-evaluation is not a separate
+`UPDATE`;** a computed column cannot be updated.
+
+### 2.2 A computed column cannot reach `AlloyProperty` — so AC 1 cannot be met literally
+
+AC 1 says the expression should evaluate *"against the min/max pair"*. A computed column's
+expression is limited to columns **of the same row**. `SpcMeasurement` has no alloy, no
+line, and no path to `AlloyProperty` — it reaches its checkpoint by `CheckpointId`, and the
+alloy is two joins further out.
+
+Three shapes, and one is honest:
+
+- ⛔ **Widen the expression** — impossible; no join is available to a computed column.
+- ⛔ **Denormalise the alloy onto `SpcMeasurement`** — reaches the pair, duplicates reference
+  data onto every measurement row, and still cannot follow a later correction.
+- ✅ **Carry the band on the row, as a pair.** `ToleranceMin` / `ToleranceMax` replace the
+  single `ToleranceValue`; the writer (`FW-168`) resolves the band from `AlloyProperty` at
+  capture time and stamps both — exactly as it already stamps `ToleranceValue` today. The
+  expression then compares against two columns of its own row, which is legal.
+
+**Take the third.** It is also the only one that keeps the historical verdict stable: a
+measurement is judged against the band **that applied when it was taken**, which is what an
+SPC record is for. `P-148` records it.
+
+### 2.3 Unresolvable must be `NULL`, not `1`
+
+`P-125` found the sibling hazard on `RunReading.InSpec`: `BIT NOT NULL DEFAULT (1)` means an
+omitted value **claims** in-spec. Here the same hazard arrives by a different route — with
+`Q22` unseeded the band **cannot be resolved for any alloy today**, so a `NOT NULL` verdict
+column has to invent an answer for every row.
+
+`SpcCheckpoint.AllInSpec` already models this correctly one table up: `BIT NULL`, commented
+*"NULL=not yet evaluated"*. **Make `InSpec` nullable and let an unresolvable band yield
+`NULL`.**
+
+⚠ **This is a contract change for every consumer.** The `AllInSpec` roll-up must treat `NULL`
+as *unknown*, never as *pass* — a checkpoint with one unevaluated measurement is not "all in
+spec".
+
+### 2.4 `Q22` blocks the demonstration, not the build
+
+The four min/max pairs are owed by e-mail and `AlloyProperty` is **deliberately unseeded** —
+diameter and ovality are `NULL` by design. So after this story ships, every band is still
+unresolvable and every new `InSpec` is `NULL`.
+
+**That is the correct state and must be recorded as such**, the way `FW-205` shipped
+*"correctly wired and correctly inert"*, rather than read later as a broken deployment.
+
+> ⛔ **Do not seed placeholder pairs to make a test pass.** The card says so outright, and a
+> placeholder band is indistinguishable from a real one once it is on disk.
+> `AlloyProperty.LbPerFtFactor` already carries a `NULL` marked *"OQ-10 PENDING"* for exactly
+> this reason.
+
+---
+
+## 3. Build order
+
+1. **Enumerate the blast radius first.** Everything reading `SpcMeasurement.InSpec` or
+   `SpcCheckpoint.AllInSpec`: the roll-up, `sp_ShiftSummary` (MVP-2, `09_`), and `FW-168`'s
+   service. A nullable verdict changes all three.
+2. **`05_QualityOutput.sql`** — `ToleranceMin` / `ToleranceMax` `DECIMAL(8,4) NULL` replace
+   `ToleranceValue` (§2.2). ⚠ **Retire `CK_SpcMeasurement_TolPos`** and add
+   `CK_SpcMeasurement_TolOrder` (`ToleranceMin <= ToleranceMax`) — a pair's invariant is
+   **ordering, not sign**, because an asymmetric band may lie entirely one side of target.
+3. **Redefine `InSpec`**, nullable and three-way: `NULL` when either bound is `NULL`; `1` when
+   the reading lies within `[Target+Min, Target+Max]`; `0` otherwise. ⚠ Express it against
+   `Deviation`'s sign convention (`ActualValue - TargetValue`) so the two computed columns
+   cannot disagree.
+4. **Re-evaluate the persisted rows** (§2.1) — drop and re-add inside the chain's idempotent
+   guard. **Assert row count before and after.**
+5. **Update the `AllInSpec` roll-up** so `NULL` propagates as unknown (§2.3), never as pass.
+6. **Sync `Schema/FlatWireSchema_QualityOutput.md`** to the DDL — **the DDL wins.**
+7. **`TC-020`-style three-way check** (AC 4). ⚠ With `Q22` open the third leg is `NULL`, so it
+   is **two-way** and signed off **per leg** — the treatment `P-84` established for `FW-147`.
+
+> ⚠ **`[DBD §6.2]` states the counted baseline.** This story changes columns and constraints,
+> **not** the table count — but `verify_schema_counts.py` must still re-run green.
+
+---
+
+## 4. Decisions this plan makes
+
+> The `P-##` series belongs to [`Backend/TaskBreakdownPlans/`](../../Backend/TaskBreakdownPlans/)
+> and is continuous across the repository; `P-01`–`P-147` precede this story. ⚠ Recorded here
+> because a **plan** may mint one — the DB `Orchestration.md` is what may not.
+
+### `P-148` — the band is carried on the measurement row as a pair, not resolved by join
+
+A computed column cannot join (§2.2). **`ToleranceMin`/`ToleranceMax` replace
+`ToleranceValue`, stamped by the writer at capture time.**
+
+Reasons: it is the only legal shape; it preserves the historical verdict, since an SPC
+measurement must be judged against the band that applied when it was taken; and it widens
+what `FW-168` already does, at a call site that exists.
+
+**Fallback:** keep `ToleranceValue` alongside for the symmetric case. **Not recommended** —
+two sources of truth for one band is how `AllInSpec` and `InSpec` would drift apart.
+
+### `P-149` — `InSpec` becomes nullable, and `NULL` means unevaluated
+
+`P-125`'s rule (§2.3). `SpcCheckpoint.AllInSpec` already does this one table up; the
+inconsistency between the two is the defect.
+
+⚠ **Consumers must read `NULL` as unknown.** A roll-up treating it as pass reintroduces the
+whole hazard one level higher.
+
+### `P-150` — this ships correct and unexercised, and the build record says so
+
+`Q22` is open (§2.4). **Do not seed placeholder pairs.** Record the state the way `FW-205`
+recorded its inert interlock.
+
+---
+
+## 5. Verification
+
+**No automated tests** — `[TS §1.2]`. Verified by SQL assertion against live `FlatWireDB`.
+
+| Check | Expected |
+|---|---|
+| **Asymmetric, inside** | Band `-0.001/+0.003`, actual `+0.002` → **`1`**. ⛔ **The old expression gives `0`** |
+| **Asymmetric, outside** | Band `-0.001/+0.003`, actual `-0.002` → **`0`**. ⛔ **The old expression gives `1`** |
+| Symmetric | `-0.002/+0.002` behaves exactly as before — no regression |
+| **Unresolvable** | Either bound `NULL` → **`InSpec` is `NULL`**, never `1` (`P-149`) |
+| **Persisted rows corrected** | Rows written before the change carry the **new** verdict; row count unchanged (§2.1) |
+| Ordering constraint | `ToleranceMin > ToleranceMax` rejected by `CK_SpcMeasurement_TolOrder` |
+| One-sided band | `+0.001/+0.003` is accepted — the old `>= 0` check was not the right guard |
+| `Deviation` agreement | `InSpec` and `Deviation` never disagree about which side of target a reading falls |
+| Roll-up | A checkpoint with one `NULL` measurement has `AllInSpec` **`NULL`**, not `1` |
+| Idempotency | `FlatWire_DDL_RunAll.sql` re-runs clean; chain stays contiguous `00`–`08` |
+| Count guard | `verify_schema_counts.py` green; table count unchanged |
+| **`Q22` state** | Every band unresolvable, every new `InSpec` `NULL` — **and recorded as correct** (`P-150`) |
+
+---
+
+## 6. Handoff
+
+[`FW-168`](../../Backend/TaskBreakdownPlans/FW-168-Spc-And-SpcService.md) stamps
+`ToleranceMin`/`ToleranceMax` instead of `ToleranceValue` — its **`P-43`** already holds that
+the tolerance band is data and is unseeded, so this widens a decision it has made rather
+than adding one. `FW-244` (`G49`) edits the same numbered files; **sequence the two together**
+to avoid rewriting `05_QualityOutput.sql` twice. MVP-2's `sp_ShiftSummary` reads the roll-up
+and must not treat `NULL` as pass.
+
+---
+
+## 7. Open items
+
+| Item | Effect here |
+|---|---|
+| ⛔ **`Q22`** | The four min/max pairs are client-owed. **The fix is buildable; the demonstration is not** (`P-150`) |
+| **`P-125`** | The sibling hazard on `RunReading.InSpec` — `DEFAULT (1)` claims in-spec. Same class, different table |
+| **`P-43`** | `FW-168`'s decision that the band is data and unseeded. Widened here to a pair |
+| **`P-84`** | The per-leg sign-off pattern for a verification that cannot run every leg |
+| **`Q10` / `OI-45`** | `LbPerFtFactor` seeded `NULL` marked *"OQ-10 PENDING"* — the precedent for **not** inventing reference data |
+| **`G51`** | ✅ **This story closes it** |

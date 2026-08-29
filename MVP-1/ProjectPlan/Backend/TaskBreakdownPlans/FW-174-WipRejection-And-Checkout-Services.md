@@ -1,12 +1,12 @@
 # FW-174 · `POST /wipreject`, `POST /checkout` and their services
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Last Updated:** August 29, 2026 — ⚠ **Re-reviewed against the BUILT code and the DDL, and two of this plan's warnings are now WRONG.** ✅ **`G24`'s approval columns EXIST** — `ApprovedBy`, `ApprovedAt`, `OverrideReason` plus `CK_RodCheckout_Approval`, `CK_RodCheckout_ModeBApproved` and `CK_RodCheckout_ModePWelded`; AC 4 has its constraint and the residual is `OI-38`. ⛔ **§2.2's chain was wrong**: the release subscribes to **`BayReleaseRequested`**, not `BayStateChanged` — `FW-208` split the types, and **both handlers are already built**. ➕ **A fourth mode rule the plan never carried: a welded Mode P checkout needs the stamp *and* `NewRodStatus='HOLD'`.** Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
-**Status:** Ready to build — **AC 4 is a behaviour change, not a new feature**
+**Status:** ⚠ **A de-stub — AC 4 is a behaviour change, and its constraint is now in the database**
 **Owner:** Backend (.NET) stream
 **Audience:** The .NET developer building `FW-174`
-**Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
+**Shortcode:** — *(implementation plan, derived from the specifications and the built code; **not citable as a requirement**)*
 **Part of:** `ProjectPlan/Backend/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md)
 
 ---
@@ -52,10 +52,26 @@ From `[TB §7]` — verbatim:
 | Concern | Story |
 |---|---|
 | The DB8 / DB12 screens | `FW-067`, FE |
-| The `WipRejection` / `RodCheckout` tables | `FW-176`, DB |
-| The durable supervisor queue this notifies into | `FW-175` — ⚠ **deferred from the trial** |
+| The `WipRejection` / `RodCheckout` tables | [`FW-176`](../../Database/TaskBreakdownPlans/FW-176-WipRejection-RodCheckout-Tables.md), DB — ✅ **built, approval columns included** |
+| The durable supervisor queue this notifies into | [`FW-175`](FW-175-Durable-Supervisor-Queue.md) — ⚠ **deferred from the trial** |
 | The broadcasts | [`FW-177`](FW-177-Exception-Broadcasts.md) |
-| `ClearPayoffTags` itself | [`FW-151`](FW-151-PLCTagService.md) |
+| `ClearPayoffTags` itself | [`FW-151`](FW-151-PLCTagService.md) — ✅ **built**; `ClearPayoffTagsAsync(PayoffClearRequest)` |
+
+### 1.2 What already exists
+
+Read off the built code and the DDL on 29 Aug 2026. **The release chain is built; the two service
+bodies are not.**
+
+| Thing | State |
+|---|---|
+| `WipRejectionController` (**26**) + `CheckOutController` | ✅ Built (`FW-138`) |
+| `IWipRejectionService` / `ICheckOutService` + stubs + named-throw shells | ✅ Built (`FW-140`, `P-64`) — the stubs already refuse an unstamped Mode B and a welded Mode P |
+| `WipRejection` aggregate, raising **`BayReleaseRequested`** | ✅ Built (`FW-207`, `WipRejection.cs:131`) |
+| **`BayReleaseHandler`** — in-transaction, writes `RodStaging` | ✅ **Built by `FW-208` step 7** — *"without it a rejection commits and the bay stays occupied forever"* |
+| **`BayStateChangedBroadcastHandler`** — post-commit, sends `PayoffStateChanged` | ✅ **Built by `FW-208` step 8** |
+| `RodCheckout` approval columns + three constraints | ✅ **Built** (§2.3) |
+| `LINE_STILL_RUNNING`, `SUPERVISOR_AUTH_REQUIRED` error codes | ✅ Built |
+| **The two service bodies** | ⛔ **Absent.** This is the deliverable |
 
 ---
 
@@ -84,13 +100,30 @@ transition, not a sample.
 `RodStaging`."* `WipRejection` and `RodStaging` are **separate aggregate roots**, and a direct
 write couples two roots inside one transaction.
 
+⛔ **The event is `BayReleaseRequested`, not `BayStateChanged` — corrected 29 Aug 2026 against the
+built code.** `FW-208` split the types, and the reason is worth carrying: `BayStateChanged` is
+raised in **five** places, four of them by `RodStaging` itself (`Stage`, `MarkWelded`,
+`ConsumeAtCheckIn`, `Unstage`), so it is a *notification that a bay changed*. The release needs a
+*request that a bay be released* **and the rejection link that goes with it** —
+`CK_RodStaging_RejectLink` requires `WipRejectionId` whenever `UnstageKind = 'WipRejection'`.
+
 ```
-POST /wipreject → WipRejection raises BayStateChanged
-                → handler updates RodStaging + broadcasts PayoffStateChanged
+POST /wipreject → WipRejection.ReleaseBay() raises BayReleaseRequested
+                → BayReleaseHandler (IN-TRANSACTION) updates RodStaging + links the rejection
+                → RodStaging raises BayStateChanged
+                → BayStateChangedBroadcastHandler (POST-COMMIT) sends PayoffStateChanged
 ```
 
-[`FW-208`](FW-208-Domain-Events-Post-Commit-Dispatch.md) owns the plumbing and lists this
-chain as its own AC 5.
+**Both handlers are already built** ([`FW-208`](FW-208-Domain-Events-Post-Commit-Dispatch.md)
+steps 7 and 8), so this story's job is to **call `ReleaseBay` inside the rejection transaction** —
+not to write either handler.
+
+⚠ **The two lanes are deliberate and opposite.** The `RodStaging` write is in-transaction so it
+commits with the rejection or not at all; the broadcast is post-commit because *"telling nine
+operators a bay is free and then rolling back is a lie the database will never agree with."*
+⚠ **The handler resolves the rejection's surrogate by its `REJ-####` business key**, because at
+`ReleaseBay` time EF has not assigned the identity yet — that works only while dispatch saves
+before draining (`P-94`).
 
 ### 2.3 Mode B is enforced by the database now
 
@@ -98,18 +131,27 @@ chain as its own AC 5.
 without a supervisor stamp **now fails at write time**. That is intended, and it is why the
 card flags it as a behaviour change.
 
-The three checkout modes (`[EX]`, `[SVC §3.2a]`):
+The three checkout modes (`[EX]`, `[SVC §3.2a]`), **as the built constraints enforce them**:
 
-| Mode | Rule |
-|---|---|
-| **P** — pre-check-out | **Must carry null footage** |
-| **A** | — |
-| **B** | **Supervisor stamp + PLC-locked footage > 0** |
+| Mode | Rule | Constraint |
+|---|---|---|
+| **P** — pre-check-out | **Null run, zero footage, no PLC clear, no in-process disposition** | `CK_RodCheckout_ModeP` |
+| **P**, welded | ➕ **Supervisor stamp *and* `NewRodStatus = 'HOLD'`** — removing a welded rod means cutting the material, so it is a rejection (`Q69`) | `CK_RodCheckout_ModePWelded` |
+| **A** | — | — |
+| **B** | **Supervisor stamp + PLC-locked footage > 0**; the only mode that may dispose of in-process material | `CK_RodCheckout_ModeBApproved`, `CK_RodCheckout_ModeB` |
+| any | The stamp is **all-or-nothing** — by, at and reason together or none | `CK_RodCheckout_Approval` |
 
-⚠ **`G24`: `RodCheckout` has no `ApprovedBy`, `ApprovedAt` or `OverrideReason` columns at
-all.** `RodStaging` has the credential trio; the checkout table does not. So *"enforced by
-constraint"* needs those columns to exist — **confirm with `FW-176` before building against
-them.** Every supervisor-gated checkout is otherwise unauditable.
+✅ **`G24` was answered in the DDL and this plan had not caught up — corrected 29 Aug 2026.**
+`RodCheckout` carries **`ApprovedBy`, `ApprovedAt`, `OverrideReason`** (and `WasWelded`), added
+1 Aug 2026 with the three constraints above. **AC 4 has something to constrain**;
+[`FW-176`](../../Database/TaskBreakdownPlans/FW-176-WipRejection-RodCheckout-Tables.md) §2.4 asked
+for exactly this check against the DDL. ⚠ **The `G24` register row still reads *"Open"* and
+describes the columns as absent** — it is stale; the live residual is **`OI-38`, the PIN
+validation source**, and **the PIN is never stored**.
+
+⚠ **So the behaviour change is real and immediate:** code that writes a Mode B — or a welded
+Mode P — without a stamp now fails **at the database**, not in a service check that could be
+skipped.
 
 ---
 
@@ -127,7 +169,8 @@ them.** Every supervisor-gated checkout is otherwise unauditable.
 > ⚠ **Phase 7 adds the never-send-a-stop invariant, `FR-302`** — the gate precedes the clear
 > and the clear is not a stop.
 
-⚠ **Step 5 needs `FW-175`'s durable queue**, which is **deferred from the trial**. A pending
+⚠ **Step 5 needs [`FW-175`](FW-175-Durable-Supervisor-Queue.md)'s durable queue**, which is
+**deferred from the trial**. A pending
 disposition carried only by a transient SignalR notification is stranded when the supervisor's
 terminal disconnects — the defect `FW-175` exists to prevent. See `P-46`.
 
@@ -135,7 +178,9 @@ terminal disconnects — the defect `FW-175` exists to prevent. See `P-46`.
 
 ## 4. Decisions this plan makes
 
-> `P-##` is continuous across this folder; `P-01`–`P-45` precede this story.
+> `P-##` is continuous across the repository; `P-01`–`P-45` preceded `P-46` when it was minted on
+> 15 Aug 2026, and `P-253` is the high-water mark today. **`P-46` still stands** — `FW-175` is
+> still deferred from the trial, so the pending disposition is still recorded but unannounced.
 
 ### `P-46` — persist PENDING DISPOSITION here; the queue that reads it is `FW-175`'s
 
@@ -164,11 +209,13 @@ acceptance run.
 
 | Check | Expected |
 |---|---|
+| **De-stub only** | `git diff` adds two service bodies and **removes two `NotImplementedException`s**; no controller and **neither event handler** is re-created |
 | **Blocked bay released** | A staged rod failing inspection → `201`/`Blocked`; `POST /wipreject` → bay reports `NotStaged`. **The only path** |
-| Release mechanism | Via a **domain event** — no direct write into `RodStaging` from the rejection handler |
-| `PayoffStateChanged` | Broadcast **immediately**, never in a batch |
+| Release mechanism | `ReleaseBay()` raises **`BayReleaseRequested`** — no direct write into `RodStaging` from the rejection handler, and **no new handler** (§2.2) |
+| `PayoffStateChanged` | Broadcast **immediately**, never in a batch, and **only after commit** |
 | **Mode B** | Without a supervisor stamp → **fails at the constraint**, not in the service |
-| Mode P | **Null footage**; a non-null value rejected |
+| **Welded Mode P** | Stamp **and** `NewRodStatus='HOLD'`, or the write is refused (§2.3) |
+| Mode P | **Null run, zero footage, no PLC clear**; a non-null value rejected |
 | Line-state gate | Checkout on a running line → `422` `LINE_STILL_RUNNING` |
 | Order | Gate → void → `ClearPayoffTags` → PENDING → notify |
 | `partialSpoolAlpha` | Only on Accept |
@@ -179,9 +226,12 @@ acceptance run.
 ## 6. Handoff
 
 [`FW-177`](FW-177-Exception-Broadcasts.md) broadcasts `AlertRaised`, `RodCheckoutEvent` and
-`LineStatus → IDLE`. `FW-176` (DB) owns the tables — **and `G24`'s missing columns**.
-`FW-175` makes the supervisor notification durable, when it is scheduled. `FW-067` (FE) is
-DB8/DB12.
+`LineStatus → IDLE` — ⚠ **and neither of those two events exists yet**, so this story raises what
+that one declares (`P-141`'s pattern).
+[`FW-176`](../../Database/TaskBreakdownPlans/FW-176-WipRejection-RodCheckout-Tables.md) (DB) owns
+the tables — ✅ **built, approval columns included**.
+[`FW-175`](FW-175-Durable-Supervisor-Queue.md) makes the supervisor notification durable, when it
+is scheduled. `FW-067` (FE) is DB8/DB12.
 
 ---
 
@@ -191,10 +241,12 @@ DB8/DB12.
 |---|---|
 | **`Q13`** *(blocker)* | Re-weld on certificate — bears on the traceability a rejection interrupts |
 | **`Q23`** *(blocker)* | — |
-| **`G24`** ⚠ | **`RodCheckout` has no `ApprovedBy`/`ApprovedAt`/`OverrideReason`.** AC 4's constraint has nothing to constrain until `FW-176` adds them. **Confirm before building** |
+| **`G24`** ✅ | **Answered in the DDL** — the three approval columns and their constraints exist (§2.3). ⚠ **The register row still says otherwise and is stale.** Residual: `OI-38` |
 | **`OI-32`** | **No endpoint for supervisor disposition of a pending Mode B** — a decided requirement (`FR-325`/`FR-326`) with no surface. `P-46` |
 | **`OI-38`** | The supervisor PIN's validation source, unsettled for all overrides |
 | **`OI-20`** | Polymorphic material refs with no integrity — affects both endpoints |
 | **`OI-21`** | Two rejection-ID formats (`REJ-####` vs `REJ-2026-0418`). Pick one and record it |
 | **`OI-22`** | The **`Rework` disposition is unpersistable** |
-| **`G21`** | Bay uniqueness is keyed on the **physical station**, not the line |
+| **`G21`** ✅ | **Resolved 15 Aug 2026** — the bay is keyed on the **physical station** (`FL1PO`, shared by FL1 and FL3), and `RodStaging.Station` is persisted. Resolve the bay by station, never by `(LineId, PayoffPosition)` |
+| **`G62`** *(new here, 29 Aug 2026)* | Releasing a bay is one of the restage paths whose `stagedWeights` entry is **never evicted**, so a later `PercentRemaining` is computed against the departed rod. Owned by [`FW-239`](FW-239-Run-Lifecycle-Cache-Invalidation.md) |
+| **`D-30`** | `RodCheckout` and `WipRejection` are two of the three roots with **no `ROWVERSION`** — [`FW-243`](FW-243-D30-Rowversion.md) |

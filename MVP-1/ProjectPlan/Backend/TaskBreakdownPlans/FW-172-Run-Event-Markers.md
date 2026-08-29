@@ -1,12 +1,12 @@
 # FW-172 · Run-event markers and the `LineStatus` transitions
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Last Updated:** August 29, 2026 — ⚠ **Re-reviewed against the BUILT code.** ✅ **All six markers are typed on `IFlatWireClient`** and two of this story's four already have handlers — `WeldRecordedBroadcastHandler` and the pause/resume pair (`FW-208` step 8), where **one `PauseEvent` type serves both, discriminated by `IsResume`**. ⛔ **Two findings:** the **`SPCCheckpoint` and `DieChangeEvent` domain events do not exist** — `RunEvents.cs` holds seven records and neither is among them, so this story mints them and `FW-168`/`FW-167` raise them (`P-141`'s precedent); and **`LineStatus` is dark until commissioning `C2`**, so AC 2 cannot ride `FW-150`'s loop (`P-256`). ⚠ `[SIG §5.2]` now publishes **fourteen** events, not twelve. Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
-**Status:** Ready to build — **every marker here is immediate and unbatched**
+**Status:** ⚠ **Partly built — every marker here is immediate and unbatched, and two handlers already exist**
 **Owner:** Real-time (RT) stream
 **Audience:** The developer building `FW-172`
-**Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
+**Shortcode:** — *(implementation plan, derived from the specifications and the built code; **not citable as a requirement**)*
 **Part of:** `ProjectPlan/Backend/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md)
 
 ---
@@ -55,9 +55,9 @@ The markers are broadcasts of events other stories record. In trial scope:
 |---|---|---|
 | `SPCCheckpoint` | [`FW-168`](FW-168-Spc-And-SpcService.md) | ✅ |
 | `PauseEvent` | [`FW-170`](FW-170-Pause-Resume-And-RunControlService.md) | ✅ |
-| `WeldJoinEvent` | `FW-166` | ❌ **deferred with DB2A** |
-| `DieChangeEvent` | `FW-073` | ❌ deferred |
-| `RodCheckoutEvent` *(`FW-177`'s)* | `FW-072` | ❌ deferred |
+| `WeldJoinEvent` | [`FW-166`](FW-166-WeldEvent-And-WeldService.md) | ❌ **deferred with DB2A** — ✅ its `WeldRecorded` event and broadcast handler are **already built** |
+| `DieChangeEvent` | [`FW-167`](FW-167-DieChange-And-DieChangeService.md) / `FW-073` | ❌ deferred — ⛔ **and it has no domain event yet** (§2.0) |
+| `RodCheckoutEvent` *(`FW-177`'s)* | [`FW-174`](FW-174-WipRejection-And-Checkout-Services.md) / `FW-072` | ❌ deferred |
 
 **Build all of them.** `[TRP §7]`: *"Build the weld-marker layer even though it renders empty
 … with no `WeldEvent` rows in trial scope the array is empty, which is a **legitimate state,
@@ -74,8 +74,22 @@ and `RodCheckoutEvent`, and `RodCheckoutEvent` belongs to
 | The typed contract these are declared on | [`FW-149`](FW-149-IFlatWireClient.md) |
 | The batch loop these bypass | [`FW-150`](FW-150-Broadcast-Loop.md) |
 | `RodCheckoutEvent` and `AlertRaised` | [`FW-177`](FW-177-Exception-Broadcasts.md) |
-| The DB3 chart rendering them | `FW-081`, `FW-163`, FE |
-| Domain-event plumbing | [`FW-208`](FW-208-Domain-Events-Post-Commit-Dispatch.md) |
+| The DB3 chart rendering them | [`FW-081`](FW-081-Gauge-Trace-Live-Streaming.md), `FW-163`, FE |
+| Domain-event plumbing | [`FW-208`](FW-208-Domain-Events-Post-Commit-Dispatch.md) — ✅ **built, including the two-lane dispatch** |
+
+### 1.3 What already exists
+
+Read off the built code on 29 Aug 2026. **Half of this story is wiring that is already in place.**
+
+| Thing | State |
+|---|---|
+| The **six** markers on `IFlatWireClient` — `WeldJoinEvent`, `DieChangeEvent`, `PauseEvent`, `SPCCheckpoint`, `AlertEvent`, `RodCheckoutEvent` | ✅ Built ([`FW-149`](FW-149-IFlatWireClient.md)) — **no magic-string send is possible** |
+| `WeldRecordedBroadcastHandler` | ✅ **Built by `FW-208` step 8** |
+| `RunPausedBroadcastHandler` + `RunResumedBroadcastHandler` | ✅ **Built** — ⚠ **one `PauseEvent` type serves both**, `IsResume` discriminates; `ReasonCode` is sent **as a code** |
+| `WeldRecorded`, `RunPaused`, `RunResumed` domain events | ✅ Built — `WeldRecorded` gained `LineId` because the weld was otherwise unbroadcastable (`P-139`) |
+| `IFlatWireBroadcaster.Line(LineId)` | ✅ Built — **the only addressing this story has**, and the reason handlers live in Infrastructure (`P-101`) |
+| **`SpcCheckpointRecorded` / die-change domain events** | ⛔ **Do not exist.** §2.0 |
+| **`LineStatus` on RUNNING ↔ PAUSED** | ⛔ **Nothing sends it** — the loop's channel is dark until `C2` (`P-256`) |
 
 ---
 
@@ -102,6 +116,31 @@ may still reject, which is the disagreement in the story's "so that".
 [`FW-208`](FW-208-Domain-Events-Post-Commit-Dispatch.md) owns that plumbing; this story
 supplies the translation handlers for these five.
 
+### 2.0 ⛔ Two of the four markers have no event to translate
+
+`RunEvents.cs` holds **seven** records — `RunPaused`, `RunResumed`, `WeldRecorded`,
+`CoilCompleted`, `BayStateChanged`, `BayReleaseRequested`, `SpoolCompletionPromptRaised`. **There
+is no SPC-checkpoint event and no die-change event**, so build step 2's *"and their siblings"* has
+nothing to bind to.
+
+**Mint them here and let their writers raise them** — the `P-141` precedent, where `FW-239`
+declared `RunStarted`/`RunEnded` and `FW-157`/`FW-219` raise them, and `P-22` before it, where
+`IFlatWireClient` landed with `FW-080` though it was `FW-149`'s:
+
+| Event | Declared | Raised by |
+|---|---|---|
+| `SpcCheckpointRecorded` | **this story** | [`FW-168`](FW-168-Spc-And-SpcService.md) |
+| `DieChangeRecorded` | **this story** | [`FW-167`](FW-167-DieChange-And-DieChangeService.md) — deferred from the trial |
+
+⚠ **The handlers ship correctly wired and correctly inert until those stories raise them**, and
+the build record must say so — as `FW-205`'s and `FW-239`'s do. ⛔ **Do not raise them from the
+broadcast handler** to make the marker appear; a marker without its row is the disagreement this
+story exists to prevent.
+
+⚠ **`WeldRecorded` carries `LineId` and the others must too.** `IFlatWireBroadcaster.Line(LineId)`
+is the only way to address a group (`P-139`), so an event that cannot name its line **cannot be
+broadcast at all** — this is what `FW-208` had to fix once already.
+
 ### 2.1 The two re-broadcasts
 
 | Trigger | Re-broadcast | Why |
@@ -113,6 +152,14 @@ Both are ordinary events being re-sent, not new ones. They exist because
 [`FW-150`](FW-150-Broadcast-Loop.md) sends `ComponentStatus` **on change only**, so a change
 made through a command — not through a tag read — needs an explicit push.
 
+⛔ **`G62` makes the weld re-broadcast wrong today, and the weld is the worst case.** `FW-150`'s
+`stagedWeights` cache — `PercentRemaining`'s denominator — **has never had an eviction path**, and
+*the weld is the payoff handover*. Re-broadcasting `PayoffWeight` after a weld against a stale
+denominator publishes a confident percentage of the **previous** rod.
+[`FW-239`](FW-239-Run-Lifecycle-Cache-Invalidation.md) owns the eviction; **this re-broadcast is
+not correct until it lands.** ⚠ **FL2 sends no `PayoffWeight` at all** — `RodStaging` is FL1/FL3
+only — so an absent payload there is expected, not a fault.
+
 ### 2.2 `LineStatus` — and the rename that is pending
 
 `RUNNING ↔ PAUSED`, reaching Dashboard 1.
@@ -123,21 +170,31 @@ record and still publish the old names. **Build to `[API]`/`[SIG]`; apply the re
 pass across all three when arbitrated.**
 
 ⚠ **`enum LineState` has no `Stopped` member**, deliberately. Resolve any stop edge through
-the configurable `LineStateMap` (`[PLC §6]`), **never by adding an enum value** (`PLC-Q01`).
+the configurable `LineStateMap` (`[PLC §6]`), **never by adding an enum value** (`PLC-Q01`). The
+built enum is `Running · Idle · Setup · Paused · Fault · Offline`.
+
+⛔ **And the telemetry loop cannot serve AC 2.** `FW-150`'s `LineStatus` channel calls
+`ITagPathResolver.TryMapLineState`, which **returns `false` while `LineStateMap` is empty — i.e.
+until commissioning test `C2`** — so nothing is sent, correctly and silently. **A RUNNING ↔ PAUSED
+transition would therefore never reach Dashboard 1**, which is `P-256`.
 
 ---
 
 ## 3. Build order
 
-1. Confirm all five are typed on `IFlatWireClient`
-   ([`FW-149`](FW-149-IFlatWireClient.md)) — **no magic-string sends**.
-2. Domain events raised by the aggregates
-   ([`FW-207`](FW-207-Domain-Model.md)): `WeldRecorded`, `RunPaused` and their siblings.
-3. Translation handlers in **Infrastructure**
-   ([`FW-208`](FW-208-Domain-Events-Post-Commit-Dispatch.md) `P-35`), one per event.
+1. ✅ **All six are typed on `IFlatWireClient`** ([`FW-149`](FW-149-IFlatWireClient.md)) —
+   confirm, do not add. **No magic-string sends.**
+2. ⛔ **Read the three built handlers first** (`WeldRecordedBroadcastHandler`,
+   `RunPausedBroadcastHandler`, `RunResumedBroadcastHandler`) — two of this story's four markers
+   are already sent, and the pause pair shares one marker type.
+3. **Declare `SpcCheckpointRecorded` and `DieChangeRecorded`** (§2.0), each carrying `LineId`, and
+   write their translation handlers in **Infrastructure**
+   ([`FW-208`](FW-208-Domain-Events-Post-Commit-Dispatch.md) `P-35`) — inert until `FW-168` and
+   `FW-167` raise them.
 4. Send **immediately**, bypassing the drain loop entirely (§2).
-5. The two re-broadcasts (§2.1).
-6. `LineStatus` RUNNING ↔ PAUSED (§2.2).
+5. The two re-broadcasts (§2.1) — ⚠ the weld one is blocked behind `G62`.
+6. `LineStatus` RUNNING ↔ PAUSED **from the pause/resume events**, not from the loop (§2.2,
+   `P-256`).
 7. Reconnect and group re-join are inherited from
    [`FW-080`](FW-080-FlatWireHub.md) — **do not re-implement**.
 
@@ -145,7 +202,8 @@ the configurable `LineStateMap` (`[PLC §6]`), **never by adding an enum value**
 
 ## 4. Decisions this plan makes
 
-> `P-##` is continuous across this folder; `P-01`–`P-44` precede this story.
+> `P-##` is continuous across the repository; `P-01`–`P-44` preceded `P-45` when it was minted on
+> 15 Aug 2026. **`P-256` is added by the 29 Aug re-review**; `P-253` was the high-water mark.
 
 ### `P-45` — this story owns four markers; the other two are `FW-177`'s
 
@@ -168,6 +226,26 @@ one"* — and grouping the two exception broadcasts keeps one story owning the s
 because `phase-01b`'s **exit criterion 4** counts the **six markers** as one obligation.
 ⚠ *That criterion said "twelve events and six markers" until 28 Aug 2026 and now reads
 **fourteen**; the events half never bore on this story, and the **six markers are unchanged**.*
+✅ **Confirmed against the built `IFlatWireClient` on 29 Aug 2026: fourteen events, six markers.**
+
+### `P-256` — `LineStatus` RUNNING ↔ PAUSED is sent from the pause/resume events, not from the loop
+
+AC 2 requires the transition to reach Dashboard 1. **The telemetry loop cannot deliver it**:
+`LineStatus` there is derived from a PLC tag through `LineStateMap`, and `TryMapLineState` returns
+`false` until commissioning `C2` (§2.2). Wiring AC 2 to that channel ships a story that is dark in
+every environment, including the trial, and looks correct in code review.
+
+**So: emit `LineStatus{Running}` / `LineStatus{Paused}` from the `RunResumed` / `RunPaused`
+post-commit handlers**, where the state is **application-known** and needs no tag vocabulary. It
+is on-change by construction — the events fire only on the edge.
+
+⛔ **This does not make the loop's channel redundant and must not replace it.** The loop reports
+what the *machine* says (`Fault`, `Offline`, `Setup`); this reports what the *system did*. When
+`C2` lands, both are live and they agree on the two states they share — a disagreement is a real
+signal, not a duplicate. ⛔ **And do not add an enum value to bridge them** (`PLC-Q01`).
+
+⚠ **The same reasoning gives [`FW-177`](FW-177-Exception-Broadcasts.md)'s `LineStatus → IDLE` its
+source** — `LineState.Idle` exists; the checkout path, not the tag map, knows the line went idle.
 
 ---
 
@@ -181,8 +259,10 @@ because `phase-01b`'s **exit criterion 4** counts the **six markers** as one obl
 | **Never batched** | No marker appears inside a `GaugeReading[]` payload |
 | **After commit** | Force a save failure → **no marker is broadcast** |
 | Weld / die change | Layers present and functioning; **empty in the trial is legitimate** |
-| Re-broadcasts | `PayoffWeight` after a weld; `ComponentStatus` after a roll override |
-| `LineStatus` | RUNNING ↔ PAUSED reaches Dashboard 1 |
+| **No duplicate pause marker** | One `PauseEvent` on pause and one on resume, `IsResume` set — **the built handlers already send them**; a second send here is the defect to look for |
+| Re-broadcasts | `PayoffWeight` after a weld; `ComponentStatus` after a roll override — ⚠ the weld one carries a **stale denominator until `G62` closes** |
+| `LineStatus` | RUNNING ↔ PAUSED reaches Dashboard 1 **without `LineStateMap` being configured** *(`P-256`)* |
+| **Inert handlers declared** | `SpcCheckpointRecorded` / `DieChangeRecorded` exist, carry `LineId`, and are recorded as **wired and inert** until their writers land |
 | Reconnect | Group re-join restores delivery; markers are **not** replayed *(only `SpoolCompletionPromptDue` is durable — [`FW-080 §3.3`](FW-080-FlatWireHub.md))* |
 | Typed | No magic-string `SendAsync` |
 
@@ -204,3 +284,6 @@ because `phase-01b`'s **exit criterion 4** counts the **six markers** as one obl
 | **`PLC-Q01`** | `LineState` has no `Stopped` member — resolve via `LineStateMap`, never by adding a value |
 | **`OI-18`** | An SPC checkpoint cannot join to its trigger — affects what the marker can carry |
 | **`G9` / `OI-34`** | No latency target, so *"immediately"* has no measurable threshold. Record what is achieved |
+| ⛔ **Two events missing** *(new 29 Aug 2026)* | `SpcCheckpointRecorded` and `DieChangeRecorded` do not exist; minted here, raised by `FW-168` / `FW-167` (§2.0) |
+| ⛔ **`G62`** *(new here)* | `stagedWeights` has no eviction path, so the post-weld `PayoffWeight` re-broadcast reports the **previous** rod's percentage. Owned by [`FW-239`](FW-239-Run-Lifecycle-Cache-Invalidation.md) |
+| **`C2` / `PLC-Q01`** | `LineStateMap` is empty until commissioning, which is why `P-256` moves AC 2 off the loop |

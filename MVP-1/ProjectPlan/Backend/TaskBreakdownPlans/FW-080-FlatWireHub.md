@@ -1,9 +1,9 @@
 # FW-080 · `FlatWireHub` — strongly-typed, MessagePack, line groups
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 28, 2026 — ✅ **BUILT AND VERIFIED ON THE RUNNING HUB.** Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Last Updated:** August 29, 2026 — ✅ **`FW-208` step 8 built against this interface** — five broadcast handlers, `P-101` verified in use. ⛔ **But `CoilCompleted` has NO member here**, so a completed output coil reaches no client but the one that caused it: **`OI-140`**, decided as `FW-208` `P-137`. ⚠ ***“eight broadcast handlers”* is a miscount** — eight *handlers*, six post-commit and two in-transaction; **seven exist, five broadcast**. Corrected in three places here. **Previously, August 28, 2026 — ✅ BUILT AND VERIFIED ON THE RUNNING HUB.** Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
-**Status:** ✅ **BUILT — 28 Aug 2026.** `/hubs/flatwire` is live in `ual-api`: `Hub<IFlatWireClient>` with `[Authorize]`, MessagePack behind `EnableMessagePack`, groups `FL1Data`/`FL2Data`/`FL3Data`, and `P-100`'s prompt replay on join. **Solution builds with 0 errors and no analyzer warning from any new file**; **14 of 14 acceptance checks pass against a live client** (§6.1). `FW-145` §3.5's `?access_token=` handler was built here as the stated prerequisite. **`FW-208` is unblocked** — a broadcast handler compiles in `FlatWire.Infrastructure` against `IFlatWireBroadcaster` with no reference to `FlatWire.API`. Two things execution changed: the package pin (**`8.0.30`, not `8.0.8` — that patch carries a high-severity advisory**) and **`P-102`**, which aligns the JSON protocol on string enums because the two protocols otherwise disagree about `LineId` and `P-21`'s switch was not transparent
+**Status:** ✅ **BUILT — 28 Aug 2026.** `/hubs/flatwire` is live in `ual-api`: `Hub<IFlatWireClient>` with `[Authorize]`, MessagePack behind `EnableMessagePack`, groups `FL1Data`/`FL2Data`/`FL3Data`, and `P-100`'s prompt replay on join. **Solution builds with 0 errors and no analyzer warning from any new file**; **14 of 14 acceptance checks pass against a live client** (§6.1). `FW-145` §3.5's `?access_token=` handler was built here as the stated prerequisite. **`FW-208` is unblocked** — a broadcast handler compiles in `FlatWire.Infrastructure` against `IFlatWireBroadcaster` with no reference to `FlatWire.API`. ✅ **And it is BUILT: `FW-208` step 8 landed five broadcast handlers on 29 Aug 2026**, harness 54/54. ⛔ **One event could not be built — `CoilCompleted` has no member on this interface** (`OI-140`, `FW-208` `P-137`). Two things execution changed: the package pin (**`8.0.30`, not `8.0.8` — that patch carries a high-severity advisory**) and **`P-102`**, which aligns the JSON protocol on string enums because the two protocols otherwise disagree about `LineId` and `P-21`'s switch was not transparent
 **Owner:** Real-time (RT) stream
 **Audience:** The developer building `FW-080`
 **Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
@@ -93,7 +93,7 @@ The date is the as-of — the code moves, so re-check before relying on a row.
 | MessagePack package | ✅ **this story** — `Microsoft.AspNetCore.SignalR.Protocols.MessagePack` **`8.0.30`** in `Directory.Packages.props` **and** referenced from `Api.csproj`. ⚠ **Not `8.0.8`** (advisory — `P-21`). Server-side SignalR itself needs no package |
 | Client-side | `@microsoft/signalr` **9.0.6 is already a dependency** of `ual-angular`; `@microsoft/signalr-protocol-msgpack` is **absent** (`[SIG §4.1]`). The transport is available today; only the protocol package is new |
 | `PATH_BASE` | `"/API.FlatWire"`, applied by `app.UsePathBase(...)`. Deployed, the hub answers at `/API.FlatWire/hubs/flatwire`; **inside the pipeline the path is still `/hubs/flatwire`**, which is why `FW-145` §3.5 matches the unprefixed segment |
-| `FW-208` dispatch | ✅ Built — both lane wrappers and capture-then-replay off `CommitTransactionAsync`. Its **eight broadcast handlers are still unwritten, but no longer blocked**: `IFlatWireBroadcaster` is what they inject (`P-101`, verified) |
+| `FW-208` dispatch | ✅ Built — both lane wrappers and capture-then-replay off `CommitTransactionAsync`. ✅ **Its broadcast handlers are built too, 29 Aug 2026** — five of them, injecting `IFlatWireBroadcaster` as `P-101` requires. ⚠ **“eight” was a miscount and is corrected at source in `FW-208` `P-137`:** `P-96`'s six events with two of them on BOTH lanes make eight **handlers** — six post-commit and two in-transaction — not eight broadcasts. **Seven were built; five broadcast.** The eighth is `CoilCompleted`'s, and it is blocked on a missing member of this very interface (**`OI-140`**). |
 | **Project references** | ⛔ **`FlatWire.Infrastructure` is `Microsoft.NET.Sdk` and references only `FlatWire.Domain`.** So it can name neither `FlatWireHub` (API's — and API references Infrastructure, not the reverse) nor `IHubContext<>` (ASP.NET Core shared framework, which a class library does not carry). **`FW-208`'s eight broadcast handlers live there.** This is what `P-101` resolves |
 | `FlatWire.Domain/Services/` | Already holds `IAuditLog`, `ITagPathResolver` and `IFlatWireServices` — **Domain-side abstractions implemented outward**, so Application and Infrastructure can both see them without referencing each other (`P-02`, `P-62`). `P-101`'s broadcaster is that shape, implemented in API |
 
@@ -664,12 +664,20 @@ with real ingest through `IReadingSource`, with
 **channel**, so `[SIG §4.2]`'s rule holds: *if the simulator ever needs a change to
 `IFlatWireClient`, the contract is wrong and the contract gets fixed.*
 
-⛔ **[`FW-208`](FW-208-Domain-Events-Post-Commit-Dispatch.md) is built and waiting.** Its
-dispatcher shipped; its **eight broadcast handlers did not**, because `IFlatWireClient` does
-not exist. It translates domain events onto this interface — **and that is what keeps SignalR
-out of `FlatWire.Application`** (`[SVC §3.2c]`). Confirm member names against §3.5 when
-writing those handlers rather than inventing them: `BayStateChanged` broadcasts as
-**`PayoffStateChanged`**, and `SpoolCompletionPromptRaised` as **`SpoolCompletionPromptDue`**.
+✅ **[`FW-208`](FW-208-Domain-Events-Post-Commit-Dispatch.md) is now complete.** Its dispatcher
+shipped 27 Aug 2026 and its broadcast handlers on 29 Aug, against this interface — **and that is
+what keeps SignalR out of `FlatWire.Application`** (`[SVC §3.2c]`). The member names were confirmed
+against §3.5 rather than inferred, and two of them differ from their event: `BayStateChanged`
+broadcasts as **`PayoffStateChanged`**, and `SpoolCompletionPromptRaised` as
+**`SpoolCompletionPromptDue`**.
+
+⛔ **One event has no member here, and it is this interface's gap rather than `FW-208`'s.**
+`CoilCompleted` is raised, dispatched and reaches nothing: §3.5's fourteen events and six markers
+carry no completed output coil. **Adding one is breaking under `[API §8]`** and has to move `[SIG
+§5.2]`, this file, `[SIG §5.6]` and `FW-136` together — **cheap now, while `FW-136` does not exist,
+and dear later**. Registered as **`OI-140`**; the decision is `FW-208` `P-137`.
+
+⚠ **“eight” was a miscount and is corrected at source in `FW-208` `P-137`:** `P-96`'s six events with two of them on BOTH lanes make eight **handlers** — six post-commit and two in-transaction — not eight broadcasts. **Seven were built; five broadcast.** The eighth is `CoilCompleted`'s, and it is blocked on a missing member of this very interface (**`OI-140`**).
 
 ⚠ **Its `P-35` needs amending, and this story is why.** It says DI supplies *"the API-side
 `IHubContext<FlatWireHub, IFlatWireClient>`"* to a handler in `FlatWire.Infrastructure`. That

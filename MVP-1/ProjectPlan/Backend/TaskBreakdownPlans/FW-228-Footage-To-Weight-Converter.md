@@ -1,0 +1,224 @@
+# FW-228 · Footage-to-weight converter
+
+**Project:** United Aluminum (UAL) — Flat Wire Mill Module
+**Last Updated:** August 29, 2026 — Change history is in [`CHANGELOG.md`](../../../../CHANGELOG.md)
+**Document Type:** Implementation plan for a single backlog story
+**Status:** **Buildable — and it CANNOT produce a number today.** `Q10` is unanswered and `LbPerFtFactor` is seeded `NULL`
+**Owner:** Backend (.NET) stream
+**Audience:** The developer building `FW-228`
+**Shortcode:** — *(implementation plan, derived from `[REQ]`, `[DBD §6.6]` and the DDL; **not citable as a requirement**)*
+**Part of:** `ProjectPlan/Backend/TaskBreakdownPlans/` — index: [Orchestration.md](Orchestration.md)
+
+---
+
+> **Why this document exists.** Twelve hours, and **four details decide whether it is right.**
+>
+> **⛔ `Q10` is the most widely depended-on open number in the build, and it is the ONLY open
+> question that deliberately carries no recommendation** — the dimensional basis is a
+> measurement question UA must answer from its own practice. `AlloyProperty.LbPerFtFactor` is
+> seeded **`NULL`, marked "OQ-10 PENDING"**.
+> **The formula is settled; the basis is not.** `lb/ft = A × 12ρ`, round edge
+> `A = t·w − 0.2146·t²`. **What config selects is the dimensional basis**, and that is the whole
+> point of the interface.
+> **⛔ `FR-332a`: the mockup's `0.069 lb/ft` must NOT be implemented.** It is a wrong number
+> that is already on screen.
+> **Every consumption row persists basis + factor + version.** A later `Q10` answer **must not
+> retro-change a historical record** — the same immutability rule as `FW-225`'s snapshot.
+
+---
+
+## 1. The story
+
+From `[TB §7]` — verbatim. ⚠ **Compact `FW-225`–`FW-231` card variant** — and note it has **no
+`Blockers:` line at all**, which §2.1 argues is itself a defect.
+
+> ###### FW-228 · Footage-to-weight converter
+> **Hours:** 12 h (BE 12) · **Priority:** High · **Sprint:** S2 · **Phase:** 4 · **Stream:** BE
+>
+> > One interface, one implementation, a **selectable basis**. The formula is `FR-137` / `[DBD §6.6]`; what is
+> > open is the dimensional basis (`Q10` / `OI-45`), which is what config selects.
+>
+> - [ ] `lb/ft = A × 12ρ`, round edge `A = t·w − 0.2146·t²`, ρ read across from the shared alloy table
+> - [ ] Reference values: 1100 @ 0.110″ × 0.625″ → **0.0809** square / **0.0778** round (`TC-167`, `TC-409`)
+> - [ ] ⚠ **`FR-332a`**: the mockup's `0.069 lb/ft` must **not** be implemented
+> - [ ] Every consumption row persists **basis + factor + version** — a later `Q10` answer must not retro-change a historical record
+
+### 1.1 Out of scope
+
+| Concern | Owner |
+|---|---|
+| Answering `Q10` | ⛔ **UA** — a measurement question from their own practice |
+| Seeding `LbPerFtFactor` | `FW-004` — ⛔ **deliberately `NULL`** |
+| The allocation and consumption tables | [`FW-225`](FW-225-Rod-Order-Allocation-Schema-And-Domain.md) |
+| The weight latches that call this | [`FW-227`](FW-227-Order-Boundary-Handoff.md) |
+| The ±2 % scale-vs-calculated variance | Phase 9 / `OutputCoilCompletion` — ⛔ **cannot execute while this returns `NULL`** |
+| Spool completion's weight basis | `FW-202` |
+| The alloy table itself | `AlloyProperty`, `01_Lookup` — built |
+
+### 1.2 What already exists
+
+Verified on 29 Aug 2026.
+
+| Thing | State |
+|---|---|
+| `AlloyProperty` table + density column | ✅ Built, `01_Lookup` |
+| **`AlloyProperty.LbPerFtFactor`** | ⛔ **Seeded `NULL`, marked `"OQ-10 PENDING"`** |
+| The formula | `FR-137` / `[DBD §6.6]` | ✅ Specified |
+| Reference values | `TC-167`, `TC-409` — 1100 @ 0.110″ × 0.625″ → **0.0809** square / **0.0778** round | ✅ Specified |
+| `RodOrderConsumption` | `04_Runs.sql:733` | ✅ Built — the row that carries basis + factor + version |
+| **The converter** | — | ⛔ **Absent.** This story |
+| ⛔ **The mockup's `0.069`** | on screen, and **wrong** (`FR-332a`) | ⚠ **Already visible to reviewers** |
+
+⚠ **`FR-332` settles two adjacent questions and `Q10` is not among them.** The alloy density
+factor and the calculated-vs-weighed question are **already decided**; *"the real remaining one
+is the **dimensional basis**, the existing `OI-45`."* **Do not re-open the settled two.**
+
+---
+
+## 2. The four details
+
+### 2.1 The card has no `Blockers:` line, and it should
+
+`Q10` is unanswered and `LbPerFtFactor` is seeded `NULL`, so **this converter returns `NULL`
+for every alloy on the day it ships.** The compact card variant carries no `Blockers:` line at
+all, so nothing on the card says so.
+
+⚠ **That matters beyond this story.** `Q10` is *"the most widely depended-on number in the
+build"*: the ±2 % scale-vs-calculated variance cannot execute, `FW-227`'s weight latches latch
+nothing, and `FW-202`'s spool completion weight has no basis.
+
+**Build it anyway** — the interface, the formula, the basis selection and the snapshot are all
+independent of the answer. ⛔ **But record the inert state**, the way `FW-205` recorded its
+interlock and `FW-245` its `InSpec`.
+
+### 2.2 ⛔ Do not seed a placeholder factor
+
+`AlloyProperty.LbPerFtFactor` is **deliberately** `NULL` and **marked** `"OQ-10 PENDING"` —
+the marker exists so nobody mistakes the null for an oversight.
+
+⛔ **Seeding a plausible factor to make a test pass is the failure mode.** Once a number is on
+disk it is indistinguishable from a real one, and every consumption row written against it
+carries a fabricated weight — **permanently**, because §2.4 makes those rows immutable.
+
+⚠ **`Q22`'s tolerance pairs are the same class** and `FW-245`'s `P-150` records the same rule.
+**This is a repository-wide discipline, not a per-story judgement.**
+
+### 2.3 `0.069` is on screen and is wrong
+
+`FR-332a` is explicit: **the mockup's `0.069 lb/ft` must not be implemented.**
+
+⚠ **It is already visible**, so a reviewer comparing the built screen to the mockup will read
+the correct value as a regression. **The reference values are `TC-167`/`TC-409`'s** —
+**0.0809** square, **0.0778** round, for 1100 @ 0.110″ × 0.625″.
+
+⛔ Note the two differ by ~4 %, which is exactly the round-edge correction `A = t·w − 0.2146·t²`.
+**A converter that ignores edge type lands between them and matches neither.**
+
+### 2.4 Basis + factor + version, persisted — and this is why the story is 12 h and not 4
+
+The formula is three lines. **The snapshot is the deliverable.**
+
+Every consumption row persists **which basis was selected, which factor was used, and which
+version of the calculation produced it** — so that when `Q10` is answered and the factor
+changes, **historical rows keep the weight they were actually produced with.**
+
+⚠ **Same principle as `FW-225`'s allocation snapshot** (`RodOrderConsumption` snapshots rather
+than joining back) and `FW-245`'s `PERSISTED` verdict problem seen from the other side: there,
+the wrong answer was already on disk and had to be re-evaluated; **here, we are making sure a
+later correction does not silently rewrite history.**
+
+⛔ **So the version is not decoration.** Without it, a `Q10` answer plus a redeploy makes every
+past weight change with no record that it did.
+
+---
+
+## 3. Build order
+
+1. **One interface, one implementation, a selectable basis** — config selects the **dimensional
+   basis** (`Q10`/`OI-45`), not the formula.
+2. The formula: `lb/ft = A × 12ρ`; round edge `A = t·w − 0.2146·t²`; **ρ read across from the
+   shared alloy table**.
+   ⚠ **Square and round edge are different areas** — `EdgeType` is a canonical enum
+   (`'Round' | 'Square'`, display labels in a pipe) and must be an input, not an assumption
+   (§2.3).
+3. **Return `NULL`/unknown when the factor is `NULL`** — ⛔ never a default, never zero (§2.2).
+   The caller must be able to tell "not yet knowable" from "zero pounds".
+4. **Persist basis + factor + version** on every consumption row (§2.4).
+5. Verify against `TC-167`/`TC-409`: **0.0809** square, **0.0778** round.
+   ⚠ Those are *formula* checks and can run with a factor supplied **in the test**, without
+   seeding one.
+6. ⛔ **Do not implement `0.069`**, and note the mockup divergence for reviewers (§2.3).
+7. **Record the inert state** on the build (§2.1).
+
+---
+
+## 4. Decisions this plan makes
+
+> `P-##` is continuous across the repository; `P-01`–`P-205` precede this story.
+
+### `P-206` — an unresolvable factor returns unknown, never a default
+
+§2.2, §2.3. A converter that returns `0` on a `NULL` factor makes an empty weight
+indistinguishable from a real zero — the identical hazard `P-149` fixes on `SpcMeasurement.InSpec`
+and `P-125` flags on `RunReading.InSpec`. **Three columns, one rule.**
+
+⚠ **And the caller must handle it**: `FW-227`'s weight latches must not persist `0` as a latched
+weight.
+
+### `P-207` — the formula is verified without seeding a factor
+
+§2.2, §3 step 5. `TC-167`/`TC-409` check the **arithmetic**, and arithmetic can be checked with a
+factor injected by the test. **Seeding `AlloyProperty` to make a test pass would put a fabricated
+number on disk permanently.**
+
+**Fallback:** none. `Q10` deliberately carries no recommendation, so there is no "provisional"
+value to seed that is not an invention.
+
+### `P-208` — the version is part of the snapshot, and it is what makes a later answer safe
+
+§2.4. Basis and factor alone do not distinguish "computed under formula v1" from "v2". Without
+the version, answering `Q10` and redeploying silently changes every historical weight.
+
+---
+
+## 5. Verification
+
+**No automated tests for the service layer** — `[TS §1.2]`. The reference values are QA0
+by-hand checks.
+
+| Check | Expected |
+|---|---|
+| **Square edge** | 1100 @ 0.110″ × 0.625″ → **0.0809** (`TC-167`) |
+| **Round edge** | Same input → **0.0778** (`TC-409`) — the `0.2146·t²` correction applied |
+| **Edge type is an input** | The two differ; a converter ignoring `EdgeType` matches neither (§2.3) |
+| ⛔ **`0.069` absent** | `grep` finds it nowhere in the implementation (`FR-332a`) |
+| **`NULL` factor** | Returns **unknown**, ⛔ **never `0`** (`P-206`) |
+| **No placeholder seeded** | `AlloyProperty.LbPerFtFactor` still `NULL`, still marked `"OQ-10 PENDING"` (`P-207`) |
+| **Snapshot** | Every consumption row carries **basis + factor + version** |
+| **Immutability** | Change the factor and redeploy: historical rows keep their original weight (`P-208`) |
+| **Inert state recorded** | The build says the converter returns unknown for every alloy today (§2.1) |
+| `FR-332` | The settled two questions are **not** re-opened (§1.2) |
+
+---
+
+## 6. Handoff
+
+[`FW-227`](FW-227-Order-Boundary-Handoff.md) latches two weights from this and persists their
+difference as the overrun — ⛔ **and must not latch `0` on an unknown** (`P-206`).
+[`FW-225`](FW-225-Rod-Order-Allocation-Schema-And-Domain.md) owns the consumption row this
+snapshot lands on. `FW-202` (spool completion) and Phase 9's ±2 % scale-vs-calculated variance
+both depend on `Q10` and **cannot execute until it is answered**. `FW-004` seeds the factor when
+it arrives.
+
+---
+
+## 7. Open items
+
+| Item | Effect here |
+|---|---|
+| ⛔ **`Q10` / `OI-45`** | Unanswered, and **the only open question deliberately carrying no recommendation**. The converter is inert without it |
+| ⛔ **The card has no `Blockers:` line** | It should — `Q10` blocks the *output*, not the build (§2.1) |
+| **`FR-332a`** | The mockup's `0.069` must not be implemented, and **is already on screen** |
+| **`FR-332`** | Settles the density factor and calculated-vs-weighed. ⚠ **Do not re-open them** |
+| **`Q22`** | The same do-not-seed discipline, on `AlloyProperty`'s tolerance pairs (`FW-245`'s `P-150`) |
+| **`P-125` / `P-149`** | The same unknown-is-not-a-default rule on two other columns |
