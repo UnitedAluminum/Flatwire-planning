@@ -61,7 +61,8 @@ CANCELLED_IDS = {'FW-001', 'FW-002'}
 def repo_root():
     d = os.path.abspath(os.path.dirname(__file__))
     while d != os.path.dirname(d):
-        if os.path.isdir(os.path.join(d, '.git')):
+        # .git is a directory in a normal clone and a FILE inside a git worktree.
+        if os.path.exists(os.path.join(d, '.git')):
             return d
         d = os.path.dirname(d)
     raise SystemExit('cannot find repo root')

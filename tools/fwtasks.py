@@ -9,15 +9,15 @@ so a YAML library would be a dependency bought for no benefit.
 import os
 import re
 
-PLAN = 'MVP-1/ProjectPlan'
-TASK_DIRS = [PLAN + '/' + d + '/tasks'
-             for d in ('Frontend', 'Backend', 'Database', 'Testing', 'Development')]
-PHASE_DIR = PLAN + '/Development/Phases'
-GAPS = PLAN + '/Development/GapsRegister.md'
-QUESTIONS = 'Analysis/FlatWireOpenQuestions.md'
-DECIDED = 'Analysis/FlatWireDecidedQuestions.md'
-MASTERSPEC = 'LatestDocument/FlatWire_MasterSpecification.md'
-PLCSPEC = PLAN + '/Architecture/PLCTagSpecification.md'
+TASK_DIRS = ['30-database/tasks', '40-backend/tasks', '50-frontend/tasks',
+             '70-testing/tasks', '60-delivery/tasks']
+PHASE_DIR = '60-delivery/phases'
+BACKLOG = '60-delivery/TaskBreakdown.md'
+GAPS = '90-registers/Gaps.md'
+QUESTIONS = '90-registers/Questions.md'
+DECIDED = '90-registers/Decisions.md'
+MASTERSPEC = '10-requirements/MasterSpecification.md'
+PLCSPEC = '20-architecture/PLCTagSpecification.md'
 
 STATUSES = ['not-started', 'in-progress', 'blocked', 'in-review', 'done', 'cancelled']
 STREAMS = ['FE', 'BE', 'DB', 'RT', 'QA', 'BA']
@@ -39,7 +39,8 @@ RE_Q_ENTRY = re.compile(
 def repo_root():
     d = os.path.abspath(os.path.dirname(__file__))
     while d != os.path.dirname(d):
-        if os.path.isdir(os.path.join(d, '.git')):
+        # .git is a directory in a normal clone and a FILE inside a git worktree.
+        if os.path.exists(os.path.join(d, '.git')):
             return d
         d = os.path.dirname(d)
     raise SystemExit('cannot find repo root')

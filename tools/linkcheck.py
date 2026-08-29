@@ -40,7 +40,8 @@ EXTERNAL = ('http://', 'https://', 'mailto:', '#', 'data:', 'tel:')
 def repo_root():
     d = os.path.abspath(os.path.dirname(__file__))
     while d != os.path.dirname(d):
-        if os.path.isdir(os.path.join(d, '.git')):
+        # .git is a directory in a normal clone and a FILE inside a git worktree.
+        if os.path.exists(os.path.join(d, '.git')):
             return d
         d = os.path.dirname(d)
     raise SystemExit('linkcheck: cannot find repo root (.git)')
@@ -145,6 +146,17 @@ def key(ref):
     return '%s|%s|%s' % (ref['src'], ref['kind'], ref['raw'])
 
 
+def target_key(ref):
+    """Identify a reference by what it POINTS AT, not by how it is spelled.
+
+    A re-tree deliberately rewrites the spelling of thousands of citations, so a
+    raw-text comparison reports every rewritten link as lost. What must be preserved
+    is the target: file X still reaches document Y. Targets are compared by basename
+    because the target moves too.
+    """
+    return '%s|%s' % (os.path.basename(ref['src']), os.path.basename(ref['target']))
+
+
 def norm(s):
     src, kind, raw = s.split('|', 2)
     return (os.path.basename(src), kind, raw)
@@ -169,10 +181,12 @@ def main():
         print('   unresolved detail -> tools/_linkcheck_unresolved.txt')
 
     current = {key(r) for r in refs}
+    current_t = {target_key(r) for r in refs}
 
     if '--baseline' in args:
         write_text(BASELINE, json.dumps(
-            {'resolvable': sorted(current), 'unresolved_count': len(unresolved)},
+            {'resolvable': sorted(current), 'targets': sorted(current_t),
+             'unresolved_count': len(unresolved)},
             indent=1, sort_keys=True))
         print('   baseline written: %d references pinned' % len(current))
         return 0
@@ -182,7 +196,25 @@ def main():
         return 0
 
     with open(BASELINE, encoding='utf-8') as fh:
-        base = set(json.load(fh)['resolvable'])
+        data = json.load(fh)
+    base = set(data['resolvable'])
+
+    # After an intentional re-tree the spelling of a citation changes on purpose, so
+    # compare what each file REACHES rather than how it spells the path.
+    if '--targets' in args or 'targets' in data:
+        base_t = set(data.get('targets', []))
+        lost_t = base_t - current_t
+        if lost_t:
+            print('\nREGRESSION: %d file->document links resolved before and do not now:'
+                  % len(lost_t))
+            for t in sorted(lost_t)[:40]:
+                print('   %s' % t.replace('|', '  ->  '))
+            if len(lost_t) > 40:
+                print('   ... and %d more' % (len(lost_t) - 40))
+            return 1
+        print('   OK - every file->document link in the baseline still resolves'
+              ' (%d links, %d references)' % (len(current_t), len(refs)))
+        return 0
     # The citing file's own path legitimately changes during a move, so compare on
     # (basename-of-citer, kind, raw): a moved file is not a break, a broken link is.
     lost = {norm(s) for s in base} - {norm(s) for s in current}

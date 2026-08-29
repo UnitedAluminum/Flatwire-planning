@@ -22,11 +22,11 @@ import fwtasks as F  # noqa: E402
 # on purpose: the real-time stream spans the hub and its Angular client, and three
 # RT-labelled stories (FW-135/136/137) have always lived with the frontend.
 FOLDER_STREAM = {
-    'Frontend': {'FE', 'RT'},
-    'Backend': {'BE', 'RT'},
-    'Database': {'DB'},
-    'Testing': {'QA'},
-    'Development': {'BA'},
+    '50-frontend': {'FE', 'RT'},
+    '40-backend': {'BE', 'RT'},
+    '30-database': {'DB'},
+    '70-testing': {'QA'},
+    '60-delivery': {'BA'},
 }
 
 # Register ids cited as blockers that resolve to nothing. All 21 use the retired `OQ-`
@@ -134,7 +134,7 @@ def check(rep):
                          % (t['id'], b))
 
     # --- 4. backlog <-> task parity ---------------------------------------------
-    backlog = F.read(F.PLAN + '/Development/TaskBreakdown.md')
+    backlog = F.read(F.BACKLOG)
     carded = set(re.findall(r'^######\s+(?:~~)?\*{0,2}`?(FW-N?\d+)`?', backlog, re.M))
     for sid in sorted(carded - set(by_id)):
         rep.error('4-parity', '%s has a backlog card but no task file' % sid)

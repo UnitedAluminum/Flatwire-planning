@@ -9,7 +9,7 @@
 
 These are the **repository-level** scripts: the task-tracking generator, its checkers, and the
 one-off migration helpers. The **client-deliverable renderers** are separate and live in
-[`MVP-1/ProjectPlan/Tools/`](../MVP-1/ProjectPlan/Tools/README.md) — the `.docx` and `.xlsx`
+[`MVP-1/ProjectPlan/Tools/`](deliverables/README.md) — the `.docx` and `.xlsx`
 builders and `verify_schema_counts.py`. The two sets are kept apart because these are run by
 developers on every commit and those are run when a client artifact is reissued.
 
@@ -22,9 +22,12 @@ by looking for `.git`, so they work from any working directory.
 | [`check_docs.py`](check_docs.py) | the same | nothing — reports | an unknown status, a dependency cycle, a blocker id in no register, backlog↔task drift, a task naming a phase that has no file, a stub in the wrong stream's folder |
 | [`linkcheck.py`](linkcheck.py) | every `.md` `.sql` `.html` `.js` `.py` | `_linkcheck_baseline.json` | a reference that resolved in the baseline and no longer does |
 | [`fwtasks.py`](fwtasks.py) | — | — | **Not a script** — the shared reader both generators import, so the board and the checker can never disagree about what a task file says |
-| [`init_tasks.py`](init_tasks.py) | `Development/TaskBreakdown.md` §7 | `*/tasks/FW-*.md` | — *(one-off, Stage 1; safe to re-run — it preserves bodies and rewrites only front-matter)* |
+| [`init_tasks.py`](init_tasks.py) | `../60-delivery/TaskBreakdown.md` §7 | `*/tasks/FW-*.md` | — *(one-off, Stage 1; safe to re-run — it preserves bodies and rewrites only front-matter)* |
 | [`fix_task_links.py`](fix_task_links.py) | every text file | the same | the output-coil alpha count changing |
 | [`fix_changelog_anchors.py`](fix_changelog_anchors.py) | `CHANGELOG.md` | the same | — *(reports anchors that match no heading)* |
+| [`pathmap.py`](pathmap.py) | `git ls-files` | — | a destination collision, which would silently lose a file |
+| [`retree.py`](retree.py) | every text file | the same | — *(resolves references, moves 396 files, repoints 2,029 citations in one operation)* |
+| [`fix_tool_paths.py`](fix_tool_paths.py) | `tools/deliverables/*.py` | the same | — *(marker-based repo root, path joins, and the client-leakage guard lists)* |
 
 ---
 

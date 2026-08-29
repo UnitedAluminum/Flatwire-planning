@@ -11,16 +11,16 @@ library), and this repository is the specification they are built from.
 
 | I want to know… | Go to |
 |---|---|
-| **What are we building?** | [`Business/VisionAndScope.md`](MVP-1/ProjectPlan/Business/VisionAndScope.md) `[VS]`, then [`BusinessRequirements.md`](MVP-1/ProjectPlan/Business/BusinessRequirements.md) `[REQ]` — the numbered `FR-###` register |
+| **What are we building?** | [`00-overview/VisionAndScope.md`](00-overview/VisionAndScope.md) `[VS]`, then [`BusinessRequirements.md`](10-requirements/BusinessRequirements.md) `[REQ]` — the numbered `FR-###` register |
 | **What needs to be done?** | **[`STATUS.md`](STATUS.md)** — every task, grouped by phase |
 | **Who is doing it?** | [`STATUS.md`](STATUS.md), `Owner` column. It is set in the task file, nowhere else |
 | **What is in progress / blocked / pending / done?** | [`STATUS.md`](STATUS.md) — one row per task, one enum value |
 | **What is stopping us right now?** | [`STATUS.md`](STATUS.md) § *⛔ Stopping work right now* — open register items ordered by how many tasks each blocks |
 | **How is each phase / MVP progressing?** | [`STATUS.md`](STATUS.md) § *At a glance* |
 | **What can I start today?** | [`STATUS.md`](STATUS.md) — each phase ends with **▶ Ready to start now** |
-| **How do I build task `FW-157`?** | Its task file: [`Backend/tasks/FW-157.md`](MVP-1/ProjectPlan/Backend/tasks/FW-157.md). That file *is* the plan |
-| **What is still undecided?** | [`FlatWireOpenQuestions.md`](Analysis/FlatWireOpenQuestions.md) `Q##` (business) · [`GapsRegister.md`](MVP-1/ProjectPlan/Development/GapsRegister.md) `G##` (internal) · master spec §11 `OI-##` |
-| **Where is everything else?** | [`MVP-1/ProjectPlan/README.md`](MVP-1/ProjectPlan/README.md) — the document map and shortcode table |
+| **How do I build task `FW-157`?** | Its task file: [`40-backend/tasks/FW-157.md`](40-backend/tasks/FW-157.md). That file *is* the plan |
+| **What is still undecided?** | [`90-registers/Questions.md`](90-registers/Questions.md) `Q##` (business) · [`90-registers/Gaps.md`](90-registers/Gaps.md) `G##` (internal) · master spec §11 `OI-##` |
+| **Where is everything else?** | [`./DOCUMENTS.md`](./DOCUMENTS.md) — the document map and shortcode table |
 
 ---
 
@@ -100,6 +100,6 @@ Run from the repository root. All are dependency-free except the workbook builde
 - **Ids are never renumbered** — `FR-`, `Q`, `OI-`, `G`, `TC-`, `D-`. Task ids are the one
   exception: `FW-###` is a working id that will be **replaced** by the real JIRA id once issues
   exist, in one scripted pass driven by
-  [`TaskIdMap.md`](MVP-1/ProjectPlan/Development/TaskIdMap.md).
+  [`TaskIdMap.md`](90-registers/TaskIdMap.md).
 - **[`CLAUDE.md`](CLAUDE.md) carries the domain traps** — the `Spool` / `SpoolProcessing` rename,
   the FM2 three-stand model, the alpha formats. Read it before touching schema or terminology.
