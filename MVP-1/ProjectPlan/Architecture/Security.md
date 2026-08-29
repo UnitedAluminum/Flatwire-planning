@@ -87,7 +87,7 @@ Angular enforces this with `FlatWireAuthGuard` (authenticated) and `FlatWireRole
 >
 > ⚠ **`FR-212` is what makes this a real gate rather than a tidiness question**: it is an MVP-1 requirement on an MVP-1 screen, and it is the *only* live MVP-1 role gate.
 >
-> **[`Phase-01A-ImplementationPlan.md`](../Frontend/TaskBreakdownPlans/Phase-01A-ImplementationPlan.md) `F-12` recommends (a)** — the token already carries the roles, and because the API is the enforcement point (above), the guard is UX and defence-in-depth, which is where the cheap self-contained option belongs. **That is a recommendation, not a decision: this document owns it.** Either way the guard binds to **one constants class**.
+> **[`Phase-01A-ImplementationPlan.md`](../Frontend/tasks/Phase-01A-ImplementationPlan.md) `F-12` recommends (a)** — the token already carries the roles, and because the API is the enforcement point (above), the guard is UX and defence-in-depth, which is where the cheap self-contained option belongs. **That is a recommendation, not a decision: this document owns it.** Either way the guard binds to **one constants class**.
 
 ### 8.8b The simulator control surface — absent, not forbidden
 

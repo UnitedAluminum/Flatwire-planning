@@ -17,7 +17,7 @@
                  pending sign-off (see DECISIONS D3, D4, D8, D9 and Q34-Q36)
   Story        : FW-219 (FL2/FL3 run-end write-back into the shared schema)
   Specification: MVP-1/ProjectPlan/Architecture/Integration.md Sec 8.1
-                 MVP-1/ProjectPlan/Backend/TaskBreakdownPlans/FW-219-FlatWire-CompleteCoilOnSkid.md
+                 MVP-1/ProjectPlan/Backend/tasks/FW-219.md
                  FR-509 - FR-518
 
   PURPOSE

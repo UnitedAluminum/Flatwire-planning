@@ -238,7 +238,7 @@ Two further corrections this document also carries:
 >
 > **Rod receiving is not shopfloor**, so the `FlatWire` service hosts no `/rod/**` surface at
 > all. Recorded as decision `P-53` in
-> [`FW-138`](TaskBreakdownPlans/FW-138-Fifteen-Thin-Controllers.md) §5, which carries the
+> [`FW-138`](tasks/FW-138.md) §5, which carries the
 > reasoning, the cost and the fallback.
 >
 > **Three endpoints lose their host, and only one of them was ever this service's business.**
@@ -392,7 +392,7 @@ MVP-1 is a **consumer**. Rod check-in reads a schedule's contents to build the P
 > ⚠ **This endpoint has no host as of 25 Aug 2026.** `RodReceivingController` is withdrawn —
 > rod receiving is not shopfloor (`P-53`, §3.1). **The requirement is unchanged and the shape
 > below stands**; what is missing is the controller that serves it. Re-homing is owed —
-> [`FW-138`](TaskBreakdownPlans/FW-138-Fifteen-Thin-Controllers.md) `P-54` sets out three
+> [`FW-138`](tasks/FW-138.md) `P-54` sets out three
 > options, and until one is chosen `FR-042`, `FR-064`, `FR-043`'s carry-forward gate and
 > `Q24`'s station switching have nothing to call. **Do not build it into `FlatWire` on the
 > strength of this section.**

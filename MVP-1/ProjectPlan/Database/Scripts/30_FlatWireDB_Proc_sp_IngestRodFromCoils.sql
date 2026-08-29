@@ -9,7 +9,7 @@
   Status       : Ready to build - no sign-off items. Shares FW-220's deployment prerequisite.
   Story        : FW-223 (rod ingestion - populating the FlatWire tables)
   Specification: MVP-1/ProjectPlan/Architecture/Integration.md Sec 7.9
-                 MVP-1/ProjectPlan/Backend/TaskBreakdownPlans/FW-223-Rod-Ingestion.md
+                 MVP-1/ProjectPlan/Backend/tasks/FW-223.md
                  FR-529 - FR-532
 
   *** THIS IS THE ANSWER TO OI-42. ***

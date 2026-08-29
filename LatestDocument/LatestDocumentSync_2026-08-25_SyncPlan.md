@@ -104,7 +104,7 @@ says, and this is exactly the re-copy hazard `G12` records.
 | Site | Says | Effect |
 |---|---|---|
 | [`FlatWire_MasterSpecification.md:2052`](FlatWire_MasterSpecification.md#L2052) | Post-deployment verification: *"**34 tables** present"* | Rejects a correct 33-table deploy |
-| [`FW-223-Rod-Ingestion.md:103`](../MVP-1/ProjectPlan/Backend/TaskBreakdownPlans/FW-223-Rod-Ingestion.md#L103) | AC: *"`RunAll` produces **34 tables** and zero rows"* | Fails a correct story |
+| [`FW-223.md:103`](../MVP-1/ProjectPlan/Backend/tasks/FW-223.md#L103) | AC: *"`RunAll` produces **34 tables** and zero rows"* | Fails a correct story |
 
 **The rest of C1, classified.** Update the **live** ones; the **dated audit trail keeps its numbers
 by design** and must not be swept.
@@ -123,15 +123,15 @@ by design** and must not be swept.
 | `VisionAndScope.md` | 154, 277 | Scope table and `D-03`/`D-04` row |
 | `CapacityAndEffortModel.md` | 418 | *"deployed and verified on the shared instance — 34 tables · 57 FKs"* |
 | `phase-01c-database-foundation.md` | 10, 35 | Header trail and the applied-changes callout |
-| `FW-142-Dapper-EF-And-FlatWireDbContext.md` | 169, 186, 206 | *"map all **34** tables"*, *"Read AC 2 as **34** tables"*, object-baseline row |
-| `FW-143-Serilog-And-Audit-Log.md` | 18, 124 | *"None of the **34** tables … is an audit log"* |
-| `FW-223-Rod-Ingestion.md` | 103 | ⚠ **gate** (above) |
+| `FW-142.md` | 169, 186, 206 | *"map all **34** tables"*, *"Read AC 2 as **34** tables"*, object-baseline row |
+| `FW-143.md` | 18, 124 | *"None of the **34** tables … is an audit log"* |
+| `FW-223.md` | 103 | ⚠ **gate** (above) |
 | `Orchestration.md` | 234 | `P-13` row — *"Map **34** tables"* |
 | `SQL/README.md` | 60 | *"47 of the **57** FKs"* split-count |
 
 ⚠ **Two files are worse than stale — they say `28`**, a figure retired on 22 Aug:
 [`phase-01b:47`](../MVP-1/ProjectPlan/Development/Phases/phase-01b-backend-foundation.md#L47) and
-[`FW-142:71`](../MVP-1/ProjectPlan/Backend/TaskBreakdownPlans/FW-142-Dapper-EF-And-FlatWireDbContext.md#L71),
+[`FW-142:71`](../MVP-1/ProjectPlan/Backend/tasks/FW-142.md#L71),
 both phrased *"there is one number now, and it is **28**"*. `FW-142` then says `34` at line 169 —
 **one file, two wrong numbers.**
 
@@ -156,7 +156,7 @@ Seven files still name the old forms as **live** objects:
 | `Testing/TestCases.md` | 463 (`TC-717`) | Test step asserts `CoilOutput.SharedCoilNo` — **column does not exist** |
 | `Testing/TestCases.md` | 471 (`TC-725`) | Retry test captures `SharedCoilNo` — same |
 | `Development/TaskBreakdown.md` | 682, 689 | Two ACs: *"persisted on **`CoilOutput.SharedCoilNo`**"* |
-| `FW-219-FlatWire-CompleteCoilOnSkid.md` | 38, 48, 73, 75, 85 | Design text plus AC *"Retry with **`@expectedSharedCoilNo`**"* — **parameter does not exist** |
+| `FW-219.md` | 38, 48, 73, 75, 85 | Design text plus AC *"Retry with **`@expectedSharedCoilNo`**"* — **parameter does not exist** |
 | `Architecture/Integration.md` | 223 | *"The retry contract is `CoilOutput.SharedCoilNo`"* — live prose |
 | `Backend/APIs.md` | 1190 | Mixed in one sentence: correct `CoilOutput.CoilNo`, then `@expectedSharedCoilNo` |
 | `Development/TrialRunPlan.md` | 753 | Scope row *"`CoilOutput.SharedCoilNo` / `SharedSkidNo`"* |

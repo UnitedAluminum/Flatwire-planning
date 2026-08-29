@@ -765,7 +765,7 @@ Related: **Q34**, **Q35**, **`OI-114`** (the cut-record sentinels — the same c
 
 #### A14. Shared-System Write-Back at Rod Check-in
 
-*Registered here 20 Aug 2026, and **they were minted on 19 Aug and never reached this register** — `G45`, `[INT §8.0]`, `[REQ §5.26]`, [`FW-220`'s plan](../MVP-1/ProjectPlan/Backend/TaskBreakdownPlans/FW-220-FlatWire-CheckInRod.md) and `CHANGELOG.md` all cite `Q37`–`Q40` against a register that declared itself contiguous at `Q36`. Recorded as gap **`G46`** so it is not repeated. Like `Q34`–`Q36` these are **IT** questions about the existing shared schema rather than design choices; each has a proposed value and each is a one-line change if the answer differs. All four block **reaching a shared environment**, not the build.*
+*Registered here 20 Aug 2026, and **they were minted on 19 Aug and never reached this register** — `G45`, `[INT §8.0]`, `[REQ §5.26]`, [`FW-220`'s plan](../MVP-1/ProjectPlan/Backend/tasks/FW-220.md) and `CHANGELOG.md` all cite `Q37`–`Q40` against a register that declared itself contiguous at `Q36`. Recorded as gap **`G46`** so it is not repeated. Like `Q34`–`Q36` these are **IT** questions about the existing shared schema rather than design choices; each has a proposed value and each is a one-line change if the answer differs. All four block **reaching a shared environment**, not the build.*
 
 **Q37** · `High` · Owner: Tim O. / IT · `Open`
 **The transaction token for a flat wire rod check-in**

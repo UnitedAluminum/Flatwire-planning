@@ -23,7 +23,7 @@ Scaffolded with `ng generate library flat-wire --prefix=fw --standalone=false`, 
 >
 > **`--standalone=false` is required, not stylistic** — every component in this repository is explicitly `standalone: false`, and the flag is what makes the schematic emit the NgModule instead of a standalone entry point.
 >
-> ⚠ **The three registrations named above are not the whole set.** A new library must also be reachable from the host app (a wrapper module in `src/app/project-routes/` plus a route in `src/app/routes.ts`), carry its own `jest.config.js` and `eslint.config.mjs` (selector prefix `fw`), have a content-data JSON and type, and have its config keys added to `environment.js` **and** `local-config.json`. The full list — **eleven integration points** — is [`Phase-01A-ImplementationPlan.md §2.1`](TaskBreakdownPlans/Phase-01A-ImplementationPlan.md) and is deliberately not restated here.
+> ⚠ **The three registrations named above are not the whole set.** A new library must also be reachable from the host app (a wrapper module in `src/app/project-routes/` plus a route in `src/app/routes.ts`), carry its own `jest.config.js` and `eslint.config.mjs` (selector prefix `fw`), have a content-data JSON and type, and have its config keys added to `environment.js` **and** `local-config.json`. The full list — **eleven integration points** — is [`Phase-01A-ImplementationPlan.md §2.1`](tasks/Phase-01A-ImplementationPlan.md) and is deliberately not restated here.
 
 ```
 projects/flat-wire/src/lib/

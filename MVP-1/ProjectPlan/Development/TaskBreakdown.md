@@ -284,7 +284,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ###### FW-138 · Fifteen thin controllers over `UAController`
 **Hours:** **45 h BE** *(was 56)* · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1B · **Stream:** BE
 
-> **Restated 25 Aug 2026: fifteen controllers → fourteen. `RodReceivingController` is withdrawn — rod receiving is not shopfloor.** The `FlatWire` service hosts no `/rod/**` surface: **#8 `GET /rod/{alpha}`, #9 `POST /rod` and `[API §4.20]` `GET /rod/{alpha}/orders`** all leave with it, taking this story to **22 endpoints across 12 controllers**. Recorded as decision `P-53` in [`FW-138`](../Backend/TaskBreakdownPlans/FW-138-Fifteen-Thin-Controllers.md) §5, applied in `[API §3.1]` the same day. ⚠ **The hours cell above is NOT restated** — the rate-card basis becomes 14 × 3 h = **42 h**, and that −3 h is **owed to the next re-baseline**, additively, because re-deriving in place desynchronises `[CE]`, `[DE]`, `[SSP]`, `[TRP]` and §11's reconciliation. ⚠ **#8 and §4.20 are specified and unhosted, not withdrawn**: `FR-042`, `FR-064`, `FR-043`'s carry-forward gate and `Q24`'s station switching have no endpoint until `[API]` re-homes them (`P-54`), and **DB2 — a trial screen — scans a rod.** `RodReceivingController.cs` was **deleted from `ual-api` on 25 Aug 2026** once the five affected documents were corrected; `git restore` from `FW-N04`'s commit reverses it.
+> **Restated 25 Aug 2026: fifteen controllers → fourteen. `RodReceivingController` is withdrawn — rod receiving is not shopfloor.** The `FlatWire` service hosts no `/rod/**` surface: **#8 `GET /rod/{alpha}`, #9 `POST /rod` and `[API §4.20]` `GET /rod/{alpha}/orders`** all leave with it, taking this story to **22 endpoints across 12 controllers**. Recorded as decision `P-53` in [`FW-138`](../Backend/tasks/FW-138.md) §5, applied in `[API §3.1]` the same day. ⚠ **The hours cell above is NOT restated** — the rate-card basis becomes 14 × 3 h = **42 h**, and that −3 h is **owed to the next re-baseline**, additively, because re-deriving in place desynchronises `[CE]`, `[DE]`, `[SSP]`, `[TRP]` and §11's reconciliation. ⚠ **#8 and §4.20 are specified and unhosted, not withdrawn**: `FR-042`, `FR-064`, `FR-043`'s carry-forward gate and `Q24`'s station switching have no endpoint until `[API]` re-homes them (`P-54`), and **DB2 — a trial screen — scans a rod.** `RodReceivingController.cs` was **deleted from `ual-api` on 25 Aug 2026** once the five affected documents were corrected; `git restore` from `FW-N04`'s commit reverses it.
 
 > **Restated 15 Aug 2026: 56 → 45 h, on two changes pulling opposite ways.** **(−)** The query-endpoint rate this story is priced at (4 h) bundles a unit test per `[CE §2]`; with backend tests withdrawn (`[TS §1.2]`) the rate is **3 h** and the **stub contract suite** goes with it. **(+)** **Fourteen → fifteen controllers**: `[API §3.1]` omitted **`SpoolController`** while §3.2 assigned `GET /spools` to it, so an MVP-1 endpoint had no host — resolved in `[API §3.1]` on 15 Aug 2026. **15 × 3 h = 45 h.** The controllers and their stub fixtures are unchanged; only the suite asserting them is gone.
 
@@ -348,7 +348,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 > contract are configured by two switches that can disagree. And *"as in `CoilCheckin`"* is struck
 > from criterion 2 because **there is no such pattern** — `CoilCheckin`'s `AddPersistence` takes
 > `IConfiguration` and never reads it, and no domain in `ual-api` carries a stub swap. See
-> [`FW-140 §2.1`](../Backend/TaskBreakdownPlans/FW-140-DI-Registration-And-Stub-Swap.md).
+> [`FW-140 §2.1`](../Backend/tasks/FW-140.md).
 
 **Rate-card basis:** DI + configuration swap (12 h, §2)
 **Dependencies:** FW-N04
@@ -719,7 +719,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 > absence `FW-219` found at the other end of the run. Specified as `FR-519`–`FR-528` and `[INT §8.0]`;
 > the procedure is drafted at
 > [`Database/Scripts/40_united_db_Proc_FlatWire_CheckInRod.sql`](../Database/Scripts/40_united_db_Proc_FlatWire_CheckInRod.sql),
-> the plan at [`FW-220-FlatWire-CheckInRod.md`](../Backend/TaskBreakdownPlans/FW-220-FlatWire-CheckInRod.md).
+> the plan at [`FW-220.md`](../Backend/tasks/FW-220.md).
 > **It largely closes `OI-111`** — stamping the rod's `coils` row with `wip_station` restores what the
 > shared schema lost when `D-32` cancelled `FW-002`, without touching the status vocabulary.
 > Hours are **additive to `[CE §3b]`**, like `FW-202` and `FW-219`. Gap **`G45`**.
@@ -805,7 +805,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 > `FK_RodCheckin_Rod` and `FK_RodStaging_Rod` are **enforced**, so on a clean production database **the
 > first staging or check-in fails on a foreign key**. That is `OI-42`, open since `D-04` and described in
 > `[DBD]` as *"a real design hole, not a documentation nit"*. Specified as `FR-529`–`FR-532` and
-> `[INT §7.9]`; plan at [`FW-223-Rod-Ingestion.md`](../Backend/TaskBreakdownPlans/FW-223-Rod-Ingestion.md).
+> `[INT §7.9]`; plan at [`FW-223.md`](../Backend/tasks/FW-223.md).
 > **It closes `OI-42`** and raises **`OI-117`**. Hours are **additive to `[CE §3b]`**.
 
 **Acceptance Criteria:**
@@ -3433,8 +3433,8 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 > **New 29 Aug 2026.** Nineteen stories for work that had **no id, no plan and no hours line**,
 > drawn from the two orchestration files' own recorded-but-unfixed findings
-> ([`Backend/TaskBreakdownPlans/Orchestration.md`](../Backend/TaskBreakdownPlans/Orchestration.md)
-> §8.1–§8.3 and [`Database/TaskBreakdownPlans/Orchestration.md`](../Database/TaskBreakdownPlans/Orchestration.md)
+> ([`Backend/tasks/Orchestration.md`](../Backend/tasks/Orchestration.md)
+> §8.1–§8.3 and [`Database/tasks/Orchestration.md`](../Database/tasks/Orchestration.md)
 > §3 and §8.1), plus the `P-##` register and `[GAP]`. Each names the gap or finding it closes.
 >
 > ⚠ **Hours are additive to `[CE §3b]`** — the same treatment as `FW-202`, `FW-203`, `FW-204`,
@@ -3470,7 +3470,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] ⚠ **`[API §3.1]` and `[API §3.2]` gain the controller and the endpoint row** — the count moves 22 → 23 and `[API]` is the file that says so, not this card
 - [ ] Settled **before Phase 1A freezes its base-URL set**, which is what makes this High rather than Medium
 
-**Rate-card basis:** **3 h**, quoted from [`FW-138`](../Backend/TaskBreakdownPlans/FW-138-Fifteen-Thin-Controllers.md) §8 and `P-50` — *"recommends `OrderController` as a sixteenth (**+3 h**)"*. ⚠ **Not a `[CE §2]` rate-card unit**: the card has no controller-shell row, and the command endpoint's 5 h is `FW-227`'s, not this story's
+**Rate-card basis:** **3 h**, quoted from [`FW-138`](../Backend/tasks/FW-138.md) §8 and `P-50` — *"recommends `OrderController` as a sixteenth (**+3 h**)"*. ⚠ **Not a `[CE §2]` rate-card unit**: the card has no controller-shell row, and the command endpoint's 5 h is `FW-227`'s, not this story's
 **Dependencies:** FW-138, FW-N04, **FW-227** *(handler)*
 **Blockers:** ⚠ **`[API]` must mint the controller** in `[API §3.1]`. `P-50` is explicit that inventing it in a plan is what this story exists to avoid
 
@@ -4083,7 +4083,7 @@ Sourced from each phase file's `OQ blockers:` trailer and the gaps register in [
 > rejected. **Five sites still carry it as blocking**: the row above, and the `Blockers:` lines of
 > `FW-007`, `FW-159`, `FW-176` and `FW-N01` — three of them saying it *"blocks the Phase-4 schema
 > freeze"*. `CLAUDE.md` carries it too. Recorded rather than swept here because the correction spans
-> five cards and a repository guide (`Database/TaskBreakdownPlans/Orchestration.md` §8.1 finding 1).
+> five cards and a repository guide (`Database/tasks/Orchestration.md` §8.1 finding 1).
 > ⚠ **One residual is genuine and must not be lost in the correction:** the *domain* rule must reject a
 > second rod **with the DB index absent**, which no deployed environment can show — so the index is the
 > demonstrated defence and the aggregate rule the designed one. **Do not cite `G21` as proof of

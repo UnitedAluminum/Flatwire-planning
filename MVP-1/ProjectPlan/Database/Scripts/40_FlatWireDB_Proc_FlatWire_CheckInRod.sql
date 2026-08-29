@@ -18,7 +18,7 @@
                  pending sign-off (see DECISIONS D3, D4, D5 and Q37-Q39)
   Story        : FW-220 (the shared half of FL1/FL3 rod check-in)
   Specification: MVP-1/ProjectPlan/Architecture/Integration.md Sec 8.0
-                 MVP-1/ProjectPlan/Backend/TaskBreakdownPlans/FW-220-FlatWire-CheckInRod.md
+                 MVP-1/ProjectPlan/Backend/tasks/FW-220.md
                  FR-077, FR-519 - FR-528
 
   PURPOSE
