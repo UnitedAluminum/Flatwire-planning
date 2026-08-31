@@ -2,9 +2,9 @@
 id: FW-N03
 legacy_id:
 title: Angular library scaffold, routing and configuration
-status: done
+status: not-started
 status_confirmed: false
-status_note: "✅ **BUILT 28 Aug 2026 — wave 0 is complete.** `projects/flat-wire/` exists, builds, lints and tests at 100 %; all eleven integration points verified. **§6 is the execution record.** ⚠ One acceptance criterion is proved by compilation rather than in a browser, because the host app cannot be built in this checkout — `flexmonster` is missing (§6.4)"
+status_note: "⬜ **Not started.** The 28 Aug 2026 build was **reverted on 31 Aug 2026** — `projects/flat-wire/` no longer exists in `Second-Branch/ual-angular` and none of the eleven integration points are wired. This plan is the unexecuted spec again: **the root of Phase 1A, and nothing on the FE stream starts until it lands**"
 owner:
 jira:
 mvp: 1
@@ -23,9 +23,9 @@ completed:
 # FW-N03 · `flat-wire` Angular library scaffold, routing and configuration
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 28, 2026 — ✅ **EXECUTED. The library is built** — see the new **§6 execution record**: 21 library files, a host diff of **8 files / +40 −1**, lint and styles clean, 3 tests at **100 %** coverage, and `build:shop-floor` green with `flat-wire` last. **Six schematic behaviours the plan did not predict are recorded in §6.2** — two of Step 2's three predictions are now wrong and Step 4's claim that the schematic's tsconfigs are correct is **false in a Jest repo**. ⛔ **§6.4: the host app cannot be built here at all** (`flexmonster` neither declared nor installed), so AC 4's runtime half is verified by a scoped `tsc` instead. Earlier the same day: **refreshed against the measured repository.** ✅ Re-measured and unchanged: `angular.json` holds **31 entries and no `flat-wire`**, and every precedent this plan names is present — `projects/ot-signup/`, `print-traveler-wrapper.module.ts`, the `build:base` / `build:shop-floor` / `lint:styles` / `everything` scripts, `shop-floor-common.styles.scss` already in the app `styles` array, and the `anyComponentStyle` **10 kB error / 5 kB warning** budget. ⚠ The `[TCS]` suite holds **405 defined cases**, not 799 — `TC-799` is the highest *id*. Earlier the same day: **the `[TB §7]` acceptance criterion gained `--standalone=false`**, closing the last divergence between the card a developer is measured against and the command that actually produces an NgModule library; §1 records it. Earlier the same day the card was renamed to `flat-wire` with the repository sweep, the *"cannot be met as written"* table dropped to one row and `F-13` was struck from §4. Written 27 Aug 2026 as one of the nine plans `Phase-01A-ImplementationPlan.md` was divided into
+**Last Updated:** August 31, 2026 — ⬜ **REVERTED to not-started.** The 28 Aug 2026 build was undone: `projects/flat-wire/` and the eleven host integration points were removed from `Second-Branch/ual-angular`, and the **§6 execution record was deleted** with it. **Nothing this plan describes exists in any checkout.** Earlier: August 28, 2026 — **refreshed against the measured repository.** ✅ Re-measured and unchanged: `angular.json` holds **31 entries and no `flat-wire`**, and every precedent this plan names is present — `projects/ot-signup/`, `print-traveler-wrapper.module.ts`, the `build:base` / `build:shop-floor` / `lint:styles` / `everything` scripts, `shop-floor-common.styles.scss` already in the app `styles` array, and the `anyComponentStyle` **10 kB error / 5 kB warning** budget. ⚠ The `[TCS]` suite holds **405 defined cases**, not 799 — `TC-799` is the highest *id*. Earlier the same day: **the `[TB §7]` acceptance criterion gained `--standalone=false`**, closing the last divergence between the card a developer is measured against and the command that actually produces an NgModule library; §1 records it. Earlier the same day the card was renamed to `flat-wire` with the repository sweep, the *"cannot be met as written"* table dropped to one row and `F-13` was struck from §4. Written 27 Aug 2026 as one of the nine plans `Phase-01A-ImplementationPlan.md` was divided into
 **Document Type:** Implementation plan for a single backlog story
-**Status:** ✅ **BUILT 28 Aug 2026 — wave 0 is complete.** `projects/flat-wire/` exists, builds, lints and tests at 100 %; all eleven integration points verified. **§6 is the execution record.** ⚠ One acceptance criterion is proved by compilation rather than in a browser, because the host app cannot be built in this checkout — `flexmonster` is missing (§6.4)
+**Status:** ⬜ **Not started.** The 28 Aug 2026 build was **reverted on 31 Aug 2026** — `projects/flat-wire/` no longer exists in `Second-Branch/ual-angular` and none of the eleven integration points are wired. This plan is the unexecuted spec again: **the root of Phase 1A, and nothing on the FE stream starts until it lands**
 **Owner:** Frontend (Angular) stream
 **Audience:** The Angular developer building `FW-N03`
 **Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
@@ -274,72 +274,3 @@ npm start                     # then #/flat-wire resolves
 1. **`SharedModule.forRoot()` is already imported** — do not add interceptors, and do not import it again in a child module.
 2. **The `styles` array slot in `angular.json` is deliberately empty** — `FW-130` fills it.
 3. **The routes exist and reference `FlatWireAuthGuard`** — `FW-131` supplies its body; until then it is a stub that returns `true`.
-
----
-
-## 6. Execution record — built 28 Aug 2026
-
-**Executed against `c:\UAL\Second-Branch\ual-angular` @ `feature/flat-wire`** (`F-01`), working tree
-clean at start. ✅ **All six acceptance criteria met and all eleven integration points verified**;
-**one criterion could not be demonstrated at runtime**, for a pre-existing reason unrelated to this
-story — see the blocker below.
-
-### 6.1 What was produced
-
-| | |
-|---|---|
-| **Library** | `projects/flat-wire/` — 21 files. `ng build flat-wire` → `dist/flat-wire/fesm2022/flat-wire.mjs` in **7.9 s** |
-| **Host diff** | **8 files, +40 / −1** — `angular.json` (+21), `src/app/routes.ts` (+7), `environment.js` (+3), `src/assets/local-config.json` (+3), `src/types/content-data/index.d.ts` (+2), `package.json` (+3/−1), `jest.base.config.js` (+1), `tsconfig.json` (**+1**) |
-| **New host files** | `src/app/project-routes/flat-wire-wrapper.module.ts` · `src/assets/content-data/flat-wire.json` |
-| **Lint** | `ng lint flat-wire` — **All files pass**. `npm run lint:styles` — clean |
-| **Tests** | `npm run test:flat-wire` — **3 passed, 100 % statements / branches / functions / lines** |
-| **Chain** | `npm run build:shop-floor` — all nine entry points built, **`flat-wire` last** |
-| **Line endings** | every touched file is **pure CRLF**, zero stray LF. `tsconfig.json`'s diff is **one line** |
-
-### 6.2 ⛔ Six things the plan did not predict
-
-**Step 2 predicted three schematic behaviours. Angular 20.3.15 does five things, and two of the
-plan's three are now wrong.** Recorded so the next library scaffold does not re-derive them.
-
-| # | What actually happened | Consequence |
-|---|---|---|
-| 1 | ⛔ **The schematic reformats the whole of `angular.json`** — every inline object expanded, a **~1,200-line diff** against a repo whose prettier config is `objectWrap: collapse`, `printWidth: 120` | **`git checkout -- angular.json`, then insert the project entry by hand** in the house style, alphabetically (`customer-search` → `flat-wire` → `furnace-scheduling`). Result: **+21 lines** |
-| 2 | ⚠ **It now generates `eslint.config.mjs`** — with the correct `fw` prefix. **Step 2 item 3 is half obsolete** | Kept the file but rewrote it to the house shape (plain array export + BOM, as `ot-signup`); `jest.config.js` is still not generated and was written by hand |
-| 3 | ⛔ **Step 4 is wrong that the schematic's tsconfigs "are correct".** Its `tsconfig.spec.json` types **`jasmine`** and extends the root `tsconfig.json` — in a **Jest** repository | All three replaced with the house shape: `types: ["jest","node"]`, `module: CommonJs`, extends `../../tsconfig.spec.json`. **Following the plan literally would have produced a spec config that does not type Jest globals** |
-| 4 | ⚠ **It emits Angular-20 default names** — `flat-wire-module.ts`, `flat-wire.ts`. Measured house convention: **36 × `*.module.ts`**, **313 × `*.component.ts`**, **5 × `*-routing.module.ts`** | Renamed to `flat-wire.module.ts` / `flat-wire-routing.module.ts`. ⚠ **This makes `[CMP §5.1]`'s `flat-wire-routing.ts` a conflict with the repository** — raised in `[P1A §6.14]`, not overruled here |
-| 5 | ⛔ **A lint-rule conflict makes a JSDoc block on the NgModule unfixable.** `@stylistic/padding-line-between-statements` forbids the blank line `jsdoc/lines-before-block` requires; `ng lint --fix` reports **`ESLintCircularFixesWarning`** and leaves an error either way | Use **`/* … */` block comments, never `/** … */`, immediately above a decorator — and carry no doc block on the module class, matching `ot-signup.module.ts`. `multiline-comment-style` separately forbids consecutive `//` lines, so **block comments are the only form that passes** |
-| 6 | ⚠ **The 95 % gate bites at scaffold time, not at feature time** (`F-08`). The first suite run failed at **36 % statements / 0 % functions** — `flat-wire-auth.guard.ts` matches `collectCoverageFrom`'s `*.guard.ts` and had no spec | Added `flat-wire-auth.guard.spec.ts`. **A guard stub is not free: it owes a spec the day it is written** |
-
-### 6.3 Two deliberate departures from the plan's letter
-
-1. **A placeholder component exists, and `[TB §7]`'s AC 4 is why.** The plan puts *"any control or screen"* out of scope, but AC 4 requires lazy routes that **resolve**, and `[CMP §5.2]`'s routes name screen components belonging to Phase-3+ stories. `FlatWirePlaceholderComponent` (`fw-flat-wire-placeholder`, `OnPush`, no styles) renders on all four routes. ⚠ **`FW-130` replaces it with the shell**; it is marked as such in its own header comment and in `FlatWireModule`.
-2. **`FLAT_WIRE_ROUTES` carries four routes, not three.** `[TB §7]` names three; a `path: ''` default was added so `#/flat-wire` itself resolves. All four carry `FlatWireAuthGuard` and the `resolveData` / `ContentDataService` pair (`F-11`).
-
-### 6.4 ⛔ The one thing that could not be verified, and it is not this story's fault
-
-**`npm start` / a host `ng build` cannot run in this checkout.** The app build fails with `TS2307` on
-`flexmonster` and `ngx-flexmonster`, `NG6002` on `CostLedgerModule` and `Can't resolve
-node_modules/flexmonster/flexmonster.min.css`. Both belong to **`projects/reports/cost-ledger`** — the
-only library in the repository that uses them.
-
-⚠ **Corrected 28 Aug 2026 — the two packages are not in the same state**, and this record first said
-they were: **`ngx-flexmonster` IS declared** (`^2.9.130`) and merely absent from `node_modules`, while
-only the licensed core **`flexmonster` is undeclared** (it is the wrapper's peer dependency, which
-npm 7+ resolves on its own). **That makes it an incomplete install rather than a missing dependency —
-try `npm install` first.** Detail and the licence caveat in `[P1A §6.15]`.
-
-✅ **Nothing in the failure touches flat wire** — the compiler analysed the wrapper modules and
-flagged `CostLedgerModule` while raising nothing for `FlatWireModule`. The wiring was proved instead
-by a **scoped `tsc --noEmit`** over `flat-wire-wrapper.module.ts` + `projects/flat-wire/src/**`:
-**zero errors**, so the wrapper resolves `FlatWireModule` from the source path and the library
-type-checks whole.
-
-⚠ **So AC 4's runtime half — *"`#/flat-wire` resolves"* — is verified by compilation, not by a
-browser.** Whoever installs the missing packages should re-run `npm start` and confirm it, along
-with `phase-01a` exit criterion 1. **New finding `[P1A §6.15]`.**
-
-⚠ **`build:base` is genuinely required first, and skipping it produced a misleading failure.**
-`dist/shared` was stale from **23 Jul 2026** while `projects/shared` had changed on 27 Aug, so
-`build:shop-floor` failed inside `shop-floor-common` on a `SharedApiService` method that exists in
-source but not in the stale bundle. **It looked like flat wire had broken the chain and had nothing
-to do with it.** After `npm run build:base` the chain is green.

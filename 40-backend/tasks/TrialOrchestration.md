@@ -101,7 +101,7 @@ vocabulary, so a glyph means here what it means on [`STATUS.md`](../../STATUS.md
 
 | Phase | BE | FE | RT | DB |
 |---|---|---|---|---|
-| **1A** | — | ✅ `FW-N03` · ⬜ `FW-130` · ⛔ `FW-131` · ⬜ `FW-132` · ⬜ **`FW-133` 75** · ⬜ `FW-134` | ⬜ `FW-135` · ⬜ `FW-136` · ⛔ `FW-137` *(Angular, §1.2)* | — |
+| **1A** | — | ⬜ `FW-N03` · ⬜ `FW-130` · ⛔ `FW-131` · ⬜ `FW-132` · ⬜ **`FW-133` 75** · ⬜ `FW-134` | ⬜ `FW-135` · ⬜ `FW-136` · ⛔ `FW-137` *(Angular, §1.2)* | — |
 | **1B** | ✅ [FW-N04](FW-N04.md) · ✅ [FW-138](FW-138.md) *(7 controllers, `P-53`)* · ✅ [FW-139](FW-139.md) · ✅ [FW-140](FW-140.md) · ✅ [FW-141](FW-141.md) · ✅ [FW-142](FW-142.md) · ✅ [FW-143](FW-143.md) · 🔵 [FW-144](FW-144.md) · ⛔ [FW-145](FW-145.md) · ✅ [FW-146](FW-146.md) · ✅ [FW-147](FW-147.md) · ✅ [FW-148](FW-148.md) · 🔵 [FW-207](FW-207.md) · ✅ [FW-208](FW-208.md) | — | 🔵 [FW-080](FW-080.md) · 🔵 [FW-149](FW-149.md) | — |
 | **1C** | — | — | — | ⊘ ~~`FW-002`~~ *(cancelled, `D-32`)* · 🔵 `FW-152` · ⬜ `FW-005` · ⬜ `FW-004` · ⬜ `FW-006` · ⬜ **`FW-007` 31** |
 | **h** — `[TRP]`'s, **per stream** | **145** | **139** | **60** | **65** *(62 after `D-32`; published figure held — see `[TRP §2.1]`)* |
@@ -120,7 +120,7 @@ vocabulary, so a glyph means here what it means on [`STATUS.md`](../../STATUS.md
 | **1B close-out** | ✅ [FW-218](FW-218.md) | — | ✅ [FW-150](FW-150.md) · ✅ [FW-151](FW-151.md) · ✅ [FW-205](FW-205.md) · ✅ [FW-203](FW-203.md) *(for `FW-N05`)* | — | 53 |
 | navigation | — | ⬜ `FW-204` · ⬜ `FW-153` | — | 🔵 `FW-155` | 15 |
 | **Phase 4** | 🔵 [FW-157](FW-157.md) | ⬜ `FW-061` | ⬜ [FW-082](FW-082.md) | 🔵 `FW-159` | 74 |
-| **Phase 5** | ⬜ [FW-164](FW-164.md) | ⬜ `FW-062` · ⬜ `FW-162` · ⬜ `FW-081` · ⬜ `FW-163` · ⬜ `FW-214` | — | 🔵 `FW-165` | 89 |
+| **Phase 5** | 🔵 [FW-164](FW-164.md) | ⬜ `FW-062` · ⬜ `FW-162` · ⬜ `FW-081` · ⬜ `FW-163` · ⬜ `FW-214` | — | 🔵 `FW-165` | 89 |
 | **Phase 6** *(start)* | ⛔ [FW-168](FW-168.md) · ⬜ [FW-170](FW-170.md) | ⬜ `FW-065` · ⬜ `FW-071` | — | 🔵 `FW-171` | 49 |
 
 ### T3 — exceptions, completion, FL2 · 143 h
@@ -345,15 +345,15 @@ are §5's deferrals working as intended, not gaps:
 beside it"* story, it writes the `SpoolProcessing` row DB5 reads, and it is the **only T3 story
 carrying `status: blocked`**. §5 keeps Part B as `Must`.
 
-### 9.4 Frontend — scaffold only, zero of six screens
+### 9.4 Frontend — nothing built, zero of six screens
 
-`projects/flat-wire/` exists and is `FW-N03`, **done 28 Aug 2026**: `flat-wire.module.ts`,
-`flat-wire-routing.module.ts`, `flat-wire-auth.guard.ts`, `public-api.ts` and a
-`FlatWirePlaceholderComponent`. `components/`, `services/`, `models/`, `styles/` and `guards/`
-are otherwise **`.gitkeep` directories**.
+⛔ **Updated 31 Aug 2026.** `projects/flat-wire/` **no longer exists.** `FW-N03` was built on
+28 Aug 2026 and **reverted on 31 Aug 2026**, taking the library and all eleven host integration
+points with it, so `ual-angular` is back to **30 libraries and no flat wire**. The scaffold card
+`FW-N03` is `not-started` again.
 
-⚠ **Nothing downstream of the scaffold has started** — including `FW-130` (the shell and the
-1280×1024 canvas, buildable now that `FW-N03` has landed), **`FW-133`**, which §2 calls *"the
+⚠ **Nothing downstream of the scaffold has started either** — including `FW-130` (the shell and the
+1280×1024 canvas, blocked on the scaffold again), **`FW-133`**, which §2 calls *"the
 single largest story in the trial and all six screens depend on it… not trimmable"*, and the
 three Angular stories §1.2 excludes, `FW-135` / `FW-136` / `FW-137`.
 
@@ -427,7 +427,7 @@ not the same claim, and in three of these rows they disagree:
 
 | Phase | Stream | Code state |
 |---|---|---|
-| **1A** | FE · RT | `projects/flat-wire/` is the `FW-N03` scaffold and **nothing else** — a placeholder component over five `.gitkeep` directories. `FW-133` gates five of the six screens |
+| **1A** | FE · RT | ⛔ `projects/flat-wire/` **does not exist** — the `FW-N03` scaffold was built 28 Aug and **reverted 31 Aug 2026**. `FW-133` gates five of the six screens |
 | **1B** | BE · RT | ✅ **Committed and building** — skeleton, 15 controllers, `FlatWireHub`, broadcast loop, `PLCTagService`, `OpcFeedSimulator`, `ITInhibitService`, `/sim`. **The trial's only finished layer** |
 | **1C** | DB | DDL **written**, schema **deployed** — the **four** remaining `not-started` cards **understate what exists** (`FW-152` was corrected to `in-review` on 30 Aug against the DDL and the tools), and ⛔ §9.5 shows the deployment is pre-`Q60` and unseeded, so they **overstate that it is usable**. ⚠ **§9.5 measures `DEVUAL-UADEV001\TEST1`, which is now retired for `FlatWireDB`** — the instance of record is `DEV00164-001`, where `[DEP §4.2]`'s gate passed on 26 Aug; **re-measure before reading §9.5 as owed work** |
 | **4** | BE | `CheckInService` **staged, uncommitted** (§9.2). `FW-082` not begun — `PLCTagService`'s five write operations still have **no callers**, which is correct until Phase 4 (`[PLCC §4]`) |
@@ -445,9 +445,9 @@ untracked.
 | | Built | Pending |
 |---|---|---|
 | **BE / RT server** | Phase-1B spine, `/sim`, 15 controllers — committed and building | commit + review of §9.2's six services; `FW-082`, `FW-172`, `FW-177`, `FW-181`, `FW-202`; `FW-145`'s claim values |
-| **FE** | `FW-N03` scaffold | **all six screens** — `FW-133` first and largest |
+| **FE** | — **nothing** | the `FW-N03` scaffold *and* **all six screens** — `FW-133` first and largest |
 | **DB** | schema deployed, and to the *right* instance | ⛔ re-deploy at `Q60`, then seed |
 
 ⚠ **The critical path is no longer the backend.** §4's blockers all still stand, but what now
-gates 30 Sep is §9.4 and §9.5 — a frontend that is one placeholder component, and a database
+gates 30 Sep is §9.4 and §9.5 — a frontend with no library at all, and a database
 whose spool tables the API cannot bind to.

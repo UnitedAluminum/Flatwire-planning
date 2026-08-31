@@ -9,7 +9,7 @@
 | MVP | Phase | Tasks | ✅ Done | 🔵 Review | 🟡 WIP | ⛔ Blocked | ⬜ Not started | % | Open items |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---|
 | -- | 2 Pass Schedule Management (Operations Manag | 0 | 0 | 0 | 0 | 0 | 0 | 0 % | — |
-| 1 | 1A Angular Foundation | 9 | 1 | 0 | 0 | 2 | 6 | 11 % | G10 · G14 · G18 · G23 |
+| 1 | 1A Angular Foundation | 9 | 0 | 0 | 0 | 2 | 7 | 0 % | G10 · G14 · G18 · G23 |
 | 1 | 1B Backend Foundation | 27 | 16 | 4 | 0 | 1 | 6 | 59 % | G10 · G17 · G2 · G29 … |
 | 1 | 1C Database Foundation | 12 | 0 | 1 | 0 | 1 | 8 | 0 % | G14 · G17 · G32 · G34 … |
 | 1 | 3 Line Status Board & Real-Time Backbone | 7 | 0 | 1 | 0 | 0 | 6 | 0 % | G9 · OI-28 · OI-34 |
@@ -24,7 +24,7 @@
 | 1 | 12 Yield, Cost Ledger & Scrap | 4 | 0 | 0 | 0 | 0 | 4 | 0 % | OI-60 · OI-68 · OI-83 · OQ-10 |
 | 1 | 13 Administration & Reference Data | 9 | 0 | 0 | 0 | 0 | 9 | 0 % | OI-43 · OI-77 · OQ-22 |
 | 1 | 14 Integration Testing, PLC Commissioning & | 12 | 0 | 0 | 0 | 0 | 12 | 0 % | G29 · G30 · G32 · G33 … |
-| **All** | | **163** | **17** | **16** | **0** | **23** | **105** | **11 %** | |
+| **All** | | **163** | **16** | **16** | **0** | **23** | **106** | **10 %** | |
 
 *Percentages are by task count. **Hours are not totalled here** - [`CapacityAndEffortModel.md`](60-delivery/CapacityAndEffortModel.md) `[CE]` is the hours model of record, and a total derived on this page would be a second figure to disagree with it.*
 
@@ -147,20 +147,20 @@ Open register items cited by at least one live task, most-blocking first.
 
 ## MVP-1 › Phase 1A — Angular Foundation
 
-**9 tasks · 11 % done**
+**9 tasks · 0 % done**
   · **Spec:** [phase-01a-angular-foundation.md](60-delivery/phases/phase-01a-angular-foundation.md)
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
 |---|---|---|---|---|---:|---|---|---|
-| [FW-130](50-frontend/tasks/FW-130.md) | Shell layout and the 1280×1024 shopfloor canvas | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | FE | 16 | S0 | FW-N03✅ | **G18** **G23** |
-| [FW-131](50-frontend/tasks/FW-131.md) | Route guards, interceptor wiring and the error envelope | ⛔ blocked ⚠ *blocker closed — needs status update* ⚠ *status inferred, unconfirmed* | — | FE | 12 | S0 | FW-N03✅ | — |
-| [FW-132](50-frontend/tasks/FW-132.md) | DI-swappable API client and domain models | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | FE | 20 | S0 | FW-N03✅ FW-147✅ FW-007 | **G14** |
+| [FW-130](50-frontend/tasks/FW-130.md) | Shell layout and the 1280×1024 shopfloor canvas | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | FE | 16 | S0 | FW-N03 | **G18** **G23** |
+| [FW-131](50-frontend/tasks/FW-131.md) | Route guards, interceptor wiring and the error envelope | ⛔ blocked ⚠ *blocker closed — needs status update* ⚠ *status inferred, unconfirmed* | — | FE | 12 | S0 | FW-N03 | — |
+| [FW-132](50-frontend/tasks/FW-132.md) | DI-swappable API client and domain models | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | FE | 20 | S0 | FW-N03 FW-147✅ FW-007 | **G14** |
 | [FW-133](50-frontend/tasks/FW-133.md) | Shared composite controls | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | FE | 120 | S0 | FW-130 | **G18** |
 | [FW-134](50-frontend/tasks/FW-134.md) | Shared primitive controls and alert-banner | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | FE | 32 | S0 | FW-130 | — |
-| [FW-135](50-frontend/tasks/FW-135.md) | SignalR client service | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | RT | 24 | S0 | FW-N03✅ | **G10** |
+| [FW-135](50-frontend/tasks/FW-135.md) | SignalR client service | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | RT | 24 | S0 | FW-N03 | **G10** |
 | [FW-136](50-frontend/tasks/FW-136.md) | MockSignalRService and the typed event set | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | RT | 12 | S0 | FW-135 | — |
 | [FW-137](50-frontend/tasks/FW-137.md) | PWA cache sync and the reconnect banner | ⛔ blocked ⚠ *blocker closed — needs status update* ⚠ *status inferred, unconfirmed* | — | RT | 8 | S0 | FW-135 | — |
-| [FW-N03](50-frontend/tasks/FW-N03.md) | Angular library scaffold, routing and configuration | ✅ done ⚠ *status inferred, unconfirmed* | — | FE | 24 | S0 | — | — |
+| [FW-N03](50-frontend/tasks/FW-N03.md) | Angular library scaffold, routing and configuration | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | FE | 24 | S0 | — | — |
 
 **Open items owned by this phase**
 
@@ -171,7 +171,7 @@ Open register items cited by at least one live task, most-blocking first.
 | `G18` | Source docs (CLAUDE.md / CheckinImplementationPrompt) describe a --fw- design system, but the actual | FW-130, FW-133 | — |
 | `G23` | The 1280×1024 shopfloor canvas is an acceptance criterion nobody has confirmed. All 25+ mockups are  | FW-130 | — |
 
-**▶ Ready to start now:** *none — every not-started task here is waiting on a dependency or a blocker*
+**▶ Ready to start now:** `FW-N03`
 
 ## MVP-1 › Phase 1B — Backend Foundation
 
@@ -276,7 +276,7 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-154](40-backend/tasks/FW-154.md) | GET /lines/status and LineStatusService | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | BE | 16 | S1 | FW-138✅ FW-141✅ | — |
 | [FW-155](30-database/tasks/FW-155.md) | FlatWireRun(LineId, Status) index | 🔵 in-review ⚠ *status inferred, unconfirmed* | — | DB | 4 | S1 | FW-006 | — |
 | [FW-156](70-testing/tasks/FW-156.md) | Hub load test | ⬜ not-started | — | QA | 16 | S1 | FW-080 FW-150✅ | **G9** **OI-34** |
-| [FW-204](50-frontend/tasks/FW-204.md) | Minimal landing route — the entry point when Dashboard 1 is out  | ⬜ not-started | — | FE | 8 | S1 | FW-N03✅ FW-130 FW-164 | — |
+| [FW-204](50-frontend/tasks/FW-204.md) | Minimal landing route — the entry point when Dashboard 1 is out  | ⬜ not-started | — | FE | 8 | S1 | FW-N03 FW-130 FW-164 | — |
 | [FW-N06](40-backend/tasks/FW-N06.md) | Alert rules engine and the AlertRaised/AlertCleared lifecycle | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | RT | 40 | S1 | FW-149 FW-150✅ | **OI-28** |
 
 **Open items owned by this phase**
