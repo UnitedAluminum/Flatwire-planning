@@ -1,7 +1,7 @@
 # Flat Wire Mill — Six-Screen Trial Run Plan (sign-off ~16 Nov 2026)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 25, 2026 — **§1.4's controller counts 15 → 14 and 8 → 7** (`FW-138` `P-53`, no `/rod/**` surface); hours cells untouched so the workbook guards still pass, and ⚠ **DB2's rod scan has no endpoint** until `P-54` closes. Earlier the same day: **re-baselined at three resources × 6.5 h/day from 31 August: feature-complete Tue 3 Nov, sign-off ~Mon 16 Nov 2026.** §2 only — **no effort figure moved**, and 869 / 459 / 330 h and §4's allocation are untouched, which is why §3, §4 and §6 needed no edit. Two things invert: **the over-commitment is gone** (T1 was 102 % and T3 114 %; all three blocks now sit under capacity with 28 h of margin), and **no staffing option reaches 30 Sep** — even five resources land in early October. The 6.5 h is an **availability** figure, not the hands-on-keyboard reading in `[CE §4]`'s sensitivity table. ⚠ [`StaffedSprintPlans.md`](StaffedSprintPlans.md) and `[CE §4]` remain on the 8 h basis and now disagree with this document by design. *(previously August 22, 2026 — **§8’s count assertion is re-derived and now runnable** (32 · 50 · 57 · 2 · 1), with the `QUOTED_IDENTIFIER`/`Msg 1934` and false-`PRINT`-pass traps written down beside it *(previously August 18, 2026 — **`FW-219` enters the trial: the FL2/FL3 run-end write-back into the shared schema, 40 h AI-assisted / 56 h hand-coded, additive.** §5.3 is the reasoning; the short version is that `phase-05` routes the FL2 screen's *Complete Run* into `POST /coil/complete`, which wrote **only** `FlatWireDB`, so a completed trial coil was invisible to packing, shipping, cost and yield. **§4's "Phases 9–14 are wholly outside the trial" gains its first exception**, on the same reasoning §5.1 used for `FW-202`. New blocker **6** (`Q34`–`Q36`, which block a shared environment but not the build). **The published 832 / 462 / 409 h figures are unchanged and now understate by 40 h** — as with `FW-202`, the additive hours are stated here and not folded in. *(Earlier same day: **`D-32`: there is no shared-schema migration.** `FW-001` is **cancelled rather than deferred** — its −36 h stops being a debt owed to production — and `FW-002` (3 h) goes with it. ⚠ **The published 832 / 462 / 409 h figures are deliberately held**, so read them as 3 h conservative *(previously August 15, 2026 — **blocker 4 (`G6`) closed**: all six roles exist as JWT claims; its residual re-dated to the T1 QA0 walkthrough. Revision history in [`CHANGELOG.md`](../CHANGELOG.md))*)*))*
+**Last Updated:** August 29, 2026 — ⚠ **`D-33`: `FW-214` is a standalone WinForms tool, not an Angular screen, and it costs 21 h more.** **15 → 36 h AI-assisted** (52 h base), so **T2 280 → 301 h and the trial 869 → 890 h**. ⚠ **T2 is the first block in this plan to sit over capacity** — 301 h against 292 h, **103 %** — and T3 absorbs it, so **feature-complete moves Tue 3 Nov → Wed 4 Nov and sign-off ~Mon 16 Nov → ~Tue 17 Nov**. ⚠ **Margin 28 h → 7 h, which no longer covers either §2.3 reserve at any bound.** §1.3, §1.4's grid (Phase 5 FE 76 → 97), §2.1, §2.2, §2.3, §4's T2 block and §8's UAT callout all move together. ⚠ **The +21 h is not recoverable by reversing the decision** — reinstating the Angular screen re-couples the shop-floor release train, which is what the change buys; §2.1 names the ≈6 h relief valve instead. ⚠ **`FW-130`/`FW-135`'s 40 h is NOT recovered**: both serve the six operator screens *(previously August 25, 2026 — and 8 → 7** (`FW-138` `P-53`, no `/rod/**` surface); hours cells untouched so the workbook guards still pass, and ⚠ **DB2's rod scan has no endpoint** until `P-54` closes. Earlier the same day: **re-baselined at three resources × 6.5 h/day from 31 August: feature-complete Tue 3 Nov, sign-off ~Mon 16 Nov 2026.** §2 only — **no effort figure moved**, and 869 / 459 / 330 h and §4's allocation are untouched, which is why §3, §4 and §6 needed no edit. Two things invert: **the over-commitment is gone** (T1 was 102 % and T3 114 %; all three blocks now sit under capacity with 28 h of margin), and **no staffing option reaches 30 Sep** — even five resources land in early October. The 6.5 h is an **availability** figure, not the hands-on-keyboard reading in `[CE §4]`'s sensitivity table. ⚠ [`StaffedSprintPlans.md`](StaffedSprintPlans.md) and `[CE §4]` remain on the 8 h basis and now disagree with this document by design. *(previously August 22, 2026 — **§8’s count assertion is re-derived and now runnable** (32 · 50 · 57 · 2 · 1), with the `QUOTED_IDENTIFIER`/`Msg 1934` and false-`PRINT`-pass traps written down beside it *(previously August 18, 2026 — **`FW-219` enters the trial: the FL2/FL3 run-end write-back into the shared schema, 40 h AI-assisted / 56 h hand-coded, additive.** §5.3 is the reasoning; the short version is that `phase-05` routes the FL2 screen's *Complete Run* into `POST /coil/complete`, which wrote **only** `FlatWireDB`, so a completed trial coil was invisible to packing, shipping, cost and yield. **§4's "Phases 9–14 are wholly outside the trial" gains its first exception**, on the same reasoning §5.1 used for `FW-202`. New blocker **6** (`Q34`–`Q36`, which block a shared environment but not the build). **The published 832 / 462 / 409 h figures are unchanged and now understate by 40 h** — as with `FW-202`, the additive hours are stated here and not folded in. *(Earlier same day: **`D-32`: there is no shared-schema migration.** `FW-001` is **cancelled rather than deferred** — its −36 h stops being a debt owed to production — and `FW-002` (3 h) goes with it. ⚠ **The published 832 / 462 / 409 h figures are deliberately held**, so read them as 3 h conservative *(previously August 15, 2026 — **blocker 4 (`G6`) closed**: all six roles exist as JWT claims; its residual re-dated to the T1 QA0 walkthrough. Revision history in [`CHANGELOG.md`](../CHANGELOG.md))*)*))*)*
 **Document Type:** Scoped delivery plan for the client-requested trial run
 **Status:** Published — **three resources at 6.5 h/day reach 3 Nov on development alone; UAT still needs its own window, to ~16 Nov.** §2.2 prices what more resources would buy
 **Owner:** Delivery lead / programme management
@@ -58,7 +58,7 @@ different places and each supplies its own material context.
 | **FL1 run completion → `SpoolProcessing`** (`FW-202`) | **67** | ⚠ **Inside screen #2's approved mockup, and the only thing that creates what DB5 checks in.** See §5.1 |
 | **Minimal landing route** (`FW-204`) | 5 | Replaces DB1 as the entry point and the way back into a running line. **Retires when `FW-060` ships.** See §1.5 |
 | **FL2/FL3 run-end write-back** (`FW-219`) | **40** | ⚠ **The trial's FL2 run has nowhere to land.** `phase-05` routes *Complete Run* to `POST /coil/complete`, and until 18 Aug 2026 that endpoint wrote **only** `FlatWireDB` — so a completed trial coil is invisible to packing, shipping, cost and yield. Client-directed. See §5.3 | 
-| **Simulator console `DB-S1`** (`FW-214`) | 15 | ⚠ **Not a seventh screen and not a dashboard** — no `DB##` number, absent from the fifteen-dashboard inventory, the navigation map and the topbar tiles (`[SIM §9.1]`). It is the **engineer's half of the acceptance run**: UAT executes §8 in front of the client and step 7 times a **3 s stop against a 5 s dwell**, which is a button, not a saved HTTP request and a stopwatch. **Ships with unbacked controls greyed** — see §1.4 |
+| **Simulator console `DB-S1`** (`FW-214`) | **36** | ⚠ **Not a seventh screen and not a dashboard** — no `DB##` number, absent from the fifteen-dashboard inventory, the navigation map and the topbar tiles (`[SIM §9.1]`). It is the **engineer's half of the acceptance run**: UAT executes §8 in front of the client and step 7 times a **3 s stop against a 5 s dwell**, which is a button, not a saved HTTP request and a stopwatch. **Ships with unbacked controls greyed** — see §1.4 |
 
 ### 1.3 Total
 
@@ -67,17 +67,17 @@ different places and each supplies its own material context.
 | **Phase 1 platform** (1A Angular · 1B Backend · 1C Database) | **459** | **55 %** |
 | Navigation, reconnect and the run index *(was Phase 3)* | 15 | 2 % |
 | Phase 4 — rod check-in *(no DB2A staging)* | 74 | 9 % |
-| Phase 5 — DB3 FL1 shell **+ the simulator console** | 89 | 11 % |
+| Phase 5 — DB3 FL1 shell **+ the simulator console** | **110** | 12 % |
 | Phase 6 — SPC + Pause/Resume *(no weld, no die change, no roll adjust)* | 56 | 7 % |
 | Phase 7 — WIP rejection | 31 | 4 % |
 | **FL1 spool completion — Part B** (`FW-202`) | **67** | **8 %** |
 | Phase 8 — DB5 + DB3 FL2 | 38 | 5 % |
 | **FL2/FL3 run-end write-back** (`FW-219`) | **40** | **5 %** |
-| | **869 h** | |
+| | **890 h** | |
 
 | Stream | h | Share |
 |---|---|---|
-| **FE** Angular | 329 | 38 % |
+| **FE** Angular *(+ the one WinForms tool, `D-33`)* | **350** | 39 % |
 | **BE** .NET | 264 | 30 % |
 | **RT** real-time / PLC | 141 | 16 % |
 | **DB** SQL Server | 135 | 16 % |
@@ -134,13 +134,13 @@ convention, and verifiable by hand. Derived from the `[SSP §5]` story hours all
 | **1C** Database foundation | — | — | **62** | — | **62** | T1 |
 | Navigation, reconnect, run index | 12 | — | 3 | — | **15** | T2 |
 | **4** Rod check-in | 24 | 24 | 15 | 11 | **74** | T2 |
-| **5** DB3 FL1 shell **+ console** | **76** | 8 | 5 | — | **89** | T2 |
+| **5** DB3 FL1 shell **+ console** | **97** | 8 | 5 | — | **110** | T2 |
 | **6** SPC + Pause/Resume | 30 | 13 | 6 | 7 | **56** | T2 · T3 |
 | **7** WIP rejection | 13 | 8 | 5 | 5 | **31** | T3 |
 | **`FW-202`** FL1 spool completion | 20 | **29** | 5 | 13 | **67** | T3 |
 | **8** DB5 + DB3 FL2 | 15 | 12 | 8 | 3 | **38** | T3 |
 | **`FW-219`** run-end write-back | — | **14** | **26** | — | **40** | T3 |
-| | **329** | **264** | **135** | **141** | **869** | |
+| | **350** | **264** | **135** | **141** | **890** | |
 
 **Four things this grid shows that the phase totals hide:**
 
@@ -316,10 +316,10 @@ schedule insurance in the plan — without it the whole FE stream queues behind 
 > is the **first increment of `FW-215`** exactly as `FW-203` is of `FW-211`. `[SIM §2.4]`'s rule travels with
 > it: **when simulation is off the routes are not registered at all — `404`, not `403`.**
 >
-> **And `FW-214`, the console `DB-S1`, is in at 15 h — with controls greyed.** An API alone means UAT is
+> **And `FW-214`, the console `DB-S1`, is in at 36 h — with controls greyed.** ⚠ **`D-33` (29 Aug 2026) retargeted it to a standalone WinForms executable**, so it is **52 h base / 36 h AI-assisted**, not the 24 h / 15 h published before that date. An API alone means UAT is
 > executed by an engineer issuing HTTP calls beside the operators, and step 7 times a **3 s stop against a 5 s
 > dwell**. ⚠ **Its own dependency is `FW-215` in full**, which needs `FW-210` (24 h) and `FW-213` (16 h) —
-> **making every control live is +50 h AI-assisted and the window does not have it.** So the screen is built
+> **making every control live is +50 h AI-assisted and the window does not have it.** So the console is built
 > whole against `FW-218`'s four endpoints and the rest is greyed: **Start**, the **scenario picker**, **six of
 > the seven fault buttons** and the **seed**. Live: stop, steer, drop-readings, the readouts, the dual state
 > badges, and `lbPerFt` — **which displays NULL, putting `OQ-10` on screen instead of burying it.** Grey them,
@@ -337,8 +337,12 @@ schedule insurance in the plan — without it the whole FE stream queues behind 
 > - **`G39` applies to `FW-218` too** — steering an unverified model does not make it verified. See §9.
 >
 > The 111 h and this 26 h are all **additive to `[CE §3b]`**, on the same footing as `FW-202`, `FW-203` and
-> `FW-204`. ⚠ **`FW-214`'s 24 h base is not additive twice** — it is the simulator set's own FE line, pulled
+> `FW-204`. ⚠ **`FW-214`'s base is not additive twice** — it is the simulator set's own FE line, pulled
 > forward out of the unscheduled 111 h rather than minted on top of it, so the set's remainder is **87 h**.
+> ⚠ **`D-33` re-priced that line 24 h → 52 h base**, and the **+28 h is genuinely new** — it is the
+> standalone platform the Angular screen would have got free from `FW-130`/`FW-135`. **The set's remainder
+> stays 87 h**, and **retiring the Angular console recovers none of `FW-130`/`FW-135`'s 40 h**: both serve
+> the six operator screens and stay in the plan at full value.
 
 - ⚠ **`FW-N05` 22 h → a 6 h simulator.** `[DE §1]` prices real OPC ingest at retention **0.90** and calls it *"not
   verifiable without the hardware"*. Deferring it to the October commissioning window and driving the trial from a
@@ -475,13 +479,14 @@ Working days **31 Aug → 3 Nov 2026: 46** — Labor Day (Mon 7 Sep) deducted, c
 > **The 6.5 h is an availability figure, not a productivity figure**, and `[CE §4]` requires that reading be
 > stated: each resource commits 6.5 h of the working day to flat wire and the balance goes elsewhere. **The
 > estimates remain calendar-hour estimates and the 869 h does not move** — only the hours available per day do.
+> *(That was true of the 25 Aug re-baseline. The total is **890 h** since `D-33`, 29 Aug 2026 — §1.3.)*
 > This is *not* the hands-on-keyboard reading in `[CE §4]`'s sensitivity table; that one would additionally
 > inflate the effort requirement, and nothing here claims it. Mixing the two, as that section warns, "either
 > double-counts overhead or hides it."
 
 | Measure | Value |
 |---|---|
-| Trial development effort | **869 h** — unchanged |
+| Trial development effort | **890 h** — 869 h until `D-33` added 21 h to `FW-214` on 29 Aug 2026 |
 | 3 resources × 6.5 h | **19.5 h/day** |
 | Working days needed | **44.6** — 46 once each block rounds to a whole day |
 | Development window | **Mon 31 Aug → Tue 3 Nov 2026** = **897 h** |
@@ -498,7 +503,8 @@ team size."* So UAT gets its own block after 3 Nov (T4 below) rather than overla
 > capacity**. That is the more honest failure mode and the easier one to manage — the plan is no longer
 > pretending the work fits a window it does not fit. **What did not change is the shape:** Phase 1 is still 56 %
 > of the work, the allocation in §4 is untouched, UAT still cannot overlap feature work, and **no effort figure
-> moved** — 869 h, 459 h of platform and 330 h deferred all stand exactly as before.
+> moved** — 869 h, 459 h of platform and 330 h deferred all stand exactly as before. *(Historical: `D-33`
+> later moved the total to **890 h** on 29 Aug 2026. The 459 h and 330 h are unchanged.)*
 
 ### 2.1 The shape — three resources, three blocks of work
 
@@ -509,9 +515,9 @@ why §3, §4 and §6 are untouched by this revision.
 | Sprint | Dates | Wk days | Team | Capacity | Planned | Util | Content |
 |---|---|---|---|---|---|---|---|
 | **T1** | Mon 31 Aug – Tue 29 Sep | 21 | **3** | 410 h | **406 h** | 99 % | Phase 1A ∥ 1B ∥ 1C |
-| **T2** | Wed 30 Sep – Tue 20 Oct | 15 | **3** | 292 h | **280 h** | 96 % | Phase 1 close-out · navigation · 4 · 5 · 6 (start) |
+| **T2** | Wed 30 Sep – Tue 20 Oct | 15 | **3** | 292 h | **301 h** | ⚠ **103 %** | Phase 1 close-out · navigation · 4 · 5 · 6 (start) |
 | **T3** | Wed 21 Oct – Tue 3 Nov | 10 | **3** | 195 h | **183 h** | 94 % | 6 close · 7 · spool completion · 8 · **run-end write-back** |
-| | **— feature complete Tue 3 Nov —** | **46** | | **897 h** | **869 h** | **97 %** | |
+| | **— feature complete Wed 4 Nov —** | **47** | | **897 h** | **890 h** | **99 %** | |
 | **T4** | Wed 4 Nov – Mon 16 Nov | 9 | 3 + QA + BA | 176 h | **unsized** ⚠ | — | Regression · **de-stub pass** · defects · **UAT + sign-off** |
 
 **Three-resource split: 1 FE · 1 BE/DB · 1 RT/FE**, per the 24 Aug call — two on the front end and Yogender on
@@ -525,22 +531,37 @@ finds for the full plan, so the FE share is what to watch inside T1 rather than 
 > have been withdrawn**. **1A and 1C must still finish inside T1** or the whole T2 chain moves; that constraint
 > is structural and survives the re-baseline.
 
-**Margin: 28 h in total, spread across all three blocks** — 4 h in T1, 12 h in T2, 12 h in T3. That is better
-than the 16 h this plan carried at 8 h/day *and* better distributed, since none of it used to sit in T1. It is
-still **less than either reserve at its upper bound** (§2.3), so the reserves remain a programme-management
+**Margin: 7 h in total** — 4 h in T1, **−9 h in T2**, 12 h in T3. ⚠ **T2 is the first block in this plan to sit
+over capacity**, by 9 h, and the cause is named: `D-33` (29 Aug 2026) retargeted `FW-214` from an Angular
+screen to a standalone WinForms tool, **15 h → 36 h AI-assisted**, and T2 had only 12 h of room. **T3 absorbs
+the 9 h** because T2 and T3 are sequential, which is why feature-complete moves one day (Tue 3 Nov → Wed
+4 Nov) rather than three weeks. *(Before `D-33` this read: 28 h in total — 4 h T1, 12 h T2, 12 h T3.)*
+
+> **The +21 h buys release independence, and that was the trade.** `flat-wire` ships **inside the shop-floor
+> bundle** (`[DEP §1.1]`), so the engineering console rode the operator app's release train; a separate EXE
+> ends that. ⚠ **Do not read the +21 h as recoverable by reversing the decision** — reinstating the Angular
+> screen re-couples the release train, which is the thing being bought. If T2 needs relief, cut the FL3 panel
+> and reduce the global bar to a readout-only strip (≈6 h): both are greyed or static for the trial anyway.
+
+> ⚠ **The story is carded `FE` but the work is .NET.** `FE` in this plan means the user-facing surface, not
+> Angular — keeping the stream label is what avoids a tooling change (`tools/fwtasks.py` declares a closed
+> stream vocabulary). **For resourcing, treat these 36 h as available to the BE/RT resource**, which matters
+> because §2.1 names FE as the binding constraint and T2's Phase 5 block carries **RT 0**.
+
+It is **less than either reserve at any bound** (§2.3), so the reserves remain a programme-management
 decision rather than something the schedule absorbs.
 
 ### 2.2 What each staffing option lands
 
 | Option | Feature complete | Sign-off | Note |
 |---|---|---|---|
-| **3 resources** *(the baseline — §2.1)* | **Tue 3 Nov** | **~Mon 16 Nov** | 869 h ÷ 19.5 h/day = **44.6 working days** from 31 Aug, 46 once each block rounds. This is the staffed plan, not an option: it is what the team actually is |
-| **4 resources** | ~Fri 16 Oct | ~late Oct | 26.0 h/day → **34 working days**. Buys back roughly **two and a half weeks**. The fourth pair of hands is worth most in T1, where the three tracks genuinely parallelise |
-| **5 resources** | ~Wed 7 Oct | ~mid-Oct | 32.5 h/day → **27 working days**. Beyond T1 the chain is sequential, so the fifth resource returns much less than the fourth — see §3 |
+| **3 resources** *(the baseline — §2.1)* | **Wed 4 Nov** | **~Tue 17 Nov** | 890 h ÷ 19.5 h/day = **45.6 working days** from 31 Aug, 47 once each block rounds. This is the staffed plan, not an option: it is what the team actually is. *(Tue 3 Nov / ~Mon 16 Nov on 869 h, before `D-33`)* |
+| **4 resources** | ~Mon 19 Oct | ~late Oct | 26.0 h/day → **35 working days**. Buys back roughly **two and a half weeks**. The fourth pair of hands is worth most in T1, where the three tracks genuinely parallelise |
+| **5 resources** | ~Thu 8 Oct | ~mid-Oct | 32.5 h/day → **28 working days**. Beyond T1 the chain is sequential, so the fifth resource returns much less than the fourth — see §3 |
 
 **No staffing option reaches 30 September, and the three-resource row is not an option — it is the plan.**
 Even five resources from 31 Aug land feature-complete in the first week of October, with UAT after that. The
-honest published answer at three resources is **feature-complete 3 November and sign-off around 16 November**,
+honest published answer at three resources is **feature-complete 4 November and sign-off around 17 November**,
 inside the planned Q4 2026 production window. The 4- and 5-resource rows are priced here so that the cost of
 the date is visible — not because either is staffed.
 
@@ -553,18 +574,19 @@ the date is visible — not because either is staffed.
 > must land before Phase 8 begins — so **T3 carries two ordered dependencies**, and a longer block does not
 > loosen an ordering constraint. Sequence T3 from §3 rather than from its utilisation figure.
 
-### 2.3 Reserves, excluded from the 869 h
+### 2.3 Reserves, excluded from the 890 h
 
 | Reserve | h | Basis |
 |---|---|---|
 | `G2` / `OI-39` — cross-DB check-in recovery | **24–64** | `[CE §2]`. Phase 4's estimate is provisional until it closes |
 | `OQ-10` / `OI-45` — footage→weight dimensional basis | **16–32** | `[CE §2]` prices it on Phase 9, but `TC-167`/`TC-168` put the same calculation in the spool-completion path this trial builds. See §5.1 |
 
-Neither is a coding problem, so neither compresses under AI assistance. **The 28 h of margin in §2.1 covers
-either reserve at its lower bound, and neither at its upper** — 24 h or 16 h fits; 64 h or 32 h does not. Both
-together do not fit at any bound. **Nothing has first claim on it any more**, which is new: the re-baseline
-removed T1's overrun, so the margin is genuinely uncommitted for the first time. If both reserves land, the
-date moves, and that is a programme-management decision rather than something the schedule absorbs.
+Neither is a coding problem, so neither compresses under AI assistance. ⚠ **The 7 h of margin in §2.1 no
+longer covers either reserve at any bound** — not 16 h, not 24 h. *(It covered both lower bounds at 28 h,
+until `D-33` spent 21 h of it on 29 Aug 2026.)* **If either reserve lands, the date moves.** That was already
+true at the upper bounds and is now true at the lower ones, so it is a programme-management decision rather
+than something the schedule absorbs — and it is the strongest argument for the §2.1 relief valve (cut the
+FL3 panel and the global bar to a readout-only strip, ≈6 h) if a reserve starts to look likely.
 
 ---
 
@@ -623,14 +645,14 @@ allocated**, so this plan mints **`FW-202`**, **`FW-203`**, **`FW-204`** and **`
 on it** — `pass-schedule-table`, `confirm-bar`, `gauge-trace-chart`, `tab-wizard`, `action-bar`,
 `payoff-weight-bar`. It is not trimmable.
 
-### T2 — check-in and the run monitor · 280 h
+### T2 — check-in and the run monitor · 301 h
 
 | Phase | Stories | h |
 |---|---|---|
 | 1B close-out | `FW-150` 11 · `FW-151` 11 · **`FW-205` 14** *(`ITInhibitService`; needs `FW-151`)* · **`FW-203` 6** — OPC feed simulator, *in place of `FW-N05`* · **`FW-218` 11** — its control surface *(steer · stop edge · dropped readings · state read; §8 cannot be executed without it)* | 53 |
 | navigation | **`FW-204` 5** — minimal landing route · `FW-153` 7 *(reconnect + cached fallback)* · `FW-155` 3 *(run index)* | 15 |
 | **4** | `FW-061` 24 · `FW-157` 24 · `FW-159` 15 *(check-in write path + the `FlatWireDB`-local `INFLAT` write, `D-32`; **no `RodStaging`**)* · `FW-082` 11 | 74 |
-| **5** | `FW-062` 17 *(FL1 only)* · `FW-162` 13 · `FW-081` 18 · `FW-163` 13 · `FW-164` 8 · `FW-165` 5 · **`FW-214` 15** — simulator console `DB-S1`, *unbacked controls greyed* | 89 |
+| **5** | `FW-062` 17 *(FL1 only)* · `FW-162` 13 · `FW-081` 18 · `FW-163` 13 · `FW-164` 8 · `FW-165` 5 · **`FW-214` 36** — simulator console `DB-S1`, **standalone WinForms** (`D-33`), *unbacked controls greyed* | 110 |
 | **6** *(start)* | `FW-065` 15 · `FW-071` 15 · `FW-168` 8 · `FW-170` 5 · `FW-171` 6 *(SPC + pause tables; **no `WeldEvent`**)* | 49 |
 
 ### T3 — exceptions, completion, FL2 · 183 h
@@ -973,11 +995,19 @@ are a system rather than six pages, and it is what UAT executes:
 > an operator screen.** The operator drives the application; a test engineer drives the machine, from `DB-S1`. **`POST /sim/{lineId}/steer`** produces
 > step 3's out-of-spec run, **`DELETE /sim/{lineId}/run`** produces step 7's stop edge at a chosen instant, and
 > **`POST /sim/{lineId}/fault`** (dropped readings) is the only way to reach the interlock's condition 5.
-> ⚠ **The console and its endpoints are `Engineer`/`Admin` and are not registered at all when simulation is
-> off** — so `DB-S1` exists on staging and **cannot exist on a commissioned line** (`[SIM §2.4]`, `[SIM §8.4]`).
+> ⚠ **The console and its endpoints are `Engineer`/`Admin`, and the endpoints are not registered at all when
+> simulation is off** — so `DB-S1` works on staging and **cannot drive a commissioned line** (`[SIM §2.4]`,
+> `[SIM §8.4]`, `[SIM §9.4]`).
 > **Plan the UAT session around this**: the engineer's console is part of the run, it is a second screen in the
 > room, and the sequence should be rehearsed before operators are in it. ⚠ **Several of its controls are greyed**
 > (§1.4) — brief the client, or the greyed scenario picker reads as a defect on the day.
+>
+> ⚠ **Since `D-33` (29 Aug 2026) `DB-S1` is a separate WinForms application, not a browser tab.** Two things
+> follow for the UAT room. **(1) It must be installed on the engineer's machine before the session** — it is
+> not reachable by navigating to a URL, and discovering that on the day costs the session. **(2) “A second
+> screen in the room” is now literal**, which is the arrangement this callout already assumed.
+> ⚠ **`FW-145` gates the run regardless of technology**: no role claim is issued today, so
+> `RequireAuthorization(Roles = "Engineer,Admin")` denies every caller and all four endpoints return `401`.
 
 1. **Landing route** — FL1 and FL2 both idle; each tile routes to its check-in screen.
 2. **DB2** — scan a rod, clear all six wizard steps, select the payoff, **Confirm Schedule** (amber → green),

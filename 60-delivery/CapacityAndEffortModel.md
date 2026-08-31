@@ -1,7 +1,7 @@
 # Flat Wire Mill — Capacity & Effort Model
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 25, 2026 — **new §3f — `FW-224`, additive and deliberately unsized** (blocked on `Q41`); `3,358 h` established as the one citable all-in figure; object count 34 → 33 *(previously August 18, 2026 — **new §3d: `FW-219`, the FL2/FL3 run-end write-back, +77 h all-in (56 h base / 40 h AI-assisted), additive.** MVP-1 becomes **3,263 h** and both scopes **3,631 h** — ⚠ **superseded the same day by §3e (rod ↔ order, +116 h): the live all-in is `3,358 h`, in §3e's roll-up row, which is the only site that may assert it**; §3, §3b and §3c are **not** re-derived. Phase 9's published 222 h is unchanged and understates by 77 h — quote `222 + 77`. *(Earlier same day: **new §3c: the `D-32` re-derivation.** The shared-schema migration is cancelled (`FW-001`, `FW-002`, and `FW-176`'s shared-`coils` columns), **−76 h base / −106 h all-in**: Phase 1C **221 → 138 h**, Phase 7 **205 → 182 h**, MVP-1 **3,292 → 3,186 h**, both scopes **3,660 → 3,554 h**. ⚠ **§3 and §3b are deliberately NOT re-derived and remain the base of record** — §3c is additive, per the pattern in `[DE]` and `[YCS]`. *(Previously August 13, 2026 — §3's story-point cross-check marked **historical** (its denominator was retired when the backlog moved to hours) and its finding 1 recorded as **closed**; Related-Documents row re-pointed. *(Earlier same day: resolved-correction narrative removed to [`../CHANGELOG.md`](../CHANGELOG.md).)* **No hours figure changed then** — the first hours change since is §3c.)*)*)*
+**Last Updated:** August 29, 2026 — **§2 gains a discrete item — `FlatWireSimConsole`, 52 h, Phase 5 (`D-33`)** — and the *New dashboard screen* 24 h row is marked **Angular only**: it prices layout inside an application that already exists, and a standalone EXE must build its own platform. ⚠ **`FW-130` (16 h) and `FW-135` (24 h) are NOT recovered** — they stop being `FW-214`'s dependencies but stay in the plan at full value for the six operator screens *(previously August 25, 2026 — **new §3f — `FW-224`, additive and deliberately unsized** (blocked on `Q41`); `3,358 h` established as the one citable all-in figure; object count 34 → 33 *(previously August 18, 2026 — **new §3d: `FW-219`, the FL2/FL3 run-end write-back, +77 h all-in (56 h base / 40 h AI-assisted), additive.** MVP-1 becomes **3,263 h** and both scopes **3,631 h** — ⚠ **superseded the same day by §3e (rod ↔ order, +116 h): the live all-in is `3,358 h`, in §3e's roll-up row, which is the only site that may assert it**; §3, §3b and §3c are **not** re-derived. Phase 9's published 222 h is unchanged and understates by 77 h — quote `222 + 77`. *(Earlier same day: **new §3c: the `D-32` re-derivation.** The shared-schema migration is cancelled (`FW-001`, `FW-002`, and `FW-176`'s shared-`coils` columns), **−76 h base / −106 h all-in**: Phase 1C **221 → 138 h**, Phase 7 **205 → 182 h**, MVP-1 **3,292 → 3,186 h**, both scopes **3,660 → 3,554 h**. ⚠ **§3 and §3b are deliberately NOT re-derived and remain the base of record** — §3c is additive, per the pattern in `[DE]` and `[YCS]`. *(Previously August 13, 2026 — §3's story-point cross-check marked **historical** (its denominator was retired when the backlog moved to hours) and its finding 1 recorded as **closed**; Related-Documents row re-pointed. *(Earlier same day: resolved-correction narrative removed to [`../CHANGELOG.md`](../CHANGELOG.md).)* **No hours figure changed then** — the first hours change since is §3c.)*)*)*)*
 **Document Type:** Capacity & Effort Model (per-phase owners, effort in hours, working-day capacity)
 **Status:** Published — **roster unfilled**; §1 must be completed by programme management
 **Estimating unit:** **hours**. Day figures are derived (**1 dev-day = 8 h**) and shown only as a reading aid.
@@ -80,7 +80,7 @@ No prior estimate of any kind exists, so the estimate is **derived, auditable an
 
 | Unit | Hours | Notes |
 |---|---|---|
-| New dashboard screen | **24 h** | `MVP-1/ProjectPlan/Frontend/Mockups/*.html` is the approved visual spec — no design time included |
+| New dashboard screen | **24 h** | `MVP-1/ProjectPlan/Frontend/Mockups/*.html` is the approved visual spec — no design time included. ⚠ **Angular only.** A WinForms surface does not price on this row — see the discrete item below |
 | Screen variant (FL2/FL3 mode of an existing screen) | **8 h** | |
 | Modal / dialog | **12 h** | |
 | Shared composite control | **20 h** | `pass-schedule-table`, `gauge-trace-chart`, `tolerance-viz`, `tab-wizard`, `action-bar`, `payoff-weight-bar` |
@@ -102,6 +102,21 @@ Two discrete line items that are **not** rate-card units:
 |---|---|---|
 | ~~FW-001 shared-schema rename **impact audit**~~ — **CANCELLED, `D-32`, 18 Aug 2026** | ~~**40 h**~~ → 0 | ~~Phase 1C~~ |
 | Hub load test (N clients × 3 lines × cadence) | **16 h** | Phase 3 |
+| **`FlatWireSimConsole` — the WinForms `DB-S1` console** *(new, `D-33`, 29 Aug 2026)* | **52 h** | Phase 5, `FW-214` |
+
+**Why the console is a discrete item and not a *New dashboard screen*.** The 24 h screen rate prices layout
+against an approved mockup **inside an application that already exists** — shell, routing, HTTP client, hub
+client and design tokens all supplied by `FW-130`/`FW-133`/`FW-135` and the shared library. `D-33` makes
+`DB-S1` a **standalone executable**, so it must build its own platform: project and configuration 5 h · auth
+5 h · REST client 4 h · **SignalR client 12 h** · line panel 12 h · FL2 variant and FL3 greying 3 h · global
+bar and control log 4 h · greying rules 2 h · simulation-off probe 2 h · packaging and the `[DEP]` entry 3 h.
+
+⚠ **The layout half is still roughly the 24 h screen rate; the other ~28 h is the platform.** That is the
+price of the decoupling, and it is stated here rather than hidden in a screen count.
+
+⚠ **`FW-130` (16 h) and `FW-135` (24 h) are NOT recovered.** They stop being `FW-214`'s dependencies, but both
+serve the six operator screens and stay in the plan at full value. Anything reading this change as a −40 h
+offset is wrong.
 
 ### Two costs the inventory does not capture
 

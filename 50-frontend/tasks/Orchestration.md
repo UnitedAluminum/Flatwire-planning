@@ -102,7 +102,7 @@ why the Backend folder deliberately does not plan them.
 | Story | Subject | h | Owning document | Status |
 |---|---|---|---|---|
 | `FW-204` | Minimal landing route — the entry point while DB1 is out of trial scope | 8 | [`[SCR §7.2]`](../ScreenPlan.md) | ⛔ Not started · **retires when `FW-060` ships** |
-| `FW-214` | Simulator control console — screen `DB-S1` | 24 | [`[SIM §9]`](../../Architecture/MachineSimulator.md) · [`../mockups/simulator_console.html`](../mockups/simulator_console.html) | ⛔ Not started · ⚠ **not one of the fifteen dashboards** (`[SCR §7.1]`); ships with controls **greyed** until `FW-218` |
+| `FW-214` | Simulator control console `DB-S1` — **standalone WinForms** (`D-33`) | **52** | [`[SIM §9]`](../../Architecture/MachineSimulator.md) · [`../mockups/simulator_console.html`](../mockups/simulator_console.html) | ⛔ Not started · ⚠ **not one of the fifteen dashboards** (`[SCR §7.1]`); ships with controls **greyed** until `FW-218` |
 
 ### 1.4 Downstream — 38 FE stories, Phases 3–14
 
@@ -294,7 +294,7 @@ re-derive on their own retention factors.
 | Item | Why |
 |---|---|
 | DB9 · DB9A · DB10 · Die Management · OEE | **MVP-2.** Mockups at [`MVP-2/Mockups/`](../../../../MVP-2/Mockups/); do not plan, estimate or implement them |
-| `FW-210` `FW-212` `FW-213` `FW-215` `FW-217` | Simulator set — unscheduled and additive. Only `FW-214`'s console is FE, and only in trial scope |
+| `FW-210` `FW-212` `FW-213` `FW-215` `FW-217` | Simulator set — unscheduled and additive. Only `FW-214`'s console is FE — and since `D-33` it is a **WinForms desktop tool**, carded `FE` because `FE` means the user-facing surface, not Angular — and only in trial scope |
 | The `[ARC §2.2]` reference rules | **Binding, and `[ARC]`'s.** Summarised as `D-06` in §4 and not restated |
 | Pixel-level design | The mockups are **the pixel authority**. This file names which one owns a screen and stops there |
 

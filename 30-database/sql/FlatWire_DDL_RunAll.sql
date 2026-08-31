@@ -28,8 +28,8 @@
 --
 -- Run this file FROM the SQL folder (the `:r` paths are relative
 -- to the invocation directory), e.g.:
---   cd "C:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Schema\SQL"
---   sqlcmd -S "DEVUAL-UADEV001\TEST1" -E -C -i FlatWire_DDL_RunAll.sql
+--   cd "c:\UAL\Flatwire-planning\30-database\sql"
+--   sqlcmd -S "DEV00164-001" -E -C -i FlatWire_DDL_RunAll.sql
 --
 -- ⚠ THE TARGET IS THE SHARED INSTANCE, NOT LOCALDB. FlatWireDB must sit
 --   alongside united_db / proddb / SlitterDB / CommonDB / wiplogdb: the
@@ -37,7 +37,9 @@
 --   ONE SqlTransaction under the LOCAL transaction manager, with no MSDTC
 --   ([INT 8.0], [ARC 10]). LocalDB has no united_db, so a build validated
 --   only there silently loses that atomicity. Prove co-location with the
---   query in ../../Scripts/20_FlatWire_Grants.sql before relying on it.
+--   query in ../scripts/20_FlatWire_Grants.sql before relying on it.
+--   DEV00164-001 is where that proof was actually taken (26 Aug 2026:
+--   is_local = 1, is_enlisted = 0 across FlatWireDB and proddb).
 --   For a throwaway developer copy only:
 --   sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_RunAll.sql
 --

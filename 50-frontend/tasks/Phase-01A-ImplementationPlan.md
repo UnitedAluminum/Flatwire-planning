@@ -48,7 +48,7 @@
 
 **Each has its own plan — see §3 for the index.**
 
-**Out of this plan:** `FW-204` (minimal landing route) and `FW-214` (simulator console `DB-S1`) are **trial scope, additive to `[CE §3b]`**; the 38 downstream FE stories of Phases 3–14; and everything MVP-2.
+**Out of this plan:** `FW-204` (minimal landing route) and `FW-214` (simulator console `DB-S1` — **a standalone WinForms tool since `D-33`, so it does not touch this Angular plan at all**) are **trial scope, additive to `[CE §3b]`**; the 38 downstream FE stories of Phases 3–14; and everything MVP-2.
 
 **Precedence, highest first:**
 

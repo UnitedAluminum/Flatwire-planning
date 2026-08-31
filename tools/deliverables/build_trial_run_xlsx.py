@@ -112,13 +112,17 @@ TASKS = os.path.join(DEV, 'TaskBreakdown.md')
 CONTENT = os.path.join(HERE, 'TrialRunContent.md')
 DEFAULT_OUT = os.path.join(DEV, 'FlatWire_TrialRunPlan.xlsx')
 
-ISSUE_DATE = 'August 25, 2026'
+ISSUE_DATE = 'August 29, 2026'
 HOURS_PER_DAY = 6.5        # 8 -> 6.5 on 25 Aug 2026 with the three-resource re-baseline.
                            # This is an AVAILABILITY figure, not a productivity one: each resource
                            # commits 6.5 h of the working day to flat wire. The estimates stay
                            # calendar-hour estimates and TOTAL_HOURS does not move - see the note
                            # on the Days column below, and TrialRunPlan.md section 2.
-TOTAL_HOURS = 869          # the plan's own headline; every guard reconciles to it
+TOTAL_HOURS = 890          # the plan's own headline; every guard reconciles to it
+                           # 869 -> 890 on 29 Aug 2026: D-33 retargets FW-214 (the DB-S1
+                           # console) from an Angular screen to a standalone WinForms tool,
+                           # 15 -> 36 h AI-assisted. T2 goes 280 -> 301 h and over capacity
+                           # (103%). See TrialRunPlan.md sections 2.1 and 2.2.
                            # 829 -> 869 on 18 Aug 2026: FW-219, the FL2/FL3 run-end write-back
                            # into the shared schema (40 h, T3). See TrialRunPlan.md section 5.3.
                            # 832 -> 829 on 18 Aug 2026: D-32 cancels the shared-schema

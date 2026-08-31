@@ -1,7 +1,7 @@
 # Flat Wire Mill — Deployment
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 26, 2026 — **this header contradicted §4.2's own gate and is now level with it.** It published `34 / 57 / 69` for `V1`/`V2`/`V3` while the body asserted **33 / 55 / 70** — the figures the DDL actually produces, and the ones [`../tools/deliverables/verify_schema_counts.py`](../tools/deliverables/verify_schema_counts.py) checks this file against. `[DBD §6.2]` remains the defining site; a header restating a count is how the gate drifted from the body in the first place, so it now points rather than repeats *(previously August 23, 2026 — **§“Verification” corrected for the third time: as written it again rejected a correct deployment.** `V1`/`V2`/`V3` asserted **32 / 50 / 57** — the 32 predated the 22 Aug rod ↔ order pair and the 50/57 were never re-derived after `D-31`. Corrected then to 34 / 57 / 69, counted from the DDL, with `[DBD §6.2]` named as the defining site)* *(previously August 22, 2026 — `V1`/`V2`/`V3` asserted 25/33/41 in SQL comments and 27/41/46 in the checklist beneath, and `V4` required the MVP-2 `sp_ShiftSummary`)* *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** **Deployment step 2 is cancelled** and §4.3 retained as the record; the 1→3→4→5 order no longer depends on the renames; `V7`/`V8`/`V9` dropped, `V10` kept *(previously August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)
+**Last Updated:** August 30, 2026 — ⛔ **§4.2 step 2.1's `cd` named a folder deleted by the 29 Aug re-tree, and it is the step the rest depends on** — `FlatWire_DDL_RunAll.sql`'s `:r` includes are relative to the invocation directory. Retargeted to `30-database\sql`. **`V3`'s comment block also carried stale arithmetic** — *"The 64 in script 07 are 53 … plus 11"*, three lines above its own correct `-- Expected: 70` and invisible to every tool; **replaced with a pointer to `[DBD §6.8]` rather than the corrected split**, because a second copy of a figure in a permitted site is how this gate came to reject a correct deployment five times. **No expectation, checklist line or section number changed** *(previously August 29, 2026 — **A sixth deployment artifact for the first time — `FlatWireSimConsole` (`D-33`).** §1.1 component 6; **new §1.2a** (it is a *distribution* decision, not a deployment step — and ⚠ **nothing enforces the installation policy**, `G66`); §1.3's *Console version* row (**do not** couple it to a `flatwire-v*` tag); §2 records it has **no environment row and needs none**; **new §4.7 (Step 7)**, optional and non-blocking. ⚠ **Never deploy it against `production`** *(previously August 26, 2026 — **this header contradicted §4.2's own gate and is now level with it.** It published `34 / 57 / 69` for `V1`/`V2`/`V3` while the body asserted **33 / 55 / 70** — the figures the DDL actually produces, and the ones [`../tools/deliverables/verify_schema_counts.py`](../tools/deliverables/verify_schema_counts.py) checks this file against. `[DBD §6.2]` remains the defining site; a header restating a count is how the gate drifted from the body in the first place, so it now points rather than repeats *(previously August 23, 2026 — **§“Verification” corrected for the third time: as written it again rejected a correct deployment.** `V1`/`V2`/`V3` asserted **32 / 50 / 57** — the 32 predated the 22 Aug rod ↔ order pair and the 50/57 were never re-derived after `D-31`. Corrected then to 34 / 57 / 69, counted from the DDL, with `[DBD §6.2]` named as the defining site)* *(previously August 22, 2026 — `V1`/`V2`/`V3` asserted 25/33/41 in SQL comments and 27/41/46 in the checklist beneath, and `V4` required the MVP-2 `sp_ShiftSummary`)* *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** **Deployment step 2 is cancelled** and §4.3 retained as the record; the 1→3→4→5 order no longer depends on the renames; `V7`/`V8`/`V9` dropped, `V10` kept *(previously August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)))*
 **Document Type:** Release overview, environments, pre-deployment, sequence, smoke suite
 **Status:** Baselined
 **Owner:** Release manager / IT
@@ -22,10 +22,25 @@
 | 3 | **`FlatWire.API`** | `dotnet publish` output | IIS application pool |
 | 4 | **`OPCConnection` configuration** | `appsettings.{Environment}.json` tag-path map | IIS (existing service) |
 | 5 | **`flat-wire`** | `ng build` static output, inside the shop-floor bundle | IIS static site |
+| 6 | **`FlatWireSimConsole`** *(new — `D-33`, 29 Aug 2026)* | `dotnet publish` WinForms EXE + `appsettings.json` | ⚠ **Engineering workstations only — never a commissioned line.** See §1.2a |
 
 ### 1.2 Deployment order — and why
 
 **1 → 3 → 4 → 5** *(step 2 cancelled — `D-32`, 18 Aug 2026)*. Database before API because the API's EF model and Dapper queries assume the tables exist. ~~The shared renames before the API because `FlatWire.API` writes `coils.coil_status`.~~ — **struck: `FlatWire.API` does not write `coils.coil_status`**, so that ordering constraint is gone with the migration. API before Angular because the Angular build is the last thing users see — if the API is not up, the UI shows an error rather than a blank screen, and rollback of a static bundle is the cheapest of the five.
+
+**Component 6 is outside that chain by design.** It is a desktop tool, it has no other component depending on it, and it must never gate a release of 1–5. Deploy it whenever, after 3.
+
+### 1.2a ⚠ Component 6 is a distribution decision, not a deployment step
+
+`FlatWireSimConsole` drives a subsystem that, with simulation off, talks to a real mill. Three rules:
+
+| Rule | Detail |
+|---|---|
+| **Where it goes** | Engineering and QA workstations, and the UAT room's second machine. **Not** the shop-floor panels, **not** the operator image, **not** a commissioned line |
+| **What protects it if that is ignored** | The server. With `SimulateOpcFeed` false every `/sim` route is **404** (`[SEC §8.8b]`), and the console shows a lock-out panel rather than a live-looking surface (`[SIM §9.4]`) |
+| **What is NOT enforced** | ⚠ **Nothing stops someone copying the EXE onto a production machine.** Installation policy is procedural — that residual is **`G66`**, and it is the one thing an unregistered Angular route gave for free |
+
+**It has no environment promotion path**, because it is a client of whichever environment its `appsettings.json` points at. Promote by pointing it at the next environment, not by rebuilding it.
 
 ### 1.3 Version and tag
 
@@ -33,6 +48,7 @@
 |---|---|
 | Release tag | `flatwire-v<major>.<minor>.<patch>` on both `ual-api` and `ual-angular` |
 | Schema version | The highest-numbered script applied, recorded in the deployment log |
+| **Console version** | ⚠ **Tagged with `ual-api`, but released on its own cadence** (`D-33`) — that independence is the point of the decision, so **do not couple its version to a `flatwire-v*` tag** |
 | Record before starting | The **currently deployed** tag for each component — you cannot roll back to a version you did not write down |
 
 ### 1.4 Release calendar
@@ -63,6 +79,8 @@
 | **production** | `uanet05` | *fill* | `FlatWireAPI_Prod` | shop-floor bundle | Live |
 
 **Promotion path:** `test1/test2` → `dev1/dev2` → `staging` → `production`. **No environment is skipped.** ~~The FW-001 renames must be exercised in at least one non-production environment that carries a realistic copy of the shared schema before they touch production.~~ — **struck 18 Aug 2026, `D-32`: nothing in this release alters the shared schema.**
+
+⚠ **`FlatWireSimConsole` (component 6) has no row above and needs none.** It is a desktop client, not a hosted component: it has no host, no app pool and no static site, and it reaches an environment by **configuration** rather than by promotion. It is installed on engineering workstations and points at whichever environment its `appsettings.json` names — see §1.2a. **It is never installed against `production`.**
 
 ### 2.1 Configuration per environment
 
@@ -161,7 +179,7 @@ SELECT RunId, PausedAt FROM dbo.RunPauseEvent WHERE ResumedAt IS NULL;
 
 ```powershell
 # 2.1 — go to the script folder. The :r includes are relative; running from anywhere else fails.
-cd "c:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Schema\SQL"
+cd "c:\UAL\Flatwire-planning\30-database\sql"
 
 # 2.2 — full build, in order. Idempotent and safe to re-run against an existing FlatWireDB.
 sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll.sql
@@ -250,9 +268,10 @@ SELECT COUNT(*) AS FkCount FROM sys.foreign_keys;
 --     filtered because the identity does not exist until the cross-database
 --     mint returns, so the column is NULL until then.
 --     UNCHANGED by the 23 Aug merge: nothing was ever indexed on SpoolTypeId.
---     The 64 in script 07 are 53 CREATE NONCLUSTERED plus 11 CREATE UNIQUE
---     NONCLUSTERED. See [DBD 6.8] PP-01 for why a deployed database reports
---     more indexes than the scripts create.
+--     [DBD 6.8] owns the nonclustered/unique split behind this figure -- it is
+--     not restated here, because a second copy is what let this gate drift.
+--     See [DBD 6.8] PP-01 for why a deployed database reports more indexes
+--     than the scripts create.
 --     NOTE: PRIMARY KEY and UNIQUE CONSTRAINT backing indexes are excluded below,
 --     which is what makes this match the script count.
 SELECT COUNT(*) AS IdxCount FROM sys.indexes
@@ -512,6 +531,37 @@ Copy-Item ".\dist\<bundle>\*" "<web-site-path>" -Recurse -Force
 - [ ] The shop-floor shell loads and `/flat-wire/status` renders DB1.
 - [ ] The browser network tab shows a **WebSocket** connection to `/hubs/flatwire` — **not** an SSE or long-poll fallback.
 - [ ] The `--color-*` design tokens resolve (no unstyled flash, correct semantic colours).
+
+### 4.7 Step 7 — `FlatWireSimConsole` *(component 6 — engineering workstations only)*
+
+⚠ **This step is optional and non-blocking.** Nothing depends on the console; a release of components 1–5 is
+complete without it. ⚠ **Do not run this step against `production`** — see §1.2a.
+
+```powershell
+cd "c:\UAL\Second-Branch\ual-api\Tools\FlatWireSimConsole"
+
+# 7.1 - publish a self-contained folder for the target environment
+dotnet publish -c Release -o "\\<share>\FlatWireSimConsole\<env>"
+
+# 7.2 - point appsettings.json at that environment's FlatWire.API, then copy
+#       the folder to the engineering workstation. There is no installer.
+```
+
+**Before deploying:**
+
+- [ ] The target environment is **not** `production`, and the line it will drive is **not** commissioned.
+- [ ] `appsettings.json` names the correct `FlatWire.API` base address and hub URL for that environment.
+- [ ] The recipient holds an `Engineering/Maintenance` or `Admin` account. ⚠ **Until `FW-145` lands, no role
+      claim is issued at all and every `/sim` call returns `401`/`403`** — that is expected, not a bad deploy.
+
+**Verification:**
+
+- [ ] Launching against an environment with simulation **off** shows the **lock-out panel** and nothing else,
+      and `GET /API.FlatWire/sim/state` returns **404** (`[SIM §9.4]`).
+- [ ] Launching against an environment with simulation **on** populates three line panels, and **FL2 shows
+      *"No live gauge · see Profile"*** rather than a flat line at target.
+- [ ] Setting `FlatWireSignalR:EnableMessagePack=false` and restarting the API leaves the console **unaffected**
+      — it uses the JSON protocol deliberately (`[SIM §9.3]`).
 
 ---
 

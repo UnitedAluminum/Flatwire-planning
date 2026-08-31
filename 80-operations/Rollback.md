@@ -1,7 +1,7 @@
 # Flat Wire Mill — Rollback Plan
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 18, 2026 — **`D-32`: there is no shared-schema migration.** **§6.3 cancelled** — the least-reversible element of the release no longer exists; `R1`, the FW-001 reverse row and `M3` amended *(previously August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
+**Last Updated:** August 29, 2026 — **§6.2 records that component 6, `FlatWireSimConsole`, is NOT in the rollback chain** (`D-33`). Nothing depends on it, it holds no state and it is absent from every production host, so it can never be the reason to roll back a release — and **deleting it is a valid end state**. Keep it out of the rollback rehearsal (`[DEP §3.6]`) and the maintenance-window budget *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** **§6.3 cancelled** — the least-reversible element of the release no longer exists; `R1`, the FW-001 reverse row and `M3` amended *(previously August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*
 **Document Type:** Rollback plan
 **Status:** Baselined — **rollback must be rehearsed before the first production deployment**
 **Owner:** Release manager / IT
@@ -33,6 +33,12 @@
 ### 6.2 Per-component rollback, in reverse dependency order
 
 Roll back **5 → 4 → 3 → 2 → 1** — the reverse of the deployment order.
+
+> ⚠ **Component 6, `FlatWireSimConsole`, is not in that chain and must not be added to it** (`D-33`, 29 Aug
+> 2026). Nothing depends on it, it holds no state, and it is not present on any production host, so it can
+> never be the reason to roll back a release. **To roll it back, copy the previous published folder over it —
+> or simply delete it**, which is a valid end state for a component whose absence breaks nothing. Do not let
+> it appear in a rollback rehearsal (`[DEP §3.6]`) or a maintenance-window budget.
 
 #### 6.2.1 Angular (cheapest, do first)
 

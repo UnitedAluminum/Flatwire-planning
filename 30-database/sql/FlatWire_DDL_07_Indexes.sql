@@ -403,6 +403,12 @@ GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_PSC_EdgerId' AND object_id = OBJECT_ID(N'dbo.PassScheduleComponent'))
     CREATE NONCLUSTERED INDEX [IX_PSC_EdgerId] ON [dbo].[PassScheduleComponent] ([EdgerId]) WHERE [EdgerId] IS NOT NULL;
 GO
+-- PassScheduleChangeLog.RunId is deliberately NOT indexed. [DBD 6.8] covers
+-- "every FK / RunId join column" and "(RunId) on every event table", and names
+-- exactly one index for this table -- the one below. RunId here is nullable
+-- context on an audit row ("NULL when made outside a run"), carries no FK and
+-- joins in no query path. FW-152 AC 4 reads "child/event"; the design says
+-- "event". Do not add one without moving [DBD 6.2]'s baseline.
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_PSChangeLog_PassScheduleId' AND object_id = OBJECT_ID(N'dbo.PassScheduleChangeLog'))
     CREATE NONCLUSTERED INDEX [IX_PSChangeLog_PassScheduleId] ON [dbo].[PassScheduleChangeLog] ([PassScheduleId], [Timestamp] DESC);
 GO

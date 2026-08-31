@@ -21,6 +21,7 @@ by looking for `.git`, so they work from any working directory.
 | [`build_status.py`](build_status.py) | every `*/tasks/FW-*.md` front-matter, the phase files, all four registers | [`STATUS.md`](../STATUS.md) | `--check`: STATUS.md is stale |
 | [`check_docs.py`](check_docs.py) | the same | nothing — reports | an unknown status, a dependency cycle, a blocker id in no register, backlog↔task drift, a task naming a phase that has no file, a stub in the wrong stream's folder |
 | [`linkcheck.py`](linkcheck.py) | every `.md` `.sql` `.html` `.js` `.py` | `_linkcheck_baseline.json` | a reference that resolved in the baseline and no longer does |
+| [`stamp_trial_status.py`](stamp_trial_status.py) | every `*/tasks/FW-*.md` front-matter | [`40-backend/tasks/TrialOrchestration.md`](../40-backend/tasks/TrialOrchestration.md) §2's sprint grids — **only** the `BE`/`FE`/`RT`/`DB` cells | `--check`: a glyph no longer matches its card's `status:`, or a grid names a story with no task file |
 | [`fwtasks.py`](fwtasks.py) | — | — | **Not a script** — the shared reader both generators import, so the board and the checker can never disagree about what a task file says |
 | [`init_tasks.py`](init_tasks.py) | `../60-delivery/TaskBreakdown.md` §7 | `*/tasks/FW-*.md` | — *(one-off, Stage 1; safe to re-run — it preserves bodies and rewrites only front-matter)* |
 | [`fix_task_links.py`](fix_task_links.py) | every text file | the same | the output-coil alpha count changing |
@@ -35,6 +36,7 @@ by looking for `.git`, so they work from any working directory.
 
 ```bash
 python tools/build_status.py     # regenerate the board after editing a task file
+python tools/stamp_trial_status.py   # re-stamp the trial grids from the same front-matter
 python tools/check_docs.py       # would CI pass?
 python tools/linkcheck.py        # did I break a path reference?
 ```
@@ -50,6 +52,7 @@ failures:
 
 ```bash
 python tools/build_status.py --check
+python tools/stamp_trial_status.py --check
 python tools/check_docs.py --strict
 python tools/linkcheck.py
 ```

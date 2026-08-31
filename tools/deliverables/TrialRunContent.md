@@ -238,9 +238,9 @@ The one place shorthand appears. Everywhere else in the workbook these are writt
 **Delivers:** Realistic live readings without a machine, and steerable — an in-tolerance run, a drifting one, an out-of-tolerance excursion or a line stop can each be reproduced on demand, so the screens are accepted against known conditions rather than whatever the plant happens to be doing.
 
 ### FW-214
-**Reference title:** Simulator control console — screen DB-S1
+**Reference title:** Simulator control console DB-S1 — standalone WinForms desktop tool
 **Work item:** Engineering console for the simulated machine
-**Delivers:** One screen an engineer drives all three simulated lines from, so the acceptance run is a few clicks rather than typed commands with a stopwatch — which matters because the run is performed in front of the client and one of its checks is a three-second stop measured against a five-second threshold. It is an engineering tool, not an operator screen: it is absent from the dashboard inventory and the navigation, and it does not exist at all once the system is connected to a real machine. Several of its controls arrive switched off, because the behaviour behind them is deliberately not being built for the trial.
+**Delivers:** One tool an engineer drives all three simulated lines from, so the acceptance run is a few clicks rather than typed commands with a stopwatch — which matters because the run is performed in front of the client and one of its checks is a three-second stop measured against a five-second threshold. It is a **separate desktop application, installed only where it is needed**, rather than part of the operator system: it is absent from the dashboard inventory and the navigation, it is restricted to engineering and administration accounts, and it stops working entirely once a line is connected to a real machine. Building it separately also means it can be changed and released without touching the operator screens. Several of its controls arrive switched off, because the behaviour behind them is deliberately not being built for the trial.
 
 ### FW-218
 **Reference title:** Trial control surface for the feed generator — steer, stop, drop, read

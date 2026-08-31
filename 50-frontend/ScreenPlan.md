@@ -1,7 +1,7 @@
 # Flat Wire Mill — Screen Plan
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 28, 2026 — ⚠ **The Mockups folder is 38 files / 19 HTML** — `dashboard_3_active_run_ual.html`, a **styling comparison build** (DB3 in the host app’s CSS at 1920×1080) plus five generated assets. The folder is still **flat**. Counts and the "composed for 5:4" statements updated — **18 of 19**, not all 19. Earlier: August 27, 2026 — **four corrections and three additions, from a review against the mockups folder and the requirement register.** ⚠ **§7.1 listed DB11 Roll Adjust as a screen; it is a dialog** (`roll_adjust.js`), which makes **five** run-event dialogs, not four. ⚠ **Appendix B said Roll Adjust is on FL1 — `FR-107` says it is not**, and `OI-11` is still carried as open although `FR-107`–`FR-109` answer it. ⚠ **The "27 HTML files" figure is 18**, and both denominators derived from it in §7.3 (*"25 of 27"*, *"26 of 27"*) are restated — **the named exceptions were always right**. ⚠ **§7.3 omitted `fw-modal.js` and four of the five dialog scripts.** Added: an MVP scope legend on the navigation map, a note that the mockups are the authority on content rather than on composition at the new **1920 × 1080** canvas, and a warning that `flat-wire-fit.js`'s hard-coded 1280 × 1024 design box is the mockup canvas and not the build target. *(previously August 25, 2026 — the dangling §9.4 pointer replaced by naming the two documents it meant *(previously August 13, 2026 — split out of `02-SRS.md`, `03-HLD-and-ERDiagram.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*
+**Last Updated:** August 29, 2026 — **§7.1's `DB-S1` row and callout restated for `D-33`** — four exclusions become five (*not in `ual-angular` at all*), and the *“it uses the shared chrome”* closing sentence is **withdrawn as false**. `simulator_console.html` is re-labelled a **layout reference**; it was never an Angular build target either, since `flat-wire`'s routing module never carried a `DB-S1` route *(previously August 28, 2026 — ⚠ **The Mockups folder is 38 files / 19 HTML** — `dashboard_3_active_run_ual.html`, a **styling comparison build** (DB3 in the host app’s CSS at 1920×1080) plus five generated assets. The folder is still **flat**. Counts and the "composed for 5:4" statements updated — **18 of 19**, not all 19. Earlier: August 27, 2026 — **four corrections and three additions, from a review against the mockups folder and the requirement register.** ⚠ **§7.1 listed DB11 Roll Adjust as a screen; it is a dialog** (`roll_adjust.js`), which makes **five** run-event dialogs, not four. ⚠ **Appendix B said Roll Adjust is on FL1 — `FR-107` says it is not**, and `OI-11` is still carried as open although `FR-107`–`FR-109` answer it. ⚠ **The "27 HTML files" figure is 18**, and both denominators derived from it in §7.3 (*"25 of 27"*, *"26 of 27"*) are restated — **the named exceptions were always right**. ⚠ **§7.3 omitted `fw-modal.js` and four of the five dialog scripts.** Added: an MVP scope legend on the navigation map, a note that the mockups are the authority on content rather than on composition at the new **1920 × 1080** canvas, and a warning that `flat-wire-fit.js`'s hard-coded 1280 × 1024 design box is the mockup canvas and not the build target. *(previously August 25, 2026 — the dangling §9.4 pointer replaced by naming the two documents it meant *(previously August 13, 2026 — split out of `02-SRS.md`, `03-HLD-and-ERDiagram.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*)*
 **Document Type:** Screen inventory, navigation map, shared chrome, mockup mapping
 **Status:** Baselined for build
 **Owner:** Frontend (Angular) stream
@@ -48,12 +48,12 @@ The **18** HTML files in [`Mockups/`](Mockups/) are the **approved visual baseli
 | **DM** | Die Management | `dashboard_die_management.html` | Maintenance | Machines App → Tooling Inventory |
 | **OEE** | OEE Dashboard | `dashboard_oee.html` | Supervisor / CI engineer | On demand |
 | — | Coil Spinner | `coil-spinner.html` | — | A component demo, not a screen |
-| **DB-S1** | Simulator Control Console — ⚠ **not an operator screen** | `simulator_console.html` | Engineer / Admin | Driving the machine model. **See the note below before treating this as one of the fifteen** |
+| **DB-S1** | Simulator Control Console — ⚠ **not an operator screen, and since `D-33` not an Angular screen at all** | `simulator_console.html` *(layout reference only)* | Engineer / Admin | Driving the machine model. **See the note below before treating this as one of the fifteen** |
 
 > ### ⚠ `DB-S1` is registered here so it is not lost, not because it is part of the suite
 >
 > The simulator control console ([`MachineSimulator.md`](../20-architecture/MachineSimulator.md) `[SIM §9]`,
-> story `FW-214`) is an **engineering tool**. Four exclusions, all deliberate:
+> story `FW-214`) is an **engineering tool**. Five exclusions, all deliberate:
 >
 > - **Not in the dashboard inventory count.** The suite is fifteen dashboards; this is not one of them and
 >   has no `FR-###` behind it.
@@ -61,11 +61,22 @@ The **18** HTML files in [`Mockups/`](Mockups/) are the **approved visual baseli
 >   actions.
 > - **No `DB##` number.** `DB-S1` sits deliberately outside the numbering so no reader mistakes it for one
 >   of the fifteen. Do not "tidy" it into the sequence.
-> - **Its route resolves only while simulation is on.** With `SimulatePLCTagPush` false the control endpoints
->   return **404, not 403** (`[SEC §8.8b]`).
+> - **It does not present a live surface while simulation is off.** With simulation off the control endpoints
+>   return **404, not 403** (`[SEC §8.8b]`), and the console shows a lock-out panel (`[SIM §9.4]`).
+> - ⚠ **Not in `ual-angular` at all.** `D-33` (29 Aug 2026) makes it a **standalone WinForms executable** in
+>   `ual-api/Tools/FlatWireSimConsole/`, released independently of the shop-floor bundle.
 >
-> It uses the shared chrome — topbar, fit script, `--color-*` tokens, `fw-modal.js` — because consistency is
-> free and divergence costs. That is not the same as being part of the suite.
+> ⚠ **It no longer uses the shared chrome.** The former note here read *"It uses the shared chrome — topbar,
+> fit script, `--color-*` tokens, `fw-modal.js` — because consistency is free and divergence costs."* That was
+> true of an Angular screen and is **false now**: none of those apply to a WinForms EXE, and `[SIM §9.3]`
+> carries the build rules that replaced them. Losing that consistency is the price of the decoupling, and it
+> was paid deliberately — §9.1's exclusions used to be convention while the console shipped in the operator
+> bundle, and are now structural.
+>
+> ⚠ **`simulator_console.html` stays in `mockups/` as the approved layout reference.** It is **not** an Angular
+> build target and never was one — `flat-wire`'s routing module never carried a `DB-S1` route. The three shared
+> scripts it loads (`flat-wire-topbar.js`, `flat-wire-fit.js`, `fw-modal.js`) no longer apply to it, and
+> `fw-modal.js` never did: the console opens no dialogs.
 
 > ⚠ **DB11 became a dialog and this table said otherwise until 27 Aug 2026.** Its launcher states it plainly — *"The screen this file used to hold now lives in `roll_adjust.js`"* — and the script exposes `window.openRollAdjust(ctx)`. **So there are five run-event dialogs, not four:** `spc_checkpoint.js` · `wip_rejection.js` · `roll_adjust.js` · `die_change.js` · `rod_checkout.js`. The parent `CLAUDE.md` still lists four and omits `roll_adjust.js`.
 >

@@ -8,15 +8,26 @@
 <!--
   DB-S1 — Machine Simulator Control Console
   Specification: ../../Architecture/MachineSimulator.md  [SIM §9]
-  Story:         FW-214 (24 h FE)
+  Story:         FW-214 (52 h FE / 36 h AI-assisted)
+
+  ⚠ LAYOUT REFERENCE ONLY — THIS IS NOT A BUILD TARGET. (D-33, 29 Aug 2026)
+     DB-S1 is a STANDALONE WINFORMS DESKTOP TOOL in ual-api/Tools/FlatWireSimConsole/,
+     released independently of ual-angular. This file stays as the approved visual
+     baseline for that layout; it was never an Angular build target either — flat-wire's
+     routing module has never carried a DB-S1 route.
+     The three shared scripts below no longer apply to the delivered console, and
+     fw-modal.js never did: this screen opens no dialogs at all.
+     Build rules for the real thing are [SIM §9.3]; the lock-out behaviour is [SIM §9.4].
 
   ⚠ THIS IS NOT A DASHBOARD. It is an engineering tool.
      - Not in the fifteen-dashboard inventory
      - Not in the operator navigation map
      - Not in the topbar "More Options" tiles
      - No DB## number, deliberately — "DB-S1" so no reader mistakes it for one of the fifteen
-     - The route resolves ONLY when simulation is on; with SimulatePLCTagPush false the
-       control endpoints return 404, not 403  ([SIM §2.4])
+     - It does NOT present a live surface when simulation is off: the control endpoints
+       return 404, not 403 ([SIM §2.4]), and the console shows a lock-out panel ([SIM §9.4])
+     - Since D-33 it is not in ual-angular at all — a separate EXE, installed only where
+       it is needed, never on a commissioned line (G66)
 
   Three things in here are easy to "fix" wrongly:
      1. FL2's gauge/width strips read "No live gauge · see Profile". They must NEVER draw a

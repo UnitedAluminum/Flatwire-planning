@@ -1,7 +1,7 @@
 # Flat Wire Mill — Machine Simulator and its Control Console
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 15, 2026 — first issue. Specifies the FL1/FL2/FL3 machine simulator (`FW-210`–`FW-215`, `FW-217`) and its engineering control console `DB-S1`. Supersedes nothing; **extends** `FW-203`, whose 8 h / 6 h figures and `[TRP §4]` schedule are unchanged
+**Last Updated:** August 29, 2026 — ⚠ **`D-33`: the console `DB-S1` is a standalone WinForms desktop tool, not an Angular screen.** §9 rewritten — a banner on the move, a fifth row on §9.1's exclusions, the seeding/lock-out notes on §9.2, **new §9.4** (what *"does not exist when simulation is off"* means for an executable, and the procedural residual **`G66`**), and **§9.3's build rules replaced wholesale** — the Angular chrome list (`--color-*`, `flat-wire-topbar.js`, `flat-wire-fit.js`, `fw-modal.js`, 14 px, `data-testid`) no longer applies to anything. §3.1's diagram node restated. ⚠ **The console is still a thin client and §2.1 still binds** — the models stay in `FlatWire.API` and the console adds no interface of its own; in particular **`SimLineState` is not widened** to fill the panels. `FW-214` is **52 h / 36 h AI-assisted**; the published 24 h / 15 h were the Angular sizing *(previously August 15, 2026 — first issue. Specifies the FL1/FL2/FL3 machine simulator (`FW-210`–`FW-215`, `FW-217`) and its engineering control console `DB-S1`. Supersedes nothing; **extends** `FW-203`, whose 8 h / 6 h figures and `[TRP §4]` schedule are unchanged)*
 **Document Type:** Design specification — the simulation subsystem
 **Status:** Proposed — no story scheduled beyond `FW-203`
 **Owner:** Architecture / Real-time stream
@@ -108,7 +108,7 @@ rule is its analogue for the simulation surface.
 
 ```mermaid
 flowchart TB
-  CONSOLE["DB-S1 console (FE)<br/>FW-214"]
+  CONSOLE["DB-S1 console<br/>standalone WinForms EXE<br/>FW-214 · D-33"]
   CTRL["Control API<br/>/sim/** · FW-215"]
   CORE["ILineModel × 3<br/>FL1 · FL2 · FL3<br/>state machine + kinematics + scenarios<br/>FW-210 · FW-213"]
   PUSH["SimulatePLCTagPush payload<br/>FW-212"]
@@ -403,7 +403,22 @@ reason to steer the machine model, and on a shopfloor panel the console must not
 
 ## 9. The console — `DB-S1`
 
-`FW-214`. Mockup: `../50-frontend/mockups/simulator_console.html`.
+`FW-214`. Layout reference: `../50-frontend/mockups/simulator_console.html`.
+
+> ⚠ **`DB-S1` is a standalone WinForms desktop tool, not an Angular screen — `D-33`, 29 Aug 2026.**
+> It lives in `ual-api/Tools/FlatWireSimConsole/` (`net8.0-windows`, its own `.sln`, beside the existing
+> `Tools/ConfigureAPI` WinExe) and builds and releases **independently of `ual-angular`**. It remains a **thin
+> client**: the `ILineModel` instances of §4 stay in `FlatWire.API`, and the console drives them over §8's
+> `/sim` endpoints and consumes the `[SIG §5.2]` hub. **§2.1 is unchanged and still binds — the console adds
+> no interface of its own.**
+>
+> **Why the move.** `flat-wire` is an Angular *library*, not a build target: it ships **inside the shop-floor
+> bundle** (`[DEP §1.1]`), and every environment build rebuilds all seventeen libraries plus the application.
+> §9.1 spends four rules insisting this is not part of the operator suite, and then it shipped in the operator
+> suite's bundle. A separate executable makes §9.1 structural rather than declarative.
+>
+> **Anything describing `DB-S1` as an Angular route, a `flat-wire` screen, or a consumer of
+> `flat-wire-topbar.js` / `flat-wire-fit.js` / `fw-modal.js` / the `--color-*` tokens is stale.**
 
 ### 9.1 ⚠ It is not a dashboard
 
@@ -413,9 +428,11 @@ reason to steer the machine model, and on a shopfloor panel the console must not
 | **Not** in the navigation map | `[SCR]` registers it explicitly as non-operator |
 | **Not** in the topbar *More Options* tiles | Those are operator actions |
 | **No** `DB##` number | `DB-S1` — deliberately outside the numbering so no reader mistakes it for one of the fifteen |
+| **Not in the operator application at all** | `D-33` — it is a separate executable, installed only where it is needed |
 
-It uses the shared chrome (topbar, fit, tokens, modal runtime) because consistency is free and divergence
-costs; that is not the same as being part of the suite.
+**Every one of those rules is stronger since `D-33`, not weaker.** The console used to satisfy the first four
+by convention while shipping in the same bundle as the fifteen; it now satisfies them by construction. The
+cost is that *"consistency is free"* no longer applies — the shared chrome is gone, and §9.3 replaces it.
 
 ### 9.2 Layout
 
@@ -435,14 +452,75 @@ Plus, global:
 - the active **`lbPerFt`** value, displayed, because §5.3 says it must not be buried
 - the noise **seed**, displayed and settable
 
-### 9.3 Build rules it inherits
+> ⚠ **The three panels seed from `GET /sim/state` and then live on the hub.** As built, `SimLineState` carries
+> **six fields** — line, running, footage, gauge offset, drift per tick, dropped-tick countdown. **Speed,
+> payoff weight, percent remaining, gauge and width actuals, line state and run status are not in it** and
+> come from `[SIG §5.2]` events 1–7. **Do not widen `SimLineState` to fill the panels**: §2.1 forbids the
+> simulator adding an interface of its own, and the control surface's own note warns that a console polling
+> that endpoint would be *a second telemetry path competing with the hub*.
 
-- `--color-*` semantic tokens from `flat-wire-shopfloor.styles.scss`. **Never `--fw-*`** — stale, `G18`
-- `flat-wire-topbar.js` once before `</body>`; `flat-wire-fit.js` **after** it; `data-fit="fill"`
-- `fw-modal.js` before any script that opens a dialog; **never stack dialogs**
-- **14 px minimum text**, form controls included
-- Footer buttons: the action carries an icon, the dismiss does not
-- `data-testid` on every control — `[SP §9.2]`'s DoD requires them and retrofitting costs ~16 h
+> ⚠ **The console does not open when simulation is off.** It probes `GET /sim/state` at startup and, on
+> **404**, shows a lock-out panel and nothing else. See §9.4 — this is the client half of `[SEC §8.8b]`, and
+> the server-side 404 remains the actual control.
+
+### 9.4 What "does not exist when simulation is off" means for an executable
+
+§2.4 and `[SEC §8.8b]` require the control surface to be **absent, not forbidden**. An Angular route honoured
+that by not resolving; an EXE cannot be unregistered. The guarantee splits into three parts, and only the
+first is enforced:
+
+| Layer | Strength |
+|---|---|
+| **The server refuses.** With `SimulateOpcFeed` false, `MapFlatWireSimControlSurface` returns before mapping anything, so every `/sim` route is **404**. **This is unchanged by `D-33` and is the real control** | **Enforced** |
+| **The console refuses to open.** It probes `GET /sim/state` at startup and shows a lock-out panel on 404, so it cannot present a live-looking surface against a commissioned line | **Enforced, client-side** |
+| **It is not installed on a commissioned line.** An EXE can simply be absent from the machine, where the `flat-wire` bundle shipped to every operator regardless | **Procedural — see `G66`** |
+
+**The net position is stronger, not weaker.** `[SEC §8.8b]` already says *"the 404 is the control; the role
+policy is the backstop, not the reverse"* — and the 404 is server-side. What `D-33` adds is that the tool is
+no longer distributed to machines that must never run it. What it gives up is that installation policy is a
+procedure rather than a build-time fact, which is **`G66`**.
+
+### 9.3 Build rules
+
+⚠ **These replaced the Angular chrome rules on 29 Aug 2026 (`D-33`).** The previous list — `--color-*` tokens,
+`flat-wire-topbar.js` then `flat-wire-fit.js`, `fw-modal.js`, the 14 px minimum, the footer-icon rule and
+`data-testid` — applied to an Angular screen and **no longer applies to anything**. It is preserved in
+[`CHANGELOG.md`](../CHANGELOG.md), not here.
+
+**Project**
+
+- `ual-api/Tools/FlatWireSimConsole/`, `net8.0-windows`, `<OutputType>WinExe`, **its own `.sln`**. The
+  precedent is `Tools/ConfigureAPI`, already a WinExe in that repository.
+- `Tools/` sits **outside `API/Directory.Packages.props`**, so this project pins its own package versions
+  inline, as `ConfigureAPI` does. Target `net8.0-windows` to match `FlatWire.API`'s `net8.0` — do **not** copy
+  `ConfigureAPI`'s older `net6.0-windows`.
+
+**The contract is referenced, never re-declared**
+
+- Link `FlatWire.Domain/Models/RealTime/HubContracts.cs` and `FlatWire.Domain/Enums/CanonicalEnums.cs` as
+  `<Compile Include …>` items. `HubContracts.cs` depends on nothing but those enums, so this costs **no
+  package graph** and no EF Core dependency.
+- ⚠ **Do not hand-write DTOs.** `HubContracts.cs` states *"names are the contract on both ends … a rename here
+  is a breaking change."* A .NET client compiles against the real types; `[SIG §5.6]`'s Angular mirror is a
+  hand-copy and `FW-135` maintains it. This is the one place the desktop client is strictly safer.
+
+**Transport**
+
+- `Microsoft.AspNetCore.SignalR.Client`, **on the JSON protocol**. ⚠ **Do not add the MessagePack protocol
+  package.** `FlatWire.API` registers `AddJsonProtocol` unconditionally beside the `EnableMessagePack` switch
+  and aligns both on **string enums** — a client built against MessagePack breaks the moment that switch is
+  turned off to measure, which `[SIG §4.1]` and `G10` say is expected to happen.
+- WebSockets + `SkipNegotiation`; JWT through `AccessTokenProvider`; `WithAutomaticReconnect()`;
+  `JoinLineGroup` / `LeaveLineGroup` with **re-join on reconnect**; hub callbacks marshalled to the UI thread.
+- Cached last-known state behind *"Reconnecting…"* — **never a blank screen** (`FR-119`).
+
+**Structure and identification**
+
+- **One `LinePanel` `UserControl`, instantiated three times.** The three lines differ by configuration, not by
+  three hand-built panels — the same rule §4 applies to the models.
+- Consistent `Control.Name` / `AccessibleName` on every control. ⚠ **`data-testid` is withdrawn**: it exists
+  for the Playwright suite (`[SP §9.2]`), which cannot drive WinForms, and `DB-S1` was never in an E2E
+  journey. **There is no UI-automation consumer today** — record that rather than inventing one.
 
 ---
 

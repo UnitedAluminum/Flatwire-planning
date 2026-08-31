@@ -1,7 +1,7 @@
 # Flat Wire Mill — Task Breakdown and Backlog
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 25, 2026 — **`FW-138`: fifteen controllers → fourteen (`P-53`, no `/rod/**` surface).** AC 1 restated; the hours cell deliberately unchanged, 42 h owed to the re-baseline. Earlier the same day: **`FW-224` recorded as reserved**; the FL2 `422` acceptance criterion withdrawn; `CoilNo` rename completed; object count 34 → 33 *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `FW-001` and `FW-002` **cancelled**; `FW-176`'s shared-`coils` column line cancelled with them; `FW-186`, `FW-201` and the FL1/FL2/FL3 machine story lose the acceptance criteria and dependencies that referenced them. **Phase 1C 221 → 138 h · Phase 7 205 → 182 h · Phase 1 1,110 → 1,027 h · baseline 116 / 3,292 h → 114 live / 3,186 h** *(earlier: **`G6` resolved on both blocked story cards** (`FW-145` and the Angular guard story): the six roles exist as JWT claims on `ClaimTypes.Role`; earlier still: **the machine simulator story set minted**: `FW-210`–`FW-215` (**111 h dev** — RT 64 · FE 24 · BE 23) and `FW-217` (+24 h), specified in [`MachineSimulator.md`](../20-architecture/MachineSimulator.md) `[SIM]`, gap **`G39`**. **Additive to `[CE §3b]`** like `FW-202`/`203`/`204`; **`FW-203` is unchanged** and becomes `FW-211`'s first increment. ⚠ **`FW-209` was already taken** — `FW-218` was the next free id and is now used; **the next free id is `FW-220`** (`FW-219` = the FL2/FL3 run-end shared write-back, minted 18 Aug 2026), and `FW-216` is deliberately skipped *(otherwise August 14, 2026 — **`FW-203`** (plant-data feed simulator, 8 h) and **`FW-204`** (minimal landing route, 8 h) minted for the trial run, both additive to `[CE §3b]` and both deliberately absent from `[SSP §5]`. Earlier same day: **`FW-202` minted** (FL1 spool completion — stop confirmation, weight basis and the `SpoolProcessing` write, **98 h**) and `FW-N02` reduced to Part A; gap **`G37`** *(otherwise August 13, 2026)* — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure)*. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*
+**Last Updated:** August 29, 2026 — **§7's `FW-214` card retargeted to WinForms (`D-33`): 24 → 52 h base, 15 → 36 h AI-assisted.** Ten acceptance criteria, a new **FL3 greyed** row (that endpoint returns 400 today — `PLC-Q08`/`G30`), the `GET /sim/state` row corrected to name its **six** fields, and dependencies **`FW-130`/`FW-135` → `FW-145`**. ⚠ **The 40 h of `FW-130`/`FW-135` is not recovered** — both serve the six operator screens *(previously August 25, 2026 — **`FW-138`: fifteen controllers → fourteen (`P-53`, no `/rod/**` surface).** AC 1 restated; the hours cell deliberately unchanged, 42 h owed to the re-baseline. Earlier the same day: **`FW-224` recorded as reserved**; the FL2 `422` acceptance criterion withdrawn; `CoilNo` rename completed; object count 34 → 33 *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `FW-001` and `FW-002` **cancelled**; `FW-176`'s shared-`coils` column line cancelled with them; `FW-186`, `FW-201` and the FL1/FL2/FL3 machine story lose the acceptance criteria and dependencies that referenced them. **Phase 1C 221 → 138 h · Phase 7 205 → 182 h · Phase 1 1,110 → 1,027 h · baseline 116 / 3,292 h → 114 live / 3,186 h** *(earlier: **`G6` resolved on both blocked story cards** (`FW-145` and the Angular guard story): the six roles exist as JWT claims on `ClaimTypes.Role`; earlier still: **the machine simulator story set minted**: `FW-210`–`FW-215` (**111 h dev** — RT 64 · FE 24 · BE 23) and `FW-217` (+24 h), specified in [`MachineSimulator.md`](../20-architecture/MachineSimulator.md) `[SIM]`, gap **`G39`**. **Additive to `[CE §3b]`** like `FW-202`/`203`/`204`; **`FW-203` is unchanged** and becomes `FW-211`'s first increment. ⚠ **`FW-209` was already taken** — `FW-218` was the next free id and is now used; **the next free id is `FW-220`** (`FW-219` = the FL2/FL3 run-end shared write-back, minted 18 Aug 2026), and `FW-216` is deliberately skipped *(otherwise August 14, 2026 — **`FW-203`** (plant-data feed simulator, 8 h) and **`FW-204`** (minimal landing route, 8 h) minted for the trial run, both additive to `[CE §3b]` and both deliberately absent from `[SSP §5]`. Earlier same day: **`FW-202` minted** (FL1 spool completion — stop confirmation, weight basis and the `SpoolProcessing` write, **98 h**) and `FW-N02` reduced to Part A; gap **`G37`** *(otherwise August 13, 2026)* — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure)*. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*)*
 **Document Type:** The MVP-1 shopfloor backlog — 116 story ids (**114 live**), the descope ladder, the coverage matrix
 **Status:** **Authoritative for MVP-1 shopfloor delivery** — **114 live stories / 3,186 h** *(re-baselined 18 Aug 2026 by `D-32`; previously **116 / 3,292 h**)*, plus **`FW-202`** *(new 14 Aug 2026, gap `G37`)*, which is **additive and deliberately outside that baseline**: its 98 h base / 136 h all-in is carried in `[TRP]` and is **not** folded into the 3,186 h or into Phase 8's 118 h.<br>⚠ **The baseline moved deliberately and this is the pass that moves it.** `D-32` cancels `FW-001` (56 h) and `FW-002` (4 h) outright and `FW-176`'s 16 h shared-`coils` column line, re-deriving **Phase 1C 221 → 138 h** and **Phase 7 205 → 182 h** from the reduced bases: **−106 h all-in.** Both phases sit wholly inside MVP-1, so the subtraction is valid whatever composition produced the 3,292 h. **Now cite "114 stories / 3,186 h"**, and expect the old pair to survive in documents this pass did not reach — the figure is quoted in five others and in `[CE]`, which is **not** re-derived (`[CE §8]`). **The 116 id count is unchanged** — ids are frozen and `FW-001`/`FW-002` keep theirs as cancelled cards.
 **Owner:** Delivery lead / programme management
@@ -1127,26 +1127,41 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
-###### FW-214 · Simulator control console — screen `DB-S1`
-**Hours:** 24 h FE · **Priority:** High · **Sprint:** **S2** *(trial scope, 15 Aug 2026)* · **Phase:** 5 · **Stream:** FE
+###### FW-214 · Simulator control console DB-S1 — standalone WinForms desktop tool
+**Hours:** 52 h FE · **Priority:** High · **Sprint:** **S2** *(trial scope, 15 Aug 2026)* · **Phase:** 5 · **Stream:** FE
+
+> ⚠ **Retargeted to WinForms 29 Aug 2026 — `D-33`. This is no longer an Angular screen.**
+> `DB-S1` becomes a **standalone WinForms desktop tool** in `ual-api/Tools/FlatWireSimConsole/`, built and
+> released independently of `ual-angular`. It stays a **thin client** — the machine model remains in
+> `FlatWire.API`, driven over `/sim` and the `FlatWireHub`, and `[SIM §2.1]` still binds.
+>
+> **Why.** `flat-wire` is an Angular *library*, not a build target: it ships **inside the shop-floor bundle**
+> (`[DEP §1.1]`), and every environment build wipes `dist/` and rebuilds all 17 libraries plus the app. An
+> engineering tool that `[SIM §9.1]` insists **is not a dashboard** was riding the operator app's release
+> train. A separate EXE severs that, and it can **not be installed** on a commissioned line at all.
+>
+> **The stream stays `FE`** — `FE` is the user-facing surface, not "Angular" — so no tooling changes.
+> ⚠ **`FW-130` and `FW-135` stop being dependencies of this story**; both remain in the plan for the six
+> operator screens, so **retiring the Angular console saves none of their 40 h**.
 
 > ⚠ **Brought into the trial 15 Aug 2026, and it ships with controls greyed — read this before building it.**
 > `[TRP §8]`'s acceptance run is executed **in front of the client during UAT**, and step 7 times a **3 s stop
 > against a 5 s dwell**. Driving that from a saved HTTP request collection with a stopwatch is where a sign-off
 > event goes wrong, which is why the screen is in and not just the API.
 >
-> **The screen is built whole; its backing is not.** This story's stated dependency is `FW-215` in full, which
+> **The console is built whole; its backing is not.** This story's stated dependency is `FW-215` in full, which
 > depends on `FW-210` (the kinematic model, 24 h) and `FW-213` (scenarios and faults, 16 h). **None of those
 > is in the trial** — making every control live is **+50 h AI-assisted**, which the window does not have. So
-> the trial builds the screen against **`FW-218`'s four endpoints** and **greys what has no backing**, exactly
+> the trial builds against **`FW-218`'s four endpoints** and **greys what has no backing**, exactly
 > as `[TRP §4]` greys Die Change, Roll Adjust and *Browse spool queue* on shipped screens.
 >
 > | Control | Trial |
 > |---|---|
 > | **Stop** · speed slider · gauge/width nudges | ✅ live — `DELETE /sim/{lineId}/run`, `POST /sim/{lineId}/steer` |
 > | **Drop readings** fault | ✅ live — the one fault `FW-218` carries |
-> | Live readouts · dual state badges · target-vs-actual strips | ✅ live — `GET /sim/state` on load, then the hub |
+> | Live readouts · dual state badges · target-vs-actual strips | ✅ live — ⚠ **`GET /sim/state` seeds only six fields** (`Line`, `Running`, `FootageFt`, `GaugeOffsetIn`, `DriftPerTickIn`, `DropTicksRemaining`); **speed, payoff weight, remaining %, gauge/width actual, line state and run status all come from the hub** |
 > | **Start** | ⚪ greyed — the trial starts runs through check-in, not the simulator (`POST /sim/{lineId}/run` is out) |
+> | **The whole FL3 panel** | ⚪ greyed — `SimControlSurface` returns **400** for `FL3` today (`PLC-Q08` / `G30`) |
 > | **Scenario picker** (`InSpec`/`Drifting`/`OutOfSpec`/`Erratic`/`ToTarget`) | ⚪ greyed — whole-run shapes need `FW-210` |
 > | **Six of the seven fault buttons** | ⚪ greyed — `FW-213`. ⚠ `WeightVariance` would be inert anyway: `AlloyProperty.LbPerFtFactor` is seeded NULL (`OQ-10`) |
 > | Seed, displayed and settable | ⚪ greyed — determinism is `[SIM §5.7]`, which needs the model |
@@ -1156,20 +1171,23 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 > deleted control is rework. The mockup already draws all of them.
 
 **As an** engineer,
-**I want** one screen that drives all three simulated lines,
+**I want** one tool that drives all three simulated lines,
 **So that** a demo, a UAT rehearsal or a bug reproduction is a few clicks rather than a config edit.
 
 **Acceptance Criteria:**
-- [ ] Three line panels per `[SIM §9.2]` — dual state badges (**run status and line state are different things**), start/stop/pause, scenario picker, live speed/footage/weight readouts, target-vs-actual strips, speed slider, the seven fault buttons
+- [ ] A **standalone WinExe** at `ual-api/Tools/FlatWireSimConsole/`, `net8.0-windows`, **its own `.sln`** — it builds and releases without `ual-angular` and without the `FlatWire.API` solution
+- [ ] Three line panels per `[SIM §9.2]` — dual state badges (**run status and line state are different things**, `[SIM §4.4]`), start/stop/pause, scenario picker, live speed/footage/weight readouts, target-vs-actual strips, speed slider, the seven fault buttons. **One `UserControl`, instantiated three times**
 - [ ] **FL2's gauge/width strips render *"No live gauge · see Profile"*** — **never a flat line at target**, which reads as a real in-spec measurement. `[TRP §8]` calls this the single most likely thing to ship wrong
 - [ ] Global: a **simulation on/off indicator that reads configuration, not UI state**; the active **`lbPerFt`**; the noise **seed**, displayed and settable
 - [ ] ⚠ **Not a dashboard** (`[SIM §9.1]`) — absent from the fifteen-dashboard inventory, the navigation map and the topbar *More Options* tiles. It carries **no `DB##` number** deliberately
-- [ ] Built to the shared chrome: `--color-*` tokens *(**never** `--fw-*`, `G18`)* · `flat-wire-topbar.js` then `flat-wire-fit.js` with `data-fit="fill"` · `fw-modal.js` before any dialog and **never stacked** · **14 px minimum text** including form controls · action button carries an icon, dismiss does not
-- [ ] `data-testid` on every control — `[SP §9.2]`'s DoD requires them and retrofitting costs ~16 h
-- [ ] Route resolves **only** when simulation is on
+- [ ] **The contract is referenced, never re-declared.** Link `FlatWire.Domain/Models/RealTime/HubContracts.cs` and `Enums/CanonicalEnums.cs` as `<Compile Include …>` items — they depend on nothing but each other, so this costs no package graph. ⚠ **Do not hand-write DTOs**: `HubContracts.cs` records that *"names are the contract on both ends"*
+- [ ] **`Microsoft.AspNetCore.SignalR.Client` on the JSON protocol.** ⚠ **Do not add the MessagePack protocol package** — `FlatWire.API` registers `AddJsonProtocol` unconditionally and aligns both protocols on **string enums**, and a client built against MessagePack breaks the moment `FlatWireSignalR:EnableMessagePack` is turned off to measure
+- [ ] Hub client: WebSockets + `SkipNegotiation`, JWT via `AccessTokenProvider`, `WithAutomaticReconnect()`, **line-group re-join on reconnect**, and cached last-known state behind *"Reconnecting…"* — **never a blank screen** (`FR-119`)
+- [ ] ⚠ **The console must not open when simulation is off.** Probe `GET /sim/state` at startup; on **404**, show a lock-out panel and nothing else. The server-side 404 remains the control (`[SEC §8.8b]`) — this is the client half of it
+- [ ] Consistent `Control.Name` / `AccessibleName` on every control. ⚠ **`data-testid` no longer applies** — it exists for the Playwright suite (`[SP §9.2]`), which cannot drive WinForms, and `DB-S1` was never in an E2E journey
 
-**Rate-card basis:** new dashboard screen @ **24 h** (§2) — `simulator_console.html` is the approved visual spec, so no design time is included. **15 h AI-assisted** at `[DE §1]`'s 0.62 frontend factor, which is the figure `[TRP §4]` schedules. ⚠ **The 24 h is unchanged by the greying** — the screen is drawn whole either way, and a disabled control costs the same as an enabled one to lay out
-**Dependencies:** **`FW-218`** *(trial — four endpoints; `FW-215` in full is the post-trial dependency)*, FW-135, FW-130
+**Rate-card basis:** **52 h**, itemised — scaffold/config/linked contracts 5 · auth 5 · REST client 4 · **SignalR client 12** · line panel 12 · FL2 variant + FL3 greying 3 · global bar and control log 4 · greying rules 2 · simulation-off probe 2 · packaging and the `[DEP]` entry 3. **36 h AI-assisted** at `[DE §1]`'s **0.70 desktop-client** factor. ⚠ **The 0.62 frontend factor does not apply** — its stated basis is that conversion of an approved mockup to Angular components against one token system *"is largely mechanical"*, and that is precisely what the move gives up. ⚠ **The published 24 h / 15 h are the retired Angular sizing** (`D-33`). The greying still changes nothing: the console is drawn whole either way
+**Dependencies:** **`FW-218`** *(trial — four endpoints; `FW-215` in full is the post-trial dependency)*, **`FW-145`** *(no role claim is issued today, so `RequireAuthorization(Roles = "Engineer,Admin")` denies every caller — this blocks the acceptance run and is **not** affected by the technology choice)*
 **Blockers:** —
 
 ---

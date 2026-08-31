@@ -134,11 +134,15 @@ DDL files are **numbered by execution order**: `00` database → `01` Lookup →
 > ⚠ **Deploy to the SHARED instance, not LocalDB.** `FlatWireDB` must sit alongside `united_db` /
 > `proddb` / `CommonDB`, because check-in spans them in **one** `SqlTransaction` under the local
 > transaction manager with no MSDTC (`[INT §8.0]`, `[ARC §10]`). LocalDB has no `united_db`, so a
-> build validated only there silently loses atomicity.
+> build validated only there silently loses atomicity. **The instance is `DEV00164-001`** — it is
+> where that atomicity was actually proven (`is_local = 1`, `is_enlisted = 0`, 26 Aug 2026), and it
+> is `[DEP §2]`'s database server for `test1`. ⚠ **`DEVUAL-UADEV001\TEST1` is retired for
+> `FlatWireDB`** — anything describing its pre-`Q60`, unseeded copy as a rebuild that is *owed*
+> describes an abandoned instance.
 
 ```powershell
 cd "c:\UAL\Flatwire-planning\30-database\sql"
-sqlcmd -S "DEVUAL-UADEV001\TEST1" -E -C -i FlatWire_DDL_RunAll.sql   # SQLCMD mode required (:r)
+sqlcmd -S "DEV00164-001" -E -C -i FlatWire_DDL_RunAll.sql            # SQLCMD mode required (:r)
 sqlcmd -S "<server>" -E -C -i FlatWire_DDL_99_Teardown.sql           # drop everything
 ```
 

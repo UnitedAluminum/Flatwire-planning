@@ -1,7 +1,7 @@
 # Six-Screen Trial Run — Execution Orchestration (30 Sep 2026)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 25, 2026 — **trial controllers 8 → 7, five of which serve a screen** (`FW-138` `P-53`), with a warning that DB2's rod scan has no endpoint until `P-54` closes. Change history is in [`CHANGELOG.md`](../../CHANGELOG.md)
+**Last Updated:** August 29, 2026 — **§9 added: what is actually built, measured against `ual-api`, `ual-angular` and the deployed `FlatWireDB`, and grouped by phase × stream in §9.6, and §2's three sprint grids re-cut with `BE`/`FE`/`RT`/`DB` columns **and a status glyph on every story**, stamped from the front-matter by `tools/stamp_trial_status.py`.** The backend spine is committed and green; ⛔ **six Phase-4–8 services are de-stubbed but uncommitted (§9.2), the frontend is a scaffold (§9.4), and the deployed database predates the `Q60` spool swap and is unseeded (§9.5)**. **`1B` holds 16 of the trial's 17 `done` stories; phases 3–8 hold 30 and none is `done`.** Change history is in [`CHANGELOG.md`](../../CHANGELOG.md)
 **Document Type:** Execution index and story map for the 30 Sep trial run
 **Status:** Active — **the trial-scope companion to [Orchestration.md](Orchestration.md)**
 **Owner:** Delivery lead, across all four streams
@@ -24,6 +24,10 @@
 >
 > ⚠ **The trial is not MVP-1 feature-complete** — *"30 Sep is a trial-run date, not an MVP-1
 > feature-complete date"* (`[RM]`). **330 h of MVP-1 work is deferred out of it**, §5.
+>
+> **§1–§8 are the plan. [§9](#9-where-the-build-actually-is--measured-29-aug-2026) is the
+> measurement** — what exists in `ual-api` / `ual-angular` / `FlatWireDB` today, which is the one
+> thing [`STATUS.md`](../../STATUS.md) cannot tell you.
 
 ---
 
@@ -73,6 +77,14 @@ template** to work from anyway.
 `[TRP §4]`. **832 h total**; the four new stories (`FW-202`, `FW-203`, `FW-204`, `FW-218`) plus
 `FW-214` are **additive to `[CE §3b]`**.
 
+**Status glyph on every story:** ✅ done · 🔵 in-review · 🟡 in-progress · ⛔ blocked · ⬜ not-started · ⊘ cancelled — `build_status.py`'s
+vocabulary, so a glyph means here what it means on [`STATUS.md`](../../STATUS.md).
+
+> ⚠ **The glyphs are STAMPED FROM the task front-matter, never typed.**
+> `python tools/stamp_trial_status.py` writes them from each card's `status:`, and `--check` fails
+> when they drift. **To change one, change the task file and re-stamp** — a status typed here would
+> be a second register to contradict the first, which is what §8 forbids.
+
 > **Sequencing within a sprint is `[TRP §3]`'s, not this file's.** It is not restated here —
 > duplicating a sequence is how the six PLC tag-map copies happened. Two ordering constraints
 > are load-bearing enough to name, and both are already in the owning plans:
@@ -87,12 +99,15 @@ template** to work from anyway.
 
 ### T1 — Phase 1 platform · 409 h
 
-| Stream | Stories | h |
-|---|---|---|
-| **FE** | `FW-N03` · `FW-130` · `FW-131` · `FW-132` · **`FW-133` 75** · `FW-134` | 139 |
-| **BE** | [FW-N04](FW-N04.md) · [FW-138](FW-138.md) *(7 controllers, `P-53`)* · [FW-139](FW-139.md) · [FW-140](FW-140.md) · [FW-141](FW-141.md) · [FW-142](FW-142.md) · [FW-143](FW-143.md) · [FW-144](FW-144.md) · [FW-145](FW-145.md) · [FW-146](FW-146.md) · [FW-147](FW-147.md) · [FW-148](FW-148.md) · [FW-207](FW-207.md) · [FW-208](FW-208.md) | 145 |
-| **RT** | `FW-135` · `FW-136` · `FW-137` *(Angular)* · [FW-080](FW-080.md) · [FW-149](FW-149.md) | 60 |
-| **DB** | ~~`FW-002`~~ *(cancelled, `D-32`)* · `FW-152` · `FW-005` · `FW-004` · `FW-006` · **`FW-007` 31** | 65 *(62 after `D-32`; published figure held — see `[TRP §2.1]`)* |
+| Phase | BE | FE | RT | DB |
+|---|---|---|---|---|
+| **1A** | — | ✅ `FW-N03` · ⬜ `FW-130` · ⛔ `FW-131` · ⬜ `FW-132` · ⬜ **`FW-133` 75** · ⬜ `FW-134` | ⬜ `FW-135` · ⬜ `FW-136` · ⛔ `FW-137` *(Angular, §1.2)* | — |
+| **1B** | ✅ [FW-N04](FW-N04.md) · ✅ [FW-138](FW-138.md) *(7 controllers, `P-53`)* · ✅ [FW-139](FW-139.md) · ✅ [FW-140](FW-140.md) · ✅ [FW-141](FW-141.md) · ✅ [FW-142](FW-142.md) · ✅ [FW-143](FW-143.md) · 🔵 [FW-144](FW-144.md) · ⛔ [FW-145](FW-145.md) · ✅ [FW-146](FW-146.md) · ✅ [FW-147](FW-147.md) · ✅ [FW-148](FW-148.md) · 🔵 [FW-207](FW-207.md) · ✅ [FW-208](FW-208.md) | — | 🔵 [FW-080](FW-080.md) · 🔵 [FW-149](FW-149.md) | — |
+| **1C** | — | — | — | ⊘ ~~`FW-002`~~ *(cancelled, `D-32`)* · 🔵 `FW-152` · ⬜ `FW-005` · ⬜ `FW-004` · ⬜ `FW-006` · ⬜ **`FW-007` 31** |
+| **h** — `[TRP]`'s, **per stream** | **145** | **139** | **60** | **65** *(62 after `D-32`; published figure held — see `[TRP §2.1]`)* |
+
+> ⚠ **T1's hours stay on the axis `[TRP]` published them on — the stream — so they are the footer,
+> not the rows.** No per-phase figure exists and none is derived here (§8).
 
 > **`FW-133` (75 h) is the single largest story in the trial and all six screens depend on
 > it** — `pass-schedule-table`, `confirm-bar`, `gauge-trace-chart`, `tab-wizard`,
@@ -100,22 +115,25 @@ template** to work from anyway.
 
 ### T2 — check-in and the run monitor · 280 h
 
-| Group | Stories | h |
-|---|---|---|
-| **1B close-out** | [FW-150](FW-150.md) · [FW-151](FW-151.md) · [FW-205](FW-205.md) · [FW-203](FW-203.md) *(for `FW-N05`)* · [FW-218](FW-218.md) | 53 |
-| navigation | `FW-204` · `FW-153` · `FW-155` | 15 |
-| **Phase 4** | `FW-061` · [FW-157](FW-157.md) · `FW-159` · [FW-082](FW-082.md) | 74 |
-| **Phase 5** | `FW-062` · `FW-162` · `FW-081` · `FW-163` · [FW-164](FW-164.md) · `FW-165` · `FW-214` | 89 |
-| **Phase 6** *(start)* | `FW-065` · `FW-071` · [FW-168](FW-168.md) · [FW-170](FW-170.md) · `FW-171` | 49 |
+| Group | BE | FE | RT | DB | h |
+|---|---|---|---|---|---|
+| **1B close-out** | ✅ [FW-218](FW-218.md) | — | ✅ [FW-150](FW-150.md) · ✅ [FW-151](FW-151.md) · ✅ [FW-205](FW-205.md) · ✅ [FW-203](FW-203.md) *(for `FW-N05`)* | — | 53 |
+| navigation | — | ⬜ `FW-204` · ⬜ `FW-153` | — | 🔵 `FW-155` | 15 |
+| **Phase 4** | 🔵 [FW-157](FW-157.md) | ⬜ `FW-061` | ⬜ [FW-082](FW-082.md) | 🔵 `FW-159` | 74 |
+| **Phase 5** | ⬜ [FW-164](FW-164.md) | ⬜ `FW-062` · ⬜ `FW-162` · ⬜ `FW-081` · ⬜ `FW-163` · ⬜ `FW-214` | — | 🔵 `FW-165` | 89 |
+| **Phase 6** *(start)* | ⛔ [FW-168](FW-168.md) · ⬜ [FW-170](FW-170.md) | ⬜ `FW-065` · ⬜ `FW-071` | — | 🔵 `FW-171` | 49 |
 
 ### T3 — exceptions, completion, FL2 · 143 h
 
-| Group | Stories | h |
-|---|---|---|
-| Phase 6 close | [FW-172](FW-172.md) | 7 |
-| **Phase 7** | `FW-067` · [FW-174](FW-174.md) · `FW-176` · [FW-177](FW-177.md) | 31 |
-| **new** | **`FW-202` 67** — FL1 spool completion, Part B | 67 |
-| **Phase 8** | `FW-064` · `FW-178` · [FW-179](FW-179.md) · `FW-180` · [FW-181](FW-181.md) | 38 |
+| Group | BE | FE | RT | DB | h |
+|---|---|---|---|---|---|
+| Phase 6 close | — | — | ⬜ [FW-172](FW-172.md) | — | 7 |
+| **Phase 7** | ⬜ [FW-174](FW-174.md) | ⬜ `FW-067` | ⬜ [FW-177](FW-177.md) | 🔵 `FW-176` | 31 |
+| **new** | — | ⛔ **`FW-202` 67** — FL1 spool completion, Part B | — | — | 67 |
+| **Phase 8** | ⬜ [FW-179](FW-179.md) | ⬜ `FW-064` · ⬜ `FW-178` | ⬜ [FW-181](FW-181.md) | 🔵 `FW-180` | 38 |
+
+> ⚠ **`FW-202` is columned `FE` because that is its card's `stream:`**, while this table files it as
+> **new T3 work** and its plan lives in this Backend folder — the `G62` mismatch §9.6 records.
 
 > ⚠ **`FW-202` must land *before* Phase 8 starts, not beside it** — it writes the `SpoolProcessing` row
 > DB5 reads. `[TRP §3]`: *"In a five-day sprint that is a real sequencing constraint, not a
@@ -242,6 +260,13 @@ that gap warns about.
   factors and **disagree on Phase-1B RT by up to 19 h.**
 - **FE and DB rows name owning documents, not plans** — this folder is Backend-scoped and
   §1.2 explains the one deliberate exclusion.
+- **Story status in §2 is stamped, not typed** — `python tools/stamp_trial_status.py` writes each
+  glyph from its card's `status:`, and `--check` fails when the grids drift. ⚠ **Never hand-edit a
+  glyph**: change the task file and re-stamp, exactly as [`STATUS.md`](../../STATUS.md) works.
+- ⚠ **§9 is a dated measurement, not a second status register.** Re-measure it against the repos
+  and re-date it; **never hand-edit a story's status there.** Status lives in the task
+  front-matter and renders into [`STATUS.md`](../../STATUS.md) — a status typed here would be
+  the next contradiction.
 - Changes go in [`CHANGELOG.md`](../../CHANGELOG.md) — **do not add a change log here.**
 
 ### 8.1 Two findings carried from `[TRP §1.4]`
@@ -253,3 +278,176 @@ Both hours-bearing, reported not fixed — see
    row in `[TRP §1.4]`.
 2. **`[TRP §1.4]`'s 1B Full column sums to 260 against a stated 268.** *(The Trial column
    reconciles exactly to 231.)*
+
+---
+
+## 9. Where the build actually is — measured 29 Aug 2026
+
+Sections 1–8 describe what the trial **plans**. This one records what **exists in the
+implementation repos**: `ual-api` branch `feature/UADEV-23146`, `ual-angular`
+`projects/flat-wire/`, and `FlatWireDB` on `DEVUAL-UADEV001\TEST1`.
+
+> **Per-story status is the task front-matter's, and [`STATUS.md`](../../STATUS.md) renders it —
+> neither is restated here.** What follows is the one thing no generated page in this repo
+> tracks: the state of the **code and the database themselves**. Where a measurement and a
+> status field disagree, §9.2 says so rather than quietly resolving it.
+
+### 9.1 Backend — the trial's spine is built and committed
+
+`FlatWire.sln` **builds: 0 errors**, 14 warnings, all pre-existing analyzer noise. Three commits:
+the four-project skeleton, fifteen controllers, and *"the real-time spine, complete"*.
+
+| Landed | What is in the repo |
+|---|---|
+| Clean-Architecture skeleton | `FlatWire.{API,Application,Domain,Infrastructure}`, on `[ARC §2.2]`'s `CoilCheckin` template |
+| **15 controllers · 22 actions** | `PassScheduleController` and `ShiftSummaryController` are scaffolded **action-less**. §3's *"7, of which 5 serve a screen"* is the **trial-path** count, not the file count |
+| Real-time spine | `OpcFeedSimulator` → `ReadingChannel` → `BroadcastLoopService` → `FlatWireHub` / `FlatWireBroadcaster`, plus `ITInhibitService` and `PLCTagService` |
+| **`/sim` control surface** | Four endpoints — `steer`, `DELETE run`, `fault`, `GET state`. §7's `G43` answer **exists**, is auth-gated, and 404s wholesale when `SimulateOpcFeed` is false (`[SIM §2.4]`) |
+| Stub/real swap | `useMockData` binds **twelve service pairs** once at startup (`FW-140` `P-11`) |
+
+**All five T2 "1B close-out" stories are `done`** — `FW-150`, `FW-151`, `FW-203`, `FW-205`,
+`FW-218`. The simulator → channel → drain → broadcast → `RunReading` path runs end to end.
+
+### 9.2 ⚠ Six services are de-stubbed in the working tree and **not committed**
+
+Staged on the same branch, compiling, and **reflected in no status field**. Front-matter still
+reads `not-started` for every story below except `FW-168`, which reads `blocked`:
+
+| Service | in `HEAD` | staged | Stories |
+|---|---|---|---|
+| `CheckInService` | 38 L, 2 throws | **1165 L, 0** | `FW-157` rod · `FW-179` spool |
+| `RunService` | 86 L, 6 throws | **841 L, 1** | `FW-164` reads · `FW-170` pause/resume |
+| `CheckOutService` | 32 L, 1 throw | **526 L, 0** | `FW-174` Mode P/A/B |
+| `SpcService` | 32 L, 1 throw | **479 L, 0** | `FW-168` — ⛔ card reports a **blocking mapping defect**, so compiling is not passing |
+| `SpoolService` | 38 L, 2 throws | **364 L, 1** | `FW-179` `GET /spools` |
+| `WipRejectionService` | 32 L, 1 throw | **285 L, 0** | `FW-174` |
+
+⚠ **Uncommitted work is not delivered work.** It sits on one machine, has had no review, and
+`[TS §1.2]` struck automated tests from the DoD — so the only evidence it behaves is §6's
+**manual contract walkthrough, whose `reviewer:` is still `TBD`**.
+
+### 9.3 Still throwing — and six of the seven correctly
+
+A `NotImplementedException` naming its owner is the **designed** state (`FW-140` `P-64`). These
+are §5's deferrals working as intended, not gaps:
+
+| Throws | Owner | Trial position |
+|---|---|---|
+| `LineStatusService` | `FW-154` | ✅ deferred — DB1, §5 |
+| `PayoffStagingService` ×4 | `FW-158` | ✅ deferred — DB2A, §5; check-in runs without `RodStaging` |
+| `WeldEventService` · `RunService.GetRunWeldEventsAsync` | `FW-166` | ✅ deferred — the weld marker layer renders empty, §3 |
+| `DieChangeService` | `FW-167` | ✅ deferred — grey the DB3 button, §5 |
+| `RollAdjustService` | `FW-169` | ✅ deferred — FL2/FL3 only, §5 |
+| `CoilService` ×2 | `FW-185` | ✅ Phase 9, wholly outside the trial |
+| **`SpoolService.CompleteSpoolAsync`** | **`FW-202`** | ⛔ **in the trial, and `blocked` on `Q10`** |
+
+⛔ **`FW-202` is the one throw that is not a descope.** It is §2's *"before Phase 8 starts, not
+beside it"* story, it writes the `SpoolProcessing` row DB5 reads, and it is the **only T3 story
+carrying `status: blocked`**. §5 keeps Part B as `Must`.
+
+### 9.4 Frontend — scaffold only, zero of six screens
+
+`projects/flat-wire/` exists and is `FW-N03`, **done 28 Aug 2026**: `flat-wire.module.ts`,
+`flat-wire-routing.module.ts`, `flat-wire-auth.guard.ts`, `public-api.ts` and a
+`FlatWirePlaceholderComponent`. `components/`, `services/`, `models/`, `styles/` and `guards/`
+are otherwise **`.gitkeep` directories**.
+
+⚠ **Nothing downstream of the scaffold has started** — including `FW-130` (the shell and the
+1280×1024 canvas, buildable now that `FW-N03` has landed), **`FW-133`**, which §2 calls *"the
+single largest story in the trial and all six screens depend on it… not trimmable"*, and the
+three Angular stories §1.2 excludes, `FW-135` / `FW-136` / `FW-137`.
+
+The approved visual baseline is still only the static mockups in `50-frontend/mockups/`.
+
+### 9.5 ⛔ The deployed database is pre-`Q60` and unseeded
+
+`FlatWireDB` **is deployed to the shared instance** beside `united_db` / `proddb` / `commondb` —
+which is what `[INT §8.0]`'s single-`SqlTransaction` check-in requires, and which LocalDB would
+have broken silently. **34 tables · 57 FKs · 126 indexes · 145 check constraints · 1 procedure.**
+
+Two things stop it serving a trial run as it stands.
+
+**1 — It predates the 23 Aug `Spool` / `SpoolProcessing` swap (`Q60`).**
+
+| | DDL and `ual-api` expect | deployed instance has |
+|---|---|---|
+| the material in process | **`SpoolProcessing`** | ⛔ absent |
+| retired the same day | — | ⛔ `SpoolConfiguration` · `SpoolCarrier` still present |
+| **`Spool`** | the article — **no `Alpha` at all** | ⛔ carries `Alpha` |
+
+`SpoolProcessingConfiguration` maps `ToTable("SpoolProcessing")`, so **every spool read and write
+fails at runtime against this instance**; and the `Spool.Alpha` half is precisely the rename
+CLAUDE.md flags as *silently wrong rather than obviously stale*. The fix is a re-run of
+`FlatWire_DDL_RunAll.sql` — every script guards its objects, and `99_Teardown` exists.
+
+**2 — Nothing is seeded.** `PayoffPosition` holds 3 rows; **every other table holds 0.** Three of
+those are load-bearing for the trial:
+
+| Empty | Consequence |
+|---|---|
+| `Stand` | `TC-115` asserts **three** `FM2` rows and there are none. Roll diameter is *data* (`D-26`) and the data is absent |
+| `AlloyProperty` | ⚠ **Worse than §4 records.** `Q10` / `OI-45` call `LbPerFtFactor` *"seeded NULL"* — the **whole table is empty**, so `Q22`'s min/max band has no row either and `FW-168`'s server-side verdict has nothing to judge against |
+| `PassSchedule` | **MVP-1 reads one and never authors one.** With none seeded, check-in has nothing to acknowledge — and that acknowledgement is what pushes the PLC tags |
+
+`30-database/sql/FlatWire_SampleData_*.sql` exists and **has not been run**.
+
+### 9.6 By phase and stream
+
+All 66 trial stories, on the task front-matter's own `phase:` and `stream:` fields. ✅ **The stream
+totals reconcile exactly with §1's coverage table** — BE 21 · RT 13 · FE 20 · DB 12.
+
+| Phase | BE | RT | FE | DB | |
+|---|---|---|---|---|---:|
+| **1A** Angular foundation | — | ⛔ 1 · ⬜ 2 | ✅ 1 · ⛔ 1 · ⬜ 4 | — | 9 |
+| **1B** Backend foundation | ✅ 12 · 🔵 2 · ⛔ 1 | ✅ 4 · 🔵 2 | — | — | **21** |
+| **1C** Database foundation | — | — | — | 🔵 1 · ⬜ 4 · ⊘ 1 | 6 |
+| **3** Line status board | — | — | ⬜ 2 | 🔵 1 | 3 |
+| **4** Rod check-in · PLC config | ⬜ 1 | ⬜ 1 | ⬜ 1 | 🔵 1 | 4 |
+| **5** Active run monitoring | ⬜ 1 | — | ⛔ 1 · ⬜ 5 | 🔵 1 | 8 |
+| **6** In-run production events | ⛔ 1 · ⬜ 1 | ⬜ 1 | ⬜ 2 | 🔵 1 | 6 |
+| **7** WIP rejection · rod checkout | ⬜ 1 | ⬜ 1 | ⬜ 1 | 🔵 1 | 4 |
+| **8** FL2 spool check-in | ⬜ 1 | ⬜ 1 | ⬜ 2 | 🔵 1 | 5 |
+| | **21** | **13** | **20** | **12** | **66** |
+
+✅ done · 🔵 in-review · 🟡 in-progress · ⛔ blocked · ⬜ not-started · ⊘ cancelled — the same glyphs §2 stamps
+and [`STATUS.md`](../../STATUS.md) renders.
+
+> **Everything finished sits in two rows.** `1B` holds **16 of the trial's 17 `done` stories** and
+> `1A` holds the seventeenth. ⛔ **Phases 3–8 carry 30 stories and not one is `done`** — their six
+> 🔵 are **all `DB`**, tables that exist in the DDL, and their two ⛔ are `FW-168` and `FW-202`.
+
+⚠ **`FW-202` sits in the `5` / `FE` cell** because that is what its card says — while §2 files it
+under **T3 as new work** and its plan lives in this Backend folder. That is the `G62` mismatch
+`check_docs` reports: one story, three labels.
+
+#### What the code says, phase by phase
+
+Overlaying §9.1–§9.5 on the same rows — because a `not-started` card and an empty repository are
+not the same claim, and in three of these rows they disagree:
+
+| Phase | Stream | Code state |
+|---|---|---|
+| **1A** | FE · RT | `projects/flat-wire/` is the `FW-N03` scaffold and **nothing else** — a placeholder component over five `.gitkeep` directories. `FW-133` gates five of the six screens |
+| **1B** | BE · RT | ✅ **Committed and building** — skeleton, 15 controllers, `FlatWireHub`, broadcast loop, `PLCTagService`, `OpcFeedSimulator`, `ITInhibitService`, `/sim`. **The trial's only finished layer** |
+| **1C** | DB | DDL **written**, schema **deployed** — the **four** remaining `not-started` cards **understate what exists** (`FW-152` was corrected to `in-review` on 30 Aug against the DDL and the tools), and ⛔ §9.5 shows the deployment is pre-`Q60` and unseeded, so they **overstate that it is usable**. ⚠ **§9.5 measures `DEVUAL-UADEV001\TEST1`, which is now retired for `FlatWireDB`** — the instance of record is `DEV00164-001`, where `[DEP §4.2]`'s gate passed on 26 Aug; **re-measure before reading §9.5 as owed work** |
+| **4** | BE | `CheckInService` **staged, uncommitted** (§9.2). `FW-082` not begun — `PLCTagService`'s five write operations still have **no callers**, which is correct until Phase 4 (`[PLCC §4]`) |
+| **5** | BE | `RunService` **staged** — `GET /run/active`, §1.1's *"trial's landing route"*, and 3 of 4 resume outcomes |
+| **6** | BE · RT | `SpcService` **staged**, and ⛔ its card reports a **blocking mapping defect**, so compiling is not passing. **6 of the 8 event handlers are also new and staged** |
+| **7** | BE | `WipRejectionService` and `CheckOutService` **staged** — *"the only thing that clears a `Blocked` bay"* |
+| **8** | BE | `SpoolService`'s `GET /spools` **staged**; `CompleteSpoolAsync` still throws — ⛔ `FW-202` |
+
+⚠ **Phases 4–8's entire BE column is §9.2** — every one of those five services is uncommitted.
+Across `ual-api`, **44 files are staged and none is committed**: 11 new, 33 modified, nothing
+untracked.
+
+### 9.7 The short answer
+
+| | Built | Pending |
+|---|---|---|
+| **BE / RT server** | Phase-1B spine, `/sim`, 15 controllers — committed and building | commit + review of §9.2's six services; `FW-082`, `FW-172`, `FW-177`, `FW-181`, `FW-202`; `FW-145`'s claim values |
+| **FE** | `FW-N03` scaffold | **all six screens** — `FW-133` first and largest |
+| **DB** | schema deployed, and to the *right* instance | ⛔ re-deploy at `Q60`, then seed |
+
+⚠ **The critical path is no longer the backend.** §4's blockers all still stand, but what now
+gates 30 Sep is §9.4 and §9.5 — a frontend that is one placeholder component, and a database
+whose spool tables the API cannot bind to.
