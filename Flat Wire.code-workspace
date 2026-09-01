@@ -1,0 +1,22 @@
+{
+	// Opens the planning repo alongside the two code repos the work lands in.
+	// Paths are relative to this file, which now sits at the REPOSITORY ROOT - it moved
+	// there in the 29 Aug 2026 re-tree, from MVP-1/ProjectPlan/. The old values counted
+	// two and three levels up from that folder; at the root the planning repo is "." and
+	// the code repos are its siblings under c:\UAL.
+	"folders": [
+		{
+			"name": "Flatwire-planning (specs)",
+			"path": "."
+		},
+		{
+			"name": "ual-angular (frontend)",
+			"path": "../ual-angular"
+		},
+		{
+			"name": "ual-api (backend)",
+			"path": "../ual-api"
+		}
+	],
+	"settings": {}
+}

@@ -1,0 +1,30 @@
+#!/bin/sh
+# Flat Wire planning repo - pre-commit hook.
+#
+# Install:  cp tools/hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+#
+# A generated file that nobody regenerates is worse than a hand-maintained one, because
+# it still looks authoritative. This regenerates STATUS.md and stages it, so a commit can
+# never leave the board disagreeing with the task files it is derived from.
+set -e
+
+PY=python
+command -v python >/dev/null 2>&1 || PY=python3
+
+# Only do the work when something that feeds the board actually changed.
+if git diff --cached --name-only | grep -qE '(^|/)tasks/FW-.*\.md$|Development/(GapsRegister|TaskBreakdown)\.md$|Development/Phases/|FlatWire(Open|Decided)Questions\.md$|PLCTagSpecification\.md$|FlatWire_MasterSpecification\.md$|^tools/'; then
+    "$PY" tools/build_status.py >/dev/null
+    git add STATUS.md
+
+    if ! "$PY" tools/check_docs.py >/tmp/fw_check.$$ 2>&1; then
+        echo "pre-commit: check_docs.py FAILED"
+        cat /tmp/fw_check.$$
+        rm -f /tmp/fw_check.$$
+        echo
+        echo "Fix the errors above, or commit with --no-verify if you know why."
+        exit 1
+    fi
+    rm -f /tmp/fw_check.$$
+fi
+
+exit 0

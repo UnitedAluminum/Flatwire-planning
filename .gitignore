@@ -11,3 +11,7 @@ __pycache__/
 # MVP-1/SRS/*.docx and *.xlsx are output, but they are the artifacts the client is sent
 # and signed off against, so they are committed on purpose. The rule is "edit the markdown
 # source and re-render", not "do not track the render".
+
+# Link-check working files. The baseline IS committed - it is the migration test fixture.
+tools/_linkcheck_unresolved.txt
+tools/*.tmp
