@@ -10,11 +10,11 @@
 |---|---|---:|---:|---:|---:|---:|---:|---:|---|
 | -- | 2 Pass Schedule Management (Operations Manag | 0 | 0 | 0 | 0 | 0 | 0 | 0 % | — |
 | 1 | 1A Angular Foundation | 9 | 0 | 0 | 0 | 2 | 7 | 0 % | G10 · G14 · G18 · G23 |
-| 1 | 1B Backend Foundation | 27 | 16 | 4 | 0 | 1 | 6 | 59 % | G10 · G17 · G2 · G29 … |
+| 1 | 1B Backend Foundation | 27 | 19 | 4 | 0 | 1 | 3 | 70 % | G10 · G17 · G2 · G29 … |
 | 1 | 1C Database Foundation | 12 | 0 | 1 | 0 | 1 | 8 | 0 % | G14 · G17 · G32 · G34 … |
 | 1 | 3 Line Status Board & Real-Time Backbone | 7 | 0 | 1 | 0 | 0 | 6 | 0 % | G9 · OI-28 · OI-34 |
-| 1 | 4 Rod Check-In & PLC Configuration (FL1 / FL | 24 | 0 | 3 | 0 | 10 | 11 | 0 % | G14 · G17 · G2 · G26 … |
-| 1 | 5 Active Run Monitoring & Live Gauge/Width T | 9 | 0 | 2 | 0 | 1 | 6 | 0 % | G34 · G9 · OI-25 · OI-45 … |
+| 1 | 4 Rod Check-In & PLC Configuration (FL1 / FL | 24 | 1 | 3 | 0 | 10 | 10 | 4 % | G14 · G17 · G2 · G26 … |
+| 1 | 5 Active Run Monitoring & Live Gauge/Width T | 9 | 2 | 2 | 0 | 1 | 4 | 22 % | G34 · G9 · OI-25 · OI-45 … |
 | 1 | 6 In-Run Production Events (Weld · Die Chang | 12 | 0 | 1 | 0 | 3 | 8 | 0 % | G26 · G27 · G28 · G34 … |
 | 1 | 7 Exception Handling: WIP Rejection & Rod Ch | 7 | 0 | 1 | 0 | 0 | 6 | 0 % | G14 · G24 · G7 · OI-100 … |
 | 1 | 8 FL2 Spool Check-In & Finishing Run (FL2 St | 9 | 0 | 2 | 0 | 2 | 5 | 0 % | OI-02 · OI-06 · OI-25 · OQ-15 … |
@@ -23,8 +23,8 @@
 | 1 | 11 Supervisor Shift Summary, Reporting & Cer | 7 | 0 | 0 | 0 | 0 | 7 | 0 % | OI-101 · OI-57 · OI-99 · OQ-25 … |
 | 1 | 12 Yield, Cost Ledger & Scrap | 4 | 0 | 0 | 0 | 0 | 4 | 0 % | OI-60 · OI-68 · OI-83 · OQ-10 |
 | 1 | 13 Administration & Reference Data | 9 | 0 | 0 | 0 | 0 | 9 | 0 % | OI-43 · OI-77 · OQ-22 |
-| 1 | 14 Integration Testing, PLC Commissioning & | 12 | 0 | 0 | 0 | 0 | 12 | 0 % | G29 · G30 · G32 · G33 … |
-| **All** | | **163** | **16** | **16** | **0** | **23** | **106** | **10 %** | |
+| 1 | 14 Integration Testing, PLC Commissioning & | 12 | 1 | 0 | 0 | 0 | 11 | 8 % | G29 · G30 · G32 · G33 … |
+| **All** | | **163** | **23** | **16** | **0** | **23** | **99** | **14 %** | |
 
 *Percentages are by task count. **Hours are not totalled here** - [`CapacityAndEffortModel.md`](60-delivery/CapacityAndEffortModel.md) `[CE]` is the hours model of record, and a total derived on this page would be a second figure to disagree with it.*
 
@@ -43,17 +43,17 @@ Open register items cited by at least one live task, most-blocking first.
 | `OQ-10` | **⚠ id not found in any register** | FW-066, FW-100, FW-185, FW-188, FW-202 | 5, 9, 12 | — | — |
 | `OQ-15` | **⚠ id not found in any register** | FW-064, FW-121, FW-122, FW-179, FW-190 | 8, 10, 14 | — | — |
 | `G14` | Pre-build data inconsistencies: 3- vs 4-item inspection (+M1/M2 ovality), R##### vs ROD-## | FW-007, FW-061, FW-132, FW-173 | 1A, 1C, 4, 7 | — | Gaps.md |
+| `G29` | No edger tag path exists on any line, yet edge type is in the push payload. Four of five s | FW-082, FW-200, FW-212, FW-N05 | 1B, 4, 14 | — | Gaps.md |
 | `G34` | Wire break now has a decided flow and still no persistence target. The client specified th | FW-007, FW-171, FW-202, FW-213 | 1C, 5, 6 | — | Gaps.md |
 | `OI-25` | Two footage coordinate systems. Run events use cumulative run footage; CoilTraceability.Fo | FW-066, FW-180, FW-183, FW-202 | 5, 8, 9 | — | MasterSpecification.md |
 | `OI-39` | Cross-database check-in has no defined recovery path. Check-in spans FlatWireDB + shared c | FW-082, FW-151, FW-157, FW-212 | 1B, 4 | — | MasterSpecification.md |
+| `OI-45` | OQ-10 — footage-to-weight: the formula and the density source are now settled; the dimensi | FW-066, FW-202, FW-210, FW-213 | 1B, 5, 9 | — | MasterSpecification.md |
 | `OQ-18` | **⚠ id not found in any register** | FW-163, FW-178, FW-202, FW-N02 | 5, 8 | — | — |
 | `OQ-22` | **⚠ id not found in any register** | FW-004, FW-061, FW-194, FW-199 | 1C, 4, 13 | — | — |
 | `G17` | rod→coils multiplies cross-DB logical FKs (every Rod.Alpha ref) | FW-006, FW-141, FW-159 | 1B, 1C, 4 | — | Gaps.md |
 | `G26` | The merged weld write straddles two phases. Dashboard 2A's weld control ships in phase 4,  | FW-063, FW-166, FW-N01 | 4, 6 | — | Gaps.md |
-| `G29` | No edger tag path exists on any line, yet edge type is in the push payload. Four of five s | FW-082, FW-200, FW-N05 | 1B, 4, 14 | — | Gaps.md |
 | `G32` | The FM2 PLC station names in the spec are ours, not the controller's. The 4 Aug 2026 rolle | FW-005, FW-217, FW-N05 | 1B, 1C, 14 | — | Gaps.md |
 | `G33` | The measure segment of every tag is ours, not the controller's — and it departs from thirt | FW-144, FW-217, FW-N05 | 1B, 14 | — | Gaps.md |
-| `OI-45` | OQ-10 — footage-to-weight: the formula and the density source are now settled; the dimensi | FW-066, FW-202, FW-210 | 1B, 5, 9 | — | MasterSpecification.md |
 | `OI-99` | Lot number is undefined when a coil has more than one source rod, which is the normal case | FW-095, FW-183, FW-184 | 9, 11 | — | MasterSpecification.md |
 | `OQ-17` | **⚠ id not found in any register** | FW-121, FW-124, FW-179 | 8, 14 | — | — |
 | `OQ-23` | **⚠ id not found in any register** | FW-158, FW-174, FW-176 | 4, 7 | — | — |
@@ -76,6 +76,7 @@ Open register items cited by at least one live task, most-blocking first.
 | `OQ-3` | **⚠ id not found in any register** | FW-061, FW-161 | 4 | — | — |
 | `OQ-62` | **⚠ id not found in any register** | FW-070, FW-169 | 6 | — | — |
 | `OQ-79` | **⚠ id not found in any register** | FW-202, FW-N02 | 5, 8 | — | — |
+| `Q10` | Footage-to-weight conversion factor | FW-210, FW-213 | 1B, 5 | Tim O. / Bob S. | Questions.md |
 | `Q6` | Weld attribution on output footage | FW-063, FW-166 | 6 | Jaspreet / Tim O. | Questions.md |
 | `G23` | The 1280×1024 shopfloor canvas is an acceptance criterion nobody has confirmed. All 25+ mo | FW-130 | 1A | — | Gaps.md |
 | `G27` | The weld screen's rod queue and traceability chain have no host. Dashboard 4 was retired 1 | FW-063 | 6 | — | Gaps.md |
@@ -83,6 +84,9 @@ Open register items cited by at least one live task, most-blocking first.
 | `G35` | FM2's two dancers are unmodelled everywhere, and one of their modes contradicts a stated r | FW-171 | 6 | — | Gaps.md |
 | `G36` | Returning Phase 9 to MVP-1 imported three uncosted dependencies, all on the DB7b packing s | FW-186 | 9 | — | Gaps.md |
 | `G55` | FL2's spool check-in is constrained to payoff position 1, while the canonical enum and the | FW-246 | 1C | — | Gaps.md |
+| `G59` | No service identity exists for a PLC write that no operator initiated. ✅ Mechanism confirm | FW-217 | 14 | — | Gaps.md |
+| `G60` | ⛔ Nothing registers flat wire with OPCConnection, so GetOPCInfo cannot succeed and no tag  | FW-217 | 14 | — | Gaps.md |
+| `G69` | [SIM §9.2] requires the console to show TWO state chips and the wire carries ONE vocabular | FW-215 | 1B | — | Gaps.md |
 | `OI-02` | ⚠️ UNRESOLVED — Intermediate spool numbering: schema SP-##### versus the SRS narrative's T | FW-124 | 8 | — | MasterSpecification.md |
 | `OI-06` | ⚠️ UNRESOLVED — Two spool status vocabularies: the schema's RECEIVED/STAGED/INFLAT/COMPLET | FW-124 | 8 | — | MasterSpecification.md |
 | `OI-100` | Valid rework stages per material state are unspecified. Rework requires a named return sta | FW-067 | 7 | — | MasterSpecification.md |
@@ -115,7 +119,6 @@ Open register items cited by at least one live task, most-blocking first.
 | `PLC-Q02` | Confirmation of every tag path in Section 5. They follow the naming convention in Section  | FW-062 | 5 | Controls engineer | PLCTagSpecification.md |
 | `PLC-Q12` | The format and lifetime of the material-tracking identifier that ITInhibit's second condit | FW-206 | 4 | Controls engineer | PLCTagSpecification.md |
 | `Q05` | **⚠ id not found in any register** | FW-082 | 4 | — | — |
-| `Q10` | Footage-to-weight conversion factor | FW-210 | 1B | Tim O. / Bob S. | Questions.md |
 | `Q14` | Pass schedule selection mechanism at check-in — no-match path undefined | FW-157 | 4 | Tim O. / Jaspreet | Questions.md |
 | `Q18` | Target spool weight source for the completion alert, and over-target behavior | FW-164 | 5 | Tim O. / Operations | Questions.md |
 | `Q22` | Dimensional tolerances — min/max for gauge, width, diameter and ovality; no column exists | FW-245 | 1C | Tim O. / IT | Questions.md |
@@ -175,7 +178,7 @@ Open register items cited by at least one live task, most-blocking first.
 
 ## MVP-1 › Phase 1B — Backend Foundation
 
-**27 tasks · 59 % done**
+**27 tasks · 70 % done**
   · **Spec:** [phase-01b-backend-foundation.md](60-delivery/phases/phase-01b-backend-foundation.md)
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
@@ -199,10 +202,10 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-205](40-backend/tasks/FW-205.md) | ITInhibitService — the run-block interlock | ✅ done ⚠ *status inferred, unconfirmed* | — | RT | 16 | S0 | FW-144 FW-151✅ FW-N05 | **G30** |
 | [FW-207](40-backend/tasks/FW-207.md) | Domain model — aggregates, value objects and invariants | 🔵 in-review ⚠ *status inferred, unconfirmed* | — | BE | 32 | S0 | FW-N04✅ | — |
 | [FW-208](40-backend/tasks/FW-208.md) | Domain events and post-commit dispatch | ✅ done ⚠ *status inferred, unconfirmed* | — | BE | 8 | S0 | FW-207 FW-142✅ FW-080 | — |
-| [FW-210](40-backend/tasks/FW-210.md) | Line model core — the kinematic state machine for FL1/FL2/FL3 | ⬜ not-started | — | RT | 24 | — | FW-N05 | **G9** **OI-34** **OI-35** **OI-45** **Q10** |
-| [FW-211](40-backend/tasks/FW-211.md) | The simulation seam — IReadingSource and the in-process adapter | ⬜ not-started | — | RT | 12 | — | FW-210 FW-144 FW-150✅ | — |
-| [FW-215](40-backend/tasks/FW-215.md) | Simulator control API — /api/v1/flatwire/sim/** | ⬜ not-started | — | BE | 23 | — | FW-210 FW-213 FW-138✅ FW-145 | — |
-| [FW-218](40-backend/tasks/FW-218.md) | Trial control surface for the feed generator — steer, stop, drop | ✅ done ⚠ *status inferred, unconfirmed* | — | BE | 18 | S1 | FW-203✅ FW-138✅ FW-145 | — |
+| [FW-210](40-backend/tasks/FW-210.md) | Line model core — the kinematic state machine for FL1/FL2/FL3 | ✅ done | — | RT | 24 | — | FW-N05 FW-203✅ | **G9** **OI-34** **OI-35** **OI-45** **Q10** |
+| [FW-211](40-backend/tasks/FW-211.md) | The simulation seam — IReadingSource and the in-process adapter | ✅ done | — | RT | 12 | — | FW-210✅ FW-144 FW-150✅ FW-203✅ | — |
+| [FW-215](40-backend/tasks/FW-215.md) | Simulator control API — /sim/** | ✅ done | — | BE | 23 | — | FW-218✅ FW-210✅ FW-211✅ FW-213✅ FW-217✅ FW-138✅ FW-145 | **G69** |
+| [FW-218](40-backend/tasks/FW-218.md) | Trial control surface for the feed generator — steer, stop, drop | ✅ done | — | BE | 18 | S1 | FW-203✅ FW-138✅ FW-145 | — |
 | [FW-234](40-backend/tasks/FW-234.md) | Audit-log persistence target | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | BE·DB | 0 | S1 | FW-143✅ FW-142✅ FW-151✅ FW-007 | — |
 | [FW-239](40-backend/tasks/FW-239.md) | Wire run-lifecycle invalidation into FW-150's per-run cache | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | RT | 4 | S1 | FW-150✅ FW-208✅ | — |
 | [FW-N04](40-backend/tasks/FW-N04.md) | FlatWire solution and four-project Clean Architecture skeleton | ✅ done ⚠ *status inferred, unconfirmed* | — | BE | 16 | S0 | — | — |
@@ -219,6 +222,7 @@ Open register items cited by at least one live task, most-blocking first.
 | `G30` | FM2's controller namespace on FL3 is undetermined, and it decides what partial failure means. Every  | FW-205 | — |
 | `G32` | The FM2 PLC station names in the spec are ours, not the controller's. The 4 Aug 2026 roller-size cor | FW-N05 | — |
 | `G33` | The measure segment of every tag is ours, not the controller's — and it departs from thirteen observ | FW-144, FW-N05 | — |
+| `G69` | [SIM §9.2] requires the console to show TWO state chips and the wire carries ONE vocabulary. The sec | FW-215 | — |
 | `G9` | NFRs absent (AGC Hz, concurrent clients, latency, reading retention) | FW-080, FW-150, FW-203, FW-210 | — |
 | `OI-34` | G9 — the non-functional targets are absent. AGC sample rate, concurrent client count, latency budget | FW-080, FW-150, FW-203, FW-210 | — |
 | `OI-35` | OQ-21 — FL{n}.LineState vocabulary is undocumented. Two-state run/stop bit, or RUNNING / STOPPED / P | FW-210 | — |
@@ -291,7 +295,7 @@ Open register items cited by at least one live task, most-blocking first.
 
 ## MVP-1 › Phase 4 — Rod Check-In & PLC Configuration (FL1 / FL3)
 
-**24 tasks · 0 % done**
+**24 tasks · 4 % done**
   · **Spec:** [phase-04-rod-checkin-plc-config.md](60-delivery/phases/phase-04-rod-checkin-plc-config.md)
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
@@ -305,7 +309,7 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-161](60-delivery/tasks/FW-161.md) | Traveler field list and the no-match path | ⬜ not-started | — | BA | 8 | S2 | — | **OQ-14** **OQ-25** **OQ-3** |
 | [FW-206](40-backend/tasks/FW-206.md) | ITInhibit conditions 1–2 — check-in and material-tracking state | ⛔ blocked ⚠ *status inferred, unconfirmed* | — | BE | 8 | S2 | FW-205✅ FW-061 | **PLC-Q12** |
 | [FW-209](50-frontend/tasks/FW-209.md) | DB2A line toggle must reload, not relabel | ⬜ not-started | — | FE | 4 | S2 | FW-061 | — |
-| [FW-212](40-backend/tasks/FW-212.md) | Closed loop — the model consumes the SimulatePLCTagPush payload | ⬜ not-started | — | RT | 12 | — | FW-210 FW-151✅ FW-082 | **G2** **G30** **OI-39** |
+| [FW-212](40-backend/tasks/FW-212.md) | Closed loop — the model consumes the SimulatePLCTagPush payload | ✅ done | — | RT | 12 | — | FW-210✅ FW-151✅ FW-082 FW-203✅ | **G2** **G29** **G30** **OI-39** |
 | [FW-220](40-backend/tasks/FW-220.md) | FL1/FL3 check-in write-back into the shared schema | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | DB·BE | 0 | S2 | FW-157 FW-159 FW-141✅ FW-142✅ FW-144 FW-003 | **OI-115** **OI-116** **Q37** **Q38** **Q39** |
 | [FW-221](30-database/tasks/FW-221.md) | Station release and reqsum reversal | ⛔ blocked ⚠ *status inferred, unconfirmed* | — | DB | 9 | S2 | FW-220 FW-222 FW-174 FW-185 FW-202 | **Q40** |
 | [FW-222](30-database/tasks/FW-222.md) | Single-active-run index and the reversal flag | 🔵 in-review ⚠ *status inferred, unconfirmed* | — | DB | 2 | S2 | FW-007 | — |
@@ -329,7 +333,7 @@ Open register items cited by at least one live task, most-blocking first.
 | `G17` | rod→coils multiplies cross-DB logical FKs (every Rod.Alpha ref) | FW-159 | — |
 | `G2` | Check-in spans FlatWireDB (run/checkin/SPC) + the shared reqsum / wip_coil_orders / actual_start_dat | FW-082, FW-157, FW-159, FW-212 | — |
 | `G26` | The merged weld write straddles two phases. Dashboard 2A's weld control ships in phase 4, and the en | FW-N01 | — |
-| `G29` | No edger tag path exists on any line, yet edge type is in the push payload. Four of five sources lis | FW-082 | — |
+| `G29` | No edger tag path exists on any line, yet edge type is in the push payload. Four of five sources lis | FW-082, FW-212 | — |
 | `G30` | FM2's controller namespace on FL3 is undetermined, and it decides what partial failure means. Every  | FW-082, FW-212 | — |
 | `OI-108` | At cold start, should Welds this run be absent, or present and unavailable? Surfaced 1 Aug 2026 when | FW-N01 | — |
 | `OI-109` | Where should the operator land after pressing Acknowledge & Begin Check-in? Changed 1 Aug 2026 from  | FW-061 | — |
@@ -360,7 +364,7 @@ Open register items cited by at least one live task, most-blocking first.
 
 ## MVP-1 › Phase 5 — Active Run Monitoring & Live Gauge/Width Trace (FL1 / FL3)
 
-**9 tasks · 0 % done**
+**9 tasks · 22 % done**
   · **Spec:** [phase-05-active-run-monitoring-gauge-trace.md](60-delivery/phases/phase-05-active-run-monitoring-gauge-trace.md)
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
@@ -372,8 +376,8 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-164](40-backend/tasks/FW-164.md) | GET /run/active, GET /run/{runId}/gaugetrace and RunQueryService | 🔵 in-review | — | BE | 12 | S2 | FW-138✅ FW-141✅ | **Q18** |
 | [FW-165](30-database/tasks/FW-165.md) | sp_GetGaugeTrace | 🔵 in-review ⚠ *status inferred, unconfirmed* | — | DB | 8 | S2 | FW-007 | **G9** |
 | [FW-202](40-backend/tasks/FW-202.md) | FL1 spool completion — stop confirmation, weight basis and the S | ⛔ blocked ⚠ *status inferred, unconfirmed* | — | FE·BE·DB·RT | 0 | S3 | FW-062 FW-081 FW-150✅ FW-171 FW-007 | **G34** **OI-25** **OI-45** **OQ-10** **OQ-18** **OQ-79** |
-| [FW-213](40-backend/tasks/FW-213.md) | Scenario and fault injection | ⬜ not-started | — | RT | 16 | — | FW-210 | **G34** |
-| [FW-214](50-frontend/tasks/FW-214.md) | Simulator control console DB-S1 — standalone WinForms desktop to | ⬜ not-started | — | FE | 52 | S2 | FW-218✅ FW-215 FW-145 | — |
+| [FW-213](40-backend/tasks/FW-213.md) | Scenario and fault injection | ✅ done | — | RT | 16 | — | FW-210✅ | **G34** **OI-45** **Q10** |
+| [FW-214](50-frontend/tasks/FW-214.md) | Simulator control console DB-S1 — standalone WinForms desktop to | ✅ done | — | FE | 52 | S2 | FW-218✅ FW-215✅ FW-145 | — |
 
 **Open items owned by this phase**
 
@@ -382,11 +386,12 @@ Open register items cited by at least one live task, most-blocking first.
 | `G34` | Wire break now has a decided flow and still no persistence target. The client specified the whole se | FW-202, FW-213 | — |
 | `G9` | NFRs absent (AGC Hz, concurrent clients, latency, reading retention) | FW-165 | — |
 | `OI-25` | Two footage coordinate systems. Run events use cumulative run footage; CoilTraceability.FootageFrom/ | FW-202 | — |
-| `OI-45` | OQ-10 — footage-to-weight: the formula and the density source are now settled; the dimensional basis | FW-202 | — |
+| `OI-45` | OQ-10 — footage-to-weight: the formula and the density source are now settled; the dimensional basis | FW-202, FW-213 | — |
 | `OQ-10` | **⚠ id not found in any register** | FW-202 | — |
 | `OQ-18` | **⚠ id not found in any register** | FW-163, FW-202 | — |
 | `OQ-79` | **⚠ id not found in any register** | FW-202 | — |
 | `PLC-Q02` | Confirmation of every tag path in Section 5. They follow the naming convention in Section 4, not a v | FW-062 | Controls engineer |
+| `Q10` | Footage-to-weight conversion factor | FW-213 | Tim O. / Bob S. |
 | `Q18` | Target spool weight source for the completion alert, and over-target behavior | FW-164 | Tim O. / Operations |
 
 **▶ Ready to start now:** *none — every not-started task here is waiting on a dependency or a blocker*
@@ -637,7 +642,7 @@ Open register items cited by at least one live task, most-blocking first.
 
 ## MVP-1 › Phase 14 — Integration Testing, PLC Commissioning & Go-Live
 
-**12 tasks · 0 % done**
+**12 tasks · 8 % done**
   · **Spec:** [phase-14-integration-testing-plc-commissioning-golive.md](60-delivery/phases/phase-14-integration-testing-plc-commissioning-golive.md)
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
@@ -648,7 +653,7 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-123](60-delivery/tasks/FW-123.md) | UAT and stakeholder sign-off | ⬜ not-started | — | BA·QA | 56 | S3 | — | — |
 | [FW-200](40-backend/tasks/FW-200.md) | PLC commissioning support | ⬜ not-started | — | RT | 40 | S3 | FW-082 FW-151✅ FW-190 | **G29** **G30** **PLC-Q04** **PLC-Q05** |
 | [FW-201](50-frontend/tasks/FW-201.md) | Defect allowance and renamed-column regression | ⬜ not-started | — | FE·BE·DB·QA | 56 | S3 | FW-001 FW-120 FW-121 FW-122 | — |
-| [FW-217](40-backend/tasks/FW-217.md) | OPC sidecar adapter — the models behind a test-only OPC UA serve | ⬜ not-started | — | RT | 24 | — | FW-210 FW-211 FW-N05 | **G32** **G33** |
+| [FW-217](40-backend/tasks/FW-217.md) | OPC sidecar adapter — the models behind a test-only OPC UA serve | ✅ done | — | RT | 24 | — | FW-210✅ FW-211✅ FW-N05 | **G32** **G33** **G59** **G60** |
 | [FW-236](40-backend/tasks/FW-236.md) | Per-tag write status from OPCConnection | ⬜ not-started | — | BE | 16 | S3 | FW-151✅ | — |
 | [FW-238](40-backend/tasks/FW-238.md) | Register flat wire with OPCConnection | ⬜ not-started | — | BE·DB | 0 | S3 | FW-003 FW-144 FW-151✅ FW-241 | — |
 | [FW-242](30-database/tasks/FW-242.md) | Move FlatWireDB into the ual-database repository | ⬜ not-started | — | DB | 16 | S3 | FW-152 FW-241 | — |
@@ -663,6 +668,8 @@ Open register items cited by at least one live task, most-blocking first.
 | `G30` | FM2's controller namespace on FL3 is undetermined, and it decides what partial failure means. Every  | FW-122, FW-200 | — |
 | `G32` | The FM2 PLC station names in the spec are ours, not the controller's. The 4 Aug 2026 roller-size cor | FW-217 | — |
 | `G33` | The measure segment of every tag is ours, not the controller's — and it departs from thirteen observ | FW-217 | — |
+| `G59` | No service identity exists for a PLC write that no operator initiated. ✅ Mechanism confirmed by exec | FW-217 | — |
+| `G60` | ⛔ Nothing registers flat wire with OPCConnection, so GetOPCInfo cannot succeed and no tag can be wri | FW-217 | — |
 | `OQ-15` | **⚠ id not found in any register** | FW-121, FW-122 | — |
 | `OQ-17` | **⚠ id not found in any register** | FW-121 | — |
 | `PLC-Q04` | Confirm the FM2 station names — S1, S2, S3, carrying position only (§4.3). Every FM2 row in §5.2.2 i | FW-200 | Controls engineer |

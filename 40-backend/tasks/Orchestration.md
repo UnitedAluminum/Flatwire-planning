@@ -31,10 +31,11 @@
 
 ## 1. Status board
 
-**37 plans**, and §1.5's **pending register** for everything that still has none. `phase-01b`'s twenty
+**42 plans**, and §1.5's **pending register** for everything that still has none. `phase-01b`'s twenty
 stories (§1.1–§1.2) · two trial-scope (§1.3) · **ten
 trial-path stories from Phases 4–8 (§1.4)** · **three shared-schema plans that this file had never
-indexed (§1.4a)** · **two additive Phase-1B plans (§1.6)**. Hours are `[TB §7]`'s, quoted not restated.
+indexed (§1.4a)** · **two additive Phase-1B plans (§1.6)** · **five simulator plans (§1.12)**. Hours
+are `[TB §7]`'s, quoted not restated.
 
 > ⚠ **The count read "32 plans" against 35 files on disk until 29 Aug 2026.**
 > [`FW-219`](FW-219.md), [`FW-220`](FW-220.md) and
@@ -163,8 +164,7 @@ in [TrialOrchestration.md](TrialOrchestration.md).
 | `FW-198` | 13 | Reference-data change broadcast | |
 | `FW-200` | 14 | PLC commissioning support | ⚠ already cited by [`FW-082`](FW-082.md) |
 | **[`FW-206`](FW-206.md)** | 4 | `ITInhibit` conditions 1–2 | ⚠ **`P-132`: `FW-206` must not re-derive `FW-205`'s arming rule** or the two double-block the same tag |
-| `FW-211` | — | The `IReadingSource` seam | 1B owns it; unscheduled and additive |
-| `FW-210` `FW-212` `FW-213` `FW-215` `FW-217` | — | Simulator set | unscheduled, additive |
+| ~~`FW-215`~~ | ✅ **BUILT 1 Sep 2026** | — | ✅ **LEAVES THIS REGISTER — the simulator set is complete.** Planned and built the same day; `P-306`–`P-314` minted, 71/71 harness checks, and the `404`/`401` gate measured in all three configurations. `G70` and (server-side) `G68` and `G73` closed; `G72` narrowed to `FW-145`; `G69` armed and still open. *(Row kept for the audit trail — previously: unscheduled, additive, card RECONCILED 1 Sep 2026* — still no plan, but no longer stale: `depends_on` now [`FW-218`](FW-218.md), [`FW-210`](FW-210.md), [`FW-211`](FW-211.md), [`FW-213`](FW-213.md), [`FW-217`](FW-217.md) *(all built)*, `FW-138`, `FW-145`, and `blocked_by` **`G69`**. ✅ **The owed endpoint is now ON the card** — `GET /sim/config`, `G68` — with `G70`’s widened gate and shared seam. ⛔ **And `G72` was raised doing it**: the built guard’s `Roles = "Engineer,Admin"` names a role `[SEC §8]` does not have |
 | `FW-N08` `FW-N10` `FW-N11` `FW-N12` | — | Wire break · stop popup · operator session · de-stub | **Uncosted** (`[TB §7]` B.4). `FW-N08` is blocked on `G34`; `FW-N11` owns `FR-018`'s number and route rule, `FW-150` owning only the gate |
 
 > ⚠ **`FW-185` and `FW-187` are the ones to watch** — Phase 9 is **wholly MVP-1** (`CoilOutput` and
@@ -213,6 +213,41 @@ in [TrialOrchestration.md](TrialOrchestration.md).
 |---|---|---|---|---|
 | [FW-234](FW-234.md) | Audit-log persistence target | 12 *(BE 8 · DB 4)* | 5 | **Ready to build** — `SerilogAuditLog`'s own class comment specifies the swap, so the BE half is one class and one registration. ⛔ **The `IAuditLog` signatures must not change** — `P-144` keeps the correlation id off `AuditEntry` for that reason. `P-146`: the audit table takes **no FK to the run**, the only place that exception is right. `P-147` guards the write so a failing audit never fails a command. ✅ **Closes `P-15`** |
 | [FW-239](FW-239.md) | Run-lifecycle invalidation into `FW-150`'s cache | 4 | 5 | ⚠ **The card names two things that do not exist.** ⛔ **There is no run-lifecycle domain event** — `RunEvents.cs` holds seven records and no run start or end, so `P-141` mints `RunStarted`/`RunEnded` here and leaves the *raising* to `FW-157`/`FW-219`; the handler ships **correctly wired and correctly inert**. ⚠ AC 2's `PayoffStateChanged` is a **hub member**, not an event — subscribe to `BayStateChanged` (`P-142`). ⛔ **`G67` raised (as `G62`, renumbered 31 Aug): `stagedWeights` has never had an eviction path**, so `PercentRemaining` is computed against the previous rod after any restage — AC 2 is a **bug fix**, not a wiring job |
+
+### 1.12 Simulator plans — written 31 Aug 2026
+
+> ⚠ **Still unscheduled, and no longer unplanned.** All five are **additive to `[CE §3b]`** and in
+> no published total, and each left §1.5's Table B and §8's exclusion list on 31 Aug 2026 —
+> *"a plan file and its index row land in the same pass"* (§9). ⚠ **`FW-212` is Phase 4, not 1B**, and
+> it left §1.5's Table A on 31 Aug 2026 when it was built; **`FW-213` is Phase 5 and `FW-217` is
+> Phase 14**, which §8 excludes — they sit here because they are *unscheduled and additive*, **not**
+> because of their phase. ✅ **`FW-215` has LEFT Table B — built 1 Sep 2026, so no simulator id remains in it.**
+>
+> ✅ **Four of the five are now built — read the Status column, not the section heading.** `FW-213` and
+> `FW-217` were planned AND built on 31 Aug 2026, and each carried a blocker its card never named:
+> `FW-213` has **two of twelve behaviours with no signal at all** (`Q10`/`OI-45`), and `FW-217` was
+> **aimed at a seam that does not exist** — `P-295`, which the build confirmed and the three affected
+> specifications have now been amended for. ⛔ **`FW-217` is built and its end-to-end leg does not run**:
+> `G59` stops `FW-N05` completing one read, and **`G70`** — raised by that build — leaves the fixture
+> unsteerable. ✅ **[`FW-215`](FW-215.md) is now PLANNED AND BUILT (1 Sep 2026) and `G70` is CLOSED** — the fixture is steerable, measured with the double mapped.
+>
+> ✅ **The first three are built — 31 Aug 2026.** `FW-210` and `FW-211` landed in one pass; They were planned early **because the code
+> had moved under both cards**: the 29 Aug RT-spine build satisfied part of each and contradicted
+> part of each. That reconciliation is what made the transplant safe, and it is precisely what
+> §8.3's *"read a plan's What already exists table before its build order"* exists for.
+>
+> ⚠ **The blockers did not close and they did not need to.** All five of `FW-210`'s remain open;
+> what they gated was **verification**, not construction — the same shape as `FW-145`'s *"the six
+> role claim values gate verification, not construction"* in §1.5's Table A. `G39` is the one that
+> matters now, and only `C13` in the October window closes it.
+
+| Plan | Story | h | Wave | Status |
+|---|---|---|---|---|
+| [FW-210](FW-210.md) | Line model core — the kinematic state machine for FL1/FL2/FL3 | 24 | — | ✅ **BUILT AND HARNESS-VERIFIED 31 Aug 2026** — 65/65 checks, 0 errors, **no new analyzer warning** (baseline measured both ways), host boots with the spine live and `/sim` unchanged from `FW-218`'s measurement. ⚠ **None of the five blockers gated construction**: `G9`/`OI-34` is a missing NFR *target* against an already-picked cadence; `OI-35` and `Q10`/`OI-45` are answered by **declining to compile a guess** — a two-state raw vocabulary and a **null** payoff weight. ⛔ **Three defects in `FW-203`'s code were fixed, and none was on the card**: gauge published as **roll gap**, `lbPerFt` as the literal `0.0075m`, and **FL3 publishing no FM2 stand at all**. ⛔ **`P-275` reverses the intuitive formula**: FL3 couples on the **gauge ratio**, not gauge × width, because A8 ignores lateral spread — the cross-section form inverted the answer. `P-276` `P-277` are two more that only running it found. ⚠ **`G39` is unchanged and this makes it worse before better** |
+| [FW-211](FW-211.md) | The simulation seam — `IReadingSource` and the in-process adapter | 12 | — | ✅ **Closed 31 Aug 2026 — nothing left to build.** `P-265` had struck AC 1 and found AC 2–5 already satisfied; the residual **steps 2 through 6** were **absorbed by `FW-210`'s build**, because a state machine and its host cannot be transplanted separately without leaving the build broken in between. ⚠ **Every decision it made held**: `P-266` (type name and both registrations), `P-267` (steer fields stayed command echo, record unwidened at six fields), `P-265` (no interface minted). ⛔ **The 12 h is not restated — whether it is struck, folded or kept as history is the re-baseline's call**, since `[CE §3b]` is quoted in ~20 files and `[TB §7]`'s rows feed three `.xlsx` generators. ⚠ **Reviewed against the built code the same day and corrected in six places, no decision withdrawn.** ⛔ The substantive one is `P-267`'s **mechanism**: an echo is not a frozen value — `GaugeOffsetIn` is the *running* commanded bias, advanced by the commanded drift each tick, so `/sim/state` is **not** idempotent on a steered line. Still command echo, never measurement. ⚠ And one **wording** reversal is now recorded: step 4's *“no new options class”* against the built `FlatWireSimulationOptions` — a nested object on the already-bound root, so the rule held and only the wording was wrong ✅ **Executed 31 Aug 2026 — nothing to build, which is the finding**, and verified on disk: models present, `LineSim` gone, both registrations intact, build **0 errors**. What execution closed is §5's three unmeasured rows (**§5.2**): the `P-37` file-level diff taken, and **10/10** harness checks including a steer forcing **20 consecutive** out-of-spec readings and `CommsDrop` bracketing condition 5 from both sides. ⛔ The commanded bias walked **5× the drift to the digit** — `P-267` as evidence, not argument. ✅ The `IReadingChannel.cs:29` comment is corrected in `ual-api` |
+| [FW-212](FW-212.md) | Closed loop — the model consumes the `SimulatePLCTagPush` payload | 12 | — | ⛔ **PLANNED, NOT BUILT — and not startable, for a reason the card does not carry.** Push **group 6** (`GaugeTarget`/`WidthTarget`) has **no tag path on any line**, paths resolve **before** the simulate branch returns, and `P-41`/`P-111` fail the push with zero tags written — so **every rod and spool check-in fails today**, as the built `TagNames.cs:81`–`:86` already states. AC 1 end-to-end is the one verification row that cannot pass. ⛔ **`P-278`: the loop reads the PAYLOAD, and `ILineModel.cs:56`'s layering objection to that is wrong** — `PlcTagValue` is a **Domain** type, and the payload is the only seam carrying **speed** (`P-261` passes it beside the snapshot) and **one component's gap**, which is AC 2. ⚠ **Half the story is already built and unreachable**: `ApplyConfiguration` is implemented at `LineModelBase.cs:307` and **called from nowhere**. ⛔ **`P-279` decorates `IPLCTagService` rather than editing it** — `PLCTagService` and `CheckInService` stay untouched, so `P-37` and `FW-211 §5.2`'s file-level measurement survive; gated on `Success && Simulated`, **AC 5 becomes structural** and AC 4 is inherited from the built commit-then-push order. ⚠ **`P-283`: edge TYPE is not on the wire at all** — engagement only, and no geometry tag may be invented (`G29`, `G33`). **Three spec amendments owed and this plan makes none.** ⚠ `G39` unchanged, and a line that reconfigures itself makes it worse before better ⚠ **RE-REVIEWED against the built code the same day — TEN CORRECTIONS, no decision withdrawn.** ⛔ The substantive one: `[PLC §7.2]` pushes an **`FM1` gap on FL3** and the plan would have **stored it and consumed it nowhere** — `Fl3LineModel.cs:61` makes the intermediate gauge a `const` and `FW-210`'s own comment had already settled why, so it is now **accepted, logged by name and not applied**; pinning it would also have moved FL3's published speed through `P-275`'s coupling. ⛔ Second: `P-281`'s inverse was written **without the forward term's no-load branch** — `P-272`'s sign error re-entering from the inverse side. ✅ Two corrections made the plan **smaller** (the observer reads `PlcWriteResult.Tags`, so it never learns which method it wrapped; the pin store takes no default). ⚠ `P-280` and `P-283` came out **stronger** — the models seed a complete default configuration, and a pushed edger disengagement **moves the published `EdgeSet` row**. **Blocker, owed amendments and `G39` unchanged** ✅ **BUILT AND HARNESS-VERIFIED 31 Aug 2026 — 42/42 checks, 0 errors, 14 warnings byte-identical to the baseline, host boots with the spine live.** ⛔ **`P-284` is a defect in the plan's own step 3**: a pinned final stand cannot *set* the target at write time — the inverse needs that stand's ENTRY gauge (`FM2_S2`'s exit on FL2/FL3, not the mill entry) and the answer would depend on the ORDER the gaps arrive in; the target is **derived on read** instead, and a steered target now clears the pin. ✅ `P-281`'s carve-out measured: FL3's FM1 gap and speed unchanged **to the digit**. ✅ AC 2 moves in **one tick**; AC 5 measured on all three arms through the real decorator. ⛔ **AC 1 end-to-end still cannot pass** — group 6's two paths re-measured at **zero hits**. `PLCTagService` and `CheckInService` **untouched** (`P-37` measured as a file diff) |
+| [FW-213](FW-213.md) | Scenario and fault injection | 16 | — | ✅ **BUILT AND HARNESS-VERIFIED 31 Aug 2026 — 58/58 checks, 0 errors, 14 warnings byte-identical to the baseline.** `P-299` and `P-300` minted, both out of running it. ⛔ **`P-299`: the plan named a tolerance band that does not exist** - neither `SimLineNominals` nor `PassScheduleSnapshot` carries one, so it is now DATA and every excursion is sized in BANDS rather than inches. ⛔ **`P-300`: an unobservable marker is not a marker** - `ILineModel` gains `WireBroken`, on the model and never on `SimLineState`. ⚠ **Two analyzer warnings were findings**: the unread `scenario` field was `ToTarget` never stopping the line. ✅ Determinism measured on all four live scenarios, 100 readings tick for tick; `grep "new Random"` returns **one** hit. ✅ **Three files edited**; `CheckInService`, `PLCTagService` and `SimControlSurface` untouched. `P-285`–`P-289`. ⛔ **The card's arithmetic is wrong twice.** It is **six faults, not seven** — `CommsDrop` is built, is `FW-218`'s `DroppedReadings`, and `FW-211 §5.2` verified it both ways; `[TB §7]`'s own `FW-214` card already says *"six of the seven"*, so the two cards contradict each other. And **two of the twelve behaviours cannot run at all**: `ToTarget` needs a *weight* target and `WeightVariance` a *calculated* weight, while `RemainingWeightLb` returns **null** whenever `LbPerFt` is unset — deliberate, `P-271`. ⚠ **`P-289` builds both to the null and declines by name, and forbids substituting footage for weight** — that would derive a stopping point from the very basis nobody has agreed, which is `G39` in miniature. ✅ **The story is smaller than the card implies**: `ApplyScenario` and `InjectFault` are already declared and throwing by name, and **four of the five scenarios are presets over fields that already exist** (`P-285`). ⚠ `OI-45` and `Q10` added to `blocked_by`, on `FW-210`'s precedent — they gate **verification, not construction** |
+| [FW-217](FW-217.md) | OPC sidecar adapter — the models behind a test-only OPC UA server | 24 | — | ✅ **BUILT AND VERIFIED 31 Aug 2026 — 46/46 harness checks over the two live routes plus three fresh-process runs, 0 errors, 14 warnings byte-identical to the baseline.** `P-302`–`P-305` minted, all four out of running it. ⛔ **`P-295` held, and the card's premise is corrected rather than met: the sidecar was aimed at a seam that does not exist.** `FW-N05` does not subscribe to OPC — `OpcIngestService.cs` is 1030 implemented lines whose only transport is **HTTP to `OPCConnection`** (`GetOPCInfo`, `ReadTag`, via `RestClient`/Polly/`UA.APIDTO`), with no OPC using-directive, and there is **no `Opc.Ua.Server` package in `ual-api`** at all. So the double answers `api/v1/OPCConnection`'s two read routes: **no package entered the graph, no `.csproj` changed, and `API/Domain/OPCConnection/` has zero modified files.** ✅ **AC 2 is a MEASUREMENT and it passes** — `git diff` on `OpcIngestService.cs` is empty; `OpcFeedSimulator`, `SimControlSurface` and `PLCTagService` untouched. ⛔ **AC 2's end-to-end half is BLOCKED and was measured, not predicted**: `NullReferenceException at GetTokenAsync ← RestClient.SetHeadersAsync` on the **client** side, before any request is sent, so the double never saw one — `G59` verbatim, [`FW-237`](FW-237.md)'s, and unmaskable by a fixture. ⛔ **`P-302`: mapped inside `FlatWire.API`**, because `P-298`'s one-edit rule needs one configuration source. ⛔ **`P-303`: one read = one tick of the configured interval** — deterministic, two fresh processes identical over 10 ticks × 7 tags. ⛔ **`P-304`: a silent tick answers 503, never a 200 of nulls** — and it is **unexecuted**. ⚠ **Two new gaps: `G70`** (the fixture cannot be steered — `/sim` is gated on the flag the double needs OFF; owner [`FW-215`](FW-215.md)) and **`G71`** (FL2's only load cell has no tag key). ✅ **`[SIM §3.1]`, `[SIM §3.3]` and `[TS §3.1]` AMENDED**, not deferred again. ⚠ **The 24 h prices a server host that was not built** — flagged for the re-baseline, and `G70`'s fix is not in it |
 
 ### 1.7 Phase 3–4 plans — written 29 Aug 2026 (batch 2)
 
@@ -432,7 +467,7 @@ fallback.
 > `ActionResultBase<T>` then `[API §1.2]` changes instead — **a contract change across every
 > 1A screen**, not a backend detail. Escalate rather than absorb.
 
-### 4a. Decision register — `P-01` to `P-98`
+### 4a. Decision register — `P-01` to `P-314`
 
 Every decision the plans make. **§4 above is this table filtered to `⚠ ratify`.** Each `P-##`
 is defined once, in the plan named here, with its rationale and fallback.
@@ -629,7 +664,7 @@ built code.** Each is defined once, in its own plan.
 > the loop forbids; `FW-164`'s *"`[API §4.7a]` specifies the combined shape"* described a shape
 > that was never written. **Read a plan's *What already exists* table before its build order.**
 
-**New decisions are minted at `P-265`+.**
+**New decisions are minted at `P-306`+.**
 
 **`P-258`–`P-261` — minted by the 29 Aug 2026 de-stub of `CheckInService`.** Defined in
 [`FW-157 §5`](FW-157.md).
@@ -645,9 +680,171 @@ built code.** Each is defined once, in its own plan.
 > Both were taken on 29 Aug 2026. These ids are cited from four `ual-api` source files and FW-152's were
 > cited nowhere, so **FW-152 moved to `P-262`–`P-264`** on 31 Aug 2026 and these stand.
 
+**`P-265`–`P-267` — minted by the 31 Aug 2026 first plan for `FW-211`, written against the built
+`ual-api`.** Defined in [`FW-211 §4`](FW-211.md).
+
+| Id | Plan | Subject |
+|---|---|---|
+| `P-265` | [FW-211](FW-211.md) | **The seam is already built and `IReadingSource` is not minted** — `AddFlatWireOpcIngest`'s `if`/`else` over two `IHostedService` implementations satisfies AC 2–5 as written, and a new interface would re-declare `IHostedService.StartAsync`. **AC 1 struck**; `[TB §7]` and `[SIM §3.2]` amendments **owed, not made** |
+| `P-266` | [FW-211](FW-211.md) | **`OpcFeedSimulator` is extended in place and keeps its type name** — `FW-218`'s four handlers take it concretely and that story is built and verified. ⚠ Its **two registrations** (concrete singleton + hosted service on the same instance) are deliberate |
+| `P-267` | [FW-211](FW-211.md) | **`SimLineState`'s steer fields stay COMMAND ECHO, not recomputed state** — they report what was asked for, not what is observed. Mapping `GaugeOffsetIn` to actual-minus-target would silently change `/sim/state`'s meaning under a console already built against it |
+
+> ⚠ **`P-265` is the one to read before any simulator work.** It records that the interface
+> `[SIM §3.2]` sketches will not be built — and until that section is amended, a reader arriving
+> at it cold will believe the seam is owed.
+
+**`P-268`–`P-274` — minted by the 31 Aug 2026 first plan for `FW-210`, written against the built
+`ual-api`.** Defined in [`FW-210 §4`](FW-210.md).
+
+| Id | Plan | Subject |
+|---|---|---|
+| `P-268` | [FW-210](FW-210.md) | **`Tick` returns `Reading`; `LineModelSnapshot` is not minted, and `Line` is the enum** — `Reading` already *is* the per-line-per-tick snapshot and already sits in `FlatWire.Domain`, so the sketch is met by **deleting** a mapping layer rather than adding one. `P-265`'s reasoning, one interface over |
+| `P-269` | [FW-210](FW-210.md) | **`ILineModel` gains one steer member** — none of `[SIM §3.2]`'s five mutators can express `[SIM §8.1]`'s `/steer` or the `Steer` `FW-218` already shipped. A hole in the contract, not a preference |
+| `P-270` | [FW-210](FW-210.md) | **FL2's gauge absence is structural in the FL2 model, so the FL2 branch is DELETED** — `SuppressesGaugeAndWidth` is the last `if (line == FL2)` in a producer, which `Reading.cs`, `FW-N05` and `FW-181` each call a defect. ⛔ And the internal gauge **does not reach `RunReading`**: `FW-181`/`FW-164` own FL2's Profile, and filling it would put data on the wire the real feed cannot produce |
+| `P-271` | [FW-210](FW-210.md) | **`lbPerFt` is configuration with no code default; absent means a NULL weight, never a compiled figure.** ⚠ The card names the wrong home — a scalar lb/ft is *"the wrong shape"*, and `FR-332`/`OI-45` have since settled the formula and the density source. **Never the basis of a persisted completion weight** ([`FW-202`](FW-202.md)) |
+| `P-272` | [FW-210](FW-210.md) | **The roll gap is published BELOW gauge and `CurrentValue` stops carrying gauge** — the built code ships the sign error `[SIM §5.5]` exists to prevent. ⚠ §10.5 arbitrates against **`FR-385`/`FR-387`**, not `FR-386` |
+| `P-273` | [FW-210](FW-210.md) | **FL3 is a third model with the full chain and coupled speeds** — a defect fix, not a feature: it currently falls through to FL1's branch and publishes **no FM2 stand at all** |
+| `P-274` | [FW-210](FW-210.md) | **`SetRunState`'s four states project onto `SimLineState.Running` as `state == Running`** — lossy on purpose, because the record is a command echo and `[SIM §9.2]` forbids widening it |
+
+> ⚠ **`P-268` and `P-270` are the two to read before writing any of it.** The first declines a type
+> the specification sketches; the second deletes a branch the built code has. Both look like
+> omissions in review and are the substance of the story.
+
+**`P-275`–`P-277` — minted by `FW-210`'s 31 Aug 2026 BUILD, and all three came out of running it.**
+Defined in [`FW-210 §4`](FW-210.md).
+
+| Id | Plan | Subject |
+|---|---|---|
+| `P-275` | [FW-210](FW-210.md) | **FL3's speeds couple on the GAUGE ratio only, never on gauge × width** — `[SIM §5.6]` **A8 ignores lateral spread**, so width is a setpoint and has no place in a conservation term. ⛔ The first implementation used cross-sections and **inverted the answer**: the trial fixtures give 0.05500 in² against 0.05600 in², so the take-up came out *slower* than its entry |
+| `P-276` | [FW-210](FW-210.md) | **`IsFaulted` is `false` on `FM1` alone and `null` everywhere else** — a fault bit is on record for FM1 only (`PLC-Q02`), and `false` elsewhere **asserts a healthy read from an instrument that does not exist**. Corrects built behaviour |
+| `P-277` | [FW-210](FW-210.md) | **The speed setpoint is 1200 FPM; the built 300 contradicted its own comment** — which claimed the seeded 800–1600 band. Judged nowhere, so it failed nothing; it made every trial DURATION about four times too long. Same family as `P-135` |
+
+> ⚠ **`P-275` is the one worth reading even outside the simulator.** It is the clearest case in the
+> folder of `[SIM §5.6]`'s assumption table doing the job it exists for: a plausible formula, written
+> from physics rather than from the spec, produced a backwards answer, and **A8 is what caught it**.
+
+**`P-278`–`P-284` — minted by [`FW-212`](FW-212.md)'s 31 Aug 2026 plan, re-review and BUILD.** Defined
+in [`FW-212 §4`](FW-212.md). ⚠ **These were defined on 31 Aug and indexed here on the same day's
+second pass** — the row was owed from the moment the plan landed (§9).
+
+| Id | Plan | Subject |
+|---|---|---|
+| `P-278` | [FW-212](FW-212.md) | **The loop reads the PAYLOAD, and `ILineModel.cs:56`'s layering objection to that is wrong** — `PlcTagValue` is a **Domain** type, and the payload is the only seam carrying **speed** and **one component's gap** |
+| `P-279` | [FW-212](FW-212.md) | **The observation DECORATES `IPLCTagService` rather than editing it**, gated on `Success && Simulated` — so `PLCTagService` and `CheckInService` stay untouched and `P-37`'s file-level measurement survives |
+| `P-280` | [FW-212](FW-212.md) | **MERGE semantics, one member** — AC 1 and AC 2 become one code path, and the models seed a complete default configuration |
+| `P-281` | [FW-212](FW-212.md) | **A pushed gap sets that stand's exit target through the mill-spring INVERSE.** ⛔ Carve-out: FL3 **accepts, logs and does not apply** a pushed `FM1` gap — `Fl3LineModel.cs:61` makes the intermediate gauge a `const` |
+| `P-282` | [FW-212](FW-212.md) | **Speed and both targets reach the model through the EXISTING `Steer`**, and the push never touches bias or drift |
+| `P-283` | [FW-212](FW-212.md) | **Edge TYPE is not on the wire at all** — engagement only, and **no geometry tag may be invented** (`G29`, `G33`) |
+| `P-284` | [FW-212](FW-212.md) | **The finished-gauge target is DERIVED on read, not written on push** *(minted by the build)* — a pinned final stand cannot set the target at write time, and the answer would otherwise depend on the ORDER the gaps arrive in |
+
+**`P-285`–`P-289` — minted by the 31 Aug 2026 first plan for [`FW-213`](FW-213.md), written against
+the built `ual-api`.** Defined in [`FW-213 §4`](FW-213.md).
+
+| Id | Plan | Subject |
+|---|---|---|
+| `P-285` | [FW-213](FW-213.md) | **The vocabulary is already minted, so this story fills bodies and adds no types** — `ApplyScenario`/`InjectFault`, `ScenarioId`/`FaultId` are all declared by `FW-210` and throw by name. **`P-265`'s and `P-268`'s reasoning a third time** |
+| `P-286` | [FW-213](FW-213.md) | **Six faults, not seven — `CommsDrop` is built and stays built.** It is `FW-205`'s only route to conditions **5 and 3**. ⛔ `[TB §7]`'s `FW-213` card and its own `FW-214` card **contradict each other**; the amendment is owed |
+| `P-287` | [FW-213](FW-213.md) | **`FaultId`'s member names are the wire vocabulary, and `"DroppedReadings"` stays an accepted alias** — `P-39`'s *"a superset, not a replacement"* applied to a value. ⚠ **Binds [`FW-215`](FW-215.md)** |
+| `P-288` | [FW-213](FW-213.md) | **One seeded generator; a second `Random` is forbidden.** `Erratic` scales `sim.GaugeNoiseIn`. A private generator breaks `[SIM §5.7]` **while still producing a plausible trace** |
+| `P-289` | [FW-213](FW-213.md) | **`ToTarget` and `WeightVariance` build to the null and decline by name.** ⛔ **Do not substitute footage for weight** — it would derive a stopping point from the very basis nobody has agreed. `G39` in miniature |
+
+**`P-290`–`P-294` — minted by the 31 Aug 2026 first plan for [`FW-214`](../../50-frontend/tasks/FW-214.md).**
+Defined in [`FW-214 §4`](../../50-frontend/tasks/FW-214.md). ⚠ **FE stream** — indexed here because the
+`P-##` series is continuous across both folders, not because this file owns the story (§8).
+
+| Id | Plan | Subject |
+|---|---|---|
+| `P-290` | [FW-214](../../50-frontend/tasks/FW-214.md) | **`lbPerFt` and the seed render as an explicit *unset*, never blank and never zero** — **`G68`**. A `0` reads as a measured factor where `Reading` already uses null to mean *not read* |
+| `P-291` | [FW-214](../../50-frontend/tasks/FW-214.md) | **The startup probe has THREE outcomes, and only 404 locks out.** ⛔ The service answers **401** today, so a binary probe shows the lock-out panel through the whole acceptance run |
+| `P-292` | [FW-214](../../50-frontend/tasks/FW-214.md) | **The server base URL is one configured value and every path composes from it** — `UsePathBase` means the deployed surface is `/API.FlatWire/**`, which the built code calls *"the mistake that works on localhost and fails on the panel"* |
+| `P-293` | [FW-214](../../50-frontend/tasks/FW-214.md) | **Steer fields are labelled *commanded* and never plotted as actuals** (`P-267`). ⛔ **Half CORRECTED by the build**: it also said *"both state chips come from the hub"*, and **no hub payload carries a run status at all** - `[SIG §5.2]` event 7 is `LineState` only. That is **`G69`**; `P-301` supersedes that half |
+| `P-294` | [FW-214](../../50-frontend/tasks/FW-214.md) | **Greying is one capability map read at startup**, not `Enabled = false` scattered through the panel — what makes *"each returns as configuration"* true rather than aspirational |
+
+**`P-295`–`P-298` — minted by the 31 Aug 2026 first plan for [`FW-217`](FW-217.md), written against
+the built `ual-api`.** Defined in [`FW-217 §4`](FW-217.md).
+
+| Id | Plan | Subject |
+|---|---|---|
+| `P-295` | [FW-217](FW-217.md) | ⛔ **The double sits at the HTTP seam `FW-N05` ACTUALLY uses, not at an OPC UA endpoint** — `OpcIngestService` speaks HTTP to `OPCConnection` over two routes and has **no OPC namespace**, so an OPC UA server would be connected to nothing. **No `Opc.Ua.Server` package exists in `ual-api`.** Three spec amendments owed |
+| `P-296` | [FW-217](FW-217.md) | **Selected by configuration alongside `AddFlatWireOpcIngest`'s existing branches; `IReadingSource` stays unminted** (`P-265`) — the second story to depend on that amendment |
+| `P-297` | [FW-217](FW-217.md) | **The double re-hosts the same `ILineModel` instances and mints no snapshot type** (`P-268`) — *"the physics is written once"* is satisfied by hosting, not by porting |
+| `P-298` | [FW-217](FW-217.md) | **No tag path string is written in the double; it answers from the bound path map.** So it proves the **pipeline**, never the **map** — `C1`/`C11` remain the only things that close `G32`/`G33` |
+
+> ⚠ **`P-295` is the one to read before any simulator work outside `FlatWire`.** It is the folder's
+> clearest case of a card naming the wrong seam: `[SIM §3.1]`'s diagram, `[SIM §3.3]` and `[TS §3.1]`
+> all described an **OPC server sidecar**, and the ingest it is meant to exercise does not speak OPC.
+> ✅ **All three were amended on 31 Aug 2026 by the build** — the diagram box, `[SIM §3.3]`'s two rows
+> and `[TS §3.1]`'s E2E row now describe the HTTP double. **`FW-217 §1.2` is still the place the
+> evidence is set out**, and `[TB §7]`'s `FW-217` and `FW-120` cards are **not** amended, because those
+> rows feed three `.xlsx` generators.
+
+**`P-299`–`P-300` — minted by [`FW-213`](FW-213.md)'s 31 Aug 2026 BUILD, and both came out of running it.**
+Defined in [`FW-213 §4`](FW-213.md).
+
+| Id | Plan | Subject |
+|---|---|---|
+| `P-299` | [FW-213](FW-213.md) | ⛔ **The gauge tolerance band becomes DATA, and excursions are sized in BANDS.** The plan's own step 1 named *"the active tolerance band … `PassSchedule` data"* and **neither `SimLineNominals` nor `PassScheduleSnapshot` carries one** - the band existed only as prose in `GaugeNoiseIn`'s remark. Now `GaugeToleranceIn` (0.0020, a FIXTURE so it takes a default, unlike `LbPerFt`). ⚠ **The model judges nothing against it** - `SpcMeasurement.InSpec` is a PERSISTED computed column and a second opinion is two answers to one question |
+| `P-300` | [FW-213](FW-213.md) | **The wire-break marker is observable on the MODEL, never on the wire** - `ILineModel.WireBroken`. `[SIM 7.2]` specifies *"stop + a break marker"* and `G34` gives it no persistence target, so **an unobservable marker is not a marker**. ⛔ Deliberately **not** on `SimLineState`, which `[SIM 9.2]` forbids widening; when `G34` settles a target this FEEDS the real home rather than replacing it |
+
+> ⚠ **Both were found by analyzer warnings, and neither was lint.** The unread `scenario` field was **`ToTarget` never stopping the line**; the unread `wireBroken` field was `P-300` asking to exist. It is the clearest case in the folder for why *"no new analyzer warning"* is worth holding as a bar.
+
+**`P-301` — minted by [`FW-214`](../../50-frontend/tasks/FW-214.md)'s 31 Aug 2026 BUILD.** Defined in [`FW-214 §4`](../../50-frontend/tasks/FW-214.md).
+
+| Id | Plan | Subject |
+|---|---|---|
+| `P-301` | [FW-214](../../50-frontend/tasks/FW-214.md) | **The run chip is labelled at the precision the wire actually carries.** `[SIM §9.2]` requires two chips and the wire carries one vocabulary, so the run chip renders **running / not running** from `/sim/state`, and `Run: unknown` before any read. ⛔ **The alternative was a four-state chip fed from a bool**, which `P-274` warns would show `Paused` as **stopped** - the exact `[SIM §4.4]` confusion two chips exist to prevent. `G69` |
+
+> ⚠ **`P-301` is `P-290`'s posture applied to a CHIP rather than a value.** Where the wire carries less than the specification asks for, show what is knowable at the precision it is knowable and record the gap - rather than inventing the rest.
+
+**`P-302`–`P-305` — minted by [`FW-217`](FW-217.md)'s 31 Aug 2026 BUILD, and all four came out of running it.**
+Defined in [`FW-217 §4`](FW-217.md).
+
+| Id | Plan | Subject |
+|---|---|---|
+| `P-302` | [FW-217](FW-217.md) | ⛔ **The double is mapped INSIDE `FlatWire.API` at `api/v1/OPCConnection`, not built as a separate host.** `P-298` requires that a `G32`/`G33` correction be ONE edit moving both sides together, and a separate process carries **its own copy of the 72-path map**. So the fixture is a *configuration state* of the service under test, which is what makes the plan's *"only its `OPCConnection` base address differs"* literally true. ⚠ Consequence accepted: the ingest's HTTP hop is a loopback |
+| `P-303` | [FW-217](FW-217.md) | **One read advances one line by one tick of the CONFIGURED interval — the reader is the clock.** `OpcFeedSimulator` passes the fixed interval to `Tick`, so passing the same thing is what makes the trace identical to the in-process adapter's for the same seed; measured elapsed would put clock jitter into a fixture whose value is reproducibility. ✅ **Measured: two fresh processes identical over 10 ticks × 7 tags.** ⚠ A reader that stops reading therefore FREEZES the line, which is what is wanted of a fixture |
+| `P-304` | [FW-217](FW-217.md) | ⛔ **A silent tick answers 503; never a 200 carrying nulls.** `Tick` returning null is a comms drop, and on an HTTP transport silence is *a read that did not complete* — so the ingest writes nothing and `FW-205`'s watchdog sees the gap it measures. A 200 with every value null would publish *a live feed reporting nothing*, **a different fault entirely**. ⚠ **UNEXECUTED — `G70`**: nothing can arm the drop |
+| `P-305` | [FW-217](FW-217.md) | **The double answers null where a line's model has no instrument, and invents no fallback.** Found by building the projection: `Fl2LineModel` reports its one load cell at `TraversingTakeup` and the tag surface carries only `Payoff1Weight`/`Payoff2Weight`, so `FL2.Payoff1.Weight` answers **null** — raised as **`G71`**. A *"the line's only load cell"* fallback was rejected: it invents a mapping the tag surface does not have, which is how a fixture comes to prove what the real path cannot do |
+
+> ⚠ **`P-303` and `P-305` are the two to carry into `FW-215`.** The first is why the double needs no
+> loop of its own; the second is the rule that keeps a fixture honest — **where the real path cannot
+> carry a value, the fixture must not carry it either.** ⛔ And `P-304` is the one that is written and
+> **not yet exercised**: `G70` leaves the drop unreachable, so the 503 branch is reviewed, not run.
+
+> ✅ **Both were carried, and `P-304` is now REACHABLE** — `FW-215` closed `G70`, so the drop can be
+> armed on the double and the 503 branch can be run. `P-305`'s rule held: `GET /sim/config` answers
+> **null** for `lbPerFt` rather than inventing a figure.
+
+**`P-306`–`P-314` — minted by [`FW-215`](FW-215.md)'s 1 Sep 2026 BUILD**, which completes the simulator
+story set. Defined in [`FW-215 §6.1`](FW-215.md).
+
+| Id | Plan | Subject |
+|---|---|---|
+| `P-306` | [FW-215](FW-215.md) | ⛔ **`POST /sim/{lineId}/run` REPLACES the line's model rather than mutating one.** Of `[SIM §8.1]`'s *"scenario, seed, start weight, target"*, **two have no lever on `ILineModel`**: the seed is `new Random(sim.Seed + (int)line)` in `LineModelBase`'s constructor and `StartWeightLb` is `private set`. ⚠ **Adding `Reseed`/`SetStartWeight` was REJECTED** — replacing is the correct semantics, not the workaround: `[SIM §5.7]`'s tick-for-tick reproducibility is a property of construction, and a mid-run reseed restarts the noise against advanced footage, reproducing nothing |
+| `P-307` | [FW-215](FW-215.md) | **The seam is `ISimLineHost`, in `FlatWire.Infrastructure`.** `SimLineState` is declared there and both hosts live there; minting it in Domain would drag that record across a boundary or add a mapping layer — **`P-265`'s mistake one interface over**. ⚠ `[SIM §2.1]` is untouched: no interface is added to the CONTRACTS |
+| `P-308` | [FW-215](FW-215.md) | **`LineModelFactory` extracted, on this codebase's own trigger.** `OpcConnectionDouble` carried the rule in terms — *"if a third consumer appears, extract then"* — and `StartRun` is the third. Both byte-identical private copies deleted. ⚠ **`Project`/`Apply` deliberately NOT extracted**: still two consumers |
+| `P-309` | [FW-215](FW-215.md) | ⛔ **The registration gate is *"a line model is hosted"***, not *"`SimulateOpcFeed` is true"* — `G70`. With the double mapped the feed **is** synthetic, so `[SIM §2.4]`'s condition was not violated but **out of date**. The `404` is unchanged where it matters and was re-measured in a fresh process |
+| `P-310` | [FW-215](FW-215.md) | **The role strings bind to `FlatWireRoles`; the POLICY is not built here.** `G72`'s literal `"Engineer,Admin"` is gone. ⛔ **`FlatWireRoles` forbids building the policy here** — *"`FW-145` owns the POLICIES and this story does not build them"* (`P-75`) — so this is a constants change and nothing more. ⚠ The constants are still `"TBD"`, so the surface denies everyone, and it **logs that state at start-up** on `FlatWireHub.OnConnectedAsync`'s precedent rather than looking guarded |
+| `P-311` | [FW-215](FW-215.md) | ⛔ **A behaviour the model declines by name answers `422`, never `500`.** `ScenarioId.ToTarget` and `FaultId.WeightVariance` are built inert while `LbPerFt` is unset (`P-271`, `Q10`/`OI-45`) and throw `NotImplementedException`. **The harness caught this as a 500 on the first run.** The model's message is returned verbatim — it names the open question. ⚠ **A declined run start leaves the LIVE model untouched**, because the scenario is applied to the replacement before the swap — measured |
+| `P-312` | [FW-215](FW-215.md) | **`/sim/state` iterates the host's own hosted set and OMITS what is not hosted, answering `200`.** ⛔ **At most two lines, never three**: `{FL1,FL2}` or `{FL3}`, since polling FL2 and FL3 together would read one load cell and three stands twice a second. `[SIM §8.1]`'s *"all three"* is unreachable **by design**. The `400` stays on the per-line routes, which can name the reason |
+| `P-313` | [FW-215](FW-215.md) | ⛔ **The per-run seed / start-weight override is a COPY.** The options arrive as the bound `IOptionsMonitor` instance, so mutating it would **leak to every line and outlive the request**, making `[SIM §5.7]`'s claim untrue invisibly. `WithRunOverrides` copies **every** field, because the model reads six more on the tick path and a partial copy leaves a replaced line on C# defaults |
+| `P-314` | [FW-215](FW-215.md) | **`DroppedReadings` kept as an alias for `FaultId.CommsDrop`** — `P-287`'s *"a superset, not a replacement"* applied to a value. `FW-214`'s console is BUILT and sends that string, as does the acceptance-run collection; neither is deprecated out from under a delivered client |
+
+> ⚠ **`P-306` and `P-313` are the pair to read together.** The first says a run start must build a new
+> model; the second says the values it is built from must be a **copy**. Taken apart, either one alone
+> produces a surface that looks right and is not: a mutation-based start cannot honour the seed at all,
+> and a replacement built from the shared options instance honours it once and then poisons every line
+> after it.
+>
+> ⛔ **`P-311` is the one a reviewer should look for in any future fixture route.** Two of `FW-213`'s
+> twelve behaviours are built **inert and decline by name**, which is correct and deliberate — and any
+> handler that reaches them without catching that turns a designed answer into a `500`. It was found by
+> running the harness, not by reading the code.
+
+
 > **`settled` means decided and recorded, not ratified by a third party** — it means the plan
 > made the call, gave its reasoning, and nothing blocks building to it. **New decisions are
-> minted at `P-169`+**, and the series stays continuous across the folder. *(`P-99`–`P-102`
+> minted at `P-306`+**, and the series stays continuous across the folder. *(`P-99`–`P-102`
 > were taken by `FW-080`'s 28 Aug refresh, re-reviews and build; `P-103`–`P-107` by `FW-151`'s
 > 28 Aug review against the built `ual-api`, **`P-108`** by its pre-execution re-review, and
 > **`P-109`–`P-112`** by its build, and **`P-113`–`P-117`** by `FW-149`'s 28 Aug review and its pre-execution re-review;
@@ -754,9 +951,8 @@ re-derive on their own retention factors and **disagree on Phase-1B RT by up to 
 |---|---|
 | `FW-206` — `ITInhibit` conditions 1–2 | **Phase 4**, not 1B. ⚠ `TC-011`/`TC-012` are **not** QA0's — running them fails against code never in scope here |
 | `FW-N11` — operator session | Uncosted; `FW-205` took the `ITInhibit` half |
-| `FW-210` `FW-212` `FW-213` `FW-215` `FW-217` | Simulator set — unscheduled, additive |
+| `FW-215` | Simulator set — unscheduled, additive, and **the last simulator id left here**. ⚠ **`FW-210`, `FW-211`, `FW-212`, `FW-213` and `FW-217` have all left this row** on 31 Aug 2026 — each is planned, built and indexed at §1.12; `FW-217` sat here for being *unscheduled and additive*, **not** for being Phase 14, which §8 above excludes. ⛔ **It now carries `G70`, and that is a reason to schedule it rather than a note about it.** `FW-217`'s build delivered an E2E fixture that **cannot be steered**: `/sim/**` is mapped only when `FlatWireOpc:SimulateOpcFeed` is *true* and its handlers take `OpcFeedSimulator` concretely, while the `OPCConnection` double needs that flag *false*. So `FW-213`'s twelve behaviours are built and unreachable from outside the process, and `[TS §3.1]`'s E2E level can drive only each line's default in-spec run. `G68` and `G69` are already owned here too. ✅ **The card itself was reconciled on 1 Sep 2026** — four of its five endpoints turned out to be BUILT (`FW-218`), its prefix, its controller style and its gate flag were all wrong against the code, and **`G72`** came out of the check; it is still `has_plan: false`, so this row stands |
 | `FW-214` — console `DB-S1` | FE stream; **standalone WinForms EXE since `D-33`**, not an Angular screen; ships with controls **greyed** |
-| `FW-211` — the `IReadingSource` seam | 1B owns it, but it is **unscheduled and additive** |
 
 ### 8.1 Five findings raised and deliberately not fixed
 

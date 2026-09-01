@@ -102,7 +102,13 @@ why the Backend folder deliberately does not plan them.
 | Story | Subject | h | Owning document | Status |
 |---|---|---|---|---|
 | `FW-204` | Minimal landing route — the entry point while DB1 is out of trial scope | 8 | [`[SCR §7.2]`](../ScreenPlan.md) | ⛔ Not started · **retires when `FW-060` ships** |
-| `FW-214` | Simulator control console `DB-S1` — **standalone WinForms** (`D-33`) | **52** | [`[SIM §9]`](../../Architecture/MachineSimulator.md) · [`../mockups/simulator_console.html`](../mockups/simulator_console.html) | ⛔ Not started · ⚠ **not one of the fifteen dashboards** (`[SCR §7.1]`); ships with controls **greyed** until `FW-218` |
+| [`FW-214`](FW-214.md) | Simulator control console `DB-S1` — **standalone WinForms** (`D-33`) | **52** | [`[SIM §9]`](../../20-architecture/MachineSimulator.md) · [`../mockups/simulator_console.html`](../mockups/simulator_console.html) | ✅ **PLANNED AND BUILT 31 Aug 2026** (`P-290`–`P-294`, `P-301`) — **36/36 harness checks, 0 errors, 0 warnings**, standalone WinExe at `ual-api/Tools/FlatWireSimConsole/`. ⛔ **New gap `G69`**: the run-status chip has no source on any wire, which corrected half of `P-293` · ⚠ **not one of the fifteen dashboards** (`[SCR §7.1]`); ships with controls **greyed** until `FW-215`. ⛔ **Three of the card's greying rows were stale and three acceptance criteria will not work deployed** — the startup probe is binary where the service answers **401**, nothing configures a base URL against `UsePathBase`, and the **`lbPerFt` readout cannot be built at all** (**`G68`**, raised by the plan) |
+
+> ⚠ **`FW-214`'s decisions are `P-290`–`P-294`, and they are indexed in the BACKEND file.** The
+> `P-##` series is continuous across both task folders and
+> [`Backend/tasks/Orchestration.md §4a`](../../40-backend/tasks/Orchestration.md) is its single
+> register — a second home is how the six PLC tag copies happened. They are **defined** in
+> [`FW-214 §4`](FW-214.md).
 
 ### 1.4 Downstream — 38 FE stories, Phases 3–14
 
@@ -294,7 +300,7 @@ re-derive on their own retention factors.
 | Item | Why |
 |---|---|
 | DB9 · DB9A · DB10 · Die Management · OEE | **MVP-2.** Mockups at [`MVP-2/Mockups/`](../../../../MVP-2/Mockups/); do not plan, estimate or implement them |
-| `FW-210` `FW-212` `FW-213` `FW-215` `FW-217` | Simulator set — unscheduled and additive. Only `FW-214`'s console is FE — and since `D-33` it is a **WinForms desktop tool**, carded `FE` because `FE` means the user-facing surface, not Angular — and only in trial scope |
+| `FW-215` | Simulator set — unscheduled and additive. ⚠ **`FW-210`, `FW-211` and `FW-212` are planned AND built, and `FW-213` and `FW-217` are planned**, all on 31 Aug 2026 — indexed at [`Backend/tasks/Orchestration.md §1.12`](../../40-backend/tasks/Orchestration.md). Only `FW-214`'s console is FE — and since `D-33` it is a **WinForms desktop tool**, carded `FE` because `FE` means the user-facing surface, not Angular — and only in trial scope. ⛔ **`FW-215` is owed one endpoint it is not carded for** — a configuration read, which is `G68` |
 | The `[ARC §2.2]` reference rules | **Binding, and `[ARC]`'s.** Summarised as `D-06` in §4 and not restated |
 | Pixel-level design | The mockups are **the pixel authority**. This file names which one owns a screen and stops there |
 
