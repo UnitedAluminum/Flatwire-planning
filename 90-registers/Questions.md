@@ -200,6 +200,8 @@ Generic labels (e.g., "Incoming Bundle Information") are agreed in principle. Th
 #### A4. Output & Packaging
 
 **Q4** · `High` · Owner: Tim O. / Shannon R. · `Open`
+
+> **Printer topology supplied 1 Sep 2026; the label rules are not.** The client named three printer locations — FL1 Payoff = SATO · FL1 Operator Station = SATO **and Zebra High-Temp** · FL2 Operator Station = SATO (+ a provisioned Zebra, unused, *"given there is no way to anneal"*) — and four label types: **Return to Stock @ Payoff**, **Coil/Spool Label High-Temp**, **Finished Coil Label**, **Skid Label**. ⚠ It is explicitly provisional: *"(Need to confirm with Bob S. & Shannon R.)"*, and the client asks Bob **"Do we need two SATOs at FL2?"**. ⚠ The high-temp unit is a **ZEBRA**, which contradicts `C12`'s *"≈ 4 SATO"*. The station model cannot hold two printers at one station — `G78`; `Return to Stock @ Payoff` has no transaction behind it — `G84`.
 **Coreless coil skid labeling rules**
 Final output is 2 coreless oscillated coils per skid. Do skid labeling, alpha assignment, and packaging records follow **UA's existing coil packaging rules** unchanged, or are flat wire-specific adjustments required?
 
@@ -210,6 +212,8 @@ Related: **`Q87`** (the finished-coil label itself — raised 24 Aug 2026, and B
 ---
 
 **Q87** · `High` · Owner: Tim O. / Bob S. / Shannon R. · `Open`
+
+> **Printer topology supplied 1 Sep 2026; the label rules are not.** The client named three printer locations — FL1 Payoff = SATO · FL1 Operator Station = SATO **and Zebra High-Temp** · FL2 Operator Station = SATO (+ a provisioned Zebra, unused, *"given there is no way to anneal"*) — and four label types: **Return to Stock @ Payoff**, **Coil/Spool Label High-Temp**, **Finished Coil Label**, **Skid Label**. ⚠ It is explicitly provisional: *"(Need to confirm with Bob S. & Shannon R.)"*, and the client asks Bob **"Do we need two SATOs at FL2?"**. ⚠ The high-temp unit is a **ZEBRA**, which contradicts `C12`'s *"≈ 4 SATO"*. The station model cannot hold two printers at one station — `G78`; `Return to Stock @ Payoff` has no transaction behind it — `G84`.
 **What does the FL2 finished-coil label carry, on what media — and does a coil built from two source rods print one alpha or two?**
 
 Raised on the **24 Aug 2026** call against a worked example: an FL2 coil wound from two contributing lengths — 400 ft and 500 ft — producing one physical coil with **two source identities behind it**. The direct question was *“what should be the alpha, a single alpha, or we will show multiple alpha at the coil?”* **UA deferred it on the call** — Tim: *“we're going to have to figure out what the labeling is going to look like”*; Shannon: *“we'll work it out outside the meeting.”*
@@ -283,6 +287,8 @@ Is there a maximum allowable twist per foot for flat wire — particularly for w
 #### B3. Yield Loss & Planning Inputs
 
 **Q10** · `Critical` · Owner: Tim O. / Bob S. · `Open`
+
+> **Partly answered 1 Sep 2026 — and the rod half is settled.** The client: *"The Rod will be considered cylindrical although it is not perfectly round. **The Rod weight is given at the time of coil receiving so there is no need to calculate, it is an input instead.**"* Footage **is** calculated and carries a ± x ft tolerance from ovality; drawn-wire tolerance is *"significantly tighter than the provided rod"*. Recorded as `D-37`. ⚠ **The formula worksheet is still owed**, and the `OI-45` dimensional basis is untouched.
 **Footage-to-weight conversion factor**
 How is the footage-to-weight conversion calculated per alloy and cross-section? Is there a standard formula (density × cross-sectional area × footage), or is it measured empirically and maintained per product? This factor is the basis for output weight calculation (weight is derived from length, not scale).
 
@@ -295,6 +301,8 @@ Note that the formula is not what is actually in doubt: the open part is the **d
 ---
 
 **Q11** · `High` · Owner: Tim O. / Margo · `Open`
+
+> **Not answered — read the 1 Sep yield answer carefully before closing this.** The client supplied the **actual**-yield measurement formula (produced lb ÷ consumed lb, per Bundle/Spool, Shift and Order — `D-40`). This question asks for the **per-pass scrap allowance** the planning algorithm applies when sizing rod input. Different question, and `OI-60` is in the same position.
 **Yield loss factor for planning rod input sizing**
 Is there a per-pass scrap allowance (die entry crop, edge trim, end crop, weld scrap) that the planning algorithm must apply when sizing rod input weight for an order? If not built in, planners will systematically under-order rod and discover the shortage at the machine.
 
@@ -415,6 +423,8 @@ The 75 / 90 / 100 ladder was specified for spool creation at FL1 TKUP-1. FL2 and
 ---
 
 **Q20** · `Medium` · Owner: Tim O. / IT · `Open`
+
+> **Half answered 1 Sep 2026.** Asked *"Is a dedicated Supervisor Monitor required for Flatwire operations?"*, the client answered a flat **"No"** — `D-38`, superseding `C13`'s *"desired but not required for initial implementation"*. ⚠ **That closes the screen, not this question**: whether the **unacknowledged 100 % milestone** mirrors to a supervisor, and where the acknowledgement audit lives, are still open. ⚠ And the client's IT inhibit list still marks **`Supervisor Monitor`** as applying, with *"Supervisor monitoring"* visible on an attached screenshot of a live machine — so something sets it. See `G80`.
 **Supervisor mirroring and audit persistence of milestone acknowledgements**
 
 Is the spool completion alert an operator-only notification, or is it also surfaced to the supervisor (Dashboard 1 line status / Operations Manager view) — particularly an **unacknowledged** 100% milestone, which indicates nobody is at the machine as the spool fills? And where does the acknowledgement audit record live: a new milestone/acknowledgement table hanging off `FlatWireRun`, or an entry in the existing run-event stream?
@@ -424,6 +434,8 @@ Is the spool completion alert an operator-only notification, or is it also surfa
 ---
 
 **Q21** · `High` · Owner: Engineering / Tim O. · `Open`
+
+> **Item 1 partly answered 1 Sep 2026.** Asked about jog events, the client confirmed *"jog events on **all three stands of FL2**, as well as **open/close on stand rolls**, and **thread position on dancers**"*. So **JOG and THREADING are real machine states**, and the state-filtering this question asks about is required rather than hypothetical. ⚠ The **tag paths** for all three are new and are `PLC-Q19`; the `FL{n}.LineState` **vocabulary itself is still unanswered**.
 **`FL{n}.LineState` state vocabulary, stop-dwell value, and pause-reason suppression**
 
 Part B of [SpoolCompletionNotification.md](../10-requirements/screens/SpoolCompletionNotification.md) conditions the spool-removal popup on the PLC confirming a `RUNNING → STOPPED` transition, using the same `FL{n}.LineState` tag the system already reads as the rod-checkout gatekeeper. Three specifics are needed before it can be built:
@@ -680,6 +692,10 @@ Related: `OI-13`, **G34**, **Q75** (partial-run disposition — the same decisio
 ---
 
 **Q32** · `High` · Owner: Tim O. / Engineering · `Open`
+
+> ✅ **Items 1 and 2 ANSWERED 1 Sep 2026, and the `C6` / `D-28` conflict is resolved with them.** The client: dancers *"maintain little to know [sic] tension by design"*; control is *"through the **machine program**"*; each dancer holds *"a **range(position)** that it is set to maintain"*; and it *"**will not be adjustable from an operator standpoint and will remain constant**"*. **Nobody selects the mode** — not the operator, not the pass schedule — so item 1 is *the machine program*, item 2 is moot, **no write surface is owed**, and the read-only dancer tag element authored on 12 Aug was correct. A tension mode does exist *"on FL2 however it will only work with heavier & larger dimension products"*, which makes `Dancer.SupportsTensionMode = 0` on FM1 mean **"no"** rather than "not stated". Recorded as `D-36`.
+>
+> ⚠ **Item 3 stays open and is now the whole question.** `PSG-D27` substitutes `σ̄_f,eff = σ̄_f − (σ_b + σ_f)/2` on applied front/back tension; if dancers *remove* tension that models something FM1 does not do at all. The client is *"uncertain how this will work in this scenario and will need to follow up with engineering"* — so this remains a physics question with two computed outputs downstream, not a documentation fix.
 **FM2 dancer modes — who selects between dancer mode and tension mode, and how does it reach the machine?**
 
 New equipment behaviour disclosed on the 6 Aug call, and **nothing in the repository models it**. Tim: *"On FM2 we are going to have two different modes on the mill dancers. The two dancers were essentially where the edgers are — between S1/S2 and S2/S3. Those dancers will have two modes: regular dancer mode, compensating speed control, and then they will also have tension mode… similar to what we see on the current mills."*
@@ -720,6 +736,8 @@ Related: **Q1** (roll gap validation — the other per-component setpoint), **Q2
 ---
 
 **Q33** · `High` · Owner: Tim O. · `Open`
+
+> ⛔ **Asked and NOT answered, 1 Sep 2026.** This was question 1 of the 13 Jaspreet sent on 22 Jul 2026, and it is **the only one of the thirteen the client left blank** — every other question carries an inline reply. The action `A1` has now been owed since 23 Jul and is owed **twice over**, being the same deliverable as `A1`/`A3` on the 6 Aug ledger. See [ClientEmail_2026-09-01_ReasonCodes_SyncPlan.md](../95-archive/source-documents/ClientEmail_2026-09-01_ReasonCodes_SyncPlan.md) §6 item 1.
 **OD/diameter → weight conversion formula for spool**
 When a spool is measured by outer diameter at the takeup, how is the remaining weight calculated? The formula (using OD, ID, coil width, and alloy density) must be confirmed by Tim O. and documented before spool weight tracking and "assign as-is" stock handling logic can be implemented. Weight distribution is tracked via footage and revolutions per the Apr 28 planning decision, but the OD-based verification formula is still needed.
 
@@ -878,6 +896,8 @@ Related: **`OI-119`** (the two scalar columns), **`Q45`** (the lead alpha, if it
 ---
 
 **Q44** · `High` · Owner: Tim O. / Bob S. · `Open`
+
+> **Printer topology supplied 1 Sep 2026; the label rules are not.** The client named three printer locations — FL1 Payoff = SATO · FL1 Operator Station = SATO **and Zebra High-Temp** · FL2 Operator Station = SATO (+ a provisioned Zebra, unused, *"given there is no way to anneal"*) — and four label types: **Return to Stock @ Payoff**, **Coil/Spool Label High-Temp**, **Finished Coil Label**, **Skid Label**. ⚠ It is explicitly provisional: *"(Need to confirm with Bob S. & Shannon R.)"*, and the client asks Bob **"Do we need two SATOs at FL2?"**. ⚠ The high-temp unit is a **ZEBRA**, which contradicts `C12`'s *"≈ 4 SATO"*. The station model cannot hold two printers at one station — `G78`; `Return to Stock @ Payoff` has no transaction behind it — `G84`.
 **What does the FL1 spool label print, and on what media?**
 
 > **Decided (August 20, 2026) — the high-temp coil label, two per spool.** Spools pass through anneal, so no ordinary label survives. Bob: *"It'll be the **1½ by 3 inch label**, the ones that are output from the mills — you get **2 per label, one for each side of the spool**, slap it on."* Tim: *"My thought was the high-temp labels with the alphas on them, just like we do the cut labels now that are going to anneal."* And **any one identifier on the label resolves the spool** — Bob: *"Just like the furnace plate … they only have to scan one of the coil codes on a furnace plate to get it into anneal."*

@@ -110,6 +110,34 @@ why the Backend folder deliberately does not plan them.
 > register — a second home is how the six PLC tag copies happened. They are **defined** in
 > [`FW-214 §4`](FW-214.md).
 
+### 1.3a Minted 2 Sep 2026 — the 1–2 September scope, and **both cards owe a mockup**
+
+`[TB §7]` Appendix `B.7`. ⛔ **This is the FE stream's distinguishing problem with this set:
+`[CE §2]` prices a screen at 24 h and a dialog at 12 h *"against the approved visual spec — no
+design time included"*, and neither of these has one.** Every other FE story in this folder was
+priced against an existing mockup.
+
+| Story | Subject | h | Owning document | Status |
+|---|---|---|---|---|
+| [`FW-253`](FW-253.md) | **Die Management screen** — the inventory grid and `FR-252`'s two history tabs | 24 | [`DieManagement.md`](../../10-requirements/screens/DieManagement.md) · ⛔ **no mockup** | ⛔ Not started · ⭐ **MVP-2 until 2 Sep 2026, MVP-1 since (`Q91`)** — `FR-240`–`FR-255` and this specification came back with the die domain, and `FW-N07`'s MoSCoW split is settled. ⛔ Blocked on **`OI-12`** (two band pairs, one table) and **`OI-141`** (one die register or two) |
+| [`FW-256`](FW-256.md) | **Line Downtime dialog** — the 25 `DWN##` codes that have no run | 12 | `D-35` · [`pause_run.js`](../mockups/pause_run.js) *(the pattern, not the surface)* · ⛔ **no mockup** | ⛔ Not started · ⛔ **`pause_run.js` refuses this job in its own header** — *"Do not add a Downtime tab to it"* — so the fourth bucket has **no surface anywhere in the mockups** |
+
+> ⚠ **Two existing FE cards were re-pointed rather than replaced**, because the reworked mockups
+> are the baseline and both dialogs already exist:
+> ⛔ **[`FW-071`](FW-071.md)** — the 15 icon tiles in five semantic columns are **retired** by
+> `D-34`. **47 codes cannot be tiles at the 14 px shopfloor minimum**, so the dialog adopts
+> `wip_rejection.js`'s quick-chips-over-two-selects pattern rather than a third interaction being
+> invented. **Three buckets, not four.** New blocker **`G83`** — four SRS reasons with no successor code.
+> ⚠ **[`FW-067`](FW-067.md)** — the 72-reason list arrived, so `wip_rejection.js` needed **only a
+> data swap**; its interaction was already right. New blockers **`G79`** (all 72 group values are
+> ours) and **`G82`** (threading is mandated as a WIPREJ and no reason code exists).
+> ⚠ **[`FW-073`](FW-073.md)** — validates per **tool** now, not per size, and **`OI-12` is no
+> longer dormant**: its 60/85 % bands and `FW-253`'s 65/80 % bands read one table.
+>
+> ⚠ **Additive to `[CE §3b]` — ⛔ but `FW-253` is scope returning to MVP-1**, so a published total
+> moves. [`FW-258`](../../60-delivery/tasks/FW-258.md) owns it, and the two mockups are named on
+> that card as an explicit pricing hole.
+
 ### 1.4 Downstream — 38 FE stories, Phases 3–14
 
 Ordered by phase, not by wave. **Every one of them is downstream of `FW-133`, `FW-134` or

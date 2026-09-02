@@ -162,6 +162,24 @@
       Mill template, and type 1 gives the lines working behaviour on day one. Against: FW-003
       also describes the machine template as a Slitter+Mill hybrid (most tabs come from the
       Slitter template), which could argue for a brand-new type instead.
+
+      NEW EVIDENCE, 31 Aug 2026 - it points AGAINST type 1. The client returned the field
+      sets for four flat wire tabs, and they are disjoint from both parents: Material Loss
+      drops ~36 Mill sleeve/pass scenarios for 7-10 flat-wire fields; Tooling Inventory
+      carries three tool types where the Slitter has five; the Flattening Line Schedule grid
+      is component-sequenced where the Mill's is pass-numbered. The instruction was "all
+      others will be removed". That is only safe to execute if the flat wire screens are
+      INDEPENDENT of ZR23/ZR24's - under a shared machine type driving shared tab
+      configuration, executing it would strip columns from the mills too. The client also
+      said, of three separate tabs, "this will be different for FL1 & FL2/FL3 as each machine
+      has its own capabilities" - so the configuration is not uniform even across the three
+      flattening lines, which no single inherited mill type expresses.
+
+      NOT A DECISION, AND THIS SCRIPT IS UNCHANGED. Whether tab configuration is actually
+      keyed on machine_type in the Machines Application has NOT been verified - ual-dot-net
+      was not read. Confirm against that code before choosing. @FlatWireMachineType is
+      deliberately left at 1. See 95-archive/source-documents/
+      ClientEmail_2026-08-31_MachinesAppTabs_SyncPlan.md section 4.7.
       RELATED GAP, not fixed here: AccountingDB.dbo.GetMachineTypeFromOpLetter maps op letters
       to machine types ('R'->1, 'T'/'X'/'S'->2, 'I'->3, 'P'->4, 'A'->5) and has NO case for the
       flattening letter 'F', so it returns NULL for flat wire today. That function needs a 'F'

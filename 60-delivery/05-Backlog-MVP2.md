@@ -37,7 +37,7 @@
 | Story | Why it is split |
 |---|---|
 | **`FW-014`** Pass-schedule override logging | The **trigger** is an MVP-1 mid-run override on the Active Run Monitor, which must raise an alert that cannot be passively dismissed. The **sink**, `PassScheduleChangeLog`, is an MVP-2 table. MVP-1 therefore has an override path with nowhere to log it. |
-| **`FW-N07`** Die master table + Die Management screen | The story's own MoSCoW split says it: the **table** is *Must*, the **screen** is *Should*. MVP-1's die change (`FW-073`) rejects a die not in inventory — it needs the table. Only the screen is MVP-2. This is `OI-41`'s actual content. |
+| ~~**`FW-N07`** Die master table + Die Management screen~~ | ⛔ **NO LONGER SPLIT, AND NO LONGER MVP-2 — 2 Sep 2026 (`Q91`).** The die split settled it the way this row always read: the table was *Must*, and it is now built as **`ToolingInventoryDie`** + **`DieHistory`**, seeded in Phase 1. The **screen** came back with it, so `FR-240`–`FR-255` and `DieManagement.md` are MVP-1 too. **`OI-41` closes.** ⚠ Effort not re-costed here — see `CapacityAndEffortModel.md` §3b. *(Was: "The story's own MoSCoW split says it: the table is Must, the screen is Should… This is `OI-41`'s actual content.")* |
 
 ## The dependency that survived the scope line
 

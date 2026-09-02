@@ -188,6 +188,27 @@ exists.
 | **[`FW-249`](FW-249.md)** | Re-derive the DB-stream total on the current basis | — | BA 8 | `[CE]` | §8.1 finding 6 — ⛔ **additively, never by substitution** |
 | **[`FW-250`](FW-250.md)** | `build_development_plan_xlsx.py` drops every multi-stream story | — | DB 6 | [`build_development_plan_xlsx.py`](../../tools/deliverables/build_development_plan_xlsx.py) | ⛔ **Found 29 Aug 2026 by RUNNING this register's own verification step.** The stream regex reads `N h XX` and cannot read `N h (XX a · YY b)`, and the miss is a silent `continue` — so **eleven stories are absent from the client-facing `FlatWire_DevelopmentPlan.xlsx`**, `FW-219`, `FW-220`, `FW-223`, `FW-202` and all of `FW-225`–`FW-231`, and absent from its *“excluded from plan”* line as well |
 
+**Minted 2 Sep 2026 — the 1–2 September scope, `[TB §7]` Appendix `B.7`:**
+
+| Story | Subject | Wave · Phase | h | Owning artifact | Closes |
+|---|---|---|---|---|---|
+| **[`FW-251`](FW-251.md)** | Restate the baseline to `[DBD §6.2]`'s current tuple and repair the cards the die split and the reason codes left stale | 1C | DB 8 | [`01_Lookup`](../sql/FlatWire_DDL_01_Lookup.sql) · [`04_Runs`](../sql/FlatWire_DDL_04_Runs.sql) · [`FW-005`](FW-005.md) · [`FW-007`](FW-007.md) · [`FW-171`](FW-171.md) · [`FW-176`](FW-176.md) | ⛔ **Six tables landed on 2 Sep 2026 and NOT ONE task card was updated.** ⚠ **`FW-005` still seeds `Drawer` with the 13 die-size rows the split took apart**, and still pins `Drawer.Id 1–13`. `C6` reports **24 advisory count claims** across ten files. ⚠ **This story states no count** — `[DBD §6.2]` is already correct and the guard passes |
+
+⚠ **`FW-251` is the DB half of a set of eight** — [`FW-252`](../../40-backend/tasks/FW-252.md),
+[`FW-254`](../../40-backend/tasks/FW-254.md), [`FW-255`](../../40-backend/tasks/FW-255.md) and
+[`FW-257`](../../40-backend/tasks/FW-257.md) are Backend's,
+[`FW-253`](../../50-frontend/tasks/FW-253.md) and
+[`FW-256`](../../50-frontend/tasks/FW-256.md) Frontend's, and
+[`FW-258`](../../60-delivery/tasks/FW-258.md) is the re-cost. ⛔ **Every DDL, schema-document,
+`[DEP §4.2]`-gate and register layer absorbed both scope events; the backlog was the only one that
+did not**, and `FW-003` was the single card touched.
+
+⚠ **The DB stream has nothing left to build for either event.** All six tables, their 62 FKs, 82
+indexes and **156 rows of inline production reference data** are in the DDL and pass
+`verify_schema_counts.py` today. `FW-251` is a **card and count-site repair**, and — as with
+[`FW-171`](FW-171.md) and [`FW-159`](FW-159.md) — **a DB developer assigned the downstream work
+finds the schema already done** (`P-195`).
+
 **Registered, and deliberately given no id:**
 
 | Item | Why no story |

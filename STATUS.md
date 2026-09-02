@@ -11,20 +11,20 @@
 | -- | 2 Pass Schedule Management (Operations Manag | 0 | 0 | 0 | 0 | 0 | 0 | 0 % | — |
 | 1 | 1A Angular Foundation | 9 | 0 | 0 | 0 | 2 | 7 | 0 % | G10 · G14 · G18 · G23 |
 | 1 | 1B Backend Foundation | 27 | 19 | 4 | 0 | 1 | 3 | 70 % | G10 · G17 · G2 · G29 … |
-| 1 | 1C Database Foundation | 12 | 0 | 1 | 0 | 1 | 8 | 0 % | G14 · G17 · G32 · G34 … |
+| 1 | 1C Database Foundation | 14 | 0 | 1 | 0 | 1 | 10 | 0 % | G14 · G17 · G32 · G34 … |
 | 1 | 3 Line Status Board & Real-Time Backbone | 7 | 0 | 1 | 0 | 0 | 6 | 0 % | G9 · OI-28 · OI-34 |
-| 1 | 4 Rod Check-In & PLC Configuration (FL1 / FL | 24 | 1 | 3 | 0 | 10 | 10 | 4 % | G14 · G17 · G2 · G26 … |
+| 1 | 4 Rod Check-In & PLC Configuration (FL1 / FL | 25 | 1 | 3 | 0 | 10 | 11 | 4 % | G14 · G17 · G2 · G26 … |
 | 1 | 5 Active Run Monitoring & Live Gauge/Width T | 9 | 2 | 2 | 0 | 1 | 4 | 22 % | G34 · G9 · OI-25 · OI-45 … |
-| 1 | 6 In-Run Production Events (Weld · Die Chang | 12 | 0 | 1 | 0 | 3 | 8 | 0 % | G26 · G27 · G28 · G34 … |
-| 1 | 7 Exception Handling: WIP Rejection & Rod Ch | 7 | 0 | 1 | 0 | 0 | 6 | 0 % | G14 · G24 · G7 · OI-100 … |
+| 1 | 6 In-Run Production Events (Weld · Die Chang | 15 | 0 | 1 | 0 | 3 | 11 | 0 % | G26 · G27 · G28 · G34 … |
+| 1 | 7 Exception Handling: WIP Rejection & Rod Ch | 7 | 0 | 1 | 0 | 0 | 6 | 0 % | G14 · G24 · G7 · G79 … |
 | 1 | 8 FL2 Spool Check-In & Finishing Run (FL2 St | 9 | 0 | 2 | 0 | 2 | 5 | 0 % | OI-02 · OI-06 · OI-25 · OQ-15 … |
 | 1 | 9 Output Coil Completion, Labeling & Packing | 11 | 0 | 1 | 0 | 3 | 7 | 0 % | G36 · OI-105 · OI-106 · OI-114 … |
 | 1 | 10 FL3 Hybrid Continuous Operation | 4 | 0 | 0 | 0 | 0 | 4 | 0 % | G30 · OQ-15 · OQ-2 · OQ-67 |
 | 1 | 11 Supervisor Shift Summary, Reporting & Cer | 7 | 0 | 0 | 0 | 0 | 7 | 0 % | OI-101 · OI-57 · OI-99 · OQ-25 … |
 | 1 | 12 Yield, Cost Ledger & Scrap | 4 | 0 | 0 | 0 | 0 | 4 | 0 % | OI-60 · OI-68 · OI-83 · OQ-10 |
-| 1 | 13 Administration & Reference Data | 9 | 0 | 0 | 0 | 0 | 9 | 0 % | OI-43 · OI-77 · OQ-22 |
+| 1 | 13 Administration & Reference Data | 11 | 0 | 0 | 0 | 0 | 11 | 0 % | OI-12 · OI-141 · OI-43 · OI-77 … |
 | 1 | 14 Integration Testing, PLC Commissioning & | 12 | 1 | 0 | 0 | 0 | 11 | 8 % | G29 · G30 · G32 · G33 … |
-| **All** | | **163** | **23** | **16** | **0** | **23** | **99** | **14 %** | |
+| **All** | | **171** | **23** | **16** | **0** | **23** | **107** | **14 %** | |
 
 *Percentages are by task count. **Hours are not totalled here** - [`CapacityAndEffortModel.md`](60-delivery/CapacityAndEffortModel.md) `[CE]` is the hours model of record, and a total derived on this page would be a second figure to disagree with it.*
 
@@ -39,6 +39,7 @@ Open register items cited by at least one live task, most-blocking first.
 | `G30` | FM2's controller namespace on FL3 is undetermined, and it decides what partial failure mea | FW-082, FW-122, FW-190, FW-200, FW-205, FW-212 | 1B, 4, 10, 14 | — | Gaps.md |
 | `G9` | NFRs absent (AGC Hz, concurrent clients, latency, reading retention) | FW-080, FW-150, FW-156, FW-165, FW-203, FW-210 | 1B, 3, 5 | — | Gaps.md |
 | `G2` | Check-in spans FlatWireDB (run/checkin/SPC) + the shared reqsum / wip_coil_orders / actual | FW-082, FW-151, FW-157, FW-159, FW-212 | 1B, 4 | — | Gaps.md |
+| `OI-12` | Die-life colour bands differ between two screens. Die Change uses green < 60 % / amber 60– | FW-073, FW-167, FW-199, FW-252, FW-253 | 6, 13 | — | MasterSpecification.md |
 | `OI-34` | G9 — the non-functional targets are absent. AGC sample rate, concurrent client count, late | FW-080, FW-150, FW-156, FW-203, FW-210 | 1B, 3 | — | MasterSpecification.md |
 | `OQ-10` | **⚠ id not found in any register** | FW-066, FW-100, FW-185, FW-188, FW-202 | 5, 9, 12 | — | — |
 | `OQ-15` | **⚠ id not found in any register** | FW-064, FW-121, FW-122, FW-179, FW-190 | 8, 10, 14 | — | — |
@@ -64,6 +65,8 @@ Open register items cited by at least one live task, most-blocking first.
 | `G18` | Source docs (CLAUDE.md / CheckinImplementationPrompt) describe a --fw- design system, but  | FW-130, FW-133 | 1A | — | Gaps.md |
 | `G24` | Supervisor approvals are decided but unpersisted. Three decisions require supervisor autho | FW-072, FW-176 | 7 | — | Gaps.md |
 | `G7` | Mid-run checkout supervisor approval relies only on transient SignalR | FW-175, FW-177 | 7 | — | Gaps.md |
+| `G79` | Every WipRejection.RejectionGroup value is ours. The client's WIPREJ sheet is a flat list  | FW-067, FW-174 | 7 | — | Gaps.md |
+| `G82` | Threading scrap must be a WIP rejection and no reason code exists for it. The client's ans | FW-067, FW-174 | 7 | — | Gaps.md |
 | `OI-101` | Shift boundaries are undefined. No shift start and end times, shift names, or weekend/holi | FW-090, FW-193 | 11 | — | MasterSpecification.md |
 | `OI-103` | No bound exists on a roll-gap change. Neither a maximum single-step change nor a cumulativ | FW-070, FW-169 | 6 | — | MasterSpecification.md |
 | `OI-105` | Which of three weights is authoritative on the coil record is undecided. §3.3 calculates n | FW-066, FW-182 | 9 | — | MasterSpecification.md |
@@ -76,7 +79,7 @@ Open register items cited by at least one live task, most-blocking first.
 | `OQ-3` | **⚠ id not found in any register** | FW-061, FW-161 | 4 | — | — |
 | `OQ-62` | **⚠ id not found in any register** | FW-070, FW-169 | 6 | — | — |
 | `OQ-79` | **⚠ id not found in any register** | FW-202, FW-N02 | 5, 8 | — | — |
-| `Q10` | Footage-to-weight conversion factor | FW-210, FW-213 | 1B, 5 | Tim O. / Bob S. | Questions.md |
+| `Q10` | > Partly answered 1 Sep 2026 — and the rod half is settled. The client: "The Rod will be c | FW-210, FW-213 | 1B, 5 | Tim O. / Bob S. | Questions.md |
 | `Q6` | Weld attribution on output footage | FW-063, FW-166 | 6 | Jaspreet / Tim O. | Questions.md |
 | `G23` | The 1280×1024 shopfloor canvas is an acceptance criterion nobody has confirmed. All 25+ mo | FW-130 | 1A | — | Gaps.md |
 | `G27` | The weld screen's rod queue and traceability chain have no host. Dashboard 4 was retired 1 | FW-063 | 6 | — | Gaps.md |
@@ -87,6 +90,9 @@ Open register items cited by at least one live task, most-blocking first.
 | `G59` | No service identity exists for a PLC write that no operator initiated. ✅ Mechanism confirm | FW-217 | 14 | — | Gaps.md |
 | `G60` | ⛔ Nothing registers flat wire with OPCConnection, so GetOPCInfo cannot succeed and no tag  | FW-217 | 14 | — | Gaps.md |
 | `G69` | [SIM §9.2] requires the console to show TWO state chips and the wire carries ONE vocabular | FW-215 | 1B | — | Gaps.md |
+| `G80` | The client's eight IT inhibit reasons and [PLC §8.2]'s five set conditions share exactly o | FW-257 | 4 | — | Gaps.md |
+| `G81` | No Qualified Operators Are Logged In presumes a mechanism that does not exist. The client  | FW-257 | 4 | — | Gaps.md |
+| `G83` | Four pause reasons lost their vocabulary and gained no successor. OperatorBreak, ShiftChan | FW-071 | 6 | — | Gaps.md |
 | `OI-02` | ⚠️ UNRESOLVED — Intermediate spool numbering: schema SP-##### versus the SRS narrative's T | FW-124 | 8 | — | MasterSpecification.md |
 | `OI-06` | ⚠️ UNRESOLVED — Two spool status vocabularies: the schema's RECEIVED/STAGED/INFLAT/COMPLET | FW-124 | 8 | — | MasterSpecification.md |
 | `OI-100` | Valid rework stages per material state are unspecified. Rework requires a named return sta | FW-067 | 7 | — | MasterSpecification.md |
@@ -96,8 +102,8 @@ Open register items cited by at least one live task, most-blocking first.
 | `OI-114` | The cut-record sentinels for a product that is never slit are undecided, and the legacy wr | FW-219 | 9 | — | MasterSpecification.md |
 | `OI-115` | The shared write set for FL2 spool check-in is undefined, and it blocks building rather th | FW-220 | 4 | — | MasterSpecification.md |
 | `OI-116` | Whether flat wire owes coil_mill_processing a row. PreCheckIn_CopyPlanningData writes it a | FW-220 | 4 | — | MasterSpecification.md |
-| `OI-12` | Die-life colour bands differ between two screens. Die Change uses green < 60 % / amber 60– | FW-073 | 6 | — | MasterSpecification.md |
 | `OI-140` | ⛔ A COMPLETED OUTPUT COIL IS NEVER BROADCAST — there is no hub member to send it on. FW-20 | FW-235 | 9 | — | MasterSpecification.md |
+| `OI-141` | ⛔ DIE MANAGEMENT AND THE MACHINES-APP TOOLING INVENTORY DESCRIBE ONE TOOL WITH TWO DIFFERE | FW-253 | 13 | — | MasterSpecification.md |
 | `OI-24` | Lot number has no column and no generator. GET /coil/{alpha}/label returns lotNumber and t | FW-184 | 9 | — | MasterSpecification.md |
 | `OI-28` | The alert lifecycle is unbacked. AlertRaised/AlertCleared, activeAlerts in the API respons | FW-N06 | 3 | — | MasterSpecification.md |
 | `OI-35` | OQ-21 — FL{n}.LineState vocabulary is undocumented. Two-state run/stop bit, or RUNNING / S | FW-210 | 1B | — | MasterSpecification.md |
@@ -229,13 +235,13 @@ Open register items cited by at least one live task, most-blocking first.
 | `OI-39` | Cross-database check-in has no defined recovery path. Check-in spans FlatWireDB + shared coils/wip_c | FW-151 | — |
 | `OI-45` | OQ-10 — footage-to-weight: the formula and the density source are now settled; the dimensional basis | FW-210 | — |
 | `PLC-Q05` | Confirm every measure name in §5.2 — RollGap, Gauge, Width, Footage, Diameter, Weight, Status.IsActi | FW-144, FW-N05 | Controls engineer |
-| `Q10` | Footage-to-weight conversion factor | FW-210 | Tim O. / Bob S. |
+| `Q10` | > Partly answered 1 Sep 2026 — and the rod half is settled. The client: "The Rod will be considered  | FW-210 | Tim O. / Bob S. |
 
 **▶ Ready to start now:** `FW-239`
 
 ## MVP-1 › Phase 1C — Database Foundation
 
-**12 tasks · 0 % done**
+**14 tasks · 0 % done**
   · **Spec:** [phase-01c-database-foundation.md](60-delivery/phases/phase-01c-database-foundation.md)
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
@@ -252,6 +258,8 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-245](30-database/tasks/FW-245.md) | G51 — SpcMeasurement.InSpec stores a wrong verdict for an asymme | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | DB | 6 | S1 | FW-004 FW-007 FW-168 | **Q22** |
 | [FW-246](30-database/tasks/FW-246.md) | G50 / G52 / G41 / G55 — constraint and referential-integrity rep | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | DB | 12 | S1 | FW-005 FW-006 FW-007 FW-147✅ FW-225 | **G55** |
 | [FW-248](30-database/tasks/FW-248.md) | Harden verify_schema_counts.py's C6, and repair the two count si | ⛔ blocked ⚠ *blocker closed — needs status update* ⚠ *status inferred, unconfirmed* | — | DB | 8 | S1 | FW-152 | — |
+| [FW-251](30-database/tasks/FW-251.md) | Restate the schema baseline to 39/62/82 and repair the DB cards  | ⬜ not-started | — | DB | 8 | S1 | FW-152 | — |
+| [FW-254](40-backend/tasks/FW-254.md) | Reason-code query endpoints — the three seeded client vocabulari | ⬜ not-started | — | BE | 9 | S1 | FW-138✅ FW-251 | — |
 
 **Open items owned by this phase**
 
@@ -295,7 +303,7 @@ Open register items cited by at least one live task, most-blocking first.
 
 ## MVP-1 › Phase 4 — Rod Check-In & PLC Configuration (FL1 / FL3)
 
-**24 tasks · 4 % done**
+**25 tasks · 4 % done**
   · **Spec:** [phase-04-rod-checkin-plc-config.md](60-delivery/phases/phase-04-rod-checkin-plc-config.md)
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
@@ -323,6 +331,7 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-237](40-backend/tasks/FW-237.md) | Service identity for unattended PLC writes | ⛔ blocked ⚠ *blocker closed — needs status update* ⚠ *status inferred, unconfirmed* | — | BE | 12 | S2 | FW-143✅ FW-151✅ FW-205✅ FW-234 | — |
 | [FW-240](40-backend/tasks/FW-240.md) | RodOrderAllocation / RodOrderConsumption domain entities | ⛔ blocked ⚠ *blocker closed — needs status update* ⚠ *status inferred, unconfirmed* | — | BE | 8 | S2 | FW-207 FW-142✅ FW-225 | — |
 | [FW-243](40-backend/tasks/FW-243.md) | D-30 — ROWVERSION on WeldEvent, RodCheckout, WipRejection | ⛔ blocked ⚠ *blocker closed — needs status update* ⚠ *status inferred, unconfirmed* | — | DB·BE | 0 | S2 | FW-007 FW-142✅ FW-207 | — |
+| [FW-257](40-backend/tasks/FW-257.md) | Re-point the built ITInhibitService at the ItInhibitReason looku | ⬜ not-started | — | BE | 8 | S2 | FW-205✅ FW-254 | **G80** **G81** |
 | [FW-N01](50-frontend/tasks/FW-N01.md) | Dashboard 2A — Rod Pre-Check-in station | ⬜ not-started | — | FE | 24 | S2 | FW-133 FW-134 FW-158 FW-166 | **G26** **OI-108** **OQ-24** |
 
 **Open items owned by this phase**
@@ -335,6 +344,8 @@ Open register items cited by at least one live task, most-blocking first.
 | `G26` | The merged weld write straddles two phases. Dashboard 2A's weld control ships in phase 4, and the en | FW-N01 | — |
 | `G29` | No edger tag path exists on any line, yet edge type is in the push payload. Four of five sources lis | FW-082, FW-212 | — |
 | `G30` | FM2's controller namespace on FL3 is undetermined, and it decides what partial failure means. Every  | FW-082, FW-212 | — |
+| `G80` | The client's eight IT inhibit reasons and [PLC §8.2]'s five set conditions share exactly one. The ov | FW-257 | — |
+| `G81` | No Qualified Operators Are Logged In presumes a mechanism that does not exist. The client marks this | FW-257 | — |
 | `OI-108` | At cold start, should Welds this run be absent, or present and unavailable? Surfaced 1 Aug 2026 when | FW-N01 | — |
 | `OI-109` | Where should the operator land after pressing Acknowledge & Begin Check-in? Changed 1 Aug 2026 from  | FW-061 | — |
 | `OI-115` | The shared write set for FL2 spool check-in is undefined, and it blocks building rather than merely  | FW-220 | — |
@@ -391,14 +402,14 @@ Open register items cited by at least one live task, most-blocking first.
 | `OQ-18` | **⚠ id not found in any register** | FW-163, FW-202 | — |
 | `OQ-79` | **⚠ id not found in any register** | FW-202 | — |
 | `PLC-Q02` | Confirmation of every tag path in Section 5. They follow the naming convention in Section 4, not a v | FW-062 | Controls engineer |
-| `Q10` | Footage-to-weight conversion factor | FW-213 | Tim O. / Bob S. |
+| `Q10` | > Partly answered 1 Sep 2026 — and the rod half is settled. The client: "The Rod will be considered  | FW-213 | Tim O. / Bob S. |
 | `Q18` | Target spool weight source for the completion alert, and over-target behavior | FW-164 | Tim O. / Operations |
 
 **▶ Ready to start now:** *none — every not-started task here is waiting on a dependency or a blocker*
 
 ## MVP-1 › Phase 6 — In-Run Production Events (Weld · Die Change · SPC · Roll Adjust · Pause)
 
-**12 tasks · 0 % done**
+**15 tasks · 0 % done**
   · **Spec:** [phase-06-in-run-production-events.md](60-delivery/phases/phase-06-in-run-production-events.md)
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
@@ -406,15 +417,18 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-063](50-frontend/tasks/FW-063.md) | Weld capture — fw-mark-welded-dialog | ⬜ not-started | — | FE | 20 | S2 | FW-N01 FW-166 | **G26** **G27** **G28** **OI-59** **OQ-6** **Q6** |
 | [FW-065](50-frontend/tasks/FW-065.md) | SPC checkpoint dialog | ⬜ not-started | — | FE | 24 | S2 | FW-133 FW-067 FW-168 | **OI-57** |
 | [FW-070](50-frontend/tasks/FW-070.md) | Roll adjust dialog | ⬜ not-started | — | FE | 28 | S2 | FW-062 FW-169 | **OI-103** **OQ-62** |
-| [FW-071](50-frontend/tasks/FW-071.md) | Pause and Resume dialogs | ⬜ not-started | — | FE | 24 | S2 | FW-062 FW-170 FW-067 FW-072 | — |
-| [FW-073](50-frontend/tasks/FW-073.md) | Die change dialog | ⬜ not-started | — | FE | 24 | S2 | FW-005 FW-065 FW-167 | **OI-12** |
+| [FW-071](50-frontend/tasks/FW-071.md) | Pause and Resume dialogs | ⬜ not-started | — | FE | 24 | S2 | FW-062 FW-170 FW-067 FW-072 FW-254 | **G83** |
+| [FW-073](50-frontend/tasks/FW-073.md) | Die change dialog | ⬜ not-started | — | FE | 24 | S2 | FW-251 FW-252 FW-065 FW-167 | **OI-12** |
 | [FW-166](40-backend/tasks/FW-166.md) | POST /weldevent and WeldService | ⛔ blocked ⚠ *status inferred, unconfirmed* | — | BE | 12 | S2 | FW-139✅ FW-171 | **G26** **OI-59** **Q6** |
-| [FW-167](40-backend/tasks/FW-167.md) | POST /diechange and DieChangeService | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | BE | 12 | S2 | FW-139✅ FW-171 FW-169 | — |
+| [FW-167](40-backend/tasks/FW-167.md) | POST /diechange and DieChangeService | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | BE | 12 | S2 | FW-139✅ FW-171 FW-169 FW-251 | **OI-12** |
 | [FW-168](40-backend/tasks/FW-168.md) | POST /spc and SpcService | ⛔ blocked ⚠ *blocker closed — needs status update* ⚠ *status inferred, unconfirmed* | — | BE | 12 | S2 | FW-139✅ FW-147✅ FW-171 | — |
 | [FW-169](40-backend/tasks/FW-169.md) | POST /rolloverride and RollOverrideService | ⛔ blocked ⚠ *status inferred, unconfirmed* | — | BE | 12 | S2 | FW-139✅ FW-151✅ FW-171 | **OI-103** **OQ-62** |
-| [FW-170](40-backend/tasks/FW-170.md) | POST /run/{id}/pause and /resume, and RunControlService | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | BE | 8 | S2 | FW-139✅ FW-171 | — |
+| [FW-170](40-backend/tasks/FW-170.md) | POST /run/{id}/pause and /resume, and RunControlService | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | BE | 8 | S2 | FW-139✅ FW-171 FW-254 | — |
 | [FW-171](30-database/tasks/FW-171.md) | The five in-run event tables | 🔵 in-review ⚠ *status inferred, unconfirmed* | — | DB | 20 | S2 | FW-007 | **G34** **G35** |
 | [FW-172](40-backend/tasks/FW-172.md) | Run-event markers and the LineStatus transitions | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | RT | 20 | S2 | FW-149 FW-081 | — |
+| [FW-252](40-backend/tasks/FW-252.md) | Die lifecycle service — per-tool die life, DieHistory writes and | ⬜ not-started | — | BE | 16 | S2 | FW-167 FW-251 | **OI-12** |
+| [FW-255](40-backend/tasks/FW-255.md) | LineDowntimeEvent write path — LineDowntimeService and the two l | ⬜ not-started | — | BE | 22 | S2 | FW-138✅ FW-251 FW-254 | — |
+| [FW-256](50-frontend/tasks/FW-256.md) | Line Downtime dialog — the 25 DWN## codes that have no run | ⬜ not-started | — | FE | 12 | S2 | FW-255 FW-133 | — |
 
 **Open items owned by this phase**
 
@@ -425,8 +439,9 @@ Open register items cited by at least one live task, most-blocking first.
 | `G28` | FL2 may have no way to record a weld. The Log Weld Event action was removed from all four active-run | FW-063 | — |
 | `G34` | Wire break now has a decided flow and still no persistence target. The client specified the whole se | FW-171 | — |
 | `G35` | FM2's two dancers are unmodelled everywhere, and one of their modes contradicts a stated rule. The c | FW-171 | — |
+| `G83` | Four pause reasons lost their vocabulary and gained no successor. OperatorBreak, ShiftChangeover, Aw | FW-071 | — |
 | `OI-103` | No bound exists on a roll-gap change. Neither a maximum single-step change nor a cumulative limit is | FW-070, FW-169 | — |
-| `OI-12` | Die-life colour bands differ between two screens. Die Change uses green < 60 % / amber 60–85 % / red | FW-073 | — |
+| `OI-12` | Die-life colour bands differ between two screens. Die Change uses green < 60 % / amber 60–85 % / red | FW-073, FW-167, FW-252 | — |
 | `OI-57` | Published tolerance bands per alloy and temper (ASTM B236, customer PO, or UA internal) are undefine | FW-065 | — |
 | `OI-59` | OQ-6 / OQ-7 — weld attribution and limits, plus the rework-weld certificate question. The footage-sp | FW-063, FW-166 | — |
 | `OQ-6` | **⚠ id not found in any register** | FW-063 | — |
@@ -442,10 +457,10 @@ Open register items cited by at least one live task, most-blocking first.
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
 |---|---|---|---|---|---:|---|---|---|
-| [FW-067](50-frontend/tasks/FW-067.md) | WIP rejection dialog | ⬜ not-started | — | FE | 20 | S2 | FW-134 FW-174 | **OI-100** **OI-84** |
+| [FW-067](50-frontend/tasks/FW-067.md) | WIP rejection dialog | ⬜ not-started | — | FE | 20 | S2 | FW-134 FW-174 FW-254 | **OI-100** **OI-84** **G79** **G82** |
 | [FW-072](50-frontend/tasks/FW-072.md) | Rod checkout dialog — Modes A, B and P | ⬜ not-started | — | FE | 24 | S2 | FW-134 FW-174 FW-071 | **G24** **OI-38** **OQ-13** |
 | [FW-173](50-frontend/tasks/FW-173.md) | Partial rod re-check-in (carry-forward) | ⬜ not-started | — | FE | 20 | S2 | FW-158 FW-176 | **G14** **OQ-12** |
-| [FW-174](40-backend/tasks/FW-174.md) | POST /wipreject, POST /checkout and their services | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | BE | 24 | S2 | FW-139✅ FW-176 FW-151✅ | **OQ-13** **OQ-23** |
+| [FW-174](40-backend/tasks/FW-174.md) | POST /wipreject, POST /checkout and their services | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | BE | 24 | S2 | FW-139✅ FW-176 FW-151✅ FW-254 | **OQ-13** **OQ-23** **G79** **G82** |
 | [FW-175](40-backend/tasks/FW-175.md) | Durable supervisor pending-approval queue | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | BE | 16 | S2 | FW-174 | **G7** |
 | [FW-176](30-database/tasks/FW-176.md) | WipRejection / RodCheckout tables and the shared coils carry-for | 🔵 in-review ⚠ *status inferred, unconfirmed* | — | DB | 28 | S2 | FW-007 FW-001 | **G24** **OI-38** **OQ-23** |
 | [FW-177](40-backend/tasks/FW-177.md) | Exception broadcasts and the supervisor notification | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | RT | 16 | S2 | FW-149 FW-175 | **G7** |
@@ -457,6 +472,8 @@ Open register items cited by at least one live task, most-blocking first.
 | `G14` | Pre-build data inconsistencies: 3- vs 4-item inspection (+M1/M2 ovality), R##### vs ROD-#####, Foota | FW-173 | — |
 | `G24` | Supervisor approvals are decided but unpersisted. Three decisions require supervisor authorisation — | FW-072, FW-176 | — |
 | `G7` | Mid-run checkout supervisor approval relies only on transient SignalR | FW-175, FW-177 | — |
+| `G79` | Every WipRejection.RejectionGroup value is ours. The client's WIPREJ sheet is a flat list of 96 rows | FW-067, FW-174 | — |
+| `G82` | Threading scrap must be a WIP rejection and no reason code exists for it. The client's answer 4 is e | FW-067, FW-174 | — |
 | `OI-100` | Valid rework stages per material state are unspecified. Rework requires a named return stage, and wh | FW-067 | — |
 | `OI-38` | PIN validation source undecided. Whether the supervisor PIN validates against the existing login/aut | FW-072, FW-176 | — |
 | `OI-84` | WIP REJ report column definitions are undocumented. Sole tracking home (register question withdrawn  | FW-067 | — |
@@ -615,7 +632,7 @@ Open register items cited by at least one live task, most-blocking first.
 
 ## MVP-1 › Phase 13 — Administration & Reference Data
 
-**9 tasks · 0 % done**
+**11 tasks · 0 % done**
   · **Spec:** [phase-13-administration-reference-data.md](60-delivery/phases/phase-13-administration-reference-data.md) · [phase-13-mvp2-die-management.md](60-delivery/phases/phase-13-mvp2-die-management.md)
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
@@ -627,13 +644,17 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-196](40-backend/tasks/FW-196.md) | Alloy CRUD, machine config and role config endpoints | ⬜ not-started | — | BE | 32 | S3 | FW-139✅ FW-145 | — |
 | [FW-197](30-database/tasks/FW-197.md) | Reference-data admin wiring | ⬜ not-started | — | DB | 8 | S3 | FW-005 FW-196 | **OI-43** **OI-77** |
 | [FW-198](40-backend/tasks/FW-198.md) | Reference-data change broadcast | ⬜ not-started | — | RT | 4 | S3 | FW-149 FW-196 | — |
-| [FW-199](60-delivery/tasks/FW-199.md) | Alloy tolerance values and die-life thresholds | ⬜ not-started | — | BA | 4 | S3 | — | **OQ-22** |
+| [FW-199](60-delivery/tasks/FW-199.md) | Alloy tolerance values and die-life thresholds | ⬜ not-started | — | BA | 4 | S3 | — | **OQ-22** **OI-12** |
 | [FW-247](30-database/tasks/FW-247.md) | G8 — legacy FlatLineSetup / FlatLineProcessing data migration | ⬜ not-started | — | DB·BA | 0 | S3 | FW-005 FW-006 FW-152 | — |
+| [FW-253](50-frontend/tasks/FW-253.md) | Die Management screen — the inventory grid and FR-252's two hist | ⬜ not-started | — | FE | 24 | S3 | FW-252 FW-130 FW-133 | **OI-12** **OI-141** |
+| [FW-258](60-delivery/tasks/FW-258.md) | Re-cost the die domain's return to MVP-1 and the reason-code sco | ⬜ not-started | — | BA | 8 | S2 | FW-249 | — |
 
 **Open items owned by this phase**
 
 | Id | What | Blocks | Owner |
 |---|---|---|---|
+| `OI-12` | Die-life colour bands differ between two screens. Die Change uses green < 60 % / amber 60–85 % / red | FW-199, FW-253 | — |
+| `OI-141` | ⛔ DIE MANAGEMENT AND THE MACHINES-APP TOOLING INVENTORY DESCRIBE ONE TOOL WITH TWO DIFFERENT FIELD S | FW-253 | — |
 | `OI-43` | The OQ-63 unplanned-component-bypass event has no home. The decision specifies a distinct transactio | FW-197 | — |
 | `OI-77` | Edger blade profiles and roll regrind. Whether blade profiles are standardised or custom per edge ty | FW-197 | — |
 | `OQ-22` | **⚠ id not found in any register** | FW-194, FW-199 | — |

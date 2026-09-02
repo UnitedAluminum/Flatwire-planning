@@ -50,12 +50,83 @@
   "use strict";
   if (window.openWipRejection) return;    /* guard against double-inclusion */
 
-  var QUICK_REASONS = [
-    "Gauge out of spec", "Width out of spec", "Surface defect", "Oxidation",
-    "Weld failure", "Die failure", "Component fault"
-  ];
+  /* ── Rejection reason vocabulary ─────────────────────────────────
+     THE CLIENT'S LIST, VERBATIM. 72 reasons from "Reason Codes.xlsx"
+     (Tim O'Brien, 1 Sep 2026), which closes action A5 of the 23 Jul call.
+     Seeded in FlatWireDB.WipRejectionReason; WipRejection.RejectionReason
+     carries the WREJ### code and FK_WipRejection_Reason enforces it.
+
+     THE WORDING IS THE CLIENT'S AND IS NOT TIDIED -- "wavy ege" is their typo,
+     the capitalisation is theirs, and "Bundle" / "Spool" are the operator's
+     words for the rod and the material in process. Rewriting any of it breaks
+     the match with the seed and with what the operator reads on the old screens.
+
+     THE GROUPING IS OURS. The client's sheet is a flat list with no groups at
+     all, so every assignment below is [PROPOSED] and mirrors
+     WipRejectionReason.RejectionGroup, where IsProposedGroup = 1 records the
+     same thing. If a group is reassigned, change it in BOTH places or the
+     composite FK rejects the row.
+
+     NOT SEEDED, DELIBERATELY: the 24 reasons the client marked as not applying
+     -- mostly side-scrap and coil-form defects that do not exist on wire
+     (Excess Side Scrap, Coil Set, Crossbow, Earing). Do not add them back.
+
+     STILL MISSING: a THREADING reason. The same mail's answer 4 requires
+     threading to be recorded as a WIPREJ/scrap and the client's list has no
+     code for it. Owed back -- do not invent one. */
+  var REASONS_BY_GROUP = {
+    "Dimensional": [
+      "Underproduced / Under Weight", "Wrong Incoming Diameter",
+      "Bad Shape (wavy ege or buckle)", "Camber", "Collapsed ID", "Gauge Varies",
+      "Off Weight", "Telescoped", "Telescoped, Oscillated Coil", "Twist",
+      "Width Varies", "Wire Brk Due To Shape", "Wrong Gauge", "Wrong ID",
+      "Wrong OD", "Wrong Width"
+    ],
+    "Surface quality": [
+      "Burr, Rolled Edges", "Chatter", "Crossbreaks", "Cutter Mark",
+      "Damaged Edges", "Dents", "Herringbone", "ID Damage", "Live Scratches",
+      "OD Damage", "Oil Stain, Smut", "Oxidation, Magnesium Stain", "Roll Mark",
+      "Rolled-in Scratches", "Rough or Cracked Edges", "Traffic Marks",
+      "Water Stain", "Water Stain in Warranty / Vendor Issue"
+    ],
+    "Weld quality": [
+      "Broken Welds", "Too Many Welds"
+    ],
+    "Material": [
+      "Wrong Bundle / Spool", "Wrong Temper", "Grain", "Sliver, Holes, Inclusion",
+      "Wire Brk Due To Edge Cracks",
+      "Wire Brk Due To Holes, Laminations, Blisters, Inclusions", "Wrong Alloy"
+    ],
+    "Process": [
+      "Cobble", "Tangle", "Wire Brk / Pull Apart", "Wire Brk Due To Tangle",
+      "Broken Bands", "Damaged Packing", "Forced Recalculation (No Reason Assigned)",
+      "Heads and Tails", "Incorrect Buildup / Plan Not Followed", "Loaded Wrong",
+      "Loose Bands", "Loosewound Coil", "Machine / IT Problem", "No Appointment",
+      "No Bands", "No Packing", "No Paperwork",
+      "Order Cancelation / For acct. Purposes", "Other", "OVERPRODUCED ORDER",
+      "Plan Required Head Scrap", "Plan Required Tail Scrap",
+      "Planned Excess Tail Scrap", "SCRAP BALANCE", "Shipping Delay",
+      "Wet At Receiving", "Wire Brk Due To Machine Problem", "Wrong Banding",
+      "Wrong Skid Size"
+    ]
+  };
   var GROUPS = ["Dimensional", "Surface quality", "Weld quality", "Material", "Process"];
-  var SPECIFIC = ["Gauge out of spec", "Width out of spec", "Edge burr", "Camber"];
+
+  /* The shortcut chips. Seven of the 72, chosen because they are what the
+     operator reaches for from a measurement or an inspection failure -- the
+     full list stays one dropdown away. Every string here MUST also appear in
+     REASONS_BY_GROUP or selectReason() cannot sync the two controls. */
+  var QUICK_REASONS = [
+    "Gauge Varies", "Width Varies", "Rough or Cracked Edges",
+    "Oxidation, Magnesium Stain", "Broken Welds", "Wire Brk / Pull Apart", "Other"
+  ];
+
+  function groupOf(reason) {
+    for (var g in REASONS_BY_GROUP) {
+      if (REASONS_BY_GROUP[g].indexOf(reason) !== -1) return g;
+    }
+    return GROUPS[0];
+  }
   var DEFAULT_REWORK_STAGES = [
     'FL1 · draw bench 2 (re-draw)',
     'FL1 · FM1 (re-roll)',
@@ -255,7 +326,9 @@
                 '<div class="fwwip-field">' +
                   '<label class="fwwip-field-label fwwip-required" for="wip-specific">Specific reason</label>' +
                   '<select class="fwwip-select" id="wip-specific">' +
-                    SPECIFIC.map(function (s) { return '<option>' + s + '</option>'; }).join("") +
+                    /* Filled by fillSpecific() from the selected group -- 72 reasons in
+                       one flat list is unusable at arm's length on a shopfloor panel. */
+                    REASONS_BY_GROUP[GROUPS[0]].map(function (s) { return '<option>' + s + '</option>'; }).join("") +
                   '</select>' +
                 '</div>' +
               '</div>' +
@@ -400,6 +473,13 @@
     $("wip-md-3").textContent = m.deviation || "—";
   }
 
+  function fillSpecific(group, select) {
+    var list = REASONS_BY_GROUP[group] || [];
+    select.innerHTML = list.map(function (s) {
+      return '<option>' + s + '</option>';
+    }).join("");
+  }
+
   function selectReason(reason) {
     currentReason = reason;
     document.querySelectorAll("#wip-quick .fwwip-quick-btn").forEach(function (b) {
@@ -407,8 +487,13 @@
     });
     /* Keep the full-list selects in step with the shortcut chip — the two were
        independent on the standalone screen, so a chip choice and a dropdown
-       choice could disagree and only one of them got submitted. */
+       choice could disagree and only one of them got submitted.
+       Since 2 Sep 2026 the specific list is FILTERED BY GROUP, so the group has
+       to move first or the reason will not be among the options to select. */
+    var group = groupOf(reason);
+    $("wip-group").value = group;
     var specific = $("wip-specific");
+    fillSpecific(group, specific);
     for (var i = 0; i < specific.options.length; i++) {
       if (specific.options[i].text === reason) { specific.selectedIndex = i; break; }
     }
@@ -427,6 +512,26 @@
   });
   document.querySelectorAll(".fwwip-disp").forEach(function (card) {
     card.addEventListener("click", function () { selectDisposition(card.getAttribute("data-disp")); });
+  });
+
+  /* Changing the group refills the specific list -- the 72 client reasons are
+     filtered by group, not shown flat. currentReason is re-pointed at the first
+     reason of the new group so the chip highlight, the two selects and what
+     actually gets submitted cannot disagree; leaving it on the old reason would
+     submit a (reason, group) pair the composite FK rejects. */
+  $("wip-group").addEventListener("change", function () {
+    var group = $("wip-group").value;
+    fillSpecific(group, $("wip-specific"));
+    currentReason = $("wip-specific").value;
+    document.querySelectorAll("#wip-quick .fwwip-quick-btn").forEach(function (b) {
+      b.classList.toggle("selected", b.getAttribute("data-reason") === currentReason);
+    });
+  });
+  $("wip-specific").addEventListener("change", function () {
+    currentReason = $("wip-specific").value;
+    document.querySelectorAll("#wip-quick .fwwip-quick-btn").forEach(function (b) {
+      b.classList.toggle("selected", b.getAttribute("data-reason") === currentReason);
+    });
   });
 
   $("wip-submit").addEventListener("click", function () {
@@ -488,9 +593,9 @@
     renderBayNotice();
     renderMeasured();
 
-    selectReason(CTX.measurement && /gauge/i.test(CTX.measurement.name) ? "Gauge out of spec"
-               : CTX.measurement && /width/i.test(CTX.measurement.name) ? "Width out of spec"
-               : trigger === "pre-checkin" ? "Surface defect"
+    selectReason(CTX.measurement && /gauge/i.test(CTX.measurement.name) ? "Gauge Varies"
+               : CTX.measurement && /width/i.test(CTX.measurement.name) ? "Width Varies"
+               : trigger === "pre-checkin" ? "Oxidation, Magnesium Stain"
                : QUICK_REASONS[0]);
     /* Suspend (HOLD) is the default everywhere: on the pre-check-in path it is
        the client's stated outcome, and mid-run nothing should be scrapped

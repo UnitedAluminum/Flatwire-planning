@@ -3229,9 +3229,13 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Acceptance Criteria:**
 - [ ] FL1, FL2, FL3 each have a unique `MachineId` / `IdNo` and appear in **every** machine dropdown system-wide
-- [ ] Machine template tabs configured: Main (combined Slitter + Mill rows) · Roll Finish · **Pass Schedule** (button renamed *"Flattening Line Schedule"*) · Coating · KSI/Gauge Max Cuts (*"Max # of Cuts"* column removed) · Rewind Capabilities · ID Width Max Cuts · Setup/Handling Times · Tooling Inventory (+ **Dies and Edgers** as new tooling types) · **Speed** (*"Min/Max Gauge"* → *"Min/Max Gauge/Diameter"*; checkboxes for **DB1, DB2, FM1-S1, FM2-S1/S2/S3**) · Material Loss (**scrap in footage, not weight**) · History
+- [ ] Machine template tabs configured: Main (combined Slitter + Mill rows) · Roll Finish · **Pass Schedule** (button renamed *"Flattening Line Schedule"*) · Coating · KSI/Gauge Max Cuts (*"Max # of Cuts"* column removed) · Rewind Capabilities · ID Width Max Cuts · Setup/Handling Times · Tooling Inventory (+ **Dies, Edgers and Straighteners** as new tooling types) · **Speed** (*"Min/Max Gauge"* → *"Min/Max Gauge/Diameter"*; checkboxes for **DB1, DB2, FM1-S1, FM2-S1/S2/S3**) · Material Loss (**scrap in footage, not weight**) · History
 - [ ] Operation letter **`F`** used for flattening in `OpLetter` / `PrevOpLetter` / `RemainingOps`
 - [ ] **The Speed tab's checkboxes name three FM2 stands — `FM2-S1`, `FM2-S2`, `FM2-S3`. There is no fourth**
+- [ ] **Tooling Inventory carries THREE tool types — Dies, Edgers (Edging Rolls) and Straighteners** — replacing the five inherited from the Slitter copy. Confirmed by Tim O'Brien, 31 Aug 2026: *"They should be replaced with Dies, Edgers, & Straighteners."* ⚠ This supersedes the 24 Aug call's two. **`Straightener` exists nowhere else in this repository** — it is a new equipment class, on FL1/FL3 only, and is **not** a pass-schedule component
+- [ ] ⚠ **Four tabs are configured PER LINE, not once** — *"This will be different for FL1 & FL2/FL3 as each machine has its own capabilities"* (31 Aug 2026), said of Flattening Line Schedule, Setup/Handling Times and Material Loss. FL1 and FL2/FL3 carry different field sets on each
+- [ ] Setup/Handling Times category labels renamed from the Slitter copy: **S1 → "Setup Before Run"** · **H1A → "Handling Before Reduction"** · **R → "Flattening Line Run"** · **H2 → "…From Takeup"** (was *Rewind*). H1AA, H1B and S2 unchanged
+- [ ] ⚠ **The Slitter and Mill screens are reference points, not screens being altered.** *"All others will be removed"* removes fields from the **Flat Wire copy** only; ZR23/ZR24 and the slitters keep theirs. Field sets: [`ClientEmail_2026-08-31_MachinesAppTabs_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-08-31_MachinesAppTabs_SyncPlan.md) §3
 
 **Rate-card basis:** 12 template tabs, priced as configuration rather than new screens (12 h, §2)
 **Dependencies:** ~~FW-001, FW-002~~ — **both cancelled, `D-32`.** ⚠ **This story is not cancelled with them:** the FL1/FL2/FL3 machine rows and the operation letter `F` are values in columns that already exist, not a schema change, so `OI-27` (no `F` case in `GetMachineTypeFromOpLetter`) stands
@@ -4026,6 +4030,244 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
+#### Additive — the 1–2 September 2026 scope, minted 2 Sep 2026 (`FW-251`–`FW-258`)
+
+> **New 2 Sep 2026.** Eight stories for the work two scope events created and no card covered.
+> Every layer of the repository was updated for both — the DDL, the six schema documents,
+> `[DBD §6.2]`, `[REQ]`, `[API §4.8]`, the registers, `[DEP §4.2]`'s gate, `[TS]` and the two
+> reworked mockups. ⛔ **The backlog was the one layer that was not**, and `FW-003` was the only
+> task card touched.
+>
+> **The two events.** ⭐ **The die split (`Q91`, 2 Sep)** — `ToolingInventoryDie` and `DieHistory`
+> added, `Drawer` cut to the two draw boxes, `DieChangeEvent` **+`OldDieId`/`NewDieId`**,
+> `PassScheduleComponent` **−`DrawerId`**; **`OI-41` closed after five months**, `FR-233`/`D4`
+> reverted to their per-tool form and **the whole die domain returned to MVP-1**. ⭐ **The client's
+> reason codes (`A4`/`A5`/`A6`, 1 Sep)** — 156 seeded rows in three new lookups, a new
+> `LineDowntimeEvent`, `CK_WipRejection_Group` dropped, the pause taxonomy replaced outright
+> (`D-34`) and eight decisions `D-34`–`D-41`.
+>
+> ⚠ **Hours are additive to `[CE §3b]`**, the same treatment as `FW-232`–`FW-250`. **`FW-258` is
+> the story that decides how a combined figure is stated** — and unlike the 29 Aug set, part of
+> this one is *scope returning to MVP-1*, so a published total genuinely moves.
+>
+> ⛔ **Two cards carry an un-priced mockup.** `FW-253`'s screen and `FW-256`'s dialog have no
+> approved visual spec, and `[CE §2]`'s 24 h and 12 h rates both assume one exists. Named on both
+> cards and on `FW-258`.
+
+---
+
+###### FW-251 · Restate the schema baseline to 39/62/82 and repair the DB cards the die split and the reason codes left stale
+**Hours:** 8 h DB · **Priority:** High · **Sprint:** S1 · **Phase:** 1C · **Stream:** DB
+
+> ⛔ **Both 2 Sep schema changes reached the DDL and neither reached the task cards.** ⚠ **`FW-005`
+> is the dangerous one** — it still says *"`Drawer` seeded with the **13 size rows**
+> (`DIE-0210`…`DIE-0340`) … this is what MVP-1's die change validates against"* and *"`Drawer.Id
+> 1–13`"*. Both are false since the split, and a developer following that card would rebuild the
+> table it took apart.
+
+**Acceptance Criteria:**
+- [ ] ⚠ **This story states no count.** `[DBD §6.2]` is the only defining site and is already correct; `verify_schema_counts.py` passes today. The repair is to the *other* sites
+- [ ] `C6`'s **24 advisory findings** resolved — restated by citation or marked dated audit trail: `MasterSpecification.md:88`/`:1388`, `FW-152.md:282`, DB `Orchestration.md:439`/`:442`, `FW-142.md:243`, `TrialOrchestration.md:366`, `CapacityAndEffortModel.md:433`, `Decisions.md:889`, `tools/deliverables/README.md:42`
+- [ ] **`FW-005` re-pointed** — the Lookup group is **eleven** tables, `Drawer` is **two** rows (`DB1`/`DB2`, capped by `CK_Drawer_Name` + `UQ_Drawer_Name`) and `ToolingInventoryDie` holds **14**
+- [ ] **`FW-007` / `FW-171` re-pointed** — **seven** in-run event tables, not five, and `DieChangeEvent` carries `OldDieId`/`NewDieId`; `FW-171`'s AC 4 reads `ToolingInventoryDie`, not `Drawer`
+- [ ] **`FW-176` re-pointed** — `CK_WipRejection_Group` **dropped**, the group moved onto the lookup row, and `G79` recorded: **all 72 group values are ours**
+- [ ] ⚠ The three reason tables are seeded **inline in `01_Lookup`** as production reference data (156 rows), not in sample data. `G85` — the same problem for `Stand`/`Drawer`/`Dancer`/`Edger` — is named, **not fixed here**
+- [ ] The **14th** die seeded for `DC-0001`'s worked example is recorded as a pre-existing seed defect, not absorbed
+- [ ] `verify_schema_counts.py` green, `C6` advisory at **0** or every survivor deliberately dated
+
+**Rate-card basis (§2):** not a rate-card unit — a card and count-site repair across ten files with the guard as its test, one script-class deliverable = **8 h**
+**Dependencies:** FW-152
+**Blockers:** — *(`G79` and `G85` are recorded here, not resolved)*
+
+---
+
+###### FW-252 · Die lifecycle service — per-tool die life, `DieHistory` writes and per-tool `POST /diechange` validation
+**Hours:** 16 h BE · **Priority:** High · **Sprint:** S2 · **Phase:** 6 · **Stream:** BE
+
+> ⭐ **This story exists only because of the die split.** For five months `OI-41` recorded the
+> accepted consequence *"two dies of one diameter share a counter, and fitting a fresh die resets
+> nothing."* **`OI-41` is closed and that consequence is retired.** `FR-233` / `D4` revert to their
+> per-tool form and **`TC-274` is executable for the first time**.
+
+**Acceptance Criteria:**
+- [ ] `DieLifecycleService` — register · install · reset · retire · edit-threshold, each writing one `DieHistory` row with its `EventType` (`CK_DieHistory_EventType`)
+- [ ] **`POST /diechange` validates against `ToolingInventoryDie`** — an unregistered `DieAlpha` is rejected — and writes `OldDieId`/`NewDieId`. **`TC-274` passes**
+- [ ] ⚠ **The rejection reason changed**: an unregistered **tool**, no longer an unrecognised **size**
+- [ ] `FR-255` footage accrues as a `RunFootage` row and `LastGrindingFeet` is maintained. ⛔ It is **deliberately denormalised** against `SUM(DieHistory.FootageAddedFt)` — this service owns keeping them equal, and the reconciliation check belongs here
+- [ ] `CK_DieHistory_RunFootageHasRun` and `CK_DieHistory_FootageOnlyOnRunFootage` exercised, so the Run-history tab cannot double-count a reset
+- [ ] A reset zeroes `LastGrindingFeet` and stamps `LastResetBy`/`LastResetAt` (`FR-245`, `FR-248`)
+- [ ] `GET /die/{dieAlpha}/history` serves **both** of `FR-252`'s views from the one discriminated table
+- [ ] ⚠ **No threshold invented** — `TotalFeetAllowed` is nullable and there is deliberately no `CHECK` against `LastGrindingFeet`; *overdue* is an operating state, not a data error
+- [ ] ⛔ **`OI-12` is not resolved here** — Die Change's 60/85 % and Die Management's 65/80 % bands now read one table. Owned by `FW-199`
+
+**Rate-card basis (§2):** non-trivial business service 12 h + one query endpoint 3 h + the `POST /diechange` amendment 1 h = **16 h** — the figure `phase-13`'s carve published for *"die lifecycle service 16 BE"*
+**Dependencies:** FW-167, FW-251
+**Blockers:** **`OI-12`**
+
+---
+
+###### FW-253 · Die Management screen — the inventory grid and `FR-252`'s two history tabs
+**Hours:** 24 h FE · **Priority:** Medium · **Sprint:** S3 · **Phase:** 13 · **Stream:** FE
+
+> ⛔ **MVP-2 until 2 Sep 2026, MVP-1 since.** `FR-240`–`FR-255` are MVP-1 requirements and
+> `DieManagement.md` is an MVP-1 specification. `FW-N07`'s contested MoSCoW split is settled the
+> way its own story text always read — the table is *Must*, the screen is *Should*, and both are
+> in scope. ⚠ **The 66 h that left MVP-1 on 11 Aug is not this 24 h**; it bundled a service and a
+> table. `FW-258` re-costs the return.
+
+**Acceptance Criteria:**
+- [ ] ⛔ **No mockup exists, and the 24 h rate assumes one does.** Author `50-frontend/mockups/die_management.html` first — shopfloor tokens, `fw-modal.js`, **14 px** minimum, no scrolling and no stacked dialogs
+- [ ] Inventory grid over `ToolingInventoryDie` carrying the client's 31 Aug field set — `S/N` · `P/N` · `Location` · `Machine Name` · `ID(")` · `Max Imput Dia.` · `Pitch` · `Max ID(")` · `Lubrication Type` · `In Use` — plus `DieAlpha`, `LastGrindingFeet`, `TotalFeetAllowed`
+- [ ] ⚠ **`DieAlpha` is on no client grid** (`OI-141`). The field half was resolved by building the **union**; the register half — one die register or two — **stays open** and must not be presumed
+- [ ] Lifecycle bands over `LifecycleStatus` (`Active|In Service|In Grinding|Retired`) plus the derived **Spare** band from `InUse = 0`. ⚠ A `BIT` cannot express *In Grinding* — `G77`'s point, and why the column is a `VARCHAR`
+- [ ] **`FR-252`'s two history tabs** — Replacement log and Run history — both from `GET /die/{dieAlpha}/history`
+- [ ] Register · reset · retire · edit-threshold, each capturing `FR-249`/`FR-250`'s reason. ⚠ `FR-250`'s five retire reasons and `FR-248`'s two reset dispositions share one column and are **not** interchangeable
+- [ ] An overdue die renders as a state; a `NULL`-threshold die renders without one — no invented limit, no false warning
+- [ ] ⛔ **The bands are not chosen here** — `OI-12`, owned by `FW-199`
+- [ ] ⚠ **Edger and straightener inventory are out of scope** — `G77`
+
+**Rate-card basis (§2):** New dashboard screen 24 h — the figure `phase-13`'s carve published as *"Die Management screen 24 FE"*. ⚠ **The mockup is not in it**
+**Dependencies:** FW-252, FW-130, FW-133
+**Blockers:** **`OI-12`** · **`OI-141`**
+
+---
+
+###### FW-254 · Reason-code query endpoints — the three seeded client vocabularies
+**Hours:** 9 h BE · **Priority:** Critical · **Sprint:** S1 · **Phase:** 1C · **Stream:** BE
+
+> ⭐ **The client's reason codes closed `A4`, `A5` and `A6` after 41 days** — the three actions the
+> 23 Jul call called *"reference data the build cannot proceed without."* Wave **`W3`**, the only
+> propagation wave marked *Blocked on client input*, is unblocked.
+>
+> ⚠ **`[API]` declares none of these three routes.** This story amends the specification as well as
+> building it, which is also why it is Critical: `FW-071`, `FW-067`, `FW-256` and `FW-257` all read it.
+
+**Acceptance Criteria:**
+- [ ] `GET /reasons/downtime` — **72** rows with `Bucket`, `DelayCode`, `Description`, `IsNonprodTime`, `DelayBufferMin`, `SupervisorOverride`; filterable by bucket, since pause wants three and downtime wants the fourth
+- [ ] `GET /reasons/wiprejection` — **72** rows with their group. ⛔ **`G79`: all 72 group values are ours**, against a client sheet with no grouping at all. The response must not present them as client-supplied
+- [ ] `GET /reasons/itinhibit` — the **12** rows: 8 client-active, 4 `[PLC §8.2]`-only inactive (`G80`), returned **flagged, not hidden**
+- [ ] ⚠ Inactive and withdrawn codes are returned with their flag so a **historical** event still renders its reason. The dialogs filter for selection; the API does not filter for display
+- [ ] The composite key is respected — **`FK_RunPauseEvent_DelayCode` is on `(code, bucket)`**, because *Rewind Bundle* is `Nonprod = Yes` under `Setup` and `No` under `Handling`. A response keyed on code alone is wrong
+- [ ] `[API §3.1]` gains the owning controller and `[API §4]` the three sections
+- [ ] ⚠ **The client has not seen the codes we minted** — all 36 new downtime reasons arrived with blank `DelayCode`, `Status` and `Delay Buffer` cells. Surface it on the card, not in the payload
+
+**Rate-card basis (§2):** 3 query endpoints @ 3 h = **9 h**
+**Dependencies:** FW-138, FW-251
+**Blockers:** — *(`G79` and `G80` are sign-off items; neither stops the read)*
+
+---
+
+###### FW-255 · `LineDowntimeEvent` write path — `LineDowntimeService` and the two line-downtime endpoints
+**Hours:** 22 h BE · **Priority:** High · **Sprint:** S2 · **Phase:** 6 · **Stream:** BE
+
+> ⛔ **44 of the client's downtime codes had nowhere to be recorded, and the reason is structural.**
+> `RunPauseEvent.RunId` is `NOT NULL` with an FK to `FlatWireRun`, `FootageAtPause` is `NOT NULL`
+> and all four `CK_RunPauseEvent_Outcome` values presume a run — while the `Downtime` bucket's 25
+> codes are *Power Outage*, *Fire Drill*, *Scheduled Maintenance*, *Waiting for Spool From Previous
+> Operation*: **exactly when no run is open.** `D-35` resolved it with a new table rather than by
+> relaxing `RunPauseEvent`, which narrows to the three run buckets (**47** codes).
+
+**Acceptance Criteria:**
+- [ ] `POST /line/{lineId}/downtime` opens a **line-scoped** event, `RunId` set only if a run happens to be open
+- [ ] `POST /downtime/{id}/end` closes it, stamping `EndedAt`/`EndedBy`. ⚠ **`DowntimeSeconds` is computed** — never written, `NULL` while open
+- [ ] `IsNonprodTime`, `DelayBufferMin` and `SupervisorOverride` are **snapshotted from `DowntimeReason`** at start, so retuning the lookup cannot re-price history
+- [ ] Only `DWN##` accepted (`CK_LineDowntimeEvent_Code`); `CK_RunPauseEvent_Bucket` rejects `Downtime` on the pause path. **Neither endpoint accepts the other's codes**
+- [ ] `DWN29 Other` requires notes. ⚠ Its `Nonprod Time` cell arrived **blank** while every sibling says `Yes`; the seed's choice stands and is not re-decided
+- [ ] `SupervisorOverrideBy` only ever set with `SupervisorOverride = 1`. ⚠ `Downtime` is the **only** bucket carrying override, and only the three change-tooling codes carry a delay buffer of 1
+- [ ] `LineStatus` broadcast with the reason and cleared on end
+- [ ] ⚠ **Decide and record who may open and close a downtime event, and whether an open event survives a shift change** — no existing event service has this shape
+- [ ] ⚠ *Bundle* and *Spool* in the seeded text are **operator words**: *Waiting for Spool From Previous Operation* means `SpoolProcessing`, never `Spool`, which since `Q60` has no `Alpha` at all
+
+**Rate-card basis (§2):** 2 command endpoints @ 5 h = 10 h + non-trivial business service 12 h = **22 h**
+**Dependencies:** FW-138, FW-251, FW-254
+**Blockers:** —
+
+---
+
+###### FW-256 · Line Downtime dialog — the 25 `DWN##` codes that have no run
+**Hours:** 12 h FE · **Priority:** High · **Sprint:** S2 · **Phase:** 6 · **Stream:** FE
+
+> ⛔ **`pause_run.js` refuses this job and says so in its own header:** *"THE FOURTH BUCKET IS NOT
+> HERE. Downtime (25 DWN## codes) is LINE-down time and belongs to LineDowntimeEvent, whose RunId
+> is nullable; this dialog pauses a RUN. **Do not add a Downtime tab to it.**"* That leaves the
+> fourth bucket with **no surface anywhere in the mockups**.
+
+**Acceptance Criteria:**
+- [ ] ⛔ **No mockup exists.** Author `50-frontend/mockups/line_downtime.js` and its thin launcher, following `pause_run.js`'s reworked quick-tiles-over-a-select pattern on `fw-modal.js`. ⚠ **Edit the `.js`, never the launcher**
+- [ ] Reached from the **line status board**, not from a run — there may be no run, no footage and no active operator session
+- [ ] The **25** `Downtime` codes (16 inherited + 9 new) from `GET /reasons/downtime`. ⚠ **No bucket selector** — one bucket, unlike pause's three
+- [ ] `DWN29 Other` demands notes before the action button enables
+- [ ] **Supervisor override captured** where the code carries it — the only bucket that does
+- [ ] An **open** event is visible from the board and closable from the same dialog. ⛔ **Never stack dialogs**
+- [ ] **14 px** minimum, no scrolling dialog, action button carries the icon and dismiss does not
+- [ ] Descriptions render **verbatim** from the seed — operator-facing labels
+
+**Rate-card basis (§2):** Modal / dialog 12 h. ⚠ **The mockup is not in that rate**
+**Dependencies:** FW-255, FW-133
+**Blockers:** —
+
+---
+
+###### FW-257 · Re-point the built `ITInhibitService` at the `ItInhibitReason` lookup
+**Hours:** 8 h BE · **Priority:** High · **Sprint:** S2 · **Phase:** 4 · **Stream:** BE
+
+> ⛔ **`FW-205` is `done`, and the vocabulary it was built against has changed.** It implements
+> `[PLC §8.2]`'s five set conditions; the client's list of eight **shares exactly one** — *no coil
+> or rod is checked in*. `ItInhibitReason` is now seeded with **12** rows, 8 client-active and 4
+> §8.2-only inactive. ⚠ **`G80`: nobody has said the five are superseded, so this is additive or
+> it is a contradiction — it is not a replacement.** §8.2's five are `FR-008`/`FR-009` with
+> `ALT002`–`ALT005`/`DAT009` and **five P1 cases `TC-011`–`TC-015`**.
+
+**Acceptance Criteria:**
+- [ ] `ITInhibitService` evaluates against **`ItInhibitReason` rows**, not a compiled-in set of five
+- [ ] The two genuinely new reasons are evaluable — **`No Bundle/Spool is Checked In`** and **`Next Bundle Not Welded`**
+- [ ] **`TC-011`–`TC-015` still pass.** §8.2's other four stay **live inhibits**, seeded inactive only because the client's sheet omitted them. ⛔ **Do not delete a condition the client merely failed to list**
+- [ ] **`TC-015a`/`b`/`c`/`e`/`f` pass**; `TC-015d` stays **blocked with `G81` named**
+- [ ] ⛔ **`No Qualified Operators Are Logged In` must not be stubbed** — `G81`: `[SEC §8]`'s six roles hold neither Leadman nor Helper and there is no qualification matrix. The row stays seeded and inactive; an always-false predicate would make it look implemented
+- [ ] ⚠ **`Supervisor Monitor` is not resolved here.** `D-38` answers the **screen**; `Q20` owns what sets the inhibit
+- [ ] ⚠ **A `Call Supervisor` action is on both live screenshots and in no requirement** — out of scope, recorded
+- [ ] ⚠ The 8-row sheet is a **curated subset**: the screenshots carry periodicity, torch/conductivity and mandrel-state conditions it drops
+
+**Rate-card basis (§2):** not a rate-card unit — reworking a **built** service from a literal condition set onto a seeded vocabulary, priced at one command-endpoint-class change plus the predicate set = **8 h**
+**Dependencies:** FW-205, FW-254
+**Blockers:** **`G80`** · **`G81`**
+
+---
+
+###### FW-258 · Re-cost the die domain's return to MVP-1 and the reason-code scope, additively
+**Hours:** 8 h BA · **Priority:** High · **Sprint:** S2 · **Phase:** 13 · **Stream:** BA
+
+> ⛔ **Every file that records the die reversal says the same thing: "the effort is NOT re-costed
+> here."** `phase-13-administration-reference-data.md`, `phase-13-mvp2-die-management.md` and
+> `05-Backlog-MVP2.md` each defer to `[CE §3b]`. **This is that deferral's owner** — and it also
+> prices the reason-code scope, which arrived the same day and was never costed at all.
+
+**Acceptance Criteria:**
+- [ ] The die domain re-derived as MVP-1: `FW-251` 8 DB · `FW-252` 16 BE · `FW-253` 24 FE, reconciled against the **8 h + 66 h** that left on 11 Aug 2026 — with the difference **explained**, not averaged
+- [ ] The reason-code scope priced in the same frame: `FW-254` 9 · `FW-255` 22 · `FW-256` 12 · `FW-257` 8. ⚠ **New client scope, not a re-baseline** — keep the two events distinguishable
+- [ ] ⛔ **Published in an ADDITIVE new sheet or section** — never by substituting into `[CE §3]`, `§3b`, `§3c` or `[TB §7.3]`. Roughly **twenty files** quote those totals
+- [ ] ⚠ **Two un-priced mockups** — `FW-253`'s screen and `FW-256`'s dialog. Price them or state the exclusion; do not let them vanish
+- [ ] Every superseded figure named with its section. **Phase 13's published 143 h MVP-1 reconciliation moves** — say so
+- [ ] ⚠ **State the schedule consequence.** ~74 h returns to MVP-1 against a window closing **30 Sep 2026**, and S3 is already 17.3 FTE over 8 working days. Absorb, descope or move the window is a delivery decision — surface it
+- [ ] `FR-240`–`FR-255` and `DieManagement.md` counted as MVP-1 in §11's coverage matrix, and §7.5's and `05-Backlog-MVP2.md`'s MVP-2 rows updated to match
+- [ ] `FW-249` is a **sibling, not a duplicate** — it re-derives the DB-stream total. One pass, or state which precedes
+
+**Rate-card basis (§2):** not a rate-card unit — one BA estimation deliverable across `[CE §3b]` and `[TB §7.3]`, the same unit as `FW-249` = **8 h**
+**Dependencies:** FW-249
+**Blockers:** —
+
+---
+
+> **Additive-set reconciliation** — DB 8 · BE `16+9+22+8 = 55` · FE `24+12 = 36` · BA 8 =
+> **107 h dev** across **eight** stories.
+>
+> ⚠ **No QA uplift and no contingency are applied here** — both are phase-level (§7.1) and these
+> eight stories span five phases. ⛔ **Unlike the 29 Aug set, part of this one is scope RETURNING
+> to MVP-1**, so a published total genuinely moves rather than merely gaining an additive
+> companion. **`FW-258`** decides how and where.
+
+---
+
 
 ### 7.3 Roll-up
 
@@ -4441,6 +4683,29 @@ orchestration files' recorded-but-unfixed findings, the `P-##` register and `[GA
 header change entries. That set is also **not contiguous** — `FW-209` was already taken and `FW-216`
 is deliberately skipped. Closing that hole is not this pass's, and is noted so `B.6` is not misread
 as following `B.3`.
+
+#### B.7 Minted ids — `FW-251`–`FW-258` (8, contiguous)
+
+**Minted 2 Sep 2026** for the two scope events of 1–2 September that every layer of the repository
+absorbed **except the backlog**. Cards are in §7.2 under *Additive — the 1–2 September 2026 scope*.
+**Next free id: `FW-259`.**
+
+| Range | Stream | Subject |
+|---|---|---|
+| `FW-251` | DB | The die split and the reason codes reached the DDL and not the cards — `FW-005` still seeds `Drawer` with 13 die-size rows |
+| `FW-252`–`FW-253` | BE + FE | The die domain's return to MVP-1 (`Q91`): per-tool lifecycle service, and the Die Management screen `FR-240`–`FR-255` |
+| `FW-254` | BE | The three seeded client vocabularies — 156 rows the dialogs cannot reach without a read |
+| `FW-255`–`FW-256` | BE + FE | `LineDowntimeEvent` and its dialog — the `Downtime` bucket's 25 codes have **no run**, and `pause_run.js` refuses them by design |
+| `FW-257` | BE | ⛔ **`FW-205` is `done` against a vocabulary that changed** — the client's 8 inhibit reasons share exactly one of `[PLC §8.2]`'s five |
+| `FW-258` | BA | The re-cost every phase file defers to `[CE §3b]`, plus the reason-code scope nobody has priced |
+
+⚠ **Hours are additive to `[CE §3b]` and are in no phase reconciliation and no roll-up column** —
+⛔ **but unlike `B.6`, part of this set is scope RETURNING to MVP-1**, so `FW-258` is not optional
+bookkeeping: a published total genuinely moves.
+
+⚠ **`FW-N07` is still carded nowhere**, and after `Q91` it no longer needs to be — the table half is
+`FW-251`'s, the service half `FW-252`'s and the screen half `FW-253`'s. `B.4` should stop listing it
+as *adopted but uncosted* once `FW-258` runs.
 
 ---
 

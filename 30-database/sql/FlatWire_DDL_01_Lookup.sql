@@ -1,8 +1,16 @@
 -- ============================================================
 -- Flat Wire Mill — DDL Script 01: Lookup / Reference Tables
 -- Run order : 01 of 09
--- Tables    : Stand, Drawer, Edger, Dancer, AlloyProperty,
---             PayoffPosition, Spool   (7)
+-- Tables    : Stand, Drawer, ToolingInventoryDie, Edger, Dancer,
+--             AlloyProperty, PayoffPosition, Spool,
+--             DowntimeReason, WipRejectionReason, ItInhibitReason   (11)
+--
+-- Sep-2-2026: the three reason-code tables added from the client's
+-- "Reason Codes.xlsx" (Tim O'Brien, 1 Sep 2026), which closes actions
+-- A4/A5/A6 of the 23 Jul 2026 call. THEY ARE SEEDED HERE, INLINE, not in
+-- FlatWire_SampleData_Lookup.sql -- see the seed block comments and the
+-- PayoffPosition precedent below: these are PRODUCTION reference data, and
+-- a deploy that runs only RunAll must end up with a usable pause dialog.
 -- Dependencies: 00_Database (FlatWireDB)
 -- ============================================================
 
@@ -52,60 +60,171 @@ GO
 
 -- ------------------------------------------------------------
 -- Drawer
--- Draw box die configurations (DB1, DB2). Die hole diameter
--- determines the output wire size after drawing.
+-- The two DRAW BOXES -- DB1 and DB2. A draw box (die block) is the
+-- machine that pulls rod through a die to reduce its diameter. The
+-- die is the TOOLING fitted in it, and lives in ToolingInventoryDie.
 --
--- DIE LIFE (Aug-6-2026). LastGrindingFeet / TotalFeetAllowed give the
--- die-life numbers their first home in the schema. Semantics are from
--- DieChangeAndManagement.md 4.2 / 4.4 -- read the column comments, because
--- LastGrindingFeet does NOT mean "the odometer reading at the last grind".
+-- THE DIE SPLIT (Sep-2-2026). Until now this table held 13 rows, one per
+-- die hole diameter, plus the two die-life counters -- so it was named
+-- after the machine and populated with the tooling. Two rows is the whole
+-- table now: there are exactly two physical draw boxes.
 --
--- SCOPE, so nobody reads more into these two columns than they carry:
--- Drawer is a die-SIZE catalogue (13 rows, one per hole diameter), so a
--- counter here accumulates against a size, not against a physical tool.
--- The per-die inventory (D-{size*1000}-{seq}, condition, Active/Nearing/
--- Overdue/Spare/Retired, disposition history) still does not exist --
--- OI-41 is NARROWED, NOT CLOSED. When that table lands, these two columns
--- move to it.
+--   Moved to ToolingInventoryDie: DiameterIn (now HoleSizeIn),
+--   MinDiameterIn / MaxDiameterIn (feed range -- a die property),
+--   LastGrindingFeet and TotalFeetAllowed (die life -- a die property).
 --
--- Nothing maintains them automatically yet: DieChangeEvent identifies its
--- dies by OldDieSizeIn / NewDieSizeIn decimals with no DrawerId FK, so no
--- run event can attribute footage to a row here. Until that FK or the PLC
--- die counter arrives, both values are Maintenance-maintained.
+-- phase-13-mvp2-die-management.md called this split impossible ("a table
+-- cannot be split") because a SCOPE SEAM ran through it: die inventory was
+-- MVP-2 while the die change was MVP-1, so the counters were bolted on here
+-- on Aug-6-2026 as a workaround. The seam is gone -- the whole die domain is
+-- MVP-1 -- so the split is now available. OI-41 CLOSES with it.
+--
+-- MAX TWO ROWS IS STRUCTURAL, not policed: CK_Drawer_Name admits only DB1
+-- and DB2 and UQ_Drawer_Name makes each unique, so a third row is impossible
+-- without a schema change. No trigger, no row-counting rule.
+--
+-- NAMING: the client's Line Schedule tab calls these D1/D2 and its
+-- Setup/Handling tab calls them DB1/DB2 -- four spellings across four
+-- surfaces. DB1/DB2 is retained deliberately; see the 31-Aug-2026 client
+-- mail analysis 4.8, which says do NOT reconcile until the Speed tab lands
+-- (action A12, still open).
 -- ------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Drawer]') AND type = N'U')
 BEGIN
     CREATE TABLE [dbo].[Drawer] (
-        [Id]            INT          NOT NULL IDENTITY(1,1),
-        [Name]          VARCHAR(50)  NOT NULL,             -- die name or part number
-        [DiameterIn]    DECIMAL(8,4) NOT NULL,             -- die hole diameter in inches (output wire size)
-        [MinDiameterIn] DECIMAL(8,4) NULL,                 -- minimum acceptable feed diameter
-        [MaxDiameterIn] DECIMAL(8,4) NULL,                 -- maximum acceptable feed diameter
-        -- Feet run SINCE the last grinding/reconditioning -- a resettable counter,
-        -- not the odometer value at that grind. Reset to 0 when the die returns
-        -- from the die room (DieChangeAndManagement.md 4.4 "Footage resets to zero").
-        [LastGrindingFeet] DECIMAL(10,2) NOT NULL CONSTRAINT [DF_Drawer_LastGrindingFeet] DEFAULT (0),
-        -- Scheduled life: the engineering/supplier maximum footage this die may run
-        -- before it is pulled. Configurable, and set LOWER on a reconditioned die.
-        -- NULL until the client supplies thresholds (OQ-83 -- tracking decided,
-        -- threshold TBD). Do not seed an invented limit.
-        [TotalFeetAllowed] DECIMAL(10,2) NULL,
-        [IsActive]      BIT          NOT NULL CONSTRAINT [DF_Drawer_IsActive] DEFAULT (1),
+        [Id]       INT         NOT NULL IDENTITY(1,1),
+        [Name]     VARCHAR(50) NOT NULL,             -- DB1 | DB2 -- the draw box, not the die
+        -- FL1 owns both boxes; FL3 runs through them, as it shares FL1's VPS payoff.
+        -- Client-confirmed 31 Aug 2026: the Tooling Inventory grid attributes dies to
+        -- Machine Name = FL1, and NO FL3 row appears in any of the three tool grids.
+        [LineId]   VARCHAR(5)  NOT NULL,
+        [IsActive] BIT         NOT NULL CONSTRAINT [DF_Drawer_IsActive] DEFAULT (1),
 
-        CONSTRAINT [PK_Drawer]             PRIMARY KEY CLUSTERED ([Id] ASC),
-        CONSTRAINT [UQ_Drawer_Name]        UNIQUE ([Name]),
-        CONSTRAINT [CK_Drawer_DiamPos]     CHECK ([DiameterIn] > 0),
-        CONSTRAINT [CK_Drawer_FeedRange]   CHECK ([MinDiameterIn] IS NULL OR [MaxDiameterIn] IS NULL OR [MinDiameterIn] < [MaxDiameterIn]),
-        CONSTRAINT [CK_Drawer_LastGrindingFeet] CHECK ([LastGrindingFeet] >= 0),
-        CONSTRAINT [CK_Drawer_TotalFeetAllowed] CHECK ([TotalFeetAllowed] IS NULL OR [TotalFeetAllowed] > 0)
-        -- Deliberately NO check that LastGrindingFeet <= TotalFeetAllowed. "Overdue"
-        -- is a real operating state the Die Management screen must display
-        -- (DieChangeAndManagement.md 5), not a data error to refuse at the database.
+        CONSTRAINT [PK_Drawer]        PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [UQ_Drawer_Name]   UNIQUE ([Name]),
+        CONSTRAINT [CK_Drawer_Name]   CHECK ([Name]   IN ('DB1','DB2')),
+        CONSTRAINT [CK_Drawer_LineId] CHECK ([LineId] IN ('FL1','FL3'))
     );
     PRINT 'Created table: Drawer';
 END
 ELSE
     PRINT 'Table already exists: Drawer';
+GO
+
+-- ------------------------------------------------------------
+-- ToolingInventoryDie
+-- The register of PHYSICAL dies -- one row per tool, not per size. A die is
+-- a tungsten carbide tool with a specific hole diameter; the hole diameter
+-- is the output wire size after drawing.
+--
+-- WHY IT IS IN 01_Lookup: [DBD 6.2a] puts "reusable articles and reference
+-- data" here -- the same rule that homes Spool, the reusable stencilled
+-- article. A die is a reusable article. Note the tension honestly: its
+-- footage counter mutates every run, which no other row in this file does.
+--
+-- WHY THE NAME IS A COMPOUND: it is the client's own term. The 31-Aug-2026
+-- mail returns a Machines Application "Tooling Inventory" tab carrying THREE
+-- tool types -- Die, Edger, Straightener. This table is the first of the
+-- three. Edger and Straightener inventory are NOT covered here; that is G77.
+--
+-- THE COLUMN SET IS THE UNION OF TWO FIELD SETS, and OI-141 is why:
+--   Ours    FR-247 registration, FR-254 (what Die Change reads at runtime):
+--           DieAlpha, DieType, LastGrindingFeet, TotalFeetAllowed, condition.
+--   Client  the 31-Aug Tooling Inventory grid: S/N, P/N, Location, ID("),
+--           Max Imput Dia., Pitch, Max ID("), Lubrication Type, In Use.
+-- They overlap on three fields and the client's grid carries NONE of the four
+-- values FR-254 says Die Change reads. OI-141 asks whether that means ONE
+-- register or TWO. This is the FlatWireDB one. If OI-141 resolves to two,
+-- FR-254's source-of-truth claim needs restating -- that would not invalidate
+-- this table, only its exclusivity.
+--
+-- ID(MM) IS NOT STORED. It is a derived display value: 0.343 * 25.4 = 8.712,
+-- shown on the client grid as "8,700". Compute it in the UI.
+--
+-- STATUS: two vocabularies, resolved by derivation rather than by picking a
+-- winner. LifecycleStatus stores the client's three values verbatim (plus
+-- Retired, from FR-250). FR-253's Nearing / Overdue / Spare are PERCENTAGE
+-- BANDS -- they are computed from LastGrindingFeet against TotalFeetAllowed,
+-- with Spare as (InUse = 0 AND LastGrindingFeet = 0), and are NOT stored.
+-- WARNING: both vocabularies contain the word "Active" meaning different
+-- things -- a lifecycle state here, and a life band under 65% in FR-253. The
+-- client's value is quoted, not edited; the two distinct names are what
+-- disambiguate. Never store a derived band in LifecycleStatus.
+--
+-- LastGrindingFeet IS DENORMALISED against SUM(DieHistory.FootageAddedFt),
+-- deliberately: FR-254 makes the running total what the Die Change screen
+-- reads, so it must be one cheap column and not an aggregate over a growing
+-- log, while FR-252 needs the per-run rows. The total is authoritative for
+-- the screens; the log explains it. They can drift and nothing here prevents
+-- it -- the invariant lives in the application beside FR-255's increment, NOT
+-- in a trigger (G41: a trigger joining on a nullable column passes silently,
+-- and DieHistory.RunId is nullable). Do not "fix" this by deriving the total.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ToolingInventoryDie]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[ToolingInventoryDie] (
+        [Id]                 INT           NOT NULL IDENTITY(1,1),
+        -- D-{size*1000}-{seq}, e.g. D-310-034 for a 0.310" die. FR-247 / [SP 192].
+        -- Not present on the client's grid at all -- see OI-141.
+        [DieAlpha]           VARCHAR(20)   NOT NULL,
+        [SerialNo]           VARCHAR(50)   NULL,           -- client grid "S/N". NULL until the client supplies serials
+        [PartNo]             VARCHAR(50)   NULL,           -- client grid "P/N"
+        [Location]           VARCHAR(50)   NULL,           -- client grid "Location" -- die room / crib position
+        -- Client grid "Machine Name". FL1 owns the draw boxes; FL3 runs through them.
+        -- NULL for a die not assigned to a line (FR-241 / FR-244 spare).
+        [LineId]             VARCHAR(5)    NULL,
+        [HoleSizeIn]         DECIMAL(8,4)  NOT NULL,       -- client grid 'ID(")' -- the hole diameter = output wire size
+        [MinFeedDiameterIn]  DECIMAL(8,4)  NULL,           -- minimum acceptable feed diameter (was Drawer.MinDiameterIn)
+        [MaxFeedDiameterIn]  DECIMAL(8,4)  NULL,           -- client grid "Max Imput Dia." (was Drawer.MaxDiameterIn)
+        [PitchIn]            DECIMAL(8,4)  NULL,           -- client grid "Pitch"
+        [MaxIdIn]            DECIMAL(8,4)  NULL,           -- client grid 'Max ID(")'
+        [LubricationType]    VARCHAR(50)   NULL,           -- client grid "Lubrication Type"
+        -- FR-247 die type/material. Also DieChangeAndManagement.md 2.4:
+        -- the incoming die "must match the outgoing die type".
+        [DieType]            VARCHAR(20)   NULL,
+        -- Feet run SINCE the last grinding/reconditioning -- a resettable counter,
+        -- not the odometer value at that grind. Reset to 0 when the die returns
+        -- from the die room (DieChangeAndManagement.md 4.4 "Footage resets to zero").
+        [LastGrindingFeet]   DECIMAL(10,2) NOT NULL CONSTRAINT [DF_ToolingInventoryDie_LastGrindingFeet] DEFAULT (0),
+        -- Scheduled life: the engineering/supplier maximum footage this die may run
+        -- before it is pulled. Configurable, and set LOWER on a reconditioned die.
+        -- NULL until the client supplies thresholds (OQ-83 -- tracking decided,
+        -- threshold TBD). Do not seed an invented limit.
+        [TotalFeetAllowed]   DECIMAL(10,2) NULL,
+        -- The client's three lifecycle values plus Retired (FR-250). A BIT cannot
+        -- express "In Grinding", which is G77's point about Edger.IsActive.
+        [LifecycleStatus]    VARCHAR(20)   NOT NULL CONSTRAINT [DF_ToolingInventoryDie_LifecycleStatus] DEFAULT ('In Service'),
+        [InUse]              BIT           NOT NULL CONSTRAINT [DF_ToolingInventoryDie_InUse] DEFAULT (0),  -- client grid "In Use". Feeds the derived Spare band
+        [Source]             VARCHAR(100)  NULL,           -- FR-247 supplier / die room source
+        [Condition]          VARCHAR(50)   NULL,           -- FR-247 condition at registration
+        [InspectionDate]     DATE          NULL,           -- FR-247 pre-use inspection
+        [LastResetBy]        VARCHAR(50)   NULL,           -- FR-245 "last reset by"
+        [LastResetAt]        DATETIMEOFFSET NULL,          -- FR-245 / FR-248
+        [Notes]              VARCHAR(500)  NULL,
+        [IsActive]           BIT           NOT NULL CONSTRAINT [DF_ToolingInventoryDie_IsActive] DEFAULT (1),
+
+        CONSTRAINT [PK_ToolingInventoryDie]           PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [UQ_ToolingInventoryDie_DieAlpha]  UNIQUE ([DieAlpha]),
+        CONSTRAINT [CK_ToolingInventoryDie_HoleSize]  CHECK ([HoleSizeIn] > 0),
+        CONSTRAINT [CK_ToolingInventoryDie_FeedRange] CHECK ([MinFeedDiameterIn] IS NULL OR [MaxFeedDiameterIn] IS NULL OR [MinFeedDiameterIn] < [MaxFeedDiameterIn]),
+        CONSTRAINT [CK_ToolingInventoryDie_LastGrindingFeet] CHECK ([LastGrindingFeet] >= 0),
+        CONSTRAINT [CK_ToolingInventoryDie_TotalFeetAllowed] CHECK ([TotalFeetAllowed] IS NULL OR [TotalFeetAllowed] > 0),
+        CONSTRAINT [CK_ToolingInventoryDie_LifecycleStatus]  CHECK ([LifecycleStatus] IN ('Active','In Service','In Grinding','Retired')),
+        CONSTRAINT [CK_ToolingInventoryDie_LineId]    CHECK ([LineId] IS NULL OR [LineId] IN ('FL1','FL3')),
+        CONSTRAINT [CK_ToolingInventoryDie_DieType]   CHECK ([DieType] IS NULL OR [DieType] IN ('TC Mono','TC Poly','Natural diamond'))
+        -- Deliberately NO check that LastGrindingFeet <= TotalFeetAllowed. "Overdue"
+        -- is a real operating state the Die Management screen must display
+        -- (DieChangeAndManagement.md 5), not a data error to refuse at the database.
+        --
+        -- Deliberately NO uniqueness on HoleSizeIn. The old one-row-per-diameter
+        -- premise is gone: many physical dies share a size, which is the point of
+        -- the split. SerialNo uniqueness is a FILTERED index in script 07, because
+        -- a plain UNIQUE would admit only one NULL and the seed leaves them all NULL.
+    );
+    PRINT 'Created table: ToolingInventoryDie';
+END
+ELSE
+    PRINT 'Table already exists: ToolingInventoryDie';
 GO
 
 -- ------------------------------------------------------------
@@ -370,4 +489,450 @@ BEGIN
 END
 ELSE
     PRINT 'Table already exists: Spool';
+GO
+
+
+-- ===========================================================================
+-- THE THREE REASON-CODE TABLES
+--
+-- Source: "Reason Codes.xlsx", Tim O'Brien -> Jaspreet Singh, 1 Sep 2026.
+-- Closes actions A4 / A5 / A6 of the 23 Jul 2026 call and unblocks that
+-- ledger's propagation wave W3.  Audit record, with the full transcription:
+--   95-archive/source-documents/ClientEmail_2026-09-01_ReasonCodes_SyncPlan.md
+--
+-- HOW THE WORKBOOK ENCODES ITS ANSWER -- read this before editing any seed
+-- row. The three sheets are NOT lists of new codes. They are the EXISTING UA
+-- code lists with a three-way classification applied IN CELL FILL COLOUR:
+--     yellow FFFFFF00  = existing code that APPLIES to wire flattening
+--     green   theme 9  = NEW code to be added for wire flattening
+--     no fill          = existing code that DOES NOT APPLY   <- unlabelled,
+--                        and the largest of the three groups
+-- Flattened to text the sheets are unusable. Counts by fill:
+--     Down Time  36 apply + 36 new + 59 not applicable  -> 72 seeded here
+--     WIPREJ     64 apply +  8 new + 24 not applicable  -> 72 seeded here
+--     IT Inhibit  6 apply +  2 new +  0 not applicable  ->  8 (+4, see below)
+-- The 83 not-applicable rows are DELIBERATELY NOT SEEDED. Do not "complete"
+-- these lists from the workbook without re-reading the fill colours.
+--
+-- WHY THE SEEDS ARE HERE AND NOT IN FlatWire_SampleData_Lookup.sql. These are
+-- PRODUCTION reference data. PayoffPosition above sets the precedent: its
+-- fixed rows are seeded inline so that RunAll ALONE yields a working
+-- database. If these rows lived only in the sample-data file, a production
+-- deploy that skips sample data would come up with empty reason tables and a
+-- pause dialog with nothing in it -- the same failure shape as empty pass
+-- schedule tables, which the trial would not catch either.
+--   (Noted, not fixed here: the Dancer seed comment in the sample-data file
+--    says "three rows, and they are equipment, not sample data" while sitting
+--    in the sample-data file. Same class of problem, separate change.)
+--
+-- CLIENT VOCABULARY vs SCHEMA VOCABULARY -- the descriptions are seeded
+-- VERBATIM because they are operator-facing labels, and they use the
+-- operator's words, not ours:
+--     "Bundle" = the incoming rod           -> Rod,             alpha R#####
+--     "Spool"  = the material in process    -> SpoolProcessing, alpha SP-#####
+--     and NEVER the Spool table above, which since Q60 is the reusable
+--     stencilled ARTICLE and carries no Alpha at all.
+-- A reader who takes "Wrong Bundle / Spool" at schema face value lands
+-- straight on the Q60 swap, which is silently wrong rather than obviously
+-- stale. Do not "correct" these strings to schema names.
+-- ===========================================================================
+
+
+-- ---------------------------------------------------------------------------
+-- DowntimeReason
+-- The delay-code vocabulary for the flattening lines.
+--
+-- THIS REPLACES THE PREVIOUS PAUSE TAXONOMY, IT DOES NOT EXTEND IT. The repo
+-- carried 15 reasons in 5 SEMANTIC categories (EquipmentMechanical /
+-- MaterialHandling / QualityMeasurement / Operational / Safety) with codes
+-- like DieChangeMidRun. The client's model is UA's existing delay-code system:
+-- four TIME buckets keyed to the standard-time model, with per-code Nonprod /
+-- Delay Buffer / Supervisor Override attributes. Literal overlap between the
+-- two vocabularies is ZERO. The 23 Jul ledger's C1 warned exactly this:
+-- "Tim's list either ratifies or replaces them -- do not assume it extends
+-- them."
+--
+-- ONE MODEL WITH THE THROUGHPUT STANDARD TIMES. The buckets hold the standard
+-- time and the delay codes consume it, mapping onto the Setup/Handling Times
+-- tab of the 31 Aug 2026 client mail:
+--     Setup    -> S1, S2            Handling -> H1A, H1AA, H1B, H2
+--     RunTime  -> R                 Downtime -> nonproductive, outside the standard
+--
+-- WHICH TABLE CONSUMES WHICH BUCKET. Setup / RunTime / Handling codes (47) are
+-- RunPauseEvent.ReasonCode -- a pause of a live run. Downtime codes (25) are
+-- LineDowntimeEvent.DelayCode in 04_Runs, because every one of them is
+-- line-down time (Power Outage, Fire Drill, Scheduled Maintenance, Waiting for
+-- Spool From Previous Operation) and RunPauseEvent requires an active run.
+-- See 04_Runs and sync-plan section 4.3.
+--
+-- FOUR CODES ARE STRANDED, and this table is where that is visible: the SRS
+-- reasons OperatorBreak, ShiftChangeover, AwaitingSupervisor and
+-- SafetyObservation have NO equivalent in the client's list. SET11 "Prior
+-- Shift unaccountable" is not shift changeover and DWN07 "Fire Drill" is not a
+-- safety observation. Owed back to the client; do not invent codes for them.
+-- ---------------------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[DowntimeReason]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[DowntimeReason] (
+        [Id]                  INT          NOT NULL IDENTITY(1,1),
+        [DelayBucket]         VARCHAR(10)  NOT NULL,        -- Setup | RunTime | Handling | Downtime
+        [DelayCode]           VARCHAR(10)  NOT NULL,        -- SET## | RUN## | HDL## | DWN##
+        [Description]         VARCHAR(120) NOT NULL,        -- client wording, VERBATIM (see header note on Bundle/Spool)
+        -- NULLABLE ON PURPOSE. Every Downtime row on the sheet says Yes except
+        -- DWN29 "Other", whose cell is BLANK. A NOT NULL column fails on
+        -- exactly one row out of 72, which is the worst kind of seed bug.
+        [IsNonprodTime]       BIT          NULL,            -- does this code consume non-productive time?
+        [Status]              VARCHAR(10)  NOT NULL CONSTRAINT [DF_DowntimeReason_Status] DEFAULT ('Active'),
+        [DelayBufferMin]      INT          NOT NULL CONSTRAINT [DF_DowntimeReason_Buffer] DEFAULT (0),
+        -- Only the Downtime bucket carries this column on the sheet; NULL
+        -- elsewhere records "the client did not state one", not "no override".
+        [SupervisorOverride]  BIT          NULL,
+        -- 1 = the code string is OURS. The sheet leaves code, Status and Delay
+        -- Buffer BLANK on all 36 new rows, so those three values are minted
+        -- here and owed back to the client for confirmation.
+        [IsProposedCode]      BIT          NOT NULL CONSTRAINT [DF_DowntimeReason_Proposed] DEFAULT (0),
+        [IsActive]            BIT          NOT NULL CONSTRAINT [DF_DowntimeReason_IsActive] DEFAULT (1),
+
+        CONSTRAINT [PK_DowntimeReason]          PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [UQ_DowntimeReason_Code]     UNIQUE ([DelayCode]),
+        -- Redundant given UQ_..._Code, and deliberately so: it is the FK target
+        -- that lets RunPauseEvent constrain (ReasonCode, ReasonCategory) as a
+        -- PAIR, so a Setup code cannot be stored under the Handling bucket.
+        CONSTRAINT [UQ_DowntimeReason_CodeBucket] UNIQUE ([DelayCode],[DelayBucket]),
+        CONSTRAINT [CK_DowntimeReason_Bucket]   CHECK ([DelayBucket] IN ('Setup','RunTime','Handling','Downtime')),
+        CONSTRAINT [CK_DowntimeReason_Status]   CHECK ([Status] IN ('Active','Inactive')),
+        CONSTRAINT [CK_DowntimeReason_Buffer]   CHECK ([DelayBufferMin] >= 0),
+        -- The code prefix and the bucket must agree, or a Setup code can be
+        -- filed under Downtime and silently reach the wrong event table.
+        CONSTRAINT [CK_DowntimeReason_Prefix]   CHECK (
+                 ([DelayBucket] = 'Setup'    AND [DelayCode] LIKE 'SET[0-9][0-9]')
+              OR ([DelayBucket] = 'RunTime'  AND [DelayCode] LIKE 'RUN[0-9][0-9]')
+              OR ([DelayBucket] = 'Handling' AND [DelayCode] LIKE 'HDL[0-9][0-9]')
+              OR ([DelayBucket] = 'Downtime' AND [DelayCode] LIKE 'DWN[0-9][0-9]')),
+        -- SupervisorOverride is a Downtime-only column on the sheet.
+        CONSTRAINT [CK_DowntimeReason_Override] CHECK ([DelayBucket] = 'Downtime' OR [SupervisorOverride] IS NULL)
+    );
+    PRINT 'Created table: DowntimeReason';
+END
+ELSE
+    PRINT 'Table already exists: DowntimeReason';
+GO
+
+-- Seed: 72 rows. 36 existing codes the client marked as applying (yellow),
+-- then 36 new ones (green) with codes minted from the next free number in each
+-- bucket -- SET29+, RUN15+, HDL18+, DWN37+ -- and IsProposedCode = 1.
+IF NOT EXISTS (SELECT 1 FROM [dbo].[DowntimeReason])
+BEGIN
+    INSERT INTO [dbo].[DowntimeReason]
+        ([DelayBucket],[DelayCode],[Description],[IsNonprodTime],[Status],[DelayBufferMin],[SupervisorOverride],[IsProposedCode])
+    VALUES
+    -- ---- EXISTING, APPLIES (yellow) : Setup, 8 -------------------------------
+      ('Setup','SET10','QC / Process Monitor Quality',                       0,'Active',  0,NULL,0)
+    , ('Setup','SET11','Prior Shift unaccountable',                          0,'Active',  0,NULL,0)
+    , ('Setup','SET12','Operator Training',                                  0,'Active',  0,NULL,0)
+    , ('Setup','SET19','Computer problems',                                  0,'Inactive',0,NULL,0)
+    , ('Setup','SET21','Replace Banding Material',                           0,'Active',  0,NULL,0)
+    , ('Setup','SET23','Other',                                              0,'Inactive',0,NULL,0)
+    , ('Setup','SET24','Machine Demonstration',                              0,'Active',  0,NULL,0)
+    , ('Setup','SET28','Active Inspection',                                  0,'Active',  0,NULL,0)
+    -- ---- EXISTING, APPLIES (yellow) : Run Time, 6 ----------------------------
+    , ('RunTime','RUN04','Rough or Cracked Edges',                           0,'Active',  0,NULL,0)
+    , ('RunTime','RUN05','Shape Problems',                                   0,'Active',  0,NULL,0)
+    , ('RunTime','RUN06','Operator Training',                                0,'Active',  0,NULL,0)
+    , ('RunTime','RUN12','Other',                                            0,'Inactive',0,NULL,0)
+    , ('RunTime','RUN13','Active Inspection',                                0,'Active',  0,NULL,0)
+    , ('RunTime','RUN14','Machine Demonstration',                            0,'Active',  0,NULL,0)
+    -- ---- EXISTING, APPLIES (yellow) : Handling, 6 ----------------------------
+    , ('Handling','HDL07','Operator Training',                               0,'Active',  0,NULL,0)
+    , ('Handling','HDL11','Replace Banding Material',                        0,'Active',  0,NULL,0)
+    , ('Handling','HDL14','Edge Damage from Width Changes',                   0,'Active',  0,NULL,0)
+    , ('Handling','HDL15','Other',                                           0,'Inactive',0,NULL,0)
+    , ('Handling','HDL16','Machine Demonstration',                           0,'Active',  0,NULL,0)
+    , ('Handling','HDL17','Active Inspection',                               0,'Active',  0,NULL,0)
+    -- ---- EXISTING, APPLIES (yellow) : Downtime, 16 ---------------------------
+    -- DWN29 is the blank-Nonprod row the nullable column exists for.
+    , ('Downtime','DWN01','unscheduled maintenance',                         1,'Active',  0,1,0)
+    , ('Downtime','DWN06','Scheduled w/o Man Power',                          1,'Active',  0,1,0)
+    , ('Downtime','DWN07','Fire Drill',                                       1,'Active',  0,1,0)
+    , ('Downtime','DWN08','Schedule/Unschedule Meeting',                      1,'Active',  0,1,0)
+    , ('Downtime','DWN09','Weather Storm',                                    1,'Active',  0,1,0)
+    , ('Downtime','DWN10','Computer Problem',                                 1,'Active',  0,1,0)
+    , ('Downtime','DWN13','Technical Monitoring',                             1,'Active',  0,1,0)
+    , ('Downtime','DWN14','Process Monitoring',                               1,'Active',  0,1,0)
+    , ('Downtime','DWN15','Power Outage',                                     1,'Active',  0,1,0)
+    , ('Downtime','DWN17','Scheduled Maintenance',                            1,'Active',  0,1,0)
+    , ('Downtime','DWN18','Maintenance Dept PM',                              1,'Active',  0,1,0)
+    , ('Downtime','DWN24','Toolbox\Shapeup',                                  1,'Active',  0,1,0)
+    , ('Downtime','DWN25','IT Maintenance',                                   1,'Active',  0,1,0)
+    , ('Downtime','DWN29','Other',                                         NULL,'Active',  0,0,0)
+    , ('Downtime','DWN32','Machine Demonstration',                            1,'Active',  0,1,0)
+    , ('Downtime','DWN33','Operators Transferred To Conveyor',                1,'Active',  0,1,0)
+    -- ---- NEW (green) : Setup, 13 --------------------------------------------
+    , ('Setup','SET29','Wire Break',                                          0,'Active',  0,NULL,1)
+    , ('Setup','SET30','Trouble Threading The Line',                          0,'Active',  0,NULL,1)
+    , ('Setup','SET31','Change Straightener Rolls',                           0,'Active',  0,NULL,1)
+    , ('Setup','SET32','Change Dies',                                         0,'Active',  0,NULL,1)
+    , ('Setup','SET33','Change Edger Rolls',                                  0,'Active',  0,NULL,1)
+    , ('Setup','SET34','Rewind Bundle',                                       1,'Active',  0,NULL,1)
+    , ('Setup','SET35','Cannot Find Bundle/Spool, Not Correct Bundle/Spool, Searching For Bundle/Spool',
+                                                                             0,'Active',  0,NULL,1)
+    , ('Setup','SET36','Searching For Next bundle/Spool',                     1,'Active',  0,NULL,1)
+    , ('Setup','SET37','Digging Out Next Bundle/Spool',                       1,'Active',  0,NULL,1)
+    , ('Setup','SET38','Refill Draw Lube',                                    0,'Active',  0,NULL,1)
+    , ('Setup','SET39','Cobble',                                              0,'Active',  0,NULL,1)
+    , ('Setup','SET40','Tangle',                                              0,'Active',  0,NULL,1)
+    , ('Setup','SET41','Wire Break Due to Bad Weld',                          0,'Active',  0,NULL,1)
+    -- ---- NEW (green) : Run Time, 6 ------------------------------------------
+    , ('RunTime','RUN15','Wire Break',                                        0,'Active',  0,NULL,1)
+    , ('RunTime','RUN16','Traverse Problems',                                 0,'Active',  0,NULL,1)
+    , ('RunTime','RUN17','Cobble',                                            0,'Active',  0,NULL,1)
+    , ('RunTime','RUN18','Tangle',                                            0,'Active',  0,NULL,1)
+    , ('RunTime','RUN19','Refill Draw Lube',                                  0,'Active',  0,NULL,1)
+    , ('RunTime','RUN20','Wire Break Due to Bad Weld',                        0,'Active',  0,NULL,1)
+    -- ---- NEW (green) : Handling, 8 ------------------------------------------
+    -- HDL24 "Rewind Bundle" is Nonprod = No while SET34, the same words under
+    -- Setup, is Yes. The attribute is per (bucket, reason), never per reason.
+    , ('Handling','HDL18','Wire Break',                                       0,'Active',  0,NULL,1)
+    , ('Handling','HDL19','Trouble Threading The Line',                       0,'Active',  0,NULL,1)
+    , ('Handling','HDL20','Change Straightener Rolls',                        0,'Active',  0,NULL,1)
+    , ('Handling','HDL21','Change Dies',                                      0,'Active',  0,NULL,1)
+    , ('Handling','HDL22','Change Edger Rolls',                               0,'Active',  0,NULL,1)
+    , ('Handling','HDL23','Wire Break Due to Bad Weld',                       0,'Active',  0,NULL,1)
+    , ('Handling','HDL24','Rewind Bundle',                                    0,'Active',  0,NULL,1)
+    , ('Handling','HDL25','Cleaning Scrap From Line',                         0,'Active',  0,NULL,1)
+    -- ---- NEW (green) : Downtime, 9 ------------------------------------------
+    , ('Downtime','DWN37','Wire Break',                                       0,'Active',  0,0,1)
+    , ('Downtime','DWN38','Trouble Threading The Line',                       0,'Active',  0,0,1)
+    , ('Downtime','DWN39','Change Straightener Rolls',                        0,'Active',  0,1,1)
+    , ('Downtime','DWN40','Change Dies',                                      0,'Active',  0,1,1)
+    , ('Downtime','DWN41','Change Edger Rolls',                               0,'Active',  0,1,1)
+    , ('Downtime','DWN42','Waiting for Spool From Previous Operation',        1,'Active',  0,0,1)
+    , ('Downtime','DWN43','Searching For Next bundle/Spool',                  1,'Active',  0,0,1)
+    , ('Downtime','DWN44','Refill Draw Lube',                                 0,'Active',  0,0,1)
+    , ('Downtime','DWN45','Digging Out Next Bundle/Spool',                    1,'Active',  0,0,1);
+
+    PRINT 'Seeded: DowntimeReason (72 rows -- 36 existing/applies, 36 new/proposed)';
+END
+ELSE
+    PRINT 'DowntimeReason already seeded -- skipped';
+GO
+
+
+-- ---------------------------------------------------------------------------
+-- WipRejectionReason
+-- The WIP rejection vocabulary for the flattening lines.
+--
+-- THE CLIENT'S SHEET HAS NO GROUPING AT ALL -- it is a flat list of 96 rows,
+-- 72 of them in scope. But WipRejection.RejectionGroup is NOT NULL under
+-- CK_WipRejection_Group (SurfaceQuality | Dimensional | WeldQuality | Material
+-- | Process). So EVERY RejectionGroup value below is OURS, not the client's,
+-- and every one is [PROPOSED]. That CHECK is dropped from WipRejection in
+-- 05_QualityOutput; the group now lives here and the FK enforces the pair.
+--
+-- ReasonCode IS A MINTED SHORT CODE, not the client's prose, for two reasons:
+-- WipRejection.RejectionReason is VARCHAR(50) and the longest client string is
+-- 56 characters ("Wire Brk Due To Holes, Laminations, Blisters, Inclusions"),
+-- and a stable code survives the client rewording a label. Description holds
+-- the prose verbatim. WREJ001-008 are the 8 new reasons, in sheet order;
+-- WREJ009-072 are the 64 existing reasons the client marked as applying, in
+-- the sheet's alphabetical order.
+--
+-- NO THREADING REASON EXISTS, and answer 4 of the mail requires threading to
+-- be recorded as a WIPREJ/scrap. Owed back to the client -- do not invent one.
+-- ---------------------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[WipRejectionReason]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[WipRejectionReason] (
+        [Id]              INT          NOT NULL IDENTITY(1,1),
+        [ReasonCode]      VARCHAR(20)  NOT NULL,            -- WREJ###, ours -- see header note
+        [Description]     VARCHAR(120) NOT NULL,            -- client wording, VERBATIM (typos included)
+        [RejectionGroup]  VARCHAR(30)  NOT NULL,            -- OURS, [PROPOSED] -- the sheet supplies no groups
+        [IsProposedGroup] BIT          NOT NULL CONSTRAINT [DF_WipRejReason_PropGroup] DEFAULT (1),
+        [IsNewForFlatWire] BIT         NOT NULL CONSTRAINT [DF_WipRejReason_New]       DEFAULT (0),
+        [IsActive]        BIT          NOT NULL CONSTRAINT [DF_WipRejReason_IsActive]  DEFAULT (1),
+
+        CONSTRAINT [PK_WipRejectionReason]        PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [UQ_WipRejectionReason_Code]   UNIQUE ([ReasonCode]),
+        -- Redundant given UQ_..._Code, and deliberately so: it is the FK target
+        -- that lets WipRejection constrain (RejectionReason, RejectionGroup) as
+        -- a PAIR. WipRejection denormalises the group onto the event row, and
+        -- without this the two copies drift the first time a group is
+        -- reassigned here.
+        CONSTRAINT [UQ_WipRejectionReason_CodeGroup] UNIQUE ([ReasonCode],[RejectionGroup]),
+        CONSTRAINT [CK_WipRejectionReason_Group]  CHECK ([RejectionGroup] IN ('SurfaceQuality','Dimensional','WeldQuality','Material','Process'))
+    );
+    PRINT 'Created table: WipRejectionReason';
+END
+ELSE
+    PRINT 'Table already exists: WipRejectionReason';
+GO
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[WipRejectionReason])
+BEGIN
+    INSERT INTO [dbo].[WipRejectionReason]
+        ([ReasonCode],[Description],[RejectionGroup],[IsNewForFlatWire])
+    VALUES
+    -- ---- NEW (green), 8 -----------------------------------------------------
+      ('WREJ001','Cobble',                                              'Process',       1)
+    , ('WREJ002','Tangle',                                              'Process',       1)
+    , ('WREJ003','Underproduced / Under Weight',                        'Dimensional',   1)
+    , ('WREJ004','Wire Brk / Pull Apart',                               'Process',       1)
+    , ('WREJ005','Wire Brk Due To Tangle',                              'Process',       1)
+    , ('WREJ006','Wrong Bundle / Spool',                                'Material',      1)
+    , ('WREJ007','Wrong Incoming Diameter',                             'Dimensional',   1)
+    , ('WREJ008','Wrong Temper',                                        'Material',      1)
+    -- ---- EXISTING, APPLIES (yellow), 64 ------------------------------------
+    -- "wavy ege" is the client's typo and is preserved.
+    , ('WREJ009','Bad Shape (wavy ege or buckle)',                       'Dimensional',   0)
+    , ('WREJ010','Broken Bands',                                        'Process',       0)
+    , ('WREJ011','Broken Welds',                                        'WeldQuality',   0)
+    , ('WREJ012','Burr, Rolled Edges',                                  'SurfaceQuality',0)
+    , ('WREJ013','Camber',                                              'Dimensional',   0)
+    , ('WREJ014','Chatter',                                             'SurfaceQuality',0)
+    , ('WREJ015','Collapsed ID',                                        'Dimensional',   0)
+    , ('WREJ016','Crossbreaks',                                         'SurfaceQuality',0)
+    , ('WREJ017','Cutter Mark',                                         'SurfaceQuality',0)
+    , ('WREJ018','Damaged Edges',                                       'SurfaceQuality',0)
+    , ('WREJ019','Damaged Packing',                                     'Process',       0)
+    , ('WREJ020','Dents',                                               'SurfaceQuality',0)
+    , ('WREJ021','Forced Recalculation (No Reason Assigned)',            'Process',       0)
+    , ('WREJ022','Gauge Varies',                                        'Dimensional',   0)
+    , ('WREJ023','Grain',                                               'Material',      0)
+    , ('WREJ024','Heads and Tails',                                     'Process',       0)
+    , ('WREJ025','Herringbone',                                         'SurfaceQuality',0)
+    , ('WREJ026','ID Damage',                                           'SurfaceQuality',0)
+    , ('WREJ027','Incorrect Buildup / Plan Not Followed',               'Process',       0)
+    , ('WREJ028','Live Scratches',                                      'SurfaceQuality',0)
+    , ('WREJ029','Loaded Wrong',                                        'Process',       0)
+    , ('WREJ030','Loose Bands',                                         'Process',       0)
+    , ('WREJ031','Loosewound Coil',                                     'Process',       0)
+    , ('WREJ032','Machine / IT Problem',                                'Process',       0)
+    , ('WREJ033','No Appointment',                                      'Process',       0)
+    , ('WREJ034','No Bands',                                            'Process',       0)
+    , ('WREJ035','No Packing',                                          'Process',       0)
+    , ('WREJ036','No Paperwork',                                        'Process',       0)
+    , ('WREJ037','OD Damage',                                           'SurfaceQuality',0)
+    , ('WREJ038','Off Weight',                                          'Dimensional',   0)
+    , ('WREJ039','Oil Stain, Smut',                                     'SurfaceQuality',0)
+    , ('WREJ040','Order Cancelation / For acct. Purposes',              'Process',       0)
+    , ('WREJ041','Other',                                               'Process',       0)
+    , ('WREJ042','OVERPRODUCED ORDER',                                  'Process',       0)
+    , ('WREJ043','Oxidation, Magnesium Stain',                          'SurfaceQuality',0)
+    , ('WREJ044','Plan Required Head Scrap',                            'Process',       0)
+    , ('WREJ045','Plan Required Tail Scrap',                            'Process',       0)
+    , ('WREJ046','Planned Excess Tail Scrap',                           'Process',       0)
+    , ('WREJ047','Roll Mark',                                           'SurfaceQuality',0)
+    , ('WREJ048','Rolled-in Scratches',                                 'SurfaceQuality',0)
+    , ('WREJ049','Rough or Cracked Edges',                              'SurfaceQuality',0)
+    , ('WREJ050','SCRAP BALANCE',                                       'Process',       0)
+    , ('WREJ051','Shipping Delay',                                      'Process',       0)
+    , ('WREJ052','Sliver, Holes, Inclusion',                            'Material',      0)
+    , ('WREJ053','Telescoped',                                          'Dimensional',   0)
+    , ('WREJ054','Telescoped, Oscillated Coil',                         'Dimensional',   0)
+    , ('WREJ055','Too Many Welds',                                      'WeldQuality',   0)
+    , ('WREJ056','Traffic Marks',                                       'SurfaceQuality',0)
+    , ('WREJ057','Twist',                                               'Dimensional',   0)
+    , ('WREJ058','Water Stain',                                         'SurfaceQuality',0)
+    , ('WREJ059','Water Stain in Warranty / Vendor Issue',              'SurfaceQuality',0)
+    , ('WREJ060','Wet At Receiving',                                    'Process',       0)
+    , ('WREJ061','Width Varies',                                        'Dimensional',   0)
+    , ('WREJ062','Wire Brk Due To Edge Cracks',                         'Material',      0)
+    , ('WREJ063','Wire Brk Due To Holes, Laminations, Blisters, Inclusions','Material',   0)
+    , ('WREJ064','Wire Brk Due To Machine Problem',                     'Process',       0)
+    , ('WREJ065','Wire Brk Due To Shape',                               'Dimensional',   0)
+    , ('WREJ066','Wrong Alloy',                                         'Material',      0)
+    , ('WREJ067','Wrong Banding',                                       'Process',       0)
+    , ('WREJ068','Wrong Gauge',                                         'Dimensional',   0)
+    , ('WREJ069','Wrong ID',                                            'Dimensional',   0)
+    , ('WREJ070','Wrong OD',                                            'Dimensional',   0)
+    , ('WREJ071','Wrong Skid Size',                                     'Process',       0)
+    , ('WREJ072','Wrong Width',                                         'Dimensional',   0);
+
+    PRINT 'Seeded: WipRejectionReason (72 rows -- 64 existing/applies, 8 new; ALL groups proposed)';
+END
+ELSE
+    PRINT 'WipRejectionReason already seeded -- skipped';
+GO
+
+
+-- ---------------------------------------------------------------------------
+-- ItInhibitReason
+-- Why the ITInhibit tag is set. See [PLC 8.0] for the mechanism.
+--
+-- THE CLIENT'S EIGHT AND THE SPECIFICATION'S FIVE SHARE EXACTLY ONE, and that
+-- is why the Source column exists. [PLC 8.2] lists five set conditions; the
+-- client's sheet lists eight; the only overlap is "no coil or rod is checked
+-- in". The specification's other four are NOT loose prose -- they are FR-008 /
+-- FR-009 with alternate flows ALT002-ALT005 / DAT009 and FIVE P1 test cases,
+-- TC-011 to TC-015. Nobody has said they are superseded.
+--
+-- So all twelve are seeded, and the four spec-only conditions are seeded
+-- IsActive = 0: present and traceable, evaluated by nothing, pending a client
+-- answer. That keeps the union visible without deciding it either way.
+-- Dropping them would silently orphan two FRs and five P1 test cases;
+-- activating them would decide a question the client has not been asked.
+--
+-- ALSO NOT MODELLED, and on BOTH real screenshots the client attached: a
+-- "Call Supervisor" action on the inhibit dialog. It is in no requirement.
+--
+-- ITINH004 "No Qualified Operators Are Logged In" CANNOT BE EVALUATED BY
+-- ANYTHING THAT EXISTS. It presumes the Leadman / Operator / Helper roles and
+-- the qualification matrix of the 23 Jul call's C10; Security section 8 has six
+-- roles, neither Leadman nor Helper, and no matrix at all.
+--
+-- ITINH007 "Supervisor Monitor" SURVIVES AN ANSWER THAT REMOVES IT. Answer 9
+-- of this mail is a flat "No" to a dedicated Supervisor Monitor, superseding
+-- C13's softer "desired but not required". The client's sheet still marks this
+-- reason as applying, and one screenshot shows "Supervisor monitoring" live.
+-- A screen and "a supervisor is presently monitoring" are different things;
+-- which one sets this is owed back.
+-- ---------------------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ItInhibitReason]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[ItInhibitReason] (
+        [Id]               INT          NOT NULL IDENTITY(1,1),
+        [ReasonCode]       VARCHAR(20)  NOT NULL,           -- ITINH###, ours
+        [Description]      VARCHAR(200) NOT NULL,           -- client / specification wording, verbatim
+        [Source]           VARCHAR(10)  NOT NULL,           -- Client | PLC-8.2
+        [IsNewForFlatWire] BIT          NOT NULL CONSTRAINT [DF_ItInhibitReason_New]      DEFAULT (0),
+        -- 0 on the four PLC-8.2-only conditions: seeded for traceability,
+        -- evaluated by nothing until the client confirms them.
+        [IsActive]         BIT          NOT NULL CONSTRAINT [DF_ItInhibitReason_IsActive] DEFAULT (1),
+
+        CONSTRAINT [PK_ItInhibitReason]       PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [UQ_ItInhibitReason_Code]  UNIQUE ([ReasonCode]),
+        CONSTRAINT [CK_ItInhibitReason_Source] CHECK ([Source] IN ('Client','PLC-8.2'))
+    );
+    PRINT 'Created table: ItInhibitReason';
+END
+ELSE
+    PRINT 'Table already exists: ItInhibitReason';
+GO
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[ItInhibitReason])
+BEGIN
+    INSERT INTO [dbo].[ItInhibitReason]
+        ([ReasonCode],[Description],[Source],[IsNewForFlatWire],[IsActive])
+    VALUES
+    -- ---- CLIENT SHEET, 8 (sheet order; 002 and 003 are the green/new rows) --
+      ('ITINH001','Correct Pass Schedule Not Loaded. Mismatched OPC and Pass Schedule Values','Client',0,1)
+    , ('ITINH002','Next Bundle Not Welded',                                  'Client', 1,1)
+    , ('ITINH003','No Bundle/Spool is Checked In',                           'Client', 1,1)
+    , ('ITINH004','No Qualified Operators Are Logged In',                    'Client', 0,1)
+    , ('ITINH005','Pass Schedule is Not Accepted',                           'Client', 0,1)
+    , ('ITINH006','SPC is Not Done',                                         'Client', 0,1)
+    , ('ITINH007','Supervisor Monitor',                                      'Client', 0,1)
+    , ('ITINH008','System Air Pressure Low',                                 'Client', 0,1)
+    -- ---- [PLC 8.2] ONLY, 4 : INACTIVE pending a client answer --------------
+    -- Condition 1 of the five is covered by ITINH003 above. These are the
+    -- other four, and they carry TC-012 to TC-015.
+    , ('ITINH009','No active material-tracking identifier exists',           'PLC-8.2',0,0)
+    , ('ITINH010','Feet data from the machine is unavailable',               'PLC-8.2',0,0)
+    , ('ITINH011','Feet data from the machine is invalid',                   'PLC-8.2',0,0)
+    , ('ITINH012','Two or more consecutive data recordings are missing',     'PLC-8.2',0,0);
+
+    PRINT 'Seeded: ItInhibitReason (12 rows -- 8 client/active, 4 PLC-8.2-only/inactive)';
+END
+ELSE
+    PRINT 'ItInhibitReason already seeded -- skipped';
 GO

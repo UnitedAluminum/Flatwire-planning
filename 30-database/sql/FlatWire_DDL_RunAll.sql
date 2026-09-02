@@ -2,7 +2,9 @@
 -- Flat Wire Mill — Master Deployment Runner
 -- ============================================================
 -- Executes the full MVP-1 schema build in the correct order:
---   00 -> 08 (DDL).  Result: 33 tables, EMPTY.
+--   00 -> 08 (DDL).  Result: 39 tables.  NOT empty: 01_Lookup seeds the
+--   three reason-code tables inline, because they are production reference
+--   data and a production deploy runs this file WITHOUT the sample data.
 --   The defining site for the object counts is [DBD 6.2]. This banner is
 --   one of exactly three places permitted to restate them.
 --
@@ -11,7 +13,7 @@
 --   data deploy independently -- see the note where it used to be.
 --
 -- ⚠ 06b AND 07b NO LONGER EXIST (23 Aug 2026). They were folded back into
---   06_ForeignKeys and 07_Indexes, which now carry all 55 FKs and all 70
+--   06_ForeignKeys and 07_Indexes, which now carry all 62 FKs and all 82
 --   index statements respectively. The MVP-1 chain is a contiguous 00..08.
 --
 -- ⚠ ONE FILE IN THIS FOLDER IS MVP-2 AND IS DELIBERATELY NOT RUN HERE:

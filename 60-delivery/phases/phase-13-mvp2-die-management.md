@@ -1,5 +1,25 @@
 # PHASE 13 (MVP-2 part) — Die Management
 
+
+> ⛔ **SCOPE REVERSED 2 Sep 2026 by the die split (`Q91`) — the die domain is back in MVP-1.**
+> The die inventory table now exists as **`ToolingInventoryDie`**, with **`DieHistory`** behind
+> `FR-252`’s two history views, and both are built and seeded in **Phase 1**. `FR-240`–`FR-255`
+> are MVP-1 requirements and **`DieManagement.md` is an MVP-1 specification**. `FW-N07`’s MoSCoW
+> split is settled the way its own story text always read — the **table** is *Must*, the **screen**
+> is *Should* — and both are in scope. **`OI-41` closes**; **Phase 6 depends on Phase 1, not Phase
+> 13**; **`FR-233` / `D4` revert to their per-tool form**; **`TC-274` becomes executable**.
+>
+> ⚠ **The effort is NOT re-costed here.** The 8 h die table and the 66 h Die Management screen
+> return to MVP-1 against a window closing 30 Sep 2026, and `CapacityAndEffortModel.md` §3b owns
+> that. Re-derive additively; do not edit published totals in place.
+>
+> ⚠ **`OI-12` escalates to a live defect** — Die Change’s 60/85 % bands and Die Management’s
+> 65/80 % bands now derive from one table. **`OI-141` stays open** on whether there is one die
+> register or two. **`G77`** still owns edger and straightener inventory, which this does not cover.
+>
+> Everything below predates the reversal. Read it as the record of the 11 Aug 2026 carve, not as
+> current scope.
+
 > **⚠ MVP-2 — deferred scope.** This is a **partial phase file**: only the Die Management content was carved out of the MVP-1 phase, **verbatim at bullet level**. The rest of that phase — the alloy lookup admin, the machine template tabs and role assignment — is MVP-1 and stays there. Read this alongside [`phase-13-administration-reference-data.md`](./phase-13-administration-reference-data.md), which remains the authority on the phase as a whole.
 >
 > **Effort: 66 h** (11 Aug 2026) — **and it is not the ladder's 99 h.** Rung 5 puts *"Phase 13 non-critical (Die Management screen, role assignment UI)"* at **99 h**, which bundles this screen with the **MVP-1** role-assignment UI and gives no split; quoting it here would silently move MVP-1 work into MVP-2. The figure below is re-priced from the rate card in [`CapacityAndEffortModel.md` §2](../CapacityAndEffortModel.md) instead: **Die Management screen 24 FE**, **die lifecycle service 16 BE**, **die inventory table 8 DB**, with QA and contingency **re-derived** from the reduced base. **MVP-1 keeps 143 h.**

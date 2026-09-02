@@ -4,8 +4,8 @@
 -- ----------------------------------------------------------------------------
 -- Project         : Flat Wire Mill Implementation - United Aluminum
 -- Document type   : Database deployment script - ISSUED FOR CLIENT REVIEW
--- Version         : 1.1
--- Last updated    : August 27, 2026
+-- Version         : 1.2
+-- Last updated    : September 2, 2026
 -- Target database : FlatWireDB  (new and standalone; NOT united_db)
 -- Creates         : PassSchedule, PassScheduleComponent, PassScheduleChangeLog
 -- File encoding   : ASCII only, so the script loads identically under SQLCMD,
@@ -55,7 +55,11 @@
 -- 3. THE EQUIPMENT THESE TABLES CONFIGURE                        [CONFIRMED]
 -- ----------------------------------------------------------------------------
 --
---   DB1, DB2   Wire drawing dies. Reduce rod diameter ahead of flattening.
+--   DB1, DB2   The two DRAW BOXES (die blocks). Each pulls the rod through a
+--              die to reduce its diameter ahead of flattening. The box is the
+--              machine and is a row in Drawer; the DIE is the tooling fitted
+--              in it and is a row in ToolingInventoryDie. A schedule states
+--              the die SIZE it needs, in ParameterValue, not which tool.
 --   FM1        12" flattening mill. Not bypassable.
 --   EdgeSet    Edger tooling. Applies a Round or a Square edge.
 --
@@ -69,7 +73,9 @@
 --   Stand.RollDiameterIn (FM1 12.000; FM2 S1 8.000, S2 6.000, S3 6.000), so a
 --   change of rolls never invalidates an identifier.
 --
---   FL1 has no edger.                    [CLIENT INPUT REQUIRED - OPEN POINT 4]
+--   FL1 has no edger.                                             [CONFIRMED]
+--   Confirmed by the client on 31 Aug 2026: the FL1 schedule is D1, D2 and the
+--   FL1 mill stand only - no edger row at all. See OPEN POINT 4.
 --
 -- ----------------------------------------------------------------------------
 -- 4. SCOPE - THIS PHASE READS PASS SCHEDULES, IT DOES NOT AUTHOR THEM
@@ -89,7 +95,7 @@
 -- ----------------------------------------------------------------------------
 --
 --   This script creates TABLES ONLY.
---     - The foreign keys to Stand, Drawer, Edger and AlloyProperty are created
+--     - The foreign keys to Stand, Edger and AlloyProperty are created
 --       by script 06, and the indexes by script 07, so that every constraint
 --       is applied to empty tables and cannot fail on existing data.
 --     - Script 01 (lookup and reference tables) must therefore run before this
@@ -234,11 +240,22 @@ GO
 --   EdgeSet             edger clearance, inches
 --   NULL whenever the component is not Active.
 --
--- Tool reference - exactly one of the three is populated on an Active row
+-- Tool reference - at most one of the two is populated on an Active row
 --   StandId   -> Stand    for FM1 and the FM2 stands
---   DrawerId  -> Drawer   for DB1 and DB2
 --   EdgerId   -> Edger    for EdgeSet
---   All three foreign keys are created by script 06.
+--   Both foreign keys are created by script 06.
+--
+--   DB1 and DB2 carry NEITHER. DrawerId was dropped on Sep-2-2026 with the die
+--   split: it pointed at what was then a 13-row die-SIZE catalogue, and the
+--   size it identified is already in ParameterValue as a decimal, so the column
+--   was a second copy of one fact. Drawer now holds the two draw BOXES, which
+--   ComponentName already names -- a DrawerId would have restated ComponentName
+--   the way StandId does today.
+--
+--   A schedule deliberately does NOT name a physical die. It is a reusable
+--   product recipe; the tool fitted at DB1 changes many times over its life.
+--   Which tool ran is recorded per event in DieChangeEvent.OldDieId/NewDieId
+--   and per run in DieHistory, not here.
 --
 -- EntryGauge and ExitGauge are informational: the calculated gauge entering
 -- and leaving the station. They let the gauge chain be read down a schedule
@@ -256,8 +273,9 @@ BEGIN
         [Sequence]       INT          NOT NULL,   -- processing order within the schedule, 1 upwards
         [IsMandatory]    BIT          NOT NULL CONSTRAINT [DF_PSC_IsMandatory] DEFAULT (0),  -- when 1, the screen locks the component and the operator cannot switch it off
         [StandId]        INT          NULL,       -- fitted stand. FK to Stand.Id, added by script 06
-        [DrawerId]       INT          NULL,       -- fitted die.   FK to Drawer.Id, added by script 06
         [EdgerId]        INT          NULL,       -- fitted edger. FK to Edger.Id, added by script 06
+        -- No DrawerId: dropped Sep-2-2026 with the die split. DB1/DB2 rows carry
+        -- their die SIZE in ParameterValue and name no physical tool. See section 3.
         [EntryGauge]     DECIMAL(8,4) NULL,       -- calculated gauge entering this station, inches; informational
         [ExitGauge]      DECIMAL(8,4) NULL,       -- calculated gauge leaving this station, inches; informational
         [SetupNo]        VARCHAR(20)  NULL,       -- legacy setup number carried over from FlatLineSetup, for historical traceability
@@ -342,11 +360,24 @@ GO
 -- OPEN POINTS - FOR CONFIRMATION AT REVIEW
 -- ============================================================================
 --
--- 1. WHO POPULATES THESE TABLES IN PRODUCTION
+-- 1. WHO POPULATES THESE TABLES IN PRODUCTION      [HALF ANSWERED 31 Aug 2026]
 --    This phase reads pass schedules and never authors them, so a schedule has
 --    to arrive from somewhere before the first production check-in. The design
---    assumes the owning system writes directly into FlatWireDB. Please confirm
---    which system that is, and when it will be available.
+--    assumes the owning system writes directly into FlatWireDB.
+--
+--    THE SYSTEM IS NOW NAMED. The client's 31 Aug 2026 mail confirms the
+--    Flattening Line Schedule tab of the Machines Application (ual-dot-net) as
+--    the authoring surface, and its grid is one row per component in
+--    processing order - the shape of PassScheduleComponent. The lineage agrees:
+--    D-13 records FlatLineSetup -> PassScheduleComponent, and the source
+--    workbook names that sheet FlatLinePassSchedule.
+--
+--    STILL OPEN, AND IT IS THE WHOLE OF OI-110: which DATABASE that tab writes
+--    to. Naming the author is not naming the write target. D-31 made
+--    PassScheduleId a real enforced FK on FlatWireRun, RodCheckin,
+--    SpoolCheckin and CoilOutput, so empty schedule tables mean check-in
+--    cannot run in production - and the acceptance trial runs on seeded
+--    schedules, so it will not surface there.
 --
 -- 2. CHANGE REASON CODES
 --    ReasonCode is free text today, with five values in use: DieWear,
@@ -354,29 +385,74 @@ GO
 --    list is complete. If it is, we will move it to a lookup table, so that
 --    the screen can offer a fixed set and reporting can group on it reliably.
 --
--- 3. FM1 ON AN FL2 SCHEDULE
---    CK_PSC_FM1NotBypassable enforces "the flattening mill is not bypassable"
---    on every schedule, without regard to line. An FL2 standalone schedule is
---    fed an already-flattened spool, so the 12" mill on FL1 is not in its
---    material path at all - yet the rule still forces an Active FM1 row on it.
---    Please confirm whether an FL2 standalone schedule should be allowed to
---    mark FM1 as not applicable. If so, we will narrow the rule to the lines
---    that carry FM1.
+-- 3. FM1 ON AN FL2 SCHEDULE                            [CORRECTED 2 Sep 2026]
+--    THIS ENTRY PREVIOUSLY STATED THE CONSTRAINT WRONGLY. It said the rule
+--    "still forces an Active FM1 row" onto an FL2 schedule. It does not.
+--    CK_PSC_FM1NotBypassable is a ROW-LEVEL check:
 --
--- 4. THE EDGER MODEL
---    Two questions, both about EdgeSet:
---      (a) FL1 has no edger, but the model allows an FL1 schedule to carry an
---          Active EdgeSet row, and the sample data uses one. Please confirm
---          how the edge condition of an FL1 product should be recorded.
---      (b) FM2 has edgers at S2 and S3, but a schedule carries a single
---          EdgeSet row. Please confirm whether the two positions are always
---          set the same, or whether they need to be configured separately.
+--        CHECK ([ComponentName] <> 'FM1' OR [State] = 'Active')
 --
--- 5. ONE ACTIVE SCHEDULE PER LINE AND ALLOY
+--    With no FM1 row present nothing is violated, and no constraint anywhere
+--    requires a schedule to carry one. An FL2 schedule of five rows and no FM1
+--    is already legal today, and no narrowing of the rule is needed.
+--
+--    The real conflict is with the Skip semantics. State = 'Skip' is
+--    documented above as "the component is not part of this schedule at all",
+--    which invites an FM1/Skip row on an FL2 schedule - and THAT the
+--    constraint rejects.
+--
+--    The client's 31 Aug 2026 mail settles the model: a schedule lists only
+--    the components in that line's material path - FL1 three rows, FL2 five,
+--    FL3 eight. OMISSION, NOT Skip.
+--
+--    NEW QUESTION, replacing the original one: if components are omitted
+--    rather than skipped, what is Skip for? Bypass stays meaningful - wired
+--    out of the pass, and visible to the operator at the machine. Please
+--    confirm before the three-value vocabulary reaches a screen.
+--
+-- 4. THE EDGER MODEL                          [BOTH ANSWERED 31 Aug 2026]
+--      (a) ANSWERED - FL1 carries NO edger row. The client's FL1 schedule is
+--          D1 (DRAW), D2 (DRAW), FL1-S1 (FLAT). There is no edge condition to
+--          record on an FL1 product, so nothing needs to be modelled for it.
+--          ACTION OUTSTANDING: the FL1 fixtures in
+--          FlatWire_SampleData_Schedule.sql each carry an Active EdgeSet row,
+--          which is now known to be wrong. See OPEN POINT 5 of that file.
+--
+--      (b) ANSWERED - THE TWO POSITIONS ARE CONFIGURED SEPARATELY, and this
+--          model cannot express that. The client's FL2 schedule sequences them
+--          as distinct steps with different widths:
+--
+--              FL2-S1 FLAT   E1 EDGE (.749 -> .740)   FL2-S2 FLAT
+--              E2 EDGE (.746 -> .743)                 FL2-S3 FLAT
+--
+--          CK_PSC_ComponentName offers ONE value, 'EdgeSet'. Two rows can be
+--          stored - UQ_PassScheduleComponent_Sequence is on (PassScheduleId,
+--          Sequence) - but both carry the same ComponentName, so position is
+--          recoverable only by inferring it from Sequence. That breaks the
+--          position-only identifier rule stated in section 3 above, and the
+--          PLC push cannot choose a tag path from an ambiguous component name.
+--          EdgerId identifies the fitted TOOL, not the STATION, so it cannot
+--          stand in.
+--
+--          PROPOSED FIX, NOT YET APPLIED: replace 'EdgeSet' with two position
+--          values in CK_PSC_ComponentName. Tracked as a gap; it changes the
+--          object baseline, so it is deliberately not made in this pass.
+--
+-- 5. ONE ACTIVE SCHEDULE PER LINE AND ALLOY        [REOPENED - 2 Sep 2026]
 --    The design allows exactly one Active schedule for a given line and alloy
---    at a time, so activating a replacement demotes the incumbent. Please
---    confirm this matches how the floor works, and that no line ever needs two
---    approved schedules for one alloy at the same time.
+--    at a time, so activating a replacement demotes the incumbent.
+--
+--    THE EVIDENCE NOW POINTS AGAINST THIS. The client's Flattening Line
+--    Schedule screen filters on Alloy, Width Range, Start Gauge, Target Gauge
+--    and Anneal Gauge - four dimensions beyond alloy. A filter panel of that
+--    shape only makes sense if many Active schedules share one line and alloy,
+--    differing by width and gauge. The FL1 example is alloy 1100, start 0.375,
+--    target 0.084, width range .725-.740; a second 1100 order at another width
+--    would need its own schedule, concurrently Active.
+--
+--    DO NOT CONFIRM THIS RULE AS DESIGNED. If it is wrong, the filtered unique
+--    index UX_PassSchedule_OneActivePerLineAlloy in script 07 must be widened
+--    or dropped.
 --
 -- 6. ActiveJobId
 --    This column names the order or job currently running the schedule, and

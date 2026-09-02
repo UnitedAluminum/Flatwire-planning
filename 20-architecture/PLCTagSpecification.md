@@ -447,6 +447,28 @@ On FL3, whether the line carries its own `FL3.ITInhibit` or asserts FL1's and FL
 
 Condition 5 additionally raises a prominent data-recording alert on the operator's screen, so the cause is visible rather than inferred.
 
+> ⚠ **The client's own inhibit list shares exactly ONE of these five — raised 2 Sep 2026 as `G80`, and unresolved.**
+> `Reason Codes.xlsx` (Tim O'Brien, 1 Sep 2026) supplies **eight** IT inhibit reasons for flat wire. Only condition 1
+> above appears among them, as *"No Bundle/Spool is Checked In"*. **Conditions 2–5 are absent from the client's list
+> entirely** — although feet-data and periodicity conditions *are* visible in the two live-machine screenshots the
+> client attached to the same mail.
+>
+> **These five are not loose prose.** They are `FR-008` / `FR-009`, alternate flows `ALT002`–`ALT005` and `DAT009`, and
+> **five P1 test cases, `TC-011`–`TC-015`**. `TC-###` and `FR-###` are never renumbered, so dropping four of them
+> orphans two requirements and five P1 tests; adopting the client's eight as a *replacement* is therefore not available
+> as a silent editorial choice.
+>
+> **What was done instead of choosing.** All twelve are seeded in `FlatWireDB.ItInhibitReason` with a `Source` column
+> (`Client` / `PLC-8.2`), and the four spec-only conditions are seeded **`IsActive = 0`** — present, traceable,
+> evaluated by nothing, deciding nothing. **This section is unchanged and still normative.** Ask the client directly
+> whether conditions 2–5 still hold for the flattening lines.
+>
+> Two more from the same list, both recorded as gaps rather than absorbed here:
+> **`No Qualified Operators Are Logged In`** presumes the Leadman/Operator/Helper qualification matrix, which does not
+> exist (`G81`); and **`Supervisor Monitor`** is marked as applying while the same mail answers *"No"* to a dedicated
+> Supervisor Monitor (`D-38`, `Q20`). A **`Call Supervisor`** action also appears on both real dialogs and in no
+> requirement.
+
 ## 8.3 What happens while it is set
 
 The machine is blocked from running, related transactions are blocked, and **no rolling data is recorded without an active coil.** The last clause is the point of the whole mechanism: unaccounted production is worse than no production.
@@ -726,6 +748,7 @@ Numbered in priority order. Every row carries the identifier it is tracked under
 | **`PLC-Q16`** | **Should the stop prompt be suppressed** when a software pause already captured a reason? Proposed yes | The spool-completion prompt | `Q21` / `OI-35` | Medium |
 | **`PLC-Q17`** | **Confirm the two structural rules** — **R6**, that an ordinal instance suffixes its digit onto the element name (`DB1`, `Payoff2`, `TKUP1`), and **R5**, that an assembly's internal stations take a station segment (`FM2.S2`) | Deriving any path that is still missing, which is the whole economy of confirming a grammar | *this document* | Medium |
 | **`PLC-Q18`** | **Confirm the dancer element** — the paths, the **ordinal convention** (`Dancer1` upstream of `Dancer2`, per R5/R6), and the **`Mode` vocabulary** of §5.5. FM1 carries one dancer and FM2 two, between S1/S2 and S2/S3; the equipment is confirmed (`D-28`) but **no dancer path has been read off a controller**. Also: **does FM1's dancer have selectable modes?** Modes were attributed to FM2 only, and we have not assumed either way | The dancer element in §5.2.1–§5.2.3 and §5.5 | **C12** |
+| **`PLC-Q19`** | **Confirm the jog, stand-roll and dancer-thread read surface** disclosed by the client on 1 Sep 2026: *"we will have jog events on **all three stands of FL2**, as well as **open/close on stand rolls**, and **thread position on dancers**"*. **None of the three has a path in any published map.** Jog and threading being real machine states also bears on `Q21`, which asks whether `FL{n}.LineState` is a two-state bit or distinguishes `THREADING` / `JOG` — a jog that reports as STOPPED changes the filtering the checkout gatekeeper needs. ⚠ The **thread position** element is a *second* dancer read, beyond `PLC-Q18`'s mode element | A new jog / roll-state / dancer-position element; `FL{n}.LineState` vocabulary | **C11** |
 
 ## 13.2 Project-owned — not client input
 
@@ -818,6 +841,7 @@ Listed for completeness, so the sign-off sheet is honest about what is ours to s
 | `PLC-Q16` | Stop-prompt suppression after a software pause | | ☐ |
 | `PLC-Q17` | The two structural rules — R6 ordinals, R5 assembly stations | | ☐ |
 | `PLC-Q18` | The dancer paths, the `Dancer1`-is-upstream convention, and the `Mode` vocabulary | | ☐ |
+| `PLC-Q19` | Jog on all three FL2 stands, open/close on stand rolls, dancer thread position — and whether `LineState` distinguishes JOG/THREADING | | ☐ |
 
 ## Part C — Approval
 

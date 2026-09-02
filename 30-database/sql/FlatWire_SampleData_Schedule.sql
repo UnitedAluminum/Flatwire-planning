@@ -58,7 +58,7 @@
 --   The sample-data runner loads five scripts and this is the second of them.
 --   Its position is load-bearing:
 --
---       Lookup     -> creates the Stand, Drawer, Edger and AlloyProperty rows
+--       Lookup     -> creates the Stand, Edger and AlloyProperty rows
 --                     this script points at by id
 --       SCHEDULE   -> this script
 --       Materials  -> creates runs that point back at these schedules
@@ -84,14 +84,15 @@
 --               3 = FM2_S2  (6")
 --               4 = FM2_S3  (6", final stand)
 --
---   Drawer.Id   the die hole diameter, which is the wire size after drawing
---                1 = DIE-0210  0.210"      8 = DIE-0275  0.275"
---                2 = DIE-0240  0.240"      9 = DIE-0300  0.300"
---                3 = DIE-0250  0.250"     10 = DIE-0310  0.310"
---                4 = DIE-0265  0.265"     11 = DIE-0320  0.320"
---                5 = DIE-0315  0.315"     12 = DIE-0335  0.335"
---                6 = DIE-0330  0.330"     13 = DIE-0340  0.340"
---                7 = DIE-0270  0.270"
+--   No die reference at all. DrawerId was dropped from
+--   PassScheduleComponent on 2 Sep 2026 with the die split, so a DB1 or DB2
+--   row here carries StandId NULL and EdgerId NULL and states its die SIZE in
+--   ParameterValue as a decimal -- which is what it always meant.
+--
+--   A schedule deliberately names no physical die. It is a reusable product
+--   recipe; the tool fitted at DB1 changes many times over the schedule's
+--   life. Which tool actually ran is in DieChangeEvent.OldDieId / NewDieId
+--   and DieHistory, both pointing at ToolingInventoryDie.
 --
 --   Edger.Id    1 = EDGE-ROUND-A  (Round)
 --               2 = EDGE-SQUARE-B (Square)
@@ -349,16 +350,16 @@ BEGIN
 INSERT INTO [dbo].[PassScheduleComponent]
     ([PassScheduleId],  [ComponentName], [State],
      [ParameterValue],  [EdgeType], [Sequence],
-     [StandId], [DrawerId], [EdgerId],
+     [StandId], [EdgerId],
      [EntryGauge], [ExitGauge], [SetupNo])
 VALUES
-    ('PS-1100-FL1-001', 'DB1',       'Active', 0.3150, NULL,    1, NULL, 5,    NULL, 0.3750, 0.3150, 'FLS-2024-001'),
-    ('PS-1100-FL1-001', 'DB2',       'Active', 0.2650, NULL,    2, NULL, 4,    NULL, 0.3150, 0.2650, 'FLS-2024-001'),
-    ('PS-1100-FL1-001', 'FM1',       'Active', 0.1080, NULL,    3, 1,    NULL, NULL, 0.2650, 0.1100, 'FLS-2024-001'),
-    ('PS-1100-FL1-001', 'EdgeSet',   'Active', 0.0020, 'Round', 4, NULL, NULL, 1,    0.1100, 0.1100, 'FLS-2024-001'),
-    ('PS-1100-FL1-001', 'FM2_S1',    'Skip',   NULL,   NULL,    5, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-001'),
-    ('PS-1100-FL1-001', 'FM2_S2',    'Skip',   NULL,   NULL,    6, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-001'),
-    ('PS-1100-FL1-001', 'FM2_S3',    'Skip',   NULL,   NULL,    7, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-001');
+    ('PS-1100-FL1-001', 'DB1',       'Active', 0.3150, NULL,    1, NULL,    NULL, 0.3750, 0.3150, 'FLS-2024-001'),
+    ('PS-1100-FL1-001', 'DB2',       'Active', 0.2650, NULL,    2, NULL,    NULL, 0.3150, 0.2650, 'FLS-2024-001'),
+    ('PS-1100-FL1-001', 'FM1',       'Active', 0.1080, NULL,    3, 1, NULL, 0.2650, 0.1100, 'FLS-2024-001'),
+    ('PS-1100-FL1-001', 'EdgeSet',   'Active', 0.0020, 'Round', 4, NULL, 1,    0.1100, 0.1100, 'FLS-2024-001'),
+    ('PS-1100-FL1-001', 'FM2_S1',    'Skip',   NULL,   NULL,    5, NULL, NULL, NULL,   NULL,   'FLS-2024-001'),
+    ('PS-1100-FL1-001', 'FM2_S2',    'Skip',   NULL,   NULL,    6, NULL, NULL, NULL,   NULL,   'FLS-2024-001'),
+    ('PS-1100-FL1-001', 'FM2_S3',    'Skip',   NULL,   NULL,    7, NULL, NULL, NULL,   NULL,   'FLS-2024-001');
 
 -- -- 2 . PS-1100-FL1-002 . Standalone . Inactive ----------------------------
 -- Retired schedule. Single draw pass, so DB2 is bypassed. FM2 was bypassed
@@ -366,16 +367,16 @@ VALUES
 INSERT INTO [dbo].[PassScheduleComponent]
     ([PassScheduleId],  [ComponentName], [State],
      [ParameterValue],  [EdgeType], [Sequence],
-     [StandId], [DrawerId], [EdgerId],
+     [StandId], [EdgerId],
      [EntryGauge], [ExitGauge], [SetupNo])
 VALUES
-    ('PS-1100-FL1-002', 'DB1',       'Active', 0.3350, NULL,    1, NULL, 12,   NULL, 0.3750, 0.3350, 'FLS-2023-015'),
-    ('PS-1100-FL1-002', 'DB2',       'Bypass', NULL,   NULL,    2, NULL, NULL, NULL, NULL,   NULL,   'FLS-2023-015'),
-    ('PS-1100-FL1-002', 'FM1',       'Active', 0.1372, NULL,    3, 1,    NULL, NULL, 0.3350, 0.1400, 'FLS-2023-015'),
-    ('PS-1100-FL1-002', 'EdgeSet',   'Active', 0.0022, 'Round', 4, NULL, NULL, 1,    0.1400, 0.1400, 'FLS-2023-015'),
-    ('PS-1100-FL1-002', 'FM2_S1',    'Bypass', NULL,   NULL,    5, NULL, NULL, NULL, NULL,   NULL,   'FLS-2023-015'),
-    ('PS-1100-FL1-002', 'FM2_S2',    'Bypass', NULL,   NULL,    6, NULL, NULL, NULL, NULL,   NULL,   'FLS-2023-015'),
-    ('PS-1100-FL1-002', 'FM2_S3',    'Bypass', NULL,   NULL,    7, NULL, NULL, NULL, NULL,   NULL,   'FLS-2023-015');
+    ('PS-1100-FL1-002', 'DB1',       'Active', 0.3350, NULL,    1, NULL,   NULL, 0.3750, 0.3350, 'FLS-2023-015'),
+    ('PS-1100-FL1-002', 'DB2',       'Bypass', NULL,   NULL,    2, NULL, NULL, NULL,   NULL,   'FLS-2023-015'),
+    ('PS-1100-FL1-002', 'FM1',       'Active', 0.1372, NULL,    3, 1, NULL, 0.3350, 0.1400, 'FLS-2023-015'),
+    ('PS-1100-FL1-002', 'EdgeSet',   'Active', 0.0022, 'Round', 4, NULL, 1,    0.1400, 0.1400, 'FLS-2023-015'),
+    ('PS-1100-FL1-002', 'FM2_S1',    'Bypass', NULL,   NULL,    5, NULL, NULL, NULL,   NULL,   'FLS-2023-015'),
+    ('PS-1100-FL1-002', 'FM2_S2',    'Bypass', NULL,   NULL,    6, NULL, NULL, NULL,   NULL,   'FLS-2023-015'),
+    ('PS-1100-FL1-002', 'FM2_S3',    'Bypass', NULL,   NULL,    7, NULL, NULL, NULL,   NULL,   'FLS-2023-015');
 
 -- -- 3 . PS-1100-FL1-003 . Standalone . Draft -------------------------------
 -- Thin-gauge development schedule. Two draw passes reach the 0.250"
@@ -384,16 +385,16 @@ VALUES
 INSERT INTO [dbo].[PassScheduleComponent]
     ([PassScheduleId],  [ComponentName], [State],
      [ParameterValue],  [EdgeType], [Sequence],
-     [StandId], [DrawerId], [EdgerId],
+     [StandId], [EdgerId],
      [EntryGauge], [ExitGauge], [SetupNo])
 VALUES
-    ('PS-1100-FL1-003', 'DB1',       'Active', 0.3100, NULL,    1, NULL, 10,   NULL, 0.3750, 0.3100, NULL),
-    ('PS-1100-FL1-003', 'DB2',       'Active', 0.2500, NULL,    2, NULL, 3,    NULL, 0.3100, 0.2500, NULL),
-    ('PS-1100-FL1-003', 'FM1',       'Active', 0.0882, NULL,    3, 1,    NULL, NULL, 0.2500, 0.0900, NULL),
-    ('PS-1100-FL1-003', 'EdgeSet',   'Active', 0.0018, 'Round', 4, NULL, NULL, 1,    0.0900, 0.0900, NULL),
-    ('PS-1100-FL1-003', 'FM2_S1',    'Skip',   NULL,   NULL,    5, NULL, NULL, NULL, NULL,   NULL,   NULL),
-    ('PS-1100-FL1-003', 'FM2_S2',    'Skip',   NULL,   NULL,    6, NULL, NULL, NULL, NULL,   NULL,   NULL),
-    ('PS-1100-FL1-003', 'FM2_S3',    'Skip',   NULL,   NULL,    7, NULL, NULL, NULL, NULL,   NULL,   NULL);
+    ('PS-1100-FL1-003', 'DB1',       'Active', 0.3100, NULL,    1, NULL,   NULL, 0.3750, 0.3100, NULL),
+    ('PS-1100-FL1-003', 'DB2',       'Active', 0.2500, NULL,    2, NULL,    NULL, 0.3100, 0.2500, NULL),
+    ('PS-1100-FL1-003', 'FM1',       'Active', 0.0882, NULL,    3, 1, NULL, 0.2500, 0.0900, NULL),
+    ('PS-1100-FL1-003', 'EdgeSet',   'Active', 0.0018, 'Round', 4, NULL, 1,    0.0900, 0.0900, NULL),
+    ('PS-1100-FL1-003', 'FM2_S1',    'Skip',   NULL,   NULL,    5, NULL, NULL, NULL,   NULL,   NULL),
+    ('PS-1100-FL1-003', 'FM2_S2',    'Skip',   NULL,   NULL,    6, NULL, NULL, NULL,   NULL,   NULL),
+    ('PS-1100-FL1-003', 'FM2_S3',    'Skip',   NULL,   NULL,    7, NULL, NULL, NULL,   NULL,   NULL);
 
 -- -- 4 . PS-3003-FL1-001 . Hybrid . Active ----------------------------------
 -- Two draw passes. FM1 leaves the wire slightly over target at 0.097", and
@@ -401,16 +402,16 @@ VALUES
 INSERT INTO [dbo].[PassScheduleComponent]
     ([PassScheduleId],  [ComponentName], [State],
      [ParameterValue],  [EdgeType], [Sequence],
-     [StandId], [DrawerId], [EdgerId],
+     [StandId], [EdgerId],
      [EntryGauge], [ExitGauge], [SetupNo])
 VALUES
-    ('PS-3003-FL1-001', 'DB1',       'Active', 0.3350, NULL,     1, NULL, 12,   NULL, 0.3750, 0.3350, 'FLS-2024-028'),
-    ('PS-3003-FL1-001', 'DB2',       'Active', 0.3000, NULL,     2, NULL, 9,    NULL, 0.3350, 0.3000, 'FLS-2024-028'),
-    ('PS-3003-FL1-001', 'FM1',       'Active', 0.0950, NULL,     3, 1,    NULL, NULL, 0.3000, 0.0970, 'FLS-2024-028'),
-    ('PS-3003-FL1-001', 'EdgeSet',   'Active', 0.0018, 'Square', 4, NULL, NULL, 2,    0.0970, 0.0970, 'FLS-2024-028'),
-    ('PS-3003-FL1-001', 'FM2_S1',    'Active', 0.0960, NULL,     5, 2,    NULL, NULL, 0.0970, 0.0960, 'FLS-2024-028'),
-    ('PS-3003-FL1-001', 'FM2_S2',    'Active', 0.0955, NULL,     6, 3,    NULL, NULL, 0.0960, 0.0955, 'FLS-2024-028'),
-    ('PS-3003-FL1-001', 'FM2_S3',    'Active', 0.0950, NULL,     7, 4,    NULL, NULL, 0.0955, 0.0950, 'FLS-2024-028');
+    ('PS-3003-FL1-001', 'DB1',       'Active', 0.3350, NULL,     1, NULL,   NULL, 0.3750, 0.3350, 'FLS-2024-028'),
+    ('PS-3003-FL1-001', 'DB2',       'Active', 0.3000, NULL,     2, NULL,    NULL, 0.3350, 0.3000, 'FLS-2024-028'),
+    ('PS-3003-FL1-001', 'FM1',       'Active', 0.0950, NULL,     3, 1, NULL, 0.3000, 0.0970, 'FLS-2024-028'),
+    ('PS-3003-FL1-001', 'EdgeSet',   'Active', 0.0018, 'Square', 4, NULL, 2,    0.0970, 0.0970, 'FLS-2024-028'),
+    ('PS-3003-FL1-001', 'FM2_S1',    'Active', 0.0960, NULL,     5, 2, NULL, 0.0970, 0.0960, 'FLS-2024-028'),
+    ('PS-3003-FL1-001', 'FM2_S2',    'Active', 0.0955, NULL,     6, 3, NULL, 0.0960, 0.0955, 'FLS-2024-028'),
+    ('PS-3003-FL1-001', 'FM2_S3',    'Active', 0.0950, NULL,     7, 4, NULL, 0.0955, 0.0950, 'FLS-2024-028');
 
 -- -- 5 . PS-3003-FL1-002 . Hybrid . Draft -----------------------------------
 -- Experimental wide product. All three FM2 stands planned active. The roll
@@ -418,16 +419,16 @@ VALUES
 INSERT INTO [dbo].[PassScheduleComponent]
     ([PassScheduleId],  [ComponentName], [State],
      [ParameterValue],  [EdgeType], [Sequence],
-     [StandId], [DrawerId], [EdgerId],
+     [StandId], [EdgerId],
      [EntryGauge], [ExitGauge], [SetupNo])
 VALUES
-    ('PS-3003-FL1-002', 'DB1',       'Active', 0.3200, NULL,     1, NULL, 11,   NULL, 0.3750, 0.3200, NULL),
-    ('PS-3003-FL1-002', 'DB2',       'Active', 0.2700, NULL,     2, NULL, 7,    NULL, 0.3200, 0.2700, NULL),
-    ('PS-3003-FL1-002', 'FM1',       'Active', 0.0765, NULL,     3, 1,    NULL, NULL, 0.2700, 0.0780, NULL),
-    ('PS-3003-FL1-002', 'EdgeSet',   'Active', 0.0015, 'Square', 4, NULL, NULL, 2,    0.0780, 0.0780, NULL),
-    ('PS-3003-FL1-002', 'FM2_S1',    'Active', 0.0775, NULL,     5, 2,    NULL, NULL, 0.0780, 0.0775, NULL),
-    ('PS-3003-FL1-002', 'FM2_S2',    'Active', 0.0762, NULL,     6, 3,    NULL, NULL, 0.0775, 0.0762, NULL),
-    ('PS-3003-FL1-002', 'FM2_S3',    'Active', 0.0750, NULL,     7, 4,    NULL, NULL, 0.0762, 0.0750, NULL);
+    ('PS-3003-FL1-002', 'DB1',       'Active', 0.3200, NULL,     1, NULL,   NULL, 0.3750, 0.3200, NULL),
+    ('PS-3003-FL1-002', 'DB2',       'Active', 0.2700, NULL,     2, NULL,    NULL, 0.3200, 0.2700, NULL),
+    ('PS-3003-FL1-002', 'FM1',       'Active', 0.0765, NULL,     3, 1, NULL, 0.2700, 0.0780, NULL),
+    ('PS-3003-FL1-002', 'EdgeSet',   'Active', 0.0015, 'Square', 4, NULL, 2,    0.0780, 0.0780, NULL),
+    ('PS-3003-FL1-002', 'FM2_S1',    'Active', 0.0775, NULL,     5, 2, NULL, 0.0780, 0.0775, NULL),
+    ('PS-3003-FL1-002', 'FM2_S2',    'Active', 0.0762, NULL,     6, 3, NULL, 0.0775, 0.0762, NULL),
+    ('PS-3003-FL1-002', 'FM2_S3',    'Active', 0.0750, NULL,     7, 4, NULL, 0.0762, 0.0750, NULL);
 
 -- -- 6 . PS-1350-FL1-001 . Hybrid . Active ----------------------------------
 -- Welding wire. Both draw passes are held near 20% to stay inside the 1350
@@ -436,16 +437,16 @@ VALUES
 INSERT INTO [dbo].[PassScheduleComponent]
     ([PassScheduleId],  [ComponentName], [State],
      [ParameterValue],  [EdgeType], [Sequence],
-     [StandId], [DrawerId], [EdgerId],
+     [StandId], [EdgerId],
      [EntryGauge], [ExitGauge], [SetupNo])
 VALUES
-    ('PS-1350-FL1-001', 'DB1',       'Active', 0.3350, NULL,    1, NULL, 12,   NULL, 0.3750, 0.3350, 'FLS-2024-041'),
-    ('PS-1350-FL1-001', 'DB2',       'Active', 0.3000, NULL,    2, NULL, 9,    NULL, 0.3350, 0.3000, 'FLS-2024-041'),
-    ('PS-1350-FL1-001', 'FM1',       'Active', 0.0990, NULL,    3, 1,    NULL, NULL, 0.3000, 0.1020, 'FLS-2024-041'),
-    ('PS-1350-FL1-001', 'EdgeSet',   'Active', 0.0020, 'Round', 4, NULL, NULL, 1,    0.1020, 0.1020, 'FLS-2024-041'),
-    ('PS-1350-FL1-001', 'FM2_S1',    'Active', 0.1010, NULL,    5, 2,    NULL, NULL, 0.1020, 0.1010, 'FLS-2024-041'),
-    ('PS-1350-FL1-001', 'FM2_S2',    'Active', 0.1005, NULL,    6, 3,    NULL, NULL, 0.1010, 0.1005, 'FLS-2024-041'),
-    ('PS-1350-FL1-001', 'FM2_S3',    'Active', 0.1000, NULL,    7, 4,    NULL, NULL, 0.1005, 0.1000, 'FLS-2024-041');
+    ('PS-1350-FL1-001', 'DB1',       'Active', 0.3350, NULL,    1, NULL,   NULL, 0.3750, 0.3350, 'FLS-2024-041'),
+    ('PS-1350-FL1-001', 'DB2',       'Active', 0.3000, NULL,    2, NULL,    NULL, 0.3350, 0.3000, 'FLS-2024-041'),
+    ('PS-1350-FL1-001', 'FM1',       'Active', 0.0990, NULL,    3, 1, NULL, 0.3000, 0.1020, 'FLS-2024-041'),
+    ('PS-1350-FL1-001', 'EdgeSet',   'Active', 0.0020, 'Round', 4, NULL, 1,    0.1020, 0.1020, 'FLS-2024-041'),
+    ('PS-1350-FL1-001', 'FM2_S1',    'Active', 0.1010, NULL,    5, 2, NULL, 0.1020, 0.1010, 'FLS-2024-041'),
+    ('PS-1350-FL1-001', 'FM2_S2',    'Active', 0.1005, NULL,    6, 3, NULL, 0.1010, 0.1005, 'FLS-2024-041'),
+    ('PS-1350-FL1-001', 'FM2_S3',    'Active', 0.1000, NULL,    7, 4, NULL, 0.1005, 0.1000, 'FLS-2024-041');
 
 -- -- 7 . PS-5052-FL1-001 . Standalone . Active ------------------------------
 -- Strain-hardened 5052 in a single draw pass, 0.375" -> 0.340", a 17.8% area
@@ -454,16 +455,16 @@ VALUES
 INSERT INTO [dbo].[PassScheduleComponent]
     ([PassScheduleId],  [ComponentName], [State],
      [ParameterValue],  [EdgeType], [Sequence],
-     [StandId], [DrawerId], [EdgerId],
+     [StandId], [EdgerId],
      [EntryGauge], [ExitGauge], [SetupNo])
 VALUES
-    ('PS-5052-FL1-001', 'DB1',       'Active', 0.3400, NULL,    1, NULL, 13,   NULL, 0.3750, 0.3400, 'FLS-2024-055'),
-    ('PS-5052-FL1-001', 'DB2',       'Skip',   NULL,   NULL,    2, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-055'),
-    ('PS-5052-FL1-001', 'FM1',       'Active', 0.1552, NULL,    3, 1,    NULL, NULL, 0.3400, 0.1600, 'FLS-2024-055'),
-    ('PS-5052-FL1-001', 'EdgeSet',   'Active', 0.0025, 'Round', 4, NULL, NULL, 1,    0.1600, 0.1600, 'FLS-2024-055'),
-    ('PS-5052-FL1-001', 'FM2_S1',    'Skip',   NULL,   NULL,    5, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-055'),
-    ('PS-5052-FL1-001', 'FM2_S2',    'Skip',   NULL,   NULL,    6, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-055'),
-    ('PS-5052-FL1-001', 'FM2_S3',    'Skip',   NULL,   NULL,    7, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-055');
+    ('PS-5052-FL1-001', 'DB1',       'Active', 0.3400, NULL,    1, NULL,   NULL, 0.3750, 0.3400, 'FLS-2024-055'),
+    ('PS-5052-FL1-001', 'DB2',       'Skip',   NULL,   NULL,    2, NULL, NULL, NULL,   NULL,   'FLS-2024-055'),
+    ('PS-5052-FL1-001', 'FM1',       'Active', 0.1552, NULL,    3, 1, NULL, 0.3400, 0.1600, 'FLS-2024-055'),
+    ('PS-5052-FL1-001', 'EdgeSet',   'Active', 0.0025, 'Round', 4, NULL, 1,    0.1600, 0.1600, 'FLS-2024-055'),
+    ('PS-5052-FL1-001', 'FM2_S1',    'Skip',   NULL,   NULL,    5, NULL, NULL, NULL,   NULL,   'FLS-2024-055'),
+    ('PS-5052-FL1-001', 'FM2_S2',    'Skip',   NULL,   NULL,    6, NULL, NULL, NULL,   NULL,   'FLS-2024-055'),
+    ('PS-5052-FL1-001', 'FM2_S3',    'Skip',   NULL,   NULL,    7, NULL, NULL, NULL,   NULL,   'FLS-2024-055');
 
 -- -- 8 . PS-1100-FL2-001 . Hybrid . Inactive --------------------------------
 -- FL2 fed continuously from FL1 with pre-drawn round wire at about 0.260", so
@@ -472,16 +473,16 @@ VALUES
 INSERT INTO [dbo].[PassScheduleComponent]
     ([PassScheduleId],  [ComponentName], [State],
      [ParameterValue],  [EdgeType], [Sequence],
-     [StandId], [DrawerId], [EdgerId],
+     [StandId], [EdgerId],
      [EntryGauge], [ExitGauge], [SetupNo])
 VALUES
-    ('PS-1100-FL2-001', 'DB1',       'Bypass', NULL,   NULL,     1, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-062'),
-    ('PS-1100-FL2-001', 'DB2',       'Bypass', NULL,   NULL,     2, NULL, NULL, NULL, NULL,   NULL,   'FLS-2024-062'),
-    ('PS-1100-FL2-001', 'FM1',       'Active', 0.0900, NULL,     3, 1,    NULL, NULL, 0.2600, 0.0920, 'FLS-2024-062'),
-    ('PS-1100-FL2-001', 'EdgeSet',   'Active', 0.0018, 'Square', 4, NULL, NULL, 2,    0.0920, 0.0920, 'FLS-2024-062'),
-    ('PS-1100-FL2-001', 'FM2_S1',    'Active', 0.0912, NULL,     5, 2,    NULL, NULL, 0.0920, 0.0912, 'FLS-2024-062'),
-    ('PS-1100-FL2-001', 'FM2_S2',    'Active', 0.0905, NULL,     6, 3,    NULL, NULL, 0.0912, 0.0905, 'FLS-2024-062'),
-    ('PS-1100-FL2-001', 'FM2_S3',    'Active', 0.0900, NULL,     7, 4,    NULL, NULL, 0.0905, 0.0900, 'FLS-2024-062');
+    ('PS-1100-FL2-001', 'DB1',       'Bypass', NULL,   NULL,     1, NULL, NULL, NULL,   NULL,   'FLS-2024-062'),
+    ('PS-1100-FL2-001', 'DB2',       'Bypass', NULL,   NULL,     2, NULL, NULL, NULL,   NULL,   'FLS-2024-062'),
+    ('PS-1100-FL2-001', 'FM1',       'Active', 0.0900, NULL,     3, 1, NULL, 0.2600, 0.0920, 'FLS-2024-062'),
+    ('PS-1100-FL2-001', 'EdgeSet',   'Active', 0.0018, 'Square', 4, NULL, 2,    0.0920, 0.0920, 'FLS-2024-062'),
+    ('PS-1100-FL2-001', 'FM2_S1',    'Active', 0.0912, NULL,     5, 2, NULL, 0.0920, 0.0912, 'FLS-2024-062'),
+    ('PS-1100-FL2-001', 'FM2_S2',    'Active', 0.0905, NULL,     6, 3, NULL, 0.0912, 0.0905, 'FLS-2024-062'),
+    ('PS-1100-FL2-001', 'FM2_S3',    'Active', 0.0900, NULL,     7, 4, NULL, 0.0905, 0.0900, 'FLS-2024-062');
 
 -- -- 9 . PS-6061-FL1-001 . Hybrid . Draft -----------------------------------
 -- Solution-treated 6061 carries the tightest per-pass limit of the five
@@ -491,16 +492,16 @@ VALUES
 INSERT INTO [dbo].[PassScheduleComponent]
     ([PassScheduleId],  [ComponentName], [State],
      [ParameterValue],  [EdgeType], [Sequence],
-     [StandId], [DrawerId], [EdgerId],
+     [StandId], [EdgerId],
      [EntryGauge], [ExitGauge], [SetupNo])
 VALUES
-    ('PS-6061-FL1-001', 'DB1',       'Active', 0.3400, NULL,    1, NULL, 13,   NULL, 0.3750, 0.3400, NULL),
-    ('PS-6061-FL1-001', 'DB2',       'Active', 0.3100, NULL,    2, NULL, 10,   NULL, 0.3400, 0.3100, NULL),
-    ('PS-6061-FL1-001', 'FM1',       'Active', 0.1248, NULL,    3, 1,    NULL, NULL, 0.3100, 0.1320, NULL),
-    ('PS-6061-FL1-001', 'EdgeSet',   'Active', 0.0022, 'Round', 4, NULL, NULL, 1,    0.1320, 0.1320, NULL),
-    ('PS-6061-FL1-001', 'FM2_S1',    'Active', 0.1315, NULL,    5, 2,    NULL, NULL, 0.1320, 0.1315, NULL),
-    ('PS-6061-FL1-001', 'FM2_S2',    'Active', 0.1308, NULL,    6, 3,    NULL, NULL, 0.1315, 0.1308, NULL),
-    ('PS-6061-FL1-001', 'FM2_S3',    'Active', 0.1300, NULL,    7, 4,    NULL, NULL, 0.1308, 0.1300, NULL);
+    ('PS-6061-FL1-001', 'DB1',       'Active', 0.3400, NULL,    1, NULL,   NULL, 0.3750, 0.3400, NULL),
+    ('PS-6061-FL1-001', 'DB2',       'Active', 0.3100, NULL,    2, NULL,   NULL, 0.3400, 0.3100, NULL),
+    ('PS-6061-FL1-001', 'FM1',       'Active', 0.1248, NULL,    3, 1, NULL, 0.3100, 0.1320, NULL),
+    ('PS-6061-FL1-001', 'EdgeSet',   'Active', 0.0022, 'Round', 4, NULL, 1,    0.1320, 0.1320, NULL),
+    ('PS-6061-FL1-001', 'FM2_S1',    'Active', 0.1315, NULL,    5, 2, NULL, 0.1320, 0.1315, NULL),
+    ('PS-6061-FL1-001', 'FM2_S2',    'Active', 0.1308, NULL,    6, 3, NULL, 0.1315, 0.1308, NULL),
+    ('PS-6061-FL1-001', 'FM2_S3',    'Active', 0.1300, NULL,    7, 4, NULL, 0.1308, 0.1300, NULL);
 
 -- -- 10 . PS-1100-FL3-001 . Hybrid . Active ---------------------------------
 -- The widest product in the set, 0.085" x 0.800" on FL3. Aspect ratio 9.41
@@ -509,16 +510,16 @@ VALUES
 INSERT INTO [dbo].[PassScheduleComponent]
     ([PassScheduleId],  [ComponentName], [State],
      [ParameterValue],  [EdgeType], [Sequence],
-     [StandId], [DrawerId], [EdgerId],
+     [StandId], [EdgerId],
      [EntryGauge], [ExitGauge], [SetupNo])
 VALUES
-    ('PS-1100-FL3-001', 'DB1',       'Active', 0.3300, NULL,     1, NULL, 6,    NULL, 0.3750, 0.3300, 'FLS-2024-075'),
-    ('PS-1100-FL3-001', 'DB2',       'Active', 0.2700, NULL,     2, NULL, 7,    NULL, 0.3300, 0.2700, 'FLS-2024-075'),
-    ('PS-1100-FL3-001', 'FM1',       'Active', 0.0855, NULL,     3, 1,    NULL, NULL, 0.2700, 0.0870, 'FLS-2024-075'),
-    ('PS-1100-FL3-001', 'EdgeSet',   'Active', 0.0017, 'Square', 4, NULL, NULL, 2,    0.0870, 0.0870, 'FLS-2024-075'),
-    ('PS-1100-FL3-001', 'FM2_S1',    'Active', 0.0862, NULL,     5, 2,    NULL, NULL, 0.0870, 0.0862, 'FLS-2024-075'),
-    ('PS-1100-FL3-001', 'FM2_S2',    'Active', 0.0856, NULL,     6, 3,    NULL, NULL, 0.0862, 0.0856, 'FLS-2024-075'),
-    ('PS-1100-FL3-001', 'FM2_S3',    'Active', 0.0850, NULL,     7, 4,    NULL, NULL, 0.0856, 0.0850, 'FLS-2024-075');
+    ('PS-1100-FL3-001', 'DB1',       'Active', 0.3300, NULL,     1, NULL,    NULL, 0.3750, 0.3300, 'FLS-2024-075'),
+    ('PS-1100-FL3-001', 'DB2',       'Active', 0.2700, NULL,     2, NULL,    NULL, 0.3300, 0.2700, 'FLS-2024-075'),
+    ('PS-1100-FL3-001', 'FM1',       'Active', 0.0855, NULL,     3, 1, NULL, 0.2700, 0.0870, 'FLS-2024-075'),
+    ('PS-1100-FL3-001', 'EdgeSet',   'Active', 0.0017, 'Square', 4, NULL, 2,    0.0870, 0.0870, 'FLS-2024-075'),
+    ('PS-1100-FL3-001', 'FM2_S1',    'Active', 0.0862, NULL,     5, 2, NULL, 0.0870, 0.0862, 'FLS-2024-075'),
+    ('PS-1100-FL3-001', 'FM2_S2',    'Active', 0.0856, NULL,     6, 3, NULL, 0.0862, 0.0856, 'FLS-2024-075'),
+    ('PS-1100-FL3-001', 'FM2_S3',    'Active', 0.0850, NULL,     7, 4, NULL, 0.0856, 0.0850, 'FLS-2024-075');
 
 -- -- 11 . PS-1100-FL2-002 . Standalone . Active -----------------------------
 -- The FL2 leg of the acceptance trial. Its input is the FL1 spool - 0.110" x
@@ -542,16 +543,16 @@ VALUES
 INSERT INTO [dbo].[PassScheduleComponent]
     ([PassScheduleId],  [ComponentName], [State],
      [ParameterValue],  [EdgeType], [Sequence],
-     [StandId], [DrawerId], [EdgerId],
+     [StandId], [EdgerId],
      [EntryGauge], [ExitGauge], [SetupNo])
 VALUES
-    ('PS-1100-FL2-002', 'DB1',       'Bypass', NULL,   NULL,    1, NULL, NULL, NULL, NULL,   NULL,   'FLS-2026-101'),
-    ('PS-1100-FL2-002', 'DB2',       'Bypass', NULL,   NULL,    2, NULL, NULL, NULL, NULL,   NULL,   'FLS-2026-101'),
-    ('PS-1100-FL2-002', 'FM1',       'Active', 0.1100, NULL,    3, 1,    NULL, NULL, 0.1100, 0.1100, 'FLS-2026-101'),
-    ('PS-1100-FL2-002', 'EdgeSet',   'Active', 0.0020, 'Round', 4, NULL, NULL, 1,    0.1100, 0.1100, 'FLS-2026-101'),
-    ('PS-1100-FL2-002', 'FM2_S1',    'Active', 0.1060, NULL,    5, 2,    NULL, NULL, 0.1100, 0.1060, 'FLS-2026-101'),
-    ('PS-1100-FL2-002', 'FM2_S2',    'Active', 0.1030, NULL,    6, 3,    NULL, NULL, 0.1060, 0.1030, 'FLS-2026-101'),
-    ('PS-1100-FL2-002', 'FM2_S3',    'Active', 0.1000, NULL,    7, 4,    NULL, NULL, 0.1030, 0.1000, 'FLS-2026-101');
+    ('PS-1100-FL2-002', 'DB1',       'Bypass', NULL,   NULL,    1, NULL, NULL, NULL,   NULL,   'FLS-2026-101'),
+    ('PS-1100-FL2-002', 'DB2',       'Bypass', NULL,   NULL,    2, NULL, NULL, NULL,   NULL,   'FLS-2026-101'),
+    ('PS-1100-FL2-002', 'FM1',       'Active', 0.1100, NULL,    3, 1, NULL, 0.1100, 0.1100, 'FLS-2026-101'),
+    ('PS-1100-FL2-002', 'EdgeSet',   'Active', 0.0020, 'Round', 4, NULL, 1,    0.1100, 0.1100, 'FLS-2026-101'),
+    ('PS-1100-FL2-002', 'FM2_S1',    'Active', 0.1060, NULL,    5, 2, NULL, 0.1100, 0.1060, 'FLS-2026-101'),
+    ('PS-1100-FL2-002', 'FM2_S2',    'Active', 0.1030, NULL,    6, 3, NULL, 0.1060, 0.1030, 'FLS-2026-101'),
+    ('PS-1100-FL2-002', 'FM2_S3',    'Active', 0.1000, NULL,    7, 4, NULL, 0.1030, 0.1000, 'FLS-2026-101');
 
     PRINT 'Seeded: PassScheduleComponent (77 rows, 7 per schedule)';
 END
@@ -641,11 +642,27 @@ GO
 --    evidence so far FM1 and the final FM2 stand (S3) should both be locked.
 --    Please confirm the full list, per line.
 --
--- 5. THE EDGE SETTING ON FL1 SCHEDULES
+-- 5. THE EDGE SETTING ON FL1 SCHEDULES               [ANSWERED 31 Aug 2026]
 --    Every FL1 fixture here carries an Active EdgeSet row, although FL1 has no
---    edger. See OPEN POINT 4 in FlatWire_DDL_02_Schedule.sql: we need to know
---    how the edge condition of an FL1 product should be recorded before these
---    rows can be corrected.
+--    edger.
+--
+--    THE QUESTION IS NOW ANSWERED, AND THESE ROWS ARE WRONG. The client's
+--    31 Aug 2026 mail shows the FL1 schedule as three rows - D1 (DRAW),
+--    D2 (DRAW), FL1-S1 (FLAT) - with no edger row at all. There is no edge
+--    condition to record on an FL1 product, so the fixtures should carry no
+--    EdgeSet row rather than a differently-recorded one.
+--
+--    EIGHT FIXTURES ARE AFFECTED: the EdgeSet row on each of PS-1100-FL1-001,
+--    -002, -003, PS-3003-FL1-001, -002, PS-1350-FL1-001, PS-5052-FL1-001 and
+--    PS-6061-FL1-001. The FL2 and FL3 fixtures are unaffected - both lines do
+--    carry edgers.
+--
+--    DELIBERATELY NOT CORRECTED IN THIS PASS. Removing eight seed rows moves
+--    the seed-row figure that [DBD 6.2] publishes and [DEP 4.2]'s V1-V5 gate
+--    checks, and that figure is COUNTED FROM A DEPLOY, never computed. The
+--    same deploy has to carry the OPEN POINT 4(b) change - two edger position
+--    values in CK_PSC_ComponentName - which rewrites the FL2 and FL3 fixtures
+--    anyway. Do both together and recount once.
 --
 -- 6. WHO POPULATES THESE TABLES IN PRODUCTION
 --    This script covers development and the acceptance trial only. Nothing in

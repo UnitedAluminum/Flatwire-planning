@@ -1,9 +1,17 @@
 -- ============================================================
 -- Flat Wire Mill — DDL Script 06: Foreign Key Constraints
 -- Run order : 06 of 09  (run AFTER all 01–05 scripts)
--- Creates   : ALL 55 foreign keys. There is no second FK script.
---             55, not 57, since 23 Aug 2026: the SpoolConfiguration merge
---             (Q60) dropped FK_SpoolProcessing_SpoolConfiguration and
+-- Creates   : ALL 62 foreign keys. There is no second FK script.
+--             62, not 58, since 2 Sep 2026 (later the same day): the client's
+--             reason-code lists added FK_RunPauseEvent_DelayCode,
+--             FK_LineDowntimeEvent_DelayCode, FK_LineDowntimeEvent_Run and
+--             FK_WipRejection_Reason.  (+4)
+--             It was 58, not 55, since 2 Sep 2026: the die split dropped
+--             FK_PSC_Drawer with PassScheduleComponent.DrawerId and added
+--             FK_DieChangeEvent_OldDie, FK_DieChangeEvent_NewDie,
+--             FK_DieHistory_Die and FK_DieHistory_Run.  (-1 +4)
+--             It was 55, not 57, from 23 Aug 2026: the SpoolConfiguration
+--             merge (Q60) dropped FK_SpoolProcessing_SpoolConfiguration and
 --             FK_Spool_SpoolConfiguration with their SpoolTypeId columns.
 -- ============================================================
 -- All FK constraints are added here in a single script so
@@ -65,8 +73,10 @@ WHERE fk.name LIKE 'FK_FlatWire%'
        'FlatWireRun','SpoolProcessing','SpoolTraceability','SpoolOrder','RodOrderAllocation',
        -- Runs
        'FlatWireRunDetail','RodStaging','RodCheckin','SpoolCheckin','SpoolStaging',
-       'RunPauseEvent','WeldEvent','RollOverride','DieChangeEvent','RunReading',
+       'RunPauseEvent','WeldEvent','RollOverride','DieChangeEvent','DieHistory','RunReading',
        'RodOrderConsumption',
+       -- ToolingInventoryDie is deliberately ABSENT: it is a pure parent, with no
+       -- FK column of its own, and this roster lists CHILD tables only.
        -- Quality / Output  (CoilOutput and CoilTraceability are MVP-1;
        -- Phase 9 returned whole on 11 Aug 2026)
        'SpcCheckpoint','SpcMeasurement','WipRejection',
@@ -506,11 +516,11 @@ IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_PSC_Stand')
         FOREIGN KEY ([StandId]) REFERENCES [dbo].[Stand] ([Id]);
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_PSC_Drawer')
-    ALTER TABLE [dbo].[PassScheduleComponent]
-        ADD CONSTRAINT [FK_PSC_Drawer]
-        FOREIGN KEY ([DrawerId]) REFERENCES [dbo].[Drawer] ([Id]);
-GO
+-- FK_PSC_Drawer was REMOVED on Sep-2-2026 with the die split. It constrained
+-- PassScheduleComponent.DrawerId, which is dropped: it pointed at what was then a
+-- 13-row die-SIZE catalogue, and the size is already in ParameterValue. Drawer now
+-- holds the two draw BOXES, which ComponentName already names. See 02_Schedule
+-- section 3 and the "Tool reference" block.
 
 IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_PSC_Edger')
     ALTER TABLE [dbo].[PassScheduleComponent]
@@ -543,4 +553,85 @@ IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_CoilOutput_PassSc
     ALTER TABLE [dbo].[CoilOutput]
         ADD CONSTRAINT [FK_CoilOutput_PassSchedule]
         FOREIGN KEY ([PassScheduleId]) REFERENCES [dbo].[PassSchedule] ([ScheduleId]);
+GO
+
+-- ------------------------------------------------------------
+-- The die domain (Sep-2-2026 die split)
+--
+-- DieChangeEvent's two FKs are what make FR-255 implementable -- per-tool
+-- footage attribution. Both are NULLABLE by design: a die change logged
+-- before its tool was registered has nothing to point at, and refusing the
+-- event would lose the run record.
+--
+-- DieHistory.RunId is NULLABLE because Reset and Retire are die-room actions
+-- with no run (FR-248, FR-250). CK_DieHistory_RunFootageHasRun in 04_Runs is
+-- what stops a RunFootage row exploiting that nullability.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_DieChangeEvent_OldDie')
+    ALTER TABLE [dbo].[DieChangeEvent]
+        ADD CONSTRAINT [FK_DieChangeEvent_OldDie]
+        FOREIGN KEY ([OldDieId]) REFERENCES [dbo].[ToolingInventoryDie] ([Id]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_DieChangeEvent_NewDie')
+    ALTER TABLE [dbo].[DieChangeEvent]
+        ADD CONSTRAINT [FK_DieChangeEvent_NewDie]
+        FOREIGN KEY ([NewDieId]) REFERENCES [dbo].[ToolingInventoryDie] ([Id]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_DieHistory_Die')
+    ALTER TABLE [dbo].[DieHistory]
+        ADD CONSTRAINT [FK_DieHistory_Die]
+        FOREIGN KEY ([DieId]) REFERENCES [dbo].[ToolingInventoryDie] ([Id]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_DieHistory_Run')
+    ALTER TABLE [dbo].[DieHistory]
+        ADD CONSTRAINT [FK_DieHistory_Run]
+        FOREIGN KEY ([RunId]) REFERENCES [dbo].[FlatWireRun] ([RunId]);
+GO
+
+
+-- ------------------------------------------------------------
+-- Reason-code vocabularies (added 2 Sep 2026)
+--
+-- Until now the pause and rejection vocabularies were enforced NOWHERE in the
+-- database -- RunPauseEvent.ReasonCode and WipRejection.RejectionReason were
+-- bare VARCHARs with no CHECK, and the only statement of the allowed values
+-- lived in a mockup and two markdown documents. The client's 1 Sep 2026
+-- "Reason Codes.xlsx" supplies real lists, so they become referential.
+--
+-- TWO OF THE THREE ARE COMPOSITE ON PURPOSE. Both event tables denormalise a
+-- second column beside the code -- the bucket on RunPauseEvent, the group on
+-- WipRejection -- and a single-column FK would leave those copies free to
+-- disagree with the lookup. The composite targets (UQ_DowntimeReason_CodeBucket,
+-- UQ_WipRejectionReason_CodeGroup) exist for exactly this.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_RunPauseEvent_DelayCode')
+    ALTER TABLE [dbo].[RunPauseEvent]
+        ADD CONSTRAINT [FK_RunPauseEvent_DelayCode]
+        FOREIGN KEY ([ReasonCode], [ReasonCategory])
+        REFERENCES [dbo].[DowntimeReason] ([DelayCode], [DelayBucket]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_LineDowntimeEvent_DelayCode')
+    ALTER TABLE [dbo].[LineDowntimeEvent]
+        ADD CONSTRAINT [FK_LineDowntimeEvent_DelayCode]
+        FOREIGN KEY ([DelayCode]) REFERENCES [dbo].[DowntimeReason] ([DelayCode]);
+GO
+
+-- Nullable: a line goes down whether or not a run was open. That nullability
+-- is the whole reason LineDowntimeEvent exists rather than the Downtime bucket
+-- being folded into RunPauseEvent -- see the table header in 04_Runs.
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_LineDowntimeEvent_Run')
+    ALTER TABLE [dbo].[LineDowntimeEvent]
+        ADD CONSTRAINT [FK_LineDowntimeEvent_Run]
+        FOREIGN KEY ([RunId]) REFERENCES [dbo].[FlatWireRun] ([RunId]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_WipRejection_Reason')
+    ALTER TABLE [dbo].[WipRejection]
+        ADD CONSTRAINT [FK_WipRejection_Reason]
+        FOREIGN KEY ([RejectionReason], [RejectionGroup])
+        REFERENCES [dbo].[WipRejectionReason] ([ReasonCode], [RejectionGroup]);
 GO

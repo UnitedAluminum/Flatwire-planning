@@ -27,11 +27,17 @@
 > physical die** — and it is an application-level validation, because `DieChangeEvent` stores
 > `OldDieSizeIn`/`NewDieSizeIn` as decimals with **no `DrawerId` FK**.
 >
-> **Accepted consequence, so it is not raised later as a bug: die life is per size.** Two dies of the same
-> diameter share one counter, and fitting a fresh die resets nothing. Authority:
-> [`DieChangeAndManagement.md`](../../10-requirements/screens/DieChangeAndManagement.md) **§2.4a** (v2.4).
-> This also removes the old *"Phase 6 depends on Phase 13"* sequencing risk (`REVIEW.md` #34, `OI-41`) —
-> `Drawer` is a Phase-1 seed, so nothing in this phase waits on Phase 13.
+> ~~**Accepted consequence: die life is per size.** Two dies of the same diameter share one counter, and
+> fitting a fresh die resets nothing.~~ ⛔ **RETIRED 2 Sep 2026 by the die split (`Q91`).** Die life is now
+> tracked **per physical tool** in `ToolingInventoryDie`, so fitting a fresh die resets a counter the system
+> can distinguish. `FR-233` / `D4` revert to their per-tool form: this phase rejects a die that is **not
+> registered**, not merely an unrecognised size. `DieChangeEvent` gained `OldDieId` / `NewDieId`, and
+> `DieHistory` records the per-run footage `FR-255` accrues. Authority:
+> [`DieChangeAndManagement.md`](../../10-requirements/screens/DieChangeAndManagement.md) **§2.4a** (revised).
+> The old *"Phase 6 depends on Phase 13"* sequencing risk (`REVIEW.md` #34, `OI-41`) stays removed, and for a
+> stronger reason: **`ToolingInventoryDie` and `DieHistory` are Phase-1 objects**, so this phase depends on
+> Phase 1. **`OI-41` closes.** ⚠ **`OI-12` is now live** — this phase’s 60/85 % bands and Die
+> Management’s 65/80 % bands derive from one table.
 
 ## Business Overview
 - **Objective:** log weld joins (traceability), die changes (→ auto SPC), SPC checkpoints (quality gate), roll-gap overrides (correct drift without editing the schedule), and pause/resume (categorised downtime).

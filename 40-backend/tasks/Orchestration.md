@@ -195,6 +195,31 @@ in [TrialOrchestration.md](TrialOrchestration.md).
 > ⚠ **All nine are additive to `[CE §3b]`** — the treatment `FW-202`/`203`/`204`/`218`/`219`
 > already have. **They offset nothing and are in no published total.**
 
+**Table C2 — minted 2 Sep 2026, the 1–2 September scope** (`[TB §7]` Appendix `B.7`).
+
+| Story | Subject | Stream · Phase | h | Closes |
+|---|---|---|---|---|
+| **[`FW-252`](FW-252.md)** | Die lifecycle service — per-tool die life, `DieHistory` writes, per-tool `POST /diechange` validation | BE · 6 | 16 | ⭐ **The die split (`Q91`).** `OI-41` closed after five months; `FR-233`/`D4` revert to per-tool, and **`TC-274` is executable for the first time**. ⛔ Blocked on `OI-12` |
+| **[`FW-254`](FW-254.md)** | Reason-code query endpoints — the three seeded vocabularies | BE · 1C | 9 | ⭐ **`A4`/`A5`/`A6` closed after 41 days**; wave `W3` unblocked. ⚠ **`[API]` declares none of the three routes** — this story amends the spec as well as building it, and four cards read it |
+| **[`FW-255`](FW-255.md)** | `LineDowntimeEvent` write path — `LineDowntimeService` and the two endpoints | BE · 6 | 22 | ⛔ **44 client downtime codes had nowhere to be recorded.** `RunPauseEvent.RunId` is `NOT NULL` and *Power Outage* happens when no run is open (`D-35`) |
+| **[`FW-257`](FW-257.md)** | Re-point the built `ITInhibitService` at `ItInhibitReason` | BE · 4 | 8 | ⛔ **`FW-205` is `done` against a vocabulary that changed.** The client's eight reasons share **exactly one** of `[PLC §8.2]`'s five (`G80`), and one of the eight is not implementable at all (`G81`) |
+
+> ⛔ **`FW-257` is the row worth reading twice: it amends a story marked `done`.** Nothing in the
+> board flags a completed card whose specification moved underneath it, which is how a service
+> built to five hard-coded conditions keeps looking finished beside a 12-row lookup.
+>
+> ⛔ **`FW-170`'s and `FW-167`'s plans were both wrong on 2 Sep 2026 and are now corrected in
+> place** — `FW-170`'s header asserted `CK_RunPauseEvent_NotesOther` keys on `ReasonCategory`
+> (it keys on **`ReasonCode`**, and `Other` is a code per bucket), and `FW-167`'s callout told the
+> reader to validate against `Drawer`'s 13-row size catalogue, **which no longer exists**.
+> `FW-174` gained the 72-reason vocabulary and `G79`/`G82`.
+>
+> ⚠ **Additive to `[CE §3b]` like Table C — ⛔ but part of this set is scope RETURNING to MVP-1**,
+> so unlike Table C a published total genuinely moves. [`FW-258`](../../60-delivery/tasks/FW-258.md)
+> owns that, and the FE half is [`FW-253`](../../50-frontend/tasks/FW-253.md) and
+> [`FW-256`](../../50-frontend/tasks/FW-256.md), the DB half
+> [`FW-251`](../../30-database/tasks/FW-251.md).
+
 **Table D — registered, and deliberately given no id.**
 
 | Item | Why no story |

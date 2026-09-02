@@ -320,7 +320,11 @@ LEAKS = [
     # The nine tables added 20-23 Aug 2026 are included below. The retired SpoolCarrier and
     # SpoolConfiguration are KEPT deliberately, on the same reasoning as the retired folder
     # names above: a stale citation should trip the guard, not slip through.
-    # DELIBERATELY NOT LISTED: the bare words Spool, Stand, Drawer, Edger and Dancer. They are
+    # The die split (2 Sep 2026) added ToolingInventoryDie and DieHistory; both are compounds
+    # and so safe to guard. Drawer stays unguarded for the reason below, and DIE IS WORSE THAN
+    # DRAWER -- "die"/"dies" appears in ordinary client prose about tooling constantly, so it
+    # must never be added here.
+    # DELIBERATELY NOT LISTED: the bare words Spool, Stand, Drawer, Die, Edger and Dancer. They are
     # what operators call the physical articles, so they are ordinary client prose and would
     # false-positive on every sentence mentioning a spool. Only the compound names are
     # unambiguous -- which is why [DBD 6.2a] renamed the material record SpoolProcessing
@@ -330,6 +334,7 @@ LEAKS = [
      r'|RunReading|WeldEvent|RollOverride|DieChangeEvent|RunPauseEvent|PayoffPosition'
      r'|FlatWireRunDetail|SpoolProcessing|SpoolStaging|SpoolOrder|SpoolTraceability'
      r'|SpoolConfiguration|SpoolCarrier|RodOrderAllocation|RodOrderConsumption'
+     r'|ToolingInventoryDie|DieHistory'
      r'|FlatwireQueue|planning_routings|wip_coil_orders|FlatWireDB|united_db|CommonDB)',
      'table or column name'),
 ]

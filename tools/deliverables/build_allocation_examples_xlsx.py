@@ -70,8 +70,11 @@ OUR_TEAM = ['Srikanth', 'Yogender', 'Ritika', 'Ashwani', 'Shray', 'Waseem', 'Vic
             'Sushant', 'Nagarro']
 
 # Guard 5. Kept in step with build_questions_xlsx.py's LEAKS list; see the note there about why
-# the bare words Spool, Stand, Drawer, Edger and Dancer are deliberately absent - they are what
-# operators call the physical articles and would false-positive on ordinary client prose.
+# the bare words Spool, Stand, Drawer, Die, Edger and Dancer are deliberately absent - they are
+# what operators call the physical articles and would false-positive on ordinary client prose.
+# The die split (2 Sep 2026) added ToolingInventoryDie and DieHistory; both are compounds and so
+# safe to guard. DIE IS WORSE THAN DRAWER - "die"/"dies" is constant in client prose about
+# tooling - so it must never be added.
 LEAKS = [
     (r'\.(?:md|html|sql|docx|xlsx|py|js|scss|css)\b', 'file name'),
     (r'\b(?:00-overview|10-requirements|20-architecture|30-database|40-backend|50-frontend|60-delivery|70-testing|80-operations|90-registers|95-archive|'
@@ -97,6 +100,7 @@ LEAKS = [
      r'|SpoolTraceability|SpoolConfiguration|SpoolCarrier|CoilTraceability|CoilOutput'
      r'|FlatWireRun|FlatWireRunDetail|RodStaging|RodCheckin|RodCheckout|SpoolCheckin'
      r'|PassSchedule|AlloyProperty|PayoffPosition|FlatWireDB|united_db|CommonDB'
+     r'|ToolingInventoryDie|DieHistory'
      r'|planning_routings|wip_coil_orders)\b', 'table or column name'),
     (r'\bPinRole|PinnedFirst|PinnedLast|PinnedBoth\b', 'column value'),
 ]

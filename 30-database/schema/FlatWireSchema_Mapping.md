@@ -59,13 +59,13 @@ ORDER BY ChildTable, ConstraintName;
 |---|---|---|---|
 | `FlatLineProcessing` | `FlatWireRunDetail` | Renamed; run-level columns removed; `RunId` FK added | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 | `FlatLineSetup` | `PassScheduleComponent` | Renamed; restructured; `RollGap` → `ParameterValue`; `ComponentName` / `State` / `EdgeType` added | [FlatWireSchema_Schedule.md](./FlatWireSchema_Schedule.md) |
-| `Drawer` | `Drawer` | `Diameter` → `DiameterIn`; `MinDiameterIn` / `MaxDiameterIn` / `IsActive` added; **`LastGrindingFeet` / `TotalFeetAllowed` added (Aug 6 2026)** — die life | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `Drawer` | `Drawer` **+ `ToolingInventoryDie`** | **SPLIT 2 Sep 2026.** The legacy sheet mixed the draw box with its tooling. `Drawer` keeps the name and becomes the **two draw boxes** (`DB1`, `DB2`; `Name` and `LineId` CHECKs); `Diameter` → **`ToolingInventoryDie.HoleSizeIn`** along with the feed range and the die-life columns added 6 Aug 2026. ⚠ **`Q90`’s `Drawer` → `Die` rename is superseded** — the name is now correct | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `Edger` | `Edger` | `EdgeType` / `IsActive` added; `Set` → `ToolingSetNo` | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `Stand` | `Stand` | `MinId` / `MaxId` → `MinGaugeIn` / `MaxGaugeIn`; `MinOD` / `MaxOd` → `MinWidthIn` / `MaxWidthIn`; `LineId` / `IsActive` added | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `SpoolConfiguration` | ~~`SpoolConfiguration`~~ → **`Spool`** | Unit suffixes added to all dimension/weight columns; `MinId`/`MaxId` → `MinCoreDiameterIn`/`MaxCoreDiameterIn`. **Merged into `Spool` 23 Aug 2026 (`Q60`)** — the target table no longer exists; the six `Min/Max` columns and `Name` (as `SizeClass`) landed on the article | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `SpoolProcessing` | `SpoolProcessing` | `Alpha` / `Status` / `GaugeIn` / `WidthIn` / weights / `Location` / timestamps / `SourceRunId` / `LineId` added; `ParentRod` → `ParentRodAlpha` | [FlatWireSchema_Materials.md](FlatWireSchema_Materials.md) |
 
-### New Tables (24) — Net New
+### New Tables (30) — Net New
 
 *(Corrected twice. The heading read "16" against a list of 16 with an arithmetic that used 15; a 13 Aug 2026 pass said `RodStaging` and `PayoffPosition` had been added and **they had not been** — both were still absent on 23 Aug, along with the six tables built 20–22 Aug. All eight were added on 23 Aug 2026, at which point the inventory sums to **7 + 24 + 3 = 34** and matches the DDL exactly. The audit that first found the drift, `GapAnalysis.md`, was retired the same day — see [`CHANGELOG.md`](../../CHANGELOG.md).)*
 
@@ -79,7 +79,9 @@ ORDER BY ChildTable, ConstraintName;
 | `RunPauseEvent` | Runs | Pause/resume cycles within a run | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 | `WeldEvent` | Runs | Rod-to-rod weld join events | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 | `RollOverride` | Runs | Run-level roll gap / die parameter adjustments | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
-| `DieChangeEvent` | Runs | Die replacement events | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
+| `DieChangeEvent` | Runs | Die replacement events; gained `OldDieId` / `NewDieId` on 2 Sep 2026 | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
+| `ToolingInventoryDie` | Lookup | **New 2 Sep 2026.** Register of physical dies — identity, hole size, type, lifecycle status, die life | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `DieHistory` | Runs | **New 2 Sep 2026.** One append-only log for a die’s installs, resets, retirements, threshold edits and per-run footage | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 | `SpcCheckpoint` | Quality | SPC measurement session headers | [FlatWireSchema_QualityOutput.md](FlatWireSchema_QualityOutput.md) |
 | `SpcMeasurement` | Quality | Individual SPC measurement readings | [FlatWireSchema_QualityOutput.md](FlatWireSchema_QualityOutput.md) |
 | `WipRejection` | Quality | Material rejection events | [FlatWireSchema_QualityOutput.md](FlatWireSchema_QualityOutput.md) |
@@ -97,6 +99,11 @@ ORDER BY ChildTable, ConstraintName;
 | `SpoolTraceability` | Material | Which rod produced which feet of a **spool** — the spool-side half of the welding-wire genealogy (`FR-333`, `G42`) | [FlatWireSchema_Materials.md](FlatWireSchema_Materials.md) |
 | `SpoolOrder` | Material | The orders a spool is committed to. **Derived** from `RodOrderAllocation`, with the order boundary in pounds (`G48`) | [FlatWireSchema_Materials.md](FlatWireSchema_Materials.md) |
 | `RodOrderAllocation` | Material | The **plan**: which orders a rod is committed to, and in what sequence. Split point held in pounds, never feet | [FlatWireSchema_Materials.md](FlatWireSchema_Materials.md) |
+
+| `DowntimeReason` | Lookup | The **delay-code vocabulary** — four time buckets, 72 codes. Replaced the 15-reason/5-category pause taxonomy outright (client, 1 Sep 2026) | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `WipRejectionReason` | Lookup | The **WIP rejection vocabulary** — 72 reasons. The client supplied no groups, so every `RejectionGroup` is ours and `[PROPOSED]` | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `ItInhibitReason` | Lookup | Why `ITInhibit` is set — 8 client reasons plus the 4 `[PLC §8.2]` conditions the client omitted, seeded **inactive** | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `LineDowntimeEvent` | Runs | **Line-scoped** downtime intervals. Exists because `RunPauseEvent.RunId` is `NOT NULL` and all 25 `DWN##` codes are line-down time | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 
 ### Production-Readiness Additions (3) — July 26, 2026
 
@@ -356,6 +363,29 @@ Rename table to `FlatWireRunDetail`. Run-level fields are removed below — they
 #### `PassScheduleComponent` *(renamed from `FlatLineSetup`)*
 
 Renamed and restructured from `FlatLineSetup`. Each row defines one component slot in a pass schedule — its tool selection, operating state, and parameter value. Belongs to a `PassSchedule` header via `PassScheduleId`. Requires a new `PassSchedule` header table (see [Missing Tables](#missing-tables)).
+
+> ⚠ **Provenance — the source sheet is named `FlatLinePassSchedule`, not `FlatLineSetup`.** In
+> `95-archive/source-documents/flatwire tables.xlsx` the eight sheets are `Drawer`, `Edger`,
+> `RollerInfo`, `SpoolConfiguration`, `SpoolCoilMapping`, `Spool`, **`FlatLinePassSchedule`** and
+> `FlatLineProcessing`. This repository calls it `FlatLineSetup` throughout and the rename is
+> unrecorded. **The legacy name stays** — `FlatLineSetup` is cited by `D-13`, `[DBD §188]`,
+> `[MSP §1473/1487/2164/3140/3362]` and the DDL, and register names are never swept. This note
+> exists so the citation resolves against the workbook. The source name also corroborates what the
+> table is: a **pass schedule**, which the client's 31 Aug 2026 Flattening Line Schedule screen
+> confirms independently.
+>
+> ⚠ **This inventory does not reconcile with that sheet — see `OI-142`.** The sheet's eleven columns
+> are `Id · RollerInfoId · StandSequence · DrawerId · DrawerSequence · EntryGauge · ExitGauge ·
+> EdgerId · RollGap · PassNo · SpoolTypeId`. The *"Removed from `FlatLineSetup`"* table below names
+> six columns to remove of which **only three are among them**; `SpoolId`, `MfgOrderNo` /
+> `HomeMfgOrderNo`, `StopNo` / `SequenceNo` and `PlanId` are **`FlatLineProcessing`** columns. And
+> **`RollerInfoId`, `PassNo` and `SpoolTypeId` are never accounted for anywhere.** `PassNo` is worth
+> noting on its own: the legacy design was **pass-numbered**, while the client's replacement grid is
+> **component-sequenced** with no pass number — which is why `Sequence` replaced it.
+>
+> ⚠ **This is the only legacy table with no `Current columns` section**, unlike `FlatLineProcessing`,
+> `Drawer`, `Edger`, `Stand` and `SpoolProcessing` — in an appendix whose stated purpose is to be
+> *"the only surviving inventory of the legacy … columns."* Reconstruct it from the eleven above.
 
 ##### Columns
 
