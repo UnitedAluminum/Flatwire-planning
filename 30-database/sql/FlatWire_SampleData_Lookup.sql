@@ -2,7 +2,7 @@
 -- Flat Wire Mill — Sample Data: Lookup / Reference Tables
 -- Run order : after DDL 06 (FKs), BEFORE FlatWire_SampleData_Schedule
 -- Tables    : Stand, Drawer, ToolingInventoryDie, Edger, Dancer,
---             AlloyProperty, Spool
+--             AlloyProperty, Spool, ToolingInventoryStraightener
 -- ============================================================
 -- These fixed IDENTITY values are the FK targets the schedule
 -- sample data (FlatWire_SampleData_Schedule.sql) references:
@@ -114,22 +114,22 @@ IF NOT EXISTS (SELECT 1 FROM [dbo].[ToolingInventoryDie])
 BEGIN
     SET IDENTITY_INSERT [dbo].[ToolingInventoryDie] ON;
     INSERT INTO [dbo].[ToolingInventoryDie]
-        ([Id], [DieAlpha], [HoleSizeIn], [LineId], [LifecycleStatus], [InUse], [LastGrindingFeet], [TotalFeetAllowed], [IsActive]) VALUES
-        ( 1, 'D-210-001', 0.2100, NULL, 'In Service', 0, 0, NULL, 1),
-        ( 2, 'D-240-001', 0.2400, NULL, 'In Service', 0, 0, NULL, 1),
-        ( 3, 'D-250-001', 0.2500, NULL, 'In Service', 0, 0, NULL, 1),
-        ( 4, 'D-265-001', 0.2650, NULL, 'In Service', 0, 0, NULL, 1),
-        ( 5, 'D-315-001', 0.3150, NULL, 'In Service', 0, 0, NULL, 1),
-        ( 6, 'D-330-001', 0.3300, NULL, 'In Service', 0, 0, NULL, 1),
-        ( 7, 'D-270-001', 0.2700, NULL, 'In Service', 0, 0, NULL, 1),
-        ( 8, 'D-275-001', 0.2750, NULL, 'In Service', 0, 0, NULL, 1),
-        ( 9, 'D-300-001', 0.3000, NULL, 'In Service', 0, 0, NULL, 1),
-        (10, 'D-310-001', 0.3100, NULL, 'In Service', 0, 0, NULL, 1),
-        (11, 'D-320-001', 0.3200, NULL, 'In Service', 0, 0, NULL, 1),
-        (12, 'D-335-001', 0.3350, NULL, 'In Service', 0, 0, NULL, 1),
-        (13, 'D-340-001', 0.3400, NULL, 'In Service', 0, 0, NULL, 1),
+        ([Id], [DieAlpha], [HoleSizeIn], [MachineName], [LifecycleStatus], [InUse], [LastGrindingFeet], [TotalFeetAllowed], [IsActive]) VALUES
+        ( 1, 'D-210-001', 0.2100, 'FL1', 'In Service', 0, 0, NULL, 1),
+        ( 2, 'D-240-001', 0.2400, 'FL1', 'In Service', 0, 0, NULL, 1),
+        ( 3, 'D-250-001', 0.2500, 'FL1', 'In Service', 0, 0, NULL, 1),
+        ( 4, 'D-265-001', 0.2650, 'FL1', 'In Service', 0, 0, NULL, 1),
+        ( 5, 'D-315-001', 0.3150, 'FL1', 'In Service', 0, 0, NULL, 1),
+        ( 6, 'D-330-001', 0.3300, 'FL1', 'In Service', 0, 0, NULL, 1),
+        ( 7, 'D-270-001', 0.2700, 'FL1', 'In Service', 0, 0, NULL, 1),
+        ( 8, 'D-275-001', 0.2750, 'FL1', 'In Service', 0, 0, NULL, 1),
+        ( 9, 'D-300-001', 0.3000, 'FL1', 'In Service', 0, 0, NULL, 1),
+        (10, 'D-310-001', 0.3100, 'FL1', 'In Service', 0, 0, NULL, 1),
+        (11, 'D-320-001', 0.3200, 'FL1', 'In Service', 0, 0, NULL, 1),
+        (12, 'D-335-001', 0.3350, 'FL1', 'In Service', 0, 0, NULL, 1),
+        (13, 'D-340-001', 0.3400, 'FL1', 'In Service', 0, 0, NULL, 1),
         -- The DC-0001 die. See the note above; do not delete without fixing that event.
-        (14, 'D-298-001', 0.2980, NULL, 'In Service', 0, 0, NULL, 1);
+        (14, 'D-298-001', 0.2980, 'FL1', 'In Service', 0, 0, NULL, 1);
     SET IDENTITY_INSERT [dbo].[ToolingInventoryDie] OFF;
     PRINT 'Seeded: ToolingInventoryDie (14 rows)';
 END
@@ -302,4 +302,44 @@ BEGIN
 END
 ELSE
     PRINT 'Spool already seeded -- skipped';
+GO
+
+-- ============================================================
+-- ToolingInventoryStraightener -- THE CLIENT'S OWN THREE ROWS
+-- ============================================================
+-- These are NOT invented fixtures. Every value is transcribed from the
+-- Tooling Inventory screenshot the client sent on 2 Sep 2026 (Straightener
+-- grid, machine FL1): sets A / B / C, 10 rolls each, OD 3.00" and ID 0.750"
+-- across all three, with only the Min/Max Dia. band and Status differing.
+--
+-- Dimensions are widened to four decimals to match the column's DECIMAL(8,4)
+-- and the screen's formatPrice(this,4) -- 3.00 stored as 3.0000 is the same
+-- number, not added precision.
+--
+-- P/N is blank in all three rows on the screenshot, so it seeds NULL -- the
+-- one optional field on the grid, and the blank is the client's data.
+--
+-- Set B's Status is 'In Service' and A/C are 'Active'. That pair is the whole
+-- observed Status vocabulary; the full list is still pending confirmation,
+-- which is why 01_Lookup writes no CHECK against it. Do not add values here
+-- to "complete" the list.
+-- ============================================================
+IF NOT EXISTS (SELECT 1 FROM [dbo].[ToolingInventoryStraightener])
+BEGIN
+    SET IDENTITY_INSERT [dbo].[ToolingInventoryStraightener] ON;
+    INSERT INTO [dbo].[ToolingInventoryStraightener]
+        ([Id], [MachineName], [Type], [Location], [SetNumber], [RollQty],
+         [MinDiameterIn], [MaxDiameterIn], [OuterDiameterIn], [InnerDiameterIn],
+         [PartNumber], [Status], [IsActive]) VALUES
+        (1, 'FL1', 'Straightener Roll', 'Straightener', 'A', 10,
+            0.1340, 0.3750, 3.0000, 0.7500, NULL, 'Active',     1),
+        (2, 'FL1', 'Straightener Roll', 'Straightener', 'B', 10,
+            0.2500, 0.5000, 3.0000, 0.7500, NULL, 'In Service', 1),
+        (3, 'FL1', 'Straightener Roll', 'Straightener', 'C', 10,
+            0.3750, 0.6500, 3.0000, 0.7500, NULL, 'Active',     1);
+    SET IDENTITY_INSERT [dbo].[ToolingInventoryStraightener] OFF;
+    PRINT 'Seeded: ToolingInventoryStraightener (3 rows -- client screenshot, FL1)';
+END
+ELSE
+    PRINT 'ToolingInventoryStraightener already seeded -- skipped';
 GO

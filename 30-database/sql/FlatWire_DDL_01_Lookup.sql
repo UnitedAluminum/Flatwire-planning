@@ -3,7 +3,7 @@
 -- Run order : 01 of 09
 -- Tables    : Stand, Drawer, ToolingInventoryDie, Edger, Dancer,
 --             AlloyProperty, PayoffPosition, Spool,
---             DowntimeReason, WipRejectionReason, ItInhibitReason   (11)
+--             DowntimeReason, WipRejectionReason, ItInhibitReason , ToolingInventoryStraightener   (12)
 --
 -- Sep-2-2026: the three reason-code tables added from the client's
 -- "Reason Codes.xlsx" (Tim O'Brien, 1 Sep 2026), which closes actions
@@ -172,12 +172,12 @@ BEGIN
         [Location]           VARCHAR(50)   NULL,           -- client grid "Location" -- die room / crib position
         -- Client grid "Machine Name". FL1 owns the draw boxes; FL3 runs through them.
         -- NULL for a die not assigned to a line (FR-241 / FR-244 spare).
-        [LineId]             VARCHAR(5)    NULL,
-        [HoleSizeIn]         DECIMAL(8,4)  NOT NULL,       -- client grid 'ID(")' -- the hole diameter = output wire size
-        [MinFeedDiameterIn]  DECIMAL(8,4)  NULL,           -- minimum acceptable feed diameter (was Drawer.MinDiameterIn)
-        [MaxFeedDiameterIn]  DECIMAL(8,4)  NULL,           -- client grid "Max Imput Dia." (was Drawer.MaxDiameterIn)
-        [PitchIn]            DECIMAL(8,4)  NULL,           -- client grid "Pitch"
-        [MaxIdIn]            DECIMAL(8,4)  NULL,           -- client grid 'Max ID(")'
+        [MachineName]        VARCHAR(20)  NOT NULL,
+        [HoleSizeIn]         DECIMAL(10,5) NOT NULL,       -- client grid 'ID(")' -- the hole diameter = output wire size
+        [MinFeedDiameterIn]  DECIMAL(10,5) NULL,           -- minimum acceptable feed diameter (was Drawer.MinDiameterIn)
+        [MaxFeedDiameterIn]  DECIMAL(10,5) NULL,           -- client grid "Max Imput Dia." (was Drawer.MaxDiameterIn)
+        [PitchIn]            DECIMAL(10,5) NULL,           -- client grid "Pitch"
+        [MaxIdIn]            DECIMAL(10,5) NULL,           -- client grid 'Max ID(")'
         [LubricationType]    VARCHAR(50)   NULL,           -- client grid "Lubrication Type"
         -- FR-247 die type/material. Also DieChangeAndManagement.md 2.4:
         -- the incoming die "must match the outgoing die type".
@@ -202,6 +202,10 @@ BEGIN
         [LastResetAt]        DATETIMEOFFSET NULL,          -- FR-245 / FR-248
         [Notes]              VARCHAR(500)  NULL,
         [IsActive]           BIT           NOT NULL CONSTRAINT [DF_ToolingInventoryDie_IsActive] DEFAULT (1),
+        [CreatedBy]          VARCHAR(50)   NULL,                  -- audit
+        [CreatedAt]          DATETIMEOFFSET NOT NULL CONSTRAINT [DF_ToolingInventoryDie_CreatedAt] DEFAULT (SYSDATETIMEOFFSET()),
+        [ModifiedBy]         VARCHAR(50)   NULL,
+        [ModifiedAt]         DATETIMEOFFSET NULL,
 
         CONSTRAINT [PK_ToolingInventoryDie]           PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_ToolingInventoryDie_DieAlpha]  UNIQUE ([DieAlpha]),
@@ -210,7 +214,7 @@ BEGIN
         CONSTRAINT [CK_ToolingInventoryDie_LastGrindingFeet] CHECK ([LastGrindingFeet] >= 0),
         CONSTRAINT [CK_ToolingInventoryDie_TotalFeetAllowed] CHECK ([TotalFeetAllowed] IS NULL OR [TotalFeetAllowed] > 0),
         CONSTRAINT [CK_ToolingInventoryDie_LifecycleStatus]  CHECK ([LifecycleStatus] IN ('Active','In Service','In Grinding','Retired')),
-        CONSTRAINT [CK_ToolingInventoryDie_LineId]    CHECK ([LineId] IS NULL OR [LineId] IN ('FL1','FL3')),
+        CONSTRAINT [CK_ToolingInventoryDie_MachineName] CHECK ([MachineName] IS NULL OR [MachineName] IN ('FL1','FL3')),
         CONSTRAINT [CK_ToolingInventoryDie_DieType]   CHECK ([DieType] IS NULL OR [DieType] IN ('TC Mono','TC Poly','Natural diamond'))
         -- Deliberately NO check that LastGrindingFeet <= TotalFeetAllowed. "Overdue"
         -- is a real operating state the Die Management screen must display
@@ -935,4 +939,86 @@ BEGIN
 END
 ELSE
     PRINT 'ItInhibitReason already seeded -- skipped';
+-- ---------------------------------------------------------------------------
+-- ToolingInventoryStraightener
+-- The Straightener grid of the client's Tooling Inventory screen (client
+-- screenshot, 2 Sep 2026): one row per straightener ROLL SET on a machine.
+--
+-- WHY A PER-TOOL TABLE AND NOT ONE POLYMORPHIC ToolingInventory. The screen's
+-- "Choose a tool" selector switches the whole COLUMN SET, not just a filter --
+-- the straightener grid carries Roll Qty / Min-Max Dia. / OD / ID, which the
+-- die, roll and edger grids do not. One table per tool keeps every column NOT
+-- NULL where the client marked it required; a shared table would have to make
+-- all of them nullable and re-assert "required" only in the UI. Sibling tables
+-- (…Die, …MillRoll, …Edger) land as those grids are specified -- the shared
+-- prefix is the grouping, so do not retrofit a parent.
+--
+-- COLUMN WIDTHS ARE THE CLIENT'S TEXTBOX MAXLENGTHS, not guesses: Type 20,
+-- SetNumber 2, RollQty 6 digits, the four dimensions 8 characters, PartNumber 20.
+-- DECIMAL(10,5) stores one digit beyond the screen's formatPrice(this,4) display
+-- precision, so a five-decimal tooling dimension survives the round trip.
+--
+-- ⚠ TWO COLUMNS ARE LOOKUP-BOUND IN THE UI AND CARRY NO CHECK CONSTRAINT HERE,
+--   DELIBERATELY:
+--     [Location] is the "Tool Location" drop-down. That lookup does NOT exist in
+--       FlatWireDB -- there is no table to point an FK at yet. The screenshot
+--       shows only 'Straightener'. When the lookup lands, add the FK in 06.
+--     [Status] is a bound drop-down whose FULL LIST IS PENDING CONFIRMATION.
+--       Only 'Active' and 'In Service' are observed. A CHECK written now would
+--       reject values the client has not yet disclosed, which is worse than no
+--       CHECK -- same discipline as Drawer.TotalFeetAllowed being left NULL.
+--   Both are NOT NULL with a non-blank CHECK, which is what the UI rule "must
+--   select a non-default value" actually asserts.
+--
+-- [IsActive] IS NOT [Status]. Status is the tool's operating state on the floor
+-- (Active / In Service); IsActive is the row soft-delete every lookup in this
+-- script carries. A retired set is IsActive = 0 and keeps whatever Status it had.
+-- ---------------------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ToolingInventoryStraightener]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[ToolingInventoryStraightener] (
+        [Id]          INT           NOT NULL IDENTITY(1,1),
+        -- Read-only label on the screen, supplied by page context: FL1 / FL2 / FL3
+        -- today. No FK -- the `machines` rows live in the SHARED schema, not in
+        -- FlatWireDB, and this database does not carry a machine master.
+        [MachineName] VARCHAR(20)   NOT NULL,
+        [Type]        VARCHAR(20)   NOT NULL,              -- validateAlphaNumeric; e.g. 'Straightener Roll'
+        [Location]    VARCHAR(30)   NOT NULL,              -- Tool Location lookup value; no FK target yet (see banner)
+        [SetNumber]   VARCHAR(2)    NOT NULL,              -- validateWord; A / B / C ...
+        [RollQty]     INT           NOT NULL,              -- validateNumeric, 6 digits
+        [MinDiameterIn] DECIMAL(10,5) NOT NULL,            -- 'Min Dia.' (in)
+        [MaxDiameterIn] DECIMAL(10,5) NOT NULL,            -- 'Max Dia.' (in)
+        [OuterDiameterIn] DECIMAL(10,5) NOT NULL,          -- 'OD(")' (in)
+        [InnerDiameterIn] DECIMAL(10,5) NOT NULL,          -- 'ID(")' (in)
+        [PartNumber]  VARCHAR(20)   NULL,                  -- 'P/N'; the only OPTIONAL field on the grid
+        [Status]      VARCHAR(20)   NOT NULL,              -- bound lookup; list pending confirmation (see banner)
+        [IsActive]    BIT           NOT NULL CONSTRAINT [DF_ToolingInvStr_IsActive] DEFAULT (1),
+        [CreatedBy]   VARCHAR(50)   NULL,                  -- audit
+        [CreatedAt]   DATETIMEOFFSET NOT NULL CONSTRAINT [DF_ToolingInvStr_CreatedAt] DEFAULT (SYSDATETIMEOFFSET()),
+        [ModifiedBy]  VARCHAR(50)   NULL,
+        [ModifiedAt]  DATETIMEOFFSET NULL,
+
+        CONSTRAINT [PK_ToolingInvStr]          PRIMARY KEY CLUSTERED ([Id] ASC),
+        -- A set number identifies the set WITHIN a machine and tool type -- the
+        -- screenshot's A / B / C repeat per machine. ASSUMED from the grid, not
+        -- stated by the client; if sets turn out to be plant-unique, tighten to
+        -- ([Type],[SetNumber]).
+        CONSTRAINT [UQ_ToolingInvStr_Set]      UNIQUE ([MachineName], [Type], [SetNumber]),
+        CONSTRAINT [CK_ToolingInvStr_RollQty]  CHECK ([RollQty] > 0),
+        -- The two cross-field rules the screen checks client-side, asserted again
+        -- here: the browser is not a place to enforce data integrity.
+        CONSTRAINT [CK_ToolingInvStr_DiaRange] CHECK ([MinDiameterIn] < [MaxDiameterIn]),
+        CONSTRAINT [CK_ToolingInvStr_IdOd]     CHECK ([InnerDiameterIn] < [OuterDiameterIn]),
+        CONSTRAINT [CK_ToolingInvStr_DiaPos]   CHECK ([MinDiameterIn] > 0 AND [InnerDiameterIn] > 0),
+        -- "Must select a non-default value" for the two drop-downs, expressed as
+        -- the only thing the database can check without the value lists.
+        CONSTRAINT [CK_ToolingInvStr_Location] CHECK (LEN(LTRIM(RTRIM([Location]))) > 0),
+        CONSTRAINT [CK_ToolingInvStr_Status]   CHECK (LEN(LTRIM(RTRIM([Status])))   > 0),
+        CONSTRAINT [CK_ToolingInvStr_Type]     CHECK (LEN(LTRIM(RTRIM([Type])))     > 0),
+        CONSTRAINT [CK_ToolingInvStr_SetNo]    CHECK (LEN(LTRIM(RTRIM([SetNumber]))) > 0)
+    );
+    PRINT 'Created table: ToolingInventoryStraightener';
+END
+ELSE
+    PRINT 'Table already exists: ToolingInventoryStraightener';
 GO
