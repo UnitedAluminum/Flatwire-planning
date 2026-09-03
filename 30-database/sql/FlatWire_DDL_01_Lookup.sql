@@ -1,7 +1,7 @@
--- ============================================================
+﻿-- ============================================================
 -- Flat Wire Mill — DDL Script 01: Lookup / Reference Tables
 -- Run order : 01 of 09
--- Tables    : Stand, Drawer, ToolingInventoryDie, Edger, Dancer,
+-- Tables    : Stand, Drawer, ToolingInventoryDie,ToolingInventoryEdger, Edger, Dancer,
 --             AlloyProperty, PayoffPosition, Spool,
 --             DowntimeReason, WipRejectionReason, ItInhibitReason , ToolingInventoryStraightener   (12)
 --
@@ -253,6 +253,102 @@ BEGIN
 END
 ELSE
     PRINT 'Table already exists: Edger';
+GO
+
+-- ------------------------------------------------------------
+-- ToolingInventoryEdger
+-- Edger tooling INVENTORY -- the physical edge-roll SETS a machine holds,
+-- as listed on the client's Tooling Inventory screen with "Choose a tool"
+-- set to Edger (client screenshot, Sep-2026).
+--
+-- NOT A SECOND Edger TABLE. Edger above is the edge PROFILE a pass schedule
+-- points at (Round | Square, one row per configuration). This is the
+-- maintenance stock list: physical roll sets with their diameters, gauge
+-- coverage, grind history and service status. A set is bought, ground and
+-- retired without any pass schedule changing, so no FK joins the two.
+--
+-- COLUMN WIDTHS MIRROR THE SCREEN'S FIELD SPEC so the database refuses what
+-- the client-side validators refuse -- Type 20 and P/N 20 (validateAlphaNumeric),
+-- Set Number 1 (validateWord, matching the existing Stripper Set Number field),
+-- Roll Qty 6 digits (validateNumeric, whole numbers), every inch value
+-- DECIMAL(10,5) -- a digit wider than the client formats (validateDecimal +
+-- formatPrice(this,4) to 4 places), so a stored value never loses precision.
+--
+-- GAUGE RANGE IS THREE COLUMNS, NOT ONE DELIMITED STRING. The field spec
+-- leaves that open (3 textboxes vs a single delimited field, pending client
+-- confirmation). Three columns is the reversible half of the choice: ".045,
+-- .040, .035" is derivable from them by concatenation, whereas recovering
+-- three comparable decimals from a string needs a parser and defeats any
+-- "which set covers 0.040?" query. If the single field is confirmed,
+-- concatenate in the read model -- do not collapse these columns.
+--
+-- LOCATION AND STATUS ARE DELIBERATELY UNCONSTRAINED STRINGS. The screen
+-- binds both to lookups (Tool Location; and Active / In Service / In
+-- Grinding / ...), but neither lookup table exists in FlatWireDB and the
+-- status list is explicitly recorded as pending confirmation. A CHECK naming
+-- three of an unknown number of values would reject legitimate data the day
+-- the rest arrive. When the lookups land, add the tables and put their FKs in
+-- DDL 06 -- that is where all FKs live.
+--
+-- THE TWO DATES ARE SYSTEM-STAMPED, NEVER TYPED. Both render as read-only
+-- labels, matching the existing Knife / Stripper pattern where a change event
+-- stamps them. Both NULL until that first event -- which is why they have no
+-- DEFAULT: a row created today has not been changed or ground today.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ToolingInventoryEdger]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[ToolingInventoryEdger] (
+        [Id]                  INT             NOT NULL IDENTITY(1,1),
+        [MachineName]         VARCHAR(10)     NOT NULL,           -- FL1 | FL2 | FL3 -- read-only label, from page context
+        [Type]                VARCHAR(20)     NOT NULL,           -- e.g. 'Edge Roll'
+        [Location]            VARCHAR(30)     NOT NULL,           -- Tool Location lookup value, e.g. 'Edger' (no FK yet -- see header)
+        [SetNumber]           CHAR(1)         NOT NULL,           -- single word character: A, B, C ...
+        [PartNo]              VARCHAR(20)     NULL,               -- P/N -- the only optional field on the screen
+        [RollQty]             INT             NOT NULL,           -- whole rolls in the set (screen allows up to 6 digits)
+        [StdRemovalFromOdIn]  DECIMAL(10,5)   NOT NULL,           -- STD Removal From OD(") -- material taken off per grind
+        -- Gauge Range(") -- the discrete gauges this set covers, smallest first.
+        -- Displayed largest-first on the screen (".045, .040, .035").
+        [GaugeRangeMinIn]     DECIMAL(10,5)   NOT NULL,
+        [GaugeRangeMidIn]     DECIMAL(10,5)   NOT NULL,
+        [GaugeRangeMaxIn]     DECIMAL(10,5)   NOT NULL,
+        [OdIn]                DECIMAL(10,5)   NOT NULL,           -- OD(")     -- current outside diameter
+        [IdIn]                DECIMAL(10,5)   NOT NULL,           -- ID(")     -- bore, fixed for the life of the roll
+        [MinOdIn]             DECIMAL(10,5)   NOT NULL,           -- Min OD(") -- scrap diameter; below this the set is retired
+        [DateOfChange]        DATETIMEOFFSET  NULL,               -- system-stamped on a change event; NULL = never changed
+        [DateOfLastGrind]     DATETIMEOFFSET  NULL,               -- system-stamped on a grind event; NULL = never ground
+        [Status]              VARCHAR(20)     NOT NULL,           -- Active | In Service | In Grinding | ... (list pending)
+        [IsActive]            BIT             NOT NULL CONSTRAINT [DF_ToolingInvEdger_IsActive] DEFAULT (1),  -- soft delete, per the other lookups
+
+        -- Audit, matching PassSchedule's block (02_Schedule). Written by
+        -- Machine_InsertUpdateToolingInventoryEdgerData and, on soft delete,
+        -- Machine_DeleteToolingInventoryEdgerData.
+        [CreatedBy]           VARCHAR(50)     NULL,
+        [CreatedAt]           DATETIMEOFFSET  NOT NULL CONSTRAINT [DF_ToolingInvEdger_CreatedAt] DEFAULT (SYSDATETIMEOFFSET()),
+        [ModifiedBy]          VARCHAR(50)     NULL,
+        [ModifiedAt]          DATETIMEOFFSET  NULL,
+
+        CONSTRAINT [PK_ToolingInventoryEdger] PRIMARY KEY CLUSTERED ([Id] ASC),
+        -- A set number identifies a set WITHIN a machine's tool location, not globally:
+        -- FL2's Edger set A and a future FL1 Edger set A are different steel.
+        CONSTRAINT [UQ_ToolingInvEdger_Set]       UNIQUE ([MachineName], [Location], [SetNumber]),
+        CONSTRAINT [CK_ToolingInvEdger_Machine]   CHECK ([MachineName] IN ('FL1','FL2','FL3')),
+        CONSTRAINT [CK_ToolingInvEdger_SetNumber] CHECK ([SetNumber] LIKE '[A-Za-z0-9]'),   -- validateWord, one character
+        CONSTRAINT [CK_ToolingInvEdger_RollQty]   CHECK ([RollQty] > 0 AND [RollQty] <= 999999),
+        CONSTRAINT [CK_ToolingInvEdger_StdRemoval] CHECK ([StdRemovalFromOdIn] > 0),
+        -- The three gauges are distinct and ordered, so min/mid/max mean what they say
+        -- whichever order the screen collected them in.
+        CONSTRAINT [CK_ToolingInvEdger_GaugeOrder] CHECK ([GaugeRangeMinIn] < [GaugeRangeMidIn] AND [GaugeRangeMidIn] < [GaugeRangeMaxIn]),
+        CONSTRAINT [CK_ToolingInvEdger_GaugePos]   CHECK ([GaugeRangeMinIn] > 0),
+        -- The two cross-field rules the screen checks client-side, asserted here too:
+        -- a bore cannot reach the rim, and a scrap diameter cannot exceed the current one.
+        CONSTRAINT [CK_ToolingInvEdger_IdLtOd]     CHECK ([IdIn] > 0 AND [IdIn] < [OdIn]),
+        CONSTRAINT [CK_ToolingInvEdger_MinOd]      CHECK ([MinOdIn] > [IdIn] AND [MinOdIn] <= [OdIn])
+        -- No CHECK on Status: the permitted list is not yet known (see header).
+    );
+    PRINT 'Created table: ToolingInventoryEdger';
+END
+ELSE
+    PRINT 'Table already exists: ToolingInventoryEdger';
 GO
 
 -- ---------------------------------------------------------------------------

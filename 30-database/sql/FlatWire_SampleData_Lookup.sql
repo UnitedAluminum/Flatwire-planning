@@ -1,7 +1,7 @@
 -- ============================================================
 -- Flat Wire Mill — Sample Data: Lookup / Reference Tables
 -- Run order : after DDL 06 (FKs), BEFORE FlatWire_SampleData_Schedule
--- Tables    : Stand, Drawer, ToolingInventoryDie, Edger, Dancer,
+-- Tables    : Stand, Drawer, ToolingInventoryDie,ToolingInventoryEdger, Edger, Dancer,
 --             AlloyProperty, Spool, ToolingInventoryStraightener
 -- ============================================================
 -- These fixed IDENTITY values are the FK targets the schedule
@@ -157,6 +157,41 @@ BEGIN
 END
 ELSE
     PRINT 'Edger already seeded — skipped';
+GO
+
+-- ============================================================
+-- ToolingInventoryEdger
+-- The three FL2 edge-roll sets exactly as the client's Tooling Inventory
+-- screenshot shows them (Sep-2026) -- transcribed, not invented. Every value
+-- below is on that screen; every value NOT on it is NULL.
+--
+-- What the screenshot leaves blank stays blank: P/N, Date of Change and Date
+-- of Last Grind. The two dates are system-stamped by change/grind events, so
+-- seeding them would fabricate maintenance history for tooling that has none.
+--
+-- Gauge Range reads largest-first on the screen (".045, .040, .035"); it is
+-- stored smallest-first in Min/Mid/Max. Set A .035-.045, B .015-.025,
+-- C .065-.075 -- three non-overlapping bands, which is why three sets exist.
+--
+-- IsActive = 1 on all three. IsActive is the soft delete (the row is a
+-- current inventory item); Status carries the service state, and a set that
+-- is In Grinding is very much still owned.
+-- ============================================================
+IF NOT EXISTS (SELECT 1 FROM [dbo].[ToolingInventoryEdger])
+BEGIN
+    SET IDENTITY_INSERT [dbo].[ToolingInventoryEdger] ON;
+    INSERT INTO [dbo].[ToolingInventoryEdger]
+        ([Id], [MachineName], [Type], [Location], [SetNumber], [PartNo], [RollQty], [StdRemovalFromOdIn],
+         [GaugeRangeMinIn], [GaugeRangeMidIn], [GaugeRangeMaxIn],
+         [OdIn], [IdIn], [MinOdIn], [DateOfChange], [DateOfLastGrind], [Status], [IsActive]) VALUES
+        (1, 'FL2', 'Edge Roll', 'Edger', 'A', NULL, 2, 0.1000, 0.0350, 0.0400, 0.0450, 6.0000, 2.0000, 4.7500, NULL, NULL, 'Active',      1),
+        (2, 'FL2', 'Edge Roll', 'Edger', 'B', NULL, 2, 0.1000, 0.0150, 0.0200, 0.0250, 6.0000, 2.0000, 4.7500, NULL, NULL, 'In Service',  1),
+        (3, 'FL2', 'Edge Roll', 'Edger', 'C', NULL, 2, 0.1000, 0.0650, 0.0700, 0.0750, 6.0000, 2.0000, 4.7500, NULL, NULL, 'In Grinding', 1);
+    SET IDENTITY_INSERT [dbo].[ToolingInventoryEdger] OFF;
+    PRINT 'Seeded: ToolingInventoryEdger (3 rows)';
+END
+ELSE
+    PRINT 'ToolingInventoryEdger already seeded -- skipped';
 GO
 
 -- ---------------------------------------------------------------------------
