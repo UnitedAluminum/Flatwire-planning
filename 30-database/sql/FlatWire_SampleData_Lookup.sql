@@ -137,6 +137,62 @@ ELSE
     PRINT 'ToolingInventoryDie already seeded — skipped';
 GO
 
+-- ============================================================
+-- ToolingInventoryRollSet  (physical roll sets -- the fourth tool type)
+--
+-- Six rows: one set per fitted position. Client mail 3 Sep 2026 names the
+-- positions -- 12" (FL1-S1), 8"/6"/6" (FL2-S1, FL2-S2, FL2-S3), and DB1/DB2
+-- capstans -- and the diameters come straight from that sentence.
+--
+-- ONE SET PER POSITION IS A FLOOR, NOT THE CLIENT'S COUNT. The mail says
+-- "12" (FL1-S1) 2 roll set", "DB1/DB2 Capstans (rolls) current inventory = 2,
+-- will be adding a spare", and "8", 6", 6" rolls for (FL2-S1, FL2-S2, FL2-S3)
+-- 2 roll sets". Whether "2 roll set(s)" means TWO ROLLS PER SET or TWO SETS PER
+-- POSITION is genuinely ambiguous in the source, and it reads both ways in one
+-- paragraph. RollQty = 2 records the first reading, which the edger grid's
+-- "Roll Qty 2" corroborates; the second reading would change the ROW COUNT and
+-- is left unseeded rather than guessed. Q92 asks. Do not multiply these rows
+-- until it comes back.
+--
+-- The spare is NOT seeded either: "will be adding a spare" is future tense, so
+-- 2 capstan sets is today's truth and 3 is the target. Seeding the third would
+-- record equipment that does not exist yet.
+--
+-- IsRefurbishable = 1 on the capstans only. That is the one word the client
+-- attached to them specifically ("they can be refurbished"); nothing on record
+-- says the mill rolls are, and 0 is the DEFAULT rather than a claim they are not.
+--
+-- NAMING: the client calls FM1 "FL1-S1". Our Stand row is FM1 and stays FM1 --
+-- the component-identifier reconciliation is deliberately deferred until the
+-- Speed tab lands (31 Aug 2026 mail analysis, section 4.8, action A12).
+--
+-- LineId FL1/FL2 only: FL3 uses a combination of the two and holds no tooling of
+-- its own (client, 3 Sep 2026). Capstan sets are FL1 -- DB1/DB2 sit on FL1 --
+-- though whether the client's "Machine Name" column would say FL1 or the draw box
+-- is one of Q92's four questions.
+--
+-- OD / MinOD / ID / SerialNo / PartNo / Location / SetNumber stay NULL: they are
+-- client grid columns and no roll-set grid has ever been supplied. G87.
+-- ============================================================
+IF NOT EXISTS (SELECT 1 FROM [dbo].[ToolingInventoryRollSet])
+BEGIN
+    SET IDENTITY_INSERT [dbo].[ToolingInventoryRollSet] ON;
+    INSERT INTO [dbo].[ToolingInventoryRollSet]
+        ([Id], [RollSetAlpha], [RollType], [StandId], [DrawerId], [LineId], [RollQty], [NominalDiameterIn], [LifecycleStatus], [IsRefurbishable], [InUse], [IsActive]) VALUES
+        (1, 'RS-FM1-001',   'Mill',    1,    NULL, 'FL1', 2, 12.000, 'In Service', 0, 0, 1),
+        (2, 'RS-FM2S1-001', 'Mill',    2,    NULL, 'FL2', 2,  8.000, 'In Service', 0, 0, 1),
+        (3, 'RS-FM2S2-001', 'Mill',    3,    NULL, 'FL2', 2,  6.000, 'In Service', 0, 0, 1),
+        (4, 'RS-FM2S3-001', 'Mill',    4,    NULL, 'FL2', 2,  6.000, 'In Service', 0, 0, 1),
+        -- Capstan rolls. NominalDiameterIn NULL: the mail gives no capstan diameter.
+        (5, 'RS-DB1-001',   'Capstan', NULL, 1,    'FL1', 2, NULL,   'In Service', 1, 0, 1),
+        (6, 'RS-DB2-001',   'Capstan', NULL, 2,    'FL1', 2, NULL,   'In Service', 1, 0, 1);
+    SET IDENTITY_INSERT [dbo].[ToolingInventoryRollSet] OFF;
+    PRINT 'Seeded: ToolingInventoryRollSet (6 rows)';
+END
+ELSE
+    PRINT 'ToolingInventoryRollSet already seeded — skipped';
+GO
+
 -- NO SEED: DieHistory -- a die's life story is empty until the line runs. Its
 -- rows are written by the die change (Install), by Die Management (Reset,
 -- Retire, ThresholdEdit) and per run by FR-255's footage accrual (RunFootage),

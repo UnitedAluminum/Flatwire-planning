@@ -1,8 +1,12 @@
 -- ============================================================
 -- Flat Wire Mill — DDL Script 06: Foreign Key Constraints
 -- Run order : 06 of 09  (run AFTER all 01–05 scripts)
--- Creates   : ALL 62 foreign keys. There is no second FK script.
---             62, not 58, since 2 Sep 2026 (later the same day): the client's
+-- Creates   : ALL 64 foreign keys. There is no second FK script.
+--             64, not 62, since 3 Sep 2026: the fourth Tooling Inventory tool
+--             type added FK_ToolingInventoryRollSet_Stand and
+--             FK_ToolingInventoryRollSet_Drawer -- the latter the FIRST foreign
+--             key ever taken on Drawer.  (+2)
+--             It was 62, not 58, since 2 Sep 2026 (later the same day): the client's
 --             reason-code lists added FK_RunPauseEvent_DelayCode,
 --             FK_LineDowntimeEvent_DelayCode, FK_LineDowntimeEvent_Run and
 --             FK_WipRejection_Reason.  (+4)
@@ -68,7 +72,7 @@ WHERE fk.name LIKE 'FK_FlatWire%'
        --
        -- Lookup / Schedule
        'PassSchedule','PassScheduleComponent','PassScheduleChangeLog',
-       'Spool',
+       'Spool','ToolingInventoryRollSet',
        -- Materials
        'FlatWireRun','SpoolProcessing','SpoolTraceability','SpoolOrder','RodOrderAllocation',
        -- Runs
@@ -77,6 +81,9 @@ WHERE fk.name LIKE 'FK_FlatWire%'
        'RodOrderConsumption',
        -- ToolingInventoryDie is deliberately ABSENT: it is a pure parent, with no
        -- FK column of its own, and this roster lists CHILD tables only.
+       -- ToolingInventoryRollSet IS listed, above, precisely because it is NOT a
+       -- pure parent: it holds StandId and DrawerId. The two tooling registers
+       -- differ here and that is not an inconsistency.
        -- Quality / Output  (CoilOutput and CoilTraceability are MVP-1;
        -- Phase 9 returned whole on 11 Aug 2026)
        'SpcCheckpoint','SpcMeasurement','WipRejection',
@@ -87,6 +94,30 @@ EXEC sp_executesql @sql;
 -- ============================================================
 
 PRINT '--- Adding FK constraints ---';
+GO
+
+-- ------------------------------------------------------------
+-- ToolingInventoryRollSet  (Lookup)
+--
+-- Added Sep-3-2026 with the fourth Tooling Inventory tool type. A roll set is
+-- fitted to exactly one position and CK_TIRS_Mount enforces which: a Mill set to
+-- a Stand, a Capstan set to a Drawer. Both columns are nullable, so both FKs are
+-- satisfied by the NULL side of that CHECK.
+--
+-- FK_ToolingInventoryRollSet_Drawer IS THE FIRST FOREIGN KEY EVER TAKEN ON Drawer.
+-- The die split left Drawer "an equipment register, not a join target" and named
+-- G77's tooling work as its likely first referrer. This is it.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_ToolingInventoryRollSet_Stand')
+    ALTER TABLE [dbo].[ToolingInventoryRollSet]
+        ADD CONSTRAINT [FK_ToolingInventoryRollSet_Stand]
+        FOREIGN KEY ([StandId]) REFERENCES [dbo].[Stand] ([Id]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_ToolingInventoryRollSet_Drawer')
+    ALTER TABLE [dbo].[ToolingInventoryRollSet]
+        ADD CONSTRAINT [FK_ToolingInventoryRollSet_Drawer]
+        FOREIGN KEY ([DrawerId]) REFERENCES [dbo].[Drawer] ([Id]);
 GO
 
 -- ------------------------------------------------------------

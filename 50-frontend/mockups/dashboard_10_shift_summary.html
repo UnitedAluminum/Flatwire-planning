@@ -894,14 +894,14 @@
 
       <div id="welds-content"><div class="weld-summary-row">
         <div class="weld-summary-tile">
-          <span class="weld-summary-label">FL1 welds</span>
+          <span class="weld-summary-label">Total welds</span>
           <span class="weld-summary-value">3</span>
           <span class="weld-summary-sub">Induction, rod&ndash;rod</span>
         </div>
         <div class="weld-summary-tile">
-          <span class="weld-summary-label">FL2 welds</span>
-          <span class="weld-summary-value">1</span>
-          <span class="weld-summary-sub">Laser, flat&ndash;flat</span>
+          <span class="weld-summary-label">Weld type</span>
+          <span class="weld-summary-value" style="font-size:17px">Induction</span>
+          <span class="weld-summary-sub success">All &#10003; Pass</span>
         </div>
       </div>
 
@@ -929,14 +929,6 @@
           <div class="weld-detail">
             <span class="weld-rods"><span class="weld-line-tag">FL1</span>R00041 &rarr; R00042</span>
             <span class="weld-footage">at 8,800 ft &middot; induction</span>
-          </div>
-          <span class="weld-pass">&#x2713; Pass</span>
-        </div>
-        <div class="weld-entry">
-          <span class="weld-time">12:38</span>
-          <div class="weld-detail">
-            <span class="weld-rods"><span class="weld-line-tag">FL2</span>SP-00029 &rarr; SP-00030</span>
-            <span class="weld-footage">at 2,150 ft &middot; induction</span>
           </div>
           <span class="weld-pass">&#x2713; Pass</span>
         </div>
@@ -1109,12 +1101,10 @@
           '<div class="rejection-section-title"><span>WIP rejections</span><span class="rejection-count-badge">1 total</span></div>' +
           '<div class="rejection-list"><div class="rejection-row"><span class="rejection-count">1</span><div class="rejection-reason-wrap"><span class="rejection-reason-name">Surface defect &middot; oxidation</span><div class="rejection-bar"><div class="rejection-bar-fill" style="width:100%"></div></div></div><span style="font-size:14px;color:var(--color-text-tertiary);font-family:var(--font-mono);">FL2</span></div></div>' +
           '<div class="suspended-banner" style="margin-top:auto"><span class="suspended-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></span><span class="suspended-banner-body"><strong>1 coil suspended</strong> &middot; FW-00419-C02 pending review</span><a href="#" class="suspended-link">Review &rarr;</a></div>',
-        weldsTitle: "FL2 Weld Events", weldsSub: "All pass",
-        welds: '<div class="weld-summary-row"><div class="weld-summary-tile"><span class="weld-summary-label">Total welds</span><span class="weld-summary-value">1</span><span class="weld-summary-sub">Induction, rod&ndash;rod</span></div><div class="weld-summary-tile"><span class="weld-summary-label">Weld type</span><span class="weld-summary-value" style="font-size:17px">Induction</span><span class="weld-summary-sub success">&#10003; Pass</span></div></div>' +
-          '<div style="font-size:14px;color:var(--color-text-secondary);font-weight:500;margin-bottom:8px;">Event log</div>' +
-          '<div class="weld-list">' +
-          '<div class="weld-entry"><span class="weld-time">12:38</span><div class="weld-detail"><span class="weld-rods"><span class="weld-line-tag">FL2</span>SP-00029 &rarr; SP-00030</span><span class="weld-footage">at 2,150 ft &middot; induction</span></div><span class="weld-pass">&#x2713; Pass</span></div>' +
-          '</div>'
+        weldsTitle: "FL2 Weld Events", weldsSub: "None",
+        welds: '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--color-text-tertiary);font-size:14px;text-align:center;gap:12px;padding:24px 0;">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:36px;height:36px;opacity:0.3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>' +
+          '<div><div style="font-weight:500;margin-bottom:4px;">No weld events</div>FL2 does not weld. Flattened material cannot be welded, so an FL2 coil inherits its spool&rsquo;s weld markers.</div></div>'
       },
       "all lines": {
         kpi: {
@@ -1135,13 +1125,12 @@
           '<div class="rejection-list"><div class="rejection-row"><span class="rejection-count">1</span><div class="rejection-reason-wrap"><span class="rejection-reason-name">Gauge out of spec</span><div class="rejection-bar"><div class="rejection-bar-fill" style="width:50%"></div></div></div><span style="font-size:14px;color:var(--color-text-tertiary);font-family:var(--font-mono);">FL1</span></div><div class="rejection-row"><span class="rejection-count">1</span><div class="rejection-reason-wrap"><span class="rejection-reason-name">Surface defect &middot; oxidation</span><div class="rejection-bar"><div class="rejection-bar-fill" style="width:50%"></div></div></div><span style="font-size:14px;color:var(--color-text-tertiary);font-family:var(--font-mono);">FL2</span></div></div>' +
           '<div class="suspended-banner" style="margin-top:auto"><span class="suspended-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></span><span class="suspended-banner-body"><strong>1 coil suspended</strong> &middot; FW-00419-C02 pending review</span><a href="#" class="suspended-link">Review &rarr;</a></div>',
         weldsTitle: "All Lines Weld Events", weldsSub: "All pass",
-        welds: '<div class="weld-summary-row"><div class="weld-summary-tile"><span class="weld-summary-label">FL1 welds</span><span class="weld-summary-value">3</span><span class="weld-summary-sub">Induction, rod&ndash;rod</span></div><div class="weld-summary-tile"><span class="weld-summary-label">FL2 welds</span><span class="weld-summary-value">1</span><span class="weld-summary-sub">Induction</span></div></div>' +
+        welds: '<div class="weld-summary-row"><div class="weld-summary-tile"><span class="weld-summary-label">Total welds</span><span class="weld-summary-value">3</span><span class="weld-summary-sub">Induction, rod&ndash;rod &middot; FL1 only</span></div><div class="weld-summary-tile"><span class="weld-summary-label">Weld type</span><span class="weld-summary-value" style="font-size:17px">Induction</span><span class="weld-summary-sub success">All &#10003; Pass</span></div></div>' +
           '<div style="font-size:14px;color:var(--color-text-secondary);font-weight:500;margin-bottom:8px;">Event log</div>' +
           '<div class="weld-list">' +
           '<div class="weld-entry"><span class="weld-time">07:44</span><div class="weld-detail"><span class="weld-rods"><span class="weld-line-tag">FL1</span>R00042 &rarr; R00043</span><span class="weld-footage">at 12,450 ft &middot; induction</span></div><span class="weld-pass">&#x2713; Pass</span></div>' +
           '<div class="weld-entry"><span class="weld-time">09:18</span><div class="weld-detail"><span class="weld-rods"><span class="weld-line-tag">FL1</span>R00040 &rarr; R00041</span><span class="weld-footage">at 9,200 ft &middot; induction</span></div><span class="weld-pass">&#x2713; Pass</span></div>' +
           '<div class="weld-entry"><span class="weld-time">11:05</span><div class="weld-detail"><span class="weld-rods"><span class="weld-line-tag">FL1</span>R00041 &rarr; R00042</span><span class="weld-footage">at 8,800 ft &middot; induction</span></div><span class="weld-pass">&#x2713; Pass</span></div>' +
-          '<div class="weld-entry"><span class="weld-time">12:38</span><div class="weld-detail"><span class="weld-rods"><span class="weld-line-tag">FL2</span>SP-00029 &rarr; SP-00030</span><span class="weld-footage">at 2,150 ft &middot; induction</span></div><span class="weld-pass">&#x2713; Pass</span></div>' +
           '</div>'
       },
       fl3: {

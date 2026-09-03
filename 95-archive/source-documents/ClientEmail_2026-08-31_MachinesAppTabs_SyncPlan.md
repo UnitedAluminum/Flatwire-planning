@@ -308,9 +308,22 @@ one `TraversingTakeup` row.
 | `image027–029.jpg` | Material Loss — FL1 · FL2 · FL3 |
 | `image005.png` | Sender signature graphic — not content |
 
-⚠ `image018`–`image020` are absent from the message; the numbering jumps `017 → 021`. Nothing in the
-body text appears to be missing as a result, but confirm in Outlook before treating the
-transcription as complete.
+✅ **RESOLVED 3 Sep 2026 — nothing was missing.** *(Original finding, retained as the audit
+trail: ⚠ "`image018`–`image020` are absent from the message; the numbering jumps `017 → 021`.
+Nothing in the body text appears to be missing as a result, but confirm in Outlook before treating
+the transcription as complete.")*
+
+A later copy of this same thread — Sushant Sinha's 3 Sep 2026 re-send, recorded at
+[`ClientEmail_2026-09-03_ProcessLetters_SyncPlan.md`](ClientEmail_2026-09-03_ProcessLetters_SyncPlan.md)
+— carries the same inline set with **continuous** numbering. **Outlook re-numbers inline `cid:`
+references per message**, so the jump was an artefact of that, not a lost attachment. The counts
+reconcile exactly: that copy holds **18 attachments = 16 content screenshots + 2 signature
+graphics**, and the 16 are **12 field sets** (3 Line Schedule + 3 Setup/Handling + 3 Tooling +
+3 Material Loss) **+ 4 "before" screens, all four PNG** — precisely the 12 + 4 this section
+records. **The transcription above is complete.**
+
+⚠ **Do not reconcile the two ledgers by image number** — the numbering differs between copies.
+Cite an attachment by **content**, never by `cid`.
 
 ---
 

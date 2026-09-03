@@ -1,7 +1,7 @@
 # Flat Wire Processing — Pass Schedule Generation Specification
 
 **Project:** Flat Wire Mill
-**Last Updated:** August 6, 2026
+**Last Updated:** September 3, 2026 — **v1.6, the client's own formulas adopted** *(previously August 6, 2026)*
 **Status:** Draft — Issued for Client Review and Sign-off
 
 ---
@@ -20,6 +20,7 @@
 | **1.3** | **Aug 6, 2026** | Analysis Team | **The 6 Aug corrections propagated into the calculation sequence — v1.2 stated the physics, this states its consequences.** Five of the thirteen steps in §6.3 assumed a clean, adjacent `S1 → S2 → S3` chain that the mill does not have. **Step 9 (rolling allocation) is rewritten**: the chain is `S1 → E1 → S2 → E2 → S3`, so it is now solved **backwards from the S3 skim**, subtracting each edger's thickness gain — and the sign matters, because the edger *raises* thickness going forward, so the upstream stand must deliver a *thinner* section than its neighbour receives; getting it backwards sets every FM2 gap too open. **New Step 9A — Edger passes** solves each edger explicitly (width taken against `PSG-D24`, mass balance, the partition into elongation and centre bulge via `PSG-D25`, the round→square check at E1 via `PSG-D26`). **Step 10** now takes `w̄` **post-edger** and `Δh` **including the upstream bulge** — the two errors run in opposite directions but do **not** cancel, since a few percent off width is not the same relative change as the bulge in a thin section. **Step 11** counts the **edgers as speed-changing stages**: they elongate, so `S1 → S2` is two ratios, not one, and the mismatch lands on the dancers that sit in exactly those positions. **Step 12 adds an edger term to `ε_total`** — the omission read **low**, and this check gates the **FL3 hybrid route**, the one route with no intermediate anneal, so the error was in the unsafe direction. **§3.3.5 restructured, and its illustration corrected for the second time.** Equal draft across three stands was the wrong *shape*, not just the wrong number: S3 is a skim pass. Bulk reduction now goes across the **reduction stands (S1, S2)** with S3 reserved, which **concentrates the load into two stands** — at a 0.170″ FM1 exit the bulk draft becomes **18.3%** against the 13.5% the equal-draft table implied, and that is the figure `PSG-D02`/`PSG-D10` must be checked against. The superseded `k` = 3 column is retained struck-through beside it. **A tension omission found while doing this:** §3.3.6's force model `F = w̄ · L_p · Q_p · σ̄_f` has **no tension term**, and `D-28`'s tension mode makes that live — applied tension reduces separating force, so in tension mode `F` is **over-predicted** (runnable schedules rejected) and the gap `S₀ = h_target − F/K` inherits the error and **delivers thin**. Added **`PSG-D27`** (inter-stand tension by mode) and **`PSG-Q29`** (is mode a schedule parameter or a machine setting). **Three new validations** — **V36** (edger width reduction within limit), **V37** (S3 reserved as a skim), **V38** (edger thickness gain carried forward, and flagged rather than silently solved at `Δt = 0`) — plus **V10**, **V20**, **V27** and **V30** amended, and §8.7's blocked-validation table extended. §6.1's flowchart gains the Step 9A node; the M4 and M8 master rows gain the edger and dancer fields. **Worked Examples A and B remain unaffected** — both are FL1 standalone, and **FL1 has no edger**, which Example A now says explicitly at Step 9A. |
 | **1.4** | **Aug 6, 2026** | Analysis Team | **Gap audit of the whole document — twelve defects fixed, five of them algorithmic.** **(1) FL2 standalone had no path through the engine.** §2.3 lists FL2's input as a flat spool and §4.3's enum admits `FL2`, but §6.2 began at *"total area reduction, **rod** to flattening entry"* and every branch exited via FL1, FL3 or FL1→anneal→FL2 — while §6.2's own note claimed the tree existed precisely so a standalone FL2 schedule could be produced. The tree now **branches on input form** before anything else; a flat spool skips Steps 2–8 and enters at Step 9. **(2) §4.2 gained the incoming flat-section inputs** — gauge, width, edge condition — and **`Prior cold work` becomes mandatory on a spool input**, because Step 12's anneal gate otherwise starts from zero on material that has already been drawn and flattened, which is the unsafe direction. **(3) `no_draw_threshold` was used in §6.2 and Step 4 but never defined** — no value, no data item, no input row, no rule; it is now **`PSG-D28`**, and the 2% figure in the internal interface contract is explicitly **not adopted** pending engineering review. **(4) Die snapping could violate the bound it snapped from.** §3.3.3 states that `d = √(4·A_final/π)` is a **lower bound** and that using it as the answer produces under-width wire; Step 6 nonetheless snapped to *nearest*, and Worked Example A snapped **down**, 0.2902″ → 0.2900″. The final die now snaps **up** whenever the entry came from the bound — which is the expected state at go-live per `PSG-R01`, not an edge case — and **Example A is recomputed** (DB2 0.2950″, DB1 0.3350″, drafts 20.20% / 22.45%, `ε_drawing` 0.4799 on the snapped sequence). The down-snap passed every reduction check, which is why it needed a rule rather than a warning. **(5) Step 9A's partition function was undefined** — `Δt = φ · f(…)` with `f` unnamed, the only relation in the document without a named basis, so `PSG-D25` asked for a coefficient to a function that had not been stated. It is now written as **volume-constant strain decomposition**, the same structure as §3.3.3's spread model run in reverse, tagged **`[RECOMMENDED DEFAULT]`** — and §12.1's *"all governing formulas are established practice"* is corrected, since that is now true of drawing and rolling but not of edging. Whether the shape is right is **`PSG-Q31`**; the risk that it is not is **`PSG-R12`**. **Two dangling validations closed:** `V33` (take-up capacity) had **no calculation to evaluate** — new **Step 12A** derives output length and weight, and exceeding capacity **splits the order across units rather than failing it**; `V16` (finished temper) had **no method**, making target temper a mandatory input nothing consumed — now **`PSG-D29`**. **Consistency:** §4.3/§4.4 aligned with §5's `M4`/`M8` (they had disagreed since v1.2) and *blade* → *roller*; §6.6 gained six exception rows; §7 gained `R31`–`R36`, amended `R11`/`R15`/`R19`, and **its summary tally was wrong and is recounted** — it claimed 12/14/4 against a table holding 16/13/1, and now reads **18 `[INDUSTRY STANDARD]` / 16 client-input / 2 equipment of 36**; §12.4's *"four items"* corrected to five blockers. **Five new client items** — `PSG-D28`, `PSG-D29`, `PSG-D30`, `PSG-Q30`, `PSG-Q31` — plus `PSG-R11`/`PSG-R12` and validations `V39`/`V40`. Sign-off checklist now **30 data items and 31 questions**. |
 | **1.5** | **Aug 6, 2026** | Analysis Team | **Second gap audit — eighteen defects, seven of them algorithmic. The recurring cause: a v1.2–v1.4 change made in one section and never carried into the sections that consume it.** **(1) Width was designed at one point on the line and nowhere else.** Step 2 solved the FM1 entry diameter from target width; Step 9A needed a width at each edger; Step 10 needed a mean width per stand — **and nothing computed the chain between them**. New **§3.3.12** and **Step 9B** do, and they surface a consequence nothing had stated: there is no edger at the mill exit, so **final width leaves S3**, which spreads — **E2 must be set narrow of target by the last stand's spread**, or every FL2 and FL3 coil runs over-width. `PSG-D08` is therefore **not an FL1-only item**; the flat→flat coefficient governs every finished coil. Width tolerance had been a mandatory input that **no calculation consumed** — now `V41`. **(2) Steps 9, 9A and 9B are mutually dependent and were written as three sequential steps.** Each needs an output of another; they are now stated as one **iterative solve** with a convergence tolerance, an iteration cap and the `Δt` = 0 fallback. **(3) Step 9 had no form for the FL2-standalone path v1.4 had just added** — it solved for `h_FM1_exit`, which does not exist on FL2. Split into **Step 9-Rod** (backward) and **Step 9-Spool** (forward from the measured gauge, with a remedy report — the rolling analogue of Worked Example B, which the document lacked); `k_bulk = 0` handled; the spool branch gains its own **pre-anneal** gate, since "intermediate anneal" is meaningless where there is no upstream stage. **(4) An undersize rod passed silently.** A rod smaller than the required entry gives `R < 0`, which satisfies Step 4's no-draw branch — so the engine bypassed both draw boxes and issued a warning-free schedule for a product that cannot be made. New **Step 3A** and `V43`. Not hypothetical: 0.375″ rod against 0.125″ × 0.875″ has **0.98% of area margin** where the flattening pass needs ~11% elongation. **(5) The bite condition was the wrong relation, on the wrong coefficient.** `PSG-D04` requested **one** number for die/wire *and* roll/material contact; the limit is **quadratic in `μ`**, so the 0.03–0.10 range spans ~**11×** in admissible draft — split into `PSG-D04` (drawing) and **`PSG-D31`** (rolling, **High**). And `Δh ≤ μ²R` is derived for a **flat** entry: applied to FM1's round entry it demands `μ ≥ 0.176` and **rejects §6.4's own nominal example**. Excluded, with the real criterion asked as **`PSG-Q32`**. §3.3.5's 18.3% draft is now checked against the limit — it needs `μ ≥ 0.088`, the top of the range, which §3.3.5 had not mentioned while naming only force and power as bounds. **(6) Three quantities were required but not calculable.** **Drive power** — `V21`, `R13` and blocker `B2` all depend on it and §3.3.6 calls it "often binding before force", yet no torque or power relation existed: added, with **Step 10A** and **`PSG-D34`**. **Tension** — `R34` was tagged `[INDUSTRY STANDARD]` with no relation named, so `PSG-D27`'s setpoints fed nothing: `σ̄_f,eff = σ̄_f − (σ_b + σ_f)/2` stated, one substitution moving both force and gap. **`Q_p`** — used in the force model with no relation, no default and **no id**: attributed to Sims/Ekelund and computed, not supplied. **(7) Cold work under-reported, in the direction Step 12 exists to catch.** `ln(A₀/A₁)` equals the **length** strain alone, so on a rolling pass it reports `(1−β)·ε_h` and on an edger pass `(1−φ)·\|ε_w\|` — at `φ` = 0.5 the edger term v1.3 added was understated **twofold**. New **§3.3.13** uses **equivalent strain** for rolling and edging, `ln(A₀/A₁)` unchanged for drawing. `ε_prior` was also **missing from the formula** although §4.2 makes it mandatory on a spool input. **Consistency:** `w_eff(d)` in Step 2 was undefined — the same defect v1.4 fixed for Step 9A's `f(…)` — now `w_eff(d) = d`, a definition folded into the calibration; **Step 1B** added for the incoming area, since *as-rolled* is a mandatory edge condition with no area formula (**`PSG-D33`**); the §6.1/§6.2 **interleave and its circularity** stated (the route gate needs Step 12's output while Step 2 needs the route); Step 12A now splits against the **planned output multiple** (**`PSG-D32`**) rather than the take-up **rating**, which differs by roughly **2×** and reported too few units; §3.3.11's *"S1 — round → flat"* corrected, since S1's entry is always already flat; edger **bypass** rules stated (**`PSG-Q33`**) — bypassing E1 removes the round→square transition, bypassing S2 leaves the edgers adjacent. **§8 gains a third outcome — *not evaluated* —** because a strict two-state rule means no schedule could be approved at go-live; **§8.7 was fifteen rows against forty validations** and is completed, including `V27`, an **Error** blocked on `PSG-D26` and previously unlisted, and `V31`/`V32`, blocked on data no item had requested (**`PSG-D35`**); `V02`–`V04`'s attribution to `PSG-D02` **corrected** — they are drawing checks, and no validation had enforced the rolling draft limits at all (`V44`). **§9 re-ordered**: five Medium items had come to sit above five High ones under a heading claiming priority order. **§7's recount was right but its prose was not** — `R29`/`R33` were called "four of the eighteen" `[INDUSTRY STANDARD]` rules when they are the two **Equipment** rules. `PSG-A01` cited "the alloys in §2", which contains none. `PSG-D12` added to blocker `B2`. **New:** `R37`–`R40`, `V41`–`V45`, `PSG-D31`–`D35`, `PSG-Q32`–`PSG-Q34`, `PSG-R13`/`R14`; `PSG-Q28` extended with the `R08`-vs-skim minimum-draft conflict; `PSG-Q30` re-filed under Production. Sign-off checklist now **35 data items and 34 questions**. **Not in this document, by design:** `FR-381`/`384`/`385`/`386`/`387` contradict this specification's arithmetic on five counts; that is recorded in `../MasterSpecification.md` §10 and `REVIEW.md`, since this document carries no story or requirement IDs. |
+| **1.6** | **Sep 3, 2026** | Analysis Team | **United Aluminum supplied its own formulas, and this document adopts them — `D-43`.** Tim O'Brien sent *"all the formulas that I am using in my current pass calculator"* on 2 Sep 2026: twenty relations, every one of them a PNG image inside a Word document. **Three of them are the answer to a request this specification made and could not answer itself.** §3.3.3 had stated that the round→flat pass *"needs **its own empirical relation**, calibrated from your trial data"* and that no published strip-rolling correlation transfers to a round entry — **`F16` is that relation**, carrying the roll radius explicitly and scaled by `C₅`. **`F19`** is its flat→flat partner and **`F20`** the edger's thickness response. **A fourth provenance tag, `[CLIENT SUPPLIED]`, is introduced** for them: the existing three had no category for a relation the client states as his own practice, and the distinction matters because where a client form differs from published practice, **the client's form governs**. ⚠ **`PSG-D08` and `PSG-D25` are NOT closed and blockers B4/B5 stand** — the *relations* arrive, the *coefficients* do not, and `[§12.5]`'s P5 trial campaign is unchanged except that each measurement now has a named quantity to fit. **What this changes in the calculation. (1) §6.3 Step 2 can now compute what it said it could not.** It solved a lower bound and reported *"the engine cannot compute the true entry diameter"*; solving `F16` on **§6.4's own worked example** gives **0.2933″** against the 0.2902″ bound — larger, as §3.3.3 predicts, with a physical 2.1% elongation — so Step 3's total drawing reduction moves **40.10% → 38.85%** with the pass count unchanged at 2, and **Worked Example A is recomputed**. **(2) `w_eff(d) = d` is RETIRED, not retagged.** It existed only because the exponential spread model needs a transverse datum for a round section; `F16` takes `D₁` and `T₂` directly. With the edger partition becoming client-supplied, **§12.1's *"three exceptions"* to *"every governing formula is established practice"* drops to ONE** — the round→flat grip criterion, `PSG-Q32`. **(3) §3.3.12's width chain is restated in `F19`'s form**, and the mapping `β = ln(1 + C₆·√(R·Δh)·Δh/(W₁T₁)) / ln(T₁/T₂)` shows that **`β` is not constant under the client's model** — it varies with roll radius, entry width and draft, and only `C₆` is. E2's pre-compensation for S3's spread is re-derived by **inverting `F19`**, since dividing by `exp(β·ε_h)` now presumes a constant that does not exist. **(4) §3.3.11's partition function, tagged `[RECOMMENDED DEFAULT]` in v1.4 because it was stated by analogy, is replaced by `F20`** — and `k` is shown to be the complement of `φ`, so **`PSG-Q31` is answered in form**. `PSG-R12` stands: a fitted constant may still fail to generalise. **(5) §3.3.4's round-edge area is confirmed first-hand** — `F14` and `F10` are both `A = t·w − 0.2146·t²`, which had to be tagged `[INDUSTRY STANDARD]` for want of a source. **Three new validations, and they are not decoration. `V46`** — `F16` is **undefined for `T₂ ≥ D₁/2`** (a negative base to a fractional power). **`V47`** — below ≈57–60% thickness reduction `F16` implies **negative elongation**. **`V48`** — predicted width cross-checked against volume conservation. ⚠ **§6.4's nominal product runs at 62.5%, three points above the floor**, and ⛔ **on the square-edge area basis the floor is 65.1%, which puts it OUTSIDE** — implied elongation 0.982 against 1.021 on the rounded-edge basis. **The same product is feasible on one area basis and impossible on the other**, which is why the client's own `F4`/`F17`-versus-`F10`/`F14` inconsistency is `Q93` item 4 rather than a note. **§6.3 Step 3A's worked figure is recomputed** — on the 0.375″ rod / 0.125″ × 0.875″ case the rod-adequacy margin moves **+0.98% → −3.93%**, so the undersize-rod check v1.5 added **now actually fires** on the document's own example, and **`FW-013`'s acceptance criterion is falsified** and re-derived in `05-Backlog-MVP2.md`. **Not adopted: `F6`.** The client's cumulative-strain formula sums the length, width and thickness strains, which is **identically zero** for any volume-conserving pass; §3.3.13's equivalent-strain treatment stands, because Step 12 gates the FL3 hybrid route and under-reporting strain errs unsafe. Asked as `Q93` item 3, not repaired silently. **Also recorded:** `F18` uses the **nominal** roll radius where §3.3.6 uses the deformed `R′`, immaterial inside a fitted correlation and material in the force model; the client's `C₆` is namespaced **`PSG-C_flat`** here because a bare `C6` collides with a 23 Jul call clarification. ⛔ **No temper relation was supplied** — `PSG-D29`, `V16` and `A2` are untouched, with an ETA of w/c 7 Sep. **New:** `V46`–`V48`, the `[CLIENT SUPPLIED]` tag. Audit record `../../95-archive/source-documents/ClientEmail_2026-09-02_PassCalculatorFormulas_SyncPlan.md`. |
 
 ---
 
@@ -34,10 +35,16 @@ supply knowledge that only United Aluminum has.
 | `[INDUSTRY STANDARD]` | Established published practice or physical law. The governing relation is named at the point of use. |
 | `[RECOMMENDED DEFAULT]` | A starting value we propose so development can proceed. Expected to be tuned against trial data. |
 | `[CLIENT INPUT REQUIRED]` | We do not know this and will not guess. Shown as a blank awaiting your input. |
+| `[CLIENT SUPPLIED]` | **United Aluminum's own stated relation, adopted as given.** Where it differs from published practice, your form governs — you calibrate against it, so your trial data will fit it. Added **3 September 2026** with the pass-calculator formulas (`D-43`). |
 
 The most common pattern in this document is a **standard relation with plant-specific
 coefficients** — the equation is `[INDUSTRY STANDARD]`, the numbers that go into it are
 `[CLIENT INPUT REQUIRED]`. That combination is normal and appears throughout.
+
+**A `[CLIENT SUPPLIED]` relation still carries `[CLIENT INPUT REQUIRED]` coefficients**, and the two
+tags coexist on the same formula. `F16`'s spread correlation is yours; the `C₅` that scales it is
+still blank. **Supplying the relation does not close the blocker** — `PSG-D08` and `PSG-D25` remain
+open, and §12.3's B4 and B5 stand.
 
 **No value specific to United Aluminum's alloys, mills, tooling, or products is asserted anywhere in
 this document as known.**
@@ -530,6 +537,52 @@ d_entry ≥ √(4 · A_final / π)
 
 Using it as the answer rather than as a bound produces flat wire that is **under-width**.
 
+### 3.3.3a The Round → Flat Width Relation — Yours
+
+**You supplied this relation on 2 September 2026** `[CLIENT SUPPLIED]`, and it is what §3.3.3 above
+asked for. It is used in preference to any published strip-rolling correlation:
+
+```
+        ⎡                        ⎛        ⎛      2T₂ ⎞^2.25 ⎛ 2R ⎞^−0.82 ⎞          ⎛ 2T₂ ⎞ ⎤
+ωĆ = C₅ ⎢ 0.7854 · D₁² / T₂  ·   ⎜ 1 − 15.8 ⎜ 1 −  ───  ⎟       ⎜ ─── ⎟         ⎟ + 0.1426 D₁ ⎜ ─── ⎟ ⎥
+        ⎣                        ⎝        ⎝       D₁  ⎠        ⎝ D₁ ⎠          ⎠          ⎝ D₁  ⎠ ⎦
+
+  D₁   entry diameter at FM1               T₂   exit thickness
+  R    roll radius (FM1 = 6.000″)          C₅   spread factor — PSG-D08
+```
+
+**`0.7854 · D₁² / T₂` is `ωT`, the theoretical zero-elongation width** (§3.3.3's `β = 1` extreme,
+since `π/4 = 0.7854`). The bracket reduces it for the elongation the pass actually produces, and the
+trailing term is an edge correction. So the relation **is** §3.3.3's argument, made quantitative.
+
+**`C₅` scales it**, in your words: *"`C₅` = 1.00 → published theoretical prediction; > 1.00 →
+predicts more spread; < 1.00 → predicts less spread."* Unlike a bare coefficient, it has a defined
+starting value, so the engine runs before calibration — flagged, not blocked.
+
+> **⚠ Two limits, and the engine enforces both.** They are not in your document, and the nominal
+> product sits close to one of them (**`G90`**).
+>
+> **1. Undefined for `T₂ ≥ D₁/2`.** The term `(1 − 2T₂/D₁)` goes negative and is raised to `2.25`,
+> a fractional power — the result is complex, not large. **`V46`** rejects the input.
+>
+> **2. Physically valid only above ≈ 57–60% thickness reduction.** Below that the predicted width
+> implies a cross-section *larger* than the entry area — negative elongation. At `D₁ = 0.250″`,
+> `R = 6.0″` the crossover is `T₂ = 0.1018″` (**59.3%**). **`V47`** rejects it.
+>
+> **Do not clamp or extrapolate.** Outside the band the relation is not merely inaccurate; a clamped
+> value is indistinguishable from a good one. Report *not evaluated* (§8).
+
+> **⚠ Which area you pair it with decides feasibility, not just precision.** §6.4's nominal product
+> (0.1100″ × 0.6250″) runs at **62.5%** reduction — inside the band on the **round-edge** area
+> (§3.3.4), implied elongation **1.021**. On the plain `w × t` rectangle the floor is **65.1%** and
+> the same product implies **0.982** — impossible. Your document uses the rectangle in its two
+> footage formulas and the round edge in its two area formulas; **which applies to footage is
+> `Q93`**, and until it is answered the engine uses the **round-edge** area throughout.
+
+**`β` is retained as a derived reporting quantity**, not an input: `β = ε_w/ε_h` computed from the
+width this relation predicts. It is reported so a schedule can be compared against published
+practice, and it is **not** used to predict width.
+
 ### 3.3.4 Edge Geometry and Cross-Sectional Area
 
 The finished cross-section is not a rectangle unless the edge is square `[INDUSTRY STANDARD]`:
@@ -545,6 +598,29 @@ roughly 2% on the required entry diameter. That is larger than typical die incre
 propagates directly into die selection.
 
 Edge profile is a required input to the area calculation, not merely a tooling setting.
+
+> ✅ **Confirmed by you, 2 September 2026.** Two of the twenty formulas in `D-43` are this relation:
+> *"Final Cross-Sectional Area Flat Wire"* is `A = w·t − (t² − πt²/4)`, and *"Round to Flat
+> Cross-Sectional Area"* is the same thing written through an edge radius, `A = w·t − (4r² − πr²)`
+> with `r = t/2`. Both reproduce the table above to twelve decimal places. This was the one line in
+> §3.3 tagged `[INDUSTRY STANDARD]` for want of a source; it now has one.
+>
+> ⚠ **Two readings we could not settle from your document, both asked as `Q93`.** The first prints
+> as `a = W₂ − (T₂² − πT₂²/4)`, subtracting an **area from a length** — we read the `× T₂` as a
+> typo. The second's legend maps `(r)` to *"Radius of the wire rod"*, but only `r = t/2`, the
+> **edge** radius, reproduces the table; on a 0.250″ rod flattened to 0.100″ × 0.511″ the two
+> readings differ by **23% of area**.
+
+**And your document fixes the edge profile by operation** `[CLIENT SUPPLIED]`, which this
+specification had not stated:
+
+> *"…approximated as a **rectangle with rounded edges for mill stands**, and **width × thickness for
+> edgers**."*
+
+That is consistent with §3.3.11 — the first edger carries the section from round edge to square — and
+it partly serves **`PSG-D26`**. ⛔ **It does not say which basis the *footage* calculation uses**, and
+your own document uses the rectangle there while using the round edge here. That gap is `Q93`, and
+§3.3.3a shows it deciding whether §6.4's nominal product is makeable at all.
 
 These formulas describe the **finished shape**. The **operation that produces it** — the edgers,
 which roll-form rather than cut, and which feed the removed width back into the section — is
@@ -693,6 +769,15 @@ Power per stand:    P = 2 · M · ω           ω = v / R      roll angular velo
 The factor of two counts both rolls. `P` is compared against **PSG-D11** per stand, and because it
 carries the line speed it can bind at a draft the force check passes — which is why §3.3.6 describes
 it as "often binding before force."
+
+> **⚠ Your contact-length formula and this one differ, and the difference is not uniform.** `D-43`'s
+> *"Contact-Length Approximation"* is `L = √(R(T₁ − T₂))` on the **nominal** roll radius; this model
+> uses the **deformed** radius `R′` (Hitchcock flattening), which is larger under load. Inside a
+> fitted spread correlation the difference is **immaterial** — it is absorbed into `C₅` and `C₆` when
+> they are calibrated, provided the same radius is used to fit and to apply. In the **force** model
+> above it is **not** absorbed: `F` scales with `L_p`, and `F` is what `PSG-D10` and `PSG-D11` are
+> checked against. This specification therefore keeps `R′` here and uses `R` in §3.3.3a and §3.3.12,
+> deliberately, and states so at both sites.
 
 > **Contact length carries the roll radius, so force differs by stand.** `L_p = √(R′ · Δh)` means that
 > at equal draft, **S1 (8″ roller) sees roughly 1.16× the separating force** of S2 or S3 (6″), since
@@ -870,6 +955,36 @@ as a trim:
    footing as the free-spread relation `PSG-D08`: without it, the section entering S2 and S3 is
    unknown, and the finishing drafts are being allocated against a guessed entry thickness.
 
+   **You supplied the relation on 2 September 2026** `[CLIENT SUPPLIED]`, and this specification uses
+   it in place of the strain-decomposition form v1.4 stated by analogy:
+
+   ```
+   t_out = t_in · [ 1 + k · (w_in − w_out) / w_in ]        k = PSG-D25
+   ```
+
+   **`k` is the partition coefficient in a different parameterisation.** Substituting into the mass
+   balance above gives the length response directly:
+
+   ```
+   L_out / L_in = (w_in / w_out) / (1 + k · Δw / w_in)
+   ```
+
+   so on a 0.550″ → 0.500″ edger pass, `k = 1` elongates the section by **0.83%** — essentially all
+   the displaced width goes to thickness and bulge — while `k = 0` puts **all** of it into length.
+   **`k` is therefore the complement of `φ`**, and the two are interchangeable: `φ` is still reported,
+   `k` is what is calibrated, because it is what you will measure against.
+
+   ✅ **This answers `PSG-Q31` in form.** That question asked whether the *relation* was right, not
+   only its coefficient — v1.4 had derived it by analogy with the spread decomposition and flagged
+   that the analogy might not hold. You have now supplied your own, so the analogy is retired.
+   ⚠ **`PSG-R12` stands**: a coefficient fitted to trial points may still fail to generalise if the
+   bulge is local rather than distributed, so the trial campaign must still measure the **profile
+   across the width**, not a mean thickness.
+
+   ⛔ **`k` itself is still owed.** It is one of the two constants your covering note describes as
+   *"an irrelevant value as a place holder, until… we are able to run samples."* **`PSG-D25` stays
+   open and §12.3's blocker B5 stands.**
+
 3. **The bulge is not uniform across the width, and the skim pass is what removes it.** After an
    edger the section is thicker at mid-width than at the edges. S2 flattens the first bulge; the
    **S3 skim pass** exists to take out the second and deliver constant area edge to edge. Its
@@ -919,6 +1034,46 @@ At a stand:   w_out = w_in · exp(β · ε_h)          ε_h = ln(h_in / h_out)  
 At an edger:  w_out = w_in − Δw                                                narrows
 ```
 
+**Superseded 3 September 2026 by your own flat→flat relation** `[CLIENT SUPPLIED]`, `D-43`:
+
+```
+At a stand:   w_out = w_in · [ 1 + C₆ · ( √(R · Δh) / w_in ) · ( Δh / h_in ) ]
+
+  Δh = h_in − h_out        √(R · Δh) is the contact length (§3.3.6, on nominal R)
+  C₆                        flat→flat spread factor — PSG-D08
+```
+
+⚠ **Namespaced `PSG-C_flat` in this repository.** A bare `C6` already denotes a 23 July call
+clarification on dancer tension; the two are unrelated.
+
+> **⚠ These two forms are not the same model, and `β` is the casualty.** Equating them:
+>
+> ```
+> β = ln( 1 + C₆ · √(R · Δh) · Δh / (w_in · h_in) ) / ln(h_in / h_out)
+> ```
+>
+> **`β` is not a constant under your model.** It varies with roll radius, entry width and draft;
+> only `C₆` is fixed. The two agree to first order — `exp(x) ≈ 1 + x` — and diverge on heavy passes.
+> This matters most where it is used below: **a pre-compensation computed with a constant `β` is
+> wrong by exactly the amount `β` drifts across the pass it is compensating for.**
+
+**So E2's pre-compensation is re-derived by inverting the relation above**, not by dividing by
+`exp(β · ε_h)`:
+
+```
+Solve for w_E2_out:    w_target = w_E2_out · [ 1 + C₆ · ( √(R_S3 · Δh_S3) / w_E2_out ) · ( Δh_S3 / h_S3,in ) ]
+
+which is linear in w_E2_out:
+
+    w_E2_out = w_target − C₆ · √(R_S3 · Δh_S3) · ( Δh_S3 / h_S3,in )
+```
+
+⚠ **The inverted form is a subtraction, not a division** — S3's spread is an **absolute** width
+increment under this model, independent of the width entering it. That is a materially different
+pre-compensation from the exponential form's proportional one, and it is the form the engine uses.
+
+The exponential form is retained below only to state the consequence it was written to establish.
+
 **The consequence that changes the design direction: the last pass is a stand, not an edger.** There
 is no edging capability at the mill exit (§3.3.11), so **final width leaves S3** — and S3, being a
 rolling pass, spreads. The width the customer receives is therefore *not* the width E2 sets. E2 must
@@ -962,6 +1117,23 @@ for material that cannot absorb the cold work — the exact failure the check ex
 
 > **This is the same argument v1.3 used to add the edger term at all**, applied one level deeper. Adding
 > a term computed the wrong way recovers only part of what was missing.
+
+> ⛔ **`D-43`'s cumulative-strain formula is NOT adopted, and this is the one place we depart from
+> your document.** *"Cumulative True Strain"* reads `Σεi = ε_t₁ + ε_t₂ + ε_t₃`, and your legend
+> defines those three as the **length, width and thickness** true strains. Summed over the three
+> dimensions of one pass that quantity is **identically zero** — it is `ln(V_out / V_in)`, and volume
+> is conserved. We have verified it to twelve decimal places on a flat→flat pass.
+>
+> **We think you mean a sum over *passes*, not over dimensions**, which is exactly what `Σεi` would
+> be if each `ε_t` were one pass's equivalent strain — and that is the formula above. It is asked as
+> **`Q93`** rather than assumed, because the Provenance Convention requires a relation to be tagged
+> where it is used, and silently rewriting a client formula into the one we expected would defeat
+> the purpose of having asked.
+>
+> **Why this is the departure worth making.** Step 12's cumulative strain **gates the FL3 hybrid
+> route** — the only route with no intermediate anneal. A strain measure that reads zero, or reads
+> low, sends material down the route that cannot anneal it. That is the failure this check exists to
+> prevent, so where the two forms disagree, the engine uses the one that cannot read zero.
 
 ## 3.4 Optimisation Strategy
 
@@ -1276,24 +1448,37 @@ IF incoming_edge = As-rolled AND PSG-D33 unavailable:
 ```
 Lower bound (zero elongation):    d_min = √(4 · A_final / π)
 
-With calibrated spread coefficient β for the round→flat pass:
-    solve  ln(w_target / w_eff(d)) = β · ln(d / t_exit)   for d
+Solve §3.3.3a for d:              w_target = ωĆ(d, t_exit, R_FM1, C₅)
 
-    w_eff(d) = d        the round section's effective entry width — see below
-    t_exit              the gauge FM1 delivers, WHICH DEPENDS ON THE ROUTE — see below
+    monotonic in d over the valid band, so bisect on [d_min, d_max]
+    t_exit    the gauge FM1 delivers, WHICH DEPENDS ON THE ROUTE — see below
+    C₅        spread factor (PSG-D08). DEFAULT 1.00 — your published-prediction value
 
-Where β is unavailable, use d_min and flag the schedule as
-"width not designed — spread model uncalibrated".
+Guards, before and after the solve:
+    REJECT if  t_exit ≥ d/2                             V46 — relation undefined
+    REJECT if  implied elongation < 1.0                  V47 — negative elongation
+    WARN   if  |A_entry − A_final · elongation| > tol    V48 — mass balance
+
+Where the solve cannot run, fall back to d_min and flag the schedule as
+"width not designed — spread relation out of range".
 ```
 
-> **`w_eff` is defined here because §3.3.3 says it cannot be assumed.** A round entry has no width in
-> the sense a rectangular entry does; the classical relations need *some* transverse datum, and the
-> defensible choice is the **entry diameter itself** — the maximum transverse extent of the section,
-> and the quantity a width gauge would read on the incoming wire. `w_eff(d) = d` is therefore adopted
-> `[RECOMMENDED DEFAULT]`, and it is a *definition* folded into the calibration rather than an
-> independent assumption: whatever systematic error it carries is absorbed into `β` when `PSG-D08` is
-> fitted from measured round-entry / measured-exit-width pairs. What matters is that the **same**
-> definition is used to fit `β` and to apply it. Stating it prevents the two from diverging.
+> **Rewritten 3 September 2026 — this step no longer stops at the bound.** v1.5 read: *"With no
+> calibrated spread coefficient the engine cannot compute the true entry diameter. It proceeds on
+> the bound and flags the schedule accordingly."* §3.3.3a's relation is now available and **`C₅` has
+> a defined starting value of 1.00**, so the true entry diameter is computed, not deferred. §6.4 is
+> recomputed on it.
+>
+> ⚠ **The result is still provisional until `C₅` is calibrated** — but provisional in a different
+> sense than before. The bound was a *known-wrong* answer (`β = 1`, zero elongation, delivering
+> under-width wire); this is your published prediction, unscaled.
+
+> **`w_eff(d) = d` is RETIRED.** It existed only because the exponential spread model needs a
+> transverse datum for a section that has no width in the rectangular sense — v1.5 adopted the entry
+> diameter `[RECOMMENDED DEFAULT]` and folded the resulting error into `β`. **§3.3.3a's relation
+> takes `D₁` and `T₂` directly and needs no transverse datum at all**, so the definition is not
+> retagged, it is removed. §12.1's list of places this document rests on something other than
+> established practice loses an entry because of it.
 >
 > **`t_exit` is not always the final gauge.** On **FL1** FM1 delivers final gauge, so `t_exit = t_target`.
 > On **FL3** FM1 delivers an *intermediate* gauge (§3.3.5) that Step 9 computes — so Step 2 consumes an
@@ -1333,6 +1518,24 @@ IF A_rod < A_entry:   REJECT
 > flattening pass needs roughly 11% elongation at any plausible spread coefficient. Reaching 0.875″ wide
 > from 0.375″ rod at that gauge would require `β ≈ 0.77`, far outside real flat rolling. The target needs
 > a **larger** rod, and the remedy the engine reports is the minimum diameter, not a die change.
+>
+> ⭐ **RECOMPUTED 3 September 2026, and the margin is now negative — this check FIRES on its own
+> example.** v1.5 could only compare against the zero-elongation bound, because that was the only
+> entry area Step 2 could produce. §3.3.3a now solves the real one: at `t_exit` = 0.125″,
+> `w_target` = 0.875″, `R` = 6.000″ and `C₅` = 1.00 the required FM1 entry is **0.3823″** — **larger
+> than the 0.375″ rod itself**. `A_entry` = 0.114788 in² against `A_rod` = 0.110447 in², so the
+> margin moves **+0.98% → −3.93%** and the schedule is **rejected** where v1.5 passed it with a
+> warning. Reported minimum rod diameter: **0.3823″**.
+>
+> ⚠ **Two caveats, both of which belong in the rejection message.** `C₅` = 1.00 is your unscaled
+> published prediction, not a calibrated value, so this says the product is *at or past* the
+> feasibility edge on 0.375″ rod — not that it is provably impossible; a calibrated `C₅` below 1.00
+> would bring it back. And the **0.109375 in² above is the square-edge area**; on the round-edge
+> basis §3.3.4 prescribes it is 0.106022 in², which is the figure the engine actually uses.
+>
+> ⛔ **This falsifies `FW-013`'s acceptance criterion**, which asserts this exact case returns
+> `preflattenDiameterIn 0.3732` and `drawPasses 0`. `0.3732` is the square-edge bound; the round-edge
+> bound is `0.3674`; and the solved entry is `0.3823`. Re-derived in `../../60-delivery/05-Backlog-MVP2.md`.
 
 ### Step 4 — Pass count
 
@@ -1775,42 +1978,72 @@ A_final = 0.1100 × 0.6250 − 0.2146 × 0.1100²
 ```
 *(Square edge would give 0.068750 in² — 3.8% higher. The edge correction is not negligible.)*
 
-**Step 2 — Entry diameter (lower bound)**
+**Step 2 — Entry diameter** *(recomputed v1.6 — the bound is now the floor, not the answer)*
 ```
-d_min = √(4 × 0.066153 / π) = √0.084229 = 0.2902 in
-```
-With no calibrated spread coefficient the engine cannot compute the true entry diameter. It proceeds
-on the bound and flags the schedule accordingly. *(For contrast: the rectangular-area
-approximation gives 0.2959″ — a 0.0057″ difference, larger than a typical die increment.)*
+Lower bound:      d_min = √(4 × 0.066153 / π) = √0.084229 = 0.2902 in
 
-**Step 3 — Total drawing reduction**
+Solve §3.3.3a for d at t_exit = 0.1100, w_target = 0.6250, R = 6.000, C₅ = 1.00:
+
+                  d_entry = 0.2933 in   →   ωĆ = 0.6248 in   (target 0.6250)
 ```
-A_rod = π × 0.3750² / 4 = 0.110447 in²
-R     = 1 − 0.066153 / 0.110447 = 1 − 0.598962 = 0.4010  →  40.10%
+**`d_entry` = 0.2933″, which is 0.0030″ ABOVE the bound** — the direction §3.3.3 predicts, since real
+flattening elongates and the bound assumes it does not. Implied elongation over the flattening pass
+is **1.021**, and the pass runs at **62.5%** thickness reduction, inside §3.3.3a's ≈59.3% floor.
+
+> ⚠ **Three numbers of the same order pull on this one die, and two of them pull the same way.** The
+> spread correction is **+0.0030″**; the round-edge correction §3.3.4 applies is **+0.0057″** (the
+> rectangular-area approximation gives 0.2959″, which §3.3.4 already calls *"larger than a typical
+> die increment"*); and `FR-384`'s die increment is **0.005″**. Both physical corrections raise the
+> entry diameter, so **`R36`'s up-snap rule still binds** — the final die may not be snapped below a
+> bound-derived entry, and here the entry is above the bound to begin with.
+>
+> ⚠ **62.5% is only three points above the validity floor**, and on the square-edge area basis the
+> floor is **65.1%** — which would put this example outside it (implied elongation 0.982). See
+> `Q93` and `G90`. The engine uses the round-edge area, per §3.3.4.
+
+**Step 3 — Total drawing reduction** *(recomputed on the solved entry, not the bound)*
+```
+A_rod   = π × 0.3750² / 4 = 0.110447 in²
+A_entry = π × 0.2933² / 4 = 0.067543 in²
+R       = 1 − 0.067543 / 0.110447 = 1 − 0.611544 = 0.3887  →  38.85%
+```
+*(v1.5 computed 40.10% against `A_final` on the bound. Drawing delivers the FM1 **entry**, not the
+finished section, so the entry area is the correct numerator — and the solved entry is larger, so the
+drawing reduction is smaller.)*
+
+**Step 3A — Rod adequacy**
+```
+A_rod 0.110447 > A_entry 0.067543   →  PASS, 38.9% of margin
 ```
 
 **Step 4 — Pass count** *(r_max placeholder = 25%)*
 ```
-n = ⌈ ln(0.598962) / ln(0.75) ⌉ = ⌈ (−0.512544) / (−0.287682) ⌉ = ⌈ 1.7817 ⌉ = 2 passes
+n = ⌈ ln(0.611544) / ln(0.75) ⌉ = ⌈ (−0.491767) / (−0.287682) ⌉ = ⌈ 1.7094 ⌉ = 2 passes
 ```
 Two draw boxes available → feasible. *(The two-pass ceiling at 25% is **43.75%**, not 50%. Our
-40.10% clears it with margin.)*
+38.85% clears it with more margin than v1.5's 40.10% did — **the pass count is unchanged**, which is
+the point worth noting: adopting the client's spread relation moved the arithmetic without moving
+the schedule's shape.)*
 
 **Step 5 — Distribution and die sizes**
 ```
-r_each = 1 − (0.598962)^(1/2) = 1 − 0.773926 = 0.2261  →  22.61% per pass
+r_each = 1 − (0.611544)^(1/2) = 1 − 0.781953 = 0.2181  →  21.80% per pass
 
-DB1 die = 0.3750 × (0.2902/0.3750)^(1/2) = √(0.3750 × 0.2902) = 0.3299 in
-DB2 die = 0.2902 in
+DB1 die = 0.3750 × (0.2933/0.3750)^(1/2) = √(0.3750 × 0.2933) = 0.3316 in
+DB2 die = 0.2933 in
 ```
 
 **Steps 6–7 — Snap and re-validate** *(against an assumed tooling set at 0.005″ increments)*
 
-`d_entry` here came from the **zero-elongation bound**, so the final die snaps **up** (Step 6):
+`d_entry` is the **solved** entry from §3.3.3a, and `R36` requires the final die never fall below the
+zero-elongation bound (0.2902″), so the final die snaps **up** (Step 6):
 
 ```
-DB2: 0.2902 → 0.2950   snapped UP, deviation +0.0048 in
+DB2: 0.2933 → 0.2950   snapped UP, deviation +0.0017 in
 DB1: recomputed as √(0.3750 × 0.2950) = 0.3326 → 0.3350   nearest, deviation +0.0024 in
+                                                          (v1.5 reached the same two dies
+                                                           from the bound — the 0.005″ grid
+                                                           absorbs the 0.0030″ spread term)
 
 Actual r₁ = 1 − (0.3350/0.3750)² = 1 − 0.798044 = 20.20%   ✓ within 25%
 Actual r₂ = 1 − (0.2950/0.3350)² = 1 − 0.775451 = 22.45%   ✓ within 25%
@@ -1819,9 +2052,13 @@ Actual r₂ = 1 − (0.2950/0.3350)² = 1 − 0.775451 = 22.45%   ✓ within 25%
 Both passes remain inside the limit after snapping. Schedule proceeds.
 
 > **Note what the up-snap did, and why it is the safe direction.** The delivered entry is **0.2950″
-> against a bound of 0.2902″** — total drawing reduction 38.13% rather than 40.10% — so the section
-> entering FM1 carries about **3.3% more area** than the bound. That surplus goes into elongation and
-> width at the flattening pass, which is exactly the margin the bound exists to preserve.
+> against a solved entry of 0.2933″ and a bound of 0.2902″** — total drawing reduction 38.12% — so
+> the section entering FM1 carries **1.2% more area** than §3.3.3a says it needs, and 3.3% more than
+> the bound. That surplus goes into elongation and width at the flattening pass.
+>
+> ⚠ **v1.6 narrowed this margin, and that is worth seeing.** Against the bound the surplus looked
+> like 3.3%; against the relation that actually predicts width it is **1.2%**. The die grid, not the
+> arithmetic, is now what supplies the headroom — and on a finer grid it would supply less.
 >
 > Snapping **down** to 0.2900″ would also have passed both reduction checks — 22.56% and 22.77%,
 > comfortably inside 25% — because those checks test *reduction*, not *width*. It would have entered
@@ -1832,10 +2069,10 @@ Both passes remain inside the limit after snapping. Schedule proceeds.
 > equalises reduction moves with it; leaving `DB1` at its original 0.3300″ would put 22.56% on the
 > first pass and only 20.09% on the second, unbalancing a sequence that was designed to be even.
 
-**Step 3A — Rod adequacy.** `A_rod` = 0.110447 in² against a required entry area of 0.066153 in² —
-ample. Passes with 67% surplus, which is what a 40% drawing reduction means. *(Contrast the case in
-Step 3A's note, where the same 0.375″ rod against a 0.125″ × 0.875″ target has under 1% of margin and is
-correctly rejected.)*
+*(Step 3A ran in sequence above and passed with 64% of surplus. **Contrast the case in Step 3A's own
+note** — the same 0.375″ rod against a 0.125″ × 0.875″ target, where v1.6's solved entry of 0.3823″
+**exceeds the rod** and the schedule is correctly rejected. Same rod, same engine, opposite outcome,
+and the difference is the finished section.)*
 
 **Step 9 — Rolling allocation.** FL1 standalone: FM1 is the only rolling stand, so it delivers
 final gauge directly. *(Had this been routed through the finishing mill, FM1 would deliver an
@@ -1846,9 +2083,29 @@ through both edgers.)*
 route is a predicted quantity rather than a set one (§3.3.3).
 
 **Step 9B — Width chain.** One stage, and it is unedged: whatever FM1's spread produces is the delivered
-width. With `β` uncalibrated the engine reports width as **not designed** and `V41` as *not evaluated* —
-it cannot compare a prediction it did not make to the ±0.0050″ band. *(On FL2 or FL3 this step would
-back-solve E2 narrow of target to allow for S3's spread, per §3.3.12.)*
+width. **v1.6 predicts it**, where v1.5 could only report *"not designed"* and leave `V41` unevaluated:
+
+```
+§3.3.3a on the SNAPPED entry 0.2950″ (not the solved 0.2933″):
+
+    ωĆ = 0.6311 in    against a 0.6250 ± 0.0050 target
+                      →  +0.0061 in   →  V41 FAILS, by 0.0011 in
+```
+
+⛔ **This example now carries a width finding, and it is the die grid that causes it.** `R36` requires
+the final die to snap **up**; the up-snap adds 1.2% of area (Step 6); that area leaves FM1 as width,
+because FL1 has no edger to take it back. **The 0.005″ die increment is coarser than the ±0.005″
+width band it feeds**, so on this route a schedule can satisfy every drawing check and still be
+predicted out of tolerance on width — which is precisely the comparison §3.3.12 added `V41` to make,
+and which no version of this document could perform until the relation arrived.
+
+⚠ **This is a `Warning`, not an `Error`, and the schedule still issues.** `C₅` is uncalibrated, and
+a calibrated value below 1.00 closes the gap — 0.6311″ is your *published prediction*, not a
+measurement. But it is the first concrete evidence that **the tooling grid and the width tolerance
+are not compatible on FL1**, and it should be checked against real dies before go-live rather than
+discovered on the floor. Recorded as `G90`'s consequence; the remedy is either a finer final-die
+increment or an explicit width-tolerance negotiation on unedged product.
+*(On FL2 or FL3 this step would back-solve E2 narrow of target to allow for S3's spread, per §3.3.12.)*
 
 **Bite condition.** FM1 takes a **round** entry, so §3.3.2's flat-entry limit `Δh ≤ μ²R` does not apply
 and is not evaluated here. Taken literally it would demand `μ ≥ 0.176` on this pass — outside any
@@ -1872,9 +2129,16 @@ A_entry   = π × 0.2950² / 4 = 0.068349 in²        the SNAPPED entry, not the
 0.2902″ it would read 0.5125 — the difference is small here but it is in the direction of
 under-reporting, and Step 12 gates the anneal decision.)*
 
-**Result:** a draft schedule with the drawing sequence fully determined, and the rolling parameters
-explicitly marked as pending two coefficient sets. **This is the correct behaviour** — a partial
-schedule with honest gaps is far more useful than a complete one built on invented constants.
+**Result:** a draft schedule with the drawing sequence fully determined, **a predicted delivered width
+carrying a `V41` warning**, and the roll gap explicitly marked as pending mill calibration. **This is
+the correct behaviour** — a partial schedule with honest gaps is far more useful than a complete one
+built on invented constants.
+
+> **What v1.6 changed about this example, in one line.** v1.5 ended with width *"not designed"* and
+> two coefficient sets missing. v1.6 designs the width, and the act of designing it surfaces a
+> conflict between the 0.005″ die grid and the ±0.005″ width band that was invisible while the
+> engine declined to predict. **That is the value of adopting the client's relation** — not that the
+> answer is now right, but that there is an answer to disagree with.
 
 ## 6.5 Worked Example B — Stress Case, Correctly Rejected
 
@@ -1954,7 +2218,8 @@ more useful to a process engineer than a bare failure.
 | **Spool too thick for the active stands to bring to target** | Reject; report the required draft, the limit, and the maximum workable incoming gauge (Step 9-Spool) | **Error** |
 | **S3 the only active stand, required reduction above the skim allowance** | Reject; recommend activating S1 or S2 (Step 9, `k_bulk` = 0) | **Error** |
 | **Predicted delivered width outside the tolerance band** | Reject; report the predicted width and the miss (Step 9B) | **Error** |
-| **Spread coefficient uncalibrated on FL2 or FL3** | Width not designed on the final unedged pass; `V41` not evaluated (§3.3.12) | **Warning** |
+| **Spread coefficient uncalibrated on FL2 or FL3** | ⚠ **Restated 3 Sep 2026.** Width **is** now designed — §3.3.12 carries the client's flat→flat relation and `C₆` scales it — but on the published value rather than a calibrated one. `V41` **evaluates**, and its result is provisional until `PSG-D08` lands | **Warning** |
+| **Round → flat pass outside §3.3.3a's valid band** | `V46` or `V47` rejects. **Not a coefficient problem** — the relation has no real value there, and no value of `C₅` changes that. The remedy is a different entry diameter or a split pass, and the engine reports the minimum reduction the relation admits (`G90`) | **Error** |
 | **Inter-stand solve does not converge within the iteration cap** | Fall back to the adjacent chain at `Δt` = 0; flag gauges and widths as provisional | **Warning** |
 | **Round → flat grip criterion unsupplied** | Bite check reported *not evaluated* on the flattening pass; **never failed against the flat-entry limit** (`PSG-Q32`) | **Warning** |
 | **As-rolled incoming edge geometry unsupplied** | Bound the incoming area, carry the square-edge value, and flag it (Step 1B, `PSG-D33`) | **Warning** |
@@ -2077,6 +2342,9 @@ Every validation below runs before a schedule may be approved. There are **three
 | **V43** | **Incoming section supplies the required flattening entry area** | `A_rod ≥ A_entry` on a rod input; `A_in ≥ A_final` on a spool input (§6.3 Step 3A) | **Error** |
 | **V44** | **Per-stand draft within its limits** | `draft ≤ max` per stand per alloy (`PSG-D02`) — **Error**. `draft ≥ min` (`R08`) — **Warning**, since a light pass is a stability concern rather than an impossibility | **Error** / Warning |
 | **V45** | **Edger roller profile available for the required edge** | A profile exists in inventory for the requested edge type and section, and the bypass combination is permitted (`PSG-Q12`, `PSG-Q33`) | Warning |
+| **V46** | **Round → flat spread relation is defined for this pass** | `t_exit < D₁ / 2` on every round → flat pass. Outside it, §3.3.3a's `(1 − 2T₂/D₁)^2.25` raises a **negative base to a fractional power** and has no real value. ⚠ **Reject the input; do not clamp** — a clamped width is indistinguishable from a computed one (`G90`) | **Error** |
+| **V47** | **Predicted section implies non-negative elongation** | `A_entry ≥ A_predicted`, where `A_predicted` is §3.3.4's **round-edge** area at the predicted width. Below ≈57–60% thickness reduction §3.3.3a predicts a section *larger* than the entry, which is impossible. The exact floor moves with `D₁`, `R` and the area basis — it is evaluated, not tabulated (`G90`) | **Error** |
+| **V48** | **Predicted width is consistent with mass balance** | `\|A_entry − A_predicted · elongation\|` within tolerance, on the round-edge area. Catches a spread prediction and a footage calculation that have silently diverged — including the case where the two are computed on **different edge geometries** (`Q93`) | Warning |
 
 ## 8.2 Material Validations
 
@@ -2164,7 +2432,9 @@ clear one.
 | **V36** | **PSG-D24** — edger width reduction limit |
 | **V37** | **PSG-Q28** — the skim allowance at S3 |
 | **V38**, and **V10**/**V20** on FM2 | **PSG-D25** — edger partition coefficient. Until it is calibrated the inter-stand gauges are provisional, which propagates into mass flow (V10) and separating force (V20) on the finishing stands |
-| **V41** | **PSG-D08** — the spread coefficients, **flat→flat** as well as round→flat. Without them there is no predicted width to compare to the band |
+| **V41** | ~~**PSG-D08**~~ — ✅ **UNBLOCKED 3 Sep 2026.** §3.3.3a supplies the relation and `C₅` defaults to 1.00, so a width **is** predicted and `V41` evaluates. ⚠ The prediction moves when `C₅` is calibrated, and §6.4 already fails the check by 0.0011″ on the published value — so `PSG-D08` remains `High`, but `V41` is no longer *blocked*, it is *provisional* |
+| **V46**, **V47** | **Nothing.** Both are properties of §3.3.3a's algebra and evaluate from the moment the relation is adopted. They are listed here only to record that they are **not** waiting on `PSG-D08` — an uncalibrated `C₅` scales the prediction but cannot move the domain limit, which depends on `T₂/D₁` alone |
+| **V48** | **`Q93` item 4** — not a data item. The check runs today on the round-edge area; if the client confirms footage uses the plain rectangle, the tolerance has to widen to admit the 3.8% edge term rather than flagging it every time |
 | **V42** | **PSG-D02** — the per-stand draft limits the total is tested against |
 | **V44** | **PSG-D02** — max and min draft per rolling stand, per alloy |
 | **V45** | **PSG-Q12** — whether roller profiles vary by product. **PSG-Q33** — the permitted bypass combinations |
@@ -2202,8 +2472,8 @@ High-priority items block correct generation.
 | **PSG-D01** | Max area reduction per drawing pass, per alloy | The largest single-pass area reduction each alloy tolerates without breakage or excessive work hardening | Determines pass count and die sizing — the foundation of the drawing sequence | Cannot determine pass count; schedules may specify unachievable reductions | **High** | Aluminium typically 15–30%, commonly 20–25% | Yes | | |
 | **PSG-D02** | Max and min draft per rolling stand, per alloy | Thickness reduction limits at FM1 and each finishing stand | Determines allocation across stands and whether each stand does useful work | Cannot allocate reduction; finishing stands may be configured to do nothing | **High** | From mill builder datasheet | Yes | | |
 | **PSG-D03** | Mechanical property data per alloy and temper | Yield, tensile, elongation, and work-hardening behaviour | Required by both drawing stress and roll force calculations | Neither stress nor force can be computed; core safety checks disabled | **High** | Published alloy data as a starting point, confirmed against your material | Yes | | |
-| **PSG-D08** | Spread behaviour, round→flat and flat→flat | How thickness reduction divides between width and length, per alloy and stand | Width on FL1 is set entirely by free spread — without this, width cannot be designed | Width becomes an outcome to be measured, not a target to be hit | **High** | Requires trial data; no published value transfers | Yes | | |
-| **PSG-D25** | **Edger partition coefficient** | When an edger narrows the width, how the displaced material divides between **length increase** and **centre bulge** (thickness increase) — per alloy, roller profile and width reduction (§3.3.11) | The edger forms rather than cuts, so the width it removes reappears in the section. Without this, the thickness and length entering S2 and S3 are unknown and the finishing drafts are allocated against a guessed entry | The finishing allocation is computed from a section that does not exist; gauge control at S3 becomes trial and error | **High** | Requires trial data — the same standing as `PSG-D08`; no published value transfers | Yes | | |
+| **PSG-D08** | Spread behaviour, round→flat and flat→flat | ✅ **THE RELATIONS ARRIVED 2 SEP 2026** — §3.3.3a (round→flat, scaled by `C₅`) and §3.3.12 (flat→flat, scaled by `C₆`), both `[CLIENT SUPPLIED]` and both yours. **What remains is the two numbers.** `C₅` has a defined starting value of **1.00** (*"published theoretical prediction"*); `C₆` has none | Width on FL1 is set entirely by free spread — without this, width cannot be designed | ⚠ **No longer "width cannot be designed"** — it is designed on your unscaled published prediction, which §6.4 shows landing **0.0011″ outside** the width band. Uncalibrated, the engine cannot tell that from a real failure | **High** | ⛔ **Still requires trial data — supplying the relation did not close this.** Measure width at the **FM1 exit** (fits `C₅`) and at the **S3 exit** (fits `C₆`); both belong to §12.5's P5 campaign | Yes | | |
+| **PSG-D25** | **Edger partition coefficient** | ✅ **THE RELATION ARRIVED 2 SEP 2026** — §3.3.11's `t_out = t_in · [1 + k · Δw/w_in]`, `[CLIENT SUPPLIED]`, replacing the strain-decomposition form v1.4 had stated **by analogy**. `k` is the complement of `φ`: at `k = 1` essentially all displaced width becomes thickness and bulge, at `k = 0` all of it becomes length. **What remains is the number**, which your covering note calls *"an irrelevant value as a place holder"* | The edger forms rather than cuts, so the width it removes reappears in the section. Without this, the thickness and length entering S2 and S3 are unknown and the finishing drafts are allocated against a guessed entry | Unchanged — the finishing allocation is computed from a section that does not exist. ✅ But the **shape** of that section is no longer our guess, which is what `PSG-Q31` asked | **High** | ⛔ **Still requires trial data.** Measure the **profile across the width** after each edger, not a mean thickness — `PSG-R12` needs it to tell a distributed bulge from a local one, and the same measurement fits `k` | Yes | | |
 | **PSG-D24** | **Maximum width reduction per edger pass** | The largest width correction one edger can take without upsetting the section — as a percentage or an absolute figure, and whether E1 and E2 differ | Determines whether the total width correction must be split across E1 and E2, and how (`PSG-Q27`) | Schedules specify a single-pass correction the edger cannot take; excess width is upset into length and thickness the schedule did not plan for | **High** | Mill builder datasheet, confirmed against practice | Yes | | |
 | **PSG-D31** | **Rolling friction coefficient** | The roll/material coefficient, **stated separately from the die/wire coefficient in `PSG-D04`** | The **bite condition** `Δh ≤ μ²R` (§3.3.2) and the pressure factor `Q_p` in the force model (§3.3.6). The bite limit is **quadratic in `μ`**, so the two contacts cannot share one value | The bite check runs on the wrong coefficient. Across the drawing range 0.03–0.10 the admissible draft varies about **11×**, so the constraint is either the binding one or invisible, with no way to tell which | **High** | Cold rolling of aluminium with good lubrication is typically quoted in the same order as drawing, but confirm it independently — **do not populate this from `PSG-D04`** | Yes | | |
 | **PSG-D10** | Roll separating force capacity per stand | Maximum force each stand can apply. **Per stand, not per mill** — S1's 8″ roller develops ~1.16× the force of a 6″ stand at equal draft (§3.3.6) | The real limit on draft per pass | Schedules may exceed machine capability | **High** | Mill builder datasheet | Yes | | |
@@ -2575,7 +2845,7 @@ gaps marked.
 | Equipment configuration and line topology | **Complete** |
 | Alloy list and product family | **Assumed, not established** — the five grades in `PSG-Q01` are what this document is written against (`PSG-A04`). No alloy list is fixed here |
 | Process flow and material routing | **Complete** |
-| Standard engineering relations | **Complete for drawing and rolling** — every governing formula is established practice, each named at the point of use, including the drive-power and tension relations added 6 Aug. **Three exceptions**, each tagged rather than asserted: the **edger partition** (§3.3.11, §6.3 Step 9A) is stated by analogy with the spread decomposition — the relation needs confirming, not only its coefficient (**PSG-Q31**); the **round-entry effective width** `w_eff(d) = d` (§6.3 Step 2) is a definition folded into the spread calibration; and the **round → flat grip criterion** (§3.3.2) has no published form for this geometry and is asked as **PSG-Q32** |
+| Standard engineering relations | **Complete for drawing and rolling** — every governing formula is established practice, each named at the point of use, including the drive-power and tension relations added 6 Aug. ✅ **Three exceptions became ONE on 3 Sep 2026.** The **edger partition** is now `[CLIENT SUPPLIED]` (§3.3.11) rather than stated by analogy — **`PSG-Q31` answered in form**; the **round-entry effective width** `w_eff(d) = d` is **retired outright**, because §3.3.3a's relation needs no transverse datum. **The one that remains:** the **round → flat grip criterion** (§3.3.2) has no published form for this geometry and is asked as **PSG-Q32**. ⚠ **Three relations are now `[CLIENT SUPPLIED]` rather than `[INDUSTRY STANDARD]`** — §3.3.3a, §3.3.12 and §3.3.11 — which is a *stronger* provenance for this plant and a weaker one for generalisation; `PSG-R12` carries that risk |
 | Product dimensional targets | **Available** per order |
 | Structural rules (bypassable stands, edger positions, route definitions) | **Complete** |
 
@@ -2586,13 +2856,13 @@ gaps marked.
 | Per-alloy reduction limits | **Missing** | PSG-D01 |
 | Per-stand draft limits | **Missing** | PSG-D02 |
 | Mechanical property data | **Partial** | PSG-D03 |
-| Spread coefficients — **round→flat and flat→flat** | **Missing — requires trial data** | PSG-D08 |
-| Edger behaviour — partition and per-pass limit | **Missing — requires trial data** | PSG-D25, PSG-D24 |
-| Round → square transition at E1 | **Missing** | PSG-D26 |
+| Spread coefficients — **round→flat and flat→flat** | ⚠ **Relations SUPPLIED 2 Sep 2026 (§3.3.3a, §3.3.12); coefficients still missing — requires trial data.** `C₅` runs at its published 1.00 meanwhile; `C₆` has no default | PSG-D08 |
+| Edger behaviour — partition and per-pass limit | ⚠ **Partition RELATION supplied 2 Sep 2026 (§3.3.11); its coefficient `k` still missing — requires trial data.** `PSG-D24`'s per-pass width limit is **untouched and still entirely missing** | PSG-D25, PSG-D24 |
+| Round → square transition at E1 | **Partial** — `D-43`'s legend states the section leaves an edger as a **square-edge rectangle** (§3.3.4); the transition itself is still unquantified | PSG-D26 |
 | Edger bypass rules | **Missing** | PSG-Q33 |
 | Inter-stand tension by dancer mode | **Missing** | PSG-D27 |
 | No-draw threshold | **Missing** | PSG-D28 |
-| Strain → temper mapping | **Missing** | PSG-D29 |
+| Strain → temper mapping | ⛔ **Missing — and explicitly NOT supplied on 2 Sep**, when the width formulas arrived without it. Client ETA w/c 7 Sep 2026 (`A2`, owed since 23 Jul) | PSG-D29 |
 | Density / footage-to-weight basis | **Missing** | PSG-D30 |
 | Planned output multiple per line | **Missing — exists in planning, not here** | PSG-D32 |
 | Machine force and power capability | **Missing** | PSG-D10, PSG-D11 |
@@ -2616,14 +2886,29 @@ Only these prevent **correct production use**. Everything else can be defaulted 
 | B1 | **Per-alloy reduction limits** (PSG-D01) | Without them the engine cannot determine pass count. Every drawing schedule depends on this single number. |
 | B2 | **Machine capability** (PSG-D10, D11, **D12**) | Without force and power limits, no schedule can be confirmed as runnable on the equipment. **Mill modulus belongs here too:** without it the engine cannot emit a roll gap at all (§3.3.7) — it reports the gap as undetermined — so a generated schedule cannot set the mill, which is the difference between a design record and a usable one. |
 | B3 | **Mechanical property data** (PSG-D03) | Both drawing stress and roll force need flow stress. Without it the principal safety checks cannot run. |
-| B4 | **Spread coefficients** (PSG-D08) | Width on FL1 is set by free spread. Without calibration, width is not designed — only measured after the fact. |
-| B5 | **Edger partition coefficient** (PSG-D25) | The edger forms rather than cuts, so the width it removes returns to the section as length and centre bulge (§3.3.11). Without it, the thickness entering S2 and S3 is unknown and the finishing drafts are allocated against a guessed entry section. |
+| B4 | **Spread coefficients** (PSG-D08) | Width on FL1 is set by free spread. ⚠ **Restated 3 Sep 2026:** the *relations* are now yours (§3.3.3a, §3.3.12), so width **is** designed — on your unscaled published prediction. Without calibration the engine cannot distinguish a schedule that will run from one that will not, and §6.4 already predicts a width **0.0011″ outside** the band. |
+| B5 | **Edger partition coefficient** (PSG-D25) | The edger forms rather than cuts, so the width it removes returns to the section as length and centre bulge (§3.3.11). ⚠ **Restated 3 Sep 2026:** the *relation* is now yours, so the section's **shape** is no longer a guess — its **magnitude** still is, and the thickness entering S2 and S3 is unknown until `k` is measured. |
 
 B1, B2, and B3 are **data requests** — they exist somewhere, in your engineers' experience or the
 mill builder's documentation. **B4 and B5 are different in kind: they require measurement**, and
 cannot be resolved by asking harder. They are also the same measurement campaign — both are about
 how deformation divides between the section's dimensions on your material, and trial production that
 calibrates one should be instrumented to calibrate the other.
+
+> ⚠ **B4 and B5 did NOT close on 2 September 2026, and it is worth being precise about what changed.**
+> Each of them was two things: *what is the relation* and *what is its coefficient*. **The relations
+> arrived** — `[CLIENT SUPPLIED]`, from United Aluminum's own pass calculator — and that was the half
+> this document could not have obtained by measurement, because it is knowledge rather than data.
+> **The coefficients did not**, and they are the half that the sentence above is about. So both
+> blockers stand, the P5 campaign is unchanged, and the difference is that **each measurement now has
+> a named quantity to fit** rather than a relation to discover first.
+>
+> **One thing did get harder to see.** While the engine declined to predict width, an uncalibrated
+> coefficient was obvious — the output said *"not designed"*. It now emits a number. **An
+> uncalibrated prediction and a calibrated one look identical on the screen**, which is why the
+> `[CLIENT SUPPLIED]`-with-`[CLIENT INPUT REQUIRED]` combination is stated in the Provenance
+> Convention and why `PSG-D35` (sanity bounds and revalidation interval) matters more from v1.6 than
+> it did before.
 
 ## 12.4 What Can Proceed Now
 
@@ -2669,6 +2954,17 @@ above.
 > only. The **flat→flat** coefficient governs the final width of every FL2 and FL3 coil (§3.3.12), so S3's
 > exit must be measured too — and `PSG-R12` requires the **profile** across the width rather than a mean, to
 > distinguish a distributed bulge from a local one. All three measurements belong to the same campaign.
+>
+> ⭐ **P5 gains named targets 3 Sep 2026 — the campaign is unchanged, but each measurement now fits a
+> specific constant.** Width at the **FM1 exit** fits **`C₅`** in §3.3.3a. Width at the **S3 exit**
+> fits **`C₆`** in §3.3.12. **Profile across the width** after each edger fits **`k`** in §3.3.11 —
+> and it is the same measurement `PSG-R12` already required, so nothing new is being asked for.
+>
+> **Two things to instrument for that the campaign did not previously need.** ⚠ Record the **entry
+> diameter and exit gauge** alongside each width, because §3.3.3a is a function of `T₂/D₁` and a
+> width alone cannot fit it. And ⚠ **record the edge geometry actually produced**, because §3.3.4's
+> round-edge correction is 3.8% of area and fitting `C₅` against the wrong area basis bakes that
+> error into the coefficient permanently (`Q93`).
 
 ## 12.6 Recommended Next Steps
 

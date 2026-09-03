@@ -1,7 +1,7 @@
 # Flat Wire Mill — Task Breakdown and Backlog
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 1, 2026 (second pass) — ⛔ **§7’s `FW-215` card again: the first pass had not checked that the story’s one new route is BUILDABLE, and it is not as `[SIM §8.1]` words it.** Of *"scenario, seed, start weight, target"*, **the seed and the start weight are constructor-only** on `LineModelBase` and nothing on `ILineModel` sets either — so `POST /sim/{lineId}/run` **replaces** the line’s model through the seam’s factory rather than mutating a live one, which is also the only way `[SIM §5.7]`’s tick-for-tick reproducibility holds. The `G70` seam therefore carries `CreateModel` too, absorbing a **byte-identical duplicate** in both hosts. ⛔ **New gap `G73`** — `[SIM §9.2]` specifies **Pause** and nothing commands it, so a **target run state** joins `POST /run`; no seventh route. ⚠ **`/sim/state` carries at most TWO lines, never three** (`{FL1,FL2}` or `{FL3}`), omits an unhosted line and still answers `200`. ⚠ **`G68`’s *"settable"* is the seed’s alone**, so the config endpoint stays a **read** and no write is owed. ⚠ **The fault route takes all SEVEN of `[SIM §7.2]`.** ⚠ **No hours-bearing cell changed and no total moves** — the `**Hours:** … **Stream:**` line is untouched and the three `.xlsx` generators re-parse unchanged *(previously September 1, 2026 — **§7's `FW-215` card reconciled against the 31 Aug simulator build — stale in eight places, and owner of four gaps it never named.** ⛔ **Four of its five endpoints are already BUILT** (`FW-218`, closed), so `POST /sim/{lineId}/run` is the one new route and the story **extends** that surface (`P-39`). Corrected: the prefix is **`/sim`**, not `/api/v1/flatwire/sim`; the surface is a **minimal-API group, not MediatR controllers** (`P-38`); the gate is **`FlatWireOpc:SimulateOpcFeed`**, not `SimulatePLCTagPush`; *"all three snapshots"* becomes **one per hosted line** (FL3 excluded, `PLC-Q08` / `G30`); and *"`[API]`'s 30 endpoints"* now cites **`[API §3.2]`** without a number. **`G68`** adds a sixth endpoint `GET /sim/config`, **`G70`** the widened gate and the shared seam, **`G69`** becomes its blocker; dependencies gain **`FW-218`** and **`FW-217`**. ⚠ **The 23 h is re-aimed, not re-priced, and no total moves** — a six-endpoint re-price is `[CE]`'s. *(previously August 29, 2026 — **§7's `FW-214` card retargeted to WinForms (`D-33`): 24 → 52 h base, 15 → 36 h AI-assisted.** Ten acceptance criteria, a new **FL3 greyed** row (that endpoint returns 400 today — `PLC-Q08`/`G30`), the `GET /sim/state` row corrected to name its **six** fields, and dependencies **`FW-130`/`FW-135` → `FW-145`**. ⚠ **The 40 h of `FW-130`/`FW-135` is not recovered** — both serve the six operator screens *(previously August 25, 2026 — **`FW-138`: fifteen controllers → fourteen (`P-53`, no `/rod/**` surface).** AC 1 restated; the hours cell deliberately unchanged, 42 h owed to the re-baseline. Earlier the same day: **`FW-224` recorded as reserved**; the FL2 `422` acceptance criterion withdrawn; `CoilNo` rename completed; object count 34 → 33 *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `FW-001` and `FW-002` **cancelled**; `FW-176`'s shared-`coils` column line cancelled with them; `FW-186`, `FW-201` and the FL1/FL2/FL3 machine story lose the acceptance criteria and dependencies that referenced them. **Phase 1C 221 → 138 h · Phase 7 205 → 182 h · Phase 1 1,110 → 1,027 h · baseline 116 / 3,292 h → 114 live / 3,186 h** *(earlier: **`G6` resolved on both blocked story cards** (`FW-145` and the Angular guard story): the six roles exist as JWT claims on `ClaimTypes.Role`; earlier still: **the machine simulator story set minted**: `FW-210`–`FW-215` (**111 h dev** — RT 64 · FE 24 · BE 23) and `FW-217` (+24 h), specified in [`MachineSimulator.md`](../20-architecture/MachineSimulator.md) `[SIM]`, gap **`G39`**. **Additive to `[CE §3b]`** like `FW-202`/`203`/`204`; **`FW-203` is unchanged** and becomes `FW-211`'s first increment. ⚠ **`FW-209` was already taken** — `FW-218` was the next free id and is now used; **the next free id is `FW-220`** (`FW-219` = the FL2/FL3 run-end shared write-back, minted 18 Aug 2026), and `FW-216` is deliberately skipped *(otherwise August 14, 2026 — **`FW-203`** (plant-data feed simulator, 8 h) and **`FW-204`** (minimal landing route, 8 h) minted for the trial run, both additive to `[CE §3b]` and both deliberately absent from `[SSP §5]`. Earlier same day: **`FW-202` minted** (FL1 spool completion — stop confirmation, weight basis and the `SpoolProcessing` write, **98 h**) and `FW-N02` reduced to Part A; gap **`G37`** *(otherwise August 13, 2026)* — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure)*. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*)*)*)*
+**Last Updated:** September 3, 2026 (tooling) — **`FW-259`–`FW-261` minted, 27 h** (DB 5 · BE 10 · FE 12) for the **fourth** Tooling Inventory tool type (`D-42`). `FW-003` and `FW-253` move from **three** tool types to four; `FW-003`'s stale *"`Straightener` exists nowhere else in this repository"* is corrected; **`FW-251`'s `FW-005` leg is discharged** — that card seeded `Drawer` with 13 die-size rows the split took apart. ⛔ `FW-261` owes an un-priced mockup. ⚠ **No figure re-derived** — `FW-258` still owns the arithmetic. *(previously September 1, 2026 (second pass) — ⛔ **§7’s `FW-215` card again: the first pass had not checked that the story’s one new route is BUILDABLE, and it is not as `[SIM §8.1]` words it.** Of *"scenario, seed, start weight, target"*, **the seed and the start weight are constructor-only** on `LineModelBase` and nothing on `ILineModel` sets either — so `POST /sim/{lineId}/run` **replaces** the line’s model through the seam’s factory rather than mutating a live one, which is also the only way `[SIM §5.7]`’s tick-for-tick reproducibility holds. The `G70` seam therefore carries `CreateModel` too, absorbing a **byte-identical duplicate** in both hosts. ⛔ **New gap `G73`** — `[SIM §9.2]` specifies **Pause** and nothing commands it, so a **target run state** joins `POST /run`; no seventh route. ⚠ **`/sim/state` carries at most TWO lines, never three** (`{FL1,FL2}` or `{FL3}`), omits an unhosted line and still answers `200`. ⚠ **`G68`’s *"settable"* is the seed’s alone**, so the config endpoint stays a **read** and no write is owed. ⚠ **The fault route takes all SEVEN of `[SIM §7.2]`.** ⚠ **No hours-bearing cell changed and no total moves** — the `**Hours:** … **Stream:**` line is untouched and the three `.xlsx` generators re-parse unchanged *(previously September 1, 2026 — **§7's `FW-215` card reconciled against the 31 Aug simulator build — stale in eight places, and owner of four gaps it never named.** ⛔ **Four of its five endpoints are already BUILT** (`FW-218`, closed), so `POST /sim/{lineId}/run` is the one new route and the story **extends** that surface (`P-39`). Corrected: the prefix is **`/sim`**, not `/api/v1/flatwire/sim`; the surface is a **minimal-API group, not MediatR controllers** (`P-38`); the gate is **`FlatWireOpc:SimulateOpcFeed`**, not `SimulatePLCTagPush`; *"all three snapshots"* becomes **one per hosted line** (FL3 excluded, `PLC-Q08` / `G30`); and *"`[API]`'s 30 endpoints"* now cites **`[API §3.2]`** without a number. **`G68`** adds a sixth endpoint `GET /sim/config`, **`G70`** the widened gate and the shared seam, **`G69`** becomes its blocker; dependencies gain **`FW-218`** and **`FW-217`**. ⚠ **The 23 h is re-aimed, not re-priced, and no total moves** — a six-endpoint re-price is `[CE]`'s. *(previously August 29, 2026 — **§7's `FW-214` card retargeted to WinForms (`D-33`): 24 → 52 h base, 15 → 36 h AI-assisted.** Ten acceptance criteria, a new **FL3 greyed** row (that endpoint returns 400 today — `PLC-Q08`/`G30`), the `GET /sim/state` row corrected to name its **six** fields, and dependencies **`FW-130`/`FW-135` → `FW-145`**. ⚠ **The 40 h of `FW-130`/`FW-135` is not recovered** — both serve the six operator screens *(previously August 25, 2026 — **`FW-138`: fifteen controllers → fourteen (`P-53`, no `/rod/**` surface).** AC 1 restated; the hours cell deliberately unchanged, 42 h owed to the re-baseline. Earlier the same day: **`FW-224` recorded as reserved**; the FL2 `422` acceptance criterion withdrawn; `CoilNo` rename completed; object count 34 → 33 *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `FW-001` and `FW-002` **cancelled**; `FW-176`'s shared-`coils` column line cancelled with them; `FW-186`, `FW-201` and the FL1/FL2/FL3 machine story lose the acceptance criteria and dependencies that referenced them. **Phase 1C 221 → 138 h · Phase 7 205 → 182 h · Phase 1 1,110 → 1,027 h · baseline 116 / 3,292 h → 114 live / 3,186 h** *(earlier: **`G6` resolved on both blocked story cards** (`FW-145` and the Angular guard story): the six roles exist as JWT claims on `ClaimTypes.Role`; earlier still: **the machine simulator story set minted**: `FW-210`–`FW-215` (**111 h dev** — RT 64 · FE 24 · BE 23) and `FW-217` (+24 h), specified in [`MachineSimulator.md`](../20-architecture/MachineSimulator.md) `[SIM]`, gap **`G39`**. **Additive to `[CE §3b]`** like `FW-202`/`203`/`204`; **`FW-203` is unchanged** and becomes `FW-211`'s first increment. ⚠ **`FW-209` was already taken** — `FW-218` was the next free id and is now used; **the next free id is `FW-220`** (`FW-219` = the FL2/FL3 run-end shared write-back, minted 18 Aug 2026), and `FW-216` is deliberately skipped *(otherwise August 14, 2026 — **`FW-203`** (plant-data feed simulator, 8 h) and **`FW-204`** (minimal landing route, 8 h) minted for the trial run, both additive to `[CE §3b]` and both deliberately absent from `[SSP §5]`. Earlier same day: **`FW-202` minted** (FL1 spool completion — stop confirmation, weight basis and the `SpoolProcessing` write, **98 h**) and `FW-N02` reduced to Part A; gap **`G37`** *(otherwise August 13, 2026)* — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure)*. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*)*)*)*)*
 **Document Type:** The MVP-1 shopfloor backlog — 116 story ids (**114 live**), the descope ladder, the coverage matrix
 **Status:** **Authoritative for MVP-1 shopfloor delivery** — **114 live stories / 3,186 h** *(re-baselined 18 Aug 2026 by `D-32`; previously **116 / 3,292 h**)*, plus **`FW-202`** *(new 14 Aug 2026, gap `G37`)*, which is **additive and deliberately outside that baseline**: its 98 h base / 136 h all-in is carried in `[TRP]` and is **not** folded into the 3,186 h or into Phase 8's 118 h.<br>⚠ **The baseline moved deliberately and this is the pass that moves it.** `D-32` cancels `FW-001` (56 h) and `FW-002` (4 h) outright and `FW-176`'s 16 h shared-`coils` column line, re-deriving **Phase 1C 221 → 138 h** and **Phase 7 205 → 182 h** from the reduced bases: **−106 h all-in.** Both phases sit wholly inside MVP-1, so the subtraction is valid whatever composition produced the 3,292 h. **Now cite "114 stories / 3,186 h"**, and expect the old pair to survive in documents this pass did not reach — the figure is quoted in five others and in `[CE]`, which is **not** re-derived (`[CE §8]`). **The 116 id count is unchanged** — ids are frozen and `FW-001`/`FW-002` keep theirs as cancelled cards.
 **Owner:** Delivery lead / programme management
@@ -2004,7 +2004,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Rate-card basis:** modal/dialog 12 h + quality-gate and weld-list uplift 8 h = 20 h (§2)
 **Dependencies:** FW-N01, FW-166
-**Blockers:** **OQ-6** · **G26** *(this de-stubs the Phase-4 screen)* · **G27** *(the weld screen's re-sequenceable rod queue and traceability chain lost their host when DB4 was retired)* · **G28** *(FL2 may have no way to record a weld at all)* · **OI-59 / Q6** *(a fail-then-remake writes several `WeldEvent` rows for one physical join; whether a superseded attempt reaches the certificate is undecided)*
+**Blockers:** **OQ-6** · **G26** *(this de-stubs the Phase-4 screen)* · **G27** *(the weld screen's re-sequenceable rod queue and traceability chain lost their host when DB4 was retired)* · **G28** ✅ *(**RESOLVED 3 Sep 2026** — FL2 never welds; flattened material cannot be welded at UA. **No FL2 weld entry point is to be built** — an FL2 coil inherits its spool's markers. Removed from `FW-063`'s `blocked_by`. `ClientEmail_2026-09-03_RodOrderAllocation_SyncPlan.md`)* · **OI-59 / Q6** *(a fail-then-remake writes several `WeldEvent` rows for one physical join; whether a superseded attempt reaches the certificate is undecided)*
 
 ---
 
@@ -2689,7 +2689,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Rate-card basis:** new dashboard 24 h (§2)
 **Dependencies:** FW-183, FW-184, FW-185
-**Blockers:** **OQ-10** *(footage→weight — **Critical**)* · **OI-45** *(dimensional basis)* · **OI-105** *(three weight figures, no precedence rule)* · **OI-98** *(odd final coil)* · **OI-25**
+**Blockers:** **OQ-10** *(footage→weight — **Critical**)* · **OI-45** *(dimensional basis)* · **OI-105** *(three weight figures, no precedence rule)* · **OI-98** ✅ *(**CLOSED 3 Sep 2026** — it ships as a single-coil skid *"as it completes the order"*; planners target even coil counts, so that is the fallback rather than the design. Removed from `FW-066`'s `blocked_by`. `ClientEmail_2026-09-03_RodOrderAllocation_SyncPlan.md`)* · **OI-25**
 
 ---
 
@@ -2825,7 +2825,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] **OQ-10** closed — the **dimensional basis** for footage→weight decided: target-derived, measured-at-completion, or integrated over `RunReading`. *(The formula is settled; the basis is not, and integrating is materially more work than the other two.)* **This question deliberately carries no recommendation — it is a measurement question United Aluminum must answer from its own practice**
 - [ ] **OI-105** closed — which of the three weight figures governs the coil record
 - [ ] **OQ-4** closed — skid labelling
-- [ ] **OI-98** progressed — what happens to an odd final coil
+- [x] **OI-98** ✅ **CLOSED 3 Sep 2026, not merely progressed** — an odd final coil ships as a single-coil skid; even coil counts are the planning control. ⚠ The owning card `FW-188` is **not** done — its other criteria are open. `ClientEmail_2026-09-03_RodOrderAllocation_SyncPlan.md`
 - [ ] Outcomes recorded in the register
 
 **Rate-card basis:** BA / Ops liaison 8 h (§2)
@@ -3229,10 +3229,12 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Acceptance Criteria:**
 - [ ] FL1, FL2, FL3 each have a unique `MachineId` / `IdNo` and appear in **every** machine dropdown system-wide
-- [ ] Machine template tabs configured: Main (combined Slitter + Mill rows) · Roll Finish · **Pass Schedule** (button renamed *"Flattening Line Schedule"*) · Coating · KSI/Gauge Max Cuts (*"Max # of Cuts"* column removed) · Rewind Capabilities · ID Width Max Cuts · Setup/Handling Times · Tooling Inventory (+ **Dies, Edgers and Straighteners** as new tooling types) · **Speed** (*"Min/Max Gauge"* → *"Min/Max Gauge/Diameter"*; checkboxes for **DB1, DB2, FM1-S1, FM2-S1/S2/S3**) · Material Loss (**scrap in footage, not weight**) · History
+- [ ] Machine template tabs configured: Main (combined Slitter + Mill rows) · Roll Finish · **Pass Schedule** (button renamed *"Flattening Line Schedule"*) · Coating · KSI/Gauge Max Cuts (*"Max # of Cuts"* column removed) · Rewind Capabilities · ID Width Max Cuts · Setup/Handling Times · Tooling Inventory (+ **Dies, Edgers, Straighteners and Roll Sets** as new tooling types — `D-42`) · **Speed** (*"Min/Max Gauge"* → *"Min/Max Gauge/Diameter"*; checkboxes for **DB1, DB2, FM1-S1, FM2-S1/S2/S3**) · Material Loss (**scrap in footage, not weight**) · History
 - [ ] Operation letter **`F`** used for flattening in `OpLetter` / `PrevOpLetter` / `RemainingOps`
 - [ ] **The Speed tab's checkboxes name three FM2 stands — `FM2-S1`, `FM2-S2`, `FM2-S3`. There is no fourth**
-- [ ] **Tooling Inventory carries THREE tool types — Dies, Edgers (Edging Rolls) and Straighteners** — replacing the five inherited from the Slitter copy. Confirmed by Tim O'Brien, 31 Aug 2026: *"They should be replaced with Dies, Edgers, & Straighteners."* ⚠ This supersedes the 24 Aug call's two. **`Straightener` exists nowhere else in this repository** — it is a new equipment class, on FL1/FL3 only, and is **not** a pass-schedule component
+- [ ] **Tooling Inventory carries FOUR tool types — Dies, Edgers (Edging Rolls), Straighteners and Roll Sets** — replacing the five inherited from the Slitter copy. `D-42`, 3 Sep 2026. The first three are Tim O'Brien, 31 Aug 2026 (*"They should be replaced with Dies, Edgers, & Straighteners."*); the fourth is Tim O'Brien, 3 Sep 2026 — *"We should include mill rolls for traceability, 12″ (FL1-S1) 2 roll set, DB1/DB2 Capstans (rolls)… 8″, 6″, 6″ rolls for (FL2-S1, FL2-S2, FL2-S3) 2 roll sets."* ⚠ This supersedes the 24 Aug call's two **and** the 31 Aug three. **Dancers, entry guides, payoffs and spools are explicitly NOT tooling** — do not add them. ⛔ **The roll-set grid columns are `[PROPOSED]`, not client-supplied** — the other three arrived as pictured grids and this one as one sentence: `G87`, and `Q92` is the send-back
+- [ ] **Tooling is maintained for FL1 and FL2 only; FL3 uses a combination of the two** — *"We should maintain them for FL1/FL2 and FL3 should use a combination of the two"* (`D-42`). This confirms the 31 Aug observation that **no FL3 row appears in any tool grid** was intentional, not an omission in the sample
+- [ ] ⚠ **`Straightener` is no longer absent from this repository.** The earlier wording here — *"exists nowhere else in this repository"* — was true when written and is now stale: three delay-reason codes (`SET31`, `HDL20`, `DWN39`, all *Change Straightener Rolls*) are seeded, and two rows carry it in the pause-run mockup. What it still lacks is an **equipment** table — `G77`. It is used on **FL1** (so FL3 by inheritance), the blocks sit on the **entry side of the 12″ mill**, and it is **not** a pass-schedule component — all four confirmed 3 Sep 2026
 - [ ] ⚠ **Four tabs are configured PER LINE, not once** — *"This will be different for FL1 & FL2/FL3 as each machine has its own capabilities"* (31 Aug 2026), said of Flattening Line Schedule, Setup/Handling Times and Material Loss. FL1 and FL2/FL3 carry different field sets on each
 - [ ] Setup/Handling Times category labels renamed from the Slitter copy: **S1 → "Setup Before Run"** · **H1A → "Handling Before Reduction"** · **R → "Flattening Line Run"** · **H2 → "…From Takeup"** (was *Rewind*). H1AA, H1B and S2 unchanged
 - [ ] ⚠ **The Slitter and Mill screens are reference points, not screens being altered.** *"All others will be removed"* removes fields from the **Flat Wire copy** only; ZR23/ZR24 and the slitters keep theirs. Field sets: [`ClientEmail_2026-08-31_MachinesAppTabs_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-08-31_MachinesAppTabs_SyncPlan.md) §3
@@ -4056,7 +4058,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
-###### FW-251 · Restate the schema baseline to 39/62/82 and repair the DB cards the die split and the reason codes left stale
+###### FW-251 · Restate the schema baseline to 40/64/86 and repair the DB cards the die split, the reason codes and the roll set left stale
 **Hours:** 8 h DB · **Priority:** High · **Sprint:** S1 · **Phase:** 1C · **Stream:** DB
 
 > ⛔ **Both 2 Sep schema changes reached the DDL and neither reached the task cards.** ⚠ **`FW-005`
@@ -4068,7 +4070,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **Acceptance Criteria:**
 - [ ] ⚠ **This story states no count.** `[DBD §6.2]` is the only defining site and is already correct; `verify_schema_counts.py` passes today. The repair is to the *other* sites
 - [ ] `C6`'s **24 advisory findings** resolved — restated by citation or marked dated audit trail: `MasterSpecification.md:88`/`:1388`, `FW-152.md:282`, DB `Orchestration.md:439`/`:442`, `FW-142.md:243`, `TrialOrchestration.md:366`, `CapacityAndEffortModel.md:433`, `Decisions.md:889`, `tools/deliverables/README.md:42`
-- [ ] **`FW-005` re-pointed** — the Lookup group is **eleven** tables, `Drawer` is **two** rows (`DB1`/`DB2`, capped by `CK_Drawer_Name` + `UQ_Drawer_Name`) and `ToolingInventoryDie` holds **14**
+- [x] ✅ **`FW-005` re-pointed 3 Sep 2026** — the Lookup group is **twelve** tables, `Drawer` is **two** rows (`DB1`/`DB2`, capped by `CK_Drawer_Name` + `UQ_Drawer_Name`), `ToolingInventoryDie` holds **14** and `ToolingInventoryRollSet` **six**. ⛔ **The dangerous line is struck rather than deleted** — its old *"13 size rows … this is what MVP-1's die change validates against"* is kept as strikethrough with the reason, because a developer who had already read it needs to see what changed, not just find it gone. ⚠ Done as a side effect of the roll-set pass, which added the **twelfth** table and would otherwise have made this card **more** wrong
 - [ ] **`FW-007` / `FW-171` re-pointed** — **seven** in-run event tables, not five, and `DieChangeEvent` carries `OldDieId`/`NewDieId`; `FW-171`'s AC 4 reads `ToolingInventoryDie`, not `Drawer`
 - [ ] **`FW-176` re-pointed** — `CK_WipRejection_Group` **dropped**, the group moved onto the lookup row, and `G79` recorded: **all 72 group values are ours**
 - [ ] ⚠ The three reason tables are seeded **inline in `01_Lookup`** as production reference data (156 rows), not in sample data. `G85` — the same problem for `Stand`/`Drawer`/`Dancer`/`Edger` — is named, **not fixed here**
@@ -4124,7 +4126,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Register · reset · retire · edit-threshold, each capturing `FR-249`/`FR-250`'s reason. ⚠ `FR-250`'s five retire reasons and `FR-248`'s two reset dispositions share one column and are **not** interchangeable
 - [ ] An overdue die renders as a state; a `NULL`-threshold die renders without one — no invented limit, no false warning
 - [ ] ⛔ **The bands are not chosen here** — `OI-12`, owned by `FW-199`
-- [ ] ⚠ **Edger and straightener inventory are out of scope** — `G77`
+- [ ] ⚠ **Edger and straightener inventory are out of scope** — `G77`; **roll-set inventory too**, pending `Q92` (`G87`)
 
 **Rate-card basis (§2):** New dashboard screen 24 h — the figure `phase-13`'s carve published as *"Die Management screen 24 FE"*. ⚠ **The mockup is not in it**
 **Dependencies:** FW-252, FW-130, FW-133
@@ -4265,6 +4267,107 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 > eight stories span five phases. ⛔ **Unlike the 29 Aug set, part of this one is scope RETURNING
 > to MVP-1**, so a published total genuinely moves rather than merely gaining an additive
 > companion. **`FW-258`** decides how and where.
+
+---
+
+#### Additive — the fourth Tooling Inventory tool type, minted 3 Sep 2026 (`FW-259`–`FW-261`)
+
+> **New 3 Sep 2026.** Three stories for one client sentence. Asked whether stands, dancers and
+> spools belonged on the Tooling Inventory tab, Tim O'Brien answered that **mill rolls and the
+> DB1/DB2 capstan rolls do** — *"for traceability"* — and that dancers, entry guides, payoffs and
+> spools do **not**. That is a **fourth** tool type where `D3` recorded two and the 31 Aug mail
+> three, and it is `D-42`.
+>
+> **The DB work is already done, and that is why `FW-259` is small.** `ToolingInventoryRollSet`,
+> its two foreign keys — including **the first ever taken on `Drawer`** — its four indexes and its
+> six seed rows all landed with the decision, and `verify_schema_counts.py` is green at
+> **40 / 64 / 86**. What did *not* land is client authority for the column set.
+>
+> ⛔ **This is the only tool type that arrived without a picture.** Dies, edgers and straighteners
+> each came as a screenshot grid with the columns in order — *"please include the fields pictured
+> below, in the order pictured"*. Roll sets came as one sentence, so every column is `[PROPOSED]`
+> at four sites. **`G87`** owns that, **`Q92`** is the send-back, and **`FW-259`** is what removes
+> the marks. Building the FE grid before `Q92` returns is how the roll shop ends up entering data
+> against fields we invented.
+>
+> ⚠ **`FW-261` owes an un-priced mockup**, the same residual `FW-253` and `FW-256` carry — and for
+> a sharper reason: there is no client screenshot of this grid either.
+>
+> ⚠ **Hours are additive to `[CE §3b]`**, the same treatment as `FW-232`–`FW-250` and
+> `FW-251`–`FW-258`. **No figure is re-derived here** — `FW-258` still owns the arithmetic, and
+> this set is a further input to it, not a second answer.
+
+---
+
+###### FW-259 · Reconcile `ToolingInventoryRollSet` with the client's roll-set grid when `Q92` returns
+**Hours:** 5 h DB · **Priority:** Medium · **Sprint:** S2 · **Phase:** 1C · **Stream:** DB
+
+> **The table is built; this is the reconciliation.** Five questions the client's sentence does not
+> settle: the column list, whether capstan rolls are one option or two, what *"refurbished"* means
+> against the edger's `In Grinding`, what `Machine Name` a capstan roll carries, and whether
+> *"2 roll set(s)"* means two rolls per set or two sets per position — **the last changes the row
+> count**, which is why the seed is deliberately one set per position.
+
+**Acceptance Criteria:**
+- [ ] `Q92`'s answer applied — the column list in the **client's order**, on the same terms `FW-003` records for the other three tabs
+- [ ] The one-option-or-two question resolved. ⚠ **A split moves the object baseline** — pair it with a recount, counted from a deploy
+- [ ] The refurbish vocabulary settled: `IsRefurbishable` + `In Grinding`, **or** a distinct state and date. Not both spellings
+- [ ] `Machine Name` for a capstan roll decided — `FL1`, or the draw box
+- [ ] ⚠ **`[PROPOSED]` removed from all four sites, or restated with what is still ours.** A half-answered `Q92` must not leave the marks off
+- [ ] `verify_schema_counts.py` green; `G87` closed or narrowed with what it still owns
+
+**Rate-card basis (§2):** not a rate-card unit — a schema reconciliation across four documentation sites with the guard as its test = **5 h**
+**Dependencies:** FW-251
+**Blockers:** **`Q92`**, **`G87`**
+
+---
+
+###### FW-260 · Roll-set register service — `ToolingInventoryRollSet` CRUD and the mount invariant
+**Hours:** 10 h BE · **Priority:** Medium · **Sprint:** S2 · **Phase:** 6 · **Stream:** BE
+
+> **The die register's sibling, and deliberately thinner.** `FW-252` carries a *lifecycle* service
+> because a die accumulates footage every run and `DieHistory` explains the total. A roll set has
+> **no footage counter** — it is reground to a minimum OD — so there is no per-run write path, no
+> denormalised total to keep honest and no history log.
+
+**Acceptance Criteria:**
+- [ ] Read and write endpoints, following `API/Domain/CoilCheckin` — ⚠ **`SlitterInterface` is explicitly not a reference**
+- [ ] **`CK_TIRS_Mount` enforced in the aggregate as well as the database**; a violation answers **422**, not 500
+- [ ] `LineId` restricted to `FL1` / `FL2` at the boundary. ⚠ **An `FL3` roll set is a client error** (`D-42`)
+- [ ] ⚠ **`NominalDiameterIn` is not derived from, validated against or reconciled with `Stand.RollDiameterIn`** — separate values, separate owners (`D-26`, `[PLC §5.4]`)
+- [ ] Retirement sets `LifecycleStatus`; it does not delete. Same discipline as `FR-250`
+
+**Rate-card basis (§2):** one register service with a non-trivial invariant, below `FW-252`'s 16 h because there is no lifecycle, no history log and no denormalised counter = **10 h**
+**Dependencies:** FW-252, FW-259
+**Blockers:** — *(buildable against the `[PROPOSED]` columns; `FW-259` may reshape them)*
+
+---
+
+###### FW-261 · Tooling Inventory — the fourth *Choose Tool* option and the roll-set grid
+**Hours:** 12 h FE · **Priority:** Medium · **Sprint:** S3 · **Phase:** 13 · **Stream:** FE
+
+> ⛔ **This card owes an un-priced mockup**, the same residual `FW-253` and `FW-256` carry.
+> `[CE §2]`'s FE rate assumes an approved visual spec and there is none — because there is no
+> client screenshot of this grid either. See `G87`.
+
+**Acceptance Criteria:**
+- [ ] **Roll Sets** as the fourth *Choose Tool* option (`D-42`). ⚠ The five Slitter-inherited options are **replaced**, not extended
+- [ ] `Machine Name` shows `FL1` or `FL2` only. ⚠ **No FL3 row** — its absence from the 31 Aug grids was intentional
+- [ ] Mill and capstan rows distinguishable without reading the mount column — **build the one-option form and keep the split cheap**
+- [ ] Status renders four lifecycle values; **`In Grinding` is not a boolean** — the narrowness `G77` flags on `Edger.IsActive`
+- [ ] ⚠ **Minimum text size 14 px.** Dancers, entry guides, payoffs and spools **do not appear** — they are not tooling
+
+**Rate-card basis (§2):** one grid on an existing tab with a new dropdown option — below `FW-253`'s 24 h, which carries a screen and two history tabs = **12 h**. ⚠ **Rate assumes a mockup that does not exist**
+**Dependencies:** FW-260, FW-003
+**Blockers:** **`Q92`**, **`OI-141`**
+
+---
+
+> **Additive-set reconciliation** — DB 5 · BE 10 · FE 12 = **27 h dev** across **three** stories.
+>
+> ⚠ **No QA uplift and no contingency are applied here** — both are phase-level (§7.1) and these
+> three span three phases. ⚠ **No published figure is re-derived**; `FW-258` owns the arithmetic
+> and this set is a further input to it.
 
 ---
 

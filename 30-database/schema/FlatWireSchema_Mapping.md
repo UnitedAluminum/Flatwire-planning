@@ -1,7 +1,7 @@
 # Flat Wire Mill — Schema Mapping & Entity Relationships
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*
+**Last Updated:** September 3, 2026 — **`ToolingInventoryRollSet` added to the table inventory** (31 net-new tables), the fourth Tooling Inventory tool type (`D-42`). ⚠ It has **no legacy sheet behind it** — unlike every other row here, it originates from a client mail rather than from the source workbook. *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)*
 **Document Type:** Legacy-to-new table mapping, the change-type inventory, and the collected enumeration reference. **Not** an ER diagram and **not** an FK list — both were deleted on 23 Aug 2026 in favour of `[DBD §7]`. The filename is kept because ~17 files cite it.
 **Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`)
@@ -65,7 +65,7 @@ ORDER BY ChildTable, ConstraintName;
 | `SpoolConfiguration` | ~~`SpoolConfiguration`~~ → **`Spool`** | Unit suffixes added to all dimension/weight columns; `MinId`/`MaxId` → `MinCoreDiameterIn`/`MaxCoreDiameterIn`. **Merged into `Spool` 23 Aug 2026 (`Q60`)** — the target table no longer exists; the six `Min/Max` columns and `Name` (as `SizeClass`) landed on the article | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `SpoolProcessing` | `SpoolProcessing` | `Alpha` / `Status` / `GaugeIn` / `WidthIn` / weights / `Location` / timestamps / `SourceRunId` / `LineId` added; `ParentRod` → `ParentRodAlpha` | [FlatWireSchema_Materials.md](FlatWireSchema_Materials.md) |
 
-### New Tables (30) — Net New
+### New Tables (31) — Net New
 
 *(Corrected twice. The heading read "16" against a list of 16 with an arithmetic that used 15; a 13 Aug 2026 pass said `RodStaging` and `PayoffPosition` had been added and **they had not been** — both were still absent on 23 Aug, along with the six tables built 20–22 Aug. All eight were added on 23 Aug 2026, at which point the inventory sums to **7 + 24 + 3 = 34** and matches the DDL exactly. The audit that first found the drift, `GapAnalysis.md`, was retired the same day — see [`CHANGELOG.md`](../../CHANGELOG.md).)*
 
@@ -82,6 +82,7 @@ ORDER BY ChildTable, ConstraintName;
 | `DieChangeEvent` | Runs | Die replacement events; gained `OldDieId` / `NewDieId` on 2 Sep 2026 | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 | `ToolingInventoryDie` | Lookup | **New 2 Sep 2026.** Register of physical dies — identity, hole size, type, lifecycle status, die life | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `DieHistory` | Runs | **New 2 Sep 2026.** One append-only log for a die’s installs, resets, retirements, threshold edits and per-run footage | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
+| `ToolingInventoryRollSet` | Lookup | **New 3 Sep 2026 (`D-42`).** Register of physical roll sets — the **fourth** Tooling Inventory tool type. Mill rolls mount on a `Stand`, capstan rolls on a `Drawer`; one discriminated table, a grind life model, and **no legacy sheet behind it** | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `SpcCheckpoint` | Quality | SPC measurement session headers | [FlatWireSchema_QualityOutput.md](FlatWireSchema_QualityOutput.md) |
 | `SpcMeasurement` | Quality | Individual SPC measurement readings | [FlatWireSchema_QualityOutput.md](FlatWireSchema_QualityOutput.md) |
 | `WipRejection` | Quality | Material rejection events | [FlatWireSchema_QualityOutput.md](FlatWireSchema_QualityOutput.md) |

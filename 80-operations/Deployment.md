@@ -1,7 +1,7 @@
 # Flat Wire Mill — Deployment
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 30, 2026 — ⛔ **§4.2 step 2.1's `cd` named a folder deleted by the 29 Aug re-tree, and it is the step the rest depends on** — `FlatWire_DDL_RunAll.sql`'s `:r` includes are relative to the invocation directory. Retargeted to `30-database\sql`. **`V3`'s comment block also carried stale arithmetic** — *"The 64 in script 07 are 53 … plus 11"*, three lines above its own correct `-- Expected: 75` and invisible to every tool; **replaced with a pointer to `[DBD §6.8]` rather than the corrected split**, because a second copy of a figure in a permitted site is how this gate came to reject a correct deployment five times. **No expectation, checklist line or section number changed** *(previously August 29, 2026 — **A sixth deployment artifact for the first time — `FlatWireSimConsole` (`D-33`).** §1.1 component 6; **new §1.2a** (it is a *distribution* decision, not a deployment step — and ⚠ **nothing enforces the installation policy**, `G66`); §1.3's *Console version* row (**do not** couple it to a `flatwire-v*` tag); §2 records it has **no environment row and needs none**; **new §4.7 (Step 7)**, optional and non-blocking. ⚠ **Never deploy it against `production`** *(previously August 26, 2026 — **this header contradicted §4.2's own gate and is now level with it.** It published `34 / 57 / 69` for `V1`/`V2`/`V3` while the body asserted **33 / 55 / 70** — the figures the DDL actually produces, and the ones [`../tools/deliverables/verify_schema_counts.py`](../tools/deliverables/verify_schema_counts.py) checks this file against. `[DBD §6.2]` remains the defining site; a header restating a count is how the gate drifted from the body in the first place, so it now points rather than repeats *(previously August 23, 2026 — **§“Verification” corrected for the third time: as written it again rejected a correct deployment.** `V1`/`V2`/`V3` asserted **32 / 50 / 57** — the 32 predated the 22 Aug rod ↔ order pair and the 50/57 were never re-derived after `D-31`. Corrected then to 34 / 57 / 69, counted from the DDL, with `[DBD §6.2]` named as the defining site)* *(previously August 22, 2026 — `V1`/`V2`/`V3` asserted 25/33/41 in SQL comments and 27/41/46 in the checklist beneath, and `V4` required the MVP-2 `sp_ShiftSummary`)* *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** **Deployment step 2 is cancelled** and §4.3 retained as the record; the 1→3→4→5 order no longer depends on the renames; `V7`/`V8`/`V9` dropped, `V10` kept *(previously August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)))*
+**Last Updated:** September 3, 2026 — **`V1`/`V2`/`V3` restated to 40 / 64 / 86** with `ToolingInventoryRollSet` (`D-42`), in both the SQL comments and the checklist beneath. ⚠ **This gate has rejected a correct deployment five times**; `[DBD §6.2]` remains the defining site and `verify_schema_counts.py` `C1` checks this file against it. *(previously August 30, 2026 — ⛔ **§4.2 step 2.1's `cd` named a folder deleted by the 29 Aug re-tree, and it is the step the rest depends on** — `FlatWire_DDL_RunAll.sql`'s `:r` includes are relative to the invocation directory. Retargeted to `30-database\sql`. **`V3`'s comment block also carried stale arithmetic** — *"The 64 in script 07 are 53 … plus 11"*, three lines above its own correct `-- Expected: 75` and invisible to every tool; **replaced with a pointer to `[DBD §6.8]` rather than the corrected split**, because a second copy of a figure in a permitted site is how this gate came to reject a correct deployment five times. **No expectation, checklist line or section number changed** *(previously August 29, 2026 — **A sixth deployment artifact for the first time — `FlatWireSimConsole` (`D-33`).** §1.1 component 6; **new §1.2a** (it is a *distribution* decision, not a deployment step — and ⚠ **nothing enforces the installation policy**, `G66`); §1.3's *Console version* row (**do not** couple it to a `flatwire-v*` tag); §2 records it has **no environment row and needs none**; **new §4.7 (Step 7)**, optional and non-blocking. ⚠ **Never deploy it against `production`** *(previously August 26, 2026 — **this header contradicted §4.2's own gate and is now level with it.** It published `34 / 57 / 69` for `V1`/`V2`/`V3` while the body asserted **33 / 55 / 70** — the figures the DDL actually produces, and the ones [`../tools/deliverables/verify_schema_counts.py`](../tools/deliverables/verify_schema_counts.py) checks this file against. `[DBD §6.2]` remains the defining site; a header restating a count is how the gate drifted from the body in the first place, so it now points rather than repeats *(previously August 23, 2026 — **§“Verification” corrected for the third time: as written it again rejected a correct deployment.** `V1`/`V2`/`V3` asserted **32 / 50 / 57** — the 32 predated the 22 Aug rod ↔ order pair and the 50/57 were never re-derived after `D-31`. Corrected then to 34 / 57 / 69, counted from the DDL, with `[DBD §6.2]` named as the defining site)* *(previously August 22, 2026 — `V1`/`V2`/`V3` asserted 25/33/41 in SQL comments and 27/41/46 in the checklist beneath, and `V4` required the MVP-2 `sp_ShiftSummary`)* *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** **Deployment step 2 is cancelled** and §4.3 retained as the record; the 1→3→4→5 order no longer depends on the renames; `V7`/`V8`/`V9` dropped, `V10` kept *(previously August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)))*)*
 **Document Type:** Release overview, environments, pre-deployment, sequence, smoke suite
 **Status:** Baselined
 **Owner:** Release manager / IT
@@ -201,7 +201,7 @@ check-in procedure claims a WIP station, and it has nothing to claim until step 
 | # | Step | Artifact |
 |---|---|---|
 | **0** | **Pre-flight: prove co-location and isolation.** `FlatWireDB` must sit on the **same instance** as `united_db` / `proddb` / `SlitterDB` / `CommonDB` / `wiplogdb` — the check-in model spans them in **one** `SqlTransaction` under the **local** transaction manager, with no MSDTC (`[INT §8.0]`, `[ARC §10]`). LocalDB has no `united_db`, so a build validated only there silently loses that atomicity | the verification query in `../30-database/scripts/20_FlatWire_Grants.sql` |
-| **1** | **The schema.** 39 tables. **Not empty** -- 01_Lookup seeds the three reason-code tables inline, as production reference data. Idempotent | `../30-database/sql/FlatWire_DDL_RunAll.sql` |
+| **1** | **The schema.** 40 tables. **Not empty** -- 01_Lookup seeds the three reason-code tables inline, as production reference data. Idempotent | `../30-database/sql/FlatWire_DDL_RunAll.sql` |
 | **2** | ⚠ **SIGN-OFF GATE — shared-schema rows.** Writes `united_db..machines` and `CommonDB..WIPStations` / `MachineStationsConfiguration`. Still **Draft** (`machine_type`, the station set and `StationType` pending sign-off) and **there is no reverse script**. Run it **by hand**, after approval — the `Scripts/` runner deliberately skips it | `../30-database/scripts/10_CommonDB_Insert_WIPStations_FlatWire.sql` |
 | **3** | **Grants.** Creates `ua_user` in six databases. Run **once per environment** | `../30-database/scripts/20_FlatWire_Grants.sql` |
 | **4** | **Inbound procedure.** Lives in `FlatWireDB` but ships with the cross-database scripts, because it reads `proddb..coils` and `united_db..alloys` | `../30-database/scripts/30_FlatWireDB_Proc_sp_IngestRodFromCoils.sql` |
@@ -247,8 +247,12 @@ sqlcmd -S "<server>" -E -C -i FlatWire_SampleData_QualityOutput.sql
 ```sql
 USE FlatWireDB;
 
--- V1. Table count must be 39 -- this is the complete MVP-1 database.
---     39, not 35, since 2 Sep 2026 (later the same day): the client's
+-- V1. Table count must be 40 -- this is the complete MVP-1 database.
+--     40, not 39, since 3 Sep 2026: the client's answer that the Tooling
+--     Inventory tab carries a FOURTH tool type (mill rolls and DB1/DB2
+--     capstan rolls) added ToolingInventoryRollSet in 01_Lookup.
+--     If this returns 39, the pre-roll-set script set ran.
+--     It was 39, not 35, since 2 Sep 2026 (later the same day): the client's
 --     reason-code lists added DowntimeReason, WipRejectionReason and
 --     ItInhibitReason in 01_Lookup, and LineDowntimeEvent in 04_Runs.
 --     If this returns 35, the pre-reason-code script set ran.
@@ -261,9 +265,12 @@ USE FlatWireDB;
 --     Defining site: [DBD 6.2]. This is one of exactly three places permitted
 --     to restate the figures; if it disagrees with [DBD 6.2], [DBD 6.2] wins.
 SELECT COUNT(*) AS TableCount FROM sys.tables WHERE is_ms_shipped = 0;
--- Expected: 39
+-- Expected: 40
 
--- V2. Foreign-key count must be 62. Was 58 until 2 Sep 2026 (later the same
+-- V2. Foreign-key count must be 64. Was 62 until 3 Sep 2026: the roll-set
+--     register added FK_ToolingInventoryRollSet_Stand and
+--     FK_ToolingInventoryRollSet_Drawer -- the latter the FIRST foreign key
+--     ever taken on Drawer  (+2). Was 58 until 2 Sep 2026 (later the same
 --     day): the client's reason-code lists added FK_RunPauseEvent_DelayCode,
 --     FK_LineDowntimeEvent_DelayCode, FK_LineDowntimeEvent_Run and
 --     FK_WipRejection_Reason  (+4). Was 55 until earlier on 2 Sep: the die split
@@ -272,11 +279,16 @@ SELECT COUNT(*) AS TableCount FROM sys.tables WHERE is_ms_shipped = 0;
 --     and FK_DieHistory_Run  (-1 +4). Was 57 until 23 Aug 2026: the
 --     SpoolConfiguration merge dropped FK_SpoolProcessing_SpoolConfiguration
 --     and FK_Spool_SpoolConfiguration with the SpoolTypeId columns they
---     constrained. All 62 are now in script 06 (06b was folded into it).
+--     constrained. All 64 are now in script 06 (06b was folded into it).
 SELECT COUNT(*) AS FkCount FROM sys.foreign_keys;
--- Expected: 62
+-- Expected: 64
 
--- V3. Index count -- 82 created by script 07 (07b was folded into it).
+-- V3. Index count -- 86 created by script 07 (07b was folded into it).
+--     WAS 82 until 3 Sep 2026: the roll-set register added four --
+--     IX_ToolingInventoryRollSet_StandId and _DrawerId (both filtered,
+--     because CK_TIRS_Mount makes one of the pair NULL on every row),
+--     IX_ToolingInventoryRollSet_LifecycleStatus and the filtered-unique
+--     UX_ToolingInventoryRollSet_SerialNo  (+4).
 --     WAS 75 until 2 Sep 2026 (later the same day): the client's reason-code
 --     lists added seven -- IX_DowntimeReason_Bucket,
 --     IX_WipRejectionReason_Group, IX_RunPauseEvent_ReasonCode,
@@ -301,7 +313,7 @@ SELECT COUNT(*) AS FkCount FROM sys.foreign_keys;
 SELECT COUNT(*) AS IdxCount FROM sys.indexes
  WHERE object_id IN (SELECT object_id FROM sys.tables)
    AND type <> 0 AND is_primary_key = 0 AND is_unique_constraint = 0;
--- Expected: 82
+-- Expected: 86
 
 -- V4. Programmability. SEVEN objects, and since change [H] (26 Aug 2026) ALL SEVEN
 --     are in FlatWireDB -- so this is a SINGLE-DATABASE query where it used to span two.
@@ -337,16 +349,16 @@ SELECT a.CoilAlpha FROM dbo.CoilTraceability a
 -- Expected: zero rows
 ```
 
-- [ ] V1 returns **39**
-- [ ] V2 returns **62**
-- [ ] V3 returns **82**
+- [ ] V1 returns **40**
+- [ ] V2 returns **64**
+- [ ] V3 returns **86**
 - [ ] V4 returns **2 rows** after `RunAll` (**7** once `Database/Scripts/` is applied — was 3 before `[H]`)
 - [ ] V5 returns **zero rows**
 - [ ] V6 returns **zero rows**
 - [ ] `ua_user` exists with `db_datareader`, `db_datawriter` and `GRANT EXECUTE ON SCHEMA::dbo`
 - [ ] On a seeded environment, the fixture alphas resolve: `R00041`–`R00043`, `SP-00031`–`SP-00033`, `PS-1100-FL1-003`, `RUN-0001`–`RUN-0005` *(corrected 26 Aug 2026: the checklist had named `SP-00021`, `RUN-0042` and `RUN-0043`, which the seeds have never created)*
 
-> **If V1 returns anything other than 39**, the wrong script set ran or a script failed silently. **Stop.**
+> **If V1 returns anything other than 40**, the wrong script set ran or a script failed silently. **Stop.**
 >
 > ⚠ **`V3` moved to 70 on 26 Aug 2026 — the FIFTH correction to this gate, and the first caused by
 > a change made in this repository rather than by a stale figure.** `Q89` added

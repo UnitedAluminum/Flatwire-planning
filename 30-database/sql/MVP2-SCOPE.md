@@ -40,7 +40,7 @@ Which leaves the one thing `D-31` moved rather than removed: **nothing in MVP-1 
 ## Deploying
 
 ```powershell
-# MVP-1 — complete on its own. 39 tables, and it needs nothing from this folder.
+# MVP-1 — complete on its own. 40 tables, and it needs nothing from this folder.
 cd "c:\UAL\Flatwire-planning\30-database\sql"
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_RunAll.sql
 

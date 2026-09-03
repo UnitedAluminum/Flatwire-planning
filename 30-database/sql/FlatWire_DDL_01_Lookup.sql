@@ -1,9 +1,16 @@
 -- ============================================================
 -- Flat Wire Mill — DDL Script 01: Lookup / Reference Tables
 -- Run order : 01 of 09
--- Tables    : Stand, Drawer, ToolingInventoryDie, Edger, Dancer,
---             AlloyProperty, PayoffPosition, Spool,
---             DowntimeReason, WipRejectionReason, ItInhibitReason   (11)
+-- Tables    : Stand, Drawer, ToolingInventoryDie, ToolingInventoryRollSet,
+--             Edger, Dancer, AlloyProperty, PayoffPosition, Spool,
+--             DowntimeReason, WipRejectionReason, ItInhibitReason   (12)
+--
+-- Sep-3-2026: ToolingInventoryRollSet added. The client's Tooling Inventory
+-- tab carries FOUR tool types, not three -- Die, Edger, Straightener and now
+-- Roll Set (mill rolls and DB1/DB2 capstan rolls), per Tim O'Brien's mail of
+-- 3 Sep 2026. Dancer, PayoffPosition and Spool are explicitly NOT tooling and
+-- stay where they are. Its columns are OUR reading of one sentence, not a
+-- client field set -- see G87 and Q92, and the table's own comment block.
 --
 -- Sep-2-2026: the three reason-code tables added from the client's
 -- "Reason Codes.xlsx" (Tim O'Brien, 1 Sep 2026), which closes actions
@@ -97,6 +104,13 @@ BEGIN
         -- FL1 owns both boxes; FL3 runs through them, as it shares FL1's VPS payoff.
         -- Client-confirmed 31 Aug 2026: the Tooling Inventory grid attributes dies to
         -- Machine Name = FL1, and NO FL3 row appears in any of the three tool grids.
+        -- (Three is right for that date: the client had sent three grids. The fourth
+        -- type, roll sets, arrived 3 Sep 2026 with no grid at all -- G87.)
+        -- CK_Drawer_LineId KEEPS FL3 while the TOOLING registers drop it, and that is
+        -- deliberate: this table is EQUIPMENT and FL3 genuinely runs through DB1/DB2.
+        -- The client's 3 Sep rule -- inventory maintained for FL1/FL2 only, FL3 using a
+        -- combination of the two (D-42) -- binds the tooling, not the machine. Do not
+        -- "align" this CHECK with CK_ToolingInventoryDie_LineId.
         [LineId]   VARCHAR(5)  NOT NULL,
         [IsActive] BIT         NOT NULL CONSTRAINT [DF_Drawer_IsActive] DEFAULT (1),
 
@@ -210,7 +224,15 @@ BEGIN
         CONSTRAINT [CK_ToolingInventoryDie_LastGrindingFeet] CHECK ([LastGrindingFeet] >= 0),
         CONSTRAINT [CK_ToolingInventoryDie_TotalFeetAllowed] CHECK ([TotalFeetAllowed] IS NULL OR [TotalFeetAllowed] > 0),
         CONSTRAINT [CK_ToolingInventoryDie_LifecycleStatus]  CHECK ([LifecycleStatus] IN ('Active','In Service','In Grinding','Retired')),
-        CONSTRAINT [CK_ToolingInventoryDie_LineId]    CHECK ([LineId] IS NULL OR [LineId] IN ('FL1','FL3')),
+        -- FL3 REMOVED Sep-3-2026. Asked whether tooling is maintained per line or for
+        -- FL1/FL2 with FL3 combining, the client answered: "We should maintain them for
+        -- FL1/FL2 and FL3 should use a combination of the two." So no tooling row is
+        -- ever attributed to FL3, and the 31-Aug observation that no FL3 row appears in
+        -- any tool grid is now confirmed as INTENDED rather than an omission in the
+        -- sample. Safe against the seed: all 14 rows carry LineId NULL.
+        -- NOTE this does NOT apply to Drawer, which is EQUIPMENT -- FL3 genuinely runs
+        -- through DB1/DB2 and keeps FL3 in its own CHECK. Do not "align" the two.
+        CONSTRAINT [CK_ToolingInventoryDie_LineId]    CHECK ([LineId] IS NULL OR [LineId] IN ('FL1')),
         CONSTRAINT [CK_ToolingInventoryDie_DieType]   CHECK ([DieType] IS NULL OR [DieType] IN ('TC Mono','TC Poly','Natural diamond'))
         -- Deliberately NO check that LastGrindingFeet <= TotalFeetAllowed. "Overdue"
         -- is a real operating state the Die Management screen must display
@@ -225,6 +247,126 @@ BEGIN
 END
 ELSE
     PRINT 'Table already exists: ToolingInventoryDie';
+GO
+
+-- ------------------------------------------------------------
+-- ToolingInventoryRollSet
+-- The register of PHYSICAL ROLL SETS -- the fourth Tooling Inventory tool type.
+--
+-- WHY IT EXISTS. Client mail of 3-Sep-2026 (Tim O'Brien), answering whether stands,
+-- dancers and spools belong on the Tooling Inventory tab:
+--
+--   "Good point! We should include mill rolls for traceability, 12" (FL1-S1) 2 roll
+--    set, DB1/DB2 Capstans (rolls) current inventory = 2, will be adding a spare and
+--    they can be refurbished, 8", 6", 6" rolls for (FL2-S1, FL2-S2, FL2-S3) 2 roll
+--    sets. We will NOT need to include dancers, entry guides, payoffs, spools, etc.
+--    in the tooling table."
+--
+-- So the tab carries FOUR types, not three: Die, Edger, Straightener, Roll Set.
+-- Dancer, PayoffPosition and Spool stay what they are -- equipment and article
+-- registers -- and are explicitly NOT tooling. Do not migrate them here.
+--
+-- THE SAME SPLIT AS THE DIE. Stand and Drawer are the POSITIONS a roll set is fitted
+-- to; this table is the physical TOOL, exactly as ToolingInventoryDie is to Drawer
+-- (Q91, 2 Sep 2026). Roll diameter already existed as Stand.RollDiameterIn and that
+-- is MACHINE data -- D-26 and [PLC 5.4] both rest on it. NominalDiameterIn here is
+-- the TOOL's own size and is deliberately a second, differently-owned column:
+-- Stand.RollDiameterIn stays authoritative for the machine. They are not duplicates
+-- and neither is stale.
+--
+-- ONE TABLE, NOT TWO, and the discriminator is why. Mill rolls fit a Stand; capstan
+-- rolls fit a Drawer. That is two parents, which normally argues for two tables --
+-- but the client named both in one breath as one answer about one tab option, and
+-- DieHistory already set the precedent in this schema of one discriminated table
+-- serving two shapes. RollType plus the mount CHECK keeps it honest: exactly one of
+-- StandId / DrawerId is populated, and it must agree with RollType.
+--
+-- THIS IS THE FIRST FOREIGN KEY EVER TAKEN ON Drawer. FlatWireSchema_Lookup.md
+-- recorded that Drawer was "an equipment register, not a join target" and named
+-- G77's tooling work as its likely first referrer. This is that referrer.
+--
+-- THE LIFE MODEL IS GRIND, NOT FOOTAGE. A die is consumed by footage
+-- (LastGrindingFeet / TotalFeetAllowed); a roll is reground until it reaches a
+-- minimum OD. So this table carries OdIn / MinOdIn / DateOfLastGrind and NO footage
+-- counter, matching the client's Edger grid rather than the Die grid. G77 already
+-- called out that the two life models differ.
+--
+-- WHAT IS NOT KNOWN -- G87, and Q92 is the send-back. Die, Edger and Straightener
+-- each arrived as a screenshot grid with an ordered column list. Roll sets arrived as
+-- ONE SENTENCE. The columns below are OUR reading of that sentence against the shape
+-- of the other three grids, not a client field set. Four things are open: the column
+-- list itself; whether capstan rolls are the same tab option as mill rolls or a
+-- fifth; whether "refurbished" is the same lifecycle as the edger's "In Grinding";
+-- and what Machine Name a capstan roll carries, given DB1/DB2 sit on FL1.
+-- Treat every column here as PROPOSED until Q92 comes back.
+--
+-- QUANTITIES FROM THE MAIL, recorded as data not as constraints: sets are 2 rolls
+-- (RollQty), capstan inventory is 2 "will be adding a spare" -- so 3 is the target
+-- and 2 is today's truth, which is why nothing caps the row count.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ToolingInventoryRollSet]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[ToolingInventoryRollSet] (
+        [Id]                 INT           NOT NULL IDENTITY(1,1),
+        -- RS-{position}-{seq}, e.g. RS-FL1S1-001. Our format, not the client's --
+        -- no alpha appears on any tooling grid the client has sent (see OI-141).
+        [RollSetAlpha]       VARCHAR(20)   NOT NULL,
+        [RollType]           VARCHAR(10)   NOT NULL,       -- Mill | Capstan
+        -- Exactly one of these two is populated; see CK_TIRS_Mount.
+        [StandId]            INT           NULL,           -- mill rolls: FM1, FM2_S1, FM2_S2, FM2_S3
+        [DrawerId]           INT           NULL,           -- capstan rolls: DB1, DB2
+        -- Client grid "Machine Name". FL1 | FL2 only -- FL3 uses a combination of the
+        -- two and holds no tooling of its own (client, 3 Sep 2026).
+        [LineId]             VARCHAR(5)    NULL,
+        [SetNumber]          VARCHAR(20)   NULL,           -- client grid "Set Number" -- lettered A / B / C on the edger and straightener grids
+        [RollQty]            INT           NOT NULL CONSTRAINT [DF_ToolingInventoryRollSet_RollQty] DEFAULT (2),  -- client grid "Roll Qty". Every set the client named is 2
+        -- The TOOL's own nominal size: 12.000 for FL1-S1; 8.000 / 6.000 / 6.000 for
+        -- FL2-S1/S2/S3. Stand.RollDiameterIn is the MACHINE's and stays authoritative.
+        [NominalDiameterIn]  DECIMAL(5,3)  NULL,
+        [OdIn]               DECIMAL(8,4)  NULL,           -- client grid 'OD(")' -- current outside diameter, falls with each grind
+        [MinOdIn]            DECIMAL(8,4)  NULL,           -- client grid 'Min OD(")' -- scrap threshold
+        [IdIn]               DECIMAL(8,4)  NULL,           -- client grid 'ID(")'
+        [SerialNo]           VARCHAR(50)   NULL,           -- client grid "S/N"
+        [PartNo]             VARCHAR(50)   NULL,           -- client grid "P/N"
+        [Location]           VARCHAR(50)   NULL,           -- client grid "Location" -- roll shop / crib position
+        -- The client's three lifecycle values plus Retired, identical to
+        -- ToolingInventoryDie. A BIT cannot express "In Grinding" -- G77's point.
+        [LifecycleStatus]    VARCHAR(20)   NOT NULL CONSTRAINT [DF_ToolingInventoryRollSet_LifecycleStatus] DEFAULT ('In Service'),
+        -- "they can be refurbished" -- the client's word for the capstan rolls, and
+        -- NOT known to be the same operation as the edger's regrind. Q92 asks.
+        [IsRefurbishable]    BIT           NOT NULL CONSTRAINT [DF_ToolingInventoryRollSet_IsRefurbishable] DEFAULT (0),
+        [DateOfChange]       DATE          NULL,           -- client grid "Date of Change"
+        [DateOfLastGrind]    DATE          NULL,           -- client grid "Date of Last Grind"
+        [InUse]              BIT           NOT NULL CONSTRAINT [DF_ToolingInventoryRollSet_InUse] DEFAULT (0),   -- client grid "In Use"
+        [Notes]              VARCHAR(500)  NULL,
+        [IsActive]           BIT           NOT NULL CONSTRAINT [DF_ToolingInventoryRollSet_IsActive] DEFAULT (1),
+
+        CONSTRAINT [PK_ToolingInventoryRollSet]          PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [UQ_ToolingInventoryRollSet_Alpha]    UNIQUE ([RollSetAlpha]),
+        CONSTRAINT [CK_TIRS_RollType]        CHECK ([RollType] IN ('Mill','Capstan')),
+        -- A mill roll set hangs off a Stand and a capstan roll set off a Drawer.
+        -- Exactly one mount, and it must agree with the discriminator.
+        CONSTRAINT [CK_TIRS_Mount]           CHECK (
+                                                 ([RollType] = 'Mill'    AND [StandId] IS NOT NULL AND [DrawerId] IS NULL)
+                                              OR ([RollType] = 'Capstan' AND [DrawerId] IS NOT NULL AND [StandId] IS NULL)),
+        CONSTRAINT [CK_TIRS_LineId]          CHECK ([LineId] IS NULL OR [LineId] IN ('FL1','FL2')),
+        CONSTRAINT [CK_TIRS_RollQty]         CHECK ([RollQty] > 0),
+        CONSTRAINT [CK_TIRS_NominalDiameter] CHECK ([NominalDiameterIn] IS NULL OR [NominalDiameterIn] > 0),
+        CONSTRAINT [CK_TIRS_Od]              CHECK ([OdIn] IS NULL OR [MinOdIn] IS NULL OR [MinOdIn] < [OdIn]),
+        CONSTRAINT [CK_TIRS_LifecycleStatus] CHECK ([LifecycleStatus] IN ('Active','In Service','In Grinding','Retired'))
+        -- Deliberately NO footage columns. See the life-model note above: a roll is
+        -- reground to a minimum OD, not consumed by feet. Do not add die-life columns
+        -- here by analogy with ToolingInventoryDie -- that analogy is the thing G77
+        -- warns about.
+        --
+        -- SerialNo uniqueness is a FILTERED index in script 07, on the same reasoning
+        -- as the die: a plain UNIQUE admits only one NULL and the seed leaves them all
+        -- NULL until the client supplies serials.
+    );
+    PRINT 'Created table: ToolingInventoryRollSet';
+END
+ELSE
+    PRINT 'Table already exists: ToolingInventoryRollSet';
 GO
 
 -- ------------------------------------------------------------

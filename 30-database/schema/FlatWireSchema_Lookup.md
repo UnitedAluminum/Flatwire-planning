@@ -1,7 +1,7 @@
 # Flat Wire Mill — Lookup & Reference Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** September 2, 2026 — **three reason-code tables added** from the client's `Reason Codes.xlsx` (Tim O'Brien, 1 Sep 2026): `DowntimeReason`, `WipRejectionReason`, `ItInhibitReason`. ⚠ **They are seeded by the DDL, not the sample-data script** — production reference data, and a production deploy runs `RunAll` without the sample data. The `Dancer` note on `SupportsTensionMode` is also corrected: `0` on FM1 now records **"no"**, not "not stated", and the `OQ-32` mode conflict is **resolved**. *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)*
+**Last Updated:** September 3, 2026 — **`ToolingInventoryRollSet` added** (`D-42`), the **fourth** Tooling Inventory tool type: mill rolls on a `Stand`, capstan rolls on a `Drawer`, one discriminated table, a **grind** life model rather than footage. ✅ The `Drawer` *"nothing holds a foreign key to this table"* note is **closed** — this is its first referrer. ⚠ `CK_ToolingInventoryDie_LineId` loses `FL3`; **`CK_Drawer_LineId` keeps it** — equipment versus tooling, do not align them. ⛔ Every roll-set column is `[PROPOSED]` pending `Q92` (`G87`). *(previously September 2, 2026 — **three reason-code tables added** from the client's `Reason Codes.xlsx` (Tim O'Brien, 1 Sep 2026): `DowntimeReason`, `WipRejectionReason`, `ItInhibitReason`. ⚠ **They are seeded by the DDL, not the sample-data script** — production reference data, and a production deploy runs `RunAll` without the sample data. The `Dancer` note on `SupportsTensionMode` is also corrected: `0` on FM1 now records **"no"**, not "not stated", and the `OQ-32` mode conflict is **resolved**. *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)*)*
 **Document Type:** Final Schema — Lookup / Configuration Tables
 **Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`)
@@ -65,7 +65,9 @@ Rolling mill finishing stands. A stand applies compressive force to reduce mater
 
 **Max two rows is structural, not policed.** `CK_Drawer_Name` admits only two values and `UQ_Drawer_Name` makes each unique, so a third row is impossible without a schema change — no trigger and no row-counting rule. `LineId = 'FL1'` for both rows is client-confirmed: the 31 Aug 2026 Tooling Inventory grid attributes dies to `Machine Name = FL1`, and **no FL3 row appears in any of the three tool grids**.
 
-> ⚠ **Nothing holds a foreign key to this table.** `PassScheduleComponent.ComponentName` and `DieChangeEvent.DiePosition` both name `DB1`/`DB2` as CHECK-constrained strings, and `PassScheduleComponent.DrawerId` was dropped with the split. So `Drawer` is an **equipment register, not a join target** — deliberate, but worth knowing before writing a query that assumes otherwise. `G77`'s edger and straightener inventory is the likely first referrer.
+> ✅ **One foreign key now points at this table, and until 3 Sep 2026 none did.** `PassScheduleComponent.ComponentName` and `DieChangeEvent.DiePosition` both name `DB1`/`DB2` as CHECK-constrained strings, and `PassScheduleComponent.DrawerId` was dropped with the split. So `Drawer` was an **equipment register, not a join target** — deliberate, and worth knowing before writing a query that assumes otherwise. **`ToolingInventoryRollSet.DrawerId` (`D-42`) is the first** — the capstan roll sets mount on the draw boxes. It is the referrer this note predicted, though it arrived from the roll sets rather than from `G77`'s edger and straightener work, which is still owed.
+
+> ⚠ **`CK_Drawer_LineId` keeps `FL3`, and `CK_ToolingInventoryDie_LineId` no longer does.** That is not an inconsistency. `Drawer` is **equipment** and FL3 genuinely runs through `DB1`/`DB2`; the tooling registers carry the client's 3 Sep rule that inventory is maintained for **FL1/FL2 only, with FL3 using a combination of the two** (`D-42`). Do not "align" the two constraints.
 
 > ⚠ **Naming: the client calls these `D1`/`D2` on one tab and `DB1`/`DB2` on another** — four spellings across four surfaces, per the 31 Aug 2026 mail analysis §4.8. `DB1`/`DB2` is retained deliberately; that analysis says **do not reconcile until the Speed tab lands** (action `A12`, still open).
 
@@ -75,7 +77,7 @@ Rolling mill finishing stands. A stand applies compressive force to reduce mater
 
 **The register of physical dies — one row per tool, not per size.** A die is a tungsten carbide tool with a specific hole diameter through which wire is pulled to reduce its cross-section; the hole diameter determines the output wire size.
 
-The name is the client's own term: the 31 Aug 2026 mail returns a Machines Application **Tooling Inventory** tab carrying **three** tool types — Die, Edger, Straightener. This table is the first of the three; **edger and straightener inventory are not covered here — that is `G77`.**
+The name is the client's own term: the Machines Application **Tooling Inventory** tab carries **four** tool types — Die, Edger, Straightener (31 Aug 2026) and **Roll Set** (3 Sep 2026, `D-42`). This table is the first of the four; **edger and straightener inventory are not covered here — that is `G77`** — and the fourth is [`ToolingInventoryRollSet`](#toolinginventoryrollset) below.
 
 | Column | Data Type | Nullable | FK Reference | Description |
 |---|---|---|---|---|
@@ -129,6 +131,52 @@ The client's grid carries three values (`Active` · `In Service` · `In Grinding
 **Die life migrated here from `Drawer`, unchanged in meaning.** `LastGrindingFeet` and `TotalFeetAllowed` are what [DieChangeAndManagement.md](../../10-requirements/screens/DieChangeAndManagement.md) §4.2 calls *"footage on die"* and *"scheduled life"*; the screen derives `Remaining` and `Life used %`. What changed is the **grain**: the counter now accumulates against a physical tool, so `OI-41`'s accepted consequence — *"two dies of one diameter share a counter"* — is retired.
 
 ⚠ **`LastGrindingFeet` is denormalised** against `SUM(DieHistory.FootageAddedFt)`, deliberately. `FR-254` makes the running total what the Die Change screen reads, so it must be one cheap column rather than an aggregate over a growing log, while `FR-252` needs the per-run rows. The total is authoritative for the screens; the log explains it. They can drift and nothing in the database prevents it — the invariant lives in the application beside `FR-255`'s increment, **not in a trigger** (`G41`: a trigger joining on a nullable column passes silently, and `DieHistory.RunId` is nullable).
+
+---
+
+## `ToolingInventoryRollSet`
+
+**The register of physical roll sets — the fourth Tooling Inventory tool type.** Added 3 September 2026 from Tim O'Brien's mail: *"We should include mill rolls for traceability, 12″ (FL1-S1) 2 roll set, DB1/DB2 Capstans (rolls) current inventory = 2, will be adding a spare and they can be refurbished, 8″, 6″, 6″ rolls for (FL2-S1, FL2-S2, FL2-S3) 2 roll sets. We will **NOT** need to include dancers, entry guides, payoffs, spools, etc. in the tooling table."* — `D-42`.
+
+**Same split as the die.** [`Stand`](#stand) and [`Drawer`](#drawer) are the **positions**; this is the physical **tool** fitted to one of them, exactly as `ToolingInventoryDie` is to `Drawer`.
+
+| Column | Data Type | Nullable | FK Reference | Description |
+|---|---|---|---|---|
+| `Id` | int | NOT NULL | — | Surrogate primary key |
+| `RollSetAlpha` | varchar(20) | NOT NULL | — | `RS-{position}-{seq}`, e.g. `RS-FM1-001`. **Ours, not the client's** — no alpha appears on any tooling grid they have sent (`OI-141`) |
+| `RollType` | varchar(10) | NOT NULL | — | `Mill` · `Capstan` — the discriminator |
+| `StandId` | int | NULL | `Stand.Id` | Mill rolls: `FM1`, `FM2_S1`, `FM2_S2`, `FM2_S3` |
+| `DrawerId` | int | NULL | `Drawer.Id` | Capstan rolls: `DB1`, `DB2`. **The first FK ever taken on `Drawer`** |
+| `LineId` | varchar(5) | NULL | — | Client grid `Machine Name`. **`FL1` or `FL2` only** — FL3 uses a combination and holds no tooling of its own |
+| `SetNumber` | varchar(20) | NULL | — | Client grid `Set Number` — lettered `A` / `B` / `C` on the edger and straightener grids |
+| `RollQty` | int | NOT NULL | — | Client grid `Roll Qty`. Default `2` — every set the client named is a two-roll set |
+| `NominalDiameterIn` | decimal(5,3) | NULL | — | The **tool's** own nominal size: `12.000` for FM1; `8.000` / `6.000` / `6.000` for FM2 S1/S2/S3 |
+| `OdIn` · `MinOdIn` · `IdIn` | decimal(8,4) | NULL | — | Client grid `OD(")` · `Min OD(")` · `ID(")`. The **grind** life model |
+| `SerialNo` · `PartNo` · `Location` | varchar | NULL | — | Client grid `S/N` · `P/N` · `Location`. `SerialNo` unique when set, via a **filtered** index |
+| `LifecycleStatus` | varchar(20) | NOT NULL | — | `Active` · `In Service` · `In Grinding` · `Retired`. Default `In Service` — identical to the die |
+| `IsRefurbishable` | bit | NOT NULL | — | *"they can be refurbished"* — the client's word, attached to the **capstans** specifically. Default `0` |
+| `DateOfChange` · `DateOfLastGrind` | date | NULL | — | Client grid `Date of Change` · `Date of Last Grind` |
+| `InUse` | bit | NOT NULL | — | Client grid `In Use`. Default `0` |
+| `Notes` · `IsActive` | varchar / bit | — | — | As elsewhere |
+
+**Constraints:**
+- `PK_ToolingInventoryRollSet`, `UQ_ToolingInventoryRollSet_Alpha`
+- `CK_TIRS_RollType` — `RollType IN ('Mill','Capstan')`
+- `CK_TIRS_Mount` — **exactly one mount, agreeing with the discriminator**: a `Mill` row has `StandId` and no `DrawerId`; a `Capstan` row has `DrawerId` and no `StandId`
+- `CK_TIRS_LineId` — `LineId IN ('FL1','FL2')` · `CK_TIRS_RollQty` — `> 0` · `CK_TIRS_NominalDiameter` — NULL or `> 0`
+- `CK_TIRS_Od` — `MinOdIn < OdIn` when both present · `CK_TIRS_LifecycleStatus`
+- `IX_ToolingInventoryRollSet_StandId` · `_DrawerId` — both **filtered**, since `CK_TIRS_Mount` guarantees one of the pair is NULL on every row
+- `IX_ToolingInventoryRollSet_LifecycleStatus` · `UX_ToolingInventoryRollSet_SerialNo` — **filtered** unique (script `07`)
+
+**One table, not two, and the discriminator is why.** Mill rolls hang off a `Stand` and capstan rolls off a `Drawer` — two parents, which normally argues for two tables. The client named both in one breath as one answer about one tab option, and `DieHistory` already set the precedent here of one discriminated table serving two shapes.
+
+> ⚠ **The life model is grind, not footage.** A die is consumed by feet (`LastGrindingFeet` / `TotalFeetAllowed`); a roll is **reground until it reaches a minimum OD**. So this table carries `OdIn` / `MinOdIn` / `DateOfLastGrind` and **no footage counter**. `G77` already recorded that the two models differ — do not add die-life columns here by analogy.
+
+> ⚠ **`Stand.RollDiameterIn` stays authoritative for the machine.** `D-26` and `[PLC §5.4]` both rest on it. `NominalDiameterIn` here is the tool's own size. They are **not** duplicates and neither is stale.
+
+> ⛔ **Every column here is `[PROPOSED]` until `Q92` returns — `G87`.** Die, Edger and Straightener each arrived as a screenshot grid with an ordered column list. Roll sets arrived as **one sentence**. Four things are open: the column list itself; whether capstan rolls are the same tab option as mill rolls or a fifth; whether *"refurbished"* is the edger's `In Grinding` under another name; and what `Machine Name` a capstan roll carries, given `DB1`/`DB2` sit on FL1.
+
+> ⚠ **The seed is six rows — one set per position — and that is a floor, not the client's count.** *"2 roll set(s)"* reads both as *two rolls per set* and *two sets per position* in the same paragraph. `RollQty = 2` records the first, which the edger grid's `Roll Qty 2` corroborates; the second would change the **row count** and is left unseeded rather than guessed. The capstan spare is not seeded either — *"will be adding a spare"* is future tense.
 
 ---
 

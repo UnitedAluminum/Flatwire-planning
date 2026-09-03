@@ -17,6 +17,15 @@
 > 65/80 % bands now derive from one table. **`OI-141` stays open** on whether there is one die
 > register or two. **`G77`** still owns edger and straightener inventory, which this does not cover.
 >
+> ⚠ **A FOURTH tool type landed 3 Sep 2026 — `D-42`.** The client's Tooling Inventory tab carries
+> **Dies · Edgers · Straighteners · Roll Sets**, and `ToolingInventoryRollSet` (mill rolls and the
+> DB1/DB2 capstan rolls) is built. **Dancers, entry guides, payoffs and spools are explicitly NOT
+> tooling.** Stories [`FW-259`](../../30-database/tasks/FW-259.md) ·
+> [`FW-260`](../../40-backend/tasks/FW-260.md) · [`FW-261`](../../50-frontend/tasks/FW-261.md),
+> 27 h. ⛔ **Its column set is `[PROPOSED]`** — the only tool type that arrived without a pictured
+> grid (**`G87`**; `Q92` is the send-back). ⚠ Tooling is maintained for **FL1/FL2 only, with FL3
+> using a combination of the two**.
+>
 > Everything below predates the reversal. Read it as the record of the 11 Aug 2026 carve, not as
 > current scope.
 
@@ -26,7 +35,7 @@
 ---
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-08-06
+**Last Updated:** 2026-09-03 — **a fourth tool type landed (`D-42`)**: the Tooling Inventory tab carries Dies · Edgers · Straighteners · **Roll Sets**, with `FW-259`–`FW-261` (27 h). ⛔ Its column set is `[PROPOSED]` — `G87` / `Q92`. *(previously 2026-08-06)*
 **Status:** Ready to build
 **Layer:** Full-stack vertical slice (admin)
 **Owner:** **FE + BE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*

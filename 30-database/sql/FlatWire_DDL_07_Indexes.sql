@@ -9,8 +9,13 @@
 -- constraints (indexed), so only child FK columns and hot
 -- filter columns are added here.
 --
--- Creates ALL 82 index statements. There is no second index script.
--- 82, not 75, since 2 Sep 2026 (later the same day): the client's reason-code
+-- Creates ALL 86 index statements. There is no second index script.
+-- 86, not 82, since 3 Sep 2026: the fourth Tooling Inventory tool type added four
+-- -- IX_ToolingInventoryRollSet_StandId and _DrawerId (both filtered, because
+-- CK_TIRS_Mount makes one of the pair NULL on every row),
+-- IX_ToolingInventoryRollSet_LifecycleStatus and the filtered-unique
+-- UX_ToolingInventoryRollSet_SerialNo.  (+4)
+-- It was 82, not 75, since 2 Sep 2026 (later the same day): the client's reason-code
 -- lists added seven -- IX_DowntimeReason_Bucket, IX_WipRejectionReason_Group,
 -- IX_RunPauseEvent_ReasonCode, IX_WipRejection_RejectionReason,
 -- IX_LineDowntimeEvent_DelayCode, IX_LineDowntimeEvent_RunId and
@@ -464,6 +469,31 @@ GO
 -- the only form that enforces the rule and still permits 14 unserialled dies.
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_ToolingInventoryDie_SerialNo' AND object_id = OBJECT_ID(N'dbo.ToolingInventoryDie'))
     CREATE UNIQUE NONCLUSTERED INDEX [UX_ToolingInventoryDie_SerialNo] ON [dbo].[ToolingInventoryDie] ([SerialNo]) WHERE [SerialNo] IS NOT NULL;
+GO
+
+-- ToolingInventoryRollSet, added Sep-3-2026 with the fourth tool type.
+-- [DBD 6.8] covers "every FK / RunId join column", so both mounts are indexed.
+-- Filtered on both, because CK_TIRS_Mount guarantees one of the pair is NULL on
+-- every row -- an unfiltered index here would be half NULLs by construction.
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_ToolingInventoryRollSet_StandId' AND object_id = OBJECT_ID(N'dbo.ToolingInventoryRollSet'))
+    CREATE NONCLUSTERED INDEX [IX_ToolingInventoryRollSet_StandId] ON [dbo].[ToolingInventoryRollSet] ([StandId]) WHERE [StandId] IS NOT NULL;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_ToolingInventoryRollSet_DrawerId' AND object_id = OBJECT_ID(N'dbo.ToolingInventoryRollSet'))
+    CREATE NONCLUSTERED INDEX [IX_ToolingInventoryRollSet_DrawerId] ON [dbo].[ToolingInventoryRollSet] ([DrawerId]) WHERE [DrawerId] IS NOT NULL;
+GO
+
+-- Same reasoning as the die's status index: the Tooling Inventory tab filters and
+-- counts on lifecycle, so it is a hot filter column rather than a display field.
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_ToolingInventoryRollSet_LifecycleStatus' AND object_id = OBJECT_ID(N'dbo.ToolingInventoryRollSet'))
+    CREATE NONCLUSTERED INDEX [IX_ToolingInventoryRollSet_LifecycleStatus] ON [dbo].[ToolingInventoryRollSet] ([LifecycleStatus]);
+GO
+
+-- Filtered unique on the same reasoning as the die: a serial identifies one
+-- physical set, but the seed leaves every SerialNo NULL until the client supplies
+-- them, and a plain UNIQUE admits only one NULL row.
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_ToolingInventoryRollSet_SerialNo' AND object_id = OBJECT_ID(N'dbo.ToolingInventoryRollSet'))
+    CREATE UNIQUE NONCLUSTERED INDEX [UX_ToolingInventoryRollSet_SerialNo] ON [dbo].[ToolingInventoryRollSet] ([SerialNo]) WHERE [SerialNo] IS NOT NULL;
 GO
 
 

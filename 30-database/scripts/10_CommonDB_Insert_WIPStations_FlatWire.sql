@@ -170,7 +170,15 @@
       is component-sequenced where the Mill's is pass-numbered. The instruction was "all
       others will be removed". That is only safe to execute if the flat wire screens are
       INDEPENDENT of ZR23/ZR24's - under a shared machine type driving shared tab
-      configuration, executing it would strip columns from the mills too. The client also
+      configuration, executing it would strip columns from the mills too.
+
+      STRENGTHENED, 3 Sep 2026 (D-42). The "three tool types" above is now FOUR - the
+      client added roll sets (mill rolls and the DB1/DB2 capstan rolls) and excluded
+      dancers, entry guides, payoffs and spools by name. The 31 Aug figure is kept as
+      written because it is the dated evidence; the point it was making only gets
+      stronger. Four types against the Slitter's five, with no overlap in the field
+      sets, is harder still to express as one inherited machine type. D8 STAYS OPEN -
+      this is more evidence for it, not a decision. The client also
       said, of three separate tabs, "this will be different for FL1 & FL2/FL3 as each machine
       has its own capabilities" - so the configuration is not uniform even across the three
       flattening lines, which no single inherited mill type expresses.

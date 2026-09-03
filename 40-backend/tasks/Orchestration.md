@@ -1,7 +1,7 @@
 # Phase 1B — Execution Orchestration
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 31, 2026 - change history is in [`CHANGELOG.md`](../../CHANGELOG.md)
+**Last Updated:** September 3, 2026 - **Table C3 added: `FW-260`**, the roll-set register service for the fourth Tooling Inventory tool type (`D-42`). Deliberately thinner than `FW-252` - a roll set has **no footage counter**, so there is no per-run write path and no history log. Its one non-trivial invariant is `CK_TIRS_Mount`. *(previously August 31, 2026 - change history is in [`CHANGELOG.md`](../../CHANGELOG.md))*
 **Document Type:** Execution index and dependency graph for the Phase-1B implementation plans
 **Status:** Active — **the entry point for this folder**
 **Owner:** Backend (.NET) + Real-time streams
@@ -213,6 +213,24 @@ in [TrialOrchestration.md](TrialOrchestration.md).
 > (it keys on **`ReasonCode`**, and `Other` is a code per bucket), and `FW-167`'s callout told the
 > reader to validate against `Drawer`'s 13-row size catalogue, **which no longer exists**.
 > `FW-174` gained the 72-reason vocabulary and `G79`/`G82`.
+
+**Table C3 — minted 3 Sep 2026, the fourth Tooling Inventory tool type** (`[TB §7]` Appendix `B.8`).
+
+| Story | Subject | Stream · Phase | h | Closes |
+|---|---|---|---|---|
+| **[`FW-260`](FW-260.md)** | Roll-set register service — `ToolingInventoryRollSet` CRUD and the mount invariant | BE · 6 | 10 | `D-42` — the client's fourth tool type. Paired with [`FW-259`](../../30-database/tasks/FW-259.md) (DB) and [`FW-261`](../../50-frontend/tasks/FW-261.md) (FE) |
+
+> ⚠ **Deliberately thinner than `FW-252`, and the reason is the life model.** A die accumulates
+> footage every run, so `FW-252` carries a *lifecycle* service, a `DieHistory` write path and a
+> denormalised total to keep honest. **A roll set has no footage counter** — it is reground to a
+> minimum OD — so there is no per-run write path and no history log. What is left is a register
+> with one non-trivial invariant: **`CK_TIRS_Mount`**, enforced in the aggregate as well as the
+> database, answering **422** rather than 500.
+>
+> ⚠ **`NominalDiameterIn` is not derived from, validated against or reconciled with
+> `Stand.RollDiameterIn`.** Separate values, separate owners — the machine's roll diameter is
+> `D-26` and `[PLC §5.4]` data; this is the physical tool's own size. A developer who "fixes" the
+> apparent duplication breaks both.
 >
 > ⚠ **Additive to `[CE §3b]` like Table C — ⛔ but part of this set is scope RETURNING to MVP-1**,
 > so unlike Table C a published total genuinely moves. [`FW-258`](../../60-delivery/tasks/FW-258.md)
