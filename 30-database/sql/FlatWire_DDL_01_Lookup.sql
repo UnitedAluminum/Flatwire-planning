@@ -1294,10 +1294,23 @@ GO
 -- the legacy system, not an enumeration: it comes from
 -- united_db.dbo.lookups where lookup_category_id = 4061
 -- (eLookUpcategory.CrewSizeForMachineStandards), and the app PARSES THE
--- INTEGER OUT OF the description varchar column.  A hardcoded IN (...)
--- list would reject a crew size an administrator adds there.  The 1..9
--- bound is a sanity check, not a vocabulary.
--- [PROPOSED] -- the bound is ours; the vocabulary needs a client answer.
+-- INTEGER OUT OF the description varchar column.  Those rows are NOT in
+-- source control -- they exist only in the live database.
+--
+-- MEASURED on DEV00164-001, 4 Sep 2026: the category holds exactly THREE
+-- active rows -- 'Crew Size 1' / '2' / '3', descriptions '1' / '2' / '3'
+-- -- and Slitters_Standards carries exactly those three across six
+-- machines (18 rows, 6 per crew size).  So the vocabulary today is 1..3.
+--
+-- The CHECK stays a RANGE anyway, and that is deliberate: 1..9 admits
+-- 1..3 now and survives an administrator adding a fourth row to that
+-- lookup, which a hardcoded IN (1,2,3) would reject at save time.
+--
+-- [PROPOSED] -- what is measured is what the SLITTERS use; whether a
+-- flattening line crew is sized the same way is Q94, still open.  Note
+-- also the legacy trap: int.TryParse with a fallback of 1 means a blank
+-- or non-numeric description SILENTLY becomes crew size 1.  All three
+-- rows parse cleanly today.
 --
 -- DECIMAL, NOT THE LEGACY FLOAT.  No FLOAT or REAL column exists anywhere
 -- in FlatWireDB, and a binary float cannot hold a standard time exactly --
