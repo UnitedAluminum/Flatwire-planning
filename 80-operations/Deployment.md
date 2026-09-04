@@ -1,7 +1,7 @@
 # Flat Wire Mill — Deployment
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 30, 2026 — ⛔ **§4.2 step 2.1's `cd` named a folder deleted by the 29 Aug re-tree, and it is the step the rest depends on** — `FlatWire_DDL_RunAll.sql`'s `:r` includes are relative to the invocation directory. Retargeted to `30-database\sql`. **`V3`'s comment block also carried stale arithmetic** — *"The 64 in script 07 are 53 … plus 11"*, three lines above its own correct `-- Expected: 70` and invisible to every tool; **replaced with a pointer to `[DBD §6.8]` rather than the corrected split**, because a second copy of a figure in a permitted site is how this gate came to reject a correct deployment five times. **No expectation, checklist line or section number changed** *(previously August 29, 2026 — **A sixth deployment artifact for the first time — `FlatWireSimConsole` (`D-33`).** §1.1 component 6; **new §1.2a** (it is a *distribution* decision, not a deployment step — and ⚠ **nothing enforces the installation policy**, `G66`); §1.3's *Console version* row (**do not** couple it to a `flatwire-v*` tag); §2 records it has **no environment row and needs none**; **new §4.7 (Step 7)**, optional and non-blocking. ⚠ **Never deploy it against `production`** *(previously August 26, 2026 — **this header contradicted §4.2's own gate and is now level with it.** It published `34 / 57 / 69` for `V1`/`V2`/`V3` while the body asserted **33 / 55 / 70** — the figures the DDL actually produces, and the ones [`../tools/deliverables/verify_schema_counts.py`](../tools/deliverables/verify_schema_counts.py) checks this file against. `[DBD §6.2]` remains the defining site; a header restating a count is how the gate drifted from the body in the first place, so it now points rather than repeats *(previously August 23, 2026 — **§“Verification” corrected for the third time: as written it again rejected a correct deployment.** `V1`/`V2`/`V3` asserted **32 / 50 / 57** — the 32 predated the 22 Aug rod ↔ order pair and the 50/57 were never re-derived after `D-31`. Corrected then to 34 / 57 / 69, counted from the DDL, with `[DBD §6.2]` named as the defining site)* *(previously August 22, 2026 — `V1`/`V2`/`V3` asserted 25/33/41 in SQL comments and 27/41/46 in the checklist beneath, and `V4` required the MVP-2 `sp_ShiftSummary`)* *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** **Deployment step 2 is cancelled** and §4.3 retained as the record; the 1→3→4→5 order no longer depends on the renames; `V7`/`V8`/`V9` dropped, `V10` kept *(previously August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)))*
+**Last Updated:** August 30, 2026
 **Document Type:** Release overview, environments, pre-deployment, sequence, smoke suite
 **Status:** Baselined
 **Owner:** Release manager / IT
@@ -518,7 +518,7 @@ Copy-Item ".\dist\<bundle>\*" "<web-site-path>" -Recurse -Force
 
 - [ ] **`useMockData` is `false`** for every environment except local development.
 - [ ] The API base URL points at the environment's `FlatWire.API`.
-- [ ] The hub URL points at `/hubs/flatwire` on that host.
+- [ ] The hub URL points at `/hubs/flat-wire` on that host.
 
 **After deploying:**
 
@@ -529,7 +529,7 @@ Copy-Item ".\dist\<bundle>\*" "<web-site-path>" -Recurse -Force
 **Verification:**
 
 - [ ] The shop-floor shell loads and `/flat-wire/status` renders DB1.
-- [ ] The browser network tab shows a **WebSocket** connection to `/hubs/flatwire` — **not** an SSE or long-poll fallback.
+- [ ] The browser network tab shows a **WebSocket** connection to `/hubs/flat-wire` — **not** an SSE or long-poll fallback.
 - [ ] The `--color-*` design tokens resolve (no unstyled flash, correct semantic colours).
 
 ### 4.7 Step 7 — `FlatWireSimConsole` *(component 6 — engineering workstations only)*
@@ -577,7 +577,7 @@ Run in order. **Any failure is a rollback candidate** — apply the decision cri
 | **S2** | `TC-701` | Login | Log in at the FL1 station as a punched-in operator | Session created; operator ID, timestamp and station captured |
 | **S3** | `TC-702` | Authorisation | Attempt `GET /passschedule` unauthenticated | `401` |
 | **S4** | `TC-703` | Line Status board | Open `/flat-wire/status` | All three line cards render from `GET /lines/status` |
-| **S5** | `TC-704` | **Hub connection** | Inspect the browser network tab | A **WebSocket** connection to `/hubs/flatwire`, not a fallback transport |
+| **S5** | `TC-704` | **Hub connection** | Inspect the browser network tab | A **WebSocket** connection to `/hubs/flat-wire`, not a fallback transport |
 | **S6** | `TC-705` | **A live event on each line** | Join `FL1Data`, `FL2Data`, `FL3Data` in turn | FL1 and FL3 receive batched `GaugeReading`; **FL2 receives none — this is correct, not a fault** |
 | **S7** | `TC-706` | Pass schedule reads | Open DB9A, then one schedule | List renders with counts; detail shows components with three-value state |
 | **S8** | `TC-707` | **One check-in against a real Active pass schedule** | Complete the 6-step wizard on the test order and acknowledge | Run created `Running`; `RodCheckin`, pre-run SPC and inspection rows written; **`Rod.Status = 'INFLAT'` in `FlatWireDB`, and `coils.coil_status` UNCHANGED** *(`D-32`)*; **records written before the push** |

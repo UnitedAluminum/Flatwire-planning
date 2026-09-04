@@ -1,9 +1,9 @@
 # Phase 1A — Shared Context, Decisions and Plan Index (Frontend)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 28, 2026 — ⚠ **The Mockups folder is 38 files / 19 HTML** — `dashboard_3_active_run_ual.html`, a **styling comparison build** (DB3 in the host app’s CSS at 1920×1080) plus five generated assets. The folder is still **flat**. Counts and the "composed for 5:4" statements updated — **18 of 19**, not all 19. Earlier: August 28, 2026 — ⛔ **Two findings from reviewing `FW-130` against the built library: `[CMP §7.4]`'s *"consume as-is"* cannot be followed.** New **§6.16** measures four conflicts — the stylesheet carries **no `stylelint-disable`** and yields **856 errors** (`lint:styles` runs `--fix`, which rewrites it and still leaves **64**), it is **14 sections rather than a token file**, §2/§3 **hard-code the old 1280 canvas**, and it declares **138 bare global selectors including `.btn`**, which collides with Bootstrap across the whole application where the cited precedent declares **one**. ⚠ There is a costing consequence: `FW-130` is priced as *consumed, not authored*, and re-scoping 138 selectors is authoring. New **§6.17**: `[CMP §7.4]`'s reason for `ViewEncapsulation.None` — *"so the tokens resolve"* — **is not a real constraint** (custom properties inherit regardless), and acting on it would leak those selectors globally; `:host` is the right half of that sentence. Earlier the same day: ✅ **`FW-N03` executed: wave 0 is built.** §2's `projects/` row is now **32 entries** and §3's wave-0 row reads BUILT. **Two findings added from the execution:** ⚠ **§6.14** — `[CMP §5.1]`'s `flat-wire-routing.ts` contradicts the repository's `<lib>-routing.module.ts` (5 of 5 files), so the library follows the checkout and the conflict is raised rather than overruled; ⛔ **§6.15** — **the host app cannot be built in this checkout at all**, because `flexmonster`/`ngx-flexmonster` are referenced by `angular.json` and seven cost-ledger files but are **neither declared nor installed**, which defers the browser-side proof for **all nine** story plans and both of `phase-01a`'s first two exit criteria. Earlier the same day: **refreshed against the measured repository and the owning documents.** ⚠ **§6.13's denominator was wrong**: `[TCS]` holds **405 defined cases**, not 799 — `TC-799` is the highest *id* and 47 ids are cited but never defined; the finding itself (no Phase-1A case) stands, and the same figure was corrected in seven story plans. ⚠ **`F-05`: MVP-1 implements 27 endpoints, not 25** — `[API §3.2]`'s own header records the index as two rows short (**34/27**), and since both missing rows are GET/POST the **decision is firmer, not weaker**. ✅ **§6.10 records `Q26`'s 24 Aug advance** — the resolution ask is closed on our side, with the ***workstation*-versus-HMI** ambiguity and the register's now-superseded *"hold 1280×1024"* recommendation both flagged. **§6.11 moved into numeric position** between §6.10 and §6.12, where it had been sitting after §6.13 — **no section was renumbered** (the §6.9 hole is deliberate, per the repository's no-renumbering rule), and it now also names **`spool_notification.js`**, the second script `CLAUDE.md` omits: the folder holds ten `.js` assets and `CLAUDE.md` names eight. Earlier the same day: ✅ **§6.8 closed: the library rename was swept repository-wide** — 43 occurrences across sixteen documents, including the three binding ones (`phase-01a`, `[TB §7]`'s `FW-N03` acceptance criteria, and `D-01` in all three documents that quote it). §6.8 now records what deliberately keeps the old string — the mockups' stylesheet, `CHANGELOG.md`'s dated rows, and this folder's corrective notes — and why the sweep had to be **binary**: two target files are pure CRLF and one is mixed. `F-13` marked applied. **History lives in [`CHANGELOG.md`](../../CHANGELOG.md), not here.**
+**Last Updated:** September 1, 2026
 **Document Type:** Phase-level foundation for nine story plans — the measured checkout, the `F-##` decisions, the findings, and the index of the nine
-**Status:** Active — ✅ **wave 0 is built (28 Aug 2026).** `projects/flat-wire/` exists, builds, lints and tests clean; `FW-130`, `FW-131`, `FW-132` and `FW-135` are **unblocked and buildable now**
+**Status:** Active — 🟡 **wave 0 is built and awaiting commit** ([`FW-N03`](FW-N03.md)); `FW-130`, `FW-131`, `FW-132` and `FW-135` unlock when it lands
 **Owner:** Frontend (Angular) stream
 **Audience:** The Angular developer building Phase 1A, and the delivery lead sequencing it
 **Shortcode:** **`[P1A]`** — *declared here because the nine story plans cite it as `[P1A §n]`. It is a **folder-local** convention, not one of the repository's document shortcodes, and it is **not citable as a requirement**: this file is derived from the specifications and loses to all of them*
@@ -30,7 +30,7 @@
 >
 > **On 27 Aug 2026 this plan was divided into nine per-story plans**, one per Phase-1A story, each
 > with its own build order, verification and blockers. §3 is the index. **What stayed here is what is
-> shared**: the measured checkout (§2), the eleven integration points (§2.1), the `F-01`–`F-15`
+> shared**: the measured checkout (§2), the eight integration points (§2.1), the `F-01`–`F-15`
 > decisions (§4), the phase-level exit criteria (§5) and the twelve findings (§6).
 >
 > **The division was by story, not by subject** — so a developer opens one file, and the facts nine
@@ -73,7 +73,7 @@ contradicts a specification it is flagged, and the contradiction is filed in §6
 | | Measured |
 |---|---|
 | **Angular · TypeScript · Jest** | **20.3.12** · 5.9.3 · Jest 30 + `jest-preset-angular` 15 · `ng-packagr` 20 — ⚠ the ecosystem docs say Angular 18.2.7 (§6.4) |
-| **`projects/`** | **32 `angular.json` entries** — 31 libraries + the host app `united-aluminum`. ✅ **`flat-wire` is entry 32, built 28 Aug 2026** (`FW-N03` §6); this row read *"31 entries · no `flat-wire`"* until then |
+| **`projects/`** | **31 committed `angular.json` entries — 30 libraries + the host app `united-aluminum`, and no `flat-wire`.** ⚠ The **working tree** holds a 32nd entry and `projects/flat-wire/`, both **uncommitted** — this row counts what has landed |
 | **Components** | NgModule-based; **`standalone: false`** written explicitly on every `@Component` |
 | **Routing** | `HashLocationStrategy` (so `/flat-wire` resolves as `#/flat-wire`); host `src/app/routes.ts` lazy-loads one **wrapper module** per library from `src/app/project-routes/`, each of which imports the library module from its **source** path |
 | **Configuration** | `environment.js` (a Node script) writes `src/assets/config.json`; `src/environments/` holds only `environment.ts` and `environment.prod.ts`, carrying nothing but `production`. `AppConfig` = `typeof src/assets/local-config.json`. Read through `AppConfigService.getEndpoint()` — ⚠ **there is no `environment.development.ts`** (`F-02`) |
@@ -90,24 +90,46 @@ contradicts a specification it is flagged, and the contradiction is filed in §6
 | **Test gate** | root `jest.config.js` globs `projects/**/jest.config.js`, so a new library's config is picked up automatically. Every library sets **95 %** on statements, branches, functions and lines. `collectCoverageFrom` globs `*.component.ts`, `*.service.ts`, `*.guard.ts`, `*.pipe.ts`, `*.directive.ts`, `*.model.ts`, `*.utils.ts` (`F-08`) |
 | **Global CSS the shell must survive** | `src/styles/styles.scss` sets `body { font-family: Verdana; font-size: 12px !important }` and `html, body { text-align: center }`, and Bootstrap 5.3.8's reboot is global |
 
-### 2.1 The eleven integration points
+### 2.1 The eight integration points
 
-A new library is not done when `ng build` passes. These are the files that make it *exist* in this
-monorepo, each with the library to copy the shape from:
+A new library is not done when it compiles. These are the files that make it *exist* in this
+monorepo, each with the library to copy the shape from.
+
+⚠ **`flat-wire` is a routing application, not an injectable library** — nothing imports it by
+package name and it publishes no bundle, so three integration points an injectable library needs do
+not apply here. **The precedent for every row is `planning`**, measured; `ot-signup` is not, because
+it is both a routing module and an injectable library.
 
 | # | File | What goes in | Precedent |
 |---|---|---|---|
-| 1 | `angular.json` | project entry, `projectType: library`, **`prefix: fw`**, ng-packagr builder + lint target | `shop-floor-common` |
-| 2 | `tsconfig.json` | `"flat-wire": ["dist/flat-wire"]`, **inside the `/** mono repo paths **/` markers** | every library |
-| 3 | `jest.base.config.js` | `'^flat-wire': '<rootDir>/dist/flat-wire/fesm2022/flat-wire.mjs'` — for consistency; not load-bearing in 1A, since the wrapper imports by source path and nothing yet imports `flat-wire` by package name | every library |
-| 4 | `package.json` | `ng build flat-wire` appended to **`build:shop-floor`** (build ordering only — `[ARC §2.2]`), plus a `test:flat-wire` script | `checkin-precheckin` |
-| 5 | `src/app/routes.ts` | the lazy route loading the wrapper module | `shop-floor` |
-| 6 | `src/app/project-routes/flat-wire-wrapper.module.ts` | `@NgModule({ imports: [FlatWireModule] })`, importing from `projects/flat-wire/src/lib/flat-wire.module` | `print-traveler-wrapper.module.ts` |
-| 7 | `src/assets/content-data/flat-wire.json` | the shell's user-facing strings (`F-11`) | `shop-floor-common.json` |
-| 8 | `src/types/content-data/index.d.ts` | `export type FlatWireContent = typeof flatWireJson;` | every library |
-| 9 | `environment.js` | `flatWireApiUrl`, `flatWireHubUrl`, `useMockData: false` | the `config` object |
-| 10 | `src/assets/local-config.json` | the same three keys with **`useMockData: true`** — this file is also the `AppConfig` *type* | — |
-| 11 | app `styles` array in `angular.json` | `projects/flat-wire/src/lib/styles/flat-wire.styles.scss` | `shop-floor-common.styles.scss`, already there |
+| 1 | `angular.json` | project entry, `projectType: library`, ng-packagr builder + lint target. ⚠ **No karma `test` target** — this repository is Jest | `planning` |
+| 2 | `package.json` | a `test:flat-wire` script. ⚠ **Not appended to `build:shop-floor`** — row 2 of the struck table | `planning` |
+| 3 | `src/app/routes.ts` | the lazy route loading the wrapper module. ⚠ **Append it — the file is not alphabetical** | `planning` |
+| 4 | `src/app/project-routes/flat-wire-wrapper.module.ts` | `@NgModule({ imports: [FlatWireModule] })`, importing from `projects/flat-wire/src/lib/flat-wire.module` — the **source** path | `planning-wrapper.module.ts` |
+| 5 | `src/assets/content-data/flat-wire.json` | the shell's user-facing strings (`F-11`) | `planning.json` |
+| 6 | `src/types/content-data/index.d.ts` | `export type FlatWireContent = typeof flatWireJson;` | every library |
+| 7 | `environment.js` | `flatWireApiUrl: 'FlatWire/api/v1/'` · `flatWireHubUrl: 'FlatWire/hubs/flat-wire'` · `useMockData: false`. ⚠ The `// to be removed once live data is available` comment goes **here** — this file is JavaScript | the `config` object |
+| 8 | `src/assets/local-config.json` | the same three keys with **`useMockData: true`**. ⚠ **Strict JSON — it cannot carry that comment**, and it is also the `AppConfig` *type* | — |
+
+#### ⛔ What a routing application does not get
+
+| Not done | Why |
+|---|---|
+| a `tsconfig.json` path | A path exists so other code can `import { X } from '<lib>'` against `dist/<lib>`. **Nothing imports `flat-wire`**; the wrapper imports it from source. **Measured: `planning` has no path** |
+| a `build:shop-floor` chain entry | With no consumer there is no bundle to order. **Measured: `planning` is in no chain** — not `build:base`, not `build:shop-floor`, not `build:coil-receiving`; the app build compiles it from source |
+| a `jest.base.config.js` alias | The alias resolves a package-name import to a bundle. There is neither. **Measured: `planning` is not in `moduleNameMapper`** |
+| an app `styles` array entry | **No new styles are created** — the existing application styles are used, and a new style or class is written only when a requirement calls for one. ⚠ The mechanism and precedent remain: `planning-styles.scss` is one of four library sheets already in that array, so a later requirement follows it. → `F-03`, withdrawn |
+
+> **Two things that are deliberately *not* in the eight**, because neither makes the library exist:
+>
+> - ✅ **The git hooks need nothing.** `.husky/pre-push` derives each project path from the
+>   `"test:*"` scripts in `package.json`, so point 2 is what makes it run this library's suite;
+>   `pre-commit` lints every project and `commit-msg` is a generic regex. **No hook enumerates
+>   projects.**
+> - ⚠ **The repository's instruction files do need updating** — `CLAUDE.md`,
+>   `.claude/project-context.md` and `.github/copilot-instructions.md`, which must state the
+>   **routing-application vs injectable-library** distinction and name `flat-wire` as the former.
+>   [`FW-N03` step 10](FW-N03.md) owns it.
 
 ---
 
@@ -121,7 +143,7 @@ times is how a repository ends up with six contradictory copies of one fact.
 
 | Wave | Story | Plan | h | State |
 |---|---|---|---|---|
-| **0** | `FW-N03` · library scaffold, routing, configuration | [FW-N03.md](FW-N03.md) | 24 | ✅ **BUILT 28 Aug 2026** — execution record at that plan's §6 |
+| **0** | `FW-N03` · library scaffold, routing, configuration | [FW-N03.md](FW-N03.md) | 24 | 🟡 **Built, awaiting commit** — all three verification commands pass |
 | **1** | `FW-130` · shell layout and the 1920 × 1080 canvas | [FW-130.md](FW-130.md) | 16 | ✅ buildable · 🔴 on the critical path |
 | **1** | `FW-131` · guards, interceptors, error envelope | [FW-131.md](FW-131.md) | 12 | ⛔ **role half blocked** on `F-12` |
 | **1** | `FW-132` · API client and domain models | [FW-132.md](FW-132.md) | 20 | ⚠ bakes in `G14`'s two undecided halves |
@@ -140,7 +162,7 @@ times is how a repository ends up with six contradictory copies of one fact.
 | | Home |
 |---|---|
 | the measured state of the checkout | **§2 of this file** |
-| the eleven integration points a new library must touch | **§2.1 of this file** — `FW-N03` executes them |
+| the eight integration points a new library must touch | **§2.1 of this file** — `FW-N03` executes them |
 | every `F-##` decision | **§4 of this file** |
 | the findings raised against other documents | **§6 of this file** |
 | dependency waves, the blocker calendar, the critical path | [`Orchestration.md`](Orchestration.md) |
@@ -176,8 +198,7 @@ across that folder; a second series there would collide in citation.
 | id | Decision |
 |---|---|
 | **`F-01`** | **Target checkout is `c:\UAL\Second-Branch\ual-angular` @ `feature/flat-wire`.** `phase-01a` and `[ARC §2.1]` name `c:\UAL\ual-angular`. ⚠ **This plan does not supersede a specification** — the conflict is raised for `[ARC]` to settle |
-| **`F-02`** | **`useMockData`, `flatWireApiUrl` and `flatWireHubUrl` are config keys, not `environment.*.ts` constants.** The file `phase-01a` names — `environment.development.ts` — does not exist. The repo's own mechanism gives the spec's exact semantics: `useMockData: true` in **`src/assets/local-config.json`** (read only by `ng serve`, never deployed), `useMockData: false` plus the two URLs in **`environment.js`** (→ `config.json`, read by every built environment). ⚠ **Both files must carry every key** — `AppConfig` is `typeof local-config.json`, so that file is also the type, and a key in only one of them makes the type and the runtime value diverge |
-| **`F-03`** | **The token stylesheet ships as a library style file in the app `styles` array, carrying `/* stylelint-disable */`.** *"Consume as-is"* (`[CMP §7.4]`) and `color-no-hex` cannot both hold; the precedents for suppressing it are `src/styles/_colors.scss` and `multi-grid-layout.scss`. `em` units are not a factor — the stylesheet uses none |
+| **`F-02`** | **`useMockData`, `flatWireApiUrl` and `flatWireHubUrl` are config keys, not `environment.*.ts` constants.** The file `phase-01a` names — `environment.development.ts` — does not exist. The repo's own mechanism gives the spec's exact semantics: `useMockData: true` in **`src/assets/local-config.json`** (read only by `ng serve`, never deployed), `useMockData: false` plus the two URLs in **`environment.js`** (→ `config.json`, read by every built environment). ⚠ **Both files must carry every key** — `AppConfig` is `typeof local-config.json`, so that file is also the type, and a key in only one of them makes the type and the runtime value diverge. ✅ **Values set 1 Sep 2026:** `flatWireApiUrl: 'FlatWire/api/v1/'` — correct, because `prefix` is `http://<host>/API.` and `FW-080`'s `PATH_BASE` is `/API.FlatWire`. ✅ **`flatWireHubUrl: 'FlatWire/hubs/flat-wire'`** — the hyphen was adopted across all layers on 1 Sep 2026 (`[API §1]`, `[SIG §4]`, `[ARC]`, `[DEP]`, `phase-01b`, the master specification and four backend plans — 22 occurrences). ⛔ **`FW-080` is built on the old path and owes the re-map**, with `FW-145 §3.5`'s `?access_token=` handler beside it; `FW-135` cannot connect until then — [`FW-N03 §8·1`](FW-N03.md) |
 | **`F-04`** | **The library defines its own `FlatWireResponse<T>`** — `data · success · errorCode · errorDescription · errors[] · errorContext` per `[API §1.2]`. `shared`'s `HTTPResponse<T>` has no `errors[]` and is neither extended nor reused |
 | **`F-05`** | **No MVP-1 gap from `ApiGatewayService`'s `get`/`post`-only surface.** The contract's only `PUT` and `PATCH` are `PUT /passschedule/{id}` and `PATCH /passschedule/{id}/status` — **both Phase 2, both MVP-2** — so `get`/`post` covers all **27** MVP-1 endpoints. ⚠ **27, not 25** *(corrected 28 Aug 2026)*: `[API §3.2]`'s heading says *"32 endpoints, of which MVP-1 implements 25"* while that document's own header records the index as **two rows short** — `§4.20`/`§4.21`, added 22 Aug and never indexed — making the surface **34/27** (`P-53`, `P-54`). ✅ **The decision is unaffected and is in fact firmer**: both missing rows are `GET /rod/{alpha}/orders` and `POST /order/{orderNo}/complete`, so a larger surface is still entirely GET/POST. Recorded because it becomes a gap the day pass-schedule authoring returns |
 | **`F-06`** | **`UILogService` is provided by `SharedModule` but not exported from `shared`'s public API.** Error telemetry is therefore **already wired** — `forRoot()` registers `GlobalErrorHandler`, which uses it. Deliberate log calls need one additive export line in `projects/shared/src/public-api.ts`; take that **only if 1A needs explicit logging**, and never re-implement the service |
@@ -187,7 +208,7 @@ across that folder; a second series there would collide in citation.
 | **`F-10`** | **`FW-137` is sequenced last** and its dependency named: `@angular/service-worker` is a provisioning item, like MessagePack, not a build one |
 | **`F-11`** | **Flat wire follows the repo's content-data convention** — `src/assets/content-data/flat-wire.json`, a `FlatWireContent` type, and the `resolveData` / `ContentDataService` route pair — rather than the mockups' inlined English. In 1A the file covers shell chrome only and grows per screen |
 | **`F-12`** | ⛔ **The role source must be decided before `FlatWireRoleGuard` can be built.** Options: **(a)** decode the JWT the client already holds; **(b)** extend the login response with the six roles — touches `Login`; **(c)** map the six onto the existing per-module ACCESS/WRITE primitive — no new mechanism, but loses `FR-212`'s Operations-Manager-only granularity. **This plan recommends (a)**: the roles are already in the token (`ClaimTypes.Role`, confirmed 15 Aug 2026), decoding is a few lines with no new dependency and no second team, and `[SEC §8]` puts the real gate on the API (`[Authorize]` + role policies) — which makes the guard **UX and defence-in-depth, not the enforcement point**, exactly the case where the cheap self-contained option wins. (b) remains right if `[SEC]` wants a server-authoritative shape. Either way the guard binds to **one constants class**, as [`FW-145`](../../40-backend/tasks/FW-145.md) does server-side. ✅ **All three options and this recommendation are now recorded in [`[SEC §8]`](../../Architecture/Security.md) itself** (27 Aug 2026), marked as a recommendation with the decision left to that document. → `[SEC]` / `G6` |
-| **`F-13`** | **The library is `flat-wire`, not `flat-wire-shopfloor`.** Everything derived follows — `projects/flat-wire/`, `dist/flat-wire`, the tsconfig path key, `^flat-wire` in `moduleNameMapper`, `test:flat-wire`, `FlatWireModule`, `flat-wire-routing.ts`, `content-data/flat-wire.json`, `flat-wire.styles.scss`. **Prefix stays `fw`**, and the route base now matches the library name. ✅ **Applied repository-wide on 28 Aug 2026** — 43 occurrences across sixteen documents (§6.8). ⚠ **The mockups' `flat-wire-shopfloor.styles.scss` / `.css` keep their names** — 23 HTML files link them. ✅ `[CMP §5.1]`, `phase-01a` and `FW-N03`'s acceptance criteria **all now say `flat-wire`** (§6.8) |
+| **`F-13`** | **The library is `flat-wire`, not `flat-wire-shopfloor`.** Everything derived follows — `projects/flat-wire/`, `test:flat-wire`, `FlatWireModule`, `flat-wire-routing.module.ts`, `content-data/flat-wire.json` — and the route base matches the library name. ⚠ **There is no tsconfig path key, no `moduleNameMapper` entry and no `flat-wire.styles.scss`** (§2.1), and the selector prefix is the repository default `lib`. ✅ **Applied repository-wide on 28 Aug 2026** — 43 occurrences across sixteen documents (§6.8). ⚠ **The mockups' `flat-wire-shopfloor.styles.scss` / `.css` keep their names** — 23 HTML files link them. ✅ `[CMP §5.1]`, `phase-01a` and `FW-N03`'s acceptance criteria **all now say `flat-wire`** (§6.8) |
 | **`F-14`** | **The canvas is 1920 × 1080.** User instruction, 27 Aug 2026, and it **decides `G23`** — the gap whose whole content was that nobody had confirmed 1280 × 1024. It is decided **in the expensive direction**: +50 % width against +5 % height, and 5:4 → 16:9, so the work is **re-composition, not rescaling** (step 2's six rules). ⚠ **The 14 px text floor and ≥ 48 px tap targets are carried forward unchanged on a stated assumption** — both are physical legibility rules (`[VAL §7.5]`: arm's length, gloved), so they track **dpi, not resolution**, and they hold only if the 1920 × 1080 panel is a **physically larger** panel of the same dpi class (a ~21.5" 16:9 against a 17–19" 5:4, both ~96–102 dpi). **If it is the same physical panel at higher density, every size in the token system scales ×1.5 and the floor becomes 21 px.** No document records the diagonal (§6.10) |
 | **`F-15`** | **At the new canvas the mockups remain the authority on *content*, not on *composition*.** They keep their standing for controls, states, colour semantics, wording, interaction and the button-icon rule — `[SCR §7.1]`'s *"approved visual baseline and pixel authority"* is unaffected there. **What they cannot be is the layout authority for a canvas they were not composed at**: 18 files are laid out for 5:4. ⚠ **So composition at 1920 × 1080 is new design work with no mockup behind it**, and it is **not in `[TB §7]`'s hours** — flagged, not re-estimated, because `[CE]` owns the figure. **Do not re-author the mockups as part of 1A**: `G23`'s own instruction is *"do not re-author anything until answered"*, and the answer belongs to `[SCR]` / `[VAL]`, which still specify 1280 × 1024 |
 
@@ -203,11 +224,10 @@ across that folder; a second series there would collide in citation.
 ```bash
 cd c:\UAL\Second-Branch\ual-angular
 
-npm run build:base            # shared et al. -> dist/  (REQUIRED FIRST)
-ng build flat-wire            # the library itself
-npm run build:shop-floor      # proves the chain is not broken
-ng lint flat-wire             # eslint, fw prefix rules
-npm run lint:styles           # stylelint over projects/**/*.scss
+npm run build                 # clean:dist -> build:base -> the chains -> ng build.
+                              # This is what compiles flat-wire: the wrapper imports it from
+                              # SOURCE, so there is no `ng build flat-wire` and no chain entry
+ng lint flat-wire             # eslint
 npm run test:flat-wire        # Jest, 95 % thresholds
 npm start                     # then #/flat-wire, light and dark
 npm run everything            # build && lint && test — the aggregate gate
@@ -312,34 +332,6 @@ The gate is repo-wide and automatic; `phase-01a` asks for smoke tests. And `@mic
 (`G10`, *measure-first*) and `@angular/service-worker` (`FW-137`, unregistered anywhere) both have to
 be added to `package.json` before their stories can start. → `[TS]`, `[GAP]` `G10`, `[TB §7]`.
 
-### 6.8 ✅ The library name — swept on 28 Aug 2026, and the two names no longer coexist
-
-**Closed.** `F-13` renamed the library on 27 Aug 2026 and only this folder followed; the sweep took the
-rest. **43 library-name occurrences renamed across sixteen documents**, including the three that were
-binding — `phase-01a`'s objective and exit criterion, **`[TB §7]`'s `FW-N03` acceptance criteria**,
-which had instructed a developer to run `ng generate library flat-wire-shopfloor`, and `D-01` in all
-three documents that quote it (the master specification, `[ARC §13.1]`, `[VS]`).
-
-**What deliberately still carries the old string, and why:**
-
-| | Count | Why |
-|---|---|---|
-| **`flat-wire-shopfloor.styles.scss` / `.css`** | 60 | The mockups' stylesheet **keeps its own name** (`F-13`). 23 HTML files link it; the library's copy is `flat-wire.styles.scss` |
-| **`CHANGELOG.md`** rows dated before the rename | 7 | Repository convention — a dated entry keeps the names it was written with |
-| **Corrective notes in this folder** | a few | They cite the old name to explain the change; deleting them would erase the reason |
-
-⚠ **Six of the sixteen files contained both forms on different lines** — `CLAUDE.md` among them, with
-two library references and one stylesheet reference — so the sweep protected the asset string before
-replacing and restored it after. A blind find-and-replace would have renamed the stylesheet and broken
-23 mockups.
-
-⚠ **The technique mattered as much as the scope.** `../../90-registers/Gaps.md` and `phase-01a` are **pure CRLF**
-and `TrialRunPlan.md` is **mixed**; the sweep read and wrote **binary**, so all three kept their line
-endings byte for byte and the diff is 43 lines rather than ~1,300. **`sed -i` on this repository
-normalises line endings** — that is why it was not used.
-
----
-
 ### 6.10 ⚠ The 1920 × 1080 canvas is decided here and stated as 1280 × 1024 in five places
 
 `F-14` sets the canvas. ✅ **`[VAL §7.5]` — the row every other document derives from — was corrected on
@@ -348,7 +340,7 @@ verified against:**
 
 | Where | What it still says |
 |---|---|
-| ~~[`[VAL §7.5]`](../ValidationRules.md)~~ | ✅ **Corrected 27 Aug 2026 to 1920 × 1080**, with the geometry, the horizontal-re-layout rule, the dpi assumption behind the 14 px floor and a request for the panel diagonal |
+| [`[VAL §7.5]`](../ValidationRules.md) | ✅ **1920 × 1080**, with the geometry, the horizontal-re-layout rule, the dpi assumption behind the 14 px floor and a request for the panel diagonal |
 | [`phase-01a`](../../60-delivery/phases/phase-01a-angular-foundation.md) | *"fixed **1280×1024** shopfloor canvas"*, and **exit criterion 2** |
 | `[TB §7]` — `FW-130` | *"Fixed **1280×1024** canvas"*, an acceptance criterion |
 | [`[GAP]` `G23`](../../Development/GapsRegister.md) | **still Open**, with *"do not re-author anything until answered"* as its resolution — the answer has now arrived and the row has not |
@@ -434,7 +426,7 @@ things this layer delivers — the Angular library, the shell layout, the canvas
 Phase-1A story.**
 
 ⚠ **The suite holds 405 defined cases and its highest id is `TC-799` — those are different numbers**
-*(corrected 28 Aug 2026, having been stated here and in seven story plans as "a suite of 799")*. Case
+. Case
 ids are minted per requirement block and are **non-contiguous**: 47 ids are cited somewhere in the
 repository and defined nowhere. **Cite the count when you mean the count** — an id is not a tally, and
 `[TCS]`'s coverage matrix is read against the former.
@@ -471,94 +463,6 @@ routes constant is `FLAT_WIRE_ROUTES` exactly as `[TB §7]` requires. ⚠ **This
 `[CMP]`** — the conflict is raised for it to settle, and it is cosmetic: no citation anywhere depends
 on the filename. The same pass found the Angular 20 schematic emits `flat-wire-module.ts` /
 `flat-wire.ts`, which matches neither the spec nor the repository. → `[CMP §5.1]`.
-
----
-
-### 6.15 ⛔ The host application cannot be built in this checkout — `flexmonster` is missing
-
-**Found on executing `FW-N03`, 28 Aug 2026, and it blocks runtime verification for every 1A story.**
-`ng build united-aluminum` fails with `TS2307` on `flexmonster` and `ngx-flexmonster`, `NG6002` on
-`CostLedgerModule`, and `Can't resolve node_modules/flexmonster/flexmonster.min.css`. Both are consumed
-by **`projects/reports/cost-ledger`** — the Cost Ledger report, **the only library in the repository
-that uses them** — across 13 files plus 2 test mocks, and `angular.json` loads
-`flexmonster/flexmonster.min.css` into the app `styles` array and lists `flexmonster` in
-`allowedCommonJsDependencies`.
-
-⚠ **The state of the two packages is not the same, and the difference decides the fix**
-*(corrected 28 Aug 2026 — this section first said neither was declared, which was true of only one)*:
-
-| Package | Declared in `package.json` | Present in `node_modules` |
-|---|---|---|
-| **`ngx-flexmonster`** (the Angular wrapper, `<fm-pivot>`) | ✅ **yes — `^2.9.130`** | ⛔ no |
-| **`flexmonster`** (the licensed core library) | ⛔ no | ⛔ no |
-
-**So this is most likely an incomplete `npm install` in this checkout, not a missing declaration** —
-a declared dependency is absent from `node_modules`, and **`npm install` (or `npm ci`) is the first
-thing to try.** The core `flexmonster` being undeclared is a separate and milder point: it is
-`ngx-flexmonster`'s **peer** dependency, which npm 7+ installs automatically, which is very likely why
-nobody has declared it explicitly. ⚠ **It is also licensed software** — the repo carries a
-`flexmonsterLicenseKey`, currently `'dummy-key'` in both config files — so if a fresh install does not
-resolve it, the question is a licence one and belongs to the Angular repository's owner, not to this
-plan.
-
-✅ **Nothing in the failure touches flat wire.** The compiler analysed the wrapper modules and flagged
-`CostLedgerModule` while raising nothing for `FlatWireModule`, and a scoped `tsc --noEmit` over
-`flat-wire-wrapper.module.ts` + `projects/flat-wire/src/**` returns **zero errors**.
-
-⚠ **The consequence is a verification gap, not a build one.** `npm start` is in the command list of
-**all nine** story plans and in `phase-01a`'s exit criterion 1 (*"reachable at `/flat-wire`"*) and
-criterion 2 (*"renders in light and dark"*). **Neither can be executed until the packages are
-installed**, so every 1A story's browser-side proof is deferred — including `FW-130`'s canvas and dark
-mode, which have no compile-time equivalent at all. **This is a provisioning item of the same class as
-`G10` and `@angular/service-worker`, and it is larger, because it gates observation rather than one
-story.** → the Angular repository's owner, `[DEP]`.
-
----
-
-### 6.16 ⛔ `[CMP §7.4]`'s "consume as-is" cannot be followed — measured on the actual stylesheet
-
-**Found reviewing `FW-130` against the built library, 28 Aug 2026.** `[CMP §7.4]` and `[TB §7]`'s
-`FW-130` card both instruct the developer to consume
-`../mockups/flat-wire-shopfloor.styles.scss` **as-is**. Measured, that instruction conflicts with the
-repository in **four** separate ways, and none was known when it was written:
-
-| # | Measured | Why "as-is" fails |
-|---|---|---|
-| 1 | The file **does not carry `/* stylelint-disable */`**, and yields **856** stylelint errors. `npm run lint:styles` runs with **`--fix`**, which **rewrites it 29,788 → 30,406 bytes** and still leaves **64** errors — **55 `color-no-hex`** | The comment must be added **before the first lint run**, so the shipped copy is *never* byte-identical to the mockups' unless that order is respected |
-| 2 | It is **14 sections**: §1 is the `:root` token block, **§2–§14 are working component CSS** | The card describes it as *"the semantic design-token system"*. Two thirds of the file is not that |
-| 3 | **§2 and §3 hard-code the old canvas** — `body { min-width: 1280px }`, `.dashboard { width: 1280px }` | Copying as-is imports **1280** into the one story whose subject is **1920** (`F-14`) |
-| 4 | It declares **138 bare top-level class selectors**, including **`.btn`**, `.panel`, `.field`, `.input`, `.header`, `.footer` | Registered in the app `styles` array it is **global**, in an app that `@use`s **Bootstrap 5.3.8** and hosts 30 other libraries. **`.btn` is Bootstrap's own class** |
-
-⚠ **Item 4 is not the house pattern and the repository has already solved this collision once.** The
-precedent the plan itself cites, `shop-floor-common.styles.scss`, declares **exactly one** bare
-selector (`.order-info-iframe`) and none of those names; and `CLAUDE.md` records the four run-event
-dialog scripts being rescoped under `.fwdc` / `.fwspc` / `.fwwip` *"because the originals defined bare
-`.section`, `.btn`, `.field` and `.footer` that collide with every host screen."* **The stylesheet
-never received that treatment.**
-
-⚠ **There is a costing consequence.** `FW-130`'s rate-card basis prices 16 h as a discounted 20 h
-*"because the token system is consumed, not authored"*. **Re-scoping ~138 selectors is authoring.**
-Flagged, not re-estimated — `[CE]` owns the figure. Three options are costed in
-[`FW-130 §3 step 2c`](FW-130.md); **whichever is taken must be written down**,
-because `FW-133`'s six composite controls and `FW-134`'s six primitives are built straight into it.
-→ `[CMP §7.4]`, `[TB §7]`, `[CE]`.
-
----
-
-### 6.17 ⚠ `[CMP §7.4]`'s reason for `ViewEncapsulation.None` is not a real constraint
-
-`[CMP §7.4]` reads *"Angular components must use `ViewEncapsulation.None` or `:host` scoping **so the
-tokens resolve**."* **The stated reason does not hold.** CSS custom properties are **inherited**:
-Angular's emulated encapsulation rewrites component selectors and creates no style boundary, and
-custom properties pierce even a real shadow boundary by design. **`var(--color-*)` resolves under the
-default encapsulation with nothing switched off.**
-
-⚠ **Why it matters rather than being pedantry:** a developer who reads that sentence and picks the
-first option would turn encapsulation **off** on the shell — and with `§6.16`'s **138 bare global
-selectors** in the same stylesheet, that leaks them out of flat wire into every other UAL module.
-**The correct choice is `:host`**, which the same sentence permits; only its justification is wrong.
-Recorded rather than edited, because `[CMP]` owns the sentence and the *choice* was already the
-plan's to make. → `[CMP §7.4]`.
 
 ---
 

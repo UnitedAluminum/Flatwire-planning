@@ -345,19 +345,32 @@ are §5's deferrals working as intended, not gaps:
 beside it"* story, it writes the `SpoolProcessing` row DB5 reads, and it is the **only T3 story
 carrying `status: blocked`**. §5 keeps Part B as `Must`.
 
-### 9.4 Frontend — scaffold only, zero of six screens
+### 9.4 Frontend — two screens as UI skeletons, none of the six trial screens
 
 `projects/flat-wire/` exists and is `FW-N03`, **done 28 Aug 2026**: `flat-wire.module.ts`,
-`flat-wire-routing.module.ts`, `flat-wire-auth.guard.ts`, `public-api.ts` and a
-`FlatWirePlaceholderComponent`. `components/`, `services/`, `models/`, `styles/` and `guards/`
-are otherwise **`.gitkeep` directories**.
+`flat-wire-routing.module.ts`, `public-api.ts` and the shell.
 
-⚠ **Nothing downstream of the scaffold has started** — including `FW-130` (the shell and the
-1280×1024 canvas, buildable now that `FW-N03` has landed), **`FW-133`**, which §2 calls *"the
-single largest story in the trial and all six screens depend on it… not trimmable"*, and the
-three Angular stories §1.2 excludes, `FW-135` / `FW-136` / `FW-137`.
+🟡 **Two screens have since been built on it, both as UI skeletons:** **DB3 Active Run Monitor**
+(`flat-wire-landing.component`, the default child of `#/flat-wire`) and **DB1 Line Status**
+(`supervisor-dashboard.component`), plus a spool notification card and a trace popup. Four
+reusable pieces went into **`projects/shared`** — `lib-nav-rail`, `lib-chart-canvas`,
+`lib-trace-panel` and `buildTraceConfig`.
 
-The approved visual baseline is still only the static mockups in `50-frontend/mockups/`.
+⛔ **Neither is a trial screen, and neither carries data.** Every figure on both is a literal in a
+private builder: **no API client, no `HttpClient`, no SignalR, no subscription anywhere in the
+library**, every rail entry inert, nothing persisted. **Zero of the six trial screens exist** —
+DB2, DB5 and the rest are untouched.
+
+⚠ **`FW-133` has a foundation but is not done** — the canvas, the Chart.js lifetime and the trace
+config builder exist; the runtime `isLive` contract, the SVG profile mode and the other five
+controls do not. §2 still calls it *"the single largest story in the trial and all six screens
+depend on it… not trimmable"*. `FW-135` / `FW-136` / `FW-137` are untouched.
+
+⚠ **`FW-130`'s canvas is `1920 × 1080`, not `1280 × 1024`** — `G23` was decided and this line was
+stale.
+
+The approved visual baseline for the six trial screens is still only the static mockups in
+`50-frontend/mockups/`.
 
 ### 9.5 ⛔ The deployed database is pre-`Q60` and unseeded
 

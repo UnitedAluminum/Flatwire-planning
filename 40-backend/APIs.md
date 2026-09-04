@@ -1,7 +1,7 @@
 # Flat Wire Mill — API Contract
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 25, 2026 — **`P-56`: the envelope is `ActionResultBase<T>` EXTENDED, not replaced** (§1.2 gains `errorCode`/`errorDescription`); §1.8 flagged as owing a `400` code and `WRONG_STATION`. Earlier the same day: **`P-53`: `RodReceivingController` withdrawn (§3.1), fifteen controllers → fourteen.** `/rod/**` is not this service's: #8, #9 and §4.20 are **specified and unhosted**, re-homing owed as `P-54`; §3.2 also flagged as two rows short of the contract (§4.20/§4.21 unindexed — the surface is 34/27, not 32/25). Earlier the same day: the five `lineId = FL2` → `422` sites marked withdrawn pending wave W5; `@expectedCoilNo` rename completed *(previously August 22, 2026 — **`POST /coil/complete`’s worked example was losing a foot** (`footageFrom: 1851` → `1850`): `CoilTraceability` ranges are **half-open `[From, To)`**, as the non-overlap trigger enforces, so the example a developer copies would have failed `TC-617` *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `ROD_UNAVAILABLE` and the staging/check-in availability tests move to local `Rod.Status`; the `coils.coil_status = INFLAT` side effect is struck from the check-in write list *(previously August 15, 2026 — **`SpoolController` added to §3.1** (fourteen → **fifteen**: §3.2 assigned `GET /spools` to a controller in no list) and the **endpoint count corrected to 31 live rows, of which MVP-1 implements 24** — *"28 of the 30"* contradicted this file's own *"the pass schedule is read, never written"*, which removes six endpoints rather than one. `[PLC §351–356]` retargeted to `[PLC §7.2]` *(otherwise August 13, 2026 — split out of `04-APIContract.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*))*
+**Last Updated:** August 25, 2026
 **Document Type:** REST contract — conventions, enums, endpoints, traceability
 **Status:** Baselined for build — missing endpoint groups in §10
 **Owner:** Backend (.NET) stream
@@ -19,7 +19,7 @@
 |---|---|
 | Service | `FlatWire` — a new microservice at `API/Domain/FlatWire/` in `ual-api` |
 | REST base URL | **`/api/v1/flatwire`** |
-| Hub URL | **`/hubs/flatwire`** |
+| Hub URL | **`/hubs/flat-wire`** |
 | Controller base class | `UAController` from `UA.Framework.API` |
 | Authorization | **Every controller and every endpoint carries `[Authorize]`** |
 

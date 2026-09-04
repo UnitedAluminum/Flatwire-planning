@@ -1,7 +1,7 @@
 # Flat Wire Mill — Screen Plan
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 29, 2026 — **§7.1's `DB-S1` row and callout restated for `D-33`** — four exclusions become five (*not in `ual-angular` at all*), and the *“it uses the shared chrome”* closing sentence is **withdrawn as false**. `simulator_console.html` is re-labelled a **layout reference**; it was never an Angular build target either, since `flat-wire`'s routing module never carried a `DB-S1` route *(previously August 28, 2026 — ⚠ **The Mockups folder is 38 files / 19 HTML** — `dashboard_3_active_run_ual.html`, a **styling comparison build** (DB3 in the host app’s CSS at 1920×1080) plus five generated assets. The folder is still **flat**. Counts and the "composed for 5:4" statements updated — **18 of 19**, not all 19. Earlier: August 27, 2026 — **four corrections and three additions, from a review against the mockups folder and the requirement register.** ⚠ **§7.1 listed DB11 Roll Adjust as a screen; it is a dialog** (`roll_adjust.js`), which makes **five** run-event dialogs, not four. ⚠ **Appendix B said Roll Adjust is on FL1 — `FR-107` says it is not**, and `OI-11` is still carried as open although `FR-107`–`FR-109` answer it. ⚠ **The "27 HTML files" figure is 18**, and both denominators derived from it in §7.3 (*"25 of 27"*, *"26 of 27"*) are restated — **the named exceptions were always right**. ⚠ **§7.3 omitted `fw-modal.js` and four of the five dialog scripts.** Added: an MVP scope legend on the navigation map, a note that the mockups are the authority on content rather than on composition at the new **1920 × 1080** canvas, and a warning that `flat-wire-fit.js`'s hard-coded 1280 × 1024 design box is the mockup canvas and not the build target. *(previously August 25, 2026 — the dangling §9.4 pointer replaced by naming the two documents it meant *(previously August 13, 2026 — split out of `02-SRS.md`, `03-HLD-and-ERDiagram.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*)*
+**Last Updated:** September 4, 2026 — Change history is in [`../CHANGELOG.md`](../CHANGELOG.md)
 **Document Type:** Screen inventory, navigation map, shared chrome, mockup mapping
 **Status:** Baselined for build
 **Owner:** Frontend (Angular) stream
@@ -157,7 +157,13 @@ The shared topbar's **More Options** tile popup reaches Pass Schedule, WIP Rejec
 The mockups are the pixel authority. Two mechanical rules carry over from them into the Angular build:
 
 1. **Clone Dashboard 12's skeleton, not Dashboard 2's**, when starting a new screen — DB2's `dashboard_2_rod_checkin.html` inlines its own app bar and omits `flat-wire-topbar.js`.
-2. **Consume `flat-wire-shopfloor.styles.scss` as-is.** There is no token migration; the `--fw-*` prefix in older documents is stale (gap **G18**). Angular components need `ViewEncapsulation.None` or `:host` scoping so the tokens resolve.
+2. ⛔ **WITHDRAWN — do not consume the mockups' token stylesheet.** This rule used to read *"consume `flat-wire-shopfloor.styles.scss` as-is … Angular components need `ViewEncapsulation.None` or `:host` scoping so the tokens resolve."* **The token stylesheet is not shipped into the repository** ([`Orchestration §4`](tasks/Orchestration.md), `F-03` withdrawn), the mockups' `--color-*` palette **exists nowhere**, and the standing rule is now **create no new classes, styles or colours** — a flat wire screen is built from the application's existing classes. See [`[UIC §2]`](UIConventions.md). The `--fw-*` half stands: that prefix is stale (gap **G18**) and there is nothing to migrate.
+
+⚠ **A screen is built through four authorities, in order** — the story names the screen, the mockup
+supplies its content, [`[UIC]`](UIConventions.md) supplies the look, and the **application
+repository's rules supply the code**. That fourth one is mandatory and is where reviews actually
+fail; see *Before you write code* in the repository [`CLAUDE.md`](../CLAUDE.md) and
+[`[UIC §1.2]`](UIConventions.md).
 
 ---
 

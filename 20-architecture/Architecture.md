@@ -1,7 +1,7 @@
 # Flat Wire Mill — Architecture
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 29, 2026 — **New decision `D-33`: the simulator console `DB-S1` is a standalone WinForms desktop tool, not an Angular screen.** §13.1 gains the row and its preamble moves to `D-29`–`D-33`; §11's deploy path gains the EXE. ⚠ **§14.2's *new frameworks rejected* row gains a note** — `D-33` is not an exception to it: WinForms is not new to UAL (~104 shop-floor apps in `ual-dot-net`, and `Tools/ConfigureAPI` is already a WinExe), so there is no ramp-up to fund *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration**; `FW-001`/`FW-002` cancelled, §10's boundary and §13.2's recovery risk narrowed *(earlier: **`OI-37` struck from §13's open-item list** — the six roles are confirmed as JWT claims on `ClaimTypes.Role`; split out of `03-HLD-and-ERDiagram.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*
+**Last Updated:** August 29, 2026
 **Document Type:** High-level design, code locations, cross-cutting concerns, the stack ADR
 **Status:** Baselined for build — design risks in §13.2, unresolved items in §13.3
 **Owner:** Architecture stream
@@ -49,7 +49,7 @@ flowchart TB
   P1 & P2 & P3 & POS & PK --> SHELL
   SHELL --> LIB
   LIB <-->|"REST /api/v1/flatwire"| FW
-  LIB <-->|"WebSocket /hubs/flatwire"| FW
+  LIB <-->|"WebSocket /hubs/flat-wire"| FW
   LIB --> LOGIN
   FW --> FWDB
   FW --> SHARED
