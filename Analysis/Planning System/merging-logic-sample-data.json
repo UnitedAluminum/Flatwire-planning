@@ -1,0 +1,254 @@
+{
+  "note": "Sample data for merging-logic.md. Only the columns relevant to merging are shown - see tables.md for the full schemas. Machine ids for FL2/FL3 are not decided yet and are left null. Coil numbers only change where a division happens, and divisions are created during the merge - so every temp row carries the original incoming coil number and new coil numbers appear only in the planning tables.",
+  "machines": {
+    "FL1": { "MachineGroup": "FL1", "MachineId": 123 },
+    "FL2": { "MachineGroup": "FL2", "MachineId": null },
+    "FL3": { "MachineGroup": "FL3", "MachineId": null },
+    "Furnace": { "MachineGroup": "Furnace", "MachineId": null }
+  },
+  "scenarios": [
+    {
+      "name": "Two identical FAF orders - split at the last flatten",
+      "description": "Order A (1000 lb) and order B (300 lb) have identical FAF routes, so all three operations merge. The coil cannot be split at the furnace, so the split happens at the last flatten: one PlanningFlatLineProcessing row per order, same input/output field values, different outputs.",
+      "coil": { "IncomingCoilNo": "FW10001", "Gauge": 0.3750, "Temper": "F", "Shape": "Round", "Type": "Rod", "Weight": 1300 },
+      "orders": [
+        { "OrderNo": 123456, "RelLetter": "A", "MfgOrderNo": 900001, "CoilOrderPlanId": 5001, "IssuedWeight": 1000, "Smp": "FAF" },
+        { "OrderNo": 123457, "RelLetter": "A", "MfgOrderNo": 900002, "CoilOrderPlanId": 5002, "IssuedWeight": 300, "Smp": "FAF" }
+      ],
+      "temp": {
+        "TempRoutings": [
+          { "Id": 1, "CoilOrderPlanId": 5001, "MfgOrderNo": 900001, "SequenceNo": 0, "IncomingCoilNo": "FW10001", "OperationLetter": "F", "MachineGroup": "FL1", "MachineId": 123, "CoilStartGauge": 0.3750, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "F", "TargetTemper": "H18", "OrdersInput": "123456", "RemainingOperations": "FAF", "BackToStock": false, "PlanId": "PL-2026-0001" },
+          { "Id": 2, "CoilOrderPlanId": 5001, "MfgOrderNo": 900001, "SequenceNo": 10, "IncomingCoilNo": "FW10001", "OperationLetter": "A", "MachineGroup": "Furnace", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "H18", "TargetTemper": "O", "OrdersInput": "123456", "RemainingOperations": "AF", "BackToStock": false, "PlanId": "PL-2026-0001" },
+          { "Id": 3, "CoilOrderPlanId": 5001, "MfgOrderNo": 900001, "SequenceNo": 20, "IncomingCoilNo": "FW10001", "OperationLetter": "F", "MachineGroup": "FL2", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.0160, "GaugeNegativeTolerence": 0.0007, "GaugePositiveTolerence": 0.0008, "InputTemper": "O", "TargetTemper": "H17", "OrdersInput": "123456", "RemainingOperations": "F", "BackToStock": false, "PlanId": "PL-2026-0001" },
+
+          { "Id": 4, "CoilOrderPlanId": 5002, "MfgOrderNo": 900002, "SequenceNo": 0, "IncomingCoilNo": "FW10001", "OperationLetter": "F", "MachineGroup": "FL1", "MachineId": 123, "CoilStartGauge": 0.3750, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "F", "TargetTemper": "H18", "OrdersInput": "123457", "RemainingOperations": "FAF", "BackToStock": false, "PlanId": "PL-2026-0001" },
+          { "Id": 5, "CoilOrderPlanId": 5002, "MfgOrderNo": 900002, "SequenceNo": 10, "IncomingCoilNo": "FW10001", "OperationLetter": "A", "MachineGroup": "Furnace", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "H18", "TargetTemper": "O", "OrdersInput": "123457", "RemainingOperations": "AF", "BackToStock": false, "PlanId": "PL-2026-0001" },
+          { "Id": 6, "CoilOrderPlanId": 5002, "MfgOrderNo": 900002, "SequenceNo": 20, "IncomingCoilNo": "FW10001", "OperationLetter": "F", "MachineGroup": "FL2", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.0160, "GaugeNegativeTolerence": 0.0007, "GaugePositiveTolerence": 0.0008, "InputTemper": "O", "TargetTemper": "H17", "OrdersInput": "123457", "RemainingOperations": "F", "BackToStock": false, "PlanId": "PL-2026-0001" }
+        ],
+        "TempFlatLineProcessing": [
+          { "Id": 1, "CoilOrderPlanId": 5001, "MfgOrderNo": 900001, "SequenceNo": 0, "IncomingCoilNo": "FW10001", "CoilNo": "FW10001", "OnGaugeWeight": 1000, "StartGauge": 0.3750, "MinTargetGauge": 0.1080, "TargetGauge": 0.1100, "MaxTargetGauge": 0.1120, "InputShape": "Round", "InputType": "Rod", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H18", "OrdersInput": "123456", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0001" },
+          { "Id": 2, "CoilOrderPlanId": 5001, "MfgOrderNo": 900001, "SequenceNo": 20, "IncomingCoilNo": "FW10001", "CoilNo": "FW10001", "OnGaugeWeight": 1000, "StartGauge": 0.1100, "MinTargetGauge": 0.0153, "TargetGauge": 0.0160, "MaxTargetGauge": 0.0168, "InputShape": "Flat", "InputType": "Wire", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H17", "OrdersInput": "123456", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0001" },
+
+          { "Id": 3, "CoilOrderPlanId": 5002, "MfgOrderNo": 900002, "SequenceNo": 0, "IncomingCoilNo": "FW10001", "CoilNo": "FW10001", "OnGaugeWeight": 300, "StartGauge": 0.3750, "MinTargetGauge": 0.1080, "TargetGauge": 0.1100, "MaxTargetGauge": 0.1120, "InputShape": "Round", "InputType": "Rod", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H18", "OrdersInput": "123457", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0001" },
+          { "Id": 4, "CoilOrderPlanId": 5002, "MfgOrderNo": 900002, "SequenceNo": 20, "IncomingCoilNo": "FW10001", "CoilNo": "FW10001", "OnGaugeWeight": 300, "StartGauge": 0.1100, "MinTargetGauge": 0.0153, "TargetGauge": 0.0160, "MaxTargetGauge": 0.0168, "InputShape": "Flat", "InputType": "Wire", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H17", "OrdersInput": "123457", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0001" }
+        ],
+        "TempMfgSalesOrderRef": [
+          { "Id": 1, "MfgOrderNo": 900001, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW10001", "IssuedWeight": 1000, "CoilOrderPlanId": 5001, "PlanId": "PL-2026-0001" },
+          { "Id": 2, "MfgOrderNo": 900002, "OrderNo": 123457, "RelLetter": "A", "CoilNo": "FW10001", "IssuedWeight": 300, "CoilOrderPlanId": 5002, "PlanId": "PL-2026-0001" }
+        ],
+        "TempOrderRemainingOperations": [
+          { "Id": 1, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW10001", "RemainingOperations": "FAF", "PlannedOperations": "FAF", "PlannedWeight": 1000, "CoilOrderPlanId": 5001, "PlanId": "PL-2026-0001" },
+          { "Id": 2, "OrderNo": 123457, "RelLetter": "A", "CoilNo": "FW10001", "RemainingOperations": "FAF", "PlannedOperations": "FAF", "PlannedWeight": 300, "CoilOrderPlanId": 5002, "PlanId": "PL-2026-0001" }
+        ]
+      },
+      "planning": {
+        "PlanningRoutings": [
+          { "Id": 1, "SequenceNo": 0, "MfgOrderNo": 900001, "IncomingCoilNo": "FW10001", "OperationLetter": "F", "MachineGroup": "FL1", "MachineId": 123, "CoilStartGauge": 0.3750, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "F", "TargetTemper": "H18", "OrdersInput": "123456;123457", "BackToStock": false, "PlanId": "PL-2026-0001" },
+          { "Id": 2, "SequenceNo": 10, "MfgOrderNo": 900001, "IncomingCoilNo": "FW10001", "OperationLetter": "A", "MachineGroup": "Furnace", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "H18", "TargetTemper": "O", "OrdersInput": "123456;123457", "BackToStock": false, "PlanId": "PL-2026-0001" },
+          { "Id": 3, "SequenceNo": 20, "MfgOrderNo": 900001, "IncomingCoilNo": "FW10001", "OperationLetter": "F", "MachineGroup": "FL2", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.0160, "GaugeNegativeTolerence": 0.0007, "GaugePositiveTolerence": 0.0008, "InputTemper": "O", "TargetTemper": "H17", "OrdersInput": "123456;123457", "BackToStock": false, "PlanId": "PL-2026-0001" }
+        ],
+        "PlanningFlatLineProcessing": [
+          { "Id": 1, "SequenceNo": 0, "IncomingCoilNo": "FW10001", "CoilNo": "FW10001", "OnGaugeWeight": 1300, "StartGauge": 0.3750, "MinTargetGauge": 0.1080, "TargetGauge": 0.1100, "MaxTargetGauge": 0.1120, "InputShape": "Round", "InputType": "Rod", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H18", "OrdersInput": "123456;123457", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0001", "_comment": "merged - single output, both orders" },
+          { "Id": 2, "SequenceNo": 20, "IncomingCoilNo": "FW10001", "CoilNo": "FW10002", "OnGaugeWeight": 1000, "StartGauge": 0.1100, "MinTargetGauge": 0.0153, "TargetGauge": 0.0160, "MaxTargetGauge": 0.0168, "InputShape": "Flat", "InputType": "Wire", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H17", "OrdersInput": "123456", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0001", "_comment": "split row 1 of 2 - order A output" },
+          { "Id": 3, "SequenceNo": 20, "IncomingCoilNo": "FW10001", "CoilNo": "FW10003", "OnGaugeWeight": 300, "StartGauge": 0.1100, "MinTargetGauge": 0.0153, "TargetGauge": 0.0160, "MaxTargetGauge": 0.0168, "InputShape": "Flat", "InputType": "Wire", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H17", "OrdersInput": "123457", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0001", "_comment": "split row 2 of 2 - order B output; identical input/output fields, different output" }
+        ],
+        "PlanningMfgSalesOrderRef": [
+          { "Id": 1, "MfgOrderNo": 900001, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW10001", "IssuedWeight": 1000, "CoilOrderPlanId": 5001, "PlanId": "PL-2026-0001" },
+          { "Id": 2, "MfgOrderNo": 900002, "OrderNo": 123457, "RelLetter": "A", "CoilNo": "FW10001", "IssuedWeight": 300, "CoilOrderPlanId": 5002, "PlanId": "PL-2026-0001" }
+        ],
+        "OrderRemainingOperations": [
+          { "Id": 1, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW10001", "RemainingOperations": "FAF", "PlannedOperations": "FAF", "PlannedWeight": 1000, "CoilOrderPlanId": 5001, "PlanId": "PL-2026-0001" },
+          { "Id": 2, "OrderNo": 123457, "RelLetter": "A", "CoilNo": "FW10001", "RemainingOperations": "FAF", "PlannedOperations": "FAF", "PlannedWeight": 300, "CoilOrderPlanId": 5002, "PlanId": "PL-2026-0001" }
+        ]
+      }
+    },
+    {
+      "name": "FAF and F orders - split at the first flatten",
+      "description": "Order A (1000 lb) is FAF, order B (500 lb) is only F. The routes diverge after the first flatten, so the two PlanningFlatLineProcessing rows appear at the first flatten instead of the last. Only order A carries on to the anneal and the second flatten.",
+      "coil": { "IncomingCoilNo": "FW20001", "Gauge": 0.3750, "Temper": "F", "Shape": "Round", "Type": "Rod", "Weight": 1500 },
+      "orders": [
+        { "OrderNo": 123456, "RelLetter": "A", "MfgOrderNo": 900011, "CoilOrderPlanId": 6001, "IssuedWeight": 1000, "Smp": "FAF" },
+        { "OrderNo": 123458, "RelLetter": "A", "MfgOrderNo": 900012, "CoilOrderPlanId": 6002, "IssuedWeight": 500, "Smp": "F" }
+      ],
+      "planning": {
+        "PlanningRoutings": [
+          { "Id": 11, "SequenceNo": 0, "MfgOrderNo": 900011, "IncomingCoilNo": "FW20001", "OperationLetter": "F", "MachineGroup": "FL1", "MachineId": 123, "CoilStartGauge": 0.3750, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "F", "TargetTemper": "H18", "OrdersInput": "123456;123458", "BackToStock": false, "PlanId": "PL-2026-0002", "_comment": "merged - both orders" },
+          { "Id": 12, "SequenceNo": 10, "MfgOrderNo": 900011, "IncomingCoilNo": "FW20002", "OperationLetter": "A", "MachineGroup": "Furnace", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "H18", "TargetTemper": "O", "OrdersInput": "123456", "BackToStock": false, "PlanId": "PL-2026-0002", "_comment": "order A only" },
+          { "Id": 13, "SequenceNo": 20, "MfgOrderNo": 900011, "IncomingCoilNo": "FW20002", "OperationLetter": "F", "MachineGroup": "FL2", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.0160, "GaugeNegativeTolerence": 0.0007, "GaugePositiveTolerence": 0.0008, "InputTemper": "O", "TargetTemper": "H17", "OrdersInput": "123456", "BackToStock": false, "PlanId": "PL-2026-0002", "_comment": "order A only" }
+        ],
+        "PlanningFlatLineProcessing": [
+          { "Id": 11, "SequenceNo": 0, "IncomingCoilNo": "FW20001", "CoilNo": "FW20002", "OnGaugeWeight": 1000, "StartGauge": 0.3750, "MinTargetGauge": 0.1080, "TargetGauge": 0.1100, "MaxTargetGauge": 0.1120, "InputShape": "Round", "InputType": "Rod", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H18", "OrdersInput": "123456", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0002", "_comment": "split row 1 of 2 - order A output, carries on to the anneal" },
+          { "Id": 12, "SequenceNo": 0, "IncomingCoilNo": "FW20001", "CoilNo": "FW20003", "OnGaugeWeight": 500, "StartGauge": 0.3750, "MinTargetGauge": 0.1080, "TargetGauge": 0.1100, "MaxTargetGauge": 0.1120, "InputShape": "Round", "InputType": "Rod", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H18", "OrdersInput": "123458", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0002", "_comment": "split row 2 of 2 - order B output, finishes here" },
+          { "Id": 13, "SequenceNo": 20, "IncomingCoilNo": "FW20002", "CoilNo": "FW20002", "OnGaugeWeight": 1000, "StartGauge": 0.1100, "MinTargetGauge": 0.0153, "TargetGauge": 0.0160, "MaxTargetGauge": 0.0168, "InputShape": "Flat", "InputType": "Wire", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H17", "OrdersInput": "123456", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0002", "_comment": "order A only" }
+        ],
+        "OrderRemainingOperations": [
+          { "Id": 11, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW20001", "RemainingOperations": "FAF", "PlannedOperations": "FAF", "PlannedWeight": 1000, "CoilOrderPlanId": 6001, "PlanId": "PL-2026-0002" },
+          { "Id": 12, "OrderNo": 123458, "RelLetter": "A", "CoilNo": "FW20001", "RemainingOperations": "F", "PlannedOperations": "F", "PlannedWeight": 500, "CoilOrderPlanId": 6002, "PlanId": "PL-2026-0002" }
+        ]
+      }
+    },
+    {
+      "name": "Customer order plus an as-is stock order - split at the first flatten",
+      "description": "Customer order 123456 (1000 lb) runs the FAF route. The remaining 500 lb of the coil goes back to stock as an AS-IS stock order: an item number is supplied for it, and a stock order number is generated for it in the planning logic (that generation happens at service level - CreateStockOrder / GetNextStockOrderNo; 45231 is used here as the generated number). The as-is portion has no SMP, so it keeps the coil properties: its flat line entry has the input fields equal to the output fields and BackToStock = 1. At SequenceNo 0 there is a SINGLE PlanningRoutings row: its nominal/target gauge is the minimum of the combined orders and its target temper is that of the order needing further processing. PlanningFlatLineProcessing has TWO rows at SequenceNo 0, and BackToStock = 1 is set there - not on the routing row.",
+      "coil": { "IncomingCoilNo": "FW30001", "Gauge": 0.3750, "Temper": "F", "Shape": "Round", "Type": "Rod", "Weight": 1500 },
+      "orders": [
+        { "OrderNo": 123456, "RelLetter": "A", "MfgOrderNo": 900021, "CoilOrderPlanId": 7001, "IssuedWeight": 1000, "Smp": "FAF", "IsStockOrder": false, "_comment": "customer order - order no > 100000" },
+        { "OrderNo": 45231, "RelLetter": "A", "MfgOrderNo": 900022, "CoilOrderPlanId": 7002, "IssuedWeight": 500, "Smp": null, "IsStockOrder": true, "IsAsIs": true, "ItemTemplateIdx": 24908, "_comment": "as-is stock order - item number supplied, order no generated by CreateStockOrder, always < 100000" }
+      ],
+      "temp": {
+        "TempRoutings": [
+          { "Id": 21, "CoilOrderPlanId": 7001, "MfgOrderNo": 900021, "SequenceNo": 0, "IncomingCoilNo": "FW30001", "OperationLetter": "F", "MachineGroup": "FL1", "MachineId": 123, "CoilStartGauge": 0.3750, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "F", "TargetTemper": "H18", "OrdersInput": "123456", "RemainingOperations": "FAF", "BackToStock": false, "PlanId": "PL-2026-0003" },
+          { "Id": 22, "CoilOrderPlanId": 7001, "MfgOrderNo": 900021, "SequenceNo": 10, "IncomingCoilNo": "FW30001", "OperationLetter": "A", "MachineGroup": "Furnace", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "H18", "TargetTemper": "O", "OrdersInput": "123456", "RemainingOperations": "AF", "BackToStock": false, "PlanId": "PL-2026-0003" },
+          { "Id": 23, "CoilOrderPlanId": 7001, "MfgOrderNo": 900021, "SequenceNo": 20, "IncomingCoilNo": "FW30001", "OperationLetter": "F", "MachineGroup": "FL2", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.0160, "GaugeNegativeTolerence": 0.0007, "GaugePositiveTolerence": 0.0008, "InputTemper": "O", "TargetTemper": "H17", "OrdersInput": "123456", "RemainingOperations": "F", "BackToStock": false, "PlanId": "PL-2026-0003" },
+
+          { "Id": 24, "CoilOrderPlanId": 7002, "MfgOrderNo": 900022, "SequenceNo": 0, "IncomingCoilNo": "FW30001", "OperationLetter": "F", "MachineGroup": "FL1", "MachineId": 123, "ItemTemplateIdx": 24908, "CoilStartGauge": 0.3750, "NominalGauge": 0.3750, "GaugeNegativeTolerence": 0.0000, "GaugePositiveTolerence": 0.0000, "InputTemper": "F", "TargetTemper": "F", "OrdersInput": "45231", "RemainingOperations": "F", "BackToStock": false, "PlanId": "PL-2026-0003", "_comment": "as-is - target equals the incoming coil; BackToStock is set on the flat line processing row, not here" }
+        ],
+        "TempFlatLineProcessing": [
+          { "Id": 21, "CoilOrderPlanId": 7001, "MfgOrderNo": 900021, "SequenceNo": 0, "IncomingCoilNo": "FW30001", "CoilNo": "FW30001", "OnGaugeWeight": 1000, "StartGauge": 0.3750, "MinTargetGauge": 0.1080, "TargetGauge": 0.1100, "MaxTargetGauge": 0.1120, "InputShape": "Round", "InputType": "Rod", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H18", "OrdersInput": "123456", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0003" },
+          { "Id": 22, "CoilOrderPlanId": 7001, "MfgOrderNo": 900021, "SequenceNo": 20, "IncomingCoilNo": "FW30001", "CoilNo": "FW30001", "OnGaugeWeight": 1000, "StartGauge": 0.1100, "MinTargetGauge": 0.0153, "TargetGauge": 0.0160, "MaxTargetGauge": 0.0168, "InputShape": "Flat", "InputType": "Wire", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H17", "OrdersInput": "123456", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0003" },
+
+          { "Id": 23, "CoilOrderPlanId": 7002, "MfgOrderNo": 900022, "SequenceNo": 0, "IncomingCoilNo": "FW30001", "CoilNo": "FW30001", "OnGaugeWeight": 500, "StartGauge": 0.3750, "MinTargetGauge": 0.3750, "TargetGauge": 0.3750, "MaxTargetGauge": 0.3750, "InputShape": "Round", "InputType": "Rod", "OutputShape": "Round", "OutputType": "Rod", "Temper": "F", "OrdersInput": "45231", "BackToStock": true, "PassScheduleId": null, "PlanId": "PL-2026-0003", "_comment": "as-is entry - input fields identical to output fields, BackToStock = 1" }
+        ],
+        "TempMfgSalesOrderRef": [
+          { "Id": 21, "MfgOrderNo": 900021, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW30001", "IssuedWeight": 1000, "CoilOrderPlanId": 7001, "PlanId": "PL-2026-0003" },
+          { "Id": 22, "MfgOrderNo": 900022, "OrderNo": 45231, "RelLetter": "A", "CoilNo": "FW30001", "ItemTemplateIdx": 24908, "IssuedWeight": 500, "CoilOrderPlanId": 7002, "PlanId": "PL-2026-0003" }
+        ],
+        "TempOrderRemainingOperations": [
+          { "Id": 21, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW30001", "RemainingOperations": "FAF", "PlannedOperations": "FAF", "PlannedWeight": 1000, "CoilOrderPlanId": 7001, "PlanId": "PL-2026-0003" },
+          { "Id": 22, "OrderNo": 45231, "RelLetter": "A", "CoilNo": "FW30001", "RemainingOperations": "F", "PlannedOperations": "F", "PlannedWeight": 500, "CoilOrderPlanId": 7002, "PlanId": "PL-2026-0003" }
+        ]
+      },
+      "planning": {
+        "PlanningRoutings": [
+          { "Id": 21, "SequenceNo": 0, "MfgOrderNo": 900021, "IncomingCoilNo": "FW30001", "OperationLetter": "F", "MachineGroup": "FL1", "MachineId": 123, "CoilStartGauge": 0.3750, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "F", "TargetTemper": "H18", "OrdersInput": "123456;45231", "BackToStock": false, "PlanId": "PL-2026-0003", "_comment": "single merged row - NominalGauge/target is the minimum of the combined orders (0.1100 vs 0.3750); TargetTemper is that of the order needing further processing (H18); BackToStock is NOT set here, it is set on the flat line processing row" },
+          { "Id": 22, "SequenceNo": 10, "MfgOrderNo": 900021, "IncomingCoilNo": "FW30002", "OperationLetter": "A", "MachineGroup": "Furnace", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "H18", "TargetTemper": "O", "OrdersInput": "123456", "BackToStock": false, "PlanId": "PL-2026-0003" },
+          { "Id": 23, "SequenceNo": 20, "MfgOrderNo": 900021, "IncomingCoilNo": "FW30002", "OperationLetter": "F", "MachineGroup": "FL2", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.0160, "GaugeNegativeTolerence": 0.0007, "GaugePositiveTolerence": 0.0008, "InputTemper": "O", "TargetTemper": "H17", "OrdersInput": "123456", "BackToStock": false, "PlanId": "PL-2026-0003" }
+        ],
+        "PlanningFlatLineProcessing": [
+          { "Id": 21, "SequenceNo": 0, "IncomingCoilNo": "FW30001", "CoilNo": "FW30002", "OnGaugeWeight": 1000, "StartGauge": 0.3750, "MinTargetGauge": 0.1080, "TargetGauge": 0.1100, "MaxTargetGauge": 0.1120, "InputShape": "Round", "InputType": "Rod", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H18", "OrdersInput": "123456", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0003", "_comment": "split row 1 of 2 - customer order output, carries on to the anneal" },
+          { "Id": 22, "SequenceNo": 0, "IncomingCoilNo": "FW30001", "CoilNo": "FW30003", "OnGaugeWeight": 500, "StartGauge": 0.3750, "MinTargetGauge": 0.3750, "TargetGauge": 0.3750, "MaxTargetGauge": 0.3750, "InputShape": "Round", "InputType": "Rod", "OutputShape": "Round", "OutputType": "Rod", "Temper": "F", "OrdersInput": "45231", "BackToStock": true, "PassScheduleId": null, "PlanId": "PL-2026-0003", "_comment": "split row 2 of 2 - as-is stock output, input fields = output fields, BackToStock = 1" },
+          { "Id": 23, "SequenceNo": 20, "IncomingCoilNo": "FW30002", "CoilNo": "FW30002", "OnGaugeWeight": 1000, "StartGauge": 0.1100, "MinTargetGauge": 0.0153, "TargetGauge": 0.0160, "MaxTargetGauge": 0.0168, "InputShape": "Flat", "InputType": "Wire", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H17", "OrdersInput": "123456", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0003", "_comment": "customer order only" }
+        ],
+        "PlanningMfgSalesOrderRef": [
+          { "Id": 21, "MfgOrderNo": 900021, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW30001", "IssuedWeight": 1000, "CoilOrderPlanId": 7001, "PlanId": "PL-2026-0003" },
+          { "Id": 22, "MfgOrderNo": 900022, "OrderNo": 45231, "RelLetter": "A", "CoilNo": "FW30001", "ItemTemplateIdx": 24908, "IssuedWeight": 500, "CoilOrderPlanId": 7002, "PlanId": "PL-2026-0003" }
+        ],
+        "OrderRemainingOperations": [
+          { "Id": 21, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW30001", "RemainingOperations": "FAF", "PlannedOperations": "FAF", "PlannedWeight": 1000, "CoilOrderPlanId": 7001, "PlanId": "PL-2026-0003" },
+          { "Id": 22, "OrderNo": 45231, "RelLetter": "A", "CoilNo": "FW30001", "RemainingOperations": "F", "PlannedOperations": "F", "PlannedWeight": 500, "CoilOrderPlanId": 7002, "PlanId": "PL-2026-0003" }
+        ]
+      }
+    },
+    {
+      "name": "FAF and FA orders - extra as-is flatten added at merge time",
+      "description": "Customer order 123456 (1000 lb) is FAF. Stock order 45232 (500 lb) is FA, so its last operation is the anneal - on the temp side that is flagged with BackToStock = 1 on its anneal routing row and TempOrderRemainingOperations shows FA. The extra flatten added during the merge counts as an operation, so the planning OrderRemainingOperations shows FAF. The output cannot be divided at the furnace, so when the temp data is merged into the planning tables an extra FLATTEN is added for the stock portion at SequenceNo 20: an as-is entry with the input fields equal to the output fields and BackToStock = 1 on the flat line processing row. Note the extra flatten does not exist in the temp data - it is created during the merge. If the FA order were a customer order instead of a stock order the same extra flatten would be added, just without BackToStock.",
+      "coil": { "IncomingCoilNo": "FW40001", "Gauge": 0.3750, "Temper": "F", "Shape": "Round", "Type": "Rod", "Weight": 1500 },
+      "orders": [
+        { "OrderNo": 123456, "RelLetter": "A", "MfgOrderNo": 900031, "CoilOrderPlanId": 8001, "IssuedWeight": 1000, "Smp": "FAF", "IsStockOrder": false, "_comment": "customer order - needs further processing after the anneal" },
+        { "OrderNo": 45232, "RelLetter": "A", "MfgOrderNo": 900032, "CoilOrderPlanId": 8002, "IssuedWeight": 500, "Smp": "FA", "IsStockOrder": true, "ItemTemplateIdx": 24910, "_comment": "stock order - finishes at the anneal" }
+      ],
+      "temp": {
+        "TempRoutings": [
+          { "Id": 31, "CoilOrderPlanId": 8001, "MfgOrderNo": 900031, "SequenceNo": 0, "IncomingCoilNo": "FW40001", "OperationLetter": "F", "MachineGroup": "FL1", "MachineId": 123, "CoilStartGauge": 0.3750, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "F", "TargetTemper": "H18", "OrdersInput": "123456", "RemainingOperations": "FAF", "BackToStock": false, "PlanId": "PL-2026-0004" },
+          { "Id": 32, "CoilOrderPlanId": 8001, "MfgOrderNo": 900031, "SequenceNo": 10, "IncomingCoilNo": "FW40001", "OperationLetter": "A", "MachineGroup": "Furnace", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "H18", "TargetTemper": "O", "OrdersInput": "123456", "RemainingOperations": "AF", "BackToStock": false, "PlanId": "PL-2026-0004" },
+          { "Id": 33, "CoilOrderPlanId": 8001, "MfgOrderNo": 900031, "SequenceNo": 20, "IncomingCoilNo": "FW40001", "OperationLetter": "F", "MachineGroup": "FL2", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.0160, "GaugeNegativeTolerence": 0.0007, "GaugePositiveTolerence": 0.0008, "InputTemper": "O", "TargetTemper": "H17", "OrdersInput": "123456", "RemainingOperations": "F", "BackToStock": false, "PlanId": "PL-2026-0004" },
+
+          { "Id": 34, "CoilOrderPlanId": 8002, "MfgOrderNo": 900032, "SequenceNo": 0, "IncomingCoilNo": "FW40001", "OperationLetter": "F", "MachineGroup": "FL1", "MachineId": 123, "ItemTemplateIdx": 24910, "CoilStartGauge": 0.3750, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "F", "TargetTemper": "H18", "OrdersInput": "45232", "RemainingOperations": "FA", "BackToStock": false, "PlanId": "PL-2026-0004" },
+          { "Id": 35, "CoilOrderPlanId": 8002, "MfgOrderNo": 900032, "SequenceNo": 10, "IncomingCoilNo": "FW40001", "OperationLetter": "A", "MachineGroup": "Furnace", "MachineId": null, "ItemTemplateIdx": 24910, "CoilStartGauge": 0.1100, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "H18", "TargetTemper": "O", "OrdersInput": "45232", "RemainingOperations": "A", "BackToStock": true, "PlanId": "PL-2026-0004", "_comment": "last operation of the stock order is the anneal, so BackToStock = 1 sits on the routing row here on the temp side" }
+        ],
+        "TempFlatLineProcessing": [
+          { "Id": 31, "CoilOrderPlanId": 8001, "MfgOrderNo": 900031, "SequenceNo": 0, "IncomingCoilNo": "FW40001", "CoilNo": "FW40001", "OnGaugeWeight": 1000, "StartGauge": 0.3750, "MinTargetGauge": 0.1080, "TargetGauge": 0.1100, "MaxTargetGauge": 0.1120, "InputShape": "Round", "InputType": "Rod", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H18", "OrdersInput": "123456", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0004" },
+          { "Id": 32, "CoilOrderPlanId": 8001, "MfgOrderNo": 900031, "SequenceNo": 20, "IncomingCoilNo": "FW40001", "CoilNo": "FW40001", "OnGaugeWeight": 1000, "StartGauge": 0.1100, "MinTargetGauge": 0.0153, "TargetGauge": 0.0160, "MaxTargetGauge": 0.0168, "InputShape": "Flat", "InputType": "Wire", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H17", "OrdersInput": "123456", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0004" },
+
+          { "Id": 33, "CoilOrderPlanId": 8002, "MfgOrderNo": 900032, "SequenceNo": 0, "IncomingCoilNo": "FW40001", "CoilNo": "FW40001", "OnGaugeWeight": 500, "StartGauge": 0.3750, "MinTargetGauge": 0.1080, "TargetGauge": 0.1100, "MaxTargetGauge": 0.1120, "InputShape": "Round", "InputType": "Rod", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H18", "OrdersInput": "45232", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0004", "_comment": "the stock order has no flatten after the anneal in its own SMP, so it has no temp row at SequenceNo 20" }
+        ],
+        "TempMfgSalesOrderRef": [
+          { "Id": 31, "MfgOrderNo": 900031, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW40001", "IssuedWeight": 1000, "CoilOrderPlanId": 8001, "PlanId": "PL-2026-0004" },
+          { "Id": 32, "MfgOrderNo": 900032, "OrderNo": 45232, "RelLetter": "A", "CoilNo": "FW40001", "ItemTemplateIdx": 24910, "IssuedWeight": 500, "CoilOrderPlanId": 8002, "PlanId": "PL-2026-0004" }
+        ],
+        "TempOrderRemainingOperations": [
+          { "Id": 31, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW40001", "RemainingOperations": "FAF", "PlannedOperations": "FAF", "PlannedWeight": 1000, "CoilOrderPlanId": 8001, "PlanId": "PL-2026-0004" },
+          { "Id": 32, "OrderNo": 45232, "RelLetter": "A", "CoilNo": "FW40001", "RemainingOperations": "FA", "PlannedOperations": "FA", "PlannedWeight": 500, "CoilOrderPlanId": 8002, "PlanId": "PL-2026-0004" }
+        ]
+      },
+      "planning": {
+        "PlanningRoutings": [
+          { "Id": 31, "SequenceNo": 0, "MfgOrderNo": 900031, "IncomingCoilNo": "FW40001", "OperationLetter": "F", "MachineGroup": "FL1", "MachineId": 123, "CoilStartGauge": 0.3750, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "F", "TargetTemper": "H18", "OrdersInput": "123456;45232", "BackToStock": false, "PlanId": "PL-2026-0004", "_comment": "merged - identical output and identical next operation" },
+          { "Id": 32, "SequenceNo": 10, "MfgOrderNo": 900031, "IncomingCoilNo": "FW40001", "OperationLetter": "A", "MachineGroup": "Furnace", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "H18", "TargetTemper": "O", "OrdersInput": "123456;45232", "BackToStock": false, "PlanId": "PL-2026-0004", "_comment": "merged - the split cannot happen here, so BackToStock is not set on the anneal row" },
+          { "Id": 33, "SequenceNo": 20, "MfgOrderNo": 900031, "IncomingCoilNo": "FW40001", "OperationLetter": "F", "MachineGroup": "FL2", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.0160, "GaugeNegativeTolerence": 0.0007, "GaugePositiveTolerence": 0.0008, "InputTemper": "O", "TargetTemper": "H17", "OrdersInput": "123456;45232", "BackToStock": false, "PlanId": "PL-2026-0004", "_comment": "single merged row - gauge 0.0160 is the minimum of the two (0.0160 vs the as-is 0.1100) and temper H17 is that of the order needing further processing" }
+        ],
+        "PlanningFlatLineProcessing": [
+          { "Id": 31, "SequenceNo": 0, "IncomingCoilNo": "FW40001", "CoilNo": "FW40001", "OnGaugeWeight": 1500, "StartGauge": 0.3750, "MinTargetGauge": 0.1080, "TargetGauge": 0.1100, "MaxTargetGauge": 0.1120, "InputShape": "Round", "InputType": "Rod", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H18", "OrdersInput": "123456;45232", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0004", "_comment": "merged - single output, both orders" },
+          { "Id": 32, "SequenceNo": 20, "IncomingCoilNo": "FW40001", "CoilNo": "FW40002", "OnGaugeWeight": 1000, "StartGauge": 0.1100, "MinTargetGauge": 0.0153, "TargetGauge": 0.0160, "MaxTargetGauge": 0.0168, "InputShape": "Flat", "InputType": "Wire", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H17", "OrdersInput": "123456", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0004", "_comment": "split row 1 of 2 - customer order output" },
+          { "Id": 33, "SequenceNo": 20, "IncomingCoilNo": "FW40001", "CoilNo": "FW40003", "OnGaugeWeight": 500, "StartGauge": 0.1100, "MinTargetGauge": 0.1100, "TargetGauge": 0.1100, "MaxTargetGauge": 0.1100, "InputShape": "Flat", "InputType": "Wire", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "O", "OrdersInput": "45232", "BackToStock": true, "PassScheduleId": null, "PlanId": "PL-2026-0004", "_comment": "split row 2 of 2 - the EXTRA as-is flatten added at merge time so the stock portion can be separated; input fields = output fields, BackToStock = 1. No matching temp row exists." }
+        ],
+        "PlanningMfgSalesOrderRef": [
+          { "Id": 31, "MfgOrderNo": 900031, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW40001", "IssuedWeight": 1000, "CoilOrderPlanId": 8001, "PlanId": "PL-2026-0004" },
+          { "Id": 32, "MfgOrderNo": 900032, "OrderNo": 45232, "RelLetter": "A", "CoilNo": "FW40001", "ItemTemplateIdx": 24910, "IssuedWeight": 500, "CoilOrderPlanId": 8002, "PlanId": "PL-2026-0004" }
+        ],
+        "OrderRemainingOperations": [
+          { "Id": 31, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW40001", "RemainingOperations": "FAF", "PlannedOperations": "FAF", "PlannedWeight": 1000, "CoilOrderPlanId": 8001, "PlanId": "PL-2026-0004" },
+          { "Id": 32, "OrderNo": 45232, "RelLetter": "A", "CoilNo": "FW40001", "RemainingOperations": "FAF", "PlannedOperations": "FAF", "PlannedWeight": 500, "CoilOrderPlanId": 8002, "PlanId": "PL-2026-0004", "_comment": "FAF - the extra as-is flatten added at merge time counts as an operation here, whereas TempOrderRemainingOperations still shows FA" }
+        ]
+      }
+    },
+    {
+      "name": "Two FAF orders with different outputs on the first flatten",
+      "description": "Both orders are FAF, but the first flatten has a different output for each: order 123456 goes to 0.1100 H18 and order 123459 goes to 0.0800 H18. The outputs differ, so the coil is divided at SequenceNo 0 - one PlanningRoutings row for the operation (nominal/target gauge is the minimum of the two, 0.0800, and the target temper is H18 as both need further processing) and two PlanningFlatLineProcessing rows, one per output, each with its own new coil number. From that point the two coils are physically separate, so the anneal and the final flatten are modelled as one routing row per coil. No further division happens after SequenceNo 0, so the coil numbers carry through unchanged.",
+      "coil": { "IncomingCoilNo": "FW50001", "Gauge": 0.3750, "Temper": "F", "Shape": "Round", "Type": "Rod", "Weight": 1500 },
+      "orders": [
+        { "OrderNo": 123456, "RelLetter": "A", "MfgOrderNo": 900041, "CoilOrderPlanId": 9001, "IssuedWeight": 1000, "Smp": "FAF", "IsStockOrder": false, "_comment": "first flatten to 0.1100 H18, finishes at 0.0160 H17" },
+        { "OrderNo": 123459, "RelLetter": "A", "MfgOrderNo": 900042, "CoilOrderPlanId": 9002, "IssuedWeight": 500, "Smp": "FAF", "IsStockOrder": false, "_comment": "first flatten to 0.0800 H18, finishes at 0.0300 H16" }
+      ],
+      "temp": {
+        "TempRoutings": [
+          { "Id": 41, "CoilOrderPlanId": 9001, "MfgOrderNo": 900041, "SequenceNo": 0, "IncomingCoilNo": "FW50001", "OperationLetter": "F", "MachineGroup": "FL1", "MachineId": 123, "CoilStartGauge": 0.3750, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "F", "TargetTemper": "H18", "OrdersInput": "123456", "RemainingOperations": "FAF", "BackToStock": false, "PlanId": "PL-2026-0005" },
+          { "Id": 42, "CoilOrderPlanId": 9001, "MfgOrderNo": 900041, "SequenceNo": 10, "IncomingCoilNo": "FW50001", "OperationLetter": "A", "MachineGroup": "Furnace", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "H18", "TargetTemper": "O", "OrdersInput": "123456", "RemainingOperations": "AF", "BackToStock": false, "PlanId": "PL-2026-0005" },
+          { "Id": 43, "CoilOrderPlanId": 9001, "MfgOrderNo": 900041, "SequenceNo": 20, "IncomingCoilNo": "FW50001", "OperationLetter": "F", "MachineGroup": "FL2", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.0160, "GaugeNegativeTolerence": 0.0007, "GaugePositiveTolerence": 0.0008, "InputTemper": "O", "TargetTemper": "H17", "OrdersInput": "123456", "RemainingOperations": "F", "BackToStock": false, "PlanId": "PL-2026-0005" },
+
+          { "Id": 44, "CoilOrderPlanId": 9002, "MfgOrderNo": 900042, "SequenceNo": 0, "IncomingCoilNo": "FW50001", "OperationLetter": "F", "MachineGroup": "FL1", "MachineId": 123, "CoilStartGauge": 0.3750, "NominalGauge": 0.0800, "GaugeNegativeTolerence": 0.0015, "GaugePositiveTolerence": 0.0015, "InputTemper": "F", "TargetTemper": "H18", "OrdersInput": "123459", "RemainingOperations": "FAF", "BackToStock": false, "PlanId": "PL-2026-0005", "_comment": "different output from order 123456 at the same sequence" },
+          { "Id": 45, "CoilOrderPlanId": 9002, "MfgOrderNo": 900042, "SequenceNo": 10, "IncomingCoilNo": "FW50001", "OperationLetter": "A", "MachineGroup": "Furnace", "MachineId": null, "CoilStartGauge": 0.0800, "NominalGauge": 0.0800, "GaugeNegativeTolerence": 0.0015, "GaugePositiveTolerence": 0.0015, "InputTemper": "H18", "TargetTemper": "O", "OrdersInput": "123459", "RemainingOperations": "AF", "BackToStock": false, "PlanId": "PL-2026-0005" },
+          { "Id": 46, "CoilOrderPlanId": 9002, "MfgOrderNo": 900042, "SequenceNo": 20, "IncomingCoilNo": "FW50001", "OperationLetter": "F", "MachineGroup": "FL2", "MachineId": null, "CoilStartGauge": 0.0800, "NominalGauge": 0.0300, "GaugeNegativeTolerence": 0.0010, "GaugePositiveTolerence": 0.0010, "InputTemper": "O", "TargetTemper": "H16", "OrdersInput": "123459", "RemainingOperations": "F", "BackToStock": false, "PlanId": "PL-2026-0005" }
+        ],
+        "TempFlatLineProcessing": [
+          { "Id": 41, "CoilOrderPlanId": 9001, "MfgOrderNo": 900041, "SequenceNo": 0, "IncomingCoilNo": "FW50001", "CoilNo": "FW50001", "OnGaugeWeight": 1000, "StartGauge": 0.3750, "MinTargetGauge": 0.1080, "TargetGauge": 0.1100, "MaxTargetGauge": 0.1120, "InputShape": "Round", "InputType": "Rod", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H18", "OrdersInput": "123456", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0005" },
+          { "Id": 42, "CoilOrderPlanId": 9001, "MfgOrderNo": 900041, "SequenceNo": 20, "IncomingCoilNo": "FW50001", "CoilNo": "FW50001", "OnGaugeWeight": 1000, "StartGauge": 0.1100, "MinTargetGauge": 0.0153, "TargetGauge": 0.0160, "MaxTargetGauge": 0.0168, "InputShape": "Flat", "InputType": "Wire", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H17", "OrdersInput": "123456", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0005" },
+
+          { "Id": 43, "CoilOrderPlanId": 9002, "MfgOrderNo": 900042, "SequenceNo": 0, "IncomingCoilNo": "FW50001", "CoilNo": "FW50001", "OnGaugeWeight": 500, "StartGauge": 0.3750, "MinTargetGauge": 0.0785, "TargetGauge": 0.0800, "MaxTargetGauge": 0.0815, "InputShape": "Round", "InputType": "Rod", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H18", "OrdersInput": "123459", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0005" },
+          { "Id": 44, "CoilOrderPlanId": 9002, "MfgOrderNo": 900042, "SequenceNo": 20, "IncomingCoilNo": "FW50001", "CoilNo": "FW50001", "OnGaugeWeight": 500, "StartGauge": 0.0800, "MinTargetGauge": 0.0290, "TargetGauge": 0.0300, "MaxTargetGauge": 0.0310, "InputShape": "Flat", "InputType": "Wire", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H16", "OrdersInput": "123459", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0005" }
+        ],
+        "TempMfgSalesOrderRef": [
+          { "Id": 41, "MfgOrderNo": 900041, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW50001", "IssuedWeight": 1000, "CoilOrderPlanId": 9001, "PlanId": "PL-2026-0005" },
+          { "Id": 42, "MfgOrderNo": 900042, "OrderNo": 123459, "RelLetter": "A", "CoilNo": "FW50001", "IssuedWeight": 500, "CoilOrderPlanId": 9002, "PlanId": "PL-2026-0005" }
+        ],
+        "TempOrderRemainingOperations": [
+          { "Id": 41, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW50001", "RemainingOperations": "FAF", "PlannedOperations": "FAF", "PlannedWeight": 1000, "CoilOrderPlanId": 9001, "PlanId": "PL-2026-0005" },
+          { "Id": 42, "OrderNo": 123459, "RelLetter": "A", "CoilNo": "FW50001", "RemainingOperations": "FAF", "PlannedOperations": "FAF", "PlannedWeight": 500, "CoilOrderPlanId": 9002, "PlanId": "PL-2026-0005" }
+        ]
+      },
+      "planning": {
+        "PlanningRoutings": [
+          { "Id": 41, "SequenceNo": 0, "MfgOrderNo": 900041, "IncomingCoilNo": "FW50001", "OperationLetter": "F", "MachineGroup": "FL1", "MachineId": 123, "CoilStartGauge": 0.3750, "NominalGauge": 0.0800, "GaugeNegativeTolerence": 0.0015, "GaugePositiveTolerence": 0.0015, "InputTemper": "F", "TargetTemper": "H18", "OrdersInput": "123456;123459", "BackToStock": false, "PlanId": "PL-2026-0005", "_comment": "single row for the operation even though the outputs differ - NominalGauge 0.0800 is the minimum of 0.1100 and 0.0800, TargetTemper H18 is common to both. The two outputs are held in PlanningFlatLineProcessing." },
+          { "Id": 42, "SequenceNo": 10, "MfgOrderNo": 900041, "IncomingCoilNo": "FW50002", "OperationLetter": "A", "MachineGroup": "Furnace", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.1100, "GaugeNegativeTolerence": 0.0020, "GaugePositiveTolerence": 0.0020, "InputTemper": "H18", "TargetTemper": "O", "OrdersInput": "123456", "BackToStock": false, "PlanId": "PL-2026-0005", "_comment": "the coil already divided at sequence 0, so each resulting coil has its own anneal row" },
+          { "Id": 43, "SequenceNo": 10, "MfgOrderNo": 900042, "IncomingCoilNo": "FW50003", "OperationLetter": "A", "MachineGroup": "Furnace", "MachineId": null, "CoilStartGauge": 0.0800, "NominalGauge": 0.0800, "GaugeNegativeTolerence": 0.0015, "GaugePositiveTolerence": 0.0015, "InputTemper": "H18", "TargetTemper": "O", "OrdersInput": "123459", "BackToStock": false, "PlanId": "PL-2026-0005" },
+          { "Id": 44, "SequenceNo": 20, "MfgOrderNo": 900041, "IncomingCoilNo": "FW50002", "OperationLetter": "F", "MachineGroup": "FL2", "MachineId": null, "CoilStartGauge": 0.1100, "NominalGauge": 0.0160, "GaugeNegativeTolerence": 0.0007, "GaugePositiveTolerence": 0.0008, "InputTemper": "O", "TargetTemper": "H17", "OrdersInput": "123456", "BackToStock": false, "PlanId": "PL-2026-0005" },
+          { "Id": 45, "SequenceNo": 20, "MfgOrderNo": 900042, "IncomingCoilNo": "FW50003", "OperationLetter": "F", "MachineGroup": "FL2", "MachineId": null, "CoilStartGauge": 0.0800, "NominalGauge": 0.0300, "GaugeNegativeTolerence": 0.0010, "GaugePositiveTolerence": 0.0010, "InputTemper": "O", "TargetTemper": "H16", "OrdersInput": "123459", "BackToStock": false, "PlanId": "PL-2026-0005" }
+        ],
+        "PlanningFlatLineProcessing": [
+          { "Id": 41, "SequenceNo": 0, "IncomingCoilNo": "FW50001", "CoilNo": "FW50002", "OnGaugeWeight": 1000, "StartGauge": 0.3750, "MinTargetGauge": 0.1080, "TargetGauge": 0.1100, "MaxTargetGauge": 0.1120, "InputShape": "Round", "InputType": "Rod", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H18", "OrdersInput": "123456", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0005", "_comment": "split row 1 of 2 - order 123456 output at 0.1100" },
+          { "Id": 42, "SequenceNo": 0, "IncomingCoilNo": "FW50001", "CoilNo": "FW50003", "OnGaugeWeight": 500, "StartGauge": 0.3750, "MinTargetGauge": 0.0785, "TargetGauge": 0.0800, "MaxTargetGauge": 0.0815, "InputShape": "Round", "InputType": "Rod", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H18", "OrdersInput": "123459", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0005", "_comment": "split row 2 of 2 - order 123459 output at 0.0800; different target gauge, so the input and output fields are NOT the same across the two rows here" },
+          { "Id": 43, "SequenceNo": 20, "IncomingCoilNo": "FW50002", "CoilNo": "FW50002", "OnGaugeWeight": 1000, "StartGauge": 0.1100, "MinTargetGauge": 0.0153, "TargetGauge": 0.0160, "MaxTargetGauge": 0.0168, "InputShape": "Flat", "InputType": "Wire", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H17", "OrdersInput": "123456", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0005", "_comment": "no division here, so the coil number carries through" },
+          { "Id": 44, "SequenceNo": 20, "IncomingCoilNo": "FW50003", "CoilNo": "FW50003", "OnGaugeWeight": 500, "StartGauge": 0.0800, "MinTargetGauge": 0.0290, "TargetGauge": 0.0300, "MaxTargetGauge": 0.0310, "InputShape": "Flat", "InputType": "Wire", "OutputShape": "Flat", "OutputType": "Wire", "Temper": "H16", "OrdersInput": "123459", "BackToStock": false, "PassScheduleId": null, "PlanId": "PL-2026-0005", "_comment": "no division here, so the coil number carries through" }
+        ],
+        "PlanningMfgSalesOrderRef": [
+          { "Id": 41, "MfgOrderNo": 900041, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW50001", "IssuedWeight": 1000, "CoilOrderPlanId": 9001, "PlanId": "PL-2026-0005" },
+          { "Id": 42, "MfgOrderNo": 900042, "OrderNo": 123459, "RelLetter": "A", "CoilNo": "FW50001", "IssuedWeight": 500, "CoilOrderPlanId": 9002, "PlanId": "PL-2026-0005" }
+        ],
+        "OrderRemainingOperations": [
+          { "Id": 41, "OrderNo": 123456, "RelLetter": "A", "CoilNo": "FW50001", "RemainingOperations": "FAF", "PlannedOperations": "FAF", "PlannedWeight": 1000, "CoilOrderPlanId": 9001, "PlanId": "PL-2026-0005" },
+          { "Id": 42, "OrderNo": 123459, "RelLetter": "A", "CoilNo": "FW50001", "RemainingOperations": "FAF", "PlannedOperations": "FAF", "PlannedWeight": 500, "CoilOrderPlanId": 9002, "PlanId": "PL-2026-0005" }
+        ]
+      }
+    }
+  ]
+}

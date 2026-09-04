@@ -54,7 +54,7 @@ USE [FlatWireDB];
 GO
 
 -- Seed data — strict dependency order:
---   Lookup (IDENTITY targets: Stand, Drawer, Edger, AlloyProperty)
+--   Lookup (IDENTITY targets: Stand, Drawer, ToolingInventoryDie, Edger, AlloyProperty)
 --   → Schedule (needs those IDENTITY values)
 --   → Materials (Rod/Run/SpoolProcessing -- FlatWireRun.PassScheduleId needs
 --     its parent schedule to exist, now that the FK is enforced)

@@ -1,7 +1,7 @@
 # Flat Wire Mill — Database Design and ER Model
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 26, 2026 — **§6.2's baseline moved to 33 tables · 55 FKs · 70 index statements · 1 procedure · 1 trigger** when `Q89` added `UX_CoilTraceability_ChildAlpha` (+1 index statement, and three columns that move no count). ⚠ **This header lagged §6.2 by three days and is now level with it** — a header dated earlier than the section it introduces is how a reader concludes the baseline is older than it is. §6.2 remains the **only** site that defines these figures; the three permitted to restate them are `[DEP §4.2]`'s gate, `phase-01c`'s *Testing* and *Acceptance criteria*, and `FlatWire_DDL_RunAll.sql`'s banner. *(previously August 23, 2026 — **the `Spool` article registry is seeded at its real size: 45 rows, `SP-0001`…`SP-0045`** (44 active + `SP-0045` withdrawn), replacing four placeholder rows. **Four digits, not five, per `OQ-K`** — five would make a carrier number string-identical to a `SpoolProcessing.Alpha`. Seed-row total 210 → **251**; table/FK/index counts unchanged. `Q42` stays **open** on the format and on 30-vs-45.)* *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. Object counts…)*
+**Last Updated:** September 3, 2026 — **§6.2 baseline moves to 40 tables · 64 FKs · 86 index statements · 1 procedure · 1 trigger**, measured by `verify_schema_counts.py`. `ToolingInventoryRollSet` (`D-42`) is the **twelfth** Lookup table, adding 2 FKs — one of them **the first ever taken on `Drawer`** — and 4 indexes. §7.3's ER diagram gains the entity. *(previously August 26, 2026 — **§6.2's baseline moved to 33 tables · 55 FKs · 70 index statements · 1 procedure · 1 trigger** when `Q89` added `UX_CoilTraceability_ChildAlpha` (+1 index statement, and three columns that move no count). ⚠ **This header lagged §6.2 by three days and is now level with it** — a header dated earlier than the section it introduces is how a reader concludes the baseline is older than it is. §6.2 remains the **only** site that defines these figures; the three permitted to restate them are `[DEP §4.2]`'s gate, `phase-01c`'s *Testing* and *Acceptance criteria*, and `FlatWire_DDL_RunAll.sql`'s banner. *(previously August 23, 2026 — **the `Spool` article registry is seeded at its real size: 45 rows, `SP-0001`…`SP-0045`** (44 active + `SP-0045` withdrawn), replacing four placeholder rows. **Four digits, not five, per `OQ-K`** — five would make a carrier number string-identical to a `SpoolProcessing.Alpha`. Seed-row total 210 → **251**; table/FK/index counts unchanged. `Q42` stays **open** on the format and on 30-vs-45.)* *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. Object counts…)*)*
 **Document Type:** Data model, ER diagrams, the counted object baseline
 **Status:** Baselined for build
 **Owner:** Architecture stream / DBA
@@ -21,7 +21,11 @@ The flat-wire-specific model lives in a **new standalone SQL Server database, `F
 
 ### 6.2 Table count — counted, not quoted
 
-⚠ **The baseline moved again on 26 Aug 2026: it is now 33 tables · 55 FKs · 70 index statements · 1 procedure · 1 trigger, and **251** seed rows.** `Q89` added `UX_CoilTraceability_ChildAlpha` — **one index statement, and three columns which move no count** (`ChildAlpha`, `SourceSegmentAlpha`, `SharedWrittenAt` on `CoilTraceability`). ⛔ **No table and no FK was added:** a foreign key cannot point at a filtered unique index, which is why `SourceSegmentAlpha` has none. *(Previously, 23 Aug 2026: 33 · 55 · **69** · 1 · 1.)* `SpoolConfiguration` was **merged into `Spool`** (`Q60`) — it was a size class holding one meaningful row against 30–45 articles, so its six dimensional columns and its `Name` now sit on the article itself as `SizeClass` + `Min/MaxWeightLb` + `Min/MaxCoreDiameterIn` + `Min/MaxOuterDiameterIn`. **−1 table** (34 → 33), **−2 FKs** (57 → 55: `FK_SpoolProcessing_SpoolConfiguration` and `FK_Spool_SpoolConfiguration` both go, with the `SpoolTypeId` columns they constrained), **−2 seed rows** (212 → 210), and **index statements unchanged at 69** — nothing was indexed on `SpoolTypeId`. Verified on a teardown-and-deploy, idempotent on re-run, 0 empty tables. **The seed-row total moved 212 → 210 → 251**: −2 with the merge, then **+41 on 23 Aug 2026 when the `Spool` article registry was seeded at its real size** — 45 articles `SP-0001`…`SP-0045`, replacing four placeholder rows (44 active + `SP-0045` withdrawn, which is what keeps the `IsActive = 0` path covered). **Four digits, not five** — `OQ-K`: five would make a carrier number string-identical to a `SpoolProcessing.Alpha`, and the seeded material alphas `SP-00031`/`32`/`33` all fall inside 1–45. `Q42` remains open on the format and on 30-vs-45. **Table, FK, index, procedure and trigger counts are unchanged — seeding rows moves none of them.**
+⚠ **The baseline is 45 tables · 67 FKs · 87 index statements · 1 procedure · 1 trigger**, measured by `verify_schema_counts.py` from the runner chain on **4 Sep 2026**. The move from 40/64/86 is the **five Machine Setup tables** — the Setup/Handling Times and Material Loss tabs of the Machines Application, from Tim O'Brien's per-line field sets of 31 Aug 2026. **+5 tables** in `01_Lookup`: three catalogues (`SetupHandlingTimeGroup`, `SetupHandlingTimeElement`, `MaterialLossElement`) **seeded inline by the DDL, 144 rows**, and two value tables (`SetupHandlingTimeStandard`, `MaterialLossStandard`) created **empty** because the numbers are the Naj/Bob/Tim standards spreadsheet and it is unfinished. **FKs +3 = 67** — all three *internal* to the group; **no FK reaches a machine or a line**, because `FL1`/`FL2`/`FL3` is a CHECKed `LineId` string and `united_db.dbo.machines` is in another database. **Index statements +1 = 87** — only `IX_SetupHandlingTimeElement_GroupId`; the other four tables need none and `07`'s trailing block says why for each. ⚠ **`SetupHandlingTimeStandard.CrewSize` is `[PROPOSED]`** — crew size *is* a row dimension (verified against `united_db.dbo.Slitters_Standards`), but its **vocabulary is data**, in `united_db.dbo.lookups` category `4061`, so the column carries a range CHECK and not a value list. ⛔ **`OI-110` is NOT closed by this** — which database these tabs write to is still unanswered, and the evidence points at `united_db`. *(previously 40 tables · 64 FKs · 86 index statements · 1 procedure · 1 trigger, 3 Sep 2026 — the move from 39/62/82 was **`ToolingInventoryRollSet`** — the **fourth** Tooling Inventory tool type, from Tim O'Brien's mail of 3 Sep 2026 (`D-42`): *"We should include mill rolls for traceability… DB1/DB2 Capstans (rolls)… 8″, 6″, 6″ rolls for (FL2-S1, FL2-S2, FL2-S3)."* **+1 table** in `01_Lookup`; **FKs +2 = 64** — `FK_ToolingInventoryRollSet_Stand` and `FK_ToolingInventoryRollSet_Drawer`, **the latter the first foreign key ever taken on `Drawer`**; **index statements +4 = 86** — the two filtered mount indexes, `IX_ToolingInventoryRollSet_LifecycleStatus` and the filtered-unique `UX_ToolingInventoryRollSet_SerialNo`. **Seed rows +6.** ⚠ **The column set is `[PROPOSED]`, not client-supplied** — Die, Edger and Straightener each arrived as a screenshot grid; roll sets arrived as one sentence. See `G87` and `Q92`.)*
+
+*(Previously, and still the reading for anything dated before 3 Sep:)* ⚠ **The baseline moved TWICE on 2 Sep 2026: it was then 39 tables · 62 FKs · 82 index statements · 1 procedure · 1 trigger.** The **second move is the client's reason-code lists** — `Reason Codes.xlsx`, Tim O'Brien, 1 Sep 2026, which closes actions `A4`/`A5`/`A6` of the 23 Jul call. **+4 tables** (35 → 39): **`DowntimeReason`**, **`WipRejectionReason`** and **`ItInhibitReason`** in `01_Lookup`, and **`LineDowntimeEvent`** in `04_Runs`. **FKs +4 = 62**: `FK_RunPauseEvent_DelayCode` and `FK_WipRejection_Reason` (both **composite**, so the denormalised bucket and group cannot drift from the lookup), plus `FK_LineDowntimeEvent_DelayCode` and `FK_LineDowntimeEvent_Run`. **Index statements +7 = 82.** **Seed rows +156**, and they are seeded **inline in `01_Lookup`, not in the sample data** — they are production reference data, and a production deploy runs `RunAll` without the sample-data file. ⚠ **`LineDowntimeEvent` exists because `RunPauseEvent` could not hold the `Downtime` bucket**: its `RunId` is `NOT NULL` and all 25 `DWN##` codes are line-down time. `RunPauseEvent` now takes the other three buckets (47 codes) and `CK_RunPauseEvent_Bucket` enforces the split. *(The first move, earlier the same day — 33 → 35 tables · 58 FKs · 75 index statements.)* The **die split** did it — `Drawer` was reduced to the two draw boxes `DB1`/`DB2`, and the die-size catalogue it had been holding became **`ToolingInventoryDie`**, a register of physical dies carrying `LastGrindingFeet` / `TotalFeetAllowed`, with **`DieHistory`** as its append-only life log. **+2 tables** (33 → 35). **FKs −1 +4 = 58**: `FK_PSC_Drawer` went with `PassScheduleComponent.DrawerId`, and `FK_DieChangeEvent_OldDie`, `FK_DieChangeEvent_NewDie`, `FK_DieHistory_Die`, `FK_DieHistory_Run` arrived. **Index statements −1 +6 = 75**: `IX_PSC_DrawerId` went with its column; six were added, including the filtered-unique `UX_ToolingInventoryDie_SerialNo`. **Seed rows: −13 `Drawer` size rows, +2 `Drawer` boxes, +14 dies** — the fourteenth is a 0.2980 die that `DieChangeEvent` `DC-0001` has always referenced without the catalogue ever carrying that size. `DieHistory` is deliberately unseeded. **Seed rows measured at 254** on the deploy below — 251 − 13 + 2 + 14, and the first time that figure has been confirmed by anything at all. This closes **`OI-41`**, open since April, and supersedes **`Q90`** — `Drawer` is *not* renamed, because the name is now correct.
+>
+> *(Previously, 26 Aug 2026: 33 tables · 55 FKs · 70 index statements · 1 procedure · 1 trigger, and **251** seed rows.)* `Q89` added `UX_CoilTraceability_ChildAlpha` — **one index statement, and three columns which move no count** (`ChildAlpha`, `SourceSegmentAlpha`, `SharedWrittenAt` on `CoilTraceability`). ⛔ **No table and no FK was added:** a foreign key cannot point at a filtered unique index, which is why `SourceSegmentAlpha` has none. *(Previously, 23 Aug 2026: 33 · 55 · **69** · 1 · 1.)* `SpoolConfiguration` was **merged into `Spool`** (`Q60`) — it was a size class holding one meaningful row against 30–45 articles, so its six dimensional columns and its `Name` now sit on the article itself as `SizeClass` + `Min/MaxWeightLb` + `Min/MaxCoreDiameterIn` + `Min/MaxOuterDiameterIn`. **−1 table** (34 → 33), **−2 FKs** (57 → 55: `FK_SpoolProcessing_SpoolConfiguration` and `FK_Spool_SpoolConfiguration` both go, with the `SpoolTypeId` columns they constrained), **−2 seed rows** (212 → 210), and **index statements unchanged at 69** — nothing was indexed on `SpoolTypeId`. Verified on a teardown-and-deploy, idempotent on re-run, 0 empty tables. **The seed-row total moved 212 → 210 → 251**: −2 with the merge, then **+41 on 23 Aug 2026 when the `Spool` article registry was seeded at its real size** — 45 articles `SP-0001`…`SP-0045`, replacing four placeholder rows (44 active + `SP-0045` withdrawn, which is what keeps the `IsActive = 0` path covered). **Four digits, not five** — `OQ-K`: five would make a carrier number string-identical to a `SpoolProcessing.Alpha`, and the seeded material alphas `SP-00031`/`32`/`33` all fall inside 1–45. `Q42` remains open on the format and on 30-vs-45. **Table, FK, index, procedure and trigger counts are unchanged — seeding rows moves none of them.**
 
 **Anything in this repository still saying 34 tables or 57 FKs as a *live* figure is stale** — statements dated before 23 Aug 2026 are audit trail and keep their numbers by design.
 
@@ -33,6 +37,14 @@ The flat-wire-specific model lives in a **new standalone SQL Server database, `F
 
 **Proven, on a real teardown-and-rebuild — but against the PRE-MERGE scripts, so its counts are superseded:** `99_Teardown` → `RunAll` produced **34 tables · 57 FKs · 69 index statements · 1 procedure · 1 trigger**. ⚠ **That run predates the same day's `SpoolConfiguration` merge (`Q60`), so the table and FK figures no longer match this section** — the current scripts measure **33 tables · 55 FKs · 69 index statements · 1 procedure · 1 trigger**, counted statically by [`verify_schema_counts.py`](../tools/deliverables/verify_schema_counts.py).
 
+> ✅✅ **THE DEPLOYED DATABASE IS NOW THE SCRIPTS — measured on `DEV00164-001`, 2 Sep 2026, after a real teardown and rebuild.** `99_Teardown` → `RunAll` → `RunAll` → `SampleData_RunAll` → `RunAll_MVP2` produced **35 tables · 58 FKs · 75 index statements · 2 procedures · 1 trigger** and **254 seed rows across 34 non-empty tables** — `DieHistory` is the single empty one, by design. The second `RunAll` created nothing, so the chain is **idempotent**. `[DEP §4.2]`’s `V1`–`V5` all pass as written. The four die-domain constraints were exercised negatively and positively: a third draw box, a `RunFootage` row with no run, footage on a `Reset` row, and a derived life band stored as `LifecycleStatus` are each **refused**, and a valid `RunFootage` row is **accepted**.
+>
+> ⚠ **The procedure count is 2, not 1, and that is correct here** — `RunAll_MVP2` was run, which adds `sp_ShiftSummary` to `sp_GetGaugeTrace`. Before this rebuild the instance reported **11 procedures**: leftovers from earlier incremental runs, which is exactly the trap §6.2 warns about when it says the count must come from a teardown. They are gone.
+>
+> ⚠ **`QUOTED_IDENTIFIER` must be ON for any session that writes these tables.** `sqlcmd -Q` defaults it OFF and the filtered indexes reject the insert outright (Msg 1934). The DDL scripts set it explicitly; ad-hoc sessions need `sqlcmd -I` or an explicit `SET`.
+>
+> *(Superseded below: the 25 Aug 2026 measurement, when the deployed database was two schema changes behind and effectively unseeded. Kept as the record of what the rebuild fixed.)*
+>
 > ⚠⚠ **THE DEPLOYED DATABASE IS TWO SCHEMA CHANGES BEHIND THE SCRIPTS — measured on the shared instance, 25 Aug 2026.** `FlatWireDB` on `DEVUAL-UADEV001\TEST1` reports **34 tables · 57 FKs · 1 procedure · 1 trigger**, and it still holds **`SpoolCarrier`** and **`SpoolConfiguration`** while having **no `SpoolProcessing` at all**. So it predates *both* the `Q60` `Spool`/`SpoolCarrier` swap and the `SpoolConfiguration` merge. ⚠ **A stale `Spool` there means the material record, which is the silently-wrong reading `[DBD §6.2a]` exists to prevent** — code written against that database will compile and do the wrong thing.
 >
 > **It is also effectively unseeded: 3 rows in total.** The **251** seed-row figure asserted above is therefore **still unverified by anything** — no tool covers it and the live database cannot confirm it.
@@ -47,12 +59,12 @@ The flat-wire-specific model lives in a **new standalone SQL Server database, `F
 
 | Group | Script | Count | Scope | Tables |
 |---|---|---|---|---|
-| **Lookup / Reference** | `01_Lookup` | **7** | MVP-1 | `Stand` · `Drawer` · `Edger` · **`Dancer`** · `AlloyProperty` · `PayoffPosition` · **`Spool`** — *`SpoolConfiguration` merged into `Spool` on 23 Aug 2026 (`Q60`)* |
+| **Lookup / Reference** | `01_Lookup` | **17** | MVP-1 | `Stand` · `Drawer` · **`ToolingInventoryDie`** · **`ToolingInventoryRollSet`** · `Edger` · **`Dancer`** · `AlloyProperty` · `PayoffPosition` · **`Spool`** · **`DowntimeReason`** · **`WipRejectionReason`** · **`ItInhibitReason`** — *the three reason lists added 2 Sep 2026 from the client's reason codes, and **seeded inline by the DDL** rather than by the sample data* — *`SpoolConfiguration` merged into `Spool` on 23 Aug 2026 (`Q60`)*; **`ToolingInventoryDie` added 2 Sep 2026 by the die split, which also reduced `Drawer` to the two draw boxes**; **`ToolingInventoryRollSet` added 3 Sep 2026 as the fourth tool type (`D-42`)**; · **`SetupHandlingTimeGroup`** · **`SetupHandlingTimeElement`** · **`SetupHandlingTimeStandard`** · **`MaterialLossElement`** · **`MaterialLossStandard`** — *the five **Machine Setup** tables added 4 Sep 2026 from the client's 31 Aug field sets; the three catalogues are **seeded inline by the DDL**, like the reason lists, because a production deploy runs `RunAll` without the sample data* |
 | **Schedule** | `02_Schedule` | **3** | **MVP-1** — `D-31` | `PassSchedule` · `PassScheduleComponent` · `PassScheduleChangeLog` |
 | **Materials** | `03_Materials` | **6** | MVP-1 | `Rod` · `FlatWireRun` · `SpoolProcessing` · **`SpoolTraceability`** · **`SpoolOrder`** · **`RodOrderAllocation`** |
-| **Runs** | `04_Runs` | **11** | MVP-1 | `FlatWireRunDetail` · `RodStaging` · `RodCheckin` · `SpoolCheckin` · **`SpoolStaging`** · `RunPauseEvent` · `WeldEvent` · `RollOverride` · `DieChangeEvent` · `RunReading` · **`RodOrderConsumption`** |
+| **Runs** | `04_Runs` | **13** | MVP-1 | `FlatWireRunDetail` · `RodStaging` · `RodCheckin` · `SpoolCheckin` · **`SpoolStaging`** · `RunPauseEvent` · **`LineDowntimeEvent`** · `WeldEvent` · `RollOverride` · `DieChangeEvent` · **`DieHistory`** · `RunReading` · **`RodOrderConsumption`** |
 | **Quality / Output** | `05_QualityOutput` | **6** | MVP-1 | `SpcCheckpoint` · `SpcMeasurement` · `WipRejection` · `CoilOutput` · `CoilTraceability` · `RodCheckout` |
-| | | **33** | **MVP-1 = the full design** | one figure since `D-31`; **34 → 33 on 23 Aug 2026** when `SpoolConfiguration` merged into `Spool`; `FlatWire_DDL_RunAll.sql` builds all of it |
+| | | **45** | **MVP-1 = the full design** | one figure since `D-31`; **34 → 33 on 23 Aug 2026** when `SpoolConfiguration` merged into `Spool`, then **33 → 35 on 2 Sep 2026** with the die split, then **35 → 39 later the same day** with the client's three reason-code lookups and `LineDowntimeEvent`, then **39 → 40 on 3 Sep 2026** with `ToolingInventoryRollSet`, then **40 → 45 on 4 Sep 2026** with the five Machine Setup tables; `FlatWire_DDL_RunAll.sql` builds all of it |
 
 ### This is the only site that defines the object counts
 
@@ -95,10 +107,11 @@ group a table is in.** It still does not. Read the DDL file number instead.
 | Rule | |
 |---|---|
 | **Consumable material** is a bare singular noun in `03_Materials` | `Rod` |
-| **Reusable articles and reference data** live in `01_Lookup` | `Stand` · `Drawer` · `Edger` · `Dancer` · `Spool` · `AlloyProperty` · `PayoffPosition` — **seven**, since `SpoolConfiguration` merged into `Spool` |
+| **Reusable articles and reference data** live in `01_Lookup` | `Stand` · `Drawer` · `ToolingInventoryDie` · `Edger` · `Dancer` · `Spool` · `AlloyProperty` · `PayoffPosition` — **eight**: seven since `SpoolConfiguration` merged into `Spool`, plus `ToolingInventoryDie` from the 2 Sep 2026 die split |
 | **Material in process** carries the `…Processing` suffix | `SpoolProcessing` |
 | **Events** are `<Subject><Event>` in `04_Runs` | `WeldEvent` · `DieChangeEvent` · `RunPauseEvent` |
 | **The group is NOT encoded in the name** | Never infer it; open the numbered DDL file |
+| **Compound names are allowed where the bare noun misleads** | `ToolingInventoryDie` (2 Sep 2026) is the client’s own term from the Machines Application tab. It is deliberately **not** `Die`: `Q90` had proposed renaming `Drawer` → `Die`, and the die split **supersedes that** — `Drawer` keeps its name because it now genuinely holds the two draw boxes |
 
 **Never renumber a section to close a gap** — `§6` opening the data model, and `§6.2a` rather than a
 renumber here, are both deliberate. That is what keeps every `§n` citation resolving.
@@ -171,7 +184,9 @@ local master: a welding-wire certificate that cannot resolve every source rod is
 | Table | Purpose | Key columns / constraints |
 |---|---|---|
 | `Stand` | Rolling-mill finishing stands | `Name` UNIQUE — position only (`FM1`, `FM2_S1`, `FM2_S2`, `FM2_S3`), `LineId` (NULL = shared), **`RollDiameterIn DECIMAL(5,3)` > 0** (FM1 12.000; FM2 S1 8.000, S2 6.000, S3 6.000), gauge and width ranges `DECIMAL(8,4)` with Min<Max checks. *(Aug 4 2026: FM2 is three stands and diameter moved out of the name into `RollDiameterIn`. The DDL comment on `MinWidthIn` says "strip width" — a source terminology slip; the column means flat wire width.)* |
-| `Drawer` | Draw-box die configurations | `Name` UNIQUE, `DiameterIn DECIMAL(8,4)` > 0, optional feed-diameter range. **Die life (6 Aug 2026):** `LastGrindingFeet DECIMAL(10,2)` NOT NULL DEFAULT 0 — feet run *since* the last grind, not the reading at it — and `TotalFeetAllowed DECIMAL(10,2)` NULL, the scheduled-life threshold (NULL until **OQ-83** supplies values). **No `LastGrindingFeet ≤ TotalFeetAllowed` check** — *overdue* is a displayed state, not a data error |
+| `Drawer` | **The two draw boxes** — `DB1` and `DB2` | `Name` UNIQUE **and `CHECK IN ('DB1','DB2')`**, so the table is capped at two rows structurally rather than by a counting rule; `LineId CHECK IN ('FL1','FL3')` — FL1 owns both boxes and FL3 runs through them. **Restructured 2 Sep 2026 by the die split:** it had been a 13-row die-*size* catalogue, so it was named after the machine and populated with the tooling. `DiameterIn`, the feed range and both die-life columns moved to `ToolingInventoryDie`. ⚠ **Nothing holds a foreign key to it** — `PassScheduleComponent.ComponentName` and `DieChangeEvent.DiePosition` name `DB1`/`DB2` as CHECK-constrained strings, so this is an equipment register, not a join target |
+| **`ToolingInventoryDie`** | **The register of physical dies** — one row per tool | `DieAlpha` UNIQUE (`D-{size×1000}-{seq}`), `SerialNo` **filtered**-unique (the seed leaves all 14 NULL, and a plain UNIQUE admits only one NULL), `HoleSizeIn DECIMAL(8,4)` > 0 — **deliberately NOT unique**, many tools share a size. `LastGrindingFeet` / `TotalFeetAllowed` migrated here from `Drawer`, semantics unchanged, and **no `≤` check** — *overdue* is a displayed state, not a data error. `LifecycleStatus CHECK IN ('Active','In Service','In Grinding','Retired')` — the client’s three values plus `FR-250`’s; a `BIT` cannot express *In Grinding*. ⚠ **`FR-253`’s `Nearing` / `Overdue` / `Spare` are percentage bands and are DERIVED, never stored** — and both vocabularies contain the word `Active` meaning different things. Column set is the union of `FR-247`/`FR-254` and the client’s 31 Aug Tooling Inventory grid; `ID(MM)` is not stored, being a derived display value. See **`OI-141`** on whether one register or two |
+| **`DieHistory`** | One append-only log serving **both** of `FR-252`’s tabs — Run history and Replacement log | `EventType CHECK IN ('Install','Reset','Retire','ThresholdEdit','RunFootage')`; `RunId` **nullable** (“NULL when made outside a run” — Reset and Retire are die-room actions), same shape as `PassScheduleChangeLog`. Two CHECKs recover the typing a discriminated table gives up: `CK_DieHistory_RunFootageHasRun` and `CK_DieHistory_FootageOnlyOnRunFootage`. `FR-252`’s *order* and *line* are **not** columns — derived through `RunId`. Exists because **nothing else records which physical die ran a given run**, so per-run footage is not derivable |
 | `Edger` | Edger tooling configurations | `EdgeType` CHECK IN (`Round`,`Square`), `ToolingSetNo` |
 | `AlloyProperty` | Per-alloy process properties; the **local** parent for `PassSchedule.Alloy` | `Alloy` UNIQUE, `MaxReductionPerPass DECIMAL(5,3)`, `SpringbackFactor`, tolerance defaults, speed range, `IsWeldingWire`. **`LbPerFtFactor` must not be populated** (seeded NULL, "OQ-10 PENDING") and `DensityLbPerIn3` **duplicates `united_db..alloys.alloy_density`** — see §6.6 |
 | `PayoffPosition` | Material input/output positions | **Pinned Ids, not IDENTITY**: 1 `Payoff1` (VPS, 9,000 lb, rod-fed), 2 `Payoff2` (VPS, 9,000 lb, rod-fed), 3 `TraversingTakeup`. Seeded **by the DDL itself**, because the `FlatWireRunDetail` FK depends on the rows existing |
@@ -368,7 +383,7 @@ Each is an open issue, listed here so nobody assumes a table exists.
 
 | Concept | Required by | Schema state |
 |---|---|---|
-| **Die master / inventory** | `[REQ]` `FR-233`, `FR-254`, all of §5.10 | **No table.** Only the `Drawer` lookup and `DieChangeEvent`. Die Change cannot validate a scan against an inventory that does not exist — this is why Phase 6 depends on Phase 13 (**OI-41**). **Narrowed 6 Aug 2026, not closed:** `Drawer` now carries `LastGrindingFeet` / `TotalFeetAllowed`, so the counter and threshold have somewhere to live — but against a die **size**, not a physical tool, so registration, condition, status and disposition history are all still missing |
+| ~~**Die master / inventory**~~ | `[REQ]` `FR-233`, `FR-254`, all of §5.10 | ✅ **BUILT 2 Sep 2026 — `OI-41` CLOSES.** **`ToolingInventoryDie`** is the per-tool register (`D-{size×1000}-{seq}`, hole size, type, `LifecycleStatus`, `LastGrindingFeet` / `TotalFeetAllowed`) and **`DieHistory`** carries registration, reset, retirement and per-run footage. `DieChangeEvent` gained `OldDieId` / `NewDieId`, so a run event can attribute footage to a **tool** for the first time and **`FR-255`** becomes implementable. **`FR-233` / `D4` revert to their pre-11-Aug per-tool form** — the system rejects an unregistered *die*, not merely an unrecognised *size* — and the accepted consequence *"two dies of one diameter share a counter"* is retired with them. **Phase 6 no longer depends on Phase 13**: it depends on Phase 1, where both tables seed. ⚠ **Still open: `OI-141`** — whether this is the only die register or one of two, given `[MSP §4.10]` puts Die Management in the Machines Application. ⚠ **`OI-12` escalates** — the 60/85 % and 65/80 % band sets now derive from one table. *(Was: "No table… narrowed 6 Aug 2026, not closed", when `Drawer` held the counters against a die **size** rather than a physical tool.)* |
 | **Alert lifecycle** | `FR-422`–`FR-428`, hub `AlertRaised`/`AlertCleared` | **No table.** Alerts cannot survive a restart; acknowledgements cannot be audited — **OI-28** |
 | **MMS ID format and lifecycle** | `FR-013` | Columns exist on `RodCheckin` / `SpoolCheckin`; **no format, no generator** — **OI-03** |
 | **Lot number** | `GET /coil/{alpha}/label`, `FR-336` | **No column, no generator** — **OI-24** |
@@ -480,7 +495,7 @@ GROUP BY f.RunId, rp.ReasonCode, rp.ReasonCategory
 ### 6.11 Build and run order
 
 0. **Database & security** (`DDL_00`) — create `FlatWireDB`, RCSI, `ua_user` grants
-1. **Lookup tables** (`DDL_01`) — Stand, Drawer, Edger, **Dancer**, **AlloyProperty**, **PayoffPosition**, **Spool**
+1. **Lookup tables** (`DDL_01`) — Stand, Drawer, **ToolingInventoryDie**, Edger, **Dancer**, **AlloyProperty**, **PayoffPosition**, **Spool**
 2. **Schedule tables** (`DDL_02`) — PassSchedule, PassScheduleComponent, **PassScheduleChangeLog** — **MVP-1 since `D-31`**
 3. **Material tables** (`DDL_03`) — Rod, FlatWireRun, Spool, **SpoolTraceability**, **SpoolOrder**, **RodOrderAllocation**
 4. **Run tracking tables** (`DDL_04`) — FlatWireRunDetail, **RodStaging**, RodCheckin, SpoolCheckin, **SpoolStaging**, RunPauseEvent, WeldEvent, RollOverride, DieChangeEvent, **RunReading**, **RodOrderConsumption**
@@ -598,10 +613,42 @@ erDiagram
     }
     Drawer {
         int Id PK
-        varchar Name UK
-        decimal DiameterIn
+        varchar Name UK "DB1 | DB2 only"
+        varchar LineId
+        bit IsActive
+    }
+    ToolingInventoryDie {
+        int Id PK
+        varchar DieAlpha UK "D-{size*1000}-{seq}"
+        varchar SerialNo "filtered UK"
+        decimal HoleSizeIn
+        varchar DieType
+        varchar LifecycleStatus
+        bit InUse
         decimal LastGrindingFeet
         decimal TotalFeetAllowed
+    }
+    DieHistory {
+        int Id PK
+        int DieId FK
+        varchar EventType
+        varchar RunId FK "NULL outside a run"
+        decimal FootageAddedFt
+        varchar OperatorId
+    }
+    ToolingInventoryRollSet {
+        int Id PK
+        varchar RollSetAlpha UK "RS-{position}-{seq}"
+        varchar RollType "Mill | Capstan"
+        int StandId FK "NULL on a Capstan row"
+        int DrawerId FK "NULL on a Mill row"
+        varchar LineId "FL1 | FL2 - never FL3"
+        int RollQty "2 on every set the client named"
+        decimal NominalDiameterIn "the TOOL's size; Stand.RollDiameterIn is the machine's"
+        decimal OdIn
+        decimal MinOdIn "grind life, not footage"
+        varchar LifecycleStatus
+        bit IsRefurbishable "capstans, per the client"
     }
     Edger {
         int Id PK
@@ -635,15 +682,91 @@ erDiagram
         bit IsActive
         varchar Notes
     }
+    DowntimeReason {
+        int Id PK
+        varchar DelayBucket "Setup | RunTime | Handling | Downtime"
+        varchar DelayCode UK "SET## | RUN## | HDL## | DWN##"
+        varchar Description "client wording, verbatim"
+        bit IsNonprodTime "NULL - DWN29 blank on the sheet"
+        varchar Status "Active | Inactive"
+        int DelayBufferMin
+        bit SupervisorOverride "NULL outside the Downtime bucket"
+        bit IsProposedCode "1 = the code string is ours"
+        bit IsActive
+    }
+    WipRejectionReason {
+        int Id PK
+        varchar ReasonCode UK "WREJ### - ours"
+        varchar Description "client wording, typos included"
+        varchar RejectionGroup "ours - the sheet has no groups"
+        bit IsProposedGroup "1 on every row today"
+        bit IsNewForFlatWire
+        bit IsActive
+    }
+    ItInhibitReason {
+        int Id PK
+        varchar ReasonCode UK "ITINH### - ours"
+        varchar Description
+        varchar Source "Client | PLC-8.2"
+        bit IsNewForFlatWire
+        bit IsActive "0 on the four PLC-8.2-only rows"
+    }
+    SetupHandlingTimeGroup {
+        int Id PK
+        varchar GroupCode UK "S1 | H1A | H1AA | R | H1B | S2 | H2"
+        varchar GroupLabel "client wording; 4 renamed from the Slitter template"
+        int Sequence UK "1-7, left to right as pictured"
+        bit IsActive
+    }
+    SetupHandlingTimeElement {
+        int Id PK
+        varchar LineId "FL1 | FL2 | FL3 - all three, unlike the tooling registers"
+        int GroupId FK
+        varchar ElementLabel "unique per LineId+GroupId, NOT per label"
+        int Sequence "order within LineId+GroupId, as pictured"
+        bit IsActive
+    }
+    SetupHandlingTimeStandard {
+        int Id PK
+        int ElementId FK
+        tinyint CrewSize "PROPOSED - vocabulary is united_db lookups cat 4061"
+        decimal StandardMinutes "minutes; DECIMAL, not the legacy FLOAT"
+        varchar CreatedBy
+        varchar ModifiedBy
+        rowversion RowVersion "the legacy table has no PK at all"
+    }
+    MaterialLossElement {
+        int Id PK
+        varchar LineId "FL1 | FL2 | FL3"
+        varchar ElementLabel "80 chars - the Pass Change label is 65"
+        int Sequence "order within LineId, as pictured"
+        bit IsActive
+    }
+    MaterialLossStandard {
+        int Id PK
+        int ElementId UK "1:1 with the catalogue, on purpose"
+        decimal StandardLossFt "FEET, per the FL1 grid footer"
+        varchar CreatedBy
+        varchar ModifiedBy
+        rowversion RowVersion
+    }
     AlloyProperty      ||--o{ PassSchedule : "Alloy"
     Stand              ||--o{ PassScheduleComponent : "StandId"
-    Drawer             ||--o{ PassScheduleComponent : "DrawerId"
     Edger              ||--o{ PassScheduleComponent : "EdgerId"
+    ToolingInventoryDie ||--o{ DieChangeEvent : "OldDieId / NewDieId"
+    ToolingInventoryDie ||--o{ DieHistory : "DieId"
+    FlatWireRun        ||--o{ DieHistory : "RunId"
     PayoffPosition     ||--o{ FlatWireRunDetail : "PayoffPositionId"
     PayoffPosition     ||--o{ RodStaging : "PayoffPosition"
+    DowntimeReason     ||--o{ RunPauseEvent : "DelayCode + DelayBucket"
+    DowntimeReason     ||--o{ LineDowntimeEvent : "DelayCode"
+    WipRejectionReason ||--o{ WipRejection : "ReasonCode + RejectionGroup"
+    SetupHandlingTimeGroup   ||--o{ SetupHandlingTimeElement : "GroupId"
+    SetupHandlingTimeElement ||--o{ SetupHandlingTimeStandard : "ElementId (one per CrewSize)"
+    MaterialLossElement      ||--|| MaterialLossStandard : "ElementId"
 ```
 
-**In prose:** **eight** reference tables, all soft-deleted by `IsActive` — `Dancer` and `Spool` included. Only `PayoffPosition` has pinned (non-IDENTITY) keys, because FK targets must exist before the DDL that references them runs.
+**In prose:** **eleven** reference tables, all soft-deleted by `IsActive` — `Dancer` and `Spool` included, and since 2 Sep 2026 the three client reason-code vocabularies. **`PayoffPosition` is no longer the only one with DDL-side seed data**: `DowntimeReason`, `WipRejectionReason` and `ItInhibitReason` are seeded inline by `01_Lookup` too, because they are production reference data and a production deploy runs `RunAll` without the sample-data file. Only `PayoffPosition` has pinned (non-IDENTITY) keys, because FK targets must exist before the DDL that references them runs.
 
 ### 7.4 Group 2 — Schedule
 
@@ -830,10 +953,23 @@ erDiagram
     RunPauseEvent { int Id PK
         varchar RunId FK
         int FootageAtPause
-        varchar ReasonCode
-        varchar ReasonCategory
+        varchar ReasonCode FK "DelayCode - SET / RUN / HDL only"
+        varchar ReasonCategory FK "DelayBucket"
+        bit IsNonprodTime "snapshot"
+        int DelayBufferMin "snapshot"
         datetimeoffset ResumedAt
         varchar Outcome }
+    LineDowntimeEvent { int Id PK
+        varchar LineId "the event is LINE-scoped"
+        varchar RunId FK "NULL - most downtime has no run"
+        varchar DelayCode FK "DWN## only"
+        datetimeoffset StartedAt
+        datetimeoffset EndedAt
+        int DowntimeSeconds "computed"
+        bit IsNonprodTime "snapshot"
+        int DelayBufferMin "snapshot"
+        bit SupervisorOverride
+        varchar SupervisorOverrideBy }
     WeldEvent { int Id PK
         varchar WeldEventId UK
         varchar RunId FK
@@ -905,9 +1041,10 @@ erDiagram
     FlatWireRun ||--o{ RodOrderConsumption : "RunId"
     Rod         ||--o{ RodOrderConsumption : "RodAlpha"
     RodCheckin  ||--o{ RodOrderConsumption : "RodCheckinId"
+    FlatWireRun ||--o{ LineDowntimeEvent : "RunId (optional)"
 ```
 
-**In prose:** **eleven** tables, every one keyed on `RunId` except `RodStaging` **and `SpoolStaging`**, both of which precede the run. The two internal edges are the auto-created override a die change links to, and the staging row a check-in consumes. `RodStaging ||--o| RodCheckin` is **zero-or-one** in both directions: a check-in may have no staging row (direct check-in) and a staging row may never be checked in (un-staged).
+**In prose:** **twelve** tables, every one keyed on `RunId` except `RodStaging` **and `SpoolStaging`**, both of which precede the run — and **`LineDowntimeEvent`, whose `RunId` is optional because the line goes down whether or not a run is open**. That nullability is the whole reason it is a separate table rather than the `Downtime` bucket folded into `RunPauseEvent`, whose `RunId` is `NOT NULL`. The two internal edges are the auto-created override a die change links to, and the staging row a check-in consumes. `RodStaging ||--o| RodCheckin` is **zero-or-one** in both directions: a check-in may have no staging row (direct check-in) and a staging row may never be checked in (un-staged).
 
 ### 7.7 Group 5 — Quality / Output
 
@@ -1019,7 +1156,8 @@ statement that the relationship is *conditional*, and each one encodes a rule:
   outcome occurs. `RodOrderConsumption.RodCheckoutId` is populated *only* when closure is
   `RodAbandoned` (Mode B).
 - **Route-dependent links** — `PassScheduleComponent.StandId` / `DrawerId` / `EdgerId`: a
-  component is a stand *or* a drawer *or* an edger, never all three.
+  component is a stand *or* an edger, never both — the `DrawerId` third arm was dropped
+  on 2 Sep 2026 with the die split, so a `DB1`/`DB2` row now carries neither.
 - **Late-binding links** — `Spool.SpoolId`, `SpoolProcessing.SourceRunId`,
   `CoilTraceability.SpoolAlpha`: the value does not exist when the row is created.
 

@@ -13,9 +13,11 @@
 
 ## 7. User interface requirements
 
-The **18** HTML files in [`Mockups/`](Mockups/) are the **approved visual baseline and the pixel authority**. They open directly in a browser with no build step. This section states what a developer cannot infer from §5.
+The HTML files in [`Mockups/`](Mockups/) are the **approved visual baseline and the pixel authority**. They open directly in a browser with no build step. This section states what a developer cannot infer from §5.
 
-> ⚠ **This read "27 HTML files" until 27 Aug 2026, and two derived figures in §7.3 rested on it.** Measured: **19** here, **24** across both scopes (19 + 5 in [`MVP-2/Mockups/`](../../../MVP-2/Mockups/)). ⚠ **The 19th is `dashboard_3_active_run_ual.html`, a styling comparison build rather than a screen** — DB3 in the host application’s CSS at **1920×1080**, so it is the one file here **not** composed for 5:4, and it is not part of the screen inventory below. The link label was also a stale absolute path left by the 13 Aug restructure; from this folder the mockups are simply `Mockups/`.
+> ⚠ **RE-MEASURED 4 Sep 2026: the folder holds `44` files, `25` of them HTML (43 / 24 before this screen was added).** The published figures below were **already wrong before `dashboard_ask.html` was added** — they read "38 files / 19 HTML", which described the *pre-re-tree* split, when the five MVP-2 mockups lived in a separate folder. The 29 Aug 2026 re-tree folded them into this flat folder and no count followed. **Nothing measures these numbers**: `verify_schema_counts.py` counts database objects only, `linkcheck.py` is additive, and `check_docs.py` reads task front-matter — so screen counts are hand-maintained prose and have drifted accordingly. ⚠ **The same drift is uncorrected in roughly a dozen other restatements** — `[VAL]`, the `50-frontend/tasks/` files, `[CMP]`, `[ARC §2]`, `[MS §7.1]` and `tools/pathmap.py` — and reconciling all of them is a separate pass, deliberately not bundled into a screen addition.
+>
+> ⚠ **This read "27 HTML files" until 27 Aug 2026, and two derived figures in §7.3 rested on it.** Measured then: **19** here, **24** across both scopes (19 + 5 in [`MVP-2/Mockups/`](../../../MVP-2/Mockups/)). ⚠ **The 19th is `dashboard_3_active_run_ual.html`, a styling comparison build rather than a screen** — DB3 in the host application’s CSS at **1920×1080**, so it is the one file here **not** composed for 5:4, and it is not part of the screen inventory below. The link label was also a stale absolute path left by the 13 Aug restructure; from this folder the mockups are simply `Mockups/`.
 >
 > ⚠ **The mockups are the pixel authority for *content*, not for *composition at the current canvas*.** All 18 are composed for **1280 × 1024**, and `[VAL §7.5]`'s canvas is **1920 × 1080** as of 27 Aug 2026 — a 5:4 → 16:9 change. Controls, states, colour semantics, wording and interaction remain theirs; **layout at the new canvas is design work no mockup covers.**
 
@@ -49,6 +51,7 @@ The **18** HTML files in [`Mockups/`](Mockups/) are the **approved visual baseli
 | **OEE** | OEE Dashboard | `dashboard_oee.html` | Supervisor / CI engineer | On demand |
 | — | Coil Spinner | `coil-spinner.html` | — | A component demo, not a screen |
 | **DB-S1** | Simulator Control Console — ⚠ **not an operator screen, and since `D-33` not an Angular screen at all** | `simulator_console.html` *(layout reference only)* | Engineer / Admin | Driving the machine model. **See the note below before treating this as one of the fifteen** |
+| **ASK** | Ask Flat Wire — natural-language query and report. ⚠ **`PROPOSED`, in neither MVP-1 nor MVP-2** | `dashboard_ask.html` | Supervisor / Quality / Engineering / Planning | Answering a cross-station question without opening four screens. **Same footing as `DB-S1` below: registered so it is not lost, not because it is part of the suite** |
 
 > ### ⚠ `DB-S1` is registered here so it is not lost, not because it is part of the suite
 >

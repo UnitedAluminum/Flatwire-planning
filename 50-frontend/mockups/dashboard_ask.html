@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>Ask Flat Wire &middot; ASK</title>
+<link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
+<!--
+  ============================================================================
+  ASK — Ask Flat Wire · natural-language query, report and export
+  ============================================================================
+  Owning specification : ../../10-requirements/screens/AskFlatWire.md
+  Status               : PROPOSED. Not in MVP-1 and not in MVP-2.
+  Source               : the client's written request of 4 Sep 2026, including
+                         the worked example used as the thread's first turn,
+                         verbatim.
+
+  ── REDESIGNED 4 SEP 2026 — FROM A DASHBOARD TO A CONVERSATION ────────────
+  The first build of this screen was assembled from the suite's dashboard
+  primitives: six stacked .panel regions — header, ask bar, interpretation
+  strip, answer, results, footer — measuring 41 discrete elements and 9 drawn
+  boxes at rest. Right instinct for consistency, wrong one for the job: a
+  person asking "which coils came off R00045?" should see their question, the
+  answer and the rows, not a control surface.
+
+  This is the same information in a conversation. What changed, and why:
+    • ONE outer surface holds sidebar + transcript. The six panels are gone.
+    • The screen header is gone entirely. The app bar is the only bar, and
+      the four things the header carried — back link, ASK badge, the name and
+      the PROPOSED chip — moved into the sidebar's identity block. The chip
+      especially must never be lost: it is what stops this reading as scope.
+    • The six demo states became ONE scrolling thread, because the refinement
+      story is the point and a dropdown that swaps whole screens hides it.
+    • The interpretation strip became a muted line under the user's own
+      message, where the reading of a question belongs.
+    • Two of the four filled callout boxes are gone; the information moved
+      into the prose, where it reads better.
+    • Export split by scope: per-turn Excel/Word/PDF exports THAT TABLE;
+      Build report, in the sidebar, composes the WHOLE conversation.
+
+  ⚠ THE BRIEF SAID "WHITE BACKGROUNDS"; THE SUITE HAS A DARK MODE.
+  Every surface here comes from a --color-* token and nothing is hard-coded.
+  In light mode --color-background-primary IS #ffffff, so the brief is met in
+  the theme it was written about without breaking the other one. Hard-coding
+  white is the single easiest way to get this file wrong.
+
+  ── WHY THIS FILE CARRIES A MNEMONIC AND NOT A DB## NUMBER ────────────────
+  Registered here so it is not lost, NOT because it is part of the suite.
+  The house rule is stated three times for DB-S1 in ScreenPlan §7: a screen
+  outside the operator set takes a mnemonic, like DC, DM and OEE, and must not
+  be "tidied" into the numbering. DB15 is the next free number — DB4 is retired
+  and DB13/DB14 were descoped with their numbers retained — but a proposed
+  screen should not take it. Five exclusions, same shape as DB-S1's:
+    1. NOT counted in the fifteen-dashboard inventory.
+    2. NOT in the operator navigation map as a production route.
+    3. IS in the More Options tiles, because a reviewer has to reach it.
+    4. NO DB## number.
+    5. NOT an Angular build target — there is no story, phase or owner.
+
+  ── THE ONE RULE THAT MAKES THIS SAFE ─────────────────────────────────────
+  THE MODEL WRITES THE PROSE. THE TABLE RENDERS FROM TOOL OUTPUT.
+  Rows are never parsed out of the model's text, so a hallucinated weight
+  cannot reach the grid. Everything else here depends on that: operator free
+  text (InspectionNotes 500, ObservationNotes 500, TriggerDescription 200,
+  WeldQualityFailReason 200) flows into the model's context through tool
+  results, so injected text can at worst mislead a sentence — it cannot forge
+  a row, and it may never select or parameterise the SQL fallback.
+
+  ── THE FOOTAGE TRAP, WHICH THIS SCREEN EXISTS TO NOT FALL INTO ───────────
+  Three frames, per the DDL (authoritative; DatabaseDesign.md contradicts it
+  on the second and is wrong):
+    RUN-CUMULATIVE  WeldEvent.FootagePosition, SpcCheckpoint, RunReading
+    COIL-LOCAL      CoilTraceability.FootageFrom/To, half-open, To exclusive
+    SPOOL-LOCAL     SpoolTraceability.FootageFrom/To
+  Conversion uses anchors STORED on rows (CoilOutput.RunFootageAtStartFt,
+  SpoolProcessing.RunStartFootageFt, SpoolCheckin.SpoolStartFootageFt) and is
+  never derived, because RUN FOOTAGE != SUM OF COIL FOOTAGES. Turn 1 shows
+  that concretely: RUN-0002's counter reads 23,100 ft while its coils sum to
+  22,722 — 378 ft of threading and tail that belong to no coil.
+  Across the spool hop, WEIGHT is the only safe currency. Turn 3 shows why:
+  the same metal is 23,137 ft at FL1 section and 153,904 ft at FL2.
+
+  ── THE NUMBERS HERE ARE COMPUTED, NOT COPIED ─────────────────────────────
+  Every weight is derived from its own footage and section using [DBD §6.6]:
+      lb/ft = A x 12 x rho      round edge  A = t*w - 0.2146*t^2
+      rho(1100) = 0.098          FL3 0.0850x0.8000 -> 0.078145 lb/ft
+                                 FL1 0.1100x0.6250 -> 0.077796 lb/ft
+                                 FL2 0.0160x0.6250 -> 0.011695 lb/ft
+  The DB seed was NOT used as-is: FW-00600-C01 there records 253.50 lb over
+  3,800 ft at 0.0850x0.8000, which implies a 0.667" width, not 0.800". On a
+  screen whose whole claim is data accuracy, arithmetic that does not close
+  would undercut it.
+  R00045, RUN-0002 and FW-00600-C01 are real identifiers from the seed. The
+  additional runs and coils are EXAMPLE DATA, marked as such on screen,
+  because the client asked for "all coils" and the seed yields exactly one.
+
+  ── LAYOUT MECHANICS THAT WILL BREAK IF CHANGED ───────────────────────────
+  • .dashboard is pinned with HEIGHT, not min-height. flat-wire-fit.js's
+    measure() forces an inline min-height:0, which would release a min-height
+    pin and scale the whole page to microscopic.
+  • EVERY ancestor of .transcript carries min-height:0. Flex min-height:auto
+    refuses to shrink below content, so without it scrollHeight returns the
+    full unscrolled thread and the screen shrinks instead of scrolling.
+  • NO VIEWPORT UNITS AT ALL inside .dashboard. vh leaks live window height
+    into that measurement and oscillates on resize; vw is just as wrong,
+    because measure() sets an explicit pixel width on .dashboard, so a vw
+    child would read the real window instead of the design box. The fluid
+    widths here are PERCENTAGES, which resolve against the design box.
+  • Two widths, not one. fit.js caps scale at 1 and then widens the design
+    box to the window, so a single 720px column left 422px of dead gutter at
+    1920 and 742px at 2560 — fitting, but marooned. The container is fluid,
+    clamp(720px, 88%, 1240px); the READING SPINE is fixed at 760px because
+    line length is a readability limit, not leftover space. Tables take the
+    container. Both are centred, so they share a centre line.
+  • The composer is the last flex child with flex-shrink:0. It must NOT be
+    position:fixed: fit.js transforms <body>, so body is the containing block
+    for fixed, and a fixed composer would pin to the scaled box and scale.
+  • #more-btn is PRE-PLACED in the sidebar. The topbar's guard is
+    !document.getElementById("more-btn") — document-wide, not scoped to
+    .header — so it binds to ours instead of injecting its own. That is also
+    why this file has no .header element: the injector appendChild()s into
+    .header, which is justify-content:space-between, and a third child
+    silently shoves the existing right-hand group to the centre.
+
+  ── WHAT IS DELIBERATELY ABSENT ───────────────────────────────────────────
+  • No pagination. The suite has none anywhere.
+  • No fourth table renderer. The inline table reuses DB5A's .info-table.
+  • No dialog. The SQL preview is an inline disclosure, so there is no focus
+    trap and fw-modal.js is not loaded — the same as DB5A, DB9A and DM.
+  • No traveler print. The traveler is digital; this exports REPORTS.
+  • No hover-only affordance. Claude reveals message actions on hover; this
+    suite forbids that, so the per-turn export row is always visible. Keeping
+    it to three unbordered text buttons is what stops it re-cluttering.
+
+  ── OPEN ITEMS RENDERED, NOT SILENTLY RESOLVED ────────────────────────────
+  OI-101  "last shift" is undefined — no shift times, names or crossing rule.
+          The screen resolves it to an explicit window and SHOWS the window.
+  WORD    The shared print-export component does Print, PDF and Excel and has
+          no Word path. Word is badged as new capability, not shown as a peer.
+  D-09    The Anthropic package is not in UAL production; ARC §14.2 needs a
+          decision before any of this is buildable.
+  SEC     Security.md addresses egress nowhere at all, in either direction.
+  API     There is no traceability read endpoint today. The retrieval
+          operations named in the provenance lines are mostly NEW surface.
+
+  DEMO CONTROL (sidebar foot, dashed — demo only, not a shipped control):
+    Thread · Offline · Empty. The thread is the default and carries all five
+    scenarios; Offline is a page condition, not a turn; Empty is the state
+    behind "New question", which a reviewer will click first.
+  ============================================================================
+-->
+<style>
+  /* Pinned with height, not min-height — see LAYOUT MECHANICS above. */
+  .dashboard { height: 1024px; }
+
+  /* ── One surface holds everything. This replaces six .panel regions. ── */
+  .shell {
+    flex: 1 1 0; min-height: 0;
+    display: flex;
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ──
+     Proportional, so a wide panel does not leave the rail looking stranded.
+     PERCENT, never vw: flat-wire-fit.js sets an explicit pixel width on
+     .dashboard while measuring, so a viewport unit inside would read the real
+     window instead of the design box and oscillate on resize. */
+  .side {
+    width: clamp(240px, 19%, 320px); flex-shrink: 0;
+    display: flex; flex-direction: column;
+    border-right: 0.5px solid var(--color-border-tertiary);
+    background: var(--color-background-secondary);
+  }
+  .side-id { padding: 16px 16px 14px; }
+  .id-row { display: flex; align-items: center; gap: 8px; }
+  .wordmark { font-size: 17px; font-weight: 600; letter-spacing: -0.2px; }
+  .ask-badge {
+    font-family: var(--font-mono); font-size: 14px; font-weight: 600;
+    letter-spacing: 0.5px; padding: 1px 7px; border-radius: 5px;
+    background: var(--color-purple); color: #ffffff;
+  }
+  .proposed {
+    display: inline-block; margin-top: 7px;
+    font-size: 14px; padding: 2px 9px; border-radius: 11px;
+    background: var(--color-background-draft); color: var(--color-text-draft);
+  }
+  .back {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 11px; min-height: 34px;
+    font-size: 14px; color: var(--color-text-secondary); text-decoration: none;
+  }
+  .back:hover { color: var(--color-text-primary); }
+  .back svg { width: 14px; height: 14px; }
+
+  .new-q {
+    margin: 0 12px 14px; min-height: 48px; padding: 0 14px;
+    display: flex; align-items: center; gap: 9px;
+    font-family: var(--font-sans); font-size: 15px; font-weight: 500;
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    color: var(--color-text-primary); cursor: pointer; text-align: left;
+  }
+  .new-q:hover { border-color: var(--color-purple); color: var(--color-text-draft); }
+  .new-q svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  .threads { flex: 1 1 0; min-height: 0; overflow-y: auto; padding: 0 12px; }
+  .thr-label {
+    font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.4px;
+    text-transform: uppercase; color: var(--color-text-tertiary);
+    padding: 9px 6px 5px;
+  }
+  .thr {
+    display: block; width: 100%; text-align: left;
+    min-height: 36px; padding: 8px 10px; margin-bottom: 1px;
+    font-family: var(--font-sans); font-size: 14px; line-height: 1.35;
+    color: var(--color-text-secondary);
+    background: transparent; border: none; border-radius: 6px;
+    cursor: pointer;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .thr:hover { background: var(--color-background-tertiary); color: var(--color-text-primary); }
+  .thr.current {
+    background: var(--color-background-primary); color: var(--color-text-primary);
+    font-weight: 500; box-shadow: inset 3px 0 0 var(--color-purple);
+  }
+
+  .side-foot { padding: 12px; border-top: 0.5px solid var(--color-border-tertiary); }
+  .side-act {
+    display: flex; align-items: center; gap: 9px; width: 100%;
+    min-height: 40px; padding: 0 10px; margin-bottom: 2px;
+    font-family: var(--font-sans); font-size: 14px;
+    background: transparent; border: none; border-radius: 6px;
+    color: var(--color-text-secondary); cursor: pointer; text-align: left;
+  }
+  .side-act:hover { background: var(--color-background-tertiary); color: var(--color-text-primary); }
+  .side-act svg { width: 15px; height: 15px; flex-shrink: 0; }
+  /* The topbar binds to this instead of injecting its own; it sets no styles
+     on a pre-placed button, so the sidebar look is entirely ours. */
+  #more-btn { font-weight: 400; }
+
+  .demo {
+    display: flex; align-items: center; gap: 7px; margin: 8px 0 10px;
+    padding: 5px 8px; border: 1px dashed var(--color-border-secondary);
+    border-radius: 6px;
+  }
+  .demo label { font-size: 14px; color: var(--color-text-tertiary); }
+  .demo select {
+    flex: 1; min-height: 30px; font-size: 14px; font-family: var(--font-sans);
+    background: var(--color-background-primary); color: var(--color-text-primary);
+    border: 0.5px solid var(--color-border-secondary); border-radius: 5px; cursor: pointer;
+  }
+  .who { font-size: 14px; color: var(--color-text-tertiary); padding: 0 10px; line-height: 1.4; }
+  .who b { display: block; color: var(--color-text-secondary); font-weight: 500; }
+
+  /* ── Conversation ── */
+  .conv { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+  .transcript { flex: 1 1 0; min-height: 0; overflow-y: auto; }
+
+  /* ── Two widths, deliberately ──────────────────────────────────────────
+     A single 720px column left 422px of dead gutter on each side at 1920 and
+     742px at 2560 — the screen was "fitting" while looking like a strip in an
+     empty room. So the CONTAINER is fluid and the READING MEASURE is not:
+     prose, questions and the composer stay on a 760px spine because line
+     length is a readability limit, not leftover space, while TABLES take the
+     full container, which is the one thing that genuinely wants the width.
+     Everything is centre-aligned, so the two widths share a centre line. */
+  .col {
+    width: 100%;
+    max-width: clamp(720px, 88%, 1240px);
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+  .transcript .col { padding-top: 30px; padding-bottom: 26px; }
+  /* The spine rule itself is declared at the END of this sheet — the turn
+     rules below use `margin` shorthands, which would reset margin-inline if
+     they came after it. Search "READING SPINE". */
+
+  /* User turn — the suite's .history-entry recipe, right-aligned. */
+  .t-user { display: flex; flex-direction: column; align-items: flex-end; margin: 0 0 26px; }
+  .bubble {
+    max-width: 80%; padding: 11px 15px;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    font-size: 15px; line-height: 1.55; color: var(--color-text-primary);
+  }
+  .reading {
+    margin-top: 7px; max-width: 80%; text-align: right;
+    font-size: 14px; line-height: 1.5; color: var(--color-text-tertiary);
+    background: none; border: none; padding: 0; cursor: pointer;
+    font-family: var(--font-sans);
+  }
+  .reading:hover { color: var(--color-text-secondary); }
+  .reading .dot {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--color-amber); margin-right: 4px; vertical-align: middle;
+  }
+
+  /* Assistant turn — no card, no bubble, no avatar. */
+  .t-ai { margin: 0 0 34px; }
+  .lead { font-size: 17px; font-weight: 600; line-height: 1.4; margin: 0 0 8px; }
+  .prose { font-size: 15px; line-height: 1.62; color: var(--color-text-secondary); margin: 0; }
+  .prose b { color: var(--color-text-primary); font-weight: 600; }
+  .prose + .prose { margin-top: 10px; }
+
+  /* A note, not a callout box: a left rule and muted text. */
+  .aside-note {
+    margin: 13px 0 0; padding: 2px 0 2px 13px;
+    border-left: 2px solid var(--color-amber);
+    font-size: 14px; line-height: 1.55; color: var(--color-text-secondary);
+  }
+  .aside-note b { color: var(--color-text-primary); font-weight: 600; }
+  .aside-note.plain { border-left-color: var(--color-border-secondary); }
+
+  /* Inline result — one hairline border, no header bar. */
+  .result { margin: 15px 0 0; }
+  .tbl-wrap {
+    overflow-x: auto;
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+  }
+  .info-table { width: 100%; border-collapse: collapse; font-size: 14px; white-space: nowrap; }
+  .info-table th {
+    text-align: left; padding: 8px 12px; font-weight: 500; font-size: 14px;
+    color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.3px;
+    background: var(--color-background-secondary);
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .info-table td {
+    padding: 7px 12px; border-bottom: 0.5px solid var(--color-border-tertiary);
+    color: var(--color-text-primary); line-height: 1.35;
+  }
+  .info-table tbody tr:last-child td { border-bottom: none; }
+  .info-table .mono { font-family: var(--font-mono); }
+  .info-table .num  { font-family: var(--font-mono); text-align: right; }
+  .info-table th.num { text-align: right; }
+  .info-table .dash { color: var(--color-text-tertiary); }
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 11px;
+    font-size: 14px; font-weight: 500;
+  }
+  .tag.ok { background: var(--color-background-success); color: var(--color-text-success); }
+  .tag.ex { background: var(--color-background-tertiary); color: var(--color-text-tertiary); font-weight: 400; }
+
+  /* The caption carries what the old results panel spread over five parts. */
+  .cap { margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: var(--color-text-tertiary); }
+  .cap .op { font-family: var(--font-mono); color: var(--color-text-success); }
+  .cap .sep { margin: 0 6px; opacity: 0.5; }
+  .cap.unvalidated { color: var(--color-text-warning); }
+  .cap.unvalidated .op { color: var(--color-text-warning); }
+
+  details.sql { margin: 13px 0 0; }
+  details.sql summary {
+    font-size: 14px; color: var(--color-text-warning); cursor: pointer;
+    list-style: none; display: inline-flex; align-items: center; gap: 6px;
+    min-height: 30px;
+  }
+  details.sql summary::-webkit-details-marker { display: none; }
+  details.sql summary::before { content: "›"; transition: transform 0.15s; display: inline-block; }
+  details.sql[open] summary::before { transform: rotate(90deg); }
+  details.sql pre {
+    margin: 7px 0 0; padding: 12px 14px; overflow-x: auto;
+    font-family: var(--font-mono); font-size: 14px; line-height: 1.55;
+    background: var(--color-background-tertiary);
+    border-radius: var(--border-radius-md);
+    color: var(--color-text-primary);
+  }
+
+  /* Per-turn export: text buttons only. No icons, no borders — that is what
+     keeps an always-visible row (no hover allowed) from re-cluttering. */
+  .acts { display: flex; gap: 4px; margin: 11px 0 0; flex-wrap: wrap; }
+  .act {
+    min-height: 34px; padding: 0 10px;
+    font-family: var(--font-sans); font-size: 14px;
+    background: none; border: none; border-radius: 6px;
+    color: var(--color-text-secondary); cursor: pointer;
+  }
+  .act:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .act .new-cap {
+    font-family: var(--font-mono); font-size: 14px; font-weight: 600;
+    color: var(--color-text-draft); margin-left: 5px;
+  }
+
+  /* ── Empty state, behind "New question" ── */
+  .empty { display: none; flex-direction: column; align-items: center; justify-content: center;
+           height: 100%; text-align: center; padding: 0 28px; }
+  .empty.show { display: flex; }
+  .empty h2 { font-size: 22px; font-weight: 500; margin: 0 0 8px; }
+  .empty p { font-size: 15px; color: var(--color-text-secondary); margin: 0 0 22px; max-width: 52ch; line-height: 1.55; }
+  .starters { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 480px; }
+  .starter {
+    min-height: 44px; padding: 10px 14px; text-align: left;
+    font-family: var(--font-sans); font-size: 14px; line-height: 1.4;
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-md);
+    color: var(--color-text-secondary); cursor: pointer;
+  }
+  .starter:hover { border-color: var(--color-purple); color: var(--color-text-primary); }
+
+  /* ── Composer ── */
+  .composer-wrap { flex-shrink: 0; padding: 0 0 20px; }
+  .offline-bar {
+    display: none; align-items: flex-start; gap: 9px; margin: 0 0 11px;
+    padding: 10px 13px; border-radius: var(--border-radius-md);
+    background: var(--color-background-danger); color: var(--color-text-danger);
+    font-size: 14px; line-height: 1.5;
+  }
+  .offline-bar.show { display: flex; }
+  .offline-bar svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; }
+  .offline-bar b { font-weight: 600; }
+  .composer {
+    display: flex; align-items: flex-end; gap: 8px;
+    padding: 8px 8px 8px 16px;
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-lg);
+  }
+  .composer:focus-within { border-color: var(--color-purple); box-shadow: 0 0 0 3px rgba(107,63,160,0.10); }
+  .composer textarea {
+    flex: 1; resize: none; border: none; outline: none; background: none;
+    font-family: var(--font-sans); font-size: 15px; line-height: 1.5;
+    color: var(--color-text-primary);
+    padding: 12px 0; max-height: 96px; overflow-y: auto;
+  }
+  .composer textarea::placeholder { color: var(--color-text-tertiary); }
+  .send {
+    width: 48px; height: 48px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--color-purple); border: none; border-radius: var(--border-radius-md);
+    color: #ffffff; cursor: pointer;
+  }
+  .send:hover { background: #5a3488; }
+  .send:disabled { opacity: 0.4; cursor: not-allowed; }
+  .send svg { width: 19px; height: 19px; }
+  .composer-note {
+    margin: 8px 0 0; font-size: 14px; color: var(--color-text-tertiary);
+    text-align: center; line-height: 1.45;
+  }
+
+  /* ── READING SPINE ─────────────────────────────────────────────────────
+     Last in the sheet on purpose: every rule above sets vertical margins with
+     the `margin` shorthand, which resets left and right. Declared here,
+     margin-inline:auto survives them and centres the spine inside the fluid
+     .col. Tables are deliberately absent — .result keeps the full container
+     width, which is the whole point of the two-width layout. */
+  .t-user, .lead, .prose, .aside-note, details.sql,
+  .composer, .offline-bar, .composer-note {
+    max-width: 760px;
+    margin-inline: auto;
+  }
+
+  .hide { display: none !important; }
+</style>
+</head>
+<body>
+<div class="dashboard">
+  <!-- flat-wire-topbar.js inserts .global-bar here as the first child. -->
+
+  <div class="shell">
+
+    <aside class="side">
+      <div class="side-id">
+        <div class="id-row">
+          <span class="wordmark">Ask Flat Wire</span>
+          <span class="ask-badge">ASK</span>
+        </div>
+        <span class="proposed">Proposed &mdash; not in MVP-1 or MVP-2</span>
+        <a class="back" href="dashboard_1_line_status.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Line status
+        </a>
+      </div>
+
+      <button class="new-q" type="button" id="new-q">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        New question
+      </button>
+
+      <nav class="threads" id="threads"></nav>
+
+      <div class="side-foot">
+        <button class="side-act" type="button" id="build-report">Build report</button>
+        <!-- Pre-placed so flat-wire-topbar.js binds to it instead of injecting
+             its own into a .header this screen does not have. -->
+        <button class="side-act" type="button" id="more-btn">More options</button>
+
+        <div class="demo">
+          <label for="sim-select">DEMO</label>
+          <select class="sim-select" id="sim-select">
+            <option value="thread">Thread</option>
+            <option value="offline">Offline</option>
+            <option value="empty">Empty</option>
+          </select>
+        </div>
+
+        <div class="who"><b>Carl Bishop</b>Shift Supervisor</div>
+      </div>
+    </aside>
+
+    <main class="conv">
+      <div class="transcript" id="transcript">
+        <div class="col" id="thread"></div>
+        <div class="empty" id="empty">
+          <h2>What do you want to know?</h2>
+          <p>Ask about rods, spools, coils, welds, runs or quality in plain English.
+             Answers come from production records, never from an estimate.</p>
+          <div class="starters" id="starters"></div>
+        </div>
+      </div>
+
+      <div class="composer-wrap">
+        <div class="col">
+          <div class="offline-bar" id="offline-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>
+            <span><b>Language service unreachable.</b> Nothing has been cleared &mdash; the conversation,
+            its rows and its exports are exactly as they were. Retrying automatically.</span>
+          </div>
+          <div class="composer">
+            <textarea id="q" rows="1" placeholder="Ask about rods, spools, coils, welds&hellip;"></textarea>
+            <button class="send" type="button" id="send" aria-label="Send">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+          </div>
+          <p class="composer-note" id="composer-note">Mockup &middot; scripted answers on example data</p>
+        </div>
+      </div>
+    </main>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, html) {
+    var e = document.createElement(tag);
+    if (cls) { e.className = cls; }
+    if (html != null) { e.innerHTML = html; }
+    return e;
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────
+     THE THREAD. Five exchanges carrying every scenario the six demo states
+     held. Weights are computed, not copied — see the head comment.
+     ───────────────────────────────────────────────────────────────────── */
+  var THREAD = [
+    {
+      q: "Show me all coils produced from Rod R00045 during the last shift, including their weight, dimensions, weld information, and current status.",
+      reading: "Coil &middot; from Rod R00045 &middot; <span class='dot'></span>20 Jul 07:00 &rarr; 15:00 &middot; weight, dimensions, welds, status",
+      lead: "Three coils, 2,624.25 lb, one of them welded",
+      prose: [
+        "Rod <b>R00045</b> (1100-H19, 0.3750&Prime;, heat HT-1100-2461) ran on <b>FL3 hybrid</b> across two runs in that window and produced <b>three coils</b> totalling <b>2,624.25 lb</b> over 33,582 ft, all <b>COMPLETE</b> at 0.0850&Prime; &times; 0.8000&Prime;.",
+        "<b>FW-00600-C03 contains one induction weld.</b> R00045 runs out at run-cumulative 6,400 ft and R00046 carries the remaining 4,580 ft, so that coil is not single-heat and its certificate names both rods."
+      ],
+      notes: [
+        { cls: "", html: "<b>&ldquo;Last shift&rdquo; is not defined anywhere in the design</b> &mdash; no shift times, no names, no rule for a run that crosses a boundary. It was resolved to an explicit window, shown above the answer so it can be corrected in one tap." },
+        { cls: "plain", html: "RUN-0002&rsquo;s counter reads 23,100 ft; its two coils sum to 22,722. The missing <b>378 ft</b> is threading scrap and the tail, and belongs to no coil &mdash; which is why coil ranges are read from a stored anchor rather than derived." }
+      ],
+      ops: ["findRod", "runsForRod", "coilsForRun", "weldsForRun"],
+      cols: [
+        { t: "Coil" }, { t: "Run" }, { t: "Gauge &times; width" },
+        { t: "Footage", num: true }, { t: "Net lb", num: true }, { t: "Welds" }, { t: "Status" }
+      ],
+      rows: [
+        ["<span class='mono'>FW-00600-C01</span>", "<span class='mono'>RUN-0002</span>", "<span class='mono'>0.0850 &times; 0.8000</span>", "11,518", "900.07", "<span class='dash'>&mdash;</span>", "<span class='tag ok'>COMPLETE</span>"],
+        ["<span class='mono'>FW-00600-C02</span> <span class='tag ex'>example</span>", "<span class='mono'>RUN-0002</span>", "<span class='mono'>0.0850 &times; 0.8000</span>", "11,204", "875.53", "<span class='dash'>&mdash;</span>", "<span class='tag ok'>COMPLETE</span>"],
+        ["<span class='mono'>FW-00600-C03</span> <span class='tag ex'>example</span>", "<span class='mono'>RUN-0007</span>", "<span class='mono'>0.0850 &times; 0.8000</span>", "10,860", "848.65", "<b>1</b>", "<span class='tag ok'>COMPLETE</span>"]
+      ]
+    },
+    {
+      q: "only the ones with a weld, and add the supplier heat",
+      reading: "Coil &middot; filter: has weld &middot; + supplier heat &middot; same window",
+      lead: "One of the three, split across two heats",
+      prose: [
+        "Only <b>FW-00600-C03</b> carries a weld. It is attributed by footage range against the stored coil anchor: <b>R00045</b> supplies coil-local 0 &ndash; 6,280 ft, and <b>R00046</b> supplies 6,280 &ndash; 10,860 ft. The two segments sum to the coil&rsquo;s 848.65 lb exactly, which is the check that the ranges are complete and do not overlap."
+      ],
+      notes: [
+        { cls: "plain", html: "The first question was not re-run. Only the filter changed, and the coils already retrieved were re-used &mdash; which is what keeps a refinement cheap and keeps the whole thread on one screen." }
+      ],
+      ops: ["weldsForRun", "traceabilityForCoil"],
+      cols: [
+        { t: "Coil" }, { t: "Segment" }, { t: "Source rod" }, { t: "Supplier heat" },
+        { t: "Coil-local range", num: true }, { t: "Segment lb", num: true }, { t: "Weld" }
+      ],
+      rows: [
+        ["<span class='mono'>FW-00600-C03</span>", "1 of 2", "<span class='mono'>R00045</span>", "<span class='mono'>HT-1100-2461</span>", "0 &ndash; 6,280", "490.75", "<span class='dash'>&mdash;</span>"],
+        ["<span class='mono'>FW-00600-C03</span>", "2 of 2", "<span class='mono'>R00046</span>", "<span class='mono'>HT-1100-2470</span>", "6,280 &ndash; 10,860", "357.90", "<b>WLD-004</b> Pass"]
+      ]
+    },
+    {
+      q: "Which finished coils came from spool SP-00031, and how much of each came from R00043?",
+      reading: "Coil &middot; from Spool SP-00031 &middot; via FL1 &rarr; FL2 &middot; <span class='dot'></span>measured by weight",
+      lead: "Two coils, attributed by weight because footage cannot cross this hop",
+      prose: [
+        "Spool <b>SP-00031</b> (1,799.97 lb) was drawn from two rods and finished at FL2 into <b>two coils of 899.99 lb</b>. <b>FW-00700-C01</b> is entirely <b>R00043</b>; <b>FW-00700-C02</b> is <b>111.37 lb of R00043</b> and <b>788.62 lb of R00044</b>."
+      ],
+      notes: [
+        { cls: "", html: "<b>The same metal is 23,137 ft on the spool and 153,904 ft as finished coils &mdash; 6.7&times;.</b> Spool footage is spool-local at the FL1 section; coil footage is coil-local at FL2. Comparing them produces a plausible, wrong answer, so this attributes by <b>weight</b>, which is conserved across the hop." }
+      ],
+      ops: ["findSpool", "traceabilityForSpool", "coilsForSpool"],
+      cols: [
+        { t: "Coil" }, { t: "From spool" }, { t: "Source rod" },
+        { t: "Segment lb", num: true }, { t: "Coil net lb", num: true }, { t: "Status" }
+      ],
+      rows: [
+        ["<span class='mono'>FW-00700-C01</span> <span class='tag ex'>example</span>", "<span class='mono'>SP-00031</span>", "<span class='mono'>R00043</span>", "899.99", "899.99", "<span class='tag ok'>COMPLETE</span>"],
+        ["<span class='mono'>FW-00700-C02</span> <span class='tag ex'>example</span>", "<span class='mono'>SP-00031</span>", "<span class='mono'>R00043</span>", "111.37", "899.99", "<span class='tag ok'>COMPLETE</span>"],
+        ["<span class='mono'>FW-00700-C02</span>", "<span class='mono'>SP-00031</span>", "<span class='mono'>R00044</span>", "788.62", "899.99", "<span class='tag ok'>COMPLETE</span>"]
+      ]
+    },
+    {
+      q: "How many coils went to HOLD per alloy over the last 30 days, ranked?",
+      reading: "Coil &middot; grouped by alloy &middot; <span class='dot'></span>06 Aug &rarr; 04 Sep &middot; <span class='dot'></span>answered by generated query",
+      lead: "Answered by the fallback, and marked as such",
+      prose: [
+        "No retrieval operation aggregates coils by alloy, so this fell through to the read-only fallback. The statement ran against allowlisted reporting views &mdash; not the underlying records &mdash; and is shown <b>before</b> it runs, not after. <b>5052</b> leads on holds at 7, all dimensional."
+      ],
+      notes: [
+        { cls: "", html: "<b>This answer is not validated by construction.</b> A retrieval answer cannot join the footage frames wrongly because the operation re-anchors them; a generated statement can. It ran read-only on a separate credential, under a row cap and a time limit &mdash; and the statement travels with the export so a reviewer can check it." },
+        { cls: "plain", html: "Retrieved text can never reach this path. The fallback is reachable only from a question a person typed; operator free text is returned as data and can never select or shape a statement." }
+      ],
+      sql: "SELECT  alloy,\n        COUNT(*) AS holds\nFROM    rpt.CoilOutput_Resolved      -- allowlisted view; re-anchors footage\nWHERE   status = 'HOLD'\n  AND   completed_at >= DATEADD(day, -30, SYSUTCDATETIME())\nGROUP BY alloy\nORDER BY holds DESC;",
+      unvalidated: true,
+      ops: [],
+      cols: [ { t: "Alloy" }, { t: "Coils on HOLD", num: true }, { t: "Leading reason group" }, { t: "Share", num: true } ],
+      rows: [
+        ["<span class='mono'>5052</span>", "7", "Dimensional", "38.9%"],
+        ["<span class='mono'>1100</span>", "5", "Surface quality", "27.8%"],
+        ["<span class='mono'>3003</span>", "4", "Dimensional", "22.2%"],
+        ["<span class='mono'>6061</span>", "2", "Weld quality", "11.1%"]
+      ]
+    },
+    {
+      q: "What will next week's scrap rate be?",
+      reading: "Not a retrieval &mdash; <span class='dot'></span>declined",
+      lead: "That is a forecast, and this screen only reads records",
+      prose: [
+        "Nothing here predicts. This answers questions about what the plant <b>has recorded</b>, and a scrap-rate forecast would need a model trained on production history that does not exist yet &mdash; the lines have not run. Rather than produce a number that looks authoritative and is not, the question is declined.",
+        "What it <b>can</b> answer from the same data: scrap and hold counts by line, alloy, shift or reason group over any window you name; which rejection reasons recur; and the footage and weight lost to each."
+      ],
+      notes: [],
+      ops: []
+    }
+  ];
+
+  var RECENT = [
+    { label: "Coils from R00045 last shift", when: "THIS SHIFT", current: true },
+    { label: "Holds per alloy, 30 days", when: "THIS SHIFT" },
+    { label: "Spool SP-00031 genealogy", when: "THIS SHIFT" },
+    { label: "Weld count on FW-00421", when: "YESTERDAY" }
+  ];
+
+  var STARTERS = [
+    "Show me all coils produced from Rod R00045 during the last shift.",
+    "Which finished coils came from spool SP-00031?",
+    "How many coils went to HOLD per alloy over the last 30 days?"
+  ];
+
+  /* ── rendering ────────────────────────────────────────────────────── */
+
+  function renderTurn(t) {
+    var frag = document.createDocumentFragment();
+
+    var u = el("div", "t-user");
+    u.appendChild(el("div", "bubble", t.q));
+    if (t.reading) {
+      var r = el("button", "reading", t.reading);
+      r.type = "button";
+      r.title = "Tap to correct how the question was read";
+      u.appendChild(r);
+    }
+    frag.appendChild(u);
+
+    var a = el("div", "t-ai");
+    a.appendChild(el("p", "lead", t.lead));
+    (t.prose || []).forEach(function (p) { a.appendChild(el("p", "prose", p)); });
+    (t.notes || []).forEach(function (n) { a.appendChild(el("div", "aside-note " + (n.cls || ""), n.html)); });
+
+    if (t.sql) {
+      var d = el("details", "sql");
+      d.appendChild(el("summary", null, "Show the statement that ran"));
+      var pre = el("pre");
+      pre.textContent = t.sql;
+      d.appendChild(pre);
+      a.appendChild(d);
+    }
+
+    if (t.cols) {
+      var res = el("div", "result");
+      var wrap = el("div", "tbl-wrap");
+      var tbl = el("table", "info-table");
+      var thead = el("thead"), htr = el("tr");
+      t.cols.forEach(function (c) {
+        var th = el("th", c.num ? "num" : null, c.t);
+        htr.appendChild(th);
+      });
+      thead.appendChild(htr); tbl.appendChild(thead);
+      var tb = el("tbody");
+      t.rows.forEach(function (row) {
+        var tr = el("tr");
+        row.forEach(function (cell, i) {
+          tr.appendChild(el("td", t.cols[i] && t.cols[i].num ? "num" : null, cell));
+        });
+        tb.appendChild(tr);
+      });
+      tbl.appendChild(tb); wrap.appendChild(tbl); res.appendChild(wrap);
+
+      var n = t.rows.length;
+      var cap = el("p", "cap" + (t.unvalidated ? " unvalidated" : ""));
+      if (t.unvalidated) {
+        cap.innerHTML = n + " rows<span class='sep'>&middot;</span>" +
+          "<span class='op'>generated query</span><span class='sep'>&middot;</span>not validated";
+      } else {
+        cap.innerHTML = n + (n === 1 ? " row" : " rows") + "<span class='sep'>&middot;</span>" +
+          t.ops.map(function (o) { return "<span class='op'>" + o + "</span>"; }).join(" &rsaquo; ") +
+          "<span class='sep'>&middot;</span>rows are retrieval output";
+      }
+      res.appendChild(cap);
+
+      var acts = el("div", "acts");
+      [["excel", "Excel"], ["word", "Word"], ["pdf", "PDF"]].forEach(function (x) {
+        var b = el("button", "act", x[1] + (x[0] === "word" ? " <span class='new-cap'>NEW</span>" : ""));
+        b.type = "button";
+        b.setAttribute("data-export", x[0]);
+        acts.appendChild(b);
+      });
+      res.appendChild(acts);
+      a.appendChild(res);
+    }
+
+    frag.appendChild(a);
+    return frag;
+  }
+
+  function renderThread(upTo) {
+    var host = $("thread");
+    host.innerHTML = "";
+    THREAD.slice(0, upTo == null ? THREAD.length : upTo).forEach(function (t) {
+      host.appendChild(renderTurn(t));
+    });
+  }
+
+  function renderSidebar() {
+    var host = $("threads");
+    host.innerHTML = "";
+    var seen = null;
+    RECENT.forEach(function (r) {
+      if (r.when !== seen) { host.appendChild(el("div", "thr-label", r.when)); seen = r.when; }
+      var b = el("button", "thr" + (r.current ? " current" : ""), r.label);
+      b.type = "button";
+      host.appendChild(b);
+    });
+  }
+
+  function renderStarters() {
+    var host = $("starters");
+    host.innerHTML = "";
+    STARTERS.forEach(function (s) {
+      var b = el("button", "starter", s);
+      b.type = "button";
+      b.addEventListener("click", function () { $("q").value = s; send(); });
+      host.appendChild(b);
+    });
+  }
+
+  /* ── free-typed questions ─────────────────────────────────────────────
+     Match what was typed against the scripted turns rather than re-rendering
+     the screen, and when nothing matches say so plainly. A mockup that
+     silently ignores input teaches the reviewer the wrong thing. */
+  var MATCH = [
+    { re: /(spool|sp-?0*31)/i, ix: 2 },
+    { re: /(hold|alloy|30 ?day)/i, ix: 3 },
+    { re: /(forecast|predict|next week|will be)/i, ix: 4 },
+    { re: /(weld|heat)/i, ix: 1 },
+    { re: /(coil|r0*45|rod|shift)/i, ix: 0 }
+  ];
+
+  function unmatched(q) {
+    return {
+      q: q,
+      reading: "Not scripted in this mockup",
+      lead: "This mockup has scripted answers only",
+      prose: [
+        "The built screen would send this to the retrieval operations and answer it from production records. This file is a static mockup, so it can only answer the five questions the thread already contains &mdash; try one of those, or use <b>New question</b> to see the starting state."
+      ],
+      notes: [],
+      ops: []
+    };
+  }
+
+  function send() {
+    var box = $("q");
+    var text = box.value.trim();
+    if (!text || box.disabled) { return; }
+    var hit = null, i;
+    for (i = 0; i < MATCH.length; i++) {
+      if (MATCH[i].re.test(text)) { hit = THREAD[MATCH[i].ix]; break; }
+    }
+    var turn = hit ? JSON.parse(JSON.stringify(hit)) : unmatched(text);
+    turn.q = text;
+    showEmpty(false);
+    var host = $("thread");
+    var mark = document.createElement("div");
+    host.appendChild(mark);
+    host.appendChild(renderTurn(turn));
+    box.value = "";
+    box.style.height = "auto";
+    mark.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function showEmpty(on) {
+    $("empty").classList.toggle("show", on);
+    $("thread").classList.toggle("hide", on);
+  }
+
+  function setOffline(on) {
+    $("offline-bar").classList.toggle("show", on);
+    $("q").disabled = on;
+    $("send").disabled = on;
+    $("composer-note").textContent = on
+      ? "Service unavailable — the conversation and its exports still work"
+      : "Mockup · scripted answers on example data";
+  }
+
+  /* ── wiring ───────────────────────────────────────────────────────── */
+  renderSidebar();
+  renderStarters();
+  renderThread();
+  showEmpty(false);
+
+  $("send").addEventListener("click", send);
+  $("q").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+  $("q").addEventListener("input", function () {
+    this.style.height = "auto";
+    this.style.height = Math.min(this.scrollHeight, 96) + "px";
+  });
+
+  $("new-q").addEventListener("click", function () {
+    $("sim-select").value = "empty";
+    setOffline(false);
+    showEmpty(true);
+    $("q").focus();
+  });
+
+  $("build-report").addEventListener("click", function () {
+    $("composer-note").textContent =
+      "Build report — composes the whole conversation, its resolved windows and its provenance into one titled document.";
+  });
+
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest ? e.target.closest("[data-export]") : null;
+    if (!b) { return; }
+    var k = b.getAttribute("data-export");
+    $("composer-note").textContent = k === "word"
+      ? "Word — the shared print-export component has no Word path. This format is new capability, not reuse."
+      : (k === "excel" ? "Excel" : "PDF") + " — would render this table through the shared print-export component, which already supports it.";
+  });
+
+  $("sim-select").addEventListener("change", function () {
+    var v = this.value;
+    setOffline(v === "offline");
+    showEmpty(v === "empty");
+    if (v === "thread") { renderThread(); $("transcript").scrollTop = 0; }
+  });
+})();
+</script>
+
+<script src="flat-wire-topbar.js"></script>
+<script src="flat-wire-fit.js" data-fit="fill"></script>
+</body>
+</html>

@@ -73,7 +73,7 @@ Per-component rows belonging to a pass schedule. Each row defines one tool stati
 | `Sequence` | int | NOT NULL | — | Processing order of this component within the pass schedule; unique per `PassScheduleId` |
 | `IsMandatory` | bit | NOT NULL | — | UI lock: `1` = component cannot be toggled off in the editor; default `0` |
 | `StandId` | int | NULL | `Stand.Id` | FK to the specific stand used — FM components only; NULL for DB and EdgeSet components |
-| `DrawerId` | int | NULL | `Drawer.Id` | FK to the specific die used — DB components only; NULL for FM and EdgeSet components |
+| ~~`DrawerId`~~ | — | — | — | **DROPPED 2 Sep 2026 with the die split.** It pointed at what was then a 13-row die-*size* catalogue, and the size it identified is already in `ParameterValue` as a decimal — so it was a second copy of one fact. `Drawer` now holds the two draw **boxes**, which `ComponentName` already names, so a `DrawerId` would have restated `ComponentName` the way `StandId` does. A `DB1`/`DB2` row now carries `StandId` NULL and `EdgerId` NULL. **A schedule names no physical die**: it is a reusable product recipe, and which tool actually ran is in `DieChangeEvent.OldDieId`/`NewDieId` and `DieHistory` |
 | `EdgerId` | int | NULL | `Edger.Id` | FK to the specific edger used — EdgeSet component only; NULL for all other components |
 | `EntryGauge` | decimal(8,4) | NULL | — | Calculated entry gauge for this component in inches; informational only |
 | `ExitGauge` | decimal(8,4) | NULL | — | Calculated exit gauge for this component in inches; informational only |

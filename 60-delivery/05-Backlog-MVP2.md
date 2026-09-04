@@ -1,13 +1,21 @@
 # Flat Wire Mill — Backlog, MVP-2 Deferred Stories
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 11, 2026
+**Last Updated:** September 3, 2026 — **`FW-013`'s acceptance criterion is falsified and carries an appended correction** *(previously August 11, 2026)*
 **Status:** **MVP-2 — deferred scope**
 **Extracted from:** [`./TaskBreakdown.md`](./TaskBreakdown.md) §7.2–§7.3, 11 Aug 2026
 
 ---
 
 > **⚠ MVP-2 — deferred scope.** Nothing here is part of MVP-1 or of MVP-1 planning. Rows are **copied verbatim**; no story ID, estimate or acceptance criterion was altered.
+>
+> ⛔ **One exception, 3 Sep 2026 — `FW-013`.** Its acceptance criterion is **factually wrong** since
+> `D-43` supplied the client's round→flat spread relation, and a criterion that asserts a specific
+> numeric output cannot be left to be read as current. **The original text is preserved verbatim and
+> the correction is APPENDED to it**, not substituted — so the verbatim guarantee still holds for
+> what was extracted on 11 Aug, and nobody reads the stale number as the expected result.
+> **No estimate or story ID changed**: the arithmetic moved, the effort did not. Audit record
+> [`ClientEmail_2026-09-02_PassCalculatorFormulas_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-02_PassCalculatorFormulas_SyncPlan.md).
 >
 > **These rows are copies, not moves.** They remain in the MVP-1 backlog, marked as deferred, because **§11 of that document is the coverage matrix proving every `FR-###` reaches a story** — removing rows would leave requirements looking uncovered. The MVP-1 document stays authoritative for estimates and the dependency chain.
 
@@ -20,7 +28,7 @@
 | **FW-010** | Pass Schedule data model + API | E02 | 2 | BE | 5 | Critical | FW-006 | **Given** an Operations user, **when** they create a schedule, **then** it starts `Draft`, **and** at most one `Active` schedule exists per `(LineId, Alloy)`. **Component state is the three-value enum, not `IsActive` bool.** |
 | **FW-011** | Dashboard 9A — schedule list | E02 | 2 | FE | 3 | High | FW-010 | **Given** schedules exist, **when** search, alloy, line and status filters are applied, **then** they apply simultaneously, the stats strip updates, and any non-"All" filter renders amber. |
 | **FW-012** | Dashboard 9 — schedule management | E02 | 2 | FE | 8 | Critical | FW-010 | **Given** a schedule open for edit, **when** the operator toggles components, **then** the mandatory final stand is locked on, bypassed rows read "Bypassed · no parameters", edger rows offer an edge-type selector, **and** nothing pushes to the PLC. |
-| **FW-013** | Generate-from-Specs algorithm | E02 | 2 | BE | 8 | High | FW-004 | **Given** alloy 1100, rod 0.375″, gauge 0.125″, width 0.875″, **when** generate runs, **then** it returns `preflattenDiameterIn 0.3732`, `areaReductionPct 0.95`, `drawPasses 0`, `routeMode Hybrid` with the two warnings — **not the published 0.265 / 50.1 / Standalone.** Apply stays enabled on errors; **no PLC write ever occurs**. |
+| **FW-013** | Generate-from-Specs algorithm | E02 | 2 | BE | 8 | High | FW-004 | **Given** alloy 1100, rod 0.375″, gauge 0.125″, width 0.875″, **when** generate runs, **then** it returns `preflattenDiameterIn 0.3732`, `areaReductionPct 0.95`, `drawPasses 0`, `routeMode Hybrid` with the two warnings — **not the published 0.265 / 50.1 / Standalone.** Apply stays enabled on errors; **no PLC write ever occurs**. ⛔ **THIS CRITERION IS FALSIFIED — 3 Sep 2026, appended, original text above left intact.** `0.3732` is the **square-edge** zero-elongation bound; the round-edge bound `[PSG §6.3 Step 1]` computes is **0.3674**; and `[PSG §6.3 Step 2]`, which since `D-43` solves the client's own spread relation instead of stopping at the bound, gives **0.3823″ — larger than the 0.375″ rod**. The rod-adequacy margin moves **+0.98% → −3.93%**, so **the correct output is a `Step 3A` / `V43` REJECTION** reporting a 0.3823″ minimum rod diameter, not a schedule with `drawPasses 0`. ⚠ `C₅` = 1.00 is the client's unscaled published value, so this places the product *at or past* the feasibility edge on 0.375″ rod rather than proving it impossible — a calibrated `C₅` below 1.00 would recover it, and `PSG-D08` is still owed. **Do not sign this story off against either number until `Q93` item 4 (which area basis) is answered.** |
 | **FW-068** | DB9/9A shopfloor integration | E02 | 2 | FE | 2 | High | FW-011, FW-012 | **Given** the shopfloor shell, **when** a user opens Pass Schedules from the More Options popup, **then** DB9A opens with role-appropriate actions and operators see read-only. |
 | **FW-069** | Dashboard 10 — shift summary | E07 | 11 | FE + BE | 5 | Medium | FW-007 | **Given** a shift window, **when** a machine tab is selected, **then** the KPI tiles reflect **that machine only**, the utilisation timeline shows one line (or all three on All Lines), and runs that resumed without a completed SPC checkpoint are **flagged as exceptions**. |
 
@@ -37,7 +45,7 @@
 | Story | Why it is split |
 |---|---|
 | **`FW-014`** Pass-schedule override logging | The **trigger** is an MVP-1 mid-run override on the Active Run Monitor, which must raise an alert that cannot be passively dismissed. The **sink**, `PassScheduleChangeLog`, is an MVP-2 table. MVP-1 therefore has an override path with nowhere to log it. |
-| **`FW-N07`** Die master table + Die Management screen | The story's own MoSCoW split says it: the **table** is *Must*, the **screen** is *Should*. MVP-1's die change (`FW-073`) rejects a die not in inventory — it needs the table. Only the screen is MVP-2. This is `OI-41`'s actual content. |
+| ~~**`FW-N07`** Die master table + Die Management screen~~ | ⛔ **NO LONGER SPLIT, AND NO LONGER MVP-2 — 2 Sep 2026 (`Q91`).** The die split settled it the way this row always read: the table was *Must*, and it is now built as **`ToolingInventoryDie`** + **`DieHistory`**, seeded in Phase 1. The **screen** came back with it, so `FR-240`–`FR-255` and `DieManagement.md` are MVP-1 too. **`OI-41` closes.** ⚠ Effort not re-costed here — see `CapacityAndEffortModel.md` §3b. *(Was: "The story's own MoSCoW split says it: the table is Must, the screen is Should… This is `OI-41`'s actual content.")* |
 
 ## The dependency that survived the scope line
 

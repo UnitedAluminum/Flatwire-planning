@@ -1,12 +1,41 @@
 # PHASE 13 — Administration & Reference Data
 
+
+> ⛔ **SCOPE REVERSED 2 Sep 2026 by the die split (`Q91`) — the die domain is back in MVP-1.**
+> The die inventory table now exists as **`ToolingInventoryDie`**, with **`DieHistory`** behind
+> `FR-252`’s two history views, and both are built and seeded in **Phase 1**. `FR-240`–`FR-255`
+> are MVP-1 requirements and **`DieManagement.md` is an MVP-1 specification**. `FW-N07`’s MoSCoW
+> split is settled the way its own story text always read — the **table** is *Must*, the **screen**
+> is *Should* — and both are in scope. **`OI-41` closes**; **Phase 6 depends on Phase 1, not Phase
+> 13**; **`FR-233` / `D4` revert to their per-tool form**; **`TC-274` becomes executable**.
+>
+> ⚠ **The effort is NOT re-costed here.** The 8 h die table and the 66 h Die Management screen
+> return to MVP-1 against a window closing 30 Sep 2026, and `CapacityAndEffortModel.md` §3b owns
+> that. Re-derive additively; do not edit published totals in place.
+>
+> ⚠ **`OI-12` escalates to a live defect** — Die Change’s 60/85 % bands and Die Management’s
+> 65/80 % bands now derive from one table. **`OI-141` stays open** on whether there is one die
+> register or two. **`G77`** still owns edger and straightener inventory, which this does not cover.
+>
+> ⚠ **A FOURTH tool type landed 3 Sep 2026 — `D-42`.** The client's Tooling Inventory tab carries
+> **Dies · Edgers · Straighteners · Roll Sets**, and `ToolingInventoryRollSet` (mill rolls and the
+> DB1/DB2 capstan rolls) is built. **Dancers, entry guides, payoffs and spools are explicitly NOT
+> tooling.** Stories [`FW-259`](../../30-database/tasks/FW-259.md) ·
+> [`FW-260`](../../40-backend/tasks/FW-260.md) · [`FW-261`](../../50-frontend/tasks/FW-261.md),
+> 27 h. ⛔ **Its column set is `[PROPOSED]`** — the only tool type that arrived without a pictured
+> grid (**`G87`**; `Q92` is the send-back). ⚠ Tooling is maintained for **FL1/FL2 only, with FL3
+> using a combination of the two**.
+>
+> Everything below predates the reversal. Read it as the record of the 11 Aug 2026 carve, not as
+> current scope.
+
 > **Part of the [Flat Wire Mill — Master Implementation Roadmap](../../00-overview/Roadmap.md).** See [Foundations](../../20-architecture/Architecture.md) for §0.2–0.4 shared context.
 > **Prev:** [Phase 12 — Yield, Cost Ledger & Scrap](./phase-12-yield-cost-ledger-scrap.md) · **Next:** [Phase 14 — Integration Testing, PLC Commissioning & Go-Live](./phase-14-integration-testing-plc-commissioning-golive.md)
 
 ---
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-08-06
+**Last Updated:** 2026-09-03 — **a fourth tool type landed (`D-42`)**: the Tooling Inventory tab carries Dies · Edgers · Straighteners · **Roll Sets**, with `FW-259`–`FW-261` (27 h). ⛔ Its column set is `[PROPOSED]` — `G87` / `Q92`. *(previously 2026-08-06)*
 **Status:** Ready to build
 **Layer:** Full-stack vertical slice (admin)
 **Owner:** **FE + BE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*

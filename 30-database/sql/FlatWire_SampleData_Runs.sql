@@ -2,7 +2,7 @@
 -- Flat Wire Mill — Sample Data: Run Tracking Tables
 -- Run order : after Materials seed (needs Rod, FlatWireRun, Spool)
 -- Tables    : RodCheckin, RodStaging, SpoolCheckin, FlatWireRunDetail,
---             RunPauseEvent, WeldEvent, RollOverride,
+--             RunPauseEvent, LineDowntimeEvent, WeldEvent, RollOverride,
 --             DieChangeEvent, RunReading
 -- ============================================================
 -- Computed columns (SpcOvalityIn, Delta, PauseDurationSeconds)
@@ -136,12 +136,20 @@ GO
 --   RUN-0001 = closed (ResumeRun) · RUN-0004 = OPEN · RUN-0005 = Other+Notes (CheckOutRod)
 -- ============================================================
 IF NOT EXISTS (SELECT 1 FROM [dbo].[RunPauseEvent])
+-- Sep-2-2026: RE-POINTED onto the client's delay codes. These rows previously
+-- used GaugeWidthInvestigation / DieChange / EquipmentFailure against the
+-- retired 5-category taxonomy; with FK_RunPauseEvent_DelayCode in place every
+-- one of them now fails to insert. ReasonCode holds a DelayCode and
+-- ReasonCategory a DelayBucket -- Setup | RunTime | Handling only, since
+-- Downtime belongs to LineDowntimeEvent below.
+-- The RUN12 row is deliberate coverage for CK_RunPauseEvent_NotesOther: it is
+-- one of the three per-bucket 'Other' codes, so its Notes must be non-NULL.
 INSERT INTO [dbo].[RunPauseEvent]
-    ([RunId],[PausedAt],[FootageAtPause],[ReasonCode],[ReasonCategory],[Notes],[ResumedAt],[Outcome],[ActivityCompleted],[OperatorId],[ResumedBy])
+    ([RunId],[PausedAt],[FootageAtPause],[ReasonCode],[ReasonCategory],[IsNonprodTime],[DelayBufferMin],[Notes],[ResumedAt],[Outcome],[ActivityCompleted],[OperatorId],[ResumedBy])
 VALUES
-    ('RUN-0001','2026-07-20 07:45:00 -05:00',2100,'GaugeWidthInvestigation','QualityMeasurement',NULL,                              '2026-07-20 07:58:00 -05:00','ResumeRun', 'Verified gauge within tolerance','Dave M.', 'Dave M.'),
-    ('RUN-0004','2026-07-21 11:20:00 -05:00',1850,'DieChange',             'Maintenance',        NULL,                              NULL,                        NULL,        NULL,                            'Linda K.',NULL),
-    ('RUN-0005','2026-07-22 07:00:00 -05:00', 900,'EquipmentFailure',      'Other',              'Bearing fault on FM1 drive gearbox','2026-07-22 07:10:00 -05:00','CheckOutRod','Rod checked out; run aborted',   'Marcus T.','Marcus T.');
+    ('RUN-0001','2026-07-20 07:45:00 -05:00',2100,'RUN13','RunTime',0,0,NULL,                               '2026-07-20 07:58:00 -05:00','ResumeRun', 'Verified gauge within tolerance','Dave M.', 'Dave M.'),
+    ('RUN-0004','2026-07-21 11:20:00 -05:00',1850,'SET32','Setup',  0,0,NULL,                               NULL,                        NULL,        NULL,                            'Linda K.',NULL),
+    ('RUN-0005','2026-07-22 07:00:00 -05:00', 900,'RUN12','RunTime',0,0,'Bearing fault on FM1 drive gearbox','2026-07-22 07:10:00 -05:00','CheckOutRod','Rod checked out; run aborted',   'Marcus T.','Marcus T.');
 GO
 
 -- ============================================================
@@ -169,12 +177,21 @@ GO
 
 -- ============================================================
 -- DieChangeEvent  (links the auto-created RollOverride)
+--
+-- OldDieId 9 = D-300-001 (0.3000) and NewDieId 14 = D-298-001 (0.2980), both
+-- from FlatWire_SampleData_Lookup.sql. Die 14 exists BECAUSE of this row: the
+-- 0.2980 size was never in the old 13-row catalogue, so this event has always
+-- described an installation D4 should have refused. It passed silently while
+-- nothing was a foreign key. See the note on ToolingInventoryDie's seed.
+--
+-- The decimals are kept beside the FKs on purpose -- they record the size
+-- MEASURED at the swap, which is the audit fact; the FKs record which tool.
 -- ============================================================
 IF NOT EXISTS (SELECT 1 FROM [dbo].[DieChangeEvent])
 INSERT INTO [dbo].[DieChangeEvent]
-    ([DieChangeId],[RunId],[LineId],[RodAlpha],[FootagePosition],[DiePosition],[OldDieSizeIn],[NewDieSizeIn],[ReasonCode],[LinkedOverrideId],[SpcCheckpointRequired],[OperatorId],[Timestamp])
+    ([DieChangeId],[RunId],[LineId],[RodAlpha],[FootagePosition],[DiePosition],[OldDieId],[NewDieId],[OldDieSizeIn],[NewDieSizeIn],[ReasonCode],[LinkedOverrideId],[SpcCheckpointRequired],[OperatorId],[Timestamp])
 VALUES
-    ('DC-0001','RUN-0003','FL1','R00043',1200,'DB2',0.3000,0.2980,'GaugeDrift','OVR-0002',1,'Dave M.','2026-07-21 07:16:00 -05:00');
+    ('DC-0001','RUN-0003','FL1','R00043',1200,'DB2',9,14,0.3000,0.2980,'GaugeDrift','OVR-0002',1,'Dave M.','2026-07-21 07:16:00 -05:00');
 GO
 
 -- ============================================================
@@ -297,4 +314,28 @@ LEFT JOIN [dbo].[RodOrderAllocation] ra
   ON ra.[RodAlpha] = v.[RodAlpha] AND ra.[OrderNo] = v.[OrderNo] AND ra.[IsActive] = 1;
 GO
 PRINT 'Seeded: RodOrderConsumption (3 rows -- R00043 runs two orders on one mount)';
+GO
+
+-- ------------------------------------------------------------
+-- LineDowntimeEvent  (DowntimeSeconds is computed -- omitted)
+-- NEW Sep-2-2026, with the client's Downtime bucket.
+--
+-- The point of these three rows is the RunId column. Two of them are line-down
+-- with NO run open, which is the case RunPauseEvent cannot represent at all --
+-- its RunId is NOT NULL. The third carries a RunId because the line happened
+-- to be running when it went down. If a future change folds this table back
+-- into RunPauseEvent, rows 1 and 2 are what will fail.
+--
+-- The DWN29 row is coverage for CK_LineDowntimeEvent_NotesOther, mirroring the
+-- RUN12 row above for the other three buckets.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM [dbo].[LineDowntimeEvent])
+INSERT INTO [dbo].[LineDowntimeEvent]
+    ([LineId],[RunId],[DelayCode],[StartedAt],[EndedAt],[IsNonprodTime],[DelayBufferMin],[SupervisorOverride],[SupervisorOverrideBy],[Notes],[OperatorId],[EndedBy])
+VALUES
+    ('FL1',NULL,      'DWN15','2026-07-19 22:10:00 -05:00','2026-07-19 23:35:00 -05:00',1,0,1,   'R. Alvarez',NULL,                                  'Dave M.',  'Dave M.'),
+    ('FL2',NULL,      'DWN42','2026-07-21 06:00:00 -05:00','2026-07-21 08:15:00 -05:00',1,0,0,   NULL,        NULL,                                  'Linda K.', 'Linda K.'),
+    ('FL2','RUN-0004','DWN29','2026-07-21 14:05:00 -05:00',NULL,                        NULL,0,0,NULL,       'Compressor tripped; maintenance en route','Marcus T.',NULL);
+GO
+PRINT 'Seeded: LineDowntimeEvent (3 rows -- two with no open run, one still open)';
 GO

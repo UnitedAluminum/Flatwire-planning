@@ -1,7 +1,7 @@
 # Flat Wire Mill — Decided Questions and Answers
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 26, 2026 — ⚠ **`GenerateCoilAlpha`'s six-character root is the exclusion sweep's `LIKE` filter, NOT the string the suffix is appended to.** A seven-character input returns a **child** (`R00002A` → `R00002AA`), verified on the live instance; the recorded reason for rejecting segment-rooted alphas — *"returns a sibling of the segment"* — was **false**. The verdict is unchanged and now rests on **collision**: `R00002AA` is also suffix 27 of the rod-rooted sequence. Ceiling corrected **26 → 702** — `Q89`'s dangling `Q93` citation repointed to `OI-135`, since `Q93` was withdrawn the same day. *(previously August 23, 2026 — **`Q60` and `Q61`: `Spool`/`SpoolCarrier` swapped, then `SpoolConfiguration` merged into `Spool`.** The material table is `SpoolProcessing`; the article is `Spool` and now carries its own size limits. **The object baseline moves to 33 tables · 55 FKs** (`[DBD §6.2]`). ⚠ **A stale `Spool` reference is *silently wrong*, not obviously stale.** *(previously August 23, 2026 — **`Q60` added: `Spool` and `SpoolCarrier` are swapped.** The material table is now `SpoolProcessing` and `Spool` is the reusable stencilled article in `01_Lookup`; the naming convention that was missing is written down as `[DBD §6.2a]`. ⚠ **A swap makes a stale reference silently wrong rather than obviously stale** — read that entry before trusting any pre-23-Aug `Spool` citation. The Decision Index was also brought level with its own total, having been three rows behind since 22 Aug. *(previously August 22, 2026 — **`Q57` and `Q58` added: two questions raised and decided the same day**, from [`RodOrderAllocation.md`](../95-archive/design-notes/RodOrderAllocation.md). Both are **alpha-identity** decisions and both were settled against the schema rather than by preference: `Q57` puts FL1 segment alphas and FL2 coil identities in **one namespace** because the generator cannot see `FlatWireDB` and a local counter would issue the same string twice; `Q58` **keeps `CoilAlpha`** and renames only `SharedCoilNo`, because making the shared identity the sole one would have coupled coil creation to a cross-database call. *(previously August 18, 2026 — `Q68` carries a supersession note — `D-32` (there is no shared-schema migration) keeps the 30 Jul timing answer and moves the status to the local rod record)*)*)*)*
+**Last Updated:** September 3, 2026 — **`Q91`'s first recorded cost is resolved, and it lasted one day.** *"Nothing holds a foreign key to `Drawer`"* stopped being true when `ToolingInventoryRollSet.DrawerId` landed with `D-42`; the prediction was right that a referrer would come and wrong about which — it arrived from the **roll sets**, not from `G77`'s edger and straightener work. ⚠ `ComponentName` and `DiePosition` are still CHECK-constrained strings, so that half of the cost stands. *(previously August 26, 2026 — ⚠ **`GenerateCoilAlpha`'s six-character root is the exclusion sweep's `LIKE` filter, NOT the string the suffix is appended to.** A seven-character input returns a **child** (`R00002A` → `R00002AA`), verified on the live instance; the recorded reason for rejecting segment-rooted alphas — *"returns a sibling of the segment"* — was **false**. The verdict is unchanged and now rests on **collision**: `R00002AA` is also suffix 27 of the rod-rooted sequence. Ceiling corrected **26 → 702** — `Q89`'s dangling `Q93` citation repointed to `OI-135`, since `Q93` was withdrawn the same day. *(previously August 23, 2026 — **`Q60` and `Q61`: `Spool`/`SpoolCarrier` swapped, then `SpoolConfiguration` merged into `Spool`.** The material table is `SpoolProcessing`; the article is `Spool` and now carries its own size limits. **The object baseline moves to 33 tables · 55 FKs** (`[DBD §6.2]`). ⚠ **A stale `Spool` reference is *silently wrong*, not obviously stale.** *(previously August 23, 2026 — **`Q60` added: `Spool` and `SpoolCarrier` are swapped.** The material table is now `SpoolProcessing` and `Spool` is the reusable stencilled article in `01_Lookup`; the naming convention that was missing is written down as `[DBD §6.2a]`. ⚠ **A swap makes a stale reference silently wrong rather than obviously stale** — read that entry before trusting any pre-23-Aug `Spool` citation. The Decision Index was also brought level with its own total, having been three rows behind since 22 Aug. *(previously August 22, 2026 — **`Q57` and `Q58` added: two questions raised and decided the same day**, from [`RodOrderAllocation.md`](../95-archive/design-notes/RodOrderAllocation.md). Both are **alpha-identity** decisions and both were settled against the schema rather than by preference: `Q57` puts FL1 segment alphas and FL2 coil identities in **one namespace** because the generator cannot see `FlatWireDB` and a local counter would issue the same string twice; `Q58` **keeps `CoilAlpha`** and renames only `SharedCoilNo`, because making the shared identity the sole one would have coupled coil creation to a cross-database call. *(previously August 18, 2026 — `Q68` carries a supersession note — `D-32` (there is no shared-schema migration) keeps the 30 Jul timing answer and moves the status to the local rod record)*)*)*)*)*
 
 **Scope:** MVP-1
 **Status:** Closed decisions — reference record
@@ -827,5 +827,182 @@ Related: **`Q89`** (whether every alpha reaches the shared schema — decided th
 **Two resolutions that made it tractable.** The skid guards are driven off **`@skidAssignment`** — the operator's *1 of 2 / 2 of 2* declaration — rather than row counts, which `D11` already does for `IsComplete`; this is safe because `C12` states *"all integrity is in triggers and procedures"* and both skid tables carry no PK, FK or CHECK. That also **sidesteps `OI-114`**, whose `skid_coil_seq_no` column is `int NULL`, unconstrained, and written `NULL` by one of the writers `OI-114` names.
 
 Related: **`Q88`** (two alphas per se — decided the same day), **`Q87`** (whether the label prints one alpha or two — **still open, and the same question one layer up**), **`Q6`** (footage-based split), **`OI-135`** (the **702**-suffix budget now divides by N — raised as `Q93` and withdrawn to the `OI` register the same day, so cite `OI-135`), **`OI-113`**, **`OI-128`**, **`OI-114`**, `D6`, `D11`, `C12`.
+
+---
+
+**Q90** · `Medium` · Owner: Nagarro (internal design) · `Decided September 1, 2026` · ⛔ **SUPERSEDED by `Q91`, 2 September 2026 — the rename was never applied and will not be. `Drawer` keeps its name; the table was SPLIT instead.**
+**Is `Drawer` the right name for the die-size catalogue?**
+
+**Asked:** the name denotes a **machine** and the table holds **tooling**. A drawer — a draw box, or
+die block — is the machine that pulls rod through a die; those are modelled elsewhere entirely, as the
+`PassScheduleComponent.ComponentName` values `DB1` and `DB2`. What the table actually holds is the
+13-row die-size catalogue, `DIE-0210` … `DIE-0340`, one row per hole diameter, and its own DDL comment
+block has to spend eleven lines saying so. Every reader who meets the table has to be told that its
+name is wrong before they can use it.
+
+> **Decision (September 1, 2026): rename the table `Drawer` → `Die`.** A bare singular noun, which is
+> what `[DBD §6.2a]` requires of `01_Lookup`, and it sits under that section's **reference data** half
+> rather than its *reusable articles* half, because the table is a catalogue of sizes and not a
+> register of objects. `PassScheduleComponent.DrawerId` → `DieId`; the eight constraints and defaults,
+> `FK_PSC_Drawer` and the filtered index `IX_PSC_DrawerId` all take the new stem. **The 13 seed values
+> are untouched** — they already read `DIE-####`.
+
+**This supersedes `Q60`'s rejection, for `Drawer` alone.** `Q60` declined to rename the four bare
+lookup nouns, on two grounds. The first — that they are **heterogeneous**, so no single suffix fits
+`Stand`, `Drawer`, `Edger` and `Dancer` together — is **accepted and unchanged**: this decision renames
+one table on its own merits and applies no suffix, and `Stand`, `Edger` and `Dancer` keep their names.
+The second — that these are *"common English words that make a mechanical rename unsafe"* — was tested
+rather than assumed: **three of 240 occurrences use "drawer" as an English word**, so the hazard is
+real but small, and the sweep was done per-file with review rather than as a global replace.
+
+**Rejected: `Dies`.** It was the form requested. All 33 tables in the schema are bare singular; `Dies`
+would be the only plural and would contradict `[DBD §6.2a]` outright, which would then have to be
+amended to permit plurals — a larger change to the convention than the rename is worth.
+
+**Rejected: `DieSize`.** The strongest alternative, and the one that survives scrutiny best on
+semantics — see the cost below. It was declined because `Die` reads correctly at the point of use, in
+the pass-schedule component join and on the die-change screen, where the operator's word is "die".
+
+**The cost, recorded rather than absorbed.** `Die` fixes a wrong name and introduces a **misleading**
+one. A row is a **size**, not a physical tool, and `Die` implies the opposite — which is precisely the
+misreading `D4` was restated on 11 Aug 2026 to prevent (*"the system rejects an unrecognised die
+**size**, not an unregistered physical die"*), and why `OI-41`'s accepted consequence reads *"two dies
+of one diameter share a counter."* Under `Drawer` nobody assumed a row was a die; under `Die`, readers
+will. **Three mitigations, all applied:** every definitional site now leads with *"die-size
+catalogue"* — the `01_Lookup` comment block, `[DBD §6.3]`'s row and `FlatWireSchema_Lookup.md` — and
+`[DBD §6.2a]` records the rename and its date.
+
+**A consequence MVP-2 inherits.** `OI-41` says `LastGrindingFeet` and `TotalFeetAllowed` move to the
+per-tool die inventory when it lands. That table can no longer be called `Die`, and must take a
+distinct name — `DieTool` or `DieInventory`. This is stated here so the choice is made knowingly
+rather than discovered.
+
+**Unlike `Q60`, this rename fails loudly.** `Q60` was a *swap*, which is why a stale `Spool` reference
+is silently wrong. After this one there is no `Drawer` at all: stale SQL errors on a missing object and
+a stale document names a table that is not in the schema. No silent-wrongness mitigation is needed.
+
+**Scope of the change: schema and its documents of record.** The `DB1` / `DB2` component names, screen
+labels, the operator's vocabulary and the `DIE-####` seed values are all **untouched** — the same
+boundary `Q58` set and `Q60` kept.
+
+~~**Verified, not asserted — measured on `DEV00164-001`, 1 Sep 2026.** Teardown → `RunAll` → `RunAll` →
+seed → `RunAll_MVP2`: **33 tables · 55 FKs · 70 index statements · 1 procedure · 1 trigger**, idempotent
+on re-run, and every figure **identical to the pre-rename baseline**.~~ ⛔ **WITHDRAWN 2 Sep 2026 — this
+describes a deployment that was never made.** No `Die` object ever existed in any script or database;
+`Drawer` was still in 7 SQL files and ~30 documents when `Q91` superseded this decision. The live
+baseline is **35 · 58 · 75 · 1 · 1** after the split. `[DBD §6.2]` remains the defining site.
+
+Related: **`Q60`** (the rejection this supersedes in part, and the naming convention it wrote down),
+**`Q58`** (the rename-only scope precedent), **`OI-41`** (the per-tool die inventory that must now
+choose another name), **`D4`** (enforceable at size level only), `[DBD §6.2a]`, `[DBD §6.2]`.
+
+---
+
+**Q91** · `High` · Owner: Nagarro (internal design) · `Decided September 2, 2026`
+**`Drawer` holds 13 rows for a system with 2 draw boxes, and the die-life counters are properties of a die. Split it?**
+
+**Asked:** the system has exactly **two** draw boxes, `DB1` and `DB2`. `Drawer` held **13** rows — one
+per die hole diameter — and carried `LastGrindingFeet` / `TotalFeetAllowed`, which are properties of a
+**die**, not of a draw box. One table was carrying two unrelated things, and it was named after the one
+it did *not* hold. The row count is the tell: if the table modelled draw boxes there would be two rows.
+
+> **Decision (September 2, 2026): split it, and keep the name `Drawer`.**
+>
+> - **`Drawer`** becomes the **two draw boxes** — `DB1`, `DB2` — with `LineId` and `IsActive`.
+>   `CK_Drawer_Name IN ('DB1','DB2')` plus the existing `UQ_Drawer_Name` cap the table at two rows
+>   **structurally**: a third row needs a schema change, not a rule or a trigger.
+> - **`ToolingInventoryDie`** (new, `01_Lookup`) is the register of **physical dies** — `DieAlpha`
+>   `D-{size×1000}-{seq}`, `SerialNo`, `HoleSizeIn`, `DieType`, `LifecycleStatus`, and the two die-life
+>   columns migrated from `Drawer` unchanged in meaning.
+> - **`DieHistory`** (new, `04_Runs`) is one discriminated append-only log serving **both** of
+>   `FR-252`'s tabs — Run history and Replacement log.
+> - **`DieChangeEvent`** gains nullable `OldDieId` / `NewDieId`.
+> - **`PassScheduleComponent.DrawerId` is dropped**, with `FK_PSC_Drawer` and `IX_PSC_DrawerId`.
+>
+> **Measured, not asserted:** **35 tables · 58 FKs · 75 index statements · 1 procedure · 1 trigger**,
+> counted by `verify_schema_counts.py` from the runner chain. `[DBD §6.2]` remains the defining site.
+
+**This supersedes `Q90` outright.** `Q90` (1 Sep 2026) decided to rename `Drawer` → `Die` on the
+grounds that *"the name denotes a machine and the table holds tooling"*. The diagnosis was right and
+the remedy was backwards: **the table should hold what its name says**, not be renamed to match what
+it wrongly held. `Q90` also recorded its own cost — that `Die` would imply a physical tool when a row
+was a size — and the split removes that cost rather than mitigating it. **`Drawer` is not renamed.**
+`Q90`'s verification paragraph describes a deployment that was never made; it stands as the record of
+a decision taken and reversed within a day, and is not to be acted on.
+
+**What made the split possible, having been called impossible.**
+`phase-13-mvp2-die-management.md` §"Three things this carve does not resolve" item 2 states:
+*"`Drawer` carries two columns that exist only for this file… **A table cannot be split**, so `Drawer`
+stays whole in MVP-1 with two columns nothing in MVP-1 maintains."* It could not be split because a
+**scope seam** ran through it — the 11 Aug 2026 decision put die inventory and lifecycle outside MVP-1
+while keeping the die-change event inside, so the counters were bolted onto `Drawer` on 6 Aug as a
+workaround. **This decision removes the seam**: the whole die domain returns to MVP-1.
+
+**The client had already confirmed the shape.** The 31 Aug 2026 mail's analysis (§4.6) says `Drawer`
+*"is a catalogue of die sizes… while Tim's grid is a register of physical dies with serials"* and
+points at this work by name. `ToolingInventoryDie` is the client's own term, from the Machines
+Application **Tooling Inventory** tab. `LineId = 'FL1'` on both boxes is client-confirmed: dies are
+attributed to `Machine Name = FL1` and **no FL3 row appears in any of the three tool grids**.
+
+**Scope reversal, stated plainly.** This reverses the 11 Aug 2026 decision that put die inventory and
+lifecycle wholly outside MVP-1, and with it **`RISK-12`'s closure reasoning** — the dependency is not
+*severed*, it is **satisfied**, because both tables seed in Phase 1. `FR-240`–`FR-255` come back to
+MVP-1, `FW-N07`'s contested MoSCoW split is settled the way its own story text always read (*"the
+table is Must, the screen is Should"*), and **`TC-274` becomes executable for the first time**.
+
+**What closes.** **`OI-41`**, open since April and *"narrowed, not closed"* since 6 Aug — the per-tool
+die inventory now exists. Its accepted consequence, *"two dies of one diameter share a counter"*, is
+**retired**: the counter accumulates against a tool. **`FR-233` / `D4` revert to their pre-11-Aug
+per-tool form** — the system rejects an unregistered *die*, not merely an unrecognised *size* — so
+`DieChangeAndManagement.md` §2.4a, which exists only to explain that downgrade, is withdrawn.
+**Phase 6 no longer depends on Phase 13**; it depends on Phase 1.
+
+**What does NOT close, and must not be reported as closed.**
+- **`OI-141`** — ownership. `[MSP §4.10]` puts Die Management on the Machines Application → Tooling
+  Inventory tab while `FR-254` makes it the runtime source of truth, and the client's grid carries
+  **none** of the four values `FR-254` says Die Change reads. `ToolingInventoryDie` carries the
+  **union** of both field sets, which resolves the *field* half only. If `OI-141` resolves to **two**
+  registers, this is the `FlatWireDB` one and `FR-254`'s exclusivity needs restating — the table
+  stands either way. **Ours to settle, not a client question.**
+- **`OI-12` escalates from curiosity to defect.** Die Change uses 60/85 % bands and Die Management
+  uses 65/80 % (`FR-253`). While they sat in different scopes at different granularities this was
+  tolerable; both are now MVP-1 deriving bands from **one table**, so two screens will disagree about
+  the same die.
+- **`OQ-83`** — `TotalFeetAllowed` seeds NULL. An invented engineering limit is worse than no limit.
+- **`G77`** — edger and straightener inventory. The client's Tooling Inventory has **three** tool
+  types; this decision builds the die and explicitly leaves the other two, as `G77` already states.
+
+**Two costs, recorded rather than absorbed.**
+1. **Nothing holds a foreign key to `Drawer`.** `PassScheduleComponent.ComponentName` and
+   `DieChangeEvent.DiePosition` name `DB1`/`DB2` as CHECK-constrained strings, and `DrawerId` is gone.
+   `Drawer` is now an **equipment register, not a join target**. That is defensible — it is the parallel
+   of `Stand` — but it is a two-row table nothing joins to, and `G77`'s edger/straightener work is its
+   likely first referrer. Converting `DieChangeEvent.DiePosition` to a real FK was considered and **not
+   done**: it is beyond this decision's scope.
+   > ✅ **RESOLVED 3 Sep 2026 — this cost lasted one day.** `ToolingInventoryRollSet.DrawerId`
+   > (`D-42`) is the **first foreign key ever taken on `Drawer`**, so it is a join target after all.
+   > The prediction was right about *that* a referrer would come and wrong about *which*: it arrived
+   > from the **roll sets**, not from `G77`'s edger and straightener work, which is still owed.
+   > ⚠ `ComponentName` and `DiePosition` are **still CHECK-constrained strings** and were
+   > deliberately left so — that half of the cost stands.
+2. **`ToolingInventoryDie.LastGrindingFeet` duplicates `SUM(DieHistory.FootageAddedFt)`**, deliberately.
+   `FR-254` makes the running total what the Die Change screen reads, so it must be one cheap column
+   rather than an aggregate over a growing log, while `FR-252` needs the per-run rows. The total is
+   authoritative for the screens; the log explains it. **They can drift and the database does not
+   prevent it** — the invariant lives in the application beside `FR-255`'s increment, **not** in a
+   trigger, per `G41` (a trigger joining on a nullable column passes silently, and `DieHistory.RunId`
+   is nullable).
+
+**A pre-existing seed defect this surfaced.** `FlatWire_SampleData_Runs.sql` seeds `DieChangeEvent`
+`DC-0001` with `NewDieSizeIn = 0.2980`, and **0.2980 was never one of the 13 catalogue sizes**. The
+sample data has always described an installation `D4` should have refused, in either form; it passed
+silently because nothing was a foreign key. A **fourteenth** die, `D-298-001`, is seeded so the row
+resolves. The event itself is left alone deliberately — its `GaugeDrift`-at-footage-1200 path with a
+linked `RollOverride` is the only worked example of that flow in the seed set.
+
+Related: **`Q90`** (superseded outright), **`OI-41`** (closes), **`OI-141`** (open — ownership),
+**`OI-12`** (escalated), **`OQ-83`**, **`G77`**, **`G41`**, **`FW-N07`**, **`TC-274`**, **`RISK-12`**
+(closure reasoning restated), **`FR-233`** / **`D4`** (revert to per-tool), **`FR-252`**–**`FR-255`**,
+`[DBD §6.2]`, `[DBD §6.2a]`, `[DEP §4.2]`.
 
 ---

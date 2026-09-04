@@ -72,19 +72,53 @@ When an out-of-specification checkpoint routes here, the failing measurement —
 
 # 3. The Rejection Reason
 
-## 3.1 Groups and reasons `[CONFIRMED]`
+## 3.1 Groups and reasons
 
-| Group | Reasons |
-|---|---|
-| **Dimensional** | Gauge out of spec · Width out of spec · Edge burr · Camber |
-| **Surface quality** | Oxidation · Water stain · Surface defect · Scratch · Pit |
-| **Weld quality** | Weld failure · Weld break mid-run |
-| **Material** | Chemistry non-conformance · Wrong alloy · Temper incorrect |
-| **Process** | Die failure · Roll gap error · Component fault |
+**The reason vocabulary is the client's and arrived on 1 Sep 2026** — `Reason Codes.xlsx`, closing action `A5` of the
+23 Jul call. **72 reasons are in scope**: 64 existing UA rejection reasons the client marked as applying to wire
+flattening, and 8 new ones. The other 24 are marked as **not** applying and are deliberately absent — several are the
+side-scrap and coil-form defects that do not exist on wire (*Excess Side Scrap*, *Coil Set*, *Crossbow*, *Earing*).
+The authoritative list is `FlatWireDB.WipRejectionReason`, seeded by `01_Lookup`; this section describes it and does
+not define it.
+
+The eight **new** reasons `[CONFIRMED]`:
+
+> Cobble · Tangle · Underproduced / Under Weight · Wire Brk / Pull Apart · Wire Brk Due To Tangle ·
+> Wrong Bundle / Spool · Wrong Incoming Diameter · Wrong Temper
+
+⚠ **The grouping is OURS, not the client's** — `[PROPOSED]`, and `G79`. The client's sheet is a **flat list with no
+groups at all**, while `WipRejection.RejectionGroup` is `NOT NULL`. Every one of the 72 assignments below was made by
+us and is recorded as provisional by `WipRejectionReason.IsProposedGroup = 1`. The counts:
+
+| Group | Reasons | Examples |
+|---|---|---|
+| **Dimensional** | 16 | Gauge Varies · Width Varies · Camber · Collapsed ID · Off Weight · Twist · Wrong Gauge / ID / OD / Width |
+| **Surface quality** | 18 | Burr, Rolled Edges · Chatter · Damaged Edges · Live Scratches · Oil Stain, Smut · Oxidation, Magnesium Stain · Roll Mark |
+| **Weld quality** | 2 | Broken Welds · Too Many Welds |
+| **Material** | 7 | Wrong Alloy · Wrong Temper · Grain · Sliver, Holes, Inclusion · Wire Brk Due To Edge Cracks |
+| **Process** | 29 | Cobble · Tangle · Machine / IT Problem · Loose Bands · No Paperwork · SCRAP BALANCE · Other |
+
+**The wording is the client's, verbatim, and is not tidied.** *"Bad Shape (wavy ege or buckle)"* keeps their typo;
+the capitalisation is theirs. Critically, **"Bundle" and "Spool" are the operator's words, not the schema's**:
+*Bundle* is the incoming rod (`Rod`, `R#####`) and *Spool* is the **material in process** (`SpoolProcessing`,
+`SP-#####`) — **never** the `Spool` article lookup, which since `Q60` carries no `Alpha` at all. Rewriting these
+strings breaks the match with the seed and with what the operator reads on the existing screens.
+
+> ⛔ **There is no threading reason, and one is required.** The same client mail's answer 4 states *"We will
+> definitely need to record the threading as a WIPREJ/Scrap"*, and none of the 72 covers it. The footage would come
+> from the Material Loss tab of the 31 Aug mail, **whose fields are all empty** pending *"the actual footage for these
+> events through testing"*. Tracked as `G82`. **Do not invent a reason code** — the vocabulary is the client's.
 
 ## 3.2 The common reasons are offered directly `[PROPOSED]`
 
-The reasons that account for most rejections are reachable in one action, without first selecting a group. The full grouped list remains available. An operator standing at a stopped machine should not navigate a taxonomy to record *gauge out of spec*.
+The reasons that account for most rejections are reachable in one action, without first selecting a group. The full
+grouped list remains available. An operator standing at a stopped machine should not navigate a taxonomy to record
+*gauge varies*.
+
+**This is now load-bearing rather than a convenience.** At 72 reasons the flat list is not usable at the 14 px
+shopfloor minimum on a panel read at arm's length, so the dialog is two-level by necessity: quick chips over a group
+select that **filters** the reason select. The two controls are one choice — selecting either moves the other, because
+`FK_WipRejection_Reason` is composite on `(RejectionReason, RejectionGroup)` and a pair that disagrees is rejected.
 
 ## 3.3 Observation
 
@@ -213,7 +247,7 @@ Stamped automatically and not editable by the operator:
 | §2 | The five entry paths | ☐ | ☐ |
 | §2.1 | The pre-check-in path records no footage, rather than zero | ☐ | ☐ |
 | §2.2 | A failing checkpoint measurement is carried in and pre-filled | ☐ | ☐ |
-| §3.1 | The five rejection groups and their reasons | ☐ | ☐ |
+| §3.1 | The five rejection groups — **ours**, and the 72 client reasons assigned to them (`G79`) | ☐ | ☐ |
 | §4.1 | The three dispositions and their effects | ☐ | ☐ |
 | §4.2 | Suspend is the default disposition | ☐ | ☐ |
 | §4.3 | Rework requires a named return stage | ☐ | ☐ |

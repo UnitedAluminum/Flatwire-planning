@@ -458,8 +458,8 @@ in `Second-Branch/ual-angular` on 28 Aug 2026, the convention is **`<lib>-routin
 The file is also genuinely an NgModule — it wraps `RouterModule.forChild(FLAT_WIRE_ROUTES)` — which is
 what the `.module` suffix denotes.
 
-**`FW-N03` was built as `flat-wire-routing.module.ts`**, following the repository, and the exported
-routes constant is `FLAT_WIRE_ROUTES` exactly as `[TB §7]` requires. ⚠ **This plan does not overrule
+**The 28 Aug 2026 `FW-N03` build used `flat-wire-routing.module.ts`**, following the repository, and its exported
+routes constant was `FLAT_WIRE_ROUTES` exactly as `[TB §7]` requires. ⚠ **This plan does not overrule
 `[CMP]`** — the conflict is raised for it to settle, and it is cosmetic: no citation anywhere depends
 on the filename. The same pass found the Angular 20 schematic emits `flat-wire-module.ts` /
 `flat-wire.ts`, which matches neither the spec nor the repository. → `[CMP §5.1]`.

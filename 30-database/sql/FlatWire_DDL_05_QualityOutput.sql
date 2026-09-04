@@ -86,8 +86,15 @@ BEGIN
         [MaterialAlpha]      VARCHAR(20)   NOT NULL,        -- rod alpha or spool alpha
         [Stage]              VARCHAR(30)   NOT NULL,        -- e.g. FL1ActiveRun, FL2Incoming
         [FootagePosition]    INT           NULL,            -- NULL for pre-run rejections
+        -- Sep-2-2026: both columns now resolve against WipRejectionReason in
+        -- 01_Lookup, seeded from the client's 1 Sep 2026 "Reason Codes.xlsx".
+        -- RejectionReason narrowed 50 -> 20 to match WipRejectionReason's
+        -- ReasonCode: the widths must agree for the composite FK in script 06,
+        -- which constrains the (reason, group) PAIR rather than the reason
+        -- alone. The client's prose lives in the lookup's Description, where
+        -- it is not capped at 50 -- its longest string is 56 characters.
         [RejectionGroup]     VARCHAR(30)   NOT NULL,        -- SurfaceQuality|Dimensional|WeldQuality|Material|Process
-        [RejectionReason]    VARCHAR(50)   NOT NULL,        -- e.g. GaugeOutOfSpec, WeldBreak
+        [RejectionReason]    VARCHAR(20)   NOT NULL,        -- WREJ### (FK -> WipRejectionReason.ReasonCode)
         [MeasuredValue]      DECIMAL(10,4) NULL,
         [TargetMin]          DECIMAL(10,4) NULL,
         [TargetMax]          DECIMAL(10,4) NULL,
@@ -100,7 +107,14 @@ BEGIN
         CONSTRAINT [PK_WipRejection]              PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_WipRejection_Id]           UNIQUE ([RejectionId]),
         CONSTRAINT [CK_WipRejection_LineId]       CHECK ([LineId]           IN ('FL1','FL2','FL3')),
-        CONSTRAINT [CK_WipRejection_Group]        CHECK ([RejectionGroup]   IN ('SurfaceQuality','Dimensional','WeldQuality','Material','Process')),
+        -- CK_WipRejection_Group was DROPPED Sep-2-2026. The client's WIPREJ
+        -- sheet is a flat list of 72 in-scope reasons with NO grouping at all,
+        -- so every group value is OURS and provisional. Holding the vocabulary
+        -- in two places -- a CHECK here and the lookup row there -- guarantees
+        -- they drift the first time a group is reassigned. The FK added by
+        -- script 06 now enforces the (reason, group) pair via
+        -- WipRejectionReason, which is also where IsProposedGroup records that
+        -- the assignment is not the client's.
         CONSTRAINT [CK_WipRejection_Disposition]  CHECK ([Disposition]      IN ('Suspend','Scrap','Rework')),
         CONSTRAINT [CK_WipRejection_MatStatus]    CHECK ([NewMaterialStatus] IN ('HOLD','SCRAP'))
     );

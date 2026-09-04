@@ -307,7 +307,7 @@ re-derive on their own retention factors.
 | Item | Why |
 |---|---|
 | DB9 · DB9A · DB10 · Die Management · OEE | **MVP-2.** Mockups at [`MVP-2/Mockups/`](../../../../MVP-2/Mockups/); do not plan, estimate or implement them |
-| `FW-210` `FW-212` `FW-213` `FW-215` `FW-217` | Simulator set — unscheduled and additive. Only `FW-214`'s console is FE — and since `D-33` it is a **WinForms desktop tool**, carded `FE` because `FE` means the user-facing surface, not Angular — and only in trial scope |
+| `FW-215` | Simulator set — unscheduled and additive. ⚠ **`FW-210`, `FW-211` and `FW-212` are planned AND built, and `FW-213` and `FW-217` are planned**, all on 31 Aug 2026 — indexed at [`Backend/tasks/Orchestration.md §1.12`](../../40-backend/tasks/Orchestration.md). Only `FW-214`'s console is FE — and since `D-33` it is a **WinForms desktop tool**, carded `FE` because `FE` means the user-facing surface, not Angular — and only in trial scope. ⛔ **`FW-215` is owed one endpoint it is not carded for** — a configuration read, which is `G68` |
 | The `[ARC §2.2]` reference rules | **Binding, and `[ARC]`'s.** Summarised as `D-06` in §4 and not restated |
 | Pixel-level design | The mockups are **the pixel authority**. This file names which one owns a screen and stops there |
 

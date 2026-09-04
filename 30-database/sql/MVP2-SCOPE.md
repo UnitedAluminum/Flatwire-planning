@@ -40,8 +40,8 @@ Which leaves the one thing `D-31` moved rather than removed: **nothing in MVP-1 
 ## Deploying
 
 ```powershell
-# MVP-1 — complete on its own. 33 tables, and it needs nothing from this folder.
-cd "c:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Schema\SQL"
+# MVP-1 — complete on its own. 45 tables, and it needs nothing from this folder.
+cd "c:\UAL\Flatwire-planning\30-database\sql"
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_RunAll.sql
 
 # MVP-2 — adds sp_ShiftSummary and nothing else. Only needed for DB10.
@@ -72,11 +72,13 @@ Recorded so that anyone reading an older copy, or a document that quotes one, kn
 | *"The deployment order is not the numeric order, deliberately — the pass-schedule seed runs **before** the foreign keys."* | Only true when adding constraints to an **already-seeded** database. The MVP-1 runner applies all DDL **before any seed**, so the FKs land on empty tables. ⚠ **The seed order still matters**: `Lookup → Schedule → Materials`, because `FlatWireRun.PassScheduleId` now has a real parent |
 | *"An MVP-1-only database has dangling `PassScheduleId` values."* | There is no MVP-1-only-without-schedule database any more |
 
-## Column-level scope that could not be divided
+## Column-level scope that could not be divided — ✅ RESOLVED 2 Sep 2026
 
-`Drawer.LastGrindingFeet` and `Drawer.TotalFeetAllowed` — added 6 Aug 2026 — are **the die-life counter and threshold**, and they exist solely for the **MVP-2** Die Management screen (`DieChangeAndManagement.md` §4.2/§4.4 semantics, and `OQ-83`'s threshold). But `Drawer` is an **MVP-1** lookup table that `PassScheduleComponent` and the MVP-1 die change both need.
-
-**A table cannot be split**, so `Drawer` stays whole in MVP-1 with two columns nothing in MVP-1 populates. Recorded here rather than acted on — and it is now the *only* surviving instance of scope that could not be cleanly divided.
+> ⛔ **This section recorded a problem that has now been fixed, and it is kept only as the record of how.** It said `Drawer.LastGrindingFeet` and `Drawer.TotalFeetAllowed` — added 6 Aug 2026 — existed solely for the **MVP-2** Die Management screen (the §4.2 / §4.4 semantics of [`DieChangeAndManagement.md`](../../10-requirements/screens/DieChangeAndManagement.md), and `OQ-83`’s threshold) while `Drawer` was an **MVP-1** lookup, and concluded: *"**A table cannot be split**, so `Drawer` stays whole in MVP-1 with two columns nothing in MVP-1 populates."*
+>
+> **The table WAS split, on 2 Sep 2026 (`Q91`).** What made it possible was removing the **scope seam**, not a new technique: the whole die domain returned to MVP-1, so there is no longer an MVP-1 table carrying MVP-2 columns. `Drawer` is now the two draw **boxes** (`DB1`, `DB2`); the die-life columns live on **`ToolingInventoryDie`**, the per-tool register, beside **`DieHistory`**. Both are MVP-1, built and seeded in Phase 1. **`OI-41` closes** with it.
+>
+> This was the *only* surviving instance of scope that could not be expressed at table granularity. There is now none.
 
 ## What is MVP-1 and is not duplicated here
 

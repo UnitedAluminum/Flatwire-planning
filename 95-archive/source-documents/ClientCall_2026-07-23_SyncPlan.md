@@ -47,6 +47,8 @@ Everything else in this summary is additive. Its real value is that it **names o
 
 ### 3.1 `C6` — dancer and tension control contradicts `D-28`
 
+> ✅ **RESOLVED 1 Sep 2026, in favour of the position recorded here.** A 1 Sep statement is later client direction than the 6 Aug call, and it makes both readings true at once: dancers hold *"little to know [sic] tension by design"*, control is **the machine program**, each dancer holds a **position range**, and it *"will not be adjustable from an operator standpoint and will remain constant"* — while a tension mode does exist *"on FL2 however it will only work with heavier & larger dimension products"*. **Nobody selects the mode**, so no write surface is owed and the read-only tag element authored on 12 Aug was the correct call. Recorded as `D-36`; `Q32` items 1 and 2 are answered. ⚠ **Item 3 — the tension physics behind `PSG-D27` — stays open on the client's own engineering follow-up.** See [ClientEmail_2026-09-01_ReasonCodes_SyncPlan.md](ClientEmail_2026-09-01_ReasonCodes_SyncPlan.md) §4.5.
+
 > *"Dancers remove tension rather than apply tension. Tension control will primarily be machine-driven. Configuration values will be controlled through process settings."* — 23 Jul 2026
 
 | Date | Position | Consequence if adopted |
@@ -73,20 +75,22 @@ The summary says the requirements are already documented and asks the team to re
 
 ## 4. Action items with owners
 
-| # | Action | Owner |
-|---|---|---|
-| **A1** | Provide the **OD calculation formula** | **Tim O'Brien** |
-| **A2** | Obtain **temper calculation logic** from the Technical Team | **Tim O'Brien** |
-| **A3** | Determine the **weight calculation approach for non-cylindrical rod** | **Tim O'Brien** |
-| **A4** | Share **flat wire downtime reasons** | **Tim O'Brien** |
-| **A5** | Share **flat wire web rejection reasons** | **Tim O'Brien** |
-| **A6** | Share **flat wire IT inhibit reasons** | **Tim O'Brien** |
+| # | Action | Owner | Status (3 Sep 2026) |
+|---|---|---|---|
+| **A1** | Provide the **OD calculation formula** | **Tim O'Brien** | ⛔ **STILL OWED.** Re-asked as question 1 on 22 Jul and **left blank** in the 1 Sep reply — the only one of thirteen with no answer |
+| **A2** | Obtain **temper calculation logic** from the Technical Team | **Tim O'Brien** | ⚠ **PARTIAL, 1 Sep 2026.** Three regimes named (`D-39`); *"a formula work sheet will be sent separately"* — **not yet received**. ⛔ **STILL NOT RECEIVED, 2 Sep 2026 — and this is the one that did not come.** A worksheet **did** arrive that day (`D-43`, twenty formulas), answering the *width* half of Sushant's 27 Aug ask *"formulas for the width **and temper** as per cross sectional area"*. **The temper half is absent from it entirely** — no temper symbol in the 44-entry legend, no temper relation among the twenty. Tim, in the covering note: *"I will send the calculator next week after I have finished with some updates to the table lookups and **temper calculations**."* So there is now an **ETA (w/c 7 Sep 2026), not an answer**. `PSG-D29` and validation `V16` remain blocked; `D-39`'s three regimes remain unquantified |
+| **A3** | Determine the **weight calculation approach for non-cylindrical rod** | **Tim O'Brien** | ⚠ **PARTIAL, 1 Sep 2026.** Rod is cylindrical and **weight is an input, not calculated** (`D-37`); footage is derived with a ± x ft tolerance. Worksheet **owed**. ⚠ **ADVANCED 2 Sep 2026, not closed.** `D-43`'s `F1` supplies the round-section footage relation — `L_F = tω / (π r² · 12 · ρ₁)`, i.e. `lb/ft = A × 12 × ρ`, **algebraically identical to `FR-332a`** (and that identity is what re-points `Q10`). ⛔ **The ± x ft tolerance is still unstated**, and Tim's density value is still unstated |
+| **A4** | Share **flat wire downtime reasons** | **Tim O'Brien** | ✅ **CLOSED 1 Sep 2026** — 72 codes in four time buckets. ⚠ It **replaces** the existing taxonomy, exactly as `C1` warned |
+| **A5** | Share **flat wire web rejection reasons** | **Tim O'Brien** | ✅ **CLOSED 1 Sep 2026** — 72 reasons. ⚠ No grouping supplied; all five groups are ours (`G79`) |
+| **A6** | Share **flat wire IT inhibit reasons** | **Tim O'Brien** | ✅ **CLOSED 1 Sep 2026** — 8 reasons. ⚠ They share only **one** of `[PLC §8.2]`'s five conditions (`G80`) |
 | **A7** | Review **throughput and yield documentation** | Jaspreet & Development Team |
 | **A8** | Prepare flat wire **architecture, estimates, stories and execution plan** | **Yogender** |
 | **A9** | Review **resource allocation and flat wire start dates** | Divesh, Shray, Ritika & Team |
 | **A10** | Finalise **effort estimates and schedule** | Project Team |
 | **A11** | Continue **readiness planning for August deployment** | Shopfloor Team |
 | **A12** | Begin **Coil Receiving** development — highest-priority flat wire module | Vicky & Team |
+
+✅ **Three of those four arrived on 1 Sep 2026** — `A4`, `A5` and `A6`, in `Reason Codes.xlsx`, 41 days after the questions were sent. **`A1` did not**, and it is the one that was owed twice over. Transcription and consequences: [ClientEmail_2026-09-01_ReasonCodes_SyncPlan.md](ClientEmail_2026-09-01_ReasonCodes_SyncPlan.md).
 
 **Six of the twelve are Tim's, and four of those (`A1`, `A4`, `A5`, `A6`) are reference data the build cannot proceed without.** `A1` is the same deliverable as `A1`/`A3` on the [6 Aug ledger](ClientCall_2026-08-06_SyncPlan.md), so it is owed twice over.
 
@@ -108,7 +112,7 @@ The summary says the requirements are already documented and asks the team to re
 |---|---|---|
 | **W1 — Registers** | `Q32` annotated with the `C6` conflict *(done 12 Aug)* · `Q20`, `OI-65`, `Q4`, `Q33`, `Q10` gain the clarifications from `C13`, `C9`, `C11`, `C14`, `C15` | Not blocked |
 | **W2 — New items** | Three homeless subjects (§6) need a `Q##` or `OI-##` each: drawdown-on-temper, rewind scope, flat-wire downtime-reason vocabulary | Not blocked — **but adds to register counts; report, do not absorb** |
-| **W3 — Reference data** | `SpoolConfiguration` seed for the 12″ ID (`C9`) · downtime and rejection reason vocabularies once `A4`/`A5` arrive | **Blocked** on `A4`, `A5` |
+| **W3 — Reference data** | `SpoolConfiguration` seed for the 12″ ID (`C9`) · downtime and rejection reason vocabularies once `A4`/`A5` arrive | ✅ **UNBLOCKED and EXECUTED 2 Sep 2026.** `A4`/`A5`/`A6` arrived 1 Sep; `DowntimeReason`, `WipRejectionReason` and `ItInhibitReason` are built in `01_Lookup` and **seeded inline by the DDL** — they are production reference data, not fixtures. `LineDowntimeEvent` came with them, because the `Downtime` bucket has no run to hang on |
 | **W4 — Roles** | [02-SRS.md](../../20-architecture/Security.md) §8 — reconcile Leadman/Operator/Helper and the qualification matrix against the existing six roles (`C10`) | **Blocked** — needs a client decision on whether these replace or overlay the existing roles |
 | **W5 — Labels and printers** | `Q4` · [OutputCoilCompletion.md](../../10-requirements/screens/OutputCoilCompletion.md) §7 — label types per stage, printer hardware (`C11`, `C12`) | Not blocked for the types; the *rules* remain open under `Q4` |
 | **W6 — PLC surface** | Dancer element authored **read-only** *(done 12 Aug)*; the write surface waits on §3.1 | **Partly blocked** on `C6` |

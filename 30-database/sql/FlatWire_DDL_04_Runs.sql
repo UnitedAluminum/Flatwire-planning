@@ -2,9 +2,12 @@
 -- Flat Wire Mill — DDL Script 04: Run Tracking Tables
 -- Run order : 04 of 09
 -- Tables    : FlatWireRunDetail, RodStaging, RodCheckin, SpoolCheckin, SpoolStaging,
---             RunPauseEvent, WeldEvent, RollOverride, DieChangeEvent,
---             RunReading, RodOrderConsumption   (11)
--- Dependencies: 03_Materials (FlatWireRun, Rod, SpoolProcessing), 02_Schedule (PassSchedule)
+--             RunPauseEvent, LineDowntimeEvent, WeldEvent, RollOverride,
+--             DieChangeEvent, DieHistory, RunReading, RodOrderConsumption   (13)
+-- Dependencies: 03_Materials (FlatWireRun, Rod, SpoolProcessing), 02_Schedule (PassSchedule),
+--               01_Lookup (ToolingInventoryDie -- DieHistory and DieChangeEvent both
+--               reference it; DowntimeReason -- RunPauseEvent and LineDowntimeEvent
+--               both reference it, via FKs added by script 06)
 -- Note      : FlatWireRun itself is in 03_Materials so SpoolProcessing can
 --             reference it as SourceRunId.
 -- ============================================================
@@ -376,6 +379,30 @@ GO
 -- RunPauseEvent
 -- One row per pause/resume cycle. Created on pause; updated
 -- on resume. Rows with NULL ResumedAt are active (open) pauses.
+--
+-- Sep-2-2026: THE REASON VOCABULARY CHANGED MODEL, NOT JUST CONTENT.
+-- The client's "Reason Codes.xlsx" (Tim O'Brien, 1 Sep 2026) replaced the
+-- 15-reason / 5-semantic-category taxonomy (EquipmentMechanical,
+-- MaterialHandling, QualityMeasurement, Operational, Safety with codes like
+-- DieChangeMidRun) with UA's existing DELAY-CODE model: four TIME buckets and
+-- SET## / RUN## / HDL## / DWN## codes. Literal overlap was ZERO.
+--
+-- THE COLUMN NAMES ARE DELIBERATELY UNCHANGED. ReasonCode now holds a
+-- DelayCode and ReasonCategory holds a DelayBucket, so POST /run/{runId}/pause
+-- keeps its field names and the change is a VOCABULARY swap for every consumer
+-- rather than a rename across APIs.md, the schema docs and the mockups.
+--
+-- THIS TABLE TAKES THREE OF THE FOUR BUCKETS -- Setup, RunTime, Handling
+-- (47 codes). The Downtime bucket's 25 codes go to LineDowntimeEvent below,
+-- because RunId here is NOT NULL and every DWN code is line-down time (Power
+-- Outage, Fire Drill, Scheduled Maintenance, Waiting for Spool From Previous
+-- Operation) occurring when no run is open. FootageAtPause NOT NULL and
+-- CK_RunPauseEvent_Outcome's four run-centric values say the same thing.
+-- CK_RunPauseEvent_Bucket enforces the split at the database.
+--
+-- FOUR PREVIOUS REASONS HAVE NO SUCCESSOR CODE: OperatorBreak,
+-- ShiftChangeover, AwaitingSupervisor, SafetyObservation. Owed back to the
+-- client; see the DowntimeReason header in 01_Lookup.
 -- ------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[RunPauseEvent]') AND type = N'U')
 BEGIN
@@ -384,9 +411,19 @@ BEGIN
         [RunId]                VARCHAR(20)   NOT NULL,       -- FK → FlatWireRun.RunId
         [PausedAt]             DATETIMEOFFSET NOT NULL,      -- timestamp of pause
         [FootageAtPause]       INT           NOT NULL,       -- footage counter at moment of pause
-        [ReasonCode]           VARCHAR(50)   NOT NULL,       -- e.g. GaugeWidthInvestigation, DieChange
-        [ReasonCategory]       VARCHAR(50)   NOT NULL,       -- e.g. QualityMeasurement, Maintenance, Other
-        [Notes]                VARCHAR(500)  NULL,           -- required when ReasonCategory = Other
+        -- Narrowed 50 -> 10 with the vocabulary change: a delay code is 5
+        -- characters and a bucket is at most 8, and the widths must match
+        -- DowntimeReason's for the composite FK in script 06.
+        [ReasonCode]           VARCHAR(10)   NOT NULL,       -- DelayCode: SET## | RUN## | HDL##  (FK -> DowntimeReason.DelayCode)
+        [ReasonCategory]       VARCHAR(10)   NOT NULL,       -- DelayBucket: Setup | RunTime | Handling
+        [Notes]                VARCHAR(500)  NULL,           -- required on the per-bucket 'Other' codes (see CK below)
+        -- Snapshots taken from DowntimeReason AT THE MOMENT OF PAUSE. The
+        -- lookup row is editable reference data, so a historical pause must not
+        -- silently re-price when someone retunes a buffer or flips a Nonprod
+        -- flag. Nullable because DowntimeReason.IsNonprodTime is (DWN29's cell
+        -- is blank on the client's sheet).
+        [IsNonprodTime]        BIT           NULL,           -- did this delay consume non-productive time?
+        [DelayBufferMin]       INT           NULL,           -- buffer in force when the pause was taken
         [ResumedAt]            DATETIMEOFFSET NULL,          -- NULL = pause still active
         [PauseDurationSeconds] AS (DATEDIFF(SECOND, [PausedAt], [ResumedAt])),  -- computed on resume; NULL while open
         [Outcome]              VARCHAR(30)   NULL,           -- ResumeRun|LogWipRejection|CheckOutRod|ContinuePause
@@ -397,12 +434,83 @@ BEGIN
         CONSTRAINT [PK_RunPauseEvent]         PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [CK_RunPauseEvent_Outcome] CHECK ([Outcome] IN ('ResumeRun','LogWipRejection','CheckOutRod','ContinuePause') OR [Outcome] IS NULL),
         CONSTRAINT [CK_RunPauseEvent_Footage] CHECK ([FootageAtPause] >= 0),
-        CONSTRAINT [CK_RunPauseEvent_NotesOther] CHECK ([ReasonCategory] <> 'Other' OR [Notes] IS NOT NULL)
+        -- Setup / RunTime / Handling only. Downtime belongs to LineDowntimeEvent.
+        CONSTRAINT [CK_RunPauseEvent_Bucket] CHECK ([ReasonCategory] IN ('Setup','RunTime','Handling')),
+        -- REWRITTEN Sep-2-2026, and it had to be. This was
+        --     CHECK ([ReasonCategory] <> 'Other' OR [Notes] IS NOT NULL)
+        -- which keyed on a CATEGORY that no longer exists -- under the delay-code
+        -- model 'Other' is a CODE, one per bucket, so the old predicate was
+        -- vacuously true on every row and silently stopped requiring notes.
+        -- DWN29, the Downtime bucket's 'Other', is handled on LineDowntimeEvent.
+        CONSTRAINT [CK_RunPauseEvent_NotesOther] CHECK ([ReasonCode] NOT IN ('SET23','RUN12','HDL15') OR [Notes] IS NOT NULL)
     );
     PRINT 'Created table: RunPauseEvent';
 END
 ELSE
     PRINT 'Table already exists: RunPauseEvent';
+GO
+
+-- ------------------------------------------------------------
+-- LineDowntimeEvent
+-- One row per line-down interval. Created when downtime starts;
+-- updated when the line comes back. Rows with NULL EndedAt are
+-- open. NEW Sep-2-2026.
+--
+-- WHY THIS IS NOT A RunPauseEvent, which is the whole reason it
+-- exists. The client's delay-code model has four time buckets and
+-- the Downtime bucket's 25 codes are all LINE-DOWN time -- Power
+-- Outage, Fire Drill, Scheduled Maintenance, Waiting for Spool
+-- From Previous Operation. Those occur when NO RUN IS OPEN, and
+-- RunPauseEvent cannot hold them: RunId is NOT NULL with an FK to
+-- FlatWireRun, FootageAtPause is NOT NULL, and every value in
+-- CK_RunPauseEvent_Outcome (ResumeRun | LogWipRejection |
+-- CheckOutRod | ContinuePause) presumes a run to return to.
+-- Relaxing all three would leave a table named RunPauseEvent whose
+-- rows have no run, no footage and no outcome.
+--
+-- WipRejection.RunId is nullable for exactly the same reason, and
+-- RunId below follows it: an optional link, populated only when a
+-- run did happen to be open when the line went down.
+--
+-- SCOPE IS THE LINE, NOT THE RUN. LineId is the identity; that is
+-- what makes a shift-level downtime roll-up possible at all.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[LineDowntimeEvent]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[LineDowntimeEvent] (
+        [Id]                    INT           NOT NULL IDENTITY(1,1),
+        [LineId]                VARCHAR(5)    NOT NULL,      -- FL1 | FL2 | FL3 -- the event is line-scoped
+        [RunId]                 VARCHAR(20)   NULL,          -- FK -> FlatWireRun.RunId; NULL when no run was open
+        [DelayCode]             VARCHAR(10)   NOT NULL,      -- DWN## (FK -> DowntimeReason.DelayCode)
+        [StartedAt]             DATETIMEOFFSET NOT NULL,
+        [EndedAt]               DATETIMEOFFSET NULL,         -- NULL = the line is still down
+        [DowntimeSeconds]       AS (DATEDIFF(SECOND, [StartedAt], [EndedAt])),  -- NULL while open
+        -- Snapshots from DowntimeReason at the moment downtime started, for the
+        -- same reason RunPauseEvent carries them: the lookup is editable
+        -- reference data and history must not re-price when it is retuned.
+        [IsNonprodTime]         BIT           NULL,
+        [DelayBufferMin]        INT           NULL,
+        [SupervisorOverride]    BIT           NULL,          -- was an override in force for this code?
+        [SupervisorOverrideBy]  VARCHAR(50)   NULL,          -- who exercised it, when one was taken
+        [Notes]                 VARCHAR(500)  NULL,          -- required on DWN29 'Other' (see CK below)
+        [OperatorId]            VARCHAR(50)   NOT NULL,      -- who recorded the start
+        [EndedBy]               VARCHAR(50)   NULL,          -- who recorded the end
+
+        CONSTRAINT [PK_LineDowntimeEvent]           PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [CK_LineDowntimeEvent_LineId]    CHECK ([LineId] IN ('FL1','FL2','FL3')),
+        -- Downtime codes only. The other three buckets belong to RunPauseEvent.
+        CONSTRAINT [CK_LineDowntimeEvent_Code]      CHECK ([DelayCode] LIKE 'DWN[0-9][0-9]'),
+        CONSTRAINT [CK_LineDowntimeEvent_Window]    CHECK ([EndedAt] IS NULL OR [EndedAt] >= [StartedAt]),
+        -- The Downtime bucket's own 'Other', matching CK_RunPauseEvent_NotesOther
+        -- for the other three buckets' SET23 / RUN12 / HDL15.
+        CONSTRAINT [CK_LineDowntimeEvent_NotesOther] CHECK ([DelayCode] <> 'DWN29' OR [Notes] IS NOT NULL),
+        -- An override cannot have an actor without having been taken.
+        CONSTRAINT [CK_LineDowntimeEvent_Override]  CHECK ([SupervisorOverrideBy] IS NULL OR [SupervisorOverride] = 1)
+    );
+    PRINT 'Created table: LineDowntimeEvent';
+END
+ELSE
+    PRINT 'Table already exists: LineDowntimeEvent';
 GO
 
 -- ------------------------------------------------------------
@@ -496,6 +604,22 @@ GO
 -- DieChangeEvent
 -- Die replacement events during a run. Automatically triggers
 -- a PostDieChange SPC checkpoint.
+--
+-- PER-TOOL ATTRIBUTION (Sep-2-2026). OldDieId / NewDieId are the reason the
+-- die split is worth doing: until they existed this table identified its dies
+-- by DECIMAL SIZE ONLY, with no FK, so no run event could attribute footage to
+-- a tool and both die-life counters were Maintenance-maintained by hand. With
+-- these two columns FR-255 becomes implementable -- "closes accumulation on
+-- the outgoing die and starts a new counter on the incoming die".
+--
+-- OldDieSizeIn / NewDieSizeIn are KEPT, and are not redundant: they record the
+-- size that was physically measured at the swap, which is the audit fact. The
+-- FKs record which tool it was. A disagreement between them is a real finding,
+-- not a data error, so nothing here reconciles the two.
+--
+-- Both FKs are NULLABLE. A die change logged before its tool was registered
+-- has no row to point at, and refusing the event would lose the run record --
+-- the weaker MVP-1 behaviour was exactly the size-level D4 this split retires.
 -- ------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[DieChangeEvent]') AND type = N'U')
 BEGIN
@@ -507,8 +631,10 @@ BEGIN
         [RodAlpha]             VARCHAR(20)   NOT NULL,      -- FK → Rod.Alpha (material in-process)
         [FootagePosition]      INT           NOT NULL,      -- footage at time of die change
         [DiePosition]          VARCHAR(5)    NOT NULL,      -- DB1 | DB2
-        [OldDieSizeIn]         DECIMAL(8,4)  NOT NULL,      -- replaced die hole diameter (in)
-        [NewDieSizeIn]         DECIMAL(8,4)  NOT NULL,      -- replacement die hole diameter (in)
+        [OldDieId]             INT           NULL,          -- FK → ToolingInventoryDie.Id, added by script 06
+        [NewDieId]             INT           NULL,          -- FK → ToolingInventoryDie.Id, added by script 06
+        [OldDieSizeIn]         DECIMAL(8,4)  NOT NULL,      -- replaced die hole diameter (in), as measured
+        [NewDieSizeIn]         DECIMAL(8,4)  NOT NULL,      -- replacement die hole diameter (in), as measured
         [ReasonCode]           VARCHAR(50)   NOT NULL,      -- DieWear | GaugeDrift | Breakage | ScheduledChange
         [LinkedOverrideId]     VARCHAR(20)   NULL,          -- FK → RollOverride.OverrideId (auto-created)
         [SpcCheckpointRequired] BIT          NOT NULL CONSTRAINT [DF_DieChangeEvent_SpcReq] DEFAULT (1),
@@ -526,6 +652,83 @@ BEGIN
 END
 ELSE
     PRINT 'Table already exists: DieChangeEvent';
+GO
+
+-- ------------------------------------------------------------
+-- DieHistory
+-- The append-only life story of one physical die. ONE table serves BOTH of
+-- FR-252's tabs -- "Run history" (order, line, footage added, date, operator)
+-- and "Replacement log" (install, reset and retirement events).
+--
+-- WHY IT IS NOT TWO TABLES: PassScheduleChangeLog already establishes the
+-- pattern in 02_Schedule -- a discriminated append-only log with a NULLABLE
+-- RunId and the comment "NULL when made outside a run". A second table would
+-- only re-separate what one EventType column distinguishes.
+--
+-- WHY IT EXISTS AT ALL -- two facts, neither of which any existing table can
+-- carry:
+--   1. Reset and Retire (FR-248, FR-250) are DIE ROOM actions with no run.
+--      DieChangeEvent.RunId is NOT NULL with an FK to FlatWireRun, so they
+--      cannot live there. And FR-252 wants HISTORY -- a die is reconditioned
+--      repeatedly -- which a master row cannot hold.
+--   2. NOTHING ELSE RECORDS WHICH PHYSICAL DIE RAN A GIVEN RUN. The only die
+--      references anywhere in 02/03/04 are DieChangeEvent's two decimals, and
+--      PassScheduleComponent carries the SIZE in ParameterValue, not the tool.
+--      So FR-252's "footage added per die per run" is NOT DERIVABLE for any
+--      run without a mid-run swap. It has to be written.
+--
+-- THE TWO CHECKS ARE THE POINT. A single discriminated table gives up the
+-- ability to make RunId NOT NULL where it belongs; these recover it, the same
+-- way CK_PSC_ParamValue does in 02_Schedule ("a setting may only be recorded
+-- against a component that is engaged"). Without them a RunFootage row could
+-- exist with no run and no footage, which is not a history entry at all.
+--
+-- FR-252's "order" and "line" are deliberately NOT columns -- derive them
+-- through RunId -> FlatWireRun. Storing them would be the third copy.
+--
+-- Retention/rollup: TBD. RunFootage rows accrue one per die per run, so this
+-- is the only table here whose growth is driven by production volume rather
+-- than by operator actions. Read with G3, which owns RunReading's retention.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[DieHistory]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[DieHistory] (
+        [Id]                   INT           NOT NULL IDENTITY(1,1),
+        [DieId]                INT           NOT NULL,      -- FK → ToolingInventoryDie.Id, added by script 06
+        -- Install/Reset/Retire/ThresholdEdit are Replacement-log rows (FR-248, FR-250,
+        -- FR-249); RunFootage rows are Run-history rows (FR-252, FR-255).
+        [EventType]            VARCHAR(20)   NOT NULL,
+        [RunId]                VARCHAR(20)   NULL,          -- FK → FlatWireRun.RunId, added by script 06. NULL when made outside a run
+        [FootageAddedFt]       DECIMAL(10,2) NULL,          -- RunFootage only: feet this run added to the die
+        [OldValue]             VARCHAR(100)  NULL,          -- value before the change, as text (threshold edits, resets)
+        [NewValue]             VARCHAR(100)  NULL,          -- value after the change, as text
+        -- Retire reason (FR-250: end of life | physical damage | bore out of tolerance |
+        -- size discontinued | other) or reset disposition (FR-248: Reconditioned |
+        -- New spare). Deliberately not CHECK-constrained: two vocabularies share the
+        -- column and neither is client-confirmed. See OQ-83.
+        [ReasonCode]           VARCHAR(50)   NULL,
+        [ReasonNotes]          VARCHAR(500)  NULL,          -- FR-249 requires a reason on a threshold edit
+        [RemovedFromLineDate]  DATE          NULL,          -- FR-248 "date removed from line"
+        [ReturnedReadyDate]    DATE          NULL,          -- FR-248 "date returned and ready"
+        [InspectionDate]       DATE          NULL,          -- FR-248 inspection date
+        [DieRoomSource]        VARCHAR(100)  NULL,          -- FR-248 die room source
+        [OperatorId]           VARCHAR(50)   NOT NULL,
+        [Timestamp]            DATETIMEOFFSET NOT NULL CONSTRAINT [DF_DieHistory_Timestamp] DEFAULT (SYSDATETIMEOFFSET()),
+
+        CONSTRAINT [PK_DieHistory]           PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [CK_DieHistory_EventType] CHECK ([EventType] IN ('Install','Reset','Retire','ThresholdEdit','RunFootage')),
+        -- A footage row without a run is not a history entry. Recovers the NOT NULL
+        -- that the single discriminated table gives up.
+        CONSTRAINT [CK_DieHistory_RunFootageHasRun]      CHECK ([EventType] <> 'RunFootage' OR [RunId] IS NOT NULL),
+        -- ...and no other event type may carry footage, so the Run history tab cannot
+        -- silently double-count a reset.
+        CONSTRAINT [CK_DieHistory_FootageOnlyOnRunFootage] CHECK ([EventType] = 'RunFootage' OR [FootageAddedFt] IS NULL),
+        CONSTRAINT [CK_DieHistory_FootageNonNeg]         CHECK ([FootageAddedFt] IS NULL OR [FootageAddedFt] >= 0)
+    );
+    PRINT 'Created table: DieHistory';
+END
+ELSE
+    PRINT 'Table already exists: DieHistory';
 GO
 
 -- ------------------------------------------------------------

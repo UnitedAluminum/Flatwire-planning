@@ -861,17 +861,20 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 ### 4.8 `POST /run/{runId}/pause` and `/resume`
 
-**Pause** — reason categories and codes:
+**Pause** — delay buckets and codes. ⚠ **The vocabulary changed model on 2 Sep 2026**, from 15 reasons in 5 *semantic* categories to the client's **delay-code** system: four *time* buckets keyed to the throughput standard-time model, from `Reason Codes.xlsx` (Tim O'Brien, 1 Sep 2026). **Literal overlap with the old codes is zero.** The field names are unchanged — `reasonCode` now carries a `DelayCode` and `reasonCategory` a `DelayBucket` — so this is a value swap for callers, not a contract rename. The vocabulary is `FlatWireDB.DowntimeReason` and `FK_RunPauseEvent_DelayCode` enforces it.
 
-| Category | Codes |
-|---|---|
-| `EquipmentMechanical` | `DieChangeMidRun`, `RollAdjustment`, `LubricationCoolant`, `DrawBoxInspection`, `ComponentInspection` |
-| `MaterialHandling` | `Payoff2LoadingWeld`, `DownstreamBlockage` |
-| `QualityMeasurement` | `GaugeWidthInvestigation`, `ManualSpcMeasurement`, `SurfaceInspection` |
-| `Operational` | `OperatorBreak`, `ShiftChangeover`, `AwaitingSupervisor` |
-| `Safety` | `SafetyObservation` |
-| `RodCheckout` | *(navigates to Rod Checkout instead of pausing — `FR-262`)* |
-| `Other` | `Other` — **requires `notes`**, enforced by `CK_RunPauseEvent_NotesOther` |
+| Bucket (`reasonCategory`) | Codes (`reasonCode`) | Count |
+|---|---|---|
+| `Setup` | `SET10`–`SET12`, `SET19`, `SET21`, `SET23`, `SET24`, `SET28` (inherited) · `SET29`–`SET41` (new) | 21 |
+| `RunTime` | `RUN04`–`RUN06`, `RUN12`–`RUN14` (inherited) · `RUN15`–`RUN20` (new) | 12 |
+| `Handling` | `HDL07`, `HDL11`, `HDL14`–`HDL17` (inherited) · `HDL18`–`HDL25` (new) | 14 |
+| ~~`Downtime`~~ | **Not accepted by this endpoint** — `DWN##` codes go to line downtime, not a run pause. `CK_RunPauseEvent_Bucket` rejects them | (25) |
+
+- **`Other` is a code, not a category.** One per bucket — `SET23`, `RUN12`, `HDL15` — and each **requires `notes`**, enforced by `CK_RunPauseEvent_NotesOther`. ⚠ A caller still sending `reasonCategory: "Other"` now fails the bucket CHECK rather than silently skipping the notes requirement.
+- **`RodCheckout` remains not a pause reason** — it navigates to Rod Checkout instead (`FR-262`), unchanged.
+- **Snapshots:** the response persists `isNonprodTime` and `delayBufferMin` as they stood at the moment of pause, so retuning the lookup cannot re-price history.
+
+> ⚠ **Four previously accepted codes have no successor**: `OperatorBreak`, `ShiftChangeover`, `AwaitingSupervisor`, `SafetyObservation`. The client's list has no equivalent — `SET11 Prior Shift unaccountable` is not shift changeover and `DWN07 Fire Drill` is not a safety observation. Owed back to the client; **callers must not substitute a nearby code.**
 
 **Side effects on pause:** `RunPauseEvent` written with `FootageAtPause` · `FlatWireRun.PausedAt` set and `Status='Paused'` · PLC tags to hold/idle · `LineStatus{Paused}` broadcast with the reason.
 
@@ -883,8 +886,8 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 ```json
 {
-  "reasonCode": "GaugeWidthInvestigation",
-  "reasonCategory": "QualityMeasurement",
+  "reasonCode": "RUN13",
+  "reasonCategory": "RunTime",
   "notes": "Gauge reading drifted high — investigating FM1 roll gap"
 }
 ```

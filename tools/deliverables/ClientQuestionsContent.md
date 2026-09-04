@@ -1,7 +1,7 @@
 # Flat Wire Mill — Client Questions Workbook Content
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 25, 2026 — **ten missing entries authored** — `Q48`–`Q55`, `Q59`, `Q87`; without them the client questions workbook could not be rebuilt *(previously August 20, 2026 — client-facing prose added for **`Q37`–`Q47`**: the four shared-record sign-off values from the check-in write-back, and the seven questions from the 20 Aug client call on the spool carrier, the multi-order spool and FL2 pre-check-in. Workbook regenerated to **47 open questions**, leakage scan clean. *(previously August 18, 2026 — `Q68` amended — the status moves to the flat wire module’s own rod record, and the client is asked which reports filter on the coil status field *(previously August 12, 2026)*)*)*
+**Last Updated:** September 3, 2026 — **`Q93` authored** — the six unreadable points in Tim O'Brien's pass-calculator formula document (`D-43`), of which items 3 and 4 are asked now and the rest wait for the calculator itself. *(previously August 25, 2026 — **ten missing entries authored** — `Q48`–`Q55`, `Q59`, `Q87`; without them the client questions workbook could not be rebuilt *(previously August 20, 2026 — client-facing prose added for **`Q37`–`Q47`**: the four shared-record sign-off values from the check-in write-back, and the seven questions from the 20 Aug client call on the spool carrier, the multi-order spool and FL2 pre-check-in. Workbook regenerated to **47 open questions**, leakage scan clean. *(previously August 18, 2026 — `Q68` amended — the status moves to the flat wire module’s own rod record, and the client is asked which reports filter on the coil status field *(previously August 12, 2026)*)*)*)*
 **Document Type:** Source content for a generated client deliverable — not a specification
 **Status:** Active
 
@@ -897,6 +897,39 @@ optional; everything else is required.
 **Recommended answer:** Option 3 for the identifiers, with the media decided together with Q4.
 **Why:** A customer reading two identifiers on one coil has to work out what that means; the certificate is the right place for the full genealogy, and the coil record already holds it. The media half genuinely depends on the skid decision and should not be settled separately.
 **Impact if unanswered:** Deferred on the 24 August call. Coil completion cannot be finished without it, and it is bound up with the skid labelling question - the same decision seen from the other end.
+
+---
+
+## Q92
+
+**Register title:** What columns does the roll-set Tooling Inventory grid carry, and are capstan rolls the same tool option as mill rolls?
+**Area:** Tooling management
+**Needs input from:** Tim O. / Maintenance
+**What we need:** Information
+**Answer together with:** Q26
+**Question:** What columns should the roll-set grid on the Tooling Inventory tab carry, and in what order - and should capstan rolls be the same tool option as mill rolls, or a separate one?
+**Background:** On 3 September you asked us to include mill rolls for traceability, naming the 12 inch set on FL1, the DB1 and DB2 capstan rolls, and the 8, 6 and 6 inch sets on FL2, and confirming that dancers, entry guides, payoffs and spools are not tooling. That is the fourth tool type on the tab. The other three - dies, edging rolls and straighteners - each reached us as a screenshot of the grid with the columns in the order you wanted them. Roll sets reached us as a sentence, so the register is built against our reading of it rather than against a grid you have seen.
+**Already agreed:** Roll sets belong on the Tooling Inventory tab, for traceability. Dancers, entry guides, payoffs and spools do not. Tooling is maintained for FL1 and FL2, with FL3 using a combination of the two. The capstan rolls can be refurbished, current inventory is two and a spare is being added.
+**Options:** (1) Send the roll-set grid as a screenshot, as you did for the other three. (2) Confirm our proposed column list as it stands. (3) Tell us the differences from the edging-roll grid and we will apply them.
+**Recommended answer:** Option 1, plus a one-line answer to each of the three follow-ups below.
+**Why:** A screenshot is how the other three arrived and it took one round. Our proposed list is the edging-roll and straightener columns merged, which is a reasonable guess but still a guess, and a tooling grid that collects the wrong fields is expensive to unwind once the roll shop has started entering data against it.
+**Impact if unanswered:** The register is built and seeded, so nothing is blocked in the database. What is blocked is the fourth tool option on the tab and the screen that renders its grid. Three smaller points travel with this one: whether refurbishing a capstan is the same operation as the In Grinding state the edging rolls already use or something separate; what Machine Name a capstan roll carries, given DB1 and DB2 sit on FL1; and whether two roll set means two rolls in a set or two sets per position, which reads both ways in the same sentence and changes how many rows the inventory has.
+
+---
+
+## Q93
+
+**Register title:** Six readings in the pass-calculator formula document that the page cannot settle
+**Area:** Pass schedule generation
+**Needs input from:** Tim O. / Process Engineering
+**What we need:** Information
+**Question:** Six points in your Wire Flattening Mathematical Calculation Formulas document read more than one way. Two of them change what the engine calculates, and one of them decides whether our worked example is a product that can be made at all.
+**Background:** Thank you for these - the width formulas are the answer to something we asked for and could not work out ourselves, and we have adopted them as the basis for width, area, footage and edging. Every formula in the document is a picture rather than text, so reading them is an act of interpretation on our side, and we would rather ask than guess. We have built to our best reading in each case and flagged it at the point of use.
+**Already agreed:** The formulas are the engineering basis for the generation engine. The two empirical factors are placeholders until sample runs produce a table. The temper calculations are still to come.
+**Options:** (1) Send the calculator next week as planned and let us read the cell formulas, which answers four of the six by demonstration. (2) Answer all six in a line each. (3) Answer the two that matter most now and leave the rest for the calculator.
+**Recommended answer:** Option 3. The two we would like now are items 3 and 4 below. The other four are exactly the kind of thing a working spreadsheet settles better than an email.
+**Why:** Items 3 and 4 are about what you meant, not about what the arithmetic does, and a spreadsheet will show us the cells without explaining the intent behind them. Item 4 in particular changes a result rather than a detail.
+**Impact if unanswered:** Nothing in the build stops. What stops is sign-off on the generate-from-specs story, whose expected result we have had to re-derive and cannot confirm until item 4 is settled. The six points are: (1) The Final Cross-Sectional Area Flat Wire formula subtracts an area from a width, which cannot be right dimensionally - we read it as a missing multiplication by the final thickness, which then matches your Round to Flat area formula exactly. Is that the intended reading? (2) In the Round to Flat Cross-Sectional Area formula the legend gives r as the radius of the wire rod, but the formula only produces the right answer when r is the edge radius, which is half the final thickness. On a quarter-inch rod the two readings differ by about a quarter of the area. Please confirm r is the edge radius. (3) The Cumulative True Strain formula adds the length, width and thickness strains together. For any pass that conserves volume those three always add to zero, so as written the total is always nil. We think you mean the sum across passes rather than across the three dimensions - is that right? (4) Your two linear-feet formulas use width times thickness as the cross-section, while your two area formulas use the rounded-edge shape. The difference is about four percent, and on our nominal product it is the difference between a section that can be rolled and one that cannot. Which of the two should the footage calculation use? (5) Are the three empirical factors single numbers or lookup tables, and if tables, what are they looked up by - alloy, stand, gauge range, or something else? We ask because you mentioned generating a table from samples, and a table needs a key. Two smaller points here: the second spread factor is not in the legend, and there are two different thickness-reduction percentages in the document that only agree when the entry is already flat. (6) The Theoretical and Calculated Width Flat to Flat formula has one bracket unclosed as printed. Our reading is the only one that works dimensionally, but please confirm the grouping, and confirm the square root covers the roll radius times the thickness change together.
 
 ---
 
