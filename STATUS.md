@@ -11,7 +11,7 @@
 | -- | 2 Pass Schedule Management (Operations Manag | 0 | 0 | 0 | 0 | 0 | 0 | 0 % | — |
 | 1 | 1A Angular Foundation | 9 | 0 | 0 | 0 | 2 | 7 | 0 % | G10 · G14 · G18 · G23 |
 | 1 | 1B Backend Foundation | 27 | 19 | 4 | 0 | 1 | 3 | 70 % | G10 · G17 · G2 · G29 … |
-| 1 | 1C Database Foundation | 15 | 0 | 1 | 0 | 1 | 11 | 0 % | G14 · G17 · G32 · G34 … |
+| 1 | 1C Database Foundation | 16 | 1 | 1 | 0 | 1 | 11 | 7 % | G14 · G17 · G32 · G34 … |
 | 1 | 3 Line Status Board & Real-Time Backbone | 7 | 0 | 1 | 0 | 0 | 6 | 0 % | G9 · OI-28 · OI-34 |
 | 1 | 4 Rod Check-In & PLC Configuration (FL1 / FL | 25 | 1 | 3 | 0 | 10 | 11 | 4 % | G14 · G17 · G2 · G26 … |
 | 1 | 5 Active Run Monitoring & Live Gauge/Width T | 9 | 2 | 2 | 0 | 1 | 4 | 22 % | G34 · G9 · OI-25 · OI-45 … |
@@ -24,7 +24,7 @@
 | 1 | 12 Yield, Cost Ledger & Scrap | 4 | 0 | 0 | 0 | 0 | 4 | 0 % | OI-60 · OI-68 · OI-83 · OQ-10 |
 | 1 | 13 Administration & Reference Data | 12 | 0 | 0 | 0 | 0 | 12 | 0 % | OI-12 · OI-141 · OI-43 · OI-77 … |
 | 1 | 14 Integration Testing, PLC Commissioning & | 12 | 1 | 0 | 0 | 0 | 11 | 8 % | G29 · G30 · G32 · G33 … |
-| **All** | | **174** | **23** | **16** | **0** | **23** | **110** | **13 %** | |
+| **All** | | **175** | **24** | **16** | **0** | **23** | **110** | **14 %** | |
 
 *Percentages are by task count. **Hours are not totalled here** - [`CapacityAndEffortModel.md`](60-delivery/CapacityAndEffortModel.md) `[CE]` is the hours model of record, and a total derived on this page would be a second figure to disagree with it.*
 
@@ -241,7 +241,7 @@ Open register items cited by at least one live task, most-blocking first.
 
 ## MVP-1 › Phase 1C — Database Foundation
 
-**15 tasks · 0 % done**
+**16 tasks · 7 % done**
   · **Spec:** [phase-01c-database-foundation.md](60-delivery/phases/phase-01c-database-foundation.md)
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
@@ -261,6 +261,7 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-251](30-database/tasks/FW-251.md) | Restate the schema baseline to 40/64/86 and repair the DB cards  | ⬜ not-started | — | DB | 8 | S1 | FW-152 | — |
 | [FW-254](40-backend/tasks/FW-254.md) | Reason-code query endpoints — the three seeded client vocabulari | ⬜ not-started | — | BE | 9 | S1 | FW-138✅ FW-251 | — |
 | [FW-259](30-database/tasks/FW-259.md) | Reconcile ToolingInventoryRollSet with the client's roll-set gri | ⬜ not-started | — | DB | 5 | S2 | FW-251 | **Q92** **G87** |
+| [FW-262](30-database/tasks/FW-262.md) | Machine Setup schema — Setup/Handling Times and Material Loss, f | ✅ done ⚠ *status inferred, unconfirmed* | — | DB | 10 | S2 | — | — |
 
 **Open items owned by this phase**
 

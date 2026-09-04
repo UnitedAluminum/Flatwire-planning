@@ -65,7 +65,7 @@ ORDER BY ChildTable, ConstraintName;
 | `SpoolConfiguration` | ~~`SpoolConfiguration`~~ → **`Spool`** | Unit suffixes added to all dimension/weight columns; `MinId`/`MaxId` → `MinCoreDiameterIn`/`MaxCoreDiameterIn`. **Merged into `Spool` 23 Aug 2026 (`Q60`)** — the target table no longer exists; the six `Min/Max` columns and `Name` (as `SizeClass`) landed on the article | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `SpoolProcessing` | `SpoolProcessing` | `Alpha` / `Status` / `GaugeIn` / `WidthIn` / weights / `Location` / timestamps / `SourceRunId` / `LineId` added; `ParentRod` → `ParentRodAlpha` | [FlatWireSchema_Materials.md](FlatWireSchema_Materials.md) |
 
-### New Tables (31) — Net New
+### New Tables (36) — Net New
 
 *(Corrected twice. The heading read "16" against a list of 16 with an arithmetic that used 15; a 13 Aug 2026 pass said `RodStaging` and `PayoffPosition` had been added and **they had not been** — both were still absent on 23 Aug, along with the six tables built 20–22 Aug. All eight were added on 23 Aug 2026, at which point the inventory sums to **7 + 24 + 3 = 34** and matches the DDL exactly. The audit that first found the drift, `GapAnalysis.md`, was retired the same day — see [`CHANGELOG.md`](../../CHANGELOG.md).)*
 
@@ -83,6 +83,11 @@ ORDER BY ChildTable, ConstraintName;
 | `ToolingInventoryDie` | Lookup | **New 2 Sep 2026.** Register of physical dies — identity, hole size, type, lifecycle status, die life | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `DieHistory` | Runs | **New 2 Sep 2026.** One append-only log for a die’s installs, resets, retirements, threshold edits and per-run footage | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 | `ToolingInventoryRollSet` | Lookup | **New 3 Sep 2026 (`D-42`).** Register of physical roll sets — the **fourth** Tooling Inventory tool type. Mill rolls mount on a `Stand`, capstan rolls on a `Drawer`; one discriminated table, a grind life model, and **no legacy sheet behind it** | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `SetupHandlingTimeGroup` | Lookup | **New 4 Sep 2026.** The seven column headings of the Setup/Handling Times tab, in the client’s left-to-right order. Four renamed from the Slitter template; seven is capped structurally by CHECK + UNIQUE | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `SetupHandlingTimeElement` | Lookup | **New 4 Sep 2026.** One row per (line, group, element label) — the client’s grid as data, **FL1 33 / FL2 29 / FL3 47**. Keyed on group + label because three labels appear in two groups each. ⛔ **FL3 is not the union of FL1 and FL2**, and two of its rows are disputed and seeded as pictured | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `SetupHandlingTimeStandard` | Lookup | **New 4 Sep 2026.** The standard time per element **per crew size**, in minutes. Created **EMPTY** — the numbers are the Naj/Bob/Tim spreadsheet. ⚠ `CrewSize` is `[PROPOSED]`: the vocabulary is data, in `united_db.dbo.lookups` category `4061` | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `MaterialLossElement` | Lookup | **New 4 Sep 2026.** One row per (line, element label) for the Material Loss tab, **FL1 7 / FL2 9 / FL3 12**. The unit is **feet**. Both `Pass Change` wordings kept — FL1 says *Rod Dia.*, FL2/FL3 say *Input Ga/Width* | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `MaterialLossStandard` | Lookup | **New 4 Sep 2026.** The standard scrap footage per element — no crew size. Created **EMPTY**; `G82` records the threading footage as pending trial. 1:1 with its catalogue **on purpose**, so a rebuild cannot destroy entered standards | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `SpcCheckpoint` | Quality | SPC measurement session headers | [FlatWireSchema_QualityOutput.md](FlatWireSchema_QualityOutput.md) |
 | `SpcMeasurement` | Quality | Individual SPC measurement readings | [FlatWireSchema_QualityOutput.md](FlatWireSchema_QualityOutput.md) |
 | `WipRejection` | Quality | Material rejection events | [FlatWireSchema_QualityOutput.md](FlatWireSchema_QualityOutput.md) |

@@ -9,8 +9,12 @@
 -- constraints (indexed), so only child FK columns and hot
 -- filter columns are added here.
 --
--- Creates ALL 86 index statements. There is no second index script.
--- 86, not 82, since 3 Sep 2026: the fourth Tooling Inventory tool type added four
+-- Creates ALL 87 index statements. There is no second index script.
+-- 87, not 86, since 4 Sep 2026: the five Machine Setup tables added exactly ONE
+-- -- IX_SetupHandlingTimeElement_GroupId. The other four tables need none, and
+-- the block at the end of this file states why for each. Five tables, one index
+-- is the expected ratio here, not an oversight.  (+1)
+-- It was 86, not 82, since 3 Sep 2026: the fourth Tooling Inventory tool type added four
 -- -- IX_ToolingInventoryRollSet_StandId and _DrawerId (both filtered, because
 -- CK_TIRS_Mount makes one of the pair NULL on every row),
 -- IX_ToolingInventoryRollSet_LifecycleStatus and the filtered-unique
@@ -537,4 +541,30 @@ GO
 -- both (LineId, StartedAt); filtered to open rows makes the probe a seek.
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_LineDowntimeEvent_LineOpen' AND object_id = OBJECT_ID(N'dbo.LineDowntimeEvent'))
     CREATE NONCLUSTERED INDEX [IX_LineDowntimeEvent_LineOpen] ON [dbo].[LineDowntimeEvent] ([LineId], [StartedAt]) WHERE [EndedAt] IS NULL;
+GO
+
+-- ------------------------------------------------------------
+-- Machine Setup application (Sep-4-2026).  ONE index, and the absence of
+-- the other four is deliberate -- per this script's own rule, only child
+-- FK columns and hot filter columns are added, because business and
+-- natural keys already carry UNIQUE constraints.
+--
+--   SetupHandlingTimeElement.GroupId  -- INDEXED below. It is a child FK
+--     column and it is NOT the leading column of any UNIQUE constraint:
+--     both of its UQs lead on LineId.
+--   SetupHandlingTimeStandard.ElementId -- NOT indexed. It leads
+--     UQ_SetupHandlingTimeStandard_ElementCrew, which is already an index.
+--   MaterialLossStandard.ElementId -- NOT indexed. It IS
+--     UQ_MaterialLossStandard_Element.
+--   The per-line grid read (one line, in order) is served exactly by
+--     UQ_SetupHandlingTimeElement_LineGroupSeq (LineId, GroupId, Sequence)
+--     and UQ_MaterialLossElement_LineSeq (LineId, Sequence).
+--
+-- So: one statement, not five. Do not read the other four as forgotten.
+-- ------------------------------------------------------------
+
+-- Renders a group's column on the Setup/Handling Times grid, and the
+-- catalogue-integrity join from element back to its heading.
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_SetupHandlingTimeElement_GroupId' AND object_id = OBJECT_ID(N'dbo.SetupHandlingTimeElement'))
+    CREATE NONCLUSTERED INDEX [IX_SetupHandlingTimeElement_GroupId] ON [dbo].[SetupHandlingTimeElement] ([GroupId]);
 GO

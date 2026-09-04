@@ -21,7 +21,7 @@ The flat-wire-specific model lives in a **new standalone SQL Server database, `F
 
 ### 6.2 Table count — counted, not quoted
 
-⚠ **The baseline is 40 tables · 64 FKs · 86 index statements · 1 procedure · 1 trigger**, measured by `verify_schema_counts.py` from the runner chain on **3 Sep 2026**. The move from 39/62/82 is **`ToolingInventoryRollSet`** — the **fourth** Tooling Inventory tool type, from Tim O'Brien's mail of 3 Sep 2026 (`D-42`): *"We should include mill rolls for traceability… DB1/DB2 Capstans (rolls)… 8″, 6″, 6″ rolls for (FL2-S1, FL2-S2, FL2-S3)."* **+1 table** in `01_Lookup`; **FKs +2 = 64** — `FK_ToolingInventoryRollSet_Stand` and `FK_ToolingInventoryRollSet_Drawer`, **the latter the first foreign key ever taken on `Drawer`**; **index statements +4 = 86** — the two filtered mount indexes, `IX_ToolingInventoryRollSet_LifecycleStatus` and the filtered-unique `UX_ToolingInventoryRollSet_SerialNo`. **Seed rows +6.** ⚠ **The column set is `[PROPOSED]`, not client-supplied** — Die, Edger and Straightener each arrived as a screenshot grid; roll sets arrived as one sentence. See `G87` and `Q92`.
+⚠ **The baseline is 45 tables · 67 FKs · 87 index statements · 1 procedure · 1 trigger**, measured by `verify_schema_counts.py` from the runner chain on **4 Sep 2026**. The move from 40/64/86 is the **five Machine Setup tables** — the Setup/Handling Times and Material Loss tabs of the Machines Application, from Tim O'Brien's per-line field sets of 31 Aug 2026. **+5 tables** in `01_Lookup`: three catalogues (`SetupHandlingTimeGroup`, `SetupHandlingTimeElement`, `MaterialLossElement`) **seeded inline by the DDL, 144 rows**, and two value tables (`SetupHandlingTimeStandard`, `MaterialLossStandard`) created **empty** because the numbers are the Naj/Bob/Tim standards spreadsheet and it is unfinished. **FKs +3 = 67** — all three *internal* to the group; **no FK reaches a machine or a line**, because `FL1`/`FL2`/`FL3` is a CHECKed `LineId` string and `united_db.dbo.machines` is in another database. **Index statements +1 = 87** — only `IX_SetupHandlingTimeElement_GroupId`; the other four tables need none and `07`'s trailing block says why for each. ⚠ **`SetupHandlingTimeStandard.CrewSize` is `[PROPOSED]`** — crew size *is* a row dimension (verified against `united_db.dbo.Slitters_Standards`), but its **vocabulary is data**, in `united_db.dbo.lookups` category `4061`, so the column carries a range CHECK and not a value list. ⛔ **`OI-110` is NOT closed by this** — which database these tabs write to is still unanswered, and the evidence points at `united_db`. *(previously 40 tables · 64 FKs · 86 index statements · 1 procedure · 1 trigger, 3 Sep 2026 — the move from 39/62/82 was **`ToolingInventoryRollSet`** — the **fourth** Tooling Inventory tool type, from Tim O'Brien's mail of 3 Sep 2026 (`D-42`): *"We should include mill rolls for traceability… DB1/DB2 Capstans (rolls)… 8″, 6″, 6″ rolls for (FL2-S1, FL2-S2, FL2-S3)."* **+1 table** in `01_Lookup`; **FKs +2 = 64** — `FK_ToolingInventoryRollSet_Stand` and `FK_ToolingInventoryRollSet_Drawer`, **the latter the first foreign key ever taken on `Drawer`**; **index statements +4 = 86** — the two filtered mount indexes, `IX_ToolingInventoryRollSet_LifecycleStatus` and the filtered-unique `UX_ToolingInventoryRollSet_SerialNo`. **Seed rows +6.** ⚠ **The column set is `[PROPOSED]`, not client-supplied** — Die, Edger and Straightener each arrived as a screenshot grid; roll sets arrived as one sentence. See `G87` and `Q92`.)*
 
 *(Previously, and still the reading for anything dated before 3 Sep:)* ⚠ **The baseline moved TWICE on 2 Sep 2026: it was then 39 tables · 62 FKs · 82 index statements · 1 procedure · 1 trigger.** The **second move is the client's reason-code lists** — `Reason Codes.xlsx`, Tim O'Brien, 1 Sep 2026, which closes actions `A4`/`A5`/`A6` of the 23 Jul call. **+4 tables** (35 → 39): **`DowntimeReason`**, **`WipRejectionReason`** and **`ItInhibitReason`** in `01_Lookup`, and **`LineDowntimeEvent`** in `04_Runs`. **FKs +4 = 62**: `FK_RunPauseEvent_DelayCode` and `FK_WipRejection_Reason` (both **composite**, so the denormalised bucket and group cannot drift from the lookup), plus `FK_LineDowntimeEvent_DelayCode` and `FK_LineDowntimeEvent_Run`. **Index statements +7 = 82.** **Seed rows +156**, and they are seeded **inline in `01_Lookup`, not in the sample data** — they are production reference data, and a production deploy runs `RunAll` without the sample-data file. ⚠ **`LineDowntimeEvent` exists because `RunPauseEvent` could not hold the `Downtime` bucket**: its `RunId` is `NOT NULL` and all 25 `DWN##` codes are line-down time. `RunPauseEvent` now takes the other three buckets (47 codes) and `CK_RunPauseEvent_Bucket` enforces the split. *(The first move, earlier the same day — 33 → 35 tables · 58 FKs · 75 index statements.)* The **die split** did it — `Drawer` was reduced to the two draw boxes `DB1`/`DB2`, and the die-size catalogue it had been holding became **`ToolingInventoryDie`**, a register of physical dies carrying `LastGrindingFeet` / `TotalFeetAllowed`, with **`DieHistory`** as its append-only life log. **+2 tables** (33 → 35). **FKs −1 +4 = 58**: `FK_PSC_Drawer` went with `PassScheduleComponent.DrawerId`, and `FK_DieChangeEvent_OldDie`, `FK_DieChangeEvent_NewDie`, `FK_DieHistory_Die`, `FK_DieHistory_Run` arrived. **Index statements −1 +6 = 75**: `IX_PSC_DrawerId` went with its column; six were added, including the filtered-unique `UX_ToolingInventoryDie_SerialNo`. **Seed rows: −13 `Drawer` size rows, +2 `Drawer` boxes, +14 dies** — the fourteenth is a 0.2980 die that `DieChangeEvent` `DC-0001` has always referenced without the catalogue ever carrying that size. `DieHistory` is deliberately unseeded. **Seed rows measured at 254** on the deploy below — 251 − 13 + 2 + 14, and the first time that figure has been confirmed by anything at all. This closes **`OI-41`**, open since April, and supersedes **`Q90`** — `Drawer` is *not* renamed, because the name is now correct.
 >
@@ -59,12 +59,12 @@ The flat-wire-specific model lives in a **new standalone SQL Server database, `F
 
 | Group | Script | Count | Scope | Tables |
 |---|---|---|---|---|
-| **Lookup / Reference** | `01_Lookup` | **12** | MVP-1 | `Stand` · `Drawer` · **`ToolingInventoryDie`** · **`ToolingInventoryRollSet`** · `Edger` · **`Dancer`** · `AlloyProperty` · `PayoffPosition` · **`Spool`** · **`DowntimeReason`** · **`WipRejectionReason`** · **`ItInhibitReason`** — *the three reason lists added 2 Sep 2026 from the client's reason codes, and **seeded inline by the DDL** rather than by the sample data* — *`SpoolConfiguration` merged into `Spool` on 23 Aug 2026 (`Q60`)*; **`ToolingInventoryDie` added 2 Sep 2026 by the die split, which also reduced `Drawer` to the two draw boxes**; **`ToolingInventoryRollSet` added 3 Sep 2026 as the fourth tool type (`D-42`)** |
+| **Lookup / Reference** | `01_Lookup` | **17** | MVP-1 | `Stand` · `Drawer` · **`ToolingInventoryDie`** · **`ToolingInventoryRollSet`** · `Edger` · **`Dancer`** · `AlloyProperty` · `PayoffPosition` · **`Spool`** · **`DowntimeReason`** · **`WipRejectionReason`** · **`ItInhibitReason`** — *the three reason lists added 2 Sep 2026 from the client's reason codes, and **seeded inline by the DDL** rather than by the sample data* — *`SpoolConfiguration` merged into `Spool` on 23 Aug 2026 (`Q60`)*; **`ToolingInventoryDie` added 2 Sep 2026 by the die split, which also reduced `Drawer` to the two draw boxes**; **`ToolingInventoryRollSet` added 3 Sep 2026 as the fourth tool type (`D-42`)**; · **`SetupHandlingTimeGroup`** · **`SetupHandlingTimeElement`** · **`SetupHandlingTimeStandard`** · **`MaterialLossElement`** · **`MaterialLossStandard`** — *the five **Machine Setup** tables added 4 Sep 2026 from the client's 31 Aug field sets; the three catalogues are **seeded inline by the DDL**, like the reason lists, because a production deploy runs `RunAll` without the sample data* |
 | **Schedule** | `02_Schedule` | **3** | **MVP-1** — `D-31` | `PassSchedule` · `PassScheduleComponent` · `PassScheduleChangeLog` |
 | **Materials** | `03_Materials` | **6** | MVP-1 | `Rod` · `FlatWireRun` · `SpoolProcessing` · **`SpoolTraceability`** · **`SpoolOrder`** · **`RodOrderAllocation`** |
 | **Runs** | `04_Runs` | **13** | MVP-1 | `FlatWireRunDetail` · `RodStaging` · `RodCheckin` · `SpoolCheckin` · **`SpoolStaging`** · `RunPauseEvent` · **`LineDowntimeEvent`** · `WeldEvent` · `RollOverride` · `DieChangeEvent` · **`DieHistory`** · `RunReading` · **`RodOrderConsumption`** |
 | **Quality / Output** | `05_QualityOutput` | **6** | MVP-1 | `SpcCheckpoint` · `SpcMeasurement` · `WipRejection` · `CoilOutput` · `CoilTraceability` · `RodCheckout` |
-| | | **40** | **MVP-1 = the full design** | one figure since `D-31`; **34 → 33 on 23 Aug 2026** when `SpoolConfiguration` merged into `Spool`, then **33 → 35 on 2 Sep 2026** with the die split, then **35 → 39 later the same day** with the client's three reason-code lookups and `LineDowntimeEvent`, then **39 → 40 on 3 Sep 2026** with `ToolingInventoryRollSet`; `FlatWire_DDL_RunAll.sql` builds all of it |
+| | | **45** | **MVP-1 = the full design** | one figure since `D-31`; **34 → 33 on 23 Aug 2026** when `SpoolConfiguration` merged into `Spool`, then **33 → 35 on 2 Sep 2026** with the die split, then **35 → 39 later the same day** with the client's three reason-code lookups and `LineDowntimeEvent`, then **39 → 40 on 3 Sep 2026** with `ToolingInventoryRollSet`, then **40 → 45 on 4 Sep 2026** with the five Machine Setup tables; `FlatWire_DDL_RunAll.sql` builds all of it |
 
 ### This is the only site that defines the object counts
 
@@ -711,6 +711,45 @@ erDiagram
         bit IsNewForFlatWire
         bit IsActive "0 on the four PLC-8.2-only rows"
     }
+    SetupHandlingTimeGroup {
+        int Id PK
+        varchar GroupCode UK "S1 | H1A | H1AA | R | H1B | S2 | H2"
+        varchar GroupLabel "client wording; 4 renamed from the Slitter template"
+        int Sequence UK "1-7, left to right as pictured"
+        bit IsActive
+    }
+    SetupHandlingTimeElement {
+        int Id PK
+        varchar LineId "FL1 | FL2 | FL3 - all three, unlike the tooling registers"
+        int GroupId FK
+        varchar ElementLabel "unique per LineId+GroupId, NOT per label"
+        int Sequence "order within LineId+GroupId, as pictured"
+        bit IsActive
+    }
+    SetupHandlingTimeStandard {
+        int Id PK
+        int ElementId FK
+        tinyint CrewSize "PROPOSED - vocabulary is united_db lookups cat 4061"
+        decimal StandardMinutes "minutes; DECIMAL, not the legacy FLOAT"
+        varchar CreatedBy
+        varchar ModifiedBy
+        rowversion RowVersion "the legacy table has no PK at all"
+    }
+    MaterialLossElement {
+        int Id PK
+        varchar LineId "FL1 | FL2 | FL3"
+        varchar ElementLabel "80 chars - the Pass Change label is 65"
+        int Sequence "order within LineId, as pictured"
+        bit IsActive
+    }
+    MaterialLossStandard {
+        int Id PK
+        int ElementId UK "1:1 with the catalogue, on purpose"
+        decimal StandardLossFt "FEET, per the FL1 grid footer"
+        varchar CreatedBy
+        varchar ModifiedBy
+        rowversion RowVersion
+    }
     AlloyProperty      ||--o{ PassSchedule : "Alloy"
     Stand              ||--o{ PassScheduleComponent : "StandId"
     Edger              ||--o{ PassScheduleComponent : "EdgerId"
@@ -722,6 +761,9 @@ erDiagram
     DowntimeReason     ||--o{ RunPauseEvent : "DelayCode + DelayBucket"
     DowntimeReason     ||--o{ LineDowntimeEvent : "DelayCode"
     WipRejectionReason ||--o{ WipRejection : "ReasonCode + RejectionGroup"
+    SetupHandlingTimeGroup   ||--o{ SetupHandlingTimeElement : "GroupId"
+    SetupHandlingTimeElement ||--o{ SetupHandlingTimeStandard : "ElementId (one per CrewSize)"
+    MaterialLossElement      ||--|| MaterialLossStandard : "ElementId"
 ```
 
 **In prose:** **eleven** reference tables, all soft-deleted by `IsActive` — `Dancer` and `Spool` included, and since 2 Sep 2026 the three client reason-code vocabularies. **`PayoffPosition` is no longer the only one with DDL-side seed data**: `DowntimeReason`, `WipRejectionReason` and `ItInhibitReason` are seeded inline by `01_Lookup` too, because they are production reference data and a production deploy runs `RunAll` without the sample-data file. Only `PayoffPosition` has pinned (non-IDENTITY) keys, because FK targets must exist before the DDL that references them runs.

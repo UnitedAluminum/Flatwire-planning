@@ -1,7 +1,7 @@
 # Flat Wire Mill — Vision & Scope
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 25, 2026 — the line-capability table records FL2 pre-check-in (`FR-533`); object count 34 → 33; effort points at `[CE §3e]` *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `SC-01` retargeted to `Rod.Status`; **`RISK-05` retired** and replaced by the narrower **`OI-111`**; §1’s “largest single blast radius” claim withdrawn *(previously August 15, 2026 — **`RISK-06` retired** and the *unverified assumption* callout restated: all six roles exist as JWT claims on `ClaimTypes.Role` (`G6`/`OI-37`))*)*
+**Last Updated:** September 4, 2026 — the *Future enhancements* list re-pointed: the die-life predictive bullet now names its successor, `AI-08` in the new `[AI]` opportunity assessment, and the anneal bullet cross-references `AI-28`. **Nothing else in this document changes** — `[AI]` is direction only, mints no register id and moves no scope *(previously August 25, 2026 — the line-capability table records FL2 pre-check-in (`FR-533`); object count 34 → 33; effort points at `[CE §3e]` *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `SC-01` retargeted to `Rod.Status`; **`RISK-05` retired** and replaced by the narrower **`OI-111`**; §1’s “largest single blast radius” claim withdrawn *(previously August 15, 2026 — **`RISK-06` retired** and the *unverified assumption* callout restated: all six roles exist as JWT claims on `ClaimTypes.Role` (`G6`/`OI-37`))*)*)*
 **Document Type:** Vision & Scope
 **Status:** Baselined — open items in §13; the schedule position in §11 requires a programme decision
 **Owner:** Programme management
@@ -319,7 +319,7 @@ New contradictions found while producing these seven documents, not present in a
 - Full spool state machine (OQ-17) and formal partial-rod carry-forward (OQ-12). *The `PRC007`/`PRC008` gate now fires at the Dashboard 2A staging scan, so a partial rod is caught before it is mounted; the full carry-forward accounting remains post-go-live.*
 - Rolls-in-Flattening report, extended SCADA history, WIP Log enhancements (Low priority).
 - Message broker (Kafka/RabbitMQ) if AGC throughput outgrows SignalR (revisit post-go-live).
-- Die-life predictive thresholds once failure data exists (OQ-83).
-- Anneal scheduling rules (OI-64) and shared anneal-furnace capacity (OI-64).
+- Die-life predictive thresholds once failure data exists (OQ-83) — **now carried as `AI-08` in [`AIOpportunities.md`](AIOpportunities.md) `[AI]`**, which is where this bullet's successors live. `[AI]` is **direction only and mints no register id**; it holds the wider AI opportunity assessment, including what to capture during the trial so these options stay open. It does not change this list's status: everything here remains post-go-live.
+- Anneal scheduling rules (OI-64) and shared anneal-furnace capacity (OI-64) — see also `[AI]` `AI-28`.
 
 ---

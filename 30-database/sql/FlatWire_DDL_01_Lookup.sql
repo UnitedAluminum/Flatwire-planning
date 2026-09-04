@@ -3,7 +3,19 @@
 -- Run order : 01 of 09
 -- Tables    : Stand, Drawer, ToolingInventoryDie, ToolingInventoryRollSet,
 --             Edger, Dancer, AlloyProperty, PayoffPosition, Spool,
---             DowntimeReason, WipRejectionReason, ItInhibitReason   (12)
+--             DowntimeReason, WipRejectionReason, ItInhibitReason,
+--             SetupHandlingTimeGroup, SetupHandlingTimeElement,
+--             SetupHandlingTimeStandard, MaterialLossElement,
+--             MaterialLossStandard   (17)
+--
+-- Sep-4-2026: the five MACHINE SETUP tables added -- the Setup/Handling
+-- Times and Material Loss tabs of the Machines Application, from Tim
+-- O'Brien's per-line field sets of 31 Aug 2026. Three catalogues (seeded
+-- inline here, 144 rows) plus two value tables created EMPTY, because the
+-- numbers are the Naj/Bob/Tim standards spreadsheet and it is not
+-- finished. See the section header before SetupHandlingTimeGroup below --
+-- it carries the why-not-the-legacy-shape argument and the three costs of
+-- putting these in FlatWireDB rather than united_db. OI-110 STAYS OPEN.
 --
 -- Sep-3-2026: ToolingInventoryRollSet added. The client's Tooling Inventory
 -- tab carries FOUR tool types, not three -- Die, Edger, Straightener and now
@@ -1077,4 +1089,502 @@ BEGIN
 END
 ELSE
     PRINT 'ItInhibitReason already seeded -- skipped';
+GO
+
+
+-- ============================================================
+-- MACHINE SETUP APPLICATION -- Setup/Handling Times and Material Loss
+-- Added Sep-4-2026.  Five tables, from Tim O'Brien's field sets of
+-- 31 Aug 2026 (delivered as screenshot grids; see the 31 Aug client
+-- mail analysis sections 3.2 and 3.4).
+--
+-- THE CLIENT'S INSTRUCTION IS THE DESIGN: "Please include the fields
+-- pictured below, in the order pictured, all others will be removed",
+-- said of each tab SEPARATELY FOR FL1, FL2 AND FL3 -- "this will be
+-- different for FL1 & FL2/FL3 as each machine has its own capabilities."
+--
+-- WHY NOT THE LEGACY SHAPE.  united_db.dbo.Slitters_Standards (32 float
+-- columns) and united_db.dbo.machine_mill_material_loss (36 float columns)
+-- are FORM-SHAPED: one column per field, order encoded in COLUMN ORDER.
+-- Flat Wire needs 56 setup elements and 16 loss elements across three
+-- lines, the client has already revised both lists twice, and two of the
+-- FL3 rows are still disputed -- so membership AND order are DATA here,
+-- not DDL.  united_db.dbo.MaterialLossStandardMapping is UA's own move in
+-- the same direction (StandardComponent varchar + MaterialLoss decimal).
+--
+-- CATALOGUE vs VALUES, and why they are separate tables.  The three
+-- catalogues are CLIENT-SUPPLIED PRODUCTION REFERENCE DATA and are seeded
+-- inline below, like DowntimeReason.  The two *Standard tables hold the
+-- NUMBERS, which do not exist yet: they are the Naj/Bob/Tim standards
+-- spreadsheet, FW-003's open external dependency.  Keeping them apart is
+-- what makes "the DDL seeds the catalogue and never the values" true
+-- STRUCTURALLY -- share one table and RunAll would insert rows that get
+-- UPDATEd with real standards, after which the IF NOT EXISTS seed guard
+-- stops firing and a teardown/rebuild silently destroys them.
+--
+-- OI-110 IS NOT CLOSED BY THIS.  Which database the Machine Setup tabs
+-- write to is still unanswered, and the evidence actually points at
+-- united_db: every other tab persists to a united_db satellite FK'd to
+-- united_db.dbo.machines, and 10_CommonDB_Insert_WIPStations_FlatWire.sql
+-- says the template tabs "live in satellite tables ... and are separate
+-- work".  FlatWireDB is the D-02/D-31 decision, and it costs three things:
+--   1. NO FK to machines is possible (cross-database).  The app must map
+--      machines.machine_idx 125/126/127 -> FL1/FL2/FL3 ITSELF, and nothing
+--      here enforces it -- a wrong mapping writes one line's standards
+--      onto another and no constraint will catch it.
+--   2. The legacy app must reach cross-database to read and write these.
+--   3. The History tab reads united_db.dbo.AuditTrail, NOT these tables,
+--      so the app must keep writing AuditTrail or that tab shows nothing.
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- SetupHandlingTimeGroup
+-- The seven column headings of the STANDARD SPECIFICATIONS page, in the
+-- client's left-to-right order.  Four are RENAMED from the Slitter
+-- template this tab was copied from:
+--   S1  "Setup Before 1st SPC"  -> "Setup Before Run"
+--   H1A "Handling Before SPC"   -> "Handling Before Reduction"
+--   R   "Slitter Run"           -> "Flattening Line Run"
+--   H2  "...From Rewind"        -> "...From Takeup"
+-- H1AA, H1B and S2 keep their wording.
+--
+-- SEVEN IS STRUCTURAL, not policed: CK_..._GroupCode admits only these
+-- codes and UQ_..._GroupCode makes each unique, so an eighth group is
+-- impossible without a schema change.  Same idiom as CK_Drawer_Name.
+--
+-- Sequence is NOT cosmetic.  The Slitter template lays these out in a
+-- 3-column block; the client's Flat Wire grids lay them out in ONE row,
+-- S1 H1A H1AA R H1B S2 H2.  That is "the order pictured".
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SetupHandlingTimeGroup]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[SetupHandlingTimeGroup] (
+        [Id]         INT         NOT NULL IDENTITY(1,1),
+        [GroupCode]  VARCHAR(5)  NOT NULL,               -- S1 | H1A | H1AA | R | H1B | S2 | H2
+        [GroupLabel] VARCHAR(60) NOT NULL,               -- longest is H1AA's at 52 chars
+        [Sequence]   INT         NOT NULL,               -- 1..7, left to right as pictured
+        [IsActive]   BIT         NOT NULL CONSTRAINT [DF_SetupHandlingTimeGroup_IsActive] DEFAULT (1),
+
+        CONSTRAINT [PK_SetupHandlingTimeGroup]           PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [UQ_SetupHandlingTimeGroup_GroupCode] UNIQUE ([GroupCode]),
+        CONSTRAINT [UQ_SetupHandlingTimeGroup_Sequence]  UNIQUE ([Sequence]),
+        CONSTRAINT [CK_SetupHandlingTimeGroup_GroupCode] CHECK ([GroupCode] IN ('S1','H1A','H1AA','R','H1B','S2','H2'))
+    );
+    PRINT 'Created table: SetupHandlingTimeGroup';
+END
+ELSE
+    PRINT 'Table already exists: SetupHandlingTimeGroup';
+GO
+
+-- ------------------------------------------------------------
+-- SetupHandlingTimeElement
+-- One row per (line, group, element label) -- the client's grid, as data.
+-- FL1 33 elements, FL2 29, FL3 47.
+--
+-- KEYED ON GROUP + LABEL, NEVER LABEL ALONE.  Three labels legitimately
+-- appear in TWO groups each and are therefore two rows, not one:
+--   'Load Spool: Takeup-1'  in S1 and S2
+--   'Thread: Takeup-1'      in H1AA and H1B
+--   'SPC: Takeup-2'         in H1AA and H1B
+-- A label-only unique key would reject the client's own field set.
+--
+-- FL3 IS NOT THE UNION OF FL1 AND FL2 and must not be generated as one.
+-- It drops, per group: S1 'Rotate Payoff: TPO' and 'Load Spool: Takeup-1';
+-- H1A both TPO rows; H1AA 'Thread: Takeup-1'; H1B 'Remove Spool: Takeup-1'
+-- AND 'SPC: FL1-Stand 1'; S2 'Load Spool: Takeup-1'.  It adds nothing.
+--
+-- TWO DISPUTED ROWS, SEEDED AS PICTURED ON PURPOSE.  FL3 has no
+-- intermediate spool, so there is no Takeup-1 in its path -- yet
+-- 'SPC: Takeup-1' SURVIVES in FL3/H1AA while every other Takeup-1 step was
+-- dropped; and 'SPC: FL1-Stand 1' is ABSENT from FL3/H1B for no reason the
+-- material path explains.  The two point opposite ways.  DO NOT "fix"
+-- either one: the client said "in the order pictured", and a send-back is
+-- what changes them.  The FL3 counts (H1AA 15, H1B 5) are the guard.
+--
+-- CK_..._LineId admits ALL THREE LINES.  Do NOT align it with
+-- CK_ToolingInventoryDie_LineId ('FL1') or CK_TIRS_LineId ('FL1','FL2'):
+-- those drop FL3 because TOOLING is maintained for FL1/FL2 only (D-42),
+-- whereas these tabs are configured per line INCLUDING FL3 -- the client
+-- supplied a distinct FL3 grid.  Same equipment-vs-tooling distinction
+-- CK_Drawer_LineId already carries a warning about.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SetupHandlingTimeElement]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[SetupHandlingTimeElement] (
+        [Id]           INT         NOT NULL IDENTITY(1,1),
+        [LineId]       VARCHAR(5)  NOT NULL,             -- FL1 / FL2 / FL3
+        [GroupId]      INT         NOT NULL,             -- FK -> SetupHandlingTimeGroup.Id
+        [ElementLabel] VARCHAR(60) NOT NULL,             -- longest today is 27 chars; generous against revision
+        [Sequence]     INT         NOT NULL,             -- order within (LineId, GroupId), as pictured
+        [IsActive]     BIT         NOT NULL CONSTRAINT [DF_SetupHandlingTimeElement_IsActive] DEFAULT (1),
+
+        CONSTRAINT [PK_SetupHandlingTimeElement]                PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [UQ_SetupHandlingTimeElement_LineGroupLabel] UNIQUE ([LineId], [GroupId], [ElementLabel]),
+        CONSTRAINT [UQ_SetupHandlingTimeElement_LineGroupSeq]   UNIQUE ([LineId], [GroupId], [Sequence]),
+        CONSTRAINT [CK_SetupHandlingTimeElement_LineId]         CHECK ([LineId] IN ('FL1','FL2','FL3'))
+    );
+    PRINT 'Created table: SetupHandlingTimeElement';
+END
+ELSE
+    PRINT 'Table already exists: SetupHandlingTimeElement';
+GO
+
+-- ------------------------------------------------------------
+-- MaterialLossElement
+-- One row per (line, element label) for the MATERIAL LOSS tab.
+-- FL1 7 elements, FL2 9, FL3 12.
+--
+-- THE UNIT IS FEET, not minutes and not weight -- the FL1 grid's own
+-- footer reads "(Values in footage (')", and FW-003's acceptance criteria
+-- have carried "scrap in footage, not weight" since the Mill template was
+-- chosen as the source.
+--
+-- NO CREW SIZE HERE.  The STANDARD SPECIFICATIONS page has a Crew Size
+-- selector; the MATERIAL LOSS page has none, on the Mill template and on
+-- all three client grids.  Scrap footage is a property of the event.
+--
+-- 16 DISTINCT LABELS ACROSS 28 ROWS, and the two Pass Change wordings are
+-- deliberately BOTH kept: FL1 reads "(Alloy, Rod Dia., Mech Properties,
+-- Output Size)" where FL2 and FL3 read "(Alloy, Input Ga/Width, ...)".
+-- FL1 is rod-fed and FL2 is spool-fed, so the difference is real.
+--
+-- KNOWN CLIENT INCONSISTENCY, seeded verbatim: the same FL1 grid says
+-- "Threading Drawblock #1" but "Die Change Drawingblock #1".  The repo's
+-- canonical term is DB1/DB2.  Drawer's own comment block records four
+-- spellings across four surfaces and says DO NOT reconcile them until the
+-- Speed tab lands (action A12, still open) -- so this is not reconciled.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[MaterialLossElement]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[MaterialLossElement] (
+        [Id]           INT         NOT NULL IDENTITY(1,1),
+        [LineId]       VARCHAR(5)  NOT NULL,             -- FL1 / FL2 / FL3
+        [ElementLabel] VARCHAR(80) NOT NULL,             -- 80, not 60: the Pass Change label is 65 chars
+        [Sequence]     INT         NOT NULL,             -- order within LineId, as pictured
+        [IsActive]     BIT         NOT NULL CONSTRAINT [DF_MaterialLossElement_IsActive] DEFAULT (1),
+
+        CONSTRAINT [PK_MaterialLossElement]           PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [UQ_MaterialLossElement_LineLabel] UNIQUE ([LineId], [ElementLabel]),
+        CONSTRAINT [UQ_MaterialLossElement_LineSeq]   UNIQUE ([LineId], [Sequence]),
+        CONSTRAINT [CK_MaterialLossElement_LineId]    CHECK ([LineId] IN ('FL1','FL2','FL3'))
+    );
+    PRINT 'Created table: MaterialLossElement';
+END
+ELSE
+    PRINT 'Table already exists: MaterialLossElement';
+GO
+
+-- ------------------------------------------------------------
+-- SetupHandlingTimeStandard
+-- The standard time for one element at one crew size, IN MINUTES -- the
+-- page's own note is "All Standard time should be entered in minutes".
+--
+-- CREATED EMPTY, DELIBERATELY.  These numbers are the Naj/Bob/Tim
+-- standards spreadsheet, recorded on FW-003 as an unfinished EXTERNAL
+-- dependency.  Do not seed placeholder zeros: the client's grids show 0 in
+-- every cell because they are blank templates, and a zero here is
+-- indistinguishable from a real measured standard of zero.
+--
+-- CREW SIZE IS A ROW DIMENSION, verified against the legacy app rather
+-- than assumed: united_db.dbo.Slitters_Standards holds one row per
+-- (Machine_Idx, Crew_Size), Machine_GetSetupHandlingTimeForSlitter filters
+-- on BOTH, and the dropdown AutoPostBacks to re-read a different row.
+--
+-- WHY A RANGE CHECK AND NOT A LIST.  The crew-size vocabulary is DATA in
+-- the legacy system, not an enumeration: it comes from
+-- united_db.dbo.lookups where lookup_category_id = 4061
+-- (eLookUpcategory.CrewSizeForMachineStandards), and the app PARSES THE
+-- INTEGER OUT OF the description varchar column.  A hardcoded IN (...)
+-- list would reject a crew size an administrator adds there.  The 1..9
+-- bound is a sanity check, not a vocabulary.
+-- [PROPOSED] -- the bound is ours; the vocabulary needs a client answer.
+--
+-- DECIMAL, NOT THE LEGACY FLOAT.  No FLOAT or REAL column exists anywhere
+-- in FlatWireDB, and a binary float cannot hold a standard time exactly --
+-- which matters when 47 of them are summed into one FL3 setup total.
+-- DECIMAL(8,3) matches legacy slitter_standard_setup_time_S1.modified_s1
+-- and the tab's own MaxLength="8" input.
+--
+-- ROWVERSION is the fix for a real legacy defect: Slitters_Standards has
+-- NO primary key and NO index, and its save proc guards uniqueness with a
+-- racy IF NOT EXISTS, so two supervisors saving at once can duplicate a
+-- row or silently overwrite each other.  Do not port that.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SetupHandlingTimeStandard]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[SetupHandlingTimeStandard] (
+        [Id]              INT            NOT NULL IDENTITY(1,1),
+        [ElementId]       INT            NOT NULL,       -- FK -> SetupHandlingTimeElement.Id
+        [CrewSize]        TINYINT        NOT NULL,       -- [PROPOSED] vocabulary: united_db.dbo.lookups category 4061
+        [StandardMinutes] DECIMAL(8,3)   NOT NULL,       -- minutes, per the page's own note
+
+        -- ---- audit ---------------------------------------------------------
+        [CreatedBy]       VARCHAR(50)    NOT NULL,
+        [CreatedAt]       DATETIMEOFFSET NOT NULL CONSTRAINT [DF_SetupHandlingTimeStandard_CreatedAt] DEFAULT (SYSDATETIMEOFFSET()),
+        [ModifiedBy]      VARCHAR(50)    NULL,
+        [ModifiedAt]      DATETIMEOFFSET NULL,
+        [RowVersion]      ROWVERSION     NOT NULL,       -- concurrency token; the legacy table has none
+
+        CONSTRAINT [PK_SetupHandlingTimeStandard]             PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [UQ_SetupHandlingTimeStandard_ElementCrew] UNIQUE ([ElementId], [CrewSize]),
+        CONSTRAINT [CK_SetupHandlingTimeStandard_CrewSize]    CHECK ([CrewSize] BETWEEN 1 AND 9),
+        CONSTRAINT [CK_SetupHandlingTimeStandard_Minutes]     CHECK ([StandardMinutes] >= 0)
+    );
+    PRINT 'Created table: SetupHandlingTimeStandard';
+END
+ELSE
+    PRINT 'Table already exists: SetupHandlingTimeStandard';
+GO
+
+-- ------------------------------------------------------------
+-- MaterialLossStandard
+-- The standard scrap footage for one material-loss element.  One row per
+-- element -- no crew size, see MaterialLossElement.
+--
+-- CREATED EMPTY, and this one has a second reason beyond the standards
+-- spreadsheet: G82 records that the threading footage specifically is
+-- pending "the actual footage for these events through testing", and the
+-- client's grids arrived with EVERY value blank.  Do not invent a quantity.
+--
+-- 1:1 WITH MaterialLossElement AND STILL A SEPARATE TABLE -- see the
+-- catalogue-vs-values note in this section's header.  The short version:
+-- the catalogue is DDL-seeded, these values are typed by a human, and
+-- mixing the two would let a teardown/rebuild destroy real standards.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[MaterialLossStandard]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[MaterialLossStandard] (
+        [Id]             INT            NOT NULL IDENTITY(1,1),
+        [ElementId]      INT            NOT NULL,        -- FK -> MaterialLossElement.Id
+        [StandardLossFt] DECIMAL(10,2)  NOT NULL,        -- FEET, per the FL1 grid footer
+
+        -- ---- audit ---------------------------------------------------------
+        [CreatedBy]      VARCHAR(50)    NOT NULL,
+        [CreatedAt]      DATETIMEOFFSET NOT NULL CONSTRAINT [DF_MaterialLossStandard_CreatedAt] DEFAULT (SYSDATETIMEOFFSET()),
+        [ModifiedBy]     VARCHAR(50)    NULL,
+        [ModifiedAt]     DATETIMEOFFSET NULL,
+        [RowVersion]     ROWVERSION     NOT NULL,
+
+        CONSTRAINT [PK_MaterialLossStandard]         PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [UQ_MaterialLossStandard_Element] UNIQUE ([ElementId]),
+        CONSTRAINT [CK_MaterialLossStandard_LossFt]  CHECK ([StandardLossFt] >= 0)
+    );
+    PRINT 'Created table: MaterialLossStandard';
+END
+ELSE
+    PRINT 'Table already exists: MaterialLossStandard';
+GO
+
+-- ------------------------------------------------------------
+-- SEED: SetupHandlingTimeGroup, SetupHandlingTimeElement,
+--       MaterialLossElement
+--
+-- SEEDED HERE, INLINE, not in FlatWire_SampleData_Lookup.sql -- these are
+-- PRODUCTION REFERENCE DATA (the client's own field sets), and a
+-- production deploy runs RunAll WITHOUT the sample data.  Seeded there
+-- instead, both Machine Setup tabs would come up EMPTY in production while
+-- looking perfectly healthy anywhere the fixtures had been loaded.  Same
+-- reasoning as DowntimeReason / WipRejectionReason / ItInhibitReason.
+--
+-- NO IDENTITY_INSERT and NO PINNED IDS.  Ids are irrelevant here; the
+-- codes and labels are the keys.  IDENTITY_INSERT with a pinned-Id map is
+-- the SAMPLE-DATA idiom (Stand.Id 1-4), needed only when another seed file
+-- references the values.  The element seed below resolves GroupId by
+-- JOINING ON GroupCode, so nothing depends on IDENTITY allocation.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SetupHandlingTimeGroup])
+BEGIN
+    INSERT INTO [dbo].[SetupHandlingTimeGroup] ([GroupCode],[GroupLabel],[Sequence],[IsActive])
+    VALUES
+      ('S1',    'Setup Before Run',                                      1, 1)
+    , ('H1A',   'Handling Before Reduction',                             2, 1)
+    , ('H1AA',  'Handling After Loading Payoff/Before Running Machine',  3, 1)
+    , ('R',     'Flattening Line Run',                                   4, 1)
+    , ('H1B',   'Handling After Running Stop',                           5, 1)
+    , ('S2',    'Setup Time Between Stops',                              6, 1)
+    , ('H2',    'Handling After Removing Stop From Takeup',              7, 1)
+    ;
+
+    PRINT 'Seeded: SetupHandlingTimeGroup (7 rows)';
+END
+ELSE
+    PRINT 'SetupHandlingTimeGroup already seeded -- skipped';
+GO
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SetupHandlingTimeElement])
+BEGIN
+    -- C5-OK: SetupHandlingTimeElement.GroupId
+    -- Resolved by joining the VALUES list on GroupCode against the
+    -- SetupHandlingTimeGroup seed above, which runs in this same script.
+    -- Not positional and not a pinned IDENTITY value, so the C5 seed-order
+    -- check cannot verify it positionally -- hence this explicit marker.
+    INSERT INTO [dbo].[SetupHandlingTimeElement] ([LineId],[GroupId],[ElementLabel],[Sequence],[IsActive])
+    SELECT v.[LineId], g.[Id], v.[ElementLabel], v.[Sequence], 1
+    FROM (VALUES
+        -- ---- FL1 : 33 elements ----------------------------
+          ('FL1', 'S1',    'Lower Payoff: VPS',            1)
+        , ('FL1', 'S1',    'Raise Payoff: VPS',            2)
+        , ('FL1', 'S1',    'Die Change: DB1/DB2',          3)
+        , ('FL1', 'S1',    'Fill Die Lubricant: DB1/DB2',  4)
+        , ('FL1', 'S1',    'Set Wire Straightener',        5)
+        , ('FL1', 'S1',    'Straightener Roll Change',     6)
+        , ('FL1', 'S1',    'Open Stand Rolls',             7)
+        , ('FL1', 'S1',    'Close Stand Rolls',            8)
+        , ('FL1', 'S1',    'Jog Capstan: DB1',             9)
+        , ('FL1', 'S1',    'Jog Capstan: DB2',            10)
+        , ('FL1', 'S1',    'Jog: FL1-Stand 1',            11)
+        , ('FL1', 'S1',    'Load Spool: Takeup-1',        12)
+        , ('FL1', 'H1A',   'Load & Prep Bundle: VPS',      1)
+        , ('FL1', 'H1A',   'SPC - Payoff: VPS',            2)
+        , ('FL1', 'H1A',   'Weld/Anneal Rod Ends: VPS',    3)
+        , ('FL1', 'H1A',   'Thread Payoff: VPS',           4)
+        , ('FL1', 'H1AA',  'Pull Point wire Rod: DB1',     1)
+        , ('FL1', 'H1AA',  'Thread Capstan: DB1',          2)
+        , ('FL1', 'H1AA',  'SPC: DB1',                     3)
+        , ('FL1', 'H1AA',  'Pull Point wire Rod: DB2',     4)
+        , ('FL1', 'H1AA',  'Thread Capstan: DB2',          5)
+        , ('FL1', 'H1AA',  'SPC: DB2',                     6)
+        , ('FL1', 'H1AA',  'Thread: FL1-Stand 1',          7)
+        , ('FL1', 'H1AA',  'Thread: Takeup-1',             8)
+        , ('FL1', 'H1AA',  'SPC: Takeup-1',                9)
+        , ('FL1', 'H1AA',  'Torch Test',                  10)
+        , ('FL1', 'H1AA',  'Conductivity',                11)
+        , ('FL1', 'R',     'Run',                          1)
+        , ('FL1', 'H1B',   'Cut and secure coil end',      1)
+        , ('FL1', 'H1B',   'SPC: FL1-Stand 1',             2)
+        , ('FL1', 'H1B',   'Remove Spool: Takeup-1',       3)
+        , ('FL1', 'H1B',   'Thread: Takeup-1',             4)
+        , ('FL1', 'S2',    'Load Spool: Takeup-1',         1)
+
+        -- ---- FL2 : 29 elements ----------------------------
+        , ('FL2', 'S1',    'Rotate Payoff: TPO',           1)
+        , ('FL2', 'S1',    'Open Stand Rolls',             2)
+        , ('FL2', 'S1',    'Close Stand Rolls',            3)
+        , ('FL2', 'S1',    'Jog: FL2-Stand 1',             4)
+        , ('FL2', 'S1',    'Jog: FL2-Stand 2',             5)
+        , ('FL2', 'S1',    'Jog: FL2-Stand 3',             6)
+        , ('FL2', 'S1',    'Set: Edger-1',                 7)
+        , ('FL2', 'S1',    'Set: Edger-2',                 8)
+        , ('FL2', 'S1',    'Open Edgers',                  9)
+        , ('FL2', 'S1',    'Close Edgers',                10)
+        , ('FL2', 'S1',    'Edger Roll Change',           11)
+        , ('FL2', 'H1A',   'Load & Prep Spool: TPO',       1)
+        , ('FL2', 'H1A',   'SPC - Payoff: TPO',            2)
+        , ('FL2', 'H1AA',  'Thread: FL2-Stand 1',          1)
+        , ('FL2', 'H1AA',  'Thread: FL2-Stand 2',          2)
+        , ('FL2', 'H1AA',  'Thread: FL2-Stand 3',          3)
+        , ('FL2', 'H1AA',  'Thread Takeup: Takeup-2',      4)
+        , ('FL2', 'H1AA',  'SPC: Takeup-2',                5)
+        , ('FL2', 'H1AA',  'Torch Test',                   6)
+        , ('FL2', 'H1AA',  'Conductivity',                 7)
+        , ('FL2', 'R',     'Run',                          1)
+        , ('FL2', 'H1B',   'Cut and secure coil end',      1)
+        , ('FL2', 'H1B',   'SPC: Takeup-2',                2)
+        , ('FL2', 'H1B',   'Band ID/OD x 4',               3)
+        , ('FL2', 'H1B',   'Collapse Mandrel',             4)
+        , ('FL2', 'H1B',   'Push Off Stop',                5)
+        , ('FL2', 'S2',    'Expand Mandrel',               1)
+        , ('FL2', 'H2',    'Stop to Skid',                 1)
+        , ('FL2', 'H2',    'Band Skid',                    2)
+
+        -- ---- FL3 : 47 elements ----------------------------
+        , ('FL3', 'S1',    'Lower Payoff: VPS',            1)
+        , ('FL3', 'S1',    'Raise Payoff: VPS',            2)
+        , ('FL3', 'S1',    'Die Change: DB1/DB2',          3)
+        , ('FL3', 'S1',    'Fill Die Lubricant: DB1/DB2',  4)
+        , ('FL3', 'S1',    'Set Wire Straightener',        5)
+        , ('FL3', 'S1',    'Straightener Roll Change',     6)
+        , ('FL3', 'S1',    'Open Stand Rolls',             7)
+        , ('FL3', 'S1',    'Close Stand Rolls',            8)
+        , ('FL3', 'S1',    'Jog Capstan: DB1',             9)
+        , ('FL3', 'S1',    'Jog Capstan: DB2',            10)
+        , ('FL3', 'S1',    'Jog: FL1-Stand 1',            11)
+        , ('FL3', 'S1',    'Jog: FL2-Stand 1',            12)
+        , ('FL3', 'S1',    'Jog: FL2-Stand 2',            13)
+        , ('FL3', 'S1',    'Jog: FL2-Stand 3',            14)
+        , ('FL3', 'S1',    'Set: Edger-1',                15)
+        , ('FL3', 'S1',    'Set: Edger-2',                16)
+        , ('FL3', 'S1',    'Open Edgers',                 17)
+        , ('FL3', 'S1',    'Close Edgers',                18)
+        , ('FL3', 'S1',    'Edger Roll Change',           19)
+        , ('FL3', 'H1A',   'Load & Prep Bundle: VPS',      1)
+        , ('FL3', 'H1A',   'SPC - Payoff: VPS',            2)
+        , ('FL3', 'H1A',   'Weld/Anneal Rod Ends: VPS',    3)
+        , ('FL3', 'H1A',   'Thread Payoff: VPS',           4)
+        , ('FL3', 'H1AA',  'Pull Point wire Rod: DB1',     1)
+        , ('FL3', 'H1AA',  'Thread Capstan: DB1',          2)
+        , ('FL3', 'H1AA',  'SPC: DB1',                     3)
+        , ('FL3', 'H1AA',  'Pull Point wire Rod: DB2',     4)
+        , ('FL3', 'H1AA',  'Thread Capstan: DB2',          5)
+        , ('FL3', 'H1AA',  'SPC: DB2',                     6)
+        , ('FL3', 'H1AA',  'Thread: FL1-Stand 1',          7)
+        , ('FL3', 'H1AA',  'SPC: Takeup-1',                8)
+        , ('FL3', 'H1AA',  'Thread: FL2-Stand 1',          9)
+        , ('FL3', 'H1AA',  'Thread: FL2-Stand 2',         10)
+        , ('FL3', 'H1AA',  'Thread: FL2-Stand 3',         11)
+        , ('FL3', 'H1AA',  'Thread Takeup: Takeup-2',     12)
+        , ('FL3', 'H1AA',  'SPC: Takeup-2',               13)
+        , ('FL3', 'H1AA',  'Torch Test',                  14)
+        , ('FL3', 'H1AA',  'Conductivity',                15)
+        , ('FL3', 'R',     'Run',                          1)
+        , ('FL3', 'H1B',   'Cut and secure coil end',      1)
+        , ('FL3', 'H1B',   'SPC: Takeup-2',                2)
+        , ('FL3', 'H1B',   'Band ID/OD x 4',               3)
+        , ('FL3', 'H1B',   'Collapse Mandrel',             4)
+        , ('FL3', 'H1B',   'Push Off Stop',                5)
+        , ('FL3', 'S2',    'Expand Mandrel',               1)
+        , ('FL3', 'H2',    'Stop to Skid',                 1)
+        , ('FL3', 'H2',    'Band Skid',                    2)
+    ) AS v([LineId], [GroupCode], [ElementLabel], [Sequence])
+    JOIN [dbo].[SetupHandlingTimeGroup] g ON g.[GroupCode] = v.[GroupCode];
+
+    PRINT 'Seeded: SetupHandlingTimeElement (109 rows -- FL1 33, FL2 29, FL3 47)';
+END
+ELSE
+    PRINT 'SetupHandlingTimeElement already seeded -- skipped';
+GO
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[MaterialLossElement])
+BEGIN
+    INSERT INTO [dbo].[MaterialLossElement] ([LineId],[ElementLabel],[Sequence],[IsActive])
+    VALUES
+      -- ---- FL1 : 7 elements ----------------------------
+      ('FL1', 'Threading Drawblock #1',                                             1, 1)
+    , ('FL1', 'Threading Drawblock #2',                                             2, 1)
+    , ('FL1', 'Threading FL1-Stand #1',                                             3, 1)
+    , ('FL1', 'Die Change Drawingblock #1',                                         4, 1)
+    , ('FL1', 'Die Change Drawingblock #2',                                         5, 1)
+    , ('FL1', 'Straightener Roll Change',                                           6, 1)
+    , ('FL1', 'Pass Change (Alloy, Rod Dia., Mech Properties, Output Size)',        7, 1)
+
+      -- ---- FL2 : 9 elements ----------------------------
+    , ('FL2', 'OD Buildup Loss Previous Oper Furnace',                              1, 1)
+    , ('FL2', 'OD Buildup Loss Previous Oper Flatten',                              2, 1)
+    , ('FL2', 'OD Buildup Loss Previous Oper Other',                                3, 1)
+    , ('FL2', 'Edger #1 Roll Change',                                               4, 1)
+    , ('FL2', 'Edger #2 Roll Change',                                               5, 1)
+    , ('FL2', 'Pass Change (Alloy, Input Ga/Width, Mech Properties, Output Size)',  6, 1)
+    , ('FL2', 'Threading FL2-Stand #1',                                             7, 1)
+    , ('FL2', 'Threading FL2-Stand #2',                                             8, 1)
+    , ('FL2', 'Threading FL2-Stand #3',                                             9, 1)
+
+      -- ---- FL3 : 12 elements ----------------------------
+    , ('FL3', 'Threading Drawblock #1',                                             1, 1)
+    , ('FL3', 'Threading Drawblock #2',                                             2, 1)
+    , ('FL3', 'Threading FL1-Stand #1',                                             3, 1)
+    , ('FL3', 'Die Change Drawingblock #1',                                         4, 1)
+    , ('FL3', 'Die Change Drawingblock #2',                                         5, 1)
+    , ('FL3', 'Straightener Roll Change',                                           6, 1)
+    , ('FL3', 'Edger #1 Roll Change',                                               7, 1)
+    , ('FL3', 'Edger #2 Roll Change',                                               8, 1)
+    , ('FL3', 'Threading FL2-Stand #1',                                             9, 1)
+    , ('FL3', 'Threading FL2-Stand #2',                                            10, 1)
+    , ('FL3', 'Threading FL2-Stand #3',                                            11, 1)
+    , ('FL3', 'Pass Change (Alloy, Input Ga/Width, Mech Properties, Output Size)', 12, 1)
+    ;
+
+    PRINT 'Seeded: MaterialLossElement (28 rows -- FL1 7, FL2 9, FL3 12)';
+END
+ELSE
+    PRINT 'MaterialLossElement already seeded -- skipped';
 GO

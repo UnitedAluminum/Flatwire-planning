@@ -482,3 +482,228 @@ Why the `ITInhibit` tag is set. The mechanism is `[PLC §8]`; this is the vocabu
 > ⚠ **`ITINH007 Supervisor Monitor` survives an answer that removes it.** The same mail's answer 9 is a flat **"No"** to a dedicated Supervisor Monitor, superseding `C13`'s *"desired but not required"*. The sheet still marks the reason as applying, and one attached screenshot shows *"Supervisor monitoring"* live on a real machine. A *screen* and *a supervisor is presently monitoring* are different things; which one sets this is owed back.
 
 > **Not modelled, and on both real screenshots the client attached:** a **`Call Supervisor`** action on the inhibit dialog. It appears in no requirement.
+
+---
+
+## The Machine Setup application tables
+
+The **Setup/Handling Times** and **Material Loss** tabs of the Machines Application, from Tim
+O'Brien's per-line field sets of 31 Aug 2026. Five tables: three **catalogues** holding the
+client's field lists (seeded inline by the DDL, 144 rows) and two **value** tables holding the
+numbers, created empty.
+
+> ⛔ **`OI-110` is not closed by these tables.** Which database the Machine Setup tabs write to is
+> still unanswered, and the evidence points at `united_db` — every other tab of that application
+> persists to a `united_db` satellite keyed on `united_db.dbo.machines`, and
+> `10_CommonDB_Insert_WIPStations_FlatWire.sql` records the template tabs as *"satellite
+> tables … separate work"*. `FlatWireDB` is the `D-02` / `D-31` decision and it costs three
+> things: **no foreign key to `machines` is possible** (cross-database), so the app must map
+> `machine_idx` **125/126/127 → `FL1`/`FL2`/`FL3`** itself with nothing enforcing it; the legacy
+> app must reach cross-database; and **the History tab reads `united_db.dbo.AuditTrail`, not
+> these tables**, so it keeps needing an `AuditTrail` write or it shows nothing.
+
+> ⚠ **These are deliberately not the legacy shape.** `united_db.dbo.Slitters_Standards` (32
+> `float` columns) and `united_db.dbo.machine_mill_material_loss` (36 `float` columns) are
+> form-shaped: one column per field, **order encoded in column order**. The client's instruction
+> was *"include the fields pictured below, **in the order pictured**"*, said separately for FL1,
+> FL2 and FL3 — so membership and order are **data** here. `united_db.dbo.MaterialLossStandardMapping`
+> is UA's own move in the same direction.
+
+---
+
+## `SetupHandlingTimeGroup`
+
+The seven column headings of the STANDARD SPECIFICATIONS page, in the client's left-to-right
+order. Four are renamed from the Slitter template the tab was copied from; `H1AA`, `H1B` and `S2`
+keep their wording.
+
+| Column | Data Type | Nullable | FK Reference | Description |
+|---|---|---|---|---|
+| `Id` | int | NOT NULL | — | Surrogate primary key |
+| `GroupCode` | varchar(5) | NOT NULL UNIQUE | — | `S1` · `H1A` · `H1AA` · `R` · `H1B` · `S2` · `H2` |
+| `GroupLabel` | varchar(60) | NOT NULL | — | The heading as the client wrote it. Longest is `H1AA`'s, 52 characters |
+| `Sequence` | int | NOT NULL UNIQUE | — | `1`–`7`, left to right as pictured |
+| `IsActive` | bit | NOT NULL | — | `1` = shown on the tab |
+
+**Allowed values — `GroupCode`:**
+
+| Code | Flat Wire label | Slitter label it replaced |
+|---|---|---|
+| `S1` | Setup Before Run | Setup Before 1st SPC |
+| `H1A` | Handling Before Reduction | Handling Before SPC |
+| `H1AA` | Handling After Loading Payoff/Before Running Machine | *unchanged* |
+| `R` | Flattening Line Run | Slitter Run |
+| `H1B` | Handling After Running Stop | *unchanged* |
+| `S2` | Setup Time Between Stops | *unchanged* |
+| `H2` | Handling After Removing Stop From Takeup | …From **Rewind** |
+
+**Constraints:**
+- `UQ_SetupHandlingTimeGroup_GroupCode` — `GroupCode` is unique
+- `UQ_SetupHandlingTimeGroup_Sequence` — `Sequence` is unique
+- `CK_SetupHandlingTimeGroup_GroupCode` — one of the seven codes above
+
+**Seed rows** (created by the DDL): **7**.
+
+> ⚠ **`Sequence` is not cosmetic.** The Slitter template lays these headings out in a 3-column
+> block; all three client grids lay them out in **one row** — `S1 H1A H1AA R H1B S2 H2`. That
+> ordering *is* "the order pictured", so it is stored rather than implied.
+
+> **Seven is structural, not policed.** `CK_…_GroupCode` admits only these codes and
+> `UQ_…_GroupCode` makes each unique, so an eighth group is impossible without a schema change —
+> the `CK_Drawer_Name` + `UQ_Drawer_Name` idiom.
+
+---
+
+## `SetupHandlingTimeElement`
+
+One row per (line, group, element label) — the client's grid as data. **FL1 33 · FL2 29 · FL3 47.**
+
+| Column | Data Type | Nullable | FK Reference | Description |
+|---|---|---|---|---|
+| `Id` | int | NOT NULL | — | Surrogate primary key |
+| `LineId` | varchar(5) | NOT NULL | — | `FL1` / `FL2` / `FL3` |
+| `GroupId` | int | NOT NULL | `SetupHandlingTimeGroup.Id` | Which of the seven headings this element sits under |
+| `ElementLabel` | varchar(60) | NOT NULL | — | The element as the client wrote it. Longest today is 27 characters; the width is deliberately generous against revision |
+| `Sequence` | int | NOT NULL | — | Order within `(LineId, GroupId)`, as pictured |
+| `IsActive` | bit | NOT NULL | — | `1` = shown on the tab |
+
+**Constraints:**
+- `UQ_SetupHandlingTimeElement_LineGroupLabel` — `(LineId, GroupId, ElementLabel)` is unique
+- `UQ_SetupHandlingTimeElement_LineGroupSeq` — `(LineId, GroupId, Sequence)` is unique
+- `CK_SetupHandlingTimeElement_LineId` — `FL1` / `FL2` / `FL3`
+- `IX_SetupHandlingTimeElement_GroupId` — the one index the five tables need
+
+**Seed rows** (created by the DDL): **109**.
+
+> ⚠ **Keyed on group + label, never label alone.** Three labels legitimately appear in **two**
+> groups each and are therefore two rows: `Load Spool: Takeup-1` (`S1`, `S2`) ·
+> `Thread: Takeup-1` (`H1AA`, `H1B`) · `SPC: Takeup-2` (`H1AA`, `H1B`). A label-only unique key
+> would reject the client's own field set.
+
+> ⚠ **FL3 is not the union of FL1 and FL2, and must not be generated as one.** It drops, per
+> group: `S1` *Rotate Payoff: TPO* and *Load Spool: Takeup-1*; `H1A` both TPO rows; `H1AA`
+> *Thread: Takeup-1*; `H1B` *Remove Spool: Takeup-1* **and** *SPC: FL1-Stand 1*; `S2`
+> *Load Spool: Takeup-1*. It adds nothing the other two do not have.
+
+> ⛔ **Two FL3 rows are disputed and are seeded exactly as pictured.** FL3 has no intermediate
+> spool, so nothing sits at Takeup-1 — yet **`SPC: Takeup-1` survives** in `FL3`/`H1AA` while
+> every other Takeup-1 step was dropped, and **`SPC: FL1-Stand 1` is absent** from `FL3`/`H1B`
+> for no reason the material path explains. **The two point opposite ways.** Do not "fix" either:
+> the client said *"in the order pictured"*, and a send-back is what changes them. The FL3 group
+> counts — `H1AA` 15, `H1B` 5 — are the regression guard.
+
+> ⚠ **`CK_SetupHandlingTimeElement_LineId` admits all three lines. Do not align it** with
+> `CK_ToolingInventoryDie_LineId` (`FL1`) or `CK_TIRS_LineId` (`FL1`,`FL2`). Those drop FL3
+> because **tooling** is maintained for FL1/FL2 only (`D-42`); these tabs are configured **per
+> line including FL3** — the client supplied a distinct FL3 grid. Same equipment-versus-tooling
+> distinction `CK_Drawer_LineId` already carries a warning about.
+
+---
+
+## `SetupHandlingTimeStandard`
+
+The standard time for one element at one crew size, **in minutes** — the page's own note is
+*"All Standard time should be entered in minutes"*.
+
+| Column | Data Type | Nullable | FK Reference | Description |
+|---|---|---|---|---|
+| `Id` | int | NOT NULL | — | Surrogate primary key |
+| `ElementId` | int | NOT NULL | `SetupHandlingTimeElement.Id` | The element this time is for |
+| `CrewSize` | tinyint | NOT NULL | — | **`[PROPOSED]`** — see the callout below |
+| `StandardMinutes` | decimal(8,3) | NOT NULL | — | Minutes. `DECIMAL`, not the legacy `FLOAT` |
+| `CreatedBy` · `CreatedAt` · `ModifiedBy` · `ModifiedAt` | varchar(50) / datetimeoffset | NOT NULL / NOT NULL / NULL / NULL | — | Audit quad, as on `PassSchedule` |
+| `RowVersion` | rowversion | NOT NULL | — | Concurrency token — the legacy table has none |
+
+**Constraints:**
+- `UQ_SetupHandlingTimeStandard_ElementCrew` — `(ElementId, CrewSize)` is unique
+- `CK_SetupHandlingTimeStandard_CrewSize` — `CrewSize BETWEEN 1 AND 9`
+- `CK_SetupHandlingTimeStandard_Minutes` — `StandardMinutes >= 0`
+
+**Seed rows:** **none, deliberately.** These numbers are the **Naj/Bob/Tim standards
+spreadsheet**, recorded on `FW-003` as an unfinished *external* dependency. A placeholder zero
+would be indistinguishable from a measured standard of zero — the client's grids show `0` in
+every cell because they are blank templates — so seeding one would launder a blank into a value.
+
+> ✅ **Crew size is a row dimension, verified rather than assumed.**
+> `united_db.dbo.Slitters_Standards` holds one row per `(Machine_Idx, Crew_Size)`,
+> `Machine_GetSetupHandlingTimeForSlitter` filters on **both**, and the dropdown `AutoPostBack`s
+> to re-read a different row. **Material Loss has no crew size** — no selector, no column.
+
+> ⚠ **`CrewSize` is `[PROPOSED]`, and the CHECK is a range on purpose.** The crew-size
+> **vocabulary is data** in the legacy system, not an enumeration: it comes from
+> `united_db.dbo.lookups` where `lookup_category_id = 4061`
+> (`eLookUpcategory.CrewSizeForMachineStandards`), and the app **parses the integer out of the
+> `description varchar(512)` column**. A hardcoded `IN (…)` list would reject a crew size an
+> administrator adds there. `1..9` is a sanity bound, not a vocabulary, and the real list is owed
+> back from the client.
+
+> **`RowVersion` fixes a real legacy defect.** `Slitters_Standards` has **no primary key and no
+> index at all**, and its save procedure guards uniqueness with a racy `IF NOT EXISTS` — so two
+> supervisors saving at once can duplicate a row or silently overwrite each other. Not ported.
+
+---
+
+## `MaterialLossElement`
+
+One row per (line, element label) for the MATERIAL LOSS tab. **FL1 7 · FL2 9 · FL3 12.**
+
+| Column | Data Type | Nullable | FK Reference | Description |
+|---|---|---|---|---|
+| `Id` | int | NOT NULL | — | Surrogate primary key |
+| `LineId` | varchar(5) | NOT NULL | — | `FL1` / `FL2` / `FL3` |
+| `ElementLabel` | varchar(80) | NOT NULL | — | The element as the client wrote it. **80, not 60** — the `Pass Change` label is 65 characters |
+| `Sequence` | int | NOT NULL | — | Order within `LineId`, as pictured |
+| `IsActive` | bit | NOT NULL | — | `1` = shown on the tab |
+
+**Constraints:**
+- `UQ_MaterialLossElement_LineLabel` — `(LineId, ElementLabel)` is unique
+- `UQ_MaterialLossElement_LineSeq` — `(LineId, Sequence)` is unique
+- `CK_MaterialLossElement_LineId` — `FL1` / `FL2` / `FL3`
+
+**Seed rows** (created by the DDL): **28** — 16 distinct labels across three lines.
+
+> **The unit is feet.** The FL1 grid's own footer reads *"(Values in footage (')"*, and `FW-003`'s
+> acceptance criteria have carried *"scrap in footage, not weight"* since the Mill template was
+> chosen as the source.
+
+> ⚠ **Both `Pass Change` wordings are kept, deliberately.** FL1 reads *"(Alloy, **Rod Dia.**,
+> Mech Properties, Output Size)"* where FL2 and FL3 read *"(Alloy, **Input Ga/Width**, …)"*. FL1
+> is rod-fed and FL2 is spool-fed, so the difference is real — which is why 28 rows carry 16
+> distinct labels and not 15.
+
+> ⚠ **A client inconsistency, seeded verbatim:** the same FL1 grid says *"Threading **Drawblock**
+> #1"* but *"Die Change **Drawingblock** #1"*. The repo's canonical term is `DB1`/`DB2`.
+> `Drawer`'s own comment block records four spellings across four surfaces and says **do not
+> reconcile them until the Speed tab lands** (action `A12`, still open) — so this is not
+> reconciled here either.
+
+---
+
+## `MaterialLossStandard`
+
+The standard scrap footage for one material-loss element. One row per element — no crew size.
+
+| Column | Data Type | Nullable | FK Reference | Description |
+|---|---|---|---|---|
+| `Id` | int | NOT NULL | — | Surrogate primary key |
+| `ElementId` | int | NOT NULL UNIQUE | `MaterialLossElement.Id` | The element this footage is for |
+| `StandardLossFt` | decimal(10,2) | NOT NULL | — | **Feet**, per the FL1 grid footer. The schema's footage type |
+| `CreatedBy` · `CreatedAt` · `ModifiedBy` · `ModifiedAt` | varchar(50) / datetimeoffset | NOT NULL / NOT NULL / NULL / NULL | — | Audit quad, as on `PassSchedule` |
+| `RowVersion` | rowversion | NOT NULL | — | Concurrency token |
+
+**Constraints:**
+- `UQ_MaterialLossStandard_Element` — one row per element
+- `CK_MaterialLossStandard_LossFt` — `StandardLossFt >= 0`
+
+**Seed rows:** **none, deliberately** — and this one has a second reason beyond the standards
+spreadsheet: **`G82`** records the threading footage as pending *"the actual footage for these
+events through testing"*, and the client's grids arrived with **every value blank**.
+
+> **Why this is a separate table when it is 1:1 with `MaterialLossElement`.** The catalogue is
+> **DDL-seeded reference data**; these values are **typed by a human and must never be seeded**.
+> Share one table and `RunAll` inserts rows that are later `UPDATE`d with real standards — after
+> which the `IF NOT EXISTS` whole-table seed guard stops firing, and the teardown-and-rebuild the
+> deploy gate requires takes the real standards with it. Separating them makes *"the DDL seeds
+> the catalogue and never the values"* true **structurally**, not by convention. It also keeps
+> the lookup convention clean: `IsActive` and no audit columns on a catalogue, the full audit
+> quad only where someone types a number.

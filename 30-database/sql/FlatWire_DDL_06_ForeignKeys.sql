@@ -1,8 +1,15 @@
 -- ============================================================
 -- Flat Wire Mill — DDL Script 06: Foreign Key Constraints
 -- Run order : 06 of 09  (run AFTER all 01–05 scripts)
--- Creates   : ALL 64 foreign keys. There is no second FK script.
---             64, not 62, since 3 Sep 2026: the fourth Tooling Inventory tool
+-- Creates   : ALL 67 foreign keys. There is no second FK script.
+--             67, not 64, since 4 Sep 2026: the five Machine Setup tables
+--             added FK_SetupHandlingTimeElement_Group,
+--             FK_SetupHandlingTimeStandard_Element and
+--             FK_MaterialLossStandard_Element -- all three INTERNAL to that
+--             group. No FK reaches a machine or a line: FL1/FL2/FL3 is a
+--             CHECKed LineId string, and united_db.dbo.machines is in
+--             another database, so a key to it cannot exist.  (+3)
+--             It was 64, not 62, since 3 Sep 2026: the fourth Tooling Inventory tool
 --             type added FK_ToolingInventoryRollSet_Stand and
 --             FK_ToolingInventoryRollSet_Drawer -- the latter the FIRST foreign
 --             key ever taken on Drawer.  (+2)
@@ -87,7 +94,12 @@ WHERE fk.name LIKE 'FK_FlatWire%'
        -- Quality / Output  (CoilOutput and CoilTraceability are MVP-1;
        -- Phase 9 returned whole on 11 Aug 2026)
        'SpcCheckpoint','SpcMeasurement','WipRejection',
-       'CoilOutput','CoilTraceability','RodCheckout'
+       'CoilOutput','CoilTraceability','RodCheckout',
+       -- Machine Setup (Sep-4-2026). CHILD tables only, per this roster's rule:
+       -- SetupHandlingTimeGroup and MaterialLossElement are deliberately ABSENT
+       -- because they are pure parents with no FK column of their own -- the same
+       -- reason ToolingInventoryDie is absent above.
+       'SetupHandlingTimeElement','SetupHandlingTimeStandard','MaterialLossStandard'
    );
 EXEC sp_executesql @sql;
 */
@@ -665,4 +677,34 @@ IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_WipRejection_Reas
         ADD CONSTRAINT [FK_WipRejection_Reason]
         FOREIGN KEY ([RejectionReason], [RejectionGroup])
         REFERENCES [dbo].[WipRejectionReason] ([ReasonCode], [RejectionGroup]);
+GO
+
+-- ------------------------------------------------------------
+-- Machine Setup application -- Setup/Handling Times and Material Loss
+-- (Sep-4-2026).  Three FKs, all within the new five-table group.
+--
+-- There is NO fourth FK to a machine or a line, and that is not an
+-- omission: FL1/FL2/FL3 is a CHECK-constrained LineId string here (19
+-- tables carry one), and the machine registry is
+-- united_db.dbo.machines -- a different database, so a foreign key to it
+-- is impossible.  See the note at the head of the Machine Setup section
+-- in 01_Lookup.
+-- ------------------------------------------------------------
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_SetupHandlingTimeElement_Group')
+    ALTER TABLE [dbo].[SetupHandlingTimeElement]
+        ADD CONSTRAINT [FK_SetupHandlingTimeElement_Group]
+        FOREIGN KEY ([GroupId]) REFERENCES [dbo].[SetupHandlingTimeGroup] ([Id]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_SetupHandlingTimeStandard_Element')
+    ALTER TABLE [dbo].[SetupHandlingTimeStandard]
+        ADD CONSTRAINT [FK_SetupHandlingTimeStandard_Element]
+        FOREIGN KEY ([ElementId]) REFERENCES [dbo].[SetupHandlingTimeElement] ([Id]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_MaterialLossStandard_Element')
+    ALTER TABLE [dbo].[MaterialLossStandard]
+        ADD CONSTRAINT [FK_MaterialLossStandard_Element]
+        FOREIGN KEY ([ElementId]) REFERENCES [dbo].[MaterialLossElement] ([Id]);
 GO

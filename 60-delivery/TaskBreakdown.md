@@ -4372,6 +4372,48 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 
+#### Additive — the Machine Setup schema, minted 4 Sep 2026 (`FW-262`)
+
+> **The two Machine Setup tabs the client specified on 31 Aug had nowhere to store anything.**
+> `FW-003` owns all twelve template tabs and is priced at **12 h as *"configuration rather than
+> new screens"*** — an FE card. Five tables, 144 seeded rows, three FKs and eleven documentation
+> touchpoints are not 12 h of configuration, and the storage had never been budgeted anywhere.
+> **Additive to `[CE §3b]`**, like `FW-202`/`203`/`204` and `FW-259`–`FW-261` before it.
+
+> ⛔ **`OI-110` does not close with it.** Which database these tabs write to is still unanswered,
+> and reading `ual-dot-net` for the first time made the evidence *worse* for `FlatWireDB`: every
+> other Machine Setup tab persists to a `united_db` satellite keyed on `united_db.dbo.machines`.
+> `FlatWireDB` is the `D-02`/`D-31` decision and the three costs are recorded on the card. If the
+> client answers `united_db`, all five tables move and every count site moves back.
+
+###### FW-262 · Machine Setup schema — Setup/Handling Times and Material Loss, five tables
+**Hours:** 10 h DB · **Priority:** High · **Sprint:** S2 · **Phase:** 1C · **Stream:** DB
+
+> **Catalogue plus values, not the legacy wide shape.** `united_db.dbo.Slitters_Standards` is 32
+> `float` columns with **no primary key and no index at all**, and
+> `united_db.dbo.machine_mill_material_loss` is 36 `float` columns with **no audit columns**. Both
+> encode *"the order pictured"* in **column order**. The client has revised these lists twice, two
+> FL3 rows are disputed, and FL3's set is not derivable from FL1's and FL2's — so membership and
+> order are **data** here: `FL1 33 · FL2 29 · FL3 47` setup elements over seven groups, and
+> `FL1 7 · FL2 9 · FL3 12` material-loss elements.
+
+**Acceptance Criteria:**
+- [x] Five tables in `01_Lookup` — three catalogues **seeded inline by the DDL** (7 + 109 + 28 = **144 rows**), two `*Standard` value tables created **EMPTY**
+- [x] The catalogues seeded by the DDL and not the sample data, for the reason the reason-code lists are: a production deploy runs `RunAll` **without** the fixtures, and both tabs would render empty in production while looking healthy everywhere else
+- [x] `Sequence` stored, because *"in the order pictured"* was said separately for each line
+- [x] Element uniqueness on **group + label**, never label alone — three labels legitimately sit in two groups each
+- [x] `CrewSize` in the key on the setup side and **absent** on the loss side, both verified against the legacy app rather than assumed
+- [x] `verify_schema_counts.py` green at **45 · 67 · 87**, advisory count back at its pre-change **24**
+- [ ] ⛔ **Values loaded** — blocked on the Naj/Bob/Tim standards spreadsheet, and on `G82` for the footage half
+- [ ] ⛔ **`CrewSize` vocabulary confirmed and `[PROPOSED]` removed** — `Q94`
+- [ ] ⛔ **FL3's two disputed rows settled** — `SPC: Takeup-1` kept where there is no Takeup-1, `SPC: FL1-Stand 1` dropped for no stated reason. **Seeded exactly as pictured**; `Q94` is the send-back
+
+**Rate-card basis (§2):** not a rate-card unit — five tables with a 144-row client-supplied seed, three FKs, one index and eleven documentation touchpoints under the count guard = **10 h**
+**Dependencies:** —
+**Blockers:** none for the schema. **`Q94`** and the standards spreadsheet block the **values**
+
+---
+
 ### 7.3 Roll-up
 
 > ⚠ **The `FW-232`–`FW-250` additive set is deliberately NOT in this roll-up.** Those nineteen

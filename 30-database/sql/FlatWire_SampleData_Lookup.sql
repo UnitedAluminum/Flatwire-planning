@@ -278,6 +278,33 @@ GO
 -- seeded by FlatWire_DDL_01_Lookup.sql itself, because FK targets must exist
 -- before the DDL that references them runs. Deliberate, not an omission.
 
+-- NO SEED: SetupHandlingTimeGroup
+-- NO SEED: SetupHandlingTimeElement
+-- NO SEED: MaterialLossElement
+-- The client's own field sets for the two Machine Setup tabs (7 group
+-- headings, 109 setup elements, 28 material-loss elements), seeded by
+-- FlatWire_DDL_01_Lookup.sql itself for exactly the reason the three reason
+-- lists are: PRODUCTION REFERENCE DATA, and a production deploy runs RunAll
+-- WITHOUT this file. Seeded here, both tabs would render EMPTY in production
+-- while looking healthy in every environment where the fixtures had loaded.
+-- Deliberate, not an omission.
+
+-- NO SEED: SetupHandlingTimeStandard
+-- NO SEED: MaterialLossStandard
+-- These two hold the NUMBERS -- standard minutes per crew size, and standard
+-- scrap footage -- and they are seeded NOWHERE, in this file or the DDL.
+-- Two reasons, and both are load-bearing:
+--   1. The values do not exist yet. They are the Naj/Bob/Tim standards
+--      spreadsheet, recorded on FW-003 as an unfinished EXTERNAL dependency,
+--      and G82 separately records the threading footage as pending "the
+--      actual footage for these events through testing".
+--   2. A placeholder zero is INDISTINGUISHABLE from a measured standard of
+--      zero. The client's grids show 0 in every cell because they are blank
+--      templates; seeding that would launder a blank into a value, and the
+--      first person to sum a setup time would get a plausible wrong answer
+--      instead of an obviously missing one.
+-- Deliberate, not an omission.
+
 -- NO SEED: DowntimeReason
 -- NO SEED: WipRejectionReason
 -- NO SEED: ItInhibitReason

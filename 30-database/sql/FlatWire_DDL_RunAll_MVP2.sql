@@ -14,7 +14,7 @@
 --
 --   If you are looking for 06b or 07b: they no longer exist. On 23 Aug 2026
 --   they were folded back into 06_ForeignKeys and 07_Indexes, which now hold
---   all 64 FKs and all 86 index statements. The MVP-1 chain is 00..08 and
+--   all 67 FKs and all 87 index statements. The MVP-1 chain is 00..08 and
 --   this file is 09.
 --
 -- WHAT IS LEFT, AND WHY
