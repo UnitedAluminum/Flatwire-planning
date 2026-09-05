@@ -199,7 +199,7 @@ Requirements are numbered `FR-###` and grouped by operator workflow. Each group 
 | **FR-019** | The system shall capture gauge and width **simultaneously at every recording point**, so both traces derive from the same samples. | Must | `DAT006`, `DAT007`, `GWT004` |
 | **FR-020** | When two or more consecutive data-recording entries are missing, the system shall display a prominent data-recording alert **and activate ITInhibit**. | Must | `DAT009` |
 | **FR-021** | The system shall open the "Reason for Flatwire Stop" popup when the OPC mill-speed tag reads zero. | Must | `INT006`, `STP001` |
-| **FR-022** | The system shall source **all OPC tag paths from configuration** (`appsettings.json`), never hardcoded, so paths can be corrected after commissioning without redeployment. | Must | `INT005` |
+| **FR-022** | The system shall source **all OPC tag paths from configuration**, never hardcoded, so paths can be corrected after commissioning without redeployment. ⚠ **The configuration is the `CommonDB` `OPCTags` registration, not `appsettings.json` — `D-44`, 4 Sep 2026.** The parenthetical read *(`appsettings.json`)* until then; the requirement's substance is unchanged and better satisfied, since a row update needs no file deployment at all. | Must | `INT005` |
 
 ---
 

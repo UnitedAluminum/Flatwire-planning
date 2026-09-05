@@ -555,7 +555,7 @@ Requirements are numbered `FR-###`, grouped by operator workflow. Each group nam
 | **FR-019** | The system shall capture gauge and width **simultaneously at every recording point**, so both traces derive from the same samples. | `DAT006`, `DAT007`, `GWT004` |
 | **FR-020** | When two or more consecutive data-recording entries are missing, the system shall display a prominent data-recording alert and activate ITInhibit. | `DAT009` |
 | **FR-021** | The system shall open the "Reason for Flatwire Stop" popup when the OPC mill-speed tag reads zero. | `INT006`, `STP001` |
-| **FR-022** | The system shall source **all OPC tag paths from configuration** (`appsettings.json`), never hardcoded, so paths can be corrected after commissioning without redeployment. | `INT005` |
+| **FR-022** | The system shall source **all OPC tag paths from configuration**, never hardcoded, so paths can be corrected after commissioning without redeployment. ⚠ **The configuration is the `CommonDB` `OPCTags` registration, not `appsettings.json` — `D-44`, 4 Sep 2026.** The parenthetical read *(`appsettings.json`)* until then; the requirement's substance is unchanged and better satisfied, since a row update needs no file deployment at all. | `INT005` |
 
 ### 4.1 Pre-Check-In Station — Dashboard 2A
 
@@ -2927,7 +2927,7 @@ The Flat Wire real-time client is purpose-built; existing SignalR hub clients su
 | staging | `uanet-staging` (UAT on `devual-uadev001` or equivalent) | Pre-production, UAT |
 | production | `uanet05` | Live |
 
-**Deploy path:** Angular `ng build` → static files to IIS · `dotnet publish FlatWire.API` → IIS application pool **with the WebSockets feature enabled** (required by the real-time design) · DDL via the ordered migration scripts. Configuration lives in `appsettings.{Environment}.json`: the `FlatWireDB` connection string, JWT settings, the **OPC tag-path map** (config-driven, never hardcoded) and the SignalR settings (MessagePack, keep-alive/timeout, cadence). A `/health` endpoint reports DB and OPC reachability.
+**Deploy path:** Angular `ng build` → static files to IIS · `dotnet publish FlatWire.API` → IIS application pool **with the WebSockets feature enabled** (required by the real-time design) · DDL via the ordered migration scripts. Configuration lives in `appsettings.{Environment}.json`: the `FlatWireDB` connection string, JWT settings, the non-path OPC settings (`SimulatePLCTagPush`, `PublishIntervalMs`, per-line `LineStateMap`) and the SignalR settings (MessagePack, keep-alive/timeout, cadence). ⚠ **The OPC tag-path map is NOT among them — `D-44`, 4 Sep 2026**: the 72 paths are `CommonDB` `OPCTags` rows reached through `OPCConnection`'s `GetOPCInfo`, still config-driven and never hardcoded. A `/health` endpoint reports DB and OPC reachability.
 
 Until PLC commissioning completes, every line runs `SimulatePLCTagPush` plus a mock SignalR stream, so the UI stays fully testable and development is **not** blocked on commissioning.
 

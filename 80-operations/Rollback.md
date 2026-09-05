@@ -55,7 +55,15 @@ Copy-Item "<backup>\OPCConnection\appsettings.<Env>.json" "<opc-site-path>" -For
 Restart-WebAppPool -Name "OPCConnection_<Env>"
 ```
 
-- [ ] Tag paths match the previous map. **Nothing is lost** — configuration only.
+⚠ **This no longer restores the tag paths — `D-44`, 4 Sep 2026.** They are `CommonDB` rows, so restoring them means re-running the version-stamped registration script `[DEP §3.2]` backs up, against `OPCTags` / `OPCTagApplicationMapping`:
+
+```powershell
+sqlcmd -S "<commondb-server>" -E -C -i "<backup>\CommonDB\FlatWire_OPC_Registration_<previous-tag>.sql"
+```
+
+- [ ] The `appsettings` file matches the previous version — `SimulatePLCTagPush`, `PublishIntervalMs`, `LineStateMap`.
+- [ ] **Tag paths match the previous map**, checked as `OPCTags` rows and not as file contents.
+- [ ] ⚠ **Loss assessment is no longer "nothing" — it was *"nothing is lost, configuration only"* until `D-44`.** `CommonDB` is a **shared** database: restoring these rows is a write other modules' registrations sit beside, so scope the restore to the flat wire `OPCModules` member and never restore the tables wholesale.
 
 #### 6.2.3 `FlatWire.API`
 

@@ -23,8 +23,8 @@
 | 1 | 11 Supervisor Shift Summary, Reporting & Cer | 7 | 0 | 0 | 0 | 0 | 7 | 0 % | OI-101 · OI-57 · OI-99 · OQ-25 … |
 | 1 | 12 Yield, Cost Ledger & Scrap | 4 | 0 | 0 | 0 | 0 | 4 | 0 % | OI-60 · OI-68 · OI-83 · OQ-10 |
 | 1 | 13 Administration & Reference Data | 12 | 0 | 0 | 0 | 0 | 12 | 0 % | OI-12 · OI-141 · OI-43 · OI-77 … |
-| 1 | 14 Integration Testing, PLC Commissioning & | 12 | 1 | 0 | 0 | 0 | 11 | 8 % | G29 · G30 · G32 · G33 … |
-| **All** | | **175** | **24** | **16** | **0** | **23** | **110** | **14 %** | |
+| 1 | 14 Integration Testing, PLC Commissioning & | 12 | 1 | 0 | 2 | 0 | 9 | 8 % | G29 · G30 · G32 · G33 … |
+| **All** | | **175** | **24** | **16** | **2** | **23** | **108** | **14 %** | |
 
 *Percentages are by task count. **Hours are not totalled here** - [`CapacityAndEffortModel.md`](60-delivery/CapacityAndEffortModel.md) `[CE]` is the hours model of record, and a total derived on this page would be a second figure to disagree with it.*
 
@@ -64,6 +64,7 @@ Open register items cited by at least one live task, most-blocking first.
 | `G10` | Real-time deploy prereqs / MessagePack dependency | FW-080, FW-135 | 1A, 1B | — | Gaps.md |
 | `G18` | Source docs (CLAUDE.md / CheckinImplementationPrompt) describe a --fw- design system, but  | FW-130, FW-133 | 1A | — | Gaps.md |
 | `G24` | Supervisor approvals are decided but unpersisted. Three decisions require supervisor autho | FW-072, FW-176 | 7 | — | Gaps.md |
+| `G60` | ⛔ Nothing registers flat wire with OPCConnection, so GetOPCInfo cannot succeed and no tag  | FW-217, FW-238 | 14 | — | Gaps.md |
 | `G7` | Mid-run checkout supervisor approval relies only on transient SignalR | FW-175, FW-177 | 7 | — | Gaps.md |
 | `G79` | Every WipRejection.RejectionGroup value is ours. The client's WIPREJ sheet is a flat list  | FW-067, FW-174 | 7 | — | Gaps.md |
 | `G82` | Threading scrap must be a WIP rejection and no reason code exists for it. The client's ans | FW-067, FW-174 | 7 | — | Gaps.md |
@@ -89,12 +90,12 @@ Open register items cited by at least one live task, most-blocking first.
 | `G36` | Returning Phase 9 to MVP-1 imported three uncosted dependencies, all on the DB7b packing s | FW-186 | 9 | — | Gaps.md |
 | `G55` | FL2's spool check-in is constrained to payoff position 1, while the canonical enum and the | FW-246 | 1C | — | Gaps.md |
 | `G59` | No service identity exists for a PLC write that no operator initiated. ✅ Mechanism confirm | FW-217 | 14 | — | Gaps.md |
-| `G60` | ⛔ Nothing registers flat wire with OPCConnection, so GetOPCInfo cannot succeed and no tag  | FW-217 | 14 | — | Gaps.md |
 | `G69` | [SIM §9.2] requires the console to show TWO state chips and the wire carries ONE vocabular | FW-215 | 1B | — | Gaps.md |
 | `G80` | The client's eight IT inhibit reasons and [PLC §8.2]'s five set conditions share exactly o | FW-257 | 4 | — | Gaps.md |
 | `G81` | No Qualified Operators Are Logged In presumes a mechanism that does not exist. The client  | FW-257 | 4 | — | Gaps.md |
 | `G83` | Four pause reasons lost their vocabulary and gained no successor. OperatorBreak, ShiftChan | FW-071 | 6 | — | Gaps.md |
 | `G87` | The fourth Tooling Inventory tool type is built from one sentence, and every column in it  | FW-259 | 1C | — | Gaps.md |
+| `G94` | ⛔ OPCUAManager has no canonical tag identity: five call sites, four formats, and only the  | FW-238 | 14 | — | Gaps.md |
 | `OI-02` | ⚠️ UNRESOLVED — Intermediate spool numbering: schema SP-##### versus the SRS narrative's T | FW-124 | 8 | — | MasterSpecification.md |
 | `OI-06` | ⚠️ UNRESOLVED — Two spool status vocabularies: the schema's RECEIVED/STAGED/INFLAT/COMPLET | FW-124 | 8 | — | MasterSpecification.md |
 | `OI-100` | Valid rework stages per material state are unspecified. Rework requires a named return sta | FW-067 | 7 | — | MasterSpecification.md |
@@ -680,8 +681,8 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-200](40-backend/tasks/FW-200.md) | PLC commissioning support | ⬜ not-started | — | RT | 40 | S3 | FW-082 FW-151✅ FW-190 | **G29** **G30** **PLC-Q04** **PLC-Q05** |
 | [FW-201](50-frontend/tasks/FW-201.md) | Defect allowance and renamed-column regression | ⬜ not-started | — | FE·BE·DB·QA | 56 | S3 | FW-001 FW-120 FW-121 FW-122 | — |
 | [FW-217](40-backend/tasks/FW-217.md) | OPC sidecar adapter — the models behind a test-only OPC UA serve | ✅ done | — | RT | 24 | — | FW-210✅ FW-211✅ FW-N05 | **G32** **G33** **G59** **G60** |
-| [FW-236](40-backend/tasks/FW-236.md) | Per-tag write status from OPCConnection | ⬜ not-started | — | BE | 16 | S3 | FW-151✅ | — |
-| [FW-238](40-backend/tasks/FW-238.md) | Register flat wire with OPCConnection | ⬜ not-started | — | BE·DB | 0 | S3 | FW-003 FW-144 FW-151✅ FW-241 | — |
+| [FW-236](40-backend/tasks/FW-236.md) | Per-tag write status from OPCConnection | 🟡 in-progress | — | BE | 16 | S3 | FW-151✅ | — |
+| [FW-238](40-backend/tasks/FW-238.md) | Register flat wire with OPCConnection | 🟡 in-progress | — | BE·DB | 12 | S3 | FW-003 FW-144 FW-151✅ FW-241 | **G60** **G94** |
 | [FW-242](30-database/tasks/FW-242.md) | Move FlatWireDB into the ual-database repository | ⬜ not-started | — | DB | 16 | S3 | FW-152 FW-241 | — |
 | [FW-249](30-database/tasks/FW-249.md) | Re-derive the DB-stream total on the current basis | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | BA | 8 | S1 | — | — |
 | [FW-250](30-database/tasks/FW-250.md) | build_development_plan_xlsx.py silently drops every multi-stream | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | DB | 9 | S1 | — | — |
@@ -695,11 +696,12 @@ Open register items cited by at least one live task, most-blocking first.
 | `G32` | The FM2 PLC station names in the spec are ours, not the controller's. The 4 Aug 2026 roller-size cor | FW-217 | — |
 | `G33` | The measure segment of every tag is ours, not the controller's — and it departs from thirteen observ | FW-217 | — |
 | `G59` | No service identity exists for a PLC write that no operator initiated. ✅ Mechanism confirmed by exec | FW-217 | — |
-| `G60` | ⛔ Nothing registers flat wire with OPCConnection, so GetOPCInfo cannot succeed and no tag can be wri | FW-217 | — |
+| `G60` | ⛔ Nothing registers flat wire with OPCConnection, so GetOPCInfo cannot succeed and no tag can be wri | FW-217, FW-238 | — |
+| `G94` | ⛔ OPCUAManager has no canonical tag identity: five call sites, four formats, and only the subscribe  | FW-238 | — |
 | `OQ-15` | **⚠ id not found in any register** | FW-121, FW-122 | — |
 | `OQ-17` | **⚠ id not found in any register** | FW-121 | — |
 | `PLC-Q04` | Confirm the FM2 station names — S1, S2, S3, carrying position only (§4.3). Every FM2 row in §5.2.2 i | FW-200 | Controls engineer |
 | `PLC-Q05` | Confirm every measure name in §5.2 — RollGap, Gauge, Width, Footage, Diameter, Weight, Status.IsActi | FW-200 | Controls engineer |
 
-**▶ Ready to start now:** `FW-120`, `FW-123`, `FW-236`, `FW-249`, `FW-250`
+**▶ Ready to start now:** `FW-120`, `FW-123`, `FW-249`, `FW-250`
 

@@ -160,7 +160,11 @@ They sit on opposite sides of the channel. **Never derive one from the other**
 **`ITagPathResolver.LogicalNamesFor(LineId)`** is documented on the built interface as *"the
 ingest subscription list — `FW-N05` subscribes from this."* **Resolve through that interface;
 never compose a path in code** — that is what keeps `grep` at zero hits outside configuration,
-and it is the seam `OI-A` is contained behind if the map moves to the `CommonDB` registration.
+and it is the seam `OI-A` was contained behind. ✅ **The map has now moved — `D-44`, 4 Sep 2026:
+it is the `CommonDB` `OPCTags` registration.** Nothing in this story changes: the interface,
+the call and the start-up resolve are identical, and only the implementation behind it becomes a
+`CommonDbTagPathResolver` (`FW-238`, gated on `G93`). ⚠ **One check tightens** — *zero hits
+outside configuration* becomes **zero hits in any file**, since no file holds a path at all.
 
 ⚠ **Resolve the path list ONCE at start-up, not per tick.** `Resolve` throws
 `KeyNotFoundException` **by design** — an unresolved path must fail the operation that needed
@@ -227,7 +231,7 @@ here, because this path runs continuously rather than once per operator action.*
   `MachineId > 0`, and both routes sit behind the global `AuthorizeFilter`. **The register names
   `SetITInhibit` and hold/restore; this story is the third and largest case.**
 - **`G60` — nothing registers flat wire with `OPCConnection`.** `OPCModules` has five members
-  and no flat wire one, and none of the eight `Database/Scripts/` files touches
+  and no flat wire one, and none of the eight `30-database/scripts/` files touches
   `OPCModules` / `OPCServers` / `OPCTags` / `OPCTagApplicationMapping`. **With a token and no
   registration, `GetOPCInfo` returns an empty list.**
 
@@ -541,6 +545,7 @@ stands in until commissioning. `FW-211` — unscheduled — makes the two interc
 | **`G29`** *(blocker)* | **No edger tag path exists on any line** |
 | **`G32` / `PLC-Q04`** *(blocker)* | FM2 station names pending sign-off |
 | **`G58`** | The read-side twin: a failed read returns the tag **unchanged**, and `IsGood` is set by only one of the two managers — §2.4 row 3 is the workaround, per-tag status is `OPCConnection`'s fix |
+| **`G94`** *(new, 4 Sep 2026)* | ⚠ **Off this story's path by DECISION, not by luck** — `P-118` polls `GetOPCInfo` and `ReadTag` rather than subscribing, so `OPCUAManager`'s notification defect (`:670`) cannot reach this ingest at all. ⛔ **But `ReadTag` is itself one of the five sites**: it passes the bare tag name, which resolves to namespace **0** where the subscription uses **2**. Latent only because every `OPCModules` row is `OPCDA` today — and `D-44` puts our 72 paths into that same registration. `OPCConnection`'s change, owned by `FW-236` |
 | **`G31`** | Read tags with no remaining consumer. ⚠ **Mostly decidable from `[PLC]`'s own *"used in"* column, which contradicts the gap's wording** — §2.3's table settles five of six classes; **the one genuine orphan is `FL1.EdgeSet.Status.IsActive`** |
 | ⛔ **`PLC-Q08` / `G30`** *(blocker for FL3 only)* | Whether FL3's stands are `FL3.FM2.*` or **`FL2.FM2.*`**. Until it answers, **FL3 is configured and inert** — and if it aliases, polling FL2 and FL3 together double-reads every FL2 tag |
 | ⚠ ~~**No fault tag on any FM2 stand**~~ **WITHDRAWN 28 Aug 2026** | **Already tracked — the observation was right and it was not new.** `TagNames.Fm2S3Faulted` exists with a derived path and carries its own note: *"a fault bit is on record for FM1 ONLY. No FM2 stand has one and neither do the die blocks, so the component-fault alert cannot fire for any of them — `PLC-Q02`, `[PLC §5.4]`."* The observation was right and it was not new. **Read `PLC-Q02`'s row before citing it: it also carries the FL1 second-take-up question** |
@@ -548,7 +553,7 @@ stands in until commissioning. `FW-211` — unscheduled — makes the two interc
 | **`G35`** | Dancer elements read-only, `[PROPOSED]` (`PLC-Q18`, commissioning test `C12`) |
 | **`G9` / `OI-34`** | The channel cannot be sized from NFRs and the load test cannot fail — `P-28` gives the arithmetic's shape and a provisional default |
 | **`G3`** | `RunReading` is the store the broadcast loop persists to. ✅ **Table half built 26 Aug 2026** — and its columns are a per-line snapshot, which is §2.5's evidence |
-| **`OI-A`** | Whether the map stays in `appsettings` or moves to the `CommonDB` registration — contained behind `ITagPathResolver`, so no caller changes either way |
+| ✅ **`OI-A`** | **CLOSED 4 Sep 2026 — `D-44`: the map moves to the `CommonDB` registration.** Contained behind `ITagPathResolver`, so there are **no caller changes and nothing here to do**. The move is `FW-238`'s and is gated on **`G93`** (`OPCTags` has no logical-name column) |
 
 **Citations corrected 28 Aug 2026:** the `41`-path literal (→ `G33`, measured 72) and
 `[SIG §5.2]` as the shared ingest contract (→ this card's §2.5).

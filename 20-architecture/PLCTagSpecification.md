@@ -3,9 +3,10 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL2 / FL3
-**Version:** 1.2
-**Date:** August 12, 2026
+**Version:** 1.3
+**Date:** September 5, 2026
 **Status:** Issued for Client Review and Sign-off
+**Last Updated:** September 5, 2026 — **`D-46`: every tag path gains a `PLC` element after the line.** `FL1.AGC.Gauge` is now `FL1.PLC.AGC.Gauge`. The grammar in §4.1, rules R2 and R3, and every path in §5.2 are rewritten. **Values only — no logical name moved**, which is the property §4 was built to have. ⚠ **`D-47`: FL3 has no controller of its own**; see §5.2.3.
 **Interface reference:** The machine write surface (pass-schedule push and tag clear) · the machine read surface (subscribed values) · `ITInhibit`
 **Requirement source:** This document specifies the flat wire PLC/OPC tag surface — every value the application writes to the line, every value it reads from it, and the one tag that blocks the machine from running.
 
@@ -74,7 +75,7 @@ Everything in Sections 5 and 7 — the three tag maps and the push payload — f
 
 Two consequences worth stating plainly:
 
-- **FL1 has no edger, so FL1 has no edger tag.** `FL1.EdgeSet.Status.IsActive` is deliberately absent from the FL1 map, and from this interface entirely.
+- **FL1 has no edger, so FL1 has no edger tag.** `FL1.PLC.EdgeSet.Status.IsActive` is deliberately absent from the FL1 map, and from this interface entirely.
 - **FL2 measures nothing live**, so FL2 has no gauge or width tag at all. Its trace is reconstructed from the FL1 pass that produced the spool.
 - **The dancers are equipment, not an assumption.** FM1 carries one and FM2 carries two, sitting **between** stands rather than at them. This is confirmed equipment (`D-28`); the **paths** that address them in §5.2 are our derivation and are `[PROPOSED]` (`PLC-Q18`).
 
@@ -115,11 +116,27 @@ That property is what makes this section worth reading rather than skipping. **C
 
 ## 4.1 The grammar `[PROPOSED]`
 
+> ### ✅ The `PLC` element is the one part of this grammar that is no longer proposed — `D-46`, 5 Sep 2026.
+>
+> The first two flat wire tag paths actually read off a controller — `FL1.PLC._System._Error` and
+> `FL2.PLC._System._Error`, supplied 5 Sep 2026 — both carry a **`PLC` segment after the line**, which
+> nothing in this document's derivation had. The rest of the ecosystem agrees unanimously: all 313 of
+> `UnifiedSlitterService`'s paths are `{Machine}.PLC.{…}` (`D72.PLC.LineSpeed`, `R48iQ.PLC.Running`),
+> and `CoolingChamber` addresses `Cooling.PLC.CR.C{n}.NumberOfLoadsPresent`.
+>
+> So every path below gained the element. **This cost nothing but a values edit** — the 35 logical
+> names in `TagNames.cs` did not move, and neither did any code — which is exactly what §4.2's R7 and
+> the key/value decoupling in `[PLCC §2]` were designed to buy. It is also the first evidence
+> **against** a derived path that `PLC-Q02` has ever produced, and it is worth reading as a warning:
+> the remaining structure below is still derivation, not observation.
+
+
 ```
-<tag>        ::= <line> "." <element> "." <measure>
-               | <line> "." <scalar>
+<tag>        ::= <line> "." <controller> "." <element> "." <measure>
+               | <line> "." <controller> "." <scalar>
 
 <line>       ::= "FL1" | "FL2" | "FL3"
+<controller> ::= "PLC"
 
 <element>    ::= <simple>
                | <assembly> "." <station>
@@ -144,13 +161,13 @@ That property is what makes this section worth reading rather than skipping. **C
 | # | Rule | Status |
 |---|---|---|
 | **R1** | Segments are separated by `.`, written in PascalCase, with no spaces or underscores | `[PROPOSED]` |
-| **R2** | **The first segment is always the line.** There is no plant-level tag — the run-block interlock is one tag per line, so a blocked line blocks only itself | `[PROPOSED]` |
-| **R3** | An equipment tag is **the line, the element, and a measure** — three to six segments, because the element may be an assembly, a station within it and a sub-unit of that station. A line-level scalar is the line plus the scalar | `[PROPOSED]` |
+| **R2** | **The first segment is always the line, and the second is always `PLC`.** There is no plant-level tag — the run-block interlock is one tag per line, so a blocked line blocks only itself | `[PROPOSED]` — the `PLC` element is **`[CONFIRMED]`**, `D-46` |
+| **R3** | An equipment tag is **the line, `PLC`, the element, and a measure** — four to seven segments, because the element may be an assembly, a station within it and a sub-unit of that station. A line-level scalar is the line, `PLC`, and the scalar | `[PROPOSED]` |
 | **R4** | Booleans live under `Status.*` and carry an **`Is` prefix** — `Status.IsActive`, `Status.IsFaulted` | `[PROPOSED]` — `PLC-Q05` |
 | **R5** | A multi-stand assembly interposes a station segment — `FM2.S2.…`. Single-instance equipment does not — `FM1.RollGap`. **The station segment applies to equipment *at* a station; equipment that sits *between* stations attaches to the assembly directly and takes an ordinal per R6** — which is how the dancers are addressed | `[PROPOSED]` — `PLC-Q17` |
 | **R6** | Ordinal instances suffix the digit onto the element name — `DB1`, `Payoff2`, `TKUP1`. This is the rule for *"the nth instance of a thing"*; R5 is a different matter — an assembly's internal stations — and the two do not compete **Where two instances sit in a flow, the ordinal follows the material: `Dancer1` is upstream of `Dancer2`.** | `[PROPOSED]` — `PLC-Q17` |
 | **R7** | **Units never appear in the path.** No measure names its unit, on any line | `[PROPOSED]` — `PLC-Q15` |
-| **R8** | An analogue measure is a **single bare segment** — `RollGap`, `Gauge`, `Width`, `Footage`, `Diameter`, `Weight`. No unit, no qualifier group, no present-value suffix: **the tag *is* the present value.** So `FL1.DB1.Diameter` is the diameter of the die **fitted at DB1 now** — the machine holds no scheduled die to confuse it with | `[PROPOSED]` — `PLC-Q05` |
+| **R8** | An analogue measure is a **single bare segment** — `RollGap`, `Gauge`, `Width`, `Footage`, `Diameter`, `Weight`. No unit, no qualifier group, no present-value suffix: **the tag *is* the present value.** So `FL1.PLC.DB1.Diameter` is the diameter of the die **fitted at DB1 now** — the machine holds no scheduled die to confuse it with | `[PROPOSED]` — `PLC-Q05` |
 
 > ### `[CLIENT INPUT REQUIRED]` No tag states its unit, and that is the one item here that can produce scrap.
 >
@@ -158,9 +175,9 @@ That property is what makes this section worth reading rather than skipping. **C
 
 **Why booleans keep a group segment and analogues do not.** The asymmetry is deliberate. `Status` names a *kind* of signal — a discrete condition of the equipment rather than a quantity — and so earns its place in the address. A present-value suffix, a unit and a qualifier each restate something the tag already says: a live tag on a physical die block reports the fitted equipment, at the present moment, in the machine's own unit, because there is nothing else it could report.
 
-**Why `EdgeType` sits on the station, not on the edger subunit.** The `Edger` subunit exists for the tooling's own engagement state — `FM2.S2.Edger.Status.IsActive`, whether the physical attachment is in or out — because that is plausibly a distinct I/O point from the stand's own controls. `EdgeType` is different: it is **configuration of the station**, not a reading from the tooling, and the pass-schedule payload already carries it that way — as a field on the `FM2_S2` / `FM2_S3` component alongside `state` and `parameterValue`, not nested under a separate edger object. The tag mirrors that: `FL2.FM2.S2.EdgeType`, one segment, no `.Edger.` in between. If the controls engineer's actual wiring puts edge-type configuration on the tooling's own address block instead, that is a one-segment correction, not a redesign — but it is not the default assumption here.
+**Why `EdgeType` sits on the station, not on the edger subunit.** The `Edger` subunit exists for the tooling's own engagement state — `FM2.S2.Edger.Status.IsActive`, whether the physical attachment is in or out — because that is plausibly a distinct I/O point from the stand's own controls. `EdgeType` is different: it is **configuration of the station**, not a reading from the tooling, and the pass-schedule payload already carries it that way — as a field on the `FM2_S2` / `FM2_S3` component alongside `state` and `parameterValue`, not nested under a separate edger object. The tag mirrors that: `FL2.PLC.FM2.S2.EdgeType`, one segment, no `.Edger.` in between. If the controls engineer's actual wiring puts edge-type configuration on the tooling's own address block instead, that is a one-segment correction, not a redesign — but it is not the default assumption here.
 
-**Because the grammar is regular, paths we do not have are derived rather than left blank.** The full `FL2.*` and `FL3.*` sets are published in Section 5 as `[PROPOSED]` derivations, so there is something concrete to correct rather than a gap to discover at commissioning.
+**Because the grammar is regular, paths we do not have are derived rather than left blank.** The full `FL2.PLC.*` and `FL3.PLC.*` sets are published in Section 5 as `[PROPOSED]` derivations, so there is something concrete to correct rather than a gap to discover at commissioning.
 
 ## 4.3 FM2 station names `[CLIENT INPUT REQUIRED]`
 
@@ -199,25 +216,26 @@ The application subscribes to the machine and republishes to the operator screen
 
 | Tag path | Reads | Consumed by | Status |
 |---|---|---|---|
-| `FL1.DB1.Diameter` | Diameter of the die fitted at DB1 | Run monitor component panel | `[PROPOSED]` |
-| `FL1.DB2.Diameter` | Diameter of the die fitted at DB2 | Run monitor component panel | `[PROPOSED]` |
-| `FL1.DB1.Status.IsActive` | DB1 active or bypassed | Run monitor component panel · roll-adjust dialog (greys bypassed rows) | `[PROPOSED]` |
-| `FL1.DB2.Status.IsActive` | DB2 active or bypassed | As DB1 | `[PROPOSED]` |
-| `FL1.FM1.RollGap` | FM1 present roll gap | Run monitor component panel · **the roll-adjust dialog's *Current* column — whether that column is read back from the machine or is the last value the application wrote is itself unresolved, `PLC-Q09`** | `[PROPOSED]` |
-| `FL1.FM1.Status.IsActive` | FM1 running | Run monitor component panel | `[PROPOSED]` |
-| `FL1.FM1.Status.IsFaulted` | FM1 faulted | **Line status board — the Critical *component fault* alert** | `[PROPOSED]` |
-| `FL1.AGC.Gauge` | Live gauge after FM1 | Run monitor gauge trace · line status board · gauge-trace report | `[PROPOSED]` |
-| `FL1.AGC.Width` | Live width | Run monitor width trace · line status board · gauge-trace report | `[PROPOSED]` |
-| `FL1.Speed` | Line speed | Line status board · run monitor header · **machine-stop prompt trigger** | `[PROPOSED]` |
-| `FL1.Payoff1.Weight` | Payoff 1 load cell | Line status board · pre-check-in station · run monitor · **weld alerts at 3,000 lb and 2,000 lb** | `[PROPOSED]` |
-| `FL1.Payoff2.Weight` | Payoff 2 load cell | As Payoff 1 | `[PROPOSED]` |
-| `FL1.TKUP1.Footage` | Intermediate take-up footage counter | Run monitor · spool progress · **die-life accumulation** · every mid-run event's footage stamp | `[PROPOSED]` |
-| **`FL1.FM1.Dancer.Status.IsActive`** | FM1's dancer active | Component panel | **`[PROPOSED]`** — no dancer path is on record (`PLC-Q18`) |
-| **`FL1.FM1.Dancer.Position`** | Dancer arm position — the tension-compensation feedback | Run monitor (diagnostic) | **`[PROPOSED]`** — `PLC-Q18` |
-| `FL1.LineState` | Machine run/stop state | **Rod-checkout gate** · **machine-stop prompt** · line status badge | `[PROPOSED]` path · **vocabulary `[CLIENT INPUT REQUIRED]` — see Section 6** |
-| **`FL1.ITInhibit`** | The run-block interlock (**written**, not read — see Section 8) | System only | `[PROPOSED]` — line-scoped |
+| `FL1.PLC.DB1.Diameter` | Diameter of the die fitted at DB1 | Run monitor component panel | `[PROPOSED]` |
+| `FL1.PLC.DB2.Diameter` | Diameter of the die fitted at DB2 | Run monitor component panel | `[PROPOSED]` |
+| `FL1.PLC.DB1.Status.IsActive` | DB1 active or bypassed | Run monitor component panel · roll-adjust dialog (greys bypassed rows) | `[PROPOSED]` |
+| `FL1.PLC.DB2.Status.IsActive` | DB2 active or bypassed | As DB1 | `[PROPOSED]` |
+| `FL1.PLC.FM1.RollGap` | FM1 present roll gap | Run monitor component panel · **the roll-adjust dialog's *Current* column — whether that column is read back from the machine or is the last value the application wrote is itself unresolved, `PLC-Q09`** | `[PROPOSED]` |
+| `FL1.PLC.FM1.Status.IsActive` | FM1 running | Run monitor component panel | `[PROPOSED]` |
+| `FL1.PLC.FM1.Status.IsFaulted` | FM1 faulted | **Line status board — the Critical *component fault* alert** | `[PROPOSED]` |
+| `FL1.PLC.AGC.Gauge` | Live gauge after FM1 | Run monitor gauge trace · line status board · gauge-trace report | `[PROPOSED]` |
+| `FL1.PLC.AGC.Width` | Live width | Run monitor width trace · line status board · gauge-trace report | `[PROPOSED]` |
+| `FL1.PLC.Speed` | Line speed | Line status board · run monitor header · **machine-stop prompt trigger** | `[PROPOSED]` |
+| `FL1.PLC.Payoff1.Weight` | Payoff 1 load cell | Line status board · pre-check-in station · run monitor · **weld alerts at 3,000 lb and 2,000 lb** | `[PROPOSED]` |
+| `FL1.PLC.Payoff2.Weight` | Payoff 2 load cell | As Payoff 1 | `[PROPOSED]` |
+| `FL1.PLC.TKUP1.Footage` | Intermediate take-up footage counter | Run monitor · spool progress · **die-life accumulation** · every mid-run event's footage stamp | `[PROPOSED]` |
+| **`FL1.PLC.FM1.Dancer.Status.IsActive`** | FM1's dancer active | Component panel | **`[PROPOSED]`** — no dancer path is on record (`PLC-Q18`) |
+| **`FL1.PLC.FM1.Dancer.Position`** | Dancer arm position — the tension-compensation feedback | Run monitor (diagnostic) | **`[PROPOSED]`** — `PLC-Q18` |
+| `FL1.PLC.LineState` | Machine run/stop state | **Rod-checkout gate** · **machine-stop prompt** · line status badge | `[PROPOSED]` path · **vocabulary `[CLIENT INPUT REQUIRED]` — see Section 6** |
+| **`FL1.PLC.ITInhibit`** | The run-block interlock (**written**, not read — see Section 8) | System only | `[PROPOSED]` — line-scoped |
+| **`FL1.PLC._System._Error`** | **The controller's system-error bit.** Not consumed by any screen — it is what `OPCConnection` requires in order to answer at all (see the note below) | `OPCConnection` only | ✅ **`[CONFIRMED]`** — supplied by the client, 5 Sep 2026 |
 
-> **`[CLIENT INPUT REQUIRED]` Does FL1 address a second take-up?** FL1's flow ends at the intermediate take-up, and the final take-up belongs to FL2 and FL3 — so **`FL1.TKUP2.Footage` is deliberately absent** from the map above. Confirm that FL1 has one take-up and no second footage counter (`PLC-Q02`).
+> **`[CLIENT INPUT REQUIRED]` Does FL1 address a second take-up?** FL1's flow ends at the intermediate take-up, and the final take-up belongs to FL2 and FL3 — so **`FL1.PLC.TKUP2.Footage` is deliberately absent** from the map above. Confirm that FL1 has one take-up and no second footage counter (`PLC-Q02`).
 
 ### 5.2.2 FL2 — finishing line, standalone
 
@@ -225,63 +243,96 @@ FL2 has **no die blocks, no FM1, and no live gauge or width measurement.** Its t
 
 | Tag path | Reads | Consumed by | Status |
 |---|---|---|---|
-| `FL2.FM2.S1.RollGap` | **S1 (8″)** present roll gap | Component panel · roll-adjust *Current* column (`PLC-Q09`) | `[PROPOSED]` — station name per `PLC-Q04` |
-| `FL2.FM2.S1.Status.IsActive` | S1 active or bypassed | Component panel · roll-adjust | `[PROPOSED]` — station name per `PLC-Q04` |
-| `FL2.FM2.S2.RollGap` | **S2 (6″)** present roll gap | As above | `[PROPOSED]` — station name per `PLC-Q04` |
-| `FL2.FM2.S2.Status.IsActive` | S2 active or bypassed | As above | `[PROPOSED]` — station name per `PLC-Q04` |
-| `FL2.FM2.S3.RollGap` | **S3 (6″) — the final stand** | As above | `[PROPOSED]` — station name per `PLC-Q04` |
-| `FL2.FM2.S3.Status.IsActive` | S3 active or bypassed | As above | `[PROPOSED]` — station name per `PLC-Q04` |
-| **`FL2.FM2.S3.Status.IsFaulted`** | S3 faulted | Component-fault alert | **`[PROPOSED]`** — no fault path is on record for any FM2 stand |
-| **`FL2.FM2.S2.Edger.Status.IsActive`** | **S2 edger active** | Component panel; edge configuration readback | **`[PROPOSED]` — no edger path is on record** |
-| **`FL2.FM2.S3.Edger.Status.IsActive`** | **S3 edger active** | As above | **`[PROPOSED]`** |
-| **`FL2.FM2.Dancer1.Status.IsActive`** | **Dancer 1 (between S1 and S2)** active | Component panel | **`[PROPOSED]`** — `PLC-Q18` |
-| **`FL2.FM2.Dancer1.Position`** | Dancer 1 arm position | Run monitor (diagnostic) | **`[PROPOSED]`** — `PLC-Q18` |
-| **`FL2.FM2.Dancer1.Mode`** | Dancer mode or tension mode — vocabulary in §5.5 | Component panel | **`[PROPOSED]`** — **read-only**; see §5.5 |
-| **`FL2.FM2.Dancer1.Tension`** | Tension setpoint — **meaningful in tension mode only** | Component panel | **`[PROPOSED]`** — `PLC-Q18`; unit per `PLC-Q15` |
-| **`FL2.FM2.Dancer2.Status.IsActive`** | **Dancer 2 (between S2 and S3)** active | As above | **`[PROPOSED]`** — `PLC-Q18` |
-| **`FL2.FM2.Dancer2.Position`** | Dancer 2 arm position | As above | **`[PROPOSED]`** — `PLC-Q18` |
-| **`FL2.FM2.Dancer2.Mode`** | As Dancer 1 | As above | **`[PROPOSED]`** — **read-only**; see §5.5 |
-| **`FL2.FM2.Dancer2.Tension`** | As Dancer 1 | As above | **`[PROPOSED]`** — `PLC-Q18`; unit per `PLC-Q15` |
-| `FL2.Speed` | Line speed | Line status board · run monitor header · machine-stop prompt | `[PROPOSED]` — derived |
-| `FL2.Payoff1.Weight` | The spool payoff load cell. **This position is named the *traversing payoff* (TPO)** in the equipment register; `Payoff1` is the tag-namespace name for it | Line status board · run monitor | `[PROPOSED]` — derived |
-| `FL2.TKUP2.Footage` | Final take-up footage counter. **TKUP-2 *is* the traversing take-up** — the two names are the same equipment | Run monitor · coil progress · every event's footage stamp | `[PROPOSED]` — derived |
-| `FL2.LineState` | Machine run/stop state | Checkout gate · machine-stop prompt · status badge | `[PROPOSED]` — derived; vocabulary per Section 6 |
-| **`FL2.ITInhibit`** | Run-block interlock (written) | System only | `[PROPOSED]` — line-scoped |
+| `FL2.PLC.FM2.S1.RollGap` | **S1 (8″)** present roll gap | Component panel · roll-adjust *Current* column (`PLC-Q09`) | `[PROPOSED]` — station name per `PLC-Q04` |
+| `FL2.PLC.FM2.S1.Status.IsActive` | S1 active or bypassed | Component panel · roll-adjust | `[PROPOSED]` — station name per `PLC-Q04` |
+| `FL2.PLC.FM2.S2.RollGap` | **S2 (6″)** present roll gap | As above | `[PROPOSED]` — station name per `PLC-Q04` |
+| `FL2.PLC.FM2.S2.Status.IsActive` | S2 active or bypassed | As above | `[PROPOSED]` — station name per `PLC-Q04` |
+| `FL2.PLC.FM2.S3.RollGap` | **S3 (6″) — the final stand** | As above | `[PROPOSED]` — station name per `PLC-Q04` |
+| `FL2.PLC.FM2.S3.Status.IsActive` | S3 active or bypassed | As above | `[PROPOSED]` — station name per `PLC-Q04` |
+| **`FL2.PLC.FM2.S3.Status.IsFaulted`** | S3 faulted | Component-fault alert | **`[PROPOSED]`** — no fault path is on record for any FM2 stand |
+| **`FL2.PLC.FM2.S2.Edger.Status.IsActive`** | **S2 edger active** | Component panel; edge configuration readback | **`[PROPOSED]` — no edger path is on record** |
+| **`FL2.PLC.FM2.S3.Edger.Status.IsActive`** | **S3 edger active** | As above | **`[PROPOSED]`** |
+| **`FL2.PLC.FM2.Dancer1.Status.IsActive`** | **Dancer 1 (between S1 and S2)** active | Component panel | **`[PROPOSED]`** — `PLC-Q18` |
+| **`FL2.PLC.FM2.Dancer1.Position`** | Dancer 1 arm position | Run monitor (diagnostic) | **`[PROPOSED]`** — `PLC-Q18` |
+| **`FL2.PLC.FM2.Dancer1.Mode`** | Dancer mode or tension mode — vocabulary in §5.5 | Component panel | **`[PROPOSED]`** — **read-only**; see §5.5 |
+| **`FL2.PLC.FM2.Dancer1.Tension`** | Tension setpoint — **meaningful in tension mode only** | Component panel | **`[PROPOSED]`** — `PLC-Q18`; unit per `PLC-Q15` |
+| **`FL2.PLC.FM2.Dancer2.Status.IsActive`** | **Dancer 2 (between S2 and S3)** active | As above | **`[PROPOSED]`** — `PLC-Q18` |
+| **`FL2.PLC.FM2.Dancer2.Position`** | Dancer 2 arm position | As above | **`[PROPOSED]`** — `PLC-Q18` |
+| **`FL2.PLC.FM2.Dancer2.Mode`** | As Dancer 1 | As above | **`[PROPOSED]`** — **read-only**; see §5.5 |
+| **`FL2.PLC.FM2.Dancer2.Tension`** | As Dancer 1 | As above | **`[PROPOSED]`** — `PLC-Q18`; unit per `PLC-Q15` |
+| `FL2.PLC.Speed` | Line speed | Line status board · run monitor header · machine-stop prompt | `[PROPOSED]` — derived |
+| `FL2.PLC.Payoff1.Weight` | The spool payoff load cell. **This position is named the *traversing payoff* (TPO)** in the equipment register; `Payoff1` is the tag-namespace name for it | Line status board · run monitor | `[PROPOSED]` — derived |
+| `FL2.PLC.TKUP2.Footage` | Final take-up footage counter. **TKUP-2 *is* the traversing take-up** — the two names are the same equipment | Run monitor · coil progress · every event's footage stamp | `[PROPOSED]` — derived |
+| `FL2.PLC.LineState` | Machine run/stop state | Checkout gate · machine-stop prompt · status badge | `[PROPOSED]` — derived; vocabulary per Section 6 |
+| **`FL2.PLC.ITInhibit`** | Run-block interlock (written) | System only | `[PROPOSED]` — line-scoped |
+| **`FL2.PLC._System._Error`** | As FL1 | `OPCConnection` only | ✅ **`[CONFIRMED]`** — supplied by the client, 5 Sep 2026 |
 
 > **Every FM2 stand is addressable, including the final one.** All three stands are reachable, so this map covers the whole mill. What is open on these rows is the **station naming** — §4.3 and **`PLC-Q04`** — not whether a stand can be reached. Separately, the **edger** paths at S2 and S3 have no source at all: that is **`PLC-Q07`**.
+
+> ### ⚠ `G95` — without a system-error tag, the whole line is invisible, not just that one tag.
+>
+> `_System._Error` looks like a diagnostic nicety and is nothing of the kind. `OPCConnection` answers
+> `GetOPCInfo` from `GetOPCServerAndTagDetails`, whose **first result set INNER JOINs `OPCTags`
+> filtered `IsSystemErrorTag = 1`**. A line with no such row therefore returns **no `OPCInfo` at
+> all** — no `MachineId`, no `ConnectionType`, no servers, and none of the other tags either.
+>
+> The failure is indistinguishable from the line never having been registered, which is exactly the
+> symptom `G60` describes. Two rows, one per line, are what make every other row on this page
+> reachable. They are not optional and they are not a data tag.
+>
+> ⚠ The same result set joins `CommonDB.Machines`, which filters `STATUS = 1`. A `machines` row in
+> any other status disappears the same silent way.
 
 > **Equipment aliases, so the map is not read as incomplete.** FL2's output take-up is called **TKUP-2** in the tag namespace and **the traversing take-up** in the equipment register — the same machine, mapped above. Its *input* is likewise the **traversing payoff (TPO)**, mapped as `Payoff1`. Separately, the data model carries a third material-position value named `TraversingTakeup`; that is a **vocabulary entry so FL2 can be represented alongside the two rod payoffs**, not evidence of a fourth untagged piece of equipment.
 
 ### 5.2.3 FL3 — hybrid, FL1 feeding FL2 continuously
 
-FL3 runs both mills in one pass with the intermediate take-up bypassed. It therefore needs **the FL1 draw-and-FM1 set and the FL2 finishing set at the same time** — and the question of how it addresses them is unresolved.
+FL3 runs both mills in one pass with the intermediate take-up bypassed. It therefore needs **the FL1 draw-and-FM1 set and the FL2 finishing set at the same time** — and how it addresses them is now settled.
 
-> ### `[CLIENT INPUT REQUIRED]` — the whole of FL3's namespace is one open question
+> ### ✅ `PLC-Q08` IS ANSWERED — `D-47`, 5 Sep 2026. **FL3 has no controller of its own.**
 >
-> The finishing stands are addressed as **`FL2.FM2.…`**, and FL3 needs those same stands. So either:
+> Of the two topologies this section used to hold open, **option 1 is the answer**: FM2 is owned by
+> the FL2 controller, FM1 and the die blocks by the FL1 controller, and FL3 reaches both through
+> **`FL1.PLC.*` and `FL2.PLC.*`**. There is no `FL3.PLC.*` namespace on any machine.
 >
-> 1. **FM2 is owned by the FL2 controller** and FL3 reaches it through the `FL2.*` namespace — in which case a single FL3 acknowledgement **writes to two controllers**; or
-> 2. **FL3 has its own address space** (`FL3.FM2.*`) and the push is one controller.
+> **The consequence this section always warned about is now real, and it is owed a design.** A single
+> FL3 acknowledgement **writes to two controllers**, so:
 >
-> **This is not a naming preference.** It decides whether the FL3 push crosses a controller boundary, which decides what a partial failure looks like and what the recovery has to undo. The commissioning test written to prove the single-batch push — *"one acknowledgement configures FM1 and FM2"* — passes under either topology and cannot distinguish them (`PLC-Q08`).
+> - the push is **two** `WriteTag` batches, not one — §7.1's *"one acknowledgement pushes all FM1 and
+>   FM2 tags in a single batch"* is **superseded** for FL3;
+> - §7.5's compensating re-clear now spans **two failure domains**, and the case where the FL1 half
+>   commits and the FL2 half fails has never been specified;
+> - `ITInhibit` is one tag per line (§8.1), so blocking FL3 means setting **both**
+>   `FL1.PLC.ITInhibit` **and** `FL2.PLC.ITInhibit`. Setting one blocks nothing.
+>
+> **That design is `G99`, and it is open.** Until it lands, FL3 is **not registered with
+> `OPCConnection` at all** — deliberately — so `GetOPCInfo` answers an empty list for FL3 and an FL3
+> push fails by name rather than half-configuring a line. The registration script asserts machine 127
+> is absent.
+>
+> ⚠ **The commissioning test is still blind.** *"One acknowledgement configures FM1 and FM2"* passed
+> under either topology, which is why this went unresolved so long. Under `D-47` it must be rewritten
+> to prove **both** controllers were written and that a partial failure re-clears both.
 
-Pending that answer, FL3's map is the union below, with `{FM2-prefix}` standing for whichever namespace applies:
+The map below is the union of what FL3 uses. **The `FL3.PLC.*` paths in it are now historical** — they
+record which measures the hybrid route needs, not addresses that exist. Read the left-hand column as
+*"the FL1 or FL2 path for this measure"* until `G99` re-points them:
 
 | Tag path | Reads | Consumed by | Status |
 |---|---|---|---|
-| `FL3.DB1.Diameter` · `FL3.DB2.Diameter` | Diameters of the fitted dies | Run monitor component panel | `[PROPOSED]` |
-| `FL3.DB1.Status.IsActive` · `FL3.DB2.Status.IsActive` | Die blocks active or bypassed | Component panel · roll-adjust dialog | `[PROPOSED]` |
-| `FL3.FM1.RollGap` · `.Status.IsActive` · `.Status.IsFaulted` | FM1 gap, running, faulted | Component panel · roll-adjust *Current* · **component-fault alert** | `[PROPOSED]` |
+| `FL3.PLC.DB1.Diameter` · `FL3.PLC.DB2.Diameter` | Diameters of the fitted dies | Run monitor component panel | `[PROPOSED]` |
+| `FL3.PLC.DB1.Status.IsActive` · `FL3.PLC.DB2.Status.IsActive` | Die blocks active or bypassed | Component panel · roll-adjust dialog | `[PROPOSED]` |
+| `FL3.PLC.FM1.RollGap` · `.Status.IsActive` · `.Status.IsFaulted` | FM1 gap, running, faulted | Component panel · roll-adjust *Current* · **component-fault alert** | `[PROPOSED]` |
 | `{FM2-prefix}.FM2.S1.*` · `.S2.*` · `.S3.*` | The **three** finishing stands, gap and status | Component panel · roll-adjust dialog | `[CLIENT INPUT REQUIRED]` — `PLC-Q08` |
 | `{FM2-prefix}.FM2.S2.Edger.*` · `.S3.Edger.*` | The two edgers | Component panel; edge-configuration readback | `[PROPOSED]` — `PLC-Q07` |
-| `FL3.AGC.Gauge` · `FL3.AGC.Width` | Live gauge and width — **FL3 is real-time** | Run monitor traces · line status board · gauge-trace report | `[PROPOSED]` |
-| **`FL3.FM1.Dancer.Status.IsActive`** · **`.Position`** | FM1's dancer on the hybrid route | Component panel | **`[PROPOSED]`** — `PLC-Q18` |
-| **`FL3.FM2.Dancer1.*`** · **`FL3.FM2.Dancer2.*`** | Both FM2 dancers — same four measures as §5.2.2 | Component panel | **`[PROPOSED]`** — `PLC-Q18`; **namespace per `PLC-Q08`** |
-| `FL3.Speed` | Line speed | Line status board · run monitor header · **machine-stop prompt** | `[PROPOSED]` |
-| `FL3.Payoff1.Weight` · `FL3.Payoff2.Weight` | Payoff load cells — FL3 feeds from rod, so both bays apply | Line status board · pre-check-in · run monitor · **weld alerts** | `[PROPOSED]` |
-| `FL3.TKUP2.Footage` | Final take-up footage — the intermediate take-up is bypassed | Run monitor · coil progress · **die-life accumulation** · event footage stamps | `[PROPOSED]` |
-| `FL3.LineState` | Machine run/stop state | **Rod-checkout gate** · **machine-stop prompt** · status badge | `[PROPOSED]`; vocabulary per Section 6 |
-| `FL3.ITInhibit` | Run-block interlock (written) | System only | `[PROPOSED]` |
+| `FL3.PLC.AGC.Gauge` · `FL3.PLC.AGC.Width` | Live gauge and width — **FL3 is real-time** | Run monitor traces · line status board · gauge-trace report | `[PROPOSED]` |
+| **`FL3.PLC.FM1.Dancer.Status.IsActive`** · **`.Position`** | FM1's dancer on the hybrid route | Component panel | **`[PROPOSED]`** — `PLC-Q18` |
+| **`FL3.PLC.FM2.Dancer1.*`** · **`FL3.PLC.FM2.Dancer2.*`** | Both FM2 dancers — same four measures as §5.2.2 | Component panel | **`[PROPOSED]`** — `PLC-Q18`; **namespace per `PLC-Q08`** |
+| `FL3.PLC.Speed` | Line speed | Line status board · run monitor header · **machine-stop prompt** | `[PROPOSED]` |
+| `FL3.PLC.Payoff1.Weight` · `FL3.PLC.Payoff2.Weight` | Payoff load cells — FL3 feeds from rod, so both bays apply | Line status board · pre-check-in · run monitor · **weld alerts** | `[PROPOSED]` |
+| `FL3.PLC.TKUP2.Footage` | Final take-up footage — the intermediate take-up is bypassed | Run monitor · coil progress · **die-life accumulation** · event footage stamps | `[PROPOSED]` |
+| `FL3.PLC.LineState` | Machine run/stop state | **Rod-checkout gate** · **machine-stop prompt** · status badge | `[PROPOSED]`; vocabulary per Section 6 |
+| `FL3.PLC.ITInhibit` | Run-block interlock (written) | System only | `[PROPOSED]` |
 
 ## 5.3 Sampling, publication and retention
 
@@ -299,7 +350,7 @@ Three gaps are properties of the surface itself rather than questions about it, 
 
 1. **The edgers and the dancers have no observed path on any line.** Edge type is in the push payload (§7.2), and there is no tag to write it to or read it back from. The paths in §5.2.2 are our derivations. `PLC-Q07`.
 2. **There is no take-up weight tag on any line** — yet the machine-stop prompt, the completion transaction and the printed label all use a wound weight, and assumption **A2** says load cells are fitted on both take-ups. Either the weight is derived, in which case `PLC-Q03` carries its accuracy, or two paths are missing. `PLC-Q14`.
-3. **A fault bit is specified for one component only** — FM1. No FM2 stand has one on record (`FL2.FM2.S3.Status.IsFaulted` is our proposal), and neither do the die blocks, so **the line status board's Critical *component fault* alert cannot fire for any of them**. `PLC-Q02` establishes whether the machine exposes a fault bit per component.
+3. **A fault bit is specified for one component only** — FM1. No FM2 stand has one on record (`FL2.PLC.FM2.S3.Status.IsFaulted` is our proposal), and neither do the die blocks, so **the line status board's Critical *component fault* alert cannot fire for any of them**. `PLC-Q02` establishes whether the machine exposes a fault bit per component.
 
 Every other open question about this surface — the line-state vocabulary, FL3's namespace, units, the station and measure names — is in Section 13.1 rather than repeated here.
 
@@ -322,7 +373,7 @@ Every other open question about this surface — the line-state vocabulary, FL3'
 
 # 6. Line State and Its Vocabulary
 
-`FL{n}.LineState` is read on every line, and **what the controller reports through it is undocumented.** That makes it the single riskiest ambiguity in the interface, because two operator-facing behaviours are conditioned on values nobody has written down.
+`FL{n}.PLC.LineState` is read on every line, and **what the controller reports through it is undocumented.** That makes it the single riskiest ambiguity in the interface, because two operator-facing behaviours are conditioned on values nobody has written down.
 
 We are **not** guessing at them. **The machine-value-to-application-state mapping is published as configuration**, on exactly the same principle as the tag paths themselves — so the answer supplied at commissioning is applied without a code change, in the same file and by the same mechanism as a corrected path.
 
@@ -340,7 +391,7 @@ A machine that reports *jogging* or *threading* as stopped changes the filtering
 
 This is what we are asking the commissioning engineer to fill in, and it is a scheduled step of the commissioning sequence (test **C2**): drive the line through each condition and record the tag's value.
 
-| Machine condition | Raw value of `FL{n}.LineState` | Maps to application state |
+| Machine condition | Raw value of `FL{n}.PLC.LineState` | Maps to application state |
 |---|---|---|
 | Running at production speed | | Running |
 | Stopped, ready | | Idle |
@@ -371,7 +422,21 @@ Two further values are needed alongside it:
 | **Hold / idle** | Pause | Drive enable and speed to idle | The pause record |
 | **Simulated push** | Development and all environments before commissioning | Logs the intended writes and **makes no machine connection** | The application log only |
 
-For **FL3**, one acknowledgement pushes **all FM1 and FM2 tags in a single batch** — see `PLC-Q08` for the unresolved question of how many controllers that batch reaches.
+> ### ⛔ For **FL3** this is now TWO batches, not one — `D-47`, 5 Sep 2026.
+>
+> This section used to say *"one acknowledgement pushes all FM1 and FM2 tags in a single batch"*,
+> with `PLC-Q08` open on how many controllers that batch reached. **`PLC-Q08` is answered: FL3 has
+> no controller of its own.** FM1 and the die blocks are the FL1 controller's; FM2 is the FL2
+> controller's. So one FL3 acknowledgement writes to **two** controllers, in two batches.
+>
+> **The single-batch guarantee survives only for FL1 and FL2.** For those, one acknowledgement is
+> still one `WriteTag` POST carrying N tags, and §7.5's compensating re-clear has one failure
+> domain to undo.
+>
+> ⚠ **What FL3's push actually looks like — the ordering, whether the two batches are sequential or
+> concurrent, and what a half-committed push leaves behind — is `G99` and is NOT specified here.**
+> Until it is, FL3 is not registered with `OPCConnection` and an FL3 push fails by name rather than
+> configuring one mill and not the other.
 
 ## 7.2 The push payload, item by item
 
@@ -417,7 +482,26 @@ If any single tag write in a push fails, the check-in is **aborted**: the tags a
 
 **That sequence is a compensating re-clear, not an atomic rollback**, and the distinction is not pedantry. An atomic rollback is a guarantee the infrastructure provides; a compensating re-clear is a series of ordinary writes that can themselves fail. Describing it as a rollback misleads implementers, and the check-in spans three systems — this application's database, the shared material and order schema, and the machine — no two of which share a transaction.
 
-**The recovery path for the case where one of the three succeeds and another fails is a project-side open item** (Section 13.2), and settling FL3's controller topology (`PLC-Q08`) is a prerequisite, because it determines whether the machine is one failure domain or two.
+**The recovery path for the case where one of the three succeeds and another fails is a project-side open item** (Section 13.2).
+
+> ### ⛔ On FL3 the machine is **two** failure domains, and that case is unwritten — `D-47` / `G99`.
+>
+> This paragraph used to make settling `PLC-Q08` a prerequisite *"because it determines whether the
+> machine is one failure domain or two"*. It is settled, and the answer is **two**.
+>
+> Everything above is written for one machine write that either lands or does not. An FL3 push has
+> **two**, to different controllers, and they can disagree:
+>
+> | Outcome | What is left behind |
+> |---|---|
+> | Both succeed | The intended state. |
+> | Both fail | Re-clear both; equivalent to the single-controller case above. |
+> | **FL1 lands, FL2 fails** | **Unspecified.** The draw boxes and FM1 are configured for a run the finishing mill is not, and the compensating re-clear must now reach a controller that already accepted its write. |
+> | **FL2 lands, FL1 fails** | **Unspecified**, and the mirror image. |
+>
+> The re-clear is a series of ordinary writes that can themselves fail — that is this section's own
+> point — and spanning two controllers doubles the ways it can. **`G99` owns this.** Until it is
+> designed, FL3 is not registered and cannot reach either controller.
 
 ---
 
@@ -427,13 +511,13 @@ If any single tag write in a push fails, the check-in is **aborted**: the tags a
 
 `ITInhibit` is a **system-controlled tag that blocks the machine from running** when the prerequisites for recording a run are not met. Its purpose is to make it impossible to produce material the system cannot account for.
 
-**It is one tag per line** — `FL1.ITInhibit`, `FL2.ITInhibit` — so a line blocked from running blocks **only itself**. An idle FL1 with no rod checked in does not stop a scheduled FL2.
+**It is one tag per line** — `FL1.PLC.ITInhibit`, `FL2.PLC.ITInhibit` — so a line blocked from running blocks **only itself**. An idle FL1 with no rod checked in does not stop a scheduled FL2.
 
 > **It is set and cleared only by the system. Never by an operator.**
 >
 > There is no operator path to clear it, and **there must not be one.** It clears when — and only when — the condition that set it resolves.
 
-On FL3, whether the line carries its own `FL3.ITInhibit` or asserts FL1's and FL2's together follows from the namespace question, `PLC-Q08` — FL3 is the one line where a block legitimately implicates a second, the two being one physical thread of material.
+On FL3, whether the line carries its own `FL3.PLC.ITInhibit` or asserts FL1's and FL2's together follows from the namespace question, `PLC-Q08` — FL3 is the one line where a block legitimately implicates a second, the two being one physical thread of material.
 
 ## 8.2 The five set conditions
 
@@ -542,7 +626,7 @@ If the push fails at any tag, the whole check-in aborts per §7.5.
 
 **4 — Spool check-in on FL2.** The FL2 operator scans the spool, reviews the historical profile from the FL1 pass that produced it, and acknowledges against the same confirmation gate. The payload is the finishing mill only — **the three FM2 stands and the two edgers, with no die blocks and no FM1** — and there is no visual inspection step.
 
-**5 — Hybrid check-in on FL3.** One acknowledgement, at the rod end, configures **both mills in a single batch**. There is no intermediate spool and therefore no second check-in. A failure anywhere in the batch aborts the whole check-in.
+**5 — Hybrid check-in on FL3.** ⛔ **This test cannot be run as written, and could never have distinguished the two topologies it was meant to prove** — *"one acknowledgement configures FM1 and FM2"* passes whether the batch reaches one controller or two, which is how `PLC-Q08` stayed open so long. `D-47` settles it at **two**, so the test must be rewritten to assert that **both** controllers were written and that a partial failure re-clears both (`G99`). Until then FL3 is not registered and this scenario is **blocked, not merely pending**. *(Original text: one acknowledgement, at the rod end, configures both mills in a single batch.)* There is no intermediate spool and therefore no second check-in. A failure anywhere in the batch aborts the whole check-in.
 
 ## 9.4 During the run
 
@@ -730,14 +814,14 @@ Numbered in priority order. Every row carries the identifier it is tracked under
 
 | # | Question | What it blocks | Also tracked as | Priority |
 |---|---|---|---|---|
-| **`PLC-Q01`** | **The line-state vocabulary** — what values `FL{n}.LineState` can take (§6.2) | The rod-checkout gate, the spool-completion prompt and the line status badge | `Q21` / `OI-35` | **Critical** |
+| **`PLC-Q01`** | **The line-state vocabulary** — what values `FL{n}.PLC.LineState` can take (§6.2) | The rod-checkout gate, the spool-completion prompt and the line status badge | `Q21` / `OI-35` | **Critical** |
 | **`PLC-Q02`** | **Confirmation of every tag path in Section 5.** They follow the naming convention in Section 4, not a verified map, and none has been read off a controller | The entire interface, before go-live. Commissioning test **C1** has no confirmed list to read from until this closes | *this document* | **Critical** |
 | **`PLC-Q03`** | **The dimensional basis for converting footage to weight** — target dimensions, measured at completion, or integrated over the recorded readings | Output weight, spool completion, the weld alerts | `Q10` / `OI-45` | **Critical** |
 | **`PLC-Q04`** | **Confirm the FM2 station names** — `S1`, `S2`, `S3`, carrying position only (§4.3). Every FM2 row in §5.2.2 is `[PROPOSED]` until this is answered. **The stand count and the roller diameters are not in question** — only the station names | Every FM2 read subscription and every FM2 write. Commissioning tests **C1** and **C11** | `G32` | **Critical** |
 | **`PLC-Q05`** | **Confirm every measure name in §5.2** — `RollGap`, `Gauge`, `Width`, `Footage`, `Diameter`, `Weight`, `Status.IsActive`, `Status.IsFaulted`, and the unit-free scalars `Speed` and `LineState`. These follow rules R4, R7 and R8; **none has been read off a controller**, and they are **the largest single block of unconfirmed strings in this document** | Every read subscription and every write, on all three lines. If the measure names are wrong, **commissioning test C1 fails across the whole map rather than on isolated rows** | `G33` | **Critical** |
 | **`PLC-Q06`** | **Is speed pushed as a target/setpoint or a limit/clamp?** (§7.2) | The push payload, and what a check-in does to a stationary line | `Q27` | High |
 | **`PLC-Q07`** | **Is edge type pushed, and where are the edger tag paths?** No edger path is on record for any line | The FL2/FL3 edge configuration and its readback | `Q28` / `G29` | High |
-| **`PLC-Q08`** | **On FL3, are the finishing stands addressed as `FL2.FM2.*` or `FL3.FM2.*`?** (§5.2.3) | Whether the single-batch push crosses a controller boundary, what recovery must undo, and whether FL3 carries its own interlock | `Q29` / `G30` | High |
+| **`PLC-Q08`** | **On FL3, are the finishing stands addressed as `FL2.PLC.FM2.*` or `FL3.PLC.FM2.*`?** (§5.2.3) | Whether the single-batch push crosses a controller boundary, what recovery must undo, and whether FL3 carries its own interlock | `Q29` / `G30` | High |
 | **`PLC-Q09`** | **Is the roll gap read back from the machine before a run starts?** Three options are open, and the currently implied design has **no readback at all** | Whether a run can start on gaps that were never verified | `Q1` / `OI-52` | High |
 | **`PLC-Q10`** | **Confirm the checkout tag behaviour** — never send a stop, clear only when confirmed stopped, block while running | The checkout build | `Q13` / `OI-54` | High |
 | **`PLC-Q11`** | **The machine's publish rate and the acceptable end-to-end latency** | The real-time design's acceptance criteria | `G9` / `OI-34` | High |
@@ -748,7 +832,7 @@ Numbered in priority order. Every row carries the identifier it is tracked under
 | **`PLC-Q16`** | **Should the stop prompt be suppressed** when a software pause already captured a reason? Proposed yes | The spool-completion prompt | `Q21` / `OI-35` | Medium |
 | **`PLC-Q17`** | **Confirm the two structural rules** — **R6**, that an ordinal instance suffixes its digit onto the element name (`DB1`, `Payoff2`, `TKUP1`), and **R5**, that an assembly's internal stations take a station segment (`FM2.S2`) | Deriving any path that is still missing, which is the whole economy of confirming a grammar | *this document* | Medium |
 | **`PLC-Q18`** | **Confirm the dancer element** — the paths, the **ordinal convention** (`Dancer1` upstream of `Dancer2`, per R5/R6), and the **`Mode` vocabulary** of §5.5. FM1 carries one dancer and FM2 two, between S1/S2 and S2/S3; the equipment is confirmed (`D-28`) but **no dancer path has been read off a controller**. Also: **does FM1's dancer have selectable modes?** Modes were attributed to FM2 only, and we have not assumed either way | The dancer element in §5.2.1–§5.2.3 and §5.5 | **C12** |
-| **`PLC-Q19`** | **Confirm the jog, stand-roll and dancer-thread read surface** disclosed by the client on 1 Sep 2026: *"we will have jog events on **all three stands of FL2**, as well as **open/close on stand rolls**, and **thread position on dancers**"*. **None of the three has a path in any published map.** Jog and threading being real machine states also bears on `Q21`, which asks whether `FL{n}.LineState` is a two-state bit or distinguishes `THREADING` / `JOG` — a jog that reports as STOPPED changes the filtering the checkout gatekeeper needs. ⚠ The **thread position** element is a *second* dancer read, beyond `PLC-Q18`'s mode element | A new jog / roll-state / dancer-position element; `FL{n}.LineState` vocabulary | **C11** |
+| **`PLC-Q19`** | **Confirm the jog, stand-roll and dancer-thread read surface** disclosed by the client on 1 Sep 2026: *"we will have jog events on **all three stands of FL2**, as well as **open/close on stand rolls**, and **thread position on dancers**"*. **None of the three has a path in any published map.** Jog and threading being real machine states also bears on `Q21`, which asks whether `FL{n}.PLC.LineState` is a two-state bit or distinguishes `THREADING` / `JOG` — a jog that reports as STOPPED changes the filtering the checkout gatekeeper needs. ⚠ The **thread position** element is a *second* dancer read, beyond `PLC-Q18`'s mode element | A new jog / roll-state / dancer-position element; `FL{n}.PLC.LineState` vocabulary | **C11** |
 
 ## 13.2 Project-owned — not client input
 

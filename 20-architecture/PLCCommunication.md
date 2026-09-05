@@ -1,7 +1,7 @@
 # Flat Wire Mill — PLC / OPC Communication
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — split out of `03-HLD-and-ERDiagram.md`, `02-SRS.md`, `04-APIContract.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** September 5, 2026 — **§2 rewritten again, by `D-45`: the tag paths are in BOTH `appsettings` and `CommonDB.OPCTags`, deliberately.** `appsettings` resolves them (it is the only thing that can — `OPCTags` has no logical-name column and, per `D-45`, is not getting one), and the registration carries the same paths as rows so `GetOPCInfo` can answer. **`G93` is withdrawn**; there is no shared `ALTER` and no other team. ⚠ The registration is **41 rows across two lines**, not 72 across three — `D-47` gives FL3 no controller of its own. ⚠ Every path gained a `PLC` element (`D-46`). *(previously September 4, 2026 — ⛔ **§2 was REWRITTEN by `D-44`, and the pre-4-Sep version is wrong rather than stale.** OPC tag paths do **not** live in `appsettings` — they are `CommonDB` `OPCTags` rows reached through `OPCConnection`'s `GetOPCInfo`, with a new **`TagKey`** column carrying the logical name. This closes **`OI-A`**, which this section's old text was one of the two wrong answers to. `appsettings` keeps `SimulatePLCTagPush`, `PublishIntervalMs` and per-line `LineStateMap` only. The `§1.6` interlock rule and `§1.7`'s mapping-table obligation are **unchanged in substance**, restated against the new mechanism; rollback is no longer file-only. ⚠ New **`G93`** — the shared-table alteration is not ours *(previously August 13, 2026 — split out of `03-HLD-and-ERDiagram.md`, `02-SRS.md`, `04-APIContract.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*
 **Document Type:** PLC integration design, the write surface and the service contract
 **Status:** Baselined for build — **carries no tag path strings by rule**
 **Owner:** Real-time / PLC stream
@@ -38,7 +38,7 @@ The requirement-level rules, which remain normative here:
 
 | ID | Requirement |
 |---|---|
-| `FR-022` | All OPC tag paths shall be sourced from configuration, **never hardcoded**, so a path found wrong at commissioning is corrected without redeployment. |
+| `FR-022` | All OPC tag paths shall be sourced from configuration, **never hardcoded**, so a path found wrong at commissioning is corrected without redeployment. ⚠ **`D-44` settles what "configuration" means here — the `CommonDB` `OPCTags` registration, not `appsettings`.** The requirement's substance is unchanged and better served: a correction is now a row update with no file deployment at all. |
 | `FR-049` | **No PLC write shall occur at pre-check-in.** |
 | `FR-071` | Tags shall be pushed on **one trigger only** — explicit operator acknowledgement of a pass schedule at check-in. Never on schedule save, load, generation or apply. |
 | `FR-072` | **Every audit record shall be written before the push**, leaving an incomplete-push marker if the push then fails. |
@@ -184,7 +184,45 @@ Three implementation consequences:
 
 ### 2. Configuration binding
 
-Every path is configuration (`FR-022` / `INT005`), owned by `OPCConnection`'s `appsettings.{Environment}.json`.
+> ⚠ **THE TAG PATHS ARE IN BOTH PLACES, BY DECISION. `D-45`, 5 Sep 2026 — this narrows `D-44`, which had narrowed the section before it. Read this box before anything below it.**
+>
+> Every path is configuration (`FR-022` / `INT005`) and is never hardcoded. That has not changed.
+> What changed twice is *which* configuration.
+>
+> **`appsettings` RESOLVES the paths. `CommonDB.OPCTags` REGISTERS them. Both, deliberately.**
+>
+> - **`FlatWireOpc:Lines:{line}:Tags` is the resolution map**, read through the unchanged
+>   `ITagPathResolver` seam. Code asks for a logical name — `Gauge`, `ITInhibit`, `Fm2S1RollGap` —
+>   and this is what answers. It is the only thing that can: see the box below.
+> - **`CommonDB.OPCTags` carries the same paths as rows**, so `OPCConnection` can answer
+>   `GetOPCInfo` with a real `OPCInfo` header and so the SignalR subscribe path has a tag list.
+>
+> `OI-A` asked *which deployable's `appsettings`* held the map, and offered `OPCConnection`'s (this
+> section's original answer) and `FlatWire`'s (`[DEP §2.1]`'s). **`D-45`'s answer is `FlatWire`'s** —
+> `[DEP §2.1]` was right — with the registration alongside it rather than instead of it.
+>
+> ### ✅ Why `OPCTags` cannot be the resolution map — and why that is fine
+>
+> The table is `OPCTagsIdx · TagName · RequestedUpdateRate · IsSystemErrorTag · IsActive`. **There
+> is no logical-name column**, so nothing in it can map `Gauge` to a path. `D-44` proposed adding a
+> nullable `TagKey varchar(64)`; **`D-45` dropped that**, and `G93` is withdrawn.
+>
+> The reason is that the ecosystem has never needed the column and demonstrably scales without it.
+> `UnifiedSlitterService` addresses **313 tags across six slitters** off this exact schema:
+> `TagName` is the identity everywhere — DB row, OPC-UA `StartNodeId`, `MonitoredItem.DisplayName`,
+> value-cache key, event-correlation key — and its logical layer is a 620-constant C# class.
+> FlatWire's split is the same one, done better: the logical names are in `TagNames.cs` and the
+> paths are in **configuration** rather than hardcoded, which is what `FR-022` actually asks for.
+>
+> Against that, the column cost an `ALTER` on a shared `CommonDB` table, a change to a procedure,
+> a `UA.APIDTO` property, two NuGet version bumps and another team's schedule.
+>
+> ⚠ **The cost accepted instead is that the strings exist twice with nothing keying them together.**
+> `[DEP §5]` carries a config-vs-rows diff and `11_`'s verification block prints every registered
+> path, so the drift is checked rather than assumed. ⚠ **If a logical key in the database is ever
+> wanted, `OpcSubModuleTags` is the ecosystem's precedent — a side table, not an `ALTER`.**
+
+`appsettings.{Environment}.json` keeps the **non-path** settings, and only those. The skeleton below is what `FlatWire.API` binds:
 
 ```jsonc
 {
@@ -193,43 +231,68 @@ Every path is configuration (`FR-022` / `INT005`), owned by `OPCConnection`'s `a
     "SimulateMachineFeed": true,       // the READ side — [SIM]. Root-level like its write-side
                                        // peer above, NOT per line: one flag pair puts the whole
                                        // system in simulation. Contrast the interlock key in §1.6,
-                                       // which is line-scoped and belongs under Lines.FL{n}.Tags
+                                       // which is line-scoped and is a TagKey in the registration
     "PublishIntervalMs": 1000,         // 1000 | 5000 | 10000 | 30000
     "Lines": {
       "FL1": {
-        "Tags": {
-          "Gauge":          "<path from [PLC §5.2.1]>",
-          "Width":          "<path from [PLC §5.2.1]>",
-          "Speed":          "<path from [PLC §5.2.1]>",
-          "LineState":      "<path from [PLC §5.2.1]>",
-          "DancerActive":   "<path from [PLC §5.2.1]>",   // FM1 carries one dancer
-          "DancerPosition": "<path from [PLC §5.2.1]>"
-          // ... one key per row of the FL1 map
-        },
+        // D-45: the "Tags" BLOCK STAYS. It is the resolution map - 17 entries on FL1,
+        // 22 on FL2, 33 on FL3 - keyed by logical name, values the .PLC. paths (D-46).
+        // OPCTags carries the same paths as ROWS; it cannot resolve them (no key column).
         "LineStateMap": {                       // per [PLC §6] — filled at commissioning
           "<raw value>": "Running"              // C2 supplies the left-hand side
         }
       },
-      "FL2": { /* per [PLC §5.2.2] — note FM2 carries **two** dancers, so the
-                     dancer keys are indexed: DancerActive1/2, DancerPosition1/2,
-                     DancerMode1/2, DancerTension1/2 */ },
-      "FL3": { /* per [PLC §5.2.3] */ }
+      "FL2": { /* LineStateMap only */ },
+      "FL3": { /* LineStateMap only */ }
     }
   }
 }
 ```
 
+**`LineStateMap` stays in `appsettings` deliberately.** It is a machine-value → application-state vocabulary, **not a tag path**, and there is no table for it anywhere in `CommonDB` — `§1.7`'s obligation is unchanged and `PLC-Q01`'s answer still arrives after code freeze, so it must stay applicable without a build.
+
+**The registration, per line** — one `OPCTags` row per path, mapped to the line's `machines` row
+and to `OPCModuleId` **6**. Delivered by
+[`11_CommonDB_Insert_OPCRegistration_FlatWire.sql`](../30-database/scripts/11_CommonDB_Insert_OPCRegistration_FlatWire.sql).
+
+⚠ **41 rows, not 72, and only two lines.** FL1's 17 + FL2's 22 data tags + **2 system-error rows**.
+**FL3 (machine 127) is not registered at all** — `D-47`: it has no controller of its own, so its
+tags *are* FL1's and FL2's. Do not reconcile 41 against the **72 bound paths** `FW-144 §8.2`
+measured; they count different things and both are correct.
+
+⛔ **The two system-error rows are load-bearing.** `GetOPCServerAndTagDetails`'s first result set
+INNER JOINs `IsSystemErrorTag = 1`, so a line without one returns **no `OPCInfo` at all** — a
+symptom identical to not being registered (`G95`). `FL1.PLC._System._Error` and
+`FL2.PLC._System._Error` were supplied by the client on 5 Sep 2026.
+
+⚠ **Rows store the BARE path** — `FL1.PLC.AGC.Gauge`, never `ns=2;s=…`. `OPCConnection` applies the
+node-id form at the QuickOPC boundary, and `G94` measured 0 of 496 existing rows carrying a prefix.
+
+Since `D-46` every path carries a `PLC` element after the line, which is what the first two paths
+read off a real controller turned out to have:
+
+| `TagKey` | `TagName` | Source |
+|---|---|---|
+| `Gauge` | *path from `[PLC §5.2.1]`* | one row per row of the FL1 map |
+| `Width` | *path from `[PLC §5.2.1]`* | |
+| `Speed` | *path from `[PLC §5.2.1]`* | |
+| `LineState` | *path from `[PLC §5.2.1]`* | |
+| `DancerActive` / `DancerPosition` | *path from `[PLC §5.2.1]`* | FM1 carries one dancer |
+| `ITInhibit` | *path from `[PLC §5.2.1]`* | line-scoped — §1.6 |
+
+FL2 is `[PLC §5.2.2]` and carries **two** dancers, so its keys are indexed — `Dancer1Active`/`Dancer2Active`, `Dancer1Position`/`Dancer2Position`, `Dancer1Mode`/`Dancer2Mode`, `Dancer1Tension`/`Dancer2Tension` — **prefix**-indexed, per `TagNames.cs:229-251`. FL3 is `[PLC §5.2.3]`.
+
 **Binding rules:**
 
-- Keys are **stable logical names**; values are paths. Code references the logical name and never a literal path — that is what makes a commissioning correction a config edit.
+- Keys are **stable logical names**; values are paths. Code references the logical name and never a literal path — that is what makes a commissioning correction a data edit rather than a release. ⚠ **Under `D-45` the key and the value both stay in `appsettings`** — `TagKey` was never added, and this rule is why the map could not simply move into `OPCTags`: that table has no column for the left-hand side. ✅ **`D-46` is this rule paying for itself.** Adding a `PLC` element to all 72 paths moved the right-hand side only, and no logical name and no line of code changed.
 - **The keys above were realigned on 4 Aug 2026** — `GaugeCurrent`→`Gauge`, `WidthCurrent`→`Width`, `SpeedFpm`→`Speed` — when `[PLC §4.2]` respecified the measure segment (analogues bare, no units). **That was readability, not necessity.** The keys are deliberately decoupled from the paths, so a measure rename does *not* require a config-contract change and a path correction at commissioning must stay a values-only edit. If `PLC-Q05` comes back with different measure names, **only the right-hand side moves.**
-- Bind to a strongly-typed options class and **validate on startup**: every logical name the code uses must be present. A missing key should fail fast at boot, not silently at the first read.
-- A path marked `[PROPOSED]` in `[PLC §5.2]` is still a path — configure it, so C1 has something to test. **Do not log a warning per proposed path.** As of the v1.0 reissue **every path in the map is `[PROPOSED]`** — the `[CONFIRMED]` tag was retired because nothing had earned it — so a per-path warning fires for every tag on every line at every startup, which trains people to ignore the log. Emit **one warning at startup naming the count of unconfirmed paths**, and let that count fall as `C1` and `C11` confirm them. A count that reaches zero is the signal worth having.
+- Bind the non-path settings to a strongly-typed options class and **validate on startup**. ✅ **Under `D-45` the tag paths ARE among them again**, so the boot-time completeness check moves with them: every logical name the code uses must resolve against the registration, and a missing `TagKey` must fail fast rather than silently at the first read. **That check is now a query, not a binding** — and it can only run once `G60` and `G93` land, so until then it degrades to a warning. `FW-144`'s four boot assertions are the existing mechanism and are the right place for it.
+- A path marked `[PROPOSED]` in `[PLC §5.2]` is still a path — register it, so C1 has something to test. **Do not log a warning per proposed path.** As of the v1.0 reissue **every path in the map is `[PROPOSED]`** — the `[CONFIRMED]` tag was retired because nothing had earned it — so a per-path warning fires for every tag on every line at every startup, which trains people to ignore the log. Emit **one warning at startup naming the count of unconfirmed paths**, and let that count fall as `C1` and `C11` confirm them. A count that reaches zero is the signal worth having. ✅ **`P-74`'s per-line `Confirmed` list stays exactly where `FW-144` built it** — `D-45` dropped the confirmation column along with `TagKey`, so this is configuration again and nothing is owed. ⚠ Leave the three lists **empty** until `C1`/`C11`: the *"72 of 72 UNCONFIRMED"* boot warning is currently the only live tracker for `G33`.
 - `LineStateMap` is **empty until C2**. Until then the harness drives the double, per `[PLC §10.2]`.
 - **The dancer keys are read-only — subscribe, never write.** FM1 has one dancer, FM2 two. Whether the mode is ever *written* is unresolved (`Q32`): the 6 Aug call described two selectable modes, the 23 Jul meeting recorded tension control as machine-driven. `[PLC §5.5]` publishes the read surface only, so **`PLCTagService` is unchanged** — no new write operation, no change to the ordering rule or the compensating re-clear. If the mode becomes written, it joins the existing push batch and inherits both unchanged.
-- **The interlock key belongs inside each line's `Tags` block, never at the root** — it is line-scoped per `[PLC §8.1]`. A root-level key is the plant-level reading in disguise. See §1.6.
+- **The interlock is line-scoped, so `ITInhibit` is one registered row per line and never one plant-level row** — `[PLC §8.1]`, §1.6. Under `D-45` that means **two** `OPCTags` rows — `FL1.PLC.ITInhibit` and `FL2.PLC.ITInhibit`, each mapped to its own `machines` row. ⛔ **There is no third.** `D-47` gives FL3 no controller, so blocking FL3 means setting **both** of these; setting one blocks nothing, and that is `G99`; a single shared row is the plant-level reading in disguise. *(Before `D-44` this rule read "inside each line's `Tags` block, never at the root" — same rule, different mechanism.)*
 
-**Deployment:** `SimulatePLCTagPush` is `true` everywhere until commissioning completes (`[DEP]:82`, restated in the go-live checklist at `:356`). Verification of a tag push happens **on a stopped line only** (`[DEP §4.5]`, step V12). Rollback restores the file and recycles `OPCConnection_<Env>` — configuration only, nothing lost (`[RB §6.2.2]`).
+**Deployment:** `SimulatePLCTagPush` is `true` everywhere until commissioning completes (`[DEP]:82`, restated in the go-live checklist at `:356`). Verification of a tag push happens **on a stopped line only** (`[DEP §4.5]`, step V12). ⚠ **Rollback changed with `D-44`:** restoring `appsettings` and recycling `OPCConnection_<Env>` no longer restores the tag paths, because they are rows. **A path correction is now a `CommonDB` `UPDATE`, and rolling one back means restoring the row** — so the `OPCTags` / `OPCTagApplicationMapping` flat wire rows must be scripted and backed up like any other reference data (`[RB §6.2.2]`, `[DEP §3.2]`). The gain is that a correction needs no file deployment at all; the cost is that it is no longer "configuration only, nothing lost".
 
 ---
 
@@ -265,6 +328,23 @@ Supervisor PINs authenticate only. **Never in a payload, never stored** — pers
 | **8** | The FL2 push — finishing mill only, no die blocks and no FM1 |
 | **10** | The FL3 single-batch push across both mills |
 | **14** | Commissioning: simulate → live, C1–C11 |
+
+> ### ⛔ One thing must land BEFORE that window opens — `FW-236` / `G94`.
+>
+> `D-47` sets flat wire's `ConnectionType` to `21317`, which makes it **the first module ever to
+> select `ual-api`'s `OPCUAManager`**. `G94` measured all four existing `CommonDB.OPCModules` rows
+> as `21316` (OPC DA) on `DEV00164-001`, so that code path has never run in production and every
+> defect `G94` catalogues has been latent only because nothing selected it.
+>
+> Until `G94`'s identity fix merges, `ReadTag` and `WriteTag` address namespace **0** — a different
+> node — so a push reports success and writes nowhere. **`P-105`'s confirm read does not catch it**,
+> because it reads back the same wrong node. The fix exists but is uncommitted, and `FW-236` still
+> needs `OPCConnection`'s owner to accept a response-shape change.
+>
+> ⚠ **OPC UA itself is not what is unproven** — the six slitters run UA today through
+> `ual-window-service`'s `UAL.OpcConnection`, on a module id that bypasses `OPCUAManager` entirely.
+> It is `ual-api`'s QuickOPC path that has no production mileage. If it proves unreliable in the
+> window, that library is the fallback rather than a rewrite.
 
 **Commissioning is targeted by Sep 30** and its 40 hours sit in Phase 14's W7 window, flagged in the plan as the worst compression in the schedule. Until then all three lines run simulated pushes and a mock stream, so the UI is fully testable and the interface is entirely unproven.
 

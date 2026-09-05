@@ -3,15 +3,56 @@
 -- ============================================================
 -- Creates the flat wire grants and the five cross-database procedures.
 --
--- ⚠⚠ THIS RUNNER DELIBERATELY SKIPS ONE FILE:
+-- ⚠⚠ THIS RUNNER DELIBERATELY SKIPS FIVE FILES:
 --
+--       08_CommonDB_OPCModules_ColumnDrift.sql
+--       09_CommonDB_OPCTables_Constraints.sql
 --       10_CommonDB_Insert_WIPStations_FlatWire.sql
+--       11_CommonDB_Insert_OPCRegistration_FlatWire.sql
+--       16_CommonDB_Delete_OPCRegistration_FlatWire.sql
 --
---   It is NOT an oversight and it must NOT be added. That script writes
---   ROWS into united_db..machines, CommonDB..WIPStations and
+--   None is an oversight and none must be added.
+--
+--   08 ALTERS a SHARED CommonDB table -- it adds the two columns
+--   ual-database's OPCModules\CreateTable.sql declares and a stale CommonDB
+--   lacks, OPCEventType and EventDurationSeconds. It writes no row and drops
+--   nothing, and 11 cannot insert without them (G100). It has already been run
+--   on DEV00164-001 and it is idempotent, so a re-run reports 'present' twice.
+--   It is still a schema change to a table this project does not own, which is
+--   exactly the kind of thing that should not be one keystroke inside a runner.
+--   ⚠ It deliberately does NOT backfill: OPCModulesIdx 1-4 are left NULL, and
+--   refreshing dbo.GetOPCServerAndTagDetails without backfilling them first makes
+--   GetOPCInfo throw for four other modules. Read the script's header, and G100.
+--
+--   09 ALTERS five SHARED CommonDB tables -- it adds the primary keys,
+--   unique constraints, foreign keys and indexes those tables have never
+--   had, so it changes the schema of objects four other modules read
+--   (hole detection, coil receiving, handheld service, furnace
+--   scheduling). It writes no row. Nothing blocks it -- G100 does not touch
+--   it -- and it has already been run on DEV00164-001. It should be run BY
+--   HAND and EARLY, because it turns 11's hand-written idempotency
+--   guards into schema guarantees. A schema change to tables this project
+--   does not own is precisely the kind of thing that should not be one
+--   keystroke inside a runner.
+--
+--   10 writes ROWS into united_db..machines, CommonDB..WIPStations and
 --   CommonDB..MachineStationsConfiguration -- SHARED tables that other
 --   modules read -- it is still Draft with machine_type, the station set
 --   and StationType pending sign-off, and NO REVERSE SCRIPT EXISTS.
+--
+--   11 writes ROWS into CommonDB..OPCModules, OPCTags and the two
+--   application-mapping tables -- shared in exactly the same way -- and it
+--   READS CommonDB..OPCServers, which is a LOOKUP table it never inserts
+--   into or updates (D-48). G97 is now ANSWERED (D-49: the endpoint pair is
+--   OPCServersIdx 1 and 2, both lines onto both), so the script has no
+--   placeholder left and WILL RUN -- which is exactly why it stays out of
+--   this runner. It must not be activated before FW-236 / G94 merges, and
+--   G100 no longer stops it -- 08 levelled dbo.OPCModules on DEV00164-001 and
+--   section 4a now binds clean. It is a sign-off gate, and it claims
+--   OPCModulesIdx 6 on a table whose IDENTITY nothing else reserves.
+--
+--   16 reverses 11 and is DEV ONLY. A reverse belongs in the chain even less
+--   than a forward seed does: FW-241 makes the same call for 15.
 --
 --   Automating an irreversible write into databases this project does not
 --   own is the accident this runner is shaped to prevent. It is the same
@@ -79,8 +120,11 @@
 PRINT '======================================================';
 PRINT ' Flat Wire cross-database scripts - START';
 PRINT '======================================================';
-PRINT ' NOTE: 10_CommonDB_Insert_WIPStations_FlatWire.sql is NOT run here.';
-PRINT '       Run it by hand, after sign-off. See README.md.';
+PRINT ' NOTE: 08_ (OPCModules column drift), 09_ (OPC constraints), 10_ (WIP';
+PRINT '       stations), 11_ (OPC registration) and 16_ (its reverse) are NOT';
+PRINT '       run here. 08_ and 09_ are by hand and unblocked; 10_ and 11_';
+PRINT '       are by hand, after sign-off.';
+PRINT '       See README.md.';
 GO
 
 :r 20_FlatWire_Grants.sql
@@ -94,6 +138,10 @@ GO
 PRINT '======================================================';
 PRINT ' Flat Wire cross-database scripts - COMPLETE';
 PRINT '======================================================';
-PRINT ' Reminder: 10 (WIP stations / machines rows) is a separate,';
-PRINT '           sign-off-gated, NON-REVERSIBLE manual step.';
+PRINT ' Reminder: 10 (WIP stations / machines rows) and 11 (the OPC';
+PRINT '           registration) are separate, sign-off-gated manual steps.';
+PRINT '           10 is NON-REVERSIBLE. 11 is reversed by 16, DEV only.';
+PRINT '           11 has no placeholder left (G97 answered, D-49) and G100';
+PRINT '           is cleared on DEV00164-001 - what holds it now is';
+PRINT '           FW-236 / G94 alone. Run 08 and 09 by hand first.';
 GO
