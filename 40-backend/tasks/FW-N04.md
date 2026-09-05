@@ -715,6 +715,12 @@ Plus, for the pulled-forward scope — **✅ all verified**:
 xUnit requirement here without reversing that decision in `[TS]`."* Phase 1B's QA
 contribution is a signed-off manual contract walkthrough at QA0, which this story predates.
 
+⚠ **Superseded 5 Sep 2026 — `D-50`.** The statement above was correct on 25 Aug 2026, and the `[SP]`
+instruction it quotes **has now been complied with**: `[TS §1.2]` is amended and `[SP §9.2]` follows
+it, so the reversal was taken in the strategy rather than inside a leaf story. ⛔ **The reinstatement
+is the UNIT level only** — the integration and contract suites stay withdrawn. ⚠ **This story is not
+reopened** (`[SP §9.2]`'s retrospection clause); `FW-263` creates the project this one could not.
+
 ---
 
 ## 7. Handoff

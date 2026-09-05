@@ -1,7 +1,7 @@
 # Flat Wire Mill — Task Breakdown and Backlog
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 4, 2026 (OPC UA tag identity) — **[`FW-236`](../40-backend/tasks/FW-236.md)'s card absorbs new gap `G94`: `OPCUAManager` has no canonical tag identity, and it is ordered AHEAD of `G58`.** Six acceptance criteria added — canonicalise identity before lifting `G58`'s swallow, correct `ReadTag`/`WriteTag` from namespace **0** to **2**, correlate notifications on the `object state` overload rather than `NodeDescriptor.ToString()`, and give `OPCConnection` its first unit tests behind a first-party adapter (the QuickOPC singular methods are **extension methods** and cannot be mocked). ⚠ **`G94` is latent and measured so** — all four `CommonDB.OPCModules` rows are `21316` (`OPCDA`), so the UA manager runs nowhere today. ⚠ **HOURS NOT RE-DERIVED and no story minted** — the card stays at **16 h** because the `Hours` cell feeds three client `.xlsx` generators; a re-price belongs in an additive pass. Card kept byte-identical to its task-file twin. *(previously September 3, 2026 (tooling) — **`FW-259`–`FW-261` minted, 27 h** (DB 5 · BE 10 · FE 12) for the **fourth** Tooling Inventory tool type (`D-42`). `FW-003` and `FW-253` move from **three** tool types to four; `FW-003`'s stale *"`Straightener` exists nowhere else in this repository"* is corrected; **`FW-251`'s `FW-005` leg is discharged** — that card seeded `Drawer` with 13 die-size rows the split took apart. ⛔ `FW-261` owes an un-priced mockup. ⚠ **No figure re-derived** — `FW-258` still owns the arithmetic. *(previously September 1, 2026 (second pass) — ⛔ **§7’s `FW-215` card again: the first pass had not checked that the story’s one new route is BUILDABLE, and it is not as `[SIM §8.1]` words it.** Of *"scenario, seed, start weight, target"*, **the seed and the start weight are constructor-only** on `LineModelBase` and nothing on `ILineModel` sets either — so `POST /sim/{lineId}/run` **replaces** the line’s model through the seam’s factory rather than mutating a live one, which is also the only way `[SIM §5.7]`’s tick-for-tick reproducibility holds. The `G70` seam therefore carries `CreateModel` too, absorbing a **byte-identical duplicate** in both hosts. ⛔ **New gap `G73`** — `[SIM §9.2]` specifies **Pause** and nothing commands it, so a **target run state** joins `POST /run`; no seventh route. ⚠ **`/sim/state` carries at most TWO lines, never three** (`{FL1,FL2}` or `{FL3}`), omits an unhosted line and still answers `200`. ⚠ **`G68`’s *"settable"* is the seed’s alone**, so the config endpoint stays a **read** and no write is owed. ⚠ **The fault route takes all SEVEN of `[SIM §7.2]`.** ⚠ **No hours-bearing cell changed and no total moves** — the `**Hours:** … **Stream:**` line is untouched and the three `.xlsx` generators re-parse unchanged *(previously September 1, 2026 — **§7's `FW-215` card reconciled against the 31 Aug simulator build — stale in eight places, and owner of four gaps it never named.** ⛔ **Four of its five endpoints are already BUILT** (`FW-218`, closed), so `POST /sim/{lineId}/run` is the one new route and the story **extends** that surface (`P-39`). Corrected: the prefix is **`/sim`**, not `/api/v1/flatwire/sim`; the surface is a **minimal-API group, not MediatR controllers** (`P-38`); the gate is **`FlatWireOpc:SimulateOpcFeed`**, not `SimulatePLCTagPush`; *"all three snapshots"* becomes **one per hosted line** (FL3 excluded, `PLC-Q08` / `G30`); and *"`[API]`'s 30 endpoints"* now cites **`[API §3.2]`** without a number. **`G68`** adds a sixth endpoint `GET /sim/config`, **`G70`** the widened gate and the shared seam, **`G69`** becomes its blocker; dependencies gain **`FW-218`** and **`FW-217`**. ⚠ **The 23 h is re-aimed, not re-priced, and no total moves** — a six-endpoint re-price is `[CE]`'s. *(previously August 29, 2026 — **§7's `FW-214` card retargeted to WinForms (`D-33`): 24 → 52 h base, 15 → 36 h AI-assisted.** Ten acceptance criteria, a new **FL3 greyed** row (that endpoint returns 400 today — `PLC-Q08`/`G30`), the `GET /sim/state` row corrected to name its **six** fields, and dependencies **`FW-130`/`FW-135` → `FW-145`**. ⚠ **The 40 h of `FW-130`/`FW-135` is not recovered** — both serve the six operator screens *(previously August 25, 2026 — **`FW-138`: fifteen controllers → fourteen (`P-53`, no `/rod/**` surface).** AC 1 restated; the hours cell deliberately unchanged, 42 h owed to the re-baseline. Earlier the same day: **`FW-224` recorded as reserved**; the FL2 `422` acceptance criterion withdrawn; `CoilNo` rename completed; object count 34 → 33 *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `FW-001` and `FW-002` **cancelled**; `FW-176`'s shared-`coils` column line cancelled with them; `FW-186`, `FW-201` and the FL1/FL2/FL3 machine story lose the acceptance criteria and dependencies that referenced them. **Phase 1C 221 → 138 h · Phase 7 205 → 182 h · Phase 1 1,110 → 1,027 h · baseline 116 / 3,292 h → 114 live / 3,186 h** *(earlier: **`G6` resolved on both blocked story cards** (`FW-145` and the Angular guard story): the six roles exist as JWT claims on `ClaimTypes.Role`; earlier still: **the machine simulator story set minted**: `FW-210`–`FW-215` (**111 h dev** — RT 64 · FE 24 · BE 23) and `FW-217` (+24 h), specified in [`MachineSimulator.md`](../20-architecture/MachineSimulator.md) `[SIM]`, gap **`G39`**. **Additive to `[CE §3b]`** like `FW-202`/`203`/`204`; **`FW-203` is unchanged** and becomes `FW-211`'s first increment. ⚠ **`FW-209` was already taken** — `FW-218` was the next free id and is now used; **the next free id is `FW-220`** (`FW-219` = the FL2/FL3 run-end shared write-back, minted 18 Aug 2026), and `FW-216` is deliberately skipped *(otherwise August 14, 2026 — **`FW-203`** (plant-data feed simulator, 8 h) and **`FW-204`** (minimal landing route, 8 h) minted for the trial run, both additive to `[CE §3b]` and both deliberately absent from `[SSP §5]`. Earlier same day: **`FW-202` minted** (FL1 spool completion — stop confirmation, weight basis and the `SpoolProcessing` write, **98 h**) and `FW-N02` reduced to Part A; gap **`G37`** *(otherwise August 13, 2026)* — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure)*. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*)*)*)*)*)*
+**Last Updated:** September 5, 2026 (backend tests reinstated) — ⭐ **`FW-263`–`FW-267` minted in a new §7.2 additive block, reversing the 15 Aug 2026 withdrawal of automated backend tests for the UNIT level only** (`D-50`, `[TS §1.2]`, gap `G101`): the test project and its fixtures, the pure-domain suite, `PLCTagService`'s simulate branch including `FW-236`'s untested `FR-074` branch, the line models and simulators, and the reachable DbContext-backed services. **98 h dev (BE 62 · RT 36), additive.** ⛔ **The `−22 h` is NOT added back, and it was never `−22` of test content** — *"−26 on tests, +4 for `SpoolController`"*, so the reversible amount is `+23 h` dev and reversing it would delete a controller; **1B stays 519 h and the baseline 114 stories / 3,186 h**. ⚠ **QA held at 78 h in both directions**, and `[CE §2]`'s two struck endpoint rates **stay struck**. ➕ `B.8` added — ⚠ **and it does not follow `B.7` contiguously**, because `FW-259`–`FW-262` still have no appendix block. *(previously September 4, 2026 (OPC UA tag identity) — **[`FW-236`](../40-backend/tasks/FW-236.md)'s card absorbs new gap `G94`: `OPCUAManager` has no canonical tag identity, and it is ordered AHEAD of `G58`.** Six acceptance criteria added — canonicalise identity before lifting `G58`'s swallow, correct `ReadTag`/`WriteTag` from namespace **0** to **2**, correlate notifications on the `object state` overload rather than `NodeDescriptor.ToString()`, and give `OPCConnection` its first unit tests behind a first-party adapter (the QuickOPC singular methods are **extension methods** and cannot be mocked). ⚠ **`G94` is latent and measured so** — all four `CommonDB.OPCModules` rows are `21316` (`OPCDA`), so the UA manager runs nowhere today. ⚠ **HOURS NOT RE-DERIVED and no story minted** — the card stays at **16 h** because the `Hours` cell feeds three client `.xlsx` generators; a re-price belongs in an additive pass. Card kept byte-identical to its task-file twin. *(previously September 3, 2026 (tooling) — **`FW-259`–`FW-261` minted, 27 h** (DB 5 · BE 10 · FE 12) for the **fourth** Tooling Inventory tool type (`D-42`). `FW-003` and `FW-253` move from **three** tool types to four; `FW-003`'s stale *"`Straightener` exists nowhere else in this repository"* is corrected; **`FW-251`'s `FW-005` leg is discharged** — that card seeded `Drawer` with 13 die-size rows the split took apart. ⛔ `FW-261` owes an un-priced mockup. ⚠ **No figure re-derived** — `FW-258` still owns the arithmetic. *(previously September 1, 2026 (second pass) — ⛔ **§7’s `FW-215` card again: the first pass had not checked that the story’s one new route is BUILDABLE, and it is not as `[SIM §8.1]` words it.** Of *"scenario, seed, start weight, target"*, **the seed and the start weight are constructor-only** on `LineModelBase` and nothing on `ILineModel` sets either — so `POST /sim/{lineId}/run` **replaces** the line’s model through the seam’s factory rather than mutating a live one, which is also the only way `[SIM §5.7]`’s tick-for-tick reproducibility holds. The `G70` seam therefore carries `CreateModel` too, absorbing a **byte-identical duplicate** in both hosts. ⛔ **New gap `G73`** — `[SIM §9.2]` specifies **Pause** and nothing commands it, so a **target run state** joins `POST /run`; no seventh route. ⚠ **`/sim/state` carries at most TWO lines, never three** (`{FL1,FL2}` or `{FL3}`), omits an unhosted line and still answers `200`. ⚠ **`G68`’s *"settable"* is the seed’s alone**, so the config endpoint stays a **read** and no write is owed. ⚠ **The fault route takes all SEVEN of `[SIM §7.2]`.** ⚠ **No hours-bearing cell changed and no total moves** — the `**Hours:** … **Stream:**` line is untouched and the three `.xlsx` generators re-parse unchanged *(previously September 1, 2026 — **§7's `FW-215` card reconciled against the 31 Aug simulator build — stale in eight places, and owner of four gaps it never named.** ⛔ **Four of its five endpoints are already BUILT** (`FW-218`, closed), so `POST /sim/{lineId}/run` is the one new route and the story **extends** that surface (`P-39`). Corrected: the prefix is **`/sim`**, not `/api/v1/flatwire/sim`; the surface is a **minimal-API group, not MediatR controllers** (`P-38`); the gate is **`FlatWireOpc:SimulateOpcFeed`**, not `SimulatePLCTagPush`; *"all three snapshots"* becomes **one per hosted line** (FL3 excluded, `PLC-Q08` / `G30`); and *"`[API]`'s 30 endpoints"* now cites **`[API §3.2]`** without a number. **`G68`** adds a sixth endpoint `GET /sim/config`, **`G70`** the widened gate and the shared seam, **`G69`** becomes its blocker; dependencies gain **`FW-218`** and **`FW-217`**. ⚠ **The 23 h is re-aimed, not re-priced, and no total moves** — a six-endpoint re-price is `[CE]`'s. *(previously August 29, 2026 — **§7's `FW-214` card retargeted to WinForms (`D-33`): 24 → 52 h base, 15 → 36 h AI-assisted.** Ten acceptance criteria, a new **FL3 greyed** row (that endpoint returns 400 today — `PLC-Q08`/`G30`), the `GET /sim/state` row corrected to name its **six** fields, and dependencies **`FW-130`/`FW-135` → `FW-145`**. ⚠ **The 40 h of `FW-130`/`FW-135` is not recovered** — both serve the six operator screens *(previously August 25, 2026 — **`FW-138`: fifteen controllers → fourteen (`P-53`, no `/rod/**` surface).** AC 1 restated; the hours cell deliberately unchanged, 42 h owed to the re-baseline. Earlier the same day: **`FW-224` recorded as reserved**; the FL2 `422` acceptance criterion withdrawn; `CoilNo` rename completed; object count 34 → 33 *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `FW-001` and `FW-002` **cancelled**; `FW-176`'s shared-`coils` column line cancelled with them; `FW-186`, `FW-201` and the FL1/FL2/FL3 machine story lose the acceptance criteria and dependencies that referenced them. **Phase 1C 221 → 138 h · Phase 7 205 → 182 h · Phase 1 1,110 → 1,027 h · baseline 116 / 3,292 h → 114 live / 3,186 h** *(earlier: **`G6` resolved on both blocked story cards** (`FW-145` and the Angular guard story): the six roles exist as JWT claims on `ClaimTypes.Role`; earlier still: **the machine simulator story set minted**: `FW-210`–`FW-215` (**111 h dev** — RT 64 · FE 24 · BE 23) and `FW-217` (+24 h), specified in [`MachineSimulator.md`](../20-architecture/MachineSimulator.md) `[SIM]`, gap **`G39`**. **Additive to `[CE §3b]`** like `FW-202`/`203`/`204`; **`FW-203` is unchanged** and becomes `FW-211`'s first increment. ⚠ **`FW-209` was already taken** — `FW-218` was the next free id and is now used; **the next free id is `FW-220`** (`FW-219` = the FL2/FL3 run-end shared write-back, minted 18 Aug 2026), and `FW-216` is deliberately skipped *(otherwise August 14, 2026 — **`FW-203`** (plant-data feed simulator, 8 h) and **`FW-204`** (minimal landing route, 8 h) minted for the trial run, both additive to `[CE §3b]` and both deliberately absent from `[SSP §5]`. Earlier same day: **`FW-202` minted** (FL1 spool completion — stop confirmation, weight basis and the `SpoolProcessing` write, **98 h**) and `FW-N02` reduced to Part A; gap **`G37`** *(otherwise August 13, 2026)* — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure)*. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*)*)*)*)*)*)*
 **Document Type:** The MVP-1 shopfloor backlog — 116 story ids (**114 live**), the descope ladder, the coverage matrix
 **Status:** **Authoritative for MVP-1 shopfloor delivery** — **114 live stories / 3,186 h** *(re-baselined 18 Aug 2026 by `D-32`; previously **116 / 3,292 h**)*, plus **`FW-202`** *(new 14 Aug 2026, gap `G37`)*, which is **additive and deliberately outside that baseline**: its 98 h base / 136 h all-in is carried in `[TRP]` and is **not** folded into the 3,186 h or into Phase 8's 118 h.<br>⚠ **The baseline moved deliberately and this is the pass that moves it.** `D-32` cancels `FW-001` (56 h) and `FW-002` (4 h) outright and `FW-176`'s 16 h shared-`coils` column line, re-deriving **Phase 1C 221 → 138 h** and **Phase 7 205 → 182 h** from the reduced bases: **−106 h all-in.** Both phases sit wholly inside MVP-1, so the subtraction is valid whatever composition produced the 3,292 h. **Now cite "114 stories / 3,186 h"**, and expect the old pair to survive in documents this pass did not reach — the figure is quoted in five others and in `[CE]`, which is **not** re-derived (`[CE §8]`). **The 116 id count is unchanged** — ids are frozen and `FW-001`/`FW-002` keep theirs as cancelled cards.
 **Owner:** Delivery lead / programme management
@@ -302,7 +302,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Each returns the `{Data, Success, Errors}` envelope
 - [ ] **`[Authorize]` on every controller and every endpoint** — no bare `ControllerBase`, no unprotected route
 - [ ] Stub endpoints return schema-valid fixtures for the seed alphas, per `[API §4]` shapes
-- [ ] ⚠ **The stub endpoints stay; the suite that asserted them is withdrawn** (15 Aug 2026, `[TS §1.2]`). `[API §7.2]`'s five obligations are verified by the **signed-off manual contract walkthrough** at QA0 (`[TS §4.2]`), not by xUnit. **1A still builds against these stubs** — dropping the test does not drop the fixtures
+- [ ] ⚠ **The stub endpoints stay; the suite that asserted them is withdrawn** (15 Aug 2026, `[TS §1.2]`). `[API §7.2]`'s five obligations are verified by the **signed-off manual contract walkthrough** at QA0 (`[TS §4.2]`), not by xUnit. **1A still builds against these stubs** — dropping the test does not drop the fixtures ⚠ **`D-50`, 5 Sep 2026: the withdrawal is reversed, but the stub CONTRACT suite is NOT reinstated.** `[TS §1.2]`'s reversal is the **unit level only**, so this criterion stands unchanged and QA0's walkthrough remains the record.
 
 **Rate-card basis:** 14 controllers @ 4 h = 56 h (§2, query-endpoint rate for scaffold + stub), **less the withdrawn contract suite → 42 h** (15 Aug 2026)
 **Dependencies:** FW-N04
@@ -4464,6 +4464,152 @@ not in this edit.
 
 ---
 
+#### Additive — reinstating automated backend tests, minted 5 Sep 2026 (`FW-263`–`FW-267`)
+
+> **The 15 Aug 2026 withdrawal is REVERSED — `D-50`, `[TS §1.2]`, gap `G101`.** `[SP §9.2]` said
+> *"Do not reinstate an xUnit requirement here without reversing that decision in `[TS]`"*, and four
+> task cards said the same from the other side — `FW-N05` (*"adding a test project would reverse that
+> decision from inside a leaf story"*), `FW-205` (*"a harness is not a test project"*), `FW-236`
+> (*"none of them is a test project"*). **This is the reversal, taken in the strategy and priced
+> here, not smuggled into a leaf story.**
+>
+> ⛔ **The reversal is the UNIT level only.** The seeded-`FlatWireDB` integration suite and the
+> stub/contract suite **stay withdrawn**; the `Contract` row stays manual and `TC-020` stays a hand
+> diff across 14 enums with a named owner. A reader taking *"tests are back"* to mean all three
+> levels will schedule work that is not here.
+>
+> ⚠ **The reversible August amount is `+23 h` dev base / `+26 h` all-in — NOT the `−22`.** That
+> figure was *"−26 on tests, +4 for `SpoolController`"*, and the `+4` was never test content, so
+> reversing *"the −22"* would silently delete a controller's hours. ⛔ **Nothing is added back in
+> place.** `FW-138`, `FW-147` and `FW-080` are **delivered** stories whose `Hours` cells are
+> machine-parsed; 1B stays at **519 h**, S0 at **1,027 h**, and the baseline at **114 live stories /
+> 3,186 h**. This set carries its own hours, additive to `[CE §3b]`, exactly as `FW-259`–`FW-262` do.
+> ⚠ **QA stays held at 78 h and is recomputed in neither direction.**
+>
+> ⚠ **`FW-266` is the only card here that changes production code**, and only two seams of it —
+> `TimeProvider` on two call sites and one widened constructor parameter. ⛔ **Nothing touches the
+> check-in path.** Two seams that look obvious are **not** the answer: an `IRestClient` cannot reach
+> `FW-236`'s `FR-074` branch at all (`TagWriteOutcome`/`OpcWriteStatus` are private nested types), and
+> an `IFlatWireDbContext` cannot exist (seven repositories bind `GenericRepository<T,
+> FlatWireDbContext>` as a generic type argument).
+>
+> ⚠ **98 h lands on a programme already at 9.4 FTE (`G1`).** Priority is `High`/`Medium`, never
+> `Critical` — the trial does not depend on any of it. **If the set is cut, cut from `FW-267`
+> upward:** `FW-264` is the highest-value, lowest-risk card and needs no refactor at all.
+
+###### FW-263 · `FlatWire.UnitTests` — the test project, its fixtures and the OPC stub
+**Hours:** 8 h BE · **Priority:** High · **Sprint:** S3 · **Phase:** 1B · **Stream:** BE
+
+> **The project `FW-236` named and could not create.** Writes no test of its own beyond a smoke
+> check — it creates the fifth project in `FlatWire.sln` and the fixtures the four suites share.
+
+**Acceptance Criteria:**
+- [ ] `FlatWire.UnitTests.csproj` copying `OPCConnection.UnitTests.csproj` — `IsPackable` only, five **unversioned** packages, ⛔ **no `TargetFramework`, no `Version=`, and `Directory.Packages.props` untouched**
+- [ ] ⚠ `ProjectReference`s use the **non-standard csproj filenames** (`Domain.csproj`, `Application.csproj`, `Infrastructure.csproj`); `Api.csproj` belongs to `FW-266`
+- [ ] Added to `FlatWire.sln`; a four-line `.editorconfig` scoped to the **test project only**, never the domain root
+- [ ] Five fixtures: the recording `OpcConnectionStub` over `Mock<HttpMessageHandler>`, the options builder, `FakeTimeProvider` (⚠ **no package** — `TimeProvider` is in the net8.0 BCL), `NoProviderContext`, and the canonical-alpha builders
+- [ ] ⛔ **Nothing calls `ServiceLocator.Initialise`** — its `??=` poisons the whole assembly
+
+**Rate-card basis (§2):** not a rate-card unit — project under central package management, solution wiring and five shared fixtures, priced beside `FW-262`'s 10 h discrete item = **8 h**
+**Dependencies:** FW-142
+**Blockers:** —
+
+---
+
+###### FW-264 · Pure-domain suite — the validators, the 20 rules and the 15 value objects
+**Hours:** 28 h BE · **Priority:** High · **Sprint:** S3 · **Phase:** 1B · **Stream:** BE
+
+> ⭐ **The highest-value card in the set and the only one with no production-code prerequisite.**
+> `FlatWire.Domain` has no infrastructure dependency by construction (`D-29`). It is also what lifts
+> `G21`'s standing caveat, which is why it leads rather than follows.
+
+**Acceptance Criteria:**
+- [ ] All **15** `AbstractValidator<>` classes covered, each asserting the property name **and** the `ValidationMessages` constant
+- [ ] All **20 concrete** rule classes — ⚠ **20, not 22**: `ConflictRule` and `UnprocessableRule` are the abstract bases. Each asserts its base, i.e. **409 vs 422**, not merely that it threw
+- [ ] ⭐ **`BayAlreadyOccupiedRule` rejects a second rod with NO DATABASE PRESENT** — `G21`'s owed evidence
+- [ ] ⛔ **`FootageWindow` overlap arithmetic** — touching windows must **not** overlap
+- [ ] All **15** value objects; `RunAlpha` rejects `RUN-10000`; quantities asserted at the persisted `DECIMAL(8,4)`
+- [ ] ⚠ Asserts the **C# side of `TC-020` only** — the three-way enum diff stays manual with a named owner
+- [ ] ⚠ **No coverage percentage configured or gated on**
+
+**Rate-card basis (§2):** 15 validators × 1 h (§2's own bundled-test price) + 20 rules × 0.5 h + 15 value objects × 0.4 h = 31 h, less 3 h priced on `FW-263` = **28 h**
+**Dependencies:** FW-263, FW-147
+**Blockers:** —
+
+---
+
+###### FW-265 · `PLCTagService` — the simulate branch and `FW-236`'s `FR-074` outcome branch
+**Hours:** 16 h BE · **Priority:** High · **Sprint:** S3 · **Phase:** 1B · **Stream:** BE
+
+> ⭐ **Closes the hole `FW-236` opened** — an `FR-074` branch left compiled but untested, which is the
+> finding that became `G101`. ⚠ **Mostly conversion**: `FW-151` §5.1 enumerates ten scenarios and 53
+> assertions from a harness that was never committed.
+
+**Acceptance Criteria:**
+- [ ] `FW-151` §5.1's ten scenarios committed; simulate mode makes **zero** outbound requests, `GetOPCInfo` included
+- [ ] ⛔ **The sentinel: a silently dropped write answering `200` reports `Unconfirmed`, never `Confirmed`** — *"the single most falsifiable check in this story"*
+- [ ] ⭐ **`FR-074`**: a refused or faulted tag fails the operation and names it; **a partial batch names only the failures**
+- [ ] ⛔ **A bare tag echo from an older `OPCConnection` does NOT fail the push** (`PLCTagService.cs:402`) — the branch a naive implementation would have broken
+- [ ] ⚠ The status crosses the wire as a **number**; the `P-104` cache holds; `G59`'s null `HttpContext` is audited and escapes no exception
+- [ ] ⚠ **`G33` is not closed by this**
+
+**Rate-card basis (§2):** lower-middle of the 12–24 h band, deliberately — **conversion of an enumerated 53-assertion table**, not authorship, with `FW-263` supplying the stub the original harness needed a loopback listener for = **16 h**
+**Dependencies:** FW-263, FW-151
+**Blockers:** —
+
+---
+
+###### FW-266 · Line models and the two simulators, with the two small testability seams
+**Hours:** 36 h RT · **Priority:** Medium · **Sprint:** — *(unscheduled)* · **Phase:** 1B · **Stream:** RT
+
+> **The only card here that changes production code**, and only ~4 h of it: `TimeProvider` on **two**
+> call sites, and one constructor parameter widened to `ISimLineHost`. ⛔ **Neither is on the
+> check-in path.** ⚠ **Do not convert all 23 `UtcNow` sites** — 8 are demo stubs and 11 are in
+> services untestable today for unrelated reasons.
+
+**Acceptance Criteria:**
+- [ ] ⭐ **Determinism** — `[SIM §5.7]`'s tick-for-tick seed reproducibility, asserted; `seed + (int)line` makes FL1 and FL2 diverge
+- [ ] `TimeProvider` as an **optional last constructor parameter** defaulting to `TimeProvider.System`, so no call site and no DI registration changes
+- [ ] `OpcConnectionDouble` — one tick per request; `HostedLines` is **never three**
+- [ ] `OpcFeedSimulator`'s `ISimLineHost` members tested **synchronously**; ⛔ **`StartAsync` is never called**
+- [ ] `SimulatedPushObserver` calls `ApplyPush` only on success; `PassSchedulePushPayload` formatting asserted under a **`de-DE`** culture scope
+- [ ] ⚠ Adds `Api.csproj` — the only card that needs it — and updates `FlatWire/README.md` §5
+
+**Rate-card basis (§2):** two non-trivial algorithms at the top of the 12–24 h band sharing one tick harness — `LineModelBase` 8 h · three models 18 h · two simulators 10 h, less 4 h shared = 32 h, plus **4 h** for the two seams = **36 h**
+**Dependencies:** FW-263, FW-210
+**Blockers:** —
+
+---
+
+###### FW-267 · DbContext-backed services — the guard clauses and `BusinessKeyGenerator`
+**Hours:** 10 h BE · **Priority:** Medium · **Sprint:** — *(unscheduled)* · **Phase:** 1B · **Stream:** BE
+
+> ⛔ **NOT the withdrawn integration suite.** `[TS §1.2]`'s *"no integration suite against a seeded
+> `FlatWireDB`"* stands. ⛔ **`CheckInService` and the other four services end-to-end are deferred**
+> to a future `FlatWire.IntegrationTests`: the model carries 247 T-SQL `HasColumnType` calls, 7
+> computed columns and 6 `IsRowVersion`, and `CheckInService` Dapper-inserts into a table with no
+> `DbSet` — a SQLite approximation would be confidently wrong about exactly what matters.
+
+**Acceptance Criteria:**
+- [ ] **Tier 1, no provider at all** — a guard test that passes proves the guard returned before touching the database
+- [ ] ⛔ **`GetSpoolsAsync("not-an-alpha")` answers 400, not 404** — *"the mistake to avoid"*
+- [ ] **Tier 2** — exactly **one** new pin, `Microsoft.EntityFrameworkCore.Sqlite` 8.0.8. ⛔ **Not `InMemory`**: no transactions, no relational model
+- [ ] `BusinessKeyGenerator` — `RUN-0007` → `RUN-0008`; an unparseable mark restarts at 1 (`OI-21`); `RUN-9999` throws; ⭐ **the mark is read inside an open transaction**
+- [ ] ⚠ Every test states what the provider **cannot** prove, so a green run is never mistaken for a constraint check
+
+**Rate-card basis (§2):** not a full service-test card — ~12 guard assertions needing no provider, plus one 183-line generator with its SQLite fixture and the single pin = **10 h**. ⚠ The five services end-to-end would be ~36 h and are deliberately not bought here
+**Dependencies:** FW-263
+**Blockers:** —
+
+---
+
+> **Additive-set reconciliation** — BE 62 · RT 36 = **98 h dev** across **five** stories.
+>
+> ⚠ **No QA uplift and no contingency are applied here** — both are phase-level (§7.1).
+> ⚠ **No published figure is re-derived.** 1B stays at **519 h**, S0 at **1,027 h**, and the baseline
+> at **114 live stories / 3,186 h**. `FW-249` and `FW-258` own the arithmetic; this set is a further
+> input to it, not a second answer.
+
 ### 7.3 Roll-up
 
 > ⚠ **The `FW-232`–`FW-250` additive set is deliberately NOT in this roll-up.** Those nineteen
@@ -4472,6 +4618,13 @@ not in this edit.
 > silently re-baseline six of them. **The 114-story / 3,186 h baseline below is unchanged.**
 > Re-deriving a combined figure is **`FW-249`'s**, in an additive sheet — `[CE §8]` is explicit that
 > substituting a number into a derivation without re-deriving it *"makes the arithmetic lie"*.
+>
+> ⚠ **The same holds for every additive set minted since**: `FW-251`–`FW-258`, `FW-259`–`FW-261`,
+> `FW-262`, and **`FW-263`–`FW-267`** (98 h dev, the backend-test reinstatement of 5 Sep 2026,
+> `D-50`). None of them is in this roll-up, and **the 114-story / 3,186 h baseline stays unchanged**.
+> ⛔ **`FW-263`–`FW-267` in particular reverse a decision without reversing its arithmetic** — the
+> August withdrawal is **not** added back in place, because the three stories that carried it are
+> delivered and their `Hours` cells are machine-parsed.
 
 #### 4.1 By phase
 
@@ -4901,6 +5054,31 @@ bookkeeping: a published total genuinely moves.
 ⚠ **`FW-N07` is still carded nowhere**, and after `Q91` it no longer needs to be — the table half is
 `FW-251`'s, the service half `FW-252`'s and the screen half `FW-253`'s. `B.4` should stop listing it
 as *adopted but uncosted* once `FW-258` runs.
+
+#### B.8 Minted ids — `FW-263`–`FW-267` (5, contiguous)
+
+**Minted 5 Sep 2026** to reverse the 15 Aug 2026 withdrawal of automated backend tests (`D-50`,
+`[TS §1.2]`, gap `G101`). Cards are in §7.2 under *Additive — reinstating automated backend tests*.
+**Next free id: `FW-268`.**
+
+| Range | Stream | Subject |
+|---|---|---|
+| `FW-263` | BE | `FlatWire.UnitTests` — the project `FW-236` named and could not create, plus the five shared fixtures |
+| `FW-264` | BE | Pure domain — 15 validators, 20 concrete rules, 15 value objects. ⭐ **Closes `G21`'s domain half**, and needs no refactor at all |
+| `FW-265` | BE | `PLCTagService`'s simulate branch — `FW-151 §5.1`'s ten scenarios and 53 assertions committed at last, plus `FW-236`'s untested `FR-074` branch |
+| `FW-266` | RT | The line models and the two simulators. ⚠ **The only card in the set that changes production code** — two seams, ~4 h, neither on the check-in path |
+| `FW-267` | BE | Guard clauses and `BusinessKeyGenerator`. ⛔ **Not the withdrawn integration suite**, and the five services end-to-end are deliberately deferred |
+
+⚠ **Hours are additive to `[CE §3b]` and are in no phase reconciliation and no roll-up column.**
+⛔ **Unlike `B.7`, no published total moves** — the August withdrawal is *not* reversed in place, so
+1B stays at **519 h** and the baseline at **114 live stories / 3,186 h**. ⚠ The reversible August
+amount was `+23 h` dev / `+26 h` all-in, **not** the published `−22` (which was *"−26 on tests, +4
+for `SpoolController`"*); reversing *"the −22"* would have deleted a controller's hours.
+
+⚠ **This block does not follow `B.7` contiguously.** `B.7` stops at `FW-258`, and **`FW-259`–`FW-262`
+have no appendix block at all** — they are recorded only in §7.2 and this file's header trail, the
+same shape of hole `B.6` records for `FW-202`–`FW-231`. Closing it is not this pass's work, and is
+noted here so `B.8` is not misread as following `B.7`.
 
 ---
 

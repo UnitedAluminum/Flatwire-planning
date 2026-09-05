@@ -524,6 +524,14 @@ backend tests, and adding a test project would reverse that decision from inside
 is reproducible from this card: build a `ReadingChannel` over `ChannelCapacity`, write
 `capacity + N` snapshots with no reader, and assert the four properties in the first row.
 
+⚠ **Superseded 5 Sep 2026 — `D-50`, `[TS §1.2]`.** The decision this paragraph declined to reverse
+*"from inside a leaf story"* **has now been reversed in the strategy**, and `FW-263` creates the test
+project. ✅ **The reasoning above stays correct** — it was not this card's to take, and that is
+exactly why the reversal was taken in `[TS]` and `[SP §9.2]` instead. ⚠ **This card's channel harness
+is NOT in `FW-263`–`FW-267`'s scope as minted** — the four layers are the domain, `PLCTagService`'s
+simulate branch, the line models and simulators, and the reachable DbContext-backed services. The
+harness described here remains the verification of record until a card exists for it.
+
 ---
 
 ## 6. Handoff

@@ -10,7 +10,7 @@
 |---|---|---:|---:|---:|---:|---:|---:|---:|---|
 | -- | 2 Pass Schedule Management (Operations Manag | 0 | 0 | 0 | 0 | 0 | 0 | 0 % | — |
 | 1 | 1A Angular Foundation | 9 | 0 | 0 | 0 | 2 | 7 | 0 % | G10 · G14 · G18 · G23 |
-| 1 | 1B Backend Foundation | 27 | 19 | 4 | 0 | 1 | 3 | 70 % | G10 · G17 · G2 · G29 … |
+| 1 | 1B Backend Foundation | 32 | 19 | 4 | 0 | 1 | 8 | 59 % | G10 · G17 · G2 · G29 … |
 | 1 | 1C Database Foundation | 16 | 1 | 1 | 0 | 1 | 11 | 7 % | G14 · G17 · G32 · G34 … |
 | 1 | 3 Line Status Board & Real-Time Backbone | 7 | 0 | 1 | 0 | 0 | 6 | 0 % | G9 · OI-28 · OI-34 |
 | 1 | 4 Rod Check-In & PLC Configuration (FL1 / FL | 25 | 1 | 3 | 0 | 10 | 11 | 4 % | G14 · G17 · G2 · G26 … |
@@ -24,7 +24,7 @@
 | 1 | 12 Yield, Cost Ledger & Scrap | 4 | 0 | 0 | 0 | 0 | 4 | 0 % | OI-60 · OI-68 · OI-83 · OQ-10 |
 | 1 | 13 Administration & Reference Data | 12 | 0 | 0 | 0 | 0 | 12 | 0 % | OI-12 · OI-141 · OI-43 · OI-77 … |
 | 1 | 14 Integration Testing, PLC Commissioning & | 12 | 1 | 0 | 2 | 0 | 9 | 8 % | G29 · G30 · G32 · G33 … |
-| **All** | | **175** | **24** | **16** | **2** | **23** | **108** | **14 %** | |
+| **All** | | **180** | **24** | **16** | **2** | **23** | **113** | **13 %** | |
 
 *Percentages are by task count. **Hours are not totalled here** - [`CapacityAndEffortModel.md`](60-delivery/CapacityAndEffortModel.md) `[CE]` is the hours model of record, and a total derived on this page would be a second figure to disagree with it.*
 
@@ -185,7 +185,7 @@ Open register items cited by at least one live task, most-blocking first.
 
 ## MVP-1 › Phase 1B — Backend Foundation
 
-**27 tasks · 70 % done**
+**32 tasks · 59 % done**
   · **Spec:** [phase-01b-backend-foundation.md](60-delivery/phases/phase-01b-backend-foundation.md)
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
@@ -215,6 +215,11 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-218](40-backend/tasks/FW-218.md) | Trial control surface for the feed generator — steer, stop, drop | ✅ done | — | BE | 18 | S1 | FW-203✅ FW-138✅ FW-145 | — |
 | [FW-234](40-backend/tasks/FW-234.md) | Audit-log persistence target | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | BE·DB | 0 | S1 | FW-143✅ FW-142✅ FW-151✅ FW-007 | — |
 | [FW-239](40-backend/tasks/FW-239.md) | Wire run-lifecycle invalidation into FW-150's per-run cache | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | RT | 4 | S1 | FW-150✅ FW-208✅ | — |
+| [FW-263](40-backend/tasks/FW-263.md) | FlatWire.UnitTests — the test project, its fixtures and the OPC  | ⬜ not-started | — | BE | 8 | S3 | FW-142✅ | — |
+| [FW-264](40-backend/tasks/FW-264.md) | Pure-domain suite — the validators, the 20 rules and the 15 valu | ⬜ not-started | — | BE | 28 | S3 | FW-263 FW-147✅ | — |
+| [FW-265](40-backend/tasks/FW-265.md) | PLCTagService — the simulate branch and FW-236's FR-074 outcome  | ⬜ not-started | — | BE | 16 | S3 | FW-263 FW-151✅ | — |
+| [FW-266](40-backend/tasks/FW-266.md) | Line models and the two simulators, with the two small testabili | ⬜ not-started | — | RT·BE | 36 | — | FW-263 FW-210✅ | — |
+| [FW-267](40-backend/tasks/FW-267.md) | DbContext-backed services — the guard clauses and BusinessKeyGen | ⬜ not-started | — | BE | 10 | — | FW-263 | — |
 | [FW-N04](40-backend/tasks/FW-N04.md) | FlatWire solution and four-project Clean Architecture skeleton | ✅ done ⚠ *status inferred, unconfirmed* | — | BE | 16 | S0 | — | — |
 | [FW-N05](40-backend/tasks/FW-N05.md) | OPC ingest hosted service and bounded channel | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | RT | 32 | S0 | FW-144 FW-080 | **G29** **G32** **G33** **PLC-Q05** |
 
@@ -238,7 +243,7 @@ Open register items cited by at least one live task, most-blocking first.
 | `PLC-Q05` | Confirm every measure name in §5.2 — RollGap, Gauge, Width, Footage, Diameter, Weight, Status.IsActi | FW-144, FW-N05 | Controls engineer |
 | `Q10` | > ⛔ THE CLIENT IS NOW DISPUTING OUR FIGURES — 3 Sep 2026, twice in one document. Tim O'Brien, on a w | FW-210 | Tim O. / Bob S. |
 
-**▶ Ready to start now:** `FW-239`
+**▶ Ready to start now:** `FW-239`, `FW-263`
 
 ## MVP-1 › Phase 1C — Database Foundation
 

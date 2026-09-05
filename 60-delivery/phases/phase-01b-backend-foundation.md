@@ -7,7 +7,7 @@
 ---
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-08-27 — **the `TC-020`-is-stale warning at L163 is withdrawn.** `[TCS]` corrected that test case on **14 Aug 2026** — it reads `{DB1, DB2, FM1, EdgeSet, FM2_S1, FM2_S2, FM2_S3}` and matches the built `CanonicalEnums.cs` value for value — but the warning stayed here for thirteen days and `FW-147` inherited it, telling its developer the story’s one remaining step was blocked when it is runnable. **Rewritten to the same line count on purpose**, so every `phase-01b` L-number citation in the repository still resolves. Previously 2026-08-25 — **`P-53`: fifteen controllers → fourteen.** `RodReceivingController` withdrawn (rod receiving is not shopfloor); this layer builds **22 endpoints across 12 controllers**, and exit criterion 2 is restated. Previously 2026-08-15 — **`G6`/`OI-37` answered**: the Authorization row's *"can block the build outright"* warning is struck and the answer recorded. History in [`CHANGELOG.md`](../../CHANGELOG.md)
+**Last Updated:** 2026-09-05 (`D-50`) — ⭐ **The Testing section's *no automated tests* callout is SUPERSEDED: the .NET unit level is reinstated** (`[TS §1.2]`), carded `FW-263`–`FW-267`, gap `G101`. ⛔ Integration and contract suites stay withdrawn; no numeric .NET bar. ⚠ **This phase's stories are not reopened and QA0 is not retro-amended.** *(previously 2026-08-27 — **the `TC-020`-is-stale warning at L163 is withdrawn.** `[TCS]` corrected that test case on **14 Aug 2026** — it reads `{DB1, DB2, FM1, EdgeSet, FM2_S1, FM2_S2, FM2_S3}` and matches the built `CanonicalEnums.cs` value for value — but the warning stayed here for thirteen days and `FW-147` inherited it, telling its developer the story’s one remaining step was blocked when it is runnable. **Rewritten to the same line count on purpose**, so every `phase-01b` L-number citation in the repository still resolves. Previously 2026-08-25 — **`P-53`: fifteen controllers → fourteen.** `RodReceivingController` withdrawn (rod receiving is not shopfloor); this layer builds **22 endpoints across 12 controllers**, and exit criterion 2 is restated. Previously 2026-08-15 — **`G6`/`OI-37` answered**: the Authorization row's *"can block the build outright"* warning is struck and the answer recorded. History in [`CHANGELOG.md`](../../CHANGELOG.md))*
 **Status:** **Ready to build — but the 14 Aug gate was not met.** Two blockers below are `Critical` and unresolved
 **Layer:** .NET 8 microservice (`ual-api`)
 **Owner:** **BE + RT** (streams) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
@@ -114,7 +114,15 @@ dependency, still blocked on `OI-33`'s unmapped columns.
 
 ## Testing
 
-> ### ⚠ This layer ships **no automated tests** (`[TS §1.2]`)
+> ### ⭐ SUPERSEDED 5 Sep 2026 (`D-50`) — the .NET UNIT level is reinstated
+> A committed `FlatWire.UnitTests` project now covers four layers (`[TS §1.2]`), carded as
+> `FW-263`–`FW-267` in `[TB §7.2]` and minted as gap `G101`. ⛔ **The integration and contract
+> suites stay withdrawn**, and ⛔ **no numeric .NET coverage bar** is set. ⚠ **1B's stories are not
+> reopened** (`[SP §9.2]`) and **QA0 is not retro-amended** — QA0 ran 14 Aug 2026 and the
+> walkthrough below remains the record of what gated this phase. **The original callout is kept
+> beneath, as the record of what was in force from 15 Aug to 5 Sep 2026.**
+
+> ### ⚠ This layer ships **no automated tests** (`[TS §1.2]`) *(superseded — see above)*
 > No xUnit of any kind: no unit tests, no validator tests, no stub-fixture/contract suite, no
 > integration suite against a seeded `FlatWireDB`. **The stub endpoints and the FluentValidation
 > validators are unaffected** — they are production deliverables; only the suites that asserted them
