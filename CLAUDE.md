@@ -195,6 +195,85 @@ Angular library (prefix `fw`).
 
 ---
 
+## Before you write code
+
+⚠ **This repository plans the work; it does not define how the code is written.** The Angular
+standards live in the application repository, `UALUADEV`, and they are **mandatory** — a story is
+not done because it renders correctly.
+
+| Where | What |
+|---|---|
+| `UALUADEV/CLAUDE.md` | The non-negotiable rules, always in context. Start here |
+| `UALUADEV/.claude/instructions/` | One rule file per file type — component, template, spec, interface, enum, model, style, content-data |
+| `UALUADEV/.claude/commands/generate-tests.md` | How a `.spec.ts` is written. **14 absolute rules** |
+| `UALUADEV/.claude/code-review-guidelines/` | What the review checks, by file type |
+
+### Building a screen from a mockup — the seven steps, in order
+
+⛔ **This is not a suggested order. Every step below exists because skipping it cost a rework.**
+
+1. **The story names the screen and its sections** — [`[UIC §1.2]`](50-frontend/UIConventions.md).
+   ⛔ **Not the mockup folder**: nineteen files, several variants per line, no mapping to story ids.
+   If a plan does not name its screen, raise it in the plan rather than choosing silently.
+2. **The mockup supplies content only** — what is shown, in what grouping, with what labels.
+   ⛔ **Not composition** (`F-15`: the mockups are 5:4 and the canvas is 16:9), ⛔ **not its
+   `--color-*` tokens** (they exist nowhere in the application), ⛔ **not `flat-wire-fit.js`'s
+   page scaling** ([`[UIC §4.1]`](50-frontend/UIConventions.md)).
+3. **`[UIC]` supplies the look, and `projects/shared` supplies the rail and the chart.**
+   ⛔ **Consume `lib-nav-rail`, `lib-chart-canvas` and `lib-trace-panel`; do not rewrite them**
+   ([`[UIC §3.22]`](50-frontend/UIConventions.md)). Check a class exists before using it.
+4. **Write the code with the rules loaded, not remembered.** A `PreToolUse` hook in `UALUADEV`
+   (`.claude/hooks/inject-rules.cjs`) pushes the matching digest from
+   `.claude/instructions/digests/` into context on **every file write** — because *"read the
+   instruction file first"* was advisory and was skipped every time.
+5. **`/generate-tests <file>` before writing any spec.** 100 % on all four metrics is the target;
+   95 % is a floor for genuinely untestable paths, not a goal.
+6. **`/angular-review` before raising the PR.**
+7. **Update the story plan and `[UIC]` in the same pass** — what was built, **what was skipped**, and
+   any class that had to be created ([`[UIC §5]`](50-frontend/UIConventions.md)). Then a row in
+   [`CHANGELOG.md`](CHANGELOG.md), which is the only place history lives.
+
+⛔ **`ng lint` passing is not evidence of compliance.** The rules that are actually broken are the
+ones ESLint cannot see — `@param` prose instead of a type, mock data with a type annotation instead
+of angle brackets, redundant sibling tests, assertions against an imported constant, and CSS classes
+that do not exist. **Two consecutive flat wire reviews** found violations in every one of those
+categories with `ng lint` reporting **zero errors** before and after.
+
+⚠ **A CSS class that does not exist looks exactly like one that does.** Three shipped here
+(`min-w-0`, `min-h-0`, `big-screen`), each silently doing nothing — `min-w-0` for long enough to put
+a horizontal scrollbar on every resolution. **Two are now defined; `big-screen` is still not, and
+still must not be used.** Check `UALUADEV/src/styles/*.scss` and Bootstrap 5.3 before using a class —
+see [`[UIC §2]`](50-frontend/UIConventions.md).
+
+---
+
+### Where a reusable control lives
+
+| The control is used by | It belongs in |
+|---|---|
+| **flat wire only** | `projects/flat-wire/src/lib/components/shared/` — `[CMP §5.1]` |
+| **flat wire *and* another library** | **`projects/shared`** |
+
+✅ **Standing decision, settled — do not raise it as a conflict again.** `D-06` says flat wire
+consumes only `shared`'s foundational services and builds every control fresh, and `[CMP §5.1]` puts
+flat wire's controls inside flat wire. Both were written for controls **only flat wire uses**. A
+control shared with another library cannot live in either one: slitter would have to depend on
+flat wire (which is not even a dist bundle), and the reverse is what `D-06` forbids. `projects/shared`
+is the only library both can consume, so that is where cross-library controls go.
+
+⚠ **`projects/shared` has 23 dependent libraries.** Adding to it means `ng build shared` before any
+dependent test run — `jest.base.config.js` resolves `shared` to `dist/`, not source.
+
+**Already there:** `lib-nav-rail` (the collapsible icon rail), `lib-chart-canvas` (a canvas and its
+Chart.js lifetime), `lib-trace-panel` (reading header + chart + statistics), and `buildTraceConfig`.
+
+⚠ **A shared control's input shape is a contract with libraries you are not looking at.**
+`NavRailItem` is deliberately a **structural subset** of `shop-floor-common`'s `HamburgerMenuItems`,
+so `slitter-traveler-landing` passes its store array straight in with no mapping. **Adding a required
+field to it breaks slitter** — new fields stay optional.
+
+---
+
 ## Before you finish
 
 ```bash

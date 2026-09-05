@@ -1,7 +1,7 @@
 # Flat Wire Mill — Frontend Components
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 27, 2026 — **five corrections and three additions, from a review against the `Second-Branch/ual-angular` checkout.** ⛔ **§5.3's fixture list named three alphas no seed creates** (`SP-00021`, `RUN-0042`, `RUN-0043`) and did not say that `PS-1100-FL1-003` is the **negative** fixture — both corrected against `FlatWire_SampleData_*.sql`, in the very sentence that warns against following other documents' inconsistent fixtures. ⛔ **`environment.development.ts` does not exist**, so `useMockData` is a config key. ⚠ **§5.2 routed five dialogs as screens** and carried four MVP-2 routes. ⚠ **The library is `flat-wire`**, and the scaffold needs `--standalone=false`. ⚠ **§5.1's tree listed MVP-2 screens.** Added: the eleven-point registration pointer, a note that the canvas is `[VAL §7.5]`'s rather than §7.4's, and per-story ownership for §7.6's twenty controls. *(previously August 13, 2026 — split out of `03-HLD-and-ERDiagram.md`, `02-SRS.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
+**Last Updated:** August 27, 2026 — Change history is in [`../CHANGELOG.md`](../CHANGELOG.md)
 **Document Type:** Library structure, routing, state, charts, the design-token system
 **Status:** Baselined for build
 **Owner:** Frontend (Angular) stream
@@ -150,6 +150,24 @@ There is **no Angular structural or UI template** for this library. Every contro
 | **The screen story that first needs it** | `option-card` · `consequence-box` · `footer-stamp` · `info-table` accordion · `machine-status-panel` · `skid-tracker` · `source-traceability-table` · `coil-label` |
 
 ⚠ **Row 3 is a costing boundary, not a licence to reimplement.** Those controls are still built once and shared — they are simply not costed in 1A.
+
+✅ **Built and living in `projects/shared`, because slitter-interface consumes them too:**
+
+| Control | Consumers today |
+|---|---|
+| **`lib-nav-rail`** — the collapsible icon rail | DB3 landing · DB1 supervisor · `slitter-traveler-landing`'s left rail |
+| **`lib-chart-canvas`** — a canvas and its Chart.js lifetime | via `lib-trace-panel`; available to any chart |
+| **`lib-trace-panel`** — reading header + chart + statistics | DB3's two trace panels **and** the enlarged popup |
+
+⚠ **The rail was never in this register** — `[UIC §3.6]` makes a mockup's action bar *become* the
+rail, so its action half sits conceptually with `FW-133`'s `action-bar` and its navigation half with
+`FW-130`'s shell. **No hours have been restated for either story**; this row records what exists.
+
+⛔ **`slitter-traveler-landing`'s RIGHT sidebar was deliberately left on its own markup.** It is not
+item-driven: seven bespoke buttons, an embedded `<lib-format-grid>`, a spinner-instead-of-icon
+loading state, a red icon on a white badge, and two actions that are component-only methods on a
+component already at the 400-line lint ceiling. Bending the shared rail to fit one caller would have
+cost more than it saved.
 
 ✅ **Two of `[VAL §7.5]`'s constraints are met by reuse rather than by a new control:** the on-screen keyboard and numeric keypad are `ngx-touch-keyboard` (already a dependency, and `NgxTouchKeyboardModule` is imported by `SharedModule`) and `shared`'s `KeypadComponent`. Consuming a foundational `shared` component is **not** a `D-06` violation.
 

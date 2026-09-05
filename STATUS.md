@@ -9,12 +9,12 @@
 | MVP | Phase | Tasks | ✅ Done | 🔵 Review | 🟡 WIP | ⛔ Blocked | ⬜ Not started | % | Open items |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---|
 | -- | 2 Pass Schedule Management (Operations Manag | 0 | 0 | 0 | 0 | 0 | 0 | 0 % | — |
-| 1 | 1A Angular Foundation | 9 | 0 | 0 | 0 | 2 | 7 | 0 % | G10 · G14 · G18 · G23 |
+| 1 | 1A Angular Foundation | 9 | 0 | 0 | 2 | 2 | 5 | 0 % | G10 · G14 · G18 · G23 |
 | 1 | 1B Backend Foundation | 32 | 19 | 4 | 0 | 1 | 8 | 59 % | G10 · G17 · G2 · G29 … |
 | 1 | 1C Database Foundation | 16 | 1 | 1 | 0 | 1 | 11 | 7 % | G14 · G17 · G32 · G34 … |
 | 1 | 3 Line Status Board & Real-Time Backbone | 7 | 0 | 1 | 0 | 0 | 6 | 0 % | G9 · OI-28 · OI-34 |
 | 1 | 4 Rod Check-In & PLC Configuration (FL1 / FL | 25 | 1 | 3 | 0 | 10 | 11 | 4 % | G14 · G17 · G2 · G26 … |
-| 1 | 5 Active Run Monitoring & Live Gauge/Width T | 9 | 2 | 2 | 0 | 1 | 4 | 22 % | G34 · G9 · OI-25 · OI-45 … |
+| 1 | 5 Active Run Monitoring & Live Gauge/Width T | 9 | 2 | 2 | 1 | 1 | 3 | 22 % | G34 · G9 · OI-25 · OI-45 … |
 | 1 | 6 In-Run Production Events (Weld · Die Chang | 16 | 0 | 1 | 0 | 3 | 12 | 0 % | G26 · G27 · G34 · G35 … |
 | 1 | 7 Exception Handling: WIP Rejection & Rod Ch | 7 | 0 | 1 | 0 | 0 | 6 | 0 % | G14 · G24 · G7 · G79 … |
 | 1 | 8 FL2 Spool Check-In & Finishing Run (FL2 St | 9 | 0 | 2 | 0 | 2 | 5 | 0 % | OI-02 · OI-06 · OI-25 · OQ-15 … |
@@ -24,7 +24,7 @@
 | 1 | 12 Yield, Cost Ledger & Scrap | 4 | 0 | 0 | 0 | 0 | 4 | 0 % | OI-60 · OI-68 · OI-83 · OQ-10 |
 | 1 | 13 Administration & Reference Data | 12 | 0 | 0 | 0 | 0 | 12 | 0 % | OI-12 · OI-141 · OI-43 · OI-77 … |
 | 1 | 14 Integration Testing, PLC Commissioning & | 12 | 1 | 0 | 2 | 0 | 9 | 8 % | G29 · G30 · G32 · G33 … |
-| **All** | | **180** | **24** | **16** | **2** | **23** | **113** | **13 %** | |
+| **All** | | **180** | **24** | **16** | **5** | **23** | **110** | **13 %** | |
 
 *Percentages are by task count. **Hours are not totalled here** - [`CapacityAndEffortModel.md`](60-delivery/CapacityAndEffortModel.md) `[CE]` is the hours model of record, and a total derived on this page would be a second figure to disagree with it.*
 
@@ -162,7 +162,7 @@ Open register items cited by at least one live task, most-blocking first.
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
 |---|---|---|---|---|---:|---|---|---|
-| [FW-130](50-frontend/tasks/FW-130.md) | Shell layout and the 1280×1024 shopfloor canvas | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | FE | 16 | S0 | FW-N03 | **G18** **G23** |
+| [FW-130](50-frontend/tasks/FW-130.md) | Shell layout and the 1920×1080 shopfloor canvas | 🟡 in-progress ⚠ *status inferred, unconfirmed* | — | FE | 16 | S0 | FW-N03 | **G18** **G23** |
 | [FW-131](50-frontend/tasks/FW-131.md) | Route guards, interceptor wiring and the error envelope | ⛔ blocked ⚠ *blocker closed — needs status update* ⚠ *status inferred, unconfirmed* | — | FE | 12 | S0 | FW-N03 | — |
 | [FW-132](50-frontend/tasks/FW-132.md) | DI-swappable API client and domain models | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | FE | 20 | S0 | FW-N03 FW-147✅ FW-007 | **G14** |
 | [FW-133](50-frontend/tasks/FW-133.md) | Shared composite controls | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | FE | 120 | S0 | FW-130 | **G18** |
@@ -170,7 +170,7 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-135](50-frontend/tasks/FW-135.md) | SignalR client service | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | RT | 24 | S0 | FW-N03 | **G10** |
 | [FW-136](50-frontend/tasks/FW-136.md) | MockSignalRService and the typed event set | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | RT | 12 | S0 | FW-135 | — |
 | [FW-137](50-frontend/tasks/FW-137.md) | PWA cache sync and the reconnect banner | ⛔ blocked ⚠ *blocker closed — needs status update* ⚠ *status inferred, unconfirmed* | — | RT | 8 | S0 | FW-135 | — |
-| [FW-N03](50-frontend/tasks/FW-N03.md) | Angular library scaffold, routing and configuration | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | FE | 24 | S0 | — | — |
+| [FW-N03](50-frontend/tasks/FW-N03.md) | Angular library scaffold, routing and configuration | 🟡 in-progress | — | FE | 24 | S0 | — | — |
 
 **Open items owned by this phase**
 
@@ -181,7 +181,7 @@ Open register items cited by at least one live task, most-blocking first.
 | `G18` | Source docs (CLAUDE.md / CheckinImplementationPrompt) describe a --fw- design system, but the actual | FW-130, FW-133 | — |
 | `G23` | The 1280×1024 shopfloor canvas is an acceptance criterion nobody has confirmed. All 25+ mockups are  | FW-130 | — |
 
-**▶ Ready to start now:** `FW-N03`
+**▶ Ready to start now:** *none — every not-started task here is waiting on a dependency or a blocker*
 
 ## MVP-1 › Phase 1B — Backend Foundation
 
@@ -390,7 +390,7 @@ Open register items cited by at least one live task, most-blocking first.
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
 |---|---|---|---|---|---:|---|---|---|
-| [FW-062](50-frontend/tasks/FW-062.md) | Dashboard 3 — Active Run Monitor (FL1) and FL3 variant | ⬜ not-started | — | FE | 32 | S2 | FW-133 FW-162 FW-163 FW-081 FW-164 | **PLC-Q02** |
+| [FW-062](50-frontend/tasks/FW-062.md) | Dashboard 3 — Active Run Monitor (FL1) and FL3 variant | 🟡 in-progress | — | FE | 32 | S2 | FW-133 FW-162 FW-163 FW-081 FW-164 | **PLC-Q02** |
 | [FW-081](40-backend/tasks/FW-081.md) | gauge-trace-chart live streaming, maximize and runtime source to | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | FE·RT | 28 | S2 | FW-133 FW-135 FW-150✅ | — |
 | [FW-162](50-frontend/tasks/FW-162.md) | run-status-cards | ⬜ not-started | — | FE | 20 | S2 | FW-133 | — |
 | [FW-163](50-frontend/tasks/FW-163.md) | info-grid and chart-tab-strip | ⬜ not-started | — | FE | 20 | S2 | FW-133 | **OQ-18** |
