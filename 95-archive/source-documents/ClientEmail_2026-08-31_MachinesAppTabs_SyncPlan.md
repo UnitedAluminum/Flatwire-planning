@@ -335,4 +335,4 @@ Cite an attachment by **content**, never by `cid`.
 | [FlatWire_DDL_02_Schedule.sql](../../30-database/sql/FlatWire_DDL_02_Schedule.sql) | Three of its six OPEN POINTS are answered — §4.2 |
 | [MasterSpecification.md](../../10-requirements/MasterSpecification.md) | `OI-110`, `OI-31` and the Die Management requirements `FR-240`–`FR-255` |
 | [FW-003.md](../../50-frontend/tasks/FW-003.md) | The machine-template story this corrects |
-| [10_CommonDB_Insert_WIPStations_FlatWire.sql](../../30-database/scripts/10_CommonDB_Insert_WIPStations_FlatWire.sql) | `D8`, the `machine_type` open item — §4.7 |
+| [10_CommonDB_Insert_WIPStations_FlatWire.sql](../design-notes/10_CommonDB_Insert_WIPStations_FlatWire.sql) | `D8`, the `machine_type` open item — §4.7 |

@@ -95,7 +95,8 @@
 -- ----------------------------------------------------------------------------
 --
 --   This script creates TABLES ONLY.
---     - The foreign keys to Stand, Edger and AlloyProperty are created
+--     - The foreign keys to Stand, ToolingInventoryEdger and AlloyProperty
+--       are created
 --       by script 06, and the indexes by script 07, so that every constraint
 --       is applied to empty tables and cannot fail on existing data.
 --     - Script 01 (lookup and reference tables) must therefore run before this
@@ -241,9 +242,17 @@ GO
 --   NULL whenever the component is not Active.
 --
 -- Tool reference - at most one of the two is populated on an Active row
---   StandId   -> Stand    for FM1 and the FM2 stands
---   EdgerId   -> Edger    for EdgeSet
+--   StandId   -> Stand                  for FM1 and the FM2 stands
+--   EdgerId   -> ToolingInventoryEdger  for EdgeSet
 --   Both foreign keys are created by script 06.
+--
+--   EdgerId RE-POINTED Sep-6-2026 (D-53). It used to reference [dbo].[Edger],
+--   which has been ABSORBED into ToolingInventoryEdger -- the five-column
+--   table could not hold the client's fourteen-column Tooling Inventory grid.
+--   The COLUMN and the CONSTRAINT NAME are both unchanged: FK_PSC_Edger keeps
+--   its name deliberately, because renaming it would churn [API], FW-147's
+--   enum-mirror inventory and TC-020 for no gain. Contrast the die split,
+--   which DROPPED DrawerId outright; here only the target moves.
 --
 --   DB1 and DB2 carry NEITHER. DrawerId was dropped on Sep-2-2026 with the die
 --   split: it pointed at what was then a 13-row die-SIZE catalogue, and the
@@ -273,7 +282,7 @@ BEGIN
         [Sequence]       INT          NOT NULL,   -- processing order within the schedule, 1 upwards
         [IsMandatory]    BIT          NOT NULL CONSTRAINT [DF_PSC_IsMandatory] DEFAULT (0),  -- when 1, the screen locks the component and the operator cannot switch it off
         [StandId]        INT          NULL,       -- fitted stand. FK to Stand.Id, added by script 06
-        [EdgerId]        INT          NULL,       -- fitted edger. FK to Edger.Id, added by script 06
+        [EdgerId]        INT          NULL,       -- fitted edger. FK to ToolingInventoryEdger.Id, added by script 06 (re-pointed Sep-6-2026, D-53)
         -- No DrawerId: dropped Sep-2-2026 with the die split. DB1/DB2 rows carry
         -- their die SIZE in ParameterValue and name no physical tool. See section 3.
         [EntryGauge]     DECIMAL(8,4) NULL,       -- calculated gauge entering this station, inches; informational

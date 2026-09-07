@@ -10,21 +10,22 @@
 |---|---|---:|---:|---:|---:|---:|---:|---:|---|
 | -- | 2 Pass Schedule Management (Operations Manag | 0 | 0 | 0 | 0 | 0 | 0 | 0 % | — |
 | 1 | 1A Angular Foundation | 9 | 0 | 0 | 2 | 2 | 5 | 0 % | G10 · G14 · G18 · G23 |
-| 1 | 1B Backend Foundation | 32 | 19 | 4 | 0 | 1 | 8 | 59 % | G10 · G17 · G2 · G29 … |
-| 1 | 1C Database Foundation | 16 | 1 | 1 | 0 | 1 | 11 | 7 % | G14 · G17 · G32 · G34 … |
+| 1 | 1B Backend Foundation | 31 | 21 | 4 | 0 | 1 | 5 | 68 % | G10 · G17 · G2 · G29 … |
+| 1 | 1C Database Foundation | 17 | 1 | 1 | 0 | 1 | 12 | 7 % | G104 · G14 · G17 · G32 … |
 | 1 | 3 Line Status Board & Real-Time Backbone | 7 | 0 | 1 | 0 | 0 | 6 | 0 % | G9 · OI-28 · OI-34 |
 | 1 | 4 Rod Check-In & PLC Configuration (FL1 / FL | 25 | 1 | 3 | 0 | 10 | 11 | 4 % | G14 · G17 · G2 · G26 … |
 | 1 | 5 Active Run Monitoring & Live Gauge/Width T | 9 | 2 | 2 | 1 | 1 | 3 | 22 % | G34 · G9 · OI-25 · OI-45 … |
-| 1 | 6 In-Run Production Events (Weld · Die Chang | 16 | 0 | 1 | 0 | 3 | 12 | 0 % | G26 · G27 · G34 · G35 … |
+| 1 | 6 In-Run Production Events (Weld · Die Chang | 17 | 0 | 1 | 0 | 3 | 13 | 0 % | G26 · G27 · G34 · G35 … |
 | 1 | 7 Exception Handling: WIP Rejection & Rod Ch | 7 | 0 | 1 | 0 | 0 | 6 | 0 % | G14 · G24 · G7 · G79 … |
 | 1 | 8 FL2 Spool Check-In & Finishing Run (FL2 St | 9 | 0 | 2 | 0 | 2 | 5 | 0 % | OI-02 · OI-06 · OI-25 · OQ-15 … |
 | 1 | 9 Output Coil Completion, Labeling & Packing | 11 | 0 | 1 | 0 | 3 | 7 | 0 % | G36 · OI-105 · OI-106 · OI-114 … |
 | 1 | 10 FL3 Hybrid Continuous Operation | 4 | 0 | 0 | 0 | 0 | 4 | 0 % | G30 · OQ-15 · OQ-2 · OQ-67 |
 | 1 | 11 Supervisor Shift Summary, Reporting & Cer | 7 | 0 | 0 | 0 | 0 | 7 | 0 % | OI-101 · OI-57 · OI-99 · OQ-25 … |
 | 1 | 12 Yield, Cost Ledger & Scrap | 4 | 0 | 0 | 0 | 0 | 4 | 0 % | OI-60 · OI-68 · OI-83 · OQ-10 |
-| 1 | 13 Administration & Reference Data | 12 | 0 | 0 | 0 | 0 | 12 | 0 % | OI-12 · OI-141 · OI-43 · OI-77 … |
+| 1 | 13 Administration & Reference Data | 13 | 0 | 0 | 0 | 0 | 13 | 0 % | OI-12 · OI-141 · OI-43 · OI-77 … |
 | 1 | 14 Integration Testing, PLC Commissioning & | 12 | 1 | 0 | 2 | 0 | 9 | 8 % | G29 · G30 · G32 · G33 … |
-| **All** | | **180** | **24** | **16** | **5** | **23** | **110** | **13 %** | |
+| 2 | 1B Backend Foundation | 1 | 0 | 0 | 0 | 0 | 1 | 0 % | — |
+| **All** | | **183** | **26** | **16** | **5** | **23** | **111** | **14 %** | |
 
 *Percentages are by task count. **Hours are not totalled here** - [`CapacityAndEffortModel.md`](60-delivery/CapacityAndEffortModel.md) `[CE]` is the hours model of record, and a total derived on this page would be a second figure to disagree with it.*
 
@@ -64,7 +65,8 @@ Open register items cited by at least one live task, most-blocking first.
 | `G10` | Real-time deploy prereqs / MessagePack dependency | FW-080, FW-135 | 1A, 1B | — | Gaps.md |
 | `G18` | Source docs (CLAUDE.md / CheckinImplementationPrompt) describe a --fw- design system, but  | FW-130, FW-133 | 1A | — | Gaps.md |
 | `G24` | Supervisor approvals are decided but unpersisted. Three decisions require supervisor autho | FW-072, FW-176 | 7 | — | Gaps.md |
-| `G60` | ⛔ Nothing registers flat wire with OPCConnection, so GetOPCInfo cannot succeed and no tag  | FW-217, FW-238 | 14 | — | Gaps.md |
+| `G59` | No service identity exists for a PLC write that no operator initiated. ✅ Mechanism confirm | FW-217, FW-N05 | 1B, 14 | — | Gaps.md |
+| `G60` | ⚠ HALF CLOSED 6 Sep 2026 — the registration EXISTS on DEV00164-001; the running service is | FW-217, FW-N05 | 1B, 14 | — | Gaps.md |
 | `G7` | Mid-run checkout supervisor approval relies only on transient SignalR | FW-175, FW-177 | 7 | — | Gaps.md |
 | `G79` | Every WipRejection.RejectionGroup value is ours. The client's WIPREJ sheet is a flat list  | FW-067, FW-174 | 7 | — | Gaps.md |
 | `G82` | Threading scrap must be a WIP rejection and no reason code exists for it. The client's ans | FW-067, FW-174 | 7 | — | Gaps.md |
@@ -84,18 +86,18 @@ Open register items cited by at least one live task, most-blocking first.
 | `Q10` | > ⛔ THE CLIENT IS NOW DISPUTING OUR FIGURES — 3 Sep 2026, twice in one document. Tim O'Bri | FW-210, FW-213 | 1B, 5 | Tim O. / Bob S. | Questions.md |
 | `Q6` | Weld attribution on output footage | FW-063, FW-166 | 6 | Jaspreet / Tim O. | Questions.md |
 | `Q92` | What columns does the roll-set Tooling Inventory grid carry — and are capstan rolls the sa | FW-259, FW-261 | 1C, 13 | Tim O. / Maintenance | Questions.md |
+| `Q95` | Five things the edger Tooling Inventory grid does not say — and one of them decides how a  | FW-268, FW-270 | 1C, 13 | Tim O. / Maintenance | Questions.md |
+| `G104` | ToolingInventoryEdger HAS NO NATURAL KEY, AND THREE COLUMNS ON IT ARE OURS RATHER THAN THE | FW-268 | 1C | — | Gaps.md |
 | `G23` | The 1280×1024 shopfloor canvas is an acceptance criterion nobody has confirmed. All 25+ mo | FW-130 | 1A | — | Gaps.md |
 | `G27` | The weld screen's rod queue and traceability chain have no host. Dashboard 4 was retired 1 | FW-063 | 6 | — | Gaps.md |
 | `G35` | FM2's two dancers are unmodelled everywhere, and one of their modes contradicts a stated r | FW-171 | 6 | — | Gaps.md |
 | `G36` | Returning Phase 9 to MVP-1 imported three uncosted dependencies, all on the DB7b packing s | FW-186 | 9 | — | Gaps.md |
 | `G55` | FL2's spool check-in is constrained to payoff position 1, while the canonical enum and the | FW-246 | 1C | — | Gaps.md |
-| `G59` | No service identity exists for a PLC write that no operator initiated. ✅ Mechanism confirm | FW-217 | 14 | — | Gaps.md |
 | `G69` | [SIM §9.2] requires the console to show TWO state chips and the wire carries ONE vocabular | FW-215 | 1B | — | Gaps.md |
 | `G80` | The client's eight IT inhibit reasons and [PLC §8.2]'s five set conditions share exactly o | FW-257 | 4 | — | Gaps.md |
 | `G81` | No Qualified Operators Are Logged In presumes a mechanism that does not exist. The client  | FW-257 | 4 | — | Gaps.md |
 | `G83` | Four pause reasons lost their vocabulary and gained no successor. OperatorBreak, ShiftChan | FW-071 | 6 | — | Gaps.md |
 | `G87` | The fourth Tooling Inventory tool type is built from one sentence, and every column in it  | FW-259 | 1C | — | Gaps.md |
-| `G94` | ⛔ OPCUAManager has no canonical tag identity: five call sites, four formats, and only the  | FW-238 | 14 | — | Gaps.md |
 | `OI-02` | ⚠️ UNRESOLVED — Intermediate spool numbering: schema SP-##### versus the SRS narrative's T | FW-124 | 8 | — | MasterSpecification.md |
 | `OI-06` | ⚠️ UNRESOLVED — Two spool status vocabularies: the schema's RECEIVED/STAGED/INFLAT/COMPLET | FW-124 | 8 | — | MasterSpecification.md |
 | `OI-100` | Valid rework stages per material state are unspecified. Rework requires a named return sta | FW-067 | 7 | — | MasterSpecification.md |
@@ -185,7 +187,7 @@ Open register items cited by at least one live task, most-blocking first.
 
 ## MVP-1 › Phase 1B — Backend Foundation
 
-**32 tasks · 59 % done**
+**31 tasks · 68 % done**
   · **Spec:** [phase-01b-backend-foundation.md](60-delivery/phases/phase-01b-backend-foundation.md)
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
@@ -198,7 +200,6 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-142](40-backend/tasks/FW-142.md) | Dapper/EF data access and FlatWireDbContext | ✅ done ⚠ *status inferred, unconfirmed* | — | BE | 24 | S0 | FW-N04✅ FW-006 FW-007 | — |
 | [FW-143](40-backend/tasks/FW-143.md) | Serilog structured logging and the audit log | ✅ done ⚠ *status inferred, unconfirmed* | — | BE | 12 | S0 | FW-N04✅ | — |
 | [FW-144](40-backend/tasks/FW-144.md) | Configuration binding | 🔵 in-review ⚠ *status inferred, unconfirmed* | — | BE | 12 | S0 | FW-N04✅ | **G33** **PLC-Q05** |
-| [FW-145](40-backend/tasks/FW-145.md) | JWT authentication and role authorization policies | ⛔ blocked ⚠ *blocker closed — needs status update* ⚠ *status inferred, unconfirmed* | — | BE | 16 | S0 | FW-N04✅ | — |
 | [FW-146](40-backend/tasks/FW-146.md) | Global exception middleware and the response envelope | ✅ done ⚠ *status inferred, unconfirmed* | — | BE | 8 | S0 | FW-N04✅ | — |
 | [FW-147](40-backend/tasks/FW-147.md) | FluentValidation, value objects and the canonical cross-layer en | ✅ done ⚠ *status inferred, unconfirmed* | — | BE | 12 | S0 | FW-N04✅ | — |
 | [FW-148](40-backend/tasks/FW-148.md) | Health checks | ✅ done ⚠ *status inferred, unconfirmed* | — | BE | 8 | S0 | FW-N04✅ | — |
@@ -215,13 +216,13 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-218](40-backend/tasks/FW-218.md) | Trial control surface for the feed generator — steer, stop, drop | ✅ done | — | BE | 18 | S1 | FW-203✅ FW-138✅ FW-145 | — |
 | [FW-234](40-backend/tasks/FW-234.md) | Audit-log persistence target | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | BE·DB | 0 | S1 | FW-143✅ FW-142✅ FW-151✅ FW-007 | — |
 | [FW-239](40-backend/tasks/FW-239.md) | Wire run-lifecycle invalidation into FW-150's per-run cache | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | RT | 4 | S1 | FW-150✅ FW-208✅ | — |
-| [FW-263](40-backend/tasks/FW-263.md) | FlatWire.UnitTests — the test project, its fixtures and the OPC  | ⬜ not-started | — | BE | 8 | S3 | FW-142✅ | — |
-| [FW-264](40-backend/tasks/FW-264.md) | Pure-domain suite — the validators, the 20 rules and the 15 valu | ⬜ not-started | — | BE | 28 | S3 | FW-263 FW-147✅ | — |
-| [FW-265](40-backend/tasks/FW-265.md) | PLCTagService — the simulate branch and FW-236's FR-074 outcome  | ⬜ not-started | — | BE | 16 | S3 | FW-263 FW-151✅ | — |
-| [FW-266](40-backend/tasks/FW-266.md) | Line models and the two simulators, with the two small testabili | ⬜ not-started | — | RT·BE | 36 | — | FW-263 FW-210✅ | — |
-| [FW-267](40-backend/tasks/FW-267.md) | DbContext-backed services — the guard clauses and BusinessKeyGen | ⬜ not-started | — | BE | 10 | — | FW-263 | — |
+| [FW-263](40-backend/tasks/FW-263.md) | FlatWire.UnitTests — the test project, its fixtures and the OPC  | ✅ done | — | BE | 8 | S3 | FW-142✅ | — |
+| [FW-264](40-backend/tasks/FW-264.md) | Pure-domain suite — the validators, the 20 rules and the 15 valu | ⬜ not-started | — | BE | 28 | S3 | FW-263✅ FW-147✅ | — |
+| [FW-265](40-backend/tasks/FW-265.md) | PLCTagService — the simulate branch and FW-236's FR-074 outcome  | ✅ done | — | BE | 16 | S3 | FW-263✅ FW-151✅ | — |
+| [FW-266](40-backend/tasks/FW-266.md) | Line models and the two simulators, with the two small testabili | ⬜ not-started | — | RT·BE | 36 | — | FW-263✅ FW-210✅ | — |
+| [FW-267](40-backend/tasks/FW-267.md) | DbContext-backed services — the guard clauses and BusinessKeyGen | ⬜ not-started | — | BE | 10 | — | FW-263✅ | — |
 | [FW-N04](40-backend/tasks/FW-N04.md) | FlatWire solution and four-project Clean Architecture skeleton | ✅ done ⚠ *status inferred, unconfirmed* | — | BE | 16 | S0 | — | — |
-| [FW-N05](40-backend/tasks/FW-N05.md) | OPC ingest hosted service and bounded channel | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | RT | 32 | S0 | FW-144 FW-080 | **G29** **G32** **G33** **PLC-Q05** |
+| [FW-N05](40-backend/tasks/FW-N05.md) | OPC ingest hosted service and bounded channel | ⛔ blocked | — | RT | 32 | S0 | FW-144 FW-080 | **G59** **G60** **G29** **G32** **G33** **PLC-Q05** |
 
 **Open items owned by this phase**
 
@@ -234,6 +235,8 @@ Open register items cited by at least one live task, most-blocking first.
 | `G30` | FM2's controller namespace on FL3 is undetermined, and it decides what partial failure means. Every  | FW-205 | — |
 | `G32` | The FM2 PLC station names in the spec are ours, not the controller's. The 4 Aug 2026 roller-size cor | FW-N05 | — |
 | `G33` | The measure segment of every tag is ours, not the controller's — and it departs from thirteen observ | FW-144, FW-N05 | — |
+| `G59` | No service identity exists for a PLC write that no operator initiated. ✅ Mechanism confirmed by exec | FW-N05 | — |
+| `G60` | ⚠ HALF CLOSED 6 Sep 2026 — the registration EXISTS on DEV00164-001; the running service is still unp | FW-N05 | — |
 | `G69` | [SIM §9.2] requires the console to show TWO state chips and the wire carries ONE vocabulary. The sec | FW-215 | — |
 | `G9` | NFRs absent (AGC Hz, concurrent clients, latency, reading retention) | FW-080, FW-150, FW-203, FW-210 | — |
 | `OI-34` | G9 — the non-functional targets are absent. AGC sample rate, concurrent client count, latency budget | FW-080, FW-150, FW-203, FW-210 | — |
@@ -243,11 +246,11 @@ Open register items cited by at least one live task, most-blocking first.
 | `PLC-Q05` | Confirm every measure name in §5.2 — RollGap, Gauge, Width, Footage, Diameter, Weight, Status.IsActi | FW-144, FW-N05 | Controls engineer |
 | `Q10` | > ⛔ THE CLIENT IS NOW DISPUTING OUR FIGURES — 3 Sep 2026, twice in one document. Tim O'Brien, on a w | FW-210 | Tim O. / Bob S. |
 
-**▶ Ready to start now:** `FW-239`, `FW-263`
+**▶ Ready to start now:** `FW-239`, `FW-264`, `FW-266`, `FW-267`
 
 ## MVP-1 › Phase 1C — Database Foundation
 
-**16 tasks · 7 % done**
+**17 tasks · 7 % done**
   · **Spec:** [phase-01c-database-foundation.md](60-delivery/phases/phase-01c-database-foundation.md)
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
@@ -259,7 +262,7 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-006](30-database/tasks/FW-006.md) | Materials group tables | ⬜ not-started | — | DB | 12 | S0 | FW-152 | **G17** |
 | [FW-007](30-database/tasks/FW-007.md) | Runs and Quality/Output group tables | ⬜ not-started | — | DB | 52 | S0 | FW-152 FW-006 | **G14** **G34** |
 | [FW-152](30-database/tasks/FW-152.md) | FlatWireDB creation, ordered DDL runner, indexes and grants | 🔵 in-review ⚠ *status inferred, unconfirmed* | — | DB | 12 | S0 | — | — |
-| [FW-241](30-database/tasks/FW-241.md) | Deploy step 2 — finalise the shared-schema insert, author its re | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | DB | 8 | S1 | FW-152 FW-003 | — |
+| [FW-241](30-database/tasks/FW-241.md) | Deploy step 2 — author the shared-schema insert and its reverse  | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | DB | 8 | S1 | FW-152 FW-003 | — |
 | [FW-244](30-database/tasks/FW-244.md) | G49 — nine decided requirements with no column | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | DB | 8 | S1 | FW-007 FW-006 | — |
 | [FW-245](30-database/tasks/FW-245.md) | G51 — SpcMeasurement.InSpec stores a wrong verdict for an asymme | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | DB | 6 | S1 | FW-004 FW-007 FW-168 | **Q22** |
 | [FW-246](30-database/tasks/FW-246.md) | G50 / G52 / G41 / G55 — constraint and referential-integrity rep | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | DB | 12 | S1 | FW-005 FW-006 FW-007 FW-147✅ FW-225 | **G55** |
@@ -268,11 +271,13 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-254](40-backend/tasks/FW-254.md) | Reason-code query endpoints — the three seeded client vocabulari | ⬜ not-started | — | BE | 9 | S1 | FW-138✅ FW-251 | — |
 | [FW-259](30-database/tasks/FW-259.md) | Reconcile ToolingInventoryRollSet with the client's roll-set gri | ⬜ not-started | — | DB | 5 | S2 | FW-251 | **Q92** **G87** |
 | [FW-262](30-database/tasks/FW-262.md) | Machine Setup schema — Setup/Handling Times and Material Loss, f | ✅ done ⚠ *status inferred, unconfirmed* | — | DB | 10 | S2 | — | — |
+| [FW-268](30-database/tasks/FW-268.md) | Reconcile ToolingInventoryEdger with the client's edger grid whe | ⬜ not-started | — | DB | 4 | S2 | FW-251 | **Q95** **G104** |
 
 **Open items owned by this phase**
 
 | Id | What | Blocks | Owner |
 |---|---|---|---|
+| `G104` | ToolingInventoryEdger HAS NO NATURAL KEY, AND THREE COLUMNS ON IT ARE OURS RATHER THAN THE CLIENT'S. | FW-268 | — |
 | `G14` | Pre-build data inconsistencies: 3- vs 4-item inspection (+M1/M2 ovality), R##### vs ROD-#####, Foota | FW-007 | — |
 | `G17` | rod→coils multiplies cross-DB logical FKs (every Rod.Alpha ref) | FW-006 | — |
 | `G32` | The FM2 PLC station names in the spec are ours, not the controller's. The 4 Aug 2026 roller-size cor | FW-005 | — |
@@ -283,6 +288,7 @@ Open register items cited by at least one live task, most-blocking first.
 | `PLC-Q04` | Confirm the FM2 station names — S1, S2, S3, carrying position only (§4.3). Every FM2 row in §5.2.2 i | FW-005 | Controls engineer |
 | `Q22` | Dimensional tolerances — min/max for gauge, width, diameter and ovality; no column exists | FW-245 | Tim O. / IT |
 | `Q92` | What columns does the roll-set Tooling Inventory grid carry — and are capstan rolls the same tool op | FW-259 | Tim O. / Maintenance |
+| `Q95` | Five things the edger Tooling Inventory grid does not say — and one of them decides how a roll set i | FW-268 | Tim O. / Maintenance |
 
 **▶ Ready to start now:** *none — every not-started task here is waiting on a dependency or a blocker*
 
@@ -419,7 +425,7 @@ Open register items cited by at least one live task, most-blocking first.
 
 ## MVP-1 › Phase 6 — In-Run Production Events (Weld · Die Change · SPC · Roll Adjust · Pause)
 
-**16 tasks · 0 % done**
+**17 tasks · 0 % done**
   · **Spec:** [phase-06-in-run-production-events.md](60-delivery/phases/phase-06-in-run-production-events.md)
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
@@ -440,6 +446,7 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-255](40-backend/tasks/FW-255.md) | LineDowntimeEvent write path — LineDowntimeService and the two l | ⬜ not-started | — | BE | 22 | S2 | FW-138✅ FW-251 FW-254 | — |
 | [FW-256](50-frontend/tasks/FW-256.md) | Line Downtime dialog — the 25 DWN## codes that have no run | ⬜ not-started | — | FE | 12 | S2 | FW-255 FW-133 | — |
 | [FW-260](40-backend/tasks/FW-260.md) | Roll-set register service - ToolingInventoryRollSet CRUD and the | ⬜ not-started | — | BE | 10 | S2 | FW-252 FW-259 | — |
+| [FW-269](40-backend/tasks/FW-269.md) | Edger register service - ToolingInventoryEdger CRUD and the gaug | ⬜ not-started | — | BE | 10 | S2 | FW-252 FW-268 | — |
 
 **Open items owned by this phase**
 
@@ -641,7 +648,7 @@ Open register items cited by at least one live task, most-blocking first.
 
 ## MVP-1 › Phase 13 — Administration & Reference Data
 
-**12 tasks · 0 % done**
+**13 tasks · 0 % done**
   · **Spec:** [phase-13-administration-reference-data.md](60-delivery/phases/phase-13-administration-reference-data.md) · [phase-13-mvp2-die-management.md](60-delivery/phases/phase-13-mvp2-die-management.md)
 
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
@@ -658,6 +665,7 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-253](50-frontend/tasks/FW-253.md) | Die Management screen — the inventory grid and FR-252's two hist | ⬜ not-started | — | FE | 24 | S3 | FW-252 FW-130 FW-133 | **OI-12** **OI-141** |
 | [FW-258](60-delivery/tasks/FW-258.md) | Re-cost the die domain's return to MVP-1 and the reason-code sco | ⬜ not-started | — | BA | 8 | S2 | FW-249 | — |
 | [FW-261](50-frontend/tasks/FW-261.md) | Tooling Inventory - the fourth Choose Tool option and the roll-s | ⬜ not-started | — | FE | 12 | S3 | FW-260 FW-003 | **Q92** **OI-141** |
+| [FW-270](50-frontend/tasks/FW-270.md) | Tooling Inventory - the Edgers tool option and its gauge grid | ⬜ not-started | — | FE | 12 | S2 | FW-253 FW-269 | **Q95** |
 
 **Open items owned by this phase**
 
@@ -669,6 +677,7 @@ Open register items cited by at least one live task, most-blocking first.
 | `OI-77` | Edger blade profiles and roll regrind. Whether blade profiles are standardised or custom per edge ty | FW-197 | — |
 | `OQ-22` | **⚠ id not found in any register** | FW-194, FW-199 | — |
 | `Q92` | What columns does the roll-set Tooling Inventory grid carry — and are capstan rolls the same tool op | FW-261 | Tim O. / Maintenance |
+| `Q95` | Five things the edger Tooling Inventory grid does not say — and one of them decides how a roll set i | FW-270 | Tim O. / Maintenance |
 
 **▶ Ready to start now:** *none — every not-started task here is waiting on a dependency or a blocker*
 
@@ -687,7 +696,7 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-201](50-frontend/tasks/FW-201.md) | Defect allowance and renamed-column regression | ⬜ not-started | — | FE·BE·DB·QA | 56 | S3 | FW-001 FW-120 FW-121 FW-122 | — |
 | [FW-217](40-backend/tasks/FW-217.md) | OPC sidecar adapter — the models behind a test-only OPC UA serve | ✅ done | — | RT | 24 | — | FW-210✅ FW-211✅ FW-N05 | **G32** **G33** **G59** **G60** |
 | [FW-236](40-backend/tasks/FW-236.md) | Per-tag write status from OPCConnection | 🟡 in-progress | — | BE | 16 | S3 | FW-151✅ | — |
-| [FW-238](40-backend/tasks/FW-238.md) | Register flat wire with OPCConnection | 🟡 in-progress | — | BE·DB | 12 | S3 | FW-003 FW-144 FW-151✅ FW-241 | **G60** **G94** |
+| [FW-238](40-backend/tasks/FW-238.md) | Register flat wire with OPCConnection | 🟡 in-progress | — | BE·DB | 12 | S3 | FW-003 FW-144 FW-151✅ FW-241 | — |
 | [FW-242](30-database/tasks/FW-242.md) | Move FlatWireDB into the ual-database repository | ⬜ not-started | — | DB | 16 | S3 | FW-152 FW-241 | — |
 | [FW-249](30-database/tasks/FW-249.md) | Re-derive the DB-stream total on the current basis | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | BA | 8 | S1 | — | — |
 | [FW-250](30-database/tasks/FW-250.md) | build_development_plan_xlsx.py silently drops every multi-stream | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | DB | 9 | S1 | — | — |
@@ -701,12 +710,22 @@ Open register items cited by at least one live task, most-blocking first.
 | `G32` | The FM2 PLC station names in the spec are ours, not the controller's. The 4 Aug 2026 roller-size cor | FW-217 | — |
 | `G33` | The measure segment of every tag is ours, not the controller's — and it departs from thirteen observ | FW-217 | — |
 | `G59` | No service identity exists for a PLC write that no operator initiated. ✅ Mechanism confirmed by exec | FW-217 | — |
-| `G60` | ⛔ Nothing registers flat wire with OPCConnection, so GetOPCInfo cannot succeed and no tag can be wri | FW-217, FW-238 | — |
-| `G94` | ⛔ OPCUAManager has no canonical tag identity: five call sites, four formats, and only the subscribe  | FW-238 | — |
+| `G60` | ⚠ HALF CLOSED 6 Sep 2026 — the registration EXISTS on DEV00164-001; the running service is still unp | FW-217 | — |
 | `OQ-15` | **⚠ id not found in any register** | FW-121, FW-122 | — |
 | `OQ-17` | **⚠ id not found in any register** | FW-121 | — |
 | `PLC-Q04` | Confirm the FM2 station names — S1, S2, S3, carrying position only (§4.3). Every FM2 row in §5.2.2 i | FW-200 | Controls engineer |
 | `PLC-Q05` | Confirm every measure name in §5.2 — RollGap, Gauge, Width, Footage, Diameter, Weight, Status.IsActi | FW-200 | Controls engineer |
 
 **▶ Ready to start now:** `FW-120`, `FW-123`, `FW-249`, `FW-250`
+
+## MVP-2 › Phase 1B — Backend Foundation
+
+**1 task · 0 % done**
+  · **Spec:** [phase-01b-backend-foundation.md](60-delivery/phases/phase-01b-backend-foundation.md)
+
+| Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
+|---|---|---|---|---|---:|---|---|---|
+| [FW-145](40-backend/tasks/FW-145.md) | JWT authentication and role authorization policies | ⬜ not-started | — | BE | 16 | — | FW-N04✅ | — |
+
+**▶ Ready to start now:** `FW-145`
 

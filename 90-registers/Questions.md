@@ -150,6 +150,7 @@ Two decided questions are only partly in MVP-1 and carry banners in [FlatWireDec
 | 92 | What columns does the **roll-set** Tooling Inventory grid carry, and are capstan rolls the same tool option as mill rolls? | `Shopfloor` | High | Tim O. / Maintenance | Open | |
 | 93 | Six readings in the pass-calculator formula document that the page cannot settle | `Other` | High | Tim O. / Process Engineering | Open | |
 | 94 | The crew-size vocabulary, and two FL3 rows in the Machine Setup grids that contradict each other | `Shopfloor` | High | Tim O. / Bob S. | Open | |
+| 95 | Five things the **edging-roll** Tooling Inventory grid does not say — serial number, set-letter scope, groove order, what `.100` measures, and whether the `Type` cell is the edge profile | `Shopfloor` | Medium | Tim O. / Maintenance | Open | |
 
 ---
 
@@ -1201,3 +1202,29 @@ Raised **4 September 2026** against the per-line field sets of 31 Aug 2026 (the 
 **What is blocked meanwhile:** nothing in the schema. `[PROPOSED]` stays on `CrewSize` until (1) is answered, and the **values** are separately blocked on the Naj/Bob/Tim standards spreadsheet and, for the footage half, on `G82`.
 
 Related: **`FW-262`** (the schema this came out of), **`FW-003`** (the tab configuration), **`OI-110`** (which database these tabs write to — still open, and the evidence now points at `united_db`), **`G92`** (the History tab cannot see these tables), **`G82`** (threading footage pending trial), **`A12`** (still open on the Speed tab leg).
+
+---
+
+**Q95** · `Medium` · Owner: Tim O. / Maintenance · `Open`
+
+**Five things the edger Tooling Inventory grid does not say — and one of them decides how a roll set is identified at all.**
+
+Raised **6 September 2026**, when `Edger` was absorbed into **`ToolingInventoryEdger`** (`D-53`). Unlike the roll sets of `Q92`, **the edger grid exists and was followed** — all fourteen columns of the 31 Aug 2026 screenshot are built, in order. These are the residue where that grid is **silent**, and `G104` is the gap.
+
+1. **Is there a serial number for an edger roll set?** The **die** and **straightener** grids both carry `S/N`; **the edger grid does not**. `SerialNo` is modelled here only for consistency with `ToolingInventoryDie` and `ToolingInventoryRollSet`, as a filtered-unique column. If edger sets genuinely have no serials, the column should go rather than sit empty forever.
+2. **Is `Set Number` unique across lines, or only within one?** The grid letters them `A` / `B` / `C`. If a straightener set `A` and an edger set `A` can coexist — and they appear to — then `Set Number` is not unique on its own and the key has to be `(Machine Name, Set Number)`. ⭐ **This is the most consequential of the five.** We deliberately carry **no alpha and no name** for an edger set — unlike dies and roll sets, which have `D-` and `RS-` references of our invention, because nothing reads one at runtime here — so **the register currently has no natural key at all** and two identical rows are possible. We have not guessed the key, because your answer to this question *is* the key: per line, or per shop.
+3. **Are the grooves numbered or ordered across the roll face?** `Gauge Range(")` reads `.045, .040, .035` — three grooves in one cell, now one row each in `ToolingInventoryEdgerGauge`. Whether that comma order is a **physical order** across the face, or just descending gauges, decides whether `GrooveNo` is real data or should be dropped. It is `[PROPOSED]` and nullable meanwhile.
+4. **Does `STD Removal From OD .100` mean per grind?** Read that way, `OD 6.00` down to `Min OD 4.75` is about **twelve grinds**, which is the whole life model the register is built on. If `.100` is something else — a total allowance, a per-pass figure — the remaining-life arithmetic on the tab is wrong from the first screen.
+5. **Is a physical set classified by edge profile at all?** The old `Edger` table forced every row to be `Round` or `Square` (`EdgeType NOT NULL`), but **the client's fourteen columns carry no such field**. `EdgeType` is therefore **relaxed to NULL** here: requiring it would invent a mandatory classification the client has never supplied. If a set really is ground for one profile only, say so and it goes back to `NOT NULL`.
+
+> ⭐ **Question 2 has already cost two columns, and both were gains.** `Name` (carried over from `Edger`, `NOT NULL` + `UNIQUE`) went on 6 Sep and `EdgerToolAlpha` on 7 Sep, each once it was confirmed that **nothing read it** — no procedure, no view, no join, no seed row — and that your grid shows neither field. Removing `Name` stopped the form demanding one for every tool. The price is that **the register has no unique constraint of any kind until question 2 comes back**; `FW-268` adds `(Machine Name, Set Number)` the moment it does.
+
+**Recommendation:** answer 1, 2 and 5 in a line each — they are yes/no — and answer 4 with the arithmetic, because it is the one that silently produces wrong numbers rather than an obviously empty field. Question 3 can wait for the roll shop.
+
+**Why:** these are **not** `G87` repeated. `G87` says the roll-set register was built from **one sentence** with no grid at all; here the grid was supplied and followed, and the risk is narrower — a tab that asks for a serial number that does not exist, or refuses to save a tool because it has no name. That is an operator-facing failure, not a schema one.
+
+**What was done meanwhile:** the register is **built and seeded** — two sets (`A` Round, `B` Square) from the client's own sample row, three gauge rows on set `A` (`.045` / `.040` / `.035`), and set `B` deliberately **ungauged** because the grid does not say what a square-edge set carries. Every one of the five columns above is marked `[PROPOSED]` at its site.
+
+**What is blocked meanwhile:** nothing in the schema, and nothing in the pass schedule — `FK_PSC_Edger` re-points cleanly and the seeded `EdgeSet` rows needed no change. What waits is `FW-268`'s reconciliation and the *Edgers* option on the Tooling Inventory tab.
+
+Related: **`D-53`** (the absorption this came out of), **`G104`** (the gap), **`G77`** (straightener inventory — still no schema at all), **`Q92`** (the same send-back for roll sets, still open), **`OI-77`** (edger blade profiles — the **profile** half is still untouched), **`OI-141`** (who owns tooling inventory, now across **three** built registers), **`G74`** (`CK_PSC_ComponentName` offers one `EdgeSet` value for two stations — **not** addressed by this).

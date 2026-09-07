@@ -63,7 +63,7 @@ Project references: `API → Application, Domain, Infrastructure` · `Applicatio
 - ⚠ **`RunReading`** — 10 Hz time series. Inside `FlatWireRun` it would materialise thousands of rows on every command. **Append-only write model**, read by Dapper via `sp_GetGaugeTrace`. **The most important exclusion in this design.**
 - **`Rod`** — a `FlatWireDB`-local mirror of `coils` (`D-04`); `coils` owns the lifecycle. Read model.
 - **`PassSchedule`** — **a read model, and MVP-1 now builds the table** (`D-31`, 15 Aug 2026): `02_Schedule` is in the MVP-1 runner and `PassScheduleId` carries a **real, enforced FK**. ⚠ *This row previously said "MVP-2-owned … not built by the MVP-1 runner … an opaque external reference" — all three clauses are superseded.* **Read-model status is unchanged and is the point**: MVP-1 reads schedules and never authors them, so there is no aggregate, no repository and no write path. The immutable **`PassScheduleSnapshot`** value object still applies — a certificate must stay reproducible after the owning system later edits the schedule.
-- **`Stand`, `Drawer`, `Edger`, `Dancer`, `Spool`, `AlloyProperty`, `PayoffPosition`** — reference data. *(`SpoolConfiguration` merged into `Spool`, 23 Aug 2026 — `Q60`)*
+- **`Stand`, `Drawer`, `ToolingInventoryEdger`, `Dancer`, `Spool`, `AlloyProperty`, `PayoffPosition`** — reference data. *(`Edger` **absorbed** into `ToolingInventoryEdger` on 6 Sep 2026, `D-53`; `ToolingInventoryEdgerGauge` is its child and is served **through the aggregate**, never as its own resource.)* *(`SpoolConfiguration` merged into `Spool`, 23 Aug 2026 — `Q60`)*
 
 > ### ⚠ The five tables added 22 Aug 2026 — placed 27 Aug 2026
 >

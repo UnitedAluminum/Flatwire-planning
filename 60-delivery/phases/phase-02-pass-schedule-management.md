@@ -74,11 +74,11 @@
 - **Error handling:** 422 on acknowledging a Draft; 403 on unauthorized edit.
 
 ## Database Changes
-- **Tables:** `PassSchedule`, `PassScheduleComponent` (writes); `Stand`/`Drawer`/`Edger` (reads for component→tool links); alloy lookup (reads).
+- **Tables:** `PassSchedule`, `PassScheduleComponent` (writes); `Stand`/`Drawer`/**`ToolingInventoryEdger`** (reads for component→tool links); alloy lookup (reads). ⚠ **`EdgerId` re-pointed 6 Sep 2026 (`D-53`)** — `FK_PSC_Edger` keeps its name.
 - **Stored procs/views/functions:** none required (EF/Dapper); optionally a `vw_ActivePassSchedules` view for the check-in lookup.
 - **Indexes:** `PassSchedule(LineId, Alloy, Status)` supporting the attribute lookup.
 - **Data changes:** override-log rows on every post-Active edit (`ParameterChanged, Old→New, OperatorId, Reason, Timestamp`).
-- **Relationships:** `PassSchedule 1→N PassScheduleComponent`; each component optionally → `Stand`/`Drawer`/`Edger`.
+- **Relationships:** `PassSchedule 1→N PassScheduleComponent`; each component optionally → `Stand`/`Drawer`/**`ToolingInventoryEdger`**.
 
 ## Real-Time Functionality
 None for authoring (no PLC push during generate/edit). The only real-time tie is **OQ-62**-decided: when Ops edits an *Active* schedule mid-run, a `LineStatus`/alert push notifies the Active Run Monitor requiring explicit Acknowledge/Stop (handled in Phase 6).

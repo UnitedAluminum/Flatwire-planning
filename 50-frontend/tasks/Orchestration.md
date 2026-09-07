@@ -378,3 +378,24 @@ All six are other documents' to correct, so they are recorded here rather than e
   document**, and the plan then wins over this file exactly as the Backend plans do.
 - Per repository convention, changes go in [`CHANGELOG.md`](../../CHANGELOG.md) — **do
   not add a change log to this file.**
+
+## The edger register — `FW-270`, minted 6 Sep 2026 (`D-53`)
+
+| Story | Subject | Stream · Phase | h | Closes |
+|---|---|---|---|---|
+| **[`FW-270`](FW-270.md)** | Tooling Inventory — the *Edgers* tool option and its gauge grid | FE · 13 | 12 | `D-53`. Paired with [`FW-268`](../../30-database/tasks/FW-268.md) and [`FW-269`](../../40-backend/tasks/FW-269.md) |
+
+> ⛔ **This card owes an un-priced mockup**, the same residual `FW-261`, `FW-253` and `FW-256`
+> carry. ⭐ **Unlike `FW-261` there IS a client screenshot of the grid** — fourteen columns, in
+> the order the client asked for — but an approved *mockup* is still not the same thing, and
+> `[CE §2]`'s FE rate assumes one.
+>
+> ⚠ **The gauge grid is a child of the selected set, not a peer list.** `.045` / `.040` / `.035`
+> are three grooves on one roll, and it must be obvious on screen that they belong to one tool.
+>
+> ⚠ **The form must ask for `Name` while the schema requires it**, even though the client's grid
+> has no such column (`G104`). If `FW-268` relaxes it, **drop the requirement in the same pass**
+> rather than leaving a mandatory field with no source.
+>
+> ⛔ **Straighteners remain out of scope** — `G77`. After this story three of the four tool types
+> have screens.

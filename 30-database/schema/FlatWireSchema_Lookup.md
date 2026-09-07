@@ -1,7 +1,7 @@
 # Flat Wire Mill — Lookup & Reference Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** September 3, 2026 — **`ToolingInventoryRollSet` added** (`D-42`), the **fourth** Tooling Inventory tool type: mill rolls on a `Stand`, capstan rolls on a `Drawer`, one discriminated table, a **grind** life model rather than footage. ✅ The `Drawer` *"nothing holds a foreign key to this table"* note is **closed** — this is its first referrer. ⚠ `CK_ToolingInventoryDie_LineId` loses `FL3`; **`CK_Drawer_LineId` keeps it** — equipment versus tooling, do not align them. ⛔ Every roll-set column is `[PROPOSED]` pending `Q92` (`G87`). *(previously September 2, 2026 — **three reason-code tables added** from the client's `Reason Codes.xlsx` (Tim O'Brien, 1 Sep 2026): `DowntimeReason`, `WipRejectionReason`, `ItInhibitReason`. ⚠ **They are seeded by the DDL, not the sample-data script** — production reference data, and a production deploy runs `RunAll` without the sample data. The `Dancer` note on `SupportsTensionMode` is also corrected: `0` on FM1 now records **"no"**, not "not stated", and the `OQ-32` mode conflict is **resolved**. *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)*)*
+**Last Updated:** September 7, 2026 — **`Edger` is ABSORBED into `ToolingInventoryEdger`, and `ToolingInventoryEdgerGauge` is its child** (`D-53`). The five-column `Edger` could not hold the client's **fourteen-column** Tooling Inventory grid, and `02_Schedule` already recorded that `EdgerId` *"identifies the fitted **TOOL**, not the STATION"* — so it was already meant to be the physical tool register and was simply too thin to be one. `PassScheduleComponent.EdgerId` re-points here and **`FK_PSC_Edger` keeps its name**. `Gauge Range(")` becomes a **child table**, not a delimited string (`G77`), because a pass schedule must be able to select **a groove**. ⭐ **This closes `G77`'s edger half; the straightener half stays open**, along with the `.134`/`.184` range discrepancy. ⚠ **`EdgeType` and `EdgerType` are kept as SEPARATE columns** — the grid's `Type` cell may well be the edge profile for an edger, but `ToolingInventoryDie` reads the same heading as the die **material** (`DieType`), so it does not mean one thing across the grids and merging them would be our guess. `Q95` leg 5 asks. `EdgeType` is **relaxed to NULL**. ⚠ **The table has NO natural key.** `Name` was removed on 6 Sep 2026 and **`EdgerToolAlpha` on 7 Sep**, both once it was verified that nothing read them — no procedure, view, join or seed row, and the client's grid shows neither field (`OI-141`, `G104`, `Q95`). Identity is the `IDENTITY` column alone, so **duplicate rows are possible**; `(LineId, SetNumber)` is the replacement and waits on `Q95` leg 2 rather than being guessed. *(previously September 3, 2026 — **`ToolingInventoryRollSet` added** (`D-42`), the **fourth** Tooling Inventory tool type: mill rolls on a `Stand`, capstan rolls on a `Drawer`, one discriminated table, a **grind** life model rather than footage. ✅ The `Drawer` *"nothing holds a foreign key to this table"* note is **closed** — this is its first referrer. ⚠ `CK_ToolingInventoryDie_LineId` loses `FL3`; **`CK_Drawer_LineId` keeps it** — equipment versus tooling, do not align them. ⛔ Every roll-set column is `[PROPOSED]` pending `Q92` (`G87`). *(previously September 2, 2026 — **three reason-code tables added** from the client's `Reason Codes.xlsx` (Tim O'Brien, 1 Sep 2026): `DowntimeReason`, `WipRejectionReason`, `ItInhibitReason`. ⚠ **They are seeded by the DDL, not the sample-data script** — production reference data, and a production deploy runs `RunAll` without the sample data. The `Dancer` note on `SupportsTensionMode` is also corrected: `0` on FM1 now records **"no"**, not "not stated", and the `OQ-32` mode conflict is **resolved**. *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)*)*)* ⚠ **Amended 7 September 2026: `EdgerToolAlpha` removed** from `ToolingInventoryEdger`, on the same finding as `Name` the day before — nothing read it, and no client tooling grid has ever shown an alpha (`OI-141`). The register now has **no natural key**; `(LineId, SetNumber)` waits on `Q95` leg 2. **Object counts do not move** — a UNIQUE constraint in `01` is not an index statement in `07`.
 **Document Type:** Final Schema — Lookup / Configuration Tables
 **Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`)
@@ -180,22 +180,96 @@ The client's grid carries three values (`Active` · `In Service` · `In Grinding
 
 ---
 
-## `Edger`
+## `ToolingInventoryEdger`
 
-Edger tooling configurations (EdgeSet component). An edger applies side pressure to shape the lateral edges of the flat wire — either rounding them (`Round`) or keeping them sharp (`Square`). Each row represents one distinct tooling set-up. Referenced by `PassScheduleComponent` rows where `ComponentName = 'EdgeSet'`.
+**The register of physical edger roll sets — the second of the four Tooling Inventory tool types (`D-42`).** Built 6 September 2026 from the client's fourteen-column grid of 31 August 2026, and from Tim O'Brien's description of 24 August: *"Edgers will have multiple gauge capability, i.e. (.045, .040, .035), being that they have multiple grooves cut into them at specific gauges."*
+
+> ⭐ **This table ABSORBS `Edger`. It is not a new sibling.** `Edger` held five columns — `Id · Name · EdgeType · ToolingSetNo · IsActive` — against fourteen; its `IsActive bit` could not express `In Grinding`; and its seed (`EDGE-ROUND-A`) named a **profile** while its `ToolingSetNo` named a **physical set**. That was exactly `G77`'s grain complaint, and one table resolves it. `D-53`.
+
+> ⚠ **Not the die split's shape, deliberately.** The die split kept `Drawer` as the two draw **boxes** and moved the tooling out. There is no edger equivalent of `Drawer` to keep: `E1`/`E2` exist nowhere as rows, only as setup-step text, and `CK_PSC_ComponentName` still offers a single `EdgeSet` value for two physical stations. **That station gap is untouched and stays open.**
+
+| Column | Data Type | Nullable | FK Reference | Description |
+|---|---|---|---|---|
+| `Id` | int | NOT NULL | — | Surrogate primary key. **`1` and `2` are load-bearing** — see the seed note below |
+| `EdgeType` | varchar(10) | **NULL** | — | `Round` · `Square`. Carried from `Edger` and **relaxed to NULL** — **ours**, see the note below |
+| `EdgerType` | varchar(20) | NULL | — | Client grid `Type` |
+| `LineId` | varchar(5) | NULL | — | Client grid `Machine Name`. **`FL2` only** — the grid attributes edgers to FL2 and `D-42` bars FL3 |
+| `Location` | varchar(50) | NULL | — | Client grid `Location` — roll shop / crib position |
+| `SetNumber` | varchar(20) | NULL | — | Client grid `Set Number` — lettered `A` / `B` / `C`. **Replaces `Edger.ToolingSetNo`** |
+| `PartNo` | varchar(50) | NULL | — | Client grid `P/N` |
+| `SerialNo` | varchar(50) | NULL | — | **`[PROPOSED]`** — the edger grid carries **no** `S/N` column (`G104`, `Q95`). Unique when set, via a **filtered** index |
+| `RollQty` | int | NOT NULL | — | Client grid `Roll Qty`. Default `2` — the sample reads 2 |
+| `StdRemovalFromOdIn` | decimal(8,4) | NULL | — | Client grid `STD Removal From OD(")` — `.100` per grind |
+| `OdIn` · `MinOdIn` · `IdIn` | decimal(8,4) | NULL | — | Client grid `OD(")` · `Min OD(")` · `ID(")`. `6.00` falling to `4.75` — about twelve grinds |
+| `DateOfChange` · `DateOfLastGrind` | date | NULL | — | Client grid `Date of Change` · `Date of Last Grind` |
+| `LifecycleStatus` | varchar(20) | NOT NULL | — | Client grid `Status`: `Active` · `In Service` · `In Grinding`, plus `Retired`. Default `In Service` — identical to the die and the roll set |
+| `InUse` | bit | NOT NULL | — | Default `0` |
+| `Notes` · `IsActive` | varchar / bit | — | — | As elsewhere |
+
+**Constraints:**
+- `PK_ToolingInventoryEdger` — ⚠ **and nothing else. The table has NO natural key**: no name, no alpha, no unique business column. See the note below
+- `CK_TIE_EdgeType` — NULL or `IN ('Round','Square')`. The surviving half of `CK_Edger_EdgeType`
+- `CK_TIE_LineId` — `LineId IN ('FL2')` · `CK_TIE_RollQty` — `> 0` · `CK_TIE_StdRemoval` — NULL or `> 0`
+- `CK_TIE_Od` — `MinOdIn < OdIn` when both present · `CK_TIE_LifecycleStatus`
+- `IX_ToolingInventoryEdger_LifecycleStatus` · `UX_ToolingInventoryEdger_SerialNo` — **filtered** unique (script `07`)
+- **Inbound:** `FK_PSC_Edger` — `PassScheduleComponent.EdgerId`, **re-pointed here from `Edger`, name unchanged**
+
+> ⚠ **`EdgeType` is relaxed to NULL, and it is ours.** It was `NOT NULL` on `Edger`, and the client's
+> fourteen columns do not classify a set by edge profile in a way we can rely on. Requiring it would
+> invent a mandatory classification the client has never supplied — the `G87` mistake.
+> `CK_PSC_EdgeTypeReq` still forces the **schedule** to state its profile, which is where the requirement
+> belongs. `Q95` asks.
+>
+> ⚠ **`EdgerType` sits beside it and carries the grid's `Type` cell separately.** Whether the two are
+> actually one field for an edger is **open** — `Q95` asks that too. They are not merged on our own
+> reading, because `ToolingInventoryDie` reads the same grid heading as the die **material** (`DieType`),
+> so the heading demonstrably does not mean one thing across the three grids.
+
+> ⚠ **This table has NO natural key, and two identical rows are therefore possible.** That is a
+> recorded state rather than an oversight — `G104`. Both candidates were removed deliberately, for the
+> same reason: they were **ours**, and **nothing read them**, verified rather than assumed.
+>
+> **`(LineId, SetNumber)` is the obvious replacement key and is deliberately NOT taken**: `Q95` leg 2
+> asks whether `Set Number` is unique **per line or per shop**, and a `UNIQUE` here would pre-empt that
+> answer in one direction. `FW-268` adds the key when `Q95` returns.
+
+> ⭐ **`Name` went on 6 Sep 2026 and `EdgerToolAlpha` on 7 Sep.** `Name` was inherited from `Edger`
+> (`NOT NULL` + `UNIQUE`), and it was verified before removal that **nothing read it** — no procedure,
+> no view, no join, and no seed row: `FlatWire_SampleData_Schedule` resolves `EdgerId` by **`Id`**,
+> never by name. Keeping it meant the form had to demand a name for every new tool. The alpha
+> (`ED-{seq}`) followed for the same reason — no client tooling grid has ever shown one (`OI-141`) and
+> the client identifies a set by `Machine Name` + `Set Number` + `P/N`.
+>
+> ⚠ **`ToolingInventoryDie` and `ToolingInventoryRollSet` keep their alphas, and that is NOT an
+> inconsistency to fix** — `FR-254` has the Die Change screen read `DieAlpha` **at runtime**; this table
+> has no such caller. ⛔ **Do not reinstate either.**
+
+> ⚠ **The life model is grind, not footage** — the same distinction `ToolingInventoryRollSet` carries. `STD Removal From OD .100` against `OD 6.00` and `Min OD 4.75` is about twelve grinds. **No footage counter.** Do not add `LastGrindingFeet` / `TotalFeetAllowed` by analogy with `ToolingInventoryDie` — that analogy is what `G77` warns about.
+
+> ⭐ **The seed keeps `Id 1` = `Round` and `Id 2` = `Square`, and that was the point.** `FlatWire_SampleData_Schedule.sql` seeds `EdgeSet` rows as (`EdgerId 1`, `Round`) and (`EdgerId 2`, `Square`). Carrying the two ids and the two names across unchanged meant **not one value in that file had to change** — only a comment. Do not renumber them.
+
+---
+
+## `ToolingInventoryEdgerGauge`
+
+**One row per groove cut into an edger roll set.** The client's grid holds the whole set in **one cell** — `Gauge Range(") = .045, .040, .035` — because the rolls *"have multiple grooves cut into them at specific gauges"*.
 
 | Column | Data Type | Nullable | FK Reference | Description |
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | — | Surrogate primary key |
-| `Name` | varchar(50) | NOT NULL | — | Edger assembly name or identifier |
-| `EdgeType` | varchar(10) | NOT NULL | — | Edge profile produced: `Round` or `Square` |
-| `ToolingSetNo` | varchar(20) | NULL | — | Physical tooling set number identifying the specific edger tooling configuration |
-| `IsActive` | bit | NOT NULL | — | `1` = active and selectable in pass schedules; `0` = retired |
-
-**Allowed values — `EdgeType`:** `Round`, `Square`
+| `EdgerToolId` | int | NOT NULL | `ToolingInventoryEdger.Id` | The set this groove is cut into |
+| `GaugeIn` | decimal(8,4) | NOT NULL | — | One groove: `.0450` · `.0400` · `.0350` |
+| `GrooveNo` | tinyint | NULL | — | **`[PROPOSED]`** — position across the roll face. The grid neither numbers nor orders the grooves (`G104`, `Q95`) |
+| `IsActive` | bit | NOT NULL | — | As elsewhere |
 
 **Constraints:**
-- `UQ_Edger_Name` — `Name` is unique
+- `PK_ToolingInventoryEdgerGauge`, `FK_ToolingInventoryEdgerGauge_EdgerTool` (`NO ACTION`, like every key in the schema)
+- `UQ_TIEG_ToolGauge` — `(EdgerToolId, GaugeIn)`: one set cannot carry the same gauge twice
+- **No index on `EdgerToolId`** — it is the **leading column** of `UQ_TIEG_ToolGauge`, which already serves *"the grooves on this tool"*. A second index would be pure duplication
+
+> ⭐ **Why a child table and not a delimited string — `G77` asked for this in terms.** The failure mode a `varchar` causes is specific: a pass schedule could never select **a groove**, only a whole tool.
+
+> ⚠ **Set `B` is deliberately left ungauged in the seed.** The grid supplies one gauge range and does not say whether a square-edge set carries the same grooves, different ones, or any. Copying `A`'s three onto `B` would assert something the client has never said — the same bargain `ToolingInventoryRollSet` made in seeding one set per position. `Q95` asks.
 
 ---
 
@@ -495,7 +569,7 @@ numbers, created empty.
 > ⛔ **`OI-110` is not closed by these tables.** Which database the Machine Setup tabs write to is
 > still unanswered, and the evidence points at `united_db` — every other tab of that application
 > persists to a `united_db` satellite keyed on `united_db.dbo.machines`, and
-> `10_CommonDB_Insert_WIPStations_FlatWire.sql` records the template tabs as *"satellite
+> the withdrawn WIP-station seed (`FW-241`) recorded the template tabs as *"satellite
 > tables … separate work"*. `FlatWireDB` is the `D-02` / `D-31` decision and it costs three
 > things: **no foreign key to `machines` is possible** (cross-database), so the app must map
 > `machine_idx` **125/126/127 → `FL1`/`FL2`/`FL3`** itself with nothing enforcing it; the legacy

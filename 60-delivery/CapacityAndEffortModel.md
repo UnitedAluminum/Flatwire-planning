@@ -1,7 +1,7 @@
 # Flat Wire Mill — Capacity & Effort Model
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** September 5, 2026 (`D-50`) — ⭐ **Automated backend tests are reinstated at the UNIT level, and NOTHING is re-priced in place.** ⛔ **§2's two struck endpoint rates STAY struck** — they are the correct basis for the Phases 1–8 stories already delivered against them. ⛔ **The `−22 h` is NOT added back, and it is not `−22`**: it was *"−26 on tests, +4 for `SpoolController`"*, so the reversible content is `+23 h` dev / `+26 h` all-in and reversing it would delete a controller. 1B stays **519 h**, the baseline stays **114 stories / 3,186 h**; the work is additive as `FW-263`–`FW-267` (98 h). ⚠ **QA held at 78 h in both directions.** *(previously August 29, 2026 — **§2 gains a discrete item — `FlatWireSimConsole`, 52 h, Phase 5 (`D-33`)** — and the *New dashboard screen* 24 h row is marked **Angular only**: it prices layout inside an application that already exists, and a standalone EXE must build its own platform. ⚠ **`FW-130` (16 h) and `FW-135` (24 h) are NOT recovered** — they stop being `FW-214`'s dependencies but stay in the plan at full value for the six operator screens *(previously August 25, 2026 — **new §3f — `FW-224`, additive and deliberately unsized** (blocked on `Q41`); `3,358 h` established as the one citable all-in figure; object count 34 → 33 *(previously August 18, 2026 — **new §3d: `FW-219`, the FL2/FL3 run-end write-back, +77 h all-in (56 h base / 40 h AI-assisted), additive.** MVP-1 becomes **3,263 h** and both scopes **3,631 h** — ⚠ **superseded the same day by §3e (rod ↔ order, +116 h): the live all-in is `3,358 h`, in §3e's roll-up row, which is the only site that may assert it**; §3, §3b and §3c are **not** re-derived. Phase 9's published 222 h is unchanged and understates by 77 h — quote `222 + 77`. *(Earlier same day: **new §3c: the `D-32` re-derivation.** The shared-schema migration is cancelled (`FW-001`, `FW-002`, and `FW-176`'s shared-`coils` columns), **−76 h base / −106 h all-in**: Phase 1C **221 → 138 h**, Phase 7 **205 → 182 h**, MVP-1 **3,292 → 3,186 h**, both scopes **3,660 → 3,554 h**. ⚠ **§3 and §3b are deliberately NOT re-derived and remain the base of record** — §3c is additive, per the pattern in `[DE]` and `[YCS]`. *(Previously August 13, 2026 — §3's story-point cross-check marked **historical** (its denominator was retired when the backlog moved to hours) and its finding 1 recorded as **closed**; Related-Documents row re-pointed. *(Earlier same day: resolved-correction narrative removed to [`../CHANGELOG.md`](../CHANGELOG.md).)* **No hours figure changed then** — the first hours change since is §3c.)*)*)*)*)*
+**Last Updated:** September 6, 2026 (`D-52`) — ⭐ **NEW §3h, AND IT IS THE FIRST SHEET THAT TAKES HOURS OUT: `FW-145` (JWT role policies, 16 h BE, Phase 1B) is carved to MVP-2.** Phase 1B **442 → 420 h** on §3's base, MVP-1 all-in **3,358 → 3,336 h**, story baseline **114 → 113**. ⛔ **The carve is 22 h all-in, not 16** — QA at 20 % and contingency at 15 % ride with it, the same arithmetic §3b and §3c used; §3h says so explicitly so it is not "corrected". ⛔ **It recovers 0.06 FTE and must not be read as relief** — the hours leave **W0**, not the weeks that fail, and **§7 is unchanged**. `D-52` was taken to make the built simulator driveable, not to save time. ⚠ **`[TB]`'s 519 h Phase 1B is deliberately NOT re-derived** (different basis, §8), and **no row is added to the MVP-2 backlog files** — their cells feed three client `.xlsx` generators. ⛔ **§3, §3b, §3c, §3d, §3e and §3g are untouched and remain the base of record.** *(previously September 5, 2026 (`D-50`) — ⭐ **Automated backend tests are reinstated at the UNIT level, and NOTHING is re-priced in place.** ⛔ **§2's two struck endpoint rates STAY struck** — they are the correct basis for the Phases 1–8 stories already delivered against them. ⛔ **The `−22 h` is NOT added back, and it is not `−22`**: it was *"−26 on tests, +4 for `SpoolController`"*, so the reversible content is `+23 h` dev / `+26 h` all-in and reversing it would delete a controller. 1B stays **519 h**, the baseline stays **114 stories / 3,186 h**; the work is additive as `FW-263`–`FW-267` (98 h). ⚠ **QA held at 78 h in both directions.** *(previously August 29, 2026 — **§2 gains a discrete item — `FlatWireSimConsole`, 52 h, Phase 5 (`D-33`)** — and the *New dashboard screen* 24 h row is marked **Angular only**: it prices layout inside an application that already exists, and a standalone EXE must build its own platform. ⚠ **`FW-130` (16 h) and `FW-135` (24 h) are NOT recovered** — they stop being `FW-214`'s dependencies but stay in the plan at full value for the six operator screens *(previously August 25, 2026 — **new §3f — `FW-224`, additive and deliberately unsized** (blocked on `Q41`); `3,358 h` established as the one citable all-in figure; object count 34 → 33 *(previously August 18, 2026 — **new §3d: `FW-219`, the FL2/FL3 run-end write-back, +77 h all-in (56 h base / 40 h AI-assisted), additive.** MVP-1 becomes **3,263 h** and both scopes **3,631 h** — ⚠ **superseded the same day by §3e (rod ↔ order, +116 h): the live all-in is `3,358 h`, in §3e's roll-up row, which is the only site that may assert it**; §3, §3b and §3c are **not** re-derived. Phase 9's published 222 h is unchanged and understates by 77 h — quote `222 + 77`. *(Earlier same day: **new §3c: the `D-32` re-derivation.** The shared-schema migration is cancelled (`FW-001`, `FW-002`, and `FW-176`'s shared-`coils` columns), **−76 h base / −106 h all-in**: Phase 1C **221 → 138 h**, Phase 7 **205 → 182 h**, MVP-1 **3,292 → 3,186 h**, both scopes **3,660 → 3,554 h**. ⚠ **§3 and §3b are deliberately NOT re-derived and remain the base of record** — §3c is additive, per the pattern in `[DE]` and `[YCS]`. *(Previously August 13, 2026 — §3's story-point cross-check marked **historical** (its denominator was retired when the backlog moved to hours) and its finding 1 recorded as **closed**; Related-Documents row re-pointed. *(Earlier same day: resolved-correction narrative removed to [`../CHANGELOG.md`](../CHANGELOG.md).)* **No hours figure changed then** — the first hours change since is §3c.)*)*)*)*)*)*
 **Document Type:** Capacity & Effort Model (per-phase owners, effort in hours, working-day capacity)
 **Status:** Published — **roster unfilled**; §1 must be completed by programme management
 **Estimating unit:** **hours**. Day figures are derived (**1 dev-day = 8 h**) and shown only as a reading aid.
@@ -539,6 +539,101 @@ alpha in the design of record. Built alone, `FW-230` reissues `R00001A` on every
 coils have neither a segment nor a rod to root on, and that is a design gap rather than an estimating
 one. Sizing it before that is answered would be a guess presented as an estimate — the same reason
 `§3f` carries no hours.
+
+## 3h. `FW-145` carved to MVP-2 (`D-52`) — subtractive, and the **first** sheet that takes hours out
+
+**`D-52` (6 Sep 2026) moves `FW-145` — JWT authentication and role authorization policies, 16 h BE,
+Phase 1B, `S0`, Critical — wholly to MVP-2.** MVP-1 ships on bare `[Authorize]` with no role policy
+and no `403`. The decision and its consequences are `[ARC §13.1]` `D-52`; this sheet is only the
+arithmetic.
+
+⚠ **SUBTRACTIVE, and additive in method** — `§3`, `§3b`, `§3c`, `§3d`, `§3e` and `§3g` are **not**
+re-derived in place and remain the base of record. Read this sheet **with** them, exactly as they
+are read with each other.
+
+### What leaves, and what does not
+
+| | Hours | Where it goes |
+|---|---:|---|
+| **Role policies** — the six `[SEC §8]` policies, the `SimulatorControl` policy, `P-75`'s capability scoping, `P-76`'s open `ProductionTransaction` question, and `AC 4`'s authorisation tests | **16** | **MVP-2** |
+| ⛔ **The `?access_token=` hub handler** *(`FW-145` §3.5 / `P-77`)* | **0** | ⛔ **STAYS IN MVP-1.** It was specified by `FW-145` and **built by [`FW-080`](../40-backend/tasks/FW-080.md)** as its stated prerequisite, inside `FW-080`'s own 28 h. There is nothing to recover: the hours were never in this cell |
+| ⛔ **`FR-212`**, the one live MVP-1 role gate (DB11) | **0** | ⛔ **STAYS IN MVP-1.** It is a **client-side** requirement in `ual-angular` and never depended on which MVP registers server policies (`[SEC §8.8]`) |
+
+**So the carve is the full 16 h of the story's cell and nothing more.** ⚠ **Do not net anything
+against `FW-145`'s own §1 caveat** — *"the construction is smaller than the card implies, the
+verification is larger"* — that card explicitly left the re-baseline to `[CE]`, and `[CE]` declines
+it here for the same reason it was declined there: both movements are unmeasured, they point
+opposite ways, and a carve is the wrong pass in which to guess at them. **16 h moves whole.**
+
+### Phase 1B, re-derived from the reduced base
+
+§3b's method, unchanged: subtract the carved deliverable from the published discipline column, then
+**re-derive QA and contingency from the reduced base** rather than scaling them.
+
+| | FE | BE | DB | RT | QA | BA | Cont | **Total** |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| **1B** as published (`§3`) | — | 208 | — | 112 | 64 | — | 58 | **442** |
+| − `FW-145` | — | **−16** | — | — | −3 | — | −3 | **−22** |
+| **1B** after `D-52` | — | **192** | — | 112 | **61** | — | **55** | **420** |
+
+Reproducible from §2: base `192 + 112 = 304` → `QA = 0.20 × 304 = 60.8 → 61` →
+`Cont = 0.15 × (304 + 61) = 54.75 → 55` → `192 + 112 + 61 + 55 = **420**`. Every cell is the figure
+used, per §3's rounding convention.
+
+### ⛔ Why the total moves by 22 and not by 16 — read this before "correcting" it
+
+**A 16 h dev carve is a 22 h all-in carve**, because QA rides at 20 % of the dev base and
+contingency at 15 % of everything above it. `16 + 3 + 3 = 22`. **This is the same arithmetic §3b
+used** for the Phase 11 and Phase 13 carves and `§3c` used for `D-32`, and it is why those sheets
+subtract 71, 66 and 106 rather than their bare dev figures. ⚠ **`§3d`/`§3e` add *base* hours to
+3,186 and label the result all-in** — an inconsistency that predates this sheet and is **not
+repaired here**; it does not affect this subtraction, which is stated all-in on both sides.
+
+### Roll-up
+
+```
+3,358 h  MVP-1 all-in, the live figure ([CE §3e], the only site that may assert it)
+ −  22   §3h — FW-145 carved to MVP-2 (16 h BE + 3 QA + 3 contingency)
+─────
+3,336 h  MVP-1 all-in after D-52
+```
+
+**`3,336 h` is the live MVP-1 figure from 6 Sep 2026, and this row is the only site that may assert
+it.** Cite it as *"3,358 h less the `D-52` carve = **3,336 h** (`[CE §3h]`)"*. ⛔ **`§3e`'s row keeps
+its own claim on 3,358** — that figure is still correct as the pre-`D-52` all-in and is the base
+this line subtracts from. Do not delete it, and do not restate 3,336 anywhere else.
+
+### What this does and does not buy
+
+| | |
+|---|---:|
+| Story baseline | **114 → 113 live stories**; `3,186 h` scheduled base → **`3,170 h`** |
+| FTE at 352 h/person over the 44-day window | `3,336 ÷ 352` = **9.48 FTE**, against **9.54** before |
+| **Recovered** | **0.06 FTE** |
+
+⛔ **This recovers nothing and must not be presented as relief.** 22 hours against a 3,336-hour plan
+is six hundredths of one person, and it comes out of **W0** — the Phase-1B week that §3b's own grid
+already showed carrying 10.7 FTE against a 12-day span, not out of W4–W7 where the model predicts
+failure. **§7's forced decision is completely unchanged.** `D-52` was taken to make the built
+simulator driveable and to clear an unverifiable story off the critical path; **the hours were never
+the reason and are not the benefit.**
+
+### Two figures deliberately not derived here
+
+- ⛔ **`[TB]`'s Phase 1B of `519 h` is NOT re-derived.** It is a different composition on a
+  different basis, which **this model does not carry** (§8, and §3's own *"check the composition,
+  never the total"* callout). Anyone working from 519 must re-derive it there; subtracting 22 from
+  it would silently mix two bases — the exact error that callout exists to prevent.
+- ⚠ **`[TB §7]`'s `FW-145` block keeps its `16 h BE · S0 · 1B` cells, and no row is added to
+  `05-Backlog-MVP2.md` or `FlatWireJiraStories-MVP2.md`.** Those cells are **parsed by three client
+  `.xlsx` generators** — `build_development_plan_xlsx.py` buckets stories by **phase** and discards
+  the sprint — so editing them rewrites a client deliverable from a planning decision.
+  **`[TB §7]` carries a carve banner instead**, which is exactly how Dashboard 10 and Die Management
+  were carved. ⛔ **The consequence is explicit and is not a defect: `[TB]`'s Phase 1B figure and the
+  generated development plan both still contain this 16 h and therefore overstate MVP-1 by it**, in
+  the same way `[TB]`'s 246 h Phase 11 and 209 h Phase 13 do. **This section is the apportioned
+  figure; cite it, not `[TB]`.** Admitting `FW-145` to the MVP-2 backlog files belongs in a pass
+  that owns those generators.
 
 ## 4. Capacity model
 

@@ -371,7 +371,7 @@ CREATE OR ALTER PROCEDURE [dbo].[FlatWire_CompleteCoilOnSkid]
     , @skidAssignment        VARCHAR(10)                    -- Coil1Of2 | Coil2Of2   (D11)
     , @badgeNo               INT
     , @existingSkidNo        CHAR(9)      = ''              -- required for Coil2Of2
-    , @wipStation            VARCHAR(6)   = 'FWPACK'        -- seeded by 10_CommonDB_Insert_WIPStations_FlatWire.sql
+    , @wipStation            VARCHAR(6)   = 'FWPACK'        -- seeded by deploy step 2 (FW-241)
     , @palletWeightLb        INT          = 0
     , @isCoilBreak           BIT          = 0               -- mid-run break -> coil_break     (D6)
     , @coilBreakReason       VARCHAR(255) = NULL

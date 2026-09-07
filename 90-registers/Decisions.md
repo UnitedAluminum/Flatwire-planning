@@ -851,6 +851,18 @@ name is wrong before they can use it.
 lookup nouns, on two grounds. The first — that they are **heterogeneous**, so no single suffix fits
 `Stand`, `Drawer`, `Edger` and `Dancer` together — is **accepted and unchanged**: this decision renames
 one table on its own merits and applies no suffix, and `Stand`, `Edger` and `Dancer` keep their names.
+
+> ⭐ **SUPERSEDED FOR `Edger` ALONE, 6 Sep 2026 — `D-53`.** *"`Stand`, `Edger` and `Dancer` keep
+> their names"* held for two weeks. **`Edger` does not keep its name, because it did not keep its
+> shape**: it was **absorbed** into `ToolingInventoryEdger` when the client's fourteen-column
+> Tooling Inventory grid was built out, against the five columns it had.
+>
+> ⚠ **That is not a rename, and the clause above is not wrong.** The table was **replaced**, not
+> relabelled — `PassScheduleComponent.EdgerId` re-points and `FK_PSC_Edger` keeps its own name —
+> and this decision's reasoning (heterogeneous nouns, so no single suffix fits) is untouched.
+> **`Stand` and `Dancer` keep their names still.** `ToolingInventory*` is a **family** of related
+> registers, not a suffix convention applied to a noun: `ToolingInventoryDie`,
+> `ToolingInventoryRollSet`, `ToolingInventoryEdger`, and the child `ToolingInventoryEdgerGauge`.
 The second — that these are *"common English words that make a mechanical rename unsafe"* — was tested
 rather than assumed: **three of 240 occurrences use "drawer" as an English word**, so the hazard is
 real but small, and the sweep was done per-file with review rather than as a global replace.

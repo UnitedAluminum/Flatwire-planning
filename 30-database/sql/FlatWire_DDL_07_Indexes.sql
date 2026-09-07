@@ -9,8 +9,14 @@
 -- constraints (indexed), so only child FK columns and hot
 -- filter columns are added here.
 --
--- Creates ALL 87 index statements. There is no second index script.
--- 87, not 86, since 4 Sep 2026: the five Machine Setup tables added exactly ONE
+-- Creates ALL 89 index statements. There is no second index script.
+-- 89, not 87, since 6 Sep 2026: the edger absorption (D-53) added exactly TWO --
+-- IX_ToolingInventoryEdger_LifecycleStatus and the filtered-unique
+-- UX_ToolingInventoryEdger_SerialNo. The removed [dbo].[Edger] carried NO index
+-- of its own, so nothing was lost with it, and IX_PSC_EdgerId is untouched
+-- because it sits on PassScheduleComponent, not on the table that moved. The
+-- child ToolingInventoryEdgerGauge needs none -- see the block beside it.  (+2)
+-- It was 87, not 86, since 4 Sep 2026: the five Machine Setup tables added exactly ONE
 -- -- IX_SetupHandlingTimeElement_GroupId. The other four tables need none, and
 -- the block at the end of this file states why for each. Five tables, one index
 -- is the expected ratio here, not an oversight.  (+1)
@@ -498,6 +504,43 @@ GO
 -- them, and a plain UNIQUE admits only one NULL row.
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_ToolingInventoryRollSet_SerialNo' AND object_id = OBJECT_ID(N'dbo.ToolingInventoryRollSet'))
     CREATE UNIQUE NONCLUSTERED INDEX [UX_ToolingInventoryRollSet_SerialNo] ON [dbo].[ToolingInventoryRollSet] ([SerialNo]) WHERE [SerialNo] IS NOT NULL;
+GO
+
+
+-- ------------------------------------------------------------
+-- ToolingInventoryEdger, added Sep-6-2026 by the edger absorption (D-53).
+-- TWO statements, and the absences are deliberate:
+--
+--   ToolingInventoryEdger has NO FK column of its own -- the key runs the other
+--     way, PassScheduleComponent.EdgerId points AT it -- so there is no child
+--     FK column here to index. IX_PSC_EdgerId already serves that join from the
+--     other side and is unchanged by the re-point.
+--   There is NO natural-key index here at all: the table has no name and no
+--     alpha -- Name removed 6 Sep 2026, EdgerToolAlpha 7 Sep, both because
+--     nothing read them. (LineId, SetNumber) is the candidate and is
+--     deliberately not taken until Q95 leg 2 says whether Set Number is unique
+--     per line or per shop -- see 01_Lookup's comment block and G104.
+--   ToolingInventoryEdgerGauge.EdgerToolId is NOT indexed: it is the LEADING
+--     column of UQ_TIEG_ToolGauge (EdgerToolId, GaugeIn), which is already an
+--     index and already serves "the grooves on this tool, in order". Adding a
+--     second index on the same leading column would be pure duplication -- the
+--     same reasoning as MaterialLossStandard.ElementId below.
+--   The removed [dbo].[Edger] carried no index at all, so nothing was dropped.
+-- ------------------------------------------------------------
+
+-- Same reasoning as the die's and the roll set's status index: the Tooling
+-- Inventory tab filters and counts on lifecycle, so it is a hot filter column
+-- rather than a display field. "In Grinding" is the query that matters.
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_ToolingInventoryEdger_LifecycleStatus' AND object_id = OBJECT_ID(N'dbo.ToolingInventoryEdger'))
+    CREATE NONCLUSTERED INDEX [IX_ToolingInventoryEdger_LifecycleStatus] ON [dbo].[ToolingInventoryEdger] ([LifecycleStatus]);
+GO
+
+-- Filtered unique, on the same reasoning as the die and the roll set: a serial
+-- identifies one physical set, but the client's fourteen-column edger grid
+-- carries no S/N column at all (G104, Q95), so the seed leaves every SerialNo
+-- NULL and a plain UNIQUE would admit only one such row.
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_ToolingInventoryEdger_SerialNo' AND object_id = OBJECT_ID(N'dbo.ToolingInventoryEdger'))
+    CREATE UNIQUE NONCLUSTERED INDEX [UX_ToolingInventoryEdger_SerialNo] ON [dbo].[ToolingInventoryEdger] ([SerialNo]) WHERE [SerialNo] IS NOT NULL;
 GO
 
 

@@ -1,4 +1,35 @@
 /*==============================================================================================
+  *** WITHDRAWN 6 September 2026 - ARCHIVED, NEVER RUN. NOT A REQUIREMENT. ***
+
+  This file was removed from 30-database/scripts/ on 6 Sep 2026 and is kept here for history
+  only.  Per CLAUDE.md, NOTHING IN 95-archive/ IS CITABLE AS A REQUIREMENT, ever - including
+  the decisions D1-D11 below.  Do not run it and do not cite it as the current design.
+
+  WHAT IS STILL TRUE
+  ------------------
+  The ROWS this script would have written are STILL REQUIRED.  D-32 (18 Aug 2026) struck the
+  shared-schema MIGRATION, not this seeding: the FL1/FL2/FL3 rows in united_db..machines and
+  the CommonDB WIP-station registration both still stand.  Deploy step 2 ([DEP 4.2]) is
+  therefore still owed, and is still the chain's only irreversible step.
+
+  WHO OWNS IT NOW
+  ---------------
+  FW-241 - 30-database/tasks/FW-241.md.  It no longer "finalises a draft"; it AUTHORS the
+  seed script and the reverse script that has never existed, under the same sign-off gate.
+
+  WHAT MUST NOT BE LOST WHEN IT IS RE-AUTHORED
+  --------------------------------------------
+    * The G21 guard - FL1 and FL3 SHARE one physical payoff station, FL1PO.  Seeding an
+      FL3PO would let two rods occupy one bay with every constraint satisfied.  See the
+      G21 block below and 90-registers/Gaps.md.
+    * D8 - machine_type is still UNDECIDED and the 31 Aug / 3 Sep client evidence argues
+      against reusing type 1.  It is an open item, not a default.
+    * The fixed part order 4a -> 4b -> 4c/4d -> 4e: each part needs the previous part's keys.
+    * D6/D7 - the CHAR padding conventions (WIPStation 6, PrinterName 12, CoilNo 9).
+      G78 also records that the four printer names below were INVENTED and are wrong.
+==============================================================================================*/
+
+/*==============================================================================================
   Project      : UAL Flat Wire Mill - Shopfloor
   Script       : 10_CommonDB_Insert_WIPStations_FlatWire.sql
   Target DBs   : united_db (dbo.machines)

@@ -1,8 +1,12 @@
 -- ============================================================
 -- Flat Wire Mill — DDL Script 06: Foreign Key Constraints
 -- Run order : 06 of 09  (run AFTER all 01–05 scripts)
--- Creates   : ALL 67 foreign keys. There is no second FK script.
---             67, not 64, since 4 Sep 2026: the five Machine Setup tables
+-- Creates   : ALL 68 foreign keys. There is no second FK script.
+--             68, not 67, since 6 Sep 2026: the edger absorption (D-53) added
+--             FK_ToolingInventoryEdgerGauge_EdgerTool. FK_PSC_Edger was
+--             RE-POINTED from [dbo].[Edger] to ToolingInventoryEdger and KEEPS
+--             ITS NAME, so it is not a new key and moves no count.  (+1)
+--             It was 67, not 64, since 4 Sep 2026: the five Machine Setup tables
 --             added FK_SetupHandlingTimeElement_Group,
 --             FK_SetupHandlingTimeStandard_Element and
 --             FK_MaterialLossStandard_Element -- all three INTERNAL to that
@@ -79,7 +83,7 @@ WHERE fk.name LIKE 'FK_FlatWire%'
        --
        -- Lookup / Schedule
        'PassSchedule','PassScheduleComponent','PassScheduleChangeLog',
-       'Spool','ToolingInventoryRollSet',
+       'Spool','ToolingInventoryRollSet','ToolingInventoryEdgerGauge',
        -- Materials
        'FlatWireRun','SpoolProcessing','SpoolTraceability','SpoolOrder','RodOrderAllocation',
        -- Runs
@@ -88,6 +92,10 @@ WHERE fk.name LIKE 'FK_FlatWire%'
        'RodOrderConsumption',
        -- ToolingInventoryDie is deliberately ABSENT: it is a pure parent, with no
        -- FK column of its own, and this roster lists CHILD tables only.
+       -- ToolingInventoryEdger is ABSENT for the same reason (Sep-6-2026): the
+       -- key runs the other way -- PassScheduleComponent.EdgerId points AT it --
+       -- so it holds no FK column. Its child ToolingInventoryEdgerGauge IS
+       -- listed, above, because it holds EdgerToolId.
        -- ToolingInventoryRollSet IS listed, above, precisely because it is NOT a
        -- pure parent: it holds StandId and DrawerId. The two tooling registers
        -- differ here and that is not an inconsistency.
@@ -565,10 +573,35 @@ GO
 -- holds the two draw BOXES, which ComponentName already names. See 02_Schedule
 -- section 3 and the "Tool reference" block.
 
+-- FK_PSC_Edger was RE-POINTED on Sep-6-2026 by the edger absorption (D-53).
+-- [dbo].[Edger] held five columns against the client's fourteen-column Tooling
+-- Inventory grid, and 02_Schedule already recorded that EdgerId "identifies the
+-- fitted TOOL, not the STATION" -- so Edger was already meant to be the physical
+-- tool register. ToolingInventoryEdger is that register. THE CONSTRAINT NAME IS
+-- DELIBERATELY UNCHANGED: renaming it would churn [API], FW-147's enum-mirror
+-- inventory and TC-020 for no gain. This is NOT a new key and moves no count.
 IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_PSC_Edger')
     ALTER TABLE [dbo].[PassScheduleComponent]
         ADD CONSTRAINT [FK_PSC_Edger]
-        FOREIGN KEY ([EdgerId]) REFERENCES [dbo].[Edger] ([Id]);
+        FOREIGN KEY ([EdgerId]) REFERENCES [dbo].[ToolingInventoryEdger] ([Id]);
+GO
+
+-- ------------------------------------------------------------
+-- ToolingInventoryEdgerGauge  (Lookup)
+--
+-- One row per GROOVE cut into an edger roll set. The client's grid holds the
+-- whole set in one cell -- 'Gauge Range(") = .045, .040, .035' -- and G77 asked
+-- for a child table rather than a delimited string, because a pass schedule must
+-- eventually be able to select A GROOVE and a VARCHAR forbids it.
+--
+-- NO ACTION on delete, like every other key in this file -- there is not one
+-- CASCADE in the schema and that is the convention. A tool with grooves cannot
+-- be deleted until its grooves are, which is the intended safety.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_ToolingInventoryEdgerGauge_EdgerTool')
+    ALTER TABLE [dbo].[ToolingInventoryEdgerGauge]
+        ADD CONSTRAINT [FK_ToolingInventoryEdgerGauge_EdgerTool]
+        FOREIGN KEY ([EdgerToolId]) REFERENCES [dbo].[ToolingInventoryEdger] ([Id]);
 GO
 
 -- ------------------------------------------------------------

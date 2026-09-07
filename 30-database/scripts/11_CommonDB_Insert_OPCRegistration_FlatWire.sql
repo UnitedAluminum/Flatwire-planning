@@ -415,7 +415,7 @@ BEGIN
     FROM      [united_db].[dbo].[machines]
     WHERE     [machine_idx] IN (@FL1Idx, @FL2Idx, 127);
 
-    RAISERROR('ABORT: FL1 (125) and FL2 (126) must both exist in united_db.dbo.machines with status = 1. Run 10_CommonDB_Insert_WIPStations_FlatWire.sql first. CommonDB.Machines filters STATUS = 1, so a row with any other status disappears from GetOPCInfo with no error at all.', 16, 1);
+    RAISERROR('ABORT: FL1 (125) and FL2 (126) must both exist in united_db.dbo.machines with status = 1. Seed them first - deploy step 2, owned by FW-241. CommonDB.Machines filters STATUS = 1, so a row with any other status disappears from GetOPCInfo with no error at all.', 16, 1);
     RETURN;
 END
 

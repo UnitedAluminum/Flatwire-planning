@@ -177,7 +177,7 @@
   fails at run time, or worse, silently does half the work.
 
   C1. CommonDB..WIPStations is the ONE physical station table. united_db..wip_stations and
-      proddb..wip_stations are BOTH VIEWS OVER IT (10_CommonDB_Insert_WIPStations_FlatWire.sql:34-35)
+      proddb..wip_stations are BOTH VIEWS OVER IT, and so is SlitterDB..WIPStations
       - one row, three names. The scripted united_db\Tables\wip_stations\CreateTable.sql in the
       database repo is a stale base-table definition that has since become a view; do not write
       through it and do not trust its column types.
@@ -472,7 +472,7 @@ BEGIN
             THROW 52004, 'FlatWire_CheckInRod: @machineIdx does not match @lineId. FL1 is 125 and FL3 is 127, fixed so DEV/TEST/PROD agree (D8).', 1;
 
         IF @station <> @lineId
-            THROW 52005, 'FlatWire_CheckInRod: @station must equal @lineId - there is one WIP station per line (10_CommonDB_Insert_WIPStations_FlatWire.sql D1). FL1PO is the PRE-check-in station and is not this one.', 1;
+            THROW 52005, 'FlatWire_CheckInRod: @station must equal @lineId - there is one WIP station per line, not one per mill component (deploy step 2 / FW-241, decision D1). FL1PO is the PRE-check-in station and is not this one.', 1;
 
         IF @payoffPosition NOT IN (1, 2)
             THROW 52006, 'FlatWire_CheckInRod: @payoffPosition must be 1 or 2.', 1;
@@ -503,11 +503,11 @@ BEGIN
         IF NOT EXISTS (SELECT 1 FROM [proddb].[dbo].[coils] WITH (NOLOCK) WHERE coil_no = @rodAlpha)
             THROW 52014, 'FlatWire_CheckInRod: the rod has no proddb..coils row. Rod receipt is upstream of check-in and must have happened first.', 1;
 
-        -- The station must have been seeded. 10_CommonDB_Insert_WIPStations_FlatWire.sql creates
+        -- The station must have been seeded. Deploy step 2 (FW-241) creates
         -- FL1/FL2/FL3/FL1PO/FWPACK; without it step 9 updates zero rows and says nothing.
         IF NOT EXISTS (SELECT 1 FROM [CommonDB].[dbo].[WIPStations] WITH (NOLOCK)
                        WHERE LTRIM(RTRIM(WIPStation)) = @station)
-            THROW 52015, 'FlatWire_CheckInRod: the WIP station does not exist. Run 10_CommonDB_Insert_WIPStations_FlatWire.sql before this procedure.', 1;
+            THROW 52015, 'FlatWire_CheckInRod: the WIP station does not exist. The machines / WIP-station rows must be seeded first - deploy step 2, owned by FW-241.', 1;
 
         -- The planning step must exist somewhere, or there is nothing to copy and nothing to start.
         IF NOT EXISTS (SELECT 1 FROM [united_db].[dbo].[planning_routings] WITH (NOLOCK)

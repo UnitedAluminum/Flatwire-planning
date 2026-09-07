@@ -1,7 +1,8 @@
 -- ============================================================
 -- Flat Wire Mill — Sample Data: Lookup / Reference Tables
 -- Run order : after DDL 06 (FKs), BEFORE FlatWire_SampleData_Schedule
--- Tables    : Stand, Drawer, ToolingInventoryDie, Edger, Dancer,
+-- Tables    : Stand, Drawer, ToolingInventoryDie, ToolingInventoryRollSet,
+--             ToolingInventoryEdger, ToolingInventoryEdgerGauge, Dancer,
 --             AlloyProperty, Spool
 -- ============================================================
 -- These fixed IDENTITY values are the FK targets the schedule
@@ -9,7 +10,13 @@
 --   Stand.Id  1=FM1  2=FM2_S1  3=FM2_S2  4=FM2_S3
 --   Drawer.Id 1=DB1  2=DB2   (the two draw boxes; the schedule no longer
 --             references them at all -- DrawerId was dropped 2 Sep 2026)
---   Edger.Id  1=Round  2=Square
+--   ToolingInventoryEdger.Id  1=Round (Set A)  2=Square (Set B)
+--             ^ THESE TWO IDS ARE LOAD-BEARING. FlatWire_SampleData_Schedule
+--             seeds EdgeSet rows with EdgerId 1 paired to EdgeType 'Round' and
+--             EdgerId 2 paired to 'Square'. The table was [dbo].[Edger] until
+--             6 Sep 2026, when it was absorbed (D-53); the ids were carried
+--             across DELIBERATELY so that not one row of the schedule seed had
+--             to change. Do not renumber them.
 -- ToolingInventoryDie.Id 1..14 are the FK targets for
 --   FlatWire_SampleData_Runs.sql's DieChangeEvent.OldDieId / NewDieId.
 -- AlloyProperty seeds the 5 alloys referenced by PassSchedule
@@ -200,19 +207,72 @@ GO
 -- Deliberate, not an omission. Same bargain as PayoffPosition below.
 
 -- ============================================================
--- Edger
+-- ToolingInventoryEdger  (physical edger roll sets -- the second tool type)
+--
+-- REPLACES the [dbo].[Edger] seed, absorbed 6 Sep 2026 (D-53).
+--
+-- ID 1 AND ID 2 ARE LOAD-BEARING. The schedule sample data seeds EdgeSet rows as
+-- (EdgerId 1, EdgeType 'Round') and (EdgerId 2, EdgeType 'Square'); carrying the
+-- ids across unchanged is what let that file keep every value it had when Edger
+-- was absorbed. Do not renumber. (The old Name values EDGE-ROUND-A / EDGE-SQUARE-B
+-- were carried too, until Name itself was removed later the same day -- nothing
+-- read them. Set A is the Round set and Set B the Square one.)
+--
+-- The measured columns are the client's own sample row from the 31 Aug 2026
+-- Tooling Inventory grid: Machine Name FL2, Roll Qty 2, STD Removal From OD
+-- .100, OD 6.00, Min OD 4.75. ToolingSetNo becomes the client's SetNumber, and
+-- its invented 'TS-RND-01' / 'TS-SQR-01' values give way to the grid's own
+-- lettering, A and B. With Name and EdgerToolAlpha both gone, Set Number is the
+-- only human-readable identifier these rows carry.
+--
+-- SerialNo, PartNo, Location, EdgerType, DateOfChange and DateOfLastGrind stay
+-- NULL: they are client grid columns and no serials, part numbers or dates have
+-- ever been supplied. Inventing them would be the G87 mistake.
 -- ============================================================
-IF NOT EXISTS (SELECT 1 FROM [dbo].[Edger])
+IF NOT EXISTS (SELECT 1 FROM [dbo].[ToolingInventoryEdger])
 BEGIN
-    SET IDENTITY_INSERT [dbo].[Edger] ON;
-    INSERT INTO [dbo].[Edger] ([Id], [Name], [EdgeType], [ToolingSetNo], [IsActive]) VALUES
-        (1, 'EDGE-ROUND-A',  'Round',  'TS-RND-01', 1),
-        (2, 'EDGE-SQUARE-B', 'Square', 'TS-SQR-01', 1);
-    SET IDENTITY_INSERT [dbo].[Edger] OFF;
-    PRINT 'Seeded: Edger (2 rows)';
+    SET IDENTITY_INSERT [dbo].[ToolingInventoryEdger] ON;
+    INSERT INTO [dbo].[ToolingInventoryEdger]
+        ([Id], [EdgeType], [LineId], [SetNumber],
+         [RollQty], [StdRemovalFromOdIn], [OdIn], [MinOdIn], [LifecycleStatus], [InUse], [IsActive]) VALUES
+        (1, 'Round',  'FL2', 'A', 2, 0.1000, 6.0000, 4.7500, 'In Service', 0, 1),
+        (2, 'Square', 'FL2', 'B', 2, 0.1000, 6.0000, 4.7500, 'In Service', 0, 1);
+    SET IDENTITY_INSERT [dbo].[ToolingInventoryEdger] OFF;
+    PRINT 'Seeded: ToolingInventoryEdger (2 rows)';
 END
 ELSE
-    PRINT 'Edger already seeded — skipped';
+    PRINT 'ToolingInventoryEdger already seeded — skipped';
+GO
+
+-- ============================================================
+-- ToolingInventoryEdgerGauge  (the grooves cut into a set)
+--
+-- Three rows, on SET A ONLY, and they are the client's own cell verbatim:
+-- 'Gauge Range(") = .045, .040, .035'. That is the single sample the 31 Aug
+-- grid supplies.
+--
+-- SET B IS DELIBERATELY LEFT UNGAUGED. The grid gives one gauge range and does
+-- not say whether a square-edge set carries the same grooves, different ones,
+-- or any. Seeding B by copying A would assert something the client has never
+-- said -- the same bargain ToolingInventoryRollSet made when it seeded one set
+-- per position rather than guessing the real inventory. Q95 asks.
+--
+-- GrooveNo is left NULL on all three: the grid neither numbers nor orders the
+-- grooves across the roll face, and whether it should is one of Q95's legs.
+-- ============================================================
+IF NOT EXISTS (SELECT 1 FROM [dbo].[ToolingInventoryEdgerGauge])
+BEGIN
+    SET IDENTITY_INSERT [dbo].[ToolingInventoryEdgerGauge] ON;
+    INSERT INTO [dbo].[ToolingInventoryEdgerGauge]
+        ([Id], [EdgerToolId], [GaugeIn], [GrooveNo], [IsActive]) VALUES
+        (1, 1, 0.0450, NULL, 1),
+        (2, 1, 0.0400, NULL, 1),
+        (3, 1, 0.0350, NULL, 1);
+    SET IDENTITY_INSERT [dbo].[ToolingInventoryEdgerGauge] OFF;
+    PRINT 'Seeded: ToolingInventoryEdgerGauge (3 rows)';
+END
+ELSE
+    PRINT 'ToolingInventoryEdgerGauge already seeded — skipped';
 GO
 
 -- ---------------------------------------------------------------------------

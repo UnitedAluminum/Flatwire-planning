@@ -432,6 +432,28 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ###### FW-145 · JWT authentication and role authorization policies
 **Hours:** 16 h BE · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1B · **Stream:** BE
 
+> ⭐ **THIS STORY IS MVP-2 — `D-52`, 6 Sep 2026.** Role policies are carved out of MVP-1 whole;
+> **MVP-1 ships on bare `[Authorize]` with no role policy and no `403` anywhere.** `G6` is off the
+> story's `blocked_by` and the card is `not-started`, not `blocked`.
+>
+> ⚠ **The cells above are deliberately UNCHANGED — `16 h BE · S0 · 1B` — and that is the same
+> convention Dashboard 10 and Die Management were carved under.** The heading, hours, priority,
+> sprint and phase cells are parsed by three client `.xlsx` generators, which bucket by **phase**;
+> editing them here would rewrite a client deliverable from a planning decision. **So `[TB]`'s
+> Phase 1B figure and the generated development plan both continue to include this 16 h and
+> therefore overstate MVP-1 by it** — exactly as `[TB]`'s Phase 11 (246 h) and Phase 13 (209 h)
+> figures do. **The apportioned figure is `[CE §3h]`'s: Phase 1B `442 → 420 h`, MVP-1 all-in
+> `3,358 → 3,336 h`.** Cite `[CE §3h]`, never this block, for an MVP-1 number.
+>
+> ⛔ **Two pieces of this story do NOT travel to MVP-2, and both are already built or still owed in
+> MVP-1.** **(a)** The **`?access_token=` hub handler** (AC 2) was built by `FW-080` inside its
+> own 28 h as `FW-145` §3.5's stated prerequisite — the hub depends on it. **(b) `FR-212`**, the one
+> live MVP-1 role gate, is **client-side** in `ual-angular` and never depended on server policies.
+>
+> ✅ **What the carve bought:** `G72` closes for MVP-1, `/sim/**` drops to bare `[Authorize]`, and
+> the seven built simulator stories plus the `DB-S1` console become **driveable** instead of denying
+> every caller on six `TBD` role constants.
+
 **As a** security owner,
 **I want** role policies matching the Authorization Matrix,
 **So that** each endpoint admits only the roles that should reach it.
@@ -742,7 +764,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 > ⚠ **The BE half is partly already priced.** `FW-157` is costed at 36 h for *"a complex command spanning two databases and the PLC"* — the shared half was always in that number, it simply had nothing to call. The 8 h here is the seam and the grants, not the command.
 
-**Dependencies:** FW-157, FW-159, FW-141, FW-142, FW-144, FW-003, `10_CommonDB_Insert_WIPStations_FlatWire.sql`
+**Dependencies:** FW-157, FW-159, FW-141, FW-142, FW-144, FW-003, **FW-241** (deploy step 2 — the station rows; its draft script was withdrawn 6 Sep 2026)
 **Blockers:** **Q37** (the check-in transaction token), **Q38** (the WIP-log status value), **Q39** (stamping the rod's `coils` row) — all three must close before this runs outside DEV. **`OI-115`** blocks the FL2 half. **`OI-116`** (the rolling-processing table) is not a hard blocker.
 
 ---
@@ -1764,7 +1786,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Indexes: `RodCheckin(RunId)`, `RodCheckin(RodAlpha)`, **`RodCheckin(LineId, PayoffPosition)`** *(was missing)*, `RodStaging(LineId, Status)`, `RodStaging(RodAlpha)`
 - [ ] **Filtered unique indexes `UX_RodStaging_Bay` and `UX_RodStaging_RodActive`** enforce one rod per bay and one bay per rod
 - [ ] `PayoffPosition` lookup has its 3 pinned rows and `FlatWireRunDetail.PayoffPositionId` now has an enforced FK parent
-- [ ] **`FL1PO` WIP station seeded** by `10_CommonDB_Insert_WIPStations_FlatWire.sql`, sharing FL1's `MachineIdx` — the legacy `ZR23`/`ZR23PO` pattern. **`FL2PO` stays absent** per `PCI002`
+- [ ] **`FL1PO` WIP station seeded** by deploy step 2 (`FW-241`), sharing FL1's `MachineIdx` — the legacy `ZR23`/`ZR23PO` pattern. **`FL2PO` stays absent** per `PCI002`
 
 **Rate-card basis:** `RodStaging` table 4 h + repository/EF writes across five tables 16 h + ~~cross-DB~~ **local** `Rod.Status → INFLAT` write 8 h = 28 h (§3 worked derivation) *(target changed by `D-32`; the 8 h is unchanged and Phase 4's published figure is unaffected)*
 **Dependencies:** FW-007
@@ -3291,7 +3313,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** stands, drawers, edgers and spool configurations are maintainable.
 
 **Acceptance Criteria:**
-- [ ] `Stand`, `Drawer`, `Edger` and `Spool` reachable through the admin endpoints
+- [ ] `Stand`, `Drawer`, **`ToolingInventoryEdger`** and `Spool` reachable through the admin endpoints — ⚠ **`Edger` absorbed 6 Sep 2026 (`D-53`)**; gauge rows are reached **through** the tool, never on their own
 - [ ] Audit columns populated on edit
 - [ ] **`Drawer` is already seeded in Phase 1** — this exposes it, it does not create it
 - [ ] **No die inventory table is created** — die inventory and lifecycle are owned outside MVP-1
@@ -3795,14 +3817,15 @@ not in this edit.
 
 ---
 
-###### FW-241 · Deploy step 2 — finalise the shared-schema insert, author its reverse script, run it under sign-off
+###### FW-241 · Deploy step 2 — author the shared-schema insert and its reverse script, run it under sign-off
 **Hours:** 8 h DB · **Priority:** Critical · **Sprint:** S1 · **Phase:** 1C · **Stream:** DB
 
 > ⛔ **`[DEP §4.2]` step 2 is the only irreversible step in the ten-step deploy chain, and it is the
-> one that has never run.** `10_CommonDB_Insert_WIPStations_FlatWire.sql` writes
-> `united_db..machines` and `CommonDB..WIPStations` / `MachineStationsConfiguration`; it is
-> **Draft**, `machine_type`, the station set and `StationType` are all pending, **no reverse script
-> exists**, and the `Scripts/` runner **deliberately skips it**. So FL1/FL2/FL3 exist in neither
+> one that has never run.** It seeds
+> `united_db..machines` and `CommonDB..WIPStations` / `MachineStationsConfiguration`. The
+> draft script was **withdrawn 6 Sep 2026** having never run; `machine_type` (`D8`), the
+> station set and `StationType` are all still pending, **no reverse script has ever
+> existed**, and the `Scripts/` runner never carried it. So FL1/FL2/FL3 exist in neither
 > shared table.
 >
 > ⚠ **`FW-220` names this script as a dependency**, which means the FL1/FL3 check-in write-back —
@@ -4120,10 +4143,10 @@ not in this edit.
 **Acceptance Criteria:**
 - [ ] ⚠ **This story states no count.** `[DBD §6.2]` is the only defining site and is already correct; `verify_schema_counts.py` passes today. The repair is to the *other* sites
 - [ ] `C6`'s **24 advisory findings** resolved — restated by citation or marked dated audit trail: `MasterSpecification.md:88`/`:1388`, `FW-152.md:282`, DB `Orchestration.md:439`/`:442`, `FW-142.md:243`, `TrialOrchestration.md:366`, `CapacityAndEffortModel.md:433`, `Decisions.md:889`, `tools/deliverables/README.md:42`
-- [x] ✅ **`FW-005` re-pointed 3 Sep 2026** — the Lookup group is **twelve** tables, `Drawer` is **two** rows (`DB1`/`DB2`, capped by `CK_Drawer_Name` + `UQ_Drawer_Name`), `ToolingInventoryDie` holds **14** and `ToolingInventoryRollSet` **six**. ⛔ **The dangerous line is struck rather than deleted** — its old *"13 size rows … this is what MVP-1's die change validates against"* is kept as strikethrough with the reason, because a developer who had already read it needs to see what changed, not just find it gone. ⚠ Done as a side effect of the roll-set pass, which added the **twelfth** table and would otherwise have made this card **more** wrong
+- [x] ✅ **`FW-005` re-pointed AGAIN 6 Sep 2026** — the Lookup group is **eighteen** tables: `Edger` is **absorbed** into `ToolingInventoryEdger`, with `ToolingInventoryEdgerGauge` as its child (`D-53`), and the seed keeps `Id 1` = `Round` / `Id 2` = `Square` so the schedule sample data needed no value changed. *(previously re-pointed 3 Sep 2026 — the Lookup group was **twelve** tables, `Drawer` is **two** rows (`DB1`/`DB2`, capped by `CK_Drawer_Name` + `UQ_Drawer_Name`), `ToolingInventoryDie` holds **14** and `ToolingInventoryRollSet` **six**. ⛔ **The dangerous line is struck rather than deleted** — its old *"13 size rows … this is what MVP-1's die change validates against"* is kept as strikethrough with the reason, because a developer who had already read it needs to see what changed, not just find it gone. ⚠ Done as a side effect of the roll-set pass, which added the **twelfth** table and would otherwise have made this card **more** wrong)*
 - [ ] **`FW-007` / `FW-171` re-pointed** — **seven** in-run event tables, not five, and `DieChangeEvent` carries `OldDieId`/`NewDieId`; `FW-171`'s AC 4 reads `ToolingInventoryDie`, not `Drawer`
 - [ ] **`FW-176` re-pointed** — `CK_WipRejection_Group` **dropped**, the group moved onto the lookup row, and `G79` recorded: **all 72 group values are ours**
-- [ ] ⚠ The three reason tables are seeded **inline in `01_Lookup`** as production reference data (156 rows), not in sample data. `G85` — the same problem for `Stand`/`Drawer`/`Dancer`/`Edger` — is named, **not fixed here**
+- [ ] ⚠ The three reason tables are seeded **inline in `01_Lookup`** as production reference data (156 rows), not in sample data. `G85` — the same problem for `Stand`/`Drawer`/`Dancer`/`ToolingInventoryEdger` — is named, **not fixed here**
 - [ ] The **14th** die seeded for `DC-0001`'s worked example is recorded as a pre-existing seed defect, not absorbed
 - [ ] `verify_schema_counts.py` green, `C6` advisory at **0** or every survivor deliberately dated
 
@@ -4176,7 +4199,7 @@ not in this edit.
 - [ ] Register · reset · retire · edit-threshold, each capturing `FR-249`/`FR-250`'s reason. ⚠ `FR-250`'s five retire reasons and `FR-248`'s two reset dispositions share one column and are **not** interchangeable
 - [ ] An overdue die renders as a state; a `NULL`-threshold die renders without one — no invented limit, no false warning
 - [ ] ⛔ **The bands are not chosen here** — `OI-12`, owned by `FW-199`
-- [ ] ⚠ **Edger and straightener inventory are out of scope** — `G77`; **roll-set inventory too**, pending `Q92` (`G87`)
+- [ ] ⚠ **Straightener inventory is out of scope** — `G77`; **roll-set inventory too**, pending `Q92` (`G87`). *(**Edgers left this exclusion 6 Sep 2026** — `ToolingInventoryEdger` is built (`D-53`), screen `FW-270`.)*
 
 **Rate-card basis (§2):** New dashboard screen 24 h — the figure `phase-13`'s carve published as *"Die Management screen 24 FE"*. ⚠ **The mockup is not in it**
 **Dependencies:** FW-252, FW-130, FW-133
@@ -4404,7 +4427,7 @@ not in this edit.
 - [ ] **Roll Sets** as the fourth *Choose Tool* option (`D-42`). ⚠ The five Slitter-inherited options are **replaced**, not extended
 - [ ] `Machine Name` shows `FL1` or `FL2` only. ⚠ **No FL3 row** — its absence from the 31 Aug grids was intentional
 - [ ] Mill and capstan rows distinguishable without reading the mount column — **build the one-option form and keep the split cheap**
-- [ ] Status renders four lifecycle values; **`In Grinding` is not a boolean** — the narrowness `G77` flags on `Edger.IsActive`
+- [ ] Status renders four lifecycle values; **`In Grinding` is not a boolean** — the narrowness `G77` flagged on the **old** `Edger.IsActive`, a table absorbed 6 Sep 2026 (`D-53`)
 - [ ] ⚠ **Minimum text size 14 px.** Dancers, entry guides, payoffs and spools **do not appear** — they are not tooling
 
 **Rate-card basis (§2):** one grid on an existing tab with a new dropdown option — below `FW-253`'s 24 h, which carries a screen and two history tabs = **12 h**. ⚠ **Rate assumes a mockup that does not exist**
@@ -4463,6 +4486,111 @@ not in this edit.
 **Blockers:** none for the schema. **`Q94`** and the standards spreadsheet block the **values**
 
 ---
+
+#### Additive — the edger register, minted 6 Sep 2026 (`FW-268`–`FW-270`)
+
+> **`G77`'s edger half closes, and `Edger` is absorbed rather than extended — `D-53`.** The
+> five-column `Edger` stood against the client's **fourteen**-column Tooling Inventory grid of
+> 31 Aug 2026; its `IsActive BIT` could not express `In Grinding`; and its seed `EDGE-ROUND-A` named
+> an edge **profile** while its `ToolingSetNo` named a **physical set** — the grain ambiguity `G77`
+> said had to be settled first. `02_Schedule` already recorded that `EdgerId` *"identifies the fitted
+> **TOOL**, not the STATION"*, so `Edger` was already meant to be this register.
+
+> ⭐ **Unlike `FW-259`–`FW-261`, the client's grid EXISTS and WAS FOLLOWED.** All fourteen columns
+> are built, in order. `Gauge Range(")` became a **child table** — `ToolingInventoryEdgerGauge`, one
+> row per groove — because the cell holds `.045, .040, .035` and a pass schedule must be able to
+> select **one**, which `G77` asked for in terms. So these three cards are **narrower** than the
+> roll-set set: only four columns are ours (`G104`), not the whole grid.
+
+> ⛔ **`G77` is NOT closed** — the **straightener** still has no table at all, and the `.134`/`.184`
+> range discrepancy is untouched. **Additive to `[CE §3b]`**, like `FW-259`–`FW-261` before it.
+> **No figure is re-derived here** — `FW-258` owns the arithmetic.
+
+---
+
+###### FW-268 · Reconcile `ToolingInventoryEdger` with the client's edger grid when `Q95` returns
+**Hours:** 4 h DB · **Priority:** Medium · **Sprint:** S2 · **Phase:** 1C · **Stream:** DB
+
+> **The tables are built; this is the reconciliation** — and it is smaller than `FW-259` because the
+> grid was supplied. Five things it does not say: whether an edger set has an `S/N` (the die and
+> straightener grids do, **this one does not**), whether `Set Number` is unique across lines, whether
+> the grooves are ordered, what `.100 STD Removal From OD` measures, and whether the grid's `Type`
+> cell holds the edge profile — which we have NOT assumed, which is why `EdgerType` is kept beside
+> `EdgeType` rather than folded into it: `ToolingInventoryDie` reads the same heading as the die
+> **material**, so it does not mean one thing across the grids.
+>
+> ⚠ **The `Set Number` leg is the important one.** `Name` (6 Sep) and `EdgerToolAlpha` (7 Sep) were
+> both removed from the register once nothing was found to read them, so it has **no natural key**:
+> `(LineId, SetNumber)` is the replacement and `Q95` leg 2 is what decides its scope.
+
+**Acceptance Criteria:**
+- [ ] `Q95` q1 applied — **drop `SerialNo` and its filtered index** if edger sets carry no serial. ⚠ That moves the index count; pair it with a recount
+- [ ] q2 applied — ⚠ **and the NATURAL KEY added with it. The table has no unique constraint at all today**: `Name` (6 Sep) and `EdgerToolAlpha` (7 Sep) were both removed once nothing was found to read them (`G104`), so **two identical rows are possible**. Add `(LineId, SetNumber)` filtered-unique, or `(SetNumber)` if the letter is unique shop-wide. ⚠ **Filtered means an index statement, so it moves the count** — pair with a recount. ⛔ **Do not answer it by reinstating `Name` or an alpha**
+- [ ] q3 applied — `GrooveNo` is real ordering, or it goes
+- [ ] q4 applied — ⚠ **`.100` is read as *per grind* (`6.00` → `4.75` ≈ twelve).** If that is wrong the remaining-life figure is wrong **silently**
+- [ ] q5 applied — if the grid's `Type` cell **is** the edge profile, **fold `EdgerType` into `EdgeType`** and drop the spare. Back to `NOT NULL`, or left nullable. ⚠ **Check `CK_PSC_EdgeTypeReq` first**; and ⚠ **do not align with `DieType`** — same heading, different meaning
+- [ ] ⚠ **`[PROPOSED]` removed from every site, or restated with what is still ours**
+- [ ] `verify_schema_counts.py` green; counts from a **teardown-and-deploy**, never computed
+- [ ] `G104` closed or narrowed. ⛔ **`G77` is not closed by this**
+
+**Rate-card basis (§2):** not a rate-card unit — narrower than `FW-259` because the grid exists; four columns across four sites with the guard as its test = **4 h**
+**Dependencies:** FW-251
+**Blockers:** **`Q95`**, **`G104`**
+
+---
+
+###### FW-269 · Edger register service — `ToolingInventoryEdger` CRUD and the gauge collection
+**Hours:** 10 h BE · **Priority:** Medium · **Sprint:** S2 · **Phase:** 6 · **Stream:** BE
+
+> **The roll set's sibling, with one invariant instead of a mount.** `FW-260` guards `CK_TIRS_Mount`;
+> this one guards the **child collection**: a groove has no meaning apart from the set it is cut
+> into, so the gauges are managed through the aggregate and never addressed on their own.
+
+**Acceptance Criteria:**
+- [ ] Read and write endpoints, following `API/Domain/CoilCheckin` — ⚠ **`SlitterInterface` is explicitly not a reference**
+- [ ] **Gauges are a child collection of the aggregate**; no standalone endpoint. A duplicate gauge on one tool answers **422**, not 500
+- [ ] `EdgeType` accepts **null** (`D-53`). ⛔ Do not "fix" a null by defaulting it to `Round`
+- [ ] `LineId` restricted to `FL2` at the boundary. ⚠ **An `FL1` or `FL3` edger set is a client error** (`D-42`)
+- [ ] `LifecycleStatus` rejects a **derived band** — ⚠ `Active` means a lifecycle state here and a life band elsewhere
+- [ ] Enum mirror holds C# ↔ TypeScript ↔ DB CHECK (`TC-020`). ⚠ **`FK_PSC_Edger` kept its name** through the re-point
+- [ ] Unit tests per `G101` / `D-50`
+
+**Rate-card basis (§2):** one register service over a parent plus a child collection, level with `FW-260` = **10 h**
+**Dependencies:** FW-252, FW-268
+**Blockers:** — *(buildable now; `FW-268` may reshape four columns)*
+
+---
+
+###### FW-270 · Tooling Inventory — the *Edgers* tool option and its gauge grid
+**Hours:** 12 h FE · **Priority:** Medium · **Sprint:** S2 · **Phase:** 13 · **Stream:** FE
+
+> ⛔ **This card owes an un-priced mockup**, the same residual `FW-261`, `FW-253` and `FW-256` carry.
+> `[CE §2]`'s FE rate assumes an approved visual spec. Here a **client screenshot of the grid does
+> exist** — unlike `FW-261` — but an approved *mockup* does not.
+
+**Acceptance Criteria:**
+- [ ] **Edgers** as a *Choose Tool* option, rendering the client's **fourteen columns in their order**. ⚠ *"in the order pictured, all others will be removed"*
+- [ ] **The gauge grid is a child of the selected set**, not a peer list
+- [ ] `Machine Name` shows `FL2` only. ⚠ **No FL3 row** — its absence from the 31 Aug grids was intentional
+- [ ] Status renders four lifecycle values; **`In Grinding` is not a boolean** — the narrowness `G77` flagged on the old `Edger.IsActive`
+- [ ] ⛔ **No `Name` field and no alpha** — both removed from the schema (`G104`), so the form asks for neither. A set is shown as `Set Number` + `P/N` + `Machine Name`, which is how the client's own grid identifies one. ⚠ **Do not add a display name back** for a grid column or dropdown label; compose it from those three
+- [ ] ⚠ **Minimum text size 14 px.** ⛔ **Straighteners remain out of scope** — `G77`
+
+**Rate-card basis (§2):** one grid on an existing tab with a dropdown option and a child collection, level with `FW-261` = **12 h**. ⚠ **Rate assumes a mockup that does not exist**
+**Dependencies:** FW-269, FW-003
+**Blockers:** **`Q95`**, **`OI-141`**
+
+---
+
+> **Additive-set reconciliation** — DB 4 · BE 10 · FE 12 = **26 h dev** across **three** stories.
+>
+> ⚠ **No QA uplift and no contingency are applied here** — both are phase-level (§7.1) and these
+> three span three phases.
+> ⚠ **No published figure is re-derived**; `FW-258` owns the arithmetic and this set is a further
+> input to it, not a second answer.
+
+---
+
 
 #### Additive — reinstating automated backend tests, minted 5 Sep 2026 (`FW-263`–`FW-267`)
 
@@ -4620,8 +4748,8 @@ not in this edit.
 > substituting a number into a derivation without re-deriving it *"makes the arithmetic lie"*.
 >
 > ⚠ **The same holds for every additive set minted since**: `FW-251`–`FW-258`, `FW-259`–`FW-261`,
-> `FW-262`, and **`FW-263`–`FW-267`** (98 h dev, the backend-test reinstatement of 5 Sep 2026,
-> `D-50`). None of them is in this roll-up, and **the 114-story / 3,186 h baseline stays unchanged**.
+> `FW-262`, **`FW-263`–`FW-267`** (98 h dev, the backend-test reinstatement of 5 Sep 2026,
+> `D-50`), and **`FW-268`–`FW-270`** (26 h dev, the edger register of 6 Sep 2026, `D-53`). None of them is in this roll-up, and **the 114-story / 3,186 h baseline stays unchanged**.
 > ⛔ **`FW-263`–`FW-267` in particular reverse a decision without reversing its arithmetic** — the
 > August withdrawal is **not** added back in place, because the three stories that carried it are
 > delivered and their `Hours` cells are machine-parsed.
@@ -5059,7 +5187,7 @@ as *adopted but uncosted* once `FW-258` runs.
 
 **Minted 5 Sep 2026** to reverse the 15 Aug 2026 withdrawal of automated backend tests (`D-50`,
 `[TS §1.2]`, gap `G101`). Cards are in §7.2 under *Additive — reinstating automated backend tests*.
-**Next free id: `FW-268`.**
+**Next free id: `FW-271`.**
 
 | Range | Stream | Subject |
 |---|---|---|

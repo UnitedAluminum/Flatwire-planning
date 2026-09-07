@@ -16,10 +16,13 @@
 > statement here resolves to a plan, and where this file and a plan disagree, **the plan
 > wins**; where a plan and a specification disagree, the specification wins.
 >
-> **The one thing to read first:** the critical path is **134 h**, and as of **15 Aug 2026
-> nothing on it is blocked** — `G6`/`OI-37` was answered and node 2 (`FW-145`) is buildable.
-> See §3. What remains is a **verification** dependency, not a build one: the six role claim
-> *values* are still unmapped (§5).
+> **The one thing to read first:** the critical path was **134 h**, and as of **15 Aug 2026
+> nothing on it was blocked** — `G6`/`OI-37` was answered and node 2 (`FW-145`) was buildable.
+> ⭐ **Since `D-52` (6 Sep 2026) node 2 has LEFT MVP-1 entirely**: `FW-145` is an MVP-2 story, so
+> **the MVP-1 critical path is 118 h** — `FW-N04 (16) → FW-080 (28) → FW-N05 (32) → FW-150 (16) →
+> FW-203 (8) → FW-218 (18)` — and the verification dependency on the six role claim *values* comes
+> off it with the node. See §3. ⚠ **The residual is re-scoped, not answered**: it still bites
+> `FW-177` in MVP-1, where a wrong value fails **silent** rather than closed (§5).
 >
 > **Building the trial rather than the phase?** Its companion is
 > **[TrialOrchestration.md](TrialOrchestration.md)** — the same stories on a different axis:
@@ -119,7 +122,7 @@ in [TrialOrchestration.md](TrialOrchestration.md).
 
 | Plan | Story | h | Stream | Phase | Status |
 |---|---|---|---|---|---|
-| [FW-220](FW-220.md) | FL1/FL3 check-in write-back into the shared schema | 32 *(DB 24 · BE 8)* | DB+BE | 4 | ⛔ **Blocked on an approval, not on code** — names `10_CommonDB_Insert_WIPStations_FlatWire.sql`, whose sign-off gate has never been passed (`FW-241`). ⚠ `Q37`–`Q39` before it runs outside DEV |
+| [FW-220](FW-220.md) | FL1/FL3 check-in write-back into the shared schema | 32 *(DB 24 · BE 8)* | DB+BE | 4 | ⛔ **Blocked on `FW-241`** — deploy step 2, whose sign-off gate has never been passed and whose draft script was **withdrawn 6 Sep 2026**. ⚠ `Q37`–`Q39` before it runs outside DEV |
 | [FW-221 *(no plan)*](Orchestration.md) | Station release and reqsum reversal | 9 | DB | 4 | ⚠ **DB-stream story, no plan file** — `60_` has no open items; ⛔ `70_ReverseReqsum` is **safe to create and unsafe to call** (`Q40`) |
 | [FW-223](FW-223.md) | Rod ingestion — populating the FlatWire tables | 14 *(DB 10 · BE 4)* | DB+BE | 4 | **`30_…sp_IngestRodFromCoils` is Ready — no open items.** Downstream of step 2 |
 | [FW-219](FW-219.md) | FL2/FL3 run-end write-back into the shared schema | 40 *(DB 26 · BE 14)* | DB+BE | 9 | ⚠ `Q34`–`Q36` before it runs outside DEV. `OI-114`'s cut-record sentinels are **parameterised**, so a wrong answer is a one-line change |
@@ -134,7 +137,7 @@ in [TrialOrchestration.md](TrialOrchestration.md).
 
 | Story | h | What is stopping it |
 |---|---|---|
-| [FW-145](FW-145.md) | 16 | ⚠ **The only unbuilt Phase-1B story.** Plan is *Buildable — one fact outstanding*; the six role claim **values** gate verification, not construction (§5). ⛔ **`P-136` makes it a hard dependency for the trial acceptance run** — `FW-218`'s `/sim` routes issue no role claim and therefore **deny everyone today** |
+| ~~[FW-145](FW-145.md)~~ | ~~16~~ | ⭐ **LEAVES THIS REGISTER — carved to MVP-2 by `D-52`, 6 Sep 2026, and unblocked in the same act.** `G6` is off its `blocked_by`; the claim-**value** residual travels to MVP-2 with the role policies it gates. ✅ **`P-136`'s hard trial dependency is DISCHARGED** — `/sim/**` drops to bare `[Authorize]`, so `FW-218`'s routes stop denying everyone and the acceptance run is executable. ⛔ **Phase 1B now has no unbuilt story and no blocked one.** ⚠ **`G6`'s residual is NOT answered** — it still bites `FW-177` in MVP-1, where a wrong claim value fails **silent** |
 | [FW-157](FW-157.md) | 36 | `G2` — provisional; the trial runs it without `RodStaging` |
 | [FW-082](FW-082.md) | 16 | Four blockers; `G29` leaves a payload value with nowhere to write |
 | [FW-164](FW-164.md) | 12 | The trial's landing route since DB1 left scope |
@@ -460,24 +463,39 @@ graph LR
 
 ---
 
-## 3. The critical path — clear as of 15 Aug 2026
+## 3. The critical path — clear as of 15 Aug 2026, and **118 h since `D-52`**
 
 ```
-FW-N04 (16) → FW-145 (16) → FW-080 (28) → FW-N05 (32) → FW-150 (16) → FW-203 (8) → FW-218 (18)
-                  ✅ unblocked 15 Aug
+FW-N04 (16) → FW-080 (28) → FW-N05 (32) → FW-150 (16) → FW-203 (8) → FW-218 (18)     = 118 h
 ```
 
-**134 h**, and it runs almost entirely through the **RT stream**, not the 249 h of backend
-bulk. Three consequences:
+> ⭐ **`FW-145` was node 2 and is no longer on this path — `D-52`, 6 Sep 2026.** The story is
+> **MVP-2**, so its 16 h and its `G6` verification dependency both leave MVP-1. The path drops
+> **134 h → 118 h**. ⚠ **The edge itself is not deleted** — `FW-080` still `depends_on` `FW-145`
+> for the *policies*, but the one piece of `FW-145` the hub actually needed, the `?access_token=`
+> handler, was **built inside `FW-080`** as its stated prerequisite (`FW-145` §3.5, `P-77`), so
+> nothing on this path waits for MVP-2.
+>
+> **The superseded shape, kept as audit trail:**
+>
+> ```
+> FW-N04 (16) → FW-145 (16) → FW-080 (28) → FW-N05 (32) → FW-150 (16) → FW-203 (8) → FW-218 (18)
+>                   ✅ unblocked 15 Aug                                                   = 134 h
+> ```
 
-1. **No plan is marked `Blocked` any more.** `G6`/`OI-37` — whether the six roles exist as
-   JWT claims — **was answered on 15 Aug 2026: they do, on the standard `ClaimTypes.Role`.**
-   `phase-01b` L91's *"can block the build outright"* and `[TRP §6]`'s 28 Aug date are both
-   **spent**, and node 2 is buildable today. ⚠ **One residual, and it moved rather than
-   closed:** the six claim *values* are abbreviated or coded rather than `[SEC §8]`'s labels,
-   and the mapping has not been supplied. It gates **verification, not construction** —
-   `FW-145` §5 absorbs it into a six-constant class — so it is now a QA0 dependency rather
-   than a critical-path one. See §5.
+**118 h since `D-52`** *(134 h before it)*, and it runs almost entirely through the **RT stream**,
+not the 249 h of backend bulk. Three consequences:
+
+1. **No plan is marked `Blocked` any more, and since `D-52` the residual is off this path
+   altogether.** `G6`/`OI-37` — whether the six roles exist as JWT claims — **was answered on
+   15 Aug 2026: they do, on the standard `ClaimTypes.Role`.** `phase-01b` L91's *"can block the
+   build outright"* and `[TRP §6]`'s 28 Aug date are both **spent**. ⭐ **And on 6 Sep 2026 `D-52`
+   carved `FW-145` to MVP-2**, so node 2 and its residual leave MVP-1 together: the six claim
+   *values* are still abbreviated or coded rather than `[SEC §8]`'s labels and the mapping is still
+   unsupplied, but with no role policy in MVP-1 there is nothing here for it to gate. ⛔ **It is not
+   answered and it is not a QA0 dependency that vanished** — it now bites **`FW-177`**, which is
+   MVP-1, targets SignalR groups by role name, and where a wrong value fails **silent** rather than
+   closed. See §5.
 2. **Staffing the backend stream harder does not shorten the phase.** BE 249 h is wide and
    shallow — twelve stories unlock together at wave 1; RT 124 h is narrow and deep.
    `[TRP §1.4]`: RT *"none of it compresses well — 0.75–0.90 against FE's 0.62."*
@@ -932,7 +950,7 @@ than about what to build. Defined in [`FW-238 §4`](FW-238.md).
 | By | Blocker | Stops | Plan |
 |---|---|---|---|
 | ~~28 Aug~~ ✅ **Closed 15 Aug** | ~~**`G6` / `OI-37`** — roles as JWT claims~~ | ~~🔴 The critical path~~ — **answered: the six roles exist on `ClaimTypes.Role`** | [FW-145](FW-145.md) |
-| **Before QA0** *(not before the build)* | **`G6` residual** — the six role claim **values**, which are coded rather than `[SEC §8]`'s labels | ⚠ **Verification, not construction.** The build proceeds against `FlatWireRoles`' six constants; §6's matrix walk cannot pass until the mapping lands. **Fails closed in `FW-145` and *silent* in `FW-177`** | [FW-145 §5](FW-145.md) · [FW-177 §3.1](FW-177.md) |
+| **Before `FW-177`** *(was: before QA0)* | **`G6` residual** — the six role claim **values**, which are coded rather than `[SEC §8]`'s labels | ⚠ **Verification, not construction**, and since `D-52` (6 Sep 2026) **the `FW-145` half has left MVP-1 with the story**: no role policy in MVP-1 means no matrix walk to fail. ⛔ **What is left is the worse half.** `FW-177` targets SignalR groups **by role name** in MVP-1, and there a wrong value fails ***silent*** — no `403`, no error, a notification that simply reaches nobody. **Ask for the mapping on the same schedule as before; only the reason changed** | [FW-177 §3.1](FW-177.md) · ~~[FW-145 §5](FW-145.md)~~ *(MVP-2)* |
 | **Before T2** | **`G10`** — IIS WebSockets on the target | Transport **silently** falls back to long-poll; cadence assertions change character. **A provisioning task, not a build one** | [FW-080](FW-080.md) |
 | **Before T2** | **`G2` / `OI-39`** — cross-DB check-in recovery | ⚠ **Narrowed twice and no longer blocks a build** (28 Aug review, `P-27`): `D-32` removed the mirror option, `[ARC §10]`/`FR-526` removed the cross-database half, and the compensation this service owns is **three specified steps**. Carries the **24–64 h** reserve, which `[ARC §10]` asks to be **re-derived before S2** — its cross-database portion is spent. Phase 4 stays provisional until it closes formally. ⚠ **`G30` is now the only open input** | [FW-151](FW-151.md) · [FW-146](FW-146.md) · [FW-143](FW-143.md) |
 | **Before `G58`'s own fix lands** *(owner: **`FW-236`**)* | ⛔ **`G94`** — `OPCUAManager` has no canonical tag identity | **Ordered AHEAD of `G58`, and the ordering IS the finding.** `ReadTag`/`WriteTag` address namespace **0** where the subscription uses **2**, `:554` duplicates the literal, and the notification handler republishes a debug string — and `G58`'s swallow is what hides every one of them, so lifting the swallow first surfaces a flood of genuine-but-unexplained write failures. ⚠ **Latent, and measured so**: all four `OPCModules` rows are `21316` (`OPCDA`), so nothing executes it today | [FW-236](FW-236.md) |
@@ -1096,3 +1114,23 @@ only unplanned. They sit outside the trial, which is why they have not been reac
   and is not a published total.
 - Per repository convention, changes go in [`CHANGELOG.md`](../../CHANGELOG.md) — **do
   not add a change log to this file.**
+
+## The edger register — `FW-269`, minted 6 Sep 2026 (`D-53`)
+
+| Story | Subject | Stream · Phase | h | Closes |
+|---|---|---|---|---|
+| **[`FW-269`](FW-269.md)** | Edger register service — `ToolingInventoryEdger` CRUD and the gauge collection | BE · 6 | 10 | `D-53` — the second of the client's four tool types. Paired with [`FW-268`](../../30-database/tasks/FW-268.md) and [`FW-270`](../../50-frontend/tasks/FW-270.md) |
+
+> ⚠ **Level with `FW-260`, and the invariant is the difference.** `FW-260` guards
+> **`CK_TIRS_Mount`** — exactly one of `StandId` / `DrawerId`, agreeing with the discriminator.
+> This one guards the **child collection**: a groove has no meaning apart from the set it is cut
+> into, which is what `UQ_TIEG_ToolGauge (EdgerToolId, GaugeIn)` says. So the gauges are managed
+> **through the aggregate** and never addressed on their own — exposing `/gauges/{id}` would let
+> a caller orphan one. A duplicate gauge answers **422**, not 500.
+>
+> ⚠ **`EdgeType` accepts null**, and that is deliberate (`D-53`): the client's fourteen columns do
+> not classify a set by edge profile at all. ⛔ **Do not "fix" a null by defaulting it to `Round`.**
+> `CK_PSC_EdgeTypeReq` still forces the *schedule* to state its profile.
+>
+> ⚠ **`FK_PSC_Edger` kept its name** through the re-point from `Edger`, so any inventory keyed on
+> constraint names — `FW-147`'s enum mirror, `TC-020` — needs no change.

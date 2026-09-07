@@ -1,7 +1,7 @@
 # Flat Wire Mill — Machine Simulator and its Control Console
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 1, 2026 — change history is in [`CHANGELOG.md`](../CHANGELOG.md)
+**Last Updated:** September 6, 2026 (`D-52` — `/sim/**` drops to bare `[Authorize]`, §8.4) — change history is in [`CHANGELOG.md`](../CHANGELOG.md)
 **Document Type:** Design specification — the simulation subsystem
 **Status:** Baselined for build — the story set `FW-210`–`FW-215`, `FW-217`, `FW-218` is **BUILT** (29 Aug → 1 Sep 2026); still unscheduled and additive to `[CE §3b]`. Open items in §11
 **Owner:** Architecture / Real-time stream
@@ -547,6 +547,40 @@ register** — `FlatWireRoles` forbids building it here (`P-75`) — **and the s
 this surface denies every caller today** and says so at start-up rather than looking guarded. That is `G72`,
 **narrowed and reassigned to `FW-145`**, not closed.
 
+> ### ⭐ MVP-1 POSITION — `D-52`, 6 Sep 2026: this surface carries **bare `[Authorize]`**
+>
+> **`FW-145` is MVP-2.** There is no `SimulatorControl` policy in MVP-1 and no claim to wait for, so the
+> paragraphs above describe the **MVP-2** end state and the rows below describe what is built now.
+>
+> | | MVP-1 (now) | MVP-2 (`FW-145`) |
+> |---|---|---|
+> | Guard | **Bare `[Authorize]`** — any authenticated caller | `RequireAuthorization(FlatWirePolicies.SimulatorControl)` |
+> | *"Never `Operator`"* | ⛔ **Not enforced by a role check.** The only control is §8.3's conditional registration — an unhosted line answers **`404`** | Enforced, `403` |
+> | The six `FlatWireRoles` constants | Still `TBD`, and **no longer load-bearing here** | Mapped, and this surface swaps one line |
+>
+> ⛔ **Delete the start-up *"this surface denies every caller"* announcement along with the guard.** It was
+> right while the constants gated the routes; left in place it announces a condition that no longer holds,
+> which is worse than no announcement at all.
+>
+> ⛔ **`FlatWireRoles` itself stays.** `FW-177` targets SignalR groups by role name, so the constants class
+> and `P-310`'s *bind-the-constants-never-the-literals* rule both survive this change untouched.
+>
+> ⚠ **This makes §8.3 the whole of the control, which is precisely what `G66` warned about** — a
+> reachability concern must not be answered with a role check, and now it cannot be. Read `G66` before
+> treating the `404` as sufficient for a shopfloor panel.
+>
+> ✅ **What it buys:** the seven built simulator stories and `DB-S1` become **driveable**. That is the
+> reason the carve was made now rather than deferred with the rest of `FW-145`.
+>
+> ⭐ **BUILT AND MEASURED 6 Sep 2026** — `ual-api` `feature/UADEV-23146`, one file (`SimControlSurface.cs`),
+> `FlatWire.sln` **0 errors / 14 warnings byte-identical to the baseline / 279 tests**. On the running
+> service the guard answers **`401` with no token, `401` on a bad signature, `200` with any valid token —
+> including one carrying role `Operator`.** ⛔ **That last row is this section's cost, measured rather than
+> predicted.** ⭐ **And the surface drives:** `steer`, `fault`, `DELETE run`, `config` and `state` all
+> `200`, with the state reflecting each — FL1 `gaugeOffsetIn 0.004 · driftPerTickIn 0.0001 ·
+> dropTicksRemaining 5`, FL2 `running=false`. ⚠ **`G39` is untouched by all of it** — §10 stands
+> unchanged, and a model that steers convincingly is exactly what that gap warns about.
+
 ⛔ **The role policy is the backstop, never the control.** `[SEC §8.8b]` is explicit, and `G66` records why:
 do not "fix" a reachability concern by adding a role check in place of the `404`.
 
@@ -714,7 +748,7 @@ move that line.
 | `G66` | `DB-S1` is unreachable-by-**procedure** rather than by construction — an EXE cannot be unregistered (§9.4). The server-side `404` is unaffected and remains the actual control |
 | `G69` | Two state chips, one wire vocabulary (§9.2, §4.4). ⚠ **Armed since 1 Sep 2026** — `Paused` is now commandable, so a chip fed from `SimLineState.Running` can be caught showing it as stopped |
 | `G71` | FL2's only load cell has **no tag key** — §4.2's model reports an instrument the tag surface cannot carry, so it crosses the in-process feed and not the real path |
-| `G72` | The simulator guard's role name and policy (§8.4). **Narrowed and reassigned to `FW-145`** — listed here as an index entry, not as work this document owes |
+| ~~`G72`~~ | ✅ **CLOSED FOR MVP-1 — `D-52`, 6 Sep 2026** (§8.4). `FW-145` is MVP-2, so `/sim/**` carries **bare `[Authorize]`** and the six `TBD` constants stop denying every caller. ⚠ **Closed by removing the guard, not by satisfying it** — it **reopens in MVP-2** as the one-line swap to `RequireAuthorization(FlatWirePolicies.SimulatorControl)`, and it is still `FW-145`'s. ⛔ **`G66` is now the only control on this surface** |
 
 > ⚠ **Residuals on gaps already RESOLVED, recorded here because each still owes something — and both are
 > now the CONSOLE's, not this document's.** **`G68`** — `GET /sim/config` is built **and** specified (§8.1,

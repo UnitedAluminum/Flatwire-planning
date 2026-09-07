@@ -917,6 +917,23 @@ optional; everything else is required.
 
 ---
 
+## Q95
+
+**Register title:** Five things the edging-roll Tooling Inventory grid does not say, including how a set is identified
+**Area:** Tooling management
+**Needs input from:** Tim O. / Maintenance
+**What we need:** Information
+**Answer together with:** Q92
+**Question:** Five short questions about the edging-roll grid on the Tooling Inventory tab: is there a serial number for a roll set, is the set letter unique across machines, are the grooves numbered across the roll face, does the standard removal figure of .100 mean per grind, and does the Type column hold the edge profile?
+**Background:** Thank you for the grid you sent on 31 August - unlike the roll sets we asked about separately, this one arrived as a picture with the columns in the order you wanted, and we have built all fourteen of them exactly as pictured. These five questions are the places where the grid is silent rather than unclear, and each one is a field we have had to decide on our own.
+**Already agreed:** The Tooling Inventory tab carries dies, edging rolls, straighteners and roll sets. Edging rolls have multiple gauge capability, with grooves cut at specific gauges - your example was .045, .040 and .035. Edging rolls belong to FL2. Tooling is maintained for FL1 and FL2, with FL3 using a combination of the two.
+**Options:** (1) Answer the five below in a line each. (2) Send a filled-in example row for one real roll set and we will read the answers off it. (3) Tell us to leave our current reading in place until the roll shop starts using the tab.
+**Recommended answer:** Option 1 for questions 1, 2 and 5, which are yes or no, and Option 2 for question 4 if a worked example is easier than a description.
+**Why:** Two of the five matter more than the rest. Question 2 decides how a roll set is identified: we hold no reference number of our own for edging rolls, so the set letter and the machine name are all there is, and until we know whether the letter repeats across machines we cannot stop the same set being entered twice. Question 4 is the other: we have read the .100 standard removal as the amount taken off the outside diameter at each grind, which makes a roll good for about twelve grinds between 6.00 and the 4.75 minimum, and that number will appear on screen as remaining life. If .100 means something else, the figure will be wrong without looking wrong. The remaining three are cosmetic if we get them wrong - an empty column, or a field the roll shop ignores.
+**Impact if unanswered:** Nothing in the database is blocked - the register is built and seeded with your own sample values, and the pass schedule still resolves. What waits is the edging-roll option on the tab and the screen that renders it. The five points are: (1) Is there a serial number for an edging-roll set? Your die and straightener grids both carry one and this grid does not, so we have added the field for consistency and it may simply not apply. (2) Is the set letter - A, B, C - unique across the whole shop, or only within one machine? This is the one we would most like answered. We do not hold a reference number of our own for edging rolls - unlike dies, which have one only because the die change screen reads it while a run is going - so the set letter and the machine name are what identify a set. Whether the letter repeats across machines decides which of those we can rely on, and until it is settled nothing stops the same set being entered twice. (3) Are the grooves numbered or ordered across the face of the roll, or is .045, .040, .035 just a list? We now hold one row per groove so that a pass schedule can eventually call for a particular one, and we would rather record a real position than invent one. (4) Does standard removal from OD .100 mean the amount taken off at each grind? (5) Does the Type column on this grid hold the edge profile - round or square, as in whether the set puts a rounded or a square edge on the wire? We have kept Type as its own field and the edge profile as a second one, because the die grid uses the same Type heading for the die material, so we could not assume the heading means the same thing on every tooling grid. If Type is the profile for edging rolls, we will merge the two. We have also left the profile optional, since a set that can serve either has to be recordable.
+
+---
+
 ## Q93
 
 **Register title:** Six readings in the pass-calculator formula document that the page cannot settle

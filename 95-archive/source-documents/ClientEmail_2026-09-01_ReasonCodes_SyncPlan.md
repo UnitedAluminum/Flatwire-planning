@@ -252,7 +252,7 @@ buckets — **47 codes** (20 existing + 27 new); `LineDowntimeEvent` takes the o
 
 ### 4.4 `wip_stations.PrinterName` cannot express the printer topology
 
-[`10_CommonDB_Insert_WIPStations_FlatWire.sql`](../../30-database/scripts/10_CommonDB_Insert_WIPStations_FlatWire.sql)
+[`10_CommonDB_Insert_WIPStations_FlatWire.sql`](../design-notes/10_CommonDB_Insert_WIPStations_FlatWire.sql)
 seeds five stations against **four invented printer names** — `FL1$PRINT`, `FL2$PRINT`, `FL3$PRINT`,
 `FWPACK$PRINT`, each `CHAR`-padded to exactly 12 (`D6`, asserted by the script's own verification
 step). Answer 10 gives the real topology, and it does not fit:
@@ -445,4 +445,4 @@ loses the classification entirely, and the *"does not apply"* state is unlabelle
 | [ClientEmail_2026-08-31_MachinesAppTabs_SyncPlan.md](ClientEmail_2026-08-31_MachinesAppTabs_SyncPlan.md) | The Setup/Handling Times and Material Loss tabs are the other half of answers 4 and 13 |
 | [PLCTagSpecification.md](../../20-architecture/PLCTagSpecification.md) | §8.2's five set conditions; the new dancer and jog read surface |
 | [pause_run.js](../../50-frontend/mockups/pause_run.js) · [wip_rejection.js](../../50-frontend/mockups/wip_rejection.js) | The two dialogs whose vocabularies change |
-| [10_CommonDB_Insert_WIPStations_FlatWire.sql](../../30-database/scripts/10_CommonDB_Insert_WIPStations_FlatWire.sql) | `PrinterName` and the invented printer names — §4.4 |
+| [10_CommonDB_Insert_WIPStations_FlatWire.sql](../design-notes/10_CommonDB_Insert_WIPStations_FlatWire.sql) | `PrinterName` and the invented printer names — §4.4 |

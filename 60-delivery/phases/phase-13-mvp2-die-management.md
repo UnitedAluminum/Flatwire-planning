@@ -18,7 +18,7 @@
 > register or two. **`G77`** still owns edger and straightener inventory, which this does not cover.
 >
 > ⚠ **A FOURTH tool type landed 3 Sep 2026 — `D-42`.** The client's Tooling Inventory tab carries
-> **Dies · Edgers · Straighteners · Roll Sets**, and `ToolingInventoryRollSet` (mill rolls and the
+> **Dies · Edgers · Straighteners · Roll Sets**. ⭐ **Three of the four are now built** — `ToolingInventoryDie`, `ToolingInventoryRollSet`, and **`ToolingInventoryEdger` + `ToolingInventoryEdgerGauge` (6 Sep 2026, `D-53`, which absorbed `Edger`)**. ⚠ **Only the STRAIGHTENER is unbuilt, and that is all `G77` still owns.** `ToolingInventoryRollSet` (mill rolls and the
 > DB1/DB2 capstan rolls) is built. **Dancers, entry guides, payoffs and spools are explicitly NOT
 > tooling.** Stories [`FW-259`](../../30-database/tasks/FW-259.md) ·
 > [`FW-260`](../../40-backend/tasks/FW-260.md) · [`FW-261`](../../50-frontend/tasks/FW-261.md),
@@ -38,7 +38,7 @@
 ---
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** September 3, 2026 — **a fourth tool type landed (`D-42`)**: the Tooling Inventory tab carries Dies · Edgers · Straighteners · **Roll Sets**, with `FW-259`–`FW-261` (27 h). ⛔ Its column set is `[PROPOSED]` — `G87` / `Q92`. *(previously August 11, 2026)*
+**Last Updated:** September 6, 2026 — **the edger register is built and `G77`'s edger half closes (`D-53`)**: `Edger` is **absorbed** into `ToolingInventoryEdger`, with `ToolingInventoryEdgerGauge` holding one row per groove. Three of the four tool types now have schema; **only the straightener does not**. *(previously September 3, 2026 — **a fourth tool type landed (`D-42`)**: the Tooling Inventory tab carries Dies · Edgers · Straighteners · **Roll Sets**, with `FW-259`–`FW-261` (27 h). ⛔ Its column set is `[PROPOSED]` — `G87` / `Q92`. *(previously August 11, 2026)*
 **Status:** **MVP-2 — deferred scope**
 **Carved from:** [`phase-13-administration-reference-data.md`](./phase-13-administration-reference-data.md) on 11 Aug 2026, bullets copied verbatim
 
@@ -91,5 +91,5 @@ The MVP-1 file also carries a standing instruction that survives this carve: **"
 |---|---|
 | Die Management screen, die lifecycle service, die inventory status vocabulary | **MVP-2** (here) |
 | Alloy lookup admin grid + alloy CRUD (`FW-004`), machine template tabs (`FW-003`), role assignment | **MVP-1** |
-| `Stand` / `Drawer` / `Edger` / `SpoolConfiguration` lookups | **MVP-1** |
+| `Stand` / `Drawer` / **`ToolingInventoryEdger`** / `SpoolConfiguration` lookups | **MVP-1** |
 | The **30 Jul 2026 alloy reference-data client answers** — four min/max tolerance pairs on `AlloyProperty`, the values owed by e-mail, and the note that **`CHK007` cannot fire until they arrive** | **MVP-1, and it blocks Phase 4** |

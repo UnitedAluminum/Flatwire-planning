@@ -7,7 +7,7 @@
 --
 --       08_CommonDB_OPCModules_ColumnDrift.sql
 --       09_CommonDB_OPCTables_Constraints.sql
---       10_CommonDB_Insert_WIPStations_FlatWire.sql
+--       (10_CommonDB_Insert_WIPStations_FlatWire.sql -- WITHDRAWN 6 Sep 2026)
 --       11_CommonDB_Insert_OPCRegistration_FlatWire.sql
 --       16_CommonDB_Delete_OPCRegistration_FlatWire.sql
 --
@@ -98,9 +98,14 @@
 --      transaction model spans them in ONE SqlTransaction under the LOCAL
 --      transaction manager, with no MSDTC ([INT 8.0], [ARC 10]). The
 --      verification query is in 20_FlatWire_Grants.sql -- run it FIRST.
---   3. 10_CommonDB_Insert_WIPStations_FlatWire.sql has been run by hand,
---      after sign-off. FlatWire_CheckInRod claims a WIP station, so it has
+--   3. The machines / WIP-station rows have been seeded by hand, after
+--      sign-off. FlatWire_CheckInRod claims a WIP station, so it has
 --      nothing to claim until those rows exist.
+--      NOTE: the script that used to do this,
+--      10_CommonDB_Insert_WIPStations_FlatWire.sql, was WITHDRAWN on
+--      6 Sep 2026 and never ran. The rows are still required (D-32);
+--      authoring the seed and its reverse is FW-241, [DEP 4.2] step 2.
+--      Retired draft: 95-archive/design-notes/ (history, not a requirement).
 --
 -- REQUIRES SQLCMD MODE (`:r` and `:on error exit` are SQLCMD-only):
 --   cd "c:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Scripts"

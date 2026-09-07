@@ -58,8 +58,8 @@
   TABLE CONSTRAINTS THAT SHAPE THIS SCRIPT
   ----------------------------------------
   C1. CommonDB..WIPStations is the ONE physical station table. united_db..wip_stations and
-      proddb..wip_stations are BOTH VIEWS OVER IT
-      (10_CommonDB_Insert_WIPStations_FlatWire.sql:34-35) - one row, three names.
+      proddb..wip_stations are BOTH VIEWS OVER IT, and so is SlitterDB..WIPStations
+      - one row, several names.
 
   C2. wip_stations_k1 is a UNIQUE NONCLUSTERED index on CoilNo. Because it is a plain UNIQUE
       index, ONLY ONE ROW MAY HOLD NULL, so an idle station cannot be released to NULL. The
@@ -166,7 +166,7 @@ BEGIN
         WHERE  LTRIM(RTRIM(WIPStation)) = @station;
 
         IF @@ROWCOUNT = 0
-            THROW 53002, 'FlatWire_ReleaseStation: the WIP station does not exist. Run 10_CommonDB_Insert_WIPStations_FlatWire.sql before this procedure.', 1;
+            THROW 53002, 'FlatWire_ReleaseStation: the WIP station does not exist. The machines / WIP-station rows must be seeded first - deploy step 2, owned by FW-241.', 1;
 
         SET @releasedCoilNo = @currentCoil;
 

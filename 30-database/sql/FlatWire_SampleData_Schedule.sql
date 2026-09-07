@@ -58,8 +58,8 @@
 --   The sample-data runner loads five scripts and this is the second of them.
 --   Its position is load-bearing:
 --
---       Lookup     -> creates the Stand, Edger and AlloyProperty rows
---                     this script points at by id
+--       Lookup     -> creates the Stand, ToolingInventoryEdger and
+--                     AlloyProperty rows this script points at by id
 --       SCHEDULE   -> this script
 --       Materials  -> creates runs that point back at these schedules
 --       Runs, Quality/Output
@@ -94,8 +94,15 @@
 --   life. Which tool actually ran is in DieChangeEvent.OldDieId / NewDieId
 --   and DieHistory, both pointing at ToolingInventoryDie.
 --
---   Edger.Id    1 = EDGE-ROUND-A  (Round)
---               2 = EDGE-SQUARE-B (Square)
+--   ToolingInventoryEdger.Id  1 = Set A (Round)
+--                             2 = Set B (Square)
+--
+--   RE-POINTED, NOT RE-VALUED, 6 Sep 2026 (D-53). EdgerId used to reference
+--   [dbo].[Edger]; that table was absorbed into ToolingInventoryEdger, which
+--   carries the same two ids precisely so that NOT ONE VALUE in this file had to
+--   change. If those ids are ever renumbered in the Lookup seed, every EdgeSet row
+--   below breaks. (The two Name values were carried across as well, until Name was
+--   removed later the same day -- nothing, including this file, ever read it.)
 --
 -- ----------------------------------------------------------------------------
 -- 4. WHAT THE ELEVEN SCHEDULES COVER

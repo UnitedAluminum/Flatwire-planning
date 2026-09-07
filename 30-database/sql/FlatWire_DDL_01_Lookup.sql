@@ -2,11 +2,25 @@
 -- Flat Wire Mill — DDL Script 01: Lookup / Reference Tables
 -- Run order : 01 of 09
 -- Tables    : Stand, Drawer, ToolingInventoryDie, ToolingInventoryRollSet,
---             Edger, Dancer, AlloyProperty, PayoffPosition, Spool,
+--             ToolingInventoryEdger, ToolingInventoryEdgerGauge,
+--             Dancer, AlloyProperty, PayoffPosition, Spool,
 --             DowntimeReason, WipRejectionReason, ItInhibitReason,
 --             SetupHandlingTimeGroup, SetupHandlingTimeElement,
 --             SetupHandlingTimeStandard, MaterialLossElement,
---             MaterialLossStandard   (17)
+--             MaterialLossStandard   (18)
+--
+-- Sep-6-2026: ToolingInventoryEdger and ToolingInventoryEdgerGauge added, and
+-- [dbo].[Edger] REMOVED -- ABSORBED, not extended (D-53). Edger held five
+-- columns against the client's fourteen-column Tooling Inventory grid of
+-- 31 Aug 2026, and 02_Schedule already said "EdgerId identifies the fitted
+-- TOOL, not the STATION" -- so it was meant to be the physical tool register
+-- and was simply too thin to be one. PassScheduleComponent.EdgerId re-points
+-- at ToolingInventoryEdger and FK_PSC_Edger keeps its name. Gauge Range is a
+-- CHILD TABLE, not a delimited string, because the grid's cell holds three
+-- grooves (".045, .040, .035") and a pass schedule must be able to select ONE.
+-- This CLOSES G77's edger half; the STRAIGHTENER half stays open, along with
+-- the .134/.184 range discrepancy. See the table comment blocks below, G104
+-- and Q95. NOTE the table count is 18 and not 19: two added, one removed.
 --
 -- Sep-4-2026: the five MACHINE SETUP tables added -- the Setup/Handling
 -- Times and Material Loss tabs of the Machines Application, from Tim
@@ -150,8 +164,10 @@ GO
 --
 -- WHY THE NAME IS A COMPOUND: it is the client's own term. The 31-Aug-2026
 -- mail returns a Machines Application "Tooling Inventory" tab carrying THREE
--- tool types -- Die, Edger, Straightener. This table is the first of the
--- three. Edger and Straightener inventory are NOT covered here; that is G77.
+-- tool types -- Die, Edger, Straightener. THAT COUNT IS FOUR as of 3 Sep 2026
+-- (D-42): Roll Set is the fourth. This table is the first of the four; edgers
+-- became ToolingInventoryEdger on 6 Sep 2026 (D-53). Only the STRAIGHTENER is
+-- still uncovered, and that is what remains of G77.
 --
 -- THE COLUMN SET IS THE UNION OF TWO FIELD SETS, and OI-141 is why:
 --   Ours    FR-247 registration, FR-254 (what Die Change reads at runtime):
@@ -218,7 +234,9 @@ BEGIN
         -- threshold TBD). Do not seed an invented limit.
         [TotalFeetAllowed]   DECIMAL(10,2) NULL,
         -- The client's three lifecycle values plus Retired (FR-250). A BIT cannot
-        -- express "In Grinding", which is G77's point about Edger.IsActive.
+        -- express "In Grinding" -- which was G77's point about the old
+        -- Edger.IsActive, a table absorbed on 6 Sep 2026 (D-53). The three
+        -- tooling registers now carry LifecycleStatus identically.
         [LifecycleStatus]    VARCHAR(20)   NOT NULL CONSTRAINT [DF_ToolingInventoryDie_LifecycleStatus] DEFAULT ('In Service'),
         [InUse]              BIT           NOT NULL CONSTRAINT [DF_ToolingInventoryDie_InUse] DEFAULT (0),  -- client grid "In Use". Feeds the derived Spare band
         [Source]             VARCHAR(100)  NULL,           -- FR-247 supplier / die room source
@@ -301,7 +319,8 @@ GO
 -- (LastGrindingFeet / TotalFeetAllowed); a roll is reground until it reaches a
 -- minimum OD. So this table carries OdIn / MinOdIn / DateOfLastGrind and NO footage
 -- counter, matching the client's Edger grid rather than the Die grid. G77 already
--- called out that the two life models differ.
+-- called out that the two life models differ. ToolingInventoryEdger (6 Sep 2026,
+-- D-53) is built on the same grind model, from that grid directly.
 --
 -- WHAT IS NOT KNOWN -- G87, and Q92 is the send-back. Die, Edger and Straightener
 -- each arrived as a screenshot grid with an ordered column list. Roll sets arrived as
@@ -382,27 +401,174 @@ ELSE
 GO
 
 -- ------------------------------------------------------------
--- Edger
--- Edger tooling configurations (EdgeSet component). Produces
--- either Round or Square edge profiles on the flat wire.
+-- ToolingInventoryEdger
+-- The register of PHYSICAL EDGER ROLL SETS -- the second of the four Tooling
+-- Inventory tool types (D-42), and the one that CLOSES G77's edger half.
+--
+-- THIS TABLE ABSORBS [dbo].[Edger]. IT IS NOT A NEW SIBLING. Edger held five
+-- columns -- Id, Name, EdgeType, ToolingSetNo, IsActive -- against the client's
+-- FOURTEEN-column Tooling Inventory grid of 31 Aug 2026:
+--
+--   Machine Name, Type, Location, Set Number, P/N, Roll Qty,
+--   STD Removal From OD("), Gauge Range("), OD("), ID("), Min OD("),
+--   Date of Change, Date of Last Grind, Status
+--
+-- WHY ABSORB RATHER THAN SIT BESIDE IT. 02_Schedule already says outright that
+-- "EdgerId identifies the fitted TOOL, not the STATION" -- so Edger was ALREADY
+-- meant to be the physical tool register and was simply too thin to be one. Two
+-- registers both meaning "edger" is exactly the grain ambiguity G77 raised:
+-- Edger's seed (EDGE-ROUND-A) named a PROFILE while its ToolingSetNo named a
+-- PHYSICAL SET. One table resolves it. PassScheduleComponent.EdgerId re-points
+-- here and FK_PSC_Edger KEEPS ITS NAME -- renaming it would churn [API],
+-- FW-147's enum-mirror inventory and TC-020 for no gain.
+--
+-- NOT the die split's shape, and that is deliberate. The die split kept Drawer
+-- as the two draw BOXES and moved the tooling out. There is no edger equivalent
+-- of Drawer to keep: E1/E2 exist nowhere as rows, only as setup-step text, and
+-- CK_PSC_ComponentName still offers a single 'EdgeSet' value for two physical
+-- stations. THAT STATION GAP IS NOT ADDRESSED HERE and stays open.
+--
+-- EdgeType is CARRIED OVER from Edger and it is OURS -- it does not appear on the
+-- client's grid. EdgerType, beside it, IS the grid's "Type" cell and is a separate
+-- column: whether the two are actually the same field for an edger is OPEN, and Q95
+-- asks. (ToolingInventoryDie reads the same grid heading as the die MATERIAL and
+-- calls it DieType, so the heading demonstrably does not mean one thing across the
+-- grids -- which is why they are not merged here on our own reading.)
+--   EdgeType is RELAXED TO NULL. It was NOT NULL on Edger, but the client's
+--   fourteen columns do not classify a set by edge profile in a way we can rely on.
+--   Requiring it would invent a mandatory classification the client has never
+--   supplied -- the G87 mistake. CK_PSC_EdgeTypeReq still forces the SCHEDULE to
+--   state its profile, which is where the requirement actually belongs. Q95 asks.
+--
+-- THIS TABLE HAS NO NATURAL KEY. Identity is the IDENTITY column and nothing
+-- else, so TWO IDENTICAL ROWS ARE CURRENTLY POSSIBLE. That is a known, recorded
+-- state, not an oversight -- G104. Both candidates were removed deliberately, and
+-- the reasoning is the same for each: they were OURS, and nothing read them.
+--
+--   Name was inherited from [dbo].[Edger], where it was NOT NULL and UNIQUE. It
+--   was removed on 6 Sep 2026 once it was verified that NOTHING read it: no
+--   procedure, no view, no join, and no seed row -- FlatWire_SampleData_Schedule
+--   resolves EdgerId by Id, never by name. The client's fourteen-column grid has
+--   no Name field at all. Keeping it NOT NULL meant the Tooling Inventory form
+--   had to demand a name for every new tool, for a field the client never asked for.
+--
+--   EdgerToolAlpha (ED-{seq}) followed on 7 Sep 2026, for the same reason. No
+--   client tooling grid has ever shown an alpha (OI-141), and the client
+--   identifies a set by Machine Name + Set Number + P/N. ToolingInventoryDie and
+--   ToolingInventoryRollSet KEEP theirs, and that is NOT an inconsistency to fix:
+--   DieAlpha is load-bearing because FR-254 has the Die Change screen read it AT
+--   RUNTIME. This table has no such caller.
+--
+-- (LineId, SetNumber) is the obvious replacement key, and it is DELIBERATELY NOT
+-- taken: Q95 leg 2 asks whether Set Number is unique per LINE or per SHOP, and a
+-- UNIQUE here would pre-empt that answer in one direction. FW-268 adds the key when
+-- Q95 returns. Do not add one before then, and do not reinstate Name or the alpha.
+--
+-- THE LIFE MODEL IS GRIND, NOT FOOTAGE -- the same distinction
+-- ToolingInventoryRollSet carries. STD Removal From OD .100 against OD 6.00 and
+-- Min OD 4.75 is about twelve grinds. So there is NO footage counter here. Do
+-- not add LastGrindingFeet / TotalFeetAllowed by analogy with
+-- ToolingInventoryDie -- that analogy is the thing G77 warns about.
+--
+-- GAUGE RANGE IS A CHILD TABLE, NOT A DELIMITED STRING. The grid's cell reads
+-- ".045, .040, .035" -- three grooves cut into one roll at specific gauges, in
+-- the client's own words. G77 called for a child table in terms, and the reason
+-- is that a pass schedule must eventually be able to select A GROOVE, which a
+-- VARCHAR forbids. See ToolingInventoryEdgerGauge below.
+--
+-- ID(MM) IS NOT STORED, on the ToolingInventoryDie precedent: it is a derived
+-- display value. Compute it in the UI.
+--
+-- LineId is 'FL2' ONLY. The client's grid attributes edgers to FL2, and D-42
+-- bars any tooling row from FL3 ("maintain them for FL1/FL2 and FL3 should use
+-- a combination of the two"). NOTE this does NOT apply to Drawer, which is
+-- EQUIPMENT and keeps FL3 in its own CHECK. Do not "align" the two.
 -- ------------------------------------------------------------
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Edger]') AND type = N'U')
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ToolingInventoryEdger]') AND type = N'U')
 BEGIN
-    CREATE TABLE [dbo].[Edger] (
-        [Id]           INT         NOT NULL IDENTITY(1,1),
-        [Name]         VARCHAR(50) NOT NULL,               -- edger assembly name/identifier
-        [EdgeType]     VARCHAR(10) NOT NULL,               -- Round | Square
-        [ToolingSetNo] VARCHAR(20) NULL,                   -- physical tooling set number
-        [IsActive]     BIT         NOT NULL CONSTRAINT [DF_Edger_IsActive] DEFAULT (1),
+    CREATE TABLE [dbo].[ToolingInventoryEdger] (
+        [Id]                 INT           NOT NULL IDENTITY(1,1),
+        [EdgeType]           VARCHAR(10)   NULL,           -- Round | Square. Carried from Edger, RELAXED to NULL -- see the block above
+        [LineId]             VARCHAR(5)    NULL,           -- client grid "Machine Name". FL2 only
+        [EdgerType]          VARCHAR(20)   NULL,           -- client grid "Type"
+        [Location]           VARCHAR(50)   NULL,           -- client grid "Location" -- roll shop / crib position
+        [SetNumber]          VARCHAR(20)   NULL,           -- client grid "Set Number" -- lettered A / B / C. REPLACES Edger.ToolingSetNo
+        [PartNo]             VARCHAR(50)   NULL,           -- client grid "P/N"
+        [SerialNo]           VARCHAR(50)   NULL,           -- [PROPOSED] ours: the edger grid carries NO S/N column (G104, Q95)
+        [RollQty]            INT           NOT NULL CONSTRAINT [DF_ToolingInventoryEdger_RollQty] DEFAULT (2),  -- client grid "Roll Qty" -- the sample reads 2
+        [StdRemovalFromOdIn] DECIMAL(8,4)  NULL,           -- client grid 'STD Removal From OD(")' -- .100 per grind
+        [OdIn]               DECIMAL(8,4)  NULL,           -- client grid 'OD(")' -- 6.00, falls with each grind
+        [IdIn]               DECIMAL(8,4)  NULL,           -- client grid 'ID(")'
+        [MinOdIn]            DECIMAL(8,4)  NULL,           -- client grid 'Min OD(")' -- 4.75, the scrap threshold
+        [DateOfChange]       DATE          NULL,           -- client grid "Date of Change"
+        [DateOfLastGrind]    DATE          NULL,           -- client grid "Date of Last Grind"
+        -- The client's three Status values plus Retired, identical to
+        -- ToolingInventoryDie and ToolingInventoryRollSet. A BIT cannot express
+        -- "In Grinding" -- that was G77's point about the old Edger.IsActive.
+        [LifecycleStatus]    VARCHAR(20)   NOT NULL CONSTRAINT [DF_ToolingInventoryEdger_LifecycleStatus] DEFAULT ('In Service'),
+        [InUse]              BIT           NOT NULL CONSTRAINT [DF_ToolingInventoryEdger_InUse] DEFAULT (0),
+        [Notes]              VARCHAR(500)  NULL,
+        [IsActive]           BIT           NOT NULL CONSTRAINT [DF_ToolingInventoryEdger_IsActive] DEFAULT (1),
 
-        CONSTRAINT [PK_Edger]          PRIMARY KEY CLUSTERED ([Id] ASC),
-        CONSTRAINT [UQ_Edger_Name]     UNIQUE ([Name]),
-        CONSTRAINT [CK_Edger_EdgeType] CHECK ([EdgeType] IN ('Round', 'Square'))
+        CONSTRAINT [PK_ToolingInventoryEdger]        PRIMARY KEY CLUSTERED ([Id] ASC),
+        -- NO UNIQUE CONSTRAINT AND NO NATURAL KEY. See the block above.
+        -- The surviving half of CK_Edger_EdgeType. CK_PSC_EdgeType stays where it
+        -- is: it constrains the SCHEDULE's chosen profile, which is a different
+        -- assertion from the tool's capability. Do not merge them.
+        CONSTRAINT [CK_TIE_EdgeType]        CHECK ([EdgeType] IS NULL OR [EdgeType] IN ('Round','Square')),
+        CONSTRAINT [CK_TIE_LineId]          CHECK ([LineId] IS NULL OR [LineId] IN ('FL2')),
+        CONSTRAINT [CK_TIE_RollQty]         CHECK ([RollQty] > 0),
+        CONSTRAINT [CK_TIE_StdRemoval]      CHECK ([StdRemovalFromOdIn] IS NULL OR [StdRemovalFromOdIn] > 0),
+        CONSTRAINT [CK_TIE_Od]              CHECK ([OdIn] IS NULL OR [MinOdIn] IS NULL OR [MinOdIn] < [OdIn]),
+        CONSTRAINT [CK_TIE_LifecycleStatus] CHECK ([LifecycleStatus] IN ('Active','In Service','In Grinding','Retired'))
+        -- Deliberately NO footage columns. See the life-model note above.
+        --
+        -- SerialNo uniqueness is a FILTERED index in script 07, on the same
+        -- reasoning as the die and the roll set: a plain UNIQUE admits only one
+        -- NULL and the seed leaves them all NULL until the client supplies serials.
     );
-    PRINT 'Created table: Edger';
+    PRINT 'Created table: ToolingInventoryEdger';
 END
 ELSE
-    PRINT 'Table already exists: Edger';
+    PRINT 'Table already exists: ToolingInventoryEdger';
+GO
+
+-- ------------------------------------------------------------
+-- ToolingInventoryEdgerGauge
+-- One row per GROOVE cut into an edger roll set.
+--
+-- The client's Tooling Inventory grid holds the whole set in ONE CELL --
+-- 'Gauge Range(") = .045, .040, .035' -- because, in Tim O'Brien's words of
+-- 24 Aug 2026, edgers "have multiple grooves cut into them at specific gauges".
+-- That is a repeating group, and G77 asked for a child table in terms rather
+-- than a delimited string. The failure mode a VARCHAR causes is specific: a
+-- pass schedule can never select A GROOVE, only a whole tool.
+--
+-- GrooveNo is [PROPOSED] -- the grid does not number or order the grooves, and
+-- whether they are ordered across the roll face is one of Q95's legs (G104).
+-- It is nullable so that a row can record a gauge without asserting a position.
+--
+-- Uniqueness is (EdgerToolId, GaugeIn): one tool cannot carry the same gauge
+-- twice. That UNIQUE leads on EdgerToolId, so NO separate index on the FK
+-- column is created in script 07 -- see 07's trailing block.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ToolingInventoryEdgerGauge]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[ToolingInventoryEdgerGauge] (
+        [Id]          INT           NOT NULL IDENTITY(1,1),
+        [EdgerToolId] INT           NOT NULL,              -- FK to ToolingInventoryEdger.Id, added by script 06
+        [GaugeIn]     DECIMAL(8,4)  NOT NULL,              -- one groove: .0450 | .0400 | .0350
+        [GrooveNo]    TINYINT       NULL,                  -- [PROPOSED] position across the roll face -- Q95
+        [IsActive]    BIT           NOT NULL CONSTRAINT [DF_ToolingInventoryEdgerGauge_IsActive] DEFAULT (1),
+
+        CONSTRAINT [PK_ToolingInventoryEdgerGauge] PRIMARY KEY CLUSTERED ([Id] ASC),
+        CONSTRAINT [UQ_TIEG_ToolGauge]             UNIQUE ([EdgerToolId], [GaugeIn]),
+        CONSTRAINT [CK_TIEG_GaugeIn]               CHECK ([GaugeIn] > 0)
+    );
+    PRINT 'Created table: ToolingInventoryEdgerGauge';
+END
+ELSE
+    PRINT 'Table already exists: ToolingInventoryEdgerGauge';
 GO
 
 -- ---------------------------------------------------------------------------
@@ -1125,7 +1291,7 @@ GO
 -- OI-110 IS NOT CLOSED BY THIS.  Which database the Machine Setup tabs
 -- write to is still unanswered, and the evidence actually points at
 -- united_db: every other tab persists to a united_db satellite FK'd to
--- united_db.dbo.machines, and 10_CommonDB_Insert_WIPStations_FlatWire.sql
+-- united_db.dbo.machines, and the withdrawn WIP-station seed (FW-241)
 -- says the template tabs "live in satellite tables ... and are separate
 -- work".  FlatWireDB is the D-02/D-31 decision, and it costs three things:
 --   1. NO FK to machines is possible (cross-database).  The app must map

@@ -15,10 +15,10 @@
 >
 > ⚠ **`OI-12` escalates to a live defect** — Die Change’s 60/85 % bands and Die Management’s
 > 65/80 % bands now derive from one table. **`OI-141` stays open** on whether there is one die
-> register or two. **`G77`** still owns edger and straightener inventory, which this does not cover.
+> register or two. **`G77`** still owns **straightener** inventory, which this does not cover. *(It owned the edger half too until 6 Sep 2026 — `D-53`.)*
 >
 > ⚠ **A FOURTH tool type landed 3 Sep 2026 — `D-42`.** The client's Tooling Inventory tab carries
-> **Dies · Edgers · Straighteners · Roll Sets**, and `ToolingInventoryRollSet` (mill rolls and the
+> **Dies · Edgers · Straighteners · Roll Sets**. ⭐ **Three of the four are now built** — `ToolingInventoryDie`, `ToolingInventoryRollSet`, and **`ToolingInventoryEdger` + `ToolingInventoryEdgerGauge` (6 Sep 2026, `D-53`, which absorbed `Edger`)**. ⚠ **Only the STRAIGHTENER is unbuilt, and that is all `G77` still owns.** `ToolingInventoryRollSet` (mill rolls and the
 > DB1/DB2 capstan rolls) is built. **Dancers, entry guides, payoffs and spools are explicitly NOT
 > tooling.** Stories [`FW-259`](../../30-database/tasks/FW-259.md) ·
 > [`FW-260`](../../40-backend/tasks/FW-260.md) · [`FW-261`](../../50-frontend/tasks/FW-261.md),
@@ -35,7 +35,7 @@
 ---
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-09-03 — **a fourth tool type landed (`D-42`)**: the Tooling Inventory tab carries Dies · Edgers · Straighteners · **Roll Sets**, with `FW-259`–`FW-261` (27 h). ⛔ Its column set is `[PROPOSED]` — `G87` / `Q92`. *(previously 2026-08-06)*
+**Last Updated:** 2026-09-06 — **the edger register is built and `G77`'s edger half closes (`D-53`)**: `Edger` is **absorbed** into `ToolingInventoryEdger`, with `ToolingInventoryEdgerGauge` holding one row per groove. Three of the four tool types now have schema; **only the straightener does not**. *(previously 2026-09-03 — **a fourth tool type landed (`D-42`)**: the Tooling Inventory tab carries Dies · Edgers · Straighteners · **Roll Sets**, with `FW-259`–`FW-261` (27 h). ⛔ Its column set is `[PROPOSED]` — `G87` / `Q92`. *(previously 2026-08-06)*
 **Status:** Ready to build
 **Layer:** Full-stack vertical slice (admin)
 **Owner:** **FE + BE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
@@ -49,7 +49,7 @@
 > [`phase-13-mvp2-die-management.md`](./phase-13-mvp2-die-management.md):
 > the screen, the die lifecycle service and the die inventory status vocabulary.
 > **What stays MVP-1:** the alloy lookup admin and CRUD (`FW-004`), machine template tabs (`FW-003`), role
-> assignment, the `Stand`/`Drawer`/`Edger`/`Spool` lookups, and the **30 Jul alloy client answers
+> assignment, the `Stand`/`Drawer`/**`ToolingInventoryEdger`**/`Spool` lookups, and the **30 Jul alloy client answers
 > below — which block Phase 4**. The **`FW-N07` table half is also MVP-1**: MVP-1's die change (`FW-073`) rejects
 > a die not in inventory, so the 8 h costed for the missing die table stays here even though the screen does not.
 > **The 209 h figure above was not apportioned** and now overstates MVP-1. The ladder's rung-5 99 h is **not** the
@@ -64,7 +64,7 @@
 ## UI / Backend / Database
 - **UI:** alloy lookup admin grid; machine template tabs (Machines app, FW-003); role assignment. *(The **Die Management** screen is **MVP-2** — see [`phase-13-mvp2-die-management.md`](./phase-13-mvp2-die-management.md).)*
 - **Backend:** alloy CRUD (audit-logged, restricted); machine config. *(The die lifecycle service is MVP-2.)*
-- **Database:** alloy lookup; `Stand`/`Drawer`/`Edger` lookups; `Spool` (article, with its merged size limits) configuration`. *(The die inventory table — status `Active/Nearing/Overdue/Spare/Retired` — is **MVP-2**, and its 8 h went with it. `Drawer` is seeded in Phase 1 and is what MVP-1's die change validates against.)*
+- **Database:** alloy lookup; `Stand`/`Drawer`/**`ToolingInventoryEdger`** lookups *(`Edger` absorbed 6 Sep 2026, `D-53`)*; `Spool` (article, with its merged size limits) configuration`. *(The die inventory table — status `Active/Nearing/Overdue/Spare/Retired` — is **MVP-2**, and its 8 h went with it. `Drawer` is seeded in Phase 1 and is what MVP-1's die change validates against.)*
 
 ## Real-Time / Testing / Deliverables
 - Tests: alloy edit audit + restriction; **size-level** die validation against `Drawer` (an unrecognised size is refused). Deliverables: alloy admin, machine tabs, role config. *(The die-life banner, threshold/reset tests and the register-before-scan rule are **MVP-2** — MVP-1 has no per-tool registration to test.)*

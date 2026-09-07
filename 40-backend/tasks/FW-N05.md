@@ -2,9 +2,9 @@
 id: FW-N05
 legacy_id:
 title: OPC ingest hosted service and bounded channel
-status: not-started
-status_confirmed: false
-status_note: "⚠ **Deferred for the trial, not cancelled** — `FW-203` stands in until commissioning"
+status: blocked
+status_confirmed: true
+status_note: "⚠ **Deferred for the trial, not cancelled** — `FW-203` stands in until commissioning. ⛔ **`not-started` was WRONG and is corrected 6 Sep 2026** — the defect [`CHANGELOG.md`](../../CHANGELOG.md) raised on 31 Aug against **1,030 implemented lines** and left unfixed. The contract and the hosted service are BUILT and harness-verified (9/9); the service is **registered off** and cannot complete a single read until **`G59`** gives it an identity. That is `blocked`, not unstarted"
 owner:
 jira:
 mvp: 1
@@ -15,7 +15,7 @@ priority: critical
 hours: 32
 sprint: S0
 depends_on: [FW-144, FW-080]
-blocked_by: [G29, G32, G33, PLC-Q05]
+blocked_by: [G59, G60, G29, G32, G33, PLC-Q05]
 has_plan: true
 started:
 completed:
@@ -23,7 +23,7 @@ completed:
 # FW-N05 · OPC ingest hosted service and bounded channel
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 28, 2026 — ✅ **EXECUTED, AND VERIFIED BY HARNESS AND BY BOOT. The contract is built and the hosted service is built, registered off, and blocked exactly where `P-120` said it would be.** Built in `ual-api`: **`Reading`** (`FlatWire.Domain/Models/RealTime/Reading.cs`), **`IReadingChannel`** + **`ReadingChannel`** (bounded, `DropOldest`, `SingleReader`, `SingleWriter = false`), **`OpcIngestService`** (`FlatWire.Infrastructure`), three new options (`SimulateOpcFeed`, `ChannelCapacity`, `IngestLines`) with validation, and the registration seam `AddFlatWireOpcIngest`. **0 errors, 13 warnings on a clean rebuild — 5 code warnings, all pre-existing, none in these files.** ✅ **The headline behaviour is verified: 9 of 9 harness assertions pass.** A 1,524-snapshot burst against a stalled drain stayed **bounded at 1,024**, the **oldest 500 were dropped and the freshest survived**, `written − drained = 500` made the resolution loss observable, and the whole burst allocated **349.7 KB** — ~235 bytes a snapshot, so `P-28`'s 1024 default costs ~240 KB. ⛔ **EXECUTION FOUND A DEFECT THE REVIEW DID NOT: the configuration binder APPENDS to a collection that already holds C# defaults.** `IngestLines = ["FL1","FL2"]` in code plus the same two in `appsettings` bound to **`FL1, FL2, FL1, FL2`** — four poll loops reading every tag **twice a second**, which the boot log printed as *"OPC ingest started: FL1, FL2, FL1, FL2"*. Worse than the doubling: a deployer setting `["FL3"]` would get `FL1, FL2, FL3` and **could not remove the first two**, making this card's `{FL1,FL2}`-or-`{FL3}` rule impossible to honour. **Fixed by removing the C# default** (`P-123`) — the default lives in `appsettings.json`, where it can be overridden — **plus a dedupe guard** in the service, since a deployer listing a line twice is the same bug by hand. ✅ **Re-booted: `FL1, FL2` once each.** ✅ **`G59`/`G60` reproduced by boot, by name:** with the flag flipped, both lines log *"cannot resolve … `FlatWireOpc:OpcModuleId` is not configured (gap G60 …)"* — **once per line, twice in 15 seconds of ticking**, and the host **stayed up** (health `200`, `database.reachable: true`). That last property is the one that matters: a deferred, blocked ingest does not take the API down. ⚠ **Two of this card's own numbers are corrected by the build: the read list is 14 of FL1's 17 paths and 11 of FL2's 22 — 25 tag reads in 2 POSTs a second**, not the ~37 this card estimated, because the dancers, the two edger keys and the write-only interlock have nowhere to land (`P-122`). ⚠ **And one is now stale: `Polly` IS in `FlatWire.Infrastructure`'s package set** — `FW-151` added it on 28 Aug. What was missing instead was **`Microsoft.Extensions.Hosting.Abstractions`**, which AC 1's placement requires and which was **not** centrally pinned; added at **8.0.1** to match the net8.0 shared framework (`P-121`). ⚠ **One review finding withdrawn:** the *"no fault tag on any FM2 stand"* item is **already tracked** — `TagNames.Fm2S3Faulted` carries a derived path and its own note citing `PLC-Q02` / `[PLC §5.4]`. It was not a new gap. Change history is in [`CHANGELOG.md`](../../CHANGELOG.md)
+**Last Updated:** September 6, 2026 (executed) — ⭐ **THE TWO THINGS THIS CARD COULD STILL DO WERE DONE, AND ONE OF THEM FALSIFIED A `✅` IT ALREADY CARRIED.** ✅ **The channel harness is in the repository at last** — `ReadingChannelTests`, 6 tests replaying the 28 Aug burst (1,524 → bounded at 1,024, oldest 500 dropped, freshest survived, `written − drained = 500`), **suite 279 passing / 0 failed** (was 273), **no production file changed**. ⭐ **Mutation-checked, not merely green**: `DropOldest` → `DropWrite` fails exactly one test, the freshest-survive one — the regression that bounds memory identically and would silently freeze the panel on stale readings. ✅ **The owed boot re-run was performed against the LIVE registration** and failed exactly where `P-120` said it would: the `OpcModuleId` guard no longer fires, the resolve reaches `GetOPCInfo`, and **`G59` throws first** — `NullReferenceException at GetTokenAsync ← RestClient.SetHeadersAsync`, named by the ingest, once per line. Health **`200`**, `database.reachable: true`, host up throughout — **a blocked ingest degrades the service and does not stop it.** ✅ **The registration was verified independently in `CommonDB`**: module **6** `FlatWire`, `ct=21317`, **41** mappings (machine 125 → 18, 126 → 23), 2 system-error rows — and **`OPCTags` has no `TagKey` column**, confirming `D-45` against the database rather than the register. ⛔ **NEW GAP `G102`**: with `G59` open the ingest logs **a full stack trace twice a second** — 78 stack traces + 156 `RestClient` INFO lines in 40 s against **2** from its own guard, ≈500,000 a day. **The guard works and the ingest is not at fault** — `RestClient` logs beneath it — and it reads as new **only because `G60` closed**, so §5's *"2 log lines"* was true when written and is falsified by its own re-run. ⚠ **`G59` remains the sole blocker; nothing here unblocks the story.** *(previously September 6, 2026 — ⚠ **RECONCILED AGAINST `D-45`–`D-51`. The build is untouched and every measured number in this card still holds; what moved is the ground under two of its sections.** ⛔ **The one correction that would have caused damage: §2.3's *"the map has moved to `CommonDB`, so zero tag paths in any file"* is WRONG and is struck.** `D-45` (5 Sep) withdrew `G93` without building it — there is **no `TagKey` column**, no `CommonDbTagPathResolver`, and `appsettings` **keeps** all 72 paths behind the unchanged `ITagPathResolver` while `OPCTags` registers them too, deliberately, reconciled by a config-vs-rows diff. The check reverts to **zero tag-path strings in *code***, which is what this card was built to and passed. ✅ **`G60` IS HALF CLOSED — `11_` ran and committed on `DEV00164-001`, 6 Sep 2026**: module **6** at `ConnectionType` **21317**, 4 endpoint mappings, 41 `OPCTags`, 41 mappings — so §2.4's *"none of the eight `30-database/scripts/` files touches `OPCModules`"* is stale, and `OpcModuleId` is now **`6` in `appsettings`**, which retires the exact boot message §5 recorded as this card's `G60` evidence. ⛔ **`G59` is now the sole *design* blocker left, and it is unmoved.** ⭐ **`PLC-Q08` IS ANSWERED — `D-47`: FL3 has no controller of its own, so this card's `{FL1,FL2}`-or-`{FL3}` rule is RETIRED, not pending.** FL3 is not registered, has no `MachineId`, and its 33 configured paths still lack the `PLC` element `D-46` added to FL1's and FL2's — **FL3 can never simply be added to `IngestLines`**, and the two-controller push that replaces the rule is `G99`, on the write path. ✅ **`G94` no longer touches this ingest — `D-51`, 6 Sep**: flat wire deploys from `feature/UADEV-23146`, where `ReadTag` calls `GetOpcUaTagName()`. ⚠ **But `ConnectionType 21317` makes flat wire the first module on `OPCUAManager`** — the manager that never sets `IsGood` — so §2.4 row 3's *"do not gate on `IsGood`"* is no longer a precaution against an unknown, it is the only available behaviour. ✅ **`D-50` reversed the no-backend-tests rule for the unit level and `FlatWire.UnitTests` now exists in `FlatWire.sln`**, so §5's stated reason for leaving the channel harness uncommitted is spent — **no card owns it yet**. ⚠ **Two `ual-api` comment blocks still teach the retired FL3 rule** (§7). *(previously August 28, 2026 — ✅ **EXECUTED, AND VERIFIED BY HARNESS AND BY BOOT. The contract is built and the hosted service is built, registered off, and blocked exactly where `P-120` said it would be.** Built in `ual-api`: **`Reading`** (`FlatWire.Domain/Models/RealTime/Reading.cs`), **`IReadingChannel`** + **`ReadingChannel`** (bounded, `DropOldest`, `SingleReader`, `SingleWriter = false`), **`OpcIngestService`** (`FlatWire.Infrastructure`), three new options (`SimulateOpcFeed`, `ChannelCapacity`, `IngestLines`) with validation, and the registration seam `AddFlatWireOpcIngest`. **0 errors, 13 warnings on a clean rebuild — 5 code warnings, all pre-existing, none in these files.** ✅ **The headline behaviour is verified: 9 of 9 harness assertions pass.** A 1,524-snapshot burst against a stalled drain stayed **bounded at 1,024**, the **oldest 500 were dropped and the freshest survived**, `written − drained = 500` made the resolution loss observable, and the whole burst allocated **349.7 KB** — ~235 bytes a snapshot, so `P-28`'s 1024 default costs ~240 KB. ⛔ **EXECUTION FOUND A DEFECT THE REVIEW DID NOT: the configuration binder APPENDS to a collection that already holds C# defaults.** `IngestLines = ["FL1","FL2"]` in code plus the same two in `appsettings` bound to **`FL1, FL2, FL1, FL2`** — four poll loops reading every tag **twice a second**, which the boot log printed as *"OPC ingest started: FL1, FL2, FL1, FL2"*. Worse than the doubling: a deployer setting `["FL3"]` would get `FL1, FL2, FL3` and **could not remove the first two**, making this card's `{FL1,FL2}`-or-`{FL3}` rule impossible to honour. **Fixed by removing the C# default** (`P-123`) — the default lives in `appsettings.json`, where it can be overridden — **plus a dedupe guard** in the service, since a deployer listing a line twice is the same bug by hand. ✅ **Re-booted: `FL1, FL2` once each.** ✅ **`G59`/`G60` reproduced by boot, by name:** with the flag flipped, both lines log *"cannot resolve … `FlatWireOpc:OpcModuleId` is not configured (gap G60 …)"* — **once per line, twice in 15 seconds of ticking**, and the host **stayed up** (health `200`, `database.reachable: true`). That last property is the one that matters: a deferred, blocked ingest does not take the API down. ⚠ **Two of this card's own numbers are corrected by the build: the read list is 14 of FL1's 17 paths and 11 of FL2's 22 — 25 tag reads in 2 POSTs a second**, not the ~37 this card estimated, because the dancers, the two edger keys and the write-only interlock have nowhere to land (`P-122`). ⚠ **And one is now stale: `Polly` IS in `FlatWire.Infrastructure`'s package set** — `FW-151` added it on 28 Aug. What was missing instead was **`Microsoft.Extensions.Hosting.Abstractions`**, which AC 1's placement requires and which was **not** centrally pinned; added at **8.0.1** to match the net8.0 shared framework (`P-121`). ⚠ **One review finding withdrawn:** the *"no fault tag on any FM2 stand"* item is **already tracked** — `TagNames.Fm2S3Faulted` carries a derived path and its own note citing `PLC-Q02` / `[PLC §5.4]`. It was not a new gap.)*)* Change history is in [`CHANGELOG.md`](../../CHANGELOG.md)
 **Document Type:** Implementation plan for a single backlog story
 **Status:** ⚠ **Deferred for the trial, not cancelled** — `FW-203` stands in until commissioning
 **Owner:** Real-time (RT) stream
@@ -160,11 +160,19 @@ They sit on opposite sides of the channel. **Never derive one from the other**
 **`ITagPathResolver.LogicalNamesFor(LineId)`** is documented on the built interface as *"the
 ingest subscription list — `FW-N05` subscribes from this."* **Resolve through that interface;
 never compose a path in code** — that is what keeps `grep` at zero hits outside configuration,
-and it is the seam `OI-A` was contained behind. ✅ **The map has now moved — `D-44`, 4 Sep 2026:
-it is the `CommonDB` `OPCTags` registration.** Nothing in this story changes: the interface,
-the call and the start-up resolve are identical, and only the implementation behind it becomes a
-`CommonDbTagPathResolver` (`FW-238`, gated on `G93`). ⚠ **One check tightens** — *zero hits
-outside configuration* becomes **zero hits in any file**, since no file holds a path at all.
+and it is the seam `OI-A` was contained behind.
+
+> ⛔ **STRUCK 6 Sep 2026 — this paragraph said the map had moved out of `appsettings`, and it has
+> not.** It read: *"✅ The map has now moved — `D-44`, 4 Sep 2026: it is the `CommonDB` `OPCTags`
+> registration … only the implementation behind it becomes a `CommonDbTagPathResolver` (`FW-238`,
+> gated on `G93`). ⚠ One check tightens — zero hits outside configuration becomes **zero hits in any
+> file**, since no file holds a path at all."* **`D-45` (5 Sep) withdrew `G93` without building it.**
+> There is no `TagKey` column, so `OPCTags` cannot be addressed by meaning and **`ConfigurationTagPathResolver`
+> stays** — `appsettings` resolves *and* `OPCTags` registers, both deliberately, kept in step by a
+> config-vs-rows diff (`FW-238`). ⚠ **Acting on the struck text would have been destructive**: it
+> licenses deleting the 72 paths this service resolves from. **The check is `zero tag-path strings in
+> CODE`** — what §5 measured and what this build passes — not *zero in any file*. ✅ **Nothing in the
+> built service changes either way**; that is what the seam bought.
 
 ⚠ **Resolve the path list ONCE at start-up, not per tick.** `Resolve` throws
 `KeyNotFoundException` **by design** — an unresolved path must fail the operation that needed
@@ -188,11 +196,25 @@ most of it**, and it disagrees with the gap's *"no named surviving consumer"*:
 | `ITInhibit` | Written, never read (`[PLC §8.1]`) | **Not a read at all** |
 
 ⛔ **FL3 is configured and inert, and the ingest must poll FL1 and FL2 only.** The built
-`FlatWireOpcOptions.Lines` says so in as many words, and the reason is `PLC-Q08` / `G30`:
-whether FL3's finishing stands are addressed `FL3.FM2.*` or **`FL2.FM2.*`** is unanswered. Under
-the second answer, polling FL2 and FL3 together **reads the same load cell and the same three
-stands twice a second** — a doubling of OPC load that no screen would reveal. When `PLC-Q08`
-answers, the rule is **{FL1, FL2} *or* {FL3}, never all three.**
+`FlatWireOpcOptions.Lines` says so in as many words, and the reason **used to be** the open
+`PLC-Q08` / `G30`.
+
+✅ **`PLC-Q08` IS ANSWERED — `D-47`, 5 Sep 2026, and the answer makes FL3's exclusion permanent
+rather than provisional.** FL3 has **no controller of its own**: FM1 and the die blocks belong to
+the FL1 controller, FM2 to the FL2 controller, and **there is no `FL3.PLC.*` namespace on any
+machine**. So FL3's tags *are* FL1's and FL2's, already polled.
+
+⛔ **The `{FL1, FL2}` *or* `{FL3}` rule is therefore RETIRED — do not implement it, and do not wait
+for it.** Three measured facts close it (6 Sep 2026): FL3 is **not registered** (`11_` seeds
+machines 125 and 126 and `GetOPCServerAndTagDetails` correctly returns nothing for 127); FL3 has
+**no `MachineId`** in `appsettings`, so naming it in `IngestLines` fails the resolve **by name**;
+and FL3's 33 configured paths still read `FL3.AGC.Gauge`, **without the `PLC` element `D-46` added
+to FL1's and FL2's** — they address nothing. **`IngestLines` is `{FL1, FL2}`, full stop.**
+
+⚠ **What replaces the rule is a WRITE-path problem, not this card's** — `G99`: one FL3
+acknowledgement must now push to **two** controllers, in two `WriteTag` batches, with a re-clear
+spanning two failure domains. **The ingest is unaffected**, because reading FL1 and FL2 already
+reads every tag FL3 has.
 
 > ⚠ **"Subscription" is the register's word, not the mechanism.** `OPCConnection` does expose a
 > real subscription path (`IOPCManager.SubscribeAll`, pushed over `OPCManagerHub`), but the
@@ -219,7 +241,7 @@ here, because this path runs continuously rather than once per operator action.*
 |---|---|---|
 | 1 | **`ReadTag([FromBody] OPCInfo opc)` returns `List<OPCTag>`** — the handler resolves one manager, checks connectivity **once**, then loops `opcManager.ReadTag(tag)` over `OPC.Tags` | **One POST reads a whole line.** 2 POSTs/s at the 1 s default, not ~39 (`P-118`) |
 | 2 | **`GetOPCInfo` must run first** — `MachineId`, `OPCServers`, `ConnectionType` and `IsReadonly` are `CommonDB` state and cannot be hand-built (`FW-151` `P-104`) | Resolve **once at start-up, every line in one call.** ✅ The cache is **already built and configured** — `FlatWireOpcOptions.OpcInfoCacheSeconds`, default **300** — so reuse it rather than adding one. Never resolve per tick |
-| 3 | ⛔ **A failed read is indistinguishable from a good one.** Both managers return the tag **unchanged** on a null read or an `OpcException`; `OPCUAManager.ReadTag` logs at `LogInformation` and **never sets `IsGood`**, while `OPCDAManager.ReadTag` does — and `ConnectionType` decides which one runs (`G58`'s read-side twin) | **Send `Value = null` and treat a null return as *no reading*** (`FW-151` `P-105`'s sentinel, natural on a read path). **Do not gate on `IsGood`.** Publish `null`, and **never carry the previous tick's value forward** |
+| 3 | ⛔ **A failed read is indistinguishable from a good one.** Both managers return the tag **unchanged** on a null read or an `OpcException`; `OPCUAManager.ReadTag` logs at `LogInformation` and **never sets `IsGood`**, while `OPCDAManager.ReadTag` does — and `ConnectionType` decides which one runs (`G58`'s read-side twin). ⛔ **DECIDED 6 Sep 2026, and against us: `11_` registers flat wire at `ConnectionType` 21317, so this is the FIRST module to run on `OPCUAManager`** — the manager that never sets it | **Send `Value = null` and treat a null return as *no reading*** (`FW-151` `P-105`'s sentinel, natural on a read path). **Do not gate on `IsGood`** — it is now not merely unreliable but **never set on our path**, so a reviewer asking for the `IsGood` check is asking for a field that is always `false`. Publish `null`, and **never carry the previous tick's value forward** |
 | 4 | ⛔ **`RestClient` reports transport faults in-band** — it catches everything and returns `Result.Fail`; a connectivity failure inside the handler throws and surfaces the same way | Branch on **`Result.IsFailure`**, not on an exception (`FW-151` `P-109`). Polly retries on the result |
 
 ⛔ **And two blockers that stop the first line of it — `P-120`.**
@@ -230,10 +252,19 @@ here, because this path runs continuously rather than once per operator action.*
   `ReadTagQueryValidator` independently requires a **non-empty `AccessToken`** and
   `MachineId > 0`, and both routes sit behind the global `AuthorizeFilter`. **The register names
   `SetITInhibit` and hold/restore; this story is the third and largest case.**
-- **`G60` — nothing registers flat wire with `OPCConnection`.** `OPCModules` has five members
-  and no flat wire one, and none of the eight `30-database/scripts/` files touches
-  `OPCModules` / `OPCServers` / `OPCTags` / `OPCTagApplicationMapping`. **With a token and no
-  registration, `GetOPCInfo` returns an empty list.**
+- ✅ **`G60` — HALF CLOSED 6 Sep 2026. The registration now exists.** As written this bullet said
+  *"`OPCModules` has five members and no flat wire one, and none of the eight
+  `30-database/scripts/` files touches `OPCModules` / `OPCServers` / `OPCTags` /
+  `OPCTagApplicationMapping`"* — **both halves are now stale.**
+  [`11_CommonDB_Insert_OPCRegistration_FlatWire.sql`](../../30-database/scripts/11_CommonDB_Insert_OPCRegistration_FlatWire.sql)
+  ran and committed on `DEV00164-001`: module **6** (not the enum's apparently-free `5`, which the
+  slitters hold — `G96`), `ConnectionType` **21317**, **4** endpoint mappings, **41** `OPCTags`
+  (39 data + 2 system-error rows, `G95`) and 41 tag mappings. `OpcModuleId` is **`6` in
+  `appsettings`**. ⚠ **Do not reconcile 41 against `FW-144`'s 72** — 41 excludes FL3 (`D-47`) and
+  counts registered rows; 72 counts bound paths. Both are right.
+  ⛔ **Not retired, and the remainder is what bites here:** `GetOPCInfo` has **never been exercised
+  through the running service** (`FW-238` §3 step 9 — and this card's own boot is one of the two
+  proofs owed), and **nothing is registered on `test1`, staging or production.**
 
 ⚠ **`RestClient` is registered `AddScoped` (`FW-151` step 0) and an `IHostedService` is a
 singleton** — take an `IServiceScopeFactory` and open a scope per tick. Cheap, and the
@@ -300,18 +331,21 @@ not a missing reading — `SpeedFpm` even publishes `IsStopped`).
 
 ## 3. Build order
 
-0. ⛔ **Identity and registration first** (`P-120`) — without them nothing after step 1 can be
-   executed even once. `G59` decides how a hosted service authenticates (the `CoolingChamber`
-   badge-login precedent, or a token held for the run's duration); `G60` adds the flat wire
-   `OPCModules` member and the `CommonDB` registration script. **Neither is this story's to
-   decide alone — raise both now, not in the 40 h Phase-14 window.**
+0. ⛔ **Identity first** (`P-120`) — without it nothing after step 1 can be executed even once.
+   ✅ **`G60`'s half is DONE on `DEV00164-001`** (`11_`, 6 Sep 2026 — §2.4), so the registration
+   script no longer has to be written; what remains of it is **running `11_` on every other
+   environment** and proving `GetOPCInfo` through the running service. ⛔ **`G59` is untouched and
+   is now the only thing standing between this service and its first successful read**: it decides
+   how a hosted service authenticates (the `CoolingChamber` badge-login precedent, or a token held
+   for the run's duration). **Still not this story's to decide alone — raise it now, not in the
+   40 h Phase-14 window.**
 1. `IHostedService` in `FlatWire.Infrastructure`, reading through the existing
    **`OPCConnection`** domain (`[ARC §2.2]`: the tag layer to integrate with) — `GetOPCInfo`
    **once** at start-up, cached (§2.4 row 2). ⚠ The AC says *"FL1/FL2/FL3"*; **build for three
    and poll two** — FL3 is configured and inert (step 2), exactly as `FlatWireOpcOptions.Lines`
    already is.
 2. **One `PeriodicTimer` loop per polled line — FL1 and FL2 only** (§2.3: FL3 is configured and
-   inert pending `PLC-Q08` / `G30`), `await`ing its read inside the loop, so a slow OPC read
+   inert **permanently** — `PLC-Q08` is answered by `D-47`, not pending), `await`ing its read inside the loop, so a slow OPC read
    **delays the next poll instead of stacking** and one slow line never blocks the other.
    `WaitForNextTickAsync` skips missed ticks rather than queueing them, which is the behaviour
    wanted. No fire-and-forget per tick.
@@ -431,6 +465,14 @@ controller read, and it is the trade the AC's *"degrades resolution"* already na
 how a deferred plan hides its own hardest precondition: **the first `GetOPCInfo` this service
 issues fails before the network, and the register does not say so.**
 
+> ✅ **Half discharged 6 Sep 2026, and the decision was right to force it.** `G60` was raised on
+> 28 Aug because this plan insisted on it; `FW-238` owned it, and `11_` ran on `DEV00164-001` on
+> 6 Sep — **outside** the Phase-14 window, which is exactly what `P-120` was for. It surfaced four
+> things a commissioning session would otherwise have paid for: `G95` (no system-error row ⇒ the
+> whole line is invisible, a symptom **identical** to no registration), `G96` (the enum's free-looking
+> `5` is in production), `G97` (no UA endpoint) and `G100` (column drift). ⛔ **`G59` is NOT
+> discharged and is now the whole of step 0.**
+
 **So they are build-order step 0** (§3), owned here to the extent of raising them with dates and
 named owners. The reasoning is `G60`'s own: `SimulatePLCTagPush` is `true` in every environment
 until commissioning, so **nothing exercises this path before Phase 14** — the window
@@ -482,9 +524,15 @@ already holds items. Four poll loops, every tag read twice a second, and the boo
 *"OPC ingest started: FL1, FL2, FL1, FL2."*
 
 **The worse half is not the doubling.** A deployer setting `["FL3"]` would get `FL1, FL2, FL3`
-and **could not remove the first two**, so `{FL1,FL2}`-or-`{FL3}` — the rule that keeps FL3's
-possible aliasing of FL2's namespace from double-reading every tag — would be unhonourable from
-configuration.
+and **could not remove the first two** — a configuration key that cannot express the operator's
+intent is broken whatever that intent turns out to be.
+
+⚠ **Amended 6 Sep 2026 — the decision stands, its second example does not.** This paragraph
+originally justified the *"could not remove the first two"* half by the `{FL1,FL2}`-or-`{FL3}`
+rule, and **`D-47` retired that rule** (§2.3): FL3 has no controller, so it is never polled under
+any answer. ✅ **The defect and the fix are unchanged and were measured** — a bound list that
+silently appends to a C# default is wrong on its own terms, and `IngestLines` is the one bound
+list in the surface.
 
 **So the property starts empty and the default lives in `appsettings.json`**, where it can
 actually be overridden, and the validator refuses an empty list by name. **Plus a dedupe guard
@@ -504,14 +552,14 @@ the service with the flag flipped**; results below are measured, 28 Aug 2026.
 
 | AC | Result |
 |---|---|
-| **Bounded channel, drop-oldest/coalesce** | ✅ **9 of 9 harness assertions.** A **1,524**-snapshot burst against a stalled drain stayed **bounded at 1,024**; the **oldest 500 dropped, the freshest survived** (`first survivor = 500`, `last = 1523`); `written − drained = 500`; **349.7 KB** allocated for the whole burst. **The one behaviour that matters, and it holds** |
-| Hosted service reads via `OPCConnection` | ⛔ **Not executable, as `P-120` predicted.** With `SimulateOpcFeed=false` both lines log **`G60` by name** and keep trying. Recorded as the result rather than skipped — it needs `G59` (identity) and `G60` (registration), not hardware |
-| Tag paths from configuration | ✅ **Zero tag-path strings in the new code.** Paths come from `ITagPathResolver`; the read list is `TagNames` constants |
+| **Bounded channel, drop-oldest/coalesce** | ✅ **9 of 9 harness assertions.** A **1,524**-snapshot burst against a stalled drain stayed **bounded at 1,024**; the **oldest 500 dropped, the freshest survived** (`first survivor = 500`, `last = 1523`); `written − drained = 500`; **349.7 KB** allocated for the whole burst. **The one behaviour that matters, and it holds.** ⭐ **AND IT IS NOW IN THE REPOSITORY — `ReadingChannelTests`, 6 replayable tests, committed 6 Sep 2026.** Same burst, same four properties, in `FlatWire.UnitTests/Infrastructure/Services/`. ✅ **Mutation-checked, so it is not a test that only passes:** flipping the production `DropOldest` to `DropWrite` **fails `The_oldest_are_dropped_and_the_freshest_survive` and nothing else** — which is the point, because `DropWrite` bounds memory identically and would silently freeze the panel on stale readings instead. Suite **279 passing, 0 failed** (was 273); `ReadingChannel.cs` byte-identical after the mutation was reverted |
+| Hosted service reads via `OPCConnection` | ✅ **RE-RUN DONE 6 Sep 2026, and it failed where this card predicted it would.** With `SimulateOpcFeed=false` against the live registration, the `OpcModuleId` guard **no longer fires** and the resolve reaches `GetOPCInfo`, where **`G59` throws first** — `NullReferenceException at AuthenticationHttpContextExtensions.GetTokenAsync ← RestClient.SetHeadersAsync`, and the ingest names the gap: *"…this is gap G59 — RestClient takes its bearer token from the current HttpContext and a hosted service has none."* **Once per line, exactly as designed.** ⛔ **Still not executable, and `G59` is now demonstrably the only thing in the way** — `P-120` predicted this in order. *(Superseded evidence, 28 Aug: both lines logged `G60` by name at the configuration guard, before any HTTP call.)* |
+| Tag paths from configuration | ✅ **Zero tag-path strings in the new code.** Paths come from `ITagPathResolver`; the read list is `TagNames` constants. ⚠ **This is the correct check and it survives `D-45`** — §2.3's struck *"zero in any file"* would have failed it, since `appsettings` holds all 72 by design |
 | Publish interval | ✅ `1000 ms` observed at boot; the validator rejects anything outside NFR005's set, by name (`FW-144`) |
 | **One POST per line per tick** | ✅ **2 POSTs a second, reading 25 tags** — `FL1: 14 of 17`, `FL2: 11 of 22`, logged at boot. Per-path polling would be ~25 requests a second |
 | **FL3 is not polled** | ✅ `OPC ingest started: FL1, FL2` — after `P-123`'s fix. ⛔ **Before it: `FL1, FL2, FL1, FL2`** |
 | **A failed read publishes `null`, not a stale value** | ✅ By construction — a null `Value` back leaves the field null and **no previous tick's value is carried forward**. Warned **once per path**, naming `G33` |
-| **The ingest cannot take the API down** | ✅ **Measured.** 15 s of per-tick resolve failures produced **2 log lines** (one per line) and the host stayed up — health `200`, `database.reachable: true`. *(`opc.reachable: false` is pre-existing: no `OPCConnection` runs locally.)* |
+| **The ingest cannot take the API down** | ✅ **Re-measured 6 Sep 2026 against the live registration and it still holds — the property that matters is intact.** 40 s of per-tick resolve failures, host alive throughout, health **`200`**, `{"status":"Degraded","database":{"reachable":true,"latencyMs":521},"opc":{"reachable":false}}`. **A deferred, blocked ingest degrades the service; it does not stop it.** ⛔ **But the *"2 log lines"* half of this row is FALSIFIED by the same re-run, and it is now `G102`.** Measured in that window: **78** `NullReferenceException` stack traces and **156** `RestClient` INFO lines against **2** from the ingest's own guard — ≈**6 lines a second**, ~500,000 a day. ⚠ **The guard is not broken and the ingest is not at fault**: `RestClient` logs the caught exception with a stack trace on every attempt, beneath us. **It reads as new only because `G60` closed** — the old evidence stopped at the configuration guard and never reached `RestClient` |
 | Contract unchanged | ✅ `Reading` and `IReadingChannel` are published for `FW-203` and `FW-150`. **Nothing of this story was built before it** — no `Channel<>`, no `IHostedService`, no `Reading` existed |
 
 ⚠ **`TC-620`–`TC-623` remain untestable** — the AGC sample rate, client count, latency budget and
@@ -532,6 +580,27 @@ is NOT in `FW-263`–`FW-267`'s scope as minted** — the four layers are the do
 simulate branch, the line models and simulators, and the reachable DbContext-backed services. The
 harness described here remains the verification of record until a card exists for it.
 
+⭐ **And the obstacle is now gone — measured 6 Sep 2026: `FlatWire.UnitTests` EXISTS and is in
+`FlatWire.sln`.** Both reasons this harness stayed in a scratchpad have expired: the strategy
+reinstated the unit level (`D-50`), and there is no longer a test project to create. ✅ **The channel
+is the cheapest possible unit test and the highest-value one on this card** — `ReadingChannel` is
+pure in-memory, needs **no hardware, no `G59` identity, no registration and no database**, and it is
+the *only* acceptance criterion this story can prove today. **Write `capacity + N` snapshots with no
+reader; assert bounded-at-capacity, oldest-dropped, freshest-survived, and `written − drained = N`**
+— four asserts, one file, no fixture.
+
+✅ **DONE 6 Sep 2026 — the harness is no longer scratchpad-only.**
+`FlatWire.UnitTests/Infrastructure/Services/ReadingChannelTests.cs` carries the four properties plus
+the configured capacity and the argument guards: **6 tests, suite 279 passing / 0 failed**, up from
+273. **No production file changed** — the seam needed nothing, which is what `P-119`'s
+*"no lock anywhere"* design bought. ⭐ **It was mutation-checked rather than merely run green**:
+`DropOldest` → `DropWrite` fails exactly one test, the freshest-survive one. That is the assertion
+worth having, because `DropWrite` bounds memory identically and passes every other check while
+silently keeping the **oldest** 1,024 readings — a frozen panel rather than a lost sample.
+⚠ **`G101`'s indictment applies to this card no longer**: this verification is now *a property of
+the repository*, not *a claim about a build*. ⚠ **The other proofs stay manual** — the integration
+and contract levels remain withdrawn, so `GetOPCInfo` and the boot above are still hand-run.
+
 ---
 
 ## 6. Handoff
@@ -547,26 +616,37 @@ stands in until commissioning. `FW-211` — unscheduled — makes the two interc
 
 | Item | Effect here |
 |---|---|
-| ⛔ **`G59`** *(blocker, and this story is its largest case)* | **No service identity for a hosted-service read** — `GetOPCInfo` fails before the network. `P-120` |
-| ⛔ **`G60`** *(blocker)* | **Nothing registers flat wire with `OPCConnection`** — `GetOPCInfo` returns an empty list. `P-120` |
+| ⛔ **`G59`** *(blocker, and this story is its largest case)* | **No service identity for a hosted-service read** — `GetOPCInfo` fails before the network. `P-120`. ✅ **Reproduced on the running service 6 Sep 2026 against the LIVE registration** (§5): with `G60`'s configuration half closed, this is now the **only** thing between the ingest and its first read |
+| ⛔ **`G102`** *(new, 6 Sep 2026 — raised by executing this card)* | **While `G59` is open the ingest logs a full stack trace twice a second** — 78 stack traces + 156 `RestClient` INFO lines in a measured 40 s window against **2** from the ingest's own guard, ≈500,000 a day. ⚠ **The guard works and the ingest is not at fault**; `RestClient` logs the caught exception on every attempt beneath it. **New only because `G60` closed** — the old evidence stopped at the configuration guard and never reached `RestClient`. **The fix is small and is this service's**: back off a line's resolve once it has failed, since a null-reference identity failure cannot succeed on the next tick |
+| ⚠ **`G60`** *(HALF CLOSED 6 Sep 2026)* | ✅ **The registration is live on `DEV00164-001`** — `11_` committed module **6** at `ConnectionType` **21317**, 4 endpoint mappings, 41 `OPCTags`, 41 mappings, and `OpcModuleId` is `6` in `appsettings` (§2.4). ⛔ **Two halves left, and the first is this card's:** `GetOPCInfo` has never been exercised **through the running service** (`FW-238` §3 step 9 — a re-boot of this ingest is one of the two proofs owed, §5), and **`test1`, staging and production have nothing registered** |
 | **`PLC-Q05` / `G33`** *(blocker)* | The measure segment of **every** path is ours; **a wrong path fails silently.** ⚠ The literal `41` is struck — `FW-144` measured **72** bound (FL1 17 · FL2 22 · FL3 33), and the re-baseline is `G33`'s |
 | **`G29`** *(blocker)* | **No edger tag path exists on any line** |
 | **`G32` / `PLC-Q04`** *(blocker)* | FM2 station names pending sign-off |
 | **`G58`** | The read-side twin: a failed read returns the tag **unchanged**, and `IsGood` is set by only one of the two managers — §2.4 row 3 is the workaround, per-tag status is `OPCConnection`'s fix |
-| **`G94`** *(new, 4 Sep 2026)* | ⚠ **Off this story's path by DECISION, not by luck** — `P-118` polls `GetOPCInfo` and `ReadTag` rather than subscribing, so `OPCUAManager`'s notification defect (`:670`) cannot reach this ingest at all. ⛔ **But `ReadTag` is itself one of the five sites**: it passes the bare tag name, which resolves to namespace **0** where the subscription uses **2**. Latent only because every `OPCModules` row is `OPCDA` today — and `D-44` puts our 72 paths into that same registration. `OPCConnection`'s change, owned by `FW-236` |
+| ✅ **`G94`** *(no longer reaches this ingest — `D-51`, 6 Sep 2026)* | ⚠ **Off this story's path by DECISION, not by luck** — `P-118` polls `GetOPCInfo` and `ReadTag` rather than subscribing, so `OPCUAManager`'s notification defect (`:670`) cannot reach this ingest at all. ✅ **And `ReadTag`'s own half is fixed on the branch that matters:** flat wire deploys from `feature/UADEV-23146`, where `ReadTag` (`:214`) and `WriteTag` (`:381`) both call `GetOpcUaTagName()`. `G94` stays open **as a statement about `release/mvp-3.x`**, which does not contain `API/Domain/FlatWire` at all — ⚠ **re-ask per environment**, against the branch that environment's `OPCConnection` is built from. ⛔ **Two claims in this row's original text are struck:** *"every `OPCModules` row is `OPCDA` today"* — **flat wire's own row is `21317`, i.e. UA**, and it is the first (§2.4 row 3) — and *"`D-44` puts our 72 paths into that registration"*, which is **41 rows** and no longer via `D-44`'s mechanism (`D-45`) |
 | **`G31`** | Read tags with no remaining consumer. ⚠ **Mostly decidable from `[PLC]`'s own *"used in"* column, which contradicts the gap's wording** — §2.3's table settles five of six classes; **the one genuine orphan is `FL1.EdgeSet.Status.IsActive`** |
-| ⛔ **`PLC-Q08` / `G30`** *(blocker for FL3 only)* | Whether FL3's stands are `FL3.FM2.*` or **`FL2.FM2.*`**. Until it answers, **FL3 is configured and inert** — and if it aliases, polling FL2 and FL3 together double-reads every FL2 tag |
+| ✅ **`PLC-Q08` / `G30`** *(ANSWERED — `D-47`, 5 Sep 2026; **no longer a blocker on this card**)* | **FL3 has no controller of its own.** FM1 and the die blocks are the FL1 controller's, FM2 the FL2 controller's, and there is **no `FL3.PLC.*` namespace on any machine** — so FL3 is not registered, has no `MachineId`, and reading FL1 and FL2 already reads every tag it has. ⛔ **This card's `{FL1,FL2}`-or-`{FL3}` rule is RETIRED, not pending** (§2.3, `P-123`) |
+| ⛔ **`G99`** *(new, 5 Sep 2026 — replaces `G30` here, and it is NOT this card's)* | The consequence of `D-47`: one FL3 acknowledgement must **write to two controllers**, in two `WriteTag` batches, with a re-clear spanning two failure domains and **both** lines' `ITInhibit` set. ✅ **The ingest is untouched** — `G99` is entirely on the write path (`FW-151` / `[PLC §7.1]`, `[PLC §7.5]`) |
 | ⚠ ~~**No fault tag on any FM2 stand**~~ **WITHDRAWN 28 Aug 2026** | **Already tracked — the observation was right and it was not new.** `TagNames.Fm2S3Faulted` exists with a derived path and carries its own note: *"a fault bit is on record for FM1 ONLY. No FM2 stand has one and neither do the die blocks, so the component-fault alert cannot fire for any of them — `PLC-Q02`, `[PLC §5.4]`."* The observation was right and it was not new. **Read `PLC-Q02`'s row before citing it: it also carries the FL1 second-take-up question** |
 | **`PLC-Q02`** | Whether FL1 has a second take-up. `FL1.TKUP2` is deliberately absent, which is why footage's logical name differs by line (§2.3) |
 | **`G35`** | Dancer elements read-only, `[PROPOSED]` (`PLC-Q18`, commissioning test `C12`) |
 | **`G9` / `OI-34`** | The channel cannot be sized from NFRs and the load test cannot fail — `P-28` gives the arithmetic's shape and a provisional default |
 | **`G3`** | `RunReading` is the store the broadcast loop persists to. ✅ **Table half built 26 Aug 2026** — and its columns are a per-line snapshot, which is §2.5's evidence |
-| ✅ **`OI-A`** | **CLOSED 4 Sep 2026 — `D-44`: the map moves to the `CommonDB` registration.** Contained behind `ITagPathResolver`, so there are **no caller changes and nothing here to do**. The move is `FW-238`'s and is gated on **`G93`** (`OPCTags` has no logical-name column) |
+| ✅ **`OI-A`** | **CLOSED — but NOT as `D-44` first framed it, and the difference matters here.** `D-45` (5 Sep 2026) **withdrew `G93` without building it**: there is no `TagKey` column, so `OPCTags` cannot be keyed by meaning and **`ConfigurationTagPathResolver` stays**. `appsettings` resolves **and** `OPCTags` registers — two homes on purpose, reconciled by `FW-238`'s config-vs-rows diff. ✅ **Still nothing here to do**: contained behind `ITagPathResolver`, no caller changes, and the `CommonDbTagPathResolver` this row used to promise **is not being built** (§2.3) |
+| ⚠ **`ual-api` comment drift** *(found 6 Sep 2026 — comments only, no behaviour)* | **Two built comment blocks still teach the retired FL3 rule**: `FlatWireOpcOptions.IngestLines`'s remarks and `appsettings.json`'s `_comment` both say *"pending `PLC-Q08` / `G30` … when it answers the rule is {FL1,FL2} OR {FL3}"*. ✅ **The code is correct** — `IngestLines` is `["FL1","FL2"]` and FL3 fails the resolve by name — so this is a **doc fix, not a defect**, deliberately left for whoever next opens those files rather than taken from a planning card |
 
 **Citations corrected 28 Aug 2026:** the `41`-path literal (→ `G33`, measured 72) and
 `[SIG §5.2]` as the shared ingest contract (→ this card's §2.5).
 
-**Re-reviewed before execution, same day, against the built `FlatWire` projects** — which is
+**Reconciled 6 Sep 2026 against `D-45`–`D-51`, the live `CommonDB` registration and the built
+`FlatWire` projects.** ✅ **Nothing measured on 28 Aug moved**: the 9/9 harness assertions, the
+1,024 bound, the 349.7 KB, the `8.0.1` pin and the **14 of 17 / 11 of 22 = 25 tag reads** were all
+re-verified from `appsettings` and `IngestedNames` and are unchanged. ⛔ **What moved was around
+the card** — `G93` withdrawn, `G60` half closed, `PLC-Q08` answered, `G94` re-scoped, the unit-test
+level reinstated — **and one of those had turned a ✅ in §2.3 into instructions that would have
+deleted this service's tag map.**
+
+**Re-reviewed before execution, 28 Aug 2026, against the built `FlatWire` projects** — which is
 where the `LineId` / `PayoffPosition` / `ComponentName` types, `LogicalNamesFor`,
 `OpcInfoCacheSeconds`, the `RequirePositive` throw and FL3's inertness all came from. **Nothing
 for this story is built yet:** no `Channel<>`, no `IHostedService`, no `Reading` type exists in

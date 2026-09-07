@@ -56,7 +56,9 @@
   DEPLOY / TEARDOWN ORDER
   -----------------------
       deploy:    FlatWire_DDL_RunAll.sql
-              -> 10_CommonDB_Insert_WIPStations_FlatWire.sql
+              -> the machines / WIP-station seed (FW-241; the old script
+                 10_CommonDB_Insert_WIPStations_FlatWire.sql was withdrawn
+                 6 Sep 2026 and must be re-authored before this step runs)
               -> 20_FlatWire_Grants.sql
               -> the four procedures
 
