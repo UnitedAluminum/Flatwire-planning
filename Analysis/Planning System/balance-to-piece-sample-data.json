@@ -1,0 +1,4406 @@
+{
+  "note": "Expected rows for the two final plan strategies. Generated from the real code, so these are what it produces today. Only the columns that carry the decision are listed; the gauge, temper and shape columns are copied from the per order plan unchanged.",
+  "conventions": {
+    "CoilNo": "A coil no is issued only where the coil DIVIDES, and both halves are CHILDREN of the coil being divided: rod FW7001 divides into FW7001A and FW7001B, and FW7001B divides again into FW7001BA and FW7001BB. Where nothing divides, the arriving coil no carries through. A coil no is a six character root plus at most three alphas, so at nine characters GenerateCoilAlpha carries on from the letter after the first alpha and strips the rest - the children of FW7005BBB are FW7005C and FW7005D. An output going BACK TO STOCK is asked for with wareHouseAlpha = 1 instead, which generates from LEFT(parent, 6), giving a coil at the rod\u0027s own level rather than under the coil it came off.",
+    "Weights": "WeightOn and WeightOff are the weight of the coil the operation RECEIVES: the whole rod at the first flatten, the balance at each later flatten, and the order\u0027s own planned weight once its piece has been peeled off. RequiredInWeight is the order\u0027s planned weight throughout.",
+    "OnGaugeWeight": "On a piece row it is the order\u0027s planned weight. On a balance row it is the total still to be planned, which is the weight handed to the next flatten.",
+    "NextOperation": "FlatLineProcessing has no next operation column. That a balance is flattened again is expressed by its CoilNo arriving at a routing whose OperationLetter is F - so FW7001B leaves the first flatten and arrives at the second.",
+    "Levels": "LevelId is unique across the plan and ParentLevelId chains each order\u0027s first flatten to the flatten its balance came from, so the cascade is one tree.",
+    "MfgOrderNo": "0 everywhere. It is assigned when the plan is exported, not when it is planned.",
+    "BackToStock": "A stock order\u0027s material goes back to stock at its LAST output, and that row carries the flag. The merge has to invent an as is flatten to hold it when the order finishes at the anneal, because the furnace output cannot be divided; the cascade does not, because the order already has an output row of its own. Either way the coil that row travels on is asked for with wareHouseAlpha = 1."
+  },
+  "openPoints": [
+    "A root operation row carries no weight in this sample because the row itself is synthetic here. In production it is written by the root operation and carries the rod weight, which both strategies pass through untouched.",
+    "The LAST order carries the balance coil it arrived on rather than a fresh alpha, because nothing divides at its flatten - in the three order case order 123458 travels on FW7001BB. Its own first flatten therefore reads as a no op on the flat line, FW7001BB to FW7001BB, for the same 800 lb the balance row above it already reported. Both operations are real - one is the previous order\u0027s flatten, one is its own - but the pair looks duplicated. Confirm, or say the last order should get its own alpha too.",
+    "The first flatten\u0027s WeightOn is the WHOLE rod (3,000) even though only the leading order\u0027s 1,000 lb comes off it as finished output. This matches the merge, where a shared operation carries the pre division weight. Confirm rather than the 1,000 lb.",
+    "Under BalanceToPiece each order gets its OWN flatten operation at the flat line, so a three order rod plans three FL1 operations. That is the check out and check in the client described. The merge plans one."
+  ],
+  "scenarios": [
+    {
+      "name": "Three orders on one rod - the worked cascade",
+      "description": "The case the request states: a 3,000 lb rod, order one needing 1,000 lb and two more orders sharing the rest. Each flatten peels one order off and hands the balance on.",
+      "coil": {
+        "InitialCoilNo": "FW7001",
+        "Weight": 3000,
+        "Gauge": 0.3750,
+        "Temper": "F",
+        "Shape": "Round",
+        "Type": "Rod"
+      },
+      "orders": [
+        {
+          "OrderNo": 123456,
+          "CoilOrderPlanId": 6000,
+          "PlannedWeight": 1000,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        },
+        {
+          "OrderNo": 123457,
+          "CoilOrderPlanId": 6001,
+          "PlannedWeight": 1200,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        },
+        {
+          "OrderNo": 123458,
+          "CoilOrderPlanId": 6002,
+          "PlannedWeight": 800,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        }
+      ],
+      "rootOperations": [],
+      "expected": {
+        "BalanceToPiece": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123456",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7001",
+              "WeightOn": 3000,
+              "WeightOff": 3000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123456",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7001A",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123456",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7001A",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 4,
+              "ParentLevelId": 1,
+              "OrdersInput": "123457",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7001B",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 1200,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 5,
+              "ParentLevelId": 4,
+              "OrdersInput": "123457",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7001BA",
+              "WeightOn": 1200,
+              "WeightOff": 1200,
+              "RequiredInWeight": 1200,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "LevelId": 6,
+              "ParentLevelId": 5,
+              "OrdersInput": "123457",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7001BA",
+              "WeightOn": 1200,
+              "WeightOff": 1200,
+              "RequiredInWeight": 1200,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 7,
+              "ParentLevelId": 4,
+              "OrdersInput": "123458",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7001BB",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "LevelId": 8,
+              "ParentLevelId": 7,
+              "OrdersInput": "123458",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7001BB",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 40,
+              "LevelId": 9,
+              "ParentLevelId": 8,
+              "OrdersInput": "123458",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7001BB",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7001",
+              "CoilNo": "FW7001A",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123456",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7001",
+              "CoilNo": "FW7001B",
+              "OnGaugeWeight": 2000,
+              "OrdersInput": "123457;123458",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "IncomingCoilNo": "FW7001B",
+              "CoilNo": "FW7001BA",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123457",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "IncomingCoilNo": "FW7001B",
+              "CoilNo": "FW7001BB",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123458",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7001A",
+              "CoilNo": "FW7001A",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123456",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7001BB",
+              "CoilNo": "FW7001BB",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123458",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "IncomingCoilNo": "FW7001BA",
+              "CoilNo": "FW7001BA",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123457",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 40,
+              "IncomingCoilNo": "FW7001BB",
+              "CoilNo": "FW7001BB",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123458",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6002,
+              "RemainingOperations": "FAF"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 4
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 5
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 6
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6002,
+              "PlanningLevelId": 7
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6002,
+              "PlanningLevelId": 8
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6002,
+              "PlanningLevelId": 9
+            }
+          ]
+        },
+        "MergeOrders": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123456;123457;123458",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7001",
+              "WeightOn": 3000,
+              "WeightOff": 3000,
+              "RequiredInWeight": 3000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123456;123457;123458",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7001",
+              "WeightOn": 3000,
+              "WeightOff": 3000,
+              "RequiredInWeight": 3000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123456;123457;123458",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7001",
+              "WeightOn": 3000,
+              "WeightOff": 3000,
+              "RequiredInWeight": 3000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7001",
+              "CoilNo": "FW7001",
+              "OnGaugeWeight": 3000,
+              "OrdersInput": "123456;123457;123458",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7001",
+              "CoilNo": "FW7001A",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123456",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7001",
+              "CoilNo": "FW7001B",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123457",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7001",
+              "CoilNo": "FW7001C",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123458",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6002,
+              "RemainingOperations": "FAF"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Two orders - a single split",
+      "description": "The smallest cascade. One split, so two pieces and no balance that is flattened twice.",
+      "coil": {
+        "InitialCoilNo": "FW7002",
+        "Weight": 2000,
+        "Gauge": 0.3750,
+        "Temper": "F",
+        "Shape": "Round",
+        "Type": "Rod"
+      },
+      "orders": [
+        {
+          "OrderNo": 123460,
+          "CoilOrderPlanId": 6000,
+          "PlannedWeight": 1200,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        },
+        {
+          "OrderNo": 123461,
+          "CoilOrderPlanId": 6001,
+          "PlannedWeight": 800,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        }
+      ],
+      "rootOperations": [],
+      "expected": {
+        "BalanceToPiece": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123460",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7002",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 1200,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123460",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7002A",
+              "WeightOn": 1200,
+              "WeightOff": 1200,
+              "RequiredInWeight": 1200,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123460",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7002A",
+              "WeightOn": 1200,
+              "WeightOff": 1200,
+              "RequiredInWeight": 1200,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 4,
+              "ParentLevelId": 1,
+              "OrdersInput": "123461",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7002B",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 5,
+              "ParentLevelId": 4,
+              "OrdersInput": "123461",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7002B",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "LevelId": 6,
+              "ParentLevelId": 5,
+              "OrdersInput": "123461",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7002B",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7002",
+              "CoilNo": "FW7002A",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123460",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7002",
+              "CoilNo": "FW7002B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123461",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "IncomingCoilNo": "FW7002B",
+              "CoilNo": "FW7002B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123461",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7002A",
+              "CoilNo": "FW7002A",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123460",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "IncomingCoilNo": "FW7002B",
+              "CoilNo": "FW7002B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123461",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "FAF"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 4
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 5
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 6
+            }
+          ]
+        },
+        "MergeOrders": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123460;123461",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7002",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 2000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123460;123461",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7002",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 2000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123460;123461",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7002",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 2000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7002",
+              "CoilNo": "FW7002",
+              "OnGaugeWeight": 2000,
+              "OrdersInput": "123460;123461",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7002",
+              "CoilNo": "FW7002A",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123460",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7002",
+              "CoilNo": "FW7002B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123461",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "FAF"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "One order - nothing divides",
+      "description": "A single order divides nothing, so no alpha is issued and the rod keeps its own coil no through every operation. Both strategies must agree here.",
+      "coil": {
+        "InitialCoilNo": "FW7003",
+        "Weight": 1000,
+        "Gauge": 0.3750,
+        "Temper": "F",
+        "Shape": "Round",
+        "Type": "Rod"
+      },
+      "orders": [
+        {
+          "OrderNo": 123470,
+          "CoilOrderPlanId": 6000,
+          "PlannedWeight": 1000,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        }
+      ],
+      "rootOperations": [],
+      "expected": {
+        "BalanceToPiece": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123470",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7003",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123470",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7003",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123470",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7003",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7003",
+              "CoilNo": "FW7003",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123470",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7003",
+              "CoilNo": "FW7003",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123470",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            }
+          ]
+        },
+        "MergeOrders": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123470",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7003",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123470",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7003",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123470",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7003",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7003",
+              "CoilNo": "FW7003",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123470",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7003",
+              "CoilNo": "FW7003",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123470",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Four orders - the cascade nests three deep",
+      "description": "Each division produces children of the coil arriving, so the alphas nest: A and B, then BA and BB, then BBA and BBB. A coil no is a six character root plus at most three alphas, which is exactly the depth three divisions need.",
+      "coil": {
+        "InitialCoilNo": "FW7004",
+        "Weight": 4000,
+        "Gauge": 0.3750,
+        "Temper": "F",
+        "Shape": "Round",
+        "Type": "Rod"
+      },
+      "orders": [
+        {
+          "OrderNo": 123480,
+          "CoilOrderPlanId": 6000,
+          "PlannedWeight": 1000,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        },
+        {
+          "OrderNo": 123481,
+          "CoilOrderPlanId": 6001,
+          "PlannedWeight": 1000,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        },
+        {
+          "OrderNo": 123482,
+          "CoilOrderPlanId": 6002,
+          "PlannedWeight": 1000,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        },
+        {
+          "OrderNo": 123483,
+          "CoilOrderPlanId": 6003,
+          "PlannedWeight": 1000,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        }
+      ],
+      "rootOperations": [],
+      "expected": {
+        "BalanceToPiece": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123480",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7004",
+              "WeightOn": 4000,
+              "WeightOff": 4000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123480",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7004A",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123480",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7004A",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 4,
+              "ParentLevelId": 1,
+              "OrdersInput": "123481",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7004B",
+              "WeightOn": 3000,
+              "WeightOff": 3000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 5,
+              "ParentLevelId": 4,
+              "OrdersInput": "123481",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7004BA",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "LevelId": 6,
+              "ParentLevelId": 5,
+              "OrdersInput": "123481",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7004BA",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 7,
+              "ParentLevelId": 4,
+              "OrdersInput": "123482",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7004BB",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "LevelId": 8,
+              "ParentLevelId": 7,
+              "OrdersInput": "123482",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7004BBA",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 40,
+              "LevelId": 9,
+              "ParentLevelId": 8,
+              "OrdersInput": "123482",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7004BBA",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "LevelId": 10,
+              "ParentLevelId": 7,
+              "OrdersInput": "123483",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7004BBB",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6003,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 40,
+              "LevelId": 11,
+              "ParentLevelId": 10,
+              "OrdersInput": "123483",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7004BBB",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6003,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 50,
+              "LevelId": 12,
+              "ParentLevelId": 11,
+              "OrdersInput": "123483",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7004BBB",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6003,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7004",
+              "CoilNo": "FW7004A",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123480",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7004",
+              "CoilNo": "FW7004B",
+              "OnGaugeWeight": 3000,
+              "OrdersInput": "123481;123482;123483",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "IncomingCoilNo": "FW7004B",
+              "CoilNo": "FW7004BA",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123481",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "IncomingCoilNo": "FW7004B",
+              "CoilNo": "FW7004BB",
+              "OnGaugeWeight": 2000,
+              "OrdersInput": "123482;123483",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7004A",
+              "CoilNo": "FW7004A",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123480",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7004BB",
+              "CoilNo": "FW7004BBA",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123482",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7004BB",
+              "CoilNo": "FW7004BBB",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123483",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6003,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "IncomingCoilNo": "FW7004BA",
+              "CoilNo": "FW7004BA",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123481",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "IncomingCoilNo": "FW7004BBB",
+              "CoilNo": "FW7004BBB",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123483",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6003,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 40,
+              "IncomingCoilNo": "FW7004BBA",
+              "CoilNo": "FW7004BBA",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123482",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 50,
+              "IncomingCoilNo": "FW7004BBB",
+              "CoilNo": "FW7004BBB",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123483",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6003,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6002,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6003,
+              "RemainingOperations": "FAF"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 4
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 5
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 6
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6002,
+              "PlanningLevelId": 7
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6002,
+              "PlanningLevelId": 8
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6002,
+              "PlanningLevelId": 9
+            },
+            {
+              "TempCoilOrderPlanId": 6003,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6003,
+              "PlanningLevelId": 10
+            },
+            {
+              "TempCoilOrderPlanId": 6003,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6003,
+              "PlanningLevelId": 11
+            },
+            {
+              "TempCoilOrderPlanId": 6003,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6003,
+              "PlanningLevelId": 12
+            }
+          ]
+        },
+        "MergeOrders": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123480;123481;123482;123483",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7004",
+              "WeightOn": 4000,
+              "WeightOff": 4000,
+              "RequiredInWeight": 4000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123480;123481;123482;123483",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7004",
+              "WeightOn": 4000,
+              "WeightOff": 4000,
+              "RequiredInWeight": 4000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123480;123481;123482;123483",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7004",
+              "WeightOn": 4000,
+              "WeightOff": 4000,
+              "RequiredInWeight": 4000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7004",
+              "CoilNo": "FW7004",
+              "OnGaugeWeight": 4000,
+              "OrdersInput": "123480;123481;123482;123483",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7004",
+              "CoilNo": "FW7004A",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123480",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7004",
+              "CoilNo": "FW7004B",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123481",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7004",
+              "CoilNo": "FW7004C",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123482",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7004",
+              "CoilNo": "FW7004D",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123483",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6003,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6002,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6003,
+              "RemainingOperations": "FAF"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6003,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6003,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6003,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Five orders - the fourth division has no room to nest",
+      "description": "A fourth division would need a tenth character, so GenerateCoilAlpha carries on from the letter after the first alpha and strips the rest: the children of FW7005BBB are seven character coil nos again. This is the one case where a piece is not a descendant of the coil it came off, and the generator decides it, not the planner.",
+      "coil": {
+        "InitialCoilNo": "FW7005",
+        "Weight": 5000,
+        "Gauge": 0.3750,
+        "Temper": "F",
+        "Shape": "Round",
+        "Type": "Rod"
+      },
+      "orders": [
+        {
+          "OrderNo": 123530,
+          "CoilOrderPlanId": 6000,
+          "PlannedWeight": 1000,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        },
+        {
+          "OrderNo": 123531,
+          "CoilOrderPlanId": 6001,
+          "PlannedWeight": 1000,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        },
+        {
+          "OrderNo": 123532,
+          "CoilOrderPlanId": 6002,
+          "PlannedWeight": 1000,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        },
+        {
+          "OrderNo": 123533,
+          "CoilOrderPlanId": 6003,
+          "PlannedWeight": 1000,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        },
+        {
+          "OrderNo": 123534,
+          "CoilOrderPlanId": 6004,
+          "PlannedWeight": 1000,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        }
+      ],
+      "rootOperations": [],
+      "expected": {
+        "BalanceToPiece": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123530",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7005",
+              "WeightOn": 5000,
+              "WeightOff": 5000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123530",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7005A",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123530",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7005A",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 4,
+              "ParentLevelId": 1,
+              "OrdersInput": "123531",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7005B",
+              "WeightOn": 4000,
+              "WeightOff": 4000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 5,
+              "ParentLevelId": 4,
+              "OrdersInput": "123531",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7005BA",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "LevelId": 6,
+              "ParentLevelId": 5,
+              "OrdersInput": "123531",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7005BA",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 7,
+              "ParentLevelId": 4,
+              "OrdersInput": "123532",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7005BB",
+              "WeightOn": 3000,
+              "WeightOff": 3000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "LevelId": 8,
+              "ParentLevelId": 7,
+              "OrdersInput": "123532",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7005BBA",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 40,
+              "LevelId": 9,
+              "ParentLevelId": 8,
+              "OrdersInput": "123532",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7005BBA",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "LevelId": 10,
+              "ParentLevelId": 7,
+              "OrdersInput": "123533",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7005BBB",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6003,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 40,
+              "LevelId": 11,
+              "ParentLevelId": 10,
+              "OrdersInput": "123533",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7005C",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6003,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 50,
+              "LevelId": 12,
+              "ParentLevelId": 11,
+              "OrdersInput": "123533",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7005C",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6003,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 40,
+              "LevelId": 13,
+              "ParentLevelId": 10,
+              "OrdersInput": "123534",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7005D",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6004,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 50,
+              "LevelId": 14,
+              "ParentLevelId": 13,
+              "OrdersInput": "123534",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7005D",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6004,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 60,
+              "LevelId": 15,
+              "ParentLevelId": 14,
+              "OrdersInput": "123534",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7005D",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6004,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7005",
+              "CoilNo": "FW7005A",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123530",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7005",
+              "CoilNo": "FW7005B",
+              "OnGaugeWeight": 4000,
+              "OrdersInput": "123531;123532;123533;123534",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "IncomingCoilNo": "FW7005B",
+              "CoilNo": "FW7005BA",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123531",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "IncomingCoilNo": "FW7005B",
+              "CoilNo": "FW7005BB",
+              "OnGaugeWeight": 3000,
+              "OrdersInput": "123532;123533;123534",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7005A",
+              "CoilNo": "FW7005A",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123530",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7005BB",
+              "CoilNo": "FW7005BBA",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123532",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7005BB",
+              "CoilNo": "FW7005BBB",
+              "OnGaugeWeight": 2000,
+              "OrdersInput": "123533;123534",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6003,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "IncomingCoilNo": "FW7005BA",
+              "CoilNo": "FW7005BA",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123531",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "IncomingCoilNo": "FW7005BBB",
+              "CoilNo": "FW7005C",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123533",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6003,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "IncomingCoilNo": "FW7005BBB",
+              "CoilNo": "FW7005D",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123534",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6004,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 40,
+              "IncomingCoilNo": "FW7005BBA",
+              "CoilNo": "FW7005BBA",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123532",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 40,
+              "IncomingCoilNo": "FW7005D",
+              "CoilNo": "FW7005D",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123534",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6004,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 50,
+              "IncomingCoilNo": "FW7005C",
+              "CoilNo": "FW7005C",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123533",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6003,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 60,
+              "IncomingCoilNo": "FW7005D",
+              "CoilNo": "FW7005D",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123534",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6004,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6002,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6003,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6004,
+              "RemainingOperations": "FAF"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 4
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 5
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 6
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6002,
+              "PlanningLevelId": 7
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6002,
+              "PlanningLevelId": 8
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6002,
+              "PlanningLevelId": 9
+            },
+            {
+              "TempCoilOrderPlanId": 6003,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6003,
+              "PlanningLevelId": 10
+            },
+            {
+              "TempCoilOrderPlanId": 6003,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6003,
+              "PlanningLevelId": 11
+            },
+            {
+              "TempCoilOrderPlanId": 6003,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6003,
+              "PlanningLevelId": 12
+            },
+            {
+              "TempCoilOrderPlanId": 6004,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6004,
+              "PlanningLevelId": 13
+            },
+            {
+              "TempCoilOrderPlanId": 6004,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6004,
+              "PlanningLevelId": 14
+            },
+            {
+              "TempCoilOrderPlanId": 6004,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6004,
+              "PlanningLevelId": 15
+            }
+          ]
+        },
+        "MergeOrders": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123530;123531;123532;123533;123534",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7005",
+              "WeightOn": 5000,
+              "WeightOff": 5000,
+              "RequiredInWeight": 5000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123530;123531;123532;123533;123534",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7005",
+              "WeightOn": 5000,
+              "WeightOff": 5000,
+              "RequiredInWeight": 5000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123530;123531;123532;123533;123534",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7005",
+              "WeightOn": 5000,
+              "WeightOff": 5000,
+              "RequiredInWeight": 5000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7005",
+              "CoilNo": "FW7005",
+              "OnGaugeWeight": 5000,
+              "OrdersInput": "123530;123531;123532;123533;123534",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7005",
+              "CoilNo": "FW7005A",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123530",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7005",
+              "CoilNo": "FW7005B",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123531",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7005",
+              "CoilNo": "FW7005C",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123532",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7005",
+              "CoilNo": "FW7005D",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123533",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6003,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7005",
+              "CoilNo": "FW7005E",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123534",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6004,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6002,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6003,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6004,
+              "RemainingOperations": "FAF"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6003,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6004,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6003,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6004,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6003,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6004,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Part of the rod is left unplanned",
+      "description": "1,000 and 800 planned on a 3,000 lb rod. The balance carries what is still to be PLANNED, not what is left on the rod, so the 1,200 lb remainder appears nowhere and is left as it is.",
+      "coil": {
+        "InitialCoilNo": "FW7006",
+        "Weight": 3000,
+        "Gauge": 0.3750,
+        "Temper": "F",
+        "Shape": "Round",
+        "Type": "Rod"
+      },
+      "orders": [
+        {
+          "OrderNo": 123490,
+          "CoilOrderPlanId": 6000,
+          "PlannedWeight": 1000,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        },
+        {
+          "OrderNo": 123491,
+          "CoilOrderPlanId": 6001,
+          "PlannedWeight": 800,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        }
+      ],
+      "rootOperations": [],
+      "expected": {
+        "BalanceToPiece": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123490",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7006",
+              "WeightOn": 3000,
+              "WeightOff": 3000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123490",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7006A",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123490",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7006A",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 4,
+              "ParentLevelId": 1,
+              "OrdersInput": "123491",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7006B",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 5,
+              "ParentLevelId": 4,
+              "OrdersInput": "123491",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7006B",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "LevelId": 6,
+              "ParentLevelId": 5,
+              "OrdersInput": "123491",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7006B",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7006",
+              "CoilNo": "FW7006A",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123490",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7006",
+              "CoilNo": "FW7006B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123491",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "IncomingCoilNo": "FW7006B",
+              "CoilNo": "FW7006B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123491",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7006A",
+              "CoilNo": "FW7006A",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123490",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "IncomingCoilNo": "FW7006B",
+              "CoilNo": "FW7006B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123491",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "FAF"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 4
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 5
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 6
+            }
+          ]
+        },
+        "MergeOrders": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123490;123491",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7006",
+              "WeightOn": 3000,
+              "WeightOff": 3000,
+              "RequiredInWeight": 1800,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123490;123491",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7006",
+              "WeightOn": 3000,
+              "WeightOff": 3000,
+              "RequiredInWeight": 1800,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123490;123491",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7006",
+              "WeightOn": 3000,
+              "WeightOff": 3000,
+              "RequiredInWeight": 1800,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7006",
+              "CoilNo": "FW7006",
+              "OnGaugeWeight": 1800,
+              "OrdersInput": "123490;123491",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7006",
+              "CoilNo": "FW7006A",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123490",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7006",
+              "CoilNo": "FW7006B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123491",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "FAF"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Flattens only - an FL3 route with no spool stage",
+      "description": "No anneal, so the route is a single flatten on FL3 and there is no spool stage at all. The split still happens at that flatten.",
+      "coil": {
+        "InitialCoilNo": "FW7007",
+        "Weight": 2000,
+        "Gauge": 0.3750,
+        "Temper": "F",
+        "Shape": "Round",
+        "Type": "Rod"
+      },
+      "orders": [
+        {
+          "OrderNo": 123500,
+          "CoilOrderPlanId": 6000,
+          "PlannedWeight": 1200,
+          "Smp": "F",
+          "PlanType": "CustomerOrder"
+        },
+        {
+          "OrderNo": 123501,
+          "CoilOrderPlanId": 6001,
+          "PlannedWeight": 800,
+          "Smp": "F",
+          "PlanType": "CustomerOrder"
+        }
+      ],
+      "rootOperations": [],
+      "expected": {
+        "BalanceToPiece": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123500",
+              "OperationLetter": "F",
+              "MachineGroup": "FL3",
+              "IncomingCoilNo": "FW7007",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 1200,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123501",
+              "OperationLetter": "F",
+              "MachineGroup": "FL3",
+              "IncomingCoilNo": "FW7007B",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7007",
+              "CoilNo": "FW7007A",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123500",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7007",
+              "CoilNo": "FW7007B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123501",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "IncomingCoilNo": "FW7007B",
+              "CoilNo": "FW7007B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123501",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "F"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "F"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 2
+            }
+          ]
+        },
+        "MergeOrders": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123500;123501",
+              "OperationLetter": "F",
+              "MachineGroup": "FL3",
+              "IncomingCoilNo": "FW7007",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 2000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7007",
+              "CoilNo": "FW7007A",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123500",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7007",
+              "CoilNo": "FW7007B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123501",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "F"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "F"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "A root operation was added first",
+      "description": "The planner added a root operation, so a blank order no row sits at sequence 0 level 1 and every order\u0027s chain starts from that offset.",
+      "coil": {
+        "InitialCoilNo": "FW7008",
+        "Weight": 3000,
+        "Gauge": 0.3750,
+        "Temper": "F",
+        "Shape": "Round",
+        "Type": "Rod"
+      },
+      "orders": [
+        {
+          "OrderNo": 123510,
+          "CoilOrderPlanId": 6000,
+          "PlannedWeight": 1000,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        },
+        {
+          "OrderNo": 123511,
+          "CoilOrderPlanId": 6001,
+          "PlannedWeight": 1200,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        },
+        {
+          "OrderNo": 123512,
+          "CoilOrderPlanId": 6002,
+          "PlannedWeight": 800,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        }
+      ],
+      "rootOperations": [
+        {
+          "SequenceNo": 0,
+          "LevelId": 1,
+          "ParentLevelId": 0,
+          "OrdersInput": "",
+          "OperationLetter": "F",
+          "MachineGroup": "FL1",
+          "IncomingCoilNo": "FW7008",
+          "WeightOn": 0,
+          "WeightOff": 0,
+          "RequiredInWeight": 0,
+          "NextOperation": "",
+          "RemainingOperations": "",
+          "CoilOrderPlanId": 0,
+          "MfgOrderNo": 0
+        }
+      ],
+      "expected": {
+        "BalanceToPiece": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123510;123511;123512",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7008",
+              "WeightOn": 0,
+              "WeightOff": 0,
+              "RequiredInWeight": 0,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 0,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123510",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7008",
+              "WeightOn": 3000,
+              "WeightOff": 3000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123510",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7008A",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "LevelId": 4,
+              "ParentLevelId": 3,
+              "OrdersInput": "123510",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7008A",
+              "WeightOn": 1000,
+              "WeightOff": 1000,
+              "RequiredInWeight": 1000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 5,
+              "ParentLevelId": 2,
+              "OrdersInput": "123511",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7008B",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 1200,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "LevelId": 6,
+              "ParentLevelId": 5,
+              "OrdersInput": "123511",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7008BA",
+              "WeightOn": 1200,
+              "WeightOff": 1200,
+              "RequiredInWeight": 1200,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 40,
+              "LevelId": 7,
+              "ParentLevelId": 6,
+              "OrdersInput": "123511",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7008BA",
+              "WeightOn": 1200,
+              "WeightOff": 1200,
+              "RequiredInWeight": 1200,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "LevelId": 8,
+              "ParentLevelId": 5,
+              "OrdersInput": "123512",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7008BB",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 40,
+              "LevelId": 9,
+              "ParentLevelId": 8,
+              "OrdersInput": "123512",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7008BB",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 50,
+              "LevelId": 10,
+              "ParentLevelId": 9,
+              "OrdersInput": "123512",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7008BB",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 10,
+              "IncomingCoilNo": "FW7008",
+              "CoilNo": "FW7008A",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123510",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "IncomingCoilNo": "FW7008",
+              "CoilNo": "FW7008B",
+              "OnGaugeWeight": 2000,
+              "OrdersInput": "123511;123512",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7008B",
+              "CoilNo": "FW7008BA",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123511",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7008B",
+              "CoilNo": "FW7008BB",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123512",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "IncomingCoilNo": "FW7008A",
+              "CoilNo": "FW7008A",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123510",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "IncomingCoilNo": "FW7008BB",
+              "CoilNo": "FW7008BB",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123512",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 40,
+              "IncomingCoilNo": "FW7008BA",
+              "CoilNo": "FW7008BA",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123511",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 50,
+              "IncomingCoilNo": "FW7008BB",
+              "CoilNo": "FW7008BB",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123512",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6002,
+              "RemainingOperations": "FAF"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 0,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 0,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 4,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 4
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 5
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 6
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 4,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 7
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6002,
+              "PlanningLevelId": 8
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6002,
+              "PlanningLevelId": 9
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 4,
+              "PlanningCoilOrderPlanId": 6002,
+              "PlanningLevelId": 10
+            }
+          ]
+        },
+        "MergeOrders": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123510;123511;123512",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7008",
+              "WeightOn": 0,
+              "WeightOff": 0,
+              "RequiredInWeight": 0,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 0,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123510;123511;123512",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7008",
+              "WeightOn": 3000,
+              "WeightOff": 3000,
+              "RequiredInWeight": 3000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123510;123511;123512",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7008",
+              "WeightOn": 3000,
+              "WeightOff": 3000,
+              "RequiredInWeight": 3000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "LevelId": 4,
+              "ParentLevelId": 3,
+              "OrdersInput": "123510;123511;123512",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7008",
+              "WeightOn": 3000,
+              "WeightOff": 3000,
+              "RequiredInWeight": 3000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 10,
+              "IncomingCoilNo": "FW7008",
+              "CoilNo": "FW7008",
+              "OnGaugeWeight": 3000,
+              "OrdersInput": "123510;123511;123512",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "IncomingCoilNo": "FW7008",
+              "CoilNo": "FW7008A",
+              "OnGaugeWeight": 1000,
+              "OrdersInput": "123510",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "IncomingCoilNo": "FW7008",
+              "CoilNo": "FW7008B",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123511",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 30,
+              "IncomingCoilNo": "FW7008",
+              "CoilNo": "FW7008C",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123512",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6002,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6002,
+              "RemainingOperations": "FAF"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 0,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 0,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 4,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 4
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 4,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 4
+            },
+            {
+              "TempCoilOrderPlanId": 6002,
+              "TempLevelId": 4,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 4
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Mixed routes - one order ends on a flatten, the other on an anneal",
+      "description": "Order one is FAF and order two is FA, so under the merge they diverge at the anneal and an extra as-is flatten has to be written for the order that is already finished. Under the cascade each order has its own chain from the start, so nothing diverges and no as-is flatten is needed. Compare the IsAsIs rows.",
+      "coil": {
+        "InitialCoilNo": "FW7009",
+        "Weight": 2000,
+        "Gauge": 0.3750,
+        "Temper": "F",
+        "Shape": "Round",
+        "Type": "Rod"
+      },
+      "orders": [
+        {
+          "OrderNo": 123520,
+          "CoilOrderPlanId": 6000,
+          "PlannedWeight": 1200,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        },
+        {
+          "OrderNo": 123521,
+          "CoilOrderPlanId": 6001,
+          "PlannedWeight": 800,
+          "Smp": "FA",
+          "PlanType": "CustomerOrder"
+        }
+      ],
+      "rootOperations": [],
+      "expected": {
+        "BalanceToPiece": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123520",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7009",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 1200,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123520",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7009A",
+              "WeightOn": 1200,
+              "WeightOff": 1200,
+              "RequiredInWeight": 1200,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123520",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7009A",
+              "WeightOn": 1200,
+              "WeightOff": 1200,
+              "RequiredInWeight": 1200,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 4,
+              "ParentLevelId": 1,
+              "OrdersInput": "123521",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7009B",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "A",
+              "RemainingOperations": "A",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 5,
+              "ParentLevelId": 4,
+              "OrdersInput": "123521",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7009B",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7009",
+              "CoilNo": "FW7009A",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123520",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7009",
+              "CoilNo": "FW7009B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123521",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "IncomingCoilNo": "FW7009B",
+              "CoilNo": "FW7009B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123521",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7009A",
+              "CoilNo": "FW7009A",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123520",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "FA"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 4
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 5
+            }
+          ]
+        },
+        "MergeOrders": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123520;123521",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7009",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 2000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123520;123521",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7009",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 2000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123520;123521",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7009",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 2000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7009",
+              "CoilNo": "FW7009",
+              "OnGaugeWeight": 2000,
+              "OrdersInput": "123520;123521",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7009",
+              "CoilNo": "FW7009A",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123520",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7009",
+              "CoilNo": "FW7009B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123521",
+              "IsAsIs": true,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "FAF"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 0,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "An as is stock order goes back to stock",
+      "description": "Order two is a stock order finishing at the anneal, so the merge creates an as is flatten to separate it and its output goes BACK TO STOCK. Its coil no is asked for as a warehouse alpha, which GetCoilAlpha generates from the rod rather than from the coil it came off, because material going back to stock becomes a stock coil in its own right. Under the cascade each order has its own chain, so no as is flatten is needed and the piece itself is the back to stock output.",
+      "coil": {
+        "InitialCoilNo": "FW7010",
+        "Weight": 2000,
+        "Gauge": 0.3750,
+        "Temper": "F",
+        "Shape": "Round",
+        "Type": "Rod"
+      },
+      "orders": [
+        {
+          "OrderNo": 123540,
+          "CoilOrderPlanId": 6000,
+          "PlannedWeight": 1200,
+          "Smp": "FAF",
+          "PlanType": "CustomerOrder"
+        },
+        {
+          "OrderNo": 123541,
+          "CoilOrderPlanId": 6001,
+          "PlannedWeight": 800,
+          "Smp": "FA",
+          "PlanType": "ItemStockOrder"
+        }
+      ],
+      "rootOperations": [],
+      "expected": {
+        "BalanceToPiece": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123540",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7010",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 1200,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123540",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7010A",
+              "WeightOn": 1200,
+              "WeightOff": 1200,
+              "RequiredInWeight": 1200,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123540",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7010A",
+              "WeightOn": 1200,
+              "WeightOff": 1200,
+              "RequiredInWeight": 1200,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 4,
+              "ParentLevelId": 1,
+              "OrdersInput": "123541",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7010B",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "A",
+              "RemainingOperations": "A",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 5,
+              "ParentLevelId": 4,
+              "OrdersInput": "123541",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7010B",
+              "WeightOn": 800,
+              "WeightOff": 800,
+              "RequiredInWeight": 800,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7010",
+              "CoilNo": "FW7010A",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123540",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7010",
+              "CoilNo": "FW7010B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123541",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "IncomingCoilNo": "FW7010B",
+              "CoilNo": "FW7010B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123541",
+              "IsAsIs": false,
+              "BackToStock": true,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7010A",
+              "CoilNo": "FW7010A",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123540",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "FA"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 4
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6001,
+              "PlanningLevelId": 5
+            }
+          ]
+        },
+        "MergeOrders": {
+          "PlanningRoutings": [
+            {
+              "SequenceNo": 0,
+              "LevelId": 1,
+              "ParentLevelId": 0,
+              "OrdersInput": "123540;123541",
+              "OperationLetter": "F",
+              "MachineGroup": "FL1",
+              "IncomingCoilNo": "FW7010",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 2000,
+              "NextOperation": "A",
+              "RemainingOperations": "AF",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 10,
+              "LevelId": 2,
+              "ParentLevelId": 1,
+              "OrdersInput": "123540;123541",
+              "OperationLetter": "A",
+              "MachineGroup": "Furnace",
+              "IncomingCoilNo": "FW7010",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 2000,
+              "NextOperation": "F",
+              "RemainingOperations": "F",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "LevelId": 3,
+              "ParentLevelId": 2,
+              "OrdersInput": "123540;123541",
+              "OperationLetter": "F",
+              "MachineGroup": "FL2",
+              "IncomingCoilNo": "FW7010",
+              "WeightOn": 2000,
+              "WeightOff": 2000,
+              "RequiredInWeight": 2000,
+              "NextOperation": "",
+              "RemainingOperations": "",
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            }
+          ],
+          "PlanningFlatLineProcessing": [
+            {
+              "SequenceNo": 0,
+              "IncomingCoilNo": "FW7010",
+              "CoilNo": "FW7010",
+              "OnGaugeWeight": 2000,
+              "OrdersInput": "123540;123541",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7010",
+              "CoilNo": "FW7010A",
+              "OnGaugeWeight": 1200,
+              "OrdersInput": "123540",
+              "IsAsIs": false,
+              "BackToStock": false,
+              "CoilOrderPlanId": 6000,
+              "MfgOrderNo": 0
+            },
+            {
+              "SequenceNo": 20,
+              "IncomingCoilNo": "FW7010",
+              "CoilNo": "FW7010B",
+              "OnGaugeWeight": 800,
+              "OrdersInput": "123541",
+              "IsAsIs": true,
+              "BackToStock": true,
+              "CoilOrderPlanId": 6001,
+              "MfgOrderNo": 0
+            }
+          ],
+          "OrderRemainingOperations": [
+            {
+              "CoilOrderPlanId": 6000,
+              "RemainingOperations": "FAF"
+            },
+            {
+              "CoilOrderPlanId": 6001,
+              "RemainingOperations": "FAF"
+            }
+          ],
+          "RoutingsLevelIdMap": [
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 1,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 1
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 2,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 2
+            },
+            {
+              "TempCoilOrderPlanId": 6000,
+              "TempLevelId": 3,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            },
+            {
+              "TempCoilOrderPlanId": 6001,
+              "TempLevelId": 0,
+              "PlanningCoilOrderPlanId": 6000,
+              "PlanningLevelId": 3
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
