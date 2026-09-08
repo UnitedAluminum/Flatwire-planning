@@ -171,7 +171,7 @@
   ------------------------------------------------------------
   D1. Scope is FL2 and FL3 only. FL1 produces an intermediate SPOOL, not a finished coil, and a
       spool is not a saleable unit that goes on a skid. FL1 run completion writes FlatWireDB.Spool
-      and stops there (FW-202). @lineId is validated against ('FL2','FL3') for that reason.
+      and stops there (FW-202). @machineName is validated against ('FL2','FL3') for that reason.
 
   D2. One coil per call. Forced by C4 - the coils trigger is single-row only. The two coils that
       share a skid are two calls, distinguished by @skidAssignment.
@@ -353,7 +353,7 @@ GO
 CREATE OR ALTER PROCEDURE [dbo].[FlatWire_CompleteCoilOnSkid]
       @coilAlpha             VARCHAR(30)                    -- FlatWireDB CoilOutput.CoilAlpha, e.g. FW-00421-C01
     , @runId                 VARCHAR(20)                    -- FlatWireDB FlatWireRun.RunId, e.g. RUN-0042
-    , @lineId                VARCHAR(5)                     -- FL2 | FL3            (D1)
+    , @machineName                VARCHAR(5)                     -- FL2 | FL3            (D1)
     , @leadSegmentAlpha      VARCHAR(20)                    -- the LEAD part's source segment: the SourceSegmentAlpha of the
                                                             -- CoilTraceability row with the lowest FootageFrom. Rooted on
                                                             -- HERE, not on a rod (change [N], 26 Aug 2026). Pass the ROD
@@ -371,7 +371,7 @@ CREATE OR ALTER PROCEDURE [dbo].[FlatWire_CompleteCoilOnSkid]
     , @skidAssignment        VARCHAR(10)                    -- Coil1Of2 | Coil2Of2   (D11)
     , @badgeNo               INT
     , @existingSkidNo        CHAR(9)      = ''              -- required for Coil2Of2
-    , @wipStation            VARCHAR(6)   = 'FWPACK'        -- seeded by 10_CommonDB_Insert_WIPStations_FlatWire.sql
+    , @wipStation            VARCHAR(6)   = 'FWPACK'        -- seeded by deploy step 2 (FW-241)
     , @palletWeightLb        INT          = 0
     , @isCoilBreak           BIT          = 0               -- mid-run break -> coil_break     (D6)
     , @coilBreakReason       VARCHAR(255) = NULL
@@ -485,7 +485,7 @@ BEGIN
     SET @logInfo = 'EXEC FlatWire_CompleteCoilOnSkid '
                  + ISNULL(@coilAlpha, 'NULL')            + ', '
                  + ISNULL(@runId, 'NULL')                + ', '
-                 + ISNULL(@lineId, 'NULL')               + ', '
+                 + ISNULL(@machineName, 'NULL')               + ', '
                  + ISNULL(@leadSegmentAlpha, 'NULL')     + ', '
                  + ISNULL(CAST(@orderNo AS VARCHAR(10)), 'NULL')
                  + ISNULL(@relLetter, ' ')               + ', '
@@ -508,14 +508,14 @@ BEGIN
           1. Validate. Fail before writing anything, not half way through.
              C12: none of the target tables has a CHECK or FK, so every rule lives here.
         --------------------------------------------------------------------------------------*/
-        SET @lineId          = LTRIM(RTRIM(ISNULL(@lineId, '')));
+        SET @machineName          = LTRIM(RTRIM(ISNULL(@machineName, '')));
         SET @skidAssignment  = LTRIM(RTRIM(ISNULL(@skidAssignment, '')));
         SET @leadSegmentAlpha = LTRIM(RTRIM(ISNULL(@leadSegmentAlpha, '')));
         SET @existingSkidNo  = LTRIM(RTRIM(ISNULL(@existingSkidNo, '')));
         SET @wipStation      = LTRIM(RTRIM(ISNULL(@wipStation, 'FWPACK')));
 
-        IF @lineId NOT IN ('FL2', 'FL3')
-            THROW 51001, 'FlatWire_CompleteCoilOnSkid: @lineId must be FL2 or FL3. FL1 produces a spool, not a finished coil (D1).', 1;
+        IF @machineName NOT IN ('FL2', 'FL3')
+            THROW 51001, 'FlatWire_CompleteCoilOnSkid: @machineName must be FL2 or FL3. FL1 produces a spool, not a finished coil (D1).', 1;
 
         IF @skidAssignment NOT IN ('Coil1Of2', 'Coil2Of2')
             THROW 51002, 'FlatWire_CompleteCoilOnSkid: @skidAssignment must be Coil1Of2 or Coil2Of2 (D11).', 1;

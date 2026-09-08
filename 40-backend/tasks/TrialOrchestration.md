@@ -1,7 +1,7 @@
 # Six-Screen Trial Run — Execution Orchestration (30 Sep 2026)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 29, 2026 — **§9 added: what is actually built, measured against `ual-api`, `ual-angular` and the deployed `FlatWireDB`, and grouped by phase × stream in §9.6, and §2's three sprint grids re-cut with `BE`/`FE`/`RT`/`DB` columns **and a status glyph on every story**, stamped from the front-matter by `tools/stamp_trial_status.py`.** The backend spine is committed and green; ⛔ **six Phase-4–8 services are de-stubbed but uncommitted (§9.2), the frontend is a scaffold (§9.4), and the deployed database predates the `Q60` spool swap and is unseeded (§9.5)**. **`1B` holds 16 of the trial's 17 `done` stories; phases 3–8 hold 30 and none is `done`.** Change history is in [`CHANGELOG.md`](../../CHANGELOG.md)
+**Last Updated:** September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — **§6's *Before T1 closes* row is discharged** — `G23` is closed at 1920 × 1080 (client-confirmed as `Q26`), so the canvas re-layout is scheduled work rather than a risk. ⚠ **What replaces it is the panel's physical diagonal**, on which the 14 px floor rests. *(previously August 29, 2026 — **§9 added: what is actually built, measured against `ual-api`, `ual-angular` and the deployed `FlatWireDB`, and grouped by phase × stream in §9.6, and §2's three sprint grids re-cut with `BE`/`FE`/`RT`/`DB` columns **and a status glyph on every story**, stamped from the front-matter by `tools/stamp_trial_status.py`.** The backend spine is committed and green; ⛔ **six Phase-4–8 services are de-stubbed but uncommitted (§9.2), the frontend is a scaffold (§9.4), and the deployed database predates the `Q60` spool swap and is unseeded (§9.5)**. **`1B` holds 16 of the trial's 17 `done` stories; phases 3–8 hold 30 and none is `done`.** Change history is in [`CHANGELOG.md`](../../CHANGELOG.md))*
 **Document Type:** Execution index and story map for the 30 Sep trial run
 **Status:** Active — **the trial-scope companion to [Orchestration.md](Orchestration.md)**
 **Owner:** Delivery lead, across all four streams
@@ -101,8 +101,8 @@ vocabulary, so a glyph means here what it means on [`STATUS.md`](../../STATUS.md
 
 | Phase | BE | FE | RT | DB |
 |---|---|---|---|---|
-| **1A** | — | ⬜ `FW-N03` · ⬜ `FW-130` · ⛔ `FW-131` · ⬜ `FW-132` · ⬜ **`FW-133` 75** · ⬜ `FW-134` | ⬜ `FW-135` · ⬜ `FW-136` · ⛔ `FW-137` *(Angular, §1.2)* | — |
-| **1B** | ✅ [FW-N04](FW-N04.md) · ✅ [FW-138](FW-138.md) *(7 controllers, `P-53`)* · ✅ [FW-139](FW-139.md) · ✅ [FW-140](FW-140.md) · ✅ [FW-141](FW-141.md) · ✅ [FW-142](FW-142.md) · ✅ [FW-143](FW-143.md) · 🔵 [FW-144](FW-144.md) · ⛔ [FW-145](FW-145.md) · ✅ [FW-146](FW-146.md) · ✅ [FW-147](FW-147.md) · ✅ [FW-148](FW-148.md) · 🔵 [FW-207](FW-207.md) · ✅ [FW-208](FW-208.md) | — | 🔵 [FW-080](FW-080.md) · 🔵 [FW-149](FW-149.md) | — |
+| **1A** | — | ✅ `FW-N03` · 🟡 `FW-130` · ⛔ `FW-131` · ⬜ `FW-132` · ⬜ **`FW-133` 75** · ⬜ `FW-134` | ⬜ `FW-135` · ⬜ `FW-136` · ⛔ `FW-137` *(Angular, §1.2)* | — |
+| **1B** | ✅ [FW-N04](FW-N04.md) · ✅ [FW-138](FW-138.md) *(7 controllers, `P-53`)* · ✅ [FW-139](FW-139.md) · ✅ [FW-140](FW-140.md) · ✅ [FW-141](FW-141.md) · ✅ [FW-142](FW-142.md) · ✅ [FW-143](FW-143.md) · 🔵 [FW-144](FW-144.md) · ⬜ [FW-145](FW-145.md) · ✅ [FW-146](FW-146.md) · ✅ [FW-147](FW-147.md) · ✅ [FW-148](FW-148.md) · 🔵 [FW-207](FW-207.md) · ✅ [FW-208](FW-208.md) | — | 🔵 [FW-080](FW-080.md) · 🔵 [FW-149](FW-149.md) | — |
 | **1C** | — | — | — | ⊘ ~~`FW-002`~~ *(cancelled, `D-32`)* · 🔵 `FW-152` · ⬜ `FW-005` · ⬜ `FW-004` · ⬜ `FW-006` · ⬜ **`FW-007` 31** |
 | **h** — `[TRP]`'s, **per stream** | **145** | **139** | **60** | **65** *(62 after `D-32`; published figure held — see `[TRP §2.1]`)* |
 
@@ -120,7 +120,7 @@ vocabulary, so a glyph means here what it means on [`STATUS.md`](../../STATUS.md
 | **1B close-out** | ✅ [FW-218](FW-218.md) | — | ✅ [FW-150](FW-150.md) · ✅ [FW-151](FW-151.md) · ✅ [FW-205](FW-205.md) · ✅ [FW-203](FW-203.md) *(for `FW-N05`)* | — | 53 |
 | navigation | — | ⬜ `FW-204` · ⬜ `FW-153` | — | 🔵 `FW-155` | 15 |
 | **Phase 4** | 🔵 [FW-157](FW-157.md) | ⬜ `FW-061` | ⬜ [FW-082](FW-082.md) | 🔵 `FW-159` | 74 |
-| **Phase 5** | 🔵 [FW-164](FW-164.md) | ⬜ `FW-062` · ⬜ `FW-162` · ⬜ `FW-081` · ⬜ `FW-163` · ⬜ `FW-214` | — | 🔵 `FW-165` | 89 |
+| **Phase 5** | 🔵 [FW-164](FW-164.md) | 🟡 `FW-062` · ⬜ `FW-162` · ⬜ `FW-081` · ⬜ `FW-163` · ✅ `FW-214` | — | 🔵 `FW-165` | 89 |
 | **Phase 6** *(start)* | ⛔ [FW-168](FW-168.md) · ⬜ [FW-170](FW-170.md) | ⬜ `FW-065` · ⬜ `FW-071` | — | 🔵 `FW-171` | 49 |
 
 ### T3 — exceptions, completion, FL2 · 143 h
@@ -159,7 +159,7 @@ Not reduced quality — **reduced surface**. Each has a plan section saying so.
 > all three `/rod/**` endpoints leave the service, and **DB2 rod check-in scans a rod**: the
 > scan was served by `GET /rod/{alpha}`, *"everything staging and check-in need in one round
 > trip"* (`[API §4.3]`). The trial therefore has no scan validation, no carry-forward gate
-> (`FR-043` needs `footageRunToDate`) and no station switching (`Q24` needs `scheduledLineId`)
+> (`FR-043` needs `footageRunToDate`) and no station switching (`Q24` needs `scheduledMachineName`)
 > until `[API]` re-homes them — `FW-138`'s `P-54`. **Settle it before T1 is scheduled.**
 
 > **`FW-150` and `FW-151` are not reduced** precisely so the real ingest drops in behind them
@@ -176,7 +176,7 @@ Not reduced quality — **reduced surface**. Each has a plan section saying so.
 | **Before T2** | **`Q22`** — min/max tolerance values | ⛔ Owed by e-mail, **nothing seeded**. `CHK007` is a band check at both stations | [FW-168 §`P-43`](FW-168.md) |
 | **Before T2** | **`G2` / `OI-39`** — cross-DB recovery | **Phase 4 is provisional until it closes**; carries the 24–64 h reserve | [FW-157](FW-157.md) · [FW-151](FW-151.md) |
 | **Before T2** | **`G10`** — IIS WebSockets on `devual-uadev001` | Transport **silently** falls back to long-poll. **Provisioning, not build** | [FW-080](FW-080.md) |
-| **Before T1 closes** | **`G23`** — the 1280×1024 canvas unconfirmed | 1920×1080 is **a re-layout of every screen, not a rescale**. *"Gets more expensive every sprint"* | FE — `[TRP §6]` |
+| ~~**Before T1 closes**~~ | ✅ ~~**`G23`** — the 1280×1024 canvas unconfirmed~~ **CLOSED 7 Sep 2026 at 1920×1080** (`Q26`) | The re-layout is now scheduled work rather than risk. ⚠ **What is left is the panel's physical diagonal**, on which the 14 px floor rests | FE — `[TRP §6]`, `[P1A §6.10]` |
 | Before Phase 8 ships | **`Q15` / `OI-47`** — hybrid-origin guard **undefined** | `TC-118` is P1: *"gate fails until specified"*. The trial does not walk into it | [FW-179 §3](FW-179.md) |
 
 ✅ **Blocker 1 closed by `D-31`** — the three `PassSchedule*` tables, their seed, 10 FKs and 6
@@ -345,19 +345,32 @@ are §5's deferrals working as intended, not gaps:
 beside it"* story, it writes the `SpoolProcessing` row DB5 reads, and it is the **only T3 story
 carrying `status: blocked`**. §5 keeps Part B as `Must`.
 
-### 9.4 Frontend — nothing built, zero of six screens
+### 9.4 Frontend — two screens as UI skeletons, none of the six trial screens
 
-⛔ **Updated 31 Aug 2026.** `projects/flat-wire/` **no longer exists.** `FW-N03` was built on
-28 Aug 2026 and **reverted on 31 Aug 2026**, taking the library and all eleven host integration
-points with it, so `ual-angular` is back to **30 libraries and no flat wire**. The scaffold card
-`FW-N03` is `not-started` again.
+`projects/flat-wire/` exists and is `FW-N03`, **done 28 Aug 2026**: `flat-wire.module.ts`,
+`flat-wire-routing.module.ts`, `public-api.ts` and the shell.
 
-⚠ **Nothing downstream of the scaffold has started either** — including `FW-130` (the shell and the
-1280×1024 canvas, blocked on the scaffold again), **`FW-133`**, which §2 calls *"the
-single largest story in the trial and all six screens depend on it… not trimmable"*, and the
-three Angular stories §1.2 excludes, `FW-135` / `FW-136` / `FW-137`.
+🟡 **Two screens have since been built on it, both as UI skeletons:** **DB3 Active Run Monitor**
+(`flat-wire-landing.component`, the default child of `#/flat-wire`) and **DB1 Line Status**
+(`supervisor-dashboard.component`), plus a spool notification card and a trace popup. Four
+reusable pieces went into **`projects/shared`** — `lib-nav-rail`, `lib-chart-canvas`,
+`lib-trace-panel` and `buildTraceConfig`.
 
-The approved visual baseline is still only the static mockups in `50-frontend/mockups/`.
+⛔ **Neither is a trial screen, and neither carries data.** Every figure on both is a literal in a
+private builder: **no API client, no `HttpClient`, no SignalR, no subscription anywhere in the
+library**, every rail entry inert, nothing persisted. **Zero of the six trial screens exist** —
+DB2, DB5 and the rest are untouched.
+
+⚠ **`FW-133` has a foundation but is not done** — the canvas, the Chart.js lifetime and the trace
+config builder exist; the runtime `isLive` contract, the SVG profile mode and the other five
+controls do not. §2 still calls it *"the single largest story in the trial and all six screens
+depend on it… not trimmable"*. `FW-135` / `FW-136` / `FW-137` are untouched.
+
+⚠ **`FW-130`'s canvas is `1920 × 1080`, not `1280 × 1024`** — `G23` was decided and this line was
+stale.
+
+The approved visual baseline for the six trial screens is still only the static mockups in
+`50-frontend/mockups/`.
 
 ### 9.5 ⛔ The deployed database is pre-`Q60` and unseeded
 

@@ -132,7 +132,7 @@ This is where the weld physically happens: the operator has just positioned and 
 
 **Two capabilities of the retired screen have not been rehoused** and are listed as open items: a **re-sequenceable queue of the rods awaiting weld**, and the **traceability chain** view showing completed → outgoing → incoming → future rod (`FR-175`).
 
-> `[CLIENT INPUT REQUIRED]` **FL2 has no pre-check-in station**, so with the weld action removed from its run monitor, FL2 has **no way to record a weld**. This is correct if FL2 only ever inherits the weld markers of the spool it receives (as §6 states), and wrong if FL2 joins one spool to the next — the shift summary reports FL2 weld events, which suggests it may. **Confirmation needed.**
+> ✅ **ANSWERED 3 Sep 2026 — FL2 never welds, so it needs no way to record one.** Tim O'Brien: *"Once the material has been Flattened, it is no longer able to be welded due to a lack of capability at UA"*, and on welding being induction on the FL1 side only with FL2 cutting and re-threading rather than joining spools, *"Correct."* **§6's inheritance rule is therefore normative**, `D8` is safe as written, and gap `G28` is resolved. The shift-summary fixture that reported FL2 weld events was the wrong artifact and has been corrected. *Original open item:* `[CLIENT INPUT REQUIRED]` **FL2 has no pre-check-in station**, so with the weld action removed from its run monitor, FL2 has **no way to record a weld**. This is correct if FL2 only ever inherits the weld markers of the spool it receives (as §6 states), and wrong if FL2 joins one spool to the next.
 
 ---
 
@@ -160,6 +160,8 @@ Source rods (input)
 | **Rod → spool** | When the FL1 take-up reaches capacity, the spool record aggregates that run's weld events, storing each rod's footage range and embedding the weld markers on the gauge profile |
 | **Spool → coil** | When a coreless coil completes at FL2, it inherits the spool's weld markers and presents the source traceability table |
 | **Coil → skid** | Two coils are paired onto a skid, which carries the full genealogy forward to shipment and certification |
+
+> ✅ **The `Spool → coil` row is NORMATIVE, confirmed by the client 3 Sep 2026.** An FL2 coil **inherits** its spool's weld markers and never records a weld of its own, because flattened material cannot be welded at UA at all. **FL2 has no weld entry point by design, not by omission.** ⚠ A consequence worth stating: since every weld happens upstream at FL1, **an FL2-standalone spool received with no traceability rows has no weld genealogy to inherit** — which is `OI-139`, and this answer removes the alternative explanation for it.
 
 ### Source traceability as presented at coil completion
 
@@ -223,7 +225,7 @@ Recorded from the client call of **July 30, 2026** unless otherwise dated.
 | D7 | **A failing weld does not mark the rod welded** | The join did not hold, so the line cannot transition through it. The rod stays staged and un-welded, the failure and its reason are shown at the station, and the operator remakes the weld. **One physical join can therefore carry several records** — see OI-59 |
 | D8 | **The weld is recorded at one place: the Rod Pre-Check-In station** | The separate Weld Event screen was withdrawn and the weld action removed from all three active-run monitors. Two capabilities of the retired screen were **not** rehoused (G27), and **FL2 — which has no pre-check-in station — is left with no capture path** (G28) |
 
-> **D8 has an unresolved consequence and is the reason G28 is High.** The decision is sound for FL1 and FL3, where the weld physically happens at the payoff the operator is standing at. It is only safe for FL2 if FL2 never makes a weld of its own. §6 says an FL2 coil *inherits* its spool's weld markers, which supports the decision; the shift report shows FL2 weld events, which contradicts it. **One of those two is wrong and we do not know which.**
+> ✅ **D8's consequence is RESOLVED, 3 Sep 2026 — the condition it depended on holds.** This note read: *"The decision is sound for FL1 and FL3 — It is only safe for FL2 if FL2 never makes a weld of its own."* The client has now confirmed FL2 never does, so **`D8` is safe for all three lines** and `G28` is closed. The shift-summary fixture, not this specification, was the error.
 
 ---
 
@@ -231,7 +233,7 @@ Recorded from the client call of **July 30, 2026** unless otherwise dated.
 
 | Ref | Priority | Question | What it blocks |
 |---|---|---|---|
-| **G28** | **High** | **Can FL2 record a weld at all?** The weld action was removed from every active-run monitor on 1 Aug 2026 and the weld now lives only at the pre-check-in station — **which FL2 does not have**. This is correct if FL2 only ever inherits the weld markers of the spool it receives (§6); it is a functional hole if FL2 joins one spool to the next. The shift summary reports FL2 weld events, so the two statements disagree | Any weld on FL2. If FL2 does weld, it currently has no capture path |
+| ✅ ~~**G28**~~ | **Resolved** | ~~**Can FL2 record a weld at all?**~~ **ANSWERED 3 Sep 2026 — no, and it does not need to.** Flattened material cannot be welded at UA; welding is induction at FL1 only. §6's inheritance rule is normative and the shift-summary fixture was corrected | — |
 | **G27** | Medium | **The rod queue and traceability chain have no host.** The retired Weld Event screen carried a re-sequenceable queue of rods awaiting weld and a chain view of completed → outgoing → incoming → future rod (`FR-175`). Neither moved to the pre-check-in dialog | `FR-175`; the operator's view of weld sequence and genealogy |
 | **Q6** | High | **Footage attribution at the weld point** — split at the exact foot, or attribute the coil to the dominant rod? | The values in every source-traceability table |
 | **Q7** | High | **Maximum weld joints per finished coil** — the limit the system must enforce | A validation rule at confirmation; run-length planning. Exceeding a customer's limit causes jams in their welding equipment |

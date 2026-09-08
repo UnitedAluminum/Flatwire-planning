@@ -21,7 +21,7 @@ SET ANSI_NULLS ON;
 GO
 
 CREATE OR ALTER PROCEDURE [dbo].[sp_ShiftSummary]
-    @LineId     VARCHAR(5),
+    @MachineName     VARCHAR(5),
     @ShiftStart DATETIMEOFFSET,
     @ShiftEnd   DATETIMEOFFSET
 AS
@@ -29,24 +29,24 @@ BEGIN
     SET NOCOUNT ON;
 
     SELECT
-        @LineId AS LineId,
+        @MachineName AS MachineName,
         @ShiftStart AS ShiftStart,
         @ShiftEnd   AS ShiftEnd,
         (SELECT COUNT(*)               FROM [dbo].[CoilOutput]
-           WHERE [LineId] = @LineId AND [CompletedAt] >= @ShiftStart AND [CompletedAt] < @ShiftEnd)                     AS CoilsCompleted,
+           WHERE [MachineName] = @MachineName AND [CompletedAt] >= @ShiftStart AND [CompletedAt] < @ShiftEnd)                     AS CoilsCompleted,
         (SELECT ISNULL(SUM([NetWeightLb]),0) FROM [dbo].[CoilOutput]
-           WHERE [LineId] = @LineId AND [CompletedAt] >= @ShiftStart AND [CompletedAt] < @ShiftEnd)                     AS NetWeightLb,
+           WHERE [MachineName] = @MachineName AND [CompletedAt] >= @ShiftStart AND [CompletedAt] < @ShiftEnd)                     AS NetWeightLb,
         (SELECT ISNULL(SUM([FootageFt]),0)   FROM [dbo].[CoilOutput]
-           WHERE [LineId] = @LineId AND [CompletedAt] >= @ShiftStart AND [CompletedAt] < @ShiftEnd)                     AS FootageFt,
+           WHERE [MachineName] = @MachineName AND [CompletedAt] >= @ShiftStart AND [CompletedAt] < @ShiftEnd)                     AS FootageFt,
         (SELECT COUNT(*)               FROM [dbo].[WipRejection]
-           WHERE [LineId] = @LineId AND [Timestamp] >= @ShiftStart AND [Timestamp] < @ShiftEnd)                        AS WipRejections,
+           WHERE [MachineName] = @MachineName AND [Timestamp] >= @ShiftStart AND [Timestamp] < @ShiftEnd)                        AS WipRejections,
         (SELECT COUNT(*)               FROM [dbo].[SpcCheckpoint]
-           WHERE [LineId] = @LineId AND [Timestamp] >= @ShiftStart AND [Timestamp] < @ShiftEnd)                        AS SpcCheckpoints,
+           WHERE [MachineName] = @MachineName AND [Timestamp] >= @ShiftStart AND [Timestamp] < @ShiftEnd)                        AS SpcCheckpoints,
         (SELECT ISNULL(SUM(CASE WHEN [AllInSpec] = 1 THEN 1 ELSE 0 END),0) FROM [dbo].[SpcCheckpoint]
-           WHERE [LineId] = @LineId AND [Timestamp] >= @ShiftStart AND [Timestamp] < @ShiftEnd)                        AS SpcCheckpointsInSpec,
+           WHERE [MachineName] = @MachineName AND [Timestamp] >= @ShiftStart AND [Timestamp] < @ShiftEnd)                        AS SpcCheckpointsInSpec,
         (SELECT ISNULL(SUM(rp.[PauseDurationSeconds]),0)
            FROM [dbo].[RunPauseEvent] rp
            JOIN [dbo].[FlatWireRun] r ON r.[RunId] = rp.[RunId]
-           WHERE r.[LineId] = @LineId AND rp.[PausedAt] >= @ShiftStart AND rp.[PausedAt] < @ShiftEnd)                  AS PauseSeconds;
+           WHERE r.[MachineName] = @MachineName AND rp.[PausedAt] >= @ShiftStart AND rp.[PausedAt] < @ShiftEnd)                  AS PauseSeconds;
 END
 GO

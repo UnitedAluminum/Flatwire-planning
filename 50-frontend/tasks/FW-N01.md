@@ -4,6 +4,7 @@ legacy_id:
 title: Dashboard 2A — Rod Pre-Check-in station
 status: not-started
 status_confirmed: true
+status_note: "⬜ **Not started, and four of its endpoints already answer** — `GET /payoff/status`, `POST /staging/rod`, `POST /staging/rod/unstage` and `GET /staging/queue`, all behind the stub/real DI swap. So the screen is buildable against live HTTP today. ⚠ DB3 (`flat-wire-landing`) is built and is the reference [`[UIC]`](../UIConventions.md) is drawn from; `lib-nav-rail` / `lib-chart-canvas` / `lib-trace-panel` are **consumed from `projects/shared`**, not written here ([`[UIC §3.22]`](../UIConventions.md)). ⛔ **It also has to host the weld dialog** (`FW-063`), whose endpoint `POST /staging/rod/mark-welded` does **not** exist — `G26` and `G27`. ⛔ `FW-134`'s OK/NG/NA inspection buttons are owed and unbuilt. ⚠ `OI-108` is undecided: at cold start, is *Welds this run* absent, or present and unavailable?"
 owner:
 jira:
 mvp: 1

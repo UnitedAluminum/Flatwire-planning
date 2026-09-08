@@ -3,15 +3,15 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** Maintenance (tooling inventory)
-**Version:** 1.1
-**Last Updated:** August 12, 2026
-**Status:** **MVP-2 — not part of MVP-1 and not part of MVP-1 planning**
+**Version:** 1.2
+**Last Updated:** September 2, 2026
+**Status:** **MVP-1** — moved back in by the die split (`Q91`, 2 Sep 2026)
 **Screen reference:** Die Management (maintenance, tooling inventory) — [`../../50-frontend/mockups/dashboard_die_management.html`](../../50-frontend/mockups/dashboard_die_management.html)
 **Extracted from:** [`DieChangeAndManagement.md`](./DieChangeAndManagement.md) v2.2 §4, on 11 Aug 2026
 
 ---
 
-> **Scope banner.** This document is **MVP-2**. Nothing in it is to be planned, estimated, or implemented for MVP-1. See [`../../95-archive/design-notes/MVP-2-scope-note.md`](../../95-archive/design-notes/MVP-2-scope-note.md) for the scope decision.
+> ⚠ **Scope banner, REVERSED 2 Sep 2026 by the die split (`Q91`). This document is now MVP-1.** Its tables are built and seeded in Phase 1 — **`ToolingInventoryDie`** (the per-tool register) and **`DieHistory`** (the append-only log behind §1.3's two history views) — and `FR-240`–`FR-255` are MVP-1 requirements. `FW-N07`'s MoSCoW split is settled the way its own story text always read: the **table** is *Must* and the **screen** is *Should*, and both are now in scope. **§1.1's division-of-responsibility table below is no longer a scope boundary** — it still describes correctly which capability belongs to which *screen*, but both screens are MVP-1. **§1.5 and §7's "where do these values come from" question closes**: `FR-254`'s three values come from `ToolingInventoryDie`. ⚠ **`OI-141` stays open** on whether this screen is an Angular dashboard or the Machines Application → Tooling Inventory tab, and so on whether there is one die register or two. ⚠ **`OI-12` is now a live defect**: this screen's 65/80 % bands and the Die Change screen's 60/85 % bands derive from one table. *(Was: "This document is **MVP-2**. Nothing in it is to be planned, estimated, or implemented for MVP-1.")* See [`../../95-archive/design-notes/MVP-2-scope-note.md`](../../95-archive/design-notes/MVP-2-scope-note.md) for the scope decision.
 >
 > **It was extracted, not written.** Its parent document covered two subjects in one file: the mid-run **Die Change event**, which **stays in MVP-1** (Phase 6, delivered as the `die_change.js` dialog over the paused run), and **Die Management** inventory, which is this document. The split was made so the MVP-1 requirements were not carried into MVP-2 by accident. **The parent is still the authority on the die change event**; this file is the authority on inventory.
 
@@ -39,7 +39,7 @@ The maintenance-facing counterpart to the die change event, reached from tooling
 
 ## 1.1 Division of responsibility
 
-| Capability | Die change *(MVP-1)* | Die management *(MVP-2 — this document)* |
+| Capability | Die change *(this stays on the shopfloor screen)* | Die management *(this document — maintenance-facing; **MVP-1 since `Q91`**)* |
 |---|---|---|
 | Log a mid-run die swap | **Yes** | No |
 | View outgoing die remaining life | Yes — read only | Yes — editable |
@@ -51,7 +51,7 @@ The maintenance-facing counterpart to the die change event, reached from tooling
 | View full run history per die | No | **Yes** |
 | View the replacement and reset log | No | **Yes** |
 
-> **This table is now also the scope boundary**, which it was not when both columns shipped together. Everything in the right-hand column is MVP-2. Everything in the left-hand column is MVP-1 and **depends on the right-hand column existing** — see §7.
+> ⚠ **This table is NO LONGER a scope boundary** — it was one only between 11 Aug and 2 Sep 2026. Both columns are **MVP-1**. It still divides the capabilities correctly *by screen*: the left-hand column is the shopfloor die-change dialog, the right-hand column the maintenance inventory screen. The dependency it warns about is **satisfied**, not outstanding: the right-hand column's tables are built and seeded in Phase 1, so Phase 6 depends on Phase 1. See §7.
 
 ## 1.2 Inventory view
 

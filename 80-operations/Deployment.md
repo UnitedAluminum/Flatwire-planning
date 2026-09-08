@@ -1,7 +1,7 @@
 # Flat Wire Mill — Deployment
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 30, 2026 — ⛔ **§4.2 step 2.1's `cd` named a folder deleted by the 29 Aug re-tree, and it is the step the rest depends on** — `FlatWire_DDL_RunAll.sql`'s `:r` includes are relative to the invocation directory. Retargeted to `30-database\sql`. **`V3`'s comment block also carried stale arithmetic** — *"The 64 in script 07 are 53 … plus 11"*, three lines above its own correct `-- Expected: 70` and invisible to every tool; **replaced with a pointer to `[DBD §6.8]` rather than the corrected split**, because a second copy of a figure in a permitted site is how this gate came to reject a correct deployment five times. **No expectation, checklist line or section number changed** *(previously August 29, 2026 — **A sixth deployment artifact for the first time — `FlatWireSimConsole` (`D-33`).** §1.1 component 6; **new §1.2a** (it is a *distribution* decision, not a deployment step — and ⚠ **nothing enforces the installation policy**, `G66`); §1.3's *Console version* row (**do not** couple it to a `flatwire-v*` tag); §2 records it has **no environment row and needs none**; **new §4.7 (Step 7)**, optional and non-blocking. ⚠ **Never deploy it against `production`** *(previously August 26, 2026 — **this header contradicted §4.2's own gate and is now level with it.** It published `34 / 57 / 69` for `V1`/`V2`/`V3` while the body asserted **33 / 55 / 70** — the figures the DDL actually produces, and the ones [`../tools/deliverables/verify_schema_counts.py`](../tools/deliverables/verify_schema_counts.py) checks this file against. `[DBD §6.2]` remains the defining site; a header restating a count is how the gate drifted from the body in the first place, so it now points rather than repeats *(previously August 23, 2026 — **§“Verification” corrected for the third time: as written it again rejected a correct deployment.** `V1`/`V2`/`V3` asserted **32 / 50 / 57** — the 32 predated the 22 Aug rod ↔ order pair and the 50/57 were never re-derived after `D-31`. Corrected then to 34 / 57 / 69, counted from the DDL, with `[DBD §6.2]` named as the defining site)* *(previously August 22, 2026 — `V1`/`V2`/`V3` asserted 25/33/41 in SQL comments and 27/41/46 in the checklist beneath, and `V4` required the MVP-2 `sp_ShiftSummary`)* *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** **Deployment step 2 is cancelled** and §4.3 retained as the record; the 1→3→4→5 order no longer depends on the renames; `V7`/`V8`/`V9` dropped, `V10` kept *(previously August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)))*
+**Last Updated:** September 5, 2026 (sixth pass) — ➕ **New §4.2 step `1b` — the `CommonDB` `OPCModules` column drift**, [`08_CommonDB_OPCModules_ColumnDrift.sql`](../30-database/scripts/08_CommonDB_OPCModules_ColumnDrift.sql). `dbo.OPCModules` on `DEV00164-001` carried **four** columns against `ual-database`'s **six**, so step `2a`'s *first* insert died on `Msg 207` — that is `G100`. The columns were added there **by hand** and step `1b` is the record of that change: guarded per column, idempotent, **writes no row**. ✅ **`G100` no longer gates step `2a`**, which leaves `FW-236`/`G94` as the only thing holding it. ⚠ **A lettered suffix, not a new step, per `P-153`** — same idiom as `1a` and `2a` — and **independent of `1a`**: either order works, both must precede `2a`. ⛔ **Step `1b` does NOT backfill, and that matters**: `OPCModulesIdx` 1-4 are left `NULL` in both columns, and adding the columns **removed the interlock** that used to make a `dbo.GetOPCServerAndTagDetails` refresh impossible. That procedure selects both into a **non-nullable** DTO, so refreshing it now — without backfilling — makes `GetOPCInfo` throw for **four other modules**. See `G100`. *(previously September 5, 2026 (fifth pass) — ➕ **New §4.2 step `1a` — the `CommonDB` OPC schema hardening**, [`09_CommonDB_OPCTables_Constraints.sql`](../30-database/scripts/09_CommonDB_OPCTables_Constraints.sql). The five `CommonDB` OPC tables are pure **heaps** — no PK, no unique index, no FK, no check constraint — while their `united_db` predecessors carry PKs and two FKs, lost in the migration and never re-created. Step `1a` restores them **before step `2a`**, converting `11_`'s hand-written idempotency guards into schema guarantees. ⚠ **A lettered suffix, not a new step, per `P-153`** — same idiom as `2a` and §1.2a. ✅ **It is the only shared-database step with nothing blocking it**: `G100` does not apply, and pre-flight measured 16 checks / 0 conflicts on `DEV00164-001`. *(previously September 5, 2026 (fourth pass — `D-49`) — ✅ **`G97` is RESOLVED: step `2a` uses the OPC UA endpoint pair at `OPCServersIdx` 1 and 2, both lines onto both**, so `11_` carries no placeholder and `OPCServerApplicationMapping` takes **4** rows. ⛔ **`G100` is now the only thing stopping the step running, which makes the `FW-236`/`G94` ordering matter more, not less.** ⚠ **Re-check the two ids per environment** — on `DEV00164-001` they are `UAOPC3`/`UAOPC4`, not `UAOPC1`/`UAOPC2`. *(previously September 5, 2026 (third pass — `D-48`) — ⚠ **`OPCServers` is a LOOKUP table and step `2a` neither inserts nor updates a row in it.** `11_` **writes four** `CommonDB` tables and **reads** the fifth, selecting an endpoint from the four that already exist (`UAOPC1`–`UAOPC4`); `16_` reverses nothing there, and the backup checklist no longer lists `OPCServers` as ours. ⛔ **`G97` still gates step `2a`**, but as *which of the four*, not *what is the endpoint*. *(previously September 5, 2026 (second pass) — ⛔ **§4.2's cross-folder sequence did not contain the OPC registration at all, and it is the section that calls itself that sequence's only home.** `11_` was component **4** in §1.1 and step **nothing** in §4.2, so a deployer following the ten-step chain would have skipped it and met `G60` at commissioning instead. Added as **step `2a`**, immediately after the `machines` rows it keys on and aborts without. ⚠ **A suffix, not an eleventh step, deliberately** — the chain is cited as *ten steps* in five files and `P-153` makes *"step 2"* the single record of `FW-003`'s decided values, so renumbering would have invalidated all of it to save a letter; same idiom as §1.2a. The runner-exclusion sentence now reads *steps 2 and 2a*, and the teardown paragraph records that `16_` is the **one** shared-row reversal that exists, DEV only. Raised by [`FW-238`](../40-backend/tasks/FW-238.md) §6. *(previously September 5, 2026 — **`D-45`/`D-46`/`D-47`: step 4's artifact is now a real script, and the tag paths live in two places on purpose.** The registration is [`11_`](../30-database/scripts/11_CommonDB_Insert_OPCRegistration_FlatWire.sql) with reverse `16_` — **41 rows, FL1 and FL2 only**, module id **6**, `ConnectionType` 21317. `appsettings` keeps the resolution map (`D-45` dropped `D-44`'s `TagKey` column, so `G93` is withdrawn), §5 gains a **config-vs-rows diff** to keep the two copies in step, and every path gained a `PLC` element. ⛔ Step 4 **cannot run until `G97`** supplies the UA endpoint, and must not be activated before `FW-236`/`G94` merges. *(previously September 4, 2026 — **`V1`/`V2`/`V3` restated to 45 / 67 / 87** with the five **Machine Setup** tables (the Setup/Handling Times and Material Loss tabs, from the client’s 31 Aug field sets), in both the SQL comments and the checklist beneath. ⚠ **`V3` moved by ONE against five new tables** — that is correct, not a missed index; script `07` states why for each of the other four. *(previously September 3, 2026 — **`V1`/`V2`/`V3` restated to 40 / 64 / 86** with `ToolingInventoryRollSet` (`D-42`), in both the SQL comments and the checklist beneath. ⚠ **This gate has rejected a correct deployment five times**; `[DBD §6.2]` remains the defining site and `verify_schema_counts.py` `C1` checks this file against it. *(previously August 30, 2026 — ⛔ **§4.2 step 2.1's `cd` named a folder deleted by the 29 Aug re-tree, and it is the step the rest depends on** — `FlatWire_DDL_RunAll.sql`'s `:r` includes are relative to the invocation directory. Retargeted to `30-database\sql`. **`V3`'s comment block also carried stale arithmetic** — *"The 64 in script 07 are 53 … plus 11"*, three lines above its own correct `-- Expected: 75` and invisible to every tool; **replaced with a pointer to `[DBD §6.8]` rather than the corrected split**, because a second copy of a figure in a permitted site is how this gate came to reject a correct deployment five times. **No expectation, checklist line or section number changed** *(previously August 29, 2026 — **A sixth deployment artifact for the first time — `FlatWireSimConsole` (`D-33`).** §1.1 component 6; **new §1.2a** (it is a *distribution* decision, not a deployment step — and ⚠ **nothing enforces the installation policy**, `G66`); §1.3's *Console version* row (**do not** couple it to a `flatwire-v*` tag); §2 records it has **no environment row and needs none**; **new §4.7 (Step 7)**, optional and non-blocking. ⚠ **Never deploy it against `production`** *(previously August 26, 2026 — **this header contradicted §4.2's own gate and is now level with it.** It published `34 / 57 / 69` for `V1`/`V2`/`V3` while the body asserted **33 / 55 / 70** — the figures the DDL actually produces, and the ones [`../tools/deliverables/verify_schema_counts.py`](../tools/deliverables/verify_schema_counts.py) checks this file against. `[DBD §6.2]` remains the defining site; a header restating a count is how the gate drifted from the body in the first place, so it now points rather than repeats *(previously August 23, 2026 — **§“Verification” corrected for the third time: as written it again rejected a correct deployment.** `V1`/`V2`/`V3` asserted **32 / 50 / 57** — the 32 predated the 22 Aug rod ↔ order pair and the 50/57 were never re-derived after `D-31`. Corrected then to 34 / 57 / 69, counted from the DDL, with `[DBD §6.2]` named as the defining site)* *(previously August 22, 2026 — `V1`/`V2`/`V3` asserted 25/33/41 in SQL comments and 27/41/46 in the checklist beneath, and `V4` required the MVP-2 `sp_ShiftSummary`)* *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** **Deployment step 2 is cancelled** and §4.3 retained as the record; the 1→3→4→5 order no longer depends on the renames; `V7`/`V8`/`V9` dropped, `V10` kept *(previously August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)))*)*)*)*)*)*)*)*)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** Release overview, environments, pre-deployment, sequence, smoke suite
 **Status:** Baselined
 **Owner:** Release manager / IT
@@ -20,7 +20,7 @@
 | 1 | **`FlatWireDB` schema** | Ordered SQL scripts `00` → `08` (+ seed on non-production) | SQL Server |
 | ~~2~~ | ~~**FW-001 shared-schema renames**~~ — **CANCELLED 18 Aug 2026, `D-32`. There is no shared-schema migration, so this component does not exist and step 2 is not deployed.** ⚠ **Step 4's `machines` rows (FL1/FL2/FL3, `FW-003`) and the `CommonDB` WIP-station registration are NOT cancelled** — they insert rows into existing tables and are still required | — | — |
 | 3 | **`FlatWire.API`** | `dotnet publish` output | IIS application pool |
-| 4 | **`OPCConnection` configuration** | `appsettings.{Environment}.json` tag-path map | IIS (existing service) |
+| 4 | **`OPCConnection` registration** *(retargeted `D-44`, narrowed `D-45`, `D-48` and `D-49`)* | **`CommonDB` OPC registration script** — [`11_CommonDB_Insert_OPCRegistration_FlatWire.sql`](../30-database/scripts/11_CommonDB_Insert_OPCRegistration_FlatWire.sql), reversed by [`16_`](../30-database/scripts/16_CommonDB_Delete_OPCRegistration_FlatWire.sql). **Writes four tables** — `OPCModules` (id **6**, `ConnectionType` 21317) · `OPCServerApplicationMapping` (**4** rows — both lines onto the endpoint pair `OPCServersIdx` **1 and 2**, `ConnectionSequence` 1 and 2, `D-49`) · **`OPCTags` 41 rows** (39 data + 2 system-error) · `OPCTagApplicationMapping` — and **reads a fifth**: `OPCServers` is a **lookup** it selects existing endpoints from and never writes to (`D-48`). Keyed on the `machines` rows of **§4.2 step 2**'s `10_` script *(corrected 5 Sep 2026 — this cell said "step 1", which is neither the component nor the step that writes them)*. ⚠ **FL1 and FL2 only — FL3 is not registered** (`D-47`/`G99`). Deployed as **§4.2 step `2a`** | SQL Server (`CommonDB`) — run by hand after sign-off, like `10_`, and **not** inside `FlatWire_Scripts_RunAll.sql`. ✅ **`G97` resolved (`D-49`) — no placeholder left.** ✅ **`G100` no longer stops it** — the target `CommonDB` was behind source control on `dbo.OPCModules`; that is closed by **§4.2 step `1b`** and measured. ⛔ **It must not be activated before `FW-236`/`G94` merges** — now the only thing stopping it running |
 | 5 | **`flat-wire`** | `ng build` static output, inside the shop-floor bundle | IIS static site |
 | 6 | **`FlatWireSimConsole`** *(new — `D-33`, 29 Aug 2026)* | `dotnet publish` WinForms EXE + `appsettings.json` | ⚠ **Engineering workstations only — never a commissioned line.** See §1.2a |
 
@@ -90,9 +90,10 @@ Configuration lives in `appsettings.{Environment}.json` plus environment variabl
 |---|---|---|
 | `FlatWireDB` connection string | `UA_Connection_String_Variable` → the named variable | Same indirection pattern as the other services |
 | JWT settings | `UA_JWT_Environment_Variable`, `UA_JWT_Token_Expiration_Minutes` | Inherited from `Login` |
-| **OPC tag-path map** | `appsettings.{Environment}.json` | **Config-driven, never hardcoded** — so a wrong path found at commissioning is a config edit, not a redeploy |
+| **OPC tag-path map** | ⚠ **BOTH, deliberately — `D-45` (5 Sep 2026)** | `FlatWireOpc:Lines:{line}:Tags` in `appsettings` is the **resolution map** — the only thing that can be, since `OPCTags` has no logical-name column and `D-45` declined to add one. `CommonDB.OPCTags` carries the **same paths as rows** so `GetOPCInfo` can answer. **Config-driven, never hardcoded** either way. ⚠ A wrong path is therefore corrected in **two places** — the row and the config entry — and §5's config-vs-rows diff is what catches a correction made in only one. Since `D-46` every path carries a `PLC` element |
+| Per-line `LineStateMap` | `appsettings.{Environment}.json` | **Stays in the file** — a machine-value → application-state vocabulary, not a tag path, with no table anywhere in `CommonDB`. Empty until commissioning test `C2` (`[PLCC §1.7]`) |
 | SignalR settings | `appsettings.{Environment}.json` | MessagePack on/off, keep-alive, client timeout, broadcast cadence |
-| `SimulatePLCTagPush` | `appsettings.{Environment}.json` | **`true` everywhere until PLC commissioning completes** |
+| `SimulatePLCTagPush`, `PublishIntervalMs` | `appsettings.{Environment}.json` | **`true` everywhere until PLC commissioning completes** |
 | `useMockData` (Angular) | `environment.*.ts` | **`true` only in `environment.development.ts`** |
 
 > **Check `useMockData` before every non-development build.** Shipping a bundle with mock data enabled looks like a working system that is reading nothing.
@@ -119,6 +120,7 @@ Configuration lives in `appsettings.{Environment}.json` plus environment variabl
 - [ ] Current `FlatWire.API` publish folder copied to `\\<release-share>\flatwire\api\<previous-tag>\`.
 - [ ] Current Angular static output copied to `\\<release-share>\flatwire\web\<previous-tag>\`.
 - [ ] Current `appsettings.{Environment}.json` for **both** `FlatWire.API` and `OPCConnection` copied and version-stamped.
+- [ ] ⚠ **The flat wire `CommonDB` OPC registration rows scripted out and version-stamped** — `OPCModules` · `OPCServerApplicationMapping` · `OPCTags` · `OPCTagApplicationMapping`, for `OPCModuleId` **6**. ⚠ **`OPCServers` is not in that list and must not be** — it is a **lookup** holding site endpoints flat wire never wrote (`D-48`), so backing it up as *ours* would invite restoring somebody else's rows. **`D-45` (5 Sep 2026):** the rows are a *second* copy of the paths, not the only one — `appsettings` still resolves them — so a lost registration costs `GetOPCInfo`, not the map itself. Restore with `11_`; it is idempotent.
 
 ### 3.3 Line state — production and trial only
 
@@ -131,8 +133,8 @@ Configuration lives in `appsettings.{Environment}.json` plus environment variabl
 
 ```sql
 -- Run against FlatWireDB. All four must return zero rows.
-SELECT RunId, LineId, Status FROM dbo.FlatWireRun  WHERE Status IN ('Running','Paused');
-SELECT Id, LineId, PayoffPosition, RodAlpha FROM dbo.RodStaging WHERE Status = 'Staged';
+SELECT RunId, MachineName, Status FROM dbo.FlatWireRun  WHERE Status IN ('Running','Paused');
+SELECT Id, MachineName, PayoffPosition, RodAlpha FROM dbo.RodStaging WHERE Status = 'Staged';
 SELECT CheckoutId, RodAlpha FROM dbo.RodCheckout
   WHERE Mode = 'ModeB' AND InProcessMaterialDisposition = 'HoldPendingSupervisor'
     AND PartialSpoolAlpha IS NULL;
@@ -195,29 +197,51 @@ sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll.sql
 
 #### The full cross-folder sequence — this is its only home
 
-`FlatWire_DDL_RunAll.sql` is **one step of ten**. The `Database/Scripts/` half is not optional: the
-check-in procedure claims a WIP station, and it has nothing to claim until step 2 has run.
+`FlatWire_DDL_RunAll.sql` is **one step of ten, plus the gate at 2a**. The `Database/Scripts/` half
+is not optional: the check-in procedure claims a WIP station, and it has nothing to claim until
+step 2 has run.
+
+> ⚠ **`2a` is a suffix, not an eleventh step, and that is deliberate.** The chain is cited as
+> **ten steps** in `[TB §7]`, `FW-241` and `30-database/tasks/Orchestration.md` ×3, and **`P-153`
+> makes "step 2" the single record of `FW-003`'s three decided values** — so renumbering to insert
+> the OPC registration would have invalidated every one of those citations to save a letter. `2a`
+> runs **after** 2, is gated the same way, and is the same category of thing: shared reference
+> data, written by hand, reversed by nothing the runner touches. Same idiom as §1.2a.
+>
+> ⚠ **`1a` is the same idiom again, and for the same reason.** The `CommonDB` OPC constraint script
+> had to land **before `2a`**, and the only alternatives were renumbering the chain — which `P-153`
+> forbids — or letting a schema change to five shared tables ride along inside `2a`'s row. It is a
+> lettered suffix on step 1 rather than a new step 2 for exactly the reason `2a` is: **ten steps** is
+> cited in five files. Unlike `2` and `2a` it writes **no rows at all**, so it is not a sign-off gate
+> on shared *data* — but it does `ALTER` shared *tables*, which is why it is still run by hand.
 
 | # | Step | Artifact |
 |---|---|---|
 | **0** | **Pre-flight: prove co-location and isolation.** `FlatWireDB` must sit on the **same instance** as `united_db` / `proddb` / `SlitterDB` / `CommonDB` / `wiplogdb` — the check-in model spans them in **one** `SqlTransaction` under the **local** transaction manager, with no MSDTC (`[INT §8.0]`, `[ARC §10]`). LocalDB has no `united_db`, so a build validated only there silently loses that atomicity | the verification query in `../30-database/scripts/20_FlatWire_Grants.sql` |
-| **1** | **The schema.** 33 tables, empty. Idempotent | `../30-database/sql/FlatWire_DDL_RunAll.sql` |
-| **2** | ⚠ **SIGN-OFF GATE — shared-schema rows.** Writes `united_db..machines` and `CommonDB..WIPStations` / `MachineStationsConfiguration`. Still **Draft** (`machine_type`, the station set and `StationType` pending sign-off) and **there is no reverse script**. Run it **by hand**, after approval — the `Scripts/` runner deliberately skips it | `../30-database/scripts/10_CommonDB_Insert_WIPStations_FlatWire.sql` |
+| **1** | **The schema.** 46 tables. **Not empty** -- 01_Lookup seeds the three reason-code tables inline, as production reference data. Idempotent | `../30-database/sql/FlatWire_DDL_RunAll.sql` |
+| **1a** | **`CommonDB` OPC schema hardening.** Adds the **5 primary keys, 6 unique constraints, 4 foreign keys, 1 check constraint and 2 indexes** the five `CommonDB` OPC tables have never had — they are pure **heaps** in source control, though their `united_db` predecessors carry PKs and two FKs. **Writes no row and alters no column**; it only `ALTER`s five tables four other modules read. ⚠ **Must run before step `2a`** — it turns `11_`'s hand-written idempotency guards (duplicate `TagName`, duplicate `ModuleName`, duplicate `(machine, module, tag)`, duplicate `ConnectionSequence`, dangling `OPCServersIdx`) into schema guarantees, so running it first protects `2a`'s **first** run rather than its second. ✅ **Nothing blocks it** — `G100` does not apply, because it touches only columns present on both `DEV00164-001` and source control. Pre-flight measured there 5 Sep 2026: **16 checks, 0 conflicts**, and **all 18 objects are now present on that instance**. ⚠ **Independent of step `1b`** — either order works, both must precede `2a`. Idempotent, and it aborts on its own validation before creating anything. Reversible **DEV only and by hand** — no reverse script; §6 lists every object it made. Run it **by hand**; the `Scripts/` runner deliberately skips it. `FW-238` | `../30-database/scripts/09_CommonDB_OPCTables_Constraints.sql` |
+| **1b** | **`CommonDB` `OPCModules` column drift.** Adds the two columns `ual-database`'s `CreateTable.sql` declares and a stale `CommonDB` lacks — `OPCEventType` and `EventDurationSeconds`, both `int NULL`. **Writes no row, creates no constraint, drops nothing.** ⚠ **Must run before step `2a`** — `11_` §4a inserts all six columns, so without these two its *first* insert dies on `Msg 207` (`G100`). ⚠ **Independent of step `1a`** — neither touches what the other checks, so the two may run in either order; both must precede `2a`. ✅ **Already applied to `DEV00164-001`** (5 Sep 2026 — the columns were added there by hand and this script is the record of it). Idempotent: on an instance that is already level it reports *present* twice and exits `0`. ⛔ **It does NOT backfill.** `OPCModulesIdx` 1-4 are left `NULL` and §4 of the script prints them — **read `G100` before refreshing `dbo.GetOPCServerAndTagDetails`**, because that procedure selects both columns into a non-nullable DTO. Run it **by hand**; the `Scripts/` runner deliberately skips it. **No reverse script**, deliberately. `FW-238` | `../30-database/scripts/08_CommonDB_OPCModules_ColumnDrift.sql` |
+| **2** | ⛔ **SIGN-OFF GATE — shared-schema rows, and there is no longer a script.** Seeds `united_db..machines` and `CommonDB..WIPStations` / `MachineStationsConfiguration`. The draft was **withdrawn on 6 Sep 2026** having never run; the rows remain **required** (`D-32`), so authoring the seed **and its reverse** is `FW-241`. `machine_type` (`D8`), the station set and `StationType` are still the open sign-off items. Still **by hand**, after approval — and still the chain’s only irreversible step | ⛔ **No script** — [`FW-241`](../30-database/tasks/FW-241.md). Retired draft: [`95-archive/design-notes/…`](../95-archive/design-notes/10_CommonDB_Insert_WIPStations_FlatWire.sql) |
+| **2a** | ⚠ **SIGN-OFF GATE — the `OPCConnection` registration** (component 4 of §1.1). Writes **four** `CommonDB` tables — `OPCModules` (id **6**, `ConnectionType` **21317**) · `OPCServerApplicationMapping` (**4** rows) · `OPCTags` (**41** rows — 39 data + **2 system-error**) · `OPCTagApplicationMapping` — for **FL1 and FL2 only**, and **reads** `OPCServers` to resolve the **existing** endpoint pair at `OPCServersIdx` **1 and 2** (`D-48`: it is a lookup and takes no `INSERT` and no `UPDATE`; `D-49`: both lines map to **both** endpoints, `ConnectionSequence` 1 and 2). ⛔ **Re-check those two ids on the target instance** — on `DEV00164-001` they are `UAOPC3`/`UAOPC4`, and the numbering is an artefact of insertion order, not a convention. ⛔ **Keyed on step 2's `machines` rows and it checks: it aborts unless 125 and 126 are both present at `status = 1`.** ✅ **`G97` is resolved (`D-49`) and the script has no placeholder left.** ✅ **`G100` no longer gates it either** — `dbo.OPCModules` on `DEV00164-001` now carries all six columns (step `1b`) and §4a binds clean, measured 5 Sep 2026. ⛔ **What is left is that it must not be activated before `FW-236`/`G94` merges**, because flat wire is the first module ever to select `ual-api`'s `OPCUAManager` and until then every write lands in namespace 0 reporting `200` — now the *only* thing between this step and a clean run. Run it **by hand**, after approval; the `Scripts/` runner deliberately skips it. ⚠ **Run steps `1a` and `1b` first.** `1a` adds the primary keys, unique constraints and foreign keys these four tables have never carried, converting this script's own hand-written duplicate guards into schema guarantees; `1b` levels `dbo.OPCModules` with source control so §4a has the columns to insert into. Neither is blocked, both are idempotent, and their order relative to each other does not matter. ⚠ **On an instance you have not measured, `11_`'s §0 guard will abort by name if `1b` was skipped** — under sqlcmd pass **`-b`**. ⚠ **FL3 (machine 127) is NOT registered** (`D-47`/`G99`) — an empty `GetOPCInfo` for FL3 is correct. Verify with the script's own §5 block (§4.5). `FW-238` · `G60` | `../30-database/scripts/11_CommonDB_Insert_OPCRegistration_FlatWire.sql`, reversed **DEV only** by `../30-database/scripts/16_CommonDB_Delete_OPCRegistration_FlatWire.sql` |
 | **3** | **Grants.** Creates `ua_user` in six databases. Run **once per environment** | `../30-database/scripts/20_FlatWire_Grants.sql` |
 | **4** | **Inbound procedure.** Lives in `FlatWireDB` but ships with the cross-database scripts, because it reads `proddb..coils` and `united_db..alloys` | `../30-database/scripts/30_FlatWireDB_Proc_sp_IngestRodFromCoils.sql` |
 | **5–8** | **The four `united_db` procedures — any order among themselves.** `CREATE PROCEDURE` uses **deferred name resolution**, so they have no compile-time dependency on one another. The numbering groups them; it does not impose an order. ⚠ `70_ReverseReqsum` contains a `proddb..wip_coil_orders` **DELETE** that is **not signed off for a shared environment** (`Q40`) — creating it is safe, calling it is not | `Scripts/40_…CheckInRod`, `50_…CompleteCoilOnSkid`, `60_…ReleaseStation`, `70_…ReverseReqsum` |
 | **9** | **The verification gate** — `V1`–`V6` below, then `V10`–`V12` | this section |
 | **10** | **DEV / TRIAL ONLY — seed data.** Never against production | `../30-database/sql/FlatWire_SampleData_RunAll.sql` |
 
-Steps 3–8 can be run together with `../30-database/scripts/FlatWire_Scripts_RunAll.sql`, **which excludes step 2
-on purpose.** See [`Database/Scripts/README.md`](../30-database/scripts/README.md) for each script's
-sign-off state and whether it is reversible.
+Steps 3–8 can be run together with `../30-database/scripts/FlatWire_Scripts_RunAll.sql`, **which excludes
+steps 2 and 2a on purpose** — the runner skips `10`, `11` and `16`, and its header says so. See
+[`Database/Scripts/README.md`](../30-database/scripts/README.md) for each script's sign-off state and
+whether it is reversible.
 
 **Teardown reverses, code before data:** `../30-database/scripts/99_FlatWireDB_Proc_FlatWire_Teardown.sql` (drops
 the four `united_db` procedures — **code, not data**), then
 `../30-database/sql/FlatWire_DDL_99_Teardown.sql` (drops `FlatWireDB`, and `sp_IngestRodFromCoils` goes
 with it). ⚠ **Neither undoes step 2's shared rows.** Nothing does — remove them deliberately and by
-hand.
+hand. ⚠ **Step 2a is the one exception, and only on DEV**: `16_` removes `11_`'s rows from the **four**
+`CommonDB` OPC tables it writes, mappings before the rows they point at, and by exact value. ⛔ **It
+removes nothing from `OPCServers`** — a **lookup** `11_` only ever selected from (`D-48`). **Not for production** — deleting the registration
+on a commissioned line stops `GetOPCInfo` answering and every push fails.
 
 **Every script guards its objects** (`IF NOT EXISTS` / `IF EXISTS…DROP…CREATE`), so the whole build is **idempotent**. FKs are deliberately in a single script **after** all tables exist, so the table scripts have no cross-group ordering concerns.
 
@@ -247,22 +271,84 @@ sqlcmd -S "<server>" -E -C -i FlatWire_SampleData_QualityOutput.sql
 ```sql
 USE FlatWireDB;
 
--- V1. Table count must be 33 -- this is the complete MVP-1 database.
---     33, not 34, since 23 Aug 2026: SpoolConfiguration was MERGED into
---     Spool (Q60). If this returns 34, the pre-merge script set ran.
+-- V1. Table count must be 46 -- this is the complete MVP-1 database.
+--     Was 45 until 6 Sep 2026: the edger absorption (D-53) added
+--     ToolingInventoryEdger and ToolingInventoryEdgerGauge and REMOVED
+--     Edger -- two in, one out, so +1 and not +2. The five-column Edger
+--     could not hold the client's fourteen-column Tooling Inventory grid.
+--     If this returns 47, Edger was not dropped: you ran an INCREMENTAL
+--     build over an older database instead of a teardown-and-deploy.
+--     Was 40 until 4 Sep 2026: the five Machine Setup tables (the
+--     Setup/Handling Times and Material Loss tabs) added 5 in 01_Lookup.
+--     40, not 39, since 3 Sep 2026: the client's answer that the Tooling
+--     Inventory tab carries a FOURTH tool type (mill rolls and DB1/DB2
+--     capstan rolls) added ToolingInventoryRollSet in 01_Lookup.
+--     If this returns 39, the pre-roll-set script set ran.
+--     It was 39, not 35, since 2 Sep 2026 (later the same day): the client's
+--     reason-code lists added DowntimeReason, WipRejectionReason and
+--     ItInhibitReason in 01_Lookup, and LineDowntimeEvent in 04_Runs.
+--     If this returns 35, the pre-reason-code script set ran.
+--     It was 35, not 33, earlier on 2 Sep 2026: the DIE SPLIT added
+--     ToolingInventoryDie (the register of physical dies, in 01_Lookup)
+--     and DieHistory (its append-only life log, in 04_Runs), and reduced
+--     Drawer to the two draw boxes DB1/DB2. If this returns 33, the
+--     pre-split script set ran. It was 33, not 34, from 23 Aug 2026:
+--     SpoolConfiguration was MERGED into Spool (Q60).
 --     Defining site: [DBD 6.2]. This is one of exactly three places permitted
 --     to restate the figures; if it disagrees with [DBD 6.2], [DBD 6.2] wins.
 SELECT COUNT(*) AS TableCount FROM sys.tables WHERE is_ms_shipped = 0;
--- Expected: 33
+-- Expected: 46
 
--- V2. Foreign-key count must be 55. Was 57 until 23 Aug 2026: the
+-- V2. Foreign-key count must be 68. Was 67 until 6 Sep 2026: the edger
+--     absorption added exactly ONE,
+--     FK_ToolingInventoryEdgerGauge_EdgerTool. FK_PSC_Edger was
+--     RE-POINTED from Edger to ToolingInventoryEdger and KEEPS ITS NAME,
+--     so it is not a new key and moves no count.
+--     Was 64 until 4 Sep 2026: the five
+--     Machine Setup tables added 3, all internal to that group -- no FK
+--     reaches a machine or a line, because MachineName is a CHECKed string and
+--     united_db.dbo.machines is in another database.
+--     Was 62 until 3 Sep 2026: the roll-set
+--     register added FK_ToolingInventoryRollSet_Stand and
+--     FK_ToolingInventoryRollSet_Drawer -- the latter the FIRST foreign key
+--     ever taken on Drawer  (+2). Was 58 until 2 Sep 2026 (later the same
+--     day): the client's reason-code lists added FK_RunPauseEvent_DelayCode,
+--     FK_LineDowntimeEvent_DelayCode, FK_LineDowntimeEvent_Run and
+--     FK_WipRejection_Reason  (+4). Was 55 until earlier on 2 Sep: the die split
+--     dropped FK_PSC_Drawer with PassScheduleComponent.DrawerId and added
+--     FK_DieChangeEvent_OldDie, FK_DieChangeEvent_NewDie, FK_DieHistory_Die
+--     and FK_DieHistory_Run  (-1 +4). Was 57 until 23 Aug 2026: the
 --     SpoolConfiguration merge dropped FK_SpoolProcessing_SpoolConfiguration
 --     and FK_Spool_SpoolConfiguration with the SpoolTypeId columns they
---     constrained. All 55 are now in script 06 (06b was folded into it).
+--     constrained. All 64 are now in script 06 (06b was folded into it).
 SELECT COUNT(*) AS FkCount FROM sys.foreign_keys;
--- Expected: 55
+-- Expected: 68
 
--- V3. Index count -- 70 created by script 07 (07b was folded into it).
+-- V3. Index count -- 89 created by script 07 (07b was folded into it).
+--     Was 87 until 6 Sep 2026: the edger absorption added exactly TWO,
+--     IX_ToolingInventoryEdger_LifecycleStatus and the filtered-unique
+--     UX_ToolingInventoryEdger_SerialNo. The REMOVED Edger carried no
+--     index at all, so nothing was lost with it, and IX_PSC_EdgerId is
+--     untouched because it sits on PassScheduleComponent.
+--     Was 86 until 4 Sep 2026: the five Machine Setup tables added exactly
+--     ONE, IX_SetupHandlingTimeElement_GroupId. Five tables and one index
+--     is the expected ratio -- script 07 states why for each of the other
+--     four. Do NOT read the difference as a missing index.
+--     WAS 82 until 3 Sep 2026: the roll-set register added four --
+--     IX_ToolingInventoryRollSet_StandId and _DrawerId (both filtered,
+--     because CK_TIRS_Mount makes one of the pair NULL on every row),
+--     IX_ToolingInventoryRollSet_LifecycleStatus and the filtered-unique
+--     UX_ToolingInventoryRollSet_SerialNo  (+4).
+--     WAS 75 until 2 Sep 2026 (later the same day): the client's reason-code
+--     lists added seven -- IX_DowntimeReason_Bucket,
+--     IX_WipRejectionReason_Group, IX_RunPauseEvent_ReasonCode,
+--     IX_WipRejection_RejectionReason, IX_LineDowntimeEvent_DelayCode,
+--     IX_LineDowntimeEvent_RunId and IX_LineDowntimeEvent_LineOpen  (+7).
+--     WAS 70 until earlier on 2 Sep 2026: the die split dropped IX_PSC_DrawerId with
+--     its column and added six -- IX_DieChangeEvent_OldDieId,
+--     IX_DieChangeEvent_NewDieId, IX_DieHistory_DieId, IX_DieHistory_RunId,
+--     IX_ToolingInventoryDie_LifecycleStatus and the filtered-unique
+--     UX_ToolingInventoryDie_SerialNo  (-1 +6).
 --     WAS 69 until 26 Aug 2026: Q89 added UX_CoilTraceability_ChildAlpha, a
 --     FILTERED unique index on the per-source-rod shared identity. It is
 --     filtered because the identity does not exist until the cross-database
@@ -277,7 +363,7 @@ SELECT COUNT(*) AS FkCount FROM sys.foreign_keys;
 SELECT COUNT(*) AS IdxCount FROM sys.indexes
  WHERE object_id IN (SELECT object_id FROM sys.tables)
    AND type <> 0 AND is_primary_key = 0 AND is_unique_constraint = 0;
--- Expected: 70
+-- Expected: 89
 
 -- V4. Programmability. SEVEN objects, and since change [H] (26 Aug 2026) ALL SEVEN
 --     are in FlatWireDB -- so this is a SINGLE-DATABASE query where it used to span two.
@@ -301,8 +387,8 @@ SELECT name, type_desc FROM sys.objects
 -- Expected: 2 rows after RunAll; 7 once Database/Scripts/ has been applied
 
 -- V5. Business invariant — at most one Active PassSchedule per line + alloy.
-SELECT LineId, Alloy, COUNT(*) FROM dbo.PassSchedule
- WHERE Status = 'Active' GROUP BY LineId, Alloy HAVING COUNT(*) > 1;
+SELECT MachineName, Alloy, COUNT(*) FROM dbo.PassSchedule
+ WHERE Status = 'Active' GROUP BY MachineName, Alloy HAVING COUNT(*) > 1;
 -- Expected: zero rows
 
 -- V6. Business invariant — CoilTraceability ranges do not overlap within a coil.
@@ -313,16 +399,16 @@ SELECT a.CoilAlpha FROM dbo.CoilTraceability a
 -- Expected: zero rows
 ```
 
-- [ ] V1 returns **33**
-- [ ] V2 returns **55**
-- [ ] V3 returns **70**
+- [ ] V1 returns **46**
+- [ ] V2 returns **68**
+- [ ] V3 returns **89**
 - [ ] V4 returns **2 rows** after `RunAll` (**7** once `Database/Scripts/` is applied — was 3 before `[H]`)
 - [ ] V5 returns **zero rows**
 - [ ] V6 returns **zero rows**
 - [ ] `ua_user` exists with `db_datareader`, `db_datawriter` and `GRANT EXECUTE ON SCHEMA::dbo`
 - [ ] On a seeded environment, the fixture alphas resolve: `R00041`–`R00043`, `SP-00031`–`SP-00033`, `PS-1100-FL1-003`, `RUN-0001`–`RUN-0005` *(corrected 26 Aug 2026: the checklist had named `SP-00021`, `RUN-0042` and `RUN-0043`, which the seeds have never created)*
 
-> **If V1 returns anything other than 33**, the wrong script set ran or a script failed silently. **Stop.**
+> **If V1 returns anything other than 46**, the wrong script set ran or a script failed silently. **Stop.** ⚠ **`47` specifically means `Edger` survived** — it was dropped on 6 Sep 2026 (`D-53`), and a table cannot be removed by an incremental re-run. **Teardown and redeploy.**
 >
 > ⚠ **`V3` moved to 70 on 26 Aug 2026 — the FIFTH correction to this gate, and the first caused by
 > a change made in this repository rather than by a stale figure.** `Q89` added
@@ -484,7 +570,10 @@ Invoke-RestMethod -Uri "https://<host>/api/v1/flatwire/health" -Method Get
 
 ### 4.5 Step 5 — OPC / PLC configuration
 
-- [ ] The FL1/FL2/FL3 tag-path map in `appsettings.{Environment}.json` matches the map confirmed with Engineering.
+- [ ] The **FL1 and FL2** tag-path map in **`CommonDB.OPCTags`** matches the map confirmed with Engineering — 41 rows for `OPCModuleId` 6, mapped to the right `machines` row. ⛔ **FL3 must have none** (`D-47`/`G99`). Run `11_`'s §5 verification block, which asserts the counts, prints every path, and fails on a missing system-error row, an `ns=` prefix, a path without the `PLC` element, or any machine-127 row.
+- [ ] ⚠ **The config-vs-rows diff** — the 39 registered data `TagName`s equal FL1's and FL2's `FlatWireOpc:Lines:*:Tags` values **exactly**. `D-45` accepts that the strings live in two places; this is the check that keeps them in step, and it is the one that catches a commissioning correction applied to only one of them.
+- [ ] `GetOPCInfo` returns a non-empty `OPCInfo` for FL1 and FL2 with `ConnectionType == 21317`, and **an empty list for FL3** — the empty answer is correct, not a fault (`G99`).
+- [ ] `GET`ting `GetOPCInfo` for each of FL1/FL2/FL3 returns a non-empty `Tags` list — **the registration is what makes this checklist item checkable at all** (`G60`).
 - [ ] `OPCConnection` is running and subscribed to the FL1/FL2/FL3 tags.
 - [ ] **Tag-push verification is performed on a line that is STOPPED.**
 
@@ -518,7 +607,7 @@ Copy-Item ".\dist\<bundle>\*" "<web-site-path>" -Recurse -Force
 
 - [ ] **`useMockData` is `false`** for every environment except local development.
 - [ ] The API base URL points at the environment's `FlatWire.API`.
-- [ ] The hub URL points at `/hubs/flatwire` on that host.
+- [ ] The hub URL points at `/hubs/flat-wire` on that host — the path [`[SIG §5.1]`](../20-architecture/SignalR.md) owns. Deployed behind `UsePathBase` it answers at `/API.FlatWire/hubs/flat-wire`, which is what the client's `prefix` + `flatWireHubUrl` composes to.
 
 **After deploying:**
 
@@ -529,7 +618,7 @@ Copy-Item ".\dist\<bundle>\*" "<web-site-path>" -Recurse -Force
 **Verification:**
 
 - [ ] The shop-floor shell loads and `/flat-wire/status` renders DB1.
-- [ ] The browser network tab shows a **WebSocket** connection to `/hubs/flatwire` — **not** an SSE or long-poll fallback.
+- [ ] The browser network tab shows a **WebSocket** connection to `/hubs/flat-wire` — **not** an SSE or long-poll fallback.
 - [ ] The `--color-*` design tokens resolve (no unstyled flash, correct semantic colours).
 
 ### 4.7 Step 7 — `FlatWireSimConsole` *(component 6 — engineering workstations only)*
@@ -577,7 +666,7 @@ Run in order. **Any failure is a rollback candidate** — apply the decision cri
 | **S2** | `TC-701` | Login | Log in at the FL1 station as a punched-in operator | Session created; operator ID, timestamp and station captured |
 | **S3** | `TC-702` | Authorisation | Attempt `GET /passschedule` unauthenticated | `401` |
 | **S4** | `TC-703` | Line Status board | Open `/flat-wire/status` | All three line cards render from `GET /lines/status` |
-| **S5** | `TC-704` | **Hub connection** | Inspect the browser network tab | A **WebSocket** connection to `/hubs/flatwire`, not a fallback transport |
+| **S5** | `TC-704` | **Hub connection** | Inspect the browser network tab | A **WebSocket** connection to `/hubs/flat-wire`, not a fallback transport |
 | **S6** | `TC-705` | **A live event on each line** | Join `FL1Data`, `FL2Data`, `FL3Data` in turn | FL1 and FL3 receive batched `GaugeReading`; **FL2 receives none — this is correct, not a fault** |
 | **S7** | `TC-706` | Pass schedule reads | Open DB9A, then one schedule | List renders with counts; detail shows components with three-value state |
 | **S8** | `TC-707` | **One check-in against a real Active pass schedule** | Complete the 6-step wizard on the test order and acknowledge | Run created `Running`; `RodCheckin`, pre-run SPC and inspection rows written; **`Rod.Status = 'INFLAT'` in `FlatWireDB`, and `coils.coil_status` UNCHANGED** *(`D-32`)*; **records written before the push** |

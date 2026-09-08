@@ -1,7 +1,7 @@
 # Flat Wire Mill — Material Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`**, so `SpoolProcessing.SpoolTypeId` is gone — the article's limits are reached through the nullable `SpoolId`. Counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*
+**Last Updated:** August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`**, so `SpoolProcessing.SpoolTypeId` is gone — the article's limits are reached through the nullable `SpoolId`. Counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** Final Schema — Material Tracking Tables
 **Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `../sql/FlatWire_DDL_03_Materials.sql`
@@ -166,7 +166,7 @@ Pre-drawn wire spool tracking. Spools are produced on FL1 in Hybrid route mode a
 | `ParentRodAlpha` | varchar(20) | NULL | `Rod.Alpha` | Alpha of the wire rod coil that was drawn into this spool on FL1 |
 | `SourceRodAlpha` | varchar(20) | NULL | `Rod.Alpha` | Partial-run source rod (Phase 7 / OQ-12); distinct from `ParentRodAlpha` |
 | `SourceRunId` | varchar(20) | NULL | `FlatWireRun.RunId` | FK to the FL1 run that produced this spool; NULL if spool origin is external |
-| `LineId` | varchar(5) | NULL | — | Line that produced or is currently processing this spool (`FL1`, `FL2`, `FL3`) |
+| `MachineName` | varchar(5) | NULL | — | Line that produced or is currently processing this spool (`FL1`, `FL2`, `FL3`) |
 | `OriginRouteMode` | varchar(15) | NULL | — | `Standalone`/`Hybrid` origin route; FL2 rejects a Standalone schedule on a Hybrid-origin spool (OQ-15) |
 | `Status` | varchar(20) | NOT NULL | — | Material lifecycle status — see allowed values |
 | `GaugeIn` | decimal(8,4) | NULL | — | Spool wire gauge in inches; populated at FL2/FL3 check-in |
@@ -192,7 +192,7 @@ Pre-drawn wire spool tracking. Spools are produced on FL1 in Hybrid route mode a
 | `HOLD` | Spool is on hold pending quality review or supervisor decision |
 | `SCRAP` | Spool has been scrapped |
 
-**Constraints:** `CK_SpoolProcessing_LineId` (`FL1`/`FL2`/`FL3` or NULL); `CK_SpoolProcessing_OriginRoute` (`Standalone`/`Hybrid` or NULL). Full status transition machine is OQ-17 (In Progress).
+**Constraints:** `CK_SpoolProcessing_MachineName` (`FL1`/`FL2`/`FL3` or NULL); `CK_SpoolProcessing_OriginRoute` (`Standalone`/`Hybrid` or NULL). Full status transition machine is OQ-17 (In Progress).
 
 ## `SpoolTraceability`
 

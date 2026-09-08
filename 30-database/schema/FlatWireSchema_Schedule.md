@@ -2,7 +2,7 @@
 
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 23, 2026 — corrected up to the DDL; header fields standardised
+**Last Updated:** August 23, 2026 — corrected up to the DDL; header fields standardised · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** Final Schema — Pass Schedule Tables
 **Source:** Derived from `FlatWireSchema_Mapping.md` recommendations
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `../sql/FlatWire_DDL_02_Schedule.sql`
@@ -26,7 +26,7 @@ Header record for a pass schedule. One schedule can be used across many runs. Sc
 | `ScheduleId` | varchar(30) | NOT NULL | — | Human-readable primary key; recommended format `PS-{Alloy}-{Line}-{Seq}` (e.g. `PS-1100-FL1-003`) |
 | `Description` | varchar(200) | NULL | — | Free-text description for operator reference |
 | `Alloy` | varchar(10) | NOT NULL | `AlloyProperty.Alloy` | Aluminum alloy designation (e.g. `1100`, `3003`, `1350`); FK to the authoritative alloy list |
-| `LineId` | varchar(5) | NOT NULL | — | Target flat wire line: `FL1`, `FL2`, or `FL3` |
+| `MachineName` | varchar(5) | NOT NULL | — | Target flat wire line: `FL1`, `FL2`, or `FL3` |
 | `RouteMode` | varchar(15) | NOT NULL | — | `Standalone` = single-line processing; `Hybrid` = FL1 produces spools that feed FL2 or FL3 |
 | `Status` | varchar(10) | NOT NULL | — | Lifecycle state: `Draft` = in progress; `Active` = approved for production; `Inactive` = retired |
 | `TargetGauge` | decimal(8,4) | NOT NULL | — | Target output gauge in inches |
@@ -52,7 +52,7 @@ Header record for a pass schedule. One schedule can be used across many runs. Sc
 **Constraints:**
 - `LineSpeedMinFpm < LineSpeedMaxFpm`
 - `GaugeTolerance > 0`, `WidthTolerance > 0`
-- **Enforced:** filtered unique index `UX_PassSchedule_OneActivePerLineAlloy (LineId, Alloy) WHERE Status='Active'` — at most one `Active` schedule per line + alloy (DDL_07)
+- **Enforced:** filtered unique index `UX_PassSchedule_OneActivePerLineAlloy (MachineName, Alloy) WHERE Status='Active'` — at most one `Active` schedule per line + alloy (DDL_07)
 
 ---
 
@@ -73,8 +73,8 @@ Per-component rows belonging to a pass schedule. Each row defines one tool stati
 | `Sequence` | int | NOT NULL | — | Processing order of this component within the pass schedule; unique per `PassScheduleId` |
 | `IsMandatory` | bit | NOT NULL | — | UI lock: `1` = component cannot be toggled off in the editor; default `0` |
 | `StandId` | int | NULL | `Stand.Id` | FK to the specific stand used — FM components only; NULL for DB and EdgeSet components |
-| `DrawerId` | int | NULL | `Drawer.Id` | FK to the specific die used — DB components only; NULL for FM and EdgeSet components |
-| `EdgerId` | int | NULL | `Edger.Id` | FK to the specific edger used — EdgeSet component only; NULL for all other components |
+| ~~`DrawerId`~~ | — | — | — | **DROPPED 2 Sep 2026 with the die split.** It pointed at what was then a 13-row die-*size* catalogue, and the size it identified is already in `ParameterValue` as a decimal — so it was a second copy of one fact. `Drawer` now holds the two draw **boxes**, which `ComponentName` already names, so a `DrawerId` would have restated `ComponentName` the way `StandId` does. A `DB1`/`DB2` row now carries `StandId` NULL and `EdgerId` NULL. **A schedule names no physical die**: it is a reusable product recipe, and which tool actually ran is in `DieChangeEvent.OldDieId`/`NewDieId` and `DieHistory` |
+| `EdgerId` | int | NULL | `ToolingInventoryEdger.Id` | FK to the specific edger used — EdgeSet component only; NULL for all other components. ⚠ **Re-pointed 6 Sep 2026 (`D-53`)** from `Edger`, which was absorbed. The column and the constraint name `FK_PSC_Edger` are both **unchanged** |
 | `EntryGauge` | decimal(8,4) | NULL | — | Calculated entry gauge for this component in inches; informational only |
 | `ExitGauge` | decimal(8,4) | NULL | — | Calculated exit gauge for this component in inches; informational only |
 | `SetupNo` | varchar(20) | NULL | — | Legacy setup number from `FlatLineSetup`; retained for historical traceability |
@@ -86,7 +86,7 @@ Per-component rows belonging to a pass schedule. Each row defines one tool stati
 | `DB1` | Draw box | First draw box — primary die reduction |
 | `DB2` | Draw box | Second draw box — secondary die reduction |
 | `FM1` | Finishing mill | FL1's 12-inch flattening mill — not bypassable |
-| `EdgeSet` | Edger | Edge profile tooling station (FL1 legacy — FL1 has no edger) |
+| `EdgeSet` | ToolingInventoryEdger | Edge profile tooling station (FL1 legacy — FL1 has no edger) |
 | `FM2_S1` | Finishing mill | FM2 stand **S1 — 8-inch roller**; bypassable, no edger |
 | `FM2_S2` | Finishing mill | FM2 stand **S2 — 6-inch roller**; bypassable, edger position |
 | `FM2_S3` | Finishing mill | FM2 stand **S3 — 6-inch roller**; edger position, **final gauge control, not bypassable** |

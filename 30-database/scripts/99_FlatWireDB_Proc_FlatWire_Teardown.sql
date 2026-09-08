@@ -10,8 +10,9 @@
 
   PURPOSE
   -------
-  Drops the four flat wire procedures. They lived in united_db until 26 Aug 2026; change [H]
-  moved them into FlatWireDB.
+  Drops the four flat wire procedures, and since 8 Sep 2026 the FlatWireDB.dbo.WIPStations VIEW
+  as well (35_, FW-N16). They lived in united_db until 26 Aug 2026; change [H] moved them into
+  FlatWireDB.
 
   *** READ THIS BEFORE ASSUMING THE FILE IS NOW REDUNDANT. ***
 
@@ -56,7 +57,9 @@
   DEPLOY / TEARDOWN ORDER
   -----------------------
       deploy:    FlatWire_DDL_RunAll.sql
-              -> 10_CommonDB_Insert_WIPStations_FlatWire.sql
+              -> the machines / WIP-station seed (FW-241; the old script
+                 10_CommonDB_Insert_WIPStations_FlatWire.sql was withdrawn
+                 6 Sep 2026 and must be re-authored before this step runs)
               -> 20_FlatWire_Grants.sql
               -> the four procedures
 
@@ -120,6 +123,27 @@ BEGIN
 END
 ELSE
     PRINT 'Not present: FlatWire_CompleteCoilOnSkid';
+GO
+
+/*----------------------------------------------------------------------------------------------
+  The view goes with them, and it is NOT a procedure.
+
+  35_FlatWireDB_View_WIPStations.sql creates FlatWireDB.dbo.WIPStations over CommonDB's table. It
+  is dropped here for the same reason the four procedures are: the one path that is not a full
+  teardown - backing out a bad cross-database deploy while FlatWireDB itself must survive - has no
+  other way to remove it.
+
+  *** DROPPING IT REMOVES A READ AND NOTHING ELSE. *** The shared CommonDB..WIPStations table is
+  untouched by this, exactly as D-32 requires. A view is a name over someone else's row.
+----------------------------------------------------------------------------------------------*/
+
+IF OBJECT_ID(N'[dbo].[WIPStations]', N'V') IS NOT NULL
+BEGIN
+    DROP VIEW [dbo].[WIPStations];
+    PRINT 'Dropped: WIPStations (view - the shared CommonDB table is untouched)';
+END
+ELSE
+    PRINT 'Not present: WIPStations (view)';
 GO
 
 PRINT '=== FlatWire procedure teardown (united_db): done ===';

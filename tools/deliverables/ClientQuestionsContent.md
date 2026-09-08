@@ -1,7 +1,7 @@
 # Flat Wire Mill — Client Questions Workbook Content
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 25, 2026 — **ten missing entries authored** — `Q48`–`Q55`, `Q59`, `Q87`; without them the client questions workbook could not be rebuilt *(previously August 20, 2026 — client-facing prose added for **`Q37`–`Q47`**: the four shared-record sign-off values from the check-in write-back, and the seven questions from the 20 Aug client call on the spool carrier, the multi-order spool and FL2 pre-check-in. Workbook regenerated to **47 open questions**, leakage scan clean. *(previously August 18, 2026 — `Q68` amended — the status moves to the flat wire module’s own rod record, and the client is asked which reports filter on the coil status field *(previously August 12, 2026)*)*)*
+**Last Updated:** September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — **`Q26` moves from Part 1 to Part 2** — the shopfloor panel is 1920 × 1080, confirmed 7 Sep 2026, so its prose is re-authored as a decision to confirm rather than a question to answer. Its *Still open* line asks for the one thing the resolution did not settle: **the panel's physical diagonal in inches**, which the minimum text size and touch-target rules depend on. ⚠ **The workbook could not be rebuilt in this pass** — `Q94` has been in the open register since 4 Sep 2026 with no entry here, and the coverage guard is fatal. *(previously September 3, 2026 — **`Q93` authored** — the six unreadable points in Tim O'Brien's pass-calculator formula document (`D-43`), of which items 3 and 4 are asked now and the rest wait for the calculator itself. *(previously August 25, 2026 — **ten missing entries authored** — `Q48`–`Q55`, `Q59`, `Q87`; without them the client questions workbook could not be rebuilt *(previously August 20, 2026 — client-facing prose added for **`Q37`–`Q47`**: the four shared-record sign-off values from the check-in write-back, and the seven questions from the 20 Aug client call on the spool carrier, the multi-order spool and FL2 pre-check-in. Workbook regenerated to **47 open questions**, leakage scan clean. *(previously August 18, 2026 — `Q68` amended — the status moves to the flat wire module’s own rod record, and the client is asked which reports filter on the coil status field *(previously August 12, 2026)*)*)*)*)*
 **Document Type:** Source content for a generated client deliverable — not a specification
 **Status:** Active
 
@@ -412,20 +412,6 @@ optional; everything else is required.
 **Recommended answer:** Allow it behind a supervisor override, at both pre-check-in and check-in, with the run carrying an **unscheduled marker** rather than being force-fitted to an order.
 **Why:** Trials and rush pieces are real, and a refusal by omission means the floor works around the system instead of in it. Reusing the existing supervisor override fields and adding only the marker is a far smaller change than the alternative.
 **Impact if unanswered:** Unscheduled material cannot be run at all, and nobody has decided that it should not be.
-
----
-
-## Q26
-
-**Register title:** Shopfloor panel resolution — 1280×1024 (stocked) vs 1920×1080 (required)
-**Area:** Shopfloor screens
-**Needs input from:** Tim O., Charles, Juan
-**What we need:** Decision
-**Question:** Will the flat wire screens run on the same 1280×1024 monitors United Aluminum stocks today, or on 1920×1080 panels? We need this confirmed in writing, and it is time-critical.
-**Background:** Every screen is designed at 1280×1024, and the minimum text size for arm's-length reading on the floor is calibrated to that. You expected the same monitors as the current screens and were going to verify with Charles and Juan; our action was to send you the required resolution by e-mail. The reason it is urgent rather than merely open: 1920×1080 is a 1.5 times width change with almost no extra height, so it is a **re-layout of all twenty-five-plus screens, not a rescale**. The canvas size is an acceptance criterion for the first delivery phase, which closes on 14 August 2026 — an answer after that is an answer that arrives too late to be free.
-**Recommended answer:** Hold 1280×1024, and confirm it in writing before 14 August. Our screens already degrade gracefully onto a wider panel — they never scale up beyond their natural size and they widen to fill available width — so 1920×1080 hardware would display them correctly today, simply leaving horizontal space unused.
-**Why:** That makes 1280×1024 the safe commitment and any later re-layout an optimisation rather than a rescue. We are not re-authoring anything until this is answered.
-**Impact if unanswered:** A late answer of 1920×1080 turns into a re-layout of every screen after the first phase gate has closed.
 
 ---
 
@@ -900,7 +886,69 @@ optional; everything else is required.
 
 ---
 
+## Q92
+
+**Register title:** What columns does the roll-set Tooling Inventory grid carry, and are capstan rolls the same tool option as mill rolls?
+**Area:** Tooling management
+**Needs input from:** Tim O. / Maintenance
+**What we need:** Information
+**Answer together with:** Q26
+**Question:** What columns should the roll-set grid on the Tooling Inventory tab carry, and in what order - and should capstan rolls be the same tool option as mill rolls, or a separate one?
+**Background:** On 3 September you asked us to include mill rolls for traceability, naming the 12 inch set on FL1, the DB1 and DB2 capstan rolls, and the 8, 6 and 6 inch sets on FL2, and confirming that dancers, entry guides, payoffs and spools are not tooling. That is the fourth tool type on the tab. The other three - dies, edging rolls and straighteners - each reached us as a screenshot of the grid with the columns in the order you wanted them. Roll sets reached us as a sentence, so the register is built against our reading of it rather than against a grid you have seen.
+**Already agreed:** Roll sets belong on the Tooling Inventory tab, for traceability. Dancers, entry guides, payoffs and spools do not. Tooling is maintained for FL1 and FL2, with FL3 using a combination of the two. The capstan rolls can be refurbished, current inventory is two and a spare is being added.
+**Options:** (1) Send the roll-set grid as a screenshot, as you did for the other three. (2) Confirm our proposed column list as it stands. (3) Tell us the differences from the edging-roll grid and we will apply them.
+**Recommended answer:** Option 1, plus a one-line answer to each of the three follow-ups below.
+**Why:** A screenshot is how the other three arrived and it took one round. Our proposed list is the edging-roll and straightener columns merged, which is a reasonable guess but still a guess, and a tooling grid that collects the wrong fields is expensive to unwind once the roll shop has started entering data against it.
+**Impact if unanswered:** The register is built and seeded, so nothing is blocked in the database. What is blocked is the fourth tool option on the tab and the screen that renders its grid. Three smaller points travel with this one: whether refurbishing a capstan is the same operation as the In Grinding state the edging rolls already use or something separate; what Machine Name a capstan roll carries, given DB1 and DB2 sit on FL1; and whether two roll set means two rolls in a set or two sets per position, which reads both ways in the same sentence and changes how many rows the inventory has.
+
+---
+
+## Q95
+
+**Register title:** Five things the edging-roll Tooling Inventory grid does not say, including how a set is identified
+**Area:** Tooling management
+**Needs input from:** Tim O. / Maintenance
+**What we need:** Information
+**Answer together with:** Q92
+**Question:** Five short questions about the edging-roll grid on the Tooling Inventory tab: is there a serial number for a roll set, is the set letter unique across machines, are the grooves numbered across the roll face, does the standard removal figure of .100 mean per grind, and does the Type column hold the edge profile?
+**Background:** Thank you for the grid you sent on 31 August - unlike the roll sets we asked about separately, this one arrived as a picture with the columns in the order you wanted, and we have built all fourteen of them exactly as pictured. These five questions are the places where the grid is silent rather than unclear, and each one is a field we have had to decide on our own.
+**Already agreed:** The Tooling Inventory tab carries dies, edging rolls, straighteners and roll sets. Edging rolls have multiple gauge capability, with grooves cut at specific gauges - your example was .045, .040 and .035. Edging rolls belong to FL2. Tooling is maintained for FL1 and FL2, with FL3 using a combination of the two.
+**Options:** (1) Answer the five below in a line each. (2) Send a filled-in example row for one real roll set and we will read the answers off it. (3) Tell us to leave our current reading in place until the roll shop starts using the tab.
+**Recommended answer:** Option 1 for questions 1, 2 and 5, which are yes or no, and Option 2 for question 4 if a worked example is easier than a description.
+**Why:** Two of the five matter more than the rest. Question 2 decides how a roll set is identified: we hold no reference number of our own for edging rolls, so the set letter and the machine name are all there is, and until we know whether the letter repeats across machines we cannot stop the same set being entered twice. Question 4 is the other: we have read the .100 standard removal as the amount taken off the outside diameter at each grind, which makes a roll good for about twelve grinds between 6.00 and the 4.75 minimum, and that number will appear on screen as remaining life. If .100 means something else, the figure will be wrong without looking wrong. The remaining three are cosmetic if we get them wrong - an empty column, or a field the roll shop ignores.
+**Impact if unanswered:** Nothing in the database is blocked - the register is built and seeded with your own sample values, and the pass schedule still resolves. What waits is the edging-roll option on the tab and the screen that renders it. The five points are: (1) Is there a serial number for an edging-roll set? Your die and straightener grids both carry one and this grid does not, so we have added the field for consistency and it may simply not apply. (2) Is the set letter - A, B, C - unique across the whole shop, or only within one machine? This is the one we would most like answered. We do not hold a reference number of our own for edging rolls - unlike dies, which have one only because the die change screen reads it while a run is going - so the set letter and the machine name are what identify a set. Whether the letter repeats across machines decides which of those we can rely on, and until it is settled nothing stops the same set being entered twice. (3) Are the grooves numbered or ordered across the face of the roll, or is .045, .040, .035 just a list? We now hold one row per groove so that a pass schedule can eventually call for a particular one, and we would rather record a real position than invent one. (4) Does standard removal from OD .100 mean the amount taken off at each grind? (5) Does the Type column on this grid hold the edge profile - round or square, as in whether the set puts a rounded or a square edge on the wire? We have kept Type as its own field and the edge profile as a second one, because the die grid uses the same Type heading for the die material, so we could not assume the heading means the same thing on every tooling grid. If Type is the profile for edging rolls, we will merge the two. We have also left the profile optional, since a set that can serve either has to be recordable.
+
+---
+
+## Q93
+
+**Register title:** Six readings in the pass-calculator formula document that the page cannot settle
+**Area:** Pass schedule generation
+**Needs input from:** Tim O. / Process Engineering
+**What we need:** Information
+**Question:** Six points in your Wire Flattening Mathematical Calculation Formulas document read more than one way. Two of them change what the engine calculates, and one of them decides whether our worked example is a product that can be made at all.
+**Background:** Thank you for these - the width formulas are the answer to something we asked for and could not work out ourselves, and we have adopted them as the basis for width, area, footage and edging. Every formula in the document is a picture rather than text, so reading them is an act of interpretation on our side, and we would rather ask than guess. We have built to our best reading in each case and flagged it at the point of use.
+**Already agreed:** The formulas are the engineering basis for the generation engine. The two empirical factors are placeholders until sample runs produce a table. The temper calculations are still to come.
+**Options:** (1) Send the calculator next week as planned and let us read the cell formulas, which answers four of the six by demonstration. (2) Answer all six in a line each. (3) Answer the two that matter most now and leave the rest for the calculator.
+**Recommended answer:** Option 3. The two we would like now are items 3 and 4 below. The other four are exactly the kind of thing a working spreadsheet settles better than an email.
+**Why:** Items 3 and 4 are about what you meant, not about what the arithmetic does, and a spreadsheet will show us the cells without explaining the intent behind them. Item 4 in particular changes a result rather than a detail.
+**Impact if unanswered:** Nothing in the build stops. What stops is sign-off on the generate-from-specs story, whose expected result we have had to re-derive and cannot confirm until item 4 is settled. The six points are: (1) The Final Cross-Sectional Area Flat Wire formula subtracts an area from a width, which cannot be right dimensionally - we read it as a missing multiplication by the final thickness, which then matches your Round to Flat area formula exactly. Is that the intended reading? (2) In the Round to Flat Cross-Sectional Area formula the legend gives r as the radius of the wire rod, but the formula only produces the right answer when r is the edge radius, which is half the final thickness. On a quarter-inch rod the two readings differ by about a quarter of the area. Please confirm r is the edge radius. (3) The Cumulative True Strain formula adds the length, width and thickness strains together. For any pass that conserves volume those three always add to zero, so as written the total is always nil. We think you mean the sum across passes rather than across the three dimensions - is that right? (4) Your two linear-feet formulas use width times thickness as the cross-section, while your two area formulas use the rounded-edge shape. The difference is about four percent, and on our nominal product it is the difference between a section that can be rolled and one that cannot. Which of the two should the footage calculation use? (5) Are the three empirical factors single numbers or lookup tables, and if tables, what are they looked up by - alloy, stand, gauge range, or something else? We ask because you mentioned generating a table from samples, and a table needs a key. Two smaller points here: the second spread factor is not in the legend, and there are two different thickness-reduction percentages in the document that only agree when the entry is already flat. (6) The Theoretical and Calculated Width Flat to Flat formula has one bracket unclosed as printed. Our reading is the only one that works dimensionally, but please confirm the grouping, and confirm the square root covers the roll radius times the thickness change together.
+
+---
+
 # Part 2 — Decisions to Confirm
+
+---
+
+## Q26
+
+**Register title:** Shopfloor panel resolution — 1920×1080 confirmed
+**Area:** Shopfloor screens
+**Question:** Will the flat wire screens run on the same 1280×1024 monitors United Aluminum stocks today, or on 1920×1080 panels?
+**Background:** Every screen was designed at 1280×1024, and the minimum text size for arm's-length reading on the floor is calibrated to that. You expected the same monitors as the current screens and were verifying with Charles and Juan; our action was to send you the resolution the application needs. It mattered urgently because 1920×1080 is a 1.5 times width change with almost no extra height, which makes it a **re-layout of all twenty-five-plus screens, not a rescale**.
+**Decision as recorded:** The panel is **1920×1080**. The extra room is almost entirely horizontal — half as wide again, but only five per cent taller — so the screens are re-composed into more columns rather than stretched, and **nothing is made bigger**. The designs you have already reviewed stay authoritative for **what each screen shows** — the controls, the wording, the colours, the way it behaves — and stop being authoritative for **where things sit on the page**, which is now laid out for the wider panel.
+**Still open:** **We need the physical size of the panel, not only its resolution.** The 14-pixel minimum text size and the 48-pixel minimum touch target are rules about what a person can read and hit at arm's length, standing, in gloves — so they follow how large the screen physically is, not how many pixels it has. They carry over unchanged only if the new panel is a physically larger screen of roughly the same pixel density, which is what we have assumed. If it is instead the same size of panel with a denser display, every text size and every touch target has to grow by half. **Please confirm the screen diagonal in inches.** One further check: the resolution was confirmed as a *workstation* figure, and the panel at the machine may be different hardware — please confirm one answer covers both.
+**Our recommendation:** Confirm as recorded, and send the panel diagonal with it. The re-layout is scheduled work rather than a surprise — it was priced as a re-layout of every screen from the day the question was raised, and the screens already widen to fill whatever width they are given, so this was the cheap direction for the answer to go.
 
 ---
 

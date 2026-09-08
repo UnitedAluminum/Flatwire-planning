@@ -1,7 +1,7 @@
 # Flat Wire Mill — Staffed Development Sprint Plan (3 Developers)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 18, 2026 — **`D-32`: there is no shared-schema migration.** `FW-001` (36 h) and `FW-002` (3 h) struck from the S2 story list; `FW-159`’s `INFLAT` write is `FlatWireDB`-local *(previously August 14, 2026 — Related Documents now points at [`TrialRunPlan.md`](TrialRunPlan.md) `[TRP]`, the client-requested six-screen trial subset. **No figure in this document changed** *(otherwise August 13, 2026 — re-baselined at three developers, yield/cost/scrap out of plan)*)*
+**Last Updated:** September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — **`FW-130`'s story title moves to the 1920 × 1080 canvas** — client-confirmed as `Q26`, closing gap `G23`. **No hour or sprint figure changed.** *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `FW-001` (36 h) and `FW-002` (3 h) struck from the S2 story list; `FW-159`’s `INFLAT` write is `FlatWireDB`-local *(previously August 14, 2026 — Related Documents now points at [`TrialRunPlan.md`](TrialRunPlan.md) `[TRP]`, the client-requested six-screen trial subset. **No figure in this document changed** *(otherwise August 13, 2026 — re-baselined at three developers, yield/cost/scrap out of plan)*)*)*
 **Document Type:** Sprint plan at a fixed team of three, with story allocation
 **Status:** Published — **does not land on 30 Sep 2026.** The date below is what three developers actually deliver
 **Owner:** Development leads / delivery lead
@@ -146,7 +146,7 @@ in parallel within a sprint.
 | Story | Title | Phase | Stream | h | Sprint |
 |---|---|---|---|---|---|
 | `FW-N03` | Angular library scaffold, routing and configuration | 1A | FE | 15 | S1 |
-| `FW-130` | Shell layout and the 1280×1024 shopfloor canvas | 1A | FE | 10 | S1 |
+| `FW-130` | Shell layout and the 1920×1080 shopfloor canvas | 1A | FE | 10 | S1 |
 | `FW-131` | Route guards, interceptor wiring and the error envelope | 1A | FE | 7 | S1 |
 | `FW-132` | DI-swappable API client and domain models | 1A | FE | 12 | S1 |
 | `FW-133` | Shared composite controls | 1A | FE | 75 | S1 |
@@ -181,7 +181,7 @@ in parallel within a sprint.
 | `FW-060` | Dashboard 1 — Line Status Overview | 3 | FE | 31 | S3 |
 | `FW-153` | Alert chips, reconnect banner and cached-state fallback | 3 | FE | 14 | S3 |
 | `FW-154` | `GET /lines/status` and `LineStatusService` | 3 | BE | 11 | S3 |
-| `FW-155` | `FlatWireRun(LineId, Status)` index | 3 | DB | 3 | S3 |
+| `FW-155` | `FlatWireRun(MachineName, Status)` index | 3 | DB | 3 | S3 |
 | `FW-N06` | Alert rules engine and the `AlertRaised`/`AlertCleared` lifecycle | 3 | RT | 28 | S3 |
 | `FW-061` | Dashboard 2 — Rod Check-in six-step wizard (FL1/FL3) | 4 | FE | 24 | S3 |
 | `FW-157` | `POST /checkin/rod` and `CheckInService` | 4 | BE | 24 | S3 |

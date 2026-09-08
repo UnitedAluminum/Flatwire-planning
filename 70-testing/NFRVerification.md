@@ -1,7 +1,7 @@
 # Flat Wire Mill — NFR Verification
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 13, 2026 — split out of `06-TestPlanAndTestCases.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous
+**Last Updated:** September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — **`TC-627` moves to 1920 × 1080 at 1:1.** The canvas was client-confirmed as `Q26`, closing gap `G23`; [`[VAL §7.5]`](../50-frontend/ValidationRules.md) owns the figure and this case verifies against it. `TC-624`–`TC-626` and `TC-628` are unchanged, and **no test-case id was renumbered**. *(previously August 13, 2026 — split out of `06-TestPlanAndTestCases.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
 **Document Type:** Non-functional verification
 **Status:** Baselined — **four NFRs are untestable until their targets are defined**
 **Owner:** QA stream
@@ -57,7 +57,7 @@
 | **TC-624** | **Minimum text size** | No rendered text below **14 px** on any screen, **except** axis labels in the four documented vertically-compressed SVG charts. Form controls pinned to 14 px |
 | **TC-625** | **Tap targets** | Every interactive element ≥ **48 px** |
 | **TC-626** | **No hover dependency** | Every action reachable by touch alone; no action revealed only on hover |
-| **TC-627** | **1280 × 1024 at 1:1** | Every screen renders complete with **no horizontal or vertical scrollbar** and no clipping |
+| **TC-627** | **1920 × 1080 at 1:1** | Every screen renders complete with **no horizontal or vertical scrollbar** and no clipping. ⚠ **The figure read 1280 × 1024 until 7 Sep 2026** — `Q26` confirmed the panel and `[VAL §7.5]` owns the row |
 | **TC-628** | **Angular coverage bar** | 95 % branches, functions, lines and statements |
 | **TC-629** | **The word "strip"** | Absent from every screen, label, report and column heading |
 

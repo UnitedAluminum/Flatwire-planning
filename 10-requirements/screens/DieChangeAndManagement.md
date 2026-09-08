@@ -93,7 +93,7 @@ Auto-filled from the machine's current die assignment. The operator confirms rat
 
 | Field | Entry |
 |---|---|
-| Die identity | **Scanned**, or keyed. The entry resolves against the **`Drawer` die-size catalogue** — 13 rows, one per hole diameter — and populates the fields below. **It does not resolve a physical tool**; see §2.4a |
+| Die identity | **Scanned**, or keyed. The entry resolves a **`DieAlpha`** against **`ToolingInventoryDie`**, the per-tool register seeded in Phase 1, and populates the fields below. **It resolves a physical tool** — revised 2 Sep 2026 by the die split (`Q91`); see §2.4a |
 | Condition | **New** (full scheduled life) or **Reconditioned** (reduced scheduled life) |
 | Die size | Must match the outgoing die **unless the reason is a size change** |
 | Source | Die room, or external supplier |
@@ -103,9 +103,34 @@ Auto-filled from the machine's current die assignment. The operator confirms rat
 
 **A die whose size is not in the catalogue cannot be installed.** An unrecognised size is refused. **This is `D4` as it applies in MVP-1, and it is weaker than the rule as originally written** — see §2.4a.
 
-## 2.4a What `D4` means in MVP-1 `[CONFIRMED — Aug 11, 2026]`
+## 2.4a What `D4` means `[REVISED — Sep 2, 2026]`
 
-Die **inventory and lifecycle are owned outside MVP-1**: registration, per-tool identity, condition history, retirement and the four lifecycle operations are all MVP-2 (`DieManagement.md`). MVP-1 keeps the **die change event** and nothing else of the die domain. The three values the change screen needs therefore come from the `Drawer` lookup that MVP-1 already seeds in Phase 1:
+> ⚠ **This section existed only to explain a downgrade that has been reverted.** From 11 Aug 2026 it recorded that die inventory and lifecycle were owned *outside* MVP-1, so `D4` could be enforced at **die-size** level only. The die split (`Q91`, 2 Sep 2026) built the per-tool inventory and brought the die domain back into MVP-1, so **`D4` is enforced as originally written**. The Aug-11 position is preserved below the line as audit trail; it is not current behaviour.
+
+**`D4`, current form: a die that is not registered in inventory cannot be installed.** The incoming-die scan resolves a **`DieAlpha`** (`D-{size×1000}-{seq}`) against **`ToolingInventoryDie`**, which is built and seeded in Phase 1. An unregistered die is rejected and Maintenance must register it first — which is what `FR-233` said before 11 Aug and says again.
+
+The three values §1.5 needs now come from the per-tool register:
+
+| Value | Source | Granularity |
+|---|---|---|
+| Die identity | `ToolingInventoryDie.DieAlpha`, with `HoleSizeIn` and `DieType` | **The physical tool** |
+| Footage counter | `ToolingInventoryDie.LastGrindingFeet` | Per tool |
+| Life threshold | `ToolingInventoryDie.TotalFeetAllowed`, with the **60 / 85 %** bands of §5 | Per tool |
+
+`DieChangeEvent` now carries `OldDieId` / `NewDieId` alongside `OldDieSizeIn` / `NewDieSizeIn`: the FKs record *which tool*, the decimals record *what was measured*. That pair is what makes `FR-255` implementable — accumulation closes on the outgoing die and opens on the incoming one.
+
+**What this retires.** The accepted consequence of the Aug-11 position — *"die life is tracked per size, so two dies of the same diameter share one counter"* — **no longer holds**. Installing a fresh die now resets a counter the system can distinguish, because the counter belongs to the tool.
+
+> ⚠ **`OI-12` is now a live conflict, not a cross-scope curiosity.** This screen uses **60 / 85 %** bands; Die Management uses **65 / 80 %** (`FR-253`). Both are MVP-1 and both derive from `ToolingInventoryDie`, so two screens will state different statuses for the same die. It needs a decision before the Die Management build.
+
+> ⚠ **`OI-141` is open on ownership**, not on this behaviour. `[MSP §4.10]` puts Die Management on the Machines Application → Tooling Inventory tab while `FR-254` makes it the runtime source of truth this screen reads. `ToolingInventoryDie` carries the union of both field sets; if the answer is *two* registers, this screen reads the `FlatWireDB` one.
+
+---
+
+<details>
+<summary><strong>Superseded — the Aug 11, 2026 position, kept as audit trail</strong></summary>
+
+Die **inventory and lifecycle are owned outside MVP-1**: registration, per-tool identity, condition history, retirement and the four lifecycle operations were all MVP-2 (`DieManagement.md`). MVP-1 kept the **die change event** and nothing else of the die domain. The three values the change screen needed therefore came from the `Drawer` lookup that MVP-1 already seeded in Phase 1:
 
 | Value | MVP-1 source | Granularity |
 |---|---|---|
@@ -113,9 +138,11 @@ Die **inventory and lifecycle are owned outside MVP-1**: registration, per-tool 
 | Footage counter | `Drawer.LastGrindingFeet` | Per size |
 | Life threshold | `Drawer.TotalFeetAllowed`, with the **60 / 85 %** bands of §5 | Per size |
 
-**`D4` is restated accordingly: the system rejects an unrecognised die *size*, not an unregistered physical die.** It cannot do the latter — nothing in MVP-1 knows that a physical tool exists. `DieChangeEvent` already reflects this: it stores `OldDieSizeIn` and `NewDieSizeIn` as decimals with **no `DrawerId` foreign key**, so the check is an application-level validation against the catalogue, not a database constraint.
+**`D4` was restated accordingly: the system rejects an unrecognised die *size*, not an unregistered physical die.** It could not do the latter — nothing in MVP-1 knew that a physical tool existed. `DieChangeEvent` reflected this: it stored `OldDieSizeIn` and `NewDieSizeIn` as decimals with **no FK**, so the check was an application-level validation against the catalogue, not a database constraint.
 
-> **The consequence, stated plainly so it is not later reported as a defect: die life is tracked per size, so two dies of the same diameter share one counter.** Installing a fresh die does not reset anything a size-level counter can distinguish, and a size at 85 % reads as 85 % whichever physical tool is fitted. This is accepted for MVP-1. Per-tool life tracking arrives with Die Management.
+> **The consequence, stated plainly so it is not later reported as a defect: die life is tracked per size, so two dies of the same diameter share one counter.**
+
+</details>
 
 ## 2.5 Reason for the change
 
@@ -219,7 +246,7 @@ In both cases, material run before verification could be out of specification.
 | Footage counter | The outgoing die's accumulated footage and remaining life |
 | Life threshold | The life bar and the remaining figure |
 
-> **✅ ANSWERED Aug 11, 2026 — see §2.4a.** All three values come from the **`Drawer` die-size catalogue**, which MVP-1 already seeds: identity resolves against its 13 rows, footage from `LastGrindingFeet`, threshold from `TotalFeetAllowed`. The option chosen was the first of the three offered — *seed the die reference data as static for MVP-1* — with the important qualification that `Drawer` is a **size** catalogue, so the resolution is per size and not per physical tool. **`D4` is enforceable only in its size-level form**, and is restated in §2.4a rather than left as an open question. Die inventory and lifecycle stay MVP-2 permanently; no registration path is pulled back.
+> ⚠ **SUPERSEDED 2 Sep 2026 — see §2.4a.** All three values now come from **`ToolingInventoryDie`**, the per-tool register, so the answer below is the Aug-11 interim and not current behaviour. *(Was: "✅ ANSWERED Aug 11, 2026 — All three values come from the **`Drawer` die-size catalogue**, which MVP-1 already seeds: identity resolves against its 13 rows, footage from `LastGrindingFeet`, threshold from `TotalFeetAllowed`. The option chosen was the first of the three offered — *seed the die reference data as static for MVP-1* — with the important qualification that `Drawer` is a **size** catalogue, so the resolution is per size and not per physical tool. **`D4` is enforceable only in its size-level form**, and is restated in §2.4a rather than left as an open question. Die inventory and lifecycle stay MVP-2 permanently; no registration path is pulled back.")* ⚠ **That last clause is exactly what `Q91` reversed on 2 Sep 2026:** die inventory and lifecycle are back in MVP-1, the registration path IS pulled back, and `D4` is enforceable per tool.
 
 ---
 
@@ -253,7 +280,7 @@ In both cases, material run before verification could be out of specification.
 | D1 | **The post-die-change gate is a hard block on full production**, enforced at the confirm action, with thread mode permitted | May 4, 2026 | |
 | D2 | **Gauge drift and size change both route to the SPC checkpoint**; planned life and die failure return to the run | May 4, 2026 | |
 | D3 | A **die failure** holds the suspect **footage range**, not the run | Apr 2026 | |
-| D4 | ~~A die that is not registered in inventory **cannot be installed**~~ → **restated Aug 11, 2026:** a die whose **size** is not in the `Drawer` catalogue cannot be installed | Apr 2026, restated Aug 2026 | ✅ **Enforceable in its size-level form — see §2.4a.** The per-tool form is not, and never will be in MVP-1: die inventory and lifecycle are owned outside it |
+| D4 | **A die that is not registered in inventory cannot be installed** — the original form, **restored 2 Sep 2026** by the die split (`Q91`). *(The Aug-11 size-level restatement is withdrawn.)* | Apr 2026, restated Aug 2026, restored Sep 2026 | ✅ **Enforceable as written.** `ToolingInventoryDie` is built and seeded in Phase 1, so the scan resolves a physical tool and an unregistered die is rejected — see §2.4a |
 | D5 | Die change events are **immutable**; corrections are separate records | Apr 2026 | |
 | D6 | Die management is the **source of truth** for die identity, footage and life threshold | Apr 2026 | ⚠ **The source of truth is now MVP-2 while its consumer ships in MVP-1** — see §4 |
 
@@ -263,7 +290,7 @@ In both cases, material run before verification could be out of specification.
 
 | # | Assumption | Note |
 |---|---|---|
-| A1 | ~~Every die in physical circulation is registered in inventory before it reaches the line.~~ **Superseded Aug 11, 2026.** MVP-1 makes no such assumption because it cannot check it. What it assumes instead: **every die size in use is one of the 13 rows seeded in `Drawer`**, and the die room keeps `LastGrindingFeet` current per size. | ✅ Restated for MVP-1 |
+| A1 | **Every die in physical circulation is registered in inventory before it reaches the line** — the original assumption, **restored 2 Sep 2026** by the die split (`Q91`), and now checkable: the scan resolves a `DieAlpha` against `ToolingInventoryDie`. The die room keeps `LastGrindingFeet` current **per tool**. *(The Aug-11 size-level substitute is withdrawn.)* | ✅ Restored and enforceable |
 | A2 | The machine reports the current die assignment, so the outgoing panel does not need operator entry. | |
 | A3 | The footage encoder is the authoritative source of both the change position and the accumulated die footage. | |
 | A4 | Die room inspection records exist and are readable, so the incoming die's inspection date can be displayed rather than typed. | |
@@ -304,7 +331,7 @@ In both cases, material run before verification could be out of specification.
 |---|---|:--:|:--:|
 | §1.3 | Die change applies to FL1 and FL3 only | ☐ | ☐ |
 | §2.2 | Three die block choices, DB2 defaulted | ☐ | ☐ |
-| §2.4a | A die whose **size** is not in the `Drawer` catalogue cannot be installed — the size-level form of `D4` | ☐ | ☐ |
+| §2.4a | A die that is **not registered in `ToolingInventoryDie`** cannot be installed — `D4` in its per-tool form, restored 2 Sep 2026 | ☐ | ☐ |
 | §2.4a | **Die life is tracked per size, not per physical tool** — two dies of one diameter share a counter, and a fresh die resets nothing | ☐ | ☐ |
 | §2.5 | The five reason codes and what each triggers | ☐ | ☐ |
 | §2.6 | Quality hold captures a footage range, with the end read-only | ☐ | ☐ |

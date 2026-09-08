@@ -136,7 +136,7 @@ and column names, screen numbers, machine tag paths, and code formatting of any 
 # Part 2 — Work Items
 
 ## FW-130
-**Reference title:** Shell layout and the 1280×1024 shopfloor canvas
+**Reference title:** Shell layout and the 1920×1080 shopfloor canvas
 **Work item:** Screen framework and fixed shopfloor canvas
 **Delivers:** Every screen renders identically on the panel and is readable at arm's length, standing, in gloves.
 **Audience:** Line operator
@@ -352,7 +352,7 @@ and column names, screen numbers, machine tag paths, and code formatting of any 
 **Audience:** Supervisor
 
 ## FW-155
-**Reference title:** `FlatWireRun(LineId, Status)` index
+**Reference title:** `FlatWireRun(MachineName, Status)` index
 **Work item:** Board query performance
 **Delivers:** The board stays fast with every supervisor terminal refreshing it at once.
 **Audience:** IT and operations

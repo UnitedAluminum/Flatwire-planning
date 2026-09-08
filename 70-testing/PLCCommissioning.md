@@ -26,13 +26,13 @@ Executed on the physical line with the commissioning engineer. **This is the onl
 
 ### 8.2 Who must be present
 
-Commissioning engineer (PLC) · Engineering (tag map owner) · one line operator · one developer with `appsettings` write access · QA to record.
+Commissioning engineer (PLC) · Engineering (tag map owner) · one line operator · **one developer or DBA with `CommonDB` write access** *(`appsettings` write access until `D-44`, 4 Sep 2026 — the paths are `OPCTags` rows now, so the person who can fix a wrong path is whoever can `UPDATE` that table)* · QA to record.
 
 ### 8.3 Sequence
 
 | # | Test | Method | Pass |
 |---|---|---|---|
-| **C1** | **Tag paths resolve** | Read every configured tag path in turn | Every path resolves. **Correct any wrong path in `appsettings.json` — no redeploy is required** |
+| **C1** | **Tag paths resolve** | Read every registered tag path in turn. ⚠ **`GetOPCInfo` must return a non-empty `Tags` list first** — if it does not, the registration is missing (`G60`) and `C1` cannot start | Every path resolves. **Correct any wrong path with an `UPDATE` on that line's `CommonDB.OPCTags` row — no file change and no redeploy** *(`D-44`; this read "correct any wrong path in `appsettings.json`" until 4 Sep 2026)*. Record each corrected `TagKey` → `TagName` so `[DEP §3.2]`'s version-stamped script can be regenerated |
 | **C2** | **`FL{n}.LineState` vocabulary** | Drive the line through run, stop, pause, fault, thread and jog, recording the tag value at each | **The observed vocabulary is documented.** This closes **OI-35**, on which both the checkout gatekeeper and the spool prompt depend |
 | **C3** | **Footage counter** | Run a measured length | Counter matches within tolerance |
 | **C4** | **Tag push configures the machine** | Acknowledge a pass schedule at check-in | Component states, die sizes, roll gaps, edge type and targets **all take effect on the machine** |

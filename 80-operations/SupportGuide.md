@@ -34,7 +34,7 @@
 |---|---|
 | 1 | Confirm `OPCConnection` is running and subscribed |
 | 2 | Compare the configured path against the map confirmed with Engineering |
-| 3 | **Correct it in `appsettings.{Environment}.json` and recycle the pool. No redeploy is required — this is exactly why the paths are configuration** |
+| 3 | **Correct the `TagName` on the `CommonDB.OPCTags` row for that line's `TagKey`. No file change and no redeploy — this is exactly why the paths are configuration** *(`D-44`, 4 Sep 2026; this step said "correct it in `appsettings.{Environment}.json` and recycle the pool" until then, and a pool recycle is no longer needed)*. ⚠ **Note what you changed** — the rows are release artifacts and `[DEP §3.2]` version-stamps them, so an undocumented hand-edit will be overwritten by the next deployment |
 | 4 | Verify by reading the tag back, **on a stopped line** |
 | 5 | If `FL{n}.LineState` is involved, expect ambiguity: **its state vocabulary is undocumented (OI-35)**, and both the checkout gatekeeper and the spool prompt depend on it. Record what you observe — it closes the open item |
 

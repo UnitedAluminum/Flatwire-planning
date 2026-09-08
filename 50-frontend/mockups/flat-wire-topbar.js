@@ -94,6 +94,10 @@
     { t: "Rod Pre-Check-in",   s: "Stage at payoff",       href: "dashboard_2a_rod_precheckin.html", ic: mt('<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.5"/><path d="M12 3.5v3M12 17.5v3"/>') },
     { t: "Rod Checkout",       s: "Return rod",            act: "openRodCheckout", href: "dashboard_12_rod_checkout.html", ic: mt('<path d="M14 3h5a2 2 0 012 2v14a2 2 0 01-2 2h-5"/><path d="M9 16l4-4-4-4"/><path d="M13 12H3"/>') },
     { t: "Spool Queue",        s: "Spools for FL2",        href: "dashboard_5a_spool_queue.html", ic: mt('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M3.6 8.5h16.8M3.6 15.5h16.8"/>') },
+    /* ASK is PROPOSED — no story, no phase, no owner, and no DB## number. It is
+       reachable here only so a reviewer can open it; that is the one DB-S1
+       exclusion it does not take. See dashboard_ask.html's head comment. */
+    { t: "Ask Flat Wire",      s: "Ask a question",        href: "dashboard_ask.html", ic: mt('<path d="M21 11.5a8.4 8.4 0 01-9 8.4L3 21l1.1-3.4A8.4 8.4 0 1121 11.5z"/><path d="M9.6 9.4a2.5 2.5 0 114.1 2.3c-.9.6-1.7 1-1.7 2.1"/><circle cx="12" cy="16.6" r="0.7" fill="currentColor" stroke="none"/>') },
     { t: "Shift Summary",      s: "Shift report",          href: "../../../../MVP-2/Mockups/dashboard_10_shift_summary.html", ic: mt('<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><line x1="10" y1="13" x2="16" y2="13"/><line x1="10" y1="17" x2="16" y2="17"/>') },
     { t: "Downtime",           s: "Log downtime",          href: null, ic: mt('<circle cx="12" cy="12" r="9"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/>') },
     { t: "Supervisor Monitor", s: "Supervisor view",       href: null, ic: mt('<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M8.5 11.5l2.5 2 4-4.5"/>') },

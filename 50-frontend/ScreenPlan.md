@@ -1,7 +1,7 @@
 # Flat Wire Mill — Screen Plan
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 29, 2026 — **§7.1's `DB-S1` row and callout restated for `D-33`** — four exclusions become five (*not in `ual-angular` at all*), and the *“it uses the shared chrome”* closing sentence is **withdrawn as false**. `simulator_console.html` is re-labelled a **layout reference**; it was never an Angular build target either, since `flat-wire`'s routing module never carried a `DB-S1` route *(previously August 28, 2026 — ⚠ **The Mockups folder is 38 files / 19 HTML** — `dashboard_3_active_run_ual.html`, a **styling comparison build** (DB3 in the host app’s CSS at 1920×1080) plus five generated assets. The folder is still **flat**. Counts and the "composed for 5:4" statements updated — **18 of 19**, not all 19. Earlier: August 27, 2026 — **four corrections and three additions, from a review against the mockups folder and the requirement register.** ⚠ **§7.1 listed DB11 Roll Adjust as a screen; it is a dialog** (`roll_adjust.js`), which makes **five** run-event dialogs, not four. ⚠ **Appendix B said Roll Adjust is on FL1 — `FR-107` says it is not**, and `OI-11` is still carried as open although `FR-107`–`FR-109` answer it. ⚠ **The "27 HTML files" figure is 18**, and both denominators derived from it in §7.3 (*"25 of 27"*, *"26 of 27"*) are restated — **the named exceptions were always right**. ⚠ **§7.3 omitted `fw-modal.js` and four of the five dialog scripts.** Added: an MVP scope legend on the navigation map, a note that the mockups are the authority on content rather than on composition at the new **1920 × 1080** canvas, and a warning that `flat-wire-fit.js`'s hard-coded 1280 × 1024 design box is the mockup canvas and not the build target. *(previously August 25, 2026 — the dangling §9.4 pointer replaced by naming the two documents it meant *(previously August 13, 2026 — split out of `02-SRS.md`, `03-HLD-and-ERDiagram.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*)*
+**Last Updated:** September 4, 2026 — Change history is in [`../CHANGELOG.md`](../CHANGELOG.md) · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** Screen inventory, navigation map, shared chrome, mockup mapping
 **Status:** Baselined for build
 **Owner:** Frontend (Angular) stream
@@ -13,9 +13,11 @@
 
 ## 7. User interface requirements
 
-The **18** HTML files in [`Mockups/`](Mockups/) are the **approved visual baseline and the pixel authority**. They open directly in a browser with no build step. This section states what a developer cannot infer from §5.
+The HTML files in [`Mockups/`](Mockups/) are the **approved visual baseline and the pixel authority**. They open directly in a browser with no build step. This section states what a developer cannot infer from §5.
 
-> ⚠ **This read "27 HTML files" until 27 Aug 2026, and two derived figures in §7.3 rested on it.** Measured: **19** here, **24** across both scopes (19 + 5 in [`MVP-2/Mockups/`](../../../MVP-2/Mockups/)). ⚠ **The 19th is `dashboard_3_active_run_ual.html`, a styling comparison build rather than a screen** — DB3 in the host application’s CSS at **1920×1080**, so it is the one file here **not** composed for 5:4, and it is not part of the screen inventory below. The link label was also a stale absolute path left by the 13 Aug restructure; from this folder the mockups are simply `Mockups/`.
+> ⚠ **RE-MEASURED 4 Sep 2026: the folder holds `44` files, `25` of them HTML (43 / 24 before this screen was added).** The published figures below were **already wrong before `dashboard_ask.html` was added** — they read "38 files / 19 HTML", which described the *pre-re-tree* split, when the five MVP-2 mockups lived in a separate folder. The 29 Aug 2026 re-tree folded them into this flat folder and no count followed. **Nothing measures these numbers**: `verify_schema_counts.py` counts database objects only, `linkcheck.py` is additive, and `check_docs.py` reads task front-matter — so screen counts are hand-maintained prose and have drifted accordingly. ⚠ **The same drift is uncorrected in roughly a dozen other restatements** — `[VAL]`, the `50-frontend/tasks/` files, `[CMP]`, `[ARC §2]`, `[MS §7.1]` and `tools/pathmap.py` — and reconciling all of them is a separate pass, deliberately not bundled into a screen addition.
+>
+> ⚠ **This read "27 HTML files" until 27 Aug 2026, and two derived figures in §7.3 rested on it.** Measured then: **19** here, **24** across both scopes (19 + 5 in [`MVP-2/Mockups/`](../../../MVP-2/Mockups/)). ⚠ **The 19th is `dashboard_3_active_run_ual.html`, a styling comparison build rather than a screen** — DB3 in the host application’s CSS at **1920×1080**, so it is the one file here **not** composed for 5:4, and it is not part of the screen inventory below. The link label was also a stale absolute path left by the 13 Aug restructure; from this folder the mockups are simply `Mockups/`.
 >
 > ⚠ **The mockups are the pixel authority for *content*, not for *composition at the current canvas*.** All 18 are composed for **1280 × 1024**, and `[VAL §7.5]`'s canvas is **1920 × 1080** as of 27 Aug 2026 — a 5:4 → 16:9 change. Controls, states, colour semantics, wording and interaction remain theirs; **layout at the new canvas is design work no mockup covers.**
 
@@ -29,7 +31,7 @@ The **18** HTML files in [`Mockups/`](Mockups/) are the **approved visual baseli
 | **DB2A** | Rod Pre-Check-in Station (FL1/FL3) | `dashboard_2a_rod_precheckin.html` | FL1 operator | Staging the next rod while the current coil runs |
 | **DB2** | Rod Check-in & Pre-Run Setup | **`dashboard_2_rod_checkin.html`** | FL1 operator | Start of each rod |
 | **DB2-FL3** | Rod Check-in — FL3 hybrid variant | `dashboard_2_rod_checkin_fl3.html` | FL3 operator | Start of each hybrid rod *(older layout — OI-16)* |
-| **DB3** | Active Run Monitor (FL1) | `dashboard_3_active_run.html` *(the earlier left-rail layout that held this filename was withdrawn 1 Aug 2026, git history at `2a0426b`; this file was named `dashboard_3_active_run_v2.html` until 11 Aug 2026)* | FL1 operator | During every run |
+| **DB3** | Active Run Monitor — **one screen, all three lines** *(`D-55`, 7 Sep 2026: built once at `#/flat-wire/home/:machineName`; the three rows below are **content variants**, not separate screens, and only four things differ by line)* | `dashboard_3_active_run.html` *(the earlier left-rail layout that held this filename was withdrawn 1 Aug 2026, git history at `2a0426b`; this file was named `dashboard_3_active_run_v2.html` until 11 Aug 2026)* | FL1 operator | During every run |
 | **DB3-FL2** | Active Run Monitor (FL2) | `dashboard_3_active_run_fl2.html` | FL2 operator | During every FL2 run |
 | **DB3-FL3** | Active Run Monitor (FL3) | `dashboard_3_active_run_fl3.html` | FL3 operator | During every hybrid run |
 | ~~**DB4**~~ | ~~Weld Event Logger~~ — **RETIRED 1 Aug 2026**, folded into DB2A's *Mark as welded* dialog | ~~`dashboard_4_weld_event.html`~~ *(deleted; git history at `2a0426b`)* | — | — |
@@ -49,6 +51,7 @@ The **18** HTML files in [`Mockups/`](Mockups/) are the **approved visual baseli
 | **OEE** | OEE Dashboard | `dashboard_oee.html` | Supervisor / CI engineer | On demand |
 | — | Coil Spinner | `coil-spinner.html` | — | A component demo, not a screen |
 | **DB-S1** | Simulator Control Console — ⚠ **not an operator screen, and since `D-33` not an Angular screen at all** | `simulator_console.html` *(layout reference only)* | Engineer / Admin | Driving the machine model. **See the note below before treating this as one of the fifteen** |
+| **ASK** | Ask Flat Wire — natural-language query and report. ⚠ **`PROPOSED`, in neither MVP-1 nor MVP-2** | `dashboard_ask.html` | Supervisor / Quality / Engineering / Planning | Answering a cross-station question without opening four screens. **Same footing as `DB-S1` below: registered so it is not lost, not because it is part of the suite** |
 
 > ### ⚠ `DB-S1` is registered here so it is not lost, not because it is part of the suite
 >
@@ -157,7 +160,13 @@ The shared topbar's **More Options** tile popup reaches Pass Schedule, WIP Rejec
 The mockups are the pixel authority. Two mechanical rules carry over from them into the Angular build:
 
 1. **Clone Dashboard 12's skeleton, not Dashboard 2's**, when starting a new screen — DB2's `dashboard_2_rod_checkin.html` inlines its own app bar and omits `flat-wire-topbar.js`.
-2. **Consume `flat-wire-shopfloor.styles.scss` as-is.** There is no token migration; the `--fw-*` prefix in older documents is stale (gap **G18**). Angular components need `ViewEncapsulation.None` or `:host` scoping so the tokens resolve.
+2. ⛔ **WITHDRAWN — do not consume the mockups' token stylesheet.** This rule used to read *"consume `flat-wire-shopfloor.styles.scss` as-is … Angular components need `ViewEncapsulation.None` or `:host` scoping so the tokens resolve."* **The token stylesheet is not shipped into the repository** ([`Orchestration §4`](tasks/Orchestration.md), `F-03` withdrawn), the mockups' `--color-*` palette **exists nowhere**, and the standing rule is now **create no new classes, styles or colours** — a flat wire screen is built from the application's existing classes. See [`[UIC §2]`](UIConventions.md). The `--fw-*` half stands: that prefix is stale (gap **G18**) and there is nothing to migrate.
+
+⚠ **A screen is built through four authorities, in order** — the story names the screen, the mockup
+supplies its content, [`[UIC]`](UIConventions.md) supplies the look, and the **application
+repository's rules supply the code**. That fourth one is mandatory and is where reviews actually
+fail; see *Before you write code* in the repository [`CLAUDE.md`](../CLAUDE.md) and
+[`[UIC §1.2]`](UIConventions.md).
 
 ---
 

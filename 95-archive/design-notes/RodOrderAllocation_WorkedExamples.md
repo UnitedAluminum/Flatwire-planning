@@ -9,6 +9,16 @@
 
 ---
 
+> ⛔ **CLIENT RESPONSE RECEIVED 3 Sep 2026, AND IT REJECTS THE FLOW EXAMPLES 6 AND 7 ARE BUILT ON.** These traces assume a rod shared across an order boundary **stays mounted** — *"no dismount and no second check-in."* Tim O'Brien: *"in both cases the system should require a **check-out/check-in of the Rod, and the check-in of a new empty spool**"*, and *"**I do not believe that we want to have multiple orders on a spool.**"* If that is ratified, **Examples 6 and 7 describe a flow that will not be built**, and Example 7's boundary-alignment rule — the document's main recommendation — has nothing to align, because no spool spans a boundary.
+>
+> ⚠ **Two input assumptions are also superseded.** Rod weight is **4,400 / 5,600 / 7,400 lb** from three stocked vendors, not the 4,000 lb every figure here uses; and realistic outputs are **FL1 `.085t x .700w`** and **FL2 `.016t x .699w`**, not 0.110 × 0.625 and 0.0160 × 0.625. At 4,400 lb a rod leaves an **800 lb tail — exactly the coil minimum**, so Example 1's stranded tail becomes a marginal coil and its yield conclusion reverses.
+>
+> ⛔ **NOTHING BELOW HAS BEEN RE-DERIVED, DELIBERATELY.** Every figure chains off rod weight and gauge, `tools/deliverables/build_allocation_examples_xlsx.py` generates a client workbook from this file, and the client is **separately disputing the footage basis** (`Q10`). A corrected set belongs in an additive pass once `OI-97` and `Q10` settle — not in an edit to these numbers.
+>
+> ⚠ **The Companion rule above was honoured in one direction only.** The 26 Aug 2026 revision of the `.html` — a multi-rod coil carrying **two identities**, each holding its own rod's weight — has no counterpart in this file. The client answered the **24 Aug** copy, which predates it.
+>
+> Full analysis: [`ClientEmail_2026-09-03_RodOrderAllocation_SyncPlan.md`](../source-documents/ClientEmail_2026-09-03_RodOrderAllocation_SyncPlan.md). **Nothing in `95-archive/` is citable.**
+
 ## 0. What this is, and the two axes
 
 **Seven traces** — the six-cell matrix **{one order · one rod} × {one order · many rods} × {many

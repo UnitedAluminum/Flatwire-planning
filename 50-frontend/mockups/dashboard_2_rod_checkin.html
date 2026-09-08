@@ -10,11 +10,11 @@
      If the rod is planned for FL3 and the operator is on the FL1 tab, the screen switches to
      FL3. Identical behaviour at pre-check-in (Dashboard 2A) and here at check-in.
        The client's phrasing was explicit: "No blocking message."
-       Implementation: read `scheduledLineId` from GET /rod/{alpha} at the scan; if it differs
-     from the line on screen, switch. A POST that still arrives with the wrong lineId returns
-     409 WRONG_STATION carrying `correctLineId`, and the client switches and re-posts.
+       Implementation: read `scheduledMachineName` from GET /rod/{alpha} at the scan; if it differs
+     from the line on screen, switch. A POST that still arrives with the wrong machineName returns
+     409 WRONG_STATION carrying `correctMachineName`, and the client switches and re-posts.
        SUPERSEDED: the earlier design notified the operator and required a supervisor override,
-     recorded on RodStaging.OffScheduleOverride / ScheduledLineId. Those columns are dropped.
+     recorded on RodStaging.OffScheduleOverride / ScheduledMachineName. Those columns are dropped.
        NOT YET IMPLEMENTED IN THIS MOCKUP — this screen is single-line (FL1) with no station
      toggle, so there is nothing here to switch. Dashboard 2A carries the working version.
        OPEN: what a part-completed wizard does when the station changes under it (this screen

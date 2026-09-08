@@ -1,9 +1,32 @@
 -- ============================================================
 -- Flat Wire Mill — DDL Script 06: Foreign Key Constraints
 -- Run order : 06 of 09  (run AFTER all 01–05 scripts)
--- Creates   : ALL 55 foreign keys. There is no second FK script.
---             55, not 57, since 23 Aug 2026: the SpoolConfiguration merge
---             (Q60) dropped FK_SpoolProcessing_SpoolConfiguration and
+-- Creates   : ALL 68 foreign keys. There is no second FK script.
+--             68, not 67, since 6 Sep 2026: the edger absorption (D-53) added
+--             FK_ToolingInventoryEdgerGauge_EdgerTool. FK_PSC_Edger was
+--             RE-POINTED from [dbo].[Edger] to ToolingInventoryEdger and KEEPS
+--             ITS NAME, so it is not a new key and moves no count.  (+1)
+--             It was 67, not 64, since 4 Sep 2026: the five Machine Setup tables
+--             added FK_SetupHandlingTimeElement_Group,
+--             FK_SetupHandlingTimeStandard_Element and
+--             FK_MaterialLossStandard_Element -- all three INTERNAL to that
+--             group. No FK reaches a machine or a line: FL1/FL2/FL3 is a
+--             CHECKed MachineName string, and united_db.dbo.machines is in
+--             another database, so a key to it cannot exist.  (+3)
+--             It was 64, not 62, since 3 Sep 2026: the fourth Tooling Inventory tool
+--             type added FK_ToolingInventoryRollSet_Stand and
+--             FK_ToolingInventoryRollSet_Drawer -- the latter the FIRST foreign
+--             key ever taken on Drawer.  (+2)
+--             It was 62, not 58, since 2 Sep 2026 (later the same day): the client's
+--             reason-code lists added FK_RunPauseEvent_DelayCode,
+--             FK_LineDowntimeEvent_DelayCode, FK_LineDowntimeEvent_Run and
+--             FK_WipRejection_Reason.  (+4)
+--             It was 58, not 55, since 2 Sep 2026: the die split dropped
+--             FK_PSC_Drawer with PassScheduleComponent.DrawerId and added
+--             FK_DieChangeEvent_OldDie, FK_DieChangeEvent_NewDie,
+--             FK_DieHistory_Die and FK_DieHistory_Run.  (-1 +4)
+--             It was 55, not 57, from 23 Aug 2026: the SpoolConfiguration
+--             merge (Q60) dropped FK_SpoolProcessing_SpoolConfiguration and
 --             FK_Spool_SpoolConfiguration with their SpoolTypeId columns.
 -- ============================================================
 -- All FK constraints are added here in a single script so
@@ -60,23 +83,61 @@ WHERE fk.name LIKE 'FK_FlatWire%'
        --
        -- Lookup / Schedule
        'PassSchedule','PassScheduleComponent','PassScheduleChangeLog',
-       'Spool',
+       'Spool','ToolingInventoryRollSet','ToolingInventoryEdgerGauge',
        -- Materials
        'FlatWireRun','SpoolProcessing','SpoolTraceability','SpoolOrder','RodOrderAllocation',
        -- Runs
        'FlatWireRunDetail','RodStaging','RodCheckin','SpoolCheckin','SpoolStaging',
-       'RunPauseEvent','WeldEvent','RollOverride','DieChangeEvent','RunReading',
+       'RunPauseEvent','WeldEvent','RollOverride','DieChangeEvent','DieHistory','RunReading',
        'RodOrderConsumption',
+       -- ToolingInventoryDie is deliberately ABSENT: it is a pure parent, with no
+       -- FK column of its own, and this roster lists CHILD tables only.
+       -- ToolingInventoryEdger is ABSENT for the same reason (Sep-6-2026): the
+       -- key runs the other way -- PassScheduleComponent.EdgerId points AT it --
+       -- so it holds no FK column. Its child ToolingInventoryEdgerGauge IS
+       -- listed, above, because it holds EdgerToolId.
+       -- ToolingInventoryRollSet IS listed, above, precisely because it is NOT a
+       -- pure parent: it holds StandId and DrawerId. The two tooling registers
+       -- differ here and that is not an inconsistency.
        -- Quality / Output  (CoilOutput and CoilTraceability are MVP-1;
        -- Phase 9 returned whole on 11 Aug 2026)
        'SpcCheckpoint','SpcMeasurement','WipRejection',
-       'CoilOutput','CoilTraceability','RodCheckout'
+       'CoilOutput','CoilTraceability','RodCheckout',
+       -- Machine Setup (Sep-4-2026). CHILD tables only, per this roster's rule:
+       -- SetupHandlingTimeGroup and MaterialLossElement are deliberately ABSENT
+       -- because they are pure parents with no FK column of their own -- the same
+       -- reason ToolingInventoryDie is absent above.
+       'SetupHandlingTimeElement','SetupHandlingTimeStandard','MaterialLossStandard'
    );
 EXEC sp_executesql @sql;
 */
 -- ============================================================
 
 PRINT '--- Adding FK constraints ---';
+GO
+
+-- ------------------------------------------------------------
+-- ToolingInventoryRollSet  (Lookup)
+--
+-- Added Sep-3-2026 with the fourth Tooling Inventory tool type. A roll set is
+-- fitted to exactly one position and CK_TIRS_Mount enforces which: a Mill set to
+-- a Stand, a Capstan set to a Drawer. Both columns are nullable, so both FKs are
+-- satisfied by the NULL side of that CHECK.
+--
+-- FK_ToolingInventoryRollSet_Drawer IS THE FIRST FOREIGN KEY EVER TAKEN ON Drawer.
+-- The die split left Drawer "an equipment register, not a join target" and named
+-- G77's tooling work as its likely first referrer. This is it.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_ToolingInventoryRollSet_Stand')
+    ALTER TABLE [dbo].[ToolingInventoryRollSet]
+        ADD CONSTRAINT [FK_ToolingInventoryRollSet_Stand]
+        FOREIGN KEY ([StandId]) REFERENCES [dbo].[Stand] ([Id]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_ToolingInventoryRollSet_Drawer')
+    ALTER TABLE [dbo].[ToolingInventoryRollSet]
+        ADD CONSTRAINT [FK_ToolingInventoryRollSet_Drawer]
+        FOREIGN KEY ([DrawerId]) REFERENCES [dbo].[Drawer] ([Id]);
 GO
 
 -- ------------------------------------------------------------
@@ -506,16 +567,41 @@ IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_PSC_Stand')
         FOREIGN KEY ([StandId]) REFERENCES [dbo].[Stand] ([Id]);
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_PSC_Drawer')
-    ALTER TABLE [dbo].[PassScheduleComponent]
-        ADD CONSTRAINT [FK_PSC_Drawer]
-        FOREIGN KEY ([DrawerId]) REFERENCES [dbo].[Drawer] ([Id]);
-GO
+-- FK_PSC_Drawer was REMOVED on Sep-2-2026 with the die split. It constrained
+-- PassScheduleComponent.DrawerId, which is dropped: it pointed at what was then a
+-- 13-row die-SIZE catalogue, and the size is already in ParameterValue. Drawer now
+-- holds the two draw BOXES, which ComponentName already names. See 02_Schedule
+-- section 3 and the "Tool reference" block.
 
+-- FK_PSC_Edger was RE-POINTED on Sep-6-2026 by the edger absorption (D-53).
+-- [dbo].[Edger] held five columns against the client's fourteen-column Tooling
+-- Inventory grid, and 02_Schedule already recorded that EdgerId "identifies the
+-- fitted TOOL, not the STATION" -- so Edger was already meant to be the physical
+-- tool register. ToolingInventoryEdger is that register. THE CONSTRAINT NAME IS
+-- DELIBERATELY UNCHANGED: renaming it would churn [API], FW-147's enum-mirror
+-- inventory and TC-020 for no gain. This is NOT a new key and moves no count.
 IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_PSC_Edger')
     ALTER TABLE [dbo].[PassScheduleComponent]
         ADD CONSTRAINT [FK_PSC_Edger]
-        FOREIGN KEY ([EdgerId]) REFERENCES [dbo].[Edger] ([Id]);
+        FOREIGN KEY ([EdgerId]) REFERENCES [dbo].[ToolingInventoryEdger] ([Id]);
+GO
+
+-- ------------------------------------------------------------
+-- ToolingInventoryEdgerGauge  (Lookup)
+--
+-- One row per GROOVE cut into an edger roll set. The client's grid holds the
+-- whole set in one cell -- 'Gauge Range(") = .045, .040, .035' -- and G77 asked
+-- for a child table rather than a delimited string, because a pass schedule must
+-- eventually be able to select A GROOVE and a VARCHAR forbids it.
+--
+-- NO ACTION on delete, like every other key in this file -- there is not one
+-- CASCADE in the schema and that is the convention. A tool with grooves cannot
+-- be deleted until its grooves are, which is the intended safety.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_ToolingInventoryEdgerGauge_EdgerTool')
+    ALTER TABLE [dbo].[ToolingInventoryEdgerGauge]
+        ADD CONSTRAINT [FK_ToolingInventoryEdgerGauge_EdgerTool]
+        FOREIGN KEY ([EdgerToolId]) REFERENCES [dbo].[ToolingInventoryEdger] ([Id]);
 GO
 
 -- ------------------------------------------------------------
@@ -543,4 +629,115 @@ IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_CoilOutput_PassSc
     ALTER TABLE [dbo].[CoilOutput]
         ADD CONSTRAINT [FK_CoilOutput_PassSchedule]
         FOREIGN KEY ([PassScheduleId]) REFERENCES [dbo].[PassSchedule] ([ScheduleId]);
+GO
+
+-- ------------------------------------------------------------
+-- The die domain (Sep-2-2026 die split)
+--
+-- DieChangeEvent's two FKs are what make FR-255 implementable -- per-tool
+-- footage attribution. Both are NULLABLE by design: a die change logged
+-- before its tool was registered has nothing to point at, and refusing the
+-- event would lose the run record.
+--
+-- DieHistory.RunId is NULLABLE because Reset and Retire are die-room actions
+-- with no run (FR-248, FR-250). CK_DieHistory_RunFootageHasRun in 04_Runs is
+-- what stops a RunFootage row exploiting that nullability.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_DieChangeEvent_OldDie')
+    ALTER TABLE [dbo].[DieChangeEvent]
+        ADD CONSTRAINT [FK_DieChangeEvent_OldDie]
+        FOREIGN KEY ([OldDieId]) REFERENCES [dbo].[ToolingInventoryDie] ([Id]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_DieChangeEvent_NewDie')
+    ALTER TABLE [dbo].[DieChangeEvent]
+        ADD CONSTRAINT [FK_DieChangeEvent_NewDie]
+        FOREIGN KEY ([NewDieId]) REFERENCES [dbo].[ToolingInventoryDie] ([Id]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_DieHistory_Die')
+    ALTER TABLE [dbo].[DieHistory]
+        ADD CONSTRAINT [FK_DieHistory_Die]
+        FOREIGN KEY ([DieId]) REFERENCES [dbo].[ToolingInventoryDie] ([Id]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_DieHistory_Run')
+    ALTER TABLE [dbo].[DieHistory]
+        ADD CONSTRAINT [FK_DieHistory_Run]
+        FOREIGN KEY ([RunId]) REFERENCES [dbo].[FlatWireRun] ([RunId]);
+GO
+
+
+-- ------------------------------------------------------------
+-- Reason-code vocabularies (added 2 Sep 2026)
+--
+-- Until now the pause and rejection vocabularies were enforced NOWHERE in the
+-- database -- RunPauseEvent.ReasonCode and WipRejection.RejectionReason were
+-- bare VARCHARs with no CHECK, and the only statement of the allowed values
+-- lived in a mockup and two markdown documents. The client's 1 Sep 2026
+-- "Reason Codes.xlsx" supplies real lists, so they become referential.
+--
+-- TWO OF THE THREE ARE COMPOSITE ON PURPOSE. Both event tables denormalise a
+-- second column beside the code -- the bucket on RunPauseEvent, the group on
+-- WipRejection -- and a single-column FK would leave those copies free to
+-- disagree with the lookup. The composite targets (UQ_DowntimeReason_CodeBucket,
+-- UQ_WipRejectionReason_CodeGroup) exist for exactly this.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_RunPauseEvent_DelayCode')
+    ALTER TABLE [dbo].[RunPauseEvent]
+        ADD CONSTRAINT [FK_RunPauseEvent_DelayCode]
+        FOREIGN KEY ([ReasonCode], [ReasonCategory])
+        REFERENCES [dbo].[DowntimeReason] ([DelayCode], [DelayBucket]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_LineDowntimeEvent_DelayCode')
+    ALTER TABLE [dbo].[LineDowntimeEvent]
+        ADD CONSTRAINT [FK_LineDowntimeEvent_DelayCode]
+        FOREIGN KEY ([DelayCode]) REFERENCES [dbo].[DowntimeReason] ([DelayCode]);
+GO
+
+-- Nullable: a line goes down whether or not a run was open. That nullability
+-- is the whole reason LineDowntimeEvent exists rather than the Downtime bucket
+-- being folded into RunPauseEvent -- see the table header in 04_Runs.
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_LineDowntimeEvent_Run')
+    ALTER TABLE [dbo].[LineDowntimeEvent]
+        ADD CONSTRAINT [FK_LineDowntimeEvent_Run]
+        FOREIGN KEY ([RunId]) REFERENCES [dbo].[FlatWireRun] ([RunId]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_WipRejection_Reason')
+    ALTER TABLE [dbo].[WipRejection]
+        ADD CONSTRAINT [FK_WipRejection_Reason]
+        FOREIGN KEY ([RejectionReason], [RejectionGroup])
+        REFERENCES [dbo].[WipRejectionReason] ([ReasonCode], [RejectionGroup]);
+GO
+
+-- ------------------------------------------------------------
+-- Machine Setup application -- Setup/Handling Times and Material Loss
+-- (Sep-4-2026).  Three FKs, all within the new five-table group.
+--
+-- There is NO fourth FK to a machine or a line, and that is not an
+-- omission: FL1/FL2/FL3 is a CHECK-constrained MachineName string here (19
+-- tables carry one), and the machine registry is
+-- united_db.dbo.machines -- a different database, so a foreign key to it
+-- is impossible.  See the note at the head of the Machine Setup section
+-- in 01_Lookup.
+-- ------------------------------------------------------------
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_SetupHandlingTimeElement_Group')
+    ALTER TABLE [dbo].[SetupHandlingTimeElement]
+        ADD CONSTRAINT [FK_SetupHandlingTimeElement_Group]
+        FOREIGN KEY ([GroupId]) REFERENCES [dbo].[SetupHandlingTimeGroup] ([Id]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_SetupHandlingTimeStandard_Element')
+    ALTER TABLE [dbo].[SetupHandlingTimeStandard]
+        ADD CONSTRAINT [FK_SetupHandlingTimeStandard_Element]
+        FOREIGN KEY ([ElementId]) REFERENCES [dbo].[SetupHandlingTimeElement] ([Id]);
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_MaterialLossStandard_Element')
+    ALTER TABLE [dbo].[MaterialLossStandard]
+        ADD CONSTRAINT [FK_MaterialLossStandard_Element]
+        FOREIGN KEY ([ElementId]) REFERENCES [dbo].[MaterialLossElement] ([Id]);
 GO

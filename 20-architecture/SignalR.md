@@ -1,7 +1,7 @@
 # Flat Wire Mill — Real-Time Architecture and the FlatWireHub Contract
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 28, 2026 — ⛔ **§5.4 named the six run-event markers and gave NO payload fields, so six of the twenty payloads on `IFlatWireClient` were frozen on a task plan's authority rather than this document's.** Raised by `FW-149`'s pre-execution re-review as decision **`P-117`** and **published here `[PROPOSED]`**, the same device `[PLC §5.2]` uses for a tag path nobody has read off a controller: a **shared base** (`lineId` · `runId` · **`footagePosition`** · `timestamp`) plus one to three fields per marker. **`footagePosition` is the load-bearing one** — DB3 overlays markers on a footage-indexed trace, so a marker without it cannot be drawn. The shapes are `FW-080`'s, built because the hub does not compile without them; **they are offered to ratify or correct, not to redesign**, and they were **verified field for field against the built code on publication — all six agree**. Also recorded: **cadence is immediate/unbatched for all six** (`[SIG §4.2]`'s rare-event path) and **none of the six is durable** — a client that misses one recovers it from the trace query, which is why only events 11 and 13 are server-owned. ⚠ **This closes the last of the twenty payloads that had no specification**; `FW-149`'s contract diff now covers 20 of 20 on the server side. *(previously August 27, 2026)* ⛔ **the contract carries fourteen events and two places in this file still said otherwise, one of them a build input.** §5.6's Angular observable map listed **twelve**, missing `orderAllocationReached$` and `orderAllocationResolved$`, which never arrived when events 13 and 14 entered §5.2 on 22 Aug — **`FW-135`'s criterion is "typed Observables per event", so a client built to that map ships 12 of 14 streams**, and the two missing ones are the only signal DB3 gets that an order boundary was crossed on a rod that is still running. §9.3 read **"Ten"**, three counts behind. ⚠ **`PP-04` audited two other documents and missed both of these, inside its own file** — its rule is now four sites, and it gains the distinction it was missing: **a document that enumerates the events carries the count even without printing a number.** Three sites outside this file are recorded as stale (`phase-01a` at twelve, `[TB §7]`'s `FW-136` at nine, `FW-080` claiming to match it). Also: §4.2's rare-event node gained the four prompt events, §4.1 records that **`@microsoft/signalr` 9.0.6 is already a dependency while the MessagePack protocol package is not**, and §4.5/§5.7 now separate the **undefined NFR targets** from the **specified broadcast cadence**, naming `PLC-Q11` and `C8` as where the open figures are being asked. *(previously August 14, 2026 — **`SpoolCompletionPromptDue` and `SpoolCompletionPromptResolved` promoted into the published contract** as events 11 and 12 (§5.2); §5.5 split so it now holds only the two unpublished Part A events; `PP-04`'s count restated 10 → 12; `OI-32` half-closed. Gap **`G37`** *(otherwise August 13, 2026)* — split out of `03-HLD-and-ERDiagram.md`, `02-SRS.md`, `04-APIContract.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
+**Last Updated:** August 28, 2026 · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** Real-time design and the hub contract
 **Status:** Baselined for build
 **Owner:** Architecture / Real-time stream
@@ -88,11 +88,11 @@ Known targets: **1-second default push interval, configurable to 5/10/30 s, with
 
 | Step | Detail |
 |---|---|
-| Connect | `/hubs/flatwire`, **WebSockets-first** with `SkipNegotiation` where the topology allows. SSE and long-poll are last-resort fallbacks only |
+| Connect | `/hubs/flat-wire`, **WebSockets-first** with `SkipNegotiation` where the topology allows. SSE and long-poll are last-resort fallbacks only |
 | Protocol | **MessagePack** — `AddSignalR().AddMessagePackProtocol()` server-side, `@microsoft/signalr-protocol-msgpack` client-side |
 | Auth | JWT via the **`?access_token=` query parameter**; hub methods carry `[Authorize]` |
-| Join | `JoinLineGroup({lineId})` on every screen that opens for a line |
-| Leave | `LeaveLineGroup({lineId})` on teardown — the server fans out only to interested clients |
+| Join | `JoinLineGroup({machineName})` on every screen that opens for a line |
+| Leave | `LeaveLineGroup({machineName})` on teardown — the server fans out only to interested clients |
 | Reconnect | **Automatic, with exponential backoff, plus line-group re-join.** The client renders cached last-known state behind a "Reconnecting…" banner and **never a blank screen** |
 | Scale-out | The hub is stateless. Multi-instance requires a **Redis backplane or Azure SignalR Service** — configuration only, no code change |
 
@@ -104,20 +104,20 @@ A strongly-typed `Hub<IFlatWireClient>` — **no magic-string method names.**
 
 | # | Event | Payload | Cadence | Consumers |
 |---|---|---|---|---|
-| 1 | `GaugeReading` | `GaugeReading[]` — each `{lineId, value(in), timestamp, footagePosition}` | **batched**, ~10 Hz | DB3 traces, DB1 live gauge |
+| 1 | `GaugeReading` | `GaugeReading[]` — each `{machineName, value(in), timestamp, footagePosition}` | **batched**, ~10 Hz | DB3 traces, DB1 live gauge |
 | 2 | `WidthReading` | `WidthReading[]` — same shape | **batched**, ~10 Hz | DB3 traces, DB1 live width |
-| 3 | `SpeedFPM` | `{lineId, value(FPM), timestamp}` | batched / decimated | DB1 board, DB3 header, **the machine-stop prompt** |
-| 4 | `PayoffWeight` | `{lineId, position, weightLb, percentRemaining}` | batched | DB1, DB2A, DB3 payoff bars |
-| 5 | `FootageCounter` | `{lineId, footage(ft), timestamp}` | batched | DB3 header, spool progress, die-life accumulation |
-| 6 | `ComponentStatus` | `{lineId, component, isActive, currentValue}` | **on change only** | DB3 component panel, roll-adjust dialog |
-| 7 | `LineStatus` | `{lineId, status, orderId, alpha}` | **on change only, immediate** | DB1 header badge |
-| 8 | `AlertRaised` | `{lineId, alertType, severity, message, timestamp}` | **immediate, unbatched** | DB1 alert bar |
-| 9 | `AlertCleared` | `{lineId, alertType}` | **immediate, unbatched** | DB1 alert bar |
-| 10 | `PayoffStateChanged` | `{lineId, position, state, rodAlpha, rodSeqno, isWelded}` | **immediate, unbatched** | DB2A bay cards, DB1 "Payoff 2 not loaded" rule |
-| 11 | `SpoolCompletionPromptDue` | `{lineId, runId, spoolAlpha, plcStopTimestamp, latchedWeightLb, targetLb}` | **immediate, unbatched · server-owned, durable** | DB3 machine-stop confirmation |
-| 12 | `SpoolCompletionPromptResolved` | `{lineId, runId, answer, operatorId, timestamp}` | **immediate, unbatched** | DB3 — closes the prompt across all clients |
-| 13 | `OrderAllocationReached` | `{lineId, station, runId, rodAlpha, orderNo, consumptionId, crossedAt, latchedWeightLb, allocatedWeightLb}` | **immediate, unbatched · server-owned, durable** | DB3 — the order-complete prompt |
-| 14 | `OrderAllocationResolved` | `{lineId, station, runId, orderNo, consumptionId, acknowledgedBy, weightAtAckLb, overrunLb, timestamp}` | **immediate, unbatched** | DB3 — closes the prompt across all clients, and reveals the next order |
+| 3 | `SpeedFPM` | `{machineName, value(FPM), timestamp}` | batched / decimated | DB1 board, DB3 header, **the machine-stop prompt** |
+| 4 | `PayoffWeight` | `{machineName, position, weightLb, percentRemaining}` | batched | DB1, DB2A, DB3 payoff bars |
+| 5 | `FootageCounter` | `{machineName, footage(ft), timestamp}` | batched | DB3 header, spool progress, die-life accumulation |
+| 6 | `ComponentStatus` | `{machineName, component, isActive, currentValue}` | **on change only** | DB3 component panel, roll-adjust dialog |
+| 7 | `LineStatus` | `{machineName, status, orderId, alpha}` | **on change only, immediate** | DB1 header badge |
+| 8 | `AlertRaised` | `{machineName, alertType, severity, message, timestamp}` | **immediate, unbatched** | DB1 alert bar |
+| 9 | `AlertCleared` | `{machineName, alertType}` | **immediate, unbatched** | DB1 alert bar |
+| 10 | `PayoffStateChanged` | `{machineName, position, state, rodAlpha, rodSeqno, isWelded}` | **immediate, unbatched** | DB2A bay cards, DB1 "Payoff 2 not loaded" rule |
+| 11 | `SpoolCompletionPromptDue` | `{machineName, runId, spoolAlpha, plcStopTimestamp, latchedWeightLb, targetLb}` | **immediate, unbatched · server-owned, durable** | DB3 machine-stop confirmation |
+| 12 | `SpoolCompletionPromptResolved` | `{machineName, runId, answer, operatorId, timestamp}` | **immediate, unbatched** | DB3 — closes the prompt across all clients |
+| 13 | `OrderAllocationReached` | `{machineName, station, runId, rodAlpha, orderNo, consumptionId, crossedAt, latchedWeightLb, allocatedWeightLb}` | **immediate, unbatched · server-owned, durable** | DB3 — the order-complete prompt |
+| 14 | `OrderAllocationResolved` | `{machineName, station, runId, orderNo, consumptionId, acknowledgedBy, weightAtAckLb, overrunLb, timestamp}` | **immediate, unbatched** | DB3 — closes the prompt across all clients, and reveals the next order |
 
 `state` on `PayoffStateChanged` is `NotStaged` · `Staged` · `Active` · `Blocked`. It fires on **every** bay-occupancy change: pre-check-in, pre-check-out, mark-as-welded, and check-in consuming a staged row.
 
@@ -178,7 +178,7 @@ Also broadcast, consumed by DB3 traces: `WeldJoinEvent` · `DieChangeEvent` · `
 
 | Field | Why it is on every marker |
 |---|---|
-| `lineId` | group routing and the per-line trace |
+| `machineName` | group routing and the per-line trace |
 | `runId` | the run the marker belongs to |
 | **`footagePosition`** | ⚠ **load-bearing: DB3 overlays markers on a footage-indexed trace, so a marker without it cannot be drawn** |
 | `timestamp` | server-stamped at API receipt (`FR-174`), never from the client clock |
@@ -214,20 +214,20 @@ Specified in [`SpoolCompletionNotification.md`](../10-requirements/screens/Spool
 ### 5.6 Angular observable map
 
 ```typescript
-gaugeReading$(lineId): Observable<GaugeReadingEvent[]>
-widthReading$(lineId): Observable<WidthReadingEvent[]>
-speedFpm$(lineId): Observable<SpeedFpmEvent>
-payoffWeight$(lineId): Observable<PayoffWeightEvent>
-payoffStateChanged$(lineId): Observable<PayoffStateChangedEvent>
-footageCounter$(lineId): Observable<FootageCounterEvent>
-componentStatus$(lineId): Observable<ComponentStatusEvent>
-lineStatus$(lineId): Observable<LineStatusEvent>
-alertRaised$(lineId): Observable<AlertRaisedEvent>
-alertCleared$(lineId): Observable<AlertClearedEvent>
-spoolCompletionPromptDue$(lineId): Observable<SpoolCompletionPromptDueEvent>
-spoolCompletionPromptResolved$(lineId): Observable<SpoolCompletionPromptResolvedEvent>
-orderAllocationReached$(lineId): Observable<OrderAllocationReachedEvent>
-orderAllocationResolved$(lineId): Observable<OrderAllocationResolvedEvent>
+gaugeReading$(machineName): Observable<GaugeReadingEvent[]>
+widthReading$(machineName): Observable<WidthReadingEvent[]>
+speedFpm$(machineName): Observable<SpeedFpmEvent>
+payoffWeight$(machineName): Observable<PayoffWeightEvent>
+payoffStateChanged$(machineName): Observable<PayoffStateChangedEvent>
+footageCounter$(machineName): Observable<FootageCounterEvent>
+componentStatus$(machineName): Observable<ComponentStatusEvent>
+lineStatus$(machineName): Observable<LineStatusEvent>
+alertRaised$(machineName): Observable<AlertRaisedEvent>
+alertCleared$(machineName): Observable<AlertClearedEvent>
+spoolCompletionPromptDue$(machineName): Observable<SpoolCompletionPromptDueEvent>
+spoolCompletionPromptResolved$(machineName): Observable<SpoolCompletionPromptResolvedEvent>
+orderAllocationReached$(machineName): Observable<OrderAllocationReachedEvent>
+orderAllocationResolved$(machineName): Observable<OrderAllocationResolvedEvent>
 ```
 
 **Fourteen observables, one per §5.2 event.** ⚠ **This map listed twelve until 27 Aug 2026** — `orderAllocationReached$` and `orderAllocationResolved$` were missing, having never been added when events 13 and 14 entered §5.2 on 22 Aug 2026. That is a build defect and not a documentation one: `FW-135`'s acceptance criterion is *"typed Observables per event"*, so a client built to this map would have shipped **12 of 14 streams**, and the two missing ones are the order-allocation prompt — the only signal DB3 gets that an order boundary has been crossed on a rod that is **still running**.

@@ -33,12 +33,19 @@
      · An ICON BADGE + title + one-line purpose in the head, then a single row of
        CONTEXT CHIPS — status, order, alpha, footage, pause start — each with its
        own glyph. The run is stated once, horizontally, instead of twice.
-     · REASONS AS ICON TILES in five category columns, each column headed by a
-       category glyph and label. Every tile carries an icon, a name and a mono
-       qualifier line; the two reasons that lead somewhere carry a route line
+     · REASONS AS ICON TILES. Every tile carries an icon, a name and a mono
+       qualifier line; the reasons that lead somewhere carry a route line
        ("→ opens die change") so the operator knows before committing.
-     · `Other` sits at the foot of the first column rather than in a group of its
-       own — it is a reason like the rest, it just also needs typing.
+       ⚠ REWORKED 2 Sep 2026 — this was FIVE CATEGORY COLUMNS of tiles, one per
+       semantic category, holding all fifteen reasons. The client's delay-code
+       vocabulary has 47 codes on this dialog, and 47 tiles do not fit at the
+       14px shopfloor floor on a 1280x1024 panel read at arm's length. It is now
+       EIGHT QUICK TILES over a bucket select plus a code select carrying the
+       full list — the same two-level shape wip_rejection.js already used, rather
+       than a third interaction invented for this screen. A tile and the selects
+       are ONE choice: selecting either moves the other.
+     · `Other` is now a CODE PER BUCKET (SET23 / RUN12 / HDL15), not a category
+       of its own — it is a reason like the rest, it just also needs typing.
      · NOTES on one row: label left, field right, with a 500-character counter.
      · Footage and clock TICK while the dialog is open, because the line is still
        running. Confirming freezes them and the footer shows the value the freeze
@@ -68,8 +75,16 @@
        resume dialog, and a checkout confirmed while paused should still close
        the pause with that outcome.
      · Reason CODES are carried, not labels: `RunPauseEvent` needs ReasonCode +
-       ReasonCategory. `Other` keeps its code and puts the prose in notes.
-     · Notes are REQUIRED on Other, matching CK_RunPauseEvent_NotesOther.
+       ReasonCategory — since 2 Sep 2026 a DELAY CODE and a DELAY BUCKET, and
+       FK_RunPauseEvent_DelayCode is COMPOSITE on the pair, so the two must
+       agree or the insert is rejected. `Other` keeps its code and puts the
+       prose in notes.
+     · Notes are REQUIRED on Other, matching CK_RunPauseEvent_NotesOther — which
+       was rewritten the same day to key on the three codes rather than on a
+       category called "Other", which the delay-code model does not have.
+     · THE FOURTH BUCKET IS NOT HERE. Downtime (25 DWN## codes) is LINE-down
+       time and belongs to LineDowntimeEvent, whose RunId is nullable; this
+       dialog pauses a RUN. Do not add a Downtime tab to it.
      · Duration reads h:mm:ss past an hour.
      · All CSS is scoped under .fwpause. The pre-redesign file defined a bare
        `.btn` globally, which overrode the shared 52px shopfloor button on every
@@ -133,40 +148,113 @@
      Codes and categories are the ones POST /run/{runId}/pause accepts; the
      labels are the ones the SRS lists. `opens` names a global dialog opener to
      hand off to once the pause is applied. */
-  var CATEGORIES = {
-    EquipmentMechanical: { label: "Equipment / Mechanical", icon: IC.catEquip, reasons: [
-      { code: "DieChangeMidRun",     label: "Die change",            sub: "mid-run, no weld", icon: IC.die,
-        opens: "die-change", opensLabel: "opens die change" },
-      { code: "RollAdjustment",      label: "Roll adjustment",       icon: IC.roll,
-        opens: "roll-adjust", opensLabel: "opens roll adjust" },
-      { code: "LubricationCoolant",  label: "Lubrication / coolant", icon: IC.drop },
-      { code: "DrawBoxInspection",   label: "Draw box inspection",   icon: IC.drawbox },
-      { code: "ComponentInspection", label: "Component inspection",  sub: "non-fault", icon: IC.inspect },
-      /* Other lives at the foot of this column: it is a reason like the rest, it
-         just also needs typing. */
-      { code: "Other",               label: "Other", sub: "describe it in the notes", icon: IC.dots,
-        requiresNotes: true }
+  /* ── Delay-code vocabulary ────────────────────────────
+     REPLACED 2 Sep 2026. This was 15 reasons in 5 SEMANTIC categories
+     (EquipmentMechanical / MaterialHandling / QualityMeasurement / Operational
+     / Safety) with codes like DieChangeMidRun. The client's "Reason Codes.xlsx"
+     (Tim O'Brien, 1 Sep 2026) replaced that with UA's DELAY-CODE model: four
+     TIME buckets keyed to the throughput standard-time model. Literal overlap
+     with the old vocabulary was ZERO.
+
+     ONLY THREE BUCKETS ARE HERE. The fourth, Downtime (25 DWN## codes), is
+     LINE-down time -- Power Outage, Fire Drill, Waiting for Spool From Previous
+     Operation -- which happens when no run is open. Those go to
+     LineDowntimeEvent, not RunPauseEvent, whose RunId is NOT NULL.
+     CK_RunPauseEvent_Bucket rejects a DWN code here.
+
+     WORDING IS THE CLIENT'S, VERBATIM, including "Bundle" for the rod and
+     "Spool" for the material in process. It must match DowntimeReason's seed:
+     FK_RunPauseEvent_DelayCode is COMPOSITE on (code, bucket), so a mismatch
+     is rejected rather than silently stored.
+
+     STILL MISSING: OperatorBreak, ShiftChangeover, AwaitingSupervisor and
+     SafetyObservation were reasons here until today and the client's list has
+     NO equivalent -- SET11 "Prior Shift unaccountable" is not shift changeover
+     and DWN07 "Fire Drill" is not a safety observation. Owed back to the
+     client. DO NOT map them onto a nearby code. */
+  var BUCKETS = {
+    Setup: { label: "Setup", icon: IC.catEquip, codes: [
+      { code: "SET10", label: "QC / Process Monitor Quality", opens: "spc", opensLabel: "opens SPC" },
+      { code: "SET11", label: "Prior Shift unaccountable" },
+      { code: "SET12", label: "Operator Training" },
+      { code: "SET19", label: "Computer problems" },
+      { code: "SET21", label: "Replace Banding Material" },
+      { code: "SET23", label: "Other", requiresNotes: true },
+      { code: "SET24", label: "Machine Demonstration" },
+      { code: "SET28", label: "Active Inspection" },
+      { code: "SET29", label: "Wire Break" },
+      { code: "SET30", label: "Trouble Threading The Line" },
+      { code: "SET31", label: "Change Straightener Rolls" },
+      { code: "SET32", label: "Change Dies", opens: "die-change", opensLabel: "opens die change" },
+      { code: "SET33", label: "Change Edger Rolls" },
+      { code: "SET34", label: "Rewind Bundle" },
+      { code: "SET35", label: "Cannot Find Bundle/Spool, Not Correct Bundle/Spool, Searching For Bundle/Spool" },
+      { code: "SET36", label: "Searching For Next bundle/Spool" },
+      { code: "SET37", label: "Digging Out Next Bundle/Spool" },
+      { code: "SET38", label: "Refill Draw Lube" },
+      { code: "SET39", label: "Cobble" },
+      { code: "SET40", label: "Tangle" },
+      { code: "SET41", label: "Wire Break Due to Bad Weld" }
     ]},
-    MaterialHandling: { label: "Material Handling", icon: IC.catMat, reasons: [
-      { code: "Payoff2LoadingWeld", label: "Payoff 2 loading",    sub: "weld preparation", icon: IC.payoff },
-      { code: "DownstreamBlockage", label: "Downstream blockage", sub: "TKUP-2 full / FL2 not ready", icon: IC.blockage }
+    RunTime: { label: "Run Time", icon: IC.catQual, codes: [
+      { code: "RUN04", label: "Rough or Cracked Edges" },
+      { code: "RUN05", label: "Shape Problems" },
+      { code: "RUN06", label: "Operator Training" },
+      { code: "RUN12", label: "Other", requiresNotes: true },
+      { code: "RUN13", label: "Active Inspection" },
+      { code: "RUN14", label: "Machine Demonstration" },
+      { code: "RUN15", label: "Wire Break" },
+      { code: "RUN16", label: "Traverse Problems" },
+      { code: "RUN17", label: "Cobble" },
+      { code: "RUN18", label: "Tangle" },
+      { code: "RUN19", label: "Refill Draw Lube" },
+      { code: "RUN20", label: "Wire Break Due to Bad Weld" }
     ]},
-    QualityMeasurement: { label: "Quality / Measurement", icon: IC.catQual, reasons: [
-      { code: "GaugeWidthInvestigation", label: "Gauge / width investigation", icon: IC.gauge },
-      { code: "ManualSpcMeasurement",    label: "Manual SPC measurement",      icon: IC.chart,
-        opens: "spc", opensLabel: "opens SPC" },
-      { code: "SurfaceInspection",       label: "Surface inspection",          icon: IC.eye }
-    ]},
-    Operational: { label: "Operational", icon: IC.catOp, reasons: [
-      { code: "OperatorBreak",      label: "Operator break",                 icon: IC.cup },
-      { code: "ShiftChangeover",    label: "Shift changeover",               icon: IC.swap },
-      { code: "AwaitingSupervisor", label: "Awaiting supervisor instruction", icon: IC.supervisor }
-    ]},
-    Safety: { label: "Safety", icon: IC.catSafe, reasons: [
-      { code: "SafetyObservation", label: "Safety observation", sub: "non-fault", icon: IC.shieldAlert }
+    Handling: { label: "Handling", icon: IC.catMat, codes: [
+      { code: "HDL07", label: "Operator Training" },
+      { code: "HDL11", label: "Replace Banding Material" },
+      { code: "HDL14", label: "Edge Damage from Width Changes" },
+      { code: "HDL15", label: "Other", requiresNotes: true },
+      { code: "HDL16", label: "Machine Demonstration" },
+      { code: "HDL17", label: "Active Inspection" },
+      { code: "HDL18", label: "Wire Break" },
+      { code: "HDL19", label: "Trouble Threading The Line" },
+      { code: "HDL20", label: "Change Straightener Rolls" },
+      { code: "HDL21", label: "Change Dies", opens: "die-change", opensLabel: "opens die change" },
+      { code: "HDL22", label: "Change Edger Rolls" },
+      { code: "HDL23", label: "Wire Break Due to Bad Weld" },
+      { code: "HDL24", label: "Rewind Bundle" },
+      { code: "HDL25", label: "Cleaning Scrap From Line" }
     ]}
   };
-  var COLUMN_ORDER = ["EquipmentMechanical", "MaterialHandling", "QualityMeasurement", "Operational", "Safety"];
+  var BUCKET_ORDER = ["Setup", "RunTime", "Handling"];
+
+  /* THE TILE GRID DID NOT SURVIVE THE CHANGE, and this is why. 15 reasons work
+     as icon tiles; 47 delay codes do not -- not at the 14px shopfloor minimum,
+     read at arm's length on a 1280x1024 panel. Rather than invent a third
+     interaction, this adopts the one wip_rejection.js already uses: a short row
+     of QUICK TILES over a bucket select plus a code select holding the full 47.
+     Eight tiles, chosen as what an operator reaches for mid-run, and both
+     routing reasons are kept so the "-> opens ..." affordance survives. Every
+     code here MUST exist in BUCKETS above. */
+  var QUICK_CODES = ["SET32", "SET10", "RUN04", "RUN16", "SET38", "RUN15", "SET30", "RUN12"];
+
+  function findReason(code) {
+    for (var key in BUCKETS) {
+      var b = BUCKETS[key];
+      for (var i = 0; i < b.codes.length; i++) {
+        if (b.codes[i].code === code) {
+          var r = b.codes[i];
+          /* The code/bucket PAIR is what the API stores and what
+             FK_RunPauseEvent_DelayCode checks -- never the label. */
+          return { code: r.code, category: key, label: r.label,
+                   opens: r.opens, opensLabel: r.opensLabel,
+                   requiresNotes: !!r.requiresNotes };
+        }
+      }
+    }
+    return null;
+  }
 
   var NOTES_MAX = 500;
 
@@ -214,7 +302,17 @@
     '.fwpause .fwp-prompt .req{color:var(--color-red)}',
     '.fwpause .fwp-prompt p{margin:0;font-size:14px;color:var(--color-text-tertiary)}',
 
-    '.fwpause .fwp-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;align-items:start}',
+    '.fwpause .fwp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:stretch}',
+    /* The full-list picker. 47 codes will not fit as tiles at the 14px floor,
+       so they live in two selects -- the same shape wip_rejection.js uses. */
+    '.fwpause .fwp-full{margin-top:16px;padding-top:14px;border-top:1px solid var(--gb-border,#d4d9e0)}',
+    '.fwpause .fwp-full-head{font-size:14px;font-weight:600;margin-bottom:8px}',
+    '.fwpause .fwp-full-fields{display:flex;gap:14px;align-items:flex-end}',
+    '.fwpause .fwp-full-field{display:flex;flex-direction:column;gap:5px}',
+    '.fwpause .fwp-full-field.grow{flex:1 1 auto;min-width:0}',
+    '.fwpause .fwp-full-label{font-size:14px;font-weight:600}',
+    '.fwpause .fwp-select{font-size:14px;min-height:44px;padding:6px 10px;width:100%;'
+      + 'border:1px solid var(--gb-border,#d4d9e0);border-radius:6px;background:#fff}',
     '.fwpause .fwp-col{display:flex;flex-direction:column;min-width:0}',
     /* Two lines reserved: 'Equipment / Mechanical' and 'Quality / Measurement' wrap at
        14px in a 200px column, and a one-line reservation left those columns' tiles
@@ -321,13 +419,24 @@
       '</button>';
   }
 
-  function column(key) {
-    var c = CATEGORIES[key];
-    return '' +
-      '<div class="fwp-col" data-category="' + key + '">' +
-        '<div class="fwp-grouphead">' + c.icon + '<span class="lbl">' + c.label + '</span></div>' +
-        '<div class="fwp-tiles">' + c.reasons.map(tile).join("") + '</div>' +
-      '</div>';
+  function quickTiles() {
+    return QUICK_CODES.map(function (code) {
+      var r = findReason(code);
+      return tile({ code: r.code, label: r.label, sub: BUCKETS[r.category].label,
+                    opensLabel: r.opensLabel, requiresNotes: r.requiresNotes });
+    }).join("");
+  }
+
+  function bucketOptions() {
+    return BUCKET_ORDER.map(function (k) {
+      return '<option value="' + k + '">' + BUCKETS[k].label + '</option>';
+    }).join("");
+  }
+
+  function codeOptions(bucketKey) {
+    return BUCKETS[bucketKey].codes.map(function (r) {
+      return '<option value="' + r.code + '">' + r.code + ' \u00b7 ' + r.label + '</option>';
+    }).join("");
   }
 
   function chip(id, icon, label, live) {
@@ -387,8 +496,24 @@
             '<p>Select one &middot; the reason is logged against the run, the alpha and the frozen footage</p>' +
           '</div>' +
 
-          '<div class="fwp-grid" id="pause-grid" role="radiogroup" aria-label="Pause reason">' +
-            COLUMN_ORDER.map(column).join("") +
+          '<div class="fwp-grid" id="pause-grid" role="radiogroup" aria-label="Common pause reasons">' +
+            quickTiles() +
+          '</div>' +
+
+          /* The full 47. The tiles above are a shortcut, not the vocabulary --
+             a code reached here and a code reached by tile are the same row. */
+          '<div class="fwp-full">' +
+            '<div class="fwp-full-head">All delay codes</div>' +
+            '<div class="fwp-full-fields">' +
+              '<div class="fwp-full-field">' +
+                '<label class="fwp-full-label" for="pause-bucket">Bucket</label>' +
+                '<select class="fwp-select" id="pause-bucket">' + bucketOptions() + '</select>' +
+              '</div>' +
+              '<div class="fwp-full-field grow">' +
+                '<label class="fwp-full-label" for="pause-code">Delay code</label>' +
+                '<select class="fwp-select" id="pause-code">' + codeOptions(BUCKET_ORDER[0]) + '</select>' +
+              '</div>' +
+            '</div>' +
           '</div>' +
 
           '<div class="fwp-notes" id="pause-notes-wrap">' +
@@ -571,21 +696,6 @@
   }
 
   /* ── Reason selection ───────────────────────────────────────── */
-  function findReason(code) {
-    for (var key in CATEGORIES) {
-      var c = CATEGORIES[key];
-      for (var i = 0; i < c.reasons.length; i++) {
-        if (c.reasons[i].code === code) {
-          var r = c.reasons[i];
-          /* Other lives in the Equipment COLUMN for layout, but its category is
-             Other — the code/category pair is what the API stores. */
-          return { code: r.code, category: r.code === "Other" ? "Other" : key,
-                   label: r.label, opens: r.opens, requiresNotes: !!r.requiresNotes };
-        }
-      }
-    }
-    return null;
-  }
 
   function refreshPauseConfirm() {
     var notes = $("pause-notes").value.trim();
@@ -598,6 +708,10 @@
     $("pause-notes-tag").classList.toggle("required", needsNotes);
   }
 
+  function fillCodes(bucketKey) {
+    $("pause-code").innerHTML = codeOptions(bucketKey);
+  }
+
   function selectReason(code) {
     reason = findReason(code);
     document.querySelectorAll("#pause-overlay .fwp-tile").forEach(function (b) {
@@ -605,11 +719,29 @@
       b.classList.toggle("selected", on);
       b.setAttribute("aria-checked", on ? "true" : "false");
     });
+    /* Keep the full-list selects in step with the quick tiles. The two controls
+       are one choice, not two: a tile and a dropdown that disagree mean the
+       operator sees one reason highlighted and a different code is submitted.
+       The bucket has to move BEFORE the code list is read, because the code
+       options are filtered by bucket. */
+    if (reason) {
+      $("pause-bucket").value = reason.category;
+      fillCodes(reason.category);
+      $("pause-code").value = reason.code;
+    }
     refreshPauseConfirm();
   }
 
   document.querySelectorAll("#pause-overlay .fwp-tile").forEach(function (btn) {
     btn.addEventListener("click", function () { selectReason(btn.getAttribute("data-code")); });
+  });
+  $("pause-bucket").addEventListener("change", function () {
+    var b = $("pause-bucket").value;
+    fillCodes(b);
+    selectReason($("pause-code").value);
+  });
+  $("pause-code").addEventListener("change", function () {
+    selectReason($("pause-code").value);
   });
   wireCounter("pause-notes", "pause-notes-count", refreshPauseConfirm);
   wireCounter("resume-notes", "resume-notes-count");

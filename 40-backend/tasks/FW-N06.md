@@ -65,7 +65,7 @@ From `[TB §7]` — verbatim:
 > **Acceptance Criteria:**
 > - [ ] Five rules implemented: Payoff1 < 3,000 lb → **Warning** · gauge outside ±tolerance → **Warning** · component fault → **Critical** · active WIP rejection → **Warning** · **Payoff2 not loaded AND Payoff1 < 2,000 lb → Critical**
 > - [ ] `AlertRaised` and `AlertCleared` broadcast as **rare domain events — immediate and unbatched**, never inside the 10 Hz telemetry batch
-> - [ ] **"Payoff2 not loaded" reads `RodStaging`** — a `Staged` row on `(LineId, PayoffPosition)` means loaded. `PayoffWeight` alone **cannot** distinguish an empty bay from a sensor reading zero
+> - [ ] **"Payoff2 not loaded" reads `RodStaging`** — a `Staged` row on `(MachineName, PayoffPosition)` means loaded. `PayoffWeight` alone **cannot** distinguish an empty bay from a sensor reading zero
 > - [ ] Consumes `PayoffStateChanged` (Phase 4) to keep the evaluation live
 > - [ ] Unit tests cover each threshold's raise and clear edges
 >
@@ -134,7 +134,7 @@ AC 3 is the most important line on the card. `PayoffWeight` **cannot** distingui
 | Rod loaded, sensor faulty or reading zero | `0` |
 | Rod loaded and nearly consumed | `~0` |
 
-**A `Staged` row on `(LineId, PayoffPosition)` means loaded.** That is the only sound source.
+**A `Staged` row on `(MachineName, PayoffPosition)` means loaded.** That is the only sound source.
 
 ⚠ **And `Staged` is subtler than it looks**: `Blocked` is **derived** (`Status='Staged'` + a
 `Fail`), and `IsWelded` is a **flag on a `Staged` row**. So *"is the bay loaded"* is true for
@@ -178,7 +178,7 @@ fault **must not** also be evaluated into `ITInhibit` from this code.
    `AlertRaised`/`AlertCleared` **lifecycle** — the clear edge is half the work and half the
    acceptance (AC 5).
    ⚠ **Hold raised-alert state**, or every evaluation re-raises. Keyed on
-   `(LineId, AlertType[, Position])`.
+   `(MachineName, AlertType[, Position])`.
 3. **Rule 1** — Payoff1 < 3,000 lb → Warning.
 4. **Rule 2** — gauge outside ±tolerance → Warning. ⚠ **Reuse `FW-150`'s per-run cached band**
    (`P-125`); do not re-query per reading. ⛔ **And `Q22` leaves the band unseeded**, so this is

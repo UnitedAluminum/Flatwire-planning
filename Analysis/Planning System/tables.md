@@ -102,10 +102,23 @@ An as-is plan is the exception on the SMP: it has none, and is generated for the
 
 | Operation | Letter |
 |---|---|
-| `DRAW` | `D` |
+| `DRAW` | ⚠ **pending** — `D` is already in use by another process (`G86`) |
 | `FLATTEN` | `F` |
 | `ANNEAL` | `A` |
-| `EDGE` | `E` |
+| `EDGE` | ⚠ **pending** — `E` is already in use, and whether `EDGE` is an SMP process at all is open (`OI-143`) |
+
+> ⚠ **Two of these four letters are not assigned yet, and the operation strings below depend on them.**
+> A query over `dbo.c_process_id.process_letter` UNION `dbo.lookups.display_name`
+> (`lookup_category_id = 930`) returns only four unused letters — **`F`, `K`, `Q`, `U`**.
+> `FLATTEN`=`F` and `ANNEAL`=`A` hold. **`D` and `E` do not** — both are taken by other
+> processes. **`K` has been proposed to the client for `DRAW` and is NOT confirmed** — do not
+> build against it. Gap **`G86`**; client answers tracked as **`OI-27`** (the `DRAW` letter)
+> and **`OI-143`** (whether `EDGE` is a process). Audit record:
+> [`ClientEmail_2026-09-03_ProcessLetters_SyncPlan.md`](../../95-archive/source-documents/ClientEmail_2026-09-03_ProcessLetters_SyncPlan.md).
+>
+> ✅ **The `FA` / `FAF` worked examples in this file, in [merging-logic.md](merging-logic.md) and in
+> [merging-logic-sample-data.json](merging-logic-sample-data.json) are UNAFFECTED** — they are
+> Flatten/Anneal routes and carry no `D` or `E`. Do not rewrite them.
 
 Temp routing generation rules (grouping + line assignment)
 

@@ -1,7 +1,7 @@
 # Flat Wire Mill — Vision & Scope
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 25, 2026 — the line-capability table records FL2 pre-check-in (`FR-533`); object count 34 → 33; effort points at `[CE §3e]` *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `SC-01` retargeted to `Rod.Status`; **`RISK-05` retired** and replaced by the narrower **`OI-111`**; §1’s “largest single blast radius” claim withdrawn *(previously August 15, 2026 — **`RISK-06` retired** and the *unverified assumption* callout restated: all six roles exist as JWT claims on `ClaimTypes.Role` (`G6`/`OI-37`))*)*
+**Last Updated:** September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — **`SC-09` and §10.2's *Authored canvas* constraint move to 1920 × 1080.** The client confirmed the shopfloor panel (`Q26`), which closed gap `G23`; `[VAL §7.5]` owns the row and every other document derives it from there. *(previously September 4, 2026 — the *Future enhancements* list re-pointed: the die-life predictive bullet now names its successor, `AI-08` in the new `[AI]` opportunity assessment, and the anneal bullet cross-references `AI-28`. **Nothing else in this document changes** — `[AI]` is direction only, mints no register id and moves no scope *(previously August 25, 2026 — the line-capability table records FL2 pre-check-in (`FR-533`); object count 34 → 33; effort points at `[CE §3e]` *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `SC-01` retargeted to `Rod.Status`; **`RISK-05` retired** and replaced by the narrower **`OI-111`**; §1’s “largest single blast radius” claim withdrawn *(previously August 15, 2026 — **`RISK-06` retired** and the *unverified assumption* callout restated: all six roles exist as JWT claims on `ClaimTypes.Role` (`G6`/`OI-37`))*)*)*)*
 **Document Type:** Vision & Scope
 **Status:** Baselined — open items in §13; the schedule position in §11 requires a programme decision
 **Owner:** Programme management
@@ -200,7 +200,7 @@ Written so `[TS]` can test them and `[DEP]` can gate a release on them.
 | **SC-06** | The line board is live and correct | All three lines render concurrently; every alert rule fires on its stated condition; readings arrive by push with **no polling** | `[TS]` real-time suite |
 | **SC-07** | Exceptions have formal off-ramps | WIP rejection sets material status and alerts a supervisor; all three checkout modes complete with the correct status transition and PLC tag treatment | `[TS]` exception suite |
 | **SC-08** | Every override is attributable | Every supervisor override, pass-schedule change and PLC tag write/clear is retrievable with who, when, why and old→new value | `[TS]` audit suite |
-| **SC-09** | The screens work on the panel | Every screen renders complete at 1280 × 1024 at 1:1, no text below 14 px (except the documented SVG axis exception), every tap target ≥ 48 px | `[TS]` UI conformance |
+| **SC-09** | The screens work on the panel | Every screen renders complete at **1920 × 1080** at 1:1, no text below 14 px (except the documented SVG axis exception), every tap target ≥ 48 px | `[TS]` UI conformance |
 | **SC-10** | A network drop is survivable | Client shows "Reconnecting…" over cached last-known state — **never a blank screen** — and re-joins its line group automatically | `[TS]` resilience suite |
 | **SC-11** | The release can be rolled back | A rehearsed rollback returns every component to its prior version, with the data-loss position stated in advance | `[RB §6]` |
 
@@ -218,7 +218,7 @@ Stay entirely within the existing UAL stack — Angular 18.2+ (delivered as a PW
 
 | Constraint | Value | Why |
 |---|---|---|
-| Authored canvas | **1280 × 1024** | The physical shopfloor panel |
+| Authored canvas | **1920 × 1080** | The physical shopfloor panel — confirmed by the client 7 Sep 2026 (`Q26`); `[VAL §7.5]` owns the row |
 | Minimum text size | **14 px** | Read at arm's length, standing, sometimes gloved |
 | Tap targets | **≥ 48 px** | Touch-first, gloved hands |
 | Hover | **No action may depend on it** | Touch screens have no hover |
@@ -258,7 +258,7 @@ The design is therefore **records first, PLC second**, with **compensating write
 | **RISK-09** | **SignalR drops on the shopfloor network** | Medium | Medium | Architecture | Auto-reconnect with backoff + group re-join; PWA cache; "Reconnecting…" banner over cached state | `FR-119` |
 | **RISK-10** | **UAT shares a 3-day W7 with feature work.** UAT and stakeholder sign-off cannot start the day feature work completes | High | High | Programme management | Pull Phase 14 into a dedicated post-feature-complete window, **independent of team size** | `[SP §4]` |
 | **RISK-11** | **Touch-screen usability** on a screen set no operator has used | Medium | Medium | UX / Operations | Mockups for early user testing; UAT at the start of Phase 14 | `SC-09` |
-| ~~**RISK-12**~~ | ~~**Phase 6 depends on Phase 13.** Die-change validation needs the die inventory Die Management creates, and there is no die master table in the schema at all~~ **CLOSED 11 Aug 2026 — the dependency is severed, not scheduled around.** Die inventory and lifecycle are **owned outside MVP-1**, so no die master table is expected. Die-change validation resolves against the **`Drawer` die-size catalogue seeded in Phase 1**, with life from `LastGrindingFeet` / `TotalFeetAllowed`. **`D4` is restated at size level** — it rejects an unrecognised die *size*, not an unregistered physical tool. Accepted consequence: **die life is per size, so two dies of one diameter share a counter** | — | — | — | Resolved — see `DieChangeAndManagement.md` §2.4a. **`OI-41` closes with it** |
+| ~~**RISK-12**~~ ⚠ **CLOSURE REASONING RESTATED 2 Sep 2026 (`Q91`)** — the dependency is **not severed, it is satisfied**: the die master table now exists as `ToolingInventoryDie` and is seeded in **Phase 1**, so Phase 6 depends on Phase 1. Die inventory and lifecycle are back **inside** MVP-1, `D4` is enforced **per tool** again, and the accepted consequence *"two dies of one diameter share a counter"* is retired. The Aug-11 text below records how the risk was closed at the time and is superseded, not deleted. | ~~**Phase 6 depends on Phase 13.** Die-change validation needs the die inventory Die Management creates, and there is no die master table in the schema at all~~ **CLOSED 11 Aug 2026 — the dependency is severed, not scheduled around.** Die inventory and lifecycle are **owned outside MVP-1**, so no die master table is expected. Die-change validation resolves against the **`Drawer` die-size catalogue seeded in Phase 1**, with life from `LastGrindingFeet` / `TotalFeetAllowed`. **`D4` is restated at size level** — it rejects an unrecognised die *size*, not an unregistered physical tool. Accepted consequence: **die life is per size, so two dies of one diameter share a counter** | — | — | — | Resolved — see `DieChangeAndManagement.md` §2.4a. **`OI-41` closes with it** |
 
 ### The three things most likely to stop this project
 
@@ -319,7 +319,7 @@ New contradictions found while producing these seven documents, not present in a
 - Full spool state machine (OQ-17) and formal partial-rod carry-forward (OQ-12). *The `PRC007`/`PRC008` gate now fires at the Dashboard 2A staging scan, so a partial rod is caught before it is mounted; the full carry-forward accounting remains post-go-live.*
 - Rolls-in-Flattening report, extended SCADA history, WIP Log enhancements (Low priority).
 - Message broker (Kafka/RabbitMQ) if AGC throughput outgrows SignalR (revisit post-go-live).
-- Die-life predictive thresholds once failure data exists (OQ-83).
-- Anneal scheduling rules (OI-64) and shared anneal-furnace capacity (OI-64).
+- Die-life predictive thresholds once failure data exists (OQ-83) — **now carried as `AI-08` in [`AIOpportunities.md`](AIOpportunities.md) `[AI]`**, which is where this bullet's successors live. `[AI]` is **direction only and mints no register id**; it holds the wider AI opportunity assessment, including what to capture during the trial so these options stay open. It does not change this list's status: everything here remains post-go-live.
+- Anneal scheduling rules (OI-64) and shared anneal-furnace capacity (OI-64) — see also `[AI]` `AI-28`.
 
 ---
