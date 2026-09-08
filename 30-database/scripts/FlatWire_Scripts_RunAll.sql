@@ -1,7 +1,15 @@
 -- ============================================================
 -- Flat Wire Mill — Cross-Database Scripts Runner
 -- ============================================================
--- Creates the flat wire grants and the five cross-database procedures.
+-- Creates the flat wire grants, the five cross-database procedures and the
+-- FlatWireDB.dbo.WIPStations view.
+--
+-- ⚠ 35_ (the view) IS in the chain, unlike 08-16, because it creates a READ in
+--   FlatWireDB and alters nothing shared (D-32). ⛔ But it is the ONE file here
+--   that CANNOT be created without CommonDB present: CREATE VIEW binds at
+--   creation time, where CREATE PROCEDURE defers. Its own guard reports and
+--   skips rather than failing the batch, so a FlatWireDB-only run stays green
+--   and says what it left out.
 --
 -- ⚠⚠ THIS RUNNER DELIBERATELY SKIPS FIVE FILES:
 --
@@ -134,6 +142,7 @@ GO
 
 :r 20_FlatWire_Grants.sql
 :r 30_FlatWireDB_Proc_sp_IngestRodFromCoils.sql
+:r 35_FlatWireDB_View_WIPStations.sql
 :r 40_FlatWireDB_Proc_FlatWire_CheckInRod.sql
 :r 50_FlatWireDB_Proc_FlatWire_CompleteCoilOnSkid.sql
 :r 60_FlatWireDB_Proc_FlatWire_ReleaseStation.sql

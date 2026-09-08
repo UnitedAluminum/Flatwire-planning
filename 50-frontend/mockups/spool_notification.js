@@ -797,7 +797,7 @@
 
   var overlay = $('fwsc-overlay');
 
-  function lineId() {
+  function machineName() {
     if (CFG.line) return CFG.line;
     var badge = document.querySelector('.line-badge');
     var m = badge && badge.textContent.match(/FL\d+/);
@@ -813,7 +813,7 @@
 
   function audit(event, extra) {
     if (!window.console || !console.info) return;
-    var payload = { line: lineId(), spool: CFG.spoolAlpha, at: new Date().toISOString() };
+    var payload = { line: machineName(), spool: CFG.spoolAlpha, at: new Date().toISOString() };
     for (var k in extra) if (Object.prototype.hasOwnProperty.call(extra, k)) payload[k] = extra[k];
     console.info('[FlatWire] ' + event, payload);
   }
@@ -824,7 +824,7 @@
     var badge = document.querySelector('.line-badge');
     if (badge && !badge.classList.contains('paused')) {
       badge.classList.toggle('fwn-plc-stopped', !running);
-      badge.innerHTML = '<span class="dot"></span>' + lineId() + (running ? ' running' : ' stopped (PLC)');
+      badge.innerHTML = '<span class="dot"></span>' + machineName() + (running ? ' running' : ' stopped (PLC)');
     }
     /* "Machine · FL1 Running" header on the status card, when present */
     var heads = document.querySelectorAll('.mpc-card-head');
@@ -856,7 +856,7 @@
       : 'Target ' + L + ' weight reached — machine stopped';
     $('fwsc-sub').textContent =
       n === 2 ? 'Review what will be committed and printed'
-      : lineId() + ' · ' + CFG.takeup + ' · ' + CFG.spoolAlpha;
+      : machineName() + ' · ' + CFG.takeup + ' · ' + CFG.spoolAlpha;
   }
 
   /* Open the confirmation — only ever called after a PLC-confirmed stop (S-1),
@@ -890,7 +890,7 @@
       CFG.labelCopies + ' labels.';
 
     /* PLC provenance line */
-    $('fwsc-tag').textContent      = lineId() + '.LineState = STOPPED';
+    $('fwsc-tag').textContent      = machineName() + '.LineState = STOPPED';
     $('fwsc-dwell').textContent    = 'held ' + CFG.stopDwellSec + 's · 0 FPM';
     $('fwsc-stoptime').textContent = latchedAtStr;
     $('fwsc-alpha').textContent    = CFG.spoolAlpha;

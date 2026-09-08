@@ -1,7 +1,7 @@
 # Flat Wire Mill — Run Tracking Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 25, 2026 — `CK_RodStaging_LineId` explained as correctly unchanged by the FL2 reversal *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)*
+**Last Updated:** August 25, 2026 — `CK_RodStaging_MachineName` explained as correctly unchanged by the FL2 reversal *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** Final Schema — Run Tracking Tables
 **Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `../sql/FlatWire_DDL_04_Runs.sql` (`FlatWireRun` itself is created in `DDL_03`)
@@ -24,7 +24,7 @@ Core run header table. One row is created when the first rod or spool is checked
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `RunId` | varchar(20) | NOT NULL UNIQUE | — | Unique run identifier (e.g. `RUN-0042`); referenced by all child event tables |
-| `LineId` | varchar(5) | NOT NULL | — | Flat wire line executing this run: `FL1`, `FL2`, or `FL3` |
+| `MachineName` | varchar(5) | NOT NULL | — | Flat wire line executing this run: `FL1`, `FL2`, or `FL3` |
 | `OrderId` | varchar(20) | NOT NULL | — | Manufacturing order number associated with this run |
 | `PassScheduleId` | varchar(30) | NOT NULL | `PassSchedule.ScheduleId` | FK to the pass schedule — defines die sizes, roll gaps, and component states for this run |
 | `Alloy` | varchar(10) | NOT NULL | — | Aluminum alloy; denormalized from `PassSchedule.Alloy` for query convenience — keep in sync if the alloy ever changes |
@@ -99,7 +99,7 @@ Supersedes the retired `Rod.StagedPayoffPosition` / `Rod.IsWelded` columns.
 | Column | Data Type | Nullable | FK Reference | Description |
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | — | Surrogate primary key |
-| `LineId` | varchar(5) | NOT NULL | — | Line the bay belongs to: `FL1` or `FL3` |
+| `MachineName` | varchar(5) | NOT NULL | — | Line the bay belongs to: `FL1` or `FL3` |
 | `PayoffPosition` | int | NOT NULL | `PayoffPosition.Id` | Intended payoff bay: `1` or `2` (`PCI006`) |
 | `RodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | FK to the rod being staged |
 | `RodSeqno` | int | NOT NULL | — | **Actual** processing sequence, assigned here at pre-check-in. This is the SRS `FlatwireQueue` sequence (`Rodno`/`RodSeqno`/`Welded`), which that model inserts at pre-check-in. Monotonic per line. Drives Traveler Queue ordering |
@@ -134,7 +134,7 @@ Supersedes the retired `Rod.StagedPayoffPosition` / `Rod.IsWelded` columns.
 | `WipRejectionId` | int | NULL | `WipRejection.Id` | The rejection that released the bay. Present exactly when `UnstageKind = 'WipRejection'` |
 | `RowVersion` | rowversion | NOT NULL | — | Optimistic-concurrency token |
 
-> **Dropped 1 Aug 2026 — `OffScheduleOverride`, `ScheduledLineId`.** A rod whose order is booked on the **other** rod line is no longer a deviation: the station **switches to the correct line automatically**, with no message and no override, at both pre-check-in and check-in (**Q24**, client 30 Jul 2026). `CK_RodStaging_OffSched` and `CK_RodStaging_OffSchedLine` went with them, and `CK_RodStaging_Override` — generalised on 30 Jul to cover *either* deviation — reverts to keying on `OutOfSequenceOverride` alone.
+> **Dropped 1 Aug 2026 — `OffScheduleOverride`, `ScheduledMachineName`.** A rod whose order is booked on the **other** rod line is no longer a deviation: the station **switches to the correct line automatically**, with no message and no override, at both pre-check-in and check-in (**Q24**, client 30 Jul 2026). `CK_RodStaging_OffSched` and `CK_RodStaging_OffSchedLine` went with them, and `CK_RodStaging_Override` — generalised on 30 Jul to cover *either* deviation — reverts to keying on `OutOfSequenceOverride` alone.
 >
 > **`OverrideBy` / `OverrideAt` / `OverrideReason` are retained**: they are shared with the out-of-sequence override, which stays. Dropping all five would have deleted the surviving override's audit trail.
 >
@@ -165,14 +165,14 @@ Supersedes the retired `Rod.StagedPayoffPosition` / `Rod.IsWelded` columns.
 - `CK_RodStaging_Override` — the credential stamp is **all-or-nothing**: `OverrideBy`/`OverrideAt`/`OverrideReason` are all set exactly when `OutOfSequenceOverride = 1`. An override with no supervisor or no reason is unauditable, which defeats the point of permitting the deviation
 - `CK_RodStaging_OutOfSeq` — `ExpectedRodAlpha` present exactly when `OutOfSequenceOverride = 1`
 - `CK_RodStaging_OutOfSeqRod` — `ExpectedRodAlpha <> RodAlpha`; "out of sequence" means the rod staged is not the one expected
-- `CK_RodStaging_LineId` — `FL1` or `FL3` only. ⚠ **Unchanged by the 20 Aug 2026 FL2 reversal, and correctly so**: FL2 pre-check-in lives in `SpoolStaging`, because this table is rod-shaped (rod inspection columns, `IsWelded`, two bay states, `PayoffPosition NOT NULL`) and widening the CHECK would admit FL2 rows that cannot populate half of it
+- `CK_RodStaging_MachineName` — `FL1` or `FL3` only. ⚠ **Unchanged by the 20 Aug 2026 FL2 reversal, and correctly so**: FL2 pre-check-in lives in `SpoolStaging`, because this table is rod-shaped (rod inspection columns, `IsWelded`, two bay states, `PayoffPosition NOT NULL`) and widening the CHECK would admit FL2 rows that cannot populate half of it
 - `CK_RodStaging_PayoffPos` — `1` or `2`
 - `CK_RodStaging_Welded` — `WeldedAt`/`WeldedBy` are both set exactly when `IsWelded = 1`. **Unchanged by the Aug 1 2026 quality decision:** a failed weld sets none of the three, so the all-or-nothing group still holds. Quality itself is **not** mirrored here — it lives on `WeldEvent`, and duplicating it would let the two disagree about one join
 - `CK_RodStaging_Unstaged` — `UnstagedAt`/`UnstagedBy`/`UnstageReasonCode`/`UnstageKind` are all set exactly when `Status = 'Unstaged'`
 - `CK_RodStaging_UnstageKind` — `UnstageKind` is NULL or one of `PreCheckOut` / `WipRejection`
 - `CK_RodStaging_RejectLink` — `WipRejectionId` present exactly when `UnstageKind = 'WipRejection'`. Written with `ISNULL(UnstageKind,'')` rather than a bare comparison: `UnstageKind = 'WipRejection'` evaluates to **UNKNOWN** while the column is NULL, and a CHECK constraint *accepts* UNKNOWN — a still-`Staged` row could otherwise carry a rejection link
 - `CK_RodStaging_CheckedIn` — `CheckedInAt`/`RodCheckinId` are both set exactly when `Status = 'CheckedIn'`
-- **`UX_RodStaging_Bay`** — filtered UNIQUE on `(LineId, PayoffPosition) WHERE Status = 'Staged'`: **one rod per payoff bay**
+- **`UX_RodStaging_Bay`** — filtered UNIQUE on `(MachineName, PayoffPosition) WHERE Status = 'Staged'`: **one rod per payoff bay**
 - **`UX_RodStaging_RodActive`** — filtered UNIQUE on `(RodAlpha) WHERE Status = 'Staged'`: **one bay per rod**
 
 > The two filtered unique indexes are the reason this is a table rather than columns on `Rod`: they make the bay-occupancy invariant impossible to violate, including under concurrent staging from two clients. Note that any client writing to this table needs `QUOTED_IDENTIFIER ON` (a filtered-index requirement, same as the PERSISTED computed columns elsewhere in this schema).
@@ -192,7 +192,7 @@ separate table rather than a widening of it.
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | - | Surrogate primary key, IDENTITY |
 | `SpoolAlpha` | varchar(20) | NOT NULL | `SpoolProcessing.Alpha` | The row's identity |
-| `LineId` | varchar(5) | NOT NULL | - | `FL2`; `FL3` permitted should it ever queue |
+| `MachineName` | varchar(5) | NOT NULL | - | `FL2`; `FL3` permitted should it ever queue |
 | `QueuePosition` | decimal(9,3) | NOT NULL | - | Operator-ordered; lowest is checked in by default |
 | `Status` | varchar(20) | NOT NULL | - | Default `Queued` |
 | `PreCheckedInBy` | varchar(50) | NOT NULL | - | Who validated it - the audit the queue exists to provide |
@@ -205,7 +205,7 @@ separate table rather than a widening of it.
 
 **Constraints:**
 - `PK_SpoolStaging` - `Id`
-- `CK_SpoolStaging_LineId` - `FL2` or `FL3`
+- `CK_SpoolStaging_MachineName` - `FL2` or `FL3`
 - `CK_SpoolStaging_Status` - enumerating check
 - `CK_SpoolStaging_Pos` - `QueuePosition > 0`
 - `CK_SpoolStaging_Removed` - `RemovedAt` is set exactly when `Status <> 'Queued'`
@@ -233,7 +233,7 @@ Captures every rod check-in event with inspection results and pre-run SPC measur
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `RunId` | varchar(20) | NOT NULL | `FlatWireRun.RunId` | FK to the run this check-in initiated or contributed to |
-| `LineId` | varchar(5) | NOT NULL | — | Line where the rod was checked in |
+| `MachineName` | varchar(5) | NOT NULL | — | Line where the rod was checked in |
 | `RodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | FK to the rod being checked in |
 | `PayoffPosition` | int | NOT NULL | — | Payoff position where the rod was loaded: `1` or `2` |
 | `DiameterMeasuredIn` | decimal(8,4) | NOT NULL | — | Operator-measured rod diameter at check-in, in inches |
@@ -268,7 +268,7 @@ Captures every spool check-in event at FL2 or FL3 with inspection results. Mirro
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `RunId` | varchar(20) | NOT NULL | `FlatWireRun.RunId` | FK to the run this spool check-in initiated |
-| `LineId` | varchar(5) | NOT NULL | — | Line where the spool was checked in: `FL2` or `FL3` |
+| `MachineName` | varchar(5) | NOT NULL | — | Line where the spool was checked in: `FL2` or `FL3` |
 | `SpoolAlpha` | varchar(20) | NOT NULL | `SpoolProcessing.Alpha` | FK to the spool being checked in |
 | `PayoffPosition` | int | NOT NULL | — | Payoff position where the spool was loaded: `1` or `2` |
 | `GaugeIn` | decimal(8,4) | NOT NULL | — | Operator-measured spool wire gauge at check-in, in inches; validated against `PassSchedule.TargetGauge ± GaugeTolerance` |
@@ -341,7 +341,7 @@ Which is the whole reason it exists. The `Downtime` bucket's 25 in-scope codes a
 | Column | Data Type | Nullable | FK Reference | Description |
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | — | Surrogate primary key |
-| `LineId` | varchar(5) | NOT NULL | — | `FL1` / `FL2` / `FL3` — **the event is line-scoped**, which is what makes a shift-level roll-up possible |
+| `MachineName` | varchar(5) | NOT NULL | — | `FL1` / `FL2` / `FL3` — **the event is line-scoped**, which is what makes a shift-level roll-up possible |
 | `RunId` | varchar(20) | **NULL** | `FlatWireRun.RunId` | Optional link, populated only when a run happened to be open |
 | `DelayCode` | varchar(10) | NOT NULL | `DowntimeReason.DelayCode` | `DWN##` only (`CK_LineDowntimeEvent_Code`) |
 | `StartedAt` | datetimeoffset | NOT NULL | — | When the line went down |
@@ -377,7 +377,7 @@ Rod-to-rod weld join events recorded during a run. A weld joins the tail of the 
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `WeldEventId` | varchar(20) | NOT NULL UNIQUE | — | Unique weld event identifier (e.g. `WLD-002`) |
 | `RunId` | varchar(20) | NOT NULL | `FlatWireRun.RunId` | FK to the run in which this weld occurred |
-| `LineId` | varchar(5) | NOT NULL | — | Line where the weld was performed |
+| `MachineName` | varchar(5) | NOT NULL | — | Line where the weld was performed |
 | `OutgoingRodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | Alpha of the rod being depleted — the tail (outgoing) end |
 | `IncomingRodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | Alpha of the rod being joined — the leading (incoming) end |
 | `OutgoingPayoffPosition` | int | NULL | — | Bay the depleting rod is drawing from (`1`/`2`). The weld *is* the payoff handover, so recording it makes the handover directly queryable instead of inferred by joining `RodCheckin`/`RodStaging` |
@@ -414,7 +414,7 @@ Records run-level roll gap or die parameter adjustments applied during a run. Ov
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `OverrideId` | varchar(20) | NOT NULL UNIQUE | — | Unique override identifier (e.g. `OVR-0042`) |
 | `RunId` | varchar(20) | NOT NULL | `FlatWireRun.RunId` | FK to the run in which this override was applied |
-| `LineId` | varchar(5) | NOT NULL | — | Line where the override was applied |
+| `MachineName` | varchar(5) | NOT NULL | — | Line where the override was applied |
 | `RodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | Alpha of the material in-process at the time of the override |
 | `FootagePosition` | int | NOT NULL | — | Footage counter value at the time of the override |
 | `ComponentName` | varchar(20) | NOT NULL | — | Component that was adjusted (e.g. `DB1`, `FM1`) — matches `PassScheduleComponent.ComponentName` values |
@@ -440,7 +440,7 @@ Records die replacement events during a run. Each die change event automatically
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `DieChangeId` | varchar(20) | NOT NULL UNIQUE | — | Unique die change identifier (e.g. `DC-0041`) |
 | `RunId` | varchar(20) | NOT NULL | `FlatWireRun.RunId` | FK to the run in which this die change occurred |
-| `LineId` | varchar(5) | NOT NULL | — | Line where the die change was performed |
+| `MachineName` | varchar(5) | NOT NULL | — | Line where the die change was performed |
 | `RodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | Alpha of the material in-process at the time of the die change |
 | `FootagePosition` | int | NOT NULL | — | Footage counter value at the time of the die change |
 | `DiePosition` | varchar(5) | NOT NULL | — | Draw box position where the die was changed: `DB1` or `DB2`. A CHECK-constrained string, **not** an FK to `Drawer` |
@@ -539,8 +539,8 @@ is the outcome. **One check-in, N consumption rows** - which *is* the client's r
 | `ConsumptionId` | varchar(20) | NOT NULL | - | Human key, e.g. `RC-0041`, as `CheckoutId` / `RejectionId` |
 | `RunId` | varchar(20) | NOT NULL | `FlatWireRun.RunId` | The run |
 | `RodCheckinId` | int | NOT NULL | `RodCheckin.Id` | The mount this pairing runs on |
-| `Station` | varchar(10) | NOT NULL | - | e.g. `FL1PO`. **The exclusivity key** (`G21`) - not `LineId` |
-| `LineId` | varchar(5) | NOT NULL | - | `FL1` or `FL3`; projection and reporting only |
+| `Station` | varchar(10) | NOT NULL | - | e.g. `FL1PO`. **The exclusivity key** (`G21`) - not `MachineName` |
+| `MachineName` | varchar(5) | NOT NULL | - | `FL1` or `FL3`; projection and reporting only |
 | `RodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | The rod |
 | `OrderNo` | varchar(50) | NOT NULL | - | Shared-schema order. **No FK by design** |
 | `RelLetter` | varchar(10) | NULL | - | Release letter |
@@ -578,7 +578,7 @@ is the outcome. **One check-in, N consumption rows** - which *is* the client's r
 **Constraints:**
 - `PK_RodOrderConsumption` - `Id`; `UQ_RodOrderConsumption_CId` - `ConsumptionId`
 - `UQ_RodOrderConsumption_Pair` - `(RodCheckinId, OrderNo, RelLetter)`: **one mount, one pairing per order**
-- `CK_RodOrderConsumption_State` / `_LineId` / `_Closure` - enumerating checks
+- `CK_RodOrderConsumption_State` / `_MachineName` / `_Closure` - enumerating checks
 - `CK_RodOrderConsumption_Footage` - `EndFootageFt >= StartFootageFt`
 - `CK_RodOrderConsumption_Seq` - `ActualRodSeqNo >= 1`
 - `CK_RodOrderConsumption_AckStamps` - the three acknowledgement stamps are **all-or-nothing**

@@ -119,7 +119,7 @@ cadences differ (§2.2).
   Set `SingleReader = true` and leave **`SingleWriter = false`**: each line's poll loop writes,
   and claiming a single writer to save an interlocked operation is a correctness bug, not a
   saving. `FW-150` groups per line as it already must — and `IFlatWireBroadcaster` is already
-  `Line(LineId) → IFlatWireClient`, so **per line is the unit the whole RT spine is keyed on.**
+  `Line(MachineName) → IFlatWireClient`, so **per line is the unit the whole RT spine is keyed on.**
 - ⚠ **`DropOldest` gives you no signal that it dropped** — `TryWrite` returns `true` either
   way. So expose a **written count** here and let `FW-150` expose the drained count: the
   difference *is* the resolution loss, and without those two numbers *"degrades resolution"* is
@@ -157,7 +157,7 @@ They sit on opposite sides of the channel. **Never derive one from the other**
 **The surface exists, is measured, and has a method.**
 [`FW-144`](FW-144.md) built the map behind **`ITagPathResolver`**
 (`ConfigurationTagPathResolver`, `FlatWire.Domain/Services/`), and
-**`ITagPathResolver.LogicalNamesFor(LineId)`** is documented on the built interface as *"the
+**`ITagPathResolver.LogicalNamesFor(MachineName)`** is documented on the built interface as *"the
 ingest subscription list — `FW-N05` subscribes from this."* **Resolve through that interface;
 never compose a path in code** — that is what keeps `grep` at zero hits outside configuration,
 and it is the seam `OI-A` was contained behind.
@@ -286,7 +286,7 @@ POST's response, mapped once at ingest** (`P-119`).
 
 | Field | Type | Note |
 |---|---|---|
-| `Line` | **`Enums.LineId`** | The built enum — `FL1` / `FL2` / `FL3`, and the same type `ITagPathResolver` and `IFlatWireBroadcaster.Line()` already take |
+| `Line` | **`Enums.MachineName`** | The built enum — `FL1` / `FL2` / `FL3`, and the same type `ITagPathResolver` and `IFlatWireBroadcaster.Line()` already take |
 | `ReadAt` | `DateTimeOffset` | Stamped **at ingest, server-side** (`FR-174`). `FW-150` converts to UTC for `RunReading.ReadingTs`, the one `DATETIME2` exception |
 | `GaugeIn` · `WidthIn` | `decimal?` | `null` = **absent**, and on FL2 that is structural, not a branch (below) |
 | `SpeedFpm` · `FootageFt` | `decimal?` | Unit suffix per `phase-01b`'s cross-cutting rule. **`0` is a real value here** — a stopped line, a run at footage zero |
@@ -315,7 +315,7 @@ not a missing reading — `SpeedFpm` even publishes `IsStopped`).
    `OPCTag` lists downstream would put tag-path knowledge inside the broadcast loop.
 2. **It is a snapshot, so drop-oldest coalesces correctly** — a newer snapshot supersedes an
    older one in every field. That is why no keyed coalescer is needed, and it is why the unit is
-   a line: `IFlatWireBroadcaster` is already `Line(LineId) → IFlatWireClient`.
+   a line: `IFlatWireBroadcaster` is already `Line(MachineName) → IFlatWireClient`.
 3. ✅ **FL2's `null` gauge and width need no ingest branch, because FL2's published map has no
    `AGC` row at all** — `[PLC §5.2.2]` carries the three stands, speed, one payoff, footage,
    line state and the dancers, and no live measurement (assumption `A3`: *"FL2 has no live
@@ -452,7 +452,7 @@ one in every field, so `BoundedChannelFullMode.DropOldest` **is** the coalesce, 
 and with no shared state: one allocation per line per tick, one `TryWrite`, no lock anywhere.
 
 ✅ **The built code already agrees the unit is a line.** `IFlatWireBroadcaster` is
-`Line(LineId) → IFlatWireClient`, `ITagPathResolver` is keyed by `LineId`, and `OPCInfo` carries
+`Line(MachineName) → IFlatWireClient`, `ITagPathResolver` is keyed by `MachineName`, and `OPCInfo` carries
 one `MachineId`. A per-tag channel item would be the only per-tag thing in the whole spine.
 
 ⚠ **Consequence to accept:** coalescing is **per line, not per tag** — a dropped snapshot loses
@@ -647,7 +647,7 @@ level reinstated — **and one of those had turned a ✅ in §2.3 into instructi
 deleted this service's tag map.**
 
 **Re-reviewed before execution, 28 Aug 2026, against the built `FlatWire` projects** — which is
-where the `LineId` / `PayoffPosition` / `ComponentName` types, `LogicalNamesFor`,
+where the `MachineName` / `PayoffPosition` / `ComponentName` types, `LogicalNamesFor`,
 `OpcInfoCacheSeconds`, the `RequirePositive` throw and FL3's inertness all came from. **Nothing
 for this story is built yet:** no `Channel<>`, no `IHostedService`, no `Reading` type exists in
 `FlatWire.Infrastructure`, so §2.5 remains the first definition and `P-29` still binds.

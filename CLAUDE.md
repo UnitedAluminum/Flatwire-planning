@@ -153,7 +153,9 @@ Every script guards its objects, so `RunAll` is idempotent. In SSMS use **Query 
 ## Mockups (`50-frontend/mockups/`)
 
 Static HTML, **open directly in a browser**, no build step. The approved visual baseline for the
-Angular library (prefix `fw`).
+Angular library (**selector prefix `lib`** — `D-54`; this read `fw` until 7 Sep 2026, while
+`angular.json`, `eslint.config.mjs` and all five components have always said `lib`, as do all 27
+sibling libraries).
 
 - `flat-wire-shopfloor.styles.scss` / `.css` — the semantic design tokens. Edit the `.scss`; the
   `.css` is compiled output. **The `--fw-*` token prefix in older docs is stale** (gap `G18`).

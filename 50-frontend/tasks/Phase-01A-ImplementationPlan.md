@@ -1,9 +1,9 @@
 # Phase 1A — Shared Context, Decisions and Plan Index (Frontend)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 1, 2026
+**Last Updated:** September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — **§6.10 is reconciled: `G23`, `Q26` and `OI-96` are all closed** and every site it listed as stale now carries 1920 × 1080. Its stale link to the pre-restructure `Development/GapsRegister.md` is fixed. `F-14` and `F-15` are unchanged — the client answer ratifies them. *(previously September 1, 2026)*
 **Document Type:** Phase-level foundation for nine story plans — the measured checkout, the `F-##` decisions, the findings, and the index of the nine
-**Status:** Active — 🟡 **wave 0 is built and awaiting commit** ([`FW-N03`](FW-N03.md)); `FW-130`, `FW-131`, `FW-132` and `FW-135` unlock when it lands
+**Status:** Active — ✅ **wave 0 is DONE and committed** ([`FW-N03`](FW-N03.md), `67426e67e`), so **wave 1 is open**: `FW-130`, `FW-131`, `FW-132` and `FW-135` are unlocked *(this line read "built and awaiting commit" until 7 Sep 2026)*
 **Owner:** Frontend (Angular) stream
 **Audience:** The Angular developer building Phase 1A, and the delivery lead sequencing it
 **Shortcode:** **`[P1A]`** — *declared here because the nine story plans cite it as `[P1A §n]`. It is a **folder-local** convention, not one of the repository's document shortcodes, and it is **not citable as a requirement**: this file is derived from the specifications and loses to all of them*
@@ -143,7 +143,7 @@ times is how a repository ends up with six contradictory copies of one fact.
 
 | Wave | Story | Plan | h | State |
 |---|---|---|---|---|
-| **0** | `FW-N03` · library scaffold, routing, configuration | [FW-N03.md](FW-N03.md) | 24 | 🟡 **Built, awaiting commit** — all three verification commands pass |
+| **0** | `FW-N03` · library scaffold, routing, configuration | [FW-N03.md](FW-N03.md) | 24 | ✅ **DONE — committed at `67426e67e`; wave 1 open** — all three verification commands pass |
 | **1** | `FW-130` · shell layout and the 1920 × 1080 canvas | [FW-130.md](FW-130.md) | 16 | ✅ buildable · 🔴 on the critical path |
 | **1** | `FW-131` · guards, interceptors, error envelope | [FW-131.md](FW-131.md) | 12 | ⛔ **role half blocked** on `F-12` |
 | **1** | `FW-132` · API client and domain models | [FW-132.md](FW-132.md) | 20 | ⚠ bakes in `G14`'s two undecided halves |
@@ -198,13 +198,13 @@ across that folder; a second series there would collide in citation.
 | id | Decision |
 |---|---|
 | **`F-01`** | **Target checkout is `c:\UAL\Second-Branch\ual-angular` @ `feature/flat-wire`.** `phase-01a` and `[ARC §2.1]` name `c:\UAL\ual-angular`. ⚠ **This plan does not supersede a specification** — the conflict is raised for `[ARC]` to settle |
-| **`F-02`** | **`useMockData`, `flatWireApiUrl` and `flatWireHubUrl` are config keys, not `environment.*.ts` constants.** The file `phase-01a` names — `environment.development.ts` — does not exist. The repo's own mechanism gives the spec's exact semantics: `useMockData: true` in **`src/assets/local-config.json`** (read only by `ng serve`, never deployed), `useMockData: false` plus the two URLs in **`environment.js`** (→ `config.json`, read by every built environment). ⚠ **Both files must carry every key** — `AppConfig` is `typeof local-config.json`, so that file is also the type, and a key in only one of them makes the type and the runtime value diverge. ✅ **Values set 1 Sep 2026:** `flatWireApiUrl: 'FlatWire/api/v1/'` — correct, because `prefix` is `http://<host>/API.` and `FW-080`'s `PATH_BASE` is `/API.FlatWire`. ✅ **`flatWireHubUrl: 'FlatWire/hubs/flat-wire'`** — the hyphen was adopted across all layers on 1 Sep 2026 (`[API §1]`, `[SIG §4]`, `[ARC]`, `[DEP]`, `phase-01b`, the master specification and four backend plans — 22 occurrences). ⛔ **`FW-080` is built on the old path and owes the re-map**, with `FW-145 §3.5`'s `?access_token=` handler beside it; `FW-135` cannot connect until then — [`FW-N03 §8·1`](FW-N03.md) |
+| **`F-02`** | **`useMockData`, `flatWireApiUrl` and `flatWireHubUrl` are config keys, not `environment.*.ts` constants.** The file `phase-01a` names — `environment.development.ts` — does not exist. The repo's own mechanism gives the spec's exact semantics: `useMockData: true` in **`src/assets/local-config.json`** (read only by `ng serve`, never deployed), `useMockData: false` plus the two URLs in **`environment.js`** (→ `config.json`, read by every built environment). ⚠ **Both files must carry every key** — `AppConfig` is `typeof local-config.json`, so that file is also the type, and a key in only one of them makes the type and the runtime value diverge. ✅ **Values set 1 Sep 2026:** `flatWireApiUrl: 'FlatWire/api/v1/'` — correct, because `prefix` is `http://<host>/API.` and `FW-080`'s `PATH_BASE` is `/API.FlatWire`. ✅ **`flatWireHubUrl: 'FlatWire/hubs/flat-wire'`** — the hyphen was adopted across all layers on 1 Sep 2026 (`[API §1]`, `[SIG §4]`, `[ARC]`, `[DEP]`, `phase-01b`, the master specification and four backend plans — 22 occurrences). ✅ **`FW-080 §0` re-mapped the service to match on 6 Sep 2026** — `Constants.Routes.Hub` is `/hubs/flat-wire`, read by both `app.MapHub` and `FW-145 §3.5`'s `?access_token=` handler, so the two cannot drift and **nothing is owed on either side** *(this cell said the re-map was owed and that `FW-135` could not connect, until 7 Sep 2026)*. ⚠ The path is asserted at **`[SIG §5.1]`**, not `[SIG §4]` — §4.1 covers transport and protocol and never names it. ⛔ What still gates `FW-135` is the **protocol** (`G105`), not the path — [`FW-N03 §8·1`](FW-N03.md) |
 | **`F-04`** | **The library defines its own `FlatWireResponse<T>`** — `data · success · errorCode · errorDescription · errors[] · errorContext` per `[API §1.2]`. `shared`'s `HTTPResponse<T>` has no `errors[]` and is neither extended nor reused |
 | **`F-05`** | **No MVP-1 gap from `ApiGatewayService`'s `get`/`post`-only surface.** The contract's only `PUT` and `PATCH` are `PUT /passschedule/{id}` and `PATCH /passschedule/{id}/status` — **both Phase 2, both MVP-2** — so `get`/`post` covers all **27** MVP-1 endpoints. ⚠ **27, not 25** *(corrected 28 Aug 2026)*: `[API §3.2]`'s heading says *"32 endpoints, of which MVP-1 implements 25"* while that document's own header records the index as **two rows short** — `§4.20`/`§4.21`, added 22 Aug and never indexed — making the surface **34/27** (`P-53`, `P-54`). ✅ **The decision is unaffected and is in fact firmer**: both missing rows are `GET /rod/{alpha}/orders` and `POST /order/{orderNo}/complete`, so a larger surface is still entirely GET/POST. Recorded because it becomes a gap the day pass-schedule authoring returns |
 | **`F-06`** | **`UILogService` is provided by `SharedModule` but not exported from `shared`'s public API.** Error telemetry is therefore **already wired** — `forRoot()` registers `GlobalErrorHandler`, which uses it. Deliberate log calls need one additive export line in `projects/shared/src/public-api.ts`; take that **only if 1A needs explicit logging**, and never re-implement the service |
 | **`F-07`** | **Class guards in `canActivate: [...]`**, not functional guards — matching all eleven existing routing modules |
 | **`F-08`** | **The library's `jest.config.js` keeps the repo's 95 % thresholds.** `phase-01a`'s *"smoke tests"* is the floor, not the gate — and the root config picks the library up automatically, so there is no opt-out short of shipping no config at all. ⚠ The cost is wider than the component stories: `collectCoverageFrom` globs `*.model.ts` and `*.service.ts` too, so **`FW-132`'s mock service and its eight models carry the same obligation** as `FW-133`/`FW-134`'s controls. Flagged as effort risk against `[TB §7]`'s hours, which this plan does not restate |
-| **`F-09`** | **Route base stays `/flat-wire`** per `[CMP §5.2]` (as `#/flat-wire`). ⚠ **Raised, not settled** — it bypasses the repo's machine-context mechanism. `shared`'s `AuthenticationGuard` stashes `CURRENT_MACHINE` only when the path contains the literal **`shop-floor`** *and* its last segment is a positive number; `shared.service.ts` reads that in two places, and `LoginService.monitorUsers(machineConfigurationId)` drives the topbar's multi-operator chips that `[SCR §7.3]` requires. `[CMP §5.2]`'s routes satisfy **neither** test — `:lineId` is `FL1`/`FL2`/`FL3`, non-numeric and not the last segment. **Recommendation:** keep `/flat-wire` and make `line-context.service` resolve `:lineId` → machine id and set `CURRENT_MACHINE`, so multi-operator is consumed rather than rebuilt. → `[SCR]` / `[CMP]` |
+| **`F-09`** | **Route base stays `/flat-wire`** per `[CMP §5.2]` (as `#/flat-wire`). ⚠ **Raised, not settled** — it bypasses the repo's machine-context mechanism. `shared`'s `AuthenticationGuard` stashes `CURRENT_MACHINE` only when the path contains the literal **`shop-floor`** *and* its last segment is a positive number; `shared.service.ts` reads that in two places, and `LoginService.monitorUsers(machineConfigurationId)` drives the topbar's multi-operator chips that `[SCR §7.3]` requires. `[CMP §5.2]`'s routes satisfy **neither** test — `:machineName` is `FL1`/`FL2`/`FL3`, non-numeric and not the last segment. **Recommendation:** keep `/flat-wire` and make `line-context.service` resolve `:machineName` → machine id and set `CURRENT_MACHINE`, so multi-operator is consumed rather than rebuilt. → `[SCR]` / `[CMP]` |
 | **`F-10`** | **`FW-137` is sequenced last** and its dependency named: `@angular/service-worker` is a provisioning item, like MessagePack, not a build one |
 | **`F-11`** | **Flat wire follows the repo's content-data convention** — `src/assets/content-data/flat-wire.json`, a `FlatWireContent` type, and the `resolveData` / `ContentDataService` route pair — rather than the mockups' inlined English. In 1A the file covers shell chrome only and grows per screen |
 | **`F-12`** | ⛔ **The role source must be decided before `FlatWireRoleGuard` can be built.** Options: **(a)** decode the JWT the client already holds; **(b)** extend the login response with the six roles — touches `Login`; **(c)** map the six onto the existing per-module ACCESS/WRITE primitive — no new mechanism, but loses `FR-212`'s Operations-Manager-only granularity. **This plan recommends (a)**: the roles are already in the token (`ClaimTypes.Role`, confirmed 15 Aug 2026), decoding is a few lines with no new dependency and no second team, and `[SEC §8]` puts the real gate on the API (`[Authorize]` + role policies) — which makes the guard **UX and defence-in-depth, not the enforcement point**, exactly the case where the cheap self-contained option wins. (b) remains right if `[SEC]` wants a server-authoritative shape. Either way the guard binds to **one constants class**, as [`FW-145`](../../40-backend/tasks/FW-145.md) does server-side. ✅ **All three options and this recommendation are now recorded in [`[SEC §8]`](../../Architecture/Security.md) itself** (27 Aug 2026), marked as a recommendation with the decision left to that document. → `[SEC]` / `G6` |
@@ -332,43 +332,43 @@ The gate is repo-wide and automatic; `phase-01a` asks for smoke tests. And `@mic
 (`G10`, *measure-first*) and `@angular/service-worker` (`FW-137`, unregistered anywhere) both have to
 be added to `package.json` before their stories can start. → `[TS]`, `[GAP]` `G10`, `[TB §7]`.
 
-### 6.10 ⚠ The 1920 × 1080 canvas is decided here and stated as 1280 × 1024 in five places
+### 6.10 ✅ The 1920 × 1080 canvas is decided here, and the five stale sites are now reconciled
 
 `F-14` sets the canvas. ✅ **`[VAL §7.5]` — the row every other document derives from — was corrected on
-27 Aug 2026.** ⚠ **Four sites still say 1280 × 1024, and one of them is an acceptance criterion this plan is
-verified against:**
+27 Aug 2026.** ✅ **The client confirmed the same figure on 7 Sep 2026 as `Q26`, which closed `G23` and
+`OI-96` and moved every remaining site. What each one says now:**
 
 | Where | What it still says |
 |---|---|
 | [`[VAL §7.5]`](../ValidationRules.md) | ✅ **1920 × 1080**, with the geometry, the horizontal-re-layout rule, the dpi assumption behind the 14 px floor and a request for the panel diagonal |
-| [`phase-01a`](../../60-delivery/phases/phase-01a-angular-foundation.md) | *"fixed **1280×1024** shopfloor canvas"*, and **exit criterion 2** |
-| `[TB §7]` — `FW-130` | *"Fixed **1280×1024** canvas"*, an acceptance criterion |
-| [`[GAP]` `G23`](../../Development/GapsRegister.md) | **still Open**, with *"do not re-author anything until answered"* as its resolution — the answer has now arrived and the row has not |
+| [`phase-01a`](../../60-delivery/phases/phase-01a-angular-foundation.md) | ✅ **1920×1080** — the deliverable row **and exit criterion 2**, both moved 7 Sep 2026 |
+| `[TB §7]` — `FW-130` | ✅ **1920×1080** — the `######` heading and the canvas acceptance criterion, both moved 7 Sep 2026 |
+| [`[GAP]` `G23`](../../90-registers/Gaps.md) | ✅ **Resolved 7 Sep 2026.** `Q26` moved to [`Decisions.md`](../../90-registers/Decisions.md) and `OI-96` closed in the same pass. ⚠ The link in this row pointed at the pre-restructure path until 7 Sep 2026 |
 | [`../Mockups/`](../Mockups/) | **19 files, 18 of them composed for 5:4**; `flat-wire-fit.js` hard-codes `DESIGN_W = 1280` and `MIN_H = 1024`. ⚠ The 19th, `dashboard_3_active_run_ual.html` (28 Aug 2026), is DB3 at **1920×1080 in the host app’s CSS** — a comparison build, and the only rendering of a flat wire screen at the decided canvas |
 
-**Two consequences worth stating plainly.** ⚠ **`G23` should be closed in the register, and closing it
-is not free** — its impact line prices 1920 × 1080 as *"a re-layout of every screen, not a rescale"*,
-which `F-15` accepts rather than argues with. ⚠ **The panel's physical diagonal is recorded nowhere**,
+**Two consequences worth stating plainly.** ✅ **`G23` is closed in the register, and closing it was
+not free** — its impact line priced 1920 × 1080 as *"a re-layout of every screen, not a rescale"*,
+which `F-15` accepts rather than argues with, and fifteen sites moved with the row. ⛔ **The panel's
+physical diagonal is still recorded nowhere**,
 and `F-14`'s carry-forward of the 14 px floor depends on it: `G23` and `Q26` were about **resolution**
 only. **Ask for the diagonal with the resolution** — a same-size denser panel means every type size,
 tap target and spacing token scales ×1.5, which is a change to the token system rather than to the
 layouts. → `[VAL §7.5]`, `[GAP]` `G23`, `Q26`, `[TB §7]`.
 
-✅ **`Q26` advanced on 24 Aug 2026 and this plan should not be read as though nothing has moved**
-*(recorded 28 Aug 2026)*. **The Nagarro-side action is closed** — Tim, opening the 24 Aug call,
-confirmed the 1920 × 1080 requirement and said he would respond to Charles's e-mail, so the number is
-on record with the two people who own the answer. **The question is still `Open`**, because what UA will
-actually stock is Charles's and Juan's to say. ⚠ **Two things in that progress note bear on `F-14`
+✅ **`Q26` is answered — the client confirmed 1920 × 1080 on 7 Sep 2026**, and it now lives in
+[`Decisions.md`](../../90-registers/Decisions.md) rather than the open register *(originally recorded 28 Aug 2026, when
+the Nagarro-side action closed: Tim, opening the 24 Aug call, confirmed the 1920 × 1080 requirement and
+said he would respond to Charles's e-mail)*. ⚠ **Two things in that progress note bear on `F-14`
 rather than on `G23`:**
 
 1. ⚠ **Tim's phrasing was *workstation* resolution.** That may not be the shopfloor HMI panel this
    question is about, and the two are **different dpi classes** — which is precisely the axis `F-14`'s
    14 px carry-forward rests on. **One answer may not cover both**, and it is the *panel's* number that
    is needed. `Q26` flags this itself; nothing has confirmed it either way.
-2. ⚠ **`Q26`'s own `Recommendation:` still reads *"hold the 1280 × 1024 canvas"***, which `F-14`
-   supersedes by user instruction. A reader arriving at the register first will find the opposite of the
-   decision. **That is the register's line to update, not this plan's** — but it is why `G23`'s row and
-   `Q26`'s recommendation should be closed in the same pass.
+2. ✅ **`Q26`'s superseded `Recommendation:` — *"hold the 1280 × 1024 canvas"* — is gone**, along with
+   the rest of its open-register entry: the question moved to [`Decisions.md`](../../90-registers/Decisions.md) on
+   7 Sep 2026 carrying the decision instead. `G23`'s row, `OI-96` and the client questions workbook closed in
+   the same pass, which is what this note asked for.
 
 ---
 

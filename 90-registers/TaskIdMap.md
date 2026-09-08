@@ -1,7 +1,7 @@
 # Flat Wire — Task ID Map (`FW-###` ↔ JIRA)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 29, 2026
+**Last Updated:** September 7, 2026 · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** Register — the only home for the story-id ↔ JIRA-issue pairing
 **Status:** Active — seeded from commit history; filled in as JIRA issues are created
 **Owner:** Delivery lead
@@ -65,3 +65,28 @@ One row per story. `Created` is the date the JIRA issue was raised, for audit.
    simply absent from this table, and the migration tool leaves them alone and reports them.
 4. **`CHANGELOG.md` and any archived document keep the old ids by design**, the same
    convention the repository already applies to the `Q##` renumbering.
+5. **`FW-N##` is in scope for this map and takes a row like any other id** *(added 7 Sep 2026 — the
+   form existed for six stories and was addressed by no rule here)*. The `N` marks a story **minted
+   after the original numbering**, not a different class of work: `FW-N01`–`FW-N06` carry task files
+   and `[TB]` cards exactly as `FW-###` stories do, and `tools/fwtasks.py` matches both with one
+   pattern (`^FW-N?\d+\.md$`). ⚠ **When the cutover pass is written it must scan `FW-N?\d+`, not
+   `FW-\d{3}`**, or the six are silently skipped.
+   ⛔ **And it has not been written: `tools/migrate_task_ids.py` does not exist** *(measured 7 Sep
+   2026)*, though the section above names it as this table's sole consumer. The cutover is
+   consequently gated by two things, not one — the many-to-one JIRA problem **and** an absent tool.
+   ⚠ Whoever writes it must reuse `tools/fix_task_links.py`'s guard
+   `\bFW-(\d{3}|N\d{2})(?![\dA-Za-z-])`: **`FW-#####-C##` is an output-coil alpha, not a story id**,
+   and there are 299 of them in the repository.
+6. ⚠ **`FW-N07`–`FW-N12` are minted but have no task file.** They are reserved in
+   [`TaskBreakdown.md`](../60-delivery/TaskBreakdown.md)'s Appendix B ledger and cross-referenced
+   from around a dozen documents. **They are not free to reuse, and they take no row here** until a
+   task file exists — Rule 1 counts stories, not reservations. ~~**New `N` ids therefore mint at
+   `FW-N13`.**~~ ⚠ **Restated 8 Sep 2026: they now mint at `FW-N20`.** `FW-N13` was taken on
+   7 Sep, `FW-N15`/`FW-N16` by `D-55` the same day, and `FW-N17`–`FW-N19` by `D-56` on 8 Sep — all
+   six carry task files and `[TB]` cards, so all six are stories by Rule 1.
+7. ⚠ **`FW-N17`–`FW-N19` have no JIRA id yet and therefore take no row above.** They are the
+   `LineId` → `MachineName` rename (`D-56`), one story per stream: `FW-N17` DB, `FW-N18` BE,
+   `FW-N19` FE. ⛔ **This is not a gap in the map** — the 1:1 table above is keyed by JIRA id and
+   records a pairing only once an issue exists. Add a row per story as its issue is created, and
+   note that `FW-N18`'s work landed on `ual-api` branch `feature/UADEV-23146`, which the
+   many-to-one table already covers under `UADEV-23146`.

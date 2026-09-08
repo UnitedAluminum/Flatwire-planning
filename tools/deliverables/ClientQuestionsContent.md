@@ -1,7 +1,7 @@
 # Flat Wire Mill — Client Questions Workbook Content
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** September 3, 2026 — **`Q93` authored** — the six unreadable points in Tim O'Brien's pass-calculator formula document (`D-43`), of which items 3 and 4 are asked now and the rest wait for the calculator itself. *(previously August 25, 2026 — **ten missing entries authored** — `Q48`–`Q55`, `Q59`, `Q87`; without them the client questions workbook could not be rebuilt *(previously August 20, 2026 — client-facing prose added for **`Q37`–`Q47`**: the four shared-record sign-off values from the check-in write-back, and the seven questions from the 20 Aug client call on the spool carrier, the multi-order spool and FL2 pre-check-in. Workbook regenerated to **47 open questions**, leakage scan clean. *(previously August 18, 2026 — `Q68` amended — the status moves to the flat wire module’s own rod record, and the client is asked which reports filter on the coil status field *(previously August 12, 2026)*)*)*)*
+**Last Updated:** September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — **`Q26` moves from Part 1 to Part 2** — the shopfloor panel is 1920 × 1080, confirmed 7 Sep 2026, so its prose is re-authored as a decision to confirm rather than a question to answer. Its *Still open* line asks for the one thing the resolution did not settle: **the panel's physical diagonal in inches**, which the minimum text size and touch-target rules depend on. ⚠ **The workbook could not be rebuilt in this pass** — `Q94` has been in the open register since 4 Sep 2026 with no entry here, and the coverage guard is fatal. *(previously September 3, 2026 — **`Q93` authored** — the six unreadable points in Tim O'Brien's pass-calculator formula document (`D-43`), of which items 3 and 4 are asked now and the rest wait for the calculator itself. *(previously August 25, 2026 — **ten missing entries authored** — `Q48`–`Q55`, `Q59`, `Q87`; without them the client questions workbook could not be rebuilt *(previously August 20, 2026 — client-facing prose added for **`Q37`–`Q47`**: the four shared-record sign-off values from the check-in write-back, and the seven questions from the 20 Aug client call on the spool carrier, the multi-order spool and FL2 pre-check-in. Workbook regenerated to **47 open questions**, leakage scan clean. *(previously August 18, 2026 — `Q68` amended — the status moves to the flat wire module’s own rod record, and the client is asked which reports filter on the coil status field *(previously August 12, 2026)*)*)*)*)*
 **Document Type:** Source content for a generated client deliverable — not a specification
 **Status:** Active
 
@@ -412,20 +412,6 @@ optional; everything else is required.
 **Recommended answer:** Allow it behind a supervisor override, at both pre-check-in and check-in, with the run carrying an **unscheduled marker** rather than being force-fitted to an order.
 **Why:** Trials and rush pieces are real, and a refusal by omission means the floor works around the system instead of in it. Reusing the existing supervisor override fields and adding only the marker is a far smaller change than the alternative.
 **Impact if unanswered:** Unscheduled material cannot be run at all, and nobody has decided that it should not be.
-
----
-
-## Q26
-
-**Register title:** Shopfloor panel resolution — 1280×1024 (stocked) vs 1920×1080 (required)
-**Area:** Shopfloor screens
-**Needs input from:** Tim O., Charles, Juan
-**What we need:** Decision
-**Question:** Will the flat wire screens run on the same 1280×1024 monitors United Aluminum stocks today, or on 1920×1080 panels? We need this confirmed in writing, and it is time-critical.
-**Background:** Every screen is designed at 1280×1024, and the minimum text size for arm's-length reading on the floor is calibrated to that. You expected the same monitors as the current screens and were going to verify with Charles and Juan; our action was to send you the required resolution by e-mail. The reason it is urgent rather than merely open: 1920×1080 is a 1.5 times width change with almost no extra height, so it is a **re-layout of all twenty-five-plus screens, not a rescale**. The canvas size is an acceptance criterion for the first delivery phase, which closes on 14 August 2026 — an answer after that is an answer that arrives too late to be free.
-**Recommended answer:** Hold 1280×1024, and confirm it in writing before 14 August. Our screens already degrade gracefully onto a wider panel — they never scale up beyond their natural size and they widen to fill available width — so 1920×1080 hardware would display them correctly today, simply leaving horizontal space unused.
-**Why:** That makes 1280×1024 the safe commitment and any later re-layout an optimisation rather than a rescue. We are not re-authoring anything until this is answered.
-**Impact if unanswered:** A late answer of 1920×1080 turns into a re-layout of every screen after the first phase gate has closed.
 
 ---
 
@@ -951,6 +937,18 @@ optional; everything else is required.
 ---
 
 # Part 2 — Decisions to Confirm
+
+---
+
+## Q26
+
+**Register title:** Shopfloor panel resolution — 1920×1080 confirmed
+**Area:** Shopfloor screens
+**Question:** Will the flat wire screens run on the same 1280×1024 monitors United Aluminum stocks today, or on 1920×1080 panels?
+**Background:** Every screen was designed at 1280×1024, and the minimum text size for arm's-length reading on the floor is calibrated to that. You expected the same monitors as the current screens and were verifying with Charles and Juan; our action was to send you the resolution the application needs. It mattered urgently because 1920×1080 is a 1.5 times width change with almost no extra height, which makes it a **re-layout of all twenty-five-plus screens, not a rescale**.
+**Decision as recorded:** The panel is **1920×1080**. The extra room is almost entirely horizontal — half as wide again, but only five per cent taller — so the screens are re-composed into more columns rather than stretched, and **nothing is made bigger**. The designs you have already reviewed stay authoritative for **what each screen shows** — the controls, the wording, the colours, the way it behaves — and stop being authoritative for **where things sit on the page**, which is now laid out for the wider panel.
+**Still open:** **We need the physical size of the panel, not only its resolution.** The 14-pixel minimum text size and the 48-pixel minimum touch target are rules about what a person can read and hit at arm's length, standing, in gloves — so they follow how large the screen physically is, not how many pixels it has. They carry over unchanged only if the new panel is a physically larger screen of roughly the same pixel density, which is what we have assumed. If it is instead the same size of panel with a denser display, every text size and every touch target has to grow by half. **Please confirm the screen diagonal in inches.** One further check: the resolution was confirmed as a *workstation* figure, and the panel at the machine may be different hardware — please confirm one answer covers both.
+**Our recommendation:** Confirm as recorded, and send the panel diagonal with it. The re-layout is scheduled work rather than a surprise — it was priced as a re-layout of every screen from the day the question was raised, and the screens already widen to fill whatever width they are given, so this was the cheap direction for the answer to go.
 
 ---
 

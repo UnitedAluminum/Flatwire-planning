@@ -1,7 +1,7 @@
 # Flat Wire Mill — Six-Screen Trial Run Plan (sign-off ~16 Nov 2026)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 29, 2026 — ⚠ **`D-33`: `FW-214` is a standalone WinForms tool, not an Angular screen, and it costs 21 h more.** **15 → 36 h AI-assisted** (52 h base), so **T2 280 → 301 h and the trial 869 → 890 h**. ⚠ **T2 is the first block in this plan to sit over capacity** — 301 h against 292 h, **103 %** — and T3 absorbs it, so **feature-complete moves Tue 3 Nov → Wed 4 Nov and sign-off ~Mon 16 Nov → ~Tue 17 Nov**. ⚠ **Margin 28 h → 7 h, which no longer covers either §2.3 reserve at any bound.** §1.3, §1.4's grid (Phase 5 FE 76 → 97), §2.1, §2.2, §2.3, §4's T2 block and §8's UAT callout all move together. ⚠ **The +21 h is not recoverable by reversing the decision** — reinstating the Angular screen re-couples the shop-floor release train, which is what the change buys; §2.1 names the ≈6 h relief valve instead. ⚠ **`FW-130`/`FW-135`'s 40 h is NOT recovered**: both serve the six operator screens *(previously August 25, 2026 — and 8 → 7** (`FW-138` `P-53`, no `/rod/**` surface); hours cells untouched so the workbook guards still pass, and ⚠ **DB2's rod scan has no endpoint** until `P-54` closes. Earlier the same day: **re-baselined at three resources × 6.5 h/day from 31 August: feature-complete Tue 3 Nov, sign-off ~Mon 16 Nov 2026.** §2 only — **no effort figure moved**, and 869 / 459 / 330 h and §4's allocation are untouched, which is why §3, §4 and §6 needed no edit. Two things invert: **the over-commitment is gone** (T1 was 102 % and T3 114 %; all three blocks now sit under capacity with 28 h of margin), and **no staffing option reaches 30 Sep** — even five resources land in early October. The 6.5 h is an **availability** figure, not the hands-on-keyboard reading in `[CE §4]`'s sensitivity table. ⚠ [`StaffedSprintPlans.md`](StaffedSprintPlans.md) and `[CE §4]` remain on the 8 h basis and now disagree with this document by design. *(previously August 22, 2026 — **§8’s count assertion is re-derived and now runnable** (32 · 50 · 57 · 2 · 1), with the `QUOTED_IDENTIFIER`/`Msg 1934` and false-`PRINT`-pass traps written down beside it *(previously August 18, 2026 — **`FW-219` enters the trial: the FL2/FL3 run-end write-back into the shared schema, 40 h AI-assisted / 56 h hand-coded, additive.** §5.3 is the reasoning; the short version is that `phase-05` routes the FL2 screen's *Complete Run* into `POST /coil/complete`, which wrote **only** `FlatWireDB`, so a completed trial coil was invisible to packing, shipping, cost and yield. **§4's "Phases 9–14 are wholly outside the trial" gains its first exception**, on the same reasoning §5.1 used for `FW-202`. New blocker **6** (`Q34`–`Q36`, which block a shared environment but not the build). **The published 832 / 462 / 409 h figures are unchanged and now understate by 40 h** — as with `FW-202`, the additive hours are stated here and not folded in. *(Earlier same day: **`D-32`: there is no shared-schema migration.** `FW-001` is **cancelled rather than deferred** — its −36 h stops being a debt owed to production — and `FW-002` (3 h) goes with it. ⚠ **The published 832 / 462 / 409 h figures are deliberately held**, so read them as 3 h conservative *(previously August 15, 2026 — **blocker 4 (`G6`) closed**: all six roles exist as JWT claims; its residual re-dated to the T1 QA0 walkthrough. Revision history in [`CHANGELOG.md`](../CHANGELOG.md))*)*))*)*
+**Last Updated:** September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — **✅ `G23` is CLOSED and its §6 risk paragraph is rewritten.** The canvas is 1920 × 1080, client-confirmed as `Q26`; `FW-130`'s title in §3 and §7's DoD bar move with it, and T4's UAT now asserts conformance at that figure. ⚠ **What is left is not the resolution but the panel's physical diagonal**, on which the 14 px floor rests — ask for it before T1 closes. **No hour figure changed.** *(previously August 29, 2026 — ⚠ **`D-33`: `FW-214` is a standalone WinForms tool, not an Angular screen, and it costs 21 h more.** **15 → 36 h AI-assisted** (52 h base), so **T2 280 → 301 h and the trial 869 → 890 h**. ⚠ **T2 is the first block in this plan to sit over capacity** — 301 h against 292 h, **103 %** — and T3 absorbs it, so **feature-complete moves Tue 3 Nov → Wed 4 Nov and sign-off ~Mon 16 Nov → ~Tue 17 Nov**. ⚠ **Margin 28 h → 7 h, which no longer covers either §2.3 reserve at any bound.** §1.3, §1.4's grid (Phase 5 FE 76 → 97), §2.1, §2.2, §2.3, §4's T2 block and §8's UAT callout all move together. ⚠ **The +21 h is not recoverable by reversing the decision** — reinstating the Angular screen re-couples the shop-floor release train, which is what the change buys; §2.1 names the ≈6 h relief valve instead. ⚠ **`FW-130`/`FW-135`'s 40 h is NOT recovered**: both serve the six operator screens *(previously August 25, 2026 — and 8 → 7** (`FW-138` `P-53`, no `/rod/**` surface); hours cells untouched so the workbook guards still pass, and ⚠ **DB2's rod scan has no endpoint** until `P-54` closes. Earlier the same day: **re-baselined at three resources × 6.5 h/day from 31 August: feature-complete Tue 3 Nov, sign-off ~Mon 16 Nov 2026.** §2 only — **no effort figure moved**, and 869 / 459 / 330 h and §4's allocation are untouched, which is why §3, §4 and §6 needed no edit. Two things invert: **the over-commitment is gone** (T1 was 102 % and T3 114 %; all three blocks now sit under capacity with 28 h of margin), and **no staffing option reaches 30 Sep** — even five resources land in early October. The 6.5 h is an **availability** figure, not the hands-on-keyboard reading in `[CE §4]`'s sensitivity table. ⚠ [`StaffedSprintPlans.md`](StaffedSprintPlans.md) and `[CE §4]` remain on the 8 h basis and now disagree with this document by design. *(previously August 22, 2026 — **§8’s count assertion is re-derived and now runnable** (32 · 50 · 57 · 2 · 1), with the `QUOTED_IDENTIFIER`/`Msg 1934` and false-`PRINT`-pass traps written down beside it *(previously August 18, 2026 — **`FW-219` enters the trial: the FL2/FL3 run-end write-back into the shared schema, 40 h AI-assisted / 56 h hand-coded, additive.** §5.3 is the reasoning; the short version is that `phase-05` routes the FL2 screen's *Complete Run* into `POST /coil/complete`, which wrote **only** `FlatWireDB`, so a completed trial coil was invisible to packing, shipping, cost and yield. **§4's "Phases 9–14 are wholly outside the trial" gains its first exception**, on the same reasoning §5.1 used for `FW-202`. New blocker **6** (`Q34`–`Q36`, which block a shared environment but not the build). **The published 832 / 462 / 409 h figures are unchanged and now understate by 40 h** — as with `FW-202`, the additive hours are stated here and not folded in. *(Earlier same day: **`D-32`: there is no shared-schema migration.** `FW-001` is **cancelled rather than deferred** — its −36 h stops being a debt owed to production — and `FW-002` (3 h) goes with it. ⚠ **The published 832 / 462 / 409 h figures are deliberately held**, so read them as 3 h conservative *(previously August 15, 2026 — **blocker 4 (`G6`) closed**: all six roles exist as JWT claims; its residual re-dated to the T1 QA0 walkthrough. Revision history in [`CHANGELOG.md`](../CHANGELOG.md))*)*))*)*)*
 **Document Type:** Scoped delivery plan for the client-requested trial run
 **Status:** Published — **three resources at 6.5 h/day reach 3 Nov on development alone; UAT still needs its own window, to ~16 Nov.** §2.2 prices what more resources would buy
 **Owner:** Delivery lead / programme management
@@ -220,7 +220,7 @@ not the 55 % the dev-only figures imply. ⚠ **Both percentages fell on 18 Aug 2
 | Deliverable | Hand-coded | Story | **Trial h** |
 |---|---|---|---|
 | Library scaffold, routing and configuration | 24 | `FW-N03` | 15 |
-| Shell layout and the 1280×1024 shopfloor canvas | 16 | `FW-130` | 10 |
+| Shell layout and the 1920×1080 shopfloor canvas | 16 | `FW-130` | 10 |
 | Route guards, interceptor wiring, error envelope | 12 | `FW-131` | 7 |
 | DI-swappable API client and domain models | 20 | `FW-132` | 12 |
 | **Six shared composite controls** @ 20 h | **120** | **`FW-133`** | **75** |
@@ -326,7 +326,7 @@ schedule insurance in the plan — without it the whole FE stream queues behind 
 > do not delete them; each returns as configuration. Same pattern as Die Change and Roll Adjust in §4.
 >
 > **Still out, deliberately:** `FW-210` (the kinematic model), `FW-211` (the seam), `FW-212` (the closed loop
-> that converges on the pushed pass schedule), `FW-213` (the fault catalogue beyond one fault), `POST /sim/{lineId}/run`,
+> that converges on the pushed pass schedule), `FW-213` (the fault catalogue beyond one fault), `POST /sim/{machineName}/run`,
 > and `FW-217` (the OPC sidecar). The trial does not need a machine that *reacts* — it needs a feed it can
 > *steer*, and a screen to steer it from.
 >
@@ -367,7 +367,7 @@ spine every later phase consumes (`[SP §6.3]`), and none of it compresses well 
 | | **100** base → QA 20 → cont. 18 = **138** | | **62** | **62** |
 
 > **`FW-007`'s 52 h includes** the `RodStaging.Station` column and the `UX_RodStaging_Bay` re-key from
-> `(LineId, PayoffPosition)` to `(Station, PayoffPosition)`, for **`G21`**. **The trial column is deliberately
+> `(MachineName, PayoffPosition)` to `(Station, PayoffPosition)`, for **`G21`**. **The trial column is deliberately
 > not re-derived**: that work is bay-uniqueness work, and DB2A left the trial on 14 Aug, so the
 > +4 h is real on the hand-coded basis and absent from trial scope. The table still deploys (§8) — only the
 > re-key does not.
@@ -423,7 +423,7 @@ read; nothing else in trial scope calls it).
 
 **Two things in the old Phase 3 row are *not* DB1's and stay:** `FW-153`'s **reconnect banner and cached-state
 fallback** (`FR-119`/`NFR006` require it on every screen, and the acceptance run exercises it on DB3) and
-`FW-155`'s **`FlatWireRun(LineId, Status)` index** (check-in's *single active run per line* rule and
+`FW-155`'s **`FlatWireRun(MachineName, Status)` index** (check-in's *single active run per line* rule and
 `GET /run/active` both need it). **And the real-time backbone is untouched** — `FlatWireHub`, the OPC ingest and
 the broadcast loop are **Phase 1B**, not Phase 3. Anyone reading *"Phase 3 removed"* as *"real-time removed"* has
 it wrong.
@@ -450,7 +450,7 @@ dialog, 13 h FE), `FW-166` (`POST /weldevent` + `WeldService`, 8 h BE) and the `
 
 | Blocker | Why it goes |
 |---|---|
-| **`G21`** — `(LineId, PayoffPosition)` uniqueness across FL1/FL3 | It **blocked the Phase-4 schema freeze**, and it is a defect *in `RodStaging`*. No staging table, no gap in trial scope. **It remains open for MVP-1** |
+| **`G21`** — `(MachineName, PayoffPosition)` uniqueness across FL1/FL3 | It **blocked the Phase-4 schema freeze**, and it is a defect *in `RodStaging`*. No staging table, no gap in trial scope. **It remains open for MVP-1** |
 | **`G26`** — the merged weld write straddles phases 4 and 6 | It existed only because DB2A's *Mark as welded* button shipped in Phase 4 against a Phase-6 endpoint. Neither is in the trial |
 
 **And these are the costs:**
@@ -856,12 +856,13 @@ stubbed to a single active schedule) · `OQ-18` (which order field carries coil 
 (short-close transaction) · `G9`/`OI-34` (real-time NFRs undefined, so the hub load test has no pass criteria).
 ⚠ **`G10` — IIS WebSockets must be enabled on the deployment target** and MessagePack is a client dependency the repo does not otherwise use. The trial leans on the hub for §8 steps 3, 7, 9 and **10 (reconnect and group re-join on staging)**; if `devual-uadev001` lacks the feature the transport silently falls back to long-poll and the cadence assertions change character. **Pre-check the environment before T2** — it is a provisioning task, not a build one.
 
-⚠ **`G23` — the 1280×1024 shopfloor canvas has never been confirmed.** All
-25+ mockups are authored to it, `flat-wire-fit.js` calibrates its 14 px floor against it, and **§7's DoD bar and
-T4's UAT both assert conformance at 1280×1024 at 1:1** — against a question (`Q26`) that is still open with Tim.
-**1920×1080 is 1.5× width and 1.05× height: a re-layout of every screen, not a rescale.** `data-fit="fill"` makes
-a wider panel the cheap direction, so the exposure is bounded, but an answer arriving after T1 lands on finished
-screens. **Chase it before T1 closes** — it is the one open item here that gets more expensive every sprint.
+✅ **`G23` is CLOSED (7 Sep 2026) — the canvas is 1920×1080, confirmed by the client (`Q26`).** All
+25+ mockups are *composed* at 1280×1024 and `flat-wire-fit.js` calibrates its 14 px floor against that box, so
+**§7's DoD bar and T4's UAT now assert conformance at 1920×1080 at 1:1** — both moved in the same pass.
+**1920×1080 is 1.5× width and 1.05× height: a re-layout of every screen, not a rescale**, and `data-fit="fill"` had always made
+a wider panel the cheap direction, so the exposure was bounded in the direction it went. ⚠ **What is left is not this
+item's:** the panel's **physical diagonal** is recorded nowhere and the 14 px floor tracks dpi rather than resolution, so a
+same-size denser panel would scale every size ×1.5 (`[P1A §6.10]`). **Ask for the diagonal before T1 closes.**
 
 **`G28`** (whether FL2 ever welds spool-to-spool) is **moot for the trial** now that no weld is captured anywhere,
 and stays open for MVP-1.
@@ -894,7 +895,7 @@ and stays open for MVP-1.
   `flat-wire` is all-new from the mockups, and `checkin-precheckin`, `shop-floor*`, `common-grid`,
   `wip-rejection`, `slitter-*` are not to be copied. Only the foundational `shared` services are reused.
 - **DoD bar is unchanged in every respect but one** (`[SP §9.2]`): Jest 95 % coverage, UI conformance at
-  1280×1024 at 1:1, **no text below 14 px**, tap targets ≥ 48 px, no hover-dependent action, no new `--fw-*`
+  **1920×1080** at 1:1 (`Q26`, 7 Sep 2026), **no text below 14 px**, tap targets ≥ 48 px, no hover-dependent action, no new `--fw-*`
   tokens. ⚠ **The exception: `.NET` carries no automated tests** — *"xUnit + validator tests"* was struck
   from the DoD on **15 Aug 2026** (`[TS §1.2]`). The trial therefore verifies the backend by **manual
   contract walkthrough**, which has to be staffed inside the window rather than assumed.
@@ -963,7 +964,7 @@ fails at step 8 with an unhelpful message if it is wrong:
 -- (a) FL2 has exactly one Active schedule and it is Standalone.
 --     UX_PassSchedule_OneActivePerLineAlloy allows only one per line+alloy,
 --     so a second Active FL2/1100 row is not a warning — it is a failed insert.
-SELECT ScheduleId, RouteMode, Status FROM PassSchedule WHERE LineId = 'FL2';
+SELECT ScheduleId, RouteMode, Status FROM PassSchedule WHERE MachineName = 'FL2';
 --     expect PS-1100-FL2-002 Standalone Active · PS-1100-FL2-001 Hybrid Inactive
 
 -- (b) No STANDALONE FL2 schedule engages FM1 (FL1's 12" mill).
@@ -973,11 +974,11 @@ SELECT ScheduleId, RouteMode, Status FROM PassSchedule WHERE LineId = 'FL2';
 SELECT p.ScheduleId, c.ComponentName, c.State
 FROM   PassScheduleComponent c
 JOIN   PassSchedule p ON p.ScheduleId = c.PassScheduleId
-WHERE  p.LineId = 'FL2' AND p.RouteMode = 'Standalone'
+WHERE  p.MachineName = 'FL2' AND p.RouteMode = 'Standalone'
   AND  c.ComponentName = 'FM1' AND c.State = 'Active';
 ```
 
-> ⚠ **Do not generalise (b) into *"a component's `Stand.LineId` must equal its schedule's `LineId`"*.** That
+> ⚠ **Do not generalise (b) into *"a component's `Stand.MachineName` must equal its schedule's `MachineName`"*.** That
 > assertion returns **18 rows** and most are legitimate: an **FL3** schedule drives `FM1` (FL1's) *and*
 > `FM2_S1..S3` (FL2's) because FL3 **is** FL1 feeding FL2, and a **Hybrid FL1** schedule reaches FM2 for the
 > same reason. The defect is the single narrow case above. **Do not add a trigger for it either** — this
@@ -992,9 +993,9 @@ is deliberately **absent** (it is MVP-2's, for DB10). Any "25 tables / 33 FKs / 
 are a system rather than six pages, and it is what UAT executes:
 
 > ⚠ **Four of these steps are driven from the simulator console (`FW-214`) over `FW-218`'s endpoints, not from
-> an operator screen.** The operator drives the application; a test engineer drives the machine, from `DB-S1`. **`POST /sim/{lineId}/steer`** produces
-> step 3's out-of-spec run, **`DELETE /sim/{lineId}/run`** produces step 7's stop edge at a chosen instant, and
-> **`POST /sim/{lineId}/fault`** (dropped readings) is the only way to reach the interlock's condition 5.
+> an operator screen.** The operator drives the application; a test engineer drives the machine, from `DB-S1`. **`POST /sim/{machineName}/steer`** produces
+> step 3's out-of-spec run, **`DELETE /sim/{machineName}/run`** produces step 7's stop edge at a chosen instant, and
+> **`POST /sim/{machineName}/fault`** (dropped readings) is the only way to reach the interlock's condition 5.
 > ⚠ **The console and its endpoints are `Engineer`/`Admin`, and the endpoints are not registered at all when
 > simulation is off** — so `DB-S1` works on staging and **cannot drive a commissioned line** (`[SIM §2.4]`,
 > `[SIM §8.4]`, `[SIM §9.4]`).

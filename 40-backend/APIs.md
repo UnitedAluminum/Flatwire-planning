@@ -1,7 +1,7 @@
 # Flat Wire Mill — API Contract
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 25, 2026
+**Last Updated:** September 8, 2026 — `§4.7a`'s published `200` shape brought level with the built DTO: the order block, `outOfSpec`, `stationClaim` and `components[].edgeType`. The first two had been on the type since 29 Aug and unpublished; the last two are `FW-N16` / `D-55`. *(previously August 25, 2026)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** REST contract — conventions, enums, endpoints, traceability
 **Status:** Baselined for build — missing endpoint groups in §10
 **Owner:** Backend (.NET) stream
@@ -58,7 +58,7 @@ Every endpoint returns the standard UAL envelope.
 > | `errorCode` | **int** | the HTTP status |
 > | `errorDescription` | **string** | the `[API §1.8]` machine code — `BAY_OCCUPIED` |
 > | `errors` | array | the human-readable messages |
-> | `errorContext` | object | the routing payload, typed — `{route, rodAlpha}` or `{correctLineId}` |
+> | `errorContext` | object | the routing payload, typed — `{route, rodAlpha}` or `{correctMachineName}` |
 
 ### 1.3 Status-code usage
 
@@ -69,7 +69,7 @@ Every endpoint returns the standard UAL envelope.
 | `401` / `403` | Not authenticated / role not permitted (see §9.2) |
 | `404` | The named resource does not exist (rod alpha, schedule id, run id) |
 | `409` | **Conflict with current state** — line already has an active run, bay already occupied, rod already staged or checked in, payoff mismatch, optimistic-concurrency failure |
-| `422` | The request is well-formed but **violates a business rule** — inspection fail, ~~`lineId = FL2` at a staging endpoint~~ *(withdrawn, `FR-533`)*, `Draft` schedule at check-in, carry-forward not acknowledged, diameter outside tolerance, missing supervisor authorisation |
+| `422` | The request is well-formed but **violates a business rule** — inspection fail, ~~`machineName = FL2` at a staging endpoint~~ *(withdrawn, `FR-533`)*, `Draft` schedule at check-in, carry-forward not acknowledged, diameter outside tolerance, missing supervisor authorisation |
 | `500` | Server error **or PLC push failure**, with the transaction aborted and compensating writes issued |
 
 **The 409/422 split is load-bearing.** A `409` means "someone or something else got there first — re-read and retry"; a `422` means "this will never succeed as submitted".
@@ -119,7 +119,7 @@ Machine-readable codes accompany the human-readable `errors[]` where a client mu
 | `ROD_WRONG_ORDER` | 409 | Rod belongs to a different order once one is established | Refuse — welding across orders breaks genealogy |
 | `BAY_OCCUPIED` | 409 | `UX_RodStaging_Bay` violated | Re-read bay state and re-render |
 | `ROD_ALREADY_STAGED` | 409 | `UX_RodStaging_RodActive` violated | Re-read |
-| ~~`LINE_NOT_ELIGIBLE`~~ | ~~422~~ | ~~`lineId = FL2` at a staging endpoint~~ | ⚠ **Withdrawn in requirement text by `FR-533`** — FL2 gets a validation queue, so the action is **shown** on FL2, not hidden. Endpoint change owed (W5) |
+| ~~`LINE_NOT_ELIGIBLE`~~ | ~~422~~ | ~~`machineName = FL2` at a staging endpoint~~ | ⚠ **Withdrawn in requirement text by `FR-533`** — FL2 gets a validation queue, so the action is **shown** on FL2, not hidden. Endpoint change owed (W5) |
 | `INSPECTION_FAILED` | 422 | Any inspection item `Fail` | Route to WIP Rejection — payload carries `{route:"wipRejection", rodAlpha}` |
 | `CARRY_FORWARD_REQUIRED` | 422 | `footageRunToDate > 0` without `acknowledgedCarryForward` | Show the carry-forward path only |
 | `DIAMETER_OUT_OF_TOLERANCE` | 422 | Measured diameter outside nominal ± tolerance | Block, show the valid range |
@@ -138,7 +138,7 @@ Machine-readable codes accompany the human-readable `errors[]` where a client mu
 > 25 Aug 2026 — this document owes the catalogue entry.**
 >
 > ⚠ **`WRONG_STATION` (409) is specified at §4.5 and §4.6 and is likewise absent here**, though a
-> client branches on it and it carries `correctLineId`. Same owner, same date.
+> client branches on it and it carries `correctMachineName`. Same owner, same date.
 
 ---
 
@@ -149,7 +149,7 @@ Machine-readable codes accompany the human-readable `errors[]` where a client mu
 **Define once; mirror in three places.** Every enum below exists as a C# enum in `FlatWire.Domain/Enums`, a TypeScript union in the Angular library's `models/`, and a `CHECK` constraint in the DDL. **A change to any one is a change to all three** — this is the rule that the four defects in §2.3 all violated.
 
 ```csharp
-enum LineId          { FL1, FL2, FL3 }
+enum MachineName          { FL1, FL2, FL3 }
 enum LineState       { Running, Idle, Setup, Paused, Fault, Offline }
 enum RouteMode       { Standalone, Hybrid }
 enum ScheduleStatus  { Draft, Active, Inactive }
@@ -297,11 +297,11 @@ Roles use the matrix in `[SEC §8]`. "Any" means any authenticated role.
 | 7 | `POST /passschedule/generate` | Run the generator; returns a **draft, unpersisted** | OpsMgr, Eng | `PassSchedule` | 2 | `FR-380`–`FR-391` |
 | 8 | `GET /rod/{alpha}` | Validate + return rod details at scan | Any | ⚠ **none** — `RodReceiving` withdrawn 25 Aug 2026 (`P-53`); **re-homing owed** (`P-54`) | 4 (upstream data) | `FR-042`, `FR-064` |
 | 9 | `POST /rod` | Receive a rod, generate an R-series alpha | Receiving | ⚠ **none** — upstream service, not `FlatWire` (`P-53`) | upstream | — |
-| 10 | `GET /payoff/status?lineId=` | Both payoff bays on one line — the DB2A primary read | Any | `PayoffStaging` | 4 | `FR-032`–`FR-034` |
+| 10 | `GET /payoff/status?machineName=` | Both payoff bays on one line — the DB2A primary read | Any | `PayoffStaging` | 4 | `FR-032`–`FR-034` |
 | 11 | `POST /staging/rod` | Pre-check-in: stage a rod at a bay | Operator (+Supervisor for the out-of-sequence override) | `PayoffStaging` | 4 | `FR-039`–`FR-049` |
 | 12 | `POST /staging/rod/unstage` | Pre-check-out — writes `RodCheckout` Mode P | Operator; **+Supervisor when the rod is welded** | `PayoffStaging` | 4 / 7 | `FR-052`–`FR-054` |
 | ~~13~~ | ~~`POST /staging/rod/mark-welded`~~ **RETIRED 1 Aug 2026** — superseded by `POST /weldevent`, which is now the single weld write | — | — | — | `FR-050`, `FR-051` |
-| 14 | `GET /staging/queue?lineId=` | The Traveler Queue projection | Any | `PayoffStaging` | 4 | `FR-035`–`FR-038` |
+| 14 | `GET /staging/queue?machineName=` | The Traveler Queue projection | Any | `PayoffStaging` | 4 | `FR-035`–`FR-038` |
 | 15 | `POST /checkin/rod` | FL1/FL3 rod check-in + PLC push | Operator | `CheckIn` | 4 | `FR-063`–`FR-084` |
 | 16 | `POST /checkin/spool` | FL2 spool check-in + FM2 PLC push | Operator | `CheckIn` | 8 | `FR-090`–`FR-096` |
 | 16a | `GET /spools[?spoolAlpha=]` | Spools available for FL2; with `spoolAlpha` the **backend resolves the order** and returns it with that order's spools, in one response | Any | `SpoolProcessing` **(§3.1, added 15 Aug 2026)** | 8 | `FR-097`–`FR-099` |
@@ -337,7 +337,7 @@ Only shapes carrying a correction or a non-obvious rule are given in full. The r
 
 ```json
 { "data": { "lines": [ {
-      "lineId": "FL1", "status": "Running",
+      "machineName": "FL1", "status": "Running",
       "activeOrderId": "FW-00421", "activeAlpha": "R00041",
       "alloy": "1100", "routeMode": "Standalone",
       "speedFpm": 1620.0,
@@ -405,7 +405,7 @@ Returns `alpha, alloy, temper, diameterIn, grossWeightLb, netWeightLb, status, l
 | Field | Why it cannot be omitted |
 |---|---|
 | `orderId` | The rod→order resolution read from `planning_routings`. **`null` for a rod planning has not allocated — such a rod cannot be staged.** This is what lets a cold station identify which order it is starting |
-| `scheduledLineId` | The line the order is booked on. Since 30 Jul 2026 this **drives navigation**: if it is not the line on screen, the client **switches to that station** and continues — no message, no override (**Q24**). Resolve it before posting to `/staging/rod` or `/checkin/rod` |
+| `scheduledMachineName` | The line the order is booked on. Since 30 Jul 2026 this **drives navigation**: if it is not the line on screen, the client **switches to that station** and continues — no message, no override (**Q24**). Resolve it before posting to `/staging/rod` or `/checkin/rod` |
 | `footageRunToDate` | Without it the caller cannot enforce the carry-forward gate; the scan would silently offer a fresh-start check-in for a rod that has already run footage, which `FR-043` forbids |
 | `remainingWeightEstimateLb` | Starting weight for a carry-forward run |
 | `stagedPayoffPosition`, `isWelded` | **Projected from the current `RodStaging` row where `Status='Staged'`** (null/false when not staged). They are **no longer columns on `Rod`** |
@@ -428,7 +428,7 @@ Returns `alpha, alloy, temper, diameterIn, grossWeightLb, netWeightLb, status, l
     "receivedAt": "2026-04-29T14:00:00Z",
 
     "orderId": "FW-00421",
-    "scheduledLineId": "FL1",
+    "scheduledMachineName": "FL1",
 
     "footageRunToDate": 0.0,
     "remainingWeightEstimateLb": null,
@@ -439,7 +439,7 @@ Returns `alpha, alloy, temper, diameterIn, grossWeightLb, netWeightLb, status, l
 }
 ```
 
-### 4.4 `GET /payoff/status?lineId=`
+### 4.4 `GET /payoff/status?machineName=`
 
 **Purpose:** the Dashboard 2A primary read — both bays on one line, as peers.
 **Role:** any. **Idempotent.**
@@ -448,14 +448,14 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 
 **`state` is derived, not stored.** `Blocked` = `Status='Staged'` **and** any inspection column `Fail`. Adding a fourth stored `Status` value would fall outside the `UX_RodStaging_Bay` filtered index and free a bay that is still physically occupied.
 
-**Errors:** ~~`422 LINE_NOT_ELIGIBLE` when `lineId = FL2`~~. ⚠ **The `lineId = FL2` refusal is WITHDRAWN in requirement text** (`FR-533`, `[REQ]` §5.29, client reversal 20 Aug 2026) **but is still specified here** — the contract change is wave W5 of the 20 Aug ledger and is not yet applied. Do not build the refusal; do not delete it from this contract without the W5 change.
+**Errors:** ~~`422 LINE_NOT_ELIGIBLE` when `machineName = FL2`~~. ⚠ **The `machineName = FL2` refusal is WITHDRAWN in requirement text** (`FR-533`, `[REQ]` §5.29, client reversal 20 Aug 2026) **but is still specified here** — the contract change is wave W5 of the 20 Aug ledger and is not yet applied. Do not build the refusal; do not delete it from this contract without the W5 change.
 
 **Worked example**
 
 ```json
 {
   "data": {
-    "lineId": "FL1",
+    "machineName": "FL1",
     "bays": [
       {
         "position": 1,
@@ -502,7 +502,7 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 **Purpose:** pre-check-in. **Role:** Operator; Supervisor credentials required for either deviation. **Not idempotent** — a repeat is a `409` from the filtered unique index.
 
 ```json
-{ "lineId": "FL1", "payoffPosition": 2, "rodAlpha": "R00043",
+{ "machineName": "FL1", "payoffPosition": 2, "rodAlpha": "R00043",
   "orderId": "FW-00421", "scrapBoxRef": "SB-1100-04",
   "diameterIn": 0.375, "grossWeightLb": 8780.0, "netWeightLb": 8440.0,
   "inspection": { "oxidation": "Pass", "surfaceDefects": "Pass",
@@ -517,7 +517,7 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 
 | Field | Type | Required | Validation |
 |---|---|---|---|
-| `lineId` | enum | ✓ | `FL1` \| `FL3` today; **`FL2` is owed** (`FR-533`) — the `422` is withdrawn in requirement text, wave W5 not applied |
+| `machineName` | enum | ✓ | `FL1` \| `FL3` today; **`FL2` is owed** (`FR-533`) — the `422` is withdrawn in requirement text, wave W5 not applied |
 | `payoffPosition` | int | ✓ | 1 or 2 only |
 | `rodAlpha` | string | ✓ | Must exist in `coils` |
 | `orderId` | string | ✓ | **Re-resolved server-side; a mismatch is rejected** |
@@ -539,11 +539,11 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 |---|---|---|
 | Allocation | Rod has a `planning_routings` entry, which **yields the order** | `422 ROD_NOT_ALLOCATED` |
 | Order membership | Once an order is established the rod must belong to **that** order | `409 ROD_WRONG_ORDER` — welding across orders breaks genealogy. ⚠ **Knowingly wrong for a multi-order rod** — G22 |
-| Order's line | The resolved order is scheduled on **this** line | **Not a refusal and not an override** — the client switches station. A mismatched POST returns `409 WRONG_STATION` with `correctLineId`; the client switches and re-posts |
+| Order's line | The resolved order is scheduled on **this** line | **Not a refusal and not an override** — the client switches station. A mismatched POST returns `409 WRONG_STATION` with `correctMachineName`; the client switches and re-posts |
 | Availability | `coils.coil_status` not `COMPLETE`/`HOLD`/`SCRAP`, **`Rod.Status` not `INFLAT`** *(local since `D-32`)*, and no `Staged` row | `409 ROD_UNAVAILABLE` |
 | Planned sequence | The rod is the one planning expects next (lowest `plannedSeqno` still available) | **Not a refusal** — supervisor override |
 | Bay occupancy | `UX_RodStaging_Bay` / `UX_RodStaging_RodActive` | `409` **from the index, not a read-then-write race** |
-| ~~Line~~ | ~~`lineId = FL2`~~ | ~~`422 LINE_NOT_ELIGIBLE`~~ — **withdrawn by `FR-533`**; W5 owed |
+| ~~Line~~ | ~~`machineName = FL2`~~ | ~~`422 LINE_NOT_ELIGIBLE`~~ — **withdrawn by `FR-533`**; W5 owed |
 | Inspection | Any item `Fail` | **`201 Created` with `state: "Blocked"`** and `{"route":"wipRejection","rodAlpha":"…"}` — the row is **committed before the inspection gate** (changed 31 Jul 2026), because the bundle is already on the bay and writing nothing reported an occupied position as free. Still a **hard block, no override** (`CHK010`) |
 | Carry-forward | `footageRunToDate > 0` without acknowledgement | `422 CARRY_FORWARD_REQUIRED` |
 | Diameter | Outside the min/max lookup band | `422 DIAMETER_OUT_OF_TOLERANCE` |
@@ -551,7 +551,7 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 
 **Side effects — compensating writes, not one ACID transaction:** `RodStaging` insert with server-assigned `RodSeqno` and snapshotted `PlannedSeqno` · **`coils.coil_status` is not changed** — and since **`D-32`** (18 Aug 2026) it is not changed at check-in either: `FW-002` is cancelled, so `INFLAT` is written to **`FlatWireDB`'s `Rod.Status`** instead (the **Q68** timing answer stands, the column has changed). Whether the reqsum + `wip_coil_orders` insert stays here is still the open half of that question (cross-database either way) · `PayoffStateChanged` broadcast. **No PLC write.**
 
-> **Wrong station is corrected, not authorised (30 Jul 2026).** ~~Staging a rod whose order is booked on another line is a deviation requiring a supervisor override.~~ The system **selects the correct station**: the client reads `scheduledLineId` at the scan and switches to that line. `RodStaging.OffScheduleOverride`, `ScheduledLineId`, `CK_RodStaging_OffSched` and `CK_RodStaging_OffSchedLine` are **dropped**; the shared credential trio survives for the out-of-sequence override. **Open:** what happens to a part-completed wizard when the station switches mid-transaction, whether an FL3 tab exists on the FL1 panel at all (**OI-26**/**G21**), and what to do when the order is scheduled on **neither** rod line — there is no station to switch to (**Q25**, not covered on the call).
+> **Wrong station is corrected, not authorised (30 Jul 2026).** ~~Staging a rod whose order is booked on another line is a deviation requiring a supervisor override.~~ The system **selects the correct station**: the client reads `scheduledMachineName` at the scan and switches to that line. `RodStaging.OffScheduleOverride`, `ScheduledMachineName`, `CK_RodStaging_OffSched` and `CK_RodStaging_OffSchedLine` are **dropped**; the shared credential trio survives for the out-of-sequence override. **Open:** what happens to a part-completed wizard when the station switches mid-transaction, whether an FL3 tab exists on the FL1 panel at all (**OI-26**/**G21**), and what to do when the order is scheduled on **neither** rod line — there is no station to switch to (**Q25**, not covered on the call).
 
 > **A blocked bay is cleared by the WIP rejection, and by nothing else.** `POST /wipreject` sets `RodStaging.Status → 'Unstaged'`, `UnstageKind = 'WipRejection'`, `WipRejectionId`, and broadcasts `PayoffStateChanged` (**Q23** item 3, 30 Jul 2026). Reusing `Unstaged` with a discriminator was chosen over a fourth `Rejected` status, which would have forced the vocabulary, `CK_RodStaging_Unstaged` and the `UX_RodStaging_Bay` filter to change together.
 
@@ -605,7 +605,7 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 **Purpose:** the gate for everything. **Role:** Operator. **Not idempotent** — a second call for the same line returns `409 RUN_ALREADY_ACTIVE`.
 
 ```json
-{ "lineId": "FL1", "rodAlpha": "R00041", "payoffPosition": 1,
+{ "machineName": "FL1", "rodAlpha": "R00041", "payoffPosition": 1,
   "diameterMeasuredIn": 0.374,
   "grossWeightLb": 8840.0, "netWeightLb": 8500.0,
   "inspection": { "oxidation": "Pass", "surfaceDefects": "Pass",
@@ -620,13 +620,13 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 >
 > **Note the deliberate asymmetry:** `POST /staging/rod` uses a **3-item** inspection object and `POST /checkin/rod` uses a **4-item** one. That is correct — the connector-tag check belongs to check-in. The wider 3-vs-4 divergence across older documents is gap **G14**; this contract resolves it as **three at staging, four at check-in**.
 
-**Response:** `{ runId, lineId, rodAlpha, passScheduleId, checkedInAt, plcTagsPushed }`
+**Response:** `{ runId, machineName, rodAlpha, passScheduleId, checkedInAt, plcTagsPushed }`
 
 **Side effects, in this mandatory order:**
 
 1. `FlatWireRun` created (`Status='Running'`, `StartedAt`), `RodCheckin`, `SpcCheckpoint(PreRun)` + `SpcMeasurement` rows, inspection result — **all in the local transaction**
 2. Shared schema: ~~`coils.coil_status = INFLAT`~~ *(struck — `D-32`, 18 Aug 2026; written to local `Rod.Status` instead)*, reqsum + `wip_coil_orders`, `actual_start_date` on `planning_routings` / `routings`, `wip_stations.coilno` — **all three surviving writes land in columns that already exist, so no migration is required**
-3. **PLC:** `PushPassSchedule(scheduleId, lineId, payoffPosition)` — a single batch
+3. **PLC:** `PushPassSchedule(scheduleId, machineName, payoffPosition)` — a single batch
 4. `RodStaging.Status → CheckedIn` with `CheckedInAt` and `RodCheckinId`
 5. Broadcast `LineStatus{Running}`, `PayoffStateChanged{Active}`, `ComponentStatus`
 
@@ -636,15 +636,15 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 
 **FL3:** one acknowledgement pushes **all FM1 and FM2 tags in a single batch**; `RouteMode` is `Hybrid`; **no `SpoolProcessing` row is created**.
 
-**Station selection applies here too (30 Jul 2026).** A rod scanned at check-in whose order is booked on the other rod line **switches the screen to that line** rather than being refused; a mismatched POST returns `409 WRONG_STATION` with `correctLineId`. Same rule as §4.5, same open questions.
+**Station selection applies here too (30 Jul 2026).** A rod scanned at check-in whose order is booked on the other rod line **switches the screen to that line** rather than being refused; a mismatched POST returns `409 WRONG_STATION` with `correctMachineName`. Same rule as §4.5, same open questions.
 
 ### 4.6a `POST /checkin/spool`
 
 **Purpose:** FL2 spool check-in and the FM2 PLC tag push. **Role:** Operator. **Not idempotent** — same `409 RUN_ALREADY_ACTIVE` rule as `§4.6`.
 
-**Request:** `lineId, spoolAlpha, gaugeMeasuredIn, widthMeasuredIn, grossWeightLb, netWeightLb, passScheduleId, operatorId, orderId`
+**Request:** `machineName, spoolAlpha, gaugeMeasuredIn, widthMeasuredIn, grossWeightLb, netWeightLb, passScheduleId, operatorId, orderId`
 
-**Response:** `{ runId, lineId, spoolAlpha, passScheduleId, checkedInAt, plcTagsPushed }`
+**Response:** `{ runId, machineName, spoolAlpha, passScheduleId, checkedInAt, plcTagsPushed }`
 
 **Side effects:** the same shape as `§4.6` — `SpoolCheckin` + `FlatWireRun` written first, then the tag push, then `PlcTagsPushed` stamped — but against **FL2 component tags** (`FM2_S1`/`FM2_S2`/`FM2_S3`, edgers at S2/S3 only). **FL2 broadcasts `null` live gauge and width**; its trace is the historical profile, so no `GaugeReading`/`WidthReading` batch starts on this call.
 
@@ -654,7 +654,7 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 
 ```json
 {
-  "lineId": "FL2",
+  "machineName": "FL2",
   "spoolAlpha": "SP-00021",
   "gaugeMeasuredIn": 0.126,
   "widthMeasuredIn": 0.877,
@@ -670,7 +670,7 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 {
   "data": {
     "runId": "RUN-0043",
-    "lineId": "FL2",
+    "machineName": "FL2",
     "spoolAlpha": "SP-00021",
     "passScheduleId": "PS-1100-FL2-001",
     "checkedInAt": "2026-04-30T07:00:00Z",
@@ -754,7 +754,7 @@ different transaction on a different line"*. Routing a spool commit through it i
 
 ```json
 // request
-{ "runId": "RUN-0042", "lineId": "FL1",
+{ "runId": "RUN-0042", "machineName": "FL1",
   "answer": "Yes",                       // Yes | No | AutoDismissed  — [SIG §5.2]'s vocabulary
   "scaleWeightLb": 1798.5,               // optional; null = use the calculated value
   "varianceAcknowledged": false,         // required true when |scale − calculated| > 2 %
@@ -784,7 +784,7 @@ different transaction on a different line"*. Routing a spool commit through it i
 ⚠ **`answer` is persisted to `FlatWireRun.PromptAnswer`**, whose `CHECK` allows exactly
 `Yes` / `No` / `AutoDismissed` — the enum, the TypeScript union and that constraint are one mirror.
 
-### 4.7 `GET /staging/queue?lineId=`
+### 4.7 `GET /staging/queue?machineName=`
 
 Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, grossWeightLb, payoffPosition, status, isWelded, footageRunToDate }` with `status ∈ {Available, PreCheckedIn, Welded}`.
 
@@ -824,14 +824,14 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 **Purpose:** the active run for a line — Dashboard 3 calls it on load and on resume. **Role:** any authenticated. **Query:** `line` = `FL1` | `FL2` | `FL3` (required).
 
-**Response `200`:** `{ runId, lineId, orderId, alloy, passScheduleId, targetGauge, gaugeTolerance, targetWidth, widthTolerance, routeMode, status, startedAt, pausedAt, footageFt, payoffs[{position, alpha, weightLb, percentRemaining, status}], weldEvents[{weldEventId, outgoingAlpha, incomingAlpha, footagePosition, timestamp}], components[{componentName, state, currentValue}] }`
+**Response `200`:** `{ runId, machineName, orderId, alloy, passScheduleId, targetGauge, gaugeTolerance, targetWidth, widthTolerance, routeMode, status, startedAt, pausedAt, footageFt, payoffs[{position, alpha, weightLb, percentRemaining, status}], weldEvents[{weldEventId, outgoingAlpha, incomingAlpha, footagePosition, timestamp}], components[{componentName, state, currentValue, edgeType}], customer, dueDate, setupGaugeIn, setupWidthIn, finish, temper, odMinIn, odMaxIn, coilWeightMinLb, coilWeightMaxLb, outOfSpec{consecutiveReadings, autoPromptEnabled}, stationClaim{station, checkedInAlpha, isIdle} }`
 
 **Response `204 No Content`:** no active run on this line. This is the normal idle state, not an error.
 
 ```json
 {
   "data": {
-    "runId": "RUN-0042", "lineId": "FL1", "orderId": "FW-00421", "alloy": "1100",
+    "runId": "RUN-0042", "machineName": "FL1", "orderId": "FW-00421", "alloy": "1100",
     "passScheduleId": "PS-1100-FL1-003",
     "targetGauge": 0.125, "gaugeTolerance": 0.003,
     "targetWidth": 0.875, "widthTolerance": 0.005,
@@ -846,10 +846,17 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
         "footagePosition": 1850, "timestamp": "2026-04-30T06:50:00Z" }
     ],
     "components": [
-      { "componentName": "DB1", "state": "Active", "currentValue": 0.310 },
-      { "componentName": "DB2", "state": "Active", "currentValue": 0.260 },
-      { "componentName": "FM1", "state": "Active", "currentValue": 0.126 }
-    ]
+      { "componentName": "DB1", "state": "Active", "currentValue": 0.310, "edgeType": null },
+      { "componentName": "DB2", "state": "Active", "currentValue": 0.260, "edgeType": null },
+      { "componentName": "FM1", "state": "Active", "currentValue": 0.126, "edgeType": null }
+    ],
+    "customer": null, "dueDate": null,
+    "setupGaugeIn": null, "setupWidthIn": null,
+    "finish": null, "temper": null,
+    "odMinIn": null, "odMaxIn": null,
+    "coilWeightMinLb": null, "coilWeightMaxLb": null,
+    "outOfSpec": { "consecutiveReadings": 5, "autoPromptEnabled": true },
+    "stationClaim": { "station": "FL1", "checkedInAlpha": "R00041", "isIdle": false }
   },
   "success": true
 }
@@ -858,6 +865,28 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 > **`weldEvents[]` here is a trimmed marker list** feeding the gauge-trace chart — no quality, operator or weld type. Dashboard 2A needs those, which is why `§4.17a` exists as a separate run-scoped resource rather than this one being widened.
 >
 > **`gaugeTolerance` and `widthTolerance` are single-± fields**, and the 30 Jul client decision (`Q22`) replaced single-± tolerances with four min/max pairs. This response shape has not caught up — the same defect gap **`G51`** records against `SpcMeasurement`.
+
+> ### ⭐ Four blocks were added to this response after it was first published — brought level 8 Sep 2026
+>
+> This section stopped at `components[]` while the built DTO had moved on four times. **The shape
+> above and the sample are now the built contract**; every addition is non-breaking under `§8`.
+>
+> | Added | What | When, and why it rides *this* read |
+> |---|---|---|
+> | **the order block** | `customer` · `dueDate` · `setupGaugeIn` · `setupWidthIn` · `finish` · `temper` · `odMinIn` · `odMaxIn` · `coilWeightMinLb` · `coilWeightMaxLb` | `FW-164` AC 3, `P-254`, 29 Aug 2026. ⚠ **Every field nullable by `P-42`** — the columns are cross-database and `OI-33` leaves `planning_routings` unmapped, so they are `null` today and the screen must render *not available* rather than fail. ⚠ `Q18`: which order field carries the coil min/max weight |
+> | **`outOfSpec`** | `consecutiveReadings` · `autoPromptEnabled` | `FW-164` AC 4. ⛔ **Never null** — both have defaults, so the client always has a rule and never invents one. ⛔ **DETECTION thresholds, not a tolerance band**: the band is `AlloyProperty`'s and stays server-side (`P-43`, `P-255`) |
+> | **`stationClaim`** | `station` · `checkedInAlpha` · `isIdle` | **`FW-N16`, `D-55`, 8 Sep 2026.** What is physically checked in at the line, read back from `CommonDB..WIPStations` through the `FlatWireDB..WIPStations` view (`[INT §4]`). ⛔ **Never null, and `isIdle` is resolved SERVER-SIDE** — an idle station parks its own name in `CoilNo`, so `checkedInAlpha` is `null` when idle and **never the sentinel**. A consumer comparing the two itself renders *FL1* where an operator expects a rod number. ⚠ FL2 reads idle through a real run: no spool check-in procedure claims its station (`OI-115`) |
+> | **`components[].edgeType`** | `Round` \| `Square` | **`FW-N16`, 8 Sep 2026.** One `currentValue` cannot carry a clearance *and* an edge type. ⚠ **It rides the `EdgeSet` component, not a stand** — `D-26` dropped the `Edger` component name for exactly this reason; the edgers are fitted at `FM2_S2`/`FM2_S3` but the schedule says `EdgeSet`, and an `Active` `EdgeSet` always carries one (`CK_PSC_EdgeTypeReq`). `null` on every other component |
+>
+> ⛔ **FM1's *"Gap 0.112″ · W 0.630″"* is still ONE value and is not served by `edgeType`.** The pass
+> schedule carries a single `ParameterValue` per component, so the second figure has no source
+> anywhere — that is `Q3`'s territory, and inventing a field for it here would put a number an
+> operator trusts beside one nothing wrote.
+>
+> ⚠ **One round trip, deliberately.** This is the trial's landing route (`[TRP §1.4]`), so a second
+> call for any of the four would double latency on the screen an operator opens first. ⛔ **Do not
+> split them out and do not nest the order block under `orderId`** — the second makes the built DTO
+> and the published contract disagree, which is the drift `§7`'s stub-first rule exists to prevent.
 
 ### 4.8 `POST /run/{runId}/pause` and `/resume`
 
@@ -905,7 +934,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 ### 4.9 `POST /spc`
 
-**Request:** `runId, lineId, checkpointType, footagePosition, operatorId, triggerDescription, measurements[{name, targetValue, toleranceValue, actualValue}]`
+**Request:** `runId, machineName, checkpointType, footagePosition, operatorId, triggerDescription, measurements[{name, targetValue, toleranceValue, actualValue}]`
 
 > **Correction — `toleranceValue` is required.** `SpcMeasurement.ToleranceValue` is `NOT NULL` and drives the computed `InSpec`; the April contract omitted it from its example. Omitting it produces a `400`.
 
@@ -930,7 +959,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 ```json
 {
   "runId": "RUN-0042",
-  "lineId": "FL1",
+  "machineName": "FL1",
   "checkpointType": "PostDieChange",
   "footagePosition": 3840,
   "operatorId": "john.d",
@@ -960,7 +989,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 ### 4.10 `POST /weldevent`
 
-**Request:** `runId, lineId, outgoingRodAlpha, incomingRodAlpha, outgoingPayoffPosition, incomingPayoffPosition, footagePosition, weldType, weldQuality, weldQualityFailReason, operatorId`
+**Request:** `runId, machineName, outgoingRodAlpha, incomingRodAlpha, outgoingPayoffPosition, incomingPayoffPosition, footagePosition, weldType, weldQuality, weldQualityFailReason, operatorId`
 
 | Rule | Enforcement |
 |---|---|
@@ -996,7 +1025,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 ```json
 {
   "runId": "RUN-0042",
-  "lineId": "FL1",
+  "machineName": "FL1",
   "outgoingRodAlpha": "R00041",
   "incomingRodAlpha": "R00042",
   "footagePosition": 3840,
@@ -1025,7 +1054,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 ### 4.11 `POST /rolloverride`
 
-**Request:** `runId, lineId, alpha, footagePosition, operatorId, reasonCode, notes, measuredGaugeIn, measuredWidthIn, adjustments[{componentName, scheduledValue, newValue}]`
+**Request:** `runId, machineName, alpha, footagePosition, operatorId, reasonCode, notes, measuredGaugeIn, measuredWidthIn, adjustments[{componentName, scheduledValue, newValue}]`
 
 **Both `measuredGaugeIn` and `measuredWidthIn` are required** (`FR-205`). `reasonCode` is one of `GaugeDriftHigh`, `GaugeDriftLow`, `WidthDrift`, `SpcFlag`, `RollWear`, `PostWeldCorrection`, `OperatorDiscretion`, `Other`.
 
@@ -1048,7 +1077,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 ```json
 {
   "runId": "RUN-0042",
-  "lineId": "FL1",
+  "machineName": "FL1",
   "alpha": "R00041",
   "footagePosition": 3840,
   "operatorId": "john.d",
@@ -1087,7 +1116,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 ### 4.12 `POST /diechange`
 
-**Request:** `runId, lineId, rodAlpha, footagePosition, diePosition, outgoingDieAlpha, incomingDieAlpha, oldDieSizeIn, newDieSizeIn, incomingCondition, reasonCode, qualityHold{fromFootage, toFootage, flagForQa}, spcCheckpointRequired, operatorId`
+**Request:** `runId, machineName, rodAlpha, footagePosition, diePosition, outgoingDieAlpha, incomingDieAlpha, oldDieSizeIn, newDieSizeIn, incomingCondition, reasonCode, qualityHold{fromFootage, toFootage, flagForQa}, spcCheckpointRequired, operatorId`
 
 | Rule | Detail |
 |---|---|
@@ -1106,7 +1135,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 ```json
 {
   "runId": "RUN-0042",
-  "lineId": "FL1",
+  "machineName": "FL1",
   "alpha": "R00041",
   "footagePosition": 3840,
   "operatorId": "john.d",
@@ -1131,7 +1160,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 ### 4.13 `POST /checkout`
 
-**Request:** `runId, lineId, rodAlpha, payoffPosition, mode, footageAtCheckout, reasonCode, rodDisposition, remainingWeightLbEstimate, inProcessMaterialDisposition, notes, operatorId`
+**Request:** `runId, machineName, rodAlpha, payoffPosition, mode, footageAtCheckout, reasonCode, rodDisposition, remainingWeightLbEstimate, inProcessMaterialDisposition, notes, operatorId`
 
 | Mode | `runId` | `footageAtCheckout` | Reasons | Rod disposition | In-process disposition |
 |---|---|---|---|---|---|
@@ -1163,7 +1192,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 4. The footage counter is **read and locked at the moment the dialog opens**, so the recorded value is final.
 5. Tags are cleared **only after a confirmed stop and an operator confirm**.
 
-**Response:** `{ checkoutId, lineId, rodAlpha, newRodStatus, plcTagsCleared, partialSpoolAlpha }`
+**Response:** `{ checkoutId, machineName, rodAlpha, newRodStatus, plcTagsCleared, partialSpoolAlpha }`
 
 > **`partialSpoolAlpha` stays `null` until a supervisor approves.** Mode B creates a **Pending Disposition** with the material locked, not plannable and carrying no alpha, and pushes a SignalR notification to the Supervisor role. **There is no endpoint for the supervisor's Accept / Hold / Reject decision** — **OI-32** — and relying on a transient notification to reach a supervisor is gap **G7**: a durable pending-approval queue is required, with SignalR as a live nudge only.
 
@@ -1172,7 +1201,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 ```json
 {
   "runId": "RUN-0042",
-  "lineId": "FL1",
+  "machineName": "FL1",
   "rodAlpha": "R00041",
   "payoffPosition": 1,
   "mode": "ModeA",
@@ -1189,7 +1218,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 {
   "data": {
     "checkoutId": "CO-0041",
-    "lineId": "FL1",
+    "machineName": "FL1",
     "rodAlpha": "R00041",
     "newRodStatus": "STAGED",
     "plcTagsCleared": true,
@@ -1201,7 +1230,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 ### 4.14 `POST /wipreject`
 
-**Request:** `runId, lineId, materialAlpha, stage, footagePosition, rejectionGroup, rejectionReason, measuredValue, targetMin, targetMax, disposition, observationNotes, returnToStage, operatorId`
+**Request:** `runId, machineName, materialAlpha, stage, footagePosition, rejectionGroup, rejectionReason, measuredValue, targetMin, targetMax, disposition, observationNotes, returnToStage, operatorId`
 
 `runId` and `footagePosition` are **nullable** — a pre-run incoming rejection has neither. `rejectionGroup` is one of `SurfaceQuality`, `Dimensional`, `WeldQuality`, `Material`, `Process`. `observationNotes` is **required when `disposition = 'Suspend'`**.
 
@@ -1215,7 +1244,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 ```json
 {
-  "lineId": "FL1",
+  "machineName": "FL1",
   "materialAlpha": "R00041",
   "stage": "FL1ActiveRun",
   "footagePosition": 3840,
@@ -1245,7 +1274,7 @@ Returns rows of `{ plannedSeqno, rodSeqno, rodAlpha, alloy, temper, diameterIn, 
 
 ### 4.15 `POST /coil/complete`
 
-**Request:** `runId, lineId, grossWeightLb, netWeightLb, finalGaugeMeasuredIn, finalWidthMeasuredIn, skidAssignment, existingSkidId, operatorId`
+**Request:** `runId, machineName, grossWeightLb, netWeightLb, finalGaugeMeasuredIn, finalWidthMeasuredIn, skidAssignment, existingSkidId, operatorId`
 
 `skidAssignment` is `Coil1Of2` \| `Coil2Of2` — **exactly two coils per skid.** `Coil1Of2` opens a skid and returns its new `skidId`; `Coil2Of2` requires `existingSkidId`, closes the skid, prints the skid label and moves it to the packing queue.
 
@@ -1274,7 +1303,7 @@ The response is unchanged — `CoilNo` is **not** added to it. `coilAlpha` remai
 ```json
 {
   "runId": "RUN-0042",
-  "lineId": "FL2",
+  "machineName": "FL2",
   "grossWeightLb": 900.0,
   "netWeightLb": 885.0,
   "finalGaugeMeasuredIn": 0.126,
@@ -1350,7 +1379,7 @@ Returns `alpha, alloy, temper, gaugeIn, widthIn, grossWeightLb, netWeightLb, foo
 {
   "data": {
     "runId": "RUN-0041",
-    "lineId": "FL1",
+    "machineName": "FL1",
     "targetGauge": 0.125,
     "upperLimit": 0.128,
     "lowerLimit": 0.122,
@@ -1373,7 +1402,7 @@ Returns `alpha, alloy, temper, gaugeIn, widthIn, grossWeightLb, netWeightLb, foo
 
 Every weld recorded against one run, oldest first. Backs the read-only **Welds this run** dialog on Dashboard 2A (`PCI021`), opened from the **active bay card** — so the caller always holds a `runId`. An **empty array is a normal response**, rendered as the dialog's empty state.
 
-**Response:** `{ runId, lineId, totalCount, failedCount, weldEvents[{weldEventId, outgoingAlpha, incomingAlpha, outgoingPayoffPosition, incomingPayoffPosition, footagePosition, weldType, weldQuality, weldQualityFailReason, operatorId, timestamp}] }`
+**Response:** `{ runId, machineName, totalCount, failedCount, weldEvents[{weldEventId, outgoingAlpha, incomingAlpha, outgoingPayoffPosition, incomingPayoffPosition, footagePosition, weldType, weldQuality, weldQualityFailReason, operatorId, timestamp}] }`
 
 **Read-only — there is no PUT, PATCH or DELETE counterpart.** A recorded weld is a certificate input; reversing one in place is `WLD011`, which no document specifies.
 
@@ -1394,7 +1423,7 @@ Every weld recorded against one run, oldest first. Backs the read-only **Welds t
 {
   "data": {
     "runId": "RUN-0418",
-    "lineId": "FL1",
+    "machineName": "FL1",
     "totalCount": 2,
     "failedCount": 1,
     "weldEvents": [

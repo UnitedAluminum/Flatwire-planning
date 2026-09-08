@@ -1,7 +1,7 @@
 # Flat Wire Mill — Quality Control & Output Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*
+**Last Updated:** August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** Final Schema — Quality Control & Output Tables
 **Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `../sql/FlatWire_DDL_05_QualityOutput.sql`
@@ -25,7 +25,7 @@ Header record for each SPC measurement session. A checkpoint groups one or more 
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `CheckpointId` | varchar(20) | NOT NULL UNIQUE | — | Unique checkpoint identifier (e.g. `SPC-0041`) |
 | `RunId` | varchar(20) | NOT NULL | `FlatWireRun.RunId` | FK to the run this checkpoint belongs to |
-| `LineId` | varchar(5) | NOT NULL | — | Line where the checkpoint was performed |
+| `MachineName` | varchar(5) | NOT NULL | — | Line where the checkpoint was performed |
 | `CheckpointType` | varchar(30) | NOT NULL | — | What triggered this checkpoint — see allowed values |
 | `FootagePosition` | int | NOT NULL | — | Footage counter value at the time the checkpoint was initiated |
 | `OperatorId` | varchar(50) | NOT NULL | — | User ID of the operator performing the measurements |
@@ -71,7 +71,7 @@ Material rejection events raised during a run or during incoming material inspec
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `RejectionId` | varchar(20) | NOT NULL UNIQUE | — | Unique rejection identifier (e.g. `REJ-0041`) |
 | `RunId` | varchar(20) | NULL | `FlatWireRun.RunId` | FK to the run in which rejection occurred; NULL for pre-run incoming material rejections |
-| `LineId` | varchar(5) | NOT NULL | — | Line where the rejection was identified |
+| `MachineName` | varchar(5) | NOT NULL | — | Line where the rejection was identified |
 | `MaterialAlpha` | varchar(20) | NOT NULL | — | Alpha of the rejected material — rod alpha (e.g. `R00041`) or spool alpha (e.g. `SP-00021`) |
 | `Stage` | varchar(30) | NOT NULL | — | Production stage at which the rejection occurred (e.g. `FL1ActiveRun`, `FL2Incoming`, `FL1Incoming`) |
 | `FootagePosition` | int | NULL | — | Footage counter value at the point of rejection; NULL for pre-run rejections |
@@ -102,7 +102,7 @@ Output coil records generated at run completion. One row per finished coil produ
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `CoilAlpha` | varchar(30) | NOT NULL UNIQUE | — | Unique alpha identifier for this output coil (e.g. `FW-00421-C01`) |
 | `RunId` | varchar(20) | NOT NULL | `FlatWireRun.RunId` | FK to the run that produced this coil |
-| `LineId` | varchar(5) | NOT NULL | — | Line that produced this coil |
+| `MachineName` | varchar(5) | NOT NULL | — | Line that produced this coil |
 | `OrderId` | varchar(20) | NOT NULL | — | Manufacturing order this coil fulfills |
 | `GrossWeightLb` | decimal(8,2) | NOT NULL | — | Gross weight of the finished coil in pounds |
 | `NetWeightLb` | decimal(8,2) | NOT NULL | — | Net weight in pounds; footage × `AlloyProperty.LbPerFtFactor` (OQ-10) |
@@ -182,7 +182,7 @@ Records rod removal from a payoff position. Supports two modes: **Mode A** = pre
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `CheckoutId` | varchar(20) | NOT NULL UNIQUE | — | Unique checkout identifier (e.g. `CO-0041`) |
 | `RunId` | varchar(20) | NULL | `FlatWireRun.RunId` | FK to the run from which the rod was removed; NULL for Mode P and Mode A |
-| `LineId` | varchar(5) | NOT NULL | — | Line from which the rod is being removed |
+| `MachineName` | varchar(5) | NOT NULL | — | Line from which the rod is being removed |
 | `RodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | Alpha of the rod being checked out |
 | `PayoffPosition` | int | NOT NULL | — | Payoff position from which the rod is being removed |
 | `Mode` | varchar(10) | NOT NULL | — | Checkout mode: `ModeP` = pre-check-out (never checked in); `ModeA` = pre-run removal; `ModeB` = mid-run removal |

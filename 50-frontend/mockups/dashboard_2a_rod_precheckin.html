@@ -70,7 +70,7 @@
          out-of-sequence. SUPERSEDED 1 Aug 2026: off-schedule (order booked on the other rod
          line) used to be the second one. It is no longer a deviation at all — the system
          AUTO-SELECTS THE CORRECT STATION and carries on, with no message and no override
-         (Q24). RodStaging.OffScheduleOverride / ScheduledLineId and CK_RodStaging_OffSched
+         (Q24). RodStaging.OffScheduleOverride / ScheduledMachineName and CK_RodStaging_OffSched
          are dropped; the shared OverrideBy/At/Reason columns stay for out-of-sequence.
          OPEN: what a part-completed wizard does when the station switches under it, and
          whether FL1/FL3 are one station or two (OI-26/G21) — if two, the switch must also
@@ -3176,7 +3176,7 @@
      it never stops the transaction and it is not dismissable-before-continuing.
 
      Superseded: this used to raise the same supervisor credential block as an out-of-sequence
-     stage, recorded on RodStaging.OffScheduleOverride / ScheduledLineId. Those columns and
+     stage, recorded on RodStaging.OffScheduleOverride / ScheduledMachineName. Those columns and
      CK_RodStaging_OffSched are dropped.
 
      OPEN (OI-26/G21): whether FL1 and FL3 are one physical station or two. If they are one, this

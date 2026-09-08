@@ -1,7 +1,7 @@
 # Flat Wire Mill — Frontend Components
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 27, 2026 — Change history is in [`../CHANGELOG.md`](../CHANGELOG.md)
+**Last Updated:** August 27, 2026 — Change history is in [`../CHANGELOG.md`](../CHANGELOG.md) · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** Library structure, routing, state, charts, the design-token system
 **Status:** Baselined for build
 **Owner:** Frontend (Angular) stream
@@ -17,29 +17,46 @@
 
 ### 5.1 Library structure
 
-Scaffolded with `ng generate library flat-wire --prefix=fw --standalone=false`, registered in `angular.json` and `tsconfig` paths, added to the `build:shop-floor` npm chain.
+Scaffolded with `ng generate library flat-wire --prefix=lib --standalone=false`, registered in `angular.json`.
 
-> **The library is `flat-wire`.** It was `flat-wire-shopfloor` until 27 Aug 2026. The prefix stays `fw`; the **mockups'** `flat-wire-shopfloor.styles.scss` / `.css` keep their own names, and the library's copy of that stylesheet is `flat-wire.styles.scss`.
+> **The library is `flat-wire`.** It was `flat-wire-shopfloor` until 27 Aug 2026. **The selector prefix is `lib`** (`D-54`); the **mockups'** `flat-wire-shopfloor.styles.scss` / `.css` keep their own names.
+>
+> ⚠ **Three corrections landed here on 7 Sep 2026, all measured against the built library.** *(1)* This section said `--prefix=fw` and *"the prefix stays `fw`"*; `angular.json` declares `"prefix": "lib"`, `eslint.config.mjs` enforces `lib` for components and directives, and all five components ship as `lib-*` — as do all 27 sibling libraries, so `fw` would have made flat wire the only one that deviates. `D-54` ratifies `lib`. *(2)* The **`tsconfig` paths entry and the `build:shop-floor` chain entry are NOT required and deliberately absent** — the host reaches a routed library through a wrapper module that imports it from **source**, so it needs no `dist` bundle and no build-ordering entry, exactly as [`[UIC §1.1]`](UIConventions.md) explains and as `slitter-interface` and `coil-receiving` both demonstrate. *(3)* **The library carries no stylesheet**, so `flat-wire.styles.scss` is removed from §5.1's tree below — see [`[UIC §2]`](UIConventions.md).
 >
 > **`--standalone=false` is required, not stylistic** — every component in this repository is explicitly `standalone: false`, and the flag is what makes the schematic emit the NgModule instead of a standalone entry point.
 >
-> ⚠ **The three registrations named above are not the whole set.** A new library must also be reachable from the host app (a wrapper module in `src/app/project-routes/` plus a route in `src/app/routes.ts`), carry its own `jest.config.js` and `eslint.config.mjs` (selector prefix `fw`), have a content-data JSON and type, and have its config keys added to `environment.js` **and** `local-config.json`. The full list — **eleven integration points** — is [`Phase-01A-ImplementationPlan.md §2.1`](tasks/Phase-01A-ImplementationPlan.md) and is deliberately not restated here.
+> ⚠ **The three registrations named above are not the whole set.** A new library must also be reachable from the host app (a wrapper module in `src/app/project-routes/` plus a route in `src/app/routes.ts`), carry its own `jest.config.js` and `eslint.config.mjs` (selector prefix **`lib`**, `D-54`), have a content-data JSON and type, and have its config keys added to `environment.js` **and** `local-config.json`. The full list — **eleven integration points** — is [`Phase-01A-ImplementationPlan.md §2.1`](tasks/Phase-01A-ImplementationPlan.md) and is deliberately not restated here.
 
 ```
 projects/flat-wire/src/lib/
-├── components/            one folder per MVP-1 screen — DB1, DB2, DB2A, DB3 (+ FL2 and
-│                          FL3 variants), DB5, DB5A, DB6, DB7, DB7b, DB8, DB11, DB12, DC
-├── components/shared/     the fw-prefixed reusable controls ([CMP §7.6])
+├── components/            one folder per MVP-1 screen — DB1, DB2, DB2A, DB3 (ONE folder,
+│                          all three lines — D-55), DB5, DB5A, DB6, DB7, DB7b, DB8, DB11,
+│                          DB12, DC
+├── components/shared/     the lib-prefixed reusable controls ([CMP §7.6]) — for controls
+│                          ONLY flat wire uses; a control shared with another library
+│                          goes to projects/shared instead ([UIC §3.22])
+├── constants/ enums/      api-methods + screen constants; LineState, SpoolMilestone
+├── interfaces/            the per-screen VIEW models — and they are the contract any
+│                          API mapper must return ([UIC §5])
 ├── services/              flat-wire-api-*.service, flat-wire-signalr.service,
 │                          line-context.service, run-state.service
-├── models/                DTOs + the TypeScript mirror of the canonical enums
-├── guards/                FlatWireAuthGuard, FlatWireRoleGuard
-├── styles/                flat-wire.styles.scss — the mockups'
-│                          flat-wire-shopfloor.styles.scss, consumed as-is
+├── models/                wire DTOs + the TypeScript mirror of the canonical enums
+├── guards/                FlatWireRoleGuard  (no FlatWireAuthGuard — the shell binds
+│                          shared's AuthenticationGuard; FW-131)
 ├── flat-wire.module.ts
-├── flat-wire-routing.ts
+├── flat-wire-routing.module.ts
 └── public-api.ts
 ```
+
+⚠ **`styles/` is deliberately absent, and so is any `.scss`** *(corrected 7 Sep 2026 — this tree
+carried `styles/flat-wire.styles.scss` as though the mockups' sheet were shipped into the library)*.
+`projects/flat-wire/` **has no stylesheet and registers none**: the mockups' `--color-*` palette
+exists nowhere in the application, and anything reusable enough to deserve a class goes into
+`src/styles/` under a generic name. See [`[UIC §2]`](UIConventions.md), which records the five
+classes created that way.
+
+⚠ **As built, `components/shared/`, `services/`, `models/` and `guards/` do not exist yet** — they
+arrive with their first occupant. `constants/`, `enums/` and `interfaces/` do.
 
 This is the **standard Angular library layout, not copied from any existing feature library**.
 
@@ -52,10 +69,10 @@ This is the **standard Angular library layout, not copied from any existing feat
 Lazily-loaded `FLAT_WIRE_ROUTES` under `/flat-wire`, per-line:
 
 ```
-/flat-wire/line/:lineId/checkin/rod
-/flat-wire/line/:lineId/staging            (FL1, FL3 only — guarded)
+/flat-wire/line/:machineName/checkin/rod
+/flat-wire/line/:machineName/staging            (FL1, FL3 only — guarded)
 /flat-wire/line/FL2/checkin/spool
-/flat-wire/line/:lineId/run/active
+/flat-wire/home/:machineName                    (DB3 — see the D-55 note below)
 /flat-wire/status                          (DB1)
 /flat-wire/packing                         (DB7b)
 ```
@@ -63,6 +80,27 @@ Lazily-loaded `FLAT_WIRE_ROUTES` under `/flat-wire`, per-line:
 > ⚠ **The run events are dialogs, not routes** *(corrected 27 Aug 2026)*. SPC checkpoint, WIP rejection, roll adjust, die change and rod checkout open **over** the active-run screen — `spc_checkpoint.js`, `wip_rejection.js`, `roll_adjust.js`, `die_change.js`, `rod_checkout.js` — and weld capture is DB2A's *Mark as welded* dialog since **DB4 was retired on 1 Aug 2026**. This section previously listed `run/weld | spc | rolladjust | diechange | checkout` as routes; **all five are dialogs**, and the launcher pages in [`Mockups/`](Mockups/) exist so a reviewer can see each one standalone, not as operator navigation. Whether any should also carry a deep link is **`[SCR]`'s call and is unresolved**.
 >
 > ⚠ **Four MVP-2 routes were also removed** — `/passschedule`, `/passschedule/:id` (DB9A / DB9), `/shift` (DB10) and `/dies` (Die Management). `/packing` (DB7b) is MVP-1 and stays.
+
+> ### ⭐ The `D-55` note — the route grammar inverted on 7 September 2026
+>
+> **DB3 is now `#/flat-wire/home/:machineName`** — one component for FL1, FL2 and FL3, with the line read
+> from the segment. `FW-N15` owns the route, the resolver and `LINE_PROFILES`. The `#` needs no work:
+> `HashLocationStrategy` is provided app-wide in `app.module.ts`.
+>
+> ⚠ **This is screen-first, and the five routes above are line-first.** They are shaped
+> `/flat-wire/line/:machineName/...` — the line *above* the screen — while `home/:machineName` puts it *below*.
+> ⛔ **Two grammars in one library is a defect, not a style difference.** Either the siblings become
+> `/flat-wire/checkin/rod/:machineName`, `/flat-wire/spool-queue/:machineName` and so on, or the split is
+> recorded as a deliberate decision. **It is currently neither, and this note is the flag.**
+>
+> ⚠ **`#/flat-wire` is stranded** now the landing child carries a required param. It resolves from
+> the terminal's own machine registration, falling back to a line picker — which is **`FW-204`**,
+> whose note already complains that *"`/flat-wire` already resolves — to DB3, not to this story's
+> tiles."* `D-55` is what makes that story coherent rather than redundant.
+>
+> ⛔ **`screenKey` does not follow the route.** It is stamped into every element id
+> ([`[UIC §3.22]`](UIConventions.md)), so it stays a stable semantic key; `'home'` is a location, not
+> a screen.
 
 ---
 
@@ -97,7 +135,7 @@ The mock service must mirror the **DB seed**, not invent fixtures. **Measured ag
 
 ### 5.4 State
 
-`line-context.service` (which line is in scope) and `run-state.service` (active alpha, footage, payoff) over RxJS `BehaviorSubject`s. **No NgRx** — it is not used in the repository.
+`line-context.service` (which line is in scope — ⭐ **`D-55` makes this the single site that resolves the line from the URL segment**, holding `machineName`, `station` and `machineIdx`; `station` equals `machineName` by rule and the machine values are **cited** from [`[INT]`](../20-architecture/Integration.md), never retyped. It also owns **`LINE_PROFILES`**, the four-field-per-line configuration the one Active Run component is driven by — info-grid subject, centre status card, action set, spool-completion overlay. ⛔ Nothing the API already carries may enter it: `components[]`, `RouteMode`, `weldEvents[]`, `payoffs[]` and the station claim are **data**. `FW-N15` owns it) and `run-state.service` (active alpha, footage, payoff) over RxJS `BehaviorSubject`s. **No NgRx** — it is not used in the repository.
 
 ---
 
@@ -109,6 +147,12 @@ The mock service must mirror the **DB seed**, not invent fixtures. **Measured ag
 | Historical FL2 profile | **Inline SVG** | The mockup's profile is hand-crafted SVG, not Chart.js |
 
 `gauge-trace-chart` is **one component with an `isLive` flag**, not two components.
+
+> ⭐ **`D-55` (7 Sep 2026) makes the trace treatment uniform across all three lines** — the same panel titles (`Gauge` and `Width`), the same axis, one source path, with `isLive` driven by the data rather than by the line. The mockups' per-line titles (*"Final gauge · post S3"*) are **superseded**, and that departure is recorded in `FW-062` and [`[UIC §5]`](UIConventions.md).
+>
+> ⛔ **A `null` gauge or width reading renders a NO-MEASUREMENT state, never a flat line at target** — that would show an operator a perfectly in-spec measurement of nothing (`FW-181`).
+>
+> ⚠ **This collides with `FR-120`, which is `Must` and `[CONFIRMED]`**, and with `ActiveRunMonitor` §3.2 and `TC-140`, all of which specify an FL2 profile view. **The reconciliation is a client decision and is deliberately not made here.** The inline-SVG profile row above stands until it closes.
 
 ---
 

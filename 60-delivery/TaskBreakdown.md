@@ -1,7 +1,7 @@
 # Flat Wire Mill — Task Breakdown and Backlog
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 5, 2026 (backend tests reinstated) — ⭐ **`FW-263`–`FW-267` minted in a new §7.2 additive block, reversing the 15 Aug 2026 withdrawal of automated backend tests for the UNIT level only** (`D-50`, `[TS §1.2]`, gap `G101`): the test project and its fixtures, the pure-domain suite, `PLCTagService`'s simulate branch including `FW-236`'s untested `FR-074` branch, the line models and simulators, and the reachable DbContext-backed services. **98 h dev (BE 62 · RT 36), additive.** ⛔ **The `−22 h` is NOT added back, and it was never `−22` of test content** — *"−26 on tests, +4 for `SpoolController`"*, so the reversible amount is `+23 h` dev and reversing it would delete a controller; **1B stays 519 h and the baseline 114 stories / 3,186 h**. ⚠ **QA held at 78 h in both directions**, and `[CE §2]`'s two struck endpoint rates **stay struck**. ➕ `B.8` added — ⚠ **and it does not follow `B.7` contiguously**, because `FW-259`–`FW-262` still have no appendix block. *(previously September 4, 2026 (OPC UA tag identity) — **[`FW-236`](../40-backend/tasks/FW-236.md)'s card absorbs new gap `G94`: `OPCUAManager` has no canonical tag identity, and it is ordered AHEAD of `G58`.** Six acceptance criteria added — canonicalise identity before lifting `G58`'s swallow, correct `ReadTag`/`WriteTag` from namespace **0** to **2**, correlate notifications on the `object state` overload rather than `NodeDescriptor.ToString()`, and give `OPCConnection` its first unit tests behind a first-party adapter (the QuickOPC singular methods are **extension methods** and cannot be mocked). ⚠ **`G94` is latent and measured so** — all four `CommonDB.OPCModules` rows are `21316` (`OPCDA`), so the UA manager runs nowhere today. ⚠ **HOURS NOT RE-DERIVED and no story minted** — the card stays at **16 h** because the `Hours` cell feeds three client `.xlsx` generators; a re-price belongs in an additive pass. Card kept byte-identical to its task-file twin. *(previously September 3, 2026 (tooling) — **`FW-259`–`FW-261` minted, 27 h** (DB 5 · BE 10 · FE 12) for the **fourth** Tooling Inventory tool type (`D-42`). `FW-003` and `FW-253` move from **three** tool types to four; `FW-003`'s stale *"`Straightener` exists nowhere else in this repository"* is corrected; **`FW-251`'s `FW-005` leg is discharged** — that card seeded `Drawer` with 13 die-size rows the split took apart. ⛔ `FW-261` owes an un-priced mockup. ⚠ **No figure re-derived** — `FW-258` still owns the arithmetic. *(previously September 1, 2026 (second pass) — ⛔ **§7’s `FW-215` card again: the first pass had not checked that the story’s one new route is BUILDABLE, and it is not as `[SIM §8.1]` words it.** Of *"scenario, seed, start weight, target"*, **the seed and the start weight are constructor-only** on `LineModelBase` and nothing on `ILineModel` sets either — so `POST /sim/{lineId}/run` **replaces** the line’s model through the seam’s factory rather than mutating a live one, which is also the only way `[SIM §5.7]`’s tick-for-tick reproducibility holds. The `G70` seam therefore carries `CreateModel` too, absorbing a **byte-identical duplicate** in both hosts. ⛔ **New gap `G73`** — `[SIM §9.2]` specifies **Pause** and nothing commands it, so a **target run state** joins `POST /run`; no seventh route. ⚠ **`/sim/state` carries at most TWO lines, never three** (`{FL1,FL2}` or `{FL3}`), omits an unhosted line and still answers `200`. ⚠ **`G68`’s *"settable"* is the seed’s alone**, so the config endpoint stays a **read** and no write is owed. ⚠ **The fault route takes all SEVEN of `[SIM §7.2]`.** ⚠ **No hours-bearing cell changed and no total moves** — the `**Hours:** … **Stream:**` line is untouched and the three `.xlsx` generators re-parse unchanged *(previously September 1, 2026 — **§7's `FW-215` card reconciled against the 31 Aug simulator build — stale in eight places, and owner of four gaps it never named.** ⛔ **Four of its five endpoints are already BUILT** (`FW-218`, closed), so `POST /sim/{lineId}/run` is the one new route and the story **extends** that surface (`P-39`). Corrected: the prefix is **`/sim`**, not `/api/v1/flatwire/sim`; the surface is a **minimal-API group, not MediatR controllers** (`P-38`); the gate is **`FlatWireOpc:SimulateOpcFeed`**, not `SimulatePLCTagPush`; *"all three snapshots"* becomes **one per hosted line** (FL3 excluded, `PLC-Q08` / `G30`); and *"`[API]`'s 30 endpoints"* now cites **`[API §3.2]`** without a number. **`G68`** adds a sixth endpoint `GET /sim/config`, **`G70`** the widened gate and the shared seam, **`G69`** becomes its blocker; dependencies gain **`FW-218`** and **`FW-217`**. ⚠ **The 23 h is re-aimed, not re-priced, and no total moves** — a six-endpoint re-price is `[CE]`'s. *(previously August 29, 2026 — **§7's `FW-214` card retargeted to WinForms (`D-33`): 24 → 52 h base, 15 → 36 h AI-assisted.** Ten acceptance criteria, a new **FL3 greyed** row (that endpoint returns 400 today — `PLC-Q08`/`G30`), the `GET /sim/state` row corrected to name its **six** fields, and dependencies **`FW-130`/`FW-135` → `FW-145`**. ⚠ **The 40 h of `FW-130`/`FW-135` is not recovered** — both serve the six operator screens *(previously August 25, 2026 — **`FW-138`: fifteen controllers → fourteen (`P-53`, no `/rod/**` surface).** AC 1 restated; the hours cell deliberately unchanged, 42 h owed to the re-baseline. Earlier the same day: **`FW-224` recorded as reserved**; the FL2 `422` acceptance criterion withdrawn; `CoilNo` rename completed; object count 34 → 33 *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `FW-001` and `FW-002` **cancelled**; `FW-176`'s shared-`coils` column line cancelled with them; `FW-186`, `FW-201` and the FL1/FL2/FL3 machine story lose the acceptance criteria and dependencies that referenced them. **Phase 1C 221 → 138 h · Phase 7 205 → 182 h · Phase 1 1,110 → 1,027 h · baseline 116 / 3,292 h → 114 live / 3,186 h** *(earlier: **`G6` resolved on both blocked story cards** (`FW-145` and the Angular guard story): the six roles exist as JWT claims on `ClaimTypes.Role`; earlier still: **the machine simulator story set minted**: `FW-210`–`FW-215` (**111 h dev** — RT 64 · FE 24 · BE 23) and `FW-217` (+24 h), specified in [`MachineSimulator.md`](../20-architecture/MachineSimulator.md) `[SIM]`, gap **`G39`**. **Additive to `[CE §3b]`** like `FW-202`/`203`/`204`; **`FW-203` is unchanged** and becomes `FW-211`'s first increment. ⚠ **`FW-209` was already taken** — `FW-218` was the next free id and is now used; **the next free id is `FW-220`** (`FW-219` = the FL2/FL3 run-end shared write-back, minted 18 Aug 2026), and `FW-216` is deliberately skipped *(otherwise August 14, 2026 — **`FW-203`** (plant-data feed simulator, 8 h) and **`FW-204`** (minimal landing route, 8 h) minted for the trial run, both additive to `[CE §3b]` and both deliberately absent from `[SSP §5]`. Earlier same day: **`FW-202` minted** (FL1 spool completion — stop confirmation, weight basis and the `SpoolProcessing` write, **98 h**) and `FW-N02` reduced to Part A; gap **`G37`** *(otherwise August 13, 2026)* — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure)*. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*)*)*)*)*)*)*
+**Last Updated:** September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — **`FW-130`'s `G23` blocker is CLOSED, not merely decided** — the client confirmed 1920 × 1080 (`Q26`), and the documentation residual that row named is discharged: `SC-09`, `phase-01a`'s deliverable and exit criterion 2, `TC-627` and both DoD bars all moved in the same pass. **No hour, sprint or story-heading row changed** — the §7 card's title and canvas criterion had already moved on 7 Sep. *(previously September 5, 2026 (backend tests reinstated) — ⭐ **`FW-263`–`FW-267` minted in a new §7.2 additive block, reversing the 15 Aug 2026 withdrawal of automated backend tests for the UNIT level only** (`D-50`, `[TS §1.2]`, gap `G101`): the test project and its fixtures, the pure-domain suite, `PLCTagService`'s simulate branch including `FW-236`'s untested `FR-074` branch, the line models and simulators, and the reachable DbContext-backed services. **98 h dev (BE 62 · RT 36), additive.** ⛔ **The `−22 h` is NOT added back, and it was never `−22` of test content** — *"−26 on tests, +4 for `SpoolController`"*, so the reversible amount is `+23 h` dev and reversing it would delete a controller; **1B stays 519 h and the baseline 114 stories / 3,186 h**. ⚠ **QA held at 78 h in both directions**, and `[CE §2]`'s two struck endpoint rates **stay struck**. ➕ `B.8` added — ⚠ **and it does not follow `B.7` contiguously**, because `FW-259`–`FW-262` still have no appendix block. *(previously September 4, 2026 (OPC UA tag identity) — **[`FW-236`](../40-backend/tasks/FW-236.md)'s card absorbs new gap `G94`: `OPCUAManager` has no canonical tag identity, and it is ordered AHEAD of `G58`.** Six acceptance criteria added — canonicalise identity before lifting `G58`'s swallow, correct `ReadTag`/`WriteTag` from namespace **0** to **2**, correlate notifications on the `object state` overload rather than `NodeDescriptor.ToString()`, and give `OPCConnection` its first unit tests behind a first-party adapter (the QuickOPC singular methods are **extension methods** and cannot be mocked). ⚠ **`G94` is latent and measured so** — all four `CommonDB.OPCModules` rows are `21316` (`OPCDA`), so the UA manager runs nowhere today. ⚠ **HOURS NOT RE-DERIVED and no story minted** — the card stays at **16 h** because the `Hours` cell feeds three client `.xlsx` generators; a re-price belongs in an additive pass. Card kept byte-identical to its task-file twin. *(previously September 3, 2026 (tooling) — **`FW-259`–`FW-261` minted, 27 h** (DB 5 · BE 10 · FE 12) for the **fourth** Tooling Inventory tool type (`D-42`). `FW-003` and `FW-253` move from **three** tool types to four; `FW-003`'s stale *"`Straightener` exists nowhere else in this repository"* is corrected; **`FW-251`'s `FW-005` leg is discharged** — that card seeded `Drawer` with 13 die-size rows the split took apart. ⛔ `FW-261` owes an un-priced mockup. ⚠ **No figure re-derived** — `FW-258` still owns the arithmetic. *(previously September 1, 2026 (second pass) — ⛔ **§7’s `FW-215` card again: the first pass had not checked that the story’s one new route is BUILDABLE, and it is not as `[SIM §8.1]` words it.** Of *"scenario, seed, start weight, target"*, **the seed and the start weight are constructor-only** on `LineModelBase` and nothing on `ILineModel` sets either — so `POST /sim/{machineName}/run` **replaces** the line’s model through the seam’s factory rather than mutating a live one, which is also the only way `[SIM §5.7]`’s tick-for-tick reproducibility holds. The `G70` seam therefore carries `CreateModel` too, absorbing a **byte-identical duplicate** in both hosts. ⛔ **New gap `G73`** — `[SIM §9.2]` specifies **Pause** and nothing commands it, so a **target run state** joins `POST /run`; no seventh route. ⚠ **`/sim/state` carries at most TWO lines, never three** (`{FL1,FL2}` or `{FL3}`), omits an unhosted line and still answers `200`. ⚠ **`G68`’s *"settable"* is the seed’s alone**, so the config endpoint stays a **read** and no write is owed. ⚠ **The fault route takes all SEVEN of `[SIM §7.2]`.** ⚠ **No hours-bearing cell changed and no total moves** — the `**Hours:** … **Stream:**` line is untouched and the three `.xlsx` generators re-parse unchanged *(previously September 1, 2026 — **§7's `FW-215` card reconciled against the 31 Aug simulator build — stale in eight places, and owner of four gaps it never named.** ⛔ **Four of its five endpoints are already BUILT** (`FW-218`, closed), so `POST /sim/{machineName}/run` is the one new route and the story **extends** that surface (`P-39`). Corrected: the prefix is **`/sim`**, not `/api/v1/flatwire/sim`; the surface is a **minimal-API group, not MediatR controllers** (`P-38`); the gate is **`FlatWireOpc:SimulateOpcFeed`**, not `SimulatePLCTagPush`; *"all three snapshots"* becomes **one per hosted line** (FL3 excluded, `PLC-Q08` / `G30`); and *"`[API]`'s 30 endpoints"* now cites **`[API §3.2]`** without a number. **`G68`** adds a sixth endpoint `GET /sim/config`, **`G70`** the widened gate and the shared seam, **`G69`** becomes its blocker; dependencies gain **`FW-218`** and **`FW-217`**. ⚠ **The 23 h is re-aimed, not re-priced, and no total moves** — a six-endpoint re-price is `[CE]`'s. *(previously August 29, 2026 — **§7's `FW-214` card retargeted to WinForms (`D-33`): 24 → 52 h base, 15 → 36 h AI-assisted.** Ten acceptance criteria, a new **FL3 greyed** row (that endpoint returns 400 today — `PLC-Q08`/`G30`), the `GET /sim/state` row corrected to name its **six** fields, and dependencies **`FW-130`/`FW-135` → `FW-145`**. ⚠ **The 40 h of `FW-130`/`FW-135` is not recovered** — both serve the six operator screens *(previously August 25, 2026 — **`FW-138`: fifteen controllers → fourteen (`P-53`, no `/rod/**` surface).** AC 1 restated; the hours cell deliberately unchanged, 42 h owed to the re-baseline. Earlier the same day: **`FW-224` recorded as reserved**; the FL2 `422` acceptance criterion withdrawn; `CoilNo` rename completed; object count 34 → 33 *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `FW-001` and `FW-002` **cancelled**; `FW-176`'s shared-`coils` column line cancelled with them; `FW-186`, `FW-201` and the FL1/FL2/FL3 machine story lose the acceptance criteria and dependencies that referenced them. **Phase 1C 221 → 138 h · Phase 7 205 → 182 h · Phase 1 1,110 → 1,027 h · baseline 116 / 3,292 h → 114 live / 3,186 h** *(earlier: **`G6` resolved on both blocked story cards** (`FW-145` and the Angular guard story): the six roles exist as JWT claims on `ClaimTypes.Role`; earlier still: **the machine simulator story set minted**: `FW-210`–`FW-215` (**111 h dev** — RT 64 · FE 24 · BE 23) and `FW-217` (+24 h), specified in [`MachineSimulator.md`](../20-architecture/MachineSimulator.md) `[SIM]`, gap **`G39`**. **Additive to `[CE §3b]`** like `FW-202`/`203`/`204`; **`FW-203` is unchanged** and becomes `FW-211`'s first increment. ⚠ **`FW-209` was already taken** — `FW-218` was the next free id and is now used; **the next free id is `FW-220`** (`FW-219` = the FL2/FL3 run-end shared write-back, minted 18 Aug 2026), and `FW-216` is deliberately skipped *(otherwise August 14, 2026 — **`FW-203`** (plant-data feed simulator, 8 h) and **`FW-204`** (minimal landing route, 8 h) minted for the trial run, both additive to `[CE §3b]` and both deliberately absent from `[SSP §5]`. Earlier same day: **`FW-202` minted** (FL1 spool completion — stop confirmation, weight basis and the `SpoolProcessing` write, **98 h**) and `FW-N02` reduced to Part A; gap **`G37`** *(otherwise August 13, 2026)* — split out of `05-SprintPlanAndBacklog.md` in the ProjectPlan restructure)*. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*)*)*)*)*)*)*)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** The MVP-1 shopfloor backlog — 116 story ids (**114 live**), the descope ladder, the coverage matrix
 **Status:** **Authoritative for MVP-1 shopfloor delivery** — **114 live stories / 3,186 h** *(re-baselined 18 Aug 2026 by `D-32`; previously **116 / 3,292 h**)*, plus **`FW-202`** *(new 14 Aug 2026, gap `G37`)*, which is **additive and deliberately outside that baseline**: its 98 h base / 136 h all-in is carried in `[TRP]` and is **not** folded into the 3,186 h or into Phase 8's 118 h.<br>⚠ **The baseline moved deliberately and this is the pass that moves it.** `D-32` cancels `FW-001` (56 h) and `FW-002` (4 h) outright and `FW-176`'s 16 h shared-`coils` column line, re-deriving **Phase 1C 221 → 138 h** and **Phase 7 205 → 182 h** from the reduced bases: **−106 h all-in.** Both phases sit wholly inside MVP-1, so the subtraction is valid whatever composition produced the 3,292 h. **Now cite "114 stories / 3,186 h"**, and expect the old pair to survive in documents this pass did not reach — the figure is quoted in five others and in `[CE]`, which is **not** re-derived (`[CE §8]`). **The 116 id count is unchanged** — ids are frozen and `FW-001`/`FW-002` keep theirs as cancelled cards.
 **Owner:** Delivery lead / programme management
@@ -77,7 +77,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Library generated via `ng generate library flat-wire --prefix=fw --standalone=false` → `projects/flat-wire/`; registered in `angular.json` and `tsconfig` paths
 - [ ] Added to the `build:shop-floor` npm chain **for build ordering only** — no UI reuse from any library in that chain (Foundations §0.2)
 - [ ] Folder structure `src/lib/{components,components/shared,services,models,guards,styles}` + module, routing and `public-api.ts` — standard Angular-library layout, **not** copied from any existing feature library
-- [ ] Lazy-loaded `FLAT_WIRE_ROUTES` under `/flat-wire` with per-line routes (`/flat-wire/line/:lineId/checkin/rod`, `/flat-wire/line/FL2/checkin/spool`, `/flat-wire/line/:lineId/run/active`)
+- [ ] Lazy-loaded `FLAT_WIRE_ROUTES` under `/flat-wire` with per-line routes (`/flat-wire/line/:machineName/checkin/rod`, `/flat-wire/line/FL2/checkin/spool`, `/flat-wire/line/:machineName/run/active`)
 - [ ] `app-config.service` + `environment.*.ts` carry `useMockData`, API base and hub URL; `ui-log.service` wired for client telemetry
 - [ ] Library builds and lints clean and does not break the `build:shop-floor` chain
 
@@ -87,7 +87,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
-###### FW-130 · Shell layout and the 1280×1024 shopfloor canvas
+###### FW-130 · Shell layout and the 1920×1080 shopfloor canvas
 **Hours:** 16 h FE · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1A · **Stream:** FE
 
 **As an** operator,
@@ -96,14 +96,15 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Acceptance Criteria:**
 - [ ] Shell layout component: header (line context + operator + clock), sidebar nav to all dashboards, `alert-banner` slot
-- [ ] Fixed **1280×1024** canvas; renders in both light and `prefers-color-scheme: dark`
+- [ ] Fixed **1920×1080** canvas; renders in both light and `prefers-color-scheme: dark` *(the figure read 1280×1024 until 7 Sep 2026; `F-14` decided 1920×1080 and `[VAL §7.5]` carries it, which is also what closed `G23`)*
 - [ ] Consumes the existing semantic design-token system in `../50-frontend/mockups/flat-wire-shopfloor.styles.scss` **as-is** — `--color-background-*`, `--color-text-*`, `--color-blue/green/red/gray/purple/amber`, `--color-border-*`, `--border-radius-md/lg`, `--font-sans/mono`
 - [ ] **No `--fw-*` token appears anywhere** — that prefix is stale (**G18**); `ViewEncapsulation.None`/`:host` so tokens resolve
 - [ ] Minimum text size **14px** throughout, including form controls, which do not inherit the body font
+- [ ] ⭐ **Responsive reflow below 1920 wide — `col-4` → `col-md-6` → `col-12`, traces stacking, never by scaling** *(folded in 7 Sep 2026; `[UIC §4.1]` requires it, 99 of 315 templates in the application already use a responsive column prefix, and the two built screens use fixed `col-4`/`col-6` only)*. ⛔ **No page-level `transform: scale` anywhere** — the mockups' `flat-wire-fit.js` is deliberately not ported
 
 **Rate-card basis:** shared composite control 20 h, discounted to 16 h — the token system is consumed, not authored (§2, §8 *"no token migration"*)
 **Dependencies:** FW-N03
-**Blockers:** **G18** (stale token prefix in older source docs) · **G23** (the 1280×1024 canvas is an unconfirmed acceptance criterion — 1920×1080 means a re-layout)
+**Blockers:** **G18** (stale token prefix in older source docs) · ~~**G23** (the 1280×1024 canvas is an unconfirmed acceptance criterion — 1920×1080 means a re-layout)~~ ✅ **CLOSED 7 Sep 2026 at 1920×1080** — decided by `F-14`, confirmed by the client as `Q26`, carried by `[VAL §7.5]`, and dropped from `FW-130`'s `blocked_by`. ✅ **The documentation residual is discharged with it**: this card, `SC-09`, `phase-01a`'s deliverable and exit criterion 2, `TC-627` and both DoD bars all moved off 1280×1024 in the same pass
 
 ---
 
@@ -140,6 +141,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Models authored: `rod`, `spool`, `pass-schedule`, `active-run`, `checkin`, `weld-event`, `spc-checkpoint`, `signalr-events`
 - [ ] `line-context.service` (current FL1/FL2/FL3 scope) and `run-state.service` (active alpha/footage/payoff via RxJS `BehaviorSubject`s — **no NgRx**, which is not used in this repo)
 - [ ] **Canonical enums defined once:** `State = 'Active' | 'Bypass' | 'Skip'` (never a boolean `IsActive`) and `EdgeType = 'Round' | 'Square'` with "Round Edge / Flat Edge" as display labels in a pipe
+- [ ] ⭐ **A view-model mapper per screen, as a pure function in a `.model.ts` sibling with its own spec** *(folded in 7 Sep 2026)* — DTO → the **12 existing interfaces** in `src/lib/interfaces/`, which the templates already bind. ⛔ **Do not redefine those interfaces**; map onto them, or the two shapes diverge. ⚠ **This replaces DB3's seven private `build*()` methods**, which currently return hardcoded literals straight into the fields the template binds — the mapper is what makes the reference screen a pattern rather than a layout
 
 **Rate-card basis:** API client + two implementations + 8 models, priced as a shared composite (20 h, §2)
 **Dependencies:** FW-N03; converges with FW-147 (backend enums) and FW-007 (DB `CHECK`s)
@@ -207,7 +209,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Rate-card basis:** real-time client, priced against §0.4's stated design (24 h)
 **Dependencies:** FW-N03
-**Blockers:** **G10** (MessagePack dependency / deploy prereqs)
+**Blockers:** **G10** (MessagePack dependency / deploy prereqs) · **G105** (the protocol is undecided and enums cross as strings under MessagePack, integers under JSON — decide before the enum mappers are written)
 
 ---
 
@@ -675,10 +677,10 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** the acceptance run's out-of-spec, stop-edge and missing-data assertions can be executed at all.
 
 **Acceptance Criteria:**
-- [ ] `POST /sim/{lineId}/steer` — move gauge and width toward or away from target **on a live run**, which is what `[TRP §8]` step 3's *"force N consecutive out-of-spec readings"* requires and what Dashboard 3's auto-prompt threshold is measured against
-- [ ] `DELETE /sim/{lineId}/run` — a `RUNNING → STOPPED` edge **at a chosen instant**, so `TC-171`'s **3 s stop against a 5 s dwell** and `TC-172`'s **weight latched at the stop timestamp** are executable. ⚠ **Configuration plus a restart cannot do this** — it destroys the run being demonstrated, and step 7's prompt-durability and step 10's reconnect assertions both need the run to survive
-- [ ] `POST /sim/{lineId}/fault` — **one fault only, dropped readings.** It is the sole way to exercise `FW-205`'s condition 5 (*two or more consecutive recordings missing*); the rest of `[SIM §7.2]`'s catalogue is `FW-213` and stays out
-- [ ] `GET /sim/state` — all three snapshots in one read, **so `FW-214`'s console populates on load without polling**. Added 15 Aug 2026 when the console entered trial scope; it is the fourth of `[SIM §8.1]`'s five, and `POST /sim/{lineId}/run` is the one that stays out (the trial starts runs through check-in, not through the simulator)
+- [ ] `POST /sim/{machineName}/steer` — move gauge and width toward or away from target **on a live run**, which is what `[TRP §8]` step 3's *"force N consecutive out-of-spec readings"* requires and what Dashboard 3's auto-prompt threshold is measured against
+- [ ] `DELETE /sim/{machineName}/run` — a `RUNNING → STOPPED` edge **at a chosen instant**, so `TC-171`'s **3 s stop against a 5 s dwell** and `TC-172`'s **weight latched at the stop timestamp** are executable. ⚠ **Configuration plus a restart cannot do this** — it destroys the run being demonstrated, and step 7's prompt-durability and step 10's reconnect assertions both need the run to survive
+- [ ] `POST /sim/{machineName}/fault` — **one fault only, dropped readings.** It is the sole way to exercise `FW-205`'s condition 5 (*two or more consecutive recordings missing*); the rest of `[SIM §7.2]`'s catalogue is `FW-213` and stays out
+- [ ] `GET /sim/state` — all three snapshots in one read, **so `FW-214`'s console populates on load without polling**. Added 15 Aug 2026 when the console entered trial scope; it is the fourth of `[SIM §8.1]`'s five, and `POST /sim/{machineName}/run` is the one that stays out (the trial starts runs through check-in, not through the simulator)
 - [ ] ⚠ **Routes are not registered at all when simulation is off — `404`, not `403`** (`[SIM §2.4]`). A present-but-forbidden control plane is one misconfigured role away from driving a live line
 - [ ] `Engineer` / `Admin` policy on top of that, **never `Operator`** (`[SIM §8.4]`)
 - [ ] ⚠ **Not among `[API]`'s 30 endpoints** and must not be added to that count — an engineering surface on a separate prefix (`[SIM §8.2]`)
@@ -758,7 +760,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Weights beyond the `smallint` bound on `WIPStations` are **refused**, not truncated
 - [ ] Re-entry inside one transaction is a **no-op** — the station claim and `actual_start_date` are their own evidence, so no caller-held retry token is needed (unlike `FW-219`)
 - [ ] `FlatWire` service granted read/write on `united_db`, `proddb`, `CommonDB`, `SlitterDB` and `wiplogdb` via `20_FlatWire_Grants.sql` (extends `FW-144`) — `[public]` membership is **per database**
-- [ ] ⚠ **FL2 is refused** (`@lineId` validated against FL1/FL3). Its shared write set is undefined — **`OI-115`**, and it blocks rather than merely awaiting sign-off
+- [ ] ⚠ **FL2 is refused** (`@machineName` validated against FL1/FL3). Its shared write set is undefined — **`OI-115`**, and it blocks rather than merely awaiting sign-off
 
 **Rate-card basis:** procedure 32 h hand-coded @ **0.75** (`[DE §1]` *non-trivial business service* — domain reasoning against an undocumented legacy schema with triggers) = 24 h · `CheckInService` call, unit-of-work seam and grants 12 h @ 0.70 = 8 h. **44 h hand-coded → 32 h AI-assisted.**
 
@@ -800,12 +802,12 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 > **New 19 Aug 2026, and the first half is a live correctness gap.** *"Single active run per line"* is stated
 > as a business rule in `phase-04`, owed as `409 RUN_ALREADY_ACTIVE` by `FW-157 §3`, and enforced **nowhere**:
-> `IX_FlatWireRun_LineId` is a **non-unique** index. Two concurrent check-ins on one line both pass the
+> `IX_FlatWireRun_MachineName` is a **non-unique** index. Two concurrent check-ins on one line both pass the
 > aggregate check and both commit — precisely the read-then-write race `CoilCheckin`'s
 > `IsAnyCoilCheckedInRule` has, reproduced in new code.
 
 **Acceptance Criteria:**
-- [ ] `UX_FlatWireRun_ActiveLine` — filtered UNIQUE on `LineId` where `Status IN ('Running','Paused')`, in the `UX_RodStaging_Bay` idiom. The aggregate still enforces the rule in code; this is **belt-and-braces**, and it is what makes the `409` truthful under concurrency rather than merely likely
+- [ ] `UX_FlatWireRun_ActiveLine` — filtered UNIQUE on `MachineName` where `Status IN ('Running','Paused')`, in the `UX_RodStaging_Bay` idiom. The aggregate still enforces the rule in code; this is **belt-and-braces**, and it is what makes the `409` truthful under concurrency rather than merely likely
 - [ ] Two concurrent check-ins on one line: one succeeds, the other fails on the index and surfaces `409 RUN_ALREADY_ACTIVE`
 - [ ] `RodCheckin.WipCoilOrdersWritten BIT NOT NULL DEFAULT 0` — **defaults to the safe direction**, so a missing value never authorises `FW-221`'s delete
 - [ ] Object baseline moves **49 → 50 index statements**, verified by count; the table count stays **28**. `[DBD §6.2]` moves with it
@@ -1135,7 +1137,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 >
 > ⚠ **Reconciled against the 31 Aug simulator build before it was built.** ⛔ **Four of
 > the five endpoints were already BUILT.** `FW-218` shipped `steer`, `stop`, `fault` and `state` at
-> **`/sim`** and is closed, so `POST /sim/{lineId}/run` is the one new route and this story **extends
+> **`/sim`** and is closed, so `POST /sim/{machineName}/run` is the one new route and this story **extends
 > that surface** rather than authoring one (`P-39`). The prefix is **`/sim`**, not
 > `/api/v1/flatwire/sim`; the surface is a **minimal-API group, not MediatR controllers** (`P-38`);
 > and the gate is **`FlatWireOpc:SimulateOpcFeed`**, not `SimulatePLCTagPush` — the *write* half of
@@ -1156,7 +1158,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** the console and the automated suites use one control surface.
 
 **Acceptance Criteria:**
-- [ ] **`POST /sim/{lineId}/run`** — scenario, seed, start weight, target and the **target run state** (`[SIM §8.1]`). **The one genuinely new route**, and what lets a line stopped through `DELETE /sim/{lineId}/run` restart without a service restart
+- [ ] **`POST /sim/{machineName}/run`** — scenario, seed, start weight, target and the **target run state** (`[SIM §8.1]`). **The one genuinely new route**, and what lets a line stopped through `DELETE /sim/{machineName}/run` restart without a service restart
 - [ ] ⛔ **Two of those parameters have no lever, so the route REPLACES the line's model rather than mutating a live one.** The seed is set in `LineModelBase`'s **constructor** and `StartWeightLb` is `private set`, also constructor-only; `ApplyConfiguration` carries neither. Replacing is what `[SIM §5.7]`'s tick-for-tick reproducibility requires anyway. ⚠ **Do not add a reseed or set-weight member to `ILineModel`**, and ⚠ **copy the options rather than mutating the bound `IOptionsMonitor` instance**, or the override leaks to every line
 - [ ] ⛔ **The target run state is what makes `Pause` reachable — `G73`.** `SetRunning(line, false)` maps straight to `Stopped`, so `Paused` and `Idle` cannot be commanded at all and `[SIM §4.4]`'s run-versus-line distinction has never been demonstrable, though `[SIM §9.2]` puts **Start / Stop / Pause** on every panel. ⛔ **No seventh route** — `DELETE /run` keeps the `Stopped` edge
 - [ ] **The four built endpoints are re-pointed at the line model, not rewritten** — paths, shapes and semantics unchanged (`P-39`). ⛔ **Do not change `OpcFeedSimulator`'s four lever signatures** (`P-266`; `FW-218` is closed)
@@ -1164,9 +1166,9 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] ⚠ **Extended as the existing minimal-API group, not converted to MediatR controllers over `UAController`** (`P-38`) — a controller would exist and then be *un-mapped* by a convention, a weaker claim than never mapping it. **The `{data,success,errors}` wire shape is unchanged**
 - [ ] ⚠ **Routes are not registered at all when no line model is hosted — `404`, not `403`** (`[SIM §2.4]`, `P-38`). A present-but-forbidden control plane is one misconfigured role away from driving a live line. ⛔ **The gate is `FlatWireOpc:SimulateOpcFeed`**, and ⚠ do not "fix" `G66` with a role check instead — `[SEC §8.8b]` makes the `404` the control and the policy the backstop
 - [ ] ⛔ **`G70`: widen that condition to *"the readings come from a line model"*** — `SimulateOpcFeed` **or** `UseOpcConnectionDouble` — and give the handlers **one seam satisfied by both `OpcFeedSimulator` and `OpcConnectionDouble`** instead of the concrete simulator. ⚠ **No second control surface for the double** (`P-39`)
-- [ ] **The seam carries the model factory too**, because `POST /run` needs it — both hosts hold a **byte-identical** private `CreateModel(LineId, FlatWireSimulationOptions)`, and one factory behind the seam replaces two copies. ⚠ That is the whole addition; the four lever signatures are untouched
+- [ ] **The seam carries the model factory too**, because `POST /run` needs it — both hosts hold a **byte-identical** private `CreateModel(MachineName, FlatWireSimulationOptions)`, and one factory behind the seam replaces two copies. ⚠ That is the whole addition; the four lever signatures are untouched
 - [ ] **Bind `FW-145`'s `SimulatorControl` policy** (`RequireAuthorization(FlatWirePolicies.SimulatorControl)`) **on top of** that, never `Operator` (`[SIM §8.4]`). ⛔ **`G72`: the built surface hardcodes `Roles = "Engineer,Admin"` and `Engineer` is not one of `[SEC §8]`'s six roles**, so it keeps denying after the claim is issued. ⚠ Do **not** add an `Engineer` role, and do **not** fall back to a bare `[Authorize]`. ⚠ **Standing condition, not a criterion:** `FW-145` issues no role claim yet, so these deny today — fail-closed
-- [ ] **`POST /sim/{lineId}/fault` accepts all seven of `[SIM §7.2]`'s faults**, not `FW-218`'s single `DroppedReadings`; `FaultId` was built with all seven, `FW-213`'s twelve behaviours are reachable on the objects only, and the console greys **six of seven** buttons for want of this route. ⚠ An unsupported kind stays **rejected, not ignored**
+- [ ] **`POST /sim/{machineName}/fault` accepts all seven of `[SIM §7.2]`'s faults**, not `FW-218`'s single `DroppedReadings`; `FaultId` was built with all seven, `FW-213`'s twelve behaviours are reachable on the objects only, and the console greys **six of seven** buttons for want of this route. ⚠ An unsupported kind stays **rejected, not ignored**
 - [ ] **`GET /sim/config` — the sixth endpoint (`G68`)**: the active `lbPerFt`, the seed and the simulation flag. `[SIM §9.2]` asks for `lbPerFt` ***displayed*** and the seed ***"displayed and settable"*** — ⚠ **"settable" is the seed's alone** and `POST /run` already carries it, so **a read closes `G68`**. ⛔ **Do not add a configuration write**: a runtime `lbPerFt` setter would decide `Q10` / `OI-45` by the back door. ⚠ `lbPerFt` **stays nullable** (`P-271`). ⛔ **Do not widen `SimLineState`** (six fields, `P-267`; `[SIM §9.2]` forbids it)
 - [ ] **`GET /sim/state` returns one snapshot per *hosted* line** so the console needs no poll on load. ⛔ **At most two, never three** — the standing rule is `{FL1,FL2}` or `{FL3}`, since polling FL2 and FL3 together would read one load cell and three stands twice a second, so `[SIM §8.1]`'s *"all three"* is unreachable **by design**. ⚠ **An unhosted line is OMITTED and the answer is still `200`**; the `400` belongs to the per-line routes
 - [ ] ⚠ **These belong to no endpoint total** — an engineering surface on a separate prefix; do not add them to `[API §3.2]`'s index (`[SIM §8.2]`)
@@ -1207,10 +1209,10 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 >
 > | Control | Trial |
 > |---|---|
-> | **Stop** · speed slider · gauge/width nudges | ✅ live — `DELETE /sim/{lineId}/run`, `POST /sim/{lineId}/steer` |
+> | **Stop** · speed slider · gauge/width nudges | ✅ live — `DELETE /sim/{machineName}/run`, `POST /sim/{machineName}/steer` |
 > | **Drop readings** fault | ✅ live — the one fault `FW-218` carries |
 > | Live readouts · dual state badges · target-vs-actual strips | ✅ live — ⚠ **`GET /sim/state` seeds only six fields** (`Line`, `Running`, `FootageFt`, `GaugeOffsetIn`, `DriftPerTickIn`, `DropTicksRemaining`); **speed, payoff weight, remaining %, gauge/width actual, line state and run status all come from the hub** |
-> | **Start** | ⚪ greyed — the trial starts runs through check-in, not the simulator (`POST /sim/{lineId}/run` is out) |
+> | **Start** | ⚪ greyed — the trial starts runs through check-in, not the simulator (`POST /sim/{machineName}/run` is out) |
 > | **The whole FL3 panel** | ⚪ greyed — `SimControlSurface` returns **400** for `FL3` today (`PLC-Q08` / `G30`) |
 > | **Scenario picker** (`InSpec`/`Drifting`/`OutOfSpec`/`Erratic`/`ToTarget`) | ⚪ greyed — whole-run shapes need `FW-210` |
 > | **Six of the seven fault buttons** | ⚪ greyed — `FW-213`. ⚠ `WeightVariance` would be inert anyway: `AlloyProperty.LbPerFtFactor` is seeded NULL (`OQ-10`) |
@@ -1428,7 +1430,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] `Rod` created — a `FlatWireDB`-local master **mirroring** the shared `coils` record, with **enforced** rod-alpha FKs. `coils` remains the source of truth for the rod *lifecycle*; the mirror is what makes the FKs enforceable (`D-04`)
 - [ ] `FlatWireRun` created — the hub table, so `SpoolProcessing.SourceRunId` can reference it
 - [ ] `SpoolProcessing` created
-- [ ] Indexes: `FlatWireRun(LineId, Status)`, `(Status)`, `(PassScheduleId)`, **`SpoolProcessing(SourceRunId)`**, **`SpoolProcessing(ParentRodAlpha)`** — *the two spool indexes were listed against `Spool` until 26 Aug 2026; since `Q60` (23 Aug) that is the article lookup and carries neither column*
+- [ ] Indexes: `FlatWireRun(MachineName, Status)`, `(Status)`, `(PassScheduleId)`, **`SpoolProcessing(SourceRunId)`**, **`SpoolProcessing(ParentRodAlpha)`** — *the two spool indexes were listed against `Spool` until 26 Aug 2026; since `Q60` (23 Aug) that is the article lookup and carries neither column*
 - [ ] **`PassScheduleId` is a real, enforced FK** on `FlatWireRun`, `RodCheckin`, `SpoolCheckin` and `CoilOutput`, created by `06`'s schedule section. Seeded values like `PS-1100-FL1-001` resolve to rows seeded by `FlatWire_SampleData_Schedule.sql`. *(This line said it "carries no local FK — a documented external reference, in the same class as `PlanId` and `SkidId`" until 26 Aug 2026; `D-31` retired that on 15 Aug. `PlanId`, `CoilOrderPlanId` and `SkidId` are unaffected and remain external references.)*
 
 **Rate-card basis:** 3 tables @ 4 h = 12 h (§2)
@@ -1467,7 +1469,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 > ⚠ **Re-derived 18 Aug 2026 — `D-32`.** Previously `56+4+12+16+8+12+52 = 160` → QA 32 → Cont 29 → **221 h** ✓ (§3b). `FW-001` (56) and `FW-002` (4) are **cancelled**, so the base falls by 60 h and QA and contingency are re-derived from the reduced base — the convention `[CE §3b]` uses for every carve. **221 → 138 h, −83 h all-in.** This is a **removal of scope, not a productivity claim**, so the QA line is re-derived rather than held; `[CE §8]`'s warning against mechanically re-applying the 20 % concerns work that *moved* into manual regression, and here there is no work left to regress.
 
-> **Restated 15 Aug 2026 from 215 h.** `FW-007` 48 → 52 h for **`G21`**: the `RodStaging.Station` column plus re-keying `UX_RodStaging_Bay` from `(LineId, PayoffPosition)` to `(Station, PayoffPosition)`. ⚠ **Separate from `[CE §8]`'s understatement**, which is about the costed table count rather than any scope change — **do not net them**; one is a costing gap, the other scoped work. *(The "~17 h" figure this line quoted until 26 Aug 2026 is withdrawn at the source — `[CE §8]` publishes the per-table 4 h and no total.)*
+> **Restated 15 Aug 2026 from 215 h.** `FW-007` 48 → 52 h for **`G21`**: the `RodStaging.Station` column plus re-keying `UX_RodStaging_Bay` from `(MachineName, PayoffPosition)` to `(Station, PayoffPosition)`. ⚠ **Separate from `[CE §8]`'s understatement**, which is about the costed table count rather than any scope change — **do not net them**; one is a costing gap, the other scoped work. *(The "~17 h" figure this line quoted until 26 Aug 2026 is withdrawn at the source — `[CE §8]` publishes the per-table 4 h and no total.)*
 
 **S0 total** — `370 + 519 + 138 = **1,027 h**` ✓ · 12 working days · **10.7 FTE** *(1C re-derived to 138 h by `D-32` six lines above; this roll-up still carried the pre-`D-32` 221 h and its 1,110 h / 11.6 FTE until 26 Aug 2026. `[CE §3c]` publishes the same 1,027 h — ⚠ **check the composition, never the total**: §2–§5 of `[CE]` carry a differently-composed 1,027 h that predates the 1B restatements.)*
 
@@ -1560,7 +1562,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
-###### FW-155 · `FlatWireRun(LineId, Status)` index
+###### FW-155 · `FlatWireRun(MachineName, Status)` index
 **Hours:** 4 h DB · **Priority:** Medium · **Sprint:** S1 · **Phase:** 3 · **Stream:** DB
 
 **As a** database owner,
@@ -1568,7 +1570,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** a board polled by every supervisor terminal does not table-scan the hub table.
 
 **Acceptance Criteria:**
-- [ ] Nonclustered index on `FlatWireRun(LineId, Status)` created in `07_Indexes`
+- [ ] Nonclustered index on `FlatWireRun(MachineName, Status)` created in `07_Indexes`
 - [ ] `GET /lines/status` execution plan uses it
 - [ ] Idempotent guard, consistent with FW-152's runner
 
@@ -1588,7 +1590,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **Acceptance Criteria:**
 - [ ] Five rules implemented: Payoff1 < 3,000 lb → **Warning** · gauge outside ±tolerance → **Warning** · component fault → **Critical** · active WIP rejection → **Warning** · **Payoff2 not loaded AND Payoff1 < 2,000 lb → Critical**
 - [ ] `AlertRaised` and `AlertCleared` broadcast as **rare domain events — immediate and unbatched**, never inside the 10 Hz telemetry batch
-- [ ] **"Payoff2 not loaded" reads `RodStaging`** — a `Staged` row on `(LineId, PayoffPosition)` means loaded. `PayoffWeight` alone **cannot** distinguish an empty bay from a sensor reading zero
+- [ ] **"Payoff2 not loaded" reads `RodStaging`** — a `Staged` row on `(MachineName, PayoffPosition)` means loaded. `PayoffWeight` alone **cannot** distinguish an empty bay from a sensor reading zero
 - [ ] Consumes `PayoffStateChanged` (Phase 4) to keep the evaluation live
 - [ ] Unit tests cover each threshold's raise and clear edges
 
@@ -1737,7 +1739,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Acceptance Criteria:**
 - [ ] `CheckInController POST /checkin/rod`; `CheckInRodCommand` (line, rodAlpha, payoff, diameterMeasured, weights, `InspectionDto`, scheduleId, operatorId, orderId) → `CheckInRodResponse` (runId, checkedInAt, plcTagsPushed)
-- [ ] **Records are written BEFORE the PLC push** — inspection result, pre-run SPC checkpoint, run record with schedule id + version, acknowledgement audit entry — then `PLCTagService.PushPassSchedule(scheduleId, lineId, payoffPosition)`
+- [ ] **Records are written BEFORE the PLC push** — inspection result, pre-run SPC checkpoint, run record with schedule id + version, acknowledgement audit entry — then `PLCTagService.PushPassSchedule(scheduleId, machineName, payoffPosition)`
 - [ ] **MVP-1 persists its own snapshot of what it pushed** — schedule id, version and effective configuration — so a certificate stays reproducible after the owning system later edits the schedule
 - [ ] Business rules: Draft schedule not acknowledgeable (`422`); single active run per line (`409`); all-or-nothing
 - [ ] Where a staged row exists, the request's `payoffPosition` must match it (`409` on mismatch); check-in **consumes** the staged row (`RodStaging.Status → CheckedIn`, `RodCheckinId` linked) rather than creating a parallel record
@@ -1783,14 +1785,14 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] `RodStaging` table live with the 3-item inspection, `RodSeqno`, `IsWelded`, carry-forward evidence (`FootageRunToDateAtStaging`) and release audit (`UnstageKind`, `WipRejectionId`)
 - [ ] Repository/EF writes across `RodCheckin`, `FlatWireRun`, `SpcCheckpoint`, `SpcMeasurement`, `RodCheckout`
 - [ ] ~~**Cross-database write setting the `coils` rod row to `INFLAT`**~~ → **`FlatWireDB`-local write setting `Rod.Status = 'INFLAT'`** — at check-in only, never at staging. ⚠ **Changed by `D-32` (18 Aug 2026):** `FW-002` is cancelled, so `INFLAT` is not a shared status value and this stops being a cross-database write at all. **The 8 h is deliberately held** — the write still has to be made, ordered and compensated; only its target moved
-- [ ] Indexes: `RodCheckin(RunId)`, `RodCheckin(RodAlpha)`, **`RodCheckin(LineId, PayoffPosition)`** *(was missing)*, `RodStaging(LineId, Status)`, `RodStaging(RodAlpha)`
+- [ ] Indexes: `RodCheckin(RunId)`, `RodCheckin(RodAlpha)`, **`RodCheckin(MachineName, PayoffPosition)`** *(was missing)*, `RodStaging(MachineName, Status)`, `RodStaging(RodAlpha)`
 - [ ] **Filtered unique indexes `UX_RodStaging_Bay` and `UX_RodStaging_RodActive`** enforce one rod per bay and one bay per rod
 - [ ] `PayoffPosition` lookup has its 3 pinned rows and `FlatWireRunDetail.PayoffPositionId` now has an enforced FK parent
 - [ ] **`FL1PO` WIP station seeded** by deploy step 2 (`FW-241`), sharing FL1's `MachineIdx` — the legacy `ZR23`/`ZR23PO` pattern. **`FL2PO` stays absent** per `PCI002`
 
 **Rate-card basis:** `RodStaging` table 4 h + repository/EF writes across five tables 16 h + ~~cross-DB~~ **local** `Rod.Status → INFLAT` write 8 h = 28 h (§3 worked derivation) *(target changed by `D-32`; the 8 h is unchanged and Phase 4's published figure is unaffected)*
 **Dependencies:** FW-007
-**Blockers:** ⚠ **G21 — `UX_RodStaging_Bay` does not enforce one-rod-per-bay across FL1/FL3, and the uniqueness scope is unresolved. This blocks the schema freeze for this phase** · **G2 / G17**
+**Blockers:** ~~⚠ **G21 — `UX_RodStaging_Bay` does not enforce one-rod-per-bay across FL1/FL3, and the uniqueness scope is unresolved. This blocks the schema freeze for this phase**~~ ✅ **Resolved 15 Aug 2026** — decided as one physical station and fixed in three layers; dropped from this story's `blocked_by` on 7 Sep 2026 · **G2 / G17**
 
 ---
 
@@ -1802,7 +1804,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** the "Payoff2 not loaded" alert reflects reality rather than a stale poll.
 
 **Acceptance Criteria:**
-- [ ] New event `PayoffStateChanged { lineId, position, state, rodAlpha, rodSeqno, isWelded }` on every bay-occupancy change — stage, un-stage, a **passing** weld, and check-in consuming a staged row
+- [ ] New event `PayoffStateChanged { machineName, position, state, rodAlpha, rodSeqno, isWelded }` on every bay-occupancy change — stage, un-stage, a **passing** weld, and check-in consuming a staged row
 - [ ] **A failed weld changes no bay state and broadcasts nothing**
 - [ ] **Sent immediately and unbatched** as a rare domain event — it must **not** enter the ~100 ms / 10 Hz telemetry batch. Live weight keeps coming from the batched `PayoffWeight`
 - [ ] On check-in success, broadcast `LineStatus {status: Running}` so Dashboard 1 flips to RUNNING, and `ComponentStatus` reflecting the pushed values
@@ -1822,7 +1824,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** the line runs the schedule I confirmed and nothing else.
 
 **Acceptance Criteria:**
-- [ ] `PushPassSchedule(scheduleId, lineId, payoffPosition)` writes the six value groups the push needs: **component active/bypass state · die sizes · roll gaps · edge type · speed · gauge and width targets**. Nothing else
+- [ ] `PushPassSchedule(scheduleId, machineName, payoffPosition)` writes the six value groups the push needs: **component active/bypass state · die sizes · roll gaps · edge type · speed · gauge and width targets**. Nothing else
 - [ ] Written as a batch to the selected payoff position
 - [ ] **Triggered only by the step-2 acknowledgement** — never at schedule generate or apply time, and never at pre-check-in
 - [ ] Failure path performs **compensating re-clears**, and no `LineStatus` broadcast is emitted
@@ -1869,6 +1871,8 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 ###### FW-062 · Dashboard 3 — Active Run Monitor (FL1) and FL3 variant
+
+> ⭐ **Re-scoped 7 Sep 2026 by `D-55`: ONE machine-driven component for FL1/FL2/FL3** at `#/flat-wire/home/:machineName`, with **four** per-line rows — material panel, centre status card, action set, spool overlay. The "variants" are retired, and six things that read as configuration are data or uniform. ⛔ **Now depends on `FW-N15`** (route, resolver, `LINE_PROFILES`) **and `FW-N16`** (station-claim read), neither of which existed. Full criteria in the task file.
 **Hours:** 32 h FE · **Priority:** Critical · **Sprint:** S2 · **Phase:** 5 · **Stream:** FE
 
 **As an** FL1 operator,
@@ -1884,6 +1888,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] After N consecutive out-of-spec readings (**configurable, default 5**) → auto-prompt SPC toast
 - [ ] SignalR drop → reconnect banner with cached state
 - [ ] **Dashboards 13 and 14 are not built** — descoped 4 Aug 2026, both mockups deleted
+- [ ] ⭐ **Screen state on `signal()` / `computed()`, with no manual `detectChanges()` anywhere** *(folded in 7 Sep 2026)*. The built screen holds 13 plain fields under `OnPush` and calls `changeDetectorRef.detectChanges()` in four handlers, and it mutates objects in place — `table.isExpanded`, `alert.isAcknowledgeable`. ⚠ **That works only because nothing is async**; the first live stream makes it intermittent, which is the worst failure mode to debug on a shop floor. ✅ `spool-notification.component` already uses `input.required()` / `output()` and is the in-library precedent to follow
 
 **Rate-card basis:** new dashboard 24 h + FL3 screen variant 8 h = 32 h (§2)
 **Dependencies:** FW-133, FW-162, FW-163, FW-081, FW-164
@@ -1892,6 +1897,8 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 ###### FW-162 · `run-status-cards`
+
+> ⭐ **`D-55`, 7 Sep 2026:** the middle card is **profile-driven** (payoffs \| material flow) rather than line-branched markup, and the **Components card renders from the run's pass schedule** — so there is no per-line component list in code on any line.
 **Hours:** 20 h FE · **Priority:** Critical · **Sprint:** S2 · **Phase:** 5 · **Stream:** FE
 
 **As an** operator,
@@ -1912,6 +1919,8 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 ###### FW-163 · `info-grid` and `chart-tab-strip`
+
+> ⭐ **`D-55`, 7 Sep 2026:** the grid **subject** comes from the line profile (rod \| spool), and there is **one shared Order Information column set for all three lines**. ⚠ Its blocker widens: the unfinalised column set is **`Q3`** (*"the full field list per station for FL1, FL2 and FL3 has not been documented"*), with `Q18` narrowing to one field inside it.
 **Hours:** 20 h FE · **Priority:** High · **Sprint:** S2 · **Phase:** 5 · **Stream:** FE
 
 **As an** operator,
@@ -1923,6 +1932,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Order Information carries customer, due date, gauge/width tolerance, setup width/gauge, finish, OD min–max and weights
 - [ ] **`chart-tab-strip`** — the **section collapse toggle with `localStorage` persistence**, plus a single inert tab label that titles the section
 - [ ] ⚠ **The collapse toggle has no requirement of its own** — `FR-112` covered only the tabs, which went with the Machine View descope. This is a pre-existing gap, now visible; either keep the strip as the collapse control or fold it into the shell, but record the choice
+- [ ] ⭐ **The two column-header arrays move into content data** *(folded in 7 Sep 2026)* — `ROD_INFO_COLUMNS` and `ORDER_INFO_COLUMNS` sit in `flat-wire.constants.ts` as **untranslated literals**, the only visible strings in the library that do not resolve through `AppConfigService.getContentData()`. They belong in `src/assets/content-data/flat-wire.json` with the rest, and this story is where they move because it is the story that replaces the markup consuming them
 
 **Rate-card basis:** `info-grid` composite 12 h + `chart-tab-strip` primitive 8 h = 20 h (§2)
 **Dependencies:** FW-133
@@ -1931,6 +1941,8 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 ###### FW-081 · `gauge-trace-chart` live streaming, maximize and runtime source toggle
+
+> ⭐ **`D-55`, 7 Sep 2026:** the trace treatment is now **uniform across all three lines** — same titles (`Gauge` / `Width`), same axis, one source path — so `isLive` is driven by the data rather than by the line. ⛔ **A `null` reading renders a no-measurement state, never a flat line at target.** ⚠ That uniformity collides with `FR-120`, which is `Must` and `[CONFIRMED]`; the reconciliation is a client decision and is recorded as open.
 **Hours:** 4 h FE · 24 h RT · **Priority:** Critical · **Sprint:** S2 · **Phase:** 5 · **Stream:** FE + RT
 
 **As an** operator,
@@ -1952,6 +1964,8 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 ###### FW-164 · `GET /run/active`, `GET /run/{runId}/gaugetrace` and `RunQueryService`
+
+> ⭐ **Two response additions, 7 Sep 2026 (`D-55`)**, both non-breaking under `[API §8]` and both riding this one read rather than a second call (`P-254`): **(1)** the **station claim** — `WIPStation` plus the resolved `CoilNo`, or an explicit *idle* marker (`FW-N16` owns the view and the read); **(2)** a **second component value** — `ComponentStateItem.CurrentValue` is a single `decimal?`, but the Components card needs two on some rows (FM1's gap **and** width; a stand's diameter **and** its `EdgeType`). ⚠ `[API §4.7a]`'s published shape is also behind the built DTO — it omits the order block and `outOfSpec` (`P-254`).
 **Hours:** 12 h BE · **Priority:** High · **Sprint:** S2 · **Phase:** 5 · **Stream:** BE
 
 **As a** client developer,
@@ -1991,7 +2005,54 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
-**Phase 5 reconciliation** — FE `32+20+20+4 = 76` · BE 12 · DB 8 · RT 24 · base **120** → QA 22 → Cont 12 → **154 h** ✓ (§3b) *(QA/cont carried at published values — see the arithmetic note above)*
+###### FW-N15 · Active Run machine context — the `home/:machineName` route, line resolution and the line capability profile
+**Hours:** 8 h FE · **Priority:** Critical · **Sprint:** S2 · **Phase:** 5 · **Stream:** FE
+
+**As an** FL1, FL2 or FL3 operator,
+**I want** the run monitor to open on my own line from its address,
+**So that** one screen serves all three lines and shows me the material on mine.
+
+**Acceptance Criteria:**
+- [ ] One child route `path: 'home/:machineName'` serves all three lines — `#/flat-wire/home/fl1|fl2|fl3`
+- [ ] `FLAT_WIRE_CONSTANTS.FLAT_WIRE_LANDING` is replaced by `HOME`; ⛔ **`screenKey` does NOT follow it** — it is stamped into every element id, so it binds to a stable semantic key
+- [ ] The segment is normalised to upper case to reach `MachineName`; ⛔ an unrecognised or absent line is **refused**, never defaulted to FL1
+- [ ] `LineContextService` is the single site resolving `machineName` / `station` / `machineIdx` — machine values **cited** from `[INT]`, never retyped
+- [ ] `LINE_PROFILES` carries **four fields per line**; ⛔ nothing the API already supplies may enter it (`components[]`, `RouteMode`, `weldEvents[]`, `payoffs[]`, the station claim are **data**)
+- [ ] ⚠ **A line switch reloads, it does not relabel** (`FW-209`'s rule) — subscribe to `paramMap`, never `snapshot`; leave and re-join the hub group
+- [ ] ⚠ **`#/flat-wire` is stranded** by the required param — it resolves from the terminal registration, falling back to `FW-204`'s picker
+
+**Rate-card basis:** 8 h, a **proxy not a measurement** — §2's smallest unit is 4 h for a whole table and a service-plus-route-plus-constant has no card entry (the reasoning `FW-209` used). ⛔ Not 0 h: `hours: 0` means **cancelled** here
+**Dependencies:** FW-N03
+**Blockers:** **`OI-11`** *(Roll Adjust on FL1 — the action-set profile row only)*
+
+---
+
+###### FW-N16 · The station claim — `FlatWireDB..WIPStations` view and the checked-in-material read
+**Hours:** 8 h BE · 4 h DB · **Priority:** Critical · **Sprint:** S2 · **Phase:** 5 · **Stream:** BE + DB
+
+**As a** client developer,
+**I want** the active-run response to carry the material claimed at the line's station,
+**So that** one machine-driven screen shows the right rod or spool without a second call.
+
+**Acceptance Criteria:**
+- [ ] A **`FlatWireDB..WIPStations` view** over `CommonDB.dbo.WIPStations`, per `[DBD §6.6]`'s one-object convention (`FlatWireDB..Alloys` is the precedent)
+- [ ] ⛔ **No shared object is altered** — a view is a read, so `D-32` holds
+- [ ] The read keys on `LTRIM(RTRIM(WIPStation)) = @station`, a seek on `wip_stations_k0`. ⛔ **Not on `MachineIdx`** — unindexed, and `FL1PO` shares FL1's value, so it returns two rows
+- [ ] ⛔ **`CoilNo` is ABSENT when it is `''` or equals the station name** — the test `FlatWire_ReleaseStation` applies; an idle station parks its own name there
+- [ ] Values trimmed on read; the claim **rides `GET /run/active?line=`** rather than a second call (`P-254`), degrading to idle rather than to an error
+- [ ] ⛔ **READ-ONLY** — claiming is `FlatWire_CheckInRod`'s, releasing `FlatWire_ReleaseStation`'s (`FW-174`, `FW-202`). Do not add a second writer
+- [ ] ⚠ **Record, do not fix:** `CoilNo` is `varchar(9)` — fits a rod (6) and a spool (8), **not** an output coil (12). Input material only
+- [ ] ⚠ **Does not cover FL2's writer.** No spool check-in proc exists, so this read finds the idle sentinel through a real FL2 run — `OI-115`'s territory, and ⛔ green tests here must not imply FL2 works
+
+**Rate-card basis:** one view 4 h DB + the read and its response field 8 h BE = 12 h, mirroring `FW-164`'s basis. ⛔ Not 0 h
+**Dependencies:** FW-164, FW-230, FW-231
+**Blockers:** ⛔ **`G54`** *(`Critical` — nothing writes `SpoolTraceability` or registers an FL1 segment alpha in `proddb..coils`; `FW-230`+`FW-231` ship together or neither)*
+
+---
+
+**Phase 5 reconciliation** — FE `32+20+20+4+8 = 84` · BE `12+8 = 20` · DB `8+4 = 12` · RT 24 · base **140** → QA 22 → Cont 12 → **174 h** ✓ (§3b) *(QA/cont carried at published values — see the arithmetic note above)*
+
+> ⚠ **This phase rose 154 → 174 h on 7 September 2026** — `D-55` minted **`FW-N15`** (8 h FE) and **`FW-N16`** (8 h BE · 4 h DB), neither of which had an owner: the line route and resolver, and the read of the WIP-station claim. ⛔ **This is an ADDITION, not a re-apportionment** — no existing story lost hours to it, and QA and contingency are carried unchanged at their published values per the arithmetic note. ⚠ **The downstream totals are NOT swept**: `[CE]`, `[DSP]` and `[SSP]` still publish the 154 h figure, and reconciling them is a costing pass, not part of this change. `D-55` records why the two stories exist; §3b is the site that owns the phase figure.
 
 ---
 
@@ -2404,7 +2465,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **Rate-card basis:** 2 tables @ 4 h = 8 h + ~~shared-schema columns 16 h *(named in the scope call)*~~ **cancelled, `D-32`** + indexes 4 h = **12 h** (§2, previously 28 h)
 > ⚠ **The 16 h priced the shared `coils` columns and their impact audit, and it falls to zero rather than shrinking** — the local columns that replace them (`Rod.FootageRunToDate`, `Rod.RemainingWeightEstimateLb`, `SpoolProcessing.SourceRodAlpha`) were **delivered in the DDL on 26 Jul 2026**, so there is no residual schema work hiding inside the removed line. **If wiring the carry-forward write paths needs time of its own it must be re-priced as a new line, not assumed to have been inside this one.**
 **Dependencies:** FW-007, ~~FW-001~~ *(cancelled)*
-**Blockers:** **G24** *(the approval columns exist now; PIN source is `OI-38`)* · **G21 / OQ-23**
+**Blockers:** **G24** *(the approval columns exist now; PIN source is `OI-38`)* · ~~**G21**~~ ✅ **resolved 15 Aug 2026, dropped 7 Sep** · **OQ-23**
 
 ---
 
@@ -2491,6 +2552,8 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 ###### FW-178 · Dashboard 3 FL2 variant configuration
+
+> ⭐ **Narrowed 7 Sep 2026 by `D-55`.** Four of its six criteria dissolve: the Live/Profile toggle (trace source is now uniform), the Order Information weight field (one shared column set, `Q3`), the three FM2 rows (**pass-schedule data**, not a variant) and the info-grid chrome. ✅ **What remains is genuinely FL2:** the material-flow card's content model and the Spool Information subject. ⚠ Its trace half moves to `FW-181` as a shared-path rule.
 **Hours:** 8 h FE · **Priority:** High · **Sprint:** S3 · **Phase:** 8 · **Stream:** FE
 
 **As an** FL2 operator,
@@ -2544,7 +2607,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** a `WHERE OrderNo =` on a `VARCHAR(50)` does not scan.
 
 **Acceptance Criteria:**
-- [ ] `SpoolCheckin` write path live, `LineId` restricted to FL2/FL3
+- [ ] `SpoolCheckin` write path live, `MachineName` restricted to FL2/FL3
 - [ ] `FlatWireRun` FL2 run header created on check-in; `SpoolProcessing.Status = INFLAT`
 - [ ] **New index on `SpoolProcessing.OrderNo`** — unindexed today. It also fixes DB5's scan, which validates against nothing
 - [ ] Reads wired: source FL1 run gauge trace + `WeldEvent` markers, `SpoolProcessing.SourceRunId` / `ParentRodAlpha`
@@ -2869,6 +2932,8 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 ###### FW-189 · Dashboard 2 and 3 FL3 variants
+
+> ⭐ **The DB3 half is now the action set alone** (`D-55`, 7 Sep 2026) — trace titles, the Components card and the Rod Information columns are all shared with FL1, so FL3's Active Run delta is one profile row. The DB2 FL3 variant is unchanged. ⚠ **Recorded double-count:** FL3's DB3 work is costed both here (4 h of 12) and in `FW-062` (8 h of 32); hours are left untouched pending a costing pass, which will now find more than 12 h.
 **Hours:** 12 h FE · **Priority:** High · **Sprint:** S3 · **Phase:** 10 · **Stream:** FE
 
 **As an** FL3 operator,
@@ -3622,7 +3687,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] If yes: `[SIG §5.2]` gains the event, `IFlatWireClient` the member, `Models/RealTime/HubContracts.cs` the payload, `[SIG §5.6]` the Angular mirror and `FW-136` the client leg — ⚠ **in ONE pass**, because `P-22` mints the interface whole precisely so it is not widened piecemeal
 - [ ] ⚠ **This is a BREAKING change under `[API §8]`** and must be recorded as one
 - [ ] `FW-208`'s step-8 handler set goes from five broadcasts to six; the *"eight handlers"* figure is unchanged (six post-commit + two in-transaction)
-- [ ] Payload carries what DB7's other viewers need — at least `lineId`, `runId`, coil alpha, weight and skid position — and follows `[SIG §5.4]`'s shared-base convention where it applies
+- [ ] Payload carries what DB7's other viewers need — at least `machineName`, `runId`, coil alpha, weight and skid position — and follows `[SIG §5.4]`'s shared-base convention where it applies
 - [ ] If the client says no: the event stays handler-less **by decision**, `P-137` is restated as settled, and this story closes at 0 h
 
 **Rate-card basis (§2):** 1 new hub event (typed contract + publisher + subscriber) @ 8 h (RT 8) · Angular mirror + `FW-136` leg @ 4 h (FE 4) = **12 h**
@@ -3961,7 +4026,7 @@ not in this edit.
 > - **`G55`** — `CK_SpoolCheckin_PayoffPos` pins FL2's spool to payoff **`1`** while `CanonicalEnums.cs` and the seeded `PayoffPosition` row both make it **`3` (`TraversingTakeup`)**. ⚠ **On a column with no FK, so `TC-020`'s membership diff passes** — the disagreement is about *meaning*.
 
 **Acceptance Criteria:**
-- [ ] `G41`: the constraint becomes line-aware so an FL2 schedule can be authored. ⚠ **Do not generalise into *"a component's `Stand.LineId` must equal its schedule's `LineId`"*** — `[GAP]` forbids it explicitly
+- [ ] `G41`: the constraint becomes line-aware so an FL2 schedule can be authored. ⚠ **Do not generalise into *"a component's `Stand.MachineName` must equal its schedule's `MachineName`"*** — `[GAP]` forbids it explicitly
 - [ ] `G55`: FL2's payoff settled at one value across the `CHECK`, `CanonicalEnums.cs` and the `PayoffPosition` seed — *"FL2 has ONE payoff"* is true and is **not** the same claim as *which one*
 - [ ] `G52`: `Sole` either joins a tier in `RodOrderAllocation.md` §3's partition or leaves the `CHECK`; `FR-546`'s refusal is demonstrable at both stations
 - [ ] `G50`: the three holes closed — alloy FK'd on the material side, payoff position modelled one way, `ComponentName` referencing the vocabulary
@@ -4243,7 +4308,7 @@ not in this edit.
 > relaxing `RunPauseEvent`, which narrows to the three run buckets (**47** codes).
 
 **Acceptance Criteria:**
-- [ ] `POST /line/{lineId}/downtime` opens a **line-scoped** event, `RunId` set only if a run happens to be open
+- [ ] `POST /line/{machineName}/downtime` opens a **line-scoped** event, `RunId` set only if a run happens to be open
 - [ ] `POST /downtime/{id}/end` closes it, stamping `EndedAt`/`EndedBy`. ⚠ **`DowntimeSeconds` is computed** — never written, `NULL` while open
 - [ ] `IsNonprodTime`, `DelayBufferMin` and `SupervisorOverride` are **snapshotted from `DowntimeReason`** at start, so retuning the lookup cannot re-price history
 - [ ] Only `DWN##` accepted (`CK_LineDowntimeEvent_Code`); `CK_RunPauseEvent_Bucket` rejects `Downtime` on the pause path. **Neither endpoint accepts the other's codes**
@@ -4406,7 +4471,7 @@ not in this edit.
 **Acceptance Criteria:**
 - [ ] Read and write endpoints, following `API/Domain/CoilCheckin` — ⚠ **`SlitterInterface` is explicitly not a reference**
 - [ ] **`CK_TIRS_Mount` enforced in the aggregate as well as the database**; a violation answers **422**, not 500
-- [ ] `LineId` restricted to `FL1` / `FL2` at the boundary. ⚠ **An `FL3` roll set is a client error** (`D-42`)
+- [ ] `MachineName` restricted to `FL1` / `FL2` at the boundary. ⚠ **An `FL3` roll set is a client error** (`D-42`)
 - [ ] ⚠ **`NominalDiameterIn` is not derived from, validated against or reconciled with `Stand.RollDiameterIn`** — separate values, separate owners (`D-26`, `[PLC §5.4]`)
 - [ ] Retirement sets `LifecycleStatus`; it does not delete. Same discipline as `FR-250`
 
@@ -4521,11 +4586,11 @@ not in this edit.
 >
 > ⚠ **The `Set Number` leg is the important one.** `Name` (6 Sep) and `EdgerToolAlpha` (7 Sep) were
 > both removed from the register once nothing was found to read them, so it has **no natural key**:
-> `(LineId, SetNumber)` is the replacement and `Q95` leg 2 is what decides its scope.
+> `(MachineName, SetNumber)` is the replacement and `Q95` leg 2 is what decides its scope.
 
 **Acceptance Criteria:**
 - [ ] `Q95` q1 applied — **drop `SerialNo` and its filtered index** if edger sets carry no serial. ⚠ That moves the index count; pair it with a recount
-- [ ] q2 applied — ⚠ **and the NATURAL KEY added with it. The table has no unique constraint at all today**: `Name` (6 Sep) and `EdgerToolAlpha` (7 Sep) were both removed once nothing was found to read them (`G104`), so **two identical rows are possible**. Add `(LineId, SetNumber)` filtered-unique, or `(SetNumber)` if the letter is unique shop-wide. ⚠ **Filtered means an index statement, so it moves the count** — pair with a recount. ⛔ **Do not answer it by reinstating `Name` or an alpha**
+- [ ] q2 applied — ⚠ **and the NATURAL KEY added with it. The table has no unique constraint at all today**: `Name` (6 Sep) and `EdgerToolAlpha` (7 Sep) were both removed once nothing was found to read them (`G104`), so **two identical rows are possible**. Add `(MachineName, SetNumber)` filtered-unique, or `(SetNumber)` if the letter is unique shop-wide. ⚠ **Filtered means an index statement, so it moves the count** — pair with a recount. ⛔ **Do not answer it by reinstating `Name` or an alpha**
 - [ ] q3 applied — `GrooveNo` is real ordering, or it goes
 - [ ] q4 applied — ⚠ **`.100` is read as *per grind* (`6.00` → `4.75` ≈ twelve).** If that is wrong the remaining-life figure is wrong **silently**
 - [ ] q5 applied — if the grid's `Type` cell **is** the edge profile, **fold `EdgerType` into `EdgeType`** and drop the spare. Back to `NOT NULL`, or left nullable. ⚠ **Check `CK_PSC_EdgeTypeReq` first**; and ⚠ **do not align with `DieType`** — same heading, different meaning
@@ -4550,7 +4615,7 @@ not in this edit.
 - [ ] Read and write endpoints, following `API/Domain/CoilCheckin` — ⚠ **`SlitterInterface` is explicitly not a reference**
 - [ ] **Gauges are a child collection of the aggregate**; no standalone endpoint. A duplicate gauge on one tool answers **422**, not 500
 - [ ] `EdgeType` accepts **null** (`D-53`). ⛔ Do not "fix" a null by defaulting it to `Round`
-- [ ] `LineId` restricted to `FL2` at the boundary. ⚠ **An `FL1` or `FL3` edger set is a client error** (`D-42`)
+- [ ] `MachineName` restricted to `FL2` at the boundary. ⚠ **An `FL1` or `FL3` edger set is a client error** (`D-42`)
 - [ ] `LifecycleStatus` rejects a **derived band** — ⚠ `Active` means a lifecycle state here and a life band elsewhere
 - [ ] Enum mirror holds C# ↔ TypeScript ↔ DB CHECK (`TC-020`). ⚠ **`FK_PSC_Edger` kept its name** through the re-point
 - [ ] Unit tests per `G101` / `D-50`
@@ -4737,6 +4802,120 @@ not in this edit.
 > ⚠ **No published figure is re-derived.** 1B stays at **519 h**, S0 at **1,027 h**, and the baseline
 > at **114 live stories / 3,186 h**. `FW-249` and `FW-258` own the arithmetic; this set is a further
 > input to it, not a second answer.
+
+#### Additive — the shared header's environment badge, minted 7 Sep 2026 (`FW-N13`)
+
+> **Found by reconciling the story records against the built Angular library, not by a review of
+> this file.** `flat-wire`'s `api-methods.constants.ts` declares exactly one method name —
+> `FlatWire/GetServerConnectionInfo` — and **no FlatWire controller implements it**, while
+> `CoilReceiving`, `FurnaceScheduler`, `Login` and `SlitterInterface` all carry the identical
+> action. ⚠ **The client half was already complete**, so this is a copy rather than a design.
+>
+> ⛔ **It fails silently on every screen.** `lib-header` subscribes without an error branch, so the
+> environment badge simply stays blank and nothing logs — which is why it survived the build, the
+> lint and the test run untouched.
+
+###### FW-N13 · FlatWire/GetServerConnectionInfo — the shared header's environment badge
+**Hours:** 3 h BE · **Priority:** Medium · **Sprint:** S0 · **Phase:** 1B · **Stream:** BE
+
+**As an** operator at a shopfloor terminal,
+**I want** the header to tell me which environment and database server I am connected to,
+**So that** I never record production work against a test instance, or the reverse.
+
+**Acceptance Criteria:**
+- [ ] A `GetServerConnectionInfo` action on a FlatWire controller returning `ActionResult<ActionResultBase<string>>`, **copied from one of the four sibling implementations** rather than designed
+- [ ] Reachable at `api/v1/flatwire/GetServerConnectionInfo` — which is what the client's `prefix` + `flatWireApiUrl` + the already-declared suffix composes to, so ⛔ **no client change is required or permitted**
+- [ ] Returns the database server the service is actually connected to, so `[DEP §2]`'s `test1` instance is distinguishable from production
+- [ ] Verified in the browser: the header environment label renders on `#/flat-wire` instead of staying blank
+
+**Rate-card basis:** query endpoint **3 h** (§2) — a thin read, no MediatR handler, no validator, no new contract
+**Dependencies:** FW-138
+**Blockers:** —
+
+> **Additive-set reconciliation** — BE 3 = **3 h dev**, one story.
+>
+> ⚠ **No QA uplift and no contingency are applied here** — both are phase-level (§7.1).
+> ⚠ **No published figure is re-derived.** 1B stays at **519 h**, S0 at **1,027 h**, and the
+> baseline at **114 live stories / 3,186 h**. ⛔ **And this story is deliberately absent from
+> `phase-01b`'s `**Stories:**` trailer**, as every additive-set story is — adding it would
+> disturb the subtotal chain `build_trial_run_xlsx.py` reconciles against `[TRP §1.4]`.
+
+#### Additive — `LineId` becomes `MachineName`, minted 8 Sep 2026 (`FW-N17`–`FW-N19`)
+
+> **Raised as a duplication and settled as a rename.** The question asked was why the module
+> carries `LineId` when `united_db..machines.machine_name` already holds `FL1` / `FL2` / `FL3`.
+> ⚠ **It never carried two identifiers.** `LineId` was a denormalised `VARCHAR(5)` holding those
+> exact literals on **24 columns**, policed by **22 `CHECK` constraints** and **zero foreign keys**
+> — so what was duplicated was the *vocabulary*, and there is **no data migration**.
+>
+> ⛔ **Two of the three procedures written against this column could not execute.** On
+> `origin/feature/UADEV-23178`, `Machine_GetToolingInventoryDieData` and its Insert/Update sibling
+> read and write `TID.MachineName` against a column the DDL named `LineId`; the edger pair papered
+> over the mismatch with `TIE.LineId AS MachineName`. Both pairs already *projected* `MachineName`,
+> so the legacy Machines Application's result set does not move — and the client's own grid header
+> for the column is literally **"Machine Name"**.
+>
+> Decided as **`D-56`**, which reverses the rename half of `D-53` and **does not reopen** `D-55`'s
+> three-fact split: `machineIdx` (125 / 126 / 127) stays a separate fact, cited from `[INT]` and
+> never derived from the name.
+
+###### FW-N17 · `LineId` → `MachineName` — the database layer
+**Hours:** 4 h DB · **Priority:** High · **Sprint:** S0 · **Phase:** 1C · **Stream:** DB
+
+**As a** developer reading the schema,
+**I want** one name for the flattening line across every table, constraint and procedure,
+**So that** the column, the API field and the shared machine registry all agree.
+
+**Acceptance Criteria:**
+- [ ] All **24 `LineId` columns** renamed `MachineName` across `01_Lookup`, `02_Schedule`, `03_Materials`, `04_Runs`, `05_QualityOutput`
+- [ ] **Shape unchanged** — `VARCHAR(5)`, same nullability per table, same `CHECK` value sets. ⛔ No column widened to `machine_name`'s `varchar(31)`
+- [ ] All **22 `CK_*_LineId` constraints** renamed `CK_*_MachineName`, and the **3 index names** that carry the token: `IX_FlatWireRun_MachineName`, `IX_RodStaging_MachineName_Status`, `IX_RodCheckin_MachineName_PayoffPosition`
+- [ ] `sp_ShiftSummary` takes `@MachineName VARCHAR(5)` (script **09** — reached only by `FlatWire_DDL_RunAll_MVP2.sql`, not the base runner)
+- [ ] The 3 cross-database procedures updated, **including the `THROW` message text** for `52003` / `52004` / `52005` and `51001`
+- [ ] `06_ForeignKeys` comment prose updated; ⛔ **no FK added** — `united_db..machines` is another database, so the `CHECK` stays the only guarantee
+- [ ] Sample data and the 6 `schema/*.md` documents brought level, including `DatabaseDesign.md`'s **15 mermaid ERD attribute lines**
+- [ ] `verify_schema_counts.py` reports **46 / 68 / 89 / 1 / 1 unchanged** — a rename that moves a count is a defect
+- [ ] Deployed to `DEV00164-001` via teardown + **both** runners, and `[DEP §390]`'s `UX_PassSchedule_OneActivePerLineAlloy` query re-run
+- [ ] ⚠ **Raised, not fixed:** the Die procedures' FL3 branch queries `MachineName IN ('FL1','FL2')` while `CK_ToolingInventoryDie_MachineName` admits only `NULL` or `'FL1'`, so the `FL2` arm is unreachable — a `D-42` question
+- [ ] ⚠ **Left alone deliberately:** `Stand` and `Dancer` carry the column with **no `CHECK`** (24 columns, 22 constraints). Pre-existing; not "fixed" under cover of a rename
+
+###### FW-N18 · `LineId` → `MachineName` — the FlatWire service
+**Hours:** 6 h BE · **Priority:** High · **Sprint:** S0 · **Phase:** 1B · **Stream:** BE
+
+**As a** client developer,
+**I want** the API and hub to name the line `machineName`,
+**So that** the C# enum, the TypeScript union and the DDL `CHECK` remain one mirror per `[API §2.1]`.
+
+**Acceptance Criteria:**
+- [ ] `CanonicalEnums.cs` declares **`enum MachineName { FL1, FL2, FL3 }`** — string-serialised, value order unchanged, appended never reordered
+- [ ] 11 entities, 15 `*Contracts.cs`, `HubContracts.cs` (20 properties), `RunEvents.cs` (13 records), the 6 `Rules/` files and `ErrorContexts.WrongStationContext(CorrectMachineName)` all renamed
+- [ ] 8 validators and `ValidationMessages` renamed, with the **message text** updated to `"machineName is required."`
+- [ ] 11 EF configurations carry the new column name; `.HasConversion<string>().HasColumnType("VARCHAR(5)")` **unchanged**
+- [ ] `ContextRepository`'s raw SQL projects `s.[MachineName]`
+- [ ] Hub and broadcaster signatures retyped; ⛔ **method names keep "Line"** — `JoinLineGroup` / `LeaveLineGroup` / `Line(...)` are group operations, not fields
+- [ ] ⛔ **`LineTagOptions.MachineId` and `appsettings.json`'s `MachineId` (125 / 126) untouched** — a different fact, and inferring one from the other is how a write reaches the wrong machine
+- [ ] `Tools/FlatWireSimConsole` (5 files) renamed and building — it drives the hub and the sim control surface, so it breaks if left behind
+- [ ] `dotnet build FlatWire.sln` clean and `dotnet test` **green with no test count lost**
+
+###### FW-N19 · `LineId` → `MachineName` — the `flat-wire` Angular library
+**Hours:** 6 h FE · **Priority:** High · **Sprint:** S0 · **Phase:** 1A · **Stream:** FE
+
+**As an** operator,
+**I want** the screens to behave exactly as before,
+**So that** the rename is invisible on the shopfloor while the code speaks one vocabulary.
+
+**Acceptance Criteria:**
+- [ ] `enums/line-id.enum.ts` renamed to **`enums/machine-name.enum.ts`** with `enum MachineName`, and all 14 import paths follow
+- [ ] `resolveLineId` → **`resolveMachineName`**; ⛔ `stationFor()` and `machineIndexFor()` keep their names — they are `D-55`'s other two facts. The module's header comment is **rewritten in prose**, not token-swapped
+- [ ] `ROUTE_PARAMS.LINE_ID` becomes **`MACHINE_NAME: 'machineName'`**. ⚠ **This constant *is* the URL** — the route is composed from it, so the address becomes `flatline/:machineName`; the segment *value* is still `fl1`, upper-cased on resolve
+- [ ] `RunHeader.machineName` and `FlatWireLine.machineName` **retyped from `string` to `MachineName`** — the three-way mirror was already broken on the client
+- [ ] `LineAlert.machineName` becomes **`MachineName | null`** and the plant-wide-alert sentinel changes `''` → `null`; the existing `@if` truthiness guard already covers it
+- [ ] ⛔ **`ACTIVE_RUN_SCREEN_KEY` untouched** — it is stamped into every DOM id and is deliberately not the route segment
+- [ ] `LINE_MACHINE_INDEX` keys retype; **values stay 125 / 126 / 127** and its warning comment stays verbatim
+- [ ] Spec route fixtures use `convertToParamMap({ machineName: 'fl1' })` — ⚠ a missed key does **not** fail to compile, it silently resolves `null` and the tests pass against an idle screen
+- [ ] `@param` / `@returns` JSDoc types tracked via `/fix-jsdoc`; angle-bracket cast style kept
+- [ ] **Rendered output byte-identical** — every binding still prints `FL1` / `FL2` / `FL3`; no operator-visible label changes
+- [ ] `test:flat-wire` green at **100 %** on all four metrics, and `ng build flat-wire` clean
 
 ### 7.3 Roll-up
 
@@ -4965,7 +5144,7 @@ Absorbed from `05-SprintPlanAndBacklog.md` §7.3 under the single-backlog decisi
 - [ ] Map both tables for read and write; the allocation is **superseded, never updated** on a re-plan
 - [ ] The three invariants SQL cannot express: a rod's active ranges **tile the rod**; a `PinnedBoth` row is its order's only row; an order with an allocation has ≥ 1 rod
 - [ ] `RodOrderConsumption` snapshots the allocation it ran against — never a join back
-- [ ] ⚠ `UX_RodOrderConsumption_Station` is keyed on **`Station`**, not `LineId` — FL1 and FL3 share one physical VPS. Do not "fix" it to `LineId`
+- [ ] ⚠ `UX_RodOrderConsumption_Station` is keyed on **`Station`**, not `MachineName` — FL1 and FL3 share one physical VPS. Do not "fix" it to `MachineName`
 
 **Blockers:** **`Q48`** (`Critical` — can two orders on one rod have different pass schedules? It decides whether the mounted handoff is universal or conditional)
 
@@ -5209,11 +5388,52 @@ same shape of hole `B.6` records for `FW-202`–`FW-231`. Closing it is not this
 noted here so `B.8` is not misread as following `B.7`.
 
 ---
+#### B.9 Minted `FW-N##` ids — `FW-N13` (1)
+
+**Minted 7 Sep 2026** while reconciling the story records against the built Angular library. The
+card is in §7.2 under *Additive — the shared header's environment badge*.
+**Next free `FW-N##` id: `FW-N20`.** ⚠ This line read `FW-N14` until 8 Sep 2026 and was stale: `D-55` minted `FW-N15`/`FW-N16` on 7 Sep and `D-56` minted `FW-N17`–`FW-N19` on 8 Sep. See B.10.
+
+| Id | Stream | Subject |
+|---|---|---|
+| `FW-N13` | BE | `FlatWire/GetServerConnectionInfo` — the one method name the Angular library already declares and no FlatWire controller implements, so the header's environment badge is blank on every screen |
+
+⚠ **This is the first *minted* `FW-N##`.** `B.2` holds the six **adopted** ones (`FW-N01`–`FW-N06`)
+and `B.4` the six **adopted but uncosted** (`FW-N07`–`FW-N12`), so neither fits — hence a block of
+its own rather than a row bent into one of theirs. ⚠ **`FW-N07`–`FW-N12` are not free to reuse**:
+they are cross-referenced from around a dozen documents while carrying no task file, which is why
+minting resumed at `FW-N13`. See [`TaskIdMap.md`](../90-registers/TaskIdMap.md) Rules 5 and 6.
+
+---
+
 
 
 ---
 
 ---
+
+#### B.10 Minted `FW-N##` ids — `FW-N17`–`FW-N19` (3, contiguous)
+
+**Minted 8 Sep 2026** by `D-56`, which renamed `LineId` to `MachineName` across the module. The
+cards are in §7.2 under *Additive — `LineId` becomes `MachineName`*.
+**Next free `FW-N##` id: `FW-N20`.**
+
+| Id | Stream | Subject |
+|---|---|---|
+| `FW-N17` | DB | The 24 columns, 22 `CHECK`s, 3 index names, `sp_ShiftSummary` and the 3 cross-database procedures |
+| `FW-N18` | BE | `enum MachineName`, 11 entities, 15 contract files, 8 validators, 11 EF configurations, the hub, and the sim console |
+| `FW-N19` | FE | The enum file rename, the route parameter, the two retyped view-model interfaces and the `LineAlert` sentinel |
+
+⚠ **One story per stream, deliberately.** `check_docs.py`'s `6-folder` rule ties a card's stream
+to the folder its plan lives in, so a single cross-stream story would have to sit in one folder and
+declare another — the inherited disagreement `G62` already tracks for eleven older stories. Three
+cards avoid adding a twelfth.
+
+⛔ **These hours are an ADDITION, not a re-apportionment.** No existing story lost hours to the
+rename, and QA and contingency are carried unchanged. The downstream totals in `[CE]`, `[DSP]` and
+`[SSP]` are **not** swept — same treatment `D-55` gave `FW-N15`/`FW-N16`, and for the same reason:
+reconciling them is a costing pass, not part of this change.
+
 
 ## 8. Descope ladder
 

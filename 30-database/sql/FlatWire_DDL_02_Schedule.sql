@@ -167,7 +167,7 @@ BEGIN
 
         -- ---- what and where ------------------------------------------------
         [Alloy]              VARCHAR(10)    NOT NULL,   -- 1100 | 1350 | 3003 | 5052 | 6061. FK to AlloyProperty, added by script 06
-        [LineId]             VARCHAR(5)     NOT NULL,   -- FL1 | FL2 | FL3
+        [MachineName]             VARCHAR(5)     NOT NULL,   -- FL1 | FL2 | FL3
         [RouteMode]          VARCHAR(15)    NOT NULL,   -- Standalone = one line only; Hybrid = FL1 feeding FL2 continuously
         [Status]             VARCHAR(10)    NOT NULL,   -- Draft | Active | Inactive
 
@@ -206,7 +206,7 @@ BEGIN
         -- Only Active schedules may be selected at check-in.
         CONSTRAINT [CK_PassSchedule_Status]    CHECK ([Status]    IN ('Draft', 'Active', 'Inactive')),
         -- The three flattening lines.
-        CONSTRAINT [CK_PassSchedule_LineId]    CHECK ([LineId]    IN ('FL1', 'FL2', 'FL3')),
+        CONSTRAINT [CK_PassSchedule_MachineName]    CHECK ([MachineName]    IN ('FL1', 'FL2', 'FL3')),
         -- The speed window must be a window, not a point or an inversion.
         CONSTRAINT [CK_PassSchedule_Speed]     CHECK ([LineSpeedMinFpm] < [LineSpeedMaxFpm]),
         -- A zero tolerance would put every reading out of spec, so both must be positive.

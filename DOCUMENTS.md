@@ -80,7 +80,7 @@ Every document declares its own **shortcode** in its header; citations use `[COD
 | **Executable truth** | [Database/Schema/SQL/](30-database/sql/) | **Authoritative for types, nullability and constraints. Never regenerate it from the markdown** |
 | Sequencing | [Database/tasks/](30-database/tasks/) | **Not a fourth tier — the DB stream's execution index.** [Orchestration.md](30-database/tasks/Orchestration.md): what can start, in what order, what is stopping it. ✅ **Phase 1C is built**, so its §3 is not a construction path but **`[DEP §4.2]`'s ten-step deploy chain and the sign-off gate at step 2 that has never been passed.** ⚠ **The folder holds no per-story plans** — rows name owning artifacts, and **the DDL wins**. **States no object count, deliberately** |
 
-**The MVP-1 build is `33 tables · 55 FKs · 69 index statements · 1 procedure · 1 trigger`** — counted from `Database/Schema/SQL/` and checked by [`tools/deliverables/verify_schema_counts.py`](tools/deliverables/verify_schema_counts.py). **The design and the build are the same 33 tables:** `D-31` (15 Aug 2026) moved the three `PassSchedule*` tables **into** MVP-1, so they **are** built by `FlatWire_DDL_RunAll.sql` and their four FKs **are** enforced. Only `sp_ShiftSummary` (`09_Programmability_MVP2`) stays MVP-2. ⚠ **MVP-1 reads pass schedules and never authors them** — owning the table is not owning the data. Defined once in `[DBD §6.2]` — every other mention is a citation.
+**The MVP-1 build is `46 tables · 68 FKs · 89 index statements · 1 procedure · 1 trigger`** *(re-measured 7 Sep 2026; this read `33 · 55 · 69`, a baseline superseded by `D-42`, `D-53` and the rod↔order tables — `[DBD §6.2]` had already moved and this file lagged it)* — counted from `Database/Schema/SQL/` and checked by [`tools/deliverables/verify_schema_counts.py`](tools/deliverables/verify_schema_counts.py). **The design and the build are the same 46 tables:** `D-31` (15 Aug 2026) moved the three `PassSchedule*` tables **into** MVP-1, so they **are** built by `FlatWire_DDL_RunAll.sql` and their four FKs **are** enforced. Only `sp_ShiftSummary` (`09_Programmability_MVP2`) stays MVP-2. ⚠ **MVP-1 reads pass schedules and never authors them** — owning the table is not owning the data. Defined once in `[DBD §6.2]` — every other mention is a citation.
 
 ### `Backend/` · `Frontend/`
 
@@ -177,7 +177,7 @@ These three were sibling folders of `MVP-1/` until the 13 Aug 2026 consolidation
 ## 4. Four things a reader most often gets wrong
 
 1. **The date does not work.** MVP-1 is **3,186 hours** against 44 working days — **9.1 FTE sustained**, **24.5 in W7** *(`D-32`, 18 Aug 2026; previously 3,292 h / 9.4)* — and the full descope ladder recovers only ~12 %. A programme decision is required. `[SP §1]`, `[GAP]` `G1`.
-2. **`Rod` is retained**, with enforced FKs. The design and the MVP-1 build are the same **33 tables** — `D-31` (15 Aug 2026) retired the 25/28 split. `[DBD §6.2]`.
+2. **`Rod` is retained**, with enforced FKs. The design and the MVP-1 build are the same **46 tables** *(re-measured 7 Sep 2026)* — `D-31` (15 Aug 2026) retired the 25/28 split. `[DBD §6.2]`.
 3. **There is no Angular template.** Every control is built fresh from the mockups; the only reuse is the foundational `shared` services. `[ARC §2.2]`.
 4. **FL1 has no edger**, FM2's edgers are at **S2 and S3 only**, and **FL2 broadcasts `null` live gauge and width**. `[BR §3.1]`.
 

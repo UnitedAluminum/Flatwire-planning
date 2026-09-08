@@ -1,7 +1,7 @@
 # Flat Wire Mill — Machine Simulator and its Control Console
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 6, 2026 (`D-52` — `/sim/**` drops to bare `[Authorize]`, §8.4) — change history is in [`CHANGELOG.md`](../CHANGELOG.md)
+**Last Updated:** September 6, 2026 (`D-52` — `/sim/**` drops to bare `[Authorize]`, §8.4) — change history is in [`CHANGELOG.md`](../CHANGELOG.md) · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** Design specification — the simulation subsystem
 **Status:** Baselined for build — the story set `FW-210`–`FW-215`, `FW-217`, `FW-218` is **BUILT** (29 Aug → 1 Sep 2026); still unscheduled and additive to `[CE §3b]`. Open items in §11
 **Owner:** Architecture / Real-time stream
@@ -168,7 +168,7 @@ in where the readings are delivered.
 // FlatWire.Domain — no infrastructure dependency
 public interface ILineModel
 {
-    string LineId { get; }                       // FL1 | FL2 | FL3
+    string MachineName { get; }                       // FL1 | FL2 | FL3
     LineModelSnapshot Tick(TimeSpan elapsed);    // advance and emit
     void ApplyConfiguration(PassSchedulePush push);
     void ApplyScenario(ScenarioId scenario);
@@ -187,11 +187,11 @@ public interface IReadingSource            // implemented by FW-N05 and by FW-21
 > the design; read `ILineModel.cs` in `ual-api` for what was built.** ⚠ `IReadingSource` was never
 > minted (`P-265`, and see §3.1). ⚠ `Tick` returns **`Reading`** and **no `LineModelSnapshot` exists** —
 > `Reading` already *is* the per-line-per-tick snapshot, so a second type would be a second contract for
-> one fact plus a mapping layer at the cadence (`P-268`). ⚠ `Line` is the **`LineId` enum**, not a
+> one fact plus a mapping layer at the cadence (`P-268`). ⚠ `Line` is the **`MachineName` enum**, not a
 > string, because every other member of the real-time spine is keyed that way (`P-268`). ⚠ There are
 > **six mutators, not five**: `InjectFault` takes a duration in ticks, `ApplyComponent` merges one
 > component's pushed set-points (`P-280`), and **`Steer`** exists because the five sketched mutators
-> cannot express `[SIM §8.1]`'s `POST /sim/{lineId}/steer` — a hole in the contract rather than a
+> cannot express `[SIM §8.1]`'s `POST /sim/{machineName}/steer` — a hole in the contract rather than a
 > preference (`P-269`). ⚠ `ApplyConfiguration` takes `PassScheduleSnapshot`, a Domain value object,
 > rather than the sketched `PassSchedulePush`. **The amendment of this sketch is owed to `FW-210` /
 > `FW-211`; this note is not it.**
@@ -452,10 +452,10 @@ route would exist and then be removed — a weaker claim than never mapping it, 
 
 | Method | Route | Purpose |
 |---|---|---|
-| `POST` | `/sim/{lineId}/run` | Start a run — scenario, seed, start weight, target, **target run state** |
-| `DELETE` | `/sim/{lineId}/run` | Stop; optionally as a `LineStop` edge |
-| `POST` | `/sim/{lineId}/steer` | Change speed setpoint, targets or drift mid-run |
-| `POST` | `/sim/{lineId}/fault` | Inject one fault from §7.2 |
+| `POST` | `/sim/{machineName}/run` | Start a run — scenario, seed, start weight, target, **target run state** |
+| `DELETE` | `/sim/{machineName}/run` | Stop; optionally as a `LineStop` edge |
+| `POST` | `/sim/{machineName}/steer` | Change speed setpoint, targets or drift mid-run |
+| `POST` | `/sim/{machineName}/fault` | Inject one fault from §7.2 |
 | `GET` | `/sim/state` | One snapshot **per hosted line, at most two** — the console's poll-free read on load |
 | `GET` | `/sim/config` | The active `lbPerFt`, the noise **seed** and the simulation flag — §9.2's two required readouts (`G68`) |
 
@@ -631,7 +631,7 @@ Three line panels — FL1, FL2, FL3 — each carrying:
 - live readouts: speed, footage, payoff weight, percent remaining
 - target-vs-actual strip for gauge and width — **FL2 renders these as *No live gauge · see Profile***, never
   a flat line at target
-- a speed slider and gauge/width target nudges (`/sim/{lineId}/steer`)
+- a speed slider and gauge/width target nudges (`/sim/{machineName}/steer`)
 - the seven fault buttons of §7.2
 
 Plus, global:
@@ -643,7 +643,7 @@ Plus, global:
 > ⚠ **"Settable" attaches to the seed only, and `G68` had been reading it as both** *(clarified 1 Sep 2026)*.
 > `lbPerFt` is **displayed**; making it settable at runtime would decide `Q10` / `OI-45` by the back door,
 > against `P-271`. So the configuration read `G68` asks of `FW-215` is a **read**, and the seed's settable half
-> is already `POST /sim/{lineId}/run`'s seed parameter (§5.7). **No configuration write is owed.**
+> is already `POST /sim/{machineName}/run`'s seed parameter (§5.7). **No configuration write is owed.**
 
 > ⚠ **The three panels seed from `GET /sim/state` and then live on the hub.** As built, `SimLineState` carries
 > **six fields** — line, running, footage, gauge offset, drift per tick, dropped-tick countdown. **Speed,

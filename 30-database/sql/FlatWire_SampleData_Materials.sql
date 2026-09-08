@@ -48,7 +48,7 @@ GO
 -- ============================================================
 IF NOT EXISTS (SELECT 1 FROM [dbo].[FlatWireRun])
 INSERT INTO [dbo].[FlatWireRun]
-    ([RunId],[LineId],[OrderId],[PassScheduleId],[Alloy],[RouteMode],[Status],[StartedAt],[PausedAt],[CompletedAt],[FootageFt],[OperatorId],[CreatedBy])
+    ([RunId],[MachineName],[OrderId],[PassScheduleId],[Alloy],[RouteMode],[Status],[StartedAt],[PausedAt],[CompletedAt],[FootageFt],[OperatorId],[CreatedBy])
 VALUES
     ('RUN-0001','FL1','FW-00421','PS-1100-FL1-001','1100','Standalone','Complete','2026-07-20 06:30:00 -05:00',NULL,               '2026-07-20 09:45:00 -05:00',4200.00,'Dave M.','Dave M.'),
     ('RUN-0002','FL3','FW-00600','PS-1100-FL3-001','1100','Hybrid',    'Complete','2026-07-20 10:00:00 -05:00',NULL,               '2026-07-20 12:30:00 -05:00',3800.00,'Linda K.','Linda K.'),
@@ -62,7 +62,7 @@ GO
 -- ============================================================
 IF NOT EXISTS (SELECT 1 FROM [dbo].[SpoolProcessing])
 INSERT INTO [dbo].[SpoolProcessing]
-    ([Alpha],[OrderNo],[RelLetter],[ParentRodAlpha],[SourceRodAlpha],[SourceRunId],[LineId],[OriginRouteMode],
+    ([Alpha],[OrderNo],[RelLetter],[ParentRodAlpha],[SourceRodAlpha],[SourceRunId],[MachineName],[OriginRouteMode],
      [Status],[GaugeIn],[WidthIn],[GrossWeightLb],[NetWeightLb],[Location],[ReceivedAt],[StagedAt],[CreatedBy])
 VALUES
     ('SP-00031','FW-00500','A','R00043',NULL,     'RUN-0003','FL1','Hybrid',    'INFLAT', 0.0970,0.7500,3400.00,3385.00,'FL2 TPO',    '2026-07-21 09:05:00 -05:00','2026-07-21 09:40:00 -05:00','Dave M.'),

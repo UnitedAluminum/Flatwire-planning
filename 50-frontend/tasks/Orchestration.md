@@ -1,7 +1,7 @@
 # Phase 1A — Execution Orchestration (Frontend)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 4, 2026 — Change history is in [`../../CHANGELOG.md`](../../CHANGELOG.md)
+**Last Updated:** September 7, 2026 — Change history is in [`../../CHANGELOG.md`](../../CHANGELOG.md)
 **Document Type:** Execution index and dependency graph for the Phase-1A implementation and the FE stream downstream of it
 **Status:** Active — **the entry point for this folder**
 **Owner:** Frontend (Angular)
@@ -77,9 +77,9 @@ Phases 3–14** (§1.4). Hours are `[TB §7]`'s, **quoted not restated**.
 
 | Story | Subject | h | Wave | Owning document | Status |
 |---|---|---|---|---|---|
-| `FW-N03` | Angular library scaffold, routing, configuration | 24 | **0** | [`[CMP §5.1]`](../Components.md) · [`phase-01a`](../../60-delivery/phases/phase-01a-angular-foundation.md) · [`plan`](FW-N03.md) | 🟡 **Built, awaiting commit.** All three of [`plan §3`](FW-N03.md)'s commands pass — `npm run build` emits **`flat-wire.js` as a named lazy chunk**, `ng lint` is clean across all 32 targets, `npm run test:flat-wire` is **25 tests at 100 %** on all four metrics · ⚠ **Those figures now cover two screens, not the scaffold** — DB3 and DB1 were built on top of it · ⚠ **The working tree is the only copy**: `HEAD` holds **31** `angular.json` entries and no `flat-wire`. **Wave 1 opens on the commit** |
+| `FW-N03` | Angular library scaffold, routing, configuration | 24 | **0** | [`[CMP §5.1]`](../Components.md) · [`phase-01a`](../../60-delivery/phases/phase-01a-angular-foundation.md) · [`plan`](FW-N03.md) | ✅ **DONE, and wave 1 is OPEN.** All three of [`plan §3`](FW-N03.md)'s commands pass — `npm run build` emits **`flat-wire.js` as a named lazy chunk**, `ng lint` is clean across all 32 targets, `npm run test:flat-wire` is **6 suites / 25 tests at 100 %** on all four metrics · ⚠ **Those figures cover two screens, not just the scaffold** — DB3 and DB1 were built on top of it · ✅ **Committed**: `HEAD` carries **33 files** under `projects/flat-wire` at `67426e67e`, working tree clean for that path *(this cell said the working tree was the only copy and that wave 1 opened on the commit, until 7 Sep 2026)* |
 | `FW-130` | Shell layout and the **1920×1080** canvas | 16 | 1 | [`[VAL §7.5]`](../ValidationRules.md) · [`[CMP §7.4]`](../Components.md) · [`plan`](FW-130.md) | 🟡 **Partly built.** The shell layout and the **1920×1080** canvas exist on both screens, with the height **budgeted** rather than scaled ([`[UIC §4.1]`](../UIConventions.md)) · ⛔ **Not done**: the line card's payoff section and its components / die-life / SPC section; dark mode is unverified · ✅ **`G23` decided 27 Aug 2026 — 1920×1080** ([`P1A`](Phase-01A-ImplementationPlan.md) `F-14`), and **in the expensive direction**: +50 % width against +5 % height, 5:4 → 16:9, so **re-composition, not rescaling** · ⚠ **`FW-N03` ships the shell component**, so this story **fills in its layout**; no stylesheet is shipped |
-| `FW-131` | Route guards, interceptors, error envelope | 12 | 1 | [`[SEC §8]`](../../Architecture/Security.md) · [`[API §1.2]`](../../Backend/APIs.md) · [`plan`](FW-131.md) | ⛔ Not started · ⛔ **`G6` is worse than filed** — the client has **no role source at all**, so the role guard cannot be **built** (§5) · ⚠ **No `FlatWireAuthGuard`** — no library in the repository defines a guard, and `FW-N03` wires `shared`'s |
+| `FW-131` | Route guards, interceptors, error envelope | 12 | 1 | [`[SEC §8]`](../../Architecture/Security.md) · [`[API §1.2]`](../../Backend/APIs.md) · [`plan`](FW-131.md) | ⛔ **Blocked** *(this cell read "Not started" until 7 Sep 2026)* · ✅ **`G6` is RESOLVED** — all six roles exist as JWT claims on `ClaimTypes.Role`; its residual is that the claim **values** are coded rather than labelled, and that travels with `FW-145`. ⛔ **The live blocker is `F-12`**, which must decide the role source before `FlatWireRoleGuard` can be built, and `F-##` is not a family `blocked_by` can carry (§5) · ⚠ **No `FlatWireAuthGuard`** — no library in the repository defines a guard, and `FW-N03` wires `shared`'s |
 | `FW-132` | DI-swappable API client and domain models | 20 | 1 | [`[CMP §5.3]`](../Components.md) · [`[API §7]`](../../Backend/APIs.md) · [`plan`](FW-132.md) | ⛔ Not started · ⛔ **its fixture list names three alphas the seeds never create** (§8.1) · ⚠ `G14` · **owes `TC-020`'s third leg** (`G56`, `P-84`) |
 | **`FW-133`** | **Shared composite controls** | **120** | 2 | [`[CMP §7.6]`](../Components.md) · [`../Mockups/`](../Mockups/) · [`plan`](FW-133.md) | 🟡 **`gauge-trace-chart`'s foundation is built** — `lib-chart-canvas`, `lib-trace-panel` and `buildTraceConfig` are in **`projects/shared`** and consumed by DB3 · ⛔ **The other five controls, the runtime `isLive` contract and the SVG profile mode are untouched** · 🔴 **still the critical path** — 45 % of the layer, every screen depends on it, `[TRP]`: *"not trimmable"* · ⚠ **the 120 h is deliberately not restated and now overstates what is left** ([`plan`](FW-133.md)) |
 | `FW-134` | Shared primitive controls and `alert-banner` | 32 | 2 | [`[CMP §7.6]`](../Components.md) · [`plan`](FW-134.md) | ⛔ Not started · ⚠ **two of its consumer slots already exist as inline markup** on DB1 — the alerts card and the line-card weight bars. When these controls land that markup is **replaced**, not left beside them |
@@ -93,16 +93,16 @@ why the Backend folder deliberately does not plan them.
 
 | Story | Subject | h | Wave | Owning document | Status |
 |---|---|---|---|---|---|
-| `FW-135` | `flat-wire-signalr.service.ts` — MessagePack, NgZone, ring buffer | 24 | 1 | [`[SIG §4]`](../../Architecture/SignalR.md) · [`plan`](FW-135.md) | ⛔ Not started · ⚠ **`G10`** — MessagePack is a new client dependency and `[SIG]` treats it as measure-first · ⛔ **It cannot connect** — `flatWireHubUrl` is `FlatWire/hubs/flat-wire` and the running hub is mapped at `/hubs/flatwire`; `FW-080` owes the re-map (§5) |
+| `FW-135` | `flat-wire-signalr.service.ts` — MessagePack, NgZone, ring buffer | 24 | 1 | [`[SIG §4]`](../../Architecture/SignalR.md) · [`plan`](FW-135.md) | ⛔ Not started · ✅ **The hub path is settled** — `FW-080 §0` re-mapped it to `/hubs/flat-wire` on 6 Sep 2026 and proved it on a running service, so **the "cannot connect" blocker this cell carried until 7 Sep is closed** · ⚠ **`G10`** — MessagePack is a new client dependency and `[SIG]` treats it as measure-first · ⛔ **`G105`** — the protocol is undecided and enums cross as **strings** under MessagePack, **integers** under JSON, so it must be settled before the enum mappers are written (§5) |
 | `FW-136` | `MockSignalRService` and the typed event set | 12 | 2 | [`[SIG §5.2]`](../../Architecture/SignalR.md) · [`plan`](FW-136.md) | ⛔ Not started · **fourteen events + six markers**, matching `IFlatWireClient` name for name · ⚠ `[TB §7]`'s own acceptance criteria for this story enumerate **nine** ([`P1A §6.12`](Phase-01A-ImplementationPlan.md)) |
-| `FW-137` | PWA cache sync and the reconnect banner | 8 | 2 | [`[SIG §4]`](../../Architecture/SignalR.md) · [`plan`](FW-137.md) | ⛔ Not started |
+| `FW-137` | PWA cache sync and the reconnect banner | 8 | 2 | [`[SIG §4]`](../../Architecture/SignalR.md) · [`plan`](FW-137.md) | ⛔ **Blocked** *(this cell read "Not started" until 7 Sep 2026)* — on a package decision: `@angular/service-worker` is not a dependency. ⚠ It carries an empty `blocked_by` because that is not a register item, which is why the board flags it as a closed blocker |
 
 ### 1.3 Trial scope — additive to `[CE §3b]`, offsets nothing
 
 | Story | Subject | h | Owning document | Status |
 |---|---|---|---|---|
 | `FW-204` | Minimal landing route — the entry point while DB1 is out of trial scope | 8 | [`[SCR §7.2]`](../ScreenPlan.md) | ⛔ Not started · **retires when `FW-060` ships** · ⚠ **`/flat-wire` already resolves — to DB3, not to this story's tiles.** DB1's skeleton also exists, so **whether this story is still needed is an open question** ([`plan`](FW-204.md)) |
-| `FW-214` | Simulator control console `DB-S1` — **standalone WinForms** (`D-33`) | **52** | [`[SIM §9]`](../../Architecture/MachineSimulator.md) · [`../mockups/simulator_console.html`](../mockups/simulator_console.html) | ⛔ Not started · ⚠ **not one of the fifteen dashboards** (`[SCR §7.1]`); ships with controls **greyed** until `FW-218` |
+| `FW-214` | Simulator control console `DB-S1` — **standalone WinForms** (`D-33`) | **52** | [`[SIM §9]`](../../Architecture/MachineSimulator.md) · [`../mockups/simulator_console.html`](../mockups/simulator_console.html) | ✅ **DONE** *(this cell read "Not started" until 7 Sep 2026)* — the standalone WinForms console is built at `ual-api/Tools/FlatWireSimConsole/`, and `FW-218`'s trial control surface is `done` too · ⚠ **not one of the fifteen dashboards** (`[SCR §7.1]`), and since `D-33` **not an Angular screen at all** |
 
 ### 1.4 Downstream — 38 FE stories, Phases 3–14
 
@@ -113,17 +113,41 @@ both**, directly or through a screen that is.
 |---|---|---|
 | **3** | `FW-060` 44 · `FW-153` 20 | [`LineStatusOverview.md`](../../10-requirements/screens/LineStatusOverview.md) (DB1) · 🟡 **DB1 already renders** as `supervisor-dashboard.component` — **UI skeleton only**, every value placeholder, no streams, rail inert ([`FW-060`](FW-060.md)) |
 | **4** | `FW-061` 36 · `FW-N01` 24 · `FW-209` 4 · `FW-226` FE 6 · `FW-227` FE 10 | [`RocCheckin.md`](../../10-requirements/screens/RocCheckin.md) (DB2) · [`RodPreCheckin.md`](../../10-requirements/screens/RodPreCheckin.md) (DB2A) |
-| **5** | `FW-062` 32 · `FW-162` 20 · `FW-163` 20 · `FW-081` FE 4 | [`ActiveRunMonitor.md`](../../10-requirements/screens/ActiveRunMonitor.md) (DB3) · 🟡 **DB3 already renders** as `flat-wire-landing.component`, the default child of `#/flat-wire` — **UI skeleton only** ([`FW-062`](FW-062.md)). `FW-163`'s two behaviours exist **inline, not as controls**; `FW-081`'s FE maximise is **built as a popup** |
+| **5** | `FW-N15` 8 · `FW-062` 32 · `FW-162` 20 · `FW-163` 20 · `FW-081` FE 4 — **and `FW-N16` 12 (BE+DB)** | [`ActiveRunMonitor.md`](../../10-requirements/screens/ActiveRunMonitor.md) (DB3) · 🟡 **DB3 already renders** as `flat-wire-landing.component`, the default child of `#/flat-wire` — **UI skeleton only** ([`FW-062`](FW-062.md)). `FW-163`'s two behaviours exist **inline, not as controls**; `FW-081`'s FE maximise is **built as a popup** |
 | **6** | `FW-063` 20 · `FW-073` 24 · `FW-065` 24 · `FW-070` 28 · `FW-071` 24 | [`WeldEvent.md`](../../10-requirements/screens/WeldEvent.md) · [`DieChangeAndManagement.md`](../../10-requirements/screens/DieChangeAndManagement.md) · [`SPCCheckpoint.md`](../../10-requirements/screens/SPCCheckpoint.md) · [`RollAdjust.md`](../../10-requirements/screens/RollAdjust.md) (DB11) |
 | **7** | `FW-067` 20 · `FW-072` 24 · `FW-173` 20 | [`WipRejection.md`](../../10-requirements/screens/WipRejection.md) (DB8) · [`RodCheckout.md`](../../10-requirements/screens/RodCheckout.md) (DB12) · [`PartialRodReCheckin.md`](../../95-archive/design-notes/PartialRodReCheckin.md) *(rationale only — the rules are `RodPreCheckin.md` §7 / `RodCheckout.md` §7.2)* |
 | **8** | `FW-124` 24 · `FW-064` 16 · `FW-178` 8 | [`SpoolQueue.md`](../../10-requirements/screens/SpoolQueue.md) (DB5A) · [`RocCheckin.md`](../../10-requirements/screens/RocCheckin.md) §4.3 (DB5) |
 | **5/8 boundary** | `FW-202` FE 32 | [`SpoolCompletionNotification.md`](../../10-requirements/screens/SpoolCompletionNotification.md) · ⚠ **must land before Phase 8 *starts***, not beside it · 🟡 **Part A's card and docked pill are already on the DB3 landing** — the milestone ladder, escalation and the live weight stream are still this story's ([`[UIC §3.16]`](../UIConventions.md)) |
 | **9** | `FW-066` 24 · `FW-182` 24 · `FW-183` 40 · `FW-184` 16 | [`OutputCoilCompletion.md`](../../10-requirements/screens/OutputCoilCompletion.md) — **v1.1 owns DB7 and DB7b together** |
-| **10** | `FW-189` 12 | FL3 variants of DB2 and DB3 |
+| **10** | `FW-189` 12 | DB2 FL3 variant · ⭐ **DB3 is no longer a variant** (`D-55`): FL3 supplies **one profile row** — the action set (`FR-108`) — to `FW-062`'s one component. Trace titles, the Components card and the Rod Information columns are shared with FL1 |
 | **11** | `FW-091` 8 · `FW-092` 8 · `FW-093` 8 · `FW-094` 8 · `FW-095` 8 | reports — ⚠ **four of the five are descope-ladder rung 6** |
 | **12** | `FW-100` FE 24 · `FW-102` FE 12 · `FW-110` FE 8 | ⚠ `FW-110` is **rung 1 — the first thing off the plan** |
 | **13** | `FW-194` 20 · `FW-054` 12 · `FW-003` 12 · `FW-195` 12 | `../../95-archive/design-notes/FlatWireShopfloorDashboards.md` *"Alloy Reference Data"* (MVP-1 reference data) |
 | **14** | `FW-201` FE 16 | [`[UAT]`](../../Testing/UATPlan.md) |
+
+> ### ⭐ `D-55` re-sequences phase 5 — 7 September 2026
+>
+> **DB3 is one machine-driven component for FL1, FL2 and FL3**, so the phase gains two stories that
+> had no owner and loses the "variant" work in phases 8 and 10.
+>
+> - **`FW-N15` (8 h FE) enters wave 1 and gates `FW-062`.** The route (`#/flat-wire/home/:machineName`),
+>   the line resolver and `LINE_PROFILES` are what tell the one component which line it is showing.
+>   Nothing owned them: `[CMP §5.2]`'s route and `[CMP §5.4]`'s `line-context.service` were both
+>   specified and unbuilt.
+> - **`FW-N16` (12 h, BE + DB) also gates `FW-062`** — the `FlatWireDB..WIPStations` view and the
+>   station-claim read that tells the screen *which material* is at the line. ⛔ **It is itself gated
+>   by `G54`**: `FW-230` and `FW-231` must ship together, or a blank-list mint reissues `R00001A` on
+>   every spool.
+> - **Phase 5 rose 154 → 174 h.** An addition, not a re-apportionment; `[CE]`, `[DSP]` and `[SSP]`
+>   still publish 154 and reconciling them is a costing pass. See `[TB §3b]`'s reconciliation note.
+> - **`FW-178` (phase 8) narrows** to the FL2 material-flow card and Spool Information grid — its
+>   trace-toggle, order-field and FM2-row criteria all dissolve into shared or pass-schedule-driven
+>   behaviour. **`FW-189` (phase 10) reduces to one profile row on DB3.**
+>
+> ⚠ **The dependency inversion is now explicit and still unresolved.** `FW-062` declares
+> `depends_on: [FW-162, FW-163, …]` while **having already shipped both stories' output as inline
+> markup**. Those two stories must **replace** that markup, not sit beside it — so whichever is
+> scheduled second inherits the other's shape. Settle the order when either is picked up.
 
 > ⚠ **Five screens in `[SCR §7.1]`'s inventory are MVP-2 and have no story here** — DB9, DB9A,
 > DB10, Die Management and OEE. Their mockups live in [`MVP-2/Mockups/`](../../../../MVP-2/Mockups/),
@@ -161,8 +185,8 @@ graph LR
 
 | Wave | Stories | Note |
 |---|---|---|
-| **0** | `FW-N03` | The single root. **Nothing else starts.** 🟡 **Built and awaiting commit** — the wave opens on the commit, not on the build |
-| **1** | `FW-130` `FW-131` `FW-132` `FW-135` | Four unlock at once. ⚠ Two of them carry a blocker that outlives wave 0: `FW-131`'s role half (`G6`) and **`FW-135`'s hub path** (§5) |
+| **0** | `FW-N03` | The single root. **Nothing else starts.** ✅ **CLOSED — committed at `67426e67e`, so wave 1 is open** *(this read "built and awaiting commit" until 7 Sep 2026)* |
+| **1** | `FW-130` `FW-131` `FW-132` `FW-135` | Four unlock at once. ⚠ Two of them carry a blocker that outlives wave 0: `FW-131`'s role half — now **`F-12`, since `G6` closed** — and **`FW-135`'s protocol decision (`G105`)**. ✅ *`FW-135`'s hub path was the blocker named here until 7 Sep 2026; `FW-080 §0` closed it on 6 Sep* (§5) |
 | **2** | `FW-133` `FW-134` `FW-136` `FW-137` | ⚠ **`FW-133` is 120 h of this wave's 172** |
 
 > **Two dashed edges leave the layer, and neither blocks.** `phase-01a`: *"This layer is not
@@ -188,11 +212,12 @@ consequences, and the second is the one that decides staffing:
 
 1. **Nothing on this path is blocked, and its first node is now built.** Unlike 1B, where the path's
    second node spent a fortnight waiting on `G6`, every 1A node is buildable today. `G23` shadowed
-   `FW-130` and never stopped it; it is now **decided at 1920×1080**
+   `FW-130` and never stopped it; it is now **closed at 1920×1080** (client-confirmed 7 Sep 2026 as `Q26`)
    ([`P1A`](Phase-01A-ImplementationPlan.md) `F-14`), which removes the shadow and **adds composition
    work instead** — see §4. 🟡 **`FW-N03`'s 24 h is done but uncommitted** (§1.1), so the path is
-   **136 h remaining** the moment it lands. ⚠ **The blocked node is off this path**: `FW-135`'s hub
-   mismatch sits on the RT chain, not on `FW-N03 → FW-130 → FW-133`.
+   **136 h remaining** the moment it lands. ⚠ **The blocked node is off this path**: `FW-135`'s
+   protocol decision (`G105`) sits on the RT chain, not on `FW-N03 → FW-130 → FW-133`. *(This read
+   "hub mismatch" until 7 Sep 2026; that half closed on 6 Sep.)*
    ⚠ **`FW-130` is smaller than 16 h now describes** — `FW-N03` ships the shell component and no
    stylesheet is authored, so the *"tokens consumed, not authored"* basis prices work that no longer
    happens. **Flagged for `[CE]`, not re-estimated here** ([`FW-130 §5`](FW-130.md)).
@@ -231,11 +256,11 @@ that own them**, and this table is the index.
 |---|---|---|
 | **`G23`** ✅ | `FW-130` → **every screen** | ✅ **Decided: the canvas is 1920×1080** ([`P1A`](Phase-01A-ImplementationPlan.md) `F-14`). The gap's own impact line priced this as *"a re-layout of every screen, not a rescale"*, and that price is **accepted, not argued with**: +50 % width against +5 % height and a 5:4 → 16:9 shape change. ⚠ **The mockups keep authority over content and lose it over composition** (`F-15`), and composition at the new canvas is **not in `[TB §7]`'s hours**. ⚠ **Still open underneath it:** the **panel diagonal** is recorded nowhere, and the 14 px floor is a dpi rule — [`P1A`](Phase-01A-ImplementationPlan.md) §6.10. ⚠ **`[GAP]` `G23` still says 1280×1024 and is still `Open`** — but **`[VAL §7.5]`, the row every other document derives from, reads 1920×1080**  |
 | **no new styles** ✅ | `FW-130`, `FW-133`, `FW-134` | **The mockups' token stylesheet is not shipped into the repository.** Flat wire uses the **existing application styles** — Bootstrap 5.3.8, `src/styles/styles.scss` and its `_colors.scss` SCSS variables, `shared`'s components — and **a new style or class is written only when a requirement calls for one**. `[P1A §4]` **`F-03` is withdrawn**, `FW-130`'s step 2 with it. ⚠ **`--color-*` is defined nowhere in this repository** — the application's colour system is the SCSS variables in `src/styles/_colors.scss` |
-| **the hub path** ✅ | `FW-135`, and `FW-080` in 1B | **The SignalR hub is `/hubs/flat-wire`** — kebab-case, matching the library name, and every document names it. ⛔ **The decision is made and the code is not**: `FW-080` maps `/hubs/flatwire` and owes the re-map, plus `FW-145 §3.5`'s token handler — §5 |
+| **the hub path** ✅ | `FW-135`, and `FW-080` in 1B | **The SignalR hub is `/hubs/flat-wire`** — kebab-case, matching the library name, and every document names it. ✅ **The decision is made AND the code now matches it**: `FW-080 §0` re-mapped `Constants.Routes.Hub` on 6 Sep 2026, and both `app.MapHub` and `FW-145 §3.5`'s token handler read that same constant, so they cannot drift apart. *(This cell said the code did not match until 7 Sep 2026.)* **Nothing is owed on either side** |
 | **`D-06`** | `FW-133`, `FW-134`, every screen | **There is no Angular structural or UI template.** `checkin-precheckin`, `shop-floor*`, `common-grid`, `wip-rejection` and `slitter-*` are **not** to be copied; the only reuse is `shared`'s foundational services. ⚠ **`flat-wire` joins no build chain at all** — it is a routing application that publishes no bundle ([`P1A §2.1`](Phase-01A-ImplementationPlan.md)). `[ARC §2.2]` calls these *"the rules most likely to be broken by a developer working from habit"* — **settled, and the one most likely to be broken anyway** |
 | **`D-08`** | `FW-061` | **Dashboard 2 is the six-step tab wizard**, `dashboard_2_rod_checkin.html`. The grid + progress-ring `- Old.html` is retired and was deleted 11 Aug 2026 — **the plain filename no longer refers to a retired screen**. `[ARC §13.1]` `D-08` |
 | **`G18`** | — | ⚠ **A trap, not a gate.** The `--fw-*` prefix is **retired and there is nothing to migrate** — no mockup and no stylesheet uses it. Consume `--color-*` as-is. If it resurfaces from an older commit it is wrong. `[CMP §7.4]` |
-| **`P-58`** / **`P-83`** | `FW-132` | **Fourteen canonical enums, mirrored in all three layers, and `LineId` is never narrowed** — line eligibility is a per-endpoint *shape* rule, so no screen gets an FL2 refusal free from enum membership. Settled in [`FW-147`](../../40-backend/tasks/FW-147.md); the TypeScript leg is **owed by `FW-132`** (`G56`) |
+| **`P-58`** / **`P-83`** | `FW-132` | **Fourteen canonical enums, mirrored in all three layers, and `MachineName` is never narrowed** — line eligibility is a per-endpoint *shape* rule, so no screen gets an FL2 refusal free from enum membership. Settled in [`FW-147`](../../40-backend/tasks/FW-147.md); the TypeScript leg is **owed by `FW-132`** (`G56`) |
 | **`P-53`** 🔴 / **`P-54`** | `FW-061`, `FW-N01` | **The service hosts no rod-receiving surface**, so **DB2's rod scan has no endpoint** — `GET /rod/{alpha}` was *"everything staging and check-in need in one round trip"*. `[API]`'s call, not a plan's. [`FW-138 §8.1`](../../40-backend/tasks/FW-138.md) |
 | **`OI-05`** | `FW-061`, `FW-064` | ⚠ **`Bevel edge` must not be offered or accepted** — a live *fourth* edge vocabulary on the DB9/9A Generate modal with no domain value behind it. `EdgeType` is `Round`/`Square`, displayed *"Round Edge"* / *"Flat Edge"* through **one** pipe (`[API §2.1]`) |
 
@@ -247,7 +272,8 @@ that own them**, and this table is the index.
 |---|---|---|---|
 | ✅ **Answered** | **`G23` — the canvas is 1920×1080** | ⚠ **The rework is now scheduled rather than risked.** The register's mitigation half-holds: `data-fit="fill"` already widens to the window, so width is the cheap direction and the height barely moves — but **no script re-composes a screen**, and 18 mockups are laid out for 5:4. **Two follow-ups, neither of them a build stop:** close `G23` in the register, and **get the panel diagonal** — the 14 px floor survives on the assumption that the panel is physically larger, not denser. ✅ **The resolution half of the ask is closed on our side** (`Q26`, 24 Aug 2026): the 1920×1080 requirement is with Tim and Charles **in writing**, so what remains is UA's answer, not our action. ⚠ **And `Q26` records an ambiguity that lands squarely on the dpi assumption** — Tim's phrasing was *workstation* resolution, which may not be the shopfloor HMI panel this question is about. **A workstation monitor and an HMI panel are different dpi classes**, so one answer may not cover both, and it is the panel's number `F-14` needs | [`[GAP]` `G23`](../../Development/GapsRegister.md) · [`Q26`](../../90-registers/Questions.md) · `[VAL §7.5]` · [`P1A §6.10`](Phase-01A-ImplementationPlan.md) |
 | **Before `FW-131`'s role half** | ⛔ **`G6` — the client has no role source at all**: no role field on `LoginStatusDetails`, no role vocabulary in `shared.constants.ts`, no JWT decoder in the repository | ⛔ **Construction, not verification.** `FlatWireRoleGuard` **cannot be built** until a source is chosen. ⚠ **This row named `FlatWireAuthGuard` as the unaffected half until 1 Sep 2026 — there is no such guard.** Authentication is `shared`'s `AuthenticationGuard`, already wired by `FW-N03`, so **the auth half is not merely unblocked, it is done** ([`P1A §6.18`](Phase-01A-ImplementationPlan.md)); only the role half is blocked. Three options and a recommendation in [`P1A`](Phase-01A-ImplementationPlan.md) `F-12`; either way bind to one constants class, as `FW-145` does server-side | `[SEC §8]` · [`FW-145 §5`](../../40-backend/tasks/FW-145.md) · [`P1A §6.1`](Phase-01A-ImplementationPlan.md) |
-| **Before `FW-135` connects** | ⛔ **The hub answers at `/hubs/flatwire`; every document names `/hubs/flat-wire`** | ⛔ **`FW-135`, entirely.** **[`FW-080`](../../40-backend/tasks/FW-080.md) is built on the old path and owes the re-map**, and it is **two lines, not one**: `app.MapHub<FlatWireHub>` and [`FW-145 §3.5`](../../40-backend/tasks/FW-145.md)'s `?access_token=` handler, which matches the same segment with `StartsWithSegments` and would otherwise answer **401 to a valid token**. ✅ `FW-145` is still `blocked`, so its half is free. ⚠ **Nothing is owed on the client side** — `FW-N03` already reads the value from config | [`FW-080 §0`](../../40-backend/tasks/FW-080.md) · [`FW-N03 §8·1`](FW-N03.md) · re-run `[DEP]` S5 / `TC-704` |
+| ~~**Before `FW-135` connects** — the hub path~~ | ✅ **CLOSED 6 Sep 2026 by [`FW-080 §0`](../../40-backend/tasks/FW-080.md)**, and struck here 7 Sep | The hub answers at **`/hubs/flat-wire`**, the path every document names. The re-map was two lines and both were taken: `app.MapHub<FlatWireHub>(Constants.Routes.Hub)` and [`FW-145 §3.5`](../../40-backend/tasks/FW-145.md)'s `?access_token=` handler read **the same constant**, so neither can drift. Proven on a running service — old path `404`, new path `401` then `101 Switching Protocols`. ⚠ **`FW-145` must still be *delivered*** for a valid token to clear `[Authorize]`; until then expect a **401, which is an auth failure and not a path failure** | [`FW-080 §0`](../../40-backend/tasks/FW-080.md) · [`FW-N03 §8·1`](FW-N03.md) · `[DEP]` S5 / `TC-704` re-run and corrected |
+| **Before `FW-135`'s enum mappers are written** | ⛔ **The hub protocol is undecided** (`G105`) | ⛔ **`FW-135`'s deserialisation, and every DTO behind it.** MessagePack is on by default but config-switchable, and enums cross as **strings** under it and **integers** under JSON — so a client written against one breaks when the flag moves. ⚠ Distinct from `G10`, which is the missing npm package and the IIS WebSockets prerequisite | `G105` · [`[SIG §4.1]`](../../20-architecture/SignalR.md) · recommended: `EnableMessagePack: false` for `test1`, build on JSON, verify MessagePack before UAT |
 | **Before T2** | **`G10`** — IIS WebSockets on the target, and MessagePack as a new client dependency | Transport **silently** falls back to long-poll. **A provisioning task, not a build one**; `[SIG]` treats the package as measure-first | [`FW-080`](../../40-backend/tasks/FW-080.md) · `[DEP §4.4]` |
 | **Before Phase 4** | **`G14`** — 3- vs 4-item inspection · `R#####` vs `ROD-#####` · `FootageFt` INT vs DECIMAL | ⚠ **`FW-132` bakes whichever it picks into the models every screen binds to.** The alpha-format half is ✅ **closed and verified** server-side — `Program.cs` requires `RodAlpha("ROD-00041")` to throw at boot — so **`R#####` is settled**; the inspection-count and footage-type halves are not | [`[GAP]` `G14`](../../Development/GapsRegister.md) |
 | **Before Phase 4** | **`OI-109`** return-to-DB2A pending client confirmation · **`Q3`** · **`Q14`** · ⛔ **`Q22`** | `FW-061`. **`Q22` is the hard one** — the four tolerance values are **owed by e-mail and nothing is seeded**, so `CHK007` cannot be exercised at either station | [`RocCheckin.md`](../../10-requirements/screens/RocCheckin.md) |
@@ -348,7 +374,7 @@ All six are other documents' to correct, so they are recorded here rather than e
 5. **DB2's rod scan has no endpoint.** `P-53` withdrew `RodReceivingController` on 25 Aug 2026;
    `GET /rod/{alpha}` was *"everything staging and check-in need in one round trip"*
    (`[API §4.3]`). `FW-061` and `FW-N01` both read it, and with it go the carry-forward gate
-   (`FR-043` needs `footageRunToDate`) and station switching (`Q24` needs `scheduledLineId`).
+   (`FR-043` needs `footageRunToDate`) and station switching (`Q24` needs `scheduledMachineName`).
    Three options are in `P-54`; **it is `[API]`'s call and it lands on this stream.**
 6. **1A's stated verification exercises the mock path only.** `phase-01a`'s *Testing* section
    lists guards, `flat-wire-api-mock.service`, `line-context`/`run-state` and

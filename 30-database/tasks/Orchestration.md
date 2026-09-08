@@ -91,7 +91,7 @@ exists.
 > ⚠ **Verified against the DDL on 29 Aug 2026, not read off a document.** `RodStaging`,
 > `SpoolCheckin`, `WipRejection`, `RodCheckout`, `CoilOutput`, `CoilTraceability` + its
 > non-overlap trigger, all five in-run event tables, `sp_GetGaugeTrace`,
-> `IX_FlatWireRun_LineId` **keyed `(LineId, Status)`** and `UX_FlatWireRun_ActiveLine` are all
+> `IX_FlatWireRun_MachineName` **keyed `(MachineName, Status)`** and `UX_FlatWireRun_ActiveLine` are all
 > **present and deployed**. §3 already said it — *"Construction is done"* — and this table now
 > agrees with it.
 >
@@ -101,7 +101,7 @@ exists.
 
 | Phase | Stories (DB h) | Owning artifact | Status |
 |---|---|---|---|
-| **3** | `FW-155` 4 | `IX_FlatWireRun_LineId`, keyed **`(LineId, Status)`** — not `LineId` alone | ✅ **Built** — `IX_FlatWireRun_LineId` deployed, keyed `(LineId, Status)` as specified |
+| **3** | `FW-155` 4 | `IX_FlatWireRun_MachineName`, keyed **`(MachineName, Status)`** — not `MachineName` alone | ✅ **Built** — `IX_FlatWireRun_MachineName` deployed, keyed `(MachineName, Status)` as specified |
 | **4** | `FW-159` 28 · `FW-220` DB 24 · `FW-221` 9 · `FW-222` 2 · `FW-223` DB 10 · `FW-225` DB 12 | [`40_…CheckInRod.sql`](../scripts/40_FlatWireDB_Proc_FlatWire_CheckInRod.sql) · [`60_…ReleaseStation.sql`](../scripts/60_FlatWireDB_Proc_FlatWire_ReleaseStation.sql) · [`70_…ReverseReqsum.sql`](../scripts/70_FlatWireDB_Proc_FlatWire_ReverseReqsum.sql) · [`30_…sp_IngestRodFromCoils.sql`](../scripts/30_FlatWireDB_Proc_sp_IngestRodFromCoils.sql) · `RodOrderAllocation` in `03_Materials` | ⚠ **Schema built; write paths are Draft.** `RodStaging` deployed. ⛔ `40_` blocked by `Q37`–`Q39`, `70_` by `Q40`, and **all of it sits behind deploy step 2's sign-off** (`FW-241`). `FW-222`'s `UX_FlatWireRun_ActiveLine` ✅ built |
 | **5** | `FW-165` 8 | `sp_GetGaugeTrace`, in [`FlatWire_DDL_08_Programmability.sql`](../sql/FlatWire_DDL_08_Programmability.sql) | ✅ **Built** — `sp_GetGaugeTrace` is the chain's one procedure; `FW-141`'s `ContextRepository` already calls it |
 | **6** | `FW-171` 20 | the five in-run event tables in [`FlatWire_DDL_04_Runs.sql`](../sql/FlatWire_DDL_04_Runs.sql) | ✅ **Tables built.** ⚠ `G34` (wire break has no persistence target, `FW-N08`, uncosted) and `G35` (FM2's dancers, blocked on `Q32`) are still open against them |
@@ -131,7 +131,7 @@ exists.
 
 | Record | Story | h | Built | Still owed |
 |---|---|---|---|---|
-| [FW-155](FW-155.md) | `FlatWireRun(LineId, Status)` index | 4 | ✅ `IX_FlatWireRun_LineId`, keyed **`(LineId, Status)`** — `07_Indexes.sql:40` | ⛔ **AC 2** — the execution plan, unverifiable until `FW-154`'s service body lands. ⚠ **The name understates the key; do not rename it** |
+| [FW-155](FW-155.md) | `FlatWireRun(MachineName, Status)` index | 4 | ✅ `IX_FlatWireRun_MachineName`, keyed **`(MachineName, Status)`** — `07_Indexes.sql:40` | ⛔ **AC 2** — the execution plan, unverifiable until `FW-154`'s service body lands. ⚠ **The name understates the key; do not rename it** |
 | [FW-159](FW-159.md) | `RodStaging` + check-in write path + `INFLAT` | 28 | ✅ Table `04_Runs.sql:74`, **both filtered unique indexes**, all five listed indexes, the `PayoffPosition` lookup | ⛔ **The card's blocker is STALE** — it says `G21` blocks the Phase-4 schema freeze; **`G21` was fixed 15 Aug 2026** and the fix **is** the absent `FL3PO` (`P-194`). ⚠ **The residual hours are Backend's**, not this stream's (`P-195`) — a DB developer assigned this finds nothing to build |
 | [FW-221](FW-221.md) | Station release + reqsum reversal | 9 | ✅ Both procedures written — `60_` **no open items**, `70_` Draft | ⛔ **`Q40`** — `70_` is **safe to create and unsafe to call** (`P-196`). ⚠ Its stations do not exist until deploy step 2, and **all four callers are unbuilt**. `P-197`: the **two reversal guards are independent and both stay** |
 | [FW-222](FW-222.md) | Single-active-run index + reversal flag | 2 | ✅ `UX_FlatWireRun_ActiveLine` `07_Indexes.sql:55`, `RodCheckin.WipCoilOrdersWritten` `04_Runs.sql:277` defaulting **safe** | ⛔ **AC 2 never run** — and it must **defeat the aggregate check**, or it proves the code path and not the index (`P-192`). ⛔ **AC 4's counts are stale** (49→50 indexes, 28 tables) and are **left as audit trail** (`P-193`) |
@@ -466,7 +466,7 @@ corrections with no id**, deliberately: neither is a deliverable:
    deploy** — an FL3 rod at `FL1PO` position 1 is rejected. Still saying otherwise:
    **`FW-007`**, **`FW-159`**, **`FW-176`** and **`FW-N01`**'s Blockers lines in `[TB §7]`
    (three of them saying it *"blocks the Phase-4 schema freeze"*), and **`CLAUDE.md`**
-   (*"the `(LineId, PayoffPosition)` uniqueness scope is unresolved across FL1/FL3"*). ⚠ **One
+   (*"the `(MachineName, PayoffPosition)` uniqueness scope is unresolved across FL1/FL3"*). ⚠ **One
    residual is genuine and must not be lost in the correction:** the *domain* rule must reject a
    second rod **with the DB index absent**, which no deployed environment can show — so the
    index is the demonstrated defence and the aggregate rule the designed one. **Do not cite
@@ -549,7 +549,7 @@ grid **was supplied and was followed** — all fourteen columns, in order. What 
 is the residue where that grid is **silent**: `SerialNo` (the die and straightener grids carry an
 `S/N`; this one does not), `EdgerType` and `GrooveNo`. ⭐ **`Name` and `EdgerToolAlpha` were both
 removed** once it was confirmed nothing reads them, which is why the form demands neither — but it
-also leaves the register with **no natural key**, and `FW-268` adds `(LineId, SetNumber)` when `Q95`
+also leaves the register with **no natural key**, and `FW-268` adds `(MachineName, SetNumber)` when `Q95`
 leg 2 lands.
 
 ⛔ **`G77` is NOT closed by this.** The **straightener** still has no table at all, and the

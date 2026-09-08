@@ -486,7 +486,7 @@ here before `Q41` closes would be a guess presented as an estimate.
 | **Schema** | ✅ **Done** — `SpoolStaging` built 22 Aug 2026, in the runner, seeded | **0 h.** The 20 Aug ledger’s W4 is complete; do not re-price it |
 | **Requirement text** | ✅ **Done** 25 Aug 2026 — `§5.29`, eight requirements | **0 h** |
 | **Test cases** | ✅ **Written** 25 Aug 2026 — `TC-776`–`TC-783`, all `[PROPOSED]` and deliberately not automated | Automation still owed |
-| **Endpoint** | ❌ Owed — `POST /precheckin` must accept `lineId = FL2` and its `422` retire, in **five** places in `[API]` | BE |
+| **Endpoint** | ❌ Owed — `POST /precheckin` must accept `machineName = FL2` and its `422` retire, in **five** places in `[API]` | BE |
 | **Screen** | ❌ Owed — the action on **Dashboard 5A**, not a new screen, and **not** DB2A | FE |
 | **WIP station** | ❌ Owed — `FL2PO` must be created; the script says it is *deliberately not created* | DB / deploy |
 | **Mockup** | ⚠ Comments corrected 25 Aug 2026; **the control itself is not built** | FE |

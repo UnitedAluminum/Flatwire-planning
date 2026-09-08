@@ -3,8 +3,8 @@
 **Project:** Flat Wire Mill Implementation
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL2 / FL3
-**Version:** 1.3
-**Last Updated:** August 25, 2026 — `FR-551` and `FR-554` cited on the allocation notification and overrun text; worked examples cited *(previously August 15, 2026)*
+**Version:** 1.4
+**Last Updated:** September 7, 2026 — **Section 1.4a added: this screen is ONE component serving all three lines**, with exactly four things varying by line (material panel, centre status card, action set, spool alerts). Component and roll settings come from the run's **pass schedule** rather than a per-line list, and the material shown is whatever is checked in at that line's station — with the rule that **a station holding its own name is idle, not loaded**. ⚠ **One row of Section 1.4 is now contested and is deliberately left unresolved**: it gives FL2 *"historical / profile only"* while the screen is specified with one trace treatment on all three lines, and `FR-120` and Section 3.2 still require the FL2 profile. That reconciliation is a client decision *(previously August 25, 2026 — `FR-551` and `FR-554` cited on the allocation notification and overrun text; worked examples cited *(previously August 15, 2026)*)*
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 3 — Active Run Monitor. The operator's continuously displayed screen during a production run.
 **Requirement source:** SRS run-monitoring and pause/resume rules; the four resume outcomes (OI-14); trace behaviour per line
@@ -46,6 +46,42 @@ Every other operator screen in this system is entered, completed and left. This 
 | **FL1** | Real-time gauge and width | No edger. Two payoffs, continuous feed by induction weld. No roll adjust for the finishing mill |
 | **FL2** | **Historical / profile only** | Fed from a pre-flattened spool, so there is one input rather than two payoffs. No draw boxes, therefore no die change |
 | **FL3** | Real-time gauge and width | FL1 feeding FL2 continuously. The fullest action set |
+
+## 1.4a One screen for three lines — the configuration surface `[CONFIRMED — September 7, 2026]`
+
+**This screen is a single component serving all three lines**, addressed at `#/flat-wire/home/{line}`
+and configured from the line alone. This section states what varies with it.
+
+**Exactly four things differ by line. Everything else is either identical or supplied by data.**
+
+| # | What varies | FL1 | FL2 | FL3 |
+|---|---|---|---|---|
+| 1 | Material information panel | Rod Information | **Spool** Information | Rod Information — *the same columns as FL1* |
+| 2 | Centre status card | Payoffs — two rods | **Material flow** — spool in, coil out | Payoffs — two rods |
+| 3 | Action set | Section 5.3 | Section 5.3 | Section 5.3 |
+| 4 | Spool-completion alerts | Present | Absent | Absent |
+
+**What does *not* vary, and must not be built as though it did:** the run header · both trace panels,
+their titles and their axis · the machine and component cards · the order-information panel and its
+column set · the collapsing behaviour · the pause and resume dialogs · the loading, idle and
+reconnecting states.
+
+**The component and roll settings shown on this screen come from the run's pass schedule** — they are
+data, not a per-line list. That is why the same card can show draw boxes and one mill on FL1, three
+finishing stands on FL2, and both groups on FL3, without a line-specific layout.
+
+**Which material is shown is determined by the line, and by one rule.** The screen reads the material
+checked in at that line's station. ⛔ **A station whose recorded coil number equals its own station
+name is IDLE, not loaded** — that value is the placeholder an empty station carries, and reading it as
+material would display a station name where an operator expects a rod or spool number. An idle station
+renders the same empty state as a line with no active run.
+
+> ⚠ **One row of Section 1.4 above is contested and is NOT settled by `D-55`.** That table gives FL2
+> *"historical / profile only"* while this screen is now specified with **one trace treatment on all
+> three lines**. `FR-120` and Section 3.2 both still require the FL2 profile, and the FL2 mockup still
+> shows a Live/Profile control. **The reconciliation is a client decision and is deliberately not made
+> here** — see the open items in Section 11. What *is* settled is that a reading with **no
+> measurement** must render as absent rather than as a value at target, on every line.
 
 ---
 

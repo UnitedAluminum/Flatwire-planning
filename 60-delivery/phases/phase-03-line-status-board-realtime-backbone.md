@@ -42,12 +42,12 @@
 - **Response models:** `LinesStatusResponse`/`LineStatusDto`/`PayoffStatusDto`/`ActiveAlertDto`. `PayoffStatusDto` carries bay **occupancy** (`state`, `rodAlpha`) alongside live weight — see `GET /payoff/status` for the fuller per-bay shape used by Dashboard 2A.
 - **Business services:** `LineStatusService` (composes scheduling + run + latest OPC readings); strongly-typed `FlatWireHub : Hub<IFlatWireClient>` (MessagePack; `JoinLineGroup`); OPC ingest → bounded channel → cadence-driven broadcast loop emitting `GaugeReading[]/WidthReading[]/SpeedFPM/PayoffWeight/ComponentStatus/LineStatus/FootageCounter` + `AlertRaised/AlertCleared` from the rules engine (see §0.4).
 - **Business rules (alert engine):** Payoff1<3,000 lb → Warning; gauge outside ±tol → Warning; component fault → Critical; active WIP rejection → Warning; Payoff2 not loaded & Payoff1<2,000 lb → Critical.
-- **Data source for "Payoff2 not loaded":** `RodStaging` — a `Staged` row on `(LineId, PayoffPosition)` means loaded. Until Phase 4 delivered that table this rule had **no way to be evaluated**, since nothing recorded bay occupancy; `PayoffWeight` alone cannot distinguish "empty bay" from "sensor reading zero". Consume the `PayoffStateChanged` event to keep the evaluation live.
+- **Data source for "Payoff2 not loaded":** `RodStaging` — a `Staged` row on `(MachineName, PayoffPosition)` means loaded. Until Phase 4 delivered that table this rule had **no way to be evaluated**, since nothing recorded bay occupancy; `PayoffWeight` alone cannot distinguish "empty bay" from "sensor reading zero". Consume the `PayoffStateChanged` event to keep the evaluation live.
 - **Logging/authz:** any authenticated role reads.
 
 ## Database Changes
 - **Tables:** reads `FlatWireRun` (active run/line-state), scheduling (order/alpha), latest readings buffered in-memory (not persisted per-tick in Phase 1).
-- **Indexes:** `FlatWireRun(LineId, Status)`.
+- **Indexes:** `FlatWireRun(MachineName, Status)`.
 
 ## Real-Time Functionality (the real-time backbone — see §0.4)
 - **Design:** strongly-typed `FlatWireHub : Hub<IFlatWireClient>`, MessagePack, WebSockets-first; OPC ingest → bounded channel → ~10 Hz batched broadcast per line group; hot telemetry batched/decimated, domain events sent immediately.

@@ -11,7 +11,7 @@
 --             FK_SetupHandlingTimeStandard_Element and
 --             FK_MaterialLossStandard_Element -- all three INTERNAL to that
 --             group. No FK reaches a machine or a line: FL1/FL2/FL3 is a
---             CHECKed LineId string, and united_db.dbo.machines is in
+--             CHECKed MachineName string, and united_db.dbo.machines is in
 --             another database, so a key to it cannot exist.  (+3)
 --             It was 64, not 62, since 3 Sep 2026: the fourth Tooling Inventory tool
 --             type added FK_ToolingInventoryRollSet_Stand and
@@ -717,7 +717,7 @@ GO
 -- (Sep-4-2026).  Three FKs, all within the new five-table group.
 --
 -- There is NO fourth FK to a machine or a line, and that is not an
--- omission: FL1/FL2/FL3 is a CHECK-constrained LineId string here (19
+-- omission: FL1/FL2/FL3 is a CHECK-constrained MachineName string here (19
 -- tables carry one), and the machine registry is
 -- united_db.dbo.machines -- a different database, so a foreign key to it
 -- is impossible.  See the note at the head of the Machine Setup section

@@ -1,0 +1,1901 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The reset the Artifact host injects, reproduced so this file renders identically
+     from file://. It must precede the document own style block below. -->
+<style>
+  :root { color-scheme: light dark; }
+  html, body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+<title>Flat Wire Angular Baseline</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #f4f6f7;
+    --surface: #ffffff;
+    --sunken: #e9ecee;
+    --line: #d5dade;
+    --line-soft: #e4e8ea;
+    --ink: #161a1f;
+    --ink-2: #49535d;
+    --ink-3: #74808b;
+    --accent: #2f5b85;
+    --accent-soft: #4674a0;
+    --accent-wash: #eaf0f6;
+    --st-done: #17835f;
+    --st-review: #185fa5;
+    --st-wip: #a98400;
+    --st-blocked: #b02e4a;
+    --st-none: #8a8a83;
+    --shadow: 0 1px 2px rgba(22, 26, 31, .06), 0 6px 18px -12px rgba(22, 26, 31, .18);
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+    --sans: "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
+    --display: "Archivo", "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #15181c;
+      --surface: #1c2126;
+      --sunken: #23292f;
+      --line: #333c44;
+      --line-soft: #272e35;
+      --ink: #e7eaed;
+      --ink-2: #adb7c0;
+      --ink-3: #85919b;
+      --accent: #7aa7cf;
+      --accent-soft: #4674a0;
+      --accent-wash: #1f2a35;
+      --st-done: #22a87c;
+      --st-review: #3d86cc;
+      --st-wip: #ab840e;
+      --st-blocked: #c74a62;
+      --st-none: #7e8286;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -14px rgba(0, 0, 0, .7);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #15181c;
+    --surface: #1c2126;
+    --sunken: #23292f;
+    --line: #333c44;
+    --line-soft: #272e35;
+    --ink: #e7eaed;
+    --ink-2: #adb7c0;
+    --ink-3: #85919b;
+    --accent: #7aa7cf;
+    --accent-soft: #4674a0;
+    --accent-wash: #1f2a35;
+    --st-done: #22a87c;
+    --st-review: #3d86cc;
+    --st-wip: #ab840e;
+    --st-blocked: #c74a62;
+    --st-none: #7e8286;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -14px rgba(0, 0, 0, .7);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 236px minmax(0, 1fr);
+    gap: 0;
+    max-width: 1520px;
+    margin: 0 auto;
+  }
+
+  /* ---------- index rail ---------- */
+  .rail {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 28px 18px 40px 24px;
+    border-right: 1px solid var(--line);
+    background: var(--surface);
+  }
+
+  .rail-mark {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    line-height: 1.3;
+  }
+
+  .rail-mark span { display: block; color: var(--ink-3); font-weight: 500; }
+
+  .rail nav { margin-top: 24px; display: flex; flex-direction: column; gap: 1px; }
+
+  .rail a {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 8px;
+    padding: 5px 8px 5px 6px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    line-height: 1.35;
+    color: var(--ink-2);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+  }
+
+  .rail a:hover { background: var(--accent-wash); color: var(--ink); border-left-color: var(--accent-soft); }
+  .rail a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .rail a i { font-style: normal; font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  .rail-group { margin-top: 16px; font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); padding-left: 8px; }
+
+  /* ---------- content ---------- */
+  main { padding: 0 0 96px; min-width: 0; }
+
+  .masthead {
+    padding: 56px 56px 40px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(30px, 3.6vw, 46px);
+    line-height: 1.06;
+    letter-spacing: -.02em;
+    margin: 14px 0 0;
+    text-wrap: balance;
+    max-width: 22ch;
+  }
+
+  .standfirst {
+    margin: 18px 0 0;
+    max-width: 66ch;
+    font-size: 17px;
+    line-height: 1.58;
+    color: var(--ink-2);
+  }
+
+  .meta {
+    margin-top: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 28px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink-3);
+  }
+
+  .meta b { color: var(--ink-2); font-weight: 500; }
+
+  section { padding: 0 56px; scroll-margin-top: 12px; }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin: 56px 0 4px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .sec-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    padding-top: 4px;
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 24px;
+    letter-spacing: -.014em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 16.5px;
+    letter-spacing: -.005em;
+    margin: 34px 0 10px;
+    text-wrap: balance;
+  }
+
+  h4 {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 11.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 26px 0 8px;
+  }
+
+  p { margin: 0 0 14px; max-width: 72ch; }
+  section > p, section > ul, section > ol { max-width: 72ch; }
+  ul, ol { margin: 0 0 14px; padding-left: 20px; }
+  li { margin-bottom: 5px; }
+  li > ul { margin-top: 5px; }
+  a { color: var(--accent); }
+
+  code, .m {
+    font-family: var(--mono);
+    font-size: .875em;
+    background: var(--sunken);
+    padding: .1em .32em;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+
+  strong { font-weight: 600; }
+
+  .lede {
+    font-size: 16px;
+    color: var(--ink-2);
+    max-width: 70ch;
+    margin: 16px 0 20px;
+  }
+
+  /* ---------- verdict / answer blocks ---------- */
+  .answers { display: flex; flex-direction: column; gap: 14px; margin: 26px 0 8px; }
+
+  .answer {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent-soft);
+    border-radius: 3px;
+    padding: 18px 22px;
+    box-shadow: var(--shadow);
+  }
+
+  .answer .q {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 15px;
+    margin: 0 0 8px;
+    color: var(--ink);
+  }
+
+  .answer p { margin: 0; color: var(--ink-2); max-width: 78ch; }
+  .answer p + p { margin-top: 10px; }
+
+  /* ---------- callouts ---------- */
+  .note {
+    border-left: 3px solid var(--st-review);
+    background: var(--surface);
+    border-top: 1px solid var(--line-soft);
+    border-right: 1px solid var(--line-soft);
+    border-bottom: 1px solid var(--line-soft);
+    padding: 14px 18px;
+    margin: 20px 0;
+    font-size: 14.5px;
+    max-width: 80ch;
+  }
+
+  .note.warn { border-left-color: var(--st-wip); }
+  .note.stop { border-left-color: var(--st-blocked); }
+  .note.good { border-left-color: var(--st-done); }
+  .note p { margin: 0; max-width: none; }
+  .note p + p { margin-top: 9px; }
+
+  .note-label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 5px;
+  }
+
+  /* ---------- tables ---------- */
+  .tw { overflow-x: auto; margin: 18px 0 24px; border: 1px solid var(--line); border-radius: 3px; background: var(--surface); }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+
+  thead th {
+    text-align: left;
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 10.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    background: var(--sunken);
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+    vertical-align: bottom;
+  }
+
+  tbody td { padding: 9px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: top; line-height: 1.45; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: var(--accent-wash); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 12.5px; }
+  td.id { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+  td.tight { white-space: nowrap; }
+
+  /* status stripe on a row */
+  tbody tr[data-st] td:first-child { box-shadow: inset 3px 0 0 var(--st-none); }
+  tbody tr[data-st="done"] td:first-child { box-shadow: inset 3px 0 0 var(--st-done); }
+  tbody tr[data-st="review"] td:first-child { box-shadow: inset 3px 0 0 var(--st-review); }
+  tbody tr[data-st="wip"] td:first-child { box-shadow: inset 3px 0 0 var(--st-wip); }
+  tbody tr[data-st="blocked"] td:first-child { box-shadow: inset 3px 0 0 var(--st-blocked); }
+
+  /* ---------- pills ---------- */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+    line-height: 1.5;
+  }
+
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+  .pill.done { color: var(--st-done); }
+  .pill.review { color: var(--st-review); }
+  .pill.wip { color: var(--st-wip); }
+  .pill.blocked { color: var(--st-blocked); }
+  .pill.none { color: var(--st-none); }
+  .pill.plain { border-style: dashed; color: var(--ink-3); }
+  .pill.plain::before { display: none; }
+
+  .verdict { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+  .v-reuse { color: var(--st-done); }
+  .v-gen { color: var(--st-review); }
+  .v-fix { color: var(--st-wip); }
+  .v-no { color: var(--st-blocked); }
+
+  /* ---------- meters ---------- */
+  .meters { margin: 22px 0 10px; display: flex; flex-direction: column; gap: 20px; max-width: 860px; }
+
+  .meter-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 7px;
+  }
+
+  .meter-name { font-family: var(--display); font-weight: 600; font-size: 14.5px; }
+  .meter-name em { font-style: normal; font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); font-weight: 400; margin-left: 8px; }
+  .meter-val { font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+
+  .bar { display: flex; gap: 2px; height: 26px; background: var(--sunken); border-radius: 2px; overflow: hidden; }
+
+  .bar span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .bar .s-done { background: var(--st-done); }
+  .bar .s-review { background: var(--st-review); }
+  .bar .s-wip { background: var(--st-wip); }
+  .bar .s-blocked { background: var(--st-blocked); }
+  .bar .s-none { background: var(--st-none); }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin-top: 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-2);
+  }
+
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; font-style: normal; }
+
+  /* ---------- flow / stack ---------- */
+  .flow {
+    margin: 22px 0 26px;
+    padding: 20px 22px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow-x: auto;
+  }
+
+  .flow-line { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+  .flow-line + .flow-line { margin-top: 10px; }
+  .flow-node { padding: 5px 10px; border: 1px solid var(--line); border-radius: 2px; background: var(--ground); }
+  .flow-node.built { border-color: var(--st-done); color: var(--st-done); }
+  .flow-node.gap { border-color: var(--st-blocked); color: var(--st-blocked); border-style: dashed; }
+  .flow-node.part { border-color: var(--st-wip); color: var(--st-wip); }
+  .flow-arrow { color: var(--ink-3); }
+  .flow-cap { margin-top: 14px; font-size: 12.5px; color: var(--ink-3); font-family: var(--sans); white-space: normal; }
+
+  /* ---------- tree ---------- */
+  pre.tree {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.7;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 18px 20px;
+    overflow-x: auto;
+    margin: 18px 0 24px;
+  }
+
+  pre.tree b { font-weight: 500; color: var(--st-done); }
+  pre.tree u { text-decoration: none; color: var(--st-blocked); }
+  pre.tree i { font-style: normal; color: var(--ink-3); }
+
+  /* ---------- phase cards ---------- */
+  .phases { display: flex; flex-direction: column; gap: 0; margin: 22px 0 10px; counter-reset: ph; }
+
+  .phase {
+    display: grid;
+    grid-template-columns: 62px minmax(0, 1fr);
+    gap: 20px;
+    padding: 22px 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .phase:last-child { border-bottom: 1px solid var(--line); }
+
+  .phase-num {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 34px;
+    line-height: 1;
+    color: var(--line);
+    letter-spacing: -.03em;
+  }
+
+  .phase h3 { margin: 0 0 4px; font-size: 17px; }
+  .phase .goal { font-size: 13px; color: var(--ink-3); font-family: var(--mono); margin-bottom: 12px; }
+  .phase p { margin-bottom: 10px; }
+  .phase ul { margin-bottom: 0; }
+
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 18px; font-size: 13.5px; margin: 14px 0 18px; }
+  .kv dt { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); padding-top: 3px; }
+  .kv dd { margin: 0; }
+
+  footer.end {
+    margin: 64px 56px 0;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    color: var(--ink-3);
+    font-family: var(--mono);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 1080px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 22px 24px; }
+    .rail nav { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 2px 12px; margin-top: 16px; }
+    .rail-group { grid-column: 1 / -1; }
+    .masthead, section { padding-left: 26px; padding-right: 26px; }
+    footer.end { margin-left: 26px; margin-right: 26px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="rail">
+    <div class="rail-mark">Flat Wire Mill<span>Angular baseline &amp; build plan</span></div>
+    <nav>
+      <a href="#s1"><i>01</i> Executive summary</a>
+      <a href="#s2"><i>02</i> Current architecture</a>
+      <a href="#s3"><i>03</i> Active Run deep dive</a>
+      <a href="#s4"><i>04</i> The baseline, ruled</a>
+      <a href="#s5"><i>05</i> What is implemented</a>
+      <a href="#s6"><i>06</i> Requirement vs code</a>
+      <a href="#s7"><i>07</i> Pending screens</a>
+      <a href="#s8"><i>08</i> Reuse matrix</a>
+      <a href="#s9"><i>09</i> API · DB · PLC</a>
+      <a href="#s10"><i>10</i> Debt &amp; risk</a>
+      <a href="#s11"><i>11</i> Target architecture</a>
+      <a href="#s12"><i>12</i> Build sequence</a>
+      <a href="#s13"><i>13</i> Backlog</a>
+      <a href="#s14"><i>14</i> Dependency map</a>
+      <a href="#s15"><i>15</i> Plan edits owed</a>
+      <a href="#s16"><i>16</i> Next ten tasks</a>
+      <div class="rail-group">Measured</div>
+      <a href="#s5">25 tests · 100% coverage</a>
+      <a href="#s9">23 of 31 endpoints live</a>
+      <a href="#s10">5 baseline blockers</a>
+    </nav>
+  </aside>
+
+  <main>
+    <header class="masthead">
+      <div class="eyebrow">Deep analysis · projects/flat-wire · 7 September 2026</div>
+      <h1>Build forward from the Active Run screen</h1>
+      <p class="standfirst">
+        The Angular work already landed for Flat Wire is a complete, test-clean <em>presentation</em>
+        baseline for fifteen dashboards — and it contains no data layer at all. Meanwhile the
+        <code>FlatWire</code> microservice already answers 23 endpoints behind a stub/real DI swap.
+        The whole of the remaining plan follows from closing that one gap first, then copying
+        <code>flat-wire-landing</code> outward.
+      </p>
+      <div class="meta">
+        <span><b>Angular</b> ual-angular @ 20.3.12 · projects/flat-wire</span>
+        <span><b>API</b> ual-api @ API/Domain/FlatWire</span>
+        <span><b>Spec</b> Flatwire-planning @ main 88e59c6</span>
+        <span><b>Window</b> 17 Aug → 30 Sep 2026</span>
+      </div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section id="s1">
+      <div class="sec-head"><span class="sec-num">01</span><h2>Executive summary</h2></div>
+
+      <p class="lede">
+        Three questions were asked. They are answered here before anything else, because the rest of
+        this document is only the working behind them.
+      </p>
+
+      <div class="answers">
+        <div class="answer">
+          <p class="q">1. What has been established in Angular that should become the reference implementation?</p>
+          <p>
+            <strong>The whole of <code>flat-wire-landing.component</code> — its composition, not its content.</strong>
+            Specifically: the shell/wrapper/route triple that puts a screen at <code>#/flat-wire</code>; the
+            flex height budget that fits 1920&#8239;×&#8239;1080 without scrolling or scaling; the card idiom;
+            the consumed <code>shared</code> controls (<code>lib-nav-rail</code>, <code>lib-trace-panel</code>,
+            <code>lib-chart-canvas</code>); the <code>OnPush</code>&#8239;+&#8239;typed-interface&#8239;+&#8239;private-builder
+            component shape; content strings resolved through <code>AppConfigService</code>; popups through
+            <code>CommonPopupService</code>; and the corner <code>lib-spool-notification</code> pattern for a
+            non-modal advisory. It is already codified in <code>[UIC]</code>, which is unusually good and
+            should be treated as binding.
+          </p>
+          <p>
+            <strong>What must not be inherited is the <em>data</em> shape.</strong> Every figure on both screens
+            comes from a private <code>build*()</code> method returning literals. Copy the builders' output
+            types; do not copy the builders.
+          </p>
+        </div>
+
+        <div class="answer">
+          <p class="q">2. What can be directly reused for the remaining screens?</p>
+          <p>
+            Immediately and without change: the eleven host integration points (all already wired,
+            including <code>useMockData</code> in both config files and <code>flatWireHubUrl</code>);
+            the routing pattern; the three <code>shared</code> controls; the card, context-bar, collapsible-table
+            and modal markup idioms; <code>SpoolNotificationComponent</code> as the template for every
+            corner advisory; <code>TraceGraphPopupComponent</code> as the template for every dialog;
+            <code>resolveSpoolMilestone</code> as the template for every pure decision function; and the
+            spec harness — declaring (not stubbing) the shared components, with <code>jest-canvas-mock</code>.
+          </p>
+          <p>
+            Reusable only after generalization: the trace section, the info tables, the payoff bars and
+            the alert rows, which exist as inline markup on the two built screens and are owed as
+            controls by <code>FW-163</code>, <code>FW-134</code> and <code>FW-133</code>. Each must
+            <em>replace</em> that markup, not sit beside it.
+          </p>
+        </div>
+
+        <div class="answer">
+          <p class="q">3. What is the recommended plan to build the rest on top of it?</p>
+          <p>
+            Five phases, sequenced so nothing is built twice. <strong>Phase&nbsp;1 stabilizes the baseline</strong>
+            — the API client, the SignalR client, the two state services, and the replacement of DB3's
+            builders by a real view-model mapper. That is roughly 100&nbsp;h and it is the only work that
+            every later screen depends on. <strong>Phase&nbsp;2</strong> builds the four core operator screens by
+            copying DB3. <strong>Phase&nbsp;3</strong> turns the traces and prompts live. <strong>Phase&nbsp;4</strong>
+            delivers the seven dialogs and the transactional screens. <strong>Phase&nbsp;5</strong> completes
+            line variants, reports and admin.
+          </p>
+          <p>
+            The plan of record already contains almost all of these stories with correct ids and hours.
+            What it needs is the record fixes and eleven new rows in §15, not a rewrite.
+          </p>
+        </div>
+      </div>
+
+      <h3>The one number that shapes everything</h3>
+      <p>
+        Frontend and backend readiness are inverted, and the plan has not caught up. Task counts are
+        from <code>STATUS.md</code>; endpoint counts are measured from the controllers.
+      </p>
+
+      <div class="meters">
+        <div>
+          <div class="meter-head">
+            <span class="meter-name">Phase 1B Backend Foundation<em>31 stories</em></span>
+            <span class="meter-val">68% done</span>
+          </div>
+          <div class="bar" role="img" aria-label="Backend foundation: 21 done, 4 in review, 1 blocked, 5 not started">
+            <span class="s-done" style="flex:21">21</span>
+            <span class="s-review" style="flex:4">4</span>
+            <span class="s-blocked" style="flex:1"></span>
+            <span class="s-none" style="flex:5">5</span>
+          </div>
+        </div>
+        <div>
+          <div class="meter-head">
+            <span class="meter-name">Phase 1A Angular Foundation<em>9 stories</em></span>
+            <span class="meter-val">11% done</span>
+          </div>
+          <div class="bar" role="img" aria-label="Angular foundation: 1 done, 1 in progress, 2 blocked, 5 not started">
+            <span class="s-done" style="flex:1">1</span>
+            <span class="s-wip" style="flex:1">1</span>
+            <span class="s-blocked" style="flex:2">2</span>
+            <span class="s-none" style="flex:5">5</span>
+          </div>
+        </div>
+        <div>
+          <div class="meter-head">
+            <span class="meter-name">MVP-1 REST surface<em>31 endpoints in <code>[API §3.1]</code></em></span>
+            <span class="meter-val">23 answering</span>
+          </div>
+          <div class="bar" role="img" aria-label="REST surface: 23 endpoints implemented, 8 not implemented">
+            <span class="s-done" style="flex:23">23 implemented</span>
+            <span class="s-none" style="flex:8">8</span>
+          </div>
+        </div>
+        <div class="legend">
+          <span><i style="background:var(--st-done)"></i> Done</span>
+          <span><i style="background:var(--st-review)"></i> In review</span>
+          <span><i style="background:var(--st-wip)"></i> In progress</span>
+          <span><i style="background:var(--st-blocked)"></i> Blocked</span>
+          <span><i style="background:var(--st-none)"></i> Not started</span>
+        </div>
+      </div>
+
+      <div class="note good">
+        <span class="note-label">The lever</span>
+        <p>
+          <code>DependencyInjectionRegistry.cs</code> registers twelve services twice — <code>StubCheckInService</code>
+          … <code>StubWipRejectionService</code> when <code>useMockData</code> is true, the real ones when it is false.
+          <strong>The Angular client can therefore be written against live HTTP today</strong>, against seeded
+          fixtures, with no database and no PLC. This removes the usual reason to defer the data layer, and
+          it is why Phase&nbsp;1 below is scheduled first rather than in parallel.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section id="s2">
+      <div class="sec-head"><span class="sec-num">02</span><h2>Current Angular architecture</h2></div>
+
+      <p>
+        <code>projects/flat-wire</code> is 30 files and 1,517 lines of component code. It is a
+        <em>presentation-only</em> library: no service, no <code>HttpClient</code>, no
+        <code>Observable</code>, no <code>subscribe</code>, no guard of its own, and no stylesheet.
+        Measured, not assumed — each of those greps returns zero.
+      </p>
+
+      <pre class="tree">projects/flat-wire/
+├── src/public-api.ts                     <i>exports the component + module only</i>
+├── src/lib/flat-wire.module.ts           <b>CommonModule · DragDropModule · SharedModule.forRoot() · NgbModule</b>
+├── src/lib/flat-wire-routing.module.ts   <b>'' → shell (AuthenticationGuard, ContentDataService)</b>
+│                                         <b>  ├── '' → redirect flat-wire-landing</b>
+│                                         <b>  ├── flat-wire-landing      DB3 Active Run  (the landing)</b>
+│                                         <b>  └── supervisor-dashboard   DB1 Line Status</b>
+├── src/lib/flat-wire.component.{ts,html} <b>shell: lib-header/footer/global-spinner/toast</b>
+├── src/lib/components/
+│   ├── flat-wire-landing/                <b>380 ts · 202 html · spool-milestone.model.ts</b>
+│   ├── supervisor-dashboard/             <b>268 ts · 189 html</b>
+│   ├── spool-notification/               <b>60 ts · 99 html — signal inputs, outputs</b>
+│   └── trace-graph-popup/                <b>37 ts · 18 html — NgbActiveModal</b>
+├── src/lib/constants/{api-methods,flat-wire}.constants.ts
+├── src/lib/enums/{line-state,spool-milestone}.enum.ts
+├── src/lib/interfaces/{flat-wire-landing,supervisor-dashboard}.interface.ts
+├── <u>src/lib/services/     ← does not exist</u>
+├── <u>src/lib/models/       ← does not exist</u>
+├── <u>src/lib/guards/       ← does not exist</u>
+└── <u>src/lib/components/shared/  ← does not exist</u></pre>
+
+      <h3>End-to-end trace, as it stands</h3>
+
+      <div class="flow">
+        <div class="flow-line">
+          <span class="flow-node built">#/flat-wire</span><span class="flow-arrow">→</span>
+          <span class="flow-node built">AuthenticationGuard</span><span class="flow-arrow">→</span>
+          <span class="flow-node built">ContentDataService</span><span class="flow-arrow">→</span>
+          <span class="flow-node built">FlatWireComponent</span><span class="flow-arrow">→</span>
+          <span class="flow-node built">FlatWireLandingComponent</span>
+        </div>
+        <div class="flow-line">
+          <span class="flow-node built">constructor</span><span class="flow-arrow">→</span>
+          <span class="flow-node part">buildRunHeader() · buildMachineLines() · buildPayoffs() … 7 builders</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-node built">typed interfaces</span><span class="flow-arrow">→</span>
+          <span class="flow-node built">template</span>
+        </div>
+        <div class="flow-line">
+          <span class="flow-node gap">FlatWireApiService</span><span class="flow-arrow">⇢</span>
+          <span class="flow-node gap">ApiGatewayService</span><span class="flow-arrow">⇢</span>
+          <span class="flow-node built">GET /run/active</span><span class="flow-arrow">⇢</span>
+          <span class="flow-node gap">RunView mapper</span><span class="flow-arrow">⇢</span>
+          <span class="flow-node part">the same 7 interfaces</span>
+        </div>
+        <div class="flow-cap">
+          Solid green is built. Amber is built but hardcoded. Dashed red does not exist — and note that
+          the third row's <em>endpoint</em> is green: the API is already there. The interfaces the builders
+          return are exactly the interfaces a mapper would return, which is why this is a substitution
+          rather than a redesign.
+        </div>
+      </div>
+
+      <h3>Host integration — eleven points, all wired</h3>
+      <div class="tw">
+        <table>
+          <thead>
+            <tr><th>Integration point</th><th>State</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+            <tr data-st="done"><td><code>angular.json</code> project</td><td><span class="pill done">wired</span></td><td class="id">prefix <code>lib</code>, ng-packagr, lint target</td></tr>
+            <tr data-st="done"><td>Wrapper module</td><td><span class="pill done">wired</span></td><td class="id">src/app/project-routes/flat-wire-wrapper.module.ts</td></tr>
+            <tr data-st="done"><td>Host route</td><td><span class="pill done">wired</span></td><td class="id">routes.ts · webpackChunkName "flat-wire"</td></tr>
+            <tr data-st="done"><td>Content data + type</td><td><span class="pill done">wired</span></td><td class="id">flat-wire.json (94 keys) · FlatWireContent</td></tr>
+            <tr data-st="done"><td>jest config + script</td><td><span class="pill done">wired</span></td><td class="id">test:flat-wire · thresholds 95</td></tr>
+            <tr data-st="done"><td>eslint config</td><td><span class="pill done">wired</span></td><td class="id">component-selector prefix <code>lib</code></td></tr>
+            <tr data-st="done"><td>API URL key</td><td><span class="pill done">wired</span></td><td class="id">flatWireApiUrl = FlatWire/api/v1/</td></tr>
+            <tr data-st="done"><td>Hub URL key</td><td><span class="pill done">wired</span></td><td class="id">flatWireHubUrl = FlatWire/hubs/flat-wire</td></tr>
+            <tr data-st="done"><td><code>useMockData</code></td><td><span class="pill done">wired</span></td><td class="id">local-config <code>true</code> · environment.js <code>false</code></td></tr>
+            <tr data-st="none"><td>tsconfig path / build chain</td><td><span class="pill plain">n/a</span></td><td>Correctly absent — the wrapper imports from source, as slitter-interface and coil-receiving do. <code>[CMP §5.1]</code> asks for a <code>build:shop-floor</code> entry; that requirement is wrong for a routed library.</td></tr>
+            <tr data-st="blocked"><td><code>GetServerConnectionInfo</code></td><td><span class="pill blocked">missing</span></td><td>The client calls <code>FlatWire/GetServerConnectionInfo</code> for the header's environment badge. No FlatWire controller implements it, while CoilReceiving, FurnaceScheduler, Login and SlitterInterface all do. Silent 404; badge stays blank. ✅ <strong>Now owned by <code>FW-N13</code></strong> — minted 7 Sep 2026, 3&#8239;h BE, Phase&nbsp;1B, priced as <code>[CE §2]</code>'s query endpoint. The endpoint itself is still unimplemented.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note warn">
+        <span class="note-label">Correction to the specification</span>
+        <p>
+          <code>CLAUDE.md</code> and <code>[CMP §5.1]</code> both state the library prefix is <code>fw</code>.
+          <strong>It is <code>lib</code></strong> — in <code>angular.json</code>, in
+          <code>eslint.config.mjs</code>, and in all five component selectors
+          (<code>lib-flat-wire-landing</code>, <code>lib-spool-notification</code>, …). All 27 sibling
+          libraries use <code>lib</code>. <strong>Recommendation: ratify <code>lib</code> and correct the
+          two documents.</strong> Renaming to <code>fw</code> would make Flat Wire the only library in the
+          repository that deviates, and would break the ids <code>[UIC §3.22]</code> derives from
+          <code>screenKey</code>.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section id="s3">
+      <div class="sec-head"><span class="sec-num">03</span><h2>Active Run deep dive</h2></div>
+
+      <p class="lede">
+        <code>flat-wire-landing.component</code> is DB3 Active Run Monitor for FL1, and it is the default
+        child of <code>#/flat-wire</code>. 380 lines of TypeScript, 202 of template, 9 tests. This is what
+        it actually does.
+      </p>
+
+      <h4>Component contract</h4>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Aspect</th><th>As built</th><th>Verdict for the next screen</th></tr></thead>
+          <tbody>
+            <tr><td class="tight">Decorator</td><td><code>selector: 'lib-flat-wire-landing'</code>, <code>templateUrl</code>, <code>ChangeDetectionStrategy.OnPush</code>, <code>standalone: false</code></td><td class="verdict v-reuse">Reuse as-is</td></tr>
+            <tr><td class="tight">DI</td><td><code>inject()</code> field initializers, private, one comment line each: <code>AppConfigService</code>, <code>ChangeDetectorRef</code>, <code>CommonPopupService</code></td><td class="verdict v-reuse">Reuse as-is</td></tr>
+            <tr><td class="tight">Public state</td><td>13 public fields, each a named interface (<code>RunHeader</code>, <code>MachineLine[]</code>, <code>Payoff[]</code>, <code>ComponentSetting[]</code>, <code>InfoTable[]</code>, <code>TracePanel[]</code>, <code>SpoolReading</code>) — never <code>any</code>, never an inline literal type</td><td class="verdict v-reuse">Reuse as-is</td></tr>
+            <tr><td class="tight">Content strings</td><td><code>getContentData('flat-wire') as FlatWireContent</code> in the constructor; every visible string comes from it</td><td class="verdict v-reuse">Reuse as-is</td></tr>
+            <tr><td class="tight">Data source</td><td>Seven private <code>build*()</code> methods returning literals, with a block <code>TODO</code> naming the owning story for each</td><td class="verdict v-no">Do not reuse</td></tr>
+            <tr><td class="tight">Change detection</td><td>Every handler mutates then calls <code>changeDetectorRef.detectChanges()</code></td><td class="verdict v-fix">Improve first</td></tr>
+            <tr><td class="tight">View queries</td><td><code>viewChildren(TracePanelComponent)</code> as a <code>Signal</code>, driving <code>resizeTraces()</code></td><td class="verdict v-reuse">Reuse as-is</td></tr>
+            <tr><td class="tight">Window events</td><td><code>@HostListener('window:resize')</code> fans the resize into every panel</td><td class="verdict v-reuse">Reuse as-is</td></tr>
+            <tr><td class="tight">Popups</td><td><code>commonPopupService.popupModal(Cmp, { modalName, modalSize: MODAL_SIZE.XL }, { panel })</code></td><td class="verdict v-reuse">Reuse as-is</td></tr>
+            <tr><td class="tight">Pure logic</td><td>Extracted to a free function in a sibling file — <code>spool-milestone.model.ts</code> / <code>resolveSpoolMilestone()</code>, separately spec'd</td><td class="verdict v-reuse">Reuse as-is</td></tr>
+            <tr><td class="tight">Constants</td><td>Magic numbers named in <code>flat-wire.constants.ts</code>: <code>GAUGE_TARGET</code>, <code>SPOOL_SCALE_TICKS</code>, <code>LINE_STATE_ICONS</code> keyed by enum</td><td class="verdict v-reuse">Reuse as-is</td></tr>
+            <tr><td class="tight">Child components</td><td><code>lib-spool-notification</code> takes <code>input.required()</code> signals and emits <code>output()</code> — the modern signal API, unlike the parent's plain fields</td><td class="verdict v-reuse">Reuse as-is</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>Template composition — the pattern to copy</h4>
+      <p>
+        The height budget is the single most valuable thing on this screen and the easiest to get wrong.
+        <code>[UIC §4.1]</code> holds the full reasoning; the shape is:
+      </p>
+      <pre class="tree">&lt;div class="h-91 bg-body-secondary p-1 overflow-hidden"&gt;                  <i>the box</i>
+  &lt;div class="d-flex align-items-stretch h-100"&gt;                         <i>definite height</i>
+    &lt;lib-nav-rail (expandedChange)="resizeTraces()" [items] [screenKey] /&gt;
+    &lt;div class="menu-content flex-grow-1 min-w-0 d-flex flex-column h-100"&gt;
+      &lt;div class="… context bar …           flex-shrink-0"&gt;               <i>fixed cost</i>
+      &lt;div class="row g-2 mb-2             flex-shrink-0"&gt;               <i>3 × col-4 cards</i>
+      &lt;div class="flex-grow-1 min-h-0 d-flex flex-column"&gt;               <i>← absorbs the slack</i>
+        &lt;div class="card … flex-shrink-0"&gt;   × 2                          <i>info tables</i>
+        &lt;div class="card flex-grow-1 min-h-0 d-flex flex-column"&gt;        <i>traces</i>
+          &lt;lib-trace-panel&gt; × 2 in col-6                                <i>host classes continue the chain</i></pre>
+
+      <p>
+        Three rules inside that carry real consequence, all learned the hard way and all recorded:
+        <code>min-w-0</code> and <code>min-h-0</code> did not exist as classes until this screen needed
+        them (every prior use in the repository was a silent no-op, which put a horizontal scrollbar on
+        every resolution); the height chain must continue <em>into</em> the trace panel's host classes or
+        the canvas overflows; and collapsing a section destroys its canvas, which
+        <code>lib-chart-canvas</code> already handles by destroy-before-rebuild.
+      </p>
+
+      <h4>Operator interactions — five, all local</h4>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Action</th><th>Handler</th><th>What happens now</th><th>What it owes</th></tr></thead>
+          <tbody>
+            <tr data-st="wip"><td class="tight">Rail entry × 7</td><td class="id">—</td><td>All seven <code>isActive: false</code>, so rendered disabled. <code>(itemClick)</code> is not bound.</td><td>One dialog each (§7)</td></tr>
+            <tr data-st="done"><td class="tight">Maximize trace</td><td class="id">openTraceGraph()</td><td>Opens <code>TraceGraphPopupComponent</code> at <code>MODAL_SIZE.XL</code> rendering the same <code>lib-trace-panel</code></td><td>Nothing — complete</td></tr>
+            <tr data-st="done"><td class="tight">Collapse table / traces</td><td class="id">toggleInfoTable() · toggleTraceSection()</td><td>Flips a flag, re-runs <code>resizeTraces()</code></td><td><code>localStorage</code> persistence (<code>FW-163</code>)</td></tr>
+            <tr data-st="wip"><td class="tight">Acknowledge spool</td><td class="id">acknowledgeSpool()</td><td>Sets <code>isSpoolAcknowledged</code>, card collapses to the docked pill</td><td>Persist the acknowledgement; re-arm on the next milestone</td></tr>
+            <tr data-st="blocked"><td class="tight">Complete spool</td><td class="id">completeSpool()</td><td>Sets the same flag. <strong>Nothing is posted.</strong></td><td><code>POST /spool/complete</code> — the endpoint exists</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>Real-time, validation, errors, loading, empty — the honest picture</h4>
+      <ul>
+        <li><strong>Real-time:</strong> none. <code>TracePanel.points</code> is seven literals from <code>GAUGE_TRACE_READINGS</code>; <code>isLive</code> is left at its <code>false</code> default so the chart is drawn once. The plumbing for live is already in <code>lib-chart-canvas</code> — <code>isLive</code> switches it to <code>chart.update('none')</code> in place.</li>
+        <li><strong>Validation:</strong> none, because there is no input on this screen. The first real validation lands with the dialogs.</li>
+        <li><strong>Errors:</strong> nothing screen-level. The shell mounts <code>lib-toast</code> and <code>lib-global-spinner</code>, and <code>ApiGatewayService</code> raises the spinner per call — so the loading and error <em>surfaces</em> exist and are unused.</li>
+        <li><strong>Empty states:</strong> none anywhere. This matters most for FL2, which broadcasts <code>null</code> gauge and width by design — the FL2 variant needs an explicit empty state, not a value resting at target.</li>
+        <li><strong>Navigation:</strong> none out of the screen. There is no back control and no line switch.</li>
+      </ul>
+
+      <div class="note">
+        <span class="note-label">Reference chain, as requested</span>
+        <p>
+          Active Run → <strong>reference layout</strong> (§4.1 height budget, card idiom, context bar) →
+          <strong>reference component</strong> (<code>OnPush</code>, typed public fields, <code>inject()</code>,
+          content-data constructor) → <strong>reference child</strong> (signal inputs/outputs, as
+          <code>lib-spool-notification</code>) → <strong>reference dialog</strong> (<code>CommonPopupService</code>
+          + <code>NgbActiveModal</code> + <code>cdkDrag</code>, as <code>TraceGraphPopupComponent</code>) →
+          <strong>reference pure logic</strong> (free function in a sibling file) →
+          <strong>reference spec</strong> (declare the shared components, <code>jest-canvas-mock</code>, one
+          <code>describe</code> per public method). <em>Everything except the data path, which is Phase&nbsp;1's job to author.</em>
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section id="s4">
+      <div class="sec-head"><span class="sec-num">04</span><h2>The baseline, ruled</h2></div>
+
+      <p class="lede">
+        Every pattern found in the two built screens, with an explicit verdict. This table is the answer
+        to "what should become the standard approach".
+      </p>
+
+      <h3>UI baseline</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Pattern</th><th>Established as</th><th>Verdict</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr><td class="tight">Page frame</td><td><code>h-91 bg-body-secondary p-1 overflow-hidden</code> + <code>d-flex align-items-stretch h-100</code></td><td class="verdict v-reuse">Reuse as-is</td><td>The screen budgets height; it never scrolls and never scales</td></tr>
+            <tr><td class="tight">Navigation</td><td><code>lib-nav-rail</code> with <code>screenKey</code> bound</td><td class="verdict v-reuse">Reuse as-is</td><td>Unbound <code>screenKey</code> collapses every button id to a <code>-</code> suffix</td></tr>
+            <tr><td class="tight">Context bar</td><td><code>bg-semi-dark-blue</code> strip of <code>bg-dark-subtle rounded px-3 py-2</code> chips</td><td class="verdict v-reuse">Reuse as-is</td><td><code>py-1</code> on a trace-carrying screen, <code>py-2</code> otherwise</td></tr>
+            <tr><td class="tight">Card</td><td><code>card border-0 shadow-sm h-100</code>; header <code>bg-semi-dark-blue</code> + <code>badge bg-secondary</code> + <code>fa-2x text-warning</code> icon</td><td class="verdict v-reuse">Reuse as-is</td><td>From <code>scaffold-form §8</code> in slitter's colours</td></tr>
+            <tr><td class="tight">Tables</td><td>Plain <code>table table-sm table-hover</code>, <code>text-nowrap</code>, <code>bg-light-grey</code> head</td><td class="verdict v-gen">Generalize</td><td>Deliberately not a grid component (<code>D-06</code>). <code>FW-163</code> owes <code>info-grid</code></td></tr>
+            <tr><td class="tight">Collapse</td><td><code>fa-circle-chevron-up/down</code> at <code>fa-2x</code>, id <code>act-{key}-{screen}</code></td><td class="verdict v-gen">Generalize</td><td>Key must be kebab-case; it is stamped into the id</td></tr>
+            <tr><td class="tight">Progress</td><td>Bootstrap <code>progress</code>/<code>progress-bar</code> with <code>[style.width.%]</code> and full ARIA</td><td class="verdict v-gen">Generalize</td><td><code>FW-134</code>'s <code>payoff-weight-bar</code></td></tr>
+            <tr><td class="tight">Status dots</td><td>Font Awesome <code>fa-circle</code> + colour; <code>live-dot</code> adds the pulse</td><td class="verdict v-reuse">Reuse as-is</td><td>Only genuinely live things pulse</td></tr>
+            <tr><td class="tight">Dialogs</td><td><code>modal-header bg-semi-dark-blue</code> + <code>cdkDrag</code> + <code>libResetDragPosition</code>; footer close last as <code>btn extra-big btn-danger</code></td><td class="verdict v-reuse">Reuse as-is</td><td>Action button carries an icon, dismiss does not. Never stack dialogs</td></tr>
+            <tr><td class="tight">Non-modal advisory</td><td><code>.floating-popover</code> + <code>.pill</code> corner card, <code>role="status"</code>, <code>aria-live="polite"</code></td><td class="verdict v-reuse">Reuse as-is</td><td>Generic class name on purpose — reuse it, don't clone it</td></tr>
+            <tr><td class="tight">Charts</td><td><code>lib-trace-panel</code> → <code>lib-chart-canvas</code> → <code>buildTraceConfig</code> with target line + tolerance band</td><td class="verdict v-reuse">Reuse as-is</td><td>Pass <code>responsive: false</code>; jsdom has no <code>ResizeObserver</code></td></tr>
+            <tr><td class="tight">Loading / error</td><td><code>lib-global-spinner</code> + <code>lib-toast</code> in the shell</td><td class="verdict v-fix">Improve first</td><td>Mounted but never exercised — no screen-level error or empty state exists yet</td></tr>
+            <tr><td class="tight">Responsive</td><td>Fixed <code>col-4</code>/<code>col-6</code> only</td><td class="verdict v-fix">Improve first</td><td><code>[UIC §4.1]</code> requires <code>col-md-6</code>→<code>col-12</code> reflow below 1920; not implemented</td></tr>
+            <tr><td class="tight">Theme</td><td>One blue theme, no toggle (a demo toggle was built and removed)</td><td class="verdict v-reuse">Reuse as-is</td><td>Settled — do not reintroduce</td></tr>
+            <tr><td class="tight">Styles</td><td>No <code>.scss</code> in the library at all; five generic classes added to <code>src/styles/</code></td><td class="verdict v-reuse">Reuse as-is</td><td>⛔ <code>big-screen</code> still does not exist — never use it</td></tr>
+            <tr><td class="tight">DB1's layout</td><td><code>h-91 overflow-auto align-items-start</code>, no budget, static live badge</td><td class="verdict v-no">Do not reuse</td><td>A scheduled deferral to <code>FW-060</code>. Copy DB3's budget, never DB1's</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Service and API baseline</h3>
+      <p>
+        There is nothing to inherit here — the library has no service. What follows is the pattern the
+        <em>host</em> establishes, which Phase&nbsp;1 must adopt rather than invent.
+      </p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Concern</th><th>Repository convention</th><th>Verdict for Flat Wire</th></tr></thead>
+          <tbody>
+            <tr><td class="tight">HTTP</td><td><code>ApiGatewayService.get/post</code>; URL is <code>getEndpoint().prefix + getEndpoint().&lt;lib&gt;ApiUrl + METHOD</code>; the gateway raises and lowers the spinner</td><td class="verdict v-reuse">Adopt unchanged</td></tr>
+            <tr><td class="tight">Envelope</td><td><code>HTTPResponse&lt;T&gt;</code> — <code>{ data?, success?, errorCode?, errorDescription? }</code></td><td class="verdict v-reuse">Adopt unchanged</td></tr>
+            <tr><td class="tight">Method names</td><td><code>&lt;lib&gt;-api-methods.constants.ts</code>, one frozen object of path suffixes</td><td class="verdict v-reuse">Adopt — the file exists with one key</td></tr>
+            <tr><td class="tight">Mock swap</td><td><code>useMockData</code> in <code>local-config.json</code> / <code>environment.js</code>, read via <code>AppConfigService</code></td><td class="verdict v-gen">Adopt as a DI provider factory (<code>FW-132</code>)</td></tr>
+            <tr><td class="tight">State</td><td><code>BehaviorSubject</code> stores; no NgRx anywhere in the repository</td><td class="verdict v-gen">Build <code>line-context</code> + <code>run-state</code> (<code>[CMP §5.4]</code>)</td></tr>
+            <tr><td class="tight">Teardown</td><td><code>takeUntilDestroyed(this.destroyRef)</code> on every subscription; <code>destroyRef.onDestroy()</code> for non-Rx cleanup</td><td class="verdict v-reuse">Adopt unchanged — mandatory</td></tr>
+            <tr><td class="tight">SignalR</td><td><code>slitter-traveler-signalr.service</code>: one <code>HubConnection</code>, a <code>BehaviorSubject</code> per event exposed as an <code>Observable</code>, a <code>connectionState</code> stream, retry map, <code>ngOnDestroy</code></td><td class="verdict v-gen">Copy the <em>shape</em> only. <code>D-06</code> forbids consuming slitter code</td></tr>
+            <tr><td class="tight">Popups</td><td><code>CommonPopupService.popupModal()</code>; payload arrives as a <code>modalData</code> signal input; close via <code>NgbActiveModal</code></td><td class="verdict v-reuse">Already adopted</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Coding baseline</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Convention</th><th>As established</th></tr></thead>
+          <tbody>
+            <tr><td class="tight">Folders</td><td><code>components/&lt;kebab-screen&gt;/</code>, <code>constants/</code>, <code>enums/</code>, <code>interfaces/</code> — flat, one screen per folder</td></tr>
+            <tr><td class="tight">Files</td><td><code>&lt;name&gt;.component.ts|html|spec.ts</code> · <code>&lt;name&gt;.constants.ts</code> · <code>&lt;name&gt;.enum.ts</code> · <code>&lt;name&gt;.interface.ts</code> · <code>&lt;name&gt;.model.ts</code> for pure functions</td></tr>
+            <tr><td class="tight">Selectors</td><td><code>lib-</code> prefix, kebab-case, element</td></tr>
+            <tr><td class="tight">Members</td><td>Public before private; every member carries a one-line comment above it; explicit types on every field and return</td></tr>
+            <tr><td class="tight">JSDoc</td><td><code>method to …</code> / <code>@param x Type</code> / <code>@returns Type</code> — a bare type, never prose</td></tr>
+            <tr><td class="tight">Enums</td><td><code>PascalCase</code> members with string values; <code>CustomKeyValue&lt;T&gt;</code> maps keyed by the enum</td></tr>
+            <tr><td class="tight">Templates</td><td><code>@for</code>/<code>@if</code> control flow with <code>track</code>; no method calls in interpolation; every <code>ngbTooltip</code> carries <code>triggers="hover"</code></td></tr>
+            <tr><td class="tight">Element ids</td><td><code>btn-&lt;action&gt;-&lt;screen&gt;</code> / <code>act-&lt;key&gt;-&lt;screen&gt;</code>, kebab throughout</td></tr>
+            <tr><td class="tight">Tests</td><td><code>/generate-tests</code> before any spec; declare shared components rather than stubbing them; 100% is the target and 95% the floor</td></tr>
+            <tr><td class="tight">Review</td><td><code>/angular-review</code> before the PR. <code>ng lint</code> passing is not evidence — two consecutive reviews found violations in every unlintable category with zero lint errors</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section id="s5">
+      <div class="sec-head"><span class="sec-num">05</span><h2>What is implemented</h2></div>
+
+      <p class="lede">
+        Inventory of every artefact in the library, with production-readiness called honestly.
+        <code>npm run test:flat-wire</code> was run for this analysis: <strong>6 suites, 25 tests,
+        100% statements / branches / functions / lines</strong>, 89&nbsp;s, exit 0.
+      </p>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th>Artefact</th><th>Purpose</th><th>Complete</th><th>Partial or absent</th><th>Readiness</th></tr></thead>
+          <tbody>
+            <tr data-st="done">
+              <td class="tight"><code>FlatWireComponent</code><br><span class="pill done">shell</span></td>
+              <td>Header · outlet · footer · spinner · toast</td>
+              <td>Matches the slitter/coil-receiving shell exactly, including the required <code>isExeLogin</code>; fires <code>loginSubject.next()</code> in <code>ngAfterViewInit</code></td>
+              <td>Its <code>serverName</code> suffix resolves to a 404 (§2)</td>
+              <td>Production</td>
+            </tr>
+            <tr data-st="wip">
+              <td class="tight"><code>FlatWireLandingComponent</code><br><span class="pill wip">DB3 · landing</span></td>
+              <td>Active Run Monitor, FL1</td>
+              <td>Rail · context bar · 3 cards · 2 collapsible tables · 2 trace panels with target line and tolerance band · maximize-to-popup · height budget · spool card and pill</td>
+              <td>All data hardcoded in 7 builders. 7 rail entries inert. No FL2/FL3 variant. Target gauge/width missing from the header (they appear only as trace labels). Action grouping and the footage-based checkout disable not built</td>
+              <td>Layout: production.<br>Behaviour: proof of concept</td>
+            </tr>
+            <tr data-st="wip">
+              <td class="tight"><code>SupervisorDashboardComponent</code><br><span class="pill wip">DB1</span></td>
+              <td>Line Status board, 3 lines</td>
+              <td>Rail · 2 context bars · 3 <code>col-4</code> line cards in running/idle/offline states · alert bar with local acknowledge</td>
+              <td>All data hardcoded. Payoffs section, die-life/SPC section, panel-click routing and the FL2 empty state absent. Alert rows and weight bars are inline markup where <code>FW-134</code>'s controls belong. Two <code>[UIC]</code> deviations deliberately deferred: it scrolls instead of budgeting height, and its live badge does not pulse</td>
+              <td>Proof of concept</td>
+            </tr>
+            <tr data-st="done">
+              <td class="tight"><code>SpoolNotificationComponent</code></td>
+              <td>Corner milestone card ⇄ docked pill</td>
+              <td><code>input.required()</code> signals, two <code>output()</code>s, ticked percentage scale, accent escalation by milestone, live-dot footer, ARIA <code>role="status"</code></td>
+              <td>Parent resolves one fixed 73% fill, so it never escalates and never re-arms; Complete posts nothing</td>
+              <td>Production as a control</td>
+            </tr>
+            <tr data-st="done">
+              <td class="tight"><code>TraceGraphPopupComponent</code></td>
+              <td>Enlarged trace dialog</td>
+              <td><code>modalData</code> signal input, <code>computed()</code> panel, <code>cdkDrag</code> header, <code>NgbActiveModal</code> close, renders the same <code>lib-trace-panel</code></td>
+              <td>Nothing</td>
+              <td>Production</td>
+            </tr>
+            <tr data-st="done">
+              <td class="tight"><code>resolveSpoolMilestone()</code></td>
+              <td>Places a fill on the Info/Warn/Success/Danger ladder</td>
+              <td>Pure, separately spec'd, thresholds named in <code>SPOOL_SCALE_TICKS</code></td>
+              <td>The 75/90/100 ladder is ours; <code>FW-N02</code> owns the real milestones</td>
+              <td>Production</td>
+            </tr>
+            <tr data-st="wip">
+              <td class="tight">Constants &amp; enums</td>
+              <td><code>LineState</code>, <code>SpoolMilestone</code>, icon maps, column headers, targets</td>
+              <td>Structure is right: enum-keyed <code>CustomKeyValue</code> maps, named thresholds, kebab keys</td>
+              <td><code>GAUGE_TRACE_READINGS</code> / <code>WIDTH_TRACE_READINGS</code> / <code>SPOOL_PLACEHOLDER_PERCENT</code> are fixture data living in a constants file — they must leave when the stream lands. <code>ROD_INFO_COLUMNS</code> / <code>ORDER_INFO_COLUMNS</code> are untranslated literals, unlike every other string</td>
+              <td>Mixed</td>
+            </tr>
+            <tr data-st="done">
+              <td class="tight">Interfaces</td>
+              <td>10 view-model interfaces across two files</td>
+              <td>These are the contract the API mapper must satisfy — the most valuable artefact in the library after the template</td>
+              <td>They are <em>view</em> models only; no DTO or wire type exists yet</td>
+              <td>Production</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>Hardcoded values that must be traced out</h4>
+      <p>
+        Every one is annotated in-code with the story that replaces it, which makes this list mechanical:
+        <code>PS-1100-FL1-003</code> (pass schedule — and note it is the <em>negative</em> seed fixture,
+        which must be refused with <code>SCHEDULE_NOT_ACTIVE</code>&#8239;→&#8239;422, so it is the wrong
+        happy-path literal), <code>FW-00421</code>, <code>R00042</code>/<code>R00043</code>,
+        <code>SP-00031</code>, <code>02:14:37</code>, <code>1,620 FPM</code>, <code>42,795 ft</code>,
+        <code>Die 0.340″</code>/<code>0.310″</code>, <code>Gap 0.112″</code>, the seven-point gauge and
+        width traces, both info-table rows, and the whole of DB1's three line cards, five shift stats and
+        two alerts.
+      </p>
+      <div class="note warn">
+        <span class="note-label">Fixture discipline</span>
+        <p>
+          <code>[CMP §5.3]</code> pins the mock set to the DB seed: rods <code>R00041</code>–<code>R00048</code>,
+          spools <code>SP-00031</code>–<code>SP-00033</code>, runs <code>RUN-0001</code>–<code>RUN-0005</code>,
+          happy path <code>PS-1100-FL1-001</code>. The screen currently uses <code>PS-1100-FL1-003</code>,
+          which is the seed's <em>Draft</em> negative case. Fix this when the mock client lands — a stub that
+          accepts it asserts the opposite of the contract.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section id="s6">
+      <div class="sec-head"><span class="sec-num">06</span><h2>Requirement vs code — gap analysis</h2></div>
+
+      <p class="lede">
+        Fifteen MVP-1 dashboards and five run-event dialogs, each read against the code rather than
+        against its story status. A component existing is not a requirement met.
+      </p>
+
+      <div class="tw">
+        <table>
+          <thead>
+            <tr>
+              <th>Screen</th><th>Story</th><th>Spec</th><th>Angular</th><th>Baseline to reuse</th><th>API</th><th>Gap</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-st="wip">
+              <td class="tight"><strong>DB3</strong> Active Run FL1</td><td class="id">FW-062</td><td>Baselined</td>
+              <td><span class="pill wip">skeleton</span></td><td class="verdict v-reuse">is the reference</td>
+              <td><span class="pill done">live</span> <code>/run/active</code>, <code>/gaugetrace</code>, <code>/weldevents</code>, pause, resume</td>
+              <td>Data path; live traces; header target gauge/width; action grouping; footage-gated checkout; out-of-spec auto-prompt; reconnect banner</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight"><strong>DB3-FL2</strong> variant</td><td class="id">FW-178</td><td>Baselined</td>
+              <td><span class="pill none">none</span></td><td class="verdict v-reuse">DB3 wholesale</td>
+              <td><span class="pill wip">partial</span> null-gauge contract is <code>FW-181</code></td>
+              <td>Configuration + the explicit <em>no live trace</em> empty state; historical profile in inline SVG</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight"><strong>DB3-FL3</strong> variant</td><td class="id">FW-189</td><td>Baselined</td>
+              <td><span class="pill none">none</span></td><td class="verdict v-reuse">DB3 wholesale</td>
+              <td><span class="pill blocked">blocked</span> <code>G30</code></td>
+              <td>Adds Roll Adjust to the rail (FL1 has none); continuous end-to-end trace</td>
+            </tr>
+            <tr data-st="wip">
+              <td class="tight"><strong>DB1</strong> Line Status</td><td class="id">FW-060</td><td>Baselined</td>
+              <td><span class="pill wip">skeleton</span></td><td class="verdict v-fix">fix before reuse</td>
+              <td><span class="pill none">none</span> <code>FW-154</code> not started</td>
+              <td><code>GET /lines/status</code>; payoffs and die-life sections; panel routing; height budget; live pulse; alert lifecycle (<code>OI-28</code>)</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight"><strong>DB2</strong> Rod Check-in wizard</td><td class="id">FW-061</td><td>Baselined</td>
+              <td><span class="pill none">none</span></td><td class="verdict v-gen">DB3 frame + new wizard</td>
+              <td><span class="pill review">in review</span> <code>POST /checkin/rod</code></td>
+              <td>Six-step <code>tab-wizard</code> with progressive unlock — the largest genuinely new UI pattern in MVP-1; validation; PLC push acknowledgement</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight"><strong>DB2A</strong> Rod Pre-Check-in</td><td class="id">FW-N01</td><td>Baselined</td>
+              <td><span class="pill none">none</span></td><td class="verdict v-reuse">DB3 frame</td>
+              <td><span class="pill done">live</span> <code>/payoff/status</code>, <code>/staging/rod</code>, <code>/staging/queue</code>, unstage</td>
+              <td>Screen; inspection OK/NG/NA controls; <em>Mark as welded</em> dialog (<code>G26</code>, <code>G27</code>); <code>/staging/rod/mark-welded</code> absent from the API</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight"><strong>DB5</strong> FL2 Spool Check-in</td><td class="id">FW-064</td><td>Baselined</td>
+              <td><span class="pill none">none</span></td><td class="verdict v-reuse">DB3 frame + DB2 wizard</td>
+              <td><span class="pill done">live</span> <code>POST /checkin/spool</code></td>
+              <td>Screen; <code>G55</code> payoff-position constraint; <code>OI-02</code>/<code>OI-06</code> spool numbering and status vocabularies unresolved</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight"><strong>DB5A</strong> FL2 Spool Queue</td><td class="id">FW-124</td><td>Baselined</td>
+              <td><span class="pill none">none</span></td><td class="verdict v-reuse">DB1 card grid</td>
+              <td><span class="pill done">live</span> <code>GET /spools</code></td>
+              <td>Screen only — the lowest-risk new screen in the set</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight"><strong>DB6</strong> SPC Checkpoint <span class="pill plain">dialog</span></td><td class="id">FW-065</td><td>Baselined</td>
+              <td><span class="pill none">none</span></td><td class="verdict v-reuse">TraceGraphPopup</td>
+              <td><span class="pill done">live</span> <code>POST /spc</code></td>
+              <td>Dialog; <code>tolerance-viz</code>; <code>OI-57</code> published tolerance bands unresolved</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight"><strong>DB7</strong> Coil Completion</td><td class="id">FW-066</td><td>Baselined</td>
+              <td><span class="pill none">none</span></td><td class="verdict v-reuse">DB3 frame</td>
+              <td><span class="pill done">live</span> <code>/coil/complete</code>, <code>/coil/{alpha}/label</code></td>
+              <td>Screen; <code>source-traceability-table</code>; <code>OI-105</code> authoritative weight, <code>OI-24</code> lot number, <code>OI-140</code> no completion broadcast</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight"><strong>DB7b</strong> Packing Station</td><td class="id">FW-182</td><td>Baselined</td>
+              <td><span class="pill none">none</span></td><td class="verdict v-reuse">DB3 frame</td>
+              <td><span class="pill blocked">blocked</span> <code>G36</code></td>
+              <td>Screen; <code>skid-tracker</code>; <code>coil-label</code> preview; <code>OI-106</code> staging locations</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight"><strong>DB8</strong> WIP Rejection <span class="pill plain">dialog</span></td><td class="id">FW-067</td><td>Baselined</td>
+              <td><span class="pill none">none</span></td><td class="verdict v-reuse">TraceGraphPopup</td>
+              <td><span class="pill done">live</span> <code>POST /wipreject</code></td>
+              <td>Dialog; <code>G79</code> every rejection group is ours; <code>G82</code> no threading-scrap code</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight"><strong>DB11</strong> Roll Adjust <span class="pill plain">dialog</span></td><td class="id">FW-070</td><td>Baselined</td>
+              <td><span class="pill none">none</span></td><td class="verdict v-reuse">TraceGraphPopup</td>
+              <td><span class="pill done">live</span> <code>POST /rolloverride</code></td>
+              <td>Dialog, FL2/FL3 only; <code>OI-103</code> no bound on a roll-gap change</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight"><strong>DB12</strong> Rod Checkout <span class="pill plain">dialog</span></td><td class="id">FW-072</td><td>Baselined</td>
+              <td><span class="pill none">none</span></td><td class="verdict v-reuse">TraceGraphPopup</td>
+              <td><span class="pill done">live</span> <code>POST /checkout</code></td>
+              <td>Three modes; supervisor PIN gate unpersisted (<code>G7</code>, <code>G24</code>, <code>OI-38</code>)</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight"><strong>DC</strong> Die Change <span class="pill plain">dialog</span></td><td class="id">FW-073</td><td>Baselined</td>
+              <td><span class="pill none">none</span></td><td class="verdict v-reuse">TraceGraphPopup</td>
+              <td><span class="pill done">live</span> <code>POST /diechange</code></td>
+              <td>Dialog; <code>OI-12</code> die-life colour bands disagree across two screens</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight">Pause / Resume <span class="pill plain">dialogs</span></td><td class="id">FW-071</td><td>Baselined</td>
+              <td><span class="pill none">none</span></td><td class="verdict v-reuse">TraceGraphPopup</td>
+              <td><span class="pill done">live</span> <code>/run/{id}/pause</code>, <code>/resume</code></td>
+              <td>Two dialogs, four resume outcomes; <code>G83</code> four pause reasons lost their vocabulary</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight">Weld capture <span class="pill plain">dialog</span></td><td class="id">FW-063</td><td>Baselined</td>
+              <td><span class="pill none">none</span></td><td class="verdict v-reuse">TraceGraphPopup</td>
+              <td><span class="pill blocked">blocked</span> <code>FW-166</code></td>
+              <td>Lives inside DB2A since DB4 was retired; <code>G26</code>/<code>G27</code> — rod queue and traceability chain have no host</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight">Line Downtime <span class="pill plain">dialog</span></td><td class="id">FW-256</td><td>Baselined</td>
+              <td><span class="pill none">none</span></td><td class="verdict v-reuse">TraceGraphPopup</td>
+              <td><span class="pill none">none</span> <code>FW-255</code></td>
+              <td>25 DWN## codes with no run attached</td>
+            </tr>
+            <tr data-st="none">
+              <td class="tight">Line picker front door</td><td class="id">FW-204</td><td>⚠ re-decide</td>
+              <td><span class="pill blocked">superseded</span></td><td class="verdict v-no">—</td>
+              <td><span class="pill done">live</span> <code>/run/active</code></td>
+              <td><code>/flat-wire</code> already lands on DB3, and DB1 now renders. <strong>Recommend cancelling</strong> — two front doors is worse than one</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 7 ============ -->
+    <section id="s7">
+      <div class="sec-head"><span class="sec-num">07</span><h2>Pending screens and functionality</h2></div>
+
+      <h3>Frontend</h3>
+      <div class="kv">
+        <dt>New screens</dt><dd>DB2, DB2A, DB5, DB5A, DB7, DB7b — six. Plus DB3-FL2 and DB3-FL3 as configurations of an existing screen, and DB1 completed rather than built.</dd>
+        <dt>New dialogs</dt><dd>Seven: SPC checkpoint, WIP rejection, roll adjust, die change, rod checkout, pause/resume, weld capture. Plus line downtime.</dd>
+        <dt>Missing controls</dt><dd><code>tab-wizard</code>, <code>tolerance-viz</code>, <code>payoff-weight-bar</code>, <code>payoff-option</code>, <code>alert-banner</code>, <code>confirm-bar</code>, <code>info-grid</code>, <code>option-card</code>, <code>consequence-box</code>, <code>skid-tracker</code>, <code>source-traceability-table</code>, <code>coil-label</code>, OK/NG/NA and pass/fail buttons, <code>.input</code> invalid states, monospace readouts.</dd>
+        <dt>Missing navigation</dt><dd>No back control on any screen; no line switch; no route into a dialog; DB1's cards do not route; the <em>More Options</em> tile popup reachable from every screen does not exist.</dd>
+        <dt>Missing validation</dt><dd>All of it. No form, no <code>.invalid</code> state, no <code>field-error</code>, no supervisor PIN gate, no footage-gated action disable, no sequence validation.</dd>
+        <dt>Missing UI states</dt><dd>Loading, error, empty and offline on every screen; the FL2 null-gauge empty state; the reconnect banner over cached state (<code>FR-119</code>/<code>NFR006</code>); responsive reflow below 1920.</dd>
+        <dt>Missing business rules</dt><dd>Out-of-spec run of N readings → auto SPC prompt; die-life bands; spool milestone ladder and escalation; checkout mode selection; FL1 has no Roll Adjust while FL3 and FL2 do.</dd>
+        <dt>Missing notifications</dt><dd>Toast is mounted and unused; alert raise/clear/acknowledge has no persistence (<code>OI-28</code>); supervisor approval requests rely on transient SignalR only (<code>G7</code>).</dd>
+        <dt>Missing real-time</dt><dd>Everything — no hub client, no event handlers, no in-place chart update, no per-payoff weight stream, no line-state transitions, no prompt lifecycle.</dd>
+      </div>
+
+      <h3>Backend / API</h3>
+      <p>
+        Eight of the 31 specified endpoints do not answer. Two are MVP-2 controller shells and are
+        correctly empty; six matter to MVP-1 screens.
+      </p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Endpoint</th><th>Needed by</th><th>State</th></tr></thead>
+          <tbody>
+            <tr data-st="blocked"><td class="id">GET /rod/{alpha}<br>GET /rod/{alpha}/orders<br>POST /rod</td><td>DB2, DB2A</td><td><code>FW-233</code> — no host controller exists at all; <code>FW-225</code>/<code>FW-240</code> blocked on rod↔order allocation</td></tr>
+            <tr data-st="blocked"><td class="id">POST /order/{orderNo}/complete</td><td>DB7</td><td><code>FW-232</code> blocked</td></tr>
+            <tr data-st="blocked"><td class="id">POST /staging/rod/mark-welded</td><td>DB2A weld dialog</td><td><code>FW-166</code> blocked on <code>Q6</code>/<code>OI-59</code> weld attribution</td></tr>
+            <tr data-st="blocked"><td class="id">FlatWire/GetServerConnectionInfo</td><td>Shared <code>lib-header</code>, every screen</td><td>Not implemented; four sibling services have it. <strong>New row — 2&nbsp;h</strong></td></tr>
+            <tr data-st="none"><td class="id">GET /passschedule · /{id} · POST · PUT · /generate</td><td>DB9, DB9A</td><td>MVP-2. Controller shell exists so the client has a stable base URL</td></tr>
+            <tr data-st="none"><td class="id">GET /shiftsummary</td><td>DB10</td><td>MVP-2. Same</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Also owed on the backend for the frontend to be useful: <code>FW-154</code>
+        (<code>GET /lines/status</code> — DB1's only source, not started), <code>FW-160</code> and
+        <code>FW-172</code> (the check-in and run-event broadcasts), <code>FW-187</code> and
+        <code>FW-235</code> (completion broadcasts — <code>OI-140</code> records that a completed output
+        coil is never broadcast because no hub member exists to send it), and <code>FW-145</code>
+        (JWT roles — not started, which is why <code>FlatWireRoleGuard</code> cannot be built).
+      </p>
+
+      <h3>Database</h3>
+      <p>
+        <code>FlatWireDB</code> is a new standalone database on <code>DEV00164-001</code>, and Phase 1C is
+        <strong>7% complete with 12 of 17 stories not started</strong>. Note the recorded caveat that a
+        static verifier passing is not a deployment: <code>RunAll</code> aborts at script <code>06</code>,
+        so the FK and index scripts <code>06</code>–<code>08</code> have never run. Open items that reach
+        the UI: <code>G14</code> (rod alpha format <code>R#####</code> vs <code>ROD-#####</code>, and 3- vs
+        4-item inspection — this blocks the DB2/DB2A models directly), <code>G104</code>
+        (<code>ToolingInventoryEdger</code> has no natural key), <code>G34</code> (wire break has a flow and
+        no persistence target), <code>OI-24</code> (lot number has no column and no generator, yet
+        <code>/coil/{alpha}/label</code> returns it), <code>G24</code> (supervisor approvals unpersisted),
+        <code>OI-28</code> (alert lifecycle unbacked). Reference data not seeded:
+        <code>FW-254</code>'s three client vocabularies.
+      </p>
+
+      <h3>PLC and real-time</h3>
+      <div class="kv">
+        <dt>Hub</dt><dd>Built and in review (<code>FW-080</code>, <code>FW-149</code>). Mapped at <code>/hubs/flat-wire</code>, line groups, strongly typed via <code>IFlatWireClient</code>.</dd>
+        <dt>Events</dt><dd><strong>Fourteen</strong> streaming events plus <strong>six</strong> run-event trace markers. Gauge and width arrive <em>batched as arrays</em>; FL2 standalone suppresses both. The markers are separate from the alerts — <code>AlertEvent</code> (marker) and <code>AlertRaised</code> (event) both exist and are not the same thing.</dd>
+        <dt>Protocol</dt><dd>MessagePack is enabled by default and switchable by config. <strong>This is a decision the client must take before writing enum mappers</strong> — see §10.</dd>
+        <dt>Tags</dt><dd><code>PLCTagService</code> and <code>SimulatePLCTagPush</code> are done. Every tag path lives only in <code>[PLC]</code> and is <em>unconfirmed by design</em> until commissioning test <code>C1</code>/<code>C11</code>. Open: <code>PLC-Q04</code> FM2 station names, <code>PLC-Q05</code> every measure name, <code>G29</code> no edger tag path exists though edge type is in the push payload, <code>G32</code>/<code>G33</code> the station and measure segments are ours not the controller's.</dd>
+        <dt>Simulation</dt><dd>A full OPC feed simulator, scenario and fault injection, a closed loop that consumes the push payload, and a standalone WinForms console — <strong>all done</strong>. The frontend can be driven end to end without a PLC.</dd>
+        <dt>NFRs</dt><dd><code>G9</code>/<code>OI-34</code>: AGC sample rate, concurrent client count, latency target and reading retention are all <em>absent</em>. This blocks six stories and is the single most consequential open question for the live-trace design.</dd>
+      </div>
+    </section>
+
+    <!-- ============ 8 ============ -->
+    <section id="s8">
+      <div class="sec-head"><span class="sec-num">08</span><h2>Reusable building blocks</h2></div>
+
+      <p class="lede">
+        The matrix requested in §12 of the brief. "Where" matters as much as "what": a control used by
+        Flat Wire alone belongs in <code>flat-wire/components/shared/</code>; one shared with another
+        library must go to <code>projects/shared</code>, because slitter cannot depend on Flat Wire and
+        <code>D-06</code> forbids the reverse.
+      </p>
+
+      <div class="tw">
+        <table>
+          <thead>
+            <tr><th>Block</th><th>Location</th><th>Purpose</th><th>Reuse?</th><th>Screens that will use it</th><th>Generalization required</th></tr>
+          </thead>
+          <tbody>
+            <tr data-st="done"><td class="tight"><code>lib-nav-rail</code></td><td class="id">projects/shared</td><td>Collapsible icon rail, item-driven</td><td class="verdict v-reuse">As-is</td><td>Every screen</td><td>None. ⛔ Any field added to <code>NavRailItem</code> must be optional or slitter stops compiling</td></tr>
+            <tr data-st="done"><td class="tight"><code>lib-chart-canvas</code></td><td class="id">projects/shared</td><td>A canvas and its Chart.js lifetime</td><td class="verdict v-reuse">As-is</td><td>DB3 ×3, DB6, DB7, reports</td><td>None. <code>isLive</code> already switches to in-place update</td></tr>
+            <tr data-st="done"><td class="tight"><code>lib-trace-panel</code></td><td class="id">projects/shared</td><td>Reading header + chart + statistics</td><td class="verdict v-reuse">As-is</td><td>DB3 ×3, the popup, DB6</td><td>None for live. Needs a <em>profile</em> mode for FL2's historical inline-SVG trace (<code>FW-133</code>)</td></tr>
+            <tr data-st="done"><td class="tight"><code>buildTraceConfig</code></td><td class="id">projects/shared</td><td>Line + target line + tolerance band</td><td class="verdict v-reuse">As-is</td><td>Same</td><td>None. Keep <code>Chart.register</code> here, never in a screen</td></tr>
+            <tr data-st="done"><td class="tight"><code>CommonPopupService</code></td><td class="id">projects/shared</td><td>Modal open/close/stack, payload injection</td><td class="verdict v-reuse">As-is</td><td>All 8 dialogs</td><td>None. It supplies the <code>modalSubscription</code> result channel the dialogs need</td></tr>
+            <tr data-st="done"><td class="tight">Shell chrome</td><td class="id">projects/shared</td><td><code>lib-header</code> · <code>footer</code> · <code>global-spinner</code> · <code>toast</code></td><td class="verdict v-reuse">As-is</td><td>All</td><td>None — but see the missing <code>GetServerConnectionInfo</code></td></tr>
+            <tr data-st="done"><td class="tight"><code>KeypadComponent</code> · <code>ngx-touch-keyboard</code></td><td class="id">projects/shared</td><td>Shopfloor numeric and on-screen input</td><td class="verdict v-reuse">As-is</td><td>DB2, DB2A, DB5, DB6, all dialogs</td><td>None. Already imported by <code>SharedModule</code>; consuming it is not a <code>D-06</code> breach</td></tr>
+            <tr data-st="done"><td class="tight"><code>SpoolNotificationComponent</code></td><td class="id">flat-wire/components/</td><td>Corner advisory card ⇄ docked pill</td><td class="verdict v-gen">Generalize</td><td>Spool milestone, order allocation, out-of-spec prompt, weld-soon</td><td>Move to <code>components/shared/</code> and take a generic <code>AdvisoryReading</code>; <code>.floating-popover</code> is already generically named. <strong>Four prompts need this</strong></td></tr>
+            <tr data-st="done"><td class="tight"><code>TraceGraphPopupComponent</code></td><td class="id">flat-wire/components/</td><td>Draggable dialog scaffold</td><td class="verdict v-reuse">As-is, as a template</td><td>All 8 dialogs copy it</td><td>None — copy the file, don't abstract a base class</td></tr>
+            <tr data-st="wip"><td class="tight">Info table + chevron</td><td class="id">DB3 inline markup</td><td>Collapsible column/row table</td><td class="verdict v-gen">Generalize</td><td>DB2, DB3 ×3, DB5, DB7, DB7b, DB1</td><td><code>FW-163</code>'s <code>info-grid</code> + <code>localStorage</code>. Must <strong>replace</strong> DB3's markup</td></tr>
+            <tr data-st="wip"><td class="tight">Payoff weight bar</td><td class="id">DB3 + DB1 inline markup</td><td>Progress + <code>62% · 3,230 / 8,500 lb</code> summary</td><td class="verdict v-gen">Generalize</td><td>DB1, DB2A, DB3 ×3</td><td><code>FW-134</code>. Two consumer slots already exist as markup</td></tr>
+            <tr data-st="wip"><td class="tight">Alert row</td><td class="id">DB1 inline markup</td><td><code>alert-warning</code>/<code>-success</code> row + acknowledge</td><td class="verdict v-gen">Generalize</td><td>DB1, DB3, DB10</td><td><code>FW-134</code>'s <code>alert-banner</code></td></tr>
+            <tr data-st="wip"><td class="tight">Machine status panel</td><td class="id">DB3 card 1</td><td>Label/sub-label/value/unit readout list</td><td class="verdict v-gen">Generalize</td><td>DB1, DB3 ×3, DB5</td><td>Small control over <code>MachineLine[]</code> — the shape is already right</td></tr>
+            <tr data-st="wip"><td class="tight">Component settings panel</td><td class="id">DB3 card 3</td><td>Dot + name + setting, per mill component</td><td class="verdict v-gen">Generalize</td><td>DB3 ×3, DC, DB11</td><td>Same. Note FM2 has <strong>three</strong> stands — <code>FM2_S1/S2/S3</code>, positions only, roll diameter is data</td></tr>
+            <tr data-st="done"><td class="tight"><code>resolveSpoolMilestone</code></td><td class="id">flat-wire/…/*.model.ts</td><td>Pure threshold decision</td><td class="verdict v-reuse">As-is, as a template</td><td>Die life bands, tolerance state, out-of-spec run, shift utilisation</td><td>None — replicate the shape: free function, sibling file, own spec</td></tr>
+            <tr data-st="done"><td class="tight"><code>LINE_STATE_ICONS</code> map</td><td class="id">flat-wire/constants</td><td>Enum-keyed presentation lookup</td><td class="verdict v-reuse">As-is, as a template</td><td>Every status in the module</td><td>None — this is the pattern for all status→icon and status→class mapping</td></tr>
+            <tr data-st="none"><td class="tight">Confirmation dialog</td><td class="id">—</td><td>Amber → green two-step gate</td><td class="verdict v-no">Build new</td><td>Complete Run, checkout, WIP reject, coil complete</td><td><code>FW-134</code>'s <code>confirm-bar</code>. No equivalent exists; <code>D-06</code> rules out <code>checkin-precheckin</code>'s</td></tr>
+            <tr data-st="none"><td class="tight">Wizard</td><td class="id">—</td><td>Progressive-unlock step strip</td><td class="verdict v-no">Build new</td><td>DB2 (6 steps), DB5</td><td><code>FW-133</code>'s <code>tab-wizard</code>. The one substantial new UI pattern in MVP-1</td></tr>
+            <tr data-st="none"><td class="tight">Event timeline</td><td class="id">—</td><td>Run-event markers on the trace</td><td class="verdict v-no">Build new</td><td>DB3 ×3</td><td>Six marker types onto <code>buildTraceConfig</code>'s annotation plugin — extend the shared builder, do not fork it</td></tr>
+            <tr data-st="none"><td class="tight">Transaction summary</td><td class="id">—</td><td>What-happened receipt after a post</td><td class="verdict v-no">Build new</td><td>Every dialog, DB7</td><td>Derive from <code>HTTPResponse&lt;T&gt;</code> + <code>consequence-box</code>; one control, not one per dialog</td></tr>
+            <tr data-st="blocked"><td class="tight"><code>lib-static-grid</code> · <code>lib-common-grid</code></td><td class="id">common-grid</td><td>Slitter's info grids</td><td class="verdict v-no">Forbidden</td><td>—</td><td><code>D-06</code>. <code>CommonGridModule</code> is deliberately not imported by <code>FlatWireModule</code>. Tabular data is plain Bootstrap markup</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="note-label">Before adding to projects/shared</span>
+        <p>
+          It has <strong>23 dependent libraries</strong>, and <code>jest.base.config.js</code> resolves the
+          <code>shared</code> alias to <code>dist/</code>, not source. Any addition means
+          <code>ng build shared</code> before any dependent test run. Keep Flat Wire-only controls inside
+          Flat Wire.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ 9 ============ -->
+    <section id="s9">
+      <div class="sec-head"><span class="sec-num">09</span><h2>API · DB · PLC dependencies</h2></div>
+
+      <h3>What the Angular client can consume today</h3>
+      <p>
+        Twenty-three endpoints, all behind <code>[Authorize]</code>, all on base
+        <code>api/v1/flatwire</code>, all with a stub implementation available. Grouped by the screen that
+        needs them:
+      </p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Screen</th><th>Endpoints answering now</th></tr></thead>
+          <tbody>
+            <tr data-st="done"><td class="tight">DB3 Active Run</td><td class="id">GET /run/active · GET /run/{runId}/gaugetrace · GET /run/{runId}/weldevents · POST /run/{runId}/pause · POST /run/{runId}/resume</td></tr>
+            <tr data-st="done"><td class="tight">DB1 Line Status</td><td class="id">GET /lines/status <span class="pill wip">stub only — FW-154 not started</span></td></tr>
+            <tr data-st="done"><td class="tight">DB2A Pre-Check-in</td><td class="id">GET /payoff/status · POST /staging/rod · POST /staging/rod/unstage · GET /staging/queue</td></tr>
+            <tr data-st="done"><td class="tight">DB2 Rod Check-in</td><td class="id">POST /checkin/rod</td></tr>
+            <tr data-st="done"><td class="tight">DB5 / DB5A Spool</td><td class="id">POST /checkin/spool · GET /spools · POST /spool/complete</td></tr>
+            <tr data-st="done"><td class="tight">Run-event dialogs</td><td class="id">POST /spc · POST /weldevent · POST /rolloverride · POST /diechange · POST /checkout · POST /wipreject</td></tr>
+            <tr data-st="done"><td class="tight">DB7 Completion</td><td class="id">POST /coil/complete · GET /coil/{alpha}/label</td></tr>
+            <tr data-st="done"><td class="tight">Infrastructure</td><td class="id">GET /health · the hub at /hubs/flat-wire</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note good">
+        <span class="note-label">The hub path is settled</span>
+        <p>
+          <code>Routes.Hub</code> is <code>/hubs/flat-wire</code> — the path <code>[SIG §5.1]</code> and
+          <code>[API §1.1]</code> own — and <code>prefix</code>&#8239;+&#8239;<code>flatWireHubUrl</code>
+          composes to exactly the deployed <code>/API.FlatWire/hubs/flat-wire</code>. Both
+          <code>MapHub</code> and <code>FW-145</code>'s <code>?access_token=</code> handler read that
+          <strong>same constant</strong> rather than a second literal, so the two cannot drift apart.
+          Verified on a running service: the new path answers <strong>401</strong> then
+          <strong>101 Switching Protocols</strong>, and <code>grep hubs/flatwire</code> across
+          <code>ual-api</code> returns nothing.
+        </p>
+        <p>
+          <strong>Two things are genuinely open</strong> — the protocol decision below, and the fact that
+          <code>FW-145</code> still has to be <em>delivered</em> for a valid token to clear the hub's
+          <code>[Authorize]</code>. Until it lands, expect a <strong>401</strong>: an auth failure, not a
+          path failure.
+        </p>
+        <p>
+          ✅ <strong>The 17 sites that asserted the old <code>/hubs/flatwire</code> are all corrected</strong> (7 Sep 2026). They had spread
+          because each re-typed the path instead of citing its owner — the failure
+          <code>CLAUDE.md</code> warns about in <em>"a fact is asserted in one document and cited
+          everywhere else"</em>. Two are shortcoded specifications: <code>[ARC]</code>'s architecture
+          diagram edge label, and <code>[DEP]</code>'s three deployment checklist rows including
+          <code>TC-704</code>. The rest were 1A/1B planning narrative — <code>Orchestration.md</code>
+          (frontend ×5 and backend ×1), <code>FW-N03 §4</code>, <code>Phase-01A §F-02</code> and
+          <code>FW-214</code> ×4. <code>FW-080 §0</code>'s own claim that <em>"every document already
+          names the new path"</em> was false when written — the two it cited as correct stayed wrong
+          for a further nine days — and its <code>[SIG §4]</code> citation is corrected to
+          <code>[SIG §5.1]</code>. Every surviving occurrence is now deliberate evidence.
+        </p>
+      </div>
+
+      <div class="note warn">
+        <span class="note-label">Protocol decision — take it before writing the client</span>
+        <p>
+          The hub enables <code>AddMessagePackProtocol()</code> by default, switchable by the
+          <code>EnableMessagePack</code> config value. Two consequences:
+          <code>@microsoft/signalr-protocol-msgpack</code> is <strong>not</strong> in
+          <code>package.json</code> (<code>@microsoft/signalr</code> 9.0.6 is), and — recorded in
+          <code>Program.cs</code> — <strong>enums cross as strings under MessagePack and as integers under
+          JSON</strong>. A client written against one protocol breaks the moment the flag is flipped.
+        </p>
+        <p>
+          <strong>Recommendation:</strong> set <code>EnableMessagePack: false</code> for
+          <code>test1</code> and build the client on JSON now; add the npm package and re-test under
+          MessagePack as a separate, non-blocking story before UAT. Whichever is chosen, write the enum
+          mappers to accept both forms.
+        </p>
+      </div>
+
+      <h3>Dependency classes for the remaining work</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Class</th><th>Can proceed now</th><th>Must wait</th></tr></thead>
+          <tbody>
+            <tr><td class="tight">Development</td><td>Every screen's layout, every dialog's layout, all view models, all pure decision functions, all controls, all specs</td><td>Nothing</td></tr>
+            <tr><td class="tight">API</td><td>23 endpoints against stubs; the hub on JSON</td><td>DB2/DB2A rod detail (<code>/rod/**</code>), weld mark, order complete, header env badge</td></tr>
+            <tr><td class="tight">Database</td><td>Nothing is needed while <code>useMockData</code> is true</td><td>Real data: Phase 1C is 7% and scripts <code>06</code>–<code>08</code> have never run. <code>G14</code> blocks the DB2/DB2A models specifically</td></tr>
+            <tr><td class="tight">PLC</td><td>Everything, via the simulator — feed, scenarios, fault injection and the closed loop are all done</td><td>Commissioning only: <code>PLC-Q04</code>, <code>PLC-Q05</code>, <code>G29</code>, <code>G32</code>, <code>G33</code></td></tr>
+            <tr><td class="tight">Real-time</td><td>Client, mock hub, reconnect banner, in-place chart update</td><td>Tuning: <code>G9</code>/<code>OI-34</code> NFRs are absent, so batch size, window length and retention are guesses until answered</td></tr>
+            <tr><td class="tight">Testing</td><td>Unit and component tests for all of it</td><td><code>FlatWireRoleGuard</code> tests wait on <code>FW-145</code> (JWT roles) and <code>F-12</code>/<code>G6</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 10 ============ -->
+    <section id="s10">
+      <div class="sec-head"><span class="sec-num">10</span><h2>Technical debt and risk</h2></div>
+
+      <p class="lede">
+        Three buckets, by whether the issue propagates into the screens built next. Nothing here is a
+        style preference.
+      </p>
+
+      <h3>Must fix before using as the baseline</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>#</th><th>Issue</th><th>Why it propagates</th><th>Fix</th></tr></thead>
+          <tbody>
+            <tr data-st="blocked"><td class="num">1</td>
+              <td>No data seam. Seven <code>build*()</code> methods return literals directly into the fields the template binds.</td>
+              <td>Copying DB3 copies the builders. Fifteen screens would each grow their own hardcoded constructor, and every one would need unpicking later.</td>
+              <td>Introduce <code>FlatWireApiService</code> + a per-screen view-model mapper. Keep the ten interfaces exactly as they are — they are the mapper's return types.</td></tr>
+            <tr data-st="blocked"><td class="num">2</td>
+              <td>Manual <code>detectChanges()</code> in four handlers, and mutable objects (<code>table.isExpanded</code>, <code>alert.isAcknowledgeable</code>) mutated in place under <code>OnPush</code>.</td>
+              <td>It works only because nothing is async. Add a stream and it becomes intermittent — the worst possible failure mode to debug on a shop floor.</td>
+              <td>Move screen state to <code>signal()</code>/<code>computed()</code>, as the two child components already do. Then <code>detectChanges()</code> disappears rather than multiplying.</td></tr>
+            <tr data-st="blocked"><td class="num">3</td>
+              <td>SignalR protocol undecided, and enum wire form differs between the two options.</td>
+              <td>Every DTO and every enum mapper is written against one form. Deciding after the client exists means rewriting the mappers.</td>
+              <td>Decide now (§9). Recommend JSON for the build, MessagePack verified before UAT.</td></tr>
+            <tr data-st="blocked"><td class="num">4</td>
+              <td>No loading, error or empty state anywhere, though the spinner and toast are mounted.</td>
+              <td>These are per-screen decisions with a house style. Set it once on DB3 and every screen inherits; leave it and each of fifteen screens invents its own.</td>
+              <td>Define the three states on DB3 as part of the data-seam work. FL2's <code>null</code> gauge and width make the empty state mandatory, not optional.</td></tr>
+            <tr data-st="blocked"><td class="num">5</td>
+              <td>Fixture data in <code>flat-wire.constants.ts</code> — the trace readings, the placeholder percent — and the <em>negative</em> pass-schedule alpha used as the happy path.</td>
+              <td>A constants file is the one place nobody thinks to clean. These will survive the data path and become "real" values.</td>
+              <td>Delete them with the seam; take fixtures from <code>[CMP §5.3]</code>'s seed set only.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Should fix during the next cycle</h3>
+      <ul>
+        <li><strong><code>ROD_INFO_COLUMNS</code> / <code>ORDER_INFO_COLUMNS</code> are untranslated literals</strong> while every other visible string resolves through content data. Move them into <code>flat-wire.json</code> when <code>info-grid</code> lands.</li>
+        <li><strong>No responsive reflow.</strong> Fixed <code>col-4</code>/<code>col-6</code> only. <code>[UIC §4.1]</code> requires <code>col-md-6</code>→<code>col-12</code>; 99 of 315 templates in the repository already do this.</li>
+        <li><strong><code>public-api.ts</code> exports only the component and module.</strong> Fine today; the moment a control is shared it must be exported deliberately, not incidentally.</li>
+        <li><strong>Rail entries are inert with no explanation.</strong> Seven disabled buttons and no tooltip saying why. <code>lib-nav-rail</code> already offers <code>areItemsDisabled</code> as a screen-level gate — use it with a reason.</li>
+        <li><strong>DB1 does not follow <code>[UIC §4.1]</code></strong> — it scrolls, and its live badge does not pulse. Already scheduled into <code>FW-060</code>; keep it there and keep copying DB3.</li>
+        <li><strong>Duplicated builder idiom across the two screens.</strong> <code>buildNavItems</code>, the status-icon lookup and the card strip are parallel implementations. Converge them when the mapper lands, not before.</li>
+      </ul>
+
+      <h3>Can be deferred</h3>
+      <ul>
+        <li><code>[CMP §5.1]</code>'s <code>services/ models/ guards/ styles/</code> folders are absent. They arrive with their first occupant; creating them empty adds nothing.</li>
+        <li>The <code>fw</code> versus <code>lib</code> prefix — correct the documents, do not touch the code (§2).</li>
+        <li>No <code>serve:flat-wire</code> npm script. <code>ng serve</code> serves the whole app and the route is lazily loaded; a dedicated script buys little.</li>
+        <li><code>flat-wire</code> absent from <code>tsconfig</code> paths and the build chain — correct for a routed library, as <code>[UIC §1.1]</code> itself explains.</li>
+      </ul>
+
+      <h3>Programme risk, ranked</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Risk</th><th>Exposure</th><th>Mitigation</th></tr></thead>
+          <tbody>
+            <tr data-st="blocked"><td class="tight">Frontend is 0% of nine foundation stories with the window closing 30 Sep</td><td>Fifteen screens all depend on Phase 1A. It is the critical path and it has not started.</td><td>Phase 1 in §12, staffed first and alone. Do not start a new screen until the seam exists.</td></tr>
+            <tr data-st="blocked"><td class="tight"><code>G9</code>/<code>OI-34</code> — no NFRs</td><td>Blocks six stories. Sample rate and retention decide the live-trace architecture, and the client disputes our figures (<code>Q10</code>).</td><td>Build the window size as configuration, not a constant, so the answer is a config change rather than a redesign.</td></tr>
+            <tr data-st="blocked"><td class="tight">Ten blocked stories in Phase 4 (Rod Check-in)</td><td>DB2 and DB2A are the operator entry point and carry the most blocked dependencies of any phase.</td><td>Build both screens against stubs while <code>G14</code>, <code>OI-109</code>, <code>OI-115</code>, <code>OI-116</code> resolve. Layout does not depend on them.</td></tr>
+            <tr data-st="wip"><td class="tight">Database at 7%, with FKs and indexes never applied</td><td>Real-data testing cannot begin. <code>useMockData</code> hides this until UAT, when it surfaces all at once.</td><td>Schedule one real-data integration checkpoint per phase rather than one at the end.</td></tr>
+            <tr data-st="wip"><td class="tight">Registers hold ~40 open items, several contradictory across screens</td><td><code>OI-12</code> (die-life bands differ between two screens) and <code>OI-105</code> (three candidate authoritative weights) will produce two screens that disagree if built independently.</td><td>Resolve any item cited by two screens before the second is built — never during.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 11 ============ -->
+    <section id="s11">
+      <div class="sec-head"><span class="sec-num">11</span><h2>Recommended architecture</h2></div>
+
+      <p class="lede">
+        The target is the current library plus four folders. Nothing existing moves, nothing is rewritten.
+        This is deliberately <code>[CMP §5.1]</code>'s tree with the built components slotted in where they
+        already are.
+      </p>
+
+      <pre class="tree">projects/flat-wire/src/lib/
+├── components/
+│   ├── flat-wire-landing/        <b>DB3 FL1 — exists; loses its builders, gains a mapper</b>
+│   ├── supervisor-dashboard/     <b>DB1 — exists; completed by FW-060</b>
+│   ├── spool-notification/       <b>exists → moves under shared/ when the 2nd prompt lands</b>
+│   ├── trace-graph-popup/        <b>exists — the template every dialog copies</b>
+│   ├── rod-checkin/              <i>DB2  · FW-061</i>
+│   ├── rod-precheckin/           <i>DB2A · FW-N01 (hosts the weld dialog)</i>
+│   ├── spool-checkin/            <i>DB5  · FW-064</i>
+│   ├── spool-queue/              <i>DB5A · FW-124</i>
+│   ├── coil-completion/          <i>DB7  · FW-066</i>
+│   ├── packing-station/          <i>DB7b · FW-182</i>
+│   ├── dialogs/                  <i>spc · wip-rejection · roll-adjust · die-change ·</i>
+│   │                             <i>rod-checkout · pause · resume · weld-capture · downtime</i>
+│   └── shared/                   <i>fw-only controls: info-grid · tab-wizard · tolerance-viz ·</i>
+│                                 <i>confirm-bar · alert-banner · payoff-weight-bar · advisory-card</i>
+├── services/
+│   ├── flat-wire-api.interface.ts   <i>one interface, 23 methods, the only thing screens import</i>
+│   ├── flat-wire-api-real.service.ts   <i>over shared ApiGatewayService</i>
+│   ├── flat-wire-api-mock.service.ts   <i>over the [CMP §5.3] seed fixtures</i>
+│   ├── flat-wire-signalr.service.ts    <i>one HubConnection, one Observable per event</i>
+│   ├── flat-wire-signalr-mock.service.ts  <i>FW-136 — replays the 14+6 event set</i>
+│   ├── line-context.service.ts         <i>which line is in scope</i>
+│   └── run-state.service.ts            <i>active alpha · footage · payoff weights</i>
+├── models/                       <i>wire DTOs + the TS mirror of the canonical enums</i>
+├── guards/                       <i>FlatWireRoleGuard — waits on FW-145 / F-12</i>
+├── interfaces/                   <b>exists — the view models; one file per screen</b>
+├── constants/ · enums/           <b>exist — fixtures removed</b>
+└── flat-wire.module.ts · -routing.module.ts · public-api.ts   <b>exist</b></pre>
+
+      <h3>Data flow, target state</h3>
+      <div class="flow">
+        <div class="flow-line">
+          <span class="flow-node">Route</span><span class="flow-arrow">→</span>
+          <span class="flow-node">Screen component</span><span class="flow-arrow">→</span>
+          <span class="flow-node">FlatWireApi <i>(interface)</i></span><span class="flow-arrow">→</span>
+          <span class="flow-node">real | mock <i>by useMockData</i></span><span class="flow-arrow">→</span>
+          <span class="flow-node">ApiGatewayService</span><span class="flow-arrow">→</span>
+          <span class="flow-node built">api/v1/flatwire</span>
+        </div>
+        <div class="flow-line">
+          <span class="flow-node built">HTTPResponse&lt;T&gt;</span><span class="flow-arrow">→</span>
+          <span class="flow-node">DTO</span><span class="flow-arrow">→</span>
+          <span class="flow-node">view-model mapper</span><span class="flow-arrow">→</span>
+          <span class="flow-node built">RunHeader · MachineLine[] · TracePanel[] …</span><span class="flow-arrow">→</span>
+          <span class="flow-node">signal()</span><span class="flow-arrow">→</span>
+          <span class="flow-node built">template</span>
+        </div>
+        <div class="flow-line">
+          <span class="flow-node built">FlatWireHub <i>14 events + 6 markers</i></span><span class="flow-arrow">→</span>
+          <span class="flow-node">SignalR service <i>Observable per event</i></span><span class="flow-arrow">→</span>
+          <span class="flow-node">run-state.service</span><span class="flow-arrow">→</span>
+          <span class="flow-node">screen signal</span><span class="flow-arrow">→</span>
+          <span class="flow-node built">lib-trace-panel [isLive]="true"</span>
+        </div>
+        <div class="flow-cap">
+          Three rules make this hold. A screen imports the <em>interface</em>, never an implementation.
+          Nothing in <code>projects/flat-wire</code> touches <code>HttpClient</code> directly — always the
+          gateway, so the spinner and interceptors apply. And the mapper is a pure function in a
+          <code>.model.ts</code> sibling with its own spec, on the <code>resolveSpoolMilestone</code>
+          pattern, so 100% coverage stays reachable without mocking HTTP to test presentation.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 12 ============ -->
+    <section id="s12">
+      <div class="sec-head"><span class="sec-num">12</span><h2>Recommended build sequence</h2></div>
+
+      <p class="lede">
+        Ordered by dependency first, then by operator-workflow criticality, then by how much of the
+        baseline each phase proves. Hours are the plan-of-record figures where a story exists.
+      </p>
+
+      <div class="phases">
+        <div class="phase">
+          <div class="phase-num">01</div>
+          <div>
+            <h3>Stabilize the reference baseline</h3>
+            <div class="goal">≈ 104 h FE + 2 h BE · nothing else starts until this lands</div>
+            <p>
+              The whole programme is behind this phase and only this phase. Every item is a §10 blocker or
+              its direct enabler, and DB3 is the proving ground for all of it — when Active Run runs on
+              live data with real loading, error and empty states, the pattern is settled for fifteen
+              screens.
+            </p>
+            <ul>
+              <li><code>FW-132</code> — the API client interface, both implementations, the DTOs and the enum mirror. The config keys already exist.</li>
+              <li><code>FW-135</code> — the SignalR client. The hub path is settled; take the protocol decision.</li>
+              <li><strong>New</strong> — <code>line-context.service</code> and <code>run-state.service</code> per <code>[CMP §5.4]</code>.</li>
+              <li><strong>New</strong> — replace DB3's seven builders with a mapper; move screen state to signals; define the three UI states.</li>
+              <li><code>FW-163</code> — extract <code>info-grid</code>, <em>replacing</em> DB3's inline tables.</li>
+              <li><code>FW-134</code> — <code>alert-banner</code>, <code>payoff-weight-bar</code>, <code>confirm-bar</code>, <code>.input</code> states, OK/NG/NA buttons.</li>
+              <li><strong>New, backend</strong> — <code>FlatWire/GetServerConnectionInfo</code>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-num">02</div>
+          <div>
+            <h3>Core operator screens</h3>
+            <div class="goal">≈ 108 h FE · four screens, all copying DB3</div>
+            <p>
+              Ordered so the hardest new pattern is proven earliest and the easiest screen validates the
+              copy-forward claim first. All four can be built against stubs while their register items
+              resolve.
+            </p>
+            <ul>
+              <li><code>FW-124</code> DB5A Spool Queue — 24 h. Simplest new screen; a card grid on DB1's pattern. <strong>Build it first as the proof that copying works.</strong></li>
+              <li><code>FW-N01</code> DB2A Pre-Check-in — 24 h. Four endpoints already live; hosts the weld dialog.</li>
+              <li><code>FW-061</code> DB2 Rod Check-in — 36 h. The six-step wizard; <code>FW-133</code>'s <code>tab-wizard</code> lands here.</li>
+              <li><code>FW-064</code> DB5 Spool Check-in — 16 h. Reuses DB2's wizard.</li>
+              <li><code>FW-060</code> DB1 completion — reconciles its two <code>[UIC]</code> deviations and consumes <code>FW-134</code>'s controls.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-num">03</div>
+          <div>
+            <h3>Machine and real-time integration</h3>
+            <div class="goal">≈ 76 h FE · extends Phase 1's client, adds no new pattern</div>
+            <p>
+              Deliberately after two screens exist, so the event fan-out is designed against two real
+              consumers rather than one. The backend simulator makes all of it testable with no PLC.
+            </p>
+            <ul>
+              <li><code>FW-081</code> — live streaming into the traces; <code>isLive</code> turned on; the point window as configuration, not a constant (<code>G9</code>).</li>
+              <li><code>FW-136</code> — the mock hub over the full 14 + 6 event set.</li>
+              <li><code>FW-153</code> — alert chips, reconnect banner, cached-state fallback. Applies to every screen.</li>
+              <li><code>FW-202</code>/<code>FW-N02</code> — the spool ladder, escalation and live weight; generalizes <code>SpoolNotificationComponent</code> into the advisory card.</li>
+              <li><code>FW-178</code> DB3-FL2 — 8 h. The null-gauge empty state is the real deliverable.</li>
+              <li>Run-event markers onto the trace, extending <code>buildTraceConfig</code>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-num">04</div>
+          <div>
+            <h3>Transactions and completion</h3>
+            <div class="goal">≈ 176 h FE · eight dialogs and two screens, one pattern</div>
+            <p>
+              Every dialog copies <code>TraceGraphPopupComponent</code> and posts through the same client,
+              so the marginal cost per dialog falls sharply after the first two. Build the confirmation
+              gate and the transaction summary once, in the first dialog.
+            </p>
+            <ul>
+              <li><code>FW-065</code> SPC 24 h · <code>FW-067</code> WIP 20 h · <code>FW-073</code> Die change 24 h · <code>FW-070</code> Roll adjust 28 h · <code>FW-071</code> Pause/Resume 24 h · <code>FW-072</code> Rod checkout 24 h · <code>FW-063</code> Weld 20 h · <code>FW-256</code> Downtime 12 h.</li>
+              <li><code>FW-066</code> DB7 Coil Completion — 24 h, with <code>FW-183</code>'s traceability table.</li>
+              <li><code>FW-182</code> DB7b Packing — 24 h, with <code>skid-tracker</code> and <code>FW-184</code>'s label path.</li>
+              <li><code>FW-173</code> — partial rod re-check-in carry-forward, 20 h.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-num">05</div>
+          <div>
+            <h3>Variants, reporting and administration</h3>
+            <div class="goal">≈ 220 h FE · last because it is last-needed, not least-valuable</div>
+            <ul>
+              <li><code>FW-189</code> DB3/DB2 FL3 variants — 12 h, gated on <code>G30</code>.</li>
+              <li><code>FW-091</code>–<code>FW-095</code> — five reports, 152 h. Reuse <code>lib-chart-canvas</code> throughout.</li>
+              <li><code>FW-194</code>/<code>FW-195</code> — alloy admin and role assignment, 32 h; <code>FW-195</code> needs <code>FW-145</code>.</li>
+              <li><code>FW-003</code>/<code>FW-054</code>/<code>FW-253</code>/<code>FW-261</code>/<code>FW-270</code> — machine templates, alloys and tooling inventory.</li>
+              <li>MVP-2: DB9, DB9A, DB10, Die Management, OEE — controller shells already give the client a stable base URL.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 13 ============ -->
+    <section id="s13">
+      <div class="sec-head"><span class="sec-num">13</span><h2>Detailed development backlog</h2></div>
+
+      <p class="lede">
+        Sprint-ready. <strong>Baseline</strong> names what already exists to copy; <strong>New</strong> names
+        only what does not. Complexity is S/M/L/XL. Order is the recommended build order across the whole
+        programme.
+      </p>
+
+      <div class="tw">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Area</th><th>Screen</th><th>Task</th><th>Baseline to reuse</th><th>New development</th><th>Dependency</th><th>Pri</th><th>Cx</th><th class="num">Ord</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-st="none"><td class="id">FW-132</td><td>FE</td><td>All</td><td>API client interface, real + mock implementations, DTOs, enum mirror</td><td><code>ApiGatewayService</code>, <code>HTTPResponse&lt;T&gt;</code>, <code>api-methods.constants.ts</code>, both <code>useMockData</code> keys</td><td>23-method interface; DI provider factory; seed fixtures per <code>[CMP §5.3]</code></td><td>—</td><td>Critical</td><td>L</td><td class="num">1</td></tr>
+            <tr data-st="none"><td class="id">FW-132<br><span class="pill done">folded</span></td><td>FE</td><td>DB3</td><td>Replace the seven <code>build*()</code> builders with a view-model mapper</td><td>All ten interfaces unchanged; the whole template unchanged</td><td><code>active-run.model.ts</code> mapper + spec; delete the fixture constants</td><td>FW-132</td><td>Critical</td><td>M</td><td class="num">2</td></tr>
+            <tr data-st="none"><td class="id">FW-062<br><span class="pill done">folded</span></td><td>FE</td><td>DB3</td><td>Screen state to signals; remove manual <code>detectChanges()</code></td><td><code>SpoolNotificationComponent</code>'s signal API is the in-library precedent</td><td><code>signal()</code>/<code>computed()</code> conversion of 13 fields; spec updates</td><td>FW-132</td><td>Critical</td><td>M</td><td class="num">3</td></tr>
+            <tr data-st="none"><td class="id">FW-060 · 163<br>063 · 181 · 121<br><span class="pill plain">per screen</span></td><td>FE</td><td>All</td><td>House loading / error / empty states, set on DB3</td><td><code>lib-global-spinner</code>, <code>lib-toast</code>, gateway spinner</td><td>Three state templates + the content-data keys</td><td>FW-132</td><td>Critical</td><td>M</td><td class="num">4</td></tr>
+            <tr data-st="none"><td class="id">FW-N13<br><span class="pill done">minted</span></td><td>BE</td><td>All</td><td><code>FlatWire/GetServerConnectionInfo</code></td><td>Identical action on CoilReceiving, FurnaceScheduler, Login, SlitterInterface</td><td>One thin action</td><td>—</td><td>High</td><td>S</td><td class="num">5</td></tr>
+            <tr data-st="blocked"><td class="id">FW-135</td><td>FE</td><td>All</td><td>SignalR client — one connection, an Observable per event, connection state, retry</td><td><code>@microsoft/signalr</code> 9.0.6 present; hub path settled at <code>/hubs/flat-wire</code>; slitter's service as a <em>shape</em> reference only</td><td>Typed client over 14 events + 6 markers; protocol decision; enum handling for both wire forms</td><td>FW-132 · <code>G10</code> protocol call</td><td>Critical</td><td>L</td><td class="num">6</td></tr>
+            <tr data-st="none"><td class="id">FW-132<br><span class="pill plain">already in AC</span></td><td>FE</td><td>All</td><td><code>line-context.service</code> + <code>run-state.service</code></td><td><code>BehaviorSubject</code> convention; no NgRx</td><td>Two stores; <code>takeUntilDestroyed</code> throughout</td><td>FW-132, FW-135</td><td>Critical</td><td>M</td><td class="num">7</td></tr>
+            <tr data-st="none"><td class="id">FW-163</td><td>FE</td><td>DB2/3/5/7</td><td><code>info-grid</code> + collapse persistence</td><td>DB3's table markup and <code>InfoTable</code> interface are the specification</td><td>Component + <code>localStorage</code>; <strong>replaces</strong> DB3's markup</td><td>FW-062</td><td>High</td><td>M</td><td class="num">8</td></tr>
+            <tr data-st="none"><td class="id">FW-134</td><td>FE</td><td>DB1/2A/3</td><td>Primitive controls — <code>alert-banner</code>, <code>payoff-weight-bar</code>, <code>confirm-bar</code>, <code>.input</code> states, OK/NG/NA</td><td>Two consumer slots exist as inline markup on DB1; DB3's payoff bar is the spec</td><td>Six controls + specs; <strong>replaces</strong> both inline slots</td><td>FW-062</td><td>High</td><td>L</td><td class="num">9</td></tr>
+            <tr data-st="none"><td class="id">FW-124</td><td>FE</td><td>DB5A</td><td>FL2 Spool Queue</td><td>DB1's <code>col-4</code> card grid; DB3's frame; <code>GET /spools</code> live</td><td>Screen + selection → DB5</td><td>Phase 1</td><td>High</td><td>M</td><td class="num">10</td></tr>
+            <tr data-st="none"><td class="id">FW-N01</td><td>FE</td><td>DB2A</td><td>Rod Pre-Check-in station</td><td>DB3 frame; <code>FW-134</code> OK/NG/NA; four live endpoints</td><td>Screen; inspection panel; hosts the weld dialog; <code>OI-108</code> cold-start decision</td><td>FW-134 · G26</td><td>Critical</td><td>L</td><td class="num">11</td></tr>
+            <tr data-st="none"><td class="id">FW-133</td><td>FE</td><td>DB2/5</td><td><code>tab-wizard</code>, <code>tolerance-viz</code>, <code>pass-schedule-table</code>, trace profile mode</td><td><code>lib-trace-panel</code>/<code>lib-chart-canvas</code> already carry <code>gauge-trace-chart</code>'s foundation</td><td>Progressive-unlock wizard; tolerance track; inline-SVG profile mode</td><td>Phase 1</td><td>Critical</td><td>XL</td><td class="num">12</td></tr>
+            <tr data-st="none"><td class="id">FW-061</td><td>FE</td><td>DB2</td><td>Rod Check-in six-step wizard (FL1/FL3)</td><td>DB3 frame; <code>FW-133</code> wizard; <code>POST /checkin/rod</code></td><td>Six steps; validation; PLC push acknowledgement; <code>OI-109</code> landing decision</td><td>FW-133 · G14 · <code>/rod/**</code></td><td>Critical</td><td>XL</td><td class="num">13</td></tr>
+            <tr data-st="none"><td class="id">FW-064</td><td>FE</td><td>DB5</td><td>FL2 Spool Check-in</td><td>DB2's wizard wholesale; <code>POST /checkin/spool</code></td><td>FL2 step set; <code>G55</code> payoff-position constraint</td><td>FW-061</td><td>High</td><td>M</td><td class="num">14</td></tr>
+            <tr data-st="none"><td class="id">FW-060</td><td>FE</td><td>DB1</td><td>Complete Line Status — real data, payoffs, die life, routing</td><td>The built skeleton; <code>FW-134</code>'s controls; <code>GET /lines/status</code></td><td>Two sections; panel routing; FL2 empty state; height budget; live pulse</td><td>FW-134 · FW-154 · OI-28</td><td>High</td><td>L</td><td class="num">15</td></tr>
+            <tr data-st="none"><td class="id">FW-081</td><td>FE</td><td>DB3 ×3</td><td>Live streaming into the traces</td><td><code>lib-chart-canvas</code>'s <code>isLive</code> in-place update already exists</td><td>Batched-array handling; configurable window; source toggle</td><td>FW-135 · G9</td><td>Critical</td><td>L</td><td class="num">16</td></tr>
+            <tr data-st="none"><td class="id">FW-136</td><td>FE</td><td>All</td><td>Mock SignalR service over the typed event set</td><td><code>FW-135</code>'s interface</td><td>Replay of 14 + 6 events; scenario fixtures</td><td>FW-135</td><td>High</td><td>M</td><td class="num">17</td></tr>
+            <tr data-st="none"><td class="id">FW-153</td><td>FE</td><td>All</td><td>Alert chips, reconnect banner, cached-state fallback</td><td><code>FW-134</code>'s <code>alert-banner</code>; the connection-state stream</td><td>Banner; cache; per-screen mount (<code>FR-119</code>/<code>NFR006</code>)</td><td>FW-135, FW-134</td><td>High</td><td>M</td><td class="num">18</td></tr>
+            <tr data-st="blocked"><td class="id">FW-202</td><td>FE</td><td>DB3</td><td>Spool ladder, escalation and live weight; generalize the advisory card</td><td><code>SpoolNotificationComponent</code> + <code>resolveSpoolMilestone</code> + <code>.floating-popover</code></td><td>Real milestones; PLC-stop confirmation; move to <code>components/shared/</code></td><td>FW-N02 · OQ-10 · OI-45</td><td>High</td><td>L</td><td class="num">19</td></tr>
+            <tr data-st="none"><td class="id">FW-178</td><td>FE</td><td>DB3-FL2</td><td>FL2 variant configuration</td><td>DB3 wholesale</td><td>Null-gauge empty state; historical profile mode</td><td>FW-081, FW-133, FW-181</td><td>High</td><td>S</td><td class="num">20</td></tr>
+            <tr data-st="none"><td class="id">FW-162</td><td>FE</td><td>DB3 ×3</td><td><code>run-status-cards</code> — extract the three-card strip</td><td>DB3's Machine / Payoffs / Components cards</td><td>Three controls over the existing interfaces</td><td>FW-062</td><td>Medium</td><td>M</td><td class="num">21</td></tr>
+            <tr data-st="none"><td class="id">FW-065</td><td>FE</td><td>DB6</td><td>SPC checkpoint dialog — <em>first dialog, sets the pattern</em></td><td><code>TraceGraphPopupComponent</code>; <code>CommonPopupService</code>; <code>POST /spc</code></td><td>Dialog; <code>tolerance-viz</code>; confirmation gate; transaction summary <em>(built once here)</em></td><td>FW-133 · OI-57</td><td>Critical</td><td>L</td><td class="num">22</td></tr>
+            <tr data-st="none"><td class="id">FW-067</td><td>FE</td><td>DB8</td><td>WIP rejection dialog</td><td>FW-065's dialog pattern; <code>POST /wipreject</code></td><td>Reason tree; <code>G79</code>/<code>G82</code> vocabularies</td><td>FW-065 · FW-254</td><td>High</td><td>M</td><td class="num">23</td></tr>
+            <tr data-st="none"><td class="id">FW-073</td><td>FE</td><td>DC</td><td>Die change dialog</td><td>FW-065's pattern; <code>POST /diechange</code></td><td>Die-life bands — <strong>resolve <code>OI-12</code> first</strong>; gauge-drift path to DB6</td><td>FW-065 · OI-12 · FW-252</td><td>High</td><td>M</td><td class="num">24</td></tr>
+            <tr data-st="none"><td class="id">FW-071</td><td>FE</td><td>—</td><td>Pause and Resume dialogs</td><td>FW-065's pattern; pause/resume endpoints live</td><td>Reason cards by category; four resume outcomes; <code>G83</code> vocabulary</td><td>FW-065 · G83</td><td>High</td><td>M</td><td class="num">25</td></tr>
+            <tr data-st="none"><td class="id">FW-070</td><td>FE</td><td>DB11</td><td>Roll adjust dialog (FL2/FL3 only)</td><td>FW-065's pattern; <code>POST /rolloverride</code></td><td>Per-stand controls for <code>FM2_S1/S2/S3</code>; <code>OI-103</code> bound</td><td>FW-065 · OI-103</td><td>High</td><td>M</td><td class="num">26</td></tr>
+            <tr data-st="none"><td class="id">FW-072</td><td>FE</td><td>DB12</td><td>Rod checkout dialog — modes A, B, P</td><td>FW-065's pattern; <code>POST /checkout</code></td><td>Three modes; supervisor PIN gate; footage-gated entry</td><td>FW-065 · G7 · G24 · OI-38</td><td>High</td><td>L</td><td class="num">27</td></tr>
+            <tr data-st="blocked"><td class="id">FW-063</td><td>FE</td><td>DB2A</td><td>Weld capture dialog</td><td>FW-065's pattern; DB2A as host</td><td>Rod queue and traceability chain have no host (<code>G27</code>); endpoint absent</td><td>FW-N01 · FW-166 · Q6</td><td>High</td><td>M</td><td class="num">28</td></tr>
+            <tr data-st="none"><td class="id">FW-066</td><td>FE</td><td>DB7</td><td>Output Coil Completion</td><td>DB3 frame; <code>FW-163</code>; both coil endpoints live</td><td>Completion flow; <code>OI-105</code> weight basis; <code>OI-45</code> footage→weight</td><td>FW-183 · OI-105 · OI-140</td><td>Critical</td><td>L</td><td class="num">29</td></tr>
+            <tr data-st="none"><td class="id">FW-183</td><td>FE</td><td>DB7/7b</td><td><code>source-traceability-table</code> + <code>skid-tracker</code></td><td><code>FW-163</code>'s <code>info-grid</code></td><td>Genealogy view; skid state; <code>OI-25</code> two footage coordinate systems</td><td>FW-163 · OI-25</td><td>High</td><td>L</td><td class="num">30</td></tr>
+            <tr data-st="none"><td class="id">FW-184</td><td>FE</td><td>DB7</td><td><code>coil-label</code> preview and print path</td><td><code>shared</code>'s <code>print-export</code>; <code>GET /coil/{alpha}/label</code></td><td>Label preview with barcode bar; <code>OI-24</code> lot number undefined</td><td>FW-066 · OI-24</td><td>Medium</td><td>M</td><td class="num">31</td></tr>
+            <tr data-st="blocked"><td class="id">FW-182</td><td>FE</td><td>DB7b</td><td>Packing Station</td><td>DB3 frame; <code>FW-183</code>'s tracker</td><td>Screen; <code>OI-106</code> staging locations; <code>G36</code> three uncosted dependencies</td><td>FW-183 · G36</td><td>Medium</td><td>L</td><td class="num">32</td></tr>
+            <tr data-st="none"><td class="id">FW-173</td><td>FE</td><td>DB2</td><td>Partial rod re-check-in (carry-forward)</td><td>DB2's wizard</td><td>Carry-forward state; <code>G14</code> data inconsistencies</td><td>FW-061 · G14</td><td>Medium</td><td>M</td><td class="num">33</td></tr>
+            <tr data-st="none"><td class="id">FW-256</td><td>FE</td><td>—</td><td>Line Downtime dialog — 25 DWN## codes</td><td>FW-065's pattern</td><td>Runless event; <code>FW-255</code> write path</td><td>FW-065 · FW-255</td><td>Medium</td><td>S</td><td class="num">34</td></tr>
+            <tr data-st="blocked"><td class="id">FW-189</td><td>FE</td><td>DB2/3-FL3</td><td>FL3 hybrid variants</td><td>DB2 and DB3 wholesale</td><td>Adds Roll Adjust to the rail; continuous trace</td><td>G30 · FW-190 · FW-192</td><td>Medium</td><td>M</td><td class="num">35</td></tr>
+            <tr data-st="none"><td class="id">FW-131</td><td>FE</td><td>All</td><td><code>FlatWireRoleGuard</code>, interceptor verification, error envelope</td><td><code>AuthenticationGuard</code> already wired by <code>FW-N03</code></td><td>Role guard only</td><td>FW-145 · F-12 · G6</td><td>Medium</td><td>M</td><td class="num">36</td></tr>
+            <tr data-st="blocked"><td class="id">FW-137</td><td>FE</td><td>All</td><td>PWA cache sync and reconnect banner</td><td><code>FW-153</code>'s banner</td><td>Cache strategy</td><td>FW-153 · G10</td><td>Low</td><td>M</td><td class="num">37</td></tr>
+            <tr data-st="none"><td class="id">FW-091…095</td><td>FE</td><td>Reports</td><td>Five Flattening Lines reports</td><td><code>lib-chart-canvas</code>; the <code>reports</code> library conventions</td><td>Five report screens</td><td>FW-090</td><td>Low</td><td>XL</td><td class="num">38</td></tr>
+            <tr data-st="none"><td class="id">FW-194/195</td><td>FE</td><td>Admin</td><td>Alloy lookup grid; role assignment UI</td><td><code>FW-163</code>'s grid</td><td>Two admin screens</td><td>FW-196 · FW-145</td><td>Low</td><td>M</td><td class="num">39</td></tr>
+            <tr data-st="blocked"><td class="id">FW-204</td><td>FE</td><td>—</td><td>Minimal line-picker front door</td><td>—</td><td><strong>Recommend cancel.</strong> <code>/flat-wire</code> already lands on DB3 and DB1 renders; two front doors is a regression</td><td>—</td><td>—</td><td>—</td><td class="num">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 14 ============ -->
+    <section id="s14">
+      <div class="sec-head"><span class="sec-num">14</span><h2>Dependency map</h2></div>
+
+      <div class="flow">
+        <div class="flow-line"><span class="flow-node built">FW-N03 shell + routing</span><span class="flow-arrow">→</span><span class="flow-node built">FW-062 DB3 skeleton</span><span class="flow-arrow">→</span><span class="flow-node built">[UIC] baseline</span><span class="flow-arrow">→</span><span class="flow-node">every screen below</span></div>
+        <div class="flow-line"><span class="flow-node part">FW-132 API client</span><span class="flow-arrow">→</span><span class="flow-node">NEW-1 mapper</span><span class="flow-arrow">→</span><span class="flow-node">NEW-2 signals</span><span class="flow-arrow">→</span><span class="flow-node">NEW-3 UI states</span><span class="flow-arrow">→</span><span class="flow-node">FW-124 · N01 · 061 · 064 · 060</span></div>
+        <div class="flow-line"><span class="flow-node part">FW-135 hub client</span><span class="flow-arrow">→</span><span class="flow-node">NEW-5 state services</span><span class="flow-arrow">→</span><span class="flow-node">FW-081 live traces</span><span class="flow-arrow">→</span><span class="flow-node">FW-178 FL2</span><span class="flow-arrow">·</span><span class="flow-node">FW-202 spool</span></div>
+        <div class="flow-line"><span class="flow-node">FW-133 composites</span><span class="flow-arrow">→</span><span class="flow-node">FW-061 DB2 wizard</span><span class="flow-arrow">→</span><span class="flow-node">FW-064 DB5</span><span class="flow-arrow">·</span><span class="flow-node">FW-173 carry-forward</span></div>
+        <div class="flow-line"><span class="flow-node">FW-065 SPC dialog</span><span class="flow-arrow">→</span><span class="flow-node">067 · 070 · 071 · 072 · 073 · 063 · 256</span><span class="flow-cap" style="margin:0 0 0 6px">seven dialogs copy the first</span></div>
+        <div class="flow-line"><span class="flow-node">FW-163 info-grid</span><span class="flow-arrow">→</span><span class="flow-node">FW-183 traceability</span><span class="flow-arrow">→</span><span class="flow-node">FW-066 DB7</span><span class="flow-arrow">→</span><span class="flow-node">FW-184 label</span><span class="flow-arrow">·</span><span class="flow-node">FW-182 DB7b</span></div>
+        <div class="flow-line"><span class="flow-node gap">FW-145 JWT roles</span><span class="flow-arrow">→</span><span class="flow-node gap">FW-131 role guard</span><span class="flow-arrow">→</span><span class="flow-node gap">FW-195 role UI</span></div>
+        <div class="flow-cap">
+          Green is landed, amber is in flight, dashed red is blocked outside the frontend. Note that the
+          five chains after the first two are independent of one another — once Phase 1 lands, the wizard,
+          dialog, grid and reporting chains can run in parallel across four developers with no shared
+          edits beyond <code>components/shared/</code>.
+        </div>
+      </div>
+
+      <h4>Cross-area couplings that will bite if ignored</h4>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Coupling</th><th>Consequence if ignored</th></tr></thead>
+          <tbody>
+            <tr data-st="blocked"><td><code>G14</code> rod alpha format — <code>R#####</code> vs <code>ROD-#####</code>, 3- vs 4-item inspection</td><td>DB2 and DB2A models are written twice. Blocks <code>FW-061</code>, <code>FW-132</code>, <code>FW-173</code>.</td></tr>
+            <tr data-st="blocked"><td><code>OI-12</code> die-life colour bands differ between Die Change and Die Management</td><td>Two screens show different colours for the same die. Resolve before <code>FW-073</code>.</td></tr>
+            <tr data-st="blocked"><td><code>OI-105</code> three candidate authoritative coil weights</td><td>DB7, the label and the yield ledger disagree. Resolve before <code>FW-066</code>.</td></tr>
+            <tr data-st="blocked"><td><code>OI-140</code> a completed coil is never broadcast — no hub member exists</td><td>DB1 and DB7 cannot react to a completion. Backend change, needed by <code>FW-066</code>.</td></tr>
+            <tr data-st="blocked"><td><code>OI-28</code> alert lifecycle unbacked — <code>AlertRaised</code>/<code>Cleared</code> and <code>activeAlerts</code> have no store</td><td>DB1's acknowledge stays local, as it is today. Blocks <code>FW-060</code> and <code>FW-153</code>.</td></tr>
+            <tr data-st="blocked"><td><code>G9</code>/<code>OI-34</code> NFRs absent</td><td>Live-trace window, batch size and retention are guesses. Build them as configuration.</td></tr>
+            <tr data-st="blocked"><td>SignalR protocol / enum wire form</td><td>Every DTO mapper is rewritten if the flag flips. Decide before <code>FW-135</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ 15 ============ -->
+    <section id="s15">
+      <div class="sec-head"><span class="sec-num">15</span><h2>Plan edits owed</h2></div>
+
+      <p class="lede">
+        Most of what this section listed has been applied. What follows is what is still owed, and
+        the two items that need a decision rather than an edit.
+      </p>
+
+      <h4>Applied</h4>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Edit</th><th>Outcome</th></tr></thead>
+          <tbody>
+            <tr data-st="done"><td><code>FW-N03</code> closed</td><td><code>ual-angular</code>'s <code>HEAD</code> carries <strong>33 files</strong> under <code>projects/flat-wire</code> at <code>67426e67e</code> with a clean tree, so the commit it was waiting on has happened. <strong>Wave&nbsp;1 is open</strong> and Phase&nbsp;1A moved 0%&nbsp;→&nbsp;11%</td></tr>
+            <tr data-st="done"><td>The 17 stale hub-path sites</td><td>All corrected, including <code>[ARC]</code>'s §2 diagram, <code>[DEP]</code>'s three checklist rows and <code>FW-080 §0</code>'s own false claim. Every surviving occurrence is deliberate evidence</td></tr>
+            <tr data-st="done"><td>The <code>fw</code>&nbsp;→&nbsp;<code>lib</code> prefix</td><td>Ratified as <strong><code>D-54</code></strong> and corrected in <code>CLAUDE.md</code> and <code>[CMP §5.1]</code>, along with the <code>build:shop-floor</code> requirement and the stylesheet row</td></tr>
+            <tr data-st="done"><td><code>[UIC §1]</code>'s two missing rows</td><td><strong>Data contract</strong> — the 12 view-model interfaces are what any API mapper must return — and <strong>Fixture set</strong>, with the negative-alpha warning</td></tr>
+            <tr data-st="done"><td>1280×1024&nbsp;→&nbsp;1920×1080</td><td>Closed across four files, because the trial-run generator compares story titles <strong>full-string</strong> against its content file</td></tr>
+            <tr data-st="done"><td>Silent records</td><td>Twelve DB3/DB1-adjacent stories now state their position, and <code>G21</code> left two <code>blocked_by</code> lists</td></tr>
+            <tr data-st="done"><td>Hours on the board</td><td>15 records carrying <code>hours: 0</code> aligned to the total already on their own card — clerical, not estimating. Only the two cancelled stories remain at 0</td></tr>
+            <tr data-st="done"><td>Four folds</td><td>The view-model mapper into <code>FW-132</code>, signals into <code>FW-062</code>, the column arrays into <code>FW-163</code>, responsive reflow into <code>FW-130</code> — one criterion each, no ids minted, no hours moved</td></tr>
+            <tr data-st="done"><td><code>FW-N13</code> minted</td><td><code>FlatWire/GetServerConnectionInfo</code>, 3&#8239;h BE, priced from <code>[CE §2]</code>'s query-endpoint rate. Appendix <code>B.9</code> opened; next free is <code>FW-N14</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note warn">
+        <span class="note-label">The correction worth carrying forward</span>
+        <p>
+          This section previously proposed <strong>eleven new stories</strong>. On checking each against
+          the backlog before minting, <strong>only one was genuinely unowned</strong>. Four were folded
+          into stories that already implied them, and <strong>six already had explicit owners</strong>:
+          <code>line-context</code> and <code>run-state</code> are in <code>FW-132</code>'s criteria;
+          the weld markers are <code>FW-133</code>'s and <code>FW-081</code>'s;
+          <code>consequence-box</code> and <code>footer-stamp</code> are <code>FW-072</code>'s, and
+          <code>[CMP §7.6]</code> already assigns them to <em>"the screen story that first needs it"</em>;
+          the per-screen empty states are spread across five stories; and the advisory card sits inside
+          <code>FW-202</code>&nbsp;/&nbsp;<code>FW-N02</code>.
+        </p>
+        <p>
+          ⛔ <strong>Minting them would have created duplicate scope that no check could catch</strong> —
+          <code>check_docs.py</code> rule&nbsp;4 compares id&nbsp;↔&nbsp;card parity, never overlapping
+          subject matter. <strong>Check for an owner before minting an id.</strong>
+        </p>
+      </div>
+
+      <h4>Still owed</h4>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Story</th><th>What is true in the code</th><th>Edit owed</th></tr></thead>
+          <tbody>
+            <tr data-st="wip"><td class="id">FW-133</td><td>The <code>gauge-trace-chart</code> foundation is in <code>projects/shared</code> and consumed by DB3</td><td>The 120&#8239;h estimate overstates what is left. <strong>Split it</strong>: <code>tab-wizard</code> + <code>tolerance-viz</code> are Phase&nbsp;2 critical path, the rest follows its screen. The re-derivation belongs in an additive <code>[CE]</code> sheet</td></tr>
+            <tr data-st="wip"><td class="id">FW-176</td><td><code>D-32</code> cancels 16 of its 28&#8239;h</td><td>All three sites carry the pre-<code>D-32</code> figure. <strong>Left at 28 deliberately</strong> — the <code>Hours</code> cell feeds three client generators, so the change belongs in the same additive sheet</td></tr>
+            <tr data-st="blocked"><td class="id">FW-204</td><td><code>/flat-wire</code> lands on DB3; DB1 renders at <code>#/flat-wire/supervisor-dashboard</code></td><td><strong>Re-decide, then cancel or rescope.</strong> Both conditions that would retire it are met, and two front doors is a regression — but the call is the delivery lead's</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="note-label">Two decisions, not edits</span>
+        <p>
+          <strong>The hub protocol</strong> — <code>G105</code>. MessagePack is on by default and
+          config-switchable, and enums cross as <strong>strings</strong> under it and
+          <strong>integers</strong> under JSON, so the choice decides the payload contract before
+          <code>FW-135</code>'s enum mappers are written. Recommended: <code>EnableMessagePack: false</code>
+          for <code>test1</code>, build on JSON, verify MessagePack before UAT, and write the mappers to
+          accept both forms either way.
+        </p>
+        <p>
+          <strong>Whether <code>[CE]</code> is restated at all</strong> — it has not needed to be so far.
+          Every addition has gone into an additive <code>[TB]</code> block, which <code>§7.3</code>'s own
+          banner excludes from the roll-up, so 1B stays at 519&#8239;h, S0 at 1,027&#8239;h and the
+          baseline at 114 live stories&nbsp;/&nbsp;3,186&#8239;h. The two rows above are the first that
+          genuinely need a figure to move.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ 16 ============ -->
+    <section id="s16">
+      <div class="sec-head"><span class="sec-num">16</span><h2>The next ten tasks</h2></div>
+
+      <p class="lede">
+        In order. The first six are one developer's next two weeks and they unblock everything;
+        7–10 can start in parallel on a second developer.
+      </p>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th class="num">#</th><th>Task</th><th>Story</th><th>Why now</th><th class="num">Est</th></tr></thead>
+          <tbody>
+            <tr data-st="none"><td class="num">1</td><td><strong>Decide the SignalR protocol</strong> and record it as a decision. Recommend <code>EnableMessagePack: false</code> for <code>test1</code>, JSON for the build, MessagePack verified pre-UAT.</td><td class="id">G105</td><td>One meeting. Every DTO and enum mapper written before it is written twice.</td><td class="num">2 h</td></tr>
+            <tr data-st="none"><td class="num">2</td><td><strong>Build the API client</strong> — <code>flat-wire-api.interface.ts</code> with 23 methods, real over <code>ApiGatewayService</code>, mock over the seed fixtures, DI-swapped on <code>useMockData</code>. Both config keys already exist.</td><td class="id">FW-132</td><td>The single blocker on all fifteen screens. The endpoints already answer.</td><td class="num">24 h</td></tr>
+            <tr data-st="none"><td class="num">3</td><td><strong>Replace DB3's seven builders with a mapper</strong> — <code>active-run.model.ts</code> + spec. Keep every interface and the whole template untouched; delete the fixture constants.</td><td class="id">FW-132</td><td>Turns the reference screen from a layout into a pattern. Until this exists, copying DB3 copies its hardcoding.</td><td class="num">16 h</td></tr>
+            <tr data-st="none"><td class="num">4</td><td><strong>Move DB3's state to signals</strong> and delete the four manual <code>detectChanges()</code> calls, on <code>SpoolNotificationComponent</code>'s pattern.</td><td class="id">FW-062 <em>(folded)</em></td><td>Do it before the first async source, not after. Mutating under <code>OnPush</code> fails intermittently once data streams.</td><td class="num">12 h</td></tr>
+            <tr data-st="none"><td class="num">5</td><td><strong>Set the house loading / error / empty states</strong> on DB3, with the FL2 null-gauge empty state designed in from the start.</td><td class="id">FW-060 · 163 · 063 · 181 · 121</td><td>Decided once here or invented fifteen times later.</td><td class="num">12 h</td></tr>
+            <tr data-st="none"><td class="num">6</td><td><strong>Build the SignalR client</strong> — one <code>HubConnection</code>, an <code>Observable</code> per event across 14 + 6, connection state, retry, <code>takeUntilDestroyed</code>. Plus <code>line-context</code> and <code>run-state</code>.</td><td class="id">FW-135 · FW-132</td><td>The hub is up at a settled path, and the simulator can drive it with no PLC.</td><td class="num">28 h</td></tr>
+            <tr data-st="none"><td class="num">7</td><td><strong>Add <code>FlatWire/GetServerConnectionInfo</code></strong>, copying any of the four sibling implementations.</td><td class="id">FW-N13</td><td><code>[CE §2]</code> prices a query endpoint at three hours, and it fixes a silent 404 on every screen's header today.</td><td class="num">3 h</td></tr>
+            <tr data-st="none"><td class="num">8</td><td><strong>Extract <code>info-grid</code></strong> with collapse persistence, <em>replacing</em> DB3's inline tables — and move the two column arrays into content data while there.</td><td class="id">FW-163</td><td>Six screens need it. Extract now, while there is exactly one consumer to migrate.</td><td class="num">20 h</td></tr>
+            <tr data-st="none"><td class="num">9</td><td><strong>Build DB5A Spool Queue</strong> — the simplest new screen, on DB1's card grid and DB3's frame, against the live <code>GET /spools</code>.</td><td class="id">FW-124</td><td>The proof that a new screen is now a copy. Do it immediately after Phase 1 to validate the baseline before the expensive screens commit to it.</td><td class="num">24 h</td></tr>
+            <tr data-st="none"><td class="num">10</td><td><strong>Resolve <code>G14</code>, <code>OI-12</code>, <code>OI-105</code>, <code>OI-28</code></strong> — the four register items each cited by two or more screens.</td><td class="id">registers</td><td>Each will otherwise produce two screens that disagree, and each is a client answer rather than development work — so it must run in parallel, not after.</td><td class="num">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="note-label">Definition of done for Phase 1</span>
+        <p>
+          DB3 Active Run renders FL1 from <code>GET /run/active</code> with gauge and width streaming live
+          from the hub, a reconnect banner over cached state, and explicit loading, error and empty states —
+          with <code>useMockData: true</code> serving stub fixtures and no database or PLC involved. At that
+          point every remaining screen is a copy, and the sequence in §12 is a matter of staffing rather
+          than architecture.
+        </p>
+      </div>
+    </section>
+
+    <footer class="end">
+      Sources measured for this analysis · ual-angular/projects/flat-wire (30 files, 1,517 lines) ·
+      ual-angular/projects/shared (nav-rail, trace-panel, chart-canvas, trace-chart.model, api-gateway,
+      common-popup) · ual-api/API/Domain/FlatWire (15 controllers, 23 endpoints, FlatWireHub,
+      DependencyInjectionRegistry, Program.cs) · Flatwire-planning (STATUS.md, 50-frontend/{UIConventions,
+      Components, ScreenPlan}.md, 40-backend/APIs.md, 50-frontend/tasks/*, 40-backend/tasks/*) ·
+      npm run test:flat-wire executed 7 Sep 2026: 6 suites, 25 tests, 100 % statements / branches /
+      functions / lines · palette validated for CVD separation and surface contrast in both themes.
+    </footer>
+  </main>
+</div>
+</body>
+</html>

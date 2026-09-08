@@ -71,7 +71,7 @@ BEGIN
     CREATE TABLE [dbo].[Stand] (
         [Id]             INT          NOT NULL IDENTITY(1,1),
         [Name]           VARCHAR(30)  NOT NULL,               -- position only: FM1, FM2_S1, FM2_S2, FM2_S3
-        [LineId]         VARCHAR(5)   NULL,                   -- FL1 / FL2 / FL3; NULL = shared across lines
+        [MachineName]         VARCHAR(5)   NULL,                   -- FL1 / FL2 / FL3; NULL = shared across lines
         [RollDiameterIn] DECIMAL(5,3) NOT NULL,               -- working roll diameter in inches (FM1 12.000; FM2 S1 8.000, S2/S3 6.000)
         [MinGaugeIn]     DECIMAL(8,4) NOT NULL,               -- minimum input gauge in inches
         [MaxGaugeIn]     DECIMAL(8,4) NOT NULL,               -- maximum input gauge in inches
@@ -132,18 +132,18 @@ BEGIN
         -- Machine Name = FL1, and NO FL3 row appears in any of the three tool grids.
         -- (Three is right for that date: the client had sent three grids. The fourth
         -- type, roll sets, arrived 3 Sep 2026 with no grid at all -- G87.)
-        -- CK_Drawer_LineId KEEPS FL3 while the TOOLING registers drop it, and that is
+        -- CK_Drawer_MachineName KEEPS FL3 while the TOOLING registers drop it, and that is
         -- deliberate: this table is EQUIPMENT and FL3 genuinely runs through DB1/DB2.
         -- The client's 3 Sep rule -- inventory maintained for FL1/FL2 only, FL3 using a
         -- combination of the two (D-42) -- binds the tooling, not the machine. Do not
-        -- "align" this CHECK with CK_ToolingInventoryDie_LineId.
-        [LineId]   VARCHAR(5)  NOT NULL,
+        -- "align" this CHECK with CK_ToolingInventoryDie_MachineName.
+        [MachineName]   VARCHAR(5)  NOT NULL,
         [IsActive] BIT         NOT NULL CONSTRAINT [DF_Drawer_IsActive] DEFAULT (1),
 
         CONSTRAINT [PK_Drawer]        PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_Drawer_Name]   UNIQUE ([Name]),
         CONSTRAINT [CK_Drawer_Name]   CHECK ([Name]   IN ('DB1','DB2')),
-        CONSTRAINT [CK_Drawer_LineId] CHECK ([LineId] IN ('FL1','FL3'))
+        CONSTRAINT [CK_Drawer_MachineName] CHECK ([MachineName] IN ('FL1','FL3'))
     );
     PRINT 'Created table: Drawer';
 END
@@ -214,7 +214,7 @@ BEGIN
         [Location]           VARCHAR(50)   NULL,           -- client grid "Location" -- die room / crib position
         -- Client grid "Machine Name". FL1 owns the draw boxes; FL3 runs through them.
         -- NULL for a die not assigned to a line (FR-241 / FR-244 spare).
-        [LineId]             VARCHAR(5)    NULL,
+        [MachineName]             VARCHAR(5)    NULL,
         [HoleSizeIn]         DECIMAL(8,4)  NOT NULL,       -- client grid 'ID(")' -- the hole diameter = output wire size
         [MinFeedDiameterIn]  DECIMAL(8,4)  NULL,           -- minimum acceptable feed diameter (was Drawer.MinDiameterIn)
         [MaxFeedDiameterIn]  DECIMAL(8,4)  NULL,           -- client grid "Max Imput Dia." (was Drawer.MaxDiameterIn)
@@ -259,10 +259,10 @@ BEGIN
         -- FL1/FL2 and FL3 should use a combination of the two." So no tooling row is
         -- ever attributed to FL3, and the 31-Aug observation that no FL3 row appears in
         -- any tool grid is now confirmed as INTENDED rather than an omission in the
-        -- sample. Safe against the seed: all 14 rows carry LineId NULL.
+        -- sample. Safe against the seed: all 14 rows carry MachineName NULL.
         -- NOTE this does NOT apply to Drawer, which is EQUIPMENT -- FL3 genuinely runs
         -- through DB1/DB2 and keeps FL3 in its own CHECK. Do not "align" the two.
-        CONSTRAINT [CK_ToolingInventoryDie_LineId]    CHECK ([LineId] IS NULL OR [LineId] IN ('FL1')),
+        CONSTRAINT [CK_ToolingInventoryDie_MachineName]    CHECK ([MachineName] IS NULL OR [MachineName] IN ('FL1')),
         CONSTRAINT [CK_ToolingInventoryDie_DieType]   CHECK ([DieType] IS NULL OR [DieType] IN ('TC Mono','TC Poly','Natural diamond'))
         -- Deliberately NO check that LastGrindingFeet <= TotalFeetAllowed. "Overdue"
         -- is a real operating state the Die Management screen must display
@@ -348,7 +348,7 @@ BEGIN
         [DrawerId]           INT           NULL,           -- capstan rolls: DB1, DB2
         -- Client grid "Machine Name". FL1 | FL2 only -- FL3 uses a combination of the
         -- two and holds no tooling of its own (client, 3 Sep 2026).
-        [LineId]             VARCHAR(5)    NULL,
+        [MachineName]             VARCHAR(5)    NULL,
         [SetNumber]          VARCHAR(20)   NULL,           -- client grid "Set Number" -- lettered A / B / C on the edger and straightener grids
         [RollQty]            INT           NOT NULL CONSTRAINT [DF_ToolingInventoryRollSet_RollQty] DEFAULT (2),  -- client grid "Roll Qty". Every set the client named is 2
         -- The TOOL's own nominal size: 12.000 for FL1-S1; 8.000 / 6.000 / 6.000 for
@@ -380,7 +380,7 @@ BEGIN
         CONSTRAINT [CK_TIRS_Mount]           CHECK (
                                                  ([RollType] = 'Mill'    AND [StandId] IS NOT NULL AND [DrawerId] IS NULL)
                                               OR ([RollType] = 'Capstan' AND [DrawerId] IS NOT NULL AND [StandId] IS NULL)),
-        CONSTRAINT [CK_TIRS_LineId]          CHECK ([LineId] IS NULL OR [LineId] IN ('FL1','FL2')),
+        CONSTRAINT [CK_TIRS_MachineName]          CHECK ([MachineName] IS NULL OR [MachineName] IN ('FL1','FL2')),
         CONSTRAINT [CK_TIRS_RollQty]         CHECK ([RollQty] > 0),
         CONSTRAINT [CK_TIRS_NominalDiameter] CHECK ([NominalDiameterIn] IS NULL OR [NominalDiameterIn] > 0),
         CONSTRAINT [CK_TIRS_Od]              CHECK ([OdIn] IS NULL OR [MinOdIn] IS NULL OR [MinOdIn] < [OdIn]),
@@ -459,7 +459,7 @@ GO
 --   DieAlpha is load-bearing because FR-254 has the Die Change screen read it AT
 --   RUNTIME. This table has no such caller.
 --
--- (LineId, SetNumber) is the obvious replacement key, and it is DELIBERATELY NOT
+-- (MachineName, SetNumber) is the obvious replacement key, and it is DELIBERATELY NOT
 -- taken: Q95 leg 2 asks whether Set Number is unique per LINE or per SHOP, and a
 -- UNIQUE here would pre-empt that answer in one direction. FW-268 adds the key when
 -- Q95 returns. Do not add one before then, and do not reinstate Name or the alpha.
@@ -479,7 +479,7 @@ GO
 -- ID(MM) IS NOT STORED, on the ToolingInventoryDie precedent: it is a derived
 -- display value. Compute it in the UI.
 --
--- LineId is 'FL2' ONLY. The client's grid attributes edgers to FL2, and D-42
+-- MachineName is 'FL2' ONLY. The client's grid attributes edgers to FL2, and D-42
 -- bars any tooling row from FL3 ("maintain them for FL1/FL2 and FL3 should use
 -- a combination of the two"). NOTE this does NOT apply to Drawer, which is
 -- EQUIPMENT and keeps FL3 in its own CHECK. Do not "align" the two.
@@ -489,7 +489,7 @@ BEGIN
     CREATE TABLE [dbo].[ToolingInventoryEdger] (
         [Id]                 INT           NOT NULL IDENTITY(1,1),
         [EdgeType]           VARCHAR(10)   NULL,           -- Round | Square. Carried from Edger, RELAXED to NULL -- see the block above
-        [LineId]             VARCHAR(5)    NULL,           -- client grid "Machine Name". FL2 only
+        [MachineName]             VARCHAR(5)    NULL,           -- client grid "Machine Name". FL2 only
         [EdgerType]          VARCHAR(20)   NULL,           -- client grid "Type"
         [Location]           VARCHAR(50)   NULL,           -- client grid "Location" -- roll shop / crib position
         [SetNumber]          VARCHAR(20)   NULL,           -- client grid "Set Number" -- lettered A / B / C. REPLACES Edger.ToolingSetNo
@@ -516,7 +516,7 @@ BEGIN
         -- is: it constrains the SCHEDULE's chosen profile, which is a different
         -- assertion from the tool's capability. Do not merge them.
         CONSTRAINT [CK_TIE_EdgeType]        CHECK ([EdgeType] IS NULL OR [EdgeType] IN ('Round','Square')),
-        CONSTRAINT [CK_TIE_LineId]          CHECK ([LineId] IS NULL OR [LineId] IN ('FL2')),
+        CONSTRAINT [CK_TIE_MachineName]          CHECK ([MachineName] IS NULL OR [MachineName] IN ('FL2')),
         CONSTRAINT [CK_TIE_RollQty]         CHECK ([RollQty] > 0),
         CONSTRAINT [CK_TIE_StdRemoval]      CHECK ([StdRemovalFromOdIn] IS NULL OR [StdRemovalFromOdIn] > 0),
         CONSTRAINT [CK_TIE_Od]              CHECK ([OdIn] IS NULL OR [MinOdIn] IS NULL OR [MinOdIn] < [OdIn]),
@@ -588,7 +588,7 @@ BEGIN
     CREATE TABLE [dbo].[Dancer] (
         [Id]                  INT         NOT NULL IDENTITY(1,1),
         [Name]                VARCHAR(30) NOT NULL,               -- position-only: FM1_Dancer, FM2_Dancer1, FM2_Dancer2
-        [LineId]              VARCHAR(5)  NULL,                   -- FL1 / FL2 / FL3; NULL = shared across lines
+        [MachineName]              VARCHAR(5)  NULL,                   -- FL1 / FL2 / FL3; NULL = shared across lines
         [Position]            VARCHAR(20) NOT NULL,               -- FM1 | FM2_S1_S2 | FM2_S2_S3
         [Ordinal]             INT         NULL,                   -- 1 = upstream, 2 = downstream; NULL when single (FM1)
         [SupportsTensionMode] BIT         NOT NULL CONSTRAINT [DF_Dancer_SupportsTension] DEFAULT (0),
@@ -1367,27 +1367,27 @@ GO
 -- either one: the client said "in the order pictured", and a send-back is
 -- what changes them.  The FL3 counts (H1AA 15, H1B 5) are the guard.
 --
--- CK_..._LineId admits ALL THREE LINES.  Do NOT align it with
--- CK_ToolingInventoryDie_LineId ('FL1') or CK_TIRS_LineId ('FL1','FL2'):
+-- CK_..._MachineName admits ALL THREE LINES.  Do NOT align it with
+-- CK_ToolingInventoryDie_MachineName ('FL1') or CK_TIRS_MachineName ('FL1','FL2'):
 -- those drop FL3 because TOOLING is maintained for FL1/FL2 only (D-42),
 -- whereas these tabs are configured per line INCLUDING FL3 -- the client
 -- supplied a distinct FL3 grid.  Same equipment-vs-tooling distinction
--- CK_Drawer_LineId already carries a warning about.
+-- CK_Drawer_MachineName already carries a warning about.
 -- ------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SetupHandlingTimeElement]') AND type = N'U')
 BEGIN
     CREATE TABLE [dbo].[SetupHandlingTimeElement] (
         [Id]           INT         NOT NULL IDENTITY(1,1),
-        [LineId]       VARCHAR(5)  NOT NULL,             -- FL1 / FL2 / FL3
+        [MachineName]       VARCHAR(5)  NOT NULL,             -- FL1 / FL2 / FL3
         [GroupId]      INT         NOT NULL,             -- FK -> SetupHandlingTimeGroup.Id
         [ElementLabel] VARCHAR(60) NOT NULL,             -- longest today is 27 chars; generous against revision
-        [Sequence]     INT         NOT NULL,             -- order within (LineId, GroupId), as pictured
+        [Sequence]     INT         NOT NULL,             -- order within (MachineName, GroupId), as pictured
         [IsActive]     BIT         NOT NULL CONSTRAINT [DF_SetupHandlingTimeElement_IsActive] DEFAULT (1),
 
         CONSTRAINT [PK_SetupHandlingTimeElement]                PRIMARY KEY CLUSTERED ([Id] ASC),
-        CONSTRAINT [UQ_SetupHandlingTimeElement_LineGroupLabel] UNIQUE ([LineId], [GroupId], [ElementLabel]),
-        CONSTRAINT [UQ_SetupHandlingTimeElement_LineGroupSeq]   UNIQUE ([LineId], [GroupId], [Sequence]),
-        CONSTRAINT [CK_SetupHandlingTimeElement_LineId]         CHECK ([LineId] IN ('FL1','FL2','FL3'))
+        CONSTRAINT [UQ_SetupHandlingTimeElement_LineGroupLabel] UNIQUE ([MachineName], [GroupId], [ElementLabel]),
+        CONSTRAINT [UQ_SetupHandlingTimeElement_LineGroupSeq]   UNIQUE ([MachineName], [GroupId], [Sequence]),
+        CONSTRAINT [CK_SetupHandlingTimeElement_MachineName]         CHECK ([MachineName] IN ('FL1','FL2','FL3'))
     );
     PRINT 'Created table: SetupHandlingTimeElement';
 END
@@ -1424,15 +1424,15 @@ IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Ma
 BEGIN
     CREATE TABLE [dbo].[MaterialLossElement] (
         [Id]           INT         NOT NULL IDENTITY(1,1),
-        [LineId]       VARCHAR(5)  NOT NULL,             -- FL1 / FL2 / FL3
+        [MachineName]       VARCHAR(5)  NOT NULL,             -- FL1 / FL2 / FL3
         [ElementLabel] VARCHAR(80) NOT NULL,             -- 80, not 60: the Pass Change label is 65 chars
-        [Sequence]     INT         NOT NULL,             -- order within LineId, as pictured
+        [Sequence]     INT         NOT NULL,             -- order within MachineName, as pictured
         [IsActive]     BIT         NOT NULL CONSTRAINT [DF_MaterialLossElement_IsActive] DEFAULT (1),
 
         CONSTRAINT [PK_MaterialLossElement]           PRIMARY KEY CLUSTERED ([Id] ASC),
-        CONSTRAINT [UQ_MaterialLossElement_LineLabel] UNIQUE ([LineId], [ElementLabel]),
-        CONSTRAINT [UQ_MaterialLossElement_LineSeq]   UNIQUE ([LineId], [Sequence]),
-        CONSTRAINT [CK_MaterialLossElement_LineId]    CHECK ([LineId] IN ('FL1','FL2','FL3'))
+        CONSTRAINT [UQ_MaterialLossElement_LineLabel] UNIQUE ([MachineName], [ElementLabel]),
+        CONSTRAINT [UQ_MaterialLossElement_LineSeq]   UNIQUE ([MachineName], [Sequence]),
+        CONSTRAINT [CK_MaterialLossElement_MachineName]    CHECK ([MachineName] IN ('FL1','FL2','FL3'))
     );
     PRINT 'Created table: MaterialLossElement';
 END
@@ -1597,8 +1597,8 @@ BEGIN
     -- SetupHandlingTimeGroup seed above, which runs in this same script.
     -- Not positional and not a pinned IDENTITY value, so the C5 seed-order
     -- check cannot verify it positionally -- hence this explicit marker.
-    INSERT INTO [dbo].[SetupHandlingTimeElement] ([LineId],[GroupId],[ElementLabel],[Sequence],[IsActive])
-    SELECT v.[LineId], g.[Id], v.[ElementLabel], v.[Sequence], 1
+    INSERT INTO [dbo].[SetupHandlingTimeElement] ([MachineName],[GroupId],[ElementLabel],[Sequence],[IsActive])
+    SELECT v.[MachineName], g.[Id], v.[ElementLabel], v.[Sequence], 1
     FROM (VALUES
         -- ---- FL1 : 33 elements ----------------------------
           ('FL1', 'S1',    'Lower Payoff: VPS',            1)
@@ -1714,7 +1714,7 @@ BEGIN
         , ('FL3', 'S2',    'Expand Mandrel',               1)
         , ('FL3', 'H2',    'Stop to Skid',                 1)
         , ('FL3', 'H2',    'Band Skid',                    2)
-    ) AS v([LineId], [GroupCode], [ElementLabel], [Sequence])
+    ) AS v([MachineName], [GroupCode], [ElementLabel], [Sequence])
     JOIN [dbo].[SetupHandlingTimeGroup] g ON g.[GroupCode] = v.[GroupCode];
 
     PRINT 'Seeded: SetupHandlingTimeElement (109 rows -- FL1 33, FL2 29, FL3 47)';
@@ -1725,7 +1725,7 @@ GO
 
 IF NOT EXISTS (SELECT 1 FROM [dbo].[MaterialLossElement])
 BEGIN
-    INSERT INTO [dbo].[MaterialLossElement] ([LineId],[ElementLabel],[Sequence],[IsActive])
+    INSERT INTO [dbo].[MaterialLossElement] ([MachineName],[ElementLabel],[Sequence],[IsActive])
     VALUES
       -- ---- FL1 : 7 elements ----------------------------
       ('FL1', 'Threading Drawblock #1',                                             1, 1)

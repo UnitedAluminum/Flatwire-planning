@@ -4,7 +4,7 @@
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** All three lines; supervisor, quality, engineering and planning roles
 **Version:** 1.2
-**Last Updated:** September 4, 2026 — **§2.1 added: how the screen uses a wider panel.** The rail grows between 240 and 320 px, the reading spine stays at 760 px at every size because line length is a readability limit, and result tables take the full width up to ~1,240 px — worth about 450 px of extra table on the 1920 canvas. Also records, for a reviewer opening the mockup on a laptop, that below the specified panel height the whole suite scales down together *(previously 1.1 — **§2 redesigned: the screen is a conversation, not a dashboard.** Six stacked panels become one surface holding a rail and a transcript; a result now sits inside the answer that produced it. §5's chip strip moves under the question it describes; §6 becomes a single composer that adds turns rather than replacing the screen; §7 separates per-result export from whole-conversation export. **No rule changed** — `AQ-1`–`AQ-14` are behaviour, not layout *(previously 1.0, first issue, September 4, 2026)*)*
+**Last Updated:** September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — **The canvas note is re-worded now that the panel is settled:** the screen is *composed* at 1280 × 1024, which is the mockups' box, and the panel **is** 1920 × 1080 (`Q26`, 7 Sep 2026; gap `G23` closed). The two-width behaviour below it is unchanged. *(previously September 4, 2026 — **§2.1 added: how the screen uses a wider panel.** The rail grows between 240 and 320 px, the reading spine stays at 760 px at every size because line length is a readability limit, and result tables take the full width up to ~1,240 px — worth about 450 px of extra table on the 1920 canvas. Also records, for a reviewer opening the mockup on a laptop, that below the specified panel height the whole suite scales down together *(previously 1.1 — **§2 redesigned: the screen is a conversation, not a dashboard.** Six stacked panels become one surface holding a rail and a transcript; a result now sits inside the answer that produced it. §5's chip strip moves under the question it describes; §6 becomes a single composer that adds turns rather than replacing the screen; §7 separates per-result export from whole-conversation export. **No rule changed** — `AQ-1`–`AQ-14` are behaviour, not layout *(previously 1.0, first issue, September 4, 2026)*)*)*
 **Status:** **PROPOSED**. This screen is in neither MVP-1 nor MVP-2
 **Screen reference:** Ask Flat Wire (`ASK`) — mockup `dashboard_ask.html`
 **Requirement source:** Your written request of 4 September 2026, including the worked example quoted in §1.2. No numbered requirement group exists for this screen yet
@@ -149,8 +149,8 @@ visible rather than appearing on hover as they would in a consumer chat tool.
 
 ## 2.1 How it uses a wider panel
 
-`[PROPOSED]` The screen is authored for the 1280 × 1024 panel and renders at exactly 1:1 there and on
-the 1920 × 1080 canvas. On the wider one it does **not** simply stretch, and it does not leave the
+`[PROPOSED]` The screen is **composed** at 1280 × 1024, which is the mockups' box, and renders at exactly 1:1
+there and on the **1920 × 1080 canvas the panel actually is** (`Q26`, 7 Sep 2026). On the wider one it does **not** simply stretch, and it does not leave the
 conversation stranded in the middle either. Two widths move independently:
 
 | | Behaves how | Why |

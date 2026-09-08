@@ -1,7 +1,7 @@
 # Flat Wire Mill — Rollback Plan
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 29, 2026 — **§6.2 records that component 6, `FlatWireSimConsole`, is NOT in the rollback chain** (`D-33`). Nothing depends on it, it holds no state and it is absent from every production host, so it can never be the reason to roll back a release — and **deleting it is a valid end state**. Keep it out of the rollback rehearsal (`[DEP §3.6]`) and the maintenance-window budget *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** **§6.3 cancelled** — the least-reversible element of the release no longer exists; `R1`, the FW-001 reverse row and `M3` amended *(previously August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*
+**Last Updated:** August 29, 2026 — **§6.2 records that component 6, `FlatWireSimConsole`, is NOT in the rollback chain** (`D-33`). Nothing depends on it, it holds no state and it is absent from every production host, so it can never be the reason to roll back a release — and **deleting it is a valid end state**. Keep it out of the rollback rehearsal (`[DEP §3.6]`) and the maintenance-window budget *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** **§6.3 cancelled** — the least-reversible element of the release no longer exists; `R1`, the FW-001 reverse row and `M3` amended *(previously August 13, 2026 — split out of `07-DeploymentRunbookAndRollback.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** Rollback plan
 **Status:** Baselined — **rollback must be rehearsed before the first production deployment**
 **Owner:** Release manager / IT
@@ -141,10 +141,10 @@ Start-WebAppPool -Name "FlatWireAPI_<Env>"
 
 | # | Check | Query / method | Action |
 |---|---|---|---|
-| **M1** | **In-flight runs** | `SELECT RunId, LineId, Status, FootageFt FROM FlatWireRun WHERE Status IN ('Running','Paused')` | For each, establish physically what is on the line and correct the record or close the run |
+| **M1** | **In-flight runs** | `SELECT RunId, MachineName, Status, FootageFt FROM FlatWireRun WHERE Status IN ('Running','Paused')` | For each, establish physically what is on the line and correct the record or close the run |
 | **M2** | **Open MMS IDs** | `SELECT RunId, RodAlpha, MmsId FROM RodCheckin WHERE MmsStatus IN ('Open','Active')` | An MMS ID orphaned from its run blocks ITInhibit clearance — close or re-associate |
 | **M3** | **Rods stuck `INFLAT`** | ~~`SELECT alpha FROM coils WHERE [coil_status] = 'INFLAT'`~~ → **`SELECT RodAlpha FROM FlatWireDB.dbo.Rod WHERE [Status] = 'INFLAT'`** *(`D-32`: the shared column never carries `INFLAT`)* | Compare against physically loaded rods; correct the status of any that are not on a line |
-| **M4** | **Staged rods** | `SELECT LineId, PayoffPosition, RodAlpha FROM RodStaging WHERE Status = 'Staged'` | Confirm each is physically on its bay; un-stage the rest |
+| **M4** | **Staged rods** | `SELECT MachineName, PayoffPosition, RodAlpha FROM RodStaging WHERE Status = 'Staged'` | Confirm each is physically on its bay; un-stage the rest |
 | **M5** | **Unlabeled coils** | `SELECT CoilAlpha, Status, SkidId FROM CoilOutput WHERE SkidStatus IS NULL OR SkidStatus = 'Open'` | A physically produced coil with no record, or a record with no coil, must be resolved before shipping |
 | **M6** | **Open skids** | `SELECT SkidId, COUNT(*) FROM CoilOutput WHERE SkidId IS NOT NULL GROUP BY SkidId HAVING COUNT(*) <> 2` | Every skid holds exactly two coils — reconcile any that does not |
 | **M7** | **Pending Mode B dispositions** | `SELECT CheckoutId, RodAlpha FROM RodCheckout WHERE Mode='ModeB' AND PartialSpoolAlpha IS NULL` | Material is locked with no alpha; re-raise for supervisor decision |

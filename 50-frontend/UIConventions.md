@@ -1,7 +1,7 @@
 # Flat Wire — UI Conventions
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 4, 2026 — Change history is in [`../CHANGELOG.md`](../CHANGELOG.md)
+**Last Updated:** September 4, 2026 — Change history is in [`../CHANGELOG.md`](../CHANGELOG.md) · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** Frontend UI conventions, derived from a built screen
 **Status:** Active — **read before building any flat wire screen**
 **Owner:** Frontend (Angular)
@@ -39,6 +39,8 @@
 | **UI pattern source** | `projects/slitter-interface/.../slitter-traveler-landing.component.html` — ⚠ **its rail is now `lib-nav-rail` too**, so there is no rail markup left there to copy |
 | **Card layout source** | `.claude/commands/scaffold-form.md` §8 — ⛔ **the card layout only, never its modal layout** |
 | **Content sources** | [`mockups/dashboard_3_active_run.html`](mockups/dashboard_3_active_run.html) · [`mockups/dashboard_1_line_status.html`](mockups/dashboard_1_line_status.html) |
+| **Data contract** ⭐ | `src/lib/interfaces/` — **12 view-model interfaces** across two files, and they are **the contract any API mapper must return**. The templates bind them directly, so `FW-132` maps its wire DTOs *onto* these rather than redefining what the screens already consume. ⚠ **This is the most reusable artefact in the library and no document named it until 7 Sep 2026** — a mapper written without reading it produces a second, competing shape |
+| **Fixture set** ⚠ | `[CMP §5.3]`'s seed set, and **only** it — rods `R00041`–`R00048`, spools `SP-00031`–`SP-00033`, runs `RUN-0001`–`RUN-0005`, FL1 happy path **`PS-1100-FL1-001`**. ⛔ **DB3 currently hardcodes `PS-1100-FL1-003`, which is the seed's NEGATIVE case** — a `Draft` schedule that must be refused with `SCHEDULE_NOT_ACTIVE` → 422 (`[API §7.2]`). A stub that accepts it asserts the opposite of the contract, so **fix this when the mock client lands** |
 
 ⛔ **Do not take UI patterns from `ot-signup` or `print-traveler`.** They are both routing modules
 **and** injectable libraries, so their wiring carries things a flat wire screen must not copy.
@@ -158,7 +160,7 @@ on a value that arrives lower case.
 
 ```html
 <span class="fw-bold fs-5 text-white">
-  {{ line.lineId }}
+  {{ line.machineName }}
   @if (line.subtitle) {
     <span class="fs-14">{{ line.subtitle | titlecase }}</span>
   }
@@ -870,6 +872,24 @@ layout.**
 ---
 
 ## 5. Keeping this file true
+
+### 5.0 Departures from the mockups, recorded — `D-55`, 7 September 2026
+
+The mockups are the pixel authority for **content**. Two pieces of their content are now
+deliberately not built, and this is the record `[UIC]` exists to keep:
+
+| Departure | The mockups show | What is built | Why |
+|---|---|---|---|
+| **Trace panel titles** | *"Final gauge · post S3"*, *"Final width · post edger"* on FL2 and FL3 | **`Gauge`** and **`Width`** on every line | `D-55` makes the trace treatment uniform. ⚠ Collides with `FR-120`; the reconciliation is a **client decision**, still open |
+| **Components card rows** | `DB1` / `DB2` / `FM1` on FL1; `FM2 S1/S2/S3` on FL2; both groups on FL3 | Whatever the run's **pass schedule** supplies | The rows are **data**, not a per-line layout. One card serves all three lines, and `D-26`'s three-stand rule is expressible as rows |
+
+⛔ **Neither is a licence to diverge further.** Everything else on the three active-run mockups
+remains authoritative for content, and the departures above are the complete list.
+
+⚠ **`screenKey` does not follow the route.** `D-55` renames DB3's route segment to `home`, but
+`screenKey` is stamped into every element id (§3.22), so it stays a stable semantic key —
+`'home'` is a *location*, not a *screen*. `FW-N15` owns the choice.
+
 
 - **A screen is built → update its story plan**, in the same pass: what was built, **what was
   skipped**, and any class that had to be created. A plan left saying *"not started"* over a built

@@ -1,7 +1,7 @@
 # Flat Wire Mill — Schema Mapping & Entity Relationships
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** September 6, 2026 — **`Edger` leaves the inventory and `ToolingInventoryEdger` + `ToolingInventoryEdgerGauge` enter it** (`D-53`): the five-column `Edger` is **absorbed**, not extended, because it could not hold the client's fourteen-column Tooling Inventory grid. **32 net-new tables** (+2 −1). ⚠ `Edger` keeps its **Appendix** entry — that section describes the legacy `flatwire tables.xlsx` sheets and is audit trail, not a live inventory. *(previously September 3, 2026 — **`ToolingInventoryRollSet` added to the table inventory** (31 net-new tables), the fourth Tooling Inventory tool type (`D-42`). ⚠ It has **no legacy sheet behind it** — unlike every other row here, it originates from a client mail rather than from the source workbook. *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)*)*
+**Last Updated:** September 6, 2026 — **`Edger` leaves the inventory and `ToolingInventoryEdger` + `ToolingInventoryEdgerGauge` enter it** (`D-53`): the five-column `Edger` is **absorbed**, not extended, because it could not hold the client's fourteen-column Tooling Inventory grid. **32 net-new tables** (+2 −1). ⚠ `Edger` keeps its **Appendix** entry — that section describes the legacy `flatwire tables.xlsx` sheets and is audit trail, not a live inventory. *(previously September 3, 2026 — **`ToolingInventoryRollSet` added to the table inventory** (31 net-new tables), the fourth Tooling Inventory tool type (`D-42`). ⚠ It has **no legacy sheet behind it** — unlike every other row here, it originates from a client mail rather than from the source workbook. *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)*)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** Legacy-to-new table mapping, the change-type inventory, and the collected enumeration reference. **Not** an ER diagram and **not** an FK list — both were deleted on 23 Aug 2026 in favour of `[DBD §7]`. The filename is kept because ~17 files cite it.
 **Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`)
@@ -59,12 +59,12 @@ ORDER BY ChildTable, ConstraintName;
 |---|---|---|---|
 | `FlatLineProcessing` | `FlatWireRunDetail` | Renamed; run-level columns removed; `RunId` FK added | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 | `FlatLineSetup` | `PassScheduleComponent` | Renamed; restructured; `RollGap` → `ParameterValue`; `ComponentName` / `State` / `EdgeType` added | [FlatWireSchema_Schedule.md](./FlatWireSchema_Schedule.md) |
-| `Drawer` | `Drawer` **+ `ToolingInventoryDie`** | **SPLIT 2 Sep 2026.** The legacy sheet mixed the draw box with its tooling. `Drawer` keeps the name and becomes the **two draw boxes** (`DB1`, `DB2`; `Name` and `LineId` CHECKs); `Diameter` → **`ToolingInventoryDie.HoleSizeIn`** along with the feed range and the die-life columns added 6 Aug 2026. ⚠ **`Q90`’s `Drawer` → `Die` rename is superseded** — the name is now correct | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `Drawer` | `Drawer` **+ `ToolingInventoryDie`** | **SPLIT 2 Sep 2026.** The legacy sheet mixed the draw box with its tooling. `Drawer` keeps the name and becomes the **two draw boxes** (`DB1`, `DB2`; `Name` and `MachineName` CHECKs); `Diameter` → **`ToolingInventoryDie.HoleSizeIn`** along with the feed range and the die-life columns added 6 Aug 2026. ⚠ **`Q90`’s `Drawer` → `Die` rename is superseded** — the name is now correct | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `Edger` | **`ToolingInventoryEdger`** | **Absorbed 6 Sep 2026 (`D-53`).** `Set` → `SetNumber`; `ToolingSetNo` retired; the client's fourteen grid columns added; `IsActive bit` → `LifecycleStatus` (a `bit` cannot express `In Grinding`); `EdgeType` relaxed to NULL. `FK_PSC_Edger` re-points and **keeps its name** | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | — | **`ToolingInventoryEdgerGauge`** | **New 6 Sep 2026 (`D-53`).** One row per **groove** — the grid's `Gauge Range(")` cell holds `.045, .040, .035` in one field, and `G77` asked for a child table rather than a delimited string. **No legacy sheet behind it** | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
-| `Stand` | `Stand` | `MinId` / `MaxId` → `MinGaugeIn` / `MaxGaugeIn`; `MinOD` / `MaxOd` → `MinWidthIn` / `MaxWidthIn`; `LineId` / `IsActive` added | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `Stand` | `Stand` | `MinId` / `MaxId` → `MinGaugeIn` / `MaxGaugeIn`; `MinOD` / `MaxOd` → `MinWidthIn` / `MaxWidthIn`; `MachineName` / `IsActive` added | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `SpoolConfiguration` | ~~`SpoolConfiguration`~~ → **`Spool`** | Unit suffixes added to all dimension/weight columns; `MinId`/`MaxId` → `MinCoreDiameterIn`/`MaxCoreDiameterIn`. **Merged into `Spool` 23 Aug 2026 (`Q60`)** — the target table no longer exists; the six `Min/Max` columns and `Name` (as `SizeClass`) landed on the article | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
-| `SpoolProcessing` | `SpoolProcessing` | `Alpha` / `Status` / `GaugeIn` / `WidthIn` / weights / `Location` / timestamps / `SourceRunId` / `LineId` added; `ParentRod` → `ParentRodAlpha` | [FlatWireSchema_Materials.md](FlatWireSchema_Materials.md) |
+| `SpoolProcessing` | `SpoolProcessing` | `Alpha` / `Status` / `GaugeIn` / `WidthIn` / weights / `Location` / timestamps / `SourceRunId` / `MachineName` added; `ParentRod` → `ParentRodAlpha` | [FlatWireSchema_Materials.md](FlatWireSchema_Materials.md) |
 
 ### New Tables (36) — Net New
 
@@ -329,7 +329,7 @@ Stores per-stop and per-sequence detail records for a flat wire run. The parent/
 - **No `RunId` FK** — no link to the parent `FlatWireRun` header record; stop rows cannot be associated with a run without it.
 - **`CoilOrderPlanId` vs `PlanId`** — relationship between these two is unclear; may be redundant.
 - **Missing dimensional tolerances** — `TargetGauge`, `GaugeTolerance`, `TargetWidth`, `WidthTolerance` are needed for in-process quality checks.
-- **Naming and scope**: `FlatLineProcessing` conflates run-header and stop-detail concerns. Rename to `FlatWireRunDetail`. Run-level fields (`Status`, `RouteMode`, `LineId`, `PassScheduleId`, `StartedAt`, `PausedAt`, `CompletedAt`) belong on the new `FlatWireRun` header table, not on per-stop rows.
+- **Naming and scope**: `FlatLineProcessing` conflates run-header and stop-detail concerns. Rename to `FlatWireRunDetail`. Run-level fields (`Status`, `RouteMode`, `MachineName`, `PassScheduleId`, `StartedAt`, `PausedAt`, `CompletedAt`) belong on the new `FlatWireRun` header table, not on per-stop rows.
 
 ##### Recommended updated columns
 
@@ -356,7 +356,7 @@ Rename table to `FlatWireRunDetail`. Run-level fields are removed below — they
 | `ExitGauge` | decimal | Keep |
 | `OutputOD` | decimal | Keep |
 | `OutputID` | decimal | Keep |
-| ~~`LineId`~~ | | **Remove** — on `FlatWireRun` header |
+| ~~`MachineName`~~ | | **Remove** — on `FlatWireRun` header |
 | ~~`PassScheduleId`~~ | | **Remove** — on `FlatWireRun` header |
 | ~~`RouteMode`~~ | | **Remove** — on `FlatWireRun` header |
 | ~~`Status`~~ | | **Remove** — on `FlatWireRun` header |
@@ -500,14 +500,14 @@ Represents rolling mill stands (FM1, FM2 variants).
 ##### Issues
 - **`MinId`/`MaxId`** column names are ambiguous — `Id` typically means primary key in .NET/SQL Server conventions. Rename to `MinInsideDiameterIn` / `MaxInsideDiameterIn`, or if these refer to gauge: `MinGaugeIn` / `MaxGaugeIn`.
 - `MinOD`/`MaxOd` — casing inconsistency (`OD` vs `Od`). Standardize.
-- No `LineId` — if certain stands only exist on specific lines (FL1 vs FL2/FL3), this needs tracking.
+- No `MachineName` — if certain stands only exist on specific lines (FL1 vs FL2/FL3), this needs tracking.
 
 ##### Recommended updated columns
 | Column | Type | Change |
 |---|---|---|
 | `Id` | int PK | Keep |
 | `Name` | varchar(30) | Keep |
-| `LineId` | varchar(5) NULL | **Add** — `FL1`, `FL2`, `FL3`, or NULL if shared |
+| `MachineName` | varchar(5) NULL | **Add** — `FL1`, `FL2`, `FL3`, or NULL if shared |
 | `MinGaugeIn` | decimal(8,4) | **Rename** from `MinId` |
 | `MaxGaugeIn` | decimal(8,4) | **Rename** from `MaxId` |
 | `MinWidthIn` | decimal(8,4) | **Rename** from `MinOD` |
@@ -572,7 +572,7 @@ Represents a physical spool of pre-processed flat wire (used at FL2 check-in).
 - **Missing physical dimensions** — `GaugeIn`, `WidthIn` are required for FL2 check-in validation.
 - **Missing weights** — `GrossWeightLb`, `NetWeightLb`.
 - **Missing location** — `Location` for floor tracking.
-- **Missing `LineId`** — which line produced/is processing this spool.
+- **Missing `MachineName`** — which line produced/is processing this spool.
 - **Missing `RunId`** — which FL1 run produced it (for source traceability on Dashboard 5).
 - **Missing timestamps** — `ReceivedAt`, `StagedAt`.
 - `ParentRod` is a good field; retain as `ParentRodAlpha`.
@@ -587,7 +587,7 @@ Represents a physical spool of pre-processed flat wire (used at FL2 check-in).
 | `RelLetter` | varchar(10) | Keep |
 | `ParentRodAlpha` | varchar(20) | **Rename** from `ParentRod` |
 | `SourceRunId` | varchar(20) NULL | **Add** — FK to `FlatWireRun.RunId` (the FL1 run that produced this spool) |
-| `LineId` | varchar(5) NULL | **Add** — line currently processing or that produced this spool |
+| `MachineName` | varchar(5) NULL | **Add** — line currently processing or that produced this spool |
 | `Status` | varchar(20) NOT NULL | **Add** — `RECEIVED`, `STAGED`, `INFLAT`, `COMPLETE`, `HOLD`, `SCRAP` |
 | `GaugeIn` | decimal(8,4) NULL | **Add** |
 | `WidthIn` | decimal(8,4) NULL | **Add** |

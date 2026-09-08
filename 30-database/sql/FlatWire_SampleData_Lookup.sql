@@ -44,7 +44,7 @@ GO
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Stand])
 BEGIN
     SET IDENTITY_INSERT [dbo].[Stand] ON;
-    INSERT INTO [dbo].[Stand] ([Id], [Name], [LineId], [RollDiameterIn], [MinGaugeIn], [MaxGaugeIn], [MinWidthIn], [MaxWidthIn], [IsActive]) VALUES
+    INSERT INTO [dbo].[Stand] ([Id], [Name], [MachineName], [RollDiameterIn], [MinGaugeIn], [MaxGaugeIn], [MinWidthIn], [MaxWidthIn], [IsActive]) VALUES
         (1, 'FM1',     'FL1', 12.000, 0.0700, 0.2000, 0.4000, 0.9000, 1),
         (2, 'FM2_S1',  'FL2',  8.000, 0.0700, 0.1600, 0.4000, 0.9000, 1),
         (3, 'FM2_S2',  'FL2',  6.000, 0.0700, 0.1600, 0.4000, 0.9000, 1),
@@ -63,7 +63,7 @@ GO
 -- UQ_Drawer_Name makes each unique, so a third row is impossible without a
 -- schema change -- the cap is structural, not seeded.
 --
--- LineId FL1 for both: FL1 owns the physical boxes and FL3 runs through them,
+-- MachineName FL1 for both: FL1 owns the physical boxes and FL3 runs through them,
 -- as it shares FL1's VPS payoff. Client-confirmed 31 Aug 2026 -- the Tooling
 -- Inventory grid attributes dies to Machine Name = FL1 and NO FL3 row appears
 -- in any of the three tool grids.
@@ -74,7 +74,7 @@ GO
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Drawer])
 BEGIN
     SET IDENTITY_INSERT [dbo].[Drawer] ON;
-    INSERT INTO [dbo].[Drawer] ([Id], [Name], [LineId], [IsActive]) VALUES
+    INSERT INTO [dbo].[Drawer] ([Id], [Name], [MachineName], [IsActive]) VALUES
         (1, 'DB1', 'FL1', 1),
         (2, 'DB2', 'FL1', 1);
     SET IDENTITY_INSERT [dbo].[Drawer] OFF;
@@ -121,7 +121,7 @@ IF NOT EXISTS (SELECT 1 FROM [dbo].[ToolingInventoryDie])
 BEGIN
     SET IDENTITY_INSERT [dbo].[ToolingInventoryDie] ON;
     INSERT INTO [dbo].[ToolingInventoryDie]
-        ([Id], [DieAlpha], [HoleSizeIn], [LineId], [LifecycleStatus], [InUse], [LastGrindingFeet], [TotalFeetAllowed], [IsActive]) VALUES
+        ([Id], [DieAlpha], [HoleSizeIn], [MachineName], [LifecycleStatus], [InUse], [LastGrindingFeet], [TotalFeetAllowed], [IsActive]) VALUES
         ( 1, 'D-210-001', 0.2100, NULL, 'In Service', 0, 0, NULL, 1),
         ( 2, 'D-240-001', 0.2400, NULL, 'In Service', 0, 0, NULL, 1),
         ( 3, 'D-250-001', 0.2500, NULL, 'In Service', 0, 0, NULL, 1),
@@ -173,7 +173,7 @@ GO
 -- the component-identifier reconciliation is deliberately deferred until the
 -- Speed tab lands (31 Aug 2026 mail analysis, section 4.8, action A12).
 --
--- LineId FL1/FL2 only: FL3 uses a combination of the two and holds no tooling of
+-- MachineName FL1/FL2 only: FL3 uses a combination of the two and holds no tooling of
 -- its own (client, 3 Sep 2026). Capstan sets are FL1 -- DB1/DB2 sit on FL1 --
 -- though whether the client's "Machine Name" column would say FL1 or the draw box
 -- is one of Q92's four questions.
@@ -185,7 +185,7 @@ IF NOT EXISTS (SELECT 1 FROM [dbo].[ToolingInventoryRollSet])
 BEGIN
     SET IDENTITY_INSERT [dbo].[ToolingInventoryRollSet] ON;
     INSERT INTO [dbo].[ToolingInventoryRollSet]
-        ([Id], [RollSetAlpha], [RollType], [StandId], [DrawerId], [LineId], [RollQty], [NominalDiameterIn], [LifecycleStatus], [IsRefurbishable], [InUse], [IsActive]) VALUES
+        ([Id], [RollSetAlpha], [RollType], [StandId], [DrawerId], [MachineName], [RollQty], [NominalDiameterIn], [LifecycleStatus], [IsRefurbishable], [InUse], [IsActive]) VALUES
         (1, 'RS-FM1-001',   'Mill',    1,    NULL, 'FL1', 2, 12.000, 'In Service', 0, 0, 1),
         (2, 'RS-FM2S1-001', 'Mill',    2,    NULL, 'FL2', 2,  8.000, 'In Service', 0, 0, 1),
         (3, 'RS-FM2S2-001', 'Mill',    3,    NULL, 'FL2', 2,  6.000, 'In Service', 0, 0, 1),
@@ -233,7 +233,7 @@ IF NOT EXISTS (SELECT 1 FROM [dbo].[ToolingInventoryEdger])
 BEGIN
     SET IDENTITY_INSERT [dbo].[ToolingInventoryEdger] ON;
     INSERT INTO [dbo].[ToolingInventoryEdger]
-        ([Id], [EdgeType], [LineId], [SetNumber],
+        ([Id], [EdgeType], [MachineName], [SetNumber],
          [RollQty], [StdRemovalFromOdIn], [OdIn], [MinOdIn], [LifecycleStatus], [InUse], [IsActive]) VALUES
         (1, 'Round',  'FL2', 'A', 2, 0.1000, 6.0000, 4.7500, 'In Service', 0, 1),
         (2, 'Square', 'FL2', 'B', 2, 0.1000, 6.0000, 4.7500, 'In Service', 0, 1);
@@ -294,7 +294,7 @@ GO
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Dancer])
 BEGIN
     SET IDENTITY_INSERT [dbo].[Dancer] ON;
-    INSERT INTO [dbo].[Dancer] ([Id], [Name], [LineId], [Position], [Ordinal], [SupportsTensionMode], [DefaultMode], [IsActive]) VALUES
+    INSERT INTO [dbo].[Dancer] ([Id], [Name], [MachineName], [Position], [Ordinal], [SupportsTensionMode], [DefaultMode], [IsActive]) VALUES
         (1, 'FM1_Dancer',   NULL, 'FM1',       NULL, 0, 'Dancer', 1),
         (2, 'FM2_Dancer1',  NULL, 'FM2_S1_S2', 1,    1, 'Dancer', 1),
         (3, 'FM2_Dancer2',  NULL, 'FM2_S2_S3', 2,    1, 'Dancer', 1);

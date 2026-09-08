@@ -2,7 +2,7 @@
 
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 23, 2026 — corrected up to the DDL; header fields standardised
+**Last Updated:** August 23, 2026 — corrected up to the DDL; header fields standardised · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** Final Schema — Pass Schedule Tables
 **Source:** Derived from `FlatWireSchema_Mapping.md` recommendations
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `../sql/FlatWire_DDL_02_Schedule.sql`
@@ -26,7 +26,7 @@ Header record for a pass schedule. One schedule can be used across many runs. Sc
 | `ScheduleId` | varchar(30) | NOT NULL | — | Human-readable primary key; recommended format `PS-{Alloy}-{Line}-{Seq}` (e.g. `PS-1100-FL1-003`) |
 | `Description` | varchar(200) | NULL | — | Free-text description for operator reference |
 | `Alloy` | varchar(10) | NOT NULL | `AlloyProperty.Alloy` | Aluminum alloy designation (e.g. `1100`, `3003`, `1350`); FK to the authoritative alloy list |
-| `LineId` | varchar(5) | NOT NULL | — | Target flat wire line: `FL1`, `FL2`, or `FL3` |
+| `MachineName` | varchar(5) | NOT NULL | — | Target flat wire line: `FL1`, `FL2`, or `FL3` |
 | `RouteMode` | varchar(15) | NOT NULL | — | `Standalone` = single-line processing; `Hybrid` = FL1 produces spools that feed FL2 or FL3 |
 | `Status` | varchar(10) | NOT NULL | — | Lifecycle state: `Draft` = in progress; `Active` = approved for production; `Inactive` = retired |
 | `TargetGauge` | decimal(8,4) | NOT NULL | — | Target output gauge in inches |
@@ -52,7 +52,7 @@ Header record for a pass schedule. One schedule can be used across many runs. Sc
 **Constraints:**
 - `LineSpeedMinFpm < LineSpeedMaxFpm`
 - `GaugeTolerance > 0`, `WidthTolerance > 0`
-- **Enforced:** filtered unique index `UX_PassSchedule_OneActivePerLineAlloy (LineId, Alloy) WHERE Status='Active'` — at most one `Active` schedule per line + alloy (DDL_07)
+- **Enforced:** filtered unique index `UX_PassSchedule_OneActivePerLineAlloy (MachineName, Alloy) WHERE Status='Active'` — at most one `Active` schedule per line + alloy (DDL_07)
 
 ---
 

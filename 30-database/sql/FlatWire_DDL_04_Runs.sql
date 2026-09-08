@@ -76,20 +76,20 @@ IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Ro
 BEGIN
     CREATE TABLE [dbo].[RodStaging] (
         [Id]                      INT           NOT NULL IDENTITY(1,1),
-        [LineId]                  VARCHAR(5)    NOT NULL,   -- FL1 | FL3 (PCI002 excludes FL2)
+        [MachineName]                  VARCHAR(5)    NOT NULL,   -- FL1 | FL3 (PCI002 excludes FL2)
         -- G21. The PHYSICAL payoff station, written at staging time from the WIP-station
         -- map (CommonDB..WIPStations). FL1 and FL3 SHARE ONE physical VPS -- Dashboard 2A
         -- maps STATION_BY_LINE = {FL1:"FL1PO", FL3:"FL1PO"} and only FL1PO is seeded; the
         -- client confirmed rods are never stacked, two maximum, one per payoff (Q71).
         --
-        -- This column exists because UX_RodStaging_Bay CANNOT be keyed on LineId:
-        -- CK_RodStaging_LineId admits BOTH FL1 and FL3, so (FL1,1) and (FL3,1) are distinct
+        -- This column exists because UX_RodStaging_Bay CANNOT be keyed on MachineName:
+        -- CK_RodStaging_MachineName admits BOTH FL1 and FL3, so (FL1,1) and (FL3,1) are distinct
         -- index entries for what is ONE bay -- two rods Staged on one physical position with
         -- every constraint satisfied. Worse, Q24 makes the station SWITCH LINE BY ITSELF
-        -- when an order is booked on the other rod line (no message, no override), so LineId
+        -- when an order is booked on the other rod line (no message, no override), so MachineName
         -- is a uniqueness key the application rewrites underneath itself.
         --
-        -- LineId is RETAINED -- the queue projection, the off-schedule check and reporting
+        -- MachineName is RETAINED -- the queue projection, the off-schedule check and reporting
         -- all need it. It simply stops being the uniqueness key. See 07_Indexes.
         [Station]                 VARCHAR(10)   NOT NULL,   -- e.g. FL1PO; G21 uniqueness key
         [PayoffPosition]          INT           NOT NULL,   -- 1 or 2 (PCI006)
@@ -123,7 +123,7 @@ BEGIN
         -- and the reason recorded. The PIN is NEVER stored.
         --   OutOfSequenceOverride  the rod is not the one planning expects next
         --
-        -- OffScheduleOverride / ScheduledLineId DROPPED 1 Aug 2026 (client decision, 30 Jul).
+        -- OffScheduleOverride / ScheduledMachineName DROPPED 1 Aug 2026 (client decision, 30 Jul).
         -- A rod whose order is booked on the OTHER rod line is no longer a deviation at all:
         -- the station SWITCHES to the correct line automatically, with no message and no
         -- override, at both pre-check-in and check-in (Q24). If Q25 — an order scheduled on
@@ -169,7 +169,7 @@ BEGIN
         [RowVersion]              ROWVERSION    NOT NULL,   -- optimistic-concurrency token
 
         CONSTRAINT [PK_RodStaging]              PRIMARY KEY CLUSTERED ([Id] ASC),
-        CONSTRAINT [CK_RodStaging_LineId]       CHECK ([LineId] IN ('FL1','FL3')),
+        CONSTRAINT [CK_RodStaging_MachineName]       CHECK ([MachineName] IN ('FL1','FL3')),
         CONSTRAINT [CK_RodStaging_PayoffPos]    CHECK ([PayoffPosition] IN (1, 2)),
         CONSTRAINT [CK_RodStaging_Status]       CHECK ([Status] IN ('Staged','CheckedIn','Unstaged')),
         CONSTRAINT [CK_RodStaging_Oxidation]    CHECK ([InspectionOxidation]      IN ('Pass','Fail')),
@@ -257,7 +257,7 @@ BEGIN
     CREATE TABLE [dbo].[RodCheckin] (
         [Id]                      INT           NOT NULL IDENTITY(1,1),
         [RunId]                   VARCHAR(20)   NOT NULL,   -- FK → FlatWireRun.RunId
-        [LineId]                  VARCHAR(5)    NOT NULL,   -- FL1 | FL2 | FL3
+        [MachineName]                  VARCHAR(5)    NOT NULL,   -- FL1 | FL2 | FL3
         [RodAlpha]                VARCHAR(20)   NOT NULL,   -- FK → Rod.Alpha
         [PayoffPosition]          INT           NOT NULL,   -- 1 or 2
         [DiameterMeasuredIn]      DECIMAL(8,4)  NOT NULL,   -- operator-measured rod diameter (in)
@@ -289,7 +289,7 @@ BEGIN
 
         CONSTRAINT [PK_RodCheckin]               PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [CK_RodCheckin_PayoffPos]     CHECK ([PayoffPosition] IN (1, 2)),
-        CONSTRAINT [CK_RodCheckin_LineId]        CHECK ([LineId] IN ('FL1','FL2','FL3')),
+        CONSTRAINT [CK_RodCheckin_MachineName]        CHECK ([MachineName] IN ('FL1','FL2','FL3')),
         CONSTRAINT [CK_RodCheckin_Oxidation]     CHECK ([InspectionOxidation]     IN ('Pass','Fail')),
         CONSTRAINT [CK_RodCheckin_Surface]       CHECK ([InspectionSurfaceDefects] IN ('Pass','Fail')),
         CONSTRAINT [CK_RodCheckin_WaterStains]   CHECK ([InspectionWaterStains]   IN ('Pass','Fail')),
@@ -346,7 +346,7 @@ BEGIN
     CREATE TABLE [dbo].[SpoolCheckin] (
         [Id]               INT           NOT NULL IDENTITY(1,1),
         [RunId]            VARCHAR(20)   NOT NULL,           -- FK → FlatWireRun.RunId
-        [LineId]           VARCHAR(5)    NOT NULL,           -- FL2 | FL3
+        [MachineName]           VARCHAR(5)    NOT NULL,           -- FL2 | FL3
         [SpoolAlpha]       VARCHAR(20)   NOT NULL,           -- FK → SpoolProcessing.Alpha
         [PayoffPosition]   INT           NOT NULL,           -- 1 or 2
         [GaugeIn]          DECIMAL(8,4)  NOT NULL,           -- operator-measured gauge (in)
@@ -364,7 +364,7 @@ BEGIN
         [InspectionNotes]  VARCHAR(500)  NULL,
 
         CONSTRAINT [PK_SpoolCheckin]              PRIMARY KEY CLUSTERED ([Id] ASC),
-        CONSTRAINT [CK_SpoolCheckin_LineId]       CHECK ([LineId]           IN ('FL2','FL3')),
+        CONSTRAINT [CK_SpoolCheckin_MachineName]       CHECK ([MachineName]           IN ('FL2','FL3')),
         CONSTRAINT [CK_SpoolCheckin_PayoffPos]    CHECK ([PayoffPosition]   IN (1, 2)),
         CONSTRAINT [CK_SpoolCheckin_Inspection]   CHECK ([InspectionSurface] IN ('Pass','Fail')),
         CONSTRAINT [CK_SpoolCheckin_MmsStatus]    CHECK ([MmsStatus] IN ('Open','Active','Closed') OR [MmsStatus] IS NULL)
@@ -472,14 +472,14 @@ GO
 -- RunId below follows it: an optional link, populated only when a
 -- run did happen to be open when the line went down.
 --
--- SCOPE IS THE LINE, NOT THE RUN. LineId is the identity; that is
+-- SCOPE IS THE LINE, NOT THE RUN. MachineName is the identity; that is
 -- what makes a shift-level downtime roll-up possible at all.
 -- ------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[LineDowntimeEvent]') AND type = N'U')
 BEGIN
     CREATE TABLE [dbo].[LineDowntimeEvent] (
         [Id]                    INT           NOT NULL IDENTITY(1,1),
-        [LineId]                VARCHAR(5)    NOT NULL,      -- FL1 | FL2 | FL3 -- the event is line-scoped
+        [MachineName]                VARCHAR(5)    NOT NULL,      -- FL1 | FL2 | FL3 -- the event is line-scoped
         [RunId]                 VARCHAR(20)   NULL,          -- FK -> FlatWireRun.RunId; NULL when no run was open
         [DelayCode]             VARCHAR(10)   NOT NULL,      -- DWN## (FK -> DowntimeReason.DelayCode)
         [StartedAt]             DATETIMEOFFSET NOT NULL,
@@ -497,7 +497,7 @@ BEGIN
         [EndedBy]               VARCHAR(50)   NULL,          -- who recorded the end
 
         CONSTRAINT [PK_LineDowntimeEvent]           PRIMARY KEY CLUSTERED ([Id] ASC),
-        CONSTRAINT [CK_LineDowntimeEvent_LineId]    CHECK ([LineId] IN ('FL1','FL2','FL3')),
+        CONSTRAINT [CK_LineDowntimeEvent_MachineName]    CHECK ([MachineName] IN ('FL1','FL2','FL3')),
         -- Downtime codes only. The other three buckets belong to RunPauseEvent.
         CONSTRAINT [CK_LineDowntimeEvent_Code]      CHECK ([DelayCode] LIKE 'DWN[0-9][0-9]'),
         CONSTRAINT [CK_LineDowntimeEvent_Window]    CHECK ([EndedAt] IS NULL OR [EndedAt] >= [StartedAt]),
@@ -524,7 +524,7 @@ BEGIN
         [Id]                    INT           NOT NULL IDENTITY(1,1),
         [WeldEventId]           VARCHAR(20)   NOT NULL,     -- e.g. WLD-002
         [RunId]                 VARCHAR(20)   NOT NULL,     -- FK → FlatWireRun.RunId
-        [LineId]                VARCHAR(5)    NOT NULL,
+        [MachineName]                VARCHAR(5)    NOT NULL,
         [OutgoingRodAlpha]      VARCHAR(20)   NOT NULL,     -- FK → Rod.Alpha (depleting tail rod)
         [IncomingRodAlpha]      VARCHAR(20)   NOT NULL,     -- FK → Rod.Alpha (joining lead rod)
         -- The weld IS the payoff handover. Recording both positions makes it directly
@@ -540,7 +540,7 @@ BEGIN
 
         CONSTRAINT [PK_WeldEvent]              PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_WeldEvent_Id]           UNIQUE ([WeldEventId]),
-        CONSTRAINT [CK_WeldEvent_LineId]       CHECK ([LineId]      IN ('FL1','FL2','FL3')),
+        CONSTRAINT [CK_WeldEvent_MachineName]       CHECK ([MachineName]      IN ('FL1','FL2','FL3')),
         -- Induction is the only weld type in the May-21-2026 revision; LaserWeld retained for historical genealogy only.
         CONSTRAINT [CK_WeldEvent_WeldType]     CHECK ([WeldType]    IN ('InductionWeld','LaserWeld')),
         CONSTRAINT [CK_WeldEvent_Quality]      CHECK ([WeldQuality] IN ('Pass','Fail')),
@@ -571,7 +571,7 @@ BEGIN
         [Id]               INT           NOT NULL IDENTITY(1,1),
         [OverrideId]       VARCHAR(20)   NOT NULL,          -- e.g. OVR-0042
         [RunId]            VARCHAR(20)   NOT NULL,          -- FK → FlatWireRun.RunId
-        [LineId]           VARCHAR(5)    NOT NULL,
+        [MachineName]           VARCHAR(5)    NOT NULL,
         [RodAlpha]         VARCHAR(20)   NOT NULL,          -- FK → Rod.Alpha (material in-process)
         [FootagePosition]  INT           NOT NULL,          -- footage at time of override
         [ComponentName]    VARCHAR(20)   NOT NULL,          -- e.g. DB1, FM1
@@ -588,7 +588,7 @@ BEGIN
 
         CONSTRAINT [PK_RollOverride]              PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_RollOverride_OverrideId]   UNIQUE ([OverrideId]),
-        CONSTRAINT [CK_RollOverride_LineId]       CHECK ([LineId] IN ('FL1','FL2','FL3')),
+        CONSTRAINT [CK_RollOverride_MachineName]       CHECK ([MachineName] IN ('FL1','FL2','FL3')),
         -- Aug-4-2026: FM2 is three stands — S1 (8"), S2 (6"), S3 (6", final). See CK_PSC_ComponentName.
         CONSTRAINT [CK_RollOverride_Component]    CHECK ([ComponentName] IN ('DB1','DB2','FM1','EdgeSet','FM2_S1','FM2_S2','FM2_S3')),
         CONSTRAINT [CK_RollOverride_ReasonCode]   CHECK ([ReasonCode] IN ('GaugeDriftHigh','GaugeDriftLow','WidthDrift','SpcFlag','RollWear','PostWeldCorrection','OperatorDiscretion','Other')),
@@ -627,7 +627,7 @@ BEGIN
         [Id]                   INT           NOT NULL IDENTITY(1,1),
         [DieChangeId]          VARCHAR(20)   NOT NULL,      -- e.g. DC-0041
         [RunId]                VARCHAR(20)   NOT NULL,      -- FK → FlatWireRun.RunId
-        [LineId]               VARCHAR(5)    NOT NULL,
+        [MachineName]               VARCHAR(5)    NOT NULL,
         [RodAlpha]             VARCHAR(20)   NOT NULL,      -- FK → Rod.Alpha (material in-process)
         [FootagePosition]      INT           NOT NULL,      -- footage at time of die change
         [DiePosition]          VARCHAR(5)    NOT NULL,      -- DB1 | DB2
@@ -643,7 +643,7 @@ BEGIN
 
         CONSTRAINT [PK_DieChangeEvent]            PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_DieChangeEvent_Id]         UNIQUE ([DieChangeId]),
-        CONSTRAINT [CK_DieChangeEvent_LineId]     CHECK ([LineId]      IN ('FL1','FL2','FL3')),
+        CONSTRAINT [CK_DieChangeEvent_MachineName]     CHECK ([MachineName]      IN ('FL1','FL2','FL3')),
         CONSTRAINT [CK_DieChangeEvent_DiePos]     CHECK ([DiePosition] IN ('DB1','DB2')),
         CONSTRAINT [CK_DieChangeEvent_ReasonCode] CHECK ([ReasonCode] IN ('PlannedLife','GaugeDrift','DieFailure','SizeChange','DieWear','Breakage','ScheduledChange','Other')),
         CONSTRAINT [CK_DieChangeEvent_FootagePos] CHECK ([FootagePosition] >= 0)
@@ -770,7 +770,7 @@ GO
 -- and then have to go and locate the correct one."
 --
 -- This REVERSES FR-031 ("shall not support pre-check-in on FL2"), a rule
--- asserted across eighteen documents including CK_RodStaging_LineId
+-- asserted across eighteen documents including CK_RodStaging_MachineName
 -- below. The PHYSICAL premise of PCI002 is UNCHANGED -- FL2 still has
 -- one traversing payoff and no floor space. What was asked for is
 -- VALIDATION, not staging. A queued spool is validated, not staged.
@@ -787,7 +787,7 @@ GO
 -- 4.3 says are NOT PERFORMED on a spool ("the material was inspected at
 -- FL1 before it was drawn and flattened"), plus IsWelded, UnstageKind,
 -- two alternating bay states and PayoffPosition NOT NULL. Widening
--- CK_RodStaging_LineId to admit FL2 would add rows that cannot populate
+-- CK_RodStaging_MachineName to admit FL2 would add rows that cannot populate
 -- half the table.
 --
 -- ONE ROW PER SPOOL, not per rod alpha. FL2 mounts a spool on a single
@@ -817,7 +817,7 @@ BEGIN
     CREATE TABLE [dbo].[SpoolStaging] (
         [Id]              INT           NOT NULL IDENTITY(1,1),
         [SpoolAlpha]      VARCHAR(20)   NOT NULL,      -- FK -> SpoolProcessing.Alpha; the row's identity
-        [LineId]          VARCHAR(5)    NOT NULL,      -- FL2 (FL3 permitted should it ever queue)
+        [MachineName]          VARCHAR(5)    NOT NULL,      -- FL2 (FL3 permitted should it ever queue)
         [QueuePosition]   DECIMAL(9,3)  NOT NULL,      -- operator-ordered; lowest is checked in by default.
                                                        -- NOT unique, and fractional on purpose -- see above.
         [Status]          VARCHAR(20)   NOT NULL CONSTRAINT [DF_SpoolStaging_Status] DEFAULT ('Queued'),
@@ -830,7 +830,7 @@ BEGIN
         CONSTRAINT [PK_SpoolStaging]         PRIMARY KEY CLUSTERED ([Id] ASC),
         -- FL2 only today. FL3 is permitted because it shares FM2, but it
         -- creates no spool, so in practice it will not queue one.
-        CONSTRAINT [CK_SpoolStaging_LineId]  CHECK ([LineId] IN ('FL2','FL3')),
+        CONSTRAINT [CK_SpoolStaging_MachineName]  CHECK ([MachineName] IN ('FL2','FL3')),
         CONSTRAINT [CK_SpoolStaging_Status]  CHECK ([Status] IN ('Queued','CheckedIn','Withdrawn')),
         CONSTRAINT [CK_SpoolStaging_Pos]     CHECK ([QueuePosition] > 0),
         CONSTRAINT [CK_SpoolStaging_Removed] CHECK (([Status] = 'Queued' AND [RemovedAt] IS NULL)
@@ -913,11 +913,11 @@ GO
 -- remount, no second check-in -- so RodCheckin is the parent and this
 -- table is the child.
 --
--- THE STATION IS THE EXCLUSIVITY KEY, NOT LineId. FL1 and FL3 share
+-- THE STATION IS THE EXCLUSIVITY KEY, NOT MachineName. FL1 and FL3 share
 -- ONE physical VPS (STATION_BY_LINE maps both to FL1PO), so keying on
--- LineId would admit (FL1,...) and (FL3,...) as distinct entries for
+-- MachineName would admit (FL1,...) and (FL3,...) as distinct entries for
 -- what is one payoff. Exactly the correction G21 forced on RodStaging;
--- LineId is retained for projection and reporting only.
+-- MachineName is retained for projection and reporting only.
 --
 -- TWO WEIGHT LATCHES, NOT ONE. LatchedWeightAtThresholdLb is captured
 -- at the crossing instant and never re-read;
@@ -939,7 +939,7 @@ BEGIN
         [RunId]                       VARCHAR(20)    NOT NULL,   -- FK -> FlatWireRun.RunId
         [RodCheckinId]                INT            NOT NULL,   -- FK -> RodCheckin.Id; the mount this pairing runs on
         [Station]                     VARCHAR(10)    NOT NULL,   -- e.g. FL1PO; the exclusivity key (G21)
-        [LineId]                      VARCHAR(5)     NOT NULL,   -- FL1|FL3; projection and reporting only
+        [MachineName]                      VARCHAR(5)     NOT NULL,   -- FL1|FL3; projection and reporting only
         [RodAlpha]                    VARCHAR(20)    NOT NULL,   -- FK -> Rod.Alpha
         [OrderNo]                     VARCHAR(50)    NOT NULL,   -- shared-schema order; NO FK by design
         [RelLetter]                   VARCHAR(10)    NULL,
@@ -979,7 +979,7 @@ BEGIN
         -- One mount, one pairing per order.
         CONSTRAINT [UQ_RodOrderConsumption_Pair]    UNIQUE ([RodCheckinId], [OrderNo], [RelLetter]),
         CONSTRAINT [CK_RodOrderConsumption_State]   CHECK ([State] IN ('Pending','InProgress','ThresholdReached','Closed','Voided')),
-        CONSTRAINT [CK_RodOrderConsumption_LineId]  CHECK ([LineId] IN ('FL1','FL3')),
+        CONSTRAINT [CK_RodOrderConsumption_MachineName]  CHECK ([MachineName] IN ('FL1','FL3')),
         CONSTRAINT [CK_RodOrderConsumption_Closure] CHECK ([ClosureReason] IS NULL OR [ClosureReason] IN
                                                      ('Acknowledged','AcknowledgedEarly','RodExhausted','RodAbandoned','Superseded')),
         CONSTRAINT [CK_RodOrderConsumption_Footage] CHECK ([EndFootageFt] IS NULL OR [EndFootageFt] >= [StartFootageFt]),

@@ -1,7 +1,7 @@
 # Flat Wire Mill — Vision & Scope
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 4, 2026 — the *Future enhancements* list re-pointed: the die-life predictive bullet now names its successor, `AI-08` in the new `[AI]` opportunity assessment, and the anneal bullet cross-references `AI-28`. **Nothing else in this document changes** — `[AI]` is direction only, mints no register id and moves no scope *(previously August 25, 2026 — the line-capability table records FL2 pre-check-in (`FR-533`); object count 34 → 33; effort points at `[CE §3e]` *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `SC-01` retargeted to `Rod.Status`; **`RISK-05` retired** and replaced by the narrower **`OI-111`**; §1’s “largest single blast radius” claim withdrawn *(previously August 15, 2026 — **`RISK-06` retired** and the *unverified assumption* callout restated: all six roles exist as JWT claims on `ClaimTypes.Role` (`G6`/`OI-37`))*)*)*
+**Last Updated:** September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — **`SC-09` and §10.2's *Authored canvas* constraint move to 1920 × 1080.** The client confirmed the shopfloor panel (`Q26`), which closed gap `G23`; `[VAL §7.5]` owns the row and every other document derives it from there. *(previously September 4, 2026 — the *Future enhancements* list re-pointed: the die-life predictive bullet now names its successor, `AI-08` in the new `[AI]` opportunity assessment, and the anneal bullet cross-references `AI-28`. **Nothing else in this document changes** — `[AI]` is direction only, mints no register id and moves no scope *(previously August 25, 2026 — the line-capability table records FL2 pre-check-in (`FR-533`); object count 34 → 33; effort points at `[CE §3e]` *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** `SC-01` retargeted to `Rod.Status`; **`RISK-05` retired** and replaced by the narrower **`OI-111`**; §1’s “largest single blast radius” claim withdrawn *(previously August 15, 2026 — **`RISK-06` retired** and the *unverified assumption* callout restated: all six roles exist as JWT claims on `ClaimTypes.Role` (`G6`/`OI-37`))*)*)*)*
 **Document Type:** Vision & Scope
 **Status:** Baselined — open items in §13; the schedule position in §11 requires a programme decision
 **Owner:** Programme management
@@ -200,7 +200,7 @@ Written so `[TS]` can test them and `[DEP]` can gate a release on them.
 | **SC-06** | The line board is live and correct | All three lines render concurrently; every alert rule fires on its stated condition; readings arrive by push with **no polling** | `[TS]` real-time suite |
 | **SC-07** | Exceptions have formal off-ramps | WIP rejection sets material status and alerts a supervisor; all three checkout modes complete with the correct status transition and PLC tag treatment | `[TS]` exception suite |
 | **SC-08** | Every override is attributable | Every supervisor override, pass-schedule change and PLC tag write/clear is retrievable with who, when, why and old→new value | `[TS]` audit suite |
-| **SC-09** | The screens work on the panel | Every screen renders complete at 1280 × 1024 at 1:1, no text below 14 px (except the documented SVG axis exception), every tap target ≥ 48 px | `[TS]` UI conformance |
+| **SC-09** | The screens work on the panel | Every screen renders complete at **1920 × 1080** at 1:1, no text below 14 px (except the documented SVG axis exception), every tap target ≥ 48 px | `[TS]` UI conformance |
 | **SC-10** | A network drop is survivable | Client shows "Reconnecting…" over cached last-known state — **never a blank screen** — and re-joins its line group automatically | `[TS]` resilience suite |
 | **SC-11** | The release can be rolled back | A rehearsed rollback returns every component to its prior version, with the data-loss position stated in advance | `[RB §6]` |
 
@@ -218,7 +218,7 @@ Stay entirely within the existing UAL stack — Angular 18.2+ (delivered as a PW
 
 | Constraint | Value | Why |
 |---|---|---|
-| Authored canvas | **1280 × 1024** | The physical shopfloor panel |
+| Authored canvas | **1920 × 1080** | The physical shopfloor panel — confirmed by the client 7 Sep 2026 (`Q26`); `[VAL §7.5]` owns the row |
 | Minimum text size | **14 px** | Read at arm's length, standing, sometimes gloved |
 | Tap targets | **≥ 48 px** | Touch-first, gloved hands |
 | Hover | **No action may depend on it** | Touch screens have no hover |

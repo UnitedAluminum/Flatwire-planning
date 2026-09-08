@@ -23,7 +23,7 @@ GO
 -- ============================================================
 IF NOT EXISTS (SELECT 1 FROM [dbo].[SpcCheckpoint])
 INSERT INTO [dbo].[SpcCheckpoint]
-    ([CheckpointId],[RunId],[LineId],[CheckpointType],[FootagePosition],[OperatorId],[TriggerDescription],[AllInSpec],[Timestamp])
+    ([CheckpointId],[RunId],[MachineName],[CheckpointType],[FootagePosition],[OperatorId],[TriggerDescription],[AllInSpec],[Timestamp])
 VALUES
     ('SPC-0001','RUN-0001','FL1','PreRun',           0,'Dave M.','Pre-run rod diameter check',              1,'2026-07-20 06:31:00 -05:00'),
     ('SPC-0002','RUN-0001','FL1','PostRun',       4200,'Dave M.','Final QC at run completion',              1,'2026-07-20 09:44:00 -05:00'),
@@ -49,7 +49,7 @@ GO
 -- ============================================================
 IF NOT EXISTS (SELECT 1 FROM [dbo].[WipRejection])
 INSERT INTO [dbo].[WipRejection]
-    ([RejectionId],[RunId],[LineId],[MaterialAlpha],[Stage],[FootagePosition],[RejectionGroup],[RejectionReason],
+    ([RejectionId],[RunId],[MachineName],[MaterialAlpha],[Stage],[FootagePosition],[RejectionGroup],[RejectionReason],
      [MeasuredValue],[TargetMin],[TargetMax],[Disposition],[ObservationNotes],[NewMaterialStatus],[OperatorId],[Timestamp])
 VALUES
     ('REJ-0001',NULL,      'FL1','R00047','FL1Incoming',  NULL,'SurfaceQuality','Oxidation',    NULL,  NULL,  NULL,  'Suspend','Heavy oxidation on OD',            'HOLD','QA-Ann',  '2026-07-18 09:30:00 -05:00'),
@@ -65,7 +65,7 @@ GO
 -- ============================================================
 IF NOT EXISTS (SELECT 1 FROM [dbo].[RodCheckout])
 INSERT INTO [dbo].[RodCheckout]
-    ([CheckoutId],[RunId],[LineId],[RodAlpha],[PayoffPosition],[Mode],[FootageAtCheckout],[ReasonCode],[RodDisposition],
+    ([CheckoutId],[RunId],[MachineName],[RodAlpha],[PayoffPosition],[Mode],[FootageAtCheckout],[ReasonCode],[RodDisposition],
      [RemainingWeightLbEstimate],[InProcessMaterialDisposition],[PartialSpoolAlpha],[NewRodStatus],[PlcTagsCleared],
      [WasWelded],[ApprovedBy],[ApprovedAt],[OverrideReason],[OperatorId],[Timestamp])
 VALUES
@@ -89,7 +89,7 @@ GO
 -- ============================================================
 IF NOT EXISTS (SELECT 1 FROM [dbo].[CoilOutput])
 INSERT INTO [dbo].[CoilOutput]
-    ([CoilAlpha],[RunId],[LineId],[OrderId],[GrossWeightLb],[NetWeightLb],[NetWeightOverrideLb],[ScaleWeightLb],
+    ([CoilAlpha],[RunId],[MachineName],[OrderId],[GrossWeightLb],[NetWeightLb],[NetWeightOverrideLb],[ScaleWeightLb],
      [FinalGaugeIn],[FinalWidthIn],[FootageFt],[PassScheduleId],[PassScheduleSnapshot],[SkidId],[SkidStatus],[StagingLocation],
      [Status],[GaugeInSpec],[WidthInSpec],[CompletedAt],[OperatorId],[CreatedBy])
 VALUES

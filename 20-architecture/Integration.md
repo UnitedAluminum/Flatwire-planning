@@ -1,7 +1,7 @@
 # Flat Wire Mill — Integration
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 19, 2026 — **new §7.9: inbound ingestion.** Nothing populated `Rod` in production — rod receiving is upstream and writes `coils`, not `FlatWireDB` — so on a clean database the first staging or check-in failed on an enforced FK. `sp_IngestRodFromCoils` projects the rod on the first write that names it, and the column-ownership split is written down at last: **`OI-42` closes**. Sample data no longer deploys with the schema. New **`OI-117`** (`Rod.SupplierHeat` has no source and the certificate chain traces through it). *(Same day: **new §8.0: the FL1/FL3 check-in write-back.** Nine shared objects are written at rod check-in, all into columns that already exist, and the database half of check-in becomes **one ACID transaction** because `FlatWireDB` is co-located with the shared schema. **`OI-112` closes** (the station is released at run end) and **`OI-111` largely closes** (the rod's `coils` row is stamped with `wip_station`, `coil_status` untouched). New `OI-115` (FL2 spool check-in write set undefined), `OI-116` (`coil_mill_processing`), `Q37`–`Q40`. *(Earlier: **new §8.1: the FL2/FL3 run-end write-back.** Seven shared objects are written at coil completion, all into columns that already exist; the skid table is named at last, closing `OI-104`. *(Earlier same day: **`D-32`: there is no shared-schema migration.** `FW-001`/`FW-002` cancelled; §9.5 is retained as the record of what was cancelled, and the `coils.coil_status = INFLAT` write is struck from §8 and §9.4)* *(earlier: split out of `03-HLD-and-ERDiagram.md`, `02-SRS.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
+**Last Updated:** August 19, 2026 — **new §7.9: inbound ingestion.** Nothing populated `Rod` in production — rod receiving is upstream and writes `coils`, not `FlatWireDB` — so on a clean database the first staging or check-in failed on an enforced FK. `sp_IngestRodFromCoils` projects the rod on the first write that names it, and the column-ownership split is written down at last: **`OI-42` closes**. Sample data no longer deploys with the schema. New **`OI-117`** (`Rod.SupplierHeat` has no source and the certificate chain traces through it). *(Same day: **new §8.0: the FL1/FL3 check-in write-back.** Nine shared objects are written at rod check-in, all into columns that already exist, and the database half of check-in becomes **one ACID transaction** because `FlatWireDB` is co-located with the shared schema. **`OI-112` closes** (the station is released at run end) and **`OI-111` largely closes** (the rod's `coils` row is stamped with `wip_station`, `coil_status` untouched). New `OI-115` (FL2 spool check-in write set undefined), `OI-116` (`coil_mill_processing`), `Q37`–`Q40`. *(Earlier: **new §8.1: the FL2/FL3 run-end write-back.** Seven shared objects are written at coil completion, all into columns that already exist; the skid table is named at last, closing `OI-104`. *(Earlier same day: **`D-32`: there is no shared-schema migration.** `FW-001`/`FW-002` cancelled; §9.5 is retained as the record of what was cancelled, and the `coils.coil_status = INFLAT` write is struck from §8 and §9.4)* *(earlier: split out of `03-HLD-and-ERDiagram.md`, `02-SRS.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** Cross-database touchpoints — **reads and writes against the shared schema as it stands**
 **Status:** Baselined for build
 **Owner:** Architecture stream
@@ -103,6 +103,38 @@ It runs as the **first statement inside the caller's transaction**, before any o
 | **`wip_log`** | `wiplogdb`, via `proddb..wip_log_view` | **At coil completion (§8.1)** | **Write** | All 44 columns `NOT NULL` |
 | **`coil_cost`** | `united_db`, via `CoilCost_UpdateInsert` | **At coil completion (§8.1)** | **Write** | Omit it and the coil vanishes from cost and yield |
 | `Lots` / chemistry | shared | The far end of the cert chain | **Read** | — |
+
+> ### ⭐ `WIPStations` is also a READ — `D-55`, 7 September 2026
+>
+> The cross-database table above lists `wip_stations.coilno` only as a **write** (claimed by
+> `FlatWire_CheckInRod`, released by `FlatWire_ReleaseStation`). **The Active Run Monitor reads
+> it back** to show the material checked in at a line — `FW-N16` owns the read and the
+> `FlatWireDB..WIPStations` view over it, following `[DBD §6.6]`'s one-object convention.
+> ⛔ **A view is a read, so `D-32` holds** — no shared object is altered.
+>
+> **Key on the station name.** `wip_stations_k0` is `UNIQUE CLUSTERED` on `WIPStation`, and
+> `@station = @machineName` by rule (`FlatWire_CheckInRod` throws `52005` otherwise), so `FL1` → the
+> `FL1` row is a clustered seek. ⛔ **Not on `MachineIdx`**: it is `smallint NULL` with no index,
+> and **`FL1PO` shares FL1's value**, so that key scans and returns two rows for FL1.
+>
+> ⛔ **`CoilNo` equal to the station's own name means IDLE, not material.** An idle station parks
+> its station name there as a guaranteed-unique placeholder, because `wip_stations_k1` is a plain
+> `UNIQUE` index admitting only one `NULL` — verified 28 Jul 2026, all 78 pre-existing rows.
+> Reading it as material displays a station name where an operator expects a rod or spool number.
+>
+> ⚠ **The guard is on the rod path only.** `FlatWire_CheckInRod` throws `52003` for FL2, and
+> **no spool check-in procedure exists** — so nothing claims FL2's station today and the read
+> finds the idle sentinel through a real FL2 run. That writer is **`OI-115`**'s and needs its own
+> story; whatever writes it must carry the same `@station = @machineName` guard.
+>
+> **FL1 → FL2 traceability, for the same screen.** A spool carries **one child alpha per rod
+> segment** (`SpoolTraceability.ChildAlpha`; `Q57`, 22 Aug 2026), each registered in
+> `proddb..coils` by the 26 Aug design, with the order set on `SpoolOrder` and the selection on
+> `SpoolCheckin.OrderId`. ⚠ **`SP-#####` is a `FlatWireDB` identity, not a `coils` one** — the
+> resolution order is `SpoolProcessing.Alpha` → `SpoolTraceability` → the child alphas →
+> `proddb..coils`, never a direct `coils` lookup on the spool number. ⛔ **And the FL1 writer is
+> missing too** — `G54` / `OI-138`: nothing writes `SpoolTraceability` and nothing registers a
+> segment alpha, so `FW-230` and `FW-231` ship together or `R00001A` is reissued on every spool.
 
 **WIP station registration** creates `FL1`, `FL2`, `FL3`, **`FL1PO`** (the Pre-Check-In station, sharing FL1's MachineIdx, same pattern as legacy `ZR23`/`ZR23PO`) and `FWPACK` (packing, MachineIdx NULL by design because it serves all three lines). **`FL2PO` is deliberately not created.** **There is no `FL3PO`** — working assumption is that FL3 posts to `FL1PO` (**OI-26**).
 

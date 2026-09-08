@@ -82,7 +82,7 @@
 
      THE UI IS NOT THE ENFORCEMENT. Hiding a button is not a constraint:
      nothing in dbo.SpoolProcessing prevents two rows going INFLAT at once — there is no
-     filtered unique index, and Spool carries no LineId at all, so "checked in
+     filtered unique index, and Spool carries no MachineName at all, so "checked in
      on FL2" is not even expressible as a constraint today. POST /checkin/spool
      has to reject the second check-in itself (409), and the schema needs a way
      to say which line a spool is on. Flagged on screen, not assumed.
@@ -484,7 +484,7 @@
       <span class="queue-title" id="queue-title">Spools</span>
       <div class="queue-meta">
         <span class="open-flag" title="OI-06 (partially decided, 2 Aug 2026): the client fixed the FL2 operator-visible vocabulary at two states — Ready for FL2 (schema RECEIVED) and Checked in (schema INFLAT). The storage vocabulary is still unmapped: the schema allows RECEIVED/STAGED/INFLAT/COMPLETE/HOLD/SCRAP and the planning narrative uses a different five, and the four values this screen no longer renders still have no defined FL2 presentation.">OI-06 storage vocabulary</span>
-        <span class="open-flag" title="Single check-in is enforced only in this UI. dbo.SpoolProcessing has no filtered unique index on Status and carries no LineId at all, so 'one spool checked in per line' is not expressible as a database constraint today. POST /checkin/spool must reject the second check-in with a 409 — a hidden button is not a constraint.">Server must enforce exclusivity</span>
+        <span class="open-flag" title="Single check-in is enforced only in this UI. dbo.SpoolProcessing has no filtered unique index on Status and carries no MachineName at all, so 'one spool checked in per line' is not expressible as a database constraint today. POST /checkin/spool must reject the second check-in with a 409 — a hidden button is not a constraint.">Server must enforce exclusivity</span>
       </div>
     </div>
 

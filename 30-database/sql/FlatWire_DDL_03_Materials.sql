@@ -73,7 +73,7 @@ BEGIN
     CREATE TABLE [dbo].[FlatWireRun] (
         [Id]             INT           NOT NULL IDENTITY(1,1),
         [RunId]          VARCHAR(20)   NOT NULL,            -- e.g. RUN-0042; referenced by all child tables
-        [LineId]         VARCHAR(5)    NOT NULL,            -- FL1 | FL2 | FL3
+        [MachineName]         VARCHAR(5)    NOT NULL,            -- FL1 | FL2 | FL3
         [OrderId]        VARCHAR(20)   NOT NULL,            -- manufacturing order number
         [PassScheduleId] VARCHAR(30)   NOT NULL,            -- FK → PassSchedule.ScheduleId
         [Alloy]          VARCHAR(10)   NOT NULL,            -- denormalized from PassSchedule.Alloy
@@ -110,7 +110,7 @@ BEGIN
 
         CONSTRAINT [PK_FlatWireRun]           PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_FlatWireRun_RunId]     UNIQUE ([RunId]),
-        CONSTRAINT [CK_FlatWireRun_LineId]    CHECK ([LineId]    IN ('FL1','FL2','FL3')),
+        CONSTRAINT [CK_FlatWireRun_MachineName]    CHECK ([MachineName]    IN ('FL1','FL2','FL3')),
         CONSTRAINT [CK_FlatWireRun_RouteMode] CHECK ([RouteMode] IN ('Standalone','Hybrid')),
         CONSTRAINT [CK_FlatWireRun_Status]    CHECK ([Status]    IN ('Running','Paused','Complete','Aborted')),
         CONSTRAINT [CK_FlatWireRun_Footage]   CHECK ([FootageFt] >= 0),
@@ -139,7 +139,7 @@ BEGIN
         [ParentRodAlpha] VARCHAR(20)   NULL,                -- FK → Rod.Alpha (rod drawn into this spool)
         [SourceRodAlpha] VARCHAR(20)   NULL,                -- FK → Rod.Alpha (partial-run source rod; Phase 7 / OQ-12)
         [SourceRunId]    VARCHAR(20)   NULL,                -- FK → FlatWireRun.RunId (FL1 run that produced it)
-        [LineId]         VARCHAR(5)    NULL,                -- line that produced or is processing this spool
+        [MachineName]         VARCHAR(5)    NULL,                -- line that produced or is processing this spool
         [OriginRouteMode] VARCHAR(15)  NULL,               -- Standalone | Hybrid — origin route; FL2 rejects a Standalone schedule on a Hybrid-origin spool (OQ-15)
         [Status]         VARCHAR(20)   NOT NULL,            -- RECEIVED|STAGED|INFLAT|COMPLETE|HOLD|SCRAP
         [GaugeIn]        DECIMAL(8,4)  NULL,                -- wire gauge (in); set at FL2/FL3 check-in
@@ -157,7 +157,7 @@ BEGIN
         CONSTRAINT [PK_SpoolProcessing]        PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_SpoolProcessing_Alpha]  UNIQUE ([Alpha]),
         CONSTRAINT [CK_SpoolProcessing_Status] CHECK ([Status] IN ('RECEIVED','STAGED','INFLAT','COMPLETE','HOLD','SCRAP')),
-        CONSTRAINT [CK_SpoolProcessing_LineId] CHECK ([LineId] IN ('FL1','FL2','FL3') OR [LineId] IS NULL),
+        CONSTRAINT [CK_SpoolProcessing_MachineName] CHECK ([MachineName] IN ('FL1','FL2','FL3') OR [MachineName] IS NULL),
         CONSTRAINT [CK_SpoolProcessing_OriginRoute] CHECK ([OriginRouteMode] IN ('Standalone','Hybrid') OR [OriginRouteMode] IS NULL)
     );
     PRINT 'Created table: SpoolProcessing';

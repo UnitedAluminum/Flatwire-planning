@@ -139,7 +139,7 @@ BEGIN
 
     INSERT INTO [dbo].[PassSchedule]
         ([ScheduleId],         [Description],
-         [Alloy], [LineId],   [RouteMode],  [Status],
+         [Alloy], [MachineName],   [RouteMode],  [Status],
          [TargetGauge], [GaugeTolerance],
          [TargetWidth],  [WidthTolerance],
          [InputRodDiameterIn], [InputTemper], [InputCondition],
@@ -606,13 +606,13 @@ UNION ALL
 SELECT 'PassScheduleChangeLog',            COUNT(*)           FROM [dbo].[PassScheduleChangeLog];
 GO
 
-SELECT  [LineId],
+SELECT  [MachineName],
         [RouteMode],
         [Status],
         COUNT(*) AS [Schedules]
 FROM    [dbo].[PassSchedule]
-GROUP BY [LineId], [RouteMode], [Status]
-ORDER BY [LineId], [RouteMode], [Status];
+GROUP BY [MachineName], [RouteMode], [Status]
+ORDER BY [MachineName], [RouteMode], [Status];
 GO
 
 -- ============================================================================

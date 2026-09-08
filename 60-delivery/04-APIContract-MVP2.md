@@ -98,4 +98,4 @@ For alloy 1100, rod 0.375″, gauge 0.125″, width 0.875″:
 
 ### 4.18 `GET /shiftsummary`
 
-**Query:** `lineId` (or `All`), `shiftStart`, `shiftEnd`. Backed by `sp_ShiftSummary`. Returns per-line footage, weight out, coils out, SPC pass rate, WIP rejection count, suspended-coil count, weld events, pause minutes with a category breakdown, utilisation, and the **flagged-exception list** for runs that resumed without a completed SPC checkpoint.
+**Query:** `machineName` (or `All`), `shiftStart`, `shiftEnd`. Backed by `sp_ShiftSummary`. Returns per-line footage, weight out, coils out, SPC pass rate, WIP rejection count, suspended-coil count, weld events, pause minutes with a category breakdown, utilisation, and the **flagged-exception list** for runs that resumed without a completed SPC checkpoint.

@@ -7,7 +7,7 @@
 ---
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** 2026-08-28 — **the scaffold command gained `--standalone=false`** (the setup table's *Project architecture* row): without it the Angular 20 library schematic emits a standalone entry point, and every component in `ual-angular` is explicitly `standalone: false`. Earlier the same day the library was renamed **`flat-wire-shopfloor` → `flat-wire`** across this file (objective, setup table, exit criterion 1) with the repository-wide sweep. *(previously 2026-08-15 — **`G6`/`OI-37` provisioning question closed**: the six roles exist as JWT claims on `ClaimTypes.Role`; the entry's *verification* half survives against the unmapped claim values)*
+**Last Updated:** September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — **The *Layout* deliverable and exit criterion 2 move to 1920 × 1080.** `F-14` had set the figure by user instruction on 27 Aug 2026 and the client confirmed it on 7 Sep as `Q26`, closing gap `G23`. ⚠ **This phase is verified against 1920 × 1080** — the old figure was an acceptance criterion, which is why it could not simply be left to drift. *(previously 2026-08-28 — **the scaffold command gained `--standalone=false`** (the setup table's *Project architecture* row): without it the Angular 20 library schematic emits a standalone entry point, and every component in `ual-angular` is explicitly `standalone: false`. Earlier the same day the library was renamed **`flat-wire-shopfloor` → `flat-wire`** across this file (objective, setup table, exit criterion 1) with the repository-wide sweep. *(previously 2026-08-15 — **`G6`/`OI-37` provisioning question closed**: the six roles exist as JWT claims on `ClaimTypes.Role`; the entry's *verification* half survives against the unmapped claim values)*)*
 **Status:** **Ready to build — but the 14 Aug gate was not met**
 **Layer:** Angular frontend (`ual-angular`)
 **Owner:** **FE** (stream) — *named owner TBD, see [Capacity & Effort Model](../CapacityAndEffortModel.md#1-delivery-streams-and-roster) §1*
@@ -35,8 +35,8 @@ a DI-swappable **real/mock** client and a purpose-built SignalR service.
 | **Project architecture** | New library `flat-wire` (prefix `fw`) via `ng generate library flat-wire --prefix=fw --standalone=false` → `projects/flat-wire/` — ⚠ **`--standalone=false` is required, not stylistic**: every component in `ual-angular` is explicitly `standalone: false`, and the flag is what makes the schematic emit the NgModule instead of a standalone entry point; registered in `angular.json` + `tsconfig` paths; added to the `build:shop-floor` npm chain (build-ordering only — **no** UI reuse from other libraries in the chain, per `[ARC §2.2]`) |
 | **Folder structure** | `src/lib/{components,components/shared,services,models,guards,styles}` + `flat-wire.module.ts`, `flat-wire-routing.ts`, `public-api.ts` (standard Angular-library layout — **not** copied from any existing feature library) |
 | **Shared services (consume only)** | `api-gateway.service`, `app-config.service`, `login.service` + `login-api.service`, `token-interceptor.service`, `correlation-id-interceptor` + `correlation-id.service`, `error-handler.service` + `global-error-handler-api.service`, `ui-log.service`, `notification.service`, `subscription.service`, `print-export.service`, `util.service`. **Do not rebuild these; do not copy any feature-library UI.** |
-| **Routing** | Lazy-loaded `FLAT_WIRE_ROUTES` under `/flat-wire`; per-line routes e.g. `/flat-wire/line/:lineId/checkin/rod`, `/flat-wire/line/FL2/checkin/spool`, `/flat-wire/line/:lineId/run/active` |
-| **Layout** | Shell layout component: header (line context + operator + clock), sidebar nav to all dashboards, `alert-banner` slot; fixed **1280×1024** shopfloor canvas |
+| **Routing** | Lazy-loaded `FLAT_WIRE_ROUTES` under `/flat-wire`; per-line routes e.g. `/flat-wire/line/:machineName/checkin/rod`, `/flat-wire/line/FL2/checkin/spool`, `/flat-wire/line/:machineName/run/active` |
+| **Layout** | Shell layout component: header (line context + operator + clock), sidebar nav to all dashboards, `alert-banner` slot; fixed **1920×1080** shopfloor canvas (`Q26` / `F-14`; read 1280×1024 until 7 Sep 2026) |
 | **Authentication** | Reuse `shared` `login.service` / `login-api.service` + `token-interceptor.service` (JWT bearer) |
 | **Authorization / route guards** | `FlatWireAuthGuard` (authenticated) + `FlatWireRoleGuard` (role-gated routes) per the matrix of record, **`[SEC §8]`** — six roles: Operator · Supervisor · Operations Manager · Engineering/Maintenance · QA · Admin. ⚠ **DB9/9A are MVP-2 and are not built in MVP-1**, so they are not the guard's MVP-1 subject; the live MVP-1 role gate is **`FR-212`** — reverting a roll-gap override on **DB11 Roll Adjust** is Operations-Manager-only, operators may apply one but not undo it |
 | **Interceptors** | Reuse `token-interceptor` (JWT), `correlation-id-interceptor`, `global-error-handler-api` — **no new interceptors** |
@@ -67,7 +67,7 @@ a DI-swappable **real/mock** client and a purpose-built SignalR service.
 
 ## Acceptance criteria (exit)
 1. `flat-wire` builds, lints, and is reachable at `/flat-wire` behind `FlatWireAuthGuard`.
-2. Shell layout renders on the 1280×1024 canvas in both light and dark; all `--color-*` tokens resolve (no `--fw-*` anywhere).
+2. Shell layout renders on the **1920×1080** canvas in both light and dark; all `--color-*` tokens resolve (no `--fw-*` anywhere).
 3. DI swaps real↔mock API by `useMockData`; mock returns the seed fixtures via the `{success,data,errors}` envelope.
 4. `MockSignalRService` drives a `gauge-trace-chart` live (rAF-throttled, OnPush) with reconnect + group re-join simulated.
 5. Jest smoke suite green.

@@ -2,9 +2,9 @@
 id: FW-N03
 legacy_id:
 title: Angular library scaffold, routing and configuration
-status: in-progress
+status: done
 status_confirmed: true
-status_note: "Built in the working tree and awaiting commit. `npm run build` exits 0 and emits `flat-wire.js` as a named lazy chunk, `ng lint` passes across all 32 targets, `npm run test:flat-wire` is 25 tests at 100 % on all four metrics. `HEAD` carries no `flat-wire`, so **wave 1 opens on the commit**"
+status_note: "✅ **DONE — committed, so wave 1 is OPEN.** `ual-angular`'s `HEAD` carries **33 files** under `projects/flat-wire` at commit `67426e67e`, with a clean working tree for that path *(measured 7 Sep 2026; this note read `HEAD` carries no `flat-wire` and treated the commit as the outstanding step)*. Verification stands: `npm run build` exits 0 and emits `flat-wire.js` as a named lazy chunk, `ng lint` passes across all 32 targets, and `npm run test:flat-wire` is **6 suites / 25 tests at 100 % on all four metrics**. ⚠ **The scope delivered is wider than §1.1 originally recorded** — four components and two child routes, not one of each; see §1.1. ⚠ **Three acceptance criteria remain deviated rather than met** (the folder set, `FLAT_WIRE_ROUTES` and `ui-log.service`), each annotated in §1 with why the deviation is the right outcome"
 owner:
 jira:
 mvp: 1
@@ -69,6 +69,18 @@ From `[TB §7]` — reproduced verbatim, because the acceptance criteria are the
 > - [ ] Folder structure `src/lib/{components,components/shared,services,models,guards,styles}` + module, routing and `public-api.ts` — standard Angular-library layout, **not** copied from any existing feature library
 > - [ ] Lazy-loaded `FLAT_WIRE_ROUTES` under `/flat-wire` with per-line routes
 > - [ ] `app-config.service` + `environment.*.ts` carry `useMockData`, API base and hub URL; `ui-log.service` wired for client telemetry
+
+⚠ **Three of those criteria cannot be ticked as written** *(annotated 7 Sep 2026)*:
+
+| AC | As built | Verdict |
+|---|---|---|
+| Folder structure | `components/`, `constants/`, `enums/`, `interfaces/` exist. ⛔ **`components/shared/`, `services/`, `models/`, `guards/` and `styles/` do not.** The reusables that would have gone in `components/shared/` went to **`projects/shared`** instead — the placement rule `[UIC §3.22]` now states | **Re-word to the placement rule.** §2 step 5 excuses the empty folders; it never reconciles these five |
+| `FLAT_WIRE_ROUTES` + per-line routes | There is **no such const** — routing is a `FlatWireRoutingModule` using `RouterModule.forChild`, matching `login-routing.module.ts`'s precedent — and **no per-line routes**: two flat screen routes plus a redirect | **Deviated, and the deviation is right.** `[CMP §5.2]` still lists per-line routes; whether they arrive is `[SCR]`'s open call |
+| `app-config` + `ui-log.service` | ✅ Config keys are wired in both files. ⛔ **`ui-log.service` is not** — the library has **no `services/` folder and no service file at all** | **Half owed** |
+
+⚠ **The prefix in AC 1 is also wrong**: the generator line says `--prefix=fw`, but `angular.json`,
+`eslint.config.mjs` and all five component selectors use **`lib`**, matching all 27 sibling
+libraries. **`lib` is the value to ratify**, not a defect to fix.
 > - [ ] Library builds and lints clean and does not break the `build:shop-floor` chain
 >
 > **Dependencies:** None — the `shared` foundational services already exist
@@ -81,9 +93,9 @@ From `[TB §7]` — reproduced verbatim, because the acceptance criteria are the
 | 1 | `projects/flat-wire/` generated and registered in `angular.json` |
 | 2 | The **eight** integration points of §2 step 3 |
 | 3 | The `planning`-shaped folder tree — §2 step 5 |
-| 4 | `FlatWireModule` and `flat-wire-routing.module.ts` with the landing route |
+| 4 | `FlatWireModule` and `flat-wire-routing.module.ts` — **two child routes plus the default redirect**: `flat-wire-landing` (the default) and `supervisor-dashboard` |
 | 5 | `flat-wire.component` — header · `router-outlet` · footer · spinner · toast |
-| 6 | `flat-wire-landing.component` under `components/` |
+| 6 | **Four components under `components/`**, not one — `flat-wire-landing` (DB3, the landing) · `supervisor-dashboard` (DB1) · `spool-notification` · `trace-graph-popup` — plus the pure `spool-milestone.model.ts` and its own spec |
 | 7 | `src/assets/content-data/flat-wire.json` + the `FlatWireContent` type (`F-11`) |
 | 8 | Config keys in `environment.js` and `local-config.json` (`F-02`) |
 
@@ -385,7 +397,7 @@ plus Jest, and nothing else. → `[TCS]`, `[P1A §6.13]`
 |---|---|
 | `F-01` — the checkout differs from `phase-01a` / `[ARC §2.1]` | raised for `[ARC]`; does not stop work |
 | `F-09` — the route base and machine context | ⚠ **decide before `FW-132`**, because `line-context.service` is where `CURRENT_MACHINE` would be set |
-| ⛔ **the hub path** | `flatWireHubUrl` is `FlatWire/hubs/flat-wire`, but [`FW-080`](../../40-backend/tasks/FW-080.md) maps the hub at `/hubs/flatwire` and owes the re-map, with [`FW-145 §3.5`](../../40-backend/tasks/FW-145.md)'s `?access_token=` handler beside it. **Blocks `FW-135`, not this story** — `FW-080 §0` |
+| ✅ **the hub path** | `flatWireHubUrl` is `FlatWire/hubs/flat-wire`, and [`FW-080 §0`](../../40-backend/tasks/FW-080.md) **re-mapped the service to match on 6 Sep 2026** — `Constants.Routes.Hub` is now `/hubs/flat-wire`, read by both `app.MapHub` and [`FW-145 §3.5`](../../40-backend/tasks/FW-145.md)'s `?access_token=` handler, so the two cannot drift. **Nothing is owed by this story or any other** *(this row read as owed until 7 Sep 2026 — `FW-080 §0` had flagged that the reciprocal rows were still stale)*. ⚠ What remains for `FW-135` is the **protocol**, not the path — `G105` |
 
 ---
 

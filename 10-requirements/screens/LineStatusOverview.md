@@ -4,7 +4,7 @@
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL2 / FL3
 **Version:** 1.3
-**Last Updated:** August 15, 2026
+**Last Updated:** September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — **`Q26` is decided — the shopfloor panel is 1920 × 1080.** The board stays *composed* at 1280 × 1024 and re-lays out **horizontally** onto the wider panel; nothing gets taller. *(previously August 15, 2026)*
 **Status:** **First issue** — consolidated from existing specifications; requires review
 **Screen reference:** Dashboard 1 — Line Status Overview
 **Requirement source:** SRS line-status rules; alert rules as specified in the shopfloor dashboard set
@@ -171,7 +171,7 @@ Payoff alerting is driven by **absolute remaining pounds**. Against a 9,000 lb p
 | **OI-35 / Q21** | High | **The line-state vocabulary** — the states the machine reports (running, stopped, paused, fault, threading?) and how they map to the five shown here | The state badge on every card |
 | **OI-28** | Medium | **The alert lifecycle** — acknowledgement, retention and history | Alert behaviour and any alert reporting |
 | **Q20** | Medium | Should **spool completion milestones** and similar operator notifications also be **mirrored to this board**? | Supervisor visibility of operator-level events |
-| **Q26** | High | **Shopfloor panel resolution** — the board is authored for 1280 × 1024; a wall panel is likely to differ | Layout at readable size |
+| ~~**Q26**~~ | High | ✅ **Decided 7 Sep 2026 — the panel is 1920 × 1080.** The board is *composed* at 1280 × 1024 and re-lays out horizontally onto it | Layout at readable size |
 | — | Medium | **Confirmation of the card field set** — is anything a supervisor relies on missing, and is anything here noise? | The card content |
 | — | Low | **Does an offline line remain on the board**, or is it hidden until it returns? | Card behaviour |
 

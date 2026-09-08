@@ -42,7 +42,7 @@
 --   on 15 Aug 2026 by D-31, and merged back here because the division
 --   that justified a separate file no longer exists. Its six schedule
 --   indexes are the last section below -- including the filtered-unique
---   rule enforcing ONE Active PassSchedule per (LineId, Alloy), which
+--   rule enforcing ONE Active PassSchedule per (MachineName, Alloy), which
 --   this header used to claim while the index lived in 07b.
 --
 -- The counted total is [DBD 6.2]. This file does not restate it.
@@ -61,11 +61,11 @@ GO
 -- ------------------------------------------------------------
 -- FlatWireRun (hub) + SpoolProcessing
 -- ------------------------------------------------------------
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_FlatWireRun_LineId' AND object_id = OBJECT_ID(N'dbo.FlatWireRun'))
-    CREATE NONCLUSTERED INDEX [IX_FlatWireRun_LineId] ON [dbo].[FlatWireRun] ([LineId], [Status]);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_FlatWireRun_MachineName' AND object_id = OBJECT_ID(N'dbo.FlatWireRun'))
+    CREATE NONCLUSTERED INDEX [IX_FlatWireRun_MachineName] ON [dbo].[FlatWireRun] ([MachineName], [Status]);
 GO
 -- SINGLE ACTIVE RUN PER LINE (FW-222, 19 Aug 2026).
--- IX_FlatWireRun_LineId above is NON-unique, so nothing in the database stopped two concurrent
+-- IX_FlatWireRun_MachineName above is NON-unique, so nothing in the database stopped two concurrent
 -- check-ins on one line from both committing: each passed the aggregate check, neither saw the
 -- other. That is exactly the read-then-write race CoilCheckin's IsAnyCoilCheckedInRule has, and
 -- the reference implementation is not a pattern to copy here.
@@ -79,7 +79,7 @@ GO
 -- disjunct. Do NOT rewrite it as OR - filtered indexes reject that.
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_FlatWireRun_ActiveLine' AND object_id = OBJECT_ID(N'dbo.FlatWireRun'))
     CREATE UNIQUE NONCLUSTERED INDEX [UX_FlatWireRun_ActiveLine]
-        ON [dbo].[FlatWireRun] ([LineId])
+        ON [dbo].[FlatWireRun] ([MachineName])
         WHERE [Status] IN ('Running','Paused');
 GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_FlatWireRun_Status' AND object_id = OBJECT_ID(N'dbo.FlatWireRun'))
@@ -117,11 +117,11 @@ GO
 -- "one rod per payoff bay" and "one bay per rod" impossible to
 -- violate, including under concurrent staging from two clients.
 -- ------------------------------------------------------------
--- G21 (resolved 15 Aug 2026): keyed on [Station], NOT [LineId].
--- FL1 and FL3 share one physical VPS, so a (LineId, PayoffPosition) key admitted
+-- G21 (resolved 15 Aug 2026): keyed on [Station], NOT [MachineName].
+-- FL1 and FL3 share one physical VPS, so a (MachineName, PayoffPosition) key admitted
 -- (FL1,1) AND (FL3,1) as distinct entries for ONE bay -- the invariant this index
 -- exists to defend did not hold. Q24 compounds it: the station switches line by
--- itself, so LineId is rewritten underneath the key. See 04_Runs for the column.
+-- itself, so MachineName is rewritten underneath the key. See 04_Runs for the column.
 -- The RodStaging AGGREGATE enforces the same rule in code; this index is
 -- belt-and-braces, not the sole defence.
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_RodStaging_Bay' AND object_id = OBJECT_ID(N'dbo.RodStaging'))
@@ -135,8 +135,8 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_RodStaging_RodActive'
         WHERE [Status] = 'Staged';
 GO
 -- Primary dashboard query: "what is on each bay of this line right now".
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RodStaging_LineId_Status' AND object_id = OBJECT_ID(N'dbo.RodStaging'))
-    CREATE NONCLUSTERED INDEX [IX_RodStaging_LineId_Status] ON [dbo].[RodStaging] ([LineId], [Status]);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RodStaging_MachineName_Status' AND object_id = OBJECT_ID(N'dbo.RodStaging'))
+    CREATE NONCLUSTERED INDEX [IX_RodStaging_MachineName_Status] ON [dbo].[RodStaging] ([MachineName], [Status]);
 GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RodStaging_RodAlpha' AND object_id = OBJECT_ID(N'dbo.RodStaging'))
     CREATE NONCLUSTERED INDEX [IX_RodStaging_RodAlpha] ON [dbo].[RodStaging] ([RodAlpha]);
@@ -149,8 +149,8 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RodCheckin_RodAlpha' 
     CREATE NONCLUSTERED INDEX [IX_RodCheckin_RodAlpha] ON [dbo].[RodCheckin] ([RodAlpha]);
 GO
 -- Was missing: resolving the active rod on a given bay required a scan.
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RodCheckin_LineId_PayoffPosition' AND object_id = OBJECT_ID(N'dbo.RodCheckin'))
-    CREATE NONCLUSTERED INDEX [IX_RodCheckin_LineId_PayoffPosition] ON [dbo].[RodCheckin] ([LineId], [PayoffPosition]);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RodCheckin_MachineName_PayoffPosition' AND object_id = OBJECT_ID(N'dbo.RodCheckin'))
+    CREATE NONCLUSTERED INDEX [IX_RodCheckin_MachineName_PayoffPosition] ON [dbo].[RodCheckin] ([MachineName], [PayoffPosition]);
 GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_RodCheckin_PassScheduleId' AND object_id = OBJECT_ID(N'dbo.RodCheckin'))
     CREATE NONCLUSTERED INDEX [IX_RodCheckin_PassScheduleId] ON [dbo].[RodCheckin] ([PassScheduleId]);
@@ -301,14 +301,14 @@ GO
 
 -- The queue read: one line's live queue, in operator order.
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_SpoolStaging_Queue' AND object_id = OBJECT_ID(N'dbo.SpoolStaging'))
-    CREATE NONCLUSTERED INDEX [IX_SpoolStaging_Queue] ON [dbo].[SpoolStaging] ([LineId], [QueuePosition]) WHERE [Status] = 'Queued';
+    CREATE NONCLUSTERED INDEX [IX_SpoolStaging_Queue] ON [dbo].[SpoolStaging] ([MachineName], [QueuePosition]) WHERE [Status] = 'Queued';
 GO
 
 -- One live queue entry per spool per line. Filtered, so a withdrawn or
 -- checked-in row does not block re-queueing the same spool later --
 -- which the two-run case requires.
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_SpoolStaging_LiveSpool' AND object_id = OBJECT_ID(N'dbo.SpoolStaging'))
-    CREATE UNIQUE NONCLUSTERED INDEX [UX_SpoolStaging_LiveSpool] ON [dbo].[SpoolStaging] ([LineId], [SpoolAlpha]) WHERE [Status] = 'Queued';
+    CREATE UNIQUE NONCLUSTERED INDEX [UX_SpoolStaging_LiveSpool] ON [dbo].[SpoolStaging] ([MachineName], [SpoolAlpha]) WHERE [Status] = 'Queued';
 GO
 
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_SpoolProcessing_SpoolId' AND object_id = OBJECT_ID(N'dbo.SpoolProcessing'))
@@ -405,13 +405,13 @@ GO
 -- PassSchedule
 -- ------------------------------------------------------------
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_PassSchedule_LineAlloyStatus' AND object_id = OBJECT_ID(N'dbo.PassSchedule'))
-    CREATE NONCLUSTERED INDEX [IX_PassSchedule_LineAlloyStatus] ON [dbo].[PassSchedule] ([LineId], [Alloy], [Status]);
+    CREATE NONCLUSTERED INDEX [IX_PassSchedule_LineAlloyStatus] ON [dbo].[PassSchedule] ([MachineName], [Alloy], [Status]);
 GO
 
--- Business rule (Schedule.md): only ONE Active schedule per LineId + Alloy at a time.
+-- Business rule (Schedule.md): only ONE Active schedule per MachineName + Alloy at a time.
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_PassSchedule_OneActivePerLineAlloy' AND object_id = OBJECT_ID(N'dbo.PassSchedule'))
     CREATE UNIQUE NONCLUSTERED INDEX [UX_PassSchedule_OneActivePerLineAlloy]
-        ON [dbo].[PassSchedule] ([LineId], [Alloy])
+        ON [dbo].[PassSchedule] ([MachineName], [Alloy])
         WHERE [Status] = 'Active';
 GO
 
@@ -517,7 +517,7 @@ GO
 --     other side and is unchanged by the re-point.
 --   There is NO natural-key index here at all: the table has no name and no
 --     alpha -- Name removed 6 Sep 2026, EdgerToolAlpha 7 Sep, both because
---     nothing read them. (LineId, SetNumber) is the candidate and is
+--     nothing read them. (MachineName, SetNumber) is the candidate and is
 --     deliberately not taken until Q95 leg 2 says whether Set Number is unique
 --     per line or per shop -- see 01_Lookup's comment block and G104.
 --   ToolingInventoryEdgerGauge.EdgerToolId is NOT indexed: it is the LEADING
@@ -581,9 +581,9 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_LineDowntimeEvent_Run
 GO
 
 -- The open-downtime probe ("is FL2 down right now?") and the shift roll-up are
--- both (LineId, StartedAt); filtered to open rows makes the probe a seek.
+-- both (MachineName, StartedAt); filtered to open rows makes the probe a seek.
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_LineDowntimeEvent_LineOpen' AND object_id = OBJECT_ID(N'dbo.LineDowntimeEvent'))
-    CREATE NONCLUSTERED INDEX [IX_LineDowntimeEvent_LineOpen] ON [dbo].[LineDowntimeEvent] ([LineId], [StartedAt]) WHERE [EndedAt] IS NULL;
+    CREATE NONCLUSTERED INDEX [IX_LineDowntimeEvent_LineOpen] ON [dbo].[LineDowntimeEvent] ([MachineName], [StartedAt]) WHERE [EndedAt] IS NULL;
 GO
 
 -- ------------------------------------------------------------
@@ -594,14 +594,14 @@ GO
 --
 --   SetupHandlingTimeElement.GroupId  -- INDEXED below. It is a child FK
 --     column and it is NOT the leading column of any UNIQUE constraint:
---     both of its UQs lead on LineId.
+--     both of its UQs lead on MachineName.
 --   SetupHandlingTimeStandard.ElementId -- NOT indexed. It leads
 --     UQ_SetupHandlingTimeStandard_ElementCrew, which is already an index.
 --   MaterialLossStandard.ElementId -- NOT indexed. It IS
 --     UQ_MaterialLossStandard_Element.
 --   The per-line grid read (one line, in order) is served exactly by
---     UQ_SetupHandlingTimeElement_LineGroupSeq (LineId, GroupId, Sequence)
---     and UQ_MaterialLossElement_LineSeq (LineId, Sequence).
+--     UQ_SetupHandlingTimeElement_LineGroupSeq (MachineName, GroupId, Sequence)
+--     and UQ_MaterialLossElement_LineSeq (MachineName, Sequence).
 --
 -- So: one statement, not five. Do not read the other four as forgotten.
 -- ------------------------------------------------------------

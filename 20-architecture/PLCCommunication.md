@@ -1,7 +1,7 @@
 # Flat Wire Mill — PLC / OPC Communication
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 5, 2026 — **§2 rewritten again, by `D-45`: the tag paths are in BOTH `appsettings` and `CommonDB.OPCTags`, deliberately.** `appsettings` resolves them (it is the only thing that can — `OPCTags` has no logical-name column and, per `D-45`, is not getting one), and the registration carries the same paths as rows so `GetOPCInfo` can answer. **`G93` is withdrawn**; there is no shared `ALTER` and no other team. ⚠ The registration is **41 rows across two lines**, not 72 across three — `D-47` gives FL3 no controller of its own. ⚠ Every path gained a `PLC` element (`D-46`). *(previously September 4, 2026 — ⛔ **§2 was REWRITTEN by `D-44`, and the pre-4-Sep version is wrong rather than stale.** OPC tag paths do **not** live in `appsettings` — they are `CommonDB` `OPCTags` rows reached through `OPCConnection`'s `GetOPCInfo`, with a new **`TagKey`** column carrying the logical name. This closes **`OI-A`**, which this section's old text was one of the two wrong answers to. `appsettings` keeps `SimulatePLCTagPush`, `PublishIntervalMs` and per-line `LineStateMap` only. The `§1.6` interlock rule and `§1.7`'s mapping-table obligation are **unchanged in substance**, restated against the new mechanism; rollback is no longer file-only. ⚠ New **`G93`** — the shared-table alteration is not ours *(previously August 13, 2026 — split out of `03-HLD-and-ERDiagram.md`, `02-SRS.md`, `04-APIContract.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*
+**Last Updated:** September 5, 2026 — **§2 rewritten again, by `D-45`: the tag paths are in BOTH `appsettings` and `CommonDB.OPCTags`, deliberately.** `appsettings` resolves them (it is the only thing that can — `OPCTags` has no logical-name column and, per `D-45`, is not getting one), and the registration carries the same paths as rows so `GetOPCInfo` can answer. **`G93` is withdrawn**; there is no shared `ALTER` and no other team. ⚠ The registration is **41 rows across two lines**, not 72 across three — `D-47` gives FL3 no controller of its own. ⚠ Every path gained a `PLC` element (`D-46`). *(previously September 4, 2026 — ⛔ **§2 was REWRITTEN by `D-44`, and the pre-4-Sep version is wrong rather than stale.** OPC tag paths do **not** live in `appsettings` — they are `CommonDB` `OPCTags` rows reached through `OPCConnection`'s `GetOPCInfo`, with a new **`TagKey`** column carrying the logical name. This closes **`OI-A`**, which this section's old text was one of the two wrong answers to. `appsettings` keeps `SimulatePLCTagPush`, `PublishIntervalMs` and per-line `LineStateMap` only. The `§1.6` interlock rule and `§1.7`'s mapping-table obligation are **unchanged in substance**, restated against the new mechanism; rollback is no longer file-only. ⚠ New **`G93`** — the shared-table alteration is not ours *(previously August 13, 2026 — split out of `03-HLD-and-ERDiagram.md`, `02-SRS.md`, `04-APIContract.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** PLC integration design, the write surface and the service contract
 **Status:** Baselined for build — **carries no tag path strings by rule**
 **Owner:** Real-time / PLC stream
@@ -60,8 +60,8 @@ The integration layer is the **existing `OPCConnection` service, extended** to s
 
 | Operation | Signature |
 |---|---|
-| Pass-schedule push | `PushPassSchedule(scheduleId, lineId, payoffPosition)` |
-| Payoff clear | `ClearPayoffTags(lineId, payoffPosition)` |
+| Pass-schedule push | `PushPassSchedule(scheduleId, machineName, payoffPosition)` |
+| Payoff clear | `ClearPayoffTags(machineName, payoffPosition)` |
 | Per-component write | one call per changed component, on roll-adjust Apply |
 | Hold / idle and restore | on pause and resume |
 | Simulated push | `SimulatePLCTagPush` — selected by configuration, not by call site |
@@ -123,8 +123,8 @@ Five operations. Behaviour, triggers and payload are `[PLC §7]`; this is the sh
 
 | Operation | Signature | Called from |
 |---|---|---|
-| Pass-schedule push | `PushPassSchedule(scheduleId, lineId, payoffPosition)` | `CheckInService`, on the rod and spool check-in paths |
-| Payoff clear | `ClearPayoffTags(lineId, payoffPosition)` | `CheckOutService`, Modes A and B only |
+| Pass-schedule push | `PushPassSchedule(scheduleId, machineName, payoffPosition)` | `CheckInService`, on the rod and spool check-in paths |
+| Payoff clear | `ClearPayoffTags(machineName, payoffPosition)` | `CheckOutService`, Modes A and B only |
 | Per-component write | one call per changed component | `RollOverrideService`, on roll-adjust Apply |
 | Hold / idle and restore | drive enable and speed | `RunControlService`, on pause and resume |
 | Simulated push | `SimulatePLCTagPush` | Selected by configuration, not by call site |
@@ -164,13 +164,13 @@ Three things were called "line state": the PLC tag, a C#/TS enum, and a SignalR 
 
 **Do not add a seventh enum member for `Stopped`** on the assumption of what the machine reports — `FR-141` fires the spool prompt on a *running → stopped* transition, and the resolution is the configurable mapping table in `[PLC §6]`, not a guessed enum value.
 
-#### 1.6 The interlock is line-scoped, so it takes a `lineId`
+#### 1.6 The interlock is line-scoped, so it takes a `machineName`
 
 `[PLC §8.1]`. The run-block interlock is **one tag per line**, not one plant-level tag — the client confirmed the line-scoped form after every pre-consolidation source had recorded it without its prefix.
 
 Three implementation consequences:
 
-- **The write carries the line.** Whatever sets and clears the interlock takes `lineId`, and its logical key sits **under `Lines.FL{n}.Tags`** like every other path — not as a peer of `SimulatePLCTagPush` at the root. A single root-level key would be the plant-level reading expressed in configuration, and it would be discovered the first time an idle line blocked a running one.
+- **The write carries the line.** Whatever sets and clears the interlock takes `machineName`, and its logical key sits **under `Lines.FL{n}.Tags`** like every other path — not as a peer of `SimulatePLCTagPush` at the root. A single root-level key would be the plant-level reading expressed in configuration, and it would be discovered the first time an idle line blocked a running one.
 - **The five conditions are evaluated per line.** Condition 1 (nothing checked in) and condition 2 (no active material-tracking identifier) are already per-run and therefore per-line; conditions 3–5 (feet data unavailable, invalid, two consecutive recordings missed) are evaluated **against that line's own stream**. A gap in FL1's feet data must not set FL2's interlock.
 - **FL3 is the open case, and it is `PLC-Q08`, not a design choice.** Whether the hybrid line has its own interlock or asserts the interlocks of the two controllers it spans follows from the FL3 namespace answer. Bind it as one per-line key like the others and let the config value decide; **do not write a special case** before `PLC-Q08` closes.
 

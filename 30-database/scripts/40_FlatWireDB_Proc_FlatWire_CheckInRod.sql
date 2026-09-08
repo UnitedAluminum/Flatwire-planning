@@ -239,7 +239,7 @@
 
   DECISIONS / ASSUMPTIONS  (confirm before running outside DEV)
   ------------------------------------------------------------
-  D1. Scope is FL1 and FL3 - ROD check-in only. @lineId is validated against ('FL1','FL3').
+  D1. Scope is FL1 and FL3 - ROD check-in only. @machineName is validated against ('FL1','FL3').
       *** FL2 SPOOL CHECK-IN IS NOT HANDLED, AND THAT IS AN OPEN ITEM, NOT A CLOSED ONE. ***
       API Sec 4.6a says FL2 spool check-in has "the same shape as Sec 4.6" but then lists ONLY
       FlatWireDB writes. A spool has no proddb..coils row, so what FL2 owes to the reqsum,
@@ -297,7 +297,7 @@
       reporting. Registered as OI-116. Copying it speculatively is the worse error: adding rows
       later is additive, removing wrong ones is not.
 
-  D8. machine_idx comes from the CALLER (@machineIdx), validated against @lineId, and is NOT
+  D8. machine_idx comes from the CALLER (@machineIdx), validated against @machineName, and is NOT
       derived by the legacy op-letter CASE.
       PreCheckIn_CopyPlanningData picks machine_idx with a CASE over IsOtherOpLetter /
       IsRollingOpLetter and coil_width. *** THAT CASE RETURNS THE ELSE BRANCH FOR FLAT WIRE. ***
@@ -370,7 +370,7 @@ GO
 CREATE OR ALTER PROCEDURE [dbo].[FlatWire_CheckInRod]
       @rodAlpha              VARCHAR(9)                     -- proddb..coils.coil_no, e.g. R00041
     , @runId                 VARCHAR(20)                    -- FlatWireDB FlatWireRun.RunId, audit correlation
-    , @lineId                VARCHAR(5)                     -- FL1 | FL3            (D1)
+    , @machineName                VARCHAR(5)                     -- FL1 | FL3            (D1)
     , @station               VARCHAR(6)                     -- FL1 | FL3            (C1)
     , @machineIdx            INT                            -- 125 | 127            (D8)
     , @orderNo               INT
@@ -429,7 +429,7 @@ BEGIN
     SET @logInfo = 'EXEC FlatWire_CheckInRod '
                  + ISNULL(@rodAlpha, 'NULL')             + ', '
                  + ISNULL(@runId, 'NULL')                + ', '
-                 + ISNULL(@lineId, 'NULL')               + ', station='
+                 + ISNULL(@machineName, 'NULL')               + ', station='
                  + ISNULL(@station, 'NULL')              + ', payoff='
                  + ISNULL(CAST(@payoffPosition AS VARCHAR(2)), 'NULL') + ', order='
                  + ISNULL(CAST(@orderNo AS VARCHAR(10)), 'NULL')
@@ -457,22 +457,22 @@ BEGIN
             THROW 52001, 'FlatWire_CheckInRod must be called inside the caller''s transaction: the FlatWireDB and shared writes commit together. See THE TRANSACTION BOUNDARY (D2).', 1;
 
         SET @rodAlpha = LTRIM(RTRIM(ISNULL(@rodAlpha, '')));
-        SET @lineId   = LTRIM(RTRIM(ISNULL(@lineId, '')));
+        SET @machineName   = LTRIM(RTRIM(ISNULL(@machineName, '')));
         SET @station  = LTRIM(RTRIM(ISNULL(@station, '')));
         SET @idleSentinel = LEFT(@station + SPACE(9), 9);
 
         IF @isSimulated = 1
             THROW 52002, 'FlatWire_CheckInRod: refusing a simulated run. Simulated production must not reach wip_coil_orders, routings or wip_log - it would be indistinguishable from real production in cost and yield (D11).', 1;
 
-        IF @lineId NOT IN ('FL1', 'FL3')
-            THROW 52003, 'FlatWire_CheckInRod: @lineId must be FL1 or FL3. FL2 spool check-in is not handled here and its shared write set is undefined (D1, OI-115).', 1;
+        IF @machineName NOT IN ('FL1', 'FL3')
+            THROW 52003, 'FlatWire_CheckInRod: @machineName must be FL1 or FL3. FL2 spool check-in is not handled here and its shared write set is undefined (D1, OI-115).', 1;
 
-        IF (@lineId = 'FL1' AND @machineIdx <> 125)
-        OR (@lineId = 'FL3' AND @machineIdx <> 127)
-            THROW 52004, 'FlatWire_CheckInRod: @machineIdx does not match @lineId. FL1 is 125 and FL3 is 127, fixed so DEV/TEST/PROD agree (D8).', 1;
+        IF (@machineName = 'FL1' AND @machineIdx <> 125)
+        OR (@machineName = 'FL3' AND @machineIdx <> 127)
+            THROW 52004, 'FlatWire_CheckInRod: @machineIdx does not match @machineName. FL1 is 125 and FL3 is 127, fixed so DEV/TEST/PROD agree (D8).', 1;
 
-        IF @station <> @lineId
-            THROW 52005, 'FlatWire_CheckInRod: @station must equal @lineId - there is one WIP station per line, not one per mill component (deploy step 2 / FW-241, decision D1). FL1PO is the PRE-check-in station and is not this one.', 1;
+        IF @station <> @machineName
+            THROW 52005, 'FlatWire_CheckInRod: @station must equal @machineName - there is one WIP station per line, not one per mill component (deploy step 2 / FW-241, decision D1). FL1PO is the PRE-check-in station and is not this one.', 1;
 
         IF @payoffPosition NOT IN (1, 2)
             THROW 52006, 'FlatWire_CheckInRod: @payoffPosition must be 1 or 2.', 1;

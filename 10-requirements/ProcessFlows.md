@@ -1,7 +1,7 @@
 # Flat Wire Mill — Process Flows
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 18, 2026 — **`D-32`: there is no shared-schema migration.** The check-in sequence diagram drops `coils.coil_status = INFLAT` from the legacy write *(previously August 13, 2026 — split out of `02-SRS.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
+**Last Updated:** August 18, 2026 — **`D-32`: there is no shared-schema migration.** The check-in sequence diagram drops `coils.coil_status = INFLAT` from the legacy write *(previously August 13, 2026 — split out of `02-SRS.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** End-to-end process flows — the normal path
 **Status:** Baselined for build
 **Owner:** BA / Analysis stream
@@ -92,7 +92,7 @@ sequenceDiagram
     NG-->>OP: station = FL1 Station or FL3 Station
     OP->>NG: scan rod alpha, diameter, weights, payoff
     NG->>API: GET /rod/{alpha}
-    API-->>NG: alloy, temper, weights, orderId, scheduledLineId, footageRunToDate
+    API-->>NG: alloy, temper, weights, orderId, scheduledMachineName, footageRunToDate
     OP->>NG: complete the 6 wizard steps
     NG->>NG: attribute lookup recommends a pass schedule
     OP->>NG: Confirm Schedule (confirm bar amber → green)
@@ -101,7 +101,7 @@ sequenceDiagram
     API->>SVC: CheckInRodCommand
     SVC->>DB: inspection result, PreRun SPC, FlatWireRun(Running), RodCheckin
     SVC->>LEG: reqsum + wip_coil_orders, actual_start_date
-    SVC->>PLC: PushPassSchedule(scheduleId, lineId, payoffPosition)
+    SVC->>PLC: PushPassSchedule(scheduleId, machineName, payoffPosition)
     PLC-->>SVC: all tags OK — any failure aborts, compensating clears run
     SVC->>DB: RodStaging.Status → CheckedIn when the rod was staged
     SVC->>HUB: LineStatus Running + PayoffStateChanged Active

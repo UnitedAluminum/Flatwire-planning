@@ -1,7 +1,7 @@
 # Flat Wire Mill — Lookup & Reference Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** September 7, 2026 — **`Edger` is ABSORBED into `ToolingInventoryEdger`, and `ToolingInventoryEdgerGauge` is its child** (`D-53`). The five-column `Edger` could not hold the client's **fourteen-column** Tooling Inventory grid, and `02_Schedule` already recorded that `EdgerId` *"identifies the fitted **TOOL**, not the STATION"* — so it was already meant to be the physical tool register and was simply too thin to be one. `PassScheduleComponent.EdgerId` re-points here and **`FK_PSC_Edger` keeps its name**. `Gauge Range(")` becomes a **child table**, not a delimited string (`G77`), because a pass schedule must be able to select **a groove**. ⭐ **This closes `G77`'s edger half; the straightener half stays open**, along with the `.134`/`.184` range discrepancy. ⚠ **`EdgeType` and `EdgerType` are kept as SEPARATE columns** — the grid's `Type` cell may well be the edge profile for an edger, but `ToolingInventoryDie` reads the same heading as the die **material** (`DieType`), so it does not mean one thing across the grids and merging them would be our guess. `Q95` leg 5 asks. `EdgeType` is **relaxed to NULL**. ⚠ **The table has NO natural key.** `Name` was removed on 6 Sep 2026 and **`EdgerToolAlpha` on 7 Sep**, both once it was verified that nothing read them — no procedure, view, join or seed row, and the client's grid shows neither field (`OI-141`, `G104`, `Q95`). Identity is the `IDENTITY` column alone, so **duplicate rows are possible**; `(LineId, SetNumber)` is the replacement and waits on `Q95` leg 2 rather than being guessed. *(previously September 3, 2026 — **`ToolingInventoryRollSet` added** (`D-42`), the **fourth** Tooling Inventory tool type: mill rolls on a `Stand`, capstan rolls on a `Drawer`, one discriminated table, a **grind** life model rather than footage. ✅ The `Drawer` *"nothing holds a foreign key to this table"* note is **closed** — this is its first referrer. ⚠ `CK_ToolingInventoryDie_LineId` loses `FL3`; **`CK_Drawer_LineId` keeps it** — equipment versus tooling, do not align them. ⛔ Every roll-set column is `[PROPOSED]` pending `Q92` (`G87`). *(previously September 2, 2026 — **three reason-code tables added** from the client's `Reason Codes.xlsx` (Tim O'Brien, 1 Sep 2026): `DowntimeReason`, `WipRejectionReason`, `ItInhibitReason`. ⚠ **They are seeded by the DDL, not the sample-data script** — production reference data, and a production deploy runs `RunAll` without the sample data. The `Dancer` note on `SupportsTensionMode` is also corrected: `0` on FM1 now records **"no"**, not "not stated", and the `OQ-32` mode conflict is **resolved**. *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)*)*)* ⚠ **Amended 7 September 2026: `EdgerToolAlpha` removed** from `ToolingInventoryEdger`, on the same finding as `Name` the day before — nothing read it, and no client tooling grid has ever shown an alpha (`OI-141`). The register now has **no natural key**; `(LineId, SetNumber)` waits on `Q95` leg 2. **Object counts do not move** — a UNIQUE constraint in `01` is not an index statement in `07`.
+**Last Updated:** September 7, 2026 — **`Edger` is ABSORBED into `ToolingInventoryEdger`, and `ToolingInventoryEdgerGauge` is its child** (`D-53`). The five-column `Edger` could not hold the client's **fourteen-column** Tooling Inventory grid, and `02_Schedule` already recorded that `EdgerId` *"identifies the fitted **TOOL**, not the STATION"* — so it was already meant to be the physical tool register and was simply too thin to be one. `PassScheduleComponent.EdgerId` re-points here and **`FK_PSC_Edger` keeps its name**. `Gauge Range(")` becomes a **child table**, not a delimited string (`G77`), because a pass schedule must be able to select **a groove**. ⭐ **This closes `G77`'s edger half; the straightener half stays open**, along with the `.134`/`.184` range discrepancy. ⚠ **`EdgeType` and `EdgerType` are kept as SEPARATE columns** — the grid's `Type` cell may well be the edge profile for an edger, but `ToolingInventoryDie` reads the same heading as the die **material** (`DieType`), so it does not mean one thing across the grids and merging them would be our guess. `Q95` leg 5 asks. `EdgeType` is **relaxed to NULL**. ⚠ **The table has NO natural key.** `Name` was removed on 6 Sep 2026 and **`EdgerToolAlpha` on 7 Sep**, both once it was verified that nothing read them — no procedure, view, join or seed row, and the client's grid shows neither field (`OI-141`, `G104`, `Q95`). Identity is the `IDENTITY` column alone, so **duplicate rows are possible**; `(MachineName, SetNumber)` is the replacement and waits on `Q95` leg 2 rather than being guessed. *(previously September 3, 2026 — **`ToolingInventoryRollSet` added** (`D-42`), the **fourth** Tooling Inventory tool type: mill rolls on a `Stand`, capstan rolls on a `Drawer`, one discriminated table, a **grind** life model rather than footage. ✅ The `Drawer` *"nothing holds a foreign key to this table"* note is **closed** — this is its first referrer. ⚠ `CK_ToolingInventoryDie_MachineName` loses `FL3`; **`CK_Drawer_MachineName` keeps it** — equipment versus tooling, do not align them. ⛔ Every roll-set column is `[PROPOSED]` pending `Q92` (`G87`). *(previously September 2, 2026 — **three reason-code tables added** from the client's `Reason Codes.xlsx` (Tim O'Brien, 1 Sep 2026): `DowntimeReason`, `WipRejectionReason`, `ItInhibitReason`. ⚠ **They are seeded by the DDL, not the sample-data script** — production reference data, and a production deploy runs `RunAll` without the sample data. The `Dancer` note on `SupportsTensionMode` is also corrected: `0` on FM1 now records **"no"**, not "not stated", and the `OQ-32` mode conflict is **resolved**. *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)*)*)* ⚠ **Amended 7 September 2026: `EdgerToolAlpha` removed** from `ToolingInventoryEdger`, on the same finding as `Name` the day before — nothing read it, and no client tooling grid has ever shown an alpha (`OI-141`). The register now has **no natural key**; `(MachineName, SetNumber)` waits on `Q95` leg 2. **Object counts do not move** — a UNIQUE constraint in `01` is not an index statement in `07`. · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
 **Document Type:** Final Schema — Lookup / Configuration Tables
 **Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`)
@@ -24,7 +24,7 @@ Rolling mill finishing stands. A stand applies compressive force to reduce mater
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `Name` | varchar(30) | NOT NULL | — | Stand identifier used in pass schedules and UI — **position only**: `FM1`, `FM2_S1`, `FM2_S2`, `FM2_S3` |
-| `LineId` | varchar(5) | NULL | — | Flat wire line this stand belongs to (`FL1`, `FL2`, `FL3`); NULL if the stand is shared across lines |
+| `MachineName` | varchar(5) | NULL | — | Flat wire line this stand belongs to (`FL1`, `FL2`, `FL3`); NULL if the stand is shared across lines |
 | `RollDiameterIn` | decimal(5,3) | NOT NULL | — | Working roll diameter in inches. **FM1 `12.000`; FM2 `S1` `8.000`, `S2` `6.000`, `S3` `6.000`.** Feeds the bite condition and roll-force limits in the generation engine ([PassScheduleGenerationSpec](../../10-requirements/screens/PassScheduleGenerationSpec.md) §3.3.2 / §3.3.6) |
 | `MinGaugeIn` | decimal(8,4) | NOT NULL | — | Minimum input gauge this stand can process, in inches |
 | `MaxGaugeIn` | decimal(8,4) | NOT NULL | — | Maximum input gauge this stand can process, in inches |
@@ -54,20 +54,20 @@ Rolling mill finishing stands. A stand applies compressive force to reduce mater
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `Name` | varchar(50) | NOT NULL | — | `DB1` or `DB2` — the draw box, not the die |
-| `LineId` | varchar(5) | NOT NULL | — | `FL1` for both. FL1 owns the physical boxes and FL3 runs through them, as it shares FL1's VPS payoff |
+| `MachineName` | varchar(5) | NOT NULL | — | `FL1` for both. FL1 owns the physical boxes and FL3 runs through them, as it shares FL1's VPS payoff |
 | `IsActive` | bit | NOT NULL | — | `1` = box in service |
 
 **Constraints:**
 - `PK_Drawer` — clustered on `Id`
 - `UQ_Drawer_Name` — `Name` is unique
 - `CK_Drawer_Name` — `Name IN ('DB1','DB2')`
-- `CK_Drawer_LineId` — `LineId IN ('FL1','FL3')`
+- `CK_Drawer_MachineName` — `MachineName IN ('FL1','FL3')`
 
-**Max two rows is structural, not policed.** `CK_Drawer_Name` admits only two values and `UQ_Drawer_Name` makes each unique, so a third row is impossible without a schema change — no trigger and no row-counting rule. `LineId = 'FL1'` for both rows is client-confirmed: the 31 Aug 2026 Tooling Inventory grid attributes dies to `Machine Name = FL1`, and **no FL3 row appears in any of the three tool grids**.
+**Max two rows is structural, not policed.** `CK_Drawer_Name` admits only two values and `UQ_Drawer_Name` makes each unique, so a third row is impossible without a schema change — no trigger and no row-counting rule. `MachineName = 'FL1'` for both rows is client-confirmed: the 31 Aug 2026 Tooling Inventory grid attributes dies to `Machine Name = FL1`, and **no FL3 row appears in any of the three tool grids**.
 
 > ✅ **One foreign key now points at this table, and until 3 Sep 2026 none did.** `PassScheduleComponent.ComponentName` and `DieChangeEvent.DiePosition` both name `DB1`/`DB2` as CHECK-constrained strings, and `PassScheduleComponent.DrawerId` was dropped with the split. So `Drawer` was an **equipment register, not a join target** — deliberate, and worth knowing before writing a query that assumes otherwise. **`ToolingInventoryRollSet.DrawerId` (`D-42`) is the first** — the capstan roll sets mount on the draw boxes. It is the referrer this note predicted, though it arrived from the roll sets rather than from `G77`'s edger and straightener work, which is still owed.
 
-> ⚠ **`CK_Drawer_LineId` keeps `FL3`, and `CK_ToolingInventoryDie_LineId` no longer does.** That is not an inconsistency. `Drawer` is **equipment** and FL3 genuinely runs through `DB1`/`DB2`; the tooling registers carry the client's 3 Sep rule that inventory is maintained for **FL1/FL2 only, with FL3 using a combination of the two** (`D-42`). Do not "align" the two constraints.
+> ⚠ **`CK_Drawer_MachineName` keeps `FL3`, and `CK_ToolingInventoryDie_MachineName` no longer does.** That is not an inconsistency. `Drawer` is **equipment** and FL3 genuinely runs through `DB1`/`DB2`; the tooling registers carry the client's 3 Sep rule that inventory is maintained for **FL1/FL2 only, with FL3 using a combination of the two** (`D-42`). Do not "align" the two constraints.
 
 > ⚠ **Naming: the client calls these `D1`/`D2` on one tab and `DB1`/`DB2` on another** — four spellings across four surfaces, per the 31 Aug 2026 mail analysis §4.8. `DB1`/`DB2` is retained deliberately; that analysis says **do not reconcile until the Speed tab lands** (action `A12`, still open).
 
@@ -86,7 +86,7 @@ The name is the client's own term: the Machines Application **Tooling Inventory*
 | `SerialNo` | varchar(50) | NULL | — | Client grid `S/N`. Unique when set, via a **filtered** index |
 | `PartNo` | varchar(50) | NULL | — | Client grid `P/N` |
 | `Location` | varchar(50) | NULL | — | Client grid `Location` — die room / crib position |
-| `LineId` | varchar(5) | NULL | — | Client grid `Machine Name`. NULL for a die not assigned to a line |
+| `MachineName` | varchar(5) | NULL | — | Client grid `Machine Name`. NULL for a die not assigned to a line |
 | `HoleSizeIn` | decimal(8,4) | NOT NULL | — | Client grid `ID(")` — the hole diameter, and so the output wire size |
 | `MinFeedDiameterIn` | decimal(8,4) | NULL | — | Minimum acceptable feed diameter (was `Drawer.MinDiameterIn`) |
 | `MaxFeedDiameterIn` | decimal(8,4) | NULL | — | Client grid `Max Imput Dia.` (was `Drawer.MaxDiameterIn`) |
@@ -108,7 +108,7 @@ The name is the client's own term: the Machines Application **Tooling Inventory*
 - `CK_ToolingInventoryDie_FeedRange` — `MinFeedDiameterIn < MaxFeedDiameterIn` when both present
 - `CK_ToolingInventoryDie_LastGrindingFeet` — `>= 0`
 - `CK_ToolingInventoryDie_TotalFeetAllowed` — NULL or `> 0`
-- `CK_ToolingInventoryDie_LifecycleStatus` · `CK_ToolingInventoryDie_LineId` · `CK_ToolingInventoryDie_DieType`
+- `CK_ToolingInventoryDie_LifecycleStatus` · `CK_ToolingInventoryDie_MachineName` · `CK_ToolingInventoryDie_DieType`
 - `UX_ToolingInventoryDie_SerialNo` — **filtered** unique, `WHERE SerialNo IS NOT NULL` (script `07`)
 
 **No uniqueness on `HoleSizeIn`.** The old one-row-per-diameter premise is gone: many physical dies share a size, which is the point of the split. **No `LastGrindingFeet <= TotalFeetAllowed` check** — *overdue* is a real operating state the Die Management screen must display, not a data error.
@@ -147,7 +147,7 @@ The client's grid carries three values (`Active` · `In Service` · `In Grinding
 | `RollType` | varchar(10) | NOT NULL | — | `Mill` · `Capstan` — the discriminator |
 | `StandId` | int | NULL | `Stand.Id` | Mill rolls: `FM1`, `FM2_S1`, `FM2_S2`, `FM2_S3` |
 | `DrawerId` | int | NULL | `Drawer.Id` | Capstan rolls: `DB1`, `DB2`. **The first FK ever taken on `Drawer`** |
-| `LineId` | varchar(5) | NULL | — | Client grid `Machine Name`. **`FL1` or `FL2` only** — FL3 uses a combination and holds no tooling of its own |
+| `MachineName` | varchar(5) | NULL | — | Client grid `Machine Name`. **`FL1` or `FL2` only** — FL3 uses a combination and holds no tooling of its own |
 | `SetNumber` | varchar(20) | NULL | — | Client grid `Set Number` — lettered `A` / `B` / `C` on the edger and straightener grids |
 | `RollQty` | int | NOT NULL | — | Client grid `Roll Qty`. Default `2` — every set the client named is a two-roll set |
 | `NominalDiameterIn` | decimal(5,3) | NULL | — | The **tool's** own nominal size: `12.000` for FM1; `8.000` / `6.000` / `6.000` for FM2 S1/S2/S3 |
@@ -163,7 +163,7 @@ The client's grid carries three values (`Active` · `In Service` · `In Grinding
 - `PK_ToolingInventoryRollSet`, `UQ_ToolingInventoryRollSet_Alpha`
 - `CK_TIRS_RollType` — `RollType IN ('Mill','Capstan')`
 - `CK_TIRS_Mount` — **exactly one mount, agreeing with the discriminator**: a `Mill` row has `StandId` and no `DrawerId`; a `Capstan` row has `DrawerId` and no `StandId`
-- `CK_TIRS_LineId` — `LineId IN ('FL1','FL2')` · `CK_TIRS_RollQty` — `> 0` · `CK_TIRS_NominalDiameter` — NULL or `> 0`
+- `CK_TIRS_MachineName` — `MachineName IN ('FL1','FL2')` · `CK_TIRS_RollQty` — `> 0` · `CK_TIRS_NominalDiameter` — NULL or `> 0`
 - `CK_TIRS_Od` — `MinOdIn < OdIn` when both present · `CK_TIRS_LifecycleStatus`
 - `IX_ToolingInventoryRollSet_StandId` · `_DrawerId` — both **filtered**, since `CK_TIRS_Mount` guarantees one of the pair is NULL on every row
 - `IX_ToolingInventoryRollSet_LifecycleStatus` · `UX_ToolingInventoryRollSet_SerialNo` — **filtered** unique (script `07`)
@@ -193,7 +193,7 @@ The client's grid carries three values (`Active` · `In Service` · `In Grinding
 | `Id` | int | NOT NULL | — | Surrogate primary key. **`1` and `2` are load-bearing** — see the seed note below |
 | `EdgeType` | varchar(10) | **NULL** | — | `Round` · `Square`. Carried from `Edger` and **relaxed to NULL** — **ours**, see the note below |
 | `EdgerType` | varchar(20) | NULL | — | Client grid `Type` |
-| `LineId` | varchar(5) | NULL | — | Client grid `Machine Name`. **`FL2` only** — the grid attributes edgers to FL2 and `D-42` bars FL3 |
+| `MachineName` | varchar(5) | NULL | — | Client grid `Machine Name`. **`FL2` only** — the grid attributes edgers to FL2 and `D-42` bars FL3 |
 | `Location` | varchar(50) | NULL | — | Client grid `Location` — roll shop / crib position |
 | `SetNumber` | varchar(20) | NULL | — | Client grid `Set Number` — lettered `A` / `B` / `C`. **Replaces `Edger.ToolingSetNo`** |
 | `PartNo` | varchar(50) | NULL | — | Client grid `P/N` |
@@ -209,7 +209,7 @@ The client's grid carries three values (`Active` · `In Service` · `In Grinding
 **Constraints:**
 - `PK_ToolingInventoryEdger` — ⚠ **and nothing else. The table has NO natural key**: no name, no alpha, no unique business column. See the note below
 - `CK_TIE_EdgeType` — NULL or `IN ('Round','Square')`. The surviving half of `CK_Edger_EdgeType`
-- `CK_TIE_LineId` — `LineId IN ('FL2')` · `CK_TIE_RollQty` — `> 0` · `CK_TIE_StdRemoval` — NULL or `> 0`
+- `CK_TIE_MachineName` — `MachineName IN ('FL2')` · `CK_TIE_RollQty` — `> 0` · `CK_TIE_StdRemoval` — NULL or `> 0`
 - `CK_TIE_Od` — `MinOdIn < OdIn` when both present · `CK_TIE_LifecycleStatus`
 - `IX_ToolingInventoryEdger_LifecycleStatus` · `UX_ToolingInventoryEdger_SerialNo` — **filtered** unique (script `07`)
 - **Inbound:** `FK_PSC_Edger` — `PassScheduleComponent.EdgerId`, **re-pointed here from `Edger`, name unchanged**
@@ -229,7 +229,7 @@ The client's grid carries three values (`Active` · `In Service` · `In Grinding
 > recorded state rather than an oversight — `G104`. Both candidates were removed deliberately, for the
 > same reason: they were **ours**, and **nothing read them**, verified rather than assumed.
 >
-> **`(LineId, SetNumber)` is the obvious replacement key and is deliberately NOT taken**: `Q95` leg 2
+> **`(MachineName, SetNumber)` is the obvious replacement key and is deliberately NOT taken**: `Q95` leg 2
 > asks whether `Set Number` is unique **per line or per shop**, and a `UNIQUE` here would pre-empt that
 > answer in one direction. `FW-268` adds the key when `Q95` returns.
 
@@ -281,7 +281,7 @@ Tension-management rollers. **FM1 carries one; FM2 carries two**, sitting **betw
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `Name` | varchar(30) | NOT NULL | — | Position-only identifier: `FM1_Dancer`, `FM2_Dancer1`, `FM2_Dancer2` |
-| `LineId` | varchar(5) | NULL | — | `FL1` / `FL2` / `FL3`; `NULL` = shared across lines, as `Stand` |
+| `MachineName` | varchar(5) | NULL | — | `FL1` / `FL2` / `FL3`; `NULL` = shared across lines, as `Stand` |
 | `Position` | varchar(20) | NOT NULL | — | Where it sits: `FM1`, `FM2_S1_S2`, `FM2_S2_S3` |
 | `Ordinal` | int | NULL | — | `1` = upstream, `2` = downstream. `NULL` when the mill carries only one (FM1) |
 | `SupportsTensionMode` | bit | NOT NULL | — | `1` where the client stated a selectable tension mode. **`0` on FM1 records "no"** since 1 Sep 2026 — tension mode is FL2-only. See below |
@@ -635,16 +635,16 @@ One row per (line, group, element label) — the client's grid as data. **FL1 33
 | Column | Data Type | Nullable | FK Reference | Description |
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | — | Surrogate primary key |
-| `LineId` | varchar(5) | NOT NULL | — | `FL1` / `FL2` / `FL3` |
+| `MachineName` | varchar(5) | NOT NULL | — | `FL1` / `FL2` / `FL3` |
 | `GroupId` | int | NOT NULL | `SetupHandlingTimeGroup.Id` | Which of the seven headings this element sits under |
 | `ElementLabel` | varchar(60) | NOT NULL | — | The element as the client wrote it. Longest today is 27 characters; the width is deliberately generous against revision |
-| `Sequence` | int | NOT NULL | — | Order within `(LineId, GroupId)`, as pictured |
+| `Sequence` | int | NOT NULL | — | Order within `(MachineName, GroupId)`, as pictured |
 | `IsActive` | bit | NOT NULL | — | `1` = shown on the tab |
 
 **Constraints:**
-- `UQ_SetupHandlingTimeElement_LineGroupLabel` — `(LineId, GroupId, ElementLabel)` is unique
-- `UQ_SetupHandlingTimeElement_LineGroupSeq` — `(LineId, GroupId, Sequence)` is unique
-- `CK_SetupHandlingTimeElement_LineId` — `FL1` / `FL2` / `FL3`
+- `UQ_SetupHandlingTimeElement_LineGroupLabel` — `(MachineName, GroupId, ElementLabel)` is unique
+- `UQ_SetupHandlingTimeElement_LineGroupSeq` — `(MachineName, GroupId, Sequence)` is unique
+- `CK_SetupHandlingTimeElement_MachineName` — `FL1` / `FL2` / `FL3`
 - `IX_SetupHandlingTimeElement_GroupId` — the one index the five tables need
 
 **Seed rows** (created by the DDL): **109**.
@@ -666,11 +666,11 @@ One row per (line, group, element label) — the client's grid as data. **FL1 33
 > the client said *"in the order pictured"*, and a send-back is what changes them. The FL3 group
 > counts — `H1AA` 15, `H1B` 5 — are the regression guard.
 
-> ⚠ **`CK_SetupHandlingTimeElement_LineId` admits all three lines. Do not align it** with
-> `CK_ToolingInventoryDie_LineId` (`FL1`) or `CK_TIRS_LineId` (`FL1`,`FL2`). Those drop FL3
+> ⚠ **`CK_SetupHandlingTimeElement_MachineName` admits all three lines. Do not align it** with
+> `CK_ToolingInventoryDie_MachineName` (`FL1`) or `CK_TIRS_MachineName` (`FL1`,`FL2`). Those drop FL3
 > because **tooling** is maintained for FL1/FL2 only (`D-42`); these tabs are configured **per
 > line including FL3** — the client supplied a distinct FL3 grid. Same equipment-versus-tooling
-> distinction `CK_Drawer_LineId` already carries a warning about.
+> distinction `CK_Drawer_MachineName` already carries a warning about.
 
 ---
 
@@ -724,15 +724,15 @@ One row per (line, element label) for the MATERIAL LOSS tab. **FL1 7 · FL2 9 ·
 | Column | Data Type | Nullable | FK Reference | Description |
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | — | Surrogate primary key |
-| `LineId` | varchar(5) | NOT NULL | — | `FL1` / `FL2` / `FL3` |
+| `MachineName` | varchar(5) | NOT NULL | — | `FL1` / `FL2` / `FL3` |
 | `ElementLabel` | varchar(80) | NOT NULL | — | The element as the client wrote it. **80, not 60** — the `Pass Change` label is 65 characters |
-| `Sequence` | int | NOT NULL | — | Order within `LineId`, as pictured |
+| `Sequence` | int | NOT NULL | — | Order within `MachineName`, as pictured |
 | `IsActive` | bit | NOT NULL | — | `1` = shown on the tab |
 
 **Constraints:**
-- `UQ_MaterialLossElement_LineLabel` — `(LineId, ElementLabel)` is unique
-- `UQ_MaterialLossElement_LineSeq` — `(LineId, Sequence)` is unique
-- `CK_MaterialLossElement_LineId` — `FL1` / `FL2` / `FL3`
+- `UQ_MaterialLossElement_LineLabel` — `(MachineName, ElementLabel)` is unique
+- `UQ_MaterialLossElement_LineSeq` — `(MachineName, Sequence)` is unique
+- `CK_MaterialLossElement_MachineName` — `FL1` / `FL2` / `FL3`
 
 **Seed rows** (created by the DDL): **28** — 16 distinct labels across three lines.
 

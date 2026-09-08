@@ -72,7 +72,7 @@ The one place shorthand appears. Everywhere else in the workbook these are writt
 **Delivers:** The operator application exists as something the team can build, run and deploy, with its screens routed and its settings in place.
 
 ### FW-130
-**Reference title:** Shell layout and the 1280×1024 shopfloor canvas
+**Reference title:** Shell layout and the 1920×1080 shopfloor canvas
 **Work item:** Shopfloor screen layout
 **Delivers:** Every screen is laid out for the panel size it will actually run on, so nothing has to be re-fitted after it is built.
 
@@ -258,7 +258,7 @@ The one place shorthand appears. Everywhere else in the workbook these are writt
 **Delivers:** A network drop never shows an operator a blank screen. The last known state stays visible with a clear warning until the connection returns.
 
 ### FW-155
-**Reference title:** `FlatWireRun(LineId, Status)` index
+**Reference title:** `FlatWireRun(MachineName, Status)` index
 **Work item:** Fast active-run lookup
 **Delivers:** Finding a line's current run stays instant as years of run history accumulate.
 

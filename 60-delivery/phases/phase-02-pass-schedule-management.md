@@ -76,7 +76,7 @@
 ## Database Changes
 - **Tables:** `PassSchedule`, `PassScheduleComponent` (writes); `Stand`/`Drawer`/**`ToolingInventoryEdger`** (reads for component→tool links); alloy lookup (reads). ⚠ **`EdgerId` re-pointed 6 Sep 2026 (`D-53`)** — `FK_PSC_Edger` keeps its name.
 - **Stored procs/views/functions:** none required (EF/Dapper); optionally a `vw_ActivePassSchedules` view for the check-in lookup.
-- **Indexes:** `PassSchedule(LineId, Alloy, Status)` supporting the attribute lookup.
+- **Indexes:** `PassSchedule(MachineName, Alloy, Status)` supporting the attribute lookup.
 - **Data changes:** override-log rows on every post-Active edit (`ParameterChanged, Old→New, OperatorId, Reason, Timestamp`).
 - **Relationships:** `PassSchedule 1→N PassScheduleComponent`; each component optionally → `Stand`/`Drawer`/**`ToolingInventoryEdger`**.
 

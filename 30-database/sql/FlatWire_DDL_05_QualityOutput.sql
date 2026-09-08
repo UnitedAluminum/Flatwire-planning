@@ -25,7 +25,7 @@ BEGIN
         [Id]                 INT           NOT NULL IDENTITY(1,1),
         [CheckpointId]       VARCHAR(20)   NOT NULL,        -- e.g. SPC-0041
         [RunId]              VARCHAR(20)   NOT NULL,        -- FK → FlatWireRun.RunId
-        [LineId]             VARCHAR(5)    NOT NULL,
+        [MachineName]             VARCHAR(5)    NOT NULL,
         [CheckpointType]     VARCHAR(30)   NOT NULL,        -- PreRun|PostDieChange|ManualSpotCheck|PostRun|RollAdjustTrigger
         [FootagePosition]    INT           NOT NULL,        -- footage counter at checkpoint initiation
         [OperatorId]         VARCHAR(50)   NOT NULL,
@@ -35,7 +35,7 @@ BEGIN
 
         CONSTRAINT [PK_SpcCheckpoint]             PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_SpcCheckpoint_Id]          UNIQUE ([CheckpointId]),
-        CONSTRAINT [CK_SpcCheckpoint_LineId]      CHECK ([LineId] IN ('FL1','FL2','FL3')),
+        CONSTRAINT [CK_SpcCheckpoint_MachineName]      CHECK ([MachineName] IN ('FL1','FL2','FL3')),
         CONSTRAINT [CK_SpcCheckpoint_Type]        CHECK ([CheckpointType] IN ('PreRun','PostDieChange','ManualSpotCheck','PostRun','RollAdjustTrigger')),
         CONSTRAINT [CK_SpcCheckpoint_FootagePos]  CHECK ([FootagePosition] >= 0)
     );
@@ -82,7 +82,7 @@ BEGIN
         [Id]                 INT           NOT NULL IDENTITY(1,1),
         [RejectionId]        VARCHAR(20)   NOT NULL,        -- e.g. REJ-0041
         [RunId]              VARCHAR(20)   NULL,            -- FK → FlatWireRun.RunId; NULL for pre-run rejections
-        [LineId]             VARCHAR(5)    NOT NULL,
+        [MachineName]             VARCHAR(5)    NOT NULL,
         [MaterialAlpha]      VARCHAR(20)   NOT NULL,        -- rod alpha or spool alpha
         [Stage]              VARCHAR(30)   NOT NULL,        -- e.g. FL1ActiveRun, FL2Incoming
         [FootagePosition]    INT           NULL,            -- NULL for pre-run rejections
@@ -106,7 +106,7 @@ BEGIN
 
         CONSTRAINT [PK_WipRejection]              PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_WipRejection_Id]           UNIQUE ([RejectionId]),
-        CONSTRAINT [CK_WipRejection_LineId]       CHECK ([LineId]           IN ('FL1','FL2','FL3')),
+        CONSTRAINT [CK_WipRejection_MachineName]       CHECK ([MachineName]           IN ('FL1','FL2','FL3')),
         -- CK_WipRejection_Group was DROPPED Sep-2-2026. The client's WIPREJ
         -- sheet is a flat list of 72 in-scope reasons with NO grouping at all,
         -- so every group value is OURS and provisional. Holding the vocabulary
@@ -159,7 +159,7 @@ BEGIN
         [Id]            INT           NOT NULL IDENTITY(1,1),
         [CoilAlpha]     VARCHAR(30)   NOT NULL,             -- e.g. FW-00421-C01
         [RunId]         VARCHAR(20)   NOT NULL,             -- FK → FlatWireRun.RunId
-        [LineId]        VARCHAR(5)    NOT NULL,
+        [MachineName]        VARCHAR(5)    NOT NULL,
         [OrderId]       VARCHAR(20)   NOT NULL,             -- manufacturing order this coil fulfills
         [GrossWeightLb] DECIMAL(8,2)  NOT NULL,             -- gross weight (lb)
         [NetWeightLb]   DECIMAL(8,2)  NOT NULL,             -- net material weight (lb); footage × AlloyProperty.LbPerFtFactor (OQ-10)
@@ -195,7 +195,7 @@ BEGIN
 
         CONSTRAINT [PK_CoilOutput]            PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_CoilOutput_CoilAlpha]  UNIQUE ([CoilAlpha]),
-        CONSTRAINT [CK_CoilOutput_LineId]     CHECK ([LineId]     IN ('FL1','FL2','FL3')),
+        CONSTRAINT [CK_CoilOutput_MachineName]     CHECK ([MachineName]     IN ('FL1','FL2','FL3')),
         CONSTRAINT [CK_CoilOutput_Status]     CHECK ([Status]     IN ('COMPLETE','HOLD','SCRAP')),
         CONSTRAINT [CK_CoilOutput_SkidStatus] CHECK ([SkidStatus] IN ('Open','Closing','Staged','Closed') OR [SkidStatus] IS NULL),
         CONSTRAINT [CK_CoilOutput_Footage]    CHECK ([FootageFt]  > 0)
@@ -274,7 +274,7 @@ BEGIN
         [Id]                           INT           NOT NULL IDENTITY(1,1),
         [CheckoutId]                   VARCHAR(20)   NOT NULL,  -- e.g. CO-0041
         [RunId]                        VARCHAR(20)   NULL,      -- FK → FlatWireRun.RunId; NULL for Mode A
-        [LineId]                       VARCHAR(5)    NOT NULL,
+        [MachineName]                       VARCHAR(5)    NOT NULL,
         [RodAlpha]                     VARCHAR(20)   NOT NULL,  -- FK → Rod.Alpha
         [PayoffPosition]               INT           NOT NULL,  -- 1 or 2
         [Mode]                         VARCHAR(10)   NOT NULL,  -- ModeP | ModeA | ModeB
@@ -300,7 +300,7 @@ BEGIN
 
         CONSTRAINT [PK_RodCheckout]                PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_RodCheckout_CheckoutId]     UNIQUE ([CheckoutId]),
-        CONSTRAINT [CK_RodCheckout_LineId]         CHECK ([LineId]          IN ('FL1','FL2','FL3')),
+        CONSTRAINT [CK_RodCheckout_MachineName]         CHECK ([MachineName]          IN ('FL1','FL2','FL3')),
         CONSTRAINT [CK_RodCheckout_PayoffPos]      CHECK ([PayoffPosition]  IN (1, 2)),
         CONSTRAINT [CK_RodCheckout_Mode]           CHECK ([Mode]            IN ('ModeP','ModeA','ModeB')),
         CONSTRAINT [CK_RodCheckout_RodDisposition] CHECK ([RodDisposition]  IN ('ReturnToFloorStorage','ReturnToWarehouse','HoldReturnToStorage','Scrap','DeferContinueLater')),

@@ -125,7 +125,7 @@ Required sections:
 7. **Out of scope, with owner and consumed interface** — rod receiving (CoilReceiving), order planning & line scheduling (Planning/Scheduling), yield/cost ledger, web order/quote changes (Epic E06), EDI rod receiving. For each, state precisely **what this module consumes** from it.
 8. **Non-goals** — no new frameworks, no printed traveler, no auto-applied pass schedule, no software PLC stop, no laser welding, never "strip".
 9. **Success criteria and acceptance measures** — phrased so doc 6 can test them and doc 7 can gate a release on them.
-10. **Constraints and assumptions** — stack constraint, the 1280×1024 shopfloor panel and 14px minimum text floor, the transactional boundary, environment topology.
+10. **Constraints and assumptions** — stack constraint, the 1920×1080 shopfloor panel and 14px minimum text floor, the transactional boundary, environment topology.
 11. **Key risks** — table with `RISK-##`, description, probability, impact, owner, mitigation, linked `G#`/`OI-##`. `RISK-01` is the schedule/capacity gap (G1). Include the three "most likely to stop this project" items from master spec §1.5.
 12. **Decisions already made and closed to re-litigation** — a condensed pointer into master spec §10 (do not restate all of it).
 13. **Open items** — the Critical tier of master spec §11.1 only, with owner and needed-by date.
