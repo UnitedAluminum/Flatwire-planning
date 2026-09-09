@@ -203,6 +203,20 @@ def esc(s):
     return (s or '').replace('|', r'\|').strip()
 
 
+def read_expected_counts():
+    """[(category, absorbed story count)] - the map's own view, not the files'.
+
+    build_features.py needs to tell "this category never had a story" from "its
+    task files have been retired", and only the map can answer that once the
+    files are gone. Parsed from the generated summary so it survives them.
+    """
+    out = []
+    for line in F.read(OUT).split('\n'):
+        m = re.match(r'^\|\s*`(FS-\d+)`\s*\|[^|]*\|[^|]*\|\s*(\d+)\s*\|', line)
+        if m:
+            out.append((m.group(1), int(m.group(2))))
+    return out
+
 def categorise(t):
     """(category, reason) for one task file."""
     tid = t['id']
