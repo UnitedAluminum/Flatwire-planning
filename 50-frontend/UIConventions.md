@@ -573,7 +573,7 @@ would have been wrong here.
 | A **running** line's state dot | ✅ | the line is producing right now |
 | A **running** payoff | ✅ | rod is being consumed |
 | The spool card's *Live · updated* footer | ✅ | it is asserting the reading is current |
-| A **Live** badge on a context bar | ✅ | same claim — ⚠ **DB1's does not pulse and should.** It is a plain `fa-circle text-success` with no `live-dot`; **the code is wrong here, not this table.** Deferred to [`FW-060`](../10-requirements/features/FS-06-line-visibility-alerting.md) with the height budget (§4.1), because DB1 is the last screen scheduled |
+| A **Live** badge on a context bar | ✅ | same claim — ⚠ **DB1's does not pulse and should.** It is a plain `fa-circle text-success` with no `live-dot`; **the code is wrong here, not this table.** Deferred to [`FW-060`](tasks/FW-060.md) with the height budget (§4.1), because DB1 is the last screen scheduled |
 | Idle / offline line, idle payoff | ⛔ | a settled state, not a live one |
 | **In spec / out of spec** on a trace | ⛔ | a measurement **verdict**. A pulsing verdict reads as "measuring", which is a different claim |
 | Component and die settings | ⛔ | configuration |
@@ -866,7 +866,7 @@ the `live-dot` keyframes, neither of which transforms a page.
 ⚠ **`supervisor-dashboard` does not follow this section, and that is a scheduled deferral, not an
 oversight.** It is `h-91 overflow-auto` with `align-items-start` and no height budget, which is the
 shape this section replaced. **DB1 is the last screen scheduled**, so it is reconciled as part of
-[`FW-060`](../10-requirements/features/FS-06-line-visibility-alerting.md) rather than now. ⛔ **Until then, copy DB3's budget — never DB1's
+[`FW-060`](tasks/FW-060.md) rather than now. ⛔ **Until then, copy DB3's budget — never DB1's
 layout.**
 
 ---

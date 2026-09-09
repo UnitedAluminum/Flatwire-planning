@@ -158,28 +158,24 @@ Open register items cited by at least one live activity, most-blocking first.
 ## FS-01 — Angular Application Shell and Foundation
 
 **7 activities · 29 % done · phase 1A** · **Story:** [FS-01-angular-application-shell.md](10-requirements/features/FS-01-angular-application-shell.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** *none — every not-started activity here waits on a dependency or a blocker*
 
 ## FS-02 — Backend Service Foundation
 
 **22 activities · 64 % done · phase 1B** · **Story:** [FS-02-backend-service-foundation.md](10-requirements/features/FS-02-backend-service-foundation.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** `FW-145`, `FW-264`, `FW-266`, `FW-267`, `FW-N13`
 
 ## FS-03 — Database Foundation and Deployment
 
 **21 activities · 21 % done · phase 1C** · **Story:** [FS-03-database-foundation.md](10-requirements/features/FS-03-database-foundation.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** *none — every not-started activity here waits on a dependency or a blocker*
 
 ## FS-04 — Real-Time and PLC Backbone
 
 **22 activities · 50 % done · phase 1A · 1B · 3 · 4 · 5** · **Story:** [FS-04-realtime-plc-backbone.md](10-requirements/features/FS-04-realtime-plc-backbone.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** `FW-239`
 
@@ -192,98 +188,84 @@ Open register items cited by at least one live activity, most-blocking first.
 ## FS-06 — Line Visibility and Alerting
 
 **7 activities · 0 % done · phase 3** · **Story:** [FS-06-line-visibility-alerting.md](10-requirements/features/FS-06-line-visibility-alerting.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** `FW-154`
 
 ## FS-07 — Rod Staging, Check-In, PLC Configuration and Weld Capture
 
 **15 activities · 0 % done · phase 4** · **Story:** [FS-07-rod-checkin-plc-config.md](10-requirements/features/FS-07-rod-checkin-plc-config.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** *none — every not-started activity here waits on a dependency or a blocker*
 
 ## FS-08 — Active Run Monitoring and Gauge/Width Trace
 
 **10 activities · 0 % done · phase 5** · **Story:** [FS-08-active-run-monitoring.md](10-requirements/features/FS-08-active-run-monitoring.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** *none — every not-started activity here waits on a dependency or a blocker*
 
 ## FS-09 — In-Run Production Events
 
 **16 activities · 0 % done · phase 6** · **Story:** [FS-09-in-run-production-events.md](10-requirements/features/FS-09-in-run-production-events.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** *none — every not-started activity here waits on a dependency or a blocker*
 
 ## FS-10 — Exceptions and Off-Ramps
 
 **7 activities · 0 % done · phase 7** · **Story:** [FS-10-exceptions-off-ramps.md](10-requirements/features/FS-10-exceptions-off-ramps.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** *none — every not-started activity here waits on a dependency or a blocker*
 
 ## FS-11 — Spool Lifecycle and FL2 Finishing Run
 
 **13 activities · 0 % done · phase 8** · **Story:** [FS-11-spool-lifecycle-fl2.md](10-requirements/features/FS-11-spool-lifecycle-fl2.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** `FW-N33`
 
 ## FS-12 — Output Completion, Labelling and Packing
 
 **10 activities · 0 % done · phase 9** · **Story:** [FS-12-output-completion-packing.md](10-requirements/features/FS-12-output-completion-packing.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** `FW-228`
 
 ## FS-13 — FL3 Hybrid Continuous Route
 
 **4 activities · 0 % done · phase 10** · **Story:** [FS-13-fl3-hybrid-route.md](10-requirements/features/FS-13-fl3-hybrid-route.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** *none — every not-started activity here waits on a dependency or a blocker*
 
 ## FS-14 — Order Allocation and Fulfilment
 
 **6 activities · 0 % done · phase 4 · 9** · **Story:** [FS-14-order-allocation-fulfilment.md](10-requirements/features/FS-14-order-allocation-fulfilment.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** *none — every not-started activity here waits on a dependency or a blocker*
 
 ## FS-15 — The Shared-Schema Boundary
 
 **5 activities · 0 % done · phase 4 · 9** · **Story:** [FS-15-shared-schema-boundary.md](10-requirements/features/FS-15-shared-schema-boundary.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** *none — every not-started activity here waits on a dependency or a blocker*
 
 ## FS-16 — Reporting and Certification
 
 **8 activities · 0 % done · phase 11** · **Story:** [FS-16-reporting-certification.md](10-requirements/features/FS-16-reporting-certification.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** *none — every not-started activity here waits on a dependency or a blocker*
 
 ## FS-17 — Yield, Cost Ledger and Scrap
 
 **4 activities · 0 % done · phase 12** · **Story:** [FS-17-yield-cost-scrap.md](10-requirements/features/FS-17-yield-cost-scrap.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** *none — every not-started activity here waits on a dependency or a blocker*
 
 ## FS-18 — Administration, Reference Data and Tooling Inventory
 
 **17 activities · 0 % done · phase 13** · **Story:** [FS-18-administration-reference-data.md](10-requirements/features/FS-18-administration-reference-data.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** *none — every not-started activity here waits on a dependency or a blocker*
 
 ## FS-19 — Integration Testing, Commissioning and Go-Live
 
 **10 activities · 10 % done · phase 14** · **Story:** [FS-19-integration-testing-golive.md](10-requirements/features/FS-19-integration-testing-golive.md)
-  · ⚠ *task files retired — this rolls up the story's hand-maintained activity table*
 
 **▶ Ready to start now:** `FW-120`, `FW-123`, `FW-249`, `FW-250`
 

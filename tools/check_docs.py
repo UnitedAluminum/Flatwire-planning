@@ -257,24 +257,31 @@ def check(rep):
         rep.error('8-map', '%d task file(s) are in no map row: %s'
                   % (len(unmapped), unmapped[:8]))
 
-    # --- 9. a card's Blockers line still agrees with its activity row ----------
+    # --- 9. a card's Blockers line still agrees with the owning story ----------
     #
-    # This rule EXISTS BECAUSE THE RETIREMENT REMOVED ITS PREDECESSOR. Card-vs-task
-    # blocker drift used to surface through the task-scoped rules (the retired floor
-    # included `3-blocker-stale-prefix` x21). With the task files gone those rules
-    # iterate over nothing, so the drift did not get fixed - it became INVISIBLE,
-    # and the strict floor dropping to 0 partly measured lost input rather than
-    # lost defects.
+    # Card-vs-story blocker drift was never checked. It surfaced only indirectly,
+    # through the task-scoped rules, and when the FS-## consolidation briefly
+    # retired the task files those rules lost their input and the drift went
+    # INVISIBLE rather than getting fixed - which is what this rule was written
+    # for. It is kept now the stories are back, because it checks something no
+    # other rule does: that the costing card and the story agree on what is
+    # blocking the work.
     #
-    # The activity row is authoritative: it was seeded from the live task files at
-    # consolidation, while a card's Blockers line is prose nobody regenerated. Ids
-    # are filtered to real register entries, because the prose carries tokens like
-    # `L1`, `M2` and `K007` that a bare [A-Z]\d+ pattern reads as blocker ids.
+    # The STORY is authoritative - its `blocked_by:` front-matter while the task
+    # files exist, and the activity row in its parent if they are ever retired
+    # again. A card's Blockers line is prose nobody regenerates. Ids are filtered
+    # to real register entries, because the prose carries tokens like `L1`, `M2`
+    # and `K007` that a bare [A-Z]\d+ pattern reads as blocker ids.
     ids_re = re.compile(r'(?:PLC-Q|OQ-|OI-|FR-|[A-Z])\d+')
-    activity = {}
-    for f in F.load_features():
-        for r in F.parse_activity_block(F.read(f['path'])):
-            activity[r['ref']] = r
+    if tasks:
+        activity = {t['id']: t for t in tasks}
+        authority = 'the story front-matter'
+    else:
+        activity = {}
+        for f in F.load_features():
+            for r in F.parse_activity_block(F.read(f['path'])):
+                activity[r['ref']] = r
+        authority = 'the activity row in its parent'
     backlog = F.read(F.BACKLOG)
     for m in re.finditer(r'^###### (FW-N?\d+)\s.*?(?=^###### |\Z)', backlog, re.S | re.M):
         cid, body = m.group(1), m.group(0)
@@ -294,8 +301,7 @@ def check(rep):
         if gone:
             bits.append('the card still lists %s' % ', '.join(gone))
         rep.warn('9-card-blocker-drift',
-                 '%s: %s - the activity row in its parent is authoritative'
-                 % (cid, '; '.join(bits)))
+                 '%s: %s - %s is authoritative' % (cid, '; '.join(bits), authority))
 
     return tasks, phases, reg
 

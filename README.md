@@ -16,12 +16,12 @@ library), and this repository is the specification they are built from.
 | **What is this functionality, and what does a change to it touch?** | **[`10-requirements/features/`](10-requirements/features/README.md)** — the 20 consolidated parent stories `FS-01`–`FS-20`. One file per functional area, and the single source of truth for its requirements, scope, open items, dependencies and change-impact |
 | **How is each *feature* progressing?** | **[`FEATURES.md`](FEATURES.md)** — the category board. `STATUS.md` answers *where are we by phase*; this answers *where are we by feature* |
 | **Which category did `FW-157` become part of?** | [`90-registers/StoryConsolidationMap.md`](90-registers/StoryConsolidationMap.md) `[SCM]` — the story → category ledger and the id-retirement register |
-| **Who is doing it?** | [`STATUS.md`](STATUS.md), `Owner` column — now **per category**, set in the parent's `owner:` front-matter and nowhere else. ⚠ **All twenty are unset**, so every row reads `—` |
+| **Who is doing it?** | [`STATUS.md`](STATUS.md), `Owner` column. It is set in the task file, nowhere else |
 | **What is in progress / blocked / pending / done?** | [`STATUS.md`](STATUS.md) — one row per task, one enum value |
 | **What is stopping us right now?** | [`STATUS.md`](STATUS.md) § *⛔ Stopping work right now* — open register items ordered by how many tasks each blocks |
 | **How is each phase / MVP progressing?** | [`STATUS.md`](STATUS.md) § *At a glance* |
 | **What can I start today?** | [`STATUS.md`](STATUS.md) — each phase ends with **▶ Ready to start now** |
-| **How do I build `FW-157`?** | Its category, [`FS-07`](10-requirements/features/FS-07-rod-checkin-plc-config.md) — requirements, scope, open items and change impact; the card in [`[TB §7]`](60-delivery/TaskBreakdown.md) for its acceptance criteria and hours. ⛔ **There is no longer a per-story plan file.** How it *was* built, if it was, is in [`95-archive/task-plans/`](95-archive/task-plans/) — **not citable** |
+| **How do I build task `FW-157`?** | Its task file: [`FW-157`](40-backend/tasks/FW-157.md). That file *is* the plan. Read its `FS-##` parent first if you need to know what the functionality *is* or what a change to it touches |
 | **What is still undecided?** | [`90-registers/Questions.md`](90-registers/Questions.md) `Q##` (business) · [`90-registers/Gaps.md`](90-registers/Gaps.md) `G##` (internal) · master spec §11 `OI-##` |
 | **Where is everything else?** | [`./DOCUMENTS.md`](./DOCUMENTS.md) — the document map and shortcode table |
 
@@ -29,10 +29,9 @@ library), and this repository is the specification they are built from.
 
 ## The three files that matter most
 
-**[`STATUS.md`](STATUS.md) — the board, by phase.** ⚙ **Generated. Never edit it.** Its 204 rows
-now come from `[SCM]` joined to the parents' activity tables. To change what it says, change the
-**activity row in its parent** and re-run `python tools/build_status.py`. The page states its own
-provenance at the top.
+**[`STATUS.md`](STATUS.md) — the board, by phase.** ⚙ **Generated. Never edit it.** Every value
+comes from the front-matter of a task file. To change what it says, change the task file and re-run
+`python tools/build_status.py`.
 
 **[`FEATURES.md`](FEATURES.md) — the board, by feature.** ⚙ **Also generated.** Its unit is the
 **activity**, not the category: a category inherits the union of its stories' blockers, so a
@@ -46,54 +45,66 @@ what a change to it would touch, this is the file. Its absorbed-story table, blo
 verification evidence are generated; its prose is hand-owned. Rules in
 [`10-requirements/features/README.md`](10-requirements/features/README.md).
 
-⛔ **`*/tasks/FW-###.md` no longer exists — retired 9 Sep 2026.** One file per story per stream
-was the shape this repository tracked work in until the `FS-##` consolidation; a one-line rename
-(`D-56`) cost three stories, and the FL2 gauge reversal cost four. **A story is no longer a planning
-unit — its category is.** Where each thing went:
+**`*/tasks/FW-###.md` — the unit of *work*, and the build record.** One file per story, in its
+stream's folder:
 
-| Was in the task file | Is now |
+```
+50-frontend/tasks/    FE stories (and three RT)
+40-backend/tasks/     BE and RT stories
+30-database/tasks/    DB stories
+70-testing/tasks/     QA stories
+60-delivery/tasks/    BA stories (no build stream)
+```
+
+Each carries machine-readable front-matter above the `---` and the developer's plan below it. Two
+developers on two tasks never edit the same file. **All 204 exist and none is going away.**
+
+✅ **Full dissolution was executed on 9 Sep 2026 and reversed the same day.** The `FS-##` tier is
+**additive**: it groups the stories for analysis and does not replace them. Anything saying the
+task files are retired, or that a parent's activity table is the only status record, is stale — see
+[`[SCM §3.1]`](90-registers/StoryConsolidationMap.md).
+
+| Where a thing lives | |
 |---|---|
-| `status:`, `depends_on:`, `blocked_by:`, verification evidence | the owning parent's **activity table** — the single writable home of status |
-| `owner:` | the parent's `owner:` front-matter, one per category |
-| phase, sprint, MVP, streams, hours, title | [`StoryConsolidationMap.md`](90-registers/StoryConsolidationMap.md) `[SCM]`, which is **frozen** |
-| the acceptance criteria | **unchanged, on the backlog card** in [`[TB §7]`](60-delivery/TaskBreakdown.md) — all 1,222 of them; only 7 % cite a spec, so they are original detail and were not merged up |
-| the implementation plan — how it was built | [`95-archive/task-plans/`](95-archive/task-plans/), which is **not citable**: read it for what was built, never as a requirement |
+| `status:`, `owner:`, `depends_on:`, `blocked_by:`, verification evidence | the **task file**'s front-matter — the one writable home |
+| Hours and acceptance criteria | the story's `######` card in [`[TB §7]`](60-delivery/TaskBreakdown.md) |
+| How to build it | the task file's own body — that file *is* the plan |
+| What the functionality **is**, and what a change to it touches | its `FS-##` parent in [`10-requirements/features/`](10-requirements/features/README.md) |
+| Which category a story sits in | [`StoryConsolidationMap.md`](90-registers/StoryConsolidationMap.md) `[SCM]` |
 
 The `*/tasks/` folders still hold five **demoted** sequencing boards. Each says so at the top, and
 every `FW-###` link on them points at a retired file — `[SCM]` is the forwarding address.
 
 ## Picking up a task
 
-⚠ **This changed on 9 Sep 2026.** Status is no longer a line in your own file — it is a **row in
-the activity table** of the parent that owns the work. That table is hand-maintained and shared, so
-two people working in one category edit one file. Keep the edit to your row.
-
-```
+```bash
 # 1. Find work: STATUS.md -> your stream -> "Ready to start now"
 #    (dependencies met, nothing blocking). FEATURES.md is the same by feature.
 
-# 2. Open the owning parent: 10-requirements/features/FS-##-*.md, section 5.
-#    Which parent? STATUS.md's row links to it, or look the id up in [SCM].
+# 2. Claim it. One line, in your own file, and no other file changes:
+#      status: in-progress
+#      owner: <you>
+#      started: <today>
 
-# 3. Claim your row - the Status cell only, and no other row:
-#      | 7 | Check-in transaction | BE | in-progress | FW-157 | - | |
+# 3. Read the FS-## parent once, for what the functionality IS and what a
+#    change to it touches. Then work: the file you claimed IS the plan -
+#    section 3 "Build order" is the steps.
 
-# 4. Read the card for WHAT to build: [TB section 7] carries the acceptance
-#    criteria and the hours. The parent carries requirements, scope and impact.
-#    There is no per-story plan any more; a past one may be in 95-archive/
-#    task-plans/, which is NOT citable.
+# 4. Blocked? Name the register id. Never prose:
+#      status: blocked
+#      blocked_by: [G2]
 
-# 5. Blocked? Name the register id in the blocked_by cell. Never prose.
+# 5. Done? Record the measured result in section 5 "Verification", then:
+#      status: in-review   ->   a reviewer sets   status: done
 
-# 6. Done? Put the measured result in the Evidence cell - 95-archive/ is not
-#    citable, so an unrecorded verification is a verification that is gone.
-#    in-review -> a reviewer sets done.
-
-python tools/build_status.py            # regenerate the phase board
-python tools/build_features.py          # regenerate the feature board + blocks
-python tools/build_features.py --selftest   # the tables still round-trip
-python tools/check_docs.py              # would CI pass? 0 errors; 50 warnings are the floor
+python tools/build_status.py     # regenerate the phase board
+python tools/build_features.py   # regenerate the feature board and the parents' blocks
+python tools/check_docs.py       # would CI pass?
 ```
+
+⚠ **Two files, not one, when a story's blockers change:** the task file's `blocked_by:` is
+authoritative, and its `######` card in `[TB §7]` carries a `**Blockers:**` line that nobody
+regenerates. `check_docs` rule 9 reports the divergence — there are **50** today.
 
 **Status values:** `not-started` → `in-progress` → `in-review` → `done`, with `blocked` and
 `cancelled` as side states. `blocked` must always name a register id.
@@ -108,7 +119,7 @@ Run from the repository root. All are dependency-free except the workbook builde
 |---|---|
 | `python tools/build_status.py` | Regenerate [`STATUS.md`](STATUS.md). `--check` fails if it is stale |
 | `python tools/build_features.py` | Regenerate [`FEATURES.md`](FEATURES.md) **and** each parent's generated blocks. `--check` for CI |
-| `python tools/build_consolidation_map.py` | ⛔ **Frozen.** It generated the map *from* the task files, so with those retired it reports the freeze and exits 0. `[SCM]` is now hand-owned; correct it by editing it |
+| `python tools/build_consolidation_map.py` | Regenerate [`StoryConsolidationMap.md`](90-registers/StoryConsolidationMap.md) §2 from the task files — only when category membership changes. Refuses to emit rather than emit something wrong, and freezes itself if the task files are ever absent |
 | `python tools/check_docs.py` | Assert the task ↔ phase ↔ register relationships. `--strict` for CI |
 | `python tools/linkcheck.py` | Verify no path reference broke against the pinned baseline |
 | `python tools/deliverables/verify_schema_counts.py` | Assert the DDL matches its published object counts |

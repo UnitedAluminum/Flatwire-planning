@@ -47,24 +47,25 @@ the rule that stops scope changes moving files — under the old shape Phase 9 a
   — they lose to every specification.** Rules, including what a parent may *assert* versus *cite*,
   are in that folder's `README.md`. ⛔ A parent carries **no `status:`, no `hours:` and no
   `depends_on:`** — enforced by `check_docs.py` rule 7.
-- ⛔ **`{30,40,50,60,70}-*/tasks/FW-###.md` no longer exists — all 204 retired 9 Sep 2026.**
-  A story is not a planning unit; its category is. **A work item is now two things:** a `######`
-  costing card in [`[TB §7]`](60-delivery/TaskBreakdown.md), which owns its **hours and its
-  acceptance criteria** (all 1,222 of them — only 7 % cite a spec, so they are original detail and
-  were deliberately *not* merged up), and an **activity row** in its owning parent, which is the
-  **single writable home of `status:`**, dependencies, blockers and verification evidence. The
-  implementation plans are in [`95-archive/task-plans/`](95-archive/task-plans/) — **not citable**;
-  read them for what was built, never as a requirement. ⚠ **`G126`:** fourteen of them carry a
-  correction owed to another document that went non-citable with them; the seven that corrected a
-  live card were lifted onto the card, the rest are unreviewed. The five `*/tasks/` folders still
-  hold **demoted** sequencing boards, each banner-flagged.
+- **A task is one file**: `{30,40,50,60,70}-*/tasks/FW-###.md`, front-matter above the `---`,
+  the developer's plan below. **All 204 exist, and none is going away.** The task file is the
+  **unit of work**, the **build record** and the **writable home of `status:`**; its `######` card
+  in [`[TB §7]`](60-delivery/TaskBreakdown.md) owns its **hours and acceptance criteria**.
+  ✅ **Full dissolution was executed on 9 Sep 2026 and reversed the same day** — anything saying
+  the task files are retired, or that an activity table is the only status record, is stale. The
+  reversal is recorded in [`[SCM §3.1]`](90-registers/StoryConsolidationMap.md).
+- ⚠ **The story is the unit of WORK; the `FS-##` category is the unit of UNDERSTANDING.** Neither
+  replaces the other. Read the parent to learn what a functional area is and what a change to it
+  touches; read the story to build it. Where a parent and a task file disagree, **the task file
+  wins** on status, hours, phase and streams — the parent's tables are generated from it.
 - **Which category a story became part of** is [`90-registers/StoryConsolidationMap.md`](90-registers/StoryConsolidationMap.md)
   `[SCM]`, which is also the id-retirement ledger: every `FW-###` is retired **with a forwarding
   address** and no number is ever reused.
 - **[`STATUS.md`](STATUS.md) and [`FEATURES.md`](FEATURES.md) are generated.** Never edit either.
-  `STATUS.md` is by phase, `FEATURES.md` by feature. ⚠ **Change the activity row in the owning
-  parent** — that table is the single writable home of status now that the task files are retired —
-  then run `python tools/build_status.py` **and** `python tools/build_features.py`.
+  `STATUS.md` is by phase, `FEATURES.md` by feature. **Change the task file** — its front-matter
+  is the one writable home of `status:` — then run `python tools/build_status.py` **and**
+  `python tools/build_features.py`. Both boards derive from the same task files, so they cannot
+  disagree.
 - **`95-archive/` is not citable.** Nothing there is a requirement, ever. ⚠ **That is why each
   parent carries its absorbed stories' measured verification evidence** — generated, so it survives
   those plans being archived.
@@ -323,35 +324,31 @@ python tools/check_docs.py               # task <-> phase <-> register <-> paren
 python tools/linkcheck.py                # no path reference broke
 ```
 
-⚠ **`check_docs.py` reports 0 errors and a floor of 50 warnings, all of one rule:
-`9-card-blocker-drift`.** `--strict` fails on them. Compare the *warning set*, not a green/red
-result.
+⚠ **`check_docs.py` reports 0 errors and a floor of 237 warnings.** `--strict` fails on them.
+Compare the *warning set*, not a green/red result: **187** are the long-standing task-scoped ones
+(stale blocker prefixes, the inherited folder/stream disagreement `G62`, inferred status, missing
+owners, the known `FW-071`/`FW-072` cycle) and **50** are `9-card-blocker-drift`.
 
-The history matters, because the number moved twice for opposite reasons. The floor was **187**
-until the `FS-##` consolidation on 9 Sep 2026 — every one scoped to a task file (stale blocker
-prefixes, the inherited folder/stream disagreement `G62`, inferred status, the known
-`FW-071`/`FW-072` cycle). Retiring the task files took it to **0**, and that reading was
-**misleading**: those rules had not been satisfied, they had **lost their input**. ⛔ **One class
-of real drift went invisible rather than getting fixed** — a card's `**Blockers:**` line diverging
-from the truth — so rule 9 was added the same day to compare each card against the **activity row
-in its parent, which is authoritative**. It found **50**: mostly `OQ-##` blockers the cards never
-received, plus resolved ones (`G6`, `G23`) they never dropped, plus the `Q6`-versus-`OQ-6` prefix
-inconsistency the retired floor had tracked as `3-blocker-stale-prefix`.
+⚠ **Rule 9 is new, and the reason it exists is worth knowing.** A card's `**Blockers:**` line
+diverging from its story's `blocked_by:` was never checked — it surfaced only indirectly. When the
+dissolution briefly retired the task files, the task-scoped rules **lost their input** and the
+floor read **0**, which looked like a clean gate and was really a blind one: the drift had not been
+fixed, it had become invisible. Rule 9 was written then and is kept now, because it checks
+something no other rule does — that the costing card and the story agree on what is blocking the
+work. It finds **50**: mostly `OQ-##` blockers the cards never received, plus resolved ones (`G6`,
+`G23`) they never dropped, plus the `Q6`-versus-`OQ-6` prefix inconsistency.
 
-⚠ **So a 0 floor was never the goal, and reaching one by deleting inputs is the failure mode to
-watch for.** These 50 are pre-existing and are the tolerated floor; a **51st** is a real finding.
+⛔ **A 0 floor was never the goal, and reaching one by deleting inputs is the failure mode to
+watch for.** These 237 are pre-existing; a 238th is a real finding.
 
-⛔ **Two commands left that list on 9 Sep 2026, and neither should be run again.**
-`build_consolidation_map.py` is **FROZEN** — it generated `[SCM]` *from* the task files, so it now
-prints the freeze and exits 0; `[SCM]` is hand-owned, and a wrong row is fixed by editing it.
-`build_status.py --dryrun-retired` compared both board sources *before* the deletion and now
-correctly reports there is nothing left to compare.
+`check_docs.py` now checks **both** tiers: `R1`–`R3` and `R6` on the task files, `R4` card ↔ task
+parity, `R5` phase resolution, **`R7`** a parent's `phases:` resolving and its forbidden fields,
+**`R8`** map ↔ parent both ways, and **`R9`** card ↔ story blockers.
 
-⚠ **The rules that survive the retirement are the ones that check the new tier:** `R4` card ↔ map
-parity, `R5` phase resolution, `R7` a parent's `phases:` resolving, and `R8` map ↔ parent both ways.
-The task-scoped rules `R1`–`R3` and `R6` now iterate over nothing, so **`0 tasks` in the header line
-is the expected reading, not a loader failure** — `check_docs` reports the parent count beside it for
-exactly that reason.
+⚠ **`build_consolidation_map.py` regenerates `[SCM]` from the task files, so run it only when
+category membership changes** — it rewrites §2 and leaves §1 and §3 alone. It **freezes itself**,
+printing a notice and exiting 0, if the task files are ever absent, because it cannot generate
+without them.
 
 `tools/hooks/pre-commit` runs the first two automatically once installed. See
 [`tools/README.md`](tools/README.md) — including the **cp1252 heredoc trap**, which silently

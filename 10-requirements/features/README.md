@@ -3,7 +3,7 @@
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
 **Last Updated:** September 9, 2026 — step 6 complete: all 20 parents authored
 **Document Type:** Index — the category structure and the rules that keep this tier thin
-**Status:** Active — all 20 parents authored, the task-file tier retired 9 Sep 2026. ⛔ **The §3 "merged acceptance criteria" item is CANCELLED, not outstanding** — see *Acceptance criteria are not merged up* below
+**Status:** Active — all 20 parents authored. ✅ **Additive: every `FW-###` story keeps its own file.** ⛔ The §3 "merged acceptance criteria" item is **cancelled, not outstanding** — see *Acceptance criteria are not merged up* below
 **Owner:** Delivery lead
 **Audience:** Anyone changing flat wire functionality, or assessing the impact of a change
 **Shortcode:** — *(derived; **not** citable as a requirement)*
@@ -64,7 +64,23 @@ body:
 | Hours | `[CE §3e]` and `[TB §7.3]` — **never** restate a figure |
 | Requirement **text** | `[REQ §5.x]` and the owning screen specification |
 | **Acceptance criteria** | the story's `######` card in [`[TB §7]`](../../60-delivery/TaskBreakdown.md) — **not** the specifications; see below |
-| Build detail for work already done | the story's build record |
+| Build detail, and how to build it | the story's own task file — `*/tasks/FW-###.md`, which **is** the plan |
+
+### ✅ This tier is additive — no story is dissolved
+
+**A parent groups stories; it does not replace them.** Full dissolution was executed on
+9 Sep 2026 — all 204 `*/tasks/FW-###.md` retired, 125 plans archived — and **reversed the same
+day on instruction**. The stories are restored and stay.
+
+⛔ **So the precedence above has a hard floor: the story wins on anything it owns.** `status:`,
+`owner:`, `depends_on:`, `blocked_by:`, phase, streams, hours and the verification record all live
+in the task file's front-matter and body, and a parent's tables are **generated from them**. A
+parent that disagrees with a task file is wrong, not authoritative. What the parent uniquely owns
+is the **consolidated open-item roll-up**, the **change-impact profile**, and the one-file answer
+to *what is this functionality and what does a change to it touch* — which is why the tier exists.
+
+⚠ **`[SCM §3.1]`** records what was attempted and reversed, including the proof the restore was
+clean: `STATUS.md` regenerates byte-identical to its pre-dissolution content.
 
 ### ⛔ Acceptance criteria are not merged up — corrected on measurement, 9 Sep 2026
 

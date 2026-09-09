@@ -75,7 +75,7 @@ than restating it.
 | `FS-20` | Unscheduled and Unhosted Requirements | — | 0 | 0 | 0 | 5 | 0 |
 | | **Total** | | **204** | | | **13** | **3698** |
 
-*The `h` column sums the absorbed stories' `hours:` front-matter. It is an audit of the partition, **not** a costing figure: `[CE §3e]` is the hours model of record and no `FS` file publishes an hours total.*
+*The `h` column sums the category's stories' `hours:` front-matter. It is an audit of the partition, **not** a costing figure: `[CE §3e]` is the hours model of record and no `FS` file publishes an hours total.*
 
 ### 2.2 Requirement coverage by category
 
@@ -502,7 +502,7 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 
 ### 2.6 Retired ids
 
-Ids **not** absorbed into a parent. Each keeps its number forever and is never reused (`TaskIdMap.md` rule 3).
+Ids with no card and no task file. Each keeps its number forever and is never reused (`TaskIdMap.md` rule 3).
 
 | `FW-###` | Why | Forwarding address |
 |---|---|---|
@@ -515,78 +515,61 @@ Ids **not** absorbed into a parent. Each keeps its number forever and is never r
 
 ---
 
-## 3. Sign-off
+## 3. Review
 
-⛔ **The migration's one-way door is the deletion step, and this section is the gate in front of
-it.** No task file is deleted and no plan archived until the review below is recorded.
+✅ **There is no deletion to gate, so this section is a review record rather than a door.**
+The consolidation is **additive**: the 20 parents were created, and **all 204 `FW-###` stories keep
+their own files**. Nothing needs signing before work continues.
 
-**What is actually deleted is narrower than it first appears.** The **backlog cards are retained**,
-so all 1,222 acceptance criteria, every hour figure and every client-visible `FW-###` survive
-untouched. What step 9 removes is the **task files** — the implementation plans — and the measured
-verification from the 32 completed ones is lifted into each parent's §2 first, because
-`95-archive/` is not citable.
+### 3.1 What was attempted, and reversed
 
-The reviewer must confirm, against the tag named here:
+⛔ **Full dissolution was executed on 9 Sep 2026 and reversed the same day, on instruction.**
+For the record, because the reversal is the reason several documents carry a *"until 9 Sep 2026"*
+note:
 
-- every story resolves to exactly one category, and the stated basis is right;
-- every `FR-###` still reaches a category — including the `Retain` rows, which own ranges no task
-  file covers;
-- every `depends_on` edge either collapses inside a category or becomes a clean `FS` → `FS` edge,
-  **and the merge creates no new dependency cycle**;
-- the phase-overrides in §2.3 are each correct;
-- §2.5's reading is right: that the 55 % of criteria classed as **build acceptance** carry no
-  requirement that exists nowhere else, and are correctly left on their card;
-- `python tools/build_status.py --dryrun-retired` passes, proving both boards survive the deletion;
-- `python tools/build_features.py --selftest` passes, proving the activity tables — the only
-  status record that outlives the task files — round-trip.
+| | |
+|---|---|
+| What was done | The 204 `*/tasks/FW-###.md` files were retired — 125 archived to `95-archive/task-plans/`, 79 content-free stubs deleted — leaving the parents' activity tables as the only status record |
+| What was reversed | All 204 restored from tag **`pre-fs-consolidation`**; the duplicate archive folder removed after verifying all 125 files were **byte-identical** to the restored originals |
+| Proof the restore was clean | `STATUS.md` regenerates **byte-identical** to its pre-dissolution content — 204 rows, the same status distribution, the same 3,698 h. `load_units()` returns `load_tasks()` unchanged, which is the identity guarantee that function exists for |
+| What was kept from the dissolution pass | The 20 parents; `[SCM]`; `FEATURES.md`; `check_docs` rules 7, 8 and 9; the no-invented-hours check; and **nine card corrections** recovered under `G126` — all of it work that does not depend on the stories being gone |
 
-| Reviewed at tag | Reviewer | Date | Outcome |
-|---|---|---|---|
-| `pre-fs-consolidation` | **— none. NOT SIGNED.** | — | **Deletion executed without it** — read below |
+⚠ **The review gate that stood here was overridden once, and that is worth remembering rather
+than deleting.** The deletion ran on repeated explicit instruction with **no reviewer**, and the
+seven judgement bullets it asked for were never confirmed. The reversal makes the consequence moot,
+but the lesson is not: **a one-way door with an unsigned gate in front of it was walked through.**
 
-⛔ **The gate was not satisfied. It was overridden, and this is the record of that.**
+### 3.2 What still needs a human, and why it is no longer urgent
 
-The deletion and archival were carried out on **9 Sep 2026** on the **repeated explicit instruction
-of the requester**, who was told what step 9 was and asked for it to proceed. **No reviewer
-confirmed the seven bullets above.** Nothing here should be read as a sign-off, and the row above is
-deliberately left unsigned rather than filled in with the executing agent's name: the reviewer's job
-is to check the judgement calls, and an agent checking its own mapping is not a review.
+These are judgement calls the tooling cannot make. They now affect only **where a change is
+analysed**, not whether a story survives — so getting one wrong costs a re-filing, not a
+requirement:
 
-**What was verified mechanically, and is therefore genuinely evidenced:**
+- the **phase-overrides** in §2.3, `FW-063`→`FS-07` most of all (weld capture, against the story's
+  own `phase: 6`), since that one contradicts a field rather than filling a gap;
+- §2.5's reading — that the criteria classed **build acceptance** carry no requirement existing
+  nowhere else, and belong on their card;
+- each category's boundary, in particular the deliberate technical split
+  `FS-01`/`FS-02`/`FS-03` and the pairs `FS-14`/`FS-15`, `FS-16`/`FS-17`.
 
-| Bullet | By | Result |
+### 3.3 Mechanically verified
+
+| Claim | By | Result |
 |---|---|---|
-| Every story resolves to exactly one category | `build_consolidation_map.py`'s own completeness assertion, plus `_audit_rules()` refusing on a no-op rule or a stale id | 204 stories, no duplicates, nothing unmapped |
-| Every `FR-###` still reaches a category | §2.2, generated | 404 requirements over 30 `[REQ]` sections |
-| No new dependency cycle | parents carry **no `depends_on`** at all, so `check_docs` R2 has no category edge to cycle on; the direction is recorded, generated, in §2.4 | `check_docs --strict` green |
-| Both boards survive the deletion | `build_status.py --dryrun-retired`, run **before** deletion | `load_units()` 204, status distribution and 3,698 h identical to `load_tasks()` |
-| The activity tables round-trip | `build_features.py --selftest` | 204 activities, seeded from the on-disk tables |
+| Every story resolves to exactly one category | this generator's completeness assertion, plus `_audit_rules()` refusing on a no-op rule or a stale id | 204 stories, no duplicates, nothing unassigned |
+| Every `FR-###` reaches a category | §2.2, generated | 404 requirements over 30 `[REQ]` sections |
+| No category dependency cycle | parents carry **no `depends_on`**, so `check_docs` rule 2 has no category edge to cycle on; direction is recorded in §2.4 | rule 2 sees only the task graph, as before |
+| Map ↔ parent agreement, both ways | `check_docs` rule 8 | 0 errors |
+| The activity tables round-trip | `build_features.py --selftest` | 204 activities |
+| Card ↔ story blocker agreement | `check_docs` rule 9 *(new)* | **50 divergences**, pre-existing, listed as warnings |
 
-⚠ **One of those two gates had itself gone blind, and that is why the pair is listed separately
-from the judgement bullets.** `--selftest` seeded only from `load_tasks()`, so at the moment the task
-files were deleted — the moment it became the only remaining guard — it reported *"0 activities
-round-trip"* and **exited 0, asserting nothing**. It now seeds from the on-disk activity tables and
-**treats a zero total as a failure**; both failure modes were re-proven by injection. Read a green
-`--selftest` from before 9 Sep 2026 as unproven.
+⚠ **`--selftest` had itself gone blind** while the task files were gone: seeded only from
+`load_tasks()`, it reported *"0 activities round-trip"* and **exited 0, asserting nothing**, at
+exactly the moment it became the only remaining guard. It now seeds from the on-disk tables when the
+stories are absent and **treats a zero total as a failure**.
 
-**What was NOT verified, and still needs a reviewer** — these are judgement, not arithmetic:
-
-- that the **phase-overrides** in §2.3 are each correct, `FW-063`→`FS-07` (weld capture, against its
-  own `phase: 6`) most of all, since that one contradicts a field rather than filling a gap;
-- that §2.5's reading is right — that the criteria classed **build acceptance** carry no requirement
-  existing nowhere else, and belong on their card;
-- that each category's boundary is the right cut of the operator journey, in particular the
-  deliberate technical split `FS-01`/`FS-02`/`FS-03` and the pairs `FS-14`/`FS-15`, `FS-16`/`FS-17`.
-
-**Recovery.** Everything removed is at tag **`pre-fs-consolidation`** — all 204 task files, the 108
-that carried `has_plan: true` among them. **125** of the 204 are also on disk at
-[`95-archive/task-plans/`](../95-archive/task-plans/), which is **not citable**: read it for what was
-built, never as a requirement. *(125, not 108: seventeen more were archived because a safety
-assertion caught them holding real content behind `has_plan: false` — `FW-062` was 13,224 bytes.
-The other 79 were stubs with no content to keep and were deleted; the tag is the only copy.)* The pre-migration link baseline is kept beside the new one as
-`tools/_linkcheck_baseline_pre-fs.json`, with the delta and its assertions in
-`tools/_linkcheck_delta_2026-09-09.txt`.
-
-⚠ **If the review below finds a mapping wrong, the fix is an edit to this file and the affected
-parent — not a regeneration.** `build_consolidation_map.py` is **frozen**: it generated from the task
-files, and they are gone. It now says so and exits 0 rather than emitting ~200 "no task file" errors.
+**Recovery.** Tag **`pre-fs-consolidation`** remains, and is the pre-consolidation state of the
+whole repository. The pre-migration link baseline is kept beside the current one as
+`tools/_linkcheck_baseline_pre-fs.json`, with the dissolution-era delta in
+`tools/_linkcheck_delta_2026-09-09.txt` — retained as the audit trail of a reversed change, not as
+a description of the current state.

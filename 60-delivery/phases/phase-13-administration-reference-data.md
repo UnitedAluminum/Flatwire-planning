@@ -20,8 +20,8 @@
 > ⚠ **A FOURTH tool type landed 3 Sep 2026 — `D-42`.** The client's Tooling Inventory tab carries
 > **Dies · Edgers · Straighteners · Roll Sets**. ⭐ **Three of the four are now built** — `ToolingInventoryDie`, `ToolingInventoryRollSet`, and **`ToolingInventoryEdger` + `ToolingInventoryEdgerGauge` (6 Sep 2026, `D-53`, which absorbed `Edger`)**. ⚠ **Only the STRAIGHTENER is unbuilt, and that is all `G77` still owns.** `ToolingInventoryRollSet` (mill rolls and the
 > DB1/DB2 capstan rolls) is built. **Dancers, entry guides, payoffs and spools are explicitly NOT
-> tooling.** Stories [`FW-259`](../../10-requirements/features/FS-03-database-foundation.md) ·
-> [`FW-260`](../../10-requirements/features/FS-18-administration-reference-data.md) · [`FW-261`](../../10-requirements/features/FS-18-administration-reference-data.md),
+> tooling.** Stories [`FW-259`](../../30-database/tasks/FW-259.md) ·
+> [`FW-260`](../../40-backend/tasks/FW-260.md) · [`FW-261`](../../50-frontend/tasks/FW-261.md),
 > 27 h. ⛔ **Its column set is `[PROPOSED]`** — the only tool type that arrived without a pictured
 > grid (**`G87`**; `Q92` is the send-back). ⚠ Tooling is maintained for **FL1/FL2 only, with FL3
 > using a combination of the two**.

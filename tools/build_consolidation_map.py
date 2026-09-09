@@ -211,7 +211,7 @@ def esc(s):
 
 
 def read_expected_counts():
-    """[(category, absorbed story count)] - the map's own view, not the files'.
+    """[(category, assigned story count)] - the map's own view, not the files'.
 
     build_features.py needs to tell "this category never had a story" from "its
     task files have been retired", and only the map can answer that once the
@@ -463,7 +463,7 @@ def build():
     L.append('| | **Total** | | **%d** | | | **%d** | **%d** |'
              % (len(rows), len(FILELESS), hsum([r[4] for r in rows])))
     L.append('')
-    L.append("*The `h` column sums the absorbed stories' `hours:` front-matter. It is an audit of "
+    L.append("*The `h` column sums the category's stories' `hours:` front-matter. It is an audit of "
              'the partition, **not** a costing figure: `[CE §3e]` is the hours model of record '
              'and no `FS` file publishes an hours total.*')
     L.append('')
@@ -634,7 +634,7 @@ def build():
 
     L.append('### 2.6 Retired ids')
     L.append('')
-    L.append('Ids **not** absorbed into a parent. Each keeps its number forever and is never '
+    L.append('Ids with no card and no task file. Each keeps its number forever and is never '
              'reused (`TaskIdMap.md` rule 3).')
     L.append('')
     L.append('| `FW-###` | Why | Forwarding address |')
@@ -653,32 +653,41 @@ def build():
 SCAFFOLD = """# Flat Wire — Story Consolidation Map (`FW-###` → `FS-##`)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 — created with the `FS-##` consolidation
-**Document Type:** Register — the only home for the story → category pairing and the id-retirement ledger
+**Last Updated:** September 9, 2026 — created with the `FS-##` consolidation; **full dissolution reversed the same day — no story is dissolved**
+**Document Type:** Register — the only home for the story → category pairing
 **Status:** Active — section 2 is generated; sections 1 and 3 are hand-owned
 **Owner:** Delivery lead
-**Audience:** Delivery lead, anyone tracing a retired `FW-###`
+**Audience:** Delivery lead, anyone tracing a story to its category
 **Shortcode:** `[SCM]`
 
 ---
 
 ## 1. Why this file exists
 
-The granular `FW-###` stories are consolidated into **20 category-based parent stories**
-(`FS-01`–`FS-20`), each of which becomes the single source of truth for its functional area.
-This file is the join between the two, and it has four jobs that outlive the migration:
+The granular `FW-###` stories are grouped into **20 category-based parent stories**
+(`FS-01`–`FS-20`), each the single place to read what a functional area *is*, what it requires,
+what is open about it and what a change to it touches. This file is the join between the two.
 
-1. **The consolidation mapping** — which story became part of which category, and on what basis.
-2. **The id-retirement ledger.** Ids are never renumbered in this repository, so every `FW-###` is
-   retired **with a forwarding address** rather than deleted. No number is ever reused.
+✅ **No `FW-###` story is dissolved, and every one keeps its own file.** An earlier pass retired
+the 204 `*/tasks/FW-###.md` files and archived their plans; **that was reversed on 9 Sep 2026** and
+all 204 are restored. The parents are an **index and an analysis layer over the stories, not a
+replacement for them** — which is why this file is a *pairing*, not a retirement ledger.
+
+Its jobs:
+
+1. **The consolidation mapping** — which category a story belongs to, and on what basis. This is
+   the whole point: a requirement change is analysed in one parent instead of across dozens of
+   files.
+2. **The reverse lookup** — given a story, which parent owns its requirements and change-impact
+   analysis. `STATUS.md` links each story to its own file; this says which category it sits in.
 3. **The title lookup** for `tools/deliverables/build_development_plan_xlsx.py` and
    `build_trial_run_xlsx.py`, whose guards require every allocated story to resolve to a title.
-4. **The forwarding address for ids the client already holds.** `[TRP]` declares story ids frozen
-   and the repository's join key, and `FlatWire_TrialRunPlan.xlsx` puts them in client-visible
-   cells. Retiring them as planning units is fine; letting them stop resolving is not.
+4. **The `FR`-range coverage assertion** — §2.2 proves every requirement reaches a category,
+   including ranges owned by ids that have no card and no task file at all.
 
-⚠ **This file must be generated and reviewed BEFORE any task file is deleted.** After deletion
-the source data is gone.
+⛔ **The story is the unit of WORK and the writable home of `status:`; the category is the unit of
+UNDERSTANDING.** Neither replaces the other. Where this file and a task file disagree about a
+story's phase, streams or hours, **the task file wins** — it is the source this is generated from.
 
 **Category membership is defined in `tools/build_consolidation_map.py` and nowhere else.**
 `10-requirements/features/README.md` carries the human-readable copy and cites this file rather
@@ -688,9 +697,9 @@ than restating it.
 
 | Action | Meaning |
 |---|---|
-| **Consolidate** | Absorbed into the named parent, which becomes the source of truth for it |
-| **Retire** | Cancelled or subsumed. Keeps its id forever; the parent is only a forwarding address |
-| **Retain** | Tracked, not absorbed — MVP-2 deferrals and uncosted items with no card and no task file. They own `FR` ranges no task file covers, which is why a map built only from task files would lose them |
+| **Consolidate** | Grouped under the named parent for requirements, scope and change-impact. **The story file remains, and remains the build record and the home of `status:`** |
+| **Retire** | Cancelled or subsumed — `FW-001`/`FW-002` by `D-32`, plus two fileless ids. Keeps its id forever; nothing is reused |
+| **Retain** | Tracked, not costed — MVP-2 deferrals and uncosted items with no card and no task file. They own `FR` ranges no task file covers, which is why a map built only from task files would lose them |
 | **Split** | Not used. Nothing in this backlog needed splitting across categories |
 
 ---

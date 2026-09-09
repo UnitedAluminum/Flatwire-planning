@@ -30,12 +30,9 @@
 > this page.** Where this file and a generated board disagree, the board wins; where it and a
 > plan disagree, the plan wins.
 >
-> ⚠ **Every `FW-###` link on this page points at a task file that no longer exists.**
-> The task files were retired and their plans archived by the same consolidation. The
-> forwarding address for any id is
-> [`StoryConsolidationMap.md`](../../90-registers/StoryConsolidationMap.md), which records
-> its title, category, phase, sprint, streams, hours and status at consolidation. The links
-> are left as written because they are the record of what this board sequenced.
+> ✅ **Its `FW-###` links all resolve.** The task files were briefly retired on 9 Sep 2026 and
+> **restored the same day**, so every story linked here still has its own file. What is
+> superseded is this page’s *status* information, not its links.
 
 > ### ✅ This folder now holds nine per-story plans — one per Phase-1A story
 >
