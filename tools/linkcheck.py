@@ -224,8 +224,71 @@ def check_fs_paths():
     return bad
 
 
+# The literal-path floor. --literal is the ONLY check that can verify a file move,
+# because resolve()'s basename fallback makes the ordinary run green either way -
+# see check_literal()'s docstring. Raise this only with a measured reason.
+LITERAL_FLOOR = 78
+
+RE_MD_LINK = re.compile(r'[]][(]([^)]+)[)]')
+RE_LINKABLE = re.compile(r'[.](?:md|sql|py|html|js|json|xlsx|css|scss|txt|cs)$', re.I)
+
+
+def check_literal():
+    """Every markdown link must resolve by its LITERAL path - no basename fallback.
+
+    resolve() falls back to a unique-basename index (see its third tier), and every
+    FW-###.md basename in this repository is unique. So a stale spelling like
+    `](40-backend/tasks/FW-157.md)` still "resolves" after that file moves, while
+    GitHub, VS Code and a human clicking it get a 404. target_key() compares
+    basename(src)|basename(target), which is invariant under a move as well.
+
+    The consequence: the ordinary linkcheck run CANNOT verify a restructure. This
+    can. 95-archive/ is excluded - it is history, and a path that was correct when
+    it was archived is not a break, the same rule check_fs_paths() already applies.
+    """
+    bad = []
+    for p in walk_files():
+        rel = os.path.relpath(p, ROOT).replace(BS_, '/')
+        if rel.startswith('95-archive/') or os.path.splitext(rel)[1].lower() != '.md':
+            continue
+        try:
+            with open(p, encoding='utf-8', errors='replace') as fh:
+                text = fh.read()
+        except (OSError, UnicodeDecodeError):
+            continue
+        for raw in RE_MD_LINK.findall(text):
+            t = raw.split('#')[0].strip()
+            if not t or is_external(t) or not RE_LINKABLE.search(t):
+                continue
+            cand = os.path.normpath(os.path.join(os.path.dirname(p), t))
+            if not os.path.isfile(cand):
+                bad.append((rel, t))
+    return bad
+
+
 def main():
     args = set(sys.argv[1:])
+    if '--literal' in args:
+        bad = check_literal()
+        print('linkcheck --literal: %d markdown link(s) do not resolve by their literal '
+              'path, in %d file(s)' % (len(bad), len({b[0] for b in bad})))
+        print('   floor is %d - these are pre-existing (CHANGELOG history, URL-encoded '
+              'names, cross-repo paths)' % LITERAL_FLOOR)
+        if len(bad) > LITERAL_FLOOR:
+            print('')
+            print('   REGRESSION: %d over the floor. A file moved and its citations did '
+                  'not follow.' % (len(bad) - LITERAL_FLOOR))
+            print('   All %d failures follow, pre-existing ones included - the COUNT is the'
+                  % len(bad))
+            print('   gate, so compare against the floor rather than reading the list as new:')
+            for rel, t in sorted(bad):
+                print('      %-46s %s' % (rel[:46], t[:70]))
+            return 1
+        if len(bad) < LITERAL_FLOOR:
+            print('   NOTE: %d BELOW the floor - lower LITERAL_FLOOR to %d and say why.'
+                  % (LITERAL_FLOOR - len(bad), len(bad)))
+        print('   OK - at or under the floor')
+        return 0
     refs, unresolved = scan()
     by_kind = defaultdict(int)
     for r in refs:
