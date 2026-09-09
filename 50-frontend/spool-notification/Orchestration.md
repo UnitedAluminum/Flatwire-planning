@@ -13,6 +13,25 @@ against the built Angular library and the mockup. **64 stories, 0 delivered.**
 
 ---
 
+
+<!-- DEMOTED BY THE FS-## CONSOLIDATION -->
+> ⛔ **SUPERSEDED for status, readiness and blockers — 9 Sep 2026.** This board is
+> **hand-maintained** and predates the `FS-##` consolidation. Three of its kind went stale
+> once [`STATUS.md`](../../STATUS.md) was generated, and its status tables are now superseded
+> a second time.
+>
+> | For | Read |
+> |---|---|
+> | Status, % complete, what is blocked | [`FEATURES.md`](../../FEATURES.md) and [`STATUS.md`](../../STATUS.md) — **generated** |
+> | What can start now | those boards' **▶ Ready to start now** lines |
+> | Open items and gaps, rolled up | the owning parent’s §6 — [`FS-11`](../../10-requirements/features/FS-11-spool-lifecycle-fl2.md) |
+> | What this functionality is, and what a change touches | [`FS-11`](../../10-requirements/features/FS-11-spool-lifecycle-fl2.md) |
+>
+> **What is still worth reading here:** the dependency-wave and sequencing narrative, which
+> exists nowhere else. ⛔ **Do not trust a status glyph, a percentage or a blocker list on
+> this page.** Where this file and a generated board disagree, the board wins; where it and a
+> plan disagree, the plan wins.
+
 > **What this file is.** It says **what can start, in what order, and what is stopping it.** It
 > holds no build detail and **no requirement text** — every statement here resolves to
 > [`SpoolCompletionNotification.md`](../../10-requirements/screens/SpoolCompletionNotification.md)

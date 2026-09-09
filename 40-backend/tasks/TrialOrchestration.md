@@ -11,6 +11,25 @@
 
 ---
 
+
+<!-- DEMOTED BY THE FS-## CONSOLIDATION -->
+> ⛔ **SUPERSEDED for status, readiness and blockers — 9 Sep 2026.** This board is
+> **hand-maintained** and predates the `FS-##` consolidation. Three of its kind went stale
+> once [`STATUS.md`](../../STATUS.md) was generated, and its status tables are now superseded
+> a second time.
+>
+> | For | Read |
+> |---|---|
+> | Status, % complete, what is blocked | [`FEATURES.md`](../../FEATURES.md) and [`STATUS.md`](../../STATUS.md) — **generated** |
+> | What can start now | those boards' **▶ Ready to start now** lines |
+> | Open items and gaps, rolled up | the owning parent’s §6 — [the relevant `FS-##` parent](../../10-requirements/features/README.md) |
+> | What this functionality is, and what a change touches | [the relevant `FS-##` parent](../../10-requirements/features/README.md) |
+>
+> **What is still worth reading here:** the dependency-wave and sequencing narrative, which
+> exists nowhere else. ⛔ **Do not trust a status glyph, a percentage or a blocker list on
+> this page.** Where this file and a generated board disagree, the board wins; where it and a
+> plan disagree, the plan wins.
+
 > **What this file is, and how it differs from its sibling.** Two orchestrations over
 > overlapping stories, on **different axes**:
 >

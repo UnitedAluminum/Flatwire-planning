@@ -11,6 +11,25 @@
 
 ---
 
+
+<!-- DEMOTED BY THE FS-## CONSOLIDATION -->
+> ⛔ **SUPERSEDED for status, readiness and blockers — 9 Sep 2026.** This board is
+> **hand-maintained** and predates the `FS-##` consolidation. Three of its kind went stale
+> once [`STATUS.md`](../../STATUS.md) was generated, and its status tables are now superseded
+> a second time.
+>
+> | For | Read |
+> |---|---|
+> | Status, % complete, what is blocked | [`FEATURES.md`](../../FEATURES.md) and [`STATUS.md`](../../STATUS.md) — **generated** |
+> | What can start now | those boards' **▶ Ready to start now** lines |
+> | Open items and gaps, rolled up | the owning parent’s §6 — [`FS-02`](../../10-requirements/features/FS-02-backend-service-foundation.md) |
+> | What this functionality is, and what a change touches | [`FS-02`](../../10-requirements/features/FS-02-backend-service-foundation.md) |
+>
+> **What is still worth reading here:** the dependency-wave and sequencing narrative, which
+> exists nowhere else. ⛔ **Do not trust a status glyph, a percentage or a blocker list on
+> this page.** Where this file and a generated board disagree, the board wins; where it and a
+> plan disagree, the plan wins.
+
 > **What this file is.** The **32 plans** each say *how* to build one story. This says **what
 > can start, in what order, and what is stopping it.** It holds no build detail — every
 > statement here resolves to a plan, and where this file and a plan disagree, **the plan

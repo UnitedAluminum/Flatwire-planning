@@ -11,6 +11,25 @@
 
 ---
 
+
+<!-- DEMOTED BY THE FS-## CONSOLIDATION -->
+> ⛔ **SUPERSEDED for status, readiness and blockers — 9 Sep 2026.** This board is
+> **hand-maintained** and predates the `FS-##` consolidation. Three of its kind went stale
+> once [`STATUS.md`](../../STATUS.md) was generated, and its status tables are now superseded
+> a second time.
+>
+> | For | Read |
+> |---|---|
+> | Status, % complete, what is blocked | [`FEATURES.md`](../../FEATURES.md) and [`STATUS.md`](../../STATUS.md) — **generated** |
+> | What can start now | those boards' **▶ Ready to start now** lines |
+> | Open items and gaps, rolled up | the owning parent’s §6 — [`FS-01`](../../10-requirements/features/FS-01-angular-application-shell.md) |
+> | What this functionality is, and what a change touches | [`FS-01`](../../10-requirements/features/FS-01-angular-application-shell.md) |
+>
+> **What is still worth reading here:** the dependency-wave and sequencing narrative, which
+> exists nowhere else. ⛔ **Do not trust a status glyph, a percentage or a blocker list on
+> this page.** Where this file and a generated board disagree, the board wins; where it and a
+> plan disagree, the plan wins.
+
 > **Why this document exists.** Phase 1A's requirements are spread across
 > [`phase-01a`](../../60-delivery/phases/phase-01a-angular-foundation.md), [`[CMP]`](../Components.md),
 > [`[SCR]`](../ScreenPlan.md), [`[VAL]`](../ValidationRules.md) and `[TB §7]`, and they are consistent
