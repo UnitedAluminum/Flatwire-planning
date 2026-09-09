@@ -110,7 +110,7 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-N13` | FlatWire/GetServerConnectionInfo — the shared header's environment | BE | ⬜ not-started | FW-138 | — |
 | `FW-N18` | LineId → MachineName — the FlatWire service | BE | ✅ done | FW-N17 | — |
 
-**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+**Verification evidence for completed work.** Generated from each story's `status_note`, which is where its measured result is recorded - so this answers *was this proven?* without opening the story.
 
 | Ref | Status | Measured result |
 |---|---|---|

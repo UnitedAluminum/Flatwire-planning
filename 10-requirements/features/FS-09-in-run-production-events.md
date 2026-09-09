@@ -101,7 +101,7 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-N26` | Log the operator-set dancer tension value | DB·BE | ⬜ not-started | FW-171 FW-144 | — |
 | `FW-N27` | Guard the weld flag - it cannot be set before check-in | BE | ⬜ not-started | FW-166 FW-158 | — |
 
-**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+**Verification evidence for completed work.** Generated from each story's `status_note`, which is where its measured result is recorded - so this answers *was this proven?* without opening the story.
 
 | Ref | Status | Measured result |
 |---|---|---|

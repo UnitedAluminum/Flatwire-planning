@@ -98,7 +98,7 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-N32` | Out-of-spec threshold becomes per-line, and the tolerance alert re | BE·FE | ⬜ not-started | FW-N29 | — |
 | `FW-N33` | Bind isLive on the trace panel - stop rebuilding the chart every f | FE | ⬜ not-started | — | — |
 
-**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+**Verification evidence for completed work.** Generated from each story's `status_note`, which is where its measured result is recorded - so this answers *was this proven?* without opening the story.
 
 | Ref | Status | Measured result |
 |---|---|---|

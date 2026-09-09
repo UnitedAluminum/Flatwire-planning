@@ -97,7 +97,7 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-N01` | Dashboard 2A — Rod Pre-Check-in station | FE | ⬜ not-started | FW-133 FW-134 FW-158 FW-166 | **G19** **G21** **G22** **G26** **OI-108** **OQ-24** |
 | `FW-N24` | Move the three cross-database writes from pre-check-in to check-in | DB·BE | ⬜ not-started | FW-159 FW-158 FW-220 | — |
 
-**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+**Verification evidence for completed work.** Generated from each story's `status_note`, which is where its measured result is recorded - so this answers *was this proven?* without opening the story.
 
 | Ref | Status | Measured result |
 |---|---|---|

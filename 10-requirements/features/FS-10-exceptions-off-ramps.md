@@ -79,7 +79,7 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-176` | WipRejection / RodCheckout tables and the shared coils carry-forwa | DB | 🔵 in-review ⚠ *inferred* | FW-007 FW-001 | **G24** **OI-38** **OQ-23** |
 | `FW-177` | Exception broadcasts and the supervisor notification | RT | ⬜ not-started ⚠ *inferred* | FW-149 FW-175 | **G7** |
 
-**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+**Verification evidence for completed work.** Generated from each story's `status_note`, which is where its measured result is recorded - so this answers *was this proven?* without opening the story.
 
 | Ref | Status | Measured result |
 |---|---|---|

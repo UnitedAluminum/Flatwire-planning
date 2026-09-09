@@ -104,7 +104,7 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-N05` | OPC ingest hosted service and bounded channel | RT | ⛔ blocked | FW-144 FW-080 | **G59** **G60** **G29** **G32** **G33** **PLC-Q05** |
 | `FW-N25` | Machine interface tag surface revision - one write removed, two re | BE·RT | ⬜ not-started | FW-144 FW-082 | — |
 
-**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+**Verification evidence for completed work.** Generated from each story's `status_note`, which is where its measured result is recorded - so this answers *was this proven?* without opening the story.
 
 | Ref | Status | Measured result |
 |---|---|---|
@@ -114,6 +114,8 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-151` | ✅ done | ✅ **BUILT and harness-verified 28 Aug 2026** — 53/53 assertions, 0 errors, no new analyzer warning. ⚠ **Two things a green build does not mean:** `G60` leaves the real resolve-and-write path **unexercised against `OPCConnection` i |
 | `FW-203` | ✅ done | ✅ **Built — `OpcFeedSimulator` is live, 0 errors and no analyzer warning from the changed files, and the whole RT spine now runs end to end: simulator → channel → `FW-150` drain → broadcast + `RunReading` → `FW-205`'s watchdog.**  |
 | `FW-205` | ✅ done | ✅ **Built — `ITInhibitService` is live in `ual-api`, 0 errors and no new analyzer warning, and the host boots under Development scope validation.** ⚠ **Two things a green build does not mean:** `G59`'s **bearer-token** half is unt |
+| `FW-210` | ✅ done | ✅ **BUILT and harness-verified 31 Aug 2026 (§5.1) — 65 checks, 0 failures.** Models exercised directly against the built `FlatWire.Domain`, then the host booted and `/sim` probed both ways: three distinct model types; **FL1 3 · FL |
+| `FW-211` | ✅ done | ✅ **BUILT and verified 31 Aug 2026** — inside `FW-210`'s build, results recorded once at `FW-210 §5.1`; every row holds, **eight of eleven as measurements**, three by construction. §5.2 closed the three gaps by **diff, not argumen |
 | `FW-212` | ✅ done | ✅ **Built and harness-verified 31 Aug 2026** — 42/42 checks. ⛔ **AC 1 end-to-end stays unverifiable**: push group 6 has no tag path on any line |
 | `FW-213` | ✅ done | ✅ **Built and harness-verified 31 Aug 2026** — 58/58 checks, 0 errors, 14 warnings byte-identical to the baseline. ⛔ `ToTarget` and `WeightVariance` ship inert and decline by name (`Q10`/`OI-45`) |
 | `FW-214` | ✅ done | ✅ **Built and harness-verified 31 Aug 2026** — 36/36 checks, 0 errors, **0 warnings**, and it builds standalone. ⛔ New gap `G69`: the run-status chip has no source on any wire |

@@ -155,21 +155,36 @@ EVIDENCED = ('done', 'in-review')
 def render_evidence(rows):
     """A generated record of what was BUILT and how it was verified.
 
-    Step 9 archives the build records to 95-archive/, which this repository's own
-    rules make non-citable. The measured verification in each plan's status_note
-    is the only evidence that the work was proven, so it is lifted here while the
-    plans are still live rather than after they are not.
+    It answers "was this proven?" from the parent, without opening the story.
+    The source is each story's `status_note`, so nothing here is hand-typed.
+
+    It also NAMES what it cannot show. FW-210 and FW-211 were `done` with a full
+    section 5 in the plan and no `status_note`, so they were omitted from this
+    table SILENTLY - a table headed "evidence for completed work" that quietly
+    covered 46 of 48. A gap now prints as a row of its own.
     """
-    done = [r for r in rows if r['status'] in EVIDENCED and r.get('evidence')]
-    if not done:
+    elig = [r for r in rows if r['status'] in EVIDENCED]
+    have = [r for r in elig if r.get('evidence')]
+    if not elig:
         return []
-    L = ['', '**Verification evidence for completed work.** Lifted from each build record '
-         'before it is archived - `95-archive/` is not citable, so this is the durable copy.', '']
+    L = ['', "**Verification evidence for completed work.** Generated from each story's "
+         '`status_note`, which is where its measured result is recorded - so this answers '
+         '*was this proven?* without opening the story.', '']
     L.append('| Ref | Status | Measured result |')
     L.append('|---|---|---|')
-    for r in done:
+    for r in have:
         L.append('| `%s` | %s | %s |'
                  % (r['ref'], MARK.get(r['status'], r['status']), esc(r['evidence'])[:230]))
+    for r in elig:
+        if not r.get('evidence'):
+            L.append('| `%s` | %s | ⛔ **NO RECORDED VERIFICATION.** Its `status_note` is '
+                     "empty, so nothing can be lifted here. Check the story's section 5 and "
+                     'summarise it there. |'
+                     % (r['ref'], MARK.get(r['status'], r['status'])))
+    if len(have) != len(elig):
+        L += ['', '⚠ **%d of %d completed activities carry a measured result.** The rest are '
+              'listed above with no evidence, deliberately - an omission this table does not show '
+              'is worse than one it does.' % (len(have), len(elig))]
     return L
 
 

@@ -91,7 +91,7 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-N15` | Active Run machine context — the home/:machineName route, line res | FE | ⬜ not-started | FW-N03 | **OI-11** |
 | `FW-N16` | The station claim — FlatWireDB..WIPStations view and the checked-i | BE·DB | 🟡 in-progress | FW-164 FW-230 FW-231 | **G54** |
 
-**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+**Verification evidence for completed work.** Generated from each story's `status_note`, which is where its measured result is recorded - so this answers *was this proven?* without opening the story.
 
 | Ref | Status | Measured result |
 |---|---|---|

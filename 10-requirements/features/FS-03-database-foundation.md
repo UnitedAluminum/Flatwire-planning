@@ -108,7 +108,7 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-N22` | AlloyProperty re-grained to vendor and rod size band | DB | ⬜ not-started | FW-004 FW-152 | — |
 | `FW-N23` | Pass schedule carries roll gap and target product gauge per stand | DB | ⬜ not-started | FW-006 FW-152 | — |
 
-**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+**Verification evidence for completed work.** Generated from each story's `status_note`, which is where its measured result is recorded - so this answers *was this proven?* without opening the story.
 
 | Ref | Status | Measured result |
 |---|---|---|
