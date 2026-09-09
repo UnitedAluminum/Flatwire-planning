@@ -1,0 +1,1839 @@
+{
+  "info": {
+    "_postman_id": "b7f1c4e2-5a63-4d18-9c07-3f2a6d9e14b8",
+    "name": "UAL Flat Wire Planning API",
+    "description": "Every flat wire planning endpoint, with a request per scenario rather than a single payload to edit.\n\n## Before running anything\n\n1. Set `baseUrl` - `https://localhost:5001` for a local API.\n2. Set `token` to a bearer token. The collection sends it on every request, and the endpoints that write take the user id from it rather than from the body.\n3. On a self-signed local certificate, turn OFF SSL certificate verification in Postman's settings.\n\n## Reading the order details\n\nEvery request carries the order's own numbers rather than having them looked up: the coil weight range (`MinBundleWeight` / `MaxBundleWeight`), the quantity and its tolerances, what is already planned and shipped, and whether the order permits welding. That is what lets a planner change any of them and ask again.\n\nTwo traps worth naming. `Orders.BundleMinWidth` / `BundleMaxWidth` in the database are NOT the coil weight range - they are the oscillation width. And `MaxBundleWeight` is never exceeded: the client's ruling is that the overage forces a WIP reject, not an over shipped coil.\n\n## Order of play\n\nFolder 1 stands alone - it writes nothing. Folders 2 to 4 chain: generate, save, merge, save the merge, and the requests capture what they need into collection variables as they go. Folder 5 does all of it in one call. Folder 7 needs something saved first.\n\n## One thing to know before you re-run a request\n\nPosting the same run twice APPENDS the same orders to the same plan rather than replacing them. A coil tested repeatedly accumulates orders, and every run does more work than the last. Whether that should replace or append is an open product decision - until it is settled, use a fresh coil no for each run.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:5001",
+      "type": "string",
+      "description": "The Planning API root, without a trailing slash."
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "A bearer token. Every write takes the user id from it."
+    },
+    {
+      "key": "planId",
+      "value": "",
+      "type": "string",
+      "description": "Captured by the generate and save requests, for the ones that follow."
+    },
+    {
+      "key": "initialPlanDocument",
+      "value": "",
+      "type": "string",
+      "description": "The last per order plan generated, so folder 3 can post it back unchanged."
+    },
+    {
+      "key": "finalPlanDocument",
+      "value": "",
+      "type": "string",
+      "description": "The last merged plan generated, so 4.3 can post it back unchanged."
+    }
+  ],
+  "item": [
+    {
+      "name": "1 - Output solution",
+      "description": "How much of an order to plan on a coil so that everything produced can be shipped, and what that weight produces: the spools FL1 winds, the finished coils cut at FL2 or FL3, whatever is left over, the warnings, and the plan for the weight it settled on.\n\nIt advises. Send WeightToPlan and that weight is evaluated instead of one being chosen, which is what lets a planner try a number and see what it costs. Nothing is written by any request in this folder.",
+      "item": [
+        {
+          "name": "1.1 Advise a weight - annealed route, whole rod ships",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 4400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "A 4,400 lb rod (a real vendor bundle weight) against an order taking 800-900 lb coils, on a route that anneals and so winds spools.\n\nExpect: WeightToPlan 4400, 5 coils of 880 (every pound ships), TailWeight 0, 3 spools of 1760 with the last closed short at 880.\nWarnings: OddBundleCountLeavesAPartSkid (5 coils means one skid ships with a single coil), FinalSpoolClosedShort.\nSuggestedPlan carries the initial plan for 4,400 lb."
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 A flattens-only route has no spool stage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 4400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 750,\n    \"MaxBundleWeight\": 850,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 2000,\n    \"TolerancePlusPercent\": 0,\n    \"ToleranceMinusPercent\": 0,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "No anneal, so the route is assigned to FL3 and the coils come straight off the rod - there is no spool at all. 2,000 lb has no equal split into 750-850 lb coils.\n\nExpect: RouteHasFlatLine1 false, SpoolCount 0, 2 coils of 850, TailWeight 300, WeightToCompleteASpool 0.\nWarnings: TailBelowMinimumBundleWeight (300 against a 750 lb minimum).\n\nNote this is the trade the exercise is about: had the ceiling allowed 2,250 the answer would be three 750 lb coils and no tail."
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 The planner types a weight - it is evaluated as typed",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 4400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ],\n  \"WeightToPlan\": 3400\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "A weight the planner typed is not argued with. What would have been advised comes back alongside it, so the override can be recorded against it.\n\nExpect: WeightToPlan 3400, SuggestedWeightToPlan 4400, 4 coils of 850, TailWeight 0, 2 spools of 1700 with neither short.\nSuggestedPlan is the plan for 3,400 lb - not for the advised 4,400."
+          },
+          "response": []
+        },
+        {
+          "name": "1.4 A typed weight that strands material owns its tail",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 4400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ],\n  \"WeightToPlan\": 1000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "1,000 lb against 800-900 lb coils has no equal split, so one 900 lb coil is cut and 100 lb is left - too little for a coil of its own, and the order forbids welding.\n\nExpect: 1 coil of 900, TailWeight 100, WeightToCompleteABundle 700, WeightToCompleteASpool 1600.\nWarnings: PlannedWeightMakesAnUnshippableTail - the reason that names the CHOICE, because the planner typed the weight. An advised weight reporting the same tail raises TailBelowMinimumBundleWeight instead (see 1.5)."
+          },
+          "response": []
+        },
+        {
+          "name": "1.5 The same tail, reached without typing a weight",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 4400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 1000,\n    \"TolerancePlusPercent\": 0,\n    \"ToleranceMinusPercent\": 0,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "The order has room for 1,000 lb and no more, so the solver reaches the same 100 lb tail on its own.\n\nExpect: WeightToPlan 1000, 1 coil of 900, TailWeight 100.\nWarnings: TailBelowMinimumBundleWeight, NOT PlannedWeightMakesAnUnshippableTail - nobody chose this, the order's ceiling did."
+          },
+          "response": []
+        },
+        {
+          "name": "1.6 Nothing shippable can be made - the order forbids welding",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 750,\n    \"MaxBundleWeight\": 850,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "The case the exercise exists for: 400 lb remains on the rod and the order's smallest coil is 750 lb, so the rod makes NO shippable output from it at all.\n\nExpect: BundleCount 0, SpoolCount 0, CarryForwardWeight 0, RequiresAdditionalCoil false, SuggestedPlan null (there is nothing to plan).\nWarnings: NoOutputPossibleFromRemainingWeight (400 against 750)."
+          },
+          "response": []
+        },
+        {
+          "name": "1.7 The same 400 lb, weldable - carried forward instead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 750,\n    \"MaxBundleWeight\": 850,\n    \"CanWeld\": true,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "Welding is rod to rod, BEFORE the first flat line - once flattened, material can never be welded forward. This tail is still rod, so the next rod can be welded on and FL1 keeps winding through the weld.\n\nExpect: CarryForwardWeight 400, RequiresAdditionalCoil true, WeightToCompleteABundle 350, WeightToCompleteASpool 1300.\nWarnings: NoOutputPossibleFromRemainingWeight and AdditionalCoilNeededToCompleteOutput."
+          },
+          "response": []
+        },
+        {
+          "name": "1.8 A spool that spans a weld carries two rod alphas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 4400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": true,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ],\n  \"WeightToPlan\": 1000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "One 900 lb coil is cut and 100 lb is welded forward, so the spool that was open at the weld keeps winding into the next rod - and its label has to list both rods' alphas, which is the client's ASTM traceability requirement.\n\nExpect: SpoolsSpanningAWeld [1] - the first (and only) spool of this plan.\nWarnings: SpoolSpansAWeldAndCarriesTwoRodAlphas, AdditionalCoilNeededToCompleteOutput, PlannedWeightMakesAnUnshippableTail."
+          },
+          "response": []
+        },
+        {
+          "name": "1.9 A route step forbidding welding overrides the order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 4400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": true,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\",\n      \"WeldPermitted\": false\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ],\n  \"WeightToPlan\": 1000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "The order permits welding but the first flatten's step says no, and the route is the thing that is actually run. WeldPermitted is nullable on purpose: null means the SMP has no opinion, so the order's answer stands - only an explicit false refuses.\n\nExpect: CarryForwardWeight 0, RequiresAdditionalCoil false, SpoolsSpanningAWeld empty. The 100 lb is stranded."
+          },
+          "response": []
+        },
+        {
+          "name": "1.10 The order has no room left - the smallest legal increment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 4400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 4000,\n    \"TolerancePlusPercent\": 0,\n    \"ToleranceMinusPercent\": 0,\n    \"AlreadyPlannedWeight\": 4000,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "Planned right up to its ceiling, more weight on this order is surplus - so the objective inverts and the suggestion becomes the LEAST that can usefully be made: one spool where the route winds them, one coil where it does not.\n\nExpect: SuggestedWeightToPlan 1700 (one spool: 2 coils of 850), not 4,400.\nWarnings: OrderHeadroomExhausted. A larger typed weight is still solved as typed - a suggestion, never a refusal."
+          },
+          "response": []
+        },
+        {
+          "name": "1.11 Over planning the order, inside its shipping tolerance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 4400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 750,\n    \"MaxBundleWeight\": 850,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 2000,\n    \"TolerancePlusPercent\": 20,\n    \"ToleranceMinusPercent\": 0,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "Over planning the ORDER is correct within its tolerance - a final spool is raised rather than left as a tail nothing can be made from. Over filling a COIL is not, and never happens.\n\n2,000 lb plus 20 per cent is a 2,400 lb ceiling, and 2,400 divides into three 800 lb coils with nothing left over.\n\nExpect: WeightToPlan 2400, 3 coils of 800, TailWeight 0.\nWarnings: OverPlannedWithinShippingTolerance (2400 against the 2000 ordered), OddBundleCountLeavesAPartSkid."
+          },
+          "response": []
+        },
+        {
+          "name": "1.12 A spool band supplied on the request wins over the table",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 4400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ],\n  \"Spools\": {\n    \"SizeClass\": \"TKUP-2 Finishing Spool\",\n    \"MinOutputWeight\": 500,\n    \"MaxOutputWeight\": 1100\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "The spool band is read from FlatWireDB..Spool, but a band on the request is used instead and nothing is read - which is what lets a planner try a band without changing anything for anyone else.\n\nExpect: 5 coils of 880 as before, but BundlesPerSpool 1 and SpoolCount 5, because an 1,100 lb spool holds only one 880 lb coil."
+          },
+          "response": []
+        },
+        {
+          "name": "1.13 Naming the class of spool to plan against",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 4400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ],\n  \"SpoolSizeClass\": \"TKUP-1 Intermediate Spool\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "One active class is in use today, so it needs no naming. Where several are, the caller has to say which - guessing would silently change how much a plan produces, so an unnamed class with several in use fails loudly rather than picking one.\n\nExpect: the same answer as 1.1, resolved from the named class."
+          },
+          "response": []
+        },
+        {
+          "name": "1.14 A spool too small to hold one of this order's coils",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 4400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ],\n  \"Spools\": {\n    \"SizeClass\": \"TKUP-3 Small Spool\",\n    \"MinOutputWeight\": 300,\n    \"MaxOutputWeight\": 700\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "A 700 lb spool cannot hold an 800 lb coil, so the coils cannot be nested at all.\n\nExpect: RouteHasFlatLine1 true but SpoolCount 0.\nWarnings: SpoolTargetCannotHoldWholeBundles (700 against a 800 lb minimum coil)."
+          },
+          "response": []
+        },
+        {
+          "name": "1.15 Counts only, no plan generated",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 4400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ],\n  \"SuggestPlan\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "A screen that only shows the counts can say so, and then nothing is generated.\n\nExpect: the same numbers as 1.1, with SuggestedPlan null."
+          },
+          "response": []
+        },
+        {
+          "name": "1.16 Rejected - no coil no",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 4400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "Validation, enforced by the framework validator behaviour before the handler runs.\n\nExpect: a validation failure naming InitialCoilNo."
+          },
+          "response": []
+        },
+        {
+          "name": "1.17 Rejected - the order states no coil weight range",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 4400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 0,\n    \"MaxBundleWeight\": 0,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "The order says what a finished coil may weigh, and nothing can be answered without it.\n\nExpect: a validation failure - the coil weight range must have a minimum above zero and a maximum no lower than it."
+          },
+          "response": []
+        },
+        {
+          "name": "1.18 Rejected - a typed weight of zero",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"CoilRemainingWeight\": 4400,\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 0,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ],\n  \"WeightToPlan\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GetFlatWireOutputSolution",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GetFlatWireOutputSolution"
+              ]
+            },
+            "description": "Omit WeightToPlan to be advised one. Sending zero is a different thing, and is refused.\n\nExpect: a validation failure naming WeightToPlan."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2 - Initial plan (one order on one coil)",
+      "description": "The per order plan - the plan for ONE order on ONE coil, which is what later gets merged with the other orders on that coil. Generating writes nothing; the caller decides whether to keep what comes back.\n\nThe route is normally the one held for the item. Supplying Smp takes precedence, so a plan can be generated against a proposed route without writing it to the item first - which is why every request here sends one.",
+      "item": [
+        {
+          "name": "2.1 Customer order, flatten - anneal - flatten",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 1000,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"PlanId\": \"\",\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GenerateFlatWireInitialPlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GenerateFlatWireInitialPlan"
+              ]
+            },
+            "description": "The ordinary case. The route contains an anneal, so it is assigned FL1 / Furnace / FL2; the part of the route the coil has already been through is discarded, and what is left is collapsed into operations.\n\nExpect: routings at FL1, Furnace and FL2, one flat line output row per flatten, and Stage 'Initial' with an empty PlanId - one is allocated on save."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Keep the generated plan so 'Save initial plan' can post it back unchanged.",
+                  "const body = pm.response.json();",
+                  "if (body && body.data) {",
+                  "    pm.collectionVariables.set('initialPlanDocument', JSON.stringify(body.data));",
+                  "    pm.collectionVariables.set('planId', body.data.planId || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.2 Customer order, flattens only",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 1000,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"PlanId\": \"\",\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GenerateFlatWireInitialPlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GenerateFlatWireInitialPlan"
+              ]
+            },
+            "description": "No anneal, so the whole route goes on FL3 in one pass and there is no furnace step. This is the same rule the output solution asks to decide whether there is a spool stage.\n\nExpect: routings on FL3 only."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Keep the generated plan so 'Save initial plan' can post it back unchanged.",
+                  "const body = pm.response.json();",
+                  "if (body && body.data) {",
+                  "    pm.collectionVariables.set('initialPlanDocument', JSON.stringify(body.data));",
+                  "    pm.collectionVariables.set('planId', body.data.planId || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.3 Item stock order - a stock order no is created on save",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"Order\": {\n    \"PlanType\": \"ItemStockOrder\",\n    \"WeightToPlan\": 1200,\n    \"OrderNo\": null,\n    \"RelLetter\": \"\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"PlanId\": \"\",\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GenerateFlatWireInitialPlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GenerateFlatWireInitialPlan"
+              ]
+            },
+            "description": "Driven by the item SMP with no customer order. The plan carries the dummy stock order no until the real one is created while saving.\n\nExpect: the same route as 2.1, and the order carrying the dummy no. The LAST output goes back to stock, and the coil it travels on is asked for with wareHouseAlpha = 1 so it gets a coil no at the rod's own level rather than under the coil it came off."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Keep the generated plan so 'Save initial plan' can post it back unchanged.",
+                  "const body = pm.response.json();",
+                  "if (body && body.data) {",
+                  "    pm.collectionVariables.set('initialPlanDocument', JSON.stringify(body.data));",
+                  "    pm.collectionVariables.set('planId', body.data.planId || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.4 As-is customer order - no route at all",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"Order\": {\n    \"PlanType\": \"AsIsCustomerOrder\",\n    \"WeightToPlan\": 800,\n    \"OrderNo\": 421,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"PlanId\": \"\",\n  \"Smp\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GenerateFlatWireInitialPlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GenerateFlatWireInitialPlan"
+              ]
+            },
+            "description": "The material goes through as is: no SMP, one as-is flatten holding the weight.\n\nExpect: a single routing, and a flat line output for the weight planned."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Keep the generated plan so 'Save initial plan' can post it back unchanged.",
+                  "const body = pm.response.json();",
+                  "if (body && body.data) {",
+                  "    pm.collectionVariables.set('initialPlanDocument', JSON.stringify(body.data));",
+                  "    pm.collectionVariables.set('planId', body.data.planId || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.5 As-is stock order - back to stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"Order\": {\n    \"PlanType\": \"AsIsStockOrder\",\n    \"WeightToPlan\": 800,\n    \"OrderNo\": null,\n    \"RelLetter\": \"\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"PlanId\": \"\",\n  \"Smp\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GenerateFlatWireInitialPlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GenerateFlatWireInitialPlan"
+              ]
+            },
+            "description": "As-is, with the output going back to stock.\n\nExpect: the output row carrying the back-to-stock flag, on a coil no issued with wareHouseAlpha = 1."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Keep the generated plan so 'Save initial plan' can post it back unchanged.",
+                  "const body = pm.response.json();",
+                  "if (body && body.data) {",
+                  "    pm.collectionVariables.set('initialPlanDocument', JSON.stringify(body.data));",
+                  "    pm.collectionVariables.set('planId', body.data.planId || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.6 Joining a plan the coil already carries",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 1200,\n    \"OrderNo\": 422,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"PlanId\": \"{{planId}}\",\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GenerateFlatWireInitialPlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GenerateFlatWireInitialPlan"
+              ]
+            },
+            "description": "A second order on a coil that has already been planned joins the same plan rather than starting a new one. Run 2.1 first: it captures the plan identifier into {{planId}}.\n\nExpect: the returned document carrying the supplied PlanId."
+          },
+          "response": []
+        },
+        {
+          "name": "2.7 Starting after operations already on the coil",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coil\": {\n    \"InitialCoilNo\": \"FW70048\",\n    \"Weight\": 4400,\n    \"Gauge\": 0.375,\n    \"Temper\": \"F\",\n    \"Shape\": \"Round\",\n    \"Type\": \"Rod\",\n    \"Width\": 0.0,\n    \"AlloyDensity\": 0.098\n  },\n  \"Order\": {\n    \"PlanType\": \"CustomerOrder\",\n    \"WeightToPlan\": 900,\n    \"OrderNo\": 423,\n    \"RelLetter\": \"A\",\n    \"ItemTemplateIdx\": 105842,\n    \"CoilOrderPlanId\": 0,\n    \"DueDate\": \"2026-11-30T00:00:00\",\n    \"RequiredGauge\": 0.016,\n    \"RequiredTemper\": \"H18\",\n    \"MinGauge\": 0.0155,\n    \"MaxGauge\": 0.0165,\n    \"Width\": 0.5,\n    \"VersionNo\": 1,\n    \"ProcessNo\": 1,\n    \"ID\": 0,\n    \"MinBundleWeight\": 800,\n    \"MaxBundleWeight\": 900,\n    \"CanWeld\": false,\n    \"TotalQuantity\": 40000,\n    \"TolerancePlusPercent\": 0.5,\n    \"ToleranceMinusPercent\": 0.5,\n    \"AlreadyPlannedWeight\": 0,\n    \"AlreadyShippedWeight\": 0\n  },\n  \"PlanId\": \"\",\n  \"Smp\": [\n    {\n      \"StepNo\": 0,\n      \"Type\": \"Rod\",\n      \"Shape\": \"Round\",\n      \"MinGauge\": 0.375,\n      \"NominalGauge\": 0.375,\n      \"MaxGauge\": 0.375,\n      \"Temper\": \"F\",\n      \"Operation\": \"None\"\n    },\n    {\n      \"StepNo\": 1,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    },\n    {\n      \"StepNo\": 2,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.11,\n      \"NominalGauge\": 0.11,\n      \"MaxGauge\": 0.11,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Anneal\"\n    },\n    {\n      \"StepNo\": 3,\n      \"Type\": \"Wire\",\n      \"Shape\": \"Flat\",\n      \"MinGauge\": 0.016,\n      \"NominalGauge\": 0.016,\n      \"MaxGauge\": 0.016,\n      \"Temper\": \"H18\",\n      \"Operation\": \"Flatten\"\n    }\n  ],\n  \"Start\": {\n    \"SequenceNo\": 10,\n    \"LevelId\": 2,\n    \"ParentLevelId\": 1\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GenerateFlatWireInitialPlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GenerateFlatWireInitialPlan"
+              ]
+            },
+            "description": "A coil can already carry ROOT operations - operations planned on the whole coil before any order. When it does, an order's own operations start after them: the next sequence no, hanging from the last root level.\n\nExpect: the first routing at SequenceNo 20 (10 plus the increment), LevelId 3, ParentLevelId 2."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3 - Save the initial plan",
+      "description": "Writes the per order plan to the temp tables, allocating the plan identifier and creating any stock order the plan needs. Every save is journalled, which is what makes undo and redo possible.",
+      "item": [
+        {
+          "name": "3.1 Save whatever '2 - Initial plan' last generated",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{initialPlanDocument}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/SaveFlatWireInitialPlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "SaveFlatWireInitialPlan"
+              ]
+            },
+            "description": "Posts back the document captured by any request in folder 2, unchanged. Run one of those first.\n\nExpect: the allocated PlanId, the coil order plan ids, and any stock order no created. The same document posted twice appends the order again rather than replacing it - see the note on the collection."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Keep the generated plan so 'Save initial plan' can post it back unchanged.",
+                  "const body = pm.response.json();",
+                  "if (body && body.data) {",
+                  "    pm.collectionVariables.set('initialPlanDocument', JSON.stringify(body.data));",
+                  "    pm.collectionVariables.set('planId', body.data.planId || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4 - Final plan (merging a coil's orders)",
+      "description": "Turns the per order plans saved for a coil into the single plan the planning tables hold. Nothing is saved by generating it.\n\nTWO STRATEGIES, and the planner chooses. The client's own material contains both answers: the sample data for the merge shows one flat line row carrying two orders on a shared spool, while their review comment says 'I do not believe that we want to have multiple orders on a spool'. Both are built. MergeOrders is the default, so present behaviour is untouched.",
+      "item": [
+        {
+          "name": "4.1 MergeOrders - orders share operations, the coil divides where they part",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GenerateFlatWireFinalPlan?Coil.InitialCoilNo=FW70048&Coil.Weight=4400&PlanId={{planId}}&Strategy=MergeOrders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GenerateFlatWireFinalPlan"
+              ],
+              "query": [
+                {
+                  "key": "Coil.InitialCoilNo",
+                  "value": "FW70048"
+                },
+                {
+                  "key": "Coil.Weight",
+                  "value": "4400"
+                },
+                {
+                  "key": "PlanId",
+                  "value": "{{planId}}"
+                },
+                {
+                  "key": "Strategy",
+                  "value": "MergeOrders"
+                }
+              ]
+            },
+            "description": "Today's behaviour, and the acceptance gate for the whole slice: one routing row per sequence per coil, carrying every order travelling on it, with coil nos issued where the coil divides.\n\nExpect: a shared row at sequence 0 whose OrdersInput lists every order on the coil."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Keep the merged plan so 'Save final plan' can post it back unchanged.",
+                  "const body = pm.response.json();",
+                  "if (body && body.data) {",
+                  "    pm.collectionVariables.set('finalPlanDocument', JSON.stringify(body.data));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.2 BalanceToPiece - one order per row, the balance carried forward",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GenerateFlatWireFinalPlan?Coil.InitialCoilNo=FW70048&Coil.Weight=4400&PlanId={{planId}}&Strategy=BalanceToPiece",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GenerateFlatWireFinalPlan"
+              ],
+              "query": [
+                {
+                  "key": "Coil.InitialCoilNo",
+                  "value": "FW70048"
+                },
+                {
+                  "key": "Coil.Weight",
+                  "value": "4400"
+                },
+                {
+                  "key": "PlanId",
+                  "value": "{{planId}}"
+                },
+                {
+                  "key": "Strategy",
+                  "value": "BalanceToPiece"
+                }
+              ]
+            },
+            "description": "The client's ruling built out: an order boundary is a hard break - rod checked out and back in, NEW EMPTY SPOOL - so no spool spans two orders. Each flatten peels one order off as its piece and hands the balance on to another flatten. At most two rows per split, which is what makes it a cascade rather than an n-way division.\n\nExpect: NO routing row carrying more than one order; a balance row whose coil no arrives at the next flatten; ParentLevelId chaining each order's first flatten to the flatten its balance came from.\n\nIt costs more: a three order rod plans THREE FL1 operations rather than one, and every boundary closes a spool short. That is the check-out and check-in being real."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Keep the merged plan so 'Save final plan' can post it back unchanged.",
+                  "const body = pm.response.json();",
+                  "if (body && body.data) {",
+                  "    pm.collectionVariables.set('finalPlanDocument', JSON.stringify(body.data));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4.3 Save the merged plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{finalPlanDocument}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/SaveFlatWireFinalPlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "SaveFlatWireFinalPlan"
+              ]
+            },
+            "description": "Writes the merged plan to the planning tables. Posts back what 4.1 or 4.2 captured, unchanged.\n\nExpect: the save result, and the plan journalled so 7.1 can undo it."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5 - Generate and save a whole run",
+      "description": "Plans the supplied orders across the supplied coils and saves each coil's merged plan, in ONE call and ONE transaction - so a coil is never left with order plans that no merged plan covers.\n\nThe orders are spread across the coils in the order both are given. A coil carries order up to its own weight, so an order too big for what is left of a coil is split and carried on by the next. Weight no coil can carry comes back on the result rather than being forced on.\n\nPERFORMANCE, measured: use a FRESH coil no for each run. Re-posting the same run appends the same orders to the same plan again, so a coil tested six times carries eighteen orders and every later run does more work than the last - five runs on distinct coils held 1.8 to 2.8 s each, while five runs on ONE coil went 1.9, 2.8, 3.7, 3.8, 4.9 s. A fresh three order run is about 2.4 s.",
+      "item": [
+        {
+          "name": "5.1 One coil, three orders, MergeOrders",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coils\": [\n    {\n      \"Coil\": {\n        \"InitialCoilNo\": \"FW70101\",\n        \"Weight\": 3500,\n        \"Gauge\": 0.375,\n        \"Temper\": \"F\",\n        \"Shape\": \"Round\",\n        \"Type\": \"Rod\",\n        \"Width\": 0.0,\n        \"AlloyDensity\": 0.098\n      },\n      \"Smp\": [\n        {\n          \"StepNo\": 0,\n          \"Type\": \"Rod\",\n          \"Shape\": \"Round\",\n          \"MinGauge\": 0.375,\n          \"NominalGauge\": 0.375,\n          \"MaxGauge\": 0.375,\n          \"Temper\": \"F\",\n          \"Operation\": \"None\"\n        },\n        {\n          \"StepNo\": 1,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.11,\n          \"NominalGauge\": 0.11,\n          \"MaxGauge\": 0.11,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Flatten\"\n        },\n        {\n          \"StepNo\": 2,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.11,\n          \"NominalGauge\": 0.11,\n          \"MaxGauge\": 0.11,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Anneal\"\n        },\n        {\n          \"StepNo\": 3,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.016,\n          \"NominalGauge\": 0.016,\n          \"MaxGauge\": 0.016,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Flatten\"\n        }\n      ],\n      \"PlanId\": \"\",\n      \"Strategy\": \"MergeOrders\"\n    }\n  ],\n  \"Orders\": [\n    {\n      \"PlanType\": \"CustomerOrder\",\n      \"WeightToPlan\": 1000,\n      \"OrderNo\": 421,\n      \"RelLetter\": \"A\",\n      \"ItemTemplateIdx\": 105842,\n      \"CoilOrderPlanId\": 0,\n      \"DueDate\": \"2026-11-30T00:00:00\",\n      \"RequiredGauge\": 0.016,\n      \"RequiredTemper\": \"H18\",\n      \"MinGauge\": 0.0155,\n      \"MaxGauge\": 0.0165,\n      \"Width\": 0.5,\n      \"VersionNo\": 1,\n      \"ProcessNo\": 1,\n      \"ID\": 0,\n      \"MinBundleWeight\": 800,\n      \"MaxBundleWeight\": 900,\n      \"CanWeld\": false,\n      \"TotalQuantity\": 40000,\n      \"TolerancePlusPercent\": 0.5,\n      \"ToleranceMinusPercent\": 0.5,\n      \"AlreadyPlannedWeight\": 0,\n      \"AlreadyShippedWeight\": 0\n    },\n    {\n      \"PlanType\": \"CustomerOrder\",\n      \"WeightToPlan\": 1200,\n      \"OrderNo\": 422,\n      \"RelLetter\": \"A\",\n      \"ItemTemplateIdx\": 105842,\n      \"CoilOrderPlanId\": 0,\n      \"DueDate\": \"2026-11-30T00:00:00\",\n      \"RequiredGauge\": 0.016,\n      \"RequiredTemper\": \"H18\",\n      \"MinGauge\": 0.0155,\n      \"MaxGauge\": 0.0165,\n      \"Width\": 0.5,\n      \"VersionNo\": 1,\n      \"ProcessNo\": 1,\n      \"ID\": 0,\n      \"MinBundleWeight\": 800,\n      \"MaxBundleWeight\": 900,\n      \"CanWeld\": false,\n      \"TotalQuantity\": 40000,\n      \"TolerancePlusPercent\": 0.5,\n      \"ToleranceMinusPercent\": 0.5,\n      \"AlreadyPlannedWeight\": 0,\n      \"AlreadyShippedWeight\": 0\n    },\n    {\n      \"PlanType\": \"CustomerOrder\",\n      \"WeightToPlan\": 800,\n      \"OrderNo\": 423,\n      \"RelLetter\": \"A\",\n      \"ItemTemplateIdx\": 105842,\n      \"CoilOrderPlanId\": 0,\n      \"DueDate\": \"2026-11-30T00:00:00\",\n      \"RequiredGauge\": 0.016,\n      \"RequiredTemper\": \"H18\",\n      \"MinGauge\": 0.0155,\n      \"MaxGauge\": 0.0165,\n      \"Width\": 0.5,\n      \"VersionNo\": 1,\n      \"ProcessNo\": 1,\n      \"ID\": 0,\n      \"MinBundleWeight\": 800,\n      \"MaxBundleWeight\": 900,\n      \"CanWeld\": false,\n      \"TotalQuantity\": 40000,\n      \"TolerancePlusPercent\": 0.5,\n      \"ToleranceMinusPercent\": 0.5,\n      \"AlreadyPlannedWeight\": 0,\n      \"AlreadyShippedWeight\": 0\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GenerateAndSaveFlatWirePlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GenerateAndSaveFlatWirePlan"
+              ]
+            },
+            "description": "The default strategy. 3,000 lb of order on a 3,500 lb rod, so all three fit and 500 lb is left on the coil.\n\nExpect: three saves under one plan identifier, a merged plan whose shared operations list every order on them, and nothing unplanned."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// A run allocates a plan identifier per coil; keep the first for undo and redo.",
+                  "const body = pm.response.json();",
+                  "const saves = body && body.data ? body.data.saves : null;",
+                  "if (saves && saves.length) {",
+                  "    pm.collectionVariables.set('planId', saves[0].planId || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.2 One coil, three orders, BalanceToPiece - the worked cascade",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coils\": [\n    {\n      \"Coil\": {\n        \"InitialCoilNo\": \"FW70102\",\n        \"Weight\": 3000,\n        \"Gauge\": 0.375,\n        \"Temper\": \"F\",\n        \"Shape\": \"Round\",\n        \"Type\": \"Rod\",\n        \"Width\": 0.0,\n        \"AlloyDensity\": 0.098\n      },\n      \"Smp\": [\n        {\n          \"StepNo\": 0,\n          \"Type\": \"Rod\",\n          \"Shape\": \"Round\",\n          \"MinGauge\": 0.375,\n          \"NominalGauge\": 0.375,\n          \"MaxGauge\": 0.375,\n          \"Temper\": \"F\",\n          \"Operation\": \"None\"\n        },\n        {\n          \"StepNo\": 1,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.11,\n          \"NominalGauge\": 0.11,\n          \"MaxGauge\": 0.11,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Flatten\"\n        },\n        {\n          \"StepNo\": 2,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.11,\n          \"NominalGauge\": 0.11,\n          \"MaxGauge\": 0.11,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Anneal\"\n        },\n        {\n          \"StepNo\": 3,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.016,\n          \"NominalGauge\": 0.016,\n          \"MaxGauge\": 0.016,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Flatten\"\n        }\n      ],\n      \"PlanId\": \"\",\n      \"Strategy\": \"BalanceToPiece\"\n    }\n  ],\n  \"Orders\": [\n    {\n      \"PlanType\": \"CustomerOrder\",\n      \"WeightToPlan\": 1000,\n      \"OrderNo\": 421,\n      \"RelLetter\": \"A\",\n      \"ItemTemplateIdx\": 105842,\n      \"CoilOrderPlanId\": 0,\n      \"DueDate\": \"2026-11-30T00:00:00\",\n      \"RequiredGauge\": 0.016,\n      \"RequiredTemper\": \"H18\",\n      \"MinGauge\": 0.0155,\n      \"MaxGauge\": 0.0165,\n      \"Width\": 0.5,\n      \"VersionNo\": 1,\n      \"ProcessNo\": 1,\n      \"ID\": 0,\n      \"MinBundleWeight\": 800,\n      \"MaxBundleWeight\": 900,\n      \"CanWeld\": false,\n      \"TotalQuantity\": 40000,\n      \"TolerancePlusPercent\": 0.5,\n      \"ToleranceMinusPercent\": 0.5,\n      \"AlreadyPlannedWeight\": 0,\n      \"AlreadyShippedWeight\": 0\n    },\n    {\n      \"PlanType\": \"CustomerOrder\",\n      \"WeightToPlan\": 1200,\n      \"OrderNo\": 422,\n      \"RelLetter\": \"A\",\n      \"ItemTemplateIdx\": 105842,\n      \"CoilOrderPlanId\": 0,\n      \"DueDate\": \"2026-11-30T00:00:00\",\n      \"RequiredGauge\": 0.016,\n      \"RequiredTemper\": \"H18\",\n      \"MinGauge\": 0.0155,\n      \"MaxGauge\": 0.0165,\n      \"Width\": 0.5,\n      \"VersionNo\": 1,\n      \"ProcessNo\": 1,\n      \"ID\": 0,\n      \"MinBundleWeight\": 800,\n      \"MaxBundleWeight\": 900,\n      \"CanWeld\": false,\n      \"TotalQuantity\": 40000,\n      \"TolerancePlusPercent\": 0.5,\n      \"ToleranceMinusPercent\": 0.5,\n      \"AlreadyPlannedWeight\": 0,\n      \"AlreadyShippedWeight\": 0\n    },\n    {\n      \"PlanType\": \"CustomerOrder\",\n      \"WeightToPlan\": 800,\n      \"OrderNo\": 423,\n      \"RelLetter\": \"A\",\n      \"ItemTemplateIdx\": 105842,\n      \"CoilOrderPlanId\": 0,\n      \"DueDate\": \"2026-11-30T00:00:00\",\n      \"RequiredGauge\": 0.016,\n      \"RequiredTemper\": \"H18\",\n      \"MinGauge\": 0.0155,\n      \"MaxGauge\": 0.0165,\n      \"Width\": 0.5,\n      \"VersionNo\": 1,\n      \"ProcessNo\": 1,\n      \"ID\": 0,\n      \"MinBundleWeight\": 800,\n      \"MaxBundleWeight\": 900,\n      \"CanWeld\": false,\n      \"TotalQuantity\": 40000,\n      \"TolerancePlusPercent\": 0.5,\n      \"ToleranceMinusPercent\": 0.5,\n      \"AlreadyPlannedWeight\": 0,\n      \"AlreadyShippedWeight\": 0\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GenerateAndSaveFlatWirePlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GenerateAndSaveFlatWirePlan"
+              ]
+            },
+            "description": "The exact case the request states: a 3,000 lb rod, the first order needing 1,000 lb and two more sharing the rest.\n\nThe first flatten yields order 421's piece and a balance row for 2,000 lb whose coil no arrives at a second flatten; that splits again for 422; 423 takes what is left.\n\nExpect: no flat line row carrying two orders, and the coil nos NESTING - the rod divides into an A and a B, and the B divides into a BA and a BB. Each division asks GenerateCoilAlpha for the coil being divided, not for the rod."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// A run allocates a plan identifier per coil; keep the first for undo and redo.",
+                  "const body = pm.response.json();",
+                  "const saves = body && body.data ? body.data.saves : null;",
+                  "if (saves && saves.length) {",
+                  "    pm.collectionVariables.set('planId', saves[0].planId || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.3 An order split across two coils",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coils\": [\n    {\n      \"Coil\": {\n        \"InitialCoilNo\": \"FW70103\",\n        \"Weight\": 1500,\n        \"Gauge\": 0.375,\n        \"Temper\": \"F\",\n        \"Shape\": \"Round\",\n        \"Type\": \"Rod\",\n        \"Width\": 0.0,\n        \"AlloyDensity\": 0.098\n      },\n      \"Smp\": [\n        {\n          \"StepNo\": 0,\n          \"Type\": \"Rod\",\n          \"Shape\": \"Round\",\n          \"MinGauge\": 0.375,\n          \"NominalGauge\": 0.375,\n          \"MaxGauge\": 0.375,\n          \"Temper\": \"F\",\n          \"Operation\": \"None\"\n        },\n        {\n          \"StepNo\": 1,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.11,\n          \"NominalGauge\": 0.11,\n          \"MaxGauge\": 0.11,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Flatten\"\n        },\n        {\n          \"StepNo\": 2,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.11,\n          \"NominalGauge\": 0.11,\n          \"MaxGauge\": 0.11,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Anneal\"\n        },\n        {\n          \"StepNo\": 3,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.016,\n          \"NominalGauge\": 0.016,\n          \"MaxGauge\": 0.016,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Flatten\"\n        }\n      ],\n      \"PlanId\": \"\",\n      \"Strategy\": \"MergeOrders\"\n    },\n    {\n      \"Coil\": {\n        \"InitialCoilNo\": \"FW70104\",\n        \"Weight\": 2000,\n        \"Gauge\": 0.375,\n        \"Temper\": \"F\",\n        \"Shape\": \"Round\",\n        \"Type\": \"Rod\",\n        \"Width\": 0.0,\n        \"AlloyDensity\": 0.098\n      },\n      \"Smp\": [\n        {\n          \"StepNo\": 0,\n          \"Type\": \"Rod\",\n          \"Shape\": \"Round\",\n          \"MinGauge\": 0.375,\n          \"NominalGauge\": 0.375,\n          \"MaxGauge\": 0.375,\n          \"Temper\": \"F\",\n          \"Operation\": \"None\"\n        },\n        {\n          \"StepNo\": 1,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.11,\n          \"NominalGauge\": 0.11,\n          \"MaxGauge\": 0.11,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Flatten\"\n        },\n        {\n          \"StepNo\": 2,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.11,\n          \"NominalGauge\": 0.11,\n          \"MaxGauge\": 0.11,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Anneal\"\n        },\n        {\n          \"StepNo\": 3,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.016,\n          \"NominalGauge\": 0.016,\n          \"MaxGauge\": 0.016,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Flatten\"\n        }\n      ],\n      \"PlanId\": \"\",\n      \"Strategy\": \"MergeOrders\"\n    }\n  ],\n  \"Orders\": [\n    {\n      \"PlanType\": \"CustomerOrder\",\n      \"WeightToPlan\": 2500,\n      \"OrderNo\": 421,\n      \"RelLetter\": \"A\",\n      \"ItemTemplateIdx\": 105842,\n      \"CoilOrderPlanId\": 0,\n      \"DueDate\": \"2026-11-30T00:00:00\",\n      \"RequiredGauge\": 0.016,\n      \"RequiredTemper\": \"H18\",\n      \"MinGauge\": 0.0155,\n      \"MaxGauge\": 0.0165,\n      \"Width\": 0.5,\n      \"VersionNo\": 1,\n      \"ProcessNo\": 1,\n      \"ID\": 0,\n      \"MinBundleWeight\": 800,\n      \"MaxBundleWeight\": 900,\n      \"CanWeld\": false,\n      \"TotalQuantity\": 40000,\n      \"TolerancePlusPercent\": 0.5,\n      \"ToleranceMinusPercent\": 0.5,\n      \"AlreadyPlannedWeight\": 0,\n      \"AlreadyShippedWeight\": 0\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GenerateAndSaveFlatWirePlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GenerateAndSaveFlatWirePlan"
+              ]
+            },
+            "description": "One 2,500 lb order against a 1,500 lb coil and a 2,000 lb coil. The first coil takes 1,500 and the second carries the remaining 1,000.\n\nExpect: two plan identifiers, one per coil - each coil is planned on its own - and the order's weight divided 1500 / 1000 with nothing unplanned."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// A run allocates a plan identifier per coil; keep the first for undo and redo.",
+                  "const body = pm.response.json();",
+                  "const saves = body && body.data ? body.data.saves : null;",
+                  "if (saves && saves.length) {",
+                  "    pm.collectionVariables.set('planId', saves[0].planId || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.4 More order than the coils can carry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coils\": [\n    {\n      \"Coil\": {\n        \"InitialCoilNo\": \"FW70105\",\n        \"Weight\": 1000,\n        \"Gauge\": 0.375,\n        \"Temper\": \"F\",\n        \"Shape\": \"Round\",\n        \"Type\": \"Rod\",\n        \"Width\": 0.0,\n        \"AlloyDensity\": 0.098\n      },\n      \"Smp\": [\n        {\n          \"StepNo\": 0,\n          \"Type\": \"Rod\",\n          \"Shape\": \"Round\",\n          \"MinGauge\": 0.375,\n          \"NominalGauge\": 0.375,\n          \"MaxGauge\": 0.375,\n          \"Temper\": \"F\",\n          \"Operation\": \"None\"\n        },\n        {\n          \"StepNo\": 1,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.11,\n          \"NominalGauge\": 0.11,\n          \"MaxGauge\": 0.11,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Flatten\"\n        },\n        {\n          \"StepNo\": 2,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.11,\n          \"NominalGauge\": 0.11,\n          \"MaxGauge\": 0.11,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Anneal\"\n        },\n        {\n          \"StepNo\": 3,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.016,\n          \"NominalGauge\": 0.016,\n          \"MaxGauge\": 0.016,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Flatten\"\n        }\n      ],\n      \"PlanId\": \"\",\n      \"Strategy\": \"MergeOrders\"\n    }\n  ],\n  \"Orders\": [\n    {\n      \"PlanType\": \"CustomerOrder\",\n      \"WeightToPlan\": 800,\n      \"OrderNo\": 421,\n      \"RelLetter\": \"A\",\n      \"ItemTemplateIdx\": 105842,\n      \"CoilOrderPlanId\": 0,\n      \"DueDate\": \"2026-11-30T00:00:00\",\n      \"RequiredGauge\": 0.016,\n      \"RequiredTemper\": \"H18\",\n      \"MinGauge\": 0.0155,\n      \"MaxGauge\": 0.0165,\n      \"Width\": 0.5,\n      \"VersionNo\": 1,\n      \"ProcessNo\": 1,\n      \"ID\": 0,\n      \"MinBundleWeight\": 800,\n      \"MaxBundleWeight\": 900,\n      \"CanWeld\": false,\n      \"TotalQuantity\": 40000,\n      \"TolerancePlusPercent\": 0.5,\n      \"ToleranceMinusPercent\": 0.5,\n      \"AlreadyPlannedWeight\": 0,\n      \"AlreadyShippedWeight\": 0\n    },\n    {\n      \"PlanType\": \"CustomerOrder\",\n      \"WeightToPlan\": 1500,\n      \"OrderNo\": 422,\n      \"RelLetter\": \"A\",\n      \"ItemTemplateIdx\": 105842,\n      \"CoilOrderPlanId\": 0,\n      \"DueDate\": \"2026-11-30T00:00:00\",\n      \"RequiredGauge\": 0.016,\n      \"RequiredTemper\": \"H18\",\n      \"MinGauge\": 0.0155,\n      \"MaxGauge\": 0.0165,\n      \"Width\": 0.5,\n      \"VersionNo\": 1,\n      \"ProcessNo\": 1,\n      \"ID\": 0,\n      \"MinBundleWeight\": 800,\n      \"MaxBundleWeight\": 900,\n      \"CanWeld\": false,\n      \"TotalQuantity\": 40000,\n      \"TolerancePlusPercent\": 0.5,\n      \"ToleranceMinusPercent\": 0.5,\n      \"AlreadyPlannedWeight\": 0,\n      \"AlreadyShippedWeight\": 0\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GenerateAndSaveFlatWirePlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GenerateAndSaveFlatWirePlan"
+              ]
+            },
+            "description": "1,000 lb of coil against 2,300 lb of order. The first order fits, the second gets the remaining 200 lb, and 1,300 lb has nowhere to go.\n\nExpect: the unplanned weight reported on the result rather than forced onto a coil that cannot hold it."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// A run allocates a plan identifier per coil; keep the first for undo and redo.",
+                  "const body = pm.response.json();",
+                  "const saves = body && body.data ? body.data.saves : null;",
+                  "if (saves && saves.length) {",
+                  "    pm.collectionVariables.set('planId', saves[0].planId || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.5 Two coils on different strategies in one run",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coils\": [\n    {\n      \"Coil\": {\n        \"InitialCoilNo\": \"FW70106\",\n        \"Weight\": 1800,\n        \"Gauge\": 0.375,\n        \"Temper\": \"F\",\n        \"Shape\": \"Round\",\n        \"Type\": \"Rod\",\n        \"Width\": 0.0,\n        \"AlloyDensity\": 0.098\n      },\n      \"Smp\": [\n        {\n          \"StepNo\": 0,\n          \"Type\": \"Rod\",\n          \"Shape\": \"Round\",\n          \"MinGauge\": 0.375,\n          \"NominalGauge\": 0.375,\n          \"MaxGauge\": 0.375,\n          \"Temper\": \"F\",\n          \"Operation\": \"None\"\n        },\n        {\n          \"StepNo\": 1,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.11,\n          \"NominalGauge\": 0.11,\n          \"MaxGauge\": 0.11,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Flatten\"\n        },\n        {\n          \"StepNo\": 2,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.11,\n          \"NominalGauge\": 0.11,\n          \"MaxGauge\": 0.11,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Anneal\"\n        },\n        {\n          \"StepNo\": 3,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.016,\n          \"NominalGauge\": 0.016,\n          \"MaxGauge\": 0.016,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Flatten\"\n        }\n      ],\n      \"PlanId\": \"\",\n      \"Strategy\": \"MergeOrders\"\n    },\n    {\n      \"Coil\": {\n        \"InitialCoilNo\": \"FW70107\",\n        \"Weight\": 1800,\n        \"Gauge\": 0.375,\n        \"Temper\": \"F\",\n        \"Shape\": \"Round\",\n        \"Type\": \"Rod\",\n        \"Width\": 0.0,\n        \"AlloyDensity\": 0.098\n      },\n      \"Smp\": [\n        {\n          \"StepNo\": 0,\n          \"Type\": \"Rod\",\n          \"Shape\": \"Round\",\n          \"MinGauge\": 0.375,\n          \"NominalGauge\": 0.375,\n          \"MaxGauge\": 0.375,\n          \"Temper\": \"F\",\n          \"Operation\": \"None\"\n        },\n        {\n          \"StepNo\": 1,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.11,\n          \"NominalGauge\": 0.11,\n          \"MaxGauge\": 0.11,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Flatten\"\n        },\n        {\n          \"StepNo\": 2,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.11,\n          \"NominalGauge\": 0.11,\n          \"MaxGauge\": 0.11,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Anneal\"\n        },\n        {\n          \"StepNo\": 3,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.016,\n          \"NominalGauge\": 0.016,\n          \"MaxGauge\": 0.016,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Flatten\"\n        }\n      ],\n      \"PlanId\": \"\",\n      \"Strategy\": \"BalanceToPiece\"\n    }\n  ],\n  \"Orders\": [\n    {\n      \"PlanType\": \"CustomerOrder\",\n      \"WeightToPlan\": 900,\n      \"OrderNo\": 421,\n      \"RelLetter\": \"A\",\n      \"ItemTemplateIdx\": 105842,\n      \"CoilOrderPlanId\": 0,\n      \"DueDate\": \"2026-11-30T00:00:00\",\n      \"RequiredGauge\": 0.016,\n      \"RequiredTemper\": \"H18\",\n      \"MinGauge\": 0.0155,\n      \"MaxGauge\": 0.0165,\n      \"Width\": 0.5,\n      \"VersionNo\": 1,\n      \"ProcessNo\": 1,\n      \"ID\": 0,\n      \"MinBundleWeight\": 800,\n      \"MaxBundleWeight\": 900,\n      \"CanWeld\": false,\n      \"TotalQuantity\": 40000,\n      \"TolerancePlusPercent\": 0.5,\n      \"ToleranceMinusPercent\": 0.5,\n      \"AlreadyPlannedWeight\": 0,\n      \"AlreadyShippedWeight\": 0\n    },\n    {\n      \"PlanType\": \"CustomerOrder\",\n      \"WeightToPlan\": 900,\n      \"OrderNo\": 422,\n      \"RelLetter\": \"A\",\n      \"ItemTemplateIdx\": 105842,\n      \"CoilOrderPlanId\": 0,\n      \"DueDate\": \"2026-11-30T00:00:00\",\n      \"RequiredGauge\": 0.016,\n      \"RequiredTemper\": \"H18\",\n      \"MinGauge\": 0.0155,\n      \"MaxGauge\": 0.0165,\n      \"Width\": 0.5,\n      \"VersionNo\": 1,\n      \"ProcessNo\": 1,\n      \"ID\": 0,\n      \"MinBundleWeight\": 800,\n      \"MaxBundleWeight\": 900,\n      \"CanWeld\": false,\n      \"TotalQuantity\": 40000,\n      \"TolerancePlusPercent\": 0.5,\n      \"ToleranceMinusPercent\": 0.5,\n      \"AlreadyPlannedWeight\": 0,\n      \"AlreadyShippedWeight\": 0\n    },\n    {\n      \"PlanType\": \"CustomerOrder\",\n      \"WeightToPlan\": 900,\n      \"OrderNo\": 423,\n      \"RelLetter\": \"A\",\n      \"ItemTemplateIdx\": 105842,\n      \"CoilOrderPlanId\": 0,\n      \"DueDate\": \"2026-11-30T00:00:00\",\n      \"RequiredGauge\": 0.016,\n      \"RequiredTemper\": \"H18\",\n      \"MinGauge\": 0.0155,\n      \"MaxGauge\": 0.0165,\n      \"Width\": 0.5,\n      \"VersionNo\": 1,\n      \"ProcessNo\": 1,\n      \"ID\": 0,\n      \"MinBundleWeight\": 800,\n      \"MaxBundleWeight\": 900,\n      \"CanWeld\": false,\n      \"TotalQuantity\": 40000,\n      \"TolerancePlusPercent\": 0.5,\n      \"ToleranceMinusPercent\": 0.5,\n      \"AlreadyPlannedWeight\": 0,\n      \"AlreadyShippedWeight\": 0\n    },\n    {\n      \"PlanType\": \"CustomerOrder\",\n      \"WeightToPlan\": 900,\n      \"OrderNo\": 424,\n      \"RelLetter\": \"A\",\n      \"ItemTemplateIdx\": 105842,\n      \"CoilOrderPlanId\": 0,\n      \"DueDate\": \"2026-11-30T00:00:00\",\n      \"RequiredGauge\": 0.016,\n      \"RequiredTemper\": \"H18\",\n      \"MinGauge\": 0.0155,\n      \"MaxGauge\": 0.0165,\n      \"Width\": 0.5,\n      \"VersionNo\": 1,\n      \"ProcessNo\": 1,\n      \"ID\": 0,\n      \"MinBundleWeight\": 800,\n      \"MaxBundleWeight\": 900,\n      \"CanWeld\": false,\n      \"TotalQuantity\": 40000,\n      \"TolerancePlusPercent\": 0.5,\n      \"ToleranceMinusPercent\": 0.5,\n      \"AlreadyPlannedWeight\": 0,\n      \"AlreadyShippedWeight\": 0\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GenerateAndSaveFlatWirePlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GenerateAndSaveFlatWirePlan"
+              ]
+            },
+            "description": "The strategy belongs to the coil, not to the run, so a run can mix them. Two orders land on each coil.\n\nExpect: the first coil's plan sharing its operations between its two orders, and the second coil's peeling them apart - the shared seq-0 row present on one and absent on the other."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// A run allocates a plan identifier per coil; keep the first for undo and redo.",
+                  "const body = pm.response.json();",
+                  "const saves = body && body.data ? body.data.saves : null;",
+                  "if (saves && saves.length) {",
+                  "    pm.collectionVariables.set('planId', saves[0].planId || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.6 A stock order in a run - back to stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coils\": [\n    {\n      \"Coil\": {\n        \"InitialCoilNo\": \"FW70108\",\n        \"Weight\": 2000,\n        \"Gauge\": 0.375,\n        \"Temper\": \"F\",\n        \"Shape\": \"Round\",\n        \"Type\": \"Rod\",\n        \"Width\": 0.0,\n        \"AlloyDensity\": 0.098\n      },\n      \"Smp\": [\n        {\n          \"StepNo\": 0,\n          \"Type\": \"Rod\",\n          \"Shape\": \"Round\",\n          \"MinGauge\": 0.375,\n          \"NominalGauge\": 0.375,\n          \"MaxGauge\": 0.375,\n          \"Temper\": \"F\",\n          \"Operation\": \"None\"\n        },\n        {\n          \"StepNo\": 1,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.11,\n          \"NominalGauge\": 0.11,\n          \"MaxGauge\": 0.11,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Flatten\"\n        },\n        {\n          \"StepNo\": 2,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.11,\n          \"NominalGauge\": 0.11,\n          \"MaxGauge\": 0.11,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Anneal\"\n        },\n        {\n          \"StepNo\": 3,\n          \"Type\": \"Wire\",\n          \"Shape\": \"Flat\",\n          \"MinGauge\": 0.016,\n          \"NominalGauge\": 0.016,\n          \"MaxGauge\": 0.016,\n          \"Temper\": \"H18\",\n          \"Operation\": \"Flatten\"\n        }\n      ],\n      \"PlanId\": \"\",\n      \"Strategy\": \"MergeOrders\"\n    }\n  ],\n  \"Orders\": [\n    {\n      \"PlanType\": \"CustomerOrder\",\n      \"WeightToPlan\": 1000,\n      \"OrderNo\": 421,\n      \"RelLetter\": \"A\",\n      \"ItemTemplateIdx\": 105842,\n      \"CoilOrderPlanId\": 0,\n      \"DueDate\": \"2026-11-30T00:00:00\",\n      \"RequiredGauge\": 0.016,\n      \"RequiredTemper\": \"H18\",\n      \"MinGauge\": 0.0155,\n      \"MaxGauge\": 0.0165,\n      \"Width\": 0.5,\n      \"VersionNo\": 1,\n      \"ProcessNo\": 1,\n      \"ID\": 0,\n      \"MinBundleWeight\": 800,\n      \"MaxBundleWeight\": 900,\n      \"CanWeld\": false,\n      \"TotalQuantity\": 40000,\n      \"TolerancePlusPercent\": 0.5,\n      \"ToleranceMinusPercent\": 0.5,\n      \"AlreadyPlannedWeight\": 0,\n      \"AlreadyShippedWeight\": 0\n    },\n    {\n      \"PlanType\": \"ItemStockOrder\",\n      \"WeightToPlan\": 1000,\n      \"OrderNo\": null,\n      \"RelLetter\": \"\",\n      \"ItemTemplateIdx\": 105842,\n      \"CoilOrderPlanId\": 0,\n      \"DueDate\": \"2026-11-30T00:00:00\",\n      \"RequiredGauge\": 0.016,\n      \"RequiredTemper\": \"H18\",\n      \"MinGauge\": 0.0155,\n      \"MaxGauge\": 0.0165,\n      \"Width\": 0.5,\n      \"VersionNo\": 1,\n      \"ProcessNo\": 1,\n      \"ID\": 0,\n      \"MinBundleWeight\": 800,\n      \"MaxBundleWeight\": 900,\n      \"CanWeld\": false,\n      \"TotalQuantity\": 40000,\n      \"TolerancePlusPercent\": 0.5,\n      \"ToleranceMinusPercent\": 0.5,\n      \"AlreadyPlannedWeight\": 0,\n      \"AlreadyShippedWeight\": 0\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GenerateAndSaveFlatWirePlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GenerateAndSaveFlatWirePlan"
+              ]
+            },
+            "description": "A customer order and a stock order on one rod. The stock order's material goes back to stock at its LAST output, and that row carries the flag.\n\nExpect: the stock order no created during the save, and the back-to-stock row travelling on a coil no issued with wareHouseAlpha = 1 - a coil at the rod's own level rather than nested under the coil it came off. Under MergeOrders the merge has to invent an as-is flatten to hold that flag when the order finishes at the anneal, because the furnace output cannot be divided."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// A run allocates a plan identifier per coil; keep the first for undo and redo.",
+                  "const body = pm.response.json();",
+                  "const saves = body && body.data ? body.data.saves : null;",
+                  "if (saves && saves.length) {",
+                  "    pm.collectionVariables.set('planId', saves[0].planId || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5.7 The route left to the item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Coils\": [\n    {\n      \"Coil\": {\n        \"InitialCoilNo\": \"FW70109\",\n        \"Weight\": 2000,\n        \"Gauge\": 0.375,\n        \"Temper\": \"F\",\n        \"Shape\": \"Round\",\n        \"Type\": \"Rod\",\n        \"Width\": 0.0,\n        \"AlloyDensity\": 0.098\n      },\n      \"Smp\": [],\n      \"PlanId\": \"\",\n      \"Strategy\": \"MergeOrders\"\n    }\n  ],\n  \"Orders\": [\n    {\n      \"PlanType\": \"CustomerOrder\",\n      \"WeightToPlan\": 1000,\n      \"OrderNo\": 421,\n      \"RelLetter\": \"A\",\n      \"ItemTemplateIdx\": 105842,\n      \"CoilOrderPlanId\": 0,\n      \"DueDate\": \"2026-11-30T00:00:00\",\n      \"RequiredGauge\": 0.016,\n      \"RequiredTemper\": \"H18\",\n      \"MinGauge\": 0.0155,\n      \"MaxGauge\": 0.0165,\n      \"Width\": 0.5,\n      \"VersionNo\": 1,\n      \"ProcessNo\": 1,\n      \"ID\": 0,\n      \"MinBundleWeight\": 800,\n      \"MaxBundleWeight\": 900,\n      \"CanWeld\": false,\n      \"TotalQuantity\": 40000,\n      \"TolerancePlusPercent\": 0.5,\n      \"ToleranceMinusPercent\": 0.5,\n      \"AlreadyPlannedWeight\": 0,\n      \"AlreadyShippedWeight\": 0\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/GenerateAndSaveFlatWirePlan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "GenerateAndSaveFlatWirePlan"
+              ]
+            },
+            "description": "Send no Smp and the route held for each order's item is read instead. The item template must exist - ItemTemplateIdx on the order is what it is read by.\n\nExpect: the same shape of plan, built from the item's own route."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// A run allocates a plan identifier per coil; keep the first for undo and redo.",
+                  "const body = pm.response.json();",
+                  "const saves = body && body.data ? body.data.saves : null;",
+                  "if (saves && saves.length) {",
+                  "    pm.collectionVariables.set('planId', saves[0].planId || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6 - Reading a plan back",
+      "description": "What is held for a plan, by whichever identifier the caller has. At least one of InitialCoilNo, MfgOrderNo or PlanId is required.",
+      "item": [
+        {
+          "name": "6.1 By coil no",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/PlanInfo?initialCoilNo=FW70101",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "PlanInfo"
+              ],
+              "query": [
+                {
+                  "key": "initialCoilNo",
+                  "value": "FW70101"
+                }
+              ]
+            },
+            "description": "Everything held for the coil - the plan, its orders and where its journal stands, so a screen knows whether undo and redo are available."
+          },
+          "response": []
+        },
+        {
+          "name": "6.2 By plan identifier",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/PlanInfo?planId={{planId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "PlanInfo"
+              ],
+              "query": [
+                {
+                  "key": "planId",
+                  "value": "{{planId}}"
+                }
+              ]
+            },
+            "description": "The same, addressed by the plan identifier a save returned."
+          },
+          "response": []
+        },
+        {
+          "name": "6.3 By manufacturing order no",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/PlanInfo?mfgOrderNo=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "PlanInfo"
+              ],
+              "query": [
+                {
+                  "key": "mfgOrderNo",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "The manufacturing order no is assigned when a plan is EXPORTED, not when it is planned - so it is 0 on a plan that has only been saved. Use a real exported no here."
+          },
+          "response": []
+        },
+        {
+          "name": "6.4 From the history tables",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/PlanInfo?initialCoilNo=FW70101&isHistorical=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "PlanInfo"
+              ],
+              "query": [
+                {
+                  "key": "initialCoilNo",
+                  "value": "FW70101"
+                },
+                {
+                  "key": "isHistorical",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Reads the history tables instead of the live ones, for a plan that has already been through the export and cleanup."
+          },
+          "response": []
+        },
+        {
+          "name": "6.5 Rejected - no identifier at all",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/PlanInfo?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "PlanInfo"
+              ],
+              "query": []
+            },
+            "description": "Expect: a validation failure - at least one of InitialCoilNo, MfgOrderNo or PlanId must be provided."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7 - Undo and redo",
+      "description": "Every save is journalled as a snapshot, held as a linked chain with one entry marked current. Undo steps back along the link an entry keeps to the one it followed; redo steps forward to the entry that followed the current one.\n\nAppending PRUNES whatever was recorded after the current entry, so acting after an undo abandons the branch that was undone - which is what makes a correction behave like any other edit.",
+      "item": [
+        {
+          "name": "7.1 Undo the last action",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"PlanId\": \"{{planId}}\",\n  \"InitialCoilNo\": \"FW70101\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/UndoFlatWirePlanAction",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "UndoFlatWirePlanAction"
+              ]
+            },
+            "description": "Steps the plan back to the state before its last save. The user is taken from the token, not the body.\n\nExpect: the restored plan document, and PlanInfo now reporting that redo is available."
+          },
+          "response": []
+        },
+        {
+          "name": "7.2 Redo it",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"PlanId\": \"{{planId}}\",\n  \"InitialCoilNo\": \"FW70101\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/RedoFlatWirePlanAction",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "RedoFlatWirePlanAction"
+              ]
+            },
+            "description": "Steps the plan forward again to the state that was undone.\n\nExpect: the plan as it was before 7.1. Saving anything else in between instead abandons this branch, and redo is no longer offered."
+          },
+          "response": []
+        },
+        {
+          "name": "7.3 Undo with nothing to undo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"PlanId\": \"FW-NO-SUCH-PLAN-00\",\n  \"InitialCoilNo\": \"FW00000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/FlatWire/UndoFlatWirePlanAction",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FlatWire",
+                "UndoFlatWirePlanAction"
+              ]
+            },
+            "description": "A plan with no journal entry.\n\nExpect: a failure carrying the reason on ErrorDescription rather than an exception through the wire."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

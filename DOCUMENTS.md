@@ -136,6 +136,7 @@ These three were sibling folders of `MVP-1/` until the 13 Aug 2026 consolidation
 | [NFRVerification.md](70-testing/NFRVerification.md) | `[NFR]` | NFR verification — **four targets are undefined, so those tests cannot fail** |
 | [UATPlan.md](70-testing/UATPlan.md) | `[UAT]` | Participants, scenario scripts, sign-off criteria |
 | [PLCCommissioning.md](70-testing/PLCCommissioning.md) | `[COM]` | **Safety-critical.** Preconditions, who must be present, `C1`–`C11`, abort criteria |
+| [postman/](70-testing/postman/) | — | The **flat wire planning API collection** — one request per scenario, payload and expected answer included. Import the collection and the local environment together |
 | [Deployment.md](80-operations/Deployment.md) | `[DEP]` | Release overview, pre-deployment, the deployment sequence, the smoke suite |
 | [Rollback.md](80-operations/Rollback.md) | `[RB]` | Rollback. **Must be rehearsed before the first production deployment** |
 | [Monitoring.md](80-operations/Monitoring.md) | `[MON]` | Health monitoring and logging |

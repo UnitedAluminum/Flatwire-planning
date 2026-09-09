@@ -1,0 +1,1891 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flat Wire Planning SRS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap">
+
+<style>
+  :root {
+    --ground:        #F6F8FA;
+    --surface:       #FFFFFF;
+    --surface-sunk:  #EDF1F5;
+    --ink:           #161C24;
+    --ink-soft:      #4A5663;
+    --ink-faint:     #74818F;
+    --rule:          #D8DFE7;
+    --rule-soft:     #E7ECF1;
+    --accent:        #2C5F7C;
+    --accent-soft:   #E2ECF3;
+    --furnace:       #A8632F;
+    --furnace-soft:  #F6E9DE;
+    --draw:          #4A6B8A;
+    --flatten:       #2C5F7C;
+    --anneal:        #A8632F;
+    --edge:          #5E6B7A;
+
+    --serif: "Newsreader", Georgia, "Times New Roman", serif;
+    --sans:  "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono:  "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+  }
+
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --ground:       #10141A;
+      --surface:      #171C24;
+      --surface-sunk: #1E242D;
+      --ink:          #E3E9F0;
+      --ink-soft:     #A8B4C2;
+      --ink-faint:    #7C8896;
+      --rule:         #2A323C;
+      --rule-soft:    #222932;
+      --accent:       #6FA8C7;
+      --accent-soft:  #1B2B36;
+      --furnace:      #D9945C;
+      --furnace-soft: #2E2116;
+      --draw:         #8AA8C4;
+      --flatten:      #6FA8C7;
+      --anneal:       #D9945C;
+      --edge:         #9BA7B5;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:       #10141A;
+    --surface:      #171C24;
+    --surface-sunk: #1E242D;
+    --ink:          #E3E9F0;
+    --ink-soft:     #A8B4C2;
+    --ink-faint:    #7C8896;
+    --rule:         #2A323C;
+    --rule-soft:    #222932;
+    --accent:       #6FA8C7;
+    --accent-soft:  #1B2B36;
+    --furnace:      #D9945C;
+    --furnace-soft: #2E2116;
+    --draw:         #8AA8C4;
+    --flatten:      #6FA8C7;
+    --anneal:       #D9945C;
+    --edge:         #9BA7B5;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 28px 96px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0 56px;
+  }
+
+  @media (min-width: 1040px) {
+    .page { grid-template-columns: 208px minmax(0, 1fr); }
+    .masthead { grid-column: 1 / -1; }
+    .index { grid-column: 1; }
+    main   { grid-column: 2; }
+  }
+
+  /* ---------------------------------------------------------------- masthead */
+  .masthead {
+    padding: 56px 0 32px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 44px;
+  }
+  .doc-kind {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(34px, 5.2vw, 52px);
+    line-height: 1.08;
+    letter-spacing: -0.015em;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-family: var(--serif);
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0 0 28px;
+  }
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    border-top: 1px solid var(--rule);
+  }
+  .fact {
+    padding: 14px 26px 4px 0;
+    margin-right: 26px;
+    border-right: 1px solid var(--rule-soft);
+  }
+  .fact:last-child { border-right: 0; }
+  .fact dt {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 3px;
+  }
+  .fact dd {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------------------------------------------------------------- index */
+  .index { display: none; }
+  @media (min-width: 1040px) {
+    .index {
+      display: block;
+      position: sticky;
+      top: 28px;
+      align-self: start;
+      max-height: calc(100vh - 56px);
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+  }
+  .index h2 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 12px;
+    font-weight: 500;
+  }
+  .index ol { list-style: none; margin: 0; padding: 0; }
+  .index li { margin-bottom: 7px; display: flex; gap: 9px; }
+  .index .n {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+    padding-top: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+  .index a { color: var(--ink-soft); text-decoration: none; }
+  .index a:hover, .index a:focus-visible { color: var(--accent); text-decoration: underline; }
+
+  /* ---------------------------------------------------------------- sections */
+  section { margin-bottom: 60px; scroll-margin-top: 24px; }
+  section > h2 {
+    font-family: var(--serif);
+    font-size: 27px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+    display: flex;
+    align-items: baseline;
+    gap: 13px;
+  }
+  section > h2 .num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+  }
+  .section-lede {
+    color: var(--ink-soft);
+    max-width: 68ch;
+    margin: 0 0 26px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  h3 {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 34px 0 14px;
+  }
+  p { max-width: 68ch; }
+  a { color: var(--accent); }
+
+  code, .m {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--surface-sunk);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+
+  /* ---------------------------------------------------------------- requirement list */
+  .reqs { display: flex; flex-direction: column; gap: 0; }
+  .req {
+    display: grid;
+    grid-template-columns: 62px minmax(0, 1fr);
+    gap: 0 18px;
+    padding: 17px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    align-items: start;
+  }
+  .req:first-child { border-top: 1px solid var(--rule); }
+  .req .id {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    padding-top: 3px;
+  }
+  .req .body { min-width: 0; }
+  .req .head {
+    font-weight: 600;
+    margin: 0 0 4px;
+    font-size: 15px;
+  }
+  .req p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
+  .req .note {
+    margin-top: 7px;
+    font-size: 13.5px;
+    color: var(--ink-faint);
+  }
+
+  /* ---------------------------------------------------------------- tables */
+  .scroller { overflow-x: auto; margin: 18px 0 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 480px; }
+  th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+    padding: 0 16px 9px 0;
+    border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+  }
+  td {
+    padding: 10px 16px 10px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+    color: var(--ink-soft);
+  }
+  td:first-child { color: var(--ink); }
+  td.mono, th.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 13px; }
+
+  /* ---------------------------------------------------------------- operation chips */
+  .op {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 21px; height: 21px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--surface);
+    background: var(--ink-soft);
+  }
+  .op.d { background: var(--draw); }
+  .op.f { background: var(--flatten); }
+  .op.a { background: var(--anneal); }
+  .op.e { background: var(--edge); }
+  .legend { display: flex; flex-wrap: wrap; gap: 20px; margin: 18px 0 4px; }
+  .legend div { display: flex; align-items: center; gap: 9px; font-size: 14px; color: var(--ink-soft); }
+
+  /* ---------------------------------------------------------------- stage strip */
+  .stages {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    margin: 22px 0 10px;
+  }
+  .stage { background: var(--surface); padding: 20px 22px; }
+  .stage .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 9px;
+  }
+  .stage h4 { font-family: var(--serif); font-size: 19px; font-weight: 500; margin: 0 0 8px; }
+  .stage p { font-size: 13.5px; color: var(--ink-soft); margin: 0 0 12px; max-width: none; }
+  .stage ul { margin: 0; padding-left: 16px; font-family: var(--mono); font-size: 12px; color: var(--ink-faint); }
+  .stage li { margin-bottom: 3px; }
+
+  /* ---------------------------------------------------------------- scenarios */
+  .scenario {
+    border-left: 2px solid var(--accent);
+    padding: 2px 0 2px 22px;
+    margin-bottom: 30px;
+  }
+  .scenario .sid {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+  }
+  .scenario h4 {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 500;
+    margin: 5px 0 9px;
+    text-wrap: balance;
+  }
+  .scenario > p { margin: 0 0 14px; color: var(--ink-soft); }
+  .routes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px 28px;
+    padding: 13px 0;
+    border-top: 1px solid var(--rule-soft);
+    border-bottom: 1px solid var(--rule-soft);
+    margin-bottom: 13px;
+  }
+  .route { display: flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 12.5px; }
+  .route .who { color: var(--ink-faint); }
+  .route .ops { display: flex; gap: 3px; }
+  .outcome { font-size: 14px; color: var(--ink-soft); margin: 0; }
+  .outcome strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------------------------------------------------------------- gaps */
+  .gap {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 0 18px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .gap:first-of-type { border-top: 1px solid var(--rule); }
+  .gap .sev {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 0 0;
+    color: var(--furnace);
+    font-weight: 600;
+  }
+  .gap .sev.low { color: var(--ink-faint); }
+  .gap .head { font-weight: 600; margin: 0 0 4px; }
+  .gap p { margin: 0; font-size: 14px; color: var(--ink-soft); }
+
+  .callout {
+    background: var(--furnace-soft);
+    border-left: 2px solid var(--furnace);
+    padding: 15px 20px;
+    margin: 22px 0;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .callout strong { color: var(--ink); }
+  .callout p { margin: 0; max-width: none; }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 20px;
+    font-size: 13px;
+    color: var(--ink-faint);
+    max-width: 68ch;
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="page">
+
+  <header class="masthead">
+    <p class="doc-kind">Software Requirements Specification · UADEV-23172</p>
+    <h1>Flat Wire Planning</h1>
+    <p class="standfirst">
+      Turning an item's SMP route, a coil and its orders into planned operations — deciding how much of an
+      order a coil should carry so that everything produced can be shipped, and then laying those orders out
+      on the coil in the plan the shop floor runs.
+    </p>
+    <dl class="facts">
+      <div class="fact"><dt>Domain</dt><dd>Planning.sln</dd></div>
+      <div class="fact"><dt>Endpoints</dt><dd>8</dd></div>
+      <div class="fact"><dt>Tests</dt><dd>419</dd></div>
+      <div class="fact"><dt>Strategies</dt><dd>2</dd></div>
+      <div class="fact"><dt>New tables</dt><dd>5</dd></div>
+      <div class="fact"><dt>Status</dt><dd>Runs on dev</dd></div>
+    </dl>
+  </header>
+
+  <nav class="index" aria-label="Contents">
+    <h2>Contents</h2>
+    <ol>
+      <li><span class="n">1</span><a href="#scope">Scope</a></li>
+      <li><span class="n">2</span><a href="#glossary">Glossary</a></li>
+      <li><span class="n">3</span><a href="#overview">How a plan is built</a></li>
+      <li><span class="n">4</span><a href="#functional">Functional requirements</a></li>
+      <li><span class="n">5</span><a href="#rules">Business rules</a></li>
+      <li><span class="n">6</span><a href="#solution">Output solution</a></li>
+      <li><span class="n">7</span><a href="#strategies">Final plan strategies</a></li>
+      <li><span class="n">8</span><a href="#coilnos">Coil numbering</a></li>
+      <li><span class="n">9</span><a href="#scenarios">Scenarios</a></li>
+      <li><span class="n">10</span><a href="#api">API surface</a></li>
+      <li><span class="n">11</span><a href="#data">Data model</a></li>
+      <li><span class="n">12</span><a href="#performance">Performance</a></li>
+      <li><span class="n">13</span><a href="#verification">Verification</a></li>
+      <li><span class="n">14</span><a href="#gaps">Known gaps</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- ============================================================ 1 -->
+    <section id="scope">
+      <h2><span class="num">01</span>Scope</h2>
+      <p class="section-lede">
+        What this covers, and what it deliberately leaves alone.
+      </p>
+      <p>
+        Flat wire orders are planned onto a rod or wire coil. Each order gets its own draft plan; orders
+        travelling on the same physical coil are then merged into one plan, dividing the coil wherever the
+        orders stop being able to share an operation. This specification covers generating, merging, saving
+        and reversing those plans.
+      </p>
+      <p>
+        The mill and slitter planning path is untouched. Nothing in it was extended, reused or refactored —
+        flat wire sits alongside it, reusing only shared framework pieces (the EF repositories, the MediatR
+        pipeline, the plan identifier function, the coil alpha issuer) and the existing planning tables where
+        the columns already fit.
+      </p>
+      <p>
+        It also covers <strong>how much</strong> of an order a coil should carry. Allocating by weight alone
+        produces material that cannot be shipped: a 4,000 lb rod winding two 1,800 lb spools leaves a 400 lb
+        tail, and if the customer's lightest coil is 800 lb that tail makes no shippable coil at all. Section
+        6 specifies the arithmetic that answers the question before any row is written.
+      </p>
+      <p>
+        The rules implemented here are specified in <span class="m">tables.md</span> (plan types, SMP
+        collapsing, line assignment, back to stock) and <span class="m">merging-logic.md</span> (the merge
+        rule, split points, coil numbering, the extra as-is flatten). The worked examples in
+        <span class="m">merging-logic-sample-data.json</span> are used directly as a test fixture, and the
+        cascade strategy has its own generated fixture in
+        <span class="m">balance-to-piece-sample-data.json</span> — those two files are the acceptance spec for
+        section 9.
+      </p>
+      <div class="callout">
+        <p>
+          <strong>Two ways of laying orders out on a coil are specified, and the planner picks.</strong> The
+          sample data the client supplied for the merge shows two orders sharing one spool; a later review
+          comment from the same client says a spool must never hold two orders. Rather than choose for them,
+          both are built — see section 7. The merging one remains the default, so nothing already agreed
+          changes without someone asking for it.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================================================ 2 -->
+    <section id="glossary">
+      <h2><span class="num">02</span>Glossary</h2>
+      <p class="section-lede">
+        Terms used throughout, in the sense this domain uses them.
+      </p>
+
+      <div class="legend">
+        <div><span class="op d">D</span> Draw — reduce a round wire</div>
+        <div><span class="op f">F</span> Flatten — round to flat, on a flat line</div>
+        <div><span class="op a">A</span> Anneal — soften in the furnace</div>
+        <div><span class="op e">E</span> Edge — finish the edges</div>
+      </div>
+
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Term</th><th>Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Plan</td><td>Everything planned on one coil, identified by a <span class="m">PlanId</span>. Every order on a coil shares one.</td></tr>
+            <tr><td>Coil order plan</td><td>One order's place on a coil. Every routing and flat line row hangs from one.</td></tr>
+            <tr><td>Initial plan</td><td>One order's draft, written to the <span class="m">Temp*</span> tables.</td></tr>
+            <tr><td>Final plan</td><td>The coil's merged plan, written to the <span class="m">Planning*</span> tables.</td></tr>
+            <tr><td>SMP route</td><td>The standard manufacturing process for an item: the ordered steps from rod to finished wire.</td></tr>
+            <tr><td>Operation string</td><td>The route as letters — <span class="m">FAF</span> is flatten, anneal, flatten.</td></tr>
+            <tr><td>Root operation</td><td>An operation planned on the whole coil before any order, under a coil order plan with no order no.</td></tr>
+            <tr><td>Division</td><td>A coil splitting into one output coil per group of orders, each taking a new coil no.</td></tr>
+            <tr><td>As-is flatten</td><td>An extra flatten the merge creates so an order finishing at the anneal can still be given a coil of its own.</td></tr>
+            <tr><td>FL1 / FL2 / FL3</td><td>Flat lines. FL1 before the anneal, FL2 after it, FL3 for a route with no anneal.</td></tr>
+            <tr><td>Spool</td><td>The physical carrier FL1 winds onto, between the rod and the furnace. A fixture with its own weight range, held in <span class="m">FlatWireDB.dbo.Spool</span>.</td></tr>
+            <tr><td>Bundle</td><td>A finished customer coil, cut from a spool at FL2 or straight from the rod at FL3. Its weight range belongs to the ORDER, not the mill.</td></tr>
+            <tr><td>Tail</td><td>Weight left on a coil once whole bundles have been cut from it.</td></tr>
+            <tr><td>Weld</td><td>Joining one rod to the next so a tail is not stranded. Rod to rod only, before FL1 — flattened material cannot be welded.</td></tr>
+            <tr><td>Skid</td><td>What finished coils ship on. Two to a skid, so an even bundle count ships complete skids.</td></tr>
+            <tr><td>Headroom</td><td>What an order may still take before it is over shipped: its ship ceiling less what is already planned and shipped.</td></tr>
+            <tr><td>Warehouse alpha</td><td>A coil no generated from the ROD rather than from the coil it came off, for material going back to stock.</td></tr>
+            <tr><td>Balance to piece</td><td>The strategy that peels one order off at each flatten and carries the rest forward, so no spool holds two orders.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================ 3 -->
+    <section id="overview">
+      <h2><span class="num">03</span>How a plan is built</h2>
+      <p class="section-lede">
+        Two stages, in this order. The second reads what the first saved, so it cannot run earlier.
+      </p>
+
+      <div class="stages">
+        <div class="stage">
+          <div class="tag">Stage 1 · per order</div>
+          <h4>Initial plan</h4>
+          <p>
+            The item's SMP route is trimmed to what the coil has not yet been through, collapsed into at most
+            three operations, and assigned to flat lines. Nothing is read from the database — the coil arrives
+            on the request.
+          </p>
+          <ul>
+            <li>TempRoutings</li>
+            <li>TempFlatLineProcessing</li>
+            <li>TempMfgSalesOrderRef</li>
+            <li>TempOrderRemainingOperations</li>
+          </ul>
+        </div>
+        <div class="stage">
+          <div class="tag">Stage 2 · per coil</div>
+          <h4>Final plan</h4>
+          <p>
+            The saved drafts are regrouped by coil order plan and merged. The coil is walked one sequence no
+            at a time; where the orders can no longer share an operation, it divides.
+          </p>
+          <ul>
+            <li>PlanningRoutings</li>
+            <li>PlanningFlatLineProcessing</li>
+            <li>PlanningMfgSalesOrderRef</li>
+            <li>OrderRemainingOperations</li>
+          </ul>
+        </div>
+        <div class="stage">
+          <div class="tag">Both stages</div>
+          <h4>Saving</h4>
+          <p>
+            A save replaces all of that plan's rows with the document's rows and records a snapshot. Because
+            saving is a replacement, undo and redo only have to write an earlier document back.
+          </p>
+          <ul>
+            <li>FlatWirePlanAction</li>
+            <li>OrdersPlannedSequence</li>
+            <li>RoutingsLevelIdMaps</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <p>
+          <strong>Every order planned on a coil shares one PlanId.</strong> Generating the first plan on a
+          blank coil mints one; every later plan on that coil joins the identifier already saved. This drives
+          the replacement scope in <span class="m">FR-2</span> and <span class="m">FR-4</span> — deleting an
+          order's rows by plan identifier would take the other orders on the coil with them.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================================================ 4 -->
+    <section id="functional">
+      <h2><span class="num">04</span>Functional requirements</h2>
+      <p class="section-lede">
+        Eight endpoints. No generate endpoint persists anything, and neither does the solution — the caller
+        decides whether to keep what comes back.
+      </p>
+
+      <div class="reqs">
+        <div class="req">
+          <div class="id">FR-1</div>
+          <div class="body">
+            <p class="head">Generate one order's plan</p>
+            <p>
+              Given a coil and an order, produce the operations that order needs: routing rows, flat line
+              rows, an order reference and a remaining operations row. The plan is returned, not saved.
+            </p>
+            <p class="note">
+              A caller may supply an SMP route on the request, which takes precedence over the item's own —
+              so a proposed route can be planned without writing it to the item first. A supplied route goes
+              through the same progress resolution, collapsing and line assignment; there is one path, not two.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">FR-2</div>
+          <div class="body">
+            <p class="head">Save one order's plan</p>
+            <p>
+              Allocate the plan identifier, create the coil order plan, mint any stock order no, stamp all of
+              it onto the rows, and replace that order's rows in the temp tables.
+            </p>
+            <p class="note">
+              Replacement is scoped to each <span class="m">CoilOrderPlanId</span> in the document, never the
+              plan identifier. Three things can only happen here: a stock order carries a dummy order no until
+              the plan is actually being kept, the coil order plan's identity only exists once its row has
+              gone in, and the order's position on the coil is recorded once and never renumbered.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">FR-3</div>
+          <div class="body">
+            <p class="head">Generate the coil's merged plan</p>
+            <p>
+              Read the saved temp rows for the plan, regroup them into the per order plans they came from, and
+              merge them into one plan for the coil. Returned, not saved.
+            </p>
+            <p class="note">
+              Root operations are separated out first and copied through rather than merged — they belong to
+              the whole coil, not to any order.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">FR-4</div>
+          <div class="body">
+            <p class="head">Save the merged plan</p>
+            <p>
+              Replace the plan's rows in the planning tables, and replace its links back to the temp
+              operations behind them. Replacement is scoped to the plan identifier, because the merged plan
+              covers the whole coil.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">FR-5</div>
+          <div class="body">
+            <p class="head">Plan a coil in one call</p>
+            <p>
+              Generate and save each supplied order in turn, then generate and save the coil's merged plan —
+              one request, one transaction.
+            </p>
+            <p class="note">
+              The plan identifier allocated by the first order saved is threaded into every later order in the
+              run. Each save is journalled under its own stage, so undo steps back through a run one stage at
+              a time rather than treating it as a single opaque action.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">FR-6</div>
+          <div class="body">
+            <p class="head">Undo and redo</p>
+            <p>
+              Step a plan back to the state before its last action, or forward again. Recording a new action
+              prunes the forward branch, so acting after an undo abandons what was undone.
+            </p>
+            <p class="note">
+              No inverse logic exists per action type. Undo writes the previous snapshot through exactly the
+              path a save takes, so any future edit becomes undoable with no work.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">FR-7</div>
+          <div class="body">
+            <p class="head">Plan onto a coil that carries root operations</p>
+            <p>
+              When operations have already been planned on the whole coil, an order's own operations start
+              after them — taking the next sequence no and hanging from the last root level. Any number of
+              root operations is supported.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">FR-8</div>
+          <div class="body">
+            <p class="head">Remove a plan or its orders</p>
+            <p>
+              Deleting a plan, or removing all assigned orders, takes the flat line processing rows with it —
+              from both the per order and the merged tables — under the same sub plan and sequence filter the
+              routings use.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">FR-9</div>
+          <div class="body">
+            <p class="head">Plan several coils in one call</p>
+            <p>
+              A run takes a list of coils and a list of orders. Each coil carries at most its own weight, so
+              an order too heavy for the coil it starts on continues onto the next; each coil is planned and
+              merged under its own plan identifier.
+            </p>
+            <p class="note">
+              What will not fit is reported rather than forced: weight left unplanned comes back in the run
+              result, and weight left free on a coil is left free. An order placed on two coils becomes two
+              coil order plans, one per coil, each carrying the weight that coil took.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">FR-10</div>
+          <div class="body">
+            <p class="head">Choose how orders are laid out on the coil</p>
+            <p>
+              Each coil in a run names the strategy its merged plan is built with:
+              <span class="m">MergeOrders</span> or <span class="m">BalanceToPiece</span>. Omitted, it is
+              <span class="m">MergeOrders</span>, which is what the merge has always done.
+            </p>
+            <p class="note">
+              The two strategies produce different plans from identical input, which is the point — see
+              section 7. Both go through the same save, journal and undo path, so choosing one costs nothing
+              downstream.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">FR-11</div>
+          <div class="body">
+            <p class="head">Advise how much of an order to plan</p>
+            <p>
+              Given a coil, what is free on it, an order and the route, answer how much to plan so that
+              everything produced can be shipped — and what that weight produces: the spools it is wound on,
+              the finished coils cut from it, whatever is left over, and what to do about that.
+            </p>
+            <p class="note">
+              It advises rather than decides. Supply a weight and that weight is evaluated instead of one
+              being chosen, with the weight that WOULD have been advised returned beside it so an override
+              can be recorded against it. Nothing is written.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ 5 -->
+    <section id="rules">
+      <h2><span class="num">05</span>Business rules</h2>
+      <p class="section-lede">
+        The rules the generated rows must satisfy. Where a rule exists to make a physical constraint hold,
+        that constraint is named.
+      </p>
+
+      <div class="reqs">
+        <div class="req">
+          <div class="id">BR-1</div>
+          <div class="body">
+            <p class="head">A route collapses into at most three operations</p>
+            <p>
+              Draws and flattens before the anneal become one flatten; the anneal stands alone; flattens and
+              edges after it become one more. Sequence nos run <span class="m">0</span>,
+              <span class="m">10</span>, <span class="m">20</span>.
+            </p>
+            <p class="note">
+              A group takes its input side from its first step and its output side from its last, which is
+              what makes the fold lossless.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">BR-2</div>
+          <div class="body">
+            <p class="head">Flat line assignment follows the anneal</p>
+            <p>
+              The anneal runs at the furnace and carries no machine. A route with no anneal runs entirely on
+              FL3. Otherwise operations before the anneal are FL1 and those after it FL2.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">BR-3</div>
+          <div class="body">
+            <p class="head">Each operation's input is the previous output</p>
+            <p>
+              The first operation receives the coil; every later one receives what the operation before it
+              produced. That single rule keeps a route consistent and is what a future edit will use to
+              recalculate everything downstream of a change.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">BR-4</div>
+          <div class="body">
+            <p class="head">Two orders may share an operation only if all merge rules hold</p>
+            <p>
+              Same operation, same output, same next operation. A new condition is a new rule class and
+              nothing else changes.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">BR-5</div>
+          <div class="body">
+            <p class="head">A coil can only be divided at a flatten</p>
+            <p>
+              The furnace output cannot be split, so a division owed at the anneal waits for the next flatten.
+              Any order with no operation there is given an extra as-is flatten so it can still take a coil of
+              its own.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">BR-6</div>
+          <div class="body">
+            <p class="head">Every order must end with its own output coil</p>
+            <p>
+              A coil still carrying more than one order at its last flatten divides there even when the
+              operations match perfectly.
+            </p>
+            <p class="note">
+              BR-5 and BR-6 are the only division rules coded. The four split points the analysis lists all
+              follow from them; none is written as a case.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">BR-7</div>
+          <div class="body">
+            <p class="head">A new coil no is issued only at a division</p>
+            <p>
+              Everywhere else the coil no carries through, including across the anneal. There is one routing
+              row per sequence no per coil; the per output detail is on the flat line rows.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">BR-8</div>
+          <div class="body">
+            <p class="head">Weight enters as the coil weight and divides with the coil</p>
+            <p>
+              Each output then carries the weight of the orders travelling on it. Nothing is lost per
+              operation, so weight off equals weight on. Required in weight is a different question — what the
+              orders on the row actually need — and stays the sum of their planned weights.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">BR-9</div>
+          <div class="body">
+            <p class="head">Rows hang in a plan tree</p>
+            <p>
+              A per order route is a chain, so its levels run from one, each hanging from the one before.
+              A division branches it: the operation the coil divided at is the parent, and the operations that
+              follow on each new coil are siblings under it. Levels are unique across a plan.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">BR-10</div>
+          <div class="body">
+            <p class="head">A routing row's remaining operations exclude its own</p>
+            <p>
+              The column names what is still to be done once the operation is finished, so it always begins
+              with the next operation and is empty on the last. The order level row is different — it names
+              the order's whole planned route.
+            </p>
+            <p class="note">
+              For <span class="m">FAF</span> the three routing rows read <span class="m">AF</span>,
+              <span class="m">F</span>, empty — while the order's own row reads <span class="m">FAF</span>.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">BR-11</div>
+          <div class="body">
+            <p class="head">The manufacturing order no is zero until export</p>
+            <p>
+              It is assigned when a plan is exported, so every row a plan generates carries zero rather than
+              nothing — including the home order no on the flat line rows.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">BR-12</div>
+          <div class="body">
+            <p class="head">Back to stock sits on the row that produced the coil</p>
+            <p>
+              A stock order ending at a flatten carries the flag on its flat line row; one ending at the
+              anneal carries it on the routing row. Where the merge creates an as-is flatten, the flag moves
+              off the anneal onto the new flat line row.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">BR-13</div>
+          <div class="body">
+            <p class="head">Unused mill and slitter measures are written, not left unknown</p>
+            <p>
+              A quantity or flag that flat wire does not use is zero or false. Row references — coil, core,
+              plastic, arbor, output item, machine and setup identifiers — stay unset, because a zero there
+              would read as a reference to a row that does not exist.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">BR-14</div>
+          <div class="body">
+            <p class="head">A finished coil is never planned above the order's maximum</p>
+            <p>
+              Where a weight will not divide into equal coils inside the customer's range, the heaviest legal
+              coils are cut and the remainder is reported. It is never rounded up into the next coil.
+            </p>
+            <p class="note">
+              The client's ruling: cut at the maximum and keep the remainder, because shipping the overage
+              would force a WIP reject. Over shipping the ORDER within its tolerance is a different matter and
+              is allowed — see BR-15.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">BR-15</div>
+          <div class="body">
+            <p class="head">An order may be over planned within its shipping tolerance</p>
+            <p>
+              The ceiling is <span class="m">(order_tot_qty_tol_plus / 100 + 1) × current_order_total_qty</span>,
+              less what is already planned and shipped. Raising a final spool rather than leaving an
+              unshippable tail is the intended use of that headroom.
+            </p>
+            <p class="note">
+              The same formula the edit order details query uses, computed in the service rather than in SQL
+              so it has one home and can be tested without a database. A test pins it to the query's own
+              numbers.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">BR-16</div>
+          <div class="body">
+            <p class="head">Welding is rod to rod, before the first flat line</p>
+            <p>
+              A tail can only be carried forward while it is still rod. Once flattened, material cannot be
+              welded — the mill has no capability for it — so a short spool or material left at FL2 is a WIP
+              reject or a concession, never a weld.
+            </p>
+            <p class="note">
+              The order permits welding or does not; a step of the route may forbid it. A step that says
+              nothing leaves the order's answer standing, which is why the flag on a step is nullable: null is
+              no opinion, not no.
+            </p>
+          </div>
+        </div>
+
+        <div class="req">
+          <div class="id">BR-17</div>
+          <div class="body">
+            <p class="head">Coils ship two to a skid, and an even count is preferred</p>
+            <p>
+              An odd number of finished coils ships a skid with one coil on it. That is allowed — the client
+              does it when it completes an order — but it is reported, because they would rather plan even.
+            </p>
+            <p class="note">
+              A preference, never a constraint: shipped weight is never traded for it.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ 6 -->
+    <section id="solution">
+      <h2><span class="num">06</span>Output solution</h2>
+      <p class="section-lede">
+        How much of an order to put on a coil, and what that weight makes. Pure arithmetic — it reads nothing
+        and writes nothing, so the same code answers the first plan and every later correction.
+      </p>
+
+      <p>
+        Allocating by weight alone strands material. The worked example the analysis opens with is a 4,000 lb
+        rod that winds two 1,800 lb spools and a 400 lb tail: with an 800 lb minimum coil the tail makes
+        nothing, so 4,000 lb is consumed and 3,600 lb ships. The fix is a planning decision, not a mill one —
+        the same rods, welds and spools with 400 lb less allocated leave 12 lb at risk instead of 900.
+      </p>
+
+      <h3>The shape of a plan that strands nothing</h3>
+      <p>
+        For one order on one coil, the planned weight is a whole number of finished coils, each inside the
+        customer's range, nested onto spools that the flat line can actually wind:
+      </p>
+
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Quantity</th><th>Constraint</th><th>Whose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">B</td><td>bundle weight, between the order's minimum and maximum, never above it</td><td>the order's</td></tr>
+            <tr><td class="mono">m</td><td>bundle count — a weight divides evenly exactly when <span class="m">floor(W / Bmin) ≥ ceil(W / Bmax)</span></td><td>derived</td></tr>
+            <tr><td class="mono">k</td><td>bundles per spool — as many whole coils as fit under the spool's maximum</td><td>the spool's</td></tr>
+            <tr><td class="mono">W</td><td>weight to plan — at most what is free on the coil, and at most the order's headroom</td><td>the answer</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Among the candidates the solver ships the most weight; then, at equal weight, the fewest and so
+        heaviest coils; then an even count. Where no equal split exists it still cuts the heaviest legal
+        coils and reports the remainder rather than forcing a coil the customer will not take.
+      </p>
+
+      <div class="callout">
+        <p>
+          <strong>The objective inverts once the order is full.</strong> An order planned up to its ship
+          ceiling wants the SMALLEST legal increment, not the largest — one spool's worth where the route
+          winds spools, otherwise one coil, both at the lightest the customer accepts. The reason is returned
+          with it, so the screen can explain the small number rather than look broken.
+        </p>
+      </div>
+
+      <h3>What comes back</h3>
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Field</th><th>Means</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">WeightToPlan</td><td>The answer — the planner's own weight, or the one advised</td></tr>
+            <tr><td class="mono">SuggestedWeightToPlan</td><td>What would have been advised, kept so an override can be recorded against it</td></tr>
+            <tr><td class="mono">Spools</td><td>Count, full weight, bundles per spool, and the last spool's weight where it closes short</td></tr>
+            <tr><td class="mono">Bundles</td><td>Count and weight of the finished coils, and whether the count is even</td></tr>
+            <tr><td class="mono">TailWeight</td><td>What is left on the coil once the coils are cut</td></tr>
+            <tr><td class="mono">CarryForwardWeight</td><td>The tail when a weld can consume it, zero when it cannot</td></tr>
+            <tr><td class="mono">WeightToCompleteABundle</td><td>How much more would finish another coil</td></tr>
+            <tr><td class="mono">WeightToCompleteASpool</td><td>How much more would finish another spool; zero without a spool stage</td></tr>
+            <tr><td class="mono">Warnings</td><td>Typed reasons and their numbers — never a sentence, so the screen words it and a test asserts it</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Warnings</h3>
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Reason</th><th>Raised when</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">NoOutputPossibleFromRemainingWeight</td><td>What is left makes no shippable coil at all</td></tr>
+            <tr><td class="mono">TailBelowMinimumBundleWeight</td><td>Weight is left over that is lighter than the order's smallest coil</td></tr>
+            <tr><td class="mono">AdditionalCoilNeededToCompleteOutput</td><td>The tail can be welded forward, so another rod would turn it into output</td></tr>
+            <tr><td class="mono">OddBundleCountLeavesAPartSkid</td><td>The coil count is odd, so a skid ships with one coil on it</td></tr>
+            <tr><td class="mono">FinalSpoolClosedShort</td><td>The last spool closes below a full one</td></tr>
+            <tr><td class="mono">OrderHeadroomExhausted</td><td>The order has no room left, so only the smallest increment is suggested</td></tr>
+            <tr><td class="mono">SpoolTargetCannotHoldWholeBundles</td><td>The spool cannot hold even one of this order's coils</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Where the numbers come from</h3>
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Value</th><th>Source</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Bundle weight range</td><td class="mono">Order — MinBundleWeight / MaxBundleWeight</td></tr>
+            <tr><td>Quantity and tolerances</td><td class="mono">Order — TotalQuantity, TolerancePlus/MinusPercent</td></tr>
+            <tr><td>Already planned and shipped</td><td class="mono">Order — AlreadyPlanned/ShippedWeight</td></tr>
+            <tr><td>Order permits welding</td><td class="mono">Order — CanWeld</td></tr>
+            <tr><td>Route permits welding at a step</td><td class="mono">SmpStep.WeldPermitted (bool?, null = no opinion)</td></tr>
+            <tr><td>Spool weight range</td><td class="mono">FlatWireDB.dbo.Spool — read across, per size class</td></tr>
+            <tr><td>Whether the route reaches a spool</td><td>Derived — the route contains an anneal, the same rule the flat lines are assigned by</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <p>
+          <strong>Only the spool band is read; everything else arrives on the request.</strong> That is
+          deliberate — the planner is looking at an order on a screen, and an answer they can argue with is
+          worth more than one that needed a round trip. Where the route reaches a spool and no band can be
+          found, the call FAILS rather than answering: with no band the route would look like one with no
+          spool stage, and the answer would be wrong rather than missing.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================================================ 7 -->
+    <section id="strategies">
+      <h2><span class="num">07</span>Final plan strategies</h2>
+      <p class="section-lede">
+        Two ways of laying several orders out on one coil, both specified, the planner choosing per coil. The
+        client's own material contains both answers, so neither is assumed.
+      </p>
+
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Source</th><th>Says</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="m">merging-logic-sample-data.json</span></td><td>One flat line row at sequence 0 carrying <span class="m">123456;123457</span> — two orders on one spool. Verified against the dev database.</td></tr>
+            <tr><td>The client's review comment</td><td>"I do not believe that we want to have multiple orders on a spool. The process would become very complex and the room for error at coil generation and skidding would be substantial."</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>MergeOrders — the default</h3>
+      <p>
+        Orders travelling on one coil share operations, and the coil divides where they diverge. One routing
+        row per sequence per coil carrying every order on it; the extra as-is flatten where one finishes at
+        the anneal; coil nos issued at divisions. This is sections 5 and 9 as originally specified, unchanged.
+      </p>
+
+      <h3>BalanceToPiece — the client's ruling</h3>
+      <p>
+        An order boundary is a hard break: the rod is checked out and back in, and a new empty spool starts.
+        So no spool spans two orders. Instead of grouping orders, each flatten peels one order's piece off and
+        carries the balance forward as its own piece, which is flattened again for the next order.
+      </p>
+
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Row</th><th>Order</th><th class="mono">Weight</th><th>Next</th><th class="mono">Level / parent</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>first flatten · piece</td><td class="mono">O1</td><td class="mono">1,000</td><td><span class="op a">A</span></td><td class="mono">2 / 1</td></tr>
+            <tr><td>first flatten · <strong>balance</strong></td><td class="mono">O2, O3</td><td class="mono">2,000</td><td><span class="op f">F</span></td><td class="mono">3 / 1</td></tr>
+            <tr><td>second flatten · piece</td><td class="mono">O2</td><td class="mono">1,200</td><td><span class="op a">A</span></td><td class="mono">4 / 3</td></tr>
+            <tr><td>second flatten · <strong>balance</strong></td><td class="mono">O3</td><td class="mono">800</td><td><span class="op f">F</span></td><td class="mono">5 / 3</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        At most two rows per split — a piece and a balance — which makes it a cascade rather than an n-way
+        division. The tree it needs already exists: <span class="m">LevelId</span> and
+        <span class="m">ParentLevelId</span> chain each balance to the flatten it came from.
+      </p>
+
+      <div class="callout">
+        <p>
+          <strong>Flat line processing has no next-operation column, and needs none.</strong> That a balance
+          is flattened again is expressed structurally: the coil no the balance leaves on is the incoming coil
+          no of a routing whose operation letter is <span class="m">F</span>. The topology is in the data
+          already, so nothing was added to carry it.
+        </p>
+      </div>
+
+      <h3>What each costs</h3>
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>&nbsp;</th><th class="mono">MergeOrders</th><th class="mono">BalanceToPiece</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Rows per shared operation</td><td>One, listing every order</td><td>Two — piece and balance</td></tr>
+            <tr><td>A spool shared between orders</td><td>Yes</td><td><strong>Never</strong></td></tr>
+            <tr><td>FL1 operations on a three-order rod</td><td>One</td><td><strong>Three</strong> — the check out and check in is real</td></tr>
+            <tr><td>Stranded weight</td><td>Lower — tails combine</td><td>Higher — every boundary closes a spool short</td></tr>
+            <tr><td>An order finishing at the anneal</td><td>Needs an invented as-is flatten to carry back to stock</td><td>Needs none — the order already has an output row of its own</td></tr>
+            <tr><td>Resequencing the orders</td><td>Affects attribution on a shared spool</td><td>Free — no spool depends on two orders being adjacent</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Both go through the same save, journal and undo path. Choosing one changes what is planned, not what
+        happens to the plan afterwards.
+      </p>
+    </section>
+
+    <!-- ============================================================ 8 -->
+    <section id="coilnos">
+      <h2><span class="num">08</span>Coil numbering</h2>
+      <p class="section-lede">
+        Every division issues coil nos through the existing coil alpha generation, so flat wire numbers coils
+        the way the rest of planning does. The shape of a coil no constrains how deep a plan can divide.
+      </p>
+
+      <p>
+        A coil no is a <strong>six character root plus up to three alphas</strong>, in nine characters total —
+        <span class="m">JP6125</span>, <span class="m">JM8603B</span>, <span class="m">JZ5531BB</span>,
+        <span class="m">JM8804UCA</span>. A division asks for children of the coil being divided, so a
+        cascade nests:
+      </p>
+
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Divides</th><th class="mono">Produces</th><th>Why</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">FW7001</td><td class="mono">FW7001A, FW7001B</td><td>Children of the rod</td></tr>
+            <tr><td class="mono">FW7001B</td><td class="mono">FW7001BA, FW7001BB</td><td>Children of the balance</td></tr>
+            <tr><td class="mono">FW7001BB</td><td class="mono">FW7001BBA, FW7001BBB</td><td>Three alphas — the limit</td></tr>
+            <tr><td class="mono">FW7001BBB</td><td class="mono">FW7001C, FW7001D</td><td>No room for a fourth, so generation returns to seven characters using the next free letter</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <p>
+          <strong>Material going back to stock is numbered differently.</strong> It becomes a stock coil in
+          its own right rather than a piece of the coil it came off, so its coil no is asked for as a
+          <em>warehouse alpha</em> — generated from the rod rather than from its parent. A division that
+          produces one of each therefore makes two calls; one that produces two of a kind makes one.
+        </p>
+      </div>
+
+      <p>
+        Under <span class="m">MergeOrders</span> the back to stock output is the invented as-is flatten's
+        coil, which the division assigns. Under <span class="m">BalanceToPiece</span> it is the order's own
+        last output. Either way the flag and the warehouse alpha land on the same row.
+      </p>
+    </section>
+
+    <!-- ============================================================ 9 -->
+    <section id="scenarios">
+      <h2><span class="num">09</span>Scenarios</h2>
+      <p class="section-lede">
+        The merge cases the analysis works through, each one a test. SC-1 to SC-5 are driven directly from
+        <span class="m">merging-logic-sample-data.json</span> — its temp block goes in, its planning block is
+        the expected result.
+      </p>
+
+      <div class="scenario">
+        <div class="sid">SC-1</div>
+        <h4>Identical routes divide at the last flatten</h4>
+        <p>
+          Two orders with identical routes on one coil. Every operation merges, and because the orders match
+          all the way through, the division happens at the last flatten where each takes its own output coil.
+        </p>
+        <div class="routes">
+          <div class="route"><span class="who">123456 · 1000 lb</span><span class="ops"><span class="op f">F</span><span class="op a">A</span><span class="op f">F</span></span></div>
+          <div class="route"><span class="who">123457 · 300 lb</span><span class="ops"><span class="op f">F</span><span class="op a">A</span><span class="op f">F</span></span></div>
+        </div>
+        <p class="outcome">
+          <strong>3 routing rows</strong>, all carrying <span class="m">123456;123457</span>.
+          <strong>3 flat line rows</strong>: one shared at sequence 0 for the full coil, then one per order at
+          sequence 20 on new coils <span class="m">FW10002</span> and <span class="m">FW10003</span>, carrying
+          1000 lb and 300 lb.
+        </p>
+      </div>
+
+      <div class="scenario">
+        <div class="sid">SC-2</div>
+        <h4>Routes diverging after the first flatten divide there</h4>
+        <p>
+          One order runs the full route; the other finishes at the first flatten. The outputs match but the
+          next operations differ, so the coil divides at the first flatten and only the longer order carries on.
+        </p>
+        <div class="routes">
+          <div class="route"><span class="who">123456 · 1000 lb</span><span class="ops"><span class="op f">F</span><span class="op a">A</span><span class="op f">F</span></span></div>
+          <div class="route"><span class="who">123458 · 500 lb</span><span class="ops"><span class="op f">F</span></span></div>
+        </div>
+        <p class="outcome">
+          Two flat line rows at sequence 0 on new coils; the anneal and last flatten carry only the order that
+          still has operations left.
+        </p>
+      </div>
+
+      <div class="scenario">
+        <div class="sid">SC-3</div>
+        <h4>A customer order beside an as-is stock order</h4>
+        <p>
+          The remainder of the coil goes back to stock as an as-is order. Its input fields equal its output
+          fields, its gauge band collapses to a single value, and the back to stock flag sits on its flat line
+          row because it ends at a flatten.
+        </p>
+        <div class="routes">
+          <div class="route"><span class="who">123456 · customer</span><span class="ops"><span class="op f">F</span><span class="op a">A</span><span class="op f">F</span></span></div>
+          <div class="route"><span class="who">stock · as-is</span><span class="ops"><span class="op f">F</span></span></div>
+        </div>
+        <p class="outcome">
+          Divides at the first flatten. The stock order's flat line row carries
+          <span class="m">BackToStock</span>; the customer order continues alone.
+        </p>
+      </div>
+
+      <div class="scenario">
+        <div class="sid">SC-4</div>
+        <h4>An order finishing at the anneal gains an extra flatten</h4>
+        <p>
+          The stock order's last operation is the anneal, and a coil cannot be divided at the furnace. The
+          merge creates an as-is flatten for it at the last flatten's sequence so it can be given a coil of its
+          own — and the back to stock flag moves off the anneal row onto that new flat line row.
+        </p>
+        <div class="routes">
+          <div class="route"><span class="who">123456 · customer</span><span class="ops"><span class="op f">F</span><span class="op a">A</span><span class="op f">F</span></span></div>
+          <div class="route"><span class="who">45232 · stock</span><span class="ops"><span class="op f">F</span><span class="op a">A</span></span></div>
+        </div>
+        <p class="outcome">
+          The stock order's operations become <span class="m">FAF</span> in the planning tables though its
+          draft said <span class="m">FA</span>. The extra flatten exists only in the merged plan.
+        </p>
+      </div>
+
+      <div class="scenario">
+        <div class="sid">SC-5</div>
+        <h4>Different outputs on the first flatten divide immediately</h4>
+        <p>
+          Both orders run the full route, but the first flatten produces a different gauge for each. The
+          outputs differ, so the coil divides at once and each order is walked on separately from there.
+        </p>
+        <div class="routes">
+          <div class="route"><span class="who">123456 → 0.1100 H18</span><span class="ops"><span class="op f">F</span><span class="op a">A</span><span class="op f">F</span></span></div>
+          <div class="route"><span class="who">123459 → 0.0800 H18</span><span class="ops"><span class="op f">F</span><span class="op a">A</span><span class="op f">F</span></span></div>
+        </div>
+        <p class="outcome">
+          The shared first operation takes the <strong>minimum</strong> gauge of the two and the temper of the
+          order needing further processing. After the division each branch carries only its own order — and
+          only its own weight.
+        </p>
+      </div>
+
+      <div class="scenario">
+        <div class="sid">SC-6</div>
+        <h4>Planning after a root operation</h4>
+        <p>
+          The coil already carries an operation planned on the whole coil, at sequence 0 and level 1 under a
+          coil order plan with no order no.
+        </p>
+        <p class="outcome">
+          An order planned afterwards runs sequences <span class="m">10, 20, 30</span> at levels
+          <span class="m">2, 3, 4</span>, its first operation hanging from the root. The merge copies the root
+          row through and appends every merged order to its <span class="m">OrdersInput</span>.
+        </p>
+      </div>
+
+      <div class="scenario">
+        <div class="sid">SC-7</div>
+        <h4>Undo after a save, then a new save</h4>
+        <p>
+          A plan is saved twice, undone once, then saved again.
+        </p>
+        <p class="outcome">
+          Undo restores the first snapshot through the same path a save takes. The new save prunes the
+          forward branch, so the undone action is no longer reachable by redo.
+        </p>
+      </div>
+
+      <div class="scenario">
+        <div class="sid">SC-8</div>
+        <h4>A second order added to a coil already planned</h4>
+        <p>
+          One order is already saved on the coil; a second is planned and saved.
+        </p>
+        <p class="outcome">
+          The second joins the plan identifier already on the coil, takes the next position among the orders,
+          and its save replaces only its own rows — the first order's rows are untouched.
+        </p>
+      </div>
+
+      <div class="scenario">
+        <div class="sid">SC-9</div>
+        <h4>Three orders on one rod, laid out as a cascade</h4>
+        <p>
+          A 3,000 lb rod under <span class="m">BalanceToPiece</span>: order one needs 1,000 lb, and two more
+          share the rest. Each flatten peels one order off and hands the balance on.
+        </p>
+        <div class="routes">
+          <div class="route"><span class="who">123456 · 1000 lb</span><span class="ops"><span class="op f">F</span><span class="op a">A</span><span class="op f">F</span></span></div>
+          <div class="route"><span class="who">123457 · 1200 lb</span><span class="ops"><span class="op f">F</span><span class="op a">A</span><span class="op f">F</span></span></div>
+          <div class="route"><span class="who">123458 · 800 lb</span><span class="ops"><span class="op f">F</span><span class="op a">A</span><span class="op f">F</span></span></div>
+        </div>
+        <p class="outcome">
+          <strong>Nine routing rows</strong>, none naming more than one order. Each order's chain starts one
+          operation later than the one before, because it begins with the flatten of the previous balance.
+          Coil nos <span class="m">FW7001A</span> and <span class="m">FW7001B</span> at the first split, then
+          <span class="m">FW7001BA</span> and <span class="m">FW7001BB</span> at the second. Weight enters at
+          3,000 and divides: the second flatten receives 2,000, the third 800.
+        </p>
+      </div>
+
+      <div class="scenario">
+        <div class="sid">SC-10</div>
+        <h4>A cascade deep enough to run out of coil no</h4>
+        <p>
+          Five orders on one rod under <span class="m">BalanceToPiece</span>, so the coil divides four times.
+        </p>
+        <p class="outcome">
+          The fourth division has no room for a tenth character, so generation carries on from the letter
+          after the first alpha and strips the rest — the children of <span class="m">FW7005BBB</span> are
+          <span class="m">FW7005C</span> and <span class="m">FW7005D</span>. This is the one case where a
+          piece is not a descendant of the coil it came off, and the generator decides it, not the planner.
+        </p>
+      </div>
+
+      <div class="scenario">
+        <div class="sid">SC-11</div>
+        <h4>A stock order finishing at the anneal, under each strategy</h4>
+        <p>
+          A customer order runs the full route beside a stock order that finishes at the anneal, and the
+          stock order's material goes back to stock.
+        </p>
+        <p class="outcome">
+          Under <span class="m">MergeOrders</span> the merge invents an as-is flatten to carry the flag, and
+          that row's coil is a warehouse alpha. Under <span class="m">BalanceToPiece</span> no as-is flatten
+          is invented — the order's own last output carries the flag, on a warehouse alpha of its own. Both
+          produce exactly one back to stock row.
+        </p>
+      </div>
+
+      <div class="scenario">
+        <div class="sid">SC-12</div>
+        <h4>A whole rod that strands nothing</h4>
+        <p>
+          A 4,400 lb rod against an order taking 800–900 lb coils, with plenty of order left to plan.
+        </p>
+        <p class="outcome">
+          <strong>5 coils of 880 lb</strong>, no tail. On a 3,500 lb spool that is three coils to a spool: two
+          spools, the second closing at 1,760. The count is odd, so a skid ships with one coil on it and
+          <span class="m">OddBundleCountLeavesAPartSkid</span> says so.
+        </p>
+      </div>
+
+      <div class="scenario">
+        <div class="sid">SC-13</div>
+        <h4>A weight with no equal split</h4>
+        <p>
+          2,000 lb against an order taking 750–850 lb coils, on a route with no anneal and so no spool stage.
+        </p>
+        <p class="outcome">
+          <span class="m">ceil(2000/850) = 3</span> exceeds <span class="m">floor(2000/750) = 2</span>, so no
+          equal split exists. Two coils of 850 are cut and <strong>300 lb is reported</strong> rather than
+          forced into a 666 lb coil that cannot ship. Given 250 lb more headroom the same order instead ships
+          <strong>three coils of 750 and no tail</strong> — which is why the ship allowance is part of the
+          solve rather than a check afterwards.
+        </p>
+      </div>
+
+      <div class="scenario">
+        <div class="sid">SC-14</div>
+        <h4>A tail too short to ship</h4>
+        <p>
+          400 lb left on a rod, against an order whose lightest coil is 750 lb.
+        </p>
+        <p class="outcome">
+          Where the rod cannot be welded: <strong>no output at all</strong>, and
+          <span class="m">NoOutputPossibleFromRemainingWeight</span> says so. Where it can:
+          <strong>400 lb carried forward</strong>, another rod required, and the planner told that
+          <strong>350 lb</strong> more completes a coil and <strong>1,300 lb</strong> more completes a spool.
+          On a route with no spool stage the spool figure stays at zero rather than quoting a target the
+          route never reaches.
+        </p>
+      </div>
+
+      <div class="scenario">
+        <div class="sid">SC-15</div>
+        <h4>An order with no room left</h4>
+        <p>
+          The order is planned right up to its ship ceiling and the planner asks for more.
+        </p>
+        <p class="outcome">
+          The smallest legal increment is advised, not the largest — one spool's worth where the route winds
+          spools, otherwise one coil, both at the customer's minimum — with
+          <span class="m">OrderHeadroomExhausted</span> so the screen can explain it. A larger weight typed by
+          the planner is still evaluated as typed.
+        </p>
+      </div>
+
+      <div class="scenario">
+        <div class="sid">SC-16</div>
+        <h4>An order too heavy for the coil it starts on</h4>
+        <p>
+          Two coils and two orders in one run, where the first order's weight exceeds the first coil.
+        </p>
+        <p class="outcome">
+          The first coil takes what it can hold and the rest of that order continues onto the second, so the
+          order becomes two coil order plans. Each coil is merged under its own plan identifier. Weight that
+          fits nowhere is reported as unplanned; weight left free on a coil is left free.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================================================ 10 -->
+    <section id="api">
+      <h2><span class="num">10</span>API surface</h2>
+      <p class="section-lede">
+        All on <span class="m">FlatWireController</span>, under <span class="m">api/v1/FlatWire</span>.
+        Responses are wrapped in <span class="m">ActionResultBase&lt;T&gt;</span>.
+      </p>
+
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Verb</th><th>Route</th><th>Returns</th><th>Req</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">POST</td><td class="mono">GenerateFlatWireInitialPlan</td><td>Plan document, stage Initial</td><td class="mono">FR-1</td></tr>
+            <tr><td class="mono">POST</td><td class="mono">SaveFlatWireInitialPlan</td><td>Save result</td><td class="mono">FR-2</td></tr>
+            <tr><td class="mono">GET</td><td class="mono">GenerateFlatWireFinalPlan</td><td>Plan document, stage Final</td><td class="mono">FR-3</td></tr>
+            <tr><td class="mono">POST</td><td class="mono">SaveFlatWireFinalPlan</td><td>Save result</td><td class="mono">FR-4</td></tr>
+            <tr><td class="mono">POST</td><td class="mono">GenerateAndSaveFlatWirePlan</td><td>Run result — every save, the merged plan per coil, and whatever could not be planned</td><td class="mono">FR-5, FR-9, FR-10</td></tr>
+            <tr><td class="mono">POST</td><td class="mono">GetFlatWireOutputSolution</td><td>How much to plan, and what it produces</td><td class="mono">FR-11</td></tr>
+            <tr><td class="mono">POST</td><td class="mono">UndoFlatWirePlanAction</td><td>The restored plan</td><td class="mono">FR-6</td></tr>
+            <tr><td class="mono">POST</td><td class="mono">RedoFlatWirePlanAction</td><td>The restored plan</td><td class="mono">FR-6</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <p>
+          <strong>Naming carries behaviour here.</strong> The framework transaction behaviour skips any
+          request whose type name contains <span class="m">Query</span>. The two generate requests are named
+          that way deliberately — they are reads and should not open a transaction. Everything that writes
+          must not contain it, which is why the one-call endpoint is a
+          <span class="m">…Command</span>: a run that saved some orders and then failed would otherwise leave
+          the coil half planned. The solution is a <span class="m">…Query</span> for the same reason in
+          reverse — it works out an answer and writes nothing.
+        </p>
+      </div>
+
+      <h3>Planning a run</h3>
+      <p>
+        <span class="m">GenerateAndSaveFlatWirePlan</span> takes a list of coils and a list of orders rather
+        than one of each. Each coil carries its own coil details, its SMP, its plan identifier and the
+        strategy its merged plan is built with; the orders are weighed out across the coils in order.
+      </p>
+    </section>
+
+    <!-- ============================================================ 11 -->
+    <section id="data">
+      <h2><span class="num">11</span>Data model</h2>
+      <p class="section-lede">
+        Five new tables. The six pre-existing planning tables already carried every column flat wire needs and
+        were not altered. The output solution adds no table at all — it reads one that already exists and
+        takes the rest on the request.
+      </p>
+
+      <h3>New tables</h3>
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Table</th><th>Holds</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">TempFlatLineProcessing</td><td>One order's flat line output per flatten</td></tr>
+            <tr><td class="mono">PlanningFlatLineProcessing</td><td>The merged plan's flat line outputs</td></tr>
+            <tr><td class="mono">TempFlatLineProcessingHistory</td><td>Archive, written by the history procedures</td></tr>
+            <tr><td class="mono">PlanningFlatLineProcessingHistory</td><td>Archive, written by the history procedures</td></tr>
+            <tr><td class="mono">FlatWirePlanAction</td><td>The undo and redo journal — a snapshot per action, one marked current</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Procedures</h3>
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Procedure</th><th>Change</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">GetFlatWirePlanIdentity</td><td>New — the plan identifier and next sub plan for a coil</td></tr>
+            <tr><td class="mono">CreateFlatWireStockOrder</td><td>New — mints a stock order no and clears the recycled number's stale rows</td></tr>
+            <tr><td class="mono">MakeHistoryForTempTables</td><td>Flat line processing block added</td></tr>
+            <tr><td class="mono">MakeHistoryForPlanningTables</td><td>Flat line processing block added</td></tr>
+            <tr><td class="mono">RollbackExport</td><td>Zeroes the merged flat line rows' order nos</td></tr>
+            <tr><td class="mono">RemoveDataFromPlanningDbForPlanIds</td><td>Deletes the new tables' rows</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Read across databases</h3>
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Read</th><th>For</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">FlatWireDB.dbo.Spool</td><td>What a spool carries, per size class — the only thing the solution looks up. Read the way the planning procedures already read <span class="m">united_db</span>: the spools belong to the flat line, not to planning.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <p>
+          <strong>A configuration table for the spool band was specified, built, and then removed.</strong>
+          The band is not a setting: the flat lines wind onto real spools, and how much one holds is a
+          property of the spool. One active class is in use today — <span class="m">TKUP-1 Intermediate
+          Spool</span>, 500 to 3,500 lb — so nothing has to be named. Where several are in use the caller
+          must say which, because guessing would silently change how much a plan produces. Those weights are
+          marked provisional in the source data.
+        </p>
+      </div>
+
+      <h3>Columns added for the solution</h3>
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Carried on</th><th>What</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">SmpStep.WeldPermitted</td><td><span class="m">bool?</span> — whether this step permits welding. Null means the SMP says nothing, so the order's answer stands and every existing route is unaffected</td></tr>
+            <tr><td class="mono">Order details</td><td>Bundle weight range, total quantity, plus and minus tolerances, already planned and already shipped weights, and whether the order permits welding</td></tr>
+            <tr><td class="mono">Coil in a run</td><td>The strategy its merged plan is built with, defaulting to <span class="m">MergeOrders</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Side tables written by a save</h3>
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Table</th><th>What goes in</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">OrdersPlannedSequence</td><td>One row per coil order plan — the order's position among the orders on the coil, numbered from one and never renumbered on a re-save</td></tr>
+            <tr><td class="mono">RoutingsLevelIdMaps</td><td>One row per merged operation per contributing order, linking a planning routing back to the temp routing behind it. Root rows map to themselves</td></tr>
+            <tr><td class="mono">CoilOrderPlan</td><td><span class="m">OrderRoutingInfo</span> carries the order's operation string, the same one written to the remaining operations row</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================ 12 -->
+    <section id="performance">
+      <h2><span class="num">12</span>Performance</h2>
+      <p>need to be extremely optimized</p>
+    </section>
+
+
+    <!-- ============================================================ 14 -->
+    <section id="gaps">
+      <h2><span class="num">14</span>Known gaps</h2>
+      <p class="section-lede">
+        Open before this can be trusted in production. The planning run and the solution both execute against
+        the dev database; nothing has been exercised by a planner.
+      </p>
+
+      <div class="gap">
+        <div class="sev">Decision</div>
+        <div>
+          <p class="head">Re-planning the same order on the same coil adds a second slice</p>
+          <p>
+            Posting the same run twice appends the same orders again rather than replacing them, so a coil
+            tested repeatedly accumulates orders and every run does more work than the last — the whole of the
+            performance problem in section 12. A planner who clicks twice gets two slices of the same order.
+            Whether that should replace or append is a product decision, not a defect to be fixed blind.
+          </p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div class="sev">Watch</div>
+        <div>
+          <p class="head">A half-saved merged plan was seen once</p>
+          <p>
+            A saved plan on dev once left 3 flat line rows with no routings, order references or remaining
+            operations, with identity counters ahead by exactly 3, 2 and 2 — inserted and rolled back while
+            the flat line rows committed. The insert path has since been rewritten to add all four tables and
+            commit them in a single save, which should make the partial state impossible, but the original
+            failure was never reproduced and so the fix is unproven. Worth watching rather than closing.
+          </p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div class="sev">Open</div>
+        <div>
+          <p class="head">Flat line rows are deleted without being archived</p>
+          <p>
+            Every sibling table writes to its history table before deleting. The two flat line history tables
+            exist but have no entity behind them, so removing a plan loses those rows with no audit trail.
+          </p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div class="sev">Open</div>
+        <div>
+          <p class="head">The stock order is not created in united_db</p>
+          <p>
+            <span class="m">CreateFlatWireStockOrder</span> mints the number and clears the recycled number's
+            stale rows, but creating the sales order itself is marked <span class="m">TODO(DBA)</span> — the
+            column lists of the <span class="m">orders</span>, <span class="m">order_parts</span> and
+            <span class="m">releases</span> tables are not in the database repository.
+          </p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div class="sev low">Awaiting BA</div>
+        <div>
+          <p class="head">Coil type has no single-letter mapping</p>
+          <p>
+            Flat wire holds the coil type as <span class="m">Rod</span> or <span class="m">Wire</span>, but
+            the routing column is <span class="m">char(1)</span> and no mapping is stated anywhere. Left unset
+            rather than invented; the flat line rows carry the type in full.
+          </p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div class="sev low">Awaiting BA</div>
+        <div>
+          <p class="head">A second anneal per route</p>
+          <p>
+            The three-operation collapse assumes at most one anneal. If a second is ever legitimate, the
+            collapser generalises to alternating groups.
+          </p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div class="sev low">Stub</div>
+        <div>
+          <p class="head">SMP routes and flat line machines</p>
+          <p>
+            The SMP arrives from a stub until the external procedure exists — one dependency injection line to
+            swap, with nothing above it changing. Only FL1 has a machine decided; FL2 and FL3 have none.
+          </p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div class="sev low">Planned</div>
+        <div>
+          <p class="head">Editing operations</p>
+          <p>
+            Adding, editing and removing a flatten or an anneal — including inserting an anneal into a
+            flatten, which splits it in two. Each is a pure document transform, so every one is undoable
+            through the journal with no work per edit type. Re-running line assignment after each structural
+            edit is what promotes an FL3-only route to FL1 / Furnace / FL2 and collapses it back.
+          </p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div class="sev">Awaiting client</div>
+        <div>
+          <p class="head">The two client sources disagree about spools</p>
+          <p>
+            The sample data supplied for the merge shows two orders on one spool; the review comment on
+            <span class="m">How rods, orders, spools and coils fit together</span> forbids it. Both are built
+            and the planner chooses, so nothing is blocked — but the client should know their two documents
+            disagree, and which one their planners will actually pick.
+          </p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div class="sev">Awaiting client</div>
+        <div>
+          <p class="head">Whether a skid weight caps two coils</p>
+          <p>
+            <span class="m">order_max_skid_wgt</span> exists and the slitter already folds it into its own
+            ceiling. Whether it should also cap two flat wire coils on a skid is unanswered, so it is not
+            applied. The skid policy is a single class and the solver already consults it, so the answer is a
+            one class change.
+          </p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div class="sev low">Awaiting client</div>
+        <div>
+          <p class="head">A maximum number of welds per coil</p>
+          <p>
+            ASTM sets no limit, but the client notes a customer could have a specification for it and that
+            nothing in quotes or orders captures one. Not built — there is no field to read. The weld policy
+            is where it would go, as one more condition.
+          </p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div class="sev low">Provisional</div>
+        <div>
+          <p class="head">The spool weights are fixture data</p>
+          <p>
+            Every row in the spool table is annotated as a provisional fixture, and the numbers drive how many
+            coils fit on a spool. They should be confirmed before anyone reads a spool count as a commitment.
+          </p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div class="sev low">Planned</div>
+        <div>
+          <p class="head">Re-solving from what the mill actually produced</p>
+          <p>
+            A spool planned at 1,800 lb and produced at 1,750 still cuts coils inside their range, so the band
+            absorbs most drift. Only when a value falls outside its band do the spools after it need
+            recomputing. Because the solver is a pure function of remaining weight, the same code serves the
+            first plan and the correction — and rewriting a plan is what a save already does, so a correction
+            is undoable like any other edit.
+          </p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div class="sev low">Planned</div>
+        <div>
+          <p class="head">Allocating a run through the solver</p>
+          <p>
+            The weight allocator still divides an order across coils by raw weight. Putting the solution in
+            front of it — so a coil takes a shippable weight rather than whatever is left — is the point of
+            the exercise, and it changes generated plans, so it is deliberately left until the arithmetic has
+            been agreed.
+          </p>
+        </div>
+      </div>
+
+      <div class="gap">
+        <div class="sev low">Open</div>
+        <div>
+          <p class="head">An index on the plan links</p>
+          <p>
+            <span class="m">RoutingsLevelIdMaps</span> holds 85,000 rows with only a primary key on its own
+            identifier, so clearing a plan's links scans the table — about 117 ms of every save. An index on
+            the plan identifier would remove it.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Generated from the implemented code, the analysis documents, the client's answers on
+      <span class="m">How rods, orders, spools and coils fit together</span>, and measurements taken against
+      the dev server. Sections 9 and 13 reflect tests that pass as of this document; section 12 reports
+      measured numbers rather than estimates; section 14 is the honest state of what is open, including two
+      questions only the client can answer and one only the business can.
+    </footer>
+
+  </main>
+</div>
+
+</body>
+</html>
