@@ -15,6 +15,47 @@
 
 **114 live stories / 3,186 h across four sprints and 15 phase specifications** *(116 ids, two cancelled by `D-32` on 18 Aug 2026; previously 3,292 h)*. Every story carries a `Rate-card basis:` line, and each phase closes on its `CapacityAndEffortModel.md` §3b figure — **except Phases 1C and 7, which `D-32` re-derives here** (138 h and 182 h) and which `[CE §3b]` still publishes at 221 h and 205 h.
 
+### 7.0 The category index
+
+⚠ **A story is no longer the unit of planning.** Every card in §7.2 is now part of a **consolidated parent story** in [`10-requirements/features/`](../10-requirements/features/README.md), and that parent is the single source of truth for its functional area — its requirements, its FE/BE/DB/RT scope, its open items, its dependencies and what a change to it touches.
+
+**What each artifact is for now:**
+
+| Artifact | Answers |
+|---|---|
+| **This section (§7.2)** | *What does it cost, in which phase, on which stream, in which sprint* — the costing and coverage ledger |
+| **`FS-##` parent** | *What is this functionality, what does it require, what is open about it, what would a change touch* |
+| **[`[SCM]`](../90-registers/StoryConsolidationMap.md)** | *Which category did this story become part of, and why* — plus the id-retirement ledger |
+| **[`FEATURES.md`](../FEATURES.md)** | *Where does each feature stand* |
+
+⛔ **Do not add requirements, acceptance criteria or dependencies to a card.** Those belong to the owning parent. A card carries hours, priority, sprint, phase and stream, because `build_development_plan_xlsx.py`, `build_trial_run_xlsx.py`, `[CE]`, `[DSP]`, `[SSP]` and `[TRP]` are all built on those cells.
+
+**The twenty categories.** ⚠ Counts and hours here are **generated** into `[SCM §2.1]`; the table below is a navigation aid and `[CE §3e]` remains the hours model of record.
+
+| `FS-##` | Category | Phase(s) | Stories | Retained | h |
+|---|---|---|---:|---:|---:|
+| [`FS-01`](../10-requirements/features/FS-01-angular-application-shell.md) | Angular Application Shell and Foundation | 1A | 7 | 0 | 230 |
+| [`FS-02`](../10-requirements/features/FS-02-backend-service-foundation.md) | Backend Service Foundation | 1B | 22 | 0 | 368 |
+| [`FS-03`](../10-requirements/features/FS-03-database-foundation.md) | Database Foundation and Deployment | 1C | 21 | 0 | 209 |
+| [`FS-04`](../10-requirements/features/FS-04-realtime-plc-backbone.md) | Real-Time and PLC Backbone | 1A · 1B · 3 · 4 · 5 | 22 | 0 | 391 |
+| [`FS-05`](../10-requirements/features/FS-05-pass-schedule-contract.md) | Pass Schedule - the consumer contract and ownership boundary | 2 | 0 | 5 | 0 |
+| [`FS-06`](../10-requirements/features/FS-06-line-visibility-alerting.md) | Line Visibility and Alerting | 3 | 7 | 0 | 148 |
+| [`FS-07`](../10-requirements/features/FS-07-rod-checkin-plc-config.md) | Rod Staging, Check-In, PLC Configuration and Weld Capture | 4 | 15 | 0 | 247 |
+| [`FS-08`](../10-requirements/features/FS-08-active-run-monitoring.md) | Active Run Monitoring and Gauge/Width Trace | 5 | 10 | 0 | 240 |
+| [`FS-09`](../10-requirements/features/FS-09-in-run-production-events.md) | In-Run Production Events | 6 | 16 | 1 | 264 |
+| [`FS-10`](../10-requirements/features/FS-10-exceptions-off-ramps.md) | Exceptions and Off-Ramps | 7 | 7 | 0 | 148 |
+| [`FS-11`](../10-requirements/features/FS-11-spool-lifecycle-fl2.md) | Spool Lifecycle and FL2 Finishing Run | 8 | 13 | 0 | 154 |
+| [`FS-12`](../10-requirements/features/FS-12-output-completion-packing.md) | Output Completion, Labelling and Packing | 9 | 10 | 0 | 186 |
+| [`FS-13`](../10-requirements/features/FS-13-fl3-hybrid-route.md) | FL3 Hybrid Continuous Route | 10 | 4 | 0 | 44 |
+| [`FS-14`](../10-requirements/features/FS-14-order-allocation-fulfilment.md) | Order Allocation and Fulfilment | 4 · 9 | 6 | 0 | 104 |
+| [`FS-15`](../10-requirements/features/FS-15-shared-schema-boundary.md) | The Shared-Schema Boundary | 4 · 9 | 5 | 0 | 113 |
+| [`FS-16`](../10-requirements/features/FS-16-reporting-certification.md) | Reporting and Certification | 11 | 8 | 1 | 206 |
+| [`FS-17`](../10-requirements/features/FS-17-yield-cost-scrap.md) | Yield, Cost Ledger and Scrap | 12 | 4 | 0 | 128 |
+| [`FS-18`](../10-requirements/features/FS-18-administration-reference-data.md) | Administration, Reference Data and Tooling Inventory | 13 | 17 | 1 | 229 |
+| [`FS-19`](../10-requirements/features/FS-19-integration-testing-golive.md) | Integration Testing, Commissioning and Go-Live | 14 | 10 | 0 | 289 |
+| [`FS-20`](../10-requirements/features/FS-20-unscheduled-unhosted.md) | Unscheduled and Unhosted Requirements | — | 0 | 5 | 0 |
+
+---
 ### 7.1 How stories are sized
 
 The unit is **hours**, factored from [`CapacityAndEffortModel.md`](CapacityAndEffortModel.md) §2's rate card. Every story carries a **`Rate-card basis:`** line so its figure is auditable rather than asserted.
