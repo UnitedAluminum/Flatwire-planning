@@ -233,11 +233,17 @@ SIZE_LIMIT = 14 * 1024
 
 
 def authored_bytes(rel):
+    """File size less EVERY generated block - there are two, not one.
+
+    Counting the blocker roll-up as authored prose would penalise exactly the
+    categories whose roll-up is most useful.
+    """
     text = F.read(rel)
-    if BEGIN in text and END in text:
-        block = text.split(BEGIN, 1)[1].split(END, 1)[0]
-        return len(text) - len(block)
-    return len(text)
+    n = len(text)
+    for begin, end in ((BEGIN, END), (BEGIN_BLK, END_BLK)):
+        if begin in text and end in text:
+            n -= len(text.split(begin, 1)[1].split(end, 1)[0])
+    return n
 
 
 def report_sizes(feats):

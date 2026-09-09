@@ -10,9 +10,9 @@ owner:
 # FS-10 · Exceptions and Off-Ramps
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 — minted empty by the `FS-##` consolidation, step 5
+**Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** ⬜ **Scaffold** — front-matter and structure only; sections 1, 3, 4, 6, 7 and 8 are not yet written
+**Status:** 🟡 **Authored** — §3's merged acceptance criteria are still outstanding
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*
@@ -30,11 +30,32 @@ owner:
 
 ## 1. Overview
 
-**Business purpose.** *(not yet written)*
+**Business purpose.** Every way material leaves the normal path. **WIP rejection** — the only thing
+that clears a Blocked bay — and **rod checkout** in its three modes: Mode A before a run starts,
+Mode B mid-run with supervisor approval, and Mode P as a pre-check-out. Plus **carry-forward**, the
+partial re-check-in of a rod that came off the line with usable material left on it.
 
-**Functional scope.** *(not yet written)*
+These are the paths taken when something has gone wrong, which makes them the paths least exercised
+in testing and most needed in production. `[EX]` is the domain authority.
 
-**Out of scope.** *(not yet written)*
+**Functional scope.** Owned by
+[`phase-07-wip-rejection-rod-checkout.md`](../../60-delivery/phases/phase-07-wip-rejection-rod-checkout.md),
+cited not restated. Seven activities: the WIP rejection dialog (DB8); the rod checkout dialog (DB12)
+covering Modes A, B and P; partial rod re-check-in; `POST /wipreject` and `POST /checkout` with
+their services; a **durable supervisor pending-approval queue**; the `WipRejection` and `RodCheckout`
+tables with the shared `coils` carry-forward columns; and the exception broadcasts with the
+supervisor notification.
+
+**Out of scope.**
+
+- **The conditions that cause a rejection.** An out-of-spec SPC verdict is raised by
+  [`FS-09`](FS-09-in-run-production-events.md); this category owns what happens next.
+- **Scrap disposition and the outlet** — [`FS-17`](FS-17-yield-cost-scrap.md) owns the Scrap Box /
+  Scrap Skid outlet, though the rejection that sends material there is here.
+- **The shared-schema writes** for reqsum reversal — `FW-221` is
+  [`FS-15`](FS-15-shared-schema-boundary.md)'s.
+- **The WIP REJ report** — `OI-84` records its columns as undocumented, and the report itself is
+  [`FS-16`](FS-16-reporting-certification.md)'s.
 
 ---
 
@@ -64,7 +85,16 @@ Seeded one activity per absorbed story. **Activities are expected to merge downw
 
 ## 3. Functional requirements
 
-Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md): **FR-290-299 · FR-300-327** (`[REQ §5.14` · `[REQ §5.15]`). **Cited, never restated.**
+Owned ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md): **FR-290-299**
+(`[REQ §5.14]`, WIP Rejection — Dashboard 8) and **FR-300-327** (`§5.15`, Rod Checkout —
+Dashboard 12) — **29 requirements**, the second-largest range set of any category.
+**Cited, never restated.** Screen authorities are
+[`WipRejection.md`](../screens/WipRejection.md) and [`RodCheckout.md`](../screens/RodCheckout.md).
+
+⚠ **Carry-forward's requirement is `FR-043`, which is in `FS-07`'s range, not this one's.** The
+partial re-check-in rules live in `RodPreCheckin.md` §7 and `RodCheckout.md` §7.2, and `Q12` is
+still open on them. So `FW-173` is built here against a requirement owned elsewhere — the one place
+this category's boundary is genuinely blurred.
 
 *(the merged, de-duplicated acceptance criteria are not yet written)*
 
@@ -76,10 +106,11 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 | Stream | Scope |
 |---|---|
-| **FE** | *(not yet written)* |
-| **BE** | *(not yet written)* |
-| **DB** | *(not yet written)* |
-| **RT** | *(not yet written)* |
+| **FE** | Three activities. The WIP rejection dialog, which opens **over whatever screen the operator is on**; the rod checkout dialog with its three modes; and partial rod re-check-in |
+| **BE** | Two. `POST /wipreject` and `POST /checkout` with their services, and the **durable supervisor pending-approval queue** — durable because `G7` records that mid-run approval currently relies only on transient SignalR |
+| **DB** | One, and it is `in-review`: the `WipRejection` and `RodCheckout` tables plus the **shared `coils` carry-forward columns**. ⚠ Its second shared-schema change was cancelled with `FW-001` by `D-32` |
+| **RT** | Exception broadcasts and the supervisor notification |
+| **QA / BA** | ⚠ **Neither has an activity here**, and this is the category with the most open items in the module. Eleven blockers, no BA story |
 
 ---
 
@@ -114,7 +145,34 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 <!-- END GENERATED: blockers -->
 
-**Gaps this category owns that no story cites:** *(not yet written)*
+**Eleven register items — the most of any category — and they fall into three groups.**
+
+**Supervisor approval is decided but unpersisted.** `G24` and `G7` are the same defect from two
+angles: three decisions require a supervisor approval, and the mechanism relies on **transient
+SignalR** with nothing durable behind it. `FW-175` is the 16 h answer, and `OI-38` compounds it —
+**the PIN validation source is undecided**, so it is not known whether the supervisor PIN checks
+against a JWT claim, a lookup or something else.
+
+**The client's reason vocabulary does not match ours.** `G79` records that **every
+`WipRejection.RejectionGroup` value is ours, not the client's** — their WIPREJ sheet says something
+different — and `G82` that **threading scrap must be a WIP rejection and no reason code exists for
+it**. Both are data gaps that make the dialog unbuildable as specified.
+
+**Three retired prefixes.** `OQ-12`, `OQ-13` and `OQ-23` resolve to no register (`G61`). As with
+`FS-13`, they inflate how blocked this category appears.
+
+**Gaps this category owns that no story cites:**
+
+- ⛔ **`OI-100` — valid rework stages per material state are unspecified.** Rework is a disposition
+  the dialog offers, and which stages a given material state may return to is undefined. Without it
+  the disposition list is a guess.
+- **`OI-84` — the WIP REJ report's column definitions are undocumented**, and this is its sole
+  tracking home even though the report belongs to `FS-16`.
+- **`Q12` is open on carry-forward** and its design rationale is explicitly *not citable* — the
+  archived note carries non-canonical `ROD-`/`SPL-` alphas (`G14`).
+- ⚠ **This category is the module's exception path and has no QA activity.** Three checkout modes,
+  a rejection flow, carry-forward and a supervisor approval queue, and the only tests are `FS-19`'s
+  three end-to-end scenarios, none of which is an exception scenario.
 
 ---
 
@@ -125,15 +183,50 @@ cyclic category graph - 15 mutually dependent pairs - so a category-level depend
 unusable. Dependencies live **per activity** in section 5. The category-level direction is
 recorded, generated, in [`[SCM §2.4]`](../../90-registers/StoryConsolidationMap.md).
 
-*(narrative dependencies - other categories, components, PLC/OPC, external systems, client
-decisions - not yet written)*
+**On other categories.** `FS-10` → `FS-01`, `FS-02`, `FS-03`, `FS-04`, `FS-07`, `FS-09` and
+`FS-18`, with mutual pairs against `FS-09` (3 edges out, 1 back — `FW-072`↔`FW-071`, the
+**pre-existing `G63` cycle**) and `FS-15` (2 out). Its dependency on `FS-18` is the reason-code
+vocabulary; on `FS-07` it is the check-in a checkout reverses.
+
+⚠ **The `G63` cycle lives on this boundary.** `FW-071` (pause/resume, `FS-09`) and `FW-072` (rod
+checkout, `FS-10`) depend on each other, recorded as a known cycle rather than broken because
+cutting the edge is a delivery decision. Consolidation neither creates nor fixes it.
+
+**On client decisions.** `G79`'s reason vocabulary and `OI-38`'s PIN source are both client-owned,
+and `G82`'s missing threading-scrap code is a value only they can supply.
+
+**On external systems.** Extends the **existing `WipRejection` service** with flat wire outlets
+rather than building a new one, and the reqsum reversal touches `proddb` through `FS-15`.
 
 ---
 
 ## 8. Change-impact profile
 
-*(not yet written - what a requirement change here affects: functionality, FE/BE/DB/RT
-components, existing implementation to modify, dependencies, regression areas)*
+**What a change here affects.** Exceptions reach into the normal path, so changes here are felt in
+categories that look unrelated.
+
+| A change to… | Affects |
+|---|---|
+| **the supervisor approval mechanism** | `FS-09`'s pause/resume, which shares the approval path, and `FS-04`'s hub if it stops being transient. `G7`/`G24` make this a near-certain change |
+| **the reason-code vocabulary** (`G79`, `G82`) | `FS-18`'s `WipRejectionReason` lookup and `FW-254`'s shared read endpoint. **A vocabulary change is one endpoint and two screens** |
+| **carry-forward** | `FS-07`'s pre-check-in and check-in, because a carried-forward rod re-enters through them, and the shared `coils` columns |
+| **a disposition** (`OI-100`) | `FS-17`'s scrap outlet, and `FS-16`'s WIP REJ report |
+| **the checkout modes** | `FS-15`'s reqsum reversal — Mode P exists specifically to reverse a reservation before a run |
+
+**Existing implementation to modify.** One activity is `in-review` — `FW-176`'s tables and the
+shared carry-forward columns — and the rest are `not-started`. So the **schema is nearly settled
+while every behaviour above it is open**, which is the wrong way round for a category with eleven
+unresolved items: the tables were designed against dispositions (`OI-100`) and a reason vocabulary
+(`G79`) that are still undecided.
+
+**Regression areas.**
+
+- **The exception paths are the least-tested code in the module** and there is no QA activity here.
+- **Supervisor approval is shared with `FS-09`.** Making it durable changes two categories' flows.
+- **`FW-176` is `in-review` against open dispositions.** If `OI-100` or `G79` resolves differently
+  from what the tables assume, a reviewed schema becomes a migration.
+- **The `G63` cycle means `FW-071` and `FW-072` cannot be sequenced independently**, and any plan
+  that assumes they can will stall.
 
 ---
 

@@ -10,9 +10,9 @@ owner:
 # FS-06 · Line Visibility and Alerting
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 — minted empty by the `FS-##` consolidation, step 5
+**Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** ⬜ **Scaffold** — front-matter and structure only; sections 1, 3, 4, 6, 7 and 8 are not yet written
+**Status:** 🟡 **Authored** — §3's merged acceptance criteria are still outstanding
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*
@@ -30,11 +30,37 @@ owner:
 
 ## 1. Overview
 
-**Business purpose.** *(not yet written)*
+**Business purpose.** The floor's master board. Dashboard 1 shows all three flattening lines at
+once — what each is running, how far through it is, and what is wrong — and it is the screen that is
+**always on** somewhere visible. It is where an operator or supervisor learns a line needs
+attention without being at that line, and it is the first flat wire screen anyone sees.
 
-**Functional scope.** *(not yet written)*
+**Functional scope.** Owned by
+[`phase-03-line-status-board-realtime-backbone.md`](../../60-delivery/phases/phase-03-line-status-board-realtime-backbone.md),
+cited not restated. Seven activities: Dashboard 1 itself; alert chips, the reconnect banner and the
+cached-state fallback; `GET /lines/status` and `LineStatusService`; the
+`FlatWireRun(MachineName, Status)` index; the hub load test; the **minimal landing route**; and the
+**alert rules engine** with the `AlertRaised`/`AlertCleared` lifecycle.
 
-**Out of scope.** *(not yet written)*
+⚠ **The phase is named "Line Status Board **& Real-Time Backbone**", and the backbone half is not
+here.** The hub, the OPC ingest and the broadcast loop are [`FS-04`](FS-04-realtime-plc-backbone.md).
+This category is the **first consumer** of that backbone, which is why the two were separated: one
+is a screen, the other is a pipeline four categories share.
+
+⚠ **`FW-204` exists because Dashboard 1 might not.** The *"minimal landing route — the entry point
+when Dashboard 1 is out of scope"* is a hedge against DB1 being descoped, and it is the only
+activity here that is not part of DB1. If DB1 ships, it is 8 h of insurance; if DB1 is cut, it is
+the only way into the application.
+
+**Out of scope.**
+
+- **The real-time transport** — `FS-04` owns the hub, its groups, the OPC ingest and the batching.
+- **The run detail** each tile links to — [`FS-08`](FS-08-active-run-monitoring.md).
+- **Alert *causes*.** SPC verdicts, die life and rejection are raised by
+  [`FS-09`](FS-09-in-run-production-events.md) and [`FS-10`](FS-10-exceptions-off-ramps.md); this
+  category owns the rules engine that turns a condition into a chip and clears it again.
+- **The shared chrome** — the shell, nav rail and alert-banner slot are `FW-130`/`FW-134` under
+  [`FS-01`](FS-01-angular-application-shell.md).
 
 ---
 
@@ -64,7 +90,15 @@ Seeded one activity per absorbed story. **Activities are expected to merge downw
 
 ## 3. Functional requirements
 
-Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md): **FR-420-428** (`[REQ §5.20]`). **Cited, never restated.**
+Owned requirement range, from [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md):
+**FR-420-428** (`[REQ §5.20]`, *Line Status Overview — Dashboard 1*) — **9 requirements**.
+**Cited, never restated.** Its screen authority is
+[`LineStatusOverview.md`](../screens/LineStatusOverview.md).
+
+⚠ **The alert rules engine is 40 h against a 9-requirement range that barely mentions it.**
+`FW-N06` is the largest single activity here and `[REQ §5.20]` does not specify the lifecycle it
+implements — `OI-28` is open precisely because *"the alert lifecycle is unbacked"*. The requirement
+range covers the board; the engine behind it is specified in `[SIG]` and in the open item.
 
 *(the merged, de-duplicated acceptance criteria are not yet written)*
 
@@ -76,10 +110,11 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 | Stream | Scope |
 |---|---|
-| **FE** | *(not yet written)* |
-| **BE** | *(not yet written)* |
-| **DB** | *(not yet written)* |
-| **RT** | *(not yet written)* |
+| **FE** | Three activities and the bulk of the hours. Dashboard 1 at 44 h — the largest FE activity outside `FS-01`'s shared controls — plus alert chips, the reconnect banner and the **cached-state fallback** that keeps the board readable when the hub drops, and the minimal landing route |
+| **BE** | `GET /lines/status` and `LineStatusService` — one read serving three lines |
+| **DB** | One activity, 4 h: the `FlatWireRun(MachineName, Status)` index. It is `in-review`, and it is what makes the board's query cheap enough to poll |
+| **RT** | The **alert rules engine** and the `AlertRaised`/`AlertCleared` lifecycle. 40 h, the largest activity here, and the one with an unbacked specification |
+| **QA** | The **hub load test** — and it is this category's, not `FS-04`'s, because DB1 is the screen that holds the most concurrent connections |
 
 ---
 
@@ -106,7 +141,27 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 <!-- END GENERATED: blockers -->
 
-**Gaps this category owns that no story cites:** *(not yet written)*
+**Three blockers, and two of them are the same absence recorded twice.** `G9` and `OI-34` both say
+*the non-functional targets are absent* — AGC sample rate, concurrent client count, latency,
+reading retention. They are two register entries for one gap, which matters here because **this is
+the category that cannot be tested without them**: `FW-156` is a load test with no target to load
+to.
+
+- **`OI-28`** — ⛔ the **alert lifecycle is unbacked**. `AlertRaised`/`AlertCleared` and
+  `activeAlerts` have no persistence and no defined lifecycle, and `FW-N06` is 40 h of engine
+  against it.
+- **`G9`** / **`OI-34`** — the NFRs. `[NFR]` records that **four targets are undefined, so those
+  tests cannot fail**, which is the same defect from the testing side.
+
+**Gaps this category owns that no story cites:**
+
+- ⚠ **The hub load test has no pass criterion.** `FW-156` is 16 h of QA against `G9`'s missing
+  concurrent-client and latency numbers. It can be written and run; it cannot pass or fail.
+- ⚠ **`FW-204`'s existence is an unrecorded scope signal.** An 8 h story whose stated purpose is
+  *"when Dashboard 1 is out of scope"* implies DB1 is a descope candidate, but DB1 does not appear
+  on `[TB §8]`'s ladder. Either the hedge is stale or the ladder is incomplete.
+- **`PP-02` — `NFR001`, `NFR002` and `NFR008` are cited nowhere.** Two of the three are the kind of
+  target this category would be measured against.
 
 ---
 
@@ -117,15 +172,44 @@ cyclic category graph - 15 mutually dependent pairs - so a category-level depend
 unusable. Dependencies live **per activity** in section 5. The category-level direction is
 recorded, generated, in [`[SCM §2.4]`](../../90-registers/StoryConsolidationMap.md).
 
-*(narrative dependencies - other categories, components, PLC/OPC, external systems, client
-decisions - not yet written)*
+**On other categories — purely downstream, no back-edges.** `FS-06` → `FS-01`, `FS-02`, `FS-03`,
+`FS-04` and `FS-08`. Nothing depends on it, which makes it independently descopable and is probably
+why `FW-204` exists.
+
+**On `FS-04` specifically.** This is the tightest coupling in the set. DB1 is the **first consumer
+of the real-time backbone**, so it is where the hub's group model, batching cadence and reconnect
+behaviour are first proven in anger. A defect in `FS-04` surfaces here first.
+
+**On client decisions.** One that matters: the NFR targets (`G9`/`OI-34`). They are not blocking
+construction — they are blocking **verification**, which is a different and easier-to-miss failure.
 
 ---
 
 ## 8. Change-impact profile
 
-*(not yet written - what a requirement change here affects: functionality, FE/BE/DB/RT
-components, existing implementation to modify, dependencies, regression areas)*
+**What a change here affects.** Little outbound, because nothing depends on this category. The
+risk runs the other way.
+
+| A change to… | Affects |
+|---|---|
+| **the alert lifecycle** (`OI-28`) | `FS-04`'s hub members, and every category that raises an alert condition — `FS-09`'s SPC verdicts, `FS-10`'s rejections, `FS-18`'s die life. **The engine is here; the causes are everywhere** |
+| **`GET /lines/status`** | Nothing outside this category. It is a single-purpose read |
+| **the `(MachineName, Status)` index** | `FS-03`'s schema, and `FS-08`'s active-run read, which filters on the same two columns |
+| **descoping DB1** | Activates `FW-204` as the sole entry point, and removes the only always-on view of the floor |
+
+**Existing implementation to modify.** Two activities are in flight — `FW-060` is `in-progress`
+and `FW-155` is `in-review` — so this is one of only three categories with **live work**. The DB1
+component and the index are the parts to be careful with; everything else is `not-started`.
+
+**Regression areas.**
+
+- **The cached-state fallback is the thing that breaks silently.** It only matters when the hub is
+  down, which is exactly when nobody is testing.
+- **A `MachineName` rename already happened here.** `D-56` renamed `LineId` → `MachineName` across
+  three stories, and this category's index carries the new name. Anything still reading `LineId` is
+  stale.
+- **The load test is not a safety net.** Until `G9` closes it cannot fail, so it provides no
+  regression protection for the hub at all.
 
 ---
 

@@ -10,9 +10,9 @@ owner:
 # FS-14 · Order Allocation and Fulfilment
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 — minted empty by the `FS-##` consolidation, step 5
+**Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** ⬜ **Scaffold** — front-matter and structure only; sections 1, 3, 4, 6, 7 and 8 are not yet written
+**Status:** 🟡 **Authored** — §3's merged acceptance criteria are still outstanding
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*
@@ -30,11 +30,34 @@ owner:
 
 ## 1. Overview
 
-**Business purpose.** *(not yet written)*
+**Business purpose.** A rod is allocated to one or more customer orders before it reaches the line,
+and the flat wire it becomes has to be attributed back to them. This category owns that
+correspondence: which orders a rod carries, in what sequence they must be run, what happens at the
+boundary between one order and the next, and when an order is fulfilled.
 
-**Functional scope.** *(not yet written)*
+It is the only category cut on a **domain object rather than a screen or a phase** — it spans
+phases 4 and 9, has no screen of its own, and exists because rod↔order allocation is one concern
+that the phase model splits between check-in and completion.
 
-**Out of scope.** *(not yet written)*
+⛔ **Every one of its six activities is `blocked`, and every blocker is an unanswered client
+question.** Not a technical unknown among them. This is the most completely blocked category in
+the module and the cheapest to unblock — five answers.
+
+**Functional scope.** `[REQ §5.28]` is the authority. Six activities: the rod↔order allocation
+schema and domain model; **sequence validation across a four-tier partition**; the order-boundary
+handoff and its notification; fulfilment rollup and order status; the `RodOrderAllocation` /
+`RodOrderConsumption` entities; and `D-30`'s `ROWVERSION` concurrency stamps.
+
+**Out of scope.**
+
+- **Creating the allocation.** Planning allocates weight and **generates all alphas at planning
+  time**, upstream of this module (`[E2E]` stage 2). This category *reads* that allocation.
+- **The shared-schema writes** that record fulfilment — [`FS-15`](FS-15-shared-schema-boundary.md)
+  owns the boundary, deliberately separated from this one.
+- **Check-in itself** — [`FS-07`](FS-07-rod-checkin-plc-config.md) — and **coil completion** —
+  [`FS-12`](FS-12-output-completion-packing.md). Both consume allocation; neither owns it.
+- **Certification.** Whether a certificate reports consumed or produced pounds is `Q53`, and the
+  certificate is [`FS-16`](FS-16-reporting-certification.md)'s.
 
 ---
 
@@ -63,7 +86,18 @@ Seeded one activity per absorbed story. **Activities are expected to merge downw
 
 ## 3. Functional requirements
 
-Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md): **FR-541-561** (`[REQ §5.28]`). **Cited, never restated.**
+Owned requirement range, from [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md):
+**FR-541-561** (`[REQ §5.28]`, *Rod ↔ Order Allocation, Sequencing and Handoff*) — **21
+requirements**. **Cited, never restated.**
+
+⚠ **`[TB §11]`'s coverage matrix has no row for this section.** Its live ranges stop at `FR-508`, so
+all 21 requirements fall outside every range it lists while it states *"All 363 requirements map to
+a story."* The requirements exist and are storied; the matrix is what is incomplete —
+see [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md).
+
+⚠ **`[REQ §5.25`–`5.30]` are marked `[PROPOSED]` and none has been client-reviewed.** They were
+written from the shared schema's own DDL. That is consistent with every blocker here being a client
+question.
 
 *(the merged, de-duplicated acceptance criteria are not yet written)*
 
@@ -75,10 +109,11 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 | Stream | Scope |
 |---|---|
-| **FE** | *(not yet written)* |
-| **BE** | *(not yet written)* |
-| **DB** | *(not yet written)* |
-| **RT** | *(not yet written)* |
+| **FE** | No screen of its own, but two activities carry an FE half: sequence validation has to *show* the operator why a rod cannot be run next, and the order-boundary handoff has to notify someone. Both surface inside `FS-07`'s and `FS-12`'s screens |
+| **BE** | Every activity. The allocation read, the **four-tier sequence partition**, the boundary handoff and its notification, the fulfilment rollup, and the two domain entities `[SVC §3.2a]` still owes a decision on (`P-91`) |
+| **DB** | `RodOrderAllocation` and `RodOrderConsumption`, and `D-30`'s `ROWVERSION` columns on `WeldEvent`, `RodCheckout` and `WipRejection` — optimistic concurrency for rows two operators can reach at once |
+| **RT** | The order-boundary notification is a broadcast; the hub member belongs to `FS-04` |
+| **BA** | ⚠ **Unassigned.** Five client questions block everything and no `BA` activity owns getting them answered |
 
 ---
 
@@ -107,7 +142,27 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 <!-- END GENERATED: blockers -->
 
-**Gaps this category owns that no story cites:** *(not yet written)*
+**All five are open client questions, and together they define the feature.** Read as a set they are
+not five details — they are the specification:
+
+- **`Q48`** — can planning put two orders with **different pass schedules** on one rod? If yes, a
+  single rod requires two acknowledgements and two PLC pushes mid-run, which is a different feature
+  from the one currently designed.
+- **`Q49`** — does multi-order-last hold when **no weld is involved**?
+- **`Q50`** — what **overrun** past the allocated weight is acceptable, and who is told?
+- **`Q51`** — on an **early acknowledgement**, where does the unconsumed allocation go?
+- **`Q53`** — is fulfilment **consumed or produced** pounds, and which does the certificate report?
+
+**Gaps this category owns that no story cites:**
+
+- ⛔ **`Q48` is not a detail, it is a scope question.** Two pass schedules on one rod would change
+  `FS-07`'s acknowledgement, `FS-04`'s tag push and `FS-05`'s consumer contract. It should be
+  answered before any of the three is built, and it currently blocks only this category's stories.
+- **`P-91`'s entity decision is unresolved.** `FW-240` builds `RodOrderAllocation` and
+  `RodOrderConsumption` pending a `[SVC §3.2a]` ruling on whether they are aggregate roots.
+- **`Q53` couples this category to a contractual obligation.** If the certificate reports produced
+  pounds, `NFR012`'s traceability depends on this category's rollup being right.
+- **No `BA` activity owns the five questions**, which is the same structural gap `FS-17` has.
 
 ---
 
@@ -118,15 +173,44 @@ cyclic category graph - 15 mutually dependent pairs - so a category-level depend
 unusable. Dependencies live **per activity** in section 5. The category-level direction is
 recorded, generated, in [`[SCM §2.4]`](../../90-registers/StoryConsolidationMap.md).
 
-*(narrative dependencies - other categories, components, PLC/OPC, external systems, client
-decisions - not yet written)*
+**On other categories.** Two outbound edges only — `FS-14` → `FS-02` and `FS-14` → `FS-03` — with a
+single back-edge from `FS-03` (`FW-243`→`FW-007`). It is unusually self-contained for something four
+other categories read.
+
+**On upstream systems — the binding structural dependency.** The allocation is created by
+**Planning**, outside this module: order → IQR → Item Template route → weight allocation, with all
+alphas generated at planning time. This category cannot validate an allocation it did not create,
+and `planning_routings` is the read.
+
+**On client decisions.** Total. **Five questions, six blocked activities, nothing startable.** No
+engineering readiness changes that, and `FS-14` is the clearest case in the module where the
+critical path runs through a conversation rather than a keyboard.
 
 ---
 
 ## 8. Change-impact profile
 
-*(not yet written - what a requirement change here affects: functionality, FE/BE/DB/RT
-components, existing implementation to modify, dependencies, regression areas)*
+**What a change here affects.** Allocation is read at both ends of the process, so changes reach
+further than the category's size suggests.
+
+| A change to… | Affects |
+|---|---|
+| **the allocation model** (`Q48`) | `FS-07`'s acknowledgement, `FS-04`'s tag push, `FS-05`'s consumer contract, `FS-12`'s attribution. **Four categories, and this is the change that would reach all of them** |
+| **sequence validation** | `FS-07`'s check-in entry conditions — it is what stops the wrong rod going next |
+| **the fulfilment definition** (`Q53`) | `FS-12`'s completion figures, `FS-16`'s certificate, `FS-17`'s yield. Three consumers of one definition |
+| **`ROWVERSION` placement** (`D-30`) | `FS-09`'s weld event, `FS-10`'s rejection and checkout. The stamps are on **their** tables, not this category's |
+
+**Existing implementation to modify.** None — all six activities are `blocked` and there are **no
+build records**. Nothing has been built, which is fortunate: `Q48`'s answer could change the model
+before anything depends on it.
+
+**Regression areas.**
+
+- **`D-30`'s `ROWVERSION` columns land on three other categories' tables.** A concurrency change
+  here is a schema change there, and `FW-243` is the only story that knows it.
+- **The fulfilment definition has three consumers** and one of them is contractual.
+- **Answering `Q48` late is the expensive path.** Every week it stays open, more of `FS-07`,
+  `FS-04` and `FS-05` gets built against the assumption of one pass schedule per rod.
 
 ---
 
