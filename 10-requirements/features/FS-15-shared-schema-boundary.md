@@ -106,7 +106,18 @@ coil master) — **33 requirements**. **Cited, never restated.**
 2. **`[TB §11]`'s coverage matrix has no row for any of them.** Its live ranges stop at `FR-508`, so
    all 33 fall outside every range it lists while it claims complete coverage.
 
-*(the merged, de-duplicated acceptance criteria are not yet written)*
+**The detailed acceptance criteria stay on the backlog cards, and that is deliberate.**
+This category's 51 criteria across 5 cards were measured, and **only 7 % of the 1,222 in the
+backlog cite any specification or `FR`** — they are original build detail (schema invariants,
+seed values, deployment contracts, arithmetic rules), not a restatement of something upstream.
+Merging them up would either lose them or make this file three times its size, so
+[`[TB §7.2]`](../../60-delivery/TaskBreakdown.md) remains their home and this section is the
+**index and the coverage assertion** over them.
+
+⚠ **What is still owed here** is the coverage sweep, not a merge: confirming that every
+criterion on every absorbed card resolves to a requirement range above, to a cited screen
+specification, or to a stated gap in §6 — and that none is orphaned. That is the gate in front
+of the deletion step and no tool can do it.
 
 ---
 

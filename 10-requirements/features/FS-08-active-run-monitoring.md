@@ -119,7 +119,18 @@ read against the 9 Sep reversal rather than on its own.
 this one's**. The activity sits here because the screen does; the requirements sit with the spool
 lifecycle. It is the clearest boundary blur in the set.
 
-*(the merged, de-duplicated acceptance criteria are not yet written)*
+**The detailed acceptance criteria stay on the backlog cards, and that is deliberate.**
+This category's 72 criteria across 10 cards were measured, and **only 7 % of the 1,222 in the
+backlog cite any specification or `FR`** — they are original build detail (schema invariants,
+seed values, deployment contracts, arithmetic rules), not a restatement of something upstream.
+Merging them up would either lose them or make this file three times its size, so
+[`[TB §7.2]`](../../60-delivery/TaskBreakdown.md) remains their home and this section is the
+**index and the coverage assertion** over them.
+
+⚠ **What is still owed here** is the coverage sweep, not a merge: confirming that every
+criterion on every absorbed card resolves to a requirement range above, to a cited screen
+specification, or to a stated gap in §6 — and that none is orphaned. That is the gate in front
+of the deletion step and no tool can do it.
 
 ---
 

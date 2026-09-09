@@ -28,7 +28,11 @@
 | **[`[SCM]`](../90-registers/StoryConsolidationMap.md)** | *Which category did this story become part of, and why* — plus the id-retirement ledger |
 | **[`FEATURES.md`](../FEATURES.md)** | *Where does each feature stand* |
 
-⛔ **Do not add requirements, acceptance criteria or dependencies to a card.** Those belong to the owning parent. A card carries hours, priority, sprint, phase and stream, because `build_development_plan_xlsx.py`, `build_trial_run_xlsx.py`, `[CE]`, `[DSP]`, `[SSP]` and `[TRP]` are all built on those cells.
+**A card carries two things and both are load-bearing.** Its **costing cells** — hours, priority, sprint, phase and stream — because `build_development_plan_xlsx.py`, `build_trial_run_xlsx.py`, `[CE]`, `[DSP]`, `[SSP]` and `[TRP]` are all built on them. And its **detailed acceptance criteria**, because they are original build detail rather than a restatement of anything upstream.
+
+⛔ **The criteria were measured before being moved and they are staying.** Of the **1,222** acceptance criteria on these cards, **only 7 % cite any specification or `FR`**. A sample reads: *"`RodStaging` invariants: `Blocked` is a derived bay state"*, *"Vendor A ±.010/.015, Vendor B ±.020/.030"*, *"a rod may be `PinnedBoth` — do not assume"*, *"`FlatWire_CheckInRod` deployed, writing nine shared objects"*. Stripping them would destroy the majority of the module's buildable detail, so the parent owns the **index and the coverage assertion** over them and this section stays their home.
+
+⚠ **What does NOT belong on a card any more:** its dependencies and blockers. Those live in the parent's generated activity table, which is where they survive the task files.
 
 **The twenty categories.** ⚠ Counts and hours here are **generated** into `[SCM §2.1]`; the table below is a navigation aid and `[CE §3e]` remains the hours model of record.
 
