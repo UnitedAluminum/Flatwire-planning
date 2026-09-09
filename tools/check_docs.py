@@ -17,6 +17,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fwtasks as F  # noqa: E402
+import build_consolidation_map as CMAP  # noqa: E402
 
 # Which streams may own a task file in each folder. RT appears in both build folders
 # on purpose: the real-time stream spans the hub and its Angular client, and three
@@ -155,7 +156,8 @@ def check(rep):
     backlog = F.read(F.BACKLOG)
     carded = set(re.findall(r'^######\s+(?:~~)?\*{0,2}`?(FW-N?\d+)`?', backlog, re.M))
     fs_carded = set(re.findall(r'^######\s+(?:~~)?\*{0,2}`?(FS-\d+)`?', backlog, re.M))
-    if carded:
+    if carded and by_id:
+        # both sides live: the original invariant
         for sid in sorted(carded - set(by_id)):
             rep.error('4-parity', '%s has a backlog card but no task file' % sid)
         for sid in sorted(set(by_id) - carded):
@@ -164,12 +166,25 @@ def check(rep):
             rep.warn('4-parity-mixed',
                      'the backlog carries both FW cards (%d) and FS cards (%d) - '
                      'expected only during the re-key' % (len(carded), len(fs_carded)))
+    elif carded:
+        # The task files are retired and the cards remain as the costing ledger.
+        # Their counterpart is now the consolidation map, which is the durable
+        # record of every retired id. Checking them against task files here would
+        # report all 204 as orphaned.
+        for sid in sorted(carded - set(cmap)):
+            rep.error('4-parity', '%s has a backlog card and no row in the '
+                                  'consolidation map' % sid)
+        for sid in sorted(set(cmap) - carded):
+            if sid in {r[0] for r in CMAP.FILELESS}:
+                continue          # fileless ids never had a card
+            rep.error('4-parity', '%s is in the map and has no backlog card' % sid)
     else:
         fs_ids_p = {f.get('id') for f in feats}
         for sid in sorted(fs_carded - fs_ids_p):
             rep.error('4-parity', '%s has a backlog card but no parent file' % sid)
         for sid in sorted(fs_ids_p - fs_carded):
             rep.error('4-parity', '%s has a parent file but no backlog card' % sid)
+
 
     # --- 5. every task maps to a real phase -------------------------------------
     for t in tasks:
