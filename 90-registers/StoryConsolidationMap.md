@@ -77,7 +77,47 @@ than restating it.
 
 *The `h` column sums the absorbed stories' `hours:` front-matter. It is an audit of the partition, **not** a costing figure: `[CE §3e]` is the hours model of record and no `FS` file publishes an hours total.*
 
-### 2.2 The map, by category
+### 2.2 Requirement coverage by category
+
+Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage matrix**, whose live ranges stop at `FR-508` and which has no row for §5.3a or §5.25–§5.30 — so **65 live requirements fall outside every range it lists** while it states *"All 363 requirements map to a story"*. That is pre-existing and is not repaired here; this index simply covers what the matrix does not.
+
+| `[REQ]` § | Section | Live `FR` | n | Owning category |
+|---|---|---|---:|---|
+| 5.0 | Cross-cutting requirements | FR-001–022 | 22 | `FS-20` |
+| 5.1 | Pre-Check-In Station — Dashboard 2A | FR-030–054 | 25 | `FS-07` |
+| 5.2 | Rod Check-In — Dashboard 2 (FL1 / FL3) | FR-060–084 | 25 | `FS-07` |
+| 5.3 | Spool Check-In — Dashboard 5 (FL2) | FR-090–096 | 7 | `FS-11` |
+| 5.3a | Spool Queue — Dashboard 5A (FL2) | FR-097–099 | 3 | `FS-11` |
+| 5.4 | Active Run Monitor — Dashboard 3 (FL1 / FL2 /  | FR-100–120 | 21 | `FS-08` |
+| 5.5 | Spool Completion Alerts and Machine-Stop Confi | FR-130–157 | 26 | `FS-11` |
+| 5.6 | Weld Event — captured at the Pre-Check-In stat | FR-160–175 | 16 | `FS-07` |
+| 5.7 | SPC Checkpoint — Dashboard 6 | FR-180–197 | 18 | `FS-09` |
+| 5.8 | Roll Adjust — Dashboard 11 | FR-200–212 | 13 | `FS-09` |
+| 5.9 | Die Change — DC screen | FR-220–234 | 15 | `FS-09` |
+| ~~5.10~~ | ~~· 5.18 · 5.19 · 5.23 · 5.24 — moved to MVP-2~~ | — | — | *index row for the sections moved to MVP-2, not a requirement section* |
+| 5.11 | Pause / Resume | FR-260–267 | 8 | `FS-09` |
+| 5.12 | Stop Transaction and Output of Rolling | FR-270–277 | 8 | `FS-20` |
+| 5.13 | Wire Break | FR-280–282 | 3 | `FS-20` |
+| 5.14 | WIP Rejection — Dashboard 8 | FR-290–299 | 10 | `FS-10` |
+| 5.15 | Rod Checkout — Dashboard 12 | FR-300–327 | 19 | `FS-10` |
+| 5.16 | Output Coil Completion — Dashboard 7 | FR-330–340 | 11 | `FS-12` |
+| 5.17 | Packing Station — Dashboard 7b | FR-345–352 | 8 | `FS-12` |
+| 5.20 | Line Status Overview — Dashboard 1 | FR-420–428 | 9 | `FS-06` |
+| ~~5.21~~ | ~~HMI Line Schematic — Dashboard 13 — [WITHDRAWN~~ | — | — | *DB13 HMI schematic - WITHDRAWN 4 Aug 2026* |
+| ~~5.22~~ | ~~SCADA Trends — Dashboard 14 — [WITHDRAWN — des~~ | — | — | *DB14 SCADA trends - WITHDRAWN 4 Aug 2026* |
+| 5.25 | Run-End Write-Back to the Shared Schema — FL2/ | FR-509–518 | 9 | `FS-15` |
+| 5.26 | Check-In Write-Back to the Shared Schema — FL1 | FR-519–528 | 10 | `FS-15` |
+| 5.27 | Inbound Ingestion — Populating the Flat Wire T | FR-529–532 | 4 | `FS-15` |
+| 5.28 | Rod ↔ Order Allocation, Sequencing and Handoff | FR-541–561 | 21 | `FS-14` |
+| 5.29 | FL2 Pre-Check-In — Validating the Next Spool | FR-533–540 | 8 | `FS-11` |
+| 5.30 | Welded-Coil Part Alphas and the Shared Coil Ma | FR-561–570 | 10 | `FS-15` |
+| 5.18 | *(heading moved to MVP-2)* | FR-360-391 | 28 | `FS-05` |
+| 5.19 | *(heading moved to MVP-2)* | FR-400-410 | 11 | `FS-05` |
+| 5.23 | *(heading moved to MVP-2)* | FR-480-490 | 11 | `FS-16` |
+| 5.24 | *(heading moved to MVP-2)* | FR-500-508 | 9 | `FS-20` |
+| | **Total mapped** | | **388** | |
+
+### 2.3 The map, by category
 
 #### `FS-01` — Angular Application Shell and Foundation
 
@@ -396,7 +436,7 @@ than restating it.
 | `FW-N11` | Operator session | — | — | — | *no card, no task file* | **Retain** | FR-001-022 — Cited against Phase 6, still uncosted (B.4) |
 | `FW-N12` | De-stub pass | — | — | — | *no card, no task file* | **Retire** | - — Absorbed in practice by FW-166 and FW-201 (B.4) |
 
-### 2.3 Category dependency direction
+### 2.4 Category dependency direction
 
 396 task-level `depends_on` edges: **165 collapse inside a category** (which is the fragmentation this consolidation removes) and 231 cross a boundary.
 
@@ -422,7 +462,7 @@ than restating it.
 
 *`FS-09` ↔ `FS-10` carries the pre-existing `FW-071`/`FW-072` cycle recorded as `G63`; consolidation neither creates nor fixes it.*
 
-### 2.4 Retired ids
+### 2.5 Retired ids
 
 Ids **not** absorbed into a parent. Each keeps its number forever and is never reused (`TaskIdMap.md` rule 3).
 

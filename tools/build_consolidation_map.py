@@ -134,6 +134,57 @@ FILELESS = [
 ]
 
 
+# Which category owns each [REQ] requirement section. Sourced from [REQ]'s own
+# section headings, NOT from [TB 11]'s coverage matrix: that matrix's live ranges
+# stop at FR-508 and it has no row for 5.3a or 5.25-5.30, so 64 live requirements
+# fall outside every range while it claims "All 363 requirements map to a story".
+# Building the index here instead is what makes the coverage complete.
+SECTION_CATEGORY = {
+    '5.0': 'FS-20', '5.1': 'FS-07', '5.2': 'FS-07', '5.3': 'FS-11', '5.3a': 'FS-11',
+    '5.4': 'FS-08', '5.5': 'FS-11', '5.6': 'FS-07', '5.7': 'FS-09', '5.8': 'FS-09',
+    '5.9': 'FS-09', '5.11': 'FS-09', '5.12': 'FS-20', '5.13': 'FS-20', '5.14': 'FS-10',
+    '5.15': 'FS-10', '5.16': 'FS-12', '5.17': 'FS-12', '5.20': 'FS-06',
+    '5.25': 'FS-15', '5.26': 'FS-15', '5.27': 'FS-15', '5.28': 'FS-14', '5.29': 'FS-11',
+    '5.30': 'FS-15',
+}
+
+# Sections whose [REQ] heading was REMOVED when the section moved to MVP-2, but
+# whose FR range and owning category are both real - the ranges still appear in
+# [TB 11]'s matrix. They have no heading to measure, so the range is quoted from
+# the matrix and the row is marked MVP-2.
+#   section: (category, FR range as [TB 11] states it, count)
+SECTION_MVP2 = {
+    '5.18': ('FS-05', 'FR-360-391', 28),
+    '5.19': ('FS-05', 'FR-400-410', 11),
+    '5.23': ('FS-16', 'FR-480-490', 11),
+    '5.24': ('FS-20', 'FR-500-508', 9),
+}
+
+# Sections with no owning category, each for a stated reason.
+SECTION_EXCLUDED = {
+    '5.10': 'index row for the sections moved to MVP-2, not a requirement section',
+    '5.21': 'DB13 HMI schematic - WITHDRAWN 4 Aug 2026',
+    '5.22': 'DB14 SCADA trends - WITHDRAWN 4 Aug 2026',
+}
+
+
+def req_sections():
+    """[(section, title, [live FR ints], [struck FR ints])] from [REQ], in order."""
+    req = F.read('10-requirements/BusinessRequirements.md')
+    heads = [(m.start(), m.group(1), m.group(2))
+             for m in re.finditer(r'^### (5\.\d+[a-z]?)\s+(.*)$', req, re.M)]
+    out = []
+    for k, (pos, num, title) in enumerate(heads):
+        end = heads[k + 1][0] if k + 1 < len(heads) else len(req)
+        live, dead = [], []
+        for line in req[pos:end].split('\n'):
+            m = re.match(r'^\|\s*(?:\S+\s*)?(~~)?\*\*`?FR-(\d{3})', line)
+            if m:
+                (dead if m.group(1) else live).append(int(m.group(2)))
+        out.append((num, title.strip(), sorted(set(live)), sorted(set(dead))))
+    return out
+
+
 def esc(s):
     return (s or '').replace('|', r'\|').strip()
 
@@ -199,6 +250,33 @@ def _audit_rules(by_id):
     both = sorted(set(OVERRIDES) & (RT_BACKBONE | SHARED_SCHEMA | ORDER_ALLOC))
     if both:
         out.append('a story is both an OVERRIDE and in a membership set: %s' % both)
+    # Every live [REQ] section must be owned or explicitly excluded, or a whole
+    # block of requirements silently loses its category.
+    known = set(SECTION_CATEGORY) | set(SECTION_EXCLUDED)
+    present = set()
+    for num, title, live, _dead in req_sections():
+        present.add(num)
+        if num not in known:
+            out.append('[REQ] section %s (%s, %d live FR) is in neither '
+                       'SECTION_CATEGORY nor SECTION_EXCLUDED' % (num, title[:40], len(live)))
+    for num, cat in sorted(SECTION_CATEGORY.items()):
+        if cat not in CATEGORIES:
+            out.append('SECTION_CATEGORY[%s] -> unknown category %s' % (num, cat))
+        if num not in present:
+            out.append('SECTION_CATEGORY names [REQ] section %s, which has no heading in [REQ]'
+                       % num)
+    for num in sorted(SECTION_EXCLUDED):
+        if num not in present:
+            out.append('SECTION_EXCLUDED names [REQ] section %s, which has no heading' % num)
+    for num, (cat, _rng, _n) in sorted(SECTION_MVP2.items()):
+        if cat not in CATEGORIES:
+            out.append('SECTION_MVP2[%s] -> unknown category %s' % (num, cat))
+        if num in present:
+            out.append('SECTION_MVP2 names [REQ] section %s, which DOES have a heading - '
+                       'move it to SECTION_CATEGORY' % num)
+    overlap = set(SECTION_MVP2) & (set(SECTION_CATEGORY) | set(SECTION_EXCLUDED))
+    if overlap:
+        out.append('section in two buckets: %s' % sorted(overlap))
     return out
 
 
@@ -290,7 +368,39 @@ def build():
              'the partition, **not** a costing figure: `[CE §3e]` is the hours model of record '
              'and no `FS` file publishes an hours total.*')
     L.append('')
-    L.append('### 2.2 The map, by category')
+    # ---- 2.2 requirement coverage -----------------------------------------
+    secs = req_sections()
+    L.append('### 2.2 Requirement coverage by category')
+    L.append('')
+    L.append('Built from `[REQ]`\'s own section headings. ⚠ **Not from `[TB §11]`\'s coverage '
+             'matrix**, whose live ranges stop at `FR-508` and which has no row for §5.3a or '
+             '§5.25–§5.30 — so **%d live requirements fall outside every range it lists** while it '
+             'states *"All 363 requirements map to a story"*. That is pre-existing and is not '
+             'repaired here; this index simply covers what the matrix does not.'
+             % sum(len(s[2]) for s in secs
+                   if s[0] in SECTION_CATEGORY and (not s[2] or s[2][-1] > 508 or s[0] == '5.3a')))
+    L.append('')
+    L.append('| `[REQ]` § | Section | Live `FR` | n | Owning category |')
+    L.append('|---|---|---|---:|---|')
+    live_total = 0
+    for num, title, live, _dead in secs:
+        cat = SECTION_CATEGORY.get(num)
+        if cat is None and num in SECTION_EXCLUDED:
+            L.append('| ~~%s~~ | ~~%s~~ | — | — | *%s* |'
+                     % (num, esc(title)[:46], SECTION_EXCLUDED[num]))
+            continue
+        rng = 'FR-%03d–%03d' % (live[0], live[-1]) if live else '—'
+        live_total += len(live)
+        L.append('| %s | %s | %s | %d | `%s` |'
+                 % (num, esc(title)[:46], rng, len(live), cat))
+    for num in sorted(SECTION_MVP2, key=float):
+        cat, rng, n = SECTION_MVP2[num]
+        live_total += n
+        L.append('| %s | *(heading moved to MVP-2)* | %s | %d | `%s` |' % (num, rng, n, cat))
+    L.append('| | **Total mapped** | | **%d** | |' % live_total)
+    L.append('')
+
+    L.append('### 2.3 The map, by category')
     L.append('')
     for cid, (name, phases) in CATEGORIES.items():
         mine = sorted([r for r in rows if r[6] == cid],
@@ -336,7 +446,7 @@ def build():
                 weight[(src, dst)].append('%s→%s' % (t['id'], d))
     mutual = sorted({tuple(sorted(k)) for k in weight if (k[1], k[0]) in weight})
 
-    L.append('### 2.3 Category dependency direction')
+    L.append('### 2.4 Category dependency direction')
     L.append('')
     L.append('%d task-level `depends_on` edges: **%d collapse inside a category** (which is the '
              'fragmentation this consolidation removes) and %d cross a boundary.'
@@ -368,7 +478,7 @@ def build():
              '`G63`; consolidation neither creates nor fixes it.*')
     L.append('')
 
-    L.append('### 2.4 Retired ids')
+    L.append('### 2.5 Retired ids')
     L.append('')
     L.append('Ids **not** absorbed into a parent. Each keeps its number forever and is never '
              'reused (`TaskIdMap.md` rule 3).')
