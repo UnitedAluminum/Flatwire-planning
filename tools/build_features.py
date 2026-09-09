@@ -1,0 +1,341 @@
+#!/usr/bin/env python3
+"""Generate FEATURES.md - the category board - and each parent's activity table.
+
+STATUS.md answers "where are we by phase". FEATURES.md answers "where are we by
+feature". Both are generated, and while the task files still exist both derive
+from the same `status:` fields, so they cannot disagree.
+
+The unit on this board is the ACTIVITY, not the category. That is deliberate: a
+category inherits the UNION of its stories' blockers, so a category-level board
+would show almost every row permanently blocked and "what can I start today"
+would stop working. Activities keep the original granularity, so the readiness
+calculation and the blocker fan-out ranking survive the collapse from 204 files
+to 20.
+
+Each parent's activity table lives inside its marker block and has two sources,
+switched automatically:
+
+  * while the task files exist, it is REGENERATED from them via the consolidation
+    map - authoritative, and nothing is hand-typed;
+  * once they are deleted, there is nothing left to derive from, so the tool
+    PARSES the block it wrote last and rolls that up instead. From that point the
+    table is hand-maintained and is the single writable record of status.
+
+    python tools/build_features.py            # write FEATURES.md and the blocks
+    python tools/build_features.py --check    # exit 1 if either is stale (CI)
+"""
+import os
+import re
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import fwtasks as F  # noqa: E402
+import build_consolidation_map as M  # noqa: E402
+
+OUT = 'FEATURES.md'
+FEATURE_DIR = '10-requirements/features'
+BEGIN = '<!-- BEGIN GENERATED: absorbed-stories -->'
+END = '<!-- END GENERATED: absorbed-stories -->'
+
+ORDER = ['done', 'in-review', 'in-progress', 'blocked', 'not-started', 'cancelled']
+MARK = {'done': '✅ done', 'in-review': '🔵 in-review', 'in-progress': '🟡 in-progress',
+        'blocked': '⛔ blocked', 'not-started': '⬜ not-started', 'cancelled': '⊘ cancelled'}
+
+RE_FRONT = re.compile(r'^---\r?\n(.*?)\r?\n---\r?\n', re.S)
+
+
+def esc(s):
+    return (s or '').replace('|', r'\|').strip()
+
+
+def load_features():
+    """[(id, front, path, filename)] for every FS-##-*.md, in id order."""
+    out = []
+    d = os.path.join(F.ROOT, FEATURE_DIR)
+    if not os.path.isdir(d):
+        return out
+    for fn in sorted(os.listdir(d)):
+        if not re.match(r'^FS-\d+-[a-z0-9-]+\.md$', fn):
+            continue
+        rel = FEATURE_DIR + '/' + fn
+        m = RE_FRONT.match(F.read(rel))
+        if not m:
+            print('build_features: WARNING - %s has no parsable front-matter, skipped' % rel)
+            continue
+        front = F.parse_front(m.group(1))
+        out.append((front.get('id', ''), front, rel, fn))
+    return sorted(out, key=lambda x: x[0])
+
+
+def pct(rows):
+    live = [r for r in rows if r['status'] != 'cancelled']
+    if not live:
+        return 0
+    return round(100.0 * sum(1 for r in live if r['status'] == 'done') / len(live))
+
+
+def activities_from_tasks(tasks_by_cat, cid):
+    """Seed one activity per absorbed story - the 1:1 starting point."""
+    rows = []
+    for t in tasks_by_cat.get(cid, []):
+        rows.append({
+            'ref': t['id'],
+            'name': t.get('title', ''),
+            'streams': t.get('streams') or ([t['stream']] if t.get('stream') else []),
+            'status': t.get('status', ''),
+            'depends_on': t.get('depends_on', []),
+            'blocked_by': t.get('blocked_by', []),
+            'evidence': '',
+            'unconfirmed': t.get('status_confirmed') == 'false',
+        })
+    return rows
+
+
+RE_ROW = re.compile(r'^\|\s*`([^`]+)`\s*\|(.*)\|\s*$')
+
+
+def activities_from_block(text):
+    """Parse back an activity table this tool wrote, for use after deletion."""
+    rows = []
+    if BEGIN not in text or END not in text:
+        return rows
+    block = text.split(BEGIN, 1)[1].split(END, 1)[0]
+    for line in block.split('\n'):
+        m = RE_ROW.match(line.strip())
+        if not m:
+            continue
+        cells = [c.strip() for c in m.group(2).split('|')]
+        if len(cells) < 5:
+            continue
+        raw = re.sub(r'[*`✅🔵🟡⛔⬜⊘]', '', cells[1]).strip()
+        status = raw.split()[0] if raw else ''
+        if status not in F.STATUSES:
+            continue
+        rows.append({
+            'ref': m.group(1),
+            'name': cells[0],
+            'streams': [x for x in re.split(r'[·,]', cells[2]) if x.strip() not in ('', '—')],
+            'status': status,
+            'depends_on': [x for x in re.findall(r'FW-N?\d+|FS-\d+', cells[3])],
+            'blocked_by': [x for x in re.findall(r'[A-Z]+-?\d+', cells[4])],
+            'evidence': cells[5] if len(cells) > 5 else '',
+            'unconfirmed': False,
+        })
+    return rows
+
+
+def render_block(rows, cid, derived):
+    L = [BEGIN, '']
+    if derived:
+        L.append('> ⚙ **Generated by `tools/build_features.py` from the absorbed task files.** '
+                 'Do not edit inside the markers.')
+    else:
+        L.append('> ⚙ **Written by `tools/build_features.py`, now hand-maintained** — the task '
+                 'files it derived from have been retired, so this table is the single writable '
+                 'record of status for this category. Keep the columns exactly as they are; '
+                 '`--check` and `FEATURES.md` both parse them.')
+    L.append('')
+    if not rows:
+        L.append('*No story maps here. This category is authored from specifications and '
+                 'registers, not from the backlog.*')
+        L.append('')
+        L.append(END)
+        return '\n'.join(L)
+    L.append('Seeded one activity per absorbed story. **Activities are expected to merge '
+             'downward** as work proceeds — `FW-N17`/`N18`/`N19` are one rename, not three.')
+    L.append('')
+    L.append('| Ref | Activity | Streams | Status | Depends on | Blocked by |')
+    L.append('|---|---|---|---|---|---|')
+    for r in rows:
+        flag = ' ⚠ *inferred*' if r.get('unconfirmed') else ''
+        L.append('| `%s` | %s | %s | %s%s | %s | %s |' % (
+            r['ref'], esc(r['name'])[:66], '·'.join(r['streams']) or '—',
+            MARK.get(r['status'], r['status']), flag,
+            ' '.join(r['depends_on']) or '—',
+            ' '.join('**%s**' % b for b in r['blocked_by']) or '—'))
+    L.append('')
+    L.append(END)
+    return '\n'.join(L)
+
+
+def build():
+    feats = load_features()
+    if not feats:
+        print('build_features: no FS-## files found in %s' % FEATURE_DIR)
+        return None, None
+    tasks = F.load_tasks()
+    reg = F.load_registers()
+
+    by_cat = {}
+    for t in tasks:
+        cat = M.categorise(t)[0]
+        if cat:
+            by_cat.setdefault(cat, []).append(t)
+
+    # Per category: derive from task files while they exist, else parse the block.
+    acts, derived_from_tasks = {}, {}
+    for cid, front, rel, fn in feats:
+        if by_cat.get(cid):
+            acts[cid] = activities_from_tasks(by_cat, cid)
+            derived_from_tasks[cid] = True
+        else:
+            parsed = activities_from_block(F.read(rel))
+            acts[cid] = parsed
+            derived_from_tasks[cid] = False
+
+    all_rows = [r for cid, _f, _p, _n in feats for r in acts[cid]]
+    done_refs = {r['ref'] for r in all_rows if r['status'] == 'done'}
+
+    def open_blockers(rows):
+        return sorted({b for r in rows for b in r['blocked_by']
+                       if reg.get(b, {}).get('open', True)})
+
+    L = ['# Flat Wire — Feature Status', '']
+    L.append('> ⚙ **Generated by `tools/build_features.py` — DO NOT EDIT BY HAND.**')
+    L.append('> The unit here is the **activity**, not the category: a category inherits the '
+             'union of')
+    L.append('> its stories\' blockers, so a category-level board would read as permanently '
+             'blocked.')
+    L.append('>')
+    L.append('> [`STATUS.md`](STATUS.md) answers *where are we by phase*. This answers *where '
+             'are we by feature*.')
+    L.append('> Category definitions: [`10-requirements/features/`](10-requirements/features/README.md). '
+             'Membership: [`[SCM §2.3]`](90-registers/StoryConsolidationMap.md).')
+    L.append('')
+    L.append('## At a glance')
+    L.append('')
+    L.append('| Category | Activities | ✅ | 🔵 | 🟡 | ⛔ | ⬜ | % | Open items |')
+    L.append('|---|---:|---:|---:|---:|---:|---:|---:|---|')
+    tot = {s: 0 for s in ORDER}
+    for cid, front, rel, fn in feats:
+        rows = acts[cid]
+        c = {s: sum(1 for r in rows if r['status'] == s) for s in ORDER}
+        for s in ORDER:
+            tot[s] += c[s]
+        ob = open_blockers(rows)
+        L.append('| [%s %s](%s) | %d | %d | %d | %d | %d | %d | %d %% | %s |' % (
+            cid, esc(front.get('title', ''))[:46], rel, len(rows),
+            c['done'], c['in-review'], c['in-progress'], c['blocked'], c['not-started'],
+            pct(rows), ' · '.join(ob[:3]) + (' …' if len(ob) > 3 else '') if ob else '—'))
+    L.append('| **All** | **%d** | **%d** | **%d** | **%d** | **%d** | **%d** | **%d %%** | |' % (
+        len(all_rows), tot['done'], tot['in-review'], tot['in-progress'],
+        tot['blocked'], tot['not-started'], pct(all_rows)))
+    L.append('')
+    L.append('*Percentages are by activity count. **Hours are not totalled here** — '
+             '[`CapacityAndEffortModel.md`](60-delivery/CapacityAndEffortModel.md) `[CE]` is the '
+             'hours model of record, and no figure derived on this page would agree with it.*')
+    L.append('')
+
+    blocking = {}
+    for r in all_rows:
+        if r['status'] == 'cancelled':
+            continue
+        for b in r['blocked_by']:
+            if reg.get(b, {}).get('open', True):
+                blocking.setdefault(b, []).append(r)
+    L.append('## ⛔ Stopping work right now')
+    L.append('')
+    if not blocking:
+        L.append('*Nothing open is currently cited as a blocker.*')
+    else:
+        L.append('Open register items cited by at least one live activity, most-blocking first.')
+        L.append('')
+        L.append('| Item | What | Blocks | Categories | Owner |')
+        L.append('|---|---|---|---|---|')
+        ref_cat = {r['ref']: cid for cid, _f, _p, _n in feats for r in acts[cid]}
+        for b in sorted(blocking, key=lambda x: (-len(blocking[x]), x)):
+            rs = blocking[b]
+            info = reg.get(b)
+            cats = sorted({ref_cat.get(r['ref'], '?') for r in rs})
+            refs = ', '.join(r['ref'] for r in rs[:6]) + (' …' if len(rs) > 6 else '')
+            what = esc(info['text'])[:80] if info else '**⚠ id not found in any register**'
+            L.append('| `%s` | %s | %s | %s | %s |' % (
+                b, what, refs, ', '.join(cats), esc(info['owner']) if info else '—'))
+    L.append('')
+    L.append('---')
+    L.append('')
+
+    for cid, front, rel, fn in feats:
+        rows = acts[cid]
+        L.append('## %s — %s' % (cid, front.get('title', '')))
+        L.append('')
+        bits = ['%d activit%s' % (len(rows), 'y' if len(rows) == 1 else 'ies'),
+                '%d %% done' % pct(rows)]
+        ph = front.get('phases') or []
+        if ph:
+            bits.append('phase %s' % ' · '.join(ph))
+        L.append('**%s** · **Story:** [%s](%s)' % (' · '.join(bits), fn, rel))
+        if not derived_from_tasks[cid] and rows:
+            L.append('  · ⚠ *task files retired — this rolls up the story\'s hand-maintained '
+                     'activity table*')
+        L.append('')
+        if not rows:
+            L.append('> This category holds no story by design. It is authored from '
+                     'specifications and registers.')
+            L.append('')
+            continue
+        ready = [r for r in rows
+                 if r['status'] == 'not-started'
+                 and all(d in done_refs for d in r['depends_on'])
+                 and not [b for b in r['blocked_by'] if reg.get(b, {}).get('open', True)]]
+        L.append('**▶ Ready to start now:** %s' % (
+            ', '.join('`%s`' % r['ref'] for r in ready) if ready
+            else '*none — every not-started activity here waits on a dependency or a blocker*'))
+        L.append('')
+
+    return '\n'.join(L) + '\n', (feats, acts, derived_from_tasks)
+
+
+def main():
+    body, extra = build()
+    if body is None:
+        return 1
+    feats, acts, derived = extra
+    check = '--check' in sys.argv
+    stale = []
+
+    if F.read(OUT) != body:
+        stale.append(OUT)
+        if not check:
+            path = os.path.join(F.ROOT, OUT)
+            tmp = path + '.tmp'
+            with open(tmp, 'w', encoding='utf-8', newline='') as fh:
+                fh.write(body)
+            os.replace(tmp, path)
+
+    for cid, front, rel, fn in feats:
+        cur = F.read(rel)
+        if BEGIN not in cur or END not in cur:
+            print('build_features: %s has no marker block' % rel)
+            return 1
+        block = render_block(acts[cid], cid, derived[cid])
+        new = cur.split(BEGIN)[0] + block + cur.split(END, 1)[1]
+        if new != cur:
+            stale.append(rel)
+            if not check:
+                path = os.path.join(F.ROOT, rel)
+                tmp = path + '.tmp'
+                with open(tmp, 'w', encoding='utf-8', newline='') as fh:
+                    fh.write(new)
+                os.replace(tmp, path)
+
+    if check:
+        if stale:
+            print('build_features: STALE (%d file(s)) - re-run tools/build_features.py'
+                  % len(stale))
+            for s in stale[:8]:
+                print('    %s' % s)
+            return 1
+        print('build_features: %s and all %d activity tables are current' % (OUT, len(feats)))
+        return 0
+
+    n = sum(len(v) for v in acts.values())
+    print('build_features: wrote %s (%d activities across %d categories)'
+          % (OUT, n, len(feats)))
+    if stale:
+        print('  updated %d file(s)' % len(stale))
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
