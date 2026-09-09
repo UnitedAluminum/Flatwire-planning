@@ -308,6 +308,7 @@ field to it breaks slitter** — new fields stay optional.
 ```bash
 python tools/build_status.py             # regenerate STATUS.md (by phase)
 python tools/build_features.py           # regenerate FEATURES.md and the parents' blocks
+python tools/build_features.py --selftest  # assert the activity table round-trips
 python tools/build_consolidation_map.py  # regenerate [SCM] - only if membership changed
 python tools/check_docs.py               # task <-> phase <-> register <-> parent integrity
 python tools/linkcheck.py                # no path reference broke

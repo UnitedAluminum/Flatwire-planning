@@ -23,6 +23,7 @@ switched automatically:
 
     python tools/build_features.py            # write FEATURES.md and the blocks
     python tools/build_features.py --check    # exit 1 if either is stale (CI)
+    python tools/build_features.py --selftest # assert the activity table round-trips
 """
 import os
 import re
@@ -109,18 +110,26 @@ def activities_from_block(text):
         cells = [c.strip() for c in m.group(2).split('|')]
         if len(cells) < 5:
             continue
-        raw = re.sub(r'[*`✅🔵🟡⛔⬜⊘]', '', cells[1]).strip()
+        # Column order is: name | streams | status | depends_on | blocked_by.
+        # An earlier version read cells[1] as the status, which is the STREAMS
+        # column, so every row failed the status-enum check and this parser
+        # silently returned nothing. It is the post-deletion fallback, so the
+        # defect would only have surfaced once the task files were gone.
+        name, streams, status_cell, deps, blk = cells[0], cells[1], cells[2], cells[3], cells[4]
+        raw = re.sub(r'[*`✅🔵🟡⛔⬜⊘]', '', status_cell)
+        raw = raw.replace('⚠', '').replace('*inferred*', '').strip()
         status = raw.split()[0] if raw else ''
         if status not in F.STATUSES:
             continue
         rows.append({
             'ref': m.group(1),
-            'name': cells[0],
-            'streams': [x for x in re.split(r'[·,]', cells[2]) if x.strip() not in ('', '—')],
+            'name': name,
+            'streams': [x.strip() for x in re.split(r'[·,]', streams)
+                        if x.strip() not in ('', '—')],
             'status': status,
-            'depends_on': [x for x in re.findall(r'FW-N?\d+|FS-\d+', cells[3])],
-            'blocked_by': [x for x in re.findall(r'[A-Z]+-?\d+', cells[4])],
-            'evidence': cells[5] if len(cells) > 5 else '',
+            'depends_on': re.findall(r'FW-N?\d+|FS-\d+', deps),
+            'blocked_by': re.findall(r'(?:PLC-Q|OQ-|OI-|FR-|[A-Z])\d+', blk),
+            'evidence': '',
             'unconfirmed': False,
         })
     return rows
@@ -421,7 +430,59 @@ def build():
     return '\n'.join(L) + '\n', (feats, acts, derived_from_tasks, reg, expected)
 
 
+def selftest():
+    """Render every activity table, parse it back, and assert it round-trips.
+
+    This exists because activities_from_block() shipped reading the STREAMS
+    column as the status, so it silently returned nothing - and it is the
+    POST-DELETION fallback, meaning the defect would first have surfaced once
+    the task files were gone and there was nothing left to re-derive from.
+    A round-trip is the only check that exercises it while the source still exists.
+    """
+    tasks = F.load_tasks()
+    by_cat = {}
+    for t in tasks:
+        c = M.categorise(t)[0]
+        if c:
+            by_cat.setdefault(c, []).append(t)
+    bad = 0
+    for cid in sorted(by_cat):
+        want = activities_from_tasks(by_cat, cid)
+        got = activities_from_block(render_block(want, cid, True, len(want)))
+        if len(want) != len(got):
+            print('  %s: rendered %d activities, parsed back %d'
+                  % (cid, len(want), len(got)))
+            bad += 1
+            continue
+        for a, b in zip(want, got):
+            for k in ('ref', 'status'):
+                if a[k] != b[k]:
+                    print('  %s/%s: %s %r -> %r' % (cid, a['ref'], k, a[k], b[k]))
+                    bad += 1
+            if [x for x in a['streams'] if x] != b['streams']:
+                print('  %s/%s: streams %r -> %r'
+                      % (cid, a['ref'], a['streams'], b['streams']))
+                bad += 1
+            if sorted(a['depends_on']) != sorted(b['depends_on']):
+                print('  %s/%s: depends_on %r -> %r'
+                      % (cid, a['ref'], a['depends_on'], b['depends_on']))
+                bad += 1
+            if sorted(a['blocked_by']) != sorted(b['blocked_by']):
+                print('  %s/%s: blocked_by %r -> %r'
+                      % (cid, a['ref'], a['blocked_by'], b['blocked_by']))
+                bad += 1
+    n = sum(len(v) for v in by_cat.values())
+    if bad:
+        print('build_features: SELFTEST FAILED - %d mismatch(es) over %d activities' % (bad, n))
+        return 1
+    print('build_features: selftest OK - %d activities round-trip through the block'
+          % n)
+    return 0
+
+
 def main():
+    if '--selftest' in sys.argv:
+        return selftest()
     body, extra = build()
     if body is None:
         return 1

@@ -28,6 +28,15 @@ if git diff --cached --name-only | grep -qE '(^|/)tasks/FW-.*\.md$|^10-requireme
     if [ -f tools/build_features.py ]; then
         "$PY" tools/build_features.py >/dev/null
         git add FEATURES.md
+        # The activity table is the ONLY status record once the task files are
+        # retired, and its parser shipped broken. Round-trip it on every commit.
+        if ! "$PY" tools/build_features.py --selftest >/tmp/fw_self.$$ 2>&1; then
+            echo "pre-commit: build_features.py --selftest FAILED"
+            cat /tmp/fw_self.$$
+            rm -f /tmp/fw_self.$$
+            exit 1
+        fi
+        rm -f /tmp/fw_self.$$
     fi
 
     if ! "$PY" tools/check_docs.py >/tmp/fw_check.$$ 2>&1; then
