@@ -59,7 +59,13 @@ DIR_MAP = [
     ('MVP-2/DevelopmentPlan',           '60-delivery'),
     ('MVP-2/ProjectPlan',               '60-delivery'),
     # audit trail - nothing here is citable as a requirement
-    ('BaseDocuments',                   '95-archive/source-documents'),
+    # NEUTRALISED 9 Sep 2026. Every other rule in this table is spent - MVP-1/,
+    # MVP-2/ and LatestDocument/ no longer exist - but this one still matched a
+    # tracked file, `BaseDocuments/flatwire tables.xlsx`. So `pathmap --apply`, or
+    # any `retree --apply` that defaulted to this map, would have shipped one
+    # unrelated file move inside an unrelated restructure. If that move is still
+    # wanted, do it deliberately and on its own.
+    # ('BaseDocuments',                 '95-archive/source-documents'),
 ]
 
 # --- individual files that do not follow their folder ---------------------------------
