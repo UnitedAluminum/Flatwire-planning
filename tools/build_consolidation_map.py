@@ -223,6 +223,54 @@ def read_expected_counts():
             out.append((m.group(1), int(m.group(2))))
     return out
 
+# What an acceptance criterion on a card resolves to. Used by section 2.6, which is
+# the evidence behind the sign-off in section 3: the question is not "is every
+# criterion a requirement" but "does any card carry a REQUIREMENT that exists
+# nowhere else". Most do not - they carry build acceptance.
+AC_SPEC = re.compile(r'\[(REQ|API|SIG|DBD|PLC|PLCC|VAL|UIC|SVC|CMP|SCR|TS|TCS|BR|INT|ARC'
+                     r'|DEP|SEC|SIM|EX|PF|NFR|CE|TB|TRP|COM|UAT|RB|MON|SUP|GAP|VS|RM|SP'
+                     r'|SSP|DSP|YCS|PSG)\b')
+AC_FR = re.compile(r'\bFR-\d{3}')
+AC_REG = re.compile(r'\b(?:D-\d+|P-\d+|Q\d+|OI-\d+|G\d+|PLC-Q\d+|OQ-\d+|F-\d+|TC-\d+'
+                    r'|NFR\d+)\b')
+AC_OBJ = re.compile(r'`(?:sp_|fn_|CK_|IX_|UX_|FK_|PK_)\w+'
+                    r'|`(?:POST|GET|PUT|PATCH|DELETE)\s+/'
+                    r'|`\w+\.\w+`'
+                    r'|`(?:FlatWire|Rod|Spool|Coil|Pass|Run|Wip|Die|Tooling|Alloy|Line|Spc'
+                    r'|Weld|Roll|Payoff|Machine|Setup|Material)\w*`')
+
+
+def classify_ac(text):
+    if AC_FR.search(text):
+        return 'FR'
+    if AC_SPEC.search(text):
+        return 'spec'
+    if AC_REG.search(text):
+        return 'register'
+    if AC_OBJ.search(text):
+        return 'object'
+    return 'build'
+
+
+def acceptance_criteria():
+    """[(story id, criterion)] for every card, in file order."""
+    lines = F.read(F.BACKLOG).split(chr(10))
+    head = re.compile(r'^###### (?:~~)?\**`?(FW-N?\d+)')
+    idx = [i for i, l in enumerate(lines) if head.match(l)]
+    out = []
+    for k, i in enumerate(idx):
+        end = idx[k + 1] if k + 1 < len(idx) else len(lines)
+        for j in range(i + 1, end):
+            if re.match(r'^#{1,6} ', lines[j]):
+                end = j
+                break
+        sid = head.match(lines[i]).group(1)
+        for j in range(i, end):
+            if lines[j].lstrip().startswith(('- [ ]', '- [x]')):
+                out.append((sid, lines[j].strip()))
+    return out
+
+
 def categorise(t):
     """(category, reason) for one task file."""
     tid = t['id']
@@ -518,7 +566,59 @@ def build():
              '`G63`; consolidation neither creates nor fixes it.*')
     L.append('')
 
-    L.append('### 2.5 Retired ids')
+    # ---- 2.5 acceptance-criteria coverage ---------------------------------
+    ac = acceptance_criteria()
+    kinds = defaultdict(int)
+    per_cat = defaultdict(lambda: defaultdict(int))
+    for sid, text in ac:
+        k = classify_ac(text)
+        kinds[k] += 1
+        per_cat[task_cat.get(sid, '?')][k] += 1
+    total = len(ac) or 1
+    LABEL = [('FR', 'cites an `FR-###`'),
+             ('spec', 'cites a specification shortcode'),
+             ('register', 'cites a decision or register item'),
+             ('object', 'names a schema object or endpoint'),
+             ('build', '**build acceptance** - no upstream referent')]
+    L.append('### 2.5 Acceptance-criteria coverage')
+    L.append('')
+    L.append('**This section is the evidence behind the sign-off in §3.** The cards carry '
+             '**%d** acceptance criteria between them. The question the sign-off has to answer is '
+             'not *"is every criterion a requirement"* - most are not - but *"does any card carry '
+             'a **requirement** that exists nowhere else"*.' % len(ac))
+    L.append('')
+    L.append('| What it resolves to | Criteria | Share |')
+    L.append('|---|---:|---:|')
+    for k, lab in LABEL:
+        L.append('| %s | %d | %.1f %% |' % (lab, kinds[k], 100.0 * kinds[k] / total))
+    L.append('| | **%d** | |' % len(ac))
+    L.append('')
+    L.append('⛔ **The %.0f %% classed as build acceptance are not unresolved requirements.** '
+             'They are the *how do I know this story is done* content of a build task - a code '
+             'address, a returned status code, a regression fixture, a naming convention, a '
+             'process instruction. There is no `FR` to resolve them to because they are not '
+             'requirements, and a story card is exactly where they belong.'
+             % (100.0 * kinds['build'] / total))
+    L.append('')
+    L.append('✅ **Nothing is lost, because the cards are retained.** An earlier plan called '
+             'for stripping them to bare costing cells. That was tested and abandoned: with only '
+             '%.0f %% citing any specification or `FR`, stripping would have destroyed the '
+             'majority of the module’s buildable detail. The deletion step removes the *task '
+             'files* - the implementation plans - and their measured verification is lifted into '
+             'each parent’s §2 before they are archived.'
+             % (100.0 * (kinds['FR'] + kinds['spec']) / total))
+    L.append('')
+    L.append('| Category | `FR` | spec | register | object | build acceptance |')
+    L.append('|---|---:|---:|---:|---:|---:|')
+    for cid in CATEGORIES:
+        r = per_cat.get(cid)
+        if not r:
+            continue
+        L.append('| `%s` | %d | %d | %d | %d | %d |'
+                 % (cid, r['FR'], r['spec'], r['register'], r['object'], r['build']))
+    L.append('')
+
+    L.append('### 2.6 Retired ids')
     L.append('')
     L.append('Ids **not** absorbed into a parent. Each keeps its number forever and is never '
              'reused (`TaskIdMap.md` rule 3).')
@@ -592,6 +692,12 @@ than restating it.
 ⛔ **The migration's one-way door is the deletion step, and this section is the gate in front of
 it.** No task file is deleted and no plan archived until the review below is recorded.
 
+**What is actually deleted is narrower than it first appears.** The **backlog cards are retained**,
+so all 1,222 acceptance criteria, every hour figure and every client-visible `FW-###` survive
+untouched. What step 9 removes is the **task files** — the implementation plans — and the measured
+verification from the 32 completed ones is lifted into each parent's §2 first, because
+`95-archive/` is not citable.
+
 The reviewer must confirm, against the tag named here:
 
 - every story resolves to exactly one category, and the stated basis is right;
@@ -599,8 +705,12 @@ The reviewer must confirm, against the tag named here:
   file covers;
 - every `depends_on` edge either collapses inside a category or becomes a clean `FS` → `FS` edge,
   **and the merge creates no new dependency cycle**;
-- the fourteen phase-overrides in section 2 are each correct;
-- no acceptance criterion on a retired card is left without a home.
+- the phase-overrides in §2.3 are each correct;
+- §2.5's reading is right: that the 55 % of criteria classed as **build acceptance** carry no
+  requirement that exists nowhere else, and are correctly left on their card;
+- `python tools/build_status.py --dryrun-retired` passes, proving both boards survive the deletion;
+- `python tools/build_features.py --selftest` passes, proving the activity tables — the only
+  status record that outlives the task files — round-trip.
 
 | Reviewed at tag | Reviewer | Date | Outcome |
 |---|---|---|---|

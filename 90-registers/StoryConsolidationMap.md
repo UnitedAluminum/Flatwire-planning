@@ -462,7 +462,45 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 
 *`FS-09` ↔ `FS-10` carries the pre-existing `FW-071`/`FW-072` cycle recorded as `G63`; consolidation neither creates nor fixes it.*
 
-### 2.5 Retired ids
+### 2.5 Acceptance-criteria coverage
+
+**This section is the evidence behind the sign-off in §3.** The cards carry **1222** acceptance criteria between them. The question the sign-off has to answer is not *"is every criterion a requirement"* - most are not - but *"does any card carry a **requirement** that exists nowhere else"*.
+
+| What it resolves to | Criteria | Share |
+|---|---:|---:|
+| cites an `FR-###` | 44 | 3.6 % |
+| cites a specification shortcode | 100 | 8.2 % |
+| cites a decision or register item | 163 | 13.3 % |
+| names a schema object or endpoint | 242 | 19.8 % |
+| **build acceptance** - no upstream referent | 673 | 55.1 % |
+| | **1222** | |
+
+⛔ **The 55 % classed as build acceptance are not unresolved requirements.** They are the *how do I know this story is done* content of a build task - a code address, a returned status code, a regression fixture, a naming convention, a process instruction. There is no `FR` to resolve them to because they are not requirements, and a story card is exactly where they belong.
+
+✅ **Nothing is lost, because the cards are retained.** An earlier plan called for stripping them to bare costing cells. That was tested and abandoned: with only 12 % citing any specification or `FR`, stripping would have destroyed the majority of the module’s buildable detail. The deletion step removes the *task files* - the implementation plans - and their measured verification is lifted into each parent’s §2 before they are archived.
+
+| Category | `FR` | spec | register | object | build acceptance |
+|---|---:|---:|---:|---:|---:|
+| `FS-01` | 0 | 2 | 2 | 6 | 37 |
+| `FS-02` | 2 | 10 | 10 | 30 | 56 |
+| `FS-03` | 1 | 12 | 29 | 41 | 60 |
+| `FS-04` | 9 | 39 | 19 | 25 | 64 |
+| `FS-06` | 2 | 0 | 0 | 8 | 23 |
+| `FS-07` | 5 | 9 | 12 | 10 | 55 |
+| `FS-08` | 2 | 3 | 20 | 14 | 33 |
+| `FS-09` | 6 | 0 | 5 | 32 | 66 |
+| `FS-10` | 0 | 0 | 2 | 10 | 28 |
+| `FS-11` | 2 | 1 | 8 | 9 | 56 |
+| `FS-12` | 2 | 3 | 9 | 8 | 33 |
+| `FS-13` | 1 | 0 | 0 | 5 | 10 |
+| `FS-14` | 1 | 4 | 4 | 6 | 14 |
+| `FS-15` | 7 | 1 | 10 | 17 | 16 |
+| `FS-16` | 0 | 0 | 4 | 6 | 22 |
+| `FS-17` | 0 | 0 | 1 | 4 | 9 |
+| `FS-18` | 4 | 4 | 24 | 8 | 54 |
+| `FS-19` | 0 | 12 | 4 | 3 | 37 |
+
+### 2.6 Retired ids
 
 Ids **not** absorbed into a parent. Each keeps its number forever and is never reused (`TaskIdMap.md` rule 3).
 
@@ -482,6 +520,12 @@ Ids **not** absorbed into a parent. Each keeps its number forever and is never r
 ⛔ **The migration's one-way door is the deletion step, and this section is the gate in front of
 it.** No task file is deleted and no plan archived until the review below is recorded.
 
+**What is actually deleted is narrower than it first appears.** The **backlog cards are retained**,
+so all 1,222 acceptance criteria, every hour figure and every client-visible `FW-###` survive
+untouched. What step 9 removes is the **task files** — the implementation plans — and the measured
+verification from the 32 completed ones is lifted into each parent's §2 first, because
+`95-archive/` is not citable.
+
 The reviewer must confirm, against the tag named here:
 
 - every story resolves to exactly one category, and the stated basis is right;
@@ -489,8 +533,12 @@ The reviewer must confirm, against the tag named here:
   file covers;
 - every `depends_on` edge either collapses inside a category or becomes a clean `FS` → `FS` edge,
   **and the merge creates no new dependency cycle**;
-- the fourteen phase-overrides in section 2 are each correct;
-- no acceptance criterion on a retired card is left without a home.
+- the phase-overrides in §2.3 are each correct;
+- §2.5's reading is right: that the 55 % of criteria classed as **build acceptance** carry no
+  requirement that exists nowhere else, and are correctly left on their card;
+- `python tools/build_status.py --dryrun-retired` passes, proving both boards survive the deletion;
+- `python tools/build_features.py --selftest` passes, proving the activity tables — the only
+  status record that outlives the task files — round-trip.
 
 | Reviewed at tag | Reviewer | Date | Outcome |
 |---|---|---|---|
