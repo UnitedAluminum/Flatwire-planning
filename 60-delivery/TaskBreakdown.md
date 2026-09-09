@@ -271,6 +271,17 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Drives a `gauge-trace-chart` live with reconnect and group re-join simulated
 - [ ] Jest: emitted events land in the ring buffer with correct types
 
+> ⚠ **Corrected 9 Sep 2026 — this card enumerates NINE events and NO markers, and the
+> real contract is larger.** Six in criterion 1 plus three in criterion 2 omits
+> **`PayoffStateChanged`** and **every SCADA marker**. The authoritative set is `[SIG §5.2]`,
+> restated on `FW-149`'s card: the readings and statuses above **plus `PayoffStateChanged`**, plus
+> the markers `WeldJoinEvent`, `DieChangeEvent`, `PauseEvent`, `SPCCheckpoint` and
+> `RodCheckoutEvent`. ⛔ **A diff run against this card as written reports eleven mismatches, and
+> the dangerous "resolution" is to trim the server to match.** `[SIG]` recorded the staleness on
+> 27 Aug 2026 as explicitly not its file's to fix, and `FW-149`'s build handed the correction here
+> (`P-116`). **Build to `[SIG §5.2]`, not to nine.** See
+> [`FS-04`](../10-requirements/features/FS-04-realtime-plc-backbone.md).
+
 **Rate-card basis:** hub event set + mock harness (12 h, §2)
 **Dependencies:** FW-135
 **Blockers:** —
@@ -415,6 +426,17 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] `RodRepository` reads the shared `coils` table (cross-database, unenforced link)
 - [ ] Unit tests cover each repository against the seeded fixtures
 
+> ⚠ **Corrected 9 Sep 2026 — the title is right and the criteria are stale.** `[SVC §3.2a]`
+> and `phase-01b` L85 say **seven repositories, one per aggregate root**, and that **`Rod` and
+> `PassSchedule` get none at all** — so two of the four names above must not be built, and
+> criterion 2's `RodRepository` is one of them. The four names predate `D-29` and the seven-root
+> boundary table. ⚠ **Repositories are keyed on the alpha value object, not `int Id`** — the
+> surrogate is not the identity. ⛔ **There is no per-aggregate repository in `ual-api` to copy:**
+> `CoilCheckin.Domain/Repository/` holds only `IContextRepository` and `IGenericRepository`, the
+> generic one registered and never consumed, with all real data access through Dapper on
+> `IContextRepository`. **Build to `[SVC §3.2a]`.** See
+> [`FS-02`](../10-requirements/features/FS-02-backend-service-foundation.md).
+
 **Rate-card basis:** 5 repositories @ 4 h = 20 h (§2, table rate covers repository)
 **Dependencies:** FW-N04, FW-006
 **Blockers:** **G17** (rod→`coils` multiplies cross-DB logical FKs)
@@ -433,6 +455,13 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] **EF Core `FlatWireDbContext`** for entity writes, mapped to all **25 MVP-1 tables** (`Rod` **is** among them per `D-04`; 28 in the full design — `[DBD §6.2]`)
 - [ ] A smoke insert→select round-trips through EF against every table
 - [ ] **The three `PassSchedule*` tables are not mapped** — they are owned outside MVP-1
+
+> ⚠ **Corrected 9 Sep 2026 — criterion 2's table split is stale.** There is **one set of
+> tables, not a "25 MVP-1 / 28 in the full design" split** (`phase-01b` L47), and
+> **`[DBD §6.2]` is the only site that counts it.** ⛔ **Do not restate a figure on this card** —
+> cite `[DBD §6.2]`, which is exactly why the rate-card line below flags its own count rather
+> than substituting one. The three `PassSchedule*` tables stay unmapped either way. See
+> [`FS-02`](../10-requirements/features/FS-02-backend-service-foundation.md).
 
 **Rate-card basis:** context + mapping across 24 tables, priced as a non-trivial service (24 h, §2). ⚠ **The table count in this derivation is stale — flagged, not substituted (23 Aug 2026).** The live figure is `[DBD §6.2]`. Replacing the count without re-deriving the hours would make the arithmetic lie, and per the standing convention an effort change lands in an **additive new sheet, never an in-place edit of a total**. **Owed: re-derive against `[DBD §6.2]` using `[CE §2]`'s rate card** — `[CE]`'s owner, not this document's.
 **Dependencies:** FW-N04; converges with FW-006 / FW-007
@@ -511,6 +540,17 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Role policies for Operator / Operations Manager / Maintenance / Supervisor / Admin, matching `04-APIContract.md`'s matrix
 - [ ] Authorization tests prove an operator cannot reach an Ops-Manager-only endpoint
 
+> ⚠ **Corrected 9 Sep 2026 — there are SIX roles, and criterion 3 lists five.** `[SEC §8]`
+> and `phase-01b` L91 are the matrix of record, all six with a column: **Operator · Supervisor ·
+> Operations Manager · Engineering/Maintenance · QA · Admin**. The omission is **QA**, which has
+> real capability — `/wipreject` dispose and SPC-HOLD release (`[API §9.2]`). *(`Admin` is a
+> **platform** role owning no production transaction, so do not read its empty cells as an
+> oversight.)* ⛔ **`P-17`'s *"six policies, one per role"* is superseded by `P-75`:**
+> authorization attributes AND-combine, so role-scoped policies cannot express a multi-role cell —
+> the policies are **capability-scoped**. ⚠ `G6`'s residual: the six claim **values** are coded
+> rather than `[SEC §8]`'s labels and the mapping is unsupplied, which gates *verification*, not
+> construction. See [`FS-02`](../10-requirements/features/FS-02-backend-service-foundation.md).
+
 **Rate-card basis:** auth + five role policies (16 h, §2)
 **Dependencies:** FW-N04
 **Blockers:** ~~**G6** (roles not confirmed as existing JWT roles vs new)~~ ✅ **Resolved 15 Aug 2026** — all six exist as JWT claims on `ClaimTypes.Role`. ⚠ Residual: the claim **values** are coded rather than labelled and the mapping is unsupplied — gates verification, not construction
@@ -550,6 +590,16 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] **`EdgeType ∈ {Round, Square}`** — one vocabulary, not three
 - [ ] **`State` is an enum, never a boolean `IsActive`**
 - [ ] All three match FW-132 (Angular models) and FW-007 (DB `CHECK`s). ⚠ **Validator unit tests are withdrawn** (15 Aug 2026, `[TS §1.2]`) — the three-way agreement is `TC-020`, now a **manual diff across 14 enums with a named owner**, not a green build
+
+> ⚠ **Corrected 9 Sep 2026 — criterion 1 misplaces two of its three sample rules.**
+> FluentValidation owns the **shape of a request** → **`400`**: field presence, ranges, enum
+> membership. Only the third sample — `PassScheduleComponent.State ∈ {Active, Bypass, Skip}` — is
+> that. **`FM2_S3` must be Active** and **FL3 ⇒ Hybrid** are aggregate **state** rules → **`422`**,
+> and belong with the domain rather than the validator. ⚠ **Rod eligibility reads BOTH stores:**
+> since `D-32` (18 Aug 2026) `INFLAT` is `FlatWireDB`-local — it lives on `Rod.Status` /
+> `SpoolProcessing.Status` / `RodCheckout.NewRodStatus` and **never enters `coils.coil_status`** —
+> and `[API §1.8]`'s `ROD_UNAVAILABLE` row already says so. It is still state, still the
+> aggregate's, still `422`. See [`FS-02`](../10-requirements/features/FS-02-backend-service-foundation.md).
 
 **Rate-card basis:** validation layer + enum definitions (12 h, §2), **less the withdrawn validator tests → 12 h** (15 Aug 2026)
 **Dependencies:** FW-N04
@@ -670,6 +720,13 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] **`SimulatePLCTagPush` dev mode** logs an audit entry instead of writing, and is switchable by configuration
 - [ ] ⚠ **OPC writes are not transactional.** Failure recovery is modelled as **compensating re-clears**, and the code and comments say so — **the word "rollback" does not appear** (**G2**; `G16` closed 4 Aug 2026)
 - [ ] The saga/compensation boundary for a cross-database check-in is documented in the service
+
+> ⚠ **Corrected 9 Sep 2026 — criterion 1 names two operations; there are FIVE.**
+> `IPLCTagService` and `PLCTagService` are built in `ual-api` as **five real operations, one
+> transport, one mode**, harness-verified 28 Aug 2026 (`P-109`–`P-112`); the two-versus-six count
+> that circulated resolved as five. ⚠ **The operations must not return `void`** — a caller has to
+> be able to assert `PlcTagsCleared = false`. Later phases add rules **on top of** these, not new
+> operations. See [`FS-04`](../10-requirements/features/FS-04-realtime-plc-backbone.md).
 
 **Rate-card basis:** PLC tag group push + compensating clear @ 16 h (§2)
 **Dependencies:** FW-144
@@ -917,6 +974,13 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] **Clears automatically only.** `TC-016` attempts an operator clear *via every UI surface* and must find none — **enforced by the absence** of any endpoint, command or hub method
 - [ ] Config key sits **inside each line's `Tags` block, never at the root** — a root key would surface the first time an idle line blocked a running one
 - [ ] Honours `SimulatePLCTagPush`; every set and clear is audit-logged with tag path, value, timestamp and result
+
+> ⚠ **Corrected 9 Sep 2026 — criterion 1 names two tags; the configuration surface is THREE
+> lines.** `FW-144` already built and boot-asserts a three-line surface, registered as three lines
+> in `Program.cs` for exactly this reason (`P-26`), so **FL3 carries its own `ITInhibit` tag**
+> beside `FL1.ITInhibit` and `FL2.ITInhibit`. ⛔ **Honour that surface; do not narrow it to two.**
+> The tag stays one boolean per line, **written, never read** — zero confirm reads. See
+> [`FS-04`](../10-requirements/features/FS-04-realtime-plc-backbone.md).
 
 **Rate-card basis:** non-trivial business service, mid-band **16 h** (§2, *12–24 h priced individually*) — comparable to the card's *"PLC tag group push + compensating clear | 16 h"*: a tag write plus stateful evaluation, but one boolean per line rather than a group push
 **Dependencies:** FW-144 (config), FW-151 (`PLCTagService`), FW-N05 (the footage feed)

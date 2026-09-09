@@ -208,6 +208,15 @@ transaction and its missing recovery path), `G34` (wire break), `OI-45` (footage
 
 **Gaps this category owns that no story cites:**
 
+- ⚠ **`G126` — three of this category's cards carried a stale acceptance criterion whose
+  correction lived only in the now-archived plan.** Corrected on the card 9 Sep 2026:
+  **`FW-136`** nine events and no markers → **`[SIG §5.2]`'s full typed set**, `PayoffStateChanged`
+  and every SCADA marker included — ⛔ *a diff against that card as written reports eleven
+  mismatches, and the dangerous "resolution" is to trim the server to match*; **`FW-151`** two
+  operations → **five**, none returning `void`; **`FW-205`** two `ITInhibit` tags → **three
+  lines**, `FW-144` having already boot-asserted the three-line surface. ⛔ **`G126`'s other rows
+  are unreviewed.** See [`Gaps.md`](../../90-registers/Gaps.md).
+
 - ⛔ **`G105` should be settled before `FW-149` leaves review.** An undecided wire protocol with a
   typed contract in review is the wrong order.
 - ⚠ **The simulator is not evidence about the controllers.** Eleven activities are `done` and the

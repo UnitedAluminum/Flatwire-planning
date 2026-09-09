@@ -180,6 +180,15 @@ reason this category got built while others stalled. None blocks the foundation 
 
 **Gaps this category owns that no story cites:**
 
+- ⚠ **`G126` — four of this category's cards carried a stale acceptance criterion whose
+  correction lived only in the now-archived plan.** Corrected on the card 9 Sep 2026:
+  **`FW-141`** four repositories → **seven, one per aggregate root, and none for `Rod` or
+  `PassSchedule`**; **`FW-142`** the 25/28 table split → **one set, counted only by `[DBD §6.2]`**;
+  **`FW-145`** five roles → **six, the omission being QA**; **`FW-147`** all three sample rules in
+  FluentValidation → **only the third, the other two being aggregate state rules returning `422`**.
+  ⛔ **`G126`'s other rows are unreviewed** — 97 correction rows across fourteen archived plans,
+  now non-citable. See [`Gaps.md`](../../90-registers/Gaps.md).
+
 - ⛔ **`CLAUDE.md` points at the wrong checkout.** It says the implementation lands in `../ual-api`,
   which resolves to a checkout with **no `FlatWire` domain at all**. Measured today: the four
   projects are in **`Second-Branch/ual-api/API/Domain/FlatWire`**. Fourteen `done` activities live
