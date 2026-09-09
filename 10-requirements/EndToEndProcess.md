@@ -508,7 +508,7 @@ Scrap can arise at any stage. Disposition depends on the scrap type and source.
 
 | Document | Purpose |
 |----------|---------|
-| [FlatWirePlan.md](FlatWirePlan.md) | Full implementation plan — scope, milestones, risks |
+| [FlatWirePlan.md](../95-archive/design-notes/FlatWirePlan.md) | Full implementation plan — scope, milestones, risks |
 | [FlatWireOpenQuestions.md](../90-registers/Questions.md) | Open questions register — open items only; the answered questions are in [FlatWireDecidedQuestions.md](../90-registers/Decisions.md) |
 | Shopfloor Flat Wire SRS.docx | Detailed software requirements for shopfloor screens |
 | Flat Wire Coil Receiving.docx | Rod receiving SRS — screen logic and validations |

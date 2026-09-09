@@ -146,7 +146,7 @@ That file defines `S0`–`S4` on a phase-grouped cadence (S1 = W1–W3, S2 = W4�
 
 ## 5. Phase table
 
-The per-phase owner, hours, days and window table is owned by [`../00-overview/Roadmap.md`](Roadmap.md), which indexes the 15 phase specifications in [`Development/Phases/`](Phases/). It was duplicated here until 13 Aug 2026.
+The per-phase owner, hours, days and window table is owned by [`../00-overview/Roadmap.md`](../00-overview/Roadmap.md), which indexes the 15 phase specifications in [`Development/Phases/`](Phases/). It was duplicated here until 13 Aug 2026.
 
 ---
 

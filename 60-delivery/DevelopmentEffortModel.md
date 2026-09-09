@@ -323,7 +323,7 @@ capacity model's §7 decision cannot wait for the gate.
 |---|---|
 | [`CapacityAndEffortModel.md`](./CapacityAndEffortModel.md) | **The base of record.** §2 rate card · §3/§3b the hand-coded per-phase hours this sheet factors · §4 full capacity model incl. QA/BA · §5 descope ladder · §7 the programme decision |
 | [`YieldCostAndScrapSheet.md`](./YieldCostAndScrapSheet.md) | **Phase 12 — excluded from this sheet and owned entirely there.** Story-level effort on both bases (**89 h AI / 128 h hand-coded** development), the descope-ladder role, and the finding that three of its four stories have **no requirement specification**. Add its 89 h to this sheet's 1,397 h for complete MVP-1 development |
-| [`../00-overview/Roadmap.md`](Roadmap.md) | Master roadmap index — per-phase Owner/Effort summary (hand-coded basis) |
+| [`../00-overview/Roadmap.md`](../00-overview/Roadmap.md) | Master roadmap index — per-phase Owner/Effort summary (hand-coded basis) |
 | [`../90-registers/Gaps.md`](../90-registers/Gaps.md) | Week grid, milestone calendar, gaps register (**G1**) |
 | [`ShopfloorPlan/phase-*.md`](Phases/) | Per-phase deliverable inventories — what the rate card priced |
 | [`ClientCall_2026-07-23_SyncPlan.md`](../95-archive/source-documents/ClientCall_2026-07-23_SyncPlan.md) | The AI-assisted development decision (§"Decisions recorded on the call") and propagation wave **W8** |

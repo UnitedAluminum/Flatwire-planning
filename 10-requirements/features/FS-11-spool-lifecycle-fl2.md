@@ -103,7 +103,7 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | Ref | Status | Measured result |
 |---|---|---|
 | `FW-180` | 🔵 in-review | ✅ **Table BUILT.** ⛔ **`OI-25`'s two footage coordinate systems are unreconciled** |
-| `FW-230` | 🔵 in-review | ⛔ **Blocked on [`FW-231`](FW-231.md).** Built alone it **reissues `R00001A` on every spool** |
+| `FW-230` | 🔵 in-review | ⛔ **Blocked on [`FW-231`](FS-15-shared-schema-boundary/BE/FW-231.md).** Built alone it **reissues `R00001A` on every spool** |
 
 <!-- END GENERATED: absorbed-stories -->
 

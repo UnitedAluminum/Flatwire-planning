@@ -2,7 +2,7 @@
 
 > **Part of the [Flat Wire Mill — Master Implementation Roadmap](../../00-overview/Roadmap.md).** One of the three layer specs that replace the combined Phase 1 doc.
 > **Siblings:** [1B — Backend Foundation](./phase-01b-backend-foundation.md) · [1C — Database Foundation](./phase-01c-database-foundation.md)
-> **Reference context (do not restate):** [`[ARC §2.2]`](../../Architecture/Architecture.md) — the binding reference-code rules; build against `c:\UAL\ual-angular` (and `§2.1` for repo locations) · [`[BR §3]`](../../Business/BusinessRules.md) — domain model and glossary · [`[SIG §4]`](../../Architecture/SignalR.md) — real-time architecture · [`[API §7]`](../../Backend/APIs.md) — the stub-first delivery contract.
+> **Reference context (do not restate):** [`[ARC §2.2]`](../../20-architecture/Architecture.md) — the binding reference-code rules; build against `c:\UAL\ual-angular` (and `§2.1` for repo locations) · [`[BR §3]`](../../10-requirements/BusinessRules.md) — domain model and glossary · [`[SIG §4]`](../../20-architecture/SignalR.md) — real-time architecture · [`[API §7]`](../../40-backend/APIs.md) — the stub-first delivery contract.
 
 ---
 

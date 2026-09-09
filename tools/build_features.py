@@ -77,10 +77,49 @@ def pct(rows):
     return round(100.0 * sum(1 for r in live if r['status'] == 'done') / len(live))
 
 
-def activities_from_tasks(tasks_by_cat, cid):
+RE_EMBEDDED_LINK = re.compile(r'[]][(]([^)]+)[)]')
+
+
+def reanchor(text, from_rel, to_rel):
+    """Re-point a relative md-link so it resolves from `to_rel` instead of `from_rel`.
+
+    A story's `status_note` is lifted verbatim into its parent's evidence table, and
+    its relative links were written from the STORY's directory. The story sits at
+    10-requirements/features/<category>/<STREAM>/, four deep; its parent sits two
+    deep. So `../../FS-15-.../BE/FW-231.md` is right in the story and overshoots the
+    repository root from the parent.
+
+    This was invisible until the story-folder move: before it, stories and parents
+    were both two deep, so a verbatim copy happened to resolve. 20 links across 16
+    status notes are affected, and linkcheck's basename fallback hid all of them -
+    only --literal shows them.
+    """
+    if not text or '](' not in text:
+        return text
+    from_dir = os.path.dirname(from_rel)
+    to_dir = os.path.dirname(to_rel)
+    if from_dir == to_dir:
+        return text
+    out = text
+    for raw in set(RE_EMBEDDED_LINK.findall(text)):
+        target = raw.split('#')[0].strip()
+        anchor = raw[len(target):]
+        if not target or target.startswith(('http', 'mailto', '/', '#')):
+            continue
+        resolved = os.path.normpath(os.path.join(from_dir, target))
+        new = os.path.relpath(resolved, to_dir if to_dir else '.').replace(chr(92), '/')
+        if new != target:
+            out = out.replace('](%s)' % raw, '](%s)' % (new + anchor))
+    return out
+
+
+def activities_from_tasks(tasks_by_cat, cid, parent_rel=None):
     """Seed one activity per story in the category - the 1:1 starting point."""
     rows = []
     for t in tasks_by_cat.get(cid, []):
+        note = t.get('status_note', '')
+        if parent_rel:
+            note = reanchor(note, t['path'], parent_rel)
         rows.append({
             'ref': t['id'],
             'name': t.get('title', ''),
@@ -88,7 +127,7 @@ def activities_from_tasks(tasks_by_cat, cid):
             'status': t.get('status', ''),
             'depends_on': t.get('depends_on', []),
             'blocked_by': t.get('blocked_by', []),
-            'evidence': t.get('status_note', ''),
+            'evidence': note,
             'unconfirmed': t.get('status_confirmed') == 'false',
         })
     return rows
@@ -357,7 +396,7 @@ def build():
     acts, derived_from_tasks = {}, {}
     for cid, front, rel, fn in feats:
         if by_cat.get(cid):
-            acts[cid] = activities_from_tasks(by_cat, cid)
+            acts[cid] = activities_from_tasks(by_cat, cid, rel)
             derived_from_tasks[cid] = True
         else:
             parsed = activities_from_block(F.read(rel))
@@ -493,7 +532,7 @@ def selftest():
     bad, n = 0, 0
     for cid, _front, rel, _fn in feats:
         if by_cat.get(cid):
-            want = activities_from_tasks(by_cat, cid)
+            want = activities_from_tasks(by_cat, cid, rel)
         else:
             want = activities_from_block(F.read(rel))
         if not want:

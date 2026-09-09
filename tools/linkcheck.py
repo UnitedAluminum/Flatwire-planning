@@ -29,7 +29,13 @@ FILE_EXT = {'.md', '.sql', '.html', '.js', '.py', '.css', '.scss', '.docx', '.xl
             '.png', '.gif', '.woff2', '.xlsm', '.bas', '.json', '.code-workspace'}
 SKIP_DIRS = {'.git', '__pycache__', 'node_modules', '.claude'}
 
-RE_MDLINK = re.compile(r'\[[^\]]*\]\(([^)\s]+)\)')
+# The link TEXT may itself contain brackets, and in this repository it routinely
+# does - `[`[UIC]`](50-frontend/UIConventions.md)` is the house citation idiom. The
+# old pattern was \[[^\]]*\], whose character class cannot cross a `]`, so it missed
+# 256 md-links across 70 files - invisible to every linkcheck mode and to retree,
+# which is why a file move left them behind. One level of nesting is enough for the
+# idiom; deeper nesting is not used.
+RE_MDLINK = re.compile(r'\[(?:[^\[\]]|\[[^\[\]]*\])*\]\(([^)\s]+)\)')
 RE_BACKTICK = re.compile(r'`([A-Za-z0-9_./\\-]+\.[A-Za-z0-9]{1,14})`')
 RE_SQLCMD = re.compile(r'^\s*:r\s+(\S+)', re.M)
 RE_HTMLREF = re.compile(r'(?:src|href)\s*=\s*["\']([^"\']+)["\']')
@@ -228,10 +234,14 @@ def check_fs_paths():
 # because resolve()'s basename fallback makes the ordinary run green either way -
 # see check_literal()'s docstring. Raise this only with a measured reason.
 # 78 when this check was written; 61 once CHANGELOG.md was excluded below; 58 after
-# the 9 Sep 2026 board archive, which repaired three links that had been broken since
-# the 29 Aug re-tree (they named pre-re-tree paths like ../Backend/tasks/). Lower it
-# whenever a pass legitimately fixes more than it breaks, and say which pass.
-LITERAL_FLOOR = 58
+# the 9 Sep 2026 board archive; 8 after the story-folder move, whose repair pass fixed
+# 50 links that had been broken since the 29 Aug re-tree. Lower it whenever a pass
+# legitimately fixes more than it breaks, and say which pass.
+#
+# The remaining 8 are genuinely outside this repository: 7 name
+# ../Database/Scripts/*.sql from the pre-re-tree tree and 1 names a UALUADEV path.
+# Fixing them means deciding what they should say, which is content, not a move.
+LITERAL_FLOOR = 8
 
 # Excluded from --literal for the same stated reason 95-archive/ is: a path that was
 # correct when it was written is not a break. TaskIdMap.md rule 4 makes it explicit -

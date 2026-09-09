@@ -214,7 +214,7 @@ Terminology rule throughout: always "flat wire," never "strip."
 | Document | Relevance |
 |---|---|
 | [FlatWireEndToEndProcess.md](./EndToEndProcess.md) | Stage-by-stage process reference; equipment capacity table; scrap dispositions |
-| [FlatWirePlan.md](FlatWirePlan.md) | Rod receiving validations, pre-check-in inspection, planning and machines application changes |
+| [FlatWirePlan.md](../95-archive/design-notes/FlatWirePlan.md) | Rod receiving validations, pre-check-in inspection, planning and machines application changes |
 | [RocCheckin.md](screens/RocCheckin.md) | "Acknowledge & Begin Check-in" flow for Dashboards 2 and 5 (steps 13–17, 33) |
 | [Spool.md](../95-archive/design-notes/Spool.md) | Spool lifecycle, anneal alpha handling, planning allocation and remainder (steps 28–33) |
 | [SpoolCompletionNotification.md](screens/SpoolCompletionNotification.md) | Operator alert at 75 / 90 / 100 % of target spool weight as the take-up fills (step 28) |
@@ -223,7 +223,7 @@ Terminology rule throughout: always "flat wire," never "strip."
 | [WeldEvent.md](screens/WeldEvent.md) | Weld traceability detail (step 21) |
 | [SPCCheckpoint.md](screens/SPCCheckpoint.md) | Checkpoint types, tolerances, disposition rules (step 24) |
 | [DieChangeAndManagement.md](screens/DieChangeAndManagement.md) | Die change flow and tooling inventory (step 22) |
-| [FlatWireShopfloorDashboards.md](FlatWireShopfloorDashboards.md) | All dashboard specifications referenced by number |
+| [FlatWireShopfloorDashboards.md](../95-archive/design-notes/FlatWireShopfloorDashboards.md) | All dashboard specifications referenced by number |
 | [PLCTagSpecification.md](../20-architecture/PLCTagSpecification.md) | The machine tag surface — what is written at each step, what is read, and the tag lifecycle across all sixteen moments |
 | [FlatWireOpenQuestions.md](../90-registers/Questions.md) | Open decisions that affect steps above (~59 items) |
 | [`../20-architecture/Architecture.md`](../20-architecture/Architecture.md) | §0.3 domain cheat-sheet (authoritative equipment facts, alphas, hub events), §0.4 real-time architecture |

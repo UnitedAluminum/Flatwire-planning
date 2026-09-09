@@ -16,8 +16,8 @@
 > Read the rule there; this file says only what is built, what is missing and what to do.
 >
 > **`SCN-##` is an analysis id, not a work item id** — see [`Orchestration.md`](Orchestration.md).
-> Owning tasks: [`FW-N02`](../../40-backend/tasks/FW-N02.md) (Part A),
-> [`FW-202`](../../40-backend/tasks/FW-202.md) (Part B).
+> Owning tasks: [`FW-N02`](../../10-requirements/features/FS-11-spool-lifecycle-fl2/RT/FW-N02.md) (Part A),
+> [`FW-202`](../../10-requirements/features/FS-08-active-run-monitoring/FE/FW-202.md) (Part B).
 >
 > Code paths are relative to `c:\UAL\Second-Branch\ual-angular\projects\flat-wire\src\lib\`.
 

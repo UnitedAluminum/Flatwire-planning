@@ -21,7 +21,7 @@ library), and this repository is the specification they are built from.
 | **What is stopping us right now?** | [`STATUS.md`](STATUS.md) § *⛔ Stopping work right now* — open register items ordered by how many tasks each blocks |
 | **How is each phase / MVP progressing?** | [`STATUS.md`](STATUS.md) § *At a glance* |
 | **What can I start today?** | [`STATUS.md`](STATUS.md) — each phase ends with **▶ Ready to start now** |
-| **How do I build task `FW-157`?** | Its task file: [`FW-157`](40-backend/tasks/FW-157.md). That file *is* the plan. Read its `FS-##` parent first if you need to know what the functionality *is* or what a change to it touches |
+| **How do I build task `FW-157`?** | Its task file: [`FW-157`](10-requirements/features/FS-07-rod-checkin-plc-config/BE/FW-157.md). That file *is* the plan. Read its `FS-##` parent first if you need to know what the functionality *is* or what a change to it touches |
 | **What is still undecided?** | [`90-registers/Questions.md`](90-registers/Questions.md) `Q##` (business) · [`90-registers/Gaps.md`](90-registers/Gaps.md) `G##` (internal) · master spec §11 `OI-##` |
 | **Where is everything else?** | [`./DOCUMENTS.md`](./DOCUMENTS.md) — the document map and shortcode table |
 

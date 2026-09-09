@@ -556,7 +556,7 @@ are read with each other.
 | | Hours | Where it goes |
 |---|---:|---|
 | **Role policies** — the six `[SEC §8]` policies, the `SimulatorControl` policy, `P-75`'s capability scoping, `P-76`'s open `ProductionTransaction` question, and `AC 4`'s authorisation tests | **16** | **MVP-2** |
-| ⛔ **The `?access_token=` hub handler** *(`FW-145` §3.5 / `P-77`)* | **0** | ⛔ **STAYS IN MVP-1.** It was specified by `FW-145` and **built by [`FW-080`](../40-backend/tasks/FW-080.md)** as its stated prerequisite, inside `FW-080`'s own 28 h. There is nothing to recover: the hours were never in this cell |
+| ⛔ **The `?access_token=` hub handler** *(`FW-145` §3.5 / `P-77`)* | **0** | ⛔ **STAYS IN MVP-1.** It was specified by `FW-145` and **built by [`FW-080`](../10-requirements/features/FS-04-realtime-plc-backbone/RT/FW-080.md)** as its stated prerequisite, inside `FW-080`'s own 28 h. There is nothing to recover: the hours were never in this cell |
 | ⛔ **`FR-212`**, the one live MVP-1 role gate (DB11) | **0** | ⛔ **STAYS IN MVP-1.** It is a **client-side** requirement in `ual-angular` and never depended on which MVP registers server policies (`[SEC §8.8]`) |
 
 **So the carve is the full 16 h of the story's cell and nothing more.** ⚠ **Do not net anything
@@ -853,7 +853,7 @@ A separate scheduling consequence, independent of team size: **UAT cannot share 
 |---|---|
 | [`DevelopmentEffortModel.md`](./DevelopmentEffortModel.md) | **Development effort only (FE/BE/DB/RT), re-derived on an AI-assisted (claude.ai) basis** per the 23 Jul 2026 client decision. **MVP-1 development = 1,397 h / 4.0 developer-FTE excluding Phase 12** (2,114 h hand-coded), or **1,486 h against 2,242 h** with Phase 12 added back from the sheet below. It factors *this* document's published columns and does **not** supersede any figure in it — QA, BA, contingency, the roster, the capacity decision and the descope ladder all remain owned here |
 | [`YieldCostAndScrapSheet.md`](./YieldCostAndScrapSheet.md) | **Phase 12 (Yield, Cost Ledger & Scrap) at story level**, on both delivery bases. Decomposes this document's published **177 h** to the descope ladder's own 33/49/28/67 split — both axes reconcile exactly to §3 and §5 here — and adds the AI-assisted view at **126 h**. ⚠ Records that `FW-101`, `FW-102` and `FW-110` carry **no `FR-` IDs** and the phase has **no owning requirement document**, so its 177 h was priced against four Jira cards |
-| [`../00-overview/Roadmap.md`](Roadmap.md) | Master roadmap index — carries the per-phase Owner/Effort summary |
+| [`../00-overview/Roadmap.md`](../00-overview/Roadmap.md) | Master roadmap index — carries the per-phase Owner/Effort summary |
 | [`../90-registers/Gaps.md`](../90-registers/Gaps.md) | Week grid, milestones, risks, gaps register (G1) |
 | [`ShopfloorPlan/phase-*.md`](Phases/) | Per-phase `Owner:` / `Effort:` doc-control blocks and the deliverable inventories this model prices |
 | [05-SprintPlanAndBacklog.md](SprintPlan.md) | **The authoritative MVP-1 shopfloor backlog** (rewritten 13 Aug 2026) — **116 stories / 3,292 h** across four even two-week sprints, **sized in hours off §2's rate card and reconciling exactly to §3b**. Every story carries a `Rate-card basis:` line, and each phase closes on its §3b figure. **It consumes this document; it is not a second opinion** — if §3b changes, it is re-derived. Story points are retired (Appendix A there) |

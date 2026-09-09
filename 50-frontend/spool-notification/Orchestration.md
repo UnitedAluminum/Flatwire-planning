@@ -90,12 +90,12 @@ story names its owning task below.
 
 | Part | Specification | Owning story | State |
 |---|---|---|---|
-| **A** — milestone alerts | `§2`, `§3` — `FR-130`–`FR-137`, **`Should`** | [`FW-N02`](../../40-backend/tasks/FW-N02.md) | `blocked`, 4–8 h |
-| **B** — stop confirmation | `§4` — `FR-140`–`FR-157`, **`Must`** | [`FW-202`](../../40-backend/tasks/FW-202.md) | `blocked`, 98 h, critical |
+| **A** — milestone alerts | `§2`, `§3` — `FR-130`–`FR-137`, **`Should`** | [`FW-N02`](../../10-requirements/features/FS-11-spool-lifecycle-fl2/RT/FW-N02.md) | `blocked`, 4–8 h |
+| **B** — stop confirmation | `§4` — `FR-140`–`FR-157`, **`Must`** | [`FW-202`](../../10-requirements/features/FS-08-active-run-monitoring/FE/FW-202.md) | `blocked`, 98 h, critical |
 | **C** — short close | `§5` — `FR-130b`–`FR-130d`, **`Must`** | no owner | see §5 |
 
 The card, the pill and the accent map were built by
-[`FW-062`](../tasks/FW-062.md) as part of the DB3 shell.
+[`FW-062`](../../10-requirements/features/FS-08-active-run-monitoring/FE/FW-062.md) as part of the DB3 shell.
 
 ---
 
@@ -178,7 +178,7 @@ build detail belongs in task plans:
 |---|---|
 | [`Gaps.md`](../../90-registers/Gaps.md) | **`G116`**–**`G119`** — the ladder does not implement `§2.1`; no FL1 spool alpha before commit; `S-13` has no transport; three contradictory commit gates |
 | [`Questions.md`](../../90-registers/Questions.md) | **`Q96`**–**`Q109`** — fourteen new questions, grouped in §9 below |
-| [`FW-N02`](../../40-backend/tasks/FW-N02.md) | ⚠ its build order evaluates the ladder over `payoffWeight$`; `[SIG §5.2]` names **`FootageCounter`** as spool progress's source |
+| [`FW-N02`](../../10-requirements/features/FS-11-spool-lifecycle-fl2/RT/FW-N02.md) | ⚠ its build order evaluates the ladder over `payoffWeight$`; `[SIG §5.2]` names **`FootageCounter`** as spool progress's source |
 | [`CHANGELOG.md`](../../CHANGELOG.md) | one row |
 
 ⛔ **`STATUS.md` is generated.** Never edit it — run `python tools/build_status.py`.

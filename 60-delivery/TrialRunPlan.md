@@ -276,7 +276,7 @@ schedule insurance in the plan — without it the whole FE stream queues behind 
 > ⚠ **Of the trial's seven, only five serve a screen** — and the loss reaches T1: **DB2 rod
 > check-in scans a rod**, which `[API §4.3]` served, so the trial has no scan validation, no
 > carry-forward gate and no station switching until `[API]` re-homes it
-> ([`FW-138`](../40-backend/tasks/FW-138.md) `P-54`).
+> ([`FW-138`](../10-requirements/features/FS-02-backend-service-foundation/BE/FW-138.md) `P-54`).
 
 - **`FW-138` 27 h → 14 h, and its baseline moved twice.** `[API §3.1]` now lists **fifteen** controllers, not
   thirteen — `PayoffStagingController` was never counted and **`SpoolController` was added 15 Aug 2026** — and the
