@@ -2361,7 +2361,7 @@ Controllers are **thin** and extend `UAController` from `UA.Framework.API`; all 
 |---|---|
 | `LinesController` | `/lines/status` |
 | `PassScheduleController` | `/passschedule/**` |
-| `RodReceivingController` | `/rod/**` |
+| ~~`RodReceivingController`~~ | ~~`/rod/**`~~ ⛔ **WITHDRAWN 25 Aug 2026 (`P-53`)** — rod receiving is not shopfloor, so this service hosts **no `/rod/**` surface**. `[API §3.1]` is fourteen controllers, not fifteen. *(Recorded 9 Sep 2026 under `G126`; every other site had the note and this table did not.)* |
 | `PayoffStagingController` | `/payoff/status`, `/staging/**` |
 | `CheckInController` | `/checkin/**` |
 | `RunController` | `/run/**` |

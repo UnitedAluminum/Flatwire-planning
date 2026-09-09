@@ -102,7 +102,7 @@ The one place shorthand appears. Everywhere else in the workbook these are writt
 **Delivers:** The service behind the screens exists with its layers separated, ready for the first feature.
 
 ### FW-138
-**Reference title:** Fifteen thin controllers over `UAController`
+**Reference title:** Fourteen thin controllers over `UAController`
 **Work item:** Service endpoints for every screen
 **Delivers:** Every screen has a service to call. Eight of the fifteen planned are needed for the trial; the other seven belong to work outside it.
 

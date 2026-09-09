@@ -155,7 +155,7 @@ in parallel within a sprint.
 | `FW-134` | Shared primitive controls and `alert-banner` | 1A | FE | 20 | S1 |
 | `FW-137` | PWA cache sync and the reconnect banner | 1A | RT | 5 | S1 |
 | `FW-N04` | `FlatWire` solution and four-project Clean Architecture skeleton | 1B | BE | 11 | S1 |
-| `FW-138` | Thirteen thin controllers over `UAController` | 1B | BE | 35 | S1 |
+| `FW-138` | Fourteen thin controllers over `UAController` | 1B | BE | 35 | S1 |
 | `FW-139` | MediatR registration and pipeline behaviours | 1B | BE | 11 | S1 |
 | `FW-140` | DI registration and the stub/real service swap | 1B | BE | 8 | S1 |
 | `FW-141` | Repository layer | 1B | BE | 14 | S1 |

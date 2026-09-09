@@ -274,9 +274,10 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 > ⚠ **Corrected 9 Sep 2026 — this card enumerates NINE events and NO markers, and the
 > real contract is larger.** Six in criterion 1 plus three in criterion 2 omits
 > **`PayoffStateChanged`** and **every SCADA marker**. The authoritative set is `[SIG §5.2]`,
-> restated on `FW-149`'s card: the readings and statuses above **plus `PayoffStateChanged`**, plus
-> the markers `WeldJoinEvent`, `DieChangeEvent`, `PauseEvent`, `SPCCheckpoint` and
-> `RodCheckoutEvent`. ⛔ **A diff run against this card as written reports eleven mismatches, and
+> **fourteen events and six markers**. ⛔ **Do not diff against `FW-149`'s card instead — that
+> one is stale too**, at ten and five, and is corrected on its own card. The omissions here are
+> `PayoffStateChanged`, the two spool-completion prompts, the two order-allocation events and the
+> `AlertEvent` marker. ⛔ **A diff run against this card as written reports eleven mismatches, and
 > the dangerous "resolution" is to trim the server to match.** `[SIG]` recorded the staleness on
 > 27 Aug 2026 as explicitly not its file's to fix, and `FW-149`'s build handed the correction here
 > (`P-116`). **Build to `[SIG §5.2]`, not to nine.** See
@@ -339,8 +340,10 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
-###### FW-138 · Fifteen thin controllers over `UAController`
+###### FW-138 · Fourteen thin controllers over `UAController`
 **Hours:** **45 h BE** *(was 56)* · **Priority:** Critical · **Sprint:** S0 · **Phase:** 1B · **Stream:** BE
+
+⚠ **The heading followed on 9 Sep 2026 — it still read *"Fifteen"*, contradicting this note and acceptance criterion 1 on the same card (`G126`).**
 
 > **Restated 25 Aug 2026: fifteen controllers → fourteen. `RodReceivingController` is withdrawn — rod receiving is not shopfloor.** The `FlatWire` service hosts no `/rod/**` surface: **#8 `GET /rod/{alpha}`, #9 `POST /rod` and `[API §4.20]` `GET /rod/{alpha}/orders`** all leave with it, taking this story to **22 endpoints across 12 controllers**. Recorded as decision `P-53` in [`FW-138`](../10-requirements/features/FS-02-backend-service-foundation.md) §5, applied in `[API §3.1]` the same day. ⚠ **The hours cell above is NOT restated** — the rate-card basis becomes 14 × 3 h = **42 h**, and that −3 h is **owed to the next re-baseline**, additively, because re-deriving in place desynchronises `[CE]`, `[DE]`, `[SSP]`, `[TRP]` and §11's reconciliation. ⚠ **#8 and §4.20 are specified and unhosted, not withdrawn**: `FR-042`, `FR-064`, `FR-043`'s carry-forward gate and `Q24`'s station switching have no endpoint until `[API]` re-homes them (`P-54`), and **DB2 — a trial screen — scans a rod.** `RodReceivingController.cs` was **deleted from `ual-api` on 25 Aug 2026** once the five affected documents were corrected; `git restore` from `FW-N04`'s commit reverses it.
 
@@ -382,6 +385,16 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] MediatR registered in `Program.cs` (copied from `CoilCheckin.API/Program.cs`)
 - [ ] Pipeline behaviours for validation and structured logging
 - [ ] A sample command round-trips controller → MediatR → handler → envelope
+
+> ⚠ **Corrected 9 Sep 2026 — both of criterion 1's and 2's references are wrong.**
+> ⛔ **`04-APIContract.md` does not exist** — it was absorbed into
+> [`APIs.md`](../40-backend/APIs.md) `[API]` on 13 Aug 2026, and only `04-APIContract-MVP2.md`
+> still carries that name. Build `Commands/` and `Queries/` against `[API]`.
+> ⛔ **Do not copy `CoilCheckin.API/Program.cs` wholesale** (criterion 2): measured, it registers
+> **no `IPipelineBehavior` at all**, has **no `UseSerilog`**, and carries the **duplicate-handler
+> bug**. It is the template for structure, not for this story's content — the pipeline behaviours
+> in criterion 3 are exactly what it lacks, so copying it satisfies criterion 2 and breaks
+> criterion 3. See [`FS-02`](../10-requirements/features/FS-02-backend-service-foundation.md).
 
 **Rate-card basis:** cross-cutting infrastructure (16 h, §2)
 **Dependencies:** FW-N04
@@ -427,9 +440,11 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Unit tests cover each repository against the seeded fixtures
 
 > ⚠ **Corrected 9 Sep 2026 — the title is right and the criteria are stale.** `[SVC §3.2a]`
-> and `phase-01b` L85 say **seven repositories, one per aggregate root**, and that **`Rod` and
-> `PassSchedule` get none at all** — so two of the four names above must not be built, and
-> criterion 2's `RodRepository` is one of them. The four names predate `D-29` and the seven-root
+> and `phase-01b` L85 say **seven repositories, one per aggregate root**, and `[SVC §3.2]` names
+> them: **`FlatWireRun`, `RodStaging`, `WeldEvent`, `SpoolProcessing`, `CoilOutput`,
+> `RodCheckout`, `WipRejection`**. ⛔ **`Rod`, `PassSchedule` and `RunReading` are not aggregate
+> roots and get no repository at all** — so `PassScheduleRepository` and `RodRepository` above must
+> not be built, and criterion 2, which gives `RodRepository` a job, has no subject. The four names predate `D-29` and the seven-root
 > boundary table. ⚠ **Repositories are keyed on the alpha value object, not `int Id`** — the
 > surrogate is not the identity. ⛔ **There is no per-aggregate repository in `ual-api` to copy:**
 > `CoilCheckin.Domain/Repository/` holds only `IContextRepository` and `IGenericRepository`, the
@@ -460,8 +475,16 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 > tables, not a "25 MVP-1 / 28 in the full design" split** (`phase-01b` L47), and
 > **`[DBD §6.2]` is the only site that counts it.** ⛔ **Do not restate a figure on this card** —
 > cite `[DBD §6.2]`, which is exactly why the rate-card line below flags its own count rather
-> than substituting one. The three `PassSchedule*` tables stay unmapped either way. See
-> [`FS-02`](../10-requirements/features/FS-02-backend-service-foundation.md).
+> than substituting one.
+>
+> ⛔ **Criterion 4 is wrong on BOTH halves, and it is the one to read twice.** The three
+> `PassSchedule*` tables **are mapped** — read-only — and they **are MVP-1**. `D-31` (15 Aug 2026)
+> put `02_Schedule` in the MVP-1 runner and gave `PassScheduleId` a **real, enforced FK**, and
+> decision **`P-13`** reads *"`PassSchedule*` mapped read-only — `D-31` owns the tables,
+> `[SVC §3.2a]` forbids the write path"*. So they are **read-only by rule, not unmapped by
+> scope** — the distinction matters because an unmapped table needs no `DbSet` and a read-only one
+> does. *(An earlier note on this card asserted they "stay unmapped either way"; that was wrong.)*
+> See [`FS-02`](../10-requirements/features/FS-02-backend-service-foundation.md).
 
 **Rate-card basis:** context + mapping across 24 tables, priced as a non-trivial service (24 h, §2). ⚠ **The table count in this derivation is stale — flagged, not substituted (23 Aug 2026).** The live figure is `[DBD §6.2]`. Replacing the count without re-deriving the hours would make the arithmetic lie, and per the standing convention an effort change lands in an **additive new sheet, never an in-place edit of a total**. **Owed: re-derive against `[DBD §6.2]` using `[CE §2]`'s rate card** — `[CE]`'s owner, not this document's.
 **Dependencies:** FW-N04; converges with FW-006 / FW-007
@@ -537,12 +560,14 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **Acceptance Criteria:**
 - [ ] JWT bearer authentication inherited from the UAL configuration
 - [ ] Hub authentication via `?access_token=` query parameter
-- [ ] Role policies for Operator / Operations Manager / Maintenance / Supervisor / Admin, matching `04-APIContract.md`'s matrix
+- [ ] Role policies for Operator / Operations Manager / Maintenance / Supervisor / Admin, matching `04-APIContract.md`'s matrix ⚠ **both halves stale — see the correction below**
 - [ ] Authorization tests prove an operator cannot reach an Ops-Manager-only endpoint
 
 > ⚠ **Corrected 9 Sep 2026 — there are SIX roles, and criterion 3 lists five.** `[SEC §8]`
 > and `phase-01b` L91 are the matrix of record, all six with a column: **Operator · Supervisor ·
-> Operations Manager · Engineering/Maintenance · QA · Admin**. The omission is **QA**, which has
+> Operations Manager · Engineering/Maintenance · QA · Admin**. ⛔ **And the document the criterion
+> cites is gone:** `04-APIContract.md` was absorbed into [`APIs.md`](../40-backend/APIs.md) on
+> 13 Aug 2026. **`[SEC §8]` is the matrix of record**; `[API §9.2]` is a summary that defers to it. The omission is **QA**, which has
 > real capability — `/wipreject` dispose and SPC-HOLD release (`[API §9.2]`). *(`Admin` is a
 > **platform** role owning no production transaction, so do not read its empty cells as an
 > oversight.)* ⛔ **`P-17`'s *"six policies, one per role"* is superseded by `P-75`:**
@@ -662,6 +687,18 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] SCADA markers included: `WeldJoinEvent`, `DieChangeEvent`, `PauseEvent`, `SPCCheckpoint`, `RodCheckoutEvent`
 - [ ] Matches FW-136's client-side typed set exactly
 - [ ] **Naming:** the aggregate, table, endpoint and story all say **`WeldEvent`**; `WeldJoinEvent` survives only as the SignalR method name and is documented as such
+
+> ⚠ **Corrected 9 Sep 2026 — criterion 1 enumerates TEN events and criterion 2 FIVE
+> markers; `[SIG §5.2]` and `[SIG §5.4]` are **fourteen and six**.** Missing are events **11–14** —
+> `SpoolCompletionPromptDue`, `SpoolCompletionPromptResolved`, `OrderAllocationReached`,
+> `OrderAllocationResolved` — and the **`AlertEvent`** marker. ⚠ **Two of the four are durable,
+> not fire-and-forget** (`[SIG §5.2]`), and the two order-allocation events are the only signal DB3
+> gets that an order boundary was crossed on a rod that is **still running**. ⛔ **Criterion 3's
+> *"matches `FW-136`'s client-side typed set exactly"* cannot be satisfied against `FW-136`'s card
+> either — that one enumerates nine and no markers, and is corrected on its own card. Diff
+> against `[SIG §5.2]`/`[SIG §5.4]`, which is the set the built hub sends.** *(`[SIG §5.2]` read
+> "Ten" until 27 Aug 2026; events 11–12 were promoted 14 Aug and 13–14 added 22 Aug.)* See
+> [`FS-04`](../10-requirements/features/FS-04-realtime-plc-backbone.md).
 
 **Rate-card basis:** 2 × hub event group @ 8 h = 16 h (§2)
 **Dependencies:** FW-080

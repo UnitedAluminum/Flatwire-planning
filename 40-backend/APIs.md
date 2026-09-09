@@ -660,7 +660,7 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
   "widthMeasuredIn": 0.877,
   "grossWeightLb": 850.0,
   "netWeightLb": 840.0,
-  "passScheduleId": "PS-1100-FL2-001",
+  "passScheduleId": "PS-1100-FL2-002",
   "operatorId": "jane.s",
   "orderId": "FW-00421"
 }
@@ -672,13 +672,26 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
     "runId": "RUN-0043",
     "machineName": "FL2",
     "spoolAlpha": "SP-00021",
-    "passScheduleId": "PS-1100-FL2-001",
+    "passScheduleId": "PS-1100-FL2-002",
     "checkedInAt": "2026-04-30T07:00:00Z",
     "plcTagsPushed": true
   },
   "success": true
 }
 ```
+
+> ⚠ **The fixture in this example was `PS-1100-FL2-001` until 9 Sep 2026, and it made the
+> example a check-in the contract must REFUSE — twice.** The seed carries `PS-1100-FL2-001` as
+> **`Hybrid` / `Inactive`**, so it fails the status gate (`SCHEDULE_NOT_ACTIVE` / `422`) and,
+> against a Standalone-origin spool, fails `FR-091`'s route-mode check as well — yet the response
+> below it reads `"success": true`. **`PS-1100-FL2-002` is the Standalone/`Active` FL2 schedule**
+> and is the happy path.
+>
+> This is `G40`'s documentation half. `G40` was **resolved in the seed on 15 Aug 2026** —
+> `PS-1100-FL2-002` added and `-001` demoted, because
+> `UX_PassSchedule_OneActivePerLineAlloy` permits one `Active` row per line + alloy — but this
+> contract was never repointed. It was recorded only in a task plan, which `G126` archived and
+> made non-citable.
 
 ### 4.6b `GET /spools[?spoolAlpha=]`
 
@@ -1565,8 +1578,14 @@ The shopfloor UI is built against dummy data before the service exists. This is 
 > | **FL1 happy path** | **`PS-1100-FL1-001`** (1100, Standalone) | `Active` |
 > | **FL1 negative — `SCHEDULE_NOT_ACTIVE`** | `PS-1100-FL1-003` | `Draft` |
 > | FL1 negative — inactive | `PS-1100-FL1-002` | `Inactive` |
-> | **FL2 happy path** | **`PS-1100-FL2-001`** | `Active` |
+> | **FL2 happy path** | **`PS-1100-FL2-002`** (1100, Standalone) | `Active` |
+> | FL2 negative — inactive **and** wrong route mode | `PS-1100-FL2-001` (1100, **Hybrid**) | `Inactive` |
 > | FL3 hybrid | `PS-1100-FL3-001` | `Active` |
+>
+> ⚠ **The FL2 row read `PS-1100-FL2-001` / `Active` until 9 Sep 2026 and was wrong on both
+> cells** — the seed has it `Hybrid` and `Inactive` (`G40`, resolved in the seed 15 Aug 2026 but
+> never propagated here; recorded only in a task plan, which `G126` archived). It is kept as a
+> fixture, not deleted: it is the **Hybrid-FL2 coverage case** and `RUN-0004` still references it.
 >
 > The seed deliberately carries `Active`, `Inactive` and `Draft` variants of the same line and alloy so
 > the status gate is testable. **`PS-1100-FL1-003` is still a canonical fixture** — it is named above and
