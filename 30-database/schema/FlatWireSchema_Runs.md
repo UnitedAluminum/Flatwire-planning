@@ -1,7 +1,7 @@
 # Flat Wire Mill — Run Tracking Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 25, 2026 — `CK_RodStaging_MachineName` explained as correctly unchanged by the FL2 reversal *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
+**Last Updated:** September 9, 2026 — **`30-database` audit applied** (see [`CHANGELOG.md`](../../CHANGELOG.md) — Repository-wide). *(previously — August 25, 2026 — `CK_RodStaging_MachineName` explained as correctly unchanged by the FL2 reversal *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. ⚠ **`SpoolConfiguration` is a table again** (`D-58`, 8 Sep 2026), superseding `Q60`'s merge. **Object counts are not stated here** — `[DBD §6.2]` is the defining site; this header carried `33 tables · 55 FKs · 69 index statements` until 8 Sep 2026, all three stale, directly above the Authority line that says this document states no object counts. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.)*
 **Document Type:** Final Schema — Run Tracking Tables
 **Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `../sql/FlatWire_DDL_04_Runs.sql` (`FlatWireRun` itself is created in `DDL_03`)
@@ -9,7 +9,7 @@
 **Scope:** MVP-1
 **Owner:** Architecture stream / DBA
 **Audience:** DBA, .NET developers, BA
-**Part of:** `ProjectPlan/Database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
+**Part of:** `30-database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
 **Authority:** `../sql/FlatWire_DDL_04_Runs.sql` **wins** on types, nullability and constraints. This document explains them; it does not define them, and it states no object counts — those are `[DBD §6.2]`. No shortcode is declared, deliberately: these are derived documents and must not be cited as authority.
 
 Run tables capture the complete lifecycle of a flat wire production run — from initial check-in through all in-process events. `FlatWireRun` is the central header record; all event tables reference it by `RunId`.
@@ -39,6 +39,13 @@ Core run header table. One row is created when the first rod or spool is checked
 | `ModifiedBy` | varchar(50) | NULL | — | Audit: last modifier |
 | `ModifiedAt` | datetimeoffset | NULL | — | Audit: last-modified timestamp |
 | `RowVersion` | rowversion | NOT NULL | — | Optimistic-concurrency token (FootageFt/Status updated live) |
+| `PromptDueAt` | datetimeoffset | NULL | — | When the operator prompt falls due |
+| `PromptPlcStopTs` | datetimeoffset | NULL | — | The PLC stop instant the prompt is anchored to |
+| `PromptLatchedWeightLb` | decimal(8,2) | NULL | — | Weight latched at the prompt — never re-read afterwards |
+| `PromptResolvedAt` | datetimeoffset | NULL | — | When the operator answered |
+| `PromptAnswer` | varchar(15) | NULL | — | The answer given; `CK_FlatWireRun_PromptAnswer` holds the vocabulary |
+
+⚠ **The rows above were added on 8 Sep 2026** — they exist in the DDL and had never been documented here.
 
 **Allowed values:**
 - `Status`: `Running`, `Paused`, `Complete`, `Aborted`
@@ -63,16 +70,16 @@ Per-stop and per-sequence detail records for a run. Each row captures footage, g
 | `CoilOrderPlanId` | int | NULL | — | FK to the coil-level order plan; review for redundancy with `PlanId` |
 | `HomeMfgOrderNo` | varchar(50) | NULL | — | Home or parent manufacturing order number |
 | `PayoffPositionId` | int | NOT NULL | `PayoffPosition.Id` | FK to the payoff position reference — `1` Payoff1, `2` Payoff2, `3` TraversingTakeup. The parent table now exists (`FlatWireSchema_Lookup.md`); previously this was an FK-style int with no parent (REVIEW.md #15) |
-| `FootageFt` | decimal | NOT NULL | — | Footage counter reading at which this stop event occurred |
-| `OnGaugeWeight` | decimal | NULL | — | Weight of on-gauge material produced to this stop point, in pounds |
-| `TargetGauge` | decimal | NULL | — | Target gauge for quality control at this stop, in inches |
-| `GaugeTolerance` | decimal | NULL | — | Acceptable gauge deviation (±) at this stop, in inches |
-| `TargetWidth` | decimal | NULL | — | Target width at this stop, in inches |
-| `WidthTolerance` | decimal | NULL | — | Acceptable width deviation (±) at this stop, in inches |
-| `StartGauge` | decimal | NULL | — | Actual gauge measurement at the start of this stop, in inches |
-| `ExitGauge` | decimal | NULL | — | Actual gauge measurement at the exit of this stop, in inches |
-| `OutputOD` | decimal | NULL | — | Output coil or spool outer diameter at this stop, in inches |
-| `OutputID` | decimal | NULL | — | Output coil or spool inner diameter (core) at this stop, in inches |
+| `FootageFt` | decimal(10,2) | NOT NULL | — | Footage counter reading at which this stop event occurred |
+| `OnGaugeWeight` | decimal(8,2) | NULL | — | Weight of on-gauge material produced to this stop point, in pounds |
+| `TargetGauge` | decimal(8,4) | NULL | — | Target gauge for quality control at this stop, in inches |
+| `GaugeTolerance` | decimal(8,4) | NULL | — | Acceptable gauge deviation (±) at this stop, in inches |
+| `TargetWidth` | decimal(8,4) | NULL | — | Target width at this stop, in inches |
+| `WidthTolerance` | decimal(8,4) | NULL | — | Acceptable width deviation (±) at this stop, in inches |
+| `StartGauge` | decimal(8,4) | NULL | — | Actual gauge measurement at the start of this stop, in inches |
+| `ExitGauge` | decimal(8,4) | NULL | — | Actual gauge measurement at the exit of this stop, in inches |
+| `OutputOD` | decimal(8,4) | NULL | — | Output coil or spool outer diameter at this stop, in inches |
+| `OutputID` | decimal(8,4) | NULL | — | Output coil or spool inner diameter (core) at this stop, in inches |
 
 ---
 
@@ -172,7 +179,7 @@ Supersedes the retired `Rod.StagedPayoffPosition` / `Rod.IsWelded` columns.
 - `CK_RodStaging_UnstageKind` — `UnstageKind` is NULL or one of `PreCheckOut` / `WipRejection`
 - `CK_RodStaging_RejectLink` — `WipRejectionId` present exactly when `UnstageKind = 'WipRejection'`. Written with `ISNULL(UnstageKind,'')` rather than a bare comparison: `UnstageKind = 'WipRejection'` evaluates to **UNKNOWN** while the column is NULL, and a CHECK constraint *accepts* UNKNOWN — a still-`Staged` row could otherwise carry a rejection link
 - `CK_RodStaging_CheckedIn` — `CheckedInAt`/`RodCheckinId` are both set exactly when `Status = 'CheckedIn'`
-- **`UX_RodStaging_Bay`** — filtered UNIQUE on `(MachineName, PayoffPosition) WHERE Status = 'Staged'`: **one rod per payoff bay**
+- **`UX_RodStaging_Bay`** — filtered UNIQUE on **`(Station, PayoffPosition)`** `WHERE Status = 'Staged'`: **one rod per payoff bay**. ⚠ **`Station`, not `MachineName`** — FL1 and FL3 share one physical VPS, so a `MachineName` key admitted `(FL1,1)` and `(FL3,1)` as two entries for one bay. That is `G21`, closed 15 Aug 2026; this line said `MachineName` until 8 Sep 2026
 - **`UX_RodStaging_RodActive`** — filtered UNIQUE on `(RodAlpha) WHERE Status = 'Staged'`: **one bay per rod**
 
 > The two filtered unique indexes are the reason this is a table rather than columns on `Rod`: they make the bay-occupancy invariant impossible to violate, including under concurrent staging from two clients. Note that any client writing to this table needs `QUOTED_IDENTIFIER ON` (a filtered-index requirement, same as the PERSISTED computed columns elsewhere in this schema).
@@ -237,8 +244,8 @@ Captures every rod check-in event with inspection results and pre-run SPC measur
 | `RodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | FK to the rod being checked in |
 | `PayoffPosition` | int | NOT NULL | — | Payoff position where the rod was loaded: `1` or `2` |
 | `DiameterMeasuredIn` | decimal(8,4) | NOT NULL | — | Operator-measured rod diameter at check-in, in inches |
-| `GrossWeightLb` | decimal | NOT NULL | — | Gross weight verified at check-in, in pounds |
-| `NetWeightLb` | decimal | NOT NULL | — | Net weight verified at check-in, in pounds |
+| `GrossWeightLb` | decimal(8,2) | NOT NULL | — | Gross weight verified at check-in, in pounds |
+| `NetWeightLb` | decimal(8,2) | NOT NULL | — | Net weight verified at check-in, in pounds |
 | `PassScheduleId` | varchar(30) | NOT NULL | `PassSchedule.ScheduleId` | Pass schedule the operator acknowledged and accepted at check-in |
 | `OrderId` | varchar(20) | NOT NULL | — | Manufacturing order confirmed at check-in |
 | `ScrapBoxRef` | varchar(20) | NULL | — | Optional scrap-box reference (reuses slitter scrap-box source; **PROVISIONAL** ScrapBox default) |
@@ -255,6 +262,9 @@ Captures every rod check-in event with inspection results and pre-run SPC measur
 | `SpcM1In` | decimal(8,4) | NOT NULL | — | Pre-run SPC measurement 1 — primary rod diameter at entry point, in inches |
 | `SpcM2In` | decimal(8,4) | NOT NULL | — | Pre-run SPC measurement 2 at 90° — secondary rod diameter at entry point, in inches |
 | `SpcOvalityIn` | decimal(8,4) | computed | — | **Computed PERSISTED**: `ABS(SpcM1In − SpcM2In)`; indicates out-of-round condition |
+| `WipCoilOrdersWritten` | bit | NOT NULL, default `0` | — | Set once the shared `wip_coil_orders` rows for this check-in have been written — the idempotency latch for the cross-database half |
+
+⚠ **The rows above were added on 8 Sep 2026** — they exist in the DDL and had never been documented here.
 
 **Allowed values — inspection columns:** `Pass`, `Fail`
 
@@ -270,13 +280,13 @@ Captures every spool check-in event at FL2 or FL3 with inspection results. Mirro
 | `RunId` | varchar(20) | NOT NULL | `FlatWireRun.RunId` | FK to the run this spool check-in initiated |
 | `MachineName` | varchar(5) | NOT NULL | — | Line where the spool was checked in: `FL2` or `FL3` |
 | `SpoolAlpha` | varchar(20) | NOT NULL | `SpoolProcessing.Alpha` | FK to the spool being checked in |
-| `PayoffPosition` | int | NOT NULL | — | Payoff position where the spool was loaded: `1` or `2` |
+| `PayoffPosition` | int | NOT NULL | — | Payoff position where the spool was loaded — **always `1`**. ⚠ `CK_SpoolCheckin_PayoffPos` is `= 1`, not `IN (1,2)`: **FL2 has one traversing payoff** (client, 21 Aug 2026). The column is kept for shape with the rod-fed tables. This row said `1` or `2` until 8 Sep 2026 |
 | `GaugeIn` | decimal(8,4) | NOT NULL | — | Operator-measured spool wire gauge at check-in, in inches; validated against `PassSchedule.TargetGauge ± GaugeTolerance` |
 | `WidthIn` | decimal(8,4) | NOT NULL | — | Operator-measured spool wire width at check-in, in inches; validated against `PassSchedule.TargetWidth ± WidthTolerance` |
-| `GrossWeightLb` | decimal | NOT NULL | — | Gross weight verified at check-in, in pounds |
-| `NetWeightLb` | decimal | NOT NULL | — | Net weight verified at check-in, in pounds |
+| `GrossWeightLb` | decimal(8,2) | NOT NULL | — | Gross weight verified at check-in, in pounds |
+| `NetWeightLb` | decimal(8,2) | NOT NULL | — | Net weight verified at check-in, in pounds |
 | `PassScheduleId` | varchar(30) | NOT NULL | `PassSchedule.ScheduleId` | Pass schedule the operator acknowledged and accepted at check-in |
-| `OrderId` | varchar(20) | NOT NULL | — | Manufacturing order confirmed at check-in |
+| `OrderId` | varchar(20) | **NULL** | — | Manufacturing order confirmed at check-in. ⚠ **Nullable**: created `NOT NULL`, then `ALTER COLUMN … NULL` in the same script (`SQ-6`), because **one spool can carry two orders** so the order is not knowable per check-in. This row said `NOT NULL` until 8 Sep 2026 |
 | `MmsId` | varchar(30) | NULL | — | Material-tracking identity for this input spool, generated at check-in |
 | `MmsStatus` | varchar(15) | NULL | — | `Open`/`Active`/`Closed` |
 | `OperatorId` | varchar(50) | NOT NULL | — | User ID of the operator performing the check-in |
@@ -284,6 +294,9 @@ Captures every spool check-in event at FL2 or FL3 with inspection results. Mirro
 | `PlcTagsPushed` | bit | NOT NULL | — | `1` if PLC tag values were successfully written for this spool; `0` if push failed |
 | `InspectionSurface` | varchar(10) | NOT NULL | — | Visual surface condition inspection result: `Pass` or `Fail` |
 | `InspectionNotes` | varchar(500) | NULL | — | Free-text operator notes from the inspection |
+| `SpoolStartFootageFt` | decimal(10,2) | NULL | — | Where this check-in starts on the SPOOL's own footage axis — non-zero when a spool re-enters the queue for a second order |
+
+⚠ **The rows above were added on 8 Sep 2026** — they exist in the DDL and had never been documented here.
 
 **Allowed values — `InspectionSurface`:** `Pass`, `Fail`
 
@@ -513,14 +526,14 @@ Two facts drive it, neither of which any existing table can carry:
 
 ## `RunReading`
 
-Sampled gauge/width/speed profile persisted per run. Live telemetry stays in-memory (SignalR) in Phase 1; this table holds the **decimated/sampled** historical profile that feeds the FL2 gauge trace and the Gauge-Trace / Gauge-CPK / Cut-Traceability reports. It is **not** a per-tick historian — write cadence and retention/rollup are open (G3). Child of `FlatWireRun`.
+Sampled gauge/width/speed profile persisted per run. Live telemetry stays in-memory (SignalR) in Phase 1; this table holds the **decimated/sampled** recorded profile that feeds the Gauge-Trace / Gauge-CPK / Cut-Traceability reports, and that supplies a spool's **incoming** history to the next line that receives it — the profile reviewed at FL2 check-in. *(This read "the historical profile that feeds the FL2 gauge trace" until 9 Sep 2026. FL2 now measures its own trace **live** — `A3` retired, `FR-120` superseded — while the profile a spool carries **into** FL2 from its FL1 pass still comes from here. **No column changed**: `GaugeIn`/`WidthIn` were already nullable and the table has no line column, so live FL2 readings need no DDL change.)* It is **not** a per-tick historian — write cadence and retention/rollup are open (G3). Child of `FlatWireRun`.
 
 | Column | Data Type | Nullable | FK Reference | Description |
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `RunId` | varchar(20) | NOT NULL | `FlatWireRun.RunId` | FK to the parent run |
 | `FootageFt` | decimal(10,2) | NOT NULL | — | Footage position of this reading, in feet |
-| `GaugeIn` | decimal(8,4) | NULL | — | Gauge reading in inches; NULL for FL2 standalone live feed |
+| `GaugeIn` | decimal(8,4) | NULL | — | Gauge reading in inches; **NULL when no measurement exists** — a dropped or not-yet-arrived feed, on any line. *(Read "NULL for FL2 standalone live feed" until 9 Sep 2026; `A3` retired and FL2 now measures live, so this is no longer an FL2 marker.)* |
 | `WidthIn` | decimal(8,4) | NULL | — | Width reading in inches |
 | `SpeedFpm` | decimal(8,2) | NULL | — | Line speed at this position (ft/min) |
 | `InSpec` | bit | NOT NULL | — | Within gauge tolerance at capture; default `1` |
@@ -551,15 +564,15 @@ is the outcome. **One check-in, N consumption rows** - which *is* the client's r
 | `State` | varchar(20) | NOT NULL | - | See vocabulary below |
 | `StartFootageFt` | decimal(10,2) | NOT NULL | - | **Run-cumulative** anchor, captured live from the counter |
 | `EndFootageFt` | decimal(10,2) | NULL | - | Run-cumulative at close |
-| `ConsumedFootageFt` | decimal | NOT NULL | - | **Computed, PERSISTED**: `EndFootageFt - StartFootageFt` |
+| `ConsumedFootageFt` | decimal(10,2) computed | NOT NULL | - | **Computed, PERSISTED**: `EndFootageFt - StartFootageFt` |
 | `ThresholdFootageFt` | decimal(10,2) | NULL | - | Computed **once** at pairing start |
 | `ThresholdReachedAt` | datetimeoffset | NULL | - | The crossing instant |
 | `LatchedWeightAtThresholdLb` | decimal(8,2) | NULL | - | **First latch** - at the crossing, never a fresher tick |
 | `NotificationRaisedAt` | datetimeoffset | NULL | - | When `OrderAllocationReached` went out |
 | `AcknowledgedAt` / `AcknowledgedBy` | datetimeoffset / varchar(50) | NULL | - | Rule 9: **the operator closes the order, not the system** |
 | `WeightAtAcknowledgementLb` | decimal(8,2) | NULL | - | **Second latch** |
-| `OverrunWeightLb` | decimal | NULL | - | Computed, PERSISTED. `+` = overrun, `-` = early ack |
-| `VarianceVsAllocationLb` | decimal | NULL | - | Computed, PERSISTED, against the snapshot |
+| `OverrunWeightLb` | decimal(8,2) computed | NULL | - | Computed, PERSISTED. `+` = overrun, `-` = early ack |
+| `VarianceVsAllocationLb` | decimal(8,2) computed | NULL | - | Computed, PERSISTED, against the snapshot |
 | `ConsumedWeightLb` | decimal(8,2) | NULL | - | Written at close, **not computed** - the basis may be integration over `RunReading` |
 | `ConversionBasis` | varchar(20) | NULL | - | `Nominal`, `Measured`, `IntegratedRunReading`, `Override` (`OI-45`) |
 | `LbPerFtUsed` | decimal(10,6) | NULL | - | The factor **actually applied**; a historical row is never recomputed |

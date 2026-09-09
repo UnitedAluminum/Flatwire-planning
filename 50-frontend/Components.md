@@ -152,7 +152,7 @@ The mock service must mirror the **DB seed**, not invent fixtures. **Measured ag
 >
 > ⛔ **A `null` gauge or width reading renders a NO-MEASUREMENT state, never a flat line at target** — that would show an operator a perfectly in-spec measurement of nothing (`FW-181`).
 >
-> ⚠ **This collides with `FR-120`, which is `Must` and `[CONFIRMED]`**, and with `ActiveRunMonitor` §3.2 and `TC-140`, all of which specify an FL2 profile view. **The reconciliation is a client decision and is deliberately not made here.** The inline-SVG profile row above stands until it closes.
+> ✅ **THE `FR-120` COLLISION IS RESOLVED, 9 Sep 2026 — in `D-55`'s favour.** This note recorded that uniform treatment *"collides with `FR-120`, which is `Must` and `[CONFIRMED]`"*, and with `ActiveRunMonitor` §3.2 and `TC-140`, and that *"the reconciliation is a client decision and is deliberately not made here."* **It is made.** `FR-120` is **superseded** and its basis — assumption `A3` of `[PLC §14]` — **retired**: FL2 measures gauge and width live, at 4 s. `ActiveRunMonitor` §3.2 is rewritten and `TC-140` inverted. ⛔ **So the inline-SVG profile row does NOT stand — it is retired with `FR-120`.** `D-55`'s uniform treatment is now simply correct, with `isLive` driven by the data on every line. ⚠ **What remains line-specific is cadence, not treatment:** FL2 publishes at **4 s**, so footage gaps must render as gaps rather than be interpolated, and any consecutive-reading threshold is per line.
 
 ---
 

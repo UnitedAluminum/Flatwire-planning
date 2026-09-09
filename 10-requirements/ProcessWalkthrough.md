@@ -1,7 +1,7 @@
 # Flat Wire — Step-by-Step Process Walkthrough (Rod Check-in → Finished Coil)
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 18, 2026 — step 8’s `Q68` callout notes that `coils.coil_status` is never written after `D-32` *(previously August 1, 2026)*
+**Last Updated:** September 9, 2026 (`G120` resolved) — step 33 and the line table: FL2's trace is **real-time at 4 s**. ⚠ **Step 33 carried BOTH readings of "historical profile" in one sentence** — the incoming spool's FL1 history (kept) and FL2's own trace (struck); only the second clause changed *(previously August 18, 2026 — step 8’s `Q68` callout notes that `coils.coil_status` is never written after `D-32` *(previously August 1, 2026)*)*
 **Document Type:** Process Reference — Sequential Walkthrough
 **Status:** Reference — assembled from existing analysis docs; equipment facts per the May 21, 2026 client corrections
 
@@ -116,7 +116,7 @@ This document **does not introduce new requirements**. It is a navigational over
 
 32. **Back into planning.** Spool sits in warehouse inventory (`ACTIVE`); planner allocates weight to an order (`IN-PLAN`) and the remainder receives a child alpha; scheduling books it on FL2 and it moves to the TPO (`IN-USE`).
 
-33. **FL2 spool check-in (Dashboard 5).** Spool loaded onto the **TPO** (Traversing Payoff, 3,500 lb). Operator enters or confirms spool alpha, gauge, width, weight. The screen shows source rods and the **historical gauge profile from the FL1 run with weld points marked** — FL2's trace is historical/profile, not live (FL2 standalone broadcasts `null` live gauge/width). **No visual inspection** — already performed at FL1. Same mandatory pass-schedule confirmation dialog, then FM2 tags are pushed (roll gaps and stand states for S1/S2/S3, plus edger activation and edge type at S2 and S3) and the FL2 run starts, linked to the spool and its source rod alphas.
+33. **FL2 spool check-in (Dashboard 5).** Spool loaded onto the **TPO** (Traversing Payoff, 3,500 lb). Operator enters or confirms spool alpha, gauge, width, weight. The screen shows source rods and the **historical gauge profile from the FL1 run with weld points marked** — that is the *incoming spool's* recorded history, reviewed before the run starts. *(This sentence continued "— FL2's trace is historical/profile, not live (FL2 standalone broadcasts `null` live gauge/width)" until 9 Sep 2026. **That clause is removed**: FL2 measures its own trace live, at 4 s, once the run is under way — `A3` retired. The check-in profile above is a different artefact and is unchanged.)* **No visual inspection** — already performed at FL1. Same mandatory pass-schedule confirmation dialog, then FM2 tags are pushed (roll gaps and stand states for S1/S2/S3, plus edger activation and edge type at S2 and S3) and the FL2 run starts, linked to the spool and its source rod alphas.
 
 ### Route B — FL3 Hybrid (produces finished goods in one pass)
 
@@ -166,7 +166,7 @@ This document **does not introduce new requirements**. It is a navigational over
 | Output | Flat wire spool (TKUP-1, 3,500 lb) | Coreless coil (TKUP-2, 1,100 lb) | Coreless coil (TKUP-2, 1,100 lb) |
 | Intermediate stop | Yes — spool at TKUP-1 | N/A | No — continuous |
 | Anneal option | Yes (after TKUP-1) | Not applicable | No (bypassed) |
-| Gauge trace | Real-time | Historical / profile | Real-time |
+| Gauge trace | Real-time, ~10 Hz | **Real-time, 4 s** *(was "Historical / profile"; `A3` retired 9 Sep 2026)* | Real-time |
 | Intermediate alpha | Yes — `SP-#####` | N/A | No |
 | Edger | **None on FL1** | S2 and S3 only | S2 and S3 only (FM2 side) |
 | PLC tag push | At FL1 check-in | At FL2 check-in | At FL1 check-in |

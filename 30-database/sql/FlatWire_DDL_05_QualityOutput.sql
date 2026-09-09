@@ -365,6 +365,24 @@ GO
 --   SPOOL-LOCAL FRAME (feet from THIS spool's own first foot):
 --     SpoolTraceability.FootageFrom / FootageTo
 --
+-- ⚠ THE TYPES DO NOT FOLLOW THE FRAMES, AND THE RUN FRAME IS SPLIT DOWN THE MIDDLE.
+-- Across the schema, 13 footage columns are DECIMAL(10,2) and 13 are INT. The broad pattern is
+-- "quantities and totals are DECIMAL, positions and ranges are INT", and for the two LOCAL frames
+-- that is consistent -- CoilTraceability and SpoolTraceability are INT throughout, and the FLOOR
+-- in the conversion below is what makes that deliberate rather than lossy.
+-- The RUN FRAME declared just above is NOT consistent. Of its six members:
+--     DECIMAL(10,2) : FlatWireRun.FootageFt, RunReading.FootageFt, FlatWireRunDetail.FootageFt
+--     INT           : WeldEvent.FootagePosition, SpcCheckpoint.FootagePosition,
+--                     RunPauseEvent.FootageAtPause / RodCheckout.FootageAtCheckout
+-- One frame, one unit, two types. It surfaces in 08_Programmability's sp_GetGaugeTrace, which
+-- compares WeldEvent.FootagePosition (INT) to @FromFt/@ToFt (DECIMAL(10,2)) and gets an implicit
+-- column-side conversion. The same break appears inside one concept elsewhere:
+-- RodOrderConsumption.StartFootageFt/EndFootageFt are DECIMAL(10,2) while
+-- RodCheckout.FootageAtCheckout -- the same rod, the same event -- is INT.
+-- ⛔ NOT changed here: widening the INT columns touches CoilTraceability, SpoolTraceability,
+--    SpoolOrder and trg_CoilTraceability_NoOverlap, and whether run-frame positions are whole
+--    feet BY DESIGN is a question for the process owner, not a typing preference. Raised as G113.
+--
 -- Conversion, stated once:
 --     coilLocalFt = FLOOR(runFt - CoilOutput.RunFootageAtStartFt)
 -- valid only where the result lies in [0, CoilOutput.FootageFt). A run
@@ -432,7 +450,7 @@ GO
 -- with "Invalid column name" -- caught on a live deploy, 22 Aug 2026.
 IF EXISTS (SELECT 1 FROM sys.columns
            WHERE object_id = OBJECT_ID(N'[dbo].[CoilOutput]') AND name = N'AnchorBasis')
-   AND NOT EXISTS (SELECT * FROM sys.check_constraints WHERE name = N'CK_CoilOutput_AnchorBasis')
+   AND NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = N'CK_CoilOutput_AnchorBasis' AND parent_object_id = OBJECT_ID(N'[dbo].[CoilOutput]'))
 BEGIN
     ALTER TABLE [dbo].[CoilOutput]
         ADD CONSTRAINT [CK_CoilOutput_AnchorBasis]
@@ -443,7 +461,7 @@ GO
 
 IF EXISTS (SELECT 1 FROM sys.columns
            WHERE object_id = OBJECT_ID(N'[dbo].[CoilOutput]') AND name = N'RunFootageAtStartFt')
-   AND NOT EXISTS (SELECT * FROM sys.check_constraints WHERE name = N'CK_CoilOutput_RunFrame')
+   AND NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = N'CK_CoilOutput_RunFrame' AND parent_object_id = OBJECT_ID(N'[dbo].[CoilOutput]'))
 BEGIN
     ALTER TABLE [dbo].[CoilOutput]
         ADD CONSTRAINT [CK_CoilOutput_RunFrame]

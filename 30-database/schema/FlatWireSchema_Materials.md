@@ -1,7 +1,7 @@
 # Flat Wire Mill — Material Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`**, so `SpoolProcessing.SpoolTypeId` is gone — the article's limits are reached through the nullable `SpoolId`. Counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
+**Last Updated:** September 9, 2026 — **`30-database` audit applied** (see [`CHANGELOG.md`](../../CHANGELOG.md) — Repository-wide). *(previously — August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`**, so `SpoolProcessing.SpoolTypeId` is gone — the article's limits are reached through the nullable `SpoolId`. ⚠ **`SpoolConfiguration` is a table again** (`D-58`, 8 Sep 2026), superseding `Q60`'s merge. **Object counts are not stated here** — `[DBD §6.2]` is the defining site; this header carried `33 tables · 55 FKs · 69 index statements` until 8 Sep 2026, all three stale, directly above the Authority line that says this document states no object counts. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.)*
 **Document Type:** Final Schema — Material Tracking Tables
 **Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `../sql/FlatWire_DDL_03_Materials.sql`
@@ -9,7 +9,7 @@
 **Scope:** MVP-1
 **Owner:** Architecture stream / DBA
 **Audience:** DBA, .NET developers, BA
-**Part of:** `ProjectPlan/Database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
+**Part of:** `30-database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
 **Authority:** `../sql/FlatWire_DDL_03_Materials.sql` **wins** on types, nullability and constraints. This document explains them; it does not define them, and it states no object counts — those are `[DBD §6.2]`. No shortcode is declared, deliberately: these are derived documents and must not be cited as authority.
 
 Material tables track the physical aluminum inputs to the flat wire mill. Wire rod (`Rod`) is the primary raw material fed at FL1. Pre-drawn spools (`SpoolProcessing`) are FL1 output used as feed material at FL2 and FL3 in Hybrid route mode.
@@ -180,6 +180,12 @@ Pre-drawn wire spool tracking. Spools are produced on FL1 in Hybrid route mode a
 | `ModifiedBy` | varchar(50) | NULL | — | Audit: last modifier |
 | `ModifiedAt` | datetimeoffset | NULL | — | Audit: last-modified timestamp |
 | `RowVersion` | rowversion | NOT NULL | — | Optimistic-concurrency token |
+| `SpoolId` | int | NULL | `Spool.Id` | **The article this wire is wound on.** Nullable because nothing seeds articles in production yet (`Q42`) |
+| `RunStartFootageFt` | decimal(10,2) | NULL | — | Run-axis footage at which this spool's material started |
+| `FootageRunToDate` | decimal(10,2) | NULL | — | Cumulative footage drawn from this spool |
+| `RemainingWeightEstimateLb` | decimal(8,2) | NULL | — | Estimated remaining weight after a partial run. ⚠ An **estimate**, not `NetWeightLb` minus allocations |
+
+⚠ **The rows above were added on 8 Sep 2026** — they exist in the DDL and had never been documented here.
 
 **Allowed values — `Status`:**
 
@@ -251,40 +257,91 @@ Pre-drawn wire spool tracking. Spools are produced on FL1 in Hybrid route mode a
 
 ## `SpoolOrder`
 
-The orders a spool's material is committed to. One row per spool-order pairing.
+Which order each **rod's contribution** to a spool is committed to. **One row per (segment, order).**
 
-> **Derived, not allocated.** The order set is resolved **locally** from `RodOrderAllocation` as of
-> 22 Aug 2026, superseding the earlier design that read the shared
-> `united_db..planning_routings` rod-to-order allocation. That read was a **workaround written
-> because the rod-to-order table did not exist**; it does now, and `D-32`'s reasoning removes a
-> shared-schema read from the FL1 path.
+> **RE-GRAINED 8 September 2026 (`D-57`): the parent is `SpoolTraceability.Id`, not the spool.**
+>
+> This table used to key on `(SpoolAlpha, OrderNo, RelLetter)` and reference the rod **nowhere**, so
+> it could say *that* a spool crossed an order boundary and where the boundary sat on the spool — but
+> not **which rod's material went to which order**. Reaching the rod meant joining
+> `SpoolTraceability`, and the two tables' ranges were in **different units**: this one in pounds,
+> that one in **feet, nullable**. They could not be joined at all. That was the defect.
+>
+> ⛔ **`SpoolTraceability` is deliberately untouched.** Merging the two — the first proposal — breaks
+> `UQ_SpoolTraceability_Seq` (an order split inside one physical segment would share a `SeqNo`) and
+> the **UNIQUE** `UX_SpoolTraceability_ChildAlpha`, because **one physical segment has one child
+> alpha** (`Q57`). Keeping the segment grain and hanging the orders off it keeps all three.
+
+> **Two ranges, two frames, and that is the point.**
+>
+> | | Frame | Why |
+> |---|---|---|
+> | `SegmentWeightFrom`/`To` | **segment-local pounds** | Pounds because weight is conserved through drawing and rolling and footage is not. Segment-local because it makes `CK_SpoolOrder_WeightRange` an **exact single-row check** against `AllocatedWeightLb`, so the range and the allocation cannot disagree |
+> | `SpoolFootageFrom`/`To` | **spool-local feet** | The frame **FL2 actually cuts in** — the line has a footage counter, not a scale. One order spread over two segments reads as two unrelated pound intervals and as **one contiguous footage run**; contiguity is visible only here |
+>
+> ⛔ **Pounds are authoritative; feet are a recorded convenience.** No constraint can tie the two
+> frames to each other, so **if they ever disagree the pounds are right.**
+>
+> ⚠ **Stored, not derived** — the same call `SpoolProcessing.RunStartFootageFt` makes.
 
 | Column | Data Type | Nullable | FK Reference | Description |
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | - | Surrogate primary key, IDENTITY |
-| `SpoolAlpha` | varchar(20) | NOT NULL | `SpoolProcessing.Alpha` | The spool |
+| `SpoolTraceabilityId` | int | NOT NULL | `SpoolTraceability.Id` | **The segment** — one segment, one rod |
 | `OrderNo` | varchar(50) | NOT NULL | - | Shared-schema manufacturing order. **No FK by design** (`D-32`) |
 | `RelLetter` | varchar(10) | NULL | - | Release letter, mirroring `SpoolProcessing.RelLetter` |
 | `SeqNo` | smallint | NULL | - | Planned consumption order, if planning supplies one |
-| `PlannedWeightLb` | decimal(8,2) | NULL | - | Weight allocated to this order, if allocated rather than derived |
-| `SpoolWeightFrom` | decimal(8,2) | NULL | - | Spool-local cumulative lb, **inclusive** - the order boundary |
-| `SpoolWeightTo` | decimal(8,2) | NULL | - | Spool-local cumulative lb, **exclusive** |
+| `AllocatedWeightLb` | decimal(8,2) | NOT NULL | - | Pounds of **this segment** allocated to this order |
+| `SegmentWeightFrom` | decimal(8,2) | NOT NULL | - | Segment-local cumulative lb, **inclusive** |
+| `SegmentWeightTo` | decimal(8,2) | NOT NULL | - | Segment-local cumulative lb, **exclusive** |
+| `SpoolFootageFrom` | int | NULL | - | Spool-local feet, **inclusive**. Nullable for the **parent's** reason: `SpoolTraceability`'s footage is nullable, and a child cannot be `NOT NULL` where its parent is null |
+| `SpoolFootageTo` | int | NULL | - | Spool-local feet, **exclusive** |
 | `Source` | varchar(15) | NOT NULL | - | Default `Derived` |
+| `SupersededByOrderId` | int | NULL | - | Re-planning is **additive**; the old row is superseded, never updated. **No FK** — a self-reference on an additive log buys nothing and blocks a rebuild's bulk delete, the same call `RodOrderAllocation` makes |
+| `IsActive` | bit | NOT NULL | - | Default `1`; `0` once superseded. `UX_SpoolOrder_Active` filters on it |
+| `CreatedBy` | varchar(50) | NULL | - | Audit |
 | `CreatedAt` | datetimeoffset | NOT NULL | - | Default `SYSDATETIMEOFFSET()` |
 
-**Allowed values - `Source`:** `Derived` (union of the rods' orders, computed at spool creation),
-`Planned` (an explicit planning allocation that supersedes the derived row)
+**Allowed values - `Source`:** `Derived` (a whole segment maps to a whole order, read off the rod's
+plan), `Planned` (an explicit allocation — **including every straddle**), `Substituted` (a re-plan
+that replaced an earlier row)
+
+> ⚠ **A straddle is `Planned`, never `Derived` — gap `G110`.** `Derived` means *the union of the
+> orders on the rods*, which holds when a whole segment goes to one order. It does **not** hold for a
+> segment split across two: deriving the split point needs the **rod-local** weight at which this
+> spool started taking that rod, and **no table holds that anchor**. Seeding a straddle as `Derived`
+> would assert a derivation nobody can reproduce. Do not write a query that tries.
 
 **Constraints:**
 - `PK_SpoolOrder` - `Id`
-- `UQ_SpoolOrder_Key` - `(SpoolAlpha, OrderNo, RelLetter)` unique. **`RelLetter` is `ISNULL`-ed into
-  the key** rather than relying on SQL Server's single-NULL-per-key behaviour
+- `FK_SpoolOrder_SpoolTraceability` - `SpoolTraceabilityId` → `SpoolTraceability.Id`
 - `CK_SpoolOrder_Source` - enumerating check
-- `CK_SpoolOrder_Weight` - `PlannedWeightLb` NULL or `> 0`
+- `CK_SpoolOrder_Weight` - `AllocatedWeightLb > 0`
+- `CK_SpoolOrder_WeightRange` - `SegmentWeightFrom < SegmentWeightTo` **and**
+  `SegmentWeightTo - SegmentWeightFrom = AllocatedWeightLb`. Exact `DECIMAL` arithmetic makes this a
+  single-row check, so the range and the allocation can never disagree
+- `CK_SpoolOrder_FootageRange` - both footage bounds NULL or both set, and `From < To`
+- **`UX_SpoolOrder_Active`** (in `07_Indexes`) - `(SpoolTraceabilityId, OrderNo, RelLetter)` unique
+  **where `IsActive = 1`**
 
-> **`SpoolWeightFrom`/`To` are the order boundary, and they close gap `G48`.** The client confirmed
-> on 20 Aug 2026 that a spool off FL1 may carry two or more orders while **FL2 makes one order at a
-> time** - so FL2 must cut at the boundary, and without these columns nothing tells it where. Held
-> in **pounds**, half-open, matching the rod-to-order split for the same conservation reason.
+> ⛔ **Uniqueness is a filtered index, not a constraint, and it has to be.** The old
+> `UQ_SpoolOrder_Key` was an inline `UNIQUE`; re-planning is additive, so a superseded row and its
+> replacement share all three key columns and a plain `UNIQUE` would refuse the very write the
+> additive model exists to make. Same shape as `UX_RodOrderAllocation_Active`. ⚠ It also **moves the
+> published index count**, because a `UNIQUE` constraint in `03` is not an index statement in `07`.
+
+> ⛔ **Containment within the parent's window is NOT a database constraint.** Each row's footage
+> window must sit inside its segment's, and each segment's allocations must sum to no more than
+> `SpoolTraceability.SegmentWeightLb` — both are **cross-row**, the parent's footage is **nullable**,
+> and a trigger joining on `NULL` **passes silently**. They live in the domain model (`FW-207`), for
+> the identical reason `SpoolTraceability` has no non-overlap trigger.
+
+> **`G48` is fully implemented, and stays open.** The client confirmed on 20 Aug 2026 that a spool
+> off FL1 may carry two or more orders while **FL2 makes one order at a time**, so FL2 must cut at
+> the boundary and nothing told it where. `G48` asked for the boundary *in pounds, half-open*, and
+> for the derivation re-pointed at the local rod↔order table: both are now done, and the segment
+> grain adds *whose* material is on each side. ⛔ **Not closed** — its premise was contradicted on
+> 3 Sep 2026 (`Q43`, ratification owed), and the register's convention is that a
+> contradicted-premise gap stays open.
 
 ---

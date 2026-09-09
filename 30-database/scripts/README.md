@@ -15,9 +15,13 @@ each filename tells you **which database owns the object**, and is kept for exac
 `30_…sp_IngestRodFromCoils` projects a rod *into* `FlatWireDB` from the shared schema. The four
 `united_db` procedures write *out* to the shared schema at check-in, run end and reversal.
 
-⚠ **No file here is in any `:r` chain, and that is deliberate** — none can be verified by a
-`FlatWireDB`-only deploy. The numeric prefixes give the **deploy order**, which is documented once
-in **`[DEP §4.2]`**; this file does not restate the sequence.
+⚠ **Seven of these files ARE in a `:r` chain** — `FlatWire_Scripts_RunAll.sql` includes `20`, `30`,
+`35`, `40`, `50`, `60` and `70`. **The five CommonDB files are the deliberate exclusions** (`08`,
+`09`, `10`, `11`, `16`): each writes to or alters a SHARED database this project does not own, and
+that is not something that should be one keystroke inside a runner — the runner's own header argues
+each case. *(This paragraph said no file here was in any `:r` chain, which stopped being true when
+the runner was added and `35` joined it.)* The numeric prefixes give the **deploy order**, which is
+documented once in **`[DEP §4.2]`**; this file does not restate the sequence.
 
 ⚠ **The five procedures have no mutual dependency.** `CREATE PROCEDURE` uses deferred name
 resolution, so `30`–`70` may be created in any order among themselves. The numbers group them; they

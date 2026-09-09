@@ -11,7 +11,7 @@
   Status       : Draft - ready to deploy to DEV. No open sign-off items: this procedure
                  introduces no new value into the shared vocabulary.
   Story        : FW-221 (station release and reqsum reversal)
-  Specification: MVP-1/ProjectPlan/Architecture/Integration.md Sec 8.0
+  Specification: 20-architecture/Integration.md Sec 8.0
                  FR-077 (which SETS the station and never clears it), OI-112
 
   PURPOSE
@@ -235,11 +235,27 @@ BEGIN
                , @errMessage   = 'FlatWire_ReleaseStation failed for station ' + ISNULL(@station, 'NULL')
                                + '. Error: ' + ERROR_MESSAGE();
 
-        INSERT INTO [united_db].[dbo].[EventErrorLog]
-                ( [ObjectName], [ErrNumber], [ErrSeverity], [ErrState]
-                , [EventDescription], [StartTime], [UserName] )
-        VALUES  ( @spObjectName, @errNo, @errSev, @errState
-                , @errMessage, GETDATE(), SUSER_NAME() );
+        /*--------------------------------------------------------------------------------------
+          ⚠ THIS GUARD MATTERS ON EXACTLY ONE OF THE THREE CALL PATHS, and it is a real one.
+          Standalone -- after FlatWire_CompleteCoilOnSkid has committed -- there is no enclosing
+          transaction, XACT_STATE() is 0 or 1, and the log write below has always worked.
+          Called INSIDE the caller's transaction at rod checkout, XACT_ABORT dooms that
+          transaction (as the note above says), XACT_STATE() is -1, and the write fails with
+          Msg 3930 -- which, raised from inside CATCH, REPLACES the real error and never reaches
+          the THROW. 53001-53004 were unreachable on that path.
+          ⛔ Do NOT convert this into a @@TRANCOUNT assertion: this procedure is deliberately
+          transaction-agnostic (THE TRANSACTION BOUNDARY), and the header says so.
+        --------------------------------------------------------------------------------------*/
+        IF XACT_STATE() <> -1
+        BEGIN
+            INSERT INTO [united_db].[dbo].[EventErrorLog]
+                    ( [ObjectName], [ErrNumber], [ErrSeverity], [ErrState]
+                    , [EventDescription], [StartTime], [UserName] )
+            VALUES  ( @spObjectName, @errNo, @errSev, @errState
+                    , @errMessage, GETDATE(), SUSER_NAME() );
+        END
+        ELSE
+            PRINT @errMessage + ' [not logged: caller transaction uncommittable (XACT_STATE = -1); the THROW below carries the reason out]';
 
         THROW;
     END CATCH

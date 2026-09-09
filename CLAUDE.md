@@ -54,7 +54,12 @@ Three new **Flattening Lines** convert aluminium rod into coreless oscillated fl
 - **FL1** (standalone): rod → wire drawing (DB1/DB2) → 12″ mill FM1 → intermediate spool. Gauge
   trace is **real-time**. FL1 has **no edger**.
 - **FL2** (standalone): pre-flattened spool → finishing mill FM2 → coreless coil. Gauge trace is
-  **historical/profile** — FL2 broadcasts `null` live gauge/width.
+  **real-time at a 4 s update rate**, from the gauging stands downstream of FM2-S3. ⛔ **Reversed
+  9 Sep 2026** — this read *"historical/profile — FL2 broadcasts `null` live gauge/width"*, which came
+  from assumption `A3` of `[PLC §14]` (retired) via `FR-120` (superseded). **Anything still asserting
+  FL2 sends `null` live gauge or width is stale.** ⚠ **Two different things share the phrase
+  "historical profile":** FL2's *own* trace (now live) and the profile a spool carries **into** FL2
+  from its FL1 pass, reviewed at check-in over REST — **the second is unchanged.**
 - **FL3** (hybrid): FL1 feeding FL2 continuously, no intermediate anneal. Real-time. Same FM2.
 
 **⚠ FM2 has THREE stands, and the four-stand model is retired (`D-26`, 4 Aug 2026).** Component
@@ -73,13 +78,20 @@ stale reference is *silently wrong* rather than obviously stale.**
 | **`SpoolProcessing`** | the **material in process** | `Alpha` = `SP-#####` |
 
 A pre-23-Aug document saying `Spool.Alpha` means what is now `SpoolProcessing.Alpha`.
-`SpoolConfiguration` was merged away the same day and is no longer a table. Out of scope
+⚠ **`SpoolConfiguration` is a table** — `Q60` merged it into `Spool` on 23 Aug 2026 and **`D-58` split it back out on 8 Sep 2026**, with its six limits `NOT NULL` again and `IsDefault` replacing the merge's fallback. `Spool.SpoolTypeId` is `NOT NULL` and `FK_Spool_SpoolConfiguration` enforces it, so deleting references to it as "stale" breaks a `NOT NULL` foreign key. *(This line read "merged away … no longer a table" until 8 Sep 2026.)* Out of scope
 deliberately: the API surface (`GET /spools`), the code identifiers, screen labels and the
 `SP-#####` format — operators say "spool".
 
-**Alpha formats.** Rod `R#####` · Spool `SP-#####` · Run `RUN-####` · Pass schedule
+**Alpha formats.** Rod `R#####` · Spool **material** `SP-#####` · Run `RUN-####` · Pass schedule
 `PS-{alloy}-{line}-{seq}` · **Output coil `FW-#####-C##`** (mid-run child `…-A`) · Die
 `D-{size×1000}-{seq}`.
+
+> ⚠ **`Spool.SpoolNo` is FOUR digits — `SP-0001`…`SP-0045` — and that is deliberate.** It is the
+> stencilled **article** number, not an alpha. Five digits would make a `SpoolNo` string-identical
+> to a `SpoolProcessing.Alpha` (`SP-00031`/`32`/`33` are seeded and fall inside 1–45), which is the
+> collision the `Q60` swap exists to prevent. The seed builds it in one place —
+> `FlatWire_SampleData_Lookup.sql`, `'SP-' + RIGHT('0000' + …, 4)`. `Q42` is still open on the
+> format; until it closes, **do not "correct" the seed to five digits**.
 
 > **⚠ `FW-#####-C##` is a coil alpha, not a story id.** There are 299 of them. Any bulk rewrite of
 > `FW-` ids must exclude them — `\bFW-(\d{3}|N\d{2})(?![\dA-Za-z-])` — or it silently corrupts

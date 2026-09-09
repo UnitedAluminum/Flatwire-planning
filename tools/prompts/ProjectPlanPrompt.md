@@ -75,7 +75,7 @@ Optionally also write `00-README.md` — a one-page index of the seven with a re
 - **Induction welds only.** Laser welding was removed May 21 2026; do not mention it except as a superseded decision.
 - **No software stop command to the PLC.** The application is a gatekeeper; the operator stops the machine physically.
 - Alpha formats: Rod `R#####` · Spool `SP-#####` · Run `RUN-####` · Pass schedule `PS-{alloy}-{line}-{seq}` · Output coil `FW-#####-C##` (mid-run child `…-A`) · Die `D-{size×1000}-{seq}`.
-- Line facts that are frequently got wrong: **FL1 has no edger**; **FL2 edgers exist at S2 and S3 only**; **FL2 gauge trace is historical/profile and broadcasts `null` live gauge/width**; FL1 and FL3 are real-time; FL3 is FL1 feeding FL2 continuously with no intermediate anneal.
+- Line facts that are frequently got wrong: **FL1 has no edger**; **FL2 edgers exist at S2 and S3 only**; **all three lines have a real-time gauge trace — FL2 at a 4 s update rate, FL1 and FL3 at ~10 Hz** *(this said "FL2 gauge trace is historical/profile and broadcasts `null` live gauge/width" until 9 Sep 2026 — assumption `A3` retired, `FR-120` superseded; do not reintroduce it)*; FL3 is FL1 feeding FL2 continuously with no intermediate anneal.
 - New coil status is `INFLAT` — ⚠ **`FlatWireDB`-local only since `D-32` (18 Aug 2026)**; it is never added to the shared coil-status vocabulary, because the shared-schema migration is cancelled. Flattening operation letter is `F` *(not cancelled — a value in an existing column)*.
 
 **Traceability (the single most important quality bar):**

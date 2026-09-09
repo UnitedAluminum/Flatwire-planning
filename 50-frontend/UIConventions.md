@@ -880,7 +880,7 @@ deliberately not built, and this is the record `[UIC]` exists to keep:
 
 | Departure | The mockups show | What is built | Why |
 |---|---|---|---|
-| **Trace panel titles** | *"Final gauge · post S3"*, *"Final width · post edger"* on FL2 and FL3 | **`Gauge`** and **`Width`** on every line | `D-55` makes the trace treatment uniform. ⚠ Collides with `FR-120`; the reconciliation is a **client decision**, still open |
+| **Trace panel titles** | *"Final gauge · post S3"*, *"Final width · post edger"* on FL2 and FL3 | **`Gauge`** and **`Width`** on every line | `D-55` makes the trace treatment uniform. ✅ **The `FR-120` collision is resolved 9 Sep 2026, in `D-55`'s favour** — `FR-120` superseded, assumption `A3` retired, FL2 measures live at 4 s. ⚠ Only the **cadence** is line-specific now: render footage gaps as gaps, and set any consecutive-reading threshold per line |
 | **Components card rows** | `DB1` / `DB2` / `FM1` on FL1; `FM2 S1/S2/S3` on FL2; both groups on FL3 | Whatever the run's **pass schedule** supplies | The rows are **data**, not a per-line layout. One card serves all three lines, and `D-26`'s three-stand rule is expressible as rows |
 
 ⛔ **Neither is a licence to diverge further.** Everything else on the three active-run mockups

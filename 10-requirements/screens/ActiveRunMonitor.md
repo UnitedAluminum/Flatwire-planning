@@ -4,7 +4,7 @@
 **Document Type:** Functional Requirement Specification — Issued for Client Review
 **Applies to:** FL1 / FL2 / FL3
 **Version:** 1.4
-**Last Updated:** September 7, 2026 — **Section 1.4a added: this screen is ONE component serving all three lines**, with exactly four things varying by line (material panel, centre status card, action set, spool alerts). Component and roll settings come from the run's **pass schedule** rather than a per-line list, and the material shown is whatever is checked in at that line's station — with the rule that **a station holding its own name is idle, not loaded**. ⚠ **One row of Section 1.4 is now contested and is deliberately left unresolved**: it gives FL2 *"historical / profile only"* while the screen is specified with one trace treatment on all three lines, and `FR-120` and Section 3.2 still require the FL2 profile. That reconciliation is a client decision *(previously August 25, 2026 — `FR-551` and `FR-554` cited on the allocation notification and overrun text; worked examples cited *(previously August 15, 2026)*)*
+**Last Updated:** September 9, 2026 (`G120` resolved) — ⛔ **§3.2 REVERSED: FL2 produces a LIVE trace at 4 s**, not a historical profile. ✅ **The contested §1.4 row and the `D-55` collision are resolved in `D-55`'s favour** — one trace treatment, three lines. ⚠ Three cadence rules follow: **gaps render as gaps**, *last updated* is load-bearing at 4 s, and the out-of-spec threshold is **per line** — 4 readings is <0.5 s on FL1 and **16 s of production on FL2**. `D6` carries a supersession pointer with its recorded text intact *(previously September 7, 2026 — **Section 1.4a added: this screen is ONE component serving all three lines**, with exactly four things varying by line (material panel, centre status card, action set, spool alerts). Component and roll settings come from the run's **pass schedule** rather than a per-line list, and the material shown is whatever is checked in at that line's station — with the rule that **a station holding its own name is idle, not loaded**. ⚠ **One row of Section 1.4 is now contested and is deliberately left unresolved**: it gives FL2 *"historical / profile only"* while the screen is specified with one trace treatment on all three lines, and `FR-120` and Section 3.2 still require the FL2 profile. That reconciliation is a client decision *(previously August 25, 2026 — `FR-551` and `FR-554` cited on the allocation notification and overrun text; worked examples cited *(previously August 15, 2026)*)*)*
 **Status:** Issued for Client Review and Sign-off
 **Screen reference:** Dashboard 3 — Active Run Monitor. The operator's continuously displayed screen during a production run.
 **Requirement source:** SRS run-monitoring and pause/resume rules; the four resume outcomes (OI-14); trace behaviour per line
@@ -44,7 +44,7 @@ Every other operator screen in this system is entered, completed and left. This 
 | Line | Trace behaviour | Notable differences |
 |---|---|---|
 | **FL1** | Real-time gauge and width | No edger. Two payoffs, continuous feed by induction weld. No roll adjust for the finishing mill |
-| **FL2** | **Historical / profile only** | Fed from a pre-flattened spool, so there is one input rather than two payoffs. No draw boxes, therefore no die change |
+| **FL2** | **Real-time gauge and width, at 4 s** *(was "Historical / profile only"; `A3` retired 9 Sep 2026)* | Fed from a pre-flattened spool, so there is one input rather than two payoffs. No draw boxes, therefore no die change |
 | **FL3** | Real-time gauge and width | FL1 feeding FL2 continuously. The fullest action set |
 
 ## 1.4a One screen for three lines — the configuration surface `[CONFIRMED — September 7, 2026]`
@@ -76,12 +76,15 @@ name is IDLE, not loaded** — that value is the placeholder an empty station ca
 material would display a station name where an operator expects a rod or spool number. An idle station
 renders the same empty state as a line with no active run.
 
-> ⚠ **One row of Section 1.4 above is contested and is NOT settled by `D-55`.** That table gives FL2
-> *"historical / profile only"* while this screen is now specified with **one trace treatment on all
-> three lines**. `FR-120` and Section 3.2 both still require the FL2 profile, and the FL2 mockup still
-> shows a Live/Profile control. **The reconciliation is a client decision and is deliberately not made
-> here** — see the open items in Section 11. What *is* settled is that a reading with **no
-> measurement** must render as absent rather than as a value at target, on every line.
+> ✅ **RESOLVED 9 Sep 2026 — in `D-55`'s favour, and Section 1.4 now agrees with it.** This note
+> recorded that Section 1.4 gave FL2 *"historical / profile only"* while the screen was specified with
+> **one trace treatment on all three lines**, and that *"the reconciliation is a client decision and is
+> deliberately not made here"*. **It has now been made.** `FR-120` — the requirement that forced the
+> FL2 exception — is **superseded**, its basis (assumption `A3` of `[PLC §14]`) is **retired**, and FL2
+> reads live gauge and width like every other line. **One trace treatment, three lines.** The Live /
+> Profile control in the FL2 mockup is retired with it (`D-55`). What was already settled still holds:
+> a reading with **no measurement** renders as absent rather than as a value at target, on every line —
+> that rule now protects a dropped feed on any line rather than describing FL2's normal state.
 
 ---
 
@@ -171,11 +174,38 @@ Where the mounted rod carries an order boundary, this screen is where the operat
 
 **The weld marker matters commercially.** It is what lets a later quality investigation locate which source rod was in process at a given footage, and it is the visible counterpart of the traceability chain required for welding-wire customer certificates.
 
-## 3.2 FL2 produces no live trace `[CONFIRMED]`
+## 3.2 FL2 produces a live trace, at a slower cadence `[REVISED — Sep 9, 2026]`
 
-FL2 does not broadcast live gauge or width. Its trace section is populated from the historical profile of the spool being processed, not from a live instrument feed. The screen must state this rather than showing an empty chart that reads as a fault.
+~~FL2 does not broadcast live gauge or width. Its trace section is populated from the historical profile of the spool being processed, not from a live instrument feed. The screen must state this rather than showing an empty chart that reads as a fault.~~
+
+⛔ **This section said the opposite until 9 Sep 2026, and it was wrong.** `FR-120` is superseded and its
+basis — assumption `A3` of `[PLC §14]` — is retired. **FL2 broadcasts live gauge and width**, read from
+the gauging stands downstream of FM2-S3: the devices that drive S3's automatic position control, which
+could not function on a measurement nobody was taking. FL2's trace section is therefore a **live trace,
+rendered exactly as FL1's and FL3's are** (`D-55`, one treatment on three lines).
+
+⚠ **What is genuinely different about FL2 is the cadence: 4 s, against ~10 Hz on FL1 and FL3.** Three
+consequences for this screen:
+
+| | Rule |
+|---|---|
+| **Gaps are real** | The trace is footage-indexed, so at line speed a 4 s sample leaves genuine gaps between points. **Render them as gaps — never interpolate a straight line through unmeasured wire**, which would show in-spec material where none was measured |
+| **Freshness must be visible** | At 4 s a stalled feed and a healthy one look alike for several seconds. The panel's *last updated* indication is **load-bearing on FL2**, not decorative |
+| **The out-of-spec prompt threshold is per line** | See the note below — the consecutive-reading count cannot be shared with FL1 |
+
+⚠ **Unchanged, and not to be confused with the above:** at FL2 **check-in** the operator still reviews
+the recorded profile of the **FL1 pass that produced the spool**, with weld points marked. That is the
+*incoming material's* history, served by `GET /run/{runId}/gaugetrace`, and it is a different artefact
+from FL2's own live trace.
 
 > `[CLIENT INPUT REQUIRED]` **The consecutive-reading threshold that auto-prompts a checkpoint has no agreed value.** It is configurable by design, but a default is needed before the line runs. This depends on the published tolerance bands, which are also outstanding (OI-57 / OI-57, Q22).
+>
+> ⛔ **And as of 9 Sep 2026 it needs a value PER LINE, not one shared value.** With FL2 publishing at
+> **4 s** and FL1/FL3 at ~10 Hz, the same count means wildly different amounts of production: four
+> consecutive readings is under half a second on FL1 and **16 seconds of wire on FL2**. **Inheriting
+> FL1's threshold on FL2 multiplies the scrap window by forty** — this is the one item in the FL2
+> live-gauge change that can produce bad product, so it must be chosen deliberately rather than
+> defaulted. Re-choosing it needs trial data (`Q66` / `Q67`) and is carried as a trial-run item.
 
 ## 3.3 Descoped — Machine View and View Trends `[CONFIRMED — August 4, 2026]`
 
@@ -332,7 +362,7 @@ This is why the reason category is submitted as a code: the breakdown is only as
 | D3 | The pause payload carries a **reason code and category**, never a display label; notes are mandatory for *Other* | Aug 1, 2026 |
 | D4 | Footage is **frozen on confirmation** and the dialog reports the frozen value | Aug 1, 2026 |
 | D5 | **Machine View tab and View Trends withdrawn**, with Dashboards 13 and 14 | Aug 4, 2026 |
-| D6 | **FL2 broadcasts no live gauge or width**; its trace is historical profile | May 21, 2026 |
+| D6 | **FL2 broadcasts no live gauge or width**; its trace is historical profile — ⛔ **SUPERSEDED 9 Sep 2026, see §3.2.** *(The decision text is preserved as recorded: this is what was decided on the date shown. It rested on assumption `A3` of `[PLC §14]`, since retired, and `FR-120`, since superseded.)* | May 21, 2026 |
 | D7 | **FL1 has no edger**; edgers are at FM2 stands S2 and S3 only | May 21, 2026 |
 | D8 | Payoff alerts are stated in **absolute weight** alongside percentage | Jul 30, 2026 |
 
@@ -387,7 +417,8 @@ This is why the reason category is submitted as a code: the breakdown is only as
 | Ref | Item | Accept | Amend |
 |---|---|:--:|:--:|
 | §3.1 | Trace display rules, including the weld marker labelled with the rod alpha | ☐ | ☐ |
-| §3.2 | FL2 shows a historical profile, not a live trace | ☐ | ☐ |
+| §3.2 | **FL2 shows a live trace like FL1 and FL3, at a 4 s update rate**, read from the gauging stands downstream of FM2-S3 — ⚠ **this row asked you to confirm the opposite until 9 Sep 2026**; the change is explained in §3.2 | ☐ | ☐ |
+| §3.2 | **Gaps in the FL2 trace are shown as gaps, not interpolated**, and the *out-of-spec consecutive-reading* threshold is set **per line** rather than shared with FL1 | ☐ | ☐ |
 | §3.3 | Machine View and View Trends are withdrawn | ☐ | ☐ |
 | §4.1 | The four payoff weight thresholds | ☐ | ☐ |
 | §5.1 | The quick-action set and its per-line availability | ☐ | ☐ |

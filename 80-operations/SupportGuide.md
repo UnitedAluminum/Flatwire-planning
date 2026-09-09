@@ -90,7 +90,7 @@ The on-call engineer should have: this document · `[API §1.8]` (the error-code
 
 ```powershell
 # --- Database -------------------------------------------------------------
-cd "c:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Schema\SQL"   # required: :r paths are relative
+cd "c:\UAL\Flatwire-planning\30-database\sql"   # required: :r paths are relative
 sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll.sql       # full build + seed, idempotent
 sqlcmd -S "<server>" -E -C -i FlatWire_DDL_04_Runs.sql      # one script
 sqlcmd -S "<server>" -E -C -i FlatWire_DDL_99_Teardown.sql  # DROPS EVERYTHING — test only

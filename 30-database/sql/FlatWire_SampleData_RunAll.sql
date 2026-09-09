@@ -29,16 +29,23 @@
 -- separate runner is the only correct mechanism.
 --
 -- REQUIRES SQLCMD MODE (`:r` and `:on error exit` are SQLCMD-only):
---   cd "C:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Schema\SQL"
+--   cd "c:\UAL\Flatwire-planning\30-database\sql"
 --   sqlcmd -S "<server>" -E -C -i FlatWire_SampleData_RunAll.sql
 --
 -- Run FlatWire_DDL_RunAll.sql FIRST — this file seeds tables, it does not
 -- create them.
 --
--- Idempotent only insofar as the individual seed scripts are. Re-running
--- against an already-seeded database may raise duplicate-key errors; the
--- clean path is FlatWire_DDL_99_Teardown.sql, then the schema runner, then
--- this.
+-- IDEMPOTENT. Every block in all five seed files is guarded by IF NOT EXISTS, so a
+-- second full run is a clean no-op. (This note warned of duplicate-key errors until
+-- 8 Sep 2026 -- measured wrong, and it discouraged a safe re-run.)
+--
+-- ⚠ WHAT IS NOT SAFE IS A *PARTIAL* STATE, and that is the real hazard. Each block
+-- guards on ITS OWN table being empty, so if sp_IngestRodFromCoils has already created
+-- Rod rows, the eight fixture rods are skipped while the runs and check-ins that
+-- reference them are not - and the chain dies mid-file on FK_RodCheckin_Rod with
+-- :on error exit. FlatWire_SampleData_Materials.sql now THROWs 60001 up front rather
+-- than letting that happen. The clean path from any partial state is
+-- FlatWire_DDL_99_Teardown.sql, then the schema runner, then this.
 -- ============================================================
 
 :on error exit

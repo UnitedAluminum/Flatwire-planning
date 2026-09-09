@@ -2,7 +2,7 @@
 -- Flat Wire Mill — Master Deployment Runner
 -- ============================================================
 -- Executes the full MVP-1 schema build in the correct order:
---   00 -> 08 (DDL).  Result: 46 tables.  NOT empty: 01_Lookup seeds the
+--   00 -> 08 (DDL).  Result: 47 tables.  NOT empty: 01_Lookup seeds the
 --   three reason-code tables inline, because they are production reference
 --   data and a production deploy runs this file WITHOUT the sample data.
 --   The defining site for the object counts is [DBD 6.2]. This banner is
@@ -13,7 +13,7 @@
 --   data deploy independently -- see the note where it used to be.
 --
 -- ⚠ 06b AND 07b NO LONGER EXIST (23 Aug 2026). They were folded back into
---   06_ForeignKeys and 07_Indexes, which now carry all 68 FKs and all 89
+--   06_ForeignKeys and 07_Indexes, which now carry all 69 FKs and all 91
 --   index statements respectively. The MVP-1 chain is a contiguous 00..08.
 --
 -- ⚠ ONE FILE IN THIS FOLDER IS MVP-2 AND IS DELIBERATELY NOT RUN HERE:
@@ -52,8 +52,12 @@
 -- !!  READ THIS BEFORE DEPLOYING  !!
 -- ============================================================
 -- THE PASS SCHEDULE TABLES ARE BUILT HERE (decision D-31,
--- 15 Aug 2026). This runner builds ALL 33 tables and THAT IS THE
+-- 15 Aug 2026). This runner builds ALL 47 tables and THAT IS THE
 -- COMPLETE MVP-1 DATABASE. There is no second runner to chase.
+--
+-- (This line read "ALL 33 tables" from 15 Aug until 8 Sep 2026 -- thirteen
+--  stale, and C6 could not catch it: its exemption regex matches the
+--  "15 Aug 2026" that happens to sit on the same line. Cite [DBD 6.2].)
 --
 -- ⚠ THIS REVERSES THE 11 AUG 2026 SPLIT, DELIBERATELY. If you are
 --   reading an older document that says "25 tables", "the three

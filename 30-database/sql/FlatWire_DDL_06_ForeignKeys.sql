@@ -1,7 +1,11 @@
 -- ============================================================
 -- Flat Wire Mill — DDL Script 06: Foreign Key Constraints
 -- Run order : 06 of 09  (run AFTER all 01–05 scripts)
--- Creates   : ALL 68 foreign keys. There is no second FK script.
+-- Creates   : ALL 69 foreign keys. There is no second FK script.
+--             69, not 68, since 8 Sep 2026: D-58 restores FK_Spool_SpoolConfiguration,
+--             which Q60's merge dropped on 23 Aug 2026.  (+1)
+--             D-57 re-pointed SpoolOrder's parent from SpoolProcessing to SpoolTraceability and
+--             RENAMED the key with it -- one out, one in, so that change moves NO count.
 --             68, not 67, since 6 Sep 2026: the edger absorption (D-53) added
 --             FK_ToolingInventoryEdgerGauge_EdgerTool. FK_PSC_Edger was
 --             RE-POINTED from [dbo].[Edger] to ToolingInventoryEdger and KEEPS
@@ -88,8 +92,13 @@ WHERE fk.name LIKE 'FK_FlatWire%'
        'FlatWireRun','SpoolProcessing','SpoolTraceability','SpoolOrder','RodOrderAllocation',
        -- Runs
        'FlatWireRunDetail','RodStaging','RodCheckin','SpoolCheckin','SpoolStaging',
-       'RunPauseEvent','WeldEvent','RollOverride','DieChangeEvent','DieHistory','RunReading',
+       'RunPauseEvent','LineDowntimeEvent','WeldEvent','RollOverride','DieChangeEvent','DieHistory','RunReading',
        'RodOrderConsumption',
+       -- ⚠ CORRECTED 8 Sep 2026. LineDowntimeEvent was MISSING (it holds DelayCode and RunId),
+       -- which is precisely the failure this roster's own warning describes -- "a name missing
+       -- here means its constraints are NOT dropped, so the rebuild half-completes and looks
+       -- like it worked". SpoolConfiguration was LISTED and should not be: it is a pure parent
+       -- (Spool.SpoolTypeId points AT it) and this roster lists CHILD tables only.
        -- ToolingInventoryDie is deliberately ABSENT: it is a pure parent, with no
        -- FK column of its own, and this roster lists CHILD tables only.
        -- ToolingInventoryEdger is ABSENT for the same reason (Sep-6-2026): the
@@ -420,11 +429,39 @@ IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_SpoolTraceability
         FOREIGN KEY ([WeldEventId]) REFERENCES [dbo].[WeldEvent] ([WeldEventId]);
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_SpoolOrder_SpoolProcessing')
+-- RE-POINTED AND RENAMED, 8 Sep 2026 (D-57). This was FK_SpoolOrder_SpoolProcessing on
+-- (SpoolAlpha) -> SpoolProcessing(Alpha). The parent is now the SEGMENT, so the old name would
+-- have lied about what it constrains -- which is why it is renamed rather than re-pointed in
+-- place. (D-53 kept FK_PSC_Edger's name through a re-point because only the target table's NAME
+-- changed there; here the parent is a different table.) One FK out, one in: the count does not move.
+-- ⚠ GUARDED ON THE COLUMN, not just the constraint name, and this is not belt-and-braces.
+-- SpoolTraceabilityId arrives in SpoolOrder's CREATE TABLE body, and that body is behind an
+-- IF NOT EXISTS guard -- so on a database created BEFORE D-57 the table already exists, the CREATE
+-- is skipped, and the column is never added. A name-only guard would then reach a column that does
+-- not exist and fail with Msg 1911, and :on error exit would ABORT THE WHOLE RUNNER AT 06 -- taking
+-- 07 and 08 with it. Same shape as FK_SpoolProcessing_Spool below, for the same reason.
+-- ⛔ The supported path for this change is TEARDOWN-AND-DEPLOY (D-57). This guard exists so that an
+-- incremental re-run SKIPS AND SAYS SO instead of killing the chain.
+IF EXISTS (SELECT 1 FROM sys.columns
+           WHERE object_id = OBJECT_ID(N'[dbo].[SpoolOrder]') AND name = N'SpoolTraceabilityId')
+   AND NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_SpoolOrder_SpoolTraceability')
     ALTER TABLE [dbo].[SpoolOrder]
-        ADD CONSTRAINT [FK_SpoolOrder_SpoolProcessing]
-        FOREIGN KEY ([SpoolAlpha]) REFERENCES [dbo].[SpoolProcessing] ([Alpha]);
+        ADD CONSTRAINT [FK_SpoolOrder_SpoolTraceability]
+        FOREIGN KEY ([SpoolTraceabilityId]) REFERENCES [dbo].[SpoolTraceability] ([Id]);
 GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns
+               WHERE object_id = OBJECT_ID(N'[dbo].[SpoolOrder]') AND name = N'SpoolTraceabilityId')
+    PRINT 'SKIPPED FK_SpoolOrder_SpoolTraceability: SpoolOrder.SpoolTraceabilityId is absent, so this database predates D-57. Teardown and redeploy.';
+GO
+
+-- SpoolOrder.SupersededByOrderId carries NO foreign key. ⚠ THE REASON GIVEN HERE UNTIL 8 Sep 2026
+-- WAS FALSE: it said RodOrderAllocation.SupersededByAllocationId "takes none either", and
+-- FK_RodOrderAllocation_Superseded is added about fifty lines below and is one of the 69.
+-- So the two identically-shaped additive supersede columns are enforced INCONSISTENTLY, and the
+-- asymmetry has no stated justification left. The honest position: a self-FK on an additive log
+-- buys little and does block a bulk delete on rebuild -- but that argument applies to BOTH columns
+-- or NEITHER. Decide it once and make them match; raised as G112.
 
 IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_SpoolStaging_SpoolProcessing')
     ALTER TABLE [dbo].[SpoolStaging]
@@ -440,6 +477,30 @@ IF EXISTS (SELECT 1 FROM sys.columns
     ALTER TABLE [dbo].[SpoolProcessing]
         ADD CONSTRAINT [FK_SpoolProcessing_Spool]
         FOREIGN KEY ([SpoolId]) REFERENCES [dbo].[Spool] ([Id]);
+GO
+
+-- RESTORED 8 Sep 2026 (D-58), having been dropped by Q60's merge on 23 Aug 2026. The size class is
+-- a table again, so the article points at it.
+--
+-- ONE FK, NOT TWO. Q60 dropped FK_Spool_SpoolConfiguration *and*
+-- FK_SpoolProcessing_SpoolConfiguration. Only this one comes back: a material row reaches its
+-- configuration through SpoolProcessing.SpoolId -> Spool.SpoolTypeId, and a second direct path to
+-- the same fact is how the two come to disagree.
+-- ⚠ GUARDED ON THE COLUMN for the reason spelled out above FK_SpoolOrder_SpoolTraceability:
+-- SpoolTypeId returns in Spool's CREATE TABLE body, which is skipped on any database that already
+-- has the table -- i.e. every database built between 23 Aug (Q60's merge) and 8 Sep 2026. Without
+-- this guard, 06 would abort there on Msg 1911 and 07/08 would never run.
+IF EXISTS (SELECT 1 FROM sys.columns
+           WHERE object_id = OBJECT_ID(N'[dbo].[Spool]') AND name = N'SpoolTypeId')
+   AND NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Spool_SpoolConfiguration')
+    ALTER TABLE [dbo].[Spool]
+        ADD CONSTRAINT [FK_Spool_SpoolConfiguration]
+        FOREIGN KEY ([SpoolTypeId]) REFERENCES [dbo].[SpoolConfiguration] ([Id]);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns
+               WHERE object_id = OBJECT_ID(N'[dbo].[Spool]') AND name = N'SpoolTypeId')
+    PRINT 'SKIPPED FK_Spool_SpoolConfiguration: Spool.SpoolTypeId is absent, so this database predates D-58. Teardown and redeploy.';
 GO
 
 ------------------------------------------------------------
@@ -580,6 +641,22 @@ GO
 -- tool register. ToolingInventoryEdger is that register. THE CONSTRAINT NAME IS
 -- DELIBERATELY UNCHANGED: renaming it would churn [API], FW-147's enum-mirror
 -- inventory and TC-020 for no gain. This is NOT a new key and moves no count.
+-- ⚠ KEEPING THE NAME MEANS THE NAME CANNOT BE THE GUARD. On a database built before
+-- Sep-6-2026 an FK_PSC_Edger already exists pointing at the retired [dbo].[Edger]; a name-only
+-- guard sees it, skips, and leaves EdgerId validating against the WRONG TABLE -- silently, and
+-- for good, because nothing in 01-08 drops a table, so [dbo].[Edger] survives as an orphan too.
+-- The re-point is therefore detected on the PARENT and applied as drop-then-add.
+-- (OBJECT_ID returns NULL if ToolingInventoryEdger is absent, so the <> comparison is UNKNOWN
+--  and nothing is dropped -- an unbuilt register can never cost us the existing constraint.)
+IF EXISTS (SELECT 1 FROM sys.foreign_keys
+           WHERE name = 'FK_PSC_Edger'
+             AND referenced_object_id <> OBJECT_ID(N'[dbo].[ToolingInventoryEdger]'))
+BEGIN
+    ALTER TABLE [dbo].[PassScheduleComponent] DROP CONSTRAINT [FK_PSC_Edger];
+    PRINT 'Dropped FK_PSC_Edger: it pointed at the retired [dbo].[Edger] (pre-D-53). Re-adding against ToolingInventoryEdger.';
+END
+GO
+
 IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_PSC_Edger')
     ALTER TABLE [dbo].[PassScheduleComponent]
         ADD CONSTRAINT [FK_PSC_Edger]

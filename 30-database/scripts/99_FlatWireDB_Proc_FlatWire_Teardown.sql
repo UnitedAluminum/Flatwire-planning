@@ -63,7 +63,7 @@
               -> 20_FlatWire_Grants.sql
               -> the four procedures
 
-      teardown:  *** THIS SCRIPT ***          (procedures, united_db)
+      teardown:  *** THIS SCRIPT ***          (procedures, FlatWireDB)
               -> FlatWire_DDL_99_Teardown.sql (FlatWireDB)
 
   Procedures first: FlatWire_CheckInRod and FlatWire_ReverseReqsum are written to run inside a
@@ -80,7 +80,7 @@ GO
 SET NOCOUNT ON;
 GO
 
-PRINT '=== FlatWire procedure teardown (united_db): start ===';
+PRINT '=== FlatWire procedure teardown (FlatWireDB): start ===';
 GO
 
 /*----------------------------------------------------------------------------------------------
@@ -125,6 +125,20 @@ ELSE
     PRINT 'Not present: FlatWire_CompleteCoilOnSkid';
 GO
 
+-- ⚠ THE FIFTH PROCEDURE. sp_IngestRodFromCoils does not carry the FlatWire_ prefix, which is
+-- how it was missed here: change [H] moved ALL FIVE into FlatWireDB, and this script's whole
+-- purpose is dropping the code WITHOUT dropping the database. Leaving it behind produced the
+-- state the header calls the worst of the two -- a clean FlatWireDB with one stale procedure,
+-- which looks clean. It is last because nothing here calls it.
+IF OBJECT_ID(N'[dbo].[sp_IngestRodFromCoils]', N'P') IS NOT NULL
+BEGIN
+    DROP PROCEDURE [dbo].[sp_IngestRodFromCoils];
+    PRINT 'Dropped: sp_IngestRodFromCoils';
+END
+ELSE
+    PRINT 'Not present: sp_IngestRodFromCoils';
+GO
+
 /*----------------------------------------------------------------------------------------------
   The view goes with them, and it is NOT a procedure.
 
@@ -146,15 +160,22 @@ ELSE
     PRINT 'Not present: WIPStations (view)';
 GO
 
-PRINT '=== FlatWire procedure teardown (united_db): done ===';
+PRINT '=== FlatWire procedure teardown (FlatWireDB): done ===';
 GO
 
 /*==============================================================================================
-  VERIFICATION - four rows before, zero after.
+  VERIFICATION - five rows before, zero after.
+
+  ⚠ This query read united_db.sys.objects until 8 Sep 2026, and filtered on the FlatWire_
+  prefix alone. Both were wrong after change [H] moved the procedures into FlatWireDB: it
+  returned zero rows on a CORRECTLY deployed instance, and non-zero only where a pre-[H]
+  deploy had never been cleaned up - the exact inverse of the check it claims to be. The
+  prefix filter also hid sp_IngestRodFromCoils, which is the fifth procedure.
 
   SELECT name, type_desc, create_date, modify_date
-  FROM   united_db.sys.objects
-  WHERE  type = 'P' AND name LIKE 'FlatWire[_]%'
+  FROM   FlatWireDB.sys.objects
+  WHERE  type = 'P'
+    AND (name LIKE 'FlatWire[_]%' OR name = 'sp_IngestRodFromCoils')
   ORDER BY name;
 
   Nothing else in the shared schema should carry the FlatWire_ prefix. If this returns something

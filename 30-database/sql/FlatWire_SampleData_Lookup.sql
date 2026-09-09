@@ -411,22 +411,43 @@ GO
 --    edit and not 45 -- treat them the way this file treats the OQ-83
 --    threshold: present, usable, and explicitly marked TBD.
 -- ============================================================
+-- ============================================================
+-- SpoolConfiguration -- the one size class (D-58)
+-- ============================================================
+-- ONE ROW, and that is the honest count: the client has stated exactly one
+-- size ("all one standard size", 20 Aug 2026). The split back out of Spool
+-- restores the ABILITY to hold a second cheaply; it does not invent one.
+--
+-- The values are the ones the 45 articles used to repeat verbatim, which the
+-- article seed in turn carried over from the former SpoolConfiguration Id 1.
+-- IsDefault = 1 because SpoolProcessing.SpoolId is nullable, so a material row
+-- with no article needs a well-defined set of limits -- see 01_Lookup and
+-- UX_SpoolConfiguration_Default.
+-- ============================================================
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SpoolConfiguration])
+    INSERT INTO [dbo].[SpoolConfiguration]
+        ([Name],[MinWeightLb],[MaxWeightLb],
+         [MinCoreDiameterIn],[MaxCoreDiameterIn],[MinOuterDiameterIn],[MaxOuterDiameterIn],
+         [IsDefault],[IsActive])
+    VALUES
+        ('TKUP-1 Intermediate Spool', 500.00, 3500.00, 8.0000, 12.0000, 24.0000, 40.0000, 1, 1);
+GO
+PRINT 'Seeded: SpoolConfiguration (1 row -- the one stated size class)';
+GO
+
 IF NOT EXISTS (SELECT 1 FROM [dbo].[Spool])
 BEGIN
     -- FORMAT IN ONE PLACE (Q42 open): change this expression, not 45 rows.
     -- 'SP-' + 4-digit zero-padded ordinal -> SP-0001 .. SP-0045.
     INSERT INTO [dbo].[Spool]
-        ([SpoolNo],[SizeClass],
-         [MinWeightLb],[MaxWeightLb],[MinCoreDiameterIn],[MaxCoreDiameterIn],
-         [MinOuterDiameterIn],[MaxOuterDiameterIn],[IsActive],[Notes])
+        ([SpoolNo],[SpoolTypeId],[IsActive],[Notes])
     SELECT
         'SP-' + RIGHT('0000' + CAST(n.[n] AS VARCHAR(4)), 4),
-        'TKUP-1 Intermediate Spool',
-        -- Limits carried over verbatim from the former SpoolConfiguration Id 1
-        -- ('TKUP-1 Intermediate Spool'): 500-3500 lb, core 8-12", OD 24-40".
-        -- IDENTICAL on every row, by design: the SpoolConfiguration merge (Q86)
-        -- denormalised a one-row size class onto 45 articles. See 01_Lookup.
-        500.00, 3500.00, 8.0000, 12.0000, 24.0000, 40.0000,
+        -- The eight literals that used to sit here are GONE, 8 Sep 2026 (D-58): the size class is a
+        -- table again, so the article points at it instead of repeating it 45 times. Q60's merge
+        -- (cited as Q86 here until 8 Sep -- a citation defect, every other site says Q60) had
+        -- denormalised a one-row size class onto every article.
+        (SELECT [Id] FROM [dbo].[SpoolConfiguration] WHERE [Name] = 'TKUP-1 Intermediate Spool'),
         CASE WHEN n.[n] = 45 THEN 0 ELSE 1 END,
         CASE n.[n]
              WHEN  2 THEN 'PROVISIONAL fixture -- carries SP-00031 in the demo dataset'

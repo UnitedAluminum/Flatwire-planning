@@ -9,7 +9,7 @@
 -- 30_FlatWireDB_Proc_sp_IngestRodFromCoils.sql -- because it reads
 -- proddb..coils and united_db..alloys and therefore cannot be verified
 -- by a FlatWireDB-only deploy. Deploy it in the same step as the
--- united_db procedures. See ../../Scripts/README.md or [INT 7.9].
+-- united_db procedures. See ../scripts/README.md or [INT 7.9].
 --
 -- sp_ShiftSummary is NOT here -- it belongs to Dashboard 10, which
 -- is MVP-2, and lives in this folder as

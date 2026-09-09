@@ -329,6 +329,10 @@ IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[RodChe
    AND NOT EXISTS (SELECT 1 FROM sys.columns
                    WHERE object_id = OBJECT_ID(N'[dbo].[RodCheckin]') AND name = N'WipCoilOrdersWritten')
 BEGIN
+    -- ⚠ The default constraint is named ONLY here, not in the CREATE TABLE body as well.
+    --   DF_RodCheckin_WipCoilOrdersWritten was declared in both places; the guards are mutually
+    --   exclusive so only one ever fired, but editing one definition silently diverged the two
+    --   build paths.
     ALTER TABLE [dbo].[RodCheckin]
         ADD [WipCoilOrdersWritten] BIT NOT NULL
             CONSTRAINT [DF_RodCheckin_WipCoilOrdersWritten] DEFAULT (0);
@@ -365,7 +369,12 @@ BEGIN
 
         CONSTRAINT [PK_SpoolCheckin]              PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [CK_SpoolCheckin_MachineName]       CHECK ([MachineName]           IN ('FL2','FL3')),
-        CONSTRAINT [CK_SpoolCheckin_PayoffPos]    CHECK ([PayoffPosition]   IN (1, 2)),
+        -- ⚠ = 1, NOT IN (1,2): FL2 has ONE traversing payoff (client, 21 Aug 2026). This body
+        --   declared IN (1,2) until 8 Sep 2026 and the retro-fit block at the foot of this file
+        --   then dropped and re-added it as = 1 -- on EVERY FRESH BUILD, because its guard tests
+        --   'definition LIKE %(2)%' which is true of a constraint created seconds earlier. The
+        --   rule now lives here, where a fresh build reads it.
+        CONSTRAINT [CK_SpoolCheckin_PayoffPos]    CHECK ([PayoffPosition]   = 1),
         CONSTRAINT [CK_SpoolCheckin_Inspection]   CHECK ([InspectionSurface] IN ('Pass','Fail')),
         CONSTRAINT [CK_SpoolCheckin_MmsStatus]    CHECK ([MmsStatus] IN ('Open','Active','Closed') OR [MmsStatus] IS NULL)
     );
@@ -735,9 +744,18 @@ GO
 -- RunReading
 -- Decimated / sampled gauge-width-speed profile persisted per
 -- run. Live telemetry stays in-memory (SignalR) in Phase 1;
--- this table holds the historical profile that feeds the FL2
--- gauge trace and the Gauge-Trace / Gauge-CPK / Cut-Traceability
--- reports. NOT a per-tick historian — writes are sampled.
+-- this table holds the recorded profile that feeds the
+-- Gauge-Trace / Gauge-CPK / Cut-Traceability reports, and that
+-- supplies a spool's INCOMING history to the next line that
+-- receives it (reviewed at FL2 check-in).
+--   Until 9 Sep 2026 this comment read "the historical profile
+--   that feeds the FL2 gauge trace". That conflated two things:
+--   FL2 now measures its OWN trace live (A3 retired, FR-120
+--   superseded), while the profile a spool carries INTO FL2 from
+--   its FL1 pass still comes from here. No column changed --
+--   GaugeIn/WidthIn were already NULLable and there is no line
+--   column, so live FL2 readings need no DDL change.
+-- NOT a per-tick historian — writes are sampled.
 -- Retention/rollup policy: TBD (G3 open item).
 -- ------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[RunReading]') AND type = N'U')
@@ -746,7 +764,7 @@ BEGIN
         [Id]        INT           NOT NULL IDENTITY(1,1),
         [RunId]     VARCHAR(20)   NOT NULL,                 -- FK → FlatWireRun.RunId
         [FootageFt] DECIMAL(10,2) NOT NULL,                 -- footage position of this reading (ft)
-        [GaugeIn]   DECIMAL(8,4)  NULL,                     -- gauge reading (in); NULL for FL2 standalone live feed
+        [GaugeIn]   DECIMAL(8,4)  NULL,                     -- gauge reading (in); NULL when no measurement (dropped feed, any line)
         [WidthIn]   DECIMAL(8,4)  NULL,                     -- width reading (in)
         [SpeedFpm]  DECIMAL(8,2)  NULL,                     -- line speed at this position (ft/min)
         [InSpec]    BIT           NOT NULL CONSTRAINT [DF_RunReading_InSpec] DEFAULT (1),  -- within gauge tolerance at capture
@@ -884,9 +902,18 @@ GO
 -- is what SpoolQueue.md rules SQ-8..SQ-10 (exclusive check-in) and the
 -- filtered index UX_FlatWireRun_ActiveLine both rest on. The column is
 -- kept -- one reference in the repository -- and constrained to 1.
-IF EXISTS (SELECT * FROM sys.check_constraints WHERE name = N'CK_SpoolCheckin_PayoffPos')
+-- ⚠ THIS BLOCK IS NOW A REPAIR FOR OLD DATABASES ONLY. A fresh build creates the constraint as
+--   = 1 in the CREATE TABLE above, so the LIKE '%(2)%' test is false and nothing happens. Until
+--   8 Sep 2026 the body said IN (1,2) and this fired on every fresh build.
+--   Both guards are qualified on the parent object: filtering sys.check_constraints by name alone
+--   reaches across every table in the database.
+IF EXISTS (SELECT 1 FROM sys.check_constraints
+           WHERE name = N'CK_SpoolCheckin_PayoffPos'
+             AND parent_object_id = OBJECT_ID(N'[dbo].[SpoolCheckin]'))
    AND EXISTS (SELECT 1 FROM sys.check_constraints
-               WHERE name = N'CK_SpoolCheckin_PayoffPos' AND definition LIKE '%(2)%')
+               WHERE name = N'CK_SpoolCheckin_PayoffPos'
+                 AND parent_object_id = OBJECT_ID(N'[dbo].[SpoolCheckin]')
+                 AND definition LIKE '%(2)%')
 BEGIN
     ALTER TABLE [dbo].[SpoolCheckin] DROP CONSTRAINT [CK_SpoolCheckin_PayoffPos];
     ALTER TABLE [dbo].[SpoolCheckin]

@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flat Wire Mill &mdash; Isometric Line Layout</title>
+<link rel="stylesheet" href="flat-wire-shopfloor.styles.css">
+<style>
+  /* ── Page-local tokens ──────────────────────────────────────────────────── */
+  :root {
+    --pad-fl1:   #dfeaf6;
+    --pad-fl2:   #dcf1e9;
+    --pad-aisle: #ebe8de;
+    --pad-grid:  rgba(0, 0, 0, 0.09);
+    --pad-edge:  rgba(0, 0, 0, 0.16);
+    --leader:    rgba(0, 0, 0, 0.42);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --pad-fl1:   #17324c;
+      --pad-fl2:   #123a30;
+      --pad-aisle: #2c2b26;
+      --pad-grid:  rgba(255, 255, 255, 0.09);
+      --pad-edge:  rgba(255, 255, 255, 0.18);
+      --leader:    rgba(255, 255, 255, 0.48);
+    }
+  }
+
+  body { min-width: 1120px; }
+
+  .iso-page {
+    max-width: 1660px;
+    margin: 0 auto;
+    padding: 20px 20px 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ── Header ─────────────────────────────────────────────────────────────── */
+  .iso-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--color-border-secondary);
+    padding-bottom: 12px;
+  }
+  .iso-head h1 { margin: 0 0 5px; font-size: 26px; letter-spacing: -0.01em; }
+  .iso-head p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+    max-width: 84ch;
+  }
+  .iso-modes { display: flex; gap: 6px; }
+  .iso-modes button {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 9px 15px;
+    min-height: 44px;
+    border: 1px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+  }
+  .iso-modes button:hover { border-color: var(--color-border-primary); color: var(--color-text-primary); }
+  .iso-modes button[aria-pressed="true"] {
+    background: var(--color-blue);
+    border-color: var(--color-blue);
+    color: #fff;
+  }
+
+  /* ── Stage ──────────────────────────────────────────────────────────────── */
+  .iso-stage {
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 4px;
+    overflow-x: auto;
+  }
+  .iso-stage svg { display: block; width: 100%; min-width: 1180px; height: auto; }
+
+  /* ── SVG classes (presentation attributes cannot resolve var(), so every ──
+        token-driven paint is applied through a class) ───────────────────────── */
+  .pad-fl1    { fill: var(--pad-fl1); }
+  .pad-fl2    { fill: var(--pad-fl2); }
+  .pad-aisle  { fill: var(--pad-aisle); }
+  .pad-edge   { fill: none; stroke: var(--pad-edge, rgba(0,0,0,.16)); stroke-width: 1.25; }
+  .grid       { stroke: var(--pad-grid, rgba(0,0,0,.09)); stroke-width: 1; fill: none; }
+  .leader     { stroke: var(--leader, rgba(0,0,0,.42)); stroke-width: 1.25; fill: none; }
+  .leader-dot { fill: var(--leader, rgba(0,0,0,.42)); }
+  .bg-warn    { fill: var(--color-background-warning, #faeeda); stroke: var(--color-amber, #ef9f27); }
+  .bg-purple  { fill: var(--color-background-purple, #f0ebf8);  stroke: var(--color-purple, #6b3fa0); }
+  .bg-danger  { fill: var(--color-background-danger, #fcebeb);  stroke: var(--color-red, #d85a30); }
+  .tx-warn    { fill: var(--color-text-warning, #633806); }
+  .tx-purple  { fill: var(--color-text-purple, #4b2d72); }
+  .tx-danger  { fill: var(--color-text-danger, #791f1f); }
+  .tert-fill  { fill: var(--color-text-tertiary, #888780); }
+  .tert-strk  { stroke: var(--color-text-tertiary, #888780); fill: none; }
+
+  text { font-family: var(--font-sans); }
+  .lbl-name  { font-size: 15px; font-weight: 700; fill: var(--color-text-primary, #1a1a19); }
+  .lbl-sub   { font-size: 13.5px; fill: var(--color-text-secondary, #5f5e5a); }
+  .lbl-id    { font-size: 13px; font-weight: 700; letter-spacing: 0.03em; }
+  /* Cards are opaque so a leader crossing one passes behind the text. */
+  .lbl-card  { fill: var(--color-background-primary, #fff); stroke: var(--color-border-tertiary, rgba(0,0,0,.1)); }
+  .on-plate  { fill: #ffffff; }
+  .zone-txt  { font-size: 14px; font-weight: 700; letter-spacing: 0.06em; }
+  .zone-code { font-size: 18px; font-weight: 800; }
+  .stand-txt { font-size: 13px; font-weight: 800; fill: var(--color-text-primary, #1a1a19); }
+  .bore-txt  { font-size: 12px; fill: var(--color-text-secondary, #5f5e5a); }
+  .kit-txt   { font-size: 13px; font-weight: 700; fill: #ffffff; }
+  .on-mill   { fill: #eef1f4; }
+  .note-h    { font-size: 14px; font-weight: 700; }
+  .note-b    { font-size: 13.5px; }
+  .flow-txt  { font-size: 13px; font-weight: 700; fill: var(--color-text-tertiary, #888780); letter-spacing: 0.08em; }
+
+  .station { cursor: help; }
+  .dim { opacity: 0.22; }
+  .off { display: none; }
+
+  /* ── Legend ─────────────────────────────────────────────────────────────── */
+  .iso-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    align-items: center;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    padding: 2px 4px;
+  }
+  .iso-legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .swatch { width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--color-border-secondary); }
+  .swatch.line { width: 24px; height: 5px; border-radius: 3px; border: 0; }
+
+  /* ── Cards ──────────────────────────────────────────────────────────────── */
+  .iso-cols { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; }
+  .card {
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 16px 18px;
+  }
+  .card h2 { margin: 0 0 10px; font-size: 16px; }
+  .card h2 .hint { font-weight: 400; font-size: 13.5px; color: var(--color-text-tertiary); }
+
+  table.spec { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.spec th, table.spec td {
+    text-align: left;
+    padding: 7px 10px 7px 0;
+    border-bottom: 1px solid var(--color-border-tertiary);
+    vertical-align: top;
+  }
+  table.spec th { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); }
+  table.spec td.mono { font-family: var(--font-mono); font-weight: 600; white-space: nowrap; }
+  table.spec tr.sub td.mono { padding-left: 14px; font-weight: 500; }
+  .pill { display: inline-block; font-size: 12.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .pill.no  { background: var(--color-background-danger);  color: var(--color-text-danger); }
+  .pill.yes { background: var(--color-background-success); color: var(--color-text-success); }
+  .pill.na  { background: var(--color-background-tertiary); color: var(--color-text-secondary); }
+
+  ul.delta { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.55; color: var(--color-text-secondary); }
+  ul.delta li { margin-bottom: 9px; }
+  ul.delta strong { color: var(--color-text-primary); }
+  ul.delta code { font-family: var(--font-mono); font-size: 13px; }
+
+  .foot { font-size: 13.5px; color: var(--color-text-tertiary); line-height: 1.6; padding: 0 4px; }
+  .foot code { font-family: var(--font-mono); }
+
+  /* ── Tooltip ────────────────────────────────────────────────────────────── */
+  .tip {
+    position: fixed;
+    z-index: 40;
+    pointer-events: none;
+    display: none;
+    max-width: 330px;
+    background: var(--color-text-primary);
+    color: var(--color-background-primary);
+    border-radius: var(--border-radius-md);
+    padding: 10px 12px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+  }
+  .tip b { display: block; font-size: 14px; margin-bottom: 3px; }
+  .tip .k { opacity: 0.66; }
+</style>
+</head>
+<body>
+<div class="iso-page">
+
+  <header class="iso-head">
+    <div>
+      <h1>Flat Wire Mill &mdash; Isometric Line Layout</h1>
+      <p>An isometric rendering of <em>Flat Wire Machine &mdash; Big Beautiful Diagram</em> (23 Apr 2026).
+         Station order and naming follow that drawing; capacities, roll diameters and the edgers follow the
+         current record in <code>[MS &sect;2.3]</code> and <code>[BR &sect;3]</code>. Roll diameters are drawn
+         to scale. <strong>Process arrangement &mdash; not a surveyed floor plan.</strong></p>
+    </div>
+    <div class="iso-modes" id="modes">
+      <button data-mode="all" aria-pressed="true">All</button>
+      <button data-mode="fl1" aria-pressed="false">FL1 standalone</button>
+      <button data-mode="fl2" aria-pressed="false">FL2 standalone</button>
+      <button data-mode="fl3" aria-pressed="false">FL3 hybrid</button>
+    </div>
+  </header>
+
+  <div class="iso-stage">
+    <svg id="scene" xmlns="http://www.w3.org/2000/svg" role="img"
+         aria-label="Isometric layout of Flattening Line 1 and Flattening Line 2"></svg>
+  </div>
+
+  <div class="iso-legend">
+    <span><i class="swatch line" style="background:#1d9e75"></i> Rod / flat wire path</span>
+    <span><i class="swatch" style="background:#d85a30"></i> Mill rolls &mdash; diameter to scale</span>
+    <span><i class="swatch" style="background:#ef9f27"></i> Edger &mdash; vertical profiling rollers</span>
+    <span><i class="swatch" style="background:#5f6b78"></i> Mill stand</span>
+    <span><i class="swatch" style="background:#7d8895"></i> Drawing / payoff / take-up</span>
+    <span><i class="swatch" style="background:#c3c8ce"></i> Aluminium rod / flat wire stock</span>
+    <span><i class="swatch line" style="background:#6b3fa0"></i> FL3 continuous link</span>
+    <span><i class="swatch line" style="background:#ef9f27"></i> Off-line spool route</span>
+  </div>
+
+  <div class="iso-cols">
+    <section class="card">
+      <h2>Equipment inventory <span class="hint">&mdash; asserted by <code>[MS &sect;2.3]</code>, cited here</span></h2>
+      <table class="spec">
+        <thead>
+          <tr><th>Component</th><th>Line</th><th>Role</th><th>Capacity / value</th><th>Bypassable</th></tr>
+        </thead>
+        <tbody id="specBody"></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Where this drawing differs from the source</h2>
+      <ul class="delta">
+        <li><strong>TKUP-1 reads &ldquo;1,800 lbs&rdquo; on the source.</strong> That is the <em>working</em>
+            spool target &mdash; sized so two finished coils can be cut at FL2 (<code>FR-130a</code>). The
+            equipment ceiling is <strong>3,500 lb</strong>. Both are shown.</li>
+        <li><strong>TKUP-2 reads &ldquo;1,000 lbs&rdquo; on the source.</strong> Revised up to
+            <strong>1,100 lb</strong> on 4 May 2026 (<code>OQ-77</code>). Drawn as 1,100 lb.</li>
+        <li><strong>The edgers are not on the source drawing at all.</strong> <code>D-27</code> puts two of them
+            <em>inter-stand</em> &mdash; between S1/S2 and between S2/S3, entry-side, with
+            <strong>no exit-side edger</strong>. They are vertical profiling rollers, not knives: nothing is
+            trimmed and there is no scrap stream at the edger. <strong>S3 is a skim pass with no
+            edging.</strong> FL1 has no edger.</li>
+        <li><strong>FM2&rsquo;s dancers are marked twice, deliberately.</strong> The source shows one before FM2
+            and one after it. <code>D-28</code> instead places <strong>two dancers in the edger positions</strong>,
+            each with a regular and a tension mode. That is still open &mdash; <code>Q32</code>, gap
+            <code>G35</code> &mdash; so both readings are shown and neither is presented as settled.</li>
+        <li><strong>Roll diameters come from <code>Stand.RollDiameterIn</code></strong>, not from the drawing:
+            FM1 12.000&Prime;; FM2 8.000&Prime; / 6.000&Prime; / 6.000&Prime; (<code>D-26</code>). The
+            <strong>8&Prime; roller <em>is</em> S1</strong> &mdash; there is no separate <code>8" Roller</code>
+            component and no fourth FM2 stand.</li>
+        <li><strong>The step between the lines is drawn as decoupled</strong>, not as a conveyor. A spool leaves
+            TKUP-1, is optionally annealed off-line, and is re-planned before it is loaded on the TPO. The only
+            continuous path between the lines is <strong>FL3</strong>.</li>
+      </ul>
+    </section>
+  </div>
+
+  <p class="foot">
+    <strong>Sources.</strong> Station order and labels:
+    <code>50-frontend/mockups/Flat Wire Machine &mdash; Big Beautiful Diagram.png</code> (23 Apr 2026).
+    Capacities and bypass rules <code>[MS &sect;2.3]</code>; flow and line definitions <code>[MS &sect;2.2]</code>;
+    equipment configuration <code>[BR &sect;3]</code>. Decisions: <code>D-26</code> (three FM2 stands,
+    position-only ids), <code>D-27</code> (inter-stand edgers, forming not cutting), <code>D-28</code>
+    (FM2 dancers), <code>OQ-77</code> (TKUP-2 at 1,100 lb), <code>FR-130a</code> (spool sized to two coils),
+    <code>OI-19</code> (anneal capacity). Design tokens from
+    <code>flat-wire-shopfloor.styles.css</code>. Hover any machine for its detail.
+  </p>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  Axonometric basis
+  //  x = flow (left to right), y = depth (front to back), z = height.
+  //  The flow axis is deliberately shallow so a fifteen-station line stays
+  //  legible on one canvas; the depth axis carries the isometric read.
+  // ═══════════════════════════════════════════════════════════════════════════
+  var UX = [1.00,  0.060];
+  var UY = [0.62, -0.500];
+  var UZ = [0.00, -1.000];
+  // Camera direction = kernel of the projection, signed so +z faces the camera.
+  // Visible faces are therefore y-min (front), x-max (downstream) and z-max (top).
+  var NV = [0.50, -1.00, 0.47];
+
+  var OX = 120, OY = 660;
+
+  var BB = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+  function bump(sx, sy) {
+    if (sx < BB.x0) BB.x0 = sx;
+    if (sy < BB.y0) BB.y0 = sy;
+    if (sx > BB.x1) BB.x1 = sx;
+    if (sy > BB.y1) BB.y1 = sy;
+  }
+  function P(x, y, z) {
+    z = z || 0;
+    var sx = OX + x * UX[0] + y * UY[0];
+    var sy = OY + x * UX[1] + y * UY[1] + z * UZ[1];
+    bump(sx, sy);
+    return [sx, sy];
+  }
+  function depth(x, y, z) { return x * NV[0] + y * NV[1] + (z || 0) * NV[2]; }
+  function snap() { return { x0: BB.x0, y0: BB.y0, x1: BB.x1, y1: BB.y1 }; }
+
+  // ═══ Colour ══════════════════════════════════════════════════════════════
+  function mix(hex, amt) {
+    var n = parseInt(hex.slice(1), 16);
+    var r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    var t = amt > 0 ? 255 : 0, a = Math.abs(amt);
+    r = Math.round(r + (t - r) * a);
+    g = Math.round(g + (t - g) * a);
+    b = Math.round(b + (t - b) * a);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+
+  var C = {
+    steel:  '#7d8895',
+    aux:    '#98a1ac',
+    mill:   '#5f6b78',
+    plinth: '#4e5866',
+    alum:   '#c3c8ce',
+    roll:   '#d85a30',
+    edger:  '#ef9f27',
+    wire:   '#1d9e75',
+    fl1:    '#185fa5',
+    fl2:    '#1d9e75',
+    fl3:    '#6b3fa0',
+    glow:   '#e2743f'
+  };
+
+  // ═══ Draw buffer ═════════════════════════════════════════════════════════
+  var S = [];
+  function out(s) { S.push(s); }
+  function n1(v) { return v.toFixed(1); }
+  function pts(arr) {
+    var i, o = [];
+    for (i = 0; i < arr.length; i++) o.push(n1(arr[i][0]) + ',' + n1(arr[i][1]));
+    return o.join(' ');
+  }
+  function path(arr) { return 'M' + pts(arr).replace(/ /g, 'L'); }
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function proj(corners) {
+    var i, o = [];
+    for (i = 0; i < corners.length; i++) o.push(P(corners[i][0], corners[i][1], corners[i][2]));
+    return o;
+  }
+  function face(corners, fill, stroke) {
+    out('<polygon points="' + pts(proj(corners)) + '" fill="' + fill + '"' +
+        (stroke ? ' stroke="' + stroke + '" stroke-width="1" stroke-linejoin="round"' : '') + '/>');
+  }
+
+  // A box with its three visible faces: top, downstream, front.
+  function box(x, y, z, w, d, h, base) {
+    var edge = mix(base, -0.42);
+    face([[x, y + d, z + h], [x + w, y + d, z + h], [x + w, y, z + h], [x, y, z + h]], mix(base, 0.20), edge);
+    face([[x + w, y, z], [x + w, y + d, z], [x + w, y + d, z + h], [x + w, y, z + h]], mix(base, -0.26), edge);
+    face([[x, y, z], [x + w, y, z], [x + w, y, z + h], [x, y, z + h]], base, edge);
+  }
+
+  // ═══ Circles, discs and cylinders in an arbitrary 3D plane ═══════════════
+  var STEPS = 56;
+  var AX = { x: [[0, 1, 0], [0, 0, 1]], y: [[1, 0, 0], [0, 0, 1]], z: [[1, 0, 0], [0, 1, 0]] };
+
+  function at(c, u, v, r, t) {
+    var ct = Math.cos(t), stt = Math.sin(t);
+    return [c[0] + r * (ct * u[0] + stt * v[0]),
+            c[1] + r * (ct * u[1] + stt * v[1]),
+            c[2] + r * (ct * u[2] + stt * v[2])];
+  }
+  function ringPts(c, u, v, r) {
+    var i, o = [];
+    for (i = 0; i < STEPS; i++) {
+      var q = at(c, u, v, r, i / STEPS * Math.PI * 2);
+      o.push(P(q[0], q[1], q[2]));
+    }
+    return o;
+  }
+  function disc(c, u, v, r, fill, stroke) {
+    out('<polygon points="' + pts(ringPts(c, u, v, r)) + '" fill="' + fill + '"' +
+        (stroke ? ' stroke="' + stroke + '" stroke-width="1"' : '') + '/>');
+  }
+  function annulus(c, u, v, ro, ri, fill, stroke) {
+    out('<path d="' + path(ringPts(c, u, v, ro)) + 'Z ' + path(ringPts(c, u, v, ri)) + 'Z"' +
+        ' fill="' + fill + '" fill-rule="evenodd"' +
+        (stroke ? ' stroke="' + stroke + '" stroke-width="1"' : '') + '/>');
+  }
+  function outline(c, u, v, r, stroke, op) {
+    out('<polygon points="' + pts(ringPts(c, u, v, r)) + '" fill="none" stroke="' + stroke +
+        '" stroke-width="0.9" opacity="' + op + '"/>');
+  }
+
+  // The contiguous arc whose outward (or, inverted, inward) normal faces the camera.
+  function visArc(u, v, invert) {
+    var i, vis = [], ang = [];
+    for (i = 0; i < STEPS; i++) {
+      var t = i / STEPS * Math.PI * 2;
+      var nx = Math.cos(t) * u[0] + Math.sin(t) * v[0];
+      var ny = Math.cos(t) * u[1] + Math.sin(t) * v[1];
+      var nz = Math.cos(t) * u[2] + Math.sin(t) * v[2];
+      var dot = nx * NV[0] + ny * NV[1] + nz * NV[2];
+      ang.push(t);
+      vis.push(invert ? dot < 0 : dot > 0);
+    }
+    var s = -1;
+    for (i = 0; i < STEPS; i++) if (vis[i] && !vis[(i - 1 + STEPS) % STEPS]) { s = i; break; }
+    if (s < 0) return null;
+    var arc = [];
+    for (i = 0; i < STEPS && vis[(s + i) % STEPS]; i++) arc.push(ang[(s + i) % STEPS]);
+    arc.push(arc[arc.length - 1] + Math.PI * 2 / STEPS);
+    return arc;
+  }
+  function wall(cA, cB, u, v, r, fill, stroke, invert) {
+    var arc = visArc(u, v, invert);
+    if (!arc) return;
+    var near = depth(cA[0], cA[1], cA[2]) >= depth(cB[0], cB[1], cB[2]) ? cA : cB;
+    var far = near === cA ? cB : cA;
+    var i, poly = [], q;
+    for (i = 0; i < arc.length; i++) { q = at(near, u, v, r, arc[i]); poly.push(P(q[0], q[1], q[2])); }
+    for (i = arc.length - 1; i >= 0; i--) { q = at(far, u, v, r, arc[i]); poly.push(P(q[0], q[1], q[2])); }
+    out('<polygon points="' + pts(poly) + '" fill="' + fill + '" stroke="' + stroke +
+        '" stroke-width="1" stroke-linejoin="round"/>');
+  }
+  // Solid cylinder: far cap, wall, near cap.
+  function cyl(axis, c0, c1, r, base) {
+    var u = AX[axis][0], v = AX[axis][1], edge = mix(base, -0.42);
+    var near = depth(c0[0], c0[1], c0[2]) >= depth(c1[0], c1[1], c1[2]) ? c0 : c1;
+    var far = near === c0 ? c1 : c0;
+    disc(far, u, v, r, mix(base, -0.30), edge);
+    wall(c0, c1, u, v, r, mix(base, -0.10), edge, false);
+    disc(near, u, v, r, mix(base, 0.14), edge);
+  }
+  // A roll: a short cylinder on the cross-line (y) axis.
+  function roll(xc, ya, yb, zc, r, base) { cyl('y', [xc, ya, zc], [xc, yb, zc], r, base); }
+
+  // A bundle lying eye-to-sky: outer wall, the far inner wall seen down the
+  // eye, then the top annulus with its wrap rings.
+  function bundle(xc, yc, z0, ro, ri, h, base) {
+    var u = AX.z[0], v = AX.z[1], edge = mix(base, -0.40), k;
+    wall([xc, yc, z0], [xc, yc, z0 + h], u, v, ro, mix(base, -0.14), edge, false);
+    wall([xc, yc, z0], [xc, yc, z0 + h], u, v, ri, mix(base, -0.36), edge, true);
+    annulus([xc, yc, z0 + h], u, v, ro, ri, mix(base, 0.18), edge);
+    for (k = 1; k <= 3; k++) {
+      outline([xc, yc, z0 + h], u, v, ri + (ro - ri) * k / 4, mix(base, -0.20), 0.7);
+    }
+  }
+
+  // A wound reel on the cross-line axis: barrel, wound stock, optional flanges.
+  function reel(xc, ya, yb, zc, rBarrel, rWound, base, flanged) {
+    var k;
+    if (flanged) cyl('y', [xc, yb - 5, zc], [xc, yb, zc], rBarrel + 18, mix(base, -0.06));
+    cyl('y', [xc, ya + 4, zc], [xc, yb - 4, zc], rBarrel, base);
+    cyl('y', [xc, ya + 6, zc], [xc, yb - 6, zc], rWound, C.alum);
+    for (k = 1; k <= 5; k++) {
+      outline([xc, ya + 6 + (yb - ya - 12) * k / 6, zc], AX.y[0], AX.y[1], rWound,
+              mix(C.alum, -0.28), 0.75);
+    }
+    if (flanged) cyl('y', [xc, ya, zc], [xc, ya + 5, zc], rBarrel + 18, mix(base, 0.08));
+  }
+
+  // ═══ Scene constants ═════════════════════════════════════════════════════
+  var ZPL = 56;        // pass-line height, common to both lines
+  var ROWD = 78;       // machine depth — kept near the station widths, or the
+                       // depth axis swamps the flow axis and the line merges
+  var ROW = {
+    fl1: { y0: 640, tone: C.fl1, code: 'FL1', name: 'FLATTENING LINE #1' },
+    fl2: { y0: 0,   tone: C.fl2, code: 'FL2', name: 'FLATTENING LINE #2' }
+  };
+  function wireY(row) { return ROW[row].y0 + 26; }
+  function rollY(row) { return [ROW[row].y0 + 14, ROW[row].y0 + ROWD - 14]; }
+
+  // ═══ Stations ════════════════════════════════════════════════════════════
+  // x / w are flow-axis position and length; top is the label anchor height;
+  // tier / lx place the screen-space label.
+  var STATIONS = [
+    { row: 'fl1', id: 'VPS', x: 0, w: 155, kind: 'payoff', top: 132, tier: 3, lx: 300,
+      name: 'VPS — Payoff', role: 'Rod / round-wire feed, eye-to-sky',
+      cap: '9,000 lb per position', bypass: 'No', line: 'FL1 / FL3',
+      sub: ['Dual position · eye-to-sky', 'Next rod induction-welded here'] },
+    { row: 'fl1', id: 'EG1', x: 180, w: 30, kind: 'guide', top: 74, tier: 1, lx: 700,
+      name: 'Entry Guide', role: 'Aligns rod into DB1',
+      cap: '—', bypass: 'No', line: 'FL1 / FL3', hideSpec: true,
+      sub: ['Rod into the first draw'] },
+    { row: 'fl1', id: 'DB1', x: 235, w: 90, kind: 'draw', top: 118, tier: 2, lx: 640,
+      name: 'DB1 — Wire Drawing', role: 'Wire drawing die 1 (roughing)',
+      cap: '—', bypass: 'Yes', line: 'FL1 / FL3',
+      sub: ['Roughing draw · bypassable'] },
+    { row: 'fl1', id: 'DB2', x: 345, w: 90, kind: 'draw', top: 118, tier: 1, lx: 960,
+      name: 'DB2 — Wire Drawing', role: 'Wire drawing die 2 (finishing draw)',
+      cap: '—', bypass: 'Yes', line: 'FL1 / FL3',
+      sub: ['Finishing draw · bypassable'] },
+    { row: 'fl1', id: 'EG2', x: 460, w: 30, kind: 'guide', top: 74, tier: 3, lx: 860,
+      name: 'Entry Guide', role: 'Aligns drawn wire into FM1',
+      cap: '—', bypass: 'No', line: 'FL1 / FL3', hideSpec: true,
+      sub: ['Drawn wire into FM1'] },
+    { row: 'fl1', id: 'FM1', x: 515, w: 115, kind: 'mill1', top: 152, tier: 2, lx: 1010,
+      name: 'FM1 — 12″ Flattening Mill', role: 'Round to flat; gauge stand + dancer; no edger',
+      cap: '1 stand · 12.000″ rolls', bypass: 'No', line: 'FL1 / FL3',
+      sub: ['One stand (S1) · 12.000″ rolls', 'No edger · not bypassable'] },
+    { row: 'fl1', id: 'GS1', x: 655, w: 32, kind: 'gauge', top: 122, tier: 3, lx: 1180,
+      name: 'Gauge Stand', role: 'Gauge and width measurement',
+      cap: 'Real-time', bypass: 'No', line: 'FL1 / FL3', hideSpec: true, live: true,
+      sub: ['Real-time gauge + width', 'Live AGC trace'] },
+    { row: 'fl1', id: 'DN1', x: 707, w: 32, kind: 'dancer', top: 96, tier: 1, lx: 1230,
+      name: 'Dancer', role: 'Tension accumulator',
+      cap: '—', bypass: 'No', line: 'FL1 / FL3', hideSpec: true,
+      sub: ['Tension accumulator loop'] },
+    { row: 'fl1', id: 'TKUP-1', x: 765, w: 150, kind: 'takeup', top: 96, tier: 2, lx: 1400,
+      name: 'TKUP-1 — Traversing Take-Up', role: 'Intermediate spool',
+      cap: '3,500 lb (≈ 1,800 lb working)', bypass: 'N/A — non-hybrid only', line: 'FL1',
+      flanged: true,
+      sub: ['Intermediate spool SP-#####', '3,500 lb · ≈ 1,800 lb working'] },
+
+    { row: 'fl2', id: 'TPO', x: 0, w: 150, kind: 'payoffSpool', top: 96, tier: 1, lx: 180,
+      name: 'TPO — Traversing Payoff', role: 'Feeds FM2',
+      cap: '3,500 lb', bypass: 'N/A', line: 'FL2 / FL3', flanged: true,
+      sub: ['Flat wire spool on to FM2', '3,500 lb'] },
+    { row: 'fl2', id: 'DN2', x: 175, w: 32, kind: 'dancer', top: 96, tier: 2, lx: 290,
+      name: 'Dancer', role: 'Tension accumulator',
+      cap: '—', bypass: 'No', line: 'FL2 / FL3', hideSpec: true,
+      sub: ['As drawn on the source', 'See D-28 · Q32'] },
+    { row: 'fl2', id: 'FM2', x: 235, w: 250, kind: 'mill2', top: 152, tier: 1, lx: 480,
+      name: 'FM2 — 3 Stand Mill', role: 'Finishing mill — S1, S2, S3',
+      cap: '8.000″ / 6.000″ / 6.000″', bypass: 'S1, S2 yes · S3 no', line: 'FL2 / FL3',
+      sub: ['S1 8.000″ · S2 6.000″ · S3 6.000″', 'Edgers inter-stand · S3 final skim'] },
+    { row: 'fl2', id: 'GS2', x: 510, w: 32, kind: 'gauge', top: 122, tier: 2, lx: 640,
+      name: 'Gauge Stand', role: 'Gauge and width measurement',
+      cap: 'Profile / historical', bypass: 'No', line: 'FL2', hideSpec: true, live: false,
+      sub: ['Profile / historical trace', 'Broadcasts null live gauge + width'] },
+    { row: 'fl2', id: 'DN3', x: 562, w: 32, kind: 'dancer', top: 96, tier: 3, lx: 770,
+      name: 'Dancer', role: 'Tension accumulator',
+      cap: '—', bypass: 'No', line: 'FL2 / FL3', hideSpec: true,
+      sub: ['As drawn on the source', 'See D-28 · Q32'] },
+    { row: 'fl2', id: 'TKUP-2', x: 620, w: 150, kind: 'takeupCoil', top: 90, tier: 1, lx: 830,
+      name: 'TKUP-2 — Traversing Take-Up', role: 'Finished coreless coil',
+      cap: '1,100 lb', bypass: 'No', line: 'FL2 / FL3',
+      sub: ['Coreless oscillated coil', 'FW-#####-C## · 1,100 lb'] }
+  ];
+
+  var STAND_SPEC = [
+    { id: 'FM2 — S1', line: 'FL2 / FL3', role: 'Finishing stand 1, 8″ roller; no edger',
+      cap: '8.000″', bypass: 'Yes' },
+    { id: 'FM2 — S2', line: 'FL2 / FL3', role: 'Finishing stand 2, 6″ roller; edger on entry',
+      cap: '6.000″', bypass: 'Yes' },
+    { id: 'FM2 — S3', line: 'FL2 / FL3', role: 'Finishing stand 3, final gauge control; skim pass, no edging',
+      cap: '6.000″', bypass: 'No' }
+  ];
+  var TAIL_SPEC = [
+    { id: 'Anneal furnace', line: 'Off-line', role: 'Optional intermediate anneal between FL1 and FL2',
+      cap: 'Shared capacity — OI-19', bypass: 'Optional' },
+    { id: 'Line speed', line: 'All', role: 'Governed by the final take-up',
+      cap: '≈ 1,800–2,000 FPM', bypass: '—' },
+    { id: 'Skid', line: 'Packing', role: 'Finished output',
+      cap: '2 coreless coils per skid', bypass: '—' }
+  ];
+
+  // ═══ Floor ═══════════════════════════════════════════════════════════════
+  function pad(x, y, w, d, cls) {
+    var frame = [[x, y, 0], [x + w, y, 0], [x + w, y + d, 0], [x, y + d, 0]];
+    out('<polygon class="' + cls + '" points="' + pts(proj(frame)) + '"/>');
+    var i;
+    for (i = 0; i <= w; i += 100) {
+      out('<path class="grid" d="' + path([P(x + i, y), P(x + i, y + d)]) + '"/>');
+    }
+    for (i = 0; i <= d; i += 65) {
+      out('<path class="grid" d="' + path([P(x, y + i), P(x + w, y + i)]) + '"/>');
+    }
+    out('<polygon class="pad-edge" points="' + pts(proj(frame)) + '"/>');
+  }
+
+  // A floor plaque. Text is anchored off the plate's own corners rather than
+  // its centroid, so a slanted parallelogram cannot clip it.
+  function zonePlate(row, x, y, w, d) {
+    var r = ROW[row];
+    var c = proj([[x, y, 0], [x + w, y, 0], [x + w, y + d, 0], [x, y + d, 0]]);
+    out('<polygon points="' + pts(c) + '" fill="' + r.tone + '"/>');
+    var leftY = (c[0][1] + c[3][1]) / 2, rightY = (c[1][1] + c[2][1]) / 2;
+    out('<text class="zone-txt on-plate" x="' + n1(c[0][0] + 26) + '" y="' + n1(leftY + 5) +
+        '">' + esc(r.name) + '</text>');
+    out('<text class="zone-code on-plate" x="' + n1(c[1][0] - 24) + '" y="' + n1(rightY + 7) +
+        '" text-anchor="end">' + esc(r.code) + '</text>');
+  }
+
+  // Direction of travel, painted on the floor behind each line.
+  function floorArrow(x0, x1, yc) {
+    var g = mix(C.plinth, 0.42);
+    out('<polygon points="' + pts(proj([[x0, yc - 4, 4], [x1 - 34, yc - 4, 4],
+        [x1 - 34, yc + 4, 4], [x0, yc + 4, 4]])) + '" fill="' + g + '" opacity="0.6"/>');
+    out('<polygon points="' + pts(proj([[x1 - 36, yc - 15, 4], [x1, yc, 4], [x1 - 36, yc + 15, 4]])) +
+        '" fill="' + g + '" opacity="0.6"/>');
+  }
+
+  // ═══ Material path ═══════════════════════════════════════════════════════
+  function wirePath(points) {
+    var d = path(proj(points));
+    out('<path d="' + d + '" fill="none" stroke="' + mix(C.wire, -0.45) +
+        '" stroke-width="7.5" stroke-linejoin="round" stroke-linecap="round"/>');
+    out('<path d="' + d + '" fill="none" stroke="' + C.wire +
+        '" stroke-width="4.4" stroke-linejoin="round" stroke-linecap="round"/>');
+    out('<path d="' + d + '" fill="none" stroke="' + mix(C.wire, 0.5) +
+        '" stroke-width="1.3" stroke-linecap="round" opacity="0.8"/>');
+  }
+
+  // ═══ Station renderers ═══════════════════════════════════════════════════
+  function drawStation(st) {
+    var r = ROW[st.row], y0 = r.y0, ry = rollY(st.row), wy = wireY(st.row), k;
+
+    if (st.kind === 'payoff') {
+      // Two eye-to-sky bundles in line: the running rod and the staged rod.
+      box(st.x, y0, 0, st.w, ROWD, 22, C.steel);
+      var bays = [44, 114];
+      for (k = 0; k < bays.length; k++) {
+        cyl('z', [st.x + bays[k], y0 + 39, 22], [st.x + bays[k], y0 + 39, 28], 34, mix(C.steel, -0.20));
+        bundle(st.x + bays[k], y0 + 39, 28, 32, 10, 26, C.alum);
+        var bt = P(st.x + bays[k], y0 + 39, 58);
+        out('<text class="kit-txt" x="' + n1(bt[0]) + '" y="' + n1(bt[1] + 4) +
+            '" text-anchor="middle">' + (k + 1) + '</text>');
+      }
+      // Overhead pull-off: the rod is drawn straight up out of the eye.
+      box(st.x + 74, y0 + 64, 22, 12, 12, 96, mix(C.aux, -0.12));
+      box(st.x + 14, y0 + 30, 118, 148, 12, 10, C.aux);
+      return;
+    }
+
+    if (st.kind === 'guide') {
+      box(st.x, y0, 0, st.w, ROWD, 20, C.plinth);
+      box(st.x + 4, y0 + 42, 20, st.w - 8, 28, 20, C.aux);
+      for (k = 0; k < 2; k++) {
+        cyl('z', [st.x + st.w / 2, wy - 11 + k * 22, 38], [st.x + st.w / 2, wy - 11 + k * 22, ZPL + 14], 5.5,
+            mix(C.aux, -0.24));
+      }
+      return;
+    }
+
+    if (st.kind === 'draw') {
+      // Die holder, a clear gap, then the capstan housing and its drum.
+      box(st.x, y0 + 12, 0, 18, 54, 72, mix(C.steel, -0.14));
+      annulus([st.x - 0.8, y0 + 11, ZPL], AX.y[0], AX.y[1], 12, 5, C.roll, mix(C.roll, -0.42));
+      box(st.x + 28, y0, 0, st.w - 28, ROWD, 76, C.steel);
+      var cx = st.x + 28 + (st.w - 28) / 2;
+      cyl('z', [cx, y0 + 39, 76], [cx, y0 + 39, 106], 26, mix(C.steel, -0.04));
+      cyl('z', [cx, y0 + 39, 106], [cx, y0 + 39, 112], 20, C.alum);
+      return;
+    }
+
+    if (st.kind === 'mill1') {
+      var rr = 15;                             // 12.000 in work rolls
+      box(st.x, y0, 0, st.w, ROWD, 20, C.plinth);
+      box(st.x + 2, y0 + 12, 20, 20, 54, 112, C.mill);
+      box(st.x + st.w - 22, y0 + 12, 20, 20, 54, 112, C.mill);
+      box(st.x, y0 + 12, 132, st.w, 54, 14, mix(C.mill, 0.06));
+      roll(st.x + st.w / 2, ry[0], ry[1], ZPL + rr + 2, rr, C.roll);
+      roll(st.x + st.w / 2, ry[0], ry[1], ZPL - rr - 2, rr, C.roll);
+      var a = P(st.x + st.w / 2, y0 + 14, 150);
+      out('<text class="stand-txt on-mill" x="' + n1(a[0]) + '" y="' + n1(a[1] - 8) +
+          '" text-anchor="middle">S1 · 12.000″</text>');
+      return;
+    }
+
+    if (st.kind === 'mill2') {
+      var stands = [{ dx: 14, r: 12, tag: 'S1', bore: '8.000″' },
+                    { dx: 104, r: 9, tag: 'S2', bore: '6.000″' },
+                    { dx: 194, r: 9, tag: 'S3', bore: '6.000″' }];
+      var edgers = [66, 156];                  // inter-stand — D-27
+      box(st.x, y0, 0, st.w, ROWD, 20, C.plinth);
+      box(st.x, y0 + 12, 132, st.w, 54, 14, mix(C.mill, 0.06));
+      for (k = 0; k < stands.length; k++) {
+        var s = stands[k], sx = st.x + s.dx;
+        box(sx, y0 + 12, 20, 14, 54, 112, C.mill);
+        box(sx + 28, y0 + 12, 20, 14, 54, 112, C.mill);
+        roll(sx + 21, ry[0], ry[1], ZPL + s.r + 2, s.r, C.roll);
+        roll(sx + 21, ry[0], ry[1], ZPL - s.r - 2, s.r, C.roll);
+        var t = P(sx + 21, y0 + 14, 150);
+        out('<text class="stand-txt on-mill" x="' + n1(t[0]) + '" y="' + n1(t[1] - 8) +
+            '" text-anchor="middle">' + s.tag + '</text>');
+        var b = P(sx + 21, y0 + 14, 136);
+        out('<text class="bore-txt on-mill" x="' + n1(b[0]) + '" y="' + n1(b[1] - 8) +
+            '" text-anchor="middle">' + s.bore + '</text>');
+      }
+      for (k = 0; k < edgers.length; k++) {
+        var ex = st.x + edgers[k];
+        box(ex - 6, y0 + 20, 20, 26, 38, 12, mix(C.aux, -0.16));
+        cyl('z', [ex + 7, wy - 11, 32], [ex + 7, wy - 11, ZPL + 12], 7, C.edger);
+        cyl('z', [ex + 7, wy + 11, 32], [ex + 7, wy + 11, ZPL + 12], 7, C.edger);
+        var et = P(ex + 7, y0 + 14, ZPL + 18);
+        out('<text class="bore-txt" x="' + n1(et[0]) + '" y="' + n1(et[1] - 6) +
+            '" text-anchor="middle" font-weight="700">E' + (k + 1) + '</text>');
+      }
+      return;
+    }
+
+    if (st.kind === 'gauge') {
+      box(st.x, y0, 0, st.w, ROWD, 20, C.plinth);
+      box(st.x + 6, y0 + 50, 20, st.w - 12, 20, 98, C.aux);
+      box(st.x - 6, y0 + 18, 100, st.w + 12, 46, 18, mix(C.aux, 0.08));
+      box(st.x - 2, wy - 11, 78, st.w + 4, 22, 22, mix(C.mill, 0.04));
+      var led = P(st.x + st.w / 2, wy - 12, 100);
+      var lc = st.live ? C.wire : '#888780';
+      out('<circle cx="' + n1(led[0]) + '" cy="' + n1(led[1]) + '" r="5" fill="' + lc +
+          '" stroke="' + mix(lc, -0.42) + '" stroke-width="0.8"/>');
+      return;
+    }
+
+    if (st.kind === 'dancer') {
+      box(st.x, y0, 0, st.w, ROWD, 20, C.plinth);
+      box(st.x + 6, y0 + 52, 20, st.w - 12, 18, 74, C.aux);
+      box(st.x + 10, y0 + 36, ZPL - 40, st.w - 20, 18, 8, mix(C.aux, -0.10));
+      roll(st.x + st.w / 2, wy - 11, wy + 11, ZPL - 34, 12, mix(C.steel, -0.02));
+      return;
+    }
+
+    if (st.kind === 'takeup' || st.kind === 'payoffSpool' || st.kind === 'takeupCoil') {
+      var coreless = st.kind === 'takeupCoil';
+      box(st.x, y0, 0, st.w, ROWD, 20, C.plinth);
+      box(st.x + 8, y0 + 5, 20, 20, ROWD - 10, 36, C.steel);
+      box(st.x + st.w - 28, y0 + 5, 20, 20, ROWD - 10, 36, C.steel);
+      reel(st.x + st.w / 2, y0 + 14, y0 + ROWD - 14, ZPL,
+           coreless ? 15 : 18, coreless ? 30 : 28, mix(C.steel, -0.10), !coreless);
+      // Traverse stroke: the take-up oscillates across the coil face.
+      var t0 = P(st.x + st.w / 2, y0 + 8, 6), t1 = P(st.x + st.w / 2, y0 + ROWD - 8, 6);
+      out('<path d="' + path([t0, t1]) + '" stroke="' + C.fl3 +
+          '" stroke-width="2" stroke-dasharray="5 4" fill="none" opacity="0.9"/>');
+      out('<circle cx="' + n1(t0[0]) + '" cy="' + n1(t0[1]) + '" r="3.2" fill="' + C.fl3 + '"/>');
+      out('<circle cx="' + n1(t1[0]) + '" cy="' + n1(t1[1]) + '" r="3.2" fill="' + C.fl3 + '"/>');
+      return;
+    }
+  }
+
+  // ═══ Screen-space labels ═════════════════════════════════════════════════
+  // Text is measured from character counts rather than the DOM, so the card
+  // sizes are stable whether the page is rendered or the file is checked
+  // headlessly.
+  function blockH(st) { return 40 + 15.5 * st.sub.length; }
+  function blockW(st) {
+    var i, w = st.name.length * 8.4;
+    for (i = 0; i < st.sub.length; i++) w = Math.max(w, st.sub[i].length * 7.25);
+    return Math.max(152, Math.round(w) + 26);
+  }
+
+  function labelLeader(st, bands, side) {
+    var anchor = P(st.x + st.w / 2, ROW[st.row].y0, side === 'up' ? st.top : 0);
+    var bandY = bands[st.tier - 1];
+    var elbow = side === 'up' ? bandY + 10 : bandY - 10;
+    out('<path class="leader" d="M' + n1(anchor[0]) + ',' + n1(anchor[1]) +
+        'L' + n1(anchor[0]) + ',' + n1(elbow) + 'L' + n1(st.lx) + ',' + n1(elbow) +
+        'L' + n1(st.lx) + ',' + n1(bandY) + '"/>');
+    out('<circle class="leader-dot" cx="' + n1(anchor[0]) + '" cy="' + n1(anchor[1]) + '" r="2.6"/>');
+  }
+
+  function labelCard(st, bands, side) {
+    var sx = st.lx, sy = bands[st.tier - 1];
+    var h = blockH(st), w = blockW(st);
+    var top = side === 'up' ? sy - h : sy;
+    var idw = 20 + st.id.length * 8.2, i;
+    out('<g class="station" data-i="' + STATIONS.indexOf(st) + '">');
+    out('<rect class="lbl-card" x="' + n1(sx - w / 2) + '" y="' + n1(top) + '" width="' + n1(w) +
+        '" height="' + n1(h) + '" rx="7"/>');
+    out('<rect x="' + n1(sx - idw / 2) + '" y="' + n1(top + 5) + '" width="' + n1(idw) +
+        '" height="17" rx="4" fill="' + ROW[st.row].tone + '"/>');
+    out('<text class="lbl-id on-plate" x="' + n1(sx) + '" y="' + n1(top + 17.6) +
+        '" text-anchor="middle">' + esc(st.id) + '</text>');
+    out('<text class="lbl-name" x="' + n1(sx) + '" y="' + n1(top + 38) +
+        '" text-anchor="middle">' + esc(st.name) + '</text>');
+    for (i = 0; i < st.sub.length; i++) {
+      out('<text class="lbl-sub" x="' + n1(sx) + '" y="' + n1(top + 38 + 15.5 * (i + 1)) +
+          '" text-anchor="middle">' + esc(st.sub[i]) + '</text>');
+    }
+    out('</g>');
+    bump(sx - w / 2 - 3, top - 3);
+    bump(sx + w / 2 + 3, top + h + 3);
+  }
+
+  // Leaders for a whole row are laid down before any of its cards, so that a
+  // leader crossing a card always passes behind it.
+  function labelRow(row, bands, side) {
+    var i;
+    for (i = 0; i < STATIONS.length; i++) if (STATIONS[i].row === row) labelLeader(STATIONS[i], bands, side);
+    for (i = 0; i < STATIONS.length; i++) if (STATIONS[i].row === row) labelCard(STATIONS[i], bands, side);
+  }
+
+  function callout(cx, cy, w, h, bgCls, txCls, lines) {
+    out('<rect x="' + n1(cx - w / 2) + '" y="' + n1(cy) + '" width="' + n1(w) + '" height="' + n1(h) +
+        '" rx="8" class="' + bgCls + '"/>');
+    var i;
+    for (i = 0; i < lines.length; i++) {
+      out('<text class="' + (i === 0 ? 'note-h ' : 'note-b ') + txCls + '" x="' + n1(cx) +
+          '" y="' + n1(cy + 21 + i * 17) + '" text-anchor="middle">' + esc(lines[i]) + '</text>');
+    }
+    bump(cx - w / 2 - 3, cy - 3);
+    bump(cx + w / 2 + 3, cy + h + 3);
+  }
+
+  // A caption tag floating over a machine. It carries its own dark plate
+  // because grey text on a grey body cannot be read.
+  function tag3d(x, y, z, lines) {
+    var a = P(x, y, z), i, w = 0;
+    for (i = 0; i < lines.length; i++) w = Math.max(w, lines[i].length * 7.1);
+    w = Math.round(w) + 22;
+    var h = 8 + 15 * lines.length;
+    out('<rect x="' + n1(a[0] - w / 2) + '" y="' + n1(a[1] - h) + '" width="' + n1(w) +
+        '" height="' + n1(h) + '" rx="5" fill="' + mix(C.plinth, -0.15) + '" opacity="0.94"/>');
+    for (i = 0; i < lines.length; i++) {
+      out('<text class="kit-txt" x="' + n1(a[0]) + '" y="' + n1(a[1] - h + 15 * (i + 1)) +
+          '" text-anchor="middle"' + (i ? ' font-weight="400" font-size="12"' : '') + '>' +
+          esc(lines[i]) + '</text>');
+    }
+  }
+
+  // ═══ Off-line spool route, store and anneal furnace ══════════════════════
+  function offLine() {
+    var AY = 252, AD = 76;
+
+    box(345, AY, 0, 128, AD, 14, C.plinth);
+    reel(380, AY + 12, AY + AD - 12, 46, 16, 26, mix(C.steel, -0.10), true);
+    reel(450, AY + 12, AY + AD - 12, 46, 16, 26, mix(C.steel, -0.10), true);
+
+    box(535, AY, 0, 185, AD, 92, mix(C.steel, -0.22));
+    box(558, AY - 1.2, 14, 58, 2, 42, mix(C.glow, -0.04));
+    box(535, AY, 92, 185, AD, 12, mix(C.steel, -0.04));
+    cyl('z', [690, AY + 38, 104], [690, AY + 38, 150], 11, mix(C.steel, -0.30));
+
+    tag3d(409, AY, 96, ['Spool store']);
+    tag3d(620, AY, 124, ['Anneal furnace', 'optional · off-line · OI-19']);
+
+    var RY = 222;
+    out('<path d="' + path(proj([[880, 640, 6], [880, RY, 6], [455, RY, 6], [75, RY, 6],
+        [75, 82, 6]])) + '" fill="none" stroke="' + C.edger +
+        '" stroke-width="3.4" stroke-dasharray="13 9" stroke-linejoin="round"/>');
+    var head = P(75, 86, 6), pre = P(75, 124, 6);
+    var ang = Math.atan2(head[1] - pre[1], head[0] - pre[0]) * 180 / Math.PI;
+    out('<g transform="translate(' + n1(head[0]) + ',' + n1(head[1]) + ') rotate(' + n1(ang) +
+        ')"><path d="M-13,-8 L3,0 L-13,8 Z" fill="' + C.edger + '"/></g>');
+
+    // Just above the route's turn, downstream of the furnace — the one stretch
+    // clear of both rows, the store, the furnace and the FL3 arc.
+    var mid = P(940, RY, 6);
+    callout(mid[0], mid[1] - 62, 300, 44, 'bg-warn', 'tx-warn',
+      ['Spool SP-##### leaves FL1 here',
+       'off-line · anneal optional · re-planned']);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  Build — painter's algorithm: back row, aisle, front row, then overlays.
+  // ═══════════════════════════════════════════════════════════════════════════
+  var i, st;
+
+  out('<g id="floor">');
+  pad(-40, 594, 1000, 164, 'pad-fl1');
+  pad(-40, 196, 1000, 164, 'pad-aisle');
+  pad(-40, -46, 850, 168, 'pad-fl2');
+  floorArrow(120, 400, 740);
+  floorArrow(60, 340, 104);
+  zonePlate('fl1', -16, 596, 430, 40);
+  zonePlate('fl2', -16, -42, 430, 40);
+  out('</g>');
+
+  // FL1 — its pass line first, so machine bodies occlude the wire correctly.
+  out('<g id="row-fl1">');
+  var y1 = wireY('fl1');
+  wirePath([[190, y1, ZPL], [707, y1, ZPL], [723, y1, ZPL - 22], [739, y1, ZPL], [866, y1, ZPL]]);
+  for (i = 0; i < STATIONS.length; i++) {
+    st = STATIONS[i];
+    if (st.row !== 'fl1') continue;
+    out('<g class="station" data-i="' + i + '">');
+    drawStation(st);
+    out('</g>');
+  }
+  // The overhead riser is drawn after the payoff, because it passes in front of it.
+  out('<path d="' + path(proj([[114, y1, 54], [114, y1, 112]])) + '" fill="none" stroke="' +
+      C.edger + '" stroke-width="3" stroke-dasharray="8 6"/>');
+  wirePath([[44, y1, 54], [44, y1, 116], [156, y1, 118], [190, y1, ZPL]]);
+  out('</g>');
+  var bFl1 = snap();
+
+  // The off-line aisle sits in front of FL1 and behind FL2.
+  out('<g id="offline">');
+  offLine();
+  out('</g>');
+
+  // FL2.
+  out('<g id="row-fl2">');
+  var y2 = wireY('fl2');
+  wirePath([[108, y2, ZPL], [176, y2, ZPL], [191, y2, ZPL - 22], [206, y2, ZPL],
+            [563, y2, ZPL], [578, y2, ZPL - 22], [593, y2, ZPL], [678, y2, ZPL]]);
+  for (i = 0; i < STATIONS.length; i++) {
+    st = STATIONS[i];
+    if (st.row !== 'fl2') continue;
+    out('<g class="station" data-i="' + i + '">');
+    drawStation(st);
+    out('</g>');
+  }
+  out('</g>');
+  var bAll = snap();
+
+  // FL3 — a route, not a machine, so it is drawn over the scene. It is routed
+  // up out of FM1 and across the aisle at z = 150, in the one channel that is
+  // clear of FL1's bases above and FM2's beam below. An arc straight from FM1
+  // to the TPO reads as material running backwards through FL1.
+  out('<g id="fl3" class="off">');
+  var Z3 = 150, AY3 = 196;
+  var r3 = proj([[630, y1, ZPL], [630, y1, Z3], [630, AY3, Z3],
+                 [100, AY3, Z3], [100, y2, ZPL]]);
+  out('<path d="' + path(r3) + '" fill="none" stroke="' + C.fl3 +
+      '" stroke-width="4.6" stroke-dasharray="15 10" stroke-linejoin="round" stroke-linecap="round"/>');
+  out('<circle cx="' + n1(r3[0][0]) + '" cy="' + n1(r3[0][1]) + '" r="6" fill="' + C.fl3 + '"/>');
+  out('<circle cx="' + n1(r3[4][0]) + '" cy="' + n1(r3[4][1]) + '" r="6" fill="' + C.fl3 + '"/>');
+  var ap3 = P(290, AY3, Z3), apx = ap3[0], apy = ap3[1];
+  out('<rect x="' + n1(apx - 92) + '" y="' + n1(apy - 14) +
+      '" width="184" height="26" rx="6" class="bg-purple"/>');
+  out('<text class="lbl-id tx-purple" x="' + n1(apx) + '" y="' + n1(apy + 4) +
+      '" text-anchor="middle">FL3 — CONTINUOUS</text>');
+  bump(apx - 96, apy - 18);
+  bump(apx + 96, apy + 16);
+  out('</g>');
+
+  // TKUP-1 is bypassed on FL3, and nothing else about FL1 changes.
+  out('<g id="bypassStamp" class="off">');
+  var bp = P(840, ROW.fl1.y0 + 39, 130);
+  out('<rect x="' + n1(bp[0] - 80) + '" y="' + n1(bp[1] - 17) +
+      '" width="160" height="26" rx="6" class="bg-danger"/>');
+  out('<text class="lbl-id tx-danger" x="' + n1(bp[0]) + '" y="' + n1(bp[1] + 1) +
+      '" text-anchor="middle">TKUP-1 BYPASSED</text>');
+  out('</g>');
+
+  // Labels: FL1 reads upward into three bands, FL2 downward into three.
+  var up = [bFl1.y0 - 30, bFl1.y0 - 112, bFl1.y0 - 194];
+  var down = [bAll.y1 + 38, bAll.y1 + 120, bAll.y1 + 202];
+  out('<g id="labels-fl1">');
+  labelRow('fl1', up, 'up');
+  out('</g><g id="labels-fl2">');
+  labelRow('fl2', down, 'down');
+  out('</g>');
+
+  // The FL3 explanation goes in the clear air right of the FL2 label bands.
+  out('<g id="fl3note" class="off">');
+  callout(bAll.x1 - 196, bAll.y1 + 46, 392, 78, 'bg-purple', 'tx-purple',
+    ['FL3 hybrid — FM1 feeds FM2 continuously',
+     'TKUP-1 bypassed · no intermediate anneal · no spool alpha',
+     'one PS-{alloy}-FL3-{seq} covers both mills',
+     'gauge trace stays real-time end to end']);
+  out('</g>');
+
+  // Flow note, in the empty air upstream of FL1.
+  out('<g id="flowNote">');
+  var fnx = bFl1.x0 + 24, fny = bFl1.y0 + 96;
+  out('<text class="flow-txt" x="' + n1(fnx) + '" y="' + n1(fny) + '">MATERIAL FLOW</text>');
+  out('<path class="tert-strk" d="M' + n1(fnx) + ',' + n1(fny + 15) + 'h118" stroke-width="2"/>');
+  out('<path class="tert-fill" d="M' + n1(fnx + 116) + ',' + n1(fny + 8) + 'l15,7l-15,7z"/>');
+  bump(fnx - 4, fny - 16);
+  bump(fnx + 136, fny + 26);
+  out('</g>');
+
+  // ═══ Mount ═══════════════════════════════════════════════════════════════
+  var svg = document.getElementById('scene');
+  var m = 24;
+  svg.setAttribute('viewBox', n1(BB.x0 - m) + ' ' + n1(BB.y0 - m) + ' ' +
+    n1(BB.x1 - BB.x0 + m * 2) + ' ' + n1(BB.y1 - BB.y0 + m * 2));
+  svg.innerHTML = S.join('\n');
+
+  // ═══ Specification table ═════════════════════════════════════════════════
+  function pill(v) {
+    var cls = /^No/.test(v) ? 'no' : /^Yes/.test(v) ? 'yes' : 'na';
+    return '<span class="pill ' + cls + '">' + esc(v) + '</span>';
+  }
+  function specRow(o, sub) {
+    return '<tr' + (sub ? ' class="sub"' : '') + '><td class="mono">' + esc(o.id) + '</td><td>' +
+      esc(o.line) + '</td><td>' + esc(o.role) + '</td><td>' + esc(o.cap) + '</td><td>' +
+      pill(o.bypass) + '</td></tr>';
+  }
+  var rows = [], j;
+  for (i = 0; i < STATIONS.length; i++) {
+    st = STATIONS[i];
+    if (st.hideSpec) continue;
+    rows.push(specRow(st, false));
+    if (st.id === 'FM2') for (j = 0; j < STAND_SPEC.length; j++) rows.push(specRow(STAND_SPEC[j], true));
+  }
+  for (i = 0; i < TAIL_SPEC.length; i++) rows.push(specRow(TAIL_SPEC[i], false));
+  document.getElementById('specBody').innerHTML = rows.join('');
+
+  // ═══ Tooltip ═════════════════════════════════════════════════════════════
+  var tip = document.getElementById('tip');
+  svg.addEventListener('mousemove', function (ev) {
+    var g = ev.target.closest ? ev.target.closest('g.station') : null;
+    if (!g) { tip.style.display = 'none'; return; }
+    var s = STATIONS[+g.getAttribute('data-i')];
+    tip.innerHTML = '<b>' + esc(s.id) + ' — ' + esc(s.name.replace(/^.*?—\s*/, '')) + '</b>' +
+      '<span class="k">Role</span> ' + esc(s.role) + '<br>' +
+      '<span class="k">Line</span> ' + esc(s.line) + '<br>' +
+      '<span class="k">Capacity</span> ' + esc(s.cap) + '<br>' +
+      '<span class="k">Bypassable</span> ' + esc(s.bypass);
+    tip.style.display = 'block';
+    var l = Math.min(ev.clientX + 16, window.innerWidth - tip.offsetWidth - 12);
+    var t = ev.clientY - tip.offsetHeight - 14;
+    if (t < 8) t = ev.clientY + 18;
+    tip.style.left = l + 'px';
+    tip.style.top = t + 'px';
+  });
+  svg.addEventListener('mouseleave', function () { tip.style.display = 'none'; });
+
+  // ═══ View modes ══════════════════════════════════════════════════════════
+  var G = {};
+  ['row-fl1', 'row-fl2', 'labels-fl1', 'labels-fl2', 'offline', 'fl3', 'fl3note', 'bypassStamp']
+    .forEach(function (k) { G[k] = document.getElementById(k); });
+
+  function setMode(mode) {
+    var dim1 = mode === 'fl2', dim2 = mode === 'fl1';
+    G['row-fl1'].classList.toggle('dim', dim1);
+    G['labels-fl1'].classList.toggle('dim', dim1);
+    G['row-fl2'].classList.toggle('dim', dim2);
+    G['labels-fl2'].classList.toggle('dim', dim2);
+    // The spool route is the FL1 to FL2 handover; FL3 replaces it.
+    G.offline.classList.toggle('dim', mode === 'fl3');
+    G.fl3.classList.toggle('off', mode === 'fl1' || mode === 'fl2');
+    G.fl3.classList.toggle('dim', mode === 'all');
+    G['fl3note'].classList.toggle('off', mode !== 'fl3');
+    G.bypassStamp.classList.toggle('off', mode !== 'fl3');
+    var btns = document.querySelectorAll('#modes button'), k;
+    for (k = 0; k < btns.length; k++) {
+      btns[k].setAttribute('aria-pressed', String(btns[k].getAttribute('data-mode') === mode));
+    }
+  }
+  document.getElementById('modes').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button');
+    if (b) setMode(b.getAttribute('data-mode'));
+  });
+  setMode('all');
+})();
+</script>
+</body>
+</html>

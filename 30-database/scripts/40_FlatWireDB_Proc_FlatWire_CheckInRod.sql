@@ -17,8 +17,8 @@
   Status       : Draft - transaction_name, coil_skid_status and the coils rod-row stamp
                  pending sign-off (see DECISIONS D3, D4, D5 and Q37-Q39)
   Story        : FW-220 (the shared half of FL1/FL3 rod check-in)
-  Specification: MVP-1/ProjectPlan/Architecture/Integration.md Sec 8.0
-                 MVP-1/ProjectPlan/Backend/tasks/FW-220.md
+  Specification: 20-architecture/Integration.md Sec 8.0
+                 40-backend/tasks/FW-220.md
                  FR-077, FR-519 - FR-528
 
   PURPOSE
@@ -88,8 +88,10 @@
   different instances, verified by query. In THAT topology this procedure still runs, but the
   caller cannot hold one transaction across both halves and the design silently degrades to the
   two-transaction shape it exists to replace. Deploy FlatWireDB to the shared instance FIRST and
-  prove it with the co-location query in 20_FlatWire_Grants.sql. The (localdb) target in CLAUDE.md's
-  deploy snippet is a developer convenience and is not this topology.
+  prove it with the co-location query in 20_FlatWire_Grants.sql. A (localdb) target is a developer
+  convenience and is not this topology - CLAUDE.md and [DEP 2] both name DEV00164-001. (This read
+  "the (localdb) target in CLAUDE.md's deploy snippet" until 8 Sep 2026; there is no such snippet
+  now.)
 
       one SqlConnection, one SqlTransaction
         EF Core : Rod mirror upsert, FlatWireRun (Running), RodCheckin (PlcTagsPushed = 0),
@@ -422,39 +424,48 @@ BEGIN
     SET @routingsRowCopied    = 0;
     SET @wipCoilOrdersWritten = 0;
 
-    SELECT @userId = userid
-    FROM   [united_db].[dbo].[users] WITH (NOLOCK)
-    WHERE  BadgeNo = @badgeNo;
-
-    SET @logInfo = 'EXEC FlatWire_CheckInRod '
-                 + ISNULL(@rodAlpha, 'NULL')             + ', '
-                 + ISNULL(@runId, 'NULL')                + ', '
-                 + ISNULL(@machineName, 'NULL')               + ', station='
-                 + ISNULL(@station, 'NULL')              + ', payoff='
-                 + ISNULL(CAST(@payoffPosition AS VARCHAR(2)), 'NULL') + ', order='
-                 + ISNULL(CAST(@orderNo AS VARCHAR(10)), 'NULL')
-                 + ISNULL(@relLetter, ' ')               + ', mfgOrder='
-                 + ISNULL(CAST(@mfgOrderNo AS VARCHAR(10)), 'NULL') + '/'
-                 + ISNULL(CAST(@seqNo AS VARCHAR(6)), 'NULL')       + ', net='
-                 + ISNULL(CAST(@netWeightLb AS VARCHAR(10)), 'NULL');
-
-    EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
-                                            , @sp_name             = 'FlatWire_CheckInRod'
-                                            , @table_name          = 'Entered into sp'
-                                            , @log_info            = @logInfo
-                                            , @operation_performed = 'Execute'
-                                            , @user_id             = @userId;
-
     BEGIN TRY
         /*--------------------------------------------------------------------------------------
           1. Validate. Fail before writing anything, not half way through.
              C9: none of the target tables has a CHECK or FK, so every rule lives here.
         --------------------------------------------------------------------------------------*/
 
+        SET @logInfo = 'EXEC FlatWire_CheckInRod '
+                     + ISNULL(@rodAlpha, 'NULL')             + ', '
+                     + ISNULL(@runId, 'NULL')                + ', '
+                     + ISNULL(@machineName, 'NULL')               + ', station='
+                     + ISNULL(@station, 'NULL')              + ', payoff='
+                     + ISNULL(CAST(@payoffPosition AS VARCHAR(2)), 'NULL') + ', order='
+                     + ISNULL(CAST(@orderNo AS VARCHAR(10)), 'NULL')
+                     + ISNULL(@relLetter, ' ')               + ', mfgOrder='
+                     + ISNULL(CAST(@mfgOrderNo AS VARCHAR(10)), 'NULL') + '/'
+                     + ISNULL(CAST(@seqNo AS VARCHAR(6)), 'NULL')       + ', net='
+                     + ISNULL(CAST(@netWeightLb AS VARCHAR(10)), 'NULL');
+
         -- 1a. The transaction assertion, FIRST, because everything after it assumes the caller
         --     is holding a transaction that a THROW will doom. See THE TRANSACTION BOUNDARY.
         IF @@TRANCOUNT = 0
             THROW 52001, 'FlatWire_CheckInRod must be called inside the caller''s transaction: the FlatWireDB and shared writes commit together. See THE TRANSACTION BOUNDARY (D2).', 1;
+
+        /*--------------------------------------------------------------------------------------
+          ⚠ MOVED INSIDE THE TRY, AND BELOW THE ASSERTION (8 Sep 2026).
+          The users lookup and the entry audit are the FIRST cross-database statements this
+          procedure runs, and they used to sit outside the TRY entirely. So a permission or
+          connectivity failure on them -- exactly what 20_FlatWire_Grants.sql exists to prevent --
+          was unhandled and unlogged, and the "Entered into sp" row was written even for calls the
+          assertion above then rejected as illegal. @logInfo is still built ABOVE the assertion so
+          the CATCH has its context whatever fails.
+        --------------------------------------------------------------------------------------*/
+        SELECT @userId = userid
+        FROM   [united_db].[dbo].[users] WITH (NOLOCK)
+        WHERE  BadgeNo = @badgeNo;
+
+        EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+                                                , @sp_name             = 'FlatWire_CheckInRod'
+                                                , @table_name          = 'Entered into sp'
+                                                , @log_info            = @logInfo
+                                                , @operation_performed = 'Execute'
+                                                , @user_id             = @userId;
 
         SET @rodAlpha = LTRIM(RTRIM(ISNULL(@rodAlpha, '')));
         SET @machineName   = LTRIM(RTRIM(ISNULL(@machineName, '')));
@@ -1028,18 +1039,35 @@ BEGIN
                , @errMessage   = 'FlatWire_CheckInRod failed for ' + ISNULL(@rodAlpha, 'NULL')
                                + ' (run ' + ISNULL(@runId, 'NULL') + '). Error: ' + ERROR_MESSAGE();
 
-        INSERT INTO [united_db].[dbo].[EventErrorLog]
-                ( [ObjectName], [ErrNumber], [ErrSeverity], [ErrState]
-                , [EventDescription], [StartTime], [UserName] )
-        VALUES  ( @spObjectName, @errNo, @errSev, @errState
-                , @errMessage, GETDATE(), SUSER_NAME() );
 
-        EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
-                                                , @sp_name             = 'FlatWire_CheckInRod'
-                                                , @table_name          = 'Failed - caller transaction doomed'
-                                                , @log_info            = @logInfo
-                                                , @operation_performed = 'Error'
-                                                , @user_id             = @userId;
+        /*--------------------------------------------------------------------------------------
+          ⚠ XACT_STATE() = -1 IS THE NORMAL CASE HERE, AND IT IS WHY THIS GUARD EXISTS.
+          XACT_ABORT is ON, so an error inside TRY leaves the caller's transaction UNCOMMITTABLE.
+          A write to ANY log table in that state fails with Msg 3930, and because that failure is
+          raised from inside CATCH it propagates immediately -- REPLACING the real error and never
+          reaching the THROW below. The whole 52001-52021 error block was therefore unreachable, and
+          the EventErrorLog row that matters most was never written.
+          Guarded, the error survives and the caller can map it. When the transaction is doomed
+          there is nowhere durable to log to, so the reason goes to the session output instead and
+          the THROW carries it out -- which is the contract the header promises.
+        --------------------------------------------------------------------------------------*/
+        IF XACT_STATE() <> -1
+        BEGIN
+            INSERT INTO [united_db].[dbo].[EventErrorLog]
+                    ( [ObjectName], [ErrNumber], [ErrSeverity], [ErrState]
+                    , [EventDescription], [StartTime], [UserName] )
+            VALUES  ( @spObjectName, @errNo, @errSev, @errState
+                    , @errMessage, GETDATE(), SUSER_NAME() );
+
+            EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+                                                    , @sp_name             = 'FlatWire_CheckInRod'
+                                                    , @table_name          = 'Failed - caller transaction doomed'
+                                                    , @log_info            = @logInfo
+                                                    , @operation_performed = 'Error'
+                                                    , @user_id             = @userId;
+        END
+        ELSE
+            PRINT @errMessage + ' [not logged: caller transaction uncommittable (XACT_STATE = -1); the THROW below carries the reason out]';
 
         -- The caller must surface this for operator retry and must NOT swallow it.
         THROW;

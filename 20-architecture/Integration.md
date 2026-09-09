@@ -129,7 +129,9 @@ It runs as the **first statement inside the caller's transaction**, before any o
 >
 > **FL1 → FL2 traceability, for the same screen.** A spool carries **one child alpha per rod
 > segment** (`SpoolTraceability.ChildAlpha`; `Q57`, 22 Aug 2026), each registered in
-> `proddb..coils` by the 26 Aug design, with the order set on `SpoolOrder` and the selection on
+> `proddb..coils` by the 26 Aug design, with the order set on `SpoolOrder` — ⚠ **which since
+> `D-57` (8 Sep 2026) is keyed on the SEGMENT, so it names which rod's material each order took,
+> and carries the boundary in both segment-local pounds and spool-local feet** — and the selection on
 > `SpoolCheckin.OrderId`. ⚠ **`SP-#####` is a `FlatWireDB` identity, not a `coils` one** — the
 > resolution order is `SpoolProcessing.Alpha` → `SpoolTraceability` → the child alphas →
 > `proddb..coils`, never a direct `coils` lookup on the spool number. ⛔ **And the FL1 writer is

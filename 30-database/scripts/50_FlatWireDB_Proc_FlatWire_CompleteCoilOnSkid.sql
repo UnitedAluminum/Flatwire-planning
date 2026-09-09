@@ -16,8 +16,8 @@
   Status       : Draft - transaction_name, coil_status, smp_no and the coil_slit_cuts sentinels
                  pending sign-off (see DECISIONS D3, D4, D8, D9 and Q34-Q36)
   Story        : FW-219 (FL2/FL3 run-end write-back into the shared schema)
-  Specification: MVP-1/ProjectPlan/Architecture/Integration.md Sec 8.1
-                 MVP-1/ProjectPlan/Backend/tasks/FW-219.md
+  Specification: 20-architecture/Integration.md Sec 8.1
+                 40-backend/tasks/FW-219.md
                  FR-509 - FR-518
 
   PURPOSE
@@ -396,6 +396,22 @@ BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;                                      -- absent from CreateSkid_MoveCutsOnSkid
 
+    /*----------------------------------------------------------------------------------------------
+      ⚠ THIS PROCEDURE OWNS ITS TRANSACTION, AND UNTIL NOW IT NEVER SAID SO.
+      THE TRANSACTION BOUNDARY (above) states the contract in prose; its two siblings ENFORCE
+      theirs -- FlatWire_CheckInRod THROWs 52001 and FlatWire_ReverseReqsum THROWs 54001 when
+      @@TRANCOUNT = 0. This one asserted nothing, so a caller that wrapped it in a transaction got:
+        - BEGIN TRANSACTION below merely NESTING (@@TRANCOUNT 1 -> 2);
+        - the COMMIT only DECREMENTING, so the "committed" log line and the returned part set
+          were both untrue while the work sat uncommitted; and
+        - the ROLLBACK in CATCH discarding THE CALLER'S ENTIRE TRANSACTION, including FlatWireDB
+          writes this procedure knows nothing about -- the precise failure FlatWire_CheckInRod's
+          CATCH comment says the design exists to remove.
+      Fail loudly instead, before anything is written.
+    ----------------------------------------------------------------------------------------------*/
+    IF @@TRANCOUNT > 0
+        THROW 51000, 'FlatWire_CompleteCoilOnSkid: must be called OUTSIDE a caller transaction - it opens and owns its own (THE TRANSACTION BOUNDARY). Commit the FlatWireDB writes first, then call this.', 1;
+
     /*------------------------------------------------------------------------------------------
       0. Constants, locals and the audit-trail entry
     ------------------------------------------------------------------------------------------*/
@@ -421,6 +437,7 @@ BEGIN
           , @errNo            INT
           , @partCount        INT         = 0
           , @partsToWrite     INT         = 0
+          , @partsWeightExact DECIMAL(12,2)
           , @partId           INT
           , @partRod          CHAR(9)
           , @partSegment      VARCHAR(20)
@@ -430,6 +447,18 @@ BEGIN
           , @errSev           INT
           , @errState         INT
           , @spObjectName     SYSNAME;
+
+    /*----------------------------------------------------------------------------------------------
+      ⚠ BEGIN TRY OPENS HERE, NOT AFTER THE ENTRY AUDIT (moved 8 Sep 2026).
+      The parts read with its 51019/51020 THROWs, the cross-database users lookup and the
+      "Entered into sp" audit all used to sit OUTSIDE the TRY. Consequences, all real:
+        - 51019 (no CoilTraceability rows) and 51020 (ORD023) -- the two errors most likely to
+          fire on a retry -- escaped the CATCH entirely: no EventErrorLog row, no log entry;
+        - a permission or connectivity failure on the FIRST cross-database statement, which is
+          exactly what 20_FlatWire_Grants.sql exists to prevent, was unhandled and unlogged; and
+        - the entry audit was written for calls that were then rejected as illegal.
+    ----------------------------------------------------------------------------------------------*/
+    BEGIN TRY
 
         /*--------------------------------------------------------------------------------------
           THE PARTS OF THIS COIL.  (change [S], Q89)
@@ -470,19 +499,39 @@ BEGIN
              , @partsToWrite = SUM(CASE WHEN [AlreadyWritten] = 0 THEN 1 ELSE 0 END)
         FROM   @parts;
 
+        -- The parts' weight BEFORE any rounding. @parts.WeightLb is deliberately INT because the
+        -- shared-schema writes downstream are INT, but rounding EACH part and then summing is not
+        -- the same number as summing and rounding once -- see ORD023 below.
+        SELECT @partsWeightExact = SUM(ISNULL(ct.[SegmentWeightLb], 0))
+        FROM   [dbo].[CoilTraceability] AS ct
+        WHERE  ct.[CoilAlpha] = @coilAlpha;
+
         IF @partCount = 0
             THROW 51019, 'FlatWire_CompleteCoilOnSkid: no CoilTraceability rows for @coilAlpha - the FlatWireDB writes have not committed, or the alpha is wrong.', 1;
 
-        -- ORD023, and it is the only detector. A part weight that repeats the coil total instead
-        -- of splitting it double-counts on the skid and in cost, and no shared-schema guard sees it.
-        IF (SELECT SUM([WeightLb]) FROM @parts) <> @netWeightLb
+        /*--------------------------------------------------------------------------------------
+          ORD023, and it is the only detector. A part weight that repeats the coil total instead
+          of splitting it double-counts on the skid and in cost, and no shared-schema guard sees it.
+
+          ⚠ COMPARED IN DECIMAL, WITH A ONE-POUND TOLERANCE, AND BOTH HALVES OF THAT MATTER.
+          This read SUM([WeightLb]) <> @netWeightLb, which rounded EVERY PART to INT and then
+          summed. Two parts of 144.90 lb became 145 + 145 = 290 against a true coil weight of
+          289.80 -- so the only seeded ORD023 fixture (FW-00421-C01) could not pass its own
+          detector, and neither could FW-00600-C01. Summing first and rounding once removes that.
+          The tolerance is the second half: @netWeightLb is an INT parameter, so a caller holding
+          a DECIMAL(8,2) quantises 289.80 to either 289 or 290 depending on whether it rounds or
+          truncates, and NEITHER is an apportionment error. Anything under a pound is that
+          quantisation; a repeated split is out by a whole multiple of the coil weight, so this
+          still catches exactly what it was written to catch.
+        --------------------------------------------------------------------------------------*/
+        IF ABS(ISNULL(@partsWeightExact, 0) - @netWeightLb) >= 1.0
             THROW 51020, 'FlatWire_CompleteCoilOnSkid: the part weights do not sum to @netWeightLb - a split was repeated, not apportioned (ORD023).', 1;
 
-    SELECT @userId = userid
-    FROM   [united_db].[dbo].[users] WITH (NOLOCK)
-    WHERE  BadgeNo = @badgeNo;
+        SELECT @userId = userid
+        FROM   [united_db].[dbo].[users] WITH (NOLOCK)
+        WHERE  BadgeNo = @badgeNo;
 
-    SET @logInfo = 'EXEC FlatWire_CompleteCoilOnSkid '
+        SET @logInfo = 'EXEC FlatWire_CompleteCoilOnSkid '
                  + ISNULL(@coilAlpha, 'NULL')            + ', '
                  + ISNULL(@runId, 'NULL')                + ', '
                  + ISNULL(@machineName, 'NULL')               + ', '
@@ -503,7 +552,6 @@ BEGIN
                                             , @operation_performed = 'Execute'
                                             , @user_id             = @userId;
 
-    BEGIN TRY
         /*--------------------------------------------------------------------------------------
           1. Validate. Fail before writing anything, not half way through.
              C12: none of the target tables has a CHECK or FK, so every rule lives here.

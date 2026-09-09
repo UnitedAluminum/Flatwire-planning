@@ -13,8 +13,8 @@
   Status       : Draft - the DELETE needs sign-off before a shared environment (Q40).
                  Everything else is a reset to a value the column already held.
   Story        : FW-221 (station release and reqsum reversal)
-  Specification: MVP-1/ProjectPlan/Architecture/Architecture.md Sec 10 (closing line)
-                 MVP-1/ProjectPlan/Architecture/Integration.md Sec 8.0, OI-01
+  Specification: 20-architecture/Architecture.md Sec 10 (closing line)
+                 20-architecture/Integration.md Sec 8.0, OI-01
 
   PURPOSE
   -------
@@ -201,33 +201,42 @@ BEGIN
     SET @routingsReset        = 0;
     SET @stationReleased      = 0;
 
-    SELECT @userId = userid
-    FROM   [united_db].[dbo].[users] WITH (NOLOCK)
-    WHERE  BadgeNo = @badgeNo;
-
-    SET @logInfo = 'EXEC FlatWire_ReverseReqsum '
-                 + ISNULL(@rodAlpha, 'NULL')             + ', order='
-                 + ISNULL(CAST(@orderNo AS VARCHAR(10)), 'NULL')
-                 + ISNULL(@relLetter, ' ')               + ', mfgOrder='
-                 + ISNULL(CAST(@mfgOrderNo AS VARCHAR(10)), 'NULL') + '/'
-                 + ISNULL(CAST(@seqNo AS VARCHAR(6)), 'NULL')       + ', station='
-                 + ISNULL(@station, 'NULL')              + ', mode='
-                 + ISNULL(@checkoutMode, 'NULL')         + ', footage='
-                 + ISNULL(CAST(@footageAtCheckout AS VARCHAR(10)), 'NULL');
-
-    EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
-                                            , @sp_name             = 'FlatWire_ReverseReqsum'
-                                            , @table_name          = 'Entered into sp'
-                                            , @log_info            = @logInfo
-                                            , @operation_performed = 'Execute'
-                                            , @user_id             = @userId;
-
     BEGIN TRY
         /*--------------------------------------------------------------------------------------
           1. Validate.
         --------------------------------------------------------------------------------------*/
+        SET @logInfo = 'EXEC FlatWire_ReverseReqsum '
+                     + ISNULL(@rodAlpha, 'NULL')             + ', order='
+                     + ISNULL(CAST(@orderNo AS VARCHAR(10)), 'NULL')
+                     + ISNULL(@relLetter, ' ')               + ', mfgOrder='
+                     + ISNULL(CAST(@mfgOrderNo AS VARCHAR(10)), 'NULL') + '/'
+                     + ISNULL(CAST(@seqNo AS VARCHAR(6)), 'NULL')       + ', station='
+                     + ISNULL(@station, 'NULL')              + ', mode='
+                     + ISNULL(@checkoutMode, 'NULL')         + ', footage='
+                     + ISNULL(CAST(@footageAtCheckout AS VARCHAR(10)), 'NULL');
+
         IF @@TRANCOUNT = 0
             THROW 54001, 'FlatWire_ReverseReqsum must be called inside the caller''s transaction: the FlatWireDB checkout record and the shared reversal commit together. See THE TRANSACTION BOUNDARY.', 1;
+
+        /*--------------------------------------------------------------------------------------
+          ⚠ MOVED INSIDE THE TRY, AND BELOW THE ASSERTION (8 Sep 2026).
+          The users lookup and the entry audit are the FIRST cross-database statements this
+          procedure runs, and they used to sit outside the TRY entirely. So a permission or
+          connectivity failure on them -- exactly what 20_FlatWire_Grants.sql exists to prevent --
+          was unhandled and unlogged, and the "Entered into sp" row was written even for calls the
+          assertion above then rejected as illegal. @logInfo is still built ABOVE the assertion so
+          the CATCH has its context whatever fails.
+        --------------------------------------------------------------------------------------*/
+        SELECT @userId = userid
+        FROM   [united_db].[dbo].[users] WITH (NOLOCK)
+        WHERE  BadgeNo = @badgeNo;
+
+        EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+                                                , @sp_name             = 'FlatWire_ReverseReqsum'
+                                                , @table_name          = 'Entered into sp'
+                                                , @log_info            = @logInfo
+                                                , @operation_performed = 'Execute'
+                                                , @user_id             = @userId;
 
         SET @rodAlpha = LTRIM(RTRIM(ISNULL(@rodAlpha, '')));
         SET @station  = LTRIM(RTRIM(ISNULL(@station, '')));
@@ -357,18 +366,35 @@ BEGIN
                                + ' (order ' + ISNULL(CAST(@orderNo AS VARCHAR(10)), 'NULL') + '). Error: '
                                + ERROR_MESSAGE();
 
-        INSERT INTO [united_db].[dbo].[EventErrorLog]
-                ( [ObjectName], [ErrNumber], [ErrSeverity], [ErrState]
-                , [EventDescription], [StartTime], [UserName] )
-        VALUES  ( @spObjectName, @errNo, @errSev, @errState
-                , @errMessage, GETDATE(), SUSER_NAME() );
 
-        EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
-                                                , @sp_name             = 'FlatWire_ReverseReqsum'
-                                                , @table_name          = 'Failed - caller transaction doomed'
-                                                , @log_info            = @logInfo
-                                                , @operation_performed = 'Error'
-                                                , @user_id             = @userId;
+        /*--------------------------------------------------------------------------------------
+          ⚠ XACT_STATE() = -1 IS THE NORMAL CASE HERE, AND IT IS WHY THIS GUARD EXISTS.
+          XACT_ABORT is ON, so an error inside TRY leaves the caller's transaction UNCOMMITTABLE.
+          A write to ANY log table in that state fails with Msg 3930, and because that failure is
+          raised from inside CATCH it propagates immediately -- REPLACING the real error and never
+          reaching the THROW below. The whole 54001-54020 error block was therefore unreachable, and
+          the EventErrorLog row that matters most was never written.
+          Guarded, the error survives and the caller can map it. When the transaction is doomed
+          there is nowhere durable to log to, so the reason goes to the session output instead and
+          the THROW carries it out -- which is the contract the header promises.
+        --------------------------------------------------------------------------------------*/
+        IF XACT_STATE() <> -1
+        BEGIN
+            INSERT INTO [united_db].[dbo].[EventErrorLog]
+                    ( [ObjectName], [ErrNumber], [ErrSeverity], [ErrState]
+                    , [EventDescription], [StartTime], [UserName] )
+            VALUES  ( @spObjectName, @errNo, @errSev, @errState
+                    , @errMessage, GETDATE(), SUSER_NAME() );
+
+            EXEC [CommonDB].[dbo].[Logging_Information_In_Table] @module_name         = 'FlatWire'
+                                                    , @sp_name             = 'FlatWire_ReverseReqsum'
+                                                    , @table_name          = 'Failed - caller transaction doomed'
+                                                    , @log_info            = @logInfo
+                                                    , @operation_performed = 'Error'
+                                                    , @user_id             = @userId;
+        END
+        ELSE
+            PRINT @errMessage + ' [not logged: caller transaction uncommittable (XACT_STATE = -1); the THROW below carries the reason out]';
 
         THROW;
     END CATCH

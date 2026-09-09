@@ -1,7 +1,7 @@
 # Flat Wire Mill — Real-Time Architecture and the FlatWireHub Contract
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 28, 2026 · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
+**Last Updated:** September 9, 2026 (`G120` resolved) — ⛔ **§5.3 "The FL2 rule" is WITHDRAWN.** `FL2Data` carries `GaugeReading` and `WidthReading` like every other group; the instruction not to wait for them is reversed. ⚠ **What replaces it is cadence, not suppression** — FL2 at **4 s**, so **do not batch it**, render footage gaps as gaps, and re-choose any *N-consecutive-out-of-spec* rule per line *(previously August 28, 2026 · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.)*
 **Document Type:** Real-time design and the hub contract
 **Status:** Baselined for build
 **Owner:** Architecture / Real-time stream
@@ -45,7 +45,7 @@ flowchart LR
 - The broadcast loop **drains on a fixed cadence** and sends **batched arrays** per line group, collapsing thousands of AGC samples per second into a steady, bounded message rate.
 - **Coalesce / delta:** `ComponentStatus` and `LineStatus` are sent only on change; hot numeric channels are decimated to the cadence.
 - **Split by frequency:** hot telemetry batched; rare domain events sent immediately, unbatched. **`PayoffStateChanged` must never enter the ~100 ms telemetry batch** — a bay changing hands is an operator-visible state transition, not a sampled reading.
-- **FL2 standalone suppresses the batched gauge/width channels** — its historical profile is a REST query. Status and marker events still flow.
+- **All three lines publish gauge and width; FL2 does so at 4 s rather than ~10 Hz, and is therefore not batched.** *(This bullet read "FL2 standalone suppresses the batched gauge/width channels" until 9 Sep 2026 — see §5.3, withdrawn.)*
 
 > **The simulator enters this pipeline at the channel and changes nothing downstream of it.** `FW-203` and, after it, `[SIM]`'s in-process adapter (`FW-211`) publish `Reading` values into the **same bounded channel** the real ingest publishes into, at the same cadence — so the broadcast loop, the groups and **the whole of §5 are unchanged by simulation**. That is a rule, not an observation: `[SIM §2.1]` states that if the simulator ever needs a change to `IFlatWireClient` or to the `Reading` shape, **the contract is wrong and the contract gets fixed.** It is also why `FW-150` and `FW-151` are not reduced for the trial. `FW-217`'s sidecar enters one stage earlier still, at the OPC endpoint, so it exercises `FW-N05` as well.
 
@@ -76,7 +76,7 @@ Known targets: **1-second default push interval, configurable to 5/10/30 s, with
 
 ### 9.3 Real-time interface — `FlatWireHub`
 
-**Fourteen** server→client events plus **six** run event markers, on per-line groups `FL1Data` / `FL2Data` / `FL3Data`. Full payloads, cadences and consumers in `[SIG §5]`. *(This read "Ten" until 27 Aug 2026 — it was the count before events 11 and 12 were promoted on 14 Aug and events 13 and 14 added on 22 Aug. It is the third site `PP-04` should have been tracking, and the only one inside this document.)* The requirement-level constraints are `NFR005`, `NFR006`, `NFR007` in §6.1, and `FR-120` (FL2 broadcasts `null` live gauge and width).
+**Fourteen** server→client events plus **six** run event markers, on per-line groups `FL1Data` / `FL2Data` / `FL3Data`. Full payloads, cadences and consumers in `[SIG §5]`. *(This read "Ten" until 27 Aug 2026 — it was the count before events 11 and 12 were promoted on 14 Aug and events 13 and 14 added on 22 Aug. It is the third site `PP-04` should have been tracking, and the only one inside this document.)* The requirement-level constraints are `NFR005`, `NFR006` and `NFR007` in §6.1. *(`FR-120` — FL2 broadcasts `null` live gauge and width — was cited here until 9 Sep 2026 and is **superseded**; FL2 now publishes both channels at 4 s. See §5.3.)*
 
 ---
 
@@ -164,9 +164,19 @@ A strongly-typed `Hub<IFlatWireClient>` — **no magic-string method names.**
 > same rod, because the acknowledgement is what starts it. The rod is not dismounted and nothing is
 > scanned, so this event is the only signal the screen gets that the boundary has been crossed.
 
-### 5.3 The FL2 rule
+### 5.3 The FL2 rule — ⛔ WITHDRAWN 9 Sep 2026
 
-**FL2 standalone suppresses the batched gauge and width channels entirely.** Its historical profile is a REST query (`GET /run/{runId}/gaugetrace`). Status and marker events still flow. A client subscribed to `FL2Data` must not wait for `GaugeReading` — it will never arrive, and treating its absence as a fault is a defect.
+~~**FL2 standalone suppresses the batched gauge and width channels entirely.** Its historical profile is a REST query (`GET /run/{runId}/gaugetrace`). Status and marker events still flow. A client subscribed to `FL2Data` must not wait for `GaugeReading` — it will never arrive, and treating its absence as a fault is a defect.~~
+
+⛔ **There is no FL2 rule any more. `FL2Data` carries `GaugeReading` and `WidthReading` like every other line group.** This section existed only to serve `FR-120`, which was superseded when assumption `A3` of `[PLC §14]` was retired — see `[REQ]` `FR-120` and `G120`. **A client subscribed to `FL2Data` should now expect both channels**, and the previous instruction not to wait for them is reversed.
+
+⚠ **What replaces it is a cadence difference, not a suppression.** FL2 publishes gauge and width at **4 s**; FL1 and FL3 at ~10 Hz.
+
+- **Do not batch the FL2 stream.** The ~100 ms telemetry batch exists to coalesce a hot channel. At one sample every 4 s there is nothing to coalesce, and batching only adds latency to a reading the operator is already waiting on.
+- ⛔ **Any *N-consecutive-out-of-spec* rule must be re-chosen per line, not shared.** On FL1 four consecutive readings is under half a second; on FL2 it is **16 seconds of production**. Inheriting FL1's threshold silently multiplies the scrap window by forty.
+- **The trace is footage-indexed**, so a 4 s sample leaves real gaps in footage at speed. The chart must show them as gaps rather than interpolating a straight line through unmeasured wire.
+
+✅ **The REST profile query survives, with a different job.** `GET /run/{runId}/gaugetrace` is no longer how FL2 renders its own trace — it serves the **Gauge-Trace / Gauge-CPK / cut-traceability reports** (`G3`, `D-12`), and it supplies the **recorded profile a spool carries into FL2** from the FL1 pass that produced it, which the operator reviews at check-in. ⚠ **That check-in profile is a different artefact from FL2's live trace and is unaffected by this withdrawal.**
 
 ### 5.4 Run event markers
 
@@ -206,6 +216,8 @@ Specified in [`SpoolCompletionNotification.md`](../10-requirements/screens/Spool
 | `SpoolWeightMilestone` | line, run, spool, milestone (75/90/100), actual, target | Raised **server-side on crossing**, not client-side on a threshold check | **Unpublished** — Part A |
 | ~~`SpoolCompletionPromptDue`~~ | — | — | ✅ **Promoted to §5.2 event 11** (14 Aug 2026) |
 | ~~`SpoolCompletionPromptResolved`~~ | — | — | ✅ **Promoted to §5.2 event 12** (14 Aug 2026) |
+
+> ➕ **A THIRD CONSUMER ARRIVED ON 8 SEP 2026, AND IT HAS NO EVENT.** `Q20` settled that **only the unacknowledged 100 % milestone** is mirrored to the supervisor — not the whole ladder — recorded as `R-13` / `A-11` / `D15` in [`SpoolCompletionNotification.md`](../10-requirements/screens/SpoolCompletionNotification.md). ⚠ **Neither event above carries it.** `SpoolWeightMilestone` fires *on crossing*, and the supervisor case is the opposite — it fires when a crossing has gone **un**acknowledged for some interval, so it is a timer on server-held state, not a crossing. ⚠ **And there is no supervisor group to send it to:** §5.5's events are addressed to a line's operator sessions, and `D-38` settled that there is **no dedicated Supervisor Monitor** screen, so the target surface is Dashboard 1. ⛔ **Nothing is specified here yet** — this note records the requirement and its shape, and the event contract is owed. `OI-75` asks the same question one level up for the stop **prompt**, and the two should be designed together rather than separately: both are *"a decision nobody answered while the line sat at target"*. Carried on `FW-N02`.
 
 **Part A is `Should` and explicitly *"advisory and non-blocking"***, so leaving its two events unpublished is a scope decision rather than an omission — it is deferred out of the trial run (`[TRP §4]`) and remains owned by `FW-N02`. **Part B was neither:** `FR-140`–`FR-149` are `Must` and `FR-144` is a durability requirement on the transport itself, which is why it could not stay in a section headed *"not yet in the published contract"*.
 

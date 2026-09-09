@@ -218,7 +218,7 @@ step 2 has run.
 | # | Step | Artifact |
 |---|---|---|
 | **0** | **Pre-flight: prove co-location and isolation.** `FlatWireDB` must sit on the **same instance** as `united_db` / `proddb` / `SlitterDB` / `CommonDB` / `wiplogdb` — the check-in model spans them in **one** `SqlTransaction` under the **local** transaction manager, with no MSDTC (`[INT §8.0]`, `[ARC §10]`). LocalDB has no `united_db`, so a build validated only there silently loses that atomicity | the verification query in `../30-database/scripts/20_FlatWire_Grants.sql` |
-| **1** | **The schema.** 46 tables. **Not empty** -- 01_Lookup seeds the three reason-code tables inline, as production reference data. Idempotent | `../30-database/sql/FlatWire_DDL_RunAll.sql` |
+| **1** | **The schema.** 47 tables. **Not empty** -- 01_Lookup seeds the three reason-code tables inline, as production reference data. Idempotent | `../30-database/sql/FlatWire_DDL_RunAll.sql` |
 | **1a** | **`CommonDB` OPC schema hardening.** Adds the **5 primary keys, 6 unique constraints, 4 foreign keys, 1 check constraint and 2 indexes** the five `CommonDB` OPC tables have never had — they are pure **heaps** in source control, though their `united_db` predecessors carry PKs and two FKs. **Writes no row and alters no column**; it only `ALTER`s five tables four other modules read. ⚠ **Must run before step `2a`** — it turns `11_`'s hand-written idempotency guards (duplicate `TagName`, duplicate `ModuleName`, duplicate `(machine, module, tag)`, duplicate `ConnectionSequence`, dangling `OPCServersIdx`) into schema guarantees, so running it first protects `2a`'s **first** run rather than its second. ✅ **Nothing blocks it** — `G100` does not apply, because it touches only columns present on both `DEV00164-001` and source control. Pre-flight measured there 5 Sep 2026: **16 checks, 0 conflicts**, and **all 18 objects are now present on that instance**. ⚠ **Independent of step `1b`** — either order works, both must precede `2a`. Idempotent, and it aborts on its own validation before creating anything. Reversible **DEV only and by hand** — no reverse script; §6 lists every object it made. Run it **by hand**; the `Scripts/` runner deliberately skips it. `FW-238` | `../30-database/scripts/09_CommonDB_OPCTables_Constraints.sql` |
 | **1b** | **`CommonDB` `OPCModules` column drift.** Adds the two columns `ual-database`'s `CreateTable.sql` declares and a stale `CommonDB` lacks — `OPCEventType` and `EventDurationSeconds`, both `int NULL`. **Writes no row, creates no constraint, drops nothing.** ⚠ **Must run before step `2a`** — `11_` §4a inserts all six columns, so without these two its *first* insert dies on `Msg 207` (`G100`). ⚠ **Independent of step `1a`** — neither touches what the other checks, so the two may run in either order; both must precede `2a`. ✅ **Already applied to `DEV00164-001`** (5 Sep 2026 — the columns were added there by hand and this script is the record of it). Idempotent: on an instance that is already level it reports *present* twice and exits `0`. ⛔ **It does NOT backfill.** `OPCModulesIdx` 1-4 are left `NULL` and §4 of the script prints them — **read `G100` before refreshing `dbo.GetOPCServerAndTagDetails`**, because that procedure selects both columns into a non-nullable DTO. Run it **by hand**; the `Scripts/` runner deliberately skips it. **No reverse script**, deliberately. `FW-238` | `../30-database/scripts/08_CommonDB_OPCModules_ColumnDrift.sql` |
 | **2** | ⛔ **SIGN-OFF GATE — shared-schema rows, and there is no longer a script.** Seeds `united_db..machines` and `CommonDB..WIPStations` / `MachineStationsConfiguration`. The draft was **withdrawn on 6 Sep 2026** having never run; the rows remain **required** (`D-32`), so authoring the seed **and its reverse** is `FW-241`. `machine_type` (`D8`), the station set and `StationType` are still the open sign-off items. Still **by hand**, after approval — and still the chain’s only irreversible step | ⛔ **No script** — [`FW-241`](../30-database/tasks/FW-241.md). Retired draft: [`95-archive/design-notes/…`](../95-archive/design-notes/10_CommonDB_Insert_WIPStations_FlatWire.sql) |
@@ -297,7 +297,7 @@ USE FlatWireDB;
 --     Defining site: [DBD 6.2]. This is one of exactly three places permitted
 --     to restate the figures; if it disagrees with [DBD 6.2], [DBD 6.2] wins.
 SELECT COUNT(*) AS TableCount FROM sys.tables WHERE is_ms_shipped = 0;
--- Expected: 46
+-- Expected: 47
 
 -- V2. Foreign-key count must be 68. Was 67 until 6 Sep 2026: the edger
 --     absorption added exactly ONE,
@@ -322,7 +322,7 @@ SELECT COUNT(*) AS TableCount FROM sys.tables WHERE is_ms_shipped = 0;
 --     and FK_Spool_SpoolConfiguration with the SpoolTypeId columns they
 --     constrained. All 64 are now in script 06 (06b was folded into it).
 SELECT COUNT(*) AS FkCount FROM sys.foreign_keys;
--- Expected: 68
+-- Expected: 69
 
 -- V3. Index count -- 89 created by script 07 (07b was folded into it).
 --     Was 87 until 6 Sep 2026: the edger absorption added exactly TWO,
@@ -363,7 +363,7 @@ SELECT COUNT(*) AS FkCount FROM sys.foreign_keys;
 SELECT COUNT(*) AS IdxCount FROM sys.indexes
  WHERE object_id IN (SELECT object_id FROM sys.tables)
    AND type <> 0 AND is_primary_key = 0 AND is_unique_constraint = 0;
--- Expected: 89
+-- Expected: 90
 
 -- V4. Programmability. SEVEN objects, and since change [H] (26 Aug 2026) ALL SEVEN
 --     are in FlatWireDB -- so this is a SINGLE-DATABASE query where it used to span two.
@@ -399,16 +399,20 @@ SELECT a.CoilAlpha FROM dbo.CoilTraceability a
 -- Expected: zero rows
 ```
 
-- [ ] V1 returns **46**
-- [ ] V2 returns **68**
-- [ ] V3 returns **89**
+- [ ] V1 returns **47**
+- [ ] V2 returns **69**
+- [ ] V3 returns **90**
 - [ ] V4 returns **2 rows** after `RunAll` (**7** once `Database/Scripts/` is applied — was 3 before `[H]`)
 - [ ] V5 returns **zero rows**
 - [ ] V6 returns **zero rows**
 - [ ] `ua_user` exists with `db_datareader`, `db_datawriter` and `GRANT EXECUTE ON SCHEMA::dbo`
 - [ ] On a seeded environment, the fixture alphas resolve: `R00041`–`R00043`, `SP-00031`–`SP-00033`, `PS-1100-FL1-003`, `RUN-0001`–`RUN-0005` *(corrected 26 Aug 2026: the checklist had named `SP-00021`, `RUN-0042` and `RUN-0043`, which the seeds have never created)*
 
-> **If V1 returns anything other than 46**, the wrong script set ran or a script failed silently. **Stop.** ⚠ **`47` specifically means `Edger` survived** — it was dropped on 6 Sep 2026 (`D-53`), and a table cannot be removed by an incremental re-run. **Teardown and redeploy.**
+> **If V1 returns anything other than 47**, the wrong script set ran or a script failed silently. **Stop.**
+>
+> ⛔ **The old `47`-means-trouble diagnostic is RETIRED, and reading it now inverts the answer.** Until 8 Sep 2026 this gate expected **46** and warned that *"`47` specifically means `Edger` survived"*. `D-58` added `SpoolConfiguration`, so **47 is now the correct count** and 46 is the failure. ⚠ **`46` now means one of the 8 Sep changes did not land** — most likely `SpoolConfiguration`, which **cannot** be added by an incremental re-run any more than `Edger` could be removed by one. **Teardown and redeploy.**
+>
+> ⚠ **The `Edger` lesson still holds in general:** a table cannot be added or removed incrementally, because every `CREATE TABLE` here is guarded by `IF NOT EXISTS`. That is why both 8 Sep changes are teardown-and-deploy.
 >
 > ⚠ **`V3` moved to 70 on 26 Aug 2026 — the FIFTH correction to this gate, and the first caused by
 > a change made in this repository rather than by a stale figure.** `Q89` added

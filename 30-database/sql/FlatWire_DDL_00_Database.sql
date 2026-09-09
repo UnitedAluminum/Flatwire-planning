@@ -25,9 +25,30 @@ ELSE
 GO
 
 -- Recommended options for a transactional OLTP workload.
-ALTER DATABASE [FlatWireDB] SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;
+-- ⚠ BOTH ARE GUARDED, and that is what makes the "safe to re-run" claim above true.
+--   READ_COMMITTED_SNAPSHOT ON carries WITH ROLLBACK IMMEDIATE, which KILLS EVERY OPEN
+--   TRANSACTION in FlatWireDB. Unguarded, every RunAll re-run did that -- harmless on a
+--   throwaway copy, not harmless on the shared instance this runner targets ([DEP 2]).
+--   ALLOW_SNAPSHOT_ISOLATION ON has no rollback clause and instead BLOCKS until every open
+--   transaction finishes, so an unguarded re-run could hang the deploy behind a live session.
+-- Re-running now reads sys.databases and does nothing when the options are already set.
+IF NOT EXISTS (SELECT 1 FROM sys.databases
+               WHERE name = N'FlatWireDB' AND is_read_committed_snapshot_on = 1)
+BEGIN
+    ALTER DATABASE [FlatWireDB] SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;
+    PRINT 'Set READ_COMMITTED_SNAPSHOT ON';
+END
+ELSE
+    PRINT 'READ_COMMITTED_SNAPSHOT already ON - left alone (no rollback forced)';
 GO
-ALTER DATABASE [FlatWireDB] SET ALLOW_SNAPSHOT_ISOLATION ON;
+IF NOT EXISTS (SELECT 1 FROM sys.databases
+               WHERE name = N'FlatWireDB' AND snapshot_isolation_state = 1)
+BEGIN
+    ALTER DATABASE [FlatWireDB] SET ALLOW_SNAPSHOT_ISOLATION ON;
+    PRINT 'Set ALLOW_SNAPSHOT_ISOLATION ON';
+END
+ELSE
+    PRINT 'ALLOW_SNAPSHOT_ISOLATION already ON - left alone (no blocking wait)';
 GO
 
 USE [FlatWireDB]

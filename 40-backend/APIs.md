@@ -1,7 +1,7 @@
 # Flat Wire Mill — API Contract
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 8, 2026 — `§4.7a`'s published `200` shape brought level with the built DTO: the order block, `outOfSpec`, `stationClaim` and `components[].edgeType`. The first two had been on the type since 29 Aug and unpublished; the last two are `FW-N16` / `D-55`. *(previously August 25, 2026)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
+**Last Updated:** September 9, 2026 (`G120` resolved) — `currentGauge` / `currentWidth` `null` now means **idle or dropped feed on any line**, not "FL2" (`RA-AMB09` closed); the FL2 check-in call **does** start both reading channels, at **4 s** and **unbatched**. ⚠ **`GET /run/{runId}/gaugetrace` keeps DB5 and the trace reports and loses DB3** — the incoming spool's profile is a different artefact from FL2's live trace *(previously September 8, 2026 — `§4.7a`'s published `200` shape brought level with the built DTO: the order block, `outOfSpec`, `stationClaim` and `components[].edgeType`. The first two had been on the type since 29 Aug and unpublished; the last two are `FW-N16` / `D-55`. *(previously August 25, 2026)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.)*
 **Document Type:** REST contract — conventions, enums, endpoints, traceability
 **Status:** Baselined for build — missing endpoint groups in §10
 **Owner:** Backend (.NET) stream
@@ -358,7 +358,7 @@ Only shapes carrying a correction or a non-obvious rule are given in full. The r
 **Three rules a client must implement:**
 
 - **`activeOrderId` is `null` while a line is `Idle`.** The station must not display an order it has not started.
-- **`currentGauge` and `currentWidth` are `null` for FL2.** FL2 broadcasts no live trace; its profile is `GET /run/{runId}/gaugetrace`.
+- **`currentGauge` and `currentWidth` are `null` while a line is idle or its feed has dropped — on any line.** *(This read "`null` for FL2. FL2 broadcasts no live trace" until 9 Sep 2026; `A3` retired, `FR-120` superseded, and FL2 now publishes both at 4 s. Ambiguity `RA-AMB09` closes with it.)* ⚠ **A client must not treat `null` as an FL2 marker** — it means *no current measurement*, which is reachable on every line.
 - **`payoffs[].state` comes from `RodStaging`**, not from the weight feed. `weightLb` / `percentRemaining` come from the live `PayoffWeight` feed and are `null` on a bay that is not drawing. This split is what makes the "Payoff 2 not loaded" alert rule (`FR-424`) correct — a weight of zero does not distinguish an empty bay from a sensor reading zero.
 
 **`activeAlerts` has no backing table.** Alerts are computed live; they cannot survive a restart and acknowledgements cannot be audited — **OI-28**.
@@ -646,7 +646,7 @@ Returns, per bay: `position`, `state` (`NotStaged` \| `Staged` \| `Active` \| `B
 
 **Response:** `{ runId, machineName, spoolAlpha, passScheduleId, checkedInAt, plcTagsPushed }`
 
-**Side effects:** the same shape as `§4.6` — `SpoolCheckin` + `FlatWireRun` written first, then the tag push, then `PlcTagsPushed` stamped — but against **FL2 component tags** (`FM2_S1`/`FM2_S2`/`FM2_S3`, edgers at S2/S3 only). **FL2 broadcasts `null` live gauge and width**; its trace is the historical profile, so no `GaugeReading`/`WidthReading` batch starts on this call.
+**Side effects:** the same shape as `§4.6` — `SpoolCheckin` + `FlatWireRun` written first, then the tag push, then `PlcTagsPushed` stamped — but against **FL2 component tags** (`FM2_S1`/`FM2_S2`/`FM2_S3`, edgers at S2/S3 only). ⚠ **FL2 broadcasts live gauge and width, so this call DOES start both channels** — at a **4 s** cadence and **unbatched**, since there is nothing to coalesce at one sample per 4 s. *(This read "FL2 broadcasts `null` live gauge and width; its trace is the historical profile, so no `GaugeReading`/`WidthReading` batch starts on this call" until 9 Sep 2026 — `A3` retired, `FR-120` superseded, `[SIG §5.3]` withdrawn.)*
 
 > **`OI-47` is open on this endpoint:** hybrid-origin validation at FL2 check-in is undefined — whether a spool produced by an FL3 hybrid run may be checked in to FL2 standalone, and on what basis.
 
@@ -1371,7 +1371,7 @@ Returns `alpha, alloy, temper, gaugeIn, widthIn, grossWeightLb, netWeightLb, foo
 
 **Response:** `{ readings[{footageFt, gaugeIn, widthIn, speedFpm, inSpec}], weldMarkers[{footagePosition, incomingRodAlpha, weldQuality}], stats{min, max, avg, stdDev, sampleCount, outOfSpecCount} }`
 
-**This is the FL2 profile source.** FL2 standalone broadcasts `null` live gauge and width, so DB5 and the FL2 variant of DB3 render from this endpoint, not from the hub.
+**This is the source of a spool's INCOMING profile, and of the trace reports.** DB5 (FL2 spool check-in) renders the recorded profile of the **FL1 pass that produced the spool** from this endpoint, and the Gauge-Trace / Gauge-CPK / cut-traceability reports read it too. ⛔ **What changed on 9 Sep 2026:** this read *"FL2 standalone broadcasts `null` live gauge and width, so DB5 **and the FL2 variant of DB3** render from this endpoint, not from the hub."* **DB3 no longer does** — FL2 publishes live gauge and width on the hub at 4 s, so the run monitor renders from the hub on every line (`A3` retired, `FR-120` superseded, `[SIG §5.3]` withdrawn). **DB5's use of this endpoint is unaffected**, because the incoming spool's history is a different artefact from FL2's own live trace.
 
 **Worked example**
 

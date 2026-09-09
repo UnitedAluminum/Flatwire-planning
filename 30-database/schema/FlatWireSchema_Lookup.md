@@ -1,7 +1,7 @@
 # Flat Wire Mill — Lookup & Reference Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** September 7, 2026 — **`Edger` is ABSORBED into `ToolingInventoryEdger`, and `ToolingInventoryEdgerGauge` is its child** (`D-53`). The five-column `Edger` could not hold the client's **fourteen-column** Tooling Inventory grid, and `02_Schedule` already recorded that `EdgerId` *"identifies the fitted **TOOL**, not the STATION"* — so it was already meant to be the physical tool register and was simply too thin to be one. `PassScheduleComponent.EdgerId` re-points here and **`FK_PSC_Edger` keeps its name**. `Gauge Range(")` becomes a **child table**, not a delimited string (`G77`), because a pass schedule must be able to select **a groove**. ⭐ **This closes `G77`'s edger half; the straightener half stays open**, along with the `.134`/`.184` range discrepancy. ⚠ **`EdgeType` and `EdgerType` are kept as SEPARATE columns** — the grid's `Type` cell may well be the edge profile for an edger, but `ToolingInventoryDie` reads the same heading as the die **material** (`DieType`), so it does not mean one thing across the grids and merging them would be our guess. `Q95` leg 5 asks. `EdgeType` is **relaxed to NULL**. ⚠ **The table has NO natural key.** `Name` was removed on 6 Sep 2026 and **`EdgerToolAlpha` on 7 Sep**, both once it was verified that nothing read them — no procedure, view, join or seed row, and the client's grid shows neither field (`OI-141`, `G104`, `Q95`). Identity is the `IDENTITY` column alone, so **duplicate rows are possible**; `(MachineName, SetNumber)` is the replacement and waits on `Q95` leg 2 rather than being guessed. *(previously September 3, 2026 — **`ToolingInventoryRollSet` added** (`D-42`), the **fourth** Tooling Inventory tool type: mill rolls on a `Stand`, capstan rolls on a `Drawer`, one discriminated table, a **grind** life model rather than footage. ✅ The `Drawer` *"nothing holds a foreign key to this table"* note is **closed** — this is its first referrer. ⚠ `CK_ToolingInventoryDie_MachineName` loses `FL3`; **`CK_Drawer_MachineName` keeps it** — equipment versus tooling, do not align them. ⛔ Every roll-set column is `[PROPOSED]` pending `Q92` (`G87`). *(previously September 2, 2026 — **three reason-code tables added** from the client's `Reason Codes.xlsx` (Tim O'Brien, 1 Sep 2026): `DowntimeReason`, `WipRejectionReason`, `ItInhibitReason`. ⚠ **They are seeded by the DDL, not the sample-data script** — production reference data, and a production deploy runs `RunAll` without the sample data. The `Dancer` note on `SupportsTensionMode` is also corrected: `0` on FM1 now records **"no"**, not "not stated", and the `OQ-32` mode conflict is **resolved**. *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)*)*)* ⚠ **Amended 7 September 2026: `EdgerToolAlpha` removed** from `ToolingInventoryEdger`, on the same finding as `Name` the day before — nothing read it, and no client tooling grid has ever shown an alpha (`OI-141`). The register now has **no natural key**; `(MachineName, SetNumber)` waits on `Q95` leg 2. **Object counts do not move** — a UNIQUE constraint in `01` is not an index statement in `07`. · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
+**Last Updated:** September 9, 2026 — **`30-database` audit applied** (see [`CHANGELOG.md`](../../CHANGELOG.md) — Repository-wide). *(previously — September 7, 2026 — **`Edger` is ABSORBED into `ToolingInventoryEdger`, and `ToolingInventoryEdgerGauge` is its child** (`D-53`). The five-column `Edger` could not hold the client's **fourteen-column** Tooling Inventory grid, and `02_Schedule` already recorded that `EdgerId` *"identifies the fitted **TOOL**, not the STATION"* — so it was already meant to be the physical tool register and was simply too thin to be one. `PassScheduleComponent.EdgerId` re-points here and **`FK_PSC_Edger` keeps its name**. `Gauge Range(")` becomes a **child table**, not a delimited string (`G77`), because a pass schedule must be able to select **a groove**. ⭐ **This closes `G77`'s edger half; the straightener half stays open**, along with the `.134`/`.184` range discrepancy. ⚠ **`EdgeType` and `EdgerType` are kept as SEPARATE columns** — the grid's `Type` cell may well be the edge profile for an edger, but `ToolingInventoryDie` reads the same heading as the die **material** (`DieType`), so it does not mean one thing across the grids and merging them would be our guess. `Q95` leg 5 asks. `EdgeType` is **relaxed to NULL**. ⚠ **The table has NO natural key.** `Name` was removed on 6 Sep 2026 and **`EdgerToolAlpha` on 7 Sep**, both once it was verified that nothing read them — no procedure, view, join or seed row, and the client's grid shows neither field (`OI-141`, `G104`, `Q95`). Identity is the `IDENTITY` column alone, so **duplicate rows are possible**; `(MachineName, SetNumber)` is the replacement and waits on `Q95` leg 2 rather than being guessed. *(previously September 3, 2026 — **`ToolingInventoryRollSet` added** (`D-42`), the **fourth** Tooling Inventory tool type: mill rolls on a `Stand`, capstan rolls on a `Drawer`, one discriminated table, a **grind** life model rather than footage. ✅ The `Drawer` *"nothing holds a foreign key to this table"* note is **closed** — this is its first referrer. ⚠ `CK_ToolingInventoryDie_MachineName` loses `FL3`; **`CK_Drawer_MachineName` keeps it** — equipment versus tooling, do not align them. ⛔ Every roll-set column is `[PROPOSED]` pending `Q92` (`G87`). *(previously September 2, 2026 — **three reason-code tables added** from the client's `Reason Codes.xlsx` (Tim O'Brien, 1 Sep 2026): `DowntimeReason`, `WipRejectionReason`, `ItInhibitReason`. ⚠ **They are seeded by the DDL, not the sample-data script** — production reference data, and a production deploy runs `RunAll` without the sample data. The `Dancer` note on `SupportsTensionMode` is also corrected: `0` on FM1 now records **"no"**, not "not stated", and the `OQ-32` mode conflict is **resolved**. *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. ⚠ **`SpoolConfiguration` is a table again** (`D-58`, 8 Sep 2026), superseding `Q60`'s merge. **Object counts are not stated here** — `[DBD §6.2]` is the defining site; this header carried `33 tables · 55 FKs · 69 index statements` until 8 Sep 2026, all three stale, directly above the Authority line that says this document states no object counts. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)*)*)* ⚠ **Amended 7 September 2026: `EdgerToolAlpha` removed** from `ToolingInventoryEdger`, on the same finding as `Name` the day before — nothing read it, and no client tooling grid has ever shown an alpha (`OI-141`). The register now has **no natural key**; `(MachineName, SetNumber)` waits on `Q95` leg 2. **Object counts do not move** — a UNIQUE constraint in `01` is not an index statement in `07`. · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.)*
 **Document Type:** Final Schema — Lookup / Configuration Tables
 **Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`)
@@ -9,7 +9,7 @@
 **Scope:** MVP-1
 **Owner:** Architecture stream / DBA
 **Audience:** DBA, .NET developers, BA
-**Part of:** `ProjectPlan/Database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
+**Part of:** `30-database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
 **Authority:** `../sql/FlatWire_DDL_01_Lookup.sql` **wins** on types, nullability and constraints. This document explains them; it does not define them, and it states no object counts — those are `[DBD §6.2]`. No shortcode is declared, deliberately: these are derived documents and must not be cited as authority.
 
 These tables define physical equipment configuration and reference data used throughout the flat wire mill system. They are relatively static — entries are added when equipment is commissioned and soft-deleted via `IsActive` when retired. DDL: `../sql/FlatWire_DDL_01_Lookup.sql`; seed: `../sql/FlatWire_SampleData_Lookup.sql`.
@@ -28,8 +28,8 @@ Rolling mill finishing stands. A stand applies compressive force to reduce mater
 | `RollDiameterIn` | decimal(5,3) | NOT NULL | — | Working roll diameter in inches. **FM1 `12.000`; FM2 `S1` `8.000`, `S2` `6.000`, `S3` `6.000`.** Feeds the bite condition and roll-force limits in the generation engine ([PassScheduleGenerationSpec](../../10-requirements/screens/PassScheduleGenerationSpec.md) §3.3.2 / §3.3.6) |
 | `MinGaugeIn` | decimal(8,4) | NOT NULL | — | Minimum input gauge this stand can process, in inches |
 | `MaxGaugeIn` | decimal(8,4) | NOT NULL | — | Maximum input gauge this stand can process, in inches |
-| `MinWidthIn` | decimal(8,4) | NOT NULL | — | Minimum strip width this stand can process, in inches |
-| `MaxWidthIn` | decimal(8,4) | NOT NULL | — | Maximum strip width this stand can process, in inches |
+| `MinWidthIn` | decimal(8,4) | NOT NULL | — | Minimum flat wire width this stand can process, in inches |
+| `MaxWidthIn` | decimal(8,4) | NOT NULL | — | Maximum flat wire width this stand can process, in inches |
 | `IsActive` | bit | NOT NULL | — | `1` = active and selectable in pass schedules; `0` = retired |
 
 **Constraints:**
@@ -304,53 +304,110 @@ Tension-management rollers. **FM1 carries one; FM2 carries two**, sitting **betw
 
 ---
 
-## `Spool`
+## `SpoolConfiguration`
 
-**The physical article the wire is wound on.** A carrier outlives the material on it: `SpoolProcessing.Alpha`
-is the *material's* identity, this is the *article's*. Referenced by `Spool.SpoolId`.
+The **size class** a spool article belongs to — the acceptable loaded-weight band and the core /
+outer diameter bands, validated at FL2/FL3 check-in against the material being wound on the article.
 
-**`SpoolConfiguration` was merged into this table on 23 Aug 2026 (`Q60`).** It was a **size class**
-holding exactly **one** meaningful row — the client confirmed every article is the same size — while
-the articles number 30-45, so its six dimensional columns and its `Name` now live here, per article.
-
-> ⚠ **The trade, stated because it is real.** This **denormalises**: the same eight values repeat on
-> all 30-45 rows, and a second purchased size becomes a multi-row `UPDATE` where the old shape needed
-> one `INSERT`. It holds only while *"every article is one size"* does. **If the client confirms a
-> second size, revisit the merge** — the fallback below stops being well-defined at that moment.
-
-> **The nullable-limits fallback.** `SpoolProcessing.SpoolId` is **nullable by design** (`Q42` is open
-> and nothing seeds articles in production yet), so a material row may have no article and therefore
-> no limits to validate against. The documented fallback is **any active `Spool` row's limits** —
-> well-defined precisely because all articles are one size, and needing no external constant. The
-> previous shape had to keep a one-row table alive to answer the same question.
+> **SPLIT BACK OUT OF `Spool` 8 September 2026 (`D-58`). SUPERSEDES `Q60`'s merge.**
+>
+> `Q60` merged this table into `Spool` on 23 Aug 2026, because it was a size class holding exactly
+> **one** meaningful row against 30–45 articles. That reasoning was sound and the merge is not being
+> called a mistake — but it named its own reversal condition: *"It is worth it only while 'every
+> article is one size' holds. **If the client confirms a second size, revisit the merge.**"*
+>
+> ⚠ **That condition has NOT fired, and this split does not claim it has.** The client's 20 Aug 2026
+> statement — *"30 purchased with 15 more under consideration, **all one standard size**"* — still
+> stands unsuperseded. TKUP-1's 3,500 lb and TKUP-2's 1,100 lb are **machine positions**, not article
+> sizes, and FL2's output is a **coreless** coil wound on no reusable article at all. The split is
+> made on **normalisation grounds and on direction**: eight values repeated across 45 rows, a second
+> size costing an `UPDATE` of many rows where this shape needs one `INSERT`, and a size-class name
+> that lost its uniqueness constraint in the merge. ⛔ **Do not record it as a client change.**
 
 | Column | Data Type | Nullable | FK Reference | Description |
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | - | Surrogate primary key, IDENTITY |
-| `SpoolNo` | varchar(20) | NOT NULL | - | The **stencilled** string the operator reads off the carrier, e.g. `S1` .. `S45` |
-| `SizeClass` | varchar(50) | NULL | - | Descriptive size name, e.g. `TKUP-1 Intermediate Spool`. **Not unique** — every article shares one name, so `UQ_SpoolConfig_Name` could not survive the merge and is deliberately not recreated. Was `SpoolConfiguration.Name` |
-| `MinWeightLb` | decimal(8,2) | NULL | - | Minimum acceptable loaded weight (lb). *Merged from `SpoolConfiguration`* |
-| `MaxWeightLb` | decimal(8,2) | NULL | - | Maximum acceptable loaded weight (lb) |
-| `MinCoreDiameterIn` | decimal(8,4) | NULL | - | Minimum core (inside arbor) diameter (in) |
-| `MaxCoreDiameterIn` | decimal(8,4) | NULL | - | Maximum core diameter (in) |
-| `MinOuterDiameterIn` | decimal(8,4) | NULL | - | Minimum outer diameter of the loaded article (in) |
-| `MaxOuterDiameterIn` | decimal(8,4) | NULL | - | Maximum outer diameter of the loaded article (in) |
+| `Name` | varchar(50) | NOT NULL | - | The size class, e.g. `TKUP-1 Intermediate Spool`. **Unique** |
+| `MinWeightLb` | decimal(8,2) | NOT NULL | - | Minimum acceptable loaded weight (lb) |
+| `MaxWeightLb` | decimal(8,2) | NOT NULL | - | Maximum acceptable loaded weight (lb) |
+| `MinCoreDiameterIn` | decimal(8,4) | NOT NULL | - | Minimum core (inside arbor) diameter (in) |
+| `MaxCoreDiameterIn` | decimal(8,4) | NOT NULL | - | Maximum core diameter (in) |
+| `MinOuterDiameterIn` | decimal(8,4) | NOT NULL | - | Minimum outer diameter of the loaded article (in) |
+| `MaxOuterDiameterIn` | decimal(8,4) | NOT NULL | - | Maximum outer diameter of the loaded article (in) |
+| `IsDefault` | bit | NOT NULL | - | Default `0`. **Exactly one row may be `1`** — the limits to apply when a material row names no article |
+| `IsActive` | bit | NOT NULL | - | Default `1`; soft delete, per the other lookups |
+
+**Constraints:**
+- `PK_SpoolConfiguration` - `Id`
+- `UQ_SpoolConfig_Name` - `Name` unique. **Restored with the table** — the merge could not keep it,
+  because every article shares one size name, so the name stopped being unique the moment it moved
+  onto `Spool`
+- `CK_SpoolConfig_Weight` - `MinWeightLb < MaxWeightLb`
+- `CK_SpoolConfig_CoreDiam` - `MinCoreDiameterIn < MaxCoreDiameterIn`
+- `CK_SpoolConfig_OuterDiam` - `MinOuterDiameterIn < MaxOuterDiameterIn`
+- **`UX_SpoolConfiguration_Default`** (in `07_Indexes`) - `IsDefault` unique **where `IsDefault` = 1**
+
+> ⭐ **The three CHECKs are simpler than they were on `Spool`, and that is a real gain from the
+> split.** There the six limits had to be nullable, so each CHECK carried an all-or-nothing `IS NULL`
+> clause — the merge's own words: *"a CHECK accepts UNKNOWN, so a half-populated band would be
+> admitted"*. Here the columns are `NOT NULL` and the constraints say `Min < Max`, which is what they
+> were always meant to say.
+
+> ⛔ **`IsDefault` replaces a fallback the split breaks.** `SpoolProcessing.SpoolId` is **nullable**
+> (`Q42` open, nothing seeds articles in production), so a material row may have no article and no
+> limits to validate against. `Q60`'s answer was *"any active `Spool` row's limits"*, well-defined
+> **only** because all articles were one size — and splitting the size class out is precisely what
+> stops that being true. Exactly one row is flagged default instead.
+
+**Seed:** **one row** — `TKUP-1 Intermediate Spool`, 500–3,500 lb, core 8–12″, OD 24–40″,
+`IsDefault = 1`. One, because the client has stated one. The split restores the **ability** to hold a
+second cheaply; it does not invent one.
+
+---
+
+## `Spool`
+
+**The physical article the wire is wound on.** A carrier outlives the material on it: `SpoolProcessing.Alpha`
+is the *material's* identity, this is the *article's*. Referenced by `SpoolProcessing.SpoolId`.
+
+> **The size class lives in [`SpoolConfiguration`](#spoolconfiguration) again — 8 September 2026
+> (`D-58`).** `SizeClass` and the six `Min`/`Max` limit columns are **gone** from this table, along
+> with `CK_Spool_Weight` / `CK_Spool_CoreDiam` / `CK_Spool_OuterDiam`, which revert to their original
+> `CK_SpoolConfig_*` names and get **simpler** there (the columns are `NOT NULL` again, so the
+> all-or-nothing `IS NULL` clauses go). `SpoolTypeId` names the class.
+>
+> **History, kept because a reader will otherwise ask:** those columns lived here only between
+> 23 Aug and 8 Sep 2026, put there by `Q60`'s merge on the grounds that a one-row size class against
+> 30–45 articles was not worth a table. ⚠ **`D-58` records that the merge's own reversal condition —
+> a client-confirmed second size — has *not* fired**; the split is on normalisation grounds. Read
+> `SpoolConfiguration`'s section for the full statement.
+
+**This table is an article register:** which spools exist, what is stencilled on them, which class
+they are, whether they are in service.
+
+| Column | Data Type | Nullable | FK Reference | Description |
+|---|---|---|---|---|
+| `Id` | int | NOT NULL | - | Surrogate primary key, IDENTITY |
+| `SpoolNo` | varchar(20) | NOT NULL | - | The **stencilled** string the operator reads off the carrier — the seed builds `SP-0001` .. `SP-0045`, **four digits** so it cannot collide with a `SpoolProcessing.Alpha`. *(This read `S1` .. `S45` until 8 Sep 2026.)* Format open — `Q42` |
+| `SpoolTypeId` | int | NOT NULL | `SpoolConfiguration.Id` | The size class. **Restored by `D-58`**, having been dropped by `Q60`'s merge |
 | `IsActive` | bit | NOT NULL | - | Soft delete, as the other lookups. Default `1` |
 | `Notes` | varchar(200) | NULL | - | e.g. "re-stencilled 08/2026", "withdrawn - damaged flange" |
 
 **Constraints:**
 - `PK_Spool` - `Id`
 - `UQ_Spool_No` - `SpoolNo` is unique
+- `FK_Spool_SpoolConfiguration` - `SpoolTypeId` → `SpoolConfiguration.Id`. **Restored by `D-58`**
 - `DF_Spool_IsActive` - defaults to `1`
-- `CK_Spool_Weight` / `CK_Spool_CoreDiam` / `CK_Spool_OuterDiam` - carried over from `CK_SpoolConfig_*`, each now **all-or-nothing per band**: both bounds NULL, or both set with `Min < Max`. The explicit `IS NOT NULL` pair matters — `Min < Max` alone evaluates to UNKNOWN when one side is NULL and **a CHECK accepts UNKNOWN**, so half a band would have been admitted
 
-> **The stencil is the key, and that is a UI decision as much as a data one.** The operator types
-> what is painted on the carrier rather than picking from a list, because 30-45 rows will not
-> scroll usefully on a shopfloor panel at arm's length.
+> **Why the stencil is the key.** The operator types what is painted on the steel and the screen
+> validates it against this list — **not** a drop-down, because 30–45 rows will not scroll on a
+> shopfloor panel (client, 20 Aug 2026). Matched case-insensitively by the database's default
+> collation: the operator is reading paint.
 
-> **`SpoolNo`'s format is open - `Q42`** (format and mastering). The `S1..S45` pattern above is
-> illustrative, not ratified. Seed rows for this table are marked provisional for the same reason.
-> Raised as `OI-120`: nothing in the schema was a carrier before this table.
+> ⚠ **One FK, not two.** `Q60` dropped `FK_Spool_SpoolConfiguration` **and**
+> `FK_SpoolProcessing_SpoolConfiguration`. Only the first returns: a material row reaches its
+> configuration through `SpoolProcessing.SpoolId` → `Spool.SpoolTypeId`, and a second direct path to
+> the same fact is how the two come to disagree.
 
 ---
 

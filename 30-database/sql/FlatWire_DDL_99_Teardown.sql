@@ -12,6 +12,14 @@
 --   sqlcmd -S "<server>" -E -C -i FlatWire_DDL_99_Teardown.sql
 -- ============================================================
 
+-- ⚠ USE [master] FIRST. Every other script in this folder opens USE [FlatWireDB]; this is the
+-- one that needs the opposite. SET SINGLE_USER WITH ROLLBACK IMMEDIATE evicts OTHER sessions but
+-- never the caller's own, so running this from a session whose current database is FlatWireDB --
+-- the normal case straight after RunAll in the same SSMS window -- failed with Msg 3702,
+-- "Cannot drop database ... because it is currently in use."
+USE [master];
+GO
+
 IF DB_ID(N'FlatWireDB') IS NOT NULL
 BEGIN
     PRINT 'Dropping database FlatWireDB ...';

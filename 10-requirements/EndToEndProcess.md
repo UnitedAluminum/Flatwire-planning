@@ -1,9 +1,10 @@
 # Flat Wire Mill — End-to-End Process
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 18, 2026 — the `INFLAT` glossary entry notes it is `FlatWireDB`-local only after `D-32` *(previously April 28, 2026)*
+**Last Updated:** September 9, 2026 (`G120` resolved) — FL2's gauge trace mode becomes **real-time at 4 s** (trace modes and the line table); assumption `A3` retired, `FR-120` superseded. ➕ **Shortcode `[E2E]` declared** — it was cited in five places, `G120` included, while this header carried none *(previously August 18, 2026 — the `INFLAT` glossary entry notes it is `FlatWireDB`-local only after `D-32` *(previously April 28, 2026)*)*
 **Document Type:** Process Reference
 **Status:** Draft — Pending Tim O. / Bob S. review
+**Shortcode:** `[E2E]` — *declared 9 Sep 2026. It was cited as `[E2E]` in five places, including gap `G120`, while this header carried no shortcode line and [`DOCUMENTS.md`](../DOCUMENTS.md) listed the document without one — so every one of those citations was unresolvable under `DOCUMENTS.md`'s own rule.*
 
 > ### ⚠ FM2 equipment configuration in this document is superseded (4 Aug 2026)
 >
@@ -311,7 +312,7 @@ Vendor Rod
 1. Spool is loaded onto the **TPO (Traversing Payoff, 3,500 lb)**.
 2. Operator opens the FL2 check-in screen, enters spool identifier, width, gauge.
 3. System displays the pass schedule → operator acknowledges → PLC tags updated.
-4. **Gauge trace mode for FL2:** historical/profile view — gauge profile is available when material is checked into FL2, not live.
+4. **Gauge trace mode for FL2: real-time, at a 4 s update rate** — from the gauging stands downstream of FM2-S3. *(This read "historical/profile view — gauge profile is available when material is checked into FL2, not live" until 9 Sep 2026; assumption `A3` of `[PLC §14]` was retired and `FR-120` superseded.)* ⚠ **Separately and unchanged:** the *incoming spool's* FL1 profile is still available at check-in, which is what that sentence was half-describing.
 
 **All routes (non-hybrid and hybrid):**
 
@@ -479,7 +480,7 @@ Scrap can arise at any stage. Disposition depends on the scrap type and source.
 | Output | Flat wire spool (TKUP-1) | Coreless coil (TKUP-2) | Coreless coil (TKUP-2) |
 | Intermediate stop | Yes — spool at TKUP-1 | N/A | No — continuous |
 | Anneal option | Yes (after TKUP-1) | Not applicable | No (bypassed) |
-| Gauge trace | Real-time | Historical / profile view | Real-time |
+| Gauge trace | Real-time, ~10 Hz | **Real-time, 4 s** *(was "Historical / profile view"; `A3` retired 9 Sep 2026)* | Real-time |
 | Intermediate alpha | Yes — spool alpha generated | N/A | No |
 | PLC tag push | At FL1 check-in | At FL2 check-in | At FL1 check-in |
 | Scheduling entry | FL1 machine | FL2 machine | FL3 machine (hybrid) |

@@ -9,7 +9,9 @@
 -- constraints (indexed), so only child FK columns and hot
 -- filter columns are added here.
 --
--- Creates ALL 89 index statements. There is no second index script.
+-- Creates ALL 90 index statements. There is no second index script.
+-- (91 until 8 Sep 2026: IX_SpoolTraceability_SpoolAlpha was deleted as an exact duplicate of
+--  UQ_SpoolTraceability_Seq -- see the note in the SpoolTraceability block below.)
 -- 89, not 87, since 6 Sep 2026: the edger absorption (D-53) added exactly TWO --
 -- IX_ToolingInventoryEdger_LifecycleStatus and the filtered-unique
 -- UX_ToolingInventoryEdger_SerialNo. The removed [dbo].[Edger] carried NO index
@@ -282,21 +284,59 @@ GO
 -- is not a data-integrity property here; the fractional DECIMAL
 -- position makes collisions harmless.
 -- ------------------------------------------------------------
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_SpoolTraceability_SpoolAlpha' AND object_id = OBJECT_ID(N'dbo.SpoolTraceability'))
-    CREATE NONCLUSTERED INDEX [IX_SpoolTraceability_SpoolAlpha] ON [dbo].[SpoolTraceability] ([SpoolAlpha], [SeqNo]);
-GO
+-- ⛔ IX_SpoolTraceability_SpoolAlpha WAS HERE AND IS DELETED (8 Sep 2026).
+-- It was ON ([SpoolAlpha], [SeqNo]) -- the SAME key list, in the same order, as
+-- UQ_SpoolTraceability_Seq (03_Materials), which already builds its own backing index. It was the
+-- only exact duplicate in the schema, and it broke this file's own header rule: "business/natural
+-- keys already carry UNIQUE constraints (indexed), so only child FK columns and hot filter columns
+-- are added here". The same test is applied below to REFUSE an index on
+-- ToolingInventoryEdgerGauge.EdgerToolId and on MaterialLossStandard.ElementId; it just was not
+-- applied here. Removing it moves the index-statement baseline by -1 -- see [DBD 6.2].
 
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_SpoolTraceability_RodAlpha' AND object_id = OBJECT_ID(N'dbo.SpoolTraceability'))
     CREATE NONCLUSTERED INDEX [IX_SpoolTraceability_RodAlpha] ON [dbo].[SpoolTraceability] ([RodAlpha]);
 GO
 
 -- Resolves a spool from any order on it -- the GET /spools lookup path.
+--
+-- ONE HOP LONGER SINCE D-57, deliberately. SpoolOrder no longer carries SpoolAlpha, so this seeks
+-- the order then JOINS SpoolTraceability to reach the spool. The alternative was a denormalised
+-- SpoolAlpha on the child, which is a second copy of a fact its parent already owns and can
+-- disagree with it. Accepted.
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_SpoolOrder_OrderNo' AND object_id = OBJECT_ID(N'dbo.SpoolOrder'))
     CREATE NONCLUSTERED INDEX [IX_SpoolOrder_OrderNo] ON [dbo].[SpoolOrder] ([OrderNo]);
 GO
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_SpoolOrder_SpoolAlpha' AND object_id = OBJECT_ID(N'dbo.SpoolOrder'))
-    CREATE NONCLUSTERED INDEX [IX_SpoolOrder_SpoolAlpha] ON [dbo].[SpoolOrder] ([SpoolAlpha]);
+-- RE-KEYED AND RENAMED, 8 Sep 2026 (D-57): SpoolOrder's parent is the segment, so SpoolAlpha is
+-- gone from the table. Also the FK's supporting index -- an unindexed FK makes the parent's delete
+-- a scan.
+-- ⚠ GUARDED ON THE COLUMN, not just the index name -- the same reason 06 guards
+-- FK_SpoolOrder_SpoolTraceability that way. SpoolTraceabilityId arrives in SpoolOrder's CREATE
+-- TABLE body, which is skipped on any database built before D-57, so the column is never added.
+-- A name-only guard would then reach a column that does not exist and fail with Msg 1911, and
+-- :on error exit would ABORT THE RUNNER AT 07 -- taking 08 with it. 06 skips politely and says so;
+-- without this, 07 dies two scripts later, which is the failure 06's guard exists to prevent.
+IF EXISTS (SELECT 1 FROM sys.columns
+           WHERE object_id = OBJECT_ID(N'[dbo].[SpoolOrder]') AND name = N'SpoolTraceabilityId')
+   AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_SpoolOrder_SpoolTraceabilityId' AND object_id = OBJECT_ID(N'dbo.SpoolOrder'))
+    CREATE NONCLUSTERED INDEX [IX_SpoolOrder_SpoolTraceabilityId] ON [dbo].[SpoolOrder] ([SpoolTraceabilityId]);
+GO
+
+-- One ACTIVE allocation per (segment, order, release). FILTERED unique, and it has to be: re-planning
+-- is ADDITIVE (D-57), so a superseded row and its replacement share all three key columns and a plain
+-- UNIQUE would refuse the very write the additive model exists to make. This is the replacement for
+-- the inline UQ_SpoolOrder_Key the spool grain carried -- and it MOVES THE COUNT, because a UNIQUE
+-- constraint in 03 is not an index statement in 07. Same shape as UX_RodOrderAllocation_Active.
+-- ⚠ GUARDED ON THE COLUMN as well as the index name -- see IX_SpoolOrder_SpoolTraceabilityId above.
+IF EXISTS (SELECT 1 FROM sys.columns
+           WHERE object_id = OBJECT_ID(N'[dbo].[SpoolOrder]') AND name = N'SpoolTraceabilityId')
+   AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_SpoolOrder_Active' AND object_id = OBJECT_ID(N'dbo.SpoolOrder'))
+    CREATE UNIQUE NONCLUSTERED INDEX [UX_SpoolOrder_Active] ON [dbo].[SpoolOrder] ([SpoolTraceabilityId], [OrderNo], [RelLetter]) WHERE [IsActive] = 1;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns
+               WHERE object_id = OBJECT_ID(N'[dbo].[SpoolOrder]') AND name = N'SpoolTraceabilityId')
+    PRINT 'SKIPPED IX_SpoolOrder_SpoolTraceabilityId and UX_SpoolOrder_Active: SpoolOrder.SpoolTraceabilityId is absent, so this database predates D-57. Teardown and redeploy.';
 GO
 
 -- The queue read: one line's live queue, in operator order.
@@ -389,6 +429,62 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_SpoolTraceability_Chi
     CREATE UNIQUE NONCLUSTERED INDEX [UX_SpoolTraceability_ChildAlpha] ON [dbo].[SpoolTraceability] ([ChildAlpha]) WHERE [ChildAlpha] IS NOT NULL;
 GO
 
+
+-- ------------------------------------------------------------
+-- SpoolConfiguration -- exactly one default size class (D-58).
+--
+-- Spool.SpoolTypeId is NOT NULL so every article names its configuration, but
+-- SpoolProcessing.SpoolId is NULLABLE (Q42 open, nothing seeds articles in production), so a
+-- MATERIAL row may have no article and therefore no limits to validate against. Q60's merge made
+-- the fallback "any active Spool row's limits", well-defined only because all articles were one
+-- size -- and splitting the size class out is exactly what stops that being true. This index is the
+-- replacement: exactly one row may be the default, at any number of configurations.
+--
+-- FILTERED on IsDefault = 1, so the many non-default rows do not collide with each other.
+-- ------------------------------------------------------------
+-- ⚠ GUARDED ON THE TABLE, not just the index name. SpoolConfiguration is created by 01_Lookup
+-- behind an IF NOT EXISTS, and it does not exist at all on a database built between 23 Aug (Q60's
+-- merge) and 8 Sep 2026 (D-58's split). A name-only guard would fail with Msg 1911 and :on error
+-- exit would abort 07, taking 08 with it -- the same trap 06 avoids on FK_Spool_SpoolConfiguration.
+IF EXISTS (SELECT 1 FROM sys.objects
+           WHERE object_id = OBJECT_ID(N'[dbo].[SpoolConfiguration]') AND type = N'U')
+   AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_SpoolConfiguration_Default' AND object_id = OBJECT_ID(N'dbo.SpoolConfiguration'))
+    CREATE UNIQUE NONCLUSTERED INDEX [UX_SpoolConfiguration_Default] ON [dbo].[SpoolConfiguration] ([IsDefault]) WHERE [IsDefault] = 1;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.objects
+               WHERE object_id = OBJECT_ID(N'[dbo].[SpoolConfiguration]') AND type = N'U')
+    PRINT 'SKIPPED UX_SpoolConfiguration_Default: dbo.SpoolConfiguration is absent, so this database predates D-58. Teardown and redeploy.';
+GO
+
+
+-- ============================================================
+-- FOREIGN KEY COLUMNS THAT LEAD NO INDEX -- RECORDED, NOT DECIDED  (8 Sep 2026)
+-- ============================================================
+-- This file's stated pattern is "indexes covering the FK/join columns", and [DBD 6.8] repeats it.
+-- THIRTEEN of the 69 foreign keys have a child column that is the leading column of no index, and
+-- none of them appeared in either of the two "deliberate absence" lists at the foot of this file.
+-- They are listed here so the gap is visible; whether to index them is NOT decided, because it is
+-- a write-cost trade nobody has measured on this workload:
+--
+--   DieChangeEvent.RodAlpha            <- the ONLY unindexed one of NINE RodAlpha FKs
+--   SpoolCheckin.PassScheduleId        <- the only unindexed one of FOUR PassScheduleId FKs
+--   PassSchedule.Alloy                 (IX_PassSchedule_LineAlloyStatus leads on MachineName)
+--   SpoolTraceability.WeldEventId
+--   SpoolStaging.SpoolAlpha            (UX_SpoolStaging_LiveSpool leads on MachineName)
+--   Spool.SpoolTypeId
+--   RodStaging.RodCheckinId
+--   RodStaging.WipRejectionId
+--   RodStaging.PayoffPosition
+--   FlatWireRunDetail.PayoffPositionId
+--   RodOrderConsumption.AllocationId
+--   RodOrderConsumption.RodCheckoutId
+--   RodOrderAllocation.SupersededByAllocationId
+--
+-- ⚠ The cost of leaving them is on the PARENT's delete, which scans -- the reason given for
+--   adding IX_SpoolOrder_SpoolTraceabilityId above. The first two are the ones whose siblings make
+--   them look like oversights rather than choices. Raised as G111.
+-- ============================================================
 
 -- ============================================================
 -- SECTION: Indexes on the schedule tables

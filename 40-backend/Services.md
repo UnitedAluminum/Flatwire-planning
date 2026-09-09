@@ -75,7 +75,7 @@ Project references: `API → Application, Domain, Infrastructure` · `Applicatio
 > | Table | Placement |
 > |---|---|
 > | **`SpoolTraceability`** | child of `SpoolProcessing` — `FK_SpoolTraceability_SpoolProcessing`. Its `Rod`/`WeldEvent` FKs are cross-aggregate references **by alpha, not navigations** |
-> | **`SpoolOrder`** | child of `SpoolProcessing` — `FK_SpoolOrder_SpoolProcessing` |
+> | **`SpoolOrder`** | ⚠ **grandchild since 8 Sep 2026 (`D-57`)** — child of **`SpoolTraceability`** via `FK_SpoolOrder_SpoolTraceability`, and still inside the `SpoolProcessing` aggregate boundary, one level deeper. **The root does not change.** Allocate through `SpoolTraceability.AddOrder`; `SpoolProcessing.Orders` is a read-only projection over the segments |
 > | **`SpoolStaging`** | child of `SpoolProcessing` — `FK_SpoolStaging_SpoolProcessing`. ⚠ **Not a second `RodStaging`**: `RodStaging` is a root only because its parent `Rod` is a read model with no aggregate to belong to |
 > | **`RodOrderAllocation`** | ⚠ **proposed outside the seven** — parents are `Rod` and itself; §3.2e already gives it its own service and three cross-row invariants |
 > | **`RodOrderConsumption`** | ⚠ **proposed outside the seven** — **five** parents spanning three aggregates (`FlatWireRun`, `RodCheckin`, `Rod`, `RodOrderAllocation`, `RodCheckout`), so folding it into any one would put a foreign root inside a boundary |

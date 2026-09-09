@@ -1,11 +1,11 @@
 # Flat Wire Mill — Decided Questions and Answers
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — ⭐ **`Q26` ARRIVES — the shopfloor panel is 1920 × 1080**, client-confirmed 7 Sep 2026, closing gap `G23` and `OI-96`. It ratifies `F-14`, which had set the same figure by user instruction on 27 Aug 2026 and on which `FW-130` is already built. ⚠ **It is the one decided question numbered in the open band** (`Q1`–`Q33`); the bands are a convenience and the invariant is that a `Q##` appears in exactly one of the two files. ⚠ **Three stale counts were corrected while adding it, measured rather than inherited:** the index holds **28** rows against **35** body entries (7 internal-design, body-only by design), the scope split is **25 `Shopfloor` / 3 `Other`**, and the band statement predated `Q88`/`Q89`. All three had drifted when those two landed on 26 Aug 2026. *(previously September 3, 2026 — **`Q91`'s first recorded cost is resolved, and it lasted one day.** *"Nothing holds a foreign key to `Drawer`"* stopped being true when `ToolingInventoryRollSet.DrawerId` landed with `D-42`; the prediction was right that a referrer would come and wrong about which — it arrived from the **roll sets**, not from `G77`'s edger and straightener work. ⚠ `ComponentName` and `DiePosition` are still CHECK-constrained strings, so that half of the cost stands. *(previously August 26, 2026 — ⚠ **`GenerateCoilAlpha`'s six-character root is the exclusion sweep's `LIKE` filter, NOT the string the suffix is appended to.** A seven-character input returns a **child** (`R00002A` → `R00002AA`), verified on the live instance; the recorded reason for rejecting segment-rooted alphas — *"returns a sibling of the segment"* — was **false**. The verdict is unchanged and now rests on **collision**: `R00002AA` is also suffix 27 of the rod-rooted sequence. Ceiling corrected **26 → 702** — `Q89`'s dangling `Q93` citation repointed to `OI-135`, since `Q93` was withdrawn the same day. *(previously August 23, 2026 — **`Q60` and `Q61`: `Spool`/`SpoolCarrier` swapped, then `SpoolConfiguration` merged into `Spool`.** The material table is `SpoolProcessing`; the article is `Spool` and now carries its own size limits. **The object baseline moves to 33 tables · 55 FKs** (`[DBD §6.2]`). ⚠ **A stale `Spool` reference is *silently wrong*, not obviously stale.** *(previously August 23, 2026 — **`Q60` added: `Spool` and `SpoolCarrier` are swapped.** The material table is now `SpoolProcessing` and `Spool` is the reusable stencilled article in `01_Lookup`; the naming convention that was missing is written down as `[DBD §6.2a]`. ⚠ **A swap makes a stale reference silently wrong rather than obviously stale** — read that entry before trusting any pre-23-Aug `Spool` citation. The Decision Index was also brought level with its own total, having been three rows behind since 22 Aug. *(previously August 22, 2026 — **`Q57` and `Q58` added: two questions raised and decided the same day**, from [`RodOrderAllocation.md`](../95-archive/design-notes/RodOrderAllocation.md). Both are **alpha-identity** decisions and both were settled against the schema rather than by preference: `Q57` puts FL1 segment alphas and FL2 coil identities in **one namespace** because the generator cannot see `FlatWireDB` and a local counter would issue the same string twice; `Q58` **keeps `CoilAlpha`** and renames only `SharedCoilNo`, because making the shared identity the sole one would have coupled coil creation to a cross-database call. *(previously August 18, 2026 — `Q68` carries a supersession note — `D-32` (there is no shared-schema migration) keeps the 30 Jul timing answer and moves the status to the local rod record)*)*)*)*)*)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
+**Last Updated:** September 9, 2026 (the 12 Aug questions workbook returns, complete) — ⭐ **ALL 25 RECORDED DECISIONS ARE BACK FROM THE CLIENT — 20 confirmed, 5 not confirmed.** Tim O'Brien returned the 12 Aug workbook on 9 Sep with every row filled, dated 4 and 8 Sep. Each of the 25 entries now carries its confirmation. ⭐ **And ELEVEN QUESTIONS ARRIVED FROM [`Questions.md`](Questions.md) in the same pass** — `Q6`, `Q9`, `Q11`, `Q13`, `Q14`, `Q16`, `Q18`, `Q20`, `Q23`, `Q24`, `Q31`, each answered *agree with the recommendation* with nothing qualifying it. **Totals move 35 → 46 body, 28 → 39 indexed**, measured rather than inherited, and the window extends to **Sep 8**. ➕ **`Q6` and `Q11` opened Section 9 — Certification, Yield and Traceability**, because neither had a home among Sections 1–8 and filing them under quality or scheduling would have buried them; **nothing was renumbered to make room**. ⚠ **Read the free text, not only the dropdown** — three rows marked `Confirmed` carry a correction or a question (`Q65` asks *"Check point = SPC?"*, `Q73` closes its open branch, `Q83` adds per-die identity), and `Q85`'s `Not confirmed` is him **restating his own correction**, which corroborates `D-26` exactly. ⭐ **`Q68` is the large one: he adopted our position** — the queue, requirements-summary and WIP writes move to check-in with the status, so pre-check-in has no effect outside `FlatWireDB` and removing a staged rod becomes a clean local delete. ⭐ **`Q73` closes the one genuinely unresolved branch** — the three-tier sequence rule applies always, welding or not. ⭐ **`Q72` answers its residual**: there is no clear-the-weld-flag-in-place case at all. ⚠ **`Q67` is suspended, not corrected** — it waits on `Q66`'s trial figures. ⛔ **`Q70` restates the multi-order-spool reversal and does NOT ratify it** — same voice, second time; the `D1` bar is Bob and Tim on the record. ✅ **`Q26` is independently corroborated** by the same workbook. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md). *(previously September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — ⭐ **`Q26` ARRIVES — the shopfloor panel is 1920 × 1080**, client-confirmed 7 Sep 2026, closing gap `G23` and `OI-96`. It ratifies `F-14`, which had set the same figure by user instruction on 27 Aug 2026 and on which `FW-130` is already built. ⚠ **It is the one decided question numbered in the open band** (`Q1`–`Q33`); the bands are a convenience and the invariant is that a `Q##` appears in exactly one of the two files. ⚠ **Three stale counts were corrected while adding it, measured rather than inherited:** the index holds **28** rows against **35** body entries (7 internal-design, body-only by design), the scope split is **25 `Shopfloor` / 3 `Other`**, and the band statement predated `Q88`/`Q89`. All three had drifted when those two landed on 26 Aug 2026. *(previously September 3, 2026 — **`Q91`'s first recorded cost is resolved, and it lasted one day.** *"Nothing holds a foreign key to `Drawer`"* stopped being true when `ToolingInventoryRollSet.DrawerId` landed with `D-42`; the prediction was right that a referrer would come and wrong about which — it arrived from the **roll sets**, not from `G77`'s edger and straightener work. ⚠ `ComponentName` and `DiePosition` are still CHECK-constrained strings, so that half of the cost stands. *(previously August 26, 2026 — ⚠ **`GenerateCoilAlpha`'s six-character root is the exclusion sweep's `LIKE` filter, NOT the string the suffix is appended to.** A seven-character input returns a **child** (`R00002A` → `R00002AA`), verified on the live instance; the recorded reason for rejecting segment-rooted alphas — *"returns a sibling of the segment"* — was **false**. The verdict is unchanged and now rests on **collision**: `R00002AA` is also suffix 27 of the rod-rooted sequence. Ceiling corrected **26 → 702** — `Q89`'s dangling `Q93` citation repointed to `OI-135`, since `Q93` was withdrawn the same day. *(previously August 23, 2026 — **`Q60` and `Q61`: `Spool`/`SpoolCarrier` swapped, then `SpoolConfiguration` merged into `Spool`.** The material table is `SpoolProcessing`; the article is `Spool` and now carries its own size limits. **The object baseline moves to 33 tables · 55 FKs** (`[DBD §6.2]`). ⚠ **A stale `Spool` reference is *silently wrong*, not obviously stale.** *(previously August 23, 2026 — **`Q60` added: `Spool` and `SpoolCarrier` are swapped.** The material table is now `SpoolProcessing` and `Spool` is the reusable stencilled article in `01_Lookup`; the naming convention that was missing is written down as `[DBD §6.2a]`. ⚠ **A swap makes a stale reference silently wrong rather than obviously stale** — read that entry before trusting any pre-23-Aug `Spool` citation. The Decision Index was also brought level with its own total, having been three rows behind since 22 Aug. *(previously August 22, 2026 — **`Q57` and `Q58` added: two questions raised and decided the same day**, from [`RodOrderAllocation.md`](../95-archive/design-notes/RodOrderAllocation.md). Both are **alpha-identity** decisions and both were settled against the schema rather than by preference: `Q57` puts FL1 segment alphas and FL2 coil identities in **one namespace** because the generator cannot see `FlatWireDB` and a local counter would issue the same string twice; `Q58` **keeps `CoilAlpha`** and renames only `SharedCoilNo`, because making the shared identity the sole one would have coupled coil creation to a cross-database call. *(previously August 18, 2026 — `Q68` carries a supersession note — `D-32` (there is no shared-schema migration) keeps the 30 Jul timing answer and moves the status to the local rod record)*)*)*)*)*)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.)*
 
 **Scope:** MVP-1
 **Status:** Closed decisions — reference record
-**Total Decisions:** 35 (**28 client-facing**, indexed below; 7 internal-design, body only) · **Decision window:** Apr 28 → Sep 7, 2026
+**Total Decisions:** 46 (**39 client-facing**, indexed below; 7 internal-design, body only) · **Decision window:** Apr 28 → Sep 8, 2026
 
 ---
 
@@ -17,7 +17,7 @@
 
 **A decision here is the answer, not a proposal.** Pre-decision deliberation — the options weighed, the interim designs that were replaced — is not carried over; the register's change-log entries in [CHANGELOG.md](../CHANGELOG.md) hold that history. Where a decision left something genuinely unresolved, the residual is stated and points at the open register.
 
-**Ten partly-answered questions are *not* here.** `Q1`, `OI-65`, `Q12`, `Q13`, `Q17`, `Q18`, `OI-56`, `Q22`, `Q23` and `Q24` carry decided sub-parts — a basis, a shape, or some of their numbered items — but are not closed, so they stay in the open register with their decided portions intact. Look for a partial answer there before concluding one does not exist.
+**Six partly-answered questions are *not* here.** `Q1`, `OI-65`, `Q12`, `Q17`, `OI-56` and `Q22` carry decided sub-parts — a basis, a shape, or some of their numbered items — but are not closed, so they stay in the open register with their decided portions intact. Look for a partial answer there before concluding one does not exist.
 
 **Two decisions are only partly in MVP-1** — `Q62` and `Q83`. Each carries a banner on its body naming the half that applies. Read the half, not the whole.
 
@@ -45,7 +45,18 @@ The priority deadlines the e-mail set are **superseded** — it worked to a July
 
 | # | Subject | Scope | Priority | Owner | Decided |
 |---|---------|-------|----------|-------|---------|
+| 6 | Weld attribution on output footage | `Shopfloor` | High | Jaspreet / Tim O. | Sep 8, 2026 |
+| 9 | Twist and torsion tolerance for welding wire | `Other` | High | Tim O. / Technical | Sep 8, 2026 |
+| 11 | Yield loss factor for planning rod input | `Other` | High | Tim O. / Margo | Sep 8, 2026 |
+| 13 | PLC tag behaviour on rod checkout | `Shopfloor` | High | Jaspreet / Tim O. | Sep 8, 2026 |
+| 14 | Pass schedule selection mechanism at check-in | `Shopfloor` | Critical | Tim O. / Jaspreet | Sep 8, 2026 |
+| 16 | Pass schedule validation during planning/scheduling | `Other` | Medium | Tim O. / Stephen | Sep 8, 2026 |
+| 18 | Target spool weight source for the completion alert + over-target behavior | `Shopfloor` | High | Tim O. / Operations | Sep 8, 2026 *(basis Jul 30, 2026 basis)* |
+| 20 | Supervisor mirroring and audit persistence of milestone acknowledgements | `Shopfloor` | Medium | Tim O. / IT | Sep 8, 2026 |
+| 23 | Does a failed staging inspection persist a `RodStaging` row, and what releases it? | `Shopfloor` | High | Tim O. / IT | Sep 8, 2026 *(basis Jul 31 items 1–2 · Jul 30 item 3)* |
+| 24 | Staging deviations — off-schedule (auto-switch), out-of-sequence (override), PIN source | `Shopfloor` | High | Tim O. / Shannon R. | Sep 8, 2026 *(basis Jul 30, 2026 off-schedule)* |
 | 26 | Shopfloor panel resolution — 1920×1080 confirmed | `Shopfloor` | High | Tim O. / Charles / Juan | Sep 7, 2026 |
+| 31 | Wire break where the **customer accepts no welds** — the disposition set, the supervisor gate and where the decision is persisted | `Shopfloor` | High | Tim O. / Shannon R. | Sep 8, 2026 *(basis Principle Aug 6, 2026)* |
 | 61 | Mid-run pass schedule change — alpha handling | `Shopfloor` | Critical | Jaspreet / Tim O. | May 4, 2026 |
 | 62 | Pass schedule override authority and logging **⚠ in scope from Step 2 onward** | `Shopfloor` | High | Tim O. / Shannon R. | May 4, 2026 |
 | 63 | Component failure mid-run protocol | `Shopfloor` | High | Tim O. / Plant | May 4, 2026 |
@@ -122,6 +133,8 @@ Process tuning within spec, not a product change. Note: Both FL1 and FL2 mills h
 Product spec changes — a deliberate operator-driven reset to a new target, not AGC correction.
 - **Decision:** New child alpha. Tim confirmed this approach.
 
+> ✅ **CONFIRMED BY THE CLIENT — 4 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
 ---
 
 **Q62** · `High` · Owner: Tim O. / Shannon R. · `Decided May 4, 2026` · **⚠ in scope from Step 2 onward**
@@ -155,6 +168,8 @@ Product spec changes — a deliberate operator-driven reset to a new target, not
 - This works the same as the existing die change flow: when reason is gauge_drift or size_change, spcCheckpointRequired is set to true.
 - Active Run Monitor shows "Configuration Change Logged — Awaiting SPC Checkpoint." Operator cannot close that status without completing SPC. Tim confirmed this approach.
 
+> ✅ **CONFIRMED BY THE CLIENT — 4 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md). ⚠ **The residual is untouched by the confirmation** — the editing screens and the change log that would record an override are still outside this release, so an override has no in-release place to be authored.
+
 ---
 
 **Q63** · `High` · Owner: Tim O. / Plant · `Decided May 4, 2026`
@@ -171,6 +186,8 @@ Product spec changes — a deliberate operator-driven reset to a new target, not
 - **Supervisor acknowledgment** — Bypass-and-continue requires supervisor-level confirmation, not operator-only.
 - **Disposition decision for pre-bypass material** — If the failure event itself may have affected material quality before the component was bypassed, a disposition step (accept / inspect / reject) is required for the footage produced during the failure window (parallel to Q75 partial-run disposition flow).
 
+> ✅ **CONFIRMED BY THE CLIENT — 4 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
 ---
 
 **Q64** · `High` · Owner: Tim O. / Mick · `Decided May 4, 2026`
@@ -183,6 +200,8 @@ Product spec changes — a deliberate operator-driven reset to a new target, not
 **Decision (May 4, 2026):**
 - **Label:** Pass schedule data (ID, version, die sizes, roll gap values) should NOT appear on the coil label.
 - **Technical traceability:** Pass schedule ID and relevant configuration data should be logged against the coil record for technical traceability. This data must be captured at coil creation time so it can be retrieved for quality audits and engineering review, even if the pass schedule is subsequently edited.
+
+> ✅ **CONFIRMED BY THE CLIENT — 4 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
 
 ---
 
@@ -200,7 +219,24 @@ Product spec changes — a deliberate operator-driven reset to a new target, not
 - The "Require SPC on resume" toggle should be pre-checked ON for Gauge drift and Size change reasons, and the system should enforce this routing.
 - Override authority is restricted to an Operations Manager or Quality role minimum, with a mandatory reason code and audit log.
 
+> ⚠ **CONFIRMED 4 Sep 2026 — WITH A QUESTION BACK.** Tim O'Brien marked this `Confirmed`, then wrote in the correction column: *"**Check point = SPC?**"*
+>
+> ⛔ **He is confirming a decision whose subject term he is not certain of.** The decision governs who may turn off *"require a quality checkpoint on resume"*; if *checkpoint* and *SPC checkpoint* are the same thing, the confirmation is sound, and if they are not, he has confirmed something other than what was asked. **A one-line reply settles it — send it before treating this as closed.** [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
 ---
+
+**Q14** · `Critical` · Owner: Tim O. / Jaspreet · `Decided September 8, 2026`
+**Pass schedule selection mechanism at check-in — no-match path undefined**
+The selection mechanism itself is now shown in the updated dashboards: the system performs an attribute-based lookup (alloy + rod diameter + target gauge × width + route mode) and surfaces the best match as a system recommendation in a confirm bar. The operator must explicitly confirm before "Acknowledge & Begin Check-in" is enabled. A "Change" dropdown shows alternatives, and selecting a non-recommended schedule is flagged for Operations review.
+
+**Remaining open point:** What happens when the lookup returns no match — i.e., no active pass schedule exists for the order's attribute combination? The dashboards show no empty-match or error state. Must the check-in be blocked and an alert sent to Operations so a schedule can be created before the line starts? Or can the operator proceed by manually selecting from a list of schedules that don't match? The no-match notification path must be defined before development begins on the check-in gate logic.
+
+**Recommendation:** **block the check-in and alert Operations**, showing which attributes failed to match so the missing schedule can be authored without a phone call. The operator must not be able to proceed by hand-picking a schedule that does not match the order — that is precisely the path that produces scrap under a plausible-looking configuration, and making the match explicit is the confirm bar's whole purpose.
+
+> ✅ **ANSWERED 8 Sep 2026 — the recommendation is agreed, unqualified.** Block the check-in and alert Operations; the operator may not hand-pick a non-matching schedule. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
+---
+
 
 # Section 2 — Scheduling and Capacity
 
@@ -214,6 +250,8 @@ Product spec changes — a deliberate operator-driven reset to a new target, not
 *As put to the client:* "What is the minimum and maximum line speed (FPM) for each alloy and gauge combination on FL1 and FL2?"
 
 **Decision (May 4, 2026):** Line speed ranges are unknown at this time and will be determined by trial. Once determined through production runs, the data can be added to a configuration table by UA. No blocking issue for initial development — scheduling algorithm should be designed to accept these values as table-driven inputs.
+
+> ✅ **CONFIRMED BY THE CLIENT — 4 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md). ⚠ **The approach is confirmed; the figures are not.** They follow the trial, and **`Q67` is explicitly suspended until they exist** — see its entry.
 
 ---
 
@@ -232,7 +270,22 @@ Product spec changes — a deliberate operator-driven reset to a new target, not
 
 > **This decision also part-answers `Q2`** (FL3 scheduling representation), which remains open on how FL3 is represented as a booking unit.
 
+> ⚠ **NOT CONFIRMED — 4 Sep 2026. Suspended, not corrected.** Tim O'Brien: *"This is tied to Q66, if the output speed of FL2 is greater than initial estimates, this gap would close. Given this, **we wont have an absolute answer until we have processed some trial data.**"*
+>
+> ⛔ **This is not a disagreement with what was recorded — it is a refusal to confirm it yet.** The decision stands as the working assumption; it cannot become settled until `Q66`'s line-speed figures exist, and those follow the trial. **Treat the recorded answer as provisional and re-put it once the trial data lands.** [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
 ---
+
+**Q16** · `Medium` · Owner: Tim O. / Stephen · `Decided September 8, 2026`
+**Pass schedule validation during planning and scheduling**
+Should the scheduling or planning system warn when a job is scheduled for FL1/FL2/FL3 but no active pass schedule exists for that product's alloy, gauge, width, and edge type combination? Without this check, operators will arrive at the machine ready to run with no pass schedule available, blocking the line until Operations creates one. A pre-scheduling validation prevents that delay.
+
+**Recommendation:** **warn at scheduling time, do not block.** A scheduler should be able to book work before Operations has authored the schedule, but not unknowingly — and `Q14` already provides the hard gate at the point it matters, check-in. Warning at scheduling plus blocking at check-in covers the failure without making planning depend on pass schedule authoring.
+
+> ✅ **ANSWERED 8 Sep 2026 — the recommendation is agreed, unqualified.** Warn at scheduling time, do not block; check-in provides the hard gate (`Q14`). [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
+---
+
 
 # Section 3 — Rod Staging and Pre-Check-in
 
@@ -250,6 +303,12 @@ Product spec changes — a deliberate operator-driven reset to a new target, not
 **Residual — still open, and it is not small.** The decision covers the **status column** only, not the rest of the SRS data note: whether pre-check-in still performs the `FlatwireQueue` insert, the reqsum and the `wip_coil_orders` insert. If those writes stay at staging, the compensating-write burden (**G2/G16**) is unchanged and only the status moved; if they move to check-in, pre-check-out becomes a pure `FlatWireDB` delete and **OI-01** closes completely. With Tim O. / IT — see the follow-up list in [ClientCall_2026-07-30_SyncPlan.md](../95-archive/source-documents/ClientCall_2026-07-30_SyncPlan.md) §6.
 
 Detail in [RodPreCheckin.md](../10-requirements/screens/RodPreCheckin.md).
+
+> ⭐ **NOT CONFIRMED — 4 Sep 2026, AND HE ADOPTED OUR POSITION INSTEAD.** The residual recorded here said the decision covered the **status only**, and left the queue insert, the requirements summary and the work-in-progress order insert uncovered. Tim O'Brien:
+>
+> *"**Please proceed with your position that these writes should move to check-in alongside the status, so that pre-check-in has no effect outside the flat wire system at all.**"*
+>
+> ✅ **All three writes move to check-in.** The consequence is the one the residual identified as the whole point: **removing a staged rod becomes a clean local delete**, with no cross-database undo. Pre-check-in becomes wholly `FlatWireDB`-local, which is consistent with `D-32` — the shared schema is neither altered nor written at staging time. ⚠ **This changes the check-in transaction, not just the staging one**: the writes have to land inside the single `SqlTransaction` that already spans the databases. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
 
 ---
 
@@ -271,6 +330,8 @@ Detail in [RodPreCheckin.md](../10-requirements/screens/RodPreCheckin.md).
 
 **Requirement gap.** Pre-check-out has **no SRS requirement ID at all** — §4.17 covers only post-check-in removal. A new `PCI`-series requirement block is needed.
 
+> ✅ **CONFIRMED BY THE CLIENT — 4 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
 ---
 
 **Q70** · `Medium` · Owner: Tim O. / Planning · `Decided July 30, 2026`
@@ -283,6 +344,10 @@ Detail in [RodPreCheckin.md](../10-requirements/screens/RodPreCheckin.md).
 **What this overturned.** The interim rule — staging validates that the rod *"belongs to the **current** production order"*, singular, with a rod from any other order a **hard refusal** — is wrong as written: the successor order is on the *same rod*, so a refusal would stop the line mid-bundle. [RodPreCheckin.md](../10-requirements/screens/RodPreCheckin.md)'s order-lookup table needs *"order differs → Refused"* rewritten as membership in an **ordered set** rather than equality with one order.
 
 **The sequencing question this opened is `Q73`, decided 6 Aug 2026** — see below.
+
+> ⚠ **NOT CONFIRMED — 4 Sep 2026, and it is the multi-order-spool reversal again.** Tim O'Brien: *"Per the email that I sent today referencing the HTML document, **we do not want multiple orders on one spool, we will want to stop the line and force a spool change.**"*
+>
+> ⛔ **This does NOT ratify the reversal.** It is the same person, restating the position he gave on 3 Sep, six days later. The five items held as *"premise contradicted, pending ratification"* — `OI-119`, `OI-123`, `OI-124`, `G48`, `Q43` — stay held. The bar set for `D1` was **Bob and Tim agreeing on the record**, and one voice repeating itself is not two voices. ✅ **What it does establish** is that the position is durable and unambiguous enough to plan against; annotate the five items as *restated 9 Sep, still unratified*. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
 
 ---
 
@@ -299,6 +364,8 @@ Detail in [RodPreCheckin.md](../10-requirements/screens/RodPreCheckin.md).
 
 Related: **Q7** (max weld joints per coil), **Q10** (footage-to-weight factor), **G21**, **OI-97**.
 
+> ✅ **CONFIRMED BY THE CLIENT — 4 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
 ---
 
 **Q72** · `Medium` · Owner: Tim O. / Shannon R. · `Decided July 30, 2026`
@@ -313,6 +380,12 @@ Related: **Q7** (max weld joints per coil), **Q10** (footage-to-weight factor), 
 **Residual — the in-place reversal is still unspecified.** `WLD011` is *"supervisor reversal of a welded coil"*, which is broader than un-staging. Reversing a weld **in place**, on a rod that stays staged (mis-scan, wrong rod welded, weld failed after marking), has no specification and no audit target. `CK_RodStaging_Welded` ties `WeldedAt`/`WeldedBy` to `IsWelded`, so an in-place reversal is a three-column clear plus an audit trail that does not exist. `WLD011` needs a requirement before it gets a control.
 
 Related: **Q74**, `WLD003`/`WLD010`.
+
+> ⭐ **NOT CONFIRMED — 8 Sep 2026, and the residual is answered.** The residual said reversing a weld **in place** was unspecified and had no audit target — a mis-scan, the wrong rod welded, a weld that failed after being marked. Tim O'Brien:
+>
+> *"**A weld flag should not be possible unless a rod has been checked in or prechecked in.** In this instance, if a miss-scan occurred, the operator would have had to check in and weld the coil and therefore **the coil would need to be reversed out of staging and rejected, via a supervisor override.**"*
+>
+> ✅ **There is no clear-the-flag-in-place case at all.** The only path is reverse out of staging and reject, which is the existing rejection path with the existing supervisor gate — so the missing audit target does not need inventing. ⚠ **The precondition is itself a validation we should check we enforce**: a weld flag must be impossible before check-in or pre-check-in. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
 
 ---
 
@@ -349,7 +422,81 @@ Related: **Q74**, `WLD003`/`WLD010`.
 
 Full record in [ClientCall_2026-08-06_SyncPlan.md](../95-archive/source-documents/ClientCall_2026-08-06_SyncPlan.md) §3.1. Related: **Q12**, **Q17**, **Q70**, **Q24**, gap **G22**.
 
+> ⭐ **CONFIRMED 8 Sep 2026 — AND THE UNRESOLVED BRANCH IS CLOSED.** The residual asked the one question this decision left genuinely open: *when no weld is involved, may an operator run a rod carrying two orders before the other rods of the first order?* Tim O'Brien answered it directly:
+>
+> *"For No-Welding branch, **continue to utilize the three-tier rule. This keeps things consistent and clean. The rules apply all the time, regardless of welding.**"*
+>
+> ✅ **The rule is unconditional.** The qualifier that made the transcript ambiguous is removed: there is one sequencing rule, it is the three-tier rule, and welding does not gate it. ⚠ **The second half of the residual is still open** — whether a rod may be pre-checked-in against the later order on it while the earlier one is still running was not put to him and is not answered here. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
 ---
+
+**Q23** · `High` · Owner: Tim O. / IT · `Decided September 8, 2026`
+
+> **Decided (Jul 31, 2026) — items 1 and 2.** `Blocked` is **derived** (`Status = 'Staged'` + any inspection column `= 'Fail'`), not a fourth `Status` value; and pre-check-in **commits the `RodStaging` row before the inspection gate**. `POST /staging/rod` now returns `201 Created` with `state: "Blocked"` and the WIP-rejection route, replacing the `422`-and-write-nothing behaviour. The deciding argument is physical: bundles are not unbanded until positioned at the payoff — which is *why* the inspection happens at staging — so a rod that fails is **already on the bay**. Writing no row left `GET /payoff/status` reporting an occupied position as `NotStaged`, Dashboard 2A offering it as "Empty — available", and the next rod stageable into a bay that physically holds a rejected bundle. `CHK010` is unchanged: no bypass, WIP Rejection remains the only forward path. Contracts updated in [04-APIContract.md](../40-backend/APIs.md), [FlatWireSchema_Runs.md](../30-database/schema/FlatWireSchema_Runs.md) and [phase-04](../60-delivery/phases/phase-04-rod-checkin-plc-config.md).
+>
+> **Decided (July 30, 2026) — item 3, the blocking residual.** A failed staging inspection is **captured as a rejection on the rejection screen** — the operator enters the rejection reason there — and **the rod goes to `HOLD`**. That is what releases the `RodStaging` row and frees the bay: the WIP rejection carries the material out of the bay, so the row leaves `Status = 'Staged'` and `UX_RodStaging_Bay`'s filter with it. **A blocked bay is now clearable.**
+>
+> **Implementation choice, not a business one** — recorded here because the DDL has to pick one: reuse `Status = 'Unstaged'` with a release-reason discriminator, or add a fourth `Rejected` value. **Recommendation: reuse `Unstaged` plus a `ReleaseReason`.** A fourth value multiplies branches in every "staged" query and forces `CK_RodStaging_Unstaged`, the status vocabulary and the filtered index to change together for no operational gain — the bay genuinely *is* free once the bundle leaves. `CK_RodStaging_Unstaged` currently ties `Unstaged` to the pre-check-out column group, so that constraint must admit the rejection route as a second way in.
+
+**Does a failed staging inspection persist a `RodStaging` row, or is nothing written?**
+
+Dashboard 2A and `GET /payoff/status` both expose a **`Blocked`** bay state, defined as *"inspection failed at staging"*. `RodStaging.Status` has no such value — it is only `Staged | CheckedIn | Unstaged`.
+
+The state *is* derivable: the three inspection columns are `NOT NULL` `Pass`/`Fail`, so a blocked bay is `Status = 'Staged'` with any inspection column `= 'Fail'`. That reading is also the correct one operationally, because `UX_RodStaging_Bay` is filtered on `Status = 'Staged'` — the failed bundle is still physically in the bay and must keep it occupied. But no artifact states this, and the alternative (a fourth status value) would change the filtered index.
+
+The sharper problem is that **nothing currently writes the row**. On a failed inspection the wizard is a hard block with no bypass (`CHK010`) and the only forward action is a link to WIP Rejection, so the staging record is never committed and the inspection evidence is lost at navigation. The `Blocked` state is therefore unreachable in practice.
+
+To resolve:
+
+1. Confirm `Blocked` is **derived** (`Staged` + any `Fail`) rather than a fourth `Status` value.
+2. Does pre-check-in commit a `RodStaging` row *before* routing to WIP Rejection, so the failure and its observation are persisted and the bay reads BLOCKED?
+3. **What releases a blocked row — DECIDED Jul 30, 2026:** the WIP rejection itself releases it and the rod goes to `HOLD`. See the block above.
+4. `InspectionNotes` is nullable but documented as *"expected when any item fails."* Should it be enforced NOT NULL when any item is `Fail`, matching the constraint style already used for the welded/unstaged/checked-in column groups?
+
+**Two untraced consequences of the item-2 decision**, recorded rather than resolved: `RodStaging` now holds rows for material that was never accepted, which affects the **`TRV009`** traveler (is `Blocked` a third class alongside pre-checked-in and welded?); and the **`Available`** queue projection must exclude rods sitting blocked, or a rejected bundle reappears as stageable.
+
+Related to `CHK010` and gap **G14**. Detail in [RodPreCheckin.md](../10-requirements/screens/RodPreCheckin.md).
+
+**Recommendation:** on the one item still open, **enforce `InspectionNotes` NOT NULL when any inspection column is `Fail`**, using the same constraint style already applied to the welded, unstaged and checked-in column groups. A failure with no observation is the one case where the note carries the whole evidentiary value, and the document already says it is expected. The release-route implementation choice is recorded above and stands: **reuse `Unstaged` plus a `ReleaseReason`**, not a fourth status value.
+
+> ✅ **ANSWERED 8 Sep 2026 — the recommendation is agreed, unqualified.** Inspection notes become mandatory when any inspection item fails, matching the other conditional field groups. This was the one point that remained; **the question is now fully answered.** [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
+---
+
+**Q24** · `High` · Owner: Tim O. / Shannon R. · `Decided September 8, 2026`
+**Staging deviations — off-schedule (auto-switch), out-of-sequence, PIN source, and the mid-order case**
+
+**Decided (July 30, 2026) — off-schedule is not a deviation at all.** Tim's direction: **no blocking message and no override — the system selects the correct station automatically.** If the rod is planned for FL3 and the operator is on the FL1 tab, the screen **switches to FL3** and the transaction continues. The same behaviour applies to **pre-check-in and check-in**.
+
+> **The off-schedule override columns are dropped** (project decision, Aug 1, 2026): `RodStaging.OffScheduleOverride`, `ScheduledLineId` and `CK_RodStaging_OffSched` are removed, and `CK_RodStaging_Override` keys on `OutOfSequenceOverride` alone.
+>
+> **`OverrideBy` / `OverrideAt` / `OverrideReason` survive.** They are shared with the out-of-sequence override, which stays. Dropping all five columns would delete the surviving override's audit trail.
+>
+> **Two things this raises rather than settles:** auto-switching moves the operator between stations **mid-transaction** — the behaviour of a part-completed wizard must be specified; and it presumes an FL3 tab exists on the FL1 panel at all, which is **OI-26/G21** surfacing as a UI question. If **Q25** later needs an authorisation for the not-scheduled-anywhere case, it **re-adds** a column group rather than reusing this one.
+
+**Decided (July 30, 2026) — out-of-planned-sequence, provisionally confirmed.** The operator must be **notified** when the rod being checked in / pre-checked-in is not the one the planning system expects next, and a **supervisor override is required** to depart from the planned sequence. Same credential block: reason + badge/ID + PIN, remote-approval fallback, all recorded (`RodStaging.OutOfSequenceOverride` + `ExpectedRodAlpha`, sharing the credential stamp). "Expects next" is the lowest planned sequence still available, so a blocked bundle does not freeze the sequence behind it.
+
+> **Re-review committed.** On the Jul 30 call Tim agreed the override *"might not be a bad idea"* and asked to **leave it in place for now** while he reviews something in the spec that it may support. **Confirm at the next review** before anything downstream treats it as final.
+>
+> Both sequence columns are retained — the deviation is authorised *and* recorded (see **OI-72**).
+
+Rod→order comes from **`planning_routings`**, so the order is *resolved* from the scan rather than chosen — which is what makes even the first rod on a cold line validatable.
+
+Still to confirm:
+
+1. **PIN validation source** — the existing login/authorisation service, or a separate supervisor credential store? Inherited unresolved from the withdrawn spool-weight question and tracked as **`OI-38`**; it still gates the out-of-sequence override and the welded pre-check-out (**Q69**), so it should be settled once for all of them.
+2. **The mid-order case** — per **Q70** (Jul 30, 2026) a rod can legitimately carry **more than one order**, so "a rod from another order" is not automatically a foreign rod. The refusal survives only for a genuinely unrelated order; the same-rod successor must pass. Sequencing across the two is **Q73**.
+3. **Does the same override apply at check-in (Dashboard 2)?** The decision says "checkin/precheckin", so Dashboard 2 needs the identical out-of-sequence panel and the same columns on `RodCheckin`. Only Dashboard 2A carries it today.
+
+**Recommendation:** **yes to item 3 — build the identical panel and columns on Dashboard 2**, because a validation enforced at one of two entry points is not enforced; `Q73` independently requires the same thing of the sequencing rule, so the two land together. Validate the **PIN against the existing login/authorisation service** (item 1), the same recommendation recorded at **`OI-38`**, so one credential path serves all three overrides. Item 2 follows `Q70`/`Q73` and needs no separate answer here. Separately, **close the committed re-review of the out-of-sequence override** — it is marked provisional pending Tim's spec check, and anything downstream treating it as final is doing so on an unconfirmed rule.
+
+Detail in [RodPreCheckin.md](../10-requirements/screens/RodPreCheckin.md).
+
+> ✅ **ANSWERED 8 Sep 2026 — the recommendation is agreed, unqualified.** The identical out-of-sequence control is built at **check-in as well as pre-check-in**, and the PIN validates against the existing login and authorization service — so one credential path serves this override, the weight-variance override and the welded pre-check-out override. ⚠ **The review he committed to on the provisional out-of-sequence override is not separately confirmed**; agreeing with the recommendation implies it stands, but he did not say so. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
+---
+
+
 
 # Section 4 — Rod Checkout and Disposition
 
@@ -365,6 +512,8 @@ Full record in [ClientCall_2026-08-06_SyncPlan.md](../95-archive/source-document
 **Decision (May 4, 2026):** A mid-run checkout (footage > 0, rod removed before exhaustion) requires supervisor approval. Operator-only checkout authority is not sufficient. This mirrors the WIP Rejection disposition flow.
 
 > **Note (Aug 11, 2026) — this question was miscited for three months.** `Analysis/OperationsManager.md` recorded the mid-run approval requirement as pending under *"open question OQ-B"*, an identifier that exists in **no register**, and stated it as open although `Q74` had decided it on 4 May 2026. Corrected when that file was consolidated, and recorded here because the file was **deleted on 11 Aug 2026** (recoverable at `d79ce78`) and this is now the only home for the correction. If you meet an `OQ-B` reference anywhere else, it means `Q74`.
+
+> ✅ **CONFIRMED BY THE CLIENT — 8 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
 
 ---
 
@@ -391,7 +540,58 @@ Full record in [ClientCall_2026-08-06_SyncPlan.md](../95-archive/source-document
    - **Reject** → WIP Rejection flow triggered; material goes to scrap
 7. Disposition record written (supervisor ID, decision, reason code, timestamp)
 
+> ✅ **CONFIRMED BY THE CLIENT — 8 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
 ---
+
+**Q13** · `High` · Owner: Jaspreet / Tim O. · `Decided September 8, 2026`
+**PLC tag behaviour on rod checkout**
+
+**Status (May 4, 2026):** Tim needs to confirm the following proposed behavior with engineering:
+- The application never sends a stop command to the PLC — the operator always controls the machine physically.
+- Tags are only ever cleared when the line is confirmed stopped — no footage is lost, no control logic is disrupted mid-motion.
+- The application checks whether the line is stopped before allowing checkout to proceed.
+
+Proposed screen behavior (awaiting engineering confirmation):
+- **If line is still running when operator clicks "Check Out Rod":** Checkout is blocked. Message shown: "Line is still running. Stop the line before checking out the rod." Checkout dialog does not open.
+- **If line is confirmed stopped:** Checkout dialog opens. Footage counter value is read from the PLC and locked at that moment. Operator completes the form, clicks Confirm, and only then are PLC tags cleared and the checkout record written.
+
+**Recommendation:** adopt the **proposed behaviour as written** — the application never commands a stop, checkout is blocked while `FL{n}.LineState` reports running, and tags clear only after the operator has physically stopped the line and confirmed the dialog. It is the only design that cannot drop footage or interrupt control logic mid-motion, so engineering is being asked to confirm the readback tag rather than to redesign the flow. Depends on `Q21` for the state vocabulary that makes "stopped" decidable.
+
+> ✅ **ANSWERED 8 Sep 2026 — the proposed behaviour is adopted as written.** The application never sends a stop command; settings clear only when the line is confirmed stopped; checkout is blocked while the line runs. ⚠ **The line-state signal this depends on is `Q21`**, which he deferred — so the flow is agreed while the signal it reads is not yet specified. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
+---
+
+**Q31** · `High` · Owner: Tim O. / Shannon R. · `Decided September 8, 2026`
+**Wire break where the customer accepts no welds — what happens to both pieces?**
+
+**Q73**'s companion case, raised by Yogender on the 6 Aug call. **Q61**/`OI-13` settle the normal break: weld and continue on the same alpha (see the decision recorded against `OI-13`). This asks what happens when the customer's specification **forbids welds**, so weld-and-continue is not available.
+
+**Decided in principle:** it is handled with **the same logic as a Z-mill coil break**. Tim: *"that scenario would probably be handled just like the current e-mails where if we have a coil break and we're not going to meet the planned weight… we're going to replan the coil and use another input material coil and rerun the order."* Shannon converged on the same shape — *"it would be very, very similar to the coil break; they have to make a decision on both pieces. It could be returned to warehouse, it could be scrap, it could be continue processing, could be put it on hold."*
+
+The judgement is made by a **supervisor** on the **total linear footage / weight already on the FL1 spool** against the planned weight:
+
+- **Enough material** → approach the customer for a **concession** (*"will you still take this, it's underweight by 250 pounds"*).
+- **Early in the run** → **WIP reject**, strip the spool, mount an **empty spool**, **replan** onto another input rod and rerun the order.
+
+**What is still open:**
+
+1. The **disposition vocabulary** — is it exactly the Z-mill set (warehouse / scrap / continue / hold / concession), and does it reuse the existing screen or need its own?
+2. The **supervisor gate** — credential block, or an operator decision recorded against a supervisor name?
+3. Does the **concession path reuse the existing coil-break e-mail flow**, or does flat wire need its own?
+4. **Where the decision is persisted** — shares a target with **G34**.
+
+**Scope note from the call:** Tim flagged this as a genuine **one-off** — a customer ordering one or two skids rather than a truckload, who also refuses welds — and cautioned against over-engineering it: *"we're trying to account for one-offs which we don't know for sure is going to be a thing."* Confirm the frequency before sizing the build.
+
+Related: `OI-13`, **G34**, **Q75** (partial-run disposition — the same decision shape), **Q79** (short close), **Q6** (weld footage attribution — why a no-weld customer is knowable at all).
+
+**Recommendation:** **reuse the Z-mill disposition set and the existing screens** — warehouse / scrap / continue / hold, with concession handled by the existing coil-break e-mail flow — and persist the decision against the run-event stream, the same target `G34` needs. Heed Tim's own caution and **confirm the frequency before sizing anything**: if this is genuinely a one-off, the right build is a supervisor disposition on existing rails. **Recommend no new screen.**
+
+> ✅ **ANSWERED 8 Sep 2026 — the recommendation is agreed, unqualified.** Reuse the Z-mill disposition set and existing screens, concession through the existing coil-break e-mail flow, decision persisted in the run-event history. ⛔ **But the frequency question was not answered**, and the recommendation made the build size conditional on it — *"if it is genuinely a one-off, the right build is a supervisor disposition on existing rails and no new screen"*. **Agreeing with a conditional recommendation without supplying the condition leaves the sizing open.** [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
+---
+
+
 
 # Section 5 — Spool Lifecycle and Output
 
@@ -419,6 +619,8 @@ Full record in [ClientCall_2026-08-06_SyncPlan.md](../95-archive/source-document
 
 Related: **Q17** (the FL2 queue the selection is made from), **Q15** (validating a hybrid-origin spool at that same check-in), **Q5**/**Q6** (the cert traceability this chain serves).
 
+> ✅ **CONFIRMED BY THE CLIENT — 8 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
 ---
 
 **Q77** · `High` · Owner: Tim O. / Bob S. · `Decided Apr 28, 2026`
@@ -429,6 +631,8 @@ Related: **Q17** (the FL2 queue the selection is made from), **Q15** (validating
 *As put to the client:* "TKUP-2 has a 1,000 lb capacity. Is the customer-facing maximum coil weight also 1,000 lb, or is it set lower (e.g., 500 lb for ease of handling at the customer)?"
 
 **Decision (Apr 28, 2026, updated May 4, 2026):** New estimated maximum capacity is **1,100 lb** (TKUP-2 equipment limit — revised from 1,000 lb stated at the Apr 28 meeting). The customer defines their coil weight limit below UA's maximum capacity; this is captured in the orders/quotes application. Orders exceeding a single rod or spool weight will be split into multiple stops, each generating its own alpha. The last stop may contain multiple alphas. Weight distribution is tracked via footage and revolutions.
+
+> ✅ **CONFIRMED BY THE CLIENT — 8 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
 
 ---
 
@@ -442,6 +646,8 @@ Related: **Q17** (the FL2 queue the selection is made from), **Q15** (validating
 **Decision (May 4, 2026):**
 - **Anneal step:** The alpha should be modified (updated) to maintain traceability — no new child alpha is generated for an intermediate anneal. The existing spool alpha carries forward with the anneal step recorded against it.
 - **Re-pass through FL1:** UA does not have the capability to run a spool through FL1. This scenario is not applicable.
+
+> ✅ **CONFIRMED BY THE CLIENT — 8 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
 
 ---
 
@@ -460,7 +666,39 @@ Related: **Q17** (the FL2 queue the selection is made from), **Q15** (validating
 
 **Carry item.** Item 5 is a **run/stop model** change rather than a screen rule — check it against `FlatWireRun` / `CoilOutput` footage accumulation and against `CoilTraceability`'s coil-local footage (**OI-25**) before it is written as settled. Overlaps the partial-spool handling in **Q12** and [PartialRodReCheckin.md](../95-archive/design-notes/PartialRodReCheckin.md); the **10-90 SOP document itself is not in this repository** and must be obtained rather than paraphrased.
 
+> ✅ **CONFIRMED BY THE CLIENT — 8 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md). ⛔ **Both residuals stand, and one is a document we still do not hold.** The coil-break clause of item 5 remains **provisional** — the confirmation was of the decision as recorded, and the recorded text already carried that caveat. And the mill stop procedure is **still owed**: Tim's covering mail says *"Need to review a current document and then retool for this process"*, so it has not simply been overlooked — it is being revised. **Do not paraphrase it in the meantime.**
+
 ---
+
+**Q18** · `High` · Owner: Tim O. / Operations · `Decided September 8, 2026`
+**Target spool weight source for the completion alert, and over-target behavior**
+
+> **Decided (July 30, 2026) — the basis is the customer weight range, not a fixed default.** Tim/Bob: the customer specifies a **min–max weight** (e.g. 900 lb max / 800 lb min) and completion is graded against **that range, by weight** — not against footage and not against an assumed default. Spools are sized at roughly **1,800 lb** so that **two finished coils** can be cut from one spool at FL2. Still open: **which order field carries the customer min/max**, and whether the ladder still escalates to a distinct over-target state.
+
+The spool completion alert ([SpoolCompletionNotification.md](../10-requirements/screens/SpoolCompletionNotification.md)) compares actual processed weight against a target. Two candidate sources exist: the order's **Max Wgt of Spool** (customer/order-driven) and the **take-up equipment capacity** (TKUP-1 = 3,500 lb). Note the customer maximum can be well below the TKUP-2 capacity of 1,100 lb, so on FL2/FL3 the customer value governs rather than the cap.
+
+Second part: if the operator does not acknowledge the 100% notification, live weight keeps climbing past target. Should the notification escalate to a distinct **over-target** state (proposed as milestone M4, red, "over by *n* lb"), or continue showing "target reached" with a percentage above 100? Depends on **Q33** for the authoritative weight source.
+
+**Recommendation:** carry the customer min/max on the **order**, reusing the existing *Max Wgt of Spool* field for the maximum and adding a matching minimum, rather than introducing a new spool-target entity — `Q79` grades short closes against the same range, so one source serves both. On the second part, **escalate to a distinct over-target state**: a percentage climbing above 100 with no change of state gives the operator nothing new to react to at exactly the moment the equipment limit is being approached.
+
+> ✅ **ANSWERED 8 Sep 2026 — both parts of the recommendation agreed, unqualified.** The customer minimum and maximum ride on the order, reusing the existing maximum spool weight field and adding a matching minimum; an unacknowledged climb past target escalates to a **distinct over-target state** rather than a percentage above 100. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
+---
+
+**Q20** · `Medium` · Owner: Tim O. / IT · `Decided September 8, 2026`
+
+> **Half answered 1 Sep 2026.** Asked *"Is a dedicated Supervisor Monitor required for Flatwire operations?"*, the client answered a flat **"No"** — `D-38`, superseding `C13`'s *"desired but not required for initial implementation"*. ⚠ **That closes the screen, not this question**: whether the **unacknowledged 100 % milestone** mirrors to a supervisor, and where the acknowledgement audit lives, are still open. ⚠ And the client's IT inhibit list still marks **`Supervisor Monitor`** as applying, with *"Supervisor monitoring"* visible on an attached screenshot of a live machine — so something sets it. See `G80`.
+**Supervisor mirroring and audit persistence of milestone acknowledgements**
+
+Is the spool completion alert an operator-only notification, or is it also surfaced to the supervisor (Dashboard 1 line status / Operations Manager view) — particularly an **unacknowledged** 100% milestone, which indicates nobody is at the machine as the spool fills? And where does the acknowledgement audit record live: a new milestone/acknowledgement table hanging off `FlatWireRun`, or an entry in the existing run-event stream?
+
+**Recommendation:** mirror to the supervisor **only the unacknowledged 100 % milestone**, not the whole ladder — an unanswered completion means nobody is at the machine while the spool fills, which is the one state a supervisor needs, and mirroring all three teaches them to ignore it. Persist the acknowledgement in the **existing run-event stream** rather than a new milestone table: it is an event with an actor and a timestamp, which is exactly what that stream already holds.
+
+> ✅ **ANSWERED 8 Sep 2026 — the recommendation is agreed, unqualified.** Mirror only the unacknowledged 100 % milestone to the supervisor, and record the acknowledgement in the existing run-event history rather than a new record type. Together with the 1 Sep *"No"* on a dedicated Supervisor Monitor (`D-38`), **this question is now fully answered.** [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
+---
+
+
 
 # Section 6 — Quality, Packaging and Tooling
 
@@ -475,6 +713,8 @@ Related: **Q17** (the FL2 queue the selection is made from), **Q15** (validating
 
 **Decision (May 4, 2026):** No separator is required or available. UA does not currently have the capability to provide any separator between oscillate layers. No pack specification field for interleave material is needed.
 
+> ✅ **CONFIRMED BY THE CLIENT — 8 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
 ---
 
 **Q81** · `Medium` · Owner: Tim O. / Technical · `Decided May 4, 2026`
@@ -486,6 +726,8 @@ Related: **Q17** (the FL2 queue the selection is made from), **Q15** (validating
 
 **Decision (May 4, 2026):** The camber measurement feature should be available in the SPC checkpoint if the customer has camber specifications. Implementation is conditional on customer requirement — the field is available but not mandatory for all orders. Inline measurement method to be confirmed per order spec.
 
+> ✅ **CONFIRMED BY THE CLIENT — 8 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
 ---
 
 **Q82** · `Medium` · Owner: Tim O. / Technical · `Decided May 4, 2026`
@@ -496,6 +738,8 @@ Related: **Q17** (the FL2 queue the selection is made from), **Q15** (validating
 *As put to the client:* "For Flat Edge products, what is the maximum allowable edge burr height?"
 
 **Decision (May 4, 2026):** Not currently measured. No system implementation required at this time.
+
+> ✅ **CONFIRMED BY THE CLIENT — 8 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
 
 ---
 
@@ -524,7 +768,20 @@ Confirmed design approach:
 | Manual reset | After physical die replacement, Maintenance (Supervisor) resets footage counter through a dedicated die-management screen; logs who reset it and when |
 | Sensor requirement | Pull footage from existing PLC footage counter already used for spool/alpha tracking — no new IoT sensor needed |
 
+> ✅ **CONFIRMED BY THE CLIENT — 8 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md). ➕ **And it gains a detail:** *"Correct, **Dies will have a unique identifier to track their usage individually.**"* So per-die identity is confirmed, which is what footage-per-die tracking needs. ⚠ **The replacement threshold figures are still deferred**, and per-tool tracking, the die register and the die management screen remain outside this release.
+
 ---
+
+**Q9** · `High` · Owner: Tim O. / Technical · `Decided September 8, 2026`
+**Twist and torsion tolerance for welding wire**
+Is there a maximum allowable twist per foot for flat wire — particularly for welding wire feedability through automated welding equipment? Exceeding this limit causes wire jams at the customer and is a common first-shipment field failure.
+
+**Recommendation:** treat it exactly as **camber under `Q81`** — an **optional SPC checkpoint field, active only when the order specifies a limit.** That is the pattern already agreed for a customer-conditional dimensional characteristic, it needs no new mechanism, and it lets a welding-wire order enforce twist without every order measuring it. Ask Technical for the limit only for the customers who require it.
+
+> ✅ **ANSWERED 8 Sep 2026 — the recommendation is agreed, unqualified.** Twist is treated as camber already is: an optional quality checkpoint field, active only where the order specifies a limit. ⚠ **No limits were supplied**, which the recommendation asked for *only for the customers who require it* — so the absence is consistent with agreement, not a gap. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
+---
+
 
 # Section 7 — Equipment and PLC
 
@@ -544,6 +801,8 @@ Confirmed design approach:
 **Where the rule now lives.** It is **normative prose in `[PLC §8.1]`**: *"It is one tag per line — `FL1.ITInhibit`, `FL2.ITInhibit` — so a line blocked from running blocks only itself."* **This entry is the audit trail for the decision; the specification is the statement of the rule.**
 
 Related: `FR-008`–`FR-010`, `FR-020`, **Q29**, **PLC-Q02**, commissioning test **C7**, `PLC-Q08`.
+
+> ✅ **CONFIRMED BY THE CLIENT — 8 Sep 2026.** Tim O'Brien marked this `Confirmed` on the returned questions workbook, with no qualification. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md). ⚠ **The hybrid residual stands** — whether FL3 carries its own interlock or asserts both mills' together followed from the hybrid addressing question, and **`Q29` has now answered that**: FL2 owns FM2 and FL3 uses FL2's address. **Re-read this residual against that answer**; it may now be decidable without asking.
 
 ---
 
@@ -572,6 +831,12 @@ Three pieces of evidence fix the mapping:
 
 Related: `D-26` (master spec §10.2), **OI-04**, **OI-36**, **PLC-Q04**, `PLC-Q04`, gap **G32**, commissioning test **C11**.
 
+> ✅ **RESTATED 8 Sep 2026 — the stand model is corroborated, and the edger positions are named.** Tim O'Brien marked this `Not confirmed` and restated the correction he originally raised, so the dropdown reflects authorship rather than disagreement:
+>
+> *"**FL2 - Has three stands S1 = 8", S2 = 6", S3 = 6". There are two edgers, one sits between S1/S2 & the other between S2/S3. There is no edger after S3.**"*
+>
+> ✅ **This is `D-26` exactly** — three stands, position-only ids, and the 8″ roller *is* S1. ⚠ **But the edgers are located by inter-stand gap, which is a different convention from the one in use.** `CLAUDE.md` says *"edgers at S2 and S3 only"*; he says *between* S1/S2 and *between* S2/S3; and `Q28` names them **E1** and **E2**. **These are the same two physical gaps under three namings — settle on one in `[PLC]` before writing tags.** ⚠ **The per-stand force and stiffness figures the residual asked for are still owed** — his covering mail says *"Need engineering consult"*. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
 ---
 
 **Q26** · `High` · Owner: Tim O. / Charles / Juan · `Decided Sep 7, 2026`
@@ -590,6 +855,10 @@ Related: `D-26` (master spec §10.2), **OI-04**, **OI-36**, **PLC-Q04**, `PLC-Q0
 **Where the rule now lives.** [`[VAL §7.5]`](../50-frontend/ValidationRules.md) — *"this row is where the canvas is defined, and every other document derives it from here."* **This entry is the audit trail for the decision; that row is the statement of the rule.**
 
 Related: gap **`G23`** (closed with this), **`OI-96`** (closed with this), `F-14`, `F-15`, `FW-130`, `SC-09`, `TC-627`, and [phase-01a](../60-delivery/phases/phase-01a-angular-foundation.md), whose deliverable row and **exit criterion 2** both carried the old figure and moved with this decision. ⚠ [`flat-wire-fit.js`](../50-frontend/mockups/flat-wire-fit.js) still hard-codes `DESIGN_W = 1280` and `MIN_H = 1024` — correctly, because it is a **mockup** asset scaling the mockups' own box. It is **not** the authority for either the canvas or the 14 px floor; [`[VAL §7.5]`](../50-frontend/ValidationRules.md) is.
+
+> ✅ **INDEPENDENTLY CORROBORATED — 8 Sep 2026.** The returned questions workbook still carries `Q26` on its *Open Questions* sheet, because it was issued on 12 Aug and this decision closed on 7 Sep. Tim O'Brien answered it *"Different answer"* against our superseded *hold 1280 × 1024* recommendation: *"**As answered previously, we are going with 1920x1080 res wide screens.** Exact mfg. and model were provided to Sushant."*
+>
+> ⚠ **This reopens nothing** — it is the same figure by a second route, and *"as answered previously"* refers to the 7 Sep confirmation this entry already records. ➕ **It does advance the residual:** the panel's **physical diagonal** is still unrecorded and the 14 px floor rests on it — and the exact manufacturer and model are now stated to be with **Sushant**, which is where to get it. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
 
 ---
 
@@ -1040,3 +1309,34 @@ Related: **`Q90`** (superseded outright), **`OI-41`** (closes), **`OI-141`** (op
 `[DBD §6.2]`, `[DBD §6.2a]`, `[DEP §4.2]`.
 
 ---
+
+
+# Section 9 — Certification, Yield and Traceability
+
+Two decisions that reached this file together, from the client questions workbook returned on 9 September 2026. Neither had a thematic home among Sections 1–8: both are **certification and yield** questions rather than screen, staging or equipment ones, and filing them under quality or scheduling would have buried them. Section numbers here are non-contiguous by design — this one is new, and nothing was renumbered to make room for it.
+
+---
+
+**Q6** · `High` · Owner: Jaspreet / Tim O. · `Decided September 8, 2026`
+**Weld attribution on output footage**
+When a weld joins two source rods (R1 and R2) into a continuous run, how is output footage attributed to each source for cert and yield purposes? Is there a footage-based split at the weld point, or is the entire output coil attributed to the dominant (largest contributor) rod?
+
+**Recommendation:** **footage-based split at the weld point**, not dominant-rod attribution. `CoilTraceability` is already a per-footage-range genealogy chain, so the split is the natural read of data we hold anyway, whereas dominant-rod attribution makes a certificate assert that material came from a rod it did not. Cost at capture is nil — the weld already records its footage position.
+
+> ✅ **ANSWERED 8 Sep 2026 — the recommendation is agreed, unqualified.** Footage-based split at the weld point, not dominant-rod attribution. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
+---
+
+**Q11** · `High` · Owner: Tim O. / Margo · `Decided September 8, 2026`
+
+> **Not answered — read the 1 Sep yield answer carefully before closing this.** The client supplied the **actual**-yield measurement formula (produced lb ÷ consumed lb, per Bundle/Spool, Shift and Order — `D-40`). This question asks for the **per-pass scrap allowance** the planning algorithm applies when sizing rod input. Different question, and `OI-60` is in the same position.
+**Yield loss factor for planning rod input sizing**
+Is there a per-pass scrap allowance (die entry crop, edge trim, end crop, weld scrap) that the planning algorithm must apply when sizing rod input weight for an order? If not built in, planners will systematically under-order rod and discover the shortage at the machine.
+
+**Recommendation:** a **per-pass scrap allowance held as configuration, with die entry crop, edge trim, end crop and weld scrap as separate line items** so each can be tuned independently; seed provisionally and refine from trial. Rolling them into one factor makes the number impossible to improve later, because nobody can tell which component was wrong. Must agree with `OI-60`.
+
+> ✅ **ANSWERED 8 Sep 2026 — the recommendation is agreed, unqualified.** Per-pass scrap allowance held as configuration, with die entry crop, edge trim, end crop and weld scrap as separate line items. ⚠ **No figures were supplied.** The recommendation said to seed provisionally and refine from trial data, so the build is not blocked — but the seeded values remain ours, not UA's, and must stay visibly provisional. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
+---
+
+

@@ -74,7 +74,7 @@ directive — hence a separate runner.
 **bare relative filenames**, so run them **from this folder**.
 
 ```powershell
-cd "c:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Schema\SQL"
+cd "c:\UAL\Flatwire-planning\30-database\sql"
 
 sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll.sql          # the MVP-1 schema
 sqlcmd -S "<server>" -E -C -i FlatWire_SampleData_RunAll.sql   # DEV / TRIAL ONLY

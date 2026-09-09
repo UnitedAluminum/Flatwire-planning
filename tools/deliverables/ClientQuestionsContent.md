@@ -123,20 +123,6 @@ optional; everything else is required.
 
 ---
 
-## Q6
-
-**Register title:** Weld attribution on output footage
-**Area:** Certification and traceability
-**Needs input from:** Tim O.
-**What we need:** Decision
-**Question:** When a weld joins two source rods into one continuous run, how is the output footage attributed between them for certification and yield — split at the weld point, or all attributed to whichever rod contributed most?
-**Background:** The weld already records the footage position at which it was made, so a footage-based split needs no extra capture. Attributing the whole coil to the larger contributor would make a certificate assert that material came from a rod it did not come from.
-**Recommended answer:** Footage-based split at the weld point, not dominant-rod attribution.
-**Why:** It is the natural reading of data we already hold, it costs nothing extra at capture, and the alternative puts an untrue statement on a certificate.
-**Impact if unanswered:** Certificate and yield attribution for welded runs is undefined — and welded runs are the normal case on continuous feed.
-
----
-
 ## Q7
 
 **Register title:** Max weld joints per finished coil
@@ -165,20 +151,6 @@ optional; everything else is required.
 
 ---
 
-## Q9
-
-**Register title:** Twist and torsion tolerance for welding wire
-**Area:** Quality and tolerances
-**Needs input from:** Tim O., Technical
-**What we need:** Decision
-**Question:** Is there a maximum allowable twist per foot for flat wire, particularly for welding wire that has to feed through automated welding equipment?
-**Background:** Excess twist jams wire at the customer and is a common first-shipment field failure. Camber has already been settled as an optional measurement active only when the order specifies a limit; twist is the same shape of characteristic.
-**Recommended answer:** Treat it exactly as camber is already treated — an optional quality checkpoint field, active only when the order specifies a limit. Please supply the limit only for the customers who require it.
-**Why:** It reuses a pattern already agreed for a customer-conditional dimensional characteristic, needs no new mechanism, and does not make every order measure something only some orders care about.
-**Impact if unanswered:** Welding wire orders cannot enforce a twist limit; no impact on orders that do not specify one.
-
----
-
 ## Q10
 
 **Register title:** Footage-to-weight conversion factor
@@ -189,20 +161,6 @@ optional; everything else is required.
 **Background:** Output weight is derived from length rather than weighed, so this factor sits behind spool completion, the printed coil label and the pass schedule calculations. The formula itself is not really in doubt; the basis it is applied to is, and a nominal-versus-measured difference is large enough to matter on a label.
 **Why:** Two independently confirmed factors will disagree in the third decimal and nobody will know which is authoritative. The same number is also being requested for the pass schedule calculations and must not resolve to a second value.
 **Impact if unanswered:** Every derived weight in the system — spool completion, coil label, planning — rests on an unconfirmed basis. This is one of the most widely depended-on numbers in the build.
-
----
-
-## Q11
-
-**Register title:** Yield loss factor for planning rod input
-**Area:** Costing and yield
-**Needs input from:** Tim O., Margo
-**What we need:** Values or data
-**Question:** Is there a per-pass scrap allowance — die entry crop, edge trim, end crop, weld scrap — that planning must apply when sizing rod input for an order?
-**Background:** If this is not built in, planners will systematically under-order rod and the shortage will be discovered at the machine.
-**Recommended answer:** Hold a per-pass scrap allowance as configuration, with die entry crop, edge trim, end crop and weld scrap as **separate line items** so each can be tuned independently. Seed them provisionally and refine from trial data. The figures must agree with the metallic yield answer.
-**Why:** Rolling them into one factor makes the number impossible to improve later, because nobody can tell which component was wrong.
-**Impact if unanswered:** Planning under-orders rod and the shortage surfaces at the machine.
 
 ---
 
@@ -221,37 +179,6 @@ optional; everything else is required.
 
 ---
 
-## Q13
-
-**Register title:** PLC tag behaviour on rod checkout
-**Area:** Rod checkout and partial material
-**Needs input from:** Tim O., Engineering
-**What we need:** Confirmation of our reading
-**Question:** When a rod is checked out mid-run, what should happen to the machine settings the system had sent? We have proposed a behaviour and need engineering to confirm it.
-**Background:** The concern is losing footage or interrupting the machine's control logic while material is still moving. Our proposal avoids both by never commanding the machine and only clearing settings once the line is confirmed stopped. Whether "stopped" is reliably readable depends on the line-state signal, which is the subject of a separate question.
-**Already agreed:** Nothing yet — the behaviour below is our proposal awaiting engineering confirmation.
-**Options:** As proposed: the application never sends a stop command — the operator always controls the machine physically; settings are cleared only when the line is confirmed stopped; and the system checks the line is stopped before allowing checkout to proceed. On screen: if the line is still running when the operator presses Check Out Rod, checkout is blocked with the message "Line is still running. Stop the line before checking out the rod." If the line is confirmed stopped, the checkout dialog opens, the footage reading is taken and locked at that moment, and settings are cleared only after the operator confirms.
-**Recommended answer:** Adopt the proposed behaviour as written. We are asking engineering to confirm the line-state signal we read to decide "stopped", not to redesign the flow.
-**Why:** It is the only design that cannot drop footage or interrupt control logic mid-motion, because the operator stops the line physically and the system only ever follows.
-**Impact if unanswered:** Mid-run rod checkout cannot be built, and it is a routine operational event.
-
----
-
-## Q14
-
-**Register title:** Pass schedule selection mechanism at check-in
-**Area:** Pass schedule at check-in
-**Needs input from:** Tim O.
-**What we need:** Decision
-**Question:** What happens at check-in when no pass schedule matches the order? Must check-in be blocked and Operations alerted so a schedule can be created, or may the operator proceed by manually picking a schedule that does not match?
-**Background:** The selection mechanism itself is settled and visible on the screens you have reviewed: the system looks up a schedule by alloy, rod diameter, target gauge and width, and route mode, and presents the best match for the operator to confirm before check-in can begin. A change control offers alternatives, and picking a non-recommended schedule is flagged for Operations review. What the screens do not show is the case where the lookup returns nothing at all.
-**Already agreed:** The selection mechanism — attribute-based lookup, system recommendation, explicit operator confirmation before check-in is enabled, alternatives available with non-recommended choices flagged for Operations review.
-**Recommended answer:** Block the check-in and alert Operations, showing which attributes failed to match so the missing schedule can be authored without a phone call. The operator must not be able to proceed by hand-picking a schedule that does not match the order.
-**Why:** Hand-picking a non-matching schedule is precisely the path that produces scrap under a configuration that looks plausible on screen — and making the match explicit is the whole purpose of the confirmation step.
-**Impact if unanswered:** The check-in gate logic cannot be built, and this is the first thing that happens on every run.
-
----
-
 ## Q15
 
 **Register title:** FL3 hybrid pass schedule — one or two schedules?
@@ -264,20 +191,6 @@ optional; everything else is required.
 **Recommended answer:** Record the originating route mode on the spool and have FL2 check-in refuse a standalone FL2 schedule for a hybrid-origin spool unless a supervisor overrides with a reason — the same override pattern used for the other supervisor-gated deviations.
 **Why:** The spool already carries the run that produced it, so this is a lookup rather than new data to capture. Without it, hybrid material can be re-passed under a configuration that never applied to it.
 **Impact if unanswered:** FL2 check-in development cannot begin.
-
----
-
-## Q16
-
-**Register title:** Pass schedule validation during planning/scheduling
-**Area:** Planning and scheduling
-**Needs input from:** Tim O., Stephen
-**What we need:** Decision
-**Question:** Should planning or scheduling warn when a job is booked on a flattening line but no pass schedule exists for that product's alloy, gauge, width and edge type?
-**Background:** Without a check at scheduling time, operators arrive at the machine ready to run and find no schedule available, and the line waits while Operations authors one. The hard gate at check-in is being handled separately.
-**Recommended answer:** Warn at scheduling time, do not block. A scheduler should be able to book work before Operations has authored the schedule, but not unknowingly. Check-in provides the hard gate at the point it matters.
-**Why:** Warning at scheduling plus blocking at check-in covers the failure without making planning depend on pass schedule authoring being finished first.
-**Impact if unanswered:** Lines will occasionally sit waiting for a schedule that could have been flagged days earlier.
 
 ---
 
@@ -296,21 +209,6 @@ optional; everything else is required.
 
 ---
 
-## Q18
-
-**Register title:** Target spool weight source for the completion alert + over-target behavior
-**Area:** Spool lifecycle
-**Needs input from:** Tim O., Operations
-**What we need:** Decision
-**Question:** Two parts. Which order field carries the customer's minimum and maximum weight? And if the operator does not acknowledge the completion notification and weight keeps climbing past target, should the notification escalate to a distinct over-target state, or keep showing "target reached" with a percentage above 100?
-**Background:** The basis was settled on 30 July 2026 — completion is graded against the customer's weight range — but the field that carries that range has not been named, and there are two candidate sources for a target: the order's maximum spool weight, and the take-up equipment capacity. Note the customer maximum can sit well below the finished-coil take-up capacity, in which case the customer value governs rather than the equipment cap.
-**Already agreed:** The basis is the customer weight range, not a fixed default: the customer specifies a minimum and maximum — for example 900 lb maximum and 800 lb minimum — and completion is graded against that range by weight, not by footage and not against an assumed default. Spools are sized at roughly 1,800 lb so two finished coils can be cut from one spool at FL2.
-**Recommended answer:** Carry the customer minimum and maximum on the **order**, reusing the existing maximum spool weight field for the maximum and adding a matching minimum, rather than introducing a new target record. On the second part, escalate to a distinct over-target state.
-**Why:** The short-close rule already grades against the same range, so one source serves both. A percentage climbing past 100 with no change of state gives the operator nothing new to react to at exactly the moment the equipment limit is being approached.
-**Impact if unanswered:** The completion alert has no confirmed target to compare against, and the over-target behaviour is unspecified.
-
----
-
 ## Q19
 
 **Register title:** Does the spool completion alert ladder apply to finished coils at TKUP-2 (FL2/FL3)?
@@ -322,20 +220,6 @@ optional; everything else is required.
 **Recommended answer:** Yes — run the same 75 / 90 / 100 ladder at the finished-coil take-up, with coil wording and the coil target weight. On FL2 standalone the weight-per-foot factor comes from the pass schedule or order, and it is the same factor as elsewhere rather than a new one.
 **Why:** The operator concern is identical, and a second differently-shaped notification on the same shop floor is a training cost for no benefit.
 **Impact if unanswered:** Finished-coil completion has no approaching-target warning, so operators get no notice before the coil reaches weight.
-
----
-
-## Q20
-
-**Register title:** Supervisor mirroring and audit persistence of milestone acknowledgements
-**Area:** Spool lifecycle
-**Needs input from:** Tim O., IT
-**What we need:** Decision
-**Question:** Is the spool completion alert operator-only, or is it also shown to the supervisor — particularly an **unacknowledged** 100 per cent milestone, which means nobody is at the machine while the spool fills? And where is the acknowledgement recorded for audit?
-**Background:** An unanswered completion notification is a specific and actionable signal: the spool is filling and no one is responding. The other two rungs of the ladder are not, and mirroring all three would teach a supervisor to ignore the notification.
-**Recommended answer:** Mirror only the unacknowledged 100 per cent milestone to the supervisor, not the whole ladder. Record the acknowledgement in the existing run-event history rather than a new record type.
-**Why:** The unanswered completion is the one state a supervisor needs; mirroring everything trains them to ignore it. An acknowledgement is an event with an actor and a timestamp, which is exactly what the run-event history already holds.
-**Impact if unanswered:** Supervisors get no visibility of an unattended machine at spool completion, and the acknowledgement has no confirmed audit home.
 
 ---
 
@@ -367,37 +251,6 @@ optional; everything else is required.
 **Recommended answer:** Send the four sets of figures. We will make the structural change now and seed nothing until they arrive, so the build is not waiting on the values. **Per-alloy is sufficient granularity** unless Process Engineering states that tolerance varies by vendor or by nominal size — please confirm that specifically. We will also consolidate the one ovality limit that is currently hard-coded so ovality is validated in one place rather than two.
 **Why:** The shape is decided and the structure can be built empty, so the numbers and the schema are not blocking each other. But nothing can be validated against a tolerance that does not exist, so the figures block the check-in build regardless.
 **Impact if unanswered:** Rod acceptance validation at both pre-check-in and check-in cannot be completed. This is a current blocker.
-
----
-
-## Q23
-
-**Register title:** Does a failed staging inspection persist a RodStaging row, and what releases it?
-**Area:** Rod staging and pre-check-in
-**Needs input from:** Tim O., IT
-**What we need:** Confirmation of our reading
-**Question:** One point remains. When a staging inspection fails, should the inspector's notes be **mandatory**? They are currently optional but documented as expected whenever any item fails.
-**Background:** The substantive parts of this question were settled in July 2026. The reasoning behind them is physical: bundles are not unbanded until they are positioned at the payoff — which is precisely why the inspection happens at staging — so a rod that fails inspection is already sitting on the bay. Recording nothing left the system reporting an occupied bay as empty and offering it to the next rod, while a physically present rejected bundle blocked it.
-**Already agreed:** A blocked bay is a **derived** state — staged, with any inspection item failed — rather than a separate status. Pre-check-in commits the staging record **before** the inspection gate, so the failure and the observation are both persisted and the bay correctly reads as blocked. There is no bypass: rejection remains the only forward path. A failed inspection is captured as a rejection on the rejection screen, the operator enters the reason there, the rod goes to hold, and that rejection is what releases the bay.
-**Recommended answer:** Make the inspection notes **mandatory when any inspection item fails**, matching the treatment already applied to the other conditional field groups.
-**Why:** A failure with no observation is the one case where the note carries the whole evidentiary value — and the existing documentation already says a note is expected there.
-**Impact if unanswered:** Failed inspections may be recorded with no observation, which undermines the rejection audit trail.
-
----
-
-## Q24
-
-**Register title:** Staging deviations — off-schedule (auto-switch), out-of-sequence (override), PIN source
-**Area:** Rod staging and pre-check-in
-**Needs input from:** Tim O., Shannon R.
-**What we need:** Decision
-**Answer together with:** Q73
-**Question:** Does the same out-of-sequence supervisor override apply at check-in as well as pre-check-in? And the out-of-sequence override itself was left in place provisionally pending your review — please confirm or remove it.
-**Background:** Two parts of this were settled on 30 July 2026. On the out-of-sequence override you said it "might not be a bad idea" and asked to leave it in place while you reviewed something in the specification it may support — so it is currently built on an unconfirmed rule, and anything depending on it is depending on a provisional decision. On the check-in point, the decision said pre-check-in and check-in, but only the pre-check-in screen carries the control today.
-**Already agreed:** Off-schedule is not a deviation at all — there is no blocking message and no override, and the system selects the correct station automatically. If the rod is planned for FL3 and the operator is on the FL1 tab, the screen switches to FL3 and the transaction continues, at both pre-check-in and check-in. Separately, and provisionally: the operator must be notified when the rod being checked in is not the one planning expects next, and a supervisor override is required to depart from the planned sequence — reason, badge or identifier and PIN, with a remote-approval fallback, all recorded. "Expects next" means the lowest planned sequence still available, so a blocked bundle does not freeze the sequence behind it.
-**Recommended answer:** Yes to the check-in point — build the identical control at check-in, because a validation enforced at one of two entry points is not enforced. Validate the PIN against the **existing login and authorisation service**, so one credential path serves this override, the weight-variance override and the welded pre-check-out override. And please close the review you committed to on the out-of-sequence override.
-**Why:** The multi-order sequencing rule independently requires the same control at check-in, so the two land together. A second credential store is an authentication surface with no owner. And a provisional rule that downstream work treats as final is the kind of thing that surfaces late.
-**Impact if unanswered:** The sequence validation is enforceable at only one of the two entry points, and three supervisor overrides have no confirmed credential source.
 
 ---
 
@@ -472,21 +325,6 @@ optional; everything else is required.
 **Recommended answer:** Specify the completion weight as **derived from footage and cross-section**, and treat any take-up load cell as a **corroborating** reading rather than the source. If the cells exist, tell us and we will add their signals so commissioning can read them — but the transaction will not depend on them.
 **Why:** It puts the scale-versus-calculated reconciliation in one place, one level down, instead of creating two competing rules at this level. Note the consequence: if the weight is derived, its accuracy rests entirely on the footage-to-weight dimensional basis, which is separately open and already critical.
 **Impact if unanswered:** The most consequential number in the completion transaction — the one printed on the label — has no confirmed source.
-
----
-
-## Q31
-
-**Register title:** Wire break where the customer accepts no welds — the disposition set, the supervisor gate and where the decision is persisted
-**Area:** Rod checkout and partial material
-**Needs input from:** Tim O., Shannon R.
-**What we need:** Decision
-**Question:** Four points remain on the no-weld wire break. Is the disposition list exactly the Z-mill set — return to warehouse, scrap, continue processing, hold, concession — and does it reuse the existing screen? Is the supervisor gate a credential block, or an operator decision recorded against a supervisor's name? Does the concession path reuse the existing coil-break e-mail flow? And, before any of that, how often does this actually happen?
-**Background:** The principle was agreed on the 6 August call: it is handled with the same logic as a Z-mill coil break, with a supervisor judging the material already on the spool against the planned weight. If there is enough material, approach the customer for a concession — "will you still take this, it's underweight by 250 pounds". If the break is early in the run, reject the material, strip the spool, mount an empty one, replan onto another input rod and rerun the order. You flagged this yourself as a genuine one-off — a customer ordering one or two skids rather than a truckload, who also refuses welds — and cautioned against over-engineering it.
-**Already agreed:** Same logic as a Z-mill coil break. The judgement is a supervisor's, made on the total footage or weight already on the spool against the planned weight. Enough material means approach the customer for a concession; early in the run means reject, strip the spool, mount an empty spool, replan onto another input rod and rerun.
-**Recommended answer:** Reuse the Z-mill disposition set and the existing screens — warehouse, scrap, continue, hold — with concession handled through the existing coil-break e-mail flow, and persist the decision in the run-event history. **Confirm the frequency before we size anything.** If it is genuinely a one-off, the right build is a supervisor disposition on existing rails and **no new screen**.
-**Why:** We are taking your own caution seriously: building a dedicated path for a case that may never recur is the wrong trade against a 30 September window.
-**Impact if unanswered:** A no-weld customer's wire break has no defined disposition path, and the persistence target is undecided.
 
 ---
 
@@ -936,10 +774,139 @@ optional; everything else is required.
 
 ---
 
+## Q94
+
+**Register title:** The crew-size vocabulary, and two FL3 rows in the Machine Setup grids that contradict each other
+**Area:** Reference data
+**Needs input from:** Tim O., Bob S.
+**What we need:** Confirmation of our reading
+**Question:** Three things the two Machine Setup tabs you sent on 31 August do not settle. First, are the flattening lines' crew sizes the same three values the slitters already use - one, two and three? Second, why does the hybrid line still list a quality checkpoint at the first take-up, when the hybrid route runs continuously and nothing sits there? And third, why is the quality checkpoint at the first drawing stand listed for the standalone line but not for the hybrid one, when the hybrid route runs through that stand?
+**Background:** We built the setup and handling times and the material loss tabs exactly as pictured, in the order pictured, which is what you asked for. These three are the points the pictures could not settle on their own. We measured the crew-size question against your existing system and found exactly three values in use across six slitting machines, which is why we are asking you to confirm rather than to choose.
+**Recommended answer:** On the crew sizes, confirm that one, two and three are the whole vocabulary for the flattening lines as well. On the other two, we believe the hybrid column was copied from the standalone one and edited by hand, and that both rows are slips - but we would rather you tell us than have us decide.
+**Why:** The two grid rows point in opposite directions - one keeps a step for equipment the hybrid route does not have, the other drops a step for equipment it does. Someone correcting each on its own merits would silently make both wrong, which is why they go back to you together rather than separately.
+**Impact if unanswered:** Nothing is blocked. Both rows are built exactly as you pictured them and our checks assert them positively, so a well-meant correction fails a test rather than passing silently. The crew size stays marked as proposed until you confirm the vocabulary.
+
+---
+
 # Part 2 — Decisions to Confirm
 
 ---
 
+## Q6
+
+**Register title:** Weld attribution on output footage
+**Area:** Certification and traceability
+**Question:** When a weld joins two source rods into one continuous run, how is the output footage attributed between them for certification and yield — split at the weld point, or all attributed to whichever rod contributed most?
+**Background:** The weld already records the footage position at which it was made, so a footage-based split needs no extra capture. Attributing the whole coil to the larger contributor would make a certificate assert that material came from a rod it did not come from.
+**Decision as recorded:** The output footage is split at the weld point and attributed to each source rod by the footage each actually contributed. The whole coil is not attributed to whichever rod contributed most.
+**Our recommendation:** Confirm as recorded. You agreed this without qualification on 8 September 2026. The weld already records the footage position at which it was made, so the split costs nothing extra to capture, and the alternative would put an untrue statement on a certificate.
+
+---
+## Q9
+
+**Register title:** Twist and torsion tolerance for welding wire
+**Area:** Quality and tolerances
+**Question:** Is there a maximum allowable twist per foot for flat wire, particularly for welding wire that has to feed through automated welding equipment?
+**Background:** Excess twist jams wire at the customer and is a common first-shipment field failure. Camber has already been settled as an optional measurement active only when the order specifies a limit; twist is the same shape of characteristic.
+**Decision as recorded:** Twist is treated exactly as camber already is: an optional quality checkpoint field that is active only when the order specifies a limit. Orders that do not specify one are unaffected.
+**Still open:** The limits themselves, for those welding wire customers who require them. Nothing is blocked meanwhile: the field stays inactive until a limit is supplied.
+**Our recommendation:** Confirm as recorded. You agreed this without qualification on 8 September 2026. Please supply the limit only for the customers who require one - no value is needed for the rest.
+
+---
+## Q11
+
+**Register title:** Yield loss factor for planning rod input
+**Area:** Costing and yield
+**Question:** Is there a per-pass scrap allowance — die entry crop, edge trim, end crop, weld scrap — that planning must apply when sizing rod input for an order?
+**Background:** If this is not built in, planners will systematically under-order rod and the shortage will be discovered at the machine.
+**Decision as recorded:** A per-pass scrap allowance is held as configuration, with die entry crop, edge trim, end crop and weld scrap as four separate line items so each can be tuned independently.
+**Still open:** The figures themselves. The values we seed meanwhile are ours, not yours, and are marked as provisional until the trial replaces them.
+**Our recommendation:** Confirm as recorded. You agreed this without qualification on 8 September 2026. We will seed the four allowances provisionally and refine them from trial data, so planning is not held up waiting for final figures.
+
+---
+## Q13
+
+**Register title:** PLC tag behaviour on rod checkout
+**Area:** Rod checkout and partial material
+**Question:** When a rod is checked out mid-run, what should happen to the machine settings the system had sent? We have proposed a behaviour and need engineering to confirm it.
+**Background:** The concern is losing footage or interrupting the machine's control logic while material is still moving. Our proposal avoids both by never commanding the machine and only clearing settings once the line is confirmed stopped. Whether "stopped" is reliably readable depends on the line-state signal, which is the subject of a separate question.
+**Decision as recorded:** The behaviour is adopted as proposed. The application never sends a stop command - the operator always controls the machine physically. Settings are cleared only once the line is confirmed stopped, and the system checks the line is stopped before allowing checkout to proceed. If the line is still running the checkout is refused with a message saying so; if it is stopped, the footage reading is taken and locked at that moment and the settings clear only after the operator confirms.
+**Still open:** The machine signal we read to decide the line is stopped is still being settled with your engineers - it is asked separately. The flow above does not change with the answer.
+**Our recommendation:** Confirm as recorded. You agreed this without qualification on 8 September 2026.
+
+---
+## Q14
+
+**Register title:** Pass schedule selection mechanism at check-in
+**Area:** Pass schedule at check-in
+**Question:** What happens at check-in when no pass schedule matches the order? Must check-in be blocked and Operations alerted so a schedule can be created, or may the operator proceed by manually picking a schedule that does not match?
+**Background:** The selection mechanism itself is settled and visible on the screens you have reviewed: the system looks up a schedule by alloy, rod diameter, target gauge and width, and route mode, and presents the best match for the operator to confirm before check-in can begin. A change control offers alternatives, and picking a non-recommended schedule is flagged for Operations review. What the screens do not show is the case where the lookup returns nothing at all.
+**Decision as recorded:** Check-in is blocked and Operations is alerted, showing which attributes failed to match so the missing schedule can be created without a phone call. The operator cannot proceed by hand-picking a schedule that does not match the order.
+**Our recommendation:** Confirm as recorded. You agreed this without qualification on 8 September 2026. This is the first thing that happens on every run, so the gate had to be unambiguous.
+
+---
+## Q16
+
+**Register title:** Pass schedule validation during planning/scheduling
+**Area:** Planning and scheduling
+**Question:** Should planning or scheduling warn when a job is booked on a flattening line but no pass schedule exists for that product's alloy, gauge, width and edge type?
+**Background:** Without a check at scheduling time, operators arrive at the machine ready to run and find no schedule available, and the line waits while Operations authors one. The hard gate at check-in is being handled separately.
+**Decision as recorded:** Planning and scheduling warn when a job is booked on a flattening line with no matching pass schedule, but do not block. A scheduler can book work before Operations has written the schedule - but not without knowing.
+**Our recommendation:** Confirm as recorded. You agreed this without qualification on 8 September 2026. Check-in provides the hard gate at the point where it matters; this is only the early warning.
+
+---
+## Q18
+
+**Register title:** Target spool weight source for the completion alert + over-target behavior
+**Area:** Spool lifecycle
+**Question:** Two parts. Which order field carries the customer's minimum and maximum weight? And if the operator does not acknowledge the completion notification and weight keeps climbing past target, should the notification escalate to a distinct over-target state, or keep showing "target reached" with a percentage above 100?
+**Background:** The basis was settled on 30 July 2026 — completion is graded against the customer's weight range — but the field that carries that range has not been named, and there are two candidate sources for a target: the order's maximum spool weight, and the take-up equipment capacity. Note the customer maximum can sit well below the finished-coil take-up capacity, in which case the customer value governs rather than the equipment cap.
+**Decision as recorded:** Two parts. The customer minimum and maximum weight are carried on the order, reusing the existing maximum spool weight field for the maximum and adding a matching minimum. And when weight climbs past target without the operator acknowledging, the notification escalates to a distinct over-target state rather than continuing to show a percentage above one hundred.
+**Our recommendation:** Confirm as recorded. You agreed both parts without qualification on 8 September 2026. A percentage climbing past one hundred with no change of state gives the operator nothing new to react to at exactly the moment the equipment limit is being approached.
+
+---
+## Q20
+
+**Register title:** Supervisor mirroring and audit persistence of milestone acknowledgements
+**Area:** Spool lifecycle
+**Question:** Is the spool completion alert operator-only, or is it also shown to the supervisor — particularly an **unacknowledged** 100 per cent milestone, which means nobody is at the machine while the spool fills? And where is the acknowledgement recorded for audit?
+**Background:** An unanswered completion notification is a specific and actionable signal: the spool is filling and no one is responding. The other two rungs of the ladder are not, and mirroring all three would teach a supervisor to ignore the notification.
+**Decision as recorded:** Only the unacknowledged one hundred per cent milestone is mirrored to the supervisor, not the whole ladder. The acknowledgement is recorded in the existing run event history rather than in a new record.
+**Our recommendation:** Confirm as recorded. You agreed this without qualification on 8 September 2026. An unanswered completion means nobody is at the machine while the spool fills, which is the one state a supervisor needs; mirroring all three milestones would teach them to ignore it.
+
+---
+## Q23
+
+**Register title:** Does a failed staging inspection persist a RodStaging row, and what releases it?
+**Area:** Rod staging and pre-check-in
+**Question:** One point remains. When a staging inspection fails, should the inspector's notes be **mandatory**? They are currently optional but documented as expected whenever any item fails.
+**Background:** The substantive parts of this question were settled in July 2026. The reasoning behind them is physical: bundles are not unbanded until they are positioned at the payoff — which is precisely why the inspection happens at staging — so a rod that fails inspection is already sitting on the bay. Recording nothing left the system reporting an occupied bay as empty and offering it to the next rod, while a physically present rejected bundle blocked it.
+**Decision as recorded:** The inspector's notes are mandatory whenever any staging inspection item fails, matching the treatment already applied to the other conditional field groups.
+**Our recommendation:** Confirm as recorded. You agreed this without qualification on 8 September 2026. It was the one point that remained on this question; with it answered the question is fully settled.
+
+---
+## Q24
+
+**Register title:** Staging deviations — off-schedule (auto-switch), out-of-sequence (override), PIN source
+**Area:** Rod staging and pre-check-in
+**Question:** Does the same out-of-sequence supervisor override apply at check-in as well as pre-check-in? And the out-of-sequence override itself was left in place provisionally pending your review — please confirm or remove it.
+**Background:** Two parts of this were settled on 30 July 2026. On the out-of-sequence override you said it "might not be a bad idea" and asked to leave it in place while you reviewed something in the specification it may support — so it is currently built on an unconfirmed rule, and anything depending on it is depending on a provisional decision. On the check-in point, the decision said pre-check-in and check-in, but only the pre-check-in screen carries the control today.
+**Decision as recorded:** The identical out-of-sequence control is built at check-in as well as at pre-check-in, because a validation enforced at one of two entry points is not enforced. The supervisor PIN validates against the existing login and authorisation service, so one credential path serves this override, the weight variance override and the welded pre-check-out override.
+**Still open:** The review you committed to on the out-of-sequence override itself was not separately confirmed. Agreeing the above implies it stands, but please say so explicitly.
+**Our recommendation:** Confirm as recorded. You agreed this without qualification on 8 September 2026.
+
+---
+## Q31
+
+**Register title:** Wire break where the customer accepts no welds — the disposition set, the supervisor gate and where the decision is persisted
+**Area:** Rod checkout and partial material
+**Question:** Four points remain on the no-weld wire break. Is the disposition list exactly the Z-mill set — return to warehouse, scrap, continue processing, hold, concession — and does it reuse the existing screen? Is the supervisor gate a credential block, or an operator decision recorded against a supervisor's name? Does the concession path reuse the existing coil-break e-mail flow? And, before any of that, how often does this actually happen?
+**Background:** The principle was agreed on the 6 August call: it is handled with the same logic as a Z-mill coil break, with a supervisor judging the material already on the spool against the planned weight. If there is enough material, approach the customer for a concession — "will you still take this, it's underweight by 250 pounds". If the break is early in the run, reject the material, strip the spool, mount an empty one, replan onto another input rod and rerun the order. You flagged this yourself as a genuine one-off — a customer ordering one or two skids rather than a truckload, who also refuses welds — and cautioned against over-engineering it.
+**Decision as recorded:** The Z-mill disposition set and the existing screens are reused - return to warehouse, scrap, continue processing and hold - with a concession handled through the existing coil break notification flow. The supervisor's decision is kept in the run event history.
+**Still open:** How often this actually happens. The recommendation made the size of the build conditional on that answer: if it is genuinely a one-off, the right build is a supervisor disposition on the existing screens and no new screen at all. Please tell us the frequency.
+**Our recommendation:** Confirm as recorded. You agreed this without qualification on 8 September 2026.
+
+---
 ## Q26
 
 **Register title:** Shopfloor panel resolution — 1920×1080 confirmed

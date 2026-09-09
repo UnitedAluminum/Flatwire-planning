@@ -6,7 +6,7 @@
 **Version:** 1.3
 **Date:** September 5, 2026
 **Status:** Issued for Client Review and Sign-off
-**Last Updated:** September 5, 2026 — **`D-46`: every tag path gains a `PLC` element after the line.** `FL1.AGC.Gauge` is now `FL1.PLC.AGC.Gauge`. The grammar in §4.1, rules R2 and R3, and every path in §5.2 are rewritten. **Values only — no logical name moved**, which is the property §4 was built to have. ⚠ **`D-47`: FL3 has no controller of its own**; see §5.2.3.
+**Last Updated:** September 9, 2026 (`G120` resolved) — ⭐ **ASSUMPTION `A3` IS RETIRED AND FL2 HAS GAUGE AND WIDTH TAGS.** §5.2.2 gains **`FL2.PLC.AGC.Gauge`** and **`.Width`** — `REAL`, **inches**, **4 s** — mirroring FL1's `AGC` element so **§4.1's grammar needs no change**. §2's four assertions inverted, §5.1 gains a cadence note, §5.4's take-up-weight gap closes with falsified `A2`, and **`C1`/`C8` are rewritten** — `C8` was titled *"AGC feed reaches the screen"* and written for FL1/FL3 only. ⚠ **`PLC-Q11` is answered for FL2 only (4 s); FL1/FL3's ~10 Hz is OUR figure** and `C8` confirms or corrects it. ⚠ **`PLC-Q19` gains a fourth read and it decides the tag shape** — one gauging stand or two, i.e. two rows or four under `R6`. ⛔ **FL3's rows stay historical**; the new FL2 path is what `G99` re-points them to. 🐛 `PLC-Q18`'s row was missing a cell. *(previously September 5, 2026 — **`D-46`: every tag path gains a `PLC` element after the line.** `FL1.AGC.Gauge` is now `FL1.PLC.AGC.Gauge`. The grammar in §4.1, rules R2 and R3, and every path in §5.2 are rewritten. **Values only — no logical name moved**, which is the property §4 was built to have. ⚠ **`D-47`: FL3 has no controller of its own**; see §5.2.3.)*
 **Interface reference:** The machine write surface (pass-schedule push and tag clear) · the machine read surface (subscribed values) · `ITInhibit`
 **Requirement source:** This document specifies the flat wire PLC/OPC tag surface — every value the application writes to the line, every value it reads from it, and the one tag that blocks the machine from running.
 
@@ -70,13 +70,13 @@ Everything in Sections 5 and 7 — the three tag maps and the push payload — f
 | Line | Flow | Edger | Dancers | Live gauge / width |
 |---|---|---|---|---|
 | **FL1** | Payoff → DB1 → DB2 → **FM1** (12″ mill) → intermediate take-up | **None — FL1 has no edger** | **1** — on FM1 | **Real-time** |
-| **FL2** | Spool payoff → **FM2** (**S1 8″ → S2 6″ → S3 6″**) → final take-up | **S2 and S3 only** | **2** — inter-stand, between S1/S2 and S2/S3 | **Historical** — FL2 reports no live gauge or width |
+| **FL2** | Spool payoff → **FM2** (**S1 8″ → S2 6″ → S3 6″**) → final take-up | **S2 and S3 only** | **2** — inter-stand, between S1/S2 and S2/S3 | **Real-time** — from the gauging stands downstream of S3, at **4 s** |
 | **FL3** | Payoff → DB1 → DB2 → FM1 → *(intermediate take-up bypassed)* → FM2 → final take-up | S2 and S3 | **3** — FM1's and both of FM2's | **Real-time** |
 
 Two consequences worth stating plainly:
 
 - **FL1 has no edger, so FL1 has no edger tag.** `FL1.PLC.EdgeSet.Status.IsActive` is deliberately absent from the FL1 map, and from this interface entirely.
-- **FL2 measures nothing live**, so FL2 has no gauge or width tag at all. Its trace is reconstructed from the FL1 pass that produced the spool.
+- ~~**FL2 measures nothing live**, so FL2 has no gauge or width tag at all. Its trace is reconstructed from the FL1 pass that produced the spool.~~ ⛔ **CORRECTED 9 Sep 2026 with the retirement of `A3` (§14).** **FL2 measures live, from the gauging stands downstream of S3** — the devices that drive S3's automatic position control (`Q1`) — and §5.2.2 now carries `FL2.PLC.AGC.Gauge` and `FL2.PLC.AGC.Width` at a **4 s** update rate. ⚠ **Do not confuse this with the spool's incoming profile:** at FL2 **check-in** the operator still reviews the recorded profile of the **FL1 pass that produced the spool** (§10, step 4), which is a different artefact and is unchanged.
 - **The dancers are equipment, not an assumption.** FM1 carries one and FM2 carries two, sitting **between** stands rather than at them. This is confirmed equipment (`D-28`); the **paths** that address them in §5.2 are our derivation and are `[PROPOSED]` (`PLC-Q18`).
 
 ## 2.2 Per-line differences at a glance
@@ -87,11 +87,11 @@ Two consequences worth stating plainly:
 | **Check-in type** | Rod, with visual inspection | Spool, no visual inspection | Rod, one acknowledgement for both mills |
 | **Pushed** | Components, die sizes, FM1 gap, speed, gauge/width targets | **Components**, FM2 stand gaps ×3, edger activation and edge type, speed, targets | **Everything, in one batch** |
 | **Edge type pushed** | **No — FL1 has no edger** | Yes, S2 and S3 | Yes, S2 and S3 |
-| **Live gauge / width** | **Real-time** | **None — historical profile only** | **Real-time** |
+| **Live gauge / width** | **Real-time**, ~10 Hz | **Real-time**, **4 s** — from the gauging stands downstream of S3 *(was "None — historical profile only"; `A3` retired 9 Sep 2026)* | **Real-time**, ~10 Hz |
 | **Payoff bays** | 2, with welding between rods | Spool payoff | 2, with welding between rods |
 | **Dancers** | 1, on FM1 | **2, inter-stand** — the pair with selectable modes | 3 — FM1's and both of FM2's |
 | **Pre-check-in staging** | Yes | **FL2 has no staging space** — and it now has **pre-check-in** all the same, reversed by the client on 20 Aug 2026: a validation queue rather than a bay. **No tag is written at pre-check-in on any line** (§7.3), so this document is unaffected either way | Yes |
-| **Explicitly absent** | Edger, FM2 stands, final take-up | Die blocks, FM1, live measurement, staging | Intermediate take-up (bypassed, not removed) |
+| **Explicitly absent** | Edger, FM2 stands, final take-up | Die blocks, FM1, staging *(**live measurement removed from this list** 9 Sep 2026 — `A3` retired)* | Intermediate take-up (bypassed, not removed) |
 | **Unresolved** | Whether a second take-up applies (§5.2.1) | Station names (`PLC-Q04`) · edger paths (`PLC-Q07`) · what clears the tags at end of spool (§13.2) | **The entire namespace** (`PLC-Q08`) |
 
 ---
@@ -199,6 +199,7 @@ The application subscribes to the machine and republishes to the operator screen
 |---|---|---|
 | Gauge reading | Line, value, timestamp, footage position | Active run monitor traces · line status board · gauge-trace report |
 | Width reading | Line, value, timestamp, footage position | Active run monitor traces · line status board · gauge-trace report |
+| ⚠ *Cadence note on the two above* | **All three lines now publish gauge and width** (`A3` retired, 9 Sep 2026) — but **not at the same rate**: FL1 and FL3 at ~10 Hz, **FL2 at 4 s**. **Batching is meaningful only at the FL1/FL3 rate**; a 4 s stream should not be batched, and any *N-consecutive-out-of-spec* rule must be re-chosen per line rather than shared, since on FL2 each reading costs 4 s of production | The real-time design (`[SIG §5]`) and the out-of-spec alert rule |
 | Line speed | Line, value, timestamp | Line status board · run monitor header · **the machine-stop prompt** |
 | Payoff weight | Line, position, weight, percent remaining | Line status board · pre-check-in station · run monitor payoff bars · **the weld-readiness alerts** |
 | Component status | Line, component, active flag, fault flag, current value | Run monitor component panel · **the component-fault alert** |
@@ -239,7 +240,9 @@ The application subscribes to the machine and republishes to the operator screen
 
 ### 5.2.2 FL2 — finishing line, standalone
 
-FL2 has **no die blocks, no FM1, and no live gauge or width measurement.** Its trace is the historical profile from the FL1 pass that produced the spool.
+FL2 has **no die blocks and no FM1**. ⛔ **It DOES measure gauge and width live** — the *"no live gauge or width measurement"* clause that stood here until 9 Sep 2026 came from assumption `A3`, now retired (§14). The source is the **gauging stands downstream of S3**, the devices that drive S3's automatic position control (`Q1`), and the two paths are the last rows of this table. ⚠ **Its update rate is 4 s, not FL1/FL3's ~10 Hz** — see §5.1 for what that changes.
+
+⚠ **Separately, and unchanged:** at FL2 **check-in** the operator reviews the recorded profile of the **FL1 pass that produced the spool** (§10, step 4). That is the *incoming material's* history, not FL2's own trace, and nothing here affects it.
 
 | Tag path | Reads | Consumed by | Status |
 |---|---|---|---|
@@ -266,6 +269,28 @@ FL2 has **no die blocks, no FM1, and no live gauge or width measurement.** Its t
 | `FL2.PLC.LineState` | Machine run/stop state | Checkout gate · machine-stop prompt · status badge | `[PROPOSED]` — derived; vocabulary per Section 6 |
 | **`FL2.PLC.ITInhibit`** | Run-block interlock (written) | System only | `[PROPOSED]` — line-scoped |
 | **`FL2.PLC._System._Error`** | As FL1 | `OPCConnection` only | ✅ **`[CONFIRMED]`** — supplied by the client, 5 Sep 2026 |
+| **`FL2.PLC.AGC.Gauge`** | **Live gauge**, from the gauging stands downstream of S3 — the devices driving S3's automatic position control. `REAL` (float32), **inches**, **4 s** update rate | Run monitor gauge trace · line status board · gauge-trace report | **`[PROPOSED]`** — new 9 Sep 2026 with the retirement of `A3`. Measure name per `PLC-Q05`; **unit per `PLC-Q15`**; **one stand or two per `PLC-Q19`** |
+| **`FL2.PLC.AGC.Width`** | **Live width**, from the same stands. `REAL` (float32), **inches**, **4 s** update rate | Run monitor width trace · line status board · gauge-trace report | **`[PROPOSED]`** — as above |
+
+> ### ⚠ Three things are open on the two new `AGC` rows, and one of them changes their shape.
+>
+> **The element name is ours and is deliberately `AGC`.** It mirrors `FL1.PLC.AGC.Gauge`/`.Width`
+> exactly, satisfies **R2**, **R7** and **R8**, and needs **no change to the §4.1 grammar** — `AGC` is
+> already a `<simple>` element. A stand-addressed alternative (`FL2.PLC.FM2.S3.Gauge`) would extend the
+> grammar and pull in **R5**'s at-a-station-versus-between-stations rule for no benefit, since the
+> devices sit *downstream* of S3 rather than at it.
+>
+> ⛔ **`PLC-Q19` — one gauging stand or several?** `Q19` says *"a gauge **stand**"* (singular); `Q1` says
+> *"the gauging **stands** down stream"* (plural). **If there are two, `R6`'s ordinal rule applies and
+> these become `AGC1`/`AGC2` — four rows, not two.** Ask before commissioning: this is cheap now and
+> expensive at `C1`.
+>
+> ⚠ **`PLC-Q15` — the unit.** Inches is **our assumption**. A controller reporting gauge in **mils**
+> would pass every structural check this document can perform and produce out-of-specification wire.
+>
+> ⚠ **The 4 s rate is the client's** (9 Sep 2026) and is **40× slower than FL1/FL3's ~10 Hz**. It
+> answers `PLC-Q11` for FL2 only. See §5.1 — batching is pointless at this cadence, and any
+> *N-consecutive-readings* alert rule must be re-chosen for FL2 rather than inherited.
 
 > **Every FM2 stand is addressable, including the final one.** All three stands are reachable, so this map covers the whole mill. What is open on these rows is the **station naming** — §4.3 and **`PLC-Q04`** — not whether a stand can be reached. Separately, the **edger** paths at S2 and S3 have no source at all: that is **`PLC-Q07`**.
 
@@ -318,6 +343,20 @@ The map below is the union of what FL3 uses. **The `FL3.PLC.*` paths in it are n
 record which measures the hybrid route needs, not addresses that exist. Read the left-hand column as
 *"the FL1 or FL2 path for this measure"* until `G99` re-points them:
 
+> ➕ **One of `G99`'s unknowns is removed as of 9 Sep 2026: the finishing-end gauge address now exists.**
+> With `A3` retired, §5.2.2 carries **`FL2.PLC.AGC.Gauge`** and **`.Width`** — and since `D-47` puts FM2
+> under the **FL2** controller on a hybrid run, **those are the paths FL3's gauge and width re-point to.**
+> ⚠ **This is worth stating because FL3's real-time trace never had a working finishing-end address**:
+> `A3` denied FL2 any gauge tag while the FL3 route was specified as real-time end to end through the
+> same FM2, so the `FL3.PLC.AGC.*` rows below could not have resolved to anything. That was one of the
+> internal contradictions that retired `A3`.
+> ⛔ **`G99` does not close.** The two-controller push, the compensating clear and the two-failure-domain
+> case are untouched, and FL3 remains deliberately unregistered with `OPCConnection`.
+> ⛔ **And the FL3 rows in the code are deliberately NOT re-prefixed.** All 33 paths in the FL3 `Tags`
+> block still read `FL3.*` without the `PLC` element that `R2` requires. Adding the element would make a
+> **non-existent controller look addressable** and hide exactly what `G99` is tracking — the whole block
+> has to be re-pointed at FL1/FL2 addresses, not cosmetically corrected. FL3 is not in `IngestLines`.
+
 | Tag path | Reads | Consumed by | Status |
 |---|---|---|---|
 | `FL3.PLC.DB1.Diameter` · `FL3.PLC.DB2.Diameter` | Diameters of the fitted dies | Run monitor component panel | `[PROPOSED]` |
@@ -341,7 +380,7 @@ record which measures the hybrid route needs, not addresses that exist. Read the
 | **Who subscribes** | The existing OPC integration service, extended to the three new lines. The OPC servers themselves are unchanged; the PLCs are new hardware. **No new integration layer is introduced.** |
 | **Publication to screens** | Values are batched and republished to the browser on a configurable interval, default **1 second**, selectable at 5, 10 or 30 seconds. Rare state changes — a payoff becoming occupied, a line changing state — are sent immediately rather than waiting for a batch. |
 | **Sample rate at the machine** | **Not specified.** How often the AGC publishes a gauge reading, and what end-to-end delay is acceptable between the machine measuring and the operator seeing it, are both undefined (`PLC-Q11`). |
-| **Retention** | Raw gauge and width readings **are persisted** against the run, keyed by footage position — this is what makes FL2's historical profile and the gauge-trace report possible. How long they are kept, and whether they are rolled up after a period, is undecided and is a project-side item (Section 13.2). |
+| **Retention** | Raw gauge and width readings **are persisted** against the run, keyed by footage position — this is what makes the **gauge-trace, Gauge-CPK and cut-traceability reports** possible, and what supplies a spool's recorded profile to the **next** line that receives it. *(Until 9 Sep 2026 this read "FL2's historical profile", which conflated two things: FL2 now measures its own trace live (`A3` retired), while the profile a spool **carries into** FL2 from its FL1 pass still comes from here.)* How long they are kept, and whether they are rolled up after a period, is undecided and is a project-side item (Section 13.2). |
 | **Feet consumption** | Sourced from the machine wherever available, continuously updating remaining feet and derived weight for **both the active input coil and the next welded one**. Unavailable or invalid feet data sets `ITInhibit` and prevents rolling. **The footage→weight conversion basis is undecided (`PLC-Q03`, Critical)** — every derived weight on the payoff bars, the weld alerts and the spool completion depends on it. |
 
 ## 5.4 What the surface lacks
@@ -349,7 +388,7 @@ record which measures the hybrid route needs, not addresses that exist. Read the
 Three gaps are properties of the surface itself rather than questions about it, and they are stated here so they are not discovered at commissioning:
 
 1. **The edgers and the dancers have no observed path on any line.** Edge type is in the push payload (§7.2), and there is no tag to write it to or read it back from. The paths in §5.2.2 are our derivations. `PLC-Q07`.
-2. **There is no take-up weight tag on any line** — yet the machine-stop prompt, the completion transaction and the printed label all use a wound weight, and assumption **A2** says load cells are fitted on both take-ups. Either the weight is derived, in which case `PLC-Q03` carries its accuracy, or two paths are missing. `PLC-Q14`.
+2. **There is no take-up weight tag on any line, and there will not be one** — the machine-stop prompt, the completion transaction and the printed label all use a wound weight, and it is **derived**, not weighed. ✅ **Resolved 8 Sep 2026**: assumption **A2**'s claim of take-up load cells was **falsified** by `Q30` (*"there are no available loadcells installed on the take-ups or payoffs"*), so the *"two paths are missing"* branch is closed and `PLC-Q14` is answered. The accuracy of the derivation is `PLC-Q03` and `OI-45`. ⚠ **This is now a property of the surface, not a gap in it.**
 3. **A fault bit is specified for one component only** — FM1. No FM2 stand has one on record (`FL2.PLC.FM2.S3.Status.IsFaulted` is our proposal), and neither do the die blocks, so **the line status board's Critical *component fault* alert cannot fire for any of them**. `PLC-Q02` establishes whether the machine exposes a fault bit per component.
 
 Every other open question about this surface — the line-state vocabulary, FL3's namespace, units, the station and measure names — is in Section 13.1 rather than repeated here.
@@ -777,14 +816,14 @@ The commissioning engineer · Engineering as the tag map owner · one line opera
 
 | # | Test | Method | Pass criterion | Closes |
 |---|---|---|---|---|
-| **C1** | Tag paths resolve | Read every configured path in turn, **recording the string the controller accepted for each** | Every path resolves. **A wrong path is corrected in configuration — no redeployment** | `PLC-Q02` · `PLC-Q05` · `PLC-Q17` |
+| **C1** | Tag paths resolve | Read every configured path in turn, **recording the string the controller accepted for each** | Every path resolves. **A wrong path is corrected in configuration — no redeployment**. ➕ **Includes the two new FL2 `AGC` paths** (9 Sep 2026); ⛔ settle **`PLC-Q19`** first — two gauging stands would make them `AGC1`/`AGC2`, i.e. four paths — and **record the unit reported**, per `PLC-Q15` | `PLC-Q02` · `PLC-Q05` · `PLC-Q15` · `PLC-Q17` · `PLC-Q19` |
 | **C2** | Line-state vocabulary | Drive the line through run, stop, pause, fault, thread and jog, recording the tag value at each | **The observed vocabulary is documented** and the §6.2 table is complete | `PLC-Q01` |
 | **C3** | Footage counter | Run a measured length | The counter matches within tolerance | — |
 | **C4** | A push configures the machine | Acknowledge a pass schedule at check-in | Component states, die sizes, roll gaps, edge type and targets **all take effect on the machine** | — |
 | **C5** | Single-batch push on FL3 | Acknowledge a hybrid check-in | **One** acknowledgement configures FM1 **and** FM2. **Record which controller(s) were written** † | `PLC-Q08` |
 | **C6** | Tag clear on checkout | Stop the line, check the rod out | Tags cleared **only after the confirmed stop**; the payoff assignment cleared | — |
 | **C7** | `ITInhibit` blocks the run | Set each of the five conditions in turn, **on one line at a time** | The machine is **blocked** in each case and clears only when the condition resolves — **and the other two lines still run** | — |
-| **C8** | Machine data reaches the screen | Run at speed | Gauge and width stream at the configured cadence, **and the end-to-end latency is measured and recorded** | `PLC-Q11` |
+| **C8** | Machine data reaches the screen — **on all three lines** *(FL2 added 9 Sep 2026 with the retirement of `A3`)* | Run **each** line at speed; FL2 explicitly, since it was never covered | Gauge and width stream on every line, **at that line's own cadence — assert ≈4 s on FL2** — and the end-to-end latency is measured and recorded per line. ⚠ FL1/FL3's ~10 Hz is **our** figure and is confirmed or corrected here | `PLC-Q11` |
 | **C9** | Stop-confirmation edge | Run to target weight, stop, hold past the dwell | The prompt fires once; the weight is latched at the stop timestamp | `PLC-Q13` |
 | **C10** | Checkout gate | Attempt a checkout with the line running | Blocked with the specified message, and **no stop command observed on the wire** | `PLC-Q10` |
 | **C11** | FM2 station names and the three-stand set | Read the gap and status of each of the three FM2 stands, **recording the path string the controller actually accepted** | **Exactly three FM2 stands respond**, and the accepted station names are recorded. **A fourth stand must not respond** | `PLC-Q04` |
@@ -824,15 +863,15 @@ Numbered in priority order. Every row carries the identifier it is tracked under
 | **`PLC-Q08`** | **On FL3, are the finishing stands addressed as `FL2.PLC.FM2.*` or `FL3.PLC.FM2.*`?** (§5.2.3) | Whether the single-batch push crosses a controller boundary, what recovery must undo, and whether FL3 carries its own interlock | `Q29` / `G30` | High |
 | **`PLC-Q09`** | **Is the roll gap read back from the machine before a run starts?** Three options are open, and the currently implied design has **no readback at all** | Whether a run can start on gaps that were never verified | `Q1` / `OI-52` | High |
 | **`PLC-Q10`** | **Confirm the checkout tag behaviour** — never send a stop, clear only when confirmed stopped, block while running | The checkout build | `Q13` / `OI-54` | High |
-| **`PLC-Q11`** | **The machine's publish rate and the acceptable end-to-end latency** | The real-time design's acceptance criteria | `G9` / `OI-34` | High |
+| **`PLC-Q11`** | **The machine's publish rate and the acceptable end-to-end latency.** ⚠ **PARTLY ANSWERED 9 Sep 2026 — for FL2 only: 4 s** for gauge and width, supplied with the retirement of `A3`. FL1's and FL3's rates are still unstated, and the repository's ~10 Hz for them is **our** figure. ⛔ **The latency half is untouched**, and `C8` measures it | The real-time design's acceptance criteria | `G9` / `OI-34` | High |
 | **`PLC-Q12`** | **The format and lifetime of the material-tracking identifier** that `ITInhibit`'s second condition depends on | The interlock, and check-in | `OI-03` | High |
 | **`PLC-Q13`** | **The stop dwell** before the spool prompt fires. 5 seconds proposed | The spool-completion prompt | `Q21` / `OI-35` | High |
 | **`PLC-Q14`** | **Do take-up load cells exist, and is the spool-completion weight read from them or derived** from footage × cross-section? Assumption A2 and the spool completion specification disagree, and §5.2 publishes no take-up weight path | The machine-stop prompt, the completion transaction and the **printed label**. Commissioning test **C9**. Coupled to `PLC-Q03` | `Q30` | High |
 | **`PLC-Q15`** | **What unit is each value in?** No tag names a unit (R7), and inches are assumed everywhere without ever being stated. **A controller reporting gauge in mils would pass every check we can perform and produce scrap** | Every displayed dimension, and the roll gaps computed from them | *this document* | High |
 | **`PLC-Q16`** | **Should the stop prompt be suppressed** when a software pause already captured a reason? Proposed yes | The spool-completion prompt | `Q21` / `OI-35` | Medium |
 | **`PLC-Q17`** | **Confirm the two structural rules** — **R6**, that an ordinal instance suffixes its digit onto the element name (`DB1`, `Payoff2`, `TKUP1`), and **R5**, that an assembly's internal stations take a station segment (`FM2.S2`) | Deriving any path that is still missing, which is the whole economy of confirming a grammar | *this document* | Medium |
-| **`PLC-Q18`** | **Confirm the dancer element** — the paths, the **ordinal convention** (`Dancer1` upstream of `Dancer2`, per R5/R6), and the **`Mode` vocabulary** of §5.5. FM1 carries one dancer and FM2 two, between S1/S2 and S2/S3; the equipment is confirmed (`D-28`) but **no dancer path has been read off a controller**. Also: **does FM1's dancer have selectable modes?** Modes were attributed to FM2 only, and we have not assumed either way | The dancer element in §5.2.1–§5.2.3 and §5.5 | **C12** |
-| **`PLC-Q19`** | **Confirm the jog, stand-roll and dancer-thread read surface** disclosed by the client on 1 Sep 2026: *"we will have jog events on **all three stands of FL2**, as well as **open/close on stand rolls**, and **thread position on dancers**"*. **None of the three has a path in any published map.** Jog and threading being real machine states also bears on `Q21`, which asks whether `FL{n}.PLC.LineState` is a two-state bit or distinguishes `THREADING` / `JOG` — a jog that reports as STOPPED changes the filtering the checkout gatekeeper needs. ⚠ The **thread position** element is a *second* dancer read, beyond `PLC-Q18`'s mode element | A new jog / roll-state / dancer-position element; `FL{n}.PLC.LineState` vocabulary | **C11** |
+| **`PLC-Q18`** | **Confirm the dancer element** — the paths, the **ordinal convention** (`Dancer1` upstream of `Dancer2`, per R5/R6), and the **`Mode` vocabulary** of §5.5. FM1 carries one dancer and FM2 two, between S1/S2 and S2/S3; the equipment is confirmed (`D-28`) but **no dancer path has been read off a controller**. Also: **does FM1's dancer have selectable modes?** Modes were attributed to FM2 only, and we have not assumed either way | The dancer element in §5.2.1–§5.2.3 and §5.5 | **C12** | High |
+| **`PLC-Q19`** | **Confirm the jog, stand-roll and dancer-thread read surface** disclosed by the client on 1 Sep 2026: *"we will have jog events on **all three stands of FL2**, as well as **open/close on stand rolls**, and **thread position on dancers**"*. **None of the three has a path in any published map.** Jog and threading being real machine states also bears on `Q21`, which asks whether `FL{n}.PLC.LineState` is a two-state bit or distinguishes `THREADING` / `JOG` — a jog that reports as STOPPED changes the filtering the checkout gatekeeper needs. ⚠ The **thread position** element is a *second* dancer read, beyond `PLC-Q18`'s mode element. ➕ **A FOURTH READ JOINED THIS QUESTION ON 9 Sep 2026 — the FL2 gauging stands.** With `A3` retired, §5.2.2 carries `FL2.PLC.AGC.Gauge` / `.Width`, and **one thing about their shape is unresolved: how many stands there are.** `Q19` says *"a gauge **stand**"* (singular); `Q1` says *"the gauging **stands** down stream"* (plural). ⛔ **If two, `R6`'s ordinal rule applies and the two rows become `AGC1`/`AGC2` — four rows, not two.** Answer before `C1` runs | A new jog / roll-state / dancer-position element; `FL{n}.PLC.LineState` vocabulary; **the FL2 `AGC` ordinal** | **C11** | High |
 
 ## 13.2 Project-owned — not client input
 
@@ -855,8 +894,8 @@ Listed for completeness, so the sign-off sheet is honest about what is ours to s
 | # | Assumption |
 |---|---|
 | A1 | Every value in Section 5 is readable from the machine controller and can be published continuously, per line. |
-| A2 | **Load cells are fitted on both payoff positions and on both take-ups.** *(**Nothing in this interface currently reads the take-up load cells** — §5.2 publishes no take-up weight path on any line, and the spool completion specification derives the weight from footage instead. Confirm as `PLC-Q14`.)* |
-| A3 | Gauge and width are measured live on FL1 and FL3. **FL2 has no live measurement** — its trace is the recorded profile from the FL1 pass that produced the spool. |
+| A2 | **Load cells are fitted on both payoff positions and on both take-ups.** *(**Nothing in this interface currently reads the take-up load cells** — §5.2 publishes no take-up weight path on any line, and the spool completion specification derives the weight from footage instead. Confirm as `PLC-Q14`.)* ⛔ **FALSIFIED 8 Sep 2026 — `Q30`: *"there are no available loadcells installed on the take-ups or payoffs"*.** Completion weight is derived from footage and cross-section, and there is nothing to corroborate it against. ⚠ **This is the neighbour of `A3`, which `G120` now contests on the same mail.** |
+| A3 | ~~Gauge and width are measured live on FL1 and FL3. **FL2 has no live measurement** — its trace is the recorded profile from the FL1 pass that produced the spool.~~ ⛔ **RETIRED 9 Sep 2026 — THIS ASSUMPTION WAS WRONG, AND IT WAS THE SOLE ORIGIN OF `FR-120`, `FR-137`'s FL2 clause, `[SIG §5.3]`, `[E2E]`'s trace mode and the master specification's line table.** No client source ever stated it, and three things contradict it. ⭐ **The decisive one is internal and needs no client input:** FL3 is *"FL1 feeding FL2 continuously… **Real-time. Same FM2**"* (`CLAUDE.md`), §5.2.3 records FL3 gauge and width as real-time, and `FW-181` already conceded that *"FL2 standalone has no live gauge; **FL2 running as part of an FL3 hybrid does**"* — so this assumption claimed **the same instrument on the same mill ceases to exist when the upstream feed changes**, which is incoherent. `G40` had already noticed the tell: `FR-120` conditions the denial on FL2 in ***standalone*** mode, not on FL2 as a line. ⭐ **Second, a client-confirmed decision predating both questions** — [`Decisions.md`](../90-registers/Decisions.md), Case 4: *"**Both FL1 and FL2 mills have automatic gauge control (AGC).** Roll gaps can deviate to maintain gauge/width within tolerance **via output of gauge/width trace devices**"*, marked *"Tim confirmed"*. **Third**, `Q19` (*"the FL2 does have a gauge stand that tracks thickness and width throughout the production run"*) and `Q1` (**automatic position control on FL2-S3 via the gauging stands downstream** — a closed loop that cannot run off a measurement nobody takes). ⚠ **`A2` immediately above was falsified by the same mail** (`Q30`). **Replaced by:** gauge and width are measured live on **all three lines**; FL2's paths are §5.2.2's `FL2.PLC.AGC.Gauge` / `.Width` at a **4 s** update rate. ⚠ **What is still owed is the exposure, not the measurement** — that the readings reach us as OPC tags at that cadence is `[PROPOSED]` like every other row in §5.2, and confirms at `C1`. `G120`. |
 | A4 | The machine accepts the full tag set in **one push**. There is no partial-configuration mode. |
 | A5 | Each line presents **one OPC namespace**, and the OPC servers are unchanged from those in service today. |
 | A6 | Historical readings are retained long enough to serve the shift and custom reporting windows. |
@@ -885,7 +924,7 @@ Listed for completeness, so the sign-off sheet is honest about what is ours to s
 
 | Ref | Item | Accept | Amend |
 |---|---|:--:|:--:|
-| §2 | The equipment flow per line and the per-line differences — what each line has, what it pushes, and what it explicitly does not, including **FL1 having no edger** and **FL2 having no live measurement** | ☐ | ☐ |
+| §2 | The equipment flow per line and the per-line differences — what each line has, what it pushes, and what it explicitly does not, including **FL1 having no edger**. ⚠ **Changed 9 Sep 2026:** this row previously asked you to confirm *"FL2 having no live measurement"*. **We now understand the opposite** — FL2 measures gauge and width live from the gauging stands downstream of S3, at **4 s** — so please confirm **that** instead, along with `§5.2.2`'s two new `AGC` rows | ☐ | ☐ |
 | §3 | Tags are pushed on **one trigger only** — acknowledgement at check-in | ☐ | ☐ |
 | §4.1–4.2 | The tag naming convention and rules R1–R8 | ☐ | ☐ |
 | §4.3 | FM2's station names — `S1`, `S2`, `S3`, carrying position only | ☐ | ☐ |

@@ -156,6 +156,12 @@ skips so a `FlatWireDB`-only run stays green.
   alpha in `proddb..coils`, so FL2's material still does not resolve. `FW-230` + `FW-231` ship together.
 - ⚠ **`OI-115`** — no spool check-in procedure, so **FL2 reads the idle sentinel through a real run**.
   The read is correct; the writer does not exist. ⛔ Green tests here do not mean FL2 works.
-- ⚠ **The view is unverified against a server.** It has never been executed — `[DEP]`'s `RunAll`
-  aborts at script `06` on `DEV00164-001`, and this file is in the *other* chain besides. Deploy after
-  `20_FlatWire_Grants.sql` on the shared instance and confirm the `PRINT`.
+- ✅ **DEPLOYED AND VERIFIED, 8 Sep 2026.** `FlatWire_Scripts_RunAll.sql` on `DEV00164-001` reported
+  *Created view: FlatWireDB.dbo.WIPStations* and *Granted SELECT … to ua_user*, and the view reads
+  **78 rows** through to `CommonDB` — with the idle sentinel visible live (`ACCES → ACCES`, the station
+  name parked in `CoilNo`), which is exactly the rule `StationClaim.Resolve` implements.
+  ⛔ **But 0 of the 78 are FL1/FL2/FL3/FL1PO**, because the WIP-station seed `10_` was withdrawn on
+  6 Sep and is owed by **`FW-241`**. So the claim finds **no row at all**, which resolves as idle. The
+  read is correct; the rows do not exist yet — a second reason FL2 reads idle, on top of `OI-115`.
+  ⚠ **The earlier note here said `RunAll` aborts at script `06`; that is FIXED** — the full chain ran
+  clean on 8 Sep, with `V1`–`V3`/`V5` passing as written.

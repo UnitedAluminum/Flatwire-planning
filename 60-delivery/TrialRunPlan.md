@@ -875,9 +875,13 @@ and stays open for MVP-1.
   S3 only**; roll diameter is data in `Stand.RollDiameterIn`. Anything showing four stands or a separate
   *8″ Roller* row is stale (decision **`D-26`**). **DB5 and DB3-FL2 are already correct — do not "fix" them
   back.** `TC-115` asserts exactly three rows.
-- **FL2 broadcasts `null` live gauge/width.** The Live view must render an explicit empty state — *"No live gauge
-  on FL2 · see Profile"* — and **must not draw a flat line at target**, which reads as a real in-spec
-  measurement. The mockup animates a simulated trace only because a static prototype has no hub (`phase-08`
+- ⛔ **REVERSED 9 Sep 2026 — FL2 broadcasts live gauge/width, at a 4 s update rate.** ~~The Live view must
+  render an explicit empty state — *"No live gauge on FL2 · see Profile"*~~ — that empty state is retired
+  with `FR-120`; FL2 renders the same live trace as FL1 and FL3. ✅ **The rest of the rule stands and is now
+  broader:** a reading with **no measurement**, on **any** line, **must not draw a flat line at target**,
+  which reads as a real in-spec measurement. ⚠ **And a new trial risk replaces the old one:** at 4 s,
+  footage gaps must render as gaps rather than be interpolated, and the out-of-spec consecutive-reading
+  threshold must be set **per line** — FL1's value is ~40× more production on FL2. The mockup animates a simulated trace only because a static prototype has no hub (`phase-08`
   §Real-Time). **This is the single most likely thing to ship wrong.**
 - **Build the weld-marker layer even though it renders empty.** Both charts' data contracts carry
   `weldMarkers[]`; with no `WeldEvent` rows in trial scope the array is empty, which is a **legitimate state, not
@@ -931,7 +935,7 @@ trial does ship. **State the number at sign-off.**
 **Schema** — deploy clean and confirm the count:
 
 ```powershell
-cd "c:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Schema\SQL"
+cd "c:\UAL\Flatwire-planning\30-database\sql"
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_99_Teardown.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_RunAll.sql
 # expect 33 tables · 55 FKs · 70 index statements · 1 procedure · 1 trigger  (static count 26 Aug 2026;

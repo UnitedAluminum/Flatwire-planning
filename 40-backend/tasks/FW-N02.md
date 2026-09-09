@@ -4,7 +4,7 @@ legacy_id:
 title: Spool completion weight milestones and machine-stop confirmation
 status: blocked
 status_confirmed: false
-status_note: "⚠ **Part A only.** Part B moved to [`FW-202`](FW-202.md) — ⛔ **the card's ACs still describe both**"
+status_note: "⚠ **Part A only.** Part B moved to [`FW-202`](FW-202.md) — ⛔ **the card's ACs still describe both**. ✅ 9 Sep 2026: the retired `OQ-18`/`OQ-79` resolved to `OI-74`/`OI-75` (`G61`) and then **discharged for Part A** — `Q18` settled the target source and M4, `Q20` the mirror and the audit home, and `OI-75`'s open leg is the Part **B** stop prompt. **`Q96` — is Part A in scope at all — is now the ONLY gate.** ✅ `G120` **resolved 9 Sep 2026**: `A3` retired and `FR-120` superseded, so FL2 measures gauge and width live at 4 s. ⚠ **That does not change this story's lb/ft factor** — `Q10` fixed the dimensional basis as **nominal for every line** (`D17`), so the milestone weight still derives from pass-schedule dimensions on all three lines. Live gauge drives the trace and SPC, not the weight. ➕ `Q20` also adds a supervisor-mirror event that `[SIG §5.5]` does not carry"
 owner:
 jira:
 mvp: 1
@@ -15,7 +15,7 @@ priority: medium
 hours: 8
 sprint: S3
 depends_on: [FW-150]
-blocked_by: [OQ-18, OQ-79]
+blocked_by: [Q96]
 has_plan: true
 started:
 completed:
@@ -178,6 +178,18 @@ not.
 4. The **milestone ladder** as a threshold evaluator over `payoffWeight$`, following
    [`FW-N06`](FW-N06.md)'s raise/clear shape (§2.3).
    ⚠ **FL1 only** in practice — FL2 sends no payoff weight.
+
+   > ⛔ **The stream named here looks wrong, and it should be settled before this step is built.**
+   > `[SIG §5.2]` row 5 lists `FootageCounter`'s consumers as *"DB3 header, **spool progress**,
+   > die-life accumulation"* and row 4 confines `PayoffWeight` to *"DB1, DB2A, DB3 **payoff bars**"*;
+   > `SpoolCompletionNotification.md §3.1` derives spool weight **from footage**
+   > (`(current footage − footage at spool start) × lb per ft`), not from payoff weight.
+   > **Payoff weight is rod *depletion*; the ladder measures spool *fill*.** The two diverge by
+   > scrap, threading and the wire still in the machine — which is to say near target, exactly where
+   > the ladder matters. ⚠ The *"FL1 only"* note above holds either way, so it is not evidence for
+   > the payoff reading. Raised 9 Sep 2026 by
+   > [`50-frontend/spool-notification/`](../../50-frontend/spool-notification/Orchestration.md);
+   > see its `G-2`.
 5. **Unbatched delivery** — a rare event must not ride `FW-150`'s newest-wins batch, for the same
    reason `FW-160` and `FW-N06` must not.
 6. ⛔ **Nothing gates on a milestone** (§2.3).

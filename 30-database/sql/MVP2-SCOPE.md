@@ -1,7 +1,7 @@
 # MVP-2 Database Changes — Deferred Schema
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 15, 2026 — **decision `D-31` moved the pass-schedule tables into MVP-1.** This document previously described a three-table, ten-FK, six-index deferred increment; **one stored procedure is all that is left.** Rewritten rather than amended, because almost every warning it carried was a cost of a division that no longer exists
+**Last Updated:** September 9, 2026 — **`30-database` audit applied** (see [`CHANGELOG.md`](../../CHANGELOG.md) — Repository-wide). *(previously — August 15, 2026 — **decision `D-31` moved the pass-schedule tables into MVP-1.** This document previously described a three-table, ten-FK, six-index deferred increment; **one stored procedure is all that is left.** Rewritten rather than amended, because almost every warning it carried was a cost of a division that no longer exists)*
 **Status:** **MVP-2 — deferred scope.** Additive on top of the MVP-1 schema.
 
 ---
@@ -40,7 +40,7 @@ Which leaves the one thing `D-31` moved rather than removed: **nothing in MVP-1 
 ## Deploying
 
 ```powershell
-# MVP-1 — complete on its own. 46 tables, and it needs nothing from this folder.
+# MVP-1 — complete on its own. 47 tables, and it needs nothing from this folder.
 cd "c:\UAL\Flatwire-planning\30-database\sql"
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -C -i FlatWire_DDL_RunAll.sql
 

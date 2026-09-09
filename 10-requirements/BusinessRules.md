@@ -1,7 +1,7 @@
 # Flat Wire Mill — Business Rules and Domain Model
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** August 18, 2026 — **`D-32`: there is no shared-schema migration.** §3’s material-status vocabulary notes that `INFLAT` is `FlatWireDB`-local only; the 30 Jul timing decision stands, its target column does not *(previously August 13, 2026 — split out of `02-SRS.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*
+**Last Updated:** September 9, 2026 (`G120` resolved) — §3.1's load-bearing fact list **reverses on FL2**: it measures gauge and width **live at 4 s**, not `null` with a historical profile. Assumption `A3` retired, `FR-120` superseded. ⚠ The entry now warns against the conflation that let `A3` survive — FL2's **own** trace versus the profile a spool carries **into** FL2 *(previously August 18, 2026 — **`D-32`: there is no shared-schema migration.** §3’s material-status vocabulary notes that `INFLAT` is `FlatWireDB`-local only; the 30 Jul timing decision stands, its target column does not *(previously August 13, 2026 — split out of `02-SRS.md` in the ProjectPlan restructure. **Section numbers are unchanged**, so every `§n` citation still resolves; numbering inside this file is deliberately non-contiguous)*)*
 **Document Type:** Domain model, identifier formats, status vocabularies, state machines
 **Status:** Baselined for build
 **Owner:** BA / Analysis stream
@@ -19,7 +19,7 @@ See `[VS §3.2]` for the full comparison. The facts most often got wrong, restat
 
 - **FL1 has no edger.** No edge-set field appears on any FL1 screen, and the FL1 HMI route variant must not render an Edge Set node.
 - **FM2 has three stands: `S1` = 8″, `S2` = 6″, `S3` = 6″. Edgers sit at S2 and S3 only, and S3 is the final, non-bypassable stand.** `[CONFIRMED — Aug 4 2026]` FL3 drives the same FM2. FL1's FM1 is a 12″ mill.
-- **FL2 standalone broadcasts `null` live gauge and width.** Its trace is a historical profile served by a REST query, not a live stream.
+- **FL2 measures gauge and width live, like FL1 and FL3 — but at 4 s, not ~10 Hz.** The source is the gauging stands downstream of FM2-S3, the devices that drive S3's automatic position control. ⛔ **This reversed on 9 Sep 2026.** It read *"FL2 standalone broadcasts `null` live gauge and width; its trace is a historical profile served by a REST query"* — which came from assumption `A3` of `[PLC §14]`, now retired: no client source ever supported it, and it was incoherent with FL3 driving the same FM2 in real time. ⚠ **Do not confuse FL2's own live trace with the profile a spool carries INTO FL2** from the FL1 pass that produced it — the second is reviewed at check-in, is served by a REST query, and is unchanged.
 - **FL3 is FL1 feeding FL2 continuously**, with no intermediate stop, no spool alpha, no intermediate anneal and no FL2 check-in step.
 
 | FM2 stand | Roller | Edger | Bypassable |

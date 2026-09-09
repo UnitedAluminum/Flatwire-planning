@@ -3,11 +3,16 @@
 -- Run order : 01 of 09
 -- Tables    : Stand, Drawer, ToolingInventoryDie, ToolingInventoryRollSet,
 --             ToolingInventoryEdger, ToolingInventoryEdgerGauge,
---             Dancer, AlloyProperty, PayoffPosition, Spool,
+--             Dancer, AlloyProperty, PayoffPosition,
+--             SpoolConfiguration, Spool,
 --             DowntimeReason, WipRejectionReason, ItInhibitReason,
 --             SetupHandlingTimeGroup, SetupHandlingTimeElement,
 --             SetupHandlingTimeStandard, MaterialLossElement,
---             MaterialLossStandard   (18)
+--             MaterialLossStandard   (19)
+--
+-- Sep-8-2026: SpoolConfiguration RETURNS, splitting back out of Spool (D-58).
+--             Q60 merged it in on 23 Aug 2026; that merge is superseded, not
+--             deleted -- see the Spool header below for what changed and why.  (+1)
 --
 -- Sep-6-2026: ToolingInventoryEdger and ToolingInventoryEdgerGauge added, and
 -- [dbo].[Edger] REMOVED -- ABSORBED, not extended (D-53). Edger held five
@@ -75,8 +80,8 @@ BEGIN
         [RollDiameterIn] DECIMAL(5,3) NOT NULL,               -- working roll diameter in inches (FM1 12.000; FM2 S1 8.000, S2/S3 6.000)
         [MinGaugeIn]     DECIMAL(8,4) NOT NULL,               -- minimum input gauge in inches
         [MaxGaugeIn]     DECIMAL(8,4) NOT NULL,               -- maximum input gauge in inches
-        [MinWidthIn]     DECIMAL(8,4) NOT NULL,               -- minimum strip width in inches
-        [MaxWidthIn]     DECIMAL(8,4) NOT NULL,               -- maximum strip width in inches
+        [MinWidthIn]     DECIMAL(8,4) NOT NULL,               -- minimum flat wire width in inches
+        [MaxWidthIn]     DECIMAL(8,4) NOT NULL,               -- maximum flat wire width in inches
         [IsActive]       BIT          NOT NULL CONSTRAINT [DF_Stand_IsActive] DEFAULT (1),
 
         CONSTRAINT [PK_Stand]                  PRIMARY KEY CLUSTERED ([Id] ASC),
@@ -725,32 +730,96 @@ IF NOT EXISTS (SELECT 1 FROM [dbo].[PayoffPosition] WHERE [Id] = 3)
 GO
 
 -- ------------------------------------------------------------
+-- SpoolConfiguration
+-- The SIZE CLASS a spool article belongs to -- the acceptable loaded weight
+-- band and the core / outer diameter bands, validated at FL2/FL3 check-in
+-- against the material being wound on the article.
+--
+-- *** SPLIT BACK OUT OF Spool, 8 Sep 2026 (D-58). SUPERSEDES Q60'S MERGE. ***
+--
+-- Q60 merged this table into Spool on 23 Aug 2026, on the grounds that it was
+-- a size class holding exactly ONE meaningful row against 30-45 articles. That
+-- reasoning was sound and the merge is not being called a mistake. What it
+-- bought was one fewer table; what it cost is stated in the merge's own
+-- comment, which named its reversal condition:
+--
+--     "It is worth it only while 'every article is one size' holds. IF THE
+--      CLIENT CONFIRMS A SECOND SIZE, revisit the merge."
+--
+-- ⚠ THAT CONDITION HAS *NOT* FIRED, AND THIS SPLIT DOES NOT CLAIM IT HAS.
+-- The client's statement of 20 Aug 2026 -- "30 purchased with 15 more under
+-- consideration, ALL ONE STANDARD SIZE" -- still stands unsuperseded. TKUP-1's
+-- 3,500 lb and TKUP-2's 1,100 lb are MACHINE POSITIONS, not article sizes, and
+-- FL2's output is a CORELESS coil wound on no reusable article at all. So the
+-- split is made on NORMALISATION grounds and on direction: eight values
+-- repeated across 45 rows, a second size costing an UPDATE of many rows where
+-- this shape needs one INSERT, and a size-class name that lost its uniqueness
+-- constraint in the merge. See D-58. Do not record it as a client change.
+--
+-- THE COLUMNS ARE NOT NULL AGAIN, AND THAT IS A REAL GAIN. On Spool the six
+-- limits had to be nullable, so each CHECK carried an all-or-nothing IS NULL
+-- clause -- the merge's own comment: "a CHECK accepts UNKNOWN, so a
+-- half-populated band would be admitted". Here they are NOT NULL and the three
+-- constraints reduce to Min < Max, which is what they were always meant to say.
+--
+-- IsDefault REPLACES A FALLBACK THE SPLIT BREAKS. SpoolProcessing.SpoolId is
+-- nullable (Q42 open), so a material row may have no article and no limits to
+-- validate against. Q60's answer was "any active Spool row's limits",
+-- well-defined ONLY because all articles were one size. Splitting the size
+-- class out is precisely what stops that being true, so exactly one row is
+-- flagged default and UX_SpoolConfiguration_Default in 07 enforces it.
+-- ------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SpoolConfiguration]') AND type = N'U')
+BEGIN
+    CREATE TABLE [dbo].[SpoolConfiguration] (
+        [Id]                 INT          NOT NULL IDENTITY(1,1),
+        [Name]               VARCHAR(50)  NOT NULL,       -- e.g. 'TKUP-1 Intermediate Spool'
+        [MinWeightLb]        DECIMAL(8,2) NOT NULL,        -- minimum acceptable loaded weight (lb)
+        [MaxWeightLb]        DECIMAL(8,2) NOT NULL,        -- maximum acceptable loaded weight (lb)
+        [MinCoreDiameterIn]  DECIMAL(8,4) NOT NULL,        -- minimum core (inside arbor) diameter (in)
+        [MaxCoreDiameterIn]  DECIMAL(8,4) NOT NULL,        -- maximum core diameter (in)
+        [MinOuterDiameterIn] DECIMAL(8,4) NOT NULL,        -- minimum outer diameter of the loaded article (in)
+        [MaxOuterDiameterIn] DECIMAL(8,4) NOT NULL,        -- maximum outer diameter of the loaded article (in)
+        -- The limits to apply when a material row names no article. See the header.
+        [IsDefault]          BIT          NOT NULL CONSTRAINT [DF_SpoolConfig_IsDefault] DEFAULT (0),
+        [IsActive]           BIT          NOT NULL CONSTRAINT [DF_SpoolConfig_IsActive]  DEFAULT (1),
+
+        CONSTRAINT [PK_SpoolConfiguration]  PRIMARY KEY CLUSTERED ([Id] ASC),
+        -- RESTORED with the table. The merge could not keep it: every article shares one size name,
+        -- so the name stopped being unique the moment it moved onto Spool.
+        CONSTRAINT [UQ_SpoolConfig_Name]    UNIQUE ([Name]),
+        -- No IS NULL clauses -- the columns are NOT NULL here. See the header.
+        CONSTRAINT [CK_SpoolConfig_Weight]     CHECK ([MinWeightLb]        < [MaxWeightLb]),
+        CONSTRAINT [CK_SpoolConfig_CoreDiam]   CHECK ([MinCoreDiameterIn]  < [MaxCoreDiameterIn]),
+        CONSTRAINT [CK_SpoolConfig_OuterDiam]  CHECK ([MinOuterDiameterIn] < [MaxOuterDiameterIn])
+    );
+    PRINT 'Created table: SpoolConfiguration';
+END
+ELSE
+    PRINT 'Table already exists: SpoolConfiguration';
+GO
+
+-- ------------------------------------------------------------
 -- Spool
 -- The REUSABLE PHYSICAL ARTICLE a spool of wire is wound onto --
 -- stencilled like a furnace plate, 30 purchased with 15 more under
 -- consideration, all one standard size (client, 20 Aug 2026).
 --
--- SpoolConfiguration WAS MERGED INTO THIS TABLE, 23 Aug 2026. It was a
--- SIZE CLASS (15lb / 30lb, with min/max weight and diameters) that held
--- exactly ONE meaningful row -- the client confirmed every article is the
--- same size -- while the articles number 30-45. The limits now live here,
--- per article: Min/MaxWeightLb, Min/MaxCoreDiameterIn, Min/MaxOuterDiameterIn.
+-- *** THE SIZE CLASS LIVES IN SpoolConfiguration AGAIN, 8 Sep 2026 (D-58). ***
+-- SizeClass and the six Min/Max limit columns are GONE from this table, along
+-- with CK_Spool_Weight / CK_Spool_CoreDiam / CK_Spool_OuterDiam, which return
+-- to their original CK_SpoolConfig_* names. This table is an article register
+-- again: which spools exist, what is stencilled on them, and which are in
+-- service. SpoolTypeId names the size class.
+--
+-- HISTORY, kept because a reader will otherwise ask: those columns arrived here
+-- on 23 Aug 2026 when Q60 merged SpoolConfiguration in, on the grounds that a
+-- one-row size class against 30-45 articles was not worth a table. The merge's
+-- own comment named the condition for undoing it and D-58 records that the
+-- condition has NOT fired -- the split is on normalisation grounds, not on a
+-- client change. Read SpoolConfiguration's header above for the full statement.
+--
 -- Nothing in the schema was a carrier before 22 Aug 2026 (OI-120).
---
--- THE TRADE, stated because it is real. This DENORMALISES: the same eight
--- values are repeated on all 30-45 rows, and a second purchased size means
--- an UPDATE of many rows where the old shape needed one INSERT. It is worth
--- it only while "every article is one size" holds. IF THE CLIENT CONFIRMS A
--- SECOND SIZE, revisit the merge -- the fallback below stops being
--- well-defined at exactly that moment.
---
--- THE NULLABLE-LIMITS FALLBACK. SpoolProcessing.SpoolId is NULLABLE by
--- design (Q42 is open and nothing seeds articles in production yet), so a
--- material row may have no article and therefore no limits to validate
--- against. The documented fallback is ANY ACTIVE Spool ROW'S LIMITS --
--- well-defined precisely because all articles are one size. It needs no
--- external constant, which is the point: the previous shape had to keep a
--- one-row table alive to answer the same question.
 --
 -- WHY THE STENCIL IS THE KEY. The operator types what is painted on
 -- the steel and the screen validates it against this list -- NOT a
@@ -773,37 +842,18 @@ IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Sp
 BEGIN
     CREATE TABLE [dbo].[Spool] (
         [Id]                 INT          NOT NULL IDENTITY(1,1),
-        [SpoolNo]            VARCHAR(20)  NOT NULL,         -- the stencilled string, e.g. S1 .. S45 (format open, Q42)
-        [SizeClass]          VARCHAR(50)  NULL,             -- descriptive size name, e.g. 'TKUP-1 Intermediate Spool'.
-                                                           -- NOT unique: every article is the same size, so they all
-                                                           -- share one name. Was SpoolConfiguration.Name, which DID
-                                                           -- carry UQ_SpoolConfig_Name -- that constraint cannot
-                                                           -- survive the merge and is deliberately not recreated.
-        -- MERGED FROM SpoolConfiguration, 23 Aug 2026. Limits are now per ARTICLE.
-        -- Validated at FL2/FL3 check-in against the material being wound on this article.
-        [MinWeightLb]        DECIMAL(8,2) NULL,             -- minimum acceptable loaded weight (lb)
-        [MaxWeightLb]        DECIMAL(8,2) NULL,             -- maximum acceptable loaded weight (lb)
-        [MinCoreDiameterIn]  DECIMAL(8,4) NULL,             -- minimum core (inside arbor) diameter (in)
-        [MaxCoreDiameterIn]  DECIMAL(8,4) NULL,             -- maximum core diameter (in)
-        [MinOuterDiameterIn] DECIMAL(8,4) NULL,             -- minimum outer diameter of the loaded article (in)
-        [MaxOuterDiameterIn] DECIMAL(8,4) NULL,             -- maximum outer diameter of the loaded article (in)
+        [SpoolNo]            VARCHAR(20)  NOT NULL,         -- the stencilled string; the seed builds SP-0001 .. SP-0045
+                                                          -- (FOUR digits, so it cannot collide with a SpoolProcessing.Alpha;
+                                                          --  format still open, Q42). This comment said 'S1 .. S45' until 8 Sep 2026.
+        [SpoolTypeId]        INT          NOT NULL,         -- FK -> SpoolConfiguration.Id; RESTORED by D-58
         [IsActive]           BIT          NOT NULL CONSTRAINT [DF_Spool_IsActive] DEFAULT (1),  -- soft delete, per the other lookups
         [Notes]              VARCHAR(200) NULL,             -- e.g. "re-stencilled 08/2026", "withdrawn - damaged flange"
 
         CONSTRAINT [PK_Spool]        PRIMARY KEY CLUSTERED ([Id] ASC),
-        CONSTRAINT [UQ_Spool_No]     UNIQUE ([SpoolNo]),
-        -- Carried over from CK_SpoolConfig_*. NULL-tolerant now that the columns are
-        -- nullable: a CHECK accepts UNKNOWN, so a half-populated band would be admitted.
-        -- All-or-nothing per band is therefore asserted explicitly.
-        CONSTRAINT [CK_Spool_Weight]    CHECK (([MinWeightLb] IS NULL AND [MaxWeightLb] IS NULL)
-                                            OR ([MinWeightLb] IS NOT NULL AND [MaxWeightLb] IS NOT NULL
-                                                AND [MinWeightLb] < [MaxWeightLb])),
-        CONSTRAINT [CK_Spool_CoreDiam]  CHECK (([MinCoreDiameterIn] IS NULL AND [MaxCoreDiameterIn] IS NULL)
-                                            OR ([MinCoreDiameterIn] IS NOT NULL AND [MaxCoreDiameterIn] IS NOT NULL
-                                                AND [MinCoreDiameterIn] < [MaxCoreDiameterIn])),
-        CONSTRAINT [CK_Spool_OuterDiam] CHECK (([MinOuterDiameterIn] IS NULL AND [MaxOuterDiameterIn] IS NULL)
-                                            OR ([MinOuterDiameterIn] IS NOT NULL AND [MaxOuterDiameterIn] IS NOT NULL
-                                                AND [MinOuterDiameterIn] < [MaxOuterDiameterIn]))
+        CONSTRAINT [UQ_Spool_No]     UNIQUE ([SpoolNo])
+        -- The three band CHECKs moved to SpoolConfiguration with the columns they guarded, and
+        -- reverted to their original CK_SpoolConfig_* names. They are SIMPLER there: the columns
+        -- are NOT NULL again, so the all-or-nothing IS NULL clauses the merge forced are gone.
     );
     PRINT 'Created table: Spool';
 END

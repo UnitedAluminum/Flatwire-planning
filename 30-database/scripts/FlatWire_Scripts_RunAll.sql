@@ -116,7 +116,7 @@
 --      Retired draft: 95-archive/design-notes/ (history, not a requirement).
 --
 -- REQUIRES SQLCMD MODE (`:r` and `:on error exit` are SQLCMD-only):
---   cd "c:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Scripts"
+--   cd "c:\UAL\Flatwire-planning\30-database\scripts"
 --   sqlcmd -S "<server>" -E -C -i FlatWire_Scripts_RunAll.sql
 --
 -- Run it FROM this folder -- the `:r` paths are relative to the invocation
@@ -124,7 +124,7 @@
 --
 -- The full cross-folder deploy sequence has ONE home: [DEP 4.2].
 -- Teardown: 99_FlatWireDB_Proc_FlatWire_Teardown.sql (code), then
--- ../Schema/SQL/FlatWire_DDL_99_Teardown.sql (the database). Neither undoes
+-- ../sql/FlatWire_DDL_99_Teardown.sql (the database). Neither undoes
 -- 10's shared rows -- by design.
 -- ============================================================
 

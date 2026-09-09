@@ -10,7 +10,7 @@
 **Scope:** **MVP-1** — `D-31`, 15 Aug 2026
 **Owner:** Architecture stream / DBA
 **Audience:** DBA, .NET developers, BA
-**Part of:** `ProjectPlan/Database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
+**Part of:** `30-database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
 **Authority:** `../sql/FlatWire_DDL_02_Schedule.sql` **wins** on types, nullability and constraints. This document explains them; it does not define them, and it states no object counts — those are `[DBD §6.2]`. No shortcode is declared, deliberately: these are derived documents and must not be cited as authority.
 
 Pass schedules define the complete tooling configuration and dimensional targets for a flat wire production run. A schedule header (`PassSchedule`) specifies alloy, line, targets, and speed ranges. Its component rows (`PassScheduleComponent`) define each tool station in the pass sequence.

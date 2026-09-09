@@ -1,7 +1,7 @@
 # Flat Wire Mill — Capacity & Effort Model
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** September 6, 2026 (`D-52`) — ⭐ **NEW §3h, AND IT IS THE FIRST SHEET THAT TAKES HOURS OUT: `FW-145` (JWT role policies, 16 h BE, Phase 1B) is carved to MVP-2.** Phase 1B **442 → 420 h** on §3's base, MVP-1 all-in **3,358 → 3,336 h**, story baseline **114 → 113**. ⛔ **The carve is 22 h all-in, not 16** — QA at 20 % and contingency at 15 % ride with it, the same arithmetic §3b and §3c used; §3h says so explicitly so it is not "corrected". ⛔ **It recovers 0.06 FTE and must not be read as relief** — the hours leave **W0**, not the weeks that fail, and **§7 is unchanged**. `D-52` was taken to make the built simulator driveable, not to save time. ⚠ **`[TB]`'s 519 h Phase 1B is deliberately NOT re-derived** (different basis, §8), and **no row is added to the MVP-2 backlog files** — their cells feed three client `.xlsx` generators. ⛔ **§3, §3b, §3c, §3d, §3e and §3g are untouched and remain the base of record.** *(previously September 5, 2026 (`D-50`) — ⭐ **Automated backend tests are reinstated at the UNIT level, and NOTHING is re-priced in place.** ⛔ **§2's two struck endpoint rates STAY struck** — they are the correct basis for the Phases 1–8 stories already delivered against them. ⛔ **The `−22 h` is NOT added back, and it is not `−22`**: it was *"−26 on tests, +4 for `SpoolController`"*, so the reversible content is `+23 h` dev / `+26 h` all-in and reversing it would delete a controller. 1B stays **519 h**, the baseline stays **114 stories / 3,186 h**; the work is additive as `FW-263`–`FW-267` (98 h). ⚠ **QA held at 78 h in both directions.** *(previously August 29, 2026 — **§2 gains a discrete item — `FlatWireSimConsole`, 52 h, Phase 5 (`D-33`)** — and the *New dashboard screen* 24 h row is marked **Angular only**: it prices layout inside an application that already exists, and a standalone EXE must build its own platform. ⚠ **`FW-130` (16 h) and `FW-135` (24 h) are NOT recovered** — they stop being `FW-214`'s dependencies but stay in the plan at full value for the six operator screens *(previously August 25, 2026 — **new §3f — `FW-224`, additive and deliberately unsized** (blocked on `Q41`); `3,358 h` established as the one citable all-in figure; object count 34 → 33 *(previously August 18, 2026 — **new §3d: `FW-219`, the FL2/FL3 run-end write-back, +77 h all-in (56 h base / 40 h AI-assisted), additive.** MVP-1 becomes **3,263 h** and both scopes **3,631 h** — ⚠ **superseded the same day by §3e (rod ↔ order, +116 h): the live all-in is `3,358 h`, in §3e's roll-up row, which is the only site that may assert it**; §3, §3b and §3c are **not** re-derived. Phase 9's published 222 h is unchanged and understates by 77 h — quote `222 + 77`. *(Earlier same day: **new §3c: the `D-32` re-derivation.** The shared-schema migration is cancelled (`FW-001`, `FW-002`, and `FW-176`'s shared-`coils` columns), **−76 h base / −106 h all-in**: Phase 1C **221 → 138 h**, Phase 7 **205 → 182 h**, MVP-1 **3,292 → 3,186 h**, both scopes **3,660 → 3,554 h**. ⚠ **§3 and §3b are deliberately NOT re-derived and remain the base of record** — §3c is additive, per the pattern in `[DE]` and `[YCS]`. *(Previously August 13, 2026 — §3's story-point cross-check marked **historical** (its denominator was retired when the backlog moved to hours) and its finding 1 recorded as **closed**; Related-Documents row re-pointed. *(Earlier same day: resolved-correction narrative removed to [`../CHANGELOG.md`](../CHANGELOG.md).)* **No hours figure changed then** — the first hours change since is §3c.)*)*)*)*)*)*
+**Last Updated:** September 9, 2026 (`G120` resolved) — ⭐ **NEW §3i: FL2 LIVE GAUGE AND WIDTH, +22 h ADDITIVE** (`FW-N31` 8 FE · `FW-N32` 12 BE/FE · `FW-N33` 2 FE). ⛔ **`FW-N29` adds ZERO** — it was sized at 8 h *"to cover whichever answer arrives"*, the answer arrived, and rescoping it cost nothing. ⛔ **And a proposed fourth story was dropped as a duplicate** of `FW-N29`'s tag-binding criteria — three cards, not four. ⚠ **No hours are carried for the ~45-site requirement sweep**; document correction is not dev effort anywhere in this model. ⚠ **Nor for choosing FL2's out-of-spec `N`** — `FW-N32` builds the per-line mechanism, the value needs run data (`Q66`/`Q67`) and is a trial-run item. **The total is small because the architecture absorbed the reversal**: the Angular trace path was already line-agnostic (`D-55`), the tag binding is values-only config (`P-37`), and `RunReading` needed no DDL change. *(previously September 6, 2026 (`D-52`) — ⭐ **NEW §3h, AND IT IS THE FIRST SHEET THAT TAKES HOURS OUT: `FW-145` (JWT role policies, 16 h BE, Phase 1B) is carved to MVP-2.** Phase 1B **442 → 420 h** on §3's base, MVP-1 all-in **3,358 → 3,336 h**, story baseline **114 → 113**. ⛔ **The carve is 22 h all-in, not 16** — QA at 20 % and contingency at 15 % ride with it, the same arithmetic §3b and §3c used; §3h says so explicitly so it is not "corrected". ⛔ **It recovers 0.06 FTE and must not be read as relief** — the hours leave **W0**, not the weeks that fail, and **§7 is unchanged**. `D-52` was taken to make the built simulator driveable, not to save time. ⚠ **`[TB]`'s 519 h Phase 1B is deliberately NOT re-derived** (different basis, §8), and **no row is added to the MVP-2 backlog files** — their cells feed three client `.xlsx` generators. ⛔ **§3, §3b, §3c, §3d, §3e and §3g are untouched and remain the base of record.** *(previously September 5, 2026 (`D-50`) — ⭐ **Automated backend tests are reinstated at the UNIT level, and NOTHING is re-priced in place.** ⛔ **§2's two struck endpoint rates STAY struck** — they are the correct basis for the Phases 1–8 stories already delivered against them. ⛔ **The `−22 h` is NOT added back, and it is not `−22`**: it was *"−26 on tests, +4 for `SpoolController`"*, so the reversible content is `+23 h` dev / `+26 h` all-in and reversing it would delete a controller. 1B stays **519 h**, the baseline stays **114 stories / 3,186 h**; the work is additive as `FW-263`–`FW-267` (98 h). ⚠ **QA held at 78 h in both directions.** *(previously August 29, 2026 — **§2 gains a discrete item — `FlatWireSimConsole`, 52 h, Phase 5 (`D-33`)** — and the *New dashboard screen* 24 h row is marked **Angular only**: it prices layout inside an application that already exists, and a standalone EXE must build its own platform. ⚠ **`FW-130` (16 h) and `FW-135` (24 h) are NOT recovered** — they stop being `FW-214`'s dependencies but stay in the plan at full value for the six operator screens *(previously August 25, 2026 — **new §3f — `FW-224`, additive and deliberately unsized** (blocked on `Q41`); `3,358 h` established as the one citable all-in figure; object count 34 → 33 *(previously August 18, 2026 — **new §3d: `FW-219`, the FL2/FL3 run-end write-back, +77 h all-in (56 h base / 40 h AI-assisted), additive.** MVP-1 becomes **3,263 h** and both scopes **3,631 h** — ⚠ **superseded the same day by §3e (rod ↔ order, +116 h): the live all-in is `3,358 h`, in §3e's roll-up row, which is the only site that may assert it**; §3, §3b and §3c are **not** re-derived. Phase 9's published 222 h is unchanged and understates by 77 h — quote `222 + 77`. *(Earlier same day: **new §3c: the `D-32` re-derivation.** The shared-schema migration is cancelled (`FW-001`, `FW-002`, and `FW-176`'s shared-`coils` columns), **−76 h base / −106 h all-in**: Phase 1C **221 → 138 h**, Phase 7 **205 → 182 h**, MVP-1 **3,292 → 3,186 h**, both scopes **3,660 → 3,554 h**. ⚠ **§3 and §3b are deliberately NOT re-derived and remain the base of record** — §3c is additive, per the pattern in `[DE]` and `[YCS]`. *(Previously August 13, 2026 — §3's story-point cross-check marked **historical** (its denominator was retired when the backlog moved to hours) and its finding 1 recorded as **closed**; Related-Documents row re-pointed. *(Earlier same day: resolved-correction narrative removed to [`../CHANGELOG.md`](../CHANGELOG.md).)* **No hours figure changed then** — the first hours change since is §3c.)*)*)*)*)*)*)*
 **Document Type:** Capacity & Effort Model (per-phase owners, effort in hours, working-day capacity)
 **Status:** Published — **roster unfilled**; §1 must be completed by programme management
 **Estimating unit:** **hours**. Day figures are derived (**1 dev-day = 8 h**) and shown only as a reading aid.
@@ -634,6 +634,60 @@ the reason and are not the benefit.**
   the same way `[TB]`'s 246 h Phase 11 and 209 h Phase 13 do. **This section is the apportioned
   figure; cite it, not `[TB]`.** Admitting `FW-145` to the MVP-2 backlog files belongs in a pass
   that owns those generators.
+
+## 3i. FL2 live gauge and width (`G120` resolved) — additive
+
+**`G120` resolved 9 Sep 2026: assumption `A3` of `[PLC §14]` is retired and `FR-120` superseded, so FL2
+measures gauge and width live at a 4 s update rate.** The requirement sweep itself carries no hours —
+it corrects documents. What carries hours is the build behind it.
+
+⚠ **ADDITIVE.** `§3`, `§3b`, `§3c`, `§3d`, `§3e`, `§3g` and `§3h` are **not** re-derived in place and
+remain the base of record. Read this sheet **with** them, exactly as they are read with each other.
+
+### What is added
+
+| Story | Stream | Hours | Rate-card basis |
+|---|---|---:|---|
+| **`FW-N29`** FL2 live gauge and width trace at 4 s — tag binding, unbatched broadcast, simulator | RT | **0** | ⛔ **Already carded at 8 h and already counted.** It was sized *"to cover whichever answer arrives"* and the answer arrived; **rescoping it added no hours** |
+| **`FW-N31`** FL2 trace cadence — honest gaps, visible freshness | FE | **8** | *Shared primitive control* (8 h). The chart and panel exist and are consumed unchanged; gap handling goes in the config builder, freshness in the panel header |
+| **`FW-N32`** Per-line out-of-spec threshold, and the FL2 tolerance alert | BE + FE | **12** | *Non-trivial business service* at the **low end** of the 12–24 h band (8 h BE — the evaluator exists, per-line resolution is added) + 4 h FE to surface the value in force |
+| **`FW-N33`** Bind `isLive` on the trace panel | FE | **2** | **Below** the 8 h primitive unit: the fix is one attribute, already applied. The hours are the regression spec and the consumer check |
+| | | **22 h** | **8 FE + 12 BE/FE + 2 FE** |
+
+### Three things this sheet deliberately does not claim
+
+⛔ **No hours for the requirement sweep.** ~45 type-A assertion sites were corrected across `[PLC]`,
+`[REQ]`, `[MS]`, `[BR]`, `[VS]`, `[SIG]`, `[E2E]`, `[API]`, `[SIM]`, four screens, the DB docs, the DDL
+comments, `DOCUMENTS.md` and `CLAUDE.md`. **Document correction is not carried as dev effort anywhere in
+this model**, and inventing a line for it here would break the comparison with every other sheet.
+
+⛔ **No hours for a tag-binding story, and this is a correction.** The change plan proposed **four** new
+stories, the fourth being *"FL2 live gauge — tag binding & ingest"*. **It would have duplicated
+`FW-N29`**, whose acceptance criteria already carry the two `appsettings` keys, the ingest verification
+and the `C1` path capture. **Three cards, not four.**
+
+⛔ **No hours for choosing FL2's out-of-spec `N`.** `FW-N32` builds the per-line **mechanism**; the
+**value** needs run data and is a trial-run item (`Q66` / `Q67`). ⚠ **This is the one item in the change
+that can produce bad product** — four consecutive readings is under half a second on FL1 and **16
+seconds of wire on FL2** — so it is carried explicitly rather than defaulted.
+
+### Why the total is small relative to the disruption
+
+The change reversed a `Must` requirement, retired an interface assumption and inverted five P1 test
+cases — and costs **22 h**. That is not an under-estimate; it is what the architecture was built for:
+
+- **The Angular trace path was already line-agnostic**, so no client branch had to be written or
+  removed. `D-55` had already deleted the per-line treatment.
+- **The tag binding is values-only configuration** (`P-37`), so ingest and broadcast needed **no code**.
+- **`RunReading` needed no DDL change at all** — `GaugeIn`/`WidthIn` were already nullable and the table
+  has no line column.
+
+⚠ **The saving is real but it is not free of risk**: because so little code changed, the failure modes
+that remain are the ones no compiler or lint catches — an interpolated gap, a stale-looking healthy
+feed, and an inherited threshold. All three are in `FW-N31` and `FW-N32` for that reason.
+
+---
+
 
 ## 4. Capacity model
 

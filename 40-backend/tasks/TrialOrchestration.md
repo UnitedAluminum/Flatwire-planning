@@ -220,8 +220,12 @@ accept it as untestable.
 - **FM2 has three stands** — `FM2_S1` (8″) → `FM2_S2` (6″) → `FM2_S3` (6″, non-bypassable),
   **edgers on S2 and S3 only**. Anything showing four or a separate *8″ Roller* is stale
   (`D-26`). `TC-115` asserts three rows.
-- ⚠ **FL2 broadcasts `null` live gauge/width** and Live must render an explicit empty state —
-  ***"the single most likely thing to ship wrong."*** [FW-181](FW-181.md).
+- ⛔ **REVERSED 9 Sep 2026: FL2 broadcasts live gauge/width at 4 s**, so there is no FL2 empty state
+  to build (`A3` retired, `FR-120` superseded). ⚠ **The risk did not disappear, it moved** — what is
+  now *"the single most likely thing to ship wrong"* is the **cadence**: a 4 s stream batched like a
+  10 Hz one, footage gaps interpolated into a smooth in-spec line, or FL1's consecutive-reading
+  threshold inherited on FL2, where each reading is 4 s of production. [FW-181](FW-181.md),
+  [FW-N29](FW-N29.md).
 - **Build the weld-marker layer though it renders empty** — *"a legitimate state, not a
   defect."*
 - **Never stack two dialogs** — close, then open. The spool notification is the exception:

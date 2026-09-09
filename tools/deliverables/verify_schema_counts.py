@@ -389,6 +389,21 @@ RE_C6_TOTAL = (
 
 C6_NEAR = 160          # how far from the table count a tuple member may sit
 
+# ---- shape 3/4 support, added 8 Sep 2026 ----
+#
+# WHY THESE EXIST. The audit of 8 Sep 2026 found [DBD] publishing THREE different index
+# counts -- "70 index statements", "the twelve unique indexes" and "the count is 69 CREATE
+# ... INDEX statements -- [DBD 6.2]", the last CITING the section that said 91 -- and C6
+# reported the file clean. Shapes 1 and 2 could not see any of them: shape 1 only fires on
+# a claim anchored to a TABLE count, and shape 2 only on the word "all". A bare
+# single-metric figure in a site whose whole job is to state the baseline is exactly the
+# kind of claim this check exists to catch, so shape 3 reads it in the FATAL sites.
+#
+# Shape 4 does the same for the mermaid group labels in [DBD] 7.1, which read
+# "Group 1 - Lookup (8)" against nineteen tables for six days.
+RE_C6_GROUP = re.compile('Group' + r'\s+\d+\s*[^(' + chr(10) + ']*\((\d+)\)')
+C6_GROUP_FILES = (os.path.join('30-database', 'DatabaseDesign.md'),)
+
 
 def count_claims(got):
     """C6. Baseline count claims in prose that disagree with the DDL.
@@ -400,6 +415,19 @@ def count_claims(got):
     actual = {'tables': len(got['tables']), 'fks': len(got['fks']),
               'indexes': len(got['indexes']), 'procs': len(got['procs']),
               'triggers': len(got['triggers'])}
+    # The set of legitimate group sizes, for shape 4. A label may carry any ONE of them;
+    # what it may not do is carry a number no group has. Counted from the five domain DDL
+    # files, which ARE the five groups.
+    group_sizes = set()
+    for _fn in ('01_Lookup', '02_Schedule', '03_Materials', '04_Runs', '05_QualityOutput'):
+        _p = os.path.join(ROOT, '30-database', 'sql', 'FlatWire_DDL_%s.sql' % _fn)
+        try:
+            # Anchored at line start on the bracketed form, so the many prose
+            # mentions of "CREATE TABLE" in these files' comments do not count.
+            group_sizes.add(len(re.findall(
+                r'^\s*CREATE TABLE \[dbo\]\.', read(_p), re.I | re.M)))
+        except (OSError, UnicodeDecodeError):
+            pass
     fatal, advisory = [], []
 
     def emit(bucket, rel, lineno, claimed, kind, shape):
@@ -495,6 +523,37 @@ def count_claims(got):
                         if exempt(m.start()) or not in_context(m.start()):
                             continue
                         emit(bucket, rel, lineno, m.group(1), kind, 'stated as complete')
+
+                # ---- shape 3: a BARE single-metric figure in a permitted site
+                # Only in the fatal tier, and deliberately so. Those files exist to state
+                # the baseline, so "70 index statements" there is a baseline claim whether
+                # or not a table count sits beside it. In ordinary prose the same figure is
+                # as likely to be a subset ("their 6 indexes") and stays unjudged.
+                if is_fatal:
+                    for rx, kind in ((RE_C6_FKS, 'fks'), (RE_C6_IDX, 'indexes'),
+                                     (RE_C6_PROCS, 'procs'), (RE_C6_TRIGS, 'triggers')):
+                        for m in rx.finditer(line):
+                            val = int(m.group(1))
+                            if val == actual[kind]:
+                                continue
+                            if val < C6_MIN_WHOLE and kind in ('fks', 'indexes'):
+                                continue          # a subset, not the schema
+                            if exempt(m.start()) or not in_context(m.start()):
+                                continue
+                            emit(bucket, rel, lineno, val, kind,
+                                 'single metric, permitted site')
+
+                # ---- shape 4: a mermaid group label whose size has drifted
+                if rel in C6_GROUP_FILES:
+                    for m in RE_C6_GROUP.finditer(line):
+                        claimed = int(m.group(1))
+                        if claimed in group_sizes:
+                            continue
+                        if exempt(m.start()):
+                            continue
+                        fatal.append('C6: %s:%d draws a group of %d; the DDL groups are %s'
+                                     % (rel, lineno, claimed,
+                                        ', '.join(str(n) for n in sorted(group_sizes))))
     return fatal, advisory
 
 

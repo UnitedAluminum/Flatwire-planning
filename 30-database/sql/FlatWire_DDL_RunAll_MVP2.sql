@@ -14,7 +14,7 @@
 --
 --   If you are looking for 06b or 07b: they no longer exist. On 23 Aug 2026
 --   they were folded back into 06_ForeignKeys and 07_Indexes, which now hold
---   all 68 FKs and all 89 index statements. The MVP-1 chain is 00..08 and
+--   all 69 FKs and all 90 index statements. The MVP-1 chain is 00..08 and
 --   this file is 09.
 --
 -- WHAT IS LEFT, AND WHY
@@ -31,7 +31,7 @@
 -- This chain is purely ADDITIVE.
 --
 -- REQUIRES SQLCMD MODE (`:r` and `:on error exit` are SQLCMD-only):
---   cd "C:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Schema\SQL"
+--   cd "c:\UAL\Flatwire-planning\30-database\sql"
 --   sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll_MVP2.sql
 --
 -- Idempotent: the included script guards its objects.

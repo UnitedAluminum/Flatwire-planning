@@ -96,7 +96,7 @@ The line status overview is the **master board for the flat wire floor** — one
 | **Route** | Pass schedule route mode | Rod → flat · flat → finish · hybrid |
 | **Pass schedule** | Run record | **The schedule identity in force** — see 3.1 |
 | **Speed** | Live machine value | |
-| **Gauge · width** | Live measurement | Real-time on FL1 and FL3; **blank on FL2**, whose trace is historical |
+| **Gauge · width** | Live measurement | **Real-time on all three lines** — FL1 and FL3 at ~10 Hz, **FL2 at 4 s**. Blank on any line that is idle or whose feed has dropped. *(Read "blank on FL2, whose trace is historical" until 9 Sep 2026; `A3` retired, `FR-120` superseded.)* ⚠ At 4 s the *last updated* indication is load-bearing on FL2 — a stalled feed and a healthy one look alike for several seconds |
 | **Payoff 1 weight** | Load cell | Decrements as the rod runs off |
 | **Payoff 2 state** | Staging record | Ready · not loaded — see 3.2 |
 | **Run time** | System | Since check-in acknowledgement |

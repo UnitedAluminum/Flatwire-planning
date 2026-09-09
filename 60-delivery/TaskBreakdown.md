@@ -604,7 +604,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Drains the channel on a **fixed cadence (default ~100 ms / 10 Hz)**, sending **batched arrays** per line group
 - [ ] Hot numeric channels decimated to cadence; `ComponentStatus` / `LineStatus` sent **on change only**
 - [ ] **Rare domain events sent immediately and unbatched** — they must not enter the 10 Hz batch
-- [ ] **FL2 standalone suppresses batched gauge/width** and broadcasts `null`; the historical profile is a REST query
+- [ ] ⛔ **REVERSED 9 Sep 2026: FL2 publishes batched-channel gauge/width like every line, at 4 s and unbatched** (`A3` retired, `FR-120` superseded, `[SIG §5.3]` withdrawn). ✅ The REST profile query survives with a different job — the trace **reports**, and the **incoming spool's** FL1 history at check-in
 - [ ] Cadence is configuration-driven (FW-144)
 
 **Rate-card basis:** 2 × hub event group @ 8 h = 16 h (§2)
@@ -649,7 +649,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **Acceptance Criteria:**
 - [ ] Publishes to the **same bounded channel** `FW-N05` will publish to, at the same cadence, so `FW-150`'s broadcast loop is unchanged when the real ingest arrives
 - [ ] Drives `GaugeReading`, `WidthReading`, `SpeedFPM`, `PayoffWeight`, `FootageCounter`, `ComponentStatus` and `LineStatus` for **FL1**
-- [ ] ⚠ **FL2 is driven too, and only gauge/width are suppressed.** `[SIG §5.3]` suppresses **only** the batched gauge and width channels on FL2 — `SpeedFPM`, `FootageCounter`, `ComponentStatus` and `LineStatus` **still flow**, and `FR-120` makes live gauge/width **`null`**. Two of the six trial screens are FL2 (DB5, DB3-FL2) and `[TRP §8]` step 9 requires Profile to stay static *"across several live ticks"* — which needs FL2 ticking. **A simulator that drives FL1 only leaves both FL2 screens dead**
+- [ ] ⚠ **FL2 is driven too, and only gauge/width are suppressed.** `[SIG §5.3]` suppresses **only** the batched gauge and width channels on FL2 — `SpeedFPM`, `FootageCounter`, `ComponentStatus` and `LineStatus` **still flow**, ⛔ **and the clause that stood here — *“`FR-120` makes live gauge/width `null`”* — is REVERSED (9 Sep 2026): FL2 publishes both at 4 s, so nothing is suppressed.** Two of the six trial screens are FL2 (DB5, DB3-FL2) and `[TRP §8]` step 9 requires Profile to stay static *"across several live ticks"* — which needs FL2 ticking. **A simulator that drives FL1 only leaves both FL2 screens dead**
 - [ ] Traces can be steered to produce **in-spec, drifting and out-of-spec** runs, so the `FR-119` reconnect path and Dashboard 3's N-consecutive-out-of-spec auto-prompt are both demonstrable
 - [ ] Drives a `RUNNING → STOPPED` edge on demand, which is what `FW-202`'s stop-confirmation state machine is armed by
 - [ ] **Switchable by configuration alongside `SimulatePLCTagPush`** — one flag pair puts the whole system in simulation
@@ -1051,7 +1051,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **Acceptance Criteria:**
 - [ ] `ILineModel` in `FlatWire.Domain` with **no infrastructure dependency** — `Tick`, `ApplyConfiguration`, `ApplyScenario`, `InjectFault`, `SetRunState` (`[SIM §3.2]`)
 - [ ] **Three distinct models, not three instances of one.** FL1 rod→`DB1`/`DB2`→`FM1`→spool · FL2 spool→`FM2_S1`/`S2`/`S3` · FL3 **one run**, `RouteMode='Hybrid'`, speeds coupled through the chain
-- [ ] ⚠ **FL2 ticks.** Only batched `GaugeReading`/`WidthReading` are suppressed (`[SIG §5.3]`); `SpeedFPM`, `FootageCounter`, `PayoffWeight`, `ComponentStatus` and `LineStatus` still flow, and `FR-120` makes live gauge/width **`null`**. Gauge is still computed internally for the `RunReading` profile
+- [ ] ⚠ **FL2 ticks — and as of 9 Sep 2026 NOTHING is suppressed.** `GaugeReading` and `WidthReading` flow alongside `SpeedFPM`, `FootageCounter`, `PayoffWeight`, `ComponentStatus` and `LineStatus` (`A3` retired, `FR-120` superseded, `[SIG §5.3]` withdrawn). ⚠ **The FL2 difference is now cadence: 4 s, unbatched** — a simulator ticking FL2's gauge at the FL1 rate is not modelling the machine
 - [ ] Kinematics per `[SIM §5]`: footage integrates speed and is **monotonic**; weight depletes by `footage × lbPerFt`; gauge/width converge first-order on target
 - [ ] **`lbPerFt` is read from configuration and never a constant** — `Q10` carries no recommendation and `OI-45` is open (`[SIM §5.3]`)
 - [ ] **Mill spring places the roll gap *below* gauge**, load-proportionally — master spec §10.5, not `FR-386`'s alloy multiplier
@@ -1511,7 +1511,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **Acceptance Criteria:**
 - [ ] `dashboard-1-line-status` built from `../50-frontend/mockups/dashboard_1_line_status.html`
 - [ ] `line-status-panel` per line showing status badge, order/alpha, alloy/route, speed, gauge/width, payoff weight bar + Payoff-2 status, run time
-- [ ] **Gauge/width live on FL1/FL3; blank for FL2 idle** — FL2 standalone broadcasts `null` and the panel must show an explicit empty state, never a flat line at target
+- [ ] **Gauge/width live on every line; blank when idle** *(was “live on FL1/FL3; blank for FL2 idle — FL2 standalone broadcasts `null`”; `A3` retired 9 Sep 2026, closing `RA-AMB09`)* — ✅ the panel must still show an explicit empty state for a **dropped feed on any line**, never a flat line at target
 - [ ] Subscribes to `lineStatus$ / gaugeReading$ / widthReading$ / speedFpm$ / payoffWeight$ / alertRaised$ / alertCleared$`
 - [ ] Clicking a panel routes to that line's Dashboard 3 (running) or Dashboard 2/5 (idle)
 - [ ] **No header drill-downs to Dashboard 13 / 14** — both descoped 4 Aug 2026, `FR-425` withdrawn
@@ -2627,8 +2627,8 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** I never read a drawn line as a real measurement.
 
 **Acceptance Criteria:**
-- [ ] FL2 standalone broadcasts **`null`** for live gauge/width while still emitting `SpeedFPM`, `PayoffWeight`, `LineStatus`, `FootageCounter`, `ComponentStatus` — **this contract is unchanged**
-- [ ] ⚠ **Live renders an explicit empty state when the field is `null`** — *"No live gauge on FL2 · see Profile"* — and **must not draw a flat line at target**, which would read as a real in-spec measurement. *(The mockup animates a simulated trace because a static prototype has no hub; the built screen must not.)*
+- [ ] ⛔ **THIS CONTRACT IS NO LONGER UNCHANGED — reversed 9 Sep 2026.** FL2 broadcasts **live** gauge/width at 4 s alongside `SpeedFPM`, `PayoffWeight`, `LineStatus`, `FootageCounter`, `ComponentStatus` (`A3` retired, `FR-120` superseded, `G120`)
+- [ ] ⚠ **Live renders an explicit empty state when the field is `null`** — ⛔ **but NOT the FL2 text**: *“No live gauge on FL2 · see Profile”* is **retired** with `FR-120` (9 Sep 2026). The empty state now means **no measurement on any line** — a dropped feed — and **must not draw a flat line at target**, which would read as a real in-spec measurement. *(The mockup animates a simulated trace because a static prototype has no hub; the built screen must not.)*
 - [ ] **Profile is the value of record on FL2 standalone** — the incoming spool's FL1 history on a **footage** x-axis, with weld markers and a whole-length verdict badge. **Static: it must not be re-rendered or re-sampled by the live tick**
 - [ ] **Profile is the honest default** on FL2 standalone
 - [ ] **The toggle's availability binds to line mode, not a hard-coded off** — on FL3 the same variant *does* receive live gauge/width, which is why the toggle exists at all
@@ -2695,7 +2695,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 **Acceptance Criteria — the weight basis (`FR-137`, `FR-151`–`FR-155`):**
 - [ ] `actual = (current footage − footage at spool start) × lb-per-ft`, where `lb-per-ft = A(in²) × 12 × ρ`, `A` applying the **round-edge correction** where applicable and ρ read from **`united_db..alloys.alloy_density`** (cross-database). Reference: 1100 at 0.110″ × 0.625″ → **0.0809 lb/ft** square edge, 0.0778 round (`TC-167`)
-- [ ] **FL2 takes gauge and width from the pass schedule / order, not live measurement**, because FL2 broadcasts `null` (`TC-168`)
+- [ ] **FL2 takes gauge and width from the pass schedule / order, not live measurement** — ⚠ **the behaviour is unchanged but the reason is not**: the dimensional basis is **nominal for every line** (`Q10`, `D17`), not because FL2 broadcasts `null`. **`TC-168` must now pass while FL2 publishes live readings**, i.e. it proves the weight derivation ignores them
 - [ ] Scale weight entered as **gross**, `net = gross − spool tare`; variance shown in **lb and % of calculated** (`TC-180`)
 - [ ] Scale basis **pre-selected once entered and still overridable** back to calculated (`TC-181`)
 - [ ] ⚠ **Variance beyond ±2 % never disables commit** (`TC-182`) — it is flagged, an override panel appears, the button relabels, the **commit control stays enabled** and remote approval is offered. An incomplete override flags the missing field, focuses the first, and commits nothing (`TC-183`)
@@ -4917,6 +4917,275 @@ not in this edit.
 - [ ] **Rendered output byte-identical** — every binding still prints `FL1` / `FL2` / `FL3`; no operator-visible label changes
 - [ ] `test:flat-wire` green at **100 %** on all four metrics, and `ng build flat-wire` clean
 
+#### Additive — the 8 September client answers, minted 9 Sep 2026 (`FW-N22`–`FW-N30`, and `FW-224` taken up)
+
+**Ten stories from the returned client questions workbook.** Nine are minted in the `FW-N##` series; **`FW-224` is not new** — it has been reserved and unminted for FL2 pre-check-in since 20 August and the client's answer forces it.
+
+⛔ **These hours are an ADDITION, not a re-apportionment.** No existing story loses hours, and the downstream totals in `[CE]`, `[DSP]` and `[SSP]` are **not** swept — the same treatment `D-55` gave `FW-N15`/`FW-N16` and `D-57` gave `FW-N20`. Reconciling them is a costing pass, not part of this change.
+
+###### FW-N22 · `AlloyProperty` re-grained to vendor and rod size band, and seeded
+**Hours:** 10 h DB · **Priority:** Critical · **Sprint:** S2 · **Phase:** 1C · **Stream:** DB
+
+> **New 9 September 2026** — minted by the client's answer to `Q22`, which arrived with figures **and** withdrew the recommendation they were meant to fill. `G121` records it: *"the tolerances are defined by vendor for the incoming rod, and also vary by size"*. The per-alloy min/max pairs cannot hold that.
+
+**As a** developer building rod acceptance,
+**I want** rod dimensional tolerance held per vendor and per size band rather than per alloy,
+**So that** the figures the client sent on 8 September can be seeded without lying about their grain.
+
+**Acceptance Criteria:**
+- [ ] `AlloyProperty`'s diameter and ovality min/max pairs are re-grained to **vendor × size band**, keeping the ASTM row as the default a vendor inherits
+- [ ] The two ASTM B233 bands are seeded as the floor — **.375–.500 → ±.020 diameter / .030 ovality** and **.501–1.000 → ±.025 / .035**
+- [ ] The two named vendor rows are seeded — **Vendor A ±.010 / .015**, **Vendor B ±.020 / .030** — as tighter-than-ASTM overrides
+- [ ] ⚠ **A vendor row is *at least* as tight as its band**, so the lookup is per-vendor-with-ASTM-default, not one or the other
+- [ ] ⛔ **Where the rod's vendor comes from at validation time is settled here** — the pre-check-in and check-in flows may not carry it today, and the re-grain is useless if they cannot join to it
+- [ ] The hard-coded ovality limit is moved into the lookup so ovality is validated in **one** place, not two
+- [ ] ⛔ **No placeholder pairs.** A per-alloy seed of per-vendor figures is wrong data, which is worse than the empty table this replaces
+
+**Rate-card basis:** the re-grain, the FK and index changes, the ASTM + two-vendor seed and the validation join = **10 h DB**
+**Dependencies:** FW-004, FW-152 — **Blockers:** none
+
+###### FW-N23 · Pass schedule carries roll gap **and** target product gauge per stand, plus the two edger reduction limits
+**Hours:** 12 h DB · **Priority:** High · **Sprint:** S2 · **Phase:** 1C · **Stream:** DB
+
+> **New 9 September 2026** — minted by the client's answer to `Q1`: *"the feedback will be in relation to the mill stand screw down, correlating to the roll gap. **However this will not match the product gauge**"*, with the worked example that a .025 product gauge is a .22 roll gap. One column per stand cannot express that comparison. `Q28` supplies the edger limits in the same answer.
+
+**As a** developer building the run-start gate,
+**I want** the pass schedule to state both the roll gap and the product gauge it is meant to deliver,
+**So that** the machine readback can be compared against something it actually reports.
+
+**Acceptance Criteria:**
+- [ ] Each stand row carries **both** a roll gap and a target product gauge — the readback compares gap to gap, never gap to gauge
+- [ ] The two edger reduction limits are held **per edger, not per mill**: **E1 (between S1 and S2) 0.015 in max**, **E2 (between S2 and S3) 0.006 in max**
+- [ ] ⚠ **The existing per-alloy maximum reduction is the wrong grain for these** — it is per-alloy and these are per-edger, the same defect as the tolerance one table over
+- [ ] Position feedback exists on **all** stands and edgers of both lines; **automatic position control only on the 12-inch mill and the third finishing stand**, with the edgers and the first two finishing stands fixed position
+- [ ] The out-of-tolerance treatment is a supervisor-overridable block, not a hard stop
+- [ ] ⛔ **No tag path strings here** — the machine interface specification owns every one of them
+
+**Rate-card basis:** two columns per stand with their constraints, the two edger limits, the seed and the index changes = **12 h DB**
+**Dependencies:** FW-006, FW-152 — **Blockers:** none
+
+###### FW-N24 · Move the three cross-database writes from pre-check-in to check-in
+**Hours:** 10 h DB · 6 h BE · **Priority:** Critical · **Sprint:** S2 · **Phase:** 4 · **Stream:** DB + BE
+
+> **New 9 September 2026** — the client adopted our position on `Q68` outright: *"please proceed with your position that these writes should move to check-in alongside the status, **so that pre-check-in has no effect outside the flat wire system at all**"*. The recorded decision had covered the status only; the residual named the other three writes and they now move with it.
+
+**As a** operator removing a staged rod,
+**I want** pre-check-in to have no effect outside the flat wire system,
+**So that** taking a staged rod back off the payoff is a clean local delete with nothing to undo elsewhere.
+
+**Acceptance Criteria:**
+- [ ] The queue insert, the requirements summary write and the work-in-progress order insert all move from staging time to check-in time
+- [ ] ⛔ **They land inside the single transaction check-in already spans** — the one that crosses databases under the local transaction manager with no distributed coordinator
+- [ ] Pre-check-in writes **only** flat wire tables; removing a staged rod is a local delete with no cross-database reversal
+- [ ] The reversal procedure shrinks to the mid-run cases only — it no longer has a staging-time write to undo
+- [ ] The reversal flag's meaning is restated: it can only ever describe a check-in-time write now
+- [ ] ⚠ **The station release and ingestion trigger points move with it** — the first write that names the rod is no longer at staging
+
+**Rate-card basis:** four procedures re-sequenced with their guards **10 h DB**, the service orchestration and its tests **6 h BE** = 16 h
+**Dependencies:** FW-159, FW-158, FW-220 — **Blockers:** none
+
+###### FW-N25 · Machine interface tag surface revision — one write removed, two reads added
+**Hours:** 6 h BE · 4 h RT · **Priority:** High · **Sprint:** S2 · **Phase:** 4 · **Stream:** BE + RT
+
+> **New 9 September 2026** — four answers land on one surface, so they are one story. `Q27` removes the line speed **write** entirely: *"we will not feed the line speed to the Opc from the machine application. Speeds shall be controlled via the machine HMI"*. `Q30`/`Q33` add a calculated coil outside-diameter **read**. `Q28` supplies the edger position signal that was missing. `Q32` confirms the dancer elements stay read-only.
+
+**As a** developer building the check-in acknowledgement push,
+**I want** the tag surface to match what the machines actually accept and report,
+**So that** the acknowledgement writes only values the controllers expect.
+
+**Acceptance Criteria:**
+- [ ] ⛔ **The line speed write is removed.** Speed is controlled at the machine and is exposed to us as a **read** only
+- [ ] ⚠ **The safety consequence this was raised for disappears with it** — an acknowledgement can no longer start a threading line at scheduled speed, because it no longer sends a speed
+- [ ] The pass schedule still carries a recommended speed; it is **advisory to the operator**, not pushed
+- [ ] A **coil outside-diameter read** is added — engineering derives it from encoder footage against take-up speed and exposes it
+- [ ] **Edger position** becomes addressable on the two finishing lines; ⛔ **blade profile is not a signal and never will be** — the edgers are grooved rolls, not knives
+- [ ] The dancer elements stay **read-only by decision**, not by omission — the mode is selected at the machine
+- [ ] The push loses one of its six value groups; the acknowledgement contract and its tests follow
+- [ ] ⛔ **Every tag path string stays in the machine interface specification** — this story changes that document and the bound configuration map, and writes no path anywhere else
+
+**Rate-card basis:** the specification revision and the bound map **6 h BE**, the push contract, the new read and their tests **4 h RT** = 10 h
+**Dependencies:** FW-144, FW-082 — **Blockers:** none
+
+###### FW-N26 · Log the operator-set dancer tension value
+**Hours:** 6 h DB · 6 h BE · **Priority:** High · **Sprint:** S2 · **Phase:** 6 · **Stream:** DB + BE
+
+> **New 9 September 2026** — the only genuinely new requirement in the batch, and it had **no home anywhere**. Answering `Q32` the client added: *"this will be an operator adjusted value, but **will need to be data logged**. The goal would be that we, via trial data established standard tension values, that can be used as setpoints"*. Two dancers on the finishing mill have tension mode; the rest do not.
+
+**As a** process engineer establishing standard tension values,
+**I want** the tension the operator sets on the finishing mill recorded against the run,
+**So that** trial data can turn operator judgement into a setpoint the schedule can carry.
+
+**Acceptance Criteria:**
+- [ ] The operator-set tension value is persisted against the run with an actor and a timestamp
+- [ ] Only the **two finishing-mill dancers** have tension mode; the others are position-sensing and are not logged this way
+- [ ] The tension elements are read from the machine feed — they are excluded from the read set today
+- [ ] ⚠ **The mode itself is not written.** It is selected at the machine, and the read-only view already built is the whole answer
+- [ ] The reading is available to the trial so standard values can be derived from it
+- [ ] ⛔ **This does not settle whether applied tension reduces roll separating force** outside tension mode — that half of the question is still open and the calculated roll gap depends on it
+
+**Rate-card basis:** the persistence target with its constraints and index **6 h DB**, the ingest, the entity and the tests **6 h BE** = 12 h
+**Dependencies:** FW-171, FW-144 — **Blockers:** none
+
+###### FW-N27 · Guard the weld flag — it cannot be set before check-in
+**Hours:** 6 h BE · **Priority:** High · **Sprint:** S2 · **Phase:** 6 · **Stream:** BE
+
+> **New 9 September 2026** — the client answered the residual on `Q72` in terms: *"a weld flag should not be possible unless a rod has been checked in or prechecked in… the coil would need to be **reversed out of staging and rejected, via a supervisor override**"*. So the clear-the-flag-in-place case we could not specify **does not exist**, and the missing audit target does not need inventing.
+
+**As a** supervisor auditing a mis-scanned rod,
+**I want** a weld to be impossible to record on material that was never checked in,
+**So that** the only way to undo one is the rejection path, which is already audited.
+
+**Acceptance Criteria:**
+- [ ] Marking a rod welded is refused unless it is checked in or pre-checked in
+- [ ] ⛔ **There is no clear-in-place path.** A mis-scan, a wrong rod or a failed weld is reversed out of staging and rejected under supervisor override
+- [ ] The rejection path already carries the supervisor fields, so no new audit record is created
+- [ ] The operator surface refuses before check-in and offers no un-weld action
+- [ ] ⚠ **Every predicate that reads *staged* states its welded intent explicitly** — the ambiguity this closes is what let the case go unspecified
+
+**Rate-card basis:** one precondition across the write path and the dialog, with tests = **6 h BE**
+**Dependencies:** FW-166, FW-158 — **Blockers:** none
+
+###### FW-N28 · Each die carries a unique identifier for per-die footage tracking
+**Hours:** 8 h DB · **Priority:** Medium · **Sprint:** S2 · **Phase:** 13 · **Stream:** DB
+
+> **New 9 September 2026** — confirming `Q83` the client added the mechanism: *"correct, **dies will have a unique identifier to track their usage individually**"*. The recorded decision tracked footage at size level with a per-size allowance; per-tool identity is what the replacement alert actually needs.
+
+**As a** roll-shop user tracking die life,
+**I want** each physical die identified individually rather than by its size,
+**So that** footage accrues against the tool that actually ran.
+
+**Acceptance Criteria:**
+- [ ] Each die carries a unique identifier, distinct from its size
+- [ ] Footage accrues against the individual tool, not the size band
+- [ ] The die change transaction records which physical die was fitted and which was removed
+- [ ] ⚠ **The replacement threshold figures stay deferred** — the client has not supplied them and no life allowance is seeded
+- [ ] The identity pattern follows the roll sets, which the client named as the comparison
+
+**Rate-card basis:** the identifier, its uniqueness constraint, the footage accrual and the seed = **8 h DB**
+**Dependencies:** FW-251, FW-005 — **Blockers:** none
+
+###### FW-224 · FL2 pre-check-in — spool staging
+**Hours:** 12 h BE · 8 h FE · **Priority:** Critical · **Sprint:** S2 · **Phase:** 8 · **Stream:** BE + FE
+
+> ⭐ **This id has been reserved and unminted since 20 August 2026** and is cross-referenced from five documents; it is not a new number. The client's answer to `Q17` on 8 September makes minting it unavoidable: *"we had requested that FL2 have a precheckin staging ability similar to that of FL1. **Bob S. had explained why this was necessary** to reduce downtime in the event of an incorrectly selected spool"*. ⛔ **Still blocked** — `Q41` asks what an FL2 pre-check-in actually *does*, and that is unanswered.
+
+**As a** FL2 operator about to run a spool,
+**I want** to validate the spool I have selected before committing to check it in,
+**So that** a wrong spool is found at the payoff instead of after the line is claimed.
+
+**Acceptance Criteria:**
+- [ ] ⛔ **BLOCKED until the client says whether this is a physical staging area or a validation step with no material movement.** The two differ in cost and in whether the *no space to stage* premise survives
+- [ ] The schema half already exists — this story is the endpoint, the screen and the rules, not the table
+- [ ] The staging endpoint widens to accept the finishing line; ⛔ **the retired not-eligible error is not reinstated**
+- [ ] The queue gains the staged state alongside the two the operator sees today
+- [ ] ⚠ **The held-spool view state is already agreed** and is not blocked on this — a quality-held spool appears on the queue with no check-in action
+- [ ] Check-in stays exclusive: while any spool is checked in, no other offers the action
+
+**Rate-card basis:** the endpoint, the rules and the queue read **12 h BE**, the staging step on the screen **8 h FE** = 20 h. ⚠ **First sizing** — this id was carried as *not yet sized*
+**Dependencies:** FW-179, FW-158 — **Blockers:** Q17, Q41
+
+###### FW-N29 · FL2 live gauge and width trace at 4 s
+**Hours:** 8 h RT · **Priority:** High · **Sprint:** S2 · **Phase:** 8 · **Stream:** RT
+
+> ✅ **UNBLOCKED AND DECIDED 9 Sep 2026 — FL2 PUBLISHES A LIVE TRACE AT 4 s.** `A3` retired, `FR-120` superseded, `G120` resolved. ⭐ **The decisive evidence was internal**: FL3 runs the **same FM2** in real time, and `FW-181` already conceded FL2-within-FL3 has live gauge — so `A3` claimed one instrument stops existing when the upstream feed changes. A client-confirmed decision (`Decisions.md` Case 4) had said as much before either question was asked. **Build:** two `AGC` tag paths (values-only config), unbatched 4 s broadcast, `Fl2LineModel.ReadGaugeInstrument()` un-suppressed, no client branch. ⛔ **The out-of-spec consecutive-reading threshold must be set PER LINE** — 4 readings is <0.5 s on FL1 and 16 s of production on FL2; that is the one part of this that can produce bad product. ⚠ Residuals: `PLC-Q15` (inches, not mils) and `PLC-Q19` (one gauging stand or two — two tags or four).
+>
+> **HISTORICAL — the position this story held until 9 Sep 2026:** ⛔ *BLOCKED, and deliberately unresolved. Answering a question about notifications the client remarked: "the FL2 does have a gauge stand that tracks thickness and width throughout the production run"*. Six documents say the opposite — that the finishing line broadcasts no live gauge or width and its trace is a stored profile. `G120` holds the contradiction. Nothing was edited on the strength of a passing remark.*
+
+**As a** FL2 operator watching a run,
+**I want** to know whether the gauge trace in front of me is live or a stored profile,
+**So that** I am not reading a stationary chart as a moving one.
+
+**Acceptance Criteria:**
+- [ ] Two tag paths bound in the FL2 `Tags` block — **`FL2.PLC.AGC.Gauge`** and **`FL2.PLC.AGC.Width`**, `REAL`, **inches**, **4 s**. ⚠ **Values-only config**; ingest and broadcast need no code (`P-37`)
+- [ ] `GaugeReading` and `WidthReading` broadcast on `FL2Data` at ≈4 s, **unbatched** — one sample per 4 s coalesces nothing, and batching only adds latency to a reading the operator is waiting on
+- [ ] `Fl2LineModel.ReadGaugeInstrument()` returns real values instead of `(null, null)`. ⚠ **Its 40-line header comment forbids exactly this change and must be rewritten with it**
+- [ ] ⛔ **No line branch anywhere, and no trace flag added to `LINE_PROFILES`** — `D-55` removed that branch deliberately; FL2 renders through the same components as FL1/FL3
+- [ ] `RunReading` rows for FL2 carry **both** gauge and width from the **same sample** (`TC-030`). ✅ **No DDL change** — both columns are already nullable and the table has no line column
+- [ ] `TC-140`, `TC-141`, `TC-492` inverted and `TC-494` widened; **`TC-168` still passes**, proving the weight derivation ignores the new readings (basis is nominal for every line — `Q10`, `D17`)
+- [ ] ⚠ **Gap rendering and the per-line out-of-spec threshold are NOT in this story** — `FW-N31` and `FW-N32`. This card is the ingest and broadcast path only
+
+**Rate-card basis:** **8 h RT** — one new hub-event path per the 8 h unit, and the tag binding is values-only config. ⚠ **The client-side cadence handling and the threshold work are carded separately** (`FW-N31`, `FW-N32`), which is what keeps this at 8 h.
+**Dependencies:** FW-081 — **Blockers:** none (`G120` resolved 9 Sep 2026)
+
+###### FW-N30 · Certificate traceability granularity — cast number as the lot reference
+**Hours:** 10 h BE · **Priority:** High · **Sprint:** S2 · **Phase:** 11 · **Stream:** BE
+
+> ⛔ **BLOCKED on a technical consult the client has scheduled.** Both `Q5` and `Q8` came back *needs discussion*, deferred to three named people. ⭐ **The deferral is not empty**: *"continuous cast rod comes with a **Cast# which can be considered Lot#**. I do not believe they use a heat number"* — which removes one of the three granularities the question offered and reduces it to coil versus lot.
+
+**As a** customer receiving welding wire,
+**I want** the certificate to carry a traceability reference I can act on,
+**So that** material can be traced back to the cast it came from.
+
+**Acceptance Criteria:**
+- [ ] ⛔ **BLOCKED** until the three named people say whether the heat detail must be *printed* and whether any customer contractually requires a certificate per coil
+- [ ] ⭐ **The cast number is the lot reference** — there is no heat number in this material, so the question is coil versus lot and nothing else
+- [ ] Coil-level traceability with full rod genealogy behind it is built regardless; only what is *printed* is in doubt
+- [ ] ⚠ **The standards content list the client supplied names a test result we have nowhere recorded** — mechanical and electrical results for specimens *containing the welds*, not merely for the parent material
+- [ ] The certificate carries every contributing rod's identity, which is already settled
+
+**Rate-card basis:** the certificate content and its issuing rule = **10 h BE**. ⚠ **Not startable** — sized so the board carries it
+**Dependencies:** FW-185 — **Blockers:** Q5, Q8
+
+###### FW-N31 · FL2 trace cadence — honest gaps and visible freshness at 4 s
+**Hours:** 8 h FE · **Priority:** High · **Sprint:** S2 · **Phase:** 8 · **Stream:** FE
+
+> **New 9 Sep 2026 with the FL2 live-gauge change (`G120` resolved).** `FW-N29` makes FL2's readings arrive; this makes them **readable**. ⚠ **A 4 s trace is not a 10 Hz trace drawn slowly** — two failure modes belong to the cadence alone.
+
+**As a** FL2 operator watching a live trace that updates every four seconds,
+**I want** unmeasured wire to look unmeasured, and a stalled feed to look stalled,
+**So that** I never read a drawn line as evidence that material was in specification.
+
+**Acceptance Criteria:**
+- [ ] **A footage gap renders as a gap** — the trace breaks rather than joining points across wire that passed unmeasured. ⛔ **An interpolated line across unmeasured wire is the defect this story exists to prevent**
+- [ ] The gap threshold is derived from **footage**, not sample count or wall-clock — the trace is footage-indexed and the footage between 4 s samples varies with line speed
+- [ ] The panel's **last updated** indication is prominent enough to be load-bearing at 4 s, where a stalled feed is invisible for seconds
+- [ ] A feed that stops mid-run shows **no measurement** — not the last value held, and ⛔ **never a flat line at target**
+- [ ] ⛔ **No branch on `machineName`, no trace field on `LineProfile`** — `D-55` removed that branch deliberately
+- [ ] Specs assert the gap case against **literal** footage values, not an imported constant
+
+**Rate-card basis:** **8 h FE** — a *shared primitive control* change; the chart and panel exist and are consumed unchanged.
+**Dependencies:** FW-N29 — **Blockers:** none
+
+###### FW-N32 · Out-of-spec threshold becomes per-line, and the tolerance alert reaches FL2
+**Hours:** 12 h · **Priority:** High · **Sprint:** S2 · **Phase:** 8 · **Stream:** BE
+
+> ⛔ **New 9 Sep 2026, and the one part of the FL2 live-gauge change that can produce BAD PRODUCT.** The out-of-spec rule auto-prompts after *N consecutive* readings, and `N` is one shared value chosen when only FL1/FL3 measured, at ~10 Hz. **At FL2's 4 s the same `N` is ~40× more production** — four readings is under half a second on FL1 and **16 seconds of wire** on FL2. Every other part of this change fails visibly; this one fails silently and the wire is already made.
+
+**As a** quality engineer setting up the finishing line,
+**I want** the out-of-spec prompt threshold set per line rather than shared,
+**So that** FL2's four-second cadence does not turn a four-reading rule into sixteen seconds of scrap.
+
+**Acceptance Criteria:**
+- [ ] The consecutive-out-of-spec threshold is **configuration, per line** — consistent with `R-12`/`S-14`, which already require thresholds tunable without a release
+- [ ] The evaluator reads **that line's** value, and which value is in force is **visible per line**
+- [ ] **The gauge-tolerance alert rule reaches FL2** — `TC-494` was scoped *"FL1/FL3"* and is widened; until this lands **FL2 measures live and raises no tolerance alert**, which is worse than not measuring because the screen looks complete
+- [ ] Evaluated **server-side** with the ladder and the alert, so every client agrees on the count (`§4.2`#6, `[SIG §5.5]`)
+- [ ] A provisional per-line default is seeded and **visibly marked provisional**. ⚠ **Do not seed FL1's value as FL2's default** — that is the silent regression this story prevents
+- [ ] Specs cover FL1 at its value, FL2 at its value, and **FL2's being absent** — which must not fall back to FL1's
+
+**Rate-card basis:** **8 h BE** (*non-trivial business service*, low end of 12–24 h — the evaluator exists) + **4 h FE** to surface the value in force. No new endpoint, no new hub event.
+⚠ **The mechanism is MVP-1; the VALUE is a trial-run item** — re-choosing `N` needs run data (`Q66`/`Q67`).
+**Dependencies:** FW-N29 — **Blockers:** none
+
+###### FW-N33 · Bind `isLive` on the trace panel — stop rebuilding the chart every frame
+**Hours:** 2 h FE · **Priority:** High · **Sprint:** S2 · **Phase:** 8 · **Stream:** FE
+
+> 🐛 **A PRE-EXISTING DEFECT, found while making the FL2 change and not caused by it.** `active-run.component.html` renders `<lib-trace-panel>` without binding `[isLive]`, which defaults to `false`, so `ChartCanvasComponent.render()` takes the `destroy()` + `new Chart(...)` path on **every telemetry frame** instead of `update('none')`. ⛔ **This has been hitting FL1 and FL3 at ~10 Hz all along.** `[UIC]` and `[CMP]` both specify `isLive`; **a specified input that is never bound looks exactly like one that is**, and `ng lint` cannot see it.
+
+**As an** operator watching a live trace,
+**I want** the chart updated in place rather than rebuilt,
+**So that** the panel does not thrash on every telemetry frame.
+
+**Acceptance Criteria:**
+- [ ] `<lib-trace-panel>` binds **`[isLive]="true"`** ✅ *(applied 9 Sep 2026; this card carries the verification and the spec)*
+- [ ] A spec asserts the live path calls `update('none')` and ⛔ **does NOT construct a new `Chart`** — assert the **absence** of the rebuild, which is how this survived
+- [ ] The non-live path and the `false` default stay intact for other consumers
+- [ ] ⚠ Check the other consumers in `projects/shared` (**23 dependent libraries**; `ng build shared` before any dependent test run) and confirm whether **`trace-graph-popup`** needs the binding too
+
+**Rate-card basis:** **2 h FE** — below the 8 h primitive unit; the fix is one attribute already applied, and the hours are the regression spec plus the consumer check.
+**Dependencies:** none — **Blockers:** none
+
+
 ### 7.3 Roll-up
 
 > ⚠ **The `FW-232`–`FW-250` additive set is deliberately NOT in this roll-up.** Those nineteen
@@ -5130,6 +5399,69 @@ Every `FW-###` cited anywhere in the repository resolves through this table.
 Absorbed from `05-SprintPlanAndBacklog.md` §7.3 under the single-backlog decision.
 
 ---
+
+###### FW-N20 · `SpoolOrder` re-grained from the spool to the segment
+**Hours:** 6 h DB · 4 h BE · **Priority:** High · **Sprint:** S0 · **Phase:** 1C · **Stream:** DB + BE
+
+> **New 8 September 2026** — minted by `D-57`. `SpoolOrder` recorded *which orders a spool carries* and
+> referenced the rod **nowhere**, so it could say *that* a spool crossed an order boundary but not
+> **whose material** went to which order — and reaching the rod meant joining `SpoolTraceability`,
+> whose ranges are in **feet and nullable** against this table's **pounds**. They could not be joined.
+
+**As a** developer building the welding-wire certificate,
+**I want** each rod's contribution to a spool to name the order it was consumed against,
+**So that** the rod → order → spool chain is joinable at every hop.
+
+**Acceptance Criteria:**
+- [x] `SpoolOrder` re-parented to **`SpoolTraceability.Id`** — one row per (segment, order)
+- [x] ⛔ **`SpoolTraceability` untouched.** A literal merge breaks `UQ_SpoolTraceability_Seq` and the
+      UNIQUE `UX_SpoolTraceability_ChildAlpha` — **one physical segment has one child alpha** (`Q57`)
+- [x] **Two ranges in two frames:** segment-local **pounds** (`CK_SpoolOrder_WeightRange` forces them
+      exactly equal to `AllocatedWeightLb`) and spool-local **feet**, the frame FL2 cuts in
+- [x] ⛔ **Pounds authoritative, feet a recorded convenience** — no constraint can tie the two together
+- [x] Re-planning **additive** (`IsActive` + `SupersededByOrderId`); uniqueness is the filtered
+      `UX_SpoolOrder_Active`, because a plain `UNIQUE` would refuse the re-plan write itself
+- [x] `FK_SpoolOrder_SpoolProcessing` → `FK_SpoolOrder_SpoolTraceability` (**renamed** — different
+      parent table; one out, one in, so **no count change**)
+- [x] ⛔ **The guarded `ALTER` block adding `SpoolWeightFrom`/`To` DELETED** — its guard is *"the column
+      is absent"*, true by design after the re-grain, so a teardown would have bolted two stray columns on
+- [x] `AddOrder` moves to `SpoolTraceability` and **asserts invariants** — it asserted none before
+- [x] Seed exercises the **straddle**, and both `Source` values
+
+**Rate-card basis:** the re-grain + FK + 2 indexes + seed **6 h DB**, the entity, EF mapping, aggregate
+move and two rules with tests **4 h BE** = 10 h.
+**Dependencies:** none — **Blockers:** none *(⛔ but `Q43` is unratified: this builds one of two client readings)*
+
+###### FW-N21 · `SpoolConfiguration` split back out of `Spool`
+**Hours:** 4 h DB · **Priority:** Medium · **Sprint:** S0 · **Phase:** 1C · **Stream:** DB
+
+> **New 8 September 2026** — minted by `D-58`, which **supersedes `Q60`'s merge**. ⛔ **The condition
+> `Q60` named for undoing itself — a client-confirmed second size — has NOT fired.** The 20 Aug 2026
+> *"all one standard size"* stands unsuperseded, and TKUP-1's 3,500 lb against TKUP-2's 1,100 lb are
+> **machine positions**, not article sizes. The split is on **normalisation grounds and direction**.
+
+**As a** developer maintaining the article register,
+**I want** the size class held once rather than repeated on every article,
+**So that** a second purchased size is one `INSERT` and not a 45-row `UPDATE`.
+
+**Acceptance Criteria:**
+- [x] `SpoolConfiguration` created in `01_Lookup`; `Spool` reduced to five columns + `SpoolTypeId`
+- [x] The six limits are **`NOT NULL` again**, so the three band CHECKs drop their all-or-nothing
+      `IS NULL` clauses and reduce to `Min < Max`; `UQ_SpoolConfig_Name` **restored** with the table
+- [x] ⛔ **`IsDefault` + `UX_SpoolConfiguration_Default` replace `Q60`'s fallback** — *"any active
+      `Spool` row's limits"* was well-defined only because all articles were one size, which splitting
+      is precisely what stops being true
+- [x] **`FK_Spool_SpoolConfiguration` restored** — ⛔ but **not**
+      `FK_SpoolProcessing_SpoolConfiguration`: a second direct path to the configuration is how the two
+      come to disagree
+- [x] Seed carries **one** configuration row, because the client has stated one. ⛔ The
+      `'SP-' + RIGHT(...)` format expression is kept — `Q42` is open
+- [x] ⛔ **Recorded as normalisation, not as a client change**
+- [x] `[DEP §4.2]`'s *"47 means `Edger` survived"* diagnostic retired — **47 is now correct**
+
+**Rate-card basis:** one table + FK + index + seed + the five `C2` doc placements = **4 h DB**.
+⚠ **Zero code cost** — the article is not modelled in C# at all; one comment re-pointed.
+**Dependencies:** none — **Blockers:** none
 
 ###### FW-225 · Rod ↔ order allocation — schema and domain model
 **Hours:** 28 h (DB 12 · BE 16) · **Priority:** Critical · **Sprint:** S2 · **Phase:** 4 · **Stream:** DB + BE
@@ -5392,7 +5724,7 @@ noted here so `B.8` is not misread as following `B.7`.
 
 **Minted 7 Sep 2026** while reconciling the story records against the built Angular library. The
 card is in §7.2 under *Additive — the shared header's environment badge*.
-**Next free `FW-N##` id: `FW-N20`.** ⚠ This line read `FW-N14` until 8 Sep 2026 and was stale: `D-55` minted `FW-N15`/`FW-N16` on 7 Sep and `D-56` minted `FW-N17`–`FW-N19` on 8 Sep. See B.10.
+**Next free `FW-N##` id: `FW-N31`.** *(was `FW-N20`; `FW-N20`/`N21` were taken by `D-57`/`D-58` and `FW-N22`–`FW-N30` on 9 Sep 2026.)* ⚠ This line read `FW-N14` until 8 Sep 2026 and was stale: `D-55` minted `FW-N15`/`FW-N16` on 7 Sep and `D-56` minted `FW-N17`–`FW-N19` on 8 Sep. See B.10.
 
 | Id | Stream | Subject |
 |---|---|---|
@@ -5416,7 +5748,7 @@ minting resumed at `FW-N13`. See [`TaskIdMap.md`](../90-registers/TaskIdMap.md) 
 
 **Minted 8 Sep 2026** by `D-56`, which renamed `LineId` to `MachineName` across the module. The
 cards are in §7.2 under *Additive — `LineId` becomes `MachineName`*.
-**Next free `FW-N##` id: `FW-N20`.**
+**Next free `FW-N##` id: `FW-N31`.** *(was `FW-N20`; `FW-N20`/`N21` were taken by `D-57`/`D-58` and `FW-N22`–`FW-N30` on 9 Sep 2026.)*
 
 | Id | Stream | Subject |
 |---|---|---|
@@ -5434,6 +5766,28 @@ rename, and QA and contingency are carried unchanged. The downstream totals in `
 `[SSP]` are **not** swept — same treatment `D-55` gave `FW-N15`/`FW-N16`, and for the same reason:
 reconciling them is a costing pass, not part of this change.
 
+
+#### B.11 Minted `FW-N##` ids — `FW-N22`–`FW-N30` (9, contiguous), and `FW-224` taken up
+
+**Minted 9 Sep 2026** from the client questions workbook returned that day. The cards are in §7.2 under *Additive — the 8 September client answers*.
+**Next free `FW-N##` id: `FW-N31`.**
+
+| Id | Stream | Subject |
+|---|---|---|
+| `FW-N22` | DB | `AlloyProperty` re-grained to vendor and rod size band, and seeded |
+| `FW-N23` | DB | Pass schedule carries roll gap **and** target product gauge per stand, plus the two edger reduction limits |
+| `FW-N24` | DB + BE | Move the three cross-database writes from pre-check-in to check-in |
+| `FW-N25` | BE + RT | Machine interface tag surface revision — one write removed, two reads added |
+| `FW-N26` | DB + BE | Log the operator-set dancer tension value |
+| `FW-N27` | BE | Guard the weld flag — it cannot be set before check-in |
+| `FW-N28` | DB | Each die carries a unique identifier for per-die footage tracking |
+| `FW-224` | BE + FE | FL2 pre-check-in — spool staging |
+| `FW-N29` | RT | FL2 gauge trace — live stream or post-check-in profile |
+| `FW-N30` | BE | Certificate traceability granularity — cast number as the lot reference |
+
+⚠ **`FW-224` is a RESERVED id being taken up, not a mint.** It has carried the FL2 pre-check-in scope since 20 Aug 2026, is cross-referenced from five documents, and was recorded as *additive, not yet sized*. This is its first sizing.
+
+⛔ **`FW-N07`–`FW-N12` and `FW-N14` remain reserved gaps, not free ids.**
 
 ## 8. Descope ladder
 

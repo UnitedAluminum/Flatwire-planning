@@ -42,7 +42,7 @@ BEGIN
         -- NOTE: [StagedPayoffPosition] and [IsWelded] were removed here. Pre-check-in
         -- staging now lives in [dbo].[RodStaging] (04_Runs), which can enforce the
         -- one-rod-per-payoff-bay invariant that a nullable column on Rod cannot.
-        -- See MVP-1/ProjectPlan/Business/Screens/RodPreCheckin.md and SRS §4.2 PCI001-PCI008 / WLD010.
+        -- See 10-requirements/screens/RodPreCheckin.md and SRS §4.2 PCI001-PCI008 / WLD010.
         [FootageRunToDate] DECIMAL(10,2) NULL,              -- cumulative footage produced across partial runs (Phase 7 / OQ-12)
         [RemainingWeightEstimateLb] DECIMAL(8,2) NULL,      -- estimated remaining weight after a partial run (lb)
         [ReceivedAt]   DATETIMEOFFSET NOT NULL CONSTRAINT [DF_Rod_ReceivedAt] DEFAULT (SYSDATETIMEOFFSET()),
@@ -275,21 +275,60 @@ GO
 
 -- ------------------------------------------------------------
 -- SpoolOrder
--- The orders a spool may be consumed against. A spool coming off FL1
--- may carry TWO OR MORE orders (client, 20 Aug 2026) while FL2 makes
--- ONE order at a time -- so the SET lives here and the SELECTION lives
--- on SpoolCheckin.OrderId, which is why that column is being relaxed
--- to NULL rather than removed.
+-- The orders a spool's material is consumed against, ONE ROW PER
+-- (SEGMENT, ORDER). A spool coming off FL1 may carry TWO OR MORE orders
+-- (client, 20 Aug 2026) while FL2 makes ONE order at a time -- so the SET
+-- lives here and the SELECTION lives on SpoolCheckin.OrderId, which is why
+-- that column is nullable rather than removed.
 --
--- DERIVED, NOT ALLOCATED. The set is the union of the orders on the rods
--- in SpoolTraceability -- resolved LOCALLY from RodOrderAllocation as of
--- 22 Aug 2026 (G48). It previously said "read from the shared
--- planning_routings rod->order allocation", which was a workaround
--- written because the rod<->order table did not exist. Deriving locally
--- removes a shared-schema read from the FL1 path and removes a
--- re-resolution that could disagree with the local allocation.
--- A later planning allocation may supersede a derived row; that is
--- additive.
+-- *** RE-PARENTED FROM THE SPOOL TO THE SEGMENT, 8 Sep 2026 (D-57). ***
+-- This table was keyed (SpoolAlpha, OrderNo, RelLetter) and referenced the
+-- rod NOWHERE, so it could say THAT a spool crossed an order boundary and
+-- where the boundary sat on the spool -- but not WHICH ROD'S MATERIAL went
+-- to which order. Reaching the rod meant joining SpoolTraceability, and the
+-- two tables' ranges were in DIFFERENT UNITS: this one in pounds, that one
+-- in feet and nullable. They could not be joined at all. That was the
+-- defect. The parent is now SpoolTraceability.Id -- one segment, one rod --
+-- so the rod is reachable in one hop.
+--
+-- SpoolTraceability IS DELIBERATELY UNTOUCHED. Merging the two, which was
+-- the first proposal, breaks two load-bearing things: UQ_SpoolTraceability_Seq
+-- (an order split inside one physical segment would share a SeqNo) and
+-- UX_SpoolTraceability_ChildAlpha, which is UNIQUE because ONE PHYSICAL
+-- SEGMENT HAS ONE CHILD ALPHA (Q57). A merged grain lands that alpha on two
+-- rows, and demoting the index leaves no uniqueness guard at all while
+-- FW-231 is blocked (G54). Keeping the segment grain and hanging the orders
+-- off it costs nothing and keeps all three.
+--
+-- TWO RANGES, TWO FRAMES, AND THAT IS THE POINT.
+--   * SegmentWeightFrom/To are SEGMENT-LOCAL POUNDS. Pounds because weight
+--     is conserved through drawing and rolling and footage is not (the same
+--     reasoning RodOrderAllocation states); segment-local because that makes
+--     CK_SpoolOrder_WeightRange an EXACT single-row check against
+--     AllocatedWeightLb, so the range and the allocation cannot disagree.
+--   * SpoolFootageFrom/To are SPOOL-LOCAL FEET, the frame FL2 actually cuts
+--     in -- the line has a footage counter, not a scale. One order spread
+--     over two segments reads as two unrelated pound intervals and as ONE
+--     CONTIGUOUS FOOTAGE RUN. Contiguity is visible only in the spool frame,
+--     which is why the pair is stored rather than derived (the same call
+--     SpoolProcessing.RunStartFootageFt makes: store the anchor).
+--
+-- *** POUNDS ARE AUTHORITATIVE; FEET ARE A RECORDED CONVENIENCE. *** No
+-- constraint can tie the two frames to each other -- SQL cannot express it
+-- across a nullable parent -- so IF THEY EVER DISAGREE, THE POUNDS ARE RIGHT.
+--
+-- DERIVED vs PLANNED, and the honest line between them (G110).
+-- Derived = the union of the orders on the rods in SpoolTraceability,
+-- resolved LOCALLY from RodOrderAllocation (G48). That holds when a WHOLE
+-- SEGMENT maps to a WHOLE ORDER. It does NOT hold for a segment SPLIT across
+-- two orders: deriving the split point needs the ROD-LOCAL weight at which
+-- this spool started taking that rod, and NO TABLE HOLDS THAT ANCHOR. A
+-- straddle is therefore Planned -- an allocation decision, not a derivation.
+-- Do not write a query that tries to derive one; see G110.
+--
+-- RE-PLANNING IS ADDITIVE, mirroring RodOrderAllocation exactly: the old row
+-- is superseded and never updated, which is what UX_SpoolOrder_Active's
+-- IsActive filter exists for.
 --
 -- NO FK ON OrderNo. Orders live in the shared schema and D-32 forbids
 -- altering it, so this is an unenforced external reference -- the same
@@ -298,23 +337,51 @@ GO
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SpoolOrder]') AND type = N'U')
 BEGIN
     CREATE TABLE [dbo].[SpoolOrder] (
-        [Id]              INT           NOT NULL IDENTITY(1,1),
-        [SpoolAlpha]      VARCHAR(20)   NOT NULL,      -- FK -> SpoolProcessing.Alpha
-        [OrderNo]         VARCHAR(50)   NOT NULL,      -- shared-schema manufacturing order; NO FK by design
-        [RelLetter]       VARCHAR(10)   NULL,          -- release letter, mirroring SpoolProcessing.RelLetter
-        [SeqNo]           SMALLINT      NULL,          -- planned consumption order, if planning supplies one
-        [PlannedWeightLb] DECIMAL(8,2)  NULL,          -- weight allocated to this order, if allocated rather than derived
-        [Source]          VARCHAR(15)   NOT NULL CONSTRAINT [DF_SpoolOrder_Source] DEFAULT ('Derived'),
-        [CreatedAt]       DATETIMEOFFSET NOT NULL CONSTRAINT [DF_SpoolOrder_CreatedAt] DEFAULT (SYSDATETIMEOFFSET()),
+        [Id]                  INT            NOT NULL IDENTITY(1,1),   -- surrogate PK, repo convention
+        [SpoolTraceabilityId] INT            NOT NULL,      -- FK -> SpoolTraceability.Id; ONE SEGMENT, ONE ROD
+        [OrderNo]             VARCHAR(50)    NOT NULL,      -- shared-schema manufacturing order; NO FK by design (D-32)
+        [RelLetter]           VARCHAR(10)    NULL,          -- release letter, mirroring SpoolProcessing.RelLetter
+        [SeqNo]               SMALLINT       NULL,          -- planned consumption order, if planning supplies one
+        [AllocatedWeightLb]   DECIMAL(8,2)   NOT NULL,      -- pounds of THIS SEGMENT allocated to this order
+        [SegmentWeightFrom]   DECIMAL(8,2)   NOT NULL,      -- segment-local cumulative lb, INCLUSIVE
+        [SegmentWeightTo]     DECIMAL(8,2)   NOT NULL,      -- segment-local cumulative lb, EXCLUSIVE
+        -- SPOOL-local feet, the frame FL2 cuts in. NULLABLE for the PARENT'S reason and not out of
+        -- caution: SpoolTraceability.FootageFrom/To are nullable because a weight-only row is
+        -- legitimate before a run supplies footage, and a child cannot be NOT NULL where its parent
+        -- is null. A row with weights and no feet is a legitimate state, not an incomplete one.
+        [SpoolFootageFrom]    INT            NULL,          -- spool-local feet, INCLUSIVE
+        [SpoolFootageTo]      INT            NULL,          -- spool-local feet, EXCLUSIVE
+        [Source]              VARCHAR(15)    NOT NULL CONSTRAINT [DF_SpoolOrder_Source] DEFAULT ('Derived'),
+        [SupersededByOrderId] INT            NULL,          -- re-planning is ADDITIVE; the old row is never updated
+        [IsActive]            BIT            NOT NULL CONSTRAINT [DF_SpoolOrder_IsActive] DEFAULT (1),
+        [CreatedBy]           VARCHAR(50)    NULL,          -- audit
+        [CreatedAt]           DATETIMEOFFSET NOT NULL CONSTRAINT [DF_SpoolOrder_CreatedAt] DEFAULT (SYSDATETIMEOFFSET()),
 
         CONSTRAINT [PK_SpoolOrder]        PRIMARY KEY CLUSTERED ([Id] ASC),
-        -- RelLetter is nullable, so ISNULL it into the uniqueness key rather
-        -- than relying on UNIQUE's single-NULL-per-key SQL Server behaviour.
-        CONSTRAINT [UQ_SpoolOrder_Key]    UNIQUE ([SpoolAlpha], [OrderNo], [RelLetter]),
-        -- Derived  = union of the rods' orders, computed at spool creation
-        -- Planned  = an explicit planning allocation that supersedes the derived row
-        CONSTRAINT [CK_SpoolOrder_Source] CHECK ([Source] IN ('Derived','Planned')),
-        CONSTRAINT [CK_SpoolOrder_Weight] CHECK ([PlannedWeightLb] IS NULL OR [PlannedWeightLb] > 0)
+        -- *** UNIQUENESS IS A FILTERED INDEX IN 07, NOT A CONSTRAINT HERE. ***
+        -- UQ_SpoolOrder_Key (SpoolAlpha, OrderNo, RelLetter) is GONE with the spool grain, and its
+        -- replacement CANNOT be an inline UNIQUE: re-planning is additive, so a superseded row and
+        -- its replacement share (SpoolTraceabilityId, OrderNo, RelLetter) and a plain UNIQUE would
+        -- refuse the very write the additive model exists to make. UX_SpoolOrder_Active filters on
+        -- IsActive = 1, exactly as UX_RodOrderAllocation_Active does.
+        -- Derived     = whole segment -> whole order, read off the rod's plan (G48)
+        -- Planned     = an explicit allocation, incl. EVERY straddle -- see the header and G110
+        -- Substituted = a re-plan that replaced an earlier row
+        CONSTRAINT [CK_SpoolOrder_Source] CHECK ([Source] IN ('Planned','Derived','Substituted')),
+        CONSTRAINT [CK_SpoolOrder_Weight] CHECK ([AllocatedWeightLb] > 0),
+        -- Half-open, so From < To. AND the range must EQUAL the allocation: exact DECIMAL arithmetic
+        -- makes that a single-row check, so the two can never disagree. Copied from
+        -- CK_RodOrderAllocation_WeightRange, which states the same rule one hop up the chain.
+        CONSTRAINT [CK_SpoolOrder_WeightRange] CHECK ([SegmentWeightFrom] < [SegmentWeightTo]
+                                                  AND [SegmentWeightTo] - [SegmentWeightFrom] = [AllocatedWeightLb]),
+        -- Both NULL or both set, never one of each -- the same shape as CK_SpoolTraceability_Range,
+        -- because it is the same frame and the same convention. CONTAINMENT WITHIN THE PARENT'S
+        -- WINDOW IS *NOT* HERE: it is cross-row, the parent's footage is nullable, and a trigger
+        -- joining on NULL PASSES SILENTLY. It lives in the domain (FW-207), for the identical reason
+        -- SpoolTraceability has no non-overlap trigger.
+        CONSTRAINT [CK_SpoolOrder_FootageRange] CHECK (([SpoolFootageFrom] IS NULL AND [SpoolFootageTo] IS NULL)
+                                                    OR ([SpoolFootageFrom] IS NOT NULL AND [SpoolFootageTo] IS NOT NULL
+                                                        AND [SpoolFootageFrom] < [SpoolFootageTo]))
     );
     PRINT 'Created table: SpoolOrder';
 END
@@ -509,32 +576,20 @@ END
 GO
 
 -- ------------------------------------------------------------
--- SpoolOrder -- the order boundary's position on the spool (G48).
+-- SpoolOrder -- the retro-fit ALTER block was REMOVED, 8 Sep 2026 (D-57).
 --
--- A spool wound across an O1->O2 boundary recorded THAT it carries two
--- orders and not WHERE the boundary is -- so FL2, which makes one order
--- at a time, had to cut at a point nothing told it. These two columns
--- are that point.
+-- It added SpoolWeightFrom/SpoolWeightTo, G48's fix, to an existing database.
+-- The re-grain replaces that pair with SegmentWeightFrom/To (segment-local,
+-- NOT NULL) plus SpoolFootageFrom/To, all in the CREATE TABLE body above.
 --
--- IN POUNDS, half-open [From, To), matching RodOrderAllocation's split
--- rather than SpoolTraceability's footage. Weight is conserved through
--- drawing and rolling and footage is not, so pounds are the only
--- frame-free way to state a boundary that has to survive the hop.
+-- *** IT COULD NOT BE LEFT IN PLACE. *** Its guard is "the column is absent",
+-- and after the re-grain SpoolWeightFrom IS absent -- by design. So on a fresh
+-- teardown-and-deploy the block would have fired and bolted two stray nullable
+-- columns onto the new table, in a script whose whole purpose is to be
+-- idempotent. Removing it is not tidying; leaving it was a defect.
+--
+-- The deploy path for this change is TEARDOWN-AND-DEPLOY, per D-53's precedent
+-- ("a table cannot be removed by an incremental re-run"), so no ALTER path is
+-- owed here. There is no in-repo precedent for DROP COLUMN or for dropping an
+-- inline UNIQUE, and a half-applied re-grain is worse than either end state.
 -- ------------------------------------------------------------
-IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SpoolOrder]') AND type = N'U')
-   AND NOT EXISTS (SELECT 1 FROM sys.columns
-                   WHERE object_id = OBJECT_ID(N'[dbo].[SpoolOrder]') AND name = N'SpoolWeightFrom')
-BEGIN
-    ALTER TABLE [dbo].[SpoolOrder] ADD [SpoolWeightFrom] DECIMAL(8,2) NULL;   -- spool-local cumulative lb, INCLUSIVE
-    PRINT 'Added column: SpoolOrder.SpoolWeightFrom';
-END
-GO
-
-IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SpoolOrder]') AND type = N'U')
-   AND NOT EXISTS (SELECT 1 FROM sys.columns
-                   WHERE object_id = OBJECT_ID(N'[dbo].[SpoolOrder]') AND name = N'SpoolWeightTo')
-BEGIN
-    ALTER TABLE [dbo].[SpoolOrder] ADD [SpoolWeightTo] DECIMAL(8,2) NULL;     -- spool-local cumulative lb, EXCLUSIVE
-    PRINT 'Added column: SpoolOrder.SpoolWeightTo';
-END
-GO

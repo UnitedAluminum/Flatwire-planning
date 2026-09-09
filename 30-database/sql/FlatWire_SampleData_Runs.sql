@@ -161,7 +161,17 @@ INSERT INTO [dbo].[WeldEvent]
 VALUES
     ('WLD-001','RUN-0001','FL1','R00041','R00042',2100,'InductionWeld','Pass',NULL,                   'Dave M.', '2026-07-20 08:05:00 -05:00'),
     ('WLD-002','RUN-0003','FL1','R00043','R00044',1600,'InductionWeld','Pass',NULL,                   'Dave M.', '2026-07-21 07:40:00 -05:00'),
-    ('WLD-003','RUN-0002','FL3','R00045','R00042',1900,'InductionWeld','Fail','Weld not fully fused',  'Linda K.','2026-07-20 11:05:00 -05:00');
+    -- ⚠ INCOMING ROD CORRECTED 8 Sep 2026: this was R00042, which is FK-legal and
+    --   domain-impossible. R00042 was checked in on RUN-0001 (FL1, payoff 2) and consumed
+    --   there as WLD-001's incoming rod three hours earlier, and RUN-0002's only check-in
+    --   is R00045 -- one rod cannot be drawn on two lines at once.
+    --   R00047 is the replacement: same alloy and temper as the outgoing rod (1100/H19, which
+    --   is what an induction weld requires), and consumed by no run. The story closes on
+    --   itself -- the weld FAILED, so the rod was cut back rather than drawn in, which is why
+    --   FW-00600-C01's genealogy names only R00045 and needs no new segment; R00047 is then
+    --   re-presented on 22 Jul and rejected by REJ-0001 for 'Heavy oxidation on OD', which is
+    --   a good reason for a weld not to fuse two days earlier.
+    ('WLD-003','RUN-0002','FL3','R00045','R00047',1900,'InductionWeld','Fail','Weld not fully fused',  'Linda K.','2026-07-20 11:05:00 -05:00');
 GO
 
 -- ============================================================
@@ -304,7 +314,23 @@ FROM (VALUES
     ('RC-0003','RUN-0003','FL1PO','FL1','R00043','FW-00700','A',3760.00,1,1,'InProgress',
         1150.00,NULL,2010.00,NULL,
         NULL,NULL,NULL,NULL,
-        NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Dave M.')
+        NULL,NULL,NULL,NULL,NULL,NULL,NULL,'Dave M.'),
+    -- RC-0004: the Mode B ABANDONMENT pairing, added 8 Sep 2026. Without it
+    -- FK_RodOrderConsumption_Checkout and CK_RodOrderConsumption_Abandon had NO seeded
+    -- coverage at all, and CO-0002 was a Mode B checkout that no consumption row pointed at.
+    -- R00046 is the SECOND rod to run order FW-00700 (R00043 ran it first, as RC-0003), so
+    -- ActualRodSeqNo is 2 -- UX_RodOrderConsumption_ActualSeq is UNIQUE on
+    -- (OrderNo, RelLetter, ActualRodSeqNo) and is NOT filtered, so 1 would collide.
+    -- Consumed 8560.00 - 4200.00 = 4360.00 lb, matching CO-0002's remaining-weight estimate,
+    -- over the 900 ft that checkout records.
+    -- ClosureReason and RodCheckoutId are BOTH left NULL here and set together by the UPDATE
+    -- in FlatWire_SampleData_QualityOutput.sql -- see the note above: RodCheckout does not
+    -- exist yet at this point in the :r order, and CK_RodOrderConsumption_Abandon requires
+    -- the pair to move together.
+    ('RC-0004','RUN-0005','FL1PO','FL1','R00046','FW-00700','A',NULL,   NULL,2,'Closed',
+        0.00,900.00,NULL,NULL,
+        NULL,NULL,NULL,NULL,
+        NULL,4360.00,'Measured',4.844444,'v1',NULL,NULL,'Marcus T.')
 ) AS v([ConsumptionId],[RunId],[Station],[MachineName],[RodAlpha],[OrderNo],[RelLetter],[AllocSnap],
        [PlannedSeq],[ActualSeq],[State],[StartFt],[EndFt],[ThreshFt],[ThreshAt],[LatchLb],[NotifAt],
        [AckAt],[AckBy],[AckLb],[ConsumedLb],[Basis],[LbPerFt],[ConvVer],[Closure],[Shortfall],[OperatorId])
@@ -313,7 +339,7 @@ JOIN [dbo].[RodCheckin] rc
 LEFT JOIN [dbo].[RodOrderAllocation] ra
   ON ra.[RodAlpha] = v.[RodAlpha] AND ra.[OrderNo] = v.[OrderNo] AND ra.[IsActive] = 1;
 GO
-PRINT 'Seeded: RodOrderConsumption (3 rows -- R00043 runs two orders on one mount)';
+PRINT 'Seeded: RodOrderConsumption (4 rows -- R00043 runs two orders on one mount; RC-0004 is the Mode B abandonment)';
 GO
 
 -- ------------------------------------------------------------

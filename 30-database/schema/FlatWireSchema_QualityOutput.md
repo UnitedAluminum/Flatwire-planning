@@ -1,7 +1,7 @@
 # Flat Wire Mill — Quality Control & Output Tables
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
+**Last Updated:** September 9, 2026 — **`30-database` audit applied** (see [`CHANGELOG.md`](../../CHANGELOG.md) — Repository-wide). *(previously — August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. ⚠ **`SpoolConfiguration` is a table again** (`D-58`, 8 Sep 2026), superseding `Q60`'s merge. **Object counts are not stated here** — `[DBD §6.2]` is the defining site; this header carried `33 tables · 55 FKs · 69 index statements` until 8 Sep 2026, all three stale, directly above the Authority line that says this document states no object counts. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.)*
 **Document Type:** Final Schema — Quality Control & Output Tables
 **Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`) — DDL: `../sql/FlatWire_DDL_05_QualityOutput.sql`
@@ -9,7 +9,7 @@
 **Scope:** MVP-1
 **Owner:** Architecture stream / DBA
 **Audience:** DBA, .NET developers, BA
-**Part of:** `ProjectPlan/Database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
+**Part of:** `30-database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
 **Authority:** `../sql/FlatWire_DDL_05_QualityOutput.sql` **wins** on types, nullability and constraints. This document explains them; it does not define them, and it states no object counts — those are `[DBD §6.2]`. No shortcode is declared, deliberately: these are derived documents and must not be cited as authority.
 
 These tables capture SPC measurement sessions, material rejections, and the finished output coils produced by a run. Together they provide full quality traceability from raw rod through to the finished coil.
@@ -76,10 +76,10 @@ Material rejection events raised during a run or during incoming material inspec
 | `Stage` | varchar(30) | NOT NULL | — | Production stage at which the rejection occurred (e.g. `FL1ActiveRun`, `FL2Incoming`, `FL1Incoming`) |
 | `FootagePosition` | int | NULL | — | Footage counter value at the point of rejection; NULL for pre-run rejections |
 | `RejectionGroup` | varchar(30) | NOT NULL | — | High-level rejection category — see allowed values |
-| `RejectionReason` | varchar(50) | NOT NULL | — | Specific rejection reason code (e.g. `GaugeOutOfSpec`, `WeldBreak`, `SurfaceDefect`) |
-| `MeasuredValue` | decimal | NULL | — | Actual measured value that triggered the rejection |
-| `TargetMin` | decimal | NULL | — | Minimum acceptable value for this measurement |
-| `TargetMax` | decimal | NULL | — | Maximum acceptable value for this measurement |
+| `RejectionReason` | **varchar(20)** | NOT NULL | `WipRejectionReason.ReasonCode` | The client's rejection code, e.g. `WREJ043`. ⚠ **Deliberately narrowed 50 → 20** so it matches `WipRejectionReason.ReasonCode` for the **composite** FK `(RejectionReason, RejectionGroup)`; that FK is also why `CK_WipRejection_Group` could be dropped on 2 Sep 2026. This row said `varchar(50)` until 8 Sep 2026 |
+| `MeasuredValue` | decimal(10,4) | NULL | — | Actual measured value that triggered the rejection |
+| `TargetMin` | decimal(10,4) | NULL | — | Minimum acceptable value for this measurement |
+| `TargetMax` | decimal(10,4) | NULL | — | Maximum acceptable value for this measurement |
 | `Disposition` | varchar(20) | NOT NULL | — | Action taken on the rejected material: `Suspend`, `Scrap`, `Rework` |
 | `ObservationNotes` | varchar(500) | NULL | — | Free-text operator observations about the rejection event |
 | `NewMaterialStatus` | varchar(20) | NOT NULL | — | Status the material is updated to following rejection: `HOLD` or `SCRAP` |
@@ -127,6 +127,12 @@ Output coil records generated at run completion. One row per finished coil produ
 | `ModifiedBy` | varchar(50) | NULL | — | Audit: last modifier |
 | `ModifiedAt` | datetimeoffset | NULL | — | Audit: last-modified timestamp |
 | `RowVersion` | rowversion | NOT NULL | — | Optimistic-concurrency token |
+| `RunFootageAtStartFt` | decimal(10,2) | NULL | — | The coil's START on the RUN footage axis — the anchor that places it against `CoilTraceability` |
+| `RunFootageAtEndFt` | decimal(10,2) | NULL | — | The coil's END on the same axis. ⚠ Both are `DECIMAL(10,2)` while `CoilTraceability.FootageFrom`/`To` are `INT`; see the footage-frame note in `[DBD §6.4]` |
+| `AnchorBasis` | varchar(20) | NOT NULL, default `AssumedContiguous` | — | How the two anchors were arrived at — **`Observed`** or **`AssumedContiguous`** (`CK_CoilOutput_AnchorBasis`) |
+
+⚠ **The rows above were added on 8 Sep 2026** — they exist in the DDL and had never been documented here.
+**`CK_CoilOutput_RunFrame`** goes with them: the two run-frame anchors are all-or-nothing and ordered — either may be `NULL`, but when both are set the end may not precede the start.
 
 **Allowed values:**
 - `Status`: `COMPLETE`, `HOLD`, `SCRAP`
@@ -144,11 +150,14 @@ Source traceability — maps footage ranges within an output coil back to the sp
 | `CoilAlpha` | varchar(30) | NOT NULL | `CoilOutput.CoilAlpha` | FK to the output coil this traceability row belongs to |
 | `RodAlpha` | varchar(20) | NOT NULL | `Rod.Alpha` | FK to the rod that produced material in this footage range |
 | `SpoolAlpha` | varchar(20) | NULL | `SpoolProcessing.Alpha` | FK to the spool that fed this footage range. **NULL on a rod-fed run** (FL1 standalone, and FL3 when fed directly from rod) — there is no input spool to name |
-| `FootageFrom` | int | NOT NULL | — | Start footage position (inclusive) in this coil that originated from `RodAlpha` |
-| `FootageTo` | int | NOT NULL | — | End footage position (inclusive) in this coil that originated from `RodAlpha` |
+| `FootageFrom` | int | NOT NULL | — | Start footage position (**inclusive**) in this coil that originated from `RodAlpha` |
+| `FootageTo` | int | NOT NULL | — | End footage position (**EXCLUSIVE**) in this coil that originated from `RodAlpha`. ⚠ **Ranges are HALF-OPEN `[FootageFrom, FootageTo)`** — what `trg_CoilTraceability_NoOverlap` enforces and what `TC-617` asserts (100% coverage, zero overlap). The SQL was corrected on 22 Aug 2026 and says so at `FlatWire_DDL_05_QualityOutput.sql:247-250`; this row still read *"(inclusive)"* until 8 Sep 2026. It governs the welding-wire certificate arithmetic, so the two readings differ by one foot per segment |
 | `ChildAlpha` | varchar(20) | NULL | — | ⚠ **New 26 Aug 2026 (`Q88`, `Q89`).** **One shared identity per (coil × source rod)**, minted by `CommonDB.dbo.GenerateCoilAlpha` rooted on **this row's** rod. **Every one is written to `proddb..coils`**, each carrying only its own `SegmentWeightLb`. Filtered-UNIQUE (`UX_CoilTraceability_ChildAlpha`). **Opaque** — never parsed, never ordered by |
 | `SourceSegmentAlpha` | varchar(20) | NULL | ⛔ **none possible** | ⚠ **New 26 Aug 2026.** Which **segment** of that rod the part came from. ⛔ **Not an FK and cannot be one** — the parent index `UX_SpoolTraceability_ChildAlpha` is **filtered**, and SQL Server will not point a foreign key at a filtered index. Guarded by the domain model and `TC-794` only. NULL on a rod-fed coil |
 | `SharedWrittenAt` | datetimeoffset | NULL | — | ⚠ **New 26 Aug 2026.** The **retry contract**: NULL until this part's `proddb..coils` row commits. A retry writes only the parts still NULL and reports all of them. **A column, not a new table** — `ChildAlpha` already stores the N identities; the old scalar contract simply could not say *which* committed |
+| `SeqNo` | smallint | NOT NULL, default `1` | — | Segment order within the coil — 1 for a single-rod coil, 1..N across a weld |
+
+⚠ **The rows above were added on 8 Sep 2026** — they exist in the DDL and had never been documented here.
 
 **Constraints:**
 - `FootageFrom < FootageTo` (`CK_CoilTraceability_Range`)
@@ -189,7 +198,7 @@ Records rod removal from a payoff position. Supports two modes: **Mode A** = pre
 | `FootageAtCheckout` | int | NOT NULL | — | Footage counter value at the time of checkout; `0` for Mode P and Mode A |
 | `ReasonCode` | varchar(50) | NOT NULL | — | Coded reason for the checkout (e.g. `WrongRod`, `MaterialDefect`, `EmergencyStop`) |
 | `RodDisposition` | varchar(30) | NOT NULL | — | Where the rod goes after checkout — see allowed values |
-| `RemainingWeightLbEstimate` | decimal | NULL | — | Estimated remaining material weight on the rod in pounds; Mode B only |
+| `RemainingWeightLbEstimate` | decimal(8,2) | NULL | — | Estimated remaining material weight on the rod in pounds; Mode B only |
 | `InProcessMaterialDisposition` | varchar(30) | NULL | — | Disposition of the in-process material at the time of checkout — see allowed values; Mode B only |
 | `PartialSpoolAlpha` | varchar(20) | NULL | — | Alpha generated for the partial spool if `InProcessMaterialDisposition = 'AcceptAsPartialRun'` |
 | `NewRodStatus` | varchar(20) | NOT NULL | — | Status the rod record is updated to after checkout (e.g. `HOLD`, `SCRAP`, `RECEIVED`) |

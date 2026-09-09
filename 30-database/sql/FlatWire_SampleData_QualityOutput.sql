@@ -47,13 +47,39 @@ GO
 -- ============================================================
 -- WipRejection  (pre-run hold + mid-run process hold)
 -- ============================================================
+-- *** FIXED 8 Sep 2026 -- G108. THESE TWO ROWS USED TO VIOLATE
+--     FK_WipRejection_Reason AND THE INSERT FAILED SILENTLY. ***
+--
+-- The composite FK is (RejectionReason, RejectionGroup) ->
+-- WipRejectionReason(ReasonCode, RejectionGroup), and RejectionReason must
+-- therefore hold a CODE. These rows held the PRE-REASON-CODE FREE TEXT --
+-- 'Oxidation' and 'ComponentFault' -- which predate the client's Reason
+-- Codes.xlsx landing on 2 Sep 2026. Neither pair existed in the 72 seeded
+-- codes, so SQL Server terminated this one statement with Msg 547 while the
+-- rest of the seed chain continued: the table was simply EMPTY afterwards,
+-- and sp_ShiftSummary's WipRejections column read 0 for every line.
+--
+-- REMAPPED ONTO THE CLIENT'S OWN VOCABULARY, not onto a guess. Both codes
+-- are literal matches in Reason Codes.xlsx, which is what made this fixable
+-- without Tim O'Brien's ruling:
+--   WREJ043 'Oxidation, Magnesium Stain'  (SurfaceQuality) <- 'Heavy oxidation on OD'
+--   WREJ032 'Machine / IT Problem'        (Process)        <- 'FM1 bearing fault'
+--
+-- ⚠ The ObservationNotes keep the original free text. That is the point of
+-- the column: the CODE is the vocabulary and the NOTE is what the operator
+-- saw, and collapsing the two is what produced this defect.
+--
+-- ⚠ WREJ032 is 'Machine / IT Problem' and NOT WREJ064 'Wire Brk Due To
+-- Machine Problem' -- the fixture is a bearing fault with the material held,
+-- not a wire break.
+-- ============================================================
 IF NOT EXISTS (SELECT 1 FROM [dbo].[WipRejection])
 INSERT INTO [dbo].[WipRejection]
     ([RejectionId],[RunId],[MachineName],[MaterialAlpha],[Stage],[FootagePosition],[RejectionGroup],[RejectionReason],
      [MeasuredValue],[TargetMin],[TargetMax],[Disposition],[ObservationNotes],[NewMaterialStatus],[OperatorId],[Timestamp])
 VALUES
-    ('REJ-0001',NULL,      'FL1','R00047','FL1Incoming',  NULL,'SurfaceQuality','Oxidation',    NULL,  NULL,  NULL,  'Suspend','Heavy oxidation on OD',            'HOLD','QA-Ann',  '2026-07-18 09:30:00 -05:00'),
-    ('REJ-0002','RUN-0005','FL1','R00046','FL1ActiveRun',  900,'Process',       'ComponentFault',NULL,  NULL,  NULL,  'Suspend','FM1 bearing fault; material held','HOLD','Marcus T.','2026-07-22 07:05:00 -05:00');
+    ('REJ-0001',NULL,      'FL1','R00047','FL1Incoming',  NULL,'SurfaceQuality','WREJ043',NULL,  NULL,  NULL,  'Suspend','Heavy oxidation on OD',            'HOLD','QA-Ann',  '2026-07-18 09:30:00 -05:00'),
+    ('REJ-0002','RUN-0005','FL1','R00046','FL1ActiveRun',  900,'Process',       'WREJ032',NULL,  NULL,  NULL,  'Suspend','FM1 bearing fault; material held','HOLD','Marcus T.','2026-07-22 07:05:00 -05:00');
 GO
 
 -- ============================================================
@@ -80,6 +106,36 @@ VALUES
     -- (OQ-69 / OQ-72, decided 30 Jul 2026). An UNWELDED pre-check-out needs none of that.
     ('CO-0003',NULL,      'FL1','R00044',2,'ModeP',  0,'WrongRodWelded',  'HoldReturnToStorage',4300.00,NULL,               NULL,      'HOLD',    0,
      1,'S. Kowalski','2026-07-22 07:52:00 -05:00','Welded to the running rod in error; cut back and held for disposition','Marcus T.','2026-07-22 07:55:00 -05:00');
+GO
+
+-- ============================================================
+-- RodOrderConsumption -- close RC-0004 as a Mode B abandonment
+-- ============================================================
+-- ⚠ THIS IS THE UPDATE THAT FlatWire_SampleData_Runs.sql PROMISES AND NEVER MADE.
+-- It is an UPDATE here rather than an INSERT there because FK_RodOrderConsumption_Checkout
+-- points at RodCheckout, which this file seeds and the Runs file does not -- setting it at
+-- insert time fails the FK on the :r order.
+--
+-- ClosureReason and RodCheckoutId MOVE TOGETHER, and they have to:
+-- CK_RodOrderConsumption_Abandon is "ClosureReason <> 'RodAbandoned' OR RodCheckoutId IS NOT
+-- NULL", so setting either alone in its own statement would fail. Before this, both the
+-- constraint and the foreign key had zero seeded coverage.
+--
+-- RodCheckoutId is VARCHAR(20) and carries the BUSINESS key (RodCheckout.CheckoutId), not the
+-- surrogate Id -- so 'CO-0002' goes in literally and no lookup is needed.
+IF EXISTS (SELECT 1 FROM [dbo].[RodOrderConsumption] WHERE [ConsumptionId] = 'RC-0004' AND [RodCheckoutId] IS NULL)
+   AND EXISTS (SELECT 1 FROM [dbo].[RodCheckout] WHERE [CheckoutId] = 'CO-0002')
+BEGIN
+    UPDATE [dbo].[RodOrderConsumption]
+       SET [ClosureReason] = 'RodAbandoned'
+         , [RodCheckoutId] = 'CO-0002'
+         , [ModifiedBy]    = 'Marcus T.'
+         , [ModifiedAt]    = '2026-07-22 07:12:00 -05:00'
+     WHERE [ConsumptionId] = 'RC-0004';
+    PRINT 'Closed: RC-0004 -> RodAbandoned via CO-0002 (Mode B)';
+END
+ELSE
+    PRINT 'RC-0004 already closed, or its checkout is absent -- skipped';
 GO
 
 

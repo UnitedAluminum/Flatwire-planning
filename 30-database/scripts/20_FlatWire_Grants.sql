@@ -8,7 +8,7 @@
                  (Section 1 below says "run this FIRST" -- that refers to the CO-LOCATION CHECK,
                   which is step 0. The two are not in conflict; the wording used to suggest they were.)
   Story        : FW-220 / FW-221 (extends FW-144's configuration work)
-  Specification: MVP-1/ProjectPlan/Architecture/Integration.md Sec 8.0 / Sec 8.1
+  Specification: 20-architecture/Integration.md Sec 8.0 / Sec 8.1
 
   PURPOSE
   -------
@@ -58,7 +58,7 @@
   ---------
       This script is STEP 3 OF 10. The full cross-folder sequence has ONE home and it is not here:
 
-          [DEP 4.2]  --  MVP-1/ProjectPlan/Operations/Deployment.md, section 4.2
+          [DEP 4.2]  --  80-operations/Deployment.md, section 4.2
 
       A four-step copy used to live at this spot. It omitted all four FlatWire_* procedures (in
       united_db until [H], now FlatWireDB), the
@@ -76,8 +76,10 @@
   *** FlatWireDB MUST BE ON THE SAME INSTANCE as united_db / proddb / SlitterDB / CommonDB /
   wiplogdb. *** The whole check-in transaction model depends on it: one SqlConnection with one
   SqlTransaction spans both halves under the LOCAL transaction manager, with no MSDTC. The
-  deploy snippet in CLAUDE.md shows (localdb)\MSSQLLocalDB, which is a DEVELOPER CONVENIENCE and
-  is not this topology - LocalDB has no united_db. Section 1 below reports co-location; if it
+  target is DEV00164-001, the shared instance ([DEP 2]); LocalDB is a DEVELOPER CONVENIENCE and
+  is not this topology - LocalDB has no united_db. (This note said "the deploy snippet in
+  CLAUDE.md shows (localdb)" until 8 Sep 2026; CLAUDE.md now shows DEV00164-001, so the argument
+  stands but the thing it was arguing against is gone.) Section 1 below reports co-location; if it
   warns, stop and move FlatWireDB before relying on anything downstream.
 ==============================================================================================*/
 

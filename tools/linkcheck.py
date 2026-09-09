@@ -162,6 +162,68 @@ def norm(s):
     return (os.path.basename(src), kind, raw)
 
 
+
+# ---------------------------------------------------------------------------
+# Filesystem paths in prose. Added 8 Sep 2026.
+#
+# WHY. The 29 Aug 2026 re-tree removed MVP-1/ProjectPlan/, and four runner headers went on
+# telling the reader to `cd` into it for ten days. linkcheck did not see them, because a
+# `cd` target is a DIRECTORY and resolve() only considers strings with a file extension --
+# and a `Specification:` header path is prose, not a citation. Both are instructions a
+# person follows literally, and a `cd` to a path that does not exist makes every relative
+# `:r` in the runner fail. So they are checked as what they are: paths on disk.
+RE_CD = re.compile('cd' + r'\s+"([^"' + chr(10) + ']+)"')
+RE_SPECPATH = re.compile(r'(?:Specification|See)\s*:?\s+'
+                         r'((?:MVP-\d[\/])?[A-Za-z0-9_.-]+'
+                         r'(?:[\/][A-Za-z0-9_.-]+)+\.md)')
+
+
+BS_ = chr(92)
+
+
+def check_fs_paths():
+    """Every `cd "..."` directory and `Specification:` file path must exist."""
+    bad = []
+    for rel in walk_files():
+        if os.path.splitext(rel)[1].lower() not in ('.sql', '.md'):
+            continue
+        # 95-archive is history, never a requirement (CLAUDE.md), so a path that was
+        # correct when it was archived is not a break. walk_files() yields ABSOLUTE
+        # paths, so normalise before testing the prefix.
+        relp = os.path.relpath(rel, ROOT).replace(BS_, '/')
+        if relp.startswith('95-archive/'):
+            continue
+        try:
+            with open(rel, encoding='utf-8', errors='replace') as fh:
+                text = fh.read()
+        except (OSError, UnicodeDecodeError):
+            continue
+        here = os.path.dirname(rel)
+        for m in RE_CD.finditer(text):
+            raw = m.group(1)
+            cand = raw.replace(BS_, '/')
+            if not os.path.isabs(cand):
+                cand = os.path.join(here, cand)
+            cand = os.path.normpath(cand)
+            # Only judge paths INSIDE this repository. A `cd` into a sibling code repo
+            # (Tools/FlatWireSimConsole, ../ual-angular) is a real instruction, but this
+            # checkout cannot see it, and reporting it as broken would be a false alarm
+            # that trains people to ignore the check.
+            if not cand.replace(BS_, '/').lower().startswith(
+                    os.path.normpath(ROOT).replace(BS_, '/').lower()):
+                continue
+            if not os.path.isdir(cand):
+                bad.append((relp, 'cd', raw))
+        for m in RE_SPECPATH.finditer(text):
+            raw = m.group(1).replace(BS_, '/')
+            # A repo-rooted path and a path relative to the citing file are both used;
+            # accept either rather than force one spelling.
+            if not (os.path.isfile(os.path.join(ROOT, raw))
+                    or os.path.isfile(os.path.join(here, raw))):
+                bad.append((relp, 'spec-path', raw))
+    return bad
+
+
 def main():
     args = set(sys.argv[1:])
     refs, unresolved = scan()
@@ -172,6 +234,16 @@ def main():
           % (len(refs), len(unresolved), len({r['src'] for r in refs})))
     for k in sorted(by_kind):
         print('   %-9s %5d' % (k, by_kind[k]))
+
+    fs_bad = check_fs_paths()
+    if fs_bad:
+        print('')
+        print('BROKEN FILESYSTEM PATHS: %d (a `cd` or `Specification:` target that '
+              'does not exist)' % len(fs_bad))
+        for src, kind, raw in sorted(fs_bad):
+            print('   %-46s %-10s %s' % (src, kind, raw))
+        return 1
+    print('   %-9s %5s' % ('fs-path', 'OK'))
 
     if '--report' in args:
         lines = ['%s\t%s\t%s' % (u['src'], u['kind'], u['raw'])

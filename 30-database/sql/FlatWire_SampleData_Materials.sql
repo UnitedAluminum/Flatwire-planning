@@ -1,7 +1,8 @@
 -- ============================================================
 -- Flat Wire Mill — Sample Data: Material Tables
 -- Run order : after DDL 06, and after Lookup + Schedule seeds
--- Tables    : Rod, FlatWireRun, SpoolProcessing
+-- Tables    : Rod, FlatWireRun, SpoolProcessing, SpoolTraceability,
+--             SpoolOrder, RodOrderAllocation
 -- ============================================================
 -- Coherent demo dataset (8 rods, 5 runs, 3 spools):
 --   RUN-0001  FL1 Standalone 1100  -> coil FW-00421-C01   (R00041 + welded R00042)
@@ -20,6 +21,25 @@ GO
 -- Required when writing tables that carry PERSISTED computed columns.
 SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
+GO
+
+/*==============================================================================================
+  PRECONDITION -- fail fast on a HALF-seeded database.
+
+  ⚠ EVERY BLOCK BELOW IS GUARDED ON ITS OWN TABLE BEING EMPTY, which makes a full re-run a
+  clean no-op but does NOT make a PARTIAL one safe. sp_IngestRodFromCoils creates Rod rows from
+  proddb..coils, and FlatWire_SampleData_RunAll.sql's header warns about exactly that. What
+  happened next was silent and then fatal: "IF NOT EXISTS (SELECT 1 FROM Rod)" saw those rows,
+  skipped ALL EIGHT fixture rods, and then FlatWireRun and RodCheckin inserted anyway -- so the
+  chain died mid-file on FK_RodCheckin_Rod with :on error exit, leaving a PARTIALLY seeded
+  database that no guard can now repair.
+
+  The check is on the fixture rods specifically, not on the table being empty: a database that
+  already holds ingested rod is a legitimate state, it just is not one this seed can extend.
+==============================================================================================*/
+IF EXISTS (SELECT 1 FROM [dbo].[Rod])
+   AND NOT EXISTS (SELECT 1 FROM [dbo].[Rod] WHERE [Alpha] = 'R00041')
+    THROW 60001, 'FlatWire_SampleData_Materials: dbo.Rod holds rows but not the fixture rods (R00041..R00048) - most likely sp_IngestRodFromCoils has run. This seed cannot extend that state: the runs and check-ins below would insert against rods that are not there and fail on FK_RodCheckin_Rod, half way through. Tear down and redeploy, or seed into an empty FlatWireDB.', 1;
 GO
 
 -- ============================================================
@@ -53,6 +73,16 @@ VALUES
     ('RUN-0001','FL1','FW-00421','PS-1100-FL1-001','1100','Standalone','Complete','2026-07-20 06:30:00 -05:00',NULL,               '2026-07-20 09:45:00 -05:00',4200.00,'Dave M.','Dave M.'),
     ('RUN-0002','FL3','FW-00600','PS-1100-FL3-001','1100','Hybrid',    'Complete','2026-07-20 10:00:00 -05:00',NULL,               '2026-07-20 12:30:00 -05:00',3800.00,'Linda K.','Linda K.'),
     ('RUN-0003','FL1','FW-00500','PS-3003-FL1-001','3003','Hybrid',    'Complete','2026-07-21 06:30:00 -05:00',NULL,               '2026-07-21 09:00:00 -05:00',3200.00,'Dave M.','Dave M.'),
+    -- ⛔ THE INACTIVE PASS SCHEDULE HERE IS CORRECT -- do not "fix" it. RUN-0004 is the only
+    --   non-terminal run and it names PS-1100-FL2-001, which is Inactive, so it reads at first
+    --   glance like a live run pointing at a dead schedule. It is not:
+    --     - PS-1100-FL2-001 targets 0.0900", and RUN-0004's RunReading rows are 0.0900-0.0902;
+    --     - its replacement PS-1100-FL2-002 targets 0.1000" and was CREATED 15 Aug 2026, three
+    --       weeks AFTER this run started on 21 Jul, so the run could not have used it; and
+    --     - UX_PassSchedule_OneActivePerLineAlloy admits one Active row per (line, alloy), so
+    --       FL2-001 could not stay Active once FL2-002 arrived.
+    --   A run keeps naming the schedule it STARTED under after that schedule is superseded.
+    --   Re-pointing this row would give the run readings that contradict its own schedule.
     ('RUN-0004','FL2','FW-00500','PS-1100-FL2-001','1100','Hybrid',    'Paused',  '2026-07-21 10:00:00 -05:00','2026-07-21 11:20:00 -05:00',NULL,       1850.00,'Linda K.','Linda K.'),
     ('RUN-0005','FL1','FW-00700','PS-5052-FL1-001','5052','Standalone','Aborted', '2026-07-22 06:30:00 -05:00',NULL,               '2026-07-22 07:15:00 -05:00', 900.00,'Marcus T.','Marcus T.');
 GO
@@ -115,9 +145,16 @@ INSERT INTO [dbo].[RodOrderAllocation]
 VALUES
     ('R00041','FW-00421','A',1,1,8950.00,   0.00,8950.00,'Sole',       'Full','Planned',1,'planner'),
     ('R00043','FW-00500','A',1,1,5000.00,   0.00,5000.00,'PinnedFirst','Full','Planned',1,'planner'),
-    ('R00043','FW-00700','A',2,1,3760.00,5000.00,8760.00,'PinnedLast', 'Full','Planned',1,'planner');
+    ('R00043','FW-00700','A',2,1,3760.00,5000.00,8760.00,'PinnedLast', 'Full','Planned',1,'planner'),
+    -- R00044, added 8 Sep 2026 (D-57). It had NO allocation at all, while TWO SpoolOrder rows
+    -- claimed Source='Derived' against it -- and Derived means "the union of the orders on the rods",
+    -- so the union was EMPTY and those rows were asserted, not derived. A second two-order rod, so
+    -- the spool seed derives for real. 1,485 + 3,335 = 4,820 lb, which is what SP-00031 segment 2
+    -- and SP-00032 segment 1 take between them.
+    ('R00044','FW-00700','A',1,2,1485.00,   0.00,1485.00,'PinnedFirst','Full','Planned',1,'planner'),
+    ('R00044','FW-00500','B',2,1,3335.00,1485.00,4820.00,'PinnedLast', 'Full','Planned',1,'planner');
 GO
-PRINT 'Seeded: RodOrderAllocation (3 rows -- one Sole, one two-order split)';
+PRINT 'Seeded: RodOrderAllocation (5 rows -- one Sole, two two-order splits)';
 GO
 
 -- ============================================================
@@ -149,19 +186,64 @@ PRINT 'Seeded: SpoolTraceability (3 rows -- SP-00031 is multi-rod)';
 GO
 
 -- ============================================================
--- SpoolOrder -- DERIVED from RodOrderAllocation, not allocated
+-- SpoolOrder -- one row per (SEGMENT, ORDER), re-grained 8 Sep 2026 (D-57)
 -- ============================================================
--- SP-00031's material came from R00043, which is split across FW-00500 and
--- FW-00700 -- so the spool inherits BOTH orders, and SpoolWeightFrom/To carry
--- the boundary FL2 has to cut at (G48). SP-00032 is single-order.
+-- THE FIXTURE'S STORY CHANGED, DELIBERATELY. The previous three rows put the
+-- order boundary EXACTLY ON THE ROD BOUNDARY -- FW-00500 took R00043's whole
+-- 1,900 lb segment and FW-00700 took R00044's whole 1,485 lb -- while the
+-- comment above them claimed "R00043 is split across FW-00500 and FW-00700".
+-- The numbers and the prose disagreed, and nothing was actually split. A
+-- STRADDLE is the case the re-grain exists for, so the fixture now shows one.
+--
+-- Three cases, on purpose:
+--   Case B  rows 1-2: ONE SEGMENT, TWO ORDERS -- inexpressible before D-57
+--   Case C  rows 2-3: ONE ORDER over TWO SEGMENTS -> two rows for FW-00700
+--   Case A  row 4   : the ordinary one-segment-one-order case
+--
+-- TWO FRAMES PER ROW, and this is what row 3 demonstrates. In SEGMENT-LOCAL
+-- POUNDS, FW-00700's two rows read [1000,1900) and [0,1485) -- two unrelated
+-- intervals. In SPOOL-LOCAL FEET they read [4368,8300) and [8300,14800) --
+-- one contiguous run of 10,432 ft. FL2 cuts against a footage counter, not a
+-- scale, so contiguity has to be visible in the spool frame. That is why the
+-- footage pair is stored.
+--
+-- Source IS PER ROW, and the split is not cosmetic (G110):
+--   Derived  = whole segment -> whole order, read off the rod's plan (rows 3-4)
+--   Planned  = a STRADDLE (rows 1-2). Deriving a split point needs the
+--              ROD-LOCAL weight at which this spool started taking that rod,
+--              and NO TABLE HOLDS THAT ANCHOR. So it is an allocation
+--              decision, not a derivation. Seeding these as Derived would
+--              assert a derivation nobody can reproduce.
+--
+-- Footage is STATED here, not computed, so a wrong conversion formula cannot
+-- hide behind a seed that agrees with itself. Row 1's 4368 is the only derived
+-- figure: 1000 / 1900 * 8300 = 4368.42. Row 2 then STARTS at 4368 and SNAPS
+-- its To to the parent's 8300 -- without that snap, integer rounding leaves a
+-- one-foot hole between two adjacent orders, silently.
+--
+-- !! SpoolTraceabilityId is IDENTITY, so this is an INSERT...SELECT that looks
+--    the parent up by (SpoolAlpha, SeqNo). C5 requires the marker below.
 -- ============================================================
+-- C5-OK: SpoolOrder.SpoolTraceabilityId
 IF NOT EXISTS (SELECT 1 FROM [dbo].[SpoolOrder])
 INSERT INTO [dbo].[SpoolOrder]
-    ([SpoolAlpha],[OrderNo],[RelLetter],[SeqNo],[PlannedWeightLb],[SpoolWeightFrom],[SpoolWeightTo],[Source])
-VALUES
-    ('SP-00031','FW-00500','A',1,1900.00,   0.00,1900.00,'Derived'),
-    ('SP-00031','FW-00700','A',2,1485.00,1900.00,3385.00,'Derived'),
-    ('SP-00032','FW-00500','B',1,3335.00,   0.00,3335.00,'Derived');
+    ([SpoolTraceabilityId],[OrderNo],[RelLetter],[SeqNo],
+     [AllocatedWeightLb],[SegmentWeightFrom],[SegmentWeightTo],
+     [SpoolFootageFrom],[SpoolFootageTo],[Source],[IsActive],[CreatedBy])
+SELECT st.[Id], v.[OrderNo], v.[RelLetter], v.[SeqNo],
+       v.[Alloc], v.[WFrom], v.[WTo], v.[FtFrom], v.[FtTo], v.[Source], 1, 'planner'
+FROM   (VALUES
+           -- SP-00031 seg 1 = R00043, 1,900 lb, spool ft [0,8300): STRADDLES FW-00500 -> FW-00700
+           ('SP-00031',1,'FW-00500','A',1,1000.00,   0.00,1000.00,    0, 4368,'Planned'),
+           ('SP-00031',1,'FW-00700','A',2, 900.00,1000.00,1900.00, 4368, 8300,'Planned'),
+           -- SP-00031 seg 2 = R00044, 1,485 lb, spool ft [8300,14800): continues FW-00700
+           ('SP-00031',2,'FW-00700','A',1,1485.00,   0.00,1485.00, 8300,14800,'Derived'),
+           -- SP-00032 seg 1 = R00044, 3,335 lb, spool ft [0,16400): single order
+           ('SP-00032',1,'FW-00500','B',1,3335.00,   0.00,3335.00,    0,16400,'Derived')
+       ) AS v([SpoolAlpha],[SegSeqNo],[OrderNo],[RelLetter],[SeqNo],
+              [Alloc],[WFrom],[WTo],[FtFrom],[FtTo],[Source])
+JOIN   [dbo].[SpoolTraceability] st
+       ON st.[SpoolAlpha] = v.[SpoolAlpha] AND st.[SeqNo] = v.[SegSeqNo];
 GO
-PRINT 'Seeded: SpoolOrder (3 rows -- SP-00031 crosses an order boundary)';
+PRINT 'Seeded: SpoolOrder (4 rows -- SP-00031 seg 1 straddles two orders)';
 GO

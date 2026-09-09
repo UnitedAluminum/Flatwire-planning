@@ -1,7 +1,7 @@
 -- ============================================================
 -- ⚠ MVP-2 SCOPE. NOT built by FlatWire_DDL_RunAll.sql -- that runner deliberately skips it.
 -- Co-located with the MVP-1 chain 15 Aug 2026 (was MVP-2/DBChanges/). See MVP2-SCOPE.md.
--- Flat Wire Mill (MVP-2) — DDL 08b: MVP-2 programmability
+-- Flat Wire Mill (MVP-2) — DDL 09: MVP-2 programmability
 -- Run order : the whole MVP-2 chain -- this file is the only object in it
 -- Scope     : MVP-2 (deferred). NOT part of MVP-1.
 -- ============================================================
@@ -9,7 +9,7 @@
 -- divided by MVP scope. sp_ShiftSummary (DB10) and NOTHING ELSE. trg_CoilTraceability_NoOverlap and sp_GetGaugeTrace are BOTH MVP-1 and both live in 08_Programmability -- this file does not create, drop or grant on either.
 --
 -- PREREQUISITE: the whole MVP-1 chain must already be deployed
--- (00_Database .. 08_Programmability under MVP-1/ProjectPlan/Database).
+-- (00_Database .. 08_Programmability under 30-database).
 -- These objects are ADDITIVE on top of it.
 -- ============================================================
 

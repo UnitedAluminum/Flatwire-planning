@@ -182,7 +182,7 @@ Test depth is not spread evenly. **P1** areas get happy path, boundary, negative
 
 ```powershell
 # Full build + seed, in order. Run FROM the SQL folder — the :r paths are relative.
-cd "c:\UAL\Flatwire-planning\MVP-1\ProjectPlan\Database\Schema\SQL"
+cd "c:\UAL\Flatwire-planning\30-database\sql"
 sqlcmd -S "<server>" -E -C -i FlatWire_DDL_RunAll.sql
 
 # A single script

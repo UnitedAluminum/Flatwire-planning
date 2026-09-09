@@ -1,7 +1,7 @@
 # Flat Wire Mill — Schema Mapping & Entity Relationships
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** September 6, 2026 — **`Edger` leaves the inventory and `ToolingInventoryEdger` + `ToolingInventoryEdgerGauge` enter it** (`D-53`): the five-column `Edger` is **absorbed**, not extended, because it could not hold the client's fourteen-column Tooling Inventory grid. **32 net-new tables** (+2 −1). ⚠ `Edger` keeps its **Appendix** entry — that section describes the legacy `flatwire tables.xlsx` sheets and is audit trail, not a live inventory. *(previously September 3, 2026 — **`ToolingInventoryRollSet` added to the table inventory** (31 net-new tables), the fourth Tooling Inventory tool type (`D-42`). ⚠ It has **no legacy sheet behind it** — unlike every other row here, it originates from a client mail rather than from the source workbook. *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. **`SpoolConfiguration` is also merged into `Spool`** — counts move to **33 tables · 55 FKs · 69 index statements**. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)*)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.
+**Last Updated:** September 9, 2026 — **`30-database` audit applied** (see [`CHANGELOG.md`](../../CHANGELOG.md) — Repository-wide). *(previously — September 6, 2026 — **`Edger` leaves the inventory and `ToolingInventoryEdger` + `ToolingInventoryEdgerGauge` enter it** (`D-53`): the five-column `Edger` is **absorbed**, not extended, because it could not hold the client's fourteen-column Tooling Inventory grid. **32 net-new tables** (+2 −1). ⚠ `Edger` keeps its **Appendix** entry — that section describes the legacy `flatwire tables.xlsx` sheets and is audit trail, not a live inventory. *(previously September 3, 2026 — **`ToolingInventoryRollSet` added to the table inventory** (31 net-new tables), the fourth Tooling Inventory tool type (`D-42`). ⚠ It has **no legacy sheet behind it** — unlike every other row here, it originates from a client mail rather than from the source workbook. *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. ⚠ **`SpoolConfiguration` is a table again** (`D-58`, 8 Sep 2026), superseding `Q60`'s merge. **Object counts are not stated here** — `[DBD §6.2]` is the defining site; this header carried `33 tables · 55 FKs · 69 index statements` until 8 Sep 2026, all three stale, directly above the Authority line that says this document states no object counts. *(previously August 23, 2026 — corrected up to the DDL; header fields standardised)*)*)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.)*
 **Document Type:** Legacy-to-new table mapping, the change-type inventory, and the collected enumeration reference. **Not** an ER diagram and **not** an FK list — both were deleted on 23 Aug 2026 in favour of `[DBD §7]`. The filename is kept because ~17 files cite it.
 **Source:** the April gap analysis, now the appendix of [FlatWireSchema_Mapping.md](FlatWireSchema_Mapping.md) (absorbed 13 Aug 2026 when `FlatWireTables.md` was deleted; recoverable in git history)
 **Target DB:** `FlatWireDB` (schema `dbo`)
@@ -9,7 +9,7 @@
 **Scope:** MVP-1
 **Owner:** Architecture stream / DBA
 **Audience:** DBA, .NET developers, BA
-**Part of:** `ProjectPlan/Database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
+**Part of:** `30-database/` — the as-built model and the counted baseline are [`DatabaseDesign.md`](../DatabaseDesign.md) (`[DBD]`)
 **Authority:** the DDL in `SQL/` wins on types, nullability and constraints, and the `CHECK` constraints win on every vocabulary listed here. No shortcode is declared, deliberately: this is a derived document and must not be cited as authority.
 
 ---
@@ -63,10 +63,12 @@ ORDER BY ChildTable, ConstraintName;
 | `Edger` | **`ToolingInventoryEdger`** | **Absorbed 6 Sep 2026 (`D-53`).** `Set` → `SetNumber`; `ToolingSetNo` retired; the client's fourteen grid columns added; `IsActive bit` → `LifecycleStatus` (a `bit` cannot express `In Grinding`); `EdgeType` relaxed to NULL. `FK_PSC_Edger` re-points and **keeps its name** | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | — | **`ToolingInventoryEdgerGauge`** | **New 6 Sep 2026 (`D-53`).** One row per **groove** — the grid's `Gauge Range(")` cell holds `.045, .040, .035` in one field, and `G77` asked for a child table rather than a delimited string. **No legacy sheet behind it** | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `Stand` | `Stand` | `MinId` / `MaxId` → `MinGaugeIn` / `MaxGaugeIn`; `MinOD` / `MaxOd` → `MinWidthIn` / `MaxWidthIn`; `MachineName` / `IsActive` added | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
-| `SpoolConfiguration` | ~~`SpoolConfiguration`~~ → **`Spool`** | Unit suffixes added to all dimension/weight columns; `MinId`/`MaxId` → `MinCoreDiameterIn`/`MaxCoreDiameterIn`. **Merged into `Spool` 23 Aug 2026 (`Q60`)** — the target table no longer exists; the six `Min/Max` columns and `Name` (as `SizeClass`) landed on the article | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `SpoolConfiguration` | ~~`SpoolConfiguration`~~ → **`Spool`** | Unit suffixes added to all dimension/weight columns; `MinId`/`MaxId` → `MinCoreDiameterIn`/`MaxCoreDiameterIn`. **Merged into `Spool` 23 Aug 2026 (`Q60`)**, then ⚠ **SPLIT BACK OUT by `D-58` on 8 Sep 2026 — the target table exists again**, with the six `Min/Max` columns `NOT NULL` on it and `IsDefault` replacing the merge's fallback | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | `SpoolProcessing` | `SpoolProcessing` | `Alpha` / `Status` / `GaugeIn` / `WidthIn` / weights / `Location` / timestamps / `SourceRunId` / `MachineName` added; `ParentRod` → `ParentRodAlpha` | [FlatWireSchema_Materials.md](FlatWireSchema_Materials.md) |
 
-### New Tables (36) — Net New
+### New Tables (35) — Net New
+
+⚠ **Recounted 8 Sep 2026.** `RodStaging` and `PayoffPosition` were each listed **twice**; the duplicates are removed and the heading matches what remains. Both headings count one row per table, first cell a backticked name — which is the rule `verify_schema_counts.py` C2 applies. ⚠ The `—`-prefixed **`ToolingInventoryEdgerGauge`** row in *Existing Tables* is **net new** (`D-53`) and has no original name, so it is deliberately not counted there; it sits with its parent register rather than in the list below. **This document states no schema-wide object counts**: those are `[DBD §6.2]`'s.
 
 *(Corrected twice. The heading read "16" against a list of 16 with an arithmetic that used 15; a 13 Aug 2026 pass said `RodStaging` and `PayoffPosition` had been added and **they had not been** — both were still absent on 23 Aug, along with the six tables built 20–22 Aug. All eight were added on 23 Aug 2026, at which point the inventory sums to **7 + 24 + 3 = 34** and matches the DDL exactly. The audit that first found the drift, `GapAnalysis.md`, was retired the same day — see [`CHANGELOG.md`](../../CHANGELOG.md).)*
 
@@ -98,9 +100,8 @@ ORDER BY ChildTable, ConstraintName;
 | `Dancer` | Lookup | Tension-management rollers — one on FM1, two on FM2 (`D-28`) | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
 | **`RodStaging`** | Runs | **Pre-check-in / payoff staging** — the next rod registered against a VPS bay while the current coil still runs. Two **filtered unique** indexes enforce one rod per bay and one bay per rod. `Blocked` is a **derived** state (`Status='Staged'` + any inspection `Fail`), never a fourth `Status` value | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 | **`PayoffPosition`** | Lookup | **Material input/output positions with pinned Ids, not IDENTITY** — 1 `Payoff1`, 2 `Payoff2`, 3 `TraversingTakeup`. Seeded by the DDL itself, because the `FlatWireRunDetail` FK depends on the rows existing | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
-| `PayoffPosition` | Lookup | Material input/output positions, with **pinned non-IDENTITY Ids** so FK targets exist before the DDL that references them runs | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
+| `SpoolConfiguration` | Lookup | **The size class an article belongs to** — the loaded-weight band and the core / outer diameter limits. ⚠ This row carried `Spool`'s description verbatim until 8 Sep 2026; the two are different things. Merged into `Spool` by `Q60` on 23 Aug 2026 and **split back out by `D-58`** on 8 Sep 2026, with the six limits `NOT NULL` again and `IsDefault` replacing the fallback the merge relied on |
 | `Spool` | Lookup | The **physical article** the wire is wound on, and, since the 23 Aug 2026 `SpoolConfiguration` merge (`Q60`), **its own size limits**. Stencil-keyed; format open (`Q42`) | [FlatWireSchema_Lookup.md](FlatWireSchema_Lookup.md) |
-| `RodStaging` | Runs | Pre-check-in payoff staging — the most heavily constrained table in the schema. `Blocked` is **derived**, not a fourth status | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 | `SpoolStaging` | Runs | The **FL2 pre-check-in queue**. Deliberately not `RodStaging`: one payoff, no inspection columns, no station claim, and a fractional non-unique `QueuePosition` | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 | `RodOrderConsumption` | Runs | What a check-in **actually** consumed, per order — one check-in, N rows. Two weight latches, and the overrun between them is captured | [FlatWireSchema_Runs.md](FlatWireSchema_Runs.md) |
 | `SpoolTraceability` | Material | Which rod produced which feet of a **spool** — the spool-side half of the welding-wire genealogy (`FR-333`, `G42`) | [FlatWireSchema_Materials.md](FlatWireSchema_Materials.md) |
@@ -167,9 +168,9 @@ ORDER BY ChildTable, ConstraintName;
 
 | Value | Type | Line Applicability | Description |
 |---|---|---|---|
-| `DB1` | Draw box | FL1, FL2, FL3 | First draw box — primary die reduction |
-| `DB2` | Draw box | FL1, FL2, FL3 | Second draw box — secondary die reduction |
-| `FM1` | Finishing mill | FL1, FL2, FL3 | First finishing mill stand |
+| `DB1` | Draw box | **FL1, FL3** | First draw box — primary die reduction. ⚠ `CK_Drawer_MachineName` admits `FL1`/`FL3` only; **FL2 takes a pre-flattened spool and does no in-line drawing**. This row said FL1, FL2, FL3 until 8 Sep 2026 |
+| `DB2` | Draw box | **FL1, FL3** | Second draw box — secondary die reduction. Same constraint as `DB1` |
+| `FM1` | Finishing mill | **FL1, FL3** | First finishing mill stand — the `Stand` seed places `FM1` on FL1 only |
 | `EdgeSet` | ToolingInventoryEdger | FL1, FL2, FL3 | Edge profile tooling station |
 | `FM2_S1` | Finishing mill | FL2, FL3 | FM2 stand **S1 — 8-inch roller**; bypassable, no edger |
 | `FM2_S2` | Finishing mill | FL2, FL3 | FM2 stand **S2 — 6-inch roller**; bypassable, edger position |
@@ -269,7 +270,7 @@ ORDER BY ChildTable, ConstraintName;
 | `RodOrderConsumption.State` | `Pending`, `InProgress`, `ThresholdReached`, `Closed`, `Voided` |
 | `RodOrderConsumption.ClosureReason` | `Acknowledged`, `AcknowledgedEarly`, `RodExhausted`, `RodAbandoned`, `Superseded` |
 | `RodOrderConsumption.ConversionBasis` | `Nominal`, `Measured`, `IntegratedRunReading`, `Override` — the dimensional basis itself is open (`Q10`, `OI-45`) |
-| `SpoolOrder.Source` | `Derived` (union of the rods' orders, computed at spool creation), `Planned` (an explicit allocation superseding the derived row) |
+| `SpoolOrder.Source` | **Three values**, per `CK_SpoolOrder_Source`: `Derived` (union of the rods' orders, computed at spool creation), `Planned` (an explicit allocation superseding the derived row) and **`Substituted`**. This row named only the first two until 8 Sep 2026 |
 
 ### Dancer Values
 
@@ -375,8 +376,8 @@ Renamed and restructured from `FlatLineSetup`. Each row defines one component sl
 > `95-archive/source-documents/flatwire tables.xlsx` the eight sheets are `Drawer`, `Edger`,
 > `RollerInfo`, `SpoolConfiguration`, `SpoolCoilMapping`, `Spool`, **`FlatLinePassSchedule`** and
 > `FlatLineProcessing`. This repository calls it `FlatLineSetup` throughout and the rename is
-> unrecorded. **The legacy name stays** — `FlatLineSetup` is cited by `D-13`, `[DBD §188]`,
-> `[MSP §1473/1487/2164/3140/3362]` and the DDL, and register names are never swept. This note
+> unrecorded. **The legacy name stays** — `FlatLineSetup` is cited by `D-13`, `[DBD]`,
+> `[MSP]` and the DDL — *these read `[DBD §188]` and `[MSP §1473/1487/2164/3140/3362]` until 8 Sep 2026, which are **line** numbers, not section numbers; `[DBD]` numbers §6–§7.8 and `[MSP]` §1–§11.5*, and register names are never swept. This note
 > exists so the citation resolves against the workbook. The source name also corroborates what the
 > table is: a **pass schedule**, which the client's 31 Aug 2026 Flattening Line Schedule screen
 > confirms independently.
@@ -406,8 +407,8 @@ Renamed and restructured from `FlatLineSetup`. Each row defines one component sl
 | `EdgeType` | varchar(10) NULL | `Round` or `Square`; only populated for `EdgeSet` component |
 | `Sequence` | int NOT NULL | Display/apply order (consolidates `StandSequence` and `DrawerSequence`) |
 | `StandId` | int NULL | Optional FK → `Stand` |
-| `DrawerId` | int NULL | Optional FK → `Drawer` |
-| `EdgerId` | int NULL | Optional FK → `Edger` |
+| ~~`DrawerId`~~ | int NULL | ~~Optional FK → `Drawer`~~ — **column and FK both dropped 2 Sep 2026** with the die split; `FK_PSC_Drawer` and `IX_PSC_DrawerId` went with it |
+| `EdgerId` | int NULL | Optional FK → **`ToolingInventoryEdger`** — re-pointed by `D-53` on 6 Sep 2026, **keeping the constraint name `FK_PSC_Edger`**. `Edger` no longer exists |
 | `EntryGauge` | decimal(8,4) NULL | Informational — entry gauge for this component |
 | `ExitGauge` | decimal(8,4) NULL | Informational — exit gauge for this component |
 | `SetupNo` | varchar(20) NULL | Legacy traceability only |
@@ -516,11 +517,15 @@ Represents rolling mill stands (FM1, FM2 variants).
 
 ---
 
-#### ~~`SpoolConfiguration`~~ — merged into `Spool`, 23 Aug 2026 (`Q60`)
+#### `SpoolConfiguration` — merged into `Spool` 23 Aug 2026 (`Q60`), **SPLIT BACK OUT 8 Sep 2026 (`D-58`)**
+
+> ⚠ **The strikethrough is removed because the table exists again.** Everything below is the record of the
+> merge and stays as written — `D-58` supersedes it rather than deleting it. ⛔ The reversal is on
+> **normalisation grounds**, not on a client-confirmed second size: the 20 Aug 2026 *"all one standard size"* still stands.
 
 Was a reference table for spool types with physical dimensional and weight constraints. It held one
 meaningful row against 30–45 articles, so its six `Min/Max` columns and its `Name` (as `SizeClass`)
-were folded into `Spool` itself. **The table no longer exists** — the mapping below is retained as the
+were folded into `Spool` itself. ⚠ **`D-58` SPLIT IT BACK OUT on 8 Sep 2026, so the table exists again** — with its six limits `NOT NULL` and `IsDefault` replacing the fallback the merge relied on; `Spool.SpoolTypeId` is `NOT NULL` and `FK_Spool_SpoolConfiguration` is back. The mapping below is retained as the
 record of what was mapped, not as a live target.
 
 ##### Current columns

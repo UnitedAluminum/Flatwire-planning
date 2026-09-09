@@ -238,19 +238,28 @@ real-time, so `GaugeReading` and `WidthReading` both flow batched.
 Terminal condition: the spool reaches its target weight, the line stops, and the model raises the
 `RUNNING → STOPPED` edge that arms `FW-202`'s stop-confirmation state machine.
 
-### 4.2 FL2 — standalone, historical profile
+### 4.2 FL2 — standalone, live trace at 4 s
 
 Pre-flattened spool → `FM2_S1` (8″) → `FM2_S2` (6″) → `FM2_S3` (6″, final, **non-bypassable**) → coreless
 coil. Edgers at `S2` and `S3` only, **inter-stand** (`D-27`).
 
-> ⚠ **FL2 ticks. Only two channels are suppressed.** `[SIG §5.3]` suppresses **only** the batched
-> `GaugeReading` and `WidthReading`; `SpeedFPM`, `PayoffWeight`, `FootageCounter`, `ComponentStatus` and
-> `LineStatus` **still flow**, and `FR-120` makes live gauge/width **`null`**. A simulator that treats FL2 as
-> silent leaves both FL2 trial screens dead — `FW-203`'s acceptance criteria already say so, and this model
-> inherits the rule.
+> ✅ **FL2 ticks, and NOTHING is suppressed any more.** ~~`[SIG §5.3]` suppresses **only** the batched
+> `GaugeReading` and `WidthReading`… and `FR-120` makes live gauge/width **`null`**.~~ ⛔ **Reversed
+> 9 Sep 2026:** `[SIG §5.3]` is **withdrawn** and `FR-120` **superseded**, so FL2 now broadcasts
+> `GaugeReading` and `WidthReading` **alongside** `SpeedFPM`, `PayoffWeight`, `FootageCounter`,
+> `ComponentStatus` and `LineStatus`. A simulator that treats FL2 as silent still leaves both FL2 trial
+> screens dead — that half of the rule stands and now applies to every channel.
+>
+> ⚠ **One difference remains, and it is cadence, not suppression: FL2 publishes gauge and width at
+> 4 s, unbatched**, against ~10 Hz batched on FL1 and FL3. A simulator that ticks FL2's gauge at the
+> FL1 rate is **not** modelling the machine, and it would hide exactly the risk the slower rate
+> introduces — a stale-looking-but-healthy feed, and an out-of-spec run that takes 4 s per reading to
+> detect.
 
-The model still computes gauge and width internally — it needs them for the `RunReading` profile the Live
-view's *Profile* tab reads back over REST — it simply does not broadcast them live.
+The model already computes gauge and width internally, for the `RunReading` profile. ⭐ **It must now
+broadcast them too** — the `ReadGaugeInstrument()` override that returns `(null, null)` in
+`Fl2LineModel` is the code expression of the retired assumption and is the one place this change
+actually lands in the simulator.
 
 ### 4.3 FL3 — hybrid, and genuinely a different model
 
@@ -629,8 +638,11 @@ Three line panels — FL1, FL2, FL3 — each carrying:
   §4.4's distinction is demonstrable for the first time — measured on both hosts. ⚠ **The console is
   still two buttons**: `FW-214` is built and has no Pause control at all, so the residual is on it
 - live readouts: speed, footage, payoff weight, percent remaining
-- target-vs-actual strip for gauge and width — **FL2 renders these as *No live gauge · see Profile***, never
-  a flat line at target
+- target-vs-actual strip for gauge and width — **on every line, including FL2**. *(This read "FL2
+  renders these as *No live gauge · see Profile*" until 9 Sep 2026; that empty state is retired with
+  `FR-120`.)* ⛔ **The other half of the rule stands and is unchanged:** a reading with **no
+  measurement** renders as absent, **never as a flat line at target** — which now guards a dropped
+  feed on any line rather than describing FL2's normal state
 - a speed slider and gauge/width target nudges (`/sim/{machineName}/steer`)
 - the seven fault buttons of §7.2
 
