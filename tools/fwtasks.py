@@ -11,6 +11,11 @@ import re
 
 TASK_DIRS = ['30-database/tasks', '40-backend/tasks', '50-frontend/tasks',
              '70-testing/tasks', '60-delivery/tasks']
+# The consolidated parent stories. Deliberately NOT in TASK_DIRS: an FS file is
+# not a task, has no status of its own, and must not reach the phase board or the
+# card-parity rule as if it were one.
+FEATURE_DIR = '10-requirements/features'
+CONSOLIDATION_MAP = '90-registers/StoryConsolidationMap.md'
 PHASE_DIR = '60-delivery/phases'
 BACKLOG = '60-delivery/TaskBreakdown.md'
 GAPS = '90-registers/Gaps.md'
@@ -204,6 +209,54 @@ def load_registers():
     for rid in list(reg):
         reg.setdefault(canon(rid), reg[rid])
     return reg
+
+
+def load_features():
+    """The FS-## parent stories, as dicts with `path`. Sorted by id.
+
+    Read from FEATURE_DIR, which is NOT part of TASK_DIRS - a parent is not a
+    task. It carries no `status:`, no `phase:` and no `stream:`, so nothing here
+    may be passed to a function expecting a task.
+    """
+    out = []
+    d = os.path.join(ROOT, FEATURE_DIR)
+    if not os.path.isdir(d):
+        return out
+    for fn in sorted(os.listdir(d)):
+        if not re.match(r'^FS-\d+-[a-z0-9-]+\.md$', fn):
+            continue
+        rel = FEATURE_DIR + '/' + fn
+        m = RE_FRONT.match(read(rel))
+        if not m:
+            continue
+        f = parse_front(m.group(1))
+        f['path'] = rel
+        out.append(f)
+    return sorted(out, key=lambda x: x.get('id', ''))
+
+
+def load_consolidation_map():
+    """id -> category, from the generated map. Survives the task files.
+
+    The category is in the `#### `FS-##`` heading, not in the row: a row
+    in section 2.3 has eight columns and none of them is the category. Parsing
+    rows alone silently returned only the four retired ids, whose separate table
+    DOES carry a category column.
+    """
+    out = {}
+    cat = None
+    for line in read(CONSOLIDATION_MAP).split('\n'):
+        h = re.match(r'^####\s+`(FS-\d+)`', line)
+        if h:
+            cat = h.group(1)
+            continue
+        if line.startswith('### '):
+            cat = None          # left section 2.3
+            continue
+        m = re.match(r'^\|\s*`(FW-N?\d+)`\s*\|', line)
+        if m and cat:
+            out[m.group(1)] = cat
+    return out
 
 
 def phase_sort_key(p):

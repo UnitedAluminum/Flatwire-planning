@@ -71,6 +71,8 @@ def check(rep):
     phases = F.load_phases()
     reg = F.load_registers()
     by_id = {t['id']: t for t in tasks}
+    feats = F.load_features()
+    cmap = F.load_consolidation_map()
 
     def known(rid):
         return rid in reg or F.canon(rid) in reg
@@ -86,6 +88,14 @@ def check(rep):
                       % (t['id'], st, '|'.join(F.STATUSES)))
         if st in ('in-progress', 'blocked', 'in-review') and not t.get('owner'):
             rep.warn('1-owner', '%s is %s but has no owner' % (t['id'], st))
+        # README: "`blocked` must always name a register id." Nothing enforced it.
+        # Rule 3 fires only when a cited blocker is unknown or already closed, never
+        # when there is none - so a blocked story with an empty blocked_by was
+        # invisible, and the "stopping work right now" roll-up could not show it.
+        if st == 'blocked' and not t.get('blocked_by'):
+            rep.warn('1-blocked-no-id',
+                     '%s is `blocked` and names no register id (README requires one)'
+                     % t['id'])
         if t.get('status_confirmed') == 'false':
             rep.warn('1-inferred', '%s status %r was inferred from prose and is unconfirmed'
                      % (t['id'], st))
@@ -166,6 +176,37 @@ def check(rep):
                 rep.error('6-folder', '%s is stream %s but sits in %s/ (expects %s)'
                           % (t['id'], primary, sub, '|'.join(sorted(allowed))))
 
+    # --- 7. an FS parent's phases resolve, and it carries no task-only field ---
+    for f in feats:
+        ph = f.get('phases') or []
+        if isinstance(ph, str):
+            ph = [ph]
+        for x in ph:
+            if str(x).upper() not in phases:
+                rep.error('7-fs-phase', '%s claims phase %r, which has no phase file'
+                          % (f.get('id'), x))
+        bad = [k for k in ('status', 'phase', 'stream', 'streams', 'hours', 'depends_on')
+               if f.get(k)]
+        if bad:
+            rep.error('7-fs-field',
+                      '%s carries %s, which a parent must not have - status is '
+                      'generated, hours would be a fifth published figure, and a '
+                      'category depends_on would be cyclic' % (f.get('id'), bad))
+
+    # --- 8. the map and the parents agree, both directions ---------------------
+    fs_ids = {f.get('id') for f in feats}
+    mapped = set(cmap.values())
+    for cid in sorted(mapped - fs_ids):
+        rep.error('8-map', 'the map assigns stories to %s, which has no parent file'
+                  % cid)
+    for cid in sorted(fs_ids - mapped):
+        rep.warn('8-map-empty', '%s has a parent file and no story maps to it '
+                                '(by design for a contract category)' % cid)
+    unmapped = sorted(set(by_id) - set(cmap))
+    if unmapped:
+        rep.error('8-map', '%d task file(s) are in no map row: %s'
+                  % (len(unmapped), unmapped[:8]))
+
     return tasks, phases, reg
 
 
@@ -174,8 +215,8 @@ def main():
     rep = Report()
     tasks, phases, reg = check(rep)
 
-    print('check_docs: %d tasks, %d phases, %d register items'
-          % (len(tasks), len(phases), len(reg)))
+    print('check_docs: %d tasks, %d phases, %d register items, %d parents'
+          % (len(tasks), len(phases), len(reg), len(F.load_features())))
 
     def dump(label, items):
         if not items:
