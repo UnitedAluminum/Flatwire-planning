@@ -11,6 +11,7 @@ cross-phase table at the top for "what is stopping work right now".
 
     python tools/build_status.py            # write STATUS.md
     python tools/build_status.py --check    # exit 1 if STATUS.md is stale (CI)
+    python tools/build_status.py --dryrun-retired   # prove the board survives step 9
 """
 import os
 import sys
@@ -48,7 +49,10 @@ def pct(tasks):
 
 
 def build():
-    tasks = F.load_tasks()
+    # load_units() is load_tasks() while the task files exist, and the map joined
+    # to the parents' activity tables once they are retired. Without it this board
+    # empties at the deletion step.
+    tasks = F.load_units()
     phases = F.load_phases()
     reg = F.load_registers()
 
@@ -210,7 +214,56 @@ def build():
     return '\n'.join(L) + '\n'
 
 
+def dryrun_retired():
+    """Rebuild this board as if the task files were already deleted, and compare.
+
+    Step 9 is the migration's one-way door. Before it, this proves the board
+    survives it: the same rows, the same status distribution and the same hour
+    total, reconstituted from the consolidation map joined to the parents'
+    activity tables. Run it before deleting anything.
+    """
+    from collections import Counter
+    live = F.load_tasks()
+    if not live:
+        print('build_status: no task files - already retired, nothing to compare')
+        return 0
+    want_n = len(live)
+    want_st = Counter(t.get('status') for t in live)
+    want_h = sum(int(t['hours']) for t in live if str(t.get('hours', '')).isdigit())
+
+    real = F.load_tasks
+    F.load_tasks = lambda: []
+    try:
+        got = F.load_units()
+        body = build()
+    finally:
+        F.load_tasks = real
+    got_st = Counter(u['status'] for u in got)
+    got_h = sum(int(u['hours']) for u in got if str(u['hours']).isdigit())
+    rows = len([l for l in body.split(chr(10)) if l.startswith('| [FW-')])
+
+    bad = []
+    if len(got) != want_n:
+        bad.append('rows %d -> %d' % (want_n, len(got)))
+    if got_st != want_st:
+        bad.append('status distribution differs: %r -> %r' % (dict(want_st), dict(got_st)))
+    if got_h != want_h:
+        bad.append('hours %d -> %d' % (want_h, got_h))
+    if rows != want_n:
+        bad.append('board rows %d -> %d' % (want_n, rows))
+    if bad:
+        print('build_status: DRY RUN FAILED - the board would not survive deletion:')
+        for b in bad:
+            print('    %s' % b)
+        return 1
+    print('build_status: dry run OK - %d rows, %d h and the status distribution all '
+          'survive the task files' % (want_n, want_h))
+    return 0
+
+
 def main():
+    if '--dryrun-retired' in sys.argv:
+        return dryrun_retired()
     body = build()
     path = os.path.join(F.ROOT, OUT)
     if '--check' in sys.argv:

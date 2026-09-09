@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stamp status glyphs into TrialOrchestration.md's sprint grids from the task files.
+"""Stamp status glyphs into TrialOrchestration.md's sprint grids from live status.
 
 Section 2's T1/T2/T3 grids categorise the 66 trial stories by phase and stream, but a
 story id alone does not say whether it is done, in review or not started. This writes
@@ -90,7 +90,10 @@ def main():
     root = F.repo_root()
     path = os.path.join(root, DOC)
     text = io.open(path, encoding='utf-8', newline='').read()
-    status_of = {t['id']: t.get('status', 'not-started') for t in F.load_tasks()}
+    # Dual-source: the task files while they exist, the parents' generated activity
+    # tables once they are retired. Reading load_tasks() directly would leave this
+    # tool with an empty status map after step 9 and exit 1 on every trial story.
+    status_of = F.load_activity_status()
 
     new, changes, unknown = stamp(text, status_of)
 

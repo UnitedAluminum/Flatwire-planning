@@ -121,320 +121,320 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 
 #### `FS-01` — Angular Application Shell and Foundation
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-130` | Shell layout and the 1920×1080 shopfloor canvas | 1A | FE | 16 | in-progress | Consolidate | phase 1A |
-| `FW-131` | Route guards, interceptor wiring and the error envelope | 1A | FE | 12 | blocked | Consolidate | phase 1A |
-| `FW-132` | DI-swappable API client and domain models | 1A | FE | 20 | not-started | Consolidate | phase 1A |
-| `FW-133` | Shared composite controls | 1A | FE | 120 | not-started | Consolidate | phase 1A |
-| `FW-134` | Shared primitive controls and alert-banner | 1A | FE | 32 | not-started | Consolidate | phase 1A |
-| `FW-N03` | Angular library scaffold, routing and configuration | 1A | FE | 24 | done | Consolidate | phase 1A |
-| `FW-N19` | LineId → MachineName — the flat-wire Angular library | 1A | FE | 6 | done | Consolidate | phase 1A |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-130` | Shell layout and the 1920×1080 shopfloor canvas | 1A | S0 | 1 | FE | 16 | in-progress | Consolidate | phase 1A |
+| `FW-131` | Route guards, interceptor wiring and the error envelope | 1A | S0 | 1 | FE | 12 | blocked | Consolidate | phase 1A |
+| `FW-132` | DI-swappable API client and domain models | 1A | S0 | 1 | FE | 20 | not-started | Consolidate | phase 1A |
+| `FW-133` | Shared composite controls | 1A | S0 | 1 | FE | 120 | not-started | Consolidate | phase 1A |
+| `FW-134` | Shared primitive controls and alert-banner | 1A | S0 | 1 | FE | 32 | not-started | Consolidate | phase 1A |
+| `FW-N03` | Angular library scaffold, routing and configuration | 1A | S0 | 1 | FE | 24 | done | Consolidate | phase 1A |
+| `FW-N19` | LineId → MachineName — the flat-wire Angular library | 1A | S0 | 1 | FE | 6 | done | Consolidate | phase 1A |
 
 #### `FS-02` — Backend Service Foundation
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-138` | Fifteen thin controllers over UAController | 1B | BE | 45 | done | Consolidate | phase 1B |
-| `FW-139` | MediatR registration and pipeline behaviours | 1B | BE | 16 | done | Consolidate | phase 1B |
-| `FW-140` | DI registration and the stub/real service swap | 1B | BE | 12 | done | Consolidate | phase 1B |
-| `FW-141` | Repository layer — one per aggregate root | 1B | BE | 28 | done | Consolidate | phase 1B |
-| `FW-142` | Dapper/EF data access and FlatWireDbContext | 1B | BE | 24 | done | Consolidate | phase 1B |
-| `FW-143` | Serilog structured logging and the audit log | 1B | BE | 12 | done | Consolidate | phase 1B |
-| `FW-144` | Configuration binding | 1B | BE | 12 | in-review | Consolidate | phase 1B |
-| `FW-145` | JWT authentication and role authorization policies | 1B | BE | 16 | not-started | Consolidate | phase 1B |
-| `FW-146` | Global exception middleware and the response envelope | 1B | BE | 8 | done | Consolidate | phase 1B |
-| `FW-147` | FluentValidation, value objects and the canonical cross-layer enums | 1B | BE | 12 | done | Consolidate | phase 1B |
-| `FW-148` | Health checks | 1B | BE | 8 | done | Consolidate | phase 1B |
-| `FW-207` | Domain model — aggregates, value objects and invariants | 1B | BE | 32 | in-review | Consolidate | phase 1B |
-| `FW-208` | Domain events and post-commit dispatch | 1B | BE | 8 | done | Consolidate | phase 1B |
-| `FW-234` | Audit-log persistence target | 1B | BE·DB | 12 | not-started | Consolidate | phase 1B |
-| `FW-263` | FlatWire.UnitTests — the test project, its fixtures and the OPC stub | 1B | BE | 8 | done | Consolidate | phase 1B |
-| `FW-264` | Pure-domain suite — the validators, the 20 rules and the 15 value obje | 1B | BE | 28 | not-started | Consolidate | phase 1B |
-| `FW-265` | PLCTagService — the simulate branch and FW-236's FR-074 outcome branch | 1B | BE | 16 | done | Consolidate | phase 1B |
-| `FW-266` | Line models and the two simulators, with the two small testability sea | 1B | RT·BE | 36 | not-started | Consolidate | phase 1B |
-| `FW-267` | DbContext-backed services — the guard clauses and BusinessKeyGenerator | 1B | BE | 10 | not-started | Consolidate | phase 1B |
-| `FW-N04` | FlatWire solution and four-project Clean Architecture skeleton | 1B | BE | 16 | done | Consolidate | phase 1B |
-| `FW-N13` | FlatWire/GetServerConnectionInfo — the shared header's environment bad | 1B | BE | 3 | not-started | Consolidate | phase 1B |
-| `FW-N18` | LineId → MachineName — the FlatWire service | 1B | BE | 6 | done | Consolidate | phase 1B |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-138` | Fifteen thin controllers over UAController | 1B | S0 | 1 | BE | 45 | done | Consolidate | phase 1B |
+| `FW-139` | MediatR registration and pipeline behaviours | 1B | S0 | 1 | BE | 16 | done | Consolidate | phase 1B |
+| `FW-140` | DI registration and the stub/real service swap | 1B | S0 | 1 | BE | 12 | done | Consolidate | phase 1B |
+| `FW-141` | Repository layer — one per aggregate root | 1B | S0 | 1 | BE | 28 | done | Consolidate | phase 1B |
+| `FW-142` | Dapper/EF data access and FlatWireDbContext | 1B | S0 | 1 | BE | 24 | done | Consolidate | phase 1B |
+| `FW-143` | Serilog structured logging and the audit log | 1B | S0 | 1 | BE | 12 | done | Consolidate | phase 1B |
+| `FW-144` | Configuration binding | 1B | S0 | 1 | BE | 12 | in-review | Consolidate | phase 1B |
+| `FW-145` | JWT authentication and role authorization policies | 1B | — | 2 | BE | 16 | not-started | Consolidate | phase 1B |
+| `FW-146` | Global exception middleware and the response envelope | 1B | S0 | 1 | BE | 8 | done | Consolidate | phase 1B |
+| `FW-147` | FluentValidation, value objects and the canonical cross-layer enums | 1B | S0 | 1 | BE | 12 | done | Consolidate | phase 1B |
+| `FW-148` | Health checks | 1B | S0 | 1 | BE | 8 | done | Consolidate | phase 1B |
+| `FW-207` | Domain model — aggregates, value objects and invariants | 1B | S0 | 1 | BE | 32 | in-review | Consolidate | phase 1B |
+| `FW-208` | Domain events and post-commit dispatch | 1B | S0 | 1 | BE | 8 | done | Consolidate | phase 1B |
+| `FW-234` | Audit-log persistence target | 1B | S1 | 1 | BE·DB | 12 | not-started | Consolidate | phase 1B |
+| `FW-263` | FlatWire.UnitTests — the test project, its fixtures and the OPC stub | 1B | S3 | 1 | BE | 8 | done | Consolidate | phase 1B |
+| `FW-264` | Pure-domain suite — the validators, the 20 rules and the 15 value obje | 1B | S3 | 1 | BE | 28 | not-started | Consolidate | phase 1B |
+| `FW-265` | PLCTagService — the simulate branch and FW-236's FR-074 outcome branch | 1B | S3 | 1 | BE | 16 | done | Consolidate | phase 1B |
+| `FW-266` | Line models and the two simulators, with the two small testability sea | 1B | — | 1 | RT·BE | 36 | not-started | Consolidate | phase 1B |
+| `FW-267` | DbContext-backed services — the guard clauses and BusinessKeyGenerator | 1B | — | 1 | BE | 10 | not-started | Consolidate | phase 1B |
+| `FW-N04` | FlatWire solution and four-project Clean Architecture skeleton | 1B | S0 | 1 | BE | 16 | done | Consolidate | phase 1B |
+| `FW-N13` | FlatWire/GetServerConnectionInfo — the shared header's environment bad | 1B | S0 | 1 | BE | 3 | not-started | Consolidate | phase 1B |
+| `FW-N18` | LineId → MachineName — the FlatWire service | 1B | S0 | 1 | BE | 6 | done | Consolidate | phase 1B |
 
 #### `FS-03` — Database Foundation and Deployment
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-001` | Shared-schema column renames and new columns | 1C | DB | 0 | cancelled | Retire | cancelled by D-32; phase 1C |
-| `FW-002` | INFLAT coil status | 1C | DB | 0 | cancelled | Retire | cancelled by D-32; phase 1C |
-| `FW-004` | AlloyProperty lookup and seed | 1C | DB | 8 | not-started | Consolidate | phase 1C |
-| `FW-005` | Lookup group tables and seed | 1C | DB | 16 | not-started | Consolidate | phase 1C |
-| `FW-006` | Materials group tables | 1C | DB | 12 | not-started | Consolidate | phase 1C |
-| `FW-007` | Runs and Quality/Output group tables | 1C | DB | 52 | not-started | Consolidate | phase 1C |
-| `FW-152` | FlatWireDB creation, ordered DDL runner, indexes and grants | 1C | DB | 12 | in-review | Consolidate | phase 1C |
-| `FW-241` | Deploy step 2 — author the shared-schema insert and its reverse script | 1C | DB | 8 | not-started | Consolidate | phase 1C |
-| `FW-244` | G49 — nine decided requirements with no column | 1C | DB | 8 | not-started | Consolidate | phase 1C |
-| `FW-245` | G51 — SpcMeasurement.InSpec stores a wrong verdict for an asymmetric b | 1C | DB | 6 | not-started | Consolidate | phase 1C |
-| `FW-246` | G50 / G52 / G41 / G55 — constraint and referential-integrity repairs | 1C | DB | 12 | not-started | Consolidate | phase 1C |
-| `FW-248` | Harden verify_schema_counts.py's C6, and repair the two count sites it | 1C | DB | 8 | blocked | Consolidate | phase 1C |
-| `FW-251` | Restate the schema baseline to 40/64/86 and repair the DB cards the di | 1C | DB | 8 | not-started | Consolidate | phase 1C |
-| `FW-259` | Reconcile ToolingInventoryRollSet with the client's roll-set grid when | 1C | DB | 5 | not-started | Consolidate | phase 1C |
-| `FW-262` | Machine Setup schema — Setup/Handling Times and Material Loss, five ta | 1C | DB | 10 | done | Consolidate | phase 1C |
-| `FW-268` | Reconcile ToolingInventoryEdger with the client's edger grid when Q95  | 1C | DB | 4 | not-started | Consolidate | phase 1C |
-| `FW-N17` | LineId → MachineName — the database layer | 1C | DB | 4 | done | Consolidate | phase 1C |
-| `FW-N20` | SpoolOrder re-grained from the spool to the segment | 1C | DB·BE | 10 | done | Consolidate | phase 1C |
-| `FW-N21` | SpoolConfiguration split back out of Spool | 1C | DB | 4 | done | Consolidate | phase 1C |
-| `FW-N22` | AlloyProperty re-grained to vendor and rod size band | 1C | DB | 10 | not-started | Consolidate | phase 1C |
-| `FW-N23` | Pass schedule carries roll gap and target product gauge per stand | 1C | DB | 12 | not-started | Consolidate | phase 1C |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-001` | Shared-schema column renames and new columns | 1C | S0 | 1 | DB | 0 | cancelled | Retire | cancelled by D-32; phase 1C |
+| `FW-002` | INFLAT coil status | 1C | S0 | 1 | DB | 0 | cancelled | Retire | cancelled by D-32; phase 1C |
+| `FW-004` | AlloyProperty lookup and seed | 1C | S0 | 1 | DB | 8 | not-started | Consolidate | phase 1C |
+| `FW-005` | Lookup group tables and seed | 1C | S0 | 1 | DB | 16 | not-started | Consolidate | phase 1C |
+| `FW-006` | Materials group tables | 1C | S0 | 1 | DB | 12 | not-started | Consolidate | phase 1C |
+| `FW-007` | Runs and Quality/Output group tables | 1C | S0 | 1 | DB | 52 | not-started | Consolidate | phase 1C |
+| `FW-152` | FlatWireDB creation, ordered DDL runner, indexes and grants | 1C | S0 | 1 | DB | 12 | in-review | Consolidate | phase 1C |
+| `FW-241` | Deploy step 2 — author the shared-schema insert and its reverse script | 1C | S1 | 1 | DB | 8 | not-started | Consolidate | phase 1C |
+| `FW-244` | G49 — nine decided requirements with no column | 1C | S1 | 1 | DB | 8 | not-started | Consolidate | phase 1C |
+| `FW-245` | G51 — SpcMeasurement.InSpec stores a wrong verdict for an asymmetric b | 1C | S1 | 1 | DB | 6 | not-started | Consolidate | phase 1C |
+| `FW-246` | G50 / G52 / G41 / G55 — constraint and referential-integrity repairs | 1C | S1 | 1 | DB | 12 | not-started | Consolidate | phase 1C |
+| `FW-248` | Harden verify_schema_counts.py's C6, and repair the two count sites it | 1C | S1 | 1 | DB | 8 | blocked | Consolidate | phase 1C |
+| `FW-251` | Restate the schema baseline to 40/64/86 and repair the DB cards the di | 1C | S1 | 1 | DB | 8 | not-started | Consolidate | phase 1C |
+| `FW-259` | Reconcile ToolingInventoryRollSet with the client's roll-set grid when | 1C | S2 | 1 | DB | 5 | not-started | Consolidate | phase 1C |
+| `FW-262` | Machine Setup schema — Setup/Handling Times and Material Loss, five ta | 1C | S2 | 1 | DB | 10 | done | Consolidate | phase 1C |
+| `FW-268` | Reconcile ToolingInventoryEdger with the client's edger grid when Q95  | 1C | S2 | 1 | DB | 4 | not-started | Consolidate | phase 1C |
+| `FW-N17` | LineId → MachineName — the database layer | 1C | S0 | 1 | DB | 4 | done | Consolidate | phase 1C |
+| `FW-N20` | SpoolOrder re-grained from the spool to the segment | 1C | S0 | 1 | DB·BE | 10 | done | Consolidate | phase 1C |
+| `FW-N21` | SpoolConfiguration split back out of Spool | 1C | S0 | 1 | DB | 4 | done | Consolidate | phase 1C |
+| `FW-N22` | AlloyProperty re-grained to vendor and rod size band | 1C | S2 | 1 | DB | 10 | not-started | Consolidate | phase 1C |
+| `FW-N23` | Pass schedule carries roll gap and target product gauge per stand | 1C | S2 | 1 | DB | 12 | not-started | Consolidate | phase 1C |
 
 #### `FS-04` — Real-Time and PLC Backbone
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-135` | SignalR client service | 1A | RT | 24 | not-started | Consolidate | real-time / PLC pipeline |
-| `FW-136` | MockSignalRService and the typed event set | 1A | RT | 12 | not-started | Consolidate | real-time / PLC pipeline |
-| `FW-137` | PWA cache sync and the reconnect banner | 1A | RT | 8 | blocked | Consolidate | real-time / PLC pipeline |
-| `FW-080` | FlatWireHub — strongly-typed, MessagePack, line groups | 1B | RT | 28 | in-review | Consolidate | real-time / PLC pipeline |
-| `FW-149` | IFlatWireClient typed event contract | 1B | RT | 16 | in-review | Consolidate | real-time / PLC pipeline |
-| `FW-150` | Cadence-driven broadcast loop | 1B | RT | 16 | done | Consolidate | real-time / PLC pipeline |
-| `FW-151` | PLCTagService skeleton and SimulatePLCTagPush | 1B | RT | 16 | done | Consolidate | real-time / PLC pipeline |
-| `FW-203` | OPC feed simulator — a stand-in for the real ingest | 1B | RT | 8 | done | Consolidate | real-time / PLC pipeline |
-| `FW-205` | ITInhibitService — the run-block interlock | 1B | RT | 16 | done | Consolidate | real-time / PLC pipeline |
-| `FW-210` | Line model core — the kinematic state machine for FL1/FL2/FL3 | 1B | RT | 24 | done | Consolidate | real-time / PLC pipeline |
-| `FW-211` | The simulation seam — IReadingSource and the in-process adapter | 1B | RT | 12 | done | Consolidate | real-time / PLC pipeline |
-| `FW-215` | Simulator control API — /sim/** | 1B | BE | 23 | done | Consolidate | real-time / PLC pipeline |
-| `FW-218` | Trial control surface for the feed generator — steer, stop, drop, read | 1B | BE | 18 | done | Consolidate | real-time / PLC pipeline |
-| `FW-239` | Wire run-lifecycle invalidation into FW-150's per-run cache | 1B | RT | 4 | not-started | Consolidate | real-time / PLC pipeline |
-| `FW-N05` | OPC ingest hosted service and bounded channel | 1B | RT | 32 | blocked | Consolidate | real-time / PLC pipeline |
-| `FW-082` | PLC tag group push on check-in acknowledgement | 4 | RT | 16 | not-started | Consolidate | real-time / PLC pipeline |
-| `FW-212` | Closed loop — the model consumes the SimulatePLCTagPush payload | 4 | RT | 12 | done | Consolidate | real-time / PLC pipeline |
-| `FW-N25` | Machine interface tag surface revision - one write removed, two reads  | 4 | BE·RT | 10 | not-started | Consolidate | real-time / PLC pipeline |
-| `FW-213` | Scenario and fault injection | 5 | RT | 16 | done | Consolidate | real-time / PLC pipeline |
-| `FW-214` | Simulator control console DB-S1 — standalone WinForms desktop tool | 5 | FE | 52 | done | Consolidate | real-time / PLC pipeline |
-| `FW-236` | Per-tag write status from OPCConnection | 14 | BE | 16 | in-progress | Consolidate | real-time / PLC pipeline |
-| `FW-238` | Register flat wire with OPCConnection | 14 | BE·DB | 12 | in-progress | Consolidate | real-time / PLC pipeline |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-135` | SignalR client service | 1A | S0 | 1 | RT | 24 | not-started | Consolidate | real-time / PLC pipeline |
+| `FW-136` | MockSignalRService and the typed event set | 1A | S0 | 1 | RT | 12 | not-started | Consolidate | real-time / PLC pipeline |
+| `FW-137` | PWA cache sync and the reconnect banner | 1A | S0 | 1 | RT | 8 | blocked | Consolidate | real-time / PLC pipeline |
+| `FW-080` | FlatWireHub — strongly-typed, MessagePack, line groups | 1B | S0 | 1 | RT | 28 | in-review | Consolidate | real-time / PLC pipeline |
+| `FW-149` | IFlatWireClient typed event contract | 1B | S0 | 1 | RT | 16 | in-review | Consolidate | real-time / PLC pipeline |
+| `FW-150` | Cadence-driven broadcast loop | 1B | S0 | 1 | RT | 16 | done | Consolidate | real-time / PLC pipeline |
+| `FW-151` | PLCTagService skeleton and SimulatePLCTagPush | 1B | S0 | 1 | RT | 16 | done | Consolidate | real-time / PLC pipeline |
+| `FW-203` | OPC feed simulator — a stand-in for the real ingest | 1B | S0 | 1 | RT | 8 | done | Consolidate | real-time / PLC pipeline |
+| `FW-205` | ITInhibitService — the run-block interlock | 1B | S0 | 1 | RT | 16 | done | Consolidate | real-time / PLC pipeline |
+| `FW-210` | Line model core — the kinematic state machine for FL1/FL2/FL3 | 1B | — | 1 | RT | 24 | done | Consolidate | real-time / PLC pipeline |
+| `FW-211` | The simulation seam — IReadingSource and the in-process adapter | 1B | — | 1 | RT | 12 | done | Consolidate | real-time / PLC pipeline |
+| `FW-215` | Simulator control API — /sim/** | 1B | — | 1 | BE | 23 | done | Consolidate | real-time / PLC pipeline |
+| `FW-218` | Trial control surface for the feed generator — steer, stop, drop, read | 1B | S1 | 1 | BE | 18 | done | Consolidate | real-time / PLC pipeline |
+| `FW-239` | Wire run-lifecycle invalidation into FW-150's per-run cache | 1B | S1 | 1 | RT | 4 | not-started | Consolidate | real-time / PLC pipeline |
+| `FW-N05` | OPC ingest hosted service and bounded channel | 1B | S0 | 1 | RT | 32 | blocked | Consolidate | real-time / PLC pipeline |
+| `FW-082` | PLC tag group push on check-in acknowledgement | 4 | S2 | 1 | RT | 16 | not-started | Consolidate | real-time / PLC pipeline |
+| `FW-212` | Closed loop — the model consumes the SimulatePLCTagPush payload | 4 | — | 1 | RT | 12 | done | Consolidate | real-time / PLC pipeline |
+| `FW-N25` | Machine interface tag surface revision - one write removed, two reads  | 4 | S2 | 1 | BE·RT | 10 | not-started | Consolidate | real-time / PLC pipeline |
+| `FW-213` | Scenario and fault injection | 5 | — | 1 | RT | 16 | done | Consolidate | real-time / PLC pipeline |
+| `FW-214` | Simulator control console DB-S1 — standalone WinForms desktop tool | 5 | S2 | 1 | FE | 52 | done | Consolidate | real-time / PLC pipeline |
+| `FW-236` | Per-tag write status from OPCConnection | 14 | S3 | 1 | BE | 16 | in-progress | Consolidate | real-time / PLC pipeline |
+| `FW-238` | Register flat wire with OPCConnection | 14 | S3 | 1 | BE·DB | 12 | in-progress | Consolidate | real-time / PLC pipeline |
 
 #### `FS-05` — Pass Schedule - the consumer contract and ownership boundary
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-010` | Pass schedule authoring | — | — | — | *no card, no task file* | **Retain** | FR-060-084, FR-360-391 — MVP-2 (B.5). A live dependency of FW-082 |
-| `FW-011` | Pass schedule list | — | — | — | *no card, no task file* | **Retain** | FR-400-410 — MVP-2 (B.5) |
-| `FW-012` | Pass schedule generation | — | — | — | *no card, no task file* | **Retain** | FR-360-391 — MVP-2 (B.5) |
-| `FW-013` | Pass schedule change log | — | — | — | *no card, no task file* | **Retain** | FR-360-391 — MVP-2 (B.5) |
-| `FW-068` | Pass schedule list, second half | — | — | — | *no card, no task file* | **Retain** | FR-400-410 — MVP-2 (B.5) |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-010` | Pass schedule authoring | — | — | — | — | — | *no card, no task file* | **Retain** | FR-060-084, FR-360-391 — MVP-2 (B.5). A live dependency of FW-082 |
+| `FW-011` | Pass schedule list | — | — | — | — | — | *no card, no task file* | **Retain** | FR-400-410 — MVP-2 (B.5) |
+| `FW-012` | Pass schedule generation | — | — | — | — | — | *no card, no task file* | **Retain** | FR-360-391 — MVP-2 (B.5) |
+| `FW-013` | Pass schedule change log | — | — | — | — | — | *no card, no task file* | **Retain** | FR-360-391 — MVP-2 (B.5) |
+| `FW-068` | Pass schedule list, second half | — | — | — | — | — | *no card, no task file* | **Retain** | FR-400-410 — MVP-2 (B.5) |
 
 #### `FS-06` — Line Visibility and Alerting
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-060` | Dashboard 1 — Line Status Overview | 3 | FE | 44 | in-progress | Consolidate | phase 3 |
-| `FW-153` | Alert chips, reconnect banner and cached-state fallback | 3 | FE | 20 | not-started | Consolidate | phase 3 |
-| `FW-154` | GET /lines/status and LineStatusService | 3 | BE | 16 | not-started | Consolidate | phase 3 |
-| `FW-155` | FlatWireRun(MachineName, Status) index | 3 | DB | 4 | in-review | Consolidate | phase 3 |
-| `FW-156` | Hub load test | 3 | QA | 16 | not-started | Consolidate | phase 3 |
-| `FW-204` | Minimal landing route — the entry point when Dashboard 1 is out of sco | 3 | FE | 8 | not-started | Consolidate | phase 3 |
-| `FW-N06` | Alert rules engine and the AlertRaised/AlertCleared lifecycle | 3 | RT | 40 | not-started | Consolidate | phase 3 |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-060` | Dashboard 1 — Line Status Overview | 3 | S1 | 1 | FE | 44 | in-progress | Consolidate | phase 3 |
+| `FW-153` | Alert chips, reconnect banner and cached-state fallback | 3 | S1 | 1 | FE | 20 | not-started | Consolidate | phase 3 |
+| `FW-154` | GET /lines/status and LineStatusService | 3 | S1 | 1 | BE | 16 | not-started | Consolidate | phase 3 |
+| `FW-155` | FlatWireRun(MachineName, Status) index | 3 | S1 | 1 | DB | 4 | in-review | Consolidate | phase 3 |
+| `FW-156` | Hub load test | 3 | S1 | 1 | QA | 16 | not-started | Consolidate | phase 3 |
+| `FW-204` | Minimal landing route — the entry point when Dashboard 1 is out of sco | 3 | S1 | 1 | FE | 8 | not-started | Consolidate | phase 3 |
+| `FW-N06` | Alert rules engine and the AlertRaised/AlertCleared lifecycle | 3 | S1 | 1 | RT | 40 | not-started | Consolidate | phase 3 |
 
 #### `FS-07` — Rod Staging, Check-In, PLC Configuration and Weld Capture
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-061` | Dashboard 2 — Rod Check-in six-step wizard (FL1/FL3) | 4 | FE | 36 | not-started | Consolidate | phase 4 |
-| `FW-157` | POST /checkin/rod and CheckInService | 4 | BE | 36 | in-review | Consolidate | phase 4 |
-| `FW-158` | PayoffStagingController — staging commands and queries | 4 | BE | 26 | not-started | Consolidate | phase 4 |
-| `FW-159` | RodStaging, the check-in write path and the INFLAT write | 4 | DB | 28 | in-review | Consolidate | phase 4 |
-| `FW-160` | PayoffStateChanged and the check-in broadcasts | 4 | RT | 12 | not-started | Consolidate | phase 4 |
-| `FW-161` | Traveler field list and the no-match path | 4 | BA | 8 | not-started | Consolidate | phase 4 |
-| `FW-206` | ITInhibit conditions 1–2 — check-in and material-tracking state | 4 | BE | 8 | blocked | Consolidate | phase 4 |
-| `FW-209` | DB2A line toggle must reload, not relabel | 4 | FE | 4 | not-started | Consolidate | phase 4 |
-| `FW-232` | OrderController — a host for POST /order/{orderNo}/complete | 4 | BE | 3 | blocked | Consolidate | phase 4 |
-| `FW-233` | A host for the /rod/** surface | 4 | BE | 6 | blocked | Consolidate | phase 4 |
-| `FW-237` | Service identity for unattended PLC writes | 4 | BE | 12 | blocked | Consolidate | phase 4 |
-| `FW-257` | Re-point the built ITInhibitService at the ItInhibitReason lookup | 4 | BE | 8 | not-started | Consolidate | phase 4 |
-| `FW-N01` | Dashboard 2A — Rod Pre-Check-in station | 4 | FE | 24 | not-started | Consolidate | phase 4 |
-| `FW-N24` | Move the three cross-database writes from pre-check-in to check-in | 4 | DB·BE | 16 | not-started | Consolidate | phase 4 |
-| `FW-063` | Weld capture — fw-mark-welded-dialog | 6 | FE | 20 | not-started | Consolidate | weld capture is a Dashboard 2A dialog per [REQ 5.6]; phase 6 is stale |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-061` | Dashboard 2 — Rod Check-in six-step wizard (FL1/FL3) | 4 | S2 | 1 | FE | 36 | not-started | Consolidate | phase 4 |
+| `FW-157` | POST /checkin/rod and CheckInService | 4 | S2 | 1 | BE | 36 | in-review | Consolidate | phase 4 |
+| `FW-158` | PayoffStagingController — staging commands and queries | 4 | S2 | 1 | BE | 26 | not-started | Consolidate | phase 4 |
+| `FW-159` | RodStaging, the check-in write path and the INFLAT write | 4 | S2 | 1 | DB | 28 | in-review | Consolidate | phase 4 |
+| `FW-160` | PayoffStateChanged and the check-in broadcasts | 4 | S2 | 1 | RT | 12 | not-started | Consolidate | phase 4 |
+| `FW-161` | Traveler field list and the no-match path | 4 | S2 | 1 | BA | 8 | not-started | Consolidate | phase 4 |
+| `FW-206` | ITInhibit conditions 1–2 — check-in and material-tracking state | 4 | S2 | 1 | BE | 8 | blocked | Consolidate | phase 4 |
+| `FW-209` | DB2A line toggle must reload, not relabel | 4 | S2 | 1 | FE | 4 | not-started | Consolidate | phase 4 |
+| `FW-232` | OrderController — a host for POST /order/{orderNo}/complete | 4 | S2 | 1 | BE | 3 | blocked | Consolidate | phase 4 |
+| `FW-233` | A host for the /rod/** surface | 4 | S2 | 1 | BE | 6 | blocked | Consolidate | phase 4 |
+| `FW-237` | Service identity for unattended PLC writes | 4 | S2 | 1 | BE | 12 | blocked | Consolidate | phase 4 |
+| `FW-257` | Re-point the built ITInhibitService at the ItInhibitReason lookup | 4 | S2 | 1 | BE | 8 | not-started | Consolidate | phase 4 |
+| `FW-N01` | Dashboard 2A — Rod Pre-Check-in station | 4 | S2 | 1 | FE | 24 | not-started | Consolidate | phase 4 |
+| `FW-N24` | Move the three cross-database writes from pre-check-in to check-in | 4 | S2 | 1 | DB·BE | 16 | not-started | Consolidate | phase 4 |
+| `FW-063` | Weld capture — fw-mark-welded-dialog | 6 | S2 | 1 | FE | 20 | not-started | Consolidate | weld capture is a Dashboard 2A dialog per [REQ 5.6]; phase 6 is stale |
 
 #### `FS-08` — Active Run Monitoring and Gauge/Width Trace
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-222` | Single-active-run index and the reversal flag | 4 | DB | 2 | in-review | Consolidate | single-active-run index serves the active-run read |
-| `FW-062` | Dashboard 3 — Active Run Monitor, the machine-driven shell (FL1/FL2/FL | 5 | FE | 32 | in-progress | Consolidate | phase 5 |
-| `FW-081` | gauge-trace-chart live streaming, maximize and runtime source toggle | 5 | FE·RT | 28 | not-started | Consolidate | phase 5 |
-| `FW-162` | run-status-cards | 5 | FE | 20 | not-started | Consolidate | phase 5 |
-| `FW-163` | info-grid and chart-tab-strip | 5 | FE | 20 | not-started | Consolidate | phase 5 |
-| `FW-164` | GET /run/active, GET /run/{runId}/gaugetrace and RunQueryService | 5 | BE | 12 | in-review | Consolidate | phase 5 |
-| `FW-165` | sp_GetGaugeTrace | 5 | DB | 8 | in-review | Consolidate | phase 5 |
-| `FW-202` | FL1 spool completion — stop confirmation, weight basis and the SpoolPr | 5 | FE·BE·DB·RT | 98 | blocked | Consolidate | phase 5 |
-| `FW-N15` | Active Run machine context — the home/:machineName route, line resolut | 5 | FE | 8 | not-started | Consolidate | phase 5 |
-| `FW-N16` | The station claim — FlatWireDB..WIPStations view and the checked-in-ma | 5 | BE·DB | 12 | in-progress | Consolidate | phase 5 |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-222` | Single-active-run index and the reversal flag | 4 | S2 | 1 | DB | 2 | in-review | Consolidate | single-active-run index serves the active-run read |
+| `FW-062` | Dashboard 3 — Active Run Monitor, the machine-driven shell (FL1/FL2/FL | 5 | S2 | 1 | FE | 32 | in-progress | Consolidate | phase 5 |
+| `FW-081` | gauge-trace-chart live streaming, maximize and runtime source toggle | 5 | S2 | 1 | FE·RT | 28 | not-started | Consolidate | phase 5 |
+| `FW-162` | run-status-cards | 5 | S2 | 1 | FE | 20 | not-started | Consolidate | phase 5 |
+| `FW-163` | info-grid and chart-tab-strip | 5 | S2 | 1 | FE | 20 | not-started | Consolidate | phase 5 |
+| `FW-164` | GET /run/active, GET /run/{runId}/gaugetrace and RunQueryService | 5 | S2 | 1 | BE | 12 | in-review | Consolidate | phase 5 |
+| `FW-165` | sp_GetGaugeTrace | 5 | S2 | 1 | DB | 8 | in-review | Consolidate | phase 5 |
+| `FW-202` | FL1 spool completion — stop confirmation, weight basis and the SpoolPr | 5 | S3 | 1 | FE·BE·DB·RT | 98 | blocked | Consolidate | phase 5 |
+| `FW-N15` | Active Run machine context — the home/:machineName route, line resolut | 5 | S2 | 1 | FE | 8 | not-started | Consolidate | phase 5 |
+| `FW-N16` | The station claim — FlatWireDB..WIPStations view and the checked-in-ma | 5 | S2 | 1 | BE·DB | 12 | in-progress | Consolidate | phase 5 |
 
 #### `FS-09` — In-Run Production Events
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-065` | SPC checkpoint dialog | 6 | FE | 24 | not-started | Consolidate | phase 6 |
-| `FW-070` | Roll adjust dialog | 6 | FE | 28 | not-started | Consolidate | phase 6 |
-| `FW-071` | Pause and Resume dialogs | 6 | FE | 24 | not-started | Consolidate | phase 6 |
-| `FW-073` | Die change dialog | 6 | FE | 24 | not-started | Consolidate | phase 6 |
-| `FW-166` | POST /weldevent and WeldService | 6 | BE | 12 | blocked | Consolidate | phase 6 |
-| `FW-167` | POST /diechange and DieChangeService | 6 | BE | 12 | not-started | Consolidate | phase 6 |
-| `FW-168` | POST /spc and SpcService | 6 | BE | 12 | blocked | Consolidate | phase 6 |
-| `FW-169` | POST /rolloverride and RollOverrideService | 6 | BE | 12 | blocked | Consolidate | phase 6 |
-| `FW-170` | POST /run/{id}/pause and /resume, and RunControlService | 6 | BE | 8 | not-started | Consolidate | phase 6 |
-| `FW-171` | The five in-run event tables | 6 | DB | 20 | in-review | Consolidate | phase 6 |
-| `FW-172` | Run-event markers and the LineStatus transitions | 6 | RT | 20 | not-started | Consolidate | phase 6 |
-| `FW-252` | Die lifecycle service — per-tool die life, DieHistory writes and per-t | 6 | BE | 16 | not-started | Consolidate | phase 6 |
-| `FW-255` | LineDowntimeEvent write path — LineDowntimeService and the two line-do | 6 | BE | 22 | not-started | Consolidate | phase 6 |
-| `FW-256` | Line Downtime dialog — the 25 DWN## codes that have no run | 6 | FE | 12 | not-started | Consolidate | phase 6 |
-| `FW-N26` | Log the operator-set dancer tension value | 6 | DB·BE | 12 | not-started | Consolidate | phase 6 |
-| `FW-N27` | Guard the weld flag - it cannot be set before check-in | 6 | BE | 6 | not-started | Consolidate | phase 6 |
-| `FW-014` | Roll override sink | — | — | — | *no card, no task file* | **Retire** | FR-360-391 — Subsumed by FW-169 for its MVP-1 half (B.5) |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-065` | SPC checkpoint dialog | 6 | S2 | 1 | FE | 24 | not-started | Consolidate | phase 6 |
+| `FW-070` | Roll adjust dialog | 6 | S2 | 1 | FE | 28 | not-started | Consolidate | phase 6 |
+| `FW-071` | Pause and Resume dialogs | 6 | S2 | 1 | FE | 24 | not-started | Consolidate | phase 6 |
+| `FW-073` | Die change dialog | 6 | S2 | 1 | FE | 24 | not-started | Consolidate | phase 6 |
+| `FW-166` | POST /weldevent and WeldService | 6 | S2 | 1 | BE | 12 | blocked | Consolidate | phase 6 |
+| `FW-167` | POST /diechange and DieChangeService | 6 | S2 | 1 | BE | 12 | not-started | Consolidate | phase 6 |
+| `FW-168` | POST /spc and SpcService | 6 | S2 | 1 | BE | 12 | blocked | Consolidate | phase 6 |
+| `FW-169` | POST /rolloverride and RollOverrideService | 6 | S2 | 1 | BE | 12 | blocked | Consolidate | phase 6 |
+| `FW-170` | POST /run/{id}/pause and /resume, and RunControlService | 6 | S2 | 1 | BE | 8 | not-started | Consolidate | phase 6 |
+| `FW-171` | The five in-run event tables | 6 | S2 | 1 | DB | 20 | in-review | Consolidate | phase 6 |
+| `FW-172` | Run-event markers and the LineStatus transitions | 6 | S2 | 1 | RT | 20 | not-started | Consolidate | phase 6 |
+| `FW-252` | Die lifecycle service — per-tool die life, DieHistory writes and per-t | 6 | S2 | 1 | BE | 16 | not-started | Consolidate | phase 6 |
+| `FW-255` | LineDowntimeEvent write path — LineDowntimeService and the two line-do | 6 | S2 | 1 | BE | 22 | not-started | Consolidate | phase 6 |
+| `FW-256` | Line Downtime dialog — the 25 DWN## codes that have no run | 6 | S2 | 1 | FE | 12 | not-started | Consolidate | phase 6 |
+| `FW-N26` | Log the operator-set dancer tension value | 6 | S2 | 1 | DB·BE | 12 | not-started | Consolidate | phase 6 |
+| `FW-N27` | Guard the weld flag - it cannot be set before check-in | 6 | S2 | 1 | BE | 6 | not-started | Consolidate | phase 6 |
+| `FW-014` | Roll override sink | — | — | — | — | — | *no card, no task file* | **Retire** | FR-360-391 — Subsumed by FW-169 for its MVP-1 half (B.5) |
 
 #### `FS-10` — Exceptions and Off-Ramps
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-067` | WIP rejection dialog | 7 | FE | 20 | not-started | Consolidate | phase 7 |
-| `FW-072` | Rod checkout dialog — Modes A, B and P | 7 | FE | 24 | not-started | Consolidate | phase 7 |
-| `FW-173` | Partial rod re-check-in (carry-forward) | 7 | FE | 20 | not-started | Consolidate | phase 7 |
-| `FW-174` | POST /wipreject, POST /checkout and their services | 7 | BE | 24 | not-started | Consolidate | phase 7 |
-| `FW-175` | Durable supervisor pending-approval queue | 7 | BE | 16 | not-started | Consolidate | phase 7 |
-| `FW-176` | WipRejection / RodCheckout tables and the shared coils carry-forward c | 7 | DB | 28 | in-review | Consolidate | phase 7 |
-| `FW-177` | Exception broadcasts and the supervisor notification | 7 | RT | 16 | not-started | Consolidate | phase 7 |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-067` | WIP rejection dialog | 7 | S2 | 1 | FE | 20 | not-started | Consolidate | phase 7 |
+| `FW-072` | Rod checkout dialog — Modes A, B and P | 7 | S2 | 1 | FE | 24 | not-started | Consolidate | phase 7 |
+| `FW-173` | Partial rod re-check-in (carry-forward) | 7 | S2 | 1 | FE | 20 | not-started | Consolidate | phase 7 |
+| `FW-174` | POST /wipreject, POST /checkout and their services | 7 | S2 | 1 | BE | 24 | not-started | Consolidate | phase 7 |
+| `FW-175` | Durable supervisor pending-approval queue | 7 | S2 | 1 | BE | 16 | not-started | Consolidate | phase 7 |
+| `FW-176` | WipRejection / RodCheckout tables and the shared coils carry-forward c | 7 | S2 | 1 | DB | 28 | in-review | Consolidate | phase 7 |
+| `FW-177` | Exception broadcasts and the supervisor notification | 7 | S2 | 1 | RT | 16 | not-started | Consolidate | phase 7 |
 
 #### `FS-11` — Spool Lifecycle and FL2 Finishing Run
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-064` | Dashboard 5 — FL2 Spool Check-in | 8 | FE | 16 | not-started | Consolidate | phase 8 |
-| `FW-124` | Dashboard 5A — FL2 Spool Queue | 8 | FE | 24 | not-started | Consolidate | phase 8 |
-| `FW-178` | Active Run — the FL2 material-flow card and Spool Information grid | 8 | FE | 8 | not-started | Consolidate | phase 8 |
-| `FW-179` | POST /checkin/spool and GET /spools | 8 | BE | 18 | not-started | Consolidate | phase 8 |
-| `FW-180` | SpoolCheckin table and the SpoolProcessing.OrderNo index | 8 | DB | 12 | in-review | Consolidate | phase 8 |
-| `FW-181` | The shared trace path — the no-measurement state | 8 | RT | 4 | not-started | Consolidate | phase 8 |
-| `FW-224` | FL2 pre-check-in - spool staging | 8 | BE·FE | 20 | blocked | Consolidate | phase 8 |
-| `FW-230` | FL1 segment alpha — one namespace | 8 | DB·BE | 14 | in-review | Consolidate | phase 8 |
-| `FW-N02` | Spool completion weight milestones and machine-stop confirmation | 8 | RT | 8 | blocked | Consolidate | phase 8 |
-| `FW-N29` | FL2 live gauge and width trace at 4 s | 8 | RT | 8 | not-started | Consolidate | phase 8 |
-| `FW-N31` | FL2 trace cadence - honest gaps and visible freshness at 4 s | 8 | FE | 8 | not-started | Consolidate | phase 8 |
-| `FW-N32` | Out-of-spec threshold becomes per-line, and the tolerance alert reache | 8 | BE·FE | 12 | not-started | Consolidate | phase 8 |
-| `FW-N33` | Bind isLive on the trace panel - stop rebuilding the chart every frame | 8 | FE | 2 | not-started | Consolidate | phase 8 |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-064` | Dashboard 5 — FL2 Spool Check-in | 8 | S2 | 1 | FE | 16 | not-started | Consolidate | phase 8 |
+| `FW-124` | Dashboard 5A — FL2 Spool Queue | 8 | S2 | 1 | FE | 24 | not-started | Consolidate | phase 8 |
+| `FW-178` | Active Run — the FL2 material-flow card and Spool Information grid | 8 | S3 | 1 | FE | 8 | not-started | Consolidate | phase 8 |
+| `FW-179` | POST /checkin/spool and GET /spools | 8 | S2 | 1 | BE | 18 | not-started | Consolidate | phase 8 |
+| `FW-180` | SpoolCheckin table and the SpoolProcessing.OrderNo index | 8 | S2 | 1 | DB | 12 | in-review | Consolidate | phase 8 |
+| `FW-181` | The shared trace path — the no-measurement state | 8 | S3 | 1 | RT | 4 | not-started | Consolidate | phase 8 |
+| `FW-224` | FL2 pre-check-in - spool staging | 8 | S2 | 1 | BE·FE | 20 | blocked | Consolidate | phase 8 |
+| `FW-230` | FL1 segment alpha — one namespace | 8 | S2 | 1 | DB·BE | 14 | in-review | Consolidate | phase 8 |
+| `FW-N02` | Spool completion weight milestones and machine-stop confirmation | 8 | S3 | 1 | RT | 8 | blocked | Consolidate | phase 8 |
+| `FW-N29` | FL2 live gauge and width trace at 4 s | 8 | S2 | 1 | RT | 8 | not-started | Consolidate | phase 8 |
+| `FW-N31` | FL2 trace cadence - honest gaps and visible freshness at 4 s | 8 | S2 | 1 | FE | 8 | not-started | Consolidate | phase 8 |
+| `FW-N32` | Out-of-spec threshold becomes per-line, and the tolerance alert reache | 8 | S2 | 1 | BE·FE | 12 | not-started | Consolidate | phase 8 |
+| `FW-N33` | Bind isLive on the trace panel - stop rebuilding the chart every frame | 8 | S2 | 1 | FE | 2 | not-started | Consolidate | phase 8 |
 
 #### `FS-12` — Output Completion, Labelling and Packing
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-228` | Footage-to-weight converter | 4 | BE | 12 | not-started | Consolidate | footage-to-weight converter serves coil completion |
-| `FW-066` | Dashboard 7 — Output Coil Completion | 9 | FE | 24 | not-started | Consolidate | phase 9 |
-| `FW-182` | Dashboard 7b — Packing Station | 9 | FE | 24 | not-started | Consolidate | phase 9 |
-| `FW-183` | source-traceability-table and skid-tracker | 9 | FE | 40 | not-started | Consolidate | phase 9 |
-| `FW-184` | coil-label and the print path | 9 | FE | 16 | not-started | Consolidate | phase 9 |
-| `FW-185` | POST /coil/complete, GET /coil/{alpha}/label and their services | 9 | BE | 26 | blocked | Consolidate | phase 9 |
-| `FW-186` | CoilOutput, CoilTraceability and the non-overlap trigger | 9 | DB | 16 | in-review | Consolidate | phase 9 |
-| `FW-187` | Completion broadcasts | 9 | RT | 8 | not-started | Consolidate | phase 9 |
-| `FW-188` | Footage→weight basis and skid labelling | 9 | BA | 8 | not-started | Consolidate | phase 9 |
-| `FW-235` | CoilCompleted broadcast member | 9 | RT·FE | 12 | blocked | Consolidate | phase 9 |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-228` | Footage-to-weight converter | 4 | S2 | 1 | BE | 12 | not-started | Consolidate | footage-to-weight converter serves coil completion |
+| `FW-066` | Dashboard 7 — Output Coil Completion | 9 | S3 | 1 | FE | 24 | not-started | Consolidate | phase 9 |
+| `FW-182` | Dashboard 7b — Packing Station | 9 | S3 | 1 | FE | 24 | not-started | Consolidate | phase 9 |
+| `FW-183` | source-traceability-table and skid-tracker | 9 | S3 | 1 | FE | 40 | not-started | Consolidate | phase 9 |
+| `FW-184` | coil-label and the print path | 9 | S3 | 1 | FE | 16 | not-started | Consolidate | phase 9 |
+| `FW-185` | POST /coil/complete, GET /coil/{alpha}/label and their services | 9 | S3 | 1 | BE | 26 | blocked | Consolidate | phase 9 |
+| `FW-186` | CoilOutput, CoilTraceability and the non-overlap trigger | 9 | S3 | 1 | DB | 16 | in-review | Consolidate | phase 9 |
+| `FW-187` | Completion broadcasts | 9 | S3 | 1 | RT | 8 | not-started | Consolidate | phase 9 |
+| `FW-188` | Footage→weight basis and skid labelling | 9 | S3 | 1 | BA | 8 | not-started | Consolidate | phase 9 |
+| `FW-235` | CoilCompleted broadcast member | 9 | S3 | 1 | RT·FE | 12 | blocked | Consolidate | phase 9 |
 
 #### `FS-13` — FL3 Hybrid Continuous Route
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-189` | Dashboard 2 FL3 variant, and Active Run's FL3 profile row | 10 | FE | 12 | not-started | Consolidate | phase 10 |
-| `FW-190` | Hybrid single-batch PLC push and RouteMode=Hybrid | 10 | BE | 20 | not-started | Consolidate | phase 10 |
-| `FW-191` | RouteMode and the no-intermediate-spool rule | 10 | DB | 4 | not-started | Consolidate | phase 10 |
-| `FW-192` | Continuous end-to-end trace on FL3 | 10 | RT | 8 | not-started | Consolidate | phase 10 |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-189` | Dashboard 2 FL3 variant, and Active Run's FL3 profile row | 10 | S3 | 1 | FE | 12 | not-started | Consolidate | phase 10 |
+| `FW-190` | Hybrid single-batch PLC push and RouteMode=Hybrid | 10 | S3 | 1 | BE | 20 | not-started | Consolidate | phase 10 |
+| `FW-191` | RouteMode and the no-intermediate-spool rule | 10 | S3 | 1 | DB | 4 | not-started | Consolidate | phase 10 |
+| `FW-192` | Continuous end-to-end trace on FL3 | 10 | S3 | 1 | RT | 8 | not-started | Consolidate | phase 10 |
 
 #### `FS-14` — Order Allocation and Fulfilment
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-225` | Rod ↔ order allocation — schema and domain model | 4 | DB·BE | 28 | blocked | Consolidate | order allocation, [REQ 5.28] |
-| `FW-226` | Sequence validation — the four-tier partition | 4 | BE·FE | 20 | blocked | Consolidate | order allocation, [REQ 5.28] |
-| `FW-227` | The order-boundary handoff and its notification | 4 | BE·FE | 26 | blocked | Consolidate | order allocation, [REQ 5.28] |
-| `FW-240` | RodOrderAllocation / RodOrderConsumption domain entities | 4 | BE | 8 | blocked | Consolidate | order allocation, [REQ 5.28] |
-| `FW-243` | D-30 — ROWVERSION on WeldEvent, RodCheckout, WipRejection | 4 | DB·BE | 6 | blocked | Consolidate | order allocation, [REQ 5.28] |
-| `FW-229` | Fulfilment rollup and order status | 9 | DB·BE | 16 | blocked | Consolidate | order allocation, [REQ 5.28] |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-225` | Rod ↔ order allocation — schema and domain model | 4 | S2 | 1 | DB·BE | 28 | blocked | Consolidate | order allocation, [REQ 5.28] |
+| `FW-226` | Sequence validation — the four-tier partition | 4 | S2 | 1 | BE·FE | 20 | blocked | Consolidate | order allocation, [REQ 5.28] |
+| `FW-227` | The order-boundary handoff and its notification | 4 | S2 | 1 | BE·FE | 26 | blocked | Consolidate | order allocation, [REQ 5.28] |
+| `FW-240` | RodOrderAllocation / RodOrderConsumption domain entities | 4 | S2 | 1 | BE | 8 | blocked | Consolidate | order allocation, [REQ 5.28] |
+| `FW-243` | D-30 — ROWVERSION on WeldEvent, RodCheckout, WipRejection | 4 | S2 | 1 | DB·BE | 6 | blocked | Consolidate | order allocation, [REQ 5.28] |
+| `FW-229` | Fulfilment rollup and order status | 9 | S3 | 1 | DB·BE | 16 | blocked | Consolidate | order allocation, [REQ 5.28] |
 
 #### `FS-15` — The Shared-Schema Boundary
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-220` | FL1/FL3 check-in write-back into the shared schema | 4 | DB·BE | 32 | not-started | Consolidate | shared-schema integration contract, [REQ 5.25-5.30] |
-| `FW-221` | Station release and reqsum reversal | 4 | DB | 9 | blocked | Consolidate | shared-schema integration contract, [REQ 5.25-5.30] |
-| `FW-223` | Rod ingestion — populating the FlatWire tables | 4 | DB·BE | 14 | not-started | Consolidate | shared-schema integration contract, [REQ 5.25-5.30] |
-| `FW-231` | Register every flat wire alpha in the shared coil master | 8 | DB·BE | 18 | blocked | Consolidate | shared-schema integration contract, [REQ 5.25-5.30] |
-| `FW-219` | FL2/FL3 run-end write-back into the shared schema | 9 | DB·BE | 40 | not-started | Consolidate | shared-schema integration contract, [REQ 5.25-5.30] |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-220` | FL1/FL3 check-in write-back into the shared schema | 4 | S2 | 1 | DB·BE | 32 | not-started | Consolidate | shared-schema integration contract, [REQ 5.25-5.30] |
+| `FW-221` | Station release and reqsum reversal | 4 | S2 | 1 | DB | 9 | blocked | Consolidate | shared-schema integration contract, [REQ 5.25-5.30] |
+| `FW-223` | Rod ingestion — populating the FlatWire tables | 4 | S2 | 1 | DB·BE | 14 | not-started | Consolidate | shared-schema integration contract, [REQ 5.25-5.30] |
+| `FW-231` | Register every flat wire alpha in the shared coil master | 8 | S2 | 1 | DB·BE | 18 | blocked | Consolidate | shared-schema integration contract, [REQ 5.25-5.30] |
+| `FW-219` | FL2/FL3 run-end write-back into the shared schema | 9 | S3 | 1 | DB·BE | 40 | not-started | Consolidate | shared-schema integration contract, [REQ 5.25-5.30] |
 
 #### `FS-16` — Reporting and Certification
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-090` | Flattening Lines report tab and reporting views | 11 | BE·DB | 36 | not-started | Consolidate | phase 11 |
-| `FW-091` | Gauge Trace report | 11 | FE·BE·RT | 40 | not-started | Consolidate | phase 11 |
-| `FW-092` | Gauge CPK Deviation and CPK report | 11 | FE·BE | 32 | not-started | Consolidate | phase 11 |
-| `FW-093` | Coil Pass Detail report | 11 | FE·BE | 32 | not-started | Consolidate | phase 11 |
-| `FW-094` | SPC at Flattening Line report | 11 | FE·BE | 32 | not-started | Consolidate | phase 11 |
-| `FW-095` | Cut Traceability report | 11 | FE·BE | 16 | not-started | Consolidate | phase 11 |
-| `FW-193` | Certification granularity and tolerance bands | 11 | BA | 8 | not-started | Consolidate | phase 11 |
-| `FW-N30` | Certificate traceability granularity - cast number as the lot referenc | 11 | BE | 10 | blocked | Consolidate | phase 11 |
-| `FW-069` | Shift summary | — | — | — | *no card, no task file* | **Retain** | FR-480-490 — MVP-2 (B.5) |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-090` | Flattening Lines report tab and reporting views | 11 | S3 | 1 | BE·DB | 36 | not-started | Consolidate | phase 11 |
+| `FW-091` | Gauge Trace report | 11 | S3 | 1 | FE·BE·RT | 40 | not-started | Consolidate | phase 11 |
+| `FW-092` | Gauge CPK Deviation and CPK report | 11 | S3 | 1 | FE·BE | 32 | not-started | Consolidate | phase 11 |
+| `FW-093` | Coil Pass Detail report | 11 | S3 | 1 | FE·BE | 32 | not-started | Consolidate | phase 11 |
+| `FW-094` | SPC at Flattening Line report | 11 | S3 | 1 | FE·BE | 32 | not-started | Consolidate | phase 11 |
+| `FW-095` | Cut Traceability report | 11 | S3 | 1 | FE·BE | 16 | not-started | Consolidate | phase 11 |
+| `FW-193` | Certification granularity and tolerance bands | 11 | S3 | 1 | BA | 8 | not-started | Consolidate | phase 11 |
+| `FW-N30` | Certificate traceability granularity - cast number as the lot referenc | 11 | S2 | 1 | BE | 10 | blocked | Consolidate | phase 11 |
+| `FW-069` | Shift summary | — | — | — | — | — | *no card, no task file* | **Retain** | FR-480-490 — MVP-2 (B.5) |
 
 #### `FS-17` — Yield, Cost Ledger and Scrap
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-100` | Footage-based yield and the weight formula | 12 | FE·BE | 48 | not-started | Consolidate | phase 12 |
-| `FW-101` | Weld traceability attribution in yield | 12 | BE | 20 | not-started | Consolidate | phase 12 |
-| `FW-102` | Flat-wire cost ledger configuration | 12 | FE·BE·DB | 36 | not-started | Consolidate | phase 12 |
-| `FW-110` | Scrap Box / Scrap Skid outlet | 12 | FE·BE·DB | 24 | not-started | Consolidate | phase 12 |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-100` | Footage-based yield and the weight formula | 12 | S3 | 1 | FE·BE | 48 | not-started | Consolidate | phase 12 |
+| `FW-101` | Weld traceability attribution in yield | 12 | S3 | 1 | BE | 20 | not-started | Consolidate | phase 12 |
+| `FW-102` | Flat-wire cost ledger configuration | 12 | S3 | 1 | FE·BE·DB | 36 | not-started | Consolidate | phase 12 |
+| `FW-110` | Scrap Box / Scrap Skid outlet | 12 | S3 | 1 | FE·BE·DB | 24 | not-started | Consolidate | phase 12 |
 
 #### `FS-18` — Administration, Reference Data and Tooling Inventory
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-254` | Reason-code query endpoints — the three seeded client vocabularies | 1C | BE | 9 | not-started | Consolidate | reason-code lookups are reference data, not schema foundation |
-| `FW-260` | Roll-set register service - ToolingInventoryRollSet CRUD and the mount | 6 | BE | 10 | not-started | Consolidate | roll-set register CRUD is reference data, not an in-run event |
-| `FW-269` | Edger register service - ToolingInventoryEdger CRUD and the gauge coll | 6 | BE | 10 | not-started | Consolidate | edger register CRUD is reference data, not an in-run event |
-| `FW-003` | Machine template tabs — register FL1, FL2, FL3 | 13 | FE | 12 | not-started | Consolidate | phase 13 |
-| `FW-054` | Alloys — Material Type across Properties, Reduction Rules and Vendor O | 13 | FE | 12 | not-started | Consolidate | phase 13 |
-| `FW-194` | Alloy lookup admin grid | 13 | FE | 20 | not-started | Consolidate | phase 13 |
-| `FW-195` | Role assignment UI | 13 | FE | 12 | not-started | Consolidate | phase 13 |
-| `FW-196` | Alloy CRUD, machine config and role config endpoints | 13 | BE | 32 | not-started | Consolidate | phase 13 |
-| `FW-197` | Reference-data admin wiring | 13 | DB | 8 | not-started | Consolidate | phase 13 |
-| `FW-198` | Reference-data change broadcast | 13 | RT | 4 | not-started | Consolidate | phase 13 |
-| `FW-199` | Alloy tolerance values and die-life thresholds | 13 | BA | 4 | not-started | Consolidate | phase 13 |
-| `FW-247` | G8 — legacy FlatLineSetup / FlatLineProcessing data migration | 13 | DB·BA | 32 | not-started | Consolidate | phase 13 |
-| `FW-253` | Die Management screen — the inventory grid and FR-252's two history ta | 13 | FE | 24 | not-started | Consolidate | phase 13 |
-| `FW-258` | Re-cost the die domain's return to MVP-1 and the reason-code scope, ad | 13 | BA | 8 | not-started | Consolidate | phase 13 |
-| `FW-261` | Tooling Inventory - the fourth Choose Tool option and the roll-set gri | 13 | FE | 12 | not-started | Consolidate | phase 13 |
-| `FW-270` | Tooling Inventory - the Edgers tool option and its gauge grid | 13 | FE | 12 | not-started | Consolidate | phase 13 |
-| `FW-N28` | Each die carries a unique identifier for per-die footage tracking | 13 | DB | 8 | not-started | Consolidate | phase 13 |
-| `FW-N07` | Die master table | — | — | — | *no card, no task file* | **Retain** | FR-240-255 — CONTESTED. B.4 says "wholly MVP-2, uncosted"; `phase-13` says `Q91` (2 Sep 2026) returned the die domain to MVP-1 and settled the split as table=Must, screen=Should, **both in scope**, with `ToolingInventoryDie` and `DieHistory` already built in Phase 1. B.4 is the stale side. Recorded, not repaired |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-254` | Reason-code query endpoints — the three seeded client vocabularies | 1C | S1 | 1 | BE | 9 | not-started | Consolidate | reason-code lookups are reference data, not schema foundation |
+| `FW-260` | Roll-set register service - ToolingInventoryRollSet CRUD and the mount | 6 | S2 | 1 | BE | 10 | not-started | Consolidate | roll-set register CRUD is reference data, not an in-run event |
+| `FW-269` | Edger register service - ToolingInventoryEdger CRUD and the gauge coll | 6 | S2 | 1 | BE | 10 | not-started | Consolidate | edger register CRUD is reference data, not an in-run event |
+| `FW-003` | Machine template tabs — register FL1, FL2, FL3 | 13 | S3 | 1 | FE | 12 | not-started | Consolidate | phase 13 |
+| `FW-054` | Alloys — Material Type across Properties, Reduction Rules and Vendor O | 13 | S3 | 1 | FE | 12 | not-started | Consolidate | phase 13 |
+| `FW-194` | Alloy lookup admin grid | 13 | S3 | 1 | FE | 20 | not-started | Consolidate | phase 13 |
+| `FW-195` | Role assignment UI | 13 | S3 | 1 | FE | 12 | not-started | Consolidate | phase 13 |
+| `FW-196` | Alloy CRUD, machine config and role config endpoints | 13 | S3 | 1 | BE | 32 | not-started | Consolidate | phase 13 |
+| `FW-197` | Reference-data admin wiring | 13 | S3 | 1 | DB | 8 | not-started | Consolidate | phase 13 |
+| `FW-198` | Reference-data change broadcast | 13 | S3 | 1 | RT | 4 | not-started | Consolidate | phase 13 |
+| `FW-199` | Alloy tolerance values and die-life thresholds | 13 | S3 | 1 | BA | 4 | not-started | Consolidate | phase 13 |
+| `FW-247` | G8 — legacy FlatLineSetup / FlatLineProcessing data migration | 13 | S3 | 1 | DB·BA | 32 | not-started | Consolidate | phase 13 |
+| `FW-253` | Die Management screen — the inventory grid and FR-252's two history ta | 13 | S3 | 1 | FE | 24 | not-started | Consolidate | phase 13 |
+| `FW-258` | Re-cost the die domain's return to MVP-1 and the reason-code scope, ad | 13 | S2 | 1 | BA | 8 | not-started | Consolidate | phase 13 |
+| `FW-261` | Tooling Inventory - the fourth Choose Tool option and the roll-set gri | 13 | S3 | 1 | FE | 12 | not-started | Consolidate | phase 13 |
+| `FW-270` | Tooling Inventory - the Edgers tool option and its gauge grid | 13 | S2 | 1 | FE | 12 | not-started | Consolidate | phase 13 |
+| `FW-N28` | Each die carries a unique identifier for per-die footage tracking | 13 | S2 | 1 | DB | 8 | not-started | Consolidate | phase 13 |
+| `FW-N07` | Die master table | — | — | — | — | — | *no card, no task file* | **Retain** | FR-240-255 — CONTESTED. B.4 says "wholly MVP-2, uncosted"; `phase-13` says `Q91` (2 Sep 2026) returned the die domain to MVP-1 and settled the split as table=Must, screen=Should, **both in scope**, with `ToolingInventoryDie` and `DieHistory` already built in Phase 1. B.4 is the stale side. Recorded, not repaired |
 
 #### `FS-19` — Integration Testing, Commissioning and Go-Live
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-120` | E2E FL1 standalone | 14 | QA | 32 | not-started | Consolidate | phase 14 |
-| `FW-121` | E2E FL2 standalone | 14 | QA | 24 | not-started | Consolidate | phase 14 |
-| `FW-122` | E2E FL3 hybrid | 14 | QA | 24 | not-started | Consolidate | phase 14 |
-| `FW-123` | UAT and stakeholder sign-off | 14 | BA·QA | 56 | not-started | Consolidate | phase 14 |
-| `FW-200` | PLC commissioning support | 14 | RT | 40 | not-started | Consolidate | phase 14 |
-| `FW-201` | Defect allowance and renamed-column regression | 14 | FE·BE·DB·QA | 56 | not-started | Consolidate | phase 14 |
-| `FW-217` | OPC sidecar adapter — the models behind a test-only OPC UA server | 14 | RT | 24 | done | Consolidate | phase 14 |
-| `FW-242` | Move FlatWireDB into the ual-database repository | 14 | DB | 16 | not-started | Consolidate | phase 14 |
-| `FW-249` | Re-derive the DB-stream total on the current basis | 14 | BA | 8 | not-started | Consolidate | phase 14 |
-| `FW-250` | build_development_plan_xlsx.py silently drops every multi-stream story | 14 | DB | 9 | not-started | Consolidate | phase 14 |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-120` | E2E FL1 standalone | 14 | S3 | 1 | QA | 32 | not-started | Consolidate | phase 14 |
+| `FW-121` | E2E FL2 standalone | 14 | S3 | 1 | QA | 24 | not-started | Consolidate | phase 14 |
+| `FW-122` | E2E FL3 hybrid | 14 | S3 | 1 | QA | 24 | not-started | Consolidate | phase 14 |
+| `FW-123` | UAT and stakeholder sign-off | 14 | S3 | 1 | BA·QA | 56 | not-started | Consolidate | phase 14 |
+| `FW-200` | PLC commissioning support | 14 | S3 | 1 | RT | 40 | not-started | Consolidate | phase 14 |
+| `FW-201` | Defect allowance and renamed-column regression | 14 | S3 | 1 | FE·BE·DB·QA | 56 | not-started | Consolidate | phase 14 |
+| `FW-217` | OPC sidecar adapter — the models behind a test-only OPC UA server | 14 | — | 1 | RT | 24 | done | Consolidate | phase 14 |
+| `FW-242` | Move FlatWireDB into the ual-database repository | 14 | S3 | 1 | DB | 16 | not-started | Consolidate | phase 14 |
+| `FW-249` | Re-derive the DB-stream total on the current basis | 14 | S1 | 1 | BA | 8 | not-started | Consolidate | phase 14 |
+| `FW-250` | build_development_plan_xlsx.py silently drops every multi-stream story | 14 | S1 | 1 | DB | 9 | not-started | Consolidate | phase 14 |
 
 #### `FS-20` — Unscheduled and Unhosted Requirements
 
-| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
-|---|---|---|---|---:|---|---|---|
-| `FW-N08` | Wire break | — | — | — | *no card, no task file* | **Retain** | FR-280-282 — BLOCKED, no persistence target. B.4 cites G34 and 11.1 cites OI-13 - a pre-existing contradiction, not resolved here |
-| `FW-N09` | OEE dashboard | — | — | — | *no card, no task file* | **Retain** | FR-500-508 — MVP-2, no phase and no owner (PP-03), uncosted (B.4) |
-| `FW-N10` | Stop popup | — | — | — | *no card, no task file* | **Retain** | FR-270-277 — Uncosted, no phase assignment (B.4) |
-| `FW-N11` | Operator session | — | — | — | *no card, no task file* | **Retain** | FR-001-022 — Cited against Phase 6, still uncosted (B.4) |
-| `FW-N12` | De-stub pass | — | — | — | *no card, no task file* | **Retire** | - — Absorbed in practice by FW-166 and FW-201 (B.4) |
+| `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
+|---|---|---|---|---|---|---:|---|---|---|
+| `FW-N08` | Wire break | — | — | — | — | — | *no card, no task file* | **Retain** | FR-280-282 — BLOCKED, no persistence target. B.4 cites G34 and 11.1 cites OI-13 - a pre-existing contradiction, not resolved here |
+| `FW-N09` | OEE dashboard | — | — | — | — | — | *no card, no task file* | **Retain** | FR-500-508 — MVP-2, no phase and no owner (PP-03), uncosted (B.4) |
+| `FW-N10` | Stop popup | — | — | — | — | — | *no card, no task file* | **Retain** | FR-270-277 — Uncosted, no phase assignment (B.4) |
+| `FW-N11` | Operator session | — | — | — | — | — | *no card, no task file* | **Retain** | FR-001-022 — Cited against Phase 6, still uncosted (B.4) |
+| `FW-N12` | De-stub pass | — | — | — | — | — | *no card, no task file* | **Retire** | - — Absorbed in practice by FW-166 and FW-201 (B.4) |
 
 ### 2.4 Category dependency direction
 

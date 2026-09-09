@@ -94,45 +94,9 @@ def activities_from_tasks(tasks_by_cat, cid):
     return rows
 
 
-RE_ROW = re.compile(r'^\|\s*`([^`]+)`\s*\|(.*)\|\s*$')
-
-
-def activities_from_block(text):
-    """Parse back an activity table this tool wrote, for use after deletion."""
-    rows = []
-    if BEGIN not in text or END not in text:
-        return rows
-    block = text.split(BEGIN, 1)[1].split(END, 1)[0]
-    for line in block.split('\n'):
-        m = RE_ROW.match(line.strip())
-        if not m:
-            continue
-        cells = [c.strip() for c in m.group(2).split('|')]
-        if len(cells) < 5:
-            continue
-        # Column order is: name | streams | status | depends_on | blocked_by.
-        # An earlier version read cells[1] as the status, which is the STREAMS
-        # column, so every row failed the status-enum check and this parser
-        # silently returned nothing. It is the post-deletion fallback, so the
-        # defect would only have surfaced once the task files were gone.
-        name, streams, status_cell, deps, blk = cells[0], cells[1], cells[2], cells[3], cells[4]
-        raw = re.sub(r'[*`✅🔵🟡⛔⬜⊘]', '', status_cell)
-        raw = raw.replace('⚠', '').replace('*inferred*', '').strip()
-        status = raw.split()[0] if raw else ''
-        if status not in F.STATUSES:
-            continue
-        rows.append({
-            'ref': m.group(1),
-            'name': name,
-            'streams': [x.strip() for x in re.split(r'[·,]', streams)
-                        if x.strip() not in ('', '—')],
-            'status': status,
-            'depends_on': re.findall(r'FW-N?\d+|FS-\d+', deps),
-            'blocked_by': re.findall(r'(?:PLC-Q|OQ-|OI-|FR-|[A-Z])\d+', blk),
-            'evidence': '',
-            'unconfirmed': False,
-        })
-    return rows
+# The activity-block parser is canonical in fwtasks, so stamp_trial_status.py and
+# anything else that needs status after the task files are retired shares it.
+activities_from_block = F.parse_activity_block
 
 
 def render_block(rows, cid, derived, expected):

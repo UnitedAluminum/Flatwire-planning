@@ -235,28 +235,164 @@ def load_features():
     return sorted(out, key=lambda x: x.get('id', ''))
 
 
-def load_consolidation_map():
-    """id -> category, from the generated map. Survives the task files.
+def load_consolidation_map(full=False):
+    """id -> category, or id -> full row dict when `full=True`.
 
-    The category is in the `#### `FS-##`` heading, not in the row: a row
-    in section 2.3 has eight columns and none of them is the category. Parsing
-    rows alone silently returned only the four retired ids, whose separate table
-    DOES carry a category column.
+    The category is in the `#### FS-##` heading, not in the row. After the task
+    files are retired this table is the ONLY record of each story's phase, sprint,
+    MVP, streams, hours and title, which is why it carries all of them.
     """
     out = {}
     cat = None
-    for line in read(CONSOLIDATION_MAP).split('\n'):
+    for line in read(CONSOLIDATION_MAP).split(chr(10)):
         h = re.match(r'^####\s+`(FS-\d+)`', line)
         if h:
             cat = h.group(1)
             continue
         if line.startswith('### '):
-            cat = None          # left section 2.3
+            cat = None
             continue
-        m = re.match(r'^\|\s*`(FW-N?\d+)`\s*\|', line)
-        if m and cat:
+        m = re.match(r'^\|\s*`(FW-N?\d+)`\s*\|(.*)\|\s*$', line)
+        if not (m and cat):
+            continue
+        if not full:
             out[m.group(1)] = cat
+            continue
+        c = [x.strip() for x in m.group(2).split('|')]
+        if len(c) < 9:
+            continue                      # the retired-ids table, three columns
+        dash = '—'
+        val = lambda x: '' if x in ('', dash) else x
+        out[m.group(1)] = {
+            'id': m.group(1), 'category': cat, 'title': c[0],
+            'phase': val(c[1]), 'sprint': val(c[2]), 'mvp': val(c[3]) or '1',
+            'streams': [y for y in c[4].split('·') if y and y != dash],
+            'hours': val(c[5]), 'status_at_consolidation': val(c[6]),
+            'action': val(c[7]).replace('*', ''),
+        }
     return out
+
+
+ACT_BEGIN = '<!-- BEGIN GENERATED: absorbed-stories -->'
+ACT_END = '<!-- END GENERATED: absorbed-stories -->'
+
+
+RE_ROW = re.compile(r'^\|\s*`([^`]+)`\s*\|(.*)\|\s*$')
+
+
+def parse_activity_block(text):
+    """Parse back an activity table this tool wrote, for use after deletion."""
+    rows = []
+    if ACT_BEGIN not in text or ACT_END not in text:
+        return rows
+    block = text.split(ACT_BEGIN, 1)[1].split(ACT_END, 1)[0]
+    for line in block.split('\n'):
+        m = RE_ROW.match(line.strip())
+        if not m:
+            continue
+        cells = [c.strip() for c in m.group(2).split('|')]
+        if len(cells) < 5:
+            continue
+        # Column order is: name | streams | status | depends_on | blocked_by.
+        # An earlier version read cells[1] as the status, which is the STREAMS
+        # column, so every row failed the status-enum check and this parser
+        # silently returned nothing. It is the post-deletion fallback, so the
+        # defect would only have surfaced once the task files were gone.
+        name, streams, status_cell, deps, blk = cells[0], cells[1], cells[2], cells[3], cells[4]
+        raw = re.sub(r'[*`✅🔵🟡⛔⬜⊘]', '', status_cell)
+        raw = raw.replace('⚠', '').replace('*inferred*', '').strip()
+        status = raw.split()[0] if raw else ''
+        if status not in STATUSES:
+            continue
+        rows.append({
+            'ref': m.group(1),
+            'name': name,
+            'streams': [x.strip() for x in re.split(r'[·,]', streams)
+                        if x.strip() not in ('', '—')],
+            'status': status,
+            'depends_on': re.findall(r'FW-N?\d+|FS-\d+', deps),
+            'blocked_by': re.findall(r'(?:PLC-Q|OQ-|OI-|FR-|[A-Z])\d+', blk),
+            'evidence': '',
+            'unconfirmed': False,
+        })
+    return rows
+
+
+
+def load_activity_status():
+    """id -> status, from whichever source still exists.
+
+    While the task files are present their `status:` is the authority, exactly as
+    STATUS.md has always been built. Once they are retired the parents' generated
+    activity tables are the only remaining record, so they become the source.
+    Callers get one dict either way and do not need to know which.
+    """
+    tasks = load_tasks()
+    if tasks:
+        return dict((t['id'], t.get('status', 'not-started')) for t in tasks)
+    out = {}
+    for f in load_features():
+        for r in parse_activity_block(read(f['path'])):
+            out[r['ref']] = r['status']
+    return out
+
+
+def load_units():
+    """The rows the phase board is built from, whichever source still exists.
+
+    While the task files are present this returns load_tasks() UNCHANGED, so
+    STATUS.md is byte-identical - that is the safety property this function
+    exists to preserve. Once they are retired it reconstitutes the same shape by
+    joining the consolidation map (phase, sprint, MVP, streams, hours, title) to
+    the parents' activity tables (live status, dependencies, blockers), and points
+    each row's link at the owning parent instead of a deleted file.
+    """
+    tasks = load_tasks()
+    if tasks:
+        return tasks
+    rows = load_consolidation_map(full=True)
+    live = {}
+    paths = {}
+    for f in load_features():
+        for r in parse_activity_block(read(f['path'])):
+            live[r['ref']] = r
+            paths[r['ref']] = f['path']
+    out = []
+    for tid, m in rows.items():
+        if m['action'] == 'Retain':
+            continue                     # tracked, never a board row
+        a = live.get(tid, {})
+        # A board row must have had a task file. The fileless ids carry no phase,
+        # no hours and the literal text "no card, no task file" where a status
+        # would be, so two Retire-action ones leaked onto the board as rows with
+        # that phrase as their status.
+        status = a.get('status') or m['status_at_consolidation']
+        if status not in STATUSES:
+            continue
+        out.append({
+            'id': tid,
+            'title': m['title'],
+            'status': status,
+            'status_confirmed': 'true',
+            'phase': m['phase'],
+            'mvp': m['mvp'],
+            'streams': a.get('streams') or m['streams'],
+            'stream': (m['streams'] or [''])[0],
+            'hours': m['hours'],
+            'sprint': m['sprint'],
+            'owner': '',
+            'depends_on': a.get('depends_on', []),
+            'blocked_by': a.get('blocked_by', []),
+            'has_plan': 'false',
+            'path': paths.get(tid, FEATURE_DIR + '/README.md'),
+            'folder': FEATURE_DIR,
+        })
+
+    def sortkey(t):
+        n = re.sub(r'\D', '', t['id'])
+        return (0 if 'N' not in t['id'] else 1, int(n) if n else 0)
+
+    return sorted(out, key=sortkey)
 
 
 def phase_sort_key(p):

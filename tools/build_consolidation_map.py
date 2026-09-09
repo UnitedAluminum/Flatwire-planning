@@ -347,7 +347,7 @@ def build():
         note = ('cancelled by D-32; ' + why) if cancelled else why
         rows.append((t['id'], t.get('title', ''), str(t.get('phase', '')),
                      streams_of(t), t.get('hours', ''), t.get('status', ''),
-                     cat, action, note))
+                     cat, action, note, t.get('sprint', ''), str(t.get('mvp', '1'))))
 
     if len(seen) != len(tasks):
         problems.append('assigned %d of %d task files' % (len(seen), len(tasks)))
@@ -367,7 +367,7 @@ def build():
         for s in streams_of(t):
             direct_stream[s] += h
     part_phase, part_stream = defaultdict(int), defaultdict(int)
-    for (_i, _t, ph, st, h, _s, _c, _a, _n) in rows:
+    for (_i, _t, ph, st, h, _s, _c, _a, _n, _sp, _m) in rows:
         hv = int(h) if str(h).isdigit() else 0
         part_phase[ph] += hv
         for s in st:
@@ -453,15 +453,15 @@ def build():
                      'registers, not from the backlog.*')
             L.append('')
             continue
-        L.append('| `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action '
-                 '| Basis |')
-        L.append('|---|---|---|---|---:|---|---|---|')
-        for (i, ti, ph, st, h, stat, _c, act, note) in mine:
-            L.append('| `%s` | %s | %s | %s | %s | %s | %s | %s |' % (
-                i, esc(ti)[:70], ph or '—', '·'.join(st) or '—',
-                h or '—', stat, act, esc(note)))
+        L.append('| `FW-###` | Title | Ph | Sprint | MVP | Streams | h '
+                 '| Status at consolidation | Action | Basis |')
+        L.append('|---|---|---|---|---|---|---:|---|---|---|')
+        for (i, ti, ph, st, h, stat, _c, act, note, sp, mv) in mine:
+            L.append('| `%s` | %s | %s | %s | %s | %s | %s | %s | %s | %s |' % (
+                i, esc(ti)[:70], ph or '—', sp or '—', mv or '1',
+                '·'.join(st) or '—', h or '—', stat, act, esc(note)))
         for (i, ti, fr, _c, act, note) in ret:
-            L.append('| `%s` | %s | — | — | — | *no card, no task file* '
+            L.append('| `%s` | %s | — | — | — | — | — | *no card, no task file* '
                      '| **%s** | %s — %s |' % (i, esc(ti)[:70], act, fr, esc(note)))
         L.append('')
     # ---- 2.3 category dependency direction --------------------------------
@@ -525,7 +525,7 @@ def build():
     L.append('')
     L.append('| `FW-###` | Why | Forwarding address |')
     L.append('|---|---|---|')
-    for (i, _ti, _ph, _st, _h, _stat, cat, act, note) in rows:
+    for (i, _ti, _ph, _st, _h, _stat, cat, act, note, _sp, _m) in rows:
         if act == 'Retire':
             L.append('| `%s` | %s | `%s` |' % (i, esc(note), cat))
     for (i, _ti, _fr, cat, act, note) in FILELESS:
