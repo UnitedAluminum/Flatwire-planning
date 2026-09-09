@@ -17,7 +17,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fwtasks as F  # noqa: E402
-import build_consolidation_map as CMAP  # noqa: E402
+import build_consolidation_map as CMAP
+import storymap as SM  # noqa: E402
 
 # Which streams may own a task file in each folder. RT appears in both build folders
 # on purpose: the real-time stream spans the hub and its Angular client, and three
@@ -167,6 +168,16 @@ def check(rep):
                      'the backlog carries both FW cards (%d) and FS cards (%d) - '
                      'expected only during the re-key' % (len(carded), len(fs_carded)))
     elif carded:
+        # HAZARD: reaching here means there are costed cards and ZERO task files.
+        # That is indistinguishable from "every story file was moved somewhere the
+        # loader cannot see", which is exactly what a botched restructure looks like -
+        # and it used to pass silently, this branch quietly checking cards against the
+        # map instead. Say it once, loudly, and let the map check run underneath.
+        rep.error('4-no-tasks',
+                  '%d backlog cards and ZERO task files found. Either the story files '
+                  'were deliberately retired, or they moved somewhere fwtasks.TASK_DIRS '
+                  'does not reach - check that first, because every other rule here is '
+                  'iterating over an empty list.' % len(carded))
         # The task files are retired and the cards remain as the costing ledger.
         # Their counterpart is now the consolidation map, which is the durable
         # record of every retired id. Checking them against task files here would
@@ -195,12 +206,38 @@ def check(rep):
             rep.error('5-phase', '%s names phase %r, which has no phase file'
                       % (t['id'], ph))
 
-    # --- 6. the folder a task sits in matches its stream ------------------------
+    # --- 6. the folder a task sits in matches the placement rule ----------------
+    #
+    # Two layouts, because the story-folder move is staged. Under the NEW layout the
+    # authority is storymap.destination_stream() - the same function that files the
+    # story - so the rule and the placement cannot drift, and the 18 stories whose
+    # folder disagrees with their `stream:` need no exception list. Under the legacy
+    # `*/tasks` layout the old FOLDER_STREAM table still applies.
+    #
+    # An UNRECOGNISED folder is an error either way. It used to be a silent skip:
+    # FOLDER_STREAM.get('FS-07', set()) is empty, the `and allowed` guard is False,
+    # and the rule reported nothing at all.
     for t in tasks:
-        sub = t['folder'].split('/')[-2]
+        path = t['path']
+        if path.startswith(F.FEATURE_DIR + '/'):
+            want = SM.destination_stream(t)
+            got = t.get('stream_folder', '')
+            if got not in SM.PRECEDENCE:
+                rep.error('6-folder', '%s sits in %s/, which is not a stream folder '
+                          '(expects one of %s)'
+                          % (t['id'], got, '|'.join(SM.PRECEDENCE)))
+            elif got != want:
+                rep.error('6-folder', '%s is filed under %s/ but the placement rule '
+                          'puts it in %s/ (streams %s)'
+                          % (t['id'], got, want, ','.join(t.get('streams') or [])))
+            continue
+        sub = t['folder'].split('/')[-2] if '/' in t['folder'] else t['folder']
         allowed = FOLDER_STREAM.get(sub, set())
         primary = (t.get('stream') or '').strip()
-        if primary and allowed and primary not in allowed:
+        if not allowed:
+            rep.error('6-folder', '%s sits in %s/, which is neither a stream folder '
+                      'nor under %s' % (t['id'], sub, F.FEATURE_DIR))
+        elif primary and primary not in allowed:
             # A stub this migration placed must be right; an inherited plan's
             # disagreement with its card is pre-existing and needs a human.
             if t['id'] in FOLDER_STREAM_EXCEPTIONS or t.get('has_plan') == 'true':
