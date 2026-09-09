@@ -88,24 +88,19 @@ ORDER_ALLOC = set("FW-225 FW-226 FW-227 FW-229 FW-240 FW-243".split())
 # Stories whose phase field does not decide their category. Each is a deliberate
 # override with a stated reason, which is why `category` is an independent axis
 # and is never derived from `phase`.
+#
+# There are FOUR of these, not the fourteen an earlier draft carried: ten of those
+# entries were no-ops whose phase-derived default already gave the same answer.
+# Dead configuration that looks active is a liability, so `_audit_rules()` now
+# refuses to build if any entry here fails to change the default.
 OVERRIDES = {
     # [REQ 5.6] is titled "Weld Event - captured at the Pre-Check-In station".
     # DB4 was retired 1 Aug 2026 and FR-160..175 now lands in Dashboard 2A's
     # "Mark as welded" dialog, which belongs to check-in. phase: 6 is the stale side.
     'FW-063': ('FS-07', 'weld capture is a Dashboard 2A dialog per [REQ 5.6]; phase 6 is stale'),
     'FW-222': ('FS-08', 'single-active-run index serves the active-run read'),
-    'FW-224': ('FS-11', 'FL2 pre-check-in spool staging, FR-533'),
-    'FW-230': ('FS-11', 'FL1 segment alpha is spool lifecycle'),
-    'FW-N24': ('FS-07', 'moves the three cross-database writes INTO check-in'),
     'FW-228': ('FS-12', 'footage-to-weight converter serves coil completion'),
-    'FW-254': ('FS-18', 'reason-code lookups are reference data'),
-    'FW-N31': ('FS-11', 'FL2 trace cadence'),
-    'FW-N32': ('FS-11', 'per-line out-of-spec threshold, FL2'),
-    'FW-N33': ('FS-11', 'FL2 trace panel binding'),
-    'FW-217': ('FS-19', 'OPC sidecar exists for commissioning'),
-    'FW-242': ('FS-19', 'moving FlatWireDB into ual-database is a go-live step'),
-    'FW-249': ('FS-19', 'DB-stream re-derivation is a delivery activity'),
-    'FW-250': ('FS-19', 'generator defect found during verification'),
+    'FW-254': ('FS-18', 'reason-code lookups are reference data, not schema foundation'),
 }
 
 # Ids referenced as a delivering story by [TB 11] / 11.1 / B.4 / B.5 that have NO
@@ -170,13 +165,50 @@ def hsum(values):
     return sum(int(h) for h in values if str(h).isdigit())
 
 
+def _audit_rules(by_id):
+    """Every membership rule must be live: name a real story AND change the default.
+
+    A rule that names a deleted id, or that restates the phase-derived answer, is
+    dead configuration that still reads as a decision. Ten no-op OVERRIDES entries
+    accumulated in one afternoon, so this is enforced rather than reviewed.
+    """
+    out = []
+    for tid, (cat, _why) in sorted(OVERRIDES.items()):
+        t = by_id.get(tid)
+        if t is None:
+            out.append('OVERRIDES names %s, which has no task file' % tid)
+            continue
+        if PHASE_CATEGORY.get(str(t.get('phase', '')).upper()) == cat:
+            out.append('OVERRIDES[%s] -> %s is a NO-OP; the phase default already says %s'
+                       % (tid, cat, cat))
+    for name, ids, target in (('RT_BACKBONE', RT_BACKBONE, 'FS-04'),
+                              ('SHARED_SCHEMA', SHARED_SCHEMA, 'FS-15'),
+                              ('ORDER_ALLOC', ORDER_ALLOC, 'FS-14')):
+        for tid in sorted(ids):
+            t = by_id.get(tid)
+            if t is None:
+                out.append('%s names %s, which has no task file' % (name, tid))
+                continue
+            if PHASE_CATEGORY.get(str(t.get('phase', '')).upper()) == target:
+                out.append('%s[%s] is a NO-OP; the phase default already says %s'
+                           % (name, tid, target))
+    overlap = (RT_BACKBONE & SHARED_SCHEMA) | (RT_BACKBONE & ORDER_ALLOC) \
+        | (SHARED_SCHEMA & ORDER_ALLOC)
+    if overlap:
+        out.append('a story is in two membership sets: %s' % sorted(overlap))
+    both = sorted(set(OVERRIDES) & (RT_BACKBONE | SHARED_SCHEMA | ORDER_ALLOC))
+    if both:
+        out.append('a story is both an OVERRIDE and in a membership set: %s' % both)
+    return out
+
+
 def build():
     tasks = F.load_tasks()
     backlog = F.read(F.BACKLOG)
     carded = set(re.findall(r'^######\s+(?:~~)?\*{0,2}`?(FW-N?\d+)', backlog, re.M))
     by_id = {t['id']: t for t in tasks}
 
-    problems = []
+    problems = _audit_rules(by_id)
     if carded - set(by_id):
         problems.append('cards with no task file: %s' % sorted(carded - set(by_id)))
     if set(by_id) - carded:
@@ -282,7 +314,61 @@ def build():
             L.append('| `%s` | %s | — | — | — | *no card, no task file* '
                      '| **%s** | %s — %s |' % (i, esc(ti)[:70], act, fr, esc(note)))
         L.append('')
-    L.append('### 2.3 Retired ids')
+    # ---- 2.3 category dependency direction --------------------------------
+    # Collapsing nodes in a DAG can create cycles, and it does here: the task graph
+    # carries one known cycle and the category graph carries dozens. This section
+    # exists so that fact is measured rather than rediscovered, and it is why an FS
+    # file carries NO depends_on - see the note below.
+    task_cat = dict((r[0], r[6]) for r in rows)
+    for fr in FILELESS:
+        task_cat[fr[0]] = fr[3]
+    weight = defaultdict(list)
+    intra = 0
+    for t in tasks:
+        src = task_cat.get(t['id'])
+        for d in t.get('depends_on', []):
+            dst = task_cat.get(d)
+            if dst is None:
+                continue
+            if dst == src:
+                intra += 1
+            else:
+                weight[(src, dst)].append('%s→%s' % (t['id'], d))
+    mutual = sorted({tuple(sorted(k)) for k in weight if (k[1], k[0]) in weight})
+
+    L.append('### 2.3 Category dependency direction')
+    L.append('')
+    L.append('%d task-level `depends_on` edges: **%d collapse inside a category** (which is the '
+             'fragmentation this consolidation removes) and %d cross a boundary.'
+             % (sum(len(t.get('depends_on', [])) for t in tasks), intra,
+                sum(len(v) for v in weight.values())))
+    L.append('')
+    L.append('⛔ **An `FS` file therefore carries no `depends_on`.** Collapsing nodes in a directed '
+             'acyclic graph can create cycles, and it does here: the task graph has **one** known '
+             'cycle (`FW-071`/`FW-072`, `G63`) and the category graph has **%d** mutually dependent '
+             'pairs. `check_docs.py` rule 2 treats a cycle as a hard error, so a mechanically '
+             'derived category dependency list would be unusable. Dependencies live **per activity** '
+             'inside each parent, where the original granularity keeps the graph acyclic, and the '
+             'category-level direction below is for sequencing only.' % len(mutual))
+    L.append('')
+    L.append('| Pair | Dominant direction | Back-edges against it |')
+    L.append('|---|---|---|')
+    for a, b in mutual:
+        ab, ba = weight[(a, b)], weight[(b, a)]
+        if len(ab) >= len(ba):
+            fwd, back, bl = a, b, ba
+        else:
+            fwd, back, bl = b, a, ab
+        n = max(len(ab), len(ba))
+        L.append('| `%s` ↔ `%s` | `%s` → `%s` (%d edge%s) | %d — %s |' % (
+            a, b, fwd, back, n, '' if n == 1 else 's', len(bl),
+            ', '.join('`%s`' % x for x in bl[:4]) + (' …' if len(bl) > 4 else '')))
+    L.append('')
+    L.append('*`FS-09` ↔ `FS-10` carries the pre-existing `FW-071`/`FW-072` cycle recorded as '
+             '`G63`; consolidation neither creates nor fixes it.*')
+    L.append('')
+
+    L.append('### 2.4 Retired ids')
     L.append('')
     L.append('Ids **not** absorbed into a parent. Each keeps its number forever and is never '
              'reused (`TaskIdMap.md` rule 3).')

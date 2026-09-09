@@ -210,7 +210,7 @@ than restating it.
 | `FW-237` | Service identity for unattended PLC writes | 4 | BE | 12 | blocked | Consolidate | phase 4 |
 | `FW-257` | Re-point the built ITInhibitService at the ItInhibitReason lookup | 4 | BE | 8 | not-started | Consolidate | phase 4 |
 | `FW-N01` | Dashboard 2A — Rod Pre-Check-in station | 4 | FE | 24 | not-started | Consolidate | phase 4 |
-| `FW-N24` | Move the three cross-database writes from pre-check-in to check-in | 4 | DB·BE | 16 | not-started | Consolidate | moves the three cross-database writes INTO check-in |
+| `FW-N24` | Move the three cross-database writes from pre-check-in to check-in | 4 | DB·BE | 16 | not-started | Consolidate | phase 4 |
 | `FW-063` | Weld capture — fw-mark-welded-dialog | 6 | FE | 20 | not-started | Consolidate | weld capture is a Dashboard 2A dialog per [REQ 5.6]; phase 6 is stale |
 
 #### `FS-08` — Active Run Monitoring and Gauge/Width Trace
@@ -274,13 +274,13 @@ than restating it.
 | `FW-179` | POST /checkin/spool and GET /spools | 8 | BE | 18 | not-started | Consolidate | phase 8 |
 | `FW-180` | SpoolCheckin table and the SpoolProcessing.OrderNo index | 8 | DB | 12 | in-review | Consolidate | phase 8 |
 | `FW-181` | The shared trace path — the no-measurement state | 8 | RT | 4 | not-started | Consolidate | phase 8 |
-| `FW-224` | FL2 pre-check-in - spool staging | 8 | BE·FE | 20 | blocked | Consolidate | FL2 pre-check-in spool staging, FR-533 |
-| `FW-230` | FL1 segment alpha — one namespace | 8 | DB·BE | 14 | in-review | Consolidate | FL1 segment alpha is spool lifecycle |
+| `FW-224` | FL2 pre-check-in - spool staging | 8 | BE·FE | 20 | blocked | Consolidate | phase 8 |
+| `FW-230` | FL1 segment alpha — one namespace | 8 | DB·BE | 14 | in-review | Consolidate | phase 8 |
 | `FW-N02` | Spool completion weight milestones and machine-stop confirmation | 8 | RT | 8 | blocked | Consolidate | phase 8 |
 | `FW-N29` | FL2 live gauge and width trace at 4 s | 8 | RT | 8 | not-started | Consolidate | phase 8 |
-| `FW-N31` | FL2 trace cadence - honest gaps and visible freshness at 4 s | 8 | FE | 8 | not-started | Consolidate | FL2 trace cadence |
-| `FW-N32` | Out-of-spec threshold becomes per-line, and the tolerance alert reache | 8 | BE·FE | 12 | not-started | Consolidate | per-line out-of-spec threshold, FL2 |
-| `FW-N33` | Bind isLive on the trace panel - stop rebuilding the chart every frame | 8 | FE | 2 | not-started | Consolidate | FL2 trace panel binding |
+| `FW-N31` | FL2 trace cadence - honest gaps and visible freshness at 4 s | 8 | FE | 8 | not-started | Consolidate | phase 8 |
+| `FW-N32` | Out-of-spec threshold becomes per-line, and the tolerance alert reache | 8 | BE·FE | 12 | not-started | Consolidate | phase 8 |
+| `FW-N33` | Bind isLive on the trace panel - stop rebuilding the chart every frame | 8 | FE | 2 | not-started | Consolidate | phase 8 |
 
 #### `FS-12` — Output Completion, Labelling and Packing
 
@@ -354,7 +354,7 @@ than restating it.
 
 | `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
 |---|---|---|---|---:|---|---|---|
-| `FW-254` | Reason-code query endpoints — the three seeded client vocabularies | 1C | BE | 9 | not-started | Consolidate | reason-code lookups are reference data |
+| `FW-254` | Reason-code query endpoints — the three seeded client vocabularies | 1C | BE | 9 | not-started | Consolidate | reason-code lookups are reference data, not schema foundation |
 | `FW-003` | Machine template tabs — register FL1, FL2, FL3 | 13 | FE | 12 | not-started | Consolidate | phase 13 |
 | `FW-054` | Alloys — Material Type across Properties, Reduction Rules and Vendor O | 13 | FE | 12 | not-started | Consolidate | phase 13 |
 | `FW-194` | Alloy lookup admin grid | 13 | FE | 20 | not-started | Consolidate | phase 13 |
@@ -381,10 +381,10 @@ than restating it.
 | `FW-123` | UAT and stakeholder sign-off | 14 | BA·QA | 56 | not-started | Consolidate | phase 14 |
 | `FW-200` | PLC commissioning support | 14 | RT | 40 | not-started | Consolidate | phase 14 |
 | `FW-201` | Defect allowance and renamed-column regression | 14 | FE·BE·DB·QA | 56 | not-started | Consolidate | phase 14 |
-| `FW-217` | OPC sidecar adapter — the models behind a test-only OPC UA server | 14 | RT | 24 | done | Consolidate | OPC sidecar exists for commissioning |
-| `FW-242` | Move FlatWireDB into the ual-database repository | 14 | DB | 16 | not-started | Consolidate | moving FlatWireDB into ual-database is a go-live step |
-| `FW-249` | Re-derive the DB-stream total on the current basis | 14 | BA | 8 | not-started | Consolidate | DB-stream re-derivation is a delivery activity |
-| `FW-250` | build_development_plan_xlsx.py silently drops every multi-stream story | 14 | DB | 9 | not-started | Consolidate | generator defect found during verification |
+| `FW-217` | OPC sidecar adapter — the models behind a test-only OPC UA server | 14 | RT | 24 | done | Consolidate | phase 14 |
+| `FW-242` | Move FlatWireDB into the ual-database repository | 14 | DB | 16 | not-started | Consolidate | phase 14 |
+| `FW-249` | Re-derive the DB-stream total on the current basis | 14 | BA | 8 | not-started | Consolidate | phase 14 |
+| `FW-250` | build_development_plan_xlsx.py silently drops every multi-stream story | 14 | DB | 9 | not-started | Consolidate | phase 14 |
 
 #### `FS-20` — Unscheduled and Unhosted Requirements
 
@@ -396,7 +396,33 @@ than restating it.
 | `FW-N11` | Operator session | — | — | — | *no card, no task file* | **Retain** | FR-001-022 — Cited against Phase 6, still uncosted (B.4) |
 | `FW-N12` | De-stub pass | — | — | — | *no card, no task file* | **Retire** | - — Absorbed in practice by FW-166 and FW-201 (B.4) |
 
-### 2.3 Retired ids
+### 2.3 Category dependency direction
+
+396 task-level `depends_on` edges: **165 collapse inside a category** (which is the fragmentation this consolidation removes) and 231 cross a boundary.
+
+⛔ **An `FS` file therefore carries no `depends_on`.** Collapsing nodes in a directed acyclic graph can create cycles, and it does here: the task graph has **one** known cycle (`FW-071`/`FW-072`, `G63`) and the category graph has **15** mutually dependent pairs. `check_docs.py` rule 2 treats a cycle as a hard error, so a mechanically derived category dependency list would be unusable. Dependencies live **per activity** inside each parent, where the original granularity keeps the graph acyclic, and the category-level direction below is for sequencing only.
+
+| Pair | Dominant direction | Back-edges against it |
+|---|---|---|
+| `FS-02` ↔ `FS-03` | `FS-02` → `FS-03` (5 edges) | 1 — `FW-246→FW-147` |
+| `FS-02` ↔ `FS-04` | `FS-04` → `FS-02` (14 edges) | 4 — `FW-208→FW-080`, `FW-234→FW-151`, `FW-265→FW-151`, `FW-266→FW-210` |
+| `FS-03` ↔ `FS-09` | `FS-09` → `FS-03` (7 edges) | 1 — `FW-245→FW-168` |
+| `FS-03` ↔ `FS-14` | `FS-03` → `FS-14` (1 edge) | 1 — `FW-243→FW-007` |
+| `FS-03` ↔ `FS-18` | `FS-18` → `FS-03` (11 edges) | 1 — `FW-241→FW-003` |
+| `FS-04` ↔ `FS-07` | `FS-07` → `FS-04` (6 edges) | 1 — `FW-082→FW-157` |
+| `FS-04` ↔ `FS-18` | `FS-04` → `FS-18` (1 edge) | 1 — `FW-198→FW-149` |
+| `FS-04` ↔ `FS-19` | `FS-19` → `FS-04` (5 edges) | 1 — `FW-215→FW-217` |
+| `FS-07` ↔ `FS-09` | `FS-07` → `FS-09` (2 edges) | 1 — `FW-N27→FW-158` |
+| `FS-07` ↔ `FS-15` | `FS-15` → `FS-07` (5 edges) | 1 — `FW-N24→FW-220` |
+| `FS-08` ↔ `FS-09` | `FS-09` → `FS-08` (3 edges) | 1 — `FW-202→FW-171` |
+| `FS-08` ↔ `FS-11` | `FS-11` → `FS-08` (6 edges) | 1 — `FW-N16→FW-230` |
+| `FS-08` ↔ `FS-15` | `FS-15` → `FS-08` (2 edges) | 1 — `FW-N16→FW-231` |
+| `FS-09` ↔ `FS-10` | `FS-09` → `FS-10` (3 edges) | 1 — `FW-072→FW-071` |
+| `FS-09` ↔ `FS-18` | `FS-09` → `FS-18` (3 edges) | 3 — `FW-253→FW-252`, `FW-261→FW-260`, `FW-270→FW-269` |
+
+*`FS-09` ↔ `FS-10` carries the pre-existing `FW-071`/`FW-072` cycle recorded as `G63`; consolidation neither creates nor fixes it.*
+
+### 2.4 Retired ids
 
 Ids **not** absorbed into a parent. Each keeps its number forever and is never reused (`TaskIdMap.md` rule 3).
 
