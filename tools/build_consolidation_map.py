@@ -214,11 +214,24 @@ def read_expected_counts():
 
     build_features.py needs to tell "this category never had a story" from "its
     task files have been retired", and only the map can answer that once the
-    files are gone. Parsed from the generated summary so it survives them.
+    files are gone.
+
+    Bounded to section 2.1 deliberately. Section 2.5's per-category table has the
+    same row shape - a backticked FS id followed by integers - so an unbounded
+    scan matched both and dict() kept the LAST, reading a criterion count as a
+    story count. Two categories then rendered as "no story maps here" when they
+    had four and seven stories. Anything added below 2.1 with that shape would
+    do it again.
     """
+    text = F.read(OUT)
+    start = text.find('### 2.1')
+    if start < 0:
+        return []
+    end = text.find('### 2.2', start)
+    block = text[start:end if end > 0 else len(text)]
     out = []
-    for line in F.read(OUT).split('\n'):
-        m = re.match(r'^\|\s*`(FS-\d+)`\s*\|[^|]*\|[^|]*\|\s*(\d+)\s*\|', line)
+    for line in block.split(chr(10)):
+        m = re.match(r'^[|]\s*`(FS-\d+)`\s*[|][^|]*[|][^|]*[|]\s*(\d+)\s*[|]', line)
         if m:
             out.append((m.group(1), int(m.group(2))))
     return out

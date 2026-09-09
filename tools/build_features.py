@@ -279,6 +279,18 @@ def build():
     # What the MAP says each category absorbed. Read from the map rather than the
     # task files so it still answers correctly once the files are retired.
     expected = dict(M.read_expected_counts())
+    # A silently-wrong expected count makes a populated category render as
+    # "no story maps here", which is how two of them lost their activity table.
+    # The map's own summary must cover every category and sum to the task count.
+    if expected:
+        miss = [c for c in M.CATEGORIES if c not in expected]
+        if miss:
+            print('build_features: REFUSING - the map summary has no row for %s' % miss)
+            return None, None
+        if tasks and sum(expected.values()) != len(tasks):
+            print('build_features: REFUSING - map summary sums to %d, task files number %d'
+                  % (sum(expected.values()), len(tasks)))
+            return None, None
 
     # Per category: derive from task files while they exist, else parse the block.
     acts, derived_from_tasks = {}, {}
