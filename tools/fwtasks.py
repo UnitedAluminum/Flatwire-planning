@@ -9,7 +9,22 @@ so a YAML library would be a dependency bought for no benefit.
 import os
 import re
 
-TASK_DIRS = ['30-database/tasks', '40-backend/tasks', '50-frontend/tasks',
+# Where a story file may live. Searched RECURSIVELY and covering BOTH layouts on
+# purpose, so the tree can be restructured without a window in which load_tasks()
+# returns nothing.
+#
+#     That window is the danger. This loader was five literal directories read with
+#     a non-recursive os.listdir(), and a missing directory is skipped rather than
+#     raised - so moving the files anywhere nested made load_tasks() return [], and
+#     every consumer then took its "the task files were retired" fallback. check_docs
+#     exits 0 having asserted nothing about all 204 files; build_status and
+#     build_features regenerate into retired mode. The failure is SILENT GREEN.
+#
+# `10-requirements/features` holds the story folders <category>/<STREAM>/FW-###.md;
+# the five `*/tasks` entries are the pre-9-Sep-2026 layout, kept until the move is
+# committed and verified. Keep this list in step with tools/hooks/pre-commit's grep.
+TASK_DIRS = ['10-requirements/features',
+             '30-database/tasks', '40-backend/tasks', '50-frontend/tasks',
              '70-testing/tasks', '60-delivery/tasks']
 # The consolidated parent stories. Deliberately NOT in TASK_DIRS: an FS file is
 # not a task, has no status of its own, and must not reach the phase board or the
@@ -93,21 +108,32 @@ def parse_front(block):
 def load_tasks():
     """All task files, as dicts with a `path` key. Sorted by numeric id."""
     tasks = []
+    seen = set()
     for d in TASK_DIRS:
         full = os.path.join(ROOT, d)
         if not os.path.isdir(full):
             continue
-        for fn in sorted(os.listdir(full)):
-            if not re.match(r'^FW-N?\d+\.md$', fn):
-                continue
-            rel = d + '/' + fn
-            m = RE_FRONT.match(read(rel))
-            if not m:
-                continue
-            t = parse_front(m.group(1))
-            t['path'] = rel
-            t['folder'] = d
-            tasks.append(t)
+        for dirpath, dirnames, filenames in os.walk(full):
+            dirnames[:] = [x for x in dirnames if not x.startswith('.')]
+            for fn in sorted(filenames):
+                if not re.match(r'^FW-N?\d+\.md$', fn):
+                    continue
+                rel = os.path.relpath(os.path.join(dirpath, fn),
+                                      ROOT).replace(chr(92), '/')
+                if rel in seen:
+                    continue
+                m = RE_FRONT.match(read(rel))
+                if not m:
+                    continue
+                seen.add(rel)
+                t = parse_front(m.group(1))
+                t['path'] = rel
+                t['folder'] = os.path.dirname(rel)
+                # The stream segment, stated rather than reverse-engineered. Rule 6
+                # used to take folder.split('/')[-2], which silently yields the
+                # CATEGORY under the nested layout and made the rule a no-op.
+                t['stream_folder'] = os.path.basename(os.path.dirname(rel))
+                tasks.append(t)
 
     def sortkey(t):
         i = t.get('id', '')
