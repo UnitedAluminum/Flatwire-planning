@@ -8,10 +8,23 @@
 
 ---
 
-⛔ **`95-archive/` is not citable by repository rule, and that applies here.** These 108 files were
-`{30,40,50,60,70}-*/tasks/FW-###.md` — one implementation plan per story, and the unit of planning
-until 9 September 2026. They are **moved, not destroyed**: each plan's build order, the decisions it
-made and its verification notes are all still readable.
+⛔ **`95-archive/` is not citable by repository rule, and that applies here.** These **125** files
+were `{30,40,50,60,70}-*/tasks/FW-###.md` — one implementation plan per story, and the unit of
+planning until 9 September 2026. They are **moved, not destroyed**: each plan's build order, the
+decisions it made and its verification notes are all still readable.
+
+⚠ **125, not the 108 plans that carried `has_plan: true`.** Seventeen more were archived because a
+safety assertion caught them holding real content behind `has_plan: false` — `FW-062` was 13,224
+bytes with a section headed *"Added by `D-55`, 7 September 2026 — the machine-driven contract"*. A
+further 79 stubs whose only headings were `# FW-###` and `## 1. What to build` were deleted rather
+than archived, because there was nothing in them to keep.
+
+⛔ **`G126` — fourteen of these plans carry a correction they owed another document, 97 rows in
+all, and archiving made every one of them non-citable.** Seven that corrected a *live card's*
+acceptance criterion were lifted onto the card on 9 Sep 2026 — `FW-136`, `FW-141`, `FW-142`,
+`FW-145`, `FW-147`, `FW-151`, `FW-205`. **The remaining rows are unreviewed**, and whether each was
+already applied is unknown. If you find one that still matters, **restate it in a citable document
+or re-establish it — do not cite this folder.**
 
 **What replaced them**
 

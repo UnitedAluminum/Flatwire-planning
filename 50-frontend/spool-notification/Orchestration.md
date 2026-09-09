@@ -47,7 +47,12 @@ against the built Angular library and the mockup. **64 stories, 0 delivered.**
 > ⛔ **This folder holds no task files, and that is deliberate.** `tools/fwtasks.py`'s
 > `load_tasks()` reads a fixed `TASK_DIRS` list with `os.listdir()` — **non-recursive** — so an
 > `FW-*.md` placed here would be invisible to [`STATUS.md`](../../STATUS.md) and to
-> `check_docs.py`. Task files stay flat in `{30,40,50,60,70}-*/tasks/`.
+> `check_docs.py`. ⚠ **Restated 9 Sep 2026:** this used to end *"task files stay flat in
+> `{30,40,50,60,70}-*/tasks/`"*. **There are no task files anywhere any more** — the `FS-##`
+> consolidation retired all 204. A work item is now a `######` card in
+> [`TaskBreakdown.md`](../../60-delivery/TaskBreakdown.md) plus an activity row in its owning
+> parent under [`10-requirements/features/`](../../10-requirements/features/README.md), which is
+> where this file's story links now point.
 
 ## The folder
 

@@ -18,12 +18,14 @@ by looking for `.git`, so they work from any working directory.
 
 | Script | Reads | Writes | Fails on |
 |---|---|---|---|
-| [`build_status.py`](build_status.py) | every `*/tasks/FW-*.md` front-matter, the phase files, all four registers | [`STATUS.md`](../STATUS.md) | `--check`: STATUS.md is stale |
+| [`build_status.py`](build_status.py) | `fwtasks.load_units()` — the 20 parents' activity tables joined to [`[SCM]`](../90-registers/StoryConsolidationMap.md), *or* `*/tasks/FW-*.md` front-matter while any exists — plus the phase files and all four registers | [`STATUS.md`](../STATUS.md) | `--check`: STATUS.md is stale. `--dryrun-retired` compared both sources before the task files went; it now reports there is nothing left to compare |
+| [`build_features.py`](build_features.py) | the 20 parents, `[SCM]`, all four registers | [`FEATURES.md`](../FEATURES.md) **and** each parent's `absorbed-stories` and `blockers` marker blocks | `--check`: the board or any block is stale. `--selftest`: an activity table does not round-trip — **and a zero total is a failure**, because seeded only from `load_tasks()` this check went vacuous the moment the task files were deleted |
+| [`build_consolidation_map.py`](build_consolidation_map.py) | — | — | ⛔ **FROZEN.** It generated `[SCM]` *from* the task files, so with those retired it prints the freeze and exits 0. `[SCM]` is now hand-owned; correct it by editing it. To regenerate, restore the task files from tag `pre-fs-consolidation` |
 | [`check_docs.py`](check_docs.py) | the same | nothing — reports | an unknown status, a dependency cycle, a blocker id in no register, backlog↔task drift, a task naming a phase that has no file, a stub in the wrong stream's folder |
-| [`linkcheck.py`](linkcheck.py) | every `.md` `.sql` `.html` `.js` `.py` | `_linkcheck_baseline.json` | a reference that resolved in the baseline and no longer does |
-| [`stamp_trial_status.py`](stamp_trial_status.py) | every `*/tasks/FW-*.md` front-matter | [`40-backend/tasks/TrialOrchestration.md`](../40-backend/tasks/TrialOrchestration.md) §2's sprint grids — **only** the `BE`/`FE`/`RT`/`DB` cells | `--check`: a glyph no longer matches its card's `status:`, or a grid names a story with no task file |
-| [`fwtasks.py`](fwtasks.py) | — | — | **Not a script** — the shared reader both generators import, so the board and the checker can never disagree about what a task file says |
-| [`init_tasks.py`](init_tasks.py) | `../60-delivery/TaskBreakdown.md` §7 | `*/tasks/FW-*.md` | — *(one-off, Stage 1; safe to re-run — it preserves bodies and rewrites only front-matter)* |
+| [`linkcheck.py`](linkcheck.py) | every `.md` `.sql` `.html` `.js` `.py` | `_linkcheck_baseline.json` | a reference that resolved in the baseline and no longer does. ⚠ **Re-pinned 9 Sep 2026, 4,120 → 3,304 pairs.** The pre-migration baseline is kept as `_linkcheck_baseline_pre-fs.json` and the delta with its assertions as `_linkcheck_delta_2026-09-09.txt`, because re-pinning makes a delta unverifiable afterwards |
+| [`stamp_trial_status.py`](stamp_trial_status.py) | `fwtasks.load_activity_status()` — the parents' activity tables, so it survives the task files' retirement | [`40-backend/tasks/TrialOrchestration.md`](../40-backend/tasks/TrialOrchestration.md) §2's sprint grids — **only** the `BE`/`FE`/`RT`/`DB` cells | `--check`: a glyph no longer matches its card's `status:`, or a grid names a story with no task file |
+| [`fwtasks.py`](fwtasks.py) | — | — | **Not a script** — the shared reader every generator and the checker import, so they can never disagree about what a story says. ⚠ **`load_units()` is the safety seam:** it returns `load_tasks()` unchanged while task files exist, so `STATUS.md` stayed byte-identical across the migration, and reconstitutes the same row shape from `[SCM]` + the activity tables once they are gone |
+| [`init_tasks.py`](init_tasks.py) | `../60-delivery/TaskBreakdown.md` §7 | `*/tasks/FW-*.md` | ⛔ **DEAD — DO NOT REPAIR AND DO NOT RUN.** It reads a pre-29-Aug path and raises `FileNotFoundError` on the first line of `main()`. **A repaired version would recreate all 204 task files from the backlog and undo the `FS-##` consolidation.** *(This row read "one-off, Stage 1; safe to re-run — it preserves bodies and rewrites only front-matter" until 9 Sep 2026, which was true only while the task files were the unit of work.)* If a generator is ever needed, write a new one-way tool |
 | [`fix_task_links.py`](fix_task_links.py) | every text file | the same | the output-coil alpha count changing |
 | [`fix_changelog_anchors.py`](fix_changelog_anchors.py) | `CHANGELOG.md` | the same | — *(reports anchors that match no heading)* |
 | [`pathmap.py`](pathmap.py) | `git ls-files` | — | a destination collision, which would silently lose a file |
@@ -35,9 +37,11 @@ by looking for `.git`, so they work from any working directory.
 ## The daily loop
 
 ```bash
-python tools/build_status.py     # regenerate the board after editing a task file
-python tools/stamp_trial_status.py   # re-stamp the trial grids from the same front-matter
-python tools/check_docs.py       # would CI pass?
+python tools/build_status.py     # the phase board, after editing a parent's activity row
+python tools/build_features.py   # the feature board and the parents' generated blocks
+python tools/build_features.py --selftest   # the activity tables still round-trip
+python tools/stamp_trial_status.py   # re-stamp the trial grids from the same status
+python tools/check_docs.py       # would CI pass?  --strict is green; the floor is 0
 python tools/linkcheck.py        # did I break a path reference?
 ```
 

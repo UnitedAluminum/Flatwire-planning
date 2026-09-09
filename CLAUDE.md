@@ -54,8 +54,9 @@ the rule that stops scope changes moving files — under the old shape Phase 9 a
   `[SCM]`, which is also the id-retirement ledger: every `FW-###` is retired **with a forwarding
   address** and no number is ever reused.
 - **[`STATUS.md`](STATUS.md) and [`FEATURES.md`](FEATURES.md) are generated.** Never edit either.
-  `STATUS.md` is by phase, `FEATURES.md` by feature. Change the task file, then run
-  `python tools/build_status.py` **and** `python tools/build_features.py`.
+  `STATUS.md` is by phase, `FEATURES.md` by feature. ⚠ **Change the activity row in the owning
+  parent** — that table is the single writable home of status now that the task files are retired —
+  then run `python tools/build_status.py` **and** `python tools/build_features.py`.
 - **`95-archive/` is not citable.** Nothing there is a requirement, ever. ⚠ **That is why each
   parent carries its absorbed stories' measured verification evidence** — generated, so it survives
   those plans being archived.

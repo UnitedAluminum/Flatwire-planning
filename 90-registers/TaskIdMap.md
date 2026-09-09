@@ -18,8 +18,9 @@ Task ids stay in the `FW-###` format until JIRA issues exist. At that point `FW-
 nothing else** — it is the only place the pairing is recorded, so a story's JIRA key is
 never copied into a second document that can drift from it.
 
-Until a row exists here, a task file's `jira:` field stays empty and its `id:` stays
-`FW-###`. Nothing else in the repository changes.
+Until a row exists here, the owning parent's `jira:` field stays empty and every `FW-###`
+stays `FW-###`. Nothing else in the repository changes. *(This read "a task file's `jira:`
+field" until 9 Sep 2026; the task files are retired and the parents carry that field now.)*
 
 ---
 
