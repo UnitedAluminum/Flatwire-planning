@@ -110,11 +110,11 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 | 5.28 | Rod ↔ Order Allocation, Sequencing and Handoff | FR-541–561 | 21 | `FS-14` |
 | 5.29 | FL2 Pre-Check-In — Validating the Next Spool | FR-533–540 | 8 | `FS-11` |
 | 5.30 | Welded-Coil Part Alphas and the Shared Coil Ma | FR-561–570 | 10 | `FS-15` |
-| 5.10 | Die Management - tooling inventory *(moved to MVP-2)* | FR-240-255 | 16 | `FS-18` |
-| 5.18 | Pass Schedule Management - DB9 *(moved to MVP-2)* | FR-360-391 | 28 | `FS-05` |
-| 5.19 | Pass Schedule List - DB9A *(moved to MVP-2)* | FR-400-410 | 11 | `FS-05` |
-| 5.23 | Shift Summary - DB10 *(moved to MVP-2)* | FR-480-490 | 11 | `FS-16` |
-| 5.24 | OEE Dashboard *(moved to MVP-2)* | FR-500-508 | 9 | `FS-20` |
+| 5.10 | Die Management - tooling inventory — *not declared in `[REQ]`; **MVP-1** by `Q91`, 2 Sep 2026 - `DieManagement.md` v1.2 says so in its own header. ⚠ `[REQ]` still folds this section into its MVP-2 index row, so **these 16 MVP-1 requirements have no `[REQ]` section at all*** | FR-240-255 | 16 | `FS-18` |
+| 5.18 | Pass Schedule Management - DB9 — *not declared in `[REQ]`; MVP-2* | FR-360-391 | 28 | `FS-05` |
+| 5.19 | Pass Schedule List - DB9A — *not declared in `[REQ]`; MVP-2* | FR-400-410 | 11 | `FS-05` |
+| 5.23 | Shift Summary - DB10 — *not declared in `[REQ]`; MVP-2* | FR-480-490 | 11 | `FS-16` |
+| 5.24 | OEE Dashboard — *not declared in `[REQ]`; MVP-2* | FR-500-508 | 9 | `FS-20` |
 | | **Total mapped** | | **404** | |
 
 ### 2.3 The map, by category
@@ -409,7 +409,7 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 | `FW-261` | Tooling Inventory - the fourth Choose Tool option and the roll-set gri | 13 | FE | 12 | not-started | Consolidate | phase 13 |
 | `FW-270` | Tooling Inventory - the Edgers tool option and its gauge grid | 13 | FE | 12 | not-started | Consolidate | phase 13 |
 | `FW-N28` | Each die carries a unique identifier for per-die footage tracking | 13 | DB | 8 | not-started | Consolidate | phase 13 |
-| `FW-N07` | Die master table | — | — | — | *no card, no task file* | **Retain** | FR-240-255 — Wholly MVP-2, uncosted (B.4) |
+| `FW-N07` | Die master table | — | — | — | *no card, no task file* | **Retain** | FR-240-255 — CONTESTED. B.4 says "wholly MVP-2, uncosted"; `phase-13` says `Q91` (2 Sep 2026) returned the die domain to MVP-1 and settled the split as table=Must, screen=Should, **both in scope**, with `ToolingInventoryDie` and `DieHistory` already built in Phase 1. B.4 is the stale side. Recorded, not repaired |
 
 #### `FS-19` — Integration Testing, Commissioning and Go-Live
 

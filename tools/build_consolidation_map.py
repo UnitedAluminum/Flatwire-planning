@@ -119,7 +119,10 @@ FILELESS = [
      'MVP-2 (B.5)'),
     ('FW-069', 'Shift summary', 'FR-480-490', 'FS-16', 'Retain', 'MVP-2 (B.5)'),
     ('FW-N07', 'Die master table', 'FR-240-255', 'FS-18', 'Retain',
-     'Wholly MVP-2, uncosted (B.4)'),
+     'CONTESTED. B.4 says "wholly MVP-2, uncosted"; `phase-13` says `Q91` (2 Sep 2026) '
+     'returned the die domain to MVP-1 and settled the split as table=Must, screen=Should, '
+     '**both in scope**, with `ToolingInventoryDie` and `DieHistory` already built in Phase 1. '
+     'B.4 is the stale side. Recorded, not repaired'),
     ('FW-N08', 'Wire break', 'FR-280-282', 'FS-20', 'Retain',
      'BLOCKED, no persistence target. B.4 cites G34 and 11.1 cites OI-13 - '
      'a pre-existing contradiction, not resolved here'),
@@ -148,21 +151,28 @@ SECTION_CATEGORY = {
     '5.30': 'FS-15',
 }
 
-# Sections whose [REQ] heading was REMOVED when the section moved to MVP-2, but
-# whose FR range and owning category are both real - the ranges still appear in
-# [TB 11]'s matrix. They have no heading to measure, so the range is quoted from
-# the matrix and the row is marked MVP-2.
-#   section: (category, FR range as [TB 11] states it, count, subject)
+# Sections whose requirements are NOT DECLARED in [REQ] any more, though the range
+# and its owning category are both real - the ranges still appear in [TB 11]'s
+# matrix. There is no heading to measure, so the range is quoted from the matrix.
+#
+# The scope note is per entry and is NOT uniformly "MVP-2": 5.10's requirements
+# were returned to MVP-1 by Q91 on 2 Sep 2026 and DieManagement.md v1.2 carries
+# "Status: MVP-1" in its own header, while [REQ]'s index row still folds 5.10 in
+# with the deferred set. That staleness is recorded here, not repaired.
+#   section: (category, FR range as [TB 11] states it, count, subject, scope note)
 SECTION_MVP2 = {
     # 5.10 still HAS a heading, but only because that heading was repurposed as the
     # index row for the whole moved set ("5.10 - 5.18 - 5.19 - 5.23 - 5.24 - moved to
     # MVP-2"). It declares no requirement of its own, so it belongs here and not in
     # SECTION_EXCLUDED - without this row, Die Management's FR-240-255 has no category.
-    '5.10': ('FS-18', 'FR-240-255', 16, 'Die Management - tooling inventory'),
-    '5.18': ('FS-05', 'FR-360-391', 28, 'Pass Schedule Management - DB9'),
-    '5.19': ('FS-05', 'FR-400-410', 11, 'Pass Schedule List - DB9A'),
-    '5.23': ('FS-16', 'FR-480-490', 11, 'Shift Summary - DB10'),
-    '5.24': ('FS-20', 'FR-500-508', 9, 'OEE Dashboard'),
+    '5.10': ('FS-18', 'FR-240-255', 16, 'Die Management - tooling inventory',
+             '**MVP-1** by `Q91`, 2 Sep 2026 - `DieManagement.md` v1.2 says so in its own '
+             'header. ⚠ `[REQ]` still folds this section into its MVP-2 index row, so '
+             '**these 16 MVP-1 requirements have no `[REQ]` section at all**'),
+    '5.18': ('FS-05', 'FR-360-391', 28, 'Pass Schedule Management - DB9', 'MVP-2'),
+    '5.19': ('FS-05', 'FR-400-410', 11, 'Pass Schedule List - DB9A', 'MVP-2'),
+    '5.23': ('FS-16', 'FR-480-490', 11, 'Shift Summary - DB10', 'MVP-2'),
+    '5.24': ('FS-20', 'FR-500-508', 9, 'OEE Dashboard', 'MVP-2'),
 }
 
 # Sections with no owning category, each for a stated reason.
@@ -274,7 +284,7 @@ def _audit_rules(by_id):
     for num in sorted(SECTION_EXCLUDED):
         if num not in present:
             out.append('SECTION_EXCLUDED names [REQ] section %s, which has no heading' % num)
-    for num, (cat, _rng, _n, _subj) in sorted(SECTION_MVP2.items()):
+    for num, (cat, _rng, _n, _subj, _note) in sorted(SECTION_MVP2.items()):
         if cat not in CATEGORIES:
             out.append('SECTION_MVP2[%s] -> unknown category %s' % (num, cat))
         if live_by_section.get(num):
@@ -403,10 +413,10 @@ def build():
         L.append('| %s | %s | %s | %d | `%s` |'
                  % (num, esc(title)[:46], rng, len(live), cat))
     for num in sorted(SECTION_MVP2, key=float):
-        cat, rng, n, subj = SECTION_MVP2[num]
+        cat, rng, n, subj, note = SECTION_MVP2[num]
         live_total += n
-        L.append('| %s | %s *(moved to MVP-2)* | %s | %d | `%s` |'
-                 % (num, esc(subj), rng, n, cat))
+        L.append('| %s | %s — *not declared in `[REQ]`; %s* | %s | %d | `%s` |'
+                 % (num, esc(subj), note, rng, n, cat))
     L.append('| | **Total mapped** | | **%d** | |' % live_total)
     L.append('')
 
