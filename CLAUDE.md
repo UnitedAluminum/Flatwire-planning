@@ -33,17 +33,32 @@ When asked to "implement" a feature, the code goes in those repos, using this re
 00-overview/     10-requirements/   20-architecture/   30-database/
 40-backend/      50-frontend/       60-delivery/       70-testing/
 80-operations/   90-registers/      95-archive/        tools/  deliverables/
+
+10-requirements/features/   the 20 FS-## consolidated parent stories
 ```
 
 **Subject is the folder. MVP, phase, stream, status and owner are *fields*, not paths.** That is
 the rule that stops scope changes moving files — under the old shape Phase 9 and the three
 `PassSchedule*` tables each moved between `MVP-1/` and `MVP-2/` and back.
 
+- **A functional area is one file**: [`10-requirements/features/FS-##-*.md`](10-requirements/features/README.md).
+  Twenty consolidated parent stories, each the single source of truth for what that functionality
+  is, what it requires, where it stands, what is open and what a change to it touches. ⚠ **Derived
+  — they lose to every specification.** Rules, including what a parent may *assert* versus *cite*,
+  are in that folder's `README.md`. ⛔ A parent carries **no `status:`, no `hours:` and no
+  `depends_on:`** — enforced by `check_docs.py` rule 7.
 - **A task is one file**: `{30,40,50,60,70}-*/tasks/FW-###.md`, front-matter above the `---`,
-  the developer's plan below.
-- **[`STATUS.md`](STATUS.md) is generated.** Never edit it. Change the task file, run
-  `python tools/build_status.py`.
-- **`95-archive/` is not citable.** Nothing there is a requirement, ever.
+  the developer's plan below. ⚠ **A story is no longer the unit of planning** — that is its
+  category. These are the **build record**, and the writable home of `status:`.
+- **Which category a story became part of** is [`90-registers/StoryConsolidationMap.md`](90-registers/StoryConsolidationMap.md)
+  `[SCM]`, which is also the id-retirement ledger: every `FW-###` is retired **with a forwarding
+  address** and no number is ever reused.
+- **[`STATUS.md`](STATUS.md) and [`FEATURES.md`](FEATURES.md) are generated.** Never edit either.
+  `STATUS.md` is by phase, `FEATURES.md` by feature. Change the task file, then run
+  `python tools/build_status.py` **and** `python tools/build_features.py`.
+- **`95-archive/` is not citable.** Nothing there is a requirement, ever. ⚠ **That is why each
+  parent carries its absorbed stories' measured verification evidence** — generated, so it survives
+  those plans being archived.
 
 ---
 
@@ -291,10 +306,17 @@ field to it breaks slitter** — new fields stay optional.
 ## Before you finish
 
 ```bash
-python tools/build_status.py     # regenerate STATUS.md
-python tools/check_docs.py       # task <-> phase <-> register integrity
-python tools/linkcheck.py        # no path reference broke
+python tools/build_status.py             # regenerate STATUS.md (by phase)
+python tools/build_features.py           # regenerate FEATURES.md and the parents' blocks
+python tools/build_consolidation_map.py  # regenerate [SCM] - only if membership changed
+python tools/check_docs.py               # task <-> phase <-> register <-> parent integrity
+python tools/linkcheck.py                # no path reference broke
 ```
+
+⚠ **`check_docs.py` reports 187 warnings and 0 errors as its floor.** Compare the *warning set*,
+not a green/red result: `--strict` fails on the pre-existing 187. A new rule may legitimately raise
+the floor — rule `1-blocked-no-id` raised it from 178 by making nine already-blocked stories
+visible.
 
 `tools/hooks/pre-commit` runs the first two automatically once installed. See
 [`tools/README.md`](tools/README.md) — including the **cp1252 heredoc trap**, which silently

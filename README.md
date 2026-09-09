@@ -13,6 +13,9 @@ library), and this repository is the specification they are built from.
 |---|---|
 | **What are we building?** | [`00-overview/VisionAndScope.md`](00-overview/VisionAndScope.md) `[VS]`, then [`BusinessRequirements.md`](10-requirements/BusinessRequirements.md) `[REQ]` — the numbered `FR-###` register |
 | **What needs to be done?** | **[`STATUS.md`](STATUS.md)** — every task, grouped by phase |
+| **What is this functionality, and what does a change to it touch?** | **[`10-requirements/features/`](10-requirements/features/README.md)** — the 20 consolidated parent stories `FS-01`–`FS-20`. One file per functional area, and the single source of truth for its requirements, scope, open items, dependencies and change-impact |
+| **How is each *feature* progressing?** | **[`FEATURES.md`](FEATURES.md)** — the category board. `STATUS.md` answers *where are we by phase*; this answers *where are we by feature* |
+| **Which category did `FW-157` become part of?** | [`90-registers/StoryConsolidationMap.md`](90-registers/StoryConsolidationMap.md) `[SCM]` — the story → category ledger and the id-retirement register |
 | **Who is doing it?** | [`STATUS.md`](STATUS.md), `Owner` column. It is set in the task file, nowhere else |
 | **What is in progress / blocked / pending / done?** | [`STATUS.md`](STATUS.md) — one row per task, one enum value |
 | **What is stopping us right now?** | [`STATUS.md`](STATUS.md) § *⛔ Stopping work right now* — open register items ordered by how many tasks each blocks |
@@ -24,26 +27,38 @@ library), and this repository is the specification they are built from.
 
 ---
 
-## The two files that matter most
+## The three files that matter most
 
-**[`STATUS.md`](STATUS.md) — the board.** ⚙ **Generated. Never edit it.** Every value comes from
-the front-matter of a task file. To change what it says, change the task file and re-run
+**[`STATUS.md`](STATUS.md) — the board, by phase.** ⚙ **Generated. Never edit it.** Every value
+comes from the front-matter of a task file. To change what it says, change the task file and re-run
 `python tools/build_status.py`.
 
-**`*/tasks/FW-###.md` — the unit of work.** One file per story, in its stream's folder:
+**[`FEATURES.md`](FEATURES.md) — the board, by feature.** ⚙ **Also generated.** Its unit is the
+**activity**, not the category: a category inherits the union of its stories' blockers, so a
+category-level board would read as permanently blocked. Regenerate with
+`python tools/build_features.py`.
+
+**[`10-requirements/features/FS-##-*.md`](10-requirements/features/README.md) — the unit of
+*understanding*.** Twenty consolidated parent stories, one per functional area. When you need to
+know what a piece of functionality is, what it requires, where it stands, what is open about it, or
+what a change to it would touch, this is the file. Its absorbed-story table, blocker roll-up and
+verification evidence are generated; its prose is hand-owned. Rules in
+[`10-requirements/features/README.md`](10-requirements/features/README.md).
+
+**`*/tasks/FW-###.md` — the unit of *work*, and a build record.** One file per story, in its
+stream's folder:
 
 ```
-MVP-1/ProjectPlan/Frontend/tasks/      FE stories
-                  Backend/tasks/       BE and RT stories
-                  Database/tasks/      DB stories
-                  Testing/tasks/       QA stories
-                  Development/tasks/   BA stories (no build stream)
+50-frontend/tasks/    FE stories (and three RT)
+40-backend/tasks/     BE and RT stories
+30-database/tasks/    DB stories
+70-testing/tasks/     QA stories
+60-delivery/tasks/    BA stories (no build stream)
 ```
 
-Each file carries machine-readable front-matter above the `---` and the developer's plan below
-it. Two developers on two tasks never edit the same file — that is the whole point of the split.
-
----
+Each carries machine-readable front-matter above the `---` and the developer's plan below it. Two
+developers on two tasks never edit the same file. ⚠ **A story is no longer the unit of planning** —
+that is now its category. These files remain the build record and the writable home of `status:`.
 
 ## Picking up a task
 
@@ -81,10 +96,12 @@ Run from the repository root. All are dependency-free except the workbook builde
 | Command | What it does |
 |---|---|
 | `python tools/build_status.py` | Regenerate [`STATUS.md`](STATUS.md). `--check` fails if it is stale |
+| `python tools/build_features.py` | Regenerate [`FEATURES.md`](FEATURES.md) **and** each parent's generated blocks. `--check` for CI |
+| `python tools/build_consolidation_map.py` | Regenerate [`StoryConsolidationMap.md`](90-registers/StoryConsolidationMap.md). Refuses to emit rather than emit something wrong |
 | `python tools/check_docs.py` | Assert the task ↔ phase ↔ register relationships. `--strict` for CI |
 | `python tools/linkcheck.py` | Verify no path reference broke against the pinned baseline |
-| `python MVP-1/ProjectPlan/Tools/verify_schema_counts.py` | Assert the DDL matches its published object counts |
-| `python MVP-1/ProjectPlan/Tools/build_coverage_matrix.py` | Prove every `FR-###` reaches a test case |
+| `python tools/deliverables/verify_schema_counts.py` | Assert the DDL matches its published object counts |
+| `python tools/deliverables/build_coverage_matrix.py` | Prove every `FR-###` reaches a test case |
 
 ---
 
