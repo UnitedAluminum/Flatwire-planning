@@ -73,6 +73,27 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-N13` | FlatWire/GetServerConnectionInfo — the shared header's environment | BE | ⬜ not-started | FW-138 | — |
 | `FW-N18` | LineId → MachineName — the FlatWire service | BE | ✅ done | FW-N17 | — |
 
+**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+
+| Ref | Status | Measured result |
+|---|---|---|
+| `FW-138` | ✅ done | ✅ **BUILT and brought to the C# standard, 25 Aug 2026** — 22 endpoints across 12 controllers, verified on the running service (§6.2). `P-06` was **ratified in the build** as `FlatWireResult<T>`; `P-53` is applied end to end; `/ord |
+| `FW-139` | ✅ done | ✅ **BUILT and verified on the running service, 25 Aug 2026** (§6.1) — the `P-59` bridge is proven *behaviourally*, not merely registered: an empty `StageRodCommand` is rejected in the pipeline and seven of `StageRodRequestValidato |
+| `FW-140` | ✅ done | ✅ **BUILT and verified on the running service, 26 Aug 2026** (§5.1) — the swap is real: flipping the flag changes the resolved implementation, and with it off every endpoint fails with a `NotImplementedException` naming its owning |
+| `FW-141` | ✅ done | ✅ **BUILT and verified, 27 Aug 2026** (§6.1, §6.2) — all seven repositories are delivered and registered, and **every accessor was exercised against live `FlatWireDB`**. ⚠ **Step 6 still waits on `OI-33`**; the open generic is **n |
+| `FW-142` | ✅ done | ✅ **BUILT 27 Aug 2026** (§6) — two of the four acceptance criteria were reversed by `D-31` (§2.1); `FW-141` had already landed part of §4 (§7) |
+| `FW-143` | ✅ done | ✅ **BUILT 27 Aug 2026** (§6) — Serilog, correlation, request logging and `IAuditLog` all land. ⚠ **The audit half still has no persistence target (§5, `P-15`)**, so AC 3 is structurally met and materially not |
+| `FW-144` | 🔵 in-review | ✅ **BUILT** on `ual-api` branch `feature/UADEV-23146`, 27 Aug 2026 — see §8. Still **blocked on `PLC-Q05` / `G33` for the tag map's *contents*, not its shape.** The two pre-start items are resolved: **`OI-A` was answered from the  |
+| `FW-146` | ✅ done | ✅ **BUILT — 27 Aug 2026.** `ExceptionHandlingMiddleware` is live in `ual-api`, `HttpGlobalExceptionFilter` is removed and the removal is asserted at boot; §6.2 carries the measured verification (before/after on the one runnable pa |
+| `FW-147` | ✅ done | ✅ **EXECUTED — 27 Aug 2026.** All five build-order steps are complete or accounted for: the fourteen enums and fourteen validators were built 25 Aug (`P-57`/`P-58`), step 4's `P-19` handoff was **already in `FW-207`** in three pla |
+| `FW-148` | ✅ done | ✅ **BUILT AND REVIEWED — 27 Aug 2026.** Live in `ual-api`; all three acceptance criteria measured (§5.1), the verb surface pinned to `GET`, two `P-87` bypass paths closed, solution builds with **0 errors and no analyzer warning fr |
+| `FW-207` | 🔵 in-review | ✅ **BUILT — 27 Aug 2026, on `ual-api` branch `feature/UADEV-23146`.** 15 new files, 17 amended, **0 errors and no new analyzer warning** (12 solution-wide, all pre-existing). Delivered: the **7 dimensioned quantities** + `PassSche |
+| `FW-208` | ✅ done | ✅ **BUILT — steps 1–10; 27 Aug 2026 (the mechanism) and 29 Aug 2026 (step 8, the broadcast handlers).** The only thing outstanding is `CoilCompleted`, which has no hub member to send on — a contract gap (`P-137`, `OI-140`), not un |
+| `FW-263` | ✅ done | ✅ **DONE — `FlatWire.sln` is five projects, and the fifth is the one `FW-236` named and could not create.** Merged and pushed as `a73851911` / `31f5f20d6` on `feature/UADEV-23146`. **Of 13 acceptance criteria: 12 satisfied, 1 deli |
+| `FW-265` | ✅ done | ✅ **EXECUTED 6 Sep 2026 — ALL 11 FW-151 SCENARIOS NOW COMMITTED; 11 of 12 criteria met, 1 half.** Suite **279 → 293**, full rebuild **0 errors / 22 warnings, unchanged**. ⛔ **NOT committed** — in the `ual-api` working tree on `fea |
+| `FW-N04` | ✅ done | **Built and verified 25 Aug 2026** — `ual-api` branch `feature/flat-wire`, 46 files under `API/Domain/FlatWire/`. All four acceptance criteria pass (§6) |
+| `FW-N18` | ✅ done | ✅ **Done, 8 Sep 2026 — 843 sites across 118 files, and it builds and tests clean.** `CanonicalEnums.cs` now declares `enum MachineName { FL1, FL2, FL3 }`, string-serialised with the value order untouched. Renamed through 11 entiti |
+
 <!-- END GENERATED: absorbed-stories -->
 
 ---

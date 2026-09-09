@@ -86,6 +86,12 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-228` | Footage-to-weight converter | BE | ⬜ not-started ⚠ *inferred* | — | — |
 | `FW-235` | CoilCompleted broadcast member | RT·FE | ⛔ blocked ⚠ *inferred* | FW-208 FW-080 FW-149 FW-136 FW-185 | **OI-140** |
 
+**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+
+| Ref | Status | Measured result |
+|---|---|---|
+| `FW-186` | 🔵 in-review | ✅ **Tables and trigger BUILT.** ⛔ **The trigger has still never been exercised** — its writer is unbuilt |
+
 <!-- END GENERATED: absorbed-stories -->
 
 ---

@@ -91,6 +91,14 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-N15` | Active Run machine context — the home/:machineName route, line res | FE | ⬜ not-started | FW-N03 | **OI-11** |
 | `FW-N16` | The station claim — FlatWireDB..WIPStations view and the checked-i | BE·DB | 🟡 in-progress | FW-164 FW-230 FW-231 | **G54** |
 
+**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+
+| Ref | Status | Measured result |
+|---|---|---|
+| `FW-164` | 🔵 in-review | ✅ **DE-STUBBED, 29 Aug 2026 — staged on `feature/UADEV-23146`, not committed.** `RunService.cs` goes 86 L / 6 throws → **841 L / 1**, and the throw that remains is `FW-166`'s. ⛔ **`P-254`'s CODE half landed and its CONTRACT half d |
+| `FW-165` | 🔵 in-review | ✅ **BUILT — record only.** ⛔ **`G9` leaves the decimation parameter untunable** |
+| `FW-222` | 🔵 in-review | ✅ **BUILT — record only.** ⚠ **AC 2 is unverified and AC 4's figures are stale** (§2) |
+
 <!-- END GENERATED: absorbed-stories -->
 
 ---

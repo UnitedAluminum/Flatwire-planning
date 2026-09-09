@@ -97,6 +97,13 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-N01` | Dashboard 2A — Rod Pre-Check-in station | FE | ⬜ not-started | FW-133 FW-134 FW-158 FW-166 | **G19** **G21** **G22** **G26** **OI-108** **OQ-24** |
 | `FW-N24` | Move the three cross-database writes from pre-check-in to check-in | DB·BE | ⬜ not-started | FW-159 FW-158 FW-220 | — |
 
+**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+
+| Ref | Status | Measured result |
+|---|---|---|
+| `FW-157` | 🔵 in-review | ✅ **DE-STUBBED, 29 Aug 2026 — staged on `feature/UADEV-23146`, not committed.** `CheckInService.cs` goes 38 L / 2 throws → **1165 L / 0**; the rod path is complete and raises `RunStarted`. ⛔ **AC 7's `Operator+` policy is NOT met* |
+| `FW-159` | 🔵 in-review | ✅ **Schema BUILT.** ⚠ The write path is owed. ✅ **The stale blocker is identified and removed: `G21`** — resolved 15 Aug 2026 as one physical station and fixed in three layers, so it left `blocked_by` on 7 Sep 2026 *(the note said |
+
 <!-- END GENERATED: absorbed-stories -->
 
 ---

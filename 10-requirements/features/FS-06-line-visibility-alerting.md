@@ -84,6 +84,12 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-204` | Minimal landing route — the entry point when Dashboard 1 is out of | FE | ⬜ not-started | FW-N03 FW-130 FW-164 | — |
 | `FW-N06` | Alert rules engine and the AlertRaised/AlertCleared lifecycle | RT | ⬜ not-started ⚠ *inferred* | FW-149 FW-150 | **OI-28** |
 
+**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+
+| Ref | Status | Measured result |
+|---|---|---|
+| `FW-155` | 🔵 in-review | ✅ **BUILT — record only.** One acceptance criterion is still unverified (§2.2) |
+
 <!-- END GENERATED: absorbed-stories -->
 
 ---

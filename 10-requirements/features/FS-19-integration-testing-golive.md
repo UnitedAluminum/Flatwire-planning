@@ -93,6 +93,12 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-249` | Re-derive the DB-stream total on the current basis | BA | ⬜ not-started ⚠ *inferred* | — | — |
 | `FW-250` | build_development_plan_xlsx.py silently drops every multi-stream s | DB | ⬜ not-started ⚠ *inferred* | — | — |
 
+**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+
+| Ref | Status | Measured result |
+|---|---|---|
+| `FW-217` | ✅ done | ✅ **Built and verified 31 Aug 2026** — 46/46 harness checks over the two live routes, plus three fresh-process runs; 0 errors, 14 warnings byte-identical to the baseline. ⛔ **`P-295` held: the double sits at the HTTP seam, not at  |
+
 <!-- END GENERATED: absorbed-stories -->
 
 ---

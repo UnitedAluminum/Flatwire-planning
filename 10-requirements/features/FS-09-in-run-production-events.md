@@ -101,6 +101,12 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-N26` | Log the operator-set dancer tension value | DB·BE | ⬜ not-started | FW-171 FW-144 | — |
 | `FW-N27` | Guard the weld flag - it cannot be set before check-in | BE | ⬜ not-started | FW-166 FW-158 | — |
 
+**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+
+| Ref | Status | Measured result |
+|---|---|---|
+| `FW-171` | 🔵 in-review | ✅ **Tables BUILT.** ⛔ **`G34` has a decided flow and NO persistence target**; `G35` is blocked on `Q32` [9 Sep 2026, client answers] Q32 ANSWERED 8 Sep 2026 - the dancer mode is machine-side, selected at the HMI, so the read-only  |
+
 <!-- END GENERATED: absorbed-stories -->
 
 ---

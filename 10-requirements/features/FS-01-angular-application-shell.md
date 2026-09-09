@@ -58,6 +58,13 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-N03` | Angular library scaffold, routing and configuration | FE | ✅ done | — | — |
 | `FW-N19` | LineId → MachineName — the flat-wire Angular library | FE | ✅ done | FW-N18 | — |
 
+**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+
+| Ref | Status | Measured result |
+|---|---|---|
+| `FW-N03` | ✅ done | ✅ **DONE — committed, so wave 1 is OPEN.** `ual-angular`'s `HEAD` carries **33 files** under `projects/flat-wire` at commit `67426e67e`, with a clean working tree for that path *(measured 7 Sep 2026; this note read `HEAD` carries  |
+| `FW-N19` | ✅ done | ✅ **Done, 8 Sep 2026 — 243 sites across 20 files, 210 tests green at 100 % on all four metrics, `ng build flat-wire` clean.** `enums/line-id.enum.ts` is now `enums/machine-name.enum.ts` with `enum MachineName`, and all 14 import p |
+
 <!-- END GENERATED: absorbed-stories -->
 
 ---

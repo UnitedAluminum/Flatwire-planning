@@ -87,7 +87,7 @@ def activities_from_tasks(tasks_by_cat, cid):
             'status': t.get('status', ''),
             'depends_on': t.get('depends_on', []),
             'blocked_by': t.get('blocked_by', []),
-            'evidence': '',
+            'evidence': t.get('status_note', ''),
             'unconfirmed': t.get('status_confirmed') == 'false',
         })
     return rows
@@ -166,9 +166,36 @@ def render_block(rows, cid, derived, expected):
             MARK.get(r['status'], r['status']), flag,
             ' '.join(r['depends_on']) or '—',
             ' '.join('**%s**' % b for b in r['blocked_by']) or '—'))
+    L += render_evidence(rows)
     L.append('')
     L.append(END)
     return '\n'.join(L)
+
+
+# Statuses whose work is finished or nearly so, and whose measured result is the
+# only durable record that it was proven.
+EVIDENCED = ('done', 'in-review')
+
+
+def render_evidence(rows):
+    """A generated record of what was BUILT and how it was verified.
+
+    Step 9 archives the build records to 95-archive/, which this repository's own
+    rules make non-citable. The measured verification in each plan's status_note
+    is the only evidence that the work was proven, so it is lifted here while the
+    plans are still live rather than after they are not.
+    """
+    done = [r for r in rows if r['status'] in EVIDENCED and r.get('evidence')]
+    if not done:
+        return []
+    L = ['', '**Verification evidence for completed work.** Lifted from each build record '
+         'before it is archived - `95-archive/` is not citable, so this is the durable copy.', '']
+    L.append('| Ref | Status | Measured result |')
+    L.append('|---|---|---|')
+    for r in done:
+        L.append('| `%s` | %s | %s |'
+                 % (r['ref'], MARK.get(r['status'], r['status']), esc(r['evidence'])[:230]))
+    return L
 
 
 def render_blockers(rows, reg):

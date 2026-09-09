@@ -72,6 +72,16 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-N22` | AlloyProperty re-grained to vendor and rod size band | DB | ⬜ not-started | FW-004 FW-152 | — |
 | `FW-N23` | Pass schedule carries roll gap and target product gauge per stand | DB | ⬜ not-started | FW-006 FW-152 | — |
 
+**Verification evidence for completed work.** Lifted from each build record before it is archived - `95-archive/` is not citable, so this is the durable copy.
+
+| Ref | Status | Measured result |
+|---|---|---|
+| `FW-152` | 🔵 in-review | ✅ **BUILT AND DEPLOYED on `DEV00164-001`.** All seven acceptance criteria **measured live on 30 Aug 2026** (§5.1); two card details are recorded rather than fixed — §2.2, §2.3 |
+| `FW-262` | ✅ done | ✅ **BUILT and verified, 4 Sep 2026** — five tables in `01_Lookup`, 3 FKs, 1 index, 144 catalogue rows seeded inline; `verify_schema_counts.py` green at **45 · 67 · 87** with the advisory count back at its pre-change 24. ⛔ **The tw |
+| `FW-N17` | ✅ done | ✅ **Done, 8 Sep 2026.** All **24 `LineId` columns** are now `MachineName` across scripts 01–05, with **22 `CK_*_MachineName`** constraints and the 3 index names that carried the token. Shape is unchanged — `VARCHAR(5)`, same nulla |
+| `FW-N20` | ✅ done | ✅ **Done, 8 Sep 2026 (`D-57`).** `SpoolOrder` is re-parented from `SpoolProcessing.Alpha` to **`SpoolTraceability.Id`** — one row per (segment, order), so *whose* material went to which order is finally answerable. It now carries  |
+| `FW-N21` | ✅ done | ✅ **Done, 8 Sep 2026 (`D-58`), and it SUPERSEDES `Q60`'s merge.** `SpoolConfiguration` is a table again: the six limit columns and `SizeClass` leave `Spool`, which drops to five columns and a `SpoolTypeId` FK. ⭐ **The three band C |
+
 <!-- END GENERATED: absorbed-stories -->
 
 ---
