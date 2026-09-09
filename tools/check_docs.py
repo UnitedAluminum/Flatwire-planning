@@ -143,13 +143,33 @@ def check(rep):
                          '%s is still `blocked` but %s is closed - update the task'
                          % (t['id'], b))
 
-    # --- 4. backlog <-> task parity ---------------------------------------------
+    # --- 4. backlog parity, on whichever side the backlog is keyed ---------------
+    #
+    # The backlog is being re-keyed from 204 FW cards to 20 FS cards. Those two
+    # changes cannot land in one commit, so this rule follows the backlog rather
+    # than assuming FW: while FW cards exist it checks them against the task files
+    # exactly as before; once they are gone it checks the FS cards against the
+    # parent files instead, and the task files are covered by rule 8's map parity.
+    # Without this, the card rewrite and the file deletion would be forced into a
+    # single atomic change and neither could be reviewed on its own.
     backlog = F.read(F.BACKLOG)
     carded = set(re.findall(r'^######\s+(?:~~)?\*{0,2}`?(FW-N?\d+)`?', backlog, re.M))
-    for sid in sorted(carded - set(by_id)):
-        rep.error('4-parity', '%s has a backlog card but no task file' % sid)
-    for sid in sorted(set(by_id) - carded):
-        rep.error('4-parity', '%s has a task file but no backlog card' % sid)
+    fs_carded = set(re.findall(r'^######\s+(?:~~)?\*{0,2}`?(FS-\d+)`?', backlog, re.M))
+    if carded:
+        for sid in sorted(carded - set(by_id)):
+            rep.error('4-parity', '%s has a backlog card but no task file' % sid)
+        for sid in sorted(set(by_id) - carded):
+            rep.error('4-parity', '%s has a task file but no backlog card' % sid)
+        if fs_carded:
+            rep.warn('4-parity-mixed',
+                     'the backlog carries both FW cards (%d) and FS cards (%d) - '
+                     'expected only during the re-key' % (len(carded), len(fs_carded)))
+    else:
+        fs_ids_p = {f.get('id') for f in feats}
+        for sid in sorted(fs_carded - fs_ids_p):
+            rep.error('4-parity', '%s has a backlog card but no parent file' % sid)
+        for sid in sorted(fs_ids_p - fs_carded):
+            rep.error('4-parity', '%s has a parent file but no backlog card' % sid)
 
     # --- 5. every task maps to a real phase -------------------------------------
     for t in tasks:
