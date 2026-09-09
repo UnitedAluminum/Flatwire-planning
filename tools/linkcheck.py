@@ -227,7 +227,17 @@ def check_fs_paths():
 # The literal-path floor. --literal is the ONLY check that can verify a file move,
 # because resolve()'s basename fallback makes the ordinary run green either way -
 # see check_literal()'s docstring. Raise this only with a measured reason.
-LITERAL_FLOOR = 78
+# 78 when this check was written; 61 once CHANGELOG.md was excluded below; 58 after
+# the 9 Sep 2026 board archive, which repaired three links that had been broken since
+# the 29 Aug re-tree (they named pre-re-tree paths like ../Backend/tasks/). Lower it
+# whenever a pass legitimately fixes more than it breaks, and say which pass.
+LITERAL_FLOOR = 58
+
+# Excluded from --literal for the same stated reason 95-archive/ is: a path that was
+# correct when it was written is not a break. TaskIdMap.md rule 4 makes it explicit -
+# "CHANGELOG.md and any archived document keep the old ids by design" - and it carried
+# 17 of the original 78 failures for exactly that reason.
+LITERAL_SKIP = ('95-archive/', 'CHANGELOG.md')
 
 RE_MD_LINK = re.compile(r'[]][(]([^)]+)[)]')
 RE_LINKABLE = re.compile(r'[.](?:md|sql|py|html|js|json|xlsx|css|scss|txt|cs)$', re.I)
@@ -249,7 +259,9 @@ def check_literal():
     bad = []
     for p in walk_files():
         rel = os.path.relpath(p, ROOT).replace(BS_, '/')
-        if rel.startswith('95-archive/') or os.path.splitext(rel)[1].lower() != '.md':
+        if rel.startswith(LITERAL_SKIP) or rel in LITERAL_SKIP:
+            continue
+        if os.path.splitext(rel)[1].lower() != '.md':
             continue
         try:
             with open(p, encoding='utf-8', errors='replace') as fh:
@@ -272,8 +284,9 @@ def main():
         bad = check_literal()
         print('linkcheck --literal: %d markdown link(s) do not resolve by their literal '
               'path, in %d file(s)' % (len(bad), len({b[0] for b in bad})))
-        print('   floor is %d - these are pre-existing (CHANGELOG history, URL-encoded '
-              'names, cross-repo paths)' % LITERAL_FLOOR)
+        print('   floor is %d - pre-existing (URL-encoded names, cross-repo paths). '
+              '95-archive/ and' % LITERAL_FLOOR)
+        print('   CHANGELOG.md are excluded: a path correct when written is not a break.')
         if len(bad) > LITERAL_FLOOR:
             print('')
             print('   REGRESSION: %d over the floor. A file moved and its citations did '

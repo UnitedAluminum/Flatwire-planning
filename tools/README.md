@@ -23,7 +23,8 @@ by looking for `.git`, so they work from any working directory.
 | [`build_consolidation_map.py`](build_consolidation_map.py) | every `*/tasks/FW-*.md`, `[TB §7]`, `[REQ]` | [`StoryConsolidationMap.md`](../90-registers/StoryConsolidationMap.md) §2 only — §1 and §3 are hand-owned | a story in no category or two, a no-op or stale membership rule, a `[REQ]` section reaching no category. ⚠ It **freezes itself** — prints a notice and exits 0 — if the task files are absent, because it cannot generate without them |
 | [`check_docs.py`](check_docs.py) | the same, **plus the 20 parents and `[SCM]`** | nothing — reports | **Errors:** a card costed with no map row or a map row with no card (rule 4), a parent's `phases:` not resolving or carrying `status`/`hours`/`stream`/`depends_on` (rule 7), a map row naming a parent that does not exist, or a parent no story maps to that the map does not declare empty (rule 8). **Warnings:** a card's `**Blockers:**` line diverging from the authoritative activity row in its parent (rule 9 — **50 today**; the whole floor is **237**, the other 187 being the long-standing task-scoped ones) |
 | [`linkcheck.py`](linkcheck.py) | every `.md` `.sql` `.html` `.js` `.py` | `_linkcheck_baseline.json` | a reference that resolved in the baseline and no longer does. ⚠ **A mid-dissolution re-pin (4,120 → 3,304 pairs) was REVERTED** with the task files; the baseline is the pre-consolidation one again, green at ~4,500 pairs. `_linkcheck_delta_2026-09-09.txt` keeps that measurement as the audit trail of a reversed change — it does **not** describe the repository today |
-| [`stamp_trial_status.py`](stamp_trial_status.py) | `fwtasks.load_activity_status()` — the task files' `status:`, falling back to the parents' activity tables if they are ever retired | [`40-backend/tasks/TrialOrchestration.md`](../40-backend/tasks/TrialOrchestration.md) §2's sprint grids — **only** the `BE`/`FE`/`RT`/`DB` cells | `--check`: a glyph no longer matches its card's `status:`, or a grid names a story with no task file |
+| [`stamp_trial_status.py`](stamp_trial_status.py) | — | — | ⛔ **RETIRED 9 Sep 2026 — DO NOT RUN.** It wrote into `TrialOrchestration.md`, which is archived at [`95-archive/orchestration-boards/`](../95-archive/orchestration-boards/) and closed to further updates. Running it would stamp current-looking status into a place that is by rule never current. It refuses rather than raising. The 66-story trial record is now `[TRP §4]` and `FlatWire_TrialRunPlan.xlsx` |
+| [`storymap.py`](storymap.py) | every `*/tasks/FW-*.md` and `10-requirements/features/`, plus `[SCM]` | — *(computes; `retree.py` moves)* | a story in no category, a destination collision, or a planned count that does not match the task files. **Owns the placement rule** — `destination_stream()` is `FE`→`BE`→`RT`→`DB`→`QA`→`BA`, first present wins — and `check_docs` rule 6 compares the tree against it, so the two cannot drift. `--check` reports any story not where the rule puts it |
 | [`fwtasks.py`](fwtasks.py) | — | — | **Not a script** — the shared reader every generator and the checker import, so they can never disagree about what a story says. ⚠ **`load_units()` is the safety seam:** it returns `load_tasks()` unchanged while task files exist, so `STATUS.md` stayed byte-identical across the migration, and reconstitutes the same row shape from `[SCM]` + the activity tables once they are gone |
 | [`init_tasks.py`](init_tasks.py) | `../60-delivery/TaskBreakdown.md` §7 | `*/tasks/FW-*.md` | ⛔ **DEAD — DO NOT REPAIR AND DO NOT RUN.** It reads a pre-29-Aug path and raises `FileNotFoundError` on the first line of `main()`. **A repaired version would overwrite the front-matter of all 204 live task files from the backlog** — every `status:`, `owner:`, `depends_on:` and `blocked_by:` value, which is the one writable copy of each. If a generator is ever needed, write a new one-way tool |
 | [`fix_task_links.py`](fix_task_links.py) | every text file | the same | the output-coil alpha count changing |
@@ -40,7 +41,7 @@ by looking for `.git`, so they work from any working directory.
 python tools/build_status.py     # the phase board, after editing a task file
 python tools/build_features.py   # the feature board and the parents' generated blocks
 python tools/build_features.py --selftest   # the activity tables still round-trip
-python tools/stamp_trial_status.py   # re-stamp the trial grids from the same status
+python tools/storymap.py --check     # every story where the placement rule puts it
 python tools/check_docs.py       # would CI pass?  0 errors, 237 warnings (the floor)
 python tools/linkcheck.py        # did I break a path reference?
 ```
@@ -56,7 +57,7 @@ failures:
 
 ```bash
 python tools/build_status.py --check
-python tools/stamp_trial_status.py --check
+python tools/linkcheck.py --literal
 python tools/check_docs.py --strict
 python tools/linkcheck.py
 ```

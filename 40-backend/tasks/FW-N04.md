@@ -29,7 +29,7 @@ completed:
 **Owner:** Backend (.NET) stream
 **Audience:** The .NET developer building `FW-N04`
 **Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
-**Part of:** `ProjectPlan/Backend/tasks/` — index: [README.md](../../DOCUMENTS.md)
+**Part of:** category [`FS-02` Backend Service Foundation](../../10-requirements/features/FS-02-backend-service-foundation.md) — the parent story for this functional area
 
 ---
 
@@ -117,7 +117,7 @@ Nothing below is forgotten; each has a story. **Do not build ahead into these.**
 >
 > ⚠ **The folder itself has since grown to 35 plans** as the Phase 4–9 stories were written
 > up. The thirteen beyond the twenty-two sit **downstream of this phase** and are sequenced
-> by sprint in [`TrialOrchestration.md`](TrialOrchestration.md), not by wave in
+> by sprint in [`TrialOrchestration.md`](../../95-archive/orchestration-boards/backend-TrialOrchestration.md), not by wave in
 > [`Orchestration.md`](Orchestration.md) — which is why they are absent from the table above
 > rather than missing from it. *(Any "twenty-two documents in all" or "**32 plans**" figure,
 > `Orchestration.md` §1 included, predates them.)* `FW-206` (Phase 4), `FW-N11` (uncosted)

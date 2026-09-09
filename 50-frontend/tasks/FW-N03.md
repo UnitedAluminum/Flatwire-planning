@@ -31,11 +31,11 @@ completed:
 **Shortcode:** — *(implementation plan, derived from the specifications; **not citable as a requirement**)*
 **Depends on:** **nothing** — the single root of Phase 1A
 **Unblocks:** [`FW-130`](FW-130.md) · [`FW-131`](FW-131.md) · [`FW-132`](FW-132.md) · [`FW-135`](FW-135.md) — **four at once**
-**Part of:** `ProjectPlan/Frontend/tasks/` — index: [Orchestration.md](Orchestration.md) · shared context: [Phase-01A-ImplementationPlan.md](Phase-01A-ImplementationPlan.md)
+**Part of:** category [`FS-01` Angular Application Shell and Foundation](../../10-requirements/features/FS-01-angular-application-shell.md) — the parent story for this functional area
 
 ---
 
-> **Read [`[P1A §2]`](Phase-01A-ImplementationPlan.md) first — the measured state of the checkout.**
+> **Read [`[P1A §2]`](../../95-archive/orchestration-boards/frontend-Phase-01A-ImplementationPlan.md) first — the measured state of the checkout.**
 > This plan does not restate it. The decisions it depends on are `[P1A §4]`'s `F-01`, `F-02`, `F-11`
 > and `F-13`.
 >

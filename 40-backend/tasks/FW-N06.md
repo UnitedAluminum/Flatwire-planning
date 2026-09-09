@@ -29,7 +29,7 @@ completed:
 **Owner:** Backend (.NET) / real-time stream
 **Audience:** The developer building `FW-N06`
 **Shortcode:** — *(implementation plan, derived from the specifications and the built code; **not citable as a requirement**)*
-**Part of:** `ProjectPlan/Backend/tasks/` — index: [Orchestration.md](Orchestration.md)
+**Part of:** category [`FS-06` Line Visibility and Alerting](../../10-requirements/features/FS-06-line-visibility-alerting.md) — the parent story for this functional area
 
 ---
 

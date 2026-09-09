@@ -29,7 +29,7 @@ completed:
 **Owner:** Real-time stream
 **Audience:** The developer building `FW-N02`
 **Shortcode:** — *(implementation plan, derived from the specifications and the built code; **not citable as a requirement**)*
-**Part of:** `ProjectPlan/Backend/tasks/` — index: [Orchestration.md](Orchestration.md)
+**Part of:** category [`FS-11` Spool Lifecycle and FL2 Finishing Run](../../10-requirements/features/FS-11-spool-lifecycle-fl2.md) — the parent story for this functional area
 
 ---
 

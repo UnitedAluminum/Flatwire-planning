@@ -319,7 +319,7 @@ field to it breaks slitter** — new fields stay optional.
 python tools/build_status.py             # regenerate STATUS.md (by phase)
 python tools/build_features.py           # regenerate FEATURES.md and the parents' blocks
 python tools/build_features.py --selftest  # assert the activity table round-trips
-python tools/stamp_trial_status.py        # re-stamp the trial grids from the same status
+python tools/storymap.py --check         # every story where the placement rule puts it
 python tools/check_docs.py               # task <-> phase <-> register <-> parent integrity
 python tools/linkcheck.py                # no path reference broke
 ```

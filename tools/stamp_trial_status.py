@@ -1,5 +1,22 @@
 #!/usr/bin/env python3
-"""Stamp status glyphs into TrialOrchestration.md's sprint grids from live status.
+"""RETIRED 9 Sep 2026 - DO NOT RUN. Its target document is archived and closed.
+
+    TrialOrchestration.md moved to 95-archive/orchestration-boards/ and is closed to
+    further updates by decision. This tool WROTE into it, so running it would edit an
+    archived document - and 95-archive/ is not citable, so a freshly stamped status
+    there would be a current-looking claim in a place that is by rule never current.
+
+    The 66-story trial view goes with it. Its surviving records are [TRP section 4]
+    and FlatWire_TrialRunPlan.xlsx, both hand-maintained. That loss was accepted
+    knowingly when the boards were archived.
+
+    Kept, not deleted, because its section-2 grid parser is the only worked example of
+    stamping generated status into a hand-written table without disturbing the prose
+    around it - the technique FEATURES.md's marker blocks use in a cruder form.
+
+Original docstring follows.
+
+Stamp status glyphs into TrialOrchestration.md's sprint grids from live status.
 
 Section 2's T1/T2/T3 grids categorise the 66 trial stories by phase and stream, but a
 story id alone does not say whether it is done, in review or not started. This writes
@@ -86,6 +103,14 @@ def stamp(text, status_of):
 
 
 def main():
+    print('stamp_trial_status: RETIRED 9 Sep 2026 - refusing to run.')
+    print('  Its target, TrialOrchestration.md, is archived at')
+    print('  95-archive/orchestration-boards/ and closed to further updates.')
+    print('  The trial record is now [TRP section 4] and FlatWire_TrialRunPlan.xlsx.')
+    return 0
+
+
+def _retired_main():
     check = '--check' in sys.argv
     root = F.repo_root()
     path = os.path.join(root, DOC)
