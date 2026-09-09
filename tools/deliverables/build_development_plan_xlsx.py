@@ -479,13 +479,14 @@ LEAKS = [
     # are ordinary English words and would false-positive on client prose. They are covered
     # instead by the MVP-1/ and ProjectPlan/ prefixes above.
     (r'\b(?:00-overview|10-requirements|20-architecture|30-database|40-backend|50-frontend|60-delivery|70-testing|80-operations|90-registers|95-archive|'
-     r'deliverables|tools|screens|phases|tasks|mockups|schema|sql|scripts)/',
+     r'deliverables|tools|screens|phases|tasks|features|mockups|schema|sql|scripts)/',
      'repository path'),
     (r'\bFR-\d', 'requirement identifier'),
     (r'\bOI-\d', 'open-item identifier'),
     (r'\bG\d{1,2}\b', 'gap identifier'),
     (r'\bTC-\d', 'test-case identifier'),
     (r'\bFW-\d', 'backlog identifier'),
+    (r'\bFS-\d', 'feature-category identifier'),
     (r'\bPLC-Q', 'PLC question identifier'),
     (r'\bPSG-', 'generation-spec identifier'),
     (r'\bD-\d{2}\b', 'decision identifier'),

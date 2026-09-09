@@ -78,13 +78,14 @@ OUR_TEAM = ['Srikanth', 'Yogender', 'Ritika', 'Ashwani', 'Shray', 'Waseem', 'Vic
 LEAKS = [
     (r'\.(?:md|html|sql|docx|xlsx|py|js|scss|css)\b', 'file name'),
     (r'\b(?:00-overview|10-requirements|20-architecture|30-database|40-backend|50-frontend|60-delivery|70-testing|80-operations|90-registers|95-archive|'
-     r'deliverables|tools|screens|phases|tasks|mockups|schema|sql|scripts)/',
+     r'deliverables|tools|screens|phases|tasks|features|mockups|schema|sql|scripts)/',
      'repository path'),
     (r'\bFR-\d', 'requirement identifier'),
     (r'\bOI-\d', 'open-item identifier'),
     (r'\bG\d{1,2}\b', 'gap identifier'),
     (r'\bTC-\d', 'test-case identifier'),
     (r'\bFW-\d{3}\b', 'backlog identifier'),
+    (r'\bFS-\d', 'feature-category identifier'),
     (r'\bORD\d{3}\b', 'requirement identifier'),
     # NOT guarded: bare Q## question numbers. They are the client's own cross-reference into
     # FlatWire_ClientQuestions.xlsx - that workbook exists so the client can answer them by
