@@ -91,7 +91,7 @@ section was ever written for yield, cost or scrap: `[REQ]` has no §5.x for Phas
 coverage matrix names `FW-100` only as a co-deliverer of `FR-330`–`FR-340` (output coil completion),
 which is `FS-12`'s range, not this one's.
 
-So four activities worth 128 h rest on **`[YCS]` and the phase specification alone**, with no
+So all four activities rest on **`[YCS]` and the phase specification alone**, with no
 numbered, traceable requirement behind them. That is survivable while the category is out of plan.
 ⚠ **It is not survivable if Phase 12 is brought back in** — there would be nothing for a test case
 to trace to.
@@ -138,7 +138,7 @@ to trace to.
 
 **Gaps this category owns that no story cites:**
 
-- **No requirement section exists** (§3 above) — 128 h of work with no numbered requirement.
+- **No requirement section exists** (§3 above) — four activities with no numbered requirement.
 - **No `BA` activity owns the three unsupplied values.** Every other category with value-blockers
   has a `BA` story to fetch them (`FW-193`, `FW-199`, `FW-258`); this one does not, so the blockers
   have no owner and no route to closure.

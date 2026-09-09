@@ -39,7 +39,7 @@ that stands in for all of it until commissioning.
 ⚠ **This is the one genuinely functional cross-phase category**, carved by `stream: RT` across
 phases 1A, 1B, 3, 4 and 5 rather than by layer. Four categories consume it, and it was separated from
 `FS-01`/`FS-02`/`FS-03` because it is a *pipeline*, not a chassis. It carries the **most hours of any
-category at 391 h** and, at 11 `done` plus 2 `in-progress` and 2 `in-review`, is the second-most
+category** (`[TB §7.3]`) and, at 11 `done` plus 2 `in-progress` and 2 `in-review`, is the second-most
 delivered.
 
 **Functional scope.** Ten broadcast events — `GaugeReading`, `WidthReading`, `SpeedFPM`,
@@ -132,7 +132,7 @@ so its group model, batching and reconnect behaviour were designed here.
 |---|---|
 | **RT** | Fifteen activities. The hub, the typed client contract, the broadcast loop, the OPC ingest and bounded channel, the SignalR client and mock, PWA cache sync, `PLCTagService` and its simulate branch, the tag group push, `ITInhibitService`, the line-model kinematics, the simulation seam, the closed loop, fault injection, and cache invalidation |
 | **BE** | The simulator control API `/sim/**`, the trial control surface, per-tag write status from `OPCConnection`, flat wire's `OPCConnection` registration, and the tag surface revision |
-| **FE** | One, and it is unusual: **`DB-S1`, a standalone WinForms desktop console** (`D-33`) — 52 h, the largest single activity here and not an Angular screen at all |
+| **FE** | One, and it is unusual: **`DB-S1`, a standalone WinForms desktop console** (`D-33`) — the largest single activity here and not an Angular screen at all |
 | **DB** | Only through `FW-238`'s registration, which writes `CommonDB.OPCTags` |
 | **QA** | ⚠ **None.** The hub load test is `FS-06`'s and commissioning is `FS-19`'s |
 

@@ -49,7 +49,7 @@ is a screen, the other is a pipeline four categories share.
 
 ⚠ **`FW-204` exists because Dashboard 1 might not.** The *"minimal landing route — the entry point
 when Dashboard 1 is out of scope"* is a hedge against DB1 being descoped, and it is the only
-activity here that is not part of DB1. If DB1 ships, it is 8 h of insurance; if DB1 is cut, it is
+activity here that is not part of DB1. If DB1 ships, it is cheap insurance; if DB1 is cut, it is
 the only way into the application.
 
 **Out of scope.**
@@ -95,7 +95,7 @@ Owned requirement range, from [`[SCM §2.2]`](../../90-registers/StoryConsolidat
 **Cited, never restated.** Its screen authority is
 [`LineStatusOverview.md`](../screens/LineStatusOverview.md).
 
-⚠ **The alert rules engine is 40 h against a 9-requirement range that barely mentions it.**
+⚠ **The alert rules engine is this category's largest activity against a 9-requirement range that barely mentions it.**
 `FW-N06` is the largest single activity here and `[REQ §5.20]` does not specify the lifecycle it
 implements — `OI-28` is open precisely because *"the alert lifecycle is unbacked"*. The requirement
 range covers the board; the engine behind it is specified in `[SIG]` and in the open item.
@@ -121,10 +121,10 @@ of the deletion step and no tool can do it.
 
 | Stream | Scope |
 |---|---|
-| **FE** | Three activities and the bulk of the hours. Dashboard 1 at 44 h — the largest FE activity outside `FS-01`'s shared controls — plus alert chips, the reconnect banner and the **cached-state fallback** that keeps the board readable when the hub drops, and the minimal landing route |
+| **FE** | Three activities and the bulk of the hours. Dashboard 1 — the largest FE activity outside `FS-01`'s shared controls — plus alert chips, the reconnect banner and the **cached-state fallback** that keeps the board readable when the hub drops, and the minimal landing route |
 | **BE** | `GET /lines/status` and `LineStatusService` — one read serving three lines |
-| **DB** | One activity, 4 h: the `FlatWireRun(MachineName, Status)` index. It is `in-review`, and it is what makes the board's query cheap enough to poll |
-| **RT** | The **alert rules engine** and the `AlertRaised`/`AlertCleared` lifecycle. 40 h, the largest activity here, and the one with an unbacked specification |
+| **DB** | One activity: the `FlatWireRun(MachineName, Status)` index. It is `in-review`, and it is what makes the board's query cheap enough to poll |
+| **RT** | The **alert rules engine** and the `AlertRaised`/`AlertCleared` lifecycle. The largest activity here, and the one with an unbacked specification |
 | **QA** | The **hub load test** — and it is this category's, not `FS-04`'s, because DB1 is the screen that holds the most concurrent connections |
 
 ---

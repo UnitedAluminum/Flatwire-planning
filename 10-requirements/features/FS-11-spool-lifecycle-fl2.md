@@ -205,7 +205,7 @@ records two rows as *Completed*; both are satisfied by a correct presentation ch
 - ⛔ **`OI-115` — the shared write set for FL2 spool check-in is undefined.** It is `FS-15`'s
   blocker, but it is *this* category's check-in that cannot complete without it.
 - ⚠ **`Q96` could remove a feature that is already partly specified.** If the milestone ladder is
-  out of scope, `FR-130`–`FR-155`'s 98 h re-pricing and much of
+  out of scope, `FR-130`–`FR-155`'s re-pricing (`FW-202`) and much of
   `SpoolCompletionNotification.md` go with it. It is the largest single scope question open on this
   category.
 - **The FL2 trace reversal created four stories in two days** (`FW-N29`, `FW-N31`, `FW-N32`,

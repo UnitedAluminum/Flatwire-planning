@@ -121,7 +121,7 @@ of the deletion step and no tool can do it.
 
 | Stream | Scope |
 |---|---|
-| **FE** | Four activities and 104 of 186 h. DB7's completion flow and DB7b's packing station; the **source-traceability table and skid tracker** at 40 h — the largest FE activity here, and the surface that shows a coil's genealogy; and the coil label with its print path |
+| **FE** | Four activities, and the bulk of this category's hours. DB7's completion flow and DB7b's packing station; the **source-traceability table and skid tracker** — the largest FE activity here, and the surface that shows a coil's genealogy; and the coil label with its print path |
 | **BE** | `POST /coil/complete` and `GET /coil/{alpha}/label` with their services (`blocked`), plus the **footage-to-weight converter** — which sits here rather than in `FS-07` because completion is what consumes it |
 | **DB** | `CoilOutput`, `CoilTraceability` and the **non-overlap trigger** — the one trigger in the MVP-1 build, which stops two coils claiming the same footage range. `in-review` |
 | **RT** | Completion broadcasts, and the `CoilCompleted` hub member that `OI-140` records as missing |

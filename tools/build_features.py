@@ -247,6 +247,50 @@ def authored_bytes(rel):
     return n
 
 
+def authored_text(rel):
+    """The parent's own prose - both generated blocks removed.
+
+    The hours check must not see the generated absorbed-stories table, whose
+    Hours column is derived from [SCM] and is meant to be there.
+    """
+    text = F.read(rel)
+    for begin, end in ((BEGIN, END), (BEGIN_BLK, END_BLK)):
+        if begin in text and end in text:
+            head, rest = text.split(begin, 1)
+            text = head + rest.split(end, 1)[1]
+    return text
+
+
+RE_HOURS = re.compile(r'[0-9][0-9,]*\s*h(?![A-Za-z])')
+RE_OWNER = re.compile(r'FW-N?[0-9]+|\[(?:TB|CE|TRP|SSP|DSP)')
+
+
+def hours_in_prose(feats):
+    """A parent may not print an hours figure - README.md, "Two things an FS file
+    never carries".
+
+    The rule is load-bearing and had no checker, so 55 figures accumulated across
+    ten parents while the rule sat two clicks away. Prose hours rot silently: FS-08
+    records FW-202 being re-priced 4 h -> 98 h, and nothing would have caught the
+    parent had it been re-priced again. Hours belong to the card and to [CE 3e];
+    a parent cites those, or says "the largest activity here" and names no number.
+    """
+    hits = []
+    for cid, _front, rel, _fn in feats:
+        for n, line in enumerate(authored_text(rel).split(chr(10)), 1):
+            if not RE_HOURS.search(line):
+                continue
+            # Permitted: a figure sitting beside the id or the document that OWNS
+            # it - the repository's cite-once convention. Forbidden: a figure with
+            # no owner on the line, which is how a per-category roll-up gets
+            # invented here and becomes a fifth competing total.
+            if RE_OWNER.search(line):
+                continue
+            for m in RE_HOURS.finditer(line):
+                hits.append((cid, n, m.group(0).strip(), line.strip()[:70]))
+    return hits
+
+
 def report_sizes(feats):
     over = []
     for cid, _front, rel, fn in feats:
@@ -529,6 +573,22 @@ def main():
                 with open(tmp, 'w', encoding='utf-8', newline='') as fh:
                     fh.write(new)
                 os.replace(tmp, path)
+
+    # An hours figure with no owner on its line is a rule violation, not a style
+    # note, so it fails the check rather than printing a warning nobody reads.
+    # 28 of them accumulated while the rule sat unenforced two clicks away.
+    ownerless = hours_in_prose(feats)
+    if ownerless:
+        print('build_features: %d hours figure(s) in parent prose with no owning id or '
+              'citation on the line.' % len(ownerless))
+        print('  A parent may not invent an hours figure - see '
+              '10-requirements/features/README.md.')
+        print('  Name the card that owns it, cite [CE]/[TB 7.3], or drop the number.')
+        for cid, n, tok, line in ownerless[:10]:
+            print('      %-7s line %-4d %-8s %s' % (cid, n, tok, line))
+        if len(ownerless) > 10:
+            print('      ... and %d more' % (len(ownerless) - 10))
+        return 1
 
     if check:
         if stale:

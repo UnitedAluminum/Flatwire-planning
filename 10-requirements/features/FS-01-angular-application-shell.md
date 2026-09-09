@@ -37,7 +37,7 @@ screen reuses. Nothing an operator recognises, and nothing else can be built unt
 
 ⚠ **This is one of three technical-layer categories** (`FS-01` / `FS-02` / `FS-03`), and the only
 place the *"no technical-layer categories"* rule is deliberately set aside. Phase 1 genuinely is
-technical: a single Platform Foundation measured 52 stories and 821 h, a quarter of the backlog in
+technical: a single Platform Foundation measured 52 stories, a quarter of the backlog, in
 one file, which is the shape this tier exists to remove. See
 [`README.md`](README.md#four-boundaries-that-are-not-the-phase-model).
 
@@ -135,7 +135,7 @@ one, and why it is labelled as such rather than dressed up.
 | **Shell** | Header, sidebar nav, `alert-banner` slot, the 1920×1080 canvas, light and dark, and the semantic design tokens consumed **as-is** from the mockups' `.scss` |
 | **Guards and interceptors** | `FlatWireAuthGuard` and `FlatWireRoleGuard`, reusing `shared`'s login and token interceptors — **no new interceptors** — plus the `{ success, data, errors[] }` envelope |
 | **API client** | One interface, real and mock implementations swapped by DI on `useMockData`, eight domain models, `line-context.service` and `run-state.service` on RxJS `BehaviorSubject`s — **no NgRx**, which this repository does not use |
-| **Controls** | Six composites (120 h) and the primitives with `alert-banner` |
+| **Controls** | Six composites — `FW-133`, over half this category — and the primitives with `alert-banner` |
 
 ---
 

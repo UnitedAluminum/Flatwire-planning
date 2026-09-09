@@ -50,8 +50,8 @@ three lines: same titles, same axis, one source path, with `isLive` driven by th
 the line.
 
 ⚠ **`FW-202` is 98 h in a 240 h category and is `blocked`.** FL1 spool completion — stop
-confirmation, weight basis and the `SpoolProcessing` write — was re-priced from 4 h to 98 h by
-`[TRP §5.1]` (gap `G37`), and **no published per-phase total carries that figure**. It is 41 % of
+confirmation, weight basis and the `SpoolProcessing` write — was re-priced from 4 h to 98 h by `[TRP §5.1]`
+(gap `G37`), and **no published per-phase total carries that figure**. It is 41 % of
 this category's hours and the single largest activity in the module.
 
 **Out of scope.**
@@ -194,7 +194,7 @@ of the deletion step and no tool can do it.
 
 - ⚠ **`FW-202`'s 98 h is in no published per-phase total.** `[TRP §5.1]` re-priced `FR-130`–`FR-155`
   from 4 h to 98 h as gap `G37`, story `FW-202`. Any plan built on `[CE §3b]`'s Phase 5 figure is
-  short by 94 h for this category alone.
+  short by that difference for this category alone.
 - ⚠ **`FR-120` versus `D-55` is an unreconciled contradiction between a `[CONFIRMED]` `Must` and a
   decision that post-dates it.** Recorded as open; it needs a client answer, not an engineering one.
 - **`OQ-18` resolves to no register** (`G61`).

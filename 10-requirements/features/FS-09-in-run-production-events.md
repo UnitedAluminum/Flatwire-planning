@@ -209,7 +209,7 @@ carries an icon while the **dismiss** button does not.
 - ⛔ **`G51` — `SpcMeasurement.InSpec` stores a wrong verdict for an asymmetric band.** A built
   column producing a wrong answer, and its repair is `FW-245` under `FS-03`. Every SPC report and
   certificate reads it.
-- ⚠ **Line Downtime is 34 h with no requirement section** (§3 above) — 25 client codes and no
+- ⚠ **Line Downtime has no requirement section** (§3 above; `FW-255`, `FW-256`) — 25 client codes and no
   numbered requirement behind them.
 - ⚠ **`OI-11` — Roll Adjust line applicability is unresolved** and the DB11 header disagrees with
   its own actions. Tracked under `FS-08` because it surfaces there; the dialog is this category's.

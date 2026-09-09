@@ -37,8 +37,8 @@ operational moves that go with go-live.
 
 ⚠ **This is the one category permitted to index the others**, because it is where they are all
 verified together. It is labelled **cross-cutting: verification** rather than functional, and it
-carries the largest hour total of any category at 289 h — of which **112 h is QA and 64 h BA**, the
-only category where those two streams dominate.
+carries the largest hour total of any category (`[TB §7.3]`) and is the **only one where QA and BA
+dominate**.
 
 ⛔ **Commissioning is what makes the PLC tag surface real.** `[PLC]` is v1.0 with **no
 `[CONFIRMED]` tag by design** — a tag path becomes confirmed when commissioning test `C1`/`C11`
@@ -111,8 +111,8 @@ same absence appears as `G9`/`OI-34` under `FS-06`.
 ⚠ **`FW-201` is a "defect allowance and renamed-column regression" at 56 h.** The renamed-column
 half is worth reading carefully: **`D-32` cancelled the shared-schema renames**, so the regression
 it was scoped against largely does not exist any more, while `D-56`'s `LineId` → `MachineName`
-rename *does* — a different rename, in `FlatWireDB` rather than the shared schema. Whether the 56 h
-still describes the work is unverified here.
+rename *does* — a different rename, in `FlatWireDB` rather than the shared schema. Whether
+`FW-201`'s costing still describes the work is unverified here.
 
 ---
 
@@ -122,9 +122,9 @@ still describes the work is unverified here.
 
 | Stream | Scope |
 |---|---|
-| **QA** | **112 h, the dominant stream.** Three end-to-end scenarios — FL1 standalone, FL2 standalone, FL3 hybrid — and the QA half of the defect allowance |
-| **BA** | **64 h.** UAT and stakeholder sign-off at 56 h, the largest single activity here, plus re-deriving the DB-stream total |
-| **RT** | **PLC commissioning support** at 40 h, and the **OPC sidecar adapter** — the only `done` activity in this category |
+| **QA** | **The dominant stream.** Three end-to-end scenarios — FL1 standalone, FL2 standalone, FL3 hybrid — and the QA half of the defect allowance |
+| **BA** | UAT and stakeholder sign-off (`FW-201`), the largest single activity here, plus re-deriving the DB-stream total |
+| **RT** | **PLC commissioning support**, and the **OPC sidecar adapter** — the only `done` activity in this category |
 | **DB** | Moving `FlatWireDB` into the `ual-database` repository, and repairing the development-plan generator's multi-stream defect |
 | **FE / BE** | Only through `FW-201`'s regression pass, which spans all four build streams |
 

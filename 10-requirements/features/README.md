@@ -103,9 +103,24 @@ wins**; on any number **`[CE]` and `[TB §7.3]` win**.
 
 ### Two things an `FS` file never carries
 
-- **No hours figure** — not per category, not a total, not "for orientation". The sum over the task
-  files is 3,698 h, which matches **none** of the four published figures (3,186 scheduled · 3,375
-  reconciling · 3,358 all-in · 2,367 dev-only). A fifth would be a contradiction on arrival.
+- **No hours figure a parent invents.** The sum over the task files is 3,698 h, which matches
+  **none** of the four published figures (3,186 scheduled · 3,375 reconciling · 3,358 all-in ·
+  2,367 dev-only). A fifth would be a contradiction on arrival, and a per-category or per-stream
+  roll-up written here *is* a fifth — it exists in no other document and nothing recomputes it.
+
+  ⚠ **Narrowed on 9 Sep 2026, and enforced from the same day.** This read *"no hours figure — not
+  per category, not a total, not for orientation"*, which was absolute and had **no checker**;
+  **28 ownerless figures accumulated across ten parents** while the rule sat two clicks away,
+  including invented category totals of `391 h`, `289 h`, `186 h` and `128 h`. The rule is now the
+  repository's ordinary cite-once convention applied to hours: **a figure may appear only on a line
+  that also names the `FW-###` that owns it, or cites `[CE]` / `[TB §7.3]` / `[TRP]` / `[SSP]` /
+  `[DSP]`.** `tools/build_features.py` **fails** on any other — not a warning, a non-zero exit, so
+  the pre-commit hook catches it.
+
+  ⛔ **Why a bare number rots, in this repository's own evidence:** `FS-08` records `FW-202` being
+  re-priced **4 h → 98 h**. Any parent that had printed the old figure would have been silently
+  wrong, and nothing would have said so. Tying the figure to its owner does not stop the rot — only
+  a generated table would — but it tells the reader exactly which card to check.
 - **No `depends_on`** — consolidation turns the acyclic task graph into a cyclic category graph.
   The task graph has **one** known cycle (`FW-071`/`FW-072`, `G63`); the category graph has **15
   mutually dependent pairs**, because each has a dominant direction plus one or two minority

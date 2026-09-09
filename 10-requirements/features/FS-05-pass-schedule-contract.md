@@ -38,7 +38,7 @@ is the single most depended-upon object in the module.
 ⛔ **This category exists because MVP-1 depends on something MVP-1 does not build.** Phase 2 moved
 to MVP-2 **whole and unedited** on 11 Aug 2026 — all four screen and engine stories deferred
 (`FW-010` data model and API, `FW-011` DB9A, `FW-012` DB9, `FW-013` Generate-from-Specs) with
-`231 h`. `phase-04` states the position plainly: the pass schedule is *"an EXTERNAL dependency, not
+`[CE §3b]`'s `231 h` Phase 2 figure. `phase-04` states the position plainly: the pass schedule is *"an EXTERNAL dependency, not
 a Phase-2 deliverable"* and MVP-1 *"builds no authoring UI and creates no schedule"*.
 
 **So this category owns a consumer contract, not a backlog.** No card and no task file maps here.
@@ -150,7 +150,7 @@ table. What each stream *consumes* is:
   the schedule a run acknowledges still exists or still says the same thing.
 - **`PassScheduleChangeLog` is a table nothing writes.** It is built, enforced and unreachable in
   MVP-1 — the change log for an object MVP-1 cannot change.
-- **`231 h` is the only phase figure in its division published clean and unapportioned**, which
+- **`[CE §3b]`'s `231 h` is the only phase figure in its division published clean and unapportioned**, which
   makes it the cleanest number in the plan to re-admit if the deferral is reversed.
 
 ---
