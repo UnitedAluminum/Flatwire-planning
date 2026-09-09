@@ -61,7 +61,7 @@ than restating it.
 | `FS-06` | Line Visibility and Alerting | 3 | 7 | 4 | 3 | 0 | 148 |
 | `FS-07` | Rod Staging, Check-In, PLC Configuration and Weld Capture | 4 | 15 | 7 | 8 | 0 | 247 |
 | `FS-08` | Active Run Monitoring and Gauge/Width Trace | 5 | 10 | 4 | 6 | 0 | 240 |
-| `FS-09` | In-Run Production Events | 6 | 18 | 11 | 7 | 1 | 284 |
+| `FS-09` | In-Run Production Events | 6 | 16 | 9 | 7 | 1 | 264 |
 | `FS-10` | Exceptions and Off-Ramps | 7 | 7 | 3 | 4 | 0 | 148 |
 | `FS-11` | Spool Lifecycle and FL2 Finishing Run | 8 | 13 | 8 | 5 | 0 | 154 |
 | `FS-12` | Output Completion, Labelling and Packing | 9 | 10 | 5 | 5 | 0 | 186 |
@@ -70,7 +70,7 @@ than restating it.
 | `FS-15` | The Shared-Schema Boundary | 4 · 9 | 5 | 0 | 5 | 0 | 113 |
 | `FS-16` | Reporting and Certification | 11 | 8 | 8 | 0 | 1 | 206 |
 | `FS-17` | Yield, Cost Ledger and Scrap | 12 | 4 | 4 | 0 | 0 | 128 |
-| `FS-18` | Administration, Reference Data and Tooling Inventory | 13 | 15 | 15 | 0 | 1 | 209 |
+| `FS-18` | Administration, Reference Data and Tooling Inventory | 13 | 17 | 17 | 0 | 1 | 229 |
 | `FS-19` | Integration Testing, Commissioning and Go-Live | 14 | 10 | 7 | 3 | 0 | 289 |
 | `FS-20` | Unscheduled and Unhosted Requirements | — | 0 | 0 | 0 | 5 | 0 |
 | | **Total** | | **204** | | | **13** | **3698** |
@@ -286,8 +286,6 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 | `FW-252` | Die lifecycle service — per-tool die life, DieHistory writes and per-t | 6 | BE | 16 | not-started | Consolidate | phase 6 |
 | `FW-255` | LineDowntimeEvent write path — LineDowntimeService and the two line-do | 6 | BE | 22 | not-started | Consolidate | phase 6 |
 | `FW-256` | Line Downtime dialog — the 25 DWN## codes that have no run | 6 | FE | 12 | not-started | Consolidate | phase 6 |
-| `FW-260` | Roll-set register service - ToolingInventoryRollSet CRUD and the mount | 6 | BE | 10 | not-started | Consolidate | phase 6 |
-| `FW-269` | Edger register service - ToolingInventoryEdger CRUD and the gauge coll | 6 | BE | 10 | not-started | Consolidate | phase 6 |
 | `FW-N26` | Log the operator-set dancer tension value | 6 | DB·BE | 12 | not-started | Consolidate | phase 6 |
 | `FW-N27` | Guard the weld flag - it cannot be set before check-in | 6 | BE | 6 | not-started | Consolidate | phase 6 |
 | `FW-014` | Roll override sink | — | — | — | *no card, no task file* | **Retire** | FR-360-391 — Subsumed by FW-169 for its MVP-1 half (B.5) |
@@ -395,6 +393,8 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 | `FW-###` | Title | Ph | Streams | h | Status at consolidation | Action | Basis |
 |---|---|---|---|---:|---|---|---|
 | `FW-254` | Reason-code query endpoints — the three seeded client vocabularies | 1C | BE | 9 | not-started | Consolidate | reason-code lookups are reference data, not schema foundation |
+| `FW-260` | Roll-set register service - ToolingInventoryRollSet CRUD and the mount | 6 | BE | 10 | not-started | Consolidate | roll-set register CRUD is reference data, not an in-run event |
+| `FW-269` | Edger register service - ToolingInventoryEdger CRUD and the gauge coll | 6 | BE | 10 | not-started | Consolidate | edger register CRUD is reference data, not an in-run event |
 | `FW-003` | Machine template tabs — register FL1, FL2, FL3 | 13 | FE | 12 | not-started | Consolidate | phase 13 |
 | `FW-054` | Alloys — Material Type across Properties, Reduction Rules and Vendor O | 13 | FE | 12 | not-started | Consolidate | phase 13 |
 | `FW-194` | Alloy lookup admin grid | 13 | FE | 20 | not-started | Consolidate | phase 13 |
@@ -446,9 +446,9 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 |---|---|---|
 | `FS-02` ↔ `FS-03` | `FS-02` → `FS-03` (5 edges) | 1 — `FW-246→FW-147` |
 | `FS-02` ↔ `FS-04` | `FS-04` → `FS-02` (14 edges) | 4 — `FW-208→FW-080`, `FW-234→FW-151`, `FW-265→FW-151`, `FW-266→FW-210` |
-| `FS-03` ↔ `FS-09` | `FS-09` → `FS-03` (7 edges) | 1 — `FW-245→FW-168` |
+| `FS-03` ↔ `FS-09` | `FS-09` → `FS-03` (5 edges) | 1 — `FW-245→FW-168` |
 | `FS-03` ↔ `FS-14` | `FS-03` → `FS-14` (1 edge) | 1 — `FW-243→FW-007` |
-| `FS-03` ↔ `FS-18` | `FS-18` → `FS-03` (11 edges) | 1 — `FW-241→FW-003` |
+| `FS-03` ↔ `FS-18` | `FS-18` → `FS-03` (13 edges) | 1 — `FW-241→FW-003` |
 | `FS-04` ↔ `FS-07` | `FS-07` → `FS-04` (6 edges) | 1 — `FW-082→FW-157` |
 | `FS-04` ↔ `FS-18` | `FS-04` → `FS-18` (1 edge) | 1 — `FW-198→FW-149` |
 | `FS-04` ↔ `FS-19` | `FS-19` → `FS-04` (5 edges) | 1 — `FW-215→FW-217` |
@@ -458,7 +458,7 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 | `FS-08` ↔ `FS-11` | `FS-11` → `FS-08` (6 edges) | 1 — `FW-N16→FW-230` |
 | `FS-08` ↔ `FS-15` | `FS-15` → `FS-08` (2 edges) | 1 — `FW-N16→FW-231` |
 | `FS-09` ↔ `FS-10` | `FS-09` → `FS-10` (3 edges) | 1 — `FW-072→FW-071` |
-| `FS-09` ↔ `FS-18` | `FS-09` → `FS-18` (3 edges) | 3 — `FW-253→FW-252`, `FW-261→FW-260`, `FW-270→FW-269` |
+| `FS-09` ↔ `FS-18` | `FS-09` → `FS-18` (3 edges) | 3 — `FW-253→FW-252`, `FW-260→FW-252`, `FW-269→FW-252` |
 
 *`FS-09` ↔ `FS-10` carries the pre-existing `FW-071`/`FW-072` cycle recorded as `G63`; consolidation neither creates nor fixes it.*
 

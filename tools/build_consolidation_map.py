@@ -101,6 +101,12 @@ OVERRIDES = {
     'FW-222': ('FS-08', 'single-active-run index serves the active-run read'),
     'FW-228': ('FS-12', 'footage-to-weight converter serves coil completion'),
     'FW-254': ('FS-18', 'reason-code lookups are reference data, not schema foundation'),
+    # CRUD services for a tooling REGISTER, not in-run events. Their phase 6 records
+    # when the register is read (during a run), not what the work is. Left on the
+    # phase default they split one tool type across three categories - the exact
+    # fragmentation this consolidation exists to remove.
+    'FW-260': ('FS-18', 'roll-set register CRUD is reference data, not an in-run event'),
+    'FW-269': ('FS-18', 'edger register CRUD is reference data, not an in-run event'),
 }
 
 # Ids referenced as a delivering story by [TB 11] / 11.1 / B.4 / B.5 that have NO

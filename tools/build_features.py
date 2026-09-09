@@ -153,8 +153,9 @@ def render_block(rows, cid, derived, expected):
         L.append('')
         L.append(END)
         return '\n'.join(L)
-    L.append('Seeded one activity per absorbed story. **Activities are expected to merge '
-             'downward** as work proceeds — `FW-N17`/`N18`/`N19` are one rename, not three.')
+    L.append('**%d absorbed stor%s**, seeded one activity each. **Activities are expected to '
+             'merge downward** as work proceeds — `FW-N17`/`N18`/`N19` are one rename, not '
+             'three.' % (len(rows), 'y' if len(rows) == 1 else 'ies'))
     L.append('')
     L.append('| Ref | Activity | Streams | Status | Depends on | Blocked by |')
     L.append('|---|---|---|---|---|---|')

@@ -19,7 +19,7 @@
 | [FS-06 Line Visibility and Alerting](10-requirements/features/FS-06-line-visibility-alerting.md) | 7 | 0 | 1 | 1 | 0 | 5 | 0 % | G9 · OI-28 · OI-34 |
 | [FS-07 Rod Staging, Check-In, PLC Configuration and W](10-requirements/features/FS-07-rod-checkin-plc-config.md) | 15 | 0 | 2 | 0 | 4 | 9 | 0 % | G14 · G17 · G2 … |
 | [FS-08 Active Run Monitoring and Gauge/Width Trace](10-requirements/features/FS-08-active-run-monitoring.md) | 10 | 0 | 3 | 2 | 1 | 4 | 0 % | G34 · G54 · G9 … |
-| [FS-09 In-Run Production Events](10-requirements/features/FS-09-in-run-production-events.md) | 18 | 0 | 1 | 0 | 3 | 14 | 0 % | G26 · G34 · G35 … |
+| [FS-09 In-Run Production Events](10-requirements/features/FS-09-in-run-production-events.md) | 16 | 0 | 1 | 0 | 3 | 12 | 0 % | G26 · G34 · G35 … |
 | [FS-10 Exceptions and Off-Ramps](10-requirements/features/FS-10-exceptions-off-ramps.md) | 7 | 0 | 1 | 0 | 0 | 6 | 0 % | G14 · G24 · G7 … |
 | [FS-11 Spool Lifecycle and FL2 Finishing Run](10-requirements/features/FS-11-spool-lifecycle-fl2.md) | 13 | 0 | 2 | 0 | 2 | 9 | 0 % | OI-02 · OI-06 · OI-25 … |
 | [FS-12 Output Completion, Labelling and Packing](10-requirements/features/FS-12-output-completion-packing.md) | 10 | 0 | 1 | 0 | 2 | 7 | 0 % | G36 · OI-105 · OI-106 … |
@@ -28,7 +28,7 @@
 | [FS-15 The Shared-Schema Boundary](10-requirements/features/FS-15-shared-schema-boundary.md) | 5 | 0 | 0 | 0 | 2 | 3 | 0 % | G54 · OI-114 · OI-115 … |
 | [FS-16 Reporting and Certification](10-requirements/features/FS-16-reporting-certification.md) | 8 | 0 | 0 | 0 | 1 | 7 | 0 % | OI-101 · OI-57 · OI-99 … |
 | [FS-17 Yield, Cost Ledger and Scrap](10-requirements/features/FS-17-yield-cost-scrap.md) | 4 | 0 | 0 | 0 | 0 | 4 | 0 % | OI-60 · OI-68 · OI-83 … |
-| [FS-18 Administration, Reference Data and Tooling Inv](10-requirements/features/FS-18-administration-reference-data.md) | 15 | 0 | 0 | 0 | 0 | 15 | 0 % | G121 · OI-12 · OI-141 … |
+| [FS-18 Administration, Reference Data and Tooling Inv](10-requirements/features/FS-18-administration-reference-data.md) | 17 | 0 | 0 | 0 | 0 | 17 | 0 % | G121 · OI-12 · OI-141 … |
 | [FS-19 Integration Testing, Commissioning and Go-Live](10-requirements/features/FS-19-integration-testing-golive.md) | 10 | 1 | 0 | 0 | 0 | 9 | 10 % | G29 · G30 · G32 … |
 | [FS-20 Unscheduled and Unhosted Requirements](10-requirements/features/FS-20-unscheduled-unhosted.md) | 0 | 0 | 0 | 0 | 0 | 0 | 0 % | — |
 | **All** | **204** | **32** | **16** | **6** | **25** | **123** | **16 %** | |
@@ -205,7 +205,7 @@ Open register items cited by at least one live activity, most-blocking first.
 
 ## FS-09 — In-Run Production Events
 
-**18 activities · 0 % done · phase 6** · **Story:** [FS-09-in-run-production-events.md](10-requirements/features/FS-09-in-run-production-events.md)
+**16 activities · 0 % done · phase 6** · **Story:** [FS-09-in-run-production-events.md](10-requirements/features/FS-09-in-run-production-events.md)
 
 **▶ Ready to start now:** *none — every not-started activity here waits on a dependency or a blocker*
 
@@ -259,7 +259,7 @@ Open register items cited by at least one live activity, most-blocking first.
 
 ## FS-18 — Administration, Reference Data and Tooling Inventory
 
-**15 activities · 0 % done · phase 13** · **Story:** [FS-18-administration-reference-data.md](10-requirements/features/FS-18-administration-reference-data.md)
+**17 activities · 0 % done · phase 13** · **Story:** [FS-18-administration-reference-data.md](10-requirements/features/FS-18-administration-reference-data.md)
 
 **▶ Ready to start now:** *none — every not-started activity here waits on a dependency or a blocker*
 
