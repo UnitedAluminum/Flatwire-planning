@@ -1871,9 +1871,9 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 ###### FW-062 · Dashboard 3 — Active Run Monitor (FL1) and FL3 variant
+**Hours:** 32 h FE · **Priority:** Critical · **Sprint:** S2 · **Phase:** 5 · **Stream:** FE
 
 > ⭐ **Re-scoped 7 Sep 2026 by `D-55`: ONE machine-driven component for FL1/FL2/FL3** at `#/flat-wire/home/:machineName`, with **four** per-line rows — material panel, centre status card, action set, spool overlay. The "variants" are retired, and six things that read as configuration are data or uniform. ⛔ **Now depends on `FW-N15`** (route, resolver, `LINE_PROFILES`) **and `FW-N16`** (station-claim read), neither of which existed. Full criteria in the task file.
-**Hours:** 32 h FE · **Priority:** Critical · **Sprint:** S2 · **Phase:** 5 · **Stream:** FE
 
 **As an** FL1 operator,
 **I want** one screen showing the run live with every action one click away,
@@ -1897,9 +1897,9 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 ###### FW-162 · `run-status-cards`
+**Hours:** 20 h FE · **Priority:** Critical · **Sprint:** S2 · **Phase:** 5 · **Stream:** FE
 
 > ⭐ **`D-55`, 7 Sep 2026:** the middle card is **profile-driven** (payoffs \| material flow) rather than line-branched markup, and the **Components card renders from the run's pass schedule** — so there is no per-line component list in code on any line.
-**Hours:** 20 h FE · **Priority:** Critical · **Sprint:** S2 · **Phase:** 5 · **Stream:** FE
 
 **As an** operator,
 **I want** machine, material and component state in one card strip,
@@ -1919,9 +1919,9 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 ###### FW-163 · `info-grid` and `chart-tab-strip`
+**Hours:** 20 h FE · **Priority:** High · **Sprint:** S2 · **Phase:** 5 · **Stream:** FE
 
 > ⭐ **`D-55`, 7 Sep 2026:** the grid **subject** comes from the line profile (rod \| spool), and there is **one shared Order Information column set for all three lines**. ⚠ Its blocker widens: the unfinalised column set is **`Q3`** (*"the full field list per station for FL1, FL2 and FL3 has not been documented"*), with `Q18` narrowing to one field inside it.
-**Hours:** 20 h FE · **Priority:** High · **Sprint:** S2 · **Phase:** 5 · **Stream:** FE
 
 **As an** operator,
 **I want** collapsible material and order detail on the monitor,
@@ -1941,9 +1941,9 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 ###### FW-081 · `gauge-trace-chart` live streaming, maximize and runtime source toggle
+**Hours:** 4 h FE · 24 h RT · **Priority:** Critical · **Sprint:** S2 · **Phase:** 5 · **Stream:** FE + RT
 
 > ⭐ **`D-55`, 7 Sep 2026:** the trace treatment is now **uniform across all three lines** — same titles (`Gauge` / `Width`), same axis, one source path — so `isLive` is driven by the data rather than by the line. ⛔ **A `null` reading renders a no-measurement state, never a flat line at target.** ⚠ That uniformity collides with `FR-120`, which is `Must` and `[CONFIRMED]`; the reconciliation is a client decision and is recorded as open.
-**Hours:** 4 h FE · 24 h RT · **Priority:** Critical · **Sprint:** S2 · **Phase:** 5 · **Stream:** FE + RT
 
 **As an** operator,
 **I want** the gauge and width traces streaming live with weld markers,
@@ -1964,9 +1964,9 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 ###### FW-164 · `GET /run/active`, `GET /run/{runId}/gaugetrace` and `RunQueryService`
+**Hours:** 12 h BE · **Priority:** High · **Sprint:** S2 · **Phase:** 5 · **Stream:** BE
 
 > ⭐ **Two response additions, 7 Sep 2026 (`D-55`)**, both non-breaking under `[API §8]` and both riding this one read rather than a second call (`P-254`): **(1)** the **station claim** — `WIPStation` plus the resolved `CoilNo`, or an explicit *idle* marker (`FW-N16` owns the view and the read); **(2)** a **second component value** — `ComponentStateItem.CurrentValue` is a single `decimal?`, but the Components card needs two on some rows (FM1's gap **and** width; a stand's diameter **and** its `EdgeType`). ⚠ `[API §4.7a]`'s published shape is also behind the built DTO — it omits the order block and `outOfSpec` (`P-254`).
-**Hours:** 12 h BE · **Priority:** High · **Sprint:** S2 · **Phase:** 5 · **Stream:** BE
 
 **As a** client developer,
 **I want** an active-run snapshot and a paged historical trace,
@@ -2552,9 +2552,9 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 ###### FW-178 · Dashboard 3 FL2 variant configuration
+**Hours:** 8 h FE · **Priority:** High · **Sprint:** S3 · **Phase:** 8 · **Stream:** FE
 
 > ⭐ **Narrowed 7 Sep 2026 by `D-55`.** Four of its six criteria dissolve: the Live/Profile toggle (trace source is now uniform), the Order Information weight field (one shared column set, `Q3`), the three FM2 rows (**pass-schedule data**, not a variant) and the info-grid chrome. ✅ **What remains is genuinely FL2:** the material-flow card's content model and the Spool Information subject. ⚠ Its trace half moves to `FW-181` as a shared-path rule.
-**Hours:** 8 h FE · **Priority:** High · **Sprint:** S3 · **Phase:** 8 · **Stream:** FE
 
 **As an** FL2 operator,
 **I want** the run monitor to show spool-in and coil-out rather than payoffs,
@@ -2932,9 +2932,9 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ---
 
 ###### FW-189 · Dashboard 2 and 3 FL3 variants
+**Hours:** 12 h FE · **Priority:** High · **Sprint:** S3 · **Phase:** 10 · **Stream:** FE
 
 > ⭐ **The DB3 half is now the action set alone** (`D-55`, 7 Sep 2026) — trace titles, the Components card and the Rod Information columns are all shared with FL1, so FL3's Active Run delta is one profile row. The DB2 FL3 variant is unchanged. ⚠ **Recorded double-count:** FL3's DB3 work is costed both here (4 h of 12) and in `FW-062` (8 h of 32); hours are left untouched pending a costing pass, which will now find more than 12 h.
-**Hours:** 12 h FE · **Priority:** High · **Sprint:** S3 · **Phase:** 10 · **Stream:** FE
 
 **As an** FL3 operator,
 **I want** the check-in and run screens in hybrid mode,

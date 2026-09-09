@@ -12,9 +12,23 @@ PY=python
 command -v python >/dev/null 2>&1 || PY=python3
 
 # Only do the work when something that feeds the board actually changed.
-if git diff --cached --name-only | grep -qE '(^|/)tasks/FW-.*\.md$|Development/(GapsRegister|TaskBreakdown)\.md$|Development/Phases/|FlatWire(Open|Decided)Questions\.md$|PLCTagSpecification\.md$|FlatWire_MasterSpecification\.md$|^tools/'; then
+#
+# The path list below was repointed on 9 Sep 2026. Four of the seven alternatives named
+# pre-29-Aug-re-tree paths (`Development/TaskBreakdown.md`, `Development/Phases/`,
+# `FlatWireOpenQuestions.md`, `FlatWire_MasterSpecification.md`) and matched ZERO tracked
+# files, so editing the backlog, a phase spec or any register regenerated nothing and ran
+# no check. Keep these in step with fwtasks.py's TASK_DIRS / PHASE_DIR / BACKLOG /
+# GAPS / QUESTIONS / DECIDED / MASTERSPEC / PLCSPEC constants.
+if git diff --cached --name-only | grep -qE '(^|/)tasks/FW-.*\.md$|^10-requirements/features/|^60-delivery/TaskBreakdown\.md$|^60-delivery/phases/|^90-registers/(Gaps|Questions|Decisions|TaskIdMap)\.md$|^10-requirements/MasterSpecification\.md$|PLCTagSpecification\.md$|^tools/'; then
     "$PY" tools/build_status.py >/dev/null
     git add STATUS.md
+
+    # The category board, once tools/build_features.py exists. Guarded so the hook keeps
+    # working before that tool lands.
+    if [ -f tools/build_features.py ]; then
+        "$PY" tools/build_features.py >/dev/null
+        git add FEATURES.md
+    fi
 
     if ! "$PY" tools/check_docs.py >/tmp/fw_check.$$ 2>&1; then
         echo "pre-commit: check_docs.py FAILED"
