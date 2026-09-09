@@ -85,7 +85,7 @@ The wire field becomes `machineName`. `scheduledLineId` becomes `scheduledMachin
 cd "c:/UAL/Second-Branch/ual-api/API/Domain/FlatWire"
 dotnet build FlatWire.sln
 dotnet test FlatWire.UnitTests/FlatWire.UnitTests.csproj --no-build
-cd "../../../Tools/FlatWireSimConsole" && dotnet build
+cd "c:/UAL/Second-Branch/ual-api/Tools/FlatWireSimConsole" && dotnet build
 ```
 
 **Measured 8 Sep 2026:** build 0 errors (22 warnings, all pre-existing — analyser version,
