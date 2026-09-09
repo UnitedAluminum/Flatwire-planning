@@ -94,7 +94,6 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 | 5.7 | SPC Checkpoint — Dashboard 6 | FR-180–197 | 18 | `FS-09` |
 | 5.8 | Roll Adjust — Dashboard 11 | FR-200–212 | 13 | `FS-09` |
 | 5.9 | Die Change — DC screen | FR-220–234 | 15 | `FS-09` |
-| ~~5.10~~ | ~~· 5.18 · 5.19 · 5.23 · 5.24 — moved to MVP-2~~ | — | — | *index row for the sections moved to MVP-2, not a requirement section* |
 | 5.11 | Pause / Resume | FR-260–267 | 8 | `FS-09` |
 | 5.12 | Stop Transaction and Output of Rolling | FR-270–277 | 8 | `FS-20` |
 | 5.13 | Wire Break | FR-280–282 | 3 | `FS-20` |
@@ -111,11 +110,12 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 | 5.28 | Rod ↔ Order Allocation, Sequencing and Handoff | FR-541–561 | 21 | `FS-14` |
 | 5.29 | FL2 Pre-Check-In — Validating the Next Spool | FR-533–540 | 8 | `FS-11` |
 | 5.30 | Welded-Coil Part Alphas and the Shared Coil Ma | FR-561–570 | 10 | `FS-15` |
-| 5.18 | *(heading moved to MVP-2)* | FR-360-391 | 28 | `FS-05` |
-| 5.19 | *(heading moved to MVP-2)* | FR-400-410 | 11 | `FS-05` |
-| 5.23 | *(heading moved to MVP-2)* | FR-480-490 | 11 | `FS-16` |
-| 5.24 | *(heading moved to MVP-2)* | FR-500-508 | 9 | `FS-20` |
-| | **Total mapped** | | **388** | |
+| 5.10 | Die Management - tooling inventory *(moved to MVP-2)* | FR-240-255 | 16 | `FS-18` |
+| 5.18 | Pass Schedule Management - DB9 *(moved to MVP-2)* | FR-360-391 | 28 | `FS-05` |
+| 5.19 | Pass Schedule List - DB9A *(moved to MVP-2)* | FR-400-410 | 11 | `FS-05` |
+| 5.23 | Shift Summary - DB10 *(moved to MVP-2)* | FR-480-490 | 11 | `FS-16` |
+| 5.24 | OEE Dashboard *(moved to MVP-2)* | FR-500-508 | 9 | `FS-20` |
+| | **Total mapped** | | **404** | |
 
 ### 2.3 The map, by category
 

@@ -152,17 +152,21 @@ SECTION_CATEGORY = {
 # whose FR range and owning category are both real - the ranges still appear in
 # [TB 11]'s matrix. They have no heading to measure, so the range is quoted from
 # the matrix and the row is marked MVP-2.
-#   section: (category, FR range as [TB 11] states it, count)
+#   section: (category, FR range as [TB 11] states it, count, subject)
 SECTION_MVP2 = {
-    '5.18': ('FS-05', 'FR-360-391', 28),
-    '5.19': ('FS-05', 'FR-400-410', 11),
-    '5.23': ('FS-16', 'FR-480-490', 11),
-    '5.24': ('FS-20', 'FR-500-508', 9),
+    # 5.10 still HAS a heading, but only because that heading was repurposed as the
+    # index row for the whole moved set ("5.10 - 5.18 - 5.19 - 5.23 - 5.24 - moved to
+    # MVP-2"). It declares no requirement of its own, so it belongs here and not in
+    # SECTION_EXCLUDED - without this row, Die Management's FR-240-255 has no category.
+    '5.10': ('FS-18', 'FR-240-255', 16, 'Die Management - tooling inventory'),
+    '5.18': ('FS-05', 'FR-360-391', 28, 'Pass Schedule Management - DB9'),
+    '5.19': ('FS-05', 'FR-400-410', 11, 'Pass Schedule List - DB9A'),
+    '5.23': ('FS-16', 'FR-480-490', 11, 'Shift Summary - DB10'),
+    '5.24': ('FS-20', 'FR-500-508', 9, 'OEE Dashboard'),
 }
 
 # Sections with no owning category, each for a stated reason.
 SECTION_EXCLUDED = {
-    '5.10': 'index row for the sections moved to MVP-2, not a requirement section',
     '5.21': 'DB13 HMI schematic - WITHDRAWN 4 Aug 2026',
     '5.22': 'DB14 SCADA trends - WITHDRAWN 4 Aug 2026',
 }
@@ -252,10 +256,12 @@ def _audit_rules(by_id):
         out.append('a story is both an OVERRIDE and in a membership set: %s' % both)
     # Every live [REQ] section must be owned or explicitly excluded, or a whole
     # block of requirements silently loses its category.
-    known = set(SECTION_CATEGORY) | set(SECTION_EXCLUDED)
+    known = set(SECTION_CATEGORY) | set(SECTION_EXCLUDED) | set(SECTION_MVP2)
     present = set()
+    live_by_section = {}
     for num, title, live, _dead in req_sections():
         present.add(num)
+        live_by_section[num] = live
         if num not in known:
             out.append('[REQ] section %s (%s, %d live FR) is in neither '
                        'SECTION_CATEGORY nor SECTION_EXCLUDED' % (num, title[:40], len(live)))
@@ -268,12 +274,13 @@ def _audit_rules(by_id):
     for num in sorted(SECTION_EXCLUDED):
         if num not in present:
             out.append('SECTION_EXCLUDED names [REQ] section %s, which has no heading' % num)
-    for num, (cat, _rng, _n) in sorted(SECTION_MVP2.items()):
+    for num, (cat, _rng, _n, _subj) in sorted(SECTION_MVP2.items()):
         if cat not in CATEGORIES:
             out.append('SECTION_MVP2[%s] -> unknown category %s' % (num, cat))
-        if num in present:
-            out.append('SECTION_MVP2 names [REQ] section %s, which DOES have a heading - '
-                       'move it to SECTION_CATEGORY' % num)
+        if live_by_section.get(num):
+            out.append('SECTION_MVP2 names [REQ] section %s, which still declares %d live '
+                       'requirement(s) - move it to SECTION_CATEGORY'
+                       % (num, len(live_by_section[num])))
     overlap = set(SECTION_MVP2) & (set(SECTION_CATEGORY) | set(SECTION_EXCLUDED))
     if overlap:
         out.append('section in two buckets: %s' % sorted(overlap))
@@ -384,6 +391,8 @@ def build():
     L.append('|---|---|---|---:|---|')
     live_total = 0
     for num, title, live, _dead in secs:
+        if num in SECTION_MVP2:
+            continue          # rendered below, from the matrix range
         cat = SECTION_CATEGORY.get(num)
         if cat is None and num in SECTION_EXCLUDED:
             L.append('| ~~%s~~ | ~~%s~~ | — | — | *%s* |'
@@ -394,9 +403,10 @@ def build():
         L.append('| %s | %s | %s | %d | `%s` |'
                  % (num, esc(title)[:46], rng, len(live), cat))
     for num in sorted(SECTION_MVP2, key=float):
-        cat, rng, n = SECTION_MVP2[num]
+        cat, rng, n, subj = SECTION_MVP2[num]
         live_total += n
-        L.append('| %s | *(heading moved to MVP-2)* | %s | %d | `%s` |' % (num, rng, n, cat))
+        L.append('| %s | %s *(moved to MVP-2)* | %s | %d | `%s` |'
+                 % (num, esc(subj), rng, n, cat))
     L.append('| | **Total mapped** | | **%d** | |' % live_total)
     L.append('')
 
