@@ -37,7 +37,7 @@ mid-run; **pause and resume** stop and restart with a reason; and **line downtim
 lost when there is no run at all. Each is a dialog over whatever screen the operator is on, and
 each writes an event against the run.
 
-⚠ **These are the module's most numerous activities — eighteen, the most of any category — and they
+⚠ **These are the module's most numerous activities — sixteen, the most of any category — and they
 share one shape**: a dialog, an endpoint, a row in one of the five in-run event tables, and a hub
 marker. That shared shape is why they belong together and why the phase model already grouped them.
 
@@ -117,8 +117,8 @@ Owned ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md):
 ⚠ **Two of this category's activities have no requirement range at all.** The **Line Downtime**
 dialog and its write path (`FW-255`, `FW-256`, 34 h) cover **25 `DWN##` codes that have no run** —
 downtime recorded when nothing is checked in — and no `[REQ]` section specifies them. The **dancer
-tension log** (`FW-N26`) is likewise unrequirmented, and `G35` records that **FM2's two dancers are
-unmodelled everywhere**.
+tension log** (`FW-N26`) likewise has no requirement behind it, and `G35` records that **FM2's two
+dancers are unmodelled everywhere**.
 
 *(the merged, de-duplicated acceptance criteria are not yet written)*
 
