@@ -142,10 +142,12 @@ requirements are blocked and the tooling cannot see it.**
   is an addition to `[CE]`, not a re-apportionment — the treatment `D-55` and `D-56` established.
 - **`FW-N07`–`FW-N12` are minted but fileless**, and `TaskIdMap.md` rule 6 records that they are
   **not free to reuse** — re-using one would collide with citations in about a dozen documents.
-- ⚠ **`[TB]`'s next-free-id figure is stale, in three places at once.** Appendices B.9, B.10 and
-  B.11 each state *"Next free `FW-N##` id: `FW-N31`"*, but `FW-N31`, `FW-N32` and `FW-N33` all have
-  a card **and** a task file. **The next free id is `FW-N34`.** One number, asserted three times,
-  wrong three times — the exact failure the repository's cite-once convention exists to prevent.
+- ✅ **`[TB]`'s next-free-id figure was stale in three places at once — corrected 9 Sep 2026.**
+  Appendices B.9, B.10 and B.11 each stated *"Next free `FW-N##` id: `FW-N31`"* while `FW-N31`,
+  `FW-N32` and `FW-N33` all held a card and a `[SCM]` row. One number, asserted three times, wrong
+  three times — the exact failure the cite-once convention exists to prevent, so **B.9 now asserts
+  `FW-N34` and B.10/B.11 cite it.** ⚠ It had also been stale at `FW-N14` and `FW-N20`, so B.9 says
+  the id must be **measured** — highest `FW-N##` in `[TB]` or `[SCM]`, plus one.
 - ⚠ **These four need a decision, not a build.** `[TB §11.1]`'s own words for OEE: *"Either
   schedule it or record OEE as out of scope."* Neither has happened, and the requirements sit in
   the coverage matrix looking covered.

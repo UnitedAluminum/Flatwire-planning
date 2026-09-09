@@ -1,0 +1,39 @@
+linkcheck baseline delta - the FS-## consolidation
+recorded 2026-09-09, before tools/_linkcheck_baseline.json was re-pinned
+
+Why this file exists: re-pinning the baseline makes the delta unverifiable
+afterwards. [PLAN step 0] warns that re-baselining is how a link loss becomes
+invisible, so the evidence for the re-pin is committed here rather than only
+asserted in CHANGELOG.md.
+
+  baseline pairs    4120
+  current pairs     3304
+  lost              1549
+  gained             733
+
+Every lost pair has a retired task file on at least one end:
+  plan-to-plan                 572
+  plan-to-live-doc             470
+  doc-to-retired-task-file     507
+  UNRELATED                      0
+
+  UNRELATED is 0. That is the assertion that made the re-pin safe: no citation
+  broke whose two ends were both outside the retirement. A non-zero value here
+  would have meant real collateral damage.
+
+  plan-to-plan and plan-to-live-doc are counted lost because archiving renamed
+  the CITING file: 95-archive/task-plans/backend-FW-157.md has basename
+  backend-FW-157.md, and target_key() compares basenames. Those citations still
+  resolve; only their key changed. 95-archive/ is not citable in either direction.
+
+  doc-to-retired-task-file is the real loss. After the step-9 citation sweep NO
+  live document is in this set - it is 95-archive/ (534), CHANGELOG.md (86) and
+  the five demoted sequencing boards (189), each of which now carries a banner
+  saying its FW-### links point at retired files and naming [SCM] as the
+  forwarding address.
+
+Reproduce the live-document assertion at any time:
+  python tools/linkcheck.py --report   # then read tools/_linkcheck_unresolved.txt
+  no row whose source is outside 95-archive/, CHANGELOG.md or a demoted board
+  may name an FW-###.md target.
+

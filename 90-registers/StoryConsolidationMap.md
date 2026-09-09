@@ -542,4 +542,49 @@ The reviewer must confirm, against the tag named here:
 
 | Reviewed at tag | Reviewer | Date | Outcome |
 |---|---|---|---|
-| `pre-fs-consolidation` | *(unsigned)* | — | — |
+| `pre-fs-consolidation` | **— none. NOT SIGNED.** | — | **Deletion executed without it** — read below |
+
+⛔ **The gate was not satisfied. It was overridden, and this is the record of that.**
+
+The deletion and archival were carried out on **9 Sep 2026** on the **repeated explicit instruction
+of the requester**, who was told what step 9 was and asked for it to proceed. **No reviewer
+confirmed the seven bullets above.** Nothing here should be read as a sign-off, and the row above is
+deliberately left unsigned rather than filled in with the executing agent's name: the reviewer's job
+is to check the judgement calls, and an agent checking its own mapping is not a review.
+
+**What was verified mechanically, and is therefore genuinely evidenced:**
+
+| Bullet | By | Result |
+|---|---|---|
+| Every story resolves to exactly one category | `build_consolidation_map.py`'s own completeness assertion, plus `_audit_rules()` refusing on a no-op rule or a stale id | 204 stories, no duplicates, nothing unmapped |
+| Every `FR-###` still reaches a category | §2.2, generated | 404 requirements over 30 `[REQ]` sections |
+| No new dependency cycle | parents carry **no `depends_on`** at all, so `check_docs` R2 has no category edge to cycle on; the direction is recorded, generated, in §2.4 | `check_docs --strict` green |
+| Both boards survive the deletion | `build_status.py --dryrun-retired`, run **before** deletion | `load_units()` 204, status distribution and 3,698 h identical to `load_tasks()` |
+| The activity tables round-trip | `build_features.py --selftest` | 204 activities, seeded from the on-disk tables |
+
+⚠ **One of those two gates had itself gone blind, and that is why the pair is listed separately
+from the judgement bullets.** `--selftest` seeded only from `load_tasks()`, so at the moment the task
+files were deleted — the moment it became the only remaining guard — it reported *"0 activities
+round-trip"* and **exited 0, asserting nothing**. It now seeds from the on-disk activity tables and
+**treats a zero total as a failure**; both failure modes were re-proven by injection. Read a green
+`--selftest` from before 9 Sep 2026 as unproven.
+
+**What was NOT verified, and still needs a reviewer** — these are judgement, not arithmetic:
+
+- that the **phase-overrides** in §2.3 are each correct, `FW-063`→`FS-07` (weld capture, against its
+  own `phase: 6`) most of all, since that one contradicts a field rather than filling a gap;
+- that §2.5's reading is right — that the criteria classed **build acceptance** carry no requirement
+  existing nowhere else, and belong on their card;
+- that each category's boundary is the right cut of the operator journey, in particular the
+  deliberate technical split `FS-01`/`FS-02`/`FS-03` and the pairs `FS-14`/`FS-15`, `FS-16`/`FS-17`.
+
+**Recovery.** Everything removed is at tag **`pre-fs-consolidation`** — the 204 task files including
+the 108 real plans. The plans are also on disk at
+[`95-archive/task-plans/`](../95-archive/task-plans/), which is **not citable**: read it for what was
+built, never as a requirement. The pre-migration link baseline is kept beside the new one as
+`tools/_linkcheck_baseline_pre-fs.json`, with the delta and its assertions in
+`tools/_linkcheck_delta_2026-09-09.txt`.
+
+⚠ **If the review below finds a mapping wrong, the fix is an edit to this file and the affected
+parent — not a regeneration.** `build_consolidation_map.py` is **frozen**: it generated from the task
+files, and they are gone. It now says so and exits 0 rather than emitting ~200 "no task file" errors.

@@ -18,6 +18,7 @@ and the sign-off section are hand-owned, because a generated file that also has
 to carry a human sign-off would lose it on every regeneration.
 
     python tools/build_consolidation_map.py             # write the map
+                                                        # (refuses once frozen)
     python tools/build_consolidation_map.py --check     # exit 1 if stale (CI)
 
 Category membership is defined HERE and nowhere else. 10-requirements/features/
@@ -731,7 +732,24 @@ The reviewer must confirm, against the tag named here:
 """
 
 
+FROZEN = [
+    'build_consolidation_map: the map is FROZEN.',
+    '  The task files it is generated from have been retired, so it cannot be',
+    '  regenerated - and must not be. It is now the durable record of every',
+    '  retired id, its category, phase, sprint, MVP, streams and hours, and the',
+    '  only thing STATUS.md can be rebuilt from. Edit it by hand or not at all.',
+    '  To regenerate, restore the task files from tag pre-fs-consolidation.',
+]
+
+
 def main():
+    # Post-deletion, generation is neither possible nor desirable: every membership
+    # rule and the card-parity check read task files that no longer exist. Say so
+    # once, rather than reporting two hundred missing-file errors.
+    if not F.load_tasks() and F.read(OUT).strip():
+        print(chr(10).join(FROZEN))
+        return 0
+
     body = build()
     if body is None:
         return 1

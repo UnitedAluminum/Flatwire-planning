@@ -413,18 +413,32 @@ def selftest():
     column as the status, so it silently returned nothing - and it is the
     POST-DELETION fallback, meaning the defect would first have surfaced once
     the task files were gone and there was nothing left to re-derive from.
-    A round-trip is the only check that exercises it while the source still exists.
+
+    It seeds from the task files while they exist and from the ON-DISK activity
+    tables once they do not. That second path is the point: seeded only from
+    load_tasks(), this check went vacuous the moment the task files were deleted
+    - it reported "0 activities round-trip" and exited 0, asserting nothing at
+    exactly the moment it became the only guard left. A zero total is therefore
+    a FAILURE, not a pass.
     """
+    feats = load_features()
     tasks = F.load_tasks()
     by_cat = {}
     for t in tasks:
         c = M.categorise(t)[0]
         if c:
             by_cat.setdefault(c, []).append(t)
-    bad = 0
-    for cid in sorted(by_cat):
-        want = activities_from_tasks(by_cat, cid)
-        got = activities_from_block(render_block(want, cid, True, len(want)))
+    seeded = 'task files' if tasks else 'on-disk activity tables'
+    bad, n = 0, 0
+    for cid, _front, rel, _fn in feats:
+        if by_cat.get(cid):
+            want = activities_from_tasks(by_cat, cid)
+        else:
+            want = activities_from_block(F.read(rel))
+        if not want:
+            continue
+        n += len(want)
+        got = activities_from_block(render_block(want, cid, bool(tasks), len(want)))
         if len(want) != len(got):
             print('  %s: rendered %d activities, parsed back %d'
                   % (cid, len(want), len(got)))
@@ -447,13 +461,35 @@ def selftest():
                 print('  %s/%s: blocked_by %r -> %r'
                       % (cid, a['ref'], a['blocked_by'], b['blocked_by']))
                 bad += 1
-    n = sum(len(v) for v in by_cat.values())
-    if bad:
-        print('build_features: SELFTEST FAILED - %d mismatch(es) over %d activities' % (bad, n))
+    # A vacuous selftest is a failed selftest. load_units() is the right
+    # denominator: a unit is exactly what becomes an activity, and it resolves to
+    # the task files while they exist and to the map afterwards. NOT the map's own
+    # row count - that also carries the 13 fileless ids (FW-010-014, 068, 069,
+    # N07-N12), which never had a card or a task file and own no activity row.
+    want_total = len(F.load_units())
+    if n == 0:
+        print('build_features: SELFTEST FAILED - parsed 0 activities from the %s.'
+              % seeded)
+        print('  Nothing was asserted. Either the tables are gone or '
+              'parse_activity_block() is broken.')
         return 1
-    print('build_features: selftest OK - %d activities round-trip through the block'
-          % n)
+    if want_total and n > want_total:
+        print('build_features: SELFTEST FAILED - round-tripped %d activities, the map '
+              'absorbed only %d' % (n, want_total))
+        return 1
+    if want_total and n < want_total:
+        # Merging activities downward is legitimate (FW-N17/N18/N19 -> one row);
+        # losing them silently is not. Say the number either way.
+        print('build_features: NOTE - %d activities for %d units (%d merged or lost)'
+              % (n, want_total, want_total - n))
+    if bad:
+        print('build_features: SELFTEST FAILED - %d mismatch(es) over %d activities'
+              % (bad, n))
+        return 1
+    print('build_features: selftest OK - %d activities round-trip through the block '
+          '(seeded from the %s)' % (n, seeded))
     return 0
+
 
 
 def main():

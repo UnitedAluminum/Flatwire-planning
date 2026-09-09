@@ -47,7 +47,7 @@ Operations-tunable thresholds cannot be honoured by a compiled constant.
 **Corrective action** Demote the function to a presentation map (server percent → accent); move the
 ladder to `FW-N02`'s server evaluator.
 
-> ⚠ **And correct the stream while doing it.** [`FW-N02`](../../40-backend/tasks/FW-N02.md) builds the
+> ⚠ **And correct the stream while doing it.** [`FW-N02`](../../10-requirements/features/FS-11-spool-lifecycle-fl2.md) builds the
 > evaluator over `payoffWeight$`. `[SIG §5.2]` row 5 names **`FootageCounter`** as spool progress's
 > consumer and row 4 confines `PayoffWeight` to payoff bars; `§3.1` derives weight **from footage**.
 > Payoff weight is rod *depletion*, not spool *fill* — the two diverge by scrap, threading and

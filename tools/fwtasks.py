@@ -353,10 +353,16 @@ def load_units():
     rows = load_consolidation_map(full=True)
     live = {}
     paths = {}
+    owners = {}
     for f in load_features():
         for r in parse_activity_block(read(f['path'])):
             live[r['ref']] = r
             paths[r['ref']] = f['path']
+            # Ownership moved UP a tier with the consolidation. It used to live in
+            # each task file's `owner:`; with those gone the board's Owner column
+            # was every row a placeholder. The parent's `owner:` is now the one
+            # writable home, so an activity reports the owner of its category.
+            owners[r['ref']] = f.get('owner', '')
     out = []
     for tid, m in rows.items():
         if m['action'] == 'Retain':
@@ -380,7 +386,7 @@ def load_units():
             'stream': (m['streams'] or [''])[0],
             'hours': m['hours'],
             'sprint': m['sprint'],
-            'owner': '',
+            'owner': owners.get(tid, ''),
             'depends_on': a.get('depends_on', []),
             'blocked_by': a.get('blocked_by', []),
             'has_plan': 'false',

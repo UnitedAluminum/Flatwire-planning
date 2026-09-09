@@ -5,7 +5,12 @@
 #
 # A generated file that nobody regenerates is worse than a hand-maintained one, because
 # it still looks authoritative. This regenerates STATUS.md and stages it, so a commit can
-# never leave the board disagreeing with the task files it is derived from.
+# never leave the board disagreeing with what it is derived from.
+#
+# 9 Sep 2026: that source is no longer the task files. StoryConsolidationMap.md is now a
+# HAND-OWNED input to both boards - build_consolidation_map.py is frozen and load_units()
+# reads the map for phase, sprint, MVP, streams and hours - so it is in the path list
+# below. It was not, and an edit to it silently changed STATUS.md with no regeneration.
 set -e
 
 PY=python
@@ -19,7 +24,7 @@ command -v python >/dev/null 2>&1 || PY=python3
 # files, so editing the backlog, a phase spec or any register regenerated nothing and ran
 # no check. Keep these in step with fwtasks.py's TASK_DIRS / PHASE_DIR / BACKLOG /
 # GAPS / QUESTIONS / DECIDED / MASTERSPEC / PLCSPEC constants.
-if git diff --cached --name-only | grep -qE '(^|/)tasks/FW-.*\.md$|^10-requirements/features/|^60-delivery/TaskBreakdown\.md$|^60-delivery/phases/|^90-registers/(Gaps|Questions|Decisions|TaskIdMap)\.md$|^10-requirements/MasterSpecification\.md$|PLCTagSpecification\.md$|^tools/'; then
+if git diff --cached --name-only | grep -qE '(^|/)tasks/FW-.*\.md$|^10-requirements/features/|^60-delivery/TaskBreakdown\.md$|^60-delivery/phases/|^90-registers/(Gaps|Questions|Decisions|TaskIdMap|StoryConsolidationMap)\.md$|^10-requirements/MasterSpecification\.md$|PLCTagSpecification\.md$|^tools/'; then
     "$PY" tools/build_status.py >/dev/null
     git add STATUS.md
 

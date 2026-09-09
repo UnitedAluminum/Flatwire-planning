@@ -556,7 +556,7 @@ are read with each other.
 | | Hours | Where it goes |
 |---|---:|---|
 | **Role policies** — the six `[SEC §8]` policies, the `SimulatorControl` policy, `P-75`'s capability scoping, `P-76`'s open `ProductionTransaction` question, and `AC 4`'s authorisation tests | **16** | **MVP-2** |
-| ⛔ **The `?access_token=` hub handler** *(`FW-145` §3.5 / `P-77`)* | **0** | ⛔ **STAYS IN MVP-1.** It was specified by `FW-145` and **built by [`FW-080`](../40-backend/tasks/FW-080.md)** as its stated prerequisite, inside `FW-080`'s own 28 h. There is nothing to recover: the hours were never in this cell |
+| ⛔ **The `?access_token=` hub handler** *(`FW-145` §3.5 / `P-77`)* | **0** | ⛔ **STAYS IN MVP-1.** It was specified by `FW-145` and **built by [`FW-080`](../10-requirements/features/FS-04-realtime-plc-backbone.md)** as its stated prerequisite, inside `FW-080`'s own 28 h. There is nothing to recover: the hours were never in this cell |
 | ⛔ **`FR-212`**, the one live MVP-1 role gate (DB11) | **0** | ⛔ **STAYS IN MVP-1.** It is a **client-side** requirement in `ual-angular` and never depended on which MVP registers server policies (`[SEC §8.8]`) |
 
 **So the carve is the full 16 h of the story's cell and nothing more.** ⚠ **Do not net anything

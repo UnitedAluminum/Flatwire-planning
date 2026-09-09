@@ -29,6 +29,13 @@
 > exists nowhere else. ⛔ **Do not trust a status glyph, a percentage or a blocker list on
 > this page.** Where this file and a generated board disagree, the board wins; where it and a
 > plan disagree, the plan wins.
+>
+> ⚠ **Every `FW-###` link on this page points at a task file that no longer exists.**
+> The task files were retired and their plans archived by the same consolidation. The
+> forwarding address for any id is
+> [`StoryConsolidationMap.md`](../../90-registers/StoryConsolidationMap.md), which records
+> its title, category, phase, sprint, streams, hours and status at consolidation. The links
+> are left as written because they are the record of what this board sequenced.
 
 > **What this file is.** The **32 plans** each say *how* to build one story. This says **what
 > can start, in what order, and what is stopping it.** It holds no build detail — every

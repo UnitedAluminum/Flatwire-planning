@@ -315,10 +315,17 @@ python tools/check_docs.py               # task <-> phase <-> register <-> paren
 python tools/linkcheck.py                # no path reference broke
 ```
 
-⚠ **`check_docs.py` reports 187 warnings and 0 errors as its floor.** Compare the *warning set*,
-not a green/red result: `--strict` fails on the pre-existing 187. A new rule may legitimately raise
-the floor — rule `1-blocked-no-id` raised it from 178 by making nine already-blocked stories
-visible.
+✅ **`check_docs.py --strict` is green, and it is now a usable gate.** The floor was **187
+warnings** until the `FS-##` consolidation on 9 Sep 2026; every one of them was scoped to a task
+file — stale blocker prefixes, the inherited folder/stream disagreement `G62`, inferred status, the
+known `FW-071`/`FW-072` cycle — and the task files are retired, so the floor is **0**. Treat a new
+warning as a real finding rather than noise, which was never possible while the 187 stood.
+
+⚠ **The rules that survive the retirement are the ones that check the new tier:** `R4` card ↔ map
+parity, `R5` phase resolution, `R7` a parent's `phases:` resolving, and `R8` map ↔ parent both ways.
+The task-scoped rules `R1`–`R3` and `R6` now iterate over nothing, so **`0 tasks` in the header line
+is the expected reading, not a loader failure** — `check_docs` reports the parent count beside it for
+exactly that reason.
 
 `tools/hooks/pre-commit` runs the first two automatically once installed. See
 [`tools/README.md`](tools/README.md) — including the **cp1252 heredoc trap**, which silently

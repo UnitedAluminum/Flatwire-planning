@@ -43,6 +43,36 @@ matters more than it looks:
 
 This is a decision for the delivery lead, and it is the one thing that gates the cutover.
 
+### ⚠ The `FS-##` consolidation did NOT resolve this — 9 Sep 2026
+
+The 204 stories were consolidated into the 20 parents `FS-01`–`FS-20`
+([`StoryConsolidationMap.md`](StoryConsolidationMap.md) `[SCM]`), which makes an obvious
+suggestion available: raise **one JIRA epic per `FS-##`** and let `jira:` on the parent carry it —
+the *reference rather than replacement* fallback this section already describes.
+
+**It is recorded here as an option and nothing more. No decision has been taken, and this file
+claims none.** The measured obstacle is that the epic boundary and the category boundary are not the
+same boundary today:
+
+| | |
+|---|---|
+| `UADEV-23146` covers | `FW-145`, `FW-150`, `FW-151`, `FW-202`, `FW-203`, `FW-205`, `FW-218`, `FW-N05` |
+| Those eight fall in | **three** categories — `FS-02` (1), `FS-04` (6), `FS-08` (1) |
+
+So the one epic that exists straddles three parents. Adopting `FS-##` as the epic boundary while
+`UADEV-23146` stands would create **three** id spaces with two many-to-one edges, where there is one
+many-to-one edge today — strictly worse than the present state.
+
+**What would have to be true first:** the delivery lead commits to raising epics *on the `FS`
+boundary*, and `UADEV-23146` is either split or accepted as a legacy exception. Until one of those is
+recorded here, `FW-###` remains the working id, every parent's `jira:` field stays empty, and the
+cutover stays gated by the two things named below.
+
+⚠ **The consolidation removed the task files, so the cutover tool's job changed.** A pass that
+renamed `*/tasks/FW-###.md` has nothing left to rename. What now carries an id is the `[TB §7]`
+card heading, the `[SCM]` row, and the parents' activity rows — three places, all tables, none of
+them a filename.
+
 ---
 
 ## The map
@@ -67,9 +97,11 @@ One row per story. `Created` is the date the JIRA issue was raised, for audit.
    convention the repository already applies to the `Q##` renumbering.
 5. **`FW-N##` is in scope for this map and takes a row like any other id** *(added 7 Sep 2026 — the
    form existed for six stories and was addressed by no rule here)*. The `N` marks a story **minted
-   after the original numbering**, not a different class of work: `FW-N01`–`FW-N06` carry task files
-   and `[TB]` cards exactly as `FW-###` stories do, and `tools/fwtasks.py` matches both with one
-   pattern (`^FW-N?\d+\.md$`). ⚠ **When the cutover pass is written it must scan `FW-N?\d+`, not
+   after the original numbering**, not a different class of work: `FW-N01`–`FW-N06` carry `[TB]`
+   cards and `[SCM]` rows exactly as `FW-###` stories do. *(Until 9 Sep 2026 this read "carry task
+   files and `[TB]` cards … and `tools/fwtasks.py` matches both with one pattern
+   `^FW-N?\d+\.md$`". The task files are retired and that pattern now matches nothing; the shape
+   an id must be recognised in is a table cell, not a filename.)* ⚠ **When the cutover pass is written it must scan `FW-N?\d+`, not
    `FW-\d{3}`**, or the six are silently skipped.
    ⛔ **And it has not been written: `tools/migrate_task_ids.py` does not exist** *(measured 7 Sep
    2026)*, though the section above names it as this table's sole consumer. The cutover is
@@ -77,11 +109,19 @@ One row per story. `Created` is the date the JIRA issue was raised, for audit.
    ⚠ Whoever writes it must reuse `tools/fix_task_links.py`'s guard
    `\bFW-(\d{3}|N\d{2})(?![\dA-Za-z-])`: **`FW-#####-C##` is an output-coil alpha, not a story id**,
    and there are 299 of them in the repository.
-6. ⚠ **`FW-N07`–`FW-N12` are minted but have no task file.** They are reserved in
-   [`TaskBreakdown.md`](../60-delivery/TaskBreakdown.md)'s Appendix B ledger and cross-referenced
-   from around a dozen documents. **They are not free to reuse, and they take no row here** until a
-   task file exists — Rule 1 counts stories, not reservations. ~~**New `N` ids therefore mint at
-   `FW-N13`.**~~ ⚠ **Restated 8 Sep 2026: they now mint at `FW-N20`.** `FW-N13` was taken on
+6. ⚠ **`FW-N07`–`FW-N12` are minted but have neither a card nor a `[TB §7]` costing row.** They
+   are reserved in [`TaskBreakdown.md`](../60-delivery/TaskBreakdown.md)'s Appendix B ledger and
+   cross-referenced from around a dozen documents. **They are not free to reuse, and they take no
+   row here** until one is costed — Rule 1 counts stories, not reservations. They are carried in
+   [`[SCM]`](StoryConsolidationMap.md)'s retired-ids table with `Retain`, so their requirement
+   ranges reach a category (mostly `FS-20`) even though they were never work. *(This read "have no
+   task file … until a task file exists" until 9 Sep 2026; with the task files retired that
+   condition could never be met again.)* ~~**New `N` ids therefore mint at
+   `FW-N13`.**~~ ~~**Restated 8 Sep 2026: they now mint at `FW-N20`.**~~ ⚠ **Restated again
+   9 Sep 2026: they mint at `FW-N34`.** `FW-N20`–`FW-N33` were all taken between 8 and 9 Sep 2026,
+   which is why a next-free id must be **measured, not read** — the highest `FW-N##` across
+   [`TaskBreakdown.md`](../60-delivery/TaskBreakdown.md) and [`[SCM]`](StoryConsolidationMap.md) is
+   the only answer that is not already stale. `FW-N13` was taken on
    7 Sep, `FW-N15`/`FW-N16` by `D-55` the same day, and `FW-N17`–`FW-N19` by `D-56` on 8 Sep — all
    six carry task files and `[TB]` cards, so all six are stories by Rule 1.
 7. ⚠ **`FW-N17`–`FW-N19` have no JIRA id yet and therefore take no row above.** They are the

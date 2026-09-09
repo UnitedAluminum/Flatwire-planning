@@ -2259,7 +2259,7 @@ In SSMS use **Query → SQLCMD Mode** before executing `RunAll`.
 
 **Prior art worth reading before writing `CoilCompletionService`:** `MillsDB..RollCoil_GetTotalRolledWeightinlastMillRun` already derives total rolled weight for a mill run from `alloy_density`. That is structurally the same problem as flat-wire output weight, and it may already encode UA's convention for tail loss and net-versus-gross — the part of `FRT011` still open.
 
-**WIP station registration** (deploy step 2, [`FW-241`](../30-database/tasks/FW-241.md) — ⚠ **the draft script was withdrawn 6 Sep 2026 and never ran**) creates:
+**WIP station registration** (deploy step 2, [`FW-241`](features/FS-03-database-foundation.md) — ⚠ **the draft script was withdrawn 6 Sep 2026 and never ran**) creates:
 
 | Station | Machine | StationType | Notes |
 |---|---|---|---|

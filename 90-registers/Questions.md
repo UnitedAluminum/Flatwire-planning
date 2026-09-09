@@ -760,7 +760,7 @@ Related: **Q34**, **Q35**, **`OI-114`** (the cut-record sentinels — the same c
 
 #### A14. Shared-System Write-Back at Rod Check-in
 
-*Registered here 20 Aug 2026, and **they were minted on 19 Aug and never reached this register** — `G45`, `[INT §8.0]`, `[REQ §5.26]`, [`FW-220`'s plan](../40-backend/tasks/FW-220.md) and `CHANGELOG.md` all cite `Q37`–`Q40` against a register that declared itself contiguous at `Q36`. Recorded as gap **`G46`** so it is not repeated. Like `Q34`–`Q36` these are **IT** questions about the existing shared schema rather than design choices; each has a proposed value and each is a one-line change if the answer differs. All four block **reaching a shared environment**, not the build.*
+*Registered here 20 Aug 2026, and **they were minted on 19 Aug and never reached this register** — `G45`, `[INT §8.0]`, `[REQ §5.26]`, [`FW-220`](../10-requirements/features/FS-15-shared-schema-boundary.md) and `CHANGELOG.md` all cite `Q37`–`Q40` against a register that declared itself contiguous at `Q36`. Recorded as gap **`G46`** so it is not repeated. Like `Q34`–`Q36` these are **IT** questions about the existing shared schema rather than design choices; each has a proposed value and each is a one-line change if the answer differs. All four block **reaching a shared environment**, not the build.*
 
 **Q37** · `High` · Owner: Tim O. / IT · `Open`
 **The transaction token for a flat wire rod check-in**
@@ -1203,7 +1203,7 @@ Related: **`Q73`** (the three-tier rule), **`Q24`** (out-of-sequence override), 
 >
 > ✅ **That is this question, answered, and it confirms the recommendation below** — multi-order-last holds in both cases and the rule is unconditional.
 >
-> ⛔ **NOT MOVED TO [`Decisions.md`](Decisions.md), deliberately.** `Q49` was never put to the client — it is our own question about a branch of `Q73`, and the client answered `Q73`. Moving it would also move its client-facing workbook entry into *Decisions to Confirm*, which would tell UA they decided something they were never asked. **A human should make that call.** Until then this entry carries the answer and [`FW-226`](../40-backend/tasks/FW-226.md) stays `blocked` on the id rather than on the substance. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+> ⛔ **NOT MOVED TO [`Decisions.md`](Decisions.md), deliberately.** `Q49` was never put to the client — it is our own question about a branch of `Q73`, and the client answered `Q73`. Moving it would also move its client-facing workbook entry into *Decisions to Confirm*, which would tell UA they decided something they were never asked. **A human should make that call.** Until then this entry carries the answer and [`FW-226`](../10-requirements/features/FS-14-order-allocation-fulfilment.md) stays `blocked` on the id rather than on the substance. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
 
 ---
 
