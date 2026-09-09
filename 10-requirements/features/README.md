@@ -1,9 +1,9 @@
 # Flat Wire — Consolidated Parent Stories (`FS-##`)
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 — created with the `FS-##` consolidation, step 5
+**Last Updated:** September 9, 2026 — step 6 complete: all 20 parents authored
 **Document Type:** Index — the category structure and the rules that keep this tier thin
-**Status:** Active — the 20 parents are minted; most are still scaffolds
+**Status:** Active — all 20 parents authored; §3's merged acceptance criteria outstanding on the twelve that own an `FR` range
 **Owner:** Delivery lead
 **Audience:** Anyone changing flat wire functionality, or assessing the impact of a change
 **Shortcode:** — *(derived; **not** citable as a requirement)*

@@ -10,9 +10,9 @@ owner:
 # FS-01 · Angular Application Shell and Foundation
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 — minted empty by the `FS-##` consolidation, step 5
+**Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** ⬜ **Scaffold** — front-matter and structure only; sections 1, 3, 4, 6, 7 and 8 are not yet written
+**Status:** 🟡 **Authored** — §3 needs no acceptance criteria of its own; see below
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*
@@ -30,11 +30,54 @@ owner:
 
 ## 1. Overview
 
-**Business purpose.** *(not yet written)*
+**Business purpose.** The Angular application every flat wire screen is built inside: the
+`flat-wire` library itself, its routing and configuration, the shopfloor shell, the guards and
+interceptors, the API client with its mock twin, and the **six shared composite controls** every
+screen reuses. Nothing an operator recognises, and nothing else can be built until it exists.
 
-**Functional scope.** *(not yet written)*
+⚠ **This is one of three technical-layer categories** (`FS-01` / `FS-02` / `FS-03`), and the only
+place the *"no technical-layer categories"* rule is deliberately set aside. Phase 1 genuinely is
+technical: a single Platform Foundation measured 52 stories and 821 h, a quarter of the backlog in
+one file, which is the shape this tier exists to remove. See
+[`README.md`](README.md#four-boundaries-that-are-not-the-phase-model).
 
-**Out of scope.** *(not yet written)*
+**Functional scope.** Owned by
+[`phase-01a-angular-foundation.md`](../../60-delivery/phases/phase-01a-angular-foundation.md),
+cited not restated. Seven activities: the library scaffold with routing and configuration; the
+shell layout and shopfloor canvas; route guards, interceptor wiring and the error envelope; the
+DI-swappable API client and domain models; the six **shared composite controls**; the shared
+primitive controls and `alert-banner`; and the `LineId` → `MachineName` rename.
+
+⚠ **`FW-133` is 120 h of 230 — over half this category.** Six composite controls at 20 h each:
+`pass-schedule-table`, `payoff-weight-bar`, `gauge-trace-chart`, `tolerance-viz`, `tab-wizard` and
+`action-bar`. **Every screen category depends on them**, which makes this the widest single
+dependency in the module.
+
+**Binding architectural rules** — `[ARC §2.2]`:
+
+- **There is no Angular structural template.** `flat-wire` is all-new screens built from the
+  approved mockups. The only reuse is the foundational `shared` services — `api-gateway`,
+  `app-config`, `login`, the interceptors, `notification`, `print-export` and `util`.
+- ⛔ **None of the six controls may derive from `shop-floor-common`, `checkin-precheckin` or any
+  existing UI library.**
+- **Selector prefix is `lib`** (`D-54`), matching `angular.json`, `eslint.config.mjs` and all 27
+  sibling libraries. *(This read `fw` until 7 Sep 2026.)*
+- **Canvas is 1920×1080** (`F-14`, confirmed as `Q26`), with **responsive reflow below it** —
+  `col-4` → `col-md-6` → `col-12`, never page scaling. ⛔ No page-level `transform: scale`; the
+  mockups' `flat-wire-fit.js` is deliberately not ported.
+- **Minimum text size 14 px throughout**, including form controls, which do not inherit the body
+  font.
+
+**Out of scope.**
+
+- **Any screen.** Every dashboard belongs to its functional category; this one supplies the
+  chassis.
+- **The backend and database foundations** — [`FS-02`](FS-02-backend-service-foundation.md) and
+  [`FS-03`](FS-03-database-foundation.md).
+- **The SignalR client**, which is [`FS-04`](FS-04-realtime-plc-backbone.md)'s `FW-135`/`FW-136`
+  despite living in the Angular library.
+- **Controls shared with another library.** Those belong in `projects/shared`, not here —
+  `lib-nav-rail`, `lib-chart-canvas`, `lib-trace-panel` and `buildTraceConfig` are already there.
 
 ---
 
@@ -71,9 +114,18 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 
 ## 3. Functional requirements
 
-**This category owns no `FR` range.** Infrastructure. The Angular library, shell, routing and shared controls carry no `FR` of their own; every screen category depends on them.
+**This category owns no `FR` range, and that is correct.** The library, shell, routing and shared
+controls carry no requirement of their own; every screen category depends on them. Its authorities
+are `[CMP]` (library structure, routing, state, charts, the design-token system), `[SCR]` (the
+screen inventory and mockup → component mapping), `[VAL]` (shopfloor input constraints — the 48 px
+targets, the 14 px floor, no hover) and `[UIC]` for the look.
 
-*(the merged, de-duplicated acceptance criteria are not yet written)*
+⚠ **The application repository's standards are mandatory and are not in this repository.** The
+Angular rules live in the application checkout — `CLAUDE.md`, `.claude/instructions/`,
+`generate-tests.md`'s 14 absolute rules, and the code-review guidelines. **A story is not done
+because it renders correctly**, and ⛔ **`ng lint` passing is not evidence of compliance**: two
+consecutive flat wire reviews found violations in every category ESLint cannot see, with zero lint
+errors before and after.
 
 ---
 
@@ -81,12 +133,16 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 
 *Six streams exist, not four - `QA` and `BA` are named here where they apply.*
 
-| Stream | Scope |
+**Every activity here is `FE`.** That is what makes this a layer category rather than a functional
+one, and why it is labelled as such rather than dressed up.
+
+| Activity group | Scope |
 |---|---|
-| **FE** | *(not yet written)* |
-| **BE** | *(not yet written)* |
-| **DB** | *(not yet written)* |
-| **RT** | *(not yet written)* |
+| **Library and configuration** | `ng generate library flat-wire`, `FLAT_WIRE_ROUTES` lazy-loaded under `/flat-wire` with per-line routes, `app-config.service`, `environment.*.ts` carrying `useMockData`, and `ui-log.service`. Added to the `build:shop-floor` chain **for build ordering only** |
+| **Shell** | Header, sidebar nav, `alert-banner` slot, the 1920×1080 canvas, light and dark, and the semantic design tokens consumed **as-is** from the mockups' `.scss` |
+| **Guards and interceptors** | `FlatWireAuthGuard` and `FlatWireRoleGuard`, reusing `shared`'s login and token interceptors — **no new interceptors** — plus the `{ success, data, errors[] }` envelope |
+| **API client** | One interface, real and mock implementations swapped by DI on `useMockData`, eight domain models, `line-context.service` and `run-state.service` on RxJS `BehaviorSubject`s — **no NgRx**, which this repository does not use |
+| **Controls** | Six composites (120 h) and the primitives with `alert-banner` |
 
 ---
 
@@ -112,7 +168,32 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 
 <!-- END GENERATED: blockers -->
 
-**Gaps this category owns that no story cites:** *(not yet written)*
+**Only two blockers — the fewest of any category with real work** — and both are data problems
+rather than design ones.
+
+- **`G18`** — source documents describe a stale `--fw-*` token prefix. The token system is
+  `--color-*` and is consumed as-is; **no `--fw-*` token may appear anywhere.**
+- **`G14`** — pre-build data inconsistencies: 3- versus 4-item inspection, `R#####` versus
+  `ROD-#####`, `FootageFt` `INT` versus `DECIMAL`. It blocks the domain models because the models
+  have to pick one of each.
+
+**Gaps this category owns that no story cites:**
+
+- ⚠ **`DOCUMENTS.md` says this stream has nothing built, and that is stale.** It records
+  *"Nothing in this stream is built — `flat-wire` exists in no Angular checkout (verified 27 Aug
+  2026 across three)"*. **Measured today: `flat-wire` exists** in
+  `Second-Branch/ual-angular/projects/`, and `FW-N03` and `FW-N19` are `done` with `FW-130`
+  `in-progress`.
+- ⛔ **`CLAUDE.md` points at the wrong checkout.** It says the implementation lands in
+  `../ual-angular`, which resolves to a checkout with **no `flat-wire` library**. The code is in
+  **`Second-Branch/ual-angular`**. A developer following the documented path finds nothing.
+- ⚠ **A CSS class that does not exist looks exactly like one that does.** Three shipped here —
+  `min-w-0`, `min-h-0` and `big-screen`. Two are now defined; **`big-screen` is still not, and
+  still must not be used.** `min-w-0`'s absence put a horizontal scrollbar on every resolution.
+- ⚠ **`projects/shared` has 23 dependent libraries**, and `jest.base.config.js` resolves `shared`
+  to `dist/`. Adding to it means `ng build shared` before any dependent test run. **`NavRailItem`
+  is deliberately a structural subset of `shop-floor-common`'s `HamburgerMenuItems`, so adding a
+  required field to it breaks slitter.**
 
 ---
 
@@ -123,15 +204,52 @@ cyclic category graph - 15 mutually dependent pairs - so a category-level depend
 unusable. Dependencies live **per activity** in section 5. The category-level direction is
 recorded, generated, in [`[SCM §2.4]`](../../90-registers/StoryConsolidationMap.md).
 
-*(narrative dependencies - other categories, components, PLC/OPC, external systems, client
-decisions - not yet written)*
+**On other categories — almost nothing outbound; nearly everything inbound.** `FS-01` → `FS-02` and
+`FS-03` only. **Eight categories depend on it**, and `FW-133`'s six controls are the specific
+reason. It is the widest single dependency in the module and it develops against the mock API and
+mock SignalR (`useMockData: true`), so it is **not blocked by `FS-02` or `FS-03`** — which is what
+lets 1A, 1B and 1C run in parallel.
+
+**On the application repository.** Its mandatory standards and its `PreToolUse` hook live in the
+application checkout, not here. The hook pushes the matching rule digest into context on **every
+file write**, because *"read the instruction file first"* was advisory and was skipped every time.
+
+**On the mockups.** They supply **content only** — what is shown, in what grouping, with what
+labels. ⛔ **Not composition** (they are 5:4 and the canvas is 16:9), ⛔ not their `--color-*`
+tokens, ⛔ not `flat-wire-fit.js`'s page scaling.
 
 ---
 
 ## 8. Change-impact profile
 
-*(not yet written - what a requirement change here affects: functionality, FE/BE/DB/RT
-components, existing implementation to modify, dependencies, regression areas)*
+**What a change here affects.** Everything, which is the defining property of this category.
+
+| A change to… | Affects |
+|---|---|
+| **any of the six composite controls** | **Every screen category.** `pass-schedule-table` reaches `FS-05`/`FS-07`/`FS-08`; `gauge-trace-chart` reaches `FS-08`/`FS-11`/`FS-16`; `action-bar` reaches every dialog in `FS-09` and `FS-10` |
+| **the design tokens** | Every screen, and `G18` means the stale prefix is still cited in source documents |
+| **the API client interface** | Every screen's data path, plus the mock implementation the whole UI is demoed against before `FS-02` is populated |
+| **the canvas or the reflow rule** | Every screen's layout. `F-14` moved it from 1280×1024 to 1920×1080 on 7 Sep and closed `G23` |
+| **`projects/shared`** | **23 dependent libraries**, including slitter. Not a flat wire change at all |
+
+**Existing implementation to modify.** Two activities are `done` (`FW-N03`, `FW-N19`), one is
+`in-progress` (`FW-130`) and one is `blocked` (`FW-131`). **The library exists and the shell is
+being built** — contrary to what `DOCUMENTS.md` records — so this category has moved from paper to
+code and the documentation has not followed.
+
+**Regression areas.**
+
+- **`FW-133`'s controls are the highest-leverage regression surface in the module.** One defect in
+  `gauge-trace-chart` appears on three categories' screens.
+- **A non-existent CSS class fails silently.** `big-screen` is still undefined and still must not
+  be used.
+- **Adding a required field to `NavRailItem` breaks slitter**, a library nobody changing flat wire
+  is looking at.
+- **`ng lint` passing proves nothing** about the rules that are actually broken — prose `@param`
+  instead of a type, mock data with a type annotation instead of angle brackets, redundant sibling
+  tests, assertions against an imported constant, and classes that do not exist.
+- **The documented repository path is wrong**, so the first thing a new developer does is look in
+  the wrong place.
 
 ---
 

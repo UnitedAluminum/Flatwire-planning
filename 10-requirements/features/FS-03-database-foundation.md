@@ -10,9 +10,9 @@ owner:
 # FS-03 · Database Foundation and Deployment
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 — minted empty by the `FS-##` consolidation, step 5
+**Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** ⬜ **Scaffold** — front-matter and structure only; sections 1, 3, 4, 6, 7 and 8 are not yet written
+**Status:** 🟡 **Authored** — §3 needs no acceptance criteria of its own; see below
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*
@@ -30,11 +30,47 @@ owner:
 
 ## 1. Overview
 
-**Business purpose.** *(not yet written)*
+**Business purpose.** `FlatWireDB` — every table the module writes to, their constraints, indexes,
+seed data and the ordered chain that builds them, plus the deploy path onto the shared instance.
+Nine other categories store something here.
 
-**Functional scope.** *(not yet written)*
+⚠ **One of three technical-layer categories** (`FS-01` / `FS-02` / `FS-03`) — the deliberate
+exception to the *"no technical-layer categories"* rule. See
+[`README.md`](README.md#four-boundaries-that-are-not-the-phase-model).
 
-**Out of scope.** *(not yet written)*
+**Functional scope.** Owned by
+[`phase-01c-database-foundation.md`](../../60-delivery/phases/phase-01c-database-foundation.md),
+cited not restated. The database creation and ordered DDL runner with indexes and grants; the five
+table groups; the deploy step-2 shared-schema insert and its reverse script; six schema-repair
+activities; the Machine Setup schema; the tooling reconciliations; and five schema changes minted
+since 7 September.
+
+**Two things a reader must get right:**
+
+- ⛔ **Deploy to the SHARED instance, not LocalDB.** `FlatWireDB` must sit alongside `united_db`,
+  `proddb` and `CommonDB`, because check-in spans them in **one `SqlTransaction`** under the local
+  transaction manager with **no MSDTC** (`[INT §8.0]`, `[ARC §10]`). LocalDB has no `united_db`, so a
+  build validated only there **silently loses atomicity**. The instance is **`DEV00164-001`**, where
+  that atomicity was actually proven (`is_local = 1`, `is_enlisted = 0`, 26 Aug 2026). ⚠
+  **`DEVUAL-UADEV001\TEST1` is retired** for `FlatWireDB`.
+- **The DDL is authoritative for types, nullability and constraints — never regenerate it from the
+  markdown.** Files are numbered by execution order: `00` database → `01` Lookup → `02` Schedule →
+  `03` Materials → `04` Runs → `05` Quality/Output → `06` **all FKs** → `07` Indexes →
+  `08` Programmability, with `99` teardown. **Put new FKs in `06`.** Every script guards its objects,
+  so `RunAll` is idempotent.
+
+⚠ **Object counts are asserted in `[DBD §6.2]` and nowhere else.** This file does not restate them —
+they propagate to roughly forty places and only three sites may state them.
+
+**Out of scope.**
+
+- **The shared schema.** `D-32` (18 Aug 2026): the existing `coils` and scheduling schema is **read
+  and written as it stands and never altered.** `FW-001` and `FW-002` are `cancelled` and are here
+  only as the record of what the change would have required.
+- **The shared-schema procedures** — [`FS-15`](FS-15-shared-schema-boundary.md).
+- **`sp_ShiftSummary`**, which is MVP-2 (`09_Programmability_MVP2`).
+- **What the tables mean.** Each functional category owns its own domain rules; this one owns their
+  storage.
 
 ---
 
@@ -88,9 +124,15 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 
 ## 3. Functional requirements
 
-**This category owns no `FR` range.** Infrastructure. `FlatWireDB`'s schema, constraints, indexes, seed and deploy chain carry no `FR` of their own; `[DBD]` is their authority.
+**This category owns no `FR` range, and that is correct.** Schema, constraints, indexes, seed and a
+deploy chain carry no requirement of their own. Its authorities are `[DBD]` (read §6 and §7 first —
+the **as-built** description, and §6.2 the **only** site that states object counts), the six
+per-domain schema documents, `30-database/sql/` (**executable truth**) and `[DEP §4.2]` for the
+ten-step deploy chain.
 
-*(the merged, de-duplicated acceptance criteria are not yet written)*
+⚠ **`G49` — nine decided requirements have no column.** Nine requirements were decided and the
+schema does not carry them; `FW-244` is the 8 h repair. So the relationship between requirements and
+this category is not "none" but "nine unhonoured".
 
 ---
 
@@ -98,12 +140,21 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 
 *Six streams exist, not four - `QA` and `BA` are named here where they apply.*
 
-| Stream | Scope |
+**Every activity is `DB`** except `FW-N20`, which has a `BE` half. That is what makes this a layer
+category.
+
+| Activity group | Scope |
 |---|---|
-| **FE** | *(not yet written)* |
-| **BE** | *(not yet written)* |
-| **DB** | *(not yet written)* |
-| **RT** | *(not yet written)* |
+| **Build chain** | Database creation, the ordered DDL runner, indexes and grants — `in-review` |
+| **The five table groups** | Lookup, Schedule, Materials, Runs and Quality/Output, in execution order. ⚠ `FlatWireRun` is created in **`03_Materials`**, not `04_Runs`, so `SpoolProcessing.SourceRunId` can reference it |
+| **Repairs** | `G49`'s nine missing columns; `G51`'s wrong `InSpec` verdict; `G50`/`G52`/`G41`/`G55`'s constraint and referential repairs; the count-guard hardening; and the baseline restatement |
+| **Deploy** | Step 2's shared-schema insert **and its reverse script, run under sign-off** — the gate in front of `FS-15` |
+| **Late changes** | Machine Setup (`done`), the `LineId` rename (`done`), `SpoolOrder` re-grained to the segment (`done`), `SpoolConfiguration` split back out (`done`), `AlloyProperty` re-grained to vendor and size band, and the pass schedule's roll gap and target gauge per stand |
+
+⚠ **`SpoolConfiguration` is a table.** `Q60` merged it into `Spool` on 23 Aug 2026 and **`D-58`
+split it back out on 8 Sep 2026**, with its six limits `NOT NULL` again and `IsDefault` replacing the
+merge's fallback. `Spool.SpoolTypeId` is `NOT NULL` with an enforced FK, so **deleting references to
+it as "stale" breaks a live constraint.**
 
 ---
 
@@ -141,7 +192,38 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 
 <!-- END GENERATED: blockers -->
 
-**Gaps this category owns that no story cites:** *(not yet written)*
+**Fourteen items — second only to `FS-07` — and they cluster into three kinds.**
+
+**Columns that cannot hold what they are asked to.** ⛔ **`G104`** —
+`ToolingInventoryEdger` has **no natural key** and three of its columns are wrong. ⛔ **`G121`** —
+rod tolerance varies by vendor and by size while `AlloyProperty` has only an alloy grain; `FW-N22`
+is the re-graining. **`G55`** — FL2's spool check-in is constrained to payoff position 1 while the
+rule is wider.
+
+**Values nobody has supplied.** **`Q22`** — dimensional tolerances, min/max for gauge, width and
+diameter. **`Q92`**/**`Q95`** — the roll-set and edger grid column sets, with **`G87`** recording
+that the fourth tool type was built from **one sentence**.
+
+**Tag and station names that are ours, not the controller's.** **`G32`**/**`PLC-Q04`** — the FM2
+station names. These are really `FS-19` items and reach here through the seed.
+
+Plus **`G14`** (pre-build data inconsistencies), **`G17`** (unenforced cross-database logical FKs),
+**`G34`** (wire break has no persistence target — the only remaining unbuilt MVP-1 table need),
+~~`G21`~~ (closed, still cited) and **`OQ-22`** (no register).
+
+**Gaps this category owns that no story cites:**
+
+- ⛔ **`G51` is a built defect, not a gap.** `SpcMeasurement.InSpec` **stores a wrong verdict for an
+  asymmetric band** today. Every SPC report, CPK report and certificate reads it. `FW-245` is 6 h.
+- ⛔ **Deploy step 2's sign-off has never been passed.** `[DEP §4.2]`'s chain has a sign-off gate at
+  step 2 and `FW-241` is `not-started`. **Nothing in `FS-15` may reach a shared database until it
+  is.**
+- ⚠ **The verifier is static, not a deploy.** Six green checks from `verify_schema_counts.py` mean
+  the scripts *say* the right thing, not that a database *has* it. `FW-248` hardens its blind spot
+  (`C6`) and is `blocked`.
+- ⚠ **`FW-251` restates the schema baseline**, and baselines here have drifted repeatedly — the
+  published figure has been `33 · 55 · 69`, then `46 · 68 · 89`, then `47 · 69 · 90` in a week.
+  **`[DBD §6.2]` is the only site permitted to state them**; this file deliberately states none.
 
 ---
 
@@ -152,15 +234,54 @@ cyclic category graph - 15 mutually dependent pairs - so a category-level depend
 unusable. Dependencies live **per activity** in section 5. The category-level direction is
 recorded, generated, in [`[SCM §2.4]`](../../90-registers/StoryConsolidationMap.md).
 
-*(narrative dependencies - other categories, components, PLC/OPC, external systems, client
-decisions - not yet written)*
+**On other categories — the most depended-upon category in the module.** `FS-03` → `FS-02`,
+`FS-09`, `FS-14` and `FS-18`, and **thirteen categories depend on it**. Its own outbound edges are
+mostly repairs that need a service to exist first, which is why it forms mutual pairs with `FS-02`
+(1 back-edge), `FS-09`, `FS-14` and `FS-18` (11 in, 1 out).
+
+**On the deployment topology — a hard constraint.** The single-transaction guarantee requires
+co-location on one instance. `FS-19`'s `FW-242` moves the database into `ual-database` and **must
+not lose it**.
+
+**On client decisions.** `Q22`'s tolerances, `Q92`/`Q95`'s grid columns, `PLC-Q04`'s station names.
+Four values, six blocked activities.
+
+**On sign-off.** `FW-241`'s step-2 gate is a human approval, and it blocks an entire category
+(`FS-15`) rather than a story.
 
 ---
 
 ## 8. Change-impact profile
 
-*(not yet written - what a requirement change here affects: functionality, FE/BE/DB/RT
-components, existing implementation to modify, dependencies, regression areas)*
+**What a change here affects.** Everything that stores anything.
+
+| A change to… | Affects |
+|---|---|
+| **any table's shape** | The category that owns its domain rules, plus `FS-02`'s `DbContext` and repositories. **Nine categories store something here** |
+| **a `CHECK` constraint** | `FS-02`'s canonical enums — they must agree, and the enums are defined once in `FS-02` |
+| **`AlloyProperty`'s grain** (`G121`, `FW-N22`) | `FS-07`'s check-in reads, `FS-09`'s SPC bands, `FS-16`'s certification tolerances, `FS-18`'s admin grid. **Four categories on one lookup** |
+| **the pass-schedule tables** (`FW-N23`) | `FS-05`'s consumer contract and the four categories that read a schedule |
+| **`SpoolConfiguration`** | `FS-11`'s spool lifecycle. It was merged and un-merged inside three weeks; its FK is live |
+| **the deploy chain** | `FS-15`'s ability to write anywhere shared, and `FS-19`'s go-live |
+
+**Existing implementation to modify.** Four activities are `done`, one is `in-review`, one is
+`blocked`, thirteen are `not-started` and two are `cancelled`. ⚠ **So the schema is roughly a
+quarter delivered while `G104`, `G121` and `G55` say three of its tables cannot hold what they are
+asked to.** Late schema changes have already arrived five times since 7 September — `FW-N17`,
+`FW-N20`, `FW-N21`, `FW-N22`, `FW-N23` — which is the clearest signal that this category's inputs
+are not settled.
+
+**Regression areas.**
+
+- **`G51` is producing wrong answers now**, and every consumer inherits them silently.
+- **A LocalDB-only validation passes and is worthless** for the transactional guarantee. Nothing in
+  the code makes that visible.
+- **`RunAll` is idempotent, so re-running is safe** — but `verify_schema_counts.py` being green is
+  not evidence of a deployed database.
+- **Deleting `SpoolConfiguration` references as stale breaks a `NOT NULL` foreign key.**
+- **Object counts propagate to about forty places.** Restating one here would create the next
+  contradiction, which is why this file states none.
+- **`FW-242`'s move to `ual-database` could silently break atomicity** if co-location is lost.
 
 ---
 
