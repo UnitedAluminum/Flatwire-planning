@@ -1,4 +1,12 @@
-linkcheck baseline delta - the FS-## consolidation
+linkcheck baseline delta - the FS-## FULL DISSOLUTION, WHICH WAS REVERSED
+=========================================================================
+*** THIS FILE DESCRIBES A STATE THAT NO LONGER EXISTS. ***
+Full dissolution was executed on 9 Sep 2026 and reversed the same day: all 204
+task files are restored, and the baseline was restored with them. The pairs and
+counts below are the measurement taken while the task files were retired. Keep
+it as the audit trail of a reversed change - never as a description of the
+repository today. The record is [SCM 3.1] and the CHANGELOG row of the same date.
+
 recorded 2026-09-09, before tools/_linkcheck_baseline.json was re-pinned
 
 Why this file exists: re-pinning the baseline makes the delta unverifiable

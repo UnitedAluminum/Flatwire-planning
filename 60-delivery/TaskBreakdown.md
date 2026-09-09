@@ -32,7 +32,7 @@
 
 ⛔ **The criteria were measured before being moved and they are staying.** Of the **1,222** acceptance criteria on these cards, **only 7 % cite any specification or `FR`**. A sample reads: *"`RodStaging` invariants: `Blocked` is a derived bay state"*, *"Vendor A ±.010/.015, Vendor B ±.020/.030"*, *"a rod may be `PinnedBoth` — do not assume"*, *"`FlatWire_CheckInRod` deployed, writing nine shared objects"*. Stripping them would destroy the majority of the module's buildable detail, so the parent owns the **index and the coverage assertion** over them and this section stays their home.
 
-⚠ **What does NOT belong on a card any more:** its dependencies and blockers. Those live in the parent's generated activity table, which is where they survive the task files.
+⚠ **A card's `**Dependencies:**` and `**Blockers:**` lines are NOT authoritative.** The story's own `depends_on:` / `blocked_by:` front-matter is, and the parent's activity table is generated from it. The card's lines are kept for the **rationale** they carry, which lives nowhere else — `FW-205`'s, for instance, explains *why* FL3 waits behind a config switch. ⛔ **194 of 204 cards carry a dependency line and 198 a blocker line, and 50 disagree with their story today** — `check_docs` rule 9 lists them. Fix the divergence in the **card**, never by editing the story to match. *(This read "what does NOT belong on a card any more … those live in the parent's generated activity table, which is where they survive the task files" until 9 Sep 2026, written for a dissolution that was reversed.)*
 
 **The twenty categories.** ⚠ Counts and hours here are **generated** into `[SCM §2.1]`; the table below is a navigation aid and `[CE §3e]` remains the hours model of record.
 

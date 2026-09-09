@@ -569,7 +569,8 @@ exactly the moment it became the only remaining guard. It now seeds from the on-
 stories are absent and **treats a zero total as a failure**.
 
 **Recovery.** Tag **`pre-fs-consolidation`** remains, and is the pre-consolidation state of the
-whole repository. The pre-migration link baseline is kept beside the current one as
-`tools/_linkcheck_baseline_pre-fs.json`, with the dissolution-era delta in
-`tools/_linkcheck_delta_2026-09-09.txt` — retained as the audit trail of a reversed change, not as
-a description of the current state.
+whole repository. The link baseline is that same pre-consolidation baseline again — the
+mid-dissolution re-pin was reverted with the task files, and the duplicate copy kept during the
+dissolution has been removed. `tools/_linkcheck_delta_2026-09-09.txt` retains that pass's
+measurement as the audit trail of a reversed change; **it does not describe the repository today**,
+and says so in its first lines.
