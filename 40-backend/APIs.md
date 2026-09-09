@@ -120,7 +120,7 @@ Machine-readable codes accompany the human-readable `errors[]` where a client mu
 | `BAY_OCCUPIED` | 409 | `UX_RodStaging_Bay` violated | Re-read bay state and re-render |
 | `ROD_ALREADY_STAGED` | 409 | `UX_RodStaging_RodActive` violated | Re-read |
 | ~~`LINE_NOT_ELIGIBLE`~~ | ~~422~~ | ~~`machineName = FL2` at a staging endpoint~~ | ⚠ **Withdrawn in requirement text by `FR-533`** — FL2 gets a validation queue, so the action is **shown** on FL2, not hidden. Endpoint change owed (W5) |
-| `INSPECTION_FAILED` | 422 | Any inspection item `Fail` | Route to WIP Rejection — payload carries `{route:"wipRejection", rodAlpha}` |
+| `INSPECTION_FAILED` | 422 **at `POST /checkin/rod` only** | Any inspection item `Fail` | Route to WIP Rejection — payload carries `{route:"wipRejection", rodAlpha}`. ⛔ **At `POST /staging/rod` this is NOT an error:** the row is committed **before** the inspection gate, so that endpoint returns **`201 Created` with `state: "Blocked"`** and the same `{route, rodAlpha}` payload — see §4's staging table. It is still a hard block with no bypass (`TC-048`); `Blocked` is a **derived** bay state (`Status='Staged'` + any inspection column `Fail`), not a stored one. *(This row's HTTP column read a flat `422` until 9 Sep 2026, contradicting §4 for one of the two endpoints — `G126`.)* |
 | `CARRY_FORWARD_REQUIRED` | 422 | `footageRunToDate > 0` without `acknowledgedCarryForward` | Show the carry-forward path only |
 | `DIAMETER_OUT_OF_TOLERANCE` | 422 | Measured diameter outside nominal ± tolerance | Block, show the valid range |
 | `SUPERVISOR_AUTH_REQUIRED` | 422 | A deviation applies and the credential block is missing or incomplete | Open the override panel |

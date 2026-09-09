@@ -92,7 +92,7 @@ two people working in one category edit one file. Keep the edit to your row.
 python tools/build_status.py            # regenerate the phase board
 python tools/build_features.py          # regenerate the feature board + blocks
 python tools/build_features.py --selftest   # the tables still round-trip
-python tools/check_docs.py --strict     # would CI pass? the floor is now 0
+python tools/check_docs.py              # would CI pass? 0 errors; 50 warnings are the floor
 ```
 
 **Status values:** `not-started` → `in-progress` → `in-review` → `done`, with `blocked` and

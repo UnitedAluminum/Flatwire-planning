@@ -323,11 +323,23 @@ python tools/check_docs.py               # task <-> phase <-> register <-> paren
 python tools/linkcheck.py                # no path reference broke
 ```
 
-✅ **`check_docs.py --strict` is green, and it is now a usable gate.** The floor was **187
-warnings** until the `FS-##` consolidation on 9 Sep 2026; every one of them was scoped to a task
-file — stale blocker prefixes, the inherited folder/stream disagreement `G62`, inferred status, the
-known `FW-071`/`FW-072` cycle — and the task files are retired, so the floor is **0**. Treat a new
-warning as a real finding rather than noise, which was never possible while the 187 stood.
+⚠ **`check_docs.py` reports 0 errors and a floor of 50 warnings, all of one rule:
+`9-card-blocker-drift`.** `--strict` fails on them. Compare the *warning set*, not a green/red
+result.
+
+The history matters, because the number moved twice for opposite reasons. The floor was **187**
+until the `FS-##` consolidation on 9 Sep 2026 — every one scoped to a task file (stale blocker
+prefixes, the inherited folder/stream disagreement `G62`, inferred status, the known
+`FW-071`/`FW-072` cycle). Retiring the task files took it to **0**, and that reading was
+**misleading**: those rules had not been satisfied, they had **lost their input**. ⛔ **One class
+of real drift went invisible rather than getting fixed** — a card's `**Blockers:**` line diverging
+from the truth — so rule 9 was added the same day to compare each card against the **activity row
+in its parent, which is authoritative**. It found **50**: mostly `OQ-##` blockers the cards never
+received, plus resolved ones (`G6`, `G23`) they never dropped, plus the `Q6`-versus-`OQ-6` prefix
+inconsistency the retired floor had tracked as `3-blocker-stale-prefix`.
+
+⚠ **So a 0 floor was never the goal, and reaching one by deleting inputs is the failure mode to
+watch for.** These 50 are pre-existing and are the tolerated floor; a **51st** is a real finding.
 
 ⛔ **Two commands left that list on 9 Sep 2026, and neither should be run again.**
 `build_consolidation_map.py` is **FROZEN** — it generated `[SCM]` *from* the task files, so it now
