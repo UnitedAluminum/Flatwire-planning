@@ -1016,8 +1016,18 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 > lines.** `FW-144` already built and boot-asserts a three-line surface, registered as three lines
 > in `Program.cs` for exactly this reason (`P-26`), so **FL3 carries its own `ITInhibit` tag**
 > beside `FL1.ITInhibit` and `FL2.ITInhibit`. ⛔ **Honour that surface; do not narrow it to two.**
-> The tag stays one boolean per line, **written, never read** — zero confirm reads. See
-> [`FS-04`](../10-requirements/features/FS-04-realtime-plc-backbone.md).
+> The tag stays one boolean per line, **written, never read** — zero confirm reads.
+>
+> ⚠ **The dependency line is stale too: `FW-N05` is deferred to commissioning**, so it is not
+> the trial's footage feed — in the trial that is **`FW-203`**, through the same
+> `IReadingChannel` (`[TRP §1.4]`). ✅ **Two build assumptions are already satisfied, not owed:**
+> the three-line config surface is built and boot-asserted by `FW-144` (`P-26`), and the
+> `RunReading` gate exists in `BroadcastLoopService` as `IsRunBlocked(MachineName) => false` —
+> this story **swaps the body**, it does not add the gate. ⚠ **Two condition readings to get
+> right:** a footage **decrease** is *not* invalid data, it is a new run or a counter reset, and
+> condition 4 is **negative only** (`P-128`); and *"two or more consecutive recordings missing"*
+> counts **feed samples, not `RunReading` rows**, which are footage-gated by `FR-018` and stop
+> legitimately on a pause (`P-130`). See [`FS-04`](../10-requirements/features/FS-04-realtime-plc-backbone.md).
 
 **Rate-card basis:** non-trivial business service, mid-band **16 h** (§2, *12–24 h priced individually*) — comparable to the card's *"PLC tag group push + compensating clear | 16 h"*: a tag write plus stateful evaluation, but one boolean per line rather than a group push
 **Dependencies:** FW-144 (config), FW-151 (`PLCTagService`), FW-N05 (the footage feed)
@@ -1098,6 +1108,20 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 > **Both criteria stay: the design is right and must still be built.** They are restated in `[GAP]` as
 > **closed by design, unverified**. Do not delete them to make the story pass.
 
+> ⚠ **Corrected 9 Sep 2026 — three of these criteria and the blocker note are stale.**
+> ⛔ **Criterion 3's *"`PassSchedule` is MVP-2-owned"* is wrong:** `D-31` (15 Aug 2026) gave
+> **MVP-1** the tables, with `PassScheduleId` carrying a real enforced FK. What still holds is the
+> **read-model** status — mapped read-only by `P-13`, reached through `PassScheduleSnapshot`, and
+> getting no aggregate and no repository. *(Same error as `FW-142`'s criterion 4.)*
+> ⛔ **Criterion 6's blanket `422` is withdrawn (`P-90`):** the status is **per rule**, and
+> **`G21` bay occupancy is `409` / `BAY_OCCUPIED`** (`[API §1.3]`, `[API §1.8]`) —
+> breakable-by-state is `409`; `422` is for a request that can **never** succeed as submitted.
+> ⚠ And **`BusinessRuleValidationException` → `422` does not happen**: `FW-146`'s middleware has
+> four arms and no domain-exception arm, so a throw falls to `default` → **`500`** (`P-89`).
+> `P-57` keeps state rules in the action, so `404`/`409`/`422` are `return`s, not throws.
+> ⚠ **The blocker note's *"`D1` open"* is `D-30`** — renumbered 15 Aug 2026 and promoted to
+> `[ARC §13.1]`. `D1` resolves to nothing. See [`FS-02`](../10-requirements/features/FS-02-backend-service-foundation.md).
+
 **Rate-card basis:** 7 roots × 3 h = 21 · 13 value objects × 0.5 h ≈ 7 · rules ≈ 4 = **32 h**. Above §2's *"non-trivial service 12–24 h"* band because it is ~20 items, not one. **Unchanged by the 15 Aug test withdrawal** — every hour here is production code; the withdrawn tests were never priced into it
 **Dependencies:** FW-N04
 **Blockers:** — *(⚠ **`D1` open**: `ROWVERSION` is absent on `WeldEvent`, `RodCheckout` and `WipRejection`, all three mutated after insert. Decide before the schema freeze)*
@@ -1120,6 +1144,16 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Handlers in Infrastructure/API translate each to `IFlatWireClient`
 - [ ] ⚠ **No SignalR type is referenced from `FlatWire.Application`** — `[SVC §3.2]`'s rule is satisfied, not worked around
 - [ ] `WipRejection` clearing a `Blocked` bay goes **via a domain event**, not by reaching into the `RodStaging` aggregate
+
+> ⚠ **Corrected 9 Sep 2026 — criterion 2 names the wrong method and the wrong order.**
+> The method is **`SaveEntitiesAsync`** — `SaveChangesAsync` is **not overridden** — and it
+> dispatches **before** the save, deliberately; `FlatWireDbContext`'s own remarks forbid
+> reordering it, and **both orders are needed, on two lanes** (`P-94`, `P-95`). ⛔ **Reading this
+> criterion literally is an instruction to reorder a method whose remarks forbid it.**
+> ⚠ **Criterion 1 lists five events; there are six** — `FW-207` added **`RunResumed`**. ✅ The
+> `MediatorExtension` recreation this story assumed is **already done**, at
+> `FlatWire.Infrastructure/MediatorExtension.cs` (`FW-142`). See
+> [`FS-02`](../10-requirements/features/FS-02-backend-service-foundation.md).
 
 **Rate-card basis:** dispatcher wiring + ~5 translation handlers @ 8 h (§2) — the dispatcher itself is inherited
 **Dependencies:** FW-207, FW-142, FW-080

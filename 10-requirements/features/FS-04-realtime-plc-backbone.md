@@ -219,7 +219,8 @@ transaction and its missing recovery path), `G34` (wire break), `OI-45` (footage
   `FW-136`'s set "exactly", and both were wrong by different amounts**, which is how the pair
   stayed self-consistent-looking and neither got fixed. Also: **`FW-151`** two operations →
   **five**, none returning `void`; **`FW-205`** two `ITInhibit` tags → **three lines**, `FW-144`
-  having already boot-asserted the three-line surface. ⛔ **`G126`'s other rows are under review.**
+  having already boot-asserted the three-line surface. ✅ **`G126` is closed** — all 97 rows adjudicated; `FW-205` carried a stale dependency and two
+  misread conditions besides, now corrected on its card.
   See [`Gaps.md`](../../90-registers/Gaps.md).
 
 - ⛔ **`G105` should be settled before `FW-149` leaves review.** An undecided wire protocol with a

@@ -186,8 +186,8 @@ reason this category got built while others stalled. None blocks the foundation 
   `PassSchedule`**; **`FW-142`** the 25/28 table split → **one set, counted only by `[DBD §6.2]`**;
   **`FW-145`** five roles → **six, the omission being QA**; **`FW-147`** all three sample rules in
   FluentValidation → **only the third, the other two being aggregate state rules returning `422`**.
-  ⛔ **`G126`'s other rows are unreviewed** — 97 correction rows across fourteen archived plans,
-  now non-citable. See [`Gaps.md`](../../90-registers/Gaps.md).
+  ✅ **`G126` is closed** — all 97 correction rows across the fourteen archived plans adjudicated,
+  and `FW-207` and `FW-208` each carried further stale criteria, now corrected on their cards. See [`Gaps.md`](../../90-registers/Gaps.md).
 
 - ⛔ **`CLAUDE.md` points at the wrong checkout.** It says the implementation lands in `../ual-api`,
   which resolves to a checkout with **no `FlatWire` domain at all**. Measured today: the four
