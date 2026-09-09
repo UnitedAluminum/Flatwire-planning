@@ -234,9 +234,24 @@ def check(rep):
     for cid in sorted(mapped - fs_ids):
         rep.error('8-map', 'the map assigns stories to %s, which has no parent file'
                   % cid)
+    # A parent with no stories is legitimate ONLY where the map's own 2.1 summary
+    # declares an expected count of 0 - FS-05 (the pass-schedule consumer contract)
+    # and FS-20 (the unhosted requirements). This was a blanket warning reading
+    # "by design for a contract category", which made a mistyped or orphaned parent
+    # indistinguishable from those two and left it as a warning nobody had to act on.
+    try:
+        declared_empty = {c for c, n in CMAP.read_expected_counts() if n == 0}
+    except Exception:
+        declared_empty = set()
     for cid in sorted(fs_ids - mapped):
-        rep.warn('8-map-empty', '%s has a parent file and no story maps to it '
-                                '(by design for a contract category)' % cid)
+        if cid in declared_empty:
+            rep.warn('8-map-empty', '%s has a parent file and no story maps to it - '
+                     'declared 0 in the map summary, so this is by design' % cid)
+        else:
+            rep.error('8-map-orphan',
+                      '%s has a parent file, no story maps to it, and the map summary '
+                      'does not declare it empty - it is orphaned or mistyped. Only %s '
+                      'are declared 0' % (cid, ', '.join(sorted(declared_empty)) or 'none'))
     unmapped = sorted(set(by_id) - set(cmap))
     if unmapped:
         rep.error('8-map', '%d task file(s) are in no map row: %s'
