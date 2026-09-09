@@ -3,7 +3,7 @@
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
 **Last Updated:** September 9, 2026 — step 6 complete: all 20 parents authored
 **Document Type:** Index — the category structure and the rules that keep this tier thin
-**Status:** Active — all 20 parents authored; §3's merged acceptance criteria outstanding on the twelve that own an `FR` range
+**Status:** Active — all 20 parents authored, the task-file tier retired 9 Sep 2026. ⛔ **The §3 "merged acceptance criteria" item is CANCELLED, not outstanding** — see *Acceptance criteria are not merged up* below
 **Owner:** Delivery lead
 **Audience:** Anyone changing flat wire functionality, or assessing the impact of a change
 **Shortcode:** — *(derived; **not** citable as a requirement)*
@@ -62,8 +62,30 @@ body:
 | Scope, journey, entry/exit conditions | the owning phase specification |
 | Status | [`FEATURES.md`](../../FEATURES.md) |
 | Hours | `[CE §3e]` and `[TB §7.3]` — **never** restate a figure |
-| Requirement text and acceptance criteria | `[REQ §5.x]` and the owning screen specification |
+| Requirement **text** | `[REQ §5.x]` and the owning screen specification |
+| **Acceptance criteria** | the story's `######` card in [`[TB §7]`](../../60-delivery/TaskBreakdown.md) — **not** the specifications; see below |
 | Build detail for work already done | the story's build record |
+
+### ⛔ Acceptance criteria are not merged up — corrected on measurement, 9 Sep 2026
+
+An earlier draft of this folder's rules said the cards' acceptance criteria would be **merged to the
+`FR` level and cited**, on the assumption that they restated something upstream. **Measured: of
+1,222 criteria, only 7 % cite any specification or `FR`.** They are original build detail — schema
+invariants, seed values, deployment contracts, vendor tolerances, arithmetic rules — so for most
+there is no `FR` to merge to, and stripping them would have destroyed the majority of the module's
+buildable detail.
+
+**So the cards are retained and keep their criteria.** A parent owns the *index* over them and the
+coverage assertion in [`[SCM §2.5]`](../../90-registers/StoryConsolidationMap.md); it does not
+restate them. Three consequences worth knowing:
+
+- the **169 hand-authored client prose entries needed no re-authoring**, which the migration had
+  budgeted for;
+- every client-visible `FW-###` still resolves to a card with hours and criteria, so
+  `FlatWire_DevelopmentPlan.xlsx` and `FlatWire_TrialRunPlan.xlsx` were unaffected;
+- ⚠ **`G126`** — seven cards carried a criterion a completed plan had already corrected, and
+  archiving those plans made the correction non-citable. All seven were lifted onto the card; the
+  rest of that gap's 97 rows are unreviewed. **Do not cite `95-archive/` to resolve one.**
 
 **Size is the enforcement, because prose has no checker.** It is measured on the **authored**
 content, **excluding the generated block** — measuring the whole file would be measuring how many

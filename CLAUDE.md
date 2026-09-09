@@ -47,9 +47,17 @@ the rule that stops scope changes moving files — under the old shape Phase 9 a
   — they lose to every specification.** Rules, including what a parent may *assert* versus *cite*,
   are in that folder's `README.md`. ⛔ A parent carries **no `status:`, no `hours:` and no
   `depends_on:`** — enforced by `check_docs.py` rule 7.
-- **A task is one file**: `{30,40,50,60,70}-*/tasks/FW-###.md`, front-matter above the `---`,
-  the developer's plan below. ⚠ **A story is no longer the unit of planning** — that is its
-  category. These are the **build record**, and the writable home of `status:`.
+- ⛔ **`{30,40,50,60,70}-*/tasks/FW-###.md` no longer exists — all 204 retired 9 Sep 2026.**
+  A story is not a planning unit; its category is. **A work item is now two things:** a `######`
+  costing card in [`[TB §7]`](60-delivery/TaskBreakdown.md), which owns its **hours and its
+  acceptance criteria** (all 1,222 of them — only 7 % cite a spec, so they are original detail and
+  were deliberately *not* merged up), and an **activity row** in its owning parent, which is the
+  **single writable home of `status:`**, dependencies, blockers and verification evidence. The
+  implementation plans are in [`95-archive/task-plans/`](95-archive/task-plans/) — **not citable**;
+  read them for what was built, never as a requirement. ⚠ **`G126`:** fourteen of them carry a
+  correction owed to another document that went non-citable with them; the seven that corrected a
+  live card were lifted onto the card, the rest are unreviewed. The five `*/tasks/` folders still
+  hold **demoted** sequencing boards, each banner-flagged.
 - **Which category a story became part of** is [`90-registers/StoryConsolidationMap.md`](90-registers/StoryConsolidationMap.md)
   `[SCM]`, which is also the id-retirement ledger: every `FW-###` is retired **with a forwarding
   address** and no number is ever reused.
@@ -310,8 +318,7 @@ field to it breaks slitter** — new fields stay optional.
 python tools/build_status.py             # regenerate STATUS.md (by phase)
 python tools/build_features.py           # regenerate FEATURES.md and the parents' blocks
 python tools/build_features.py --selftest  # assert the activity table round-trips
-python tools/build_status.py --dryrun-retired   # prove both boards survive the deletion step
-python tools/build_consolidation_map.py  # regenerate [SCM] - only if membership changed
+python tools/stamp_trial_status.py        # re-stamp the trial grids from the same status
 python tools/check_docs.py               # task <-> phase <-> register <-> parent integrity
 python tools/linkcheck.py                # no path reference broke
 ```
@@ -321,6 +328,12 @@ warnings** until the `FS-##` consolidation on 9 Sep 2026; every one of them was 
 file — stale blocker prefixes, the inherited folder/stream disagreement `G62`, inferred status, the
 known `FW-071`/`FW-072` cycle — and the task files are retired, so the floor is **0**. Treat a new
 warning as a real finding rather than noise, which was never possible while the 187 stood.
+
+⛔ **Two commands left that list on 9 Sep 2026, and neither should be run again.**
+`build_consolidation_map.py` is **FROZEN** — it generated `[SCM]` *from* the task files, so it now
+prints the freeze and exits 0; `[SCM]` is hand-owned, and a wrong row is fixed by editing it.
+`build_status.py --dryrun-retired` compared both board sources *before* the deletion and now
+correctly reports there is nothing left to compare.
 
 ⚠ **The rules that survive the retirement are the ones that check the new tier:** `R4` card ↔ map
 parity, `R5` phase resolution, `R7` a parent's `phases:` resolving, and `R8` map ↔ parent both ways.

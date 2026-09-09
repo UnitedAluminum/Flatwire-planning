@@ -12,7 +12,7 @@ owner:
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
 **Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** 🟡 **Authored** — holds no story by design; §3 records where the requirements went
+**Status:** ✅ **Authored and current** — **holds no story by design**; §3 records where the requirements went. No card, so no acceptance criteria to carry.
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*

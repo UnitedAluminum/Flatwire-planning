@@ -12,7 +12,7 @@ owner:
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
 **Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** 🟡 **Authored** — §3 needs no acceptance criteria of its own; see below
+**Status:** ✅ **Authored and current** — ⛔ *§3 carries no acceptance criteria of its own, and that is settled, not outstanding: measured, only 7 % of the 1,222 criteria cite any spec or `FR`, so they are original build detail and stay on their `[TB §7]` card. See [`README.md`](README.md).*
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*

@@ -578,10 +578,12 @@ round-trip"* and **exited 0, asserting nothing**. It now seeds from the on-disk 
 - that each category's boundary is the right cut of the operator journey, in particular the
   deliberate technical split `FS-01`/`FS-02`/`FS-03` and the pairs `FS-14`/`FS-15`, `FS-16`/`FS-17`.
 
-**Recovery.** Everything removed is at tag **`pre-fs-consolidation`** — the 204 task files including
-the 108 real plans. The plans are also on disk at
+**Recovery.** Everything removed is at tag **`pre-fs-consolidation`** — all 204 task files, the 108
+that carried `has_plan: true` among them. **125** of the 204 are also on disk at
 [`95-archive/task-plans/`](../95-archive/task-plans/), which is **not citable**: read it for what was
-built, never as a requirement. The pre-migration link baseline is kept beside the new one as
+built, never as a requirement. *(125, not 108: seventeen more were archived because a safety
+assertion caught them holding real content behind `has_plan: false` — `FW-062` was 13,224 bytes.
+The other 79 were stubs with no content to keep and were deleted; the tag is the only copy.)* The pre-migration link baseline is kept beside the new one as
 `tools/_linkcheck_baseline_pre-fs.json`, with the delta and its assertions in
 `tools/_linkcheck_delta_2026-09-09.txt`.
 
