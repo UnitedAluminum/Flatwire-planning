@@ -7,10 +7,13 @@
 # it still looks authoritative. This regenerates STATUS.md and stages it, so a commit can
 # never leave the board disagreeing with what it is derived from.
 #
-# 9 Sep 2026: that source is no longer the task files. StoryConsolidationMap.md is now a
-# HAND-OWNED input to both boards - build_consolidation_map.py is frozen and load_units()
-# reads the map for phase, sprint, MVP, streams and hours - so it is in the path list
-# below. It was not, and an edit to it silently changed STATUS.md with no regeneration.
+# 9 Sep 2026, twice. First: StoryConsolidationMap.md became a hand-owned input to both
+# boards, so it joined the list - it was absent, and an edit to it silently changed
+# STATUS.md with no regeneration. Then: the stories moved into
+# 10-requirements/features/<category>/<STREAM>/, so the `(^|/)tasks/FW-.*\.md$`
+# alternative went from matching 204 files to matching ZERO and was removed. That is
+# the same rot the note above describes, caught the same way - by counting matches
+# against `git ls-files` rather than assuming.
 set -e
 
 PY=python
@@ -24,7 +27,7 @@ command -v python >/dev/null 2>&1 || PY=python3
 # files, so editing the backlog, a phase spec or any register regenerated nothing and ran
 # no check. Keep these in step with fwtasks.py's TASK_DIRS / PHASE_DIR / BACKLOG /
 # GAPS / QUESTIONS / DECIDED / MASTERSPEC / PLCSPEC constants.
-if git diff --cached --name-only | grep -qE '(^|/)tasks/FW-.*\.md$|^10-requirements/features/|^60-delivery/TaskBreakdown\.md$|^60-delivery/phases/|^90-registers/(Gaps|Questions|Decisions|TaskIdMap|StoryConsolidationMap)\.md$|^10-requirements/MasterSpecification\.md$|PLCTagSpecification\.md$|^tools/'; then
+if git diff --cached --name-only | grep -qE '^10-requirements/features/|^60-delivery/TaskBreakdown\.md$|^60-delivery/phases/|^90-registers/(Gaps|Questions|Decisions|TaskIdMap|StoryConsolidationMap)\.md$|^10-requirements/MasterSpecification\.md$|PLCTagSpecification\.md$|^tools/'; then
     "$PY" tools/build_status.py >/dev/null
     git add STATUS.md
 
@@ -43,6 +46,16 @@ if git diff --cached --name-only | grep -qE '(^|/)tasks/FW-.*\.md$|^10-requireme
         fi
         rm -f /tmp/fw_self.$$
     fi
+
+    # A story in the wrong category/stream folder. The placement rule and this check
+    # are the same function, so they cannot disagree - see tools/storymap.py.
+    if ! "$PY" tools/storymap.py --check >/tmp/fw_place.$$ 2>&1; then
+        echo "pre-commit: storymap.py --check FAILED - a story is not where the rule puts it"
+        cat /tmp/fw_place.$$
+        rm -f /tmp/fw_place.$$
+        exit 1
+    fi
+    rm -f /tmp/fw_place.$$
 
     if ! "$PY" tools/check_docs.py >/tmp/fw_check.$$ 2>&1; then
         echo "pre-commit: check_docs.py FAILED"

@@ -45,19 +45,23 @@ what a change to it would touch, this is the file. Its absorbed-story table, blo
 verification evidence are generated; its prose is hand-owned. Rules in
 [`10-requirements/features/README.md`](10-requirements/features/README.md).
 
-**`*/tasks/FW-###.md` — the unit of *work*, and the build record.** One file per story, in its
-stream's folder:
+**`10-requirements/features/<category>/<STREAM>/FW-###.md` — the unit of *work*, and the build
+record.** One file per story, in the category that owns it and the stream folder that leads it:
 
 ```
-50-frontend/tasks/    FE stories (and three RT)
-40-backend/tasks/     BE and RT stories
-30-database/tasks/    DB stories
-70-testing/tasks/     QA stories
-60-delivery/tasks/    BA stories (no build stream)
+10-requirements/features/
+├── FS-07-rod-checkin-plc-config.md      the parent story
+└── FS-07-rod-checkin-plc-config/
+    ├── FE/  BE/  RT/  DB/  QA/  BA/     the stories, by leading stream
 ```
 
-Each carries machine-readable front-matter above the `---` and the developer's plan below it. Two
-developers on two tasks never edit the same file. **All 204 exist and none is going away.**
+Each carries machine-readable front-matter above the `---` and the developer's plan below it.
+**All 204 exist and none is going away.** *(Moved 9 Sep 2026 from `{30,40,50,60,70}-*/tasks/`.)*
+
+⚠ **The stream folder is the build surface that LEADS the story, not its `stream:` value.**
+`tools/storymap.py` owns the rule — first of **`FE` → `BE` → `RT` → `DB` → `QA` → `BA`** present
+in `streams:` — and **18 of the 204 differ from their own `stream:`**. Editing `streams:` is now a
+**file move**: run `python tools/storymap.py --check`, which the pre-commit hook also runs.
 
 ✅ **Full dissolution was executed on 9 Sep 2026 and reversed the same day.** The `FS-##` tier is
 **additive**: it groups the stories for analysis and does not replace them. Anything saying the

@@ -34,12 +34,22 @@ When asked to "implement" a feature, the code goes in those repos, using this re
 40-backend/      50-frontend/       60-delivery/       70-testing/
 80-operations/   90-registers/      95-archive/        tools/  deliverables/
 
-10-requirements/features/   the 20 FS-## consolidated parent stories
+10-requirements/features/   the 20 FS-## parent stories, and every story beneath them
+                            <category>/<STREAM>/FW-###.md  (204 stories, 60 folders)
 ```
 
-**Subject is the folder. MVP, phase, stream, status and owner are *fields*, not paths.** That is
-the rule that stops scope changes moving files — under the old shape Phase 9 and the three
-`PassSchedule*` tables each moved between `MVP-1/` and `MVP-2/` and back.
+**Subject is the folder. MVP, phase, status and owner are *fields*, not paths.** That is the rule
+that stops scope changes moving files — under the old shape Phase 9 and the three `PassSchedule*`
+tables each moved between `MVP-1/` and `MVP-2/` and back.
+
+⚠ **`stream` was on that list until 9 Sep 2026, and is now a path** —
+`10-requirements/features/<category>/<STREAM>/`. The exception is deliberate and its cost is
+stated: **editing a story's `streams:` is now a file move**, and 18 stories sit in a folder that
+disagrees with their own `stream:` field because the folder names the *leading* build surface.
+`tools/storymap.py --check` exists to catch the drift that follows, and `check_docs` rule 6
+compares the tree against the same function that files a story, so the rule and the check cannot
+disagree. ⛔ **Do not extend the exception.** `phase`, `mvp`, `status` and `owner` stay fields —
+they change far more often than `streams:` does, and each would turn every change into a move.
 
 - **A functional area is one file**: [`10-requirements/features/FS-##-*.md`](10-requirements/features/README.md).
   Twenty consolidated parent stories, each the single source of truth for what that functionality
@@ -47,10 +57,20 @@ the rule that stops scope changes moving files — under the old shape Phase 9 a
   — they lose to every specification.** Rules, including what a parent may *assert* versus *cite*,
   are in that folder's `README.md`. ⛔ A parent carries **no `status:`, no `hours:` and no
   `depends_on:`** — enforced by `check_docs.py` rule 7.
-- **A task is one file**: `{30,40,50,60,70}-*/tasks/FW-###.md`, front-matter above the `---`,
-  the developer's plan below. **All 204 exist, and none is going away.** The task file is the
-  **unit of work**, the **build record** and the **writable home of `status:`**; its `######` card
-  in [`[TB §7]`](60-delivery/TaskBreakdown.md) owns its **hours and acceptance criteria**.
+- **A task is one file**, and its **path states its category and its stream**:
+  `10-requirements/features/<category>/<STREAM>/FW-###.md` — front-matter above the `---`, the
+  developer's plan below. **All 204 exist, and none is going away.** The task file is the **unit of
+  work**, the **build record** and the **writable home of `status:`**; its `######` card in
+  [`[TB §7]`](60-delivery/TaskBreakdown.md) owns its **hours and acceptance criteria**.
+  *(Moved 9 Sep 2026 from `{30,40,50,60,70}-*/tasks/`, which no longer holds stories.)*
+- ⚠ **The stream folder is the build surface that LEADS the story, not the value of its
+  `stream:` field.** `tools/storymap.py` owns the rule — `destination_stream()` takes the first of
+  **`FE` → `BE` → `RT` → `DB` → `QA` → `BA`** present in `streams:` — and **18 of the 204 differ
+  from their own `stream:` because of it**, a `DB`·`BE` story filing under `BE`. `check_docs` rule 6
+  compares the tree against that same function, so the rule and the check cannot drift; run
+  `python tools/storymap.py --check` after editing `streams:`, because that edit is now a **file
+  move**. ⛔ This is the one place `CLAUDE.md`'s fields-not-paths rule below is set aside, and
+  deliberately.
   ✅ **Full dissolution was executed on 9 Sep 2026 and reversed the same day** — anything saying
   the task files are retired, or that an activity table is the only status record, is stale. The
   reversal is recorded in [`[SCM §3.1]`](90-registers/StoryConsolidationMap.md).
