@@ -82,8 +82,13 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 ## 6. Open items and gaps
 
-*(not yet written - the roll-up is the union of `blocked_by:` across the absorbed stories,
-plus the narrative gaps no story owns)*
+<!-- BEGIN GENERATED: blockers -->
+
+*No activity in this category cites a blocker.*
+
+<!-- END GENERATED: blockers -->
+
+**Gaps this category owns that no story cites:** *(not yet written)*
 
 ---
 

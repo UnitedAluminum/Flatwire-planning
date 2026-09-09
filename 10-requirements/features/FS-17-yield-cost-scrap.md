@@ -10,9 +10,9 @@ owner:
 # FS-17 · Yield, Cost Ledger and Scrap
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 — minted empty by the `FS-##` consolidation, step 5
+**Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** ⬜ **Scaffold** — front-matter and structure only; sections 1, 3, 4, 6, 7 and 8 are not yet written
+**Status:** 🟡 **Authored** — §3 needs no acceptance criteria of its own; see below
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*
@@ -30,11 +30,36 @@ owner:
 
 ## 1. Overview
 
-**Business purpose.** *(not yet written)*
+**Business purpose.** What the flat wire lines *cost* and what they *lose*. Yield measured on
+footage rather than weight, because flat wire is sold by the foot and a coreless coil is weighed
+once; the cost ledger that makes a flat wire coil visible to United Aluminum's existing costing and
+yield reporting; weld-joint attribution, so a joint's scrap lands against the right rod; and the
+scrap outlet itself — box or skid — which is the only route material takes when it leaves the
+process without becoming product.
 
-**Functional scope.** *(not yet written)*
+⛔ **This category is out of the staffed plan.** [`[SSP]`](../../60-delivery/StaffedSprintPlans.md)
+is the only plan that excludes Phase 12, and it excludes it deliberately; `[DSP]` and `[CE]` still
+cost it, so their totals are higher **by design, not in error**. It also sits on the descope ladder,
+and `[TB §7.3]`'s AI-assisted second basis **excludes Phase 12 entirely**. Its figures have exactly
+one home: [`[YCS]`](../../60-delivery/YieldCostAndScrapSheet.md).
 
-**Out of scope.** *(not yet written)*
+**Functional scope.** Owned by
+[`phase-12-yield-cost-ledger-scrap.md`](../../60-delivery/phases/phase-12-yield-cost-ledger-scrap.md),
+cited not restated. Four activities: footage-based yield and the weight formula; weld traceability
+attribution in yield; flat-wire cost ledger configuration; and the Scrap Box / Scrap Skid outlet.
+
+**Out of scope.**
+
+- **The coil's own weights and footage.** Those are captured at completion by
+  [`FS-12`](FS-12-output-completion-packing.md); this category *consumes* them.
+- **The shared cost and yield tables.** Writing `coil_cost` through
+  `CoilCost_UpdateInsert` is [`FS-15`](FS-15-shared-schema-boundary.md)'s contract — the shared
+  schema **as it stands** (`D-32`).
+- **Certification and reporting.** [`FS-16`](FS-16-reporting-certification.md) — deliberately
+  split from this category so that a **descopable** finance ledger does not share a file with a
+  **contractual** certification obligation.
+- **Weld *capture*.** The induction weld event is recorded by
+  [`FS-07`](FS-07-rod-checkin-plc-config.md); this category attributes its loss.
 
 ---
 
@@ -61,9 +86,15 @@ Seeded one activity per absorbed story. **Activities are expected to merge downw
 
 ## 3. Functional requirements
 
-**This category owns no `FR` range.** Phase 12 is **out of the staffed plan** and its figures live only in `[YCS]`. No `FR` section was ever written for yield, cost or scrap.
+**This category owns no `FR` range, and that is a finding rather than a tidy fact.** No requirement
+section was ever written for yield, cost or scrap: `[REQ]` has no §5.x for Phase 12, and the
+coverage matrix names `FW-100` only as a co-deliverer of `FR-330`–`FR-340` (output coil completion),
+which is `FS-12`'s range, not this one's.
 
-*(the merged, de-duplicated acceptance criteria are not yet written)*
+So four activities worth 128 h rest on **`[YCS]` and the phase specification alone**, with no
+numbered, traceable requirement behind them. That is survivable while the category is out of plan.
+⚠ **It is not survivable if Phase 12 is brought back in** — there would be nothing for a test case
+to trace to.
 
 ---
 
@@ -73,10 +104,11 @@ Seeded one activity per absorbed story. **Activities are expected to merge downw
 
 | Stream | Scope |
 |---|---|
-| **FE** | *(not yet written)* |
-| **BE** | *(not yet written)* |
-| **DB** | *(not yet written)* |
-| **RT** | *(not yet written)* |
+| **FE** | Three of the four activities carry an FE half: the yield view and its weight formula, the cost-ledger configuration surface, and the scrap-outlet selection |
+| **BE** | All four. Footage-to-weight conversion for yield, **weld-joint attribution** so a joint's loss lands against the contributing rod, ledger configuration, and the scrap write path |
+| **DB** | Cost-ledger configuration and the scrap outlet need persistence; yield itself is derived, not stored |
+| **RT** | **None.** Nothing here is real-time — it is all after the fact |
+| **BA** | **None assigned, and that is the gap.** Three of this category's four blockers are unsupplied *values* (`OI-60`, `OI-68`, `OI-83`) and no `BA` activity owns fetching them |
 
 ---
 
@@ -89,8 +121,30 @@ Seeded one activity per absorbed story. **Activities are expected to merge downw
 
 ## 6. Open items and gaps
 
-*(not yet written - the roll-up is the union of `blocked_by:` across the absorbed stories,
-plus the narrative gaps no story owns)*
+<!-- BEGIN GENERATED: blockers -->
+
+> ⚙ **Generated by `tools/build_features.py`.** Do not edit inside the markers - the union of `blocked_by:` across this category, which exists in no other document.
+
+**4 register items cited by 4 of 4 activities** - **3 open**, **1 resolving to no register** (`G61`).
+
+| Item | State | Blocks | What is missing |
+|---|---|---|---|
+| **`OI-60`** | ⛔ open | `FW-100` · `FW-101` | Expected metallic yield per route (rod → flat direct, rod → round wire → flat, flat → flat re-pass) is undefined. This i |
+| **`OI-68`** | ⛔ open | `FW-102` | Standard times per machine, and costing standards / industry codes. Sole tracking home (both register questions withdraw |
+| **`OI-83`** | ⛔ open | `FW-110` | Baler maximum dimensions and scrap banding material (steel versus aluminium alloy) |
+| **`OQ-10`** | ⚠ no register | `FW-100` | **Retired prefix resolving to nothing** - needs retargeting or removal (`G61`) |
+
+<!-- END GENERATED: blockers -->
+
+**Gaps this category owns that no story cites:**
+
+- **No requirement section exists** (§3 above) — 128 h of work with no numbered requirement.
+- **No `BA` activity owns the three unsupplied values.** Every other category with value-blockers
+  has a `BA` story to fetch them (`FW-193`, `FW-199`, `FW-258`); this one does not, so the blockers
+  have no owner and no route to closure.
+- **Footage-based yield needs a weight basis that `FS-12` also needs.** `FW-188` (`FS-12`, `BA`)
+  owns *"footage→weight basis and skid labelling"*. **Two categories depend on one unwritten
+  basis** and only one of them has a story for it.
 
 ---
 
@@ -101,15 +155,42 @@ cyclic category graph - 15 mutually dependent pairs - so a category-level depend
 unusable. Dependencies live **per activity** in section 5. The category-level direction is
 recorded, generated, in [`[SCM §2.4]`](../../90-registers/StoryConsolidationMap.md).
 
-*(narrative dependencies - other categories, components, PLC/OPC, external systems, client
-decisions - not yet written)*
+**On other categories.** Only two edges, both outbound and neither reciprocated: `FS-17` → `FS-03`
+(the ledger and scrap tables) and `FS-17` → `FS-12` (the completion data yield is computed from).
+Nothing depends on this category, which is what makes it cleanly descopable — **and is also the
+argument for having split it away from `FS-16`**, which is not descopable at all.
+
+**On external systems.** The existing costing and yield reporting — `coil_cost`,
+`CoilCost_UpdateInsert`, `CoilYield` — read flat wire output. Those writes are `FS-15`'s, so this
+category depends on that contract rather than owning it.
+
+**On client decisions.** All three real blockers are client-supplied values. **This category cannot
+start**, and no amount of engineering readiness changes that.
 
 ---
 
 ## 8. Change-impact profile
 
-*(not yet written - what a requirement change here affects: functionality, FE/BE/DB/RT
-components, existing implementation to modify, dependencies, regression areas)*
+**What a change here affects.** Almost nothing downstream, which is the point.
+
+| A change to… | Affects |
+|---|---|
+| **the weight formula** | `FS-12`'s completion figures if the basis is shared — and it is, through `FW-188`'s unwritten basis. **This is the one coupling that matters** |
+| **weld attribution** | `FS-07`'s weld capture is the source; a change to attribution may require a field the capture does not record |
+| **the cost ledger** | `FS-15`'s shared writes only |
+| **the scrap outlet** | `FS-10`'s WIP rejection dispositions, which is where scrapped material is decided |
+
+**Existing implementation to modify.** None — all four activities are `not-started` and there are
+**no build records**. Nothing here has ever been touched.
+
+**Regression areas.**
+
+- **The shared weight basis.** If yield and completion derive weight differently, two published
+  numbers disagree and neither is wrong on its own terms. This is the same class of defect as the
+  four contradicting hour figures, and it is avoidable now while both are unbuilt.
+- **Re-scoping this category back into plan is not a costing change alone.** It has no requirement
+  section, no BA owner for its blockers, and no test-case trace. Bringing it in means writing those
+  first.
 
 ---
 

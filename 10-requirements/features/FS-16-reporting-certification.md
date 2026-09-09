@@ -10,9 +10,9 @@ owner:
 # FS-16 · Reporting and Certification
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 — minted empty by the `FS-##` consolidation, step 5
+**Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** ⬜ **Scaffold** — front-matter and structure only; sections 1, 3, 4, 6, 7 and 8 are not yet written
+**Status:** 🟡 **Authored** — §3's merged acceptance criteria are still outstanding
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*
@@ -30,11 +30,36 @@ owner:
 
 ## 1. Overview
 
-**Business purpose.** *(not yet written)*
+**Business purpose.** What leaves the building alongside the product. Six reports covering the
+flattening lines — gauge trace, gauge CPK and deviation, coil pass detail, SPC, cut traceability
+and the Flattening Lines report tab itself — plus the **certificate of conformance** and the heat
+and weld-joint traceability behind it. For welding-wire customers a coil is not shippable without
+its certificate, so this category ends the process, not just reports on it.
 
-**Functional scope.** *(not yet written)*
+⚠ **This category carries a contractual obligation.** `NFR012` requires weld-joint traceability
+through to the customer certificate, and `CoilTraceability` is the genealogy behind it. That is
+**why it was split from [`FS-17`](FS-17-yield-cost-scrap.md)**: merged, the first descope
+conversation would reach for a finance ledger and find a contractual commitment in the same file.
 
-**Out of scope.** *(not yet written)*
+**Functional scope.** Owned by
+[`phase-11-shift-summary-reporting-certification.md`](../../60-delivery/phases/phase-11-shift-summary-reporting-certification.md)
+and its MVP-2 sibling, cited not restated. Eight activities: the report tab and its reporting views,
+five reports, the certification granularity and tolerance-band analysis, and cast number as the lot
+reference.
+
+**Out of scope.**
+
+- **Yield, cost and scrap** — [`FS-17`](FS-17-yield-cost-scrap.md), deliberately separate.
+- **The Shift Summary screen itself.** `FR-480`–`FR-490` and `FW-069` are **MVP-2**; `DB10` is not
+  built in MVP-1. This category owns the *contract* for it, not the screen.
+- **Capturing** the data reported on — SPC is [`FS-09`](FS-09-in-run-production-events.md), the
+  trace is [`FS-08`](FS-08-active-run-monitoring.md), weld capture is
+  [`FS-07`](FS-07-rod-checkin-plc-config.md), completion is
+  [`FS-12`](FS-12-output-completion-packing.md).
+
+⚠ **Four of the five reports are on descope rung 6.** `[TB §8]` puts them there, and records that
+**Cut Traceability's deferral carries a shipment risk** — it is the report a welding-wire customer's
+certificate depends on. Descoping it is not the same decision as descoping the other four.
 
 ---
 
@@ -65,7 +90,14 @@ Seeded one activity per absorbed story. **Activities are expected to merge downw
 
 ## 3. Functional requirements
 
-Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md): **FR-480-490** (`[REQ §5.23]`). **Cited, never restated.**
+Owned requirement range, from [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md):
+**FR-480-490** (`[REQ §5.23]`, Shift Summary). **Cited, never restated.**
+
+⚠ **Those eleven requirements have no `[REQ]` section and are MVP-2.** §5.23's heading was folded
+into `[REQ]`'s MVP-2 index row, so the range survives only in `[TB §11]`. **The six reports and the
+certificate carry no `FR` at all** — they trace to the phase specification, `[TCS]` and `NFR012`,
+which is the one numbered obligation in this category and is a *non-functional* requirement rather
+than an `FR`.
 
 *(the merged, de-duplicated acceptance criteria are not yet written)*
 
@@ -77,10 +109,11 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 | Stream | Scope |
 |---|---|
-| **FE** | *(not yet written)* |
-| **BE** | *(not yet written)* |
-| **DB** | *(not yet written)* |
-| **RT** | *(not yet written)* |
+| **FE** | Five of the eight activities are report surfaces: Gauge Trace, Gauge CPK Deviation and CPK, Coil Pass Detail, SPC at Flattening Line, and Cut Traceability |
+| **BE** | Every activity has a `BE` half. The Flattening Lines report tab and its **reporting views**, the query behind each report, and **cast number as the lot reference** for certificate traceability |
+| **DB** | The reporting views, shared with the report tab. No new transactional tables — this category reads |
+| **RT** | One activity only: the Gauge Trace report shares a live path with `FS-08`'s trace panel |
+| **BA** | One activity, and it is the gate: **certification granularity and tolerance bands** (`FW-193`). It carries only `OI-101` as a formal blocker, but its *analysis* is what would settle `Q5`, `Q8`, `OI-57` and `OI-99` as well - **the highest-value unblocking action in this category** |
 
 ---
 
@@ -93,8 +126,33 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 ## 6. Open items and gaps
 
-*(not yet written - the roll-up is the union of `blocked_by:` across the absorbed stories,
-plus the narrative gaps no story owns)*
+<!-- BEGIN GENERATED: blockers -->
+
+> ⚙ **Generated by `tools/build_features.py`.** Do not edit inside the markers - the union of `blocked_by:` across this category, which exists in no other document.
+
+**7 register items cited by 5 of 8 activities** - **5 open**, **2 resolving to no register** (`G61`).
+
+| Item | State | Blocks | What is missing |
+|---|---|---|---|
+| **`OI-101`** | ⛔ open | `FW-090` · `FW-193` | Shift boundaries are undefined. No shift start and end times, shift names, or weekend/holiday pattern exist anywhere in |
+| **`OI-57`** | ⛔ open | `FW-092` | Published tolerance bands per alloy and temper (ASTM B236, customer PO, or UA internal) are undefined. Sole tracking hom |
+| **`OI-99`** | ⛔ open | `FW-095` | Lot number is undefined when a coil has more than one source rod, which is the normal case under continuous welded feed. |
+| **`OQ-25`** | ⚠ no register | `FW-095` | **Retired prefix resolving to nothing** - needs retargeting or removal (`G61`) |
+| **`OQ-5`** | ⚠ no register | `FW-095` | **Retired prefix resolving to nothing** - needs retargeting or removal (`G61`) |
+| **`Q5`** | ⛔ open | `FW-N30` | Traceability granularity for certs |
+| **`Q8`** | ⛔ open | `FW-N30` | C of C frequency — per coil, order, or heat |
+
+<!-- END GENERATED: blockers -->
+
+**Gaps this category owns that no story cites:**
+
+- **`NFR012` has no test case that can currently pass.** Weld-joint traceability to the certificate
+  depends on `OI-99`'s lot definition, which is open — so the contractual obligation has no
+  verifiable acceptance while that stays open.
+- **`PP-02` — `NFR001`, `NFR002` and `NFR008` are cited nowhere** in any downstream artifact.
+  Reporting is where NFRs would normally be evidenced, and three of them reach nothing.
+- **Cut Traceability's descope carries a shipment risk that the ladder does not price.** `[TB §8]`
+  records the risk; nothing quantifies it.
 
 ---
 
@@ -105,15 +163,45 @@ cyclic category graph - 15 mutually dependent pairs - so a category-level depend
 unusable. Dependencies live **per activity** in section 5. The category-level direction is
 recorded, generated, in [`[SCM §2.4]`](../../90-registers/StoryConsolidationMap.md).
 
-*(narrative dependencies - other categories, components, PLC/OPC, external systems, client
-decisions - not yet written)*
+**On other categories — entirely downstream, with no back-edges.** `FS-16` → `FS-03`, `FS-08`,
+`FS-09` and `FS-12`: it reports on data those categories capture and cannot be verified before they
+produce it. Nothing depends on `FS-16` in return, which means it is late by nature rather than by
+sequencing choice.
+
+**On client decisions — the binding constraint.** `Q5` and `Q8` are open client questions and
+`OI-57`, `OI-99` and `OI-101` are client-owned definitions. **Five of seven blockers are answers,
+not work**, and `FW-193` is the single BA activity that closes most of them. It is the highest-value
+unblocking action available in this category.
+
+**On external systems.** Certificates draw on `Lots` and chemistry from the shared schema, and Cut
+Traceability reads `coil_slit_cuts` — reads that belong to `FS-15`'s contract.
 
 ---
 
 ## 8. Change-impact profile
 
-*(not yet written - what a requirement change here affects: functionality, FE/BE/DB/RT
-components, existing implementation to modify, dependencies, regression areas)*
+**What a change here affects.** This category is a consumer, so most changes are inbound. The
+exceptions are the ones that matter.
+
+| A change to… | Affects |
+|---|---|
+| **certificate granularity** (`Q5`/`Q8`) | `FS-12`'s completion — whether a certificate is minted per coil or per skid changes what completion must record — and `FS-15`'s shared-schema writes. **This is the one change here with real outward blast radius** |
+| **the lot definition** (`OI-99`) | `FS-07`'s weld capture, because attributing a lot across welded rods may need a field the capture does not record; and `CoilTraceability`'s genealogy in `FS-12` |
+| **tolerance bands** (`OI-57`) | `FS-09`'s SPC verdicts and `FS-18`'s `AlloyProperty` — the same bands, in three places. `G51` already records that `SpcMeasurement.InSpec` stores a wrong verdict for an asymmetric band |
+| **a report's query** | Nothing outside this category. Reports are read-only and independently descopable — which is what puts four of them on rung 6 |
+
+**Existing implementation to modify.** None — all eight activities are `not-started` and there are
+**no build records**. The reporting views do not exist yet, which means the read shapes are still
+free to follow whatever `Q5` and `Q8` decide.
+
+**Regression areas.**
+
+- **The three-way tolerance-band coupling.** `OI-57` here, `G51`'s asymmetric-band defect in
+  `FS-09`, and `AlloyProperty` in `FS-18` are one value in three homes.
+- **Descoping a report is not neutral.** Cut Traceability backs a customer certificate; the other
+  four do not. The ladder treats them as one rung.
+- **`NFR012` is contractual.** A change that defers traceability capture in `FS-07` or `FS-12`
+  breaks an obligation here, and the impact will not be visible from the story being changed.
 
 ---
 

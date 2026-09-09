@@ -10,9 +10,9 @@ owner:
 # FS-13 · FL3 Hybrid Continuous Route
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 — minted empty by the `FS-##` consolidation, step 5
+**Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** ⬜ **Scaffold** — front-matter and structure only; sections 1, 3, 4, 6, 7 and 8 are not yet written
+**Status:** 🟡 **Authored** — §3 needs no acceptance criteria of its own; see below
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*
@@ -30,11 +30,32 @@ owner:
 
 ## 1. Overview
 
-**Business purpose.** *(not yet written)*
+**Business purpose.** FL3 is **FL1 feeding FL2 continuously**, with the TKUP-1 take-up bypassed and
+no intermediate anneal. Rod enters the drawing boxes and leaves as a finished coreless coil in one
+pass, so there is **no intermediate spool and no intermediate alpha** — which is the whole point,
+and also the whole difficulty. This category is what makes the third line a route rather than a
+third copy of everything.
 
-**Functional scope.** *(not yet written)*
+**Functional scope.** Owned by
+[`phase-10-fl3-hybrid-continuous-operation.md`](../../60-delivery/phases/phase-10-fl3-hybrid-continuous-operation.md),
+cited not restated. Four activities: the Dashboard 2 FL3 variant and Active Run's FL3 profile row;
+the hybrid **single-batch PLC push** and `RouteMode=Hybrid`; `RouteMode` and the
+no-intermediate-spool rule in the schema; and continuous end-to-end trace on FL3.
 
-**Out of scope.** *(not yet written)*
+⚠ **FL3 has no controller of its own.** It runs on the **FL1 and FL2 controllers**, so a single FL3
+check-in acknowledgement must write to **two controllers** — `D-47`, and gap **`G99`**. That one
+fact is most of this category's risk, and it has no analogue on FL1 or FL2.
+
+**Out of scope.**
+
+- **The FL1 and FL2 behaviours themselves.** FL3 re-uses them; it does not re-specify them. Rod
+  check-in is [`FS-07`](FS-07-rod-checkin-plc-config.md), the run cockpit is
+  [`FS-08`](FS-08-active-run-monitoring.md), finishing is
+  [`FS-11`](FS-11-spool-lifecycle-fl2.md), completion is
+  [`FS-12`](FS-12-output-completion-packing.md).
+- **The PLC tag surface.** `[PLC]` is the only home for a tag path; nothing here restates one.
+- **Commissioning FL3.** That is [`FS-19`](FS-19-integration-testing-golive.md), whose `E2E FL3
+  hybrid` test is the acceptance of this category.
 
 ---
 
@@ -61,9 +82,14 @@ Seeded one activity per absorbed story. **Activities are expected to merge downw
 
 ## 3. Functional requirements
 
-**This category owns no `FR` range.** A **route variant**, not new requirements. FL3 re-uses the FL1 and FL2 requirement sets end to end; what differs is the single PLC push across two controllers and the absence of an intermediate spool.
+**This category owns no `FR` range, and that is correct.** FL3 is a **route variant**, not new
+requirements: it re-uses the FL1 and FL2 requirement sets end to end. What differs is mechanism, not
+obligation — one PLC push across two controllers, and the absence of an intermediate spool.
 
-*(the merged, de-duplicated acceptance criteria are not yet written)*
+The requirements it satisfies are therefore owned elsewhere and cited: `[REQ §5.2]` (rod check-in,
+via `FS-07`), `[REQ §5.4]` (active run, via `FS-08`) and `[REQ §5.16]`/`§5.17` (completion and
+packing, via `FS-12`). Its own authority is the phase specification and `[BR §3]`'s three operating
+routes.
 
 ---
 
@@ -73,10 +99,15 @@ Seeded one activity per absorbed story. **Activities are expected to merge downw
 
 | Stream | Scope |
 |---|---|
-| **FE** | *(not yet written)* |
-| **BE** | *(not yet written)* |
-| **DB** | *(not yet written)* |
-| **RT** | *(not yet written)* |
+| **FE** | One activity, and `D-55` narrowed it hard: **the DB3 half is now the action set alone**. Trace titles, the Components card and the Rod Information columns are all shared with FL1, so FL3's Active Run delta is a single profile row. The Dashboard 2 FL3 variant is unchanged |
+| **BE** | The hybrid **single-batch PLC push** and `RouteMode=Hybrid` — one acknowledgement producing writes to two controllers |
+| **DB** | `RouteMode` on the run, and the **no-intermediate-spool rule** that stops an FL3 run minting a spool alpha it must not have |
+| **RT** | Continuous end-to-end trace on FL3, so one run's gauge and width read as a single series across both mills rather than two |
+| **QA** | The `E2E FL3 hybrid` scenario in `FS-19` is this category's acceptance |
+
+⚠ **`FW-189` carries a recorded double-count.** FL3's DB3 work is costed both here (4 h of 12) and
+in `FW-062` under `FS-08` (8 h of 32). Hours are deliberately untouched pending a costing pass,
+which `[TB §7]` notes will find more than 12 h. **Do not re-derive it here** — `[CE]` owns that.
 
 ---
 
@@ -89,8 +120,33 @@ Seeded one activity per absorbed story. **Activities are expected to merge downw
 
 ## 6. Open items and gaps
 
-*(not yet written - the roll-up is the union of `blocked_by:` across the absorbed stories,
-plus the narrative gaps no story owns)*
+<!-- BEGIN GENERATED: blockers -->
+
+> ⚙ **Generated by `tools/build_features.py`.** Do not edit inside the markers - the union of `blocked_by:` across this category, which exists in no other document.
+
+**4 register items cited by 2 of 4 activities** - **1 open**, **3 resolving to no register** (`G61`).
+
+| Item | State | Blocks | What is missing |
+|---|---|---|---|
+| **`G30`** | ⛔ open | `FW-190` | FM2's controller namespace on FL3 is undetermined, and it decides what partial failure means. Every published tag map ad |
+| **`OQ-15`** | ⚠ no register | `FW-190` | **Retired prefix resolving to nothing** - needs retargeting or removal (`G61`) |
+| **`OQ-2`** | ⚠ no register | `FW-189` | **Retired prefix resolving to nothing** - needs retargeting or removal (`G61`) |
+| **`OQ-67`** | ⚠ no register | `FW-189` | **Retired prefix resolving to nothing** - needs retargeting or removal (`G61`) |
+
+<!-- END GENERATED: blockers -->
+
+⚠ **This category has the worst blocker hygiene of the twenty.** Three of the four items above
+resolve to nothing, so on the record it reads as heavily blocked when **one real open item**
+(`G30`) stands behind it. Until they are retargeted under `G61`, `FEATURES.md` overstates how
+stuck this is.
+
+**Gaps this category owns that no story cites:**
+
+- **`G99` — the two-controller acknowledgement has no specified failure semantics.** `D-47`
+  establishes that FL3 writes to both the FL1 and FL2 controllers; nothing says what happens when
+  the write half-succeeds. `[INT §8.0]`'s single-transaction guarantee covers the database half
+  only — **the PLC half is compensation, not rollback** — so a partial push is a real state the
+  design has not named.
 
 ---
 
@@ -101,15 +157,44 @@ cyclic category graph - 15 mutually dependent pairs - so a category-level depend
 unusable. Dependencies live **per activity** in section 5. The category-level direction is
 recorded, generated, in [`[SCM §2.4]`](../../90-registers/StoryConsolidationMap.md).
 
-*(narrative dependencies - other categories, components, PLC/OPC, external systems, client
-decisions - not yet written)*
+**On other categories — this one is almost entirely downstream.** Its direction is `FS-13` → six
+others (`FS-03`, `FS-04`, `FS-07`, `FS-08`, `FS-09`, `FS-11`) with **no back-edges at all**, which
+is unusual here and is what makes it safely last. It cannot start until the FL1 and FL2 routes both
+work, because it is their composition. `[SP]` sequences it 9 → 10 for exactly that reason.
+
+**On PLC and OPC.** The binding dependency. FL3 has no controller of its own, so this category
+depends on `FS-04`'s tag-push layer being able to address **two** controllers in one acknowledgement,
+and on `G30` resolving what the namespace is.
+
+**On client decisions.** `G30` is a controls-engineering answer, not a business one, and the three
+`OQ-` citations need retargeting before anyone can tell whether they hide a real question.
 
 ---
 
 ## 8. Change-impact profile
 
-*(not yet written - what a requirement change here affects: functionality, FE/BE/DB/RT
-components, existing implementation to modify, dependencies, regression areas)*
+**What a change here affects.** Very little, and that is this category's most useful property: FL3
+is a composition, so changes flow *into* it far more than out of it.
+
+| A change to… | Affects |
+|---|---|
+| **`RouteMode`** | `FS-03`'s run schema, and any read that branches on route — the no-intermediate-spool rule is the invariant that keeps `FS-11` from seeing a spool an FL3 run never made |
+| **the two-controller push** | `FS-04`'s `PLCTagService` and `FS-07`'s check-in acknowledgement. It is a *second* consumer of a push path built for one controller |
+| **the FL3 line profile row** | `FS-08` only, and only one row of it since `D-55` |
+| **FL1 or FL2 behaviour** *(inbound)* | **this category, always.** Any change to check-in, the run cockpit or finishing has to be re-verified on the hybrid route, and that is the regression nobody remembers |
+
+**Existing implementation to modify.** None. All four activities are `not-started` and this
+category has **zero build records** — it is the largest of the four zero-plan categories by hours
+and the smallest by count.
+
+**Regression areas.**
+
+- **FL1 and FL2 changes are FL3 regressions.** This is the asymmetry to watch: the FL3 route has no
+  behaviour of its own to break, so it never appears in an impact assessment, and it is precisely
+  where a shared change fails.
+- **The `FW-189` double-count** means any re-costing touches two categories.
+- **A partial two-controller push** leaves the line in a state `G99` has not named. Until it is
+  named, there is no test for it — and `FS-19`'s `E2E FL3 hybrid` scenario cannot assert on it.
 
 ---
 
