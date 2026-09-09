@@ -10,9 +10,9 @@ owner:
 # FS-11 · Spool Lifecycle and FL2 Finishing Run
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 — minted empty by the `FS-##` consolidation, step 5
+**Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** ⬜ **Scaffold** — front-matter and structure only; sections 1, 3, 4, 6, 7 and 8 are not yet written
+**Status:** 🟡 **Authored** — §3's merged acceptance criteria are still outstanding
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*
@@ -30,11 +30,45 @@ owner:
 
 ## 1. Overview
 
-**Business purpose.** *(not yet written)*
+**Business purpose.** The intermediate spool and everything that happens to it. On the FL1
+standalone route, flattened wire is taken up on a spool that carries its own alpha, its own weight
+and the gauge profile of the pass that made it; that spool is then queued, validated, checked in to
+FL2 and finished into a coreless coil. This category owns the spool as a **material object with a
+lifecycle**, and the FL2 run that consumes it.
 
-**Functional scope.** *(not yet written)*
+**Functional scope.** Owned by
+[`phase-08-fl2-spool-checkin-finishing-run.md`](../../60-delivery/phases/phase-08-fl2-spool-checkin-finishing-run.md),
+cited not restated. Thirteen activities — the most of any operator-facing category: the FL2 Spool
+Check-in screen (DB5) and Spool Queue (DB5A); Active Run's FL2 material-flow card and Spool
+Information grid; `POST /checkin/spool` and `GET /spools`; the `SpoolCheckin` table and the
+`SpoolProcessing.OrderNo` index; the shared trace path's no-measurement state; FL2 pre-check-in
+spool staging; the FL1 segment alpha namespace; spool-completion weight milestones and the
+machine-stop confirmation; and the four FL2 trace activities.
 
-**Out of scope.** *(not yet written)*
+⚠ **Two domain traps land squarely on this category.**
+
+1. **`Spool` and `SpoolProcessing` were swapped on 23 Aug 2026 (`Q60`)** — the one rename where a
+   stale reference is *silently wrong* rather than obviously stale. **`Spool`** is the reusable
+   stencilled **article**, a lookup keyed on `SpoolNo`, and **has no `Alpha` at all**;
+   **`SpoolProcessing`** is the **material in process**, keyed on `Alpha` = `SP-#####`. A
+   pre-23-Aug document saying `Spool.Alpha` means what is now `SpoolProcessing.Alpha`.
+2. **⛔ FL2's gauge trace is REAL-TIME, at a 4 s update rate.** Reversed 9 Sep 2026. Anything still
+   asserting FL2 broadcasts `null` live gauge or width is stale — that came from assumption `A3` of
+   the retired `[PLC §14]` via the superseded `FR-120`. ⚠ **Two different things share the phrase
+   "historical profile":** FL2's *own* trace, now live, and the profile a spool carries **into** FL2
+   from its FL1 pass, reviewed at check-in over REST. **The second is unchanged.**
+
+**Out of scope.**
+
+- **FL1's flattening run itself** — [`FS-07`](FS-07-rod-checkin-plc-config.md) checks in the rod;
+  [`FS-08`](FS-08-active-run-monitoring.md) monitors the run that produces the spool.
+- **The Dashboard 3 shell** — `FS-08`. This category adds FL2's material panel and grid subject to
+  it as **profile data**, never as a fork (`D-55`).
+- **The output coil** — [`FS-12`](FS-12-output-completion-packing.md).
+- **The FL3 route**, where TKUP-1 is bypassed and **no intermediate spool exists at all** —
+  [`FS-13`](FS-13-fl3-hybrid-route.md).
+- **The shared-schema write set for spool check-in**, which is `OI-115` and belongs to
+  [`FS-15`](FS-15-shared-schema-boundary.md).
 
 ---
 
@@ -70,7 +104,21 @@ Seeded one activity per absorbed story. **Activities are expected to merge downw
 
 ## 3. Functional requirements
 
-Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md): **FR-090-096 · FR-097-099 · FR-130-157 · FR-533-540** (`[REQ §5.3` · `[REQ §5.3a` · `[REQ §5.5` · `[REQ §5.29]`). **Cited, never restated.**
+Owned ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md): **FR-090-096**
+(`[REQ §5.3]`, Spool Check-in — DB5), **FR-097-099** (`§5.3a`, Spool Queue — DB5A), **FR-130-157**
+(`§5.5`, spool-completion alerts and machine-stop confirmation) and **FR-533-540** (`§5.29`, FL2
+pre-check-in) — **44 requirements**, the largest range set of any category.
+**Cited, never restated.**
+
+⚠ **Two of the four ranges are invisible to `[TB §11]`'s coverage matrix.** `FR-097`–`099` has no
+row, and `FR-533`–`540` falls past the matrix's `FR-508` ceiling. That is 11 requirements the
+matrix does not list while claiming complete coverage.
+
+⚠ **`FR-130`–`FR-155` is this category's range but `FW-202` — its 98 h answer — sits in
+[`FS-08`](FS-08-active-run-monitoring.md)**, because the stop confirmation happens on Dashboard 3.
+The requirements and the activity are deliberately in different categories, and
+[`SpoolCompletionNotification.md`](../screens/SpoolCompletionNotification.md) is the authority for
+both.
 
 *(the merged, de-duplicated acceptance criteria are not yet written)*
 
@@ -82,10 +130,15 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 | Stream | Scope |
 |---|---|
-| **FE** | *(not yet written)* |
-| **BE** | *(not yet written)* |
-| **DB** | *(not yet written)* |
-| **RT** | *(not yet written)* |
+| **FE** | Six activities. DB5's check-in wizard and DB5A's selection queue; the FL2 material-flow card and Spool Information grid on Dashboard 3 — **content model and subject only**, since `D-55` dissolved four of `FW-178`'s six criteria; and three of the four FL2 trace activities, including honest gaps at 4 s and binding `isLive` rather than rebuilding the chart each frame |
+| **BE** | `POST /checkin/spool` and `GET /spools`; FL2 pre-check-in staging; the FL1 segment alpha namespace; and the per-line out-of-spec threshold |
+| **DB** | The `SpoolCheckin` table and the `SpoolProcessing.OrderNo` index (`in-review`), plus the segment-alpha work. ⚠ `SpoolStaging` is `FS-03`'s |
+| **RT** | The shared trace path's **no-measurement state**, the FL2 4 s live trace, and the **spool-completion weight milestones** with the machine-stop confirmation |
+| **QA / BA** | ⚠ **Neither has an activity**, against ten open items including two unresolved vocabulary conflicts |
+
+⚠ **Nothing in the FL1 spool-completion notification feature is delivered.** Its comparison folder
+records two rows as *Completed*; both are satisfied by a correct presentation choice and by the
+**absence** of an Escape handler — behaviours to be **protected, not built**.
 
 ---
 
@@ -119,7 +172,34 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 <!-- END GENERATED: blockers -->
 
-**Gaps this category owns that no story cites:** *(not yet written)*
+**Ten items, and three of them are the same class of problem: two vocabularies for one thing.**
+
+- ⛔ **`OI-02` — intermediate spool numbering.** The schema says `SP-#####`; the traveler says
+  something else. ⚠ This is adjacent to a trap: **`Spool.SpoolNo` is deliberately FOUR digits**
+  (`SP-0001`…`SP-0045`) precisely so a stencilled article number can never be string-identical to a
+  `SpoolProcessing.Alpha`. `Q42` is still open on the format; **do not "correct" the seed to five
+  digits.**
+- ⛔ **`OI-06` — two spool status vocabularies.** The schema's `RECEIVED`/`S…` set versus another.
+- ⛔ **`Q17` — the spool status state machine has no agreed set of valid transitions**, which is
+  what `OI-06` needs before either can close.
+- ⛔ **`Q41` — what does an FL2 pre-check-in actually do?** `FW-224` is 20 h and `blocked` on it.
+- ⛔ **`Q96` — is the 75 / 90 / 100 % milestone ladder in scope for this delivery?** `FW-N02` is
+  `blocked` on it, and it is the mechanism behind the whole spool-completion alert.
+- **`OI-25`** — the two footage coordinate systems, shared with `FS-08` and `FS-12`.
+- **Four retired prefixes** — `OQ-15`, `OQ-17`, `OQ-18`, `OQ-76` — resolve to no register (`G61`)
+  and inflate how blocked this category appears.
+
+**Gaps this category owns that no story cites:**
+
+- ⛔ **`OI-115` — the shared write set for FL2 spool check-in is undefined.** It is `FS-15`'s
+  blocker, but it is *this* category's check-in that cannot complete without it.
+- ⚠ **`Q96` could remove a feature that is already partly specified.** If the milestone ladder is
+  out of scope, `FR-130`–`FR-155`'s 98 h re-pricing and much of
+  `SpoolCompletionNotification.md` go with it. It is the largest single scope question open on this
+  category.
+- **The FL2 trace reversal created four stories in two days** (`FW-N29`, `FW-N31`, `FW-N32`,
+  `FW-N33`) — the clearest live example of the fragmentation this consolidation exists to remove.
+  They are **one change**: FL2 trace goes live at 4 s.
 
 ---
 
@@ -130,15 +210,48 @@ cyclic category graph - 15 mutually dependent pairs - so a category-level depend
 unusable. Dependencies live **per activity** in section 5. The category-level direction is
 recorded, generated, in [`[SCM §2.4]`](../../90-registers/StoryConsolidationMap.md).
 
-*(narrative dependencies - other categories, components, PLC/OPC, external systems, client
-decisions - not yet written)*
+**On other categories.** `FS-11` → `FS-01`, `FS-02`, `FS-03`, `FS-04`, `FS-07`, `FS-08` and
+`FS-09`. Its strongest pair is with `FS-08` — **6 edges out, 1 back** — because every FL2 addition
+extends the shared Dashboard 3 component rather than replacing it. `FS-12` depends on this category
+for the spool a coil is finished from, and `FS-13` depends on its *absence* (FL3 has no spool).
+
+**On `FS-15`.** `OI-115` blocks the shared write set for spool check-in, so this category's check-in
+cannot complete its transaction until that contract exists.
+
+**On client decisions.** Five: `Q17`, `Q41`, `Q96`, `OI-02` and `OI-06`. **Two of the five are
+vocabulary conflicts where both vocabularies are already in use**, which makes them more expensive
+to leave open than to answer.
 
 ---
 
 ## 8. Change-impact profile
 
-*(not yet written - what a requirement change here affects: functionality, FE/BE/DB/RT
-components, existing implementation to modify, dependencies, regression areas)*
+**What a change here affects.** The spool is the hand-off object between two lines, so its shape
+propagates in both directions.
+
+| A change to… | Affects |
+|---|---|
+| **the spool alpha format** (`OI-02`, `Q42`) | `FS-03`'s seed, `FS-07`'s FL1 take-up, `FS-12`'s traceability, and **the four-digit `SpoolNo` guard** that stops a collision with `SpoolProcessing.Alpha`. High blast radius, and the guard is easy to break by "tidying" |
+| **the spool status vocabulary** (`OI-06`, `Q17`) | `FS-03`'s `CHECK` constraints, `FS-06`'s board, and every read that filters on status |
+| **the milestone ladder** (`Q96`) | `FS-08`'s `FW-202` (98 h), `FS-04`'s hub members, and the whole spool-completion notification feature |
+| **the FL2 trace cadence** | `FS-08`'s shared trace path and `FS-16`'s Gauge Trace report. The 9 Sep reversal already did this once |
+| **`SpoolProcessing`'s grain** | `FW-N20` already re-grained `SpoolOrder` from the spool to the segment. Anything assuming spool-grain is stale |
+
+**Existing implementation to modify.** Two activities are `in-review` — `FW-180`'s table and index,
+and `FW-230`'s segment alpha — and two are `blocked`. So **the schema is settling while `Q17` and
+`OI-06` leave the status vocabulary undecided**, which is the same inversion `FS-10` has.
+
+**Regression areas.**
+
+- **The `Spool` / `SpoolProcessing` swap is the module's most dangerous stale reference**, because
+  a pre-23-Aug citation reads as valid. Any change here should re-check which table is meant.
+- **`Spool.SpoolNo`'s four digits look like a bug and are a guard.** Correcting them to five would
+  reintroduce the exact collision `Q60` was decided to prevent.
+- **`D-55` made Dashboard 3 one component**, so FL2 additions are profile data. A per-line fork
+  here would undo the decision and break `FS-13` too.
+- **`SpoolConfiguration` was merged away by `Q60` and split back out by `D-58` on 8 Sep 2026**, with
+  its six limits `NOT NULL` again. `Spool.SpoolTypeId` is `NOT NULL` with an enforced FK, so
+  deleting references to it as "stale" breaks a live constraint.
 
 ---
 

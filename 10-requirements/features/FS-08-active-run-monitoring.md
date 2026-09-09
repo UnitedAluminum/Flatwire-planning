@@ -10,9 +10,9 @@ owner:
 # FS-08 · Active Run Monitoring and Gauge/Width Trace
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 — minted empty by the `FS-##` consolidation, step 5
+**Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** ⬜ **Scaffold** — front-matter and structure only; sections 1, 3, 4, 6, 7 and 8 are not yet written
+**Status:** 🟡 **Authored** — §3's merged acceptance criteria are still outstanding
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*
@@ -30,11 +30,41 @@ owner:
 
 ## 1. Overview
 
-**Business purpose.** *(not yet written)*
+**Business purpose.** The run cockpit. Dashboard 3 is what an operator watches while material is
+moving: what is running, how much is left on the payoff, the live gauge and width trace against
+target and tolerance, the component states, and the actions available right now. It is the screen
+the operator spends the shift on, and the only one that has to be correct in real time.
 
-**Functional scope.** *(not yet written)*
+**Functional scope.** Owned by
+[`phase-05-active-run-monitoring-gauge-trace.md`](../../60-delivery/phases/phase-05-active-run-monitoring-gauge-trace.md),
+cited not restated. Ten activities: Dashboard 3 itself, the live gauge-trace chart, the status
+cards, the info grid and chart tab strip, `GET /run/active` and `GET /run/{runId}/gaugetrace`,
+`sp_GetGaugeTrace`, the machine-context route and line-capability profile, the station claim, the
+single-active-run index, and **FL1 spool completion**.
 
-**Out of scope.** *(not yet written)*
+⚠ **`D-55` (7 Sep 2026) re-scoped this category hard: ONE machine-driven component serves FL1, FL2
+and FL3.** The per-line "variants" are retired. Four things vary by line — the material panel, the
+centre status card, the action set and the spool overlay — and everything that reads as
+configuration is **data or uniform**. The trace treatment in particular is now identical across all
+three lines: same titles, same axis, one source path, with `isLive` driven by the data rather than
+the line.
+
+⚠ **`FW-202` is 98 h in a 240 h category and is `blocked`.** FL1 spool completion — stop
+confirmation, weight basis and the `SpoolProcessing` write — was re-priced from 4 h to 98 h by
+`[TRP §5.1]` (gap `G37`), and **no published per-phase total carries that figure**. It is 41 % of
+this category's hours and the single largest activity in the module.
+
+**Out of scope.**
+
+- **The transport.** The hub, its groups, the OPC ingest and the batching are
+  [`FS-04`](FS-04-realtime-plc-backbone.md). This category consumes the stream.
+- **The run *events*** raised from this screen — pause, SPC, die change, roll adjust — are
+  [`FS-09`](FS-09-in-run-production-events.md). Dashboard 3 launches them; it does not own them.
+- **FL2's own material panel and Spool Information grid** — [`FS-11`](FS-11-spool-lifecycle-fl2.md).
+- **The FL3 profile row** — [`FS-13`](FS-13-fl3-hybrid-route.md), 1 row since `D-55`.
+- **⛔ Any claim that FL2 broadcasts `null` live gauge or width.** Reversed 9 Sep 2026: **all three
+  lines measure gauge and width live** — FL2 at a 4 s update rate, FL1 and FL3 at ~10 Hz.
+  Anything still asserting otherwise is stale.
 
 ---
 
@@ -67,7 +97,19 @@ Seeded one activity per absorbed story. **Activities are expected to merge downw
 
 ## 3. Functional requirements
 
-Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md): **FR-100-120** (`[REQ §5.4]`). **Cited, never restated.**
+Owned requirement range, from [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md):
+**FR-100-120** (`[REQ §5.4]`, *Active Run Monitor — Dashboard 3*) — **21 requirements**.
+**Cited, never restated.** Screen authority is
+[`ActiveRunMonitor.md`](../screens/ActiveRunMonitor.md).
+
+⚠ **`FR-120` is `Must` and `[CONFIRMED]`, and `D-55`'s uniform trace treatment collides with it.**
+The reconciliation is a client decision and is recorded as open. `FR-120` was also the route by
+which the retired FL2-sends-`null` assumption reached the rest of the documentation, so it must be
+read against the 9 Sep reversal rather than on its own.
+
+⚠ **`FW-202`'s 98 h answers `FR-130`–`FR-155`**, which is `[REQ §5.5]` — **`FS-11`'s range, not
+this one's**. The activity sits here because the screen does; the requirements sit with the spool
+lifecycle. It is the clearest boundary blur in the set.
 
 *(the merged, de-duplicated acceptance criteria are not yet written)*
 
@@ -79,10 +121,13 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 | Stream | Scope |
 |---|---|
-| **FE** | *(not yet written)* |
-| **BE** | *(not yet written)* |
-| **DB** | *(not yet written)* |
-| **RT** | *(not yet written)* |
+| **FE** | Five activities and most of the hours. The machine-driven Dashboard 3 shell; `run-status-cards` with a profile-driven centre card; `info-grid` and `chart-tab-strip`, whose subject comes from the line profile; the live trace chart with maximize and a runtime source toggle; and the `home/:machineName` route with line resolution and `LINE_PROFILES` |
+| **BE** | `GET /run/active` and `GET /run/{runId}/gaugetrace` behind `RunQueryService`, plus **the station claim** — the `WIPStations` view and the checked-in-material read (`D-55`, `FW-N16`). Two response additions ride this one read rather than a second call (`P-254`) |
+| **DB** | `sp_GetGaugeTrace`, and the single-active-run index with its reversal flag. Both `in-review` |
+| **RT** | The trace's live wiring, and the no-measurement state — **a `null` reading renders as a gap, never as a flat line at target** |
+
+⚠ **`[API §4.7a]`'s published shape is behind the built DTO** — it omits the order block and
+`outOfSpec` (`P-254`). Read the story plan beside the contract, not instead of it.
 
 ---
 
@@ -116,7 +161,32 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 <!-- END GENERATED: blockers -->
 
-**Gaps this category owns that no story cites:** *(not yet written)*
+**Ten items, and one of them is a data-model problem the whole module shares.**
+
+- ⛔ **`OI-25` — there are two footage coordinate systems.** Run events use **cumulative run
+  footage**; other consumers use something else. This blocks `FS-08`, `FS-11` **and** `FS-12` — the
+  three categories that all have to agree where on a coil an event happened. It is the most
+  cross-cutting unresolved item in the module and it has no owning story.
+- ⛔ **`OI-56` — scale-versus-calculated spool weight is undecided**, and this is its sole tracking
+  home even though the weight it settles is `FW-202`'s and `FS-12`'s.
+- **`OI-45`** — the footage-to-weight formula and its density source. Shared with `FS-12`.
+- **`G9`** — the NFRs. This is the category with the strictest real-time requirement and no latency
+  or sample-rate target to build to.
+- **`PLC-Q02`** — confirmation of every tag path. `[PLC]` is v1.0 with **no `[CONFIRMED]` tag by
+  design**; a path becomes confirmed only when commissioning test `C1`/`C11` says the controller
+  accepted it, which is `FS-19`'s work.
+- **`OI-11`** — Roll Adjust line applicability is unresolved, and the DB11 header disagrees with
+  its actions. The dialog is `FS-09`'s; the disagreement surfaces on this screen.
+- ~~`OI-75`~~ — ✅ closed 30 Jul 2026: a short close is an unplanned spool completion.
+
+**Gaps this category owns that no story cites:**
+
+- ⚠ **`FW-202`'s 98 h is in no published per-phase total.** `[TRP §5.1]` re-priced `FR-130`–`FR-155`
+  from 4 h to 98 h as gap `G37`, story `FW-202`. Any plan built on `[CE §3b]`'s Phase 5 figure is
+  short by 94 h for this category alone.
+- ⚠ **`FR-120` versus `D-55` is an unreconciled contradiction between a `[CONFIRMED]` `Must` and a
+  decision that post-dates it.** Recorded as open; it needs a client answer, not an engineering one.
+- **`OQ-18` resolves to no register** (`G61`).
 
 ---
 
@@ -127,15 +197,49 @@ cyclic category graph - 15 mutually dependent pairs - so a category-level depend
 unusable. Dependencies live **per activity** in section 5. The category-level direction is
 recorded, generated, in [`[SCM §2.4]`](../../90-registers/StoryConsolidationMap.md).
 
-*(narrative dependencies - other categories, components, PLC/OPC, external systems, client
-decisions - not yet written)*
+**On other categories.** `FS-08` → `FS-01`, `FS-02`, `FS-03`, `FS-04`, `FS-09`, `FS-11` and
+`FS-15`, with mutual pairs against `FS-09` (3 back-edges from it), `FS-11` (6 edges in, 1 out) and
+`FS-15` (2 in, 1 out). It is the **most depended-upon operator-facing category**: `FS-06` links to
+it, `FS-09` launches from it, `FS-11` extends it and `FS-13` adds one profile row to it.
+
+**On `FS-04`.** The tightest runtime coupling in the module. Every reading on this screen arrives
+through the hub, and the 4 s FL2 cadence versus ~10 Hz on FL1/FL3 is a difference this screen has
+to render honestly rather than smooth over.
+
+**On client decisions.** `FR-120` versus `D-55`, `OI-25`'s footage basis, `OI-56`'s weight basis and
+`OI-45`'s formula. Three of the four are about **which number is authoritative**, which is the
+recurring shape of this module's open items.
 
 ---
 
 ## 8. Change-impact profile
 
-*(not yet written - what a requirement change here affects: functionality, FE/BE/DB/RT
-components, existing implementation to modify, dependencies, regression areas)*
+**What a change here affects.** This is the screen most other categories reach into, so its
+contracts are load-bearing.
+
+| A change to… | Affects |
+|---|---|
+| **`GET /run/active`'s shape** | `FS-06`'s board tiles, `FS-11`'s FL2 additions, `FS-13`'s FL3 row, and `FS-09`'s event dialogs, all of which read the active run. `P-254` already added two fields to it |
+| **the footage basis** (`OI-25`) | `FS-09`'s event markers, `FS-11`'s spool milestones, `FS-12`'s completion footage. **Four categories on one unresolved coordinate system** |
+| **the line profile** | `FS-11` and `FS-13` both add rows to it. `D-55` made it the extension point, so a profile change is the cheap way to vary a line and the expensive way to break two categories |
+| **the trace's live path** | `FS-11`'s 4 s FL2 cadence and `FS-16`'s Gauge Trace report, which shares it |
+| **`FW-202`** | `FS-11`'s spool lifecycle, `FS-12`'s weight basis, and the published Phase 5 total |
+
+**Existing implementation to modify.** ⚠ **This is one of the most live categories in the module.**
+`FW-062` and `FW-N16` are `in-progress`; `FW-164`, `FW-165` and `FW-222` are `in-review`. So the
+API, the trace procedure and the index are all near-settled while `FW-202` — 41 % of the hours — is
+still blocked. **The reference screen is being built against a weight basis that is undecided.**
+
+**Regression areas.**
+
+- **`D-55` retired the variants, so a per-line branch is now a regression.** Anything reintroducing
+  line-branched markup undoes the decision. `FS-11` and `FS-13` must extend the profile, not fork
+  the component.
+- **The no-measurement state is the thing that breaks silently.** A `null` rendering as a flat line
+  at target looks like a perfect run.
+- **`FR-120`'s unreconciled status means the trace could be re-specified after it is built.**
+- **`FW-202` blocked while its neighbours land** is the highest-risk sequencing in the category:
+  the spool-completion write may need fields the reviewed API and index do not carry.
 
 ---
 

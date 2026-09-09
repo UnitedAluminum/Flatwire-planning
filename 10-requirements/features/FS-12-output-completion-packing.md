@@ -10,9 +10,9 @@ owner:
 # FS-12 · Output Completion, Labelling and Packing
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 — minted empty by the `FS-##` consolidation, step 5
+**Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** ⬜ **Scaffold** — front-matter and structure only; sections 1, 3, 4, 6, 7 and 8 are not yet written
+**Status:** 🟡 **Authored** — §3's merged acceptance criteria are still outstanding
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*
@@ -30,11 +30,36 @@ owner:
 
 ## 1. Overview
 
-**Business purpose.** *(not yet written)*
+**Business purpose.** Where a run becomes product. The coreless coil coming off TKUP-2 is given its
+alpha, its weights and footage, its genealogy back to the rod or spool it came from, and its label;
+then two coils go on a skid and the skid becomes a shippable unit. This is the last point at which
+flat wire is a flat wire concern — after it, the coil belongs to costing, yield and shipping.
 
-**Functional scope.** *(not yet written)*
+**Functional scope.** Owned by
+[`phase-09-output-coil-completion-labeling-packing.md`](../../60-delivery/phases/phase-09-output-coil-completion-labeling-packing.md),
+cited not restated. Ten activities: Dashboard 7 (Output Coil Completion) and Dashboard 7b (Packing
+Station); the source-traceability table and skid tracker; the coil label and its print path;
+`POST /coil/complete` and `GET /coil/{alpha}/label`; `CoilOutput`, `CoilTraceability` and the
+non-overlap trigger; completion broadcasts; the `CoilCompleted` hub member; the footage-to-weight
+converter; and the footage→weight basis analysis.
 
-**Out of scope.** *(not yet written)*
+**Alpha format:** output coil is **`FW-#####-C##`**, with a mid-run child taking `…-A`.
+⚠ **That is a coil alpha, not a story id, and there are 299 of them in this repository.** Any bulk
+rewrite of `FW-` ids must exclude them.
+
+**The traveler is fully digital** — no printing. **Coil and skid labels are still printed**, and
+that print path is `FW-184`.
+
+**Out of scope.**
+
+- **The run that produced the coil** — [`FS-08`](FS-08-active-run-monitoring.md); and the spool it
+  was finished from — [`FS-11`](FS-11-spool-lifecycle-fl2.md).
+- **The six-database write set** that makes the coil visible to UA — `[INT §8.1]`, owned by
+  [`FS-15`](FS-15-shared-schema-boundary.md). This category raises the transaction; `FS-15` owns
+  where it lands.
+- **Yield, cost and scrap** — [`FS-17`](FS-17-yield-cost-scrap.md) — and **certification** —
+  [`FS-16`](FS-16-reporting-certification.md). Both consume this category's output.
+- **Fulfilment rollup** — [`FS-14`](FS-14-order-allocation-fulfilment.md).
 
 ---
 
@@ -67,7 +92,13 @@ Seeded one activity per absorbed story. **Activities are expected to merge downw
 
 ## 3. Functional requirements
 
-Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md): **FR-330-340 · FR-345-352** (`[REQ §5.16` · `[REQ §5.17]`). **Cited, never restated.**
+Owned ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md): **FR-330-340**
+(`[REQ §5.16]`, Output Coil Completion — DB7) and **FR-345-352** (`§5.17`, Packing Station — DB7b)
+— **19 requirements**. **Cited, never restated.** Screen authority is
+[`OutputCoilCompletion.md`](../screens/OutputCoilCompletion.md), which covers both.
+
+⚠ **`FR-330`–`FR-340` is shared with [`FS-17`](FS-17-yield-cost-scrap.md).** `[TB §11]` names both
+`FW-066` and `FW-100` as delivering it. The completion half is here; the yield half is there.
 
 *(the merged, de-duplicated acceptance criteria are not yet written)*
 
@@ -79,10 +110,11 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 | Stream | Scope |
 |---|---|
-| **FE** | *(not yet written)* |
-| **BE** | *(not yet written)* |
-| **DB** | *(not yet written)* |
-| **RT** | *(not yet written)* |
+| **FE** | Four activities and 104 of 186 h. DB7's completion flow and DB7b's packing station; the **source-traceability table and skid tracker** at 40 h — the largest FE activity here, and the surface that shows a coil's genealogy; and the coil label with its print path |
+| **BE** | `POST /coil/complete` and `GET /coil/{alpha}/label` with their services (`blocked`), plus the **footage-to-weight converter** — which sits here rather than in `FS-07` because completion is what consumes it |
+| **DB** | `CoilOutput`, `CoilTraceability` and the **non-overlap trigger** — the one trigger in the MVP-1 build, which stops two coils claiming the same footage range. `in-review` |
+| **RT** | Completion broadcasts, and the `CoilCompleted` hub member that `OI-140` records as missing |
+| **BA** | The **footage→weight basis and skid labelling** (`FW-188`) — ⚠ and `FS-17` needs the same basis with no story of its own for it |
 
 ---
 
@@ -117,7 +149,36 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 <!-- END GENERATED: blockers -->
 
-**Gaps this category owns that no story cites:** *(not yet written)*
+**Eleven items, and four of them are about identity and measurement — what a coil *is* and how much
+of it there is.**
+
+- ⛔ **`OI-140` — a completed output coil is NEVER broadcast.** There is no hub member for it.
+  `FW-235` is the 12 h answer and is `blocked`. Until then, nothing downstream learns a coil
+  finished except by polling.
+- ⛔ **`OI-24` — lot number has no column and no generator**, and `GET /coil/{alpha}/label` is
+  specified to return one. Compounded by **`OI-99`**, which says the lot number is undefined when a
+  coil has more than one source rod — **the normal case under continuous welding.** Together they
+  mean the label has a field the system cannot populate.
+- ⛔ **`OI-105` — which of three weights is authoritative on the coil record is undecided.** Three
+  candidate weights, no ruling, and `FS-16`'s certificate and `FS-17`'s yield both read whichever
+  it turns out to be.
+- **`OI-106`** — staging locations are undefined, and `FR-351` requires the packing station to
+  know them.
+- **`OI-25`** — the two footage coordinate systems, shared with `FS-08` and `FS-11`.
+- **`OI-45`** — the footage-to-weight formula and density source, shared with `FS-08`.
+- **`G36`** — returning Phase 9 to MVP-1 imported three uncosted dependencies.
+- ~~`OI-104`~~ — ✅ closed 18 Aug 2026: the skid table is `united_db..wip_skids`.
+- **`OQ-4`** and **`OQ-10`** resolve to no register (`G61`).
+
+**Gaps this category owns that no story cites:**
+
+- ⚠ **Three open items converge on one question — *what number goes on the coil record?*** `OI-105`
+  (which weight), `OI-25` (which footage), `OI-45` (which formula). All three have to be answered
+  together, and each is currently tracked separately in a different category's list.
+- ⚠ **The label has an unpopulatable field.** `OI-24` plus `OI-99` means the printed label's lot
+  number cannot be produced for a welded coil, which is the common case. That is a **shipping**
+  problem, not a screen problem.
+- **`FW-188`'s basis serves two categories and only this one has the story.**
 
 ---
 
@@ -128,15 +189,50 @@ cyclic category graph - 15 mutually dependent pairs - so a category-level depend
 unusable. Dependencies live **per activity** in section 5. The category-level direction is
 recorded, generated, in [`[SCM §2.4]`](../../90-registers/StoryConsolidationMap.md).
 
-*(narrative dependencies - other categories, components, PLC/OPC, external systems, client
-decisions - not yet written)*
+**On other categories.** `FS-12` → `FS-02`, `FS-03`, `FS-04` and `FS-09`, with `FS-15` depending on
+it (2 edges in, 1 out). Three categories consume its output: `FS-14`'s fulfilment rollup, `FS-16`'s
+certificate and `FS-17`'s yield. **It is the module's hand-off point** — everything before it is
+production, everything after is business.
+
+**On `FS-15` — the hard one.** Completing a coil writes to **six databases** in one transaction:
+`wip_skids` (united_db), `wip_skid_coils` (proddb), a finished-goods `coils` row,
+`coil_gen_history`, `coil_slit_cuts` (SlitterDB), `wip_log` (wiplogdb, 44 `NOT NULL` columns) and
+`coil_cost`. This category raises it; `FS-15` owns whether it lands correctly, and eight of `FS-15`'s
+client questions are about the values this transaction has to supply.
+
+**On client decisions.** `OI-105`'s weight, `OI-24`/`OI-99`'s lot number, `OI-106`'s staging
+locations. The lot number is the one with a shipping consequence.
 
 ---
 
 ## 8. Change-impact profile
 
-*(not yet written - what a requirement change here affects: functionality, FE/BE/DB/RT
-components, existing implementation to modify, dependencies, regression areas)*
+**What a change here affects.** Everything downstream of production, plus the shared schema.
+
+| A change to… | Affects |
+|---|---|
+| **the authoritative weight** (`OI-105`) | `FS-16`'s certificate, `FS-17`'s yield, `FS-15`'s `coil_cost` write. **Three consumers, one undecided value**, and one of them is contractual |
+| **the lot number** (`OI-24`, `OI-99`) | The printed label, `FS-16`'s certificate traceability, and `FS-07`'s weld capture if attribution needs a field it does not record |
+| **the coil alpha format** | 299 existing `FW-#####-C##` references in this repository, plus `FS-15`'s shared coil master registration (`G54`) |
+| **`CoilTraceability`'s genealogy** | `FS-16`'s `NFR012` — the contractual weld-joint traceability — and `FS-11`'s spool traceability upstream of it |
+| **the non-overlap trigger** | `FS-03`'s schema. It is the only trigger in the MVP-1 build |
+
+**Existing implementation to modify.** One activity is `in-review` — `FW-186`'s tables and the
+non-overlap trigger — and two are `blocked`. So **the schema that records a coil is settling while
+`OI-105` leaves it undecided which weight the record should hold.** That is the same inversion as
+`FS-10` and `FS-11`, and here it has a contractual consumer.
+
+**Regression areas.**
+
+- **`OI-105`, `OI-25` and `OI-45` must be answered as a set.** Answering one alone produces a
+  coil record whose numbers are internally inconsistent, and the inconsistency surfaces in a
+  certificate or a yield report rather than here.
+- **The six-database write is the module's widest transaction** and its failure mode is a
+  half-visible coil. `FS-19`'s E2E scenarios are the only place it is exercised.
+- **The label print path is the only remaining printed artifact.** The traveler is fully digital, so
+  a regression in printing has no fallback.
+- **A bulk `FW-` id rewrite would corrupt 299 coil alphas.** `tools/fix_task_links.py` carries the
+  guard and a pre/post count assertion; anything new must reuse it.
 
 ---
 
