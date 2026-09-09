@@ -158,6 +158,38 @@ def render_block(rows, cid, derived):
     return '\n'.join(L)
 
 
+# Authored size, EXCLUDING the generated block. Measuring the whole file would be
+# measuring how many stories a category absorbed, which is not a property the
+# author controls. The risk this proxies for is a parent restating its phase
+# specification, and prose has no checker - so it is reported, every run.
+SIZE_TARGET = 12 * 1024
+SIZE_LIMIT = 14 * 1024
+
+
+def authored_bytes(rel):
+    text = F.read(rel)
+    if BEGIN in text and END in text:
+        block = text.split(BEGIN, 1)[1].split(END, 1)[0]
+        return len(text) - len(block)
+    return len(text)
+
+
+def report_sizes(feats):
+    over = []
+    for cid, _front, rel, fn in feats:
+        n = authored_bytes(rel)
+        if n > SIZE_LIMIT:
+            over.append((cid, n))
+    if over:
+        # ASCII only: every other tool here prints ASCII to stdout, and a Windows
+        # cp1252 console raises UnicodeEncodeError on anything else - which would
+        # crash this tool at exactly the moment the warning matters.
+        print('  ! authored content over %d KB - check whether the phase specification is '
+              'being restated rather than cited:' % (SIZE_LIMIT // 1024))
+        for cid, n in over:
+            print('      %s  %.1f KB' % (cid, n / 1024.0))
+
+
 def build():
     feats = load_features()
     if not feats:
@@ -334,6 +366,7 @@ def main():
           % (OUT, n, len(feats)))
     if stale:
         print('  updated %d file(s)' % len(stale))
+    report_sizes(feats)
     return 0
 
 

@@ -10,9 +10,9 @@ owner:
 # FS-18 · Administration, Reference Data and Tooling Inventory
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 — minted empty by the `FS-##` consolidation, step 5
+**Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** ⬜ **Scaffold** — front-matter and structure only; sections 1, 3, 4, 6, 7 and 8 are not yet written
+**Status:** 🟡 **Authored** — §3's merged acceptance criteria are still outstanding
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*
@@ -30,11 +30,39 @@ owner:
 
 ## 1. Overview
 
-**Business purpose.** *(not yet written)*
+**Business purpose.** Everything the three flattening lines are configured *by* rather than
+operated *with*: the alloy properties and tolerance bands the mills roll to, the machine
+registrations FL1/FL2/FL3 are known by, the role assignments that gate every other screen, the
+reason-code vocabularies the operator picks from, and the **Tooling Inventory** maintenance keeps
+the dies, edgers and roll sets in. None of it is touched during a run, and all of it has to be
+right before one can start.
 
-**Functional scope.** *(not yet written)*
+**Functional scope.** Scope, entry and exit conditions are owned by
+[`phase-13-administration-reference-data.md`](../../60-delivery/phases/phase-13-administration-reference-data.md)
+and are cited, not restated. In outline: alloy lookup administration and the Material Type axis;
+machine template tabs registering the three lines; role assignment; the reference-data write path
+and its change broadcast; the legacy `FlatLineSetup` / `FlatLineProcessing` migration; the
+**Die Management** screen with `FR-252`'s two history views; and three of the four Tooling
+Inventory tool types.
 
-**Out of scope.** *(not yet written)*
+⚠ **The die domain is in MVP-1, and two documents still say otherwise.** `Q91` (2 Sep 2026)
+reversed it: `FR-240`–`FR-255` are MVP-1, [`DieManagement.md`](../screens/DieManagement.md) v1.2
+carries *"Status: MVP-1"* in its own header, and `ToolingInventoryDie` and `DieHistory` are
+**already built and seeded in Phase 1**. `[REQ]` still folds §5.10 into its MVP-2 index row and
+`[TB]` appendix B.4 still calls `FW-N07` *"wholly MVP-2"*. Both are the stale side — see
+[`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md).
+
+**Out of scope.**
+
+- **Straightener inventory** — the fourth Tooling Inventory tool type is **not built and has no
+  story**. `G77` owns it. Dies, edgers and roll sets are in scope; straighteners are not.
+- **Dancers, entry guides, payoffs and spools** — explicitly *not* tooling (`D-42`).
+- **Pass schedules**, which are configuration but are their own category —
+  [`FS-05`](FS-05-pass-schedule-contract.md).
+- **Die *consumption* during a run.** The die-change event and its per-tool validation belong to
+  [`FS-09`](FS-09-in-run-production-events.md). This category owns the register; `FS-09` owns the
+  event recorded against it.
+- **Tooling for FL3** — maintained for **FL1/FL2 only**, with FL3 using a combination of the two.
 
 ---
 
@@ -74,6 +102,12 @@ Seeded one activity per absorbed story. **Activities are expected to merge downw
 
 Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolidationMap.md): **FR-240-255** (`[REQ §5.10]`). **Cited, never restated.**
 
+⚠ **Those sixteen requirements have no `[REQ]` section.** §5.10's heading was folded into the
+MVP-2 index row before `Q91` reversed the scope, so their only authority is
+[`DieManagement.md`](../screens/DieManagement.md) v1.2. Everything else this category builds —
+alloy administration, machine templates, roles, reason codes, the change broadcast — carries **no
+`FR` at all**; those activities trace to `[SCR]`, `[API]` and the phase specification instead.
+
 *(the merged, de-duplicated acceptance criteria are not yet written)*
 
 ---
@@ -84,10 +118,11 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 | Stream | Scope |
 |---|---|
-| **FE** | *(not yet written)* |
-| **BE** | *(not yet written)* |
-| **DB** | *(not yet written)* |
-| **RT** | *(not yet written)* |
+| **FE** | Nine of the fifteen activities. The alloy admin grid and the Material Type axis across Properties, Reduction Rules and Vendor O Gauge; machine template tabs for FL1/FL2/FL3; the role-assignment UI; the **Die Management** screen and `FR-252`'s two history tabs; and the Tooling Inventory tool options for **roll sets** and **edgers**, each with its own grid |
+| **BE** | Alloy CRUD, machine configuration and role configuration endpoints; the **reason-code query endpoints** serving the three seeded client vocabularies. ⚠ `[API]` specifies no die-inventory CRUD surface — `OI-32` |
+| **DB** | Reference-data admin wiring; a **unique identifier per die** for per-die footage tracking; and the legacy `FlatLineSetup` / `FlatLineProcessing` migration (`G8`), the largest single activity here. The tooling tables themselves belong to [`FS-03`](FS-03-database-foundation.md) — built in Phase 1, not here |
+| **RT** | One activity: the reference-data change broadcast, so a screen holding a stale lookup learns that it changed |
+| **BA** | Two activities, and both are inputs the build cannot proceed without — the **alloy tolerance values and die-life thresholds**, and the re-costing of the die domain's return to MVP-1 |
 
 ---
 
@@ -100,8 +135,29 @@ Owned requirement ranges, from [`[SCM §2.2]`](../../90-registers/StoryConsolida
 
 ## 6. Open items and gaps
 
-*(not yet written - the roll-up is the union of `blocked_by:` across the absorbed stories,
-plus the narrative gaps no story owns)*
+The union of `blocked_by:` across this category, plus the gaps no single story owns. **Nine
+register items block fifteen activities, and not one is a build problem** — every one is a missing
+decision or a missing value.
+
+| Item | Blocks | What is missing |
+|---|---|---|
+| **`OI-141`** | the die register itself | ⛔ **Is there one die register or two?** Die Management and the machines-app Tooling Inventory describe one tool with two different homes. Decide before either grid is built |
+| **`OI-12`** | `FW-199` · `FW-253` *(and `FS-09`'s `FW-073`, `FW-167`, `FW-252`)* | ⛔ **Live defect, escalated by `Q91`.** Die-life colour bands disagree — Die Change uses 60/85 %, Die Management 65/80 % — and since the reversal **both derive from one table**, so one of the two screens renders the wrong colour |
+| **`Q92`** | `FW-259` · `FW-261` | The **roll-set** grid's column set is `[PROPOSED]` (`G87`) — the only tool type that arrived without a pictured grid. Also unanswered: whether capstan rolls are the same thing |
+| **`Q95`** | `FW-268` · `FW-270` | Five unstated things about the **edger** grid, one of which decides its shape |
+| **`OI-77`** | `FW-197` | Whether edger blade profiles are standardised or custom, and how regrind is tracked |
+| **`G121`** | `FW-194` | **Rod tolerance varies by vendor and by size, and `AlloyProperty` has only an alloy grain.** The lookup cannot express the data it is being asked to hold. `FW-N22` re-grains it under `FS-03` |
+| **`OI-43`** | `FW-197` | The unplanned-component-bypass event has no home |
+| **`OQ-22`** | `FW-194` · `FW-199` | ⚠ Retired `OQ-` prefix resolving to no register (`G61`). Needs retargeting or removal — it is not a real blocker, but it reads as one |
+| ~~`G6`~~ | `FW-195` | ✅ **Closed** — all six roles exist as JWT claims. Residual: the claim *values* are coded rather than labelled and the mapping is unsupplied, which gates verification, not construction. ⚠ `FW-195` still cites it |
+
+**Gaps this category owns that no story cites:**
+
+- **`G77` — straightener inventory is unbuilt and unstoried.** The client's Tooling Inventory tab
+  carries four tool types; three are built. There is no story for the fourth.
+- **`OI-32` — no die-inventory CRUD endpoints are specified.** `FW-253` builds a grid with no
+  documented API surface behind it.
+- **`FR-240`–`FR-255` have no `[REQ]` section** (§3 above).
 
 ---
 
@@ -112,15 +168,58 @@ cyclic category graph - 15 mutually dependent pairs - so a category-level depend
 unusable. Dependencies live **per activity** in section 5. The category-level direction is
 recorded, generated, in [`[SCM §2.4]`](../../90-registers/StoryConsolidationMap.md).
 
-*(narrative dependencies - other categories, components, PLC/OPC, external systems, client
-decisions - not yet written)*
+**On other categories.** The dominant direction is `FS-18` → `FS-03`, on eleven task-level edges,
+because the tooling and lookup tables are built in the database foundation in Phase 1 rather than
+here; one edge runs back the other way (`FW-241`→`FW-003`). It also depends on
+[`FS-01`](FS-01-angular-application-shell.md) and [`FS-02`](FS-02-backend-service-foundation.md)
+for the shell and the service, and on [`FS-04`](FS-04-realtime-plc-backbone.md) for the change
+broadcast. [`FS-09`](FS-09-in-run-production-events.md) depends on **this** category for the die
+register its die-change event validates against — though `phase-13` records that **Phase 6 depends
+on Phase 1, not Phase 13**, so what `FS-09` actually needs is the built table, not this screen work.
+
+**On client decisions — this is the binding constraint.** Four of the nine blockers are client
+send-backs (`Q92`, `Q95`) or client-owned open items (`OI-141`, `OI-77`). **The Tooling Inventory
+grids cannot be built to a column set nobody has stated.** Two of the three tool types in scope are
+blocked this way.
+
+**On external systems.** The legacy `FlatLineSetup` / `FlatLineProcessing` tables are the migration
+source for `G8`. Machine registration writes `machines` rows 125/126/127 and the `CommonDB`
+WIP-station registrations — the shared schema **as it stands** (`D-32`), which makes that half
+[`FS-15`](FS-15-shared-schema-boundary.md)'s contract, not this one's.
+
+**On BA input.** `FW-199` supplies the alloy tolerance values and die-life thresholds that the
+alloy grid and the `OI-12` band reconciliation both need. Nothing downstream of it can be verified
+until it lands.
 
 ---
 
 ## 8. Change-impact profile
 
-*(not yet written - what a requirement change here affects: functionality, FE/BE/DB/RT
-components, existing implementation to modify, dependencies, regression areas)*
+Reference data is read by nearly every other category, so a change to a lookup's *shape* is rarely
+local.
+
+| A change to… | Affects |
+|---|---|
+| **`AlloyProperty`** | `FS-03` (the table and its seed), `FS-07` (check-in reads `alloy_density` and `Draw_max_reduction`), `FS-09` (SPC tolerance bands), `FS-16` (certification tolerances). `G121` and `FW-N22`'s vendor/size re-graining are both live here |
+| **the die register** | `FS-09`'s die-change event and its per-tool validation, `FR-252`'s history views, and the `OI-12` colour bands **in two screens at once** |
+| **a reason-code vocabulary** | `FS-09` (downtime and line-downtime dialogs) and `FS-10` (WIP rejection reasons). `FW-254` is the shared read path, so a vocabulary change is one endpoint rather than one screen |
+| **machine registration** | `FS-15`'s shared-schema writes, and the WIP-station reads every check-in depends on |
+| **role assignment** | **every** category — `FlatWireRoleGuard` gates all flat wire routes |
+
+**Existing implementation to modify.** ⚠ **Almost none of this is built.** All fifteen activities
+are `not-started`. The only things already standing are the tables in `FS-03` —
+`ToolingInventoryDie`, `ToolingInventoryEdger`, `ToolingInventoryRollSet`, `DieHistory`, the three
+reason-code lookups and `AlloyProperty` — and `FW-N22` is already re-graining `AlloyProperty` there.
+**A change to a lookup's shape is cheap now and is a migration once `FS-03` has seeded it.**
+
+**Regression areas.**
+
+- The **reason-code endpoints** (`FW-254`) are consumed by two other categories, so a change to
+  their contract is a cross-category regression, not a local one.
+- The **`OI-12` band reconciliation** touches two screens deriving from one table. Fixing one
+  without the other re-opens the defect.
+- The **`G8` migration** is the only activity here that writes historical data. A defect in it
+  surfaces late and is not reversible by redeploying.
 
 ---
 

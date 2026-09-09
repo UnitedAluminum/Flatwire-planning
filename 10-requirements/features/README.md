@@ -65,9 +65,13 @@ body:
 | Requirement text and acceptance criteria | `[REQ §5.x]` and the owning screen specification |
 | Build detail for work already done | the story's build record |
 
-**Size is the enforcement, because prose has no checker.** Target **6–10 KB**. Past **~14 KB** a
-file has started restating its phase specification, and that is a build failure of the document,
-not a style preference.
+**Size is the enforcement, because prose has no checker.** It is measured on the **authored**
+content, **excluding the generated block** — measuring the whole file would be measuring how many
+stories the category absorbed, which is not something the author controls. Target **≤ 12 KB
+authored**; past **14 KB**, check whether the phase specification is being restated rather than
+cited. `tools/build_features.py` reports this on every run, so it is not a rule anyone has to
+remember. *(A category with a large blocker roll-up legitimately runs longer: §6 and §8 are the
+parent's own content and exist nowhere else.)*
 
 ### Precedence, in one line
 
