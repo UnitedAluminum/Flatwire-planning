@@ -103,7 +103,12 @@ an operator would bookmark.
 
 - ⛔ **Ships with `FW-N18`, not after it.** The JSON body, query string and hub payload names all
   change together.
-- ⚠ **The route grammar still disagrees with itself**, and this story did not resolve it: `D-55`
-  and `[CMP §5.2]` say `#/flat-wire/home/:machineName`, while the built router composes
-  `flatline/:machineName`. Pre-existing; raised in `D-56`'s open questions.
+- ✅ **CLOSED 10 September 2026 by `D-59` — resolved in favour of the built router.** This story
+  recorded that `D-55` and `[CMP §5.2]` said `#/flat-wire/home/:machineName` while the built router
+  composed `flatline/:machineName`, and declined to settle it. **The address is
+  `#/flat-wire/flatline/:machineName`**, the specifications moved, and ⛔ **no code changed**.
+  `FW-N15` owned the decision. ⚠ **The record was here, not in `D-56`** — that decision carries no
+  open-questions line, and this handoff was the only durable statement of the disagreement.
+- ⛔ **This does not settle the sibling grammar** — `[CMP §5.2]`'s five line-first routes against
+  DB3's screen-first one stays that note's flag, and the next screen to land inherits it.
 - `/angular-review` and the `[UIC]` update are owed before the PR, per `CLAUDE.md`'s seven steps.

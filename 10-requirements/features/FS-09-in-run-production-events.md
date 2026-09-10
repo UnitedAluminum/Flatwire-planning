@@ -94,7 +94,7 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-169` | POST /rolloverride and RollOverrideService | BE | ⛔ blocked ⚠ *inferred* | FW-139 FW-151 FW-171 | **OI-103** **OQ-62** |
 | `FW-170` | POST /run/{id}/pause and /resume, and RunControlService | BE | ⬜ not-started ⚠ *inferred* | FW-139 FW-171 FW-254 | — |
 | `FW-171` | The five in-run event tables | DB | 🔵 in-review ⚠ *inferred* | FW-007 | **G34** **G35** |
-| `FW-172` | Run-event markers and the LineStatus transitions | RT | ⬜ not-started ⚠ *inferred* | FW-149 FW-081 | — |
+| `FW-172` | Run-event markers and the LineStatus transitions | RT | 🔵 in-review | FW-149 FW-081 | — |
 | `FW-252` | Die lifecycle service — per-tool die life, DieHistory writes and p | BE | ⬜ not-started | FW-167 FW-251 | **OI-12** |
 | `FW-255` | LineDowntimeEvent write path — LineDowntimeService and the two lin | BE | ⬜ not-started | FW-138 FW-251 FW-254 | — |
 | `FW-256` | Line Downtime dialog — the 25 DWN## codes that have no run | FE | ⬜ not-started | FW-255 FW-133 | — |
@@ -106,6 +106,7 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | Ref | Status | Measured result |
 |---|---|---|
 | `FW-171` | 🔵 in-review | ✅ **Tables BUILT.** ⛔ **`G34` has a decided flow and NO persistence target**; `G35` is blocked on `Q32` [9 Sep 2026, client answers] Q32 ANSWERED 8 Sep 2026 - the dancer mode is machine-side, selected at the HMI, so the read-only  |
+| `FW-172` | 🔵 in-review | ✅ **BUILT — read off `ual-api` on 10 Sep 2026.** All four markers, both `LineStatus` edges and the `ComponentStatus` re-broadcast ship in `FlatWire.Infrastructure/EventHandlers/RunEventMarkerHandlers.cs` (with `FW-177`'s two), and |
 
 <!-- END GENERATED: absorbed-stories -->
 

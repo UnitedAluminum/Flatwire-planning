@@ -18,10 +18,10 @@
 | [FS-05 Pass Schedule - the consumer contract and owne](10-requirements/features/FS-05-pass-schedule-contract.md) | 0 | 0 | 0 | 0 | 0 | 0 | 0 % | — |
 | [FS-06 Line Visibility and Alerting](10-requirements/features/FS-06-line-visibility-alerting.md) | 7 | 0 | 1 | 1 | 0 | 5 | 0 % | G9 · OI-28 · OI-34 |
 | [FS-07 Rod Staging, Check-In, PLC Configuration and W](10-requirements/features/FS-07-rod-checkin-plc-config.md) | 15 | 0 | 2 | 0 | 4 | 9 | 0 % | G14 · G17 · G2 … |
-| [FS-08 Active Run Monitoring and Gauge/Width Trace](10-requirements/features/FS-08-active-run-monitoring.md) | 10 | 0 | 3 | 2 | 1 | 4 | 0 % | G34 · G54 · G9 … |
-| [FS-09 In-Run Production Events](10-requirements/features/FS-09-in-run-production-events.md) | 16 | 0 | 1 | 0 | 3 | 12 | 0 % | G26 · G34 · G35 … |
+| [FS-08 Active Run Monitoring and Gauge/Width Trace](10-requirements/features/FS-08-active-run-monitoring.md) | 10 | 0 | 3 | 4 | 1 | 2 | 0 % | G34 · G54 · G9 … |
+| [FS-09 In-Run Production Events](10-requirements/features/FS-09-in-run-production-events.md) | 16 | 0 | 2 | 0 | 3 | 11 | 0 % | G26 · G34 · G35 … |
 | [FS-10 Exceptions and Off-Ramps](10-requirements/features/FS-10-exceptions-off-ramps.md) | 7 | 0 | 1 | 0 | 0 | 6 | 0 % | G14 · G24 · G7 … |
-| [FS-11 Spool Lifecycle and FL2 Finishing Run](10-requirements/features/FS-11-spool-lifecycle-fl2.md) | 13 | 0 | 2 | 0 | 2 | 9 | 0 % | OI-02 · OI-06 · OI-25 … |
+| [FS-11 Spool Lifecycle and FL2 Finishing Run](10-requirements/features/FS-11-spool-lifecycle-fl2.md) | 13 | 0 | 1 | 0 | 3 | 9 | 0 % | G54 · OI-02 · OI-06 … |
 | [FS-12 Output Completion, Labelling and Packing](10-requirements/features/FS-12-output-completion-packing.md) | 10 | 0 | 1 | 0 | 2 | 7 | 0 % | G36 · OI-105 · OI-106 … |
 | [FS-13 FL3 Hybrid Continuous Route](10-requirements/features/FS-13-fl3-hybrid-route.md) | 4 | 0 | 0 | 0 | 0 | 4 | 0 % | G30 · OQ-15 · OQ-2 … |
 | [FS-14 Order Allocation and Fulfilment](10-requirements/features/FS-14-order-allocation-fulfilment.md) | 6 | 0 | 0 | 0 | 6 | 0 | 0 % | Q48 · Q49 · Q50 … |
@@ -31,7 +31,7 @@
 | [FS-18 Administration, Reference Data and Tooling Inv](10-requirements/features/FS-18-administration-reference-data.md) | 17 | 0 | 0 | 0 | 0 | 17 | 0 % | G121 · OI-12 · OI-141 … |
 | [FS-19 Integration Testing, Commissioning and Go-Live](10-requirements/features/FS-19-integration-testing-golive.md) | 10 | 1 | 0 | 0 | 0 | 9 | 10 % | G29 · G30 · G32 … |
 | [FS-20 Unscheduled and Unhosted Requirements](10-requirements/features/FS-20-unscheduled-unhosted.md) | 0 | 0 | 0 | 0 | 0 | 0 | 0 % | — |
-| **All** | **204** | **32** | **16** | **6** | **25** | **123** | **16 %** | |
+| **All** | **204** | **32** | **16** | **8** | **26** | **120** | **16 %** | |
 
 *Percentages are by activity count. **Hours are not totalled here** — [`CapacityAndEffortModel.md`](60-delivery/CapacityAndEffortModel.md) `[CE]` is the hours model of record, and no figure derived on this page would agree with it.*
 
@@ -60,6 +60,7 @@ Open register items cited by at least one live activity, most-blocking first.
 | `G26` | The merged weld write straddles two phases. Dashboard 2A's weld control ships in | FW-063, FW-N01, FW-166 | FS-07, FS-09 |  |
 | `G32` | The FM2 PLC station names in the spec are ours, not the controller's. The 4 Aug  | FW-005, FW-N05, FW-217 | FS-03, FS-04, FS-19 |  |
 | `G33` | The measure segment of every tag is ours, not the controller's — and it departs  | FW-144, FW-N05, FW-217 | FS-02, FS-04, FS-19 |  |
+| `G54` | ⛔ The 26 Aug alpha design has an unbuilt precondition: nothing registers an FL1  | FW-N16, FW-230, FW-231 | FS-08, FS-11, FS-15 |  |
 | `OI-99` | Lot number is undefined when a coil has more than one source rod, which is the n | FW-183, FW-184, FW-095 | FS-12, FS-16 |  |
 | `OQ-17` | **⚠ id not found in any register** | FW-124, FW-179, FW-121 | FS-11, FS-19 | — |
 | `OQ-23` | **⚠ id not found in any register** | FW-158, FW-174, FW-176 | FS-07, FS-10 | — |
@@ -69,7 +70,6 @@ Open register items cited by at least one live activity, most-blocking first.
 | `G10` | Real-time deploy prereqs / MessagePack dependency | FW-080, FW-135 | FS-04 |  |
 | `G18` | Source docs (CLAUDE.md / CheckinImplementationPrompt) describe a --fw- design sy | FW-130, FW-133 | FS-01 |  |
 | `G24` | Supervisor approvals are decided but unpersisted. Three decisions require superv | FW-072, FW-176 | FS-10 |  |
-| `G54` | ⛔ The 26 Aug alpha design has an unbuilt precondition: nothing registers an FL1  | FW-N16, FW-231 | FS-08, FS-15 |  |
 | `G59` | No service identity exists for a PLC write that no operator initiated. ✅ Mechani | FW-N05, FW-217 | FS-04, FS-19 |  |
 | `G60` | ⚠ HALF CLOSED 6 Sep 2026 — the registration EXISTS on DEV00164-001; the running  | FW-N05, FW-217 | FS-04, FS-19 |  |
 | `G7` | Mid-run checkout supervisor approval relies only on transient SignalR | FW-175, FW-177 | FS-10 |  |

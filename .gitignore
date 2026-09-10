@@ -15,3 +15,8 @@ __pycache__/
 # Link-check working files. The baseline IS committed - it is the migration test fixture.
 tools/_linkcheck_unresolved.txt
 tools/*.tmp
+
+# Claude Code settings. `.claude/settings.json` and `.claude/hooks/` ARE committed - the Angular
+# rule-injection hook is only useful if everyone gets it. `settings.local.json` is not: it is a
+# per-machine permission allow-list full of absolute paths and one developer's command history.
+.claude/settings.local.json

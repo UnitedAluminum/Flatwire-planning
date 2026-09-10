@@ -14,10 +14,10 @@
 | 1 | 1C Database Foundation | 22 | 4 | 1 | 0 | 1 | 14 | 20 % | G104 · G121 · G14 · G17 … |
 | 1 | 3 Line Status Board & Real-Time Backbone | 7 | 0 | 1 | 1 | 0 | 5 | 0 % | G9 · OI-28 · OI-34 |
 | 1 | 4 Rod Check-In & PLC Configuration (FL1 / FL | 27 | 1 | 3 | 0 | 10 | 13 | 4 % | G14 · G17 · G2 · G26 … |
-| 1 | 5 Active Run Monitoring & Live Gauge/Width T | 11 | 2 | 2 | 2 | 1 | 4 | 18 % | G34 · G54 · G9 · OI-11 … |
-| 1 | 6 In-Run Production Events (Weld · Die Chang | 19 | 0 | 1 | 0 | 3 | 15 | 0 % | G26 · G27 · G34 · G35 … |
+| 1 | 5 Active Run Monitoring & Live Gauge/Width T | 11 | 2 | 2 | 4 | 1 | 2 | 18 % | G34 · G54 · G9 · OI-11 … |
+| 1 | 6 In-Run Production Events (Weld · Die Chang | 19 | 0 | 2 | 0 | 3 | 14 | 0 % | G26 · G27 · G34 · G35 … |
 | 1 | 7 Exception Handling: WIP Rejection & Rod Ch | 7 | 0 | 1 | 0 | 0 | 6 | 0 % | G14 · G24 · G7 · G79 … |
-| 1 | 8 FL2 Spool Check-In & Finishing Run (FL2 St | 14 | 0 | 2 | 0 | 3 | 9 | 0 % | G54 · OI-02 · OI-06 · OI-25 … |
+| 1 | 8 FL2 Spool Check-In & Finishing Run (FL2 St | 14 | 0 | 1 | 0 | 4 | 9 | 0 % | G54 · OI-02 · OI-06 · OI-25 … |
 | 1 | 9 Output Coil Completion, Labeling & Packing | 11 | 0 | 1 | 0 | 3 | 7 | 0 % | G36 · OI-105 · OI-106 · OI-114 … |
 | 1 | 10 FL3 Hybrid Continuous Operation | 4 | 0 | 0 | 0 | 0 | 4 | 0 % | G30 · OQ-15 · OQ-2 · OQ-67 |
 | 1 | 11 Supervisor Shift Summary, Reporting & Cer | 8 | 0 | 0 | 0 | 1 | 7 | 0 % | OI-101 · OI-57 · OI-99 · OQ-25 … |
@@ -25,7 +25,7 @@
 | 1 | 13 Administration & Reference Data | 14 | 0 | 0 | 0 | 0 | 14 | 0 % | G121 · OI-12 · OI-141 · OI-43 … |
 | 1 | 14 Integration Testing, PLC Commissioning & | 12 | 1 | 0 | 2 | 0 | 9 | 8 % | G29 · G30 · G32 · G33 … |
 | 2 | 1B Backend Foundation | 1 | 0 | 0 | 0 | 0 | 1 | 0 % | — |
-| **All** | | **204** | **32** | **16** | **6** | **25** | **123** | **16 %** | |
+| **All** | | **204** | **32** | **16** | **8** | **26** | **120** | **16 %** | |
 
 *Percentages are by task count. **Hours are not totalled here** - [`CapacityAndEffortModel.md`](60-delivery/CapacityAndEffortModel.md) `[CE]` is the hours model of record, and a total derived on this page would be a second figure to disagree with it.*
 
@@ -56,6 +56,7 @@ Open register items cited by at least one live task, most-blocking first.
 | `G26` | The merged weld write straddles two phases. Dashboard 2A's weld control ships in phase 4,  | FW-063, FW-166, FW-N01 | 4, 6 | — | Gaps.md |
 | `G32` | The FM2 PLC station names in the spec are ours, not the controller's. The 4 Aug 2026 rolle | FW-005, FW-217, FW-N05 | 1B, 1C, 14 | — | Gaps.md |
 | `G33` | The measure segment of every tag is ours, not the controller's — and it departs from thirt | FW-144, FW-217, FW-N05 | 1B, 14 | — | Gaps.md |
+| `G54` | ⛔ The 26 Aug alpha design has an unbuilt precondition: nothing registers an FL1 segment al | FW-230, FW-231, FW-N16 | 5, 8 | — | Gaps.md |
 | `OI-99` | Lot number is undefined when a coil has more than one source rod, which is the normal case | FW-095, FW-183, FW-184 | 9, 11 | — | MasterSpecification.md |
 | `OQ-17` | **⚠ id not found in any register** | FW-121, FW-124, FW-179 | 8, 14 | — | — |
 | `OQ-23` | **⚠ id not found in any register** | FW-158, FW-174, FW-176 | 4, 7 | — | — |
@@ -65,7 +66,6 @@ Open register items cited by at least one live task, most-blocking first.
 | `G10` | Real-time deploy prereqs / MessagePack dependency | FW-080, FW-135 | 1A, 1B | — | Gaps.md |
 | `G18` | Source docs (CLAUDE.md / CheckinImplementationPrompt) describe a --fw- design system, but  | FW-130, FW-133 | 1A | — | Gaps.md |
 | `G24` | Supervisor approvals are decided but unpersisted. Three decisions require supervisor autho | FW-072, FW-176 | 7 | — | Gaps.md |
-| `G54` | ⛔ The 26 Aug alpha design has an unbuilt precondition: nothing registers an FL1 segment al | FW-231, FW-N16 | 5, 8 | — | Gaps.md |
 | `G59` | No service identity exists for a PLC write that no operator initiated. ✅ Mechanism confirm | FW-217, FW-N05 | 1B, 14 | — | Gaps.md |
 | `G60` | ⚠ HALF CLOSED 6 Sep 2026 — the registration EXISTS on DEV00164-001; the running service is | FW-217, FW-N05 | 1B, 14 | — | Gaps.md |
 | `G7` | Mid-run checkout supervisor approval relies only on transient SignalR | FW-175, FW-177 | 7 | — | Gaps.md |
@@ -214,7 +214,7 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-151](10-requirements/features/FS-04-realtime-plc-backbone/RT/FW-151.md) | PLCTagService skeleton and SimulatePLCTagPush | ✅ done ⚠ *status inferred, unconfirmed* | — | RT | 16 | S0 | FW-144 | **G2** **OI-39** |
 | [FW-203](10-requirements/features/FS-04-realtime-plc-backbone/RT/FW-203.md) | OPC feed simulator — a stand-in for the real ingest | ✅ done ⚠ *status inferred, unconfirmed* | — | RT | 8 | S0 | FW-N05 FW-150✅ | **G9** **OI-34** |
 | [FW-205](10-requirements/features/FS-04-realtime-plc-backbone/RT/FW-205.md) | ITInhibitService — the run-block interlock | ✅ done ⚠ *status inferred, unconfirmed* | — | RT | 16 | S0 | FW-144 FW-151✅ FW-N05 | **G30** |
-| [FW-207](10-requirements/features/FS-02-backend-service-foundation/BE/FW-207.md) | Domain model — aggregates, value objects and invariants | 🔵 in-review ⚠ *status inferred, unconfirmed* | — | BE | 32 | S0 | FW-N04✅ | — |
+| [FW-207](10-requirements/features/FS-02-backend-service-foundation/BE/FW-207.md) | Domain model — aggregates, value objects and invariants | 🔵 in-review | Backend (.NET) stream | BE | 32 | S0 | FW-N04✅ | — |
 | [FW-208](10-requirements/features/FS-02-backend-service-foundation/BE/FW-208.md) | Domain events and post-commit dispatch | ✅ done ⚠ *status inferred, unconfirmed* | — | BE | 8 | S0 | FW-207 FW-142✅ FW-080 | — |
 | [FW-210](10-requirements/features/FS-04-realtime-plc-backbone/RT/FW-210.md) | Line model core — the kinematic state machine for FL1/FL2/FL3 | ✅ done | — | RT | 24 | — | FW-N05 FW-203✅ | **G9** **OI-34** **OI-35** **OI-45** **Q10** |
 | [FW-211](10-requirements/features/FS-04-realtime-plc-backbone/RT/FW-211.md) | The simulation seam — IReadingSource and the in-process adapter | ✅ done | — | RT | 12 | — | FW-210✅ FW-144 FW-150✅ FW-203✅ | — |
@@ -412,7 +412,7 @@ Open register items cited by at least one live task, most-blocking first.
 | Task | Title | Status | Owner | Stream | h | Sprint | Depends on | Blocked by |
 |---|---|---|---|---|---:|---|---|---|
 | [FW-062](10-requirements/features/FS-08-active-run-monitoring/FE/FW-062.md) | Dashboard 3 — Active Run Monitor, the machine-driven shell (FL1/ | 🟡 in-progress | — | FE | 32 | S2 | FW-133 FW-162 FW-163 FW-081 FW-164 FW-N15 FW-N16 | **PLC-Q02** |
-| [FW-081](10-requirements/features/FS-08-active-run-monitoring/FE/FW-081.md) | gauge-trace-chart live streaming, maximize and runtime source to | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | FE·RT | 28 | S2 | FW-133 FW-135 FW-150✅ | — |
+| [FW-081](10-requirements/features/FS-08-active-run-monitoring/FE/FW-081.md) | gauge-trace-chart live streaming, maximize and runtime source to | 🟡 in-progress | — | FE·RT | 28 | S2 | FW-133 FW-135 FW-150✅ | — |
 | [FW-162](10-requirements/features/FS-08-active-run-monitoring/FE/FW-162.md) | run-status-cards | ⬜ not-started | — | FE | 20 | S2 | FW-133 | — |
 | [FW-163](10-requirements/features/FS-08-active-run-monitoring/FE/FW-163.md) | info-grid and chart-tab-strip | ⬜ not-started | — | FE | 20 | S2 | FW-133 | **OQ-18** |
 | [FW-164](10-requirements/features/FS-08-active-run-monitoring/BE/FW-164.md) | GET /run/active, GET /run/{runId}/gaugetrace and RunQueryService | 🔵 in-review | — | BE | 12 | S2 | FW-138✅ FW-141✅ | — |
@@ -420,7 +420,7 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-202](10-requirements/features/FS-08-active-run-monitoring/FE/FW-202.md) | FL1 spool completion — stop confirmation, weight basis and the S | ⛔ blocked ⚠ *status inferred, unconfirmed* | — | FE·BE·DB·RT | 98 | S3 | FW-062 FW-081 FW-150✅ FW-171 FW-007 | **G34** **OI-25** **OI-45** **OI-56** |
 | [FW-213](10-requirements/features/FS-04-realtime-plc-backbone/RT/FW-213.md) | Scenario and fault injection | ✅ done | — | RT | 16 | — | FW-210✅ | **G34** **OI-45** **Q10** |
 | [FW-214](10-requirements/features/FS-04-realtime-plc-backbone/FE/FW-214.md) | Simulator control console DB-S1 — standalone WinForms desktop to | ✅ done | — | FE | 52 | S2 | FW-218✅ FW-215✅ FW-145 | — |
-| [FW-N15](10-requirements/features/FS-08-active-run-monitoring/FE/FW-N15.md) | Active Run machine context — the home/:machineName route, line r | ⬜ not-started | — | FE | 8 | S2 | FW-N03✅ | **OI-11** |
+| [FW-N15](10-requirements/features/FS-08-active-run-monitoring/FE/FW-N15.md) | Active Run machine context — the flatline/:machineName route, li | 🟡 in-progress | Frontend (Angular) stream | FE | 8 | S2 | FW-N03✅ | **OI-11** |
 | [FW-N16](10-requirements/features/FS-08-active-run-monitoring/BE/FW-N16.md) | The station claim — FlatWireDB..WIPStations view and the checked | 🟡 in-progress | — | BE·DB | 12 | S2 | FW-164 FW-230 FW-231 | **G54** |
 
 **Open items owned by this phase**
@@ -458,7 +458,7 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-169](10-requirements/features/FS-09-in-run-production-events/BE/FW-169.md) | POST /rolloverride and RollOverrideService | ⛔ blocked ⚠ *status inferred, unconfirmed* | — | BE | 12 | S2 | FW-139✅ FW-151✅ FW-171 | **OI-103** **OQ-62** |
 | [FW-170](10-requirements/features/FS-09-in-run-production-events/BE/FW-170.md) | POST /run/{id}/pause and /resume, and RunControlService | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | BE | 8 | S2 | FW-139✅ FW-171 FW-254 | — |
 | [FW-171](10-requirements/features/FS-09-in-run-production-events/DB/FW-171.md) | The five in-run event tables | 🔵 in-review ⚠ *status inferred, unconfirmed* | — | DB | 20 | S2 | FW-007 | **G34** **G35** |
-| [FW-172](10-requirements/features/FS-09-in-run-production-events/RT/FW-172.md) | Run-event markers and the LineStatus transitions | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | RT | 20 | S2 | FW-149 FW-081 | — |
+| [FW-172](10-requirements/features/FS-09-in-run-production-events/RT/FW-172.md) | Run-event markers and the LineStatus transitions | 🔵 in-review | — | RT | 20 | S2 | FW-149 FW-081 | — |
 | [FW-252](10-requirements/features/FS-09-in-run-production-events/BE/FW-252.md) | Die lifecycle service — per-tool die life, DieHistory writes and | ⬜ not-started | — | BE | 16 | S2 | FW-167 FW-251 | **OI-12** |
 | [FW-255](10-requirements/features/FS-09-in-run-production-events/BE/FW-255.md) | LineDowntimeEvent write path — LineDowntimeService and the two l | ⬜ not-started | — | BE | 22 | S2 | FW-138✅ FW-251 FW-254 | — |
 | [FW-256](10-requirements/features/FS-09-in-run-production-events/FE/FW-256.md) | Line Downtime dialog — the 25 DWN## codes that have no run | ⬜ not-started | — | FE | 12 | S2 | FW-255 FW-133 | — |
@@ -532,7 +532,7 @@ Open register items cited by at least one live task, most-blocking first.
 | [FW-180](10-requirements/features/FS-11-spool-lifecycle-fl2/DB/FW-180.md) | SpoolCheckin table and the SpoolProcessing.OrderNo index | 🔵 in-review ⚠ *status inferred, unconfirmed* | — | DB | 12 | S2 | FW-007 | **OI-25** |
 | [FW-181](10-requirements/features/FS-11-spool-lifecycle-fl2/RT/FW-181.md) | The shared trace path — the no-measurement state | ⬜ not-started ⚠ *status inferred, unconfirmed* | — | RT | 4 | S3 | FW-081 FW-150✅ | — |
 | [FW-224](10-requirements/features/FS-11-spool-lifecycle-fl2/FE/FW-224.md) | FL2 pre-check-in - spool staging | ⛔ blocked | Backend (.NET) stream | BE·FE | 20 | S2 | FW-179 FW-158 | **Q17** **Q41** |
-| [FW-230](10-requirements/features/FS-11-spool-lifecycle-fl2/BE/FW-230.md) | FL1 segment alpha — one namespace | 🔵 in-review ⚠ *status inferred, unconfirmed* | — | DB·BE | 14 | S2 | — | — |
+| [FW-230](10-requirements/features/FS-11-spool-lifecycle-fl2/BE/FW-230.md) | FL1 segment alpha — one namespace | ⛔ blocked | — | DB·BE | 14 | S2 | FW-231 | **G54** |
 | [FW-231](10-requirements/features/FS-15-shared-schema-boundary/BE/FW-231.md) | Register every flat wire alpha in the shared coil master | ⛔ blocked ⚠ *status inferred, unconfirmed* | — | DB·BE | 18 | S2 | — | **G54** |
 | [FW-N02](10-requirements/features/FS-11-spool-lifecycle-fl2/RT/FW-N02.md) | Spool completion weight milestones and machine-stop confirmation | ⛔ blocked ⚠ *status inferred, unconfirmed* | — | RT | 8 | S3 | FW-150✅ | **Q96** |
 | [FW-N29](10-requirements/features/FS-11-spool-lifecycle-fl2/RT/FW-N29.md) | FL2 live gauge and width trace at 4 s | ⬜ not-started | Real-time stream | RT | 8 | S2 | FW-081 | — |
@@ -544,7 +544,7 @@ Open register items cited by at least one live task, most-blocking first.
 
 | Id | What | Blocks | Owner |
 |---|---|---|---|
-| `G54` | ⛔ The 26 Aug alpha design has an unbuilt precondition: nothing registers an FL1 segment alpha in pro | FW-231 | — |
+| `G54` | ⛔ The 26 Aug alpha design has an unbuilt precondition: nothing registers an FL1 segment alpha in pro | FW-230, FW-231 | — |
 | `OI-02` | ⚠️ UNRESOLVED — Intermediate spool numbering: schema SP-##### versus the SRS narrative's TS###### (T | FW-124 | — |
 | `OI-06` | ⚠️ UNRESOLVED — Two spool status vocabularies: the schema's RECEIVED/STAGED/INFLAT/COMPLETE/HOLD/SCR | FW-124 | — |
 | `OI-25` | Two footage coordinate systems. Run events use cumulative run footage; CoilTraceability.FootageFrom/ | FW-180 | — |

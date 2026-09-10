@@ -34,7 +34,7 @@
 
 | | |
 |---|---|
-| **Built screens** | `components/flat-wire-landing/` — **DB3 Active Run Monitor**, the default child of `#/flat-wire` · `components/supervisor-dashboard/` — DB1 Line Status at `#/flat-wire/supervisor-dashboard` |
+| **Built screens** | `components/active-run/` — **DB3 Active Run Monitor**, at `#/flat-wire/flatline/:machineName` · `components/supervisor-dashboard/` — DB1 Line Status at `#/flat-wire/supervisor-dashboard`, **and it is the default child of `#/flat-wire`**. ⚠ **This row was wrong twice until 10 Sep 2026** (`D-59`): it named `flat-wire-landing/`, a folder that no longer exists, and made DB3 the default child, which DB1 is |
 | **Shared controls to consume** | **`projects/shared`** — `lib-nav-rail` · `lib-chart-canvas` · `lib-trace-panel` · `buildTraceConfig` (§3.22). ⚠ **`shared` has 23 dependent libraries**, so `ng build shared` before any dependent test run: jest resolves the `shared` alias to `dist/`, not source |
 | **UI pattern source** | `projects/slitter-interface/.../slitter-traveler-landing.component.html` — ⚠ **its rail is now `lib-nav-rail` too**, so there is no rail markup left there to copy |
 | **Card layout source** | `.claude/commands/scaffold-form.md` §8 — ⛔ **the card layout only, never its modal layout** |
@@ -446,6 +446,18 @@ export function buildTraceConfig(panel: TracePanel): ChartConfiguration {
 `config` computed. **Neither the screen nor the popup calls it**, which is what makes it impossible
 for the inline trace and the maximised one to drift.
 
+➕ **Two point colours and a gap rule, added 9 September 2026 with `FW-081` AC 1 and AC 3.**
+`TRACE_STYLE` gains **`IN_SPEC_POINT_COLOR` `#198754`** and **`OUT_OF_SPEC_POINT_COLOR` `#dc3545`**,
+applied per point as `pointBackgroundColor` / `pointBorderColor` arrays — so a reading outside its
+tolerance band is red **where it happened** rather than colouring the whole series. ⛔ **A gap takes
+the in-spec colour, not red**: an absent reading is not an out-of-spec one.
+
+⛔ **The dataset sets `spanGaps: false`, and it must stay false.** `TracePanel.points` is
+`(number | null)[]`; a `null` is wire that was never measured and it **must break the line**. With
+`spanGaps: true` Chart.js draws straight from the reading before the gap to the one after it, which
+is a confident in-spec line across unmeasured material — on FL2 a genuine reading arrives roughly
+every 80 ft at line speed, so that is the normal case rather than an edge one.
+
 ### 3.15 No method calls in template interpolation
 
 Compute into a field and refresh it when the state changes. With `OnPush`, inject `ChangeDetectorRef`
@@ -769,8 +781,10 @@ lower-cases `textToShow` and joins on `-`. So a label must be **space-separated 
 Queue` gives `btn-spool-queue-…`, while a camelCase label gives a camelCase id.
 
 ⚠ **A key you *do* supply must be kebab-case.** `TracePanel.key` is stamped into
-`btn-maximize-{key}-trace-panel` and an info table's key into `act-{key}-flat-wire-landing`, which is
-why `INFO_KEYS` reads `rod-information` / `order-information`.
+`btn-maximize-{key}-trace-panel` and an info table's key into `act-{key}-active-run`, which is
+why `INFO_KEYS` reads `rod-information` / `order-information`. ⚠ **The trailing segment is the
+`screenKey`, not the route** — it read `flat-wire-landing` here until 10 Sep 2026, and the built key
+is `ACTIVE_RUN_SCREEN_KEY = 'active-run'` (§5.0, `D-59`).
 
 ⚠ **Three rail behaviours are hard-coded and have no inputs** — labels are always `| uppercase`,
 icons are always `fa-2x`, and expanded labels are always `extra-big fs-15`. The switches for these
@@ -886,9 +900,12 @@ deliberately not built, and this is the record `[UIC]` exists to keep:
 ⛔ **Neither is a licence to diverge further.** Everything else on the three active-run mockups
 remains authoritative for content, and the departures above are the complete list.
 
-⚠ **`screenKey` does not follow the route.** `D-55` renames DB3's route segment to `home`, but
-`screenKey` is stamped into every element id (§3.22), so it stays a stable semantic key —
-`'home'` is a *location*, not a *screen*. `FW-N15` owns the choice.
+⚠ **`screenKey` does not follow the route.** DB3's route segment is **`flatline`** (`D-59`,
+10 Sep 2026 — `D-55` originally renamed it to `home`), but `screenKey` is stamped into every element
+id (§3.22), so it stays a stable semantic key: `ACTIVE_RUN_SCREEN_KEY = 'active-run'`. ⭐ **The same
+reasoning settled the segment itself** — a route names a *location* and a `screenKey` names a
+*screen*, which is why `'home'` was the wrong word for both and `flatline` is right for one of them.
+`FW-N15` owned the choice and `D-59` records it.
 
 
 - **A screen is built → update its story plan**, in the same pass: what was built, **what was

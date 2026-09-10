@@ -285,6 +285,15 @@ not done because it renders correctly.
    (`.claude/hooks/inject-rules.cjs`) pushes the matching digest from
    `.claude/instructions/digests/` into context on **every file write** — because *"read the
    instruction file first"* was advisory and was skipped every time.
+   ⚠ **That hook fires only for a session started in `UALUADEV`** — project settings load for the
+   directory Claude Code was *started in*, and nothing else. A session driven from **this**
+   repository, which is the normal way flat wire work runs, wrote into the Angular repo with none
+   of its rules loaded. [`.claude/hooks/inject-angular-rules.cjs`](.claude/hooks/inject-angular-rules.cjs)
+   closes that: same rule files, read live from the `UALUADEV` checkout it resolves
+   (`UAL_ANGULAR_DIR`, then `../Second-Branch/ual-angular`, then `../ual-angular`), so there is no
+   second copy to drift. It **fails open** and it is **guarded to Angular paths** — the mockups in
+   `50-frontend/` are `.css`/`.scss`/`.js` and must *not* collect application rules, per step 2.
+   `node .claude/hooks/inject-angular-rules.cjs --selftest` asserts both.
 5. **`/generate-tests <file>` before writing any spec.** 100 % on all four metrics is the target;
    95 % is a floor for genuinely untestable paths, not a goal.
 6. **`/angular-review` before raising the PR.**

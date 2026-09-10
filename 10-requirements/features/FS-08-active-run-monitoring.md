@@ -10,7 +10,7 @@ owner:
 # FS-08 · Active Run Monitoring and Gauge/Width Trace
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
+**Last Updated:** September 10, 2026 (status refreshed against the stories) — **`FW-081` and `FW-N15` moved `not-started` → `in-progress`**, so §8's roll-up now names **four** activities in progress, not two, and records that both trees are staged and uncommitted. ⚙ §2 and §6 are generated and were already level — `build_features.py --check` and `build_status.py --check` both reported current before the edit, so the divergence was in the prose only *(previously September 9, 2026 (`G120` resolved) — `FR-120` superseded, `A3` retired, all three lines render a live trace at FL2's 4 s; §3, §6, §7 and §8 updated, and the residual risk moved to the unset per-line out-of-spec threshold, `FW-N32`)*
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
 **Status:** ✅ **Authored and current** — ⛔ *§3 carries no acceptance criteria of its own, and that is settled, not outstanding: measured, only 7 % of the 1,222 criteria cite any spec or `FR`, so they are original build detail and stay on their `[TB §7]` card. See [`README.md`](README.md).*
 **Owner:** —
@@ -81,14 +81,14 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | Ref | Activity | Streams | Status | Depends on | Blocked by |
 |---|---|---|---|---|---|
 | `FW-062` | Dashboard 3 — Active Run Monitor, the machine-driven shell (FL1/FL | FE | 🟡 in-progress | FW-133 FW-162 FW-163 FW-081 FW-164 FW-N15 FW-N16 | **PLC-Q02** |
-| `FW-081` | gauge-trace-chart live streaming, maximize and runtime source togg | FE·RT | ⬜ not-started ⚠ *inferred* | FW-133 FW-135 FW-150 | — |
+| `FW-081` | gauge-trace-chart live streaming, maximize and runtime source togg | FE·RT | 🟡 in-progress | FW-133 FW-135 FW-150 | — |
 | `FW-162` | run-status-cards | FE | ⬜ not-started | FW-133 | — |
 | `FW-163` | info-grid and chart-tab-strip | FE | ⬜ not-started | FW-133 | **OQ-18** |
 | `FW-164` | GET /run/active, GET /run/{runId}/gaugetrace and RunQueryService | BE | 🔵 in-review | FW-138 FW-141 | — |
 | `FW-165` | sp_GetGaugeTrace | DB | 🔵 in-review ⚠ *inferred* | FW-007 | **G9** |
 | `FW-202` | FL1 spool completion — stop confirmation, weight basis and the Spo | FE·BE·DB·RT | ⛔ blocked ⚠ *inferred* | FW-062 FW-081 FW-150 FW-171 FW-007 | **G34** **OI-25** **OI-45** **OI-56** **OI-75** |
 | `FW-222` | Single-active-run index and the reversal flag | DB | 🔵 in-review ⚠ *inferred* | FW-007 | — |
-| `FW-N15` | Active Run machine context — the home/:machineName route, line res | FE | ⬜ not-started | FW-N03 | **OI-11** |
+| `FW-N15` | Active Run machine context — the flatline/:machineName route, line | FE | 🟡 in-progress | FW-N03 | **OI-11** |
 | `FW-N16` | The station claim — FlatWireDB..WIPStations view and the checked-i | BE·DB | 🟡 in-progress | FW-164 FW-230 FW-231 | **G54** |
 
 **Verification evidence for completed work.** Generated from each story's `status_note`, which is where its measured result is recorded - so this answers *was this proven?* without opening the story.
@@ -110,10 +110,12 @@ Owned requirement range, from [`[SCM §2.2]`](../../90-registers/StoryConsolidat
 **Cited, never restated.** Screen authority is
 [`ActiveRunMonitor.md`](../screens/ActiveRunMonitor.md).
 
-⚠ **`FR-120` is `Must` and `[CONFIRMED]`, and `D-55`'s uniform trace treatment collides with it.**
-The reconciliation is a client decision and is recorded as open. `FR-120` was also the route by
-which the retired FL2-sends-`null` assumption reached the rest of the documentation, so it must be
-read against the 9 Sep reversal rather than on its own.
+✅ **`FR-120` versus `D-55` is RESOLVED, 9 Sep 2026 (`G120`) — in `D-55`'s favour.** ~~`FR-120` is
+`Must` and `[CONFIRMED]`, and `D-55`'s uniform trace treatment collides with it. The reconciliation
+is a client decision and is recorded as open.~~ **`FR-120` is superseded** and FL2 falls under
+`FR-101` like every other line. ⛔ **Only one clause survives** — `gaugetrace` still serves the trace
+**reports** — and `FR-120` was the route by which the retired `A3` assumption reached everything
+else, so read it against the reversal, never on its own.
 
 ⚠ **`FW-202`'s 98 h answers `FR-130`–`FR-155`**, which is `[REQ §5.5]` — **`FS-11`'s range, not
 this one's**. The activity sits here because the screen does; the requirements sit with the spool
@@ -140,7 +142,7 @@ of the deletion step and no tool can do it.
 
 | Stream | Scope |
 |---|---|
-| **FE** | Five activities and most of the hours. The machine-driven Dashboard 3 shell; `run-status-cards` with a profile-driven centre card; `info-grid` and `chart-tab-strip`, whose subject comes from the line profile; the live trace chart with maximize and a runtime source toggle; and the `home/:machineName` route with line resolution and `LINE_PROFILES` |
+| **FE** | Five activities and most of the hours. The machine-driven Dashboard 3 shell; `run-status-cards` with a profile-driven centre card; `info-grid` and `chart-tab-strip`, whose subject comes from the line profile; the live trace chart with maximize and a runtime source toggle; and the `flatline/:machineName` route with line resolution and `LINE_PROFILES` |
 | **BE** | `GET /run/active` and `GET /run/{runId}/gaugetrace` behind `RunQueryService`, plus **the station claim** — the `WIPStations` view and the checked-in-material read (`D-55`, `FW-N16`). Two response additions ride this one read rather than a second call (`P-254`) |
 | **DB** | `sp_GetGaugeTrace`, and the single-active-run index with its reversal flag. Both `in-review` |
 | **RT** | The trace's live wiring, and the no-measurement state — **a `null` reading renders as a gap, never as a flat line at target** |
@@ -203,8 +205,11 @@ of the deletion step and no tool can do it.
 - ⚠ **`FW-202`'s 98 h is in no published per-phase total.** `[TRP §5.1]` re-priced `FR-130`–`FR-155`
   from 4 h to 98 h as gap `G37`, story `FW-202`. Any plan built on `[CE §3b]`'s Phase 5 figure is
   short by that difference for this category alone.
-- ⚠ **`FR-120` versus `D-55` is an unreconciled contradiction between a `[CONFIRMED]` `Must` and a
-  decision that post-dates it.** Recorded as open; it needs a client answer, not an engineering one.
+- ✅ ~~**`FR-120` versus `D-55` is an unreconciled contradiction between a `[CONFIRMED]` `Must` and a
+  decision that post-dates it.** Recorded as open; it needs a client answer, not an engineering
+  one.~~ **CLOSED 9 Sep 2026 (`G120`) — and it needed no client answer at all.** ⚠ **The lesson is
+  the label**: filed as *"needs a client answer"*, it went unexamined for as long as that held,
+  while the disproof was internal the whole time.
 - **`OQ-18` resolves to no register** (`G61`).
 
 ---
@@ -225,9 +230,11 @@ it, `FS-09` launches from it, `FS-11` extends it and `FS-13` adds one profile ro
 through the hub, and the 4 s FL2 cadence versus ~10 Hz on FL1/FL3 is a difference this screen has
 to render honestly rather than smooth over.
 
-**On client decisions.** `FR-120` versus `D-55`, `OI-25`'s footage basis, `OI-56`'s weight basis and
-`OI-45`'s formula. Three of the four are about **which number is authoritative**, which is the
-recurring shape of this module's open items.
+**On client decisions.** `OI-25`'s footage basis, `OI-56`'s weight basis, `OI-45`'s formula, and —
+new with `G120` — the **per-line** out-of-spec consecutive-reading threshold (`FW-N32`, needs trial
+data, `Q66`/`Q67`). All four are about **which number is authoritative**, the recurring shape of
+this module's open items. *(`FR-120` versus `D-55` sat here until 9 Sep 2026 and was never a client
+decision.)*
 
 ---
 
@@ -245,9 +252,14 @@ contracts are load-bearing.
 | **`FW-202`** | `FS-11`'s spool lifecycle, `FS-12`'s weight basis, and the published Phase 5 total |
 
 **Existing implementation to modify.** ⚠ **This is one of the most live categories in the module.**
-`FW-062` and `FW-N16` are `in-progress`; `FW-164`, `FW-165` and `FW-222` are `in-review`. So the
-API, the trace procedure and the index are all near-settled while `FW-202` — 41 % of the hours — is
+`FW-062`, `FW-081`, `FW-N15` and `FW-N16` are `in-progress`; `FW-164`, `FW-165` and `FW-222` are
+`in-review`. So the API, the trace procedure and the index are all near-settled, the trace chart and
+the machine-context route are being built on top of them, and `FW-202` — 41 % of the hours — is
 still blocked. **The reference screen is being built against a weight basis that is undecided.**
+⚠ **`FW-081` and `FW-N15` moved off `not-started` on 10 Sep 2026 and their work is STAGED AND
+UNCOMMITTED** — one `ual-angular` tree carrying both stories and `projects/shared`, so nothing here
+is yet on a branch another developer can read, and `ng build shared` precedes any dependent test run
+([`FW-N15` §3](FS-08-active-run-monitoring/FE/FW-N15.md)).
 
 **Regression areas.**
 
@@ -255,8 +267,11 @@ still blocked. **The reference screen is being built against a weight basis that
   line-branched markup undoes the decision. `FS-11` and `FS-13` must extend the profile, not fork
   the component.
 - **The no-measurement state is the thing that breaks silently.** A `null` rendering as a flat line
-  at target looks like a perfect run.
-- **`FR-120`'s unreconciled status means the trace could be re-specified after it is built.**
+  at target looks like a perfect run. ⚠ **Reachable on all three lines since 9 Sep 2026**, and on
+  FL2 a gap between samples is the *normal* case at 4 s.
+- ✅ ~~**`FR-120`'s unreconciled status means the trace could be re-specified after it is built.**~~
+  **Discharged** (`G120`). ⛔ **The risk moved to the threshold** — unset, now needed **per line**,
+  and the one item here that produces bad product rather than a wrong display (`FW-N32`).
 - **`FW-202` blocked while its neighbours land** is the highest-risk sequencing in the category:
   the spool-completion write may need fields the reviewed API and index do not carry.
 

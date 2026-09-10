@@ -4,7 +4,7 @@ legacy_id:
 title: Bind isLive on the trace panel - stop rebuilding the chart every frame
 status: not-started
 status_confirmed: true
-status_note: "⬜ **Not started — 2 h FE. A pre-existing defect, found while making the FL2 live-gauge change and NOT caused by it.** `active-run.component.html` renders `<lib-trace-panel>` without binding `[isLive]`, which defaults to `false`. `ChartCanvasComponent.render()` therefore takes the `releaseChart()` + `new Chart(...)` path on **every telemetry frame** instead of `this.chart.update('none')`. ⛔ **This has been hitting FL1 and FL3 at ~10 Hz all along** — two panels destroyed and reconstructed twenty times a second. `[UIC]` and `[CMP]` both specify `isLive`; nothing enforced it, and `ng lint` cannot see a missing optional input."
+status_note: "⛔ **OVERTAKEN BY `FW-081`, 10 Sep 2026 — the defect this story exists to fix is BUILT, and this note previously described the code wrongly.** ⚠ It said `active-run.component.html` renders `<lib-trace-panel>` **without binding** `[isLive]`; that stopped being true on 9 Sep, when `FW-081` bound it to a runtime signal (`[isLive]=isLive()`, proven by a `Chart.prototype.destroy` spy), and the popup half followed on 10 Sep. ✅ **So both halves of the 2 h are delivered elsewhere** — the every-frame `releaseChart()` + `new Chart(...)` teardown that hit FL1 and FL3 at ~10 Hz is gone. ⛔ **Left `not-started` deliberately: retiring or re-scoping this card is its owner's call, not `FW-081`'s**, and only a reviewer marks work done. ⚠ **The lesson the card still carries stands** — `[UIC]` and `[CMP]` both specify `isLive`, nothing enforced it, and `ng lint` cannot see a missing optional input."
 owner:
 jira:
 mvp: 1
@@ -23,9 +23,9 @@ completed:
 # FW-N33 · Bind `isLive` on the trace panel — stop rebuilding the chart every frame
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 — created; the defect was found during the FL2 live-gauge change.
+**Last Updated:** September 10, 2026 — ⛔ **the defect is BUILT, by [`FW-081`](../../FS-08-active-run-monitoring/FE/FW-081.md)**: the dashboard binding on 9 Sep and the popup binding on 10 Sep. **Everything below describing `[isLive]` as unbound is now history, not a plan.** *(Created 9 Sep 2026; the defect was found during the FL2 live-gauge change.)*
 **Document Type:** Story plan
-**Status:** Not started
+**Status:** Not started — ⚠ **and overtaken**: the work is delivered under `FW-081`; retiring or re-scoping this card is its owner's call
 **Owner:** Frontend (Angular `flat-wire`)
 **Shortcode:** — *(story plan, derived; **not citable as a requirement**)*
 

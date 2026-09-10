@@ -72,7 +72,7 @@ Lazily-loaded `FLAT_WIRE_ROUTES` under `/flat-wire`, per-line:
 /flat-wire/line/:machineName/checkin/rod
 /flat-wire/line/:machineName/staging            (FL1, FL3 only — guarded)
 /flat-wire/line/FL2/checkin/spool
-/flat-wire/home/:machineName                    (DB3 — see the D-55 note below)
+/flat-wire/flatline/:machineName                (DB3 — see the D-55 note below)
 /flat-wire/status                          (DB1)
 /flat-wire/packing                         (DB7b)
 ```
@@ -83,20 +83,29 @@ Lazily-loaded `FLAT_WIRE_ROUTES` under `/flat-wire`, per-line:
 
 > ### ⭐ The `D-55` note — the route grammar inverted on 7 September 2026
 >
-> **DB3 is now `#/flat-wire/home/:machineName`** — one component for FL1, FL2 and FL3, with the line read
+> **DB3 is now `#/flat-wire/flatline/:machineName`** — one component for FL1, FL2 and FL3, with the line read
 > from the segment. `FW-N15` owns the route, the resolver and `LINE_PROFILES`. The `#` needs no work:
 > `HashLocationStrategy` is provided app-wide in `app.module.ts`.
 >
+> ⭐ **The segment is `flatline`, decided 10 Sep 2026 by `D-59`** — this note said `home` until then,
+> and `home` is what `D-55` chose in passing. `flatline` names the thing the operator is looking at,
+> and ⛔ **`'home'` would contradict `[UIC §5.0]`**, which already holds that *"`'home'` is a location,
+> not a screen"* — the reasoning that keeps `screenKey` off the route in the first place.
+>
 > ⚠ **This is screen-first, and the five routes above are line-first.** They are shaped
-> `/flat-wire/line/:machineName/...` — the line *above* the screen — while `home/:machineName` puts it *below*.
+> `/flat-wire/line/:machineName/...` — the line *above* the screen — while `flatline/:machineName` puts it *below*.
 > ⛔ **Two grammars in one library is a defect, not a style difference.** Either the siblings become
 > `/flat-wire/checkin/rod/:machineName`, `/flat-wire/spool-queue/:machineName` and so on, or the split is
 > recorded as a deliberate decision. **It is currently neither, and this note is the flag.**
 >
-> ⚠ **`#/flat-wire` is stranded** now the landing child carries a required param. It resolves from
-> the terminal's own machine registration, falling back to a line picker — which is **`FW-204`**,
-> whose note already complains that *"`/flat-wire` already resolves — to DB3, not to this story's
-> tiles."* `D-55` is what makes that story coherent rather than redundant.
+> ⛔ **`#/flat-wire` is NOT stranded — it lands on DB1** *(corrected 10 Sep 2026, `D-59`)*. This note
+> predicted that the required param would strand it and named two ways out: the terminal's own machine
+> registration, or a line picker. **The build took a third** — the empty-path child redirects to
+> `supervisor-dashboard`, the Line Status Overview, which shows all three lines with their live state.
+> ⛔ **The terminal-registration resolve is struck**, because nothing in `projects/shared` can read a
+> terminal's own machine and no story owns building one.
+> ⚠ **This changes `FW-204`'s premise** rather than answering it: a lineless address is already served,
+> so whether the two-tile picker is still wanted is that story's question, not this note's.
 >
 > ⛔ **`screenKey` does not follow the route.** It is stamped into every element id
 > ([`[UIC §3.22]`](UIConventions.md)), so it stays a stable semantic key; `'home'` is a location, not
@@ -135,7 +144,7 @@ The mock service must mirror the **DB seed**, not invent fixtures. **Measured ag
 
 ### 5.4 State
 
-`line-context.service` (which line is in scope — ⭐ **`D-55` makes this the single site that resolves the line from the URL segment**, holding `machineName`, `station` and `machineIdx`; `station` equals `machineName` by rule and the machine values are **cited** from [`[INT]`](../20-architecture/Integration.md), never retyped. It also owns **`LINE_PROFILES`**, the four-field-per-line configuration the one Active Run component is driven by — info-grid subject, centre status card, action set, spool-completion overlay. ⛔ Nothing the API already carries may enter it: `components[]`, `RouteMode`, `weldEvents[]`, `payoffs[]` and the station claim are **data**. `FW-N15` owns it) and `run-state.service` (active alpha, footage, payoff) over RxJS `BehaviorSubject`s. **No NgRx** — it is not used in the repository.
+`line-context.model` (which line is in scope — ⭐ **`D-55` makes this the single site that resolves the line from the URL segment**, resolving `machineName`, `station` and `machineIdx`. ⚠ **It is a PURE MODULE, not an injectable — `D-59`, 10 Sep 2026**; this line named a `line-context.service` until then. `models/line-context.model.ts` exports three functions — `resolveMachineName` · `stationFor` · `machineIndexFor` — and holds **no state**, because the route already holds which line is in scope and a service holding it again would be a second copy of the same fact. What `D-55` asked for is a *single site*, which is what this is; `station` equals `machineName` by rule and the machine values are **cited** from [`[INT]`](../20-architecture/Integration.md), never retyped. It also owns **`LINE_PROFILES`**, the four-field-per-line configuration the one Active Run component is driven by — info-grid subject, centre status card, action set, spool-completion overlay. ⛔ Nothing the API already carries may enter it: `components[]`, `RouteMode`, `weldEvents[]`, `payoffs[]` and the station claim are **data**. `FW-N15` owns it) and `run-state.service` (active alpha, footage, payoff) over RxJS `BehaviorSubject`s. **No NgRx** — it is not used in the repository.
 
 ---
 

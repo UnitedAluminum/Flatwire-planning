@@ -98,7 +98,7 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-146` | Global exception middleware and the response envelope | BE | ✅ done ⚠ *inferred* | FW-N04 | — |
 | `FW-147` | FluentValidation, value objects and the canonical cross-layer enum | BE | ✅ done ⚠ *inferred* | FW-N04 | — |
 | `FW-148` | Health checks | BE | ✅ done ⚠ *inferred* | FW-N04 | — |
-| `FW-207` | Domain model — aggregates, value objects and invariants | BE | 🔵 in-review ⚠ *inferred* | FW-N04 | — |
+| `FW-207` | Domain model — aggregates, value objects and invariants | BE | 🔵 in-review | FW-N04 | — |
 | `FW-208` | Domain events and post-commit dispatch | BE | ✅ done ⚠ *inferred* | FW-207 FW-142 FW-080 | — |
 | `FW-234` | Audit-log persistence target | BE·DB | ⬜ not-started ⚠ *inferred* | FW-143 FW-142 FW-151 FW-007 | — |
 | `FW-263` | FlatWire.UnitTests — the test project, its fixtures and the OPC st | BE | ✅ done | FW-142 | — |
@@ -124,7 +124,7 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-146` | ✅ done | ✅ **BUILT — 27 Aug 2026.** `ExceptionHandlingMiddleware` is live in `ual-api`, `HttpGlobalExceptionFilter` is removed and the removal is asserted at boot; §6.2 carries the measured verification (before/after on the one runnable pa |
 | `FW-147` | ✅ done | ✅ **EXECUTED — 27 Aug 2026.** All five build-order steps are complete or accounted for: the fourteen enums and fourteen validators were built 25 Aug (`P-57`/`P-58`), step 4's `P-19` handoff was **already in `FW-207`** in three pla |
 | `FW-148` | ✅ done | ✅ **BUILT AND REVIEWED — 27 Aug 2026.** Live in `ual-api`; all three acceptance criteria measured (§5.1), the verb surface pinned to `GET`, two `P-87` bypass paths closed, solution builds with **0 errors and no analyzer warning fr |
-| `FW-207` | 🔵 in-review | ✅ **BUILT — 27 Aug 2026, on `ual-api` branch `feature/UADEV-23146`.** 15 new files, 17 amended, **0 errors and no new analyzer warning** (12 solution-wide, all pre-existing). Delivered: the **7 dimensioned quantities** + `PassSche |
+| `FW-207` | 🔵 in-review | ✅ **BUILT, and re-read against the code 10 Sep 2026.** Seven roots as `Entity, IAggregateRoot`, 13 child types, 13 value objects + `PassScheduleSnapshot`, **22 rules** and 6 domain events — `ual-api` `feature/UADEV-23146`, first l |
 | `FW-208` | ✅ done | ✅ **BUILT — steps 1–10; 27 Aug 2026 (the mechanism) and 29 Aug 2026 (step 8, the broadcast handlers).** The only thing outstanding is `CoilCompleted`, which has no hub member to send on — a contract gap (`P-137`, `OI-140`), not un |
 | `FW-263` | ✅ done | ✅ **DONE — `FlatWire.sln` is five projects, and the fifth is the one `FW-236` named and could not create.** Merged and pushed as `a73851911` / `31f5f20d6` on `feature/UADEV-23146`. **Of 13 acceptance criteria: 12 satisfied, 1 deli |
 | `FW-265` | ✅ done | ✅ **EXECUTED 6 Sep 2026 — ALL 11 FW-151 SCENARIOS NOW COMMITTED; 11 of 12 criteria met, 1 half.** Suite **279 → 293**, full rebuild **0 errors / 22 warnings, unchanged**. ⛔ **NOT committed** — in the `ual-api` working tree on `fea |

@@ -2053,7 +2053,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ###### FW-062 · Dashboard 3 — Active Run Monitor (FL1) and FL3 variant
 **Hours:** 32 h FE · **Priority:** Critical · **Sprint:** S2 · **Phase:** 5 · **Stream:** FE
 
-> ⭐ **Re-scoped 7 Sep 2026 by `D-55`: ONE machine-driven component for FL1/FL2/FL3** at `#/flat-wire/home/:machineName`, with **four** per-line rows — material panel, centre status card, action set, spool overlay. The "variants" are retired, and six things that read as configuration are data or uniform. ⛔ **Now depends on `FW-N15`** (route, resolver, `LINE_PROFILES`) **and `FW-N16`** (station-claim read), neither of which existed. Full criteria in the task file.
+> ⭐ **Re-scoped 7 Sep 2026 by `D-55`: ONE machine-driven component for FL1/FL2/FL3** at `#/flat-wire/flatline/:machineName` *(⭐ the segment is `flatline` — `D-59`, 10 Sep 2026; this note said `home` until then)*, with **four** per-line rows — material panel, centre status card, action set, spool overlay. The "variants" are retired, and six things that read as configuration are data or uniform. ⛔ **Now depends on `FW-N15`** (route, resolver, `LINE_PROFILES`) **and `FW-N16`** (station-claim read), neither of which existed. Full criteria in the task file.
 
 **As an** FL1 operator,
 **I want** one screen showing the run live with every action one click away,
@@ -2123,7 +2123,9 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 ###### FW-081 · `gauge-trace-chart` live streaming, maximize and runtime source toggle
 **Hours:** 4 h FE · 24 h RT · **Priority:** Critical · **Sprint:** S2 · **Phase:** 5 · **Stream:** FE + RT
 
-> ⭐ **`D-55`, 7 Sep 2026:** the trace treatment is now **uniform across all three lines** — same titles (`Gauge` / `Width`), same axis, one source path — so `isLive` is driven by the data rather than by the line. ⛔ **A `null` reading renders a no-measurement state, never a flat line at target.** ⚠ That uniformity collides with `FR-120`, which is `Must` and `[CONFIRMED]`; the reconciliation is a client decision and is recorded as open.
+> ⭐ **`D-55`, 7 Sep 2026:** the trace treatment is now **uniform across all three lines** — same titles (`Gauge` / `Width`), same axis, one source path — so `isLive` is driven by the data rather than by the line. ⛔ **A `null` reading renders a no-measurement state, never a flat line at target.** ~~⚠ That uniformity collides with `FR-120`, which is `Must` and `[CONFIRMED]`; the reconciliation is a client decision and is recorded as open.~~
+>
+> ✅ **RESOLVED 9 Sep 2026 (`G120`) — in `D-55`'s favour, and on internal evidence rather than a client decision.** `FR-120` is **superseded** and its basis, assumption `A3` of `[PLC §14]`, is **retired**: **all three lines render a live trace**, FL2 at **4 s** from `FL2.PLC.AGC.Gauge`/`.Width`. ⛔ **Both of AC 5's stated reasons died with it** — there is no FL2 Live/Profile control and no half-historical FL3 run — **and AC 5 itself does not change**; `FW-081` §2.1 records the three reasons that replace them, chief among them that `isLive` gates the whole Chart.js lifetime (`FW-N33` measured it **unbound**, rebuilding the chart every frame at ~10 Hz). ⚠ **Two constraints on the existing ring-buffer AC, not new scope:** every buffered point carries its **footage stamp** and a gap reaches the renderer **as a gap** (`P-344`) — at 4 s the gaps *are* the data's shape, and on a hybrid FL3 run one series holds a ~10 Hz stretch and a 4 s stretch; and **no client constant may stand for the arrival rate** (`P-345`). ⚠ **Hours unchanged at 28** — the FL2 work is carded separately as `FW-N29` (8 h RT), `FW-N31` (8 h FE), `FW-N32` (12 h) and `FW-N33` (2 h FE), all downstream of this story.
 
 **As an** operator,
 **I want** the gauge and width traces streaming live with weld markers,
@@ -2134,7 +2136,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Consumes `gaugeReading$ / widthReading$ / speedFpm$ / payoffWeight$ / componentStatus$ / footageCounter$`; markers via `WeldJoinEvent / DieChangeEvent / PauseEvent / SPCCheckpoint / RodCheckoutEvent`
 - [ ] Renders from the ring buffer under `requestAnimationFrame`, outside NgZone, on a fixed ~500-point window
 - [ ] **Each panel maximizes to full screen** — backdrop, ESC and backdrop-click restore
-- [ ] ⚠ **`isLive` is a runtime-switchable input, not mount-time.** The chart must switch between live streaming and a static historical profile **after mount, without remounting** — Phase 8 needs exactly this for FL2's Live/Profile control, and a hybrid FL3 run has both
+- [ ] ⚠ **`isLive` is a runtime-switchable input, not mount-time.** The chart must switch between live streaming and a static historical profile **after mount, without remounting** — ~~Phase 8 needs exactly this for FL2's Live/Profile control, and a hybrid FL3 run has both~~ ⛔ **both of those reasons are retired (9 Sep 2026, `G120`); the requirement is not.** It now stands on: `isLive` gating `chart.update('none')` against a full Chart.js rebuild, a **stored** series (`gaugetrace`, or a spool's incoming FL1 profile) rendering in the same mounted panel, and — on a hybrid FL3 run — **two live sources at two cadences in one continuous series**. See `FW-081` §2.1
 - [ ] Last-window buffer survives a reconnect and re-join
 
 **Rate-card basis:** FE maximize + runtime toggle 4 h + RT live wiring across 6 event streams 24 h = 28 h (§2)
@@ -2185,7 +2187,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 
 ---
 
-###### FW-N15 · Active Run machine context — the `home/:machineName` route, line resolution and the line capability profile
+###### FW-N15 · Active Run machine context — the `flatline/:machineName` route, line resolution and the line capability profile
 **Hours:** 8 h FE · **Priority:** Critical · **Sprint:** S2 · **Phase:** 5 · **Stream:** FE
 
 **As an** FL1, FL2 or FL3 operator,
@@ -2193,13 +2195,13 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **So that** one screen serves all three lines and shows me the material on mine.
 
 **Acceptance Criteria:**
-- [ ] One child route `path: 'home/:machineName'` serves all three lines — `#/flat-wire/home/fl1|fl2|fl3`
-- [ ] `FLAT_WIRE_CONSTANTS.FLAT_WIRE_LANDING` is replaced by `HOME`; ⛔ **`screenKey` does NOT follow it** — it is stamped into every element id, so it binds to a stable semantic key
+- [ ] One child route `path: 'flatline/:machineName'` serves all three lines — `#/flat-wire/flatline/fl1|fl2|fl3` (`D-59`)
+- [ ] `FLAT_WIRE_CONSTANTS.FLAT_WIRE_LANDING` is replaced by `FLATLINE`; ⛔ **`screenKey` does NOT follow it** — it is stamped into every element id, so it binds to a stable semantic key (`ACTIVE_RUN_SCREEN_KEY = 'active-run'`)
 - [ ] The segment is normalised to upper case to reach `MachineName`; ⛔ an unrecognised or absent line is **refused**, never defaulted to FL1
-- [ ] `LineContextService` is the single site resolving `machineName` / `station` / `machineIdx` — machine values **cited** from `[INT]`, never retyped
+- [ ] `line-context.model` is the single site resolving `machineName` / `station` / `machineIdx` — machine values **cited** from `[INT]`, never retyped. ⚠ **A pure module, not an injectable** (`D-59`): the route already holds which line is in scope, so what this asks for is a *single site*, not a stateful service
 - [ ] `LINE_PROFILES` carries **four fields per line**; ⛔ nothing the API already supplies may enter it (`components[]`, `RouteMode`, `weldEvents[]`, `payoffs[]`, the station claim are **data**)
 - [ ] ⚠ **A line switch reloads, it does not relabel** (`FW-209`'s rule) — subscribe to `paramMap`, never `snapshot`; leave and re-join the hub group
-- [ ] ⚠ **`#/flat-wire` is stranded** by the required param — it resolves from the terminal registration, falling back to `FW-204`'s picker
+- [ ] ⛔ **`#/flat-wire` is NOT stranded — it lands on DB1** (`supervisor-dashboard`), which shows all three lines with their live state (`D-59`). ⛔ **The terminal-registration resolve is STRUCK** — nothing in `projects/shared` can read a terminal's own machine and no story owns building one; **`FW-204`'s picker is not the answer either**, and whether it is still wanted is `FW-204`'s own question
 
 **Rate-card basis:** 8 h, a **proxy not a measurement** — §2's smallest unit is 4 h for a whole table and a service-plus-route-plus-constant has no card entry (the reasoning `FW-209` used). ⛔ Not 0 h: `hours: 0` means **cancelled** here
 **Dependencies:** FW-N03
@@ -2809,9 +2811,9 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **Acceptance Criteria:**
 - [ ] ⛔ **THIS CONTRACT IS NO LONGER UNCHANGED — reversed 9 Sep 2026.** FL2 broadcasts **live** gauge/width at 4 s alongside `SpeedFPM`, `PayoffWeight`, `LineStatus`, `FootageCounter`, `ComponentStatus` (`A3` retired, `FR-120` superseded, `G120`)
 - [ ] ⚠ **Live renders an explicit empty state when the field is `null`** — ⛔ **but NOT the FL2 text**: *“No live gauge on FL2 · see Profile”* is **retired** with `FR-120` (9 Sep 2026). The empty state now means **no measurement on any line** — a dropped feed — and **must not draw a flat line at target**, which would read as a real in-spec measurement. *(The mockup animates a simulated trace because a static prototype has no hub; the built screen must not.)*
-- [ ] **Profile is the value of record on FL2 standalone** — the incoming spool's FL1 history on a **footage** x-axis, with weld markers and a whole-length verdict badge. **Static: it must not be re-rendered or re-sampled by the live tick**
-- [ ] **Profile is the honest default** on FL2 standalone
-- [ ] **The toggle's availability binds to line mode, not a hard-coded off** — on FL3 the same variant *does* receive live gauge/width, which is why the toggle exists at all
+- [ ] ~~**Profile is the value of record on FL2 standalone**~~ ⛔ **Retired 9 Sep 2026 — the LIVE trace is the value of record on FL2, as on every line.** ✅ **What survives is the artefact, not its status:** the **incoming spool's** FL1 history on a **footage** x-axis, with weld markers and a whole-length verdict badge, reviewed at FL2 **check-in**. **Static: it must not be re-rendered or re-sampled by the live tick**
+- [ ] ~~**Profile is the honest default** on FL2 standalone~~ ⛔ **Retired 9 Sep 2026.** **Live is the default on all three lines** (`D-55`); a stored series is shown because someone asked for it, never as a line's default
+- [ ] ~~**The toggle's availability binds to line mode, not a hard-coded off** — on FL3 the same variant *does* receive live gauge/width, which is why the toggle exists at all~~ ⛔ **Retired 9 Sep 2026, and this AC's own reasoning is what disproved `A3`**: FL3 is FL1 feeding FL2 through the **same FM2**, so the instrument cannot appear and disappear with the upstream feed. **Every line receives live gauge, so nothing keys on the line** — `isLive` selects the series source and the update path (`FW-081` `P-343`)
 
 **Rate-card basis:** hub event binding 4 h (§2)
 **Dependencies:** FW-081, FW-150
@@ -3178,10 +3180,13 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 **I want** the trace to run unbroken from rod to coil,
 **So that** traceability is continuous across the whole hybrid run.
 
+> ⭐ **Re-pointed 9 September 2026 (`G120`).** `A3` retired, `FR-120` superseded: **FL2 broadcasts live gauge and width at 4 s.** ✅ **AC 1 gets easier** — there is no historical mode left to switch out of. ⛔ **AC 3 is retired, and the work it named is replaced by something harder:** the one continuous series is now spliced from **two live sources at two cadences** — `FL1.PLC.AGC.*` at ~10 Hz for the FM1 end, `FL2.PLC.AGC.*` at **4 s** for the finishing end, since `D-47` puts FM2 under the FL2 controller (`[PLC §5.2.3]`). ⚠ **`G99` is the prerequisite and does not close** — FL3's 33 paths are still `FL3.*` and FL3 is not in `IngestLines`. ⚠ **Hours not re-derived at 8 h.**
+
 **Acceptance Criteria:**
-- [ ] Continuous `GaugeReading` / `WidthReading` end to end — **no FL2 historical switch mid-run**
+- [ ] Continuous `GaugeReading` / `WidthReading` end to end — **no FL2 historical switch mid-run** — ✅ **and as of 9 Sep 2026 there is no such switch to make anywhere** (`FR-120` superseded)
 - [ ] Weld events mid-run keep the traceability chain continuous
-- [ ] The Live/Profile toggle is **available** on FL3, because a hybrid run genuinely has both
+- [ ] ➕ **The series is ONE series across two cadences.** ⛔ The join must not draw as a step change in the material, and the 4 s stretch must not be interpolated into a smooth line — consume `FW-081`'s footage-stamped buffer (`P-344`), do not re-time the samples
+- [ ] ~~The Live/Profile toggle is **available** on FL3, because a hybrid run genuinely has both~~ ⛔ **Retired 9 Sep 2026.** An FL3 run is **live end to end** — it never had "both", and that incoherence is what retired `A3` (`G120`)
 
 **Rate-card basis:** hub event binding 8 h (§2)
 **Dependencies:** FW-081, FW-181
