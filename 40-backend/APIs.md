@@ -1,7 +1,7 @@
 # Flat Wire Mill — API Contract
 
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
-**Last Updated:** September 9, 2026 (`G120` resolved) — `currentGauge` / `currentWidth` `null` now means **idle or dropped feed on any line**, not "FL2" (`RA-AMB09` closed); the FL2 check-in call **does** start both reading channels, at **4 s** and **unbatched**. ⚠ **`GET /run/{runId}/gaugetrace` keeps DB5 and the trace reports and loses DB3** — the incoming spool's profile is a different artefact from FL2's live trace *(previously September 8, 2026 — `§4.7a`'s published `200` shape brought level with the built DTO: the order block, `outOfSpec`, `stationClaim` and `components[].edgeType`. The first two had been on the type since 29 Aug and unpublished; the last two are `FW-N16` / `D-55`. *(previously August 25, 2026)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.)*
+**Last Updated:** September 10, 2026 (**`§4.22` added — `P-351`**) — ⭐ **`GET /checkin/rod/{alpha}`: the DB2 scan gets an endpoint.** `FR-064` / `CHK006` (validate the alpha against `coils`) survived `P-54`, but the surface that closure assigned them to — *"the receiving team's own"* — exists nowhere, so the **check-in gate** is hosted here: read-only, over a `FlatWireDB` **synonym** on `CommonDB..coils`, creating nothing (`FR-530`). ⛔ **`§4.3` and `§4.20` stay WITHDRAWN and this is not a re-homing of either** — no staging projection, no allocation set, no `diameterIn` (`coils` has no such column). ⚠ Index row **31** added; the count restatement owed at row #8 is now owed twice over and is still `[API]`'s. ⛔ `§4.3`'s `CoilCheckin` substitute **does not exist as described** — `G132`. *(previously September 9, 2026 (`G120` resolved) — `currentGauge` / `currentWidth` `null` now means **idle or dropped feed on any line**, not "FL2" (`RA-AMB09` closed); the FL2 check-in call **does** start both reading channels, at **4 s** and **unbatched**. ⚠ **`GET /run/{runId}/gaugetrace` keeps DB5 and the trace reports and loses DB3** — the incoming spool's profile is a different artefact from FL2's live trace *(previously September 8, 2026 — `§4.7a`'s published `200` shape brought level with the built DTO: the order block, `outOfSpec`, `stationClaim` and `components[].edgeType`. The first two had been on the type since 29 Aug and unpublished; the last two are `FW-N16` / `D-55`. *(previously August 25, 2026)* · **8 Sep 2026 (`D-56`): `LineId` is renamed `MachineName` throughout** — same `VARCHAR(5)` shape, same `CHECK` values, operator-visible labels unchanged. `FW-N17`/`FW-N18`/`FW-N19`.)*)*
 **Document Type:** REST contract — conventions, enums, endpoints, traceability
 **Status:** Baselined for build — missing endpoint groups in §10
 **Owner:** Backend (.NET) stream
@@ -155,7 +155,7 @@ enum RouteMode       { Standalone, Hybrid }
 enum ScheduleStatus  { Draft, Active, Inactive }
 enum ComponentName   { DB1, DB2, FM1, EdgeSet, FM2_S1, FM2_S2, FM2_S3 }   // FM2: S1 = 8", S2 = 6", S3 = 6" final
 enum ComponentState  { Active, Bypass, Skip }          // three values — never a boolean
-enum EdgeType        { Round, Square }                  // UI labels: "Round Edge" / "Flat Edge"
+enum EdgeType        { NaturalRoundEdge, FullRoundEdge, SquareEdge, BrokenEdge }   // D-61. Tool takes 3 of these
 enum MaterialStatus  { RECEIVED, STAGED, INFLAT, COMPLETE, HOLD, SCRAP }
 enum PayoffPosition  { Payoff1 = 1, Payoff2 = 2, TraversingTakeup = 3 }
 enum CheckpointType  { PreRun, PostDieChange, RollAdjustTrigger, ManualSpotCheck, PostRun }
@@ -165,17 +165,31 @@ enum CheckoutMode    { ModeP, ModeA, ModeB }
 enum StagingStatus   { Staged, CheckedIn, Unstaged }
 ```
 
-### 2.1 Edge type — the one vocabulary
+### 2.1 Edge type — the one vocabulary, and it is now the client's
 
 **Three vocabularies were circulating** across the source documents: `Round`/`Square` (schema and API), `Round`/`Flat` (story FW-010), and `Round Edge`/`Flat Edge` (stories FW-050/052). **Nothing mapped "Flat" to "Square".**
 
-**Resolution — the winner is `Round` / `Square`:**
+⭐ **SUPERSEDED 10 September 2026 — the client supplied a FOUR-value vocabulary and none of the three circulating pairs was right (`D-61`).**
 
 | Layer | Value |
 |---|---|
-| Domain enum, DTO wire value, DB `CHECK` (`CK_Edger_EdgeType`, `CK_PSC_EdgeType`) | **`Round`** · **`Square`** |
-| Operator-facing label, everywhere it renders | **"Round Edge"** · **"Flat Edge"** |
-| Mapping | A single Angular display pipe. **No other translation exists anywhere in the system** |
+| Domain enum, DTO wire value, DB `CHECK` on the **schedule** (`CK_PSC_EdgeType`) | **`Natural Round Edge`** · **`Full Round Edge`** · **`Square Edge`** · **`Broken Edge`** |
+| DB `CHECK` on the **tool** (`CK_TIE_EdgeType`) | **three only** — `Full Round Edge` · `Square Edge` · `Broken Edge`. ⛔ `Natural Round Edge` means *no edging*, so no physical set is ground for it |
+| Operator-facing label | ⭐ **The domain values already read as labels.** The `"Round Edge"`/`"Flat Edge"` pipe this section used to require is very likely unnecessary — **`FW-132` owns that call** and is still `not-started` |
+
+> ⚠ **`CK_Edger_EdgeType` in the old text no longer exists** — removed with `[dbo].[Edger]` by `D-53` (6 Sep 2026); the survivor is `CK_TIE_EdgeType`.
+>
+> ⭐ **`Flat` IS `Square` after all, by the client's own hand.** His 10 Sep tolerance heading reads *"Flat Wire Rolled Flat Edge **(Square Edges)**"*, which settles the *"nothing mapped Flat to Square"* problem below: they are the same profile, canonically **`Square Edge`**. `G76` is closed.
+>
+> ⛔ **THE C# ENUM AND THE TYPESCRIPT UNION ARE NOT YET CHANGED, DELIBERATELY.** `FW-147` owns one third of a three-way mirror — *"define once; mirror in three places"* — it is `done`, and its enforcement **is** the enum having only two members: *"the absence is the enforcement, so a 'helpful' addition breaks it."* Widening it waits on **`OI-05`** (is `Bevel` the same as `Broken Edge`? `Q110` item 1), because doing it twice is the cost of guessing. ⚠ **The TypeScript leg does not exist yet at all** — that is `FW-132`, not a defect.
+
+**The original three-vocabulary resolution, retained as the audit trail:**
+
+| Layer | Value |
+|---|---|
+| Domain enum, DTO wire value, DB `CHECK` | ~~**`Round`** · **`Square`**~~ |
+| Operator-facing label | ~~**"Round Edge"** · **"Flat Edge"**~~ |
+| Mapping | ~~A single Angular display pipe~~ |
 
 > **`Bevel edge` has no domain value.** The Dashboard 9 / 9A Generate modal offers it as a third option on two screens; the domain and the DB `CHECK` allow only `Round`/`Square`. It is a **fourth** vocabulary on top of the three above. Either add the value or remove the UI option — **OI-05**. **Until it is decided, `Bevel` must not be accepted by any endpoint.**
 
@@ -295,7 +309,7 @@ Roles use the matrix in `[SEC §8]`. "Any" means any authenticated role.
 | 5 | `PUT /passschedule/{id}` | Replace editable fields | OpsMgr, Eng | `PassSchedule` | 2 | `FR-364`, `FR-372` |
 | 6 | `PATCH /passschedule/{id}/status` | `Draft→Active`, `Active→Inactive`, `Inactive→Active` | OpsMgr, Eng | `PassSchedule` | 2 | `FR-410` |
 | 7 | `POST /passschedule/generate` | Run the generator; returns a **draft, unpersisted** | OpsMgr, Eng | `PassSchedule` | 2 | `FR-380`–`FR-391` |
-| 8 | `GET /rod/{alpha}` | Validate + return rod details at scan | Any | ⚠ **none** — `RodReceiving` withdrawn 25 Aug 2026 (`P-53`); **re-homing owed** (`P-54`) | 4 (upstream data) | `FR-042`, `FR-064` |
+| 8 | ~~`GET /rod/{alpha}`~~ | ~~Validate + return rod details at scan~~ | — | ⛔ **WITHDRAWN 10 Sep 2026** — `P-54` closed as **option 3, re-specify**. `RodReceiving` went on 25 Aug (`P-53`) and the read is **not re-homed**: the screens take the coil master from the receiving team and the five staging-projected fields from `GET /payoff/status`. ⚠ Count restatement owed | — | `FR-042`, `FR-064` ⚠ **now endpointless** |
 | 9 | `POST /rod` | Receive a rod, generate an R-series alpha | Receiving | ⚠ **none** — upstream service, not `FlatWire` (`P-53`) | upstream | — |
 | 10 | `GET /payoff/status?machineName=` | Both payoff bays on one line — the DB2A primary read | Any | `PayoffStaging` | 4 | `FR-032`–`FR-034` |
 | 11 | `POST /staging/rod` | Pre-check-in: stage a rod at a bay | Operator (+Supervisor for the out-of-sequence override) | `PayoffStaging` | 4 | `FR-039`–`FR-049` |
@@ -321,6 +335,14 @@ Roles use the matrix in `[SEC §8]`. "Any" means any authenticated role.
 | 28 | `GET /coil/{alpha}/label` | Label render data | Operator | `Coil` | 9 | `FR-336` |
 | 29 | `GET /shiftsummary` | Per-shift aggregation across lines | Supervisor, OpsMgr | `ShiftSummary` | 11 | `FR-480`–`FR-489` |
 | 30 | `GET /health` | DB + OPC reachability | Any / anonymous per policy | — | 1 | `[DEP §5]` |
+| 31 | `GET /checkin/rod/{alpha}` | The DB2 scan — rod existence in `coils`, plus the coil master for *Incoming Bundle Information* | Any | `CheckIn` | 4 | `FR-064`, `CHK006`; `FR-042` |
+
+> ⭐ **Row 31 added 10 Sep 2026 (`P-351`, `§4.22`).** ⛔ **It is not #8 re-homed** — `§4.3` stays
+> withdrawn, this returns no staging projection, and it creates nothing (`FR-530`). It exists because
+> `FR-064` outlived the surface `P-54` assigned it to.
+> ⚠ **The count restatement owed at row #8 is now owed twice over** — two withdrawn rows, one
+> addition, and `§4.20`/`§4.21` still unindexed. ⛔ This plan states no total: `[API]` owns it, and a
+> figure typed here would be the next contradiction.
 
 ---
 
@@ -389,13 +411,40 @@ MVP-1 is a **consumer**. Rod check-in reads a schedule's contents to build the P
 
 ### 4.3 `GET /rod/{alpha}`
 
-> ⚠ **This endpoint has no host as of 25 Aug 2026.** `RodReceivingController` is withdrawn —
-> rod receiving is not shopfloor (`P-53`, §3.1). **The requirement is unchanged and the shape
-> below stands**; what is missing is the controller that serves it. Re-homing is owed —
-> [`FW-138`](../10-requirements/features/FS-02-backend-service-foundation/BE/FW-138.md) `P-54` sets out three
-> options, and until one is chosen `FR-042`, `FR-064`, `FR-043`'s carry-forward gate and
-> `Q24`'s station switching have nothing to call. **Do not build it into `FlatWire` on the
-> strength of this section.**
+> ⛔ **WITHDRAWN 10 Sep 2026 — `P-54` closed as option 3, re-specify.** `RodReceivingController`
+> went on 25 Aug (`P-53`, §3.1) and this read is **not re-homed**. Rod and coil receiving are
+> another team's, and so is the data: DB2 and DB2A are re-specified to take the coil master from
+> the receiving team's own surface and the five staging-projected fields — `orderId`,
+> `scheduledMachineName`, `footageRunToDate`, `remainingWeightEstimateLb` and
+> `stagedPayoffPosition`/`isWelded` — from **`GET /payoff/status`** (`FW-158`), which this service
+> already owns. ⛔ **Do not build it into `FlatWire`**, and ⛔ do not re-home it.
+>
+> ### ⚠ QUALIFIED 10 September 2026 by `P-351` — this section stays withdrawn; one gap it left is closed
+>
+> ⛔ **This row is still withdrawn and must not be built.** What changed is that *"the receiving
+> team's own surface"* named nothing that exists — no endpoint, no service, no contact — while
+> `FR-064` / `CHK006` survived, as the kept-shape note below already says. So the **check-in gate**
+> is now served by [`§4.22`](#422-get-checkinrodalpha) `GET /checkin/rod/{alpha}`: existence plus the
+> coil master, read-only, over a `FlatWireDB` **synonym** on `CommonDB..coils`.
+>
+> ⚠ **`§4.22` is not this section under another name.** It returns **no** staging projection — no
+> `orderId`, no `scheduledMachineName`, no `footageRunToDate`, no `remainingWeightEstimateLb`, no
+> `stagedPayoffPosition` — because those are `RodStaging`'s and are read through `§4.4`. It returns no
+> `diameterIn` either, `coils` having no such column. ⛔ **`§4.20` is not affected**: the allocation-set
+> read stays withdrawn and `G129` stands.
+>
+> ⛔ **The `CoilCheckin` substitute named below does not exist as described** — `getCheckinCoilInfo`
+> returns order/seq/op-letter plus three booleans and `getCoilStatus` a single `VARCHAR(6)`, so
+> between them they serve **status alone**. Measured 10 Sep 2026; recorded as **`G132`**.
+>
+> ⚠ **The shape below is kept, not deleted** — it records what the two screens need, and
+> `FR-042` / `FR-064` / `FR-043`'s carry-forward gate remain requirements. What changed is only
+> where they are served from.
+>
+> ⛔ **One residual is now the whole of its problem rather than half.** `Q24`'s station switching
+> needs `scheduledMachineName`, and `FW-138 §8.1 F5` recorded that `P-54` was *necessary and not
+> sufficient* for it — the second blocker being **`OI-33`**, `planning_routings`' unmapped column
+> mapping. `OI-33` still stands.
 
 **Purpose:** validate a scanned rod and return everything staging and check-in need in one round trip.
 **Role:** any. **Idempotent.**
@@ -1482,10 +1531,19 @@ Returns `{ status, database: {reachable, latencyMs}, opc: {reachable, latencyMs}
 
 ### 4.20 `GET /rod/{alpha}/orders`
 
-> ⚠ **No host, and never indexed.** Two separate gaps meet on this endpoint: it was added on
-> 22 Aug 2026 and **§3.2's endpoint index carries no row for it** (nor for §4.21), and its
-> `/rod/**` prefix was withdrawn from the service on 25 Aug (`P-53`, §3.1). It is owed a
-> controller *and* an index row. See `P-54`.
+> ⛔ **WITHDRAWN 10 Sep 2026 — `P-54` closed as option 3, re-specify.** This service does not host
+> it and will not. **`FR-542`** (*Must*) makes the allocation set **planning's** — *"supplied by
+> planning; the shopfloor shall not author them"* — and a service that never authors one has no
+> claim to host the read.
+>
+> ⚠ **The specification below is kept, not deleted** — it is the record of the shape the shopfloor
+> needs, and `FR-547` still requires check-in to **enforce** membership of this set. Where it is
+> read from is now **`G129`**, and it is what [`FW-226`](../10-requirements/features/FS-14-order-allocation-fulfilment/FE/FW-226.md)
+> and [`FW-227`](../10-requirements/features/FS-14-order-allocation-fulfilment/FE/FW-227.md) depend
+> on. ⛔ Do not read a withdrawn section as a deleted requirement.
+>
+> *(Previously: no host and never indexed — added 22 Aug 2026 with no `§3.2` index row, prefix
+> withdrawn 25 Aug by `P-53`. The missing index row is moot now the endpoint is withdrawn.)*
 
 Returns the rod's **active allocation set** — the orders it may be consumed against, in planned sequence,
 with the weight allocated to each and the tier each rod occupies. This is what makes the sequence
@@ -1537,6 +1595,50 @@ writes must be atomic, or the station exclusivity index rejects the handover.
 
 **Early acknowledgement is permitted** — before the threshold — and is recorded as such; the overrun is
 then negative. Where the unconsumed allocation goes is **`Q51`**.
+
+### 4.22 `GET /checkin/rod/{alpha}`
+
+> ⭐ **Added 10 September 2026 — `P-351`.** The check-in gate `FR-064` / `CHK006` requires: *validate
+> the rod alpha against `coils`, and return the coil master the screen shows.* ⚠ **This is not a
+> re-homing of `§4.3`**, which stays withdrawn: rod **receiving** is another team's, and this read
+> creates nothing, ingests nothing and returns no staging projection. What it is, is check-in's own
+> pre-flight, addressed under `checkin/`. See `§4.3`'s note and `FW-138` `P-54`, which this
+> qualifies.
+
+**Purpose:** the Dashboard 2 scan — does this rod exist, and what is it?
+**Role:** any. **Idempotent. ⛔ Creates nothing (`FR-530`).**
+**Consumed by:** DB2's rod-scan row and its *Incoming Bundle Information* grid ([`FW-061`](../10-requirements/features/FS-07-rod-checkin-plc-config/FE/FW-061.md) `Step-7`).
+
+Returns: `alpha`, `alloy`, `temper`, `grossWeightLb`, `netWeightLb`, `coilStatus`, `inventoryType`,
+`location`, `receivedAt`.
+
+⛔ **`alloy` is the resolved name, not the code.** `coils.coil_alloy` is a `smallint` index and the
+name comes from `united_db..alloys` matched on the **alloy NAME** — **a lookup, never a cast**, and ⚠ **not on `alloy_idx`, which matches 0 of 1,776 real rows (`G133`; it was the documented key until 10 Sep 2026)**. Returning `"1"` where
+`"1100"` is meant does not fail; it silently stops every downstream alloy comparison from matching.
+
+⛔ **Three fields this endpoint does NOT return, each for a stated reason:**
+
+| Not returned | Why |
+|---|---|
+| `diameterIn` | ⛔ **`coils` has no rod-diameter column.** The nearest is `coil_gauge`, which is a *strip* gauge; reading it as a wire diameter would be a convention dressed as a fact. The operator measures the rod — `PCI004` at staging, `CHK007` at check-in |
+| `heatNumber` | ⛔ No source anywhere — `OI-117`. `coil_origin_code` is a one-character origin flag, not a heat number, and ⛔ must not be reused as one |
+| `supplier` | ⛔ Unmapped — `G130`. `coils.vendor_no` is a two-character code that no document maps to a name |
+
+**Errors** — both already in `§1.8`; ⛔ no new code is minted:
+
+| Code | When |
+|---|---|
+| `404 ROD_NOT_FOUND` | the alpha is not in `coils`. ⚠ Includes a rod that has moved to `coils_hist`, which this read does **not** consult — `G131` |
+| `409 ROD_UNAVAILABLE` | `coil_status` is `COMPLETE` / `HOLD` / `SCRAP` |
+
+⚠ **`ROD_UNAVAILABLE` is answered only in part here, deliberately.** Its `§1.8` meaning is three
+things — that status, **or** local `Rod.Status = 'INFLAT'`, **or** already staged. This read answers
+the first, from `coils`, and returns `coilStatus` so the screen can refuse early. ⛔ The other two stay
+on `POST /checkin/rod`, which remains the **authoritative** refusal: a pre-check that disagrees with
+the commit is worse than no pre-check.
+
+⚠ **`alpha` is trimmed.** `coils.coil_no` is `char(9)` and blank-padded, so `R00041` sits on disk as
+`'R00041   '`. The read trims on both sides of the predicate and in the projection.
 
 ---
 

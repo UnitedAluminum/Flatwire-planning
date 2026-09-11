@@ -976,7 +976,7 @@ Cont = 0.15 × (178 + 8 + 36)                       =  33
 - [ ] Called as the **first statement** of `POST /staging/rod` and `POST /checkin/rod`, before any other `FlatWireDB` write — both have an enforced FK to `Rod.Alpha`, and a direct scan into Dashboard 2 means check-in cannot assume staging ran
 - [ ] ⚠ **`GET /rod/{alpha}` does NOT ingest** (`FR-530`). It is documented `Idempotent` and any role may call it; a supervisor scanning a rod to look at it must not create records
 - [ ] **The refresh touches shared-mastered columns only** (`FR-531`). `Status`, `FootageRunToDate` and `RemainingWeightEstimateLb` are **locally mastered** — `Status` carries `INFLAT` (local since `D-32`) and resetting it un-marks a running rod; clearing `FootageRunToDate` offers a fresh-start check-in for a rod that has already run, which `FR-043` forbids. **This is why it is not a `MERGE`**
-- [ ] The alloy is resolved through `united_db..alloys` (`alloy_idx` → `alloy`) — a **lookup, not a cast**. `coil_alloy` is `smallint`, `Rod.Alloy` is `varchar(10)` holding `'1100'`; storing the code as text does not fail, it silently stops every downstream alloy comparison from matching
+- [ ] The alloy is resolved through `united_db..alloys` on the **NAME** (`alloys.alloy = CAST(coil_alloy AS VARCHAR(10))`) — a **lookup, not a cast**. ⚠ **`alloy_idx` was the documented key until 10 Sep 2026 and matches 0 of 1,776 real rows — `G133`**. `coil_alloy` is `smallint`, `Rod.Alloy` is `varchar(10)` holding `'1100'`; storing the code as text does not fail, it silently stops every downstream alloy comparison from matching
 - [ ] `Rod.DiameterIn` takes the **operator's measurement** — `proddb..coils` has no rod-diameter column and `coil_gauge` is a *strip* gauge. This is why ingestion is at first use and not at receipt: at receipt there is no measurement
 - [ ] `Rod.SupplierHeat` is left **`NULL` deliberately** — nothing sources it (**`OI-117`**)
 - [ ] A rod absent from `proddb..coils` is refused **before any `FlatWireDB` write** (`FR-532`)
@@ -4842,6 +4842,120 @@ not in this edit.
 ---
 
 
+#### Additive — the `EdgeType` vocabulary widening, minted 10 Sep 2026 (`FW-N34`)
+
+> **The client supplied a FOUR-value edge-profile vocabulary and the shipped enum has two — `D-61`.**
+> `Natural Round Edge` (no edging) · `Full Round Edge` · `Square Edge` · `Broken Edge`, from
+> `Q95` leg 5 on 10 Sep 2026. The **database half is already deployed** under `FW-268`: both
+> `EdgeType` columns widened to `varchar(20)`, `CK_PSC_EdgeType` re-valued at **four** and
+> `CK_TIE_EdgeType` at **three**, verified on `DEV00164-001`. This card is the **application half**.
+
+> ⛔ **IT IS NOT A COSMETIC ENUM EDIT, WHICH IS WHY IT IS A CARD AND NOT AN AMENDMENT TO `FW-147`.**
+> `FW-147` is **`done`** and owns one third of a three-way mirror — *"define once; mirror in three
+> places — a C# enum, a TypeScript union, and a DB `CHECK`"* — and its `Bevel` rejection **is** the
+> enum having only two members: *"the absence is the enforcement, so a 'helpful' addition breaks
+> it."* Widening it therefore **removes a control that story deliberately built**, and something
+> explicit has to replace it. ⚠ **The three-vs-four split does not enforce itself either:** an
+> endpoint writing a **tool** must reject `Natural Round Edge`, which a **schedule** accepts.
+
+> ⛔ **BLOCKED ON `OI-05`, and that is the whole point of the sequencing.** If `Bevel edge` is simply
+> `Broken Edge` under another name, the vocabulary is complete and the Dashboard 9 / 9A modal is
+> relabelled. If it is a fifth profile, the enum, both `CHECK`s **and** the deployed schema all move
+> again. Answering it first is the difference between doing this once and doing it twice —
+> `Q110` item 1.
+
+> ⚠ **The TypeScript leg does not exist yet and that is NOT a defect** — `ComponentState` and
+> `MachineName` each have a real `enums/*.enum.ts`; `EdgeType` has none. It is **`FW-132`**'s unbuilt
+> work, and this card coordinates with it rather than duplicating it. **Additive to `[CE §3b]`.**
+> **No published figure is re-derived** — `FW-258` owns the arithmetic.
+
+---
+
+###### FW-N34 · Widen the `EdgeType` enum across all three mirror legs, and replace the enforcement it removes
+**Hours:** 6 h BE · **Priority:** High · **Sprint:** S2 · **Phase:** 1B · **Stream:** BE
+
+**As a** developer applying the client's edge-profile vocabulary,
+**I want** `EdgeType` widened in the C# enum, the TypeScript union and both DB `CHECK`s together,
+**So that** the three-way mirror stays a mirror and nothing silently accepts a profile the plant cannot make.
+
+**Acceptance Criteria:**
+- [ ] ⛔ **`OI-05` answered first** — is `Bevel edge` the same profile as `Broken Edge`? Do not start before it lands
+- [ ] **The C# enum takes the four values**, and its `<remarks>` block is **rewritten** — the current text explains why `Bevel` is *absent* rather than rejected, and that rationale no longer holds
+- [ ] ⛔ **An explicit validator rejects an invalid profile**, because absence no longer can — including rejecting `Natural Round Edge` on a **tool** write while a **schedule** accepts it
+- [ ] ⭐ **The TypeScript leg is CREATED, not edited** — coordinate with `FW-132`, which owns it
+- [ ] **The DTO and doc sites move with it** — `RunContracts.cs`, `IContextRepository.cs`, `PassSchedulePushPayload.cs`
+- [ ] **Fixtures and specs** — `StubRunService.cs`, `flat-wire-api.service.ts`, and its spec
+- [ ] **`TC-020` updated** — it asserts the enum mirror
+- [ ] ⚠ **The display-pipe requirement is decided or handed to `FW-132`** — `[API §2.1]` requires a pipe that **does not exist**, and the client's values already read as operator labels
+- [ ] ⛔ **No schema change here.** If one is needed the DB half was wrong — go back to `FW-268` and **redeploy with a teardown**, because `IF NOT EXISTS` guards mean an incremental `RunAll` changes nothing
+
+**Rate-card basis (§2):** not a rate-card unit — one enum across three mirror legs plus a replacement validator and its tests, priced level with a small cross-layer contract change = **6 h BE**; the Angular leg stays with `FW-132`. ⚠ `FW-258` owns the arithmetic; this is an input to it, not a second answer.
+**Dependencies:** FW-147
+**Blockers:** **`OI-05`**
+
+---
+
+#### Additive — the rod existence read, minted 10 Sep 2026 (`FW-N35`)
+
+> **`P-54` withdrew the rod read and assigned it to a surface that does not exist.** Its direction was
+> that *"rod and coil receiving are another team's"* and that DB2 would take the coil master from
+> **"the receiving team's own surface"**. ⛔ **That surface is not an endpoint, a service, a screen or
+> a named contact in any of the four checkouts.** Meanwhile `FR-064` / `CHK006` — *validate the rod
+> number against `coils`; reject invalid or non-existent ones* — **survived the closure**, as
+> `[API §4.3]`'s own kept-shape note says in terms. A *Must* with no host is not re-specified; it is
+> deferred with no record, and Dashboard 2's scan cannot validate anything.
+
+> ⛔ **THIS IS NOT `[API §4.3]` RE-HOMED, AND THE DISTINCTION IS THE CARD.** Rod **receiving** stays
+> another team's: no `/rod/**` surface, no `RodReceivingController`, no ingestion here, and `§4.3` /
+> `§4.20` stay **withdrawn** — `G129` is untouched. What flat wire hosts is the **check-in gate**:
+> existence plus the coil master, read-only, addressed under `checkin/`, returning **no** staging
+> projection, **no** allocation set and **no** `diameterIn`. ⛔ **It creates nothing** (`FR-530`) —
+> which is the property `P-53` and `P-54` were protecting, and it is preserved rather than traded.
+
+> ⭐ **Deliberately NOT an amendment to `FW-223`, which is the obvious home and the wrong one.**
+> `FW-223` owns rod ingestion and the `coils` → `Rod` mapping, but its `depends_on` carries
+> `FW-157`, `FW-158`, `FW-159` and `FW-220` — because its two call sites are `POST /staging/rod` and
+> `POST /checkin/rod`. **A read-only lookup has neither**, and putting it there would park it behind
+> **`FW-158`**, the story that already blocks `FW-061`'s payoff occupancy. ✅ `FW-223` still gets two
+> superseding notes: its `FR-530` acceptance criterion has read *unexercisable — there is no host*
+> since 25 Aug, and this card is that host. ⛔ **`FW-233` is not revived** — cancelled, forwarded,
+> and its id never reused; its released 6 h do **not** fund this.
+
+> ⚠ **Two of Dashboard 2's six *Incoming Bundle Information* cells still have no source — `G130`.**
+> `coils` serves Alloy, Temper, Gross and Net. **Heat / Cast no. has no column anywhere** (`OI-117`;
+> `coil_origin_code` is a one-character origin flag) and **the supplier name is unmapped**
+> (`vendor_no` is a two-character code). ⛔ This card does not close that gap and must not appear to:
+> the two cells render *not available* (`P-352`). **Additive to `[CE §3b]`. No published figure is
+> re-derived** — `FW-258` owns the arithmetic.
+
+---
+
+###### FW-N35 · The rod existence read — two `FlatWireDB` synonyms and a read-only coil-master lookup
+**Hours:** 8 h (DB 3 · BE 5) · **Priority:** High · **Sprint:** S2 · **Phase:** 4 · **Streams:** DB · BE
+
+**As an** FL1 operator scanning or typing a rod number at check-in,
+**I want** the system to tell me at once whether that rod exists and what it is,
+**So that** a wrong or unknown alpha is refused before I start configuring the machine.
+
+**Acceptance Criteria:**
+- [ ] **`[API §4.22]` `GET /checkin/rod/{alpha}`** returns the coil master for a seeded rod — `alpha`, `alloy`, `temper`, gross/net weight, `coilStatus`, `inventoryType`, `location`, `receivedAt`
+- [ ] ⛔ **Both synonyms target an ACTUAL TABLE** — `[CommonDB]..[coils]` and `[united_db]..[Alloys]`, proven by `sys.objects.type_desc` = `USER_TABLE`. ⛔ **Never `proddb..coils`**, which is itself a synonym: SQL Server forbids the chain and it fails at *query* time, not at creation, so a wrong target deploys green
+- [ ] ⛔ **`alloy` is RESOLVED through `Alloys` on the NAME, never on `alloy_idx` and never cast** — `alloy_idx` matches **0 of 1,776** real rows (`G133`), and either mistake fails **silently**: a blank alloy, or a different alloy's name
+- [ ] ⛔ **`GRANT SELECT` only**, to `ua_user` — write access would make `FlatWireDB` a write path into the shared schema, which `D-32` forbids
+- [ ] ⚠ **A `SELECT` as `ua_user` succeeds** — not merely as the deploying login. A synonym carries no rights across the boundary, and a missing `CommonDB` grant surfaces as an error naming the *synonym*. `20_FlatWire_Grants.sql` is a **prerequisite**
+- [ ] The script is **idempotent**, and on a `FlatWireDB`-only instance it exits **green** while printing a warning naming the missing database
+- [ ] A blank-padded `coil_no` (`char(9)`) matches the trimmed predicate; the `smallint` weights arrive as `DECIMAL(8,2)`
+- [ ] Unknown alpha → `404 ROD_NOT_FOUND`; `COMPLETE`/`HOLD`/`SCRAP` → `409 ROD_UNAVAILABLE`. ⛔ **No new error code is minted**
+- [ ] ⛔ **`Rod` gains no row from any call** (`FR-530`, `TC-752`) — the criterion `FW-223` has been unable to exercise since 25 Aug
+- [ ] ⛔ **No `diameterIn`, `heatNumber` or `supplier`** on the response — `coils` has no diameter column (`coil_gauge` is a *strip* gauge), and `OI-117` / `G130` own the other two
+- [ ] `30-database/scripts/README.md`'s manifest gains its row
+
+**Rate-card basis (§2):** not a rate-card unit — two synonyms with a verification block (**3 h DB**) plus one repository read, its query/handler/action and tests (**5 h BE**), priced level with a small cross-database read = **8 h**. ⚠ `FW-258` owns the arithmetic; this is an input to it, not a second answer. ⛔ `FW-233`'s released 6 h are **not** reallocated here.
+**Dependencies:** FW-141, FW-142 *(both **done**)*
+**Blockers:** **`G133`** *(the alloy join is keyed the wrong way round — returns a blank alloy on every real row)* · **`G134`** *(`coils` holds no `R#####` rows, so the read answers 404 for every rod)* — ⚠ **both raised by DEPLOYING this story to `DEV00164-001` on 10 Sep 2026**; it was costed and built with `blocked_by: []`, and the 8 h stand
+
+---
+
 #### Additive — reinstating automated backend tests, minted 5 Sep 2026 (`FW-263`–`FW-267`)
 
 > **The 15 Aug 2026 withdrawal is REVERSED — `D-50`, `[TS §1.2]`, gap `G101`.** `[SP §9.2]` said
@@ -5909,7 +6023,7 @@ noted here so `B.8` is not misread as following `B.7`.
 
 **Minted 7 Sep 2026** while reconciling the story records against the built Angular library. The
 card is in §7.2 under *Additive — the shared header's environment badge*.
-**Next free `FW-N##` id: `FW-N34`** — *measured 9 Sep 2026, and it must be measured, not read.* This line has now been stale three times: it read `FW-N14` until 8 Sep 2026, `FW-N20` until 9 Sep, and `FW-N31` after `FW-N31`–`FW-N33` were minted the same day. The answer is the highest `FW-N##` appearing in this file or in [`StoryConsolidationMap.md`](../90-registers/StoryConsolidationMap.md) `[SCM]`, plus one — `[SCM]` because it is the id-retirement ledger and holds every id this file has ever carried. ⚠ `FW-N07`–`FW-N12` are **reserved and not free to reuse** (`TaskIdMap.md` rule 6). *(was `FW-N20`; `FW-N20`/`N21` were taken by `D-57`/`D-58` and `FW-N22`–`FW-N30` on 9 Sep 2026.)* ⚠ This line read `FW-N14` until 8 Sep 2026 and was stale: `D-55` minted `FW-N15`/`FW-N16` on 7 Sep and `D-56` minted `FW-N17`–`FW-N19` on 8 Sep. See B.10.
+**Next free `FW-N##` id: `FW-N36`** — *measured 10 Sep 2026, and it must be measured, not read.* ⚠ **It was stale again when `FW-N35` was minted**: it read `FW-N34` while `FW-N34` already existed in this file, in `[SCM]` and as a task file — the fourth time. This line has now been stale three times: it read `FW-N14` until 8 Sep 2026, `FW-N20` until 9 Sep, and `FW-N31` after `FW-N31`–`FW-N33` were minted the same day. The answer is the highest `FW-N##` appearing in this file or in [`StoryConsolidationMap.md`](../90-registers/StoryConsolidationMap.md) `[SCM]`, plus one — `[SCM]` because it is the id-retirement ledger and holds every id this file has ever carried. ⚠ `FW-N07`–`FW-N12` are **reserved and not free to reuse** (`TaskIdMap.md` rule 6). *(was `FW-N20`; `FW-N20`/`N21` were taken by `D-57`/`D-58` and `FW-N22`–`FW-N30` on 9 Sep 2026.)* ⚠ This line read `FW-N14` until 8 Sep 2026 and was stale: `D-55` minted `FW-N15`/`FW-N16` on 7 Sep and `D-56` minted `FW-N17`–`FW-N19` on 8 Sep. See B.10.
 
 | Id | Stream | Subject |
 |---|---|---|
@@ -6010,7 +6124,7 @@ From [`CapacityAndEffortModel.md`](CapacityAndEffortModel.md) §5. **Every rung 
 | 5.0 | FR-001 – FR-022 | 22 | **`[NEW]` FW-N11** | 4 |
 | 5.1 | FR-030 – FR-054 | 25 | **`[NEW]` FW-N01** | 4 |
 | 5.2 | FR-060 – FR-084 | 25 | FW-061, FW-082, FW-010 | 4 |
-| 5.3 | FR-090 – FR-096 | 7 | FW-064 | 8 |
+| 5.3 | FR-090 – FR-096 | 7 | FW-061 | 4 · FL2 steps Phase 8 |
 | 5.4 | FR-100 – FR-120 | 21 | FW-062, FW-081, FW-080 | 5 |
 | 5.5 | FR-130 – FR-157 | 26 | **`[NEW]` FW-N02** | 9 (uses 5) |
 | 5.6 | FR-160 – FR-175 | 16 | FW-063 | 6 |

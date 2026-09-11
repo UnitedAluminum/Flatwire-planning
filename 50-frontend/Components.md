@@ -29,9 +29,10 @@ Scaffolded with `ng generate library flat-wire --prefix=lib --standalone=false`,
 
 ```
 projects/flat-wire/src/lib/
-├── components/            one folder per MVP-1 screen — DB1, DB2, DB2A, DB3 (ONE folder,
-│                          all three lines — D-55), DB5, DB5A, DB6, DB7, DB7b, DB8, DB11,
-│                          DB12, DC
+├── components/            one folder per MVP-1 screen — DB1, DB2 (ONE folder, all three
+│                          STATIONS — D-60; FL1 rod, FL2 spool, FL3 rod, and DB5 merged
+│                          into it), DB2A, DB3 (ONE folder, all three lines — D-55),
+│                          DB5A, DB6, DB7, DB7b, DB8, DB11, DB12, DC
 ├── components/shared/     the lib-prefixed reusable controls ([CMP §7.6]) — for controls
 │                          ONLY flat wire uses; a control shared with another library
 │                          goes to projects/shared instead ([UIC §3.22])
@@ -69,9 +70,9 @@ This is the **standard Angular library layout, not copied from any existing feat
 Lazily-loaded `FLAT_WIRE_ROUTES` under `/flat-wire`, per-line:
 
 ```
-/flat-wire/line/:machineName/checkin/rod
+/flat-wire/checkin/:machineName
 /flat-wire/line/:machineName/staging            (FL1, FL3 only — guarded)
-/flat-wire/line/FL2/checkin/spool
+~~/flat-wire/line/FL2/checkin/spool~~  (withdrawn - D-60 merged it into the line above)
 /flat-wire/flatline/:machineName                (DB3 — see the D-55 note below)
 /flat-wire/status                          (DB1)
 /flat-wire/packing                         (DB7b)

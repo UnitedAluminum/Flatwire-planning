@@ -12,7 +12,7 @@ owner:
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
 **Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** ✅ **Authored and current** — ⛔ *§3 carries no acceptance criteria of its own, and that is settled, not outstanding: measured, only 7 % of the 1,222 criteria cite any spec or `FR`, so they are original build detail and stay on their `[TB §7]` card. See [`README.md`](README.md).*
+**Status:** ✅ **Authored and current** — ⛔ *§3 carries no acceptance criteria of its own, and that is settled, not outstanding: most are original build detail rather than a restatement of a spec or `FR`, so they stay on their `[TB §7]` card. The measurement is [`[SCM §2.5]`](../../90-registers/StoryConsolidationMap.md)'s. See [`README.md`](README.md).*
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*
@@ -152,7 +152,7 @@ to trace to.
 
 ⚠ **This file carries no `depends_on`.** Consolidation turns the acyclic task graph into a
 cyclic category graph - 15 mutually dependent pairs - so a category-level dependency list is
-unusable. Dependencies live **per activity** in section 5. The category-level direction is
+unusable. Dependencies live **per activity** in section 2. The category-level direction is
 recorded, generated, in [`[SCM §2.4]`](../../90-registers/StoryConsolidationMap.md).
 
 **On other categories.** Only two edges, both outbound and neither reciprocated: `FS-17` → `FS-03`

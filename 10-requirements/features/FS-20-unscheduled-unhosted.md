@@ -158,7 +158,7 @@ requirements are blocked and the tooling cannot see it.**
 
 ⚠ **This file carries no `depends_on`.** Consolidation turns the acyclic task graph into a
 cyclic category graph - 15 mutually dependent pairs - so a category-level dependency list is
-unusable. Dependencies live **per activity** in section 5. The category-level direction is
+unusable. Dependencies live **per activity** in section 2. The category-level direction is
 recorded, generated, in [`[SCM §2.4]`](../../90-registers/StoryConsolidationMap.md).
 
 **On other categories.** None today — nothing here is scheduled, so nothing here can depend or be

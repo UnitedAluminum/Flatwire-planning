@@ -406,7 +406,19 @@ def build():
         seen[t['id']] = cat
         cancelled = t.get('status') == 'cancelled'
         action = 'Retire' if cancelled else 'Consolidate'
-        note = ('cancelled by D-32; ' + why) if cancelled else why
+        # The cancelling decision is READ from the story rather than assumed. It was
+        # hard-coded to D-32 while FW-001/FW-002 were the only cancelled ids, and that
+        # silently mis-attributed the next retirement (FW-064, by D-60) to a decision
+        # about the shared schema. The ledger is the durable record of why an id was
+        # retired, so getting this wrong is worse than leaving it blank.
+        # Both decision spaces count: D-## in the master specification and P-##, which
+        # some plans own and which FS-07 records as having no register of its own.
+        decided_by = re.search(r'\b(?:D|P)-\d{2}\b', str(t.get('status_note', '')))
+        if cancelled:
+            stamp = 'cancelled by %s; ' % decided_by.group(0) if decided_by else 'cancelled; '
+            note = stamp + why
+        else:
+            note = why
         rows.append((t['id'], t.get('title', ''), str(t.get('phase', '')),
                      streams_of(t), t.get('hours', ''), t.get('status', ''),
                      cat, action, note, t.get('sprint', ''), str(t.get('mvp', '1'))))

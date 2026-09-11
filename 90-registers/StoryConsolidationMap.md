@@ -54,16 +54,16 @@ than restating it.
 | `FS-##` | Category | Phases | Stories | Stubs | Plans | Retained | h |
 |---|---|---|---:|---:|---:|---:|---:|
 | `FS-01` | Angular Application Shell and Foundation | 1A | 7 | 0 | 7 | 0 | 230 |
-| `FS-02` | Backend Service Foundation | 1B | 22 | 4 | 18 | 0 | 368 |
-| `FS-03` | Database Foundation and Deployment | 1C | 21 | 11 | 10 | 0 | 209 |
+| `FS-02` | Backend Service Foundation | 1B | 23 | 4 | 19 | 0 | 374 |
+| `FS-03` | Database Foundation and Deployment | 1C | 21 | 10 | 11 | 0 | 213 |
 | `FS-04` | Real-Time and PLC Backbone | 1A · 1B · 3 · 4 · 5 | 22 | 1 | 21 | 0 | 391 |
 | `FS-05` | Pass Schedule - the consumer contract and ownership boundary | 2 | 0 | 0 | 0 | 5 | 0 |
 | `FS-06` | Line Visibility and Alerting | 3 | 7 | 4 | 3 | 0 | 148 |
-| `FS-07` | Rod Staging, Check-In, PLC Configuration and Weld Capture | 4 | 15 | 7 | 8 | 0 | 247 |
-| `FS-08` | Active Run Monitoring and Gauge/Width Trace | 5 | 10 | 4 | 6 | 0 | 240 |
+| `FS-07` | Rod Staging, Check-In, PLC Configuration and Weld Capture | 4 | 16 | 6 | 10 | 0 | 261 |
+| `FS-08` | Active Run Monitoring and Gauge/Width Trace | 5 | 10 | 2 | 8 | 0 | 240 |
 | `FS-09` | In-Run Production Events | 6 | 16 | 9 | 7 | 1 | 264 |
 | `FS-10` | Exceptions and Off-Ramps | 7 | 7 | 3 | 4 | 0 | 148 |
-| `FS-11` | Spool Lifecycle and FL2 Finishing Run | 8 | 13 | 8 | 5 | 0 | 154 |
+| `FS-11` | Spool Lifecycle and FL2 Finishing Run | 8 | 13 | 8 | 5 | 0 | 138 |
 | `FS-12` | Output Completion, Labelling and Packing | 9 | 10 | 5 | 5 | 0 | 186 |
 | `FS-13` | FL3 Hybrid Continuous Route | 10 | 4 | 4 | 0 | 0 | 44 |
 | `FS-14` | Order Allocation and Fulfilment | 4 · 9 | 6 | 0 | 6 | 0 | 104 |
@@ -73,7 +73,7 @@ than restating it.
 | `FS-18` | Administration, Reference Data and Tooling Inventory | 13 | 17 | 17 | 0 | 1 | 229 |
 | `FS-19` | Integration Testing, Commissioning and Go-Live | 14 | 10 | 7 | 3 | 0 | 289 |
 | `FS-20` | Unscheduled and Unhosted Requirements | — | 0 | 0 | 0 | 5 | 0 |
-| | **Total** | | **204** | | | **13** | **3698** |
+| | **Total** | | **206** | | | **13** | **3706** |
 
 *The `h` column sums the category's stories' `hours:` front-matter. It is an audit of the partition, **not** a costing figure: `[CE §3e]` is the hours model of record and no `FS` file publishes an hours total.*
 
@@ -157,6 +157,7 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 | `FW-N04` | FlatWire solution and four-project Clean Architecture skeleton | 1B | S0 | 1 | BE | 16 | done | Consolidate | phase 1B |
 | `FW-N13` | FlatWire/GetServerConnectionInfo — the shared header's environment bad | 1B | S0 | 1 | BE | 3 | not-started | Consolidate | phase 1B |
 | `FW-N18` | LineId → MachineName — the FlatWire service | 1B | S0 | 1 | BE | 6 | done | Consolidate | phase 1B |
+| `FW-N34` | Widen the EdgeType enum across all three mirror legs, and replace the  | 1B | S2 | 1 | BE | 6 | not-started | Consolidate | phase 1B |
 
 #### `FS-03` — Database Foundation and Deployment
 
@@ -177,7 +178,7 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 | `FW-251` | Restate the schema baseline to 40/64/86 and repair the DB cards the di | 1C | S1 | 1 | DB | 8 | not-started | Consolidate | phase 1C |
 | `FW-259` | Reconcile ToolingInventoryRollSet with the client's roll-set grid when | 1C | S2 | 1 | DB | 5 | not-started | Consolidate | phase 1C |
 | `FW-262` | Machine Setup schema — Setup/Handling Times and Material Loss, five ta | 1C | S2 | 1 | DB | 10 | done | Consolidate | phase 1C |
-| `FW-268` | Reconcile ToolingInventoryEdger with the client's edger grid when Q95  | 1C | S2 | 1 | DB | 4 | not-started | Consolidate | phase 1C |
+| `FW-268` | Reconcile ToolingInventoryEdger with the client's edger grid when Q95  | 1C | S2 | 1 | DB | 8 | done | Consolidate | phase 1C |
 | `FW-N17` | LineId → MachineName — the database layer | 1C | S0 | 1 | DB | 4 | done | Consolidate | phase 1C |
 | `FW-N20` | SpoolOrder re-grained from the spool to the segment | 1C | S0 | 1 | DB·BE | 10 | done | Consolidate | phase 1C |
 | `FW-N21` | SpoolConfiguration split back out of Spool | 1C | S0 | 1 | DB | 4 | done | Consolidate | phase 1C |
@@ -237,7 +238,7 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 
 | `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
 |---|---|---|---|---|---|---:|---|---|---|
-| `FW-061` | Dashboard 2 — Rod Check-in six-step wizard (FL1/FL3) | 4 | S2 | 1 | FE | 36 | not-started | Consolidate | phase 4 |
+| `FW-061` | Check-In — one shared wizard for FL1 rod, FL2 spool and FL3 rod | 4 | S2 | 1 | FE | 48 | not-started | Consolidate | phase 4 |
 | `FW-157` | POST /checkin/rod and CheckInService | 4 | S2 | 1 | BE | 36 | in-review | Consolidate | phase 4 |
 | `FW-158` | PayoffStagingController — staging commands and queries | 4 | S2 | 1 | BE | 26 | not-started | Consolidate | phase 4 |
 | `FW-159` | RodStaging, the check-in write path and the INFLAT write | 4 | S2 | 1 | DB | 28 | in-review | Consolidate | phase 4 |
@@ -246,11 +247,12 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 | `FW-206` | ITInhibit conditions 1–2 — check-in and material-tracking state | 4 | S2 | 1 | BE | 8 | blocked | Consolidate | phase 4 |
 | `FW-209` | DB2A line toggle must reload, not relabel | 4 | S2 | 1 | FE | 4 | not-started | Consolidate | phase 4 |
 | `FW-232` | OrderController — a host for POST /order/{orderNo}/complete | 4 | S2 | 1 | BE | 3 | blocked | Consolidate | phase 4 |
-| `FW-233` | A host for the /rod/** surface | 4 | S2 | 1 | BE | 6 | blocked | Consolidate | phase 4 |
+| `FW-233` | A host for the /rod/** surface | 4 | S2 | 1 | BE | 0 | cancelled | Retire | cancelled by P-54; phase 4 |
 | `FW-237` | Service identity for unattended PLC writes | 4 | S2 | 1 | BE | 12 | blocked | Consolidate | phase 4 |
 | `FW-257` | Re-point the built ITInhibitService at the ItInhibitReason lookup | 4 | S2 | 1 | BE | 8 | not-started | Consolidate | phase 4 |
 | `FW-N01` | Dashboard 2A — Rod Pre-Check-in station | 4 | S2 | 1 | FE | 24 | not-started | Consolidate | phase 4 |
 | `FW-N24` | Move the three cross-database writes from pre-check-in to check-in | 4 | S2 | 1 | DB·BE | 16 | not-started | Consolidate | phase 4 |
+| `FW-N35` | The rod existence read - two FlatWireDB synonyms and a read-only coil- | 4 | S2 | 1 | DB·BE | 8 | not-started | Consolidate | phase 4 |
 | `FW-063` | Weld capture — fw-mark-welded-dialog | 6 | S2 | 1 | FE | 20 | not-started | Consolidate | weld capture is a Dashboard 2A dialog per [REQ 5.6]; phase 6 is stale |
 
 #### `FS-08` — Active Run Monitoring and Gauge/Width Trace
@@ -259,13 +261,13 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 |---|---|---|---|---|---|---:|---|---|---|
 | `FW-222` | Single-active-run index and the reversal flag | 4 | S2 | 1 | DB | 2 | in-review | Consolidate | single-active-run index serves the active-run read |
 | `FW-062` | Dashboard 3 — Active Run Monitor, the machine-driven shell (FL1/FL2/FL | 5 | S2 | 1 | FE | 32 | in-progress | Consolidate | phase 5 |
-| `FW-081` | gauge-trace-chart live streaming, maximize and runtime source toggle | 5 | S2 | 1 | FE·RT | 28 | not-started | Consolidate | phase 5 |
+| `FW-081` | gauge-trace-chart live streaming, maximize and runtime source toggle | 5 | S2 | 1 | FE·RT | 28 | in-progress | Consolidate | phase 5 |
 | `FW-162` | run-status-cards | 5 | S2 | 1 | FE | 20 | not-started | Consolidate | phase 5 |
 | `FW-163` | info-grid and chart-tab-strip | 5 | S2 | 1 | FE | 20 | not-started | Consolidate | phase 5 |
 | `FW-164` | GET /run/active, GET /run/{runId}/gaugetrace and RunQueryService | 5 | S2 | 1 | BE | 12 | in-review | Consolidate | phase 5 |
 | `FW-165` | sp_GetGaugeTrace | 5 | S2 | 1 | DB | 8 | in-review | Consolidate | phase 5 |
 | `FW-202` | FL1 spool completion — stop confirmation, weight basis and the SpoolPr | 5 | S3 | 1 | FE·BE·DB·RT | 98 | blocked | Consolidate | phase 5 |
-| `FW-N15` | Active Run machine context — the home/:machineName route, line resolut | 5 | S2 | 1 | FE | 8 | not-started | Consolidate | phase 5 |
+| `FW-N15` | Active Run machine context — the flatline/:machineName route, line res | 5 | S2 | 1 | FE | 8 | in-progress | Consolidate | phase 5 |
 | `FW-N16` | The station claim — FlatWireDB..WIPStations view and the checked-in-ma | 5 | S2 | 1 | BE·DB | 12 | in-progress | Consolidate | phase 5 |
 
 #### `FS-09` — In-Run Production Events
@@ -282,7 +284,7 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 | `FW-169` | POST /rolloverride and RollOverrideService | 6 | S2 | 1 | BE | 12 | blocked | Consolidate | phase 6 |
 | `FW-170` | POST /run/{id}/pause and /resume, and RunControlService | 6 | S2 | 1 | BE | 8 | not-started | Consolidate | phase 6 |
 | `FW-171` | The five in-run event tables | 6 | S2 | 1 | DB | 20 | in-review | Consolidate | phase 6 |
-| `FW-172` | Run-event markers and the LineStatus transitions | 6 | S2 | 1 | RT | 20 | not-started | Consolidate | phase 6 |
+| `FW-172` | Run-event markers and the LineStatus transitions | 6 | S2 | 1 | RT | 20 | in-review | Consolidate | phase 6 |
 | `FW-252` | Die lifecycle service — per-tool die life, DieHistory writes and per-t | 6 | S2 | 1 | BE | 16 | not-started | Consolidate | phase 6 |
 | `FW-255` | LineDowntimeEvent write path — LineDowntimeService and the two line-do | 6 | S2 | 1 | BE | 22 | not-started | Consolidate | phase 6 |
 | `FW-256` | Line Downtime dialog — the 25 DWN## codes that have no run | 6 | S2 | 1 | FE | 12 | not-started | Consolidate | phase 6 |
@@ -306,14 +308,14 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 
 | `FW-###` | Title | Ph | Sprint | MVP | Streams | h | Status at consolidation | Action | Basis |
 |---|---|---|---|---|---|---:|---|---|---|
-| `FW-064` | Dashboard 5 — FL2 Spool Check-in | 8 | S2 | 1 | FE | 16 | not-started | Consolidate | phase 8 |
+| `FW-064` | Dashboard 5 — FL2 Spool Check-in | 8 | S2 | 1 | FE | 0 | cancelled | Retire | cancelled by D-60; phase 8 |
 | `FW-124` | Dashboard 5A — FL2 Spool Queue | 8 | S2 | 1 | FE | 24 | not-started | Consolidate | phase 8 |
 | `FW-178` | Active Run — the FL2 material-flow card and Spool Information grid | 8 | S3 | 1 | FE | 8 | not-started | Consolidate | phase 8 |
 | `FW-179` | POST /checkin/spool and GET /spools | 8 | S2 | 1 | BE | 18 | not-started | Consolidate | phase 8 |
 | `FW-180` | SpoolCheckin table and the SpoolProcessing.OrderNo index | 8 | S2 | 1 | DB | 12 | in-review | Consolidate | phase 8 |
 | `FW-181` | The shared trace path — the no-measurement state | 8 | S3 | 1 | RT | 4 | not-started | Consolidate | phase 8 |
 | `FW-224` | FL2 pre-check-in - spool staging | 8 | S2 | 1 | BE·FE | 20 | blocked | Consolidate | phase 8 |
-| `FW-230` | FL1 segment alpha — one namespace | 8 | S2 | 1 | DB·BE | 14 | in-review | Consolidate | phase 8 |
+| `FW-230` | FL1 segment alpha — one namespace | 8 | S2 | 1 | DB·BE | 14 | blocked | Consolidate | phase 8 |
 | `FW-N02` | Spool completion weight milestones and machine-stop confirmation | 8 | S3 | 1 | RT | 8 | blocked | Consolidate | phase 8 |
 | `FW-N29` | FL2 live gauge and width trace at 4 s | 8 | S2 | 1 | RT | 8 | not-started | Consolidate | phase 8 |
 | `FW-N31` | FL2 trace cadence - honest gaps and visible freshness at 4 s | 8 | S2 | 1 | FE | 8 | not-started | Consolidate | phase 8 |
@@ -438,9 +440,9 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 
 ### 2.4 Category dependency direction
 
-396 task-level `depends_on` edges: **165 collapse inside a category** (which is the fragmentation this consolidation removes) and 231 cross a boundary.
+403 task-level `depends_on` edges: **166 collapse inside a category** (which is the fragmentation this consolidation removes) and 237 cross a boundary.
 
-⛔ **An `FS` file therefore carries no `depends_on`.** Collapsing nodes in a directed acyclic graph can create cycles, and it does here: the task graph has **one** known cycle (`FW-071`/`FW-072`, `G63`) and the category graph has **15** mutually dependent pairs. `check_docs.py` rule 2 treats a cycle as a hard error, so a mechanically derived category dependency list would be unusable. Dependencies live **per activity** inside each parent, where the original granularity keeps the graph acyclic, and the category-level direction below is for sequencing only.
+⛔ **An `FS` file therefore carries no `depends_on`.** Collapsing nodes in a directed acyclic graph can create cycles, and it does here: the task graph has **one** known cycle (`FW-071`/`FW-072`, `G63`) and the category graph has **16** mutually dependent pairs. `check_docs.py` rule 2 treats a cycle as a hard error, so a mechanically derived category dependency list would be unusable. Dependencies live **per activity** inside each parent, where the original granularity keeps the graph acyclic, and the category-level direction below is for sequencing only.
 
 | Pair | Dominant direction | Back-edges against it |
 |---|---|---|
@@ -453,6 +455,7 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 | `FS-04` ↔ `FS-18` | `FS-04` → `FS-18` (1 edge) | 1 — `FW-198→FW-149` |
 | `FS-04` ↔ `FS-19` | `FS-19` → `FS-04` (5 edges) | 1 — `FW-215→FW-217` |
 | `FS-07` ↔ `FS-09` | `FS-07` → `FS-09` (2 edges) | 1 — `FW-N27→FW-158` |
+| `FS-07` ↔ `FS-11` | `FS-07` → `FS-11` (2 edges) | 1 — `FW-224→FW-158` |
 | `FS-07` ↔ `FS-15` | `FS-15` → `FS-07` (5 edges) | 1 — `FW-N24→FW-220` |
 | `FS-08` ↔ `FS-09` | `FS-09` → `FS-08` (3 edges) | 1 — `FW-202→FW-171` |
 | `FS-08` ↔ `FS-11` | `FS-11` → `FS-08` (6 edges) | 1 — `FW-N16→FW-230` |
@@ -464,35 +467,35 @@ Built from `[REQ]`'s own section headings. ⚠ **Not from `[TB §11]`'s coverage
 
 ### 2.5 Acceptance-criteria coverage
 
-**This section is the evidence behind the sign-off in §3.** The cards carry **1222** acceptance criteria between them. The question the sign-off has to answer is not *"is every criterion a requirement"* - most are not - but *"does any card carry a **requirement** that exists nowhere else"*.
+**This section is the evidence behind the sign-off in §3.** The cards carry **1243** acceptance criteria between them. The question the sign-off has to answer is not *"is every criterion a requirement"* - most are not - but *"does any card carry a **requirement** that exists nowhere else"*.
 
 | What it resolves to | Criteria | Share |
 |---|---:|---:|
-| cites an `FR-###` | 44 | 3.6 % |
-| cites a specification shortcode | 100 | 8.2 % |
-| cites a decision or register item | 163 | 13.3 % |
-| names a schema object or endpoint | 242 | 19.8 % |
-| **build acceptance** - no upstream referent | 673 | 55.1 % |
-| | **1222** | |
+| cites an `FR-###` | 46 | 3.7 % |
+| cites a specification shortcode | 102 | 8.2 % |
+| cites a decision or register item | 174 | 14.0 % |
+| names a schema object or endpoint | 248 | 20.0 % |
+| **build acceptance** - no upstream referent | 673 | 54.1 % |
+| | **1243** | |
 
-⛔ **The 55 % classed as build acceptance are not unresolved requirements.** They are the *how do I know this story is done* content of a build task - a code address, a returned status code, a regression fixture, a naming convention, a process instruction. There is no `FR` to resolve them to because they are not requirements, and a story card is exactly where they belong.
+⛔ **The 54 % classed as build acceptance are not unresolved requirements.** They are the *how do I know this story is done* content of a build task - a code address, a returned status code, a regression fixture, a naming convention, a process instruction. There is no `FR` to resolve them to because they are not requirements, and a story card is exactly where they belong.
 
 ✅ **Nothing is lost, because the cards are retained.** An earlier plan called for stripping them to bare costing cells. That was tested and abandoned: with only 12 % citing any specification or `FR`, stripping would have destroyed the majority of the module’s buildable detail. The deletion step removes the *task files* - the implementation plans - and their measured verification is lifted into each parent’s §2 before they are archived.
 
 | Category | `FR` | spec | register | object | build acceptance |
 |---|---:|---:|---:|---:|---:|
 | `FS-01` | 0 | 2 | 2 | 6 | 37 |
-| `FS-02` | 2 | 10 | 10 | 30 | 56 |
+| `FS-02` | 2 | 11 | 12 | 33 | 59 |
 | `FS-03` | 1 | 12 | 29 | 41 | 60 |
 | `FS-04` | 9 | 39 | 19 | 25 | 64 |
 | `FS-06` | 2 | 0 | 0 | 8 | 23 |
-| `FS-07` | 5 | 9 | 12 | 10 | 55 |
-| `FS-08` | 2 | 3 | 20 | 14 | 33 |
+| `FS-07` | 6 | 10 | 14 | 13 | 59 |
+| `FS-08` | 2 | 3 | 23 | 14 | 30 |
 | `FS-09` | 6 | 0 | 5 | 32 | 66 |
 | `FS-10` | 0 | 0 | 2 | 10 | 28 |
-| `FS-11` | 2 | 1 | 8 | 9 | 56 |
+| `FS-11` | 2 | 1 | 10 | 9 | 54 |
 | `FS-12` | 2 | 3 | 9 | 8 | 33 |
-| `FS-13` | 1 | 0 | 0 | 5 | 10 |
+| `FS-13` | 2 | 0 | 2 | 5 | 8 |
 | `FS-14` | 1 | 4 | 4 | 6 | 14 |
 | `FS-15` | 7 | 1 | 10 | 17 | 16 |
 | `FS-16` | 0 | 0 | 4 | 6 | 22 |
@@ -508,6 +511,8 @@ Ids with no card and no task file. Each keeps its number forever and is never re
 |---|---|---|
 | `FW-001` | cancelled by D-32; phase 1C | `FS-03` |
 | `FW-002` | cancelled by D-32; phase 1C | `FS-03` |
+| `FW-064` | cancelled by D-60; phase 8 | `FS-11` |
+| `FW-233` | cancelled by P-54; phase 4 | `FS-07` |
 | `FW-014` | Subsumed by FW-169 for its MVP-1 half (B.5) | `FS-09` |
 | `FW-N12` | Absorbed in practice by FW-166 and FW-201 (B.4) | `FS-20` |
 

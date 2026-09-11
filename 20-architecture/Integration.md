@@ -49,10 +49,25 @@ It runs as the **first statement inside the caller's transaction**, before any o
 
 ### Which side is master for each column — the other half of `OI-42`
 
+> ⛔ **CORRECTED 10 September 2026 — `G133`. The alloy row below was keyed the wrong way round, and
+> every consumer followed it.** It read `coil_alloy → alloys.alloy_idx → .alloy`. **Measured on
+> `DEV00164-001` against all 1,776 rows of the shared coil master:** `ON a.alloy_idx = c.coil_alloy`
+> matches **nothing**; `ON a.alloy = c.coil_alloy` matches **every row**. `alloys.alloy_idx` runs
+> **1–89** and is a surrogate, while `coils.coil_alloy` holds the **designation itself** — 1100,
+> 3005, 5052, 5657, 23 distinct values. The joined rows say it plainly: `coil_alloy` 5657 matches
+> the alloy *named* `'5657'`, whose `alloy_idx` is **1**.
+> ⛔ **The old join failed worse than the cast it warned against:** `ISNULL(a.alloy, '')` turned the
+> miss into a **blank** rather than an error, and any coil whose `coil_alloy` fell in 1–89 would have
+> resolved to **a different alloy's name** silently. ⚠ **Compare as text** —
+> `alloys.alloy = CAST(coil_alloy AS VARCHAR(10))` — because the bare form converts the name to a
+> number and one non-numeric designation would fail the whole statement.
+> ⚠ **Verified against strip coils only:** there is not one `R#####` row in that table (`G134`), so
+> re-verify on the first real rod. `sp_IngestRodFromCoils` is corrected in the same pass.
+
 | `Rod` column | Source | Master |
 |---|---|---|
 | `Alpha` | `coils.coil_no` | shared |
-| `Alloy` | `coils.coil_alloy` → `united_db..alloys.alloy_idx` → `.alloy` | shared |
+| `Alloy` | `coils.coil_alloy` **=** `united_db..alloys.alloy` — matched on the **NAME** | shared |
 | `Temper` | `coils.coil_temper` | shared |
 | `DiameterIn` | the caller's measurement | **local** |
 | `GrossWeightLb`, `NetWeightLb` | `coils.coil_gross_wgt` / `coil_net_wgt` | shared |
@@ -93,7 +108,7 @@ It runs as the **first statement inside the caller's transaction**, before any o
 | `planning_routings` rod→order allocation | shared | By Planning | **Read** | The scan resolves its order from here |
 | `wip_stations.coilno` | `CommonDB` | On successful check-in | **Write** | Unenforced; `WIPStations` has a UNIQUE index on `CoilNo`. **Claimed by `FlatWire_CheckInRod` and released by `FlatWire_ReleaseStation` (§8.0) — `OI-112` closed, 19 Aug 2026** |
 | `machines` FL1/FL2/FL3 | `united_db` | One-time registration (FW-003) | Seeded | machine_idx **125/126/127**, fixed so DEV/TEST/PROD agree |
-| `alloys.alloy_density` | `united_db` | Maintained by the Alloys module | **Read** | Via a `FlatWireDB..Alloys` view (§6.6) |
+| `alloys.alloy_density` | `united_db` | Maintained by the Alloys module | **Read** | Via the `FlatWireDB..Alloys` **synonym** (`[DBD §6.6]`, corrected 10 Sep 2026 — `P-353`; read *view* until then) |
 | `alloys.Draw_max_reduction` | `united_db` | Maintained by the Alloys module | **Read** | Via the same view |
 | **`wip_skids`** | `united_db` | **Opened / closed at coil completion (§8.1)** | **Write** | No local FK. **This is the skid table `CoilOutput.SkidId` points at — `OI-104` closed, 18 Aug 2026** |
 | **`wip_skid_coils`** | `proddb` | **One row per coil at completion (§8.1)** | **Write** | No local FK |
@@ -109,8 +124,10 @@ It runs as the **first statement inside the caller's transaction**, before any o
 > The cross-database table above lists `wip_stations.coilno` only as a **write** (claimed by
 > `FlatWire_CheckInRod`, released by `FlatWire_ReleaseStation`). **The Active Run Monitor reads
 > it back** to show the material checked in at a line — `FW-N16` owns the read and the
-> `FlatWireDB..WIPStations` view over it, following `[DBD §6.6]`'s one-object convention.
-> ⛔ **A view is a read, so `D-32` holds** — no shared object is altered.
+> `FlatWireDB..WIPStations` view over it. ⚠ **It is a view because it RESHAPES** — it renames
+> `WIPStation` → `Station` and trims the padding — not because a view is the convention:
+> `[DBD §6.6]` was corrected on 10 Sep 2026 (`P-353`) and the convention for a pass-through
+> read is a **synonym**. ⛔ **A view is a read, so `D-32` holds** — no shared object is altered.
 >
 > **Key on the station name.** `wip_stations_k0` is `UNIQUE CLUSTERED` on `WIPStation`, and
 > `@station = @machineName` by rule (`FlatWire_CheckInRod` throws `52005` otherwise), so `FL1` → the

@@ -12,7 +12,7 @@ owner:
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
 **Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** ✅ **Authored and current** — ⛔ *§3 carries no acceptance criteria of its own, and that is settled, not outstanding: measured, only 7 % of the 1,222 criteria cite any spec or `FR`, so they are original build detail and stay on their `[TB §7]` card. See [`README.md`](README.md).*
+**Status:** ✅ **Authored and current** — ⛔ *§3 carries no acceptance criteria of its own, and that is settled, not outstanding: most are original build detail rather than a restatement of a spec or `FR`, so they stay on their `[TB §7]` card. The measurement is [`[SCM §2.5]`](../../90-registers/StoryConsolidationMap.md)'s. See [`README.md`](README.md).*
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*
@@ -100,17 +100,17 @@ which is the one numbered obligation in this category and is a *non-functional* 
 than an `FR`.
 
 **The detailed acceptance criteria stay on the backlog cards, and that is deliberate.**
-This category's 32 criteria across 8 cards were measured, and **only 7 % of the 1,222 in the
-backlog cite any specification or `FR`** — they are original build detail (schema invariants,
+This category's 32 criteria across 8 cards are classified in
+[`[SCM §2.5]`](../../90-registers/StoryConsolidationMap.md), which owns the measurement: most are original build detail (schema invariants,
 seed values, deployment contracts, arithmetic rules), not a restatement of something upstream.
 Merging them up would either lose them or make this file three times its size, so
 [`[TB §7.2]`](../../60-delivery/TaskBreakdown.md) remains their home and this section is the
 **index and the coverage assertion** over them.
 
-⚠ **What is still owed here** is the coverage sweep, not a merge: confirming that every
-criterion on every absorbed card resolves to a requirement range above, to a cited screen
-specification, or to a stated gap in §6 — and that none is orphaned. That is the gate in front
-of the deletion step and no tool can do it.
+✅ **The coverage question is answered, not owed.** `[SCM §2.5]` adjudicated all 1,222 criteria
+and found the majority have **no upstream referent by design** — they are *how do I know this
+story is done* content, which is what a card is for. There is also no deletion to gate: the
+dissolution was reversed 9 Sep 2026 (`[SCM §3]`).
 
 ---
 
@@ -146,7 +146,7 @@ of the deletion step and no tool can do it.
 | Item | State | Blocks | What is missing |
 |---|---|---|---|
 | **`OI-101`** | ⛔ open | `FW-090` · `FW-193` | Shift boundaries are undefined. No shift start and end times, shift names, or weekend/holiday pattern exist anywhere in |
-| **`OI-57`** | ⛔ open | `FW-092` | Published tolerance bands per alloy and temper (ASTM B236, customer PO, or UA internal) are undefined. Sole tracking hom |
+| **`OI-57`** | ⛔ open | `FW-092` | Published tolerance bands per alloy and temper (ASTM B236, customer PO, or UA internal) are undefined ✅ PARTLY ANSWERED |
 | **`OI-99`** | ⛔ open | `FW-095` | Lot number is undefined when a coil has more than one source rod, which is the normal case under continuous welded feed. |
 | **`OQ-25`** | ⚠ no register | `FW-095` | **Retired prefix resolving to nothing** - needs retargeting or removal (`G61`) |
 | **`OQ-5`** | ⚠ no register | `FW-095` | **Retired prefix resolving to nothing** - needs retargeting or removal (`G61`) |
@@ -171,7 +171,7 @@ of the deletion step and no tool can do it.
 
 ⚠ **This file carries no `depends_on`.** Consolidation turns the acyclic task graph into a
 cyclic category graph - 15 mutually dependent pairs - so a category-level dependency list is
-unusable. Dependencies live **per activity** in section 5. The category-level direction is
+unusable. Dependencies live **per activity** in section 2. The category-level direction is
 recorded, generated, in [`[SCM §2.4]`](../../90-registers/StoryConsolidationMap.md).
 
 **On other categories — entirely downstream, with no back-edges.** `FS-16` → `FS-03`, `FS-08`,

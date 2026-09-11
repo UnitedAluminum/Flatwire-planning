@@ -1,10 +1,10 @@
 # Flat Wire Mill — Open Questions Register
 
 **Project:** Flat Wire Mill Implementation
-**Last Updated:** September 9, 2026 (the 12 Aug questions workbook returns, complete) — ⭐ **ALL 33 OPEN QUESTIONS IN THE CLIENT WORKBOOK ARE ANSWERED — 17 agree with the recommendation, 12 give a different answer, 4 need discussion.** Tim O'Brien returned the 12 Aug workbook on 9 Sep, 28 days out, with every row filled. **32 entries here carry the answer**; `Q26` is the 33rd and had already moved to [`Decisions.md`](Decisions.md) on 7 Sep, where its corroboration is recorded instead. ✅ **ELEVEN CLOSED OUTRIGHT AND MOVED TO [`Decisions.md`](Decisions.md)** — `Q6`, `Q9`, `Q11`, `Q13`, `Q14`, `Q16`, `Q18`, `Q20`, `Q23`, `Q24`, `Q31`, the ones whose recommendation was agreed with no qualifying text. **Body 73 → 62, index 60 → 49, measured not inherited.** ⛔ **THE OTHER 21 STAY OPEN DELIBERATELY** — 12 gave a different answer, 4 need discussion, and 5 agreed with a qualification that is not yet resolved. ⚠ **Four of them were on the *partly answered* list and have now left it** (`Q13`, `Q18`, `Q23`, `Q24`), so that paragraph reads **four**, not eight. ⭐ **`Q10`'s dimensional basis lands: NOMINAL, with the round-edge correction at FL1 output** — the half we declined to recommend on because it was UA's to state. ⭐ **`Q27` deletes a PLC write** (line speed is controlled at the HMI and never sent). ⭐ **`Q32` proves our own recommendation wrong**, which is why it shipped flagged — the dancer mode is machine-side, so the read-only view already built is the whole answer. ⛔ **`Q22` is a WORSE blocker than before:** the tolerance values finally arrived and they are per-vendor and per-size-band, which the `AlloyProperty` grain cannot hold — `G121`. ⛔ **`Q19` says FL2 tracks gauge live and six documents say it broadcasts `null`** — `G120`, and nothing was edited on the strength of it. ⚠ **`Q15`'s premise is void** — FL3 produces coils, not spools. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md). *(previously September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — ⭐ **`Q26` IS ANSWERED AND HAS LEFT THIS REGISTER — the shopfloor panel is 1920 × 1080.** It moves to [`Decisions.md`](Decisions.md), which is this register's convention: **every row here is `Open` by construction**, so a decided question does not change state in place, it moves. Gap `G23` and `OI-96` closed with it, and its superseded *"hold the 1280 × 1024 canvas"* recommendation went with the entry. Counts follow the move: **59 → 58** open, **51 → 50** shopfloor. ⛔ **The decision is not the end of the subject** — the panel's **physical diagonal** is still unrecorded and the 14 px floor rests on it, which is now the *Still open* line on the client-facing entry. *(previously September 4, 2026 — **`Q94` added: the crew-size vocabulary, and two FL3 rows in the Machine Setup grids that contradict each other.** Raised out of `FW-262`, which built the Setup/Handling Times and Material Loss schema from the 31 Aug per-line field sets. `SetupHandlingTimeStandard.CrewSize` ships `[PROPOSED]` with a **range** CHECK because the legacy vocabulary is *data* — `united_db.dbo.lookups` category `4061`, integer parsed out of a `varchar` description — so a hardcoded list would reject a crew size an administrator adds. ⛔ **FL3 keeps `SPC: Takeup-1` where there is no Takeup-1, and drops `SPC: FL1-Stand 1` where it does run through that stand** — the two point opposite ways, so a developer correcting each on its own merits would make both wrong. Both **seeded as pictured**, with the guard asserting them positively. Open questions **59 → 60**. *(previously September 3, 2026 — **`Q93` added: six readings in the client's pass-calculator formula document that the page cannot settle — and one of them decides whether the nominal product is makeable.** Tim O'Brien's twenty formulas arrived 2 Sep (`D-43`), every one of them a PNG image; `F14` is dimensionally invalid as printed, `F6` sums to zero, and the two footage formulas use a **square-edge** area where the two area formulas use a **rounded** one — a split that makes `[PSG §6.4]`'s own nominal product feasible on one basis and impossible on the other. **`Q10` amended** — the client's own `F1` is algebraically identical to `FR-332a`, so the footage dispute is now about density and edge geometry, not the formula. Open questions **58 → 59**. *(previously September 3, 2026 — **`Q92` added: what columns does the roll-set Tooling Inventory grid carry, and are capstan rolls the same tool option as mill rolls?** The client volunteered a **fourth** tool type (`D-42`) in one sentence, without the pictured grid the other three each arrived with. Four sub-questions travel with it — the column list, one option or two, what *"refurbished"* means against the edger's `In Grinding`, and what `Machine Name` a capstan roll carries. Open questions **57 → 58**. *(previously August 24, 2026 — **`Q87` added: the FL2 finished-coil label, and whether a coil built from two source rods prints one alpha or two.** Raised by us on the 24 Aug client call and deferred by UA the same day — *“we're going to have to figure out what the labeling is going to look like.”* It is the missing third member of the labelling set: **`Q44`** is the FL1 spool label, **`Q4`** is the skid, and the finished coil the customer receives had no owner. **`Q26`** also advanced without closing — the 1920×1080 requirement is now with Tim and Charles in writing. *(previously August 23, 2026 — **the `Spool` article registry is seeded at its real size: 45 rows, `SP-0001`…`SP-0045`** (44 active + `SP-0045` withdrawn), replacing four placeholder rows. **Four digits, not five, per `OQ-K`** — five would make a carrier number string-identical to a `SpoolProcessing.Alpha`. Seed-row total 210 → **251**; table/FK/index counts unchanged. `Q42` stays **open** on the format and on 30-vs-45. *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. Object counts…)*)*)*)*)*)*)*
+**Last Updated:** September 10, 2026 (the edger grid's five silences answered) — ⭐ **`Q95` IS ANSWERED ON ALL FIVE LEGS, `Q94` ON LEGS 2 AND 3, AND `Q46` OUTRIGHT.** Tim O'Brien's reply to the 8 Sep question list settles what distinguishes an edger set (gauge band **and** profile), the four-value edge-profile vocabulary, the natural key, and the two contradictory FL3 setup rows — which had **one** root cause, not two. ⛔ **`.100 STD Removal` was *“an arbitrary number that I entered”*, so the twelve-grind life model is withdrawn**, and ⛔ **the new tolerance data cites `ASTM B211/B211M` where 8 Sep cited `B233` for the same figures** — `Q110` is the send-back, ten items, three of them the client contradicting himself. `Q95` stays `Open` on the serial leg only. *(previously September 9, 2026 — the 12 Aug questions workbook returns, complete)* — ⭐ **ALL 33 OPEN QUESTIONS IN THE CLIENT WORKBOOK ARE ANSWERED — 17 agree with the recommendation, 12 give a different answer, 4 need discussion.** Tim O'Brien returned the 12 Aug workbook on 9 Sep, 28 days out, with every row filled. **32 entries here carry the answer**; `Q26` is the 33rd and had already moved to [`Decisions.md`](Decisions.md) on 7 Sep, where its corroboration is recorded instead. ✅ **ELEVEN CLOSED OUTRIGHT AND MOVED TO [`Decisions.md`](Decisions.md)** — `Q6`, `Q9`, `Q11`, `Q13`, `Q14`, `Q16`, `Q18`, `Q20`, `Q23`, `Q24`, `Q31`, the ones whose recommendation was agreed with no qualifying text. **Body 73 → 62, index 60 → 49, measured not inherited.** ⛔ **THE OTHER 21 STAY OPEN DELIBERATELY** — 12 gave a different answer, 4 need discussion, and 5 agreed with a qualification that is not yet resolved. ⚠ **Four of them were on the *partly answered* list and have now left it** (`Q13`, `Q18`, `Q23`, `Q24`), so that paragraph reads **four**, not eight. ⭐ **`Q10`'s dimensional basis lands: NOMINAL, with the round-edge correction at FL1 output** — the half we declined to recommend on because it was UA's to state. ⭐ **`Q27` deletes a PLC write** (line speed is controlled at the HMI and never sent). ⭐ **`Q32` proves our own recommendation wrong**, which is why it shipped flagged — the dancer mode is machine-side, so the read-only view already built is the whole answer. ⛔ **`Q22` is a WORSE blocker than before:** the tolerance values finally arrived and they are per-vendor and per-size-band, which the `AlloyProperty` grain cannot hold — `G121`. ⛔ **`Q19` says FL2 tracks gauge live and six documents say it broadcasts `null`** — `G120`, and nothing was edited on the strength of it. ⚠ **`Q15`'s premise is void** — FL3 produces coils, not spools. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md). *(previously September 7, 2026 (`G23` closed — the canvas is 1920 × 1080) — ⭐ **`Q26` IS ANSWERED AND HAS LEFT THIS REGISTER — the shopfloor panel is 1920 × 1080.** It moves to [`Decisions.md`](Decisions.md), which is this register's convention: **every row here is `Open` by construction**, so a decided question does not change state in place, it moves. Gap `G23` and `OI-96` closed with it, and its superseded *"hold the 1280 × 1024 canvas"* recommendation went with the entry. Counts follow the move: **59 → 58** open, **51 → 50** shopfloor. ⛔ **The decision is not the end of the subject** — the panel's **physical diagonal** is still unrecorded and the 14 px floor rests on it, which is now the *Still open* line on the client-facing entry. *(previously September 4, 2026 — **`Q94` added: the crew-size vocabulary, and two FL3 rows in the Machine Setup grids that contradict each other.** Raised out of `FW-262`, which built the Setup/Handling Times and Material Loss schema from the 31 Aug per-line field sets. `SetupHandlingTimeStandard.CrewSize` ships `[PROPOSED]` with a **range** CHECK because the legacy vocabulary is *data* — `united_db.dbo.lookups` category `4061`, integer parsed out of a `varchar` description — so a hardcoded list would reject a crew size an administrator adds. ⛔ **FL3 keeps `SPC: Takeup-1` where there is no Takeup-1, and drops `SPC: FL1-Stand 1` where it does run through that stand** — the two point opposite ways, so a developer correcting each on its own merits would make both wrong. Both **seeded as pictured**, with the guard asserting them positively. Open questions **59 → 60**. *(previously September 3, 2026 — **`Q93` added: six readings in the client's pass-calculator formula document that the page cannot settle — and one of them decides whether the nominal product is makeable.** Tim O'Brien's twenty formulas arrived 2 Sep (`D-43`), every one of them a PNG image; `F14` is dimensionally invalid as printed, `F6` sums to zero, and the two footage formulas use a **square-edge** area where the two area formulas use a **rounded** one — a split that makes `[PSG §6.4]`'s own nominal product feasible on one basis and impossible on the other. **`Q10` amended** — the client's own `F1` is algebraically identical to `FR-332a`, so the footage dispute is now about density and edge geometry, not the formula. Open questions **58 → 59**. *(previously September 3, 2026 — **`Q92` added: what columns does the roll-set Tooling Inventory grid carry, and are capstan rolls the same tool option as mill rolls?** The client volunteered a **fourth** tool type (`D-42`) in one sentence, without the pictured grid the other three each arrived with. Four sub-questions travel with it — the column list, one option or two, what *"refurbished"* means against the edger's `In Grinding`, and what `Machine Name` a capstan roll carries. Open questions **57 → 58**. *(previously August 24, 2026 — **`Q87` added: the FL2 finished-coil label, and whether a coil built from two source rods prints one alpha or two.** Raised by us on the 24 Aug client call and deferred by UA the same day — *“we're going to have to figure out what the labeling is going to look like.”* It is the missing third member of the labelling set: **`Q44`** is the FL1 spool label, **`Q4`** is the skid, and the finished coil the customer receives had no owner. **`Q26`** also advanced without closing — the 1920×1080 requirement is now with Tim and Charles in writing. *(previously August 23, 2026 — **the `Spool` article registry is seeded at its real size: 45 rows, `SP-0001`…`SP-0045`** (44 active + `SP-0045` withdrawn), replacing four placeholder rows. **Four digits, not five, per `OQ-K`** — five would make a carrier number string-identical to a `SpoolProcessing.Alpha`. Seed-row total 210 → **251**; table/FK/index counts unchanged. `Q42` stays **open** on the format and on 30-vs-45. *(previously August 23, 2026 — **`Spool` and `SpoolCarrier` are SWAPPED (`Q60`).** The reusable stencilled article is now **`Spool`** in `01_Lookup`; the material record is now **`SpoolProcessing`** in `03_Materials`; `CarrierNo` → `SpoolNo`. ⚠ **A stale `Spool` reference is now *silently wrong*, not obviously stale** — see `[DBD §6.2a]`, the naming convention this closed. Object counts…)*)*)*)*)*)*)*
 
 **Scope:** MVP-1
-**Open Questions:** 58 · **Shopfloor scope:** 50
+**Open Questions:** 59 · **Shopfloor scope:** 51
 **Status Legend:** `Open` — every question in this register is open
 **Recommendations:** every question carries one except `Q10` — **our proposed answer, not a decision**
 **Scope Legend:** `Shopfloor` — Flat Wire Mill shopfloor changes · `Other` — adjacent modules
@@ -21,7 +21,7 @@
 
 **57 of the 62 open questions relate to Flat Wire Mill shopfloor changes** — the operator execution screens (Dashboards 1–12+) plus the reference data, equipment limits and validation rules those screens consume. The remaining 8 belong to adjacent modules (planning, scheduling, certification, and the deferred pass-schedule generation engine) and are retained here marked `Scope = Other`. *(The line previously read "50 of the 57 … remaining 7", which had not been restated when `Q87` and `Q92` were minted; the filtered index below was correct throughout.)*
 
-**This register holds open items only.** The answered questions are in [FlatWireDecidedQuestions.md](./Decisions.md) with their decisions. **The two files share one numbering space** — open questions are **`Q1`–`Q55`, `Q59`, `Q87`, `Q92` and `Q93`** (59 entries) and decided questions run **`Q56`–`Q86`, `Q88` and `Q89`** (32 entries, not contiguous — a question is numbered when raised and moves across when decided), and a `Q##` lives in exactly one of the two files, so an `OQ-##` reference from the phase files, [REVIEW.md](../95-archive/design-notes/REVIEW.md) or the master specification resolves against whichever file holds that number. ⚠ **The open register was renumbered three times on 12 Aug 2026** — the last of them when 23 questions were withdrawn as ours to answer rather than the client's. **A `Q##` read in any document or commit written before that resolves against the maps in [CHANGELOG.md](../CHANGELOG.md)**, under this file's section, and the three maps must be read in order. Every inbound citation in the repository was rewritten in the same pass, so nothing outside `CHANGELOG.md` — which keeps its historical numbers by design — should still be on an older scheme.
+**This register holds open items only.** The answered questions are in [FlatWireDecidedQuestions.md](./Decisions.md) with their decisions. **The two files share one numbering space** — open questions are **`Q1`–`Q55`, `Q59`, `Q87`, `Q92`–`Q93` and `Q110`** (60 entries) and decided questions run **`Q56`–`Q86`, `Q88` and `Q89`** (32 entries, not contiguous — a question is numbered when raised and moves across when decided), and a `Q##` lives in exactly one of the two files, so an `OQ-##` reference from the phase files, [REVIEW.md](../95-archive/design-notes/REVIEW.md) or the master specification resolves against whichever file holds that number. ⚠ **The open register was renumbered three times on 12 Aug 2026** — the last of them when 23 questions were withdrawn as ours to answer rather than the client's. **A `Q##` read in any document or commit written before that resolves against the maps in [CHANGELOG.md](../CHANGELOG.md)**, under this file's section, and the three maps must be read in order. Every inbound citation in the repository was rewritten in the same pass, so nothing outside `CHANGELOG.md` — which keeps its historical numbers by design — should still be on an older scheme.
 
 **Every question carries a `Recommendation:` at the foot of its body, with one deliberate exception.** That is **our proposed answer — it is not a decision and carries no client authority.** **`Q10` (footage-to-weight conversion factor) carries none, by decision.** The dimensional basis it turns on — nominal or measured gauge and width, and whether the round edge is corrected for — is a measurement question United Aluminum must answer from its own practice, and a proposed default risks being adopted as the basis rather than confirmed. Every derived weight in the system rests on it, so it goes to the client as an open question. The `Recommended answer` field is optional in the workbook generator for this reason. It exists so a review is a confirm-or-correct exercise rather than a blank page, and so the build has a defensible default to work to while an answer is outstanding. Where the body already recorded a proposal, leaning or option preference, the recommendation crystallises **that** rather than inventing a new one. **Confirming a recommendation closes the question** — move it to [FlatWireDecidedQuestions.md](./Decisions.md) with the confirmation date and who gave it. Nothing here should be cited as settled, and nothing should be implemented as irreversible on a recommendation alone.
 
@@ -138,7 +138,8 @@ Two decided questions are only partly in MVP-1 and carry banners in [FlatWireDec
 | 92 | What columns does the **roll-set** Tooling Inventory grid carry, and are capstan rolls the same tool option as mill rolls? | `Shopfloor` | High | Tim O. / Maintenance | Open | |
 | 93 | Six readings in the pass-calculator formula document that the page cannot settle | `Other` | High | Tim O. / Process Engineering | Open | |
 | 94 | The crew-size vocabulary, and two FL3 rows in the Machine Setup grids that contradict each other | `Shopfloor` | High | Tim O. / Bob S. | Open | |
-| 95 | Five things the **edging-roll** Tooling Inventory grid does not say — serial number, set-letter scope, groove order, what `.100` measures, and whether the `Type` cell is the edge profile | `Shopfloor` | Medium | Tim O. / Maintenance | Open | |
+| 95 | Five things the **edging-roll** Tooling Inventory grid does not say — serial number, set-letter scope, groove order, what `.100` measures, and whether the `Type` cell is the edge profile | `Shopfloor` | Medium | Tim O. / Maintenance | Open |
+| 110 | Ten things the 10 Sep 2026 answers left undetermined — including `Bevel` vs `Broken Edge`, `400-B` vs `401-B`, the capstan location, and which ASTM standard governs rod tolerance | `Shopfloor` | High | Tim O. / Engineering | Open | |
 
 ---
 
@@ -177,6 +178,20 @@ Once the approach is confirmed, a secondary question must also be resolved: Is a
 
 **Q2** · `Critical` · Owner: Tim O. / Stephen · `Open`
 **FL3 scheduling representation**
+
+> ⛔ **THE CLIENT CONTRADICTED HIMSELF ON 10 SEPTEMBER 2026, AND THE 8 SEP AGREEMENT STANDS.**
+> Asked again whether FL3 is its own line or FL1 and FL2 linked, he replied *"This one is tough, I
+> would like to see what Stephen has to say on the matter as it directly affects him."* That is
+> **two days after** agreeing the recommendation below: *"I agree, a single FL3 booking should
+> reserve FL1/2 capacities."*
+>
+> ⛔ **Do not read the deferral as a withdrawal.** Nothing new was raised against the agreed shape;
+> he deferred a question he had already answered. The recommendation remains agreed, and the
+> send-back asks which of the two replies he intends to stand.
+>
+> ⚠ **Housekeeping this exposes:** this entry's header still reads `Open` while its body records
+> the 8 Sep answer, and **`OI-63`** still reads open on the same point. Reconcile all three
+> together, not one at a time.
 FL3 is the hybrid continuous mode (FL1 + FL2). How is it represented in the scheduling system — as a single machine booking entry, or as simultaneous bookings on both FL1 and FL2? Does scheduling a job on FL3 block both lines simultaneously?
 
 **Partial decision (May 4, 2026):** FL3 cannot run if there are scheduled orders on FL1 or FL2. FL1, FL2, and FL3 are treated as separate machines in scheduling. The remaining open point is how FL3 is represented as a booking unit and whether it generates a single combined booking or simultaneous entries on both lines.
@@ -247,6 +262,22 @@ Related: **`Q4`** (skid labelling — answer together, per constraint 4), **`Q44
 **Q92** · `High` · Owner: Tim O. / Maintenance · `Open`
 
 **What columns does the roll-set Tooling Inventory grid carry — and are capstan rolls the same tool option as mill rolls?**
+
+> ⭐ **TWO OF THE FOUR LEGS CLOSE — 10 SEPTEMBER 2026 — BUT THE GRID ITSELF IS STILL NOT SUPPLIED.**
+>
+> - ✅ **Capstan rolls are the same tool option** — *"While they are not the same, we could lump them
+>   in with the mill rolls to streamline the approach."* `ToolingInventoryRollSet` does **not** split.
+> - ✅ **`Machine Name` for a capstan roll is `FL1`** — *"FL1 would be the asset they are associated
+>   with"*.
+> - ✅ **What *"refurbished"* means** — the same operation as the edger's `In Grinding`: *"being
+>   resurfaced either roll grinding or outsourced"*. One vocabulary, not two.
+> - ⛔ **The column list is still owed** — *"Yes, I will put something together once we determine
+>   best approach for identifying."* So every column in the register remains **ours**, `G87` stays
+>   open, and `FW-259` / `FW-261` stay blocked.
+>
+> ⚠ **The `Location` half of the capstan answer contradicts itself:** *"DB1/DB2 would be the
+> location as 12" rolls would belong to FL1 but would be **located at FM1**."* `DB1`/`DB2` and `FM1`
+> are different stations. Back in the send-back.
 
 Raised **3 September 2026**, the day the client volunteered the fourth tool type. Asked whether stands, dancers and spools belonged on the Tooling Inventory tab, Tim answered:
 
@@ -520,6 +551,31 @@ Blocks the Phase 4 check-in and staging validation. Detail in [RodPreCheckin.md]
 > ⚠ **Two consequences that are not just schema.** The validation now needs the rod's **vendor** in hand at pre-check-in and check-in, which the current flow may not carry. And the ASTM floor is a **fallback**, not a value — a vendor row is *at least* as tight as the band, so the lookup is per-vendor-with-ASTM-default, not one or the other.
 >
 > ⛔ **DO NOT SEED AGAINST THE OLD SHAPE.** *"No values are to be seeded until the e-mail arrives"* has been satisfied, but seeding these per-alloy would record per-vendor figures as though they were alloy properties — worse than the empty table. **This stays a Phase 4 blocker** until the grain is settled. [`ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-09_QuestionsWorkbook_SyncPlan.md).
+
+> ⭐ **MORE DATA ARRIVED 10 Sep 2026, AT A WIDER GRAIN AGAIN — AND UNDER A DIFFERENT STANDARD.**
+> Tim O'Brien supplied **fifteen further bands** across four product forms: wire rod diameter and
+> ovality, **drawn wire** (three diameter bands), **flat wire with round edges** (three thickness
+> and three width bands) and **flat wire with a rolled flat edge / square edges** (three thickness
+> bands, and three width bands qualified *"All Tempers Except O, F, and H112"*). Transcribed in full
+> at [`ClientEmail_2026-09-10_EdgersTolerancesFL3_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-10_EdgersTolerancesFL3_SyncPlan.md) §3.1.
+>
+> ⛔ **THE STANDARD CITED CONFLICTS WITH THE ONE ON RECORD, AND THE NUMBERS DO NOT.** He now cites
+> **ASTM B211 / B211M** and gives `.375"`–`.500"` as ± `.020"` diameter and ± `.030"` ovality —
+> **identical figures** to the `B233` band recorded above, but a **different standard number**, and
+> the `.501"`–`1.000"` band is absent. `B211`/`B211M` and **ANSI H35.2** appear **nowhere** in this
+> repository; `B233` is cited in twelve live places, including **`FW-N22`**'s acceptance criterion.
+> ⛔ **Change no citation until the governing standard is confirmed** — it is in the send-back.
+>
+> ⛔ **AND THE GRAIN GETS WORSE, NOT BETTER.** `G121` already defeated the alloy grain with
+> *vendor × size band*. These bands are per **product form × size band × edge profile × temper**.
+> **Still nothing is seeded**, and `FW-N22` — which re-grains `AlloyProperty` — now carries a
+> **scope note**: it covers **rod only**, and its `B233` acceptance criterion is contested.
+>
+> ⭐ **These figures also reach a SECOND open item.** `OI-57` asks for *"published tolerance bands
+> per alloy and temper (ASTM B236, customer PO, or UA internal)"* and blocks the SPC control limits
+> and the gauge-trace report. The flat-wire tables **are** published bands and the square-edge width
+> table **is** temper-qualified — so `OI-57` is partly answered, at a grain that is per size band
+> and edge profile rather than per alloy. Amended there too.
 
 ---
 
@@ -923,6 +979,19 @@ Related: **`Q43`** (whether the lead alpha defaults the order selection), **`Q44
 **Q46** · `Medium` · Owner: Tim O. · `Open`
 **Mandrel / core diameter at FL1 — selected, fixed, or read?**
 
+> ✅ **ANSWERED 10 SEPTEMBER 2026 — AND IT IS THE RECOMMENDATION.** *"The diameter is **fixed for
+> the current application**, however we will be looking to expand FL1 into other product lines which
+> could warrant a collapsable spool(s) with different core diameters."* So reading **2** — *fixed by
+> the standard size, and therefore not entered* — and no per-spool capture is built.
+>
+> ⚠ **`Q46` was NOT among the 33 answered on 9 Sep 2026**, so this is its first answer.
+>
+> ⛔ **Do not narrow `SpoolConfiguration` to a single value.** `CK_SpoolConfig_CoreDiam` is
+> `Min < Max`, so a genuinely fixed diameter cannot be expressed by it at all. The seeded
+> `8.0000`–`12.0000` range is the configurability the 23 Jul call's `C9` asked for, and `12"` is
+> the current value, held as the maximum. The collapsible-spool expansion is **context, not
+> scope** — it is the condition under which this answer would be revisited.
+
 > **Context (August 20, 2026).** Confirmed on the same call that the carrier is captured at the **FL1 spool-completion transaction** and that the transaction cannot be created without it. Tim added a rider: *"Similar to kind of like when you're on a slitter and you have to select the mandrel size, almost like that. Like we need to know what spool is there. **We need to know what diameter mandrel is attached.**"*
 
 Nothing captures it. `SpoolConfiguration` carries `MinCoreDiameterIn` / `MaxCoreDiameterIn` as a **range on the size class**, which is not a selection, and no screen or table records a per-spool value.
@@ -1304,6 +1373,39 @@ Related: **`Q42`** (carrier format and where the registry is mastered), action *
 
 **Three things the two Machine Setup grids do not settle — the crew-size vocabulary, and two FL3 rows that contradict each other.**
 
+> ⭐ **LEGS 2 AND 3 ARE ANSWERED — 10 SEPTEMBER 2026 — AND THEY HAD ONE ROOT CAUSE, NOT TWO.**
+> This question said the two rows *"go back together"* because they *"point opposite ways"*. They
+> do, and the explanation is single: **FL3's `H1AA` SPC row named FL1's TAKEUP where it should have
+> named FL1's MILL.**
+>
+> - **Leg 2** — *"This is my mistake, it should have contained SPC FL1.FM1 not Takeup1."*
+>   `FL3`/`H1AA` seq 8 is now **`SPC: FL1-Stand 1`**.
+> - **Leg 3** — the absence was **correct**: *"SPC for FL3 at FL1.FM1 under H1B is not necessary as
+>   the stop is has been completed and these dimensions would not represent final gauge/width."*
+>   ⭐ Which also explains why FL1 legitimately **keeps** it in its own `H1B`: **FL1's output IS
+>   final gauge.** So the answer is *do not add it to FL3* — the opposite of what the material path
+>   suggested, and exactly why the guard asserted the state positively.
+> - **And a third instruction, not asked for:** *"FL2 and FL3 should have SPC at FL2.FM2 for H1B."*
+>   Both `H1B` blocks already carried `SPC: Takeup-2`; it is now **`SPC: FL2-Stand 3`**.
+>
+> ⚠ **Two parts of that are OUR READING and are in the send-back.** *"FL2.FM2"* names no stand —
+> `FL2-Stand 3` is chosen because S3 is final and non-bypassable and the canonical checkpoint is
+> *"FM2 S3 output"* — and we applied **replace** rather than **add**, which is what holds the counts
+> at `FL1 33 · FL2 29 · FL3 47` and the seed at 109. Adding would make FL2 30 and FL3 48.
+>
+> ⚠ **His labels are not adopted.** `SPC: FL1.FM1` / `SPC: FL2.FM2` occur nowhere in this
+> repository and `FL1.FM1` is a **PLC tag path**; `A12` forbids reconciling component identifiers
+> until the Speed tab lands. The table's own vocabulary is `FL1-Stand 1` / `FL2-Stand 1..3`.
+>
+> ✅ **Applied and measured on `DEV00164-001` after a teardown-and-deploy, 10 Sep 2026**, with
+> `FW-262`'s guard re-pointed in the same change.
+>
+> ⛔ **LEG 1 — THE CREW-SIZE VOCABULARY — IS UNTOUCHED, AND THIS QUESTION STAYS `Open` FOR IT.**
+> Honey Sachdeva asked it directly on **4 Sep 2026** (*"please confirm whether the Crew Size
+> dropdown is required for Flattening Line (FL) machines as well"*) and **that mail was never
+> answered** — the 10 Sep reply was written over the top of it. `CrewSize` keeps its range
+> `CHECK ([CrewSize] BETWEEN 1 AND 9)` and its `[PROPOSED]` marker.
+
 Raised **4 September 2026** against the per-line field sets of 31 Aug 2026 (the Setup/Handling Times and Material Loss tabs), now built as `FlatWireDB` schema by **`FW-262`**. The schema seeds **exactly what the grids picture**; these three are what it could not derive.
 
 **1. Are the flattening lines' crew sizes the same three the slitters use?** ✅ **Measured, 4 Sep 2026 — the vocabulary is `1`, `2`, `3`.** `united_db.dbo.lookups` category `4061` holds exactly three active rows (`Crew Size 1` / `2` / `3`, descriptions `1` / `2` / `3`, all status `A`), and `united_db.dbo.Slitters_Standards` carries exactly those three across six machines — 18 rows, 6 per crew size. ⚠ **The lookup is named `CrewSizeForMachineStandards`, not slitter-specific**, so on the face of it Flat Wire inherits the same three; what is *not* evidenced is whether a flattening line crew is sized the same way. **That is the whole of the remaining question**, and it is much cheaper than the open-ended one this replaces. The STANDARD SPECIFICATIONS page carries a **Crew Size** selector and the standard time is stored per crew size — verified in the legacy app, where `united_db.dbo.Slitters_Standards` holds one row per `(Machine_Idx, Crew_Size)` and `Machine_GetSetupHandlingTimeForSlitter` filters on both. The grids themselves show no list. In the legacy system there is no fixed list to find: the values are **data**, in that lookup, with the integer **parsed out of a `varchar(512)` free-text description** — and they are **not in source control at all**, only in the live database. So `SetupHandlingTimeStandard.CrewSize` keeps a range `CHECK ([CrewSize] BETWEEN 1 AND 9)` and stays **`[PROPOSED]`** even now that the three values are known: the range admits `1`–`3` today and survives an administrator adding a fourth, which a hardcoded `IN (1,2,3)` would reject at save time.
@@ -1328,6 +1430,36 @@ Related: **`FW-262`** (the schema this came out of), **`FW-003`** (the tab confi
 
 **Five things the edger Tooling Inventory grid does not say — and one of them decides how a roll set is identified at all.**
 
+> ⭐ **ANSWERED 10 SEPTEMBER 2026 — ALL FIVE LEGS, AND FOUR OF THEM OUTRIGHT.** Tim O'Brien, replying
+> to Yogender Punia's 8 Sep list. **This question stays `Open` on leg 1 only**, which is with his
+> engineering group, following the register's standing pattern for partly-answered questions.
+>
+> | Leg | Answer | Where it went |
+> |---|---|---|
+> | 1 — serial number | ⚠ **Partial.** *"The edgers are designed by UA and then sent out for production … This is not to say that we can assign a SN, however I would need to verify with engineering."* | `SerialNo` **stays**, and stays `[PROPOSED]`. The leg's *"the column should go rather than sit empty forever"* does **not** fire |
+> | 2 — is `Set Number` unique? | ✅ Encoded and shop-unique — `400-S` / `401-S` / `402-S` / `400-R` / `400-B`, stem = gauge band, suffix = profile | **`UQ_ToolingInventoryEdger_Set (MachineName, SetNumber)`** taken. **`G104` closed** |
+> | 3 — are grooves numbered? | ✅ Identified *"by groove gauge range and profile"*, not by position. 1–5+ per roll, one profile per set, differing heights | **`GrooveNo` dropped**, exactly as this leg provided for |
+> | 4 — does `.100` mean per grind? | ⛔ *"This was an arbitrary number that I entered … This could also be variable depending on the groove width range."* | **The *"about twelve grinds"* life model is withdrawn as fact.** See `G77` |
+> | 5 — is a set classified by profile? | ✅ **Yes, definitionally** — *"edger sets are distinguished from one another by gauge band and profile (edge type)"*, *"a set will NOT share different profiles"*, profile *"per set"* | **`EdgeType` back to `NOT NULL`**, settling `D-53`'s relaxation limb |
+>
+> ⛔ **Leg 4 is the one that mattered most, and it landed the way the recommendation feared.** This
+> question warned that `.100` was *"the one that silently produces wrong numbers rather than an
+> obviously empty field"*. It was invented. **No screen may display a remaining-grinds or
+> remaining-life figure** until engineering supplies the standard.
+>
+> ⚠ **Leg 2's answer arrived with a proposal attached, and the proposal is NOT built.** *"We may
+> need to track as individual rolls … I am open to suggestions and alternatives, lets discuss."*
+> Building a roll-level table on one sentence is precisely the `G87` mistake. ⚠ **And his own
+> sample contradicts his scheme:** two rows read `400-B` with roll prefix `R2` and gauge
+> `.015-.025`, where the stem should read `401`. Both went back — see the send-back.
+>
+> ⭐ **Leg 5 also supplied the edge-profile vocabulary, which closes `G76`:** `Natural Round Edge`
+> (no edging) · `Full Round Edge` · `Square Edge` · `Broken Edge`. ⚠ **The tool takes only three of
+> them** — nothing is ground for *no edging* — so `CK_TIE_EdgeType` and `CK_PSC_EdgeType` now differ
+> in **cardinality** as well as meaning. Do not align them.
+>
+> Recorded at [`ClientEmail_2026-09-10_EdgersTolerancesFL3_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-10_EdgersTolerancesFL3_SyncPlan.md).
+
 Raised **6 September 2026**, when `Edger` was absorbed into **`ToolingInventoryEdger`** (`D-53`). Unlike the roll sets of `Q92`, **the edger grid exists and was followed** — all fourteen columns of the 31 Aug 2026 screenshot are built, in order. These are the residue where that grid is **silent**, and `G104` is the gap.
 
 1. **Is there a serial number for an edger roll set?** The **die** and **straightener** grids both carry `S/N`; **the edger grid does not**. `SerialNo` is modelled here only for consistency with `ToolingInventoryDie` and `ToolingInventoryRollSet`, as a filtered-unique column. If edger sets genuinely have no serials, the column should go rather than sit empty forever.
@@ -1342,8 +1474,40 @@ Raised **6 September 2026**, when `Edger` was absorbed into **`ToolingInventoryE
 
 **Why:** these are **not** `G87` repeated. `G87` says the roll-set register was built from **one sentence** with no grid at all; here the grid was supplied and followed, and the risk is narrower — a tab that asks for a serial number that does not exist, or refuses to save a tool because it has no name. That is an operator-facing failure, not a schema one.
 
-**What was done meanwhile:** the register is **built and seeded** — two sets (`A` Round, `B` Square) from the client's own sample row, three gauge rows on set `A` (`.045` / `.040` / `.035`), and set `B` deliberately **ungauged** because the grid does not say what a square-edge set carries. Every one of the five columns above is marked `[PROPOSED]` at its site.
+**What was done meanwhile:** the register is **built and seeded** — ~~two sets (`A` Round, `B` Square)~~ **restated 10 Sep 2026 as `400-R` Full Round Edge and `400-S` Square Edge, with both sets now gauged** (leg 6's *"1-5+ grooves … all the same profile"* made set 2's grooves derivable, where before only set 1 was gauged), from the client's own sample row, three gauge rows on set `A` (`.045` / `.040` / `.035`), and set `B` deliberately **ungauged** because the grid does not say what a square-edge set carries. Every one of the five columns above is marked `[PROPOSED]` at its site.
 
 **What is blocked meanwhile:** nothing in the schema, and nothing in the pass schedule — `FK_PSC_Edger` re-points cleanly and the seeded `EdgeSet` rows needed no change. What waits is `FW-268`'s reconciliation and the *Edgers* option on the Tooling Inventory tab.
 
 Related: **`D-53`** (the absorption this came out of), **`G104`** (the gap), **`G77`** (straightener inventory — still no schema at all), **`Q92`** (the same send-back for roll sets, still open), **`OI-77`** (edger blade profiles — the **profile** half is still untouched), **`OI-141`** (who owns tooling inventory, now across **three** built registers), **`G74`** (`CK_PSC_ComponentName` offers one `EdgeSet` value for two stations — **not** addressed by this).
+
+
+---
+
+**Q110** · `High` · Owner: Tim O. / Engineering · `Open`
+
+**Ten things the 10 September answers left undetermined — including two where the client's own reply contradicts itself, and one that must be settled before a shipped enum can be widened.**
+
+Raised **10 September 2026** against Tim O'Brien's reply to Yogender Punia's 8 Sep list, which answered `Q95` in full, `Q94` legs 2–3, `Q46` and `G76`. These are the residue, and three of them are internal inconsistencies rather than gaps.
+
+1. ⛔ **Is `Bevel edge` the same profile as `Broken Edge`?** ⭐ **Answer this before anything else here.** The new vocabulary is `Natural Round Edge` · `Full Round Edge` · `Square Edge` · `Broken Edge`. Dashboards 9 and 9A offer **Round / Flat / Bevel**, and **`OI-05`** has been open on exactly that: *"either a fourth vocabulary or dead UI"*. `Bevel` is not in the list and `Broken Edge` is. If they are the same thing, `OI-05` closes on one line. ⚠ **This gates real work:** `FW-147` is `done` and its enforcement **is** the two-member C# enum — *"the absence is the enforcement, so a 'helpful' addition breaks it"* — so widening it twice is the cost of guessing.
+2. ⛔ **`400-B` or `401-B`?** In the supplied roll table the numeric stem encodes the gauge band — `400` = `.035–.045`, `401` = `.015–.025`, `402` = `.065–.075` — and the suffix the profile. The two `Broken` rows read **`400-B`** with roll prefix `R2` and gauge `.015-.025`, both of which say `401`. Either they are `401-B`, or the stem encodes nothing and the natural-key scheme collapses.
+3. ⛔ **Roll-level tracking — confirm the shape before it is built.** *"We may need to track as individual rolls, and have assigned set numbers, with profile and gauge range identifiers. I am open to suggestions and alternatives, lets discuss."* ⛔ **Nothing has been built on that sentence** — doing so is the `G87` mistake. **Our proposal:** keep `(MachineName, SetNumber)` as the set-level key (already taken) and add a `ToolingInventoryEdgerRoll` child holding `RollNo` per set, so a set stays one row and its rolls are countable. Confirm or replace.
+4. ⛔ **Where is a capstan roll located — `DB1`/`DB2`, or `FM1`?** The answer says both: *"DB1/DB2 would be the location as 12" rolls would belong to FL1 but would be located at FM1."* The other three tooling grids all carry a station in that column.
+5. ⛔ **Which standard governs rod dimensional tolerance — `ASTM B233` or `ASTM B211 / B211M`?** On 8 Sep the `.375"`–`.500"` band was cited to **B233**; on 10 Sep the **same figures** were cited to **B211 / B211M**, and the `.501"`–`1.000"` band was omitted. `B233` is cited in **twelve live places** in our documents, including `FW-N22`'s acceptance criterion; `B211`/`B211M` and `ANSI H35.2` appear in none. ⛔ **No citation will be changed until this is settled.**
+6. ⛔ **Does *"SPC at FL2.FM2"* mean stand **S3**, and does it REPLACE `SPC: Takeup-2` or sit beside it?** Both `H1B` blocks already carried an SPC at Takeup-2. **We applied replace, at `FL2-Stand 3`**, because S3 is final and non-bypassable and the canonical checkpoint is *"FM2 S3 output"*. Replace holds the element counts at `FL1 33 · FL2 29 · FL3 47`; **add** would make them `33 / 30 / 48` and move the 109-row seed. Confirm the reading.
+7. ⛔ **Does `Crew Size` apply to the flattening lines?** This is `Q94` leg 1, and **Honey Sachdeva asked it directly on 4 Sep 2026 and received no reply** — the 10 Sep mail was written over the top of her mail. The vocabulary is already *measured* from the legacy app as `1` / `2` / `3`, but `CrewSize` keeps a range `CHECK` and a `[PROPOSED]` marker until this is confirmed.
+8. ⛔ **The rest of Honey's 4 September list, still unanswered:** the **field type** (label / textbox / dropdown / checkbox) for every column under **Dies**, **Edgers**, **Straighteners** and **Roll Sets** when a row is added or edited; and the **Roll Sets column list** (still `Q92`).
+9. ⛔ **The rod footage ± ft tolerance — he returned the question:** *"are you asking for the tolerance for the linear footage calculations?"* **Yes.** `D-37` records that footage *"is calculated and carries a ± x ft tolerance from ovality"* and that *"the formula worksheet is still owed"*. We owe him this clarification before he can answer.
+10. ⛔ **`STD Removal From OD`, and whether it varies by groove width range** — *"I will need to verify with engineering what the actual standard would be."* Until it lands, **no screen may display a remaining-grinds or remaining-life figure** (`Q95` leg 4). Same for an **edger serial number**, which he may be able to assign *"however I would need to verify with engineering"*.
+
+> ⚠ **Three of these are the client contradicting the client, not gaps in our reading** — items 2, 4 and 5 — and one more sits in `Q2`, where the 10 Sep deferral to Stephen reverses his own 8 Sep agreement. Those are cheap to settle and expensive to guess.
+
+**Recommendation:** answer **1** first and in isolation — it is a yes/no that unblocks a shipped enum. Then **2**, **4** and **5**, which are one line each because they are internal inconsistencies. **6** is ours to confirm rather than his to invent. **3** deserves a short call rather than an e-mail.
+
+**Why:** the failure mode here is not an empty field but a **plausible wrong one**. Item 5 would put the wrong standard on a specification; item 2 would build a key on an encoding that does not hold; item 1 would have us remove an enforcement mechanism and then restore it.
+
+**What was done meanwhile:** everything unambiguous was applied — see [`ClientEmail_2026-09-10_EdgersTolerancesFL3_SyncPlan.md`](../95-archive/source-documents/ClientEmail_2026-09-10_EdgersTolerancesFL3_SyncPlan.md) §5. Each of our readings is marked as ours at the site where it was applied, so none of them can be mistaken for the client's words later.
+
+**What is blocked meanwhile:** the `EdgeType` enum widening in `ual-api` and `ual-angular` waits on item 1. `FW-259` / `FW-261` wait on `Q92`. `AlloyProperty` is seeded with nothing, so `FW-N22` and `CL-05` are unchanged.
+
+Related: **`Q95`** (answered by the same mail), **`Q94`** (legs 2–3 answered, leg 1 is item 7 here), **`Q92`** (items 3, 8), **`Q22`** / **`G121`** / **`OI-57`** (item 5), **`OI-05`** (item 1), **`Q2`** / **`OI-63`** (the FL3 self-contradiction), **`A12`** (still open on the Speed tab leg — a fourth consecutive message), **`OI-143`** (unanswered a third time).

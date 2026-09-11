@@ -29,14 +29,14 @@ The HTML files in [`Mockups/`](Mockups/) are the **approved visual baseline and 
 |---|---|---|---|---|
 | **DB1** | Line Status Overview | `dashboard_1_line_status.html` | Supervisor / Foreman | Always visible — the floor master board |
 | **DB2A** | Rod Pre-Check-in Station (FL1/FL3) | `dashboard_2a_rod_precheckin.html` | FL1 operator | Staging the next rod while the current coil runs |
-| **DB2** | Rod Check-in & Pre-Run Setup | **`dashboard_2_rod_checkin.html`** | FL1 operator | Start of each rod |
+| **DB2** | **Check-in & Pre-Run Setup — ONE screen, all three stations (`D-60`)**: FL1 rod, FL2 spool, FL3 rod | **`dashboard_2_rod_checkin.html`** + `dashboard_5_spool_checkin.html` for FL2 **content** | FL1, FL2, FL3 operator | Start of each rod or spool |
 | **DB2-FL3** | Rod Check-in — FL3 hybrid variant | `dashboard_2_rod_checkin_fl3.html` | FL3 operator | Start of each hybrid rod *(older layout — OI-16)* |
 | **DB3** | Active Run Monitor — **one screen, all three lines** *(`D-55`, 7 Sep 2026: built once at `#/flat-wire/flatline/:machineName` — ⭐ **the segment is `flatline`, `D-59`, 10 Sep 2026**, and this row said `home` until then; the three rows below are **content variants**, not separate screens, and only four things differ by line)* | `dashboard_3_active_run.html` *(the earlier left-rail layout that held this filename was withdrawn 1 Aug 2026, git history at `2a0426b`; this file was named `dashboard_3_active_run_v2.html` until 11 Aug 2026)* | FL1 operator | During every run |
 | **DB3-FL2** | Active Run Monitor (FL2) | `dashboard_3_active_run_fl2.html` | FL2 operator | During every FL2 run |
 | **DB3-FL3** | Active Run Monitor (FL3) | `dashboard_3_active_run_fl3.html` | FL3 operator | During every hybrid run |
 | ~~**DB4**~~ | ~~Weld Event Logger~~ — **RETIRED 1 Aug 2026**, folded into DB2A's *Mark as welded* dialog | ~~`dashboard_4_weld_event.html`~~ *(deleted; git history at `2a0426b`)* | — | — |
 | **DB5A** | FL2 Spool Queue | `dashboard_5a_spool_queue.html` | FL2 operator | Choosing which spool to run next *(added 2 Aug 2026)* |
-| **DB5** | FL2 Spool Check-in | `dashboard_5_spool_checkin.html` | FL2 operator | Loading each spool onto the TPO |
+| ~~**DB5**~~ | ~~FL2 Spool Check-in~~ — ⛔ **merged into DB2 by `D-60`**, 10 Sep 2026. Its mockup remains the **content** authority for FL2; only the layout is now shared. `FW-064` retired into `FW-061` | `dashboard_5_spool_checkin.html` | FL2 operator | Loading each spool onto the TPO |
 | **DB6** | SPC Checkpoint Entry — **dialog** | `spc_checkpoint.js` *(launcher: `dashboard_6_spc_checkpoint.html`)* | Any operator | Pre-run, post-die-change, spot check |
 | **DB7** | Output Coil Completion & Label | `dashboard_7_coil_completion.html` | FL2/FL3 operator | Coil complete at TKUP-2 |
 | **DB7b** | Packing Station | `dashboard_7b_packing_station.html` | Packing operator | Coil arrives from a line |
@@ -177,13 +177,13 @@ fail; see *Before you write code* in the repository [`CLAUDE.md`](../CLAUDE.md) 
 | Dashboard | Phase | Scope |
 |---|---|---|
 | 1 Line Status Overview | 3 | MVP-1 |
-| 2 Rod Check-in (FL1/FL3) | 4 | MVP-1 |
+| 2 Check-in — all three stations (`D-60`) | 4 · **FL2 steps Phase 8** | MVP-1 |
 | 2A Rod Pre-Check-in | 4 | MVP-1 |
 | 3 Active Run Monitor (FL1/FL3) | 5 | MVP-1 |
 | 3 (FL2 variant) | 8 | MVP-1 |
 | ~~4 Weld Event~~ | ~~6~~ | **RETIRED 1 Aug 2026** — the mockup was deleted (git history at `2a0426b`) and weld capture moved to Dashboard 2A's dialog. `FW-063` still delivers the weld event; it has no screen of its own. Two things did not move — see **G27** |
 | 5A FL2 Spool Queue | 8 | MVP-1 |
-| 5 FL2 Spool Check-in | 8 | MVP-1 |
+| ~~5 FL2 Spool Check-in~~ — merged into 2 (`D-60`) | ~~8~~ | MVP-1 |
 | 6 SPC Checkpoint | 4 (pre-run), 6 | MVP-1 |
 | 7 Output Coil Completion / 7b Packing | 9 | MVP-1 — **returned 11 Aug 2026**; Phase 9 is wholly MVP-1 |
 | 8 WIP Rejection | 7 | MVP-1 |

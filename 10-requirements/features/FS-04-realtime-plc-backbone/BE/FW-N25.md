@@ -42,7 +42,16 @@ completed:
 - [ ] ⛔ **The line speed write is removed.** Speed is controlled at the machine and is exposed to us as a **read** only
 - [ ] ⚠ **The safety consequence this was raised for disappears with it** — an acknowledgement can no longer start a threading line at scheduled speed, because it no longer sends a speed
 - [ ] The pass schedule still carries a recommended speed; it is **advisory to the operator**, not pushed
-- [ ] A **coil outside-diameter read** is added — engineering derives it from encoder footage against take-up speed and exposes it
+- [ ] A **coil outside-diameter read** is added — engineering derives it from encoder footage
+      against take-up speed and exposes it
+- [ ] ⚠ **A SECOND, SEPARATE READ: SPOOL OD AT FL1's TAKEUP-1** — added 10 Sep 2026. *"Spool OD
+      will be calculated through the **OIT** and will be available as an OPC tag."* ⛔ **This is not
+      the coil read above** — that one is FL2 output derived from footage against take-up speed;
+      this is a different measurement in a different place, on the rod line. ⚠ **It also
+      contradicts `FR-271`**, which says Spool OD is *"auto-populated from Rod Buildup and Spool
+      ID"* — see **`G127`**, and resolve that before publishing the path. ⚠ **"OIT" is undefined
+      in this repository** (presumed Operator Interface Terminal). ⛔ **The path itself belongs in
+      `[PLC]` and nowhere else**, and stays unconfirmed until commissioning `C1`/`C11`
 - [ ] **Edger position** becomes addressable on the two finishing lines; ⛔ **blade profile is not a signal and never will be** — the edgers are grooved rolls, not knives
 - [ ] The dancer elements stay **read-only by decision**, not by omission — the mode is selected at the machine
 - [ ] The push loses one of its six value groups; the acknowledgement contract and its tests follow

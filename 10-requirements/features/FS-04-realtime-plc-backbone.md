@@ -12,7 +12,7 @@ owner:
 **Project:** United Aluminum (UAL) — Flat Wire Mill Module
 **Last Updated:** September 9, 2026 — sections 1, 4, 6, 7 and 8 authored
 **Document Type:** Consolidated parent story — the single source of truth for this functional area
-**Status:** ✅ **Authored and current** — ⛔ *§3 carries no acceptance criteria of its own, and that is settled, not outstanding: measured, only 7 % of the 1,222 criteria cite any spec or `FR`, so they are original build detail and stay on their `[TB §7]` card. See [`README.md`](README.md).*
+**Status:** ✅ **Authored and current** — ⛔ *§3 carries no acceptance criteria of its own, and that is settled, not outstanding: most are original build detail rather than a restatement of a spec or `FR`, so they stay on their `[TB §7]` card. The measurement is [`[SCM §2.5]`](../../90-registers/StoryConsolidationMap.md)'s. See [`README.md`](README.md).*
 **Owner:** —
 **Audience:** Anyone changing this functionality, and anyone assessing the impact of a change to it
 **Shortcode:** — *(derived from the specifications; **not** citable as a requirement)*
@@ -116,7 +116,7 @@ Per [`[SCM §2.3]`](../../90-registers/StoryConsolidationMap.md); the count and 
 | `FW-205` | ✅ done | ✅ **Built — `ITInhibitService` is live in `ual-api`, 0 errors and no new analyzer warning, and the host boots under Development scope validation.** ⚠ **Two things a green build does not mean:** `G59`'s **bearer-token** half is unt |
 | `FW-210` | ✅ done | ✅ **BUILT and harness-verified 31 Aug 2026 (§5.1) — 65 checks, 0 failures.** Models exercised directly against the built `FlatWire.Domain`, then the host booted and `/sim` probed both ways: three distinct model types; **FL1 3 · FL |
 | `FW-211` | ✅ done | ✅ **BUILT and verified 31 Aug 2026** — inside `FW-210`'s build, results recorded once at `FW-210 §5.1`; every row holds, **eight of eleven as measurements**, three by construction. §5.2 closed the three gaps by **diff, not argumen |
-| `FW-212` | ✅ done | ✅ **Built and harness-verified 31 Aug 2026** — 42/42 checks. ⛔ **AC 1 end-to-end stays unverifiable**: push group 6 has no tag path on any line |
+| `FW-212` | ✅ done | ⚠ **`PassScheduleComponentSnapshot.EdgeType` TAKES THE FOUR-VALUE VOCABULARY FROM 10 Sep 2026 (`D-61`), CARRIED IN **`FW-N34`**.** ✅ **Low risk precisely because this story records the field as *'carried and unread'*** — the type  |
 | `FW-213` | ✅ done | ✅ **Built and harness-verified 31 Aug 2026** — 58/58 checks, 0 errors, 14 warnings byte-identical to the baseline. ⛔ `ToTarget` and `WeightVariance` ship inert and decline by name (`Q10`/`OI-45`) |
 | `FW-214` | ✅ done | ✅ **Built and harness-verified 31 Aug 2026** — 36/36 checks, 0 errors, **0 warnings**, and it builds standalone. ⛔ New gap `G69`: the run-status chip has no source on any wire |
 | `FW-215` | ✅ done | ✅ **Built and harness-verified 1 Sep 2026** — **71/71 harness checks**, 0 errors, **14 warnings byte-identical to the baseline**, and the gate measured in all three configurations (`404` with no model hosted, `401` with the feed s |
@@ -258,7 +258,7 @@ transaction and its missing recovery path), `G34` (wire break), `OI-45` (footage
 
 ⚠ **This file carries no `depends_on`.** Consolidation turns the acyclic task graph into a
 cyclic category graph - 15 mutually dependent pairs - so a category-level dependency list is
-unusable. Dependencies live **per activity** in section 5. The category-level direction is
+unusable. Dependencies live **per activity** in section 2. The category-level direction is
 recorded, generated, in [`[SCM §2.4]`](../../90-registers/StoryConsolidationMap.md).
 
 **On other categories.** `FS-04` → `FS-01`, `FS-02`, `FS-03`, `FS-05`, `FS-07`, `FS-18` and

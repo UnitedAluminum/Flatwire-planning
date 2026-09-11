@@ -85,8 +85,9 @@ clean: `STATUS.md` regenerates byte-identical to its pre-dissolution content.
 ### ⛔ Acceptance criteria are not merged up — corrected on measurement, 9 Sep 2026
 
 An earlier draft of this folder's rules said the cards' acceptance criteria would be **merged to the
-`FR` level and cited**, on the assumption that they restated something upstream. **Measured: of
-1,222 criteria, only 7 % cite any specification or `FR`.** They are original build detail — schema
+`FR` level and cited**, on the assumption that they restated something upstream. **Measured in
+[`[SCM §2.5]`](../../90-registers/StoryConsolidationMap.md): the large majority cite no
+specification and no `FR`.** They are original build detail — schema
 invariants, seed values, deployment contracts, vendor tolerances, arithmetic rules — so for most
 there is no `FR` to merge to, and stripping them would have destroyed the majority of the module's
 buildable detail.
