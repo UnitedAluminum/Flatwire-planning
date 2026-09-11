@@ -14,6 +14,10 @@
   as well (35_, FW-N16). They lived in united_db until 26 Aug 2026; change [H] moved them into
   FlatWireDB.
 
+  Since 10 Sep 2026 it also drops the two shared-read SYNONYMS - dbo.coils and dbo.Alloys (36_,
+  FW-N35, P-353). All three of those objects are READS over someone else's table: dropping them
+  removes a name and nothing else, and the shared tables are untouched (D-32).
+
   *** READ THIS BEFORE ASSUMING THE FILE IS NOW REDUNDANT. ***
 
   [H] INVERTED THIS SCRIPT'S ORIGINAL REASON FOR EXISTING, and the old text is worth stating so
@@ -158,6 +162,37 @@ BEGIN
 END
 ELSE
     PRINT 'Not present: WIPStations (view)';
+GO
+
+/*----------------------------------------------------------------------------------------------
+  The two shared-read SYNONYMS go the same way, and for the same reason (added 10 Sep 2026).
+
+  36_FlatWireDB_Synonyms_SharedReads.sql creates FlatWireDB.dbo.coils over CommonDB.dbo.coils and
+  FlatWireDB.dbo.Alloys over united_db.dbo.Alloys (FW-N35, P-353). They are dropped here because
+  backing out a bad cross-database deploy while FlatWireDB survives has no other way to remove them.
+
+  *** DROPPING THEM REMOVES TWO NAMES AND NOTHING ELSE. *** A synonym is an alias; the shared
+  CommonDB.dbo.coils and united_db.dbo.Alloys tables are untouched, exactly as D-32 requires.
+
+  ⚠ N'SN' is the object type for a synonym. Passing N'U' or N'V' here finds nothing and the drop
+  silently does not happen - which looks identical to a clean teardown.
+----------------------------------------------------------------------------------------------*/
+
+IF OBJECT_ID(N'[dbo].[coils]', N'SN') IS NOT NULL
+BEGIN
+    DROP SYNONYM [dbo].[coils];
+    PRINT 'Dropped: coils (synonym - the shared CommonDB table is untouched)';
+END
+ELSE
+    PRINT 'Not present: coils (synonym)';
+
+IF OBJECT_ID(N'[dbo].[Alloys]', N'SN') IS NOT NULL
+BEGIN
+    DROP SYNONYM [dbo].[Alloys];
+    PRINT 'Dropped: Alloys (synonym - the shared united_db table is untouched)';
+END
+ELSE
+    PRINT 'Not present: Alloys (synonym)';
 GO
 
 PRINT '=== FlatWire procedure teardown (FlatWireDB): done ===';

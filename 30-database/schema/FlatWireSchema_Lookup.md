@@ -96,7 +96,7 @@ The name is the client's own term: the Machines Application **Tooling Inventory*
 | `DieType` | varchar(20) | NULL | — | `TC Mono` · `TC Poly` · `Natural diamond` (`FR-247`). Also what §2.4's *"must match the outgoing die type"* compares |
 | `LastGrindingFeet` | decimal(10,2) | NOT NULL | — | Feet run **since the last grinding / reconditioning** — a resettable counter, not the reading *at* that grind. Default `0` |
 | `TotalFeetAllowed` | decimal(10,2) | NULL | — | Scheduled life — maximum footage before the die is pulled. NULL until the client supplies thresholds (`OQ-83`) |
-| `LifecycleStatus` | varchar(20) | NOT NULL | — | `Active` · `In Service` · `In Grinding` · `Retired`. Default `In Service` |
+| `LifecycleStatus` | varchar(20) | NOT NULL | — | `Active` · `In Service` · `In Grinding` · `Inactive`. Default `In Service` |
 | `InUse` | bit | NOT NULL | — | Client grid `In Use`. Default `0`. Feeds the derived `Spare` band |
 | `Source` · `Condition` · `InspectionDate` · `Notes` | varchar / date | NULL | — | `FR-247` registration fields |
 | `LastResetBy` · `LastResetAt` | varchar / datetimeoffset | NULL | — | `FR-245` / `FR-248` |
@@ -119,7 +119,7 @@ The name is the client's own term: the Machines Application **Tooling Inventory*
 
 The client's grid carries three values (`Active` · `In Service` · `In Grinding`); `FR-253` specifies five (`Active < 65 % used` · `Nearing end 65–79 %` · `Overdue ≥ 80 %` · `Spare`, meaning 0 footage and not installed · `Retired`). Read `FR-253` closely and three of its five are **percentage bands**:
 
-- **Stored** in `LifecycleStatus`: the client's three verbatim, plus `Retired` from `FR-250`. A `bit` cannot express *In Grinding* — the same narrowness `G77` flags on `Edger.IsActive`.
+- **Stored** in `LifecycleStatus`: the client's three verbatim, plus `Inactive` (the client's own word, 10 Sep 2026 — *"marked as 'In Active'"*; it was `Retired` from `FR-250` until then, and `FR-250`'s **action name** and `FR-253`'s **display band** are both unchanged). A `bit` cannot express *In Grinding* — the same narrowness `G77` flags on `Edger.IsActive`.
 - **Derived**, never stored: `Nearing` / `Overdue` from `LastGrindingFeet` against `TotalFeetAllowed`; `Spare` from `InUse = 0 AND LastGrindingFeet = 0`.
 
 > ⚠ **Both vocabularies contain the word `Active`, meaning different things** — a lifecycle state here, a life band under 65 % in `FR-253`. The client's value is quoted, not edited; the two distinct names are what disambiguate. Never store a derived band in `LifecycleStatus`.
@@ -153,7 +153,7 @@ The client's grid carries three values (`Active` · `In Service` · `In Grinding
 | `NominalDiameterIn` | decimal(5,3) | NULL | — | The **tool's** own nominal size: `12.000` for FM1; `8.000` / `6.000` / `6.000` for FM2 S1/S2/S3 |
 | `OdIn` · `MinOdIn` · `IdIn` | decimal(8,4) | NULL | — | Client grid `OD(")` · `Min OD(")` · `ID(")`. The **grind** life model |
 | `SerialNo` · `PartNo` · `Location` | varchar | NULL | — | Client grid `S/N` · `P/N` · `Location`. `SerialNo` unique when set, via a **filtered** index |
-| `LifecycleStatus` | varchar(20) | NOT NULL | — | `Active` · `In Service` · `In Grinding` · `Retired`. Default `In Service` — identical to the die |
+| `LifecycleStatus` | varchar(20) | NOT NULL | — | `Active` · `In Service` · `In Grinding` · `Inactive`. Default `In Service` — identical to the die |
 | `IsRefurbishable` | bit | NOT NULL | — | *"they can be refurbished"* — the client's word, attached to the **capstans** specifically. Default `0` |
 | `DateOfChange` · `DateOfLastGrind` | date | NULL | — | Client grid `Date of Change` · `Date of Last Grind` |
 | `InUse` | bit | NOT NULL | — | Client grid `In Use`. Default `0` |
@@ -191,24 +191,26 @@ The client's grid carries three values (`Active` · `In Service` · `In Grinding
 | Column | Data Type | Nullable | FK Reference | Description |
 |---|---|---|---|---|
 | `Id` | int | NOT NULL | — | Surrogate primary key. **`1` and `2` are load-bearing** — see the seed note below |
-| `EdgeType` | varchar(10) | **NULL** | — | `Round` · `Square`. Carried from `Edger` and **relaxed to NULL** — **ours**, see the note below |
+| `EdgeType` | varchar(20) | **NOT NULL** | — | `Full Round Edge` · `Square Edge` · `Broken Edge` — **three**, not the schedule's four. **`NOT NULL` again since 10 Sep 2026** (`Q95` leg 5); no longer ours. See the note below |
 | `EdgerType` | varchar(20) | NULL | — | Client grid `Type` |
-| `MachineName` | varchar(5) | NULL | — | Client grid `Machine Name`. **`FL2` only** — the grid attributes edgers to FL2 and `D-42` bars FL3 |
-| `Location` | varchar(50) | NULL | — | Client grid `Location` — roll shop / crib position |
-| `SetNumber` | varchar(20) | NULL | — | Client grid `Set Number` — lettered `A` / `B` / `C`. **Replaces `Edger.ToolingSetNo`** |
+| `MachineName` | varchar(5) | **NOT NULL** | — | Client grid `Machine Name`. **`FL2` only** — the grid attributes edgers to FL2 and `D-42` bars FL3. **Half the natural key** |
+| `Location` | varchar(50) | NULL | — | Client grid `Location` — roll shop / crib position. **Not** the line position — see `AllocatedPosition` |
+| `AllocatedPosition` | varchar(2) | NULL | — | `E1` · `E2` — the line position this set is allocated to (client, 10 Sep 2026). `E1` sits between S1 and S2, `E2` between S2 and S3. NULL while the set is off the line |
+| `SetNumber` | varchar(20) | **NOT NULL** | — | Client grid `Set Number` — `400-S` / `401-S` / `402-R` style since 10 Sep 2026. **Half the natural key.** Replaces `Edger.ToolingSetNo` |
 | `PartNo` | varchar(50) | NULL | — | Client grid `P/N` |
 | `SerialNo` | varchar(50) | NULL | — | **`[PROPOSED]`** — the edger grid carries **no** `S/N` column (`G104`, `Q95`). Unique when set, via a **filtered** index |
 | `RollQty` | int | NOT NULL | — | Client grid `Roll Qty`. Default `2` — the sample reads 2 |
-| `StdRemovalFromOdIn` | decimal(8,4) | NULL | — | Client grid `STD Removal From OD(")` — `.100` per grind |
-| `OdIn` · `MinOdIn` · `IdIn` | decimal(8,4) | NULL | — | Client grid `OD(")` · `Min OD(")` · `ID(")`. `6.00` falling to `4.75` — about twelve grinds |
+| `StdRemovalFromOdIn` | decimal(8,4) | NULL | — | Client grid `STD Removal From OD(")`. ⚠ **`.100` is arbitrary, not a standard** — the client's own words, 10 Sep 2026 |
+| `OdIn` · `MinOdIn` · `IdIn` | decimal(8,4) | NULL | — | Client grid `OD(")` · `Min OD(")` · `ID(")`. `6.00` falling to `4.75`. ⛔ **The "about twelve grinds" reading is withdrawn** — see the life-model note |
 | `DateOfChange` · `DateOfLastGrind` | date | NULL | — | Client grid `Date of Change` · `Date of Last Grind` |
-| `LifecycleStatus` | varchar(20) | NOT NULL | — | Client grid `Status`: `Active` · `In Service` · `In Grinding`, plus `Retired`. Default `In Service` — identical to the die and the roll set |
+| `LifecycleStatus` | varchar(20) | NOT NULL | — | Client grid `Status`: `Active` · `In Service` · `In Grinding`, plus `Inactive`. Default `In Service` — identical to the die and the roll set |
 | `InUse` | bit | NOT NULL | — | Default `0` |
 | `Notes` · `IsActive` | varchar / bit | — | — | As elsewhere |
 
 **Constraints:**
-- `PK_ToolingInventoryEdger` — ⚠ **and nothing else. The table has NO natural key**: no name, no alpha, no unique business column. See the note below
-- `CK_TIE_EdgeType` — NULL or `IN ('Round','Square')`. The surviving half of `CK_Edger_EdgeType`
+- `PK_ToolingInventoryEdger` · **`UQ_ToolingInventoryEdger_Set` — `(MachineName, SetNumber)`, the natural key, taken 10 Sep 2026 once `Q95` leg 2 answered.** ⛔ Do **not** also create a unique index on those two columns — that duplication is what moved the index figure `91 → 90`
+- `CK_TIE_EdgeType` — `IN ('Full Round Edge','Square Edge','Broken Edge')`. ⚠ **Three values, where `CK_PSC_EdgeType` takes four** — see the note below
+- `CK_TIE_AllocatedPosition` — NULL or `IN ('E1','E2')`
 - `CK_TIE_MachineName` — `MachineName IN ('FL2')` · `CK_TIE_RollQty` — `> 0` · `CK_TIE_StdRemoval` — NULL or `> 0`
 - `CK_TIE_Od` — `MinOdIn < OdIn` when both present · `CK_TIE_LifecycleStatus`
 - `IX_ToolingInventoryEdger_LifecycleStatus` · `UX_ToolingInventoryEdger_SerialNo` — **filtered** unique (script `07`)
@@ -244,9 +246,13 @@ The client's grid carries three values (`Active` · `In Service` · `In Grinding
 > inconsistency to fix** — `FR-254` has the Die Change screen read `DieAlpha` **at runtime**; this table
 > has no such caller. ⛔ **Do not reinstate either.**
 
-> ⚠ **The life model is grind, not footage** — the same distinction `ToolingInventoryRollSet` carries. `STD Removal From OD .100` against `OD 6.00` and `Min OD 4.75` is about twelve grinds. **No footage counter.** Do not add `LastGrindingFeet` / `TotalFeetAllowed` by analogy with `ToolingInventoryDie` — that analogy is what `G77` warns about.
+> ✅ **The natural key arrived on 10 September 2026 — `(MachineName, SetNumber)`, and `G104` is closed.** `Q95` leg 2 asked whether a set number is unique per line or per shop; the client answered with an encoded scheme — `400-S` / `401-S` / `402-S` / `400-R` / `400-B`, the stem carrying the gauge band and the suffix the profile — so a set number is meaningful and shop-unique. Both key columns are therefore `NOT NULL`.
+>
+> ⛔ **Roll-level tracking is NOT built.** The same answer floated it — *"we may need to track as individual rolls … I am open to suggestions and alternatives, lets discuss"* — and building a child table on one sentence is the `G87` mistake. ⚠ **His own sample contradicts the scheme:** two rows read `400-B` with roll prefix `R2` and gauge `.015-.025`, where the stem should read `401`. Settle that first.
 
-> ⭐ **The seed keeps `Id 1` = `Round` and `Id 2` = `Square`, and that was the point.** `FlatWire_SampleData_Schedule.sql` seeds `EdgeSet` rows as (`EdgerId 1`, `Round`) and (`EdgerId 2`, `Square`). Carrying the two ids and the two names across unchanged meant **not one value in that file had to change** — only a comment. Do not renumber them.
+> ⚠ **The life model is grind, not footage** — the same distinction `ToolingInventoryRollSet` carries. **No footage counter.** ⛔ **But the arithmetic has no basis: `.100` is arbitrary.** `Q95` leg 4 asked whether it means per grind, warning it was *"the one that silently produces wrong numbers rather than an obviously empty field"*; the client answered 10 Sep 2026 — *"this was an arbitrary number that I entered … This could also be variable depending on the groove width range."* **The “about twelve grinds” figure is withdrawn, and no screen may display a remaining-grinds figure** until engineering confirms the standard. Do not add `LastGrindingFeet` / `TotalFeetAllowed` by analogy with `ToolingInventoryDie` — that analogy is what `G77` warns about.
+
+> ⭐ **The seed keeps `Id 1` and `Id 2`, and that was the point.** ⚠ Their **values** were restated on 10 Sep 2026 — `Id 1` is now `Full Round Edge` / `400-R` and `Id 2` is `Square Edge` / `400-S`, and the schedule seed's `EdgeType` values moved with them — but the **ids did not**, so that file still resolves by `Id` exactly as before. Originally: `FlatWire_SampleData_Schedule.sql` seeds `EdgeSet` rows as (`EdgerId 1`, `Round`) and (`EdgerId 2`, `Square`). Carrying the two ids and the two names across unchanged meant **not one value in that file had to change** — only a comment. Do not renumber them.
 
 ---
 
@@ -259,7 +265,6 @@ The client's grid carries three values (`Active` · `In Service` · `In Grinding
 | `Id` | int | NOT NULL | — | Surrogate primary key |
 | `EdgerToolId` | int | NOT NULL | `ToolingInventoryEdger.Id` | The set this groove is cut into |
 | `GaugeIn` | decimal(8,4) | NOT NULL | — | One groove: `.0450` · `.0400` · `.0350` |
-| `GrooveNo` | tinyint | NULL | — | **`[PROPOSED]`** — position across the roll face. The grid neither numbers nor orders the grooves (`G104`, `Q95`) |
 | `IsActive` | bit | NOT NULL | — | As elsewhere |
 
 **Constraints:**
@@ -708,7 +713,7 @@ One row per (line, group, element label) — the client's grid as data. **FL1 33
 
 > ⚠ **Keyed on group + label, never label alone.** Three labels legitimately appear in **two**
 > groups each and are therefore two rows: `Load Spool: Takeup-1` (`S1`, `S2`) ·
-> `Thread: Takeup-1` (`H1AA`, `H1B`) · `SPC: Takeup-2` (`H1AA`, `H1B`). A label-only unique key
+> `Thread: Takeup-1` (`H1AA`, `H1B`). ⚠ **`SPC: Takeup-2` was a third until 10 Sep 2026**, when its `H1B` occurrence became `SPC: FL2-Stand 3`; it now sits in `H1AA` only. **Measured per line on `DEV00164-001`: two.** ⚠ A cross-line query still returns three, because FL1 holds `SPC: FL1-Stand 1` in `H1B` and FL3 in `H1AA` — different lines, not different groups. The key is `(line, group, label)`, so the per-line figure is the one that matters. A label-only unique key
 > would reject the client's own field set.
 
 > ⚠ **FL3 is not the union of FL1 and FL2, and must not be generated as one.** It drops, per
@@ -716,12 +721,29 @@ One row per (line, group, element label) — the client's grid as data. **FL1 33
 > *Thread: Takeup-1*; `H1B` *Remove Spool: Takeup-1* **and** *SPC: FL1-Stand 1*; `S2`
 > *Load Spool: Takeup-1*. It adds nothing the other two do not have.
 
-> ⛔ **Two FL3 rows are disputed and are seeded exactly as pictured.** FL3 has no intermediate
-> spool, so nothing sits at Takeup-1 — yet **`SPC: Takeup-1` survives** in `FL3`/`H1AA` while
-> every other Takeup-1 step was dropped, and **`SPC: FL1-Stand 1` is absent** from `FL3`/`H1B`
-> for no reason the material path explains. **The two point opposite ways.** Do not "fix" either:
-> the client said *"in the order pictured"*, and a send-back is what changes them. The FL3 group
-> counts — `H1AA` 15, `H1B` 5 — are the regression guard.
+> ✅ **The two disputed FL3 rows are settled — `Q94` legs 2 and 3, client 10 September 2026.**
+> They were seeded exactly as pictured behind a guard that asserted the wrong state *positively*,
+> because *"a send-back is what changes them"*. It returned, and the two had **one** root cause:
+> FL3's `H1AA` SPC row named FL1's **takeup** where it should have named FL1's **mill**.
+>
+> - `FL3`/`H1AA`: `SPC: Takeup-1` → **`SPC: FL1-Stand 1`** — *"This is my mistake, it should have
+>   contained SPC FL1.FM1 not Takeup1."*
+> - `FL3`/`H1B`: the **absence** of `SPC: FL1-Stand 1` was **correct** — *"not necessary as the stop
+>   is has been completed and these dimensions would not represent final gauge/width."* Which is
+>   also why FL1 legitimately keeps it in its own `H1B`: **FL1's output is final gauge.**
+> - `FL2`/`H1B` and `FL3`/`H1B`: `SPC: Takeup-2` → **`SPC: FL2-Stand 3`** — *"FL2 and FL3 should
+>   have SPC at FL2.FM2 for H1B."*
+>
+> ⚠ **Two parts of that are ours, not his, and both are in the send-back.** *"FL2.FM2"* names no
+> stand, so `FL2-Stand 3` is our reading (S3 is final and non-bypassable; the canonical checkpoint
+> is *"FM2 S3 output"*); and we applied **replace** rather than **add**, which is what holds the
+> counts. His own labels `SPC: FL1.FM1` / `SPC: FL2.FM2` are **not adopted** — they occur nowhere
+> in this repository, `FL1.FM1` is a **PLC tag path**, and `A12` says do not reconcile component
+> identifiers until the Speed tab lands.
+>
+> ✅ **Measured on `DEV00164-001` after a teardown-and-deploy, 10 Sep 2026:** the FL3 group counts
+> are unchanged at `H1AA` 15 and `H1B` 5, totals `FL1 33 · FL2 29 · FL3 47`, grand total 109. They
+> remain the regression guard — `FW-262` §4 was re-pointed with the seed.
 
 > ⚠ **`CK_SetupHandlingTimeElement_MachineName` admits all three lines. Do not align it** with
 > `CK_ToolingInventoryDie_MachineName` (`FL1`) or `CK_TIRS_MachineName` (`FL1`,`FL2`). Those drop FL3

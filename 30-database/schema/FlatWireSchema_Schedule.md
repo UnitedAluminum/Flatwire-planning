@@ -69,7 +69,7 @@ Per-component rows belonging to a pass schedule. Each row defines one tool stati
 | `ComponentName` | varchar(20) | NOT NULL | — | Named component slot — see allowed values |
 | `State` | varchar(10) | NOT NULL | — | Operating state: `Active` = component is engaged; `Bypass` = component is present but bypassed in-line; `Skip` = component is not part of this schedule |
 | `ParameterValue` | decimal(8,4) | NULL | — | Primary operating parameter — die diameter (inches) for draw boxes (DB1/DB2); roll gap (inches) for finishing mills (FM variants); NULL when `State` is `Bypass` or `Skip` |
-| `EdgeType` | varchar(10) | NULL | — | Edge profile for edger components only: `Round` or `Square`; NULL for all other components |
+| `EdgeType` | varchar(20) | NULL | — | Edge profile for edger components only: `Natural Round Edge` · `Full Round Edge` · `Square Edge` · `Broken Edge`; NULL for all other components. ⚠ **Four here, three on `ToolingInventoryEdger`** — `Natural Round Edge` means *no edging*, so no tool is ground for it |
 | `Sequence` | int | NOT NULL | — | Processing order of this component within the pass schedule; unique per `PassScheduleId` |
 | `IsMandatory` | bit | NOT NULL | — | UI lock: `1` = component cannot be toggled off in the editor; default `0` |
 | `StandId` | int | NULL | `Stand.Id` | FK to the specific stand used — FM components only; NULL for DB and EdgeSet components |
@@ -97,7 +97,9 @@ Per-component rows belonging to a pass schedule. Each row defines one tool stati
 
 **Allowed values — `State`:** `Active`, `Bypass`, `Skip`
 
-**Allowed values — `EdgeType`:** `Round`, `Square` (edger components only; NULL otherwise)
+**Allowed values — `EdgeType`:** `Natural Round Edge` · `Full Round Edge` · `Square Edge` · `Broken Edge` (edger components only; NULL otherwise), client 10 Sep 2026.
+
+> ⚠ **This list is the *product* edge the order specifies, and it is deliberately LONGER than the tool's.** `CK_TIE_EdgeType` on `ToolingInventoryEdger` admits only `Full Round Edge`, `Square Edge` and `Broken Edge`, because `Natural Round Edge` means **no edging** and no physical set is ever ground for it — the client's own roll table carries no such row. A schedule specifying it leaves the `EdgeSet` component `Bypass` or `Skip`, which `CK_PSC_State` already expresses, so `CK_PSC_EdgeTypeReq` does not fire. ⛔ **Do not merge the two constraints or align their value lists.**
 
 **Constraints:**
 - `ParameterValue` must be NULL when `State` is `Bypass` or `Skip`

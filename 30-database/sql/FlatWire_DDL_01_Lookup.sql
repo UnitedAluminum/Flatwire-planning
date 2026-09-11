@@ -238,10 +238,22 @@ BEGIN
         -- NULL until the client supplies thresholds (OQ-83 -- tracking decided,
         -- threshold TBD). Do not seed an invented limit.
         [TotalFeetAllowed]   DECIMAL(10,2) NULL,
-        -- The client's three lifecycle values plus Retired (FR-250). A BIT cannot
-        -- express "In Grinding" -- which was G77's point about the old
-        -- Edger.IsActive, a table absorbed on 6 Sep 2026 (D-53). The three
-        -- tooling registers now carry LifecycleStatus identically.
+        -- The client's three lifecycle values plus Inactive. A BIT cannot express
+        -- "In Grinding" -- which was G77's point about the old Edger.IsActive, a
+        -- table absorbed on 6 Sep 2026 (D-53). The three tooling registers now
+        -- carry LifecycleStatus identically.
+        --
+        -- 'Inactive' WAS 'Retired' UNTIL 10 Sep 2026. The client named the value:
+        -- "a set that has worn out after its last available grind shall be taken
+        -- out of service and marked as 'In Active'". Read as Inactive, which is
+        -- also how PassSchedule.Status already glosses it -- see 02_Schedule's
+        -- [CONFIRMED] status block, "Inactive  Retired." So this is ONE vocabulary
+        -- across two domains, not a new word.
+        --
+        -- STORED TOKEN ONLY. FR-250 names the ACTION "Retire Die" and requires a
+        -- retire reason code, and FR-253's display band is still "Retired": those
+        -- are UNCHANGED. DieChangeAndManagement.md section 5 remains the single
+        -- copy of the five display bands. Do not rename a label to match this.
         [LifecycleStatus]    VARCHAR(20)   NOT NULL CONSTRAINT [DF_ToolingInventoryDie_LifecycleStatus] DEFAULT ('In Service'),
         [InUse]              BIT           NOT NULL CONSTRAINT [DF_ToolingInventoryDie_InUse] DEFAULT (0),  -- client grid "In Use". Feeds the derived Spare band
         [Source]             VARCHAR(100)  NULL,           -- FR-247 supplier / die room source
@@ -258,7 +270,7 @@ BEGIN
         CONSTRAINT [CK_ToolingInventoryDie_FeedRange] CHECK ([MinFeedDiameterIn] IS NULL OR [MaxFeedDiameterIn] IS NULL OR [MinFeedDiameterIn] < [MaxFeedDiameterIn]),
         CONSTRAINT [CK_ToolingInventoryDie_LastGrindingFeet] CHECK ([LastGrindingFeet] >= 0),
         CONSTRAINT [CK_ToolingInventoryDie_TotalFeetAllowed] CHECK ([TotalFeetAllowed] IS NULL OR [TotalFeetAllowed] > 0),
-        CONSTRAINT [CK_ToolingInventoryDie_LifecycleStatus]  CHECK ([LifecycleStatus] IN ('Active','In Service','In Grinding','Retired')),
+        CONSTRAINT [CK_ToolingInventoryDie_LifecycleStatus]  CHECK ([LifecycleStatus] IN ('Active','In Service','In Grinding','Inactive')),
         -- FL3 REMOVED Sep-3-2026. Asked whether tooling is maintained per line or for
         -- FL1/FL2 with FL3 combining, the client answered: "We should maintain them for
         -- FL1/FL2 and FL3 should use a combination of the two." So no tooling row is
@@ -365,8 +377,9 @@ BEGIN
         [SerialNo]           VARCHAR(50)   NULL,           -- client grid "S/N"
         [PartNo]             VARCHAR(50)   NULL,           -- client grid "P/N"
         [Location]           VARCHAR(50)   NULL,           -- client grid "Location" -- roll shop / crib position
-        -- The client's three lifecycle values plus Retired, identical to
+        -- The client's three lifecycle values plus Inactive, identical to
         -- ToolingInventoryDie. A BIT cannot express "In Grinding" -- G77's point.
+        -- 'Inactive' was 'Retired' until 10 Sep 2026; see the note on the die.
         [LifecycleStatus]    VARCHAR(20)   NOT NULL CONSTRAINT [DF_ToolingInventoryRollSet_LifecycleStatus] DEFAULT ('In Service'),
         -- "they can be refurbished" -- the client's word for the capstan rolls, and
         -- NOT known to be the same operation as the edger's regrind. Q92 asks.
@@ -389,7 +402,7 @@ BEGIN
         CONSTRAINT [CK_TIRS_RollQty]         CHECK ([RollQty] > 0),
         CONSTRAINT [CK_TIRS_NominalDiameter] CHECK ([NominalDiameterIn] IS NULL OR [NominalDiameterIn] > 0),
         CONSTRAINT [CK_TIRS_Od]              CHECK ([OdIn] IS NULL OR [MinOdIn] IS NULL OR [MinOdIn] < [OdIn]),
-        CONSTRAINT [CK_TIRS_LifecycleStatus] CHECK ([LifecycleStatus] IN ('Active','In Service','In Grinding','Retired'))
+        CONSTRAINT [CK_TIRS_LifecycleStatus] CHECK ([LifecycleStatus] IN ('Active','In Service','In Grinding','Inactive'))
         -- Deliberately NO footage columns. See the life-model note above: a roll is
         -- reground to a minimum OD, not consumed by feet. Do not add die-life columns
         -- here by analogy with ToolingInventoryDie -- that analogy is the thing G77
@@ -439,16 +452,29 @@ GO
 -- asks. (ToolingInventoryDie reads the same grid heading as the die MATERIAL and
 -- calls it DieType, so the heading demonstrably does not mean one thing across the
 -- grids -- which is why they are not merged here on our own reading.)
---   EdgeType is RELAXED TO NULL. It was NOT NULL on Edger, but the client's
---   fourteen columns do not classify a set by edge profile in a way we can rely on.
---   Requiring it would invent a mandatory classification the client has never
---   supplied -- the G87 mistake. CK_PSC_EdgeTypeReq still forces the SCHEDULE to
---   state its profile, which is where the requirement actually belongs. Q95 asks.
+--   EdgeType IS NOT NULL AGAIN, restored 10 Sep 2026, and it is no longer OURS.
+--   It was relaxed to NULL on 6 Sep because the client's fourteen columns did not
+--   classify a set by edge profile, and requiring it would have invented a
+--   mandatory classification the client had never supplied -- the G87 mistake.
+--   D-53 named Q95 as the send-back that would decide it, and Q95 leg 5 has
+--   returned: "edger sets are distinguished from one another by gauge band and
+--   profile (edge type)" and "a set will NOT share different profiles", profile
+--   being defined "per set". So the classification is the client's, it is
+--   definitional, and NULL is no longer a legitimate state.
 --
--- THIS TABLE HAS NO NATURAL KEY. Identity is the IDENTITY column and nothing
--- else, so TWO IDENTICAL ROWS ARE CURRENTLY POSSIBLE. That is a known, recorded
--- state, not an oversight -- G104. Both candidates were removed deliberately, and
--- the reasoning is the same for each: they were OURS, and nothing read them.
+--   THE VOCABULARY IS THREE VALUES HERE AND FOUR ON THE SCHEDULE, and that is
+--   deliberate. The client's product edge profiles are Natural Round Edge (no
+--   edging), Full Round Edge, Square Edge and Broken Edge. 'Natural Round Edge'
+--   means NO EDGING, so no physical set is ever ground for it -- and the client's
+--   own 10 Sep roll table carries no such row, only -S, -R and -B suffixes. A
+--   schedule that specifies it leaves the EdgeSet component Bypass or Skip, which
+--   CK_PSC_State already expresses. Do NOT add it here, and do NOT relax
+--   CK_PSC_EdgeTypeReq to accommodate it.
+--
+-- THE NATURAL KEY IS (MachineName, SetNumber), taken 10 Sep 2026. G104's recorded
+-- state -- "TWO IDENTICAL ROWS ARE CURRENTLY POSSIBLE" -- is closed. Both earlier
+-- candidates stay removed, and the reasoning for each still holds: they were OURS,
+-- and nothing read them.
 --
 --   Name was inherited from [dbo].[Edger], where it was NOT NULL and UNIQUE. It
 --   was removed on 6 Sep 2026 once it was verified that NOTHING read it: no
@@ -464,16 +490,42 @@ GO
 --   DieAlpha is load-bearing because FR-254 has the Die Change screen read it AT
 --   RUNTIME. This table has no such caller.
 --
--- (MachineName, SetNumber) is the obvious replacement key, and it is DELIBERATELY NOT
--- taken: Q95 leg 2 asks whether Set Number is unique per LINE or per SHOP, and a
--- UNIQUE here would pre-empt that answer in one direction. FW-268 adds the key when
--- Q95 returns. Do not add one before then, and do not reinstate Name or the alpha.
+-- (MachineName, SetNumber) IS NOW TAKEN, as UQ_ToolingInventoryEdger_Set. Q95 leg 2
+-- asked whether Set Number is unique per LINE or per SHOP; the client answered on
+-- 10 Sep 2026 with an encoded scheme -- 400-S / 401-S / 402-S / 400-R / 400-B,
+-- where the stem carries the gauge band and the suffix the profile -- so a set
+-- number is meaningful and shop-unique. Both key columns are therefore NOT NULL.
+-- Do not reinstate Name or the alpha.
+--
+--   ROLL-LEVEL TRACKING IS NOT BUILT, and that is on purpose. The same answer
+--   floated it -- "we may need to track as individual rolls, and have assigned set
+--   numbers, with profile and gauge range identifiers. I am open to suggestions and
+--   alternatives, lets discuss." That is a discussion, not a specification, and
+--   building a ToolingInventoryEdgerRoll on one sentence is precisely the G87
+--   mistake. The proposal has gone back with the send-back instead.
+--
+--   AND THE CLIENT'S OWN SAMPLE CONTRADICTS THE SCHEME: two rows read 400-B with
+--   roll prefix R2 and gauge .015-.025, where the stem should read 401. Either
+--   they are 401-B or the stem encodes nothing. Settle that before any roll table.
 --
 -- THE LIFE MODEL IS GRIND, NOT FOOTAGE -- the same distinction
--- ToolingInventoryRollSet carries. STD Removal From OD .100 against OD 6.00 and
--- Min OD 4.75 is about twelve grinds. So there is NO footage counter here. Do
--- not add LastGrindingFeet / TotalFeetAllowed by analogy with
--- ToolingInventoryDie -- that analogy is the thing G77 warns about.
+-- ToolingInventoryRollSet carries. So there is NO footage counter here. Do not add
+-- LastGrindingFeet / TotalFeetAllowed by analogy with ToolingInventoryDie -- that
+-- analogy is the thing G77 warns about.
+--
+--   BUT THE ARITHMETIC HAS NO BASIS YET. This block used to read "STD Removal From
+--   OD .100 against OD 6.00 and Min OD 4.75 is about twelve grinds". Q95 leg 4
+--   asked whether .100 means per grind, warning that it was "the one that silently
+--   produces wrong numbers rather than an obviously empty field". The client
+--   answered on 10 Sep 2026: "this was an arbitrary number that I entered. I will
+--   need to verify with engineering what the actual standard would be. This could
+--   also be variable depending on the groove width range."
+--
+--   So the twelve-grind figure is WITHDRAWN as fact. NO SCREEN MAY DISPLAY A
+--   REMAINING-GRINDS OR REMAINING-LIFE FIGURE until engineering confirms the
+--   standard. The column keeps its seeded .100 as shape, not as a specification.
+--   Whether StdRemovalFromOdIn belongs on the GROOVE rather than the set depends
+--   on an answer the client does not have -- do not move it speculatively.
 --
 -- GAUGE RANGE IS A CHILD TABLE, NOT A DELIMITED STRING. The grid's cell reads
 -- ".045, .040, .035" -- three grooves cut into one roll at specific gauges, in
@@ -493,11 +545,12 @@ IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[To
 BEGIN
     CREATE TABLE [dbo].[ToolingInventoryEdger] (
         [Id]                 INT           NOT NULL IDENTITY(1,1),
-        [EdgeType]           VARCHAR(10)   NULL,           -- Round | Square. Carried from Edger, RELAXED to NULL -- see the block above
-        [MachineName]             VARCHAR(5)    NULL,           -- client grid "Machine Name". FL2 only
+        [EdgeType]           VARCHAR(20)   NOT NULL,       -- Full Round Edge | Square Edge | Broken Edge. NOT NULL again -- see the block above
+        [MachineName]             VARCHAR(5)    NOT NULL,       -- client grid "Machine Name". FL2 only. NOT NULL: half the natural key
         [EdgerType]          VARCHAR(20)   NULL,           -- client grid "Type"
-        [Location]           VARCHAR(50)   NULL,           -- client grid "Location" -- roll shop / crib position
-        [SetNumber]          VARCHAR(20)   NULL,           -- client grid "Set Number" -- lettered A / B / C. REPLACES Edger.ToolingSetNo
+        [Location]           VARCHAR(50)   NULL,           -- client grid "Location" -- roll shop / crib position. NOT the line position: see AllocatedPosition
+        [AllocatedPosition]  VARCHAR(2)    NULL,           -- E1 | E2 -- the line position this set is allocated to, client 10 Sep 2026. NULL while off the line
+        [SetNumber]          VARCHAR(20)   NOT NULL,       -- client grid "Set Number" -- 400-S / 401-S / 402-R style. REPLACES Edger.ToolingSetNo
         [PartNo]             VARCHAR(50)   NULL,           -- client grid "P/N"
         [SerialNo]           VARCHAR(50)   NULL,           -- [PROPOSED] ours: the edger grid carries NO S/N column (G104, Q95)
         [RollQty]            INT           NOT NULL CONSTRAINT [DF_ToolingInventoryEdger_RollQty] DEFAULT (2),  -- client grid "Roll Qty" -- the sample reads 2
@@ -507,25 +560,43 @@ BEGIN
         [MinOdIn]            DECIMAL(8,4)  NULL,           -- client grid 'Min OD(")' -- 4.75, the scrap threshold
         [DateOfChange]       DATE          NULL,           -- client grid "Date of Change"
         [DateOfLastGrind]    DATE          NULL,           -- client grid "Date of Last Grind"
-        -- The client's three Status values plus Retired, identical to
+        -- The client's three Status values plus Inactive, identical to
         -- ToolingInventoryDie and ToolingInventoryRollSet. A BIT cannot express
         -- "In Grinding" -- that was G77's point about the old Edger.IsActive.
+        -- The client defined all four on 10 Sep 2026: "In Grinding" = being
+        -- resurfaced, either roll grinding or outsourced (so 'refurbished' is the
+        -- same operation, not a second vocabulary); "In Service" = installed at
+        -- FL2.E1 or FL2.E2; "Active" = available to allocate; "In Active" = worn
+        -- out after its last available grind. 'Inactive' was 'Retired' until then.
         [LifecycleStatus]    VARCHAR(20)   NOT NULL CONSTRAINT [DF_ToolingInventoryEdger_LifecycleStatus] DEFAULT ('In Service'),
         [InUse]              BIT           NOT NULL CONSTRAINT [DF_ToolingInventoryEdger_InUse] DEFAULT (0),
         [Notes]              VARCHAR(500)  NULL,
         [IsActive]           BIT           NOT NULL CONSTRAINT [DF_ToolingInventoryEdger_IsActive] DEFAULT (1),
 
         CONSTRAINT [PK_ToolingInventoryEdger]        PRIMARY KEY CLUSTERED ([Id] ASC),
-        -- NO UNIQUE CONSTRAINT AND NO NATURAL KEY. See the block above.
+        -- THE NATURAL KEY, taken 10 Sep 2026 once Q95 leg 2 answered. Both columns
+        -- are NOT NULL so a plain UNIQUE behaves: SQL Server treats NULLs as equal,
+        -- which is why SerialNo uses a FILTERED index in script 07 instead.
+        -- DO NOT also create a UNIQUE INDEX on these two columns -- that duplicate
+        -- is exactly what moved the index figure 91 -> 90 on 8 Sep 2026.
+        CONSTRAINT [UQ_ToolingInventoryEdger_Set]    UNIQUE ([MachineName], [SetNumber]),
         -- The surviving half of CK_Edger_EdgeType. CK_PSC_EdgeType stays where it
         -- is: it constrains the SCHEDULE's chosen profile, which is a different
-        -- assertion from the tool's capability. Do not merge them.
-        CONSTRAINT [CK_TIE_EdgeType]        CHECK ([EdgeType] IS NULL OR [EdgeType] IN ('Round','Square')),
-        CONSTRAINT [CK_TIE_MachineName]          CHECK ([MachineName] IS NULL OR [MachineName] IN ('FL2')),
+        -- assertion from the tool's capability. Do not merge them -- and note they
+        -- now differ in CARDINALITY too, which makes the separation load-bearing:
+        -- the schedule takes all FOUR profiles, this table takes THREE, because
+        -- 'Natural Round Edge' means NO EDGING and no set is ground for it. The
+        -- client's own 10 Sep roll table carries no such row (only -S, -R, -B).
+        CONSTRAINT [CK_TIE_EdgeType]        CHECK ([EdgeType] IN ('Full Round Edge','Square Edge','Broken Edge')),
+        CONSTRAINT [CK_TIE_MachineName]          CHECK ([MachineName] IN ('FL2')),
+        -- E1 = edger between S1 and S2, E2 = between S2 and S3 (client, 10 Sep
+        -- 2026). NULL is legitimate: a set in the crib or out for grinding has no
+        -- line position, which is why this is NOT a redefinition of Location.
+        CONSTRAINT [CK_TIE_AllocatedPosition] CHECK ([AllocatedPosition] IS NULL OR [AllocatedPosition] IN ('E1','E2')),
         CONSTRAINT [CK_TIE_RollQty]         CHECK ([RollQty] > 0),
         CONSTRAINT [CK_TIE_StdRemoval]      CHECK ([StdRemovalFromOdIn] IS NULL OR [StdRemovalFromOdIn] > 0),
         CONSTRAINT [CK_TIE_Od]              CHECK ([OdIn] IS NULL OR [MinOdIn] IS NULL OR [MinOdIn] < [OdIn]),
-        CONSTRAINT [CK_TIE_LifecycleStatus] CHECK ([LifecycleStatus] IN ('Active','In Service','In Grinding','Retired'))
+        CONSTRAINT [CK_TIE_LifecycleStatus] CHECK ([LifecycleStatus] IN ('Active','In Service','In Grinding','Inactive'))
         -- Deliberately NO footage columns. See the life-model note above.
         --
         -- SerialNo uniqueness is a FILTERED index in script 07, on the same
@@ -549,9 +620,24 @@ GO
 -- than a delimited string. The failure mode a VARCHAR causes is specific: a
 -- pass schedule can never select A GROOVE, only a whole tool.
 --
--- GrooveNo is [PROPOSED] -- the grid does not number or order the grooves, and
--- whether they are ordered across the roll face is one of Q95's legs (G104).
--- It is nullable so that a row can record a gauge without asserting a position.
+-- GrooveNo IS GONE, and Q95 leg 3 is why. It was [PROPOSED] because the grid did
+-- not number or order the grooves; the client answered on 10 Sep 2026 that rolls
+-- are identified "by groove gauge range and profile", not by position, so the
+-- column asserted a fact that does not exist. Q95 leg 3 said in terms that the
+-- answer "decides whether GrooveNo is real data or should be dropped".
+--
+-- A GROOVE IS IDENTIFIED BY ITS GAUGE, and (EdgerToolId, GaugeIn) already says
+-- so. The client: "depending on groove height, there could be 1-5+ grooves cut
+-- into a roll. All groves would have the same profile, just different grove
+-- heights" -- so height varies per groove and profile does not, which is why
+-- profile lives on the PARENT and GaugeIn is the per-groove discriminator.
+-- CONFIRM whether "groove height" is exactly this GaugeIn before adding a column
+-- for it; on the present reading they are the same measure under two names.
+--
+-- THE SEEDED GAUGE VALUES ARE ARBITRARY, by the client's own admission on
+-- 10 Sep 2026: "the gauge ranges I gave are again arbitrary, given that rolls
+-- would be cut based upon a tight range of finished gauge products". Treat the
+-- three seeded rows as shape, never as inventory.
 --
 -- Uniqueness is (EdgerToolId, GaugeIn): one tool cannot carry the same gauge
 -- twice. That UNIQUE leads on EdgerToolId, so NO separate index on the FK
@@ -563,7 +649,6 @@ BEGIN
         [Id]          INT           NOT NULL IDENTITY(1,1),
         [EdgerToolId] INT           NOT NULL,              -- FK to ToolingInventoryEdger.Id, added by script 06
         [GaugeIn]     DECIMAL(8,4)  NOT NULL,              -- one groove: .0450 | .0400 | .0350
-        [GrooveNo]    TINYINT       NULL,                  -- [PROPOSED] position across the roll face -- Q95
         [IsActive]    BIT           NOT NULL CONSTRAINT [DF_ToolingInventoryEdgerGauge_IsActive] DEFAULT (1),
 
         CONSTRAINT [PK_ToolingInventoryEdgerGauge] PRIMARY KEY CLUSTERED ([Id] ASC),
@@ -1401,21 +1486,52 @@ GO
 -- appear in TWO groups each and are therefore two rows, not one:
 --   'Load Spool: Takeup-1'  in S1 and S2
 --   'Thread: Takeup-1'      in H1AA and H1B
---   'SPC: Takeup-2'         in H1AA and H1B
 -- A label-only unique key would reject the client's own field set.
+--
+-- THAT LIST WAS THREE UNTIL 10 Sep 2026. 'SPC: Takeup-2' sat in both H1AA and
+-- H1B; the H1B occurrence became 'SPC: FL2-Stand 3' on the client's correction
+-- below, so it now appears in H1AA only. The composite key still stands on the
+-- surviving two -- do NOT narrow it to label alone.
 --
 -- FL3 IS NOT THE UNION OF FL1 AND FL2 and must not be generated as one.
 -- It drops, per group: S1 'Rotate Payoff: TPO' and 'Load Spool: Takeup-1';
 -- H1A both TPO rows; H1AA 'Thread: Takeup-1'; H1B 'Remove Spool: Takeup-1'
 -- AND 'SPC: FL1-Stand 1'; S2 'Load Spool: Takeup-1'.  It adds nothing.
 --
--- TWO DISPUTED ROWS, SEEDED AS PICTURED ON PURPOSE.  FL3 has no
--- intermediate spool, so there is no Takeup-1 in its path -- yet
--- 'SPC: Takeup-1' SURVIVES in FL3/H1AA while every other Takeup-1 step was
--- dropped; and 'SPC: FL1-Stand 1' is ABSENT from FL3/H1B for no reason the
--- material path explains.  The two point opposite ways.  DO NOT "fix"
--- either one: the client said "in the order pictured", and a send-back is
--- what changes them.  The FL3 counts (H1AA 15, H1B 5) are the guard.
+-- THE TWO DISPUTED ROWS ARE SETTLED -- Q94 legs 2 and 3, client 10 Sep 2026.
+-- This block used to say they were seeded as pictured and that "a send-back is
+-- what changes them". The send-back has returned, and the two turned out to have
+-- ONE root cause: FL3's H1AA SPC row named FL1's TAKEUP where it should have
+-- named FL1's MILL.
+--
+--   FL3/H1AA seq 8: 'SPC: Takeup-1' -> 'SPC: FL1-Stand 1'
+--     "This is my mistake, it should have contained SPC FL1.FM1 not Takeup1."
+--
+--   FL3/H1B: the ABSENCE of 'SPC: FL1-Stand 1' was CORRECT all along.
+--     "SPC for FL3 at FL1.FM1 under H1B is not necessary as the stop is has been
+--     completed and these dimensions would not represent final gauge/width."
+--     Which is also why FL1 legitimately KEEPS it in its own H1B: FL1's output
+--     IS final gauge. Do not add it to FL3.
+--
+--   FL2/H1B and FL3/H1B seq 2: 'SPC: Takeup-2' -> 'SPC: FL2-Stand 3'
+--     "FL2 and FL3 should have SPC at FL2.FM2 for H1B."
+--
+-- WE CHOSE THE STAND, AND IT IS OUR READING NOT HIS WORDS. "FL2.FM2" does not
+-- name a stand; S3 is the final non-bypassable one and CLAUDE.md's canonical
+-- checkpoint is "FM2 S3 output", so FL2-Stand 3 is applied and sent back for
+-- confirmation. His labels 'SPC: FL1.FM1' / 'SPC: FL2.FM2' are NOT adopted --
+-- they occur nowhere in this repository, FL1.FM1 is a PLC TAG PATH, and A12 says
+-- do not reconcile component identifiers until the Speed tab lands. This table's
+-- own vocabulary is FL1-Stand 1 / FL2-Stand 1..3.
+--
+-- REPLACE, NOT ADD, and that is the one part still open. Both H1B blocks already
+-- carried an SPC at Takeup-2, so "should have SPC at FL2.FM2" could have meant
+-- relocate or supplement. Relocate is applied, which keeps the FL3 counts at
+-- H1AA 15 / H1B 5 and the seed total at 109. Adding instead would make FL2 30 and
+-- FL3 48. Confirm before changing.
+--
+-- The FL3 counts (H1AA 15, H1B 5) remain the guard -- see FW-262's verification,
+-- whose positive assertions were re-pointed with this change.
 --
 -- CK_..._MachineName admits ALL THREE LINES.  Do NOT align it with
 -- CK_ToolingInventoryDie_MachineName ('FL1') or CK_TIRS_MachineName ('FL1','FL2'):
@@ -1708,7 +1824,7 @@ BEGIN
         , ('FL2', 'H1AA',  'Conductivity',                 7)
         , ('FL2', 'R',     'Run',                          1)
         , ('FL2', 'H1B',   'Cut and secure coil end',      1)
-        , ('FL2', 'H1B',   'SPC: Takeup-2',                2)
+        , ('FL2', 'H1B',   'SPC: FL2-Stand 3',             2)
         , ('FL2', 'H1B',   'Band ID/OD x 4',               3)
         , ('FL2', 'H1B',   'Collapse Mandrel',             4)
         , ('FL2', 'H1B',   'Push Off Stop',                5)
@@ -1747,7 +1863,7 @@ BEGIN
         , ('FL3', 'H1AA',  'Thread Capstan: DB2',          5)
         , ('FL3', 'H1AA',  'SPC: DB2',                     6)
         , ('FL3', 'H1AA',  'Thread: FL1-Stand 1',          7)
-        , ('FL3', 'H1AA',  'SPC: Takeup-1',                8)
+        , ('FL3', 'H1AA',  'SPC: FL1-Stand 1',             8)
         , ('FL3', 'H1AA',  'Thread: FL2-Stand 1',          9)
         , ('FL3', 'H1AA',  'Thread: FL2-Stand 2',         10)
         , ('FL3', 'H1AA',  'Thread: FL2-Stand 3',         11)
@@ -1757,7 +1873,7 @@ BEGIN
         , ('FL3', 'H1AA',  'Conductivity',                15)
         , ('FL3', 'R',     'Run',                          1)
         , ('FL3', 'H1B',   'Cut and secure coil end',      1)
-        , ('FL3', 'H1B',   'SPC: Takeup-2',                2)
+        , ('FL3', 'H1B',   'SPC: FL2-Stand 3',             2)
         , ('FL3', 'H1B',   'Band ID/OD x 4',               3)
         , ('FL3', 'H1B',   'Collapse Mandrel',             4)
         , ('FL3', 'H1B',   'Push Off Stop',                5)

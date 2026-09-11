@@ -5,8 +5,12 @@
   Target DBs   : FlatWireDB  (procedure home; dbo.Rod)
                  proddb      (dbo.coils            - READ ONLY)
                  united_db   (dbo.alloys           - READ ONLY)
-  Last Updated : 2026-08-26
+  Last Updated : 2026-09-10  *** THE ALLOY JOIN IS CORRECTED - G133, C3. It was keyed on
+                 alloys.alloy_idx, which matches NOTHING against real data; it now joins on the
+                 alloy NAME. Nothing else in this file changed. ***
   Status       : Ready to build - no sign-off items. Shares FW-220's deployment prerequisite.
+                 ⚠ The corrected join is verified against 1,776 STRIP COIL rows and not against a
+                 rod: there is not one R##### row in the shared coil master (G134).
   Story        : FW-223 (rod ingestion - populating the FlatWire tables)
   Specification: 20-architecture/Integration.md Sec 7.9
                  40-backend/tasks/FW-223.md
@@ -100,7 +104,7 @@
     Rod column                  Source                          Master
     --------------------------  ------------------------------  ------
     Alpha                       coils.coil_no                   shared
-    Alloy                       coil_alloy -> alloys.alloy      shared
+    Alloy                       coil_alloy = alloys.alloy       shared   (C3 - by NAME)
     Temper                      coils.coil_temper               shared
     DiameterIn                  the CALLER's measurement        local
     GrossWeightLb               coils.coil_gross_wgt            shared
@@ -144,10 +148,36 @@
       *** OI-117. The column is left NULL DELIBERATELY, not by oversight. Do not invent a value
       and do not reuse coil_origin_code for it. ***
 
-  C3. coils.coil_alloy is SMALLINT and Rod.Alloy is VARCHAR(10) holding '1100'. That is a LOOKUP
-      through united_db..alloys (alloy_idx -> alloy), NOT A CAST. Getting it wrong does not
-      fail - it stores the numeric code as text and every alloy comparison downstream silently
-      stops matching, which is the worst failure mode available.
+  C3. coils.coil_alloy is SMALLINT and Rod.Alloy is VARCHAR(10) holding '1100'.
+
+      *** CORRECTED 10 Sep 2026 (G133). THIS NOTE HAD THE JOIN KEY BACKWARDS, AND SO DID EVERY
+          CONSUMER THAT FOLLOWED IT. ***
+      It read: "That is a LOOKUP through united_db..alloys (alloy_idx -> alloy), NOT A CAST."
+      Measured on DEV00164-001 against all 1,776 rows of the shared coil master:
+
+          ON a.alloy_idx = c.coil_alloy   ->  matches 0 rows
+          ON a.alloy     = c.coil_alloy   ->  matches 1,776 rows
+
+      alloys.alloy_idx runs 1-89 and is a surrogate; alloys.alloy holds the DESIGNATION as text.
+      coils.coil_alloy holds THE DESIGNATION ITSELF as a number - 1100, 3005, 5052, 5657, 23
+      distinct values, none of them an index. The joined rows say it plainly: coil_alloy 5657
+      matches the alloy named '5657', whose alloy_idx is 1; 3005 matches idx 5; 5052 matches
+      idx 6.
+
+      *** THE OLD JOIN'S FAILURE MODE WAS WORSE THAN THE CAST IT WARNED ABOUT. *** A cast stores
+      '1100' as '1100'. The alloy_idx join stores NOTHING - ISNULL(a.alloy,'') turns the miss into
+      a blank - and for a coil whose coil_alloy happened to fall in 1-89 it would have stored A
+      DIFFERENT ALLOY'S NAME with no error at all. coil_alloy = 1 would have become '5657'.
+
+      *** COMPARE AS TEXT, NOT AS A NUMBER. *** The join below casts coil_alloy to VARCHAR rather
+      than letting SQL Server convert alloy to INT: all 88 alloy rows are numeric today, but one
+      non-numeric designation ('1100-H14', 'ALCLAD') would fail the WHOLE statement with a
+      conversion error instead of missing one row.
+
+      ⚠ VERIFIED AGAINST STRIP COILS ONLY. There is not one R##### row in that table (G134), so
+      this is proven for the column and not yet for a rod. If rod receiving ever writes coil_alloy
+      as an index while strip coils carry the designation, the column means two things and neither
+      join is safe - re-verify on the first real rod.
       (It reads the table AlloyProperty shadows - OI-93.)
 
   C4. coils weight columns are SMALLINT and NULLABLE; Rod weights are DECIMAL(8,2) NOT NULL.
@@ -169,7 +199,7 @@
       55001         called outside a transaction    -> 500 (a programming error)
       55002 - 55003 validation                      -> 422
       55004         rod absent from proddb..coils   -> 404 ROD_NOT_FOUND
-      55005         alloy code does not resolve     -> 422
+      55005         alloy designation does not resolve -> 422  (C3: it is a NAME, not an index)
 
   DEPLOYMENT
   ----------
@@ -231,9 +261,11 @@ BEGIN
       1. Project from the shared schema.
          LEFT JOIN on alloys so a missing lookup row is reported as itself (55005) rather than
          as a missing rod - the two failures have different causes and different fixes.
+         ⚠ The join is on the alloy NAME, corrected 10 Sep 2026 - see C3. Keyed on alloy_idx it
+         matched nothing at all, and 55005 would have fired for every rod ever ingested.
     ------------------------------------------------------------------------------------------*/
     SELECT   @found      = 1
-           , @alloy      = LTRIM(RTRIM(ISNULL(a.[alloy], '')))                     -- C3: lookup, not cast
+           , @alloy      = LTRIM(RTRIM(ISNULL(a.[alloy], '')))                     -- C3: joined on the NAME
            , @temper     = LTRIM(RTRIM(ISNULL(c.[coil_temper], '')))
            , @gross      = CAST(ISNULL(c.[coil_gross_wgt], 0) AS DECIMAL(8,2))     -- C4
            , @net        = CAST(ISNULL(c.[coil_net_wgt],   0) AS DECIMAL(8,2))     -- C4
@@ -242,7 +274,10 @@ BEGIN
            , @receivedAt = ISNULL(CAST(c.[coil_recvd_date] AS DATETIMEOFFSET), SYSDATETIMEOFFSET())
     FROM     [proddb].[dbo].[coils] AS c WITH (NOLOCK)
              LEFT JOIN [united_db].[dbo].[alloys] AS a WITH (NOLOCK)
-                    ON a.[alloy_idx] = c.[coil_alloy]
+                    -- C3: coil_alloy IS the designation, not an index into alloy_idx. Cast it to
+                    -- text rather than letting SQL Server convert alloy to INT, so a non-numeric
+                    -- designation misses one row instead of failing the whole statement.
+                    ON LTRIM(RTRIM(a.[alloy])) = CAST(c.[coil_alloy] AS VARCHAR(10))
     WHERE    c.[coil_no] = @rodAlpha;
 
     IF @found = 0
@@ -332,11 +367,13 @@ GO
     SELECT COUNT(*) AS rowsForRod FROM dbo.Rod WHERE Alpha = @rod; -- 1
   COMMIT;
 
-  -- 3. THE ALLOY IS A LOOKUP, NOT A CAST (C3). Expect '1100', never '1'.
+  -- 3. THE ALLOY RESOLVES BY NAME (C3). Expect '1100'. ⚠ Keyed on alloy_idx this returned NULL
+  --    for every row, which ISNULL turned into a blank Alloy rather than an error.
   SELECT r.Alpha, r.Alloy, r.Temper, r.DiameterIn, r.SupplierHeat, r.Status
   FROM   dbo.Rod AS r WHERE r.Alpha = @rod;
   SELECT c.coil_no, c.coil_alloy AS code, a.alloy AS resolved
-  FROM   proddb..coils AS c LEFT JOIN united_db..alloys AS a ON a.alloy_idx = c.coil_alloy
+  FROM   proddb..coils AS c
+         LEFT JOIN united_db..alloys AS a ON LTRIM(RTRIM(a.alloy)) = CAST(c.coil_alloy AS VARCHAR(10))
   WHERE  c.coil_no = @rod;
 
   -- 4. *** THE ONE THAT MATTERS: a refresh must not clobber local state. ***

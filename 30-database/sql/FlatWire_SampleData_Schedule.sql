@@ -1,4 +1,4 @@
--- ============================================================================
+﻿-- ============================================================================
 -- FLAT WIRE MILL - SAMPLE DATA
 -- Pass Schedules : PassSchedule, PassScheduleComponent, PassScheduleChangeLog
 -- ----------------------------------------------------------------------------
@@ -484,7 +484,7 @@ VALUES
     ('PS-1100-FL2-001', 'DB1',       'Bypass', NULL,   NULL,     1, NULL, NULL, NULL,   NULL,   'FLS-2024-062'),
     ('PS-1100-FL2-001', 'DB2',       'Bypass', NULL,   NULL,     2, NULL, NULL, NULL,   NULL,   'FLS-2024-062'),
     ('PS-1100-FL2-001', 'FM1',       'Active', 0.0900, NULL,     3, 1, NULL, 0.2600, 0.0920, 'FLS-2024-062'),
-    ('PS-1100-FL2-001', 'EdgeSet',   'Active', 0.0018, 'Square', 4, NULL, 2,    0.0920, 0.0920, 'FLS-2024-062'),
+    ('PS-1100-FL2-001', 'EdgeSet',   'Active', 0.0018, 'Square Edge', 4, NULL, 2,    0.0920, 0.0920, 'FLS-2024-062'),
     ('PS-1100-FL2-001', 'FM2_S1',    'Active', 0.0912, NULL,     5, 2, NULL, 0.0920, 0.0912, 'FLS-2024-062'),
     ('PS-1100-FL2-001', 'FM2_S2',    'Active', 0.0905, NULL,     6, 3, NULL, 0.0912, 0.0905, 'FLS-2024-062'),
     ('PS-1100-FL2-001', 'FM2_S3',    'Active', 0.0900, NULL,     7, 4, NULL, 0.0905, 0.0900, 'FLS-2024-062');
@@ -520,7 +520,7 @@ VALUES
     ('PS-1100-FL3-001', 'DB1',       'Active', 0.3300, NULL,     1, NULL,    NULL, 0.3750, 0.3300, 'FLS-2024-075'),
     ('PS-1100-FL3-001', 'DB2',       'Active', 0.2700, NULL,     2, NULL,    NULL, 0.3300, 0.2700, 'FLS-2024-075'),
     ('PS-1100-FL3-001', 'FM1',       'Active', 0.0855, NULL,     3, 1, NULL, 0.2700, 0.0870, 'FLS-2024-075'),
-    ('PS-1100-FL3-001', 'EdgeSet',   'Active', 0.0017, 'Square', 4, NULL, 2,    0.0870, 0.0870, 'FLS-2024-075'),
+    ('PS-1100-FL3-001', 'EdgeSet',   'Active', 0.0017, 'Square Edge', 4, NULL, 2,    0.0870, 0.0870, 'FLS-2024-075'),
     ('PS-1100-FL3-001', 'FM2_S1',    'Active', 0.0862, NULL,     5, 2, NULL, 0.0870, 0.0862, 'FLS-2024-075'),
     ('PS-1100-FL3-001', 'FM2_S2',    'Active', 0.0856, NULL,     6, 3, NULL, 0.0862, 0.0856, 'FLS-2024-075'),
     ('PS-1100-FL3-001', 'FM2_S3',    'Active', 0.0850, NULL,     7, 4, NULL, 0.0856, 0.0850, 'FLS-2024-075');
@@ -553,7 +553,7 @@ VALUES
     ('PS-1100-FL2-002', 'DB1',       'Bypass', NULL,   NULL,    1, NULL, NULL, NULL,   NULL,   'FLS-2026-101'),
     ('PS-1100-FL2-002', 'DB2',       'Bypass', NULL,   NULL,    2, NULL, NULL, NULL,   NULL,   'FLS-2026-101'),
     ('PS-1100-FL2-002', 'FM1',       'Active', 0.1100, NULL,    3, 1, NULL, 0.1100, 0.1100, 'FLS-2026-101'),
-    ('PS-1100-FL2-002', 'EdgeSet',   'Active', 0.0020, 'Round', 4, NULL, 1,    0.1100, 0.1100, 'FLS-2026-101'),
+    ('PS-1100-FL2-002', 'EdgeSet',   'Active', 0.0020, 'Full Round Edge', 4, NULL, 1,    0.1100, 0.1100, 'FLS-2026-101'),
     ('PS-1100-FL2-002', 'FM2_S1',    'Active', 0.1060, NULL,    5, 2, NULL, 0.1100, 0.1060, 'FLS-2026-101'),
     ('PS-1100-FL2-002', 'FM2_S2',    'Active', 0.1030, NULL,    6, 3, NULL, 0.1060, 0.1030, 'FLS-2026-101'),
     ('PS-1100-FL2-002', 'FM2_S3',    'Active', 0.1000, NULL,    7, 4, NULL, 0.1030, 0.1000, 'FLS-2026-101');

@@ -278,7 +278,7 @@ BEGIN
         [ComponentName]  VARCHAR(20)  NOT NULL,   -- DB1 | DB2 | FM1 | EdgeSet | FM2_S1 | FM2_S2 | FM2_S3
         [State]          VARCHAR(10)  NOT NULL,   -- Active | Bypass | Skip
         [ParameterValue] DECIMAL(8,4) NULL,       -- die diameter, roll gap or edger clearance, in inches; NULL unless Active
-        [EdgeType]       VARCHAR(10)  NULL,       -- Round | Square. Edger components only
+        [EdgeType]       VARCHAR(20)  NULL,       -- the four product edge profiles. Edger components only
         [Sequence]       INT          NOT NULL,   -- processing order within the schedule, 1 upwards
         [IsMandatory]    BIT          NOT NULL CONSTRAINT [DF_PSC_IsMandatory] DEFAULT (0),  -- when 1, the screen locks the component and the operator cannot switch it off
         [StandId]        INT          NULL,       -- fitted stand. FK to Stand.Id, added by script 06
@@ -298,13 +298,25 @@ BEGIN
         -- diameter held as data in Stand.RollDiameterIn.
         CONSTRAINT [CK_PSC_ComponentName]    CHECK ([ComponentName] IN ('DB1','DB2','FM1','EdgeSet','FM2_S1','FM2_S2','FM2_S3')),
         CONSTRAINT [CK_PSC_State]            CHECK ([State]         IN ('Active', 'Bypass', 'Skip')),
-        CONSTRAINT [CK_PSC_EdgeType]         CHECK ([EdgeType]      IN ('Round', 'Square') OR [EdgeType] IS NULL),
+        -- The client's four product edge profiles, 10 Sep 2026. This is the edge
+        -- the ORDER specifies, which is a different assertion from the tool's
+        -- ground profile in CK_TIE_EdgeType -- and that one takes only THREE,
+        -- because 'Natural Round Edge' means no edging and no set is ground for
+        -- it. Do not merge the two constraints and do not align their value lists.
+        CONSTRAINT [CK_PSC_EdgeType]         CHECK ([EdgeType]      IN ('Natural Round Edge', 'Full Round Edge', 'Square Edge', 'Broken Edge') OR [EdgeType] IS NULL),
 
         -- A setting may only be recorded against a component that is engaged,
         -- so a bypassed station cannot carry a stale set-point.
         CONSTRAINT [CK_PSC_ParamValue]       CHECK ([State] = 'Active' OR [ParameterValue] IS NULL),
 
         -- An engaged edger must say which edge it applies.
+        --
+        -- THIS STILL HOLDS UNDER THE FOUR-VALUE VOCABULARY, and must not be
+        -- relaxed to accommodate 'Natural Round Edge'. That value means NO EDGING,
+        -- so a schedule specifying it leaves the EdgeSet component Bypass or Skip
+        -- rather than Active -- which CK_PSC_State already expresses, and this
+        -- constraint then does not fire at all. An Active edger with no profile
+        -- remains the contradiction it always was.
         CONSTRAINT [CK_PSC_EdgeTypeReq]      CHECK ([ComponentName] <> 'EdgeSet' OR [State] <> 'Active' OR [EdgeType] IS NOT NULL),
 
         -- The flattening mill is not bypassable, so no schedule may switch it

@@ -11,6 +11,15 @@
 --   skips rather than failing the batch, so a FlatWireDB-only run stays green
 --   and says what it left out.
 --
+-- ⚠ 36_ (the two synonyms) is in the chain for the same reason - a read that
+--   alters nothing shared (D-32, P-353) - but it carries the OPPOSITE hazard,
+--   which is why its checks come AFTER the CREATE rather than before it:
+--   CREATE SYNONYM does not bind at all, so it succeeds on an instance with no
+--   CommonDB and fails only when something queries it. Its Sec 2 reports what
+--   will not resolve and deliberately does not abort.
+--   ⛔ Its targets are BASE TABLES - CommonDB..coils, NOT proddb..coils, which
+--   is itself a synonym and cannot be the base of another one.
+--
 -- ⚠⚠ THIS RUNNER DELIBERATELY SKIPS FIVE FILES:
 --
 --       08_CommonDB_OPCModules_ColumnDrift.sql
@@ -143,6 +152,7 @@ GO
 :r 20_FlatWire_Grants.sql
 :r 30_FlatWireDB_Proc_sp_IngestRodFromCoils.sql
 :r 35_FlatWireDB_View_WIPStations.sql
+:r 36_FlatWireDB_Synonyms_SharedReads.sql
 :r 40_FlatWireDB_Proc_FlatWire_CheckInRod.sql
 :r 50_FlatWireDB_Proc_FlatWire_CompleteCoilOnSkid.sql
 :r 60_FlatWireDB_Proc_FlatWire_ReleaseStation.sql

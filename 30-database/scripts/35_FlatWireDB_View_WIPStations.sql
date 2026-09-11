@@ -8,7 +8,8 @@
   Status       : Draft - no open sign-off items. It creates a READ and writes nothing.
   Story        : FW-N16 (the Active Run Monitor's station read), D-55
   Specification: Integration.md Sec 4 - "WIPStations is also a READ - D-55, 7 September 2026"
-                 DatabaseDesign.md Sec 6.6 - the one-object convention
+                 DatabaseDesign.md Sec 6.6 - the one-object convention (corrected 10 Sep 2026,
+                 P-353: the convention is a SYNONYM; a view is for reshaping, which this does)
                  FR-077 (which SETS the station), OI-112, OI-115
 
   PURPOSE
@@ -23,11 +24,17 @@
 
   *** A VIEW IS A READ, SO D-32 HOLDS. No shared object is created, altered or dropped. ***
 
-  WHY A VIEW RATHER THAN A THREE-PART NAME AT THE CALL SITE
-  ---------------------------------------------------------
-  [DBD Sec 6.6]'s established convention: united_db..alloys is already surfaced as a view named
-  Alloys in six consuming databases, so the type and width mismatches are absorbed ONCE rather
-  than repeated at every call site. This view does the same for two real mismatches:
+  WHY A VIEW RATHER THAN A SYNONYM OR A THREE-PART NAME AT THE CALL SITE
+  ----------------------------------------------------------------------
+  *** CORRECTED 10 Sep 2026 (P-353). This block used to say a view was the convention, citing
+      [DBD Sec 6.6]'s claim that united_db..alloys is surfaced as a VIEW in six databases. That
+      claim was measurably wrong - Alloys is a SYNONYM in six databases and a view in exactly one
+      (PlanningDB) - and Sec 6.6 has been corrected. The convention for a pass-through read is a
+      SYNONYM. ***
+
+  This object is STILL a view, and the reason is now stated correctly: a synonym is only a name,
+  so it cannot RESHAPE. This one renames WIPStation -> Station and trims the padding, which is
+  exactly what a synonym cannot do. It absorbs two real mismatches:
 
     - WIPStation is VARCHAR(6) and SPACE-PADDED to six characters by the seeding script, while
       CoilNo is VARCHAR(9). An untrimmed 'FL1   ' never equals the 'FL1' an idle station parks in

@@ -72,7 +72,7 @@ Wire rod receiving and lifecycle tracking. Each row represents one physical rod 
 | Column | Source | Master |
 |---|---|---|
 | `Alpha` | `coils.coil_no` | shared |
-| `Alloy` | `coils.coil_alloy` → `united_db..alloys.alloy_idx` → `.alloy` | shared |
+| `Alloy` | `coils.coil_alloy` **=** `united_db..alloys.alloy` — matched on the **NAME** (`G133`; it read `alloy_idx` until 10 Sep 2026, which matched **0 of 1,776** real rows) | shared |
 | `Temper` | `coils.coil_temper` (defaults to `O` when null) | shared |
 | `DiameterIn` | the operator's measurement, from the calling payload | **local** |
 | `GrossWeightLb` / `NetWeightLb` | `coils.coil_gross_wgt` / `coil_net_wgt` | shared |
